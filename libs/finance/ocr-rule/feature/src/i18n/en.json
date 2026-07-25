@@ -1,0 +1,18 @@
+{
+  "list": {
+    "title": "OCR rules"
+  },
+  "empty": "No OCR rules recorded yet.",
+  "usage": {
+    "invoice": "Invoice",
+    "expense": "Expenses",
+    "paper": "Receipt"
+  },
+  "inactive": "inactive",
+  "actionsheet": {
+    "title": "Select action",
+    "edit": "Edit rule",
+    "delete": "Delete rule",
+    "account": "Edit posting account"
+  }
+}

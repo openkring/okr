@@ -1,0 +1,23 @@
+{
+  "create": {
+    "label": "Aggiungi prenotazione",
+    "conf": "La prenotazione è stata creata.",
+    "error": "Impossibile creare la prenotazione."
+  },
+  "update": {
+    "label": "Modifica prenotazione",
+    "conf": "La prenotazione è stata modificata.",
+    "error": "Impossibile modificare la prenotazione."
+  },
+  "delete": {
+    "label": "Elimina prenotazione",
+    "conf": "La prenotazione è stata eliminata.",
+    "error": "Impossibile eliminare la prenotazione.",
+    "confirm": "Normalmente una prenotazione dovrebbe essere terminata, non eliminata. L'eliminazione è prevista solo per correggere voci errate. Eliminare davvero la prenotazione?"
+  },
+  "end": {
+    "label": "Termina prenotazione",
+    "conf": "La prenotazione è stata terminata.",
+    "error": "Impossibile terminare la prenotazione."
+  }
+}

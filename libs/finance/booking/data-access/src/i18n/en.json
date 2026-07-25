@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Add booking",
+    "error": "The booking could not be created.",
+    "conf": "The booking was created."
+  },
+  "update": {
+    "label": "Edit booking",
+    "error": "The changes could not be saved",
+    "conf": "The changes were saved."
+  },
+  "delete": {
+    "label": "Delete booking",
+    "error": "The booking could not be deleted",
+    "conf": "The booking was deleted"
+  }
+}

@@ -1,0 +1,710 @@
+{
+  "title": "AOC - Application Operation Center",
+  "result": {
+    "title": "Results"
+  },
+  "account": {
+    "title": "User Accounts",
+    "plural": "Accounts",
+    "empty": "No users found",
+    "user": {
+      "delete": {
+        "label": "Delete user",
+        "error": "The user could not be deleted.",
+        "conf": "The user was deleted.",
+        "confirm": "Do you really want to delete the user ?"
+      },
+      "update": {
+        "label": "Edit user",
+        "error": "The changes could not be saved",
+        "conf": "The changes were saved."
+      }
+    },
+    "fbuser": {
+      "delete": {
+        "label": "Delete Firebase user",
+        "error": "The Firebase user could not be deleted.",
+        "conf": "The Firebase user was deleted.",
+        "confirm": "Do you really want to delete the Firebase user ?"
+      }
+    },
+    "email": {
+      "label": "Login email",
+      "placeholder": "name@domain.com"
+    },
+    "membership": {
+      "edit": "Edit membership"
+    },
+    "copy": {
+      "email": "Copy email",
+      "uid": "Copy UID",
+      "pkey": "Copy person key"
+    }
+  },
+  "adminops": {
+    "title": "Admin Operations",
+    "debug": {
+      "tools": "Debug Tools",
+      "focus_event_logging": "Enable focus event logging"
+    },
+    "iban": {
+      "title": "Subjects with IBAN numbers:",
+      "label": "List IBAN numbers",
+      "button": "Show"
+    },
+    "mcatchange": {
+      "title": "Changes to the member category",
+      "button": "Show"
+    },
+    "doubleMembers": {
+      "title": "Duplicate members",
+      "label": "List duplicate members",
+      "button": "Show"
+    },
+    "oldJuniors": {
+      "title": "Juniors to be reassigned (too old) (>18)",
+      "label": "List juniors to be reassigned (too old)",
+      "button": "Show",
+      "nodob": "No date of birth",
+      "description": "The members listed below are currently still listed as juniors in the database and must be reassigned to active members because they were born before {{ refYear }}."
+    },
+    "club": {
+      "label": "Club"
+    },
+    "year": {
+      "label": "Year"
+    },
+    "membership": {
+      "prices": {
+        "title": "Update annual fees",
+        "label": "Update annual fees",
+        "button": "Update",
+        "description": "The annual fees are calculated from the membership categories. The standard annual fee is stored on each membership in the price field."
+      },
+      "attributes": {
+        "title": "Update member attributes",
+        "label": "Update member attributes",
+        "button": "Update",
+        "description": "For each person, the attributes priority, relIsLast and relLog are recalculated and stored in Membership. This is the prerequisite for evaluations such as Exit/Entry/Alumni/OldJuniors etc. to work correctly."
+      }
+    },
+    "checkJuniorEntry": {
+      "title": "Check junior entries",
+      "label": "Check junior entries",
+      "button": "Check",
+      "description": "The members listed below are recorded in the database with entry as an active member; they should initially be reassigned to juniors."
+    }
+  },
+  "bexio": {
+    "title": "Manage the Bexio integration",
+    "invoices": {
+      "title": "Accounts receivable invoices (Invoices)",
+      "subtitle": "This function is intended for the initial download of accounts receivable invoices from Bexio. Once this initial sync has been done, future invoices are added daily in the early morning.",
+      "nodata": "No invoices found. Load the data from Bexio first.",
+      "status": "Invoices in Firestore. Last sync:",
+      "history": "Data loaded."
+    },
+    "bills": {
+      "title": "Accounts payable invoices (Bills)",
+      "subtitle": "This function is intended for the initial download of accounts payable invoices from Bexio. Once this initial sync has been done, future invoices are added daily in the early morning.",
+      "nodata": "No invoices found. Load the data from Bexio first.",
+      "status": "Invoices in Firestore. Last sync:",
+      "history": "Data loaded."
+    },
+    "journal": {
+      "title": "Journal (Entries)",
+      "subtitle": "Initial download of all accounting journal entries from Bexio. New entries are then synced daily at 06:15.",
+      "nodata": "No entries found. Load the data from Bexio first.",
+      "status": "Entries in Firestore. Last sync:",
+      "history": "Data loaded."
+    },
+    "accounts": {
+      "title": "Accounts",
+      "subtitle": "Download account groups and accounts from Bexio as a hierarchical AccountModel structure into the Firestore accounts collection.",
+      "nodata": "No entries found. Load the data from Bexio first.",
+      "download": "Download account groups and accounts from Bexio and save them as a chart of accounts in a tree structure.",
+      "history": "Data loaded."
+    },
+    "index": {
+      "title": "Sync Bexio contacts",
+      "content": "All persons, organizations and their memberships with the default organization are loaded. The BexioID in these entities is reconciled. Then all contacts are loaded from Bexio and inserted into the same list and checked. For missing entries, an add button appears for reconciliation.",
+      "button": "Sync",
+      "contactFilter": {
+        "label": "Contact filter"
+      }
+    },
+    "edit": {
+      "person": "Edit person",
+      "org": "Edit organization",
+      "membership": "Edit membership"
+    },
+    "vendor": {
+      "title": "Vendors (Vendor)",
+      "subtitle": "Links the vendors of the bills with persons or orgs based on the name.",
+      "status": {
+        "initial": "Not yet checked.",
+        "done": "All bills have a vendor.",
+        "open": "Bills without vendor",
+        "linked": "Vendors linked",
+        "unmatched": "No match found for:"
+      }
+    },
+    "receiver": {
+      "title": "Invoice recipient",
+      "status": {
+        "initial": "Not yet checked.",
+        "done": "All invoices have a recipient.",
+        "open": "Invoices without recipient.",
+        "linked": "Recipients linked",
+        "unmatched": "No match found for:"
+      },
+      "link": "Link"
+    }
+  },
+  "chat": {
+    "title": "Chat Admin (Matrix)",
+    "rooms": "Rooms",
+    "no_rooms": "No rooms",
+    "no_members": "No members",
+    "choose_room": "Select room",
+    "details": "Details",
+    "id": "ID",
+    "name": "Name",
+    "created_by": "Created by",
+    "members": "Members",
+    "note": "If no person is selected, all chat rooms are shown. If a person is selected, all chat rooms where this person is a member are shown.",
+    "invited": "Invited",
+    "public": "Public",
+    "topic": "Topic",
+    "aliases": "Aliases",
+    "avatar": "Avatar",
+    "uid": "User ID",
+    "display_name": "Display name",
+    "level": "Power Level",
+    "membership": "Membership",
+    "choose_room_or_member": "Select room or member<br>to show details",
+    "select": {
+      "roomMember": {
+        "label": "Select person",
+        "description": "If the field is empty, all chat rooms are shown. By selecting a person you limit the selection to all rooms where this person is a member."
+      }
+    },
+    "room": {
+      "rename": {
+        "label": "Rename room",
+        "newname": "New name",
+        "action": "Rename",
+        "conf": "Room renamed"
+      },
+      "delete": {
+        "label": "Delete room",
+        "confirm": "Really delete room {{ roomId }} ? All messages will be removed.",
+        "action": "Delete",
+        "conf": "Room deleted."
+      },
+      "invite": {
+        "label": "Invite person",
+        "action": "Invite",
+        "conf": "invited"
+      },
+      "view": {
+        "label": "Show room details"
+      }
+    },
+    "alias": {
+      "add": {
+        "label": "Add alias",
+        "placeholder": "alias-name (without # and :homeserver)",
+        "action": "Add",
+        "conf": "Alias added"
+      }
+    },
+    "user": {
+      "provision": {
+        "label": "Create Matrix user",
+        "action": "Create",
+        "conf": "User created"
+      },
+      "deactivate": {
+        "label": "Deactivate Matrix user",
+        "confirm": "Deactivate {{ userId }}? The user will no longer be able to sign in.",
+        "action": "Deactivate",
+        "conf": "deactivated",
+        "notfound": "User not found"
+      }
+    },
+    "member": {
+      "deactivate": {
+        "label": "Deactivate member"
+      },
+      "kick": {
+        "label": "Remove member",
+        "confirm": "Remove {{ userId }} from the room ?",
+        "action": "Remove",
+        "conf": "removed."
+      },
+      "view": {
+        "label": "Show members"
+      }
+    },
+    "log": {
+      "title": "Matrix SDK log level",
+      "description": "Controls how verbosely the Matrix SDK (matrix-js-sdk) writes to the browser console – for chat troubleshooting only. The selection is retained across reloads. Default: warn. Set to trace/debug for verbose logs, to silent for none."
+    },
+    "repair": {
+      "names": {
+        "label": "Repair display names",
+        "description": "Sets missing Matrix display names from the person name (first name last name). Accounts with their own name remain untouched.",
+        "scan": "Check",
+        "action": "Repair",
+        "none": "All display names are correct – nothing to repair.",
+        "preview": "Accounts to be repaired",
+        "skipped_custom": "Accounts with their own display name skipped.",
+        "confirm": "Set {{ count }} display names from the person names now?",
+        "conf": "{{ count }} display names repaired."
+      },
+      "avatars": {
+        "label": "Repair avatars",
+        "description": "Sets missing Matrix avatars from the person avatar. Accounts with their own avatar remain untouched.",
+        "scan": "Check",
+        "action": "Repair",
+        "none": "All accounts have an avatar – nothing to repair.",
+        "preview": "Accounts to be repaired",
+        "skipped_has": "Accounts with their own avatar skipped.",
+        "confirm": "Set {{ count }} avatars from the person avatars now?",
+        "conf": "{{ count }} avatars repaired."
+      }
+    }
+  },
+  "content": {
+    "content": "Manage content (Pages, Sections, Menus).",
+    "title": "Content Management",
+    "link": {
+      "check": {
+        "title": "Check links",
+        "content": "Check all links in all pages and sections for functionality.",
+        "show": "Show",
+        "hide": "Hide"
+      }
+    },
+    "section": {
+      "delete": {
+        "label": "Delete section",
+        "confirm": "Do you really want to delete this section ?",
+        "conf": "The section was deleted.",
+        "error": "The section could not be deleted."
+      },
+      "orphaned": {
+        "title": "Orphaned sections",
+        "content": "List sections that are not used by any page.",
+        "hide": "Hide",
+        "show": "Show"
+      },
+      "missing": {
+        "title": "Missing sections",
+        "content": "List non-existing section names that are referenced by a page.",
+        "hide": "Hide",
+        "show": "Show"
+      },
+      "create": "Create section",
+      "edit": "Edit section",
+      "removeRef": "Remove reference from page",
+      "images": {
+        "title": "Check images with missing doc",
+        "content": "Checks per section whether images uploaded to Storage have an entry in the docs collection. On creation, the image is additionally assigned to the section (Article/Slider).",
+        "hide": "Hide",
+        "show": "Show",
+        "detail": "Show image",
+        "download": "Download image",
+        "create": {
+          "label": "Create document & assign image to section",
+          "conf": "The document was created.",
+          "error": "The document could not be created."
+        },
+        "delete": {
+          "label": "Delete image",
+          "confirm": "Do you want to delete this image file from Firebase Storage?"
+        }
+      }
+    },
+    "menu": {
+      "delete": {
+        "label": "Delete menu",
+        "confirm": "Do you really want to delete the menu entry ?",
+        "conf": "The menu entry was deleted.",
+        "error": "The menu entry could not be deleted."
+      },
+      "orphaned": {
+        "title": "Orphaned menus",
+        "content": "List menus that are not used.",
+        "hide": "Hide",
+        "show": "Show"
+      },
+      "missing": {
+        "title": "Missing menus",
+        "content": "List non-existing menus that are referenced by another menu.",
+        "hide": "Hide",
+        "show": "Show"
+      },
+      "create": "Create menu",
+      "edit": "Edit menu",
+      "removeRef": "Remove menu reference"
+    },
+    "copy": {
+      "okey": "Copy key"
+    },
+    "page": {
+      "edit": "Edit website"
+    }
+  },
+  "data": {
+    "title": "Data",
+    "content": "Validate and correct data",
+    "check": {
+      "console": "Please check and confirm the configuration in the browser console."
+    },
+    "fix": {
+      "title": "Data correction",
+      "content": "Bulk operation (adminops/fixModels) with correction operations on a collection. PLEASE BE CAREFUL: The correction operations cannot be undone. Make a backup, test the implementation in the fix operation and first do a dry run without update.",
+      "button": "Correct data"
+    },
+    "validate": {
+      "title": "Data validation",
+      "content": "Bulk operation (adminops/validateModels) with validation operations on a collection.",
+      "button": "Validate data",
+      "select": "Select collection"
+    },
+    "index": {
+      "title": "Create index",
+      "content": "Creates an index on a collection. This is useful when an index is missing in the database and a query cannot be executed.",
+      "button": "Create index",
+      "select": "Select collection"
+    },
+    "fav": {
+      "title": "Fav address consistency",
+      "description": "Compares the cached fav* fields of each person with the actual favorite addresses.",
+      "hide": "Hide",
+      "validate": "Check",
+      "person": "Person",
+      "field": "Field",
+      "favperson": "Person (fav*)",
+      "address": "In address",
+      "nomismatches": "No discrepancies found."
+    }
+  },
+  "doc": {
+    "title": "Check documents",
+    "content": "Checks whether all files in Firebase Storage have a corresponding entry in the database.",
+    "copy": {
+      "path": "Copy storage path",
+      "url": "Copy download URL"
+    },
+    "create": {
+      "label": "Create document (DB record)",
+      "conf": "The document was created.",
+      "error": "The document could not be created."
+    },
+    "delete": {
+      "label": "Delete document",
+      "confirm": "Do you want to delete this file from Firebase Storage?",
+      "conf": "The document was deleted.",
+      "error": "The document could not be deleted."
+    },
+    "download": {
+      "label": "Download document"
+    },
+    "hide": {
+      "label": "Hide"
+    },
+    "check": {
+      "title": "Files without DB entry",
+      "content": "Lists all files in Firebase Storage for which no entry exists in the Firestore docs collection.",
+      "button": "Check"
+    }
+  },
+  "roles": {
+    "title": "Authorization and roles",
+    "personSelect": {
+      "title": "Select person",
+      "content": "Most of the operations below are based on a person. Therefore, a person must be selected here first. The operations can then be performed on this person."
+    },
+    "account": {
+      "select": "Select person",
+      "title": "Create user account",
+      "content": "An existing person is registered as a user in Firebase Auth, i.e. the Firebase account and the user are created. If the Firebase account already exists, only a user is created that links the Firebase account and the person.",
+      "button": "Create account",
+      "password": {
+        "set": "Set password",
+        "reset": "Reset password"
+      }
+    },
+    "assignment": {
+      "title": "Assign roles",
+      "content": "Assign and check assignments of roles to persons."
+    },
+    "check": {
+      "title": "Check user account",
+      "content": "Check whether a person has a user account in Firebase Auth or whether the prerequisites for creating the account are met.",
+      "button": "Check"
+    },
+    "fbuser": {
+      "title": "Edit Firebase user",
+      "content": "Edit an existing Firebase user. The change is made only in Firebase Auth; if necessary, the UserModel or PersonModel must also be changed.",
+      "button": "Edit Firebase user"
+    },
+    "impersonate": {
+      "title": "Impersonate user",
+      "content": "The user's role is temporarily set to the selected user. This allows the admin to use the application as this user. To return to the admin role, the admin must sign out and sign in again.",
+      "button": "Impersonate"
+    },
+    "password": {
+      "label": "Password",
+      "placeholder": "Password",
+      "error": "The password must be at least 6 characters long.",
+      "helper": "Here you can set a password for the selected user (e.g. for testing purposes). An empty password field results in a random password. The user can then set their own password with a password reset.",
+      "set": "Set a new password for the selected user without triggering a password reset email. An empty password field results in a random password.",
+      "reset": "Send a password reset email to the selected user."
+    }
+  },
+  "session": {
+    "title": "Sessions",
+    "empty": "No sessions in the selected period",
+    "anonymous": "anonymous",
+    "loggedIn": "Signed in",
+    "col": {
+      "user": "User",
+      "browser": "Browser",
+      "os": "OS",
+      "started": "Started",
+      "duration": "Duration",
+      "status": "Status"
+    },
+    "status": {
+      "all": "All",
+      "active": "active",
+      "stale": "inactive",
+      "orphaned": "orphaned",
+      "ended": "ended"
+    },
+    "menu": {
+      "export": "Export raw data",
+      "statistics": "Show statistics",
+      "duration": "Change period"
+    },
+    "as": {
+      "title": "Session actions"
+    },
+    "view": "Show session",
+    "edit": {
+      "user": "Edit user",
+      "person": "Edit person"
+    },
+    "hide": {
+      "user": "Hide this user",
+      "anonymous": "Hide anonymous sessions"
+    },
+    "export": {
+      "empty": "No sessions to export.",
+      "conf": "The sessions were exported."
+    },
+    "detail": {
+      "title": "Session details"
+    },
+    "stats": {
+      "title": "Session statistics",
+      "total": "Sessions total",
+      "users": "Unique users",
+      "anonymous": "Anonymous sessions",
+      "avgDuration": "Average duration",
+      "medianDuration": "Median duration",
+      "byBrowser": "By browser",
+      "byOs": "By OS"
+    },
+    "duration": {
+      "title": "Select period",
+      "from": "From",
+      "to": "To"
+    }
+  },
+  "srv": {
+    "title": "Manage the SRV / Regasoft integration",
+    "index": {
+      "title": "Sync SRV members",
+      "subtitle": "Compares the current SRV memberships (orgKey=srv) with the members in the Regasoft portal. Primary reconciliation via memberId = serviceId, fallback via name.",
+      "reset": "Reset index",
+      "button": "Build index"
+    },
+    "person": {
+      "update": {
+        "label": "Edit person"
+      }
+    },
+    "membership": {
+      "update": {
+        "label": "Edit membership"
+      },
+      "parent": {
+        "create": {
+          "label": "Create association membership"
+        },
+        "update": {
+          "label": "Edit association membership"
+        }
+      }
+    },
+    "regasoft": {
+      "copy": {
+        "label": "Copy Regasoft data"
+      },
+      "view": {
+        "label": "Show Regasoft data"
+      },
+      "add": {
+        "label": "Create Regasoft entry"
+      },
+      "update": {
+        "label": "Update Regasoft entry"
+      }
+    },
+    "license": {
+      "create": {
+        "label": "Create license"
+      },
+      "download": {
+        "label": "Download license"
+      }
+    }
+  },
+  "statistics": {
+    "header": "AOC Statistics",
+    "content": "Certain statistics can be recalculated here from the current data. This calculation should only be performed when the database is in a stable state. The calculation may take some time. The statistics should then be reviewed and corrected manually if necessary.",
+    "title": "Update statistics",
+    "competitionLevels": {
+      "title": "Competition categories",
+      "label": "Update competition categories",
+      "conf": "The competition categories were recalculated.",
+      "button": "Run",
+      "description": "The competitionLevels collection caches data from the collections subjects, memberships, ownerships. This data is needed to display the competition categories."
+    },
+    "clStats": {
+      "title": "Overview statistics",
+      "subTitle": "Statistics of the competition categories",
+      "label": "Update statistics of the competition categories",
+      "conf": "The statistics were recalculated.",
+      "button": "Run"
+    },
+    "ageByGender": {
+      "title": "Age structure",
+      "subTitle": "Members by age and gender",
+      "label": "Recalculate age statistics",
+      "conf": "Age statistics were recalculated.",
+      "error": "The age statistics could not be recalculated.",
+      "button": "Run"
+    },
+    "categoryByGender": {
+      "title": "Member structure",
+      "subTitle": "Members by category and gender",
+      "label": "Recalculate member structure",
+      "conf": "Member structure was recalculated.",
+      "button": "Run"
+    },
+    "memberLocation": {
+      "title": "Origin of active members",
+      "subTitle": "Active members by place of residence (postal code)",
+      "label": "Recalculate place-of-residence statistics",
+      "conf": "Place-of-residence statistics were recalculated.",
+      "button": "Run"
+    }
+  },
+  "storage": {
+    "title": "Firebase Storage",
+    "content": "Operations to manage the files and images in Firebase Storage.",
+    "info": {
+      "title": "Firebase Storage Info",
+      "content": "Shows information about a document in Firebase Storage. For this, the relative URL to this document must be entered.",
+      "buttonLabel": "Show information"
+    },
+    "sizes": {
+      "title": "Used storage space",
+      "content": "Calculates the storage space that all documents in a Firebase Storage folder occupy. For this, the relative path to the folder must be entered.",
+      "buttonLabel": "Calculate size"
+    }
+  },
+  "tag": {
+    "title": "Tag management",
+    "add": {
+      "label": "Add tag",
+      "placeholder": "@tag.example",
+      "button": "Add tag",
+      "conf": "The tag was saved.",
+      "error": "The tag could not be saved."
+    },
+    "create": {
+      "label": "New TagList",
+      "placeholder": "Model type (e.g. person, org, section)",
+      "conf": "The tag was saved",
+      "error": "The tag could not be saved."
+    },
+    "delete": {
+      "label": "Delete tag",
+      "confirm": "Do you really want to delete this tag?",
+      "conf": "The tag was deleted.",
+      "error": "The tag could not be deleted."
+    },
+    "remove": {
+      "label": "Remove tag",
+      "conf": "The tag was removed.",
+      "error": "The tag could not be removed."
+    },
+    "update": {
+      "label": "Edit tag",
+      "placeholder": "@tag.example",
+      "conf": "The tag was changed.",
+      "error": "The tag could not be changed."
+    },
+    "search": {
+      "label": "Search tags",
+      "placeholder": "TagList name"
+    },
+    "list": {
+      "title": "TagList"
+    },
+    "string": {
+      "update": "Edit value",
+      "remove": "Remove value"
+    },
+    "strings": {
+      "title": "Tag",
+      "empty": "No TagList selected"
+    }
+  },
+  "website": {
+    "title": "Website texts",
+    "key": "ID",
+    "isHtml": "Content is HTML",
+    "list": {
+      "title": "Texts"
+    },
+    "create": {
+      "label": "Create website text",
+      "conf": "The website text was created",
+      "error": "The website text could not be created."
+    },
+    "delete": {
+      "label": "Remove website text",
+      "confirm": "Do you really want to delete the website text ?",
+      "conf": "The website text was removed.",
+      "error": "The website text could not be deleted."
+    },
+    "update": {
+      "label": "Edit website text",
+      "conf": "The website text was changed.",
+      "error": "The change could not be saved."
+    }
+  },
+  "switcher": {
+    "title": "Switch app",
+    "tooltip": "Switch to another app",
+    "current": "Current"
+  }
+}

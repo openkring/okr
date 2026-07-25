@@ -1,0 +1,42 @@
+{
+  "calendar": {
+    "select": "Select calendar",
+    "empty": "No calendar entries found."
+  },
+  "group": {
+    "select": "Select group",
+    "empty": "No groups found."
+  },
+  "org": {
+    "select": "Select organization",
+    "empty": "No organizations found."
+  },
+  "person": {
+    "select": "Select person",
+    "empty": "No persons found.",
+    "custom_use": "use as guest",
+    "label": "Person"
+  },
+  "resource": {
+    "select": "Select resource",
+    "empty": "No resources found."
+  },
+  "responsibility": {
+    "select": "Select responsible person",
+    "empty": "No responsibilities found."
+  },
+  "location": {
+    "select": "Select location",
+    "empty": "No locations found.",
+    "custom_use": "use as destination or route",
+    "segment": {
+      "list": "List",
+      "map": "Map"
+    },
+    "map": {
+      "select": "Select",
+      "copy_w3w": "Copy what3words",
+      "copied": "Copied"
+    }
+  }
+}

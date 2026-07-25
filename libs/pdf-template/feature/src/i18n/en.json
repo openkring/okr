@@ -1,0 +1,74 @@
+{
+  "template": "PDF template",
+  "templates": "PDF templates",
+  "list": {
+    "title": "Document templates"
+  },
+  "empty": "No templates found.",
+
+  "archive": {
+    "label": "Archive template"
+  },
+  "create": {
+    "label": "Add PDF template",
+    "conf": "The PDF template was created.",
+    "error": "The PDF template could not be created."
+  },
+  "delete": {
+    "label": "Delete PDF template",
+    "confirm": "Do you really want to delete the PDF template?",
+    "conf": "The PDF template was deleted",
+    "error": "The PDF template could not be deleted"
+  },
+  "duplicate": {
+    "label": "Duplicate template"
+  },
+  "preview": {
+    "label": "Preview",
+    "error": "Preview generation failed"
+  },
+  "publish": {
+    "label": "Publish template",
+    "conf": "Template published.",
+    "error": "Publishing failed."
+  },
+  "save": {
+    "draft": {
+      "conf": "Draft saved.",
+      "error": "Draft could not be saved."
+    }
+  },
+  "update": {
+    "label": "Edit PDF template",
+    "conf": "The changes were saved.",
+    "error": "The changes could not be saved"
+  },
+  "view": {
+    "label": "View current version"
+  },
+  "revert": {
+    "label": "Revert to last version",
+    "conf": "Reverted to last version.",
+    "error": "Revert failed."
+  },
+
+
+  "category": {
+    "label": "Category"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "status": {
+    "label": "Status"
+  },
+  "version": {
+    "label": "Version"
+  },
+  "html": {
+    "label": "HTML"
+  },
+  "css": {
+    "label": "CSS"
+  }
+}

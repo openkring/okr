@@ -1,0 +1,27 @@
+{
+  "create": {
+    "label": "Añadir uso",
+    "error": "No se pudo crear el uso.",
+    "conf": "El uso se ha creado."
+  },
+  "update": {
+    "label": "Editar uso",
+    "error": "No se pudieron guardar los cambios",
+    "conf": "Los cambios se han guardado."
+  },
+  "delete": {
+    "label": "Eliminar uso",
+    "error": "No se pudo eliminar el uso",
+    "conf": "El uso se ha eliminado",
+    "confirm": "Normalmente un uso debería finalizarse, no eliminarse. La eliminación solo está prevista para corregir entradas erróneas. ¿Desea realmente eliminar el uso?"
+  },
+  "select": {
+    "raw": "Datos sin procesar",
+    "lockers": "Lista de casilleros",
+    "title": "Seleccionar tipo de lista para exportar"
+  },
+  "end": {
+    "conf": "Uso finalizado",
+    "error": "No se pudo finalizar el uso."
+  }
+}

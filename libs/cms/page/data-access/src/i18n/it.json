@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Creare una nuova pagina web",
+    "conf": "La pagina web è stata creata.",
+    "error": "Non è stato possibile creare la pagina web."
+  },
+  "update": {
+    "label": "Modifica la pagina web",
+    "conf": "La pagina web è stata modificata.",
+    "error": "Non è stato possibile modificare la pagina web."
+  },
+  "delete": {
+    "label": "Elimina la pagina web",
+    "conf": "La pagina web è stata eliminata.",
+    "error": "Non è stato possibile eliminare la pagina web.",
+    "askConfirmation": "Eliminare davvero questa pagina web ?"
+  }
+}

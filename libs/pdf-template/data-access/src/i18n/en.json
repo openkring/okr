@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Add PDF template",
+    "error": "The PDF template could not be created.",
+    "conf": "The PDF template has been created."
+  },
+  "update": {
+    "label": "Edit PDF template",
+    "error": "The changes could not be saved",
+    "conf": "The changes have been saved."
+  },
+  "delete": {
+    "label": "Delete PDF template",
+    "error": "The PDF template could not be deleted",
+    "conf": "The PDF template has been deleted",
+    "confirm": "Do you really want to delete the PDF template?"
+  }
+}

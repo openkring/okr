@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Add folder",
+    "conf": "The folder has been added.",
+    "error": "The folder could not be added."
+  },
+  "update": {
+    "conf": "The folder has been changed.",
+    "error": "The folder could not be changed."
+  },
+  "delete": {
+    "conf": "The folder has been deleted.",
+    "confirm": "Should the folder really be deleted ?",
+    "error": "The folder could not be deleted."
+  }
+}

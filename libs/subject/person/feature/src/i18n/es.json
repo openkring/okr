@@ -1,0 +1,198 @@
+{
+  "persons": "Personas",
+  "empty": "No se encontraron personas.",
+  "details": "Datos de la persona",
+  "addresses": "Direcciones",
+  "misc": "Varios",
+
+   "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "La clave del registro de la persona en la base de datos."
+  },
+  "firstName": {
+    "label": "Nombre",
+    "placeholder": "Introducir nombre",
+    "helper": "Los nombres de una persona."
+  },
+  "lastName": {
+    "label": "Apellido",
+    "placeholder": "Introducir apellido",
+    "helper": "El apellido de una persona."
+  },
+  "ssnId": {
+    "label": "Número AVS",
+    "placeholder": "756.XXXX.XXXX.XX",
+    "helper": "El número AVS de una persona"
+  },
+  "bexioId": {
+    "label": "ID de Bexio",
+    "placeholder": "nnnnn",
+    "helper": "El identificador del contacto de Bexio de la persona."
+  },
+  "email": {
+    "label": "Correo electrónico",
+    "placeholder": "Introducir dirección de correo electrónico"
+  },
+  "phone": {
+    "label": "Teléfono",
+    "placeholder": "+41 XX XXX XX XX"
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas"
+  },
+  "dateOfBirth": {
+    "label": "Fecha de nacimiento",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "La fecha de nacimiento de la persona."
+  },
+  "dateOfDeath": {
+    "label": "Fecha de fallecimiento",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "La fecha de fallecimiento de la persona."
+  },
+  "dateOfEntry": {
+    "label": "Fecha de ingreso",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Inicio de la afiliación."
+  },
+  "streetName": {
+    "label": "Calle",
+    "placeholder": "Introducir calle",
+    "helper": "Nombre de la calle de una dirección postal."
+  },
+  "streetNumber": {
+    "label": "N.º",
+    "placeholder": "sss",
+    "helper": "El número de la casa de una dirección postal."
+  },
+  "countryCode": {
+    "label": "País (ISO)",
+    "placeholder": "CH",
+    "helper": "El código ISO del país."
+  },
+  "zipCode": {
+    "label": "Código postal",
+    "placeholder": "nnnn",
+    "helper": "Un código postal suizo. Cadena de 4 dígitos"
+  },
+  "city": {
+    "label": "Localidad",
+    "placeholder": "Introducir localidad",
+    "helper": "El nombre de la localidad"
+  },
+  "web": {
+    "label": "Web",
+    "placeholder": "https://...",
+    "helper": "Una dirección web (URL a un sitio web)"
+  },
+
+  "lookup": {
+    "title": "Búsqueda de direcciones (search.ch)",
+    "empty": "No se encontraron resultados.",
+    "error": "La búsqueda falló. Inténtelo de nuevo.",
+    "attribution": "Datos: Swisscom Directories AG (search.ch)"
+  },
+
+  "add": {
+    "membership": {
+      "label": "Afiliación (opcional)",
+      "confirm": "¿Debe crearse una afiliación ?",
+      "conf": "La afiliación se ha guardado.",
+      "error": "No se pudo crear la afiliación.",
+      "helper": "Puede seleccionar una organización en la que se registrará a la nueva persona como miembro. Además, debe definir la fecha de ingreso y la categoría de miembro.",
+      "exists": "Este miembro ya existe."
+    }
+  },
+  "call": {
+    "phone": "Llamar"
+  },
+  "copy": {
+    "email": {
+      "label": "Copiar correo electrónico",
+      "conf": "La dirección de correo electrónico se ha copiado",
+      "error": "No se pudo copiar la dirección de correo electrónico."
+    },
+    "phone": {
+      "label": "Copiar número de teléfono",
+      "conf": "El número de teléfono se ha copiado",
+      "error": "No se pudo copiar el número de teléfono."
+    }
+  },
+  "create": {
+    "label": "Añadir nueva persona",
+    "conf": "La persona se ha guardado",
+    "error": "No se pudo guardar la persona."
+  },
+  "update": {
+    "label": "Modificar persona",
+    "conf": "La persona se ha guardado",
+    "error": "No se pudo guardar la persona."
+  },
+  "send": {
+    "message": "Abrir chat directo",
+    "email": "Enviar correo electrónico"
+  },
+  "show": {
+    "postal": "Mostrar la dirección postal en el mapa"
+  },
+  "view": {
+    "label": "Mostrar persona"
+  },
+  "delete": {
+    "label": "Eliminar persona",
+    "conf": "La persona se ha eliminado",
+    "confirm": "¿Desea realmente eliminar la persona ?",
+    "error": "No se pudo eliminar la persona."
+  },
+
+  "gender": {
+    "label": "Sexo",
+    "helper": "El sexo de una persona",
+    "name": "Sexo",
+    "all": {
+      "label": "Todos los sexos",
+      "icon": "gender_diverse"
+    },
+    "female": {
+      "label": "femenino",
+      "description": "La persona es una mujer.",
+      "salutation": "Estimada",
+      "greeting": "Sra.",
+      "formal": "Estimada Sra."
+    },
+    "male": {
+      "label": "masculino",
+      "description": "La persona es un hombre.",
+      "salutation": "Estimado",
+      "greeting": "Sr.",
+      "formal": "Estimado Sr."
+    },
+    "other": {
+      "label": "diverso",
+      "description": "La persona es transgénero.",
+      "salutation": "Estimad@",
+      "greeting": "Miko",
+      "formal": "Estimad@ ",
+      "name": "Denominación"
+    }
+  },
+
+  "duplicate": {
+    "title": "Se encontraron posibles duplicados",
+    "intro": "Ya existen personas que coinciden con los datos introducidos. Seleccione una persona existente o cree una nueva de todos modos.",
+    "createNew": "Crear nueva de todos modos",
+    "tenants": "Mandantes"
+  },
+  "reconcile": {
+    "title": "Cotejar campos",
+    "intro": "Los campos marcados difieren. Seleccione para cada campo el valor que desea conservar.",
+    "keepExisting": "Existente",
+    "useNew": "Nuevo"
+  },
+  "validation": {
+    "lastNameRequired": "La introducción de un apellido es obligatoria.",
+    "validSSN": "Introduzca un número AVS válido."
+  }
+}

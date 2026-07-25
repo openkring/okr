@@ -1,0 +1,22 @@
+{
+  "create": {
+    "label": "Ajouter un événement",
+    "conf": "L'événement a été ajouté.",
+    "error": "L'événement n'a pas pu être ajouté."
+  },
+  "update": {
+    "label": "Modifier l'événement",
+    "conf": "L'événement a été modifié.",
+    "error": "L'événement n'a pas pu être modifié."
+  },
+  "delete": {
+    "label": "Supprimer l'événement",
+    "confirm": "Voulez-vous vraiment supprimer l'événement ?",
+    "conf": "L'événement a été supprimé.",
+    "error": "L'événement n'a pas pu être supprimé.",
+    "intro": "Cet événement fait partie d'une série d'événements récurrents. Voulez-vous supprimer uniquement cet événement, ou tous les événements futurs de la série ?",
+    "current": "Supprimer uniquement cet événement (l'événement est détaché de la série)",
+    "future": "Supprimer tous les événements futurs",
+    "all": "Supprimer tous les événements de la série"
+  }
+}

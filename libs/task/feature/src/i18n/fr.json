@@ -1,0 +1,138 @@
+{
+  "task": "Tâche",
+  "tasks": "Tâches",
+  "desc": "Tâches à accomplir.",
+  "empty": "Aucune tâche trouvée.",
+  "empty-my": "Félicitations ! - Vous n'avez aucune tâche en cours.",
+  "calendar": {
+    "name": {
+      "label": "Calendrier",
+      "description": "L'événement est inscrit dans ces calendriers.",
+      "addLabel": "Ajouter un nom de calendrier"
+    }
+  },
+  "taskQuickEntry": {
+    "label": "Saisie rapide",
+    "placeholder": "Texte [@Person] [//Date]",
+    "helper": "Permet la création rapide d'une tâche avec description, attribution et date d'échéance."
+  },
+
+  "create": {
+    "label": "Créer une nouvelle tâche",
+    "conf": "La tâche a été créée.",
+    "error": "La tâche n'a pas pu être créée."
+  },
+  "delete": {
+    "label": "Supprimer la tâche",
+    "confirm": "Voulez-vous vraiment supprimer cette tâche ?",
+    "conf": "La tâche a été supprimée.",
+    "error": "La tâche n'a pas pu être supprimée."
+  },
+  "update": {
+    "label": "Modifier la tâche",
+    "conf": "La tâche a été modifiée.",
+    "error": "La tâche n'a pas pu être modifiée."
+  },
+  "view": {
+    "label": "Afficher les détails de la tâche"
+  },
+  "done": "Marquer la tâche comme terminée",
+
+  "list": {
+    "header": {
+      "name": "Nom",
+      "dueDate": "Échéance",
+      "assignee": "Responsable",
+      "state": "Statut"
+    }
+  },
+
+  "board": {
+    "emptyColumn": "Aucune tâche",
+    "noStates": "Aucune catégorie 'task_state' n'est définie. Sans statuts, aucun tableau ne peut être affiché."
+  },
+
+   "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "La clé de la tâche dans la base de données."
+  },
+  "name": {
+    "label": "Nom de la tâche",
+    "placeholder": "Nom au choix",
+    "helper": "Un identifiant pour la tâche afin qu'elle puisse être facilement retrouvée dans une liste."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes"
+  },
+  "dueDate": {
+    "label": "Échéance le",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "Une tâche doit être terminée avant cette date.",
+    "error": "Le format de date n'est pas correct."
+  },
+  "completionDate": {
+    "label": "Terminée le",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "La tâche a été terminée à cette date.",
+    "error": "Le format de date n'est pas correct."
+  },
+  "task_state": {
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "label": "Statut",
+    "helper": "La tâche se trouve dans un état déterminé, p. ex. initial, planifié, en cours, terminé.",
+    "initial": {
+      "label": "Initial",
+      "description": "La tâche a été créée."
+    },
+    "planned": {
+      "label": "Planifiée",
+      "description": "La tâche est planifiée."
+    },
+    "doing": {
+      "label": "En cours",
+      "description": "La tâche est en cours de traitement."
+    },
+    "done": {
+      "label": "Terminée",
+      "description": "La tâche a été terminée."
+    },
+    "waiting": {
+      "label": "En attente",
+      "description": "La tâche attend une action."
+    },
+    "cancelled": {
+      "label": "Annulée",
+      "description": "La tâche a été annulée."
+    },
+    "later": {
+      "label": "Plus tard",
+      "description": "La tâche sera terminée plus tard."
+    }
+  },
+  "priority": {
+    "label": "Priorité"
+  },
+  "importance": {
+    "label": "Importance"
+  },
+  "assignee": {
+    "label": "Responsable",
+    "description": "Personne responsable de l'exécution de la tâche."
+  },
+  "author": {
+    "label": "Auteur",
+    "description": "Personne qui a créé la tâche."
+  },
+  "scope": {
+    "label": "Contexte",
+    "description": "La tâche est normalement visible pour l'auteur, la personne responsable et les utilisateurs privilégiés. Avec le contexte, la visibilité peut être étendue à un groupe."
+  },
+
+  "validations": {
+    "taskModelType": "Le ModelType doit être TaskModel."
+  }
+}

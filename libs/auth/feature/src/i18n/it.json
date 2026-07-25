@@ -1,0 +1,76 @@
+{
+  "title": "Accedi",
+  "email": {
+    "label": "E-mail",
+    "placeholder": "ssss@ssssssss.sss",
+    "error": "Inserire un indirizzo e-mail valido.",
+    "helper": "Utilizzare lo stesso indirizzo e-mail sul quale si ricevono le informazioni dell'associazione."
+  },
+  "password": {
+    "label": "Password",
+    "placeholder": "Password",
+    "error": "La password deve essere lunga almeno 6 caratteri e può contenere i seguenti caratteri speciali: -_!@?:;äüö$*+&()=.,£$%",
+    "helper": "Se non si dispone ancora di una password o non la si conosce, è possibile fare clic sul pulsante 'Reimposta password' qui sotto e impostare una nuova password."
+  },
+  "pwdreset": {
+    "title": "Imposta password",
+    "newpwd": "Imposta una nuova password",
+    "invalidLink": "Questo link non è valido o è già scaduto. Richiedere un nuovo link di reimpostazione.",
+    "success": "Password modificata con successo. Si verrà reindirizzati alla pagina di accesso.",
+    "savepwd": "Salva password"
+  },
+  "pwdconfirm": "Imposta password",
+
+  "roles": {
+    "label": "Ruoli",
+    "helper": "I ruoli raggruppano le autorizzazioni in una funzione specifica.",
+    "none": {
+      "label": "Nessuno",
+      "description": "Nessun ruolo definito."
+    },
+    "public": {
+      "label": "Pubblico",
+      "description": "Visibile agli utenti non autenticati"
+    },
+    "anonymous": {
+      "label": "anonymous",
+      "description": "Utente anonimo senza account"
+    },
+    "registered": {
+      "label": "registered",
+      "description": "Utente registrato / autenticato"
+    },
+    "privileged": {
+      "label": "privileged",
+      "description": "Utente privilegiato (ad es. membro del comitato)"
+    },
+    "contentAdmin": {
+      "label": "contentAdmin",
+      "description": "Gestore di contenuti (pagine, menu)"
+    },
+    "resourceAdmin": {
+      "label": "resourceAdmin",
+      "description": "Gestore di risorse (ad es. veicoli, imbarcazioni, chiavi)"
+    },
+    "memberAdmin": {
+      "label": "memberAdmin",
+      "description": "Gestore di membri"
+    },
+    "eventAdmin": {
+      "label": "eventAdmin",
+      "description": "Gestore di eventi e appuntamenti"
+    },
+    "treasurer": {
+      "label": "treasurer",
+      "description": "Responsabile delle finanze"
+    },
+    "admin": {
+      "label": "admin",
+      "description": "Superutente"
+    },
+    "tester": {
+      "label": "tester",
+      "description": "Tester"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Añadir plantilla PDF",
+    "error": "No se pudo crear la plantilla PDF.",
+    "conf": "La plantilla PDF se ha creado."
+  },
+  "update": {
+    "label": "Modificar plantilla PDF",
+    "error": "No se pudieron guardar los cambios",
+    "conf": "Los cambios se han guardado."
+  },
+  "delete": {
+    "label": "Eliminar plantilla PDF",
+    "error": "No se pudo eliminar la plantilla PDF",
+    "conf": "La plantilla PDF se ha eliminado",
+    "confirm": "¿Desea eliminar realmente la plantilla PDF?"
+  }
+}

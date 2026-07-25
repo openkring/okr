@@ -1,0 +1,96 @@
+{
+  "list": {
+    "title": "Solicitudes",
+    "empty": "No se encontraron solicitudes.",
+    "no_person": "Persona aún no creada — acepte primero la solicitud."
+  },
+  "add": {
+    "group": {
+      "label": "Invitar al grupo",
+      "conf": "Persona invitada al grupo."
+    },
+    "membership": {
+      "label": "Añadir afiliación",
+      "conf": "Afiliación añadida."
+    }
+  },
+  "accept": {
+    "label": "Aceptar",
+    "confirm": "¿Aceptar la solicitud? Se creará una persona.",
+    "conf": "Solicitud aprobada — se creó la persona.",
+    "error": "La aprobación falló."
+  },
+  "delete": {
+    "confirm": "¿Desea realmente eliminar esta solicitud?",
+    "conf": "Solicitud eliminada.",
+    "error": "La eliminación falló."
+  },
+  "deny": {
+    "label": "Rechazar",
+    "conf": "Solicitud rechazada.",
+    "error": "El rechazo falló.",
+    "reason": "Motivo del rechazo"
+  },
+  "send": {
+    "confirmation_sent": "Confirmación enviada al solicitante.",
+    "decision_sent": "Decisión enviada al solicitante.",
+    "error": "No se pudo enviar el correo electrónico."
+  },
+  "update": {
+    "title": "Editar solicitud",
+    "save": {
+      "label": "Guardar",
+      "conf": "Solicitud actualizada.",
+      "error": "La actualización falló."
+    }
+  },
+  "field": {
+    "firstname": "Nombre",
+    "lastname": "Apellido",
+    "gender": "Sexo",
+    "date_of_birth": "Fecha de nacimiento",
+    "ssn": "Número AVS",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "streetname": "Calle",
+    "streetnumber": "N.º",
+    "zipcode": "Código postal",
+    "city": "Localidad",
+    "countrycode": "País",
+    "parent": {
+      "firstname": "Nombre del progenitor",
+      "lastname": "Apellido del progenitor",
+      "email": "Correo electrónico del progenitor",
+      "phone": "Teléfono del progenitor"
+    },
+    "application": "Solicitud como",
+    "state": "Estado",
+    "submitted": "Recibida",
+    "reviewed": "En tramitación desde",
+    "reviewer": "Responsable de la tramitación",
+    "reason": "Observación"
+  },
+  "validation": {
+    "email_required": "El correo electrónico es obligatorio (ya sea del solicitante o del progenitor).",
+    "phone_required": "El teléfono es obligatorio (ya sea del solicitante o del progenitor)."
+  },
+  "section": {
+    "person": "Persona",
+    "contact": "Contacto",
+    "address": "Dirección",
+    "parent": "Progenitores (obligatorio para menores)",
+    "application": "Solicitud"
+  },
+  "kind": {
+    "youth": "Joven",
+    "adult": "Adulto",
+    "transfer": "Traslado"
+  },
+  "state": {
+    "applied": "Recibida",
+    "reviewing": "En tramitación",
+    "closed_approved": "Aceptada",
+    "closed_denied": "Rechazada",
+    "closed_cancelled": "Retirada"
+  }
+}

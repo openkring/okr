@@ -1,0 +1,235 @@
+{
+  "documents": "Documenti",
+  "revisions": "Versioni",
+  "empty": "Nessun documento trovato.",
+  "name": "Nome del file",
+  "size": "Dimensione",
+  "lastUpdate": "Ultima modifica",
+  "revision": {
+    "list": {
+      "title": "Cronologia delle versioni"
+    }
+  },
+
+  "upload": {
+    "new": "Carica nuova versione",
+    "single": {
+      "title": "Carica documento"
+    },
+    "multiple": {
+      "title": "Carica documenti"
+    }
+  },
+  "delete": {
+    "label": "Elimina documento",
+    "conf": "Il documento è stato eliminato.",
+    "confirm": "Eliminare davvero il documento ?",
+    "error": "Impossibile eliminare il documento."
+  },
+  "view": {
+    "label": "Visualizza dettagli del documento",
+    "revisions": "Mostra versioni"
+  },
+  "update": {
+    "label": "Modifica documento",
+    "conf": "Il documento è stato salvato.",
+    "error": "Impossibile salvare il documento."
+  },
+  "create": {
+    "label": "Crea nuovo documento",
+    "conf": "Il documento è stato salvato.",
+    "error": "Impossibile salvare il documento."
+  },
+  "download": "Scarica documento",
+  "share": "Condividi documento",
+  "image": {
+    "add": "Aggiungi immagine",
+    "select": "Scegli immagine",
+    "upload": "Carica immagine",
+    "edit": "Configura immagine",
+    "type": {
+      "name": "Tipo di immagine",
+      "label": "Tipo di immagine",
+      "helper": "Il tipo dell'immagine"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "ID",
+    "helper": "L'identificativo univoco del documento nel database."
+  },
+  "label": {
+    "label": "Denominazione",
+    "placeholder": "Inserire una denominazione",
+    "helper": "Una breve descrizione dell'immagine."
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": "Il collegamento all'immagine (di solito imgix)"
+  },
+  "actionUrl": {
+    "label": "URL di azione",
+    "placeholder": "https://...",
+    "helper": "Il collegamento all'azione, ad es. a un'immagine ingrandita a risoluzione maggiore."
+  },
+  "altText": {
+    "label": "Testo alternativo",
+    "placeholder": "testo",
+    "helper": "Una breve descrizione del contenuto dell'immagine per le persone con disabilità visive."
+  },
+  "overlay": {
+    "label": "Testo sovrapposto",
+    "placeholder": "testo",
+    "helper": "Testo da visualizzare sull'immagine."
+  },
+  "credit": {
+    "label": "Fonte dell'immagine",
+    "placeholder": "ad es. Foto: J. Muster / Keystone",
+    "helper": "Attribuzione dell'immagine. Viene mostrata come fonte sull'immagine se attivata."
+  },
+  "fullPath": {
+    "label": "Percorso del file",
+    "placeholder": "/a/b/c",
+    "helper": "Il percorso del file indica la posizione del documento nello storage."
+  },
+  "title": {
+    "label": "Titolo",
+    "placeholder": "Inserire un titolo",
+    "helper": "Una breve descrizione del documento."
+  },
+  "mimeType": {
+    "label": "Tipo MIME",
+    "placeholder": "ad es. application/pdf",
+    "helper": "Il tipo MIME indica il tipo di documento, ad es. image/jpg, application/pdf"
+  },
+  "authorKey": {
+    "label": "Chiave dell'autore",
+    "placeholder": "ssssssss",
+    "helper": "L'identificativo dell'autore nel database"
+  },
+  "authorName": {
+    "label": "Autore",
+    "placeholder": "nome",
+    "helper": "Il nome dell'autore."
+  },
+  "locationKey": {
+    "label": "Chiave del luogo",
+    "placeholder": "L'identificativo del luogo nel database",
+    "helper": "Ciò consente di creare un riferimento del documento a un luogo."
+  },
+  "hash": {
+    "label": "Hash",
+    "placeholder": "ssssssss",
+    "helper": "L'hash è una rappresentazione univoca e abbreviata del contenuto del documento. Viene utilizzato per i confronti."
+  },
+  "priorVersionKey": {
+    "label": "Chiave del predecessore",
+    "placeholder": "ssssssss",
+    "helper": "Chiave della versione precedente"
+  },
+  "version": {
+    "label": "Versione",
+    "placeholder": "ad es. yyyymmdd",
+    "helper": "Numero di versione del documento"
+  },
+  "description": {
+    "label": "Descrizione",
+    "placeholder": "testo"
+  },
+  "dateOfDocCreation": {
+    "label": "Data di creazione",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Il documento è stato creato in questa data."
+  },
+  "dateOfDocLastUpdate": {
+    "label": "Ultimo aggiornamento",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Il documento è stato aggiornato l'ultima volta in questa data."
+  },
+  "tag": {
+    "logo": "Logo",
+    "marketing": "Marketing",
+    "avatar": "Avatar"
+  },
+
+  "document_type": {
+    "name": "Tipo di documento",
+    "label": "Tipo di documento",
+    "helper": "Il tipo di un documento facilita la ricerca.",
+    "all": {
+      "label": "Tutti i tipi"
+    },
+    "accounting": {
+      "label": "Contabilità",
+      "description": "Documenti rilevanti per la contabilità, ad es. bilancio, conto economico, chiusura annuale, giornale, panoramica dei conti, piano dei conti, ecc."
+    },
+    "marketing": {
+      "label": "Marketing",
+      "description": "Volantino, prospetto, presentazione, banner"
+    },
+    "doc": {
+      "label": "Documentazione",
+      "description": "Wiki, standard, report, verbale, memo, libro."
+    },
+    "hr": {
+      "label": "Personale",
+      "description": "Candidatura, descrizione della mansione, CV, autorizzazione, richiesta, licenziamento, richiamo, permesso."
+    },
+    "business": {
+      "label": "Commerciale",
+      "description": "Proposta, studio, FAQ, supporto, analisi, business case."
+    },
+    "finance": {
+      "label": "Finanziario",
+      "description": "Estratto conto, conto economico, bilancio, estratto bancario, ricevuta, budget, conto annuale, fattura."
+    },
+    "info": {
+      "label": "Informazione",
+      "description": "Rivista, articolo, link, testo, magazine."
+    },
+    "corr": {
+      "label": "Corrispondenza",
+      "description": "Lettera, comunicazione, avviso."
+    },
+    "instruction": {
+      "label": "Istruzione",
+      "description": "Guida, direttiva, ricettario, ricetta."
+    },
+    "other": {
+      "label": "Altro",
+      "description": "Altri documenti."
+    },
+    "legal": {
+      "label": "Legale",
+      "description": "Contratto, offerta, licenza, NDA, condizioni generali, legge, statuto, visto, brevetto, certificato, passaporto, documento d'identità."
+    },
+    "source": {
+      "label": "File sorgente",
+      "description": "Codice sorgente, dati, archivio."
+    },
+    "media": {
+      "label": "Media",
+      "description": "Video, audio, grafica, fumetti, visual, illustrazione, design, icona, font."
+    }
+  },
+  "document_source": {
+    "name": "Provenienza del documento",
+    "all": {
+      "label": "Tutte le fonti"
+    },
+    "local": {
+      "label": "Locale",
+      "description": "Il file fa parte dell'applicazione (asset)"
+    },
+    "storage": {
+      "label": "Storage",
+      "description": "Il file è salvato in Firebase Storage (URL relativo)."
+    },
+    "external": {
+      "label": "Esterno",
+      "description": "Il file è salvato al di fuori dell'applicazione (URL assoluto verso una condivisione file, ad es. Google Drive, Dropbox)."
+    }
+  }
+}

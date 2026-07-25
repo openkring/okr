@@ -1,0 +1,230 @@
+{
+  "pages": "Pagine web",
+  "sections": "Sezioni",
+  "empty": "Non è ancora stato creato alcun contenuto.",
+  "emptyPage": "Non ci sono ancora sezioni per questa pagina. Si prega di creare prima le sezioni.",
+  "emptyPageReadOnly": "Questa pagina è ancora vuota.",
+  "notexist": "La pagina richiesta non esiste.",
+  "help": "Si prega di verificare l'URL o di navigare tramite il menu.",
+
+  "name": {
+    "label": "Nome",
+    "placeholder": "sssss",
+    "helper": "Il nome della pagina web, liberamente selezionabile, serve semplicemente a ritrovare la pagina web."
+  },
+  "description": "Un sito web contiene un titolo e diverse sezioni. L'ordine delle sezioni può essere modificato.",
+  "title": {
+    "label": "Titolo",
+    "placeholder": "String",
+    "helper": "Il titolo è opzionale e viene mostrato al visitatore della pagina web."
+  },
+
+  "view": "Mostra la configurazione della pagina web",
+  "edit": "Modifica la pagina web",
+  "show": "Mostra la pagina web",
+  "create": "Crea nuova pagina",
+  "add": {
+    "label": "Aggiungi pagina web",
+    "placeholder": "Nome della pagina",
+    "section": "Aggiungi nuova sezione"
+  },
+  "delete": {
+    "label": "Elimina la pagina web",
+    "confirm": "La pagina web deve davvero essere eliminata ?"
+  },
+  "search": {
+    "article": "Cerca articolo"
+  },
+  "sort": {
+    "label": "Ordina sezioni",
+    "noSections": "Non ci sono sezioni da ordinare.",
+    "onlyOneSection": "C'è solo una sezione, l'ordinamento non è necessario."
+  },
+  "upload": {
+    "image": "Carica immagine/i",
+    "file": "Carica file"
+  },
+  "error": {
+    "save": "Impossibile salvare la pagina web. Si prega di riprovare.",
+    "load": "Impossibile caricare le pagine web. Si prega di riprovare.",
+    "delete": "Impossibile eliminare la pagina web. Si prega di riprovare."
+  },
+  "print": {
+    "generating": "Il PDF è in fase di creazione …",
+    "error": "Impossibile creare il PDF. Viene utilizzata la stampa del browser.",
+    "empty": "Questa pagina non contiene sezioni stampabili."
+  },
+
+  "type": {
+    "graph": {
+      "nomain": "Nessun menu principale trovato.",
+      "help": {
+        "title": "Mappa del sito – Guida",
+        "intro": "La mappa del sito fornisce una panoramica grafica della struttura dell'app sotto forma di struttura ad albero. Elenca tutti i menu, le pagine e le sezioni configurati e ne mostra le dipendenze. Dal menu principale, attraverso i sottomenu e le pagine, fino alle singole sezioni. Ogni nodo ha un tipo, indicato da colore ed etichetta.",
+        "types": {
+          "title": "Tipi di menu",
+          "main": {
+            "label": "Menu principale",
+            "content": "La radice della navigazione. Raggruppa le voci di menu di primo livello e si espande automaticamente all'apertura."
+          },
+          "sub": {
+            "label": "Sottomenu",
+            "content": "Una voce espandibile che raggruppa altre voci di menu (visualizzata come fisarmonica nel menu)."
+          },
+          "navigate": {
+            "label": "Naviga",
+            "content": "Conduce a una pagina interna dell'app. La pagina collegata viene mostrata nell'albero come nodo figlio."
+          },
+          "browse": {
+            "label": "Sfoglia",
+            "content": "Apre un indirizzo esterno (URL) in una nuova scheda."
+          },
+          "context": {
+            "label": "Menu contestuale",
+            "content": "Il menu in alto a destra della pagina con azioni aggiuntive che agiscono su tutti i dati visualizzati."
+          },
+          "call": {
+            "label": "Azione",
+            "content": "Attiva una funzione o un comando senza navigare (ad es. caricare un file)."
+          },
+          "divider": {
+            "label": "Separatore",
+            "content": "Una linea di separazione puramente visiva per strutturare il menu – senza funzione. Utilizzata anche come segnaposto per funzioni non ancora implementate."
+          },
+          "page": {
+            "label": "Pagina",
+            "content": "Una pagina CMS composta da un elenco ordinato di sezioni."
+          },
+          "section": {
+            "label": "Sezione",
+            "content": "Un singolo blocco di contenuto all'interno di una pagina (ad es. articolo, galleria, mappa, calendario)."
+          }
+        },
+        "usage": {
+          "title": "Come utilizzare la mappa del sito:",
+          "expand": "Fare clic sul simbolo della freccia per espandere o comprimere un nodo e visualizzare i suoi elementi subordinati.",
+          "label": "Per ogni nodo viene mostrato il testo di menu tradotto; sopra, in caratteri più piccoli, è riportato il nome tecnico della voce.",
+          "edit": "Passare il mouse su un nodo e fare clic sul simbolo della matita per modificare direttamente il menu, la pagina o la sezione associati.",
+          "export": "Tramite il menu in alto a destra è possibile esportare la struttura come tabella (raw) o come XML della mappa del sito.",
+          "roles": "Sono importanti anche i ruoli visualizzati. Determinano chi può vedere la rispettiva voce. È possibile modificare il ruolo facendo clic sul simbolo della matita."
+        }
+      }
+    },
+    "blog": {
+      "label": "Pagina blog",
+      "search": "Cerca ...",
+      "filter": {
+        "all": "Tutti"
+      }
+    }
+  },
+
+  "section": {
+    "add": "Aggiungi nuova sezione",
+    "edit": "Modifica sezione",
+    "send": "Invia articolo",
+    "remove": "Rimuovi sezione",
+    "label": "Sezione"
+  },
+  "welcome": {
+    "title": "Seeclub Stäfa",
+    "subTitle": "Canottaggio sul lago di Zurigo",
+    "abstract": "Questa è la home page. Fare clic sul menu in alto a sinistra e scegliere una funzione.",
+    "logoAltText": "Logo del Seeclub Stäfa",
+    "bannerAltText": "Immagine di sfondo con un rematore sul lago di Zurigo."
+  },
+  "notfound": {
+    "error": "Pagina non trovata",
+    "title": "404 Not Found",
+    "subTitle": "finito tra le canne ?",
+    "abstract": "La pagina HTML richiesta non è stata trovata. Riprovare con un altro URL, ovvero fare clic sul menu in alto a sinistra e scegliere una funzione.",
+    "logoAltText": "Logo del Seeclub Stäfa",
+    "bannerAltText": "Immagine di sfondo dalle canne con tramonto sul lago di Zurigo."
+  },
+  "unknownpagetype": {
+    "title": "404 Not Found",
+    "subTitle": "finito tra le canne ?",
+    "abstract": "È stata richiamata una pagina HTML con un tipo sconosciuto. Si prega di riprovare con un altro URL, ovvero fare clic sul menu in alto a sinistra e scegliere una funzione.",
+    "logoAltText": "Logo del Seeclub Stäfa",
+    "bannerAltText": "Immagine di sfondo dalle canne con tramonto sul lago di Zurigo."
+  },
+
+  "content_state": {
+    "label": "Stato",
+    "helper": "Lo stato aiuta i creatori di contenuti durante la creazione. Ad esempio, le nuove pagine possono essere mostrate solo a pochi utenti mentre sono in bozza o durante una revisione.",
+    "all": {
+      "label": "Tutti gli stati"
+    },
+    "draft": {
+      "label": "Bozza"
+    },
+    "inReview": {
+      "label": "Revisione"
+    },
+    "published": {
+      "label": "Pubblicato"
+    },
+    "decommitted": {
+      "label": "Obsoleto"
+    },
+    "archived": {
+      "label": "Archiviato"
+    }
+  },
+
+  "page_type": {
+    "all": {
+      "label": "Tutti i tipi"
+    },
+    "accordion": {
+      "label": "Fisarmonica",
+      "description": "Una fisarmonica (GUI) è un elemento dell'interfaccia utente grafica che espande e comprime aree di contenuto impilate facendo clic su un'intestazione. Serve a organizzare grandi quantità di informazioni, come nelle sezioni FAQ, in modo da risparmiare spazio, mostrando solo il contenuto rilevante mentre le altre aree rimangono compatte."
+    },
+    "album": {
+      "label": "Album",
+      "description": "Un album mostra una panoramica di un certo numero di foto."
+    },
+    "blog": {
+      "label": "Blog",
+      "description": "Un blog (forma abbreviata di weblog) è un diario o giornale online aggiornato regolarmente, di solito ordinato cronologicamente, su un sito web. Serve a condividere contenuti come testi, foto o video su argomenti specifici, spesso dal punto di vista soggettivo dell'autore (blogger). I blog consentono l'interazione tramite commenti."
+    },
+    "chat": {
+      "label": "Chat",
+      "description": "Panoramica della chat con finestre di chat per la comunicazione diretta o di gruppo"
+    },
+    "content": {
+      "label": "Content",
+      "description": "Una pagina di contenuto può contenere qualsiasi sezione. È la forma più generale di una pagina."
+    },
+    "dashboard": {
+      "label": "Dashboard",
+      "description": "La dashboard fornisce una panoramica personalizzata delle ultime novità, dei messaggi di chat senza risposta, delle attività aperte e dei prossimi appuntamenti."
+    },
+    "files": {
+      "label": "File",
+      "description": "Questa pagina mostra i file in modo grafico. Corrisponde a una forma semplice di visualizzazione del file system ed è composta da file e cartelle."
+    },
+    "graph": {
+      "label": "Mappa del sito",
+      "nomain": "Nessun menu principale trovato.",
+      "description": "La mappa del sito fornisce una panoramica grafica della struttura dell'app. Elenca tutti i menu, le pagine e le sezioni configurati e ne mostra le dipendenze.",
+      "description2": "Gli elementi di questo grafo possono essere selezionati e modificati."
+    },
+    "landing": {
+      "label": "Home page",
+      "description": "La pagina principale del sito web. Di solito è anche accessibile pubblicamente e spesso contiene una hero section."
+    },
+    "people": {
+      "label": "Persone",
+      "description": "Le persone qui elencate vengono visualizzate come avatar nella sezione."
+    },
+    "searchResults": {
+      "label": "Risultati della ricerca",
+      "description": "Un sito web composto da un campo di ricerca e dai risultati della ricerca in forma di elenco."
+    },
+    "shop": {
+      "label": "Shop",
+      "description": "Nello shop è possibile vendere prodotti. I componenti dello shop sono una panoramica con ricerca e viste dettagliate dei prodotti. Nel carrello (cart) i prodotti selezionati vengono riepilogati con i prezzi e abilitati per l'ordine con pagamento."
+    }
+  }
+}

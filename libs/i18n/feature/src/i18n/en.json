@@ -1,0 +1,47 @@
+{
+  "module": {
+    "label": "Module",
+    "prompt": "Module (e.g. chat/feature)"
+  },
+  "key": {
+    "label": "Key",
+    "prompt": "Key (e.g. fields.reconnecting)"
+  },
+  "isHtml": {
+    "label": "HTML content"
+  },
+  "create": {
+    "label": "Create translation",
+    "conf": "Translation created",
+    "error": "Translation could not be created."
+  },
+  "update": {
+    "label": "Edit translation",
+    "conf": "Translation saved",
+    "error": "Translation could not be saved."
+  },
+  "delete": {
+    "label": "Delete translation",
+    "conf": "Translation deleted",
+    "confirm": "Should this translation really be deleted?",
+    "error": "The translation could not be deleted."
+  },
+  "default": {
+    "title": "Translations",
+    "edit": {
+      "title": "Edit translation"
+    },
+    "list": {
+      "title": "All default translations"
+    }
+  },
+  "override": {
+    "title": "Overrides",
+    "edit": {
+      "title": "Edit override"
+    },
+    "list": {
+      "title": "All overrides"
+    }
+  }
+}

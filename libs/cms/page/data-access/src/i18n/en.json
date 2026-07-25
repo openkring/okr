@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Create a new web page",
+    "conf": "Web page has been created.",
+    "error": "Web page could not be created."
+  },
+  "update": {
+    "label": "Edit web page",
+    "conf": "Web page has been changed.",
+    "error": "Web page could not be changed."
+  },
+  "delete": {
+    "label": "Delete web page",
+    "conf": "Web page has been deleted.",
+    "error": "Web page could not be deleted.",
+    "askConfirmation": "Do you really want to delete this web page ?"
+  }
+}

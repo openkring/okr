@@ -1,0 +1,42 @@
+{
+  "calendar": {
+    "select": "Choisir le calendrier",
+    "empty": "Aucune entrée de calendrier trouvée."
+  },
+  "group": {
+    "select": "Choisir le groupe",
+    "empty": "Aucun groupe trouvé."
+  },
+  "org": {
+    "select": "Choisir l'organisation",
+    "empty": "Aucune organisation trouvée."
+  },
+  "person": {
+    "select": "Choisir la personne",
+    "empty": "Aucune personne trouvée.",
+    "custom_use": "utiliser comme invité",
+    "label": "Personne"
+  },
+  "resource": {
+    "select": "Choisir la ressource",
+    "empty": "Aucune ressource trouvée."
+  },
+  "responsibility": {
+    "select": "Choisir le responsable",
+    "empty": "Aucune responsabilité trouvée."
+  },
+  "location": {
+    "select": "Choisir le lieu",
+    "empty": "Aucun lieu trouvé.",
+    "custom_use": "utiliser comme destination ou itinéraire",
+    "segment": {
+      "list": "Liste",
+      "map": "Carte"
+    },
+    "map": {
+      "select": "Sélectionner",
+      "copy_w3w": "Copier what3words",
+      "copied": "Copié"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "folder": {
+    "plural": "Cartelle"
+  },
+  "operation": {
+    "create": { "label": "Creare cartella" },
+    "edit": { "label": "Modificare cartella" },
+    "view": { "label": "Mostrare cartella" }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Scegliere un'azione"
+    },
+    "edit": "Modificare cartella",
+    "delete": "Eliminare cartella"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Annullare",
+    "confirmation": "Salvare"
+  }
+}

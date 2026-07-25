@@ -1,0 +1,89 @@
+{
+  "list": {
+    "titleMy": "My expenses",
+    "titleAll": "All expenses",
+    "empty": "No expense reports found"
+  },
+  "new": {
+    "title": "Submit expense",
+    "cancel": "Cancel",
+    "save": "Save",
+    "receiptHint": "Please attach at least one receipt."
+  },
+  "detail": {
+    "title": "Outlay",
+    "close": "Close",
+    "amount": "Amount",
+    "iban": "IBAN",
+    "status": "Status",
+    "booking": "Booking reference",
+    "note": "Note",
+    "receipt": "Receipt"
+  },
+  "field": {
+    "abstract": "Subject",
+    "amount": "Total amount",
+    "currency": "Currency",
+    "transfer": {
+      "label": "Transfer",
+      "me": "to me",
+      "issuer": "to invoice issuer"
+    },
+    "iban": {
+      "label": "IBAN",
+      "on": "to IBAN",
+      "profileHint": "from my profile",
+      "change": "Use a different IBAN"
+    },
+    "category": "Category",
+    "costcenter": "Cost centre",
+    "note": "Internal note",
+    "belege": {
+      "label": "Receipts",
+      "pick": "Choose file",
+      "photo": "Take photo"
+    }
+  },
+  "submit": {
+    "iban": "Bank details are being saved…",
+    "upload": "Receipts are being uploaded…",
+    "saving": "Outlay is being saved…",
+    "done": "Saved — the treasurer will check the receipt.",
+    "error": "Error — operation was rolled back"
+  },
+  "status": {
+    "draft": "Draft",
+    "processing": "In progress",
+    "validated": "Validated",
+    "error": "Error",
+    "posted": "Posted",
+    "pendingExport": "Ready for export"
+  },
+  "validation": {
+    "abstractRequired": "Subject is required.",
+    "abstractMin": "Subject must be at least 3 characters long.",
+    "abstractMax": "Subject may be at most 200 characters long.",
+    "amountRequired": "Amount must be greater than 0.",
+    "amountMax": "Amount is too large.",
+    "ibanRequired": "IBAN is required.",
+    "currencyRequired": "Currency is required.",
+    "currencyInvalid": "Invalid currency."
+  },
+  "action": {
+    "title": "Select action",
+    "view": "View",
+    "delete": "Delete",
+    "redoOcr": "Run OCR again",
+    "openTask": "Open task",
+    "openBooking": "Open booking",
+    "cancel": "Cancel"
+  },
+  "redo": {
+    "conf": "OCR scan restarted.",
+    "error": "OCR could not be restarted."
+  },
+  "delete": {
+    "confirm": "Really delete this expense?",
+    "error": "Expense could not be deleted."
+  }
+}

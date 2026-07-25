@@ -1,0 +1,78 @@
+{
+  "instrument": "Strumento",
+  "instruments": "Strumenti",
+  "plural": "Strumenti",
+  "desc": "Strumenti visivi di strategia e decisione",
+  "empty": "Nessuno strumento disponibile al momento",
+  "type": {
+    "swot": "Analisi SWOT",
+    "pestel": "Analisi PESTEL",
+    "bmc": "Business Model Canvas",
+    "eisenhower": "Matrice di Eisenhower"
+  },
+  "create": {
+    "label": "Nuovo",
+    "conf": "Strumento creato",
+    "error": "Non è stato possibile creare lo strumento"
+  },
+  "update": {
+    "label": "Modificare",
+    "conf": "Strumento salvato",
+    "error": "Non è stato possibile salvare lo strumento"
+  },
+  "delete": {
+    "label": "Eliminare",
+    "confirm": "Eliminare davvero lo strumento?",
+    "conf": "Strumento eliminato",
+    "error": "Non è stato possibile eliminare lo strumento"
+  },
+  "view": { "label": "Vista" },
+  "done": "Fatto",
+  "board": {
+    "emptyCell": "Vuoto",
+    "addTopic": "Aggiungere scheda"
+  },
+  "name": {
+    "label": "Nome",
+    "placeholder": "Nome dello strumento",
+    "helper": "ad es. Strategia 2026"
+  },
+  "description": {
+    "label": "Descrizione",
+    "placeholder": "Descrizione facoltativa"
+  },
+  "topic": {
+    "label": { "label": "Titolo", "placeholder": "Titolo breve", "helper": "Di cosa si tratta?" },
+    "description": { "label": "Descrizione", "placeholder": "Nota facoltativa" },
+    "impact": { "label": "Rilevanza" },
+    "horizon": { "label": "Orizzonte temporale" },
+    "color": { "label": "Colore" }
+  },
+  "score": { "unset": "—", "low": "Basso", "medium": "Medio", "high": "Alto" },
+  "horizon": { "short": "Breve termine", "medium": "Medio termine", "long": "Lungo termine" },
+  "cell": {
+    "strengths": "Punti di forza",
+    "weaknesses": "Punti di debolezza",
+    "opportunities": "Opportunità",
+    "threats": "Minacce",
+    "do": "Fare subito",
+    "schedule": "Pianificare",
+    "delegate": "Delegare",
+    "delete": "Eliminare",
+    "political": "Politico",
+    "economic": "Economico",
+    "social": "Socioculturale",
+    "technological": "Tecnologico",
+    "environmental": "Ecologico",
+    "legal": "Legale",
+    "keyPartners": "Partner chiave",
+    "keyActivities": "Attività chiave",
+    "keyResources": "Risorse chiave",
+    "valuePropositions": "Proposte di valore",
+    "customerRelationships": "Relazioni con i clienti",
+    "channels": "Canali",
+    "customerSegments": "Segmenti di clientela",
+    "costStructure": "Struttura dei costi",
+    "revenueStreams": "Flussi di ricavi"
+  }
+}

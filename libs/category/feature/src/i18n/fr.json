@@ -1,0 +1,266 @@
+{
+  "category": "Catégorie",
+  "categories": "Catégories",
+  "description": "Une catégorie qui décrit un groupe d'objets.",
+  "empty": "Aucune catégorie trouvée.",
+
+  "all": {
+    "label": "Toutes",
+    "description": "Tous les éléments d'une catégorie"
+  },
+  "undefined": {
+    "label": "Non défini",
+    "description": "La catégorie n'a pas encore été attribuée ou n'est pas connue."
+  },
+  "archived": {
+    "label": "Archivées",
+    "description": "Les éléments archivés sont affichés."
+  },
+
+  "create": {
+    "label": "Créer une nouvelle catégorie",
+    "conf": "La catégorie a été enregistrée.",
+    "error": "La catégorie n'a pas pu être enregistrée."
+  },
+  "delete": {
+    "label": "Supprimer la catégorie",
+    "confirm": "Voulez-vous vraiment supprimer la catégorie ?",
+    "conf": "La catégorie a été supprimée.",
+    "error": "La catégorie n'a pas pu être supprimée."
+  },
+  "update": {
+    "label": "Modifier la catégorie",
+    "conf": "La catégorie a été enregistrée.",
+    "error": "La catégorie n'a pas pu être enregistrée"
+  },
+  "select": {
+    "label": "Choisir la catégorie"
+  },
+  "view": {
+    "label": "Afficher la catégorie"
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "L'okey est l'identifiant d'une catégorie"
+  },
+  "name": {
+    "label": "Nom",
+    "placeholder": "Nom",
+    "error": "Le nom est obligatoire et doit être composé de caractères alphanumériques.",
+    "helper": "Un nom peut être composé de plusieurs mots. Seules les lettres (y compris -) et les chiffres sont autorisés, aucun caractère spécial."
+  },
+  "i18n": {
+    "label": "Base I18n",
+    "placeholder": "e.g. @subject/org/feature",
+    "helper": "L'origine des traductions pour la désignation de la catégorie. Cette information est utilisée pour l'affichage de la désignation de la catégorie ainsi que des éléments (si traduits)."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes"
+  },
+  "items": {
+      "label": "Éléments",
+      "description": "Les différents éléments d'une catégorie. Chaque élément est affiché sur sa propre ligne.",
+      "empty": "Aucun élément n'est encore défini dans cette catégorie."
+  },
+
+  "priority": {
+    "label": "Priorité",
+    "helper": "La priorité d'une tâche, c'est-à-dire la rapidité avec laquelle elle doit être effectuée.",
+    "all": {
+      "label": "Toutes les priorités"
+    },
+    "low": {
+      "label": "Basse",
+      "description": "Priorité basse"
+    },
+    "medium": {
+      "label": "Normale",
+      "description": "Priorité normale"
+    },
+    "high": {
+      "label": "Haute",
+      "description": "Priorité haute"
+    }
+  },
+   "model_type": {
+      "name": "ModelType",
+      "all": {
+        "label": "Tous"
+      },
+      "account": {
+        "label": "Compte",
+        "description": "Un compte, par ex. en comptabilité.",
+        "placeholder": "Nom du compte"
+      },
+      "address": {
+        "label": "Adresse",
+        "description": "Attributs qui rendent un sujet joignable.",
+        "placeholder": "Désignation de l'adresse"
+      },
+      "avatar": {
+        "label": "Avatar",
+        "description": "Une image représentant une personne.",
+        "placeholder": "Nom de l'avatar"
+      },
+      "bill": {
+        "label": "Facture fournisseur",
+        "description": "Facture créditeur",
+        "placeholder": "Numéro de facture"
+      },
+      "comment": {
+        "label": "Commentaire",
+        "description": "Commentaire sur un objet.",
+        "placeholder": "Titre"
+      },
+      "competitionLevel": {
+        "label": "Catégories de compétition",
+        "description": "Catégories d'âge des compétiteurs.",
+        "placeholder": "Nom de la catégorie"
+      },
+      "document": {
+        "label": "Document",
+        "description": "Un document sous forme électronique.",
+        "placeholder": "Nom du document"
+      },
+      "expense": {
+        "label": "Frais",
+        "description": "Une dépense enregistrée en comptabilité.",
+        "placeholder": "Nom de la dépense"
+      },
+      "group": {
+        "label": "Groupe",
+        "description": "Un groupe de personnes ou d'organisations.",
+        "placeholder": "Nom du groupe"
+      },
+      "invoice": {
+        "label": "Facture",
+        "description": "Facture débiteur",
+        "placeholder": "Numéro de facture"
+      },
+      "invoicePosition": {
+        "label": "Poste de facture",
+        "description": "Une partie d'une facture.",
+        "placeholder": "Nom du poste de facture"
+      },
+      "location": {
+        "label": "Lieu",
+        "description": "Un point sur la Terre déterminable au moyen de coordonnées.",
+        "placeholder": "Nom du lieu"
+      },
+      "membership": {
+        "label": "Adhésion",
+        "description": "Adhésion d'une personne ou d'une organisation à une autre organisation.",
+        "placeholder": "Numéro de membre"
+      },
+      "menuitem": {
+        "label": "Menu",
+        "description": "Un élément dans un menu.",
+        "placeholder": "Nom de l'élément de menu"
+      },
+      "org": {
+        "label": "Organisation",
+        "description": "Une organisation, comme par ex. SA, association, Sàrl...",
+        "placeholder": "Nom de l'organisation"
+      },
+      "ownership": {
+        "label": "Utilisation",
+        "description": "Une personne ou une organisation est propriétaire d'une ressource.",
+        "placeholder": "Nom de l'utilisation"
+      },
+      "page": {
+        "label": "Page web",
+        "description": "Description du contenu d'une page web (= liste de sections).",
+        "placeholder": "Titre de la page web"
+      },
+      "person": {
+        "label": "Personne",
+        "description": "Un être humain.",
+        "placeholder": "Nom d'une personne"
+      },
+      "personalRel": {
+        "label": "Relation",
+        "description": "Une relation entre deux personnes.",
+        "placeholder": "Nom de la relation"
+      },
+      "reservation": {
+        "label": "Réservation",
+        "description": "Une réservation pour une ressource.",
+        "placeholder": "Nom de la réservation"
+      },
+      "resource": {
+        "label": "Ressource",
+        "description": "Quelque chose que l'on peut utiliser, réserver ou posséder (bateau, voiture, bien immobilier, clé, casier, etc.).",
+        "placeholder": "Nom ou ID de la ressource"
+      },
+      "responsibility": {
+        "label": "Responsabilité",
+        "description": "Une responsabilité d'une personne pour quelque chose.",
+        "placeholder": "ssss"
+      },
+      "section": {
+        "label": "Section",
+        "description": "Partie d'une page web (bande horizontale).",
+        "placeholder": "Nom de la section"
+      },
+      "transfer": {
+        "label": "Transfert",
+        "description": "Un transfert d'une ressource d'une personne à une autre personne.",
+        "placeholder": "Nom du transfert"
+      },
+      "trip": {
+        "label": "Trip",
+        "description": "Un voyage/une excursion/une sortie/un trajet/une randonnée avec un ou plusieurs lieux.",
+        "placeholder": "Nom du voyage"
+      },
+      "user": {
+        "label": "Utilisateur",
+        "description": "L'utilisateur authentifié de l'application.",
+        "placeholder": "user ID"
+      },
+      "workrel": {
+        "label": "Emploi",
+        "description": "Un rapport de travail entre une personne et une organisation.",
+        "placeholder": "Nom de la relation de travail"
+      },
+      "category": {
+        "label": "Catégorie",
+        "description": "Une catégorie qui décrit un groupe d'objets.",
+        "placeholder": "Nom de la catégorie"
+      },
+      "calevent": {
+        "label": "Événement",
+        "description": "Quelque chose qui a lieu à une date déterminée.",
+        "placeholder": "Nom court de l'événement"
+      },
+      "task": {
+        "label": "Tâche",
+        "description": "Une tâche / un todo à accomplir.",
+        "placeholder": "Brève description de la tâche"
+      },
+      "session": {
+        "label": "Sessions",
+        "description": "Une session est une interaction temporaire entre le navigateur de l'utilisateur et le serveur web. Elle dure de la connexion à la déconnexion (explicite ou implicite avec délai d'expiration).",
+        "placeholder": "Nom"
+
+      }
+    },
+
+   "importance": {
+      "label": "Importance",
+      "low": {
+        "label": "Sans importance",
+        "description": "Faible importance"
+      },
+      "medium": {
+        "label": "Normale",
+        "description": "Importance normale"
+      },
+      "high": {
+        "label": "Haute",
+        "description": "Importance élevée"
+      }
+    }
+}

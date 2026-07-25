@@ -1,0 +1,151 @@
+{
+  "trip": "Trip",
+  "trips": "Trips",
+  "desc": "Before heading out, record your planned trip here in the logbook. You state where you want to row, with which boat and with which rowers. For safety reasons this is important so that we can find you faster in case of an emergency. Other members can also see which boats are already reserved. After the trip, you complete your outing. Your outing is then automatically added to the boat statistics.",
+  "empty": "No trips were found.",
+
+  "create": {
+    "label": "Record new trip",
+    "conf": "The trip was saved.",
+    "error": "The trip could not be saved.",
+    "guest": "Add guest"
+  },
+  "delete": {
+    "label": "Delete trip",
+    "confirm": "Do you really want to delete this trip?",
+    "reason": "Reason for deletion",
+    "conf": "The trip was deleted.",
+    "error": "The trip could not be deleted."
+  },
+  "end": {
+    "label": "Complete trip"
+  },
+  "view": {
+    "label": "View trip"
+  },
+  "export": {
+    "raw": "Export raw data"
+  },
+  "report": {
+    "damage": {
+      "label": "Report damage",
+      "plain": "reports damage",
+      "trip": "reports damage on trip",
+      "prompt": "Describe the damage"
+    },
+    "bug": {
+      "label": "Report bug",
+      "plain": "reports bug",
+      "trip": "reports bug on trip",
+      "prompt": "Describe the bug"
+    }
+  },
+  "search": {
+    "label": "Search location"
+  },
+  "select": {
+    "participant": {
+      "title": "Select participant",
+      "add": "Select"
+    },
+    "boat": {
+      "title": "Select boat",
+      "add": "Select"
+    },
+    "location": {
+      "title": "Select destination",
+      "add": "Select"
+    }
+  },
+  "show": {
+    "images": "Show images",
+    "statistics": {
+      "boatkm": "Show boat statistics",
+      "personkm": "Show person statistics"
+    }
+  },
+  "stats": {
+    "boat_title": "Boat statistics",
+    "member_title": "Person statistics",
+    "view_list": "Table",
+    "view_graph": "Trend"
+  },
+  "update": {
+    "label": "Edit trip",
+    "conf": "The trip was saved.",
+    "error": "The trip could not be saved."
+  },
+
+  "list": {
+    "title": "Logbook"
+  },
+
+  "warning": {
+    "suspicious": "Suspicious activity detected. Please confirm.",
+    "distance_zero": "Please enter a reasonable distance between 1 and 50 km.",
+    "distance_high": "Please enter a reasonable distance between 1 and 50 km.",
+    "seats_mismatch": "The number of participants does not match the boat capacity.",
+    "note": "To prevent misuse, various checks run in the background. Should misuse be detected, a picture of the user is taken and the admin is notified."
+  },
+
+  "boat": "Boat",
+  "distance": {
+    "label": "Distance (km)",
+    "placeholder": "nn",
+    "helper": "The length of the outing in kilometers. When a predefined destination is entered, the distance is inserted automatically. It can then be adjusted manually."
+  },
+  "participants": "Participants",
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Text"
+  },
+  "date": "Date/time",
+  "location": {
+    "label": "Destination",
+    "custom": "Custom destination",
+    "view": {
+      "list": "List",
+      "map": "Map"
+    },
+    "search": "Search location",
+    "select": "Select location",
+    "empty": "No locations found",
+    "none_selected": "No location selected"
+  },
+
+  "trip_state": {
+    "label": "Status",
+    "helper": "Status of the outing",
+    "all": {
+      "label": "All statuses"
+    },
+    "draft": {
+      "label": "Draft"
+    },
+    "open": {
+      "label": "Open"
+    },
+    "closed": {
+      "label": "Completed"
+    },
+    "cancelled": {
+      "label": "Deleted"
+    },
+    "revised": {
+      "label": "Revised"
+    }
+  },
+
+  "aoc": {
+    "title": "Outings administration",
+    "trash": "Trash",
+    "notes": "Outings with notes",
+    "zero_km": "Outings with 0 km",
+    "flagged": "Flagged outings",
+    "restore": "Restore",
+    "clear_flag": "Remove flag",
+    "hard_delete_confirm": "Permanently delete outing? This cannot be undone.",
+    "restore_conf": "Outing restored.",
+    "restore_error": "Restore failed."
+  }
+}

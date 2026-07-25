@@ -1,0 +1,138 @@
+{
+  "task": "Attività",
+  "tasks": "Attività",
+  "desc": "Attività da svolgere.",
+  "empty": "Nessuna attività trovata.",
+  "empty-my": "Congratulazioni ! - Non hai attività in sospeso.",
+  "calendar": {
+    "name": {
+      "label": "Calendario",
+      "description": "L'evento viene registrato in questi calendari.",
+      "addLabel": "Aggiungi nome del calendario"
+    }
+  },
+  "taskQuickEntry": {
+    "label": "Inserimento rapido",
+    "placeholder": "Testo [@Person] [//Date]",
+    "helper": "Consente la creazione rapida di un'attività con descrizione, assegnazione e data di scadenza."
+  },
+
+  "create": {
+    "label": "Crea nuova attività",
+    "conf": "L'attività è stata creata.",
+    "error": "Impossibile creare l'attività."
+  },
+  "delete": {
+    "label": "Elimina attività",
+    "confirm": "Eliminare davvero questa attività ?",
+    "conf": "L'attività è stata eliminata.",
+    "error": "Impossibile eliminare l'attività."
+  },
+  "update": {
+    "label": "Modifica attività",
+    "conf": "L'attività è stata modificata.",
+    "error": "Impossibile modificare l'attività."
+  },
+  "view": {
+    "label": "Visualizza dettagli dell'attività"
+  },
+  "done": "Contrassegna l'attività come completata",
+
+  "list": {
+    "header": {
+      "name": "Nome",
+      "dueDate": "Scadenza",
+      "assignee": "Responsabile",
+      "state": "Stato"
+    }
+  },
+
+  "board": {
+    "emptyColumn": "Nessuna attività",
+    "noStates": "Nessuna categoria 'task_state' è definita. Senza stati non è possibile visualizzare alcuna bacheca."
+  },
+
+   "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "La chiave dell'attività nel database."
+  },
+  "name": {
+    "label": "Nome dell'attività",
+    "placeholder": "Nome a piacere",
+    "helper": "Un identificativo per l'attività, in modo che possa essere facilmente trovata in un elenco."
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Note"
+  },
+  "dueDate": {
+    "label": "Scade il",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "Un'attività deve essere completata entro questa data.",
+    "error": "Il formato della data non è corretto."
+  },
+  "completionDate": {
+    "label": "Completata il",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "L'attività è stata completata in questa data.",
+    "error": "Il formato della data non è corretto."
+  },
+  "task_state": {
+    "all": {
+      "label": "Tutti gli stati"
+    },
+    "label": "Stato",
+    "helper": "L'attività si trova in un determinato stato, ad es. iniziale, pianificata, in corso, completata.",
+    "initial": {
+      "label": "Iniziale",
+      "description": "L'attività è stata creata."
+    },
+    "planned": {
+      "label": "Pianificata",
+      "description": "L'attività è pianificata."
+    },
+    "doing": {
+      "label": "In corso",
+      "description": "L'attività è in fase di elaborazione."
+    },
+    "done": {
+      "label": "Completata",
+      "description": "L'attività è stata completata."
+    },
+    "waiting": {
+      "label": "In attesa",
+      "description": "L'attività è in attesa di un'azione."
+    },
+    "cancelled": {
+      "label": "Annullata",
+      "description": "L'attività è stata annullata."
+    },
+    "later": {
+      "label": "Più tardi",
+      "description": "L'attività sarà completata più tardi."
+    }
+  },
+  "priority": {
+    "label": "Priorità"
+  },
+  "importance": {
+    "label": "Importanza"
+  },
+  "assignee": {
+    "label": "Responsabile",
+    "description": "Persona responsabile del completamento dell'attività."
+  },
+  "author": {
+    "label": "Autore",
+    "description": "Persona che ha creato l'attività."
+  },
+  "scope": {
+    "label": "Contesto",
+    "description": "L'attività è normalmente visibile all'autore, alla persona responsabile e agli utenti privilegiati. Con il contesto, la visibilità può essere estesa a un gruppo."
+  },
+
+  "validations": {
+    "taskModelType": "Il ModelType deve essere TaskModel."
+  }
+}

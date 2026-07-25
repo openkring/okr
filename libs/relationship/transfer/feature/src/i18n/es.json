@@ -1,0 +1,129 @@
+{
+  "transfer": "Transferencia",
+  "transfers": "Transferencias",
+  "desc": "Una transferencia de un recurso de un sujeto (persona u organización) a un objeto (persona u organización).",
+  "empty": "No se encontraron transferencias.",
+  "reldesc": "transfiere a",
+  "revreldesc": "transferido de",
+
+
+  "add": {
+    "subject": {
+      "label": "Añadir persona u organización",
+      "conf": "El sujeto de la transferencia se ha añadido.",
+      "error": "El sujeto de la transferencia no se pudo añadir."
+    },
+    "object": {
+      "label": "Añadir persona u organización",
+      "conf": "El objeto de la transferencia se ha añadido.",
+      "error": "El objeto de la transferencia no se pudo añadir."
+    }
+  },
+  "create": {
+    "label": "Añadir transferencia",
+    "conf": "La transferencia se ha creado.",
+    "error": "La transferencia no se pudo crear."
+  },
+  "delete": {
+    "label": "Eliminar transferencia",
+    "conf": "La transferencia se ha eliminado.",
+    "error": "La transferencia no se pudo eliminar."
+  },
+  "select": {
+    "resource": "Seleccionar recurso"
+  },
+  "update": {
+    "label": "Modificar transferencia",
+    "conf": "La transferencia se ha modificado.",
+    "error": "La transferencia no se pudo modificar."
+  },
+  "view": {
+    "label": "Mostrar detalles de la transferencia"
+  },
+
+  "list": {
+    "title": "Transferencias",
+    "header": {
+      "type": "Tipo",
+      "resource": "Recurso",
+      "subject": "de",
+      "object": "a",
+      "date": "Fecha",
+      "name": "Ocasión",
+      "state": "Estado"
+    }
+  },
+
+  "subject": "De",
+  "object": "A",
+  "date": "Fecha",
+  "resource": "Objeto",
+  "name": "Ocasión",
+  "state": "Estado",
+  "type": "Tipo de transferencia",
+
+
+  "transfer_type": {
+    "all": {
+      "label": "Todos"
+    },
+    "purchase": {
+      "label": "Compra",
+      "description": "Transferencia mediante compra"
+    },
+    "gift": {
+      "label": "Regalo",
+      "description": "Transferencia mediante regalo"
+    },
+    "inheritance": {
+      "label": "Herencia",
+      "description": "Transferencia mediante herencia"
+    },
+    "withdrawal": {
+      "label": "Retiro",
+      "description": "Transferencia mediante retiro"
+    },
+    "deposit": {
+      "label": "Depósito",
+      "description": "Transferencia mediante depósito"
+    },
+    "loan": {
+      "label": "Préstamo",
+      "description": "Transferencia mediante préstamo"
+    },
+    "custom": {
+      "label": "Otro",
+      "description": "Transferencia por otros motivos"
+    },
+    "booking": {
+      "label": "Asiento",
+      "description": "Transferencia mediante asiento"
+    }
+  },
+
+  "transfer_state": {
+    "all": {
+      "label": "Todos los estados"
+    },
+    "initial": {
+      "label": "Inicial",
+      "description": "Idea o plan de transferencia."
+    },
+    "draft": {
+      "label": "Borrador",
+      "description": "La transferencia se está creando actualmente (p. ej. discusión de oferta o contrato)."
+    },
+    "active": {
+      "label": "Activo",
+      "description": "La transferencia está activa y es válida."
+    },
+    "terminated": {
+      "label": "Completada",
+      "description": "La transferencia está completada."
+    },
+    "cancelled": {
+      "label": "Cancelada",
+      "description": "La transferencia fue cancelada."
+    }
+  }
+}

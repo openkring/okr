@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Nuova organizzazione",
+    "error": "Non è stato possibile salvare la nuova organizzazione.",
+    "conf": "La nuova organizzazione è stata salvata."
+  },
+  "delete": {
+    "label": "Eliminare organizzazione",
+    "confirm": "Eliminare davvero l'organizzazione ?",
+    "conf": "L'organizzazione è stata eliminata.",
+    "error": "Non è stato possibile eliminare l'organizzazione."
+  },
+  "update": {
+    "label": "Modificare organizzazione",
+    "error": "Non è stato possibile salvare le modifiche",
+    "conf": "Le modifiche sono state salvate."
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "trip": "Salida",
+  "trips": "Salidas",
+  "desc": "Antes de la salida, registre aquí en el cuaderno de bitácora su salida prevista. Con ello indica hacia dónde desea remar, con qué embarcación y con qué remeros. Por motivos de seguridad, esto es importante para que podamos encontrarle más rápido en caso de una posible emergencia. Además, otros miembros pueden ver qué embarcaciones ya están reservadas. Después de la salida, cierre su salida. Su salida se registra entonces automáticamente en las estadísticas de las embarcaciones.",
+  "empty": "No se han encontrado salidas.",
+
+  "create": {
+    "label": "Registrar nueva salida",
+    "conf": "La salida se ha guardado.",
+    "error": "No se ha podido guardar la salida.",
+    "guest": "Añadir invitado"
+  },
+  "delete": {
+    "label": "Eliminar salida",
+    "confirm": "¿Desea realmente eliminar esta salida?",
+    "reason": "Motivo de la eliminación",
+    "conf": "La salida se ha eliminado.",
+    "error": "No se ha podido eliminar la salida."
+  },
+  "end": {
+    "label": "Cerrar salida"
+  },
+  "view": {
+    "label": "Ver salida"
+  },
+  "export": {
+    "raw": "Exportar datos en bruto"
+  },
+  "report": {
+    "damage": {
+      "label": "Notificar daño",
+      "plain": "notifica un daño",
+      "trip": "notifica un daño en una salida",
+      "prompt": "Describa el daño"
+    },
+    "bug": {
+      "label": "Notificar error",
+      "plain": "notifica un error",
+      "trip": "notifica un error en una salida",
+      "prompt": "Describa el error"
+    }
+  },
+  "search": {
+    "label": "Buscar lugar"
+  },
+  "select": {
+    "participant": {
+      "title": "Elegir participante",
+      "add": "Seleccionar"
+    },
+    "boat": {
+      "title": "Elegir embarcación",
+      "add": "Seleccionar"
+    },
+    "location": {
+      "title": "Elegir destino",
+      "add": "Seleccionar"
+    }
+  },
+  "show": {
+    "images": "Mostrar imágenes",
+    "statistics": {
+      "boatkm": "Mostrar estadísticas de embarcaciones",
+      "personkm": "Mostrar estadísticas de personas"
+    }
+  },
+  "stats": {
+    "boat_title": "Estadísticas de embarcaciones",
+    "member_title": "Estadísticas de personas",
+    "view_list": "Tabla",
+    "view_graph": "Evolución"
+  },
+  "update": {
+    "label": "Editar salida",
+    "conf": "La salida se ha guardado.",
+    "error": "No se ha podido guardar la salida."
+  },
+
+  "list": {
+    "title": "Cuaderno de bitácora"
+  },
+
+  "warning": {
+    "suspicious": "Se ha detectado actividad sospechosa. Confirme por favor.",
+    "distance_zero": "Introduzca una distancia razonable entre 1 y 50 km.",
+    "distance_high": "Introduzca una distancia razonable entre 1 y 50 km.",
+    "seats_mismatch": "El número de participantes no coincide con la capacidad de la embarcación.",
+    "note": "Para evitar abusos, se realizan varias comprobaciones en segundo plano. Si se detecta un abuso, se toma una imagen del usuario y se notifica al administrador."
+  },
+
+  "boat": "Embarcación",
+  "distance": {
+    "label": "Distancia (km)",
+    "placeholder": "nn",
+    "helper": "La longitud de la salida en kilómetros. Al introducir un destino predefinido, la distancia se inserta automáticamente. Después se puede ajustar manualmente."
+  },
+  "participants": "Participantes",
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Texto"
+  },
+  "date": "Fecha/hora",
+  "location": {
+    "label": "Destino",
+    "custom": "Destino propio",
+    "view": {
+      "list": "Lista",
+      "map": "Mapa"
+    },
+    "search": "Buscar lugar",
+    "select": "Seleccionar lugar",
+    "empty": "No se han encontrado lugares",
+    "none_selected": "Ningún lugar seleccionado"
+  },
+
+  "trip_state": {
+    "label": "Estado",
+    "helper": "Estado de la salida",
+    "all": {
+      "label": "Todos los estados"
+    },
+    "draft": {
+      "label": "Borrador"
+    },
+    "open": {
+      "label": "Abierta"
+    },
+    "closed": {
+      "label": "Cerrada"
+    },
+    "cancelled": {
+      "label": "Eliminada"
+    },
+    "revised": {
+      "label": "Revisada"
+    }
+  },
+
+  "aoc": {
+    "title": "Administración de salidas",
+    "trash": "Papelera",
+    "notes": "Salidas con notas",
+    "zero_km": "Salidas con 0 km",
+    "flagged": "Salidas marcadas",
+    "restore": "Restaurar",
+    "clear_flag": "Quitar marca",
+    "hard_delete_confirm": "¿Eliminar la salida definitivamente? Esta acción no se puede deshacer.",
+    "restore_conf": "Salida restaurada.",
+    "restore_error": "La restauración ha fallado."
+  }
+}

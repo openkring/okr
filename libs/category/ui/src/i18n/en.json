@@ -1,0 +1,45 @@
+{
+  "okey": {
+    "label": "Doc. key",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Enter name",
+    "helper": ""
+  },
+  "i18nBase": {
+    "label": "i18n base",
+    "placeholder": "",
+    "helper": "Base key for translations"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": ""
+  },
+  "translateItems": {
+    "label": "Translate entries",
+    "helper": ""
+  },
+
+  "priority": {
+    "label": "Priority",
+    "helper": "The priority of a task, i.e. how quickly it must be done.",
+    "all": {
+      "label": "All priorities"
+    },
+    "low": {
+      "label": "Low",
+      "description": "Low priority"
+    },
+    "medium": {
+      "label": "Normal",
+      "description": "Normal priority"
+    },
+    "high": {
+      "label": "High",
+      "description": "High priority"
+    }
+  }
+}

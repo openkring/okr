@@ -1,0 +1,100 @@
+{
+  "singular": "Supplier invoice",
+  "plural": "Supplier invoices",
+  "empty": "No invoices found",
+
+  "list": {
+    "title": "Accounts payable invoices"
+  },
+
+  "id": {
+    "label": "Invoice no.",
+    "placeholder": "nnnnn",
+    "helper": "The supplier's invoice number."
+  },
+  "title": {
+    "label": "Subject",
+    "placeholder": "Text",
+    "helper": "A short description of what it is about."
+  },
+  "date": {
+    "bill": {
+      "label": "Invoice date",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The date on which the invoice was issued."
+    },
+    "due": {
+      "label": "payable by",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The date by which the invoice must be paid."
+    },
+    "payment": {
+      "label": "Payment date",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The date on which the invoice was paid."
+    }
+  },
+  "amount": {
+    "label": "Invoice amount",
+    "placeholder": "nn.nn",
+    "helper": "The invoice amount."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Free notes on the invoice"
+  },
+  "state": {
+    "label": "Status"
+  },
+
+  "download": {
+    "label": "Download invoice"
+  },
+  "view": {
+    "label": "Show invoice"
+  },
+  "scan": {
+    "label": "Scan invoice"
+  },
+  "create": {
+    "label": "Add invoice"
+  },
+  "update": {
+    "label": "Edit invoice"
+  },
+  "delete": {
+    "label": "Delete invoice",
+    "confirm": "Do you really want to delete the invoice ?"
+  },
+
+  "readonly": {
+    "banner": "This list is read-only. The accounts payable are managed in Bexio."
+  },
+
+  "bill_state": {
+    "name": "Invoice status",
+    "all": {
+      "label": "All statuses"
+    },
+    "draft": {
+      "label": "Draft",
+      "description": "The invoice is a draft and has not yet been sent."
+    },
+    "pending": {
+      "label": "Open",
+      "description": "The invoice has been sent and is not yet paid."
+    },
+    "paid": {
+      "label": "Paid",
+      "description": "The invoice has been paid."
+    },
+    "overdue": {
+      "label": "Overdue",
+      "description": "The payment deadline has passed, the invoice is overdue."
+    },
+    "cancelled": {
+      "label": "Cancelled",
+      "description": "The invoice has been cancelled."
+    }
+  }
+}

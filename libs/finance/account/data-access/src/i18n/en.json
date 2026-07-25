@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Add account",
+    "error": "The account could not be created.",
+    "conf": "The account was created."
+  },
+  "update": {
+    "label": "Edit account",
+    "error": "The changes could not be saved",
+    "conf": "The changes were saved."
+  },
+  "delete": {
+    "label": "Delete account",
+    "error": "The account could not be deleted",
+    "conf": "The account was deleted"
+  }
+}

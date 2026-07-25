@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Crea categoria",
+    "error": "Non è stato possibile creare la categoria",
+    "conf": "La categoria è stata creata."
+  },
+  "update": {
+    "label": "Modifica categoria",
+    "error": "Non è stato possibile modificare la categoria",
+    "conf": "La categoria è stata modificata."
+  },
+  "delete": {
+    "label": "Elimina categoria",
+    "error": "Non è stato possibile eliminare la categoria",
+    "conf": "La categoria è stata eliminata."
+  }
+}

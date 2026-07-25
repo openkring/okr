@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Add user",
+    "error": "The user could not be created.",
+    "conf": "The user was created."
+  },
+  "update": {
+    "label": "Edit user",
+    "error": "The changes could not be saved",
+    "conf": "The changes were saved."
+  },
+  "delete": {
+    "label": "Delete user",
+    "error": "The user could not be deleted",
+    "conf": "The user was deleted"
+  }
+}

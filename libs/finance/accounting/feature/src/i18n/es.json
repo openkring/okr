@@ -1,0 +1,6 @@
+{
+    "readonly": {
+        "title": "Atención",
+        "msg": "Esta contabilidad es de solo lectura. Los asientos se realizan en Bexio."
+    }
+}

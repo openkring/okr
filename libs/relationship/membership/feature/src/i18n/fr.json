@@ -1,0 +1,507 @@
+{
+  "singular": "Adhésion",
+  "memberships": "Adhésions",
+  "description": "Décrit les adhésions d'une personne.",
+  "members": "Membres",
+  "adminMarker": "(Admin)",
+  "reldesc1": "Adhésion de",
+  "reldesc2": "à",
+  "newDesc": "doit devenir membre de",
+  "changeDesc": "La catégorie de membre doit être modifiée :",
+  "titleRel": "à",
+  "year": {
+    "entry": "Année d'entrée",
+    "exit": "Année de sortie"
+  },
+  "empty": "Aucune adhésion n'a encore été enregistrée.",
+  "noData": {
+    "members": "L'organisation n'a aucun membre.",
+    "memberships": "Il n'y a aucune adhésion."
+  },
+  "view": {
+    "label": "Afficher l'adhésion"
+  },
+  "update": {
+    "label": "Modifier l'adhésion",
+    "category": "Modifier la catégorie de membre",
+    "chooseNew": "Choisir une nouvelle catégorie"
+  },
+  "chat": {
+    "open": "Ouvrir le chat direct"
+  },
+  "copy": {
+    "email": {
+      "label": "Copier l'e-mail",
+      "conf": "L'adresse e-mail a été copiée."
+    },
+    "phone": {
+      "label": "Copier le numéro de téléphone",
+      "conf": "Le numéro de téléphone a été copié."
+    }
+  },
+  "create": {
+    "member": "Ajouter un membre",
+    "alreadyMember": "Ce membre existe déjà.",
+    "label": "Ajouter une adhésion",
+    "error": "L'adhésion n'a pas pu être créée.",
+    "conf": "L'adhésion a été créée."
+  },
+  "end": {
+    "label": "Mettre fin à l'adhésion",
+    "select": "Choisir la date de sortie",
+    "confirm": "Voulez-vous vraiment mettre fin à l'adhésion ?",
+    "conf": "L'adhésion a pris fin.",
+    "error": "L'adhésion n'a pas pu prendre fin.",
+    "comment": "Adhésion terminée",
+    "intro": "<p>La date de sortie est le dernier jour de l'adhésion. À partir du lendemain, la personne n'est plus membre.<br /> Il s'agit généralement du 31.12. de l'année en cours.</p>"
+  },
+  "delete": {
+    "label": "Supprimer l'adhésion",
+    "group": "Cette adhésion de groupe doit-elle vraiment être supprimée ?",
+    "confirm": "Normalement, une adhésion doit être terminée, mais pas supprimée. La suppression n'est prévue que pour corriger des saisies erronées. Voulez-vous vraiment supprimer l'adhésion ?"
+  },
+  "download": {
+    "vcard": "Télécharger l'adresse (vCard)"
+  },
+  "send": {
+    "email": "Envoyer un e-mail"
+  },
+  "call": {
+    "phone": "Appeler"
+  },
+  "select": {
+    "label": "Sélectionner",
+    "title": "Choisir le type de liste pour l'export",
+    "default": "Données brutes",
+    "srv": "Liste SRV",
+    "address": "Liste d'adresses"
+  },
+  "category": {
+    "label": {
+      "label": "Catégorie",
+      "old": "Catégorie actuelle",
+      "new": "Nouvelle catégorie"
+    },
+    "abbreviation": "Cat.",
+    "helper": "La catégorie de membre est fixe ici. Pour la modifier, choisir l'action Changement de catégorie dans l'affichage de la liste.",
+    "name": "Nom de la catégorie",
+    "change": {
+      "label": "Modifier la catégorie de membre",
+      "helper": "À gauche s'affiche la catégorie de membre actuelle. Sélectionner à droite la nouvelle catégorie vers laquelle le membre doit passer.",
+      "helperDate": "La date à partir de laquelle la nouvelle catégorie doit s'appliquer. L'adhésion actuelle prend fin un jour plus tôt. Par défaut, la date du jour est proposée."
+    }
+  },
+  "invoice": {
+    "create": {
+      "label": "Créer une facture",
+      "conf": "La facture a été créée."
+    },
+    "update": "Modifier la facture",
+    "upload": "Téléverser la facture",
+    "download": "Télécharger la facture",
+    "paid": "Marquer comme payée",
+    "delete": "Supprimer la facture",
+    "state": "Statut de la facture"
+  },
+  "member": {
+    "update": "Modifier le membre",
+    "state": {
+      "label": "Statut du membre",
+      "helper": "Le statut actuel de cette adhésion."
+    }
+  },
+  "scsMemberFee": {
+    "archive": {
+      "confirm": "L'exécution de la facturation est clôturée et toutes les factures sont mises à l'état archivé.",
+      "conf": "Toutes les factures ont été archivées. Vous êtes prêt pour une nouvelle génération de factures."
+    },
+    "delete": {
+      "label": "Supprimer la facture",
+      "confirm": "La facture doit-elle vraiment être supprimée ?",
+      "error": "La facture n'a pas pu être supprimée",
+      "conf": "La facture a été supprimée"
+    },
+    "generate": {
+      "confirm": "ATTENTION : toutes les factures seront régénérées. Les modifications locales seront écrasées. Normalement, cette opération est exécutée une fois au démarrage d'une exécution de facturation. L'opération doit-elle être exécutée ?",
+      "conf": "Les données de facturation ont été générées."
+    },
+    "update": {
+      "label": "Modifier la facture",
+      "conf": "Les modifications ont été enregistrées."
+    },
+    "download": {
+      "enterInvoiceId": "Saisir l'ID de la facture :"
+    },
+    "upload": {
+      "label": "Contrôle de la facture",
+      "conf": "La facture a été téléversée vers Bexio.",
+      "noBexioId": "La facture ne peut pas être téléversée car l'ID Bexio est manquant."
+    },
+    "totals": {
+      "label": "Aperçu des frais"
+    },
+    "export": {
+      "title": "Factures de cotisation annuelle"
+    },
+    "list": {
+      "title": "Cotisations des membres",
+      "empty": "Aucune entrée trouvée"
+    },
+    "jb": {
+      "label": "Cotisation annuelle",
+      "placeholder": "nnn",
+      "helper": "La cotisation annuelle à votre propre organisation."
+    },
+    "jbp": {
+      "label": "Cotisation de la fédération",
+      "placeholder": "nnn",
+      "helper": "La cotisation annuelle à l'organisation faîtière."
+    },
+    "bev": {
+      "label": "Boissons 2025",
+      "placeholder": "nnn",
+      "helper": "Consommations de l'année écoulée"
+    },
+    "entryFee": {
+      "label": "Frais d'entrée uniques",
+      "placeholder": "nnn",
+      "helper": "Frais d'entrée uniques"
+    },
+    "locker": {
+      "label": "Location de casier de vestiaire",
+      "placeholder": "nn",
+      "helper": "Location annuelle d'un casier de vestiaire."
+    },
+    "skiff": {
+      "label": "Location d'emplacement pour skiff",
+      "placeholder": "nnn",
+      "helper": "Location annuelle d'un emplacement de stockage."
+    },
+    "skiffInsurance": {
+      "label": "Part d'assurance skiff",
+      "placeholder": "nn",
+      "helper": "Facturation proportionnelle des coûts d'assurance."
+    },
+    "rebate": {
+      "label": "Remise",
+      "placeholder": "nnn",
+      "helper": "Remise de formation ou de famille."
+    },
+    "total": "Total"
+  },
+  "list": {
+    "header": {
+      "name": "Nom",
+      "entry": "Entrée",
+      "entryExit": "Entrée/sortie",
+      "category": "Cat.",
+      "dateOfDeath": "Date de décès",
+      "exit": "Sortie",
+      "titleRel": "à"
+    },
+    "memberships": {
+      "title": "Adhésions (personnes et organisations)"
+    },
+    "persons": {
+      "title": "Membres"
+    },
+    "orgs": {
+      "title": "Organisations membres"
+    },
+    "applied": {
+      "title": "Inscriptions"
+    },
+    "active": {
+      "title": "Actifs"
+    },
+    "passive": {
+      "title": "Passifs"
+    },
+    "cancelled": {
+      "title": "Alumni"
+    },
+    "deceased": {
+      "title": "Défunts"
+    },
+    "entries": {
+      "title": "Entrées",
+      "yearLabel": "Année d'entrée"
+    },
+    "exits": {
+      "title": "Sorties",
+      "yearLabel": "Année de sortie"
+    }
+  },
+  "memberId": {
+    "label": "ID de membre",
+    "placeholder": "nnnnn",
+    "error": "Un nombre entier composé uniquement de chiffres doit être saisi.",
+    "helper": "Le numéro d'identification unique du membre dans cette organisation."
+  },
+  "person": {
+    "details": "Informations sur la personne",
+    "address": "Adresses",
+    "misc": "Divers",
+    "membership": "Adhésion (facultatif)",
+    "update": {
+      "label": "Modifier la personne"
+    },
+    "view": {
+      "label": "Afficher les détails de la personne"
+    }
+  },
+  "firstname": {
+    "label": "Prénom",
+    "placeholder": "ssssssss",
+    "helper": "Tous les prénoms de la personne."
+  },
+  "lastname": {
+    "label": "Nom",
+    "placeholder": "ssssssss",
+    "helper": "Nom de famille de la personne."
+  },
+  "ssnId": {
+    "label": "Numéro AHV",
+    "placeholder": "756.xxxx.xxxx.xc",
+    "helper": "Le numéro AHV est une saisie facultative. Il est utilisé par exemple pour le personnel de nettoyage pour les déclarations AHV ou les assurances, ou exigé par les fédérations comme preuve d'âge.",
+    "error": "Le numéro AHV se compose de 13 chiffres au format suivant 756.xxxx.xxxx.xc."
+  },
+  "bexioId": {
+    "label": "Bexio ID",
+    "placeholder": "nnnnnn",
+    "helper": "L'ID du même contact dans Bexio pour synchroniser les données.",
+    "error": "Bexio ID est un nombre à six chiffres."
+  },
+  "abbreviation": {
+    "label": "Abréviation",
+    "placeholder": "ss",
+    "helper": "Abréviation du nom, p. ex. pour les listes, les procès-verbaux."
+  },
+  "nickName": {
+    "label": "Surnom",
+    "placeholder": "ssssssss",
+    "helper": "Le surnom n'est utilisé que dans l'index de recherche et n'est sinon pas visible."
+  },
+  "orgFunction": {
+    "label": "Fonction",
+    "placeholder": "Fonction dans l'organisation",
+    "helper": "Le titre de fonction d'une personne dans une organisation."
+  },
+  "rebate": {
+    "label": "Remise",
+    "placeholder": "n.nn",
+    "helper": "Une remise (montant absolu en CHF) peut être indiquée ici, qui sera prise en compte lors de la facturation.",
+    "reason": "Motif de la remise"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "text",
+    "helper": "toutes notes sur cette adhésion qui doivent être conservées de manière permanente"
+  },
+  "email": {
+    "label": "E-mail",
+    "placeholder": "john@doe.com"
+  },
+  "phone": {
+    "label": "Tél.",
+    "placeholder": "+41 79 123 1234"
+  },
+  "streetname": {
+    "label": "Rue",
+    "placeholder": "Nom de rue sans n°",
+    "error": "Seules les lettres (y compris -) et les chiffres sont autorisés, aucun caractère spécial.",
+    "helper": "Nom de rue sans le numéro de maison."
+  },
+  "streetnumber": {
+    "label": "N°",
+    "placeholder": "Numéro de maison dans la rue",
+    "error": "Seules les lettres (y compris -) et les chiffres sont autorisés, aucun caractère spécial.",
+    "helper": "Uniquement le numéro de maison (sans indication de rue)."
+  },
+  "countrycode": {
+    "label": "Pays",
+    "placeholder": "CH",
+    "error": "Un code de pays à 2 lettres doit être saisi, p. ex. CH pour la Suisse.",
+    "helper": "Le code de pays à 2 lettres selon ISO 3166-1 alpha 2, voir https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes"
+  },
+  "zipcode": {
+    "label": "NPA",
+    "placeholder": "NPA",
+    "error": "Un code postal à quatre chiffres doit être saisi.",
+    "helper": "Code postal"
+  },
+  "city": {
+    "label": "Localité",
+    "placeholder": "Nom de la localité",
+    "error": "Seules les lettres sans caractères spéciaux ni chiffres sont autorisées.",
+    "helper": "Une indication de lieu, p. ex. le nom de la ville ou de la commune."
+  },
+  "web": {
+    "label": "Site web",
+    "placeholder": "https://www.domain.ch",
+    "helper": "Le site web de l'organisation.",
+    "error": "Le site web doit être indiqué au format suivant : https://www.domain.ch."
+  },
+  "dateOfEntry": {
+    "label": "Date d'entrée",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "L'adhésion commence à cette date."
+  },
+  "dateOfExit": {
+    "label": "Date de sortie",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "L'adhésion se termine à cette date."
+  },
+  "dateOfChange": {
+    "label": "Date de modification",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "Le début de l'adhésion modifiée."
+  },
+  "dateOfBirth": {
+    "label": "Date de naissance",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "La personne est née à cette date."
+  },
+  "dateOfDeath": {
+    "label": "Date de décès",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "La personne est décédée à cette date."
+  },
+  "mcat_scs": {
+    "label": "Catégorie de membre",
+    "labelOld": "Catégorie actuelle",
+    "labelNew": "Nouvelle catégorie",
+    "helper": "Catégorie de membre",
+    "all": {
+      "label": "Toutes les catégories"
+    },
+    "active": {
+      "label": "Actif 1",
+      "description": "Membre actif 1"
+    },
+    "active2": {
+      "label": "Actif 2",
+      "description": "L'adhésion actif 2 date encore d'époques antérieures."
+    },
+    "active3": {
+      "label": "Actif 3",
+      "description": "L'adhésion actif 3 date encore d'époques antérieures"
+    },
+    "junior": {
+      "label": "Junior",
+      "description": "Junior jusqu'à 18 ans maximum."
+    },
+    "free": {
+      "label": "Membres libres",
+      "description": "L'adhésion libre date encore d'époques antérieures."
+    },
+    "honorary": {
+      "label": "Membres d'honneur",
+      "description": "Membres d'honneur élus par l'assemblée générale."
+    },
+    "candidate": {
+      "label": "Candidats",
+      "description": "Nouveaux membres en formation."
+    },
+    "passive": {
+      "label": "Passif",
+      "description": "Membre passif"
+    }
+  },
+  "mcat_srv": {
+    "label": "Catégorie de membre",
+    "helper": "Catégorie de membre",
+    "all": {
+      "label": "Toutes les catégories"
+    },
+    "active": {
+      "label": "Actif",
+      "description": "La personne est un membre actif."
+    },
+    "junior": {
+      "label": "Junior",
+      "description": "Junior jusqu'à 18 ans maximum."
+    },
+    "double": {
+      "label": "Double",
+      "description": "Membre double, inscrit via un autre club."
+    },
+    "honorary": {
+      "label": "Membres d'honneur",
+      "description": "Membres d'honneur au SRV"
+    },
+    "passive": {
+      "label": "Passif",
+      "description": "Membre passif"
+    }
+  },
+  "mcat_default": {
+    "label": "Catégorie de membre",
+    "helper": "Catégorie de membre",
+    "all": {
+      "label": "Toutes les catégories"
+    },
+    "active": {
+      "label": "Actif",
+      "description": "La personne est un membre actif."
+    },
+    "passive": {
+      "label": "Passif",
+      "description": "Membre passif"
+    },
+    "junior": {
+      "label": "Jeunes",
+      "description": "Junior jusqu'à 18 ans maximum."
+    },
+    "mcat_p13": {
+      "all": {
+        "label": "Tous",
+        "description": "Tous les membres P13"
+      },
+      "active": {
+        "label": "Actif",
+        "description": "La personne souhaite participer aux événements."
+      },
+      "passive": {
+        "label": "Passif",
+        "description": "La personne ne souhaite plus participer aux événements."
+      }
+    },
+    "mcat_test": {
+      "all": {
+        "label": "Toutes les catégories"
+      },
+      "active": {
+        "label": "Actif",
+        "description": "La personne est un membre actif."
+      },
+      "junior": {
+        "label": "Junior",
+        "description": "Junior jusqu'à 18 ans maximum."
+      },
+      "passive": {
+        "label": "Passif",
+        "description": "Membre passif"
+      }
+    },
+    "state": {
+      "helper": "Le statut du membre ne peut pas être modifié. Il est dérivé automatiquement de la catégorie de membre. Le statut peut être défini par catégorie dans la définition des catégories.",
+      "applied": {
+        "label": "Inscrit",
+        "description": "L'adhésion a été demandée (liste d'attente sans candidats)."
+      },
+      "active": {
+        "label": "Actif",
+        "description": "L'adhésion est actuellement active et valide (candidats inclus)."
+      },
+      "passive": {
+        "label": "Passif",
+        "description": "L'adhésion est en pause ou inactive."
+      },
+      "cancelled": {
+        "label": "Terminée",
+        "description": "L'adhésion est terminée, elle n'est plus valide."
+      }
+    }
+  }
+}

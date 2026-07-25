@@ -1,0 +1,132 @@
+{
+  "singular": "Location",
+  "plural": "Locations",
+  "description": "A location that can be precisely located by means of coordinates.",
+  "empty": "No locations have been recorded yet. Create a new location by clicking the + button.",
+
+  "list": {
+    "header": {
+      "name": "Name",
+      "type": "Type",
+      "latitude": "Latitude",
+      "longitude": "Longitude"
+    }
+  },
+
+  "copy": {
+    "label": "Copy location",
+    "conf": "The location was copied.",
+    "error": "The location could not be copied.",
+    "coord": "Copy coordinates",
+    "w3w": "Copy what3word"
+  },
+  "convert": {
+    "label": "Convert formats",
+    "error": "The address/coordinates could not be converted. The location was saved unchanged."
+  },
+  "create": {
+    "label": "Add location",
+    "conf": "Location was added.",
+    "error": "Location could not be added."
+  },
+  "delete": {
+    "label": "Delete location",
+    "confirm": "Do you really want to delete the location?",
+    "conf": "Location was deleted.",
+    "error": "Location could not be deleted."
+  },
+  "show": {
+    "label": "Show location on the map"
+  },
+  "update": {
+    "label": "Edit location",
+    "conf": "Location was changed.",
+    "error": "Location could not be changed."
+  },
+  "view": {
+    "label": "Show location details"
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "ssssss",
+    "helper": "The unique ID in the database."
+  },
+  "name": {
+    "label": "Location name",
+    "placeholder": "ssssss",
+    "helper": "The name of the location, e.g. address"
+  },
+  "latitude": {
+    "label": "Latitude",
+    "placeholder": "nn.nnnnn",
+    "helper": "The North/South position from the Equator (+-0-90 degrees)."
+  },
+  "longitude": {
+    "label": "Longitude",
+    "placeholder": "nnn.nnnnnn",
+    "helper": "The East/West position from Greenwich +-0 - 180 degrees)."
+  },
+  "placeId": {
+    "label": "PlaceID",
+    "placeholder": "ssssss",
+    "helper": "The Place ID from Google Places."
+  },
+  "what3words": {
+    "label": "What3Words",
+    "placeholder": "ssss.ssss.ssss",
+    "helper": "The What3Words designation of this location."
+  },
+  "seaLevel": {
+    "label": "Altitude above sea level",
+    "placeholder": "nnn",
+    "helper": "The altitude above sea level in metres."
+  },
+  "speed": {
+    "label": "Speed",
+    "placeholder": "nnn",
+    "helper": "The speed in km/h."
+  },
+  "direction": {
+    "label": "Direction",
+    "placeholder": "nnn",
+    "helper": "The direction in degrees as deviation from North."
+  },
+  "distance": {
+    "label": "Distance",
+    "placeholder": "nnn",
+    "helper": "The distance of the location relative to the starting point in kilometres."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Text"
+  },
+
+  "location_type": {
+    "label": "Location type",
+    "helper": "Type of a location indication, normally used as a filter in location lists.",
+    "all": {
+      "label": "All"
+    },
+    "address": {
+      "label": "Address",
+      "description": "Location represents an address."
+    },
+    "logbuch": {
+      "label": "Logbook",
+      "description": "Location is an entry in the logbook."
+    },
+    "geomarker": {
+      "label": "Geomarker",
+      "description": "Location is a pin on a map."
+    },
+    "airport": {
+      "label": "Airport",
+      "description": "International airports for flight tracking."
+    },
+    "other": {
+      "label": "Other location",
+      "description": "Location represents other location information."
+    }
+  }
+}

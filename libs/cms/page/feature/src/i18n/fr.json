@@ -1,0 +1,230 @@
+{
+  "pages": "Pages web",
+  "sections": "Sections",
+  "empty": "Aucun contenu n'a encore été créé.",
+  "emptyPage": "Il n'y a encore aucune section pour cette page. Veuillez d'abord créer des sections.",
+  "emptyPageReadOnly": "Cette page est encore vide.",
+  "notexist": "La page demandée n'existe pas.",
+  "help": "Veuillez vérifier l'URL ou naviguer via le menu.",
+
+  "name": {
+    "label": "Nom",
+    "placeholder": "sssss",
+    "helper": "Le nom de la page web, librement choisi, sert simplement à retrouver la page web."
+  },
+  "description": "Un site web contient un titre et plusieurs sections. L'ordre des sections peut être modifié.",
+  "title": {
+    "label": "Titre",
+    "placeholder": "String",
+    "helper": "Le titre est optionnel et est affiché au visiteur de la page web."
+  },
+
+  "view": "Afficher la configuration de la page web",
+  "edit": "Modifier la page web",
+  "show": "Afficher la page web",
+  "create": "Créer une nouvelle page",
+  "add": {
+    "label": "Ajouter une page web",
+    "placeholder": "Nom de la page",
+    "section": "Ajouter une nouvelle section"
+  },
+  "delete": {
+    "label": "Supprimer la page web",
+    "confirm": "La page web doit-elle vraiment être supprimée ?"
+  },
+  "search": {
+    "article": "Rechercher un article"
+  },
+  "sort": {
+    "label": "Trier les sections",
+    "noSections": "Il n'y a aucune section à trier.",
+    "onlyOneSection": "Il n'y a qu'une seule section, le tri n'est pas nécessaire."
+  },
+  "upload": {
+    "image": "Téléverser une/des image(s)",
+    "file": "Téléverser un/des fichier(s)"
+  },
+  "error": {
+    "save": "La page web n'a pas pu être enregistrée. Veuillez réessayer.",
+    "load": "Les pages web n'ont pas pu être chargées. Veuillez réessayer.",
+    "delete": "La page web n'a pas pu être supprimée. Veuillez réessayer."
+  },
+  "print": {
+    "generating": "Le PDF est en cours de création …",
+    "error": "Le PDF n'a pas pu être créé. L'impression du navigateur est utilisée à la place.",
+    "empty": "Cette page ne contient aucune section imprimable."
+  },
+
+  "type": {
+    "graph": {
+      "nomain": "Aucun menu principal trouvé.",
+      "help": {
+        "title": "Plan du site – Aide",
+        "intro": "Le plan du site donne un aperçu graphique de la structure de l'app sous forme d'arborescence. Il répertorie tous les menus, pages et sections configurés et montre leurs dépendances. Du menu principal aux sections individuelles, en passant par les sous-menus et les pages. Chaque nœud a un type, indiqué par une couleur et un libellé.",
+        "types": {
+          "title": "Types de menu",
+          "main": {
+            "label": "Menu principal",
+            "content": "La racine de la navigation. Il regroupe les entrées de menu de premier niveau et se déploie automatiquement à l'ouverture."
+          },
+          "sub": {
+            "label": "Sous-menu",
+            "content": "Une entrée déployable qui regroupe d'autres entrées de menu (affichée sous forme d'accordéon dans le menu)."
+          },
+          "navigate": {
+            "label": "Naviguer",
+            "content": "Mène à une page interne de l'app. La page liée est affichée dans l'arborescence en tant que nœud enfant."
+          },
+          "browse": {
+            "label": "Parcourir",
+            "content": "Ouvre une adresse externe (URL) dans un nouvel onglet."
+          },
+          "context": {
+            "label": "Menu contextuel",
+            "content": "Le menu en haut à droite de la page avec des actions supplémentaires qui agissent sur toutes les données affichées."
+          },
+          "call": {
+            "label": "Action",
+            "content": "Déclenche une fonction ou une commande sans naviguer (par ex. téléverser un fichier)."
+          },
+          "divider": {
+            "label": "Séparateur",
+            "content": "Une ligne de séparation purement visuelle pour structurer le menu – sans fonction. Également utilisé comme espace réservé pour des fonctions pas encore implémentées."
+          },
+          "page": {
+            "label": "Page",
+            "content": "Une page CMS composée d'une liste ordonnée de sections."
+          },
+          "section": {
+            "label": "Section",
+            "content": "Un bloc de contenu individuel au sein d'une page (par ex. article, galerie, carte, calendrier)."
+          }
+        },
+        "usage": {
+          "title": "Comment utiliser le plan du site :",
+          "expand": "Cliquer sur le symbole en forme de flèche pour déployer ou réduire un nœud et afficher ses éléments subordonnés.",
+          "label": "Pour chaque nœud, le texte de menu traduit est affiché ; au-dessus, en plus petits caractères, figure le nom technique de l'entrée.",
+          "edit": "Passer la souris sur un nœud et cliquer sur le symbole du crayon pour modifier directement le menu, la page ou la section associés.",
+          "export": "Via le menu en haut à droite, il est possible d'exporter la structure sous forme de tableau (raw) ou de XML de plan du site.",
+          "roles": "Les rôles affichés sont également importants. Ils déterminent qui peut voir l'entrée concernée. Il est possible de changer le rôle en cliquant sur le symbole du crayon."
+        }
+      }
+    },
+    "blog": {
+      "label": "Page de blog",
+      "search": "Rechercher ...",
+      "filter": {
+        "all": "Tous"
+      }
+    }
+  },
+
+  "section": {
+    "add": "Ajouter une nouvelle section",
+    "edit": "Modifier la section",
+    "send": "Envoyer l'article",
+    "remove": "Supprimer la section",
+    "label": "Section"
+  },
+  "welcome": {
+    "title": "Seeclub Stäfa",
+    "subTitle": "Aviron sur le lac de Zurich",
+    "abstract": "Ceci est la page d'accueil. Cliquer sur le menu en haut à gauche et choisir une fonction.",
+    "logoAltText": "Logo du Seeclub Stäfa",
+    "bannerAltText": "Image de fond avec un rameur sur le lac de Zurich."
+  },
+  "notfound": {
+    "error": "Page introuvable",
+    "title": "404 Not Found",
+    "subTitle": "échoué dans les roseaux ?",
+    "abstract": "La page HTML demandée est introuvable. Réessayer avec une autre URL, c.-à-d. cliquer sur le menu en haut à gauche et choisir une fonction.",
+    "logoAltText": "Logo du Seeclub Stäfa",
+    "bannerAltText": "Image de fond depuis les roseaux avec coucher de soleil sur le lac de Zurich."
+  },
+  "unknownpagetype": {
+    "title": "404 Not Found",
+    "subTitle": "échoué dans les roseaux ?",
+    "abstract": "Une page HTML d'un type inconnu a été appelée. Veuillez réessayer avec une autre URL, c.-à-d. cliquer sur le menu en haut à gauche et choisir une fonction.",
+    "logoAltText": "Logo du Seeclub Stäfa",
+    "bannerAltText": "Image de fond depuis les roseaux avec coucher de soleil sur le lac de Zurich."
+  },
+
+  "content_state": {
+    "label": "Statut",
+    "helper": "Le statut aide les créateurs de contenu lors de la création. Par exemple, les nouvelles pages peuvent n'être affichées qu'à quelques utilisateurs lorsqu'elles sont en brouillon ou pendant une relecture.",
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "draft": {
+      "label": "Brouillon"
+    },
+    "inReview": {
+      "label": "Relecture"
+    },
+    "published": {
+      "label": "Publié"
+    },
+    "decommitted": {
+      "label": "Obsolète"
+    },
+    "archived": {
+      "label": "Archivé"
+    }
+  },
+
+  "page_type": {
+    "all": {
+      "label": "Tous les types"
+    },
+    "accordion": {
+      "label": "Accordéon",
+      "description": "Un accordéon (GUI) est un élément d'interface utilisateur graphique qui déploie et réduit des zones de contenu empilées en cliquant sur un titre. Il sert à organiser de grandes quantités d'informations, comme dans les sections FAQ, de manière compacte en n'affichant que le contenu pertinent, tandis que les autres zones restent compactes."
+    },
+    "album": {
+      "label": "Album",
+      "description": "Un album montre un aperçu d'un certain nombre de photos."
+    },
+    "blog": {
+      "label": "Blog",
+      "description": "Un blog (abréviation de weblog) est un journal ou un carnet en ligne régulièrement mis à jour, généralement classé par ordre chronologique, sur un site web. Il sert à partager des contenus tels que des textes, des photos ou des vidéos sur des sujets spécifiques, souvent du point de vue subjectif de l'auteur (blogueur). Les blogs permettent l'interaction par le biais de commentaires."
+    },
+    "chat": {
+      "label": "Chat",
+      "description": "Aperçu du chat avec fenêtres de chat pour la communication directe ou de groupe"
+    },
+    "content": {
+      "label": "Content",
+      "description": "Une page de contenu peut contenir n'importe quelles sections. C'est la forme la plus générale d'une page."
+    },
+    "dashboard": {
+      "label": "Tableau de bord",
+      "description": "Le tableau de bord donne un aperçu personnalisé des dernières nouveautés, des messages de chat sans réponse, des tâches ouvertes et des prochains rendez-vous."
+    },
+    "files": {
+      "label": "Fichiers",
+      "description": "Cette page affiche les fichiers de manière graphique. Elle correspond à une forme simple d'affichage du système de fichiers et se compose de fichiers et de dossiers."
+    },
+    "graph": {
+      "label": "Plan du site",
+      "nomain": "Aucun menu principal trouvé.",
+      "description": "Le plan du site donne un aperçu graphique de la structure de l'app. Il répertorie tous les menus, pages et sections configurés et montre leurs dépendances.",
+      "description2": "Les éléments de ce graphe peuvent être sélectionnés et modifiés."
+    },
+    "landing": {
+      "label": "Page d'accueil",
+      "description": "La page principale du site web. Elle est généralement aussi accessible publiquement et contient souvent une hero section."
+    },
+    "people": {
+      "label": "Personnes",
+      "description": "Les personnes répertoriées ici sont affichées comme avatars dans la section."
+    },
+    "searchResults": {
+      "label": "Résultats de recherche",
+      "description": "Un site web composé d'un champ de recherche et des résultats de recherche sous forme de liste."
+    },
+    "shop": {
+      "label": "Boutique",
+      "description": "Dans la boutique, des produits peuvent être vendus. Les composants de la boutique sont un aperçu avec recherche, des vues détaillées des produits. Dans le panier (cart), les produits sélectionnés sont récapitulés avec les prix et validés pour la commande avec paiement."
+    }
+  }
+}

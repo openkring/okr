@@ -1,0 +1,45 @@
+{
+  "accounts": "Accounts",
+  "empty": "No accounts found.",
+
+  "create": "Open a new account",
+  "delete": "Delete account",
+  "select": {
+    "root": "Select chart of accounts",
+    "hint": "Please select a chart of accounts first."
+  },
+  "update": "Edit account",
+  "view": "View account details",
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "The okey is the key of an element, consisting of the prefix of the category and a sequential number, e.g. boat-001 for the first boat."
+  },
+  "id": {
+    "label": "Account no.",
+    "placeholder": "nnnn",
+    "helper": "The unique number of the account."
+  },
+  "name": {
+    "label": "Account name",
+    "placeholder": "Name",
+    "error": "The name is mandatory and must consist of alphanumeric characters.",
+    "helper": "A name can consist of several words. Only letters (incl. -) and numbers are allowed, no special characters."
+  },
+  "label": {
+    "label": "Label",
+    "placeholder": "Label",
+    "error": "The label is mandatory and must consist of alphanumeric characters.",
+    "helper": "This text is shown to the user."
+  },
+  "parentId": {
+    "label": "Parent account",
+    "placeholder": "nnnn",
+    "helper": "The number of the parent account. The parent account groups several accounts and thus forms the hierarchy in the chart of accounts."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Free notes on the account."
+  }
+}

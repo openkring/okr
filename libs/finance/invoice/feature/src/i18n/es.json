@@ -1,0 +1,169 @@
+{
+  "singular": "Factura",
+  "plural": "Facturas de deudores",
+  "aging": "Antigüedad de deudores",
+  "empty": "No se encontraron facturas",
+
+  "list": {
+    "title": "Resumen de facturas"
+  },
+
+  "id": {
+    "label": "ID",
+    "placeholder": "nnnnn",
+    "helper": "Un identificador único para una factura."
+  },
+  "date": {
+    "invoice": {
+      "label": "Fecha de factura",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La fecha en que se emitió la factura. A partir de entonces comienza a correr el plazo de pago."
+    },
+    "due": {
+      "label": "Pagadero hasta",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La fecha del plazo de pago. La factura debe pagarse antes de esa fecha."
+    },
+    "payment": {
+      "label": "Pagado el",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La fecha en que se pagó la factura."
+    }
+  },
+  "receiver": {
+    "label": "Destinatario"
+  },
+  "title": {
+    "label": "Asunto",
+    "placeholder": "Texto",
+    "helper": "Una breve descripción de qué se trata."
+  },
+  "amount": {
+    "label": "Importe",
+    "placeholder": "nn.nn",
+    "helper": "El importe de la factura."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas libres sobre la factura"
+  },
+  "state": {
+    "label": "Estado de la factura"
+  },
+  "bexio": {
+    "id": {
+      "label": "Bexio ID",
+      "placeholder": "nnnnnnn",
+      "helper": "ID de factura en Bexio"
+    }
+  },
+  "position": {
+    "text": {
+      "label": "Texto",
+      "placeholder": "ssssssss",
+      "helper": "Un identificador para la posición de la factura."
+    },
+    "amount": {
+      "label": "Importe de la factura",
+      "placeholder": "nnnn.nn",
+      "helper": "Importe total de la factura de todas las posiciones."
+    }
+  },
+  "unitPrice": {
+      "label": "Precio unitario",
+      "placeholder": "nn.nn",
+      "helper": "El precio de una sola posición."
+    },
+  "accountId": {
+      "label": "Número de cuenta",
+      "placeholder": "nnnn",
+      "helper": "El número único de una cuenta."
+    },
+  "header": {
+      "label": "Encabezado",
+      "placeholder": "Texto",
+      "helper": "Texto que se muestra encima de las posiciones de la factura en la factura."
+    },
+  "footer": {
+      "label": "Pie de página",
+      "placeholder": "Texto",
+      "helper": "Texto que se muestra debajo de las posiciones de la factura en la factura."
+    },
+  "valid": {
+    "from": {
+      "label": "Válido desde",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La factura es válida a partir de esta fecha."
+    },
+    "to": {
+      "label": "Válido hasta",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La factura es válida hasta esta fecha."
+    }
+  },
+  "template": {
+    "label": "Plantilla"
+  },
+  "defaultPosition": {
+    "label": "Posición de factura predeterminada"
+  },
+  "vat": {
+    "label": "IVA",
+    "type": "Tipo de IVA"
+  },
+
+  "add": {
+    "position": "Añadir posición de factura"
+  },
+  "create": {
+    "label": "Añadir factura",
+    "conf": "La factura se ha creado.",
+    "error": "No se pudo crear la factura."
+  },
+  "delete": {
+    "label": "Eliminar factura",
+    "confirm": "¿Desea eliminar realmente la factura ?",
+    "conf": "La factura se ha eliminado.",
+    "error": "No se pudo eliminar la factura."
+  },
+  "update": {
+    "label": "Modificar factura",
+    "conf": "La factura se ha modificado.",
+    "error": "No se pudo modificar la factura."
+  },
+  "view": {
+    "label":  "Mostrar detalles de la factura",
+    "pdf": "Descargar factura como PDF"
+  },
+
+  "readonly": {
+    "banner": "Esta lista es de solo lectura. Los deudores se gestionan en Bexio."
+  },
+
+  "invoice_state": {
+    "name": "Estado de la factura",
+    "all": {
+      "label": "Todos los estados"
+    },
+    "draft": {
+      "label": "Borrador",
+      "description": "La factura es un borrador y aún no se ha enviado."
+    },
+    "pending": {
+      "label": "Pendiente",
+      "description": "La factura se ha enviado y aún no está pagada."
+    },
+    "paid": {
+      "label": "Pagada",
+      "description": "La factura se ha pagado."
+    },
+    "overdue": {
+      "label": "Vencida",
+      "description": "El plazo de pago ha vencido, la factura está vencida."
+    },
+    "cancelled": {
+      "label": "Anulada",
+      "description": "La factura se ha anulado."
+    }
+  }
+}

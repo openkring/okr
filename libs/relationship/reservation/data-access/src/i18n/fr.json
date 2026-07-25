@@ -1,0 +1,23 @@
+{
+  "create": {
+    "label": "Ajouter une réservation",
+    "conf": "La réservation a été créée.",
+    "error": "La réservation n'a pas pu être créée."
+  },
+  "update": {
+    "label": "Modifier la réservation",
+    "conf": "La réservation a été modifiée.",
+    "error": "La réservation n'a pas pu être modifiée."
+  },
+  "delete": {
+    "label": "Supprimer la réservation",
+    "conf": "La réservation a été supprimée.",
+    "error": "La réservation n'a pas pu être supprimée.",
+    "confirm": "Normalement, une réservation devrait être terminée, mais pas supprimée. La suppression n'est prévue que pour corriger des entrées erronées. Voulez-vous vraiment supprimer la réservation ?"
+  },
+  "end": {
+    "label": "Terminer la réservation",
+    "conf": "La réservation a été terminée.",
+    "error": "La réservation n'a pas pu être terminée."
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Crea nuova voce di menu",
+    "conf": "La voce di menu è stata creata.",
+    "error": "Impossibile creare la voce di menu."
+  },
+  "update": {
+    "label": "Modifica voce di menu",
+    "conf": "La voce di menu è stata modificata.",
+    "error": "Impossibile modificare la voce di menu."
+  },
+  "delete": {
+    "label": "Elimina voce di menu",
+    "conf": "La voce di menu è stata eliminata.",
+    "error": "Impossibile eliminare la voce di menu.",
+    "confirm": "Eliminare davvero questa voce di menu ?"
+  }
+}

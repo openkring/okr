@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "La regola OCR è stata creata.",
+    "error": "Non è stato possibile creare la regola OCR."
+  },
+  "update": {
+    "conf": "La regola OCR è stata modificata.",
+    "error": "Non è stato possibile modificare la regola OCR."
+  },
+  "delete": {
+    "conf": "La regola OCR è stata eliminata.",
+    "error": "Non è stato possibile eliminare la regola OCR."
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "create": {
+    "label": "Ajouter une adresse",
+    "description": "Créer une nouvelle adresse.",
+    "conf": "L'adresse a été enregistrée.",
+    "error": "L'adresse n'a pas pu être enregistrée."
+  },
+  "update": {
+    "label": "Modifier l'adresse",
+    "description": "Modifier une adresse existante.",
+    "conf": "L'adresse a été modifiée.",
+    "error": "L'adresse n'a pas pu être modifiée."
+  },
+  "delete": {
+    "label": "Supprimer l'adresse",
+    "description": "Supprimer une adresse existante.",
+    "conf": "L'adresse a été supprimée.",
+    "error": "L'adresse n'a pas pu être supprimée.",
+    "askConfirmation": "Voulez-vous vraiment supprimer l'adresse ?"
+  },
+  "favorite": {
+    "enable": {
+      "conf": "L'adresse est désormais l'adresse principale.",
+      "error": "L'adresse n'a pas pu être définie comme adresse principale."
+    },
+    "disable": {
+      "conf": "L'adresse n'est plus l'adresse principale.",
+      "error": "L'adresse principale n'a pas pu être modifiée."
+    }
+  }
+}

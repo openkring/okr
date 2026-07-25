@@ -1,0 +1,100 @@
+{
+  "map": "Mappa",
+  "allYears": "Tutti gli anni",
+  "year": "Anno",
+  "copy": {
+    "conf": "Il valore è stato copiato.",
+    "label": "Copia"
+  },
+  "select": {
+    "category": "Scegli categoria",
+    "date": "Scegli data",
+    "tag": "Scegli giorno",
+    "time": "Scegli ora"
+  },
+  "deleteContent": "Elimina contenuto",
+  "search": {
+    "placeholder": "Cerca...",
+    "byTag": "Giorno"
+  },
+  "categoryItems": {
+    "empty": "Non è ancora stato definito alcun elemento in questa categoria.",
+    "title": "Elementi",
+    "subTitle": "I singoli elementi di una categoria. Ogni elemento viene mostrato su una riga propria."
+  },
+  "color": {
+    "select": "Selezione del colore",
+    "label": "Colore"
+  },
+  "meta": {
+    "empty": "Nessun meta tag disponibile.",
+    "label": "MetaTags (SEO)"
+  },
+  "actionsheet": {
+    "title": "Scegli un'azione",
+    "address": {
+      "edit": "Modifica indirizzo e-mail",
+      "view": "Mostra indirizzo e-mail",
+      "hide": "Nascondi indirizzo e-mail"
+    }
+  },
+  "address": {
+    "email": {
+      "title": "Indirizzi e-mail",
+      "empty": "Nessun indirizzo e-mail",
+      "copy": {
+        "label": "Copia",
+        "conf": "Gli indirizzi e-mail sono stati copiati."
+      }
+    }
+  },
+  "section": {
+    "forms": {
+      "imageConfig": {
+        "title": "Configurazione dell'immagine (file)"
+      }
+    }
+  },
+  "membership": {
+    "email": {
+      "title": "Indirizzi e-mail",
+      "empty": "Nessun indirizzo e-mail disponibile.",
+      "copy": {
+        "label": "Copia",
+        "conf": "Le e-mail sono state copiate."
+      },
+      "address": {
+        "main": "Indirizzi principali",
+        "cc": "cc: indirizzi"
+      }
+    }
+  },
+  "text": {
+    "edit": "Modifica testo"
+  },
+  "string": {
+    "title": "Elenco di parole",
+    "edit": "Modifica parola",
+    "add": "Aggiungi parola"
+  },
+  "connection": {
+    "title": "Stato della connessione a Internet",
+    "intro": "Il tuo stato di connessione a Internet viene aggiornato costantemente e rappresentato a colori come segue:",
+    "good": "Buona connessione",
+    "goodExplanation": "Tutte le funzioni dell'app sono disponibili senza restrizioni. Puoi caricare contenuti, trasferire dati e interagire con altri utenti senza problemi.",
+    "slow": "Connessione lenta",
+    "slowExplanation": "Alcune funzioni dell'app potrebbero essere limitate. Il caricamento dei contenuti potrebbe richiedere più tempo e potrebbero verificarsi ritardi nel trasferimento dei dati.",
+    "offline": "Nessuna connessione",
+    "offlineExplanation": "Attualmente sei offline. Alcune funzioni dell'app non sono disponibili e non puoi caricare o trasferire nuovi dati. Verifica la tua connessione a Internet."
+  },
+  "notes": {
+    "notes": "Note",
+    "placeholder": "text",
+    "label": "Note",
+    "pwd": {
+      "header": "Inserisci la password",
+      "message": "Attenzione: se dimentichi la password, il testo non potrà più essere decifrato!",
+      "placeholder": "Password"
+    }
+  }
+}

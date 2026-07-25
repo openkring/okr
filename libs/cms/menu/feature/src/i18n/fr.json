@@ -1,0 +1,268 @@
+{
+  "menus": "Éléments de menu",
+  "submenus": "Sous-menus",
+  "empty": "Aucun élément de menu n'a encore été créé. Créez-en un en cliquant sur le bouton +.",
+  "link": "URL ou menus",
+  "action": "Action",
+  "edit": "Modifier le menu",
+  "view": "Afficher les détails du menu",
+  "create": "Créer un nouveau menu",
+  "delete": "Supprimer le menu",
+  "add": {
+    "submenu": "Ajouter un sous-menu"
+  },
+  "error": {
+    "save": "L'élément de menu n'a pas pu être enregistré. Veuillez réessayer.",
+    "load": "Les éléments de menu n'ont pas pu être chargés. Veuillez réessayer.",
+    "delete": "L'élément de menu n'a pas pu être supprimé. Veuillez réessayer."
+  },
+  "main": {
+    "aoc": {
+      "title": "AOC - Operation Centre",
+      "icon": "Tests d'icônes",
+      "translation": "Tests de traduction",
+      "storage": "Tests de stockage",
+      "admin": "Opérations d'administration",
+      "auth": "Autorisations",
+      "content": "Contenu",
+      "data": "Données",
+      "statistics": "Statistiques"
+    },
+    "board": {
+      "docs": "Documents",
+      "igsport": "IG Sport Stäfa (fichiers)",
+      "groups": "Groupes",
+      "meetings": "Séances du comité",
+      "orgs": "Organisations",
+      "projects": "Projets",
+      "title": "Comité",
+      "todos": "Tâches"
+    },
+    "boat": {
+      "title": "Bateaux",
+      "club": "Bateaux du club",
+      "archived": "Bateaux archivés",
+      "private": "Skiffs privés",
+      "info": "Statistiques des bateaux",
+      "all": "Tous les bateaux",
+      "test": "Bateaux de test"
+    },
+    "boathouse": {
+      "title": "Projet de hangar à bateaux",
+      "history": "Rétrospective",
+      "variants": "Aperçu des variantes",
+      "status": "État du projet",
+      "1haus": "Variante 1Haus",
+      "2haus": "Variante 2Haus",
+      "compare": "Comparaison des variantes",
+      "funding": "Financement"
+    },
+    "calEvent": {
+      "title": "Événements",
+      "calendar": "Calendrier",
+      "list": "Événements"
+    },
+    "cms": {
+      "title": "CMS - Content Management",
+      "pages": "Pages web",
+      "sections": "Sections",
+      "menus": "Menus",
+      "documents": "Documents",
+      "testcms": "Tests CMS",
+      "locations": "Lieux",
+      "forms": "Form Builder"
+    },
+    "finance": {
+      "title": "Finances",
+      "fees": "Cotisations",
+      "srvFees": "Frais SRV",
+      "docs": "Documents financiers",
+      "invoice-positions": "Postes de facture"
+    },
+    "gallery": {
+      "personal": "Album personnel",
+      "club": "Album du club"
+    },
+    "info": {
+      "album": "Album",
+      "boathouse": "Projet de hangar à bateaux",
+      "club": "Informations sur le club",
+      "directives": "Statuts et règlements",
+      "map": "Carte",
+      "marketing": "Logos et modèles",
+      "meetings": "Assemblées générales",
+      "title": "Informations",
+      "training": "Documents d'entraînement",
+      "weather": "Météo"
+    },
+    "members": {
+      "title": "Membres",
+      "info": "Statistiques des membres",
+      "active": "Membres actifs",
+      "persons": "Personnes",
+      "person-contacts": "Toutes les personnes",
+      "member-contacts": "Liste d'adresses",
+      "applications": "Inscriptions",
+      "birthdays": "Anniversaires",
+      "passive": "Membres passifs",
+      "deceased": "Défunts",
+      "srvall": "Membres SRV",
+      "alumni": "Anciens",
+      "men": "Hommes",
+      "women": "Femmes",
+      "entries": "Admissions",
+      "exits": "Départs",
+      "oldJuniors": "Juniors > 18"
+    },
+    "misc": {
+      "title": "Divers",
+      "impressum": "Mentions légales",
+      "terms": "Mentions juridiques",
+      "privacy": "Protection des données",
+      "help": "Guide",
+      "geotracker": "GeoTracker",
+      "counter": "Chronomètre",
+      "tenu": "Tenues"
+    },
+    "news": {
+      "title": "Actualités",
+      "bkoWebsite": "Site web",
+      "p13Website": "Site web",
+      "stuerbord": "Stüürbord"
+    },
+    "reservations": {
+      "all": "Toutes les réservations",
+      "boathouse": "Réservations du hangar à bateaux"
+    },
+    "resources": {
+      "title": "Ressources",
+      "resources": "Ressources",
+      "maleLockers": "Vestiaire hommes",
+      "femaleLockers": "Vestiaire femmes",
+      "keys": "Clés",
+      "motorboats": "Bateaux à moteur",
+      "vehicle": "Véhicules",
+      "other": "Autres ressources",
+      "archivedResources": "Ressources archivées"
+    },
+    "shop": {
+      "title": "Boutique",
+      "tenu": "Tenues",
+      "beverage": "Boissons",
+      "lifeJacket": "Gilets de sauvetage"
+    },
+    "sport": {
+      "title": "Sport",
+      "competitionLevels": "Catégories de compétition",
+      "logbook": "Journal de bord",
+      "sportCategory": "Catégories sportives",
+      "training": "Infos d'entraînement",
+      "regattas": "Régates"
+    },
+    "dashboard": "Tableau de bord",
+    "home": "Accueil",
+    "login": "Se connecter",
+    "logout": "Se déconnecter",
+    "profile": "Profil",
+    "schedule": "Lancer la planification",
+    "userSettings": "Paramètres",
+    "title": "Menu principal",
+    "version": "Version"
+  },
+  "context": {
+    "forms": {
+      "add": "Créer un nouveau formulaire"
+    }
+  },
+  "description": {
+    "menu": "Les entrées de menu renvoient vers des pages web internes (Navigation) ou externes (Browse).",
+    "label": "Description",
+    "placeholder": "ssss"
+  },
+  "icon": {
+    "label": "Nom de l'icône",
+    "placeholder": "Nom de l'icône",
+    "helper": "Le nom de l'icône correspond généralement au nom de fichier de l'image svg."
+  },
+  "icon_alt": {
+    "label": "Icône (active)",
+    "placeholder": "Nom de l'icône",
+    "helper": "Uniquement pour l'action «Toggle» : icône pour l'état actif (p. ex. eye-off)."
+  },
+  "label": {
+    "label": "Désignation",
+    "placeholder": "Nom",
+    "helper": "C'est le nom visible par l'utilisateur sur le MenuItem."
+  },
+  "label_alt": {
+    "label": "Désignation (active)",
+    "placeholder": "Nom",
+    "helper": "Uniquement pour l'action «Toggle» : désignation pour l'état actif."
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "/route/to/page",
+    "helper": "L'URL renvoie vers la page à afficher."
+  },
+  "category": {
+    "plural": "Catégories"
+  },
+  "responsibility": {
+    "export": {
+      "raw": "Exporter les responsabilités (données brutes)"
+    }
+  },
+  "content": {
+    "section": {
+      "plural": "Sections"
+    }
+  },
+  "menu_action": {
+    "label": "Action du menu",
+    "helper": "L'action à exécuter lors du clic sur l'élément de menu.",
+    "all": {
+      "label": "Toutes les actions"
+    },
+    "navigate": {
+      "label": "Navigate",
+      "description": "Naviguer vers une autre page"
+    },
+    "browse": {
+      "label": "Browse",
+      "description": "Ouvrir la page dans un onglet externe du navigateur."
+    },
+    "logout": {
+      "label": "Logout",
+      "description": "Terminer la session en cours et se déconnecter.",
+      "confirm": "Êtes-vous sûr ? Vous devrez ensuite vous reconnecter avec votre mot de passe."
+    },
+    "sub": {
+      "label": "Submenu",
+      "description": "Naviguer vers un sous-menu"
+    },
+    "context": {
+      "label": "Context Menu",
+      "description": "Menu contextuel, p. ex. Export, Add dans les listes"
+    },
+    "divider": {
+      "label": "Divider",
+      "description": "Ligne de séparation entre les éléments de menu"
+    },
+    "main": {
+      "label": "Main Menu",
+      "description": "Le menu de premier niveau"
+    },
+    "login": {
+      "label": "Login",
+      "description": "Naviguer vers le formulaire de connexion"
+    },
+    "call": {
+      "label": "Appel de fonction",
+      "description": "Appelle une méthode du store (p. ex. add, export...)"
+    },
+    "toggle": {
+      "label": "Toggle",
+      "description": "Bascule la valeur d'une variable binaire (p. ex. on/off)."
+    }
+  }
+}

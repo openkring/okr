@@ -1,0 +1,198 @@
+{
+  "persons": "Persons",
+  "empty": "No persons found.",
+  "details": "Person details",
+  "addresses": "Addresses",
+  "misc": "Miscellaneous",
+
+   "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "The key of the person entry in the database."
+  },
+  "firstName": {
+    "label": "First name",
+    "placeholder": "Enter first name",
+    "helper": "The given names of a person."
+  },
+  "lastName": {
+    "label": "Last name",
+    "placeholder": "Enter last name",
+    "helper": "The family name of a person."
+  },
+  "ssnId": {
+    "label": "AHV number",
+    "placeholder": "756.XXXX.XXXX.XX",
+    "helper": "The AHV number of a person"
+  },
+  "bexioId": {
+    "label": "Bexio ID",
+    "placeholder": "nnnnn",
+    "helper": "The ID of the person's Bexio contact."
+  },
+  "email": {
+    "label": "Email",
+    "placeholder": "Enter email address"
+  },
+  "phone": {
+    "label": "Phone",
+    "placeholder": "+41 XX XXX XX XX"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes"
+  },
+  "dateOfBirth": {
+    "label": "Date of birth",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "The date of birth of the person."
+  },
+  "dateOfDeath": {
+    "label": "Date of death",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "The date of death of the person."
+  },
+  "dateOfEntry": {
+    "label": "Entry date",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Start of the membership."
+  },
+  "streetName": {
+    "label": "Street",
+    "placeholder": "Enter street",
+    "helper": "Street name of a postal address."
+  },
+  "streetNumber": {
+    "label": "No.",
+    "placeholder": "sss",
+    "helper": "The house number of a postal address."
+  },
+  "countryCode": {
+    "label": "Country (ISO)",
+    "placeholder": "CH",
+    "helper": "The ISO code of the country."
+  },
+  "zipCode": {
+    "label": "Postal code",
+    "placeholder": "nnnn",
+    "helper": "A Swiss postal code. 4-digit string"
+  },
+  "city": {
+    "label": "City",
+    "placeholder": "Enter city",
+    "helper": "The name of the place"
+  },
+  "web": {
+    "label": "Web",
+    "placeholder": "https://...",
+    "helper": "A web address (URL to a website)"
+  },
+
+  "lookup": {
+    "title": "Address lookup (search.ch)",
+    "empty": "No matches found.",
+    "error": "Search failed. Please try again.",
+    "attribution": "Data: Swisscom Directories AG (search.ch)"
+  },
+
+  "add": {
+    "membership": {
+      "label": "Membership (optional)",
+      "confirm": "Should a membership be created ?",
+      "conf": "The membership was saved.",
+      "error": "The membership could not be created.",
+      "helper": "You can select an organisation to which the new person is registered as a member. In addition, you must set the entry date and the member category.",
+      "exists": "This member already exists."
+    }
+  },
+  "call": {
+    "phone": "Call"
+  },
+  "copy": {
+    "email": {
+      "label": "Copy email",
+      "conf": "The email address was copied",
+      "error": "The email address could not be copied."
+    },
+    "phone": {
+      "label": "Copy phone number",
+      "conf": "The phone number was copied",
+      "error": "The phone number could not be copied."
+    }
+  },
+  "create": {
+    "label": "Add new person",
+    "conf": "The person was saved",
+    "error": "The person could not be saved."
+  },
+  "update": {
+    "label": "Edit person",
+    "conf": "The person was saved",
+    "error": "The person could not be saved."
+  },
+  "send": {
+    "message": "Open direct chat",
+    "email": "Send email"
+  },
+  "show": {
+    "postal": "Show postal address on map"
+  },
+  "view": {
+    "label": "Show person"
+  },
+  "delete": {
+    "label": "Delete person",
+    "conf": "The person was deleted",
+    "confirm": "Do you really want to delete the person ?",
+    "error": "The person could not be deleted."
+  },
+
+  "gender": {
+    "label": "Gender",
+    "helper": "The gender of a person",
+    "name": "Gender",
+    "all": {
+      "label": "All genders",
+      "icon": "gender_diverse"
+    },
+    "female": {
+      "label": "female",
+      "description": "The person is a woman.",
+      "salutation": "Dear",
+      "greeting": "Ms.",
+      "formal": "Dear Ms."
+    },
+    "male": {
+      "label": "male",
+      "description": "The person is a man.",
+      "salutation": "Dear",
+      "greeting": "Mr.",
+      "formal": "Dear Mr."
+    },
+    "other": {
+      "label": "diverse",
+      "description": "The person is transgender.",
+      "salutation": "Dear",
+      "greeting": "Miko",
+      "formal": "Dear ",
+      "name": "Label"
+    }
+  },
+
+  "duplicate": {
+    "title": "Possible duplicates found",
+    "intro": "There are already persons that match the entered data. Select an existing person or create a new one anyway.",
+    "createNew": "Create new anyway",
+    "tenants": "Tenants"
+  },
+  "reconcile": {
+    "title": "Reconcile fields",
+    "intro": "The marked fields differ. Select the value to keep for each field.",
+    "keepExisting": "Existing",
+    "useNew": "New"
+  },
+  "validation": {
+    "lastNameRequired": "Entering a last name is mandatory.",
+    "validSSN": "Please enter a valid AHV number."
+  }
+}

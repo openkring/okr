@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Add responsibility",
+    "conf": "Responsibility has been created.",
+    "error": "Responsibility could not be created."
+  },
+  "update": {
+    "label": "Change responsibility",
+    "conf": "Responsibility has been changed.",
+    "error": "Responsibility could not be changed."
+  },
+  "delete": {
+    "label": "Delete responsibility",
+    "conf": "Responsibility has been deleted.",
+    "error": "Responsibility could not be deleted.",
+    "confirm": "Do you really want to delete the responsibility?"
+  }
+}

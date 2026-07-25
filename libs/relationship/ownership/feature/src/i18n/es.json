@@ -1,0 +1,195 @@
+{
+  "ownership": "Uso",
+  "ownerships": "Usos",
+  "owner": "Usuario/a",
+  "description": "Una persona u organización utiliza un recurso",
+  "empty": "No se encontraron usos.",
+  "duration": "de-a",
+  "ownerName": "Nombre",
+  "resourceName": "Recurso",
+  "newDesc": "desea utilizar ahora el siguiente recurso:",
+  "relDesc1": "Uso de",
+  "relDesc2": "por",
+  "revreldesc": "es utilizado por",
+
+
+  "create": {
+    "label": "Añadir uso",
+    "conf": "El uso se ha creado.",
+    "error": "No se pudo crear el uso."
+  },
+  "delete": {
+    "label": "Eliminar uso",
+    "confirm": "Normalmente un uso debería finalizarse, no eliminarse. La eliminación solo está prevista para corregir entradas erróneas. ¿Desea realmente eliminar el uso?",
+    "conf": "El uso se ha eliminado",
+    "error": "No se pudo eliminar el uso"
+  },
+  "end": {
+    "label": "Finalizar uso"
+  },
+  "reactivate": {
+    "label": "Reactivar uso",
+    "conf": "El uso se ha reactivado.",
+    "error": "No se pudo reactivar el uso."
+  },
+  "select": {
+    "title": "Seleccionar tipo de lista para exportar",
+    "raw": "Datos sin procesar",
+    "lockers": "Lista de casilleros"
+  },
+  "update": {
+    "label": "Editar uso",
+    "conf": "Los cambios se han guardado.",
+    "error": "No se pudieron guardar los cambios"
+  },
+  "view": {
+    "label": "Ver detalles del uso"
+  },
+  "boatAction": {
+    "edit": "Editar barco",
+    "view": "Ver barco"
+  },
+  "ownerAction": {
+    "edit": "Editar usuario/a",
+    "view": "Ver usuario/a"
+  },
+
+  "list": {
+    "empty": "No se encontraron usos.",
+    "header": {
+      "ownerName": "Nombre",
+      "resourceName": "Recurso",
+      "duration": "de-a",
+      "price": "Tarifa",
+      "deposit": "Depósito",
+      "validFrom": "Válido desde",
+      "validTo": "Válido hasta",
+      "year": "Año"
+    },
+    "all": {
+      "title": "Usos"
+    },
+    "ownerships": {
+      "title": "Usos"
+    },
+    "lockers": {
+      "title": "Casilleros"
+    },
+    "keys": {
+      "title": "Llaves"
+    },
+    "privateBoats": {
+      "title": "Skiffs privados"
+    },
+    "scsBoats": {
+      "title": "Barcos del club"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "El okey es la clave de un uso, un ID único en la base de datos."
+  },
+  "ownerName1": {
+    "label": "Nombre",
+    "placeholder": "Nombre",
+    "helper": "Los nombres de pila de una persona"
+  },
+  "ownerName2": {
+    "label": "Apellido",
+    "placeholder": "Nombre",
+    "helper": "El apellido de una persona o el nombre de la organización."
+  },
+  "currency": {
+    "label": "Moneda",
+    "placeholder": "CHF",
+    "helper": "El código de la moneda (código de tres letras)"
+  },
+  "price": {
+    "label": "Precio",
+    "placeholder": "nnnn",
+    "helper": "Una indicación de precio."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Texto"
+  },
+  "all": {
+    "title": "Todos los usos",
+    "categoryLabel": "Tipo de recurso"
+  },
+  "boat": {
+    "name": "Nombre del barco",
+    "type": "Tipo de barco"
+  },
+  "rboat": {
+    "name": "Nombre del barco",
+    "type": "Tipo de barco",
+    "title": "Barcos de remo",
+    "category": "Categoría de barco",
+    "club": {
+      "title": "Barcos del club",
+      "categoryLabel": "Categoría de barco"
+    },
+    "private": {
+      "title": "Barcos privados"
+    }
+  },
+  "lockers": {
+    "title": "Casilleros",
+    "male": {
+      "title": "Casilleros de hombres"
+    },
+    "female": {
+      "title": "Casilleros de mujeres"
+    }
+  },
+  "houseKeys": {
+    "title": "Llaves"
+  },
+  "valid": {
+    "from": {
+      "label": "Válido desde",
+      "placeholder": "DD.MM.AAAA",
+      "helper": "El uso comienza en esta fecha."
+    },
+    "to": {
+      "label": "Válido hasta",
+      "placeholder": "DD.MM.AAAA",
+      "helper": "El uso finaliza en esta fecha."
+    }
+  },
+  "ownerType": {
+    "all": {
+      "label": "Todos"
+    },
+    "persons": {
+      "label": "Personas",
+      "description": "El uso pertenece a una persona."
+    },
+    "men": {
+      "label": "Hombres",
+      "description": "El uso pertenece a un hombre."
+    },
+    "women": {
+      "label": "Mujeres",
+      "description": "El uso pertenece a una mujer."
+    },
+    "orgs": {
+      "label": "Organizaciones",
+      "description": "El uso pertenece a una organización."
+    }
+  },
+  "state": {
+    "applied": {
+      "label": "Solicitado",
+      "description": "La persona ha presentado una solicitud."
+    },
+    "active": {
+      "label": "Activo",
+      "description": "Uso actualmente válido."
+    }
+  }
+
+}

@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Aggiungi registrazione",
+    "error": "Impossibile creare la registrazione.",
+    "conf": "La registrazione è stata creata."
+  },
+  "update": {
+    "label": "Modifica registrazione",
+    "error": "Impossibile salvare le modifiche",
+    "conf": "Le modifiche sono state salvate."
+  },
+  "delete": {
+    "label": "Elimina registrazione",
+    "error": "Impossibile eliminare la registrazione",
+    "conf": "La registrazione è stata eliminata"
+  }
+}

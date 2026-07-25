@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "Instrument créé",
+    "error": "L'instrument n'a pas pu être créé"
+  },
+  "update": {
+    "conf": "Instrument enregistré",
+    "error": "L'instrument n'a pas pu être enregistré"
+  },
+  "delete": {
+    "conf": "Instrument supprimé",
+    "error": "L'instrument n'a pas pu être supprimé"
+  }
+}

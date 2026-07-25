@@ -1,0 +1,60 @@
+{
+    "singular": "Actif",
+    "plural": "Actifs",
+    "empty": "Aucun actif trouvé",
+
+    "list": {
+        "title": "Actifs / Valeurs patrimoniales / Asset"
+    },
+    "deduction": {
+        "label": "Amortissement",
+        "run": "Cycle d'amortissement"
+    },
+
+   "name": {
+        "label": "Nom de l'actif"
+    },
+   "number": {
+        "label": "Numéro de compte"
+    },
+   "category": {
+        "label": "Catégorie"
+    },
+   "date": {
+        "acquisition": {
+            "label": "Date d'acquisition"
+        },
+        "end": {
+            "label": "Fin de période"
+        }
+    },
+    "life": {
+        "label": "Durée de vie (mois)"
+    },
+    "preview": {
+        "label": "Aperçu"
+    },
+
+    "book": {
+        "label": "Comptabiliser"
+    },
+    "create": {
+        "label": "Créer un nouvel actif",
+        "conf": "L'actif a été enregistré.",
+        "error": "L'actif n'a pas pu être enregistré."
+    },
+    "delete": {
+        "label": "Supprimer l'actif",
+        "conf": "L'actif a été supprimé.",
+        "confirm": "Faut-il vraiment supprimer l'actif ?",
+        "error": "L'actif n'a pas pu être supprimé."
+    },
+    "update": {
+        "label": "Modifier l'actif",
+        "conf": "L'actif a été enregistré.",
+        "error": "L'actif n'a pas pu être enregistré."
+    },
+    "view": {
+        "label": "Afficher l'actif"
+    }
+}

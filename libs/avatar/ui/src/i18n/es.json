@@ -1,0 +1,21 @@
+{
+  "task": {
+    "empty": "No se han encontrado tareas.",
+    "empty-my": "¡Enhorabuena! - No tiene ninguna tarea abierta.",
+    "name": "Nombre",
+    "dueDate": "Fecha límite",
+    "assignee": {
+      "label": "Responsable",
+      "description": "Persona responsable de la realización de la tarea."
+    },
+    "author": {
+      "label": "Autor/-a",
+      "description": "Persona que ha creado la tarea."
+    },
+    "scope": {
+      "label": "Contexto",
+      "description": "La tarea normalmente es visible para el autor, el responsable y los usuarios privilegiados. Con el contexto, la visibilidad se puede ampliar a un grupo."
+    },
+    "state": "Estado"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Crear nueva sección",
+    "conf": "La sección se ha creado.",
+    "error": "No se ha podido crear la sección."
+  },
+  "update": {
+    "label": "Editar sección",
+    "conf": "La sección se ha modificado.",
+    "error": "No se ha podido modificar la sección."
+  },
+  "delete": {
+    "label": "Eliminar sección",
+    "conf": "La sección se ha eliminado.",
+    "error": "No se ha podido eliminar la sección.",
+    "confirm": "¿Desea realmente eliminar esta sección ?"
+  }
+}

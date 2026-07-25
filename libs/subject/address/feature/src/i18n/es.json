@@ -1,0 +1,331 @@
+{
+  "addresses": "Direcciones",
+  "empty": "No se encontraron direcciones",
+  "currency": "CHF",
+  "qrinvoice": "Factura QR",
+  "description": "Información de contacto de una persona u organización",
+
+  "browse": {
+    "label": "Ver",
+    "description": "Abrir la dirección como página web en el navegador en una pestaña externa."
+  },
+  "call": {
+    "label": "Llamar a la dirección",
+    "description": "Llamar a la dirección por teléfono.",
+    "phone": "Llamar"
+  },
+  "copy": {
+    "label": "Copiar dirección",
+    "description": "Copiar esta dirección para utilizarla, por ejemplo, en otro programa.",
+    "conf": "La dirección se ha copiado.",
+    "error": "No se pudo copiar la dirección.",
+    "email": {
+      "label": "Copiar dirección de correo electrónico",
+      "conf": "Las direcciones de correo electrónico se han copiado.",
+      "error": "No se pudo(pudieron) copiar la(s) dirección(es) de correo electrónico."
+    },
+    "url": "Copiar URL",
+    "phone": "Copiar número de teléfono"
+  },
+  "create": {
+    "label": "Añadir dirección",
+    "description": "Crear una nueva dirección.",
+    "conf": "La dirección se ha guardado.",
+    "error": "No se pudo guardar la dirección."
+  },
+  "delete": {
+    "label": "Eliminar dirección",
+    "description": "Eliminar una dirección existente.",
+    "conf": "La dirección se ha eliminado.",
+    "error": "No se pudo eliminar la dirección",
+    "confirm": "¿Desea eliminar realmente la dirección ?"
+  },
+  "favorite": {
+    "enable": {
+      "label": "Usar como dirección principal",
+      "description": "Declarar esta dirección como dirección principal. Esto significa que se utiliza, p. ej., en listas de miembros, direcciones de correo electrónico copiadas o en exportaciones.",
+      "conf": "La dirección es ahora una dirección principal."
+    },
+    "disable": {
+      "label": "Ya no es dirección principal",
+      "description": "Esta dirección ya no debe ser una dirección principal.",
+      "conf": "La dirección ya no es una dirección principal."
+    }
+  },
+  "generate": {
+    "qrezs": "Generar boletín de pago QR"
+  },
+  "hide": "Ocultar",
+  "locate": {
+    "label": "Localizar dirección",
+    "description": "Localizar geográficamente la dirección en un mapa."
+  },
+  "open": {
+    "web": "Abrir sitio web"
+  },
+  "search": {
+    "label": "Buscar lugar"
+  },
+  "send": {
+    "mail": {
+      "label": "Enviar por correo postal",
+      "description": "Imprimir la información y enviarla por correo postal ordinario."
+    },
+    "sms": {
+      "label": "Enviar mensaje SMS",
+      "description": "Enviar un mensaje SMS a esta dirección."
+    },
+    "email": {
+      "label": "Enviar correo electrónico",
+      "description": "Enviar un mensaje de correo electrónico a esta dirección.",
+      "subjectPlaceholder": "Información",
+      "bodyPlaceholder": "Saludos cordiales"
+    }
+  },
+  "share": {
+    "label": "Compartir",
+    "description": "Compartir la dirección con otras personas o aplicaciones."
+  },
+  "start": {
+    "chat": "Iniciar chat directo"
+  },
+  "update": {
+    "label": "Modificar dirección",
+    "description": "Modificar una dirección existente.",
+    "conf": "La dirección se ha modificado.",
+    "error": "No se pudo modificar la dirección",
+    "subject": "Cambiar persona u organización"
+  },
+  "upload": {
+    "file": "Subir archivo"
+  },
+  "view": {
+    "label": "Mostrar dirección",
+    "description": "Mostrar la dirección.",
+    "file": "Mostrar archivo",
+    "iban": "Mostrar boletín de pago QR",
+    "postal": "Mostrar en el mapa"
+  },
+
+
+  "address_usage": {
+    "name": "Uso",
+    "helper": "Una denominación de cómo se utiliza la dirección, p. ej. privado, trabajo.",
+    "label": "Uso",
+    "customLabel": {
+      "label": "Denominación de uso",
+      "placeholder": "p. ej. privado, trabajo",
+      "helper": "El tipo de uso de la dirección."
+    },
+    "home": {
+      "label": "Privado",
+      "description": "Se trata de una dirección en el ámbito privado."
+    },
+    "work": {
+      "label": "Trabajo",
+      "description": "Se trata de una dirección profesional."
+    },
+    "mobile": {
+      "label": "Móvil",
+      "description": "El número es de un teléfono móvil."
+    },
+    "custom": {
+      "label": "Personalizado",
+      "placeholder": "Nombre del uso personalizado",
+      "description": "Esta dirección se utiliza en un contexto especial y se designa con un nombre personalizado."
+    }
+  },
+  "address_channel": {
+    "helper": "Tipo de dirección, p. ej. teléfono o correo electrónico.",
+    "label": "Tipo de dirección",
+    "customLabel": {
+      "label": "Denominación del canal",
+      "placeholder": "p. ej. teléfono, correo electrónico, Facebook, etc.",
+      "helper": "La red o el producto de comunicación."
+    },
+    "all": {
+      "label": "Todos los tipos"
+    },
+    "phone": {
+      "label": "Teléfono",
+      "placeholder": "+41 nn nnn nnnn",
+      "description": "Número de teléfono"
+    },
+    "email": {
+      "label": "Correo electrónico",
+      "placeholder": "ssss@ssssssss.ss",
+      "description": "Dirección de correo electrónico"
+    },
+    "postal": {
+      "label": "Correo postal",
+      "description": "Correo postal",
+      "street": "Calle",
+      "streetnr": "Número",
+      "placeholder": "Nombre de la calle",
+      "zip": "C.P.",
+      "city": "Localidad",
+      "country": "País"
+    },
+    "address2": {
+      "label": "Complemento de dirección",
+      "placeholder": "p. ej. c/o o piso"
+    },
+    "web": {
+      "label": "Sitio web",
+      "placeholder": "p. ej. https://www.bkaiser.org",
+      "description": "Dirección web (URL)"
+    },
+    "twitter": {
+      "label": "X / Twitter",
+      "placeholder": "p. ej. @staefarowing",
+      "description": "X ID"
+    },
+    "linkedin": {
+      "label": "LinkedIn",
+      "placeholder": "p. ej. https://linkedin.com/in/vorname-name-2345lkjl23",
+      "description": "LinkedIn URL"
+    },
+    "facebook": {
+      "label": "Facebook",
+      "placeholder": "p. ej.: https://www.facebook.com/user123",
+      "description": "Facebook URL"
+    },
+    "matrix": {
+      "label": "Matrix (MXID)",
+      "placeholder": "@username:domain.com",
+      "description": "El ID de usuario de Matrix (MXID) se compone de su nombre de usuario local y el dominio de su servidor Matrix."
+    },
+    "xing": {
+      "label": "Xing",
+      "placeholder": "https://www.xing.com/profile/vorname_name",
+      "description": "Xing URL"
+    },
+    "skype": {
+      "label": "Skype",
+      "placeholder": "p. ej. hans34",
+      "description": "Skype ID"
+    },
+    "custom": {
+      "label": "Personalizado",
+      "placeholder": "Nombre del tipo de dirección personalizado",
+      "description": "El tipo de dirección se puede nombrar libremente.",
+      "value": "Dirección"
+    },
+    "customValue": {
+      "label": "Valor de la dirección",
+      "placeholder": "Valor de la dirección"
+    },
+    "instagram": {
+      "label": "Instagram",
+      "placeholder": "p. ej. https://www.instagram.com/user123",
+      "description": "Instagram URL"
+    },
+    "signal": {
+      "label": "Signal",
+      "placeholder": "Nombre o n.º de tel.",
+      "description": "Signal ID"
+    },
+    "wire": {
+      "label": "Wire",
+      "placeholder": "@name",
+      "description": "Wire ID"
+    },
+    "github": {
+      "label": "Github",
+      "placeholder": "@name",
+      "description": "Github ID"
+    },
+    "threema": {
+      "label": "Threema",
+      "placeholder": "p. ej. WSXnnnnn",
+      "description": "Threema ID"
+    },
+    "telegram": {
+      "label": "Telegram",
+      "placeholder": "@name o nnnnnnnnnn",
+      "description": "Telegram ID"
+    },
+    "whatsapp": {
+      "label": "Whatsapp",
+      "placeholder": "+41 nn nnn nnnn",
+      "description": "El ID de Whatsapp es el número de teléfono"
+    },
+    "bankaccount": {
+      "label": "Cuenta bancaria",
+      "placeholder": "Número IBAN",
+      "description": "Número de cuenta bancaria",
+      "description-placeholder": "Información bancaria: nombre, contacto, dirección, tel., correo electrónico, etc."
+    },
+    "twint": {
+      "label": "Twint",
+      "placeholder": "Nombre del punto de contacto",
+      "description": "Código QR Twint"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssssssss",
+    "helper": "ID único del registro de dirección en la base de datos."
+  },
+  "streetName": {
+    "label": "Calle",
+    "placeholder": "Introducir calle",
+    "helper": "El nombre de la calle"
+  },
+  "streetNumber": {
+    "label": "N.º",
+    "placeholder": "nnn",
+    "helper": "El número"
+  },
+  "addressValue2": {
+    "label": "Complemento de dirección",
+    "placeholder": "ssssssssss",
+    "helper": "Información adicional opcional para la dirección (p. ej. c/o)"
+  },
+  "countryCode": {
+    "label": "País (ISO)",
+    "placeholder": "CH",
+    "helper": "Código de país según el estándar ISO"
+  },
+  "zipCode": {
+    "label": "C.P.",
+    "placeholder": "nnnn",
+    "helper": "Código postal suizo (número de cuatro dígitos)"
+  },
+  "city": {
+    "label": "Localidad",
+    "placeholder": "Introducir localidad",
+    "helper": "Nombre de la localidad"
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": "Dirección web"
+  },
+  "iban": {
+    "label": "IBAN",
+    "placeholder": "CH00 0000 0000 0000 0000 0",
+    "helper": "International Banking Account Number (número de cuenta)"
+  },
+  "email": {
+    "label": "Correo electrónico",
+    "placeholder": "Introducir dirección de correo electrónico"
+  },
+  "phone": {
+    "label": "Teléfono",
+    "placeholder": "+41 XX XXX XX XX"
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas opcionales y libres"
+  },
+  "isFavorite": {
+    "label": "Favorito",
+    "helper": "La dirección principal se utiliza en las listas y al copiar las direcciones de correo electrónico."
+  },
+  "isCc": {
+    "label": "CC",
+    "helper": "Dirección CC (p. ej. padres)"
+  }
+}

@@ -1,0 +1,266 @@
+{
+  "category": "Category",
+  "categories": "Categories",
+  "description": "A category that describes a group of objects.",
+  "empty": "No categories found.",
+
+  "all": {
+    "label": "All",
+    "description": "All items of a category"
+  },
+  "undefined": {
+    "label": "Undefined",
+    "description": "The category has either not yet been assigned or is unknown."
+  },
+  "archived": {
+    "label": "Archived",
+    "description": "Archived items are displayed."
+  },
+
+  "create": {
+    "label": "Create new category",
+    "conf": "The category was saved.",
+    "error": "The category could not be saved."
+  },
+  "delete": {
+    "label": "Delete category",
+    "confirm": "Do you really want to delete the category?",
+    "conf": "The category was deleted.",
+    "error": "The category could not be deleted."
+  },
+  "update": {
+    "label": "Edit category",
+    "conf": "The category was saved.",
+    "error": "The category could not be saved"
+  },
+  "select": {
+    "label": "Select category"
+  },
+  "view": {
+    "label": "Show category"
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "The okey is the ID of a category"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name",
+    "error": "The name is mandatory and must consist of alphanumeric characters.",
+    "helper": "A name can consist of several words. Only letters (incl. -) and numbers are allowed, no special characters."
+  },
+  "i18n": {
+    "label": "I18n base",
+    "placeholder": "e.g. @subject/org/feature",
+    "helper": "The origin of the translations for the category name. This information is used to display the category name and also the items (if translated)."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes"
+  },
+  "items": {
+      "label": "Items",
+      "description": "The individual items of a category. Each item is displayed on its own line.",
+      "empty": "No items have been defined in this category yet."
+  },
+
+  "priority": {
+    "label": "Priority",
+    "helper": "The priority of a task, i.e. how quickly it must be done.",
+    "all": {
+      "label": "All priorities"
+    },
+    "low": {
+      "label": "Low",
+      "description": "Low priority"
+    },
+    "medium": {
+      "label": "Normal",
+      "description": "Normal priority"
+    },
+    "high": {
+      "label": "High",
+      "description": "High priority"
+    }
+  },
+   "model_type": {
+      "name": "ModelType",
+      "all": {
+        "label": "All"
+      },
+      "account": {
+        "label": "Account",
+        "description": "An account, e.g. in accounting.",
+        "placeholder": "Account name"
+      },
+      "address": {
+        "label": "Address",
+        "description": "Attributes that make a subject reachable.",
+        "placeholder": "Address label"
+      },
+      "avatar": {
+        "label": "Avatar",
+        "description": "An image representing a person.",
+        "placeholder": "Avatar name"
+      },
+      "bill": {
+        "label": "Supplier invoice",
+        "description": "Accounts payable invoice",
+        "placeholder": "Invoice number"
+      },
+      "comment": {
+        "label": "Comment",
+        "description": "Comment on an object.",
+        "placeholder": "Title"
+      },
+      "competitionLevel": {
+        "label": "Competition categories",
+        "description": "Age categories of the competitors.",
+        "placeholder": "Category name"
+      },
+      "document": {
+        "label": "Document",
+        "description": "A document in electronic form.",
+        "placeholder": "Document name"
+      },
+      "expense": {
+        "label": "Expenses",
+        "description": "An expense recorded in the accounting.",
+        "placeholder": "Expense name"
+      },
+      "group": {
+        "label": "Group",
+        "description": "A group of persons or organizations.",
+        "placeholder": "Group name"
+      },
+      "invoice": {
+        "label": "Invoice",
+        "description": "Accounts receivable invoice",
+        "placeholder": "Invoice number"
+      },
+      "invoicePosition": {
+        "label": "Invoice item",
+        "description": "A part of an invoice.",
+        "placeholder": "Invoice item name"
+      },
+      "location": {
+        "label": "Location",
+        "description": "A point on earth that can be determined by coordinates.",
+        "placeholder": "Location name"
+      },
+      "membership": {
+        "label": "Membership",
+        "description": "Membership of a person or organization in another organization.",
+        "placeholder": "Membership number"
+      },
+      "menuitem": {
+        "label": "Menu",
+        "description": "An item in a menu.",
+        "placeholder": "Menu item name"
+      },
+      "org": {
+        "label": "Organization",
+        "description": "An organization, such as a corporation, association, LLC...",
+        "placeholder": "Organization name"
+      },
+      "ownership": {
+        "label": "Usage",
+        "description": "A person or organization owns a resource.",
+        "placeholder": "Usage name"
+      },
+      "page": {
+        "label": "Web page",
+        "description": "Description of the content of a web page (= list of sections).",
+        "placeholder": "Web page title"
+      },
+      "person": {
+        "label": "Person",
+        "description": "A human being.",
+        "placeholder": "Name of a person"
+      },
+      "personalRel": {
+        "label": "Relationship",
+        "description": "A relationship between two persons.",
+        "placeholder": "Relationship name"
+      },
+      "reservation": {
+        "label": "Reservation",
+        "description": "A reservation for a resource.",
+        "placeholder": "Reservation name"
+      },
+      "resource": {
+        "label": "Resource",
+        "description": "Something that can be used, reserved, or owned (boat, car, property, key, locker, etc.).",
+        "placeholder": "Name or ID of the resource"
+      },
+      "responsibility": {
+        "label": "Responsibility",
+        "description": "A responsibility of a person for something.",
+        "placeholder": "ssss"
+      },
+      "section": {
+        "label": "Section",
+        "description": "Part of a web page (horizontal strip).",
+        "placeholder": "Section name"
+      },
+      "transfer": {
+        "label": "Transfer",
+        "description": "A transfer of a resource from one person to another person.",
+        "placeholder": "Transfer name"
+      },
+      "trip": {
+        "label": "Trip",
+        "description": "A journey/excursion/outing/trip/hike with one or more locations.",
+        "placeholder": "Trip name"
+      },
+      "user": {
+        "label": "User",
+        "description": "The authenticated user of the app.",
+        "placeholder": "user ID"
+      },
+      "workrel": {
+        "label": "Employment",
+        "description": "An employment relationship between a person and an organization.",
+        "placeholder": "Employment relationship name"
+      },
+      "category": {
+        "label": "Category",
+        "description": "A category that describes a group of objects.",
+        "placeholder": "Category name"
+      },
+      "calevent": {
+        "label": "Event",
+        "description": "Something that takes place on a specific date.",
+        "placeholder": "Short name for the event"
+      },
+      "task": {
+        "label": "Task",
+        "description": "A task / todo that needs to be done.",
+        "placeholder": "Short description of the task"
+      },
+      "session": {
+        "label": "Sessions",
+        "description": "A session is a temporary interaction between the user's browser and the web server. It lasts from login to logout (explicitly or implicitly with timeout).",
+        "placeholder": "Name"
+
+      }
+    },
+
+   "importance": {
+      "label": "Importance",
+      "low": {
+        "label": "Unimportant",
+        "description": "Low importance"
+      },
+      "medium": {
+        "label": "Normal",
+        "description": "Normal importance"
+      },
+      "high": {
+        "label": "High",
+        "description": "High importance"
+      }
+    }
+}

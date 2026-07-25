@@ -1,0 +1,22 @@
+{
+  "create": {
+    "label": "Add employment",
+    "conf": "Employment was created.",
+    "error": "Employment could not be created."
+  },
+  "update": {
+    "label": "Edit employment",
+    "conf": "Employment was changed.",
+    "error": "Employment could not be changed."
+  },
+  "delete": {
+    "label": "Delete employment",
+    "conf": "Employment was deleted.",
+    "error": "Employment could not be deleted."
+  },
+  "end": {
+    "label": "End employment",
+    "conf": "The employment was ended.",
+    "error": "The employment could not be ended."
+  }
+}

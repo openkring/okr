@@ -1,0 +1,22 @@
+{
+  "create": {
+    "label": "Aggiungi impiego",
+    "conf": "L'impiego è stato creato.",
+    "error": "Non è stato possibile creare l'impiego."
+  },
+  "update": {
+    "label": "Modifica impiego",
+    "conf": "L'impiego è stato modificato.",
+    "error": "Non è stato possibile modificare l'impiego."
+  },
+  "delete": {
+    "label": "Elimina impiego",
+    "conf": "L'impiego è stato eliminato.",
+    "error": "Non è stato possibile eliminare l'impiego."
+  },
+  "end": {
+    "label": "Termina impiego",
+    "conf": "L'impiego è stato terminato.",
+    "error": "Non è stato possibile terminare l'impiego."
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "login": {
+    "conf": "Benvenuto nell'area membri !",
+    "error": "L'accesso non è riuscito. Verificare l'indirizzo e-mail e la password e riprovare."
+  },
+  "pwdreset": {
+    "conf": "Un'e-mail con le istruzioni per reimpostare la password è stata inviata al seguente indirizzo e-mail: ",
+    "error": "La reimpostazione della password non è riuscita."
+  },
+  "logout": {
+    "conf": "La sessione è stata chiusa.",
+    "error": "La disconnessione non è riuscita. Riprovare.",
+    "confirm": "Sei sicuro ? Dovrai poi accedere nuovamente con la password."
+  }
+}

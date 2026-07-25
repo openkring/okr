@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Añadir icono",
+    "conf": "El icono se ha añadido.",
+    "error": "No se ha podido añadir el icono."
+  },
+  "update": {
+    "label": "Editar icono",
+    "conf": "El icono se ha modificado.",
+    "error": "No se ha podido modificar el icono."
+  },
+  "delete": {
+    "label": "Eliminar icono",
+    "conf": "El icono se ha eliminado.",
+    "error": "No se ha podido eliminar el icono.",
+    "confirm": "¿Desea realmente eliminar el icono ?"
+  }
+}

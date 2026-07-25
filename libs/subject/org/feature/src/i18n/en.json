@@ -1,0 +1,136 @@
+{
+  "orgs": "Organizations",
+  "empty": "No organizations found.",
+
+  "copy": {
+    "email": {
+      "conf": "The emails were copied."
+    }
+  },
+  "create": {
+    "label": "New organization"
+  },
+  "delete": {
+    "label": "Delete organization",
+    "confirm": "Should the organization really be deleted?",
+    "conf": "The organization was deleted.",
+    "error": "The organization could not be deleted."
+  },
+  "update": {
+    "label": "Change organization"
+  },
+  "view": {
+    "label": "View organization"
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssssssss",
+    "helper": "Unique ID of the address record in the database."
+  },
+  "name": {
+    "label": "Name of the organization",
+    "placeholder": "Name of the organization",
+    "helper": "Name of the organization"
+  },
+  "taxId": {
+    "label": "VAT number",
+    "placeholder": "CHE-123.456.789",
+    "helper": "Value-added tax ID (or company ID UID)",
+    "error": "The VAT number consists of CHE followed by 9 digits."
+  },
+  "bexioId": {
+    "label": "Bexio ID",
+    "placeholder": "nnnnnn",
+    "helper": "ID for synchronizing with a contact in Bexio.",
+    "error": "The Bexio ID is a six-digit number."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Optional and arbitrary notes"
+  },
+  "dateOfFoundation": {
+    "label": "Foundation date",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "Date on which the organization was founded.",
+    "error": "The date format is not correct."
+  },
+  "dateOfLiquidation": {
+    "label": "Liquidation date",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "Date on which the organization was dissolved.",
+    "error": "The date format is not correct."
+  },
+  "streetName": {
+    "label": "Street",
+    "placeholder": "Enter street",
+    "helper": "The name of the street"
+  },
+  "streetNumber": {
+    "label": "No.",
+    "placeholder": "nnn",
+    "helper": "The house number"
+  },
+  "countryCode": {
+    "label": "Country (ISO)",
+    "placeholder": "CH",
+    "helper": "Country code according to ISO standard"
+  },
+  "zipCode": {
+    "label": "Postal code",
+    "placeholder": "nnnn",
+    "helper": "Swiss postal code (four-digit number)"
+  },
+  "city": {
+    "label": "City",
+    "placeholder": "Enter city",
+    "helper": "City name"
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": "Web address"
+  },
+  "email": {
+    "label": "E-mail",
+    "placeholder": "Enter e-mail address"
+  },
+  "phone": {
+    "label": "Phone",
+    "placeholder": "+41 XX XXX XX XX"
+  },
+
+  "org_type": {
+    "label": "Organization type",
+    "helper": "The type of an organization (e.g. company, association/club, administration, etc.).",
+    "legalEntity": {
+      "label": "Company name",
+      "placeholder": "Company name",
+      "error": "Entering the company name is mandatory. Only letters (incl. -) and numbers are allowed, no special characters."
+    },
+    "association": {
+      "label": "Association name",
+      "placeholder": "Association name",
+      "helper": "The official name of the association or organization.",
+      "error": "Entering the association name is mandatory. Only letters (incl. -) and numbers are allowed, no special characters."
+    },
+    "authority": {
+      "label": "Name of the authority",
+      "placeholder": "Name of the authority",
+      "helper": "The official name of an authority, office, department or administrative unit.",
+      "error": "Entering the name of the authority is mandatory. Only letters (incl. -) and numbers are allowed, no special characters."
+    },
+    "group": {
+      "label": "Group name",
+      "placeholder": "Name of the group",
+      "helper": "The official name of a group or a team.",
+      "error": "Entering the group name is mandatory. Only letters (incl. -) and numbers are allowed, no special characters."
+    },
+    "other": {
+      "label": "Other"
+    },
+    "all": {
+      "label": "All"
+    }
+  }
+}

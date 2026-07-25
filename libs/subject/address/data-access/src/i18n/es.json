@@ -1,0 +1,31 @@
+{
+  "create": {
+    "label": "Añadir dirección",
+    "description": "Crear una nueva dirección.",
+    "conf": "La dirección se ha guardado.",
+    "error": "No se ha podido guardar la dirección."
+  },
+  "update": {
+    "label": "Editar dirección",
+    "description": "Editar una dirección existente.",
+    "conf": "La dirección se ha modificado.",
+    "error": "No se ha podido modificar la dirección."
+  },
+  "delete": {
+    "label": "Eliminar dirección",
+    "description": "Eliminar una dirección existente.",
+    "conf": "La dirección se ha eliminado.",
+    "error": "No se ha podido eliminar la dirección.",
+    "askConfirmation": "¿Desea realmente eliminar la dirección ?"
+  },
+  "favorite": {
+    "enable": {
+      "conf": "La dirección es ahora la dirección principal.",
+      "error": "No se ha podido establecer la dirección como dirección principal."
+    },
+    "disable": {
+      "conf": "La dirección ya no es la dirección principal.",
+      "error": "No se ha podido cambiar la dirección principal."
+    }
+  }
+}

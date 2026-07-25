@@ -1,0 +1,843 @@
+{
+  "resource": "Resource",
+  "resources": "Resources",
+  "desc": "Something you can use, reserve or own (boat, car, property, key, locker, etc.).",
+  "all": "All resources",
+
+  "empty": "No resources found.",
+  "other_attributes": "Other details",
+
+  "create": {
+    "label": "Add new resource",
+    "conf": "The new resource has been saved.",
+    "error": "The resource could not be saved."
+  },
+  "delete": {
+    "label": "Delete resource",
+    "conf": "The resource has been deleted.",
+    "error": "The resource could not be deleted.",
+    "confirm": "Do you really want to delete the resource?"
+  },
+  "update": {
+    "label": "Edit resource",
+    "conf": "The changes have been saved",
+    "error": "The changes could not be saved."
+  },
+  "view": {
+    "label": "Show resource"
+  },
+  "select": {
+    "label": "Select resource"
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "The okey is the unique identifier of a resource in the database."
+  },
+  "color": {
+    "label": "Color",
+    "ionic": {
+      "primary": {
+        "label": "Primary",
+        "description": "Primary color for the app"
+      },
+      "secondary": {
+        "label": "Secondary",
+        "description": "Secondary color for the app"
+      },
+      "tertiary": {
+        "label": "Tertiary",
+        "description": "Tertiary color for the app"
+      },
+      "success": {
+        "label": "Success",
+        "description": "Success color for the app"
+      },
+      "warning": {
+        "label": "Warning",
+        "description": "Warning color for the app"
+      },
+      "danger": {
+        "label": "Danger",
+        "description": "Danger color for the app"
+      },
+      "light": {
+        "label": "Light",
+        "description": "Light color for the app"
+      },
+      "medium": {
+        "label": "Medium",
+        "description": "Medium color for the app"
+      },
+      "dark": {
+        "label": "Dark",
+        "description": "Dark color for the app"
+      },
+      "white": {
+        "label": "None",
+        "description": "The default color is used, i.e. white or black"
+      }
+    }
+  },
+  "currentValue": {
+    "label": "Current value",
+    "placeholder": "Current value",
+    "helper": "The value in its current condition, e.g. the current value of a boat.",
+    "error": "You must enter a whole number consisting only of digits"
+  },
+  "description": {
+    "label": "Description",
+    "placeholder": "A longer, multi-line text."
+  },
+  "keyNr": {
+    "label": "Key no.",
+    "placeholder": "nnnnn",
+    "helper": "The key number is a five-digit number.",
+    "error": "You must enter a whole number consisting only of digits."
+  },
+  "lockerNr": {
+    "label": "Locker no.",
+    "placeholder": "n[nn]",
+    "helper": "The number of the locker, e.g. 1, 2, 3, etc.",
+    "error": "You must enter a whole number consisting only of digits."
+  },
+  "load": {
+    "label": "Load",
+    "placeholder": "Load in kg [from-to]",
+    "helper": "Load in kg (from - to)",
+    "error": "The input consists of an optional minimum weight (2-digit number) - maximum weight (2-3 digit number)"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name",
+    "error": "The name is mandatory and must consist of alphanumeric characters.",
+    "helper": "A name can consist of several words. Only letters (incl. -) and numbers are allowed, no special characters."
+  },
+
+  "resource_type": {
+    "label": "Resource type",
+    "helper": "The type of the resource.",
+    "all": {
+      "label": "All resources"
+    }
+  },
+  "type": {
+    "label": "Resource type",
+    "undefined": {
+      "label": "Undefined",
+      "description": "The resource type is not set or unknown.",
+      "formTitle": "Resource details"
+    },
+
+    "boat": {
+      "label": "Boat",
+      "plural": "Boats",
+      "empty": "No boats found.",
+      "formTitle": "Boat details",
+      "name": "Boat name",
+      "type": "Boat type",
+      "description": "Motorboat, sailboat, etc.",
+      "create": {
+        "label": "Add new boat",
+        "conf": "The new boat has been saved.",
+        "error": "The boat could not be saved."
+      },
+      "update": {
+        "label": "Edit boat",
+        "conf": "The changes have been saved",
+        "error": "The changes could not be saved."
+      },
+      "delete": {
+        "label": "Delete boat",
+        "conf": "The boat has been deleted.",
+        "error": "The boat could not be deleted.",
+        "askConfirmation": "Do you really want to delete the boat?"
+      },
+      "view": {
+        "label": "Show boat"
+      }
+    },
+    "legaldoc": {
+      "label": "Document",
+      "title": "Documents",
+      "formTitle": "",
+      "description": "A confirmation in the form of an official document."
+    },
+
+    "rboat": {
+      "label": "Rowing boat",
+      "plural": "Rowing boats",
+      "empty": "No rowing boats found.",
+      "formTitle": "Rowing boat details",
+      "name": "Name of the rowing boat",
+      "type": "Boat type",
+      "description": "Rowing boat owned by the club or privately",
+      "create": {
+        "label": "Add new rowing boat",
+        "conf": "The new rowing boat has been saved.",
+        "error": "The rowing boat could not be saved."
+      },
+      "update": {
+        "label": "Edit rowing boat",
+        "conf": "The changes have been saved",
+        "error": "The changes could not be saved."
+      },
+      "delete": {
+        "label": "Delete rowing boat",
+        "conf": "The rowing boat has been deleted.",
+        "error": "The rowing boat could not be deleted.",
+        "askConfirmation": "Do you really want to delete the rowing boat?"
+      },
+      "view": {
+        "label": "Show rowing boat"
+      }
+    },
+
+    "car": {
+      "label": "Vehicle",
+      "title": "Vehicles",
+      "formTitle": "Vehicle details",
+      "description": "Car, truck, bus",
+      "create": {
+        "label": "Add new vehicle",
+        "conf": "The new vehicle has been saved.",
+        "error": "The vehicle could not be saved."
+      },
+      "update": {
+        "label": "Edit vehicle",
+        "conf": "The changes have been saved",
+        "error": "The changes could not be saved."
+      },
+      "delete": {
+        "label": "Delete vehicle",
+        "conf": "The vehicle has been deleted.",
+        "error": "The vehicle could not be deleted.",
+        "askConfirmation": "Do you really want to delete the vehicle?"
+      },
+      "view": {
+        "label": "Show vehicle"
+      }
+    },
+
+    "clubBoat": {
+      "label": "Club boat",
+      "title": "Club boats"
+    },
+    "privateBoat": {
+      "label": "Private boat",
+      "title": "Private boats"
+    },
+
+    "other": {
+      "label": "Other resource",
+      "description": "Resource that cannot be assigned to any predefined type",
+      "formTitle": "Resource details",
+      "create": {
+        "label": "Add new resource",
+        "conf": "The new resource has been saved.",
+        "error": "The new resource could not be saved."
+      },
+      "update": {
+        "label": "Edit resource",
+        "conf": "The changes have been saved",
+        "error": "The changes could not be saved."
+      },
+      "delete": {
+        "label": "Delete resource",
+        "conf": "The resource has been deleted.",
+        "error": "The resource could not be deleted.",
+        "askConfirmation": "Do you really want to delete the resource?"
+      },
+      "view": {
+        "label": "Show resource"
+      }
+    },
+
+    "motorBoat": {
+      "label": "Motorboat",
+      "title": "Motorboats",
+      "description": "Boat with a motor, e.g. inflatable boat"
+    },
+    "vehicle": {
+      "label": "Vehicle",
+      "title": "Vehicles",
+      "description": "Car or trailer"
+    },
+    "locker": {
+      "label": "Locker",
+      "plural": "Lockers",
+      "title": "Locker - cabinet",
+      "empty": "No lockers found.",
+      "formTitle": "Locker cabinet details",
+      "description": "Changing cabinet in the men's locker room",
+      "create": {
+        "label": "Add new locker cabinet",
+        "conf": "The new locker cabinet has been saved.",
+        "error": "The locker cabinet could not be saved."
+      },
+      "update": {
+        "label": "Edit locker cabinet",
+        "conf": "The changes have been saved",
+        "error": "The changes could not be saved."
+      },
+      "delete": {
+        "label": "Delete locker cabinet",
+        "conf": "The locker cabinet has been deleted.",
+        "error": "The locker cabinet could not be deleted.",
+        "askConfirmation": "Do you really want to delete the locker cabinet?"
+      },
+      "view": {
+        "label": "Show locker cabinet"
+      }
+    },
+    "key": {
+      "label": "Key",
+      "plural": "Keys",
+      "title": "Boathouse keys",
+      "empty": "No keys found.",
+      "name": "Key name",
+      "nr": "Key no.",
+      "formTitle": "Key details",
+      "description": "Key, e.g. for the front door",
+      "create": {
+        "label": "Add new key",
+        "conf": "The new key has been saved.",
+        "error": "The key could not be saved."
+      },
+      "update": {
+        "label": "Edit key",
+        "conf": "The changes have been saved",
+        "error": "The changes could not be saved."
+      },
+      "delete": {
+        "label": "Delete key",
+        "conf": "The key has been deleted.",
+        "error": "The key could not be deleted.",
+        "askConfirmation": "Do you really want to delete the key?"
+      },
+      "view": {
+        "label": "Show key"
+      }
+    },
+    "pet": {
+      "label": "Pet",
+      "title": "Pets",
+      "formTitle": "Pet details",
+      "description": "Pet, e.g. dog or cat",
+      "create": {
+        "label": "Add new pet",
+        "conf": "The new pet has been saved.",
+        "error": "The pet could not be saved."
+      },
+      "update": {
+        "label": "Edit pet",
+        "conf": "The changes have been saved",
+        "error": "The changes could not be saved."
+      },
+      "delete": {
+        "label": "Delete pet",
+        "conf": "The pet has been deleted.",
+        "error": "The pet could not be deleted.",
+        "askConfirmation": "Do you really want to delete the pet?"
+      },
+      "view": {
+        "label": "Show pet"
+      }
+    },
+    "license": {
+      "label": "License",
+      "title": "License",
+      "description": "Permission for something, e.g. an association license"
+    },
+    "contract": {
+      "label": "Contract",
+      "title": "Contract document",
+      "description": "Contract, e.g. rental contract, employment contract"
+    },
+    "document": {
+      "label": "Document",
+      "title": "Document",
+      "description": "Any document, e.g. contract, certificate, etc."
+    },
+    "realestate": {
+      "label": "Property",
+      "title": "Property",
+      "formTitle": "Property details",
+      "description": "House, apartment, plot of land",
+      "create": {
+        "label": "Add new property",
+        "conf": "The new property has been saved.",
+        "error": "The property could not be saved."
+      },
+      "update": {
+        "label": "Edit property",
+        "conf": "The changes have been saved",
+        "error": "The changes could not be saved."
+      },
+      "delete": {
+        "label": "Delete property",
+        "conf": "The property has been deleted.",
+        "error": "The property could not be deleted.",
+        "askConfirmation": "Do you really want to delete the property?"
+      },
+      "view": {
+        "label": "Show property"
+      }
+    }
+  },
+  "state": {
+    "undefined": {
+      "label": "Undefined",
+      "description": "The status is not defined, e.g. initially there is no request yet or a request was rejected."
+    },
+    "applied": {
+      "label": "Requested",
+      "description": "A request has been made."
+    },
+    "approved": {
+      "label": "Approved",
+      "description": "The request has been approved."
+    },
+    "active": {
+      "label": "Active",
+      "description": "The resource is assigned for use by a person."
+    },
+    "lost": {
+      "label": "Lost",
+      "description": "The resource cannot currently be used, e.g. due to loss, theft or damage. The user must arrange for a replacement or compensate for the loss."
+    },
+    "cancelled": {
+      "label": "Cancelled",
+      "description": "The use of the resource has been cancelled."
+    },
+    "archived": {
+      "label": "Archived",
+      "description": "The resource is archived, i.e. the previous use is no longer current."
+    }
+  },
+
+  "boat": {
+    "singular": "Boat",
+    "plural": "Boats",
+    "field": {
+      "empty": "No boats found."
+    },
+    "create": {
+      "label": "Add new boat",
+      "conf": "The new boat has been saved.",
+      "error": "The boat could not be saved"
+    },
+    "update": {
+      "label": "Edit boat",
+      "conf": "The changes have been saved",
+      "error": "The changes could not be saved."
+    },
+    "delete": {
+      "label": "Delete boat",
+      "conf": "The boat has been deleted.",
+      "error": "The boat could not be deleted.",
+      "askConfirmation": "Do you really want to delete the boat?"
+    },
+    "view": {
+      "label": "Show boat data"
+    }
+  },
+  "boat_type": {
+    "all": {
+      "label": "All boat types"
+    },
+    "motor": {
+      "label": "Motorboat",
+      "description": "Boat with a motor"
+    },
+    "sail": {
+      "label": "Sailboat",
+      "description": "Boat with a sail"
+    },
+    "pedalo": {
+      "label": "Pedal boat",
+      "description": "Boat with pedal drive"
+    },
+    "row": {
+      "label": "Rowing boat",
+      "description": "Rowing boat"
+    },
+    "inflate": {
+      "label": "Inflatable boat",
+      "description": "Inflatable boat"
+    },
+    "sup": {
+      "label": "SUP / surfboard",
+      "description": "SUP or surfboard"
+    }
+  },
+
+  "rboat": {
+    "singular": "Rowing boat",
+    "plural": "Rowing boats",
+    "field": {
+      "empty": "No rowing boats found."
+    },
+    "create": {
+      "label": "Add new rowing boat",
+      "conf": "The new rowing boat has been saved.",
+      "error": "The rowing boat could not be saved"
+    },
+    "update": {
+      "label": "Edit rowing boat",
+      "conf": "The changes have been saved",
+      "error": "The changes could not be saved."
+    },
+    "delete": {
+      "label": "Delete rowing boat",
+      "conf": "The rowing boat has been deleted.",
+      "error": "The rowing boat could not be deleted.",
+      "askConfirmation": "Do you really want to delete the rowing boat?"
+    },
+    "view": {
+      "label": "Show rowing boat data"
+    }
+  },
+  "rboat_type": {
+    "all": {
+      "label": "All boat types"
+    },
+    "b1x": {
+      "label": "1x",
+      "description": "Single scull"
+    },
+    "b2m": {
+      "label": "2-",
+      "description": "Coxless pair"
+    },
+    "b2x": {
+      "label": "2x",
+      "description": "Double scull"
+    },
+    "b2p": {
+      "label": "2+",
+      "description": "Coxed pair"
+    },
+    "b2mx": {
+      "label": "2-/2x",
+      "description": "Convertible pair"
+    },
+    "b3x": {
+      "label": "3x",
+      "description": "Triple scull"
+    },
+    "b4m": {
+      "label": "4-",
+      "description": "Coxless four"
+    },
+    "b4x": {
+      "label": "4x",
+      "description": "Quadruple scull"
+    },
+    "b5x": {
+      "label": "5x",
+      "description": "Quintuple scull"
+    },
+    "b8p": {
+      "label": "8+",
+      "description": "Coxed eight"
+    }
+  },
+  "rboat_usage": {
+    "kandidierende": {
+      "label": "Candidates",
+      "description": "Boats for candidates (C-gigs & coastal)"
+    },
+    "breitensport": {
+      "label": "Recreational sport",
+      "description": "All active members depending on their respective performance level"
+    },
+    "routinierte": {
+      "label": "Experienced",
+      "description": "Very experienced active members, priority for training and regattas"
+    },
+    "leistungssport": {
+      "label": "Competitive sport",
+      "description": "Racers, masters in coordination with the head coach"
+    },
+    "private": {
+      "label": "Private boat",
+      "description": "The boat is privately owned by a club member and cannot be used by club members."
+    }
+  },
+  "locker": {
+    "singular": "Locker",
+    "plural": "Lockers",
+    "empty": "No lockers found.",
+    "nr": "Locker no.",
+    "create": {
+      "label": "Add new locker",
+      "conf": "The new locker has been saved",
+      "error": "The locker could not be created."
+    },
+    "delete": {
+      "label": "Delete locker",
+      "confirm": "Do you really want to delete the locker?",
+      "conf": "Locker has been deleted",
+      "error": "The locker could not be deleted."
+    },
+    "update": {
+      "label": "Edit locker",
+      "conf": "The locker has been changed",
+      "error": "The locker could not be changed"
+    },
+    "view": {
+      "label": "Show locker"
+    }
+  },
+  "key": {
+    "singular": "Key",
+    "plural": "Keys",
+    "field": {
+      "empty": "No keys have been recorded yet."
+    },
+    "create": {
+      "label": "Add new key",
+      "conf": "Key has been saved",
+      "error": "Key could not be created"
+    },
+    "delete": {
+      "label": "Delete key",
+      "confirm": "Do you really want to delete the key?",
+      "conf": "The key has been deleted",
+      "error": "The key could not be deleted."
+    },
+    "update": {
+      "label": "Edit boathouse key",
+      "conf": "Boathouse key has been changed",
+      "error": "Boathouse key could not be changed"
+    },
+    "view": {
+      "label": "Show boathouse key"
+    }
+  },
+  "vehicle": {
+    "singular": "Vehicle",
+    "plural": "Vehicles",
+    "create": {
+      "label": "Add new vehicle",
+      "conf": "Vehicle has been saved",
+      "error": "Vehicle could not be created"
+    },
+    "update": {
+      "label": "Edit vehicle",
+      "conf": "Vehicle has been changed",
+      "error": "Vehicle could not be changed"
+    },
+    "view": {
+      "label": "Show vehicle"
+    }
+  },
+  "car": {
+    "singular": "Car",
+    "plural": "Cars",
+    "create": {
+      "label": "Add new car",
+      "conf": "Car has been saved",
+      "error": "Car could not be created"
+    },
+    "update": {
+      "label": "Edit car",
+      "conf": "Car has been changed",
+      "error": "Car could not be changed"
+    },
+    "view": {
+      "label": "Show car"
+    }
+  },
+  "car_type": {
+    "name": "Vehicle type",
+    "all": {
+      "label": "All"
+    },
+    "convertible": {
+      "label": "Convertible",
+      "description": "Open vehicle with a removable roof"
+    },
+    "coupe": {
+      "label": "Coupé",
+      "description": "Two-door car with a sporty appearance."
+    },
+    "stationWagon": {
+      "label": "Station wagon",
+      "description": "Extended sedan with a larger trunk and tailgate."
+    },
+    "suv": {
+      "label": "Off-roader (SUV)",
+      "description": "Sport Utility Vehicle for offroad and onroad"
+    },
+    "sedan": {
+      "label": "Sedan",
+      "description": "Four-door vehicle with a trunk separated from the passenger compartment."
+    },
+    "hatchback": {
+      "label": "Compact",
+      "description": "Four-door vehicle with a tailgate, e.g. VW Golf"
+    },
+    "minivan": {
+      "label": "Minivan",
+      "description": "Four-door vehicle with more passenger space"
+    },
+    "truck": {
+      "label": "Truck",
+      "description": "Car, truck, bus"
+    },
+    "pickupTruck": {
+      "label": "Pickup",
+      "description": "Small truck"
+    },
+    "sportsCar": {
+      "label": "Sports car",
+      "description": "Typically a two-seater vehicle with a sporty appearance."
+    },
+    "utility": {
+      "label": "Utility vehicle",
+      "description": "Van for commercial use"
+    },
+    "camper": {
+      "label": "Camper",
+      "description": "Recreational vehicle with sleeping accommodation"
+    },
+    "bus": {
+      "label": "Bus",
+      "description": "Commercial large transporter for many people"
+    }
+  },
+  "realestate": {
+    "singular": "Property",
+    "plural": "Properties",
+    "create": {
+      "label": "Add new property",
+      "conf": "Property has been saved",
+      "error": "Property could not be created"
+    },
+    "update": {
+      "label": "Edit property",
+      "conf": "Property has been changed",
+      "error": "Property could not be changed"
+    },
+    "view": {
+      "label": "Show property"
+    }
+  },
+  "legaldoc_type": {
+    "license": {
+      "label": "License",
+      "description": "A right of use"
+    },
+    "permit": {
+      "label": "Permit",
+      "description": "The permission of an authorized party that the party concerned may do something."
+    },
+    "certification": {
+      "label": "Certificate",
+      "description": "A written confirmation from an authorized party."
+    },
+    "passport": {
+      "label": "Passport",
+      "description": "Identification in the form of a passport"
+    },
+    "idcard": {
+      "label": "ID",
+      "description": "Identification in the form of an identity card"
+    },
+    "confirmation": {
+      "label": "Confirmation",
+      "description": "A written document issued by an authorized party that vouches for the correctness and existence of a fact."
+    },
+    "diploma": {
+      "label": "Diploma",
+      "description": "A confirmation of a completed education."
+    },
+    "contract": {
+      "label": "Contract",
+      "description": "An agreement between at least 2 parties."
+    },
+    "visa": {
+      "label": "Visa",
+      "description": "e.g. a travel visa for entry into a specific country"
+    },
+    "policy": {
+      "label": "Policy",
+      "description": "e.g. an insurance policy"
+    },
+    "other": {
+      "label": "Other",
+      "description": "Another form of a legal document."
+    }
+  },
+  "pet_type": {
+    "cat": {
+      "label": "Cat",
+      "description": "A cat as a pet"
+    },
+    "dog": {
+      "label": "Dog",
+      "description": "A dog as a pet"
+    },
+    "bird": {
+      "label": "Bird",
+      "description": "A bird as a pet"
+    },
+    "sheep": {
+      "label": "Sheep",
+      "description": "A sheep as a pet"
+    },
+    "rabbit": {
+      "label": "Rabbit",
+      "description": "A rabbit as a pet"
+    },
+    "horse": {
+      "label": "Horse",
+      "description": "A horse as a pet"
+    },
+    "fish": {
+      "label": "Fish",
+      "description": "A fish as a pet"
+    }
+  },
+  "other": {
+    "create": {
+      "label": "Add new resource",
+      "error": "The new resource could not be created.",
+      "conf": "The new resource has been created."
+    },
+    "update": {
+      "label": "Edit resource",
+      "error": "The changes could not be saved.",
+      "conf": "The changes have been saved."
+    },
+    "delete": {
+      "label": "Delete resource",
+      "error": "The resource could not be deleted.",
+      "conf": "The resource has been deleted."
+    },
+    "view": {
+      "label": "Resource information"
+    },
+    "reactivate": {
+      "label": "Reactivate resource",
+      "error": "The resource could not be reactivated.",
+      "conf": "The resource has been reactivated."
+    },
+    "search": {
+      "label": "Search resource"
+    },
+    "select": {
+      "all": "Select resource",
+      "motorBoat": "Select motorboat",
+      "vehicle": "Select vehicle",
+      "locker": "Select locker cabinet",
+      "maleLocker": "Select men's locker",
+      "femaleLocker": "Select women's locker",
+      "houseKey": "Select key",
+      "rowingBoat": "Select rowing boat"
+    }
+  }
+}

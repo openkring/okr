@@ -1,0 +1,76 @@
+{
+  "title": "Se connecter",
+  "email": {
+    "label": "E-mail",
+    "placeholder": "ssss@ssssssss.sss",
+    "error": "Veuillez saisir une adresse e-mail valide.",
+    "helper": "Veuillez utiliser la même adresse e-mail sur laquelle vous recevez les informations de l'association."
+  },
+  "password": {
+    "label": "Mot de passe",
+    "placeholder": "Mot de passe",
+    "error": "Le mot de passe doit comporter au moins 6 caractères et peut contenir les caractères spéciaux suivants : -_!@?:;äüö$*+&()=.,£$%",
+    "helper": "Si vous n'avez pas encore de mot de passe ou si vous ne le connaissez pas, vous pouvez cliquer sur le bouton 'Réinitialiser le mot de passe' ci-dessous et définir un nouveau mot de passe."
+  },
+  "pwdreset": {
+    "title": "Définir le mot de passe",
+    "newpwd": "Définir un nouveau mot de passe",
+    "invalidLink": "Ce lien est invalide ou déjà expiré. Veuillez demander un nouveau lien de réinitialisation.",
+    "success": "Mot de passe modifié avec succès. Vous allez être redirigé vers la page de connexion.",
+    "savepwd": "Enregistrer le mot de passe"
+  },
+  "pwdconfirm": "Définir le mot de passe",
+
+  "roles": {
+    "label": "Rôles",
+    "helper": "Les rôles regroupent des autorisations en une fonction spécifique.",
+    "none": {
+      "label": "Aucun",
+      "description": "Aucun rôle n'est défini."
+    },
+    "public": {
+      "label": "Public",
+      "description": "Visible pour les utilisateurs non authentifiés"
+    },
+    "anonymous": {
+      "label": "anonymous",
+      "description": "Utilisateur anonyme sans compte"
+    },
+    "registered": {
+      "label": "registered",
+      "description": "Utilisateur enregistré / authentifié"
+    },
+    "privileged": {
+      "label": "privileged",
+      "description": "Utilisateur privilégié (p. ex. membre du comité)"
+    },
+    "contentAdmin": {
+      "label": "contentAdmin",
+      "description": "Gestionnaire de contenus (pages, menus)"
+    },
+    "resourceAdmin": {
+      "label": "resourceAdmin",
+      "description": "Gestionnaire de ressources (p. ex. véhicules, bateaux, clés)"
+    },
+    "memberAdmin": {
+      "label": "memberAdmin",
+      "description": "Gestionnaire de membres"
+    },
+    "eventAdmin": {
+      "label": "eventAdmin",
+      "description": "Gestionnaire d'événements et de rendez-vous"
+    },
+    "treasurer": {
+      "label": "treasurer",
+      "description": "Responsable des finances"
+    },
+    "admin": {
+      "label": "admin",
+      "description": "Superutilisateur"
+    },
+    "tester": {
+      "label": "tester",
+      "description": "Testeur"
+    }
+  }
+}

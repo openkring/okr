@@ -1,0 +1,100 @@
+{
+  "singular": "Facture fournisseur",
+  "plural": "Factures fournisseurs",
+  "empty": "Aucune facture trouvée",
+
+  "list": {
+    "title": "Factures créanciers"
+  },
+
+  "id": {
+    "label": "N° de facture",
+    "placeholder": "nnnnn",
+    "helper": "Le numéro de facture du fournisseur."
+  },
+  "title": {
+    "label": "Objet",
+    "placeholder": "Texte",
+    "helper": "Une brève description de ce dont il s'agit."
+  },
+  "date": {
+    "bill": {
+      "label": "Date de facture",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La date à laquelle la facture a été émise."
+    },
+    "due": {
+      "label": "à payer avant le",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La date à laquelle la facture doit être payée."
+    },
+    "payment": {
+      "label": "Date de paiement",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La date à laquelle la facture a été payée."
+    }
+  },
+  "amount": {
+    "label": "Montant de la facture",
+    "placeholder": "nn.nn",
+    "helper": "Le montant de la facture."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes libres sur la facture"
+  },
+  "state": {
+    "label": "Statut"
+  },
+
+  "download": {
+    "label": "Télécharger la facture"
+  },
+  "view": {
+    "label": "Afficher la facture"
+  },
+  "scan": {
+    "label": "Scanner la facture"
+  },
+  "create": {
+    "label": "Ajouter une facture"
+  },
+  "update": {
+    "label": "Modifier la facture"
+  },
+  "delete": {
+    "label": "Supprimer la facture",
+    "confirm": "Voulez-vous vraiment supprimer la facture ?"
+  },
+
+  "readonly": {
+    "banner": "Cette liste est en lecture seule. Les créanciers sont gérés dans Bexio."
+  },
+
+  "bill_state": {
+    "name": "Statut de la facture",
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "draft": {
+      "label": "Brouillon",
+      "description": "La facture est un brouillon et n'a pas encore été envoyée."
+    },
+    "pending": {
+      "label": "Ouverte",
+      "description": "La facture a été envoyée et n'est pas encore payée."
+    },
+    "paid": {
+      "label": "Payée",
+      "description": "La facture a été payée."
+    },
+    "overdue": {
+      "label": "En retard",
+      "description": "Le délai de paiement est dépassé, la facture est en retard."
+    },
+    "cancelled": {
+      "label": "Annulée",
+      "description": "La facture a été annulée."
+    }
+  }
+}

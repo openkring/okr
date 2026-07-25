@@ -1,0 +1,72 @@
+{
+  "title": "Éditeur de formulaires",
+  "list": {
+    "title": "Formulaires",
+    "empty": "Aucun formulaire trouvé."
+  },
+  "as": {
+    "title": "Actions du formulaire"
+  },
+  "action": {
+    "builder": "Modifier les champs",
+    "settings": "Paramètres",
+    "export_csv": "Exporter en CSV",
+    "export_pdf": "Exporter en PDF",
+    "duplicate": "Dupliquer",
+    "archive": "Archiver"
+  },
+  "form": {
+    "key": {
+      "label": "Clé du formulaire (immuable)"
+    },
+    "loading": "Le formulaire se charge…",
+    "notfound": "Formulaire introuvable.",
+    "archived": "Ce formulaire n'est plus disponible."
+  },
+  "field": {
+    "title": "Configurer le champ",
+    "add": "Ajouter un champ"
+  },
+
+  "canvas_empty": "Faites glisser les champs de la bibliothèque ici.",
+  "library": "Bibliothèque de champs",
+  "key": "Nom du champ (snake_case)",
+  "label": "Libellé",
+  "required": "Champ obligatoire",
+  "width": "Largeur",
+  "help": "Texte d'aide",
+  "preview": "Aperçu",
+  "mapping": {
+    "choose": "Sélectionner une collection"
+  },
+  "target": {
+    "label": "Où les soumissions doivent-elles être enregistrées ?",
+    "collection": "Collection Firestore (recommandé)",
+    "url": "URL externe (p. ex. Google Forms)"
+  },
+  "url": {
+    "label": "URL cible"
+  },
+
+  "create": {
+    "label": "Créer un nouveau formulaire",
+    "conf": "Le formulaire a été créé.",
+    "error": "Le formulaire n'a pas pu être créé."
+  },
+  "delete": {
+    "label": "Supprimer le formulaire",
+    "confirm": "Voulez-vous vraiment supprimer le formulaire ?",
+    "conf": "Le formulaire a été supprimé.",
+    "error": "Le formulaire n'a pas pu être supprimé."
+  },
+  "submit": {
+    "label": "Envoyer",
+    "conf": "Merci ! Votre soumission a été enregistrée.",
+    "error": "Erreur lors de l'envoi. Veuillez réessayer."
+  },
+  "update": {
+    "label": "Modifier le formulaire",
+    "conf": "Le formulaire a été enregistré.",
+    "error": "Le formulaire n'a pas pu être enregistré."
+  }
+}

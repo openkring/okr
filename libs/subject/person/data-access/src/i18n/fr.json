@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Ajouter une nouvelle personne",
+    "error": "La nouvelle personne n'a pas pu être créée.",
+    "conf": "La nouvelle personne a été créée."
+  },
+  "update": {
+    "label": "Modifier la personne",
+    "error": "Les modifications n'ont pas pu être enregistrées",
+    "conf": "Les modifications ont été enregistrées."
+  },
+  "delete": {
+    "label": "Supprimer la personne",
+    "error": "La personne n'a pas pu être supprimée.",
+    "conf": "La personne a été supprimée.",
+    "confirm": "Voulez-vous vraiment supprimer la personne ?"
+  }
+}

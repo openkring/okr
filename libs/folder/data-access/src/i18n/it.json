@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Aggiungere cartella",
+    "conf": "La cartella è stata aggiunta.",
+    "error": "Non è stato possibile aggiungere la cartella."
+  },
+  "update": {
+    "conf": "La cartella è stata modificata.",
+    "error": "Non è stato possibile modificare la cartella."
+  },
+  "delete": {
+    "conf": "La cartella è stata eliminata.",
+    "confirm": "Eliminare davvero la cartella ?",
+    "error": "Non è stato possibile eliminare la cartella."
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Create new section",
+    "conf": "Section was created.",
+    "error": "Section could not be created."
+  },
+  "update": {
+    "label": "Edit section",
+    "conf": "Section was changed.",
+    "error": "Section could not be changed."
+  },
+  "delete": {
+    "label": "Delete section",
+    "conf": "Section was deleted.",
+    "error": "Section could not be deleted.",
+    "confirm": "Do you really want to delete this section ?"
+  }
+}

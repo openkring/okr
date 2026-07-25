@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Create new menu entry",
+    "conf": "Menu entry was created.",
+    "error": "Menu entry could not be created."
+  },
+  "update": {
+    "label": "Edit menu entry",
+    "conf": "Menu entry was changed.",
+    "error": "Menu entry could not be changed."
+  },
+  "delete": {
+    "label": "Delete menu entry",
+    "conf": "Menu entry was deleted.",
+    "error": "Menu entry could not be deleted.",
+    "confirm": "Do you really want to delete this menu entry ?"
+  }
+}

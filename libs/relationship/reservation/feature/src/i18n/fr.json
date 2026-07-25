@@ -1,0 +1,231 @@
+{
+  "reservation": "Réservation",
+  "reservations": "Réservations",
+  "desc": "Réservation d'une ressource, par ex. hangar à bateaux ou bateau.",
+  "empty": "Aucune réservation trouvée.",
+  "reldesc1": "Réservation de ",
+  "reldesc2": "par",
+  "newDesc": "... souhaite réserver la ressource suivante :",
+
+  "create": {
+    "label": "Nouvelle réservation",
+    "conf": "La réservation a été enregistrée.",
+    "error": "La réservation n'a pas pu être enregistrée."
+  },
+  "delete": {
+    "label": "Supprimer la réservation",
+    "confirm": "Normalement, une réservation devrait être terminée, mais pas supprimée. La suppression est uniquement prévue pour corriger des entrées erronées. Voulez-vous vraiment supprimer la réservation ?",
+    "conf": "La réservation a été supprimée.",
+    "error": "La réservation n'a pas pu être supprimée."
+  },
+  "end": {
+    "label": "Terminer la réservation",
+    "conf": "La réservation a été terminée.",
+    "error": "La réservation n'a pas pu être terminée."
+  },
+  "cancelRes": {
+    "label": "Annuler la réservation",
+    "confirm": "Voulez-vous vraiment annuler cette réservation ?"
+  },
+  "select": {
+    "label": "Sélectionner"
+  },
+  "update": {
+    "label": "Modifier la réservation",
+    "conf": "La réservation a été modifiée.",
+    "error": "La réservation n'a pas pu être modifiée."
+  },
+  "view": {
+    "label": "Afficher la réservation"
+  },
+  "person": {
+    "edit": "Modifier la personne qui réserve",
+    "view": "Afficher la personne qui réserve",
+    "phone": "Appeler la personne qui réserve",
+    "chat": "Chat direct avec la personne qui réserve"
+  },
+
+  "list": {
+    "title": "Réservations",
+    "header": {
+      "reserver": "Qui",
+      "name": "Occasion",
+      "nameDate": "Occasion / Date",
+      "state": "Statut",
+      "resource": "Quoi",
+      "date": "Date",
+      "duration": "de - à",
+      "category": "Type"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "L'identifiant unique de la réservation dans la base de données."
+  },
+  "name": {
+    "label": "Occasion",
+    "placeholder": "Nom de la réservation",
+    "helper": "Une brève description."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes internes. Utiliser les remarques pour les informations publiques."
+  },
+  "reserver": {
+    "label": "Contact",
+    "helper": "La personne ou l'organisation responsable de la réservation."
+  },
+  "resource": {
+    "label": "Quoi",
+    "placeholder": "ce qui est réservé",
+    "helper": "Une description de l'objet réservé"
+  },
+  "date": {
+    "start": {
+      "label": "Date de début",
+      "placeholder": "JJ.MM.AAAA",
+      "helper": "La réservation est valable à partir de cette date."
+    },
+    "end": {
+      "label": "Date de fin",
+      "placeholder": "JJ.MM.AAAA",
+      "helper": "La réservation se termine à cette date."
+    }
+  },
+  "startTime":    {
+    "label": "Heure de début",
+    "placeholder": "HH:MM"
+  },
+  "fullDay":      {
+    "label": "Toute la journée",
+    "helper": "La réservation s'applique à toute la journée."
+  },
+  "durationMinutes": {
+    "label": "Durée (minutes)",
+    "placeholder": "nnn",
+    "helper": "La durée de la réservation en minutes."
+  },
+  "participants": {
+    "label": "Participants",
+    "placeholder": "Participants",
+    "helper": "Ici, vous pouvez décrire un peu les participants, qui vient, combien, etc."
+  },
+  "area": {
+    "label": "Zone",
+    "placeholder": "Zone ",
+    "helper": "Une indication de lieu plus précise, si différentes zones peuvent être réservées (par ex. salle de réunion)"
+  },
+  "ref": {
+    "label": "Référence",
+    "placeholder": "Référence",
+    "helper": "Une description de la manière dont la réservation a eu lieu, par ex. e-mail du xx au xxx"
+  },
+  "order": {
+    "label": "Ordre",
+    "placeholder": "nn",
+    "helper": "Critère de tri, par ex. pour les listes d'attente"
+  },
+  "description": {
+    "label": "Remarques sur la réservation",
+    "placeholder": "Ces remarques sont visibles par tous les utilisateurs. Vous pouvez ajouter toute information contextuelle importante pour cette réservation."
+  },
+  "price": {
+    "label": "Prix",
+    "placeholder": "nn",
+    "helper": "Le prix convenu pour la réservation."
+  },
+  "confirmed": {
+    "label": "Je confirme par la présente avoir lu les dispositions ci-dessus et m'y conformer.",
+    "helper": "La location des installations du club n'a lieu que si les dispositions ci-dessus sont respectées. Le club se réserve le droit d'annuler la manifestation ou de facturer au locataire les éventuels dommages ou frais supplémentaires en cas de non-respect des dispositions."
+  },
+
+  "reservation_reason": {
+    "label": "Motif de la réservation",
+    "helper": "Une catégorisation approximative du type de réservation pour le filtrage de la liste des réservations.",
+    "all": {
+      "label": "Tous les types"
+    },
+    "social": {
+      "label": "Événement social",
+      "description": "Réservation pour un événement social"
+    },
+    "maintenance": {
+      "label": "Entretien / réparation",
+      "description": "Réservation pour réparation ou entretien."
+    },
+    "course": {
+      "label": "Cours",
+      "description": "Réservé pour un cours"
+    },
+    "sport": {
+      "label": "Événement sportif",
+      "description": "Réservé pour un événement sportif"
+    },
+    "business": {
+      "label": "Événement professionnel",
+      "description": "Réservé pour un événement professionnel"
+    },
+    "private": {
+      "label": "Événement privé",
+      "description": "Réservé pour un événement privé"
+    },
+    "public": {
+      "label": "Événement public",
+      "description": "Réservé pour un événement public"
+    },
+    "workshop": {
+      "label": "Atelier",
+      "description": "Réservé pour un atelier"
+    },
+    "meeting": {
+      "label": "Réunion",
+      "description": "Réservé pour une réunion"
+    },
+    "party": {
+      "label": "Fête",
+      "description": "Réservé pour une fête"
+    },
+    "storage": {
+      "label": "Stockage",
+      "description": "Réservation d'un espace de stockage"
+    },
+    "club": {
+      "label": "Événement du club",
+      "description": "Réservé pour un événement du club"
+    }
+  },
+
+  "reservation_state": {
+    "label": "Statut",
+    "helper": "L'état de traitement de la réservation (initial/demandé/réservé/terminé/annulé/refusé).",
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "initial": {
+      "label": "Initial",
+      "description": "Idée de réservation pas encore concrète."
+    },
+    "applied": {
+      "label": "Demandé",
+      "description": "La demande de réservation est ouverte et doit être évaluée."
+    },
+    "active": {
+      "label": "Réservé",
+      "description": "La réservation a été approuvée."
+    },
+    "completed": {
+      "label": "Terminé",
+      "description": "La réservation est terminée (par ex. l'événement a eu lieu et a été payé)."
+    },
+    "cancelled": {
+      "label": "Annulé",
+      "description": "La réservation a été annulée."
+    },
+    "denied": {
+      "label": "Refusé",
+      "description": "La réservation a été refusée."
+    }
+  }
+}

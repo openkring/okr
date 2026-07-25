@@ -1,0 +1,72 @@
+{
+  "title": "Editor di moduli",
+  "list": {
+    "title": "Moduli",
+    "empty": "Nessun modulo trovato."
+  },
+  "as": {
+    "title": "Azioni del modulo"
+  },
+  "action": {
+    "builder": "Modifica campi",
+    "settings": "Impostazioni",
+    "export_csv": "Esporta CSV",
+    "export_pdf": "Esporta PDF",
+    "duplicate": "Duplica",
+    "archive": "Archivia"
+  },
+  "form": {
+    "key": {
+      "label": "Chiave del modulo (immutabile)"
+    },
+    "loading": "Il modulo è in caricamento…",
+    "notfound": "Modulo non trovato.",
+    "archived": "Questo modulo non è più disponibile."
+  },
+  "field": {
+    "title": "Configura campo",
+    "add": "Aggiungi campo"
+  },
+
+  "canvas_empty": "Trascina qui i campi dalla libreria.",
+  "library": "Libreria di campi",
+  "key": "Nome del campo (snake_case)",
+  "label": "Etichetta",
+  "required": "Campo obbligatorio",
+  "width": "Larghezza",
+  "help": "Testo di aiuto",
+  "preview": "Anteprima",
+  "mapping": {
+    "choose": "Seleziona collezione"
+  },
+  "target": {
+    "label": "Dove devono essere salvati gli invii?",
+    "collection": "Collezione Firestore (consigliato)",
+    "url": "URL esterno (ad es. Google Forms)"
+  },
+  "url": {
+    "label": "URL di destinazione"
+  },
+
+  "create": {
+    "label": "Crea nuovo modulo",
+    "conf": "Il modulo è stato creato.",
+    "error": "Impossibile creare il modulo."
+  },
+  "delete": {
+    "label": "Elimina modulo",
+    "confirm": "Eliminare davvero il modulo ?",
+    "conf": "Il modulo è stato eliminato.",
+    "error": "Impossibile eliminare il modulo."
+  },
+  "submit": {
+    "label": "Invia",
+    "conf": "Grazie! Il tuo invio è stato salvato.",
+    "error": "Errore durante l'invio. Riprovare."
+  },
+  "update": {
+    "label": "Modifica modulo",
+    "conf": "Il modulo è stato salvato.",
+    "error": "Impossibile salvare il modulo."
+  }
+}

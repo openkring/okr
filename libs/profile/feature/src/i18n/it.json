@@ -1,0 +1,199 @@
+{
+  "profile": "Profilo",
+  "intro": "Qui puoi impostare i tuoi dati di contatto e adattare il comportamento dell'applicazione alle tue esigenze. Alcuni campi non puoi modificarli tu stesso, perché sono necessari nel sistema. Per tali correzioni rivolgiti a ",
+  "personal": {
+    "title": "Dati personali",
+    "description": "Aggiorna qui i tuoi dati personali, come ad es. il numero AVS.",
+    "dateOfBirth": {
+      "label": "Data di nascita",
+      "placeholder": "GG.MM.AAAA",
+      "helper": "Abbiamo bisogno della tua data di nascita corretta, ad es. per statistiche o comunicazioni esterne (AVS, federazione, ecc.). Nelle impostazioni sulla privacy qui sotto puoi impostare la visibilità della tua data di nascita per gli altri utenti."
+    },
+    "ssn": {
+      "label": "Numero AVS",
+      "placeholder": "756.nnnn.nnnn.nn",
+      "helper": "Il numero AVS è un inserimento facoltativo. Viene utilizzato ad es. per il personale addetto alle pulizie per le comunicazioni AVS o le assicurazioni, oppure richiesto dalle federazioni come prova dell'età."
+    }
+  },
+  "privacy": {
+    "title": "Privacy",
+    "description": "In queste impostazioni sulla privacy puoi definire, per tutti gli attributi sensibili (ad es. la data di nascita), chi può vederli. Gli attributi pubblici sono visibili a tutti, anche al di fuori del club, ad es. sul sito web. Gli attributi limitati sono visibili solo ai membri all'interno dell'app. Gli attributi protetti sono visibili solo alle persone con carica (ad es. il comitato), che necessitano di questi dati per il lavoro nel club. La condivisione dei tuoi dati con altri membri del Seeclub è nel tuo stesso interesse, perché così puoi essere contattato ad es. per le uscite di canottaggio."
+  },
+  "settings": {
+    "title": "Impostazioni dell'applicazione",
+    "description": "Qui puoi adattare il comportamento dell'app alle tue esigenze. Le impostazioni valgono solo per te e non per gli altri utenti."
+  },
+  "addresses": {
+    "title": "Indirizzi",
+    "description": "Qui puoi gestire i tuoi indirizzi. Puoi indicare diversi indirizzi per diversi scopi di utilizzo, ad es. privato, lavoro, contatto di emergenza, ecc. La visibilità di questi indirizzi puoi impostarla qui sotto nelle impostazioni sulla privacy. Le informazioni sul conto bancario (numero IBAN) per i rimborsi puoi inserirle come indirizzi di tipo conto bancario. "
+  },
+  "gravatar": {
+    "label": "E-mail Gravatar",
+    "placeholder": "email@example.com",
+    "helper": "L'indirizzo e-mail utilizzato per il Gravatar (globally recognized avatar su gravatar.com). Se indichi il tuo Gravatar, questo verrà utilizzato nell'avatar dell'app al posto di un'immagine caricata."
+  },
+  "usage": {
+    "images": "Utilizzo delle immagini",
+    "dob": "Utilizzo della data di nascita",
+    "postal": "Utilizzo dell'indirizzo postale",
+    "email": "Utilizzo dell'indirizzo e-mail",
+    "phone": "Utilizzo del numero di telefono",
+    "name": "Utilizzo del tuo nome",
+    "avatar": "Utilizzo dell'avatar",
+    "srv": {
+      "info": "Il Seeclub Stäfa è membro della Federazione Svizzera di Canottaggio SRV. In qualità di membro dello SCS sei automaticamente anche membro dello SRV. Lo SRV ci richiede la trasmissione di informazioni personali (nome, cognome, indirizzo postale, numero di telefono, data di nascita, ecc.) di tutti i nostri membri. Con l'adesione allo SCS acconsenti implicitamente a che questi dati vengano trasmessi allo SRV.",
+      "label": "Desideri ricevere le SRV News ?",
+      "helper": "Per l'invio delle SRV News (in precedenza la rivista Swissrowing), lo SRV ha bisogno del tuo indirizzo e-mail. Qui hai la possibilità di disiscriverti nel caso in cui non desideri ricevere queste news. In tal caso la tua e-mail non verrà trasmessa allo SRV alla prossima sincronizzazione. Non riceverai così più alcuna news dallo SRV."
+    }
+  },
+  "language": "Lingua",
+  "update": {
+    "label": "Modifica profilo",
+    "error": "Non è stato possibile salvare le modifiche",
+    "conf": "Le modifiche sono state salvate."
+  },
+  "view": "Visualizza dettagli del profilo",
+  "edit": "Modifica profilo",
+  "create": "Creare profilo ? questo non dovrebbe essere possibile !",
+  "signature": {
+    "title": "Firma e-mail",
+    "description": "Crea una firma e-mail personale con i tuoi dati di contatto e il logo della tua organizzazione. Scegli il tuo client di posta, copia la firma e inseriscila secondo le istruzioni.",
+    "function": {
+      "label": "Funzione (facoltativo)",
+      "placeholder": "ad es. Finanze",
+      "helper": "La tua funzione o il tuo ruolo nell'organizzazione. Testo libero, non viene salvato."
+    },
+    "client": {
+      "label": "Client di posta",
+      "gmail": "Gmail",
+      "outlookWeb": "Outlook (nuovo/web)",
+      "outlookWin": "Outlook (Windows)",
+      "appleMac": "Apple Mail (Mac)",
+      "appleIos": "Apple Mail (iPhone)"
+    },
+    "format": {
+      "label": "Formato",
+      "html": "HTML",
+      "raw": "Raw",
+      "text": "Solo testo"
+    },
+    "preview": "Anteprima",
+    "copy": {
+      "button": "Copia",
+      "html": "Copia HTML",
+      "raw": "Copia RAW",
+      "text": "Copia testo",
+      "success": "Firma copiata negli appunti.",
+      "error": "Non è stato possibile copiare la firma."
+    },
+    "noOrg": "Non è disponibile alcuna organizzazione predefinita. Unisciti a un'organizzazione o selezionane una per creare una firma.",
+    "guide": {
+      "title": "Istruzioni",
+      "rawFallback": "La modalità Raw copia il codice sorgente HTML della firma come testo semplice invece che formattato. Utilizzala se il tuo client offre un campo HTML/codice sorgente, oppure per i metodi basati su file (Outlook .htm, Apple Mail .mailsignature), in cui inserisci il codice direttamente in un file.",
+      "gmail": {
+        "s1": "Impostazioni (ingranaggio) → «Visualizza tutte le impostazioni» → «Generali».",
+        "s2": "Sezione «Firma» → «Crea nuova».",
+        "s3": "Inserire nel campo della firma (⌘/Ctrl-V).",
+        "s4": "Fare clic su «Salva modifiche» in basso."
+      },
+      "oweb": {
+        "s1": "Impostazioni → «E-mail» → «Componi e rispondi».",
+        "s2": "Inserire nel campo della firma (⌘/Ctrl-V).",
+        "s3": "Fare clic su «Salva»."
+      },
+      "owin": {
+        "s1": "«File» → «Opzioni» → «E-mail» → «Firme…».",
+        "s2": "«Nuova» → inserire → «OK».",
+        "s3": "Se le spaziature si spostano durante l'inserimento: utilizzare il formato «Raw».",
+        "s4": "In alternativa, salvare l'output Raw come «signatur.htm» in %APPDATA%\\Microsoft\\Signatures\\."
+      },
+      "amac": {
+        "s1": "«Mail» → «Impostazioni» → «Firme», aggiungere una firma.",
+        "s2": "Disattivare «Rispondi sempre con il font predefinito».",
+        "s3": "Inserire la firma (suggerimento: inserire da Chrome, non da Safari).",
+        "s4": "Ripiego: modificare direttamente il file .mailsignature e inserire il codice HTML grezzo sotto i metadati."
+      },
+      "aios": {
+        "s1": "«Impostazioni» → «Mail» → «Firma» → inserire.",
+        "s2": "I layout complessi potrebbero essere semplificati – è meglio configurarla sul Mac e sincronizzarla."
+      }
+    }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Annulla",
+    "confirmation": "Salva"
+  },
+  "display": {
+    "name": {
+      "label": "Modalità di visualizzazione del nome",
+      "helper": "Determina la modalità di rappresentazione dei nomi delle persone."
+    }
+  },
+  "sort": {
+    "person": {
+      "label": "Criterio di ordinamento per le persone",
+      "helper": "Criterio di ordinamento per le persone negli elenchi"
+    }
+  },
+  "deliver": {
+    "news": {
+      "label": "Invio dei messaggi",
+      "helper": "Come devono esserti inviati i messaggi ?"
+    },
+    "invoice": {
+      "label": "Invio delle fatture",
+      "helper": "Come devono esserti inviate le fatture ?"
+    },
+    "messages": {
+      "label": "Notifiche push",
+      "state": {
+        "active": "Attivo"
+      },
+      "button": "Rinnova"
+    }
+  },
+  "show": {
+    "debug": {
+      "label": "Mostra informazioni di debug",
+      "helper": "Mostra le informazioni di debug dei moduli e dei menu. Può essere attivato solo da un amministratore nel profilo o direttamente nel database per un altro utente."
+    },
+    "archived": {
+      "label": "Mostra dati archiviati",
+      "helper": "Mostra anche i dati archiviati. Può essere attivato solo da un amministratore nel profilo o direttamente nel database per un altro utente."
+    },
+    "helpers": {
+      "label": "Mostra testi di aiuto",
+      "helper": "Per molti campi nei moduli vengono mostrati dei testi di aiuto. Puoi nasconderli qui, il che porta a una visualizzazione più compatta e chiara. La disattivazione è consigliata solo agli utenti esperti."
+    }
+  },
+  "use": {
+    "touchid": {
+      "label": "Utilizza Touch ID",
+      "helper": "Autenticazione tramite impronta digitale (se possibile sul tuo dispositivo). Non ancora del tutto implementato."
+    },
+    "faceid": {
+      "label": "Utilizza Face ID",
+      "helper": "Autenticazione tramite riconoscimento facciale (se possibile sul tuo dispositivo). Non ancora del tutto implementato."
+    }
+  },
+  "privacyUsage": {
+    "public": {
+      "label": "Pubblico",
+      "description": "Nessuna limitazione di utilizzo. Questi dati possono essere utilizzati anche sul sito web."
+    },
+    "restricted": {
+      "label": "Limitato",
+      "description": "Visibile solo ai membri del Seeclub Stäfa all'interno dell'app (utenti registrati)."
+    },
+    "protected": {
+      "label": "Protetto",
+      "description": "Utilizzabile solo da utenti autorizzati (ad es. il comitato) nell'ambito dei compiti del club."
+    },
+    "srv": {
+      "label": "Trasmissione allo SRV",
+      "description": "Il Seeclub Stäfa è membro della Federazione Svizzera di Canottaggio SRV. In qualità di membro dello SCS sei automaticamente anche membro dello SRV. Lo SRV ci richiede la trasmissione di informazioni personali (nome, cognome, indirizzo postale, numero di telefono) di tutti i nostri membri. Con l'adesione allo SCS acconsenti implicitamente a che questi dati vengano trasmessi annualmente allo SRV.",
+      "email": "Per l'invio delle SRV News (in precedenza la rivista Swissrowing), lo SRV ha bisogno del tuo indirizzo e-mail. Qui hai la possibilità di disiscriverti nel caso in cui non desideri ricevere queste news. In tal caso la tua e-mail non verrà trasmessa allo SRV alla prossima sincronizzazione. Non riceverai allora nemmeno più news dallo SRV."
+    }
+  }
+}

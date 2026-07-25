@@ -1,0 +1,92 @@
+{
+  "invitation": "Invito",
+  "invitations": "Inviti",
+  "description": "Un invito a un evento o a una manifestazione.",
+  "empty": "Non è ancora stato creato alcun invito. Creane uno cliccando sul pulsante +.",
+
+  "delete": {
+    "label": "Elimina invito",
+    "confirm": "Eliminare davvero l'invito ?",
+    "conf": "L'invito è stato eliminato.",
+    "error": "Non è stato possibile eliminare l'invito."
+  },
+  "invite": {
+    "label": "Invita una persona",
+    "conf": "La persona è stata invitata.",
+    "error": "Non è stato possibile invitare la persona."
+  },
+  "update": {
+    "label": "Modifica invito",
+    "conf": "L'invito è stato salvato",
+    "error": "Non è stato possibile salvare l'invito."
+  },
+  "view": {
+    "label": "Mostra dettagli dell'invito"
+  },
+  "accept": "Partecipo",
+  "accepted": "inviti accettati",
+  "maybe": "Forse",
+  "decline": "Non posso partecipare",
+  "resend": "Invia di nuovo l'invito",
+  "subscribe": "Partecipo",
+  "unsubscribe": "Non posso partecipare",
+
+  "list": {
+    "header": {
+      "date": "Data",
+      "name": "Nome",
+      "invitee": "Partecipante",
+      "inviter": "Organizzatore",
+      "state": "Stato"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "sssssss",
+    "helper": "Un ID univoco dell'invito nel database."
+  },
+  "invitee": "Partecipante",
+  "inviter": "Organizzatore",
+  "notes": {
+    "label": "Note",
+    "placeholder": "Note libere."
+  },
+  "sentAt": {
+    "label": "Inviato il",
+    "placeholder": "GG.MM.AAAA",
+    "helper": "L'invito è stato inviato in questa data."
+  },
+  "respondedAt": {
+    "label": "Risposto il",
+    "placeholder": "GG.MM.AAAA",
+    "helper": "All'invito è stata data risposta in questa data."
+  },
+  "role": {
+    "label": "Ruolo"
+  },
+
+  "invitation_state": {
+    "label": "Stato",
+    "helper": "Stato dell'invito",
+    "all": {
+      "label": "Tutti gli stati"
+    },
+    "pending": {
+      "label": "In sospeso",
+      "description": "L'invito è stato inviato, ma non ha ancora ricevuto risposta."
+    },
+    "accepted": {
+      "label": "Accettato",
+      "description": "L'invito è stato accettato."
+    },
+    "declined": {
+      "label": "Rifiutato",
+      "description": "L'invito è stato rifiutato."
+    },
+    "maybe": {
+      "label": "Forse",
+      "description": "All'invito è stata data risposta con 'Forse'."
+    }
+  }
+}

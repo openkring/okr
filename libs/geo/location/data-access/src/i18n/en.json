@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Add location",
+    "conf": "Location was added.",
+    "error": "Location could not be added."
+  },
+  "update": {
+    "label": "Edit location",
+    "conf": "Location was changed.",
+    "error": "Location could not be changed."
+  },
+  "delete": {
+    "label": "Delete location",
+    "conf": "Location was deleted.",
+    "error": "Location could not be deleted."
+  }
+}

@@ -1,0 +1,843 @@
+{
+  "resource": "Ressource",
+  "resources": "Ressources",
+  "desc": "Quelque chose que l'on peut utiliser, réserver ou posséder (bateau, voiture, bien immobilier, clé, casier, etc.).",
+  "all": "Toutes les ressources",
+
+  "empty": "Aucune ressource trouvée.",
+  "other_attributes": "Autres informations",
+
+  "create": {
+    "label": "Saisir une nouvelle ressource",
+    "conf": "La nouvelle ressource a été enregistrée.",
+    "error": "La ressource n'a pas pu être enregistrée."
+  },
+  "delete": {
+    "label": "Supprimer la ressource",
+    "conf": "La ressource a été supprimée.",
+    "error": "La ressource n'a pas pu être supprimée.",
+    "confirm": "Voulez-vous vraiment supprimer la ressource ?"
+  },
+  "update": {
+    "label": "Modifier la ressource",
+    "conf": "Les modifications ont été enregistrées",
+    "error": "Les modifications n'ont pas pu être enregistrées."
+  },
+  "view": {
+    "label": "Afficher la ressource"
+  },
+  "select": {
+    "label": "Choisir la ressource"
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "L'okey est l'identifiant unique d'une ressource dans la base de données."
+  },
+  "color": {
+    "label": "Couleur",
+    "ionic": {
+      "primary": {
+        "label": "Primary",
+        "description": "Primary color for the app"
+      },
+      "secondary": {
+        "label": "Secondary",
+        "description": "Secondary color for the app"
+      },
+      "tertiary": {
+        "label": "Tertiary",
+        "description": "Tertiary color for the app"
+      },
+      "success": {
+        "label": "Success",
+        "description": "Success color for the app"
+      },
+      "warning": {
+        "label": "Warning",
+        "description": "Warning color for the app"
+      },
+      "danger": {
+        "label": "Danger",
+        "description": "Danger color for the app"
+      },
+      "light": {
+        "label": "Light",
+        "description": "Light color for the app"
+      },
+      "medium": {
+        "label": "Medium",
+        "description": "Medium color for the app"
+      },
+      "dark": {
+        "label": "Dark",
+        "description": "Dark color for the app"
+      },
+      "white": {
+        "label": "Aucune",
+        "description": "La couleur par défaut est utilisée, c.-à-d. blanc ou noir"
+      }
+    }
+  },
+  "currentValue": {
+    "label": "Valeur actuelle",
+    "placeholder": "Valeur actuelle",
+    "helper": "La valeur dans l'état actuel, p. ex. la valeur actuelle d'un bateau.",
+    "error": "Vous devez saisir un nombre entier composé uniquement de chiffres"
+  },
+  "description": {
+    "label": "Description",
+    "placeholder": "Un texte plus long, sur plusieurs lignes."
+  },
+  "keyNr": {
+    "label": "N° de clé",
+    "placeholder": "nnnnn",
+    "helper": "Le numéro de clé est un nombre à cinq chiffres.",
+    "error": "Vous devez saisir un nombre entier composé uniquement de chiffres."
+  },
+  "lockerNr": {
+    "label": "N° de casier",
+    "placeholder": "n[nn]",
+    "helper": "Le numéro du casier, p. ex. 1, 2, 3, etc.",
+    "error": "Vous devez saisir un nombre entier composé uniquement de chiffres."
+  },
+  "load": {
+    "label": "Charge",
+    "placeholder": "Charge en kg [de-à]",
+    "helper": "Charge en kg (de - à)",
+    "error": "La saisie se compose d'un poids minimum optionnel (nombre à 2 chiffres) - poids maximum (nombre à 2-3 chiffres)"
+  },
+  "name": {
+    "label": "Nom",
+    "placeholder": "Nom",
+    "error": "Le nom est obligatoire et doit être composé de caractères alphanumériques.",
+    "helper": "Un nom peut être composé de plusieurs mots. Seules les lettres (y compris -) et les chiffres sont autorisés, aucun caractère spécial."
+  },
+
+  "resource_type": {
+    "label": "Type de ressource",
+    "helper": "Le type de la ressource.",
+    "all": {
+      "label": "Toutes les ressources"
+    }
+  },
+  "type": {
+    "label": "Type de ressource",
+    "undefined": {
+      "label": "Indéfini",
+      "description": "Le type de ressource n'est pas défini ou est inconnu.",
+      "formTitle": "Informations sur la ressource"
+    },
+
+    "boat": {
+      "label": "Bateau",
+      "plural": "Bateaux",
+      "empty": "Aucun bateau trouvé.",
+      "formTitle": "Informations sur le bateau",
+      "name": "Nom du bateau",
+      "type": "Type de bateau",
+      "description": "Bateau à moteur, voilier, etc.",
+      "create": {
+        "label": "Saisir un nouveau bateau",
+        "conf": "Le nouveau bateau a été enregistré.",
+        "error": "Le bateau n'a pas pu être enregistré."
+      },
+      "update": {
+        "label": "Modifier le bateau",
+        "conf": "Les modifications ont été enregistrées",
+        "error": "Les modifications n'ont pas pu être enregistrées."
+      },
+      "delete": {
+        "label": "Supprimer le bateau",
+        "conf": "Le bateau a été supprimé.",
+        "error": "Le bateau n'a pas pu être supprimé.",
+        "askConfirmation": "Voulez-vous vraiment supprimer le bateau ?"
+      },
+      "view": {
+        "label": "Afficher le bateau"
+      }
+    },
+    "legaldoc": {
+      "label": "Document",
+      "title": "Documents",
+      "formTitle": "",
+      "description": "Une confirmation sous la forme d'un document officiel."
+    },
+
+    "rboat": {
+      "label": "Bateau d'aviron",
+      "plural": "Bateaux d'aviron",
+      "empty": "Aucun bateau d'aviron trouvé.",
+      "formTitle": "Informations sur le bateau d'aviron",
+      "name": "Nom du bateau d'aviron",
+      "type": "Type de bateau",
+      "description": "Bateau d'aviron appartenant au club ou privé",
+      "create": {
+        "label": "Saisir un nouveau bateau d'aviron",
+        "conf": "Le nouveau bateau d'aviron a été enregistré.",
+        "error": "Le bateau d'aviron n'a pas pu être enregistré."
+      },
+      "update": {
+        "label": "Modifier le bateau d'aviron",
+        "conf": "Les modifications ont été enregistrées",
+        "error": "Les modifications n'ont pas pu être enregistrées."
+      },
+      "delete": {
+        "label": "Supprimer le bateau d'aviron",
+        "conf": "Le bateau d'aviron a été supprimé.",
+        "error": "Le bateau d'aviron n'a pas pu être supprimé.",
+        "askConfirmation": "Voulez-vous vraiment supprimer le bateau d'aviron ?"
+      },
+      "view": {
+        "label": "Afficher le bateau d'aviron"
+      }
+    },
+
+    "car": {
+      "label": "Véhicule",
+      "title": "Véhicules",
+      "formTitle": "Informations sur le véhicule",
+      "description": "Voiture, camion, bus",
+      "create": {
+        "label": "Saisir un nouveau véhicule",
+        "conf": "Le nouveau véhicule a été enregistré.",
+        "error": "Le véhicule n'a pas pu être enregistré."
+      },
+      "update": {
+        "label": "Modifier le véhicule",
+        "conf": "Les modifications ont été enregistrées",
+        "error": "Les modifications n'ont pas pu être enregistrées."
+      },
+      "delete": {
+        "label": "Supprimer le véhicule",
+        "conf": "Le véhicule a été supprimé.",
+        "error": "Le véhicule n'a pas pu être supprimé.",
+        "askConfirmation": "Voulez-vous vraiment supprimer le véhicule ?"
+      },
+      "view": {
+        "label": "Afficher le véhicule"
+      }
+    },
+
+    "clubBoat": {
+      "label": "Bateau du club",
+      "title": "Bateaux du club"
+    },
+    "privateBoat": {
+      "label": "Bateau privé",
+      "title": "Bateaux privés"
+    },
+
+    "other": {
+      "label": "Autre ressource",
+      "description": "Ressource qui ne peut être attribuée à aucun type prédéfini",
+      "formTitle": "Informations sur la ressource",
+      "create": {
+        "label": "Saisir une nouvelle ressource",
+        "conf": "La nouvelle ressource a été enregistrée.",
+        "error": "La nouvelle ressource n'a pas pu être enregistrée."
+      },
+      "update": {
+        "label": "Modifier la ressource",
+        "conf": "Les modifications ont été enregistrées",
+        "error": "Les modifications n'ont pas pu être enregistrées."
+      },
+      "delete": {
+        "label": "Supprimer la ressource",
+        "conf": "La ressource a été supprimée.",
+        "error": "La ressource n'a pas pu être supprimée.",
+        "askConfirmation": "Voulez-vous vraiment supprimer la ressource ?"
+      },
+      "view": {
+        "label": "Afficher la ressource"
+      }
+    },
+
+    "motorBoat": {
+      "label": "Bateau à moteur",
+      "title": "Bateaux à moteur",
+      "description": "Bateau avec moteur, p. ex. bateau pneumatique"
+    },
+    "vehicle": {
+      "label": "Véhicule",
+      "title": "Véhicules",
+      "description": "Voiture ou remorque"
+    },
+    "locker": {
+      "label": "Casier",
+      "plural": "Casiers",
+      "title": "Casier - armoire",
+      "empty": "Aucun casier trouvé.",
+      "formTitle": "Informations sur l'armoire à casiers",
+      "description": "Armoire de vestiaire dans le vestiaire des hommes",
+      "create": {
+        "label": "Saisir une nouvelle armoire à casiers",
+        "conf": "La nouvelle armoire à casiers a été enregistrée.",
+        "error": "L'armoire à casiers n'a pas pu être enregistrée."
+      },
+      "update": {
+        "label": "Modifier l'armoire à casiers",
+        "conf": "Les modifications ont été enregistrées",
+        "error": "Les modifications n'ont pas pu être enregistrées."
+      },
+      "delete": {
+        "label": "Supprimer l'armoire à casiers",
+        "conf": "L'armoire à casiers a été supprimée.",
+        "error": "L'armoire à casiers n'a pas pu être supprimée.",
+        "askConfirmation": "Voulez-vous vraiment supprimer l'armoire à casiers ?"
+      },
+      "view": {
+        "label": "Afficher l'armoire à casiers"
+      }
+    },
+    "key": {
+      "label": "Clé",
+      "plural": "Clés",
+      "title": "Clés du hangar à bateaux",
+      "empty": "Aucune clé trouvée.",
+      "name": "Nom de la clé",
+      "nr": "N° de clé",
+      "formTitle": "Informations sur la clé",
+      "description": "Clé, p. ex. pour la porte d'entrée",
+      "create": {
+        "label": "Saisir une nouvelle clé",
+        "conf": "La nouvelle clé a été enregistrée.",
+        "error": "La clé n'a pas pu être enregistrée."
+      },
+      "update": {
+        "label": "Modifier la clé",
+        "conf": "Les modifications ont été enregistrées",
+        "error": "Les modifications n'ont pas pu être enregistrées."
+      },
+      "delete": {
+        "label": "Supprimer la clé",
+        "conf": "La clé a été supprimée.",
+        "error": "La clé n'a pas pu être supprimée.",
+        "askConfirmation": "Voulez-vous vraiment supprimer la clé ?"
+      },
+      "view": {
+        "label": "Afficher la clé"
+      }
+    },
+    "pet": {
+      "label": "Animal de compagnie",
+      "title": "Animaux de compagnie",
+      "formTitle": "Informations sur l'animal de compagnie",
+      "description": "Animal de compagnie, p. ex. chien ou chat",
+      "create": {
+        "label": "Saisir un nouvel animal de compagnie",
+        "conf": "Le nouvel animal de compagnie a été enregistré.",
+        "error": "L'animal de compagnie n'a pas pu être enregistré."
+      },
+      "update": {
+        "label": "Modifier l'animal de compagnie",
+        "conf": "Les modifications ont été enregistrées",
+        "error": "Les modifications n'ont pas pu être enregistrées."
+      },
+      "delete": {
+        "label": "Supprimer l'animal de compagnie",
+        "conf": "L'animal de compagnie a été supprimé.",
+        "error": "L'animal de compagnie n'a pas pu être supprimé.",
+        "askConfirmation": "Voulez-vous vraiment supprimer l'animal de compagnie ?"
+      },
+      "view": {
+        "label": "Afficher l'animal de compagnie"
+      }
+    },
+    "license": {
+      "label": "Licence",
+      "title": "Licence",
+      "description": "Autorisation pour quelque chose, p. ex. licence de fédération"
+    },
+    "contract": {
+      "label": "Contrat",
+      "title": "Document contractuel",
+      "description": "Contrat, p. ex. contrat de location, contrat de travail"
+    },
+    "document": {
+      "label": "Document",
+      "title": "Document",
+      "description": "Un document quelconque, p. ex. contrat, certificat, etc."
+    },
+    "realestate": {
+      "label": "Bien immobilier",
+      "title": "Bien immobilier",
+      "formTitle": "Informations sur le bien immobilier",
+      "description": "Maison, appartement, terrain",
+      "create": {
+        "label": "Saisir un nouveau bien immobilier",
+        "conf": "Le nouveau bien immobilier a été enregistré.",
+        "error": "Le bien immobilier n'a pas pu être enregistré."
+      },
+      "update": {
+        "label": "Modifier le bien immobilier",
+        "conf": "Les modifications ont été enregistrées",
+        "error": "Les modifications n'ont pas pu être enregistrées."
+      },
+      "delete": {
+        "label": "Supprimer le bien immobilier",
+        "conf": "Le bien immobilier a été supprimé.",
+        "error": "Le bien immobilier n'a pas pu être supprimé.",
+        "askConfirmation": "Voulez-vous vraiment supprimer le bien immobilier ?"
+      },
+      "view": {
+        "label": "Afficher le bien immobilier"
+      }
+    }
+  },
+  "state": {
+    "undefined": {
+      "label": "Indéfini",
+      "description": "Le statut n'est pas défini, p. ex. il n'y a initialement pas encore de demande ou une demande a été rejetée."
+    },
+    "applied": {
+      "label": "Demandé",
+      "description": "Une demande a été faite."
+    },
+    "approved": {
+      "label": "Approuvé",
+      "description": "La demande a été approuvée."
+    },
+    "active": {
+      "label": "Actif",
+      "description": "La ressource est attribuée pour être utilisée par une personne."
+    },
+    "lost": {
+      "label": "Perdu",
+      "description": "La ressource ne peut actuellement pas être utilisée, p. ex. en raison d'une perte, d'un vol ou d'un dommage. L'utilisateur doit prévoir un remplacement ou indemniser la perte."
+    },
+    "cancelled": {
+      "label": "Résilié",
+      "description": "L'utilisation de la ressource a été résiliée."
+    },
+    "archived": {
+      "label": "Archivé",
+      "description": "La ressource est archivée, c.-à-d. que l'utilisation antérieure n'est plus d'actualité."
+    }
+  },
+
+  "boat": {
+    "singular": "Bateau",
+    "plural": "Bateaux",
+    "field": {
+      "empty": "Aucun bateau trouvé."
+    },
+    "create": {
+      "label": "Saisir un nouveau bateau",
+      "conf": "Le nouveau bateau a été enregistré.",
+      "error": "Le bateau n'a pas pu être enregistré"
+    },
+    "update": {
+      "label": "Modifier le bateau",
+      "conf": "Les modifications ont été enregistrées",
+      "error": "Les modifications n'ont pas pu être enregistrées."
+    },
+    "delete": {
+      "label": "Supprimer le bateau",
+      "conf": "Le bateau a été supprimé.",
+      "error": "Le bateau n'a pas pu être supprimé.",
+      "askConfirmation": "Voulez-vous vraiment supprimer le bateau ?"
+    },
+    "view": {
+      "label": "Afficher les données du bateau"
+    }
+  },
+  "boat_type": {
+    "all": {
+      "label": "Tous les types de bateaux"
+    },
+    "motor": {
+      "label": "Bateau à moteur",
+      "description": "Bateau avec un moteur"
+    },
+    "sail": {
+      "label": "Voilier",
+      "description": "Bateau avec une voile"
+    },
+    "pedalo": {
+      "label": "Pédalo",
+      "description": "Bateau à propulsion par pédalier"
+    },
+    "row": {
+      "label": "Bateau d'aviron",
+      "description": "Bateau d'aviron"
+    },
+    "inflate": {
+      "label": "Bateau pneumatique",
+      "description": "Bateau gonflable"
+    },
+    "sup": {
+      "label": "SUP / planche de surf",
+      "description": "SUP ou planche de surf"
+    }
+  },
+
+  "rboat": {
+    "singular": "Bateau d'aviron",
+    "plural": "Bateaux d'aviron",
+    "field": {
+      "empty": "Aucun bateau d'aviron trouvé."
+    },
+    "create": {
+      "label": "Saisir un nouveau bateau d'aviron",
+      "conf": "Le nouveau bateau d'aviron a été enregistré.",
+      "error": "Le bateau d'aviron n'a pas pu être enregistré"
+    },
+    "update": {
+      "label": "Modifier le bateau d'aviron",
+      "conf": "Les modifications ont été enregistrées",
+      "error": "Les modifications n'ont pas pu être enregistrées."
+    },
+    "delete": {
+      "label": "Supprimer le bateau d'aviron",
+      "conf": "Le bateau d'aviron a été supprimé.",
+      "error": "Le bateau d'aviron n'a pas pu être supprimé.",
+      "askConfirmation": "Voulez-vous vraiment supprimer le bateau d'aviron ?"
+    },
+    "view": {
+      "label": "Afficher les données du bateau d'aviron"
+    }
+  },
+  "rboat_type": {
+    "all": {
+      "label": "Tous les types de bateaux"
+    },
+    "b1x": {
+      "label": "1x",
+      "description": "Skiff"
+    },
+    "b2m": {
+      "label": "2-",
+      "description": "Deux sans barreur"
+    },
+    "b2x": {
+      "label": "2x",
+      "description": "Deux de couple"
+    },
+    "b2p": {
+      "label": "2+",
+      "description": "Deux avec barreur"
+    },
+    "b2mx": {
+      "label": "2-/2x",
+      "description": "Deux convertible"
+    },
+    "b3x": {
+      "label": "3x",
+      "description": "Trois de couple"
+    },
+    "b4m": {
+      "label": "4-",
+      "description": "Quatre sans barreur"
+    },
+    "b4x": {
+      "label": "4x",
+      "description": "Quatre de couple"
+    },
+    "b5x": {
+      "label": "5x",
+      "description": "Cinq de couple"
+    },
+    "b8p": {
+      "label": "8+",
+      "description": "Huit avec barreur"
+    }
+  },
+  "rboat_usage": {
+    "kandidierende": {
+      "label": "Candidats",
+      "description": "Bateaux pour candidats (C-gigs & coastal)"
+    },
+    "breitensport": {
+      "label": "Sport pour tous",
+      "description": "Tous les membres actifs selon leur niveau de performance respectif"
+    },
+    "routinierte": {
+      "label": "Expérimentés",
+      "description": "Membres actifs très expérimentés, priorité pour les entraînements et régates"
+    },
+    "leistungssport": {
+      "label": "Sport de compétition",
+      "description": "Régatiers, masters en accord avec le head coach"
+    },
+    "private": {
+      "label": "Bateau privé",
+      "description": "Le bateau appartient à un membre du club à titre privé et ne peut pas être utilisé par les membres du club."
+    }
+  },
+  "locker": {
+    "singular": "Casier",
+    "plural": "Casiers",
+    "empty": "Aucun casier trouvé.",
+    "nr": "N° de casier",
+    "create": {
+      "label": "Saisir un nouveau casier",
+      "conf": "Le nouveau casier a été enregistré",
+      "error": "Le casier n'a pas pu être créé."
+    },
+    "delete": {
+      "label": "Supprimer le casier",
+      "confirm": "Voulez-vous vraiment supprimer le casier ?",
+      "conf": "Le casier a été supprimé",
+      "error": "Le casier n'a pas pu être supprimé."
+    },
+    "update": {
+      "label": "Modifier le casier",
+      "conf": "Le casier a été modifié",
+      "error": "Le casier n'a pas pu être modifié"
+    },
+    "view": {
+      "label": "Afficher le casier"
+    }
+  },
+  "key": {
+    "singular": "Clé",
+    "plural": "Clés",
+    "field": {
+      "empty": "Aucune clé n'a encore été saisie."
+    },
+    "create": {
+      "label": "Saisir une nouvelle clé",
+      "conf": "La clé a été enregistrée",
+      "error": "La clé n'a pas pu être créée"
+    },
+    "delete": {
+      "label": "Supprimer la clé",
+      "confirm": "Voulez-vous vraiment supprimer la clé ?",
+      "conf": "La clé a été supprimée",
+      "error": "La clé n'a pas pu être supprimée."
+    },
+    "update": {
+      "label": "Modifier la clé du hangar à bateaux",
+      "conf": "La clé du hangar à bateaux a été modifiée",
+      "error": "La clé du hangar à bateaux n'a pas pu être modifiée"
+    },
+    "view": {
+      "label": "Afficher la clé du hangar à bateaux"
+    }
+  },
+  "vehicle": {
+    "singular": "Véhicule",
+    "plural": "Véhicules",
+    "create": {
+      "label": "Saisir un nouveau véhicule",
+      "conf": "Le véhicule a été enregistré",
+      "error": "Le véhicule n'a pas pu être créé"
+    },
+    "update": {
+      "label": "Modifier le véhicule",
+      "conf": "Le véhicule a été modifié",
+      "error": "Le véhicule n'a pas pu être modifié"
+    },
+    "view": {
+      "label": "Afficher le véhicule"
+    }
+  },
+  "car": {
+    "singular": "Voiture",
+    "plural": "Voitures",
+    "create": {
+      "label": "Saisir une nouvelle voiture",
+      "conf": "La voiture a été enregistrée",
+      "error": "La voiture n'a pas pu être créée"
+    },
+    "update": {
+      "label": "Modifier la voiture",
+      "conf": "La voiture a été modifiée",
+      "error": "La voiture n'a pas pu être modifiée"
+    },
+    "view": {
+      "label": "Afficher la voiture"
+    }
+  },
+  "car_type": {
+    "name": "Type de véhicule",
+    "all": {
+      "label": "Tous"
+    },
+    "convertible": {
+      "label": "Cabriolet",
+      "description": "Véhicule ouvert avec un toit amovible"
+    },
+    "coupe": {
+      "label": "Coupé",
+      "description": "Voiture à deux portes avec une allure sportive."
+    },
+    "stationWagon": {
+      "label": "Break",
+      "description": "Berline allongée avec un coffre plus grand et un hayon."
+    },
+    "suv": {
+      "label": "Tout-terrain (SUV)",
+      "description": "Sport Utility Vehicle pour tout-terrain et route"
+    },
+    "sedan": {
+      "label": "Berline",
+      "description": "Véhicule à quatre portes avec un coffre séparé de l'habitacle."
+    },
+    "hatchback": {
+      "label": "Compacte",
+      "description": "Véhicule à quatre portes avec hayon, p. ex. VW Golf"
+    },
+    "minivan": {
+      "label": "Monospace",
+      "description": "Quatre portes avec plus d'espace pour les passagers"
+    },
+    "truck": {
+      "label": "Camion",
+      "description": "Voiture, camion, bus"
+    },
+    "pickupTruck": {
+      "label": "Pick-up",
+      "description": "Petit camion"
+    },
+    "sportsCar": {
+      "label": "Voiture de sport",
+      "description": "Véhicule typiquement à deux places avec une allure sportive."
+    },
+    "utility": {
+      "label": "Véhicule utilitaire",
+      "description": "Fourgon pour usage professionnel"
+    },
+    "camper": {
+      "label": "Camping-car",
+      "description": "Véhicule de loisirs avec possibilité de couchage"
+    },
+    "bus": {
+      "label": "Bus",
+      "description": "Grand transporteur commercial pour de nombreuses personnes"
+    }
+  },
+  "realestate": {
+    "singular": "Bien immobilier",
+    "plural": "Biens immobiliers",
+    "create": {
+      "label": "Saisir un nouveau bien immobilier",
+      "conf": "Le bien immobilier a été enregistré",
+      "error": "Le bien immobilier n'a pas pu être créé"
+    },
+    "update": {
+      "label": "Modifier le bien immobilier",
+      "conf": "Le bien immobilier a été modifié",
+      "error": "Le bien immobilier n'a pas pu être modifié"
+    },
+    "view": {
+      "label": "Afficher le bien immobilier"
+    }
+  },
+  "legaldoc_type": {
+    "license": {
+      "label": "Licence",
+      "description": "Un droit d'utilisation"
+    },
+    "permit": {
+      "label": "Autorisation",
+      "description": "L'autorisation d'une partie habilitée que la partie concernée puisse faire quelque chose."
+    },
+    "certification": {
+      "label": "Certificat",
+      "description": "Une confirmation écrite d'une partie habilitée."
+    },
+    "passport": {
+      "label": "Passeport",
+      "description": "Pièce d'identité sous la forme d'un passeport"
+    },
+    "idcard": {
+      "label": "ID",
+      "description": "Pièce d'identité sous la forme d'une carte d'identité"
+    },
+    "confirmation": {
+      "label": "Confirmation",
+      "description": "Un document écrit délivré par une partie habilitée qui garantit l'exactitude et l'existence d'un fait."
+    },
+    "diploma": {
+      "label": "Diplôme",
+      "description": "Une confirmation d'un diplôme de formation."
+    },
+    "contract": {
+      "label": "Contrat",
+      "description": "Un accord entre au moins 2 parties."
+    },
+    "visa": {
+      "label": "Visa",
+      "description": "p. ex. un visa de voyage pour l'entrée dans un pays donné"
+    },
+    "policy": {
+      "label": "Police",
+      "description": "p. ex. une police d'assurance"
+    },
+    "other": {
+      "label": "Autre",
+      "description": "Une autre forme de document juridique."
+    }
+  },
+  "pet_type": {
+    "cat": {
+      "label": "Chat",
+      "description": "Un chat comme animal de compagnie"
+    },
+    "dog": {
+      "label": "Chien",
+      "description": "Un chien comme animal de compagnie"
+    },
+    "bird": {
+      "label": "Oiseau",
+      "description": "Un oiseau comme animal de compagnie"
+    },
+    "sheep": {
+      "label": "Mouton",
+      "description": "Un mouton comme animal de compagnie"
+    },
+    "rabbit": {
+      "label": "Lapin",
+      "description": "Un lapin comme animal de compagnie"
+    },
+    "horse": {
+      "label": "Cheval",
+      "description": "Un cheval comme animal de compagnie"
+    },
+    "fish": {
+      "label": "Poisson",
+      "description": "Un poisson comme animal de compagnie"
+    }
+  },
+  "other": {
+    "create": {
+      "label": "Ajouter une nouvelle ressource",
+      "error": "La nouvelle ressource n'a pas pu être créée.",
+      "conf": "La nouvelle ressource a été créée."
+    },
+    "update": {
+      "label": "Modifier la ressource",
+      "error": "Les modifications n'ont pas pu être enregistrées.",
+      "conf": "Les modifications ont été enregistrées."
+    },
+    "delete": {
+      "label": "Supprimer la ressource",
+      "error": "La ressource n'a pas pu être supprimée.",
+      "conf": "La ressource a été supprimée."
+    },
+    "view": {
+      "label": "Informations sur la ressource"
+    },
+    "reactivate": {
+      "label": "Réactiver la ressource",
+      "error": "La ressource n'a pas pu être réactivée.",
+      "conf": "La ressource a été réactivée."
+    },
+    "search": {
+      "label": "Rechercher une ressource"
+    },
+    "select": {
+      "all": "Choisir la ressource",
+      "motorBoat": "Choisir le bateau à moteur",
+      "vehicle": "Choisir le véhicule",
+      "locker": "Choisir l'armoire à casiers",
+      "maleLocker": "Choisir le casier des hommes",
+      "femaleLocker": "Choisir le casier des femmes",
+      "houseKey": "Choisir la clé",
+      "rowingBoat": "Choisir le bateau d'aviron"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+    "singular": "Activo",
+    "plural": "Activos",
+    "empty": "No se han encontrado activos",
+
+    "list": {
+        "title": "Activos / Valores patrimoniales / Asset"
+    },
+    "deduction": {
+        "label": "Amortización",
+        "run": "Ciclo de amortización"
+    },
+
+   "name": {
+        "label": "Nombre del activo"
+    },
+   "number": {
+        "label": "Número de cuenta"
+    },
+   "category": {
+        "label": "Categoría"
+    },
+   "date": {
+        "acquisition": {
+            "label": "Fecha de adquisición"
+        },
+        "end": {
+            "label": "Fin del periodo"
+        }
+    },
+    "life": {
+        "label": "Vida útil (meses)"
+    },
+    "preview": {
+        "label": "Vista previa"
+    },
+
+    "book": {
+        "label": "Contabilizar"
+    },
+    "create": {
+        "label": "Crear nuevo activo",
+        "conf": "El activo se ha guardado.",
+        "error": "No se ha podido guardar el activo."
+    },
+    "delete": {
+        "label": "Eliminar activo",
+        "conf": "El activo se ha eliminado.",
+        "confirm": "¿Desea realmente eliminar el activo ?",
+        "error": "No se ha podido eliminar el activo."
+    },
+    "update": {
+        "label": "Modificar activo",
+        "conf": "El activo se ha guardado.",
+        "error": "No se ha podido guardar el activo."
+    },
+    "view": {
+        "label": "Ver activo"
+    }
+}

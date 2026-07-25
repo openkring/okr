@@ -1,0 +1,16 @@
+{
+  "template": {
+    "blank": {
+      "label": "Lavagna vuota",
+      "desc": "Una superficie vuota per post-it e note."
+    },
+    "fourQuadrant": {
+      "label": "Quattro quadranti",
+      "desc": "Disporre le note in quattro campi (ad es. impatto / sforzo).",
+      "q1": "In alto a sinistra",
+      "q2": "In alto a destra",
+      "q3": "In basso a sinistra",
+      "q4": "In basso a destra"
+    }
+  }
+}

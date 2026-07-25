@@ -1,0 +1,22 @@
+{
+  "comment": {
+    "initial": {
+      "conf": "creato"
+    },
+    "update": {
+      "conf": "modificato"
+    }
+  },
+  "appConfig": {
+    "create": {
+      "conf": "Voce di configurazione salvata.",
+      "error": "Impossibile salvare la voce di configurazione."
+    },
+    "update": {
+      "conf": "Voce di configurazione salvata."
+    },
+    "delete": {
+      "conf": "Voce di configurazione eliminata."
+    }
+  }
+}

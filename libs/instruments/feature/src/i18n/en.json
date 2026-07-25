@@ -1,0 +1,78 @@
+{
+  "instrument": "Instrument",
+  "instruments": "Instruments",
+  "plural": "Instruments",
+  "desc": "Visual strategy and decision-making instruments",
+  "empty": "No instruments available yet",
+  "type": {
+    "swot": "SWOT analysis",
+    "pestel": "PESTEL analysis",
+    "bmc": "Business Model Canvas",
+    "eisenhower": "Eisenhower matrix"
+  },
+  "create": {
+    "label": "New",
+    "conf": "Instrument created",
+    "error": "Instrument could not be created"
+  },
+  "update": {
+    "label": "Edit",
+    "conf": "Instrument saved",
+    "error": "Instrument could not be saved"
+  },
+  "delete": {
+    "label": "Delete",
+    "confirm": "Really delete instrument?",
+    "conf": "Instrument deleted",
+    "error": "Instrument could not be deleted"
+  },
+  "view": { "label": "View" },
+  "done": "Done",
+  "board": {
+    "emptyCell": "Empty",
+    "addTopic": "Add card"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Name of the instrument",
+    "helper": "e.g. Strategy 2026"
+  },
+  "description": {
+    "label": "Description",
+    "placeholder": "Optional description"
+  },
+  "topic": {
+    "label": { "label": "Title", "placeholder": "Short title", "helper": "What is it about?" },
+    "description": { "label": "Description", "placeholder": "Optional note" },
+    "impact": { "label": "Importance" },
+    "horizon": { "label": "Time horizon" },
+    "color": { "label": "Color" }
+  },
+  "score": { "unset": "—", "low": "Low", "medium": "Medium", "high": "High" },
+  "horizon": { "short": "Short-term", "medium": "Medium-term", "long": "Long-term" },
+  "cell": {
+    "strengths": "Strengths",
+    "weaknesses": "Weaknesses",
+    "opportunities": "Opportunities",
+    "threats": "Threats",
+    "do": "Do immediately",
+    "schedule": "Schedule",
+    "delegate": "Delegate",
+    "delete": "Eliminate",
+    "political": "Political",
+    "economic": "Economic",
+    "social": "Sociocultural",
+    "technological": "Technological",
+    "environmental": "Environmental",
+    "legal": "Legal",
+    "keyPartners": "Key partners",
+    "keyActivities": "Key activities",
+    "keyResources": "Key resources",
+    "valuePropositions": "Value propositions",
+    "customerRelationships": "Customer relationships",
+    "channels": "Channels",
+    "customerSegments": "Customer segments",
+    "costStructure": "Cost structure",
+    "revenueStreams": "Revenue streams"
+  }
+}

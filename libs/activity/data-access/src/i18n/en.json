@@ -1,0 +1,8 @@
+{
+  "delete": {
+    "label": "Delete activity",
+    "conf": "Activity has been deleted.",
+    "confirm": "Should the activity be deleted ?",
+    "error": "The activity could not be deleted."
+  }
+}

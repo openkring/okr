@@ -1,0 +1,56 @@
+{
+  "okey": {
+    "label": "Clave del doc.",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Nombre",
+    "placeholder": "Introducir el nombre",
+    "helper": ""
+  },
+  "latitude": {
+    "label": "Latitud",
+    "placeholder": "",
+    "helper": ""
+  },
+  "longitude": {
+    "label": "Longitud",
+    "placeholder": "",
+    "helper": ""
+  },
+  "placeId": {
+    "label": "ID de lugar",
+    "placeholder": "",
+    "helper": "Identificador de lugar de Google Maps"
+  },
+  "what3words": {
+    "label": "What3Words",
+    "placeholder": "",
+    "helper": "Dirección What3Words (p. ej. word.word.word)"
+  },
+  "seaLevel": {
+    "label": "Altitud",
+    "placeholder": "",
+    "helper": ""
+  },
+  "speed": {
+    "label": "Velocidad",
+    "placeholder": "",
+    "helper": ""
+  },
+  "direction": {
+    "label": "Dirección",
+    "placeholder": "",
+    "helper": ""
+  },
+  "distance": {
+    "label": "Distancia",
+    "placeholder": "",
+    "helper": ""
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": ""
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "update": {
+    "label": "Modifica profilo",
+    "error": "Non è stato possibile salvare le modifiche",
+    "conf": "Le modifiche sono state salvate."
+  }
+}

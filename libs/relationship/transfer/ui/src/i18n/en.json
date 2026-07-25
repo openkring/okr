@@ -1,0 +1,47 @@
+{
+  "subjects": "From",
+  "objects": "To",
+  "addSubject": {
+    "label": "Add person or organization"
+  },
+  "addObject": {
+    "label": "Add person or organization"
+  },
+  "resource": {
+    "name": {
+      "label": "Object"
+    }
+  },
+  "select": {
+    "resource": "Select"
+  },
+  "name": {
+    "label": "Occasion",
+    "placeholder": "",
+    "helper": ""
+  },
+  "label": {
+    "label": "Designation",
+    "placeholder": "",
+    "helper": ""
+  },
+  "currency": {
+    "label": "Currency",
+    "placeholder": "CHF",
+    "helper": ""
+  },
+  "price": {
+    "label": "Price",
+    "placeholder": "",
+    "helper": ""
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": ""
+  },
+  "dateOfTransfer": {
+    "label": "Date",
+    "placeholder": "DD.MM.YYYY",
+    "helper": ""
+  }
+}

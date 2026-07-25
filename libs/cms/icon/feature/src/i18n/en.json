@@ -1,0 +1,82 @@
+{
+  "icon": "Icon",
+  "icons": "Icons",
+  "empty": "No icons found.",
+
+  "copy": {
+    "label": "Copy icon name"
+  },
+  "create": {
+    "label": "Add icon",
+    "conf": "The icon was added.",
+    "error": "The icon could not be added."
+  },
+  "delete": {
+    "label": "Delete icon",
+    "conf": "The icon was deleted.",
+    "error": "The icon could not be deleted.",
+    "confirm": "Should the icon really be deleted?"
+  },
+  "exportRaw": {
+    "label": "Export icons"
+  },
+  "sync": {
+    "label": "Synchronize icons"
+  },
+  "select": {
+    "label": "Select icon"
+  },
+  "update": {
+    "label": "Edit icon configuration",
+    "conf": "The icon was saved.",
+    "error": "The icon could not be saved."
+  },
+  "view": {
+    "label": "Show icon details"
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssss",
+    "helper": "A unique identifier in the form of a word. Only lowercase letters, numbers and _ or - may be used."
+  },
+  "name": {
+    "label": "Icon name",
+    "placeholder": "e.g. download",
+    "helper": "The name of the icon, e.g. pdf, doc etc. (see assets/icons or ionic).",
+    "button": "The icon on the button (ion-icon).",
+    "menu": "The icon on the menu entry (ion-icon).",
+    "error": "The name of the icon is mandatory and must consist of alphanumeric characters."
+  },
+  "type": {
+    "label": "Icon set",
+    "placeholder": "Folder name",
+    "helper": "Groups icons into a similar theme (e.g. Logos, Filetypes, Sections). Corresponds to the name of the subfolder in the Logo directory in Storage."
+  },
+  "fullPath": {
+    "label": "Storage Path",
+    "placeholder": "/asdf/asf",
+    "helper": "The path to the icon in Storage."
+  },
+  "index": {
+    "label": "Index",
+    "placeholder": "sssss sssss",
+    "helper": "Space-separated search terms"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Text"
+  },
+   "size": {
+    "label": "Size",
+    "placeholder": "40",
+    "helper": "The size of the icon in pixels, e.g. 24, 32, 48 etc.",
+    "error": "The size of the icon must be an integer consisting only of digits."
+  },
+  "slot": {
+    "label": "Icon position",
+    "placeholder": "start | end | top | bottom",
+    "helper": "The position of the icon in relation to the text, e.g. left, right, top, bottom. With none, only the icon is shown."
+  },
+  "updated": "Last update"
+}

@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Añadir carpeta",
+    "conf": "La carpeta se ha añadido.",
+    "error": "No se pudo añadir la carpeta."
+  },
+  "update": {
+    "conf": "La carpeta se ha modificado.",
+    "error": "No se pudo modificar la carpeta."
+  },
+  "delete": {
+    "conf": "La carpeta se ha eliminado.",
+    "confirm": "¿Desea eliminar realmente la carpeta ?",
+    "error": "No se pudo eliminar la carpeta."
+  }
+}

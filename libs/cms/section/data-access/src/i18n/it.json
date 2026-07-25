@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Creare nuova sezione",
+    "conf": "La sezione è stata creata.",
+    "error": "Non è stato possibile creare la sezione."
+  },
+  "update": {
+    "label": "Modificare sezione",
+    "conf": "La sezione è stata modificata.",
+    "error": "Non è stato possibile modificare la sezione."
+  },
+  "delete": {
+    "label": "Eliminare sezione",
+    "conf": "La sezione è stata eliminata.",
+    "error": "Non è stato possibile eliminare la sezione.",
+    "confirm": "Eliminare davvero questa sezione ?"
+  }
+}

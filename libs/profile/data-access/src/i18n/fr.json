@@ -1,0 +1,7 @@
+{
+  "update": {
+    "label": "Modifier le profil",
+    "error": "Les modifications n'ont pas pu être enregistrées",
+    "conf": "Les modifications ont été enregistrées."
+  }
+}

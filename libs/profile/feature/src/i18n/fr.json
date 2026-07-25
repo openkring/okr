@@ -1,0 +1,199 @@
+{
+  "profile": "Profil",
+  "intro": "Ici, vous pouvez définir vos coordonnées et adapter le comportement de l'application à vos besoins. Certains champs ne peuvent pas être modifiés vous-même, car ils sont nécessaires dans le système. Pour de telles corrections, veuillez vous adresser à ",
+  "personal": {
+    "title": "Données personnelles",
+    "description": "Mettez à jour ici vos données personnelles, comme p. ex. le numéro AVS.",
+    "dateOfBirth": {
+      "label": "Date de naissance",
+      "placeholder": "JJ.MM.AAAA",
+      "helper": "Nous avons besoin de votre date de naissance exacte, p. ex. pour des statistiques ou des déclarations externes (AVS, fédération, etc.). Dans les paramètres de confidentialité ci-dessous, vous pouvez régler la visibilité de votre date de naissance pour les autres utilisateurs."
+    },
+    "ssn": {
+      "label": "Numéro AVS",
+      "placeholder": "756.nnnn.nnnn.nn",
+      "helper": "Le numéro AVS est une saisie facultative. Il est utilisé p. ex. pour le personnel de nettoyage pour les déclarations AVS ou les assurances, ou exigé par les fédérations comme justificatif d'âge."
+    }
+  },
+  "privacy": {
+    "title": "Confidentialité",
+    "description": "Dans ces paramètres de confidentialité, vous pouvez définir, pour tous les attributs sensibles (p. ex. la date de naissance), qui peut les voir. Les attributs publics sont visibles par tous, y compris en dehors du club, p. ex. sur le site web. Les attributs restreints ne sont visibles que par les membres au sein de l'application. Les attributs protégés ne sont visibles que par les personnes en charge (p. ex. le comité), qui ont besoin de ces données pour leur travail au sein du club. Le partage de vos données avec d'autres membres du Seeclub est dans votre propre intérêt, car cela vous permet d'être contacté p. ex. pour des sorties d'aviron."
+  },
+  "settings": {
+    "title": "Paramètres de l'application",
+    "description": "Ici, vous pouvez adapter le comportement de l'application à vos besoins. Les paramètres s'appliquent uniquement à vous et non aux autres utilisateurs."
+  },
+  "addresses": {
+    "title": "Adresses",
+    "description": "Ici, vous pouvez gérer vos adresses. Vous pouvez indiquer différentes adresses pour différents usages, p. ex. privé, professionnel, contact d'urgence, etc. Vous pouvez régler la visibilité de ces adresses ci-dessous dans les paramètres de confidentialité. Les informations de compte bancaire (numéro IBAN) pour les remboursements peuvent être saisies comme adresses de type compte bancaire. "
+  },
+  "gravatar": {
+    "label": "E-mail Gravatar",
+    "placeholder": "email@example.com",
+    "helper": "L'adresse e-mail utilisée pour le Gravatar (globally recognized avatar sur gravatar.com). Si vous indiquez votre Gravatar, celui-ci sera utilisé dans l'avatar de l'application à la place d'une image téléchargée."
+  },
+  "usage": {
+    "images": "Utilisation des images",
+    "dob": "Utilisation de la date de naissance",
+    "postal": "Utilisation de l'adresse postale",
+    "email": "Utilisation de l'adresse e-mail",
+    "phone": "Utilisation du numéro de téléphone",
+    "name": "Utilisation de votre nom",
+    "avatar": "Utilisation de l'avatar",
+    "srv": {
+      "info": "Le Seeclub Stäfa est membre de la Fédération Suisse d'Aviron SRV. En tant que membre du SCS, vous êtes automatiquement aussi membre du SRV. Le SRV exige de nous la transmission d'informations personnelles (nom, prénom, adresse postale, numéro de téléphone, date de naissance, etc.) de tous nos membres. Par votre adhésion au SCS, vous consentez implicitement à ce que ces données soient transmises au SRV.",
+      "label": "Souhaitez-vous recevoir les SRV News ?",
+      "helper": "Pour l'envoi des SRV News (anciennement le magazine Swissrowing), le SRV a besoin de votre adresse e-mail. Ici, vous avez la possibilité de vous désinscrire si vous ne souhaitez pas recevoir ces news. Dans ce cas, votre e-mail ne sera pas transmis au SRV lors de la prochaine synchronisation. Vous ne recevrez alors plus aucune news du SRV."
+    }
+  },
+  "language": "Langue",
+  "update": {
+    "label": "Modifier le profil",
+    "error": "Les modifications n'ont pas pu être enregistrées",
+    "conf": "Les modifications ont été enregistrées."
+  },
+  "view": "Afficher les détails du profil",
+  "edit": "Modifier le profil",
+  "create": "Créer un profil ? cela ne devrait pas être possible !",
+  "signature": {
+    "title": "Signature e-mail",
+    "description": "Créez une signature e-mail personnelle avec vos coordonnées et le logo de votre organisation. Choisissez votre client de messagerie, copiez la signature et insérez-la selon les instructions.",
+    "function": {
+      "label": "Fonction (facultatif)",
+      "placeholder": "p. ex. Finances",
+      "helper": "Votre fonction ou rôle dans l'organisation. Texte libre, n'est pas enregistré."
+    },
+    "client": {
+      "label": "Client de messagerie",
+      "gmail": "Gmail",
+      "outlookWeb": "Outlook (nouveau/web)",
+      "outlookWin": "Outlook (Windows)",
+      "appleMac": "Apple Mail (Mac)",
+      "appleIos": "Apple Mail (iPhone)"
+    },
+    "format": {
+      "label": "Format",
+      "html": "HTML",
+      "raw": "Raw",
+      "text": "Texte uniquement"
+    },
+    "preview": "Aperçu",
+    "copy": {
+      "button": "Copier",
+      "html": "Copier le HTML",
+      "raw": "Copier le RAW",
+      "text": "Copier le texte",
+      "success": "Signature copiée dans le presse-papiers.",
+      "error": "La signature n'a pas pu être copiée."
+    },
+    "noOrg": "Aucune organisation par défaut n'est disponible. Veuillez rejoindre une organisation ou en sélectionner une pour créer une signature.",
+    "guide": {
+      "title": "Instructions",
+      "rawFallback": "Le mode Raw copie le code source HTML de la signature en texte brut au lieu du format mis en forme. Utilisez-le si votre client offre un champ HTML/code source, ou pour les méthodes basées sur un fichier (Outlook .htm, Apple Mail .mailsignature), où vous insérez le code directement dans un fichier.",
+      "gmail": {
+        "s1": "Paramètres (roue dentée) → « Afficher tous les paramètres » → « Général ».",
+        "s2": "Section « Signature » → « Créer ».",
+        "s3": "Insérer dans le champ de signature (⌘/Ctrl-V).",
+        "s4": "Cliquer sur « Enregistrer les modifications » en bas."
+      },
+      "oweb": {
+        "s1": "Paramètres → « E-mail » → « Rédiger et répondre ».",
+        "s2": "Insérer dans le champ de signature (⌘/Ctrl-V).",
+        "s3": "Cliquer sur « Enregistrer »."
+      },
+      "owin": {
+        "s1": "« Fichier » → « Options » → « E-mail » → « Signatures… ».",
+        "s2": "« Nouveau » → insérer → « OK ».",
+        "s3": "Si les espacements se décalent lors de l'insertion : utiliser le format « Raw ».",
+        "s4": "Alternativement, enregistrer la sortie Raw sous « signatur.htm » dans %APPDATA%\\Microsoft\\Signatures\\."
+      },
+      "amac": {
+        "s1": "« Mail » → « Réglages » → « Signatures », ajouter une signature.",
+        "s2": "Désactiver « Toujours répondre avec la police par défaut ».",
+        "s3": "Insérer la signature (astuce : insérer depuis Chrome, pas depuis Safari).",
+        "s4": "Solution de repli : éditer directement le fichier .mailsignature et insérer le code HTML brut sous les métadonnées."
+      },
+      "aios": {
+        "s1": "« Réglages » → « Mail » → « Signature » → insérer.",
+        "s2": "Les mises en page complexes peuvent être simplifiées – il est préférable de la configurer sur le Mac et de la synchroniser."
+      }
+    }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Annuler",
+    "confirmation": "Enregistrer"
+  },
+  "display": {
+    "name": {
+      "label": "Mode d'affichage du nom",
+      "helper": "Détermine le mode de représentation des noms de personnes."
+    }
+  },
+  "sort": {
+    "person": {
+      "label": "Critère de tri pour les personnes",
+      "helper": "Critère de tri pour les personnes dans les listes"
+    }
+  },
+  "deliver": {
+    "news": {
+      "label": "Envoi des messages",
+      "helper": "Comment les messages doivent-ils vous être envoyés ?"
+    },
+    "invoice": {
+      "label": "Envoi des factures",
+      "helper": "Comment les factures doivent-elles vous être envoyées ?"
+    },
+    "messages": {
+      "label": "Notifications push",
+      "state": {
+        "active": "Actif"
+      },
+      "button": "Renouveler"
+    }
+  },
+  "show": {
+    "debug": {
+      "label": "Afficher les informations de débogage",
+      "helper": "Affiche les informations de débogage des formulaires et des menus. Ne peut être activé que par un administrateur dans le profil ou directement dans la base de données pour un autre utilisateur."
+    },
+    "archived": {
+      "label": "Afficher les données archivées",
+      "helper": "Affiche également les données archivées. Ne peut être activé que par un administrateur dans le profil ou directement dans la base de données pour un autre utilisateur."
+    },
+    "helpers": {
+      "label": "Afficher les textes d'aide",
+      "helper": "Pour de nombreux champs des formulaires, des textes d'aide sont affichés. Vous pouvez les masquer ici, ce qui conduit à un affichage plus compact et plus clair. Le masquage n'est recommandé qu'aux utilisateurs avancés."
+    }
+  },
+  "use": {
+    "touchid": {
+      "label": "Utiliser Touch ID",
+      "helper": "Authentification par empreinte digitale (si possible sur votre appareil). Pas encore entièrement implémenté."
+    },
+    "faceid": {
+      "label": "Utiliser Face ID",
+      "helper": "Authentification par reconnaissance faciale (si possible sur votre appareil). Pas encore entièrement implémenté."
+    }
+  },
+  "privacyUsage": {
+    "public": {
+      "label": "Public",
+      "description": "Aucune restriction d'utilisation. Ces données peuvent également être utilisées sur le site web."
+    },
+    "restricted": {
+      "label": "Restreint",
+      "description": "Visible uniquement par les membres du Seeclub Stäfa au sein de l'application (utilisateurs enregistrés)."
+    },
+    "protected": {
+      "label": "Protégé",
+      "description": "Utilisable uniquement par les utilisateurs autorisés (p. ex. le comité) dans le cadre des tâches du club."
+    },
+    "srv": {
+      "label": "Transmission au SRV",
+      "description": "Le Seeclub Stäfa est membre de la Fédération Suisse d'Aviron SRV. En tant que membre du SCS, vous êtes automatiquement aussi membre du SRV. Le SRV exige de nous la transmission d'informations personnelles (nom, prénom, adresse postale, numéro de téléphone) de tous nos membres. Par votre adhésion au SCS, vous consentez implicitement à ce que ces données soient transmises annuellement au SRV.",
+      "email": "Pour l'envoi des SRV News (anciennement le magazine Swissrowing), le SRV a besoin de votre adresse e-mail. Ici, vous avez la possibilité de vous désinscrire si vous ne souhaitez pas recevoir ces news. Dans ce cas, votre e-mail ne sera pas transmis au SRV lors de la prochaine synchronisation. Vous ne recevrez alors plus non plus de news du SRV."
+    }
+  }
+}

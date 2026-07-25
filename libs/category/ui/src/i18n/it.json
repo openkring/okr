@@ -1,0 +1,45 @@
+{
+  "okey": {
+    "label": "Chiave del doc.",
+    "placeholder": "",
+    "helper": ""
+  },
+  "name": {
+    "label": "Nome",
+    "placeholder": "Inserire il nome",
+    "helper": ""
+  },
+  "i18nBase": {
+    "label": "Base i18n",
+    "placeholder": "",
+    "helper": "Chiave di base per le traduzioni"
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": ""
+  },
+  "translateItems": {
+    "label": "Tradurre le voci",
+    "helper": ""
+  },
+
+  "priority": {
+    "label": "Priorità",
+    "helper": "La priorità di un'attività, ovvero con quale rapidità deve essere svolta.",
+    "all": {
+      "label": "Tutte le priorità"
+    },
+    "low": {
+      "label": "Bassa",
+      "description": "Priorità bassa"
+    },
+    "medium": {
+      "label": "Normale",
+      "description": "Priorità normale"
+    },
+    "high": {
+      "label": "Alta",
+      "description": "Priorità alta"
+    }
+  }
+}

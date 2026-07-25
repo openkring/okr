@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Añadir pizarra",
+    "conf": "La pizarra se ha añadido.",
+    "error": "No se pudo añadir la pizarra."
+  },
+  "update": {
+    "conf": "La pizarra se ha modificado.",
+    "error": "No se pudo modificar la pizarra."
+  },
+  "delete": {
+    "conf": "La pizarra se ha eliminado.",
+    "confirm": "¿Desea realmente eliminar la pizarra ?",
+    "error": "No se pudo eliminar la pizarra."
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "create": {
+    "conf": "La spesa è stata salvata.",
+    "error": "Non è stato possibile salvare la spesa."
+  },
+  "update": {
+    "conf": "La spesa è stata aggiornata.",
+    "error": "Non è stato possibile aggiornare la spesa."
+  },
+  "delete": {
+    "conf": "La spesa è stata eliminata.",
+    "error": "Non è stato possibile eliminare la spesa."
+  },
+  "expenseDoc": {
+    "create": {
+      "conf": "La ricevuta è stata salvata.",
+      "error": "Non è stato possibile salvare la ricevuta."
+    },
+    "delete": {
+      "conf": "La ricevuta è stata eliminata.",
+      "error": "Non è stato possibile eliminare la ricevuta."
+    }
+  }
+}

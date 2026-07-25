@@ -1,0 +1,23 @@
+{
+  "create": {
+    "label": "Añadir reserva",
+    "conf": "La reserva se ha creado.",
+    "error": "No se pudo crear la reserva."
+  },
+  "update": {
+    "label": "Modificar reserva",
+    "conf": "La reserva se ha modificado.",
+    "error": "No se pudo modificar la reserva."
+  },
+  "delete": {
+    "label": "Eliminar reserva",
+    "conf": "La reserva se ha eliminado.",
+    "error": "No se pudo eliminar la reserva.",
+    "confirm": "Normalmente una reserva debería finalizarse, no eliminarse. La eliminación solo está prevista para corregir entradas erróneas. ¿Desea realmente eliminar la reserva?"
+  },
+  "end": {
+    "label": "Finalizar reserva",
+    "conf": "La reserva se ha finalizado.",
+    "error": "No se pudo finalizar la reserva."
+  }
+}

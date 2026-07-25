@@ -1,0 +1,132 @@
+{
+  "singular": "Lugar",
+  "plural": "Lugares",
+  "description": "Un lugar que se puede localizar con precisión mediante coordenadas.",
+  "empty": "Aún no se ha registrado ningún lugar. Cree un nuevo lugar haciendo clic en el botón +.",
+
+  "list": {
+    "header": {
+      "name": "Nombre",
+      "type": "Tipo",
+      "latitude": "Latitud",
+      "longitude": "Longitud"
+    }
+  },
+
+  "copy": {
+    "label": "Copiar lugar",
+    "conf": "El lugar se ha copiado.",
+    "error": "No se pudo copiar el lugar.",
+    "coord": "Copiar coordenadas",
+    "w3w": "Copiar what3word"
+  },
+  "convert": {
+    "label": "Convertir formatos",
+    "error": "No se pudieron convertir la dirección/las coordenadas. El lugar se guardó sin cambios."
+  },
+  "create": {
+    "label": "Añadir lugar",
+    "conf": "El lugar se ha añadido.",
+    "error": "No se pudo añadir el lugar."
+  },
+  "delete": {
+    "label": "Eliminar lugar",
+    "confirm": "¿Desea realmente eliminar el lugar?",
+    "conf": "El lugar se ha eliminado.",
+    "error": "No se pudo eliminar el lugar."
+  },
+  "show": {
+    "label": "Mostrar el lugar en el mapa"
+  },
+  "update": {
+    "label": "Editar lugar",
+    "conf": "El lugar se ha modificado.",
+    "error": "No se pudo modificar el lugar."
+  },
+  "view": {
+    "label": "Mostrar detalles del lugar"
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "ssssss",
+    "helper": "El ID único en la base de datos."
+  },
+  "name": {
+    "label": "Nombre del lugar",
+    "placeholder": "ssssss",
+    "helper": "El nombre del lugar, p. ej. dirección"
+  },
+  "latitude": {
+    "label": "Latitud",
+    "placeholder": "nn.nnnnn",
+    "helper": "La posición Norte/Sur respecto al Ecuador (+-0-90 grados)."
+  },
+  "longitude": {
+    "label": "Longitud",
+    "placeholder": "nnn.nnnnnn",
+    "helper": "La posición Este/Oeste respecto a Greenwich +-0 - 180 grados)."
+  },
+  "placeId": {
+    "label": "PlaceID",
+    "placeholder": "ssssss",
+    "helper": "El Place ID de Google Places."
+  },
+  "what3words": {
+    "label": "What3Words",
+    "placeholder": "ssss.ssss.ssss",
+    "helper": "La designación What3Words de este lugar."
+  },
+  "seaLevel": {
+    "label": "Altitud sobre el nivel del mar",
+    "placeholder": "nnn",
+    "helper": "La altitud sobre el nivel del mar en metros."
+  },
+  "speed": {
+    "label": "Velocidad",
+    "placeholder": "nnn",
+    "helper": "La velocidad en km/h."
+  },
+  "direction": {
+    "label": "Dirección",
+    "placeholder": "nnn",
+    "helper": "La dirección en grados como desviación respecto al Norte."
+  },
+  "distance": {
+    "label": "Distancia",
+    "placeholder": "nnn",
+    "helper": "La distancia del lugar respecto al punto de partida en kilómetros."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Texto"
+  },
+
+  "location_type": {
+    "label": "Tipo de lugar",
+    "helper": "Tipo de una indicación de lugar, normalmente utilizado como filtro en listas de lugares.",
+    "all": {
+      "label": "Todos"
+    },
+    "address": {
+      "label": "Dirección",
+      "description": "El lugar representa una dirección."
+    },
+    "logbuch": {
+      "label": "Cuaderno de bitácora",
+      "description": "El lugar es una entrada en el cuaderno de bitácora."
+    },
+    "geomarker": {
+      "label": "Geomarcador",
+      "description": "El lugar es un pin en un mapa."
+    },
+    "airport": {
+      "label": "Aeropuerto",
+      "description": "Aeropuertos internacionales para el seguimiento de vuelos."
+    },
+    "other": {
+      "label": "Otro lugar",
+      "description": "El lugar representa otra información de ubicación."
+    }
+  }
+}

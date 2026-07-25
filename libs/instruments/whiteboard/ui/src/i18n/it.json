@@ -1,0 +1,19 @@
+{
+  "name": {
+    "label": "Nome",
+    "placeholder": "Nome della lavagna",
+    "helper": ""
+  },
+  "description": {
+    "label": "Descrizione",
+    "placeholder": ""
+  },
+  "item": {
+    "text": {
+      "label": "Testo",
+      "placeholder": "Inserire il testo"
+    },
+    "color": { "label": "Colore" },
+    "owner": { "label": "Responsabile" }
+  }
+}

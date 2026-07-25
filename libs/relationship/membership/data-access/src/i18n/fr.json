@@ -1,0 +1,51 @@
+{
+  "create": {
+    "label": "Ajouter une adhésion",
+    "error": "L'adhésion n'a pas pu être créée.",
+    "conf": "L'adhésion a été créée.",
+    "alreadyMember": "Ce membre existe déjà."
+  },
+  "update": {
+    "label": "Modifier l'adhésion",
+    "error": "Les modifications n'ont pas pu être enregistrées",
+    "conf": "Les modifications ont été enregistrées."
+  },
+  "delete": {
+    "label": "Supprimer l'adhésion",
+    "error": "L'adhésion n'a pas pu être supprimée",
+    "conf": "L'adhésion a été supprimée",
+    "confirm": "Normalement, une adhésion devrait être terminée, mais pas supprimée. La suppression n'est prévue que pour corriger des entrées erronées. Voulez-vous vraiment supprimer l'adhésion ?"
+  },
+  "end": {
+    "title": "Terminer l'adhésion",
+    "select": "Choisir la date de sortie",
+    "confirm": "Voulez-vous vraiment terminer l'adhésion ?",
+    "conf": "L'adhésion a été terminée.",
+    "error": "L'adhésion n'a pas pu être terminée.",
+    "comment": "Adhésion terminée",
+    "intro": "<p>La date de sortie est le dernier jour de l'adhésion. Dès le lendemain, la personne n'est plus membre.<br /> Il s'agit le plus souvent du 31.12. de l'année en cours.</p>"
+  },
+  "select": {
+    "default": "Données brutes",
+    "srv": "Liste SRV",
+    "address": "Liste d'adresses",
+    "title": "Choisir le type de liste pour l'export"
+  },
+  "fee": {
+    "update": {
+      "label": "Modifier la facture",
+      "error": "Les modifications n'ont pas pu être enregistrées",
+      "conf": "Les modifications ont été enregistrées."
+    },
+    "create": {
+      "label": "Ajouter une facture",
+      "error": "La facture n'a pas pu être créée.",
+      "conf": "La facture a été créée."
+    },
+    "delete": {
+      "label": "Supprimer la facture",
+      "error": "La facture n'a pas pu être supprimée",
+      "conf": "La facture a été supprimée"
+    }
+  }
+}

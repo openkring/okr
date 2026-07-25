@@ -1,0 +1,16 @@
+{
+  "template": {
+    "blank": {
+      "label": "Empty board",
+      "desc": "An empty surface for post-its and notes."
+    },
+    "fourQuadrant": {
+      "label": "Four quadrants",
+      "desc": "Arrange notes in four fields (e.g. impact / effort).",
+      "q1": "Top left",
+      "q2": "Top right",
+      "q3": "Bottom left",
+      "q4": "Bottom right"
+    }
+  }
+}

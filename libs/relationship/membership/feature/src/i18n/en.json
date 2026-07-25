@@ -1,0 +1,507 @@
+{
+  "singular": "Membership",
+  "memberships": "Memberships",
+  "description": "Describes a person's memberships.",
+  "members": "Members",
+  "adminMarker": "(Admin)",
+  "reldesc1": "Membership of",
+  "reldesc2": "at",
+  "newDesc": "should become a member of",
+  "changeDesc": "The member category should be changed:",
+  "titleRel": "in",
+  "year": {
+    "entry": "Year of entry",
+    "exit": "Year of exit"
+  },
+  "empty": "No memberships have been recorded yet.",
+  "noData": {
+    "members": "The organization has no members.",
+    "memberships": "There are no memberships."
+  },
+  "view": {
+    "label": "Show membership"
+  },
+  "update": {
+    "label": "Edit membership",
+    "category": "Change member category",
+    "chooseNew": "Choose new category"
+  },
+  "chat": {
+    "open": "Open direct chat"
+  },
+  "copy": {
+    "email": {
+      "label": "Copy email",
+      "conf": "The email address was copied."
+    },
+    "phone": {
+      "label": "Copy phone number",
+      "conf": "The phone number was copied."
+    }
+  },
+  "create": {
+    "member": "Add member",
+    "alreadyMember": "This member already exists.",
+    "label": "Add membership",
+    "error": "The membership could not be created.",
+    "conf": "The membership was created."
+  },
+  "end": {
+    "label": "End membership",
+    "select": "Choose exit date",
+    "confirm": "Do you really want to end the membership?",
+    "conf": "The membership was ended.",
+    "error": "The membership could not be ended.",
+    "comment": "Membership ended",
+    "intro": "<p>The exit date is the last day of the membership. From the next day on, the person is no longer a member.<br /> Usually this is 31.12. of the current year.</p>"
+  },
+  "delete": {
+    "label": "Delete membership",
+    "group": "Should this group membership really be deleted?",
+    "confirm": "Normally a membership should be ended, but not deleted. Deletion is only intended to correct incorrect entries. Do you really want to delete the membership?"
+  },
+  "download": {
+    "vcard": "Download address (vCard)"
+  },
+  "send": {
+    "email": "Send email"
+  },
+  "call": {
+    "phone": "Call"
+  },
+  "select": {
+    "label": "Select",
+    "title": "Choose list type for export",
+    "default": "Raw data",
+    "srv": "SRV list",
+    "address": "Address list"
+  },
+  "category": {
+    "label": {
+      "label": "Category",
+      "old": "Current category",
+      "new": "New category"
+    },
+    "abbreviation": "Cat.",
+    "helper": "The member category is fixed here. If you want to change it, choose the Category change action in the list view.",
+    "name": "Name of the category",
+    "change": {
+      "label": "Change member category",
+      "helper": "On the left you see the current member category. On the right, select the new category the member should switch to.",
+      "helperDate": "The date from which the new category should apply. The current membership is ended one day earlier. By default, today's date is suggested."
+    }
+  },
+  "invoice": {
+    "create": {
+      "label": "Create invoice",
+      "conf": "The invoice was created."
+    },
+    "update": "Edit invoice",
+    "upload": "Upload invoice",
+    "download": "Download invoice",
+    "paid": "Mark as paid",
+    "delete": "Delete invoice",
+    "state": "Invoice status"
+  },
+  "member": {
+    "update": "Edit member",
+    "state": {
+      "label": "Member status",
+      "helper": "The current status of this membership."
+    }
+  },
+  "scsMemberFee": {
+    "archive": {
+      "confirm": "The invoice run is completed and all invoices are set to archived.",
+      "conf": "All invoices have been archived. You are ready for a new invoice generation."
+    },
+    "delete": {
+      "label": "Delete invoice",
+      "confirm": "Should the invoice really be deleted?",
+      "error": "The invoice could not be deleted",
+      "conf": "The invoice was deleted"
+    },
+    "generate": {
+      "confirm": "WARNING: All invoices will be regenerated. Local changes will be overwritten. Normally this operation is run once at the start of an invoice run. Should the operation be executed?",
+      "conf": "The invoice data was generated."
+    },
+    "update": {
+      "label": "Edit invoice",
+      "conf": "The changes were saved."
+    },
+    "download": {
+      "enterInvoiceId": "Enter invoice ID:"
+    },
+    "upload": {
+      "label": "Invoice review",
+      "conf": "Invoice was uploaded to Bexio.",
+      "noBexioId": "The invoice cannot be uploaded because the Bexio ID is missing."
+    },
+    "totals": {
+      "label": "Fee overview"
+    },
+    "export": {
+      "title": "Annual fee invoices"
+    },
+    "list": {
+      "title": "Member fees",
+      "empty": "No entries found"
+    },
+    "jb": {
+      "label": "Annual fee",
+      "placeholder": "nnn",
+      "helper": "The annual fee to your own organization."
+    },
+    "jbp": {
+      "label": "Association fee",
+      "placeholder": "nnn",
+      "helper": "The annual fee to the umbrella organization."
+    },
+    "bev": {
+      "label": "Beverages 2025",
+      "placeholder": "nnn",
+      "helper": "Consumption in the past year"
+    },
+    "entryFee": {
+      "label": "One-time entry fee",
+      "placeholder": "nnn",
+      "helper": "One-time entry fee"
+    },
+    "locker": {
+      "label": "Locker rental",
+      "placeholder": "nn",
+      "helper": "Annual rental of a locker."
+    },
+    "skiff": {
+      "label": "Skiff storage rental",
+      "placeholder": "nnn",
+      "helper": "Annual rental of a storage space."
+    },
+    "skiffInsurance": {
+      "label": "Skiff insurance share",
+      "placeholder": "nn",
+      "helper": "Proportional charge of the insurance costs."
+    },
+    "rebate": {
+      "label": "Discount",
+      "placeholder": "nnn",
+      "helper": "Training or family discount."
+    },
+    "total": "Total"
+  },
+  "list": {
+    "header": {
+      "name": "Name",
+      "entry": "Entry",
+      "entryExit": "Entry/exit",
+      "category": "Cat.",
+      "dateOfDeath": "Date of death",
+      "exit": "Exit",
+      "titleRel": "in"
+    },
+    "memberships": {
+      "title": "Memberships (persons and organizations)"
+    },
+    "persons": {
+      "title": "Members"
+    },
+    "orgs": {
+      "title": "Member organizations"
+    },
+    "applied": {
+      "title": "Applications"
+    },
+    "active": {
+      "title": "Active"
+    },
+    "passive": {
+      "title": "Passive"
+    },
+    "cancelled": {
+      "title": "Alumni"
+    },
+    "deceased": {
+      "title": "Deceased"
+    },
+    "entries": {
+      "title": "Entries",
+      "yearLabel": "Year of entry"
+    },
+    "exits": {
+      "title": "Exits",
+      "yearLabel": "Year of exit"
+    }
+  },
+  "memberId": {
+    "label": "Member ID",
+    "placeholder": "nnnnn",
+    "error": "An integer consisting only of digits must be entered.",
+    "helper": "The unique identification number of the member in this organization."
+  },
+  "person": {
+    "details": "Personal details",
+    "address": "Addresses",
+    "misc": "Miscellaneous",
+    "membership": "Membership (optional)",
+    "update": {
+      "label": "Edit person"
+    },
+    "view": {
+      "label": "Show person details"
+    }
+  },
+  "firstname": {
+    "label": "First name",
+    "placeholder": "ssssssss",
+    "helper": "All first names of the person."
+  },
+  "lastname": {
+    "label": "Last name",
+    "placeholder": "ssssssss",
+    "helper": "Family name of the person."
+  },
+  "ssnId": {
+    "label": "AHV number",
+    "placeholder": "756.xxxx.xxxx.xc",
+    "helper": "The AHV number is an optional entry. It is used, for example, for cleaning staff for AHV reports or insurance, or required by associations as proof of age.",
+    "error": "The AHV number consists of 13 numbers in the following format 756.xxxx.xxxx.xc."
+  },
+  "bexioId": {
+    "label": "Bexio ID",
+    "placeholder": "nnnnnn",
+    "helper": "The ID of the same contact in Bexio for synchronizing data.",
+    "error": "Bexio ID is a six-digit number."
+  },
+  "abbreviation": {
+    "label": "Abbreviation",
+    "placeholder": "ss",
+    "helper": "Abbreviation of the name, e.g. for lists, minutes."
+  },
+  "nickName": {
+    "label": "Nickname",
+    "placeholder": "ssssssss",
+    "helper": "The nickname is only used in the search index and is otherwise not visible."
+  },
+  "orgFunction": {
+    "label": "Function",
+    "placeholder": "Function in the organization",
+    "helper": "The function title of a person in an organization."
+  },
+  "rebate": {
+    "label": "Discount",
+    "placeholder": "n.nn",
+    "helper": "A discount (absolute amount in CHF) can be specified here, which is taken into account when invoicing.",
+    "reason": "Reason for discount"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "text",
+    "helper": "any notes on this membership that should be permanently recorded"
+  },
+  "email": {
+    "label": "Email",
+    "placeholder": "john@doe.com"
+  },
+  "phone": {
+    "label": "Tel.",
+    "placeholder": "+41 79 123 1234"
+  },
+  "streetname": {
+    "label": "Street",
+    "placeholder": "Street name without no.",
+    "error": "Only letters (incl. -) and numbers are allowed, no special characters.",
+    "helper": "Street name without the house number."
+  },
+  "streetnumber": {
+    "label": "No.",
+    "placeholder": "House number on the street",
+    "error": "Only letters (incl. -) and numbers are allowed, no special characters.",
+    "helper": "Only the house number (without street name)."
+  },
+  "countrycode": {
+    "label": "Country",
+    "placeholder": "CH",
+    "error": "A 2-letter country code must be entered, e.g. CH for Switzerland.",
+    "helper": "The 2-letter country code according to ISO 3166-1 alpha 2, see https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes"
+  },
+  "zipcode": {
+    "label": "Postal code",
+    "placeholder": "Postal code",
+    "error": "A four-digit postal code must be entered.",
+    "helper": "Postal code"
+  },
+  "city": {
+    "label": "City",
+    "placeholder": "City name",
+    "error": "Only letters without special characters or numbers are allowed.",
+    "helper": "A place, e.g. name of the city or municipality."
+  },
+  "web": {
+    "label": "Website",
+    "placeholder": "https://www.domain.ch",
+    "helper": "The website of the organization.",
+    "error": "The website must be entered in the following format: https://www.domain.ch."
+  },
+  "dateOfEntry": {
+    "label": "Entry date",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "The membership begins on this date."
+  },
+  "dateOfExit": {
+    "label": "Exit date",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "The membership ends on this date."
+  },
+  "dateOfChange": {
+    "label": "Change date",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "The start of the changed membership."
+  },
+  "dateOfBirth": {
+    "label": "Date of birth",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "The person was born on this date."
+  },
+  "dateOfDeath": {
+    "label": "Date of death",
+    "placeholder": "dd.mm.yyyy",
+    "helper": "The person died on this date."
+  },
+  "mcat_scs": {
+    "label": "Member category",
+    "labelOld": "Current category",
+    "labelNew": "New category",
+    "helper": "Member category",
+    "all": {
+      "label": "All categories"
+    },
+    "active": {
+      "label": "Active 1",
+      "description": "Active 1 member"
+    },
+    "active2": {
+      "label": "Active 2",
+      "description": "Active 2 membership still dates from earlier times."
+    },
+    "active3": {
+      "label": "Active 3",
+      "description": "Active 3 membership still dates from earlier times"
+    },
+    "junior": {
+      "label": "Junior",
+      "description": "Junior up to max 18 years."
+    },
+    "free": {
+      "label": "Free members",
+      "description": "Free membership still dates from earlier times."
+    },
+    "honorary": {
+      "label": "Honorary members",
+      "description": "Honorary members elected by the general assembly."
+    },
+    "candidate": {
+      "label": "Candidates",
+      "description": "New members in training."
+    },
+    "passive": {
+      "label": "Passive",
+      "description": "Passive member"
+    }
+  },
+  "mcat_srv": {
+    "label": "Member category",
+    "helper": "Member category",
+    "all": {
+      "label": "All categories"
+    },
+    "active": {
+      "label": "Active",
+      "description": "The person is an active member."
+    },
+    "junior": {
+      "label": "Junior",
+      "description": "Junior up to max 18 years."
+    },
+    "double": {
+      "label": "Double",
+      "description": "Double member who is registered through another club."
+    },
+    "honorary": {
+      "label": "Honorary members",
+      "description": "Honorary members at the SRV"
+    },
+    "passive": {
+      "label": "Passive",
+      "description": "Passive member"
+    }
+  },
+  "mcat_default": {
+    "label": "Member category",
+    "helper": "Member category",
+    "all": {
+      "label": "All categories"
+    },
+    "active": {
+      "label": "Active",
+      "description": "The person is an active member."
+    },
+    "passive": {
+      "label": "Passive",
+      "description": "Passive member"
+    },
+    "junior": {
+      "label": "Youth",
+      "description": "Junior up to max 18 years."
+    },
+    "mcat_p13": {
+      "all": {
+        "label": "All",
+        "description": "All P13 members"
+      },
+      "active": {
+        "label": "Active",
+        "description": "The person wants to attend the events."
+      },
+      "passive": {
+        "label": "Passive",
+        "description": "The person no longer wants to attend the events."
+      }
+    },
+    "mcat_test": {
+      "all": {
+        "label": "All categories"
+      },
+      "active": {
+        "label": "Active",
+        "description": "The person is an active member."
+      },
+      "junior": {
+        "label": "Junior",
+        "description": "Junior up to max 18 years."
+      },
+      "passive": {
+        "label": "Passive",
+        "description": "Passive member"
+      }
+    },
+    "state": {
+      "helper": "The member status cannot be edited. It is automatically derived from the member category. The status can be set per category in the category definition.",
+      "applied": {
+        "label": "Applied",
+        "description": "The membership has been requested (waiting list without candidates)."
+      },
+      "active": {
+        "label": "Active",
+        "description": "The membership is currently active and valid (incl. candidates)."
+      },
+      "passive": {
+        "label": "Passive",
+        "description": "The membership is paused or inactive."
+      },
+      "cancelled": {
+        "label": "Ended",
+        "description": "The membership is ended, no longer valid."
+      }
+    }
+  }
+}

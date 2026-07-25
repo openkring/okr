@@ -1,0 +1,129 @@
+{
+  "transfer": "Transfert",
+  "transfers": "Transferts",
+  "desc": "Un transfert d'une ressource d'un sujet (personne ou organisation) vers un objet (personne ou organisation).",
+  "empty": "Aucun transfert trouvé.",
+  "reldesc": "transfère à",
+  "revreldesc": "transféré de",
+
+
+  "add": {
+    "subject": {
+      "label": "Ajouter une personne ou une organisation",
+      "conf": "Le sujet du transfert a été ajouté.",
+      "error": "Le sujet du transfert n'a pas pu être ajouté."
+    },
+    "object": {
+      "label": "Ajouter une personne ou une organisation",
+      "conf": "L'objet du transfert a été ajouté.",
+      "error": "L'objet du transfert n'a pas pu être ajouté."
+    }
+  },
+  "create": {
+    "label": "Ajouter un transfert",
+    "conf": "Le transfert a été créé.",
+    "error": "Le transfert n'a pas pu être créé."
+  },
+  "delete": {
+    "label": "Supprimer le transfert",
+    "conf": "Le transfert a été supprimé.",
+    "error": "Le transfert n'a pas pu être supprimé."
+  },
+  "select": {
+    "resource": "Choisir la ressource"
+  },
+  "update": {
+    "label": "Modifier le transfert",
+    "conf": "Le transfert a été modifié.",
+    "error": "Le transfert n'a pas pu être modifié."
+  },
+  "view": {
+    "label": "Afficher les détails du transfert"
+  },
+
+  "list": {
+    "title": "Transferts",
+    "header": {
+      "type": "Type",
+      "resource": "Ressource",
+      "subject": "de",
+      "object": "à",
+      "date": "Date",
+      "name": "Occasion",
+      "state": "Statut"
+    }
+  },
+
+  "subject": "De",
+  "object": "À",
+  "date": "Date",
+  "resource": "Objet",
+  "name": "Occasion",
+  "state": "Statut",
+  "type": "Type de transfert",
+
+
+  "transfer_type": {
+    "all": {
+      "label": "Tous"
+    },
+    "purchase": {
+      "label": "Achat",
+      "description": "Transfert par achat"
+    },
+    "gift": {
+      "label": "Cadeau",
+      "description": "Transfert par cadeau"
+    },
+    "inheritance": {
+      "label": "Héritage",
+      "description": "Transfert par héritage"
+    },
+    "withdrawal": {
+      "label": "Retrait",
+      "description": "Transfert par retrait"
+    },
+    "deposit": {
+      "label": "Dépôt",
+      "description": "Transfert par dépôt"
+    },
+    "loan": {
+      "label": "Prêt",
+      "description": "Transfert par prêt"
+    },
+    "custom": {
+      "label": "Autre",
+      "description": "Transfert pour d'autres raisons"
+    },
+    "booking": {
+      "label": "Écriture",
+      "description": "Transfert par écriture"
+    }
+  },
+
+  "transfer_state": {
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "initial": {
+      "label": "Initial",
+      "description": "Idée ou projet de transfert."
+    },
+    "draft": {
+      "label": "Brouillon",
+      "description": "Le transfert est en cours de création (par ex. discussion d'offre ou de contrat)."
+    },
+    "active": {
+      "label": "Actif",
+      "description": "Le transfert est actif et valide."
+    },
+    "terminated": {
+      "label": "Terminé",
+      "description": "Le transfert est terminé."
+    },
+    "cancelled": {
+      "label": "Annulé",
+      "description": "Le transfert a été annulé."
+    }
+  }
+}

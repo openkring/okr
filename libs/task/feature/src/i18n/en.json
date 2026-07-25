@@ -1,0 +1,138 @@
+{
+  "task": "Todo",
+  "tasks": "Todos",
+  "desc": "Tasks that need to be done.",
+  "empty": "No todos found.",
+  "empty-my": "Congratulations ! - You have no open tasks.",
+  "calendar": {
+    "name": {
+      "label": "Calendar",
+      "description": "The event is entered in these calendars.",
+      "addLabel": "Add calendar name"
+    }
+  },
+  "taskQuickEntry": {
+    "label": "Quick entry",
+    "placeholder": "Text [@Person] [//Date]",
+    "helper": "Enables the quick creation of a task with description, assignment and due date."
+  },
+
+  "create": {
+    "label": "Create new todo",
+    "conf": "Todo was created.",
+    "error": "Todo could not be created."
+  },
+  "delete": {
+    "label": "Delete todo",
+    "confirm": "Do you really want to delete this todo ?",
+    "conf": "Todo was deleted.",
+    "error": "Todo could not be deleted."
+  },
+  "update": {
+    "label": "Edit todo",
+    "conf": "Todo was changed.",
+    "error": "Todo could not be changed."
+  },
+  "view": {
+    "label": "View todo details"
+  },
+  "done": "Set todo to done",
+
+  "list": {
+    "header": {
+      "name": "Name",
+      "dueDate": "Deadline",
+      "assignee": "Responsible",
+      "state": "Status"
+    }
+  },
+
+  "board": {
+    "emptyColumn": "No todos",
+    "noStates": "No 'task_state' category is defined. Without states no board can be displayed."
+  },
+
+   "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "The key of the task in the database."
+  },
+  "name": {
+    "label": "Task name",
+    "placeholder": "Any name",
+    "helper": "An identifier for the task so that it can easily be found in a list."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes"
+  },
+  "dueDate": {
+    "label": "Due on",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "A task must be completed by this date.",
+    "error": "The date format is not correct."
+  },
+  "completionDate": {
+    "label": "Completed on",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "The task was completed on this date.",
+    "error": "The date format is not correct."
+  },
+  "task_state": {
+    "all": {
+      "label": "All states"
+    },
+    "label": "Status",
+    "helper": "The task is in a certain state, e.g. initial, planned, in progress, done.",
+    "initial": {
+      "label": "Initial",
+      "description": "The task was created."
+    },
+    "planned": {
+      "label": "Planned",
+      "description": "The task is planned."
+    },
+    "doing": {
+      "label": "In progress",
+      "description": "The task is being worked on."
+    },
+    "done": {
+      "label": "Done",
+      "description": "The task was completed."
+    },
+    "waiting": {
+      "label": "Waiting",
+      "description": "The task is waiting for an action."
+    },
+    "cancelled": {
+      "label": "Cancelled",
+      "description": "The task was cancelled."
+    },
+    "later": {
+      "label": "Later",
+      "description": "The task will be done later."
+    }
+  },
+  "priority": {
+    "label": "Priority"
+  },
+  "importance": {
+    "label": "Importance"
+  },
+  "assignee": {
+    "label": "Responsible",
+    "description": "Person responsible for completing the task."
+  },
+  "author": {
+    "label": "Author",
+    "description": "Person who created the task."
+  },
+  "scope": {
+    "label": "Context",
+    "description": "The task is normally visible to the author, the responsible person and privileged users. With the context, visibility can be extended to a group."
+  },
+
+  "validations": {
+    "taskModelType": "The ModelType must be TaskModel."
+  }
+}

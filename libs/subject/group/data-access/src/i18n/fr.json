@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Nouveau groupe",
+    "error": "Le nouveau groupe n'a pas pu être enregistré.",
+    "conf": "Le nouveau groupe a été enregistré."
+  },
+  "update": {
+    "label": "Modifier le groupe",
+    "error": "Les modifications n'ont pas pu être enregistrées",
+    "conf": "Les modifications ont été enregistrées."
+  },
+  "delete": {
+    "label": "Supprimer le groupe",
+    "error": "Le groupe n'a pas pu être supprimé.",
+    "conf": "Le groupe a été supprimé.",
+    "confirm": "Voulez-vous vraiment supprimer le groupe ?"
+  }
+}

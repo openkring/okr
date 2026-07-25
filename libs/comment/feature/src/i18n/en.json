@@ -1,0 +1,8 @@
+{
+  "comments": "Comments",
+  "empty": "No comments available.",
+  "add": {
+    "title": "Write your comment here",
+    "placeholder": "Text"
+  }
+}

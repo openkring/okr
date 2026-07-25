@@ -1,0 +1,47 @@
+{
+  "module": {
+    "label": "Modulo",
+    "prompt": "Modulo (ad es. chat/feature)"
+  },
+  "key": {
+    "label": "Chiave",
+    "prompt": "Chiave (ad es. fields.reconnecting)"
+  },
+  "isHtml": {
+    "label": "Contenuto HTML"
+  },
+  "create": {
+    "label": "Crea traduzione",
+    "conf": "Traduzione creata",
+    "error": "Non è stato possibile creare la traduzione."
+  },
+  "update": {
+    "label": "Modifica traduzione",
+    "conf": "Traduzione salvata",
+    "error": "Non è stato possibile salvare la traduzione."
+  },
+  "delete": {
+    "label": "Elimina traduzione",
+    "conf": "Traduzione eliminata",
+    "confirm": "Eliminare davvero questa traduzione?",
+    "error": "Non è stato possibile eliminare la traduzione."
+  },
+  "default": {
+    "title": "Traduzioni",
+    "edit": {
+      "title": "Modifica traduzione"
+    },
+    "list": {
+      "title": "Tutte le traduzioni predefinite"
+    }
+  },
+  "override": {
+    "title": "Sostituzioni",
+    "edit": {
+      "title": "Modifica sostituzione"
+    },
+    "list": {
+      "title": "Tutte le sostituzioni"
+    }
+  }
+}

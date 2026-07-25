@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "Instrumento creado",
+    "error": "No se pudo crear el instrumento"
+  },
+  "update": {
+    "conf": "Instrumento guardado",
+    "error": "No se pudo guardar el instrumento"
+  },
+  "delete": {
+    "conf": "Instrumento eliminado",
+    "error": "No se pudo eliminar el instrumento"
+  }
+}

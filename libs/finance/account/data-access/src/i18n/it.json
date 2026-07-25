@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Aggiungi conto",
+    "error": "Non è stato possibile creare il conto.",
+    "conf": "Il conto è stato creato."
+  },
+  "update": {
+    "label": "Modifica conto",
+    "error": "Non è stato possibile salvare le modifiche",
+    "conf": "Le modifiche sono state salvate."
+  },
+  "delete": {
+    "label": "Elimina conto",
+    "error": "Non è stato possibile eliminare il conto",
+    "conf": "Il conto è stato eliminato"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Add todo",
+    "conf": "Todo was added.",
+    "error": "Todo could not be added."
+  },
+  "update": {
+    "label": "Edit todo",
+    "conf": "Todo was changed.",
+    "error": "Todo could not be changed."
+  },
+  "delete": {
+    "label": "Delete todo",
+    "conf": "Todo was deleted.",
+    "error": "Todo could not be deleted."
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "ownership": "Utilizzo",
+  "ownerships": "Utilizzi",
+  "owner": "Utente",
+  "description": "Una persona o organizzazione utilizza una risorsa",
+  "empty": "Nessun utilizzo trovato.",
+  "duration": "da-a",
+  "ownerName": "Nome",
+  "resourceName": "Risorsa",
+  "newDesc": "desidera ora utilizzare la seguente risorsa:",
+  "relDesc1": "Utilizzo di",
+  "relDesc2": "da parte di",
+  "revreldesc": "è utilizzato da",
+
+
+  "create": {
+    "label": "Aggiungi utilizzo",
+    "conf": "L'utilizzo è stato creato.",
+    "error": "Non è stato possibile creare l'utilizzo."
+  },
+  "delete": {
+    "label": "Elimina utilizzo",
+    "confirm": "Normalmente un utilizzo dovrebbe essere terminato, ma non eliminato. L'eliminazione è prevista solo per correggere voci errate. Eliminare davvero l'utilizzo?",
+    "conf": "L'utilizzo è stato eliminato",
+    "error": "Non è stato possibile eliminare l'utilizzo"
+  },
+  "end": {
+    "label": "Termina utilizzo"
+  },
+  "reactivate": {
+    "label": "Riattiva utilizzo",
+    "conf": "L'utilizzo è stato riattivato.",
+    "error": "Non è stato possibile riattivare l'utilizzo."
+  },
+  "select": {
+    "title": "Seleziona il tipo di elenco per l'esportazione",
+    "raw": "Dati grezzi",
+    "lockers": "Elenco armadietti"
+  },
+  "update": {
+    "label": "Modifica utilizzo",
+    "conf": "Le modifiche sono state salvate.",
+    "error": "Non è stato possibile salvare le modifiche"
+  },
+  "view": {
+    "label": "Visualizza dettagli utilizzo"
+  },
+  "boatAction": {
+    "edit": "Modifica barca",
+    "view": "Visualizza barca"
+  },
+  "ownerAction": {
+    "edit": "Modifica utente",
+    "view": "Visualizza utente"
+  },
+
+  "list": {
+    "empty": "Nessun utilizzo trovato.",
+    "header": {
+      "ownerName": "Nome",
+      "resourceName": "Risorsa",
+      "duration": "da-a",
+      "price": "Tariffa",
+      "deposit": "Cauzione",
+      "validFrom": "Valido da",
+      "validTo": "Valido fino a",
+      "year": "Anno"
+    },
+    "all": {
+      "title": "Utilizzi"
+    },
+    "ownerships": {
+      "title": "Utilizzi"
+    },
+    "lockers": {
+      "title": "Armadietti"
+    },
+    "keys": {
+      "title": "Chiavi"
+    },
+    "privateBoats": {
+      "title": "Skiff privati"
+    },
+    "scsBoats": {
+      "title": "Barche del club"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "L'okey è la chiave di un utilizzo, un ID univoco nel database."
+  },
+  "ownerName1": {
+    "label": "Nome",
+    "placeholder": "Nome",
+    "helper": "I nomi di una persona"
+  },
+  "ownerName2": {
+    "label": "Cognome",
+    "placeholder": "Nome",
+    "helper": "Il cognome di una persona o il nome dell'organizzazione."
+  },
+  "currency": {
+    "label": "Valuta",
+    "placeholder": "CHF",
+    "helper": "Il codice della valuta (codice a tre lettere)"
+  },
+  "price": {
+    "label": "Prezzo",
+    "placeholder": "nnnn",
+    "helper": "Un'indicazione di prezzo."
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Testo"
+  },
+  "all": {
+    "title": "Tutti gli utilizzi",
+    "categoryLabel": "Tipo di risorsa"
+  },
+  "boat": {
+    "name": "Nome della barca",
+    "type": "Tipo di barca"
+  },
+  "rboat": {
+    "name": "Nome della barca",
+    "type": "Tipo di barca",
+    "title": "Barche a remi",
+    "category": "Categoria di barca",
+    "club": {
+      "title": "Barche del club",
+      "categoryLabel": "Categoria di barca"
+    },
+    "private": {
+      "title": "Barche private"
+    }
+  },
+  "lockers": {
+    "title": "Armadietti",
+    "male": {
+      "title": "Armadietti uomini"
+    },
+    "female": {
+      "title": "Armadietti donne"
+    }
+  },
+  "houseKeys": {
+    "title": "Chiavi"
+  },
+  "valid": {
+    "from": {
+      "label": "Valido da",
+      "placeholder": "GG.MM.AAAA",
+      "helper": "L'utilizzo inizia in questa data."
+    },
+    "to": {
+      "label": "Valido fino a",
+      "placeholder": "GG.MM.AAAA",
+      "helper": "L'utilizzo termina in questa data."
+    }
+  },
+  "ownerType": {
+    "all": {
+      "label": "Tutti"
+    },
+    "persons": {
+      "label": "Persone",
+      "description": "L'utilizzo appartiene a una persona."
+    },
+    "men": {
+      "label": "Uomini",
+      "description": "L'utilizzo appartiene a un uomo."
+    },
+    "women": {
+      "label": "Donne",
+      "description": "L'utilizzo appartiene a una donna."
+    },
+    "orgs": {
+      "label": "Organizzazioni",
+      "description": "L'utilizzo appartiene a un'organizzazione."
+    }
+  },
+  "state": {
+    "applied": {
+      "label": "Richiesto",
+      "description": "La persona ha presentato una richiesta."
+    },
+    "active": {
+      "label": "Attivo",
+      "description": "Utilizzo attualmente valido."
+    }
+  }
+
+}

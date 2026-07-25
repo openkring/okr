@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Ajouter un lieu",
+    "conf": "Le lieu a été ajouté.",
+    "error": "Le lieu n'a pas pu être ajouté."
+  },
+  "update": {
+    "label": "Modifier le lieu",
+    "conf": "Le lieu a été modifié.",
+    "error": "Le lieu n'a pas pu être modifié."
+  },
+  "delete": {
+    "label": "Supprimer le lieu",
+    "conf": "Le lieu a été supprimé.",
+    "error": "Le lieu n'a pas pu être supprimé."
+  }
+}

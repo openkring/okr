@@ -1,0 +1,33 @@
+{
+  "whiteboard": "Whiteboard",
+  "plural": "Whiteboards",
+  "desc": "A wall for post-its and notes.",
+  "empty": "No whiteboards yet.",
+  "done": "Done",
+  "operation": {
+    "create": { "label": "Create whiteboard" },
+    "edit": { "label": "Edit whiteboard" },
+    "view": { "label": "View whiteboard" },
+    "delete": { "confirm": "Do you really want to delete the whiteboard ?" }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "confirmation": "Save"
+  },
+  "actionsheet": {
+    "choose": "Choose an action",
+    "open": "Open",
+    "edit": "Rename",
+    "delete": "Delete"
+  },
+  "editor": {
+    "addSticker": "Add sticker",
+    "addLabel": "Add text",
+    "chooseTemplate": "Template",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "zoomReset": "Reset view",
+    "emptyCanvas": "Tap «+» to add a sticker."
+  }
+}

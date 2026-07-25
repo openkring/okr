@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Ajouter une écriture",
+    "error": "L'écriture n'a pas pu être créée.",
+    "conf": "L'écriture a été créée."
+  },
+  "update": {
+    "label": "Modifier l'écriture",
+    "error": "Les modifications n'ont pas pu être enregistrées",
+    "conf": "Les modifications ont été enregistrées."
+  },
+  "delete": {
+    "label": "Supprimer l'écriture",
+    "error": "L'écriture n'a pas pu être supprimée",
+    "conf": "L'écriture a été supprimée"
+  }
+}

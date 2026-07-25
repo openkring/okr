@@ -1,0 +1,22 @@
+{
+  "folder": {
+    "plural": "Carpetas"
+  },
+  "operation": {
+    "create": { "label": "Crear carpeta" },
+    "edit": { "label": "Modificar carpeta" },
+    "view": { "label": "Mostrar carpeta" }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Elegir una acción"
+    },
+    "edit": "Modificar carpeta",
+    "delete": "Eliminar carpeta"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "confirmation": "Guardar"
+  }
+}

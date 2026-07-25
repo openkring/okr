@@ -1,0 +1,230 @@
+{
+  "pages": "Páginas web",
+  "sections": "Secciones",
+  "empty": "Todavía no se ha creado ningún contenido.",
+  "emptyPage": "Todavía no hay secciones para esta página. Por favor, cree primero las secciones.",
+  "emptyPageReadOnly": "Esta página aún está vacía.",
+  "notexist": "La página solicitada no existe.",
+  "help": "Por favor, compruebe la URL o navegue a través del menú.",
+
+  "name": {
+    "label": "Nombre",
+    "placeholder": "sssss",
+    "helper": "El nombre de la página web, de libre elección, sirve simplemente para volver a encontrar la página web."
+  },
+  "description": "Un sitio web contiene un título y varias secciones. El orden de las secciones se puede cambiar.",
+  "title": {
+    "label": "Título",
+    "placeholder": "String",
+    "helper": "El título es opcional y se muestra al visitante de la página web."
+  },
+
+  "view": "Mostrar la configuración de la página web",
+  "edit": "Editar la página web",
+  "show": "Mostrar la página web",
+  "create": "Crear nueva página",
+  "add": {
+    "label": "Añadir página web",
+    "placeholder": "Nombre de la página",
+    "section": "Añadir nueva sección"
+  },
+  "delete": {
+    "label": "Eliminar la página web",
+    "confirm": "¿Realmente debe eliminarse la página web ?"
+  },
+  "search": {
+    "article": "Buscar artículo"
+  },
+  "sort": {
+    "label": "Ordenar secciones",
+    "noSections": "No hay secciones para ordenar.",
+    "onlyOneSection": "Solo hay una sección, no es necesario ordenar."
+  },
+  "upload": {
+    "image": "Subir imagen(es)",
+    "file": "Subir archivo(s)"
+  },
+  "error": {
+    "save": "La página web no se pudo guardar. Por favor, inténtelo de nuevo.",
+    "load": "Las páginas web no se pudieron cargar. Por favor, inténtelo de nuevo.",
+    "delete": "La página web no se pudo eliminar. Por favor, inténtelo de nuevo."
+  },
+  "print": {
+    "generating": "Se está creando el PDF …",
+    "error": "El PDF no se pudo crear. Se utiliza la impresión del navegador en su lugar.",
+    "empty": "Esta página no contiene secciones imprimibles."
+  },
+
+  "type": {
+    "graph": {
+      "nomain": "No se encontró ningún menú principal.",
+      "help": {
+        "title": "Mapa del sitio – Ayuda",
+        "intro": "El mapa del sitio ofrece una visión general gráfica de la estructura de la app en forma de estructura de árbol. Enumera todos los menús, páginas y secciones configurados y muestra sus dependencias. Desde el menú principal, pasando por los submenús y las páginas, hasta las secciones individuales. Cada nodo tiene un tipo, indicado por color y etiqueta.",
+        "types": {
+          "title": "Tipos de menú",
+          "main": {
+            "label": "Menú principal",
+            "content": "La raíz de la navegación. Agrupa las entradas de menú de nivel superior y se despliega automáticamente al abrirse."
+          },
+          "sub": {
+            "label": "Submenú",
+            "content": "Una entrada desplegable que agrupa otras entradas de menú (mostrada como acordeón en el menú)."
+          },
+          "navigate": {
+            "label": "Navegar",
+            "content": "Lleva a una página interna de la app. La página vinculada se muestra en el árbol como nodo hijo."
+          },
+          "browse": {
+            "label": "Explorar",
+            "content": "Abre una dirección externa (URL) en una nueva pestaña."
+          },
+          "context": {
+            "label": "Menú contextual",
+            "content": "El menú en la parte superior derecha de la página con acciones adicionales que afectan a todos los datos mostrados."
+          },
+          "call": {
+            "label": "Acción",
+            "content": "Activa una función o un comando sin navegar (p. ej. subir un archivo)."
+          },
+          "divider": {
+            "label": "Separador",
+            "content": "Una línea de separación puramente visual para estructurar el menú – sin función. También se utiliza como marcador de posición para funciones aún no implementadas."
+          },
+          "page": {
+            "label": "Página",
+            "content": "Una página CMS compuesta por una lista ordenada de secciones."
+          },
+          "section": {
+            "label": "Sección",
+            "content": "Un bloque de contenido individual dentro de una página (p. ej. artículo, galería, mapa, calendario)."
+          }
+        },
+        "usage": {
+          "title": "Cómo utilizar el mapa del sitio:",
+          "expand": "Hacer clic en el símbolo de flecha para desplegar o contraer un nodo y mostrar sus elementos subordinados.",
+          "label": "Para cada nodo se muestra el texto de menú traducido; encima, en letra más pequeña, figura el nombre técnico de la entrada.",
+          "edit": "Pasar el ratón sobre un nodo y hacer clic en el símbolo del lápiz para editar directamente el menú, la página o la sección asociados.",
+          "export": "A través del menú en la parte superior derecha se puede exportar la estructura como tabla (raw) o como XML de mapa del sitio.",
+          "roles": "Los roles mostrados también son importantes. Determinan quién puede ver la entrada correspondiente. Se puede cambiar el rol haciendo clic en el símbolo del lápiz."
+        }
+      }
+    },
+    "blog": {
+      "label": "Página de blog",
+      "search": "Buscar ...",
+      "filter": {
+        "all": "Todos"
+      }
+    }
+  },
+
+  "section": {
+    "add": "Añadir nueva sección",
+    "edit": "Editar sección",
+    "send": "Enviar artículo",
+    "remove": "Eliminar sección",
+    "label": "Sección"
+  },
+  "welcome": {
+    "title": "Seeclub Stäfa",
+    "subTitle": "Remo en el lago de Zúrich",
+    "abstract": "Esta es la página de inicio. Hacer clic en el menú de la parte superior izquierda y elegir una función.",
+    "logoAltText": "Logo del Seeclub Stäfa",
+    "bannerAltText": "Imagen de fondo con un remero en el lago de Zúrich."
+  },
+  "notfound": {
+    "error": "Página no encontrada",
+    "title": "404 Not Found",
+    "subTitle": "¿acabó en los juncos ?",
+    "abstract": "La página HTML solicitada no se pudo encontrar. Inténtelo de nuevo con otra URL, es decir, haga clic en el menú de la parte superior izquierda y elija una función.",
+    "logoAltText": "Logo del Seeclub Stäfa",
+    "bannerAltText": "Imagen de fondo desde los juncos con puesta de sol en el lago de Zúrich."
+  },
+  "unknownpagetype": {
+    "title": "404 Not Found",
+    "subTitle": "¿acabó en los juncos ?",
+    "abstract": "Se llamó a una página HTML con un tipo desconocido. Por favor, inténtelo de nuevo con otra URL, es decir, haga clic en el menú de la parte superior izquierda y elija una función.",
+    "logoAltText": "Logo del Seeclub Stäfa",
+    "bannerAltText": "Imagen de fondo desde los juncos con puesta de sol en el lago de Zúrich."
+  },
+
+  "content_state": {
+    "label": "Estado",
+    "helper": "El estado ayuda a los creadores de contenido durante la creación. Por ejemplo, las páginas nuevas pueden mostrarse solo a algunos usuarios mientras están en borrador o durante una revisión.",
+    "all": {
+      "label": "Todos los estados"
+    },
+    "draft": {
+      "label": "Borrador"
+    },
+    "inReview": {
+      "label": "Revisión"
+    },
+    "published": {
+      "label": "Publicado"
+    },
+    "decommitted": {
+      "label": "Obsoleto"
+    },
+    "archived": {
+      "label": "Archivado"
+    }
+  },
+
+  "page_type": {
+    "all": {
+      "label": "Todos los tipos"
+    },
+    "accordion": {
+      "label": "Acordeón",
+      "description": "Un acordeón (GUI) es un elemento de interfaz gráfica de usuario que despliega y contrae áreas de contenido apiladas al hacer clic en un encabezado. Sirve para organizar grandes cantidades de información, como en las áreas de preguntas frecuentes, de forma que ahorra espacio, mostrando solo el contenido relevante mientras que otras áreas permanecen compactas."
+    },
+    "album": {
+      "label": "Álbum",
+      "description": "Un álbum muestra una vista general de una cantidad de fotos."
+    },
+    "blog": {
+      "label": "Blog",
+      "description": "Un blog (forma abreviada de weblog) es un diario o un cuaderno en línea actualizado regularmente, normalmente ordenado cronológicamente, en un sitio web. Sirve para compartir contenidos como textos, fotos o vídeos sobre temas específicos, a menudo desde el punto de vista subjetivo del autor (blogger). Los blogs permiten la interacción mediante comentarios."
+    },
+    "chat": {
+      "label": "Chat",
+      "description": "Vista general del chat con ventanas de chat para la comunicación directa o de grupo"
+    },
+    "content": {
+      "label": "Content",
+      "description": "Una página de contenido puede contener cualquier sección. Es la forma más general de una página."
+    },
+    "dashboard": {
+      "label": "Panel",
+      "description": "El panel ofrece una vista general personalizada de las últimas novedades, los mensajes de chat sin responder, las tareas abiertas y las próximas citas."
+    },
+    "files": {
+      "label": "Archivos",
+      "description": "Esta página muestra los archivos de forma gráfica. Corresponde a una forma sencilla de vista del sistema de archivos y se compone de archivos y carpetas."
+    },
+    "graph": {
+      "label": "Mapa del sitio",
+      "nomain": "No se encontró ningún menú principal.",
+      "description": "El mapa del sitio ofrece una visión general gráfica de la estructura de la app. Enumera todos los menús, páginas y secciones configurados y muestra sus dependencias.",
+      "description2": "Los elementos de este gráfico se pueden seleccionar y editar."
+    },
+    "landing": {
+      "label": "Página de inicio",
+      "description": "La página principal del sitio web. Normalmente también es de acceso público y suele contener una hero section."
+    },
+    "people": {
+      "label": "Personas",
+      "description": "Las personas enumeradas aquí se muestran como avatares en la sección."
+    },
+    "searchResults": {
+      "label": "Resultados de búsqueda",
+      "description": "Un sitio web compuesto por un campo de búsqueda y los resultados de búsqueda en forma de lista."
+    },
+    "shop": {
+      "label": "Tienda",
+      "description": "En la tienda se pueden vender productos. Los componentes de la tienda son una vista general con búsqueda y vistas detalladas de los productos. En el carrito de la compra (cart) se resumen los productos seleccionados con sus precios y se habilitan para el pedido con pago."
+    }
+  }
+}

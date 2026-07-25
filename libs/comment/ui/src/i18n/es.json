@@ -1,0 +1,14 @@
+{
+  "input": {
+    "comment": {
+      "date": "Fecha",
+      "authorName": "Autor",
+      "label": "Comentario"
+    }
+  },
+  "general": {
+    "noData": {
+      "comments": "Todavía no hay comentarios"
+    }
+  }
+}

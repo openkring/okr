@@ -1,0 +1,15 @@
+{
+  "list": { "title": "Firmas electrónicas" },
+  "empty": "No se han encontrado procesos de firma.",
+  "delete": { "error": "No se ha podido eliminar el proceso de firma." },
+  "send": { "error": "No se ha podido enviar el documento." },
+  "upload": { "error": "Archivo demasiado grande (máx. 40 MB) o formato incorrecto." },
+  "scan": { "no_fields": "No se han encontrado campos de firma en el documento. Utilice un PDF con Text Field Patterns incrustados." },
+  "actionsheet": {
+    "view": "Mostrar estado de la firma",
+    "doc_view": "Mostrar PDF",
+    "doc_share": "Compartir",
+    "doc_send": "Enviar por correo electrónico",
+    "delete": "Eliminar proceso de firma"
+  }
+}

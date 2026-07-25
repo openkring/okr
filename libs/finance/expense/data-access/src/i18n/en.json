@@ -1,0 +1,24 @@
+{
+  "create": {
+    "conf": "Expense was saved.",
+    "error": "The expense could not be saved."
+  },
+  "update": {
+    "conf": "Expense was updated.",
+    "error": "The expense could not be updated."
+  },
+  "delete": {
+    "conf": "Expense was deleted.",
+    "error": "The expense could not be deleted."
+  },
+  "expenseDoc": {
+    "create": {
+      "conf": "Receipt was saved.",
+      "error": "The receipt could not be saved."
+    },
+    "delete": {
+      "conf": "Receipt was deleted.",
+      "error": "The receipt could not be deleted."
+    }
+  }
+}

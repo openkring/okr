@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Nouvelle organisation",
+    "error": "La nouvelle organisation n'a pas pu être enregistrée.",
+    "conf": "La nouvelle organisation a été enregistrée."
+  },
+  "delete": {
+    "label": "Supprimer l'organisation",
+    "confirm": "Voulez-vous vraiment supprimer l'organisation ?",
+    "conf": "L'organisation a été supprimée.",
+    "error": "L'organisation n'a pas pu être supprimée."
+  },
+  "update": {
+    "label": "Modifier l'organisation",
+    "error": "Les modifications n'ont pas pu être enregistrées",
+    "conf": "Les modifications ont été enregistrées."
+  }
+}

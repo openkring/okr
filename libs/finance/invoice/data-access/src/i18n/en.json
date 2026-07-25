@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Add invoice",
+    "conf": "The invoice was created.",
+    "error": "The invoice could not be created."
+  },
+  "delete": {
+    "label": "Delete invoice",
+    "confirm": "Should the invoice really be deleted ?",
+    "conf": "The invoice was deleted.",
+    "error": "The invoice could not be deleted."
+  },
+  "update": {
+    "label": "Change invoice",
+    "conf": "The invoice was changed.",
+    "error": "The invoice could not be changed."
+  }
+}

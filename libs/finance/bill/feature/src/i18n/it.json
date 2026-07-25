@@ -1,0 +1,100 @@
+{
+  "singular": "Fattura fornitore",
+  "plural": "Fatture fornitori",
+  "empty": "Nessuna fattura trovata",
+
+  "list": {
+    "title": "Fatture creditori"
+  },
+
+  "id": {
+    "label": "N. fattura",
+    "placeholder": "nnnnn",
+    "helper": "Il numero di fattura del fornitore."
+  },
+  "title": {
+    "label": "Oggetto",
+    "placeholder": "Testo",
+    "helper": "Una breve descrizione di ciò di cui si tratta."
+  },
+  "date": {
+    "bill": {
+      "label": "Data fattura",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La data in cui è stata emessa la fattura."
+    },
+    "due": {
+      "label": "da pagare entro il",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La data entro cui deve essere pagata la fattura."
+    },
+    "payment": {
+      "label": "Data di pagamento",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La data in cui è stata pagata la fattura."
+    }
+  },
+  "amount": {
+    "label": "Importo fattura",
+    "placeholder": "nn.nn",
+    "helper": "L'importo della fattura."
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Note libere sulla fattura"
+  },
+  "state": {
+    "label": "Stato"
+  },
+
+  "download": {
+    "label": "Scarica fattura"
+  },
+  "view": {
+    "label": "Mostra fattura"
+  },
+  "scan": {
+    "label": "Scansiona fattura"
+  },
+  "create": {
+    "label": "Aggiungi fattura"
+  },
+  "update": {
+    "label": "Modifica fattura"
+  },
+  "delete": {
+    "label": "Elimina fattura",
+    "confirm": "Eliminare davvero la fattura ?"
+  },
+
+  "readonly": {
+    "banner": "Questo elenco è di sola lettura. I creditori vengono gestiti in Bexio."
+  },
+
+  "bill_state": {
+    "name": "Stato della fattura",
+    "all": {
+      "label": "Tutti gli stati"
+    },
+    "draft": {
+      "label": "Bozza",
+      "description": "La fattura è una bozza e non è ancora stata inviata."
+    },
+    "pending": {
+      "label": "Aperta",
+      "description": "La fattura è stata inviata e non è ancora pagata."
+    },
+    "paid": {
+      "label": "Pagata",
+      "description": "La fattura è stata pagata."
+    },
+    "overdue": {
+      "label": "Scaduta",
+      "description": "Il termine di pagamento è superato, la fattura è scaduta."
+    },
+    "cancelled": {
+      "label": "Annullata",
+      "description": "La fattura è stata annullata."
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "label": "Responsibility",
+  "responsibility": "Responsibility",
+  "responsibilities": "Responsibilities",
+  "responsible": "Responsible",
+  "desc": "A responsibility of a person for certain activities.",
+  "empty": "No responsibilities found.",
+
+  "create": {
+    "label": "Add responsibility",
+    "conf": "Responsibility was created.",
+    "error": "Responsibility could not be created."
+  },
+  "delete": {
+    "label": "Delete responsibility",
+    "confirm": "Do you really want to delete the responsibility?",
+    "conf": "Responsibility was deleted.",
+    "error": "Responsibility could not be deleted."
+  },
+  "export": {
+    "raw": "Export raw data"
+  },
+  "select": {
+    "responsible": "Select responsible person",
+    "delegate": "Select deputy"
+  },
+  "update": {
+    "label": "Change responsibility",
+    "conf": "Responsibility was changed.",
+    "error": "Responsibility could not be changed.",
+    "header": "Duplicate ID",
+    "message1": "A responsibility with ID ",
+    "message2": " already exists. Please use a different ID."
+  },
+  "view": {
+    "label": "View responsibility details"
+  },
+
+  "list": {
+    "title": "Responsibilities",
+    "header": {
+      "responsible": "Responsible person",
+      "delegate": "Deputy person",
+      "validFrom": "Valid from",
+      "validTo": "Valid until",
+      "category": "Type"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "The unique ID of the record in the database."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Text",
+    "helper": "Any text - only visible to privileged users."
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Enter label",
+    "helper": "A short description of the responsibility."
+  },
+  "valid": {
+    "from": {
+      "label": "Valid from",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The responsibility is valid from this day."
+    },
+    "to": {
+      "label": "Valid until",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The responsibility remains valid until this day."
+    }
+  },
+
+  "delegate": {
+    "label": "Deputy",
+    "from": {
+      "label": "from",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The deputyship starts on this day."
+    },
+    "to": {
+      "label": "until",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The deputyship ends on this day."
+    }
+  }
+}

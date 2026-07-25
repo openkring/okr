@@ -1,0 +1,22 @@
+{
+  "folder": {
+    "plural": "Dossiers"
+  },
+  "operation": {
+    "create": { "label": "Créer un dossier" },
+    "edit": { "label": "Modifier le dossier" },
+    "view": { "label": "Afficher le dossier" }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Choisir une action"
+    },
+    "edit": "Modifier le dossier",
+    "delete": "Supprimer le dossier"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Annuler",
+    "confirmation": "Enregistrer"
+  }
+}

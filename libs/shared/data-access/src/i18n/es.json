@@ -1,0 +1,22 @@
+{
+  "comment": {
+    "initial": {
+      "conf": "creado"
+    },
+    "update": {
+      "conf": "modificado"
+    }
+  },
+  "appConfig": {
+    "create": {
+      "conf": "Entrada de configuración guardada.",
+      "error": "No se pudo guardar la entrada de configuración."
+    },
+    "update": {
+      "conf": "Entrada de configuración guardada."
+    },
+    "delete": {
+      "conf": "Entrada de configuración eliminada."
+    }
+  }
+}

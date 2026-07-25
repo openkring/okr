@@ -1,0 +1,235 @@
+{
+  "documents": "Documents",
+  "revisions": "Versions",
+  "empty": "No documents found.",
+  "name": "Filename",
+  "size": "Size",
+  "lastUpdate": "Last change",
+  "revision": {
+    "list": {
+      "title": "Version history"
+    }
+  },
+
+  "upload": {
+    "new": "Upload new version",
+    "single": {
+      "title": "Upload document"
+    },
+    "multiple": {
+      "title": "Upload documents"
+    }
+  },
+  "delete": {
+    "label": "Delete document",
+    "conf": "Document was deleted.",
+    "confirm": "Do you really want to delete the document ?",
+    "error": "The document could not be deleted."
+  },
+  "view": {
+    "label": "View document details",
+    "revisions": "Show versions"
+  },
+  "update": {
+    "label": "Edit document",
+    "conf": "The document was saved.",
+    "error": "The document could not be saved."
+  },
+  "create": {
+    "label": "Create new document",
+    "conf": "The document was saved.",
+    "error": "The document could not be saved."
+  },
+  "download": "Download document",
+  "share": "Share document",
+  "image": {
+    "add": "Add image",
+    "select": "Select image",
+    "upload": "Upload image",
+    "edit": "Configure image",
+    "type": {
+      "name": "Image type",
+      "label": "Image type",
+      "helper": "The kind of image"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "ID",
+    "helper": "The unique ID of the document in the database."
+  },
+  "label": {
+    "label": "Label",
+    "placeholder": "Enter label",
+    "helper": "A short description of the image."
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": "The link to the image (usually imgix)"
+  },
+  "actionUrl": {
+    "label": "Action URL",
+    "placeholder": "https://...",
+    "helper": "The link to the action, e.g. to a zoomed image at higher resolution."
+  },
+  "altText": {
+    "label": "Alternative text",
+    "placeholder": "text",
+    "helper": "A short description of the image content for visually impaired people."
+  },
+  "overlay": {
+    "label": "Overlay text",
+    "placeholder": "text",
+    "helper": "Text to be displayed on the image."
+  },
+  "credit": {
+    "label": "Image credit",
+    "placeholder": "e.g. Photo: J. Muster / Keystone",
+    "helper": "Attribution of the image. Shown as the source on the image when enabled."
+  },
+  "fullPath": {
+    "label": "File path",
+    "placeholder": "/a/b/c",
+    "helper": "The file path points to the location of the document in storage."
+  },
+  "title": {
+    "label": "Title",
+    "placeholder": "Enter title",
+    "helper": "A short description of the document."
+  },
+  "mimeType": {
+    "label": "MIME type",
+    "placeholder": "e.g. application/pdf",
+    "helper": "The MIME type denotes the kind of document, e.g. image/jpg, application/pdf"
+  },
+  "authorKey": {
+    "label": "Author Key",
+    "placeholder": "ssssssss",
+    "helper": "The ID of the author in the database"
+  },
+  "authorName": {
+    "label": "Author",
+    "placeholder": "name",
+    "helper": "The name of the author."
+  },
+  "locationKey": {
+    "label": "Location Key",
+    "placeholder": "The ID of the location in the database",
+    "helper": "This allows a reference of the document to a location."
+  },
+  "hash": {
+    "label": "Hash",
+    "placeholder": "ssssssss",
+    "helper": "The hash is a unique, shortened representation of the document's content. It is used for comparisons."
+  },
+  "priorVersionKey": {
+    "label": "Predecessor key",
+    "placeholder": "ssssssss",
+    "helper": "Key of the previous version"
+  },
+  "version": {
+    "label": "Version",
+    "placeholder": "e.g. yyyymmdd",
+    "helper": "Version number of the document"
+  },
+  "description": {
+    "label": "Description",
+    "placeholder": "text"
+  },
+  "dateOfDocCreation": {
+    "label": "Creation date",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "The document was created on this date."
+  },
+  "dateOfDocLastUpdate": {
+    "label": "Last update",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "The document was last updated on this date."
+  },
+  "tag": {
+    "logo": "Logo",
+    "marketing": "Marketing",
+    "avatar": "Avatar"
+  },
+
+  "document_type": {
+    "name": "Document type",
+    "label": "Document type",
+    "helper": "The type of a document helps with searching.",
+    "all": {
+      "label": "All types"
+    },
+    "accounting": {
+      "label": "Accounting",
+      "description": "Accounting-related documents, e.g. balance sheet, income statement, annual financial statement, journal, account overview, chart of accounts, etc."
+    },
+    "marketing": {
+      "label": "Marketing",
+      "description": "Flyer, brochure, presentation, banner"
+    },
+    "doc": {
+      "label": "Documentation",
+      "description": "Wiki, standard, report, minutes, memo, book."
+    },
+    "hr": {
+      "label": "Human resources",
+      "description": "Application, job description, CV, authorisation, request, termination, warning, permission."
+    },
+    "business": {
+      "label": "Business",
+      "description": "Proposal, study, FAQ, support, analysis, business case."
+    },
+    "finance": {
+      "label": "Financial",
+      "description": "Account statement, income statement, balance sheet, bank statement, receipt, budget, annual accounts, invoice."
+    },
+    "info": {
+      "label": "Information",
+      "description": "Magazine, article, link, text, magazine."
+    },
+    "corr": {
+      "label": "Correspondence",
+      "description": "Letter, notice, posting."
+    },
+    "instruction": {
+      "label": "Instruction",
+      "description": "Guide, directive, cookbook, recipe."
+    },
+    "other": {
+      "label": "Other",
+      "description": "Other documents."
+    },
+    "legal": {
+      "label": "Legal",
+      "description": "Contract, offer, licence, NDA, terms and conditions, law, statutes, visa, patent, certificate, passport, ID."
+    },
+    "source": {
+      "label": "Source file",
+      "description": "Source code, data, archive."
+    },
+    "media": {
+      "label": "Media",
+      "description": "Video, audio, graphics, comics, visual, illustration, design, icon, font."
+    }
+  },
+  "document_source": {
+    "name": "Document source",
+    "all": {
+      "label": "All sources"
+    },
+    "local": {
+      "label": "Local",
+      "description": "The file is part of the application (asset)"
+    },
+    "storage": {
+      "label": "Storage",
+      "description": "The file is stored in Firebase Storage (relative URL)."
+    },
+    "external": {
+      "label": "External",
+      "description": "The file is stored outside the application (absolute URL to a file share, e.g. Google Drive, Dropbox)."
+    }
+  }
+}

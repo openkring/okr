@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Add icon",
+    "conf": "The icon was added.",
+    "error": "The icon could not be added."
+  },
+  "update": {
+    "label": "Edit icon",
+    "conf": "The icon was updated.",
+    "error": "The icon could not be updated."
+  },
+  "delete": {
+    "label": "Delete icon",
+    "conf": "The icon was deleted.",
+    "error": "The icon could not be deleted.",
+    "confirm": "Do you really want to delete the icon ?"
+  }
+}

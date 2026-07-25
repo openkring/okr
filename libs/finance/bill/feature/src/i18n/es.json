@@ -1,0 +1,100 @@
+{
+  "singular": "Factura de proveedor",
+  "plural": "Facturas de proveedor",
+  "empty": "No se han encontrado facturas",
+
+  "list": {
+    "title": "Facturas de acreedores"
+  },
+
+  "id": {
+    "label": "N.º de factura",
+    "placeholder": "nnnnn",
+    "helper": "El número de factura del proveedor."
+  },
+  "title": {
+    "label": "Asunto",
+    "placeholder": "Texto",
+    "helper": "Una breve descripción de lo que se trata."
+  },
+  "date": {
+    "bill": {
+      "label": "Fecha de factura",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La fecha en que se emitió la factura."
+    },
+    "due": {
+      "label": "a pagar antes del",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La fecha en que debe pagarse la factura."
+    },
+    "payment": {
+      "label": "Fecha de pago",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La fecha en que se pagó la factura."
+    }
+  },
+  "amount": {
+    "label": "Importe de la factura",
+    "placeholder": "nn.nn",
+    "helper": "El importe de la factura."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas libres sobre la factura"
+  },
+  "state": {
+    "label": "Estado"
+  },
+
+  "download": {
+    "label": "Descargar factura"
+  },
+  "view": {
+    "label": "Mostrar factura"
+  },
+  "scan": {
+    "label": "Escanear factura"
+  },
+  "create": {
+    "label": "Añadir factura"
+  },
+  "update": {
+    "label": "Modificar factura"
+  },
+  "delete": {
+    "label": "Eliminar factura",
+    "confirm": "¿Desea realmente eliminar la factura ?"
+  },
+
+  "readonly": {
+    "banner": "Esta lista es de solo lectura. Los acreedores se gestionan en Bexio."
+  },
+
+  "bill_state": {
+    "name": "Estado de la factura",
+    "all": {
+      "label": "Todos los estados"
+    },
+    "draft": {
+      "label": "Borrador",
+      "description": "La factura es un borrador y aún no se ha enviado."
+    },
+    "pending": {
+      "label": "Pendiente",
+      "description": "La factura se ha enviado y aún no está pagada."
+    },
+    "paid": {
+      "label": "Pagada",
+      "description": "La factura se ha pagado."
+    },
+    "overdue": {
+      "label": "Vencida",
+      "description": "El plazo de pago ha vencido, la factura está vencida."
+    },
+    "cancelled": {
+      "label": "Anulada",
+      "description": "La factura se ha anulado."
+    }
+  }
+}

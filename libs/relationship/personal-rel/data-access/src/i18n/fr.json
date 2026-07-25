@@ -1,0 +1,22 @@
+{
+  "create": {
+    "label": "Ajouter une relation personnelle",
+    "conf": "La relation personnelle a été créée.",
+    "error": "La relation personnelle n'a pas pu être créée."
+  },
+  "update": {
+    "label": "Modifier la relation personnelle",
+    "conf": "La relation personnelle a été modifiée.",
+    "error": "La relation personnelle n'a pas pu être modifiée."
+  },
+  "delete": {
+    "label": "Supprimer la relation personnelle",
+    "conf": "La relation personnelle a été supprimée.",
+    "error": "La relation personnelle n'a pas pu être supprimée."
+  },
+  "end": {
+    "label": "Terminer la relation",
+    "conf": "La relation a été terminée.",
+    "error": "La relation n'a pas pu être terminée."
+  }
+}

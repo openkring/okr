@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Add new person",
+    "error": "The new person could not be created.",
+    "conf": "The new person was created."
+  },
+  "update": {
+    "label": "Edit person",
+    "error": "The changes could not be saved",
+    "conf": "The changes were saved."
+  },
+  "delete": {
+    "label": "Remove person",
+    "error": "The person could not be removed.",
+    "conf": "The person was removed.",
+    "confirm": "Do you really want to delete the person ?"
+  }
+}

@@ -1,0 +1,40 @@
+{
+    "list": {
+        "title": "Écritures"
+    },
+    "empty": "Aucune écriture trouvée.",
+    "as": {
+        "title": "Écriture"
+    },
+    "cancel": {
+        "label": "Annuler"
+    },
+    "col": {
+        "date": "Date",
+        "credit": "Crédit",
+        "debit": "Débit",
+        "name": "Texte",
+        "amount": "Montant"
+    },
+    "view": {
+        "label": "Afficher les détails de l'écriture"
+    },
+    "edit": {
+        "label": "Modifier l'écriture"
+    },
+    "create": {
+        "label": "Créer une écriture"
+    },
+    "delete": {
+        "label": "Supprimer l'écriture"
+    },
+    "action": {
+        "createReceipt": "Créer une attestation de don",
+        "counterpartyRequired": "Veuillez d'abord saisir l'expéditeur (contrepartie).",
+        "noAddress": "Aucune adresse n'est enregistrée pour la contrepartie.",
+        "failed": "Le document n'a pas pu être créé."
+    },
+    "readonly": {
+        "banner": "Cette liste est en lecture seule. Les écritures sont gérées dans Bexio."
+    }
+}

@@ -1,0 +1,15 @@
+{
+  "login": {
+    "conf": "Welcome to the members' area !",
+    "error": "The sign-in was not successful. Please check the email address and the password and try again."
+  },
+  "pwdreset": {
+    "conf": "An email with instructions to reset the password has been sent to the following email address: ",
+    "error": "The password reset was not successful."
+  },
+  "logout": {
+    "conf": "You are signed out.",
+    "error": "The sign-out was not successful. Please try again.",
+    "confirm": "Are you sure ? You will then have to sign in again with your password."
+  }
+}

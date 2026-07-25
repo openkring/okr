@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Aggiungi attività",
+    "conf": "L'attività è stata aggiunta.",
+    "error": "Non è stato possibile aggiungere l'attività."
+  },
+  "update": {
+    "label": "Modifica attività",
+    "conf": "L'attività è stata modificata.",
+    "error": "Non è stato possibile modificare l'attività."
+  },
+  "delete": {
+    "label": "Elimina attività",
+    "conf": "L'attività è stata eliminata.",
+    "error": "Non è stato possibile eliminare l'attività."
+  }
+}

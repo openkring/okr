@@ -1,0 +1,89 @@
+{
+  "list": {
+    "titleMy": "Le mie spese",
+    "titleAll": "Tutte le spese",
+    "empty": "Nessuna nota spese trovata"
+  },
+  "new": {
+    "title": "Presenta spesa",
+    "cancel": "Annulla",
+    "save": "Salva",
+    "receiptHint": "Allegare almeno una ricevuta."
+  },
+  "detail": {
+    "title": "Esborso",
+    "close": "Chiudi",
+    "amount": "Importo",
+    "iban": "IBAN",
+    "status": "Stato",
+    "booking": "Riferimento di registrazione",
+    "note": "Nota",
+    "receipt": "Ricevuta"
+  },
+  "field": {
+    "abstract": "Oggetto",
+    "amount": "Importo totale",
+    "currency": "Valuta",
+    "transfer": {
+      "label": "Bonifico",
+      "me": "a me",
+      "issuer": "all'emittente della fattura"
+    },
+    "iban": {
+      "label": "IBAN",
+      "on": "su IBAN",
+      "profileHint": "dal mio profilo",
+      "change": "Usa un altro IBAN"
+    },
+    "category": "Categoria",
+    "costcenter": "Centro di costo",
+    "note": "Nota interna",
+    "belege": {
+      "label": "Ricevute",
+      "pick": "Scegli file",
+      "photo": "Scatta foto"
+    }
+  },
+  "submit": {
+    "iban": "Le coordinate bancarie vengono salvate…",
+    "upload": "Le ricevute vengono caricate…",
+    "saving": "L'esborso viene salvato…",
+    "done": "Salvato — il cassiere verifica la ricevuta.",
+    "error": "Errore — l'operazione è stata annullata"
+  },
+  "status": {
+    "draft": "Bozza",
+    "processing": "In elaborazione",
+    "validated": "Validato",
+    "error": "Errore",
+    "posted": "Contabilizzato",
+    "pendingExport": "Pronto per l'esportazione"
+  },
+  "validation": {
+    "abstractRequired": "L'oggetto è obbligatorio.",
+    "abstractMin": "L'oggetto deve contenere almeno 3 caratteri.",
+    "abstractMax": "L'oggetto può contenere al massimo 200 caratteri.",
+    "amountRequired": "L'importo deve essere maggiore di 0.",
+    "amountMax": "L'importo è troppo elevato.",
+    "ibanRequired": "L'IBAN è obbligatorio.",
+    "currencyRequired": "La valuta è obbligatoria.",
+    "currencyInvalid": "Valuta non valida."
+  },
+  "action": {
+    "title": "Seleziona azione",
+    "view": "Visualizza",
+    "delete": "Elimina",
+    "redoOcr": "Esegui di nuovo l'OCR",
+    "openTask": "Apri compito",
+    "openBooking": "Apri registrazione",
+    "cancel": "Annulla"
+  },
+  "redo": {
+    "conf": "Scansione OCR riavviata.",
+    "error": "Non è stato possibile riavviare l'OCR."
+  },
+  "delete": {
+    "confirm": "Eliminare davvero questa spesa?",
+    "error": "Non è stato possibile eliminare la spesa."
+  }
+}

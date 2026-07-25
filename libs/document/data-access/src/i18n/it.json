@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Aggiungi documento",
+    "conf": "Il nuovo documento è stato aggiunto.",
+    "error": "Non è stato possibile salvare il documento."
+  },
+  "update": {
+    "label": "Modifica documento",
+    "conf": "Il documento è stato modificato.",
+    "error": "Non è stato possibile modificare il documento."
+  },
+  "delete": {
+    "label": "Elimina documento",
+    "conf": "Il documento è stato eliminato.",
+    "error": "Non è stato possibile eliminare il documento."
+  }
+}

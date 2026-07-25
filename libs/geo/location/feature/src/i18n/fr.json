@@ -1,0 +1,132 @@
+{
+  "singular": "Lieu",
+  "plural": "Lieux",
+  "description": "Un lieu qui peut être localisé précisément au moyen de coordonnées.",
+  "empty": "Aucun lieu n'a encore été enregistré. Créez un nouveau lieu en cliquant sur le bouton +.",
+
+  "list": {
+    "header": {
+      "name": "Nom",
+      "type": "Type",
+      "latitude": "Latitude",
+      "longitude": "Longitude"
+    }
+  },
+
+  "copy": {
+    "label": "Copier le lieu",
+    "conf": "Le lieu a été copié.",
+    "error": "Le lieu n'a pas pu être copié.",
+    "coord": "Copier les coordonnées",
+    "w3w": "Copier what3word"
+  },
+  "convert": {
+    "label": "Convertir les formats",
+    "error": "L'adresse/les coordonnées n'ont pas pu être converties. Le lieu a été enregistré sans modification."
+  },
+  "create": {
+    "label": "Ajouter un lieu",
+    "conf": "Le lieu a été ajouté.",
+    "error": "Le lieu n'a pas pu être ajouté."
+  },
+  "delete": {
+    "label": "Supprimer le lieu",
+    "confirm": "Voulez-vous vraiment supprimer le lieu ?",
+    "conf": "Le lieu a été supprimé.",
+    "error": "Le lieu n'a pas pu être supprimé."
+  },
+  "show": {
+    "label": "Afficher le lieu sur la carte"
+  },
+  "update": {
+    "label": "Modifier le lieu",
+    "conf": "Le lieu a été modifié.",
+    "error": "Le lieu n'a pas pu être modifié."
+  },
+  "view": {
+    "label": "Afficher les détails du lieu"
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "ssssss",
+    "helper": "L'identifiant unique dans la base de données."
+  },
+  "name": {
+    "label": "Nom du lieu",
+    "placeholder": "ssssss",
+    "helper": "Le nom du lieu, par ex. adresse"
+  },
+  "latitude": {
+    "label": "Latitude",
+    "placeholder": "nn.nnnnn",
+    "helper": "La position Nord/Sud par rapport à l'Équateur (+-0-90 degrés)."
+  },
+  "longitude": {
+    "label": "Longitude",
+    "placeholder": "nnn.nnnnnn",
+    "helper": "La position Est/Ouest par rapport à Greenwich +-0 - 180 degrés)."
+  },
+  "placeId": {
+    "label": "PlaceID",
+    "placeholder": "ssssss",
+    "helper": "Le Place ID de Google Places."
+  },
+  "what3words": {
+    "label": "What3Words",
+    "placeholder": "ssss.ssss.ssss",
+    "helper": "La désignation What3Words de ce lieu."
+  },
+  "seaLevel": {
+    "label": "Altitude au-dessus du niveau de la mer",
+    "placeholder": "nnn",
+    "helper": "L'altitude au-dessus du niveau de la mer en mètres."
+  },
+  "speed": {
+    "label": "Vitesse",
+    "placeholder": "nnn",
+    "helper": "La vitesse en km/h."
+  },
+  "direction": {
+    "label": "Direction",
+    "placeholder": "nnn",
+    "helper": "La direction en degrés par rapport au Nord."
+  },
+  "distance": {
+    "label": "Distance",
+    "placeholder": "nnn",
+    "helper": "La distance du lieu par rapport au point de départ en kilomètres."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Texte"
+  },
+
+  "location_type": {
+    "label": "Type de lieu",
+    "helper": "Type d'une indication de lieu, normalement utilisé comme filtre dans les listes de lieux.",
+    "all": {
+      "label": "Tous"
+    },
+    "address": {
+      "label": "Adresse",
+      "description": "Le lieu représente une adresse."
+    },
+    "logbuch": {
+      "label": "Journal de bord",
+      "description": "Le lieu est une entrée dans le journal de bord."
+    },
+    "geomarker": {
+      "label": "Géomarqueur",
+      "description": "Le lieu est un repère sur une carte."
+    },
+    "airport": {
+      "label": "Aéroport",
+      "description": "Aéroports internationaux pour le suivi de vols."
+    },
+    "other": {
+      "label": "Autre lieu",
+      "description": "Le lieu représente une autre information de localisation."
+    }
+  }
+}

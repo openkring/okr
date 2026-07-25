@@ -1,0 +1,230 @@
+{
+  "pages": "Web pages",
+  "sections": "Sections",
+  "empty": "No content has been created yet.",
+  "emptyPage": "There are no sections for this page yet. Please create sections first.",
+  "emptyPageReadOnly": "This page is still empty.",
+  "notexist": "The requested page does not exist.",
+  "help": "Please check the URL or navigate via the menu.",
+
+  "name": {
+    "label": "Name",
+    "placeholder": "sssss",
+    "helper": "The name of the web page, freely selectable, simply serves to find the web page again."
+  },
+  "description": "A website contains a title and several sections. The order of the sections can be changed.",
+  "title": {
+    "label": "Title",
+    "placeholder": "String",
+    "helper": "The title is optional and is shown to the viewer of the web page."
+  },
+
+  "view": "Show web page configuration",
+  "edit": "Edit web page",
+  "show": "Show web page",
+  "create": "Create new page",
+  "add": {
+    "label": "Add web page",
+    "placeholder": "Name of the page",
+    "section": "Add new section"
+  },
+  "delete": {
+    "label": "Delete web page",
+    "confirm": "Should the web page really be deleted ?"
+  },
+  "search": {
+    "article": "Search article"
+  },
+  "sort": {
+    "label": "Sort sections",
+    "noSections": "There are no sections to sort.",
+    "onlyOneSection": "There is only one section, sorting is not necessary."
+  },
+  "upload": {
+    "image": "Upload image(s)",
+    "file": "Upload file(s)"
+  },
+  "error": {
+    "save": "The web page could not be saved. Please try again.",
+    "load": "The web pages could not be loaded. Please try again.",
+    "delete": "The web page could not be deleted. Please try again."
+  },
+  "print": {
+    "generating": "PDF is being created …",
+    "error": "The PDF could not be created. Browser printing is used instead.",
+    "empty": "This page contains no printable sections."
+  },
+
+  "type": {
+    "graph": {
+      "nomain": "No main menu found.",
+      "help": {
+        "title": "Sitemap – Help",
+        "intro": "The sitemap provides a graphical overview of the structure of the app in the form of a tree structure. It lists all configured menus, pages and sections and shows their dependencies. From the main menu through submenus and pages down to the individual sections. Each node has a type, which is indicated by color and label.",
+        "types": {
+          "title": "Menu types",
+          "main": {
+            "label": "Main menu",
+            "content": "The root of the navigation. It bundles the top-level menu entries and is automatically expanded when opened."
+          },
+          "sub": {
+            "label": "Submenu",
+            "content": "An expandable entry that groups further menu entries (displayed as an accordion in the menu)."
+          },
+          "navigate": {
+            "label": "Navigate",
+            "content": "Leads to an internal page of the app. The linked page is shown in the tree as a child node."
+          },
+          "browse": {
+            "label": "Browse",
+            "content": "Opens an external address (URL) in a new tab."
+          },
+          "context": {
+            "label": "Context menu",
+            "content": "The menu at the top right of the page with additional actions that affect all displayed data."
+          },
+          "call": {
+            "label": "Action",
+            "content": "Triggers a function or command without navigating (e.g. upload file)."
+          },
+          "divider": {
+            "label": "Divider",
+            "content": "A purely visual dividing line to structure the menu – without function. Also used as a placeholder for functions not yet implemented."
+          },
+          "page": {
+            "label": "Page",
+            "content": "A CMS page consisting of an ordered list of sections."
+          },
+          "section": {
+            "label": "Section",
+            "content": "A single content block within a page (e.g. article, gallery, map, calendar)."
+          }
+        },
+        "usage": {
+          "title": "How to use the sitemap:",
+          "expand": "Click on the arrow symbol to expand or collapse a node and display its child elements.",
+          "label": "For each node, the translated menu text is shown; above it, in smaller type, is the technical name of the entry.",
+          "edit": "Hover over a node and click on the pencil symbol to edit the associated menu, page or section directly.",
+          "export": "Via the menu at the top right you can export the structure as a table (raw) or as sitemap XML.",
+          "roles": "The displayed roles are also important. They determine who can see the respective entry. You can change the role by clicking on the pencil symbol."
+        }
+      }
+    },
+    "blog": {
+      "label": "Blog Page",
+      "search": "Search ...",
+      "filter": {
+        "all": "All"
+      }
+    }
+  },
+
+  "section": {
+    "add": "Add new section",
+    "edit": "Edit section",
+    "send": "Send article",
+    "remove": "Remove section",
+    "label": "Section"
+  },
+  "welcome": {
+    "title": "Seeclub Stäfa",
+    "subTitle": "Rowing on Lake Zurich",
+    "abstract": "This is the home page. Click the menu at the top left and choose a function.",
+    "logoAltText": "Logo of Seeclub Stäfa",
+    "bannerAltText": "Background image with a rower on Lake Zurich."
+  },
+  "notfound": {
+    "error": "Page not found",
+    "title": "404 Not Found",
+    "subTitle": "ended up in the reeds ?",
+    "abstract": "The requested HTML page could not be found. Try again with a different URL, i.e. click the menu at the top left and choose a function.",
+    "logoAltText": "Logo of Seeclub Stäfa",
+    "bannerAltText": "Background image from within the reeds with sunset on Lake Zurich."
+  },
+  "unknownpagetype": {
+    "title": "404 Not Found",
+    "subTitle": "ended up in the reeds ?",
+    "abstract": "An HTML page with an unknown type was called. Please try again with a different URL, i.e. click the menu at the top left and choose a function.",
+    "logoAltText": "Logo of Seeclub Stäfa",
+    "bannerAltText": "Background image from within the reeds with sunset on Lake Zurich."
+  },
+
+  "content_state": {
+    "label": "Status",
+    "helper": "The status helps the content creators during creation. For example, new pages can be shown to only a few users while in draft or during a review.",
+    "all": {
+      "label": "All statuses"
+    },
+    "draft": {
+      "label": "Draft"
+    },
+    "inReview": {
+      "label": "Review"
+    },
+    "published": {
+      "label": "Published"
+    },
+    "decommitted": {
+      "label": "Outdated"
+    },
+    "archived": {
+      "label": "Archived"
+    }
+  },
+
+  "page_type": {
+    "all": {
+      "label": "All types"
+    },
+    "accordion": {
+      "label": "Accordion",
+      "description": "An accordion (GUI) is a graphical user interface element that expands and collapses stacked content areas by clicking on a heading. It serves to organize large amounts of information, such as in FAQ areas, in a space-saving way by showing only the relevant content while other areas remain compact."
+    },
+    "album": {
+      "label": "Album",
+      "description": "An album shows an overview of a number of photos."
+    },
+    "blog": {
+      "label": "Blog",
+      "description": "A blog (short for weblog) is a regularly updated, usually chronologically ordered online diary or journal on a website. It serves to share content such as texts, photos or videos on specific topics, often from the subjective point of view of the author (blogger). Blogs enable interaction through comments."
+    },
+    "chat": {
+      "label": "Chat",
+      "description": "Chat overview with chat windows for direct or group communication"
+    },
+    "content": {
+      "label": "Content",
+      "description": "A content page can contain any sections. It is the most general form of a page."
+    },
+    "dashboard": {
+      "label": "Dashboard",
+      "description": "The dashboard gives a personalized overview of the latest news, unanswered chat messages, open tasks and upcoming appointments."
+    },
+    "files": {
+      "label": "Files",
+      "description": "This page shows files in a graphical way. It corresponds to a simple form of a file system view and consists of files and folders."
+    },
+    "graph": {
+      "label": "Sitemap",
+      "nomain": "No main menu found.",
+      "description": "The sitemap provides a graphical overview of the structure of the app. It lists all configured menus, pages and sections and shows their dependencies.",
+      "description2": "The elements in this graph can be selected and edited."
+    },
+    "landing": {
+      "label": "Homepage",
+      "description": "The main page of the website. It is usually also publicly accessible and often contains a hero section."
+    },
+    "people": {
+      "label": "People",
+      "description": "The people listed here are displayed as avatars in the section."
+    },
+    "searchResults": {
+      "label": "Search results",
+      "description": "A website consisting of a search field and the search results in list form."
+    },
+    "shop": {
+      "label": "Shop",
+      "description": "In the shop, products can be sold. Components of the shop are an overview with search, detail views of the products. In the shopping cart, the selected products are summarized with prices and released for ordering with payment."
+    }
+  }
+}

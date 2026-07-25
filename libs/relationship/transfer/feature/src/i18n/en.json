@@ -1,0 +1,129 @@
+{
+  "transfer": "Transfer",
+  "transfers": "Transfers",
+  "desc": "A transfer of a resource from a subject (person or organization) to an object (person or organization).",
+  "empty": "No transfers found.",
+  "reldesc": "transfers to",
+  "revreldesc": "transferred from",
+
+
+  "add": {
+    "subject": {
+      "label": "Add person or organization",
+      "conf": "Transfer subject has been added.",
+      "error": "Transfer subject could not be added."
+    },
+    "object": {
+      "label": "Add person or organization",
+      "conf": "Transfer object has been added.",
+      "error": "Transfer object could not be added."
+    }
+  },
+  "create": {
+    "label": "Add transfer",
+    "conf": "Transfer has been created.",
+    "error": "Transfer could not be created."
+  },
+  "delete": {
+    "label": "Delete transfer",
+    "conf": "Transfer has been deleted.",
+    "error": "Transfer could not be deleted."
+  },
+  "select": {
+    "resource": "Select resource"
+  },
+  "update": {
+    "label": "Change transfer",
+    "conf": "Transfer has been changed.",
+    "error": "Transfer could not be changed."
+  },
+  "view": {
+    "label": "Show transfer details"
+  },
+
+  "list": {
+    "title": "Transfers",
+    "header": {
+      "type": "Type",
+      "resource": "Resource",
+      "subject": "from",
+      "object": "to",
+      "date": "Date",
+      "name": "Occasion",
+      "state": "Status"
+    }
+  },
+
+  "subject": "From",
+  "object": "To",
+  "date": "Date",
+  "resource": "Object",
+  "name": "Occasion",
+  "state": "Status",
+  "type": "Transfer type",
+
+
+  "transfer_type": {
+    "all": {
+      "label": "All"
+    },
+    "purchase": {
+      "label": "Purchase",
+      "description": "Transfer through purchase"
+    },
+    "gift": {
+      "label": "Gift",
+      "description": "Transfer through gift"
+    },
+    "inheritance": {
+      "label": "Inheritance",
+      "description": "Transfer through inheritance"
+    },
+    "withdrawal": {
+      "label": "Withdrawal",
+      "description": "Transfer through withdrawal"
+    },
+    "deposit": {
+      "label": "Deposit",
+      "description": "Transfer through deposit"
+    },
+    "loan": {
+      "label": "Loan",
+      "description": "Transfer through loan"
+    },
+    "custom": {
+      "label": "Other",
+      "description": "Transfer for other reasons"
+    },
+    "booking": {
+      "label": "Booking",
+      "description": "Transfer through booking"
+    }
+  },
+
+  "transfer_state": {
+    "all": {
+      "label": "All statuses"
+    },
+    "initial": {
+      "label": "Initial",
+      "description": "Transfer idea or plan."
+    },
+    "draft": {
+      "label": "Draft",
+      "description": "Transfer is currently being created (e.g. quote or contract discussion)."
+    },
+    "active": {
+      "label": "Active",
+      "description": "The transfer is active and valid."
+    },
+    "terminated": {
+      "label": "Completed",
+      "description": "The transfer is completed."
+    },
+    "cancelled": {
+      "label": "Cancelled",
+      "description": "The transfer was cancelled."
+    }
+  }
+}

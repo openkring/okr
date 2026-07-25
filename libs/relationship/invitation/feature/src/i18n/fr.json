@@ -1,0 +1,92 @@
+{
+  "invitation": "Invitation",
+  "invitations": "Invitations",
+  "description": "Une invitation à un événement ou une manifestation.",
+  "empty": "Aucune invitation n'a encore été créée. Créez-en une en cliquant sur le bouton +.",
+
+  "delete": {
+    "label": "Supprimer l'invitation",
+    "confirm": "Voulez-vous vraiment supprimer l'invitation ?",
+    "conf": "L'invitation a été supprimée.",
+    "error": "L'invitation n'a pas pu être supprimée."
+  },
+  "invite": {
+    "label": "Inviter une personne",
+    "conf": "La personne a été invitée.",
+    "error": "La personne n'a pas pu être invitée."
+  },
+  "update": {
+    "label": "Modifier l'invitation",
+    "conf": "L'invitation a été enregistrée",
+    "error": "L'invitation n'a pas pu être enregistrée."
+  },
+  "view": {
+    "label": "Afficher les détails de l'invitation"
+  },
+  "accept": "Je participe",
+  "accepted": "invitations acceptées",
+  "maybe": "Peut-être",
+  "decline": "Je ne peux pas participer",
+  "resend": "Renvoyer l'invitation",
+  "subscribe": "Je participe",
+  "unsubscribe": "Je ne peux pas participer",
+
+  "list": {
+    "header": {
+      "date": "Date",
+      "name": "Nom",
+      "invitee": "Participant",
+      "inviter": "Organisateur",
+      "state": "Statut"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "sssssss",
+    "helper": "Un ID unique de l'invitation dans la base de données."
+  },
+  "invitee": "Participant",
+  "inviter": "Organisateur",
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes libres."
+  },
+  "sentAt": {
+    "label": "Envoyée le",
+    "placeholder": "JJ.MM.AAAA",
+    "helper": "L'invitation a été envoyée à cette date."
+  },
+  "respondedAt": {
+    "label": "Répondue le",
+    "placeholder": "JJ.MM.AAAA",
+    "helper": "L'invitation a reçu une réponse à cette date."
+  },
+  "role": {
+    "label": "Rôle"
+  },
+
+  "invitation_state": {
+    "label": "Statut",
+    "helper": "Statut de l'invitation",
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "pending": {
+      "label": "En attente",
+      "description": "L'invitation a été envoyée mais n'a pas encore reçu de réponse."
+    },
+    "accepted": {
+      "label": "Acceptée",
+      "description": "L'invitation a été acceptée."
+    },
+    "declined": {
+      "label": "Refusée",
+      "description": "L'invitation a été refusée."
+    },
+    "maybe": {
+      "label": "Peut-être",
+      "description": "L'invitation a reçu la réponse « Peut-être »."
+    }
+  }
+}

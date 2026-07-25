@@ -1,0 +1,195 @@
+{
+  "ownership": "Usage",
+  "ownerships": "Usages",
+  "owner": "User",
+  "description": "Person or organization uses a resource",
+  "empty": "No usages found.",
+  "duration": "from-to",
+  "ownerName": "Name",
+  "resourceName": "Resource",
+  "newDesc": "would like to newly use the following resource:",
+  "relDesc1": "Usage of",
+  "relDesc2": "by",
+  "revreldesc": "is used by",
+
+
+  "create": {
+    "label": "Add usage",
+    "conf": "Usage was created.",
+    "error": "Usage could not be created."
+  },
+  "delete": {
+    "label": "Delete usage",
+    "confirm": "Normally a usage should be ended, not deleted. Deletion is only intended to correct incorrect entries. Do you really want to delete the usage?",
+    "conf": "Usage was deleted",
+    "error": "Usage could not be deleted"
+  },
+  "end": {
+    "label": "End usage"
+  },
+  "reactivate": {
+    "label": "Reactivate usage",
+    "conf": "The usage was reactivated.",
+    "error": "The usage could not be reactivated."
+  },
+  "select": {
+    "title": "Select list type for export",
+    "raw": "Raw data",
+    "lockers": "Locker list"
+  },
+  "update": {
+    "label": "Edit usage",
+    "conf": "The changes were saved.",
+    "error": "The changes could not be saved"
+  },
+  "view": {
+    "label": "View usage details"
+  },
+  "boatAction": {
+    "edit": "Edit boat",
+    "view": "View boat"
+  },
+  "ownerAction": {
+    "edit": "Edit user",
+    "view": "View user"
+  },
+
+  "list": {
+    "empty": "No usages found.",
+    "header": {
+      "ownerName": "Name",
+      "resourceName": "Resource",
+      "duration": "from-to",
+      "price": "Fee",
+      "deposit": "Deposit",
+      "validFrom": "Valid from",
+      "validTo": "Valid until",
+      "year": "Year"
+    },
+    "all": {
+      "title": "Usages"
+    },
+    "ownerships": {
+      "title": "Usages"
+    },
+    "lockers": {
+      "title": "Lockers"
+    },
+    "keys": {
+      "title": "Keys"
+    },
+    "privateBoats": {
+      "title": "Private skiffs"
+    },
+    "scsBoats": {
+      "title": "Club boats"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "The okey is the key of a usage, a unique ID in the database."
+  },
+  "ownerName1": {
+    "label": "First name",
+    "placeholder": "Name",
+    "helper": "The first names of a person"
+  },
+  "ownerName2": {
+    "label": "Name",
+    "placeholder": "Name",
+    "helper": "The family name of a person or the name of the organization."
+  },
+  "currency": {
+    "label": "Currency",
+    "placeholder": "CHF",
+    "helper": "The currency code (three-letter code)"
+  },
+  "price": {
+    "label": "Price",
+    "placeholder": "nnnn",
+    "helper": "A price indication."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Text"
+  },
+  "all": {
+    "title": "All usages",
+    "categoryLabel": "Resource type"
+  },
+  "boat": {
+    "name": "Boat name",
+    "type": "Boat type"
+  },
+  "rboat": {
+    "name": "Boat name",
+    "type": "Boat type",
+    "title": "Rowing boats",
+    "category": "Boat category",
+    "club": {
+      "title": "Club boats",
+      "categoryLabel": "Boat category"
+    },
+    "private": {
+      "title": "Private boats"
+    }
+  },
+  "lockers": {
+    "title": "Lockers",
+    "male": {
+      "title": "Men's lockers"
+    },
+    "female": {
+      "title": "Women's lockers"
+    }
+  },
+  "houseKeys": {
+    "title": "Keys"
+  },
+  "valid": {
+    "from": {
+      "label": "Valid from",
+      "placeholder": "DD.MM.YYYY",
+      "helper": "The usage starts on this date."
+    },
+    "to": {
+      "label": "Valid until",
+      "placeholder": "DD.MM.YYYY",
+      "helper": "The usage ends on this date."
+    }
+  },
+  "ownerType": {
+    "all": {
+      "label": "All"
+    },
+    "persons": {
+      "label": "Persons",
+      "description": "The usage belongs to a person."
+    },
+    "men": {
+      "label": "Men",
+      "description": "The usage belongs to a man."
+    },
+    "women": {
+      "label": "Women",
+      "description": "The usage belongs to a woman."
+    },
+    "orgs": {
+      "label": "Organizations",
+      "description": "The usage belongs to an organization."
+    }
+  },
+  "state": {
+    "applied": {
+      "label": "Applied",
+      "description": "The person has submitted an application."
+    },
+    "active": {
+      "label": "Active",
+      "description": "Currently valid usage."
+    }
+  }
+
+}

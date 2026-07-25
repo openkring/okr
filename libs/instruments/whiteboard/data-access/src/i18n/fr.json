@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Ajouter un tableau blanc",
+    "conf": "Le tableau blanc a été ajouté.",
+    "error": "Le tableau blanc n'a pas pu être ajouté."
+  },
+  "update": {
+    "conf": "Le tableau blanc a été modifié.",
+    "error": "Le tableau blanc n'a pas pu être modifié."
+  },
+  "delete": {
+    "conf": "Le tableau blanc a été supprimé.",
+    "confirm": "Voulez-vous vraiment supprimer le tableau blanc ?",
+    "error": "Le tableau blanc n'a pas pu être supprimé."
+  }
+}

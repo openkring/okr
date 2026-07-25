@@ -1,0 +1,60 @@
+{
+    "singular": "Asset",
+    "plural": "Assets",
+    "empty": "No assets found",
+
+    "list": {
+        "title": "Assets / Asset values / Asset"
+    },
+    "deduction": {
+        "label": "Depreciation",
+        "run": "Depreciation run"
+    },
+
+   "name": {
+        "label": "Asset name"
+    },
+   "number": {
+        "label": "Account number"
+    },
+   "category": {
+        "label": "Category"
+    },
+   "date": {
+        "acquisition": {
+            "label": "Acquisition date"
+        },
+        "end": {
+            "label": "End of period"
+        }
+    },
+    "life": {
+        "label": "Lifetime (months)"
+    },
+    "preview": {
+        "label": "Preview"
+    },
+
+    "book": {
+        "label": "Post"
+    },
+    "create": {
+        "label": "Create new asset",
+        "conf": "The asset was saved.",
+        "error": "The asset could not be saved."
+    },
+    "delete": {
+        "label": "Delete asset",
+        "conf": "Asset was deleted.",
+        "confirm": "Should the asset really be deleted ?",
+        "error": "The asset could not be deleted."
+    },
+    "update": {
+        "label": "Change asset",
+        "conf": "The asset was saved.",
+        "error": "The asset could not be saved."
+    },
+    "view": {
+        "label": "View asset"
+    }
+}

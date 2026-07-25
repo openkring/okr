@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Añadir asiento",
+    "error": "No se pudo crear el asiento.",
+    "conf": "El asiento se ha creado."
+  },
+  "update": {
+    "label": "Modificar asiento",
+    "error": "No se pudieron guardar los cambios",
+    "conf": "Los cambios se han guardado."
+  },
+  "delete": {
+    "label": "Eliminar asiento",
+    "error": "No se pudo eliminar el asiento",
+    "conf": "El asiento se ha eliminado"
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "orgs": "Organizzazioni",
+  "empty": "Nessuna organizzazione trovata.",
+
+  "copy": {
+    "email": {
+      "conf": "Le e-mail sono state copiate."
+    }
+  },
+  "create": {
+    "label": "Nuova organizzazione"
+  },
+  "delete": {
+    "label": "Elimina organizzazione",
+    "confirm": "Eliminare davvero l'organizzazione?",
+    "conf": "L'organizzazione è stata eliminata.",
+    "error": "Non è stato possibile eliminare l'organizzazione."
+  },
+  "update": {
+    "label": "Modifica organizzazione"
+  },
+  "view": {
+    "label": "Visualizza organizzazione"
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssssssss",
+    "helper": "ID univoco del record di indirizzo nel database."
+  },
+  "name": {
+    "label": "Nome dell'organizzazione",
+    "placeholder": "Nome dell'organizzazione",
+    "helper": "Nome dell'organizzazione"
+  },
+  "taxId": {
+    "label": "Numero IVA",
+    "placeholder": "CHE-123.456.789",
+    "helper": "ID dell'imposta sul valore aggiunto (o ID aziendale IDI)",
+    "error": "Il numero IVA è composto da CHE seguito da 9 cifre."
+  },
+  "bexioId": {
+    "label": "Bexio ID",
+    "placeholder": "nnnnnn",
+    "helper": "ID per la sincronizzazione con un contatto in Bexio.",
+    "error": "L'ID Bexio è un numero a sei cifre."
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Note facoltative e libere"
+  },
+  "dateOfFoundation": {
+    "label": "Data di fondazione",
+    "placeholder": "gg.mm.aaaa",
+    "helper": "Data in cui l'organizzazione è stata fondata.",
+    "error": "Il formato della data non è corretto."
+  },
+  "dateOfLiquidation": {
+    "label": "Data di liquidazione",
+    "placeholder": "gg.mm.aaaa",
+    "helper": "Data in cui l'organizzazione è stata sciolta.",
+    "error": "Il formato della data non è corretto."
+  },
+  "streetName": {
+    "label": "Via",
+    "placeholder": "Inserisci via",
+    "helper": "Il nome della via"
+  },
+  "streetNumber": {
+    "label": "N.",
+    "placeholder": "nnn",
+    "helper": "Il numero civico"
+  },
+  "countryCode": {
+    "label": "Paese (ISO)",
+    "placeholder": "CH",
+    "helper": "Codice paese secondo lo standard ISO"
+  },
+  "zipCode": {
+    "label": "CAP",
+    "placeholder": "nnnn",
+    "helper": "Codice postale svizzero (numero a quattro cifre)"
+  },
+  "city": {
+    "label": "Località",
+    "placeholder": "Inserisci località",
+    "helper": "Nome della località"
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": "Indirizzo web"
+  },
+  "email": {
+    "label": "E-mail",
+    "placeholder": "Inserisci indirizzo e-mail"
+  },
+  "phone": {
+    "label": "Telefono",
+    "placeholder": "+41 XX XXX XX XX"
+  },
+
+  "org_type": {
+    "label": "Tipo di organizzazione",
+    "helper": "Il tipo di un'organizzazione (ad es. azienda, associazione/club, amministrazione, ecc.).",
+    "legalEntity": {
+      "label": "Ragione sociale",
+      "placeholder": "Ragione sociale",
+      "error": "L'inserimento della ragione sociale è obbligatorio. Sono consentiti solo lettere (incl. -) e numeri, nessun carattere speciale."
+    },
+    "association": {
+      "label": "Nome dell'associazione",
+      "placeholder": "Nome dell'associazione",
+      "helper": "Il nome ufficiale dell'associazione o dell'organizzazione.",
+      "error": "L'inserimento del nome dell'associazione è obbligatorio. Sono consentiti solo lettere (incl. -) e numeri, nessun carattere speciale."
+    },
+    "authority": {
+      "label": "Nome dell'autorità",
+      "placeholder": "Nome dell'autorità",
+      "helper": "Il nome ufficiale di un'autorità, un ufficio, un dipartimento o un'unità amministrativa.",
+      "error": "L'inserimento del nome dell'autorità è obbligatorio. Sono consentiti solo lettere (incl. -) e numeri, nessun carattere speciale."
+    },
+    "group": {
+      "label": "Nome del gruppo",
+      "placeholder": "Nome del gruppo",
+      "helper": "Il nome ufficiale di un gruppo o di un team.",
+      "error": "L'inserimento del nome del gruppo è obbligatorio. Sono consentiti solo lettere (incl. -) e numeri, nessun carattere speciale."
+    },
+    "other": {
+      "label": "Altro"
+    },
+    "all": {
+      "label": "Tutti"
+    }
+  }
+}

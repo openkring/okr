@@ -1,0 +1,374 @@
+{
+  "calevent": "Event",
+  "calevents": "Events",
+  "empty": "No events have been created yet. Create one by clicking the + button.",
+
+  "attendance": {
+    "accepted": "Attendances",
+    "attendees": "Attendees",
+    "helper": "People attending the event.",
+    "add": "Add attendees",
+    "exists": "This person is already registered as an attendee.",
+    "empty": "No attendees found."
+  },
+  "create": {
+    "label": "Create a new event",
+    "conf": "The event has been saved.",
+    "error": "The event could not be saved."
+  },
+  "delete": {
+    "label": "Delete event",
+    "confirm": "Do you really want to delete the event ?",
+    "conf": "The event has been deleted.",
+    "error": "The event could not be deleted.",
+    "series": {
+      "label": "Delete event series",
+      "confirm": "Do you really want to delete the event series ?",
+      "conf": "The event series has been deleted.",
+      "error": "The event series could not be deleted.",
+      "intro": "This event is part of a series of recurring events. Do you want to delete only this single event, or all future events in the series?",
+      "current": "Delete only this event (the event is detached from the series)",
+      "future": "Delete all future events",
+      "all": "Delete all events in the series"
+    }
+  },
+  "download": {
+    "ics": "Download appointment (ICS)"
+  },
+  "quickEntry": {
+    "label": "Quick entry",
+    "placeholder": "Name[,Location] [//Date] [@Person]"
+  },
+  "schedule": {
+    "title": "Date poll",
+    "find": "Find a date",
+    "close": {
+      "label": "Close poll",
+      "message": "{{date}} is chosen as the definitive date. All other proposals will be removed."
+    },
+    "optionalMessage": "Optional message to the group...",
+    "date": {
+      "proposals": "Date proposals",
+      "add": "Add date",
+      "confirm": "Apply dates"
+    },
+    "view": "Show poll"
+  },
+  "update": {
+    "label": "Edit event",
+    "conf": "The event has been changed.",
+    "error": "The event could not be changed.",
+    "series": {
+      "label": "Edit event series",
+      "conf": "The event series has been changed.",
+      "error": "The event series could not be changed.",
+      "intro": "This event is part of a series of recurring events. Do you want to change only this single event, or all future events in the series?",
+      "current": "Change only this event (the event is detached from the series)",
+      "future": "Change all future events",
+      "all": "Change all events in the series"
+    }
+  },
+  "view": {
+    "label": "Show event details",
+    "album": "View album"
+  },
+
+  "invite": {
+    "person": {
+      "label": "Invite person",
+      "conf": "The person has been invited",
+      "error": "The person could not be invited"
+    },
+    "members": {
+      "label": "Invite group members",
+      "conf": "The members of the group have been invited.",
+      "error": "The members of the group could not be invited."
+    }
+  },
+  "invitation": {
+    "pending": "{{count}} not yet responded",
+    "update": {
+      "label": "Change invitation",
+      "conf": "The invitation has been changed.",
+      "error": "The invitation could not be changed."
+    },
+    "subscribe": "I will attend",
+    "unsubscribe": "I cannot attend"
+  },
+  "weekday": {
+    "abbreviation": {
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu",
+      "friday": "Fri",
+      "saturday": "Sat",
+      "sunday": "Sun"
+    },
+    "name": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    }
+  },
+  "month": {
+    "january": "January",
+    "february": "February",
+    "march": "March",
+    "april": "April",
+    "may": "May",
+    "june": "June",
+    "july": "July",
+    "august": "August",
+    "september": "September",
+    "october": "October",
+    "november": "November",
+    "december": "December"
+  },
+  "periodicity": {
+    "name": "Periodicity",
+    "once": {
+      "label": "Once",
+      "description": "The event takes place exactly one single time."
+    },
+    "hourly": {
+      "label": "Hourly",
+      "description": "The event takes place every hour."
+    },
+    "daily": {
+      "label": "Daily",
+      "description": "The event takes place every day (including weekends)."
+    },
+    "workdays": {
+      "label": "Workdays",
+      "description": "The event takes place daily on every workday (Mon-Fri)."
+    },
+    "weekly": {
+      "label": "Weekly",
+      "description": "The event takes place every week."
+    },
+    "biweekly": {
+      "label": "Biweekly",
+      "description": "The event takes place every other week."
+    },
+    "monthly": {
+      "label": "Monthly",
+      "description": "The event is repeated monthly."
+    },
+    "quarterly": {
+      "label": "Quarterly",
+      "description": "The event takes place every three months."
+    },
+    "yearly": {
+      "label": "Yearly",
+      "description": "The event takes place once every year."
+    },
+    "other": {
+      "label": "Other",
+      "description": "A special periodicity can be configured freely."
+    },
+    "never": {
+      "label": "Never",
+      "description": "The event never takes place, it has no periodicity."
+    }
+  },
+
+  "list": {
+    "header": {
+      "name": "Event",
+      "duration": "from-to",
+      "year": "Year",
+      "responsible": "Organizers",
+      "location": "Location",
+      "description": "Topic"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "Unique key in the database."
+  },
+  "calendar": {
+    "title": "Calendar",
+    "add": "Create a new calendar",
+    "select": "Select calendar"
+  },
+  "date": {
+    "start": {
+      "label": "Start date",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "The event starts on this day."
+    },
+    "end": {
+      "label": "End date",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "The event ends on this day."
+    },
+    "repeatUntil": {
+      "label": "Repeat until",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "Recurring events are entered in the calendar up to this date."
+    }
+  },
+  "description": {
+    "label": "Additional information",
+    "placeholder": "A description of the event. Here you can record anything else about the event",
+    "helper": "An event takes place at a specific time and can be displayed in a calendar."
+  },
+  "durationMinutes": {
+    "label": "Duration (minutes)",
+    "placeholder": "nn",
+    "helper": "The duration of an event in minutes."
+  },
+  "fullDay": {
+    "label": "All day",
+    "helper": "This event is entered in the calendar as an all-day event - without a specific time."
+  },
+  "locationKey": {
+    "label": "Location key",
+    "placeholder": "sssssss",
+    "helper": "A reference to the location (location.okey in the database)."
+  },
+  "name": {
+    "label": "Event",
+    "placeholder": "Name",
+    "helper": "The name of an event."
+  },
+  "responsible": {
+    "label": "Organizers",
+    "add": "Add organizers",
+    "persons": "Responsible",
+    "description": "People responsible for the event."
+  },
+  "seriesId": {
+    "label": "Series ID",
+    "placeholder": "sssssssss",
+    "helper": "The series ID keeps all dates of a series together."
+  },
+  "startTime": {
+    "label": "Start time",
+    "placeholder": "HH:MM",
+    "helper": "The event starts at this time."
+  },
+
+  "calevent_type": {
+    "name": "Type of event",
+    "label": "Type of event",
+    "helper": "Type of event",
+    "all": {
+      "label": "All event types"
+    },
+    "ga": {
+      "label": "General assembly",
+      "description": "e.g. general meeting (GM), shareholders' meeting, members' assembly, community assembly"
+    },
+    "board": {
+      "label": "Committee",
+      "description": "e.g. executive board, board of directors, management board"
+    },
+    "project": {
+      "label": "Project meeting",
+      "description": "e.g. Scrum meeting, project status, daily standup, kickoff, wrapup etc."
+    },
+    "training": {
+      "label": "Training",
+      "description": "e.g. education, course, further training, sports training"
+    },
+    "competition": {
+      "label": "Competition",
+      "description": "e.g. regatta, race, tournament, championship"
+    },
+    "education": {
+      "label": "Education",
+      "description": "Further training / education, e.g. lecture, seminar, workshop, course"
+    },
+    "social": {
+      "label": "Social event",
+      "description": "e.g. apéro, visit, demo, dinner"
+    },
+    "sport": {
+      "label": "Sports event",
+      "description": "e.g. tournament, regatta, race etc."
+    },
+    "business": {
+      "label": "Business event",
+      "description": "e.g. staff briefing, staff review, client meeting, pitch etc."
+    },
+    "off": {
+      "label": "Absence",
+      "description": "e.g. holidays, compensation, illness"
+    },
+    "reservation": {
+      "label": "Reservation",
+      "description": "Reservation of a resource",
+      "bh": {
+        "title": "Reservation",
+        "subtitle": "Please fill out this form if you would like to reserve club facilities for your event.",
+        "conf1": "Your reservation has been saved and forwarded to the person responsible for reservations.",
+        "conf2": "In the event of non-compliance with the terms of the contract, any resulting costs will be charged to the tenant (repairs, cleaning, firewood not refilled, full rubbish bags not taken away, cigarette butts left lying around, etc.). The board also reserves the right to bar the tenant from future events.",
+        "conf3": "The tenant contacts the person responsible for the infrastructure at least one week before the event, so that all necessary details and questions can be clarified."
+      },
+      "skiff": {
+        "title": "Skiff berth reservation",
+        "boatInfo": "Information about your boat",
+        "subTitle": "Please fill out this form if you would like to reserve a storage berth for your skiff.",
+        "confirmation": "Your reservation has been saved and forwarded to the person responsible for reservations.",
+        "conf1": "The tenant hereby agrees to the terms of the contract set out in the 'Agreement for the rental of the skiff storage berth' and the 'Allocation of storage berths for private skiffs'"
+      }
+    },
+    "retro": {
+      "label": "Retrospective",
+      "description": "Scrum ceremony for exchanging experiences, wrapup"
+    },
+    "daily": {
+      "label": "Daily",
+      "description": "Scrum ceremony, daily status exchange"
+    },
+    "planning": {
+      "label": "Planning meeting",
+      "description": "Scrum ceremony for planning new tasks"
+    },
+    "grooming": {
+      "label": "Grooming",
+      "description": "Scrum ceremony for discussing new tasks"
+    },
+    "sync": {
+      "label": "Sync",
+      "description": "e.g. personal exchange, bilateral"
+    },
+    "presentation": {
+      "label": "Presentation",
+      "description": "e.g. sales, introduction, demo."
+    },
+    "team": {
+      "label": "Team meeting",
+      "description": "Regular meeting of the team."
+    },
+    "todo": {
+      "label": "Todo",
+      "description": "A task that needs to be done."
+    },
+    "work": {
+      "label": "Work",
+      "description": "e.g. cleaning, repairs, maintenance"
+    },
+    "other": {
+      "label": "Other",
+      "description": "The event cannot be assigned to any of the other types."
+    }
+  },
+
+  "validations": {
+    "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "The repeat-until date is mandatory with this periodicity",
+    "caleventRepeatUntilDateAfterStartDate": "The repeat-until date must be after the start date",
+    "caleventEndDateAfterStartDate": "The end date must be after the start date.",
+    "caleventStartDateMandatory": "The start date is mandatory.",
+    "caleventEndDateMandatory": "The end date is mandatory.",
+    "caleventModelType": "The ModelType must be EventModel."
+  }
+}

@@ -1,0 +1,710 @@
+{
+  "title": "AOC - Application Operation Center",
+  "result": {
+    "title": "Résultats"
+  },
+  "account": {
+    "title": "Comptes utilisateur",
+    "plural": "Comptes",
+    "empty": "Aucun utilisateur trouvé",
+    "user": {
+      "delete": {
+        "label": "Supprimer l'utilisateur",
+        "error": "L'utilisateur n'a pas pu être supprimé.",
+        "conf": "L'utilisateur a été supprimé.",
+        "confirm": "Voulez-vous vraiment supprimer l'utilisateur ?"
+      },
+      "update": {
+        "label": "Modifier l'utilisateur",
+        "error": "Les modifications n'ont pas pu être enregistrées",
+        "conf": "Les modifications ont été enregistrées."
+      }
+    },
+    "fbuser": {
+      "delete": {
+        "label": "Supprimer l'utilisateur Firebase",
+        "error": "L'utilisateur Firebase n'a pas pu être supprimé.",
+        "conf": "L'utilisateur Firebase a été supprimé.",
+        "confirm": "Voulez-vous vraiment supprimer l'utilisateur Firebase ?"
+      }
+    },
+    "email": {
+      "label": "E-mail de connexion",
+      "placeholder": "name@domain.com"
+    },
+    "membership": {
+      "edit": "Modifier l'adhésion"
+    },
+    "copy": {
+      "email": "Copier l'e-mail",
+      "uid": "Copier l'UID",
+      "pkey": "Copier la clé de personne"
+    }
+  },
+  "adminops": {
+    "title": "Opérations admin",
+    "debug": {
+      "tools": "Outils de débogage",
+      "focus_event_logging": "Activer la journalisation des événements de focus"
+    },
+    "iban": {
+      "title": "Sujets avec des numéros IBAN :",
+      "label": "Lister les numéros IBAN",
+      "button": "Afficher"
+    },
+    "mcatchange": {
+      "title": "Modifications de la catégorie de membre",
+      "button": "Afficher"
+    },
+    "doubleMembers": {
+      "title": "Membres en double",
+      "label": "Lister les membres en double",
+      "button": "Afficher"
+    },
+    "oldJuniors": {
+      "title": "Juniors à réaffecter (trop âgés) (>18)",
+      "label": "Lister les juniors à réaffecter (trop âgés)",
+      "button": "Afficher",
+      "nodob": "Aucune date de naissance",
+      "description": "Les membres listés ci-dessous sont actuellement encore enregistrés comme juniors dans la base de données et doivent être réaffectés aux membres actifs, car ils sont nés avant {{ refYear }}."
+    },
+    "club": {
+      "label": "Club"
+    },
+    "year": {
+      "label": "Année"
+    },
+    "membership": {
+      "prices": {
+        "title": "Mettre à jour les cotisations annuelles",
+        "label": "Mettre à jour les cotisations annuelles",
+        "button": "Mettre à jour",
+        "description": "Les cotisations annuelles sont calculées à partir des catégories d'adhésion. La cotisation annuelle standard est enregistrée sur chaque adhésion dans le champ price."
+      },
+      "attributes": {
+        "title": "Mettre à jour les attributs des membres",
+        "label": "Mettre à jour les attributs des membres",
+        "button": "Mettre à jour",
+        "description": "Pour chaque personne, les attributs priority, relIsLast et relLog sont recalculés et enregistrés dans Membership. C'est la condition préalable pour que les analyses telles que Exit/Entry/Alumni/OldJuniors etc. fonctionnent correctement."
+      }
+    },
+    "checkJuniorEntry": {
+      "title": "Vérifier les entrées de juniors",
+      "label": "Vérifier les entrées de juniors",
+      "button": "Vérifier",
+      "description": "Les membres listés ci-dessous sont enregistrés dans la base de données avec une entrée en tant que membre actif ; ils devraient initialement être réaffectés aux juniors."
+    }
+  },
+  "bexio": {
+    "title": "Gestion de l'intégration Bexio",
+    "invoices": {
+      "title": "Factures débiteurs (Invoices)",
+      "subtitle": "Cette fonction est destinée au téléchargement initial des factures débiteurs depuis Bexio. Une fois cette synchronisation initiale effectuée, les factures futures sont ajoutées quotidiennement tôt le matin.",
+      "nodata": "Aucune facture trouvée. Chargez d'abord les données depuis Bexio.",
+      "status": "Factures dans Firestore. Dernière synchro :",
+      "history": "Données chargées."
+    },
+    "bills": {
+      "title": "Factures créanciers (Bills)",
+      "subtitle": "Cette fonction est destinée au téléchargement initial des factures créanciers depuis Bexio. Une fois cette synchronisation initiale effectuée, les factures futures sont ajoutées quotidiennement tôt le matin.",
+      "nodata": "Aucune facture trouvée. Chargez d'abord les données depuis Bexio.",
+      "status": "Factures dans Firestore. Dernière synchro :",
+      "history": "Données chargées."
+    },
+    "journal": {
+      "title": "Journal (Écritures)",
+      "subtitle": "Téléchargement initial de toutes les écritures du journal comptable depuis Bexio. Ensuite, les nouvelles écritures sont synchronisées quotidiennement à 06h15.",
+      "nodata": "Aucune écriture trouvée. Chargez d'abord les données depuis Bexio.",
+      "status": "Écritures dans Firestore. Dernière synchro :",
+      "history": "Données chargées."
+    },
+    "accounts": {
+      "title": "Comptes",
+      "subtitle": "Télécharger les groupes de comptes et les comptes depuis Bexio sous forme de structure AccountModel hiérarchique dans la collection Firestore accounts.",
+      "nodata": "Aucune écriture trouvée. Chargez d'abord les données depuis Bexio.",
+      "download": "Télécharger les groupes de comptes et les comptes depuis Bexio et les enregistrer comme plan comptable en structure arborescente.",
+      "history": "Données chargées."
+    },
+    "index": {
+      "title": "Synchroniser les contacts Bexio",
+      "content": "Toutes les personnes, organisations et leurs adhésions avec l'organisation par défaut sont chargées. Le BexioID de ces entités est rapproché. Ensuite, tous les contacts de Bexio sont chargés et insérés dans la même liste puis vérifiés. Pour les entrées manquantes, un bouton d'ajout apparaît pour le rapprochement.",
+      "button": "Synchro",
+      "contactFilter": {
+        "label": "Filtre de contacts"
+      }
+    },
+    "edit": {
+      "person": "Modifier la personne",
+      "org": "Modifier l'organisation",
+      "membership": "Modifier l'adhésion"
+    },
+    "vendor": {
+      "title": "Fournisseurs (Vendor)",
+      "subtitle": "Relie les fournisseurs des bills aux personnes ou aux orgs en fonction du nom.",
+      "status": {
+        "initial": "Pas encore vérifié.",
+        "done": "Toutes les bills ont un fournisseur.",
+        "open": "Bills sans fournisseur",
+        "linked": "Fournisseurs reliés",
+        "unmatched": "Aucune correspondance trouvée pour :"
+      }
+    },
+    "receiver": {
+      "title": "Destinataire de la facture",
+      "status": {
+        "initial": "Pas encore vérifié.",
+        "done": "Toutes les factures ont un destinataire.",
+        "open": "Factures sans destinataire.",
+        "linked": "Destinataires reliés",
+        "unmatched": "Aucune correspondance trouvée pour :"
+      },
+      "link": "Relier"
+    }
+  },
+  "chat": {
+    "title": "Admin Chat (Matrix)",
+    "rooms": "Salons",
+    "no_rooms": "Aucun salon",
+    "no_members": "Aucun membre",
+    "choose_room": "Choisir le salon",
+    "details": "Détails",
+    "id": "ID",
+    "name": "Nom",
+    "created_by": "Créé par",
+    "members": "Membres",
+    "note": "Si aucune personne n'est sélectionnée, tous les salons de chat sont affichés. Si une personne est sélectionnée, tous les salons de chat où cette personne est membre sont affichés.",
+    "invited": "Invité",
+    "public": "Public",
+    "topic": "Sujet",
+    "aliases": "Aliases",
+    "avatar": "Avatar",
+    "uid": "User ID",
+    "display_name": "Nom d'affichage",
+    "level": "Power Level",
+    "membership": "Adhésion",
+    "choose_room_or_member": "Choisir un salon ou un membre<br>pour afficher les détails",
+    "select": {
+      "roomMember": {
+        "label": "Choisir une personne",
+        "description": "Si le champ est vide, tous les salons de chat sont affichés. En sélectionnant une personne, vous limitez la sélection à tous les salons où cette personne est membre."
+      }
+    },
+    "room": {
+      "rename": {
+        "label": "Renommer le salon",
+        "newname": "Nouveau nom",
+        "action": "Renommer",
+        "conf": "Salon renommé"
+      },
+      "delete": {
+        "label": "Supprimer le salon",
+        "confirm": "Vraiment supprimer le salon {{ roomId }} ? Tous les messages seront supprimés.",
+        "action": "Supprimer",
+        "conf": "Salon supprimé."
+      },
+      "invite": {
+        "label": "Inviter une personne",
+        "action": "Inviter",
+        "conf": "invité"
+      },
+      "view": {
+        "label": "Afficher les détails du salon"
+      }
+    },
+    "alias": {
+      "add": {
+        "label": "Ajouter un alias",
+        "placeholder": "alias-name (sans # ni :homeserver)",
+        "action": "Ajouter",
+        "conf": "Alias ajouté"
+      }
+    },
+    "user": {
+      "provision": {
+        "label": "Créer un utilisateur Matrix",
+        "action": "Créer",
+        "conf": "Utilisateur créé"
+      },
+      "deactivate": {
+        "label": "Désactiver l'utilisateur Matrix",
+        "confirm": "Désactiver {{ userId }} ? L'utilisateur ne pourra plus se connecter.",
+        "action": "Désactiver",
+        "conf": "désactivé",
+        "notfound": "Utilisateur introuvable"
+      }
+    },
+    "member": {
+      "deactivate": {
+        "label": "Désactiver le membre"
+      },
+      "kick": {
+        "label": "Retirer le membre",
+        "confirm": "Retirer {{ userId }} du salon ?",
+        "action": "Retirer",
+        "conf": "retiré."
+      },
+      "view": {
+        "label": "Afficher les membres"
+      }
+    },
+    "log": {
+      "title": "Niveau de log du SDK Matrix",
+      "description": "Contrôle le niveau de détail avec lequel le SDK Matrix (matrix-js-sdk) écrit dans la console du navigateur – uniquement pour le dépannage du chat. La sélection est conservée après les rechargements. Par défaut : warn. Régler sur trace/debug pour des logs détaillés, sur silent pour aucun."
+    },
+    "repair": {
+      "names": {
+        "label": "Réparer les noms d'affichage",
+        "description": "Définit les noms d'affichage Matrix manquants à partir du nom de la personne (prénom nom). Les comptes avec leur propre nom restent inchangés.",
+        "scan": "Vérifier",
+        "action": "Réparer",
+        "none": "Tous les noms d'affichage sont corrects – rien à réparer.",
+        "preview": "Comptes à réparer",
+        "skipped_custom": "Comptes avec leur propre nom d'affichage ignorés.",
+        "confirm": "Définir maintenant {{ count }} noms d'affichage à partir des noms de personnes ?",
+        "conf": "{{ count }} noms d'affichage réparés."
+      },
+      "avatars": {
+        "label": "Réparer les avatars",
+        "description": "Définit les avatars Matrix manquants à partir de l'avatar de la personne. Les comptes avec leur propre avatar restent inchangés.",
+        "scan": "Vérifier",
+        "action": "Réparer",
+        "none": "Tous les comptes ont un avatar – rien à réparer.",
+        "preview": "Comptes à réparer",
+        "skipped_has": "Comptes avec leur propre avatar ignorés.",
+        "confirm": "Définir maintenant {{ count }} avatars à partir des avatars de personnes ?",
+        "conf": "{{ count }} avatars réparés."
+      }
+    }
+  },
+  "content": {
+    "content": "Gérer le contenu (Pages, Sections, Menus).",
+    "title": "Gestion de contenu",
+    "link": {
+      "check": {
+        "title": "Vérifier les liens",
+        "content": "Vérifier le bon fonctionnement de tous les liens dans toutes les pages et sections.",
+        "show": "Afficher",
+        "hide": "Masquer"
+      }
+    },
+    "section": {
+      "delete": {
+        "label": "Supprimer la section",
+        "confirm": "Voulez-vous vraiment supprimer cette section ?",
+        "conf": "La section a été supprimée.",
+        "error": "La section n'a pas pu être supprimée."
+      },
+      "orphaned": {
+        "title": "Sections orphelines",
+        "content": "Lister les sections qui ne sont utilisées par aucune page.",
+        "hide": "Masquer",
+        "show": "Afficher"
+      },
+      "missing": {
+        "title": "Sections manquantes",
+        "content": "Lister les noms de sections inexistantes qui sont référencées par une page.",
+        "hide": "Masquer",
+        "show": "Afficher"
+      },
+      "create": "Créer une section",
+      "edit": "Modifier la section",
+      "removeRef": "Retirer la référence de la page",
+      "images": {
+        "title": "Vérifier les images sans doc",
+        "content": "Vérifie par section si les images téléchargées dans le Storage ont une entrée dans la collection docs. Lors de la création, l'image est en plus affectée à la section (Article/Slider).",
+        "hide": "Masquer",
+        "show": "Afficher",
+        "detail": "Afficher l'image",
+        "download": "Télécharger l'image",
+        "create": {
+          "label": "Créer le document et affecter l'image à la section",
+          "conf": "Le document a été créé.",
+          "error": "Le document n'a pas pu être créé."
+        },
+        "delete": {
+          "label": "Supprimer l'image",
+          "confirm": "Voulez-vous supprimer ce fichier image de Firebase Storage ?"
+        }
+      }
+    },
+    "menu": {
+      "delete": {
+        "label": "Supprimer le menu",
+        "confirm": "Voulez-vous vraiment supprimer l'entrée de menu ?",
+        "conf": "L'entrée de menu a été supprimée.",
+        "error": "L'entrée de menu n'a pas pu être supprimée."
+      },
+      "orphaned": {
+        "title": "Menus orphelins",
+        "content": "Lister les menus qui ne sont pas utilisés.",
+        "hide": "Masquer",
+        "show": "Afficher"
+      },
+      "missing": {
+        "title": "Menus manquants",
+        "content": "Lister les menus inexistants qui sont référencés par un autre menu.",
+        "hide": "Masquer",
+        "show": "Afficher"
+      },
+      "create": "Créer un menu",
+      "edit": "Modifier le menu",
+      "removeRef": "Retirer la référence du menu"
+    },
+    "copy": {
+      "okey": "Copier la clé"
+    },
+    "page": {
+      "edit": "Modifier le site web"
+    }
+  },
+  "data": {
+    "title": "Données",
+    "content": "Valider et corriger les données",
+    "check": {
+      "console": "Veuillez vérifier et confirmer la configuration dans la console du navigateur."
+    },
+    "fix": {
+      "title": "Correction de données",
+      "content": "Opération groupée (adminops/fixModels) avec des opérations de correction sur une collection. ATTENTION : Les opérations de correction ne peuvent pas être annulées. Faire une sauvegarde, tester l'implémentation dans l'opération fix et d'abord effectuer un dry run sans mise à jour.",
+      "button": "Corriger les données"
+    },
+    "validate": {
+      "title": "Validation de données",
+      "content": "Opération groupée (adminops/validateModels) avec des opérations de validation sur une collection.",
+      "button": "Valider les données",
+      "select": "Choisir la collection"
+    },
+    "index": {
+      "title": "Créer un index",
+      "content": "Crée un index sur une collection. Ceci est utile lorsqu'un index manque dans la base de données et qu'une requête ne peut pas être exécutée.",
+      "button": "Créer un index",
+      "select": "Choisir la collection"
+    },
+    "fav": {
+      "title": "Cohérence des adresses favorites",
+      "description": "Compare les champs fav* mis en cache de chaque personne avec les adresses favorites réelles.",
+      "hide": "Masquer",
+      "validate": "Vérifier",
+      "person": "Personne",
+      "field": "Champ",
+      "favperson": "Personne (fav*)",
+      "address": "Dans l'adresse",
+      "nomismatches": "Aucun écart trouvé."
+    }
+  },
+  "doc": {
+    "title": "Vérifier les documents",
+    "content": "Vérifie si tous les fichiers dans Firebase Storage ont une entrée correspondante dans la base de données.",
+    "copy": {
+      "path": "Copier le chemin de stockage",
+      "url": "Copier l'URL de téléchargement"
+    },
+    "create": {
+      "label": "Créer le document (enregistrement en BD)",
+      "conf": "Le document a été créé.",
+      "error": "Le document n'a pas pu être créé."
+    },
+    "delete": {
+      "label": "Supprimer le document",
+      "confirm": "Voulez-vous supprimer ce fichier de Firebase Storage ?",
+      "conf": "Le document a été supprimé.",
+      "error": "Le document n'a pas pu être supprimé."
+    },
+    "download": {
+      "label": "Télécharger le document"
+    },
+    "hide": {
+      "label": "Masquer"
+    },
+    "check": {
+      "title": "Fichiers sans entrée en BD",
+      "content": "Liste tous les fichiers dans Firebase Storage pour lesquels aucune entrée n'existe dans la collection docs de Firestore.",
+      "button": "Vérifier"
+    }
+  },
+  "roles": {
+    "title": "Autorisation et rôles",
+    "personSelect": {
+      "title": "Choisir une personne",
+      "content": "La plupart des opérations ci-dessous sont basées sur une personne. C'est pourquoi une personne doit d'abord être sélectionnée ici. Les opérations peuvent ensuite être effectuées sur cette personne."
+    },
+    "account": {
+      "select": "Choisir une personne",
+      "title": "Créer un compte utilisateur",
+      "content": "Une personne existante est enregistrée comme utilisateur dans Firebase Auth, c.-à-d. que le compte Firebase et l'utilisateur sont créés. Si le compte Firebase existe déjà, seul un utilisateur est créé, reliant le compte Firebase et la personne.",
+      "button": "Créer le compte",
+      "password": {
+        "set": "Définir le mot de passe",
+        "reset": "Réinitialiser le mot de passe"
+      }
+    },
+    "assignment": {
+      "title": "Attribuer des rôles",
+      "content": "Effectuer et vérifier les attributions de rôles aux personnes."
+    },
+    "check": {
+      "title": "Vérifier le compte utilisateur",
+      "content": "Vérifier si une personne a un compte utilisateur dans Firebase Auth ou si les conditions de création du compte sont remplies.",
+      "button": "Vérifier"
+    },
+    "fbuser": {
+      "title": "Modifier l'utilisateur Firebase",
+      "content": "Modifier un utilisateur Firebase existant. La modification n'a lieu que dans Firebase Auth ; le cas échéant, le UserModel ou le PersonModel doit également être modifié.",
+      "button": "Modifier l'utilisateur Firebase"
+    },
+    "impersonate": {
+      "title": "Impersonnifier un utilisateur",
+      "content": "Le rôle de l'utilisateur est temporairement défini sur l'utilisateur sélectionné. Cela permet à l'admin d'utiliser l'application en tant que cet utilisateur. Pour revenir au rôle d'admin, l'admin doit se déconnecter et se reconnecter.",
+      "button": "Impersonate"
+    },
+    "password": {
+      "label": "Mot de passe",
+      "placeholder": "Mot de passe",
+      "error": "Le mot de passe doit comporter au moins 6 caractères.",
+      "helper": "Vous pouvez définir ici un mot de passe pour l'utilisateur sélectionné (p. ex. à des fins de test). Un champ de mot de passe vide génère un mot de passe aléatoire. L'utilisateur peut ensuite définir son propre mot de passe via une réinitialisation.",
+      "set": "Définir un nouveau mot de passe pour l'utilisateur sélectionné sans déclencher d'e-mail de réinitialisation. Un champ de mot de passe vide génère un mot de passe aléatoire.",
+      "reset": "Envoyer un e-mail de réinitialisation de mot de passe à l'utilisateur sélectionné."
+    }
+  },
+  "session": {
+    "title": "Sessions",
+    "empty": "Aucune session dans la période sélectionnée",
+    "anonymous": "anonyme",
+    "loggedIn": "Connecté",
+    "col": {
+      "user": "Utilisateur",
+      "browser": "Navigateur",
+      "os": "OS",
+      "started": "Démarrée",
+      "duration": "Durée",
+      "status": "Statut"
+    },
+    "status": {
+      "all": "Toutes",
+      "active": "active",
+      "stale": "inactive",
+      "orphaned": "orpheline",
+      "ended": "terminée"
+    },
+    "menu": {
+      "export": "Exporter les données brutes",
+      "statistics": "Afficher les statistiques",
+      "duration": "Modifier la période"
+    },
+    "as": {
+      "title": "Actions de session"
+    },
+    "view": "Afficher la session",
+    "edit": {
+      "user": "Modifier l'utilisateur",
+      "person": "Modifier la personne"
+    },
+    "hide": {
+      "user": "Masquer cet utilisateur",
+      "anonymous": "Masquer les sessions anonymes"
+    },
+    "export": {
+      "empty": "Aucune session à exporter.",
+      "conf": "Les sessions ont été exportées."
+    },
+    "detail": {
+      "title": "Détails de la session"
+    },
+    "stats": {
+      "title": "Statistiques de session",
+      "total": "Total des sessions",
+      "users": "Utilisateurs uniques",
+      "anonymous": "Sessions anonymes",
+      "avgDuration": "Durée moyenne",
+      "medianDuration": "Durée médiane",
+      "byBrowser": "Par navigateur",
+      "byOs": "Par OS"
+    },
+    "duration": {
+      "title": "Choisir la période",
+      "from": "Du",
+      "to": "Au"
+    }
+  },
+  "srv": {
+    "title": "Gestion de l'intégration SRV / Regasoft",
+    "index": {
+      "title": "Synchroniser les membres SRV",
+      "subtitle": "Compare les adhésions SRV actuelles (orgKey=srv) avec les membres du portail Regasoft. Rapprochement primaire via memberId = serviceId, repli via le nom.",
+      "reset": "Réinitialiser l'index",
+      "button": "Construire l'index"
+    },
+    "person": {
+      "update": {
+        "label": "Modifier la personne"
+      }
+    },
+    "membership": {
+      "update": {
+        "label": "Modifier l'adhésion"
+      },
+      "parent": {
+        "create": {
+          "label": "Créer une adhésion de fédération"
+        },
+        "update": {
+          "label": "Modifier l'adhésion de fédération"
+        }
+      }
+    },
+    "regasoft": {
+      "copy": {
+        "label": "Copier les données Regasoft"
+      },
+      "view": {
+        "label": "Afficher les données Regasoft"
+      },
+      "add": {
+        "label": "Créer une entrée Regasoft"
+      },
+      "update": {
+        "label": "Mettre à jour l'entrée Regasoft"
+      }
+    },
+    "license": {
+      "create": {
+        "label": "Créer une licence"
+      },
+      "download": {
+        "label": "Télécharger la licence"
+      }
+    }
+  },
+  "statistics": {
+    "header": "Statistiques AOC",
+    "content": "Certaines statistiques peuvent être recalculées ici à partir des données actuelles. Ce calcul ne devrait être effectué que lorsque la base de données est dans un état stable. Le calcul peut prendre un certain temps. Les statistiques devraient ensuite être vérifiées et, le cas échéant, corrigées manuellement.",
+    "title": "Mettre à jour les statistiques",
+    "competitionLevels": {
+      "title": "Catégories de compétition",
+      "label": "Mettre à jour les catégories de compétition",
+      "conf": "Les catégories de compétition ont été recalculées.",
+      "button": "Exécuter",
+      "description": "La collection competitionLevels met en cache les données des collections subjects, memberships, ownerships. Ces données sont nécessaires à l'affichage des catégories de compétition."
+    },
+    "clStats": {
+      "title": "Statistiques de synthèse",
+      "subTitle": "Statistiques des catégories de compétition",
+      "label": "Mettre à jour les statistiques des catégories de compétition",
+      "conf": "Les statistiques ont été recalculées.",
+      "button": "Exécuter"
+    },
+    "ageByGender": {
+      "title": "Structure d'âge",
+      "subTitle": "Membres par âge et par sexe",
+      "label": "Recalculer les statistiques d'âge",
+      "conf": "Les statistiques d'âge ont été recalculées.",
+      "error": "Les statistiques d'âge n'ont pas pu être recalculées.",
+      "button": "Exécuter"
+    },
+    "categoryByGender": {
+      "title": "Structure des membres",
+      "subTitle": "Membres par catégorie et par sexe",
+      "label": "Recalculer la structure des membres",
+      "conf": "La structure des membres a été recalculée.",
+      "button": "Exécuter"
+    },
+    "memberLocation": {
+      "title": "Origine des membres actifs",
+      "subTitle": "Membres actifs par lieu de résidence (NPA)",
+      "label": "Recalculer les statistiques de lieu de résidence",
+      "conf": "Les statistiques de lieu de résidence ont été recalculées.",
+      "button": "Exécuter"
+    }
+  },
+  "storage": {
+    "title": "Firebase Storage",
+    "content": "Opérations pour gérer les fichiers et les images dans Firebase Storage.",
+    "info": {
+      "title": "Firebase Storage Info",
+      "content": "Affiche des informations sur un document dans Firebase Storage. Pour cela, l'URL relative de ce document doit être saisie.",
+      "buttonLabel": "Afficher les informations"
+    },
+    "sizes": {
+      "title": "Espace de stockage utilisé",
+      "content": "Calcule l'espace de stockage occupé par tous les documents dans un dossier Firebase Storage. Pour cela, le chemin relatif du dossier doit être saisi.",
+      "buttonLabel": "Calculer la taille"
+    }
+  },
+  "tag": {
+    "title": "Gestion des tags",
+    "add": {
+      "label": "Ajouter un tag",
+      "placeholder": "@tag.beispiel",
+      "button": "Ajouter un tag",
+      "conf": "Le tag a été enregistré.",
+      "error": "Le tag n'a pas pu être enregistré."
+    },
+    "create": {
+      "label": "Nouvelle TagList",
+      "placeholder": "Type de modèle (p. ex. person, org, section)",
+      "conf": "Le tag a été enregistré",
+      "error": "Le tag n'a pas pu être enregistré."
+    },
+    "delete": {
+      "label": "Supprimer le tag",
+      "confirm": "Voulez-vous vraiment supprimer ce tag ?",
+      "conf": "Le tag a été supprimé.",
+      "error": "Le tag n'a pas pu être supprimé."
+    },
+    "remove": {
+      "label": "Retirer le tag",
+      "conf": "Le tag a été retiré.",
+      "error": "Le tag n'a pas pu être retiré."
+    },
+    "update": {
+      "label": "Modifier le tag",
+      "placeholder": "@tag.beispiel",
+      "conf": "Le tag a été modifié.",
+      "error": "Le tag n'a pas pu être modifié."
+    },
+    "search": {
+      "label": "Rechercher des tags",
+      "placeholder": "Nom de TagList"
+    },
+    "list": {
+      "title": "TagList"
+    },
+    "string": {
+      "update": "Modifier la valeur",
+      "remove": "Retirer la valeur"
+    },
+    "strings": {
+      "title": "Tag",
+      "empty": "Aucune TagList sélectionnée"
+    }
+  },
+  "website": {
+    "title": "Textes du site web",
+    "key": "ID",
+    "isHtml": "Le contenu est du HTML",
+    "list": {
+      "title": "Textes"
+    },
+    "create": {
+      "label": "Créer un texte de site web",
+      "conf": "Le texte du site web a été créé",
+      "error": "Le texte du site web n'a pas pu être créé."
+    },
+    "delete": {
+      "label": "Retirer le texte du site web",
+      "confirm": "Voulez-vous vraiment supprimer le texte du site web ?",
+      "conf": "Le texte du site web a été retiré.",
+      "error": "Le texte du site web n'a pas pu être supprimé."
+    },
+    "update": {
+      "label": "Modifier le texte du site web",
+      "conf": "Le texte du site web a été modifié.",
+      "error": "La modification n'a pas pu être enregistrée."
+    }
+  },
+  "switcher": {
+    "title": "Changer d'app",
+    "tooltip": "Passer à une autre app",
+    "current": "Actuelle"
+  }
+}

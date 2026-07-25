@@ -1,0 +1,151 @@
+{
+  "trip": "Uscita",
+  "trips": "Uscite",
+  "desc": "Prima dell'uscita, registra qui nel giornale di bordo la tua uscita pianificata. Indichi così dove desideri remare, con quale imbarcazione e con quali rematori. Per motivi di sicurezza questo è importante, affinché possiamo trovarti più rapidamente in caso di un'eventuale emergenza. Inoltre, altri membri possono vedere quali imbarcazioni sono già prenotate. Dopo l'uscita, chiudi la tua uscita. La tua uscita viene poi automaticamente registrata nelle statistiche delle imbarcazioni.",
+  "empty": "Non è stata trovata nessuna uscita.",
+
+  "create": {
+    "label": "Registra nuova uscita",
+    "conf": "L'uscita è stata salvata.",
+    "error": "Non è stato possibile salvare l'uscita.",
+    "guest": "Aggiungi ospite"
+  },
+  "delete": {
+    "label": "Elimina uscita",
+    "confirm": "Eliminare davvero questa uscita?",
+    "reason": "Motivo dell'eliminazione",
+    "conf": "L'uscita è stata eliminata.",
+    "error": "Non è stato possibile eliminare l'uscita."
+  },
+  "end": {
+    "label": "Chiudi uscita"
+  },
+  "view": {
+    "label": "Visualizza uscita"
+  },
+  "export": {
+    "raw": "Esporta dati grezzi"
+  },
+  "report": {
+    "damage": {
+      "label": "Segnala danno",
+      "plain": "segnala un danno",
+      "trip": "segnala un danno durante un'uscita",
+      "prompt": "Descrivi il danno"
+    },
+    "bug": {
+      "label": "Segnala errore",
+      "plain": "segnala un errore",
+      "trip": "segnala un errore durante un'uscita",
+      "prompt": "Descrivi l'errore"
+    }
+  },
+  "search": {
+    "label": "Cerca luogo"
+  },
+  "select": {
+    "participant": {
+      "title": "Scegli partecipante",
+      "add": "Seleziona"
+    },
+    "boat": {
+      "title": "Scegli imbarcazione",
+      "add": "Seleziona"
+    },
+    "location": {
+      "title": "Scegli destinazione",
+      "add": "Seleziona"
+    }
+  },
+  "show": {
+    "images": "Mostra immagini",
+    "statistics": {
+      "boatkm": "Mostra statistiche delle imbarcazioni",
+      "personkm": "Mostra statistiche delle persone"
+    }
+  },
+  "stats": {
+    "boat_title": "Statistiche delle imbarcazioni",
+    "member_title": "Statistiche delle persone",
+    "view_list": "Tabella",
+    "view_graph": "Andamento"
+  },
+  "update": {
+    "label": "Modifica uscita",
+    "conf": "L'uscita è stata salvata.",
+    "error": "Non è stato possibile salvare l'uscita."
+  },
+
+  "list": {
+    "title": "Giornale di bordo"
+  },
+
+  "warning": {
+    "suspicious": "Rilevata attività sospetta. Si prega di confermare.",
+    "distance_zero": "Inserire una distanza ragionevole tra 1 e 50 km.",
+    "distance_high": "Inserire una distanza ragionevole tra 1 e 50 km.",
+    "seats_mismatch": "Il numero di partecipanti non corrisponde alla capacità dell'imbarcazione.",
+    "note": "Per evitare abusi, in background vengono eseguiti vari controlli. Qualora venga rilevato un abuso, viene scattata una foto dell'utente e l'amministratore viene notificato."
+  },
+
+  "boat": "Imbarcazione",
+  "distance": {
+    "label": "Distanza (km)",
+    "placeholder": "nn",
+    "helper": "La lunghezza dell'uscita in chilometri. Inserendo una destinazione predefinita, la distanza viene inserita automaticamente. Può poi essere modificata manualmente."
+  },
+  "participants": "Partecipanti",
+  "notes": {
+    "label": "Note",
+    "placeholder": "Testo"
+  },
+  "date": "Data/ora",
+  "location": {
+    "label": "Destinazione",
+    "custom": "Destinazione personalizzata",
+    "view": {
+      "list": "Elenco",
+      "map": "Mappa"
+    },
+    "search": "Cerca luogo",
+    "select": "Seleziona luogo",
+    "empty": "Nessun luogo trovato",
+    "none_selected": "Nessun luogo selezionato"
+  },
+
+  "trip_state": {
+    "label": "Stato",
+    "helper": "Stato dell'uscita",
+    "all": {
+      "label": "Tutti gli stati"
+    },
+    "draft": {
+      "label": "Bozza"
+    },
+    "open": {
+      "label": "Aperta"
+    },
+    "closed": {
+      "label": "Chiusa"
+    },
+    "cancelled": {
+      "label": "Eliminata"
+    },
+    "revised": {
+      "label": "Rivista"
+    }
+  },
+
+  "aoc": {
+    "title": "Amministrazione delle uscite",
+    "trash": "Cestino",
+    "notes": "Uscite con note",
+    "zero_km": "Uscite con 0 km",
+    "flagged": "Uscite contrassegnate",
+    "restore": "Ripristina",
+    "clear_flag": "Rimuovi contrassegno",
+    "hard_delete_confirm": "Eliminare definitivamente l'uscita? Questa azione non può essere annullata.",
+    "restore_conf": "Uscita ripristinata.",
+    "restore_error": "Ripristino non riuscito."
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "login": {
+    "conf": "¡Bienvenido al área de miembros !",
+    "error": "El inicio de sesión no se ha realizado correctamente. Compruebe la dirección de correo electrónico y la contraseña e inténtelo de nuevo."
+  },
+  "pwdreset": {
+    "conf": "Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña a la siguiente dirección de correo electrónico: ",
+    "error": "El restablecimiento de la contraseña no se ha realizado correctamente."
+  },
+  "logout": {
+    "conf": "Ha cerrado la sesión.",
+    "error": "El cierre de sesión no se ha realizado correctamente. Inténtelo de nuevo.",
+    "confirm": "¿Está seguro ? Después tendrá que volver a iniciar sesión con su contraseña."
+  }
+}

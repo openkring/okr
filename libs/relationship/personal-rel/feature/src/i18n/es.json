@@ -1,0 +1,123 @@
+{
+  "personalrel": "Relación",
+  "personalrels": "Relaciones",
+  "description": "Una relación entre dos personas.",
+  "relDesc": "conoce",
+  "revreldesc": "conoce",
+  "empty": "No se encontraron relaciones.",
+  "title": "Relaciones",
+  "person1": "Persona1",
+  "type": "Tipo de relación",
+  "person2": "Persona2",
+
+  "create": {
+    "label": "Crear nueva relación",
+    "conf": "La relación se ha guardado.",
+    "error": "No se pudo guardar la relación."
+  },
+  "delete": {
+    "label": "Eliminar relación",
+    "confirm": "¿Desea eliminar realmente esta relación ?",
+    "conf": "La relación se ha eliminado.",
+    "error": "No se pudo eliminar la relación."
+  },
+  "end": {
+    "label": "Finalizar relación",
+    "conf": "La relación se ha finalizado.",
+    "error": "No se pudo finalizar la relación."
+  },
+  "select": {
+    "label": "Seleccionar"
+  },
+  "update": {
+    "label": "Modificar relación",
+    "conf": "La relación se ha modificado.",
+    "error": "No se pudo modificar la relación."
+  },
+  "view": {
+    "label": "Mostrar detalles de la relación"
+  },
+
+  "list": {
+    "title": "Relaciones personales",
+    "empty": "No se encontraron relaciones personales.",
+    "header": {
+      "person1": "Persona1",
+      "person2": "Persona2",
+      "type": "Tipo de relación"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "El okey es la clave de un elemento, compuesta por el prefijo de la categoría y un número secuencial, p. ej. boat-001 para el primer barco."
+  },
+  "label": {
+    "label": "Denominación",
+    "placeholder": "Denominación",
+    "error": "La denominación es obligatoria y debe estar compuesta por caracteres alfanuméricos.",
+    "helper": "Este texto se muestra al usuario."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas"
+  },
+  "valid": {
+    "from": {
+      "label": "Válido desde",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "La relación comienza en esta fecha."
+    },
+    "to": {
+      "label": "Válido hasta",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "La relación termina en esta fecha."
+    }
+  },
+
+  "personalrel_type": {
+    "label": "Tipo de relación",
+    "helper": "El tipo de relación entre dos personas.",
+    "name": "Tipo de relación",
+    "all": {
+      "label": "Todas"
+    },
+    "partner": {
+      "label": "Pareja",
+      "description": "Pareja de vida"
+    },
+    "husband": {
+      "label": "casado/a",
+      "description": "Cónyuge"
+    },
+    "friend": {
+      "label": "amigo/a",
+      "description": "Amigo o amiga"
+    },
+    "neighbor": {
+      "label": "vecino/a",
+      "description": "Vecinos"
+    },
+    "incompatible": {
+      "label": "incompatible",
+      "description": "Dos personas que no se llevan bien."
+    },
+    "related": {
+      "label": "emparentado/a",
+      "description": "p. ej. sobrinos, sobrinas, tíos, tías, nietos, primos, primas"
+    },
+    "parentChild": {
+      "label": "Padre/madre-hijo/a",
+      "description": "Hija o hijo"
+    },
+    "sibling": {
+      "label": "Hermana/hermano",
+      "description": "Hermanos"
+    },
+    "custom": {
+      "label": "Otra relación",
+      "description": "Relación que no encaja en las otras categorías."
+    }
+  }
+}

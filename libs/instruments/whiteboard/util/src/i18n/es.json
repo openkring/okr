@@ -1,0 +1,16 @@
+{
+  "template": {
+    "blank": {
+      "label": "Tablero vacío",
+      "desc": "Una superficie vacía para post-its y notas."
+    },
+    "fourQuadrant": {
+      "label": "Cuatro cuadrantes",
+      "desc": "Organizar las notas en cuatro campos (p. ej. impacto / esfuerzo).",
+      "q1": "Arriba a la izquierda",
+      "q2": "Arriba a la derecha",
+      "q3": "Abajo a la izquierda",
+      "q4": "Abajo a la derecha"
+    }
+  }
+}

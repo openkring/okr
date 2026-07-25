@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Ajouter un dossier",
+    "conf": "Le dossier a été ajouté.",
+    "error": "Le dossier n'a pas pu être ajouté."
+  },
+  "update": {
+    "conf": "Le dossier a été modifié.",
+    "error": "Le dossier n'a pas pu être modifié."
+  },
+  "delete": {
+    "conf": "Le dossier a été supprimé.",
+    "confirm": "Voulez-vous vraiment supprimer le dossier ?",
+    "error": "Le dossier n'a pas pu être supprimé."
+  }
+}

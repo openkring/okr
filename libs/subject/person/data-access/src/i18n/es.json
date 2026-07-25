@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Añadir nueva persona",
+    "error": "No se ha podido crear la nueva persona.",
+    "conf": "La nueva persona se ha creado."
+  },
+  "update": {
+    "label": "Editar persona",
+    "error": "No se han podido guardar los cambios",
+    "conf": "Los cambios se han guardado."
+  },
+  "delete": {
+    "label": "Eliminar persona",
+    "error": "No se ha podido eliminar la persona.",
+    "conf": "La persona se ha eliminado.",
+    "confirm": "¿Desea realmente eliminar la persona ?"
+  }
+}

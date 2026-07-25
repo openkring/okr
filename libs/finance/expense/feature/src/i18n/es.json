@@ -1,0 +1,89 @@
+{
+  "list": {
+    "titleMy": "Mis gastos",
+    "titleAll": "Todos los gastos",
+    "empty": "No se encontraron liquidaciones de gastos"
+  },
+  "new": {
+    "title": "Presentar gastos",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "receiptHint": "Adjunte al menos un comprobante."
+  },
+  "detail": {
+    "title": "Desembolso",
+    "close": "Cerrar",
+    "amount": "Importe",
+    "iban": "IBAN",
+    "status": "Estado",
+    "booking": "Referencia de asiento",
+    "note": "Nota",
+    "receipt": "Comprobante"
+  },
+  "field": {
+    "abstract": "Asunto",
+    "amount": "Importe total",
+    "currency": "Moneda",
+    "transfer": {
+      "label": "Transferencia",
+      "me": "a mí",
+      "issuer": "al emisor de la factura"
+    },
+    "iban": {
+      "label": "IBAN",
+      "on": "a IBAN",
+      "profileHint": "desde mi perfil",
+      "change": "Usar otro IBAN"
+    },
+    "category": "Categoría",
+    "costcenter": "Centro de costes",
+    "note": "Nota interna",
+    "belege": {
+      "label": "Comprobantes",
+      "pick": "Elegir archivo",
+      "photo": "Tomar foto"
+    }
+  },
+  "submit": {
+    "iban": "Se están guardando los datos bancarios…",
+    "upload": "Se están subiendo los comprobantes…",
+    "saving": "Se está guardando el desembolso…",
+    "done": "Guardado — el tesorero revisará el comprobante.",
+    "error": "Error — la operación se ha revertido"
+  },
+  "status": {
+    "draft": "Borrador",
+    "processing": "En proceso",
+    "validated": "Validado",
+    "error": "Error",
+    "posted": "Contabilizado",
+    "pendingExport": "Listo para exportar"
+  },
+  "validation": {
+    "abstractRequired": "El asunto es obligatorio.",
+    "abstractMin": "El asunto debe tener al menos 3 caracteres.",
+    "abstractMax": "El asunto puede tener como máximo 200 caracteres.",
+    "amountRequired": "El importe debe ser mayor que 0.",
+    "amountMax": "El importe es demasiado grande.",
+    "ibanRequired": "El IBAN es obligatorio.",
+    "currencyRequired": "La moneda es obligatoria.",
+    "currencyInvalid": "Moneda no válida."
+  },
+  "action": {
+    "title": "Seleccionar acción",
+    "view": "Ver",
+    "delete": "Eliminar",
+    "redoOcr": "Ejecutar OCR de nuevo",
+    "openTask": "Abrir tarea",
+    "openBooking": "Abrir asiento",
+    "cancel": "Cancelar"
+  },
+  "redo": {
+    "conf": "Escaneo OCR reiniciado.",
+    "error": "No se pudo reiniciar el OCR."
+  },
+  "delete": {
+    "confirm": "¿Eliminar realmente este gasto?",
+    "error": "No se pudo eliminar el gasto."
+  }
+}

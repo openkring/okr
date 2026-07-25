@@ -1,0 +1,16 @@
+{
+  "name": {
+    "label": "Nome",
+    "placeholder": "Inserire il nome",
+    "helper": ""
+  },
+  "title": {
+    "label": "Titolo",
+    "placeholder": "Inserire il titolo",
+    "helper": ""
+  },
+  "description": {
+    "label": "Descrizione",
+    "placeholder": ""
+  }
+}

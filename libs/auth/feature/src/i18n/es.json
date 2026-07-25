@@ -1,0 +1,76 @@
+{
+  "title": "Iniciar sesión",
+  "email": {
+    "label": "Correo electrónico",
+    "placeholder": "ssss@ssssssss.sss",
+    "error": "Introduzca una dirección de correo electrónico válida.",
+    "helper": "Utilice la misma dirección de correo electrónico en la que recibe la información de la asociación."
+  },
+  "password": {
+    "label": "Contraseña",
+    "placeholder": "Contraseña",
+    "error": "La contraseña debe tener al menos 6 caracteres y puede contener los siguientes caracteres especiales: -_!@?:;äüö$*+&()=.,£$%",
+    "helper": "Si aún no tiene una contraseña o no la conoce, puede hacer clic en el botón 'Restablecer contraseña' de abajo y establecer una nueva contraseña."
+  },
+  "pwdreset": {
+    "title": "Establecer contraseña",
+    "newpwd": "Establecer una nueva contraseña",
+    "invalidLink": "Este enlace no es válido o ya ha caducado. Solicite un nuevo enlace de restablecimiento.",
+    "success": "Contraseña cambiada correctamente. Será redirigido a la página de inicio de sesión.",
+    "savepwd": "Guardar contraseña"
+  },
+  "pwdconfirm": "Establecer contraseña",
+
+  "roles": {
+    "label": "Roles",
+    "helper": "Los roles agrupan permisos en una función determinada.",
+    "none": {
+      "label": "Ninguno",
+      "description": "No hay ningún rol definido."
+    },
+    "public": {
+      "label": "Público",
+      "description": "Visible para usuarios no autenticados"
+    },
+    "anonymous": {
+      "label": "anonymous",
+      "description": "Usuario anónimo sin cuenta"
+    },
+    "registered": {
+      "label": "registered",
+      "description": "Usuario registrado / autenticado"
+    },
+    "privileged": {
+      "label": "privileged",
+      "description": "Usuario privilegiado (p. ej. miembro de la junta)"
+    },
+    "contentAdmin": {
+      "label": "contentAdmin",
+      "description": "Gestor de contenidos (páginas, menús)"
+    },
+    "resourceAdmin": {
+      "label": "resourceAdmin",
+      "description": "Gestor de recursos (p. ej. vehículos, embarcaciones, llaves)"
+    },
+    "memberAdmin": {
+      "label": "memberAdmin",
+      "description": "Gestor de miembros"
+    },
+    "eventAdmin": {
+      "label": "eventAdmin",
+      "description": "Gestor de eventos y citas"
+    },
+    "treasurer": {
+      "label": "treasurer",
+      "description": "Responsable de finanzas"
+    },
+    "admin": {
+      "label": "admin",
+      "description": "Superusuario"
+    },
+    "tester": {
+      "label": "tester",
+      "description": "Probador"
+    }
+  }
+}

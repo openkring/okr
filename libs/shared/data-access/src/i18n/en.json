@@ -1,0 +1,22 @@
+{
+  "comment": {
+    "initial": {
+      "conf": "created"
+    },
+    "update": {
+      "conf": "changed"
+    }
+  },
+  "appConfig": {
+    "create": {
+      "conf": "Config entry saved.",
+      "error": "Config entry could not be saved."
+    },
+    "update": {
+      "conf": "Config entry saved."
+    },
+    "delete": {
+      "conf": "Config entry deleted."
+    }
+  }
+}

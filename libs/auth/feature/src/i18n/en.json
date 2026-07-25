@@ -1,0 +1,76 @@
+{
+  "title": "Sign in",
+  "email": {
+    "label": "Email",
+    "placeholder": "ssss@ssssssss.sss",
+    "error": "Please enter a valid email address.",
+    "helper": "Please use the same email address on which you receive the association information."
+  },
+  "password": {
+    "label": "Password",
+    "placeholder": "Password",
+    "error": "The password must be at least 6 characters long and may contain the following special characters: -_!@?:;äüö$*+&()=.,£$%",
+    "helper": "If you do not yet have a password or do not know it, you can click the 'Reset password' button below and set a new password."
+  },
+  "pwdreset": {
+    "title": "Set password",
+    "newpwd": "Set a new password",
+    "invalidLink": "This link is invalid or has already expired. Please request a new reset link.",
+    "success": "Password changed successfully. You will be redirected to the sign-in page.",
+    "savepwd": "Save password"
+  },
+  "pwdconfirm": "Set password",
+
+  "roles": {
+    "label": "Roles",
+    "helper": "Roles group permissions into a specific function.",
+    "none": {
+      "label": "None",
+      "description": "No role is defined."
+    },
+    "public": {
+      "label": "Public",
+      "description": "Visible to non-authenticated users"
+    },
+    "anonymous": {
+      "label": "anonymous",
+      "description": "Anonymous user without an account"
+    },
+    "registered": {
+      "label": "registered",
+      "description": "Registered / authenticated user"
+    },
+    "privileged": {
+      "label": "privileged",
+      "description": "Privileged user (e.g. board member)"
+    },
+    "contentAdmin": {
+      "label": "contentAdmin",
+      "description": "Manager of content (pages, menus)"
+    },
+    "resourceAdmin": {
+      "label": "resourceAdmin",
+      "description": "Manager of resources (e.g. vehicles, boats, keys)"
+    },
+    "memberAdmin": {
+      "label": "memberAdmin",
+      "description": "Manager of members"
+    },
+    "eventAdmin": {
+      "label": "eventAdmin",
+      "description": "Manager of events and appointments"
+    },
+    "treasurer": {
+      "label": "treasurer",
+      "description": "Responsible for finances"
+    },
+    "admin": {
+      "label": "admin",
+      "description": "Superuser"
+    },
+    "tester": {
+      "label": "tester",
+      "description": "Tester"
+    }
+  }
+}

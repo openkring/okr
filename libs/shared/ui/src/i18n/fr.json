@@ -1,0 +1,100 @@
+{
+  "map": "Carte",
+  "allYears": "Toutes les années",
+  "year": "Année",
+  "copy": {
+    "conf": "La valeur a été copiée.",
+    "label": "Copier"
+  },
+  "select": {
+    "category": "Choisir une catégorie",
+    "date": "Choisir une date",
+    "tag": "Choisir un jour",
+    "time": "Choisir une heure"
+  },
+  "deleteContent": "Supprimer le contenu",
+  "search": {
+    "placeholder": "Rechercher...",
+    "byTag": "Jour"
+  },
+  "categoryItems": {
+    "empty": "Aucun élément n'a encore été défini dans cette catégorie.",
+    "title": "Éléments",
+    "subTitle": "Les différents éléments d'une catégorie. Chaque élément est affiché sur sa propre ligne."
+  },
+  "color": {
+    "select": "Choix de la couleur",
+    "label": "Couleur"
+  },
+  "meta": {
+    "empty": "Aucune méta-balise disponible.",
+    "label": "MetaTags (SEO)"
+  },
+  "actionsheet": {
+    "title": "Choisir une action",
+    "address": {
+      "edit": "Modifier l'adresse e-mail",
+      "view": "Afficher l'adresse e-mail",
+      "hide": "Masquer l'adresse e-mail"
+    }
+  },
+  "address": {
+    "email": {
+      "title": "Adresses e-mail",
+      "empty": "Aucune adresse e-mail",
+      "copy": {
+        "label": "Copier",
+        "conf": "Les adresses e-mail ont été copiées."
+      }
+    }
+  },
+  "section": {
+    "forms": {
+      "imageConfig": {
+        "title": "Configuration de l'image (fichier)"
+      }
+    }
+  },
+  "membership": {
+    "email": {
+      "title": "Adresses e-mail",
+      "empty": "Aucune adresse e-mail disponible.",
+      "copy": {
+        "label": "Copier",
+        "conf": "Les e-mails ont été copiés."
+      },
+      "address": {
+        "main": "Adresses principales",
+        "cc": "cc : adresses"
+      }
+    }
+  },
+  "text": {
+    "edit": "Modifier le texte"
+  },
+  "string": {
+    "title": "Liste de mots",
+    "edit": "Modifier le mot",
+    "add": "Ajouter un mot"
+  },
+  "connection": {
+    "title": "État de la connexion Internet",
+    "intro": "Votre état de connexion à Internet est continuellement mis à jour et représenté par des couleurs comme suit :",
+    "good": "Bonne connexion",
+    "goodExplanation": "Toutes les fonctions de l'application sont disponibles sans restriction. Vous pouvez charger du contenu, transférer des données et interagir avec d'autres utilisateurs sans problème.",
+    "slow": "Connexion lente",
+    "slowExplanation": "Certaines fonctions de l'application peuvent être restreintes. Le chargement du contenu peut prendre plus de temps et des retards peuvent survenir lors du transfert de données.",
+    "offline": "Aucune connexion",
+    "offlineExplanation": "Vous êtes actuellement hors ligne. Certaines fonctions de l'application ne sont pas disponibles et vous ne pouvez pas charger ni transférer de nouvelles données. Veuillez vérifier votre connexion Internet."
+  },
+  "notes": {
+    "notes": "Notes",
+    "placeholder": "text",
+    "label": "Notes",
+    "pwd": {
+      "header": "Saisir le mot de passe",
+      "message": "Attention : si vous oubliez le mot de passe, le texte ne pourra plus être déchiffré !",
+      "placeholder": "Mot de passe"
+    }
+  }
+}

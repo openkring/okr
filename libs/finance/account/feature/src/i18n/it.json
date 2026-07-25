@@ -1,0 +1,45 @@
+{
+  "accounts": "Conti",
+  "empty": "Nessun conto trovato.",
+
+  "create": "Aprire un nuovo conto",
+  "delete": "Elimina conto",
+  "select": {
+    "root": "Seleziona piano dei conti",
+    "hint": "Selezionare prima un piano dei conti."
+  },
+  "update": "Modifica conto",
+  "view": "Visualizza dettagli del conto",
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "L'okey è la chiave di un elemento, composta dal prefisso della categoria e da un numero progressivo, ad es. boat-001 per la prima imbarcazione."
+  },
+  "id": {
+    "label": "N. conto",
+    "placeholder": "nnnn",
+    "helper": "Il numero univoco del conto."
+  },
+  "name": {
+    "label": "Nome del conto",
+    "placeholder": "Nome",
+    "error": "Il nome è obbligatorio e deve essere composto da caratteri alfanumerici.",
+    "helper": "Un nome può essere composto da più parole. Sono ammessi solo lettere (incl. -) e numeri, nessun carattere speciale."
+  },
+  "label": {
+    "label": "Denominazione",
+    "placeholder": "Denominazione",
+    "error": "La denominazione è obbligatoria e deve essere composta da caratteri alfanumerici.",
+    "helper": "Questo testo viene mostrato all'utente."
+  },
+  "parentId": {
+    "label": "Conto principale",
+    "placeholder": "nnnn",
+    "helper": "Il numero del conto principale. Il conto principale raggruppa più conti e forma così la gerarchia nel piano dei conti."
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Note libere sul conto."
+  }
+}

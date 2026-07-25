@@ -1,0 +1,82 @@
+{
+  "icon": "Icône",
+  "icons": "Icônes",
+  "empty": "Aucune icône trouvée.",
+
+  "copy": {
+    "label": "Copier le nom de l'icône"
+  },
+  "create": {
+    "label": "Ajouter une icône",
+    "conf": "L'icône a été ajoutée.",
+    "error": "L'icône n'a pas pu être ajoutée."
+  },
+  "delete": {
+    "label": "Supprimer l'icône",
+    "conf": "L'icône a été supprimée.",
+    "error": "L'icône n'a pas pu être supprimée.",
+    "confirm": "L'icône doit-elle vraiment être supprimée ?"
+  },
+  "exportRaw": {
+    "label": "Exporter les icônes"
+  },
+  "sync": {
+    "label": "Synchroniser les icônes"
+  },
+  "select": {
+    "label": "Sélectionner une icône"
+  },
+  "update": {
+    "label": "Modifier la configuration de l'icône",
+    "conf": "L'icône a été enregistrée.",
+    "error": "L'icône n'a pas pu être enregistrée."
+  },
+  "view": {
+    "label": "Afficher les détails de l'icône"
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssss",
+    "helper": "Un identifiant unique sous forme de mot. Seuls les lettres minuscules, les chiffres et _ ou - peuvent être utilisés."
+  },
+  "name": {
+    "label": "Nom de l'icône",
+    "placeholder": "p. ex. download",
+    "helper": "Le nom de l'icône, p. ex. pdf, doc etc. (voir assets/icons ou ionic).",
+    "button": "L'icône sur le bouton (ion-icon).",
+    "menu": "L'icône sur l'entrée de menu (ion-icon).",
+    "error": "Le nom de l'icône est obligatoire et doit être composé de caractères alphanumériques."
+  },
+  "type": {
+    "label": "Jeu d'icônes",
+    "placeholder": "Nom du dossier",
+    "helper": "Regroupe les icônes selon un thème similaire (p. ex. Logos, Filetypes, Sections). Correspond au nom du sous-dossier dans le répertoire Logo du Storage."
+  },
+  "fullPath": {
+    "label": "Storage Path",
+    "placeholder": "/asdf/asf",
+    "helper": "Le chemin vers l'icône dans le Storage."
+  },
+  "index": {
+    "label": "Index",
+    "placeholder": "sssss sssss",
+    "helper": "Termes de recherche séparés par des espaces"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Text"
+  },
+   "size": {
+    "label": "Taille",
+    "placeholder": "40",
+    "helper": "La taille de l'icône en pixels, p. ex. 24, 32, 48 etc.",
+    "error": "La taille de l'icône doit être un nombre entier composé uniquement de chiffres."
+  },
+  "slot": {
+    "label": "Position de l'icône",
+    "placeholder": "start | end | top | bottom",
+    "helper": "La position de l'icône par rapport au texte, p. ex. gauche, droite, haut, bas. Avec none, seule l'icône est affichée."
+  },
+  "updated": "Dernière mise à jour"
+}

@@ -1,0 +1,82 @@
+{
+  "icon": "Icono",
+  "icons": "Iconos",
+  "empty": "No se han encontrado iconos.",
+
+  "copy": {
+    "label": "Copiar nombre del icono"
+  },
+  "create": {
+    "label": "Añadir icono",
+    "conf": "El icono se ha añadido.",
+    "error": "No se ha podido añadir el icono."
+  },
+  "delete": {
+    "label": "Eliminar icono",
+    "conf": "El icono se ha eliminado.",
+    "error": "No se ha podido eliminar el icono.",
+    "confirm": "¿Desea realmente eliminar el icono?"
+  },
+  "exportRaw": {
+    "label": "Exportar iconos"
+  },
+  "sync": {
+    "label": "Sincronizar iconos"
+  },
+  "select": {
+    "label": "Seleccionar icono"
+  },
+  "update": {
+    "label": "Editar configuración del icono",
+    "conf": "El icono se ha guardado.",
+    "error": "No se ha podido guardar el icono."
+  },
+  "view": {
+    "label": "Mostrar detalles del icono"
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssss",
+    "helper": "Un identificador único en forma de palabra. Solo se pueden utilizar letras minúsculas, números y _ o -."
+  },
+  "name": {
+    "label": "Nombre del icono",
+    "placeholder": "p. ej. download",
+    "helper": "El nombre del icono, p. ej. pdf, doc etc. (véase assets/icons o ionic).",
+    "button": "El icono en el botón (ion-icon).",
+    "menu": "El icono en la entrada del menú (ion-icon).",
+    "error": "El nombre del icono es obligatorio y debe estar compuesto por caracteres alfanuméricos."
+  },
+  "type": {
+    "label": "Conjunto de iconos",
+    "placeholder": "Nombre de la carpeta",
+    "helper": "Agrupa iconos por un tema similar (p. ej. Logos, Filetypes, Sections). Corresponde al nombre de la subcarpeta en el directorio Logo del Storage."
+  },
+  "fullPath": {
+    "label": "Storage Path",
+    "placeholder": "/asdf/asf",
+    "helper": "La ruta al icono en el Storage."
+  },
+  "index": {
+    "label": "Índice",
+    "placeholder": "sssss sssss",
+    "helper": "Términos de búsqueda separados por espacios"
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Text"
+  },
+   "size": {
+    "label": "Tamaño",
+    "placeholder": "40",
+    "helper": "El tamaño del icono en píxeles, p. ej. 24, 32, 48 etc.",
+    "error": "El tamaño del icono debe ser un número entero compuesto únicamente de cifras."
+  },
+  "slot": {
+    "label": "Posición del icono",
+    "placeholder": "start | end | top | bottom",
+    "helper": "La posición del icono en relación con el texto, p. ej. izquierda, derecha, arriba, abajo. Con none, solo se muestra el icono."
+  },
+  "updated": "Última actualización"
+}

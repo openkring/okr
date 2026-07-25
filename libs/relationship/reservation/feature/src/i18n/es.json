@@ -1,0 +1,231 @@
+{
+  "reservation": "Reserva",
+  "reservations": "Reservas",
+  "desc": "Reserva de un recurso, p. ej. cobertizo para botes o bote.",
+  "empty": "No se encontraron reservas.",
+  "reldesc1": "Reserva de ",
+  "reldesc2": "por",
+  "newDesc": "... desea reservar el siguiente recurso:",
+
+  "create": {
+    "label": "Nueva reserva",
+    "conf": "La reserva se ha guardado.",
+    "error": "La reserva no se pudo guardar."
+  },
+  "delete": {
+    "label": "Eliminar reserva",
+    "confirm": "Normalmente una reserva debería finalizarse, pero no eliminarse. La eliminación solo está prevista para corregir entradas erróneas. ¿Realmente desea eliminar la reserva?",
+    "conf": "La reserva se ha eliminado.",
+    "error": "La reserva no se pudo eliminar."
+  },
+  "end": {
+    "label": "Finalizar reserva",
+    "conf": "La reserva se ha finalizado.",
+    "error": "La reserva no se pudo finalizar."
+  },
+  "cancelRes": {
+    "label": "Cancelar reserva",
+    "confirm": "¿Realmente desea cancelar esta reserva?"
+  },
+  "select": {
+    "label": "Seleccionar"
+  },
+  "update": {
+    "label": "Modificar reserva",
+    "conf": "La reserva se ha modificado.",
+    "error": "La reserva no se pudo modificar."
+  },
+  "view": {
+    "label": "Mostrar reserva"
+  },
+  "person": {
+    "edit": "Modificar la persona que reserva",
+    "view": "Mostrar la persona que reserva",
+    "phone": "Llamar a la persona que reserva",
+    "chat": "Chat directo con la persona que reserva"
+  },
+
+  "list": {
+    "title": "Reservas",
+    "header": {
+      "reserver": "Quién",
+      "name": "Ocasión",
+      "nameDate": "Ocasión / Fecha",
+      "state": "Estado",
+      "resource": "Qué",
+      "date": "Fecha",
+      "duration": "de - a",
+      "category": "Tipo"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "El identificador único de la reserva en la base de datos."
+  },
+  "name": {
+    "label": "Ocasión",
+    "placeholder": "Nombre de la reserva",
+    "helper": "Una breve descripción."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas internas. Utilizar las indicaciones para la información pública."
+  },
+  "reserver": {
+    "label": "Contacto",
+    "helper": "La persona u organización responsable de la reserva."
+  },
+  "resource": {
+    "label": "Qué",
+    "placeholder": "qué se reserva",
+    "helper": "Una descripción del objeto reservado"
+  },
+  "date": {
+    "start": {
+      "label": "Fecha de inicio",
+      "placeholder": "DD.MM.AAAA",
+      "helper": "La reserva es válida a partir de esta fecha."
+    },
+    "end": {
+      "label": "Fecha de fin",
+      "placeholder": "DD.MM.AAAA",
+      "helper": "La reserva finaliza en esta fecha."
+    }
+  },
+  "startTime":    {
+    "label": "Hora de inicio",
+    "placeholder": "HH:MM"
+  },
+  "fullDay":      {
+    "label": "Todo el día",
+    "helper": "La reserva se aplica durante todo el día."
+  },
+  "durationMinutes": {
+    "label": "Duración (minutos)",
+    "placeholder": "nnn",
+    "helper": "La duración de la reserva en minutos."
+  },
+  "participants": {
+    "label": "Participantes",
+    "placeholder": "Participantes",
+    "helper": "Aquí se puede describir un poco a los participantes, quién viene, cuántos, etc."
+  },
+  "area": {
+    "label": "Área",
+    "placeholder": "Área ",
+    "helper": "Una indicación de lugar más precisa, si se pueden reservar diferentes áreas (p. ej. sala de reuniones)"
+  },
+  "ref": {
+    "label": "Referencia",
+    "placeholder": "Referencia",
+    "helper": "Una descripción de cómo se produjo la reserva, p. ej. correo electrónico del xx al xxx"
+  },
+  "order": {
+    "label": "Orden",
+    "placeholder": "nn",
+    "helper": "Criterio de ordenación, p. ej. para listas de espera"
+  },
+  "description": {
+    "label": "Indicaciones sobre la reserva",
+    "placeholder": "Estas indicaciones son visibles para todos los usuarios. Puede añadir cualquier información de contexto que sea importante para esta reserva."
+  },
+  "price": {
+    "label": "Precio",
+    "placeholder": "nn",
+    "helper": "El precio acordado para la reserva."
+  },
+  "confirmed": {
+    "label": "Por la presente confirmo que he leído las disposiciones anteriores y que las cumpliré.",
+    "helper": "El alquiler de las instalaciones del club solo se realiza si se cumplen las disposiciones anteriores. El club se reserva el derecho de cancelar el evento o de cobrar al arrendatario los posibles daños o gastos adicionales en caso de incumplimiento de las disposiciones."
+  },
+
+  "reservation_reason": {
+    "label": "Motivo de la reserva",
+    "helper": "Una categorización aproximada del tipo de reserva para el filtrado de la lista de reservas.",
+    "all": {
+      "label": "Todos los tipos"
+    },
+    "social": {
+      "label": "Evento social",
+      "description": "Reserva para un evento social"
+    },
+    "maintenance": {
+      "label": "Mantenimiento / reparación",
+      "description": "Reserva para reparación o mantenimiento."
+    },
+    "course": {
+      "label": "Curso",
+      "description": "Reservado para un curso"
+    },
+    "sport": {
+      "label": "Evento deportivo",
+      "description": "Reservado para un evento deportivo"
+    },
+    "business": {
+      "label": "Evento de negocios",
+      "description": "Reservado para un evento de negocios"
+    },
+    "private": {
+      "label": "Evento privado",
+      "description": "Reservado para un evento privado"
+    },
+    "public": {
+      "label": "Evento público",
+      "description": "Reservado para un evento público"
+    },
+    "workshop": {
+      "label": "Taller",
+      "description": "Reservado para un taller"
+    },
+    "meeting": {
+      "label": "Reunión",
+      "description": "Reservado para una reunión"
+    },
+    "party": {
+      "label": "Fiesta",
+      "description": "Reservado para una fiesta"
+    },
+    "storage": {
+      "label": "Almacenamiento",
+      "description": "Reserva de un espacio de almacenamiento"
+    },
+    "club": {
+      "label": "Evento del club",
+      "description": "Reservado para un evento del club"
+    }
+  },
+
+  "reservation_state": {
+    "label": "Estado",
+    "helper": "El estado de tramitación de la reserva (inicial/solicitada/reservada/completada/cancelada/rechazada).",
+    "all": {
+      "label": "Todos los estados"
+    },
+    "initial": {
+      "label": "Inicial",
+      "description": "Idea de reserva aún no concreta."
+    },
+    "applied": {
+      "label": "Solicitada",
+      "description": "La solicitud de reserva está abierta y debe evaluarse."
+    },
+    "active": {
+      "label": "Reservada",
+      "description": "La reserva ha sido aprobada."
+    },
+    "completed": {
+      "label": "Completada",
+      "description": "La reserva está completada (p. ej. el evento se realizó y se pagó)."
+    },
+    "cancelled": {
+      "label": "Cancelada",
+      "description": "La reserva fue cancelada."
+    },
+    "denied": {
+      "label": "Rechazada",
+      "description": "La reserva fue rechazada."
+    }
+  }
+}

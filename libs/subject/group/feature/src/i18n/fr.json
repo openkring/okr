@@ -1,0 +1,156 @@
+{
+  "group": "Groupe",
+  "groups": "Groupes",
+  "empty": "Aucun groupe trouvé.",
+  "content": "Contenu",
+  "segment": {
+    "content": "Contenu",
+    "chat": "Chat",
+    "calendar": "Calendrier",
+    "tasks": "Todos",
+    "files": "Fichiers",
+    "album": "Albums",
+    "members": "Membres"
+  },
+
+  "add": {
+    "page": "Ajouter une page de groupe"
+  },
+  "create": {
+    "label": "Créer un nouveau groupe",
+    "conf": "Le groupe a été créé.",
+    "error": "Le groupe n'a pas pu être créé.",
+    "duplicate": "ID en double",
+    "exists": "Un groupe avec cet ID existe déjà. Veuillez utiliser un autre ID."
+  },
+  "delete": {
+    "label": "Supprimer le groupe",
+    "confirm": "Voulez-vous vraiment supprimer le groupe ?",
+    "error": "Le groupe n'a pas pu être supprimé.",
+    "conf": "Le groupe a été supprimé."
+  },
+  "show": "Afficher le groupe",
+  "search": {
+    "oneLabel": "Rechercher un groupe",
+    "label": "Rechercher des groupes"
+  },
+  "select": {
+    "label": "Sélectionner un groupe"
+  },
+  "update": {
+    "label": "Modifier la configuration du groupe",
+    "error": "Les modifications n'ont pas pu être enregistrées",
+    "conf": "Les modifications ont été enregistrées."
+  },
+  "view": {
+    "label": "Afficher le groupe"
+  },
+  "page": {
+    "create": {
+      "label": "Créer une nouvelle page web",
+      "conf": "La page web a été créée.",
+      "error": "La page web n'a pas pu être créée."
+    }
+  },
+  "article": {
+    "title": "Article",
+    "content": "<p>Ceci est la page d'accueil de votre groupe. </p><p>Seuls les membres du groupe voient ce contenu.</p><p>L'administrateur du groupe peut modifier le contenu de cette page à sa guise. Pour cela, utilisez les opérations dans le menu contextuel en haut à droite.</p><p>Actuellement, vous trouverez ici un guide des fonctions du groupe.</p><p>Selon la configuration, un groupe peut contenir les fonctions suivantes :</p><ul><li><p>Page d'accueil (celle-ci) : informations qui restent inchangées sur une période plus longue et qui sont pertinentes pour les membres du groupe.</p></li><li><p>Calendrier</p></li><li><p>Todos</p></li><li><p>Membres : une liste des membres du groupe ; l'administrateur du groupe peut ajouter de nouveaux membres ou supprimer ceux qui existent.</p></li><li><p>Fichiers : un espace de stockage pour partager des fichiers au sein du groupe</p></li></ul><p>L'administrateur du groupe peut activer et désactiver ces fonctions.</p>",
+    "create": {
+      "label": "Créer un nouvel article",
+      "conf": "L'article a été créé.",
+      "error": "L'article n'a pas pu être créé."
+    }
+  },
+  "chat": {
+    "name": "Chat",
+    "group": {
+      "name": "Chat de groupe",
+      "description": "Ici, tous les membres du groupe peuvent échanger."
+    },
+    "create": {
+      "label": "Créer une nouvelle section de chat",
+      "conf": "La section de chat a été créée.",
+      "error": "La section de chat n'a pas pu être créée."
+    }
+  },
+  "section": {
+    "create": {
+      "label": "Créer une nouvelle section",
+      "conf": "La section a été créée.",
+      "error": "La section n'a pas pu être créée."
+    }
+  },
+  "calendar": {
+    "name": "Calendrier du groupe ",
+    "create": {
+      "label": "Ajouter un calendrier",
+      "conf": "Le calendrier a été ajouté.",
+      "error": "Le calendrier n'a pas pu être ajouté."
+    }
+  },
+
+  "attributes": "Propriétés du groupe",
+  "display": "Affichage",
+  "access": "Accès et notifications",
+  "okey": {
+    "label": "okey",
+    "placeholder": "sssssssssss",
+    "helper": "La clé du groupe dans la base de données, un ID unique, normalement attribué automatiquement."
+  },
+  "id": {
+    "label": "ID du groupe",
+    "placeholder": "ssssss",
+    "helper": "Un identifiant unique pour le groupe."
+  },
+  "name": {
+    "label": "Nom du groupe",
+    "placeholder": "sssssssss",
+    "helper": "Un nom lisible pour le groupe, afin qu'il puisse être trouvé plus facilement dans les listes."
+  },
+  "icon": {
+    "label": "Icône",
+    "placeholder": "Nom",
+    "helper": "Le nom d'un symbole graphique."
+  },
+  "visibility": {
+    "label": "Visibilité (rôles)",
+    "placeholder": "Rôle[,Rôle]",
+    "helper": "Noms de rôles séparés par des virgules (p. ex. registered,privileged). Les utilisateurs ayant l'un de ces rôles voient le calendrier et le chat du groupe, même sans en être membres. Vide = membres uniquement."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes quelconques."
+  },
+  "notifyType": {
+    "label": "Type de notification",
+    "helper": "memberOnly : seuls les membres reçoivent des notifications. membersAndMatchingVisibility : les membres et les utilisateurs ayant un rôle de visibilité correspondant."
+  },
+  "hasContent": {
+    "label": "Afficher le contenu",
+    "helper": "Le GroupAdmin peut créer et gérer ses propres contenus."
+  },
+  "hasChat": {
+    "label": "Afficher le chat",
+    "helper": "Les membres du groupe peuvent discuter entre eux."
+  },
+  "hasCalendar": {
+    "label": "Afficher le calendrier",
+    "helper": "Les membres du groupe peuvent gérer des rendez-vous dans leur propre calendrier."
+  },
+  "hasTasks": {
+    "label": "Afficher les tâches",
+    "helper": "Les tâches du groupe peuvent être traitées dans une liste de todos dédiée."
+  },
+  "hasFiles": {
+    "label": "Afficher les fichiers",
+    "helper": "Le groupe dispose de son propre espace de stockage où ses membres peuvent déposer leurs fichiers."
+  },
+  "hasAlbum": {
+    "label": "Afficher les albums",
+    "helper": "Les photos peuvent être affichées dans un album du groupe."
+  },
+  "hasMembers": {
+    "label": "Afficher les membres",
+    "helper": "Les membres du groupe sont affichés à tous les membres du groupe."
+  }
+}

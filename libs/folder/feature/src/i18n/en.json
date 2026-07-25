@@ -1,0 +1,22 @@
+{
+  "folder": {
+    "plural": "Folders"
+  },
+  "operation": {
+    "create": { "label": "Create folder" },
+    "edit": { "label": "Edit folder" },
+    "view": { "label": "Show folder" }
+  },
+  "actionsheet": {
+    "label": {
+      "choose": "Choose an action"
+    },
+    "edit": "Edit folder",
+    "delete": "Delete folder"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "confirmation": "Save"
+  }
+}

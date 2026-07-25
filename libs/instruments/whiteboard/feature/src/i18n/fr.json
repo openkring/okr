@@ -1,0 +1,33 @@
+{
+  "whiteboard": "Tableau blanc",
+  "plural": "Tableaux blancs",
+  "desc": "Un mur pour les post-it et les notes.",
+  "empty": "Aucun tableau blanc pour le moment.",
+  "done": "Terminé",
+  "operation": {
+    "create": { "label": "Créer un tableau blanc" },
+    "edit": { "label": "Modifier le tableau blanc" },
+    "view": { "label": "Afficher le tableau blanc" },
+    "delete": { "confirm": "Voulez-vous vraiment supprimer le tableau blanc ?" }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Annuler",
+    "confirmation": "Enregistrer"
+  },
+  "actionsheet": {
+    "choose": "Choisir une action",
+    "open": "Ouvrir",
+    "edit": "Renommer",
+    "delete": "Supprimer"
+  },
+  "editor": {
+    "addSticker": "Ajouter un autocollant",
+    "addLabel": "Ajouter du texte",
+    "chooseTemplate": "Modèle",
+    "zoomIn": "Agrandir",
+    "zoomOut": "Réduire",
+    "zoomReset": "Réinitialiser la vue",
+    "emptyCanvas": "Appuyer sur «+» pour ajouter un autocollant."
+  }
+}

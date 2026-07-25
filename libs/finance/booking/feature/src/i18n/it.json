@@ -1,0 +1,40 @@
+{
+    "list": {
+        "title": "Registrazioni"
+    },
+    "empty": "Nessuna registrazione trovata.",
+    "as": {
+        "title": "Registrazione"
+    },
+    "cancel": {
+        "label": "Annulla"
+    },
+    "col": {
+        "date": "Data",
+        "credit": "Avere",
+        "debit": "Dare",
+        "name": "Testo",
+        "amount": "Importo"
+    },
+    "view": {
+        "label": "Mostra dettagli della registrazione"
+    },
+    "edit": {
+        "label": "Modifica registrazione"
+    },
+    "create": {
+        "label": "Crea registrazione"
+    },
+    "delete": {
+        "label": "Elimina registrazione"
+    },
+    "action": {
+        "createReceipt": "Crea attestazione di donazione",
+        "counterpartyRequired": "Inserire prima il mittente (controparte).",
+        "noAddress": "Nessun indirizzo registrato per la controparte.",
+        "failed": "Impossibile creare il documento."
+    },
+    "readonly": {
+        "banner": "Questo elenco è di sola lettura. Le registrazioni vengono gestite in Bexio."
+    }
+}

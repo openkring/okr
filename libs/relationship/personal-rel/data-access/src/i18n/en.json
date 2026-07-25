@@ -1,0 +1,22 @@
+{
+  "create": {
+    "label": "Add personal relationship",
+    "conf": "Personal relationship was created.",
+    "error": "Personal relationship could not be created."
+  },
+  "update": {
+    "label": "Edit personal relationship",
+    "conf": "Personal relationship was changed.",
+    "error": "Personal relationship could not be changed."
+  },
+  "delete": {
+    "label": "Delete personal relationship",
+    "conf": "Personal relationship was deleted.",
+    "error": "Personal relationship could not be deleted."
+  },
+  "end": {
+    "label": "End relationship",
+    "conf": "The relationship was ended.",
+    "error": "The relationship could not be ended."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "template": {
+    "blank": {
+      "label": "Tableau vide",
+      "desc": "Une surface vide pour les post-it et les notes."
+    },
+    "fourQuadrant": {
+      "label": "Quatre quadrants",
+      "desc": "Disposer les notes dans quatre champs (par ex. impact / effort).",
+      "q1": "En haut à gauche",
+      "q2": "En haut à droite",
+      "q3": "En bas à gauche",
+      "q4": "En bas à droite"
+    }
+  }
+}

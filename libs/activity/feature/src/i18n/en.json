@@ -1,0 +1,12 @@
+{
+  "title": "Activities",
+  "empty": "No activities found",
+  "timestamp": "Timestamp",
+  "scope": "Scope",
+  "action": "Action",
+  "author": "Author",
+  "payload": "Content",
+  "view": {
+    "title": "Show activity"
+  }
+}

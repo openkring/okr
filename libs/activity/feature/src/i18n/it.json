@@ -1,0 +1,12 @@
+{
+  "title": "Attività",
+  "empty": "Nessuna attività trovata",
+  "timestamp": "Marca temporale",
+  "scope": "Ambito",
+  "action": "Azione",
+  "author": "Autore",
+  "payload": "Contenuto",
+  "view": {
+    "title": "Mostra attività"
+  }
+}

@@ -1,0 +1,331 @@
+{
+  "addresses": "Addresses",
+  "empty": "No addresses found",
+  "currency": "CHF",
+  "qrinvoice": "QR invoice",
+  "description": "Contact information for a person or organization",
+
+  "browse": {
+    "label": "View",
+    "description": "Open the address as a web page in the browser in an external tab."
+  },
+  "call": {
+    "label": "Call address",
+    "description": "Call the address by phone.",
+    "phone": "Call"
+  },
+  "copy": {
+    "label": "Copy address",
+    "description": "Copy this address to use it in another program, for example.",
+    "conf": "The address has been copied.",
+    "error": "The address could not be copied.",
+    "email": {
+      "label": "Copy email address",
+      "conf": "Email addresses have been copied.",
+      "error": "The email address(es) could not be copied."
+    },
+    "url": "Copy URL",
+    "phone": "Copy phone number"
+  },
+  "create": {
+    "label": "Add address",
+    "description": "Create a new address.",
+    "conf": "The address has been saved.",
+    "error": "The address could not be saved."
+  },
+  "delete": {
+    "label": "Delete address",
+    "description": "Delete an existing address.",
+    "conf": "The address has been deleted.",
+    "error": "The address could not be deleted",
+    "confirm": "Should the address really be deleted ?"
+  },
+  "favorite": {
+    "enable": {
+      "label": "Use as main address",
+      "description": "Declare this address as the main address. This means it is used e.g. in member lists, copied email addresses or in exports.",
+      "conf": "The address is now a main address."
+    },
+    "disable": {
+      "label": "No longer a main address",
+      "description": "This address should no longer be a main address.",
+      "conf": "The address is now no longer a main address."
+    }
+  },
+  "generate": {
+    "qrezs": "Generate QR payment slip"
+  },
+  "hide": "Hide",
+  "locate": {
+    "label": "Locate address",
+    "description": "Locate the address geographically on a map."
+  },
+  "open": {
+    "web": "Open website"
+  },
+  "search": {
+    "label": "Search location"
+  },
+  "send": {
+    "mail": {
+      "label": "Send mail",
+      "description": "Print the information and send it by regular mail."
+    },
+    "sms": {
+      "label": "Send SMS message",
+      "description": "Send an SMS message to this address."
+    },
+    "email": {
+      "label": "Send email",
+      "description": "Send an email message to this address.",
+      "subjectPlaceholder": "Information",
+      "bodyPlaceholder": "Best regards"
+    }
+  },
+  "share": {
+    "label": "Share",
+    "description": "Share the address with other people or applications."
+  },
+  "start": {
+    "chat": "Start direct chat"
+  },
+  "update": {
+    "label": "Edit address",
+    "description": "Edit an existing address.",
+    "conf": "The address has been changed.",
+    "error": "The address could not be changed",
+    "subject": "Change person or organization"
+  },
+  "upload": {
+    "file": "Upload file"
+  },
+  "view": {
+    "label": "Show address",
+    "description": "Show the address.",
+    "file": "Show file",
+    "iban": "Show QR payment slip",
+    "postal": "Show on map"
+  },
+
+
+  "address_usage": {
+    "name": "Usage",
+    "helper": "A label for how the address is used, e.g. private, business.",
+    "label": "Usage",
+    "customLabel": {
+      "label": "Usage label",
+      "placeholder": "e.g. private, business",
+      "helper": "The usage type of the address."
+    },
+    "home": {
+      "label": "Private",
+      "description": "This is an address in a private context."
+    },
+    "work": {
+      "label": "Business",
+      "description": "This is a business address."
+    },
+    "mobile": {
+      "label": "Mobile",
+      "description": "The number is from a mobile phone."
+    },
+    "custom": {
+      "label": "Custom",
+      "placeholder": "Name of the custom usage",
+      "description": "This address is used in a special context and given a custom name."
+    }
+  },
+  "address_channel": {
+    "helper": "Type of address, e.g. phone or email.",
+    "label": "Address type",
+    "customLabel": {
+      "label": "Channel label",
+      "placeholder": "e.g. phone, email, Facebook etc.",
+      "helper": "The communication network or product."
+    },
+    "all": {
+      "label": "All types"
+    },
+    "phone": {
+      "label": "Phone",
+      "placeholder": "+41 nn nnn nnnn",
+      "description": "Phone number"
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "ssss@ssssssss.ss",
+      "description": "Email address"
+    },
+    "postal": {
+      "label": "Postal mail",
+      "description": "Postal mail",
+      "street": "Street",
+      "streetnr": "House number",
+      "placeholder": "Street name",
+      "zip": "ZIP",
+      "city": "City",
+      "country": "Country"
+    },
+    "address2": {
+      "label": "Address supplement",
+      "placeholder": "e.g. c/o or floor"
+    },
+    "web": {
+      "label": "Website",
+      "placeholder": "e.g. https://www.bkaiser.org",
+      "description": "Web address (URL)"
+    },
+    "twitter": {
+      "label": "X / Twitter",
+      "placeholder": "e.g. @staefarowing",
+      "description": "X ID"
+    },
+    "linkedin": {
+      "label": "LinkedIn",
+      "placeholder": "e.g. https://linkedin.com/in/vorname-name-2345lkjl23",
+      "description": "LinkedIn URL"
+    },
+    "facebook": {
+      "label": "Facebook",
+      "placeholder": "e.g.: https://www.facebook.com/user123",
+      "description": "Facebook URL"
+    },
+    "matrix": {
+      "label": "Matrix (MXID)",
+      "placeholder": "@username:domain.com",
+      "description": "The Matrix user ID (MXID) consists of your local username and the domain of your Matrix server."
+    },
+    "xing": {
+      "label": "Xing",
+      "placeholder": "https://www.xing.com/profile/vorname_name",
+      "description": "Xing URL"
+    },
+    "skype": {
+      "label": "Skype",
+      "placeholder": "e.g. hans34",
+      "description": "Skype ID"
+    },
+    "custom": {
+      "label": "Custom",
+      "placeholder": "Name of the custom address type",
+      "description": "The address type can be named by yourself.",
+      "value": "Address"
+    },
+    "customValue": {
+      "label": "Address value",
+      "placeholder": "Address value"
+    },
+    "instagram": {
+      "label": "Instagram",
+      "placeholder": "e.g. https://www.instagram.com/user123",
+      "description": "Instagram URL"
+    },
+    "signal": {
+      "label": "Signal",
+      "placeholder": "Name or phone no.",
+      "description": "Signal ID"
+    },
+    "wire": {
+      "label": "Wire",
+      "placeholder": "@name",
+      "description": "Wire ID"
+    },
+    "github": {
+      "label": "Github",
+      "placeholder": "@name",
+      "description": "Github ID"
+    },
+    "threema": {
+      "label": "Threema",
+      "placeholder": "e.g. WSXnnnnn",
+      "description": "Threema ID"
+    },
+    "telegram": {
+      "label": "Telegram",
+      "placeholder": "@name or nnnnnnnnnn",
+      "description": "Telegram ID"
+    },
+    "whatsapp": {
+      "label": "Whatsapp",
+      "placeholder": "+41 nn nnn nnnn",
+      "description": "Whatsapp ID is the phone number"
+    },
+    "bankaccount": {
+      "label": "Bank account",
+      "placeholder": "IBAN number",
+      "description": "Bank account number",
+      "description-placeholder": "Bank information: name, contact, address, phone, email etc."
+    },
+    "twint": {
+      "label": "Twint",
+      "placeholder": "Touchpoint name",
+      "description": "Twint QR code"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssssssss",
+    "helper": "Unique ID of the address record in the database."
+  },
+  "streetName": {
+    "label": "Street",
+    "placeholder": "Enter street",
+    "helper": "The name of the street"
+  },
+  "streetNumber": {
+    "label": "No.",
+    "placeholder": "nnn",
+    "helper": "The house number"
+  },
+  "addressValue2": {
+    "label": "Address supplement",
+    "placeholder": "ssssssssss",
+    "helper": "Optional additional information for the address (e.g. c/o)"
+  },
+  "countryCode": {
+    "label": "Country (ISO)",
+    "placeholder": "CH",
+    "helper": "Country code according to ISO standard"
+  },
+  "zipCode": {
+    "label": "ZIP",
+    "placeholder": "nnnn",
+    "helper": "Swiss postal code (four-digit number)"
+  },
+  "city": {
+    "label": "City",
+    "placeholder": "Enter city",
+    "helper": "Place name"
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": "Web address"
+  },
+  "iban": {
+    "label": "IBAN",
+    "placeholder": "CH00 0000 0000 0000 0000 0",
+    "helper": "International Banking Account Number (account number)"
+  },
+  "email": {
+    "label": "Email",
+    "placeholder": "Enter email address"
+  },
+  "phone": {
+    "label": "Phone",
+    "placeholder": "+41 XX XXX XX XX"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Optional and arbitrary notes"
+  },
+  "isFavorite": {
+    "label": "Favorite",
+    "helper": "The main address is used in lists and when copying email addresses."
+  },
+  "isCc": {
+    "label": "CC",
+    "helper": "CC address (e.g. parents)"
+  }
+}

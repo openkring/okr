@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Añadir responsabilidad",
+    "conf": "La responsabilidad se ha creado.",
+    "error": "La responsabilidad no se pudo crear."
+  },
+  "update": {
+    "label": "Modificar responsabilidad",
+    "conf": "La responsabilidad se ha modificado.",
+    "error": "La responsabilidad no se pudo modificar."
+  },
+  "delete": {
+    "label": "Eliminar responsabilidad",
+    "conf": "La responsabilidad se ha eliminado.",
+    "error": "La responsabilidad no se pudo eliminar.",
+    "confirm": "¿Realmente desea eliminar la responsabilidad?"
+  }
+}

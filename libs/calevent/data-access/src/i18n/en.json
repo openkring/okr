@@ -1,0 +1,22 @@
+{
+  "create": {
+    "label": "Add event",
+    "conf": "The event has been added.",
+    "error": "The event could not be added."
+  },
+  "update": {
+    "label": "Edit event",
+    "conf": "The event has been changed.",
+    "error": "The event could not be changed."
+  },
+  "delete": {
+    "label": "Delete event",
+    "confirm": "Do you really want to delete the event ?",
+    "conf": "The event has been deleted.",
+    "error": "The event could not be deleted.",
+    "intro": "This event is part of a series of recurring events. Do you want to delete only this single event, or all future events in the series?",
+    "current": "Delete only this event (the event is detached from the series)",
+    "future": "Delete all future events",
+    "all": "Delete all events in the series"
+  }
+}

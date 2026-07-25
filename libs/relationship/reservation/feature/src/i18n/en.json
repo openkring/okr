@@ -1,0 +1,231 @@
+{
+  "reservation": "Reservation",
+  "reservations": "Reservations",
+  "desc": "Reservation of a resource, e.g. boathouse or boat.",
+  "empty": "No reservations found.",
+  "reldesc1": "Reservation of ",
+  "reldesc2": "by",
+  "newDesc": "... would like to reserve the following resource:",
+
+  "create": {
+    "label": "New reservation",
+    "conf": "The reservation has been saved.",
+    "error": "The reservation could not be saved."
+  },
+  "delete": {
+    "label": "Delete reservation",
+    "confirm": "Normally a reservation should be ended, not deleted. Deletion is only intended to correct incorrect entries. Do you really want to delete the reservation?",
+    "conf": "The reservation has been deleted.",
+    "error": "The reservation could not be deleted."
+  },
+  "end": {
+    "label": "End reservation",
+    "conf": "The reservation has been ended.",
+    "error": "The reservation could not be ended."
+  },
+  "cancelRes": {
+    "label": "Cancel reservation",
+    "confirm": "Do you really want to cancel this reservation?"
+  },
+  "select": {
+    "label": "Select"
+  },
+  "update": {
+    "label": "Change reservation",
+    "conf": "The reservation has been changed.",
+    "error": "The reservation could not be changed."
+  },
+  "view": {
+    "label": "Show reservation"
+  },
+  "person": {
+    "edit": "Change reserving person",
+    "view": "Show reserving person",
+    "phone": "Call reserving person",
+    "chat": "Direct chat with reserving person"
+  },
+
+  "list": {
+    "title": "Reservations",
+    "header": {
+      "reserver": "Who",
+      "name": "Occasion",
+      "nameDate": "Occasion / Date",
+      "state": "Status",
+      "resource": "What",
+      "date": "Date",
+      "duration": "from - to",
+      "category": "Type"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "The unique ID of the reservation in the database."
+  },
+  "name": {
+    "label": "Occasion",
+    "placeholder": "Name of the reservation",
+    "helper": "A short description."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Internal notes. Use hints for public information."
+  },
+  "reserver": {
+    "label": "Contact",
+    "helper": "The person or organization responsible for the reservation."
+  },
+  "resource": {
+    "label": "What",
+    "placeholder": "what is being reserved",
+    "helper": "A description of the object being reserved"
+  },
+  "date": {
+    "start": {
+      "label": "Start date",
+      "placeholder": "DD.MM.YYYY",
+      "helper": "The reservation is valid from this date."
+    },
+    "end": {
+      "label": "End date",
+      "placeholder": "DD.MM.YYYY",
+      "helper": "The reservation ends on this date."
+    }
+  },
+  "startTime":    {
+    "label": "Start time",
+    "placeholder": "HH:MM"
+  },
+  "fullDay":      {
+    "label": "All day",
+    "helper": "The reservation applies for the whole day."
+  },
+  "durationMinutes": {
+    "label": "Duration (minutes)",
+    "placeholder": "nnn",
+    "helper": "The duration of the reservation in minutes."
+  },
+  "participants": {
+    "label": "Participants",
+    "placeholder": "Participants",
+    "helper": "Here you can describe the participants a bit, who is coming, how many etc."
+  },
+  "area": {
+    "label": "Area",
+    "placeholder": "Area ",
+    "helper": "A more precise location description, if different areas can be reserved (e.g. meeting room)"
+  },
+  "ref": {
+    "label": "Reference",
+    "placeholder": "Reference",
+    "helper": "A description of how the reservation came about, e.g. email from xx to xxx"
+  },
+  "order": {
+    "label": "Order",
+    "placeholder": "nn",
+    "helper": "Sorting criterion, e.g. for waiting lists"
+  },
+  "description": {
+    "label": "Notes on the reservation",
+    "placeholder": "These notes are visible to all users. You can add any context information that is important for this reservation."
+  },
+  "price": {
+    "label": "Price",
+    "placeholder": "nn",
+    "helper": "The agreed price for the reservation."
+  },
+  "confirmed": {
+    "label": "I hereby confirm that I have read the above terms and will abide by them.",
+    "helper": "The club facilities are only rented out if the above terms are observed. The club reserves the right to cancel the event or to charge the renter for any damages or additional expenses in the event of non-compliance with the terms."
+  },
+
+  "reservation_reason": {
+    "label": "Reason for the reservation",
+    "helper": "A rough categorization of the reservation type for filtering the reservation list.",
+    "all": {
+      "label": "All types"
+    },
+    "social": {
+      "label": "Social event",
+      "description": "Reservation for a social event"
+    },
+    "maintenance": {
+      "label": "Maintenance / repair",
+      "description": "Reservation for repair or maintenance."
+    },
+    "course": {
+      "label": "Course",
+      "description": "Reserved for a course"
+    },
+    "sport": {
+      "label": "Sports event",
+      "description": "Reserved for a sports event"
+    },
+    "business": {
+      "label": "Business event",
+      "description": "Reserved for a business event"
+    },
+    "private": {
+      "label": "Private event",
+      "description": "Reserved for a private event"
+    },
+    "public": {
+      "label": "Public event",
+      "description": "Reserved for a public event"
+    },
+    "workshop": {
+      "label": "Workshop",
+      "description": "Reserved for a workshop"
+    },
+    "meeting": {
+      "label": "Meeting",
+      "description": "Reserved for a meeting"
+    },
+    "party": {
+      "label": "Party",
+      "description": "Reserved for a party"
+    },
+    "storage": {
+      "label": "Storage",
+      "description": "Reservation of a storage space"
+    },
+    "club": {
+      "label": "Club event",
+      "description": "Reserved for a club event"
+    }
+  },
+
+  "reservation_state": {
+    "label": "Status",
+    "helper": "The processing status of the reservation (initial/applied/reserved/completed/cancelled/denied).",
+    "all": {
+      "label": "All statuses"
+    },
+    "initial": {
+      "label": "Initial",
+      "description": "Not yet a concrete reservation idea."
+    },
+    "applied": {
+      "label": "Applied",
+      "description": "Reservation request is open and needs to be assessed."
+    },
+    "active": {
+      "label": "Reserved",
+      "description": "The reservation has been approved."
+    },
+    "completed": {
+      "label": "Completed",
+      "description": "The reservation is completed (e.g. event was held and paid for)."
+    },
+    "cancelled": {
+      "label": "Cancelled",
+      "description": "The reservation was cancelled."
+    },
+    "denied": {
+      "label": "Denied",
+      "description": "The reservation was denied."
+    }
+  }
+}

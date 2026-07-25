@@ -1,0 +1,51 @@
+{
+  "create": {
+    "label": "Add membership",
+    "error": "The membership could not be created.",
+    "conf": "The membership was created.",
+    "alreadyMember": "This member already exists."
+  },
+  "update": {
+    "label": "Edit membership",
+    "error": "The changes could not be saved",
+    "conf": "The changes were saved."
+  },
+  "delete": {
+    "label": "Delete membership",
+    "error": "The membership could not be deleted",
+    "conf": "The membership was deleted",
+    "confirm": "Normally a membership should be ended, not deleted. Deletion is only intended to correct incorrect entries. Do you really want to delete the membership?"
+  },
+  "end": {
+    "title": "End membership",
+    "select": "Select leaving date",
+    "confirm": "Do you really want to end the membership?",
+    "conf": "The membership was ended.",
+    "error": "The membership could not be ended.",
+    "comment": "Membership ended",
+    "intro": "<p>The leaving date is the last day of the membership. From the next day the person is no longer a member.<br /> Usually this is 31 December of the current year.</p>"
+  },
+  "select": {
+    "default": "Raw data",
+    "srv": "SRV list",
+    "address": "Address list",
+    "title": "Select list type for export"
+  },
+  "fee": {
+    "update": {
+      "label": "Edit invoice",
+      "error": "The changes could not be saved",
+      "conf": "The changes were saved."
+    },
+    "create": {
+      "label": "Add invoice",
+      "error": "The invoice could not be created.",
+      "conf": "The invoice was created."
+    },
+    "delete": {
+      "label": "Delete invoice",
+      "error": "The invoice could not be deleted",
+      "conf": "The invoice was deleted"
+    }
+  }
+}

@@ -1,0 +1,92 @@
+{
+    "create": {
+        "boat": {
+            "conf": "Le bateau a été enregistré.",
+            "error": "Le bateau n'a pas pu être enregistré."
+        },
+        "rboat": {
+            "conf": "Le bateau d'aviron a été enregistré.",
+            "error": "Le bateau d'aviron n'a pas pu être enregistré."
+        },
+        "car": {
+            "conf": "Le véhicule a été enregistré.",
+            "error": "Le véhicule n'a pas pu être enregistré."
+        },
+        "locker": {
+            "conf": "Le vestiaire a été enregistré.",
+            "error": "Le vestiaire n'a pas pu être enregistré."
+        },
+        "key": {
+            "conf": "La clé a été enregistrée.",
+            "error": "La clé n'a pas pu être enregistrée."
+        },
+        "realestate": {
+            "conf": "Le bien immobilier a été enregistré.",
+            "error": "Le bien immobilier n'a pas pu être enregistré."
+        },
+        "pet": {
+            "conf": "L'animal de compagnie a été enregistré.",
+            "error": "L'animal de compagnie n'a pas pu être enregistré."
+        }
+    },
+    "delete": {
+        "boat": {
+            "conf": "Le bateau a été supprimé.",
+            "error": "Le bateau n'a pas pu être supprimé."
+        },
+        "rboat": {
+            "conf": "Le bateau d'aviron a été supprimé.",
+            "error": "Le bateau d'aviron n'a pas pu être supprimé."
+        },
+        "car": {
+            "conf": "Le véhicule a été supprimé.",
+            "error": "Le véhicule n'a pas pu être supprimé."
+        },
+        "locker": {
+            "conf": "Le vestiaire a été supprimé.",
+            "error": "Le vestiaire n'a pas pu être supprimé."
+        },
+        "key": {
+            "conf": "La clé a été supprimée.",
+            "error": "La clé n'a pas pu être supprimée."
+        },
+        "realestate": {
+            "conf": "Le bien immobilier a été supprimé.",
+            "error": "Le bien immobilier n'a pas pu être supprimé."
+        },
+        "pet": {
+            "conf": "L'animal de compagnie a été supprimé.",
+            "error": "L'animal de compagnie n'a pas pu être supprimé."
+        }
+    },
+    "update": {
+        "boat": {
+            "conf": "Le bateau a été enregistré.",
+            "error": "Le bateau n'a pas pu être enregistré."
+        },
+        "rboat": {
+            "conf": "Le bateau d'aviron a été enregistré.",
+            "error": "Le bateau d'aviron n'a pas pu être enregistré."
+        },
+        "car": {
+            "conf": "Le véhicule a été enregistré.",
+            "error": "Le véhicule n'a pas pu être enregistré."
+        },
+        "locker": {
+            "conf": "Le vestiaire a été enregistré.",
+            "error": "Le vestiaire n'a pas pu être enregistré."
+        },
+        "key": {
+            "conf": "La clé a été enregistrée.",
+            "error": "La clé n'a pas pu être enregistrée."
+        },
+        "realestate": {
+            "conf": "Le bien immobilier a été enregistré.",
+            "error": "Le bien immobilier n'a pas pu être enregistré."
+        },
+        "pet": {
+            "conf": "L'animal de compagnie a été enregistré.",
+            "error": "L'animal de compagnie n'a pas pu être enregistré."
+        }
+    }
+}

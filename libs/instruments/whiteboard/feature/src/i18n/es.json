@@ -1,0 +1,33 @@
+{
+  "whiteboard": "Pizarra",
+  "plural": "Pizarras",
+  "desc": "Un muro para post-its y notas.",
+  "empty": "Todavía no hay pizarras.",
+  "done": "Hecho",
+  "operation": {
+    "create": { "label": "Crear pizarra" },
+    "edit": { "label": "Editar pizarra" },
+    "view": { "label": "Ver pizarra" },
+    "delete": { "confirm": "¿Desea realmente eliminar la pizarra ?" }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "confirmation": "Guardar"
+  },
+  "actionsheet": {
+    "choose": "Elegir una acción",
+    "open": "Abrir",
+    "edit": "Renombrar",
+    "delete": "Eliminar"
+  },
+  "editor": {
+    "addSticker": "Añadir adhesivo",
+    "addLabel": "Añadir texto",
+    "chooseTemplate": "Plantilla",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "zoomReset": "Restablecer la vista",
+    "emptyCanvas": "Pulsar «+» para añadir un adhesivo."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "The supplier invoice was created.",
+    "error": "The supplier invoice could not be created."
+  },
+  "update": {
+    "conf": "The supplier invoice was changed.",
+    "error": "The supplier invoice could not be changed."
+  },
+  "delete": {
+    "conf": "The supplier invoice was deleted.",
+    "error": "The supplier invoice could not be deleted."
+  }
+}

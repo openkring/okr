@@ -1,0 +1,6 @@
+{
+    "readonly": {
+        "title": "Attention",
+        "msg": "This accounting is read-only. The bookings are made in Bexio."
+    }
+}

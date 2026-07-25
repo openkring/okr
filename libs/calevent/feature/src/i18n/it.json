@@ -1,0 +1,374 @@
+{
+  "calevent": "Evento",
+  "calevents": "Eventi",
+  "empty": "Non è ancora stato creato alcun evento. Crearne uno facendo clic sul pulsante +.",
+
+  "attendance": {
+    "accepted": "Partecipazioni",
+    "attendees": "Partecipanti",
+    "helper": "Persone che partecipano all'evento.",
+    "add": "Aggiungi partecipanti",
+    "exists": "Questa persona è già registrata come partecipante.",
+    "empty": "Nessun partecipante trovato."
+  },
+  "create": {
+    "label": "Creare un nuovo evento",
+    "conf": "L'evento è stato salvato.",
+    "error": "Non è stato possibile salvare l'evento."
+  },
+  "delete": {
+    "label": "Eliminare l'evento",
+    "confirm": "Eliminare davvero l'evento ?",
+    "conf": "L'evento è stato eliminato.",
+    "error": "Non è stato possibile eliminare l'evento.",
+    "series": {
+      "label": "Eliminare la serie di eventi",
+      "confirm": "Eliminare davvero la serie di eventi ?",
+      "conf": "La serie di eventi è stata eliminata.",
+      "error": "Non è stato possibile eliminare la serie di eventi.",
+      "intro": "Questo evento fa parte di una serie di eventi ricorrenti. Eliminare solo questo evento, oppure tutti gli eventi futuri della serie?",
+      "current": "Eliminare solo questo evento (l'evento viene scollegato dalla serie)",
+      "future": "Eliminare tutti gli eventi futuri",
+      "all": "Eliminare tutti gli eventi della serie"
+    }
+  },
+  "download": {
+    "ics": "Scarica appuntamento (ICS)"
+  },
+  "quickEntry": {
+    "label": "Inserimento rapido",
+    "placeholder": "Nome[,Luogo] [//Data] [@Person]"
+  },
+  "schedule": {
+    "title": "Sondaggio date",
+    "find": "Trovare una data",
+    "close": {
+      "label": "Chiudere il sondaggio",
+      "message": "{{date}} viene scelta come data definitiva. Tutte le altre proposte verranno rimosse."
+    },
+    "optionalMessage": "Messaggio facoltativo al gruppo...",
+    "date": {
+      "proposals": "Proposte di date",
+      "add": "Aggiungi data",
+      "confirm": "Applica date"
+    },
+    "view": "Mostra il sondaggio"
+  },
+  "update": {
+    "label": "Modificare l'evento",
+    "conf": "L'evento è stato modificato.",
+    "error": "Non è stato possibile modificare l'evento.",
+    "series": {
+      "label": "Modificare la serie di eventi",
+      "conf": "La serie di eventi è stata modificata.",
+      "error": "Non è stato possibile modificare la serie di eventi.",
+      "intro": "Questo evento fa parte di una serie di eventi ricorrenti. Modificare solo questo evento, oppure tutti gli eventi futuri della serie?",
+      "current": "Modificare solo questo evento (l'evento viene scollegato dalla serie)",
+      "future": "Modificare tutti gli eventi futuri",
+      "all": "Modificare tutti gli eventi della serie"
+    }
+  },
+  "view": {
+    "label": "Mostra i dettagli dell'evento",
+    "album": "Visualizza album"
+  },
+
+  "invite": {
+    "person": {
+      "label": "Invitare una persona",
+      "conf": "La persona è stata invitata",
+      "error": "Non è stato possibile invitare la persona"
+    },
+    "members": {
+      "label": "Invitare i membri del gruppo",
+      "conf": "I membri del gruppo sono stati invitati.",
+      "error": "Non è stato possibile invitare i membri del gruppo."
+    }
+  },
+  "invitation": {
+    "pending": "{{count}} non hanno ancora risposto",
+    "update": {
+      "label": "Modificare l'invito",
+      "conf": "L'invito è stato modificato.",
+      "error": "Non è stato possibile modificare l'invito."
+    },
+    "subscribe": "Partecipo",
+    "unsubscribe": "Non posso partecipare"
+  },
+  "weekday": {
+    "abbreviation": {
+      "monday": "Lun",
+      "tuesday": "Mar",
+      "wednesday": "Mer",
+      "thursday": "Gio",
+      "friday": "Ven",
+      "saturday": "Sab",
+      "sunday": "Dom"
+    },
+    "name": {
+      "monday": "Lunedì",
+      "tuesday": "Martedì",
+      "wednesday": "Mercoledì",
+      "thursday": "Giovedì",
+      "friday": "Venerdì",
+      "saturday": "Sabato",
+      "sunday": "Domenica"
+    }
+  },
+  "month": {
+    "january": "Gennaio",
+    "february": "Febbraio",
+    "march": "Marzo",
+    "april": "Aprile",
+    "may": "Maggio",
+    "june": "Giugno",
+    "july": "Luglio",
+    "august": "Agosto",
+    "september": "Settembre",
+    "october": "Ottobre",
+    "november": "Novembre",
+    "december": "Dicembre"
+  },
+  "periodicity": {
+    "name": "Periodicità",
+    "once": {
+      "label": "Una volta",
+      "description": "L'evento ha luogo esattamente una sola volta."
+    },
+    "hourly": {
+      "label": "Ogni ora",
+      "description": "L'evento ha luogo ogni ora."
+    },
+    "daily": {
+      "label": "Giornaliero",
+      "description": "L'evento ha luogo ogni giorno (anche nel fine settimana)."
+    },
+    "workdays": {
+      "label": "Giorni lavorativi",
+      "description": "L'evento ha luogo ogni giorno lavorativo (lun-ven)."
+    },
+    "weekly": {
+      "label": "Settimanale",
+      "description": "L'evento ha luogo ogni settimana."
+    },
+    "biweekly": {
+      "label": "Ogni due settimane",
+      "description": "L'evento ha luogo una settimana sì e una no."
+    },
+    "monthly": {
+      "label": "Mensile",
+      "description": "L'evento viene ripetuto ogni mese."
+    },
+    "quarterly": {
+      "label": "Trimestrale",
+      "description": "L'evento ha luogo ogni tre mesi."
+    },
+    "yearly": {
+      "label": "Annuale",
+      "description": "L'evento ha luogo una volta all'anno."
+    },
+    "other": {
+      "label": "Altro",
+      "description": "Una periodicità speciale può essere configurata liberamente."
+    },
+    "never": {
+      "label": "Mai",
+      "description": "L'evento non ha mai luogo, non ha periodicità."
+    }
+  },
+
+  "list": {
+    "header": {
+      "name": "Evento",
+      "duration": "da-a",
+      "year": "Anno",
+      "responsible": "Organizzatori",
+      "location": "Luogo",
+      "description": "Argomento"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "Chiave univoca nel database."
+  },
+  "calendar": {
+    "title": "Calendario",
+    "add": "Creare un nuovo calendario",
+    "select": "Seleziona calendario"
+  },
+  "date": {
+    "start": {
+      "label": "Data di inizio",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "L'evento inizia in questo giorno."
+    },
+    "end": {
+      "label": "Data di fine",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "L'evento termina in questo giorno."
+    },
+    "repeatUntil": {
+      "label": "Ripeti fino al",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "Gli eventi ricorrenti vengono inseriti nel calendario fino a questa data."
+    }
+  },
+  "description": {
+    "label": "Ulteriori informazioni",
+    "placeholder": "Una descrizione dell'evento. Qui è possibile annotare tutto ciò che riguarda l'evento",
+    "helper": "Un evento ha luogo in un momento preciso e può essere visualizzato in un calendario."
+  },
+  "durationMinutes": {
+    "label": "Durata (minuti)",
+    "placeholder": "nn",
+    "helper": "La durata di un evento in minuti."
+  },
+  "fullDay": {
+    "label": "Tutto il giorno",
+    "helper": "Questo evento viene inserito nel calendario come evento di un'intera giornata - senza un orario preciso."
+  },
+  "locationKey": {
+    "label": "Chiave del luogo",
+    "placeholder": "sssssss",
+    "helper": "Un riferimento al luogo (location.okey nel database)."
+  },
+  "name": {
+    "label": "Evento",
+    "placeholder": "Nome",
+    "helper": "Il nome di un evento."
+  },
+  "responsible": {
+    "label": "Organizzatori",
+    "add": "Aggiungi organizzatori",
+    "persons": "Responsabile",
+    "description": "Persone responsabili dell'evento."
+  },
+  "seriesId": {
+    "label": "ID serie",
+    "placeholder": "sssssssss",
+    "helper": "L'ID serie tiene insieme tutte le date di una serie."
+  },
+  "startTime": {
+    "label": "Ora di inizio",
+    "placeholder": "HH:MM",
+    "helper": "L'evento inizia a quest'ora."
+  },
+
+  "calevent_type": {
+    "name": "Tipo di evento",
+    "label": "Tipo di evento",
+    "helper": "Tipo di evento",
+    "all": {
+      "label": "Tutti i tipi di evento"
+    },
+    "ga": {
+      "label": "Assemblea generale",
+      "description": "ad es. assemblea generale (AG), assemblea degli azionisti, assemblea dei membri, assemblea comunale"
+    },
+    "board": {
+      "label": "Comitato",
+      "description": "ad es. comitato, consiglio di amministrazione (CdA), direzione"
+    },
+    "project": {
+      "label": "Riunione di progetto",
+      "description": "ad es. riunione Scrum, stato del progetto, daily standup, kickoff, wrapup ecc."
+    },
+    "training": {
+      "label": "Allenamento",
+      "description": "ad es. formazione, corso, aggiornamento, allenamento sportivo"
+    },
+    "competition": {
+      "label": "Competizione",
+      "description": "ad es. regata, gara, torneo, campionato"
+    },
+    "education": {
+      "label": "Formazione",
+      "description": "Aggiornamento / formazione, ad es. conferenza, seminario, workshop, corso"
+    },
+    "social": {
+      "label": "Evento sociale",
+      "description": "ad es. aperitivo, visita, demo, cena"
+    },
+    "sport": {
+      "label": "Evento sportivo",
+      "description": "ad es. torneo, regata, gara ecc."
+    },
+    "business": {
+      "label": "Evento aziendale",
+      "description": "ad es. informazione al personale, colloquio con il personale, colloquio con il cliente, pitch ecc."
+    },
+    "off": {
+      "label": "Assenza",
+      "description": "ad es. ferie, compensazione, malattia"
+    },
+    "reservation": {
+      "label": "Prenotazione",
+      "description": "Prenotazione di una risorsa",
+      "bh": {
+        "title": "Prenotazione",
+        "subtitle": "Compilare questo modulo se si desidera prenotare le strutture del club per il proprio evento.",
+        "conf1": "La prenotazione è stata salvata e inoltrata alla persona responsabile delle prenotazioni.",
+        "conf2": "In caso di mancato rispetto delle condizioni contrattuali, i costi che ne derivano vengono addebitati al locatario (riparazioni, pulizia, legna da ardere non riapprovvigionata, sacchi della spazzatura pieni non portati via, mozziconi di sigaretta lasciati in giro, ecc.). Il comitato si riserva inoltre il diritto di escludere il locatario da eventi futuri.",
+        "conf3": "Il locatario si mette in contatto con la persona responsabile dell'infrastruttura almeno una settimana prima dell'evento, in modo da poter chiarire tutti i dettagli e le domande necessari."
+      },
+      "skiff": {
+        "title": "Prenotazione posto per skiff",
+        "boatInfo": "Informazioni sulla tua imbarcazione",
+        "subTitle": "Compilare questo modulo se si desidera prenotare un posto di deposito per il proprio skiff.",
+        "confirmation": "La prenotazione è stata salvata e inoltrata alla persona responsabile delle prenotazioni.",
+        "conf1": "Il locatario accetta con la presente le condizioni contrattuali stabilite nel 'Accordo per la locazione del posto di deposito dello skiff' e nell''Assegnazione dei posti di deposito per skiff privati'"
+      }
+    },
+    "retro": {
+      "label": "Retrospettiva",
+      "description": "Cerimonia Scrum per lo scambio di esperienze, wrapup"
+    },
+    "daily": {
+      "label": "Daily",
+      "description": "Cerimonia Scrum, scambio di stato quotidiano"
+    },
+    "planning": {
+      "label": "Riunione di pianificazione",
+      "description": "Cerimonia Scrum per la pianificazione di nuovi compiti"
+    },
+    "grooming": {
+      "label": "Grooming",
+      "description": "Cerimonia Scrum per la discussione di nuovi compiti"
+    },
+    "sync": {
+      "label": "Sync",
+      "description": "ad es. scambio personale, bilaterale"
+    },
+    "presentation": {
+      "label": "Presentazione",
+      "description": "ad es. vendita, presentazione, demo."
+    },
+    "team": {
+      "label": "Riunione di team",
+      "description": "Incontro regolare del team."
+    },
+    "todo": {
+      "label": "Todo",
+      "description": "Un compito da svolgere."
+    },
+    "work": {
+      "label": "Lavoro",
+      "description": "ad es. pulizia, riparazioni, manutenzione"
+    },
+    "other": {
+      "label": "Altro",
+      "description": "L'evento non può essere assegnato a nessuno degli altri tipi."
+    }
+  },
+
+  "validations": {
+    "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "La data di ripeti fino al è obbligatoria con questa periodicità",
+    "caleventRepeatUntilDateAfterStartDate": "La data di ripeti fino al deve essere successiva alla data di inizio",
+    "caleventEndDateAfterStartDate": "La data di fine deve essere successiva alla data di inizio.",
+    "caleventStartDateMandatory": "La data di inizio è obbligatoria.",
+    "caleventEndDateMandatory": "La data di fine è obbligatoria.",
+    "caleventModelType": "Il ModelType deve essere EventModel."
+  }
+}

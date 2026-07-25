@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Add transfer",
+    "conf": "Transfer was created.",
+    "error": "Transfer could not be created."
+  },
+  "update": {
+    "label": "Edit transfer",
+    "conf": "Transfer was changed.",
+    "error": "Transfer could not be changed."
+  },
+  "delete": {
+    "label": "Delete transfer",
+    "conf": "Transfer was deleted.",
+    "error": "Transfer could not be deleted."
+  }
+}

@@ -1,0 +1,268 @@
+{
+  "menus": "Menu items",
+  "submenus": "Sub-menus",
+  "empty": "No menu items have been created yet. Create one by clicking the + button.",
+  "link": "URL or menus",
+  "action": "Action",
+  "edit": "Edit menu",
+  "view": "View menu details",
+  "create": "Create new menu",
+  "delete": "Delete menu",
+  "add": {
+    "submenu": "Add sub-menu"
+  },
+  "error": {
+    "save": "The menu item could not be saved. Please try again.",
+    "load": "The menu items could not be loaded. Please try again.",
+    "delete": "The menu item could not be deleted. Please try again."
+  },
+  "main": {
+    "aoc": {
+      "title": "AOC - Operation Centre",
+      "icon": "Icon tests",
+      "translation": "Translation tests",
+      "storage": "Storage tests",
+      "admin": "Admin operations",
+      "auth": "Permissions",
+      "content": "Content",
+      "data": "Data",
+      "statistics": "Statistics"
+    },
+    "board": {
+      "docs": "Documents",
+      "igsport": "IG Sport Stäfa (files)",
+      "groups": "Groups",
+      "meetings": "Board meetings",
+      "orgs": "Organizations",
+      "projects": "Projects",
+      "title": "Board",
+      "todos": "Tasks"
+    },
+    "boat": {
+      "title": "Boats",
+      "club": "Club boats",
+      "archived": "Archived boats",
+      "private": "Private skiffs",
+      "info": "Boat statistics",
+      "all": "All boats",
+      "test": "Test boats"
+    },
+    "boathouse": {
+      "title": "Boathouse project",
+      "history": "Retrospective",
+      "variants": "Variant overview",
+      "status": "Project status",
+      "1haus": "Variant 1Haus",
+      "2haus": "Variant 2Haus",
+      "compare": "Variant comparison",
+      "funding": "Funding"
+    },
+    "calEvent": {
+      "title": "Events",
+      "calendar": "Calendar",
+      "list": "Events"
+    },
+    "cms": {
+      "title": "CMS - Content Management",
+      "pages": "Web pages",
+      "sections": "Sections",
+      "menus": "Menus",
+      "documents": "Documents",
+      "testcms": "CMS tests",
+      "locations": "Locations",
+      "forms": "Form Builder"
+    },
+    "finance": {
+      "title": "Finances",
+      "fees": "Fees",
+      "srvFees": "SRV fees",
+      "docs": "Financial documents",
+      "invoice-positions": "Invoice items"
+    },
+    "gallery": {
+      "personal": "Personal album",
+      "club": "Club album"
+    },
+    "info": {
+      "album": "Album",
+      "boathouse": "Boathouse project",
+      "club": "Club information",
+      "directives": "Statutes and regulations",
+      "map": "Map",
+      "marketing": "Logos and templates",
+      "meetings": "General assemblies",
+      "title": "Information",
+      "training": "Training materials",
+      "weather": "Weather"
+    },
+    "members": {
+      "title": "Members",
+      "info": "Member statistics",
+      "active": "Active members",
+      "persons": "Persons",
+      "person-contacts": "All persons",
+      "member-contacts": "Address list",
+      "applications": "Registrations",
+      "birthdays": "Birthdays",
+      "passive": "Passive members",
+      "deceased": "Deceased",
+      "srvall": "SRV members",
+      "alumni": "Alumni",
+      "men": "Men",
+      "women": "Women",
+      "entries": "Admissions",
+      "exits": "Departures",
+      "oldJuniors": "Juniors > 18"
+    },
+    "misc": {
+      "title": "Miscellaneous",
+      "impressum": "Imprint",
+      "terms": "Legal",
+      "privacy": "Privacy",
+      "help": "Guide",
+      "geotracker": "GeoTracker",
+      "counter": "Stopwatch",
+      "tenu": "Uniforms"
+    },
+    "news": {
+      "title": "News",
+      "bkoWebsite": "Website",
+      "p13Website": "Website",
+      "stuerbord": "Stüürbord"
+    },
+    "reservations": {
+      "all": "All reservations",
+      "boathouse": "Boathouse reservations"
+    },
+    "resources": {
+      "title": "Resources",
+      "resources": "Resources",
+      "maleLockers": "Men's locker room",
+      "femaleLockers": "Women's locker room",
+      "keys": "Keys",
+      "motorboats": "Motorboats",
+      "vehicle": "Vehicles",
+      "other": "Other resources",
+      "archivedResources": "Archived resources"
+    },
+    "shop": {
+      "title": "Shop",
+      "tenu": "Uniforms",
+      "beverage": "Beverages",
+      "lifeJacket": "Life jackets"
+    },
+    "sport": {
+      "title": "Sport",
+      "competitionLevels": "Competition categories",
+      "logbook": "Logbook",
+      "sportCategory": "Sport categories",
+      "training": "Training info",
+      "regattas": "Regattas"
+    },
+    "dashboard": "Dashboard",
+    "home": "Home",
+    "login": "Log in",
+    "logout": "Log out",
+    "profile": "Profile",
+    "schedule": "Start scheduling",
+    "userSettings": "Settings",
+    "title": "Main menu",
+    "version": "Version"
+  },
+  "context": {
+    "forms": {
+      "add": "Create new form"
+    }
+  },
+  "description": {
+    "menu": "Menu entries link to internal (Navigation) or external (Browse) web pages.",
+    "label": "Description",
+    "placeholder": "ssss"
+  },
+  "icon": {
+    "label": "Icon name",
+    "placeholder": "Name of the icon",
+    "helper": "The name of the icon is typically the file name of the svg image."
+  },
+  "icon_alt": {
+    "label": "Icon (active)",
+    "placeholder": "Name of the icon",
+    "helper": "Only for the «Toggle» action: icon for the active state (e.g. eye-off)."
+  },
+  "label": {
+    "label": "Label",
+    "placeholder": "Name",
+    "helper": "This is the name that is visible to the user on the MenuItem."
+  },
+  "label_alt": {
+    "label": "Label (active)",
+    "placeholder": "Name",
+    "helper": "Only for the «Toggle» action: label for the active state."
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "/route/to/page",
+    "helper": "The URL points to the page that should be displayed."
+  },
+  "category": {
+    "plural": "Categories"
+  },
+  "responsibility": {
+    "export": {
+      "raw": "Export responsibilities (raw data)"
+    }
+  },
+  "content": {
+    "section": {
+      "plural": "Sections"
+    }
+  },
+  "menu_action": {
+    "label": "Menu action",
+    "helper": "The action to be executed when clicking the menu item.",
+    "all": {
+      "label": "All actions"
+    },
+    "navigate": {
+      "label": "Navigate",
+      "description": "Navigate to another page"
+    },
+    "browse": {
+      "label": "Browse",
+      "description": "Open the page in an external browser tab."
+    },
+    "logout": {
+      "label": "Logout",
+      "description": "End the current session and log out.",
+      "confirm": "Are you sure? You will then need to log in again with your password."
+    },
+    "sub": {
+      "label": "Submenu",
+      "description": "Navigate to a submenu"
+    },
+    "context": {
+      "label": "Context Menu",
+      "description": "Context menu, e.g. Export, Add on lists"
+    },
+    "divider": {
+      "label": "Divider",
+      "description": "Divider line between menu items"
+    },
+    "main": {
+      "label": "Main Menu",
+      "description": "The top-level menu"
+    },
+    "login": {
+      "label": "Login",
+      "description": "Navigate to the login form"
+    },
+    "call": {
+      "label": "Function call",
+      "description": "Calls a method of the store (e.g. add, export...)"
+    },
+    "toggle": {
+      "label": "Toggle",
+      "description": "Toggles the value of a binary variable (e.g. on/off)."
+    }
+  }
+}

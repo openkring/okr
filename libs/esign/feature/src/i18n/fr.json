@@ -1,0 +1,15 @@
+{
+  "list": { "title": "Signatures électroniques" },
+  "empty": "Aucun processus de signature trouvé.",
+  "delete": { "error": "Le processus de signature n'a pas pu être supprimé." },
+  "send": { "error": "Le document n'a pas pu être envoyé." },
+  "upload": { "error": "Fichier trop volumineux (max. 40 MB) ou format incorrect." },
+  "scan": { "no_fields": "Aucun champ de signature trouvé dans le document. Veuillez utiliser un PDF avec des Text Field Patterns intégrés." },
+  "actionsheet": {
+    "view": "Afficher l'état de la signature",
+    "doc_view": "Afficher le PDF",
+    "doc_share": "Partager",
+    "doc_send": "Envoyer par e-mail",
+    "delete": "Supprimer le processus de signature"
+  }
+}

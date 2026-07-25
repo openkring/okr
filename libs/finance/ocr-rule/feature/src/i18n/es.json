@@ -1,0 +1,18 @@
+{
+  "list": {
+    "title": "Reglas OCR"
+  },
+  "empty": "Aún no se ha registrado ninguna regla OCR.",
+  "usage": {
+    "invoice": "Factura",
+    "expense": "Gastos",
+    "paper": "Comprobante"
+  },
+  "inactive": "inactivo",
+  "actionsheet": {
+    "title": "Seleccionar acción",
+    "edit": "Editar regla",
+    "delete": "Eliminar regla",
+    "account": "Editar cuenta contable"
+  }
+}

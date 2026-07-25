@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Añadir usuario",
+    "error": "No se pudo crear el usuario.",
+    "conf": "El usuario se ha creado."
+  },
+  "update": {
+    "label": "Editar usuario",
+    "error": "No se pudieron guardar los cambios",
+    "conf": "Los cambios se han guardado."
+  },
+  "delete": {
+    "label": "Eliminar usuario",
+    "error": "No se pudo eliminar el usuario",
+    "conf": "El usuario se ha eliminado"
+  }
+}

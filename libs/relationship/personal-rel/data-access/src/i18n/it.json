@@ -1,0 +1,22 @@
+{
+  "create": {
+    "label": "Aggiungi relazione personale",
+    "conf": "La relazione personale è stata creata.",
+    "error": "Non è stato possibile creare la relazione personale."
+  },
+  "update": {
+    "label": "Modifica relazione personale",
+    "conf": "La relazione personale è stata modificata.",
+    "error": "Non è stato possibile modificare la relazione personale."
+  },
+  "delete": {
+    "label": "Elimina relazione personale",
+    "conf": "La relazione personale è stata eliminata.",
+    "error": "Non è stato possibile eliminare la relazione personale."
+  },
+  "end": {
+    "label": "Termina relazione",
+    "conf": "La relazione è stata terminata.",
+    "error": "Non è stato possibile terminare la relazione."
+  }
+}

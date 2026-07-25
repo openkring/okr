@@ -1,0 +1,60 @@
+{
+    "singular": "Attivo",
+    "plural": "Attivi",
+    "empty": "Nessun attivo trovato",
+
+    "list": {
+        "title": "Attivi / Valori patrimoniali / Asset"
+    },
+    "deduction": {
+        "label": "Ammortamento",
+        "run": "Ciclo di ammortamento"
+    },
+
+   "name": {
+        "label": "Nome dell'attivo"
+    },
+   "number": {
+        "label": "Numero di conto"
+    },
+   "category": {
+        "label": "Categoria"
+    },
+   "date": {
+        "acquisition": {
+            "label": "Data di acquisizione"
+        },
+        "end": {
+            "label": "Fine periodo"
+        }
+    },
+    "life": {
+        "label": "Durata di vita (mesi)"
+    },
+    "preview": {
+        "label": "Anteprima"
+    },
+
+    "book": {
+        "label": "Registra"
+    },
+    "create": {
+        "label": "Crea nuovo attivo",
+        "conf": "L'attivo è stato salvato.",
+        "error": "Non è stato possibile salvare l'attivo."
+    },
+    "delete": {
+        "label": "Elimina attivo",
+        "conf": "L'attivo è stato eliminato.",
+        "confirm": "Eliminare davvero l'attivo ?",
+        "error": "Non è stato possibile eliminare l'attivo."
+    },
+    "update": {
+        "label": "Modifica attivo",
+        "conf": "L'attivo è stato salvato.",
+        "error": "Non è stato possibile salvare l'attivo."
+    },
+    "view": {
+        "label": "Visualizza attivo"
+    }
+}

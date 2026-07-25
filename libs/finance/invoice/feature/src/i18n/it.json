@@ -1,0 +1,169 @@
+{
+  "singular": "Fattura",
+  "plural": "Fatture debitori",
+  "aging": "Scadenzario debitori",
+  "empty": "Nessuna fattura trovata",
+
+  "list": {
+    "title": "Panoramica fatture"
+  },
+
+  "id": {
+    "label": "ID",
+    "placeholder": "nnnnn",
+    "helper": "Un identificatore univoco per una fattura."
+  },
+  "date": {
+    "invoice": {
+      "label": "Data della fattura",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La data in cui è stata emessa la fattura. Da quel momento inizia a decorrere il termine di pagamento."
+    },
+    "due": {
+      "label": "Pagabile entro",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La data del termine di pagamento. Entro tale data la fattura deve essere pagata."
+    },
+    "payment": {
+      "label": "Pagato il",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La data in cui è stata pagata la fattura."
+    }
+  },
+  "receiver": {
+    "label": "Destinatario"
+  },
+  "title": {
+    "label": "Oggetto",
+    "placeholder": "Testo",
+    "helper": "Una breve descrizione dell'argomento."
+  },
+  "amount": {
+    "label": "Importo",
+    "placeholder": "nn.nn",
+    "helper": "L'importo della fattura."
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Note libere sulla fattura"
+  },
+  "state": {
+    "label": "Stato della fattura"
+  },
+  "bexio": {
+    "id": {
+      "label": "Bexio ID",
+      "placeholder": "nnnnnnn",
+      "helper": "ID fattura in Bexio"
+    }
+  },
+  "position": {
+    "text": {
+      "label": "Testo",
+      "placeholder": "ssssssss",
+      "helper": "Un identificatore per la voce della fattura."
+    },
+    "amount": {
+      "label": "Importo della fattura",
+      "placeholder": "nnnn.nn",
+      "helper": "Importo totale della fattura su tutte le voci."
+    }
+  },
+  "unitPrice": {
+      "label": "Prezzo unitario",
+      "placeholder": "nn.nn",
+      "helper": "Il prezzo di una singola voce."
+    },
+  "accountId": {
+      "label": "Numero di conto",
+      "placeholder": "nnnn",
+      "helper": "Il numero univoco di un conto."
+    },
+  "header": {
+      "label": "Intestazione",
+      "placeholder": "Testo",
+      "helper": "Testo visualizzato sopra le voci della fattura sulla fattura."
+    },
+  "footer": {
+      "label": "Piè di pagina",
+      "placeholder": "Testo",
+      "helper": "Testo visualizzato sotto le voci della fattura sulla fattura."
+    },
+  "valid": {
+    "from": {
+      "label": "Valido dal",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La fattura è valida da questa data."
+    },
+    "to": {
+      "label": "Valido fino al",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La fattura è valida fino a questa data."
+    }
+  },
+  "template": {
+    "label": "Modello"
+  },
+  "defaultPosition": {
+    "label": "Voce di fattura predefinita"
+  },
+  "vat": {
+    "label": "IVA",
+    "type": "Aliquota IVA"
+  },
+
+  "add": {
+    "position": "Aggiungere voce di fattura"
+  },
+  "create": {
+    "label": "Aggiungere fattura",
+    "conf": "La fattura è stata creata.",
+    "error": "Non è stato possibile creare la fattura."
+  },
+  "delete": {
+    "label": "Eliminare fattura",
+    "confirm": "Eliminare davvero la fattura ?",
+    "conf": "La fattura è stata eliminata.",
+    "error": "Non è stato possibile eliminare la fattura."
+  },
+  "update": {
+    "label": "Modificare fattura",
+    "conf": "La fattura è stata modificata.",
+    "error": "Non è stato possibile modificare la fattura."
+  },
+  "view": {
+    "label":  "Mostrare i dettagli della fattura",
+    "pdf": "Scaricare la fattura in PDF"
+  },
+
+  "readonly": {
+    "banner": "Questo elenco è di sola lettura. I debitori sono gestiti in Bexio."
+  },
+
+  "invoice_state": {
+    "name": "Stato della fattura",
+    "all": {
+      "label": "Tutti gli stati"
+    },
+    "draft": {
+      "label": "Bozza",
+      "description": "La fattura è una bozza e non è ancora stata inviata."
+    },
+    "pending": {
+      "label": "Aperta",
+      "description": "La fattura è stata inviata e non è ancora stata pagata."
+    },
+    "paid": {
+      "label": "Pagata",
+      "description": "La fattura è stata pagata."
+    },
+    "overdue": {
+      "label": "Scaduta",
+      "description": "Il termine di pagamento è scaduto, la fattura è in ritardo."
+    },
+    "cancelled": {
+      "label": "Annullata",
+      "description": "La fattura è stata annullata."
+    }
+  }
+}

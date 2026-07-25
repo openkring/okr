@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Ajouter un utilisateur",
+    "error": "L'utilisateur n'a pas pu être créé.",
+    "conf": "L'utilisateur a été créé."
+  },
+  "update": {
+    "label": "Modifier l'utilisateur",
+    "error": "Les modifications n'ont pas pu être enregistrées",
+    "conf": "Les modifications ont été enregistrées."
+  },
+  "delete": {
+    "label": "Supprimer l'utilisateur",
+    "error": "L'utilisateur n'a pas pu être supprimé",
+    "conf": "L'utilisateur a été supprimé"
+  }
+}

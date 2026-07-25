@@ -1,0 +1,28 @@
+{
+  "title": "Radar de vuelos",
+  "search": {
+    "placeholder": "Número de vuelo (p. ej. LX1234)",
+    "button": "Buscar",
+    "prompt": "Introducir el número de vuelo y pulsar Buscar."
+  },
+  "detail": {
+    "title": "Detalles del vuelo",
+    "departure": "Salida",
+    "airport": "Aeropuerto",
+    "terminal": "Terminal",
+    "gate": "Puerta",
+    "delay": "Retraso",
+    "scheduled": "Previsto",
+    "estimated": "Estimado",
+    "arrival": "Llegada",
+    "aircraft": "Avión",
+    "registration": "Matrícula",
+    "live": "Posición en directo",
+    "altitude": "Altitud",
+    "direction": "Rumbo",
+    "speed": "Velocidad"
+  },
+  "error": {
+    "generic": "Error al recuperar los datos del vuelo."
+  }
+}

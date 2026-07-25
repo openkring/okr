@@ -1,0 +1,31 @@
+{
+  "create": {
+    "label": "Add address",
+    "description": "Create a new address.",
+    "conf": "The address was saved.",
+    "error": "The address could not be saved."
+  },
+  "update": {
+    "label": "Edit address",
+    "description": "Edit an existing address.",
+    "conf": "The address was changed.",
+    "error": "The address could not be changed."
+  },
+  "delete": {
+    "label": "Delete address",
+    "description": "Delete an existing address.",
+    "conf": "The address was deleted.",
+    "error": "The address could not be deleted.",
+    "askConfirmation": "Do you really want to delete the address ?"
+  },
+  "favorite": {
+    "enable": {
+      "conf": "The address is now the main address.",
+      "error": "The address could not be made the main address."
+    },
+    "disable": {
+      "conf": "The address is no longer the main address.",
+      "error": "The main address could not be changed."
+    }
+  }
+}

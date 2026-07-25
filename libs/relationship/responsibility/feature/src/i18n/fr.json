@@ -1,0 +1,91 @@
+{
+  "label": "Responsabilité",
+  "responsibility": "Responsabilité",
+  "responsibilities": "Responsabilités",
+  "responsible": "Responsable",
+  "desc": "Une compétence d'une personne pour certaines activités.",
+  "empty": "Aucune responsabilité trouvée.",
+
+  "create": {
+    "label": "Ajouter une responsabilité",
+    "conf": "La responsabilité a été créée.",
+    "error": "La responsabilité n'a pas pu être créée."
+  },
+  "delete": {
+    "label": "Supprimer la responsabilité",
+    "confirm": "Voulez-vous vraiment supprimer la responsabilité ?",
+    "conf": "La responsabilité a été supprimée.",
+    "error": "La responsabilité n'a pas pu être supprimée."
+  },
+  "export": {
+    "raw": "Exporter les données brutes"
+  },
+  "select": {
+    "responsible": "Choisir le responsable",
+    "delegate": "Choisir le suppléant"
+  },
+  "update": {
+    "label": "Modifier la responsabilité",
+    "conf": "La responsabilité a été modifiée.",
+    "error": "La responsabilité n'a pas pu être modifiée.",
+    "header": "ID en double",
+    "message1": "Une responsabilité avec l'ID ",
+    "message2": " existe déjà. Veuillez utiliser un autre ID."
+  },
+  "view": {
+    "label": "Afficher les détails de la responsabilité"
+  },
+
+  "list": {
+    "title": "Responsabilités",
+    "header": {
+      "responsible": "Personne responsable",
+      "delegate": "Personne suppléante",
+      "validFrom": "Valable à partir du",
+      "validTo": "Valable jusqu'au",
+      "category": "Type"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "L'ID unique de l'enregistrement dans la base de données."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Texte",
+    "helper": "Texte libre - visible uniquement par les utilisateurs privilégiés."
+  },
+  "name": {
+    "label": "Nom",
+    "placeholder": "Saisir la désignation",
+    "helper": "Une brève description de la responsabilité."
+  },
+  "valid": {
+    "from": {
+      "label": "Valable à partir du",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La responsabilité est valable à partir de ce jour."
+    },
+    "to": {
+      "label": "Valable jusqu'au",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La responsabilité reste valable jusqu'à ce jour."
+    }
+  },
+
+  "delegate": {
+    "label": "Suppléance",
+    "from": {
+      "label": "à partir du",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La suppléance débute ce jour."
+    },
+    "to": {
+      "label": "jusqu'au",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La suppléance se termine ce jour."
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "create": {
+    "conf": "La dépense a été enregistrée.",
+    "error": "La dépense n'a pas pu être enregistrée."
+  },
+  "update": {
+    "conf": "La dépense a été mise à jour.",
+    "error": "La dépense n'a pas pu être mise à jour."
+  },
+  "delete": {
+    "conf": "La dépense a été supprimée.",
+    "error": "La dépense n'a pas pu être supprimée."
+  },
+  "expenseDoc": {
+    "create": {
+      "conf": "Le justificatif a été enregistré.",
+      "error": "Le justificatif n'a pas pu être enregistré."
+    },
+    "delete": {
+      "conf": "Le justificatif a été supprimé.",
+      "error": "Le justificatif n'a pas pu être supprimé."
+    }
+  }
+}

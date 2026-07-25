@@ -1,0 +1,1078 @@
+{
+  "sections": "Sections",
+  "description": "Les sections sont des parties d'un site web. Elles contiennent du texte, des images, des vidéos ou d'autres éléments.",
+  "empty": "Aucune section n'a encore été créée. En créer une en cliquant sur le bouton +.",
+  "noImages": "Aucune image n'a encore été définie pour être affichée ici.",
+  "noSuchSection": "La section {{ type }} n'existe pas. Elle n'a peut-être pas encore été implémentée ou a été mal configurée.",
+  "select": {
+    "label": "Choisir la section",
+    "section": "Choisir la section",
+    "group": "Choisir le groupe",
+    "responsibility": "Choisir la responsabilité"
+  },
+  "view": "Afficher la configuration de la section",
+  "edit": "Modifier la section",
+  "create": "Créer une section",
+  "delete": {
+    "label": "Supprimer la section",
+    "confirm": "Voulez-vous vraiment supprimer cette section ?"
+  },
+  "send": {
+    "confirm1": "Voulez-vous vraiment envoyer",
+    "confirm2": "?"
+  },
+  "email": {
+    "conf": "Le ou les e-mails ont été envoyés.",
+    "error": "Le ou les e-mails n'ont pas pu être envoyés."
+  },
+  "error": {
+    "save": "La section n'a pas pu être enregistrée. Veuillez réessayer.",
+    "load": "Les sections n'ont pas pu être chargées. Veuillez réessayer.",
+    "delete": "La section n'a pas pu être supprimée. Veuillez réessayer."
+  },
+  "default": {
+    "type": "Type par défaut"
+  },
+
+  "activity": {
+    "empty": "Aucune activité disponible."
+  },
+  "album": {
+    "title": "Album",
+    "label": "Album",
+    "empty": "Aucune image trouvée.",
+    "zoom": "Zoomer l'image",
+    "zoomed": "Image agrandie",
+    "edit": "Modifier la configuration de l'album",
+    "directory": {
+      "label": "Répertoire",
+      "placeholder": "sssss/ssss",
+      "helper": "Un chemin vers un répertoire dans le stockage."
+    },
+    "style": {
+      "label": "Style de l'album"
+    },
+    "effect": {
+      "label": "Effet"
+    },
+    "recursive": {
+      "label": "Récursif",
+      "helper": "Renvoie vers les albums des sous-répertoires."
+    },
+    "show": {
+      "videos": {
+        "label": "Afficher les vidéos",
+        "helper": "Les vidéos sont affichées."
+      },
+      "streaming": {
+        "label": "Afficher les vidéos en streaming",
+        "helper": "Les vidéos en streaming sont affichées."
+      },
+      "docs": {
+        "label": "Afficher les documents",
+        "helper": "Affiche les documents."
+      },
+      "pdfs": {
+        "label": "Afficher les PDF",
+        "helper": "Affiche les PDF."
+      }
+    }
+  },
+  "article": {
+    "label": "Article",
+    "zoomed": "Vue d'image agrandie"
+  },
+  "button": {
+    "name": "Bouton",
+    "label": "Bouton",
+    "edit": "Modifier la configuration du bouton",
+    "title": "Configuration du bouton",
+    "subtitle": "Définir l'apparence du bouton",
+    "description": "Bouton avec icône et/ou texte pour le téléchargement ou la navigation.",
+    "label2": {
+      "label": "Désignation",
+      "placeholder": "Texte sur le bouton",
+      "helper": "Le texte affiché sur le bouton.",
+      "error": "Le texte sur le bouton est obligatoire."
+    },
+    "icon": {
+      "title": "Configuration de l'icône",
+      "subtitle": "Choisir une icône et son apparence"
+    },
+    "image": {
+      "zoomed": "Zoom"
+    },
+    "action": {
+      "title": "Configuration de l'action",
+      "subtitle": "Définir ce qui doit se passer lors d'un clic sur le bouton.",
+      "label": "Action du bouton"
+    },
+    "style": {
+      "title": "Configuration du bouton",
+      "subtitle": "Définir l'apparence du bouton",
+      "width": {
+        "label": "Largeur",
+        "placeholder": "60",
+        "helper": "La largeur du bouton en pixels, p. ex. 100, 200 etc.",
+        "error": "La largeur du bouton doit être un nombre entier composé uniquement de chiffres. Elle doit être supérieure à la taille de l'icône."
+      },
+      "height": {
+        "label": "Hauteur",
+        "placeholder": "60",
+        "helper": "La hauteur du bouton en pixels, p. ex. 40, 60 etc.",
+        "error": "La hauteur du bouton doit être un nombre entier composé uniquement de chiffres. Elle doit être supérieure à la taille de l'icône."
+      },
+      "shape": {
+        "label": "Forme",
+        "placeholder": "default | round",
+        "helper": "La forme du bouton, soit round soit default (= rectangulaire avec des coins arrondis).",
+        "error": "La forme du bouton doit être soit round soit default."
+      },
+      "fill": {
+        "label": "Remplissage",
+        "placeholder": "default | clear | outline | solid",
+        "helper": "Le remplissage du bouton : outline, clear, solid/default",
+        "error": "Le remplissage du bouton doit être default, clear, outline ou solid."
+      },
+      "color": {
+        "label": "Couleur",
+        "select": "Choix de la couleur"
+      }
+    }
+  },
+  "calendar": {
+    "calevents": "Événements",
+    "label": "Calendrier",
+    "empty": "Aucun événement trouvé.",
+    "update": {
+      "label": "Modifier l'événement",
+      "conf": "L'événement a été modifié.",
+      "error": "L'événement n'a pas pu être modifié."
+    },
+    "subscribe": "S'inscrire",
+    "unsubscribe": "Se désinscrire",
+    "edit": "Modifier l'événement",
+    "view": "Afficher l'événement",
+    "download": "Télécharger l'événement (ICS)"
+  },
+  "cal": {
+    "title": "Configuration du calendrier",
+    "label": "Calendrier",
+    "subtitle": "Options d'affichage du calendrier.",
+    "view": {
+      "label": "Vue par défaut"
+    },
+    "slotMinTime": {
+      "label": "Heure la plus tôt",
+      "placeholder": "05:00:00",
+      "helper": "Heure la plus tôt affichée dans la vue jour/semaine (format HH:MM:SS)."
+    },
+    "slotMaxTime": {
+      "label": "Heure la plus tard",
+      "placeholder": "22:00:00",
+      "helper": "Heure la plus tard affichée dans la vue jour/semaine (format HH:MM:SS)."
+    },
+    "weekNumbers": {
+      "label": "Afficher les semaines civiles",
+      "helper": "Affiche les numéros de semaine civile ISO."
+    },
+    "editable": {
+      "label": "Événements déplaçables",
+      "helper": "Permet de déplacer les événements et de modifier leur durée par glisser-déposer."
+    }
+  },
+  "chart": {
+    "label": "Diagramme",
+    "title": "Configuration du diagramme",
+    "subtitle": "Type de diagramme, titre et options ECharts.",
+    "type": {
+      "label": "Type de diagramme"
+    },
+    "titleText": {
+      "label": "Titre du diagramme",
+      "placeholder": "p. ex. Évolution des membres",
+      "helper": "Titre facultatif affiché au-dessus du diagramme."
+    },
+    "options": {
+      "label": "Options ECharts (JSON)",
+      "helper": "Options ECharts complètes en JSON (axes, séries de données, couleurs). Voir echarts.apache.org/option.html.",
+      "error": "JSON invalide – les modifications n'ont pas été appliquées."
+    }
+  },
+  "chat": {
+    "title": "Modifier la configuration du chat",
+    "label": "Chat",
+    "subtitle": "Adapter ici les paramètres du chat selon les besoins.",
+    "empty": "Vous n'avez aucun message ouvert.",
+    "id": {
+      "label": "ID",
+      "placeholder": "ID",
+      "helper": "Un identifiant unique."
+    },
+    "name": {
+      "label": "Nom",
+      "placeholder": "Saisir le nom",
+      "helper": "Un nom"
+    },
+    "url": {
+      "label": "URL",
+      "placeholder": "https://...",
+      "helper": "Uniform Resource Locator, un lien HTML"
+    },
+    "description": {
+      "label": "Description",
+      "placeholder": "texte",
+      "helper": "Texte libre pour un contexte non structuré sur cet élément."
+    },
+    "type": {
+      "label": "Type de chat"
+    },
+    "showChannelList": {
+      "label": "Afficher la liste des canaux",
+      "helper": "Affiche la liste des canaux de chat disponibles."
+    }
+  },
+  "context": {
+    "label": "Diagramme de contexte",
+    "title": "Options d'affichage",
+    "show": {
+      "avatar": "Afficher l'avatar",
+      "name": "Afficher le nom",
+      "member": "Afficher les membres",
+      "membership": "Afficher les adhésions",
+      "responsibility": "Afficher les responsabilités",
+      "personal": "Afficher les relations",
+      "workrel": "Afficher les emplois"
+    },
+    "save": "Enregistrer les modifications",
+    "edit": "Modifier le nœud",
+    "center": "Définir comme centre",
+    "displayConfig": "Paramètres d'affichage"
+  },
+  "editor": {
+    "title": "Éditeur",
+    "colSize": {
+      "label": "Taille de colonne",
+      "placeholder": "0..12",
+      "helper": "La largeur en nombre de colonnes d'une grille de max 12 colonnes, p. ex. 1, 2, 3 etc.",
+      "error": "La taille de colonne doit être un nombre entier composé uniquement de chiffres, entre 0 et 12."
+    },
+    "position": {
+      "label": "Position"
+    }
+  },
+  "emergency": {
+    "needs": {
+      "help": {
+        "atLocation": "a besoin d'aide à cet endroit : ",
+        "unknownLocation": "a besoin d'aide (lieu inconnu)"
+      }
+    }
+  },
+  "event": {
+    "title": "Configuration de la liste des événements",
+    "subtitle": "Adapter ici les paramètres de la liste des événements selon les besoins.",
+    "more": {
+      "label": "URL vers les données complètes",
+      "placeholder": "URL interne, relative",
+      "helper": "Une URL qui renvoie vers une page avec plus d'informations. Généralement vers une liste au sein de l'application."
+    },
+    "max": {
+      "label": "Nombre maximal d'événements",
+      "placeholder": "nnn",
+      "helper": "Le nombre maximal d'événements à afficher.",
+      "error": "Un nombre entier composé uniquement de chiffres doit être saisi ; si le champ reste vide, tous les événements sont affichés."
+    },
+    "show": {
+      "past": {
+        "label": "Afficher les événements passés",
+        "helper": "Choisir si les événements passés sont affichés dans la liste ou le calendrier."
+      },
+      "future": {
+        "label": "Afficher les événements à venir",
+        "helper": "Choisir si les événements futurs sont affichés dans la liste ou le calendrier."
+      },
+      "time": {
+        "label": "Afficher l'heure de l'événement",
+        "helper": "Choisir si, en plus de la date, l'heure de l'événement est également affichée."
+      },
+      "location": {
+        "label": "Afficher le lieu de l'événement",
+        "helper": "Choisir si le lieu de l'événement est affiché."
+      }
+    }
+  },
+  "events": {
+    "label": "Événements",
+    "empty": "Aucun événement trouvé."
+  },
+  "form": {
+    "title": "Section",
+    "label": "Formulaire",
+    "content": {
+      "title": "Contenu"
+    },
+    "image": {
+      "style":  "Styles de l'image (CSS)"
+    },
+    "roleNeeded": {
+      "title": "Rôle requis :"
+    },
+    "state": {
+      "title": "Statut de publication"
+    },
+    "submit": {
+      "label": "Enregistrer",
+      "conf": "Les modifications ont été enregistrées.",
+      "error": "Les modifications n'ont pas pu être enregistrées."
+    },
+    "encryption": {
+      "header": "Chiffrement du fichier",
+      "message": "Veuillez saisir le mot de passe de chiffrement.",
+      "placeholder": "Mot de passe"
+    },
+    "not_found": "Le modèle de formulaire n'a pas pu être trouvé.",
+    "archived": "Le modèle de formulaire est archivé.",
+    "advanced": {
+      "label": "Afficher les paramètres avancés"
+    }
+  },
+  "hero": {
+    "label": "Hero"
+  },
+  "icon": {
+    "label": "Symbole",
+    "placeholder": "Nom du symbole",
+    "helper": "Le nom du symbole.",
+    "title": "Configuration de l'icône",
+    "subtitle": "Choisir une icône et son apparence",
+    "size": {
+      "label": "Taille",
+      "placeholder": "nnn",
+      "helper": "Taille en kB."
+    },
+    "slot":    {
+      "label": "Slot",
+      "helper": "Le slot désigne le positionnement de l'icône (au début = start, à la fin = end)"
+    }
+  },
+  "iframe": {
+    "title": "Iframe",
+    "label": "Iframe",
+    "edit": "Modifier la configuration de l'iframe",
+    "description": "Intégration de contenus externes, p. ex. météo, webcams, visioconférence",
+    "style": {
+      "label": "Style CSS",
+      "placeholder": "attribut CSS",
+      "helper": "Les attributs CSS permettent de modifier l'apparence de l'élément (couleurs, bordures, mise en page, police, etc.)."
+    },
+    "url": {
+      "label": "URL de l'iFrame",
+      "placeholder": "https://...",
+      "helper": "L'URL pointe vers le contenu HTML à afficher dans l'iframe."
+    }
+  },
+  "image": {
+    "label": "Image",
+    "empty": "Aucune image trouvée.",
+    "delete": "Supprimer l'image",
+    "detail": "Afficher les détails de l'image",
+    "download": "Télécharger l'image",
+    "upload": {
+      "action": "Téléverser la ou les images",
+      "logo": "Téléverser le logo",
+      "hero": "Téléverser l'image d'arrière-plan"
+    },
+    "overwrite": {
+      "label": "Remplacer l'image",
+      "confirm": "Une image existe déjà. Voulez-vous la remplacer ?",
+      "conf": "L'image a été remplacée"
+    },
+    "config": {
+      "title": "Configuration de l'image (fichier)"
+    },
+    "display": {
+      "title": "Configuration de l'affichage de l'image"
+    },
+    "add": {
+      "label": "Ajouter une image",
+      "conf": "L'image a été ajoutée.",
+      "error": "L'image n'a pas pu être ajoutée.",
+      "empty": "Aucune image n'a encore été configurée. Veuillez d'abord ajouter des images.",
+      "title": "Images"
+    },
+    "edit": {
+      "title": "Modifier la configuration de l'image",
+      "title_modal": "Propriétés de l'image",
+      "label": {
+        "label": "Titre de l'image",
+        "placeholder": "Le titre de l'image.",
+        "helper": "Le titre de l'image.",
+        "error": "Le titre de l'image est obligatoire."
+      },
+      "url": {
+        "label": "URL de l'image",
+        "placeholder": "/path/to/image",
+        "helper": "L'URL qui pointe vers l'image. Normalement, les images se trouvent dans le stockage de l'application. L'URL est alors une URL relative /tenant/scs..."
+      },
+      "actionUrl": {
+        "label": "URL d'action",
+        "placeholder": "https://...",
+        "helper": "L'URL utilisée lors du déclenchement d'une action. Normalement, les images se trouvent dans le stockage de l'application. L'URL est alors une URL relative /tenant/scs..."
+      },
+      "overlay": {
+        "label": "Texte en surimpression",
+        "placeholder": "texte",
+        "helper": "Un texte à afficher en surimpression sur l'image. Remplace le titre/la source lorsqu'il est défini."
+      },
+      "credit": {
+        "label": "Source de l'image",
+        "placeholder": "p. ex. Photo : J. Muster / Keystone",
+        "helper": "Mention de l'auteur de l'image. Affichée comme source dans l'image lorsque « Afficher la source » est activé."
+      },
+      "type": {
+        "name": "type",
+        "label": "Type d'image",
+        "helper": "Indique le type d'une image."
+      }
+    },
+    "select": {
+      "title": "Ajouter une image",
+      "upload": "Choisir une image"
+    },
+    "style": {
+      "title": "Styles de l'image (CSS)",
+      "label": "Style CSS",
+      "placeholder": "code css",
+      "helper": "Cascading Style Sheets (CSS) est un langage de description pour la présentation de contenu HTML.",
+      "imgIxParams": {
+        "label": "Paramètres ImgIx",
+        "placeholder": "w=768&h=1024&fit=crop",
+        "helper": "Les paramètres ImgIx sont transmis à imgix comme paramètres de requête sur l'URL et influencent la manière dont l'image est affichée."
+      },
+      "width": {
+        "label": "Largeur",
+        "placeholder": "nnn",
+        "helper": "La largeur de l'affichage en pixels.",
+        "error": "Un nombre entier composé uniquement de chiffres doit être saisi."
+      },
+      "height": {
+        "label": "Hauteur",
+        "placeholder": "nnn",
+        "helper": "La hauteur de l'affichage en pixels.",
+        "error": "Un nombre entier composé uniquement de chiffres doit être saisi."
+      },
+      "sizes": {
+        "label": "Tailles d'image",
+        "placeholder": "(max-width: 768px) 100vw, 50vw",
+        "helper": "L'attribut HTML sizes (valeurs séparées par des virgules) définit les résolutions d'image pour les images responsives.",
+        "error": "Les tailles doivent être des mots séparés par des virgules."
+      },
+      "border": {
+        "label": "Bordure",
+        "placeholder": "ssss",
+        "helper": "cadre"
+      },
+      "borderRadius": {
+        "label": "Rayon des coins",
+        "placeholder": "8px",
+        "helper": "L'arrondi des coins d'une bordure."
+      },
+      "zoom": {
+        "label": "Facteur de zoom",
+        "placeholder": "n",
+        "helper": "Le facteur de zoom est utilisé pour agrandir ou réduire l'affichage, par défaut = 2x.",
+        "error": "Le facteur de zoom doit être un nombre entier composé uniquement de chiffres."
+      },
+      "slot":    {
+        "label": "Slot",
+        "helper": "Le slot désigne le positionnement de l'icône (au début = start, à la fin = end)"
+      },
+      "action":  {
+        "label": "Action de l'image",
+        "placeholder": "action",
+        "helper": "L'action exécutée lors d'un clic sur l'image, p. ex. open, download, etc."
+      },
+      "isThumbnail": {
+        "label": "Vignette",
+        "helper": "L'image est affichée comme vignette."
+      },
+      "fill": {
+        "label": "Remplissage",
+        "helper": "Mode de représentation des surfaces"
+      },
+      "hasPriority": {
+        "label": "Priorité",
+        "helper": "Définit une priorité plus élevée lors du chargement des images."
+      },
+      "showTitle": {
+        "label": "Afficher le titre",
+        "helper": "Affiche le titre de l'image comme ligne de texte au bas de l'image."
+      },
+      "showSource": {
+        "label": "Afficher la source",
+        "helper": "Affiche la mention de l'auteur (source de l'image) comme ligne de texte au bas de l'image."
+      }
+    }
+  },
+  "images": {
+    "empty": "Aucune image configurée pour l'instant.",
+    "title": "Images",
+    "upload": "Téléverser des images"
+  },
+  "invitation": {
+    "title": "Configuration des invitations",
+    "subtitle": "Adapter ici les paramètres des invitations selon les besoins.",
+    "update": {
+      "label": "Modifier l'invitation",
+      "conf": "L'invitation a été modifiée.",
+      "error": "L'invitation n'a pas pu être modifiée."
+    },
+    "subscribe": "Accepter l'invitation",
+    "unsubscribe": "Refuser l'invitation",
+    "more": {
+      "label": "URL supplémentaire",
+      "placeholder": "https://...",
+      "helper": "Un widget de tableau de bord renvoie ainsi vers une page au contenu complet."
+    },
+    "maxItems": {
+      "label": "Nombre maximal d'entrées",
+      "placeholder": "nnn",
+      "helper": "Le nombre maximal d'entrées à afficher.",
+      "error": "Un nombre entier composé uniquement de chiffres doit être saisi ; si le champ reste vide, toutes les entrées sont affichées."
+    },
+    "showPastItems": {
+      "label": "Afficher les événements passés",
+      "helper": "Choisir si les événements passés sont affichés dans la liste ou le calendrier."
+    },
+    "showUpcomingItems": {
+      "label": "Afficher les événements à venir",
+      "helper": "Choisir si les événements futurs sont affichés dans la liste ou le calendrier."
+    }
+  },
+  "map": {
+    "label": "Carte",
+    "edit": "Modifier la configuration de la carte",
+    "description": "La section affiche un extrait de carte",
+    "latitude": {
+      "label": "Latitude",
+      "placeholder": "nn.nnnnn",
+      "helper": "La latitude, p. ex. 47.2266"
+    },
+    "longitude": {
+      "label": "Longitude",
+      "placeholder": "nn.nnnn",
+      "helper": "La longitude, p. ex. 8.7334"
+    },
+    "zoom": {
+      "label": "Facteur de zoom",
+      "placeholder": "n",
+      "helper": "Facteur de zoom pour l'affichage d'une carte.",
+      "error": "Le facteur de zoom doit être un nombre entier composé uniquement de chiffres."
+
+    },
+    "center": {
+      "label": "Utiliser la position actuelle comme centre de la carte",
+      "helper": "La position GPS actuelle de votre appareil est utilisée comme centre de la carte."
+    },
+    "coordinates": {
+      "label": "Coordonnées",
+      "placeholder": "Latitude, longitude, zoom",
+      "helper": "Les coordonnées d'un lieu. Format : [longitude,latitude,zoom]. p. ex. 47.2266, 8.7334. Le zoom par défaut est 15.",
+      "error": "Les coordonnées doivent être indiquées au format suivant : latitude, longitude, zoom. Par exemple : 47.2266, 8.7334, 15."
+    }
+  },
+  "member": {
+    "age": {
+      "group": "Tranche d'âge",
+      "male": "Hommes",
+      "female": "Femmes",
+      "total": "Total",
+      "empty": "Aucun membre actif trouvé."
+    },
+    "cat": {
+      "category": "Catégorie",
+      "male": "Hommes",
+      "female": "Femmes",
+      "total": "Total",
+      "empty": "Aucun membre actif trouvé."
+    },
+    "config": {
+      "title": "Configuration des statistiques des membres",
+      "subtitle": "Organisation, affichage et tri.",
+      "orgId": {
+        "label": "Organisation",
+        "placeholder": "Clé de l'organisation",
+        "helper": "L'organisation dont les membres sont analysés."
+      },
+      "chartType": {
+        "label": "Représentation"
+      },
+      "sortOrder": {
+        "label": "Tri"
+      },
+      "categoryFilter": {
+        "label": "Filtre de catégorie",
+        "placeholder": "p. ex. Actif",
+        "helper": "Afficher uniquement cette catégorie de membres (vide = toutes)."
+      }
+    }
+  },
+  "news": {
+    "empty": "Il n'y a aucune actualité.",
+    "view": "Afficher l'article",
+    "edit": "Modifier l'article"
+  },
+  "orgchart": {
+    "label": "Organigramme",
+    "accordion": "Liste",
+    "chart": "Organigramme",
+    "group": {
+      "add": {
+        "new": "Ajouter un nouveau groupe",
+        "existing": "Ajouter un groupe existant"
+      },
+      "edit": "Modifier le groupe",
+      "remove": {
+        "label": "Retirer le groupe",
+        "confirm": "Voulez-vous vraiment retirer le groupe ?"
+      }
+    }
+  },
+  "people": {
+    "label": "Personnes",
+    "empty": "Aucune personne trouvée.",
+    "description": "Les personnes listées ici sont affichées comme avatars dans la section.",
+    "type": "Type de personne",
+    "title": {
+      "label": "Liste des personnes",
+      "placeholder": "texte",
+      "helper": "Le titre de la liste des personnes."
+    },
+    "linkedSection": {
+      "label": "Section liée",
+      "placeholder": "ID de section",
+      "helper": "La section liée affiche plus d'informations sur l'élément sélectionné dans une fenêtre modale."
+    },
+    "color": {
+      "label": "Couleur",
+      "select": "Choix de la couleur"
+    },
+    "nameDisplay": {
+      "label": "Affichage du nom",
+      "helper": "Détermine le mode d'affichage des noms de personnes."
+    },
+    "add": "Ajouter une personne",
+    "edit": "Modifier la configuration des personnes",
+    "select": {
+      "group": "Sélectionner un groupe",
+      "person": "Sélectionner une personne",
+      "responsibility": "Choisir le responsable"
+    },
+    "show": {
+      "name": {
+        "label": "Afficher le nom",
+        "helper": "Affiche le nom de la personne."
+      },
+      "label": {
+        "label": "Afficher l'étiquette",
+        "helper": "Affiche l'étiquette."
+      }
+    }
+  },
+  "rag": {
+    "label": "Retrieval Augmented Generation (RAG)",
+    "placeholder": "Posez n'importe quelle question sur le Seeclub Stäfa",
+    "upload": "Téléverser des documents vers le store RAG",
+    "config": {
+      "title": "Configuration RAG",
+      "subtitle": "Modèle, vector store et comportement de l'assistant.",
+      "model": {
+        "label": "Modèle",
+        "placeholder": "gemini-3-flash-preview",
+        "helper": "L'ID du modèle de langage utilisé."
+      },
+      "storeName": {
+        "label": "Vector store",
+        "placeholder": "scs-rag",
+        "helper": "Nom du vector store contenant les documents indexés."
+      },
+      "systemPrompt": {
+        "label": "Prompt système",
+        "placeholder": "Vous êtes un assistant utile ...",
+        "helper": "Instruction facultative qui contrôle le comportement de l'assistant."
+      },
+      "documentScope": {
+        "label": "Périmètre des documents",
+        "placeholder": "Chemin de dossier ou tag",
+        "helper": "Restriction facultative des documents recherchés."
+      },
+      "maxTokens": {
+        "label": "Tokens max.",
+        "placeholder": "1024",
+        "helper": "Limite facultative de la longueur de la réponse."
+      }
+    }
+  },
+  "responsibility": {
+    "label": "Responsabilité",
+    "edit": "Modifier la responsabilité",
+    "okey": {
+      "label": "okey",
+      "placeholder": "okey",
+      "helper": "L'okey est la clé d'un élément, composée du préfixe de la catégorie et d'un numéro séquentiel, p. ex. boat-001 pour le premier bateau."
+    },
+    "show": {
+      "avatar": {
+        "label": "Afficher l'avatar",
+        "helper": "Affiche une image d'avatar de la personne, du groupe ou de l'organisation."
+      },
+      "name": {
+        "label": "Afficher le nom",
+        "helper": "Le nom doit être affiché."
+      },
+      "description": {
+        "label": "Afficher la description",
+        "helper": "Affiche une brève description des responsabilités."
+      }
+    }
+  },
+  "section": {
+    "config": {
+      "name": {
+        "label": "Nom",
+        "placeholder": "Saisir le nom",
+        "helper": "Un nom"
+      },
+      "title": {
+        "label": "Titre",
+        "placeholder": "Saisir le titre",
+        "helper": "Un titre"
+      },
+      "subTitle": {
+        "label": "Sous-titre",
+        "placeholder": "texte",
+        "helper": "Le sous-titre est souvent la date de création de l'article"
+      },
+      "colSize": {
+        "label": "Taille de colonne",
+        "placeholder": "0..12",
+        "helper": "La largeur en nombre de colonnes d'une grille de max 12 colonnes, p. ex. 1, 2, 3 etc.",
+        "error": "La taille de colonne doit être un nombre entier composé uniquement de chiffres, entre 0 et 12."
+      }
+    }
+  },
+  "slider": {
+    "label": "Slider"
+  },
+  "table": {
+    "label": "Tableau",
+    "title": "Configuration du tableau",
+    "edit": "Modifier la configuration du tableau",
+    "description": "Présentation tabulaire de données",
+    "empty": "Le tableau est vide - aucune donnée n'a été trouvée.",
+    "body": {
+      "label": "Contenu du tableau (données)",
+      "placeholder": "texte",
+      "helper": "Le contenu (généralement du texte) dans les cellules du tableau.",
+      "title": "Données : champs du tableau",
+      "description": "Ici, vous pouvez saisir les données du tableau. Ajoutez un champ distinct pour chaque cellule du tableau. Les entrées de champ sont constituées de fragments HTML. Des liens peuvent donc également être saisis. Les trémas doivent être saisis sous forme de codes HTML. L'ordre des entrées de champ correspond à l'ordre des cellules dans le tableau. Les champs peuvent être triés ou supprimés par la suite.",
+      "add": "Ajouter un nouveau champ"
+    },
+    "grid": {
+      "label": "Mise en page du tableau",
+      "template": {
+        "label": "Modèle",
+        "placeholder": "auto auto",
+        "helper": "La définition de la grille. Elle indique combien de colonnes sont affichées et quelle doit être leur largeur. Exemples : trois colonnes de largeur automatique : 'auto auto auto', 2 colonnes, la première avec une largeur fixe : '200px auto'"
+      },
+      "gap": {
+        "label": "Écart / espacement",
+        "placeholder": "1px",
+        "helper": "L'espace entre les cellules du tableau en pixels, p. ex. 10px"
+      },
+      "backgroundColor": {
+        "label": "Couleur d'arrière-plan",
+        "placeholder": "#FFFFFF",
+        "helper": "La couleur d'arrière-plan, p. ex. #f0f0f0, grey etc. Recommandation : utilisez des références aux thèmes Ionic afin que le mode sombre fonctionne aussi, p. ex. var(--ion-color-step-200)."
+      },
+      "padding": {
+        "label": "Padding / marge intérieure",
+        "placeholder": "0",
+        "helper": "L'espace entre le texte et le bord de l'élément en pixels, p. ex. 5px"
+      },
+      "showTitleAs": {
+        "label": "Afficher le titre comme",
+        "placeholder": "header | title | legend | none",
+        "helper": "Détermine le mode d'affichage du titre."
+      }
+    },
+    "header": {
+      "label": "En-tête",
+      "placeholder": "texte",
+      "helper": "Le texte dans l'en-tête.",
+      "title": "Données : titre/en-tête",
+      "description": "Vous pouvez éventuellement saisir ici le contenu de la ligne de titre du tableau. L'ordre des entrées correspond à l'ordre des cellules dans le tableau. Les entrées peuvent être triées ou supprimées par la suite. La ligne de titre n'est affichée que si elle contient du contenu.",
+      "add": "Ajouter un nouveau titre"
+    },
+    "style": {
+      "textAlign": {
+        "label": "Alignement du texte",
+        "placeholder": "left | center | right",
+        "helper": "L'alignement du texte."
+      },
+      "backgroundColor": {
+        "label": "Couleur d'arrière-plan",
+        "placeholder": "Couleur",
+        "helper": "La couleur d'arrière-plan, p. ex. #f0f0f0, grey etc. Recommandation : utilisez des références aux thèmes Ionic afin que le mode sombre fonctionne aussi, p. ex. var(--ion-color-step-200)."
+      },
+      "fontSize": {
+        "label": "Taille de police",
+        "placeholder": "nnpx",
+        "helper": "La taille de police du texte en pixels, p. ex. 16, 20 etc."
+      },
+      "padding": {
+        "label": "Padding",
+        "placeholder": "nn",
+        "helper": "L'espace entre le texte et le bord de l'élément en pixels, p. ex. 5px"
+      },
+      "textColor": {
+        "label": "Couleur du texte",
+        "placeholder": "#RRGGBB | #RRGGBBAA | rgb(nnn,nnn,nnn) | rgba(nnn,nnn,nnn,aa) | colorname",
+        "helper": "La couleur du texte dans un format CSS valide (Hex, RGB(A), noms de couleurs).",
+        "error": "La couleur du texte doit être indiquée dans l'un des formats suivants : #RRGGBB, #RRGGBBAA, rgb(nnn,nnn,nnn), rgba(nnn,nnn,nnn,aa) ou un nom de couleur valide."
+      },
+      "border": {
+        "label": "Bordure",
+        "placeholder": "npx",
+        "helper": "Configuration simplifiée de l'attribut HTML border, p. ex. 5px solid red. Si vous laissez le champ vide, aucune bordure n'est affichée."
+      },
+      "fontWeight": {
+        "label": "Graisse de police",
+        "placeholder": "normal | bold",
+        "helper": "La graisse de la police, p. ex. normal ou bold."
+      }
+    }
+  },
+  "task": {
+    "empty": "Félicitations ! - vous n'avez aucune tâche ouverte.",
+    "complete": "Marquer comme terminée",
+    "view": "Afficher la tâche",
+    "edit": "Modifier la tâche"
+  },
+  "tracker": {
+    "label": "Tracker",
+    "title": "Configuration du tracker",
+    "intervalInSeconds": {
+      "label": "Intervalle en secondes",
+      "placeholder": "nnn",
+      "helper": "L'intervalle de temps en secondes, p. ex. 60 pour une minute, 3600 pour une heure etc.",
+      "error": "Un nombre entier composé uniquement de chiffres doit être saisi."
+    },
+    "maximumAge": {
+      "label": "Temps d'attente maximal",
+      "placeholder": "nn",
+      "helper": "Le temps d'attente maximal en millisecondes, p. ex. 1800000 pour 30 minutes pour une position en cache acceptable, la valeur par défaut est 0.",
+      "error": "Un nombre entier composé uniquement de chiffres doit être saisi."
+    },
+    "exportFormat": {
+      "label": "Format d'export",
+      "placeholder": "csv | kmz | json",
+      "helper": "Le format dans lequel les données doivent être exportées : csv, xlsx ou pdf."
+    },
+    "autostart": {
+      "label": "Démarrer automatiquement",
+      "helper": "Le tracker est démarré automatiquement."
+    },
+    "enableHighAccuracy": {
+      "label": "Haute précision",
+      "helper": "Une haute précision signifie aussi une consommation d'énergie plus élevée."
+    }
+  },
+  "tripstats": {
+    "title": "Sorties",
+    "label": "Statistiques sur les sorties",
+    "empty":    "Aucune statistique trouvée pour cette année.",
+    "col": {
+      "name": "Nom",
+      "km": "km",
+      "trips": "Sorties"
+    },
+    "type": {
+      "view": {
+        "label": "Type d'affichage"
+      },
+      "content": {
+        "label": "Type de contenu"
+      }
+    }
+  },
+  "video": {
+    "label": "Vidéo",
+    "edit": "Modifier la configuration de la vidéo",
+    "youtubeId": {
+      "label": "ID YouTube",
+      "placeholder": "ssssssssssss",
+      "helper": "L'ID YouTube est visible à la fin de l'URL youtube.com/watch?v=[YOUTUBE_ID].",
+      "error": "L'ID de la vidéo YouTube est manquant ou incorrect ; il doit être composé de 11 caractères."
+    },
+    "width": {
+      "label": "Largeur",
+      "placeholder": "560",
+      "helper": "Largeur en pixels."
+    },
+    "height": {
+      "label": "Hauteur",
+      "placeholder": "315",
+      "helper": "Hauteur en pixels."
+    },
+    "frameborder": {
+      "label": "Largeur du cadre",
+      "placeholder": "0",
+      "helper": "La largeur du cadre en pixels. 0 = pas de cadre, 1 = largeur normale"
+    },
+    "baseUrl": {
+      "label": "URL de base",
+      "placeholder": "https://",
+      "helper": "L'URL de base est ajoutée comme préfixe à une URL relative."
+    }
+  },
+
+  "section_type": {
+    "label": "Type de section",
+    "helper": "Le type d'une section, principalement utilisé comme filtre dans les listes de sections.",
+    "all": {
+      "label": "Tous les types de section"
+    },
+    "accordion": {
+      "label": "Accordéon",
+      "edit": "Modifier la configuration de l'accordéon",
+      "description": "Sections déroulantes et repliables"
+    },
+    "album": {
+      "label": "Album",
+      "edit": "Modifier la configuration de l'album",
+      "description": "Aperçu d'images avec vignettes."
+    },
+    "article": {
+      "label": "Article",
+      "edit": "Modifier l'article",
+      "description": "Article avec titre, sous-titre et texte libre. L'image est facultative et la disposition peut être réglée."
+    },
+    "button": {
+      "label": "Bouton",
+      "description": "La section affiche un bouton avec un texte facultatif."
+    },
+    "cal": {
+      "label": "Calendrier",
+      "edit": "Modifier la configuration du calendrier",
+      "description": "Présentation de rendez-vous dans un calendrier"
+    },
+    "chart": {
+      "label": "Diagramme",
+      "edit": "Modifier la configuration du diagramme",
+      "description": "Présentation de données sous forme de diagrammes"
+    },
+    "chat": {
+      "label": "Chat",
+      "title": "Modifier la configuration du chat",
+      "subtitle": "Adapter ici les paramètres du chat selon les besoins.",
+      "edit": "Modifier la configuration du chat",
+      "description": "Fenêtre de chat pour une communication directe ou de groupe"
+    },
+    "context": {
+      "label": "Diagramme de contexte",
+      "description": "Affiche les relations d'une personne, d'un groupe ou d'une organisation."
+    },
+    "events": {
+      "label": "Events",
+      "title": "Configuration de la liste des événements",
+      "subtitle": "Adapter ici les paramètres de la liste des événements selon les besoins.",
+      "edit": "Modifier la configuration de la liste des événements",
+      "description": "Présentation d'événements, p. ex. régates, manifestations, entraînements"
+    },
+    "form": {
+      "label": "Formulaire",
+      "edit": "Modifier la configuration du formulaire",
+      "description": "Formulaire pour saisir des données, p. ex. réservation du hangar à bateaux, inscription, formulaire de contact"
+    },
+    "gallery": {
+      "label": "Galerie",
+      "edit": "Modifier la configuration de la galerie",
+      "description": "Présentation d'images en grand format"
+    },
+    "hero": {
+      "label": "Hero",
+      "edit": "Modifier la configuration du hero",
+      "description": "Section avec une grande image et un titre"
+    },
+    "iframe": {
+      "label": "iFrame",
+      "description": "Section pour intégrer une webview/iframe"
+    },
+    "invitations": {
+      "label": "Invitations",
+      "title": "Configuration des invitations",
+      "subtitle": "Adapter ici les paramètres des invitations selon les besoins.",
+      "edit": "Modifier la configuration des invitations",
+      "description": "Présentation d'invitations, p. ex. pour des manifestations, des réunions"
+    },
+    "list": {
+      "label": "Liste",
+      "edit": "Modifier la configuration de la liste",
+      "description": "Une présentation en liste d'objets BOM (p. ex. personnes, bateaux, événements)"
+    },
+    "map": {
+      "label": "Carte",
+      "description": "Section pour afficher une vue de carte"
+    },
+    "model": {
+      "label": "Modèle",
+      "description": "Modèle 3D, p. ex. bateau, maison, voiture"
+    },
+    "orgchart": {
+      "label": "Organigramme",
+      "description": "Affiche une organisation hiérarchique graphiquement sous forme d'organigramme ou de liste."
+    },
+    "people": {
+      "label": "Personnes",
+      "addLabel": "Sélectionner une personne",
+      "select": {
+        "group": "Sélectionner un groupe",
+        "responsibility": "Choisir le responsable"
+      },
+      "edit": "Modifier la configuration des personnes",
+      "editorLabel": "Description facultative",
+      "configLabel": "Configuration de l'avatar",
+      "description": "Liste de personnes avec image, nom, fonction et description facultative",
+      "labelField": {
+        "label": "Nom",
+        "placeholder": "Texte affiché en plus du nom, p. ex. abréviation, fonction"
+      }
+    },
+    "responsibility": {
+      "label": "Responsabilités",
+      "edit": "Configuration",
+      "description": "Une visualisation d'un rôle avec une personne ou un groupe responsable."
+    },
+    "slider": {
+      "label": "Slider",
+      "edit": "Modifier la configuration du slider",
+      "description": "Plusieurs images sont affichées côte à côte ou les unes après les autres."
+    },
+    "table": {
+      "label": "Tableau",
+      "description": "Section pour présenter des données dans un tableau simple"
+    },
+    "tracker": {
+      "label": "Tracker",
+      "edit": "Modifier la configuration du tracker",
+      "description": "Éléments de suivi, p. ex. pour des régates, des randonnées, des entraînements"
+    },
+    "video": {
+      "label": "Vidéo",
+      "edit": "Modifier la configuration de la vidéo",
+      "description": "La section affiche une vidéo YouTube. Convient p. ex. pour des tutoriels, du marketing, etc."
+    }
+  }
+}

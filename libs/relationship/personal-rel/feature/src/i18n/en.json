@@ -1,0 +1,123 @@
+{
+  "personalrel": "Relationship",
+  "personalrels": "Relationships",
+  "description": "A relationship between two people.",
+  "relDesc": "knows",
+  "revreldesc": "knows",
+  "empty": "No relationships found.",
+  "title": "Relationships",
+  "person1": "Person1",
+  "type": "Relationship type",
+  "person2": "Person2",
+
+  "create": {
+    "label": "Create new relationship",
+    "conf": "The relationship has been saved.",
+    "error": "The relationship could not be saved."
+  },
+  "delete": {
+    "label": "Delete relationship",
+    "confirm": "Should this relationship really be deleted ?",
+    "conf": "The relationship has been deleted.",
+    "error": "The relationship could not be deleted."
+  },
+  "end": {
+    "label": "End relationship",
+    "conf": "The relationship has been ended.",
+    "error": "The relationship could not be ended."
+  },
+  "select": {
+    "label": "Select"
+  },
+  "update": {
+    "label": "Edit relationship",
+    "conf": "The relationship has been changed.",
+    "error": "The relationship could not be changed."
+  },
+  "view": {
+    "label": "Show relationship details"
+  },
+
+  "list": {
+    "title": "Personal relationships",
+    "empty": "No personal relationships found.",
+    "header": {
+      "person1": "Person1",
+      "person2": "Person2",
+      "type": "Relationship type"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "The okey is the key of an element, consisting of the category prefix and a sequential number, e.g. boat-001 for the first boat."
+  },
+  "label": {
+    "label": "Label",
+    "placeholder": "Label",
+    "error": "The label is mandatory and must consist of alphanumeric characters.",
+    "helper": "This text is shown to the user."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes"
+  },
+  "valid": {
+    "from": {
+      "label": "Valid from",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "The relationship starts on this date."
+    },
+    "to": {
+      "label": "Valid until",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "The relationship ends on this date."
+    }
+  },
+
+  "personalrel_type": {
+    "label": "Relationship type",
+    "helper": "The type of relationship between two people.",
+    "name": "Relationship type",
+    "all": {
+      "label": "All"
+    },
+    "partner": {
+      "label": "Partner",
+      "description": "Life partner"
+    },
+    "husband": {
+      "label": "married",
+      "description": "Spouse"
+    },
+    "friend": {
+      "label": "friends",
+      "description": "Friend"
+    },
+    "neighbor": {
+      "label": "neighbors",
+      "description": "Neighbors"
+    },
+    "incompatible": {
+      "label": "incompatible",
+      "description": "Two people who do not get along with each other."
+    },
+    "related": {
+      "label": "related",
+      "description": "e.g. nephews, nieces, uncles, aunts, grandchildren, cousins"
+    },
+    "parentChild": {
+      "label": "Parent-child",
+      "description": "Daughter or son"
+    },
+    "sibling": {
+      "label": "Sister/brother",
+      "description": "Siblings"
+    },
+    "custom": {
+      "label": "Other relationship",
+      "description": "Relationship that does not fit into the other categories."
+    }
+  }
+}

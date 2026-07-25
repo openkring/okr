@@ -1,0 +1,92 @@
+{
+  "invitation": "Invitación",
+  "invitations": "Invitaciones",
+  "description": "Una invitación a un evento o acontecimiento.",
+  "empty": "Todavía no se ha creado ninguna invitación. Cree una haciendo clic en el botón +.",
+
+  "delete": {
+    "label": "Eliminar invitación",
+    "confirm": "¿Desea realmente eliminar la invitación ?",
+    "conf": "La invitación se ha eliminado.",
+    "error": "No se ha podido eliminar la invitación."
+  },
+  "invite": {
+    "label": "Invitar a una persona",
+    "conf": "La persona ha sido invitada.",
+    "error": "No se ha podido invitar a la persona."
+  },
+  "update": {
+    "label": "Editar invitación",
+    "conf": "La invitación se ha guardado",
+    "error": "No se ha podido guardar la invitación."
+  },
+  "view": {
+    "label": "Mostrar detalles de la invitación"
+  },
+  "accept": "Participo",
+  "accepted": "invitaciones aceptadas",
+  "maybe": "Quizás",
+  "decline": "No puedo participar",
+  "resend": "Reenviar invitación",
+  "subscribe": "Participo",
+  "unsubscribe": "No puedo participar",
+
+  "list": {
+    "header": {
+      "date": "Fecha",
+      "name": "Nombre",
+      "invitee": "Participante",
+      "inviter": "Organizador",
+      "state": "Estado"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "sssssss",
+    "helper": "Un ID único de la invitación en la base de datos."
+  },
+  "invitee": "Participante",
+  "inviter": "Organizador",
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas libres."
+  },
+  "sentAt": {
+    "label": "Enviada el",
+    "placeholder": "DD.MM.AAAA",
+    "helper": "La invitación se envió en esta fecha."
+  },
+  "respondedAt": {
+    "label": "Respondida el",
+    "placeholder": "DD.MM.AAAA",
+    "helper": "La invitación se respondió en esta fecha."
+  },
+  "role": {
+    "label": "Rol"
+  },
+
+  "invitation_state": {
+    "label": "Estado",
+    "helper": "Estado de la invitación",
+    "all": {
+      "label": "Todos los estados"
+    },
+    "pending": {
+      "label": "Pendiente",
+      "description": "La invitación se ha enviado, pero aún no se ha respondido."
+    },
+    "accepted": {
+      "label": "Aceptada",
+      "description": "La invitación ha sido aceptada."
+    },
+    "declined": {
+      "label": "Rechazada",
+      "description": "La invitación ha sido rechazada."
+    },
+    "maybe": {
+      "label": "Quizás",
+      "description": "La invitación se ha respondido con «Quizás»."
+    }
+  }
+}

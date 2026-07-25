@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Añadir tarea",
+    "conf": "La tarea se ha añadido.",
+    "error": "No se ha podido añadir la tarea."
+  },
+  "update": {
+    "label": "Editar tarea",
+    "conf": "La tarea se ha modificado.",
+    "error": "No se ha podido modificar la tarea."
+  },
+  "delete": {
+    "label": "Eliminar tarea",
+    "conf": "La tarea se ha eliminado.",
+    "error": "No se ha podido eliminar la tarea."
+  }
+}

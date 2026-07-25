@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Aggiungi tragitto",
+    "conf": "Il tragitto è stato aggiunto.",
+    "error": "Impossibile aggiungere il tragitto."
+  },
+  "update": {
+    "label": "Modifica tragitto",
+    "conf": "Il tragitto è stato modificato.",
+    "error": "Impossibile modificare il tragitto."
+  },
+  "delete": {
+    "label": "Elimina tragitto",
+    "conf": "Il tragitto è stato eliminato.",
+    "error": "Impossibile eliminare il tragitto."
+  }
+}

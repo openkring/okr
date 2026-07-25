@@ -1,0 +1,19 @@
+{
+  "name": {
+    "label": "Nom",
+    "placeholder": "Nom du tableau blanc",
+    "helper": ""
+  },
+  "description": {
+    "label": "Description",
+    "placeholder": ""
+  },
+  "item": {
+    "text": {
+      "label": "Texte",
+      "placeholder": "Saisir le texte"
+    },
+    "color": { "label": "Couleur" },
+    "owner": { "label": "Responsable" }
+  }
+}

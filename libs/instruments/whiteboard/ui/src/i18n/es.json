@@ -1,0 +1,19 @@
+{
+  "name": {
+    "label": "Nombre",
+    "placeholder": "Nombre de la pizarra",
+    "helper": ""
+  },
+  "description": {
+    "label": "Descripción",
+    "placeholder": ""
+  },
+  "item": {
+    "text": {
+      "label": "Texto",
+      "placeholder": "Introducir texto"
+    },
+    "color": { "label": "Color" },
+    "owner": { "label": "Responsable" }
+  }
+}

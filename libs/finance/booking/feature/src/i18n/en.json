@@ -1,0 +1,40 @@
+{
+    "list": {
+        "title": "Bookings"
+    },
+    "empty": "No bookings found.",
+    "as": {
+        "title": "Booking"
+    },
+    "cancel": {
+        "label": "Cancel"
+    },
+    "col": {
+        "date": "Date",
+        "credit": "Credit",
+        "debit": "Debit",
+        "name": "Text",
+        "amount": "Amount"
+    },
+    "view": {
+        "label": "Show booking details"
+    },
+    "edit": {
+        "label": "Change booking"
+    },
+    "create": {
+        "label": "Create booking"
+    },
+    "delete": {
+        "label": "Delete booking"
+    },
+    "action": {
+        "createReceipt": "Create donation receipt",
+        "counterpartyRequired": "Please first enter the sender (counterparty).",
+        "noAddress": "No address is stored for the counterparty.",
+        "failed": "The document could not be created."
+    },
+    "readonly": {
+        "banner": "This list is read-only. The bookings are managed in Bexio."
+    }
+}

@@ -1,0 +1,151 @@
+{
+  "trip": "Sortie",
+  "trips": "Sorties",
+  "desc": "Avant de partir, enregistrez ici votre sortie prévue dans le carnet de bord. Vous indiquez ainsi où vous souhaitez ramer, avec quel bateau et avec quels rameurs. Pour des raisons de sécurité, cela est important afin que nous puissions vous retrouver plus rapidement en cas d'urgence. Les autres membres peuvent également voir quels bateaux sont déjà réservés. Après la sortie, vous clôturez votre sortie. Votre sortie est alors automatiquement reportée dans les statistiques des bateaux.",
+  "empty": "Aucune sortie n'a été trouvée.",
+
+  "create": {
+    "label": "Enregistrer une nouvelle sortie",
+    "conf": "La sortie a été enregistrée.",
+    "error": "La sortie n'a pas pu être enregistrée.",
+    "guest": "Ajouter un invité"
+  },
+  "delete": {
+    "label": "Supprimer la sortie",
+    "confirm": "Voulez-vous vraiment supprimer cette sortie ?",
+    "reason": "Motif de la suppression",
+    "conf": "La sortie a été supprimée.",
+    "error": "La sortie n'a pas pu être supprimée."
+  },
+  "end": {
+    "label": "Clôturer la sortie"
+  },
+  "view": {
+    "label": "Afficher la sortie"
+  },
+  "export": {
+    "raw": "Exporter les données brutes"
+  },
+  "report": {
+    "damage": {
+      "label": "Signaler un dommage",
+      "plain": "signale un dommage",
+      "trip": "signale un dommage lors d'une sortie",
+      "prompt": "Décrire le dommage"
+    },
+    "bug": {
+      "label": "Signaler une erreur",
+      "plain": "signale une erreur",
+      "trip": "signale une erreur lors d'une sortie",
+      "prompt": "Décrire l'erreur"
+    }
+  },
+  "search": {
+    "label": "Rechercher un lieu"
+  },
+  "select": {
+    "participant": {
+      "title": "Choisir un participant",
+      "add": "Sélectionner"
+    },
+    "boat": {
+      "title": "Choisir un bateau",
+      "add": "Sélectionner"
+    },
+    "location": {
+      "title": "Choisir une destination",
+      "add": "Sélectionner"
+    }
+  },
+  "show": {
+    "images": "Afficher les images",
+    "statistics": {
+      "boatkm": "Afficher les statistiques des bateaux",
+      "personkm": "Afficher les statistiques des personnes"
+    }
+  },
+  "stats": {
+    "boat_title": "Statistiques des bateaux",
+    "member_title": "Statistiques des personnes",
+    "view_list": "Tableau",
+    "view_graph": "Évolution"
+  },
+  "update": {
+    "label": "Modifier la sortie",
+    "conf": "La sortie a été enregistrée.",
+    "error": "La sortie n'a pas pu être enregistrée."
+  },
+
+  "list": {
+    "title": "Carnet de bord"
+  },
+
+  "warning": {
+    "suspicious": "Activité suspecte détectée. Veuillez confirmer.",
+    "distance_zero": "Veuillez saisir une distance raisonnable entre 1 et 50 km.",
+    "distance_high": "Veuillez saisir une distance raisonnable entre 1 et 50 km.",
+    "seats_mismatch": "Le nombre de participants ne correspond pas à la capacité du bateau.",
+    "note": "Afin d'éviter les abus, différents contrôles s'exécutent en arrière-plan. Si un abus est constaté, une photo de l'utilisateur est prise et l'administrateur en est notifié."
+  },
+
+  "boat": "Bateau",
+  "distance": {
+    "label": "Distance (km)",
+    "placeholder": "nn",
+    "helper": "La longueur de la sortie en kilomètres. Lors de la saisie d'une destination prédéfinie, la distance est insérée automatiquement. Elle peut ensuite être ajustée manuellement."
+  },
+  "participants": "Participants",
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Texte"
+  },
+  "date": "Date/heure",
+  "location": {
+    "label": "Destination",
+    "custom": "Destination personnalisée",
+    "view": {
+      "list": "Liste",
+      "map": "Carte"
+    },
+    "search": "Rechercher un lieu",
+    "select": "Sélectionner un lieu",
+    "empty": "Aucun lieu trouvé",
+    "none_selected": "Aucun lieu sélectionné"
+  },
+
+  "trip_state": {
+    "label": "Statut",
+    "helper": "Statut de la sortie",
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "draft": {
+      "label": "Brouillon"
+    },
+    "open": {
+      "label": "Ouverte"
+    },
+    "closed": {
+      "label": "Clôturée"
+    },
+    "cancelled": {
+      "label": "Supprimée"
+    },
+    "revised": {
+      "label": "Révisée"
+    }
+  },
+
+  "aoc": {
+    "title": "Administration des sorties",
+    "trash": "Corbeille",
+    "notes": "Sorties avec notes",
+    "zero_km": "Sorties avec 0 km",
+    "flagged": "Sorties marquées",
+    "restore": "Restaurer",
+    "clear_flag": "Retirer la marque",
+    "hard_delete_confirm": "Supprimer définitivement la sortie ? Cette action est irréversible.",
+    "restore_conf": "Sortie restaurée.",
+    "restore_error": "La restauration a échoué."
+  }
+}

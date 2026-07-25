@@ -1,0 +1,100 @@
+{
+  "user": "User",
+  "users": "Users",
+  "empty": "No users found",
+  "unknown": "Unknown user",
+  "intro": "A user corresponds 1:1 to an authenticated account (Firebase UID = User.okey) and to exactly one person (User.personKey = Person.okey).",
+
+  "create": {
+    "label": "Add user",
+    "error": "The user could not be created.",
+    "conf": "The user was created."
+  },
+  "delete": {
+    "label": "Delete user",
+    "confirm": "Do you really want to delete the user ?",
+    "error": "The user could not be deleted",
+    "conf": "The user was deleted"
+  },
+  "update": {
+    "label": "Edit user",
+    "error": "The changes could not be saved",
+    "conf": "The changes were saved."
+  },
+  "upload": {
+    "avatar": "Upload avatar image"
+  },
+  "view": {
+    "label": "Show user details"
+  },
+
+  "auth": {
+    "title": "Authentication",
+    "description": "Settings for the user's authentication. These settings apply only to the selected user."
+  },
+  "fbuser": {
+    "title": "Firebase user",
+    "description": "Details about the Firebase authentication account.",
+    "delete": {
+      "label": "Delete Firebase user"
+    },
+    "update": {
+      "label": "Edit Firebase user"
+    }
+  },
+
+  "display": {
+    "title": "Display",
+    "description": "Settings for the display of names, avatar and sorting."
+  },
+  "model": {
+    "title": "User data",
+    "description": "Technical user data and links."
+  },
+  "notification": {
+    "title": "Notifications",
+    "description": "Settings for the delivery of messages and invoices."
+  },
+  "privacy": {
+    "title": "Privacy",
+    "description": "Here you can define for all sensitive attributes who is allowed to see them. Public attributes are visible to everyone. Restricted attributes are only visible to members within the app. Protected attributes are only visible to privileged persons."
+  },
+
+  "access_level": "Access level",
+  "role": "Role",
+
+  "uid": { "label": "User ID", "placeholder": "ssssssss", "helper": "A unique identifier for the Firebase user." },
+  "displayName": { "label": "Display name", "placeholder": "sssssssss", "helper": "This name is shown in the Firebase console." },
+  "photoUrl": { "label": "Photo URL", "placeholder": "https://...", "helper": "A link to a portrait photo of the user." },
+  "okey": { "label": "User ID", "placeholder": "sssssss", "helper": "A unique identifier for the user" },
+  "personKey": { "label": "Person key", "placeholder": "sssssss", "helper": "The key of the person record in the database." },
+  "firstName": { "label": "First name", "placeholder": "Enter first name", "helper": "The user's first names." },
+  "lastName": { "label": "Last name", "placeholder": "Enter last name", "helper": "The user's family name." },
+  "tenants": { "label": "Tenants", "placeholder": "sss, sss, sss", "helper": "Identifiers of the tenants" },
+  "loginEmail": { "label": "Login e-mail", "placeholder": "Enter e-mail address" },
+  "gravatarEmail": { "label": "Gravatar e-mail", "placeholder": "Enter e-mail address" },
+  "email": { "label": "E-mail", "placeholder": "Enter e-mail address" },
+  "phone": { "label": "Phone", "placeholder": "+41 XX XXX XX XX" },
+  "notes": { "label": "Notes", "placeholder": "Any text" },
+  "avatarUsage": { "label": "Avatar usage" },
+  "personSortCriteria": { "label": "Sort persons by" },
+  "userLanguage": { "label": "Language" },
+  "nameDisplay": { "label": "Name display" },
+  "srv": { "description": "The following settings apply to the use of your data by the SRV." },
+  "usageImages": { "label": "Images" },
+  "usageDateOfBirth": { "label": "Date of birth" },
+  "usagePostalAddress": { "label": "Postal address" },
+  "usageEmail": { "label": "E-mail" },
+  "usagePhone": { "label": "Phone" },
+  "usageName": { "label": "Name" },
+  "newsDelivery": { "label": "News delivery" },
+  "invoiceDelivery": { "label": "Invoice delivery" },
+  "emailVerified": { "label": "E-mail verified", "helper": "Whether the user has confirmed the e-mail address." },
+  "disabled": { "label": "Disabled", "helper": "The user account is disabled." },
+  "useTouchId": { "label": "Use Touch ID", "helper": "Authentication via fingerprint." },
+  "useFaceId": { "label": "Use Face ID", "helper": "Authentication via face scan." },
+  "showArchivedData": { "label": "Show archived data", "helper": "Archived data is also shown." },
+  "showDebugInfo": { "label": "Show debug information", "helper": "Debug information is shown in addition." },
+  "showHelpers": { "label": "Show helpers", "helper": "Description texts are shown." },
+  "srvEmail": { "label": "SRV e-mail", "helper": "If the SRV newsletter is to be received, the e-mail must be forwarded to the SRV." }
+}

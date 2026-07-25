@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Añadir lugar",
+    "conf": "El lugar se ha añadido.",
+    "error": "No se pudo añadir el lugar."
+  },
+  "update": {
+    "label": "Editar lugar",
+    "conf": "El lugar se ha modificado.",
+    "error": "No se pudo modificar el lugar."
+  },
+  "delete": {
+    "label": "Eliminar lugar",
+    "conf": "El lugar se ha eliminado.",
+    "error": "No se pudo eliminar el lugar."
+  }
+}

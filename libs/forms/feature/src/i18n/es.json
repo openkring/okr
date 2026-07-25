@@ -1,0 +1,72 @@
+{
+  "title": "Editor de formularios",
+  "list": {
+    "title": "Formularios",
+    "empty": "No se encontraron formularios."
+  },
+  "as": {
+    "title": "Acciones del formulario"
+  },
+  "action": {
+    "builder": "Editar campos",
+    "settings": "Ajustes",
+    "export_csv": "Exportar CSV",
+    "export_pdf": "Exportar PDF",
+    "duplicate": "Duplicar",
+    "archive": "Archivar"
+  },
+  "form": {
+    "key": {
+      "label": "Clave del formulario (inmutable)"
+    },
+    "loading": "El formulario se está cargando…",
+    "notfound": "Formulario no encontrado.",
+    "archived": "Este formulario ya no está disponible."
+  },
+  "field": {
+    "title": "Configurar campo",
+    "add": "Añadir campo"
+  },
+
+  "canvas_empty": "Arrastre aquí los campos desde la biblioteca.",
+  "library": "Biblioteca de campos",
+  "key": "Nombre del campo (snake_case)",
+  "label": "Etiqueta",
+  "required": "Campo obligatorio",
+  "width": "Ancho",
+  "help": "Texto de ayuda",
+  "preview": "Vista previa",
+  "mapping": {
+    "choose": "Seleccionar colección"
+  },
+  "target": {
+    "label": "¿Dónde deben guardarse los envíos?",
+    "collection": "Colección de Firestore (recomendado)",
+    "url": "URL externa (p. ej. Google Forms)"
+  },
+  "url": {
+    "label": "URL de destino"
+  },
+
+  "create": {
+    "label": "Crear nuevo formulario",
+    "conf": "El formulario se ha creado.",
+    "error": "No se pudo crear el formulario."
+  },
+  "delete": {
+    "label": "Eliminar formulario",
+    "confirm": "¿Desea realmente eliminar el formulario ?",
+    "conf": "El formulario se ha eliminado.",
+    "error": "No se pudo eliminar el formulario."
+  },
+  "submit": {
+    "label": "Enviar",
+    "conf": "¡Gracias! Su envío se ha guardado.",
+    "error": "Error al enviar. Inténtelo de nuevo."
+  },
+  "update": {
+    "label": "Modificar formulario",
+    "conf": "El formulario se ha guardado.",
+    "error": "No se pudo guardar el formulario."
+  }
+}

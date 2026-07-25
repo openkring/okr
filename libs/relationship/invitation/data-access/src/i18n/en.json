@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Invite person",
+    "conf": "The invitation was added.",
+    "error": "The invitation could not be added."
+  },
+  "update": {
+    "label": "Edit invitation",
+    "conf": "The invitation was changed.",
+    "error": "The invitation could not be changed."
+  },
+  "delete": {
+    "label": "Delete invitation",
+    "conf": "The invitation was deleted.",
+    "error": "The invitation could not be deleted.",
+    "confirm": "Do you really want to delete this invitation ?"
+  }
+}

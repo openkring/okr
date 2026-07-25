@@ -1,0 +1,96 @@
+{
+  "list": {
+    "title": "Demandes",
+    "empty": "Aucune demande trouvée.",
+    "no_person": "Personne pas encore créée — accepter d'abord la demande."
+  },
+  "add": {
+    "group": {
+      "label": "Inviter dans le groupe",
+      "conf": "Personne invitée dans le groupe."
+    },
+    "membership": {
+      "label": "Ajouter une adhésion",
+      "conf": "Adhésion ajoutée."
+    }
+  },
+  "accept": {
+    "label": "Accepter",
+    "confirm": "Accepter la demande ? Une personne sera créée.",
+    "conf": "Demande approuvée — la personne a été créée.",
+    "error": "L'approbation a échoué."
+  },
+  "delete": {
+    "confirm": "Voulez-vous vraiment supprimer cette demande ?",
+    "conf": "Demande supprimée.",
+    "error": "La suppression a échoué."
+  },
+  "deny": {
+    "label": "Refuser",
+    "conf": "Demande refusée.",
+    "error": "Le refus a échoué.",
+    "reason": "Motif du refus"
+  },
+  "send": {
+    "confirmation_sent": "Confirmation envoyée au demandeur.",
+    "decision_sent": "Décision envoyée au demandeur.",
+    "error": "L'e-mail n'a pas pu être envoyé."
+  },
+  "update": {
+    "title": "Modifier la demande",
+    "save": {
+      "label": "Enregistrer",
+      "conf": "Demande mise à jour.",
+      "error": "La mise à jour a échoué."
+    }
+  },
+  "field": {
+    "firstname": "Prénom",
+    "lastname": "Nom",
+    "gender": "Sexe",
+    "date_of_birth": "Date de naissance",
+    "ssn": "Numéro AVS",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "streetname": "Rue",
+    "streetnumber": "N°",
+    "zipcode": "NPA",
+    "city": "Localité",
+    "countrycode": "Pays",
+    "parent": {
+      "firstname": "Prénom du parent",
+      "lastname": "Nom du parent",
+      "email": "E-mail du parent",
+      "phone": "Téléphone du parent"
+    },
+    "application": "Demande en tant que",
+    "state": "Statut",
+    "submitted": "Reçue",
+    "reviewed": "En traitement depuis",
+    "reviewer": "Responsable du traitement",
+    "reason": "Remarque"
+  },
+  "validation": {
+    "email_required": "L'e-mail est obligatoire (soit le demandeur, soit le parent).",
+    "phone_required": "Le téléphone est obligatoire (soit le demandeur, soit le parent)."
+  },
+  "section": {
+    "person": "Personne",
+    "contact": "Contact",
+    "address": "Adresse",
+    "parent": "Parents (obligatoire pour les mineurs)",
+    "application": "Demande"
+  },
+  "kind": {
+    "youth": "Jeune",
+    "adult": "Adulte",
+    "transfer": "Transfert"
+  },
+  "state": {
+    "applied": "Reçue",
+    "reviewing": "En traitement",
+    "closed_approved": "Acceptée",
+    "closed_denied": "Refusée",
+    "closed_cancelled": "Retirée"
+  }
+}

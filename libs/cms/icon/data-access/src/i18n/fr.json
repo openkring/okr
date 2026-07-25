@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Ajouter une icône",
+    "conf": "L'icône a été ajoutée.",
+    "error": "L'icône n'a pas pu être ajoutée."
+  },
+  "update": {
+    "label": "Modifier l'icône",
+    "conf": "L'icône a été modifiée.",
+    "error": "L'icône n'a pas pu être modifiée."
+  },
+  "delete": {
+    "label": "Supprimer l'icône",
+    "conf": "L'icône a été supprimée.",
+    "error": "L'icône n'a pas pu être supprimée.",
+    "confirm": "Voulez-vous vraiment supprimer l'icône ?"
+  }
+}

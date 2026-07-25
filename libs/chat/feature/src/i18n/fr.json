@@ -1,0 +1,232 @@
+{
+  "roomId": {
+    "label": "ID de salon",
+    "placeholder": "ID de salon",
+    "helper": "L'ID de salon est utilisé pour identifier de manière unique un salon de discussion.",
+    "error": "L'ID de salon doit être composé d'un seul mot avec des caractères alphanumériques en minuscules."
+  },
+  "name": {
+    "label": "Nom",
+    "placeholder": "Saisir le nom",
+    "helper": "Un nom"
+  },
+  "invite": {
+    "label": "Invitation",
+    "placeholder": "Invitation",
+    "helper": "Une invitation"
+  },
+  "unreadCount": {
+    "label": "Messages non lus",
+    "placeholder": "messages non lus",
+    "helper": "Messages non lus"
+  },
+  "topic": {
+    "label": "Sujet",
+    "placeholder": "Sujet"
+  },
+  "avatar": {
+    "label": "URL de l'avatar",
+    "placeholder": "https://...",
+    "helper": "Un avatar est l'image d'une personne, le logo d'une organisation ou d'une ressource, etc."
+  },
+  "isDirect": {
+    "label": "Message direct",
+    "helper": "Un message entre exactement deux personnes."
+  },
+  "reconnecting": "Reconnexion...",
+  "connectionError": "Erreur de connexion",
+  "connecting": "connexion...",
+  "noRoomsError": "Aucun salon de discussion disponible. Créez un salon ou rejoignez-en un pour commencer.",
+  "createTestRoom": "Créer un salon de test",
+  "typeMessage": "Écrire un message...",
+  "recordAudio": "Enregistrer un message vocal",
+  "videoCall": "Démarrer une discussion vidéo",
+  "recording": "Enregistrement en cours...",
+  "addAttachment": "Ajouter une pièce jointe",
+  "mentionEveryone": "Mentionner tout le monde dans le salon (@room)",
+  "mentionMe": "M'insérer moi-même (@me)",
+  "noMessagesStartConversation": "Il n'y a pas encore de messages. Démarrez la conversation.",
+  "room": {
+    "rooms": "Salons de discussion",
+    "empty": "Salon vide",
+    "none": "Aucun salon de discussion trouvé.",
+    "searchPlaceholder": "Rechercher un salon...",
+    "create": {
+      "header": "Créer un nouveau salon de discussion",
+      "conf": "Un nouveau salon de discussion a été créé.",
+      "error": "Le salon de discussion n'a pas pu être créé."
+    },
+    "update": {
+      "header": "Modifier le salon de discussion",
+      "conf": "Le salon de discussion a été modifié",
+      "error": "Le salon de discussion n'a pas pu être modifié."
+    }
+  },
+  "help": {
+    "title": "Discussion – Aide",
+    "intro": "Dans la discussion, vous écrivez directement (1:1) ou dans des salons de groupe avec plusieurs personnes et vous partagez des fichiers, des photos, des positions et des sondages.",
+    "shortcuts": {
+      "title": "Raccourcis clavier",
+      "mention": {
+        "token": "@",
+        "desc": "Dans les discussions de groupe, la liste des membres du salon s'ouvre pendant la saisie. ↑↓ sélectionnent une entrée, Entrée ou Tab l'insèrent, Échap referme la liste sans modifier le texte saisi. Dans les discussions directes, @ reste du texte simple."
+      },
+      "mentionRoom": {
+        "token": "@room",
+        "desc": "Notifie tous les membres du salon. L'entrée apparaît directement après le @ et de nouveau dès que vous avez saisi trois caractères – les formes abrégées @team, @all et @alle trouvent la même entrée et insèrent également @room."
+      },
+      "mentionMe": {
+        "token": "@me",
+        "desc": "Insère votre propre nom sous forme de texte sans vous notifier vous-même. L'entrée n'apparaît qu'avec la saisie exacte @me – @m ou @mei ne l'affichent pas."
+      },
+      "date": {
+        "token": "//",
+        "desc": "Ouvre le sélecteur de date et insère la date choisie."
+      },
+      "location": {
+        "token": "!!",
+        "desc": "Ouvre le sélecteur de lieu et partage le lieu choisi."
+      },
+      "send": {
+        "token": "Entrée",
+        "desc": "Envoie le message. Si la liste @ est encore ouverte, Entrée sélectionne à la place l'entrée en surbrillance."
+      },
+      "newline": {
+        "token": "Maj+Entrée",
+        "desc": "Insère une nouvelle ligne sans envoyer le message."
+      }
+    },
+    "chats": {
+      "title": "Discussions directes vs. de groupe",
+      "direct": "Une discussion directe est une conversation privée entre vous et une autre personne.",
+      "group": "Une discussion de groupe compte plusieurs membres ainsi qu'un nom de salon et un sujet."
+    }
+  },
+  "message": {
+    "edit": "Modifier le message",
+    "reply": {
+      "label": "Répondre",
+      "to": "Répondre à"
+    },
+    "copy": "Copier le message",
+    "share": "Partager le fichier",
+    "download": "Télécharger le fichier",
+    "raw": "Afficher les données brutes",
+    "react": {
+      "header": "Choisir une réaction",
+      "add": "Ajouter une réaction",
+      "cancel": "Supprimer la réaction"
+    },
+    "report": {
+      "header": "Signaler un problème",
+      "placeholder": "Motivez votre signalement de problème.",
+      "noChannel": "Canal introuvable",
+      "messageFrom": "Signalement de",
+      "message": "Message",
+      "comment": "Commentaire",
+      "showMessage": "Afficher le message",
+      "conf": "Signalement de problème envoyé.",
+      "error": "Le signalement de problème n'a pas pu être envoyé."
+    },
+    "update": {
+      "header": "Modifier le message",
+      "placeholder": "Écrivez votre modification...",
+      "conf": "Le message a été modifié.",
+      "error": "Le message n'a pas pu être modifié."
+    },
+    "delete": {
+      "label": "Supprimer le message",
+      "confirm": "Voulez-vous vraiment supprimer le message ?",
+      "conf": "Le message a été supprimé.",
+      "error": "Le message n'a pas pu être supprimé."
+    }
+  },
+  "thread": {
+    "open": "Ouvrir le fil",
+    "reply": {
+      "header": "Répondre dans le fil",
+      "placeholder": "Écrivez votre message...",
+      "error": "Le message n'a pas pu être envoyé."
+    },
+    "empty": "Il n'y a pas encore de réponses. Démarrez le fil !",
+    "title": "Fil",
+    "replies": {
+      "one": "Réponse",
+      "many": "Réponses"
+    },
+    "close": "Fermer le fil"
+  },
+  "video": {
+    "incoming": "Appel vidéo entrant...",
+    "connecting": "Établissement de la connexion..."
+  },
+  "survey": {
+    "title": "Créer un sondage",
+    "create": "Créer un sondage",
+    "allowMultipleAnswers": {
+      "label": "Plusieurs réponses possibles",
+      "helper": "Plusieurs réponses peuvent être données à la même question (choix multiple)."
+    },
+    "question": {
+      "label": "Question ou sujet",
+      "placeholder": "Écrivez quelque chose..."
+    },
+    "answer": {
+      "create": "Réponses",
+      "add": "Ajouter une réponse"
+    },
+    "results": {
+      "show": "Afficher les résultats du vote",
+      "title": "Résultat du vote"
+    },
+    "empty": "Aucun vote pour le moment",
+    "total": "Total des votes",
+    "done": "Vous avez voté",
+    "end": "Terminer le sondage",
+    "ended": "Sondage terminé",
+    "voted": "Vous avez voté",
+    "choose": {
+      "multiple": "Choisissez au moins une option",
+      "one": "Choisissez une option"
+    }
+  },
+  "attach": {
+    "title": "Ajouter une pièce jointe",
+    "image": "Joindre une image",
+    "file": "Joindre un fichier",
+    "position": "Envoyer la position",
+    "survey": "Créer un sondage"
+  },
+  "and": "et",
+  "validation": {
+    "nameRequired": "Le nom est obligatoire."
+  },
+  "isTyping": "est en train d'écrire...",
+  "areTyping": "sont en train d'écrire...",
+  "othersTyping": "d'autres écrivent...",
+  "severalTyping": "Plusieurs personnes écrivent...",
+  "date": {
+    "today": "Aujourd'hui",
+    "yesterday": "Hier"
+  },
+  "images": "Images",
+  "dropFiles": "Glissez les fichiers ici",
+  "file": {
+    "unavailable": "Fichier non disponible",
+    "shareError": "Le fichier n'a pas pu être partagé",
+    "downloadError": "Le fichier n'a pas pu être téléchargé",
+    "sendError": "Le(s) fichier(s) n'ont pas pu être envoyés",
+    "sendImagesError": "La(les) image(s) n'ont pas pu être envoyées"
+  },
+  "videoCallError": "Échec de l'appel vidéo",
+  "send": "Envoyer",
+  "emojiPicker": "Sélectionner un emoji",
+  "clearInput": "Effacer la saisie",
+  "removeImage": "Retirer l'image",
+  "toggleRoomList": "Afficher/masquer la liste des salons",
+  "call": {
+    "answer": "Répondre à l'appel",
+    "hangup": "Terminer l'appel"
+  },
+  "messagesLabel": "Messages de discussion"
+}

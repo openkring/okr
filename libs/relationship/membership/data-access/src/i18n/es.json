@@ -1,0 +1,51 @@
+{
+  "create": {
+    "label": "Añadir membresía",
+    "error": "No se pudo crear la membresía.",
+    "conf": "La membresía se ha creado.",
+    "alreadyMember": "Este miembro ya existe."
+  },
+  "update": {
+    "label": "Editar membresía",
+    "error": "No se pudieron guardar los cambios",
+    "conf": "Los cambios se han guardado."
+  },
+  "delete": {
+    "label": "Eliminar membresía",
+    "error": "No se pudo eliminar la membresía",
+    "conf": "La membresía se ha eliminado",
+    "confirm": "Normalmente una membresía debería finalizarse, no eliminarse. La eliminación solo está prevista para corregir entradas erróneas. ¿Desea realmente eliminar la membresía?"
+  },
+  "end": {
+    "title": "Finalizar membresía",
+    "select": "Seleccionar fecha de baja",
+    "confirm": "¿Desea realmente finalizar la membresía?",
+    "conf": "La membresía se ha finalizado.",
+    "error": "No se pudo finalizar la membresía.",
+    "comment": "Membresía finalizada",
+    "intro": "<p>La fecha de baja es el último día de la membresía. A partir del día siguiente, la persona deja de ser miembro.<br /> Por lo general, esta es el 31.12. del año en curso.</p>"
+  },
+  "select": {
+    "default": "Datos sin procesar",
+    "srv": "Lista SRV",
+    "address": "Lista de direcciones",
+    "title": "Seleccionar tipo de lista para exportar"
+  },
+  "fee": {
+    "update": {
+      "label": "Editar factura",
+      "error": "No se pudieron guardar los cambios",
+      "conf": "Los cambios se han guardado."
+    },
+    "create": {
+      "label": "Añadir factura",
+      "error": "No se pudo crear la factura.",
+      "conf": "La factura se ha creado."
+    },
+    "delete": {
+      "label": "Eliminar factura",
+      "error": "No se pudo eliminar la factura",
+      "conf": "La factura se ha eliminado"
+    }
+  }
+}

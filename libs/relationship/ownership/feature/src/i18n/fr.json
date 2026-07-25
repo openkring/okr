@@ -1,0 +1,195 @@
+{
+  "ownership": "Utilisation",
+  "ownerships": "Utilisations",
+  "owner": "Utilisateur/trice",
+  "description": "Une personne ou une organisation utilise une ressource",
+  "empty": "Aucune utilisation trouvée.",
+  "duration": "de-à",
+  "ownerName": "Nom",
+  "resourceName": "Ressource",
+  "newDesc": "souhaite désormais utiliser la ressource suivante :",
+  "relDesc1": "Utilisation de",
+  "relDesc2": "par",
+  "revreldesc": "est utilisé par",
+
+
+  "create": {
+    "label": "Ajouter une utilisation",
+    "conf": "L'utilisation a été créée.",
+    "error": "L'utilisation n'a pas pu être créée."
+  },
+  "delete": {
+    "label": "Supprimer l'utilisation",
+    "confirm": "Normalement, une utilisation devrait être terminée, mais pas supprimée. La suppression n'est prévue que pour corriger des entrées erronées. Voulez-vous vraiment supprimer l'utilisation ?",
+    "conf": "L'utilisation a été supprimée",
+    "error": "L'utilisation n'a pas pu être supprimée"
+  },
+  "end": {
+    "label": "Terminer l'utilisation"
+  },
+  "reactivate": {
+    "label": "Réactiver l'utilisation",
+    "conf": "L'utilisation a été réactivée.",
+    "error": "L'utilisation n'a pas pu être réactivée."
+  },
+  "select": {
+    "title": "Choisir le type de liste pour l'export",
+    "raw": "Données brutes",
+    "lockers": "Liste des vestiaires"
+  },
+  "update": {
+    "label": "Modifier l'utilisation",
+    "conf": "Les modifications ont été enregistrées.",
+    "error": "Les modifications n'ont pas pu être enregistrées"
+  },
+  "view": {
+    "label": "Afficher les détails de l'utilisation"
+  },
+  "boatAction": {
+    "edit": "Modifier le bateau",
+    "view": "Afficher le bateau"
+  },
+  "ownerAction": {
+    "edit": "Modifier l'utilisateur/trice",
+    "view": "Afficher l'utilisateur/trice"
+  },
+
+  "list": {
+    "empty": "Aucune utilisation trouvée.",
+    "header": {
+      "ownerName": "Nom",
+      "resourceName": "Ressource",
+      "duration": "de-à",
+      "price": "Frais",
+      "deposit": "Caution",
+      "validFrom": "Valable à partir du",
+      "validTo": "Valable jusqu'au",
+      "year": "Année"
+    },
+    "all": {
+      "title": "Utilisations"
+    },
+    "ownerships": {
+      "title": "Utilisations"
+    },
+    "lockers": {
+      "title": "Vestiaires"
+    },
+    "keys": {
+      "title": "Clés"
+    },
+    "privateBoats": {
+      "title": "Skiffs privés"
+    },
+    "scsBoats": {
+      "title": "Bateaux du club"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "L'okey est la clé d'une utilisation, un identifiant unique dans la base de données."
+  },
+  "ownerName1": {
+    "label": "Prénom",
+    "placeholder": "Nom",
+    "helper": "Les prénoms d'une personne"
+  },
+  "ownerName2": {
+    "label": "Nom",
+    "placeholder": "Nom",
+    "helper": "Le nom de famille d'une personne ou le nom de l'organisation."
+  },
+  "currency": {
+    "label": "Devise",
+    "placeholder": "CHF",
+    "helper": "Le code de la devise (code à trois lettres)"
+  },
+  "price": {
+    "label": "Prix",
+    "placeholder": "nnnn",
+    "helper": "Une indication de prix."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Texte"
+  },
+  "all": {
+    "title": "Toutes les utilisations",
+    "categoryLabel": "Type de ressource"
+  },
+  "boat": {
+    "name": "Nom du bateau",
+    "type": "Type de bateau"
+  },
+  "rboat": {
+    "name": "Nom du bateau",
+    "type": "Type de bateau",
+    "title": "Bateaux d'aviron",
+    "category": "Catégorie de bateau",
+    "club": {
+      "title": "Bateaux du club",
+      "categoryLabel": "Catégorie de bateau"
+    },
+    "private": {
+      "title": "Bateaux privés"
+    }
+  },
+  "lockers": {
+    "title": "Vestiaires",
+    "male": {
+      "title": "Vestiaires hommes"
+    },
+    "female": {
+      "title": "Vestiaires femmes"
+    }
+  },
+  "houseKeys": {
+    "title": "Clés"
+  },
+  "valid": {
+    "from": {
+      "label": "Valable à partir du",
+      "placeholder": "JJ.MM.AAAA",
+      "helper": "L'utilisation commence à cette date."
+    },
+    "to": {
+      "label": "Valable jusqu'au",
+      "placeholder": "JJ.MM.AAAA",
+      "helper": "L'utilisation se termine à cette date."
+    }
+  },
+  "ownerType": {
+    "all": {
+      "label": "Tous"
+    },
+    "persons": {
+      "label": "Personnes",
+      "description": "L'utilisation appartient à une personne."
+    },
+    "men": {
+      "label": "Hommes",
+      "description": "L'utilisation appartient à un homme."
+    },
+    "women": {
+      "label": "Femmes",
+      "description": "L'utilisation appartient à une femme."
+    },
+    "orgs": {
+      "label": "Organisations",
+      "description": "L'utilisation appartient à une organisation."
+    }
+  },
+  "state": {
+    "applied": {
+      "label": "Demandé",
+      "description": "La personne a soumis une demande."
+    },
+    "active": {
+      "label": "Actif",
+      "description": "Utilisation actuellement valable."
+    }
+  }
+
+}

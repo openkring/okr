@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Add trip",
+    "conf": "Trip has been added.",
+    "error": "Trip could not be added."
+  },
+  "update": {
+    "label": "Change trip",
+    "conf": "Trip has been changed.",
+    "error": "Trip could not be changed."
+  },
+  "delete": {
+    "label": "Delete trip",
+    "conf": "Trip has been deleted.",
+    "error": "Trip could not be deleted."
+  }
+}

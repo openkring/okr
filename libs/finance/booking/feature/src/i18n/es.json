@@ -1,0 +1,40 @@
+{
+    "list": {
+        "title": "Asientos"
+    },
+    "empty": "No se encontraron asientos.",
+    "as": {
+        "title": "Asiento"
+    },
+    "cancel": {
+        "label": "Cancelar"
+    },
+    "col": {
+        "date": "Fecha",
+        "credit": "Haber",
+        "debit": "Debe",
+        "name": "Texto",
+        "amount": "Importe"
+    },
+    "view": {
+        "label": "Mostrar detalles del asiento"
+    },
+    "edit": {
+        "label": "Modificar asiento"
+    },
+    "create": {
+        "label": "Crear asiento"
+    },
+    "delete": {
+        "label": "Eliminar asiento"
+    },
+    "action": {
+        "createReceipt": "Crear certificado de donación",
+        "counterpartyRequired": "Por favor, introduzca primero el remitente (contraparte).",
+        "noAddress": "No hay ninguna dirección registrada para la contraparte.",
+        "failed": "El documento no se pudo crear."
+    },
+    "readonly": {
+        "banner": "Esta lista es de solo lectura. Los asientos se gestionan en Bexio."
+    }
+}

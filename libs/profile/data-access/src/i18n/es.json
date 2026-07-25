@@ -1,0 +1,7 @@
+{
+  "update": {
+    "label": "Modificar perfil",
+    "error": "No se han podido guardar los cambios",
+    "conf": "Los cambios se han guardado."
+  }
+}

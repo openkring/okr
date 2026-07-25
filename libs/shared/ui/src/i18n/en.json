@@ -1,0 +1,100 @@
+{
+  "map": "Map",
+  "allYears": "All years",
+  "year": "Year",
+  "copy": {
+    "conf": "The value was copied.",
+    "label": "Copy"
+  },
+  "select": {
+    "category": "Choose category",
+    "date": "Choose date",
+    "tag": "Choose day",
+    "time": "Choose time"
+  },
+  "deleteContent": "Delete content",
+  "search": {
+    "placeholder": "Search...",
+    "byTag": "Day"
+  },
+  "categoryItems": {
+    "empty": "No elements have been defined in this category yet.",
+    "title": "Elements",
+    "subTitle": "The individual elements of a category. Each element is shown on its own line."
+  },
+  "color": {
+    "select": "Color selection",
+    "label": "Color"
+  },
+  "meta": {
+    "empty": "No meta tags available.",
+    "label": "MetaTags (SEO)"
+  },
+  "actionsheet": {
+    "title": "Choose an action",
+    "address": {
+      "edit": "Edit email address",
+      "view": "Show email address",
+      "hide": "Hide email address"
+    }
+  },
+  "address": {
+    "email": {
+      "title": "Email addresses",
+      "empty": "No email addresses",
+      "copy": {
+        "label": "Copy",
+        "conf": "Email addresses were copied."
+      }
+    }
+  },
+  "section": {
+    "forms": {
+      "imageConfig": {
+        "title": "Configuration of the image (file)"
+      }
+    }
+  },
+  "membership": {
+    "email": {
+      "title": "Email addresses",
+      "empty": "No email addresses available.",
+      "copy": {
+        "label": "Copy",
+        "conf": "The emails were copied."
+      },
+      "address": {
+        "main": "Main addresses",
+        "cc": "cc: addresses"
+      }
+    }
+  },
+  "text": {
+    "edit": "Edit text"
+  },
+  "string": {
+    "title": "List of words",
+    "edit": "Edit word",
+    "add": "Add word"
+  },
+  "connection": {
+    "title": "Internet connection status",
+    "intro": "Your connection status to the internet is continuously updated and shown in color as follows:",
+    "good": "Good connection",
+    "goodExplanation": "All functions of the app are available without restriction. You can load content, transfer data and interact with other users without any problems.",
+    "slow": "Slow connection",
+    "slowExplanation": "Some functions of the app may be restricted. Loading content may take longer, and there may be delays in data transfer.",
+    "offline": "No connection",
+    "offlineExplanation": "You are currently offline. Some functions of the app are not available, and you cannot load or transfer new data. Please check your internet connection."
+  },
+  "notes": {
+    "notes": "Notes",
+    "placeholder": "text",
+    "label": "Notes",
+    "pwd": {
+      "header": "Enter password",
+      "message": "Caution: if you forget the password, the text can no longer be decrypted!",
+      "placeholder": "Password"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+    "readonly": {
+        "title": "Attention",
+        "msg": "Cette comptabilité est en lecture seule. Les écritures sont effectuées dans Bexio."
+    }
+}

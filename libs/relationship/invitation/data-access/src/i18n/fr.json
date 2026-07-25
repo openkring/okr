@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Inviter une personne",
+    "conf": "L'invitation a été ajoutée.",
+    "error": "L'invitation n'a pas pu être ajoutée."
+  },
+  "update": {
+    "label": "Modifier l'invitation",
+    "conf": "L'invitation a été modifiée.",
+    "error": "L'invitation n'a pas pu être modifiée."
+  },
+  "delete": {
+    "label": "Supprimer l'invitation",
+    "conf": "L'invitation a été supprimée.",
+    "error": "L'invitation n'a pas pu être supprimée.",
+    "confirm": "Voulez-vous vraiment supprimer cette invitation ?"
+  }
+}

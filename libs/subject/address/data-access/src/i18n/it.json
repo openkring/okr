@@ -1,0 +1,31 @@
+{
+  "create": {
+    "label": "Aggiungere indirizzo",
+    "description": "Creare un nuovo indirizzo.",
+    "conf": "L'indirizzo è stato salvato.",
+    "error": "Non è stato possibile salvare l'indirizzo."
+  },
+  "update": {
+    "label": "Modificare indirizzo",
+    "description": "Modificare un indirizzo esistente.",
+    "conf": "L'indirizzo è stato modificato.",
+    "error": "Non è stato possibile modificare l'indirizzo."
+  },
+  "delete": {
+    "label": "Eliminare indirizzo",
+    "description": "Eliminare un indirizzo esistente.",
+    "conf": "L'indirizzo è stato eliminato.",
+    "error": "Non è stato possibile eliminare l'indirizzo.",
+    "askConfirmation": "Eliminare davvero l'indirizzo ?"
+  },
+  "favorite": {
+    "enable": {
+      "conf": "L'indirizzo è ora l'indirizzo principale.",
+      "error": "Non è stato possibile impostare l'indirizzo come indirizzo principale."
+    },
+    "disable": {
+      "conf": "L'indirizzo non è più l'indirizzo principale.",
+      "error": "Non è stato possibile modificare l'indirizzo principale."
+    }
+  }
+}

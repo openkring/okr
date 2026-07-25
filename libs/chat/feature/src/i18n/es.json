@@ -1,0 +1,232 @@
+{
+  "roomId": {
+    "label": "ID de sala",
+    "placeholder": "ID de sala",
+    "helper": "El ID de sala se utiliza para identificar de forma unívoca una sala de chat.",
+    "error": "El ID de sala debe estar formado por una sola palabra con caracteres alfanuméricos en minúsculas."
+  },
+  "name": {
+    "label": "Nombre",
+    "placeholder": "Introducir el nombre",
+    "helper": "Un nombre"
+  },
+  "invite": {
+    "label": "Invitación",
+    "placeholder": "Invitación",
+    "helper": "Una invitación"
+  },
+  "unreadCount": {
+    "label": "Mensajes no leídos",
+    "placeholder": "mensajes no leídos",
+    "helper": "Mensajes no leídos"
+  },
+  "topic": {
+    "label": "Tema",
+    "placeholder": "Tema"
+  },
+  "avatar": {
+    "label": "URL del avatar",
+    "placeholder": "https://...",
+    "helper": "Un avatar es la imagen de una persona, el logotipo de una organización o recurso, etc."
+  },
+  "isDirect": {
+    "label": "Mensaje directo",
+    "helper": "Un mensaje entre exactamente dos personas."
+  },
+  "reconnecting": "Reconectando...",
+  "connectionError": "Error de conexión",
+  "connecting": "conectando...",
+  "noRoomsError": "No hay salas de chat disponibles. Crea una sala o únete a una para empezar.",
+  "createTestRoom": "Crear sala de prueba",
+  "typeMessage": "Escribir un mensaje...",
+  "recordAudio": "Grabar mensaje de voz",
+  "videoCall": "Iniciar videochat",
+  "recording": "Grabando...",
+  "addAttachment": "Añadir adjunto",
+  "mentionEveryone": "Mencionar a todos en la sala (@room)",
+  "mentionMe": "Insertarme a mí mismo (@me)",
+  "noMessagesStartConversation": "Todavía no hay mensajes. Inicia la conversación.",
+  "room": {
+    "rooms": "Salas de chat",
+    "empty": "Sala vacía",
+    "none": "No se han encontrado salas de chat.",
+    "searchPlaceholder": "Buscar sala...",
+    "create": {
+      "header": "Crear nueva sala de chat",
+      "conf": "Se ha creado una nueva sala de chat.",
+      "error": "No se ha podido crear la sala de chat."
+    },
+    "update": {
+      "header": "Editar sala de chat",
+      "conf": "La sala de chat se ha modificado",
+      "error": "No se ha podido modificar la sala de chat."
+    }
+  },
+  "help": {
+    "title": "Chat – Ayuda",
+    "intro": "En el chat escribes directamente (1:1) o en salas de grupo con varias personas y compartes archivos, fotos, ubicaciones y encuestas.",
+    "shortcuts": {
+      "title": "Atajos de teclado",
+      "mention": {
+        "token": "@",
+        "desc": "En los chats de grupo, al escribir se abre la lista de miembros de la sala. ↑↓ seleccionan una entrada, Intro o Tab la insertan, Esc cierra de nuevo la lista sin modificar el texto introducido. En los chats directos, @ sigue siendo texto simple."
+      },
+      "mentionRoom": {
+        "token": "@room",
+        "desc": "Notifica a todos los miembros de la sala. La entrada aparece justo después del @ y de nuevo en cuanto se han escrito tres caracteres; las formas abreviadas @team, @all y @alle encuentran la misma entrada e insertan igualmente @room."
+      },
+      "mentionMe": {
+        "token": "@me",
+        "desc": "Inserta tu propio nombre como texto sin notificarte a ti mismo. La entrada solo aparece con la introducción exacta @me; @m o @mei no la muestran."
+      },
+      "date": {
+        "token": "//",
+        "desc": "Abre el selector de fecha e inserta la fecha elegida."
+      },
+      "location": {
+        "token": "!!",
+        "desc": "Abre el selector de ubicación y comparte el lugar elegido."
+      },
+      "send": {
+        "token": "Intro",
+        "desc": "Envía el mensaje. Si la lista @ sigue abierta, Intro selecciona en su lugar la entrada resaltada."
+      },
+      "newline": {
+        "token": "Mayús+Intro",
+        "desc": "Inserta una nueva línea sin enviar el mensaje."
+      }
+    },
+    "chats": {
+      "title": "Chats directos vs. de grupo",
+      "direct": "Un chat directo es una conversación privada entre tú y otra persona.",
+      "group": "Un chat de grupo tiene varios miembros, así como un nombre de sala y un tema."
+    }
+  },
+  "message": {
+    "edit": "Editar mensaje",
+    "reply": {
+      "label": "Responder",
+      "to": "Responder a"
+    },
+    "copy": "Copiar mensaje",
+    "share": "Compartir archivo",
+    "download": "Descargar archivo",
+    "raw": "Mostrar datos en bruto",
+    "react": {
+      "header": "Elegir reacción",
+      "add": "Añadir reacción",
+      "cancel": "Eliminar reacción"
+    },
+    "report": {
+      "header": "Notificar un problema",
+      "placeholder": "Justifica tu notificación del problema.",
+      "noChannel": "Canal no encontrado",
+      "messageFrom": "Notificación de",
+      "message": "Mensaje",
+      "comment": "Comentario",
+      "showMessage": "Mostrar mensaje",
+      "conf": "Notificación del problema enviada.",
+      "error": "No se ha podido enviar la notificación del problema."
+    },
+    "update": {
+      "header": "Editar mensaje",
+      "placeholder": "Escribe tu modificación...",
+      "conf": "El mensaje se ha modificado.",
+      "error": "No se ha podido modificar el mensaje."
+    },
+    "delete": {
+      "label": "Eliminar mensaje",
+      "confirm": "¿Desea realmente eliminar el mensaje ?",
+      "conf": "El mensaje se ha eliminado.",
+      "error": "No se ha podido eliminar el mensaje."
+    }
+  },
+  "thread": {
+    "open": "Abrir hilo",
+    "reply": {
+      "header": "Responder en el hilo",
+      "placeholder": "Escribe tu mensaje...",
+      "error": "No se ha podido enviar el mensaje."
+    },
+    "empty": "Todavía no hay respuestas. ¡Inicia el hilo!",
+    "title": "Hilo",
+    "replies": {
+      "one": "Respuesta",
+      "many": "Respuestas"
+    },
+    "close": "Cerrar hilo"
+  },
+  "video": {
+    "incoming": "Videollamada entrante...",
+    "connecting": "Estableciendo la conexión..."
+  },
+  "survey": {
+    "title": "Crear encuesta",
+    "create": "Crear encuesta",
+    "allowMultipleAnswers": {
+      "label": "Varias respuestas posibles",
+      "helper": "Se pueden dar varias respuestas a la misma pregunta (opción múltiple)."
+    },
+    "question": {
+      "label": "Pregunta o tema",
+      "placeholder": "Escribe algo..."
+    },
+    "answer": {
+      "create": "Respuestas",
+      "add": "Añadir respuesta"
+    },
+    "results": {
+      "show": "Mostrar los resultados de la votación",
+      "title": "Resultado de la votación"
+    },
+    "empty": "Todavía no hay votos",
+    "total": "Total de votos",
+    "done": "Has votado",
+    "end": "Finalizar encuesta",
+    "ended": "Encuesta finalizada",
+    "voted": "Has votado",
+    "choose": {
+      "multiple": "Elige al menos una opción",
+      "one": "Elige una opción"
+    }
+  },
+  "attach": {
+    "title": "Añadir adjunto",
+    "image": "Adjuntar imagen",
+    "file": "Adjuntar archivo",
+    "position": "Enviar ubicación",
+    "survey": "Crear encuesta"
+  },
+  "and": "y",
+  "validation": {
+    "nameRequired": "El nombre es obligatorio."
+  },
+  "isTyping": "está escribiendo...",
+  "areTyping": "están escribiendo...",
+  "othersTyping": "otros están escribiendo...",
+  "severalTyping": "Varias personas están escribiendo...",
+  "date": {
+    "today": "Hoy",
+    "yesterday": "Ayer"
+  },
+  "images": "Imágenes",
+  "dropFiles": "Arrastra los archivos aquí",
+  "file": {
+    "unavailable": "Archivo no disponible",
+    "shareError": "No se ha podido compartir el archivo",
+    "downloadError": "No se ha podido descargar el archivo",
+    "sendError": "No se han podido enviar el/los archivo(s)",
+    "sendImagesError": "No se han podido enviar la(s) imagen(es)"
+  },
+  "videoCallError": "La videollamada ha fallado",
+  "send": "Enviar",
+  "emojiPicker": "Seleccionar emoji",
+  "clearInput": "Borrar la entrada",
+  "removeImage": "Quitar imagen",
+  "toggleRoomList": "Mostrar/ocultar la lista de salas",
+  "call": {
+    "answer": "Responder a la llamada",
+    "hangup": "Finalizar la llamada"
+  },
+  "messagesLabel": "Mensajes de chat"
+}

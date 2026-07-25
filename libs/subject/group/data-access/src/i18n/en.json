@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "New group",
+    "error": "The new group could not be saved.",
+    "conf": "The new group was saved."
+  },
+  "update": {
+    "label": "Edit group",
+    "error": "The changes could not be saved",
+    "conf": "The changes were saved."
+  },
+  "delete": {
+    "label": "Delete group",
+    "error": "The group could not be deleted.",
+    "conf": "The group was deleted.",
+    "confirm": "Do you really want to delete the group ?"
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "list": {
+    "title": "Applications",
+    "empty": "No applications found.",
+    "no_person": "Person not yet created — accept the application first."
+  },
+  "add": {
+    "group": {
+      "label": "Invite to group",
+      "conf": "Person invited to group."
+    },
+    "membership": {
+      "label": "Add membership",
+      "conf": "Membership added."
+    }
+  },
+  "accept": {
+    "label": "Accept",
+    "confirm": "Accept the application? A person will be created.",
+    "conf": "Application approved — person was created.",
+    "error": "Approval failed."
+  },
+  "delete": {
+    "confirm": "Do you really want to delete this application?",
+    "conf": "Application deleted.",
+    "error": "Deletion failed."
+  },
+  "deny": {
+    "label": "Reject",
+    "conf": "Application rejected.",
+    "error": "Rejection failed.",
+    "reason": "Reason for rejection"
+  },
+  "send": {
+    "confirmation_sent": "Confirmation sent to the applicant.",
+    "decision_sent": "Decision sent to the applicant.",
+    "error": "The email could not be sent."
+  },
+  "update": {
+    "title": "Edit application",
+    "save": {
+      "label": "Save",
+      "conf": "Application updated.",
+      "error": "Update failed."
+    }
+  },
+  "field": {
+    "firstname": "First name",
+    "lastname": "Last name",
+    "gender": "Gender",
+    "date_of_birth": "Date of birth",
+    "ssn": "AHV number",
+    "email": "Email",
+    "phone": "Phone",
+    "streetname": "Street",
+    "streetnumber": "No.",
+    "zipcode": "Postal code",
+    "city": "City",
+    "countrycode": "Country",
+    "parent": {
+      "firstname": "First name of parent",
+      "lastname": "Last name of parent",
+      "email": "Email of parent",
+      "phone": "Phone of parent"
+    },
+    "application": "Application as",
+    "state": "Status",
+    "submitted": "Received",
+    "reviewed": "Under review since",
+    "reviewer": "Reviewer",
+    "reason": "Remark"
+  },
+  "validation": {
+    "email_required": "Email is required (either applicant or parent).",
+    "phone_required": "Phone is required (either applicant or parent)."
+  },
+  "section": {
+    "person": "Person",
+    "contact": "Contact",
+    "address": "Address",
+    "parent": "Parents (mandatory for minors)",
+    "application": "Application"
+  },
+  "kind": {
+    "youth": "Youth",
+    "adult": "Adult",
+    "transfer": "Transfer"
+  },
+  "state": {
+    "applied": "Received",
+    "reviewing": "Under review",
+    "closed_approved": "Accepted",
+    "closed_denied": "Rejected",
+    "closed_cancelled": "Withdrawn"
+  }
+}

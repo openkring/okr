@@ -1,0 +1,21 @@
+{
+  "task": {
+    "empty": "No todos found.",
+    "empty-my": "Congratulations! - You have no open tasks.",
+    "name": "Name",
+    "dueDate": "Due date",
+    "assignee": {
+      "label": "Responsible",
+      "description": "Person responsible for completing the task."
+    },
+    "author": {
+      "label": "Author",
+      "description": "Person who created the task."
+    },
+    "scope": {
+      "label": "Context",
+      "description": "The task is normally visible to the author, the assignee and privileged users. With the context, the visibility can be extended to a group."
+    },
+    "state": "Status"
+  }
+}

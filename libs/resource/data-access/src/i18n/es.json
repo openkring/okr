@@ -1,0 +1,92 @@
+{
+    "create": {
+        "boat": {
+            "conf": "El bote se ha guardado.",
+            "error": "El bote no se pudo guardar."
+        },
+        "rboat": {
+            "conf": "El bote de remo se ha guardado.",
+            "error": "El bote de remo no se pudo guardar."
+        },
+        "car": {
+            "conf": "El vehículo se ha guardado.",
+            "error": "El vehículo no se pudo guardar."
+        },
+        "locker": {
+            "conf": "El vestuario se ha guardado.",
+            "error": "El vestuario no se pudo guardar."
+        },
+        "key": {
+            "conf": "La llave se ha guardado.",
+            "error": "La llave no se pudo guardar."
+        },
+        "realestate": {
+            "conf": "El inmueble se ha guardado.",
+            "error": "El inmueble no se pudo guardar."
+        },
+        "pet": {
+            "conf": "La mascota se ha guardado.",
+            "error": "La mascota no se pudo guardar."
+        }
+    },
+    "delete": {
+        "boat": {
+            "conf": "El bote se ha eliminado.",
+            "error": "El bote no se pudo eliminar."
+        },
+        "rboat": {
+            "conf": "El bote de remo se ha eliminado.",
+            "error": "El bote de remo no se pudo eliminar."
+        },
+        "car": {
+            "conf": "El vehículo se ha eliminado.",
+            "error": "El vehículo no se pudo eliminar."
+        },
+        "locker": {
+            "conf": "El vestuario se ha eliminado.",
+            "error": "El vestuario no se pudo eliminar."
+        },
+        "key": {
+            "conf": "La llave se ha eliminado.",
+            "error": "La llave no se pudo eliminar."
+        },
+        "realestate": {
+            "conf": "El inmueble se ha eliminado.",
+            "error": "El inmueble no se pudo eliminar."
+        },
+        "pet": {
+            "conf": "La mascota se ha eliminado.",
+            "error": "La mascota no se pudo eliminar."
+        }
+    },
+    "update": {
+        "boat": {
+            "conf": "El bote se ha guardado.",
+            "error": "El bote no se pudo guardar."
+        },
+        "rboat": {
+            "conf": "El bote de remo se ha guardado.",
+            "error": "El bote de remo no se pudo guardar."
+        },
+        "car": {
+            "conf": "El vehículo se ha guardado.",
+            "error": "El vehículo no se pudo guardar."
+        },
+        "locker": {
+            "conf": "El vestuario se ha guardado.",
+            "error": "El vestuario no se pudo guardar."
+        },
+        "key": {
+            "conf": "La llave se ha guardado.",
+            "error": "La llave no se pudo guardar."
+        },
+        "realestate": {
+            "conf": "El inmueble se ha guardado.",
+            "error": "El inmueble no se pudo guardar."
+        },
+        "pet": {
+            "conf": "La mascota se ha guardado.",
+            "error": "La mascota no se pudo guardar."
+        }
+    }
+}

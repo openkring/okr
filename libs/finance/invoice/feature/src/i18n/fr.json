@@ -1,0 +1,169 @@
+{
+  "singular": "Facture",
+  "plural": "Factures débiteurs",
+  "aging": "Balance âgée des débiteurs",
+  "empty": "Aucune facture trouvée",
+
+  "list": {
+    "title": "Aperçu des factures"
+  },
+
+  "id": {
+    "label": "ID",
+    "placeholder": "nnnnn",
+    "helper": "Un identifiant unique pour une facture."
+  },
+  "date": {
+    "invoice": {
+      "label": "Date de facture",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La date à laquelle la facture a été émise. Le délai de paiement commence à courir à partir de ce moment."
+    },
+    "due": {
+      "label": "Payable jusqu'au",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La date de l'échéance de paiement. La facture doit être payée d'ici là."
+    },
+    "payment": {
+      "label": "Payé le",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La date à laquelle la facture a été payée."
+    }
+  },
+  "receiver": {
+    "label": "Destinataire"
+  },
+  "title": {
+    "label": "Objet",
+    "placeholder": "Texte",
+    "helper": "Une brève description de l'objet."
+  },
+  "amount": {
+    "label": "Montant",
+    "placeholder": "nn.nn",
+    "helper": "Le montant de la facture."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes libres sur la facture"
+  },
+  "state": {
+    "label": "Statut de la facture"
+  },
+  "bexio": {
+    "id": {
+      "label": "Bexio ID",
+      "placeholder": "nnnnnnn",
+      "helper": "ID de facture dans Bexio"
+    }
+  },
+  "position": {
+    "text": {
+      "label": "Texte",
+      "placeholder": "ssssssss",
+      "helper": "Un identifiant pour la position de facture."
+    },
+    "amount": {
+      "label": "Montant de la facture",
+      "placeholder": "nnnn.nn",
+      "helper": "Montant total de la facture sur toutes les positions."
+    }
+  },
+  "unitPrice": {
+      "label": "Prix unitaire",
+      "placeholder": "nn.nn",
+      "helper": "Le prix d'une seule position."
+    },
+  "accountId": {
+      "label": "Numéro de compte",
+      "placeholder": "nnnn",
+      "helper": "Le numéro unique d'un compte."
+    },
+  "header": {
+      "label": "En-tête",
+      "placeholder": "Texte",
+      "helper": "Texte affiché au-dessus des positions de facture sur la facture."
+    },
+  "footer": {
+      "label": "Pied de page",
+      "placeholder": "Texte",
+      "helper": "Texte affiché sous les positions de facture sur la facture."
+    },
+  "valid": {
+    "from": {
+      "label": "Valable à partir du",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La facture est valable à partir de cette date."
+    },
+    "to": {
+      "label": "Valable jusqu'au",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La facture est valable jusqu'à cette date."
+    }
+  },
+  "template": {
+    "label": "Modèle"
+  },
+  "defaultPosition": {
+    "label": "Position de facture par défaut"
+  },
+  "vat": {
+    "label": "TVA",
+    "type": "Taux TVA"
+  },
+
+  "add": {
+    "position": "Ajouter une position de facture"
+  },
+  "create": {
+    "label": "Ajouter une facture",
+    "conf": "La facture a été créée.",
+    "error": "La facture n'a pas pu être créée."
+  },
+  "delete": {
+    "label": "Supprimer la facture",
+    "confirm": "Voulez-vous vraiment supprimer la facture ?",
+    "conf": "La facture a été supprimée.",
+    "error": "La facture n'a pas pu être supprimée."
+  },
+  "update": {
+    "label": "Modifier la facture",
+    "conf": "La facture a été modifiée.",
+    "error": "La facture n'a pas pu être modifiée."
+  },
+  "view": {
+    "label":  "Afficher les détails de la facture",
+    "pdf": "Télécharger la facture au format PDF"
+  },
+
+  "readonly": {
+    "banner": "Cette liste est en lecture seule. Les débiteurs sont gérés dans Bexio."
+  },
+
+  "invoice_state": {
+    "name": "Statut de la facture",
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "draft": {
+      "label": "Brouillon",
+      "description": "La facture est un brouillon et n'a pas encore été envoyée."
+    },
+    "pending": {
+      "label": "En attente",
+      "description": "La facture a été envoyée et n'est pas encore payée."
+    },
+    "paid": {
+      "label": "Payée",
+      "description": "La facture a été payée."
+    },
+    "overdue": {
+      "label": "En retard",
+      "description": "Le délai de paiement est dépassé, la facture est en retard."
+    },
+    "cancelled": {
+      "label": "Annulée",
+      "description": "La facture a été annulée."
+    }
+  }
+}

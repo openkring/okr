@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Aggiungere lavagna",
+    "conf": "La lavagna è stata aggiunta.",
+    "error": "Impossibile aggiungere la lavagna."
+  },
+  "update": {
+    "conf": "La lavagna è stata modificata.",
+    "error": "Impossibile modificare la lavagna."
+  },
+  "delete": {
+    "conf": "La lavagna è stata eliminata.",
+    "confirm": "Eliminare davvero la lavagna ?",
+    "error": "Impossibile eliminare la lavagna."
+  }
+}

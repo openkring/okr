@@ -1,0 +1,15 @@
+{
+  "login": {
+    "conf": "Bienvenue dans l'espace membres !",
+    "error": "La connexion n'a pas réussi. Veuillez vérifier l'adresse e-mail et le mot de passe et réessayer."
+  },
+  "pwdreset": {
+    "conf": "Un e-mail avec des instructions pour réinitialiser le mot de passe a été envoyé à l'adresse e-mail suivante : ",
+    "error": "La réinitialisation du mot de passe n'a pas réussi."
+  },
+  "logout": {
+    "conf": "Vous êtes déconnecté.",
+    "error": "La déconnexion n'a pas réussi. Veuillez réessayer.",
+    "confirm": "Êtes-vous sûr ? Vous devrez alors vous reconnecter avec votre mot de passe."
+  }
+}

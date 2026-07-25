@@ -1,0 +1,12 @@
+{
+  "title": "Activités",
+  "empty": "Aucune activité trouvée",
+  "timestamp": "Horodatage",
+  "scope": "Domaine",
+  "action": "Action",
+  "author": "Auteur",
+  "payload": "Contenu",
+  "view": {
+    "title": "Afficher l'activité"
+  }
+}

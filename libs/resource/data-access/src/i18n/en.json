@@ -1,0 +1,92 @@
+{
+    "create": {
+        "boat": {
+            "conf": "The boat has been saved.",
+            "error": "The boat could not be saved."
+        },
+        "rboat": {
+            "conf": "The rowing boat has been saved.",
+            "error": "The rowing boat could not be saved."
+        },
+        "car": {
+            "conf": "The vehicle has been saved.",
+            "error": "The vehicle could not be saved."
+        },
+        "locker": {
+            "conf": "The locker has been saved.",
+            "error": "The locker could not be saved."
+        },
+        "key": {
+            "conf": "The key has been saved.",
+            "error": "The key could not be saved."
+        },
+        "realestate": {
+            "conf": "The property has been saved.",
+            "error": "The property could not be saved."
+        },
+        "pet": {
+            "conf": "The pet has been saved.",
+            "error": "The pet could not be saved."
+        }
+    },
+    "delete": {
+        "boat": {
+            "conf": "The boat has been deleted.",
+            "error": "The boat could not be deleted."
+        },
+        "rboat": {
+            "conf": "The rowing boat has been deleted.",
+            "error": "The rowing boat could not be deleted."
+        },
+        "car": {
+            "conf": "The vehicle has been deleted.",
+            "error": "The vehicle could not be deleted."
+        },
+        "locker": {
+            "conf": "The locker has been deleted.",
+            "error": "The locker could not be deleted."
+        },
+        "key": {
+            "conf": "The key has been deleted.",
+            "error": "The key could not be deleted."
+        },
+        "realestate": {
+            "conf": "The property has been deleted.",
+            "error": "The property could not be deleted."
+        },
+        "pet": {
+            "conf": "The pet has been deleted.",
+            "error": "The pet could not be deleted."
+        }
+    },
+    "update": {
+        "boat": {
+            "conf": "The boat has been saved.",
+            "error": "The boat could not be saved."
+        },
+        "rboat": {
+            "conf": "The rowing boat has been saved.",
+            "error": "The rowing boat could not be saved."
+        },
+        "car": {
+            "conf": "The vehicle has been saved.",
+            "error": "The vehicle could not be saved."
+        },
+        "locker": {
+            "conf": "The locker has been saved.",
+            "error": "The locker could not be saved."
+        },
+        "key": {
+            "conf": "The key has been saved.",
+            "error": "The key could not be saved."
+        },
+        "realestate": {
+            "conf": "The property has been saved.",
+            "error": "The property could not be saved."
+        },
+        "pet": {
+            "conf": "The pet has been saved.",
+            "error": "The pet could not be saved."
+        }
+    }
+}

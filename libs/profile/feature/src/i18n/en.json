@@ -1,0 +1,199 @@
+{
+  "profile": "Profile",
+  "intro": "Here you can set your contact details and adapt the behavior of the application to your needs. Certain fields you cannot change yourself because they are needed in the system. For such corrections please contact ",
+  "personal": {
+    "title": "Personal data",
+    "description": "Update your personal data here, such as the AHV number.",
+    "dateOfBirth": {
+      "label": "Date of birth",
+      "placeholder": "DD.MM.YYYY",
+      "helper": "We need your correct date of birth, e.g. for statistics or external reports (AHV, association etc.). In the privacy settings below you can set the visibility of your date of birth for other users."
+    },
+    "ssn": {
+      "label": "AHV number",
+      "placeholder": "756.nnnn.nnnn.nn",
+      "helper": "The AHV number is an optional entry. It is used, for example, for cleaning staff for AHV reports or insurance, or required by associations as proof of age."
+    }
+  },
+  "privacy": {
+    "title": "Privacy",
+    "description": "In these privacy settings you can define, for all sensitive attributes (e.g. date of birth), who is allowed to see them. Public attributes are visible to everyone, including outside the club, e.g. on the website. Restricted attributes are only visible to members within the app. Protected attributes are only visible to officers (e.g. the board) who need this data for their work in the club. Sharing your data with other Seeclub members is in your own interest, because it means you can be contacted, e.g. for rowing outings."
+  },
+  "settings": {
+    "title": "Application settings",
+    "description": "Here you can adapt the behavior of the app to your needs. The settings apply only to you and not to other users."
+  },
+  "addresses": {
+    "title": "Addresses",
+    "description": "Here you can manage your addresses. You can enter different addresses for different purposes, e.g. private, business, emergency contact, etc. You can set the visibility of these addresses below in the privacy settings. Bank account information (IBAN number) for reimbursements can be entered as addresses with the type bank account. "
+  },
+  "gravatar": {
+    "label": "Gravatar email",
+    "placeholder": "email@example.com",
+    "helper": "The email address used for the Gravatar (globally recognized avatar on gravatar.com). If you enter your Gravatar, it will be used in the app's avatar instead of an uploaded image."
+  },
+  "usage": {
+    "images": "Use of images",
+    "dob": "Use of the date of birth",
+    "postal": "Use of the postal address",
+    "email": "Use of the email address",
+    "phone": "Use of the phone number",
+    "name": "Use of your name",
+    "avatar": "Avatar use",
+    "srv": {
+      "info": "The Seeclub Stäfa is a member of the Swiss Rowing Association SRV. As a member of the SCS you are automatically also a member of the SRV. The SRV requires us to forward personal information (name, first name, postal address, phone number, date of birth etc.) of all our members. By becoming a member of the SCS you implicitly consent to this data being passed on to the SRV.",
+      "label": "Would you like to receive the SRV news ?",
+      "helper": "To send the SRV news (formerly Swissrowing magazine), the SRV needs your email address. Here you have the opt-out option in case you do not want to receive this news. In that case your email will not be forwarded to the SRV at the next synchronization. You will then no longer receive any further news from the SRV."
+    }
+  },
+  "language": "Language",
+  "update": {
+    "label": "Edit profile",
+    "error": "The changes could not be saved",
+    "conf": "The changes were saved."
+  },
+  "view": "View profile details",
+  "edit": "Edit profile",
+  "create": "Create profile ? that should not be possible !",
+  "signature": {
+    "title": "Email signature",
+    "description": "Create a personal email signature with your contact details and your organization's logo. Choose your email client, copy the signature and paste it according to the instructions.",
+    "function": {
+      "label": "Function (optional)",
+      "placeholder": "e.g. Finance",
+      "helper": "Your function or role in the organization. Free text, is not saved."
+    },
+    "client": {
+      "label": "Email client",
+      "gmail": "Gmail",
+      "outlookWeb": "Outlook (new/web)",
+      "outlookWin": "Outlook (Windows)",
+      "appleMac": "Apple Mail (Mac)",
+      "appleIos": "Apple Mail (iPhone)"
+    },
+    "format": {
+      "label": "Format",
+      "html": "HTML",
+      "raw": "Raw",
+      "text": "Text only"
+    },
+    "preview": "Preview",
+    "copy": {
+      "button": "Copy",
+      "html": "Copy HTML",
+      "raw": "Copy RAW",
+      "text": "Copy text",
+      "success": "Signature copied to the clipboard.",
+      "error": "The signature could not be copied."
+    },
+    "noOrg": "No default organization is available. Please join an organization or select one to create a signature.",
+    "guide": {
+      "title": "Instructions",
+      "rawFallback": "Raw mode copies the HTML source code of the signature as plain text instead of formatted. Use it if your client offers an HTML/source code field, or for the file-based methods (Outlook .htm, Apple Mail .mailsignature), where you paste the code directly into a file.",
+      "gmail": {
+        "s1": "Settings (gear) → «See all settings» → «General».",
+        "s2": "«Signature» section → «Create new».",
+        "s3": "Paste into the signature field (⌘/Ctrl-V).",
+        "s4": "Click «Save changes» at the bottom."
+      },
+      "oweb": {
+        "s1": "Settings → «Mail» → «Compose and reply».",
+        "s2": "Paste into the signature field (⌘/Ctrl-V).",
+        "s3": "Click «Save»."
+      },
+      "owin": {
+        "s1": "«File» → «Options» → «Mail» → «Signatures…».",
+        "s2": "«New» → paste → «OK».",
+        "s3": "If the spacing shifts when pasting: use the «Raw» format.",
+        "s4": "Alternatively, save the raw output as «signatur.htm» in %APPDATA%\\Microsoft\\Signatures\\."
+      },
+      "amac": {
+        "s1": "«Mail» → «Settings» → «Signatures», add a signature.",
+        "s2": "Disable «Always match my default message font».",
+        "s3": "Paste the signature (tip: paste from Chrome, not from Safari).",
+        "s4": "Fallback: edit the .mailsignature file directly and paste the raw HTML code below the metadata."
+      },
+      "aios": {
+        "s1": "«Settings» → «Mail» → «Signature» → paste.",
+        "s2": "Complex layouts may be simplified – best set it up on the Mac and synchronize."
+      }
+    }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "confirmation": "Save"
+  },
+  "display": {
+    "name": {
+      "label": "Name display style",
+      "helper": "Determines how person names are displayed."
+    }
+  },
+  "sort": {
+    "person": {
+      "label": "Sort criterion for persons",
+      "helper": "Sort criterion for persons in lists"
+    }
+  },
+  "deliver": {
+    "news": {
+      "label": "News delivery",
+      "helper": "How should messages be sent to you ?"
+    },
+    "invoice": {
+      "label": "Invoice delivery",
+      "helper": "How should invoices be sent to you ?"
+    },
+    "messages": {
+      "label": "Push notifications",
+      "state": {
+        "active": "Active"
+      },
+      "button": "Renew"
+    }
+  },
+  "show": {
+    "debug": {
+      "label": "Show debug information",
+      "helper": "Shows debug information of the forms and menus. Can only be switched on by an admin in the profile or directly in the database for another user."
+    },
+    "archived": {
+      "label": "Show archived data",
+      "helper": "Also shows archived data. Can only be switched on by an admin in the profile or directly in the database for another user."
+    },
+    "helpers": {
+      "label": "Show help texts",
+      "helper": "For many fields in the forms, help texts are shown. You can hide them here, which leads to a more compact, clearer display. Hiding is only recommended for advanced users."
+    }
+  },
+  "use": {
+    "touchid": {
+      "label": "Use Touch ID",
+      "helper": "Authentication by fingerprint (if possible on your device). Not yet fully implemented."
+    },
+    "faceid": {
+      "label": "Use Face ID",
+      "helper": "Authentication by facial recognition (if possible on your device). Not yet fully implemented."
+    }
+  },
+  "privacyUsage": {
+    "public": {
+      "label": "Public",
+      "description": "No restriction on use. This data may also be used on the website."
+    },
+    "restricted": {
+      "label": "Restricted",
+      "description": "Only visible to members of the Seeclub Stäfa within the app (registered users)."
+    },
+    "protected": {
+      "label": "Protected",
+      "description": "Usable only by authorized users (e.g. the board) in the context of the club's tasks."
+    },
+    "srv": {
+      "label": "Forwarding to SRV",
+      "description": "The Seeclub Stäfa is a member of the Swiss Rowing Association SRV. As a member of the SCS you are automatically also a member of the SRV. The SRV requires us to forward personal information (name, first name, postal address, phone number) of all our members. By becoming a member of the SCS you implicitly consent to this data being passed on to the SRV annually.",
+      "email": "To send the SRV news (formerly Swissrowing magazine), the SRV needs your email address. Here you have an opt-out option in case you do not want to receive this news. In that case your email will not be forwarded to the SRV at the next synchronization. You will then also no longer receive any news from the SRV."
+    }
+  }
+}

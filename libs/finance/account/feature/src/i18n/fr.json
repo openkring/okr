@@ -1,0 +1,45 @@
+{
+  "accounts": "Comptes",
+  "empty": "Aucun compte trouvé.",
+
+  "create": "Ouvrir un nouveau compte",
+  "delete": "Supprimer le compte",
+  "select": {
+    "root": "Sélectionner le plan comptable",
+    "hint": "Veuillez d'abord sélectionner un plan comptable."
+  },
+  "update": "Modifier le compte",
+  "view": "Afficher les détails du compte",
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "L'okey est la clé d'un élément, composée du préfixe de la catégorie et d'un numéro séquentiel, p. ex. boat-001 pour le premier bateau."
+  },
+  "id": {
+    "label": "N° de compte",
+    "placeholder": "nnnn",
+    "helper": "Le numéro unique du compte."
+  },
+  "name": {
+    "label": "Nom du compte",
+    "placeholder": "Nom",
+    "error": "Le nom est obligatoire et doit être composé de caractères alphanumériques.",
+    "helper": "Un nom peut être composé de plusieurs mots. Seuls les lettres (y compris -) et les chiffres sont autorisés, pas de caractères spéciaux."
+  },
+  "label": {
+    "label": "Désignation",
+    "placeholder": "Désignation",
+    "error": "La désignation est obligatoire et doit être composée de caractères alphanumériques.",
+    "helper": "Ce texte est affiché à l'utilisateur."
+  },
+  "parentId": {
+    "label": "Compte principal",
+    "placeholder": "nnnn",
+    "helper": "Le numéro du compte principal. Le compte principal regroupe plusieurs comptes et forme ainsi la hiérarchie du plan comptable."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes libres sur le compte."
+  }
+}

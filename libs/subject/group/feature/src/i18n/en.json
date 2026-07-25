@@ -1,0 +1,156 @@
+{
+  "group": "Group",
+  "groups": "Groups",
+  "empty": "No groups found.",
+  "content": "Content",
+  "segment": {
+    "content": "Content",
+    "chat": "Chat",
+    "calendar": "Calendar",
+    "tasks": "Todos",
+    "files": "Files",
+    "album": "Albums",
+    "members": "Members"
+  },
+
+  "add": {
+    "page": "Add group page"
+  },
+  "create": {
+    "label": "Create a new group",
+    "conf": "Group has been created.",
+    "error": "Group could not be created.",
+    "duplicate": "Duplicate ID",
+    "exists": "A group with this ID already exists. Please use a different ID."
+  },
+  "delete": {
+    "label": "Delete group",
+    "confirm": "Do you really want to delete the group ?",
+    "error": "The group could not be deleted.",
+    "conf": "The group has been deleted."
+  },
+  "show": "Show group",
+  "search": {
+    "oneLabel": "Search group",
+    "label": "Search groups"
+  },
+  "select": {
+    "label": "Select group"
+  },
+  "update": {
+    "label": "Change group configuration",
+    "error": "The changes could not be saved",
+    "conf": "The changes have been saved."
+  },
+  "view": {
+    "label": "Show group"
+  },
+  "page": {
+    "create": {
+      "label": "Create a new web page",
+      "conf": "Web page has been created.",
+      "error": "Web page could not be created."
+    }
+  },
+  "article": {
+    "title": "Article",
+    "content": "<p>This is your group home page. </p><p>Only group members see this content.</p><p>The group administrator can change the content of this page as desired. To do so, use the operations in the context menu at the top right.</p><p>Currently you will find here a guide to the group functions.</p><p>Depending on the configuration, a group can contain the following functions:</p><ul><li><p>Home page (this one): information that remains the same over a longer period and is relevant to the group members.</p></li><li><p>Calendar</p></li><li><p>Todos</p></li><li><p>Members: a list of the group members; the group administrator can add new members or delete existing ones.</p></li><li><p>Files: a file storage for sharing files within the group</p></li></ul><p>The group administrator can turn these functions on and off.</p>",
+    "create": {
+      "label": "Create a new article",
+      "conf": "Article has been created.",
+      "error": "Article could not be created."
+    }
+  },
+  "chat": {
+    "name": "Chat",
+    "group": {
+      "name": "Group chat",
+      "description": "Here all members of the group can exchange ideas."
+    },
+    "create": {
+      "label": "Create a new chat section",
+      "conf": "Chat section has been created.",
+      "error": "Chat section could not be created."
+    }
+  },
+  "section": {
+    "create": {
+      "label": "Create a new section",
+      "conf": "Section has been created.",
+      "error": "Section could not be created."
+    }
+  },
+  "calendar": {
+    "name": "Calendar for group ",
+    "create": {
+      "label": "Add calendar",
+      "conf": "The calendar has been added.",
+      "error": "The calendar could not be added."
+    }
+  },
+
+  "attributes": "Group properties",
+  "display": "Display",
+  "access": "Access & notifications",
+  "okey": {
+    "label": "okey",
+    "placeholder": "sssssssssss",
+    "helper": "The key of the group in the database, a unique ID, usually assigned automatically."
+  },
+  "id": {
+    "label": "Group ID",
+    "placeholder": "ssssss",
+    "helper": "A unique identifier for the group."
+  },
+  "name": {
+    "label": "Name of the group",
+    "placeholder": "sssssssss",
+    "helper": "A readable name for the group, so that it can be found more easily in lists."
+  },
+  "icon": {
+    "label": "Icon",
+    "placeholder": "Name",
+    "helper": "The name of a graphical symbol."
+  },
+  "visibility": {
+    "label": "Visibility (roles)",
+    "placeholder": "Role[,Role]",
+    "helper": "Comma-separated role names (e.g. registered,privileged). Users with one of these roles see the group's calendar and chat, even without being a member. Empty = members only."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Any notes."
+  },
+  "notifyType": {
+    "label": "Notification type",
+    "helper": "memberOnly: only members receive notifications. membersAndMatchingVisibility: members and users with a matching visibility role."
+  },
+  "hasContent": {
+    "label": "Show content",
+    "helper": "The GroupAdmin can create and manage their own content."
+  },
+  "hasChat": {
+    "label": "Show chat",
+    "helper": "The group members can chat with each other."
+  },
+  "hasCalendar": {
+    "label": "Show calendar",
+    "helper": "The group members can manage appointments in their own calendar."
+  },
+  "hasTasks": {
+    "label": "Show tasks",
+    "helper": "The group's tasks can be handled in a dedicated todo list."
+  },
+  "hasFiles": {
+    "label": "Show files",
+    "helper": "The group has its own storage area where its members can store their files."
+  },
+  "hasAlbum": {
+    "label": "Show albums",
+    "helper": "Photos can be displayed in an album of the group."
+  },
+  "hasMembers": {
+    "label": "Show members",
+    "helper": "The members of the group are shown to all group members."
+  }
+}

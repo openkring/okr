@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Créer une nouvelle entrée de menu",
+    "conf": "L'entrée de menu a été créée.",
+    "error": "L'entrée de menu n'a pas pu être créée."
+  },
+  "update": {
+    "label": "Modifier l'entrée de menu",
+    "conf": "L'entrée de menu a été modifiée.",
+    "error": "L'entrée de menu n'a pas pu être modifiée."
+  },
+  "delete": {
+    "label": "Supprimer l'entrée de menu",
+    "conf": "L'entrée de menu a été supprimée.",
+    "error": "L'entrée de menu n'a pas pu être supprimée.",
+    "confirm": "Voulez-vous vraiment supprimer cette entrée de menu ?"
+  }
+}

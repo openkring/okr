@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Aggiungere modello PDF",
+    "error": "Non è stato possibile creare il modello PDF.",
+    "conf": "Il modello PDF è stato creato."
+  },
+  "update": {
+    "label": "Modificare modello PDF",
+    "error": "Non è stato possibile salvare le modifiche",
+    "conf": "Le modifiche sono state salvate."
+  },
+  "delete": {
+    "label": "Eliminare modello PDF",
+    "error": "Non è stato possibile eliminare il modello PDF",
+    "conf": "Il modello PDF è stato eliminato",
+    "confirm": "Eliminare davvero il modello PDF?"
+  }
+}

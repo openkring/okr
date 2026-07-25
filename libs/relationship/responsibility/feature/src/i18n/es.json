@@ -1,0 +1,91 @@
+{
+  "label": "Responsabilidad",
+  "responsibility": "Responsabilidad",
+  "responsibilities": "Responsabilidades",
+  "responsible": "Responsable",
+  "desc": "Una competencia de una persona para determinadas actividades.",
+  "empty": "No se han encontrado responsabilidades.",
+
+  "create": {
+    "label": "Añadir responsabilidad",
+    "conf": "La responsabilidad se ha creado.",
+    "error": "No se ha podido crear la responsabilidad."
+  },
+  "delete": {
+    "label": "Eliminar responsabilidad",
+    "confirm": "¿Desea realmente eliminar la responsabilidad?",
+    "conf": "La responsabilidad se ha eliminado.",
+    "error": "No se ha podido eliminar la responsabilidad."
+  },
+  "export": {
+    "raw": "Exportar datos en bruto"
+  },
+  "select": {
+    "responsible": "Seleccionar responsable",
+    "delegate": "Seleccionar suplente"
+  },
+  "update": {
+    "label": "Modificar responsabilidad",
+    "conf": "La responsabilidad se ha modificado.",
+    "error": "No se ha podido modificar la responsabilidad.",
+    "header": "ID duplicado",
+    "message1": "Ya existe una responsabilidad con ID ",
+    "message2": ". Utilice un ID diferente."
+  },
+  "view": {
+    "label": "Ver detalles de la responsabilidad"
+  },
+
+  "list": {
+    "title": "Responsabilidades",
+    "header": {
+      "responsible": "Persona responsable",
+      "delegate": "Persona suplente",
+      "validFrom": "Válido desde",
+      "validTo": "Válido hasta",
+      "category": "Tipo"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "El ID único del registro en la base de datos."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Texto",
+    "helper": "Texto libre - visible solo para usuarios privilegiados."
+  },
+  "name": {
+    "label": "Nombre",
+    "placeholder": "Introducir denominación",
+    "helper": "Una breve descripción de la responsabilidad."
+  },
+  "valid": {
+    "from": {
+      "label": "Válido desde",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La responsabilidad es válida a partir de este día."
+    },
+    "to": {
+      "label": "Válido hasta",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La responsabilidad permanece válida hasta este día."
+    }
+  },
+
+  "delegate": {
+    "label": "Suplencia",
+    "from": {
+      "label": "desde",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La suplencia comienza este día."
+    },
+    "to": {
+      "label": "hasta",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "La suplencia finaliza este día."
+    }
+  }
+}

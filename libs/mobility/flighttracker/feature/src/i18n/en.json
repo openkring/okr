@@ -1,0 +1,28 @@
+{
+  "title": "Flight radar",
+  "search": {
+    "placeholder": "Flight number (e.g. LX1234)",
+    "button": "Search",
+    "prompt": "Enter flight number and press Search."
+  },
+  "detail": {
+    "title": "Flight details",
+    "departure": "Departure",
+    "airport": "Airport",
+    "terminal": "Terminal",
+    "gate": "Gate",
+    "delay": "Delay",
+    "scheduled": "Scheduled",
+    "estimated": "Estimated",
+    "arrival": "Arrival",
+    "aircraft": "Aircraft",
+    "registration": "Registration",
+    "live": "Live position",
+    "altitude": "Altitude",
+    "direction": "Heading",
+    "speed": "Speed"
+  },
+  "error": {
+    "generic": "Error retrieving flight data."
+  }
+}

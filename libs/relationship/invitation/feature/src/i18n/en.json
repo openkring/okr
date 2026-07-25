@@ -1,0 +1,92 @@
+{
+  "invitation": "Invitation",
+  "invitations": "Invitations",
+  "description": "An invitation to an event or occasion.",
+  "empty": "No invitations have been created yet. Create one by clicking the + button.",
+
+  "delete": {
+    "label": "Delete invitation",
+    "confirm": "Do you really want to delete the invitation ?",
+    "conf": "The invitation was deleted.",
+    "error": "The invitation could not be deleted."
+  },
+  "invite": {
+    "label": "Invite person",
+    "conf": "The person was invited.",
+    "error": "The person could not be invited."
+  },
+  "update": {
+    "label": "Edit invitation",
+    "conf": "The invitation was saved",
+    "error": "The invitation could not be saved."
+  },
+  "view": {
+    "label": "Show invitation details"
+  },
+  "accept": "I'm in",
+  "accepted": "accepted invitations",
+  "maybe": "Maybe",
+  "decline": "I can't attend",
+  "resend": "Resend invitation",
+  "subscribe": "I'll attend",
+  "unsubscribe": "I can't attend",
+
+  "list": {
+    "header": {
+      "date": "Date",
+      "name": "Name",
+      "invitee": "Participant",
+      "inviter": "Organizer",
+      "state": "Status"
+    }
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "sssssss",
+    "helper": "A unique ID of the invitation in the database."
+  },
+  "invitee": "Participant",
+  "inviter": "Organizer",
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Free notes."
+  },
+  "sentAt": {
+    "label": "Sent on",
+    "placeholder": "DD.MM.YYYY",
+    "helper": "The invitation was sent on this date."
+  },
+  "respondedAt": {
+    "label": "Answered on",
+    "placeholder": "DD.MM.YYYY",
+    "helper": "The invitation was answered on this date."
+  },
+  "role": {
+    "label": "Role"
+  },
+
+  "invitation_state": {
+    "label": "Status",
+    "helper": "Status of the invitation",
+    "all": {
+      "label": "All statuses"
+    },
+    "pending": {
+      "label": "Pending",
+      "description": "The invitation was sent but not yet answered."
+    },
+    "accepted": {
+      "label": "Accepted",
+      "description": "The invitation was accepted."
+    },
+    "declined": {
+      "label": "Declined",
+      "description": "The invitation was declined."
+    },
+    "maybe": {
+      "label": "Maybe",
+      "description": "The invitation was answered with 'Maybe'."
+    }
+  }
+}

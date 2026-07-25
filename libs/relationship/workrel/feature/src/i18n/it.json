@@ -1,0 +1,177 @@
+{
+  "workrel": "Impiego",
+  "workrels": "Impieghi",
+  "desc": "Un rapporto di lavoro tra una persona e un'organizzazione.",
+  "reldesc": "lavora per",
+  "revreldesc": "impiega",
+  "empty": "Nessun rapporto di lavoro trovato.",
+
+  "create": {
+    "label": "Aggiungi impiego",
+    "conf": "L'impiego è stato creato.",
+    "error": "Non è stato possibile creare l'impiego."
+  },
+  "delete": {
+    "label": "Elimina impiego",
+    "confirm": "Eliminare davvero questo impiego?",
+    "conf": "L'impiego è stato eliminato.",
+    "error": "Non è stato possibile eliminare l'impiego."
+  },
+  "end": {
+    "label": "Termina impiego"
+  },
+  "select": {
+    "label": "Seleziona"
+  },
+  "update": {
+    "label": "Modifica impiego",
+    "conf": "L'impiego è stato modificato.",
+    "error": "Non è stato possibile modificare l'impiego."
+  },
+  "view": {
+    "label": "Visualizza dettagli dell'impiego"
+  },
+
+
+  "list": {
+    "title": "Impieghi",
+    "empty": "Nessun rapporto di lavoro trovato.",
+    "header": {
+      "subject": "Persona",
+      "object": "Organizzazione",
+      "type": "Tipo di relazione"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "ID univoco dell'impiego nel database."
+  },
+  "label": {
+    "label": "Denominazione",
+    "placeholder": "Inserisci denominazione",
+    "helper": "Un nome per l'impiego, ad es. assunzione presso xy."
+  },
+  "currency": {
+    "label": "Valuta",
+    "placeholder": "CHF",
+    "helper": "Il codice valuta ISO internazionale a tre lettere."
+  },
+  "order": {
+    "label": "Ordine",
+    "placeholder": "n",
+    "helper": "Inserendo un numero ordinale, gli impieghi possono essere ordinati."
+  },
+  "price": {
+    "label": "Prezzo",
+    "placeholder": "nnnn",
+    "helper": "Il compenso per l'impiego, ad es. salario orario o salario mensile."
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Qualsiasi informazione aggiuntiva sull'impiego."
+  },
+  "validFrom": {
+    "label": "Valido dal",
+    "placeholder": "GG.MM.AAAA",
+    "helper": "L'impiego inizia in questa data."
+  },
+  "validTo": {
+    "label": "Valido fino al",
+    "placeholder": "GG.MM.AAAA",
+    "helper": "L'impiego termina in questa data."
+  },
+  "subject": "Persona",
+  "type": "Tipo di relazione",
+  "object": "Organizzazione",
+
+  "workrel_type": {
+    "name": "Tipo di lavoro",
+    "label": "Tipo di impiego",
+    "helper": "Il tipo di un impiego, di solito utilizzato per filtrare in un elenco.",
+    "all": {
+      "label": "Tutti"
+    },
+    "employee": {
+      "label": "Dipendente",
+      "description": "Dipendente"
+    },
+    "contractor": {
+      "label": "Appaltatore",
+      "description": "Appaltatore"
+    },
+    "volunteer": {
+      "label": "Volontario/a",
+      "description": "Volontario"
+    },
+    "intern": {
+      "label": "Tirocinante",
+      "description": "Tirocinante"
+    },
+    "project": {
+      "label": "Progetto",
+      "description": "Un progetto ha un inizio definito, una fine definita e un obiettivo."
+    },
+    "trainee": {
+      "label": "Apprendista",
+      "description": "Apprendista"
+    },
+    "freelancer": {
+      "label": "Freelance",
+      "description": "Freelance"
+    },
+    "student": {
+      "label": "Studente/ssa",
+      "description": "Studente"
+    },
+    "boardMember": {
+      "label": "Comitato",
+      "description": "Membro del comitato"
+    },
+    "cooperation": {
+      "label": "Cooperazione",
+      "description": "Partner di cooperazione"
+    },
+    "competition": {
+      "label": "Concorrenza",
+      "description": "È in concorrenza con un'altra organizzazione."
+    },
+    "custom": {
+      "label": "Altro tipo di lavoro",
+      "description": "Relazione che non rientra nelle altre categorie."
+    }
+  },
+
+  "workrel_state": {
+    "label": "Stato",
+    "helper": "Stato di un impiego: Iniziale / Candidato / Attivo / Passivo / Terminato / Annullato",
+    "all": {
+      "label": "Tutti"
+    },
+    "initial": {
+      "label": "Iniziale",
+      "description": "Intenzione o idea/piano."
+    },
+    "applied": {
+      "label": "Candidato",
+      "description": "La persona ha presentato la candidatura."
+    },
+    "active": {
+      "label": "Attivo",
+      "description": "Il rapporto di lavoro è attualmente valido."
+    },
+    "passive": {
+      "label": "Passivo",
+      "description": "Il rapporto di lavoro è sospeso/interrotto."
+    },
+    "terminated": {
+      "label": "Terminato",
+      "description": "Il rapporto di lavoro è terminato."
+    },
+    "cancelled": {
+      "label": "Annullato",
+      "description": "Il rapporto di lavoro è stato annullato."
+    }
+  }
+}

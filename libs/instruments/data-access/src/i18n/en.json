@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "Instrument created",
+    "error": "Instrument could not be created"
+  },
+  "update": {
+    "conf": "Instrument saved",
+    "error": "Instrument could not be saved"
+  },
+  "delete": {
+    "conf": "Instrument deleted",
+    "error": "Instrument could not be deleted"
+  }
+}

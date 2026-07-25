@@ -1,0 +1,15 @@
+{
+  "list": { "title": "E-signatures" },
+  "empty": "No signature processes found.",
+  "delete": { "error": "Signature process could not be deleted." },
+  "send": { "error": "Document could not be sent." },
+  "upload": { "error": "File too large (max. 40 MB) or wrong format." },
+  "scan": { "no_fields": "No signature fields found in the document. Please use a PDF with embedded Text Field Patterns." },
+  "actionsheet": {
+    "view": "Show signature status",
+    "doc_view": "Show PDF",
+    "doc_share": "Share",
+    "doc_send": "Send by e-mail",
+    "delete": "Delete signature process"
+  }
+}

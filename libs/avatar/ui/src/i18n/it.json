@@ -1,0 +1,21 @@
+{
+  "task": {
+    "empty": "Nessuna attività trovata.",
+    "empty-my": "Congratulazioni! - Non hai attività aperte.",
+    "name": "Nome",
+    "dueDate": "Scadenza",
+    "assignee": {
+      "label": "Responsabile",
+      "description": "Persona responsabile del completamento dell'attività."
+    },
+    "author": {
+      "label": "Autore/-trice",
+      "description": "Persona che ha creato l'attività."
+    },
+    "scope": {
+      "label": "Contesto",
+      "description": "L'attività è normalmente visibile all'autore, al responsabile e agli utenti privilegiati. Con il contesto, la visibilità può essere estesa a un gruppo."
+    },
+    "state": "Stato"
+  }
+}

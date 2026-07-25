@@ -1,0 +1,100 @@
+{
+  "user": "Usuario",
+  "users": "Usuarios",
+  "empty": "No se han encontrado usuarios",
+  "unknown": "Usuario desconocido",
+  "intro": "Un usuario corresponde 1:1 a una cuenta autenticada (Firebase UID = User.okey) y exactamente a una persona (User.personKey = Person.okey).",
+
+  "create": {
+    "label": "Añadir usuario",
+    "error": "No se ha podido crear el usuario.",
+    "conf": "El usuario se ha creado."
+  },
+  "delete": {
+    "label": "Eliminar usuario",
+    "confirm": "¿Desea realmente eliminar el usuario ?",
+    "error": "No se ha podido eliminar el usuario",
+    "conf": "El usuario se ha eliminado"
+  },
+  "update": {
+    "label": "Editar usuario",
+    "error": "No se han podido guardar los cambios",
+    "conf": "Los cambios se han guardado."
+  },
+  "upload": {
+    "avatar": "Subir imagen de avatar"
+  },
+  "view": {
+    "label": "Mostrar detalles del usuario"
+  },
+
+  "auth": {
+    "title": "Autenticación",
+    "description": "Ajustes para la autenticación del usuario. Estos ajustes se aplican únicamente al usuario seleccionado."
+  },
+  "fbuser": {
+    "title": "Usuario de Firebase",
+    "description": "Datos sobre la cuenta de autenticación de Firebase.",
+    "delete": {
+      "label": "Eliminar usuario de Firebase"
+    },
+    "update": {
+      "label": "Editar usuario de Firebase"
+    }
+  },
+
+  "display": {
+    "title": "Presentación",
+    "description": "Ajustes para la presentación de nombres, avatar y ordenación."
+  },
+  "model": {
+    "title": "Datos del usuario",
+    "description": "Datos técnicos del usuario y vínculos."
+  },
+  "notification": {
+    "title": "Notificaciones",
+    "description": "Ajustes para la entrega de mensajes y facturas."
+  },
+  "privacy": {
+    "title": "Protección de datos",
+    "description": "Aquí se puede definir, para todos los atributos sensibles, quién puede verlos. Los atributos públicos son visibles para todos. Los atributos restringidos solo son visibles para los miembros dentro de la aplicación. Los atributos protegidos solo son visibles para las personas privilegiadas."
+  },
+
+  "access_level": "Nivel de acceso",
+  "role": "Rol",
+
+  "uid": { "label": "ID de usuario", "placeholder": "ssssssss", "helper": "Un identificador único para el usuario de Firebase." },
+  "displayName": { "label": "Nombre para mostrar", "placeholder": "sssssssss", "helper": "Este nombre se muestra en la consola de Firebase." },
+  "photoUrl": { "label": "URL de la foto", "placeholder": "https://...", "helper": "Un enlace a una foto de retrato del usuario." },
+  "okey": { "label": "ID de usuario", "placeholder": "sssssss", "helper": "Un identificador único para el usuario" },
+  "personKey": { "label": "Clave de la persona", "placeholder": "sssssss", "helper": "La clave del registro de la persona en la base de datos." },
+  "firstName": { "label": "Nombre", "placeholder": "Introducir el nombre", "helper": "Los nombres del usuario." },
+  "lastName": { "label": "Apellido", "placeholder": "Introducir el apellido", "helper": "El apellido del usuario." },
+  "tenants": { "label": "Inquilinos", "placeholder": "sss, sss, sss", "helper": "Identificadores de los inquilinos" },
+  "loginEmail": { "label": "Correo electrónico de acceso", "placeholder": "Introducir la dirección de correo electrónico" },
+  "gravatarEmail": { "label": "Correo electrónico de Gravatar", "placeholder": "Introducir la dirección de correo electrónico" },
+  "email": { "label": "Correo electrónico", "placeholder": "Introducir la dirección de correo electrónico" },
+  "phone": { "label": "Teléfono", "placeholder": "+41 XX XXX XX XX" },
+  "notes": { "label": "Notas", "placeholder": "Texto libre" },
+  "avatarUsage": { "label": "Uso del avatar" },
+  "personSortCriteria": { "label": "Ordenar personas por" },
+  "userLanguage": { "label": "Idioma" },
+  "nameDisplay": { "label": "Presentación del nombre" },
+  "srv": { "description": "Los siguientes ajustes se aplican al uso de sus datos por parte del SRV." },
+  "usageImages": { "label": "Imágenes" },
+  "usageDateOfBirth": { "label": "Fecha de nacimiento" },
+  "usagePostalAddress": { "label": "Dirección postal" },
+  "usageEmail": { "label": "Correo electrónico" },
+  "usagePhone": { "label": "Teléfono" },
+  "usageName": { "label": "Nombre" },
+  "newsDelivery": { "label": "Entrega de novedades" },
+  "invoiceDelivery": { "label": "Entrega de facturas" },
+  "emailVerified": { "label": "Correo electrónico confirmado", "helper": "Si el usuario ha confirmado la dirección de correo electrónico." },
+  "disabled": { "label": "Desactivado", "helper": "La cuenta de usuario está desactivada." },
+  "useTouchId": { "label": "Usar Touch ID", "helper": "Autenticación mediante huella dactilar." },
+  "useFaceId": { "label": "Usar Face ID", "helper": "Autenticación mediante escaneo facial." },
+  "showArchivedData": { "label": "Mostrar datos archivados", "helper": "Los datos archivados también se muestran." },
+  "showDebugInfo": { "label": "Mostrar información de depuración", "helper": "La información de depuración se muestra adicionalmente." },
+  "showHelpers": { "label": "Mostrar ayudas", "helper": "Se muestran los textos descriptivos." },
+  "srvEmail": { "label": "Correo electrónico SRV", "helper": "Si se desea recibir el boletín del SRV, el correo electrónico debe transmitirse al SRV." }
+}

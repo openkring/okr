@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Create category",
+    "error": "The category could not be created",
+    "conf": "The category was created."
+  },
+  "update": {
+    "label": "Edit category",
+    "error": "The category could not be changed",
+    "conf": "The category was changed."
+  },
+  "delete": {
+    "label": "Delete category",
+    "error": "The category could not be deleted",
+    "conf": "The category was deleted."
+  }
+}

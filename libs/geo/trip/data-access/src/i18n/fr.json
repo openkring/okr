@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Ajouter un trajet",
+    "conf": "Le trajet a été ajouté.",
+    "error": "Le trajet n'a pas pu être ajouté."
+  },
+  "update": {
+    "label": "Modifier le trajet",
+    "conf": "Le trajet a été modifié.",
+    "error": "Le trajet n'a pas pu être modifié."
+  },
+  "delete": {
+    "label": "Supprimer le trajet",
+    "conf": "Le trajet a été supprimé.",
+    "error": "Le trajet n'a pas pu être supprimé."
+  }
+}

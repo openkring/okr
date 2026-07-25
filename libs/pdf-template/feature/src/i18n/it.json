@@ -1,0 +1,74 @@
+{
+  "template": "Modello PDF",
+  "templates": "Modelli PDF",
+  "list": {
+    "title": "Modelli di documento"
+  },
+  "empty": "Nessun modello trovato.",
+
+  "archive": {
+    "label": "Archiviare modello"
+  },
+  "create": {
+    "label": "Aggiungere modello PDF",
+    "conf": "Il modello PDF è stato creato.",
+    "error": "Non è stato possibile creare il modello PDF."
+  },
+  "delete": {
+    "label": "Eliminare modello PDF",
+    "confirm": "Eliminare davvero il modello PDF?",
+    "conf": "Il modello PDF è stato eliminato",
+    "error": "Non è stato possibile eliminare il modello PDF"
+  },
+  "duplicate": {
+    "label": "Duplicare modello"
+  },
+  "preview": {
+    "label": "Anteprima",
+    "error": "Generazione dell'anteprima non riuscita"
+  },
+  "publish": {
+    "label": "Pubblicare modello",
+    "conf": "Modello pubblicato.",
+    "error": "Pubblicazione non riuscita."
+  },
+  "save": {
+    "draft": {
+      "conf": "Bozza salvata.",
+      "error": "Non è stato possibile salvare la bozza."
+    }
+  },
+  "update": {
+    "label": "Modificare modello PDF",
+    "conf": "Le modifiche sono state salvate.",
+    "error": "Non è stato possibile salvare le modifiche"
+  },
+  "view": {
+    "label": "Visualizzare versione attuale"
+  },
+  "revert": {
+    "label": "Ripristinare l'ultima versione",
+    "conf": "Ripristinata l'ultima versione.",
+    "error": "Ripristino non riuscito."
+  },
+
+
+  "category": {
+    "label": "Categoria"
+  },
+  "language": {
+    "label": "Lingua"
+  },
+  "status": {
+    "label": "Stato"
+  },
+  "version": {
+    "label": "Versione"
+  },
+  "html": {
+    "label": "HTML"
+  },
+  "css": {
+    "label": "CSS"
+  }
+}

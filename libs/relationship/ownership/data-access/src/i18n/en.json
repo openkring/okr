@@ -1,0 +1,27 @@
+{
+  "create": {
+    "label": "Add usage",
+    "error": "Usage could not be created.",
+    "conf": "Usage was created."
+  },
+  "update": {
+    "label": "Edit usage",
+    "error": "The changes could not be saved",
+    "conf": "The changes were saved."
+  },
+  "delete": {
+    "label": "Delete usage",
+    "error": "Usage could not be deleted",
+    "conf": "Usage was deleted",
+    "confirm": "Normally a usage should be ended, not deleted. Deletion is only intended to correct incorrect entries. Do you really want to delete the usage?"
+  },
+  "select": {
+    "raw": "Raw data",
+    "lockers": "Locker list",
+    "title": "Select list type for export"
+  },
+  "end": {
+    "conf": "Usage ended",
+    "error": "The usage could not be ended."
+  }
+}

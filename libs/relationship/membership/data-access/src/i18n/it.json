@@ -1,0 +1,51 @@
+{
+  "create": {
+    "label": "Aggiungi adesione",
+    "error": "Non è stato possibile creare l'adesione.",
+    "conf": "L'adesione è stata creata.",
+    "alreadyMember": "Questo membro esiste già."
+  },
+  "update": {
+    "label": "Modifica adesione",
+    "error": "Non è stato possibile salvare le modifiche",
+    "conf": "Le modifiche sono state salvate."
+  },
+  "delete": {
+    "label": "Elimina adesione",
+    "error": "Non è stato possibile eliminare l'adesione",
+    "conf": "L'adesione è stata eliminata",
+    "confirm": "Normalmente un'adesione dovrebbe essere terminata, ma non eliminata. L'eliminazione è prevista solo per correggere voci errate. Eliminare davvero l'adesione?"
+  },
+  "end": {
+    "title": "Termina adesione",
+    "select": "Seleziona data di uscita",
+    "confirm": "Terminare davvero l'adesione?",
+    "conf": "L'adesione è stata terminata.",
+    "error": "Non è stato possibile terminare l'adesione.",
+    "comment": "Adesione terminata",
+    "intro": "<p>La data di uscita è l'ultimo giorno dell'adesione. Dal giorno successivo la persona non è più membro.<br /> Di solito è il 31.12. dell'anno in corso.</p>"
+  },
+  "select": {
+    "default": "Dati grezzi",
+    "srv": "Elenco SRV",
+    "address": "Elenco indirizzi",
+    "title": "Seleziona il tipo di elenco per l'esportazione"
+  },
+  "fee": {
+    "update": {
+      "label": "Modifica fattura",
+      "error": "Non è stato possibile salvare le modifiche",
+      "conf": "Le modifiche sono state salvate."
+    },
+    "create": {
+      "label": "Aggiungi fattura",
+      "error": "Non è stato possibile creare la fattura.",
+      "conf": "La fattura è stata creata."
+    },
+    "delete": {
+      "label": "Elimina fattura",
+      "error": "Non è stato possibile eliminare la fattura",
+      "conf": "La fattura è stata eliminata"
+    }
+  }
+}

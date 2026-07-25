@@ -1,0 +1,177 @@
+{
+  "workrel": "Employment",
+  "workrels": "Employments",
+  "desc": "An employment relationship between a person and an organization.",
+  "reldesc": "works for",
+  "revreldesc": "employs",
+  "empty": "No employment relationships found.",
+
+  "create": {
+    "label": "Add employment",
+    "conf": "Employment was created.",
+    "error": "Employment could not be created."
+  },
+  "delete": {
+    "label": "Delete employment",
+    "confirm": "Should this employment really be deleted?",
+    "conf": "Employment was deleted.",
+    "error": "Employment could not be deleted."
+  },
+  "end": {
+    "label": "End employment"
+  },
+  "select": {
+    "label": "Select"
+  },
+  "update": {
+    "label": "Change employment",
+    "conf": "Employment was changed.",
+    "error": "Employment could not be changed."
+  },
+  "view": {
+    "label": "View employment details"
+  },
+
+
+  "list": {
+    "title": "Employments",
+    "empty": "No employment relationships found.",
+    "header": {
+      "subject": "Person",
+      "object": "Organization",
+      "type": "Relationship type"
+    }
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "Unique ID of the employment in the database."
+  },
+  "label": {
+    "label": "Label",
+    "placeholder": "Enter label",
+    "helper": "A name for the employment, e.g. employment at xy."
+  },
+  "currency": {
+    "label": "Currency",
+    "placeholder": "CHF",
+    "helper": "The international, three-letter ISO currency code."
+  },
+  "order": {
+    "label": "Order",
+    "placeholder": "n",
+    "helper": "By entering an ordinal number, the employments can be sorted."
+  },
+  "price": {
+    "label": "Price",
+    "placeholder": "nnnn",
+    "helper": "The compensation for the employment, e.g. hourly wage or monthly salary."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Any additional information about the employment."
+  },
+  "validFrom": {
+    "label": "Valid from",
+    "placeholder": "DD.MM.YYYY",
+    "helper": "The employment starts on this date."
+  },
+  "validTo": {
+    "label": "Valid until",
+    "placeholder": "DD.MM.YYYY",
+    "helper": "The employment ends on this date."
+  },
+  "subject": "Person",
+  "type": "Relationship type",
+  "object": "Organization",
+
+  "workrel_type": {
+    "name": "Work type",
+    "label": "Employment type",
+    "helper": "The type of an employment, usually used for filtering in a list.",
+    "all": {
+      "label": "All"
+    },
+    "employee": {
+      "label": "Employee",
+      "description": "Employee"
+    },
+    "contractor": {
+      "label": "Contractor",
+      "description": "Contractor"
+    },
+    "volunteer": {
+      "label": "Volunteer",
+      "description": "Volunteer"
+    },
+    "intern": {
+      "label": "Intern",
+      "description": "Intern"
+    },
+    "project": {
+      "label": "Project",
+      "description": "A project has a defined start, a defined end and a goal."
+    },
+    "trainee": {
+      "label": "Apprentice",
+      "description": "Apprentice"
+    },
+    "freelancer": {
+      "label": "Freelancer",
+      "description": "Freelancer"
+    },
+    "student": {
+      "label": "Student",
+      "description": "Student"
+    },
+    "boardMember": {
+      "label": "Board",
+      "description": "Board member"
+    },
+    "cooperation": {
+      "label": "Cooperation",
+      "description": "Cooperation partner"
+    },
+    "competition": {
+      "label": "Competition",
+      "description": "Is in competition with another organization."
+    },
+    "custom": {
+      "label": "Other work type",
+      "description": "Relationship that does not fit into the other categories."
+    }
+  },
+
+  "workrel_state": {
+    "label": "Status",
+    "helper": "Status of an employment: Initial / Applied / Active / Passive / Terminated / Cancelled",
+    "all": {
+      "label": "All"
+    },
+    "initial": {
+      "label": "Initial",
+      "description": "Intention or idea/plan."
+    },
+    "applied": {
+      "label": "Applied",
+      "description": "The person has applied."
+    },
+    "active": {
+      "label": "Active",
+      "description": "The employment relationship is currently valid."
+    },
+    "passive": {
+      "label": "Passive",
+      "description": "The employment relationship is suspended/interrupted."
+    },
+    "terminated": {
+      "label": "Terminated",
+      "description": "The employment relationship has ended."
+    },
+    "cancelled": {
+      "label": "Cancelled",
+      "description": "The employment relationship was cancelled."
+    }
+  }
+}

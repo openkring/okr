@@ -1,0 +1,27 @@
+{
+  "create": {
+    "label": "Ajouter une utilisation",
+    "error": "L'utilisation n'a pas pu être créée.",
+    "conf": "L'utilisation a été créée."
+  },
+  "update": {
+    "label": "Modifier l'utilisation",
+    "error": "Les modifications n'ont pas pu être enregistrées",
+    "conf": "Les modifications ont été enregistrées."
+  },
+  "delete": {
+    "label": "Supprimer l'utilisation",
+    "error": "L'utilisation n'a pas pu être supprimée",
+    "conf": "L'utilisation a été supprimée",
+    "confirm": "Normalement, une utilisation devrait être terminée, mais pas supprimée. La suppression n'est prévue que pour corriger des entrées erronées. Voulez-vous vraiment supprimer l'utilisation ?"
+  },
+  "select": {
+    "raw": "Données brutes",
+    "lockers": "Liste des vestiaires",
+    "title": "Choisir le type de liste pour l'export"
+  },
+  "end": {
+    "conf": "Utilisation terminée",
+    "error": "L'utilisation n'a pas pu être terminée."
+  }
+}

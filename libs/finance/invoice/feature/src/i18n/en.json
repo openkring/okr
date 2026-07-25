@@ -1,0 +1,169 @@
+{
+  "singular": "Invoice",
+  "plural": "Accounts receivable invoices",
+  "aging": "Accounts receivable aging",
+  "empty": "No invoices found",
+
+  "list": {
+    "title": "Invoice overview"
+  },
+
+  "id": {
+    "label": "ID",
+    "placeholder": "nnnnn",
+    "helper": "A unique identifier for an invoice."
+  },
+  "date": {
+    "invoice": {
+      "label": "Invoice date",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The date on which the invoice was issued. The payment period starts from then."
+    },
+    "due": {
+      "label": "Payable until",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The date of the payment deadline. The invoice must be paid by then."
+    },
+    "payment": {
+      "label": "Paid on",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The date on which the invoice was paid."
+    }
+  },
+  "receiver": {
+    "label": "Recipient"
+  },
+  "title": {
+    "label": "Subject",
+    "placeholder": "Text",
+    "helper": "A short description of what it is about."
+  },
+  "amount": {
+    "label": "Amount",
+    "placeholder": "nn.nn",
+    "helper": "The invoice amount."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Free notes for the invoice"
+  },
+  "state": {
+    "label": "Invoice status"
+  },
+  "bexio": {
+    "id": {
+      "label": "Bexio ID",
+      "placeholder": "nnnnnnn",
+      "helper": "Invoice ID in Bexio"
+    }
+  },
+  "position": {
+    "text": {
+      "label": "Text",
+      "placeholder": "ssssssss",
+      "helper": "An identifier for the invoice item."
+    },
+    "amount": {
+      "label": "Invoice amount",
+      "placeholder": "nnnn.nn",
+      "helper": "Total amount on the invoice across all items."
+    }
+  },
+  "unitPrice": {
+      "label": "Unit price",
+      "placeholder": "nn.nn",
+      "helper": "The price of a single item."
+    },
+  "accountId": {
+      "label": "Account number",
+      "placeholder": "nnnn",
+      "helper": "The unique number of an account."
+    },
+  "header": {
+      "label": "Header",
+      "placeholder": "Text",
+      "helper": "Text displayed above the invoice items on the invoice."
+    },
+  "footer": {
+      "label": "Footer",
+      "placeholder": "Text",
+      "helper": "Text displayed below the invoice items on the invoice."
+    },
+  "valid": {
+    "from": {
+      "label": "Valid from",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The invoice is valid from this date."
+    },
+    "to": {
+      "label": "Valid until",
+      "placeholder": "dd.mm.yyyy",
+      "helper": "The invoice is valid until this date."
+    }
+  },
+  "template": {
+    "label": "Template"
+  },
+  "defaultPosition": {
+    "label": "Default invoice item"
+  },
+  "vat": {
+    "label": "VAT",
+    "type": "VAT rate"
+  },
+
+  "add": {
+    "position": "Add invoice item"
+  },
+  "create": {
+    "label": "Add invoice",
+    "conf": "The invoice has been created.",
+    "error": "The invoice could not be created."
+  },
+  "delete": {
+    "label": "Delete invoice",
+    "confirm": "Should the invoice really be deleted ?",
+    "conf": "The invoice has been deleted.",
+    "error": "The invoice could not be deleted."
+  },
+  "update": {
+    "label": "Edit invoice",
+    "conf": "The invoice has been changed.",
+    "error": "The invoice could not be changed."
+  },
+  "view": {
+    "label":  "Show invoice details",
+    "pdf": "Download invoice as PDF"
+  },
+
+  "readonly": {
+    "banner": "This list is read-only. The accounts receivable are managed in Bexio."
+  },
+
+  "invoice_state": {
+    "name": "Invoice status",
+    "all": {
+      "label": "All statuses"
+    },
+    "draft": {
+      "label": "Draft",
+      "description": "The invoice is a draft and has not been sent yet."
+    },
+    "pending": {
+      "label": "Open",
+      "description": "The invoice has been sent and is not yet paid."
+    },
+    "paid": {
+      "label": "Paid",
+      "description": "The invoice has been paid."
+    },
+    "overdue": {
+      "label": "Overdue",
+      "description": "The payment deadline has passed, the invoice is overdue."
+    },
+    "cancelled": {
+      "label": "Cancelled",
+      "description": "The invoice has been cancelled."
+    }
+  }
+}

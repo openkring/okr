@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Aggiungere trasferimento",
+    "conf": "Il trasferimento è stato creato.",
+    "error": "Non è stato possibile creare il trasferimento."
+  },
+  "update": {
+    "label": "Modificare trasferimento",
+    "conf": "Il trasferimento è stato modificato.",
+    "error": "Non è stato possibile modificare il trasferimento."
+  },
+  "delete": {
+    "label": "Eliminare trasferimento",
+    "conf": "Il trasferimento è stato eliminato.",
+    "error": "Non è stato possibile eliminare il trasferimento."
+  }
+}

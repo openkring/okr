@@ -1,0 +1,92 @@
+{
+    "create": {
+        "boat": {
+            "conf": "La barca è stata salvata.",
+            "error": "Impossibile salvare la barca."
+        },
+        "rboat": {
+            "conf": "La barca a remi è stata salvata.",
+            "error": "Impossibile salvare la barca a remi."
+        },
+        "car": {
+            "conf": "Il veicolo è stato salvato.",
+            "error": "Impossibile salvare il veicolo."
+        },
+        "locker": {
+            "conf": "Lo spogliatoio è stato salvato.",
+            "error": "Impossibile salvare lo spogliatoio."
+        },
+        "key": {
+            "conf": "La chiave è stata salvata.",
+            "error": "Impossibile salvare la chiave."
+        },
+        "realestate": {
+            "conf": "L'immobile è stato salvato.",
+            "error": "Impossibile salvare l'immobile."
+        },
+        "pet": {
+            "conf": "L'animale domestico è stato salvato.",
+            "error": "Impossibile salvare l'animale domestico."
+        }
+    },
+    "delete": {
+        "boat": {
+            "conf": "La barca è stata eliminata.",
+            "error": "Impossibile eliminare la barca."
+        },
+        "rboat": {
+            "conf": "La barca a remi è stata eliminata.",
+            "error": "Impossibile eliminare la barca a remi."
+        },
+        "car": {
+            "conf": "Il veicolo è stato eliminato.",
+            "error": "Impossibile eliminare il veicolo."
+        },
+        "locker": {
+            "conf": "Lo spogliatoio è stato eliminato.",
+            "error": "Impossibile eliminare lo spogliatoio."
+        },
+        "key": {
+            "conf": "La chiave è stata eliminata.",
+            "error": "Impossibile eliminare la chiave."
+        },
+        "realestate": {
+            "conf": "L'immobile è stato eliminato.",
+            "error": "Impossibile eliminare l'immobile."
+        },
+        "pet": {
+            "conf": "L'animale domestico è stato eliminato.",
+            "error": "Impossibile eliminare l'animale domestico."
+        }
+    },
+    "update": {
+        "boat": {
+            "conf": "La barca è stata salvata.",
+            "error": "Impossibile salvare la barca."
+        },
+        "rboat": {
+            "conf": "La barca a remi è stata salvata.",
+            "error": "Impossibile salvare la barca a remi."
+        },
+        "car": {
+            "conf": "Il veicolo è stato salvato.",
+            "error": "Impossibile salvare il veicolo."
+        },
+        "locker": {
+            "conf": "Lo spogliatoio è stato salvato.",
+            "error": "Impossibile salvare lo spogliatoio."
+        },
+        "key": {
+            "conf": "La chiave è stata salvata.",
+            "error": "Impossibile salvare la chiave."
+        },
+        "realestate": {
+            "conf": "L'immobile è stato salvato.",
+            "error": "Impossibile salvare l'immobile."
+        },
+        "pet": {
+            "conf": "L'animale domestico è stato salvato.",
+            "error": "Impossibile salvare l'animale domestico."
+        }
+    }
+}

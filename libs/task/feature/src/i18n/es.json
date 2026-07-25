@@ -1,0 +1,138 @@
+{
+  "task": "Tarea",
+  "tasks": "Tareas",
+  "desc": "Tareas que deben realizarse.",
+  "empty": "No se encontraron tareas.",
+  "empty-my": "¡Enhorabuena ! - No tiene tareas pendientes.",
+  "calendar": {
+    "name": {
+      "label": "Calendario",
+      "description": "El evento se registra en estos calendarios.",
+      "addLabel": "Añadir nombre de calendario"
+    }
+  },
+  "taskQuickEntry": {
+    "label": "Entrada rápida",
+    "placeholder": "Texto [@Person] [//Date]",
+    "helper": "Permite la creación rápida de una tarea con descripción, asignación y fecha de vencimiento."
+  },
+
+  "create": {
+    "label": "Crear nueva tarea",
+    "conf": "La tarea se ha creado.",
+    "error": "No se pudo crear la tarea."
+  },
+  "delete": {
+    "label": "Eliminar tarea",
+    "confirm": "¿Desea realmente eliminar esta tarea ?",
+    "conf": "La tarea se ha eliminado.",
+    "error": "No se pudo eliminar la tarea."
+  },
+  "update": {
+    "label": "Modificar tarea",
+    "conf": "La tarea se ha modificado.",
+    "error": "No se pudo modificar la tarea."
+  },
+  "view": {
+    "label": "Ver detalles de la tarea"
+  },
+  "done": "Marcar la tarea como realizada",
+
+  "list": {
+    "header": {
+      "name": "Nombre",
+      "dueDate": "Vencimiento",
+      "assignee": "Responsable",
+      "state": "Estado"
+    }
+  },
+
+  "board": {
+    "emptyColumn": "Sin tareas",
+    "noStates": "No se ha definido ninguna categoría 'task_state'. Sin estados no se puede mostrar ningún tablero."
+  },
+
+   "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "La clave de la tarea en la base de datos."
+  },
+  "name": {
+    "label": "Nombre de la tarea",
+    "placeholder": "Nombre a elección",
+    "helper": "Un identificador para la tarea, de modo que pueda encontrarse fácilmente en una lista."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas"
+  },
+  "dueDate": {
+    "label": "Vence el",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "Una tarea debe completarse antes de esta fecha.",
+    "error": "El formato de fecha no es correcto."
+  },
+  "completionDate": {
+    "label": "Realizada el",
+    "placeholder": "tt.mm.jjjj",
+    "helper": "La tarea se completó en esta fecha.",
+    "error": "El formato de fecha no es correcto."
+  },
+  "task_state": {
+    "all": {
+      "label": "Todos los estados"
+    },
+    "label": "Estado",
+    "helper": "La tarea se encuentra en un estado determinado, p. ej. inicial, planificada, en curso, realizada.",
+    "initial": {
+      "label": "Inicial",
+      "description": "La tarea se ha creado."
+    },
+    "planned": {
+      "label": "Planificada",
+      "description": "La tarea está planificada."
+    },
+    "doing": {
+      "label": "En curso",
+      "description": "La tarea se está procesando."
+    },
+    "done": {
+      "label": "Realizada",
+      "description": "La tarea se ha realizado."
+    },
+    "waiting": {
+      "label": "En espera",
+      "description": "La tarea está a la espera de una acción."
+    },
+    "cancelled": {
+      "label": "Cancelada",
+      "description": "La tarea se ha cancelado."
+    },
+    "later": {
+      "label": "Más tarde",
+      "description": "La tarea se realizará más tarde."
+    }
+  },
+  "priority": {
+    "label": "Prioridad"
+  },
+  "importance": {
+    "label": "Importancia"
+  },
+  "assignee": {
+    "label": "Responsable",
+    "description": "Persona responsable de la realización de la tarea."
+  },
+  "author": {
+    "label": "Autor",
+    "description": "Persona que ha creado la tarea."
+  },
+  "scope": {
+    "label": "Contexto",
+    "description": "La tarea normalmente es visible para el autor, la persona responsable y los usuarios privilegiados. Con el contexto, la visibilidad puede ampliarse a un grupo."
+  },
+
+  "validations": {
+    "taskModelType": "El ModelType debe ser TaskModel."
+  }
+}

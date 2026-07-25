@@ -1,0 +1,843 @@
+{
+  "resource": "Risorsa",
+  "resources": "Risorse",
+  "desc": "Qualcosa che si può utilizzare, prenotare o possedere (barca, auto, immobile, chiave, armadietto, ecc.).",
+  "all": "Tutte le risorse",
+
+  "empty": "Nessuna risorsa trovata.",
+  "other_attributes": "Altri dati",
+
+  "create": {
+    "label": "Registrare una nuova risorsa",
+    "conf": "La nuova risorsa è stata salvata.",
+    "error": "La risorsa non è stata salvata."
+  },
+  "delete": {
+    "label": "Eliminare la risorsa",
+    "conf": "La risorsa è stata eliminata.",
+    "error": "La risorsa non è stata eliminata.",
+    "confirm": "Eliminare davvero la risorsa?"
+  },
+  "update": {
+    "label": "Modificare la risorsa",
+    "conf": "Le modifiche sono state salvate",
+    "error": "Le modifiche non sono state salvate."
+  },
+  "view": {
+    "label": "Mostrare la risorsa"
+  },
+  "select": {
+    "label": "Scegliere la risorsa"
+  },
+
+  "okey": {
+    "label": "okey",
+    "placeholder": "okey",
+    "helper": "L'okey è l'identificatore univoco di una risorsa nel database."
+  },
+  "color": {
+    "label": "Colore",
+    "ionic": {
+      "primary": {
+        "label": "Primary",
+        "description": "Primary color for the app"
+      },
+      "secondary": {
+        "label": "Secondary",
+        "description": "Secondary color for the app"
+      },
+      "tertiary": {
+        "label": "Tertiary",
+        "description": "Tertiary color for the app"
+      },
+      "success": {
+        "label": "Success",
+        "description": "Success color for the app"
+      },
+      "warning": {
+        "label": "Warning",
+        "description": "Warning color for the app"
+      },
+      "danger": {
+        "label": "Danger",
+        "description": "Danger color for the app"
+      },
+      "light": {
+        "label": "Light",
+        "description": "Light color for the app"
+      },
+      "medium": {
+        "label": "Medium",
+        "description": "Medium color for the app"
+      },
+      "dark": {
+        "label": "Dark",
+        "description": "Dark color for the app"
+      },
+      "white": {
+        "label": "Nessuno",
+        "description": "Viene utilizzato il colore predefinito, ovvero bianco o nero"
+      }
+    }
+  },
+  "currentValue": {
+    "label": "Valore attuale",
+    "placeholder": "Valore attuale",
+    "helper": "Il valore nello stato attuale, ad es. il valore attuale di una barca.",
+    "error": "Occorre inserire un numero intero composto esclusivamente da cifre"
+  },
+  "description": {
+    "label": "Descrizione",
+    "placeholder": "Un testo più lungo, su più righe."
+  },
+  "keyNr": {
+    "label": "N. chiave",
+    "placeholder": "nnnnn",
+    "helper": "Il numero di chiave è un numero a cinque cifre.",
+    "error": "Occorre inserire un numero intero composto esclusivamente da cifre."
+  },
+  "lockerNr": {
+    "label": "N. armadietto",
+    "placeholder": "n[nn]",
+    "helper": "Il numero dell'armadietto, ad es. 1, 2, 3, ecc.",
+    "error": "Occorre inserire un numero intero composto esclusivamente da cifre."
+  },
+  "load": {
+    "label": "Carico",
+    "placeholder": "Carico in kg [da-a]",
+    "helper": "Carico in kg (da - a)",
+    "error": "L'inserimento è composto da un peso minimo facoltativo (numero a 2 cifre) - peso massimo (numero a 2-3 cifre)"
+  },
+  "name": {
+    "label": "Nome",
+    "placeholder": "Nome",
+    "error": "Il nome è obbligatorio e deve essere composto da caratteri alfanumerici.",
+    "helper": "Un nome può essere composto da più parole. Sono ammesse solo lettere (incl. -) e numeri, nessun carattere speciale."
+  },
+
+  "resource_type": {
+    "label": "Tipo di risorsa",
+    "helper": "Il tipo della risorsa.",
+    "all": {
+      "label": "Tutte le risorse"
+    }
+  },
+  "type": {
+    "label": "Tipo di risorsa",
+    "undefined": {
+      "label": "Non definito",
+      "description": "Il tipo di risorsa non è impostato o è sconosciuto.",
+      "formTitle": "Dati della risorsa"
+    },
+
+    "boat": {
+      "label": "Barca",
+      "plural": "Barche",
+      "empty": "Nessuna barca trovata.",
+      "formTitle": "Dati della barca",
+      "name": "Nome della barca",
+      "type": "Tipo di barca",
+      "description": "Motoscafo, barca a vela, ecc.",
+      "create": {
+        "label": "Registrare una nuova barca",
+        "conf": "La nuova barca è stata salvata.",
+        "error": "La barca non è stata salvata."
+      },
+      "update": {
+        "label": "Modificare la barca",
+        "conf": "Le modifiche sono state salvate",
+        "error": "Le modifiche non sono state salvate."
+      },
+      "delete": {
+        "label": "Eliminare la barca",
+        "conf": "La barca è stata eliminata.",
+        "error": "La barca non è stata eliminata.",
+        "askConfirmation": "Eliminare davvero la barca?"
+      },
+      "view": {
+        "label": "Mostrare la barca"
+      }
+    },
+    "legaldoc": {
+      "label": "Documento",
+      "title": "Documenti",
+      "formTitle": "",
+      "description": "Una conferma sotto forma di documento ufficiale."
+    },
+
+    "rboat": {
+      "label": "Barca a remi",
+      "plural": "Barche a remi",
+      "empty": "Nessuna barca a remi trovata.",
+      "formTitle": "Dati della barca a remi",
+      "name": "Nome della barca a remi",
+      "type": "Tipo di barca",
+      "description": "Barca a remi di proprietà del club o privata",
+      "create": {
+        "label": "Registrare una nuova barca a remi",
+        "conf": "La nuova barca a remi è stata salvata.",
+        "error": "La barca a remi non è stata salvata."
+      },
+      "update": {
+        "label": "Modificare la barca a remi",
+        "conf": "Le modifiche sono state salvate",
+        "error": "Le modifiche non sono state salvate."
+      },
+      "delete": {
+        "label": "Eliminare la barca a remi",
+        "conf": "La barca a remi è stata eliminata.",
+        "error": "La barca a remi non è stata eliminata.",
+        "askConfirmation": "Eliminare davvero la barca a remi?"
+      },
+      "view": {
+        "label": "Mostrare la barca a remi"
+      }
+    },
+
+    "car": {
+      "label": "Veicolo",
+      "title": "Veicoli",
+      "formTitle": "Dati del veicolo",
+      "description": "Auto, camion, autobus",
+      "create": {
+        "label": "Registrare un nuovo veicolo",
+        "conf": "Il nuovo veicolo è stato salvato.",
+        "error": "Il veicolo non è stato salvato."
+      },
+      "update": {
+        "label": "Modificare il veicolo",
+        "conf": "Le modifiche sono state salvate",
+        "error": "Le modifiche non sono state salvate."
+      },
+      "delete": {
+        "label": "Eliminare il veicolo",
+        "conf": "Il veicolo è stato eliminato.",
+        "error": "Il veicolo non è stato eliminato.",
+        "askConfirmation": "Eliminare davvero il veicolo?"
+      },
+      "view": {
+        "label": "Mostrare il veicolo"
+      }
+    },
+
+    "clubBoat": {
+      "label": "Barca del club",
+      "title": "Barche del club"
+    },
+    "privateBoat": {
+      "label": "Barca privata",
+      "title": "Barche private"
+    },
+
+    "other": {
+      "label": "Altra risorsa",
+      "description": "Risorsa che non può essere assegnata a nessun tipo predefinito",
+      "formTitle": "Dati della risorsa",
+      "create": {
+        "label": "Registrare una nuova risorsa",
+        "conf": "La nuova risorsa è stata salvata.",
+        "error": "La nuova risorsa non è stata salvata."
+      },
+      "update": {
+        "label": "Modificare la risorsa",
+        "conf": "Le modifiche sono state salvate",
+        "error": "Le modifiche non sono state salvate."
+      },
+      "delete": {
+        "label": "Eliminare la risorsa",
+        "conf": "La risorsa è stata eliminata.",
+        "error": "La risorsa non è stata eliminata.",
+        "askConfirmation": "Eliminare davvero la risorsa?"
+      },
+      "view": {
+        "label": "Mostrare la risorsa"
+      }
+    },
+
+    "motorBoat": {
+      "label": "Motoscafo",
+      "title": "Motoscafi",
+      "description": "Barca con motore, ad es. gommone"
+    },
+    "vehicle": {
+      "label": "Veicolo",
+      "title": "Veicoli",
+      "description": "Auto o rimorchio"
+    },
+    "locker": {
+      "label": "Armadietto",
+      "plural": "Armadietti",
+      "title": "Armadietto - armadio",
+      "empty": "Nessun armadietto trovato.",
+      "formTitle": "Dati dell'armadio a scomparti",
+      "description": "Armadio spogliatoio nello spogliatoio degli uomini",
+      "create": {
+        "label": "Registrare un nuovo armadio a scomparti",
+        "conf": "Il nuovo armadio a scomparti è stato salvato.",
+        "error": "L'armadio a scomparti non è stato salvato."
+      },
+      "update": {
+        "label": "Modificare l'armadio a scomparti",
+        "conf": "Le modifiche sono state salvate",
+        "error": "Le modifiche non sono state salvate."
+      },
+      "delete": {
+        "label": "Eliminare l'armadio a scomparti",
+        "conf": "L'armadio a scomparti è stato eliminato.",
+        "error": "L'armadio a scomparti non è stato eliminato.",
+        "askConfirmation": "Eliminare davvero l'armadio a scomparti?"
+      },
+      "view": {
+        "label": "Mostrare l'armadio a scomparti"
+      }
+    },
+    "key": {
+      "label": "Chiave",
+      "plural": "Chiavi",
+      "title": "Chiavi della rimessa per barche",
+      "empty": "Nessuna chiave trovata.",
+      "name": "Nome della chiave",
+      "nr": "N. chiave",
+      "formTitle": "Dati della chiave",
+      "description": "Chiave, ad es. per la porta d'ingresso",
+      "create": {
+        "label": "Registrare una nuova chiave",
+        "conf": "La nuova chiave è stata salvata.",
+        "error": "La chiave non è stata salvata."
+      },
+      "update": {
+        "label": "Modificare la chiave",
+        "conf": "Le modifiche sono state salvate",
+        "error": "Le modifiche non sono state salvate."
+      },
+      "delete": {
+        "label": "Eliminare la chiave",
+        "conf": "La chiave è stata eliminata.",
+        "error": "La chiave non è stata eliminata.",
+        "askConfirmation": "Eliminare davvero la chiave?"
+      },
+      "view": {
+        "label": "Mostrare la chiave"
+      }
+    },
+    "pet": {
+      "label": "Animale domestico",
+      "title": "Animali domestici",
+      "formTitle": "Dati dell'animale domestico",
+      "description": "Animale domestico, ad es. cane o gatto",
+      "create": {
+        "label": "Registrare un nuovo animale domestico",
+        "conf": "Il nuovo animale domestico è stato salvato.",
+        "error": "L'animale domestico non è stato salvato."
+      },
+      "update": {
+        "label": "Modificare l'animale domestico",
+        "conf": "Le modifiche sono state salvate",
+        "error": "Le modifiche non sono state salvate."
+      },
+      "delete": {
+        "label": "Eliminare l'animale domestico",
+        "conf": "L'animale domestico è stato eliminato.",
+        "error": "L'animale domestico non è stato eliminato.",
+        "askConfirmation": "Eliminare davvero l'animale domestico?"
+      },
+      "view": {
+        "label": "Mostrare l'animale domestico"
+      }
+    },
+    "license": {
+      "label": "Licenza",
+      "title": "Licenza",
+      "description": "Permesso per qualcosa, ad es. licenza di federazione"
+    },
+    "contract": {
+      "label": "Contratto",
+      "title": "Documento contrattuale",
+      "description": "Contratto, ad es. contratto di locazione, contratto di lavoro"
+    },
+    "document": {
+      "label": "Documento",
+      "title": "Documento",
+      "description": "Un documento qualsiasi, ad es. contratto, certificato, ecc."
+    },
+    "realestate": {
+      "label": "Immobile",
+      "title": "Immobile",
+      "formTitle": "Dati dell'immobile",
+      "description": "Casa, appartamento, terreno",
+      "create": {
+        "label": "Registrare un nuovo immobile",
+        "conf": "Il nuovo immobile è stato salvato.",
+        "error": "L'immobile non è stato salvato."
+      },
+      "update": {
+        "label": "Modificare l'immobile",
+        "conf": "Le modifiche sono state salvate",
+        "error": "Le modifiche non sono state salvate."
+      },
+      "delete": {
+        "label": "Eliminare l'immobile",
+        "conf": "L'immobile è stato eliminato.",
+        "error": "L'immobile non è stato eliminato.",
+        "askConfirmation": "Eliminare davvero l'immobile?"
+      },
+      "view": {
+        "label": "Mostrare l'immobile"
+      }
+    }
+  },
+  "state": {
+    "undefined": {
+      "label": "Non definito",
+      "description": "Lo stato non è definito, ad es. inizialmente non c'è ancora una richiesta oppure una richiesta è stata respinta."
+    },
+    "applied": {
+      "label": "Richiesto",
+      "description": "È stata fatta una richiesta."
+    },
+    "approved": {
+      "label": "Approvato",
+      "description": "La richiesta è stata approvata."
+    },
+    "active": {
+      "label": "Attivo",
+      "description": "La risorsa è assegnata per l'uso da parte di una persona."
+    },
+    "lost": {
+      "label": "Perso",
+      "description": "La risorsa attualmente non può essere utilizzata, ad es. a causa di perdita, furto o danneggiamento. L'utente deve provvedere alla sostituzione o risarcire la perdita."
+    },
+    "cancelled": {
+      "label": "Disdetto",
+      "description": "L'utilizzo della risorsa è stato disdetto."
+    },
+    "archived": {
+      "label": "Archiviato",
+      "description": "La risorsa è archiviata, ovvero l'utilizzo precedente non è più attuale."
+    }
+  },
+
+  "boat": {
+    "singular": "Barca",
+    "plural": "Barche",
+    "field": {
+      "empty": "Nessuna barca trovata."
+    },
+    "create": {
+      "label": "Registrare una nuova barca",
+      "conf": "La nuova barca è stata salvata.",
+      "error": "La barca non è stata salvata"
+    },
+    "update": {
+      "label": "Modificare la barca",
+      "conf": "Le modifiche sono state salvate",
+      "error": "Le modifiche non sono state salvate."
+    },
+    "delete": {
+      "label": "Eliminare la barca",
+      "conf": "La barca è stata eliminata.",
+      "error": "La barca non è stata eliminata.",
+      "askConfirmation": "Eliminare davvero la barca?"
+    },
+    "view": {
+      "label": "Mostrare i dati della barca"
+    }
+  },
+  "boat_type": {
+    "all": {
+      "label": "Tutti i tipi di barca"
+    },
+    "motor": {
+      "label": "Motoscafo",
+      "description": "Barca con un motore"
+    },
+    "sail": {
+      "label": "Barca a vela",
+      "description": "Barca con una vela"
+    },
+    "pedalo": {
+      "label": "Pedalò",
+      "description": "Barca a propulsione a pedali"
+    },
+    "row": {
+      "label": "Barca a remi",
+      "description": "Barca a remi"
+    },
+    "inflate": {
+      "label": "Gommone",
+      "description": "Barca gonfiabile"
+    },
+    "sup": {
+      "label": "SUP / tavola da surf",
+      "description": "SUP o tavola da surf"
+    }
+  },
+
+  "rboat": {
+    "singular": "Barca a remi",
+    "plural": "Barche a remi",
+    "field": {
+      "empty": "Nessuna barca a remi trovata."
+    },
+    "create": {
+      "label": "Registrare una nuova barca a remi",
+      "conf": "La nuova barca a remi è stata salvata.",
+      "error": "La barca a remi non è stata salvata"
+    },
+    "update": {
+      "label": "Modificare la barca a remi",
+      "conf": "Le modifiche sono state salvate",
+      "error": "Le modifiche non sono state salvate."
+    },
+    "delete": {
+      "label": "Eliminare la barca a remi",
+      "conf": "La barca a remi è stata eliminata.",
+      "error": "La barca a remi non è stata eliminata.",
+      "askConfirmation": "Eliminare davvero la barca a remi?"
+    },
+    "view": {
+      "label": "Mostrare i dati della barca a remi"
+    }
+  },
+  "rboat_type": {
+    "all": {
+      "label": "Tutti i tipi di barca"
+    },
+    "b1x": {
+      "label": "1x",
+      "description": "Singolo"
+    },
+    "b2m": {
+      "label": "2-",
+      "description": "Due senza"
+    },
+    "b2x": {
+      "label": "2x",
+      "description": "Doppio"
+    },
+    "b2p": {
+      "label": "2+",
+      "description": "Due con"
+    },
+    "b2mx": {
+      "label": "2-/2x",
+      "description": "Due convertibile"
+    },
+    "b3x": {
+      "label": "3x",
+      "description": "Triplo"
+    },
+    "b4m": {
+      "label": "4-",
+      "description": "Quattro senza"
+    },
+    "b4x": {
+      "label": "4x",
+      "description": "Quattro di coppia"
+    },
+    "b5x": {
+      "label": "5x",
+      "description": "Cinque di coppia"
+    },
+    "b8p": {
+      "label": "8+",
+      "description": "Otto con"
+    }
+  },
+  "rboat_usage": {
+    "kandidierende": {
+      "label": "Candidati",
+      "description": "Barche per candidati (C-gigs & coastal)"
+    },
+    "breitensport": {
+      "label": "Sport per tutti",
+      "description": "Tutti i membri attivi in base al rispettivo livello di prestazione"
+    },
+    "routinierte": {
+      "label": "Esperti",
+      "description": "Membri attivi molto esperti, priorità per allenamenti e regate"
+    },
+    "leistungssport": {
+      "label": "Sport agonistico",
+      "description": "Regatanti, master in accordo con l'head coach"
+    },
+    "private": {
+      "label": "Barca privata",
+      "description": "La barca è di proprietà privata di un membro del club e non può essere utilizzata dai membri del club."
+    }
+  },
+  "locker": {
+    "singular": "Armadietto",
+    "plural": "Armadietti",
+    "empty": "Nessun armadietto trovato.",
+    "nr": "N. armadietto",
+    "create": {
+      "label": "Registrare un nuovo armadietto",
+      "conf": "Il nuovo armadietto è stato salvato",
+      "error": "L'armadietto non è stato creato."
+    },
+    "delete": {
+      "label": "Eliminare l'armadietto",
+      "confirm": "Eliminare davvero l'armadietto?",
+      "conf": "L'armadietto è stato eliminato",
+      "error": "L'armadietto non è stato eliminato."
+    },
+    "update": {
+      "label": "Modificare l'armadietto",
+      "conf": "L'armadietto è stato modificato",
+      "error": "L'armadietto non è stato modificato"
+    },
+    "view": {
+      "label": "Mostrare l'armadietto"
+    }
+  },
+  "key": {
+    "singular": "Chiave",
+    "plural": "Chiavi",
+    "field": {
+      "empty": "Non è ancora stata registrata nessuna chiave."
+    },
+    "create": {
+      "label": "Registrare una nuova chiave",
+      "conf": "La chiave è stata salvata",
+      "error": "La chiave non è stata creata"
+    },
+    "delete": {
+      "label": "Eliminare la chiave",
+      "confirm": "Eliminare davvero la chiave?",
+      "conf": "La chiave è stata eliminata",
+      "error": "La chiave non è stata eliminata."
+    },
+    "update": {
+      "label": "Modificare la chiave della rimessa per barche",
+      "conf": "La chiave della rimessa per barche è stata modificata",
+      "error": "La chiave della rimessa per barche non è stata modificata"
+    },
+    "view": {
+      "label": "Mostrare la chiave della rimessa per barche"
+    }
+  },
+  "vehicle": {
+    "singular": "Veicolo",
+    "plural": "Veicoli",
+    "create": {
+      "label": "Registrare un nuovo veicolo",
+      "conf": "Il veicolo è stato salvato",
+      "error": "Il veicolo non è stato creato"
+    },
+    "update": {
+      "label": "Modificare il veicolo",
+      "conf": "Il veicolo è stato modificato",
+      "error": "Il veicolo non è stato modificato"
+    },
+    "view": {
+      "label": "Mostrare il veicolo"
+    }
+  },
+  "car": {
+    "singular": "Auto",
+    "plural": "Auto",
+    "create": {
+      "label": "Registrare una nuova auto",
+      "conf": "L'auto è stata salvata",
+      "error": "L'auto non è stata creata"
+    },
+    "update": {
+      "label": "Modificare l'auto",
+      "conf": "L'auto è stata modificata",
+      "error": "L'auto non è stata modificata"
+    },
+    "view": {
+      "label": "Mostrare l'auto"
+    }
+  },
+  "car_type": {
+    "name": "Tipo di veicolo",
+    "all": {
+      "label": "Tutti"
+    },
+    "convertible": {
+      "label": "Cabrio",
+      "description": "Veicolo aperto con tetto rimovibile"
+    },
+    "coupe": {
+      "label": "Coupé",
+      "description": "Auto a due porte con un aspetto sportivo."
+    },
+    "stationWagon": {
+      "label": "Station wagon",
+      "description": "Berlina allungata con un bagagliaio più grande e portellone posteriore."
+    },
+    "suv": {
+      "label": "Fuoristrada (SUV)",
+      "description": "Sport Utility Vehicle per fuoristrada e strada"
+    },
+    "sedan": {
+      "label": "Berlina",
+      "description": "Veicolo a quattro porte con un bagagliaio separato dall'abitacolo."
+    },
+    "hatchback": {
+      "label": "Compatta",
+      "description": "Veicolo a quattro porte con portellone posteriore, ad es. VW Golf"
+    },
+    "minivan": {
+      "label": "Minivan",
+      "description": "Quattro porte con più spazio per i passeggeri"
+    },
+    "truck": {
+      "label": "Camion",
+      "description": "Auto, camion, autobus"
+    },
+    "pickupTruck": {
+      "label": "Pickup",
+      "description": "Piccolo camion"
+    },
+    "sportsCar": {
+      "label": "Auto sportiva",
+      "description": "Veicolo tipicamente a due posti con un aspetto sportivo."
+    },
+    "utility": {
+      "label": "Veicolo commerciale",
+      "description": "Furgone per uso commerciale"
+    },
+    "camper": {
+      "label": "Camper",
+      "description": "Veicolo per il tempo libero con possibilità di pernottamento"
+    },
+    "bus": {
+      "label": "Autobus",
+      "description": "Grande mezzo commerciale per il trasporto di molte persone"
+    }
+  },
+  "realestate": {
+    "singular": "Immobile",
+    "plural": "Immobili",
+    "create": {
+      "label": "Registrare un nuovo immobile",
+      "conf": "L'immobile è stato salvato",
+      "error": "L'immobile non è stato creato"
+    },
+    "update": {
+      "label": "Modificare l'immobile",
+      "conf": "L'immobile è stato modificato",
+      "error": "L'immobile non è stato modificato"
+    },
+    "view": {
+      "label": "Mostrare l'immobile"
+    }
+  },
+  "legaldoc_type": {
+    "license": {
+      "label": "Licenza",
+      "description": "Un diritto d'uso"
+    },
+    "permit": {
+      "label": "Permesso",
+      "description": "Il permesso di una parte autorizzata affinché la parte interessata possa fare qualcosa."
+    },
+    "certification": {
+      "label": "Certificato",
+      "description": "Una conferma scritta di una parte autorizzata."
+    },
+    "passport": {
+      "label": "Passaporto",
+      "description": "Documento d'identità sotto forma di passaporto"
+    },
+    "idcard": {
+      "label": "ID",
+      "description": "Documento d'identità sotto forma di carta d'identità"
+    },
+    "confirmation": {
+      "label": "Conferma",
+      "description": "Un documento scritto rilasciato da una parte autorizzata che garantisce la correttezza e l'esistenza di un fatto."
+    },
+    "diploma": {
+      "label": "Diploma",
+      "description": "Una conferma di un titolo di formazione."
+    },
+    "contract": {
+      "label": "Contratto",
+      "description": "Un accordo tra almeno 2 parti."
+    },
+    "visa": {
+      "label": "Visto",
+      "description": "ad es. un visto di viaggio per l'ingresso in un determinato paese"
+    },
+    "policy": {
+      "label": "Polizza",
+      "description": "ad es. una polizza assicurativa"
+    },
+    "other": {
+      "label": "Altro",
+      "description": "Un'altra forma di documento giuridico."
+    }
+  },
+  "pet_type": {
+    "cat": {
+      "label": "Gatto",
+      "description": "Un gatto come animale domestico"
+    },
+    "dog": {
+      "label": "Cane",
+      "description": "Un cane come animale domestico"
+    },
+    "bird": {
+      "label": "Uccello",
+      "description": "Un uccello come animale domestico"
+    },
+    "sheep": {
+      "label": "Pecora",
+      "description": "Una pecora come animale domestico"
+    },
+    "rabbit": {
+      "label": "Coniglio",
+      "description": "Un coniglio come animale domestico"
+    },
+    "horse": {
+      "label": "Cavallo",
+      "description": "Un cavallo come animale domestico"
+    },
+    "fish": {
+      "label": "Pesce",
+      "description": "Un pesce come animale domestico"
+    }
+  },
+  "other": {
+    "create": {
+      "label": "Aggiungere una nuova risorsa",
+      "error": "La nuova risorsa non è stata creata.",
+      "conf": "La nuova risorsa è stata creata."
+    },
+    "update": {
+      "label": "Modificare la risorsa",
+      "error": "Le modifiche non sono state salvate.",
+      "conf": "Le modifiche sono state salvate."
+    },
+    "delete": {
+      "label": "Eliminare la risorsa",
+      "error": "La risorsa non è stata eliminata.",
+      "conf": "La risorsa è stata eliminata."
+    },
+    "view": {
+      "label": "Informazioni sulla risorsa"
+    },
+    "reactivate": {
+      "label": "Riattivare la risorsa",
+      "error": "La risorsa non è stata riattivata.",
+      "conf": "La risorsa è stata riattivata."
+    },
+    "search": {
+      "label": "Cercare una risorsa"
+    },
+    "select": {
+      "all": "Scegliere la risorsa",
+      "motorBoat": "Scegliere il motoscafo",
+      "vehicle": "Scegliere il veicolo",
+      "locker": "Scegliere l'armadio a scomparti",
+      "maleLocker": "Scegliere l'armadietto degli uomini",
+      "femaleLocker": "Scegliere l'armadietto delle donne",
+      "houseKey": "Scegliere la chiave",
+      "rowingBoat": "Scegliere la barca a remi"
+    }
+  }
+}

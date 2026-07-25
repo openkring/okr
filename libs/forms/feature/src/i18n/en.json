@@ -1,0 +1,72 @@
+{
+  "title": "Form editor",
+  "list": {
+    "title": "Forms",
+    "empty": "No forms found."
+  },
+  "as": {
+    "title": "Form actions"
+  },
+  "action": {
+    "builder": "Edit fields",
+    "settings": "Settings",
+    "export_csv": "Export CSV",
+    "export_pdf": "Export PDF",
+    "duplicate": "Duplicate",
+    "archive": "Archive"
+  },
+  "form": {
+    "key": {
+      "label": "Form key (immutable)"
+    },
+    "loading": "Form is loading…",
+    "notfound": "Form not found.",
+    "archived": "This form is no longer available."
+  },
+  "field": {
+    "title": "Configure field",
+    "add": "Add field"
+  },
+
+  "canvas_empty": "Drag fields here from the library.",
+  "library": "Field library",
+  "key": "Field name (snake_case)",
+  "label": "Label",
+  "required": "Required field",
+  "width": "Width",
+  "help": "Help text",
+  "preview": "Preview",
+  "mapping": {
+    "choose": "Select collection"
+  },
+  "target": {
+    "label": "Where should submissions be stored?",
+    "collection": "Firestore collection (recommended)",
+    "url": "External URL (e.g. Google Forms)"
+  },
+  "url": {
+    "label": "Target URL"
+  },
+
+  "create": {
+    "label": "Create new form",
+    "conf": "The form was created.",
+    "error": "The form could not be created."
+  },
+  "delete": {
+    "label": "Delete form",
+    "confirm": "Do you really want to delete the form ?",
+    "conf": "The form was deleted.",
+    "error": "The form could not be deleted."
+  },
+  "submit": {
+    "label": "Submit",
+    "conf": "Thank you! Your submission was saved.",
+    "error": "Error while submitting. Please try again."
+  },
+  "update": {
+    "label": "Edit form",
+    "conf": "The form was saved.",
+    "error": "The form could not be saved."
+  }
+}

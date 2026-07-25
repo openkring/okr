@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Nuevo grupo",
+    "error": "No se ha podido guardar el nuevo grupo.",
+    "conf": "El nuevo grupo se ha guardado."
+  },
+  "update": {
+    "label": "Editar grupo",
+    "error": "No se han podido guardar los cambios",
+    "conf": "Los cambios se han guardado."
+  },
+  "delete": {
+    "label": "Eliminar grupo",
+    "error": "No se ha podido eliminar el grupo.",
+    "conf": "El grupo se ha eliminado.",
+    "confirm": "¿Desea realmente eliminar el grupo ?"
+  }
+}

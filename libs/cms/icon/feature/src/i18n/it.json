@@ -1,0 +1,82 @@
+{
+  "icon": "Icona",
+  "icons": "Icone",
+  "empty": "Nessuna icona trovata.",
+
+  "copy": {
+    "label": "Copia nome dell'icona"
+  },
+  "create": {
+    "label": "Aggiungi icona",
+    "conf": "L'icona è stata aggiunta.",
+    "error": "Non è stato possibile aggiungere l'icona."
+  },
+  "delete": {
+    "label": "Elimina icona",
+    "conf": "L'icona è stata eliminata.",
+    "error": "Non è stato possibile eliminare l'icona.",
+    "confirm": "Eliminare davvero l'icona?"
+  },
+  "exportRaw": {
+    "label": "Esporta icone"
+  },
+  "sync": {
+    "label": "Sincronizza icone"
+  },
+  "select": {
+    "label": "Seleziona icona"
+  },
+  "update": {
+    "label": "Modifica configurazione dell'icona",
+    "conf": "L'icona è stata salvata.",
+    "error": "Non è stato possibile salvare l'icona."
+  },
+  "view": {
+    "label": "Mostra dettagli dell'icona"
+  },
+
+  "okey": {
+    "label": "ID",
+    "placeholder": "ssssss",
+    "helper": "Un identificatore univoco sotto forma di parola. Possono essere utilizzati solo lettere minuscole, numeri e _ o -."
+  },
+  "name": {
+    "label": "Nome dell'icona",
+    "placeholder": "ad es. download",
+    "helper": "Il nome dell'icona, ad es. pdf, doc ecc. (vedi assets/icons o ionic).",
+    "button": "L'icona sul pulsante (ion-icon).",
+    "menu": "L'icona sulla voce di menu (ion-icon).",
+    "error": "Il nome dell'icona è obbligatorio e deve essere composto da caratteri alfanumerici."
+  },
+  "type": {
+    "label": "Set di icone",
+    "placeholder": "Nome della cartella",
+    "helper": "Raggruppa le icone per un tema simile (ad es. Logos, Filetypes, Sections). Corrisponde al nome della sottocartella nella directory Logo nello Storage."
+  },
+  "fullPath": {
+    "label": "Storage Path",
+    "placeholder": "/asdf/asf",
+    "helper": "Il percorso dell'icona nello Storage."
+  },
+  "index": {
+    "label": "Indice",
+    "placeholder": "sssss sssss",
+    "helper": "Termini di ricerca separati da spazi"
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Text"
+  },
+   "size": {
+    "label": "Dimensione",
+    "placeholder": "40",
+    "helper": "La dimensione dell'icona in pixel, ad es. 24, 32, 48 ecc.",
+    "error": "La dimensione dell'icona deve essere un numero intero composto esclusivamente da cifre."
+  },
+  "slot": {
+    "label": "Posizione dell'icona",
+    "placeholder": "start | end | top | bottom",
+    "helper": "La posizione dell'icona rispetto al testo, ad es. sinistra, destra, sopra, sotto. Con none viene mostrata solo l'icona."
+  },
+  "updated": "Ultimo aggiornamento"
+}

@@ -1,0 +1,74 @@
+{
+  "template": "Modèle PDF",
+  "templates": "Modèles PDF",
+  "list": {
+    "title": "Modèles de document"
+  },
+  "empty": "Aucun modèle trouvé.",
+
+  "archive": {
+    "label": "Archiver le modèle"
+  },
+  "create": {
+    "label": "Ajouter un modèle PDF",
+    "conf": "Le modèle PDF a été créé.",
+    "error": "Le modèle PDF n'a pas pu être créé."
+  },
+  "delete": {
+    "label": "Supprimer le modèle PDF",
+    "confirm": "Voulez-vous vraiment supprimer le modèle PDF ?",
+    "conf": "Le modèle PDF a été supprimé",
+    "error": "Le modèle PDF n'a pas pu être supprimé"
+  },
+  "duplicate": {
+    "label": "Dupliquer le modèle"
+  },
+  "preview": {
+    "label": "Aperçu",
+    "error": "Échec de la génération de l'aperçu"
+  },
+  "publish": {
+    "label": "Publier le modèle",
+    "conf": "Modèle publié.",
+    "error": "Échec de la publication."
+  },
+  "save": {
+    "draft": {
+      "conf": "Brouillon enregistré.",
+      "error": "Le brouillon n'a pas pu être enregistré."
+    }
+  },
+  "update": {
+    "label": "Modifier le modèle PDF",
+    "conf": "Les modifications ont été enregistrées.",
+    "error": "Les modifications n'ont pas pu être enregistrées"
+  },
+  "view": {
+    "label": "Afficher la version actuelle"
+  },
+  "revert": {
+    "label": "Rétablir la dernière version",
+    "conf": "Rétabli à la dernière version.",
+    "error": "Échec du rétablissement."
+  },
+
+
+  "category": {
+    "label": "Catégorie"
+  },
+  "language": {
+    "label": "Langue"
+  },
+  "status": {
+    "label": "Statut"
+  },
+  "version": {
+    "label": "Version"
+  },
+  "html": {
+    "label": "HTML"
+  },
+  "css": {
+    "label": "CSS"
+  }
+}

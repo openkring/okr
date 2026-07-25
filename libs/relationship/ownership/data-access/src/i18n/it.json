@@ -1,0 +1,27 @@
+{
+  "create": {
+    "label": "Aggiungi utilizzo",
+    "error": "Non è stato possibile creare l'utilizzo.",
+    "conf": "L'utilizzo è stato creato."
+  },
+  "update": {
+    "label": "Modifica utilizzo",
+    "error": "Non è stato possibile salvare le modifiche",
+    "conf": "Le modifiche sono state salvate."
+  },
+  "delete": {
+    "label": "Elimina utilizzo",
+    "error": "Non è stato possibile eliminare l'utilizzo",
+    "conf": "L'utilizzo è stato eliminato",
+    "confirm": "Normalmente un utilizzo dovrebbe essere terminato, ma non eliminato. L'eliminazione è prevista solo per correggere voci errate. Eliminare davvero l'utilizzo?"
+  },
+  "select": {
+    "raw": "Dati grezzi",
+    "lockers": "Elenco armadietti",
+    "title": "Seleziona il tipo di elenco per l'esportazione"
+  },
+  "end": {
+    "conf": "Utilizzo terminato",
+    "error": "Non è stato possibile terminare l'utilizzo."
+  }
+}

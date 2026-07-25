@@ -1,0 +1,22 @@
+{
+  "comment": {
+    "initial": {
+      "conf": "créé"
+    },
+    "update": {
+      "conf": "modifié"
+    }
+  },
+  "appConfig": {
+    "create": {
+      "conf": "Entrée de configuration enregistrée.",
+      "error": "L'entrée de configuration n'a pas pu être enregistrée."
+    },
+    "update": {
+      "conf": "Entrée de configuration enregistrée."
+    },
+    "delete": {
+      "conf": "Entrée de configuration supprimée."
+    }
+  }
+}

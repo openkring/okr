@@ -1,0 +1,100 @@
+{
+  "map": "Mapa",
+  "allYears": "Todos los años",
+  "year": "Año",
+  "copy": {
+    "conf": "El valor se ha copiado.",
+    "label": "Copiar"
+  },
+  "select": {
+    "category": "Elegir categoría",
+    "date": "Elegir fecha",
+    "tag": "Elegir día",
+    "time": "Elegir hora"
+  },
+  "deleteContent": "Eliminar contenido",
+  "search": {
+    "placeholder": "Buscar...",
+    "byTag": "Día"
+  },
+  "categoryItems": {
+    "empty": "Aún no se ha definido ningún elemento en esta categoría.",
+    "title": "Elementos",
+    "subTitle": "Los elementos individuales de una categoría. Cada elemento se muestra en su propia línea."
+  },
+  "color": {
+    "select": "Selección de color",
+    "label": "Color"
+  },
+  "meta": {
+    "empty": "No hay metaetiquetas disponibles.",
+    "label": "MetaTags (SEO)"
+  },
+  "actionsheet": {
+    "title": "Elegir una acción",
+    "address": {
+      "edit": "Editar dirección de correo electrónico",
+      "view": "Mostrar dirección de correo electrónico",
+      "hide": "Ocultar dirección de correo electrónico"
+    }
+  },
+  "address": {
+    "email": {
+      "title": "Direcciones de correo electrónico",
+      "empty": "Sin direcciones de correo electrónico",
+      "copy": {
+        "label": "Copiar",
+        "conf": "Las direcciones de correo electrónico se han copiado."
+      }
+    }
+  },
+  "section": {
+    "forms": {
+      "imageConfig": {
+        "title": "Configuración de la imagen (archivo)"
+      }
+    }
+  },
+  "membership": {
+    "email": {
+      "title": "Direcciones de correo electrónico",
+      "empty": "No hay direcciones de correo electrónico disponibles.",
+      "copy": {
+        "label": "Copiar",
+        "conf": "Los correos electrónicos se han copiado."
+      },
+      "address": {
+        "main": "Direcciones principales",
+        "cc": "cc: direcciones"
+      }
+    }
+  },
+  "text": {
+    "edit": "Editar texto"
+  },
+  "string": {
+    "title": "Lista de palabras",
+    "edit": "Editar palabra",
+    "add": "Añadir palabra"
+  },
+  "connection": {
+    "title": "Estado de la conexión a Internet",
+    "intro": "Su estado de conexión a Internet se actualiza continuamente y se representa con colores de la siguiente manera:",
+    "good": "Buena conexión",
+    "goodExplanation": "Todas las funciones de la aplicación están disponibles sin restricciones. Puede cargar contenido, transferir datos e interactuar con otros usuarios sin problemas.",
+    "slow": "Conexión lenta",
+    "slowExplanation": "Algunas funciones de la aplicación pueden estar restringidas. La carga de contenido puede tardar más y pueden producirse retrasos en la transferencia de datos.",
+    "offline": "Sin conexión",
+    "offlineExplanation": "Actualmente está sin conexión. Algunas funciones de la aplicación no están disponibles y no puede cargar ni transferir nuevos datos. Compruebe su conexión a Internet."
+  },
+  "notes": {
+    "notes": "Notas",
+    "placeholder": "text",
+    "label": "Notas",
+    "pwd": {
+      "header": "Introducir contraseña",
+      "message": "Atención: si olvida la contraseña, el texto ya no podrá descifrarse.",
+      "placeholder": "Contraseña"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "create": {
+    "label": "Añadir trayecto",
+    "conf": "El trayecto se ha añadido.",
+    "error": "El trayecto no se pudo añadir."
+  },
+  "update": {
+    "label": "Modificar trayecto",
+    "conf": "El trayecto se ha modificado.",
+    "error": "El trayecto no se pudo modificar."
+  },
+  "delete": {
+    "label": "Eliminar trayecto",
+    "conf": "El trayecto se ha eliminado.",
+    "error": "El trayecto no se pudo eliminar."
+  }
+}

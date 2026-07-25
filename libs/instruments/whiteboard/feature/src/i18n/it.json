@@ -1,0 +1,33 @@
+{
+  "whiteboard": "Lavagna",
+  "plural": "Lavagne",
+  "desc": "Una parete per post-it e note.",
+  "empty": "Ancora nessuna lavagna.",
+  "done": "Fatto",
+  "operation": {
+    "create": { "label": "Crea lavagna" },
+    "edit": { "label": "Modifica lavagna" },
+    "view": { "label": "Visualizza lavagna" },
+    "delete": { "confirm": "Eliminare davvero la lavagna ?" }
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Annulla",
+    "confirmation": "Salva"
+  },
+  "actionsheet": {
+    "choose": "Scegli un'azione",
+    "open": "Apri",
+    "edit": "Rinomina",
+    "delete": "Elimina"
+  },
+  "editor": {
+    "addSticker": "Aggiungi adesivo",
+    "addLabel": "Aggiungi testo",
+    "chooseTemplate": "Modello",
+    "zoomIn": "Ingrandisci",
+    "zoomOut": "Riduci",
+    "zoomReset": "Reimposta la vista",
+    "emptyCanvas": "Tocca «+» per aggiungere un adesivo."
+  }
+}

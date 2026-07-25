@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "Ajouter une facture",
+    "conf": "La facture a été créée.",
+    "error": "La facture n'a pas pu être créée."
+  },
+  "delete": {
+    "label": "Supprimer la facture",
+    "confirm": "Faut-il vraiment supprimer la facture ?",
+    "conf": "La facture a été supprimée.",
+    "error": "La facture n'a pas pu être supprimée."
+  },
+  "update": {
+    "label": "Modifier la facture",
+    "conf": "La facture a été modifiée.",
+    "error": "La facture n'a pas pu être modifiée."
+  }
+}

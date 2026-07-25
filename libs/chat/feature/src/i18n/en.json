@@ -1,0 +1,232 @@
+{
+  "roomId": {
+    "label": "Room ID",
+    "placeholder": "Room ID",
+    "helper": "The room ID is used to uniquely identify a chat room.",
+    "error": "The room ID must consist of a single word with alphanumeric lowercase characters."
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Enter name",
+    "helper": "A name"
+  },
+  "invite": {
+    "label": "Invitation",
+    "placeholder": "Invitation",
+    "helper": "An invitation"
+  },
+  "unreadCount": {
+    "label": "Unread messages",
+    "placeholder": "unread messages",
+    "helper": "Unread messages"
+  },
+  "topic": {
+    "label": "Topic",
+    "placeholder": "Topic"
+  },
+  "avatar": {
+    "label": "Avatar URL",
+    "placeholder": "https://...",
+    "helper": "An avatar is an image of a person, a logo of an organization or resource etc."
+  },
+  "isDirect": {
+    "label": "Direct message",
+    "helper": "A message between exactly two people."
+  },
+  "reconnecting": "Reconnecting...",
+  "connectionError": "Connection error",
+  "connecting": "connecting...",
+  "noRoomsError": "No chat rooms available. Create a room or join one to get started.",
+  "createTestRoom": "Create test room",
+  "typeMessage": "Write a message...",
+  "recordAudio": "Record voice message",
+  "videoCall": "Start video chat",
+  "recording": "Recording...",
+  "addAttachment": "Add attachment",
+  "mentionEveryone": "Mention everyone in the room (@room)",
+  "mentionMe": "Insert myself (@me)",
+  "noMessagesStartConversation": "There are no messages yet. Start the conversation.",
+  "room": {
+    "rooms": "Chat rooms",
+    "empty": "Empty room",
+    "none": "No chat rooms found.",
+    "searchPlaceholder": "Search room...",
+    "create": {
+      "header": "Create new chat room",
+      "conf": "New chat room was created.",
+      "error": "The chat room could not be created."
+    },
+    "update": {
+      "header": "Edit chat room",
+      "conf": "The chat room was updated",
+      "error": "The chat room could not be updated."
+    }
+  },
+  "help": {
+    "title": "Chat – Help",
+    "intro": "In the chat you write directly (1:1) or in group rooms with several people and share files, photos, locations and surveys.",
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "mention": {
+        "token": "@",
+        "desc": "In group chats, the list of room members opens as you type. ↑↓ select an entry, Enter or Tab insert it, Escape closes the list again without changing the text you entered. In direct chats @ remains plain text."
+      },
+      "mentionRoom": {
+        "token": "@room",
+        "desc": "Notifies all members of the room. The entry appears directly after the @ and again as soon as you have typed three characters – the short forms @team, @all and @alle find the same entry and also insert @room."
+      },
+      "mentionMe": {
+        "token": "@me",
+        "desc": "Inserts your own name as text without notifying yourself. The entry only appears with the exact input @me – @m or @mei do not show it."
+      },
+      "date": {
+        "token": "//",
+        "desc": "Opens the date picker and inserts the chosen date."
+      },
+      "location": {
+        "token": "!!",
+        "desc": "Opens the location picker and shares the chosen place."
+      },
+      "send": {
+        "token": "Enter",
+        "desc": "Sends the message. If the @ list is still open, Enter selects the highlighted entry instead."
+      },
+      "newline": {
+        "token": "Shift+Enter",
+        "desc": "Inserts a new line without sending the message."
+      }
+    },
+    "chats": {
+      "title": "Direct vs. group chats",
+      "direct": "A direct chat is a private conversation between you and one other person.",
+      "group": "A group chat has several members as well as a room name and a topic."
+    }
+  },
+  "message": {
+    "edit": "Edit message",
+    "reply": {
+      "label": "Reply",
+      "to": "Reply to"
+    },
+    "copy": "Copy message",
+    "share": "Share file",
+    "download": "Download file",
+    "raw": "Show raw data",
+    "react": {
+      "header": "Choose reaction",
+      "add": "Add reaction",
+      "cancel": "Remove reaction"
+    },
+    "report": {
+      "header": "Report a problem",
+      "placeholder": "Explain your problem report.",
+      "noChannel": "Channel not found",
+      "messageFrom": "Report from",
+      "message": "Message",
+      "comment": "Comment",
+      "showMessage": "Show message",
+      "conf": "Problem report sent.",
+      "error": "The problem report could not be sent."
+    },
+    "update": {
+      "header": "Edit message",
+      "placeholder": "Write your change...",
+      "conf": "The message was updated.",
+      "error": "The message could not be updated."
+    },
+    "delete": {
+      "label": "Delete message",
+      "confirm": "Do you really want to delete the message ?",
+      "conf": "The message was deleted.",
+      "error": "The message could not be deleted."
+    }
+  },
+  "thread": {
+    "open": "Open thread",
+    "reply": {
+      "header": "Reply in thread",
+      "placeholder": "Write your message...",
+      "error": "The message could not be sent."
+    },
+    "empty": "There are no replies yet. Start the thread!",
+    "title": "Thread",
+    "replies": {
+      "one": "Reply",
+      "many": "Replies"
+    },
+    "close": "Close thread"
+  },
+  "video": {
+    "incoming": "Incoming video call...",
+    "connecting": "Establishing connection..."
+  },
+  "survey": {
+    "title": "Create survey",
+    "create": "Create survey",
+    "allowMultipleAnswers": {
+      "label": "Multiple answers possible",
+      "helper": "Several answers can be given to the same question (multiple choice)."
+    },
+    "question": {
+      "label": "Question or topic",
+      "placeholder": "Write something..."
+    },
+    "answer": {
+      "create": "Answers",
+      "add": "Add answer"
+    },
+    "results": {
+      "show": "Show voting results",
+      "title": "Voting result"
+    },
+    "empty": "No votes yet",
+    "total": "Total votes",
+    "done": "You have voted",
+    "end": "End survey",
+    "ended": "Survey ended",
+    "voted": "You have voted",
+    "choose": {
+      "multiple": "Choose at least one option",
+      "one": "Choose one option"
+    }
+  },
+  "attach": {
+    "title": "Add attachment",
+    "image": "Attach image",
+    "file": "Attach file",
+    "position": "Send location",
+    "survey": "Create survey"
+  },
+  "and": "and",
+  "validation": {
+    "nameRequired": "The name is required."
+  },
+  "isTyping": "is typing...",
+  "areTyping": "are typing...",
+  "othersTyping": "others are typing...",
+  "severalTyping": "Several people are typing...",
+  "date": {
+    "today": "Today",
+    "yesterday": "Yesterday"
+  },
+  "images": "Images",
+  "dropFiles": "Drag files here",
+  "file": {
+    "unavailable": "File not available",
+    "shareError": "File could not be shared",
+    "downloadError": "File could not be downloaded",
+    "sendError": "File(s) could not be sent",
+    "sendImagesError": "Image(s) could not be sent"
+  },
+  "videoCallError": "Video call failed",
+  "send": "Send",
+  "emojiPicker": "Select emoji",
+  "clearInput": "Clear input",
+  "removeImage": "Remove image",
+  "toggleRoomList": "Show/hide room list",
+  "call": {
+    "answer": "Answer call",
+    "hangup": "End call"
+  },
+  "messagesLabel": "Chat messages"
+}

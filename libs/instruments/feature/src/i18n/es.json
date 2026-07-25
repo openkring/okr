@@ -1,0 +1,78 @@
+{
+  "instrument": "Instrumento",
+  "instruments": "Instrumentos",
+  "plural": "Instrumentos",
+  "desc": "Instrumentos visuales de estrategia y decisión",
+  "empty": "Todavía no hay instrumentos disponibles",
+  "type": {
+    "swot": "Análisis SWOT",
+    "pestel": "Análisis PESTEL",
+    "bmc": "Business Model Canvas",
+    "eisenhower": "Matriz de Eisenhower"
+  },
+  "create": {
+    "label": "Nuevo",
+    "conf": "Instrumento creado",
+    "error": "No se pudo crear el instrumento"
+  },
+  "update": {
+    "label": "Editar",
+    "conf": "Instrumento guardado",
+    "error": "No se pudo guardar el instrumento"
+  },
+  "delete": {
+    "label": "Eliminar",
+    "confirm": "¿Eliminar realmente el instrumento?",
+    "conf": "Instrumento eliminado",
+    "error": "No se pudo eliminar el instrumento"
+  },
+  "view": { "label": "Vista" },
+  "done": "Listo",
+  "board": {
+    "emptyCell": "Vacío",
+    "addTopic": "Añadir tarjeta"
+  },
+  "name": {
+    "label": "Nombre",
+    "placeholder": "Nombre del instrumento",
+    "helper": "p. ej. Estrategia 2026"
+  },
+  "description": {
+    "label": "Descripción",
+    "placeholder": "Descripción opcional"
+  },
+  "topic": {
+    "label": { "label": "Título", "placeholder": "Título breve", "helper": "¿De qué se trata?" },
+    "description": { "label": "Descripción", "placeholder": "Nota opcional" },
+    "impact": { "label": "Importancia" },
+    "horizon": { "label": "Horizonte temporal" },
+    "color": { "label": "Color" }
+  },
+  "score": { "unset": "—", "low": "Bajo", "medium": "Medio", "high": "Alto" },
+  "horizon": { "short": "Corto plazo", "medium": "Medio plazo", "long": "Largo plazo" },
+  "cell": {
+    "strengths": "Fortalezas",
+    "weaknesses": "Debilidades",
+    "opportunities": "Oportunidades",
+    "threats": "Amenazas",
+    "do": "Hacer de inmediato",
+    "schedule": "Programar",
+    "delegate": "Delegar",
+    "delete": "Eliminar",
+    "political": "Político",
+    "economic": "Económico",
+    "social": "Sociocultural",
+    "technological": "Tecnológico",
+    "environmental": "Ecológico",
+    "legal": "Legal",
+    "keyPartners": "Socios clave",
+    "keyActivities": "Actividades clave",
+    "keyResources": "Recursos clave",
+    "valuePropositions": "Propuestas de valor",
+    "customerRelationships": "Relaciones con clientes",
+    "channels": "Canales",
+    "customerSegments": "Segmentos de clientes",
+    "costStructure": "Estructura de costes",
+    "revenueStreams": "Fuentes de ingresos"
+  }
+}

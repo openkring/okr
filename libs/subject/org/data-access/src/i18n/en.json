@@ -1,0 +1,18 @@
+{
+  "create": {
+    "label": "New organization",
+    "error": "The new organization could not be saved.",
+    "conf": "The new organization has been saved."
+  },
+  "delete": {
+    "label": "Delete organization",
+    "confirm": "Should the organization really be deleted ?",
+    "conf": "The organization has been deleted.",
+    "error": "The organization could not be deleted."
+  },
+  "update": {
+    "label": "Edit organization",
+    "error": "The changes could not be saved",
+    "conf": "The changes have been saved."
+  }
+}

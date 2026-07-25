@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "The OCR rule was created.",
+    "error": "The OCR rule could not be created."
+  },
+  "update": {
+    "conf": "The OCR rule was changed.",
+    "error": "The OCR rule could not be changed."
+  },
+  "delete": {
+    "conf": "The OCR rule was deleted.",
+    "error": "The OCR rule could not be deleted."
+  }
+}

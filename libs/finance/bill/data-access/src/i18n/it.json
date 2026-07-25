@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "La fattura fornitore è stata creata.",
+    "error": "Non è stato possibile creare la fattura fornitore."
+  },
+  "update": {
+    "conf": "La fattura fornitore è stata modificata.",
+    "error": "Non è stato possibile modificare la fattura fornitore."
+  },
+  "delete": {
+    "conf": "La fattura fornitore è stata eliminata.",
+    "error": "Non è stato possibile eliminare la fattura fornitore."
+  }
+}

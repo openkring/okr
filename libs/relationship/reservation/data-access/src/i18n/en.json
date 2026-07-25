@@ -1,0 +1,23 @@
+{
+  "create": {
+    "label": "Add reservation",
+    "conf": "Reservation was created.",
+    "error": "Reservation could not be created."
+  },
+  "update": {
+    "label": "Edit reservation",
+    "conf": "Reservation was changed.",
+    "error": "Reservation could not be changed."
+  },
+  "delete": {
+    "label": "Delete reservation",
+    "conf": "Reservation was deleted.",
+    "error": "Reservation could not be deleted.",
+    "confirm": "Normally a reservation should be ended, not deleted. Deletion is only intended to correct incorrect entries. Do you really want to delete the reservation?"
+  },
+  "end": {
+    "label": "End reservation",
+    "conf": "The reservation was ended.",
+    "error": "The reservation could not be ended."
+  }
+}

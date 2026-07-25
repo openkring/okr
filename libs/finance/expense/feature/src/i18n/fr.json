@@ -1,0 +1,89 @@
+{
+  "list": {
+    "titleMy": "Mes frais",
+    "titleAll": "Tous les frais",
+    "empty": "Aucune note de frais trouvée"
+  },
+  "new": {
+    "title": "Soumettre des frais",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "receiptHint": "Veuillez joindre au moins un justificatif."
+  },
+  "detail": {
+    "title": "Débours",
+    "close": "Fermer",
+    "amount": "Montant",
+    "iban": "IBAN",
+    "status": "Statut",
+    "booking": "Référence d'écriture",
+    "note": "Note",
+    "receipt": "Justificatif"
+  },
+  "field": {
+    "abstract": "Objet",
+    "amount": "Montant total",
+    "currency": "Devise",
+    "transfer": {
+      "label": "Virement",
+      "me": "à moi",
+      "issuer": "à l'émetteur de la facture"
+    },
+    "iban": {
+      "label": "IBAN",
+      "on": "sur IBAN",
+      "profileHint": "depuis mon profil",
+      "change": "Utiliser un autre IBAN"
+    },
+    "category": "Catégorie",
+    "costcenter": "Centre de coûts",
+    "note": "Note interne",
+    "belege": {
+      "label": "Justificatifs",
+      "pick": "Choisir un fichier",
+      "photo": "Prendre une photo"
+    }
+  },
+  "submit": {
+    "iban": "La relation bancaire est en cours d'enregistrement…",
+    "upload": "Les justificatifs sont en cours de téléversement…",
+    "saving": "Le débours est en cours d'enregistrement…",
+    "done": "Enregistré — le caissier vérifie le justificatif.",
+    "error": "Erreur — l'opération a été annulée"
+  },
+  "status": {
+    "draft": "Brouillon",
+    "processing": "En cours de traitement",
+    "validated": "Validé",
+    "error": "Erreur",
+    "posted": "Comptabilisé",
+    "pendingExport": "Prêt pour l'export"
+  },
+  "validation": {
+    "abstractRequired": "L'objet est obligatoire.",
+    "abstractMin": "L'objet doit comporter au moins 3 caractères.",
+    "abstractMax": "L'objet ne peut comporter au maximum que 200 caractères.",
+    "amountRequired": "Le montant doit être supérieur à 0.",
+    "amountMax": "Le montant est trop élevé.",
+    "ibanRequired": "L'IBAN est obligatoire.",
+    "currencyRequired": "La devise est obligatoire.",
+    "currencyInvalid": "Devise non valide."
+  },
+  "action": {
+    "title": "Choisir une action",
+    "view": "Afficher",
+    "delete": "Supprimer",
+    "redoOcr": "Relancer l'OCR",
+    "openTask": "Ouvrir la tâche",
+    "openBooking": "Ouvrir l'écriture",
+    "cancel": "Annuler"
+  },
+  "redo": {
+    "conf": "Analyse OCR relancée.",
+    "error": "L'OCR n'a pas pu être relancé."
+  },
+  "delete": {
+    "confirm": "Supprimer vraiment ces frais ?",
+    "error": "Les frais n'ont pas pu être supprimés."
+  }
+}

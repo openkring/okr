@@ -1,0 +1,198 @@
+{
+  "persons": "Persone",
+  "empty": "Nessuna persona trovata.",
+  "details": "Dati della persona",
+  "addresses": "Indirizzi",
+  "misc": "Varie",
+
+   "okey": {
+    "label": "ID",
+    "placeholder": "ssssssss",
+    "helper": "La chiave della scheda della persona nel database."
+  },
+  "firstName": {
+    "label": "Nome",
+    "placeholder": "Inserire il nome",
+    "helper": "I nomi di una persona."
+  },
+  "lastName": {
+    "label": "Cognome",
+    "placeholder": "Inserire il cognome",
+    "helper": "Il cognome di una persona."
+  },
+  "ssnId": {
+    "label": "Numero AVS",
+    "placeholder": "756.XXXX.XXXX.XX",
+    "helper": "Il numero AVS di una persona"
+  },
+  "bexioId": {
+    "label": "ID Bexio",
+    "placeholder": "nnnnn",
+    "helper": "L'identificativo del contatto Bexio della persona."
+  },
+  "email": {
+    "label": "E-mail",
+    "placeholder": "Inserire l'indirizzo e-mail"
+  },
+  "phone": {
+    "label": "Telefono",
+    "placeholder": "+41 XX XXX XX XX"
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Note"
+  },
+  "dateOfBirth": {
+    "label": "Data di nascita",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "La data di nascita della persona."
+  },
+  "dateOfDeath": {
+    "label": "Data di morte",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "La data di morte della persona."
+  },
+  "dateOfEntry": {
+    "label": "Data di adesione",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Inizio dell'affiliazione."
+  },
+  "streetName": {
+    "label": "Via",
+    "placeholder": "Inserire la via",
+    "helper": "Nome della via di un indirizzo postale."
+  },
+  "streetNumber": {
+    "label": "N.",
+    "placeholder": "sss",
+    "helper": "Il numero civico di un indirizzo postale."
+  },
+  "countryCode": {
+    "label": "Paese (ISO)",
+    "placeholder": "CH",
+    "helper": "Il codice ISO del paese."
+  },
+  "zipCode": {
+    "label": "NPA",
+    "placeholder": "nnnn",
+    "helper": "Un numero postale di avviamento svizzero. Stringa di 4 cifre"
+  },
+  "city": {
+    "label": "Località",
+    "placeholder": "Inserire la località",
+    "helper": "Il nome della località"
+  },
+  "web": {
+    "label": "Web",
+    "placeholder": "https://...",
+    "helper": "Un indirizzo web (URL verso un sito web)"
+  },
+
+  "lookup": {
+    "title": "Ricerca indirizzo (search.ch)",
+    "empty": "Nessun risultato trovato.",
+    "error": "Ricerca non riuscita. Riprovare.",
+    "attribution": "Dati: Swisscom Directories AG (search.ch)"
+  },
+
+  "add": {
+    "membership": {
+      "label": "Affiliazione (facoltativa)",
+      "confirm": "Creare un'affiliazione ?",
+      "conf": "L'affiliazione è stata salvata.",
+      "error": "Impossibile creare l'affiliazione.",
+      "helper": "È possibile scegliere un'organizzazione a cui la nuova persona viene registrata come membro. Inoltre, occorre definire la data di adesione e la categoria di membro.",
+      "exists": "Questo membro esiste già."
+    }
+  },
+  "call": {
+    "phone": "Chiama"
+  },
+  "copy": {
+    "email": {
+      "label": "Copia e-mail",
+      "conf": "L'indirizzo e-mail è stato copiato",
+      "error": "Impossibile copiare l'indirizzo e-mail."
+    },
+    "phone": {
+      "label": "Copia numero di telefono",
+      "conf": "Il numero di telefono è stato copiato",
+      "error": "Impossibile copiare il numero di telefono."
+    }
+  },
+  "create": {
+    "label": "Aggiungi nuova persona",
+    "conf": "La persona è stata salvata",
+    "error": "Impossibile salvare la persona."
+  },
+  "update": {
+    "label": "Modifica persona",
+    "conf": "La persona è stata salvata",
+    "error": "Impossibile salvare la persona."
+  },
+  "send": {
+    "message": "Apri chat diretta",
+    "email": "Invia e-mail"
+  },
+  "show": {
+    "postal": "Mostra l'indirizzo postale sulla mappa"
+  },
+  "view": {
+    "label": "Mostra persona"
+  },
+  "delete": {
+    "label": "Elimina persona",
+    "conf": "La persona è stata eliminata",
+    "confirm": "Eliminare davvero la persona ?",
+    "error": "Impossibile eliminare la persona."
+  },
+
+  "gender": {
+    "label": "Sesso",
+    "helper": "Il sesso di una persona",
+    "name": "Sesso",
+    "all": {
+      "label": "Tutti i sessi",
+      "icon": "gender_diverse"
+    },
+    "female": {
+      "label": "femminile",
+      "description": "La persona è una donna.",
+      "salutation": "Gentile",
+      "greeting": "Sig.ra",
+      "formal": "Gentile Sig.ra"
+    },
+    "male": {
+      "label": "maschile",
+      "description": "La persona è un uomo.",
+      "salutation": "Gentile",
+      "greeting": "Sig.",
+      "formal": "Gentile Sig."
+    },
+    "other": {
+      "label": "diverso",
+      "description": "La persona è transgender.",
+      "salutation": "Gentile",
+      "greeting": "Miko",
+      "formal": "Gentile ",
+      "name": "Denominazione"
+    }
+  },
+
+  "duplicate": {
+    "title": "Possibili duplicati trovati",
+    "intro": "Esistono già persone che corrispondono ai dati inseriti. Scegliere una persona esistente oppure crearne comunque una nuova.",
+    "createNew": "Crea comunque una nuova",
+    "tenants": "Mandanti"
+  },
+  "reconcile": {
+    "title": "Confronta i campi",
+    "intro": "I campi contrassegnati differiscono. Scegliere per ciascun campo il valore da mantenere.",
+    "keepExisting": "Esistente",
+    "useNew": "Nuovo"
+  },
+  "validation": {
+    "lastNameRequired": "L'inserimento di un cognome è obbligatorio.",
+    "validSSN": "Inserire un numero AVS valido."
+  }
+}

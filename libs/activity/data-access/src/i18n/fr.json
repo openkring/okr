@@ -1,0 +1,8 @@
+{
+  "delete": {
+    "label": "Supprimer l'activité",
+    "conf": "L'activité a été supprimée.",
+    "confirm": "Voulez-vous supprimer l'activité ?",
+    "error": "L'activité n'a pas pu être supprimée."
+  }
+}

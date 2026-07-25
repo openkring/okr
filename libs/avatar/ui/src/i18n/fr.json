@@ -1,0 +1,21 @@
+{
+  "task": {
+    "empty": "Aucune tâche trouvée.",
+    "empty-my": "Félicitations ! - Vous n'avez aucune tâche ouverte.",
+    "name": "Nom",
+    "dueDate": "Échéance",
+    "assignee": {
+      "label": "Responsable",
+      "description": "Personne responsable de l'exécution de la tâche."
+    },
+    "author": {
+      "label": "Auteur/-e",
+      "description": "Personne qui a créé la tâche."
+    },
+    "scope": {
+      "label": "Contexte",
+      "description": "La tâche est normalement visible par l'auteur, le responsable et les utilisateurs privilégiés. Le contexte permet d'étendre la visibilité à un groupe."
+    },
+    "state": "Statut"
+  }
+}

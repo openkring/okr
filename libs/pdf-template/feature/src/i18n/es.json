@@ -1,0 +1,74 @@
+{
+  "template": "Plantilla PDF",
+  "templates": "Plantillas PDF",
+  "list": {
+    "title": "Plantillas de documento"
+  },
+  "empty": "No se han encontrado plantillas.",
+
+  "archive": {
+    "label": "Archivar plantilla"
+  },
+  "create": {
+    "label": "Añadir plantilla PDF",
+    "conf": "La plantilla PDF se ha creado.",
+    "error": "No se ha podido crear la plantilla PDF."
+  },
+  "delete": {
+    "label": "Eliminar plantilla PDF",
+    "confirm": "¿Desea realmente eliminar la plantilla PDF?",
+    "conf": "La plantilla PDF se ha eliminado",
+    "error": "No se ha podido eliminar la plantilla PDF"
+  },
+  "duplicate": {
+    "label": "Duplicar plantilla"
+  },
+  "preview": {
+    "label": "Vista previa",
+    "error": "Error al generar la vista previa"
+  },
+  "publish": {
+    "label": "Publicar plantilla",
+    "conf": "Plantilla publicada.",
+    "error": "Error en la publicación."
+  },
+  "save": {
+    "draft": {
+      "conf": "Borrador guardado.",
+      "error": "No se ha podido guardar el borrador."
+    }
+  },
+  "update": {
+    "label": "Editar plantilla PDF",
+    "conf": "Los cambios se han guardado.",
+    "error": "No se han podido guardar los cambios"
+  },
+  "view": {
+    "label": "Ver versión actual"
+  },
+  "revert": {
+    "label": "Revertir a la última versión",
+    "conf": "Revertido a la última versión.",
+    "error": "Error al revertir."
+  },
+
+
+  "category": {
+    "label": "Categoría"
+  },
+  "language": {
+    "label": "Idioma"
+  },
+  "status": {
+    "label": "Estado"
+  },
+  "version": {
+    "label": "Versión"
+  },
+  "html": {
+    "label": "HTML"
+  },
+  "css": {
+    "label": "CSS"
+  }
+}

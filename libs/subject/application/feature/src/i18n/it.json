@@ -1,0 +1,96 @@
+{
+  "list": {
+    "title": "Richieste",
+    "empty": "Nessuna richiesta trovata.",
+    "no_person": "Persona non ancora creata — accettare prima la richiesta."
+  },
+  "add": {
+    "group": {
+      "label": "Invita nel gruppo",
+      "conf": "Persona invitata nel gruppo."
+    },
+    "membership": {
+      "label": "Aggiungi affiliazione",
+      "conf": "Affiliazione aggiunta."
+    }
+  },
+  "accept": {
+    "label": "Accetta",
+    "confirm": "Accettare la richiesta? Verrà creata una persona.",
+    "conf": "Richiesta approvata — la persona è stata creata.",
+    "error": "Approvazione non riuscita."
+  },
+  "delete": {
+    "confirm": "Eliminare davvero questa richiesta?",
+    "conf": "Richiesta eliminata.",
+    "error": "Eliminazione non riuscita."
+  },
+  "deny": {
+    "label": "Rifiuta",
+    "conf": "Richiesta rifiutata.",
+    "error": "Rifiuto non riuscito.",
+    "reason": "Motivo del rifiuto"
+  },
+  "send": {
+    "confirmation_sent": "Conferma inviata al richiedente.",
+    "decision_sent": "Decisione inviata al richiedente.",
+    "error": "Impossibile inviare l'e-mail."
+  },
+  "update": {
+    "title": "Modifica richiesta",
+    "save": {
+      "label": "Salva",
+      "conf": "Richiesta aggiornata.",
+      "error": "Aggiornamento non riuscito."
+    }
+  },
+  "field": {
+    "firstname": "Nome",
+    "lastname": "Cognome",
+    "gender": "Sesso",
+    "date_of_birth": "Data di nascita",
+    "ssn": "Numero AVS",
+    "email": "E-mail",
+    "phone": "Telefono",
+    "streetname": "Via",
+    "streetnumber": "N.",
+    "zipcode": "NPA",
+    "city": "Località",
+    "countrycode": "Paese",
+    "parent": {
+      "firstname": "Nome del genitore",
+      "lastname": "Cognome del genitore",
+      "email": "E-mail del genitore",
+      "phone": "Telefono del genitore"
+    },
+    "application": "Richiesta come",
+    "state": "Stato",
+    "submitted": "Ricevuta",
+    "reviewed": "In elaborazione dal",
+    "reviewer": "Responsabile dell'elaborazione",
+    "reason": "Osservazione"
+  },
+  "validation": {
+    "email_required": "L'e-mail è obbligatoria (del richiedente oppure del genitore).",
+    "phone_required": "Il telefono è obbligatorio (del richiedente oppure del genitore)."
+  },
+  "section": {
+    "person": "Persona",
+    "contact": "Contatto",
+    "address": "Indirizzo",
+    "parent": "Genitori (obbligatorio per i minori)",
+    "application": "Richiesta"
+  },
+  "kind": {
+    "youth": "Giovane",
+    "adult": "Adulto",
+    "transfer": "Trasferimento"
+  },
+  "state": {
+    "applied": "Ricevuta",
+    "reviewing": "In elaborazione",
+    "closed_approved": "Accettata",
+    "closed_denied": "Rifiutata",
+    "closed_cancelled": "Ritirata"
+  }
+}

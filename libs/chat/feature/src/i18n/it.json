@@ -1,0 +1,232 @@
+{
+  "roomId": {
+    "label": "ID stanza",
+    "placeholder": "ID stanza",
+    "helper": "L'ID stanza viene utilizzato per identificare in modo univoco una stanza di chat.",
+    "error": "L'ID stanza deve essere composto da una sola parola con caratteri alfanumerici minuscoli."
+  },
+  "name": {
+    "label": "Nome",
+    "placeholder": "Inserire il nome",
+    "helper": "Un nome"
+  },
+  "invite": {
+    "label": "Invito",
+    "placeholder": "Invito",
+    "helper": "Un invito"
+  },
+  "unreadCount": {
+    "label": "Messaggi non letti",
+    "placeholder": "messaggi non letti",
+    "helper": "Messaggi non letti"
+  },
+  "topic": {
+    "label": "Argomento",
+    "placeholder": "Argomento"
+  },
+  "avatar": {
+    "label": "URL dell'avatar",
+    "placeholder": "https://...",
+    "helper": "Un avatar è l'immagine di una persona, il logo di un'organizzazione o di una risorsa, ecc."
+  },
+  "isDirect": {
+    "label": "Messaggio diretto",
+    "helper": "Un messaggio tra esattamente due persone."
+  },
+  "reconnecting": "Riconnessione...",
+  "connectionError": "Errore di connessione",
+  "connecting": "connessione...",
+  "noRoomsError": "Nessuna stanza di chat disponibile. Crea una stanza o partecipa a una per iniziare.",
+  "createTestRoom": "Crea stanza di prova",
+  "typeMessage": "Scrivi un messaggio...",
+  "recordAudio": "Registra messaggio vocale",
+  "videoCall": "Avvia videochat",
+  "recording": "Registrazione in corso...",
+  "addAttachment": "Aggiungi allegato",
+  "mentionEveryone": "Menziona tutti nella stanza (@room)",
+  "mentionMe": "Inserisci me stesso (@me)",
+  "noMessagesStartConversation": "Non ci sono ancora messaggi. Avvia la conversazione.",
+  "room": {
+    "rooms": "Stanze di chat",
+    "empty": "Stanza vuota",
+    "none": "Nessuna stanza di chat trovata.",
+    "searchPlaceholder": "Cerca stanza...",
+    "create": {
+      "header": "Crea nuova stanza di chat",
+      "conf": "È stata creata una nuova stanza di chat.",
+      "error": "Non è stato possibile creare la stanza di chat."
+    },
+    "update": {
+      "header": "Modifica stanza di chat",
+      "conf": "La stanza di chat è stata modificata",
+      "error": "Non è stato possibile modificare la stanza di chat."
+    }
+  },
+  "help": {
+    "title": "Chat – Aiuto",
+    "intro": "Nella chat scrivi direttamente (1:1) o in stanze di gruppo con più persone e condividi file, foto, posizioni e sondaggi.",
+    "shortcuts": {
+      "title": "Scorciatoie da tastiera",
+      "mention": {
+        "token": "@",
+        "desc": "Nelle chat di gruppo, durante la digitazione si apre l'elenco dei membri della stanza. ↑↓ selezionano una voce, Invio o Tab la inseriscono, Esc chiude di nuovo l'elenco senza modificare il testo inserito. Nelle chat dirette @ rimane testo semplice."
+      },
+      "mentionRoom": {
+        "token": "@room",
+        "desc": "Notifica tutti i membri della stanza. La voce compare subito dopo la @ e di nuovo non appena si sono digitati tre caratteri – le forme abbreviate @team, @all e @alle trovano la stessa voce e inseriscono anch'esse @room."
+      },
+      "mentionMe": {
+        "token": "@me",
+        "desc": "Inserisce il tuo nome come testo senza notificare te stesso. La voce compare solo con l'inserimento esatto @me – @m o @mei non la mostrano."
+      },
+      "date": {
+        "token": "//",
+        "desc": "Apre il selettore della data e inserisce la data scelta."
+      },
+      "location": {
+        "token": "!!",
+        "desc": "Apre il selettore della posizione e condivide il luogo scelto."
+      },
+      "send": {
+        "token": "Invio",
+        "desc": "Invia il messaggio. Se l'elenco @ è ancora aperto, Invio seleziona invece la voce evidenziata."
+      },
+      "newline": {
+        "token": "Maiusc+Invio",
+        "desc": "Inserisce una nuova riga senza inviare il messaggio."
+      }
+    },
+    "chats": {
+      "title": "Chat dirette vs. di gruppo",
+      "direct": "Una chat diretta è una conversazione privata tra te e un'altra persona.",
+      "group": "Una chat di gruppo ha più membri nonché un nome della stanza e un argomento."
+    }
+  },
+  "message": {
+    "edit": "Modifica messaggio",
+    "reply": {
+      "label": "Rispondi",
+      "to": "Rispondi a"
+    },
+    "copy": "Copia messaggio",
+    "share": "Condividi file",
+    "download": "Scarica file",
+    "raw": "Mostra dati grezzi",
+    "react": {
+      "header": "Scegli reazione",
+      "add": "Aggiungi reazione",
+      "cancel": "Rimuovi reazione"
+    },
+    "report": {
+      "header": "Segnala un problema",
+      "placeholder": "Motiva la tua segnalazione del problema.",
+      "noChannel": "Canale non trovato",
+      "messageFrom": "Segnalazione di",
+      "message": "Messaggio",
+      "comment": "Commento",
+      "showMessage": "Mostra messaggio",
+      "conf": "Segnalazione del problema inviata.",
+      "error": "Non è stato possibile inviare la segnalazione del problema."
+    },
+    "update": {
+      "header": "Modifica messaggio",
+      "placeholder": "Scrivi la tua modifica...",
+      "conf": "Il messaggio è stato modificato.",
+      "error": "Non è stato possibile modificare il messaggio."
+    },
+    "delete": {
+      "label": "Elimina messaggio",
+      "confirm": "Eliminare davvero il messaggio ?",
+      "conf": "Il messaggio è stato eliminato.",
+      "error": "Non è stato possibile eliminare il messaggio."
+    }
+  },
+  "thread": {
+    "open": "Apri thread",
+    "reply": {
+      "header": "Rispondi nel thread",
+      "placeholder": "Scrivi il tuo messaggio...",
+      "error": "Non è stato possibile inviare il messaggio."
+    },
+    "empty": "Non ci sono ancora risposte. Avvia il thread!",
+    "title": "Thread",
+    "replies": {
+      "one": "Risposta",
+      "many": "Risposte"
+    },
+    "close": "Chiudi thread"
+  },
+  "video": {
+    "incoming": "Videochiamata in arrivo...",
+    "connecting": "Connessione in corso..."
+  },
+  "survey": {
+    "title": "Crea sondaggio",
+    "create": "Crea sondaggio",
+    "allowMultipleAnswers": {
+      "label": "Più risposte possibili",
+      "helper": "Si possono dare più risposte alla stessa domanda (scelta multipla)."
+    },
+    "question": {
+      "label": "Domanda o argomento",
+      "placeholder": "Scrivi qualcosa..."
+    },
+    "answer": {
+      "create": "Risposte",
+      "add": "Aggiungi risposta"
+    },
+    "results": {
+      "show": "Mostra i risultati della votazione",
+      "title": "Risultato della votazione"
+    },
+    "empty": "Ancora nessun voto",
+    "total": "Totale voti",
+    "done": "Hai votato",
+    "end": "Termina sondaggio",
+    "ended": "Sondaggio terminato",
+    "voted": "Hai votato",
+    "choose": {
+      "multiple": "Scegli almeno un'opzione",
+      "one": "Scegli un'opzione"
+    }
+  },
+  "attach": {
+    "title": "Aggiungi allegato",
+    "image": "Allega immagine",
+    "file": "Allega file",
+    "position": "Invia posizione",
+    "survey": "Crea sondaggio"
+  },
+  "and": "e",
+  "validation": {
+    "nameRequired": "Il nome è obbligatorio."
+  },
+  "isTyping": "sta scrivendo...",
+  "areTyping": "stanno scrivendo...",
+  "othersTyping": "altri stanno scrivendo...",
+  "severalTyping": "Diverse persone stanno scrivendo...",
+  "date": {
+    "today": "Oggi",
+    "yesterday": "Ieri"
+  },
+  "images": "Immagini",
+  "dropFiles": "Trascina qui i file",
+  "file": {
+    "unavailable": "File non disponibile",
+    "shareError": "Non è stato possibile condividere il file",
+    "downloadError": "Non è stato possibile scaricare il file",
+    "sendError": "Non è stato possibile inviare il/i file",
+    "sendImagesError": "Non è stato possibile inviare l'immagine/le immagini"
+  },
+  "videoCallError": "Videochiamata non riuscita",
+  "send": "Invia",
+  "emojiPicker": "Seleziona emoji",
+  "clearInput": "Cancella l'inserimento",
+  "removeImage": "Rimuovi immagine",
+  "toggleRoomList": "Mostra/nascondi l'elenco delle stanze",
+  "call": {
+    "answer": "Rispondi alla chiamata",
+    "hangup": "Termina la chiamata"
+  },
+  "messagesLabel": "Messaggi di chat"
+}
