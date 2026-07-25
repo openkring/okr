@@ -19,7 +19,9 @@ export class I18nService {
   return getBrowserLang();
   }
 
-  public setActiveLang(language: string, defaultLanguage: string) {
+  // language is optional: omit it (or pass undefined) to seed from the browser language.
+  // selectLanguage falls back browser → defaultLanguage when the requested code is unsupported.
+  public setActiveLang(language?: string, defaultLanguage = 'de') {
   const selectedLanguage = selectLanguage(AvailableLanguages, defaultLanguage, language);
   this.translocoService.setActiveLang(selectedLanguage);
   }

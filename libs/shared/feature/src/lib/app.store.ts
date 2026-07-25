@@ -8,9 +8,10 @@ import { App } from '@capacitor/app';
 
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
-import { AppConfig, CategoryCollection, CategoryItemModel, CategoryListModel, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@okr/shared-models';
+import { AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, replacePlaceholders } from '@okr/shared-util-core';
 import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
 
 import { SessionService} from '@okr/session-data-access';
 
@@ -76,7 +77,8 @@ export const AppStore = signalStore(
     fbUser: toSignal(authState(inject(AUTH))),
     appNavigationService: inject(AppNavigationService),
     platformId: inject(PLATFORM_ID),
-    sessionService: inject(SessionService)
+    sessionService: inject(SessionService),
+    i18nService: inject(I18nService)
   })),
   
   withProps((store) => ({
@@ -431,6 +433,18 @@ export const AppStore = signalStore(
           markStartup('app-ready');
           reportStartupTiming(store.isDataReady() ? 'data-ready' : 'watchdog');
         }
+      });
+
+      // Active UI language. Applies the signed-in user's saved preference (userLanguage),
+      // and seeds from the browser language before login / for users without a saved pref.
+      // currentUser is a LIVE Firestore stream, so this effect also handles apply-on-save:
+      // saving a new language in the profile re-emits the user doc here and switches the UI
+      // immediately (Transloco reRenderOnLangChange). AvailableLanguages is index-aligned with
+      // the Language enum (GE=0 → 'de', …); undefined language (browser seed) falls back to 'de'.
+      effect(() => {
+        const user = store.currentUser();
+        const code = user ? AvailableLanguages[user.userLanguage ?? DefaultLanguage] : undefined;
+        store.i18nService.setActiveLang(code, 'de');
       });
 
       // Start anonymous session immediately on bootstrap

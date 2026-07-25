@@ -198,7 +198,8 @@ export class ProfileSettingsAccordion {
   protected onFieldChange(fieldName: string, value: string | string[] | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update(vm => ({ ...vm, [fieldName]: value }));
-    // tbd: if language:   this.i18nService.setActiveLang(language);
+    // Language is applied centrally: on save the user doc re-streams and AppStore's
+    // language effect calls i18nService.setActiveLang() — no per-field call needed here.
   }
 
   /******************************* helpers *************************************** */
