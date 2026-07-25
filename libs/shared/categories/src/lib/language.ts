@@ -2,7 +2,9 @@ import { CategoryModel, Language } from '@okr/shared-models';
 
 export type LanguageCategory = CategoryModel;
 
-
+// The `abbreviation` values (and their order) are parity-checked against AvailableLanguages
+// (@okr/shared-models) in language.spec.ts — drift fails the build. Keep this array's order
+// aligned with the Language enum.
 export const Languages: LanguageCategory[] = [
   {
     id: Language.GE,
