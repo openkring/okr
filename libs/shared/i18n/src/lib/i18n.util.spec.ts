@@ -45,6 +45,25 @@ describe('selectLanguage', () => {
   it('drops a configured language that is not in the enabled subset', () => {
     expect(selectLanguage(['de', 'en'], 'de', 'fr')).toBe('de');
   });
+
+  // Scenario: a tenant enables a single language that differs from the browser language.
+  // The global default ('de') is NOT enabled, so we must still land on the one enabled language,
+  // never on the disabled default.
+  it('single enabled language different from the browser language → uses that one language', () => {
+    (getBrowserLang as any).mockReturnValue('de');
+    expect(selectLanguage(['fr'], 'de', undefined)).toBe('fr');
+  });
+
+  // Scenario: browser language matches no enabled language.
+  it('browser language matches nothing and the default is disabled → first enabled language', () => {
+    (getBrowserLang as any).mockReturnValue('es');
+    expect(selectLanguage(['fr', 'it'], 'de', undefined)).toBe('fr');
+  });
+
+  it('browser language matches nothing but the default is enabled → the default', () => {
+    (getBrowserLang as any).mockReturnValue('es');
+    expect(selectLanguage(['de', 'fr'], 'de', undefined)).toBe('de');
+  });
 });
 
 describe('getLabel', () => {

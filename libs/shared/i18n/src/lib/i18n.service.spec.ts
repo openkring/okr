@@ -15,6 +15,7 @@ vi.mock('@jsverse/transloco', () => ({
 
 vi.mock('@okr/shared-models', () => ({
   AvailableLanguages: ['en', 'de', 'fr'],
+  DefaultLanguageCode: 'de',
 }));
 
 vi.mock('./i18n.util', () => ({
