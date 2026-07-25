@@ -39,7 +39,7 @@ import { ProfileI18n } from "@okr/profile-util";
               @if(hasRole('admin')) {
                 @if(languages().length > 1) {
                   <ion-col size="12">
-                    <okr-category-old [i18n]="languageI18n()" [value]="language()" (valueChange)="onFieldChange('language', $event)"  [categories]="languages()" [readOnly]="isReadOnly()" />
+                    <okr-category-old [i18n]="languageI18n()" [value]="language()" (valueChange)="onFieldChange('userLanguage', $event)"  [categories]="languages()" [readOnly]="isReadOnly()" />
                   </ion-col>
                 }
                 <ion-col size="12" size-md="6">
