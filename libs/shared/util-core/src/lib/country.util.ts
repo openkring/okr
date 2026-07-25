@@ -82,7 +82,7 @@ export function getLanguages(countryCode: string): string[] {
 /*--------------------------------------------------------------------------
 i18n-iso-countries
 Country names can be translated based on npm library i18n-iso-countries.
-These entries need to match app.config.provideTransloco.config.availableLangs, e.g. ['en', 'de', 'fr'] and each 
+These entries need to match AvailableLanguages (@okr/shared-models), e.g. ['de', 'en', 'fr'] and each
 language needs to be registered in function registerCountryLanguages().
 i18n for ISO 3166-1 country codes. Source is Wikipedia: Officially assigned code elements
 
