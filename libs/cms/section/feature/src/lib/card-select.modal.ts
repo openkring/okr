@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonImg, IonRow, ModalController } from '@ionic/angular/standalone';
-import { switchMap } from 'rxjs/operators';
+import { filter, switchMap } from 'rxjs/operators';
 
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
@@ -23,8 +23,11 @@ const CardSelectStore = signalStore(
   })),
   withProps(store => ({
     headerTitle: toSignal(
-      toObservable(computed(() => PFX + 'select.' + store.slug())).pipe(
-        switchMap(key => store.i18nService.translate(key))
+      toObservable(store.slug).pipe(
+        // Skip the initial empty slug: translating '@cms/section/feature.select.'
+        // (empty suffix) reports a spurious i18n missing-key to Sentry (SCS-1K).
+        filter(slug => !!slug),
+        switchMap(slug => store.i18nService.translate(PFX + 'select.' + slug))
       ),
       { initialValue: '' }
     )
