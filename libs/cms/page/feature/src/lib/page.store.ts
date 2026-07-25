@@ -215,7 +215,7 @@ export const _PageStore = signalStore(
         return store.appStore.getCategory('roles');
       },
 
-      getConfigAttribute(key: keyof AppConfig): string | number | boolean {
+      getConfigAttribute<K extends keyof AppConfig>(key: K): AppConfig[K] {
         return store.appStore.appConfig()[key];
       },
 
