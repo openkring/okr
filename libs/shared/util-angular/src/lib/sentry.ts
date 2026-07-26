@@ -18,6 +18,14 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
   // Backstop: never send development noise (enabled:false already prevents this in dev).
   if (event.environment === 'development') return null;
 
+  // Backstop against stale prod config on a dev server (SCS-1N): a release build
+  // regenerates environment.ts with enabled:true/environment:'production'; a localhost
+  // tab bundled from that file then reports dev-serve noise (e.g. chunk-invalidation
+  // errors after a rebuild) as production. The explicit-port check keeps Capacitor
+  // native shells (capacitor://localhost, https://localhost — no port) reporting.
+  const loc = globalThis.location;
+  if (loc && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(loc.hostname) && loc.port !== '') return null;
+
   if (event.message) event.message = redactSensitive(event.message);
   event.exception?.values?.forEach((v) => { v.value = redactSensitive(v.value); });
   event.breadcrumbs?.forEach((b) => { b.message = redactSensitive(b.message); });
