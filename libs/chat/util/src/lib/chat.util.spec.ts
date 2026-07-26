@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime } from './chat.util';
+import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime, resolveMatrixDisplayName } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -54,5 +54,27 @@ describe('formatReceiptTime', () => {
 
   it('includes HH:mm time pattern', () => {
     expect(formatReceiptTime(1700000000000)).toMatch(/\d{2}:\d{2}/);
+  });
+});
+
+describe('resolveMatrixDisplayName', () => {
+  it('returns the raw display name when set', () => {
+    expect(resolveMatrixDisplayName('Alice Meier', '@p123abc:bkchat.etke.host')).toBe('Alice Meier');
+  });
+
+  it('falls back to the localpart when the display name is null', () => {
+    expect(resolveMatrixDisplayName(null, '@p123abc:bkchat.etke.host')).toBe('p123abc');
+  });
+
+  it('falls back to the localpart when the display name is empty', () => {
+    expect(resolveMatrixDisplayName('', '@p123abc:bkchat.etke.host')).toBe('p123abc');
+  });
+
+  it('falls back to the localpart when the display name is undefined', () => {
+    expect(resolveMatrixDisplayName(undefined, '@p123abc:bkchat.etke.host')).toBe('p123abc');
+  });
+
+  it('never returns the full Matrix user id', () => {
+    expect(resolveMatrixDisplayName(null, '@p123abc:bkchat.etke.host')).not.toContain(':');
   });
 });

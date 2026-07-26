@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, initMatrixLogLevel, buildMentionContent, escapeHtml, MentionRef } from '@okr/chat-util';
+import { convertHeicToJpeg, initMatrixLogLevel, buildMentionContent, escapeHtml, MentionRef, resolveMatrixDisplayName } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 
 import { isServiceAccount as isServiceAccountHelper } from './matrix-helpers';
@@ -658,6 +658,15 @@ export class MatrixChatService {
   public getCurrentDisplayName(user?: User): string | undefined {
     if (!user || !user.displayName) return undefined;
     return user.displayName || user.userId?.split(':')[0].substring(1) || 'You';
+  }
+
+  /**
+   * Returns the display name of a room member (the person's full name as provisioned
+   * on the Matrix profile), falling back to the localpart of the Matrix user ID.
+   */
+  public getMemberDisplayName(roomId: string, userId: string): string {
+    const member = this.client?.getRoom(roomId)?.getMember(userId);
+    return resolveMatrixDisplayName(member?.rawDisplayName, userId);
   }
 
   /**

@@ -73,3 +73,12 @@ export function hashUserIdToColor(userId: string): string {
 export function formatReceiptTime(ts: number): string {
   return `Gelesen ${new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
 }
+
+/**
+ * Resolve a human-readable name for a Matrix user: the profile display name
+ * (provisioned from the person's full name) or, if unset, the localpart of the
+ * Matrix user ID — never the full internal `@localpart:server` ID.
+ */
+export function resolveMatrixDisplayName(rawDisplayName: string | null | undefined, userId: string): string {
+  return rawDisplayName || userId.split(':')[0].replace(/^@/, '');
+}

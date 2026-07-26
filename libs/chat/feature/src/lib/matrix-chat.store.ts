@@ -143,9 +143,12 @@ export const _MatrixChatStore = signalStore(
       typingUsers: computed(() => {
         const notification = state.typingResource.value();
         if (!notification || notification.roomId !== state.currentRoomId()) return [];
-        // Exclude the current user from the indicator
+        // Exclude the current user from the indicator, then resolve the internal
+        // Matrix user IDs to the members' display names for rendering
         const currentUserId = state.matrixService.getCurrentUserId();
-        return notification.users.filter(u => u !== currentUserId);
+        return notification.users
+          .filter(u => u !== currentUserId)
+          .map(u => state.matrixService.getMemberDisplayName(notification.roomId, u));
       }),
       isMessagesLoading: computed(() => {
         const roomId = state.currentRoomId();
