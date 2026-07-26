@@ -8,7 +8,7 @@ import { App } from '@capacitor/app';
 
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
-import { AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@okr/shared-models';
+import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, replacePlaceholders } from '@okr/shared-util-core';
 import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
@@ -128,6 +128,21 @@ export const AppStore = signalStore(
         return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
+    // The address-directory projection (spec 1.19 Phase 4): the CF-materialized,
+    // registered-visible contact data per parentKey. This stream replaces the
+    // stripped favEmail/favPhone person/org fields for lists and detail views.
+    // orderBy 'none': lookups go through the directoryMap, and skipping the
+    // orderBy avoids a composite index on this collection.
+    addressDirectoryResource: rxResource({
+      params: () => ({
+        currentUser: store.currentUserResource.value(),
+        tenantId: store.tenantId()
+      }),
+      stream: ({params}) => {
+        if (!params.currentUser || !params.tenantId) return of([]);
+        return store.firestoreService.searchData<AddressDirectoryModel>(AddressDirectoryCollection, getSystemQuery(params.tenantId), 'none');
+      }
+    }),
     groupsResource: rxResource({
       params: () => ({
         currentUser: store.currentUserResource.value(),
@@ -185,6 +200,10 @@ export const AppStore = signalStore(
       currentUser: computed(() => state.currentUserResource.value()),
       allPersons: computed(() => state.personsResource.value() ?? []),
       allOrgs: computed(() => state.orgsResource.value() ?? []),
+      allAddressDirectories: computed(() => state.addressDirectoryResource.value() ?? []),
+      // parentKey ('person.<okey>' | 'org.<okey>') -> its directory projection doc
+      addressDirectoryMap: computed(() => new Map(
+        (state.addressDirectoryResource.value() ?? []).map((d: AddressDirectoryModel) => [d.parentKey, d]))),
       allGroups: computed(() => state.groupsResource.value() ?? []),
       allResources: computed(() => state.resourcesResource.value() ?? []),
       allTags: computed(() => state.tagsResource.value() ?? []),
@@ -294,6 +313,17 @@ export const AppStore = signalStore(
       getPerson(key: string): PersonModel | undefined {
         if (!key) return undefined;
         return store.allPersons()?.find(p => p.okey === key);
+      },
+
+      /**
+       * The address-directory projection doc of a parent (spec 1.19 Phase 4) —
+       * the registered-visible contact data (favEmail/favPhone/entries) that
+       * replaces the stripped person/org fav* fields.
+       * @param parentKey 'person.<okey>' or 'org.<okey>'
+       */
+      getDirectoryEntry(parentKey: string): AddressDirectoryModel | undefined {
+        if (!parentKey) return undefined;
+        return store.addressDirectoryMap().get(parentKey);
       },
 
       getPersonByAttribute(attributeName: string, attributeValue: string): PersonModel | undefined {
