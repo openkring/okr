@@ -10,7 +10,7 @@ import {
   getAllReservationsOfReserver, getAllReservationsOfResource,
   getAllWorkrelsOfObject, getAllWorkrelsOfSubject,
   hasChanged,
-  updateFavoriteAddressInfo,
+  updateFavoriteZipCode,
   writeAddressDirectory
 } from "@okr/shared-util-functions";
 import { getBirthYear } from "@okr/shared-util-core";
@@ -62,7 +62,7 @@ async function fetchRelations<T>(label: string, sourceId: string, fetch: () => P
 /**
  * BE AWARE OF RECURSIVE TRIGGERS !
  * 
- * address -> person/org (fav*)
+ * address -> person/org (favZipCode)
  * resource -> ownership, reservation
  * person -> ownership, membership, personalRel, workingRel, reservation
  * org -> ownership, membership, workingRel, reservation
@@ -73,9 +73,10 @@ async function fetchRelations<T>(label: string, sourceId: string, fetch: () => P
  */
 
 /**
- * If an address is changed, we update the favorite address info of the parent (which is a person or organization).
- * This is necessary to keep the favorite address info in sync with the address data.
- * THIS UPDATES PERSON or ORG (AND TRIGGERS onPersonChange/onOrgChange) - be cautious about circular updates!   
+ * If an address is changed, we update the favorite zip code of the parent (which is a person or organization)
+ * and rebuild the address-directory projection. favEmail/favPhone are no longer replicated
+ * (spec 1.19 Phase 4 strip) — contact data is served by the projection.
+ * THIS UPDATES PERSON or ORG (AND TRIGGERS onPersonChange/onOrgChange) - be cautious about circular updates!
  */
 export const onAddressChange = onDocumentWritten(
   {
@@ -90,7 +91,7 @@ export const onAddressChange = onDocumentWritten(
       // so the parent's fav* fields are refreshed even when an address is removed.
       const address = event.data?.after.data() ?? event.data?.before.data();
       if (address) {
-        await updateFavoriteAddressInfo(firestore, address as AddressModel, addressId);
+        await updateFavoriteZipCode(firestore, address as AddressModel, addressId);
         // spec 1.19 Phase 4: keep the address-directory projection in sync.
         // Writes only address-directory (no trigger on it) — no recursion.
         await writeAddressDirectory(firestore, (address as AddressModel).parentKey);
@@ -213,7 +214,6 @@ export const onPersonChange = onDocumentWritten(
         memberName1: person.firstName,
         memberName2: person.lastName,
         memberType: person.gender,
-        memberDateOfBirth: person.dateOfBirth,
         memberBirthYear: getBirthYear(person.dateOfBirth),
         memberDateOfDeath: person.dateOfDeath,
         memberZipCode: person.favZipCode,
@@ -310,7 +310,6 @@ export const onOrgChange = onDocumentWritten(
           memberName1: '',
           memberName2: org.name,
           memberType: org.type,
-          memberDateOfBirth: org.dateOfFoundation,
           memberDateOfDeath: org.dateOfLiquidation,
           memberZipCode: org.favZipCode,
           memberBexioId: org.bexioId
@@ -394,7 +393,6 @@ export const onGroupChange = onDocumentWritten(
         const newMember = {
           memberName1: '',
           memberName2: group.name,
-          memberDateOfBirth: '',
           memberDateOfDeath: '',
           memberZipCode: '',
           memberBexioId: ''

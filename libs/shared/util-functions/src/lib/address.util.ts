@@ -3,20 +3,15 @@ import { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 
 import { AddressCollection, AddressModel, OrgCollection, PersonCollection } from '@okr/shared-models';
-import { DEFAULT_EMAIL, DEFAULT_PHONE } from '@okr/shared-constants';
-
-export interface FavoriteAddressInfo {
-  favEmail: string;
-  favPhone: string;
-  favZipCode: string;
-}
 
 /**
- * If an address changes, update the corresponding cached address data in its parent document (person or org).
+ * If an address changes, update the cached favorite zip code in its parent document (person or org).
+ * favEmail/favPhone are no longer replicated to the parent (spec 1.19 Phase 4 strip) —
+ * contact data is served by the address-directory projection instead.
  * @param firestore a handle to Firestore database
  * @param addressId the key to the address data
  */
-export async function updateFavoriteAddressInfo(firestore: Firestore, address: AddressModel, addressId: string): Promise<void> {
+export async function updateFavoriteZipCode(firestore: Firestore, address: AddressModel, addressId: string): Promise<void> {
   logger.info(`Address change for ${AddressCollection}/${addressId}`);
   let parentId: string | undefined;
   let parentCollection: 'persons' | 'orgs' | undefined;
@@ -31,55 +26,34 @@ export async function updateFavoriteAddressInfo(firestore: Firestore, address: A
   if (!parentId || !parentCollection) return;
 
   try {
-    const favoriteAddressInfo = await getFavoriteAddressInfo(firestore, address.parentKey);
-    logger.info(`Updating favorite address info for ${parentCollection}/${parentId}`, favoriteAddressInfo);
+    const favZipCode = await getFavoriteZipCode(firestore, address.parentKey);
+    logger.info(`Updating favorite zip code for ${parentCollection}/${parentId}`, { favZipCode });
     const ref = admin.firestore().doc(`${parentCollection}/${parentId}`);
-    await ref.update({
-      favEmail: favoriteAddressInfo.favEmail,
-      favPhone: favoriteAddressInfo.favPhone,
-      favZipCode: favoriteAddressInfo.favZipCode,
-    });
-    logger.info(`Successfully updated favorite address info for ${parentCollection}/${parentId}`);
+    await ref.update({ favZipCode });
+    logger.info(`Successfully updated favorite zip code for ${parentCollection}/${parentId}`);
   } catch (error) {
     logger.error(`Error updating ${parentCollection}/${parentId}:`, error);
   }
 }
 
 /**
- * Extracts the favorite address info for a given person or org. 
+ * Extracts the favorite postal zip code for a given person or org.
  * @param firestore a handle to firestore database
  * @param parentKey  the key to the parent document of the address (e.g. person.{okey} or org.{okey})
- * @returns FavoriteAddressInfo, i.e. the data that is cached in teh parent document.
+ * @returns the zip code of the favorite postal address (empty string if none exists)
  */
-async function getFavoriteAddressInfo(firestore: Firestore, parentKey: string): Promise<FavoriteAddressInfo> {
+async function getFavoriteZipCode(firestore: Firestore, parentKey: string): Promise<string> {
   let query: FirebaseFirestore.Query = firestore.collection(AddressCollection);
   query = query.where('parentKey', '==', parentKey).where('isFavorite', '==', true);
-  const favoriteAddressInfo = getEmptyFavoriteAddressInfo();
   const snapshot = await query.get();
   if (snapshot.empty) {
-    logger.info(`getFavoriteAddressInfo: no favorite addresses found for ${parentKey}`);
-  } else {
-    const favoriteAddresses = snapshot.docs.map(doc => {
-      return { ...doc.data(), okey: doc.id } as AddressModel;
-    });
-    logger.info(`getFavoriteAddressInfo: found ${favoriteAddresses.length} favorite addresses for ${parentKey}`);
-    for (const favoriteAddress of favoriteAddresses) {
-      switch (favoriteAddress.addressChannel) {
-        case 'email':  favoriteAddressInfo.favEmail   = favoriteAddress.email;   break;
-        case 'phone':  favoriteAddressInfo.favPhone   = favoriteAddress.phone;   break;
-        case 'postal': favoriteAddressInfo.favZipCode = favoriteAddress.zipCode; break;
-        default:
-          logger.info(`getFavoriteAddressInfo: skipping channel ${favoriteAddress.addressChannel} for ${parentKey}`);
-      }
-    }
+    logger.info(`getFavoriteZipCode: no favorite addresses found for ${parentKey}`);
+    return '';
   }
-  return favoriteAddressInfo;
-}
-
-function getEmptyFavoriteAddressInfo(): FavoriteAddressInfo {
-  return {
-    favEmail: DEFAULT_EMAIL,
-    favPhone: DEFAULT_PHONE,
-    favZipCode: '',
-  };
+  const favoriteAddresses = snapshot.docs.map(doc => {
+    return { ...doc.data(), okey: doc.id } as AddressModel;
+  });
+  logger.info(`getFavoriteZipCode: found ${favoriteAddresses.length} favorite addresses for ${parentKey}`);
+  const favoritePostal = favoriteAddresses.find((a) => a.addressChannel === 'postal');
+  return favoritePostal?.zipCode ?? '';
 }
