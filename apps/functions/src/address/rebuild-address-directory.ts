@@ -38,7 +38,7 @@ export const rebuildAddressDirectory = onCall(
   { region: REGION, enforceAppCheck: true, timeoutSeconds: 540 },
   async (request): Promise<{ persons: number; orgs: number }> => {
     checkAppCheckToken(request, 'rebuildAddressDirectory');
-    checkAuthentication(request);
+    checkAuthentication(request, 'rebuildAddressDirectory');
     await checkAdminRole(request, 'rebuildAddressDirectory');
 
     const db = getFirestore();
