@@ -239,7 +239,9 @@ export const OrgStore = signalStore(
     },
 
     async copyEmailAddresses(): Promise<void> {
-      const allEmails = store.filteredOrgs().map((org) => org.favEmail);
+      // directory projection first (spec 1.19 Phase 4), org.favEmail fallback until the strip
+      const allEmails = store.filteredOrgs().map((org) =>
+        store.appStore.getDirectoryEntry(`org.${org.okey}`)?.favEmail || org.favEmail);
       const emails = allEmails.filter((e) => e);
       await copyToClipboardWithConfirmation(
         store.toastController,

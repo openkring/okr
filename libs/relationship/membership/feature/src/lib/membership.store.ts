@@ -423,18 +423,18 @@ export const _MembershipStore = signalStore(
         return store.appStore.getTags('membership');
       },
 
+      // contact data from the address-directory projection (spec 1.19 Phase 4);
+      // person.fav* fallback only until the Phase 4 strip removes those fields
       getEmail(membership: MembershipModel): string | undefined {
-        const person = store.appStore.getPerson(membership.memberKey);
-        if (person) {
-          return person.favEmail;
-        }
+        const parentKey = `${membership.memberModelType ?? 'person'}.${membership.memberKey}`;
+        return store.appStore.getDirectoryEntry(parentKey)?.favEmail
+          || store.appStore.getPerson(membership.memberKey)?.favEmail;
       },
 
       getPhone(membership: MembershipModel): string | undefined {
-        const person = store.appStore.getPerson(membership.memberKey);
-        if (person) {
-          return person.favPhone;
-        }
+        const parentKey = `${membership.memberModelType ?? 'person'}.${membership.memberKey}`;
+        return store.appStore.getDirectoryEntry(parentKey)?.favPhone
+          || store.appStore.getPerson(membership.memberKey)?.favPhone;
       },
 
       /******************************** actions ******************************************* */

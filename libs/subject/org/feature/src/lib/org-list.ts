@@ -93,16 +93,16 @@ import { OrgStore } from './org.store';
               </ion-avatar>
               <ion-label>{{org.name}}</ion-label>      
               <ion-label class="ion-hide-sm-down">
-                @if(org.favPhone) {
-                  <a href="{{org.favPhone}}" style="text-decoration:none;">
-                    <span>{{org.favPhone }}</span>
+                @if(favPhone(org); as phone) {
+                  <a href="{{phone}}" style="text-decoration:none;">
+                    <span>{{phone}}</span>
                   </a>
                 }
               </ion-label>
               <ion-label class="ion-hide-sm-down">
-                @if(org?.favEmail) {
-                  <a href="{{org.favEmail}}" style="text-decoration:none;">
-                    <span>{{org.favEmail }}</span>
+                @if(favEmail(org); as email) {
+                  <a href="{{email}}" style="text-decoration:none;">
+                    <span>{{email}}</span>
                   </a>
                 }
               </ion-label>
@@ -142,6 +142,16 @@ export class OrgList {
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+
+  // contact data from the address-directory projection (spec 1.19 Phase 4);
+  // org.fav* fallback only until the Phase 4 strip removes those fields
+  protected favEmail(org: OrgModel): string {
+    return this.store.appStore.getDirectoryEntry(`org.${org.okey}`)?.favEmail || org.favEmail || '';
+  }
+
+  protected favPhone(org: OrgModel): string {
+    return this.store.appStore.getDirectoryEntry(`org.${org.okey}`)?.favPhone || org.favPhone || '';
+  }
   protected readonly vcardI18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
 
   /******************************** setters (filter) ******************************************* */

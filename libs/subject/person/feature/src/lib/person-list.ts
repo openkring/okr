@@ -85,15 +85,15 @@ import { PersonStore } from './person.store';
               </ion-avatar>
               <ion-label>{{person.firstName | fullName:person.lastName:nameDisplay()}}</ion-label>      
               <ion-label class="ion-hide-sm-down">
-                @if(person.favPhone) {
-                  <span>{{person.favPhone }}</span>
+                @if(favPhone(person); as phone) {
+                  <span>{{phone}}</span>
                 }
               </ion-label>
               <ion-label class="ion-hide-md-down">
-                @if(person?.favEmail) {
-                  <span>{{person.favEmail }}</span>
+                @if(favEmail(person); as email) {
+                  <span>{{email}}</span>
                 }
-              </ion-label> 
+              </ion-label>
             </ion-item>
           }
         </ion-list>
@@ -123,6 +123,16 @@ export class PersonList {
   private readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+
+  // contact data from the address-directory projection (spec 1.19 Phase 4);
+  // person.fav* fallback only until the Phase 4 strip removes those fields
+  protected favEmail(person: PersonModel): string {
+    return this.store.appStore.getDirectoryEntry(`person.${person.okey}`)?.favEmail || person.favEmail || '';
+  }
+
+  protected favPhone(person: PersonModel): string {
+    return this.store.appStore.getDirectoryEntry(`person.${person.okey}`)?.favPhone || person.favPhone || '';
+  }
   protected personModelName = PersonModelName;
   protected readonly vcardI18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
 
@@ -182,11 +192,11 @@ export class PersonList {
     if (person.okey !== this.currentUser()?.personKey && await this.store.isPersonUser(person.okey)) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.send_message(), this.imgixBaseUrl, 'chatbubbles'));
     }
-    if (person.favEmail) {
+    if (this.favEmail(person)) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.store.i18n.copy_email(), this.imgixBaseUrl, 'copy'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.sendemail', this.store.i18n.send_email(), this.imgixBaseUrl, 'email'));
     }
-    if (person.favPhone) {
+    if (this.favPhone(person)) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.copyphone', this.store.i18n.copy_phone(), this.imgixBaseUrl, 'copy'));
       //actionSheetOptions.buttons.push(createActionSheetButton('person.sendsms', this.imgixBaseUrl, 'chatbubble'));
       actionSheetOptions.buttons.push(createActionSheetButton('person.call', this.store.i18n.call_phone(), this.imgixBaseUrl, 'tel'));
@@ -222,16 +232,16 @@ export class PersonList {
           await this.store.chat(person);
           break;
         case 'person.copyemail':
-          await this.store.copy(person.favEmail, this.store.i18n.copy_email_conf());
+          await this.store.copy(this.favEmail(person), this.store.i18n.copy_email_conf());
           break;
         case 'person.copyphone':
-          await this.store.copy(person.favPhone, this.store.i18n.copy_phone_conf());
+          await this.store.copy(this.favPhone(person), this.store.i18n.copy_phone_conf());
           break;
         case 'person.sendemail':
-          await this.store.sendEmail(person.favEmail);
+          await this.store.sendEmail(this.favEmail(person));
           break;
         case 'person.call':
-          await this.store.call(person.favPhone);
+          await this.store.call(this.favPhone(person));
           break;
         case 'person.delete':
           await this.store.delete(person, this.readOnly());
