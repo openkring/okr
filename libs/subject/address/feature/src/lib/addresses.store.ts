@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ModalController, Platform, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
+import { map, of } from 'rxjs';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getDownloadURL, ref } from 'firebase/storage';
@@ -11,7 +11,7 @@ import { getDownloadURL, ref } from 'firebase/storage';
 import { FirestoreService } from '@okr/shared-data-access';
 import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
-import { AddressCollection, AddressModel, AddressModelName, CategoryListModel, DefaultLanguage, DocumentModel, isSensitiveScalarChannel, OrgModel, PersonModel } from '@okr/shared-models';
+import { AddressCollection, AddressDirectoryCollection, AddressDirectoryModel, AddressModel, AddressModelName, CategoryListModel, DefaultLanguage, DocumentModel, getAddressDirectoryKey, isSensitiveScalarChannel, OrgModel, PersonModel } from '@okr/shared-models';
 import { AlertService, downloadToBrowser } from '@okr/shared-util-angular';
 import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@okr/shared-util-core';
 import { Languages } from '@okr/shared-categories';
@@ -22,7 +22,7 @@ import { DocumentService } from '@okr/document-data-access';
 import { FolderService } from '@okr/folder-data-access';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
-import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, getWebUrl, isAddress, openExternalUrl, stringifyPostalAddress } from '@okr/subject-address-util';
+import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, directoryEntryToAddress, getWebUrl, isAddress, openExternalUrl, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AddressEditModal } from './address-edit.modal';
 import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
@@ -75,14 +75,30 @@ export const AddressStore = signalStore(
       params: () => ({
         parentKey: store.parentKey(),
         orderByParam: store.orderByParam(),
+        currentUser: store.appStore.currentUser(),
       }),
       stream: ({params}) => {
         if (!params.parentKey?.length) return of([]);
-        const dbQuery = getSystemQuery(store.appStore.tenantId());
-        if (params.parentKey !== 'all') { // for all we do not restrict the result set
-          dbQuery.push({ key: 'parentKey', operator: '==', value: params.parentKey });
+        // Tiered source (spec 1.19 Phase 4 §A4): the raw addresses collection is
+        // (after the Phase 4 rules flip) readable only by the owner and privileged
+        // roles; everyone else streams the address-directory projection and sees
+        // exactly the registered-visible entries. 'all' stays raw — that list route
+        // is admin-guarded.
+        const user = params.currentUser;
+        const isOwner = !!user?.personKey && params.parentKey === `person.${user.personKey}`;
+        const isPrivileged = user?.roles?.['privileged'] === true || user?.roles?.['admin'] === true;
+        if (isOwner || isPrivileged || params.parentKey === 'all') {
+          const dbQuery = getSystemQuery(store.appStore.tenantId());
+          if (params.parentKey !== 'all') { // for all we do not restrict the result set
+            dbQuery.push({ key: 'parentKey', operator: '==', value: params.parentKey });
+          }
+          return store.appStore.firestoreService.searchData<AddressModel>(AddressCollection, dbQuery, params.orderByParam, 'asc');
         }
-        return store.appStore.firestoreService.searchData<AddressModel>(AddressCollection, dbQuery, params.orderByParam, 'asc');
+        const directoryKey = getAddressDirectoryKey(store.appStore.tenantId(), params.parentKey);
+        return store.appStore.firestoreService.readModel<AddressDirectoryModel>(AddressDirectoryCollection, directoryKey).pipe(
+          map((directory) => (directory?.entries ?? []).map((entry) =>
+            directoryEntryToAddress(entry, store.appStore.tenantId(), params.parentKey)))
+        );
       }
     }),
   })),

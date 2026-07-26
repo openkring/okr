@@ -62,7 +62,7 @@ function toDirectoryEntry(a) {
     addressOkey: a.okey ?? '',
     addressChannel: a.addressChannel ?? '',
     addressChannelLabel: a.addressChannelLabel ?? '',
-    addressUsage: a.addressUsage ?? 0,
+    addressUsage: a.addressUsage ?? '',
     addressUsageLabel: a.addressUsageLabel ?? '',
     isFavorite: a.isFavorite ?? false,
     isCc: a.isCc ?? false,

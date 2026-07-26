@@ -34,7 +34,7 @@ export function toDirectoryEntry(address: AddressModel): DirectoryEntry {
     addressOkey: address.okey ?? '',
     addressChannel: address.addressChannel ?? '',
     addressChannelLabel: address.addressChannelLabel ?? '',
-    addressUsage: address.addressUsage ?? 0,
+    addressUsage: address.addressUsage ?? '',
     addressUsageLabel: address.addressUsageLabel ?? '',
     isFavorite: address.isFavorite ?? false,
     isCc: address.isCc ?? false,

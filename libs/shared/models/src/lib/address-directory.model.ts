@@ -6,7 +6,7 @@ export interface DirectoryEntry {
   addressOkey: string;
   addressChannel: string;       // contact channels only — never ssn/dob/bankaccount (floors)
   addressChannelLabel: string;
-  addressUsage: number;
+  addressUsage: string;
   addressUsageLabel: string;
   isFavorite: boolean;
   isCc: boolean;

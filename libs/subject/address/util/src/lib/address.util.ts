@@ -2,11 +2,42 @@ import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { ToastController } from '@ionic/angular';
 
-import { AddressModel } from '@okr/shared-models';
+import { AddressModel, DirectoryEntry } from '@okr/shared-models';
 import { copyToClipboard, formatIban, formatPhoneNumber, IbanFormat, showToast } from '@okr/shared-util-angular';
 import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } from '@okr/shared-util-core';
 
 /*-------------------------- address creation --------------------------------*/
+
+/**
+ * Materialize an address-directory DirectoryEntry (spec 1.19 Phase 4) as an
+ * AddressModel for the contact UI. Used when the viewer reads the projection
+ * instead of the raw addresses collection (non-owner, non-privileged): the
+ * entry carries exactly the registered-visible fields; everything else stays
+ * at model defaults. okey is the REAL address doc id, so actions (mailto/tel,
+ * map) behave identically.
+ */
+export function directoryEntryToAddress(entry: DirectoryEntry, tenantId: string, parentKey: string): AddressModel {
+  const address = new AddressModel(tenantId);
+  address.okey = entry.addressOkey;
+  address.parentKey = parentKey;
+  address.addressChannel = entry.addressChannel;
+  address.addressChannelLabel = entry.addressChannelLabel;
+  address.addressUsage = entry.addressUsage;
+  address.addressUsageLabel = entry.addressUsageLabel;
+  address.isFavorite = entry.isFavorite;
+  address.isCc = entry.isCc;
+  address.email = entry.email;
+  address.phone = entry.phone;
+  address.streetName = entry.streetName;
+  address.streetNumber = entry.streetNumber;
+  address.addressValue2 = entry.addressValue2;
+  address.zipCode = entry.zipCode;
+  address.city = entry.city;
+  address.countryCode = entry.countryCode;
+  address.url = entry.url;
+  address.index = getAddressIndex(address);
+  return address;
+}
 
 /**
  * Generic function to create a favorite address of type email, phone, web, or postal

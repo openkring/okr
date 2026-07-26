@@ -3,7 +3,7 @@ import { AddressModel } from '@okr/shared-models';
 import { getCountryName } from '@okr/shared-util-core';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
-import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, getWebUrl, normalizeAddressValue, openExternalUrl, stringifyAddress, stringifyPostalAddress } from './address.util';
+import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, directoryEntryToAddress, getWebUrl, normalizeAddressValue, openExternalUrl, stringifyAddress, stringifyPostalAddress } from './address.util';
 
 // Mock all external dependencies
 vi.mock('@capacitor/browser', () => ({ Browser: { open: vi.fn() } }));
@@ -272,5 +272,26 @@ describe('Address Utils', () => {
       expect(result.email).toBe('test@example.com');
       expect(result.phone).toBe('');
     });
+  });
+});
+
+describe('directoryEntryToAddress (spec 1.19 Phase 4)', () => {
+  it('materializes a projection entry as a display AddressModel with a search index', () => {
+    const entry = {
+      addressOkey: 'a1', addressChannel: 'email', addressChannelLabel: '', addressUsage: 'home',
+      addressUsageLabel: '', isFavorite: true, isCc: false, email: 'x@y.z', phone: '',
+      streetName: '', streetNumber: '', addressValue2: '', zipCode: '', city: '', countryCode: '', url: '',
+    };
+    const address = directoryEntryToAddress(entry, 't1', 'person.p1');
+    expect(address.okey).toBe('a1');
+    expect(address.parentKey).toBe('person.p1');
+    expect(address.tenants).toEqual(['t1']);
+    expect(address.addressChannel).toBe('email');
+    expect(address.email).toBe('x@y.z');
+    expect(address.isFavorite).toBe(true);
+    expect(address.index.length).toBeGreaterThan(0);
+    // never carries vault values — the entry has none by construction
+    expect(address.ssn).toBe('');
+    expect(address.iban).toBe('');
   });
 });
