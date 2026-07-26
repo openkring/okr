@@ -233,6 +233,9 @@ export { migrateSensitiveData } from './person/migrate-sensitive-data';
 // address-directory projection rebuild/backfill (privacy 1.19 Phase 4)
 export { rebuildAddressDirectory } from './address/rebuild-address-directory';
 
+// tiered on-demand vault read (privacy 1.19 Phase 4, D9/D-P4-1)
+export { getAddressView } from './address/get-address-view';
+
 // exchange rates
 export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';
 export { setManualRate } from './exchange-rate/set-manual-rate';
