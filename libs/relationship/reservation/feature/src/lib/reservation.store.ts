@@ -215,8 +215,8 @@ export const ReservationStore = signalStore(
         }
 
         if (listId && listId !== 'all') {
-          let prefix = listId.substring(0,2);
-          let value = listId.substring(2);
+          const prefix = listId.substring(0,2);
+          const value = listId.substring(2);
           
           switch (prefix) {
             case 'r_': // resource key */
@@ -307,8 +307,7 @@ export const ReservationStore = signalStore(
 
       getPhone(reservation: ReservationModel): string | undefined {
         if (!reservation.reserver?.key) return undefined;
-        const person = store.appStore.getPerson(reservation.reserver.key);
-        return person ? person.favPhone : undefined;
+        return store.appStore.getDirectoryEntry(`person.${reservation.reserver.key}`)?.favPhone || undefined;
       },
 
       /******************************** actions ******************************************* */

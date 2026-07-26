@@ -292,7 +292,7 @@ export const PersonStore = signalStore(
         async exportVcard(person: PersonModel): Promise<void> {
             const displayName = `${person.firstName ?? ''} ${person.lastName ?? ''}`.trim() || person.lastName;
             await store.vcardExportService.exportSingle(
-                { okey: person.okey, displayName, dateOfBirth: person.dateOfBirth },
+                { okey: person.okey, displayName },
                 'person',
                 store.currentUser()?.roles,
                 store.tenantId()
@@ -335,7 +335,7 @@ export const PersonStore = signalStore(
 
         async copyEmailAddresses(readOnly = true): Promise<void> {
             const persons = store.filteredPersons();
-            const mainEmails = getMainEmailAddresses(persons);
+            const mainEmails = getMainEmailAddresses(persons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
 
             const ccQuery = getSystemQuery(store.tenantId());
             ccQuery.push({ key: 'addressChannel', operator: '==', value: 'email' });

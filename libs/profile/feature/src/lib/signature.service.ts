@@ -93,22 +93,20 @@ export class SignatureService {
     const web = pickAddress(addresses, 'web');
     const addressLine = composeOrgAddressLine(postal?.zipCode || org.favZipCode || '', postal?.city ?? '', postal?.countryCode ?? '');
 
-    // Prefer the live favorite phone address record; the denormalized person.favPhone is a
-    // fallback (it can be stale relative to the user's current address records). While the
-    // resource is still loading (value === undefined) omit the phone rather than flashing the
-    // stale favPhone, so the preview doesn't visibly switch numbers on first load.
+    // Resolve email/phone from the live own-address records (owner raw stream — the
+    // replicated person.favEmail/favPhone are being phased out, privacy 1.19 Phase 4).
+    // While the resource is still loading (value === undefined) omit both rather than
+    // flashing values that may change once the stream resolves.
     const personAddresses = this.personAddressResource.value();
-    const phone =
-      personAddresses === undefined
-        ? undefined
-        : pickAddress(personAddresses, 'phone')?.phone || person.favPhone || undefined;
+    const phone = personAddresses === undefined ? undefined : pickAddress(personAddresses, 'phone')?.phone || undefined;
+    const email = personAddresses === undefined ? undefined : pickAddress(personAddresses, 'email')?.email || undefined;
 
     return {
       person: {
         displayName: `${person.firstName} ${person.lastName}`.trim(),
         functionLabel: this.functionLabel().trim() || undefined,
         phoneE164: phone,
-        email: person.favEmail || undefined,
+        email,
       },
       org: {
         name: org.name,
@@ -173,7 +171,7 @@ export class SignatureService {
 }
 
 /** Prefer a favorite address of the given channel, else the first of that channel. */
-function pickAddress(addresses: AddressModel[], channel: 'postal' | 'web' | 'phone'): AddressModel | undefined {
+function pickAddress(addresses: AddressModel[], channel: 'postal' | 'web' | 'phone' | 'email'): AddressModel | undefined {
   const ofChannel = addresses.filter((a) => a.addressChannel === channel && !a.isArchived);
   return ofChannel.find((a) => a.isFavorite) ?? ofChannel[0];
 }

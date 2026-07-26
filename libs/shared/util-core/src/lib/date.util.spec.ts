@@ -8,6 +8,7 @@ import {
     DatePart,
     extractFromDate,
     formatDateToken,
+    getAgeFromBirthYear,
     getBirthYear,
     getEndOfYear, getStartOfYear,
     getTodayStr,
@@ -214,6 +215,18 @@ describe('date.util', () => {
             expect(getBirthYear('')).toBe('');
             expect(getBirthYear(undefined)).toBe('');
             expect(getBirthYear('1985')).toBe('');
+        });
+    });
+
+    // getAgeFromBirthYear (privacy 1.19: readers use the memberBirthYear replica)
+    describe('getAgeFromBirthYear', () => {
+        it('computes the age in years against a reference year', () => {
+            expect(getAgeFromBirthYear('1985', 2026)).toBe(41);
+        });
+        it('returns -1 for missing/invalid input', () => {
+            expect(getAgeFromBirthYear('', 2026)).toBe(-1);
+            expect(getAgeFromBirthYear(undefined, 2026)).toBe(-1);
+            expect(getAgeFromBirthYear('19851231', 2026)).toBe(-1);
         });
     });
 });

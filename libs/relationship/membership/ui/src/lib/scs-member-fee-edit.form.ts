@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonRow } f
 
 import { CategoryListModel, INVOICE_STATE_VALUES, REBATE_REASON_VALUES, ScsMemberFeesModel, UserModel } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n } from '@okr/shared-ui';
-import { getAge } from '@okr/shared-util-core';
+import { getAgeFromBirthYear } from '@okr/shared-util-core';
 
 import { MembershipI18n, scsMemberFeeValidations } from '@okr/relationship-membership-util';
 
@@ -124,8 +124,8 @@ export class ScsMemberFeeEditForm {
 
   // computed
   protected age = computed(() => {
-    const dob = this.formData()?.memberDateOfBirth;
-    return dob ? getAge(dob) : '';
+    const age = getAgeFromBirthYear(this.formData()?.memberBirthYear);
+    return age >= 0 ? age : '';
   });
   protected category = computed(() => this.formData()?.category ?? '');
   protected bexioId = computed(() => this.formData()?.memberBexioId ?? '');

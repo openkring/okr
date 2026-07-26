@@ -41,8 +41,6 @@ const CHANNEL_ORDER: VcardChannelType[] = ['phone', 'email', 'postal', 'web'];
 export interface VcardExportTarget {
   okey: string;
   displayName: string;
-  /** person only — StoreDate (yyyyMMdd); used to decide the birthday toggle */
-  dateOfBirth?: string;
 }
 
 function mapChannel(addressChannel: string | undefined): VcardChannelType | undefined {
@@ -144,7 +142,9 @@ export class VcardExportService {
 
     return {
       addresses: CHANNEL_ORDER.filter((c) => channelSet.has(c)),
-      birthday: kind === 'person' && !!target.dateOfBirth && target.dateOfBirth.length > 0,
+      // dob presence from the vault channel doc in the same result set — the replicated
+      // person.dateOfBirth is being phased out (privacy 1.19 Phase 4)
+      birthday: kind === 'person' && (addresses ?? []).some((a) => a.addressChannel === 'dob' && !!a.dob),
       photo: !!avatar?.storagePath,
       workRels: hasWorkRels,
       personalRels: hasPersonalRels,

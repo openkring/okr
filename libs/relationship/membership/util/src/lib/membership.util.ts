@@ -217,65 +217,67 @@ export function getMembershipIndexInfo(): string {
 }
 
 
-// ---------------------- Emails -------------------------------
-// tbd: add cc: email addresses
-// tbd: should we show a modal with all email addresses as deletable ion-chips ?
-  export function getMemberEmailAddresses(memberships: MembershipModel[], persons: PersonModel[]): string[] {
-    const memberKeys = new Set(memberships.map(m => m.memberKey));
-    return persons
-      .filter(p => p.okey && memberKeys.has(p.okey))
-      .map(p => p.favEmail)
-      .filter(email => !!email);   // remove empty/null
+  // ---------------------- SRV List -------------------------------
+  /**
+   * Contact data of one member, resolved by the caller instead of read from the
+   * replicated person fields (privacy 1.19 Phase 4): email/phone come from the
+   * address-directory projection, the full dateOfBirth (StoreDate) from the vault
+   * via the getAddressView callable (memberAdmin tier); '' when unavailable.
+   */
+  export interface MemberContact {
+    email: string;
+    phone: string;
+    dateOfBirth: string;
   }
 
-  // ---------------------- SRV List -------------------------------
   /**
    * For each active SCS member, there should be an active SRV member.
    * If not, we export the SCS member data only with a comment that this is a new member.
    * If there is a current SRV member, but no corresponding SCS member, we add a comment that this member exited in the previous year.
    * @param person  The person that has the following memberships:
+   * @param contact the person's resolved contact data (directory email/phone + vault dob)
    * @param currentScs  an optional currently valid SCS membership
    * @param lastYearExit an optional exit of SCS membership in the last year
    * @param currentSrv an optional currently valid SRV membership
-   * @returns 
+   * @returns
    */
-  export function convertToSrvDataRow(person: PersonModel, currentScs?: MembershipModel, lastYearExit?: MembershipModel, currentSrv?: MembershipModel, postal?: AddressModel): string[] {
+  export function convertToSrvDataRow(person: PersonModel, contact: MemberContact, currentScs?: MembershipModel, lastYearExit?: MembershipModel, currentSrv?: MembershipModel, postal?: AddressModel): string[] {
     const street = postal ? `${postal.streetName} ${postal.streetNumber}`.trim() : '';
     const zipCode = postal?.zipCode ?? person.favZipCode;
     const city = postal?.city ?? '';
     if (currentScs) {
-      const srvCat = getSrvMemberCategory(person.dateOfBirth);
+      const srvCat = getSrvMemberCategory(contact.dateOfBirth);
       if (currentSrv) { // both SCS and SRV member -> current SRV member, potential address change
         return [
           'Seeclub Stäfa',
-          getMGRART_Titel(currentSrv.category, person.dateOfBirth),
-          getSrvMembershipFee(currentSrv.category, person.dateOfBirth),
+          getMGRART_Titel(currentSrv.category, contact.dateOfBirth),
+          getSrvMembershipFee(currentSrv.category, contact.dateOfBirth),
           person.lastName,
           person.firstName,
           currentSrv.memberId,
-          getSafeDateInSrvFormat(person.dateOfBirth),
+          getSafeDateInSrvFormat(contact.dateOfBirth),
           street,
           zipCode,
           city,
-          person.favPhone,
-          person.favEmail,
+          contact.phone,
+          contact.email,
           currentSrv.orgFunction,
           checkForChanges(currentScs, currentSrv, srvCat)
         ];
       } else {  // new SRV member
         return [
           'Seeclub Stäfa',
-          getMGRART_Titel('', person.dateOfBirth),
-          getSrvMembershipFee('', person.dateOfBirth),
+          getMGRART_Titel('', contact.dateOfBirth),
+          getSrvMembershipFee('', contact.dateOfBirth),
           person.lastName,
           person.firstName,
           '',
-          getSafeDateInSrvFormat(person.dateOfBirth),
+          getSafeDateInSrvFormat(contact.dateOfBirth),
           street,
           zipCode,
           city,
-          person.favPhone,
-          person.favEmail,
+          contact.phone,
+          contact.email,
           'Eintritt per 1.1.2026: neu erfassen'
         ];
       }
@@ -286,17 +288,17 @@ export function getMembershipIndexInfo(): string {
           '*** DATENFEHLER ? *** Kein SCS Mitglied, aber SRV Mitglied (prüfe die Daten in der App, wahrscheinlich ist die SRV MItgliedschaft nicht nachgeführt)';
         return [
           'Seeclub Stäfa',
-          getMGRART_Titel(currentSrv.category, person.dateOfBirth),
-          getSrvMembershipFee(currentSrv.category, person.dateOfBirth),
+          getMGRART_Titel(currentSrv.category, contact.dateOfBirth),
+          getSrvMembershipFee(currentSrv.category, contact.dateOfBirth),
           person.lastName,
           person.firstName,
           currentSrv.memberId,
-          getSafeDateInSrvFormat(person.dateOfBirth),
+          getSafeDateInSrvFormat(contact.dateOfBirth),
           street,
           zipCode,
           city,
-          person.favPhone,
-          person.favEmail,
+          contact.phone,
+          contact.email,
           currentSrv.orgFunction,
           comment
         ];
@@ -357,15 +359,15 @@ export function getMembershipIndexInfo(): string {
   }
 
   // ---------------------- Address List -------------------------------
-  export function convertToAddressDataRow(person: PersonModel, postal?: AddressModel): string[] {
+  export function convertToAddressDataRow(person: PersonModel, contact: MemberContact, postal?: AddressModel): string[] {
     return [
       person.firstName,
       person.lastName,
       postal ? `${postal.streetName} ${postal.streetNumber}`.trim() : '',
       postal?.zipCode ?? person.favZipCode,
       postal?.city ?? '',
-      person.favPhone,
-      person.favEmail
+      contact.phone,
+      contact.email
     ];
   }
 
@@ -375,7 +377,7 @@ export function getMembershipIndexInfo(): string {
       membership.memberId,
       membership.memberName1,
       membership.memberName2,
-      membership.memberDateOfBirth,
+      membership.memberBirthYear,
       membership.dateOfEntry,
       membership.category,
       membership.orgFunction
@@ -383,7 +385,7 @@ export function getMembershipIndexInfo(): string {
   }
 
   // ---------------------- Clubdesk Import list -------------------------------
-    export function convertToClubdeskImportRow(membership: MembershipModel, person: PersonModel, postal?: AddressModel): string[] {
+    export function convertToClubdeskImportRow(membership: MembershipModel, person: PersonModel, contact: MemberContact, postal?: AddressModel): string[] {
     return [
       person.firstName,
       person.lastName,
@@ -393,9 +395,9 @@ export function getMembershipIndexInfo(): string {
       postal?.city ?? '',
       postal?.zipCode ?? person.favZipCode,
       postal?.countryCode === 'CH' ? 'Schweiz' : (postal?.countryCode ?? ''),
-      person.favEmail,
-      person.favPhone,
-      convertDateFormatToString(person.dateOfBirth, DateFormat.StoreDate, DateFormat.ViewDate, false),
+      contact.email,
+      contact.phone,
+      convertDateFormatToString(contact.dateOfBirth, DateFormat.StoreDate, DateFormat.ViewDate, false),
       convertDateFormatToString(membership.dateOfEntry, DateFormat.StoreDate, DateFormat.ViewDate, false),
       membership.memberBexioId,
       membership.category,

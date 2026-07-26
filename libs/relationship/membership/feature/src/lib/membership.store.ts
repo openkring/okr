@@ -4,6 +4,8 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ExportFormats, memberTypeMatches, yearMatches } from '@okr/shared-categories';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -18,7 +20,7 @@ import { EmailAddressesModal, selectDate } from '@okr/shared-ui';
 import { TaskService } from '@okr/task-data-access';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
-import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getRelLogEntry, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getRelLogEntry, MemberContact, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 import { AddressService } from '@okr/subject-address-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
@@ -90,7 +92,13 @@ export const _MembershipStore = signalStore(
     activityService: inject(ActivityService),
     vcardExportService: inject(VcardExportService),
     personEditModalClass: inject(PERSON_EDIT_MODAL, { optional: true }),
-    i18nService: inject(I18nService)
+    i18nService: inject(I18nService),
+    // Tiered vault read (spec 1.19 Phase 4, D-P4-1): full dob for exports comes from the
+    // getAddressView callable (memberAdmin tier), never from the person doc.
+    getAddressViewFn: httpsCallable<{ parentKeys: string[] }, { views: Record<string, AddressModel[]> }>(
+      getFunctions(getApp(), 'europe-west6'),
+      'getAddressView'
+    )
   })),
 
   withProps((store) => ({
@@ -672,7 +680,6 @@ export const _MembershipStore = signalStore(
           displayName: kind === 'person'
             ? getFullName(membership.memberName1, membership.memberName2)
             : (membership.memberName2 || membership.memberName1),
-          dateOfBirth: kind === 'person' ? membership.memberDateOfBirth : undefined,
         };
         await store.vcardExportService.exportSingle(target, kind, store.currentUser()?.roles, store.appStore.tenantId());
       },
@@ -778,7 +785,7 @@ export const _MembershipStore = signalStore(
             break;
           case 'srv':
             table.push(['Clubname', 'MGRART_Titel', 'Beitrag', 'LastName', 'FirstName', 'SrvId', 'Birthday', 'Street', 'Postcode', 'City', 'Mobile', 'Email', 'Funktion', 'Kommentar']);
-            this.exportSrv(table, postalByPersonKey);
+            await this.exportSrv(table, postalByPersonKey);
             exportCsv(table, fn, 'SRV Mitgliedschaften');
             return;
           case 'address':
@@ -786,22 +793,24 @@ export const _MembershipStore = signalStore(
             for (const member of memberships) {
               const person = store.appStore.getPerson(member.memberKey);
               if (!person) continue;
-              table.push(convertToAddressDataRow(person, postalByPersonKey.get(member.memberKey)));
+              table.push(convertToAddressDataRow(person, this.getMemberContact(member.memberKey), postalByPersonKey.get(member.memberKey)));
             }
             exportCsv(table, fn, 'Adressliste');
             return;
-          case 'clubdesk':
+          case 'clubdesk': {
             table.push(['Vorname', 'Nachname', 'Geschlecht', 'Anrede', 'Adresse', 'Ort', 'PLZ', 'Land', 'E-Mail', 'Telefon', 'Geburtsdatum', 'Eintritt', 'BexioId', 'Kategorie', 'Status', 'Funktion', 'RelLog']);
+            const dobByKey = await this.loadVaultDobs(memberships.map(m => m.memberKey));
             for (const member of memberships) {
               const person = store.appStore.getPerson(member.memberKey);
               if (!person) continue;
-              table.push(convertToClubdeskImportRow(member, person, postalByPersonKey.get(member.memberKey)));
+              table.push(convertToClubdeskImportRow(member, person, this.getMemberContact(member.memberKey, dobByKey), postalByPersonKey.get(member.memberKey)));
             }
             exportCsv(table, fn, 'Clubdesk Import');
             return;
+          }
           case 'member':
-            keys = ['memberId', 'memberName1', 'memberName2', 'memberDateOfBirth', 'dateOfEntry', 'memberCategory', 'orgFunction'] as (keyof MembershipModel)[];
-            table.push(['Mitgliedschafts-Nr', 'Vorname', 'Name', 'GebDatum', 'Eintrittsdatum', 'Kategorie', 'Funktion']);
+            keys = ['memberId', 'memberName1', 'memberName2', 'memberBirthYear', 'dateOfEntry', 'memberCategory', 'orgFunction'] as (keyof MembershipModel)[];
+            table.push(['Mitgliedschafts-Nr', 'Vorname', 'Name', 'Jahrgang', 'Eintrittsdatum', 'Kategorie', 'Funktion']);
             tableName = 'Mitglieder';
             break;
           default:
@@ -814,18 +823,21 @@ export const _MembershipStore = signalStore(
         exportCsv(table, fn, tableName);
       },
 
-      exportSrv(table: string[][], postalByPersonKey: Map<string, AddressModel>): void {
+      async exportSrv(table: string[][], postalByPersonKey: Map<string, AddressModel>): Promise<void> {
         // hardcoded and not considering any current membership filters.
         // That's why it can be used from any membership (SCS, SRV, other).
         // Get all persons
         const persons = store.appStore.allPersons();
         // Get all memberships (stateless)
         const allMemberships = store.allMembershipsResource.value() ?? [];
+        const lastYear = (new Date()).getFullYear() - 1;
+
+        // select the exported persons first, then batch-load their full dob from the vault
+        const rows: { person: PersonModel; currentScs?: MembershipModel; lastYearExit?: MembershipModel; currentSrv?: MembershipModel }[] = [];
         for (const person of persons) {
           // Current SCS membership (active, orgKey = SCS org, memberModelType = 'person')
           const currentScs = allMemberships.find(m => m.memberKey === person.okey && m.orgKey === 'scs' && m.state === 'active' && m.dateOfExit === END_FUTURE_DATE_STR);
           // SCS exit in last year
-          const lastYear = (new Date()).getFullYear() - 1;
           const lastYearExit = allMemberships.find(m => m.memberKey === person.okey && m.orgKey === 'scs' && m.dateOfExit?.startsWith(lastYear.toString()));
 
           // Current SRV membership (active, orgKey = SRV org, memberModelType = 'person')
@@ -833,9 +845,49 @@ export const _MembershipStore = signalStore(
 
           // we export a row for each person with a current SCS membership or an exit in the last year or a current SRV membership
           if (currentScs || currentSrv) {
-            table.push(convertToSrvDataRow(person, currentScs, lastYearExit, currentSrv, postalByPersonKey.get(person.okey)));
+            rows.push({ person, currentScs, lastYearExit, currentSrv });
           }
         }
+        const dobByKey = await this.loadVaultDobs(rows.map(r => r.person.okey));
+        for (const r of rows) {
+          table.push(convertToSrvDataRow(r.person, this.getMemberContact(r.person.okey, dobByKey), r.currentScs, r.lastYearExit, r.currentSrv, postalByPersonKey.get(r.person.okey)));
+        }
+      },
+
+      /**
+       * Contact data of one member for exports (privacy 1.19 Phase 4): email/phone from the
+       * address-directory projection, full dob from a preceding loadVaultDobs() batch.
+       */
+      getMemberContact(personKey: string, dobByKey?: Map<string, string>): MemberContact {
+        const directory = store.appStore.getDirectoryEntry(`person.${personKey}`);
+        return {
+          email: directory?.favEmail ?? '',
+          phone: directory?.favPhone ?? '',
+          dateOfBirth: dobByKey?.get(personKey) ?? ''
+        };
+      },
+
+      /**
+       * Batch-loads the full dateOfBirth (StoreDate) per person key from the vault via the
+       * getAddressView callable (memberAdmin tier, D-P4-1), chunked to the callable's
+       * 50-key limit. Persons without a dob vault entry are missing from the map.
+       */
+      async loadVaultDobs(personKeys: string[]): Promise<Map<string, string>> {
+        const dobByKey = new Map<string, string>();
+        const keys = [...new Set(personKeys.filter(k => !!k))];
+        for (let i = 0; i < keys.length; i += 50) {
+          const chunk = keys.slice(i, i + 50).map(k => `person.${k}`);
+          try {
+            const result = await store.getAddressViewFn({ parentKeys: chunk });
+            for (const [parentKey, addresses] of Object.entries(result.data.views ?? {})) {
+              const dob = addresses.find(a => a.addressChannel === 'dob')?.dob;
+              if (dob) dobByKey.set(parentKey.substring('person.'.length), dob);
+            }
+          } catch (error) {
+            warn(`MembershipStore.loadVaultDobs: getAddressView failed for chunk ${i / 50}: ${error}`);
+          }
+        }
+        return dobByKey;
       },
 
       async delete(membership?: MembershipModel, readOnly = true): Promise<void> {
@@ -869,7 +921,7 @@ export const _MembershipStore = signalStore(
         const memberKeySet = new Set(filteredMemberships.map(m => m.memberKey));
         const filteredPersons = persons.filter(p => p.okey && memberKeySet.has(p.okey));
 
-        const mainEmails = getMainEmailAddresses(filteredPersons);
+        const mainEmails = getMainEmailAddresses(filteredPersons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
 
         const ccQuery = getSystemQuery(store.tenantId());
         ccQuery.push({ key: 'addressChannel', operator: '==', value: 'email' });

@@ -4,9 +4,9 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg,
 import { BexioIdMask } from '@okr/shared-config';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
-import { CategoryListModel, MembershipModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
+import { CategoryListModel, MembershipModel, PersonModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { areTagsVisible, coerceBoolean, getFullName, hasRole, isOrg, isPerson } from '@okr/shared-util-core';
+import { areTagsVisible, coerceBoolean, getBirthYear, getFullName, hasRole, isOrg, isPerson } from '@okr/shared-util-core';
 
 import { MembershipI18n, membershipValidations } from '@okr/relationship-membership-util';
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -213,7 +213,6 @@ export class MembershipForm {
   protected memberOrgType = computed(() => this.formData().memberType ?? DEFAULT_ORG_TYPE);
   protected memberNickName = linkedSignal(() => this.formData().memberNickName ?? DEFAULT_NAME);
   protected memberAbbreviation = linkedSignal(() => this.formData().memberAbbreviation ?? '');
-  protected memberDateOfBirth = computed(() => this.formData().memberDateOfBirth ?? DEFAULT_DATE);
   protected memberZipCode = computed(() => this.formData().memberZipCode ?? '');
   protected memberBexioId = linkedSignal(() => this.formData().memberBexioId ?? '');
   protected orgKey = computed(() => this.formData().orgKey ?? DEFAULT_KEY);
@@ -274,18 +273,20 @@ export class MembershipForm {
     const { data: result, role } = await modal.onWillDismiss<PersonSelectResult>();
     const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm') {
-      if (isPerson(data, this.appStore.tenantId())) {
+      if (data && isPerson(data, this.appStore.tenantId())) {
+        const person: PersonModel = data;
         this.formData.update((vm) => ({
           ...vm,
-          memberKey: data.okey,
-          memberName1: data.firstName,
-          memberName2: data.lastName,
+          memberKey: person.okey,
+          memberName1: person.firstName,
+          memberName2: person.lastName,
           memberModelType: 'person',
-          memberType: data.gender,
-          memberDateOfBirth: data.dateOfBirth,
-          memberDateOfDeath: data.dateOfDeath,
-          memberZipCode: data.favZipCode,
-          memberBexioId: data.bexioId
+          memberType: person.gender,
+          memberDateOfBirth: person.dateOfBirth,
+          memberBirthYear: getBirthYear(person.dateOfBirth),
+          memberDateOfDeath: person.dateOfDeath,
+          memberZipCode: person.favZipCode,
+          memberBexioId: person.bexioId
         }));
       }
     }

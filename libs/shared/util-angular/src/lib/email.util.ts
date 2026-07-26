@@ -9,18 +9,19 @@ export type EmailEntry = {
 };
 
 /**
- * Builds a sorted list of primary (favEmail) addresses for the given persons.
- * Persons without a favEmail are excluded.
+ * Builds a sorted list of primary email addresses for the given persons.
+ * The email is resolved per person by the caller (address-directory projection or
+ * own raw addresses — privacy 1.19 Phase 4); persons resolving to none are excluded.
  */
-export function getMainEmailAddresses(persons: PersonModel[]): EmailEntry[] {
+export function getMainEmailAddresses(persons: PersonModel[], getEmail: (person: PersonModel) => string | undefined): EmailEntry[] {
   return persons
-    .filter(p => !!p.favEmail)
     .map(p => ({
-      email: p.favEmail!,
+      email: getEmail(p) ?? '',
       memberKey: p.okey ?? '',
       memberName: getFullName(p.firstName, p.lastName),
       lastName: p.lastName ?? '',
     }))
+    .filter(e => !!e.email)
     .sort((a, b) => a.lastName.localeCompare(b.lastName));
 }
 

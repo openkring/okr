@@ -4,7 +4,7 @@ import { INVOICE_STATE_VALUES, RoleName, ScsMemberFeesModel, UserModel } from '@
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getAge, hasRole } from '@okr/shared-util-core';
+import { hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 
@@ -261,10 +261,6 @@ export class ScsMemberFees {
   }
 
   /******************************* helpers *************************************** */
-  protected getAge(dateOfBirth: string): number {
-    return getAge(dateOfBirth);
-  }
-
   protected getTotal(fee: ScsMemberFeesModel): number {
     return this.store.getTotal(fee);
   }

@@ -171,6 +171,15 @@ export function getBirthYear(dateOfBirth?: string): string {
   return dateOfBirth.substring(0, 4);
 }
 
+/**
+ * Age in years from a birth year (YYYY) replica — same precision as getAge(),
+ * which also only evaluates the year (spec 1.19: readers use memberBirthYear).
+ */
+export function getAgeFromBirthYear(birthYear?: string, refYear = getYear()): number {
+  if (!birthYear || birthYear.length !== 4) return -1;
+  return refYear - Number(birthYear);
+}
+
 export function getDifferenceInHours(date1: Date, date2: Date): number {
   return differenceInHours(date1, date2);
 }
@@ -531,7 +540,7 @@ export function getDurationLabel(startDate: string, startTime: string, endTime?:
   if (startDate.length === 0) {
     return '';
   }
-  let duration = convertDateFormatToString(startDate, DateFormat.StoreDate, DateFormat.ViewDate);
+  const duration = convertDateFormatToString(startDate, DateFormat.StoreDate, DateFormat.ViewDate);
   if (startTime.length !== 5) return duration;
   if (endTime && endTime.length === 5) {
     return duration + ' ' + startTime + ' - ' + endTime;  
