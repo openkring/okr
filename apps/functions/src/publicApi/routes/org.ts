@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
+
+import { getProjectedAddresses } from '@okr/shared-util-functions';
+
 import { setCacheHeaders } from '../utils';
 
 export async function orgRouter(req: Request, res: Response): Promise<void> {
@@ -22,20 +25,18 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
     const orgDoc = orgSnap.empty ? null : orgSnap.docs[0];
     const org = orgDoc?.data() ?? null;
 
-    // Org contact from the favorite email/phone addresses (spec 1.19 Phase 3),
-    // falling back to the denormalized org.fav* fields (removed in Phase 4).
+    // Org contact via the shared projection module (spec 1.19 Phase 4, D8): the
+    // 'public' viewer tier of the org's addresses — the audited chokepoint for
+    // anonymous serving. Falls back to the denormalized org.fav* fields until
+    // the Phase 4 strip removes them.
     let favEmail = '';
     let favPhone = '';
     if (orgDoc) {
-      const addrSnap = await db.collection('addresses')
-        .where('parentKey', '==', `org.${orgDoc.id}`)
-        .where('isFavorite', '==', true)
-        .get();
-      for (const a of addrSnap.docs) {
-        const d = a.data();
-        if (d['addressChannel'] === 'email' && !favEmail) favEmail = String(d['email'] ?? '');
-        if (d['addressChannel'] === 'phone' && !favPhone) favPhone = String(d['phone'] ?? '');
-      }
+      const addresses = await getProjectedAddresses(db, `org.${orgDoc.id}`, 'public', tenantId);
+      favEmail = addresses.find((a) => a.addressChannel === 'email' && a.isFavorite)?.email
+        ?? addresses.find((a) => a.addressChannel === 'email')?.email ?? '';
+      favPhone = addresses.find((a) => a.addressChannel === 'phone' && a.isFavorite)?.phone
+        ?? addresses.find((a) => a.addressChannel === 'phone')?.phone ?? '';
     }
     favEmail = favEmail || String(org?.['favEmail'] ?? '');
     favPhone = favPhone || String(org?.['favPhone'] ?? '');
