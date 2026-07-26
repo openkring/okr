@@ -60,6 +60,14 @@ export function getEffectiveAccessor(
   return stricterAccessor(getChannelFloor(channel), stricterAccessor(preference, tenantFloor ?? 'public'));
 }
 
+/**
+ * Whether a viewer tier satisfies a required accessor (rank comparison):
+ * accessorAllows('privileged', 'registered') → true; ('registered', 'privileged') → false.
+ */
+export function accessorAllows(viewer: PrivacyAccessor, required: PrivacyAccessor): boolean {
+  return stricterAccessor(viewer, required) === viewer;
+}
+
 /** The person's privacy preferences relevant for address channels (subset of PersonModel). */
 export interface PersonPrivacyPreferences {
   usageEmail: PrivacyUsage;
