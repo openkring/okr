@@ -42,6 +42,22 @@ service cloud.firestore {
     function isContentManager() {
       return hasRole('contentAdmin') || isPrivileged();
     }
+    // ── addresses vault (privacy 1.19 Phase 4 lock) ─────────────────────────────
+    // The caller owns an address when its parentKey points at their own person.
+    function ownsParent(data) {
+      return userExists() && data.parentKey == 'person.' + userData().personKey;
+    }
+    // Sensitive scalar channels: values whose channel floor is `privileged` —
+    // never readable at the registered tier, writes gated below.
+    function isSensitiveChannel(data) {
+      return data.addressChannel in ['ssn', 'dob', 'bankaccount'];
+    }
+    // Who may write sensitive-channel addresses: the owner (self-service),
+    // privileged, or memberAdmin (authorized editor per D9; raw READ stays
+    // owner ∨ privileged — memberAdmin reads via the getAddressView callable, D-P4-1).
+    function canWriteSensitive(data) {
+      return ownsParent(data) || isPrivileged() || hasRole('memberAdmin');
+    }
     // A document belongs to the caller's tenant when their tenant is listed on the
     // document, or when the document is shared via the 'system' tenant.
     function belongsToTenant(data) {
@@ -117,7 +133,14 @@ service cloud.firestore {
     // (AppStore loads them post-login). The static websites get any org info via
     // the publicApi CF, never by reading these collections directly. (M-7)
     match /tags/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /orgs/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    // orgs: resurrection guard (spec 1.19 Phase 4) — stripped favEmail/favPhone
+    // must never reappear on the doc.
+    match /orgs/{id} {
+      allow read:   if tenantRead();
+      allow create: if tenantCreate() && !request.resource.data.keys().hasAny(['favEmail', 'favPhone']);
+      allow update: if tenantUpdate() && !request.resource.data.keys().hasAny(['favEmail', 'favPhone']);
+      allow delete: if tenantDelete();
+    }
     match /resources/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
 
     // ============================================================================
@@ -179,7 +202,20 @@ service cloud.firestore {
       allow update: if tenantCreate();
       allow delete: if tenantDelete();
     }
-    match /addresses/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    // addresses = PII vault (spec 1.19 Phase 4 lock): raw read only for the owner
+    // or privileged; everyone else reads the address-directory projection or the
+    // getAddressView callable. Sensitive channels (ssn/dob/bankaccount) are
+    // writable only by owner/privileged/memberAdmin.
+    match /addresses/{id} {
+      allow read:   if ownsParent(resource.data) || (isPrivileged() && tenantRead());
+      allow create: if tenantCreate()
+                     && (!isSensitiveChannel(request.resource.data) || canWriteSensitive(request.resource.data));
+      allow update: if tenantUpdate()
+                     && (!(isSensitiveChannel(resource.data) || isSensitiveChannel(request.resource.data))
+                         || canWriteSensitive(resource.data));
+      allow delete: if tenantDelete()
+                     && (!isSensitiveChannel(resource.data) || canWriteSensitive(resource.data));
+    }
     match /avatars/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /calevents/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
@@ -194,7 +230,16 @@ service cloud.firestore {
     match /memberships/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /ownerships/{id}         { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /personal-rels/{id}      { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /persons/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }  // C-2: no longer public
+    // persons: resurrection guard (spec 1.19 Phase 4) — the stripped PII fields
+    // (ssnId/dateOfBirth/favEmail/favPhone) must never reappear on the doc.
+    match /persons/{id} {
+      allow read:   if tenantRead();  // C-2: no longer public
+      allow create: if tenantCreate()
+                     && !request.resource.data.keys().hasAny(['ssnId', 'dateOfBirth', 'favEmail', 'favPhone']);
+      allow update: if tenantUpdate()
+                     && !request.resource.data.keys().hasAny(['ssnId', 'dateOfBirth', 'favEmail', 'favPhone']);
+      allow delete: if tenantDelete();
+    }
     match /reservations/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /scs-memberfees/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /tasks/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
@@ -240,7 +285,9 @@ service cloud.firestore {
     // Reference data that may have an admin authoring UI — allow privileged writes.
     match /assets/{id}             { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
     match /asset-categories/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
-    match /competition-levels/{id} { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    // competition-levels keep their full dateOfBirth (SRV admin data) — read is
+    // privileged-only (D-P4-3): only the AOC admin console consumes them.
+    match /competition-levels/{id} { allow read: if isPrivileged() && tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
     match /formDefinitions/{id}    { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
     match /periods/{id}            { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
     match /responsibilities/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }

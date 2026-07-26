@@ -69,6 +69,28 @@ def seed(path, d):
     code = req("POST", f"{coll}?documentId={docid}", token=OWNER, data=body(d))
     assert code in (200, 201), f"seed {path} failed: {code}"
 
+def parent_query(parentKey, token=None, tenant=None):
+    """Addresses query by parentKey. The owner needs no tenant filter (ownsParent is
+    provable from the parentKey constraint alone); privileged readers query with the
+    tenant filter like getSystemQuery does (tenantRead must be provable)."""
+    filters = [{"fieldFilter": {"field": {"fieldPath": "parentKey"},
+                                "op": "EQUAL", "value": {"stringValue": parentKey}}}]
+    if tenant is not None:
+        filters.append({"fieldFilter": {"field": {"fieldPath": "tenants"},
+                                        "op": "ARRAY_CONTAINS", "value": {"stringValue": tenant}}})
+    where = filters[0] if len(filters) == 1 else {"compositeFilter": {"op": "AND", "filters": filters}}
+    sq = {"from": [{"collectionId": "addresses"}], "where": where}
+    hdr = {"Content-Type": "application/json"}
+    if token:
+        hdr["Authorization"] = f"Bearer {token}"
+    r = urllib.request.Request(f"{BASE}:runQuery",
+                               data=json.dumps({"structuredQuery": sq}).encode(),
+                               headers=hdr, method="POST")
+    try:
+        return urllib.request.urlopen(r).status
+    except urllib.error.HTTPError as e:
+        return e.code
+
 def list_query(coll, tenant=None, token=None):
     """Mirrors getSystemQuery(tenant): isArchived==false [+ tenants array-contains tenant]."""
     filters = [{"fieldFilter": {"field": {"fieldPath": "isArchived"},
@@ -91,10 +113,14 @@ def list_query(coll, tenant=None, token=None):
 
 
 # ------------------------------------------------------------------- seed ----
-seed("users/uidA", {"tenants": ["t1"], "roles": {}, "firstName": "A"})
+seed("users/uidA", {"tenants": ["t1"], "roles": {}, "firstName": "A", "personKey": "pA"})
 seed("users/uidB", {"tenants": ["t2"], "roles": {"admin": True}, "firstName": "B"})
 seed("users/uidC", {"tenants": ["t1"], "roles": {"contentAdmin": True}, "firstName": "C"})
 seed("users/uidD", {"tenants": ["t1"], "roles": {"admin": True}, "firstName": "D"})
+# privacy 1.19 Phase 4 (addresses lock): plain member E, memberAdmin M, privileged P
+seed("users/uidE", {"tenants": ["t1"], "roles": {}, "firstName": "E", "personKey": "pE"})
+seed("users/uidM", {"tenants": ["t1"], "roles": {"memberAdmin": True}, "firstName": "M", "personKey": "pM"})
+seed("users/uidP", {"tenants": ["t1"], "roles": {"privileged": True}, "firstName": "P"})
 seed("persons/pA", {"tenants": ["t1"], "isArchived": False, "lastName": "AA"})
 seed("persons/pB", {"tenants": ["t2"], "isArchived": False, "lastName": "BB"})
 seed("memberships/mA", {"tenants": ["t1"], "isArchived": False, "x": "1"})
@@ -113,8 +139,23 @@ seed("address-directory/t1_person.pA", {"tenants": ["t1"], "isArchived": False,
                                         "parentKey": "person.pA", "favEmail": "a@t1.ch"})
 seed("address-directory/t2_person.pB", {"tenants": ["t2"], "isArchived": False,
                                         "parentKey": "person.pB", "favEmail": "b@t2.ch"})
+# privacy 1.19 Phase 4 (the lock): raw addresses — owner pA, other person pO, cross-tenant pX
+seed("addresses/adrA_email", {"tenants": ["t1"], "isArchived": False, "isFavorite": True,
+                              "parentKey": "person.pA", "addressChannel": "email", "email": "a@t1.ch"})
+seed("addresses/adrA_ssn",   {"tenants": ["t1"], "isArchived": False, "isFavorite": False,
+                              "parentKey": "person.pA", "addressChannel": "ssn", "ssn": "7561111111111"})
+seed("addresses/adrO_email", {"tenants": ["t1"], "isArchived": False, "isFavorite": True,
+                              "parentKey": "person.pO", "addressChannel": "email", "email": "o@t1.ch"})
+seed("addresses/adrO_ssn",   {"tenants": ["t1"], "isArchived": False, "isFavorite": False,
+                              "parentKey": "person.pO", "addressChannel": "ssn", "ssn": "7562222222222"})
+seed("addresses/adrX_email", {"tenants": ["t2"], "isArchived": False, "isFavorite": True,
+                              "parentKey": "person.pX", "addressChannel": "email", "email": "x@t2.ch"})
+# D-P4-3: competition-levels keep full dateOfBirth — privileged-only read
+seed("competition-levels/clA", {"tenants": ["t1"], "isArchived": False,
+                                "personKey": "pA", "dateOfBirth": "20000101"})
 
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
+E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
 GET, PATCH, POST = "GET", "PATCH", "POST"
 
 
@@ -194,6 +235,45 @@ single_cases = [
      body({"favEmail": "forged@x.ch"}), ["favEmail"]),
     ("userA create address-directory -> DENY (CF-only)", False, POST, "address-directory?documentId=t1_person.pX", A,
      body({"tenants": ["t1"], "parentKey": "person.pX"}), None),
+    # ── privacy 1.19 Phase 4: addresses = PII vault, read owner ∨ privileged ──
+    ("userE(plain) GET another's address -> DENY", False, GET, "addresses/adrO_email", E, None, None),
+    ("userE(plain) GET another's ssn address -> DENY", False, GET, "addresses/adrO_ssn", E, None, None),
+    ("userA(owner) GET own email address -> ALLOW", True, GET, "addresses/adrA_email", A, None, None),
+    ("userA(owner) GET own ssn address -> ALLOW", True, GET, "addresses/adrA_ssn", A, None, None),
+    ("userP(privileged) GET same-tenant address -> ALLOW", True, GET, "addresses/adrO_email", P, None, None),
+    ("userP(privileged) GET cross-tenant address -> DENY", False, GET, "addresses/adrX_email", P, None, None),
+    ("userD(admin t1) GET same-tenant address -> ALLOW", True, GET, "addresses/adrO_email", D, None, None),
+    # D-P4-1: memberAdmin is a sensitive-data EDITOR but not a raw READER
+    ("userM(memberAdmin) GET raw address -> DENY (D-P4-1)", False, GET, "addresses/adrO_email", M, None, None),
+    ("userM(memberAdmin) GET raw ssn address -> DENY (D-P4-1)", False, GET, "addresses/adrO_ssn", M, None, None),
+    # sensitive-channel writes: owner ∨ privileged ∨ memberAdmin
+    ("userE(plain) create ssn for another person -> DENY", False, POST, "addresses?documentId=adrNew1", E,
+     body({"tenants": ["t1"], "isArchived": False, "isFavorite": False,
+           "parentKey": "person.pO", "addressChannel": "ssn", "ssn": "7563333333333"}), None),
+    ("userE(plain) update another's ssn -> DENY", False, PATCH, "addresses/adrO_ssn", E,
+     body({"tenants": ["t1"], "isArchived": False, "isFavorite": False,
+           "parentKey": "person.pO", "addressChannel": "ssn", "ssn": "7569999999999"}), ["ssn"]),
+    ("userA(owner) update own ssn -> ALLOW", True, PATCH, "addresses/adrA_ssn", A,
+     body({"tenants": ["t1"], "isArchived": False, "isFavorite": False,
+           "parentKey": "person.pA", "addressChannel": "ssn", "ssn": "7564444444444"}), ["ssn"]),
+    ("userE(plain) create own email address -> ALLOW (unchanged)", True, POST, "addresses?documentId=adrNew2", E,
+     body({"tenants": ["t1"], "isArchived": False, "isFavorite": True,
+           "parentKey": "person.pE", "addressChannel": "email", "email": "e@t1.ch"}), None),
+    ("userM(memberAdmin) update ssn -> ALLOW (D9 editor)", True, PATCH, "addresses/adrO_ssn", M,
+     body({"tenants": ["t1"], "isArchived": False, "isFavorite": False,
+           "parentKey": "person.pO", "addressChannel": "ssn", "ssn": "7565555555555"}), ["ssn"]),
+    # resurrection guards: stripped fields must never reappear
+    ("userD(admin) PATCH persons carrying ssnId -> DENY", False, PATCH, "persons/pA", D,
+     body({"tenants": ["t1"], "isArchived": False, "lastName": "AA", "ssnId": "756"}), ["ssnId"]),
+    ("userD(admin) create person carrying favEmail -> DENY", False, POST, "persons?documentId=pNew3", D,
+     body({"tenants": ["t1"], "isArchived": False, "lastName": "N", "favEmail": "x@x.ch"}), None),
+    ("userD(admin) PATCH orgs carrying favPhone -> DENY", False, PATCH, "orgs/oA", D,
+     body({"tenants": ["t1"], "isArchived": False, "name": "Org A", "favPhone": "+4179"}), ["favPhone"]),
+    ("userD(admin) PATCH persons w/o stripped keys -> ALLOW", True, PATCH, "persons/pA", D,
+     body({"tenants": ["t1"], "isArchived": False, "lastName": "AB"}), ["lastName"]),
+    # D-P4-3: competition-levels (full dateOfBirth) — privileged-only read
+    ("userA(plain) GET competition-levels -> DENY (D-P4-3)", False, GET, "competition-levels/clA", A, None, None),
+    ("userD(admin t1) GET competition-levels -> ALLOW", True, GET, "competition-levels/clA", D, None, None),
     # default deny for unknown collection
     ("userA read unknown coll -> DENY", False, GET, "totallyUnknownColl/x", A, None, None),
 ]
@@ -212,6 +292,19 @@ list_cases = [
     ("userA LIST address-directory array-contains t1 -> ALLOW", True, "address-directory", "t1", A),
     ("userA LIST address-directory array-contains t2 -> DENY", False, "address-directory", "t2", A),
     ("anon LIST address-directory t1 -> DENY", False, "address-directory", "t1", None),
+    # privacy 1.19 Phase 4: bulk addresses stream is DENIED for plain members —
+    # they read the address-directory projection instead.
+    ("userE(plain) LIST addresses array-contains t1 -> DENY (lock)", False, "addresses", "t1", E),
+    ("userP(privileged) LIST addresses array-contains t1 -> ALLOW", True, "addresses", "t1", P),
+    ("userM(memberAdmin) LIST addresses t1 -> DENY (D-P4-1)", False, "addresses", "t1", M),
+]
+
+# (label, expect_allow, parentKey, token, tenant) — addresses query by parentKey
+parent_cases = [
+    ("userA(owner) QUERY addresses by own parentKey -> ALLOW", True, "person.pA", A, None),
+    ("userE(plain) QUERY addresses by another parentKey -> DENY", False, "person.pA", E, None),
+    ("userP(privileged) QUERY addresses by parentKey+tenant -> ALLOW", True, "person.pO", P, "t1"),
+    ("userM(memberAdmin) QUERY addresses by parentKey+tenant -> DENY (D-P4-1)", False, "person.pO", M, "t1"),
 ]
 
 
@@ -226,6 +319,12 @@ for label, expect, method, path, token, data, mask in single_cases:
 
 for label, expect, coll, tenant, token in list_cases:
     code = list_query(coll, tenant=tenant, token=token)
+    ok = (code == 200) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
+for label, expect, parentKey, token, tenant in parent_cases:
+    code = parent_query(parentKey, token=token, tenant=tenant)
     ok = (code == 200) == expect
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
