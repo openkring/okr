@@ -66,8 +66,10 @@ export class PersonService {
    * Uses FirestoreService directly (not AddressService) — cross-scope data-access
    * imports violate the Nx module boundaries; this mirrors how person.store
    * already queries the addresses collection.
+   * Public: the profile store writes the person doc itself (own toast handling)
+   * and calls this afterwards so the profile edit path stays vault-synced.
    */
-  private async syncSensitiveChannels(key: string, person: PersonModel, currentUser?: UserModel): Promise<void> {
+  public async syncSensitiveChannels(key: string, person: PersonModel, currentUser?: UserModel): Promise<void> {
     const parentKey = `person.${key}`;
     await this.upsertScalarChannel(parentKey, 'ssn', person.ssnId ?? '', currentUser);
     await this.upsertScalarChannel(parentKey, 'dob', person.dateOfBirth ?? '', currentUser);

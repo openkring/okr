@@ -97,6 +97,9 @@ export const ProfileStore = signalStore(
           // The privacy preferences (usage*) are edited directly on the person in the privacy
           // accordion — the person is the tenant-readable source for getPersonPrivacySettings.
           await store.firestoreService.updateModel<PersonModel>(PersonCollection, newPerson, false, undefined, undefined, user);
+          // Keep the addresses vault in sync (spec 1.19): the profile edit is the
+          // owner's ssn/dob self-service path and must dual-write like PersonService.
+          await store.personService.syncSensitiveChannels(newPerson.okey, newPerson, user);
         }
         if (user) {
           await store.firestoreService.updateModel<UserModel>(UserCollection, user, false, store.i18n.update_conf(), store.i18n.update_error(), user);
