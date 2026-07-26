@@ -108,6 +108,11 @@ seed("tags/tgA",     {"tenants": ["t1"], "isArchived": False, "tagModel": "x"})
 # CMS content stays public-readable.
 seed("pages/home",   {"tenants": ["t1"], "isArchived": False, "title": "Home"})
 seed("sections/secA",{"tenants": ["t1"], "isArchived": False, "type": "article"})
+# privacy 1.19 Phase 4: address-directory projection — CF-written, tenant-readable.
+seed("address-directory/t1_person.pA", {"tenants": ["t1"], "isArchived": False,
+                                        "parentKey": "person.pA", "favEmail": "a@t1.ch"})
+seed("address-directory/t2_person.pB", {"tenants": ["t2"], "isArchived": False,
+                                        "parentKey": "person.pB", "favEmail": "b@t2.ch"})
 
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 GET, PATCH, POST = "GET", "PATCH", "POST"
@@ -179,6 +184,16 @@ single_cases = [
     # CMS content stays public-readable (PWA anonymous landing renders it).
     ("anon GET pages/home (public) -> ALLOW", True, GET, "pages/home", None, None, None),
     ("anon GET sections/secA (public) -> ALLOW", True, GET, "sections/secA", None, None, None),
+    # privacy 1.19 Phase 4: address-directory projection — tenant read, CF-only write
+    ("anon GET address-directory (t1) -> DENY", False, GET, "address-directory/t1_person.pA", None, None, None),
+    ("userA GET address-directory own tenant -> ALLOW", True, GET, "address-directory/t1_person.pA", A, None, None),
+    ("userA GET address-directory other tenant -> DENY", False, GET, "address-directory/t2_person.pB", A, None, None),
+    ("userA PATCH address-directory -> DENY (CF-only)", False, PATCH, "address-directory/t1_person.pA", A,
+     body({"favEmail": "forged@x.ch"}), ["favEmail"]),
+    ("userD(admin t1) PATCH address-directory -> DENY (CF-only)", False, PATCH, "address-directory/t1_person.pA", D,
+     body({"favEmail": "forged@x.ch"}), ["favEmail"]),
+    ("userA create address-directory -> DENY (CF-only)", False, POST, "address-directory?documentId=t1_person.pX", A,
+     body({"tenants": ["t1"], "parentKey": "person.pX"}), None),
     # default deny for unknown collection
     ("userA read unknown coll -> DENY", False, GET, "totallyUnknownColl/x", A, None, None),
 ]
@@ -193,6 +208,10 @@ list_cases = [
     ("anon LIST persons array-contains t1 -> DENY (C-2)", False, "persons", "t1", None),
     ("userA LIST memberships array-contains t1 -> ALLOW", True, "memberships", "t1", A),
     ("anon LIST pages array-contains t1 -> ALLOW (public)", True, "pages", "t1", None),
+    # privacy 1.19 Phase 4: address-directory bulk stream (AppStore) — tenant-scoped
+    ("userA LIST address-directory array-contains t1 -> ALLOW", True, "address-directory", "t1", A),
+    ("userA LIST address-directory array-contains t2 -> DENY", False, "address-directory", "t2", A),
+    ("anon LIST address-directory t1 -> DENY", False, "address-directory", "t1", None),
 ]
 
 

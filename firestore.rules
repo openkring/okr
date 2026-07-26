@@ -209,6 +209,10 @@ service cloud.firestore {
     //  of these, switch its write to: isPrivileged() && belongsToTenant(request.resource.data)
     // ============================================================================
 
+    // Materialized privacy projection of addresses (spec 1.19 Phase 4): built by
+    // the replication CFs from the §A3 formula; contains ONLY registered-visible
+    // contact data, so any tenant member may read it. Never client-writable.
+    match /address-directory/{id}  { allow read: if tenantRead(); allow write: if false; }
     match /asset-movements/{id}    { allow read: if tenantRead(); allow write: if false; }
     match /bills/{id}              { allow read: if tenantRead(); allow write: if false; }
     match /booking-lines/{id}      { allow read: if tenantRead(); allow write: if false; }
