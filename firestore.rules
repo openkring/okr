@@ -90,6 +90,14 @@ service cloud.firestore {
     function tenantDelete() {
       return userExists() && belongsToTenant(resource.data);
     }
+    // personKey of the caller (from their users/{uid} doc); '' when absent.
+    function callerPersonKey() {
+      return userExists() ? userData().get('personKey', '') : '';
+    }
+    // Folder lookup for member-upload / folder-owner checks (spec 1.22).
+    function folderData(folderKey) {
+      return get(/databases/$(database)/documents/folders/$(folderKey)).data;
+    }
 
     // ============================================================================
     //  Public read — only what an unauthenticated client genuinely renders.
@@ -230,8 +238,42 @@ service cloud.firestore {
     match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /calevents/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /comments/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /docs/{id}               { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /folders/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    // docs + folders (spec 1.22 — event image folders):
+    // members may create docs only into a membersMayUpload folder, as themselves;
+    // authors manage their own docs; the folder owner may moderate (delete/update) docs in their folder.
+    match /docs/{id} {
+      allow read: if tenantRead();
+      allow create: if tenantCreate() && (
+        isContentManager()
+        || (callerPersonKey() != ''
+            && request.resource.data.get('authorKey', '') == callerPersonKey()
+            && request.resource.data.get('folderKeys', []).size() > 0
+            && folderData(request.resource.data.folderKeys[0]).get('membersMayUpload', false) == true));
+      allow update: if tenantUpdate() && (
+        isContentManager()
+        || (callerPersonKey() != '' && resource.data.get('authorKey', '') == callerPersonKey())
+        || (callerPersonKey() != ''
+            && resource.data.get('folderKeys', []).size() > 0
+            && folderData(resource.data.folderKeys[0]).get('ownerKey', '') == callerPersonKey()));
+      allow delete: if tenantDelete() && (
+        isAdmin()
+        || (callerPersonKey() != '' && resource.data.get('authorKey', '') == callerPersonKey())
+        || (callerPersonKey() != ''
+            && resource.data.get('folderKeys', []).size() > 0
+            && folderData(resource.data.folderKeys[0]).get('ownerKey', '') == callerPersonKey()));
+    }
+    match /folders/{id} {
+      allow read: if tenantRead();
+      allow create: if tenantCreate() && (
+        isContentManager()
+        || (callerPersonKey() != '' && request.resource.data.get('ownerKey', '') == callerPersonKey()));
+      allow update: if tenantUpdate() && (
+        isContentManager()
+        || (callerPersonKey() != '' && resource.data.get('ownerKey', '') == callerPersonKey()));
+      allow delete: if tenantDelete() && (
+        isContentManager()
+        || (callerPersonKey() != '' && resource.data.get('ownerKey', '') == callerPersonKey()));
+    }
     match /groups/{id}             { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /i18nTenantOverride/{id} { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /icons/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }

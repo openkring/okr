@@ -114,9 +114,9 @@ def list_query(coll, tenant=None, token=None):
 
 # ------------------------------------------------------------------- seed ----
 seed("users/uidA", {"tenants": ["t1"], "roles": {}, "firstName": "A", "personKey": "pA"})
-seed("users/uidB", {"tenants": ["t2"], "roles": {"admin": True}, "firstName": "B"})
-seed("users/uidC", {"tenants": ["t1"], "roles": {"contentAdmin": True}, "firstName": "C"})
-seed("users/uidD", {"tenants": ["t1"], "roles": {"admin": True}, "firstName": "D"})
+seed("users/uidB", {"tenants": ["t2"], "roles": {"admin": True}, "firstName": "B", "personKey": "pB"})
+seed("users/uidC", {"tenants": ["t1"], "roles": {"contentAdmin": True}, "firstName": "C", "personKey": "pC"})
+seed("users/uidD", {"tenants": ["t1"], "roles": {"admin": True}, "firstName": "D", "personKey": "pD"})
 # privacy 1.19 Phase 4 (addresses lock): plain member E, memberAdmin M, privileged P
 seed("users/uidE", {"tenants": ["t1"], "roles": {}, "firstName": "E", "personKey": "pE"})
 seed("users/uidM", {"tenants": ["t1"], "roles": {"memberAdmin": True}, "firstName": "M", "personKey": "pM"})
@@ -153,10 +153,17 @@ seed("addresses/adrX_email", {"tenants": ["t2"], "isArchived": False, "isFavorit
 # D-P4-3: competition-levels keep full dateOfBirth — privileged-only read
 seed("competition-levels/clA", {"tenants": ["t1"], "isArchived": False,
                                 "personKey": "pA", "dateOfBirth": "20000101"})
+# spec 1.22: event image folders
+seed("folders/fOpen",   {"tenants": ["t1"], "isArchived": False, "name": "Event",  "membersMayUpload": True,  "ownerKey": "pC"})
+seed("folders/fClosed", {"tenants": ["t1"], "isArchived": False, "name": "Closed", "membersMayUpload": False, "ownerKey": "pC"})
+seed("folders/fMine",   {"tenants": ["t1"], "isArchived": False, "name": "Mine",   "membersMayUpload": True,  "ownerKey": "pA"})
+seed("docs/dOwnA",   {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fOpen"], "fullPath": "a.jpg"})
+seed("docs/dOtherC", {"tenants": ["t1"], "isArchived": False, "authorKey": "pC", "folderKeys": ["fOpen"], "fullPath": "c.jpg"})
+seed("docs/dInMine", {"tenants": ["t1"], "isArchived": False, "authorKey": "pC", "folderKeys": ["fMine"], "fullPath": "m.jpg"})
 
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
-GET, PATCH, POST = "GET", "PATCH", "POST"
+GET, PATCH, POST, DELETE = "GET", "PATCH", "POST", "DELETE"
 
 
 # ------------------------------------------------------------------ cases ----
@@ -279,6 +286,37 @@ single_cases = [
     ("userD(admin t1) GET competition-levels -> ALLOW", True, GET, "competition-levels/clA", D, None, None),
     # default deny for unknown collection
     ("userA read unknown coll -> DENY", False, GET, "totallyUnknownColl/x", A, None, None),
+    # spec 1.22: docs — member upload into flagged folders only, author-scoped writes
+    ("userA create doc in open folder as self -> ALLOW", True, POST, "docs?documentId=dN1", A,
+     body({"tenants": ["t1"], "authorKey": "pA", "folderKeys": ["fOpen"], "fullPath": "n1"}), None),
+    ("userA create doc in closed folder -> DENY", False, POST, "docs?documentId=dN2", A,
+     body({"tenants": ["t1"], "authorKey": "pA", "folderKeys": ["fClosed"], "fullPath": "n2"}), None),
+    ("userA create doc with forged authorKey -> DENY", False, POST, "docs?documentId=dN3", A,
+     body({"tenants": ["t1"], "authorKey": "pC", "folderKeys": ["fOpen"], "fullPath": "n3"}), None),
+    ("userA create doc without folder -> DENY", False, POST, "docs?documentId=dN4", A,
+     body({"tenants": ["t1"], "authorKey": "pA", "folderKeys": [], "fullPath": "n4"}), None),
+    ("userC(contentAdmin) create doc without folder -> ALLOW", True, POST, "docs?documentId=dN5", C,
+     body({"tenants": ["t1"], "authorKey": "pC", "folderKeys": [], "fullPath": "n5"}), None),
+    ("userA PATCH own doc -> ALLOW", True, PATCH, "docs/dOwnA", A,
+     body({"fullPath": "a2.jpg"}), ["fullPath"]),
+    ("userA PATCH foreign doc -> DENY", False, PATCH, "docs/dOtherC", A,
+     body({"fullPath": "c2.jpg"}), ["fullPath"]),
+    ("userA DELETE foreign doc -> DENY", False, DELETE, "docs/dOtherC", A, None, None),
+    ("userA(folder owner) DELETE foreign doc in own folder -> ALLOW", True, DELETE, "docs/dInMine", A, None, None),
+    ("userA DELETE own doc -> ALLOW", True, DELETE, "docs/dOwnA", A, None, None),
+    # spec 1.22: folders — self-owned create, owner-or-contentManager write
+    ("userA create self-owned folder -> ALLOW", True, POST, "folders?documentId=fN1", A,
+     body({"tenants": ["t1"], "name": "N", "ownerKey": "pA", "membersMayUpload": False}), None),
+    ("userA create folder with foreign owner -> DENY", False, POST, "folders?documentId=fN2", A,
+     body({"tenants": ["t1"], "name": "N", "ownerKey": "pC"}), None),
+    ("userA PATCH own folder -> ALLOW", True, PATCH, "folders/fMine", A,
+     body({"name": "Mine2"}), ["name"]),
+    ("userA PATCH foreign folder -> DENY", False, PATCH, "folders/fOpen", A,
+     body({"name": "X"}), ["name"]),
+    ("userC(contentAdmin) PATCH foreign folder -> ALLOW", True, PATCH, "folders/fOpen", C,
+     body({"name": "Event2"}), ["name"]),
+    ("userA DELETE foreign folder -> DENY", False, DELETE, "folders/fClosed", A, None, None),
+    ("userA DELETE own folder -> ALLOW", True, DELETE, "folders/fMine", A, None, None),
 ]
 
 # (label, expect_allow, collection, tenant, token)
