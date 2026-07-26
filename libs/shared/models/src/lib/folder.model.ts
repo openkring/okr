@@ -15,6 +15,8 @@ export class FolderModel implements OkrModel, NamedModel, SearchableModel, Tagge
   public description = DEFAULT_NOTES;
   public title = DEFAULT_TITLE;
   public parents: string[] = [];  // FolderModel okeys — ancestor folders for hierarchy nesting
+  public membersMayUpload = false; // opt-in: registered members may upload files into this folder and manage their own uploads
+  public ownerKey = DEFAULT_KEY;   // personKey of the creator — may edit/delete this folder (enforced in firestore.rules)
   public tags = DEFAULT_TAGS;
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

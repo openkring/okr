@@ -8,13 +8,15 @@ import { addIndexElement } from '@okr/shared-util-core';
  * @param tenantId the tenant the folder belongs to
  * @param name the display name of the folder
  * @param parentKeys optional list of parent FolderModel okeys for hierarchy nesting
+ * @param ownerKey personKey of the creating user — owner may edit/delete the folder
  */
-export function newFolderModel(tenantId: string, name = DEFAULT_NAME, parentKeys: string[] = []): FolderModel {
+export function newFolderModel(tenantId: string, name = DEFAULT_NAME, parentKeys: string[] = [], ownerKey = ''): FolderModel {
   const folder = new FolderModel(tenantId);
   folder.name = name;
   folder.title = name;
   folder.description = DEFAULT_NOTES;
   folder.parents = parentKeys;
+  folder.ownerKey = ownerKey;
   return folder;
 }
 
