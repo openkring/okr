@@ -248,18 +248,26 @@ service cloud.firestore {
         || (callerPersonKey() != ''
             && request.resource.data.get('authorKey', '') == callerPersonKey()
             && request.resource.data.get('folderKeys', []).size() > 0
+            && belongsToTenant(folderData(request.resource.data.folderKeys[0]))
             && folderData(request.resource.data.folderKeys[0]).get('membersMayUpload', false) == true));
       allow update: if tenantUpdate() && (
         isContentManager()
-        || (callerPersonKey() != '' && resource.data.get('authorKey', '') == callerPersonKey())
+        || (callerPersonKey() != ''
+            && resource.data.get('authorKey', '') == callerPersonKey()
+            && request.resource.data.get('authorKey', '') == resource.data.get('authorKey', '')
+            && request.resource.data.get('folderKeys', []) == resource.data.get('folderKeys', []))
         || (callerPersonKey() != ''
             && resource.data.get('folderKeys', []).size() > 0
-            && folderData(resource.data.folderKeys[0]).get('ownerKey', '') == callerPersonKey()));
+            && belongsToTenant(folderData(resource.data.folderKeys[0]))
+            && folderData(resource.data.folderKeys[0]).get('ownerKey', '') == callerPersonKey()
+            && request.resource.data.get('authorKey', '') == resource.data.get('authorKey', '')
+            && request.resource.data.get('folderKeys', []) == resource.data.get('folderKeys', [])));
       allow delete: if tenantDelete() && (
         isAdmin()
         || (callerPersonKey() != '' && resource.data.get('authorKey', '') == callerPersonKey())
         || (callerPersonKey() != ''
             && resource.data.get('folderKeys', []).size() > 0
+            && belongsToTenant(folderData(resource.data.folderKeys[0]))
             && folderData(resource.data.folderKeys[0]).get('ownerKey', '') == callerPersonKey()));
     }
     match /folders/{id} {

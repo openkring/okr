@@ -160,6 +160,11 @@ seed("folders/fMine",   {"tenants": ["t1"], "isArchived": False, "name": "Mine",
 seed("docs/dOwnA",   {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fOpen"], "fullPath": "a.jpg"})
 seed("docs/dOtherC", {"tenants": ["t1"], "isArchived": False, "authorKey": "pC", "folderKeys": ["fOpen"], "fullPath": "c.jpg"})
 seed("docs/dInMine", {"tenants": ["t1"], "isArchived": False, "authorKey": "pC", "folderKeys": ["fMine"], "fullPath": "m.jpg"})
+# fix-review: doc owned/authored by neither userC (contentAdmin) nor userD (admin) —
+# authorKey pA, folder fMine owned by pA — so the delete-asymmetry test isolates the
+# isAdmin()-only bypass (see task-4-report.md fix-report deviation note).
+seed("docs/dForD",  {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fMine"], "fullPath": "d.jpg"})
+seed("folders/fT2", {"tenants": ["t2"], "isArchived": False, "name": "T2", "membersMayUpload": True, "ownerKey": "pB"})
 
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
@@ -304,6 +309,19 @@ single_cases = [
     ("userA DELETE foreign doc -> DENY", False, DELETE, "docs/dOtherC", A, None, None),
     ("userA(folder owner) DELETE foreign doc in own folder -> ALLOW", True, DELETE, "docs/dInMine", A, None, None),
     ("userA DELETE own doc -> ALLOW", True, DELETE, "docs/dOwnA", A, None, None),
+    # fix-review: delete asymmetry — contentAdmin alone (not author/folder-owner) is
+    # NOT enough; only isAdmin() bypasses authorship/ownership on delete.
+    ("userC(contentAdmin) DELETE foreign doc dForD -> DENY", False, DELETE, "docs/dForD", C, None, None),
+    ("userD(admin t1) DELETE foreign doc dForD -> ALLOW", True, DELETE, "docs/dForD", D, None, None),
+    # fix-review: cross-tenant folderData must not supply membersMayUpload/ownerKey
+    ("userA create doc into cross-tenant folder fT2 -> DENY", False, POST, "docs?documentId=dN6", A,
+     body({"tenants": ["t1"], "authorKey": "pA", "folderKeys": ["fT2"], "fullPath": "n6"}), None),
+    # fix-review: nonexistent folderKey must fail closed, not error open
+    ("userA create doc with nonexistent folderKey -> DENY", False, POST, "docs?documentId=dN7", A,
+     body({"tenants": ["t1"], "authorKey": "pA", "folderKeys": ["fNope"], "fullPath": "n7"}), None),
+    # fix-review: author cannot smuggle their doc into a folder they lack upload rights to
+    ("userA PATCH own doc dN1 moving folderKeys -> DENY", False, PATCH, "docs/dN1", A,
+     body({"folderKeys": ["fClosed"]}), ["folderKeys"]),
     # spec 1.22: folders — self-owned create, owner-or-contentManager write
     ("userA create self-owned folder -> ALLOW", True, POST, "folders?documentId=fN1", A,
      body({"tenants": ["t1"], "name": "N", "ownerKey": "pA", "membersMayUpload": False}), None),
