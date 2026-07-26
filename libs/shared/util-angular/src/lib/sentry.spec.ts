@@ -35,6 +35,17 @@ describe('buildSentryOptions', () => {
     // Must NOT swallow a genuinely malformed-content parse error.
     expect(matches('JSON Parse error: Unexpected token "<"')).toBe(false);
   });
+
+  it('drops events originating inside the Google reCAPTCHA script (SCS-1Q)', () => {
+    const patterns = (buildSentryOptions(cfg, []).denyUrls ?? []) as RegExp[];
+    const matches = (url: string) => patterns.some((p) => p instanceof RegExp && p.test(url));
+    // Frame filenames as they appear in real events: relative (first-party-looking) and absolute.
+    expect(matches('/recaptcha/releases/A7KpaEASfhDcK0nXxgQEyyYv/recaptcha__en.js')).toBe(true);
+    expect(matches('https://www.google.com/recaptcha/releases/abc/recaptcha__en.js')).toBe(true);
+    expect(matches('https://www.gstatic.com/recaptcha/releases/abc/recaptcha__de.js')).toBe(true);
+    // Must NOT swallow our own bundles.
+    expect(matches('https://seeclub.org/main-ABC123.js')).toBe(false);
+  });
 });
 
 describe('beforeSend', () => {

@@ -67,6 +67,12 @@ export function buildSentryOptions(
       /WKWebView API client did not respond to this postMessage/i,
     ],
 
+    // Crashes inside third-party scripts we load but don't own. reCAPTCHA (pulled in by
+    // Firebase AppCheck) throws inside its own obfuscated bundle on some clients (SCS-1Q:
+    // "Cannot read properties of undefined (reading 'oT')" — every frame in
+    // recaptcha__<lang>.js, typically a bot-like UA); nothing on our side is actionable.
+    denyUrls: [/\/recaptcha\/releases\//],
+
     tracesSampleRate: cfg.tracesSampleRate,
     tracePropagationTargets: [
       /^https:\/\/[^/]*\.cloudfunctions\.net/,
