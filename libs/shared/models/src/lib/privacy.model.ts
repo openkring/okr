@@ -9,7 +9,7 @@
  * NOT ENFORCED YET: until Phase 4 ships, these helpers describe intent only
  * (see the privacy-model skill).
  */
-import { PrivacyAccessor, privacyUsageToAccessor, stricterAccessor } from './app-config.model';
+import { PrivacyAccessor, PrivacySettings, privacyUsageToAccessor, stricterAccessor } from './app-config.model';
 import { PrivacyUsage } from './enums/privacy-usage.enum';
 
 /**
@@ -58,4 +58,46 @@ export function getEffectiveAccessor(
     ? 'public'
     : privacyUsageToAccessor(personUsage ?? PrivacyUsage.Restricted);
   return stricterAccessor(getChannelFloor(channel), stricterAccessor(preference, tenantFloor ?? 'public'));
+}
+
+/** The person's privacy preferences relevant for address channels (subset of PersonModel). */
+export interface PersonPrivacyPreferences {
+  usageEmail: PrivacyUsage;
+  usagePhone: PrivacyUsage;
+  usagePostalAddress: PrivacyUsage;
+  usageDateOfBirth: PrivacyUsage;
+}
+
+/**
+ * Which person `usage*` flag and which tenant `AppConfig.PrivacySettings` floor
+ * govern each addressChannel (spec 1.19 Phase 4). Channels absent from this map
+ * (e.g. 'web', 'twint') have neither: the Restricted default / no floor applies.
+ * AppConfig itself structurally satisfies Partial<PrivacySettings>, so it can be
+ * passed directly as the settings argument.
+ */
+export const CHANNEL_PRIVACY_INPUTS: Record<string, { usageFlag?: keyof PersonPrivacyPreferences; tenantFloor?: keyof PrivacySettings }> = {
+  email:       { usageFlag: 'usageEmail',         tenantFloor: 'showEmail' },
+  phone:       { usageFlag: 'usagePhone',         tenantFloor: 'showPhone' },
+  postal:      { usageFlag: 'usagePostalAddress', tenantFloor: 'showPostalAddress' },
+  dob:         { usageFlag: 'usageDateOfBirth',   tenantFloor: 'showDateOfBirth' },
+  ssn:         { tenantFloor: 'showTaxId' },
+  bankaccount: { tenantFloor: 'showIban' },
+};
+
+/**
+ * Effective accessor of one address doc: resolves the channel's governing
+ * usage* flag and tenant floor per CHANNEL_PRIVACY_INPUTS, then applies the
+ * §A3 formula via getEffectiveAccessor. This is the ONLY way enforcement code
+ * (projection trigger, getAddressView, CF consumers) may compute visibility.
+ */
+export function getEffectiveAccessorForAddress(
+  address: { addressChannel: string },
+  parentType: 'person' | 'org',
+  person?: Partial<PersonPrivacyPreferences>,
+  settings?: Partial<PrivacySettings>,
+): PrivacyAccessor {
+  const inputs = CHANNEL_PRIVACY_INPUTS[address.addressChannel] ?? {};
+  const usage = inputs.usageFlag ? person?.[inputs.usageFlag] : undefined;
+  const floor = inputs.tenantFloor ? settings?.[inputs.tenantFloor] : undefined;
+  return getEffectiveAccessor(address.addressChannel, parentType, usage, floor);
 }
