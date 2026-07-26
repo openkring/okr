@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as logger from "firebase-functions/logger";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
-import { AddressCollection, AddressModel, GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, PersonModel, ReservationCollection, ResourceCollection, WorkrelCollection } from "@okr/shared-models";
+import { AddressCollection, AddressModel, GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, ReservationCollection, ResourceCollection, WorkrelCollection } from "@okr/shared-models";
 import {
   getAllMembershipsOfMember, getAllMembershipsOfOrg,
   getAllOwnershipsOfOwner, getAllOwnershipsOfResource,
@@ -10,7 +10,8 @@ import {
   getAllReservationsOfReserver, getAllReservationsOfResource,
   getAllWorkrelsOfObject, getAllWorkrelsOfSubject,
   hasChanged,
-  updateFavoriteAddressInfo
+  updateFavoriteAddressInfo,
+  writeAddressDirectory
 } from "@okr/shared-util-functions";
 import { getBirthYear } from "@okr/shared-util-core";
 
@@ -90,6 +91,9 @@ export const onAddressChange = onDocumentWritten(
       const address = event.data?.after.data() ?? event.data?.before.data();
       if (address) {
         await updateFavoriteAddressInfo(firestore, address as AddressModel, addressId);
+        // spec 1.19 Phase 4: keep the address-directory projection in sync.
+        // Writes only address-directory (no trigger on it) — no recursion.
+        await writeAddressDirectory(firestore, (address as AddressModel).parentKey);
       }
     }
     catch (error) {
@@ -167,7 +171,23 @@ export const onPersonChange = onDocumentWritten(
     const personId = event.params.personId;
     logger.info(`person ${personId} has changed`);
 
+    const before = event.data?.before.data();
     const person = event.data?.after.data();
+
+    // spec 1.19 Phase 4: the address-directory projection depends on the person's
+    // usage* preferences and tenants — rebuild it when those change (or the person
+    // is created/deleted). Diff first: person writes are frequent, projections are not.
+    const privacyInputs = ['usageEmail', 'usagePhone', 'usagePostalAddress', 'usageDateOfBirth', 'tenants'];
+    const privacyChanged = !before || !person
+      || privacyInputs.some((f) => JSON.stringify(before[f] ?? null) !== JSON.stringify(person[f] ?? null));
+    if (privacyChanged) {
+      try {
+        await writeAddressDirectory(firestore, `person.${personId}`);
+      } catch (error) {
+        logger.error(`Error rebuilding address directory for person ${personId}:`, { error });
+      }
+    }
+
     if (!person) {
       logger.warn(`Person ${personId} does not exist or has been deleted.`);
       return;
@@ -250,6 +270,21 @@ export const onOrgChange = onDocumentWritten(
   async (event) => {
     const orgId = event.params.orgId;
     logger.info(`org ${orgId} has changed`);
+
+    // spec 1.19 Phase 4: org projections depend on the org's tenants — rebuild on
+    // tenants change and clean up on deletion (org contact channels are public,
+    // so no per-org preference inputs exist).
+    const beforeOrg = event.data?.before.data();
+    const afterOrg = event.data?.after.data();
+    const orgTenantsChanged = !beforeOrg || !afterOrg
+      || JSON.stringify(beforeOrg['tenants'] ?? null) !== JSON.stringify(afterOrg['tenants'] ?? null);
+    if (orgTenantsChanged) {
+      try {
+        await writeAddressDirectory(firestore, `org.${orgId}`);
+      } catch (error) {
+        logger.error(`Error rebuilding address directory for org ${orgId}:`, { error });
+      }
+    }
 
     try {
       const org = event.data?.after.data();
