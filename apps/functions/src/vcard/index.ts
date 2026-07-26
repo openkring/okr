@@ -7,15 +7,20 @@ import { getStorage } from 'firebase-admin/storage';
 import {
   ActivityCollection,
   AddressCollection,
+  AddressModel,
+  AppConfigCollection,
   AvatarCollection,
   OrgCollection,
   PersonalRelCollection,
   PersonCollection,
+  PersonPrivacyPreferences,
+  PrivacyAccessor,
+  PrivacySettings,
   Roles,
   WorkrelCollection,
 } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getCountryData, getTodayStr } from '@okr/shared-util-core';
-import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, projectAddressesForViewer } from '@okr/shared-util-functions';
 import {
   buildVCardFile,
   ExportScope,
@@ -159,15 +164,24 @@ async function assembleRecord(
   key: string,
   scope: ExportScope,
   favoritesOnly: boolean,
+  viewerAccessor: PrivacyAccessor,
+  settings: Partial<PrivacySettings> | undefined,
 ): Promise<VcardRecord | null> {
   const subjectKey = `${kind}.${key}`;
   const docSnap = await db.collection(kind === 'person' ? PersonCollection : OrgCollection).doc(key).get();
   const data = docSnap.data();
   if (!docSnap.exists || !belongsToTenant(data, tenantId)) return null;
 
-  // addresses (single equality query, tenant-filtered in memory to avoid composite indexes)
+  // addresses (single equality query, tenant-filtered in memory to avoid composite indexes),
+  // then privacy-filtered through the D8 chokepoint: the person's usage* preferences and the
+  // tenant floors apply per the caller's tier (spec 1.19 Phase 4).
   const addrSnap = await db.collection(AddressCollection).where('parentKey', '==', subjectKey).get();
-  const addresses = addrSnap.docs.map((d) => d.data()).filter((a) => belongsToTenant(a, tenantId));
+  const rawAddresses = addrSnap.docs.map((d) => d.data()).filter((a) => belongsToTenant(a, tenantId));
+  const addresses: FsData[] = projectAddressesForViewer(
+    rawAddresses as unknown as AddressModel[], viewerAccessor, kind,
+    kind === 'person' ? (data as Partial<PersonPrivacyPreferences>) : undefined,
+    settings,
+  ) as unknown as FsData[];
   const channels = buildChannels(addresses, scope, favoritesOnly);
 
   const relatedNames: VcardRelatedName[] = [];
@@ -309,9 +323,15 @@ export const vcardExport = onCall<VcardExportRequest>(
     const favoritesOnly = cap.scope === 'favorites';
     const effectiveScope = favoritesOnly ? FAVORITES_SCOPE : clampScope(request.data.scope);
 
+    // Caller tier for the privacy projection (D-P4-1): tier 2 (admin/privileged/memberAdmin,
+    // full scope) sees the privileged view; tier 1 sees exactly the registered-visible entries.
+    const viewerAccessor: PrivacyAccessor = favoritesOnly ? 'registered' : 'privileged';
+    const configSnap = await db.collection(AppConfigCollection).doc(tenantId).get();
+    const settings = configSnap.exists ? (configSnap.data() as Partial<PrivacySettings>) : undefined;
+
     const records: VcardRecord[] = [];
     for (const key of targetIds) {
-      const rec = await assembleRecord(db, tenantId, targetKind, key, effectiveScope, favoritesOnly);
+      const rec = await assembleRecord(db, tenantId, targetKind, key, effectiveScope, favoritesOnly, viewerAccessor, settings);
       if (rec) records.push(rec);
     }
     if (records.length === 0) throw new HttpsError('not-found', 'no exportable records found.');
