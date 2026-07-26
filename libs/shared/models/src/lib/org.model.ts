@@ -23,8 +23,6 @@ export class OrgModel implements OkrModel, NamedModel, AddressableModel, Searcha
   public isArchived = false;
   public index = DEFAULT_INDEX;
 
-  public favEmail = '';
-  public favPhone = '';
   public favZipCode = '';
 
   constructor(tenantId: string) {

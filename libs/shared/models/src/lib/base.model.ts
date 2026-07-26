@@ -35,9 +35,9 @@ export interface SearchableModel {
   index: string;
 }
 
+// favEmail/favPhone were stripped in privacy 1.19 Phase 4 — contact data is
+// served by the address-directory projection; only the zip code stays cached.
 export interface AddressableModel {
-  favEmail: string;
-  favPhone: string;
   favZipCode: string;
 }
 
@@ -76,7 +76,7 @@ export function isSearchableModel(obj: unknown): obj is SearchableModel {
 }
 
 export function isAddressableModel(obj: unknown): obj is AddressableModel {
-  return typeof obj === 'object' && obj !== null && 'favEmail' in obj && 'favPhone' in obj && 'favZipCode' in obj;
+  return typeof obj === 'object' && obj !== null && 'favZipCode' in obj;
 }
 
 export function isPersistedModel(obj: unknown): obj is PersistedModel {

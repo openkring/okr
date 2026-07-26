@@ -95,6 +95,22 @@ export const onAddressChange = onDocumentWritten(
         // spec 1.19 Phase 4: keep the address-directory projection in sync.
         // Writes only address-directory (no trigger on it) — no recursion.
         await writeAddressDirectory(firestore, (address as AddressModel).parentKey);
+
+        // spec 1.19 Phase 4: the vault dob address is the only dob source
+        // (person.dateOfBirth was stripped) — sync the degraded-precision
+        // memberBirthYear replica on the person's memberships from here.
+        // Memberships have no triggers — no recursion.
+        if (address.addressChannel === 'dob' && (address.parentKey as string).startsWith('person.')) {
+          const personId = (address.parentKey as string).substring('person.'.length);
+          const birthYear = getBirthYear(event.data?.after.data()?.dob ?? '');
+          const memberships = await getAllMembershipsOfMember(firestore, personId, 'person');
+          for (const m of memberships) {
+            if ((m as { memberBirthYear?: string }).memberBirthYear !== birthYear) {
+              await admin.firestore().doc(`${MembershipCollection}/${m.okey}`).update({ memberBirthYear: birthYear });
+              logger.info(`Synced memberBirthYear for membership ${m.okey} of person ${personId}`);
+            }
+          }
+        }
       }
     }
     catch (error) {
@@ -214,7 +230,8 @@ export const onPersonChange = onDocumentWritten(
         memberName1: person.firstName,
         memberName2: person.lastName,
         memberType: person.gender,
-        memberBirthYear: getBirthYear(person.dateOfBirth),
+        // memberBirthYear is NOT synced here anymore: person.dateOfBirth was stripped
+        // (spec 1.19 Phase 4) — the vault dob address syncs it via onAddressChange.
         memberDateOfDeath: person.dateOfDeath,
         memberZipCode: person.favZipCode,
         memberBexioId: person.bexioId,

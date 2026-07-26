@@ -100,7 +100,7 @@ export const AocAdminOpsStore = signalStore(
                   // now we filter the ones that are older than the given age or have no dateOfBirth.
                   // Read the year-precision replica (memberBirthYear) first (spec 1.19); getAge only
                   // subtracts years, so YYYY0101 is equivalent to the full date here.
-                  const age = getAge(m.memberBirthYear ? m.memberBirthYear + '0101' : m.memberDateOfBirth, false, refYear);
+                  const age = getAge(m.memberBirthYear ? m.memberBirthYear + '0101' : '', false, refYear);
                   if (age < 0 || age > age) return true;
                 }
               }
@@ -111,8 +111,8 @@ export const AocAdminOpsStore = signalStore(
               if (isMembership(model, store.appStore.env.tenantId)) {
                 const m = model as MembershipModel;
                 const name = getFullName(m.memberName1, m.memberName2);
-                const age = getAge(m.memberBirthYear ? m.memberBirthYear + '0101' : m.memberDateOfBirth, false, refYear);
-                const message = age < 0 ? nodob : `${title}}: ${m.memberBirthYear || m.memberDateOfBirth} -> ${age}`;
+                const age = getAge(m.memberBirthYear ? m.memberBirthYear + '0101' : '', false, refYear);
+                const message = age < 0 ? nodob : `${title}}: ${m.memberBirthYear} -> ${age}`;
                 if (age < 0) return { id: m.okey, name: name, message: nodob };
                 return { id: m.okey, name: name, message: message };
               }

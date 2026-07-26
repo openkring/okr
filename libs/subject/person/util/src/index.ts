@@ -1,4 +1,5 @@
 export * from './lib/ahvn13.pipe';
+export * from './lib/person-form.model';
 export * from './lib/person-new-form.model';
 export * from './lib/person-new-form.validations';
 export * from './lib/person.util';

@@ -27,14 +27,15 @@ export function needsSsn(app: ApplicationModel): boolean {
 }
 
 export function toPersonModel(app: ApplicationModel, tenantId: string): PersonModel {
-  const p = new PersonModel(tenantId);
+  // ssn/dob ride along as form-model fields only — PersonService strips them from
+  // the person write and syncs them into the addresses vault (spec 1.19 Phase 4).
+  // favEmail/favPhone are gone from the person; accept() creates the address docs.
+  const p = new PersonModel(tenantId) as PersonModel & { ssnId?: string; dateOfBirth?: string };
   p.firstName   = app.firstName;
   p.lastName    = app.lastName;
   p.gender      = app.gender;
   p.dateOfBirth = app.dateOfBirth;
   p.ssnId       = app.ssnId;
-  p.favEmail    = app.email;
-  p.favPhone    = app.phone;
   p.favZipCode  = app.zipCode;
   return p;
 }
@@ -44,8 +45,6 @@ export function newParentPerson(app: ApplicationModel, tenantId: string): Person
   p.firstName  = app.parentFirstName;
   p.lastName   = app.parentLastName;
   p.gender     = 'female';
-  p.favEmail   = app.parentEmail;
-  p.favPhone   = app.parentPhone;
   p.favZipCode = app.zipCode;
   return p;
 }

@@ -504,9 +504,9 @@ export const AocDataStore = signalStore(
           return; */
 
           const name = `${person.firstName} ${person.lastName}`;
+          // favEmail/favPhone were stripped from persons (spec 1.19 Phase 4) —
+          // only the favZipCode cache remains to check.
           const checks: Array<[string, string, string]> = [
-            ['favEmail',   person.favEmail,   fav.favEmail],
-            ['favPhone',   person.favPhone,   fav.favPhone],
             ['favZipCode', person.favZipCode, fav.favZipCode],
           ];
           for (const [field, cached, fromAddress] of checks) {

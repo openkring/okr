@@ -124,14 +124,13 @@ export class PersonList {
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
-  // contact data from the address-directory projection (spec 1.19 Phase 4);
-  // person.fav* fallback only until the Phase 4 strip removes those fields
+  // contact data from the address-directory projection (spec 1.19 Phase 4)
   protected favEmail(person: PersonModel): string {
-    return this.store.appStore.getDirectoryEntry(`person.${person.okey}`)?.favEmail || person.favEmail || '';
+    return this.store.appStore.getDirectoryEntry(`person.${person.okey}`)?.favEmail ?? '';
   }
 
   protected favPhone(person: PersonModel): string {
-    return this.store.appStore.getDirectoryEntry(`person.${person.okey}`)?.favPhone || person.favPhone || '';
+    return this.store.appStore.getDirectoryEntry(`person.${person.okey}`)?.favPhone ?? '';
   }
   protected personModelName = PersonModelName;
   protected readonly vcardI18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;

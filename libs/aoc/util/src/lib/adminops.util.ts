@@ -200,16 +200,18 @@ export function generatePassword(password?: string): string {
 /**
  * Create a user that corresponds to the given person. This is used when registering a new user.
  * @param person the person that the user should be created for
+ * @param email the person's favorite email, resolved from the address-directory
+ *              projection (person.favEmail was stripped, spec 1.19 Phase 4)
  * @returns user model that corresponds to the given person
  */
-export function createUserFromPerson(person: PersonModel, tenantId: string): UserModel {
+export function createUserFromPerson(person: PersonModel, tenantId: string, email: string): UserModel {
   if (!person.okey) die('AdminOpsUtil.createUserFromPerson: person must have a okey.');
   const user = new UserModel(tenantId);
-  user.loginEmail = person.favEmail;
+  user.loginEmail = email;
   user.personKey = person.okey;
   user.firstName = person.firstName;
   user.lastName = person.lastName;
-  user.gravatarEmail = person.favEmail;
+  user.gravatarEmail = email;
   user.roles = { registered: true };
   return user;
 }

@@ -1,4 +1,4 @@
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { AddressableModel, OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { PrivacyUsage } from './enums/privacy-usage.enum';
 
@@ -12,11 +12,10 @@ export class PersonModel implements OkrModel, AddressableModel, SearchableModel,
   public firstName = DEFAULT_NAME;
   public lastName = DEFAULT_NAME;
   public gender = DEFAULT_GENDER;
-  public ssnId = DEFAULT_ID; // social security number, in Switzerland: AHV Number in electronic format
-  public dateOfBirth = DEFAULT_DATE;
+  // ssnId/dateOfBirth/favEmail/favPhone were stripped in privacy 1.19 Phase 4:
+  // ssn + dob live only in the addresses vault; contact data is served by the
+  // address-directory projection.
   public dateOfDeath = DEFAULT_DATE;
-  public favEmail = DEFAULT_EMAIL;
-  public favPhone = DEFAULT_PHONE;
   public favZipCode = '';
   public bexioId = DEFAULT_ID;
 

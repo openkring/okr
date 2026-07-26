@@ -2,13 +2,13 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
 import { ChSsnMask } from "@okr/shared-config";
-import { CategoryListModel, PersonModel, UserModel } from "@okr/shared-models";
+import { CategoryListModel, UserModel } from "@okr/shared-models";
 import { CategorySelect, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
 import { coerceBoolean } from "@okr/shared-util-core";
 import { DEFAULT_GENDER } from "@okr/shared-constants";
 import { AhvFormat, formatAhv } from "@okr/shared-util-angular";
 
-import { personValidations } from "@okr/subject-person-util";
+import { PersonFormModel, personValidations } from "@okr/subject-person-util";
 import { ProfileI18n } from '@okr/profile-util';
 
 @Component({
@@ -80,7 +80,7 @@ import { ProfileI18n } from '@okr/profile-util';
 export class ProfileDataAccordion {
   // inputs
   public readonly i18n = input.required<ProfileI18n>();
-  public formData = model.required<PersonModel>();
+  public formData = model.required<PersonFormModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
   public color = input('light'); // color of the accordion

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PersonCollection, PersonModel } from './person.model';
-import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 describe('PersonModel', () => {
   it('should create an instance with tenantId', () => {
     const model = new PersonModel('tenant-123');
@@ -18,11 +18,7 @@ describe('PersonModel', () => {
     expect(model.firstName).toBe(DEFAULT_NAME);
     expect(model.lastName).toBe(DEFAULT_NAME);
     expect(model.gender).toBe(DEFAULT_GENDER);
-    expect(model.ssnId).toBe(DEFAULT_ID);
-    expect(model.dateOfBirth).toBe(DEFAULT_DATE);
     expect(model.dateOfDeath).toBe(DEFAULT_DATE);
-    expect(model.favEmail).toBe(DEFAULT_EMAIL);
-    expect(model.favPhone).toBe(DEFAULT_PHONE);
     expect(model.favZipCode).toBe('');
     expect(model.bexioId).toBe(DEFAULT_ID);
   });

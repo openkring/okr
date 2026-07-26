@@ -16,8 +16,7 @@ export class ScsMemberFeesModel implements OkrModel, SearchableModel, TaggedMode
   public notes = DEFAULT_NOTES;
 
   public member: AvatarInfo | undefined;
-  public memberDateOfBirth = DEFAULT_DATE;
-  public memberBirthYear = ''; // YYYY — degraded-precision dob replica (spec 1.19); replaces memberDateOfBirth in Phase 4
+  public memberBirthYear = ''; // YYYY — degraded-precision dob replica (spec 1.19); memberDateOfBirth was stripped in Phase 4
   public memberBexioId = DEFAULT_ID;
   public dateOfEntry = DEFAULT_DATE;
   public category = DEFAULT_MCAT;

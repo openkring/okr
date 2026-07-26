@@ -2,10 +2,10 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
-import { CategoryListModel, PersonModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
+import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVisibleToUser } from '@okr/shared-util-core';
-import { personValidations, PersonI18n } from '@okr/subject-person-util';
+import { PersonFormModel, personValidations, PersonI18n } from '@okr/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
@@ -102,7 +102,7 @@ export class PersonForm {
   protected dateOfDeathI18n = computed(() => ({ name: 'dateOfDeath', label: this.i18n().dateOfDeath_label(), placeholder: this.i18n().dateOfDeath_placeholder(), helper: this.i18n().dateOfDeath_helper() } as DateInputI18n));
 
   // inputs
-  public readonly formData = model.required<PersonModel>();
+  public readonly formData = model.required<PersonFormModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public readonly showForm = input(true);   // used for initializing the form and resetting vest validations
   public readonly allTags = input.required<string>();

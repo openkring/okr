@@ -27,8 +27,6 @@ export function baseValidations(model: OkrModel, givenTenants: string, givenTags
 
   omitWhen(!isAddressableModel(model), () => {
     const m = model as unknown as AddressableModel;
-    stringValidations('favEmail', m.favEmail, SHORT_NAME_LENGTH);
-    stringValidations('favPhone', m.favPhone, SHORT_NAME_LENGTH);
     stringValidations('favZipCode', m.favZipCode, SHORT_NAME_LENGTH);
   });
 

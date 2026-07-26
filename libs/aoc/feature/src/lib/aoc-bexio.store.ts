@@ -145,10 +145,15 @@ export const AocBexioStore = signalStore(
       //     they live in the separate address collection). Map them by parentKey (person.{okey} / org.{okey}).
       const allAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, getSystemQuery(store.tenantId()), 'none');
       const favPostalByParent = new Map<string, AddressModel>();
+      // favEmail/favPhone were stripped from persons/orgs (spec 1.19 Phase 4) —
+      // resolve the favorites from the already-loaded addresses instead.
+      const favEmailByParent = new Map<string, string>();
+      const favPhoneByParent = new Map<string, string>();
       for (const address of allAddresses) {
-        if (address.addressChannel === 'postal' && address.isFavorite) {
-          favPostalByParent.set(address.parentKey, address);
-        }
+        if (!address.isFavorite) continue;
+        if (address.addressChannel === 'postal') favPostalByParent.set(address.parentKey, address);
+        if (address.addressChannel === 'email') favEmailByParent.set(address.parentKey, address.email ?? '');
+        if (address.addressChannel === 'phone') favPhoneByParent.set(address.parentKey, address.phone ?? '');
       }
 
       const index: BexioIndex[] = [];
@@ -168,8 +173,8 @@ export const AocBexioStore = signalStore(
           streetNumber: postal?.streetNumber ?? '',
           zipCode: postal?.zipCode ?? person.favZipCode,
           city: postal?.city ?? '',
-          email: person.favEmail,
-          phone: person.favPhone,
+          email: favEmailByParent.get(`person.${person.okey}`) ?? '',
+          phone: favPhoneByParent.get(`person.${person.okey}`) ?? '',
 
           mkey: membership?.okey ?? '',
           mname: membership ? getFullName(membership.memberName1, membership.memberName2) : '',
@@ -207,8 +212,8 @@ export const AocBexioStore = signalStore(
           streetNumber: postal?.streetNumber ?? '',
           zipCode: postal?.zipCode ?? org.favZipCode,
           city: postal?.city ?? '',
-          email: org.favEmail,
-          phone: org.favPhone,
+          email: favEmailByParent.get(`org.${org.okey}`) ?? '',
+          phone: favPhoneByParent.get(`org.${org.okey}`) ?? '',
 
           mkey: membership?.okey ?? '',
           mname: membership ? getFullName(membership.memberName1, membership.memberName2) : '',

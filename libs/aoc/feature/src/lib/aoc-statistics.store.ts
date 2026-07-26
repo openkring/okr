@@ -87,7 +87,8 @@ export const AocStatisticsStore = signalStore(
         const activeMembers = await firstValueFrom(this.getActiveMembersOfDefaultOrg(log));
 
         for (const member of activeMembers) {
-          updateAgeByGenderStats(ageByGenderStats, member.memberType, member.memberDateOfBirth);
+          // year-precision replica (spec 1.19 Phase 4): decade stats need no full dob
+          updateAgeByGenderStats(ageByGenderStats, member.memberType, member.memberBirthYear ? member.memberBirthYear + '0101' : undefined);
         }
         patchState(store, { log: logMessage(log, `aoc-statistics.updateAgeByGender: saving updated statistics to ${SectionCollection}/${sectionKey}...`) });
         

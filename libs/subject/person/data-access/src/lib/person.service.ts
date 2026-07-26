@@ -7,7 +7,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserModel } from '@okr/shared-models';
-import { getFullName, getSystemQuery } from '@okr/shared-util-core';
+import { getFullName, getSystemQuery, hasRole } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import {
@@ -17,11 +17,18 @@ import {
   MergePersonIntoTenantRequest,
   MergePersonIntoTenantResponse,
   PersonDuplicateCandidate,
+  PersonFormModel,
   ReconcilableField,
 } from '@okr/subject-person-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { getAddressIndex } from '@okr/subject-address-util';
 import { PFX } from './scope';
+
+/** Vault-backed sensitive scalar values of a person (spec 1.19 Phase 4, D9). */
+export interface SensitivePersonData {
+  ssn?: string;
+  dob?: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -46,33 +53,99 @@ export class PersonService {
   /*-------------------------- CRUD operations --------------------------------*/
   /**
    * Creates a new person.
+   * ssn/dob never land on the person document (spec 1.19 Phase 4): they are taken
+   * from the `sensitive` param (or stray form-model fields), stripped from the
+   * person object, and written into the addresses vault.
    * @param person the person to create
    * @param currentUser the current user
+   * @param sensitive the vault-backed ssn/dob values from the edit form
    * @returns the unique key of the created person or undefined if creation failed
    */
-  public async create(person: PersonModel, currentUser?: UserModel): Promise<string | undefined> {
+  public async create(person: PersonModel, currentUser?: UserModel, sensitive?: SensitivePersonData): Promise<string | undefined> {
+    const sens = this.takeSensitive(person, sensitive);
     person.index = getPersonIndex(person);
     const key = await this.firestoreService.createModel<PersonModel>(PersonCollection, person, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${getFullName(person.firstName, person.lastName)}`;
     void this.activityService.log('person', 'create', currentUser, payload);
-    if (key) await this.syncSensitiveChannels(key, person, currentUser);
+    if (key) await this.syncSensitiveChannels(key, sens, currentUser);
     return key;
   }
 
   /**
-   * Dual-write of the sensitive scalar fields into the addresses vault
-   * (spec 1.19 Phase 3): ssnId → 'ssn' channel, dateOfBirth → 'dob' channel.
-   * The person fields stay populated until Phase 4 strips them.
+   * Removes the form-model ssn/dob fields from the person object (they must never be
+   * written to the person document — spec 1.19 Phase 4 strip) and returns the
+   * effective sensitive values: explicit `sensitive` param wins, stray form fields
+   * are the fallback.
+   */
+  private takeSensitive(person: PersonModel, sensitive?: SensitivePersonData): SensitivePersonData {
+    const form = person as PersonFormModel;
+    const sens: SensitivePersonData = {
+      ssn: sensitive?.ssn ?? form.ssnId,
+      dob: sensitive?.dob ?? form.dateOfBirth,
+    };
+    delete form.ssnId;
+    delete form.dateOfBirth;
+    return sens;
+  }
+
+  /**
+   * Writes the sensitive scalar values into the addresses vault
+   * (spec 1.19): ssn → 'ssn' channel, dob → 'dob' channel.
+   * Empty/undefined values are no-ops — existing vault docs are never cleared here.
    * Uses FirestoreService directly (not AddressService) — cross-scope data-access
    * imports violate the Nx module boundaries; this mirrors how person.store
    * already queries the addresses collection.
    * Public: the profile store writes the person doc itself (own toast handling)
    * and calls this afterwards so the profile edit path stays vault-synced.
    */
-  public async syncSensitiveChannels(key: string, person: PersonModel, currentUser?: UserModel): Promise<void> {
+  public async syncSensitiveChannels(key: string, sensitive: SensitivePersonData, currentUser?: UserModel): Promise<void> {
     const parentKey = `person.${key}`;
-    await this.upsertScalarChannel(parentKey, 'ssn', person.ssnId ?? '', currentUser);
-    await this.upsertScalarChannel(parentKey, 'dob', person.dateOfBirth ?? '', currentUser);
+    await this.upsertScalarChannel(parentKey, 'ssn', sensitive.ssn ?? '', currentUser);
+    await this.upsertScalarChannel(parentKey, 'dob', sensitive.dob ?? '', currentUser);
+  }
+
+  /**
+   * Loads the vault-backed ssn/dob values for the person edit form (spec 1.19
+   * Phase 4, D9): owner and privileged read the addresses vault directly (the
+   * rules allow it), memberAdmin goes through the getAddressView callable
+   * (privileged tier, D-P4-1), everyone else gets empty values (the form hides
+   * the fields via the privacy gates anyway).
+   */
+  public async loadSensitive(personKey: string, currentUser?: UserModel): Promise<SensitivePersonData> {
+    if (!personKey) return {};
+    const isOwner = currentUser?.personKey === personKey;
+    if (isOwner || hasRole('privileged', currentUser)) {
+      const [ssn, dob] = await Promise.all([
+        this.readScalarChannel(`person.${personKey}`, 'ssn'),
+        this.readScalarChannel(`person.${personKey}`, 'dob'),
+      ]);
+      return { ssn, dob };
+    }
+    if (hasRole('memberAdmin', currentUser)) {
+      try {
+        const fn = httpsCallable<{ parentKeys: string[] }, { views: Record<string, AddressModel[]> }>(
+          this.functions, 'getAddressView');
+        const result = await fn({ parentKeys: [`person.${personKey}`] });
+        const addresses = result.data.views[`person.${personKey}`] ?? [];
+        return {
+          ssn: addresses.find((a) => a.addressChannel === 'ssn')?.ssn ?? '',
+          dob: addresses.find((a) => a.addressChannel === 'dob')?.dob ?? '',
+        };
+      } catch (error) {
+        console.error('PersonService.loadSensitive: getAddressView failed', error);
+        return {};
+      }
+    }
+    return {};
+  }
+
+  /** Reads the value of a sensitive scalar-channel address ('' if none exists). */
+  private async readScalarChannel(parentKey: string, channel: 'ssn' | 'dob'): Promise<string> {
+    const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'parentKey', operator: '==', value: parentKey });
+    query.push({ key: 'addressChannel', operator: '==', value: channel });
+    const existing = await this.firestoreService.getDataOnce<AddressModel>(AddressCollection, query, 'none');
+    return existing[0]?.[channel] ?? '';
   }
 
   /**
@@ -128,16 +201,19 @@ export class PersonService {
 
   /**
    * Updates an existing person.
+   * ssn/dob never land on the person document (spec 1.19 Phase 4) — see create().
    * @param person the person to update
    * @param currentUser the current user
+   * @param sensitive the vault-backed ssn/dob values from the edit form
    * @returns the unique key of the updated person or undefined if update failed
    */
-  public async update(person: PersonModel, currentUser?: UserModel): Promise<string | undefined> {
+  public async update(person: PersonModel, currentUser?: UserModel, sensitive?: SensitivePersonData): Promise<string | undefined> {
+    const sens = this.takeSensitive(person, sensitive);
     person.index = getPersonIndex(person);
     const key = await this.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
     const payload = `${key}: ${getFullName(person.firstName, person.lastName)}`;
     void this.activityService.log('person', 'update', currentUser, payload);
-    if (key) await this.syncSensitiveChannels(key, person, currentUser);
+    if (key) await this.syncSensitiveChannels(key, sens, currentUser);
     return key;
   }
 

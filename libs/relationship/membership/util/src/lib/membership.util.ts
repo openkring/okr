@@ -8,15 +8,16 @@ import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteP
 import { CategoryChangeFormModel } from './category-change-form.model';
 import { MEMBER_NEW_FORM_SHAPE, MemberNewFormModel } from './member-new-form.model';
 
-export function createGroupMembership(group: GroupModel, person: PersonModel, tenantId: string): MembershipModel {
+export function createGroupMembership(group: GroupModel, person: PersonModel, tenantId: string, birthYear = ''): MembershipModel {
   const membership = new MembershipModel(tenantId);
   membership.memberKey = person.okey;
   membership.memberName1 = person.firstName;
   membership.memberName2 = person.lastName;
   membership.memberModelType = 'person';
   membership.memberType = person.gender;
-  membership.memberDateOfBirth = person.dateOfBirth;
-  membership.memberBirthYear = getBirthYear(person.dateOfBirth);
+  // person.dateOfBirth was stripped (spec 1.19 Phase 4) — callers pass the birth
+  // year from the vault/an existing membership when they have it.
+  membership.memberBirthYear = birthYear;
   membership.memberDateOfDeath = person.dateOfDeath;
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
@@ -31,7 +32,7 @@ export function createGroupMembership(group: GroupModel, person: PersonModel, te
   return membership;
 }
 
-export function newMembershipForPerson(person: PersonModel, orgKey: string, orgName: string, membershipCategory: CategoryItemModel, dateOfEntry = getTodayStr(DateFormat.StoreDate)): MembershipModel {
+export function newMembershipForPerson(person: PersonModel, orgKey: string, orgName: string, membershipCategory: CategoryItemModel, dateOfEntry = getTodayStr(DateFormat.StoreDate), birthYear = ''): MembershipModel {
   const membership = new MembershipModel('dummy');
   membership.tenants = person.tenants;
 
@@ -40,8 +41,9 @@ export function newMembershipForPerson(person: PersonModel, orgKey: string, orgN
   membership.memberName2 = person.lastName;
   membership.memberModelType = 'person';
   membership.memberType = person.gender;
-  membership.memberDateOfBirth = person.dateOfBirth;
-  membership.memberBirthYear = getBirthYear(person.dateOfBirth);
+  // person.dateOfBirth was stripped (spec 1.19 Phase 4) — callers pass the birth
+  // year from the vault/an existing membership when they have it.
+  membership.memberBirthYear = birthYear;
   membership.memberDateOfDeath = person.dateOfDeath;
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
@@ -71,7 +73,6 @@ export function newMembershipForOrg(org: OrgModel, orgKey: string, orgName: stri
   membership.memberName2 = org.name;
   membership.memberModelType = 'org';
   membership.memberType = org.type;
-  membership.memberDateOfBirth = org.dateOfFoundation;
   membership.memberDateOfDeath = org.dateOfLiquidation;
   membership.memberZipCode = org.favZipCode;
   membership.memberBexioId = org.bexioId;
@@ -137,8 +138,8 @@ export function addPersonInfoToMembership(membership: MembershipModel, person: P
   membership.memberName2 = person.lastName;
   membership.memberModelType = PersonModelName;
   membership.memberType = person.gender;
-  membership.memberDateOfBirth = person.dateOfBirth;
-  membership.memberBirthYear = getBirthYear(person.dateOfBirth);
+  // person.dateOfBirth was stripped (spec 1.19 Phase 4): memberBirthYear keeps its
+  // current value (class default for a fresh membership).
   membership.memberDateOfDeath = person.dateOfDeath;
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
@@ -151,7 +152,6 @@ export function addOrgInfoToMembership(membership: MembershipModel, org: OrgMode
   membership.memberName2 = org.name;
   membership.memberModelType = OrgModelName;
   membership.memberType = org.type;
-  membership.memberDateOfBirth = org.dateOfFoundation;
   membership.memberDateOfDeath = org.dateOfLiquidation;
   membership.memberZipCode = org.favZipCode;
   membership.memberBexioId = org.bexioId;
@@ -337,7 +337,7 @@ export function getMembershipIndexInfo(): string {
       membership.memberType,
       membership.memberNickName,
       membership.memberAbbreviation,
-      membership.memberDateOfBirth,
+      membership.memberBirthYear,
       membership.memberDateOfDeath,
       membership.memberZipCode,
       membership.memberBexioId,
@@ -518,7 +518,9 @@ export function createNewMemberFormModel(org?: OrgModel): MemberNewFormModel {
 } 
 
 export function convertFormToNewPerson(vm: MemberNewFormModel, tenantId: string): PersonModel {
-  const person = new PersonModel(tenantId);
+  // ssn/dob ride along as extra form-model fields only — PersonService strips them
+  // from the person write and syncs them into the addresses vault (spec 1.19 Phase 4).
+  const person = new PersonModel(tenantId) as PersonModel & { ssnId?: string; dateOfBirth?: string };
   person.okey = DEFAULT_KEY;
   person.firstName = vm.firstName ?? DEFAULT_NAME;
   person.lastName = vm.lastName ?? DEFAULT_NAME;
@@ -565,7 +567,6 @@ export function convertNewMemberFormToMembership(vm: MemberNewFormModel, personK
   member.memberName2 = vm.lastName ?? DEFAULT_NAME;
   member.memberModelType = 'person';
   member.memberType = vm.gender ?? DEFAULT_GENDER;
-  member.memberDateOfBirth = vm.dateOfBirth ?? DEFAULT_DATE;
   member.memberBirthYear = getBirthYear(vm.dateOfBirth ?? DEFAULT_DATE);
   member.memberDateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
   member.memberZipCode = vm.zipCode ?? DEFAULT_ZIP;

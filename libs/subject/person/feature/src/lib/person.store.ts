@@ -16,7 +16,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
-import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@okr/subject-person-util';
+import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonFormModel, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@okr/subject-person-util';
 import { browseUrl, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { MatrixChatService } from '@okr/chat-data-access';
@@ -300,11 +300,15 @@ export const PersonStore = signalStore(
         },
 
         async edit(person: PersonModel, readOnly = true): Promise<void> {
+            // Hydrate ssn/dob from the addresses vault (spec 1.19 Phase 4, D9):
+            // owner/privileged read raw, memberAdmin via getAddressView, others get ''.
+            const sensitive = await store.personService.loadSensitive(person.okey, store.currentUser());
+            const formPerson: PersonFormModel = { ...person, ssnId: sensitive.ssn ?? '', dateOfBirth: sensitive.dob ?? '' };
             const { PersonEditModal } = await import('./person-edit.modal');
             const modal = await store.modalController.create({
                 component: PersonEditModal,
                 componentProps: {
-                    person,
+                    person: formPerson,
                     currentUser: store.currentUser(),
                     tags: this.getTags(),
                     tenantId: store.tenantId(),

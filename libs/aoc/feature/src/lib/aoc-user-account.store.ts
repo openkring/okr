@@ -299,9 +299,8 @@ export const AocUserAccountStore = signalStore(
 
       async createAccountAndUser(account: UserAccount): Promise<void> {
         if (!account.loginEmail || !isValidEmail(account.loginEmail)) {
-          // read the favorite email from person
-          const person = store.appStore.getPerson(account.personKey);
-          account.loginEmail = person?.favEmail ?? '';
+          // read the favorite email from the address-directory projection (spec 1.19 Phase 4)
+          account.loginEmail = store.appStore.getDirectoryEntry(`person.${account.personKey}`)?.favEmail ?? '';
           if (!account.loginEmail || !isValidEmail(account.loginEmail)) {
             console.warn('AocUserAccountStore.createAccountAndUser: loginEmail is missing or invalid');
             return;

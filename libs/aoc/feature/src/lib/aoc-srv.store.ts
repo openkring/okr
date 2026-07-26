@@ -11,7 +11,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OrgModel, OwnershipModel, PersonModel, SrvContact, SrvIndex, SrvMemberLicenseDetail, SrvMismatch } from '@okr/shared-models';
-import { debugListLoaded, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@okr/shared-util-core';
+import { debugListLoaded, getBirthYear, getFullName, getMismatches, getSystemQuery, getTodayStr, getYear, isAfterOrEqualDate, isMembership, isPerson } from '@okr/shared-util-core';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipEditModal } from '@okr/relationship-membership-feature';
@@ -58,7 +58,9 @@ function buildIndexEntry(
   r: SrvContact | undefined,
   person: PersonModel | undefined,
   isProdEnv: boolean,
-  postal?: AddressModel
+  postal?: AddressModel,
+  dob = '',                                       // full dob from the vault (spec 1.19 Phase 4)
+  contact?: { email: string; phone: string }      // from the address-directory projection
 ): SrvIndex {
   const firstName = m?.memberName1 ?? r?.firstName ?? p?.memberName1 ?? '';
   const lastName  = m?.memberName2 ?? r?.lastName  ?? p?.memberName2 ?? '';
@@ -73,12 +75,12 @@ function buildIndexEntry(
     mKey:        m?.okey ?? '',
     personKey:   m?.memberKey ?? '',
     mDateOfExit: m?.dateOfExit ?? '',
-    dateOfBirth: m?.memberDateOfBirth ?? '',
+    dateOfBirth: dob,
     gender:      m?.memberType ?? '',
     state:       m?.state ?? '',
     mCategory:   memberCatAbbr(m?.category ?? ''),
-    mEmail:      person?.favEmail ?? '',
-    mPhone:      person?.favPhone ?? '',
+    mEmail:      contact?.email ?? '',
+    mPhone:      contact?.phone ?? '',
     mStreet:     postal ? `${postal.streetName} ${postal.streetNumber}`.trim() : '',
     mZipCode:    postal?.zipCode ?? person?.favZipCode ?? '',
     mCity:       postal?.city ?? '',
@@ -291,6 +293,18 @@ export const AocSrvStore = signalStore(
         }
       }
 
+      // Batch-load all dob vault addresses once (spec 1.19 Phase 4: dob lives only in
+      // the vault; the AOC console runs as admin = privileged, raw read is allowed)
+      const dobQuery = getSystemQuery(store.tenantId());
+      dobQuery.push({ key: 'addressChannel', operator: '==', value: 'dob' });
+      const allDobAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, dobQuery, 'none');
+      const dobByPersonKey = new Map<string, string>();
+      for (const a of allDobAddresses) {
+        if (a.parentKey?.startsWith('person.')) {
+          dobByPersonKey.set(a.parentKey.substring('person.'.length), a.dob ?? '');
+        }
+      }
+
       // ── Process main memberships ─────────────────────────────────────────
       for (const m of mainMemberships) {
         const p = parentByMemberKey.get(m.memberKey);
@@ -306,7 +320,10 @@ export const AocSrvStore = signalStore(
 
         const person = store.appStore.getPerson(m.memberKey);
         const postal = postalByPersonKey.get(m.memberKey);
-        index.push(buildIndexEntry(m, p, r, person, isProdEnv, postal));
+        const dob = dobByPersonKey.get(m.memberKey) ?? '';
+        const directory = store.appStore.getDirectoryEntry(`person.${m.memberKey}`);
+        const contact = { email: directory?.favEmail ?? '', phone: directory?.favPhone ?? '' };
+        index.push(buildIndexEntry(m, p, r, person, isProdEnv, postal, dob, contact));
       }
 
       // ── Orphan parent memberships (no matching main) ─────────────────────
@@ -495,7 +512,7 @@ export const AocSrvStore = signalStore(
         const cat = store.appStore.getCategoryItemByAbbreviation('mcat_' + org.okey, item.rCategory);
         if (cat) {
           const defaultDateOfEntry = getYear() + '0101'; // first day of the current year
-          const membership = newMembershipForPerson(person, org.okey, org.name, cat, defaultDateOfEntry);
+          const membership = newMembershipForPerson(person, org.okey, org.name, cat, defaultDateOfEntry, getBirthYear(item.dateOfBirth));
           membership.memberId = item.rServiceId;
           store.membershipService.create(membership, store.currentUser());
         }
@@ -509,7 +526,6 @@ export const AocSrvStore = signalStore(
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
       const fn = httpsCallable<object, { id: string }>(functions, 'createSrvContact');
-      const p = store.appStore.getPerson(item.personKey);
       const srvPostalAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [
         { key: 'parentKey', operator: '==', value: 'person.' + item.personKey },
         { key: 'addressChannel', operator: '==', value: 'postal' },
@@ -524,8 +540,8 @@ export const AocSrvStore = signalStore(
           fullname:       `${item.lastName} ${item.firstName}`.trim(),
           dateOfBirth:    item.dateOfBirth,
           gender:         item.gender === 'female' ? 2 : 1,
-          email:          p?.favEmail || null,
-          mobile:         p?.favPhone || null,
+          email:          store.appStore.getDirectoryEntry('person.' + item.personKey)?.favEmail || null,
+          mobile:         store.appStore.getDirectoryEntry('person.' + item.personKey)?.favPhone || null,
           membershipType: item.state === 'passive' ? 'Passive' : 'Active',
           nationIOC:      'SUI',
           language:       0,

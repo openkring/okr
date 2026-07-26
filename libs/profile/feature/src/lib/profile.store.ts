@@ -2,7 +2,7 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Photo } from '@capacitor/camera';
-import { of, take } from 'rxjs';
+import { from, of, take } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -13,7 +13,8 @@ import { FirestoreService } from '@okr/shared-data-access';
 
 import { AvatarService } from '@okr/avatar-data-access';
 
-import { PersonService } from '@okr/subject-person-data-access';
+import { PersonService, SensitivePersonData } from '@okr/subject-person-data-access';
+import { PersonFormModel } from '@okr/subject-person-util';
 import { PROFILE_I18N_KEYS, ProfileI18n } from '@okr/profile-util';
 
 /**
@@ -56,12 +57,32 @@ export const ProfileStore = signalStore(
           debugItemLoaded('ProfileEditStore.person', params.currentUser)
         );
       }
+    }),
+    // ssn/dob live only in the addresses vault (spec 1.19 Phase 4) — the profile is
+    // the owner's self-service path, so this reads the own vault docs directly.
+    sensitiveResource: rxResource({
+      params: () => ({
+        personKey: store.personKey(),
+        currentUser: store.appStore.currentUser()
+      }),
+      stream: ({params}) => {
+        if (!params.personKey) return of(undefined);
+        return from(store.personService.loadSensitive(params.personKey, params.currentUser));
+      }
     })
   })),
 
   withComputed((state) => {
     return {
       person: computed(() => state.personResource.value()),
+      // person + vault ssn/dob merged for the edit form; undefined until BOTH loaded
+      // (seeding from a form model without the vault values would lose them on save).
+      personForm: computed<PersonFormModel | undefined>(() => {
+        const person = state.personResource.value();
+        const sensitive = state.sensitiveResource.value();
+        if (!person || !sensitive) return undefined;
+        return { ...person, ssnId: sensitive.ssn ?? '', dateOfBirth: sensitive.dob ?? '' };
+      }),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.env.tenantId),
       privacySettings: computed(() => state.appStore.privacySettings()),
@@ -90,16 +111,21 @@ export const ProfileStore = signalStore(
      * Update the current user and the corresponding person with the changed profile data.
      * The method does two updates (person and user), saves two comments, and shows one confirmation toast.
      */
-      async save(person?: PersonModel, user?: UserModel): Promise<void> {
+      async save(person?: PersonFormModel, user?: UserModel): Promise<void> {
         if (person) {
           const newPerson = structuredClone(person);
-          newPerson.ssnId = formatAhv(newPerson.ssnId ?? '', AhvFormat.Electronic);
+          // ssn/dob go ONLY into the addresses vault (spec 1.19 Phase 4): take them
+          // off the person object before the write and sync them afterwards.
+          const sensitive: SensitivePersonData = {
+            ssn: formatAhv(newPerson.ssnId ?? '', AhvFormat.Electronic),
+            dob: newPerson.dateOfBirth ?? '',
+          };
+          delete newPerson.ssnId;
+          delete newPerson.dateOfBirth;
           // The privacy preferences (usage*) are edited directly on the person in the privacy
           // accordion — the person is the tenant-readable source for getPersonPrivacySettings.
           await store.firestoreService.updateModel<PersonModel>(PersonCollection, newPerson, false, undefined, undefined, user);
-          // Keep the addresses vault in sync (spec 1.19): the profile edit is the
-          // owner's ssn/dob self-service path and must dual-write like PersonService.
-          await store.personService.syncSensitiveChannels(newPerson.okey, newPerson, user);
+          await store.personService.syncSensitiveChannels(newPerson.okey, sensitive, user);
         }
         if (user) {
           await store.firestoreService.updateModel<UserModel>(UserCollection, user, false, store.i18n.update_conf(), store.i18n.update_error(), user);

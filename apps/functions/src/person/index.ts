@@ -59,6 +59,54 @@ async function upsertVaultScalar(
   });
 }
 
+/**
+ * Upsert the favorite contact address (email/phone) of a person — the reconcile
+ * flow resolves these onto address docs since person.favEmail/favPhone were
+ * stripped (spec 1.19 Phase 4). Idempotent.
+ */
+async function upsertFavoriteContact(
+  db: FirebaseFirestore.Firestore,
+  personId: string,
+  channel: 'email' | 'phone',
+  value: string,
+  tenants: string[],
+): Promise<void> {
+  if (!value) return;
+  const parentKey = `person.${personId}`;
+  const existing = await db.collection(AddressCollection)
+    .where('parentKey', '==', parentKey).where('addressChannel', '==', channel)
+    .where('isFavorite', '==', true).limit(1).get();
+  if (!existing.empty) {
+    if (existing.docs[0].data()[channel] !== value) await existing.docs[0].ref.update({ [channel]: value });
+    return;
+  }
+  await db.collection(AddressCollection).add({
+    addressChannel: channel, [channel]: value, parentKey, isFavorite: true, isArchived: false,
+    tenants: Array.isArray(tenants) && tenants.length ? tenants : ['system'], index: '',
+  });
+}
+
+/**
+ * Loads the candidate's vault/contact values from its addresses (spec 1.19 Phase 4:
+ * ssn/dob/favEmail/favPhone no longer live on the person doc).
+ */
+async function loadCandidateAddressData(
+  db: FirebaseFirestore.Firestore,
+  personId: string,
+): Promise<{ ssnId: string; dateOfBirth: string; favEmail: string; favPhone: string }> {
+  const snap = await db.collection(AddressCollection)
+    .where('parentKey', '==', `person.${personId}`).get();
+  const result = { ssnId: '', dateOfBirth: '', favEmail: '', favPhone: '' };
+  snap.forEach((doc) => {
+    const a = doc.data();
+    if (a.addressChannel === 'ssn') result.ssnId = String(a.ssn ?? '');
+    if (a.addressChannel === 'dob') result.dateOfBirth = String(a.dob ?? '');
+    if (a.addressChannel === 'email' && a.isFavorite === true) result.favEmail = String(a.email ?? '');
+    if (a.addressChannel === 'phone' && a.isFavorite === true) result.favPhone = String(a.phone ?? '');
+  });
+  return result;
+}
+
 /** Mirror of getPersonIndex (subject-person-util) — keep field order in sync. */
 function buildPersonIndex(p: FsData): string {
   let index = '';
@@ -70,17 +118,23 @@ function buildPersonIndex(p: FsData): string {
   return index;
 }
 
-function toCandidate(id: string, d: FsData): PersonDuplicateCandidate {
+function toCandidate(
+  id: string,
+  d: FsData,
+  addressData: { ssnId: string; dateOfBirth: string; favEmail: string; favPhone: string },
+): PersonDuplicateCandidate {
+  // ssn/dob/favEmail/favPhone come from the addresses vault/favorites
+  // (spec 1.19 Phase 4) — the person doc no longer carries them.
   return {
     okey: id,
     firstName: d.firstName ?? '',
     lastName: d.lastName ?? '',
     gender: d.gender ?? '',
-    dateOfBirth: d.dateOfBirth ?? '',
+    dateOfBirth: addressData.dateOfBirth,
     dateOfDeath: d.dateOfDeath ?? '',
-    ssnId: d.ssnId ?? '',
-    favEmail: d.favEmail ?? '',
-    favPhone: d.favPhone ?? '',
+    ssnId: addressData.ssnId,
+    favEmail: addressData.favEmail,
+    favPhone: addressData.favPhone,
     favZipCode: d.favZipCode ?? '',
     bexioId: d.bexioId ?? '',
     tenants: Array.isArray(d.tenants) ? d.tenants : [],
@@ -105,22 +159,12 @@ export const findPersonDuplicates = onCall(
     const db = getFirestore();
     const found = new Map<string, FsData>();
 
-    const equalityFields: Array<[string, string | undefined]> = [
-      ['ssnId', ssnId],
-      ['favEmail', favEmail],
-      ['dateOfBirth', dateOfBirth],
-    ];
-    for (const [field, value] of equalityFields) {
-      if (!value) continue;
-      const snap = await db.collection(PersonCollection).where(field, '==', value).limit(50).get();
-      snap.forEach((doc) => found.set(doc.id, doc.data()));
-    }
-
-    // ssn/dob may already live only in the addresses vault (spec 1.19 Phase 3):
-    // match there too and resolve back to the owning persons via parentKey.
-    const vaultMatches: Array<['ssn' | 'dob', string | undefined]> = [
+    // ssn/dob/email live only in the addresses vault/favorites (spec 1.19 Phase 4):
+    // match there and resolve back to the owning persons via parentKey.
+    const vaultMatches: Array<['ssn' | 'dob' | 'email', string | undefined]> = [
       ['ssn', ssnId],
       ['dob', dateOfBirth],
+      ['email', favEmail],
     ];
     for (const [channel, value] of vaultMatches) {
       if (!value) continue;
@@ -146,9 +190,10 @@ export const findPersonDuplicates = onCall(
     }
 
     const candidates: PersonDuplicateCandidate[] = [];
-    found.forEach((data, id) => {
-      if (data.isArchived !== true) candidates.push(toCandidate(id, data));
-    });
+    for (const [id, data] of found) {
+      if (data.isArchived === true) continue;
+      candidates.push(toCandidate(id, data, await loadCandidateAddressData(db, id)));
+    }
     return { candidates };
   },
 );
@@ -173,14 +218,21 @@ export const mergePersonIntoTenant = onCall(
       throw new HttpsError('permission-denied', 'Caller does not belong to the target tenant.');
     }
 
-    const ALLOWED_FIELDS = [
-      'firstName', 'lastName', 'gender', 'dateOfBirth', 'dateOfDeath',
-      'ssnId', 'favEmail', 'favPhone', 'favZipCode',
-    ];
+    // Person-writable fields only — ssnId/dateOfBirth go to the vault and
+    // favEmail/favPhone to the favorite addresses (spec 1.19 Phase 4 strip;
+    // writing them onto the person would resurrect the stripped fields).
+    const PERSON_FIELDS = ['firstName', 'lastName', 'gender', 'dateOfDeath', 'favZipCode'];
+    const ADDRESS_FIELDS = ['ssnId', 'dateOfBirth', 'favEmail', 'favPhone'];
     const safeFields: FsData = {};
-    for (const key of ALLOWED_FIELDS) {
+    const addressFields: FsData = {};
+    for (const key of PERSON_FIELDS) {
       if (resolvedFields && key in resolvedFields) {
         safeFields[key] = String(resolvedFields[key]);
+      }
+    }
+    for (const key of ADDRESS_FIELDS) {
+      if (resolvedFields && key in resolvedFields) {
+        addressFields[key] = String(resolvedFields[key]);
       }
     }
 
@@ -196,11 +248,14 @@ export const mergePersonIntoTenant = onCall(
       index: buildPersonIndex(merged),
     });
 
-    // Dual-write the resolved sensitive fields into the vault (spec 1.19 Phase 3).
+    // Write the resolved sensitive/contact fields into the vault and favorites
+    // (spec 1.19 Phase 4: they no longer exist on the person doc).
     const mergedTenants: string[] = Array.isArray(merged.tenants)
       ? Array.from(new Set([...merged.tenants, tenantId])) : [tenantId];
-    if ('ssnId' in safeFields) await upsertVaultScalar(db, personKey, 'ssn', safeFields.ssnId, mergedTenants);
-    if ('dateOfBirth' in safeFields) await upsertVaultScalar(db, personKey, 'dob', safeFields.dateOfBirth, mergedTenants);
+    if ('ssnId' in addressFields) await upsertVaultScalar(db, personKey, 'ssn', addressFields.ssnId, mergedTenants);
+    if ('dateOfBirth' in addressFields) await upsertVaultScalar(db, personKey, 'dob', addressFields.dateOfBirth, mergedTenants);
+    if ('favEmail' in addressFields) await upsertFavoriteContact(db, personKey, 'email', addressFields.favEmail, mergedTenants);
+    if ('favPhone' in addressFields) await upsertFavoriteContact(db, personKey, 'phone', addressFields.favPhone, mergedTenants);
     return { okey: personKey };
   },
 );

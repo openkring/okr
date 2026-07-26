@@ -6,7 +6,7 @@ import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, 
 import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { CategoryListModel, MembershipModel, PersonModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { areTagsVisible, coerceBoolean, getBirthYear, getFullName, hasRole, isOrg, isPerson } from '@okr/shared-util-core';
+import { areTagsVisible, coerceBoolean, getFullName, hasRole, isOrg, isPerson } from '@okr/shared-util-core';
 
 import { MembershipI18n, membershipValidations } from '@okr/relationship-membership-util';
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -282,8 +282,9 @@ export class MembershipForm {
           memberName2: person.lastName,
           memberModelType: 'person',
           memberType: person.gender,
-          memberDateOfBirth: person.dateOfBirth,
-          memberBirthYear: getBirthYear(person.dateOfBirth),
+          // person.dateOfBirth was stripped (spec 1.19 Phase 4): reset the birth year;
+          // the membership store resolves it from the vault on save.
+          memberBirthYear: '',
           memberDateOfDeath: person.dateOfDeath,
           memberZipCode: person.favZipCode,
           memberBexioId: person.bexioId

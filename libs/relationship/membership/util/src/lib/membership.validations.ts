@@ -3,7 +3,7 @@ import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import { ABBREVIATION_LENGTH, BEXIO_ID_LENGTH, CURRENCY_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { MembershipModel } from '@okr/shared-models';
-import { baseValidations, booleanValidations, dateValidations, isAfterDate, isFutureDate, numberValidations, stringValidations } from '@okr/shared-util-core';
+import { baseValidations, booleanValidations, dateValidations, isAfterDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const membershipValidations = staticSuite((model: MembershipModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
@@ -24,7 +24,7 @@ export const membershipValidations = staticSuite((model: MembershipModel, tenant
   });
   stringValidations('memberNickName', model.memberNickName, SHORT_NAME_LENGTH);
   stringValidations('memberAbbreviation', model.memberAbbreviation, ABBREVIATION_LENGTH);
-  dateValidations('memberDateOfBirth', model.memberDateOfBirth);
+  stringValidations('memberBirthYear', model.memberBirthYear, 4);
   dateValidations('memberDateOfDeath', model.memberDateOfDeath);
   stringValidations('memberZipCode', model.memberZipCode, ZIP_LENGTH);
   stringValidations('memberBexioId', model.memberBexioId, BEXIO_ID_LENGTH);
@@ -54,12 +54,8 @@ export const membershipValidations = staticSuite((model: MembershipModel, tenant
     });
   });
 
-  omitWhen(model.memberDateOfBirth === '', () => {
-    test('dateOfBirth', '@membershipDateOfBirthNotFuture', () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      enforce(isFutureDate(model.memberDateOfBirth)).isFalsy();
-    })
-  });
+  // memberDateOfBirth was stripped (spec 1.19 Phase 4); memberBirthYear is a plain
+  // YYYY string validated above — no date-format/future check applies.
 
   // tbd: cross reference memberKey in subjects
   // tbd: cross reference orgId in subjects

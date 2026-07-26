@@ -194,8 +194,9 @@ export const AocRolesStore = signalStore(
           return;
         }
         try {
-          patchState(store, { log: [], logTitle: `creating account for ${person.firstName} ${person.lastName}/${person.okey}/${person.favEmail}` });
-          const user = createUserFromPerson(person, store.appStore.env.tenantId);
+          const favEmail = store.appStore.getDirectoryEntry(`person.${person.okey}`)?.favEmail ?? '';
+          patchState(store, { log: [], logTitle: `creating account for ${person.firstName} ${person.lastName}/${person.okey}/${favEmail}` });
+          const user = createUserFromPerson(person, store.appStore.env.tenantId, favEmail);
           if (!user.loginEmail || user.loginEmail.length === 0 || !isValidEmail(user.loginEmail)) {
             console.warn('RolesStore.createAccountAndUser: loginEmail is missing or invalid - can not register this user');
             return;
@@ -326,7 +327,7 @@ export const AocRolesStore = signalStore(
           patchState(store, { log: [], logTitle: 'please select a person first' });
           return;
         }
-        const email = person.favEmail;
+        const email = store.appStore.getDirectoryEntry(`person.${person.okey}`)?.favEmail ?? '';
         patchState(store, { log: [], logTitle: `checking authorisation for ${person.firstName} ${person.lastName}/${person.okey}/${email}` });
         patchState(store, { log: logMessage(log, 'person ID: ' + person.okey) });
         patchState(store, { log: logMessage(log, 'person tenants: ' + person.tenants.join(', ')) });

@@ -1,10 +1,14 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
-import { PersonModel, PrivacyUsage } from '@okr/shared-models';
+import { PrivacyUsage } from '@okr/shared-models';
 import { baseValidations, categoryValidations, dateValidations, isAfterDate, stringValidations } from '@okr/shared-util-core';
 
-export const personValidations = staticSuite((model: PersonModel, tenants: string, tags: string, field?: string) => {
+import { PersonFormModel } from './person-form.model';
+
+// Validates the person edit/profile form data: PersonFormModel keeps the vault-backed
+// ssn/dob fields that were stripped from PersonModel (spec 1.19 Phase 4).
+export const personValidations = staticSuite((model: PersonFormModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
 
   baseValidations(model, tenants, tags, field);
@@ -12,8 +16,8 @@ export const personValidations = staticSuite((model: PersonModel, tenants: strin
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);
   stringValidations('gender', model.gender, WORD_LENGTH);
-  stringValidations('ssnId', model.ssnId);
-  dateValidations('dateOfBirth', model.dateOfBirth);
+  stringValidations('ssnId', model.ssnId ?? '');
+  dateValidations('dateOfBirth', model.dateOfBirth ?? '');
   dateValidations('dateOfDeath', model.dateOfDeath);
   stringValidations('bexioId', model.bexioId, 6);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
@@ -28,10 +32,10 @@ export const personValidations = staticSuite((model: PersonModel, tenants: strin
   categoryValidations('usageName', model.usageName, PrivacyUsage);
 
   // cross field validations
-  omitWhen(model.dateOfDeath === '' || model.dateOfBirth === '', () => {
+  omitWhen(model.dateOfDeath === '' || !model.dateOfBirth, () => {
     test('dateOfDeath', '@personDeathAfterBirth', () => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      enforce(isAfterDate(model.dateOfDeath, model.dateOfBirth)).isTruthy();
+      enforce(isAfterDate(model.dateOfDeath, model.dateOfBirth!)).isTruthy();
     });
   });
 

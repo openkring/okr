@@ -2,11 +2,11 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
 import { PrivacyUsages } from "@okr/shared-categories";
-import { PersonModel, PrivacyUsage, UserModel } from "@okr/shared-models";
+import { PrivacyUsage, UserModel } from "@okr/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@okr/shared-ui";
 import { coerceBoolean } from "@okr/shared-util-core";
 
-import { personValidations } from "@okr/subject-person-util";
+import { PersonFormModel, personValidations } from "@okr/subject-person-util";
 import { ProfileI18n } from "@okr/profile-util";
 
 @Component({
@@ -91,7 +91,7 @@ export class ProfilePrivacyAccordion {
   public readonly i18n = input.required<ProfileI18n>();
   // the privacy preferences (usage*) live on the person, which is the tenant-readable
   // source for AppStore.getPersonPrivacySettings — edit them directly here.
-  public personFormData = model.required<PersonModel>();
+  public personFormData = model.required<PersonFormModel>();
   // the user still carries the legacy srvEmail flag (not present on the person).
   public formData = model.required<UserModel>();
   public readonly currentUser = input<UserModel | undefined>();

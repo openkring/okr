@@ -27,8 +27,7 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
 
     // Org contact via the shared projection module (spec 1.19 Phase 4, D8): the
     // 'public' viewer tier of the org's addresses — the audited chokepoint for
-    // anonymous serving. Falls back to the denormalized org.fav* fields until
-    // the Phase 4 strip removes them.
+    // anonymous serving. org.fav* fields were stripped in Phase 4 (no fallback).
     let favEmail = '';
     let favPhone = '';
     if (orgDoc) {
@@ -38,8 +37,6 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
       favPhone = addresses.find((a) => a.addressChannel === 'phone' && a.isFavorite)?.phone
         ?? addresses.find((a) => a.addressChannel === 'phone')?.phone ?? '';
     }
-    favEmail = favEmail || String(org?.['favEmail'] ?? '');
-    favPhone = favPhone || String(org?.['favPhone'] ?? '');
 
     const contentSnap = await db.collection('websiteContent')
       .where('tenants', 'array-contains', tenantId)

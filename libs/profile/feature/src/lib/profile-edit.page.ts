@@ -5,11 +5,12 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLab
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
-import { PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
+import { PersonModelName, UserModel } from '@okr/shared-models';
 import { Languages } from '@okr/shared-categories';
 
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { AvatarToolbar } from '@okr/avatar-feature';
+import { PersonFormModel } from '@okr/subject-person-util';
 import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
 import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';
@@ -117,14 +118,15 @@ export class ProfileEditPage {
   // linkedSignals: currentPerson()/currentUser() are derived from live Firestore streams, so every
   // re-emission would hand back a new object reference (or transiently undefined while the resource
   // reloads) and silently discard whatever the user has edited so far.
-  protected personFormData = signal<PersonModel | undefined>(undefined);
+  protected personFormData = signal<PersonFormModel | undefined>(undefined);
   protected userFormData = signal<UserModel | undefined>(undefined);
   protected showForm = signal(true);
 
   // derived signals
   protected headerTitle = computed(() => this.store.getTitleLabel(false, this.currentUser()?.okey));
   protected currentUser = computed(() => this.store.currentUser());
-  protected currentPerson = computed(() => this.store.person());
+  // person + vault ssn/dob (spec 1.19 Phase 4) — undefined until both are loaded
+  protected currentPerson = computed(() => this.store.personForm());
   protected personKey = computed(() => this.currentUser()?.personKey || '');
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
   protected tenantId = computed(() => this.store.tenantId());
@@ -152,7 +154,7 @@ export class ProfileEditPage {
     });
   }
 
-  private seedFormData(person: PersonModel | undefined, user: UserModel | undefined): void {
+  private seedFormData(person: PersonFormModel | undefined, user: UserModel | undefined): void {
     this.personFormData.set(safeStructuredClone(person));
     this.userFormData.set(safeStructuredClone(user));
   }
@@ -179,7 +181,7 @@ export class ProfileEditPage {
     await this.store.saveAvatar(photo);
   }
 
-  protected onPersonChange(formData: PersonModel): void {
+  protected onPersonChange(formData: PersonFormModel): void {
     this.personFormData.set(formData);
   }
 

@@ -61,7 +61,7 @@ import { AocRolesStore } from './aoc-roles.store';
                 <ion-label>{{ person.okey }}</ion-label>
               </ion-col>
               <ion-col size="3">
-                <ion-label>{{ person.favEmail }}</ion-label>
+                <ion-label>{{ favEmail(person.okey) }}</ion-label>
               </ion-col>
             </ion-row>
             } @if(selectedUser(); as user) {
@@ -237,6 +237,11 @@ export class AocRoles {
 
   protected selectedPerson = computed(() => this.aocRolesStore.selectedPerson());
   protected selectedUser = computed(() => this.aocRolesStore.selectedUser());
+
+  // contact data from the address-directory projection (spec 1.19 Phase 4)
+  protected favEmail(personKey: string): string {
+    return this.aocRolesStore.appStore.getDirectoryEntry(`person.${personKey}`)?.favEmail ?? '';
+  }
   protected roles = linkedSignal(() => flattenRoles(this.selectedUser()?.roles ?? { 'registered': true }));
 
   protected avatar = computed(() => {

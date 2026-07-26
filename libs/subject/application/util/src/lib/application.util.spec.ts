@@ -83,10 +83,10 @@ describe('toPersonModel', () => {
     expect(person.firstName).toBe('Lukas');
     expect(person.lastName).toBe('Meier');
     expect(person.gender).toBe('male');
+    // ssn/dob ride along as form-model fields for the vault sync (spec 1.19 Phase 4);
+    // favEmail/favPhone were stripped — accept() creates the address docs instead.
     expect(person.dateOfBirth).toBe('20050605');
     expect(person.ssnId).toBe('756.1234.5678.90');
-    expect(person.favEmail).toBe('lukas@example.com');
-    expect(person.favPhone).toBe('+41791234567');
     expect(person.favZipCode).toBe('8001');
     expect(person.tenants).toContain('t');
   });

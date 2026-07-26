@@ -25,13 +25,8 @@ export const PersonSortCriterias: PersonSortCriteriaCategory[] = [
     i18nBase: '@shared/categories.sortCriteria.fullname',
     icon: 'arrow-up-circle'
   },
-  {
-    id: PersonSortCriteria.DateOfBirth,
-    abbreviation: 'DOB',
-    name: 'dateOfBirth',
-    i18nBase: '@shared/categories.sortCriteria.dob',
-    icon: 'birthday'
-  },
+  // DateOfBirth was removed as a selectable criterion: person.dateOfBirth was
+  // stripped in privacy 1.19 Phase 4 (the enum value stays for stored user prefs).
   {
     id: PersonSortCriteria.Key,
     abbreviation: 'KEY',

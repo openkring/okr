@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, PersonModel, PersonModelName, RoleName, UserModel } from '@okr/shared-models';
+import { CategoryListModel, PersonModelName, RoleName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 
@@ -19,6 +19,7 @@ import { WorkrelAccordion } from '@okr/relationship-workrel-feature';
 
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { PersonForm } from '@okr/subject-person-ui';
+import { PersonFormModel } from '@okr/subject-person-util';
 
 import { PersonStore } from './person.store';
 
@@ -92,7 +93,8 @@ export class PersonEditModal {
   private readonly modalController = inject(ModalController);
 
   // inputs
-  public person = input.required<PersonModel>();
+  // person + vault-hydrated ssn/dob (spec 1.19 Phase 4, D9) — see PersonStore.edit()
+  public person = input.required<PersonFormModel>();
   public currentUser = input<UserModel | undefined>();
   public tags = input.required<string>();
   public tenantId = input.required<string>();
@@ -131,7 +133,7 @@ export class PersonEditModal {
     setTimeout(() => this.showForm.set(true), 0);
   }
 
-  protected onFormDataChange(formData: PersonModel): void {
+  protected onFormDataChange(formData: PersonFormModel): void {
     this.formData.set(formData);
   }
 

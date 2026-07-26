@@ -11,7 +11,7 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@okr/shared-categ
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@okr/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@okr/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@okr/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
@@ -431,18 +431,15 @@ export const _MembershipStore = signalStore(
         return store.appStore.getTags('membership');
       },
 
-      // contact data from the address-directory projection (spec 1.19 Phase 4);
-      // person.fav* fallback only until the Phase 4 strip removes those fields
+      // contact data from the address-directory projection (spec 1.19 Phase 4)
       getEmail(membership: MembershipModel): string | undefined {
         const parentKey = `${membership.memberModelType ?? 'person'}.${membership.memberKey}`;
-        return store.appStore.getDirectoryEntry(parentKey)?.favEmail
-          || store.appStore.getPerson(membership.memberKey)?.favEmail;
+        return store.appStore.getDirectoryEntry(parentKey)?.favEmail;
       },
 
       getPhone(membership: MembershipModel): string | undefined {
         const parentKey = `${membership.memberModelType ?? 'person'}.${membership.memberKey}`;
-        return store.appStore.getDirectoryEntry(parentKey)?.favPhone
-          || store.appStore.getPerson(membership.memberKey)?.favPhone;
+        return store.appStore.getDirectoryEntry(parentKey)?.favPhone;
       },
 
       /******************************** actions ******************************************* */
@@ -602,6 +599,12 @@ export const _MembershipStore = signalStore(
           if (isMembership(data, store.tenantId())) {
             const mcatAbbreviation = getCatAbbreviation(store.membershipCategory(), data.category);
             data.relLog = getRelLogEntry(data.dateOfEntry, mcatAbbreviation);
+            // memberBirthYear can no longer be derived from the person doc (spec 1.19
+            // Phase 4 strip) — resolve it from the vault when the form left it empty.
+            if (data.memberModelType === PersonModelName && !data.memberBirthYear && data.memberKey) {
+              const dobByKey = await this.loadVaultDobs([data.memberKey]);
+              data.memberBirthYear = getBirthYear(dobByKey.get(data.memberKey) ?? '');
+            }
             if (!data.okey) {
               // create new membership
               store.membershipService.create(data, store.currentUser());

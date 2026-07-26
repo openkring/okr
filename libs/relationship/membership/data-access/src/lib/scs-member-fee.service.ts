@@ -88,8 +88,7 @@ export function convertMembershipToFee(
     subType: '',
     label: getFullName(membership.memberName1, membership.memberName2),
   };
-  fee.memberDateOfBirth = membership.memberDateOfBirth;
-  fee.memberBirthYear = membership.memberBirthYear || getBirthYear(membership.memberDateOfBirth);
+  fee.memberBirthYear = membership.memberBirthYear;
   fee.memberBexioId = membership.memberBexioId;
   fee.dateOfEntry = membership.dateOfEntry;
   fee.category = membership.category;

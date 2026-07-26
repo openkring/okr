@@ -5,6 +5,7 @@ import { addIndexElement, die, getBirthYear, getTodayStr } from '@okr/shared-uti
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@okr/subject-address-util';
 
 import { PERSON_NEW_FORM_SHAPE, PersonNewFormModel } from './person-new-form.model';
+import { PersonFormModel } from './person-form.model';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 // new person
@@ -16,12 +17,14 @@ export function createNewPersonFormModel(org?: OrgModel): PersonNewFormModel {
   return model;
 }
 
-export function convertFormToNewPerson(vm: PersonNewFormModel, tenantId: string): PersonModel {
-  const person = new PersonModel(tenantId);
+export function convertFormToNewPerson(vm: PersonNewFormModel, tenantId: string): PersonFormModel {
+  const person = new PersonModel(tenantId) as PersonFormModel;
   person.okey = DEFAULT_KEY;
   person.firstName = vm.firstName ?? DEFAULT_NAME;
   person.lastName = vm.lastName ?? DEFAULT_NAME;
   person.gender = vm.gender ?? DEFAULT_GENDER;
+  // ssn/dob ride along on the form model only — PersonService strips them from the
+  // person write and syncs them into the addresses vault (spec 1.19 Phase 4).
   person.dateOfBirth = vm.dateOfBirth ?? DEFAULT_DATE;
   person.dateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
   person.ssnId = formatAhv(vm.ssnId ?? DEFAULT_ID, AhvFormat.Electronic);
@@ -70,7 +73,6 @@ export function convertNewPersonFormToMembership(vm: PersonNewFormModel, personK
   member.memberType = vm.gender ?? DEFAULT_GENDER;
   member.memberNickName = DEFAULT_NAME;
   member.memberAbbreviation = '';
-  member.memberDateOfBirth = vm.dateOfBirth ?? DEFAULT_DATE;
   member.memberBirthYear = getBirthYear(vm.dateOfBirth ?? DEFAULT_DATE);
   member.memberDateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
   member.memberZipCode = vm.zipCode ?? DEFAULT_ZIP;
