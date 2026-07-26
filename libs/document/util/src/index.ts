@@ -1,4 +1,5 @@
 export * from './lib/document-i18n';
+export * from './lib/document-permissions.util';
 export * from './lib/dir.validations';
 export * from './lib/document.util';
 export * from './lib/document.validations';
