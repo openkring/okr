@@ -1,4 +1,4 @@
-import { Firestore } from 'firebase-admin/firestore';
+import { DocumentData, Firestore, Query } from 'firebase-admin/firestore';
 
 import {
   accessorAllows,
@@ -17,6 +17,8 @@ import {
   PrivacyAccessor,
   PrivacySettings,
 } from '@okr/shared-models';
+
+import { parseParentKey } from './address.util';
 
 /**
  * The shared projection module (spec 1.19 Phase 4, D8): the ONE chokepoint through
@@ -161,12 +163,6 @@ export function projectAddressesForViewer(
   return projected.map(toSanitizedAddress);
 }
 
-function parseParentKey(parentKey: string): { parentType: 'person' | 'org'; parentId: string } | undefined {
-  if (parentKey.startsWith('person.')) return { parentType: 'person', parentId: parentKey.substring('person.'.length) };
-  if (parentKey.startsWith('org.')) return { parentType: 'org', parentId: parentKey.substring('org.'.length) };
-  return undefined;
-}
-
 async function loadParentAndAddresses(firestore: Firestore, parentKey: string): Promise<{
   parentType: 'person' | 'org';
   parent: FirebaseFirestore.DocumentData | undefined;
@@ -223,6 +219,42 @@ export async function writeAddressDirectory(firestore: Firestore, parentKey: str
     void okey;
     await firestore.collection(AddressDirectoryCollection).doc(dirDoc.okey).set(JSON.parse(JSON.stringify(data)));
   }
+}
+
+/** Iterate a collection in id-ordered pages; runs `fn` per doc id. Returns docs seen. */
+async function forEachDocId(base: Query<DocumentData>, fn: (id: string) => Promise<void>, batch = 400): Promise<number> {
+  let last: string | undefined;
+  let seen = 0;
+  for (;;) {
+    let q = base.orderBy('__name__').limit(batch);
+    if (last) q = q.startAfter(last);
+    const snap = await q.get();
+    if (snap.empty) break;
+    for (const doc of snap.docs) {
+      await fn(doc.id);
+      seen++;
+    }
+    last = snap.docs[snap.docs.length - 1].id;
+    if (snap.size < batch) break;
+  }
+  return seen;
+}
+
+/**
+ * Rebuild every `address-directory` projection of one tenant. The tenant's
+ * `AppConfig.PrivacySettings` floors are inputs to the projection, so a tenant that
+ * tightens `showEmail` (etc.) must have its projections recomputed — otherwise the
+ * stricter setting does not reach members until each parent's next address write.
+ * Used by the app-config trigger and available for targeted backfills.
+ */
+export async function rebuildDirectoryForTenant(firestore: Firestore, tenantId: string): Promise<{ persons: number; orgs: number }> {
+  const persons = await forEachDocId(
+    firestore.collection(PersonCollection).where('tenants', 'array-contains', tenantId),
+    (id) => writeAddressDirectory(firestore, `person.${id}`));
+  const orgs = await forEachDocId(
+    firestore.collection(OrgCollection).where('tenants', 'array-contains', tenantId),
+    (id) => writeAddressDirectory(firestore, `org.${id}`));
+  return { persons, orgs };
 }
 
 /**

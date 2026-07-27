@@ -4,105 +4,179 @@ import * as logger from 'firebase-functions/logger';
 
 import { AddressModel } from '@okr/shared-models';
 
-import { updateFavoriteZipCode } from './address.util';
+import { getActiveAddresses, getFavoriteZipCode, getScalarChannelValue, parseParentKey, updateFavoriteZipCode } from './address.util';
 
-// Mock all external dependencies
 vi.mock('firebase-admin/firestore');
 vi.mock('firebase-functions/logger', () => ({
   info: vi.fn(),
+  warn: vi.fn(),
   error: vi.fn(),
 }));
 
-// Mock the firebase-admin module (used for the parent-document update)
-const mockUpdate = vi.fn();
-const mockDoc = vi.fn(() => ({
-  update: mockUpdate,
-}));
-vi.mock('firebase-admin', () => ({
-  firestore: () => ({
-    doc: mockDoc,
-  }),
-}));
-
 describe('Address Utils', () => {
-  const mockLoggerInfo = vi.mocked(logger.info);
   const mockLoggerError = vi.mocked(logger.error);
+  const mockLoggerWarn = vi.mocked(logger.warn);
 
-  // Mock Firestore query chain used to fetch the favorite addresses
+  // parent document handle (firestore.doc(...))
+  const mockParentGet = vi.fn();
+  const mockParentUpdate = vi.fn();
+  const mockDoc = vi.fn(() => ({ get: mockParentGet, update: mockParentUpdate }));
+
+  // address query chain (firestore.collection(...).where(...).get())
   const mockWhere = vi.fn();
   const mockGet = vi.fn();
-  const mockCollection = vi.fn(() => ({
-    where: mockWhere,
-    get: mockGet,
-  }));
+  const mockCollection = vi.fn(() => ({ where: mockWhere, get: mockGet }));
+
   const mockFirestore = {
     collection: mockCollection,
+    doc: mockDoc,
   } as unknown as Firestore;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockWhere.mockReturnThis(); // Allow chaining
+    mockWhere.mockReturnValue({ get: mockGet });
   });
 
-  function makeAddress(parentKey: string): AddressModel {
-    return { parentKey } as AddressModel;
+  function address(partial: Partial<AddressModel>): AddressModel {
+    return { parentKey: 'person.p1', isArchived: false, ...partial } as AddressModel;
   }
 
-  function createMockDocs(favs: Partial<AddressModel>[]) {
-    return favs.map((fav, i) => ({ id: `doc${i}`, data: () => fav }));
-  }
-
-  describe('updateFavoriteZipCode', () => {
-    it('returns early (no update) when the parentKey is neither person. nor org.', async () => {
-      await updateFavoriteZipCode(mockFirestore, makeAddress('unknown.parent-1'), 'addr-1');
-
-      expect(mockGet).not.toHaveBeenCalled();
-      expect(mockUpdate).not.toHaveBeenCalled();
+  describe('parseParentKey', () => {
+    it('splits a person key', () => {
+      expect(parseParentKey('person.p1')).toEqual({ parentType: 'person', parentId: 'p1', parentCollection: 'persons' });
     });
 
-    it('updates the parent person document with an empty zip code when no favorites are found', async () => {
-      mockGet.mockResolvedValue({ empty: true, docs: [] });
-      mockUpdate.mockResolvedValue({});
+    it('splits an org key', () => {
+      expect(parseParentKey('org.o1')).toEqual({ parentType: 'org', parentId: 'o1', parentCollection: 'orgs' });
+    });
 
-      await updateFavoriteZipCode(mockFirestore, makeAddress('person.parent-1'), 'addr-1');
+    it('returns undefined for any other prefix', () => {
+      expect(parseParentKey('resource.r1')).toBeUndefined();
+      expect(parseParentKey('')).toBeUndefined();
+    });
+  });
+
+  describe('getActiveAddresses', () => {
+    it('drops archived addresses (archive is the app delete)', async () => {
+      mockGet.mockResolvedValue({
+        docs: [
+          { id: 'a1', data: () => ({ addressChannel: 'postal', zipCode: '8712', isArchived: false }) },
+          { id: 'a2', data: () => ({ addressChannel: 'postal', zipCode: '8000', isArchived: true }) },
+        ],
+      });
+
+      const result = await getActiveAddresses(mockFirestore, 'person.p1');
 
       expect(mockCollection).toHaveBeenCalledWith('addresses');
-      expect(mockDoc).toHaveBeenCalledWith('persons/parent-1');
-      expect(mockUpdate).toHaveBeenCalledWith({ favZipCode: '' });
+      expect(mockWhere).toHaveBeenCalledWith('parentKey', '==', 'person.p1');
+      expect(result.map((a) => a.okey)).toEqual(['a1']);
+    });
+  });
+
+  describe('getFavoriteZipCode', () => {
+    it('returns the zip of the favorite postal address', () => {
+      expect(getFavoriteZipCode([
+        address({ addressChannel: 'postal', zipCode: '8000', isFavorite: false }),
+        address({ addressChannel: 'postal', zipCode: '8712', isFavorite: true }),
+      ])).toBe('8712');
     });
 
-    it('updates only favZipCode from the favorite postal address (never favEmail/favPhone)', async () => {
-      const favs: Partial<AddressModel>[] = [
-        { addressChannel: 'email', email: 'test@example.com' },
-        { addressChannel: 'phone', phone: '123-456-7890' },
-        { addressChannel: 'postal', zipCode: '90210' },
-      ];
-      mockGet.mockResolvedValue({ empty: false, docs: createMockDocs(favs) });
-      mockUpdate.mockResolvedValue({});
+    it('ignores favorites of other channels', () => {
+      expect(getFavoriteZipCode([
+        address({ addressChannel: 'email', email: 'a@b.ch', isFavorite: true }),
+      ])).toBe('');
+    });
 
-      await updateFavoriteZipCode(mockFirestore, makeAddress('org.parent-2'), 'addr-2');
+    it('returns an empty string when no postal address is flagged', () => {
+      expect(getFavoriteZipCode([address({ addressChannel: 'postal', zipCode: '8712', isFavorite: false })])).toBe('');
+      expect(getFavoriteZipCode([])).toBe('');
+    });
+  });
+
+  describe('getScalarChannelValue', () => {
+    it('returns the value of the scalar channel', () => {
+      expect(getScalarChannelValue([address({ okey: 'a1', addressChannel: 'dob', dob: '19630704' })], 'dob')).toBe('19630704');
+    });
+
+    it('returns an empty string when the channel is absent (a deleted dob clears its replica)', () => {
+      expect(getScalarChannelValue([address({ addressChannel: 'email', email: 'a@b.ch' })], 'dob')).toBe('');
+      expect(getScalarChannelValue([], 'dod')).toBe('');
+    });
+
+    it('picks deterministically (lowest okey) and warns when duplicates exist', () => {
+      const result = getScalarChannelValue([
+        address({ okey: 'b', addressChannel: 'dob', dob: '19700101' }),
+        address({ okey: 'a', addressChannel: 'dob', dob: '19630704' }),
+      ], 'dob');
+
+      expect(result).toBe('19630704');
+      expect(mockLoggerWarn).toHaveBeenCalled();
+    });
+
+    it('skips docs of the right channel that carry no value', () => {
+      expect(getScalarChannelValue([
+        address({ okey: 'a', addressChannel: 'dob', dob: '' }),
+        address({ okey: 'b', addressChannel: 'dob', dob: '19630704' }),
+      ], 'dob')).toBe('19630704');
+    });
+  });
+
+  describe('updateFavoriteZipCode', () => {
+    it('returns early (no read, no write) when the parentKey is neither person. nor org.', async () => {
+      await updateFavoriteZipCode(mockFirestore, 'unknown.parent-1', []);
+
+      expect(mockParentGet).not.toHaveBeenCalled();
+      expect(mockParentUpdate).not.toHaveBeenCalled();
+    });
+
+    it('writes the favorite zip code onto the parent person', async () => {
+      mockParentGet.mockResolvedValue({ exists: true, data: () => ({ favZipCode: '8000' }) });
+      mockParentUpdate.mockResolvedValue({});
+
+      await updateFavoriteZipCode(mockFirestore, 'person.parent-1', [
+        address({ addressChannel: 'postal', zipCode: '8712', isFavorite: true }),
+      ]);
+
+      expect(mockDoc).toHaveBeenCalledWith('persons/parent-1');
+      expect(mockParentUpdate).toHaveBeenCalledWith({ favZipCode: '8712' });
+    });
+
+    it('clears the zip code on the parent org when no favorite postal address is left', async () => {
+      mockParentGet.mockResolvedValue({ exists: true, data: () => ({ favZipCode: '8712' }) });
+      mockParentUpdate.mockResolvedValue({});
+
+      await updateFavoriteZipCode(mockFirestore, 'org.parent-2', []);
 
       expect(mockDoc).toHaveBeenCalledWith('orgs/parent-2');
-      expect(mockUpdate).toHaveBeenCalledWith({ favZipCode: '90210' });
+      expect(mockParentUpdate).toHaveBeenCalledWith({ favZipCode: '' });
+    });
+
+    it('skips the write when the zip code is unchanged (no onPersonChange fan-out)', async () => {
+      mockParentGet.mockResolvedValue({ exists: true, data: () => ({ favZipCode: '8712' }) });
+
+      await updateFavoriteZipCode(mockFirestore, 'person.parent-1', [
+        address({ addressChannel: 'postal', zipCode: '8712', isFavorite: true }),
+      ]);
+
+      expect(mockParentUpdate).not.toHaveBeenCalled();
+    });
+
+    it('does not write when the parent document is gone', async () => {
+      mockParentGet.mockResolvedValue({ exists: false, data: () => undefined });
+
+      await updateFavoriteZipCode(mockFirestore, 'person.parent-1', []);
+
+      expect(mockParentUpdate).not.toHaveBeenCalled();
     });
 
     it('logs an error if the update fails', async () => {
       const error = new Error('Update failed');
-      mockGet.mockResolvedValue({ empty: true, docs: [] });
-      mockUpdate.mockRejectedValue(error);
+      mockParentGet.mockResolvedValue({ exists: true, data: () => ({ favZipCode: '8000' }) });
+      mockParentUpdate.mockRejectedValue(error);
 
-      await updateFavoriteZipCode(mockFirestore, makeAddress('person.parent-1'), 'addr-1');
+      await updateFavoriteZipCode(mockFirestore, 'person.parent-1', []);
 
       expect(mockLoggerError).toHaveBeenCalledWith('Error updating persons/parent-1:', error);
-    });
-
-    it('logs that no favorite addresses were found', async () => {
-      mockGet.mockResolvedValue({ empty: true, docs: [] });
-      mockUpdate.mockResolvedValue({});
-
-      await updateFavoriteZipCode(mockFirestore, makeAddress('person.parent-1'), 'addr-1');
-
-      expect(mockLoggerInfo).toHaveBeenCalledWith('getFavoriteZipCode: no favorite addresses found for person.parent-1');
     });
   });
 });

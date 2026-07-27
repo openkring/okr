@@ -2,14 +2,18 @@ import * as admin from 'firebase-admin';
 import * as logger from "firebase-functions/logger";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
-import { AddressCollection, AddressModel, GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, ReservationCollection, ResourceCollection, WorkrelCollection } from "@okr/shared-models";
+import { AddressCollection, AddressModel, AppConfigCollection, CHANNEL_PRIVACY_INPUTS, GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, PrivacySettings, ReservationCollection, ResourceCollection, ScsMemberFeesCollection, WorkrelCollection } from "@okr/shared-models";
 import {
+  getActiveAddresses,
+  getAllMemberFeesOfMember,
   getAllMembershipsOfMember, getAllMembershipsOfOrg,
   getAllOwnershipsOfOwner, getAllOwnershipsOfResource,
   getAllPersonalRelsOfObject, getAllPersonalRelsOfSubject,
   getAllReservationsOfReserver, getAllReservationsOfResource,
   getAllWorkrelsOfObject, getAllWorkrelsOfSubject,
+  getScalarChannelValue,
   hasChanged,
+  rebuildDirectoryForTenant,
   updateFavoriteZipCode,
   writeAddressDirectory
 } from "@okr/shared-util-functions";
@@ -73,75 +77,149 @@ async function fetchRelations<T>(label: string, sourceId: string, fetch: () => P
  */
 
 /**
+ * Sync the degraded-precision dob replica (`memberBirthYear`, YYYY) onto the person's
+ * memberships and pending member-fee entries. spec 1.19 Phase 4: the vault dob address
+ * is the only dob source (person.dateOfBirth was stripped), so this trigger is the only
+ * writer. Neither collection has a trigger — no recursion.
+ */
+async function syncBirthYear(personId: string, birthYear: string): Promise<void> {
+  const memberships = await getAllMembershipsOfMember(firestore, personId, 'person');
+  for (const m of memberships) {
+    if ((m as { memberBirthYear?: string }).memberBirthYear !== birthYear) {
+      await firestore.doc(`${MembershipCollection}/${m.okey}`).update({ memberBirthYear: birthYear });
+      logger.info(`Synced memberBirthYear for membership ${m.okey} of person ${personId}`);
+    }
+  }
+  // scs-memberfees carries the same replica and drives the junior cut-off of the
+  // yearly invoice run — a dob correction has to reach the pending entries too.
+  const fees = await getAllMemberFeesOfMember(firestore, personId);
+  for (const fee of fees) {
+    if (fee.memberBirthYear !== birthYear) {
+      await firestore.doc(`${ScsMemberFeesCollection}/${fee.okey}`).update({ memberBirthYear: birthYear });
+      logger.info(`Synced memberBirthYear for member fee ${fee.okey} of person ${personId}`);
+    }
+  }
+}
+
+/**
+ * Sync the dod replicas (spec 1.19): the vault dod address is the only date of death,
+ * and persons.isDeceased/deathYear + memberships.memberIsDeceased/memberDeathYear are
+ * its degraded-precision replicas — the fact and the year, never the full date.
+ * This trigger is their only writer.
+ */
+async function syncDateOfDeath(personId: string, dod: string): Promise<void> {
+  const isDeceased = dod.length > 0;
+  const deathYear = getStoreDateYear(dod);
+
+  const personRef = firestore.doc(`${PersonCollection}/${personId}`);
+  const personSnap = await personRef.get();
+  const p = personSnap.data();
+  if (personSnap.exists && (p?.['isDeceased'] !== isDeceased || p?.['deathYear'] !== deathYear)) {
+    // triggers onPersonChange — it no longer syncs these fields
+    await personRef.update({ isDeceased, deathYear });
+    logger.info(`Synced isDeceased=${isDeceased}/deathYear=${deathYear} for person ${personId}`);
+  }
+
+  const memberships = await getAllMembershipsOfMember(firestore, personId, 'person');
+  for (const m of memberships) {
+    const member = m as { memberIsDeceased?: boolean; memberDeathYear?: string };
+    if (member.memberIsDeceased !== isDeceased || member.memberDeathYear !== deathYear) {
+      await firestore.doc(`${MembershipCollection}/${m.okey}`)
+        .update({ memberIsDeceased: isDeceased, memberDeathYear: deathYear });
+      logger.info(`Synced memberIsDeceased/memberDeathYear for membership ${m.okey} of person ${personId}`);
+    }
+  }
+}
+
+/**
  * If an address is changed, we update the favorite zip code of the parent (which is a person or organization)
  * and rebuild the address-directory projection. favEmail/favPhone are no longer replicated
  * (spec 1.19 Phase 4 strip) — contact data is served by the projection.
  * THIS UPDATES PERSON or ORG (AND TRIGGERS onPersonChange/onOrgChange) - be cautious about circular updates!
+ *
+ * Every replica is derived from the parent's LIVE vault contents (getActiveAddresses),
+ * never from the changed document alone:
+ *  - deleting an address is a SOFT delete (isArchived), so the changed doc still carries
+ *    its old value — reading it directly would leave the replica behind forever;
+ *  - a person can end up with more than one doc of a scalar channel, and the last doc
+ *    written must not silently win over the others.
+ * Both parents are processed when a write moves an address to a different parentKey,
+ * so the old parent does not keep a stale zip code and directory entry.
  */
 export const onAddressChange = onDocumentWritten(
   {
-    document: `${AddressCollection}/{addressId}`, 
+    document: `${AddressCollection}/{addressId}`,
     region: 'europe-west6'
-  }, 
+  },
   async (event) => {
     const addressId = event.params.addressId;
     logger.info(`address ${addressId} has changed`);
     try {
-      // Use after data for writes/updates; fall back to before data for deletes
-      // so the parent's fav* fields are refreshed even when an address is removed.
-      const address = event.data?.after.data() ?? event.data?.before.data();
-      if (address) {
-        await updateFavoriteZipCode(firestore, address as AddressModel, addressId);
+      const before = event.data?.before.data() as AddressModel | undefined;
+      const after = event.data?.after.data() as AddressModel | undefined;
+
+      // the channels touched by this write: `before` catches a channel change away from
+      // dob/dod (and an archive, where the channel is unchanged but the value is gone)
+      const touchedChannels = new Set([before?.addressChannel, after?.addressChannel].filter(Boolean));
+      const parentKeys = [...new Set([before?.parentKey, after?.parentKey].filter((key): key is string => !!key))];
+
+      for (const parentKey of parentKeys) {
+        const addresses = await getActiveAddresses(firestore, parentKey);
+        await updateFavoriteZipCode(firestore, parentKey, addresses);
         // spec 1.19 Phase 4: keep the address-directory projection in sync.
         // Writes only address-directory (no trigger on it) — no recursion.
-        await writeAddressDirectory(firestore, (address as AddressModel).parentKey);
+        await writeAddressDirectory(firestore, parentKey);
 
-        // spec 1.19 Phase 4: the vault dob address is the only dob source
-        // (person.dateOfBirth was stripped) — sync the degraded-precision
-        // memberBirthYear replica on the person's memberships from here.
-        // Memberships have no triggers — no recursion.
-        if (address.addressChannel === 'dob' && (address.parentKey as string).startsWith('person.')) {
-          const personId = (address.parentKey as string).substring('person.'.length);
-          const birthYear = getBirthYear(event.data?.after.data()?.dob ?? '');
-          const memberships = await getAllMembershipsOfMember(firestore, personId, 'person');
-          for (const m of memberships) {
-            if ((m as { memberBirthYear?: string }).memberBirthYear !== birthYear) {
-              await admin.firestore().doc(`${MembershipCollection}/${m.okey}`).update({ memberBirthYear: birthYear });
-              logger.info(`Synced memberBirthYear for membership ${m.okey} of person ${personId}`);
-            }
-          }
+        if (!parentKey.startsWith('person.')) continue;
+        const personId = parentKey.substring('person.'.length);
+        if (touchedChannels.has('dob')) {
+          await syncBirthYear(personId, getBirthYear(getScalarChannelValue(addresses, 'dob')));
         }
-
-        // Same for the vault dod address (spec 1.19): it is the only date of death,
-        // and person.isDeceased / membership.memberIsDeceased are its degraded-precision
-        // replicas — the fact, never the date. This trigger is their only writer.
-        if (address.addressChannel === 'dod' && (address.parentKey as string).startsWith('person.')) {
-          const personId = (address.parentKey as string).substring('person.'.length);
-          const dod = String(event.data?.after.data()?.dod ?? '');
-          const isDeceased = dod.length > 0;
-          const deathYear = getStoreDateYear(dod);
-          const personRef = admin.firestore().doc(`${PersonCollection}/${personId}`);
-          const personSnap = await personRef.get();
-          const p = personSnap.data();
-          if (personSnap.exists && (p?.['isDeceased'] !== isDeceased || p?.['deathYear'] !== deathYear)) {
-            // triggers onPersonChange — it no longer syncs these fields
-            await personRef.update({ isDeceased, deathYear });
-            logger.info(`Synced isDeceased=${isDeceased}/deathYear=${deathYear} for person ${personId}`);
-          }
-          const memberships = await getAllMembershipsOfMember(firestore, personId, 'person');
-          for (const m of memberships) {
-            const member = m as { memberIsDeceased?: boolean; memberDeathYear?: string };
-            if (member.memberIsDeceased !== isDeceased || member.memberDeathYear !== deathYear) {
-              await admin.firestore().doc(`${MembershipCollection}/${m.okey}`)
-                .update({ memberIsDeceased: isDeceased, memberDeathYear: deathYear });
-              logger.info(`Synced memberIsDeceased/memberDeathYear for membership ${m.okey} of person ${personId}`);
-            }
-          }
+        if (touchedChannels.has('dod')) {
+          await syncDateOfDeath(personId, getScalarChannelValue(addresses, 'dod'));
         }
       }
     }
     catch (error) {
       logger.error(`Error updating address ${addressId}:`, { error });
+    }
+  }
+);
+
+/**
+ * If a tenant changes its AppConfig privacy floors, the address-directory projections
+ * of that tenant have to be recomputed: the floors are inputs to the projection, so
+ * without this a tightened `showEmail` would not reach members until each parent's next
+ * address write. Only the floors that actually feed the projection are diffed (derived
+ * from CHANNEL_PRIVACY_INPUTS so the list cannot drift) — app-config is written for many
+ * other reasons and a full rebuild is expensive.
+ * THIS ONLY WRITES address-directory (no trigger on it) - no recursion.
+ */
+const PROJECTION_TENANT_FLOORS = [...new Set(
+  Object.values(CHANNEL_PRIVACY_INPUTS).map((input) => input.tenantFloor).filter((floor): floor is keyof PrivacySettings => !!floor)
+)];
+
+export const onAppConfigChange = onDocumentWritten(
+  {
+    document: `${AppConfigCollection}/{tenantId}`,
+    region: 'europe-west6',
+    timeoutSeconds: 540,
+  },
+  async (event) => {
+    const tenantId = event.params.tenantId;
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!after) return; // config deleted: the projections are cleaned up per parent
+
+    const floorsChanged = !before || PROJECTION_TENANT_FLOORS.some((floor) => before[floor] !== after[floor]);
+    if (!floorsChanged) return;
+
+    logger.info(`app-config ${tenantId}: privacy floors changed — rebuilding the address directory`);
+    try {
+      const result = await rebuildDirectoryForTenant(firestore, tenantId);
+      logger.info(`Rebuilt address directory for tenant ${tenantId}`, result);
+    } catch (error) {
+      logger.error(`Error rebuilding address directory for tenant ${tenantId}:`, { error });
     }
   }
 );

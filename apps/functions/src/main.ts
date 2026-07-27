@@ -81,6 +81,7 @@ export const onResourceChange = Replication.onResourceChange;
 export const onPersonChange = Replication.onPersonChange;
 export const onOrgChange = Replication.onOrgChange;
 export const onGroupChange = Replication.onGroupChange;
+export const onAppConfigChange = Replication.onAppConfigChange;
 
 // matrix-simple (Simpler Firebase → Matrix token exchange)
 export const getMatrixCredentials = MatrixSimple.getMatrixCredentials;
