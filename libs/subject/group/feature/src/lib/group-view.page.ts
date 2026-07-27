@@ -346,6 +346,11 @@ export class GroupViewPage implements ViewWillEnter {
   constructor() {
     effect(() => {
       this.store.setGroupKey(this.groupKey());
+      // The component instance is reused across a groupKey param change (ionViewWillEnter
+      // below relies on that too), so a stale folder-adoption-guard notice from the
+      // previous group must not leak into the next one — clear it here, before any check
+      // for the new group has run.
+      this.folderConflict.set(false);
     });
   }
 
@@ -380,11 +385,19 @@ export class GroupViewPage implements ViewWillEnter {
     // Only folder-managers may (implicitly) create the group folder — members opening
     // the files tab before it exists just see an empty list (spec 1.22).
     if (selectedSegment === 'files' && canManageFolders(this.currentUser(), this.isGroupAdmin())) {
-      const allowedOwnerKeys = (this.group()?.admins ?? []).map(admin => admin.key);
-      const isUsable = await this.folderService.ensureGroupFolder(
-        this.groupKey(), this.name(), this.store.tenantId(), this.currentUser(), allowedOwnerKeys
-      );
-      this.folderConflict.set(!isUsable);
+      // Prefer the retained formData mirror over group() — group() transiently reloads to
+      // undefined (auth/token refresh, Safari long-poll reconnect; see the linkedSignal
+      // comment above), and an empty allowedOwnerKeys array is the adoption guard's
+      // "disable the guard" sentinel. Skip the call entirely while neither has resolved
+      // yet, rather than running the guard with an unintentionally empty policy.
+      const currentGroup = this.formData() ?? this.group();
+      if (currentGroup) {
+        const allowedOwnerKeys = (currentGroup.admins ?? []).map(admin => admin.key);
+        const isUsable = await this.folderService.ensureGroupFolder(
+          this.groupKey(), this.name(), this.store.tenantId(), this.currentUser(), allowedOwnerKeys
+        );
+        this.folderConflict.set(!isUsable);
+      }
     }
   }
 }
