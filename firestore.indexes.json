@@ -1023,11 +1023,11 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "tenantId",
+          "fieldPath": "isArchived",
           "order": "ASCENDING"
         },
         {

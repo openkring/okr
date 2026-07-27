@@ -2,6 +2,7 @@ import { Inject, Injectable, InjectionToken } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 
 import { I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@okr/shared-models';
+import { getSystemQuery } from '@okr/shared-util-core';
 
 import { FirestoreService } from './firestore.service';
 
@@ -44,12 +45,16 @@ export class I18nOverrideService {
 
   public applyOverrides(lang: string): void {
     const tenantId = this.appStore.env.tenantId;
+    // Query on `tenants` (array-contains), NOT the model's scalar `tenantId`.
+    // The firestore rule gates this collection with tenantRead() → belongsToTenant(),
+    // which reads resource.data.tenants. Firestore rules are not filters: a list query
+    // whose constraints don't provably restrict the result to rule-readable documents is
+    // rejected wholesale with "Missing or insufficient permissions". Filtering on
+    // tenantId alone left `tenants` unconstrained, so every login logged a denied read.
+    // getSystemQuery is the same tenant-scoping every other collection uses.
     this.firestoreService.searchData<I18nTenantOverrideModel>(
       I18nTenantOverrideCollection,
-      [
-        { key: 'tenantId', operator: '==', value: tenantId },
-        { key: 'isArchived', operator: '==', value: false },
-      ],
+      getSystemQuery(tenantId),
       'module',
       'asc',
     ).subscribe(overrides => {

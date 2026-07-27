@@ -24,7 +24,10 @@ function makeService(overrides: unknown[] = []) {
     load: mockLoad,
   };
   const firestoreService = {
-    searchData: vi.fn(() => of(overrides)),
+    searchData: vi.fn(
+      (_collection: string, _dbQuery: { key: string; operator: string; value: unknown }[], _orderBy?: string, _sortOrder?: string) =>
+        of(overrides),
+    ),
   };
   const appStore = {
     currentUser: vi.fn(() => ({ okey: 'u1' })),
@@ -68,6 +71,18 @@ describe('I18nOverrideService', () => {
       'de',
       { merge: true },
     );
+  });
+
+  // Regression: the query used to filter on the scalar `tenantId` and leave `tenants`
+  // unconstrained. The firestore rule gates this collection on resource.data.tenants,
+  // and Firestore rejects a list query it cannot prove is rule-safe — so every login
+  // logged "Missing or insufficient permissions".
+  it('should scope the query by the tenants array the firestore rule reads', () => {
+    const { svc, firestoreService } = makeService();
+    svc.applyOverrides('de');
+    const [, dbQuery] = firestoreService.searchData.mock.calls[0];
+    expect(dbQuery).toContainEqual({ key: 'tenants', operator: 'array-contains', value: 'scs' });
+    expect(dbQuery.some((q: { key: string }) => q.key === 'tenantId')).toBe(false);
   });
 
   it('should skip overrides with no value for the requested language', () => {
