@@ -50,7 +50,7 @@ service cloud.firestore {
     // Sensitive scalar channels: values whose channel floor is `privileged` —
     // never readable at the registered tier, writes gated below.
     function isSensitiveChannel(data) {
-      return data.addressChannel in ['ssn', 'dob', 'bankaccount'];
+      return data.addressChannel in ['ssn', 'dob', 'dod', 'bankaccount'];
     }
     // Who may write sensitive-channel addresses: the owner (self-service),
     // privileged, or memberAdmin (authorized editor per D9).
@@ -89,6 +89,14 @@ service cloud.firestore {
     }
     function tenantDelete() {
       return userExists() && belongsToTenant(resource.data);
+    }
+    // The `index` search string is a plain field on a tenant-readable document, so a
+    // sensitive value embedded there (`dob:19850101`) leaks past the field-level
+    // resurrection guard — that is exactly how the stripped dob survived Phase 4 in
+    // production until 2026-07-27 (rebuilt by scripts/rebuild-person-index.mjs).
+    // matches() is full-string RE2, hence the leading/trailing `.*`.
+    function indexHasNoSensitivePii() {
+      return !request.resource.data.get('index', '').matches('.*(dob|ssn|iban):.*');
     }
     // personKey of the caller (from their users/{uid} doc); '' when absent.
     function callerPersonKey() {
@@ -291,13 +299,16 @@ service cloud.firestore {
     match /ownerships/{id}         { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /personal-rels/{id}      { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     // persons: resurrection guard (spec 1.19 Phase 4) — the stripped PII fields
-    // (ssnId/dateOfBirth/favEmail/favPhone) must never reappear on the doc.
+    // (ssnId/dateOfBirth/dateOfDeath/favEmail/favPhone) must never reappear on the doc.
+    // dateOfDeath moved to the 'dod' vault channel; persons keep only the isDeceased flag.
     match /persons/{id} {
       allow read:   if tenantRead();  // C-2: no longer public
       allow create: if tenantCreate()
-                     && !request.resource.data.keys().hasAny(['ssnId', 'dateOfBirth', 'favEmail', 'favPhone']);
+                     && !request.resource.data.keys().hasAny(['ssnId', 'dateOfBirth', 'dateOfDeath', 'favEmail', 'favPhone'])
+                     && indexHasNoSensitivePii();
       allow update: if tenantUpdate()
-                     && !request.resource.data.keys().hasAny(['ssnId', 'dateOfBirth', 'favEmail', 'favPhone']);
+                     && !request.resource.data.keys().hasAny(['ssnId', 'dateOfBirth', 'dateOfDeath', 'favEmail', 'favPhone'])
+                     && indexHasNoSensitivePii();
       allow delete: if tenantDelete();
     }
     match /reservations/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }

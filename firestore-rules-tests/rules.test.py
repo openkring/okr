@@ -148,6 +148,8 @@ seed("addresses/adrO_email", {"tenants": ["t1"], "isArchived": False, "isFavorit
                               "parentKey": "person.pO", "addressChannel": "email", "email": "o@t1.ch"})
 seed("addresses/adrO_ssn",   {"tenants": ["t1"], "isArchived": False, "isFavorite": False,
                               "parentKey": "person.pO", "addressChannel": "ssn", "ssn": "7562222222222"})
+seed("addresses/adrO_dod",   {"tenants": ["t1"], "isArchived": False, "isFavorite": False,
+                              "parentKey": "person.pO", "addressChannel": "dod", "dod": "20240115"})
 seed("addresses/adrX_email", {"tenants": ["t2"], "isArchived": False, "isFavorite": True,
                               "parentKey": "person.pX", "addressChannel": "email", "email": "x@t2.ch"})
 # D-P4-3: competition-levels keep full dateOfBirth — privileged-only read
@@ -277,15 +279,40 @@ single_cases = [
     ("userM(memberAdmin) update ssn -> ALLOW (D9 editor)", True, PATCH, "addresses/adrO_ssn", M,
      body({"tenants": ["t1"], "isArchived": False, "isFavorite": False,
            "parentKey": "person.pO", "addressChannel": "ssn", "ssn": "7565555555555"}), ["ssn"]),
+    # 'dod' (date of death) is a sensitive scalar channel like ssn/dob — persons keep
+    # only the isDeceased flag.
+    ("userE(plain) GET another's dod address -> DENY", False, GET, "addresses/adrO_dod", E, None, None),
+    ("userM(memberAdmin) GET raw dod address -> ALLOW", True, GET, "addresses/adrO_dod", M, None, None),
+    ("userM(memberAdmin) update dod -> ALLOW (D9 editor)", True, PATCH, "addresses/adrO_dod", M,
+     body({"tenants": ["t1"], "isArchived": False, "isFavorite": False,
+           "parentKey": "person.pO", "addressChannel": "dod", "dod": "20240116"}), ["dod"]),
+    ("userE(plain) create dod for another person -> DENY", False, POST, "addresses?documentId=adrNew4", E,
+     body({"tenants": ["t1"], "isArchived": False, "isFavorite": False,
+           "parentKey": "person.pO", "addressChannel": "dod", "dod": "20240117"}), None),
     # resurrection guards: stripped fields must never reappear
     ("userD(admin) PATCH persons carrying ssnId -> DENY", False, PATCH, "persons/pA", D,
      body({"tenants": ["t1"], "isArchived": False, "lastName": "AA", "ssnId": "756"}), ["ssnId"]),
+    ("userD(admin) PATCH persons carrying dateOfDeath -> DENY", False, PATCH, "persons/pA", D,
+     body({"tenants": ["t1"], "isArchived": False, "lastName": "AA", "dateOfDeath": "20240101"}), ["dateOfDeath"]),
     ("userD(admin) create person carrying favEmail -> DENY", False, POST, "persons?documentId=pNew3", D,
      body({"tenants": ["t1"], "isArchived": False, "lastName": "N", "favEmail": "x@x.ch"}), None),
     ("userD(admin) PATCH orgs carrying favPhone -> DENY", False, PATCH, "orgs/oA", D,
      body({"tenants": ["t1"], "isArchived": False, "name": "Org A", "favPhone": "+4179"}), ["favPhone"]),
     ("userD(admin) PATCH persons w/o stripped keys -> ALLOW", True, PATCH, "persons/pA", D,
      body({"tenants": ["t1"], "isArchived": False, "lastName": "AB"}), ["lastName"]),
+    # index guard: a stripped value must not sneak back inside the search-index string
+    # (the legacy `dob:` elements that survived the Phase 4 strip until 2026-07-27).
+    ("userD(admin) PATCH persons w/ dob in index -> DENY", False, PATCH, "persons/pA", D,
+     body({"tenants": ["t1"], "isArchived": False, "lastName": "AA",
+           "index": "n:AA z:8712 fn:A dob:19850101"}), ["index"]),
+    ("userD(admin) PATCH persons w/ ssn in index -> DENY", False, PATCH, "persons/pA", D,
+     body({"tenants": ["t1"], "isArchived": False, "lastName": "AA",
+           "index": "n:AA ssn:7561111111111"}), ["index"]),
+    ("userD(admin) create person w/ dob in index -> DENY", False, POST, "persons?documentId=pNew4", D,
+     body({"tenants": ["t1"], "isArchived": False, "lastName": "N", "index": "n:N dob:19850101"}), None),
+    ("userD(admin) PATCH persons w/ clean index -> ALLOW", True, PATCH, "persons/pA", D,
+     body({"tenants": ["t1"], "isArchived": False, "lastName": "AA",
+           "index": "n:AA z:8712 fn:A bx:476"}), ["index"]),
     # D-P4-3: competition-levels (full dateOfBirth) — privileged-only read
     ("userA(plain) GET competition-levels -> DENY (D-P4-3)", False, GET, "competition-levels/clA", A, None, None),
     ("userD(admin t1) GET competition-levels -> ALLOW", True, GET, "competition-levels/clA", D, None, None),
