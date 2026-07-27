@@ -385,18 +385,28 @@ export class GroupViewPage implements ViewWillEnter {
     // Only folder-managers may (implicitly) create the group folder — members opening
     // the files tab before it exists just see an empty list (spec 1.22).
     if (selectedSegment === 'files' && canManageFolders(this.currentUser(), this.isGroupAdmin())) {
+      const targetGroupKey = this.groupKey();
       // Prefer the retained formData mirror over group() — group() transiently reloads to
       // undefined (auth/token refresh, Safari long-poll reconnect; see the linkedSignal
-      // comment above), and an empty allowedOwnerKeys array is the adoption guard's
-      // "disable the guard" sentinel. Skip the call entirely while neither has resolved
-      // yet, rather than running the guard with an unintentionally empty policy.
-      const currentGroup = this.formData() ?? this.group();
+      // comment above). But that linkedSignal retains the *previous* group's record across
+      // ANY blip, including a groupKey change itself (switching groups also makes group()
+      // reload through undefined) — so only trust the candidate when its own okey actually
+      // matches the group we're checking; otherwise treat it as unresolved (same as the
+      // group()-undefined case) and skip, rather than validating against the wrong group's
+      // admin list. An empty allowedOwnerKeys array is the adoption guard's "disable the
+      // guard" sentinel, so this must not run with a stale or absent record.
+      const candidateGroup = this.formData() ?? this.group();
+      const currentGroup = candidateGroup?.okey === targetGroupKey ? candidateGroup : undefined;
       if (currentGroup) {
         const allowedOwnerKeys = (currentGroup.admins ?? []).map(admin => admin.key);
         const isUsable = await this.folderService.ensureGroupFolder(
-          this.groupKey(), this.name(), this.store.tenantId(), this.currentUser(), allowedOwnerKeys
+          targetGroupKey, currentGroup.name, this.store.tenantId(), this.currentUser(), allowedOwnerKeys
         );
-        this.folderConflict.set(!isUsable);
+        // The awaited call may resolve after the user has navigated to a different group —
+        // only apply the result if it's still the group currently on screen.
+        if (this.groupKey() === targetGroupKey) {
+          this.folderConflict.set(!isUsable);
+        }
       }
     }
   }
