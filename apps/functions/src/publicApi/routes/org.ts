@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
-import { getProjectedAddresses } from '@okr/shared-util-functions';
+import { AppConfigCollection, OrgCollection } from '@okr/shared-models';
+import { getProjectedAddresses, pickFavoriteByChannel } from '@okr/shared-util-functions';
 
 import { setCacheHeaders } from '../utils';
 
@@ -16,26 +17,46 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
   try {
     const db = getFirestore();
 
-    const orgSnap = await db.collection('orgs')
-      .where('tenants', 'array-contains', tenantId)
-      .where('isArchived', '==', false)
-      .limit(1)
-      .get();
+    // The tenant's OWN org is app-config.ownerOrgId — not "the first org in the
+    // tenant": orgs holds every partner club too, and an arbitrary limit(1) hit
+    // one of those. Fall back to the tenant query only if ownerOrgId is unset.
+    const configSnap = await db.collection(AppConfigCollection).doc(tenantId).get();
+    const ownerOrgId = (configSnap.data()?.['ownerOrgId'] as string | undefined)?.trim();
 
-    const orgDoc = orgSnap.empty ? null : orgSnap.docs[0];
+    let orgDoc: FirebaseFirestore.DocumentSnapshot | null = null;
+    if (ownerOrgId) {
+      const ownerSnap = await db.collection(OrgCollection).doc(ownerOrgId).get();
+      if (ownerSnap.exists && !ownerSnap.data()?.['isArchived']) orgDoc = ownerSnap;
+    }
+    if (!orgDoc) {
+      const orgSnap = await db.collection(OrgCollection)
+        .where('tenants', 'array-contains', tenantId)
+        .where('isArchived', '==', false)
+        .limit(1)
+        .get();
+      orgDoc = orgSnap.empty ? null : orgSnap.docs[0];
+    }
     const org = orgDoc?.data() ?? null;
 
-    // Org contact via the shared projection module (spec 1.19 Phase 4, D8): the
-    // 'public' viewer tier of the org's addresses — the audited chokepoint for
-    // anonymous serving. org.fav* fields were stripped in Phase 4 (no fallback).
+    // Org contact + postal address via the shared projection module (spec 1.19
+    // Phase 4, D8): the 'public' viewer tier of the org's addresses — the audited
+    // chokepoint for anonymous serving. org.fav* fields were stripped in Phase 4
+    // (no fallback); favZipCode is the one that still lives on OrgModel.
     let favEmail = '';
     let favPhone = '';
+    let street = '';
+    let postalCode = '';
+    let city = '';
+    let countryCode = '';
     if (orgDoc) {
       const addresses = await getProjectedAddresses(db, `org.${orgDoc.id}`, 'public', tenantId);
-      favEmail = addresses.find((a) => a.addressChannel === 'email' && a.isFavorite)?.email
-        ?? addresses.find((a) => a.addressChannel === 'email')?.email ?? '';
-      favPhone = addresses.find((a) => a.addressChannel === 'phone' && a.isFavorite)?.phone
-        ?? addresses.find((a) => a.addressChannel === 'phone')?.phone ?? '';
+      favEmail = pickFavoriteByChannel(addresses, 'email')?.email ?? '';
+      favPhone = pickFavoriteByChannel(addresses, 'phone')?.phone ?? '';
+      const postal = pickFavoriteByChannel(addresses, 'postal');
+      street = [postal?.streetName ?? '', postal?.streetNumber ?? ''].filter((p) => p.length > 0).join(' ');
+      postalCode = postal?.zipCode ?? '';
+      city = postal?.city ?? '';
+      countryCode = postal?.countryCode ?? '';
     }
 
     const contentSnap = await db.collection('websiteContent')
@@ -59,10 +80,10 @@ export async function orgRouter(req: Request, res: Response): Promise<void> {
       description: content['org.description'] ?? { de: '', en: '' },
       memberCount: org?.['memberCount'] ?? 0,
       address: {
-        street: org?.['favStreet'] ?? '',
-        postalCode: org?.['favZipCode'] ?? '',
-        city: org?.['favCity'] ?? '',
-        country: 'CH',
+        street,
+        postalCode: postalCode || (org?.['favZipCode'] ?? ''),
+        city,
+        country: countryCode || 'CH',
       },
       contact: {
         email: favEmail,
