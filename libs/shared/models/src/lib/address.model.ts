@@ -17,6 +17,7 @@ export class AddressModel implements OkrModel, TaggedModel {
   // one doc per person, no favorite/label semantics; floors in CHANNEL_SENSITIVITY_FLOOR
   public ssn = '';            // addressChannel 'ssn': the AHV number (formatAhv Electronic)
   public dob = DEFAULT_DATE;  // addressChannel 'dob': date of birth (StoreDate YYYYMMDD)
+  public dod = DEFAULT_DATE;  // addressChannel 'dod': date of death (StoreDate YYYYMMDD)
   public streetName = DEFAULT_NAME;
   public streetNumber = '';
   public addressValue2 = ''; // optional address, e.g. c/o, company

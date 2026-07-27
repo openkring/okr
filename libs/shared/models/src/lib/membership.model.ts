@@ -31,7 +31,11 @@ export class MembershipModel implements OkrModel, SearchableModel, TaggedModel {
   public memberNickName = DEFAULT_NAME;
   public memberAbbreviation = '';
   public memberBirthYear = ''; // YYYY — degraded-precision dob replica (spec 1.19); memberDateOfBirth was stripped in Phase 4
-  public memberDateOfDeath = DEFAULT_DATE;
+  // degraded-precision dod replicas (spec 1.19); memberDateOfDeath was stripped for the
+  // same reason as memberDateOfBirth. For an org member they mean "liquidated".
+  // Written together: memberDeathYear is '' exactly when memberIsDeceased is false.
+  public memberIsDeceased = false;
+  public memberDeathYear = ''; // YYYY — carries the year filter of the deceased list
   public memberZipCode = '';
   public memberBexioId = DEFAULT_ID;
   public memberId = DEFAULT_ID;

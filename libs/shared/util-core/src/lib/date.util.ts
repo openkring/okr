@@ -163,12 +163,21 @@ export function getAge(dateOfBirth: string, byDecade = false, refYear = getYear(
 }
 
 /**
+ * Extract the year (YYYY) from a StoreDate (yyyymmdd). This is the degraded-precision
+ * replica every consumer outside the PII vault gets (spec 1.19): memberBirthYear from a
+ * dob address, deathYear/memberDeathYear from a dod address.
+ */
+export function getStoreDateYear(storeDate?: string): string {
+  if (!storeDate || storeDate.length !== 8) return '';
+  return storeDate.substring(0, 4);
+}
+
+/**
  * Extract the birth year (YYYY) from a StoreDate (yyyymmdd) date of birth.
  * Degraded-precision replica for privacy (spec 1.19): replicas carry the year only.
  */
 export function getBirthYear(dateOfBirth?: string): string {
-  if (!dateOfBirth || dateOfBirth.length !== 8) return '';
-  return dateOfBirth.substring(0, 4);
+  return getStoreDateYear(dateOfBirth);
 }
 
 /**

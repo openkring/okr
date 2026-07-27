@@ -24,10 +24,14 @@ import { ActivityService } from '@okr/activity-data-access';
 import { getAddressIndex } from '@okr/subject-address-util';
 import { PFX } from './scope';
 
+/** The sensitive scalar address channels of a person (spec 1.19 Phase 4, D9). */
+export type SensitiveChannel = 'ssn' | 'dob' | 'dod';
+
 /** Vault-backed sensitive scalar values of a person (spec 1.19 Phase 4, D9). */
 export interface SensitivePersonData {
   ssn?: string;
   dob?: string;
+  dod?: string;
 }
 
 @Injectable({
@@ -72,25 +76,28 @@ export class PersonService {
   }
 
   /**
-   * Removes the form-model ssn/dob fields from the person object (they must never be
+   * Removes the form-model ssn/dob/dod fields from the person object (they must never be
    * written to the person document — spec 1.19 Phase 4 strip) and returns the
    * effective sensitive values: explicit `sensitive` param wins, stray form fields
-   * are the fallback.
+   * are the fallback. `isDeceased` is NOT set here: onAddressChange derives it from the
+   * dod vault address, so the flag has exactly one writer.
    */
   private takeSensitive(person: PersonModel, sensitive?: SensitivePersonData): SensitivePersonData {
     const form = person as PersonFormModel;
     const sens: SensitivePersonData = {
       ssn: sensitive?.ssn ?? form.ssnId,
       dob: sensitive?.dob ?? form.dateOfBirth,
+      dod: sensitive?.dod ?? form.dateOfDeath,
     };
     delete form.ssnId;
     delete form.dateOfBirth;
+    delete form.dateOfDeath;
     return sens;
   }
 
   /**
    * Writes the sensitive scalar values into the addresses vault
-   * (spec 1.19): ssn → 'ssn' channel, dob → 'dob' channel.
+   * (spec 1.19): ssn → 'ssn' channel, dob → 'dob' channel, dod → 'dod' channel.
    * Empty/undefined values are no-ops — existing vault docs are never cleared here.
    * Uses FirestoreService directly (not AddressService) — cross-scope data-access
    * imports violate the Nx module boundaries; this mirrors how person.store
@@ -102,10 +109,11 @@ export class PersonService {
     const parentKey = `person.${key}`;
     await this.upsertScalarChannel(parentKey, 'ssn', sensitive.ssn ?? '', currentUser);
     await this.upsertScalarChannel(parentKey, 'dob', sensitive.dob ?? '', currentUser);
+    await this.upsertScalarChannel(parentKey, 'dod', sensitive.dod ?? '', currentUser);
   }
 
   /**
-   * Loads the vault-backed ssn/dob values for the person edit form (spec 1.19
+   * Loads the vault-backed ssn/dob/dod values for the person edit form (spec 1.19
    * Phase 4, D9): owner and privileged read the addresses vault directly (the
    * rules allow it), memberAdmin goes through the getAddressView callable
    * (privileged tier, D-P4-1), everyone else gets empty values (the form hides
@@ -115,11 +123,12 @@ export class PersonService {
     if (!personKey) return {};
     const isOwner = currentUser?.personKey === personKey;
     if (isOwner || hasRole('privileged', currentUser)) {
-      const [ssn, dob] = await Promise.all([
+      const [ssn, dob, dod] = await Promise.all([
         this.readScalarChannel(`person.${personKey}`, 'ssn'),
         this.readScalarChannel(`person.${personKey}`, 'dob'),
+        this.readScalarChannel(`person.${personKey}`, 'dod'),
       ]);
-      return { ssn, dob };
+      return { ssn, dob, dod };
     }
     if (hasRole('memberAdmin', currentUser)) {
       try {
@@ -130,6 +139,7 @@ export class PersonService {
         return {
           ssn: addresses.find((a) => a.addressChannel === 'ssn')?.ssn ?? '',
           dob: addresses.find((a) => a.addressChannel === 'dob')?.dob ?? '',
+          dod: addresses.find((a) => a.addressChannel === 'dod')?.dod ?? '',
         };
       } catch (error) {
         console.error('PersonService.loadSensitive: getAddressView failed', error);
@@ -140,7 +150,7 @@ export class PersonService {
   }
 
   /** Reads the value of a sensitive scalar-channel address ('' if none exists). */
-  private async readScalarChannel(parentKey: string, channel: 'ssn' | 'dob'): Promise<string> {
+  private async readScalarChannel(parentKey: string, channel: SensitiveChannel): Promise<string> {
     const query = getSystemQuery(this.env.tenantId);
     query.push({ key: 'parentKey', operator: '==', value: parentKey });
     query.push({ key: 'addressChannel', operator: '==', value: channel });
@@ -152,7 +162,7 @@ export class PersonService {
    * Upsert a sensitive scalar-channel address (one doc per parent and channel,
    * no favorite/label semantics). Empty value or unchanged value → no-op (idempotent).
    */
-  private async upsertScalarChannel(parentKey: string, channel: 'ssn' | 'dob', value: string, currentUser?: UserModel): Promise<void> {
+  private async upsertScalarChannel(parentKey: string, channel: SensitiveChannel, value: string, currentUser?: UserModel): Promise<void> {
     const query = getSystemQuery(this.env.tenantId);
     query.push({ key: 'parentKey', operator: '==', value: parentKey });
     query.push({ key: 'addressChannel', operator: '==', value: channel });

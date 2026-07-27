@@ -577,7 +577,9 @@ export const AocSrvStore = signalStore(
       }
       const fn = httpsCallable<object, { id: string }>(functions, 'updateSrvContact');
       const changed = new Set(getMismatches(item).map(m => m.field));
-      const person  = store.appStore.getPerson(item.personKey);
+      // dateOfDeath lives in the addresses vault (spec 1.19 'dod' channel), not on the
+      // person document — the AOC console runs privileged, so this is a raw vault read.
+      const sensitive = await store.personService.loadSensitive(item.personKey, store.currentUser());
       const catToMembershipType: Record<string, string> = { A: 'Active', P: 'Passive', J: 'Junior', D: 'Double', C: 'Candidate' };
 
       try {
@@ -594,7 +596,7 @@ export const AocSrvStore = signalStore(
           postcode:       changed.has('zipCode')     ? item.mZipCode || null  : item.rZipCode || null,
           city:           changed.has('city')        ? item.mCity   || null   : item.rCity   || null,
           leavingDate:    item.mDateOfExit || null,
-          dateOfDeath:    person?.dateOfDeath || null,
+          dateOfDeath:    sensitive.dod || null,
         });
       } catch (e) {
         console.error('AocSrvStore.updateRegasoft: updateSrvContact failed', e);

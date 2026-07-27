@@ -7,6 +7,7 @@ describe('CHANNEL_SENSITIVITY_FLOOR / getChannelFloor', () => {
   it('floors the sensitive channels at privileged', () => {
     expect(CHANNEL_SENSITIVITY_FLOOR['ssn']).toBe('privileged');
     expect(CHANNEL_SENSITIVITY_FLOOR['dob']).toBe('privileged');
+    expect(CHANNEL_SENSITIVITY_FLOOR['dod']).toBe('privileged');
     expect(CHANNEL_SENSITIVITY_FLOOR['bankaccount']).toBe('privileged');
   });
 
@@ -21,10 +22,11 @@ describe('CHANNEL_SENSITIVITY_FLOOR / getChannelFloor', () => {
 });
 
 describe('SENSITIVE_SCALAR_CHANNELS / isSensitiveScalarChannel', () => {
-  it('flags ssn and dob as sensitive scalar (non-contact) channels', () => {
-    expect(SENSITIVE_SCALAR_CHANNELS).toEqual(['ssn', 'dob']);
+  it('flags ssn, dob and dod as sensitive scalar (non-contact) channels', () => {
+    expect(SENSITIVE_SCALAR_CHANNELS).toEqual(['ssn', 'dob', 'dod']);
     expect(isSensitiveScalarChannel('ssn')).toBe(true);
     expect(isSensitiveScalarChannel('dob')).toBe(true);
+    expect(isSensitiveScalarChannel('dod')).toBe(true);
   });
   it('treats real contact channels (incl. bankaccount) as not sensitive-scalar', () => {
     expect(isSensitiveScalarChannel('email')).toBe(false);
@@ -58,6 +60,12 @@ describe('getEffectiveAccessor (spec 1.19 §A3: stricterAccessor(channelFloor, p
   it('person ssn is privileged regardless of preference', () => {
     expect(getEffectiveAccessor('ssn', 'person', PrivacyUsage.Public)).toBe('privileged');
     expect(getEffectiveAccessor('ssn', 'person', undefined)).toBe('privileged');
+  });
+
+  it('person dod is privileged regardless of preference (no usage* flag governs it)', () => {
+    expect(getEffectiveAccessor('dod', 'person', PrivacyUsage.Public)).toBe('privileged');
+    expect(getEffectiveAccessor('dod', 'person', undefined)).toBe('privileged');
+    expect(getEffectiveAccessorForAddress({ addressChannel: 'dod' }, 'person', {}, { showDateOfDeath: 'registered' })).toBe('privileged');
   });
 
   // -------- org: no person preference, contact data intentionally public --------

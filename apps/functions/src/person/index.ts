@@ -41,7 +41,7 @@ async function requireMemberAdmin(uid: string | undefined, fnName: string): Prom
 async function upsertVaultScalar(
   db: FirebaseFirestore.Firestore,
   personId: string,
-  channel: 'ssn' | 'dob',
+  channel: 'ssn' | 'dob' | 'dod',
   value: string,
   tenants: string[],
 ): Promise<void> {
@@ -88,19 +88,20 @@ async function upsertFavoriteContact(
 
 /**
  * Loads the candidate's vault/contact values from its addresses (spec 1.19 Phase 4:
- * ssn/dob/favEmail/favPhone no longer live on the person doc).
+ * ssn/dob/dod/favEmail/favPhone no longer live on the person doc).
  */
 async function loadCandidateAddressData(
   db: FirebaseFirestore.Firestore,
   personId: string,
-): Promise<{ ssnId: string; dateOfBirth: string; favEmail: string; favPhone: string }> {
+): Promise<{ ssnId: string; dateOfBirth: string; dateOfDeath: string; favEmail: string; favPhone: string }> {
   const snap = await db.collection(AddressCollection)
     .where('parentKey', '==', `person.${personId}`).get();
-  const result = { ssnId: '', dateOfBirth: '', favEmail: '', favPhone: '' };
+  const result = { ssnId: '', dateOfBirth: '', dateOfDeath: '', favEmail: '', favPhone: '' };
   snap.forEach((doc) => {
     const a = doc.data();
     if (a.addressChannel === 'ssn') result.ssnId = String(a.ssn ?? '');
     if (a.addressChannel === 'dob') result.dateOfBirth = String(a.dob ?? '');
+    if (a.addressChannel === 'dod') result.dateOfDeath = String(a.dod ?? '');
     if (a.addressChannel === 'email' && a.isFavorite === true) result.favEmail = String(a.email ?? '');
     if (a.addressChannel === 'phone' && a.isFavorite === true) result.favPhone = String(a.phone ?? '');
   });
@@ -121,9 +122,9 @@ function buildPersonIndex(p: FsData): string {
 function toCandidate(
   id: string,
   d: FsData,
-  addressData: { ssnId: string; dateOfBirth: string; favEmail: string; favPhone: string },
+  addressData: { ssnId: string; dateOfBirth: string; dateOfDeath: string; favEmail: string; favPhone: string },
 ): PersonDuplicateCandidate {
-  // ssn/dob/favEmail/favPhone come from the addresses vault/favorites
+  // ssn/dob/dod/favEmail/favPhone come from the addresses vault/favorites
   // (spec 1.19 Phase 4) — the person doc no longer carries them.
   return {
     okey: id,
@@ -131,7 +132,7 @@ function toCandidate(
     lastName: d.lastName ?? '',
     gender: d.gender ?? '',
     dateOfBirth: addressData.dateOfBirth,
-    dateOfDeath: d.dateOfDeath ?? '',
+    dateOfDeath: addressData.dateOfDeath,
     ssnId: addressData.ssnId,
     favEmail: addressData.favEmail,
     favPhone: addressData.favPhone,
@@ -218,11 +219,11 @@ export const mergePersonIntoTenant = onCall(
       throw new HttpsError('permission-denied', 'Caller does not belong to the target tenant.');
     }
 
-    // Person-writable fields only — ssnId/dateOfBirth go to the vault and
+    // Person-writable fields only — ssnId/dateOfBirth/dateOfDeath go to the vault and
     // favEmail/favPhone to the favorite addresses (spec 1.19 Phase 4 strip;
     // writing them onto the person would resurrect the stripped fields).
-    const PERSON_FIELDS = ['firstName', 'lastName', 'gender', 'dateOfDeath', 'favZipCode'];
-    const ADDRESS_FIELDS = ['ssnId', 'dateOfBirth', 'favEmail', 'favPhone'];
+    const PERSON_FIELDS = ['firstName', 'lastName', 'gender', 'favZipCode'];
+    const ADDRESS_FIELDS = ['ssnId', 'dateOfBirth', 'dateOfDeath', 'favEmail', 'favPhone'];
     const safeFields: FsData = {};
     const addressFields: FsData = {};
     for (const key of PERSON_FIELDS) {
@@ -254,6 +255,7 @@ export const mergePersonIntoTenant = onCall(
       ? Array.from(new Set([...merged.tenants, tenantId])) : [tenantId];
     if ('ssnId' in addressFields) await upsertVaultScalar(db, personKey, 'ssn', addressFields.ssnId, mergedTenants);
     if ('dateOfBirth' in addressFields) await upsertVaultScalar(db, personKey, 'dob', addressFields.dateOfBirth, mergedTenants);
+    if ('dateOfDeath' in addressFields) await upsertVaultScalar(db, personKey, 'dod', addressFields.dateOfDeath, mergedTenants);
     if ('favEmail' in addressFields) await upsertFavoriteContact(db, personKey, 'email', addressFields.favEmail, mergedTenants);
     if ('favPhone' in addressFields) await upsertFavoriteContact(db, personKey, 'phone', addressFields.favPhone, mergedTenants);
     return { okey: personKey };

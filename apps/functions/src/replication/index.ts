@@ -13,7 +13,7 @@ import {
   updateFavoriteZipCode,
   writeAddressDirectory
 } from "@okr/shared-util-functions";
-import { getBirthYear } from "@okr/shared-util-core";
+import { getBirthYear, getStoreDateYear } from "@okr/shared-util-core";
 
 const firestore = admin.firestore();
 
@@ -108,6 +108,33 @@ export const onAddressChange = onDocumentWritten(
             if ((m as { memberBirthYear?: string }).memberBirthYear !== birthYear) {
               await admin.firestore().doc(`${MembershipCollection}/${m.okey}`).update({ memberBirthYear: birthYear });
               logger.info(`Synced memberBirthYear for membership ${m.okey} of person ${personId}`);
+            }
+          }
+        }
+
+        // Same for the vault dod address (spec 1.19): it is the only date of death,
+        // and person.isDeceased / membership.memberIsDeceased are its degraded-precision
+        // replicas — the fact, never the date. This trigger is their only writer.
+        if (address.addressChannel === 'dod' && (address.parentKey as string).startsWith('person.')) {
+          const personId = (address.parentKey as string).substring('person.'.length);
+          const dod = String(event.data?.after.data()?.dod ?? '');
+          const isDeceased = dod.length > 0;
+          const deathYear = getStoreDateYear(dod);
+          const personRef = admin.firestore().doc(`${PersonCollection}/${personId}`);
+          const personSnap = await personRef.get();
+          const p = personSnap.data();
+          if (personSnap.exists && (p?.['isDeceased'] !== isDeceased || p?.['deathYear'] !== deathYear)) {
+            // triggers onPersonChange — it no longer syncs these fields
+            await personRef.update({ isDeceased, deathYear });
+            logger.info(`Synced isDeceased=${isDeceased}/deathYear=${deathYear} for person ${personId}`);
+          }
+          const memberships = await getAllMembershipsOfMember(firestore, personId, 'person');
+          for (const m of memberships) {
+            const member = m as { memberIsDeceased?: boolean; memberDeathYear?: string };
+            if (member.memberIsDeceased !== isDeceased || member.memberDeathYear !== deathYear) {
+              await admin.firestore().doc(`${MembershipCollection}/${m.okey}`)
+                .update({ memberIsDeceased: isDeceased, memberDeathYear: deathYear });
+              logger.info(`Synced memberIsDeceased/memberDeathYear for membership ${m.okey} of person ${personId}`);
             }
           }
         }
@@ -230,9 +257,9 @@ export const onPersonChange = onDocumentWritten(
         memberName1: person.firstName,
         memberName2: person.lastName,
         memberType: person.gender,
-        // memberBirthYear is NOT synced here anymore: person.dateOfBirth was stripped
-        // (spec 1.19 Phase 4) — the vault dob address syncs it via onAddressChange.
-        memberDateOfDeath: person.dateOfDeath,
+        // memberBirthYear and memberIsDeceased are NOT synced here: person.dateOfBirth
+        // and person.dateOfDeath were stripped (spec 1.19 Phase 4) — the vault dob/dod
+        // addresses sync both replicas via onAddressChange.
         memberZipCode: person.favZipCode,
         memberBexioId: person.bexioId,
       });
@@ -327,7 +354,8 @@ export const onOrgChange = onDocumentWritten(
           memberName1: '',
           memberName2: org.name,
           memberType: org.type,
-          memberDateOfDeath: org.dateOfLiquidation,
+          memberIsDeceased: (org.dateOfLiquidation ?? '').length > 0,
+          memberDeathYear: getStoreDateYear(org.dateOfLiquidation),
           memberZipCode: org.favZipCode,
           memberBexioId: org.bexioId
         };
@@ -410,7 +438,8 @@ export const onGroupChange = onDocumentWritten(
         const newMember = {
           memberName1: '',
           memberName2: group.name,
-          memberDateOfDeath: '',
+          memberIsDeceased: false,
+          memberDeathYear: '',
           memberZipCode: '',
           memberBexioId: ''
         };

@@ -285,7 +285,8 @@ export class MembershipForm {
           // person.dateOfBirth was stripped (spec 1.19 Phase 4): reset the birth year;
           // the membership store resolves it from the vault on save.
           memberBirthYear: '',
-          memberDateOfDeath: person.dateOfDeath,
+          memberIsDeceased: person.isDeceased ?? false,
+          memberDeathYear: person.deathYear ?? '',
           memberZipCode: person.favZipCode,
           memberBexioId: person.bexioId
         }));

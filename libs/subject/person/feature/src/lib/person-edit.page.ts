@@ -137,10 +137,10 @@ export class PersonEditPage implements ViewWillEnter   {
   }
 
   /**
-   * Seeds the form from the person document and then hydrates the vault-backed ssn/dob
+   * Seeds the form from the person document and then hydrates the vault-backed ssn/dob/dod
    * (spec 1.19 Phase 4, D9) — without them the fields render empty for every role, since
-   * the person document no longer carries ssnId/dateOfBirth. Saving is already vault-aware:
-   * PersonService.create/update strip both fields off the person write and sync the vault.
+   * the person document no longer carries ssnId/dateOfBirth/dateOfDeath. Saving is already
+   * vault-aware: PersonService.create/update strip the fields off the person write and sync the vault.
    */
   private seed(person: PersonModel): void {
     const formPerson = safeStructuredClone(person) as PersonFormModel;
@@ -152,7 +152,9 @@ export class PersonEditPage implements ViewWillEnter   {
     const sensitive = await this.store.loadSensitive(personKey);
     // the user may have navigated on or started editing while the vault read was in flight
     if (this.seededPersonKey !== personKey || this.formDirty()) return;
-    this.formData.update((vm) => vm ? { ...vm, ssnId: sensitive.ssn ?? '', dateOfBirth: sensitive.dob ?? '' } : vm);
+    this.formData.update((vm) => vm
+      ? { ...vm, ssnId: sensitive.ssn ?? '', dateOfBirth: sensitive.dob ?? '', dateOfDeath: sensitive.dod ?? '' }
+      : vm);
   }
 
   /**

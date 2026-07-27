@@ -1,6 +1,6 @@
 import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { AddressModel, AvatarInfo, CategoryItemModel, GroupModel, GroupModelName, MembershipModel, MoneyModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@okr/shared-models';
-import { addIndexElement, convertDateFormatToString, DateFormat, die, getBirthYear, getTodayStr } from '@okr/shared-util-core';
+import { addIndexElement, convertDateFormatToString, DateFormat, die, getBirthYear, getStoreDateYear, getTodayStr } from '@okr/shared-util-core';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@okr/subject-address-util';
@@ -18,7 +18,8 @@ export function createGroupMembership(group: GroupModel, person: PersonModel, te
   // person.dateOfBirth was stripped (spec 1.19 Phase 4) — callers pass the birth
   // year from the vault/an existing membership when they have it.
   membership.memberBirthYear = birthYear;
-  membership.memberDateOfDeath = person.dateOfDeath;
+  membership.memberIsDeceased = person.isDeceased ?? false;
+  membership.memberDeathYear = person.deathYear ?? '';
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
   membership.orgKey = group.okey ?? DEFAULT_KEY;
@@ -44,7 +45,8 @@ export function newMembershipForPerson(person: PersonModel, orgKey: string, orgN
   // person.dateOfBirth was stripped (spec 1.19 Phase 4) — callers pass the birth
   // year from the vault/an existing membership when they have it.
   membership.memberBirthYear = birthYear;
-  membership.memberDateOfDeath = person.dateOfDeath;
+  membership.memberIsDeceased = person.isDeceased ?? false;
+  membership.memberDeathYear = person.deathYear ?? '';
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
 
@@ -73,7 +75,8 @@ export function newMembershipForOrg(org: OrgModel, orgKey: string, orgName: stri
   membership.memberName2 = org.name;
   membership.memberModelType = 'org';
   membership.memberType = org.type;
-  membership.memberDateOfDeath = org.dateOfLiquidation;
+  membership.memberIsDeceased = (org.dateOfLiquidation ?? '').length > 0;
+  membership.memberDeathYear = getStoreDateYear(org.dateOfLiquidation);
   membership.memberZipCode = org.favZipCode;
   membership.memberBexioId = org.bexioId;
 
@@ -140,7 +143,8 @@ export function addPersonInfoToMembership(membership: MembershipModel, person: P
   membership.memberType = person.gender;
   // person.dateOfBirth was stripped (spec 1.19 Phase 4): memberBirthYear keeps its
   // current value (class default for a fresh membership).
-  membership.memberDateOfDeath = person.dateOfDeath;
+  membership.memberIsDeceased = person.isDeceased ?? false;
+  membership.memberDeathYear = person.deathYear ?? '';
   membership.memberZipCode = person.favZipCode;
   membership.memberBexioId = person.bexioId;
   return membership;
@@ -152,7 +156,8 @@ export function addOrgInfoToMembership(membership: MembershipModel, org: OrgMode
   membership.memberName2 = org.name;
   membership.memberModelType = OrgModelName;
   membership.memberType = org.type;
-  membership.memberDateOfDeath = org.dateOfLiquidation;
+  membership.memberIsDeceased = (org.dateOfLiquidation ?? '').length > 0;
+  membership.memberDeathYear = getStoreDateYear(org.dateOfLiquidation);
   membership.memberZipCode = org.favZipCode;
   membership.memberBexioId = org.bexioId;
   return membership;
@@ -338,7 +343,7 @@ export function getMembershipIndexInfo(): string {
       membership.memberNickName,
       membership.memberAbbreviation,
       membership.memberBirthYear,
-      membership.memberDateOfDeath,
+      membership.memberDeathYear,
       membership.memberZipCode,
       membership.memberBexioId,
       membership.memberId,
@@ -518,9 +523,9 @@ export function createNewMemberFormModel(org?: OrgModel): MemberNewFormModel {
 } 
 
 export function convertFormToNewPerson(vm: MemberNewFormModel, tenantId: string): PersonModel {
-  // ssn/dob ride along as extra form-model fields only — PersonService strips them
+  // ssn/dob/dod ride along as extra form-model fields only — PersonService strips them
   // from the person write and syncs them into the addresses vault (spec 1.19 Phase 4).
-  const person = new PersonModel(tenantId) as PersonModel & { ssnId?: string; dateOfBirth?: string };
+  const person = new PersonModel(tenantId) as PersonModel & { ssnId?: string; dateOfBirth?: string; dateOfDeath?: string };
   person.okey = DEFAULT_KEY;
   person.firstName = vm.firstName ?? DEFAULT_NAME;
   person.lastName = vm.lastName ?? DEFAULT_NAME;
@@ -568,7 +573,8 @@ export function convertNewMemberFormToMembership(vm: MemberNewFormModel, personK
   member.memberModelType = 'person';
   member.memberType = vm.gender ?? DEFAULT_GENDER;
   member.memberBirthYear = getBirthYear(vm.dateOfBirth ?? DEFAULT_DATE);
-  member.memberDateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
+  member.memberIsDeceased = (vm.dateOfDeath ?? '').length > 0;
+  member.memberDeathYear = getStoreDateYear(vm.dateOfDeath);
   member.memberZipCode = vm.zipCode ?? DEFAULT_ZIP;
   member.memberBexioId = vm.bexioId ?? DEFAULT_ID;
   member.orgKey = vm.orgKey ?? die('membership.util.convertFormToNewMembership: orgKey is mandatory');

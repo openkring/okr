@@ -18,7 +18,7 @@ export const personValidations = staticSuite((model: PersonFormModel, tenants: s
   stringValidations('gender', model.gender, WORD_LENGTH);
   stringValidations('ssnId', model.ssnId ?? '');
   dateValidations('dateOfBirth', model.dateOfBirth ?? '');
-  dateValidations('dateOfDeath', model.dateOfDeath);
+  dateValidations('dateOfDeath', model.dateOfDeath ?? '');
   stringValidations('bexioId', model.bexioId, 6);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   //tagValidations('tags', model.tags);
@@ -32,10 +32,10 @@ export const personValidations = staticSuite((model: PersonFormModel, tenants: s
   categoryValidations('usageName', model.usageName, PrivacyUsage);
 
   // cross field validations
-  omitWhen(model.dateOfDeath === '' || !model.dateOfBirth, () => {
+  omitWhen(!model.dateOfDeath || !model.dateOfBirth, () => {
     test('dateOfDeath', '@personDeathAfterBirth', () => {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      enforce(isAfterDate(model.dateOfDeath, model.dateOfBirth!)).isTruthy();
+      enforce(isAfterDate(model.dateOfDeath!, model.dateOfBirth!)).isTruthy();
     });
   });
 

@@ -1,10 +1,10 @@
 // apps/functions/src/person/migrate-sensitive-data.ts
 import { onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { getFirestore, Query, DocumentData } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, Query, DocumentData } from 'firebase-admin/firestore';
 
 import { AddressCollection, MembershipCollection, PersonCollection, ScsMemberFeesCollection } from '@okr/shared-models';
-import { getBirthYear } from '@okr/shared-util-core';
+import { getBirthYear, getStoreDateYear } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkAdminRole } from '@okr/shared-util-functions';
 
 const REGION = 'europe-west6';
@@ -33,13 +33,13 @@ async function forEachDoc(base: Query<DocumentData>, fn: (id: string, data: FsDa
 }
 
 /**
- * Upsert a sensitive scalar-channel address (ssn/dob) for a parent. Idempotent:
+ * Upsert a sensitive scalar-channel address (ssn/dob/dod) for a parent. Idempotent:
  * skips when an up-to-date vault doc already exists.
  */
 async function upsertScalar(
   db: FirebaseFirestore.Firestore,
   parentKey: string,
-  channel: 'ssn' | 'dob',
+  channel: 'ssn' | 'dob' | 'dod',
   value: string,
   tenants: string[],
 ): Promise<boolean> {
@@ -109,6 +109,69 @@ export const migrateSensitiveData = onCall(
     });
 
     logger.info('migrateSensitiveData: done', result);
+    return result;
+  },
+);
+
+/**
+ * One-time, idempotent migration of the date of death into the vault (spec 1.19,
+ * decided 2026-07-27). Admin-only. dod is the same class of data as dob, so it moves
+ * to the 'dod' address channel and leaves only a boolean behind:
+ *  1. persons.dateOfDeath → addresses 'dod' channel, persons.isDeceased + deathYear (YYYY),
+ *     source field deleted
+ *  2. memberships.memberDateOfDeath → memberships.memberIsDeceased + memberDeathYear,
+ *     source field deleted
+ *
+ * Safe to re-run: every write is skipped when the target already matches, and a person
+ * whose field is already gone is simply left alone.
+ *
+ * RUN ORDER: deploy the app, functions and rules FIRST. Until the new app is live, the
+ * deployed client still reads persons.dateOfDeath / memberships.memberDateOfDeath, and
+ * this migration would empty its "Verstorbene" lists.
+ */
+export const migrateDateOfDeath = onCall(
+  { region: REGION, enforceAppCheck: true, timeoutSeconds: 540 },
+  async (request): Promise<FsData> => {
+    checkAppCheckToken(request, 'migrateDateOfDeath');
+    checkAuthentication(request, 'migrateDateOfDeath');
+    await checkAdminRole(request, 'migrateDateOfDeath');
+
+    const db = getFirestore();
+    const del = FieldValue.delete();
+    const result = { persons: 0, dodAddresses: 0, personsFlagged: 0, memberships: 0, membershipsFlagged: 0 };
+
+    // 1. persons → dod vault address + isDeceased/deathYear replicas, then strip the field
+    result.persons = await forEachDoc(db.collection(PersonCollection), async (id, p) => {
+      const dod = typeof p.dateOfDeath === 'string' ? p.dateOfDeath : '';
+      const hasField = 'dateOfDeath' in p;
+      const isDeceased = dod.length > 0;
+      const deathYear = getStoreDateYear(dod);
+      if (isDeceased) {
+        const tenants = Array.isArray(p.tenants) ? p.tenants : [];
+        if (await upsertScalar(db, `person.${id}`, 'dod', dod, tenants)) result.dodAddresses++;
+      }
+      // only touch the person when something actually changes (keeps re-runs free of writes)
+      if (!hasField && p.isDeceased === isDeceased && p.deathYear === deathYear) return;
+      const update: FsData = { isDeceased, deathYear };
+      if (hasField) update.dateOfDeath = del;
+      await db.collection(PersonCollection).doc(id).update(update);
+      result.personsFlagged++;
+    });
+
+    // 2. memberships → memberIsDeceased/memberDeathYear replicas, then strip the date
+    result.memberships = await forEachDoc(db.collection(MembershipCollection), async (id, m) => {
+      const dod = typeof m.memberDateOfDeath === 'string' ? m.memberDateOfDeath : '';
+      const hasField = 'memberDateOfDeath' in m;
+      const isDeceased = dod.length > 0;
+      const deathYear = getStoreDateYear(dod);
+      if (!hasField && m.memberIsDeceased === isDeceased && m.memberDeathYear === deathYear) return;
+      const update: FsData = { memberIsDeceased: isDeceased, memberDeathYear: deathYear };
+      if (hasField) update.memberDateOfDeath = del;
+      await db.collection(MembershipCollection).doc(id).update(update);
+      result.membershipsFlagged++;
+    });
+
+    logger.info('migrateDateOfDeath: done', result);
     return result;
   },
 );

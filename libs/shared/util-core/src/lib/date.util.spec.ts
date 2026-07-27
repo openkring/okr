@@ -10,6 +10,7 @@ import {
     formatDateToken,
     getAgeFromBirthYear,
     getBirthYear,
+    getStoreDateYear,
     getEndOfYear, getStartOfYear,
     getTodayStr,
     getYear,
@@ -203,6 +204,19 @@ describe('date.util', () => {
 
         it('should ignore the seconds of a full iso date time', () => {
             expect(formatDateToken('2026-07-19T14:30:45')).toEqual('19.07.2026 14:30');
+        });
+    });
+
+    // getStoreDateYear (privacy 1.19: the degraded-precision replica of any vault date)
+    describe('getStoreDateYear', () => {
+        it('extracts YYYY from a StoreDate', () => {
+            expect(getStoreDateYear('20240115')).toBe('2024');
+        });
+        it('returns empty for missing/invalid input', () => {
+            expect(getStoreDateYear('')).toBe('');
+            expect(getStoreDateYear(undefined)).toBe('');
+            expect(getStoreDateYear('2024')).toBe('');
+            expect(getStoreDateYear('202401151')).toBe('');
         });
     });
 

@@ -20,6 +20,7 @@ import { PrivacyUsage } from './enums/privacy-usage.enum';
 export const CHANNEL_SENSITIVITY_FLOOR: Record<string, PrivacyAccessor> = {
   ssn: 'privileged',         // AHV number — besonders schützenswert (revDSG)
   dob: 'privileged',         // date of birth
+  dod: 'privileged',         // date of death — same class as dob; persons.isDeceased is the public marker
   bankaccount: 'privileged', // iban
 };
 
@@ -32,9 +33,9 @@ export function getChannelFloor(channel: string): PrivacyAccessor {
  * identity data (spec 1.19 vault) and must be excluded from the contact
  * accordion/list/count. They live under the same parentKey as the real contact
  * channels, so "all addresses of a person" stays a single query — the contact UI
- * just doesn't render these two.
+ * just doesn't render them.
  */
-export const SENSITIVE_SCALAR_CHANNELS: readonly string[] = ['ssn', 'dob'];
+export const SENSITIVE_SCALAR_CHANNELS: readonly string[] = ['ssn', 'dob', 'dod'];
 
 export function isSensitiveScalarChannel(channel: string): boolean {
   return SENSITIVE_SCALAR_CHANNELS.includes(channel);
@@ -88,6 +89,9 @@ export const CHANNEL_PRIVACY_INPUTS: Record<string, { usageFlag?: keyof PersonPr
   phone:       { usageFlag: 'usagePhone',         tenantFloor: 'showPhone' },
   postal:      { usageFlag: 'usagePostalAddress', tenantFloor: 'showPostalAddress' },
   dob:         { usageFlag: 'usageDateOfBirth',   tenantFloor: 'showDateOfBirth' },
+  // dod has no usage* flag: a deceased person expresses no preference, so only the
+  // channel floor and the tenant's showDateOfDeath govern it.
+  dod:         { tenantFloor: 'showDateOfDeath' },
   ssn:         { tenantFloor: 'showTaxId' },
   bankaccount: { tenantFloor: 'showIban' },
 };

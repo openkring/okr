@@ -18,7 +18,8 @@ describe('PersonModel', () => {
     expect(model.firstName).toBe(DEFAULT_NAME);
     expect(model.lastName).toBe(DEFAULT_NAME);
     expect(model.gender).toBe(DEFAULT_GENDER);
-    expect(model.dateOfDeath).toBe(DEFAULT_DATE);
+    expect(model.isDeceased).toBe(false);
+    expect(model.deathYear).toBe('');
     expect(model.favZipCode).toBe('');
     expect(model.bexioId).toBe(DEFAULT_ID);
   });

@@ -1,6 +1,6 @@
 import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { AddressModel, MembershipModel, OrgModel, PersonModel } from '@okr/shared-models';
-import { addIndexElement, die, getBirthYear, getTodayStr } from '@okr/shared-util-core';
+import { addIndexElement, die, getBirthYear, getStoreDateYear, getTodayStr } from '@okr/shared-util-core';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@okr/subject-address-util';
 
@@ -23,7 +23,7 @@ export function convertFormToNewPerson(vm: PersonNewFormModel, tenantId: string)
   person.firstName = vm.firstName ?? DEFAULT_NAME;
   person.lastName = vm.lastName ?? DEFAULT_NAME;
   person.gender = vm.gender ?? DEFAULT_GENDER;
-  // ssn/dob ride along on the form model only — PersonService strips them from the
+  // ssn/dob/dod ride along on the form model only — PersonService strips them from the
   // person write and syncs them into the addresses vault (spec 1.19 Phase 4).
   person.dateOfBirth = vm.dateOfBirth ?? DEFAULT_DATE;
   person.dateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
@@ -74,7 +74,8 @@ export function convertNewPersonFormToMembership(vm: PersonNewFormModel, personK
   member.memberNickName = DEFAULT_NAME;
   member.memberAbbreviation = '';
   member.memberBirthYear = getBirthYear(vm.dateOfBirth ?? DEFAULT_DATE);
-  member.memberDateOfDeath = vm.dateOfDeath ?? DEFAULT_DATE;
+  member.memberIsDeceased = (vm.dateOfDeath ?? '').length > 0;
+  member.memberDeathYear = getStoreDateYear(vm.dateOfDeath);
   member.memberZipCode = vm.zipCode ?? DEFAULT_ZIP;
   member.memberBexioId = vm.bexioId ?? DEFAULT_ID;
   member.memberId = DEFAULT_ID;

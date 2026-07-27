@@ -41,7 +41,7 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
               </ion-col>
             </ion-row>
 
-            @if(isSensitiveVisibleToUser(priv().showDateOfBirth) || isVisibleToUser('dod', priv().showDateOfDeath)) {
+            @if(isSensitiveVisibleToUser(priv().showDateOfBirth) || isSensitiveVisibleToUser(priv().showDateOfDeath)) {
               <ion-row>
                 @if(isSensitiveVisibleToUser(priv().showDateOfBirth)) {
                   <ion-col size="12" size-md="6"> 
@@ -159,8 +159,8 @@ export class PersonForm {
   }
 
   protected isDeathDateVisible(): boolean {
+    if (!isSensitiveFieldVisible(this.priv().showDateOfDeath, this.currentUser())) return false;
     if (!this.isReadOnly()) return true;
-    if (!isVisibleToUser(this.priv().showDateOfDeath, this.currentUser())) return false;
     return this.dateOfDeath().length > 0 ? true : false;
   }
 

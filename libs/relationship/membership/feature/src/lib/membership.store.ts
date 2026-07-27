@@ -220,7 +220,7 @@ export const _MembershipStore = signalStore(
       deceasedMembers: computed(() => state.allMembershipsResource.value()?.filter((membership: MembershipModel) => 
         membership.orgKey === state.orgId() && 
         membership.memberModelType === 'person' &&
-        membership.memberDateOfDeath.length > 0) ?? []),
+        membership.memberIsDeceased === true) ?? []),
 
       entries: computed(() => state.allMembershipsResource.value()?.filter((membership: MembershipModel) =>
         membership.orgKey === state.orgId() && 
@@ -324,10 +324,12 @@ export const _MembershipStore = signalStore(
 
       // deceased members
       deceasedCount: computed(() => state.deceasedMembers().length), 
-      filteredDeceased: computed(() => 
-        state.deceasedMembers()?.filter((membership: MembershipModel) => 
+      // the year filter runs on memberDeathYear (YYYY): the full date is vault-only
+      // (spec 1.19 'dod' channel), the year is the degraded-precision replica.
+      filteredDeceased: computed(() =>
+        state.deceasedMembers()?.filter((membership: MembershipModel) =>
           nameMatches(membership.index, state.searchTerm()) &&
-          yearMatches(membership.memberDateOfDeath, state.selectedYear()) &&
+          yearMatches(membership.memberDeathYear, state.selectedYear()) &&
           chipMatches(membership.tags, state.selectedTag()))
       ),
 

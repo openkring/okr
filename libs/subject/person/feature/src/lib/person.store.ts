@@ -16,7 +16,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
 import { PersonService, SensitivePersonData } from '@okr/subject-person-data-access';
-import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonFormModel, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@okr/subject-person-util';
+import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@okr/subject-person-util';
 import { browseUrl, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { MatrixChatService } from '@okr/chat-data-access';
@@ -66,7 +66,9 @@ export const PersonStore = signalStore(
   withComputed((state) => {
     return {
       persons: computed(() => state.appStore.allPersons()),
-      deceased: computed(() => state.appStore.allPersons().filter((person: PersonModel) => person.dateOfDeath !== undefined && person.dateOfDeath.length > 0) ?? []),
+      // the date of death itself lives in the addresses vault ('dod' channel, spec 1.19);
+      // persons carry only the isDeceased marker, which is what a list may filter on.
+      deceased: computed(() => state.appStore.allPersons().filter((person: PersonModel) => person.isDeceased === true) ?? []),
       showGender: computed(() => hasRole(state.appStore.privacySettings().showGender, state.appStore.currentUser())),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
@@ -310,15 +312,13 @@ export const PersonStore = signalStore(
         },
 
         async edit(person: PersonModel, readOnly = true): Promise<void> {
-            // Hydrate ssn/dob from the addresses vault (spec 1.19 Phase 4, D9):
-            // owner/privileged read raw, memberAdmin via getAddressView, others get ''.
-            const sensitive = await this.loadSensitive(person.okey);
-            const formPerson: PersonFormModel = { ...person, ssnId: sensitive.ssn ?? '', dateOfBirth: sensitive.dob ?? '' };
+            // ssn/dob are NOT passed in: PersonEditModal hydrates them from the addresses
+            // vault itself (spec 1.19 Phase 4, D9), so every opener of that modal is correct.
             const { PersonEditModal } = await import('./person-edit.modal');
             const modal = await store.modalController.create({
                 component: PersonEditModal,
                 componentProps: {
-                    person: formPerson,
+                    person,
                     currentUser: store.currentUser(),
                     tags: this.getTags(),
                     tenantId: store.tenantId(),

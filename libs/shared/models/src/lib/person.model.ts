@@ -1,4 +1,4 @@
-import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
+import { DEFAULT_GENDER, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { AddressableModel, OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { PrivacyUsage } from './enums/privacy-usage.enum';
 
@@ -12,10 +12,15 @@ export class PersonModel implements OkrModel, AddressableModel, SearchableModel,
   public firstName = DEFAULT_NAME;
   public lastName = DEFAULT_NAME;
   public gender = DEFAULT_GENDER;
-  // ssnId/dateOfBirth/favEmail/favPhone were stripped in privacy 1.19 Phase 4:
-  // ssn + dob live only in the addresses vault; contact data is served by the
+  // ssnId/dateOfBirth/dateOfDeath/favEmail/favPhone were stripped in privacy 1.19 Phase 4:
+  // ssn + dob + dod live only in the addresses vault; contact data is served by the
   // address-directory projection.
-  public dateOfDeath = DEFAULT_DATE;
+  // isDeceased + deathYear are the degraded-precision dod replicas (the dob analogue is
+  // memberships.memberBirthYear): the fact and the year, never the full date, so that
+  // member-facing filters and lists keep working. Always written together — deathYear is
+  // '' exactly when isDeceased is false. onAddressChange is their only writer.
+  public isDeceased = false;
+  public deathYear = ''; // YYYY
   public favZipCode = '';
   public bexioId = DEFAULT_ID;
 

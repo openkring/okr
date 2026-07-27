@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
@@ -93,7 +93,7 @@ export class PersonEditModal {
   private readonly modalController = inject(ModalController);
 
   // inputs
-  // person + vault-hydrated ssn/dob (spec 1.19 Phase 4, D9) — see PersonStore.edit()
+  // the plain person document — ssn/dob are hydrated from the vault below (spec 1.19 Phase 4, D9)
   public person = input.required<PersonFormModel>();
   public currentUser = input<UserModel | undefined>();
   public tags = input.required<string>();
@@ -120,6 +120,33 @@ export class PersonEditModal {
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
+  /** the person key whose vault values were last requested — guards the async hydration below */
+  private hydratedPersonKey = '';
+
+  constructor() {
+    effect(() => {
+      const personKey = this.personKey();
+      if (!personKey || this.hydratedPersonKey === personKey) return;
+      this.hydratedPersonKey = personKey;
+      void this.hydrateSensitive(personKey);
+    });
+  }
+
+  /**
+   * Hydrates the vault-backed ssn/dob/dod (spec 1.19 Phase 4, D9). The person document no
+   * longer carries ssnId/dateOfBirth/dateOfDeath, and every opener (person list, membership,
+   * reservation, personal-rel, aoc, chat) hands us the plain document — so the read belongs
+   * here, in the one component they all share, not in each calling store. Mirrors person-edit.page.
+   */
+  private async hydrateSensitive(personKey: string): Promise<void> {
+    const sensitive = await this.store.loadSensitive(personKey);
+    // the modal may have been dismissed or the user may have started editing while the read was in flight
+    if (this.hydratedPersonKey !== personKey || this.formDirty()) return;
+    this.formData.update((vm) => vm
+      ? { ...vm, ssnId: sensitive.ssn ?? '', dateOfBirth: sensitive.dob ?? '', dateOfDeath: sensitive.dod ?? '' }
+      : vm);
+  }
+
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     await this.modalController.dismiss(this.formData(), 'confirm');
@@ -128,6 +155,7 @@ export class PersonEditModal {
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
     this.formData.set(safeStructuredClone(this.person()));  // reset the form
+    void this.hydrateSensitive(this.personKey());           // ...and re-read ssn/dob (not on the person document)
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

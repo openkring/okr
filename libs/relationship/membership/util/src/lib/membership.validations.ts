@@ -25,7 +25,7 @@ export const membershipValidations = staticSuite((model: MembershipModel, tenant
   stringValidations('memberNickName', model.memberNickName, SHORT_NAME_LENGTH);
   stringValidations('memberAbbreviation', model.memberAbbreviation, ABBREVIATION_LENGTH);
   stringValidations('memberBirthYear', model.memberBirthYear, 4);
-  dateValidations('memberDateOfDeath', model.memberDateOfDeath);
+  // memberIsDeceased is a boolean replica of the vault dod address (spec 1.19) — nothing to validate
   stringValidations('memberZipCode', model.memberZipCode, ZIP_LENGTH);
   stringValidations('memberBexioId', model.memberBexioId, BEXIO_ID_LENGTH);
 
