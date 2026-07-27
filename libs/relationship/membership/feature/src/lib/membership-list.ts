@@ -15,6 +15,18 @@ import { Menu } from '@okr/cms-menu-feature';
 import { getMainContact, isAdminMember } from '@okr/subject-group-util';
 
 import { MembershipStore } from './membership.store';
+import { PFX } from './scope';
+
+/**
+ * The listIds that have a `list.<listId>.title` i18n key (see src/i18n/*.json).
+ * The route param :listId is user-supplied, so an unknown value (a stale bookmark, a hand-typed
+ * url such as /membership/person/all, or the fall-through id 'all') must not be interpolated into
+ * a translation key -- it would render a blank title and report an i18n missing-key to Sentry.
+ */
+const TITLED_LIST_IDS = new Set([
+  'memberships', 'persons', 'orgs', 'applied', 'active', 'passive', 'cancelled', 'deceased', 'entries', 'exits'
+]);
+const DEFAULT_LIST_ID = 'memberships';
 
 @Component({
   selector: 'okr-membership-list',
@@ -216,7 +228,8 @@ export class MembershipList {
     }
   });
   protected title = computed(() => {
-   return `@relationship/membership/feature.list.${this.listId()}.title`;
+    const listId = this.listId();
+    return `${PFX}list.${TITLED_LIST_IDS.has(listId) ? listId : DEFAULT_LIST_ID}.title`;
   });
   
   protected yearLabel = computed(() => {
