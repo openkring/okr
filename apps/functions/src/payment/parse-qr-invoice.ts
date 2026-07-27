@@ -32,7 +32,11 @@ function parseQrContent(raw: string): ParsedQrInvoice {
 }
 
 export const parseQrInvoice = onCall(
-  { region: 'europe-west6', enforceAppCheck: true, memory: '128MiB' },
+  // 256MiB (the v2 default), not 128MiB: every function loads the one shared
+  // esbuild bundle at startup, so container memory tracks the whole codebase and
+  // not this handler (which only parses a string). At 128MiB the container OOMed
+  // during startup (135 MiB used) and the deploy failed its healthcheck.
+  { region: 'europe-west6', enforceAppCheck: true, memory: '256MiB' },
   async (request: CallableRequest<ParseQrInvoiceData>) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
     const { qrContent } = request.data;

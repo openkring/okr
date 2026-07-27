@@ -11,7 +11,9 @@ interface SetManualRateData {
 }
 
 export const setManualRate = onCall(
-  { region: 'europe-west6', enforceAppCheck: true, memory: '128MiB' },
+  // 256MiB for the same reason as parseQrInvoice: the shared bundle, not this
+  // handler, sets the startup footprint — 128MiB is below it now.
+  { region: 'europe-west6', enforceAppCheck: true, memory: '256MiB' },
   async (request: CallableRequest<SetManualRateData>) => {
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
     const { fromCurrency, toCurrency, rate, date } = request.data;
