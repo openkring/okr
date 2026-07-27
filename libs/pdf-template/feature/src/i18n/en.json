@@ -53,6 +53,57 @@
   },
 
 
+  "doc": {
+    "generate": {
+      "label": "Create document",
+      "pending": "Creating document…",
+      "error": "Error: {{ error }}"
+    },
+    "preview": {
+      "title": "Document",
+      "frame": "PDF preview",
+      "unavailable": "Preview not available. Please download.",
+      "empty": "No document loaded."
+    },
+    "close": { "label": "Close" },
+    "download": { "label": "Download" },
+    "send": { "label": "Send" }
+  },
+  "composer": {
+    "title": "Send document",
+    "to": {
+      "label": "To",
+      "placeholder": "email@domain.com"
+    },
+    "from": {
+      "label": "From",
+      "placeholder": "email@domain.com",
+      "warning": "Warning: sending will be rejected. Allowed sender domain:",
+      "unknown": "(unknown)"
+    },
+    "cc": {
+      "label": "Cc",
+      "placeholder": "email1@domain.com, email2@domain.com"
+    },
+    "bcc": {
+      "label": "Bcc",
+      "placeholder": "email1@domain.com, email2@domain.com"
+    },
+    "subject": {
+      "label": "Subject",
+      "prefix": "Document:"
+    },
+    "attachment": {
+      "add": "Add",
+      "toolarge": "File too large (max. {{ maxMb }} MB): {{ name }}"
+    },
+    "send": {
+      "conf": "Document sent to {{ recipients }}",
+      "error": "Sending failed: {{ error }}"
+    },
+    "revert": { "label": "Discard" }
+  },
+
   "category": {
     "label": "Category"
   },

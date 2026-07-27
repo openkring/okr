@@ -53,8 +53,59 @@
   },
 
 
-  "category": { 
-    "label": "Kategorie" 
+  "doc": {
+    "generate": {
+      "label": "Dokument erstellen",
+      "pending": "Dokument wird erstellt…",
+      "error": "Fehler: {{ error }}"
+    },
+    "preview": {
+      "title": "Dokument",
+      "frame": "PDF Vorschau",
+      "unavailable": "Vorschau nicht verfügbar. Bitte herunterladen.",
+      "empty": "Kein Dokument geladen."
+    },
+    "close": { "label": "Schliessen" },
+    "download": { "label": "Herunterladen" },
+    "send": { "label": "Senden" }
+  },
+  "composer": {
+    "title": "Dokument senden",
+    "to": {
+      "label": "An",
+      "placeholder": "email@domain.com"
+    },
+    "from": {
+      "label": "Von",
+      "placeholder": "email@domain.com",
+      "warning": "Warnung: Der Versand wird abgelehnt. Erlaubte Absender-Domain:",
+      "unknown": "(unbekannt)"
+    },
+    "cc": {
+      "label": "Cc",
+      "placeholder": "email1@domain.com, email2@domain.com"
+    },
+    "bcc": {
+      "label": "Bcc",
+      "placeholder": "email1@domain.com, email2@domain.com"
+    },
+    "subject": {
+      "label": "Betreff",
+      "prefix": "Dokument:"
+    },
+    "attachment": {
+      "add": "Hinzufügen",
+      "toolarge": "Datei zu gross (max. {{ maxMb }} MB): {{ name }}"
+    },
+    "send": {
+      "conf": "Dokument gesendet an {{ recipients }}",
+      "error": "Senden fehlgeschlagen: {{ error }}"
+    },
+    "revert": { "label": "Verwerfen" }
+  },
+
+  "category": {
+    "label": "Kategorie"
   },
   "language": {
     "label": "Sprache" 

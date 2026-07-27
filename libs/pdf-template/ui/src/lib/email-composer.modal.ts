@@ -1,6 +1,7 @@
 // libs/pdf-template/ui/src/lib/email-composer.modal.ts
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
+import { firstValueFrom } from 'rxjs';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
   IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
@@ -15,9 +16,11 @@ import {
 } from '@okr/shared-ui';
 import { getImgixUrl } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
 import {
   buildBrandedEmailHtml, parseEmails,
   EmailComposerFormModel, emailComposerValidations,
+  EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n,
 } from '@okr/pdf-template-util';
 import { DocEmailService, InlineAttachment } from '@okr/pdf-template-data-access';
 
@@ -42,7 +45,7 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
-        <ion-title>Dokument senden</ion-title>
+        <ion-title>{{ i18n.title() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="cancel()">
             <ion-icon src="{{ 'cancel-circle' | svgIcon }}" slot="icon-only" />
@@ -52,7 +55,7 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
     </ion-header>
 
     @if (showConfirmation()) {
-      <okr-change-confirmation [i18n]="changeConfirmationI18n" (saveClicked)="send()" (cancelClicked)="revert()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="send()" (cancelClicked)="revert()" />
     }
 
     <ion-content class="ion-no-padding">
@@ -63,12 +66,12 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
               <ion-grid>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="toI18n" [value]="toField()"
+                    <okr-text-input [i18n]="toI18n()" [value]="toField()"
                       (valueChange)="onFieldChange('to', $event)"
                       [autofocus]="true" [maxLength]="200" [readOnly]="false" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <okr-email [i18n]="fromI18n" [value]="from()"
+                    <okr-email [i18n]="fromI18n()" [value]="from()"
                       (valueChange)="onFieldChange('from', $event)" [readOnly]="false" />
                     @if (fromWarning(); as warning) {
                       <ion-note color="warning" class="attachment">{{ warning }}</ion-note>
@@ -77,17 +80,17 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
                 </ion-row>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="ccI18n" [value]="cc()"
+                    <okr-text-input [i18n]="ccI18n()" [value]="cc()"
                       (valueChange)="onFieldChange('cc', $event)" [maxLength]="200" [readOnly]="false" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="bccI18n" [value]="bcc()"
+                    <okr-text-input [i18n]="bccI18n()" [value]="bcc()"
                       (valueChange)="onFieldChange('bcc', $event)" [maxLength]="200" [readOnly]="false" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-text-input [i18n]="subjectI18n" [value]="subject()"
+                    <okr-text-input [i18n]="subjectI18n()" [value]="subject()"
                       (valueChange)="onFieldChange('subject', $event)" [maxLength]="100" [readOnly]="false" />
                   </ion-col>
                 </ion-row>
@@ -108,7 +111,7 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
                   <ion-col size="3" class="ion-text-end">
                     <ion-button fill="outline" size="small" (click)="fileInput.click()">
                       <ion-icon src="{{ 'add' | svgIcon }}" slot="start" />
-                      Hinzufügen
+                      {{ i18n.attachment_add() }}
                     </ion-button>
                     <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
                   </ion-col>
@@ -117,9 +120,9 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
                   <ion-col size="12">
                     <okr-editor [content]="body()" (contentChange)="onFieldChange('body', $event)"
                       [readOnly]="false" [clearable]="false" [copyable]="false"
-                      [buttonCopyI18n]="buttonCopyI18n" />
+                      [buttonCopyI18n]="buttonCopyI18n()" />
                     <div class="editor-actions">
-                      <okr-button-copy [i18n]="buttonCopyI18n" [value]="body()" />
+                      <okr-button-copy [i18n]="buttonCopyI18n()" [value]="body()" />
                       <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="clearBody()" tabindex="-1" />
                     </div>
                   </ion-col>
@@ -137,6 +140,8 @@ export class EmailComposerModal {
   private readonly docEmailService = inject(DocEmailService);
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
+  private readonly i18nService = inject(I18nService);
+  protected readonly i18n = this.i18nService.translateAll(EMAIL_COMPOSER_I18N_KEYS) as EmailComposerI18n;
 
   // inputs
   public readonly to            = input<string>('');
@@ -175,27 +180,55 @@ export class EmailComposerModal {
     const domain = from.split('@')[1]?.toLowerCase() ?? '';
     return expected && domain === expected
       ? ''
-      : `Warnung: Der Absender ist nicht auf der Domain ${expected || '(unbekannt)'} – der Versand wird abgelehnt.`;
+      : `${this.i18n.from_warning()} ${expected || this.i18n.from_unknown()}`;
   });
 
-  // i18n objects (literals; this lib uses literal German strings, like the other modals)
-  protected readonly toI18n: TextInputI18n      = { name: 'to', label: 'An', placeholder: 'email@domain.com', helper: '' };
-  protected readonly fromI18n: EmailInputI18n   = { name: 'from', label: 'Von', placeholder: 'email@seeclub.org' };
-  protected readonly ccI18n: TextInputI18n      = { name: 'cc', label: 'Cc', placeholder: 'email1@domain.com, email2@domain.com', helper: '' };
-  protected readonly bccI18n: TextInputI18n     = { name: 'bcc', label: 'Bcc', placeholder: 'email1@domain.com, email2@domain.com', helper: '' };
-  protected readonly subjectI18n: TextInputI18n = { name: 'subject', label: 'Betreff', placeholder: '', helper: '' };
-  protected readonly buttonCopyI18n: ButtonCopyI18n = { copy_conf: 'Kopiert' };
-  protected readonly changeConfirmationI18n: ChangeConfirmationI18n = { cancel: 'Verwerfen', save: 'Senden' };
+  // adapters at the shared/ui boundary (these components define their own minimal i18n interfaces)
+  protected readonly toI18n = computed(() => ({
+    name: 'to', label: this.i18n.to_label(), placeholder: this.i18n.to_placeholder(), helper: '',
+  } as TextInputI18n));
+  protected readonly fromI18n = computed(() => ({
+    name: 'from', label: this.i18n.from_label(), placeholder: this.i18n.from_placeholder(),
+  } as EmailInputI18n));
+  protected readonly ccI18n = computed(() => ({
+    name: 'cc', label: this.i18n.cc_label(), placeholder: this.i18n.cc_placeholder(), helper: '',
+  } as TextInputI18n));
+  protected readonly bccI18n = computed(() => ({
+    name: 'bcc', label: this.i18n.bcc_label(), placeholder: this.i18n.bcc_placeholder(), helper: '',
+  } as TextInputI18n));
+  protected readonly subjectI18n = computed(() => ({
+    name: 'subject', label: this.i18n.subject_label(), placeholder: '', helper: '',
+  } as TextInputI18n));
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n.copy_conf() } as ButtonCopyI18n));
+  protected readonly changeConfirmationI18n = computed(() => ({
+    cancel: this.i18n.revert(), save: this.i18n.send(),
+  } as ChangeConfirmationI18n));
+
+  constructor() {
+    // The subject prefix resolves asynchronously, so buildInitial() may have run before it arrived
+    // (it reads the prefix untracked — a tracked read would let a late translation reset the whole
+    // form, wiping user input). Patch the subject in once the prefix lands, and only while the form
+    // is still pristine.
+    effect(() => {
+      const prefix = this.i18n.subject_prefix();
+      if (prefix.length === 0) return;
+      untracked(() => {
+        if (this.isDirty()) return;
+        this.formData.update((vm) => ({ ...vm, subject: `${prefix} ${this.filename()}` }));
+      });
+    });
+  }
 
   private buildInitial(): EmailComposerFormModel {
     const domain = this.appStore.appConfig().appDomain ?? '';
+    const prefix = untracked(() => this.i18n.subject_prefix());
     return {
       to: this.to(),
       // Default sender on the app's own domain (e.g. app@seeclub.org), derived from app config.
       from: domain ? `app@${domain}` : '',
       cc: '',
       bcc: '',
-      subject: `Dokument: ${this.filename()}`,
+      subject: prefix ? `${prefix} ${this.filename()}` : this.filename(),
       body: '<p></p>',
     };
   }
@@ -216,7 +249,10 @@ export class EmailComposerModal {
     input.value = '';                          // allow re-selecting the same file later
     if (!file) return;
     if (file.size > MAX_ATTACHMENT_BYTES) {
-      void this.showToast(`Datei zu gross (max. ${Math.round(MAX_ATTACHMENT_BYTES / 1024 / 1024)} MB): ${file.name}`, 'danger');
+      void this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.attachment_toolarge, {
+        maxMb: Math.round(MAX_ATTACHMENT_BYTES / 1024 / 1024),
+        name: file.name,
+      }, 'danger');
       return;
     }
     const reader = new FileReader();
@@ -279,16 +315,21 @@ export class EmailComposerModal {
         extraAttachments: this.extraAttachments(),
       });
 
-      await this.showToast(`Dokument gesendet an ${recipients.join(', ')}`);
+      await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_conf, { recipients: recipients.join(', ') });
       await this.modalController.dismiss({ sent: true }, 'confirm');
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      await this.showToast(`Senden fehlgeschlagen: ${message}`, 'danger');
+      await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_error, { error: message }, 'danger');
       this.isSending.set(false);
     }
   }
 
-  private async showToast(message: string, color = 'success'): Promise<void> {
+  /**
+   * Resolve a parameterised message key and show it as a toast. Parameterised keys must go through
+   * translate(key, params) — translateAll() passes no params and would strip the placeholders.
+   */
+  private async showParamToast(key: string, params: Record<string, string | number>, color = 'success'): Promise<void> {
+    const message = await firstValueFrom(this.i18nService.translate(key, params));
     const toast = await this.toastController.create({ message, duration: 3000, color, position: 'bottom' });
     await toast.present();
   }

@@ -53,6 +53,57 @@
   },
 
 
+  "doc": {
+    "generate": {
+      "label": "Crea documento",
+      "pending": "Creazione del documento…",
+      "error": "Errore: {{ error }}"
+    },
+    "preview": {
+      "title": "Documento",
+      "frame": "Anteprima PDF",
+      "unavailable": "Anteprima non disponibile. Si prega di scaricare.",
+      "empty": "Nessun documento caricato."
+    },
+    "close": { "label": "Chiudi" },
+    "download": { "label": "Scarica" },
+    "send": { "label": "Invia" }
+  },
+  "composer": {
+    "title": "Invia documento",
+    "to": {
+      "label": "A",
+      "placeholder": "email@domain.com"
+    },
+    "from": {
+      "label": "Da",
+      "placeholder": "email@domain.com",
+      "warning": "Attenzione: l'invio verrà rifiutato. Dominio mittente consentito:",
+      "unknown": "(sconosciuto)"
+    },
+    "cc": {
+      "label": "Cc",
+      "placeholder": "email1@domain.com, email2@domain.com"
+    },
+    "bcc": {
+      "label": "Ccn",
+      "placeholder": "email1@domain.com, email2@domain.com"
+    },
+    "subject": {
+      "label": "Oggetto",
+      "prefix": "Documento:"
+    },
+    "attachment": {
+      "add": "Aggiungi",
+      "toolarge": "File troppo grande (max. {{ maxMb }} MB): {{ name }}"
+    },
+    "send": {
+      "conf": "Documento inviato a {{ recipients }}",
+      "error": "Invio non riuscito: {{ error }}"
+    },
+    "revert": { "label": "Annulla" }
+  },
+
   "category": {
     "label": "Categoria"
   },

@@ -6,6 +6,8 @@ import {
   IonContent, IonFooter, ModalController,
 } from '@ionic/angular/standalone';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { I18nService } from '@okr/shared-i18n';
+import { PDF_PREVIEW_I18N_KEYS, PdfPreviewI18n } from '@okr/pdf-template-util';
 import { EmailComposerModal } from './email-composer.modal';
 
 @Component({
@@ -24,7 +26,7 @@ import { EmailComposerModal } from './email-composer.modal';
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
-        <ion-title>{{ title() }}</ion-title>
+        <ion-title>{{ titleText() }}</ion-title>
         <ion-buttons slot="end">
           @if(canSend()) {
             <ion-button (click)="send()">
@@ -44,30 +46,30 @@ import { EmailComposerModal } from './email-composer.modal';
     <ion-content>
       @if(safeUrl(); as url) {
         @if(outputFormat() === 'pdf') {
-          <iframe [src]="url" class="preview-frame" title="PDF Preview"></iframe>
+          <iframe [src]="url" class="preview-frame" [title]="i18n.frame()"></iframe>
         } @else {
           <div class="no-preview">
-            <p>Vorschau nicht verfügbar. Bitte herunterladen.</p>
+            <p>{{ i18n.unavailable() }}</p>
           </div>
         }
       } @else {
-        <div class="no-preview"><p>Kein Dokument geladen.</p></div>
+        <div class="no-preview"><p>{{ i18n.empty() }}</p></div>
       }
     </ion-content>
 
     <ion-footer>
       <ion-toolbar>
         <ion-buttons slot="end">
-          <ion-button fill="outline" (click)="close()">Schliessen</ion-button>
+          <ion-button fill="outline" (click)="close()">{{ i18n.close() }}</ion-button>
           @if(canSend()) {
             <ion-button fill="outline" color="primary" (click)="send()">
               <ion-icon src="{{ 'send' | svgIcon }}" slot="start" />
-              Senden
+              {{ i18n.send() }}
             </ion-button>
           }
           <ion-button fill="solid" color="primary" (click)="download()">
             <ion-icon src="{{ 'download' | svgIcon }}" slot="start" />
-            Herunterladen
+            {{ i18n.download() }}
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -77,14 +79,18 @@ import { EmailComposerModal } from './email-composer.modal';
 export class PdfPreviewModal {
   private readonly modalController = inject(ModalController);
   private readonly sanitizer = inject(DomSanitizer);
+  protected readonly i18n = inject(I18nService).translateAll(PDF_PREVIEW_I18N_KEYS) as PdfPreviewI18n;
 
   public readonly url = input<string>('');
-  public readonly title = input<string>('Dokument');
+  /** Caller-supplied title (usually the filename); falls back to the translated generic title. */
+  public readonly title = input<string>('');
   public readonly filename = input<string>('document.pdf');
   public readonly outputFormat = input<'pdf' | 'docx' | 'html'>('pdf');
   public readonly storagePath = input<string>('');
   public readonly recipientEmail = input<string | undefined>(undefined);
   public readonly recipientName = input<string | undefined>(undefined);
+
+  protected readonly titleText = computed(() => this.title() || this.i18n.title());
 
   protected readonly safeUrl = computed((): SafeResourceUrl | null => {
     const u = this.url();

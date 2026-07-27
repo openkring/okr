@@ -53,6 +53,57 @@
   },
 
 
+  "doc": {
+    "generate": {
+      "label": "Crear documento",
+      "pending": "Creando documento…",
+      "error": "Error: {{ error }}"
+    },
+    "preview": {
+      "title": "Documento",
+      "frame": "Vista previa PDF",
+      "unavailable": "Vista previa no disponible. Por favor, descárguelo.",
+      "empty": "Ningún documento cargado."
+    },
+    "close": { "label": "Cerrar" },
+    "download": { "label": "Descargar" },
+    "send": { "label": "Enviar" }
+  },
+  "composer": {
+    "title": "Enviar documento",
+    "to": {
+      "label": "Para",
+      "placeholder": "email@domain.com"
+    },
+    "from": {
+      "label": "De",
+      "placeholder": "email@domain.com",
+      "warning": "Advertencia: el envío será rechazado. Dominio de remitente permitido:",
+      "unknown": "(desconocido)"
+    },
+    "cc": {
+      "label": "Cc",
+      "placeholder": "email1@domain.com, email2@domain.com"
+    },
+    "bcc": {
+      "label": "Cco",
+      "placeholder": "email1@domain.com, email2@domain.com"
+    },
+    "subject": {
+      "label": "Asunto",
+      "prefix": "Documento:"
+    },
+    "attachment": {
+      "add": "Añadir",
+      "toolarge": "Archivo demasiado grande (máx. {{ maxMb }} MB): {{ name }}"
+    },
+    "send": {
+      "conf": "Documento enviado a {{ recipients }}",
+      "error": "Error al enviar: {{ error }}"
+    },
+    "revert": { "label": "Descartar" }
+  },
+
   "category": {
     "label": "Categoría"
   },

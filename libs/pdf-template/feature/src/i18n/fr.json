@@ -53,6 +53,57 @@
   },
 
 
+  "doc": {
+    "generate": {
+      "label": "Créer un document",
+      "pending": "Création du document…",
+      "error": "Erreur : {{ error }}"
+    },
+    "preview": {
+      "title": "Document",
+      "frame": "Aperçu PDF",
+      "unavailable": "Aperçu non disponible. Veuillez télécharger.",
+      "empty": "Aucun document chargé."
+    },
+    "close": { "label": "Fermer" },
+    "download": { "label": "Télécharger" },
+    "send": { "label": "Envoyer" }
+  },
+  "composer": {
+    "title": "Envoyer le document",
+    "to": {
+      "label": "À",
+      "placeholder": "email@domain.com"
+    },
+    "from": {
+      "label": "De",
+      "placeholder": "email@domain.com",
+      "warning": "Attention : l'envoi sera refusé. Domaine d'expéditeur autorisé :",
+      "unknown": "(inconnu)"
+    },
+    "cc": {
+      "label": "Cc",
+      "placeholder": "email1@domain.com, email2@domain.com"
+    },
+    "bcc": {
+      "label": "Cci",
+      "placeholder": "email1@domain.com, email2@domain.com"
+    },
+    "subject": {
+      "label": "Objet",
+      "prefix": "Document :"
+    },
+    "attachment": {
+      "add": "Ajouter",
+      "toolarge": "Fichier trop volumineux (max. {{ maxMb }} Mo) : {{ name }}"
+    },
+    "send": {
+      "conf": "Document envoyé à {{ recipients }}",
+      "error": "Échec de l'envoi : {{ error }}"
+    },
+    "revert": { "label": "Annuler" }
+  },
+
   "category": {
     "label": "Catégorie"
   },
