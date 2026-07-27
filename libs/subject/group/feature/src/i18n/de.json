@@ -13,6 +13,10 @@
     "members": "Mitglieder"
   },
 
+  "files": {
+    "conflict": "Der Datei-Ordner dieser Gruppe wird bereits von einer anderen Person verwaltet und kann hier nicht verwendet werden. Bitte kontaktiere eine Administratorin oder einen Administrator."
+  },
+
   "add": {
     "page": "Gruppen Page hinzufügen"
   },

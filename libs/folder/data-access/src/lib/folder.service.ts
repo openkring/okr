@@ -71,12 +71,25 @@ export class FolderService {
   /**
    * Ensure a FolderModel with okey = groupKey exists for the GroupView files tab.
    * Creates it lazily the first time the files segment is opened.
+   *
+   * Adoption guard: the tightened rules let any registered member create a self-owned
+   * folder at an arbitrary document ID — including a well-known key like a group's
+   * folder — before the legitimate owner gets there first. If a squatter wins that
+   * race, a folder owner is granted moderation rights over every document inside it,
+   * so an existing folder is only accepted when its `ownerKey` is one of
+   * `allowedOwnerKeys`.
    * @param groupKey the group okey — also used as the folder okey
    * @param groupName the group display name — used as the folder name
    * @param tenantId the tenant the folder belongs to
    * @param currentUser the user creating the folder (if it doesn't exist yet)
+   * @param allowedOwnerKeys personKeys permitted to own this well-known folder. An
+   *   empty array means "no owner policy known" and disables the adoption guard —
+   *   pass the group's admin personKeys from the group-view call site; other callers
+   *   (EZS/RAG folders) omit it.
+   * @returns true when the folder is present and legitimately owned (safe to use),
+   *   false when it was refused (owner conflict) or could not be created.
    */
-  public async ensureGroupFolder(groupKey: string, groupName: string, tenantId: string, currentUser?: UserModel): Promise<void> {
+  public async ensureGroupFolder(groupKey: string, groupName: string, tenantId: string, currentUser?: UserModel, allowedOwnerKeys: string[] = []): Promise<boolean> {
     // A get() on a not-yet-existent folder can be REJECTED by the tenantRead() rule
     // (it dereferences resource.data.tenants on a null resource → "Missing or
     // insufficient permissions"), so treat any read failure as "does not exist" and
@@ -84,15 +97,24 @@ export class FolderService {
     // caller (onSegmentChanged), so an escaping rejection would be uncaught.
     try {
       const existing = await firstValueFrom(this.firestoreService.readModel<FolderModel>(FolderCollection, groupKey));
-      if (existing) return;
+      if (existing) {
+        const ownerKey = existing.ownerKey ?? ''; // legacy folders have no ownerKey
+        if (allowedOwnerKeys.length > 0 && ownerKey !== '' && !allowedOwnerKeys.includes(ownerKey)) {
+          console.error(`FolderService.ensureGroupFolder: folder '${groupKey}' is owned by '${ownerKey}', which is not among the expected owners — refusing to treat it as the group's folder`);
+          return false;
+        }
+        return true;
+      }
     } catch { /* not readable / does not exist → create below */ }
 
     try {
-      const folder = newFolderModel(tenantId, groupName);
+      const folder = newFolderModel(tenantId, groupName, [], currentUser?.personKey ?? '');
       folder.okey = groupKey;
       await this.create(folder, currentUser);
+      return true;
     } catch (ex) {
       console.error(`FolderService.ensureGroupFolder: could not create folder '${groupKey}'`, ex);
+      return false;
     }
   }
 

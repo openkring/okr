@@ -63,6 +63,9 @@
       "path": "../../../document/util/tsconfig.lib.json"
     },
     {
+      "path": "../../../folder/util/tsconfig.lib.json"
+    },
+    {
       "path": "../../../comment/feature/tsconfig.lib.json"
     },
     {

@@ -22,6 +22,7 @@
     "@okr/avatar-util": "*",
     "@okr/avatar-ui": "*",
     "@okr/document-util": "*",
+    "@okr/folder-util": "*",
     "@okr/comment-feature": "*",
     "@okr/relationship-membership-feature": "*",
     "@okr/relationship-membership-data-access": "*",

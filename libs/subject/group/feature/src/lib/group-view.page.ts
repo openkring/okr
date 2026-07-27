@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonLabel, IonPopover, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonPopover, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 
 import { GroupModel } from '@okr/shared-models';
@@ -7,6 +7,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/sha
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { isAdminMember } from '@okr/subject-group-util';
+import { canManageFolders } from '@okr/folder-util';
 import { DEFAULT_ID, DEFAULT_NAME } from '@okr/shared-constants';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -27,7 +28,7 @@ import { GroupStore } from './group.store';
     ChangeConfirmation, DeferError, PageDispatcher, CalEventList, MembershipList, DocumentList, TaskList,
     Menu, SvgIconPipe,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
-    IonHeader, IonButtons, IonTitle, IonMenuButton, IonButton, IonIcon, IonPopover
+    IonHeader, IonButtons, IonTitle, IonMenuButton, IonButton, IonIcon, IonPopover, IonItem
 ],
   providers: [GroupStore],
   template: `
@@ -142,12 +143,18 @@ import { GroupStore } from './group.store';
             }
           }
           @case ('files') {
-            @defer (on immediate) {
-              <okr-document-list [listId]="listId()" contextMenuName="disable" color="light" view="grid" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
-            } @placeholder {
-              <div class="placeholder-center"><ion-spinner /></div>
-            } @error {
-              <okr-defer-error />
+            @if(folderConflict()) {
+              <ion-item lines="none" color="danger">
+                <ion-label class="ion-text-wrap">{{ store.i18n.files_conflict() }}</ion-label>
+              </ion-item>
+            } @else {
+              @defer (on immediate) {
+                <okr-document-list [listId]="listId()" contextMenuName="disable" color="light" view="grid" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
+              } @placeholder {
+                <div class="placeholder-center"><ion-spinner /></div>
+              } @error {
+                <okr-defer-error />
+              }
             }
           }
           @case ('members') {
@@ -178,6 +185,10 @@ export class GroupViewPage implements ViewWillEnter {
  // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
+  // Set when ensureGroupFolder refuses the group's well-known folder key because it is
+  // already owned by someone outside the group's admins (folder-ID squatting guard,
+  // spec 1.22). While set, the files segment shows a notice instead of the document list.
+  protected folderConflict = signal(false);
   // Retain the last loaded group while group() transiently reloads to undefined
   // (auth/token refresh, Safari long-poll reconnect). Otherwise formData → undefined →
   // id() === '' collapses the @if and DESTROYS the segment content (e.g. the document
@@ -366,10 +377,14 @@ export class GroupViewPage implements ViewWillEnter {
   protected async onSegmentChanged($event: CustomEvent): Promise<void> {
     const selectedSegment = $event.detail.value;
     this.store.setSelectedSegment(selectedSegment);
-    if (selectedSegment === 'files') {
-      await this.folderService.ensureGroupFolder(
-        this.groupKey(), this.name(), this.store.tenantId(), this.currentUser()
+    // Only folder-managers may (implicitly) create the group folder — members opening
+    // the files tab before it exists just see an empty list (spec 1.22).
+    if (selectedSegment === 'files' && canManageFolders(this.currentUser(), this.isGroupAdmin())) {
+      const allowedOwnerKeys = (this.group()?.admins ?? []).map(admin => admin.key);
+      const isUsable = await this.folderService.ensureGroupFolder(
+        this.groupKey(), this.name(), this.store.tenantId(), this.currentUser(), allowedOwnerKeys
       );
+      this.folderConflict.set(!isUsable);
     }
   }
 }

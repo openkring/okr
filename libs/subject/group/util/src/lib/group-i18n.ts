@@ -13,6 +13,7 @@ export const GROUP_I18N_KEYS = {
   segment_tasks:                    PFX + 'segment.tasks',
   segment_files:                    PFX + 'segment.files',
   segment_members:                  PFX + 'segment.members',
+  files_conflict:                   PFX + 'files.conflict',
 
   add_page:                         PFX + 'add.page',
   create:                           PFX + 'create.label',
