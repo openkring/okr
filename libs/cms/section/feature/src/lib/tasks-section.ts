@@ -45,7 +45,7 @@ import { TasksStore } from './tasks-section.store';
             <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" [count]="numberOfTasks()" />
             <ion-card-content>
                 @if(numberOfTasks() === 0) {
-                    <okr-empty-list [message]="store.i18n.empty()" />
+                    <okr-empty-list [message]="store.i18n.task_empty()" />
                 } @else {
                     <ion-list lines="inset">
                         @for(task of tasks(); track $index) {

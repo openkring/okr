@@ -33,7 +33,7 @@ import { ActivitiesSectionStore } from './activities-section.store';
         <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if(store.activities().length === 0) {
-            <okr-empty-list [message]="store.i18n.empty()" />
+            <okr-empty-list [message]="store.i18n.activity_empty()" />
           } @else {
             <ion-list lines="inset">
               @for(activity of store.activities(); track activity.okey) {

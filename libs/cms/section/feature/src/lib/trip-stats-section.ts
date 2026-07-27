@@ -43,7 +43,7 @@ import { TripStatsSectionStore } from './trip-stats-section.store';
         (searchTermChanged)="store.setSearchTerm($event)"
       />
       @if(store.listRows().length === 0 && store.viewType() === 'list') {
-        <okr-empty-list [message]="store.i18n.empty()" />
+        <okr-empty-list [message]="store.i18n.tripstats_empty()" />
       } @else {
         @switch(store.viewType()) {
           @case('list') {
@@ -80,7 +80,7 @@ import { TripStatsSectionStore } from './trip-stats-section.store';
                 </ion-card-content>
               </ion-card>
             } @else {
-              <okr-empty-list [message]="store.i18n.empty()" />
+              <okr-empty-list [message]="store.i18n.tripstats_empty()" />
             }
           }
         }

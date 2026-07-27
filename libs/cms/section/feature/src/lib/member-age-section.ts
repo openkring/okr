@@ -23,7 +23,7 @@ import { MemberAgeSectionStore } from './member-age-section.store';
     @if(store.isLoading()) {
       <okr-spinner />
     } @else if(isEmpty()) {
-      <okr-empty-list [message]="store.i18n.empty()" />
+      <okr-empty-list [message]="store.i18n.member_age_empty()" />
     } @else {
       <ion-card>
         <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />

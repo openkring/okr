@@ -34,7 +34,7 @@ import { NewsStore } from './news-section.store';
         <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
           @if (news().length === 0) {
-            <okr-empty-list [message]="store.i18n.empty()" />
+            <okr-empty-list [message]="store.i18n.news_empty()" />
           } @else {
             <ion-list lines="none">
               @for (article of news(); track article.okey) {
