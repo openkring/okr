@@ -36,12 +36,12 @@ import { ProfileI18n } from "@okr/profile-util";
               </ion-col>
             </ion-row>
             <ion-row> 
+              @if(hasRole('registered') && languages().length > 1) {
+                <ion-col size="12">
+                  <okr-category-old [i18n]="languageI18n()" [value]="language()" (valueChange)="onFieldChange('userLanguage', $event)"  [categories]="languages()" [readOnly]="isReadOnly()" />
+                </ion-col>
+              }
               @if(hasRole('admin')) {
-                @if(languages().length > 1) {
-                  <ion-col size="12">
-                    <okr-category-old [i18n]="languageI18n()" [value]="language()" (valueChange)="onFieldChange('userLanguage', $event)"  [categories]="languages()" [readOnly]="isReadOnly()" />
-                  </ion-col>
-                }
                 <ion-col size="12" size-md="6">
                   <okr-checkbox [i18n]="showDebugInfoI18n()" [checked]="showDebugInfo()" (checkedChange)="onFieldChange('showDebugInfo', $event)" [showHelper]="showHelper()" [readOnly]="isReadOnly()" />
                 </ion-col>
@@ -172,7 +172,9 @@ export class ProfileSettingsAccordion {
   protected avatarUsage = linkedSignal(() => this.formData().avatarUsage ?? AvatarUsage.PhotoFirst);
   protected gravatarEmail = linkedSignal(() => this.formData().gravatarEmail ?? '');
   protected nameDisplay = linkedSignal(() => this.formData().nameDisplay ?? NameDisplay.FirstLast);
-  protected personSortCriteria = linkedSignal(() => this.formData().personSortCriteria ?? PersonSortCriteria.Fullname);
+  // Lastname, to match UserModel's default and convertUserToForm() — showing Fullname here made the
+  // picker disagree with the order the list actually used.
+  protected personSortCriteria = linkedSignal(() => this.formData().personSortCriteria ?? PersonSortCriteria.Lastname);
   protected newsDelivery = linkedSignal(() => this.formData().newsDelivery ?? DeliveryType.EmailAttachment);
   protected invoiceDelivery = linkedSignal(() => this.formData().invoiceDelivery ?? DeliveryType.EmailAttachment);
 

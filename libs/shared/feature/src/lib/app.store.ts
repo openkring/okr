@@ -9,7 +9,7 @@ import { App } from '@capacitor/app';
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@okr/shared-models';
-import { die, getSystemQuery, replacePlaceholders } from '@okr/shared-util-core';
+import { die, getSystemQuery, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
 import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -198,7 +198,14 @@ export const AppStore = signalStore(
   withComputed((state) => {
     return {
       currentUser: computed(() => state.currentUserResource.value()),
-      allPersons: computed(() => state.personsResource.value() ?? []),
+      // Ordered by the signed-in user's personSortCriteria preference. The Firestore query orders by
+      // lastName; re-sorting here (the full set is in memory anyway) is what makes the profile setting
+      // take effect — every person list derives from this computed. currentUserResource is a live
+      // stream, so saving a new criterion re-orders the lists immediately.
+      allPersons: computed(() => sortPersons(
+        state.personsResource.value() ?? [],
+        state.currentUserResource.value()?.personSortCriteria,
+        state.currentUserResource.value()?.nameDisplay)),
       allOrgs: computed(() => state.orgsResource.value() ?? []),
       allAddressDirectories: computed(() => state.addressDirectoryResource.value() ?? []),
       // parentKey ('person.<okey>' | 'org.<okey>') -> its directory projection doc

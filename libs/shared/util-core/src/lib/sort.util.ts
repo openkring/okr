@@ -1,3 +1,5 @@
+import { NameDisplay, PersonSortCriteria } from "@okr/shared-models";
+import { getFullName } from "./convert.util";
 import { compareNumbers, compareWords } from "./type.util";
 
 export enum SortDirection {
@@ -102,6 +104,46 @@ export function sortAscending(items: any[], column: string, typeIsString = true)
           return compareNumbers(a[column], b[column]);
       }
   })];
+}
+
+/** The subset of PersonModel that sortPersons needs; keeps the util usable for any person-like row. */
+export interface SortablePerson {
+  firstName?: string;
+  lastName?: string;
+  okey?: string;
+}
+
+/**
+ * Orders persons by the signed-in user's UserModel.personSortCriteria preference.
+ *
+ * Sorting is client-side on purpose: the AppStore already streams the full person set, and the
+ * Fullname criterion (which follows the user's nameDisplay) has no Firestore-indexable equivalent.
+ * Comparison is locale-aware and case-insensitive so German umlauts collate as expected
+ * (Äbi before Bay) — compareWords() uppercases instead, which would sort Ä after Z.
+ *
+ * PersonSortCriteria.DateOfBirth falls through to Lastname: person.dateOfBirth was stripped in
+ * privacy 1.19 Phase 4, so a stored legacy preference must still yield a sensible order.
+ */
+export function sortPersons<T extends SortablePerson>(
+  persons: T[],
+  criteria: PersonSortCriteria = PersonSortCriteria.Lastname,
+  nameDisplay: NameDisplay = NameDisplay.FirstLast,
+): T[] {
+  const compare = (a?: string, b?: string) => (a ?? '').localeCompare(b ?? '', 'de', { sensitivity: 'base' });
+  return [...persons].sort((a, b) => {
+    switch (criteria) {
+      case PersonSortCriteria.Firstname:
+        return compare(a.firstName, b.firstName) || compare(a.lastName, b.lastName);
+      case PersonSortCriteria.Fullname:
+        return compare(getFullName(a.firstName, a.lastName, nameDisplay), getFullName(b.firstName, b.lastName, nameDisplay))
+          || compare(a.okey, b.okey);
+      case PersonSortCriteria.Key:
+        return compare(a.okey, b.okey);
+      case PersonSortCriteria.Lastname:
+      default:
+        return compare(a.lastName, b.lastName) || compare(a.firstName, b.firstName);
+    }
+  });
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -3,6 +3,7 @@ import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
+import { Languages } from '@okr/shared-categories';
 import { PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
@@ -69,6 +70,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
                 [readOnly]="false"
                 [tags]="tags()"
                 [tenantId]="tenantId()"
+                [languages]="availableLanguages()"
                 [showForm]="showForm()"
                 [i18n]="store.i18n"
                 (valid)="formValid.set($event)"
@@ -125,6 +127,8 @@ export class ProfileEditModal {
   protected personKey = computed(() => this.currentUser()?.personKey ?? '');
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
   protected tenantId = computed(() => this.store.tenantId());
+  protected availableLanguages = computed(() =>
+    Languages.filter((l) => !!l.abbreviation && this.store.appStore.enabledLanguageCodes().includes(l.abbreviation)));
   protected loginEmail = computed(() => this.currentUser()?.loginEmail || '');
   protected parentKey = computed(() => `${PersonModelName}.${this.personKey()}`);
   protected avatarTitle = computed(() => this.currentPerson()?.firstName + ' ' + this.currentPerson()?.lastName);
