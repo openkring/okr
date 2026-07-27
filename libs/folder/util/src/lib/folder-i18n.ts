@@ -15,6 +15,8 @@ export const FOLDER_I18N_KEYS = {
   title_helper:             '@folder/ui.title.helper',
   description_label:        '@folder/ui.description.label',
   description_placeholder:  '@folder/ui.description.placeholder',
+  membersMayUpload_label:   '@folder/ui.membersMayUpload.label',
+  membersMayUpload_helper:  '@folder/ui.membersMayUpload.helper',
   create_label:             '@folder/feature.operation.create.label',
   edit_label:               '@folder/feature.operation.edit.label',
   view_label:               '@folder/feature.operation.view.label',

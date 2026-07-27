@@ -12,5 +12,9 @@
   "description": {
     "label": "Beschreibung",
     "placeholder": ""
+  },
+  "membersMayUpload": {
+    "label": "Mitglieder dürfen Dateien hochladen",
+    "helper": "Mitglieder können eigene Bilder und Dateien in diesen Ordner laden und ihre eigenen Uploads bearbeiten oder löschen."
   }
 }

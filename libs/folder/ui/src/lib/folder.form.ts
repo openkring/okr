@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { FolderModel, RoleName, UserModel } from '@okr/shared-models';
-import { Chips, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, Chips, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
@@ -14,7 +14,7 @@ import { FolderI18n, folderValidations } from '@okr/folder-util';
   selector: 'okr-folder-form',
   standalone: true,
   imports: [
-    TextInput, NotesInput, Chips,
+    TextInput, NotesInput, Chips, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -33,6 +33,13 @@ import { FolderI18n, folderValidations } from '@okr/folder-util';
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)"
                     [maxLength]="50" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+              <ion-row>
+                <ion-col size="12">
+                  <okr-checkbox [i18n]="membersMayUploadI18n()" [checked]="membersMayUpload()"
+                    (checkedChange)="onBooleanChange('membersMayUpload', $event)"
+                    [showHelper]="true" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -78,6 +85,8 @@ export class FolderForm {
   protected readonly title = computed(() => this.formData()?.title ?? '');
   protected readonly description = computed(() => this.formData()?.description ?? DEFAULT_NOTES);
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
+  // legacy folders have no membersMayUpload field — coalesce to false
+  protected readonly membersMayUpload = computed(() => this.formData()?.membersMayUpload === true);
 
   protected nameI18n = computed(() => ({
     name: 'name',
@@ -99,7 +108,18 @@ export class FolderForm {
     placeholder: this.i18n().description_placeholder()
   } as NotesInputI18n));
 
+  protected membersMayUploadI18n = computed(() => ({
+    name: 'membersMayUpload',
+    label: this.i18n().membersMayUpload_label(),
+    helper: this.i18n().membersMayUpload_helper()
+  } as CheckboxI18n));
+
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onBooleanChange(fieldName: string, fieldValue: boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
