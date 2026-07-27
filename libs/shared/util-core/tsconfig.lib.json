@@ -10,10 +10,10 @@
     ],
     "paths": {
       "@okr/shared-models": [
-        "../../../dist/libs/shared/models/src/index.d.ts"
+        "dist/libs/shared/models/src/index.d.ts"
       ],
       "@okr/shared-constants": [
-        "../../../dist/libs/shared/constants/src/index.d.ts"
+        "dist/libs/shared/constants/src/index.d.ts"
       ]
     },
     "tsBuildInfoFile": "../../../dist/out-tsc/shared-util-core.tsbuildinfo"
