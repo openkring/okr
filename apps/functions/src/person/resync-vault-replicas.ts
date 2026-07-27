@@ -3,10 +3,10 @@ import { onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, Query, DocumentData } from 'firebase-admin/firestore';
 
-import { PersonCollection } from '@okr/shared-models';
+import { AddressCollection, AddressModel, PersonCollection } from '@okr/shared-models';
 import {
   checkAdminRole, checkAppCheckToken, checkAuthentication,
-  getActiveAddresses, syncBirthYearReplicas, syncDateOfDeathReplicas,
+  syncBirthYearReplicas, syncDateOfDeathReplicas,
 } from '@okr/shared-util-functions';
 
 const REGION = 'europe-west6';
@@ -57,9 +57,13 @@ export const resyncVaultReplicas = onCall(
     let documentsWritten = 0;
 
     const persons = await forEachDocId(db.collection(PersonCollection), async (personId) => {
-      const addresses = await getActiveAddresses(db, `person.${personId}`);
-      documentsWritten += await syncBirthYearReplicas(db, personId, addresses);
-      documentsWritten += await syncDateOfDeathReplicas(db, personId, addresses);
+      // load ALL addresses (incl. archived): the live ones derive the replica, the full
+      // set is the `evidence` that tells a deleted value from one the vault never held
+      const snap = await db.collection(AddressCollection).where('parentKey', '==', `person.${personId}`).get();
+      const all = snap.docs.map((d) => ({ ...d.data(), okey: d.id } as AddressModel));
+      const live = all.filter((a) => a.isArchived !== true);
+      documentsWritten += await syncBirthYearReplicas(db, personId, live, all);
+      documentsWritten += await syncDateOfDeathReplicas(db, personId, live, all);
     });
 
     logger.info(`resyncVaultReplicas: done`, { persons, documentsWritten });
