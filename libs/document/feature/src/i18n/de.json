@@ -42,6 +42,15 @@
   },
   "download": "Dokument herunterladen",
   "share": "Dokument teilen",
+  "folder": {
+    "open": "Ordner öffnen",
+    "edit": "Ordner ändern",
+    "delete": {
+      "label": "Ordner löschen",
+      "confirm": "Willst du diesen Ordner wirklich löschen?"
+    },
+    "notEmpty": "Der Ordner ist nicht leer. Bitte zuerst alle Dateien und Unterordner entfernen."
+  },
   "image": {
     "add": "Bild hinzufügen",
     "select": "Bild wählen",

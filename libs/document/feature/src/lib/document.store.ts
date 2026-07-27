@@ -92,12 +92,22 @@ export const DocumentStore = signalStore(
         return store.folderService.listByParent(listId.substring(2));
       }
     }),
+
+    // The folder the list is currently filtered on (listId = 'f:<key>'), for permission checks.
+    currentFolderResource: rxResource({
+      params: () => ({ listId: store.listId(), currentUser: store.appStore.currentUser() }),
+      stream: ({ params }) => {
+        if (!params.currentUser || !params.listId.startsWith('f:')) return of<FolderModel | undefined>(undefined);
+        return store.folderService.read(params.listId.substring(2));
+      }
+    }),
   })),
 
  withComputed((state) => {
     return {
       documents: computed(() => state.documentsResource.value() ?? []),
       subFolders: computed(() => state.subfoldersResource.value() ?? []),
+      currentFolder: computed(() => state.currentFolderResource.value()),
       isLoading: computed(() => state.documentsResource.isLoading() || state.subfoldersResource.isLoading()),
     }
   }),
@@ -314,10 +324,44 @@ export const DocumentStore = signalStore(
         const name: string = data?.values?.name?.trim() ?? '';
         if (!name) return;
 
-        const folder = newFolderModel(store.tenantId(), name, parentFolderKey ? [parentFolderKey] : []);
+        const folder = newFolderModel(store.tenantId(), name, parentFolderKey ? [parentFolderKey] : [], currentUser.personKey);
         const newKey = await store.folderService.create(folder, currentUser);
         if (newKey) {
           patchState(store, { listId: `f:${newKey}` });
+        }
+      },
+
+      /** Open the FolderEditModal for the given folder (rename, membersMayUpload toggle). */
+      async editFolder(folder?: FolderModel): Promise<void> {
+        if (!folder) return;
+        const { FolderEditModal } = await import('@okr/folder-feature');
+        const modal = await store.modalController.create({
+          component: FolderEditModal,
+          componentProps: { folder, currentUser: store.currentUser(), readOnly: false }
+        });
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss<FolderModel>();
+        if (role === 'confirm' && data) {
+          await store.folderService.update(data, store.currentUser());
+          store.subfoldersResource.reload();
+          store.currentFolderResource.reload();
+        }
+      },
+
+      /** Delete a folder after confirmation — only when it holds no documents and no subfolders. */
+      async deleteFolder(folder?: FolderModel): Promise<void> {
+        if (!folder) return;
+        const docCount = store.folderDocumentCounts().get(folder.okey) ?? 0;
+        const children = await firstValueFrom(store.folderService.listByParent(folder.okey));
+        if (docCount > 0 || children.length > 0) {
+          const alert = await store.alertController.create({ message: store.i18n.folder_not_empty(), buttons: ['OK'] });
+          await alert.present();
+          return;
+        }
+        const result = await confirm(store.alertController, store.i18n.folder_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
+        if (result === true) {
+          await store.folderService.delete(folder, store.currentUser());
+          store.subfoldersResource.reload();
         }
       },
 

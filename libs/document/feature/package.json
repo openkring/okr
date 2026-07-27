@@ -18,7 +18,13 @@
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
     "@okr/cms-menu-feature": "*",
+    "@okr/document-data-access": "*",
     "@okr/document-ui": "*",
-    "@okr/document-util": "*"
+    "@okr/document-util": "*",
+    "@okr/folder-data-access": "*",
+    "@okr/folder-feature": "*",
+    "@okr/folder-ui": "*",
+    "@okr/folder-util": "*",
+    "@okr/avatar-data-access": "*"
   }
 }

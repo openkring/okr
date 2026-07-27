@@ -66,6 +66,9 @@
       "path": "../../folder/data-access/tsconfig.lib.json"
     },
     {
+      "path": "../../folder/feature/tsconfig.lib.json"
+    },
+    {
       "path": "../../folder/ui/tsconfig.lib.json"
     },
     {

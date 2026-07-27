@@ -27,6 +27,12 @@ export const DOCUMENT_I18N_KEYS = {
   download:         '@document/feature.download',
   share:            '@document/feature.share',
 
+  folder_open:           '@document/feature.folder.open',
+  folder_edit:           '@document/feature.folder.edit',
+  folder_delete:         '@document/feature.folder.delete.label',
+  folder_delete_confirm: '@document/feature.folder.delete.confirm',
+  folder_not_empty:      '@document/feature.folder.notEmpty',
+
   image_add:        '@document/feature.image.add',
   image_select:     '@document/feature.image.select',
   image_upload:     '@document/feature.image.upload',
