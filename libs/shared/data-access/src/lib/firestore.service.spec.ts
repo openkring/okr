@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { firstValueFrom, Observable, of, throwError } from 'rxjs';
 
-import { ENV, FIRESTORE } from '@okr/shared-config';
+import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { DbQuery } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { ToastController } from '@ionic/angular/standalone';
@@ -42,18 +42,24 @@ import { FirestoreService } from './firestore.service';
 
 const QUERY: DbQuery[] = [{ key: 'tenants', operator: 'array-contains', value: 'scs' }];
 
-function makeService(): FirestoreService {
+function makeService(currentUser: unknown = { uid: 'u1' }): FirestoreService {
   TestBed.configureTestingModule({
     providers: [
       FirestoreService,
       { provide: PLATFORM_ID, useValue: 'browser' },
       { provide: ENV, useValue: { tenantId: 'scs', services: {} } },
       { provide: FIRESTORE, useValue: {} },
+      { provide: AUTH, useValue: { currentUser } },
       { provide: ToastController, useValue: {} },
       { provide: I18nService, useValue: { translateAll: vi.fn(() => ({})) } },
     ],
   });
   return TestBed.inject(FirestoreService);
+}
+
+/** A Firestore Listen rejection, as the SDK raises it. */
+function permissionDenied(): Error & { code: string } {
+  return Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' });
 }
 
 describe('FirestoreService.searchData', () => {
@@ -93,6 +99,43 @@ describe('FirestoreService.searchData', () => {
     collectionDataMock.mockReturnValue(of([{ okey: 's1' }]));
     const rows = await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
     expect(rows).toHaveLength(1);
+  });
+
+  // signOut() revokes the token and the server terminates every still-open rule-gated
+  // listener with PERMISSION_DENIED at once. That burst is expected teardown, so it must
+  // not be reported as an error — it drowned out genuine failures on every logout.
+  it('does not report a permission error raised after sign-out as an error', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    collectionDataMock.mockReturnValue(throwError(() => permissionDenied()));
+    const svc = makeService(null);   // signed out
+    const rows = await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
+    expect(rows).toEqual([]);
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  // The counterpart: denied while still signed in is a real rules/query defect
+  // (e.g. a query that doesn't constrain the field its rule reads) and must stay loud.
+  it('still reports a permission error raised while signed in', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    collectionDataMock.mockReturnValue(throwError(() => permissionDenied()));
+    const svc = makeService({ uid: 'u1' });
+    await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
+    expect(error).toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  // A non-permission failure (network, unavailable) is never sign-out teardown,
+  // so it stays loud even with nobody signed in.
+  it('still reports a non-permission stream error when signed out', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    collectionDataMock.mockReturnValue(
+      throwError(() => Object.assign(new Error('backend unavailable'), { code: 'unavailable' })),
+    );
+    const svc = makeService(null);
+    await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
+    expect(error).toHaveBeenCalled();
+    error.mockRestore();
   });
 });
 

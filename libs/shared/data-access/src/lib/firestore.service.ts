@@ -27,7 +27,7 @@ import { collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBat
 import { collectionData, docData } from 'rxfire/firestore';
 import { catchError, firstValueFrom, Observable, of, shareReplay } from 'rxjs';
 
-import { ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
+import { AUTH, ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
 import { debugData, debugMessage, generateRandomString, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { TOAST_LENGTH } from '@okr/shared-constants';
@@ -47,6 +47,7 @@ export class FirestoreService {
   private readonly toastController = inject(ToastController);
   private readonly queryCache = new Map<string, Observable<unknown>>();
   private readonly i18nService = inject(I18nService);
+  private readonly auth = inject(AUTH);
 
   // i18n
   protected readonly i18n = this.i18nService.translateAll({
@@ -54,6 +55,26 @@ export class FirestoreService {
     comment_update_conf: PFX + 'comment.update.conf',
   })
   
+  /**
+   * Report an async error from an open real-time listener.
+   *
+   * Rule-gated listeners stay open across sign-out: signOut() revokes the token and the server
+   * then terminates every one of them at once with PERMISSION_DENIED. That is expected teardown,
+   * not a fault — reporting it at error level buried genuine failures under a burst of logout
+   * noise. Demote exactly that case (permission-denied AND nobody signed in) to debug; everything
+   * else — including a permission error while a user IS signed in, which is a real rules/query
+   * defect — keeps its console.error.
+   * @param context the call site, e.g. `searchData(persons)`
+   * @param err the error emitted by the stream
+   */
+  private reportStreamError(context: string, err: unknown): void {
+    if ((err as { code?: string } | null)?.code === 'permission-denied' && !this.auth.currentUser) {
+      console.debug(`FirestoreService.${context}: listener closed by sign-out.`);
+      return;
+    }
+    console.error(`FirestoreService.${context} stream error:`, err);
+  }
+
   private okrError(toastController: ToastController | undefined, message: string, isDebugMode = false): undefined {
     if (isDebugMode) console.error(message);
     if (toastController) this.okrShowToast(toastController, message);
@@ -196,7 +217,7 @@ export class FirestoreService {
       // downstream guards, which then short-circuit to empty lists — the correct sign-out behaviour.
       return (docData(doc(this.firestore, `${collectionName}/${key}`), { idField: 'okey' }) as Observable<T>).pipe(
         catchError((err) => {
-          console.error(`FirestoreService.readModel(${collectionName}/${key}) stream error:`, err);
+          this.reportStreamError(`readModel(${collectionName}/${key})`, err);
           return of(undefined);
         })
       );
@@ -229,7 +250,7 @@ export class FirestoreService {
       // token refresh, which the synchronous try/catch below cannot catch.
       return (docData(doc(this.firestore, `${collectionName}/${key}`)) as Observable<T>).pipe(
         catchError((err) => {
-          console.error(`FirestoreService.readObject(${collectionName}/${key}) stream error:`, err);
+          this.reportStreamError(`readObject(${collectionName}/${key})`, err);
           return of(undefined);
         })
       );
@@ -465,7 +486,7 @@ export class FirestoreService {
       // fall back to an empty list.
       const data$ = (collectionData(queryRef, { idField: 'okey' }) as Observable<T[]>).pipe(
         catchError((err) => {
-          console.error('FirestoreService.searchData stream error:', err);
+          this.reportStreamError(`searchData(${collectionName})`, err);
           this.queryCache.delete(cacheKey);
           return of<T[]>([]);
         }),
@@ -522,7 +543,7 @@ export class FirestoreService {
     // token refresh, which would otherwise re-throw inside change detection via a consuming resource.
     return data$.pipe(
       catchError((err) => {
-        console.error(`FirestoreService.listAllObjects(${collectionName}) stream error:`, err);
+        this.reportStreamError(`listAllObjects(${collectionName})`, err);
         return of<T[]>([]);
       })
     );
