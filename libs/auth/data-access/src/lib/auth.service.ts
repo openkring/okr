@@ -136,13 +136,19 @@ export class AuthService {
     const result = await this.alertService.confirm(this.i18n.logout_confirm(), true);
     if (result === true) {
       try {
+        // Write the audit entry BEFORE signOut, and await it. Afterwards request.auth is
+        // null, so the activities rule can only fall through to its anonymous-create
+        // branch — which requires an empty author.key, while log() stamps the real user.
+        // The write was therefore always denied and the logout never reached the audit
+        // trail. If signOut() below fails the caller is still authenticated, so the
+        // catch-path write is permitted too.
+        await this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`);
         await signOut(this.auth);
         await this.clearMatrixCredentials();
-        void this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`);
         await this.alertService.showToast(this.i18n.logout_conf());
         return true;
       } catch (ex) {
-        void this.activityService.log('auth', 'logout', currentUser, `${msg}: SUCCESS`);
+        void this.activityService.log('auth', 'logout', currentUser, `${msg}: ERROR: ${ex}`);
         console.error('AuthService.logout: error: ', ex);
         await this.alertService.showToast(this.i18n.logout_error());
       }
