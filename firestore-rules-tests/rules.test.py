@@ -243,9 +243,12 @@ single_cases = [
     ("userP(privileged) GET same-tenant address -> ALLOW", True, GET, "addresses/adrO_email", P, None, None),
     ("userP(privileged) GET cross-tenant address -> DENY", False, GET, "addresses/adrX_email", P, None, None),
     ("userD(admin t1) GET same-tenant address -> ALLOW", True, GET, "addresses/adrO_email", D, None, None),
-    # D-P4-1: memberAdmin is a sensitive-data EDITOR but not a raw READER
-    ("userM(memberAdmin) GET raw address -> DENY (D-P4-1)", False, GET, "addresses/adrO_email", M, None, None),
-    ("userM(memberAdmin) GET raw ssn address -> DENY (D-P4-1)", False, GET, "addresses/adrO_ssn", M, None, None),
+    # D-P4-1 (amended 2026-07-27): memberAdmin edits member data, so it reads the
+    # vault too — it could already obtain every value via getAddressView. Plain
+    # members stay locked out (cases above).
+    ("userM(memberAdmin) GET raw address -> ALLOW (D-P4-1 amended)", True, GET, "addresses/adrO_email", M, None, None),
+    ("userM(memberAdmin) GET raw ssn address -> ALLOW (D-P4-1 amended)", True, GET, "addresses/adrO_ssn", M, None, None),
+    ("userM(memberAdmin) GET cross-tenant address -> DENY", False, GET, "addresses/adrX_email", M, None, None),
     # sensitive-channel writes: owner ∨ privileged ∨ memberAdmin
     ("userE(plain) create ssn for another person -> DENY", False, POST, "addresses?documentId=adrNew1", E,
      body({"tenants": ["t1"], "isArchived": False, "isFavorite": False,
@@ -296,7 +299,8 @@ list_cases = [
     # they read the address-directory projection instead.
     ("userE(plain) LIST addresses array-contains t1 -> DENY (lock)", False, "addresses", "t1", E),
     ("userP(privileged) LIST addresses array-contains t1 -> ALLOW", True, "addresses", "t1", P),
-    ("userM(memberAdmin) LIST addresses t1 -> DENY (D-P4-1)", False, "addresses", "t1", M),
+    ("userM(memberAdmin) LIST addresses t1 -> ALLOW (D-P4-1 amended)", True, "addresses", "t1", M),
+    ("userM(memberAdmin) LIST addresses t2 (cross-tenant) -> DENY", False, "addresses", "t2", M),
 ]
 
 # (label, expect_allow, parentKey, token, tenant) — addresses query by parentKey
@@ -304,7 +308,10 @@ parent_cases = [
     ("userA(owner) QUERY addresses by own parentKey -> ALLOW", True, "person.pA", A, None),
     ("userE(plain) QUERY addresses by another parentKey -> DENY", False, "person.pA", E, None),
     ("userP(privileged) QUERY addresses by parentKey+tenant -> ALLOW", True, "person.pO", P, "t1"),
-    ("userM(memberAdmin) QUERY addresses by parentKey+tenant -> DENY (D-P4-1)", False, "person.pO", M, "t1"),
+    # the exact read-then-write query PersonService.upsertScalarChannel runs before
+    # saving ssn/dob — it MUST succeed for memberAdmin, or the save silently creates
+    # a duplicate vault doc instead of updating the existing one.
+    ("userM(memberAdmin) QUERY addresses by parentKey+tenant -> ALLOW (upsert lookup)", True, "person.pO", M, "t1"),
 ]
 
 

@@ -79,15 +79,17 @@ export const AddressStore = signalStore(
       }),
       stream: ({params}) => {
         if (!params.parentKey?.length) return of([]);
-        // Tiered source (spec 1.19 Phase 4 §A4): the raw addresses collection is
-        // (after the Phase 4 rules flip) readable only by the owner and privileged
-        // roles; everyone else streams the address-directory projection and sees
-        // exactly the registered-visible entries. 'all' stays raw — that list route
-        // is admin-guarded.
+        // Tiered source (spec 1.19 Phase 4 §A4): after the Phase 4 rules flip the raw
+        // addresses collection is readable by the owner, privileged, and memberAdmin
+        // (D-P4-1 as amended 2026-07-27 — memberAdmin maintains member contact data,
+        // so a read-only projection would break that job); plain members stream the
+        // address-directory projection and see exactly the registered-visible
+        // entries. 'all' stays raw — that list route is admin-guarded.
         const user = params.currentUser;
         const isOwner = !!user?.personKey && params.parentKey === `person.${user.personKey}`;
-        const isPrivileged = user?.roles?.['privileged'] === true || user?.roles?.['admin'] === true;
-        if (isOwner || isPrivileged || params.parentKey === 'all') {
+        const canReadVault = user?.roles?.['privileged'] === true || user?.roles?.['admin'] === true
+          || user?.roles?.['memberAdmin'] === true;
+        if (isOwner || canReadVault || params.parentKey === 'all') {
           const dbQuery = getSystemQuery(store.appStore.tenantId());
           if (params.parentKey !== 'all') { // for all we do not restrict the result set
             dbQuery.push({ key: 'parentKey', operator: '==', value: params.parentKey });

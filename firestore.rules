@@ -53,10 +53,18 @@ service cloud.firestore {
       return data.addressChannel in ['ssn', 'dob', 'bankaccount'];
     }
     // Who may write sensitive-channel addresses: the owner (self-service),
-    // privileged, or memberAdmin (authorized editor per D9; raw READ stays
-    // owner ∨ privileged — memberAdmin reads via the getAddressView callable, D-P4-1).
+    // privileged, or memberAdmin (authorized editor per D9).
     function canWriteSensitive(data) {
       return ownsParent(data) || isPrivileged() || hasRole('memberAdmin');
+    }
+    // Who may read the vault at all (D-P4-1, amended 2026-07-27): owner,
+    // privileged, or memberAdmin. memberAdmin is the authorized ssn/dob editor
+    // (D9) and could already obtain every value through the getAddressView
+    // callable, so denying the raw read bought no confidentiality — it only
+    // broke read-then-write flows (duplicate vault docs) and the QR-slip/export
+    // paths. Plain members remain locked out; they read the projection.
+    function canReadVault(data) {
+      return ownsParent(data) || ((isPrivileged() || hasRole('memberAdmin')) && belongsToTenant(data));
     }
     // A document belongs to the caller's tenant when their tenant is listed on the
     // document, or when the document is shared via the 'system' tenant.
@@ -202,12 +210,14 @@ service cloud.firestore {
       allow update: if tenantCreate();
       allow delete: if tenantDelete();
     }
-    // addresses = PII vault (spec 1.19 Phase 4 lock): raw read only for the owner
-    // or privileged; everyone else reads the address-directory projection or the
-    // getAddressView callable. Sensitive channels (ssn/dob/bankaccount) are
-    // writable only by owner/privileged/memberAdmin.
+    // addresses = PII vault (spec 1.19 Phase 4 lock): raw read only for the owner,
+    // privileged, or memberAdmin (D-P4-1 as amended); plain members read the
+    // address-directory projection or the getAddressView callable. Sensitive
+    // channels (ssn/dob/bankaccount) are writable only by owner/privileged/memberAdmin.
     match /addresses/{id} {
-      allow read:   if ownsParent(resource.data) || (isPrivileged() && tenantRead());
+      // resource == null: a get() on a missing doc — allow the clean not-found
+      // (same rationale as tenantRead(); list results always have a concrete resource).
+      allow read:   if userExists() && (resource == null || canReadVault(resource.data));
       allow create: if tenantCreate()
                      && (!isSensitiveChannel(request.resource.data) || canWriteSensitive(request.resource.data));
       allow update: if tenantUpdate()
