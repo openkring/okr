@@ -92,6 +92,24 @@ export function isVisibleToUser(privacyAccessor?: PrivacyAccessor, currentUser?:
   }
 }
 
+/**
+ * Visibility of a vault-backed sensitive field (ssn/dob — spec 1.19 Phase 4, D9).
+ *
+ * These fields live in the addresses vault, where memberAdmin is an authorized reader
+ * AND writer: firestore.rules `canReadVault`/`canWriteSensitive` grant it (D-P4-1 as
+ * amended), and PersonService.loadSensitive hydrates it via the getAddressView callable.
+ * The PrivacyAccessor ladder has no memberAdmin rung, though — a tenant floor of
+ * 'privileged' or 'admin' on showTaxId/showDateOfBirth therefore hid the field from
+ * exactly the role that maintains it. Grant memberAdmin explicitly instead of widening
+ * the accessor ladder (which would leak into every other privacy check).
+ * @param privacyAccessor the tenant/person floor for this field class
+ * @param currentUser the user to check
+ * @returns true if the field may be shown
+ */
+export function isSensitiveFieldVisible(privacyAccessor?: PrivacyAccessor, currentUser?: UserModel): boolean {
+  return isVisibleToUser(privacyAccessor, currentUser) || hasRole('memberAdmin', currentUser);
+}
+
 export function areNotesVisible(currentUser?: UserModel, priv?: PrivacySettings, notes?: string, readonly?: boolean): boolean {
   if (!currentUser || !priv) return false;
   debugMessage(`auth.util.isNotesVisible(readonly=${readonly}, showNotes=${priv.showNotes}, notes=<${notes}>) -> ${isVisibleToUser(priv.showNotes, currentUser)}`, currentUser);

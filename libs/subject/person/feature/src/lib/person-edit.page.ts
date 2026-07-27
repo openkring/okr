@@ -5,6 +5,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter }
 import { PersonModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { PersonFormModel } from '@okr/subject-person-util';
 
 import { MembershipAccordion } from '@okr/relationship-membership-feature';
 import { OwnershipAccordion } from '@okr/relationship-ownership-feature';
@@ -100,7 +101,9 @@ export class PersonEditPage implements ViewWillEnter   {
   // seeded by the constructor effect, once per person. This must NOT be a linkedSignal: person() is
   // derived from a live Firestore stream, so every re-emission would hand back a new object reference
   // (or transiently undefined while the resource reloads) and silently discard the user's edits.
-  public formData = signal<PersonModel | undefined>(undefined);
+  // ssn/dob are NOT on the person document (spec 1.19 Phase 4) — they live in the addresses
+  // vault and are hydrated into the form model by seed() below.
+  public formData = signal<PersonFormModel | undefined>(undefined);
   /** okey of the person formData was seeded from -> lets us re-seed when navigating to another person */
   private seededPersonKey: string | undefined;
   protected showForm = signal(true);
@@ -129,8 +132,27 @@ export class PersonEditPage implements ViewWillEnter   {
       if (!person) return;                                  // still loading -> wait
       if (this.seededPersonKey === person.okey) return;     // already seeded -> never clobber edits
       this.seededPersonKey = person.okey;
-      this.formData.set(safeStructuredClone(person));
+      this.seed(person);
     });
+  }
+
+  /**
+   * Seeds the form from the person document and then hydrates the vault-backed ssn/dob
+   * (spec 1.19 Phase 4, D9) — without them the fields render empty for every role, since
+   * the person document no longer carries ssnId/dateOfBirth. Saving is already vault-aware:
+   * PersonService.create/update strip both fields off the person write and sync the vault.
+   */
+  private seed(person: PersonModel): void {
+    const formPerson = safeStructuredClone(person) as PersonFormModel;
+    this.formData.set(formPerson);
+    void this.hydrateSensitive(person.okey);
+  }
+
+  private async hydrateSensitive(personKey: string): Promise<void> {
+    const sensitive = await this.store.loadSensitive(personKey);
+    // the user may have navigated on or started editing while the vault read was in flight
+    if (this.seededPersonKey !== personKey || this.formDirty()) return;
+    this.formData.update((vm) => vm ? { ...vm, ssnId: sensitive.ssn ?? '', dateOfBirth: sensitive.dob ?? '' } : vm);
   }
 
   /**
@@ -151,7 +173,7 @@ export class PersonEditPage implements ViewWillEnter   {
     this.formDirty.set(false);
     const person = this.person();
     if (person) {
-      this.formData.set(safeStructuredClone(person));  // reset the form
+      this.seed(person);  // reset the form (person document + vault-backed ssn/dob)
     }
     // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
@@ -160,7 +182,7 @@ export class PersonEditPage implements ViewWillEnter   {
     }, 0);
   }
 
-  protected onFormDataChange(formData: PersonModel): void {
+  protected onFormDataChange(formData: PersonFormModel): void {
     this.formData.set(formData);
   }
 

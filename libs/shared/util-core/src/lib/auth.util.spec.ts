@@ -7,6 +7,7 @@ import {
   isKioskOnly,
   isPrivileged,
   isPrivilegedOr,
+  isSensitiveFieldVisible,
   isVisibleToUser
 } from './auth.util';
 import * as logUtil from './log.util';
@@ -328,6 +329,12 @@ describe('auth.util', () => {
       expect(mockDie).toHaveBeenCalledWith('AuthUtil.isVisibleToUser: unknown privacy accessor: unknownAccessor');
     });
 
+    it('should hide a privileged field from memberAdmin (no memberAdmin rung on the accessor ladder)', () => {
+      const user = createUserWithRoles({ memberAdmin: true });
+      const result = isVisibleToUser('privileged', user);
+      expect(result).toBe(false);
+    });
+
     it('should respect role hierarchy - admin can see privileged content', () => {
       const user = createUserWithRoles({ admin: true });
       const result = isVisibleToUser('privileged', user);
@@ -375,6 +382,43 @@ describe('auth.util', () => {
 
     it('returns false for an undefined user', () => {
       expect(isKioskOnly(undefined)).toBe(false);
+    });
+  });
+
+  describe('isSensitiveFieldVisible', () => {
+    it('grants memberAdmin a privileged-floored field (spec 1.19 D9 — the ssn/dob editor)', () => {
+      const user = createUserWithRoles({ memberAdmin: true });
+      expect(isSensitiveFieldVisible('privileged', user)).toBe(true);
+    });
+
+    it('grants memberAdmin an admin-floored field', () => {
+      const user = createUserWithRoles({ memberAdmin: true });
+      expect(isSensitiveFieldVisible('admin', user)).toBe(true);
+    });
+
+    it('still grants admin and privileged', () => {
+      expect(isSensitiveFieldVisible('privileged', createUserWithRoles({ admin: true }))).toBe(true);
+      expect(isSensitiveFieldVisible('privileged', createUserWithRoles({ privileged: true }))).toBe(true);
+    });
+
+    it('does not widen access for a plain registered user', () => {
+      const user = createUserWithRoles({ registered: true });
+      expect(isSensitiveFieldVisible('privileged', user)).toBe(false);
+      expect(isSensitiveFieldVisible('admin', user)).toBe(false);
+    });
+
+    it('honours a permissive floor for a registered user', () => {
+      const user = createUserWithRoles({ registered: true });
+      expect(isSensitiveFieldVisible('registered', user)).toBe(true);
+    });
+
+    it('returns false for an undefined accessor and a non-memberAdmin user', () => {
+      const user = createUserWithRoles({ registered: true });
+      expect(isSensitiveFieldVisible(undefined, user)).toBe(false);
+    });
+
+    it('returns false for an undefined user', () => {
+      expect(isSensitiveFieldVisible('privileged', undefined)).toBe(false);
     });
   });
 });

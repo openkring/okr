@@ -15,7 +15,7 @@ import { Languages } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
-import { PersonService } from '@okr/subject-person-data-access';
+import { PersonService, SensitivePersonData } from '@okr/subject-person-data-access';
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonFormModel, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@okr/subject-person-util';
 import { browseUrl, stringifyPostalAddress } from '@okr/subject-address-util';
 
@@ -156,6 +156,16 @@ export const PersonStore = signalStore(
         /******************************** getters ******************************************* */
         getTags(): string {
             return store.appStore.getTags(PersonModelName);
+        },
+
+        /**
+         * Reads the vault-backed ssn/dob of a person (spec 1.19 Phase 4, D9). Both edit
+         * surfaces need it: the modal seeds its form from edit() below, the routed
+         * person-edit.page hydrates its form after the person stream has emitted.
+         * Returns empty values when the caller may not read the vault.
+         */
+        async loadSensitive(personKey: string): Promise<SensitivePersonData> {
+            return await store.personService.loadSensitive(personKey, store.currentUser());
         },
 
         /******************************** actions ******************************************* */
@@ -302,7 +312,7 @@ export const PersonStore = signalStore(
         async edit(person: PersonModel, readOnly = true): Promise<void> {
             // Hydrate ssn/dob from the addresses vault (spec 1.19 Phase 4, D9):
             // owner/privileged read raw, memberAdmin via getAddressView, others get ''.
-            const sensitive = await store.personService.loadSensitive(person.okey, store.currentUser());
+            const sensitive = await this.loadSensitive(person.okey);
             const formPerson: PersonFormModel = { ...person, ssnId: sensitive.ssn ?? '', dateOfBirth: sensitive.dob ?? '' };
             const { PersonEditModal } = await import('./person-edit.modal');
             const modal = await store.modalController.create({

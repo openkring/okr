@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVisibleToUser } from '@okr/shared-util-core';
+import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isSensitiveFieldVisible, isVisibleToUser } from '@okr/shared-util-core';
 import { PersonFormModel, personValidations, PersonI18n } from '@okr/subject-person-util';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
@@ -41,9 +41,9 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
               </ion-col>
             </ion-row>
 
-            @if(isVisibleToUser('dob', priv().showDateOfBirth) || isVisibleToUser('dod', priv().showDateOfDeath)) {
+            @if(isSensitiveVisibleToUser(priv().showDateOfBirth) || isVisibleToUser('dod', priv().showDateOfDeath)) {
               <ion-row>
-                @if(isVisibleToUser('dob', priv().showDateOfBirth)) {
+                @if(isSensitiveVisibleToUser(priv().showDateOfBirth)) {
                   <ion-col size="12" size-md="6"> 
                     <okr-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" autocomplete="bday" [readOnly]="isReadOnly()" />
                   </ion-col>
@@ -64,7 +64,7 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
                 </ion-col>
               }
       
-              @if(isVisibleToUser('taxId', priv().showTaxId)) {
+              @if(isSensitiveVisibleToUser(priv().showTaxId)) {
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="ssnIdI18n()" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="isReadOnly()" />
                 </ion-col>
@@ -147,6 +147,15 @@ export class PersonForm {
 
   protected isVisibleToUser(_field: string, privacyAccessor: PrivacyAccessor): boolean {
     return isVisibleToUser(privacyAccessor, this.currentUser());
+  }
+
+  /**
+   * Gate for the vault-backed sensitive fields (dob, ssn — spec 1.19 D9): the tenant floor
+   * plus an explicit memberAdmin grant, because memberAdmin maintains these values but has
+   * no rung on the PrivacyAccessor ladder.
+   */
+  protected isSensitiveVisibleToUser(privacyAccessor: PrivacyAccessor): boolean {
+    return isSensitiveFieldVisible(privacyAccessor, this.currentUser());
   }
 
   protected isDeathDateVisible(): boolean {
