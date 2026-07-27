@@ -2,22 +2,22 @@ import * as admin from 'firebase-admin';
 import * as logger from "firebase-functions/logger";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
-import { AddressCollection, AddressModel, AppConfigCollection, CHANNEL_PRIVACY_INPUTS, GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, PrivacySettings, ReservationCollection, ResourceCollection, ScsMemberFeesCollection, WorkrelCollection } from "@okr/shared-models";
+import { AddressCollection, AddressModel, AppConfigCollection, CHANNEL_PRIVACY_INPUTS, GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, PrivacySettings, ReservationCollection, ResourceCollection, WorkrelCollection } from "@okr/shared-models";
 import {
   getActiveAddresses,
-  getAllMemberFeesOfMember,
   getAllMembershipsOfMember, getAllMembershipsOfOrg,
   getAllOwnershipsOfOwner, getAllOwnershipsOfResource,
   getAllPersonalRelsOfObject, getAllPersonalRelsOfSubject,
   getAllReservationsOfReserver, getAllReservationsOfResource,
   getAllWorkrelsOfObject, getAllWorkrelsOfSubject,
-  getScalarChannelValue,
   hasChanged,
   rebuildDirectoryForTenant,
+  syncBirthYearReplicas,
+  syncDateOfDeathReplicas,
   updateFavoriteZipCode,
   writeAddressDirectory
 } from "@okr/shared-util-functions";
-import { getBirthYear, getStoreDateYear } from "@okr/shared-util-core";
+import { getStoreDateYear } from "@okr/shared-util-core";
 
 const firestore = admin.firestore();
 
@@ -77,61 +77,6 @@ async function fetchRelations<T>(label: string, sourceId: string, fetch: () => P
  */
 
 /**
- * Sync the degraded-precision dob replica (`memberBirthYear`, YYYY) onto the person's
- * memberships and pending member-fee entries. spec 1.19 Phase 4: the vault dob address
- * is the only dob source (person.dateOfBirth was stripped), so this trigger is the only
- * writer. Neither collection has a trigger — no recursion.
- */
-async function syncBirthYear(personId: string, birthYear: string): Promise<void> {
-  const memberships = await getAllMembershipsOfMember(firestore, personId, 'person');
-  for (const m of memberships) {
-    if ((m as { memberBirthYear?: string }).memberBirthYear !== birthYear) {
-      await firestore.doc(`${MembershipCollection}/${m.okey}`).update({ memberBirthYear: birthYear });
-      logger.info(`Synced memberBirthYear for membership ${m.okey} of person ${personId}`);
-    }
-  }
-  // scs-memberfees carries the same replica and drives the junior cut-off of the
-  // yearly invoice run — a dob correction has to reach the pending entries too.
-  const fees = await getAllMemberFeesOfMember(firestore, personId);
-  for (const fee of fees) {
-    if (fee.memberBirthYear !== birthYear) {
-      await firestore.doc(`${ScsMemberFeesCollection}/${fee.okey}`).update({ memberBirthYear: birthYear });
-      logger.info(`Synced memberBirthYear for member fee ${fee.okey} of person ${personId}`);
-    }
-  }
-}
-
-/**
- * Sync the dod replicas (spec 1.19): the vault dod address is the only date of death,
- * and persons.isDeceased/deathYear + memberships.memberIsDeceased/memberDeathYear are
- * its degraded-precision replicas — the fact and the year, never the full date.
- * This trigger is their only writer.
- */
-async function syncDateOfDeath(personId: string, dod: string): Promise<void> {
-  const isDeceased = dod.length > 0;
-  const deathYear = getStoreDateYear(dod);
-
-  const personRef = firestore.doc(`${PersonCollection}/${personId}`);
-  const personSnap = await personRef.get();
-  const p = personSnap.data();
-  if (personSnap.exists && (p?.['isDeceased'] !== isDeceased || p?.['deathYear'] !== deathYear)) {
-    // triggers onPersonChange — it no longer syncs these fields
-    await personRef.update({ isDeceased, deathYear });
-    logger.info(`Synced isDeceased=${isDeceased}/deathYear=${deathYear} for person ${personId}`);
-  }
-
-  const memberships = await getAllMembershipsOfMember(firestore, personId, 'person');
-  for (const m of memberships) {
-    const member = m as { memberIsDeceased?: boolean; memberDeathYear?: string };
-    if (member.memberIsDeceased !== isDeceased || member.memberDeathYear !== deathYear) {
-      await firestore.doc(`${MembershipCollection}/${m.okey}`)
-        .update({ memberIsDeceased: isDeceased, memberDeathYear: deathYear });
-      logger.info(`Synced memberIsDeceased/memberDeathYear for membership ${m.okey} of person ${personId}`);
-    }
-  }
-}
-
-/**
  * If an address is changed, we update the favorite zip code of the parent (which is a person or organization)
  * and rebuild the address-directory projection. favEmail/favPhone are no longer replicated
  * (spec 1.19 Phase 4 strip) — contact data is served by the projection.
@@ -173,10 +118,10 @@ export const onAddressChange = onDocumentWritten(
         if (!parentKey.startsWith('person.')) continue;
         const personId = parentKey.substring('person.'.length);
         if (touchedChannels.has('dob')) {
-          await syncBirthYear(personId, getBirthYear(getScalarChannelValue(addresses, 'dob')));
+          await syncBirthYearReplicas(firestore, personId, addresses);
         }
         if (touchedChannels.has('dod')) {
-          await syncDateOfDeath(personId, getScalarChannelValue(addresses, 'dod'));
+          await syncDateOfDeathReplicas(firestore, personId, addresses);
         }
       }
     }

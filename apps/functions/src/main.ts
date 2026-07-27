@@ -234,6 +234,9 @@ export { migrateSensitiveData } from './person/migrate-sensitive-data';
 // privacy 1.19: one-time migration of dateOfDeath into the 'dod' vault channel
 export { migrateDateOfDeath } from './person/migrate-sensitive-data';
 
+// re-derive the dob/dod replicas from the live vault (run AFTER migrateDateOfDeath)
+export { resyncVaultReplicas } from './person/resync-vault-replicas';
+
 // address-directory projection rebuild/backfill (privacy 1.19 Phase 4)
 export { rebuildAddressDirectory } from './address/rebuild-address-directory';
 
