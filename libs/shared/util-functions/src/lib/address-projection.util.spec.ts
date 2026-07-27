@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AddressModel, PersonModel, PrivacyUsage } from '@okr/shared-models';
 
-import { buildDirectoryDoc, projectAddressesForViewer, toDirectoryEntry } from './address-projection.util';
+import { buildDirectoryDoc, projectAddressesForViewer, reduceToFavoriteAddresses, toDirectoryEntry } from './address-projection.util';
 
 function makeAddress(overrides: Partial<AddressModel>): AddressModel {
   const address = new AddressModel('tenant1');
@@ -39,6 +39,27 @@ describe('toDirectoryEntry', () => {
   });
 });
 
+describe('reduceToFavoriteAddresses', () => {
+  it('keeps the flagged favorite of a channel and drops the siblings', () => {
+    const reduced = reduceToFavoriteAddresses([otherEmail, favoriteEmail, favoritePhone]);
+    expect(reduced.map(a => a.okey).sort()).toEqual(['a1', 'a3']);
+  });
+
+  it('falls back to the first non-CC address when the person flagged none', () => {
+    const second = makeAddress({ okey: 'b2', addressChannel: 'email', email: 'second@example.com' });
+    const reduced = reduceToFavoriteAddresses([otherEmail, second]);
+    expect(reduced.map(a => a.okey)).toEqual(['a2']);
+  });
+
+  it('never picks a CC address — a CC-only channel yields nothing', () => {
+    const ccOnly = makeAddress({ okey: 'b3', addressChannel: 'email', email: 'cc@example.com', isCc: true });
+    const reduced = reduceToFavoriteAddresses([ccOnly]);
+    expect(reduced).toEqual([]);
+    const withPlain = reduceToFavoriteAddresses([ccOnly, otherEmail]);
+    expect(withPlain.map(a => a.okey)).toEqual(['a2']);
+  });
+});
+
 describe('buildDirectoryDoc', () => {
   it('includes registered-visible contact channels and derives the fav* conveniences', () => {
     const doc = buildDirectoryDoc('tenant1', 'person.p1', 'person', allAddresses, makePerson());
@@ -46,10 +67,23 @@ describe('buildDirectoryDoc', () => {
     expect(doc.parentKey).toBe('person.p1');
     expect(doc.parentType).toBe('person');
     expect(doc.tenants).toEqual(['tenant1']);
-    expect(doc.entries.map(e => e.addressOkey).sort()).toEqual(['a1', 'a2', 'a3', 'a4']);
+    // a2 is the non-favorite second email — persons are reduced to one address per channel
+    expect(doc.entries.map(e => e.addressOkey).sort()).toEqual(['a1', 'a3', 'a4']);
     expect(doc.favEmail).toBe('fav@example.com');
     expect(doc.favPhone).toBe('+41791234567');
     expect(doc.favZipCode).toBe('8712');
+  });
+
+  it('falls back to the first non-CC address of a channel when none is flagged favorite', () => {
+    const doc = buildDirectoryDoc('tenant1', 'person.p1', 'person', [otherEmail], makePerson());
+    expect(doc.entries.map(e => e.addressOkey)).toEqual(['a2']);
+    expect(doc.favEmail).toBe('other@example.com');
+  });
+
+  it('does NOT reduce orgs — every public contact channel stays visible', () => {
+    const secondOrgEmail = makeAddress({ okey: 'o2', addressChannel: 'email', email: 'kasse@example.com' });
+    const doc = buildDirectoryDoc('tenant1', 'org.o1', 'org', [favoriteEmail, secondOrgEmail]);
+    expect(doc.entries.map(e => e.addressOkey).sort()).toEqual(['a1', 'o2']);
   });
 
   it('NEVER contains ssn/dob/bankaccount entries, regardless of preferences', () => {
@@ -91,7 +125,18 @@ describe('buildDirectoryDoc', () => {
 describe('projectAddressesForViewer', () => {
   it('registered viewer: contact channels only — no ssn/dob/iban docs at all', () => {
     const visible = projectAddressesForViewer(allAddresses, 'registered', 'person', makePerson());
-    expect(visible.map(a => a.okey).sort()).toEqual(['a1', 'a2', 'a3', 'a4']);
+    expect(visible.map(a => a.okey).sort()).toEqual(['a1', 'a3', 'a4']);
+  });
+
+  it('agrees with the materialized directory for a registered viewer', () => {
+    const visible = projectAddressesForViewer(allAddresses, 'registered', 'person', makePerson());
+    const doc = buildDirectoryDoc('tenant1', 'person.p1', 'person', allAddresses, makePerson());
+    expect(visible.map(a => a.okey).sort()).toEqual(doc.entries.map(e => e.addressOkey).sort());
+  });
+
+  it('does not reduce a privileged viewer to one address per channel', () => {
+    const visible = projectAddressesForViewer(allAddresses, 'privileged', 'person', makePerson());
+    expect(visible.filter(a => a.addressChannel === 'email').map(a => a.okey).sort()).toEqual(['a1', 'a2']);
   });
 
   it('privileged viewer: sees the vault channels including iban/ssn/dob values', () => {

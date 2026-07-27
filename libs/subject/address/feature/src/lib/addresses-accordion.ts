@@ -49,7 +49,9 @@ import { AddressStore } from "./addresses.store";
             @if(isVisibleToUser(address)) {
               <ion-item (click)="showActions(address)">
                 <ion-label>
-                  <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                  @if(store.readsVault()) {
+                    <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                  }
                   @if(address.isCc) {
                     <ion-icon src="{{ 'cc-circle' | svgIcon }}" />
                   }

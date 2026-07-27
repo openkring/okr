@@ -78,7 +78,9 @@ import { AddressStore } from './addresses.store';
                   <ion-img src="{{ address.parentKey | avatar }}" alt="Avatar Logo" />
                 </ion-avatar>
                 <ion-label>
-                  <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                  @if(store.readsVault()) {
+                    <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                  }
                   @if(address.isCc) { <ion-icon src="{{ 'cc-circle' | svgIcon }}" /> }
                   @if(address.isValidated) { <ion-icon src="{{ 'shield' | svgIcon }}" /> }
                   <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
@@ -106,7 +108,9 @@ import { AddressStore } from './addresses.store';
                     @for(address of groupedAddresses().get(parentKey) ?? []; track address.okey) {
                       <ion-item (click)="showActions(address)">
                         <ion-label class="addresses">
-                          <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                          @if(store.readsVault()) {
+                            <ion-icon src="{{ 'star' | svgIcon }}" color="{{ address.isFavorite | favoriteColor }}" />
+                          }
                           @if(address.isCc) { <ion-icon src="{{ 'cc-circle' | svgIcon }}" /> }
                           @if(address.isValidated) { <ion-icon src="{{ 'shield' | svgIcon }}" /> }
                           <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />

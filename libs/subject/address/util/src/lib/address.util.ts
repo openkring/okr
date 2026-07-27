@@ -2,9 +2,42 @@ import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { ToastController } from '@ionic/angular';
 
-import { AddressModel, DirectoryEntry } from '@okr/shared-models';
+import { AddressModel, DirectoryEntry, UserModel } from '@okr/shared-models';
 import { copyToClipboard, formatIban, formatPhoneNumber, IbanFormat, showToast } from '@okr/shared-util-angular';
 import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } from '@okr/shared-util-core';
+
+/*-------------------------- address visibility ------------------------------*/
+
+/**
+ * Whether the viewer streams the RAW `addresses` collection or the sanitized
+ * `address-directory` projection (spec 1.19 §A4, D-P4-1 as amended 2026-07-27).
+ * Raw = the owner, privileged/admin, memberAdmin, and the admin-guarded 'all'
+ * list route; everyone else reads the projection.
+ */
+export function readsAddressVault(user: UserModel | undefined, parentKey: string): boolean {
+  if (parentKey === 'all') return true; // that list route is admin-guarded
+  const isOwner = !!user?.personKey && parentKey === `person.${user.personKey}`;
+  const isPrivileged = user?.roles?.['privileged'] === true
+    || user?.roles?.['admin'] === true
+    || user?.roles?.['memberAdmin'] === true;
+  return isOwner || isPrivileged;
+}
+
+/**
+ * Whether a newly created address should be flagged as its channel's favorite
+ * — the "main address (visible to members)" of that channel (decided
+ * 2026-07-27). Members see exactly one address per channel, so a channel
+ * without a flagged favorite falls back to an arbitrary first entry; flagging
+ * the first one makes the person's own choice explicit instead.
+ * CC and archived addresses are never member-facing, so they never qualify.
+ */
+export function shouldBecomeFavorite(address: AddressModel, siblings: AddressModel[]): boolean {
+  if (address.isCc || address.isArchived) return false;
+  return !siblings.some((sibling) =>
+    sibling.okey !== address.okey
+    && sibling.addressChannel === address.addressChannel
+    && sibling.isFavorite && !sibling.isCc && !sibling.isArchived);
+}
 
 /*-------------------------- address creation --------------------------------*/
 

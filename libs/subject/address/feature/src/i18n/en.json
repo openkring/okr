@@ -43,12 +43,12 @@
   "favorite": {
     "enable": {
       "label": "Use as main address",
-      "description": "Declare this address as the main address. This means it is used e.g. in member lists, copied email addresses or in exports.",
+      "description": "Declare this address as the main address. This means it is used e.g. in member lists, copied email addresses or in exports. It is also the only address of this channel that other members see.",
       "conf": "The address is now a main address."
     },
     "disable": {
       "label": "No longer a main address",
-      "description": "This address should no longer be a main address.",
+      "description": "This address should no longer be a main address. Members will then see the main address of this channel.",
       "conf": "The address is now no longer a main address."
     }
   },
@@ -321,8 +321,8 @@
     "placeholder": "Optional and arbitrary notes"
   },
   "isFavorite": {
-    "label": "Favorite",
-    "helper": "The main address is used in lists and when copying email addresses."
+    "label": "Main address (visible to members)",
+    "helper": "The main address is the only address of this channel that other members see. It is also used in lists, exports and when copying email addresses."
   },
   "isCc": {
     "label": "CC",

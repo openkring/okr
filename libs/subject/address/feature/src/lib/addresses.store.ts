@@ -22,7 +22,7 @@ import { DocumentService } from '@okr/document-data-access';
 import { FolderService } from '@okr/folder-data-access';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
-import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, directoryEntryToAddress, getWebUrl, isAddress, openExternalUrl, stringifyPostalAddress } from '@okr/subject-address-util';
+import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, directoryEntryToAddress, getWebUrl, isAddress, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AddressEditModal } from './address-edit.modal';
 import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
@@ -85,11 +85,7 @@ export const AddressStore = signalStore(
         // so a read-only projection would break that job); plain members stream the
         // address-directory projection and see exactly the registered-visible
         // entries. 'all' stays raw — that list route is admin-guarded.
-        const user = params.currentUser;
-        const isOwner = !!user?.personKey && params.parentKey === `person.${user.personKey}`;
-        const canReadVault = user?.roles?.['privileged'] === true || user?.roles?.['admin'] === true
-          || user?.roles?.['memberAdmin'] === true;
-        if (isOwner || canReadVault || params.parentKey === 'all') {
+        if (readsAddressVault(params.currentUser, params.parentKey)) {
           const dbQuery = getSystemQuery(store.appStore.tenantId());
           if (params.parentKey !== 'all') { // for all we do not restrict the result set
             dbQuery.push({ key: 'parentKey', operator: '==', value: params.parentKey });
@@ -121,6 +117,9 @@ export const AddressStore = signalStore(
         ) ?? []
       ),
       currentUser: computed(() => store.appStore.currentUser()),
+      // reading the projection means seeing exactly one address per channel — the
+      // favorite. Marking it with a star would be noise: they are all favorites.
+      readsVault: computed(() => readsAddressVault(store.appStore.currentUser(), store.parentKey())),
       currentPerson: computed(() => store.appStore.currentPerson()),
       defaultOrg: computed(() => store.appStore.defaultOrg()),
       tenantId: computed(() => store.appStore.tenantId()),
@@ -205,9 +204,14 @@ export const AddressStore = signalStore(
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data && !readOnly) {
         if (isAddress(data, store.tenantId())) {
-            await (!data.okey ? 
-              store.addressService.create(data, store.currentUser()) : 
-              store.addressService.update(data, store.currentUser()));
+            if (!data.okey) {
+              // make the person's choice explicit rather than leaving the channel
+              // to the projection's fallback (see shouldBecomeFavorite)
+              if (shouldBecomeFavorite(data, store.addresses() ?? [])) data.isFavorite = true;
+              await store.addressService.create(data, store.currentUser());
+            } else {
+              await store.addressService.update(data, store.currentUser());
+            }
             this.reload();
         }
         }

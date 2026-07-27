@@ -43,12 +43,12 @@
   "favorite": {
     "enable": {
       "label": "Utilizzare come indirizzo principale",
-      "description": "Dichiarare questo indirizzo come indirizzo principale. Ciò significa che viene utilizzato ad es. negli elenchi dei membri, negli indirizzi e-mail copiati o nelle esportazioni.",
+      "description": "Dichiarare questo indirizzo come indirizzo principale. Ciò significa che viene utilizzato ad es. negli elenchi dei membri, negli indirizzi e-mail copiati o nelle esportazioni. È inoltre l'unico indirizzo di questo canale che gli altri membri vedono.",
       "conf": "L'indirizzo è ora un indirizzo principale."
     },
     "disable": {
       "label": "Non più indirizzo principale",
-      "description": "Questo indirizzo non deve più essere un indirizzo principale.",
+      "description": "Questo indirizzo non deve più essere un indirizzo principale. I membri vedranno allora l'indirizzo principale di questo canale.",
       "conf": "L'indirizzo non è più un indirizzo principale."
     }
   },
@@ -321,8 +321,8 @@
     "placeholder": "Note facoltative e libere"
   },
   "isFavorite": {
-    "label": "Preferito",
-    "helper": "L'indirizzo principale viene utilizzato negli elenchi e durante la copia degli indirizzi e-mail."
+    "label": "Indirizzo principale (visibile ai membri)",
+    "helper": "L'indirizzo principale è l'unico indirizzo di questo canale che gli altri membri vedono. Viene inoltre utilizzato negli elenchi, nelle esportazioni e durante la copia degli indirizzi e-mail."
   },
   "isCc": {
     "label": "CC",

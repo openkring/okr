@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AddressModel } from '@okr/shared-models';
+import { AddressModel, UserModel } from '@okr/shared-models';
 import { getCountryName } from '@okr/shared-util-core';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
-import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, directoryEntryToAddress, getWebUrl, normalizeAddressValue, openExternalUrl, stringifyAddress, stringifyPostalAddress } from './address.util';
+import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, directoryEntryToAddress, getWebUrl, normalizeAddressValue, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyAddress, stringifyPostalAddress } from './address.util';
 
 // Mock all external dependencies
 vi.mock('@capacitor/browser', () => ({ Browser: { open: vi.fn() } }));
@@ -293,5 +293,62 @@ describe('directoryEntryToAddress (spec 1.19 Phase 4)', () => {
     // never carries vault values — the entry has none by construction
     expect(address.ssn).toBe('');
     expect(address.iban).toBe('');
+  });
+});
+
+describe('readsAddressVault', () => {
+  const member = { personKey: 'p1', roles: {} } as unknown as UserModel;
+  const privileged = { personKey: 'p1', roles: { privileged: true } } as unknown as UserModel;
+  const memberAdmin = { personKey: 'p1', roles: { memberAdmin: true } } as unknown as UserModel;
+
+  it('lets the owner read their own raw addresses', () => {
+    expect(readsAddressVault(member, 'person.p1')).toBe(true);
+  });
+
+  it('sends a plain member to the projection for someone else', () => {
+    expect(readsAddressVault(member, 'person.p2')).toBe(false);
+    expect(readsAddressVault(member, 'org.o1')).toBe(false);
+  });
+
+  it('lets privileged and memberAdmin read the vault of others', () => {
+    expect(readsAddressVault(privileged, 'person.p2')).toBe(true);
+    expect(readsAddressVault(memberAdmin, 'person.p2')).toBe(true);
+  });
+
+  it("treats the admin-guarded 'all' route as raw", () => {
+    expect(readsAddressVault(member, 'all')).toBe(true);
+  });
+
+  it('sends an unauthenticated viewer to the projection', () => {
+    expect(readsAddressVault(undefined, 'person.p1')).toBe(false);
+  });
+});
+
+describe('shouldBecomeFavorite', () => {
+  const address = (overrides: Partial<AddressModel>): AddressModel =>
+    Object.assign(new AddressModel('tenant1'), overrides);
+  const newEmail = address({ okey: '', addressChannel: 'email', email: 'new@example.com' });
+
+  it('flags the first address of a channel', () => {
+    expect(shouldBecomeFavorite(newEmail, [])).toBe(true);
+    expect(shouldBecomeFavorite(newEmail, [address({ okey: 'a1', addressChannel: 'phone', isFavorite: true })])).toBe(true);
+  });
+
+  it('flags a new address when the channel has no favorite yet', () => {
+    expect(shouldBecomeFavorite(newEmail, [address({ okey: 'a1', addressChannel: 'email' })])).toBe(true);
+  });
+
+  it('does not flag when the channel already has a favorite', () => {
+    expect(shouldBecomeFavorite(newEmail, [address({ okey: 'a1', addressChannel: 'email', isFavorite: true })])).toBe(false);
+  });
+
+  it('ignores archived and CC siblings when looking for the favorite', () => {
+    expect(shouldBecomeFavorite(newEmail, [address({ okey: 'a1', addressChannel: 'email', isFavorite: true, isArchived: true })])).toBe(true);
+    expect(shouldBecomeFavorite(newEmail, [address({ okey: 'a1', addressChannel: 'email', isFavorite: true, isCc: true })])).toBe(true);
+  });
+
+  it('never flags a CC or archived address itself', () => {
+    expect(shouldBecomeFavorite(address({ addressChannel: 'email', isCc: true }), [])).toBe(false);
+    expect(shouldBecomeFavorite(address({ addressChannel: 'email', isArchived: true }), [])).toBe(false);
   });
 });

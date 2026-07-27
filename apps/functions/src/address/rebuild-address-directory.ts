@@ -30,9 +30,12 @@ async function forEachDocId(base: Query<DocumentData>, fn: (id: string) => Promi
 
 /**
  * Rebuild the entire address-directory projection (spec 1.19 Phase 4). Admin-only,
- * idempotent — run it for the initial backfill and after a tenant changes its
+ * idempotent — run it for the initial backfill, after a tenant changes its
  * AppConfig privacy floors (the floors are inputs to the projection, and config
- * changes have no trigger).
+ * changes have no trigger), and after any change to the projection logic itself:
+ * every existing doc was written by the OLD buildDirectoryDoc and stays stale
+ * until its parent's next address write fires the trigger. The favorite-only
+ * reduction (2026-07-27) is such a change — deploy, then run this.
  */
 export const rebuildAddressDirectory = onCall(
   { region: REGION, enforceAppCheck: true, timeoutSeconds: 540 },

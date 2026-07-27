@@ -43,12 +43,12 @@
   "favorite": {
     "enable": {
       "label": "Utiliser comme adresse principale",
-      "description": "Déclarer cette adresse comme adresse principale. Cela signifie qu'elle est utilisée par ex. dans les listes de membres, les adresses e-mail copiées ou les exports.",
+      "description": "Déclarer cette adresse comme adresse principale. Cela signifie qu'elle est utilisée par ex. dans les listes de membres, les adresses e-mail copiées ou les exports. Elle est en outre la seule adresse de ce canal que les autres membres voient.",
       "conf": "L'adresse est désormais une adresse principale."
     },
     "disable": {
       "label": "Plus une adresse principale",
-      "description": "Cette adresse ne doit plus être une adresse principale.",
+      "description": "Cette adresse ne doit plus être une adresse principale. Les membres verront alors l'adresse principale de ce canal.",
       "conf": "L'adresse n'est désormais plus une adresse principale."
     }
   },
@@ -321,8 +321,8 @@
     "placeholder": "Notes facultatives et libres"
   },
   "isFavorite": {
-    "label": "Favori",
-    "helper": "L'adresse principale est utilisée dans les listes et lors de la copie des adresses e-mail."
+    "label": "Adresse principale (visible par les membres)",
+    "helper": "L'adresse principale est la seule adresse de ce canal que les autres membres voient. Elle est également utilisée dans les listes, les exports et lors de la copie des adresses e-mail."
   },
   "isCc": {
     "label": "CC",

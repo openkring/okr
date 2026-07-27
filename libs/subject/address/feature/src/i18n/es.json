@@ -43,12 +43,12 @@
   "favorite": {
     "enable": {
       "label": "Usar como dirección principal",
-      "description": "Declarar esta dirección como dirección principal. Esto significa que se utiliza, p. ej., en listas de miembros, direcciones de correo electrónico copiadas o en exportaciones.",
+      "description": "Declarar esta dirección como dirección principal. Esto significa que se utiliza, p. ej., en listas de miembros, direcciones de correo electrónico copiadas o en exportaciones. Además, es la única dirección de este canal que ven los demás miembros.",
       "conf": "La dirección es ahora una dirección principal."
     },
     "disable": {
       "label": "Ya no es dirección principal",
-      "description": "Esta dirección ya no debe ser una dirección principal.",
+      "description": "Esta dirección ya no debe ser una dirección principal. Los miembros verán entonces la dirección principal de este canal.",
       "conf": "La dirección ya no es una dirección principal."
     }
   },
@@ -321,8 +321,8 @@
     "placeholder": "Notas opcionales y libres"
   },
   "isFavorite": {
-    "label": "Favorito",
-    "helper": "La dirección principal se utiliza en las listas y al copiar las direcciones de correo electrónico."
+    "label": "Dirección principal (visible para los miembros)",
+    "helper": "La dirección principal es la única dirección de este canal que ven los demás miembros. También se utiliza en listas, exportaciones y al copiar las direcciones de correo electrónico."
   },
   "isCc": {
     "label": "CC",

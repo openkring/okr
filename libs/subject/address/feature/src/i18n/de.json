@@ -43,12 +43,12 @@
   "favorite": {
     "enable": {
       "label": "Als Hauptadresse verwenden",
-      "description": "Diese Adresse zur Hauptadresse deklarieren. Dies bedeutet, dass sie zB in Mitgliederlisten, kopierten Email-Adressen oder in Exports verwendet wird.",
+      "description": "Diese Adresse zur Hauptadresse deklarieren. Dies bedeutet, dass sie zB in Mitgliederlisten, kopierten Email-Adressen oder in Exports verwendet wird. Sie ist zudem die einzige Adresse dieses Kanals, die andere Mitglieder sehen.",
       "conf": "Die Adresse ist neu eine Hauptadresse."
     },
     "disable": {
       "label": "Keine Hauptadresse mehr",
-      "description": "Diese Adresse soll keine Hauptadresse mehr sein.",
+      "description": "Diese Adresse soll keine Hauptadresse mehr sein. Mitglieder sehen dann die Hauptadresse dieses Kanals.",
       "conf": "Die Adresse ist jetzt keine Hauptadresse mehr."
     }
   },
@@ -321,8 +321,8 @@
     "placeholder": "Optionale und beliebige Notizen"
   },
   "isFavorite": {
-    "label": "Favorit",
-    "helper": "Hauptadresse wird auf Listen und beim Kopieren der Emailadressen verwendet."
+    "label": "Hauptadresse (für Mitglieder sichtbar)",
+    "helper": "Die Hauptadresse ist die einzige Adresse dieses Kanals, die andere Mitglieder sehen. Sie wird auch in Listen, Exporten und beim Kopieren der E-Mail-Adressen verwendet."
   },
   "isCc": {
     "label": "CC",

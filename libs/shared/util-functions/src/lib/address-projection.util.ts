@@ -67,8 +67,44 @@ function toSanitizedAddress(address: AddressModel): AddressModel {
 }
 
 /**
+ * Reduce a person's addresses to ONE per contact channel for below-privileged
+ * viewers (decided 2026-07-27): a member sees the address the person flagged
+ * `isFavorite` — labelled "shared with members" in the address form — and not the
+ * rest of their contact catalogue. Showing every registered-visible address leaks
+ * by inference (the work address names the employer, the second postal address the
+ * holiday flat), and the `usage*` flags are per channel CLASS, so they give the
+ * person no way to share one email while hiding another. This is that lever.
+ *
+ * Fallback: when no address of a channel is flagged, the first non-CC one wins.
+ * Nothing enforces the flag across documents (a per-address Vest suite cannot see
+ * its siblings), so without the fallback every person who never set a favorite
+ * would silently drop out of the directory and become unreachable.
+ *
+ * CC addresses are never the member-facing one: they exist for privileged
+ * correspondence and are read raw at that tier, not through this projection.
+ *
+ * Orgs are deliberately NOT reduced — org contact data is intentionally public and
+ * its multiple channels (Sekretariat, Bootshaus, Kasse) are all meant to be found.
+ */
+export function reduceToFavoriteAddresses(addresses: AddressModel[]): AddressModel[] {
+  const byChannel = new Map<string, AddressModel[]>();
+  for (const address of addresses) {
+    const channel = address.addressChannel ?? '';
+    byChannel.set(channel, [...(byChannel.get(channel) ?? []), address]);
+  }
+  const reduced: AddressModel[] = [];
+  for (const candidates of byChannel.values()) {
+    const shareable = candidates.filter((a) => !a.isCc);
+    const picked = shareable.find((a) => a.isFavorite) ?? shareable[0];
+    if (picked) reduced.push(picked);
+  }
+  return reduced;
+}
+
+/**
  * Build the materialized `address-directory` doc for one parent × tenant:
  * only addresses whose effective accessor (§A3) admits `registered` viewers,
+ * reduced to one address per channel for persons (see reduceToFavoriteAddresses),
  * with the favorite email/phone/zip lifted into the fav* convenience fields.
  */
 export function buildDirectoryDoc(
@@ -86,10 +122,16 @@ export function buildDirectoryDoc(
   const visible = addresses.filter((address) =>
     !address.isArchived
     && accessorAllows('registered', getEffectiveAccessorForAddress(address, parentType, person, settings)));
-  doc.entries = visible.map(toDirectoryEntry);
-  doc.favEmail = visible.find((a) => a.isFavorite && a.addressChannel === 'email')?.email ?? '';
-  doc.favPhone = visible.find((a) => a.isFavorite && a.addressChannel === 'phone')?.phone ?? '';
-  doc.favZipCode = visible.find((a) => a.isFavorite && a.addressChannel === 'postal')?.zipCode ?? '';
+  const projected = parentType === 'person' ? reduceToFavoriteAddresses(visible) : visible;
+  doc.entries = projected.map(toDirectoryEntry);
+  // for persons `projected` holds at most one address per channel (the favorite or
+  // its fallback), so the channel lookup already IS the favorite
+  const favorite = (channel: string) => parentType === 'person'
+    ? projected.find((a) => a.addressChannel === channel)
+    : projected.find((a) => a.isFavorite && a.addressChannel === channel);
+  doc.favEmail = favorite('email')?.email ?? '';
+  doc.favPhone = favorite('phone')?.phone ?? '';
+  doc.favZipCode = favorite('postal')?.zipCode ?? '';
   return doc;
 }
 
@@ -98,6 +140,10 @@ export function buildDirectoryDoc(
  * returns whitelist-copied address docs whose effective accessor admits the
  * viewer tier. Docs the viewer may not see are dropped entirely (stricter than
  * field-blanking — no shell docs leak existence metadata).
+ *
+ * Below-privileged viewers get the same one-per-channel reduction as the
+ * materialized directory — the two read paths MUST agree, or the detail view
+ * would show more of a person than the list it was opened from.
  */
 export function projectAddressesForViewer(
   addresses: AddressModel[],
@@ -106,11 +152,13 @@ export function projectAddressesForViewer(
   person?: Partial<PersonPrivacyPreferences>,
   settings?: Partial<PrivacySettings>,
 ): AddressModel[] {
-  return addresses
-    .filter((address) =>
-      !address.isArchived
-      && accessorAllows(viewerAccessor, getEffectiveAccessorForAddress(address, parentType, person, settings)))
-    .map(toSanitizedAddress);
+  const visible = addresses.filter((address) =>
+    !address.isArchived
+    && accessorAllows(viewerAccessor, getEffectiveAccessorForAddress(address, parentType, person, settings)));
+  const projected = parentType === 'person' && !accessorAllows(viewerAccessor, 'privileged')
+    ? reduceToFavoriteAddresses(visible)
+    : visible;
+  return projected.map(toSanitizedAddress);
 }
 
 function parseParentKey(parentKey: string): { parentType: 'person' | 'org'; parentId: string } | undefined {

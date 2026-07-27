@@ -48,10 +48,12 @@ export class AddressService {
   public async create(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
     normalizeAddressValue(address);
     address.index = getAddressIndex(address);
-    const key = await this.firestoreService.createModel<AddressModel>(AddressCollection, address, 
+    const key = await this.firestoreService.createModel<AddressModel>(AddressCollection, address,
       this.i18n.create_conf(), this.i18n.create_error(), currentUser);
     const payload = `${key}: ${address.addressChannel}/${getAddressValueByChannel(address)}`;
     void this.activityService.log('address', 'create', currentUser, payload);
+    // the new doc's key is only known now — demote against it, not against the empty okey
+    if (key) await this.demoteOtherFavorites({ ...address, okey: key }, currentUser);
     return key;
 }
 
@@ -78,6 +80,7 @@ export class AddressService {
     const value = getAddressValueByChannel(address);
     const payload = `${address.okey}: ${address.addressChannel} = ${value}`;
     void this.activityService.log('address', 'update', currentUser, payload);
+    await this.demoteOtherFavorites(address, currentUser);
     return key;
   }
 
@@ -97,8 +100,9 @@ export class AddressService {
   }
 
   /**
-   * Toggle the favorite attribute.
-   * @param address the object to delete
+   * Toggle the favorite attribute. Raising it demotes the channel's previous
+   * favorite — there is at most one per parent + channel (see demoteOtherFavorites).
+   * @param address the address to toggle
    */
   public async toggleFavorite(address: AddressModel, currentUser?: UserModel): Promise<string | undefined> {
     let conf: string;
@@ -116,21 +120,60 @@ export class AddressService {
     address.isFavorite = !address.isFavorite; // toggle
     const key = await this.firestoreService.updateModel<AddressModel>(AddressCollection, address, false, conf, error, currentUser);
     void this.activityService.log('address', 'update', currentUser, payload);
+    await this.demoteOtherFavorites(address, currentUser);
     return key;
   }
 
   /***************************  favorite address  *************************** */
   /**
-   * Returns either the favorite address of the given channel or null if there is no favorite address for this channel.
-   * @param channel the channel type (e.g. phone, email, web) to look for
-   * @returns the favorite address fo the given channel or null
+   * Enforce ONE favorite per parent + channel by clearing the flag on every other
+   * address of that channel — the address just written always wins.
+   *
+   * The invariant was assumed everywhere but enforced nowhere:
+   * `getFavoriteAddressByChannel` `die()`s on a second favorite, `generateQrEzs`
+   * and `getFavoritePostalAddress` silently pick an arbitrary one, and since spec
+   * 1.19 D-P4-6 the favorite is the single address of its channel that registered
+   * members see — so a stray second favorite decides, at random, which address of
+   * a person the whole tenant gets to see.
+   *
+   * Called from every write path that can raise the flag (create, update,
+   * toggleFavorite). Demotions are written silently: they are a consequence of the
+   * user's action, which has already shown its own confirmation toast.
    */
-  public getFavoriteAddressByChannel(channel: string): Observable<AddressModel | null> {
+  private async demoteOtherFavorites(address: AddressModel, currentUser?: UserModel): Promise<void> {
+    if (!address.isFavorite || !address.parentKey) return;
     const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'parentKey', operator: '==', value: address.parentKey });
+    query.push({ key: 'addressChannel', operator: '==', value: address.addressChannel });
+    query.push({ key: 'isFavorite', operator: '==', value: true });
+    const favorites = await this.firestoreService.getDataOnce<AddressModel>(AddressCollection, query, 'none');
+    for (const other of favorites.filter((favorite) => favorite.okey !== address.okey)) {
+      other.isFavorite = false;
+      await this.firestoreService.updateModel<AddressModel>(AddressCollection, other, false, undefined, undefined, currentUser);
+      void this.activityService.log('address', 'update', currentUser,
+        `${other.okey}: ${other.addressChannel} = fav disabled (superseded by ${address.okey})`);
+    }
+  }
+
+  /**
+   * Returns a subject's favorite address of the given channel, or null if it has none.
+   *
+   * Scoped to `parentKey`: the favorite invariant is one per parent + channel (see
+   * demoteOtherFavorites), so the query must name the parent. Without it the query
+   * matches the channel's favorite of every subject in the tenant and the `die()`
+   * below fires as soon as two people have, say, a favorite email.
+   *
+   * @param parentKey the subject's AddressModel.parentKey, i.e. `person.<okey>` / `org.<okey>`
+   * @param channel the channel type (e.g. phone, email, web) to look for
+   * @returns the favorite address of the given channel or null
+   */
+  public getFavoriteAddressByChannel(parentKey: string, channel: string): Observable<AddressModel | null> {
+    const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'parentKey', operator: '==', value: parentKey });
     query.push({ key: 'addressChannel', operator: '==', value: channel });
     query.push({ key: 'isFavorite', operator: '==', value: true });
     return this.firestoreService.searchData<AddressModel>(AddressCollection, query).pipe(map(addresses => {
-      if (addresses.length > 1) die(`AddressUtil.getFavoriteAddressByChannel -> ERROR: only one favorite adress can exist per channel type (${AddressCollection})`);
+      if (addresses.length > 1) die(`AddressService.getFavoriteAddressByChannel -> ERROR: only one favorite address can exist per parent + channel (${AddressCollection}: ${parentKey}/${channel})`);
       if (addresses.length === 1) return addresses[0];
       return null;
     }));
