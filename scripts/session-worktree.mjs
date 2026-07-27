@@ -11,7 +11,7 @@
 //   pnpm session:remove <name>   remove the worktree (branch kept unless --force)
 
 import { execFileSync, execSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
 const repoRoot = execSync('git rev-parse --show-toplevel').toString().trim();
@@ -106,8 +106,37 @@ switch (cmd) {
     const branch = `work/${name}`;
     const force = process.argv.includes('--force');
     if (!existsSync(path)) die(`No worktree at ${path}.`);
+
+    // `git worktree remove` refuses outright on a tree containing submodules
+    // ("working trees containing submodules cannot be moved or removed"), which is
+    // every worktree here (planning, apps/*, .claude/skills). So we delete the
+    // directory ourselves — which means git's own safety net is gone and we have to
+    // re-implement it: refuse while anything is unsaved, unless --force.
+    if (!force) {
+      // Tracked changes in the superproject. --ignore-submodules=dirty still reports a
+      // moved submodule pointer (a real, committed change) but not their untracked files.
+      const dirty = gitOut(['-C', path, 'status', '--porcelain', '--ignore-submodules=dirty']);
+      if (dirty)
+        die(`Worktree ${path} has uncommitted changes:\n\n${dirty}\n\nCommit them, or re-run with --force to discard.`);
+
+      // Commits sitting in a submodule that were never pushed would be unrecoverable.
+      const unpushed = gitOut([
+        '-C', path, 'submodule', 'foreach', '--quiet',
+        'n=$(git log --oneline @{u}..HEAD 2>/dev/null | wc -l | tr -d " "); [ "$n" = "0" ] || echo "  $name: $n unpushed commit(s)"'
+      ]);
+      if (unpushed)
+        die(`Submodules in ${path} have unpushed commits:\n\n${unpushed}\n\nPush them, or re-run with --force to discard.`);
+    }
+
     console.log(`\n→ Removing worktree ${path}`);
-    git(['worktree', 'remove', ...(force ? ['--force'] : []), path]);
+    try {
+      // stdio ignored: the submodule refusal below is expected, not worth printing.
+      git(['worktree', 'remove', ...(force ? ['--force'] : []), path], { stdio: 'ignore' });
+    } catch {
+      // Expected whenever the worktree has submodules — delete + prune the registration.
+      rmSync(path, { recursive: true, force: true });
+      git(['worktree', 'prune']);
+    }
     if (force) {
       try {
         git(['branch', '-D', branch]);
