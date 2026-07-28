@@ -4,7 +4,7 @@ import * as logger from 'firebase-functions/logger';
 
 import { AddressModel } from '@okr/shared-models';
 
-import { getActiveAddresses, getFavoriteZipCode, getScalarChannelValue, parseParentKey, updateFavoriteZipCode } from './address.util';
+import { demoteFavorites, findFavoritesToDemote, getActiveAddresses, getFavoriteZipCode, getScalarChannelValue, parseParentKey, updateFavoriteZipCode } from './address.util';
 
 vi.mock('firebase-admin/firestore');
 vi.mock('firebase-functions/logger', () => ({
@@ -177,6 +177,110 @@ describe('Address Utils', () => {
       await updateFavoriteZipCode(mockFirestore, 'person.parent-1', []);
 
       expect(mockLoggerError).toHaveBeenCalledWith('Error updating persons/parent-1:', error);
+    });
+  });
+
+  describe('findFavoritesToDemote', () => {
+    const okeys = (addresses: AddressModel[]) => addresses.map((a) => a.okey);
+
+    it('returns nothing when every channel has at most one favorite', () => {
+      const addresses = [
+        address({ okey: 'a1', addressChannel: 'email', isFavorite: true }),
+        address({ okey: 'a2', addressChannel: 'phone', isFavorite: true }),
+        address({ okey: 'a3', addressChannel: 'email', isFavorite: false }),
+      ];
+      expect(findFavoritesToDemote(addresses, 'a1')).toEqual([]);
+    });
+
+    it('keeps the doc that triggered the write and demotes the rest', () => {
+      const addresses = [
+        address({ okey: 'a1', addressChannel: 'email', isFavorite: true }),
+        address({ okey: 'a2', addressChannel: 'email', isFavorite: true }),
+        address({ okey: 'a3', addressChannel: 'email', isFavorite: true }),
+      ];
+      expect(okeys(findFavoritesToDemote(addresses, 'a2'))).toEqual(['a1', 'a3']);
+    });
+
+    it('falls back to the lowest okey when the trigger doc is not a favorite', () => {
+      const addresses = [
+        address({ okey: 'b2', addressChannel: 'phone', isFavorite: true }),
+        address({ okey: 'b1', addressChannel: 'phone', isFavorite: true }),
+      ];
+      // 'b9' triggered the write (e.g. a bulk import) but is not among the favorites
+      expect(okeys(findFavoritesToDemote(addresses, 'b9'))).toEqual(['b2']);
+      expect(okeys(findFavoritesToDemote(addresses))).toEqual(['b2']);
+    });
+
+    it('resolves each channel independently', () => {
+      const addresses = [
+        address({ okey: 'e1', addressChannel: 'email', isFavorite: true }),
+        address({ okey: 'e2', addressChannel: 'email', isFavorite: true }),
+        address({ okey: 'p1', addressChannel: 'postal', isFavorite: true }),
+        address({ okey: 'p2', addressChannel: 'postal', isFavorite: true }),
+      ];
+      expect(okeys(findFavoritesToDemote(addresses, 'e2'))).toEqual(['e1', 'p2']);
+    });
+
+    it('ignores non-favorites entirely', () => {
+      const addresses = [
+        address({ okey: 'a1', addressChannel: 'email', isFavorite: false }),
+        address({ okey: 'a2', addressChannel: 'email', isFavorite: false }),
+      ];
+      expect(findFavoritesToDemote(addresses, 'a1')).toEqual([]);
+    });
+
+    it('treats CC addresses like any other favorite (matches demoteOtherFavorites)', () => {
+      const addresses = [
+        address({ okey: 'a1', addressChannel: 'email', isFavorite: true, isCc: true }),
+        address({ okey: 'a2', addressChannel: 'email', isFavorite: true }),
+      ];
+      expect(okeys(findFavoritesToDemote(addresses, 'a2'))).toEqual(['a1']);
+    });
+  });
+
+  describe('demoteFavorites', () => {
+    // vi.clearAllMocks() clears calls but NOT implementations, so an earlier
+    // mockRejectedValue would otherwise leak into these tests
+    beforeEach(() => {
+      mockParentUpdate.mockResolvedValue(undefined);
+    });
+
+    it('clears the flag in the database and in the caller\'s list', async () => {
+      const addresses = [
+        address({ okey: 'a1', addressChannel: 'email', isFavorite: true }),
+        address({ okey: 'a2', addressChannel: 'email', isFavorite: true }),
+      ];
+
+      const demoted = await demoteFavorites(mockFirestore, addresses, 'a2');
+
+      expect(demoted).toBe(1);
+      expect(mockDoc).toHaveBeenCalledWith('addresses/a1');
+      expect(mockParentUpdate).toHaveBeenCalledWith({ isFavorite: false });
+      // the in-memory list must reflect the fix: the zip code and the projection are
+      // derived from it later in the same trigger pass
+      expect(addresses[0].isFavorite).toBe(false);
+      expect(addresses[1].isFavorite).toBe(true);
+    });
+
+    it('writes nothing when the invariant already holds', async () => {
+      const addresses = [address({ okey: 'a1', addressChannel: 'email', isFavorite: true })];
+
+      expect(await demoteFavorites(mockFirestore, addresses, 'a1')).toBe(0);
+      expect(mockParentUpdate).not.toHaveBeenCalled();
+    });
+
+    it('logs and continues when a demotion write fails', async () => {
+      const error = new Error('Update failed');
+      mockParentUpdate.mockRejectedValue(error);
+      const addresses = [
+        address({ okey: 'a1', addressChannel: 'email', isFavorite: true }),
+        address({ okey: 'a2', addressChannel: 'email', isFavorite: true }),
+      ];
+
+      await demoteFavorites(mockFirestore, addresses, 'a2');
+
+      expect(mockLoggerError).toHaveBeenCalledWith('demoteFavorites: could not demote a1:', error);
+      expect(addresses[0].isFavorite).toBe(true); // unchanged: the write did not land
     });
   });
 });

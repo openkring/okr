@@ -1,11 +1,14 @@
 import { Firestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 
-import { AddressModel, MembershipCollection, PersonCollection, ScsMemberFeesCollection } from '@okr/shared-models';
+import { AddressCollection, AddressModel, MembershipCollection, PersonCollection, ScsMemberFeesCollection } from '@okr/shared-models';
 import { getBirthYear, getStoreDateYear } from '@okr/shared-util-core';
 
 import { getScalarChannelValue } from './address.util';
 import { getAllMemberFeesOfMember, getAllMembershipsOfMember } from './membership.util';
+
+/** Firestore's hard cap on the number of writes in one batch. */
+const BATCH_LIMIT = 500;
 
 /**
  * The degraded-precision replicas of the sensitive scalar vault channels (spec 1.19).
@@ -31,6 +34,68 @@ import { getAllMemberFeesOfMember, getAllMembershipsOfMember } from './membershi
  */
 function mayClear(channel: string, evidence?: AddressModel[]): boolean {
   return !evidence || evidence.some((a) => a.addressChannel === channel);
+}
+
+/**
+ * Reap the vault of a HARD-deleted person: every `addresses` doc under its parentKey
+ * (INCLUDING archived ones) and every membership naming it as member.
+ *
+ * Only hard deletion reaches this. The app never hard-deletes a person —
+ * `FirestoreService.deleteModel` sets `isArchived` and leaves the document in place, so
+ * addresses keep a live parent. Hard deletes come from the Firestore console, an import,
+ * or a migration script, which is why this lives in the trigger rather than in
+ * `PersonService.delete`: it must fire whoever does the deleting.
+ *
+ * Leaving the vault behind is a revDSG exposure, not clutter: the data subject is gone,
+ * no UI can reach the records (no person → no address list), they are invisible to any
+ * access review, and they stay readable by every privileged user. Archiving them instead
+ * would produce exactly that state under a different flag, so the reap is a hard delete.
+ *
+ * Archived addresses are included on purpose — nothing may outlive the parent.
+ *
+ * Memberships are fetched through `getAllMembershipsOfMember`, which also filters
+ * `memberModelType == 'person'`. That is deliberate: an org and a group may share a key
+ * with each other, so the type filter is what keeps the reap from deleting a same-keyed
+ * org's memberships. Every membership found orphaned in the 2026-07-28 audit carried the
+ * field.
+ *
+ * @returns how many documents of each kind were deleted
+ */
+export async function reapDeletedPerson(firestore: Firestore, personId: string): Promise<{ addresses: number; memberships: number }> {
+  const nothing = { addresses: 0, memberships: 0 };
+
+  // the trigger fires on the delete itself; re-reading guards a delete-then-recreate
+  // race and makes the CF's at-least-once retry semantics safe
+  const personSnap = await firestore.doc(`${PersonCollection}/${personId}`).get();
+  if (personSnap.exists) {
+    logger.info(`reapDeletedPerson: persons/${personId} exists again — nothing reaped`);
+    return nothing;
+  }
+
+  const addressSnap = await firestore.collection(AddressCollection)
+    .where('parentKey', '==', `person.${personId}`).get();
+  const memberships = await getAllMembershipsOfMember(firestore, personId, 'person');
+  if (addressSnap.empty && memberships.length === 0) return nothing;
+
+  // audit BEFORE deleting — Cloud Logging is the only record that survives the reap.
+  // Values are NOT logged: the channel and okey are enough to trace what was removed.
+  logger.warn(`reapDeletedPerson: reaping the vault of deleted person ${personId}`, {
+    addresses: addressSnap.docs.map((doc) => ({ okey: doc.id, channel: doc.data()['addressChannel'] })),
+    memberships: memberships.map((membership) => membership.okey),
+  });
+
+  const refs = [
+    ...addressSnap.docs.map((doc) => doc.ref),
+    ...memberships.map((membership) => firestore.doc(`${MembershipCollection}/${membership.okey}`)),
+  ];
+  for (let i = 0; i < refs.length; i += BATCH_LIMIT) {
+    const batch = firestore.batch();
+    for (const ref of refs.slice(i, i + BATCH_LIMIT)) batch.delete(ref);
+    await batch.commit();
+  }
+
+  logger.info(`reapDeletedPerson: deleted ${addressSnap.size} addresses and ${memberships.length} memberships of person ${personId}`);
+  return { addresses: addressSnap.size, memberships: memberships.length };
 }
 
 /**

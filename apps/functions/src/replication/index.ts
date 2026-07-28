@@ -4,6 +4,7 @@ import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
 import { AddressCollection, AddressModel, AppConfigCollection, CHANNEL_PRIVACY_INPUTS, GroupCollection, MembershipCollection, OrgCollection, OwnershipCollection, PersonalRelCollection, PersonCollection, PrivacySettings, ReservationCollection, ResourceCollection, WorkrelCollection } from "@okr/shared-models";
 import {
+  demoteFavorites,
   getActiveAddresses,
   getAllMembershipsOfMember, getAllMembershipsOfOrg,
   getAllOwnershipsOfOwner, getAllOwnershipsOfResource,
@@ -11,6 +12,7 @@ import {
   getAllReservationsOfReserver, getAllReservationsOfResource,
   getAllWorkrelsOfObject, getAllWorkrelsOfSubject,
   hasChanged,
+  reapDeletedPerson,
   rebuildDirectoryForTenant,
   syncBirthYearReplicas,
   syncDateOfDeathReplicas,
@@ -110,6 +112,10 @@ export const onAddressChange = onDocumentWritten(
 
       for (const parentKey of parentKeys) {
         const addresses = await getActiveAddresses(firestore, parentKey);
+        // enforce ONE favorite per channel before anything derives from the list:
+        // demoteFavorites mutates `addresses`, so the zip code and the projection below
+        // are both computed from the corrected state in this same pass.
+        await demoteFavorites(firestore, addresses, addressId);
         await updateFavoriteZipCode(firestore, parentKey, addresses);
         // spec 1.19 Phase 4: keep the address-directory projection in sync.
         // Writes only address-directory (no trigger on it) — no recursion.
@@ -257,6 +263,13 @@ export const onPersonChange = onDocumentWritten(
 
     if (!person) {
       logger.warn(`Person ${personId} does not exist or has been deleted.`);
+      // the projection was already cleaned above; the vault itself has no other reaper.
+      // Only a HARD delete gets here — the app archives persons (see reapDeletedPerson).
+      try {
+        await reapDeletedPerson(firestore, personId);
+      } catch (error) {
+        logger.error(`Error reaping the vault of deleted person ${personId}:`, { error });
+      }
       return;
     }
     const source = `person ${personId}`;
