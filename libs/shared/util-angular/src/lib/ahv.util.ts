@@ -1,5 +1,4 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { die } from '@okr/shared-util-core';
 
 export enum AhvFormat {
   Electronic, // no special chars, only 13 digits: 7561234123412
@@ -27,30 +26,21 @@ export function ahvn2string(ahvn13value: number | string): string {
   return parts.join('.');
 }
 
+/**
+ * Whether the given value is a valid Swiss AHV number: 13 digits, country code 756, EAN13 checksum.
+ * A silent predicate — it is the Vest ssn suite's test (ssnValidations), so it runs on every
+ * keystroke and must not narrate the user's half-typed number into the console. An invalid value
+ * surfaces where it belongs: as the field's validation error.
+ */
 export function checkAhv(ahvn13value: number | string): boolean {
-  if (!ahvn13value) {
-    console.warn(`ahv.util.checkAhv(${ahvn13value}) is not a valid ahv number (empty or null).`);
-    return false;
-  }
+  if (!ahvn13value) return false;
   const ahvstr = ahvn13value.toString();
   // Remove all non-digit characters from the string
   const ahvn13valueStr = ahvstr.replace(/\D/g, '');
 
-  if (ahvn13valueStr.length !== 13) {
-    console.warn(`ahv.util.checkAhv(${ahvn13valueStr}) must contain 13 digits.`);
-    return false;
-  }
-  if (!ahvn13valueStr.startsWith('756')) {
-    console.warn(`ahv.util.checkAhv(${ahvn13valueStr}) must start with Swiss country code 756.`);
-    return false;
-  }
-  const checksum = computeAhvn13checkDigit(ahvn13valueStr);
-  if (checksum === parseInt(ahvn13valueStr.substring(12, 13))) {
-    return true;
-  } else {
-    console.warn(`ahv.util.checkAhv(${ahvn13valueStr}) has invalid checksum.`);
-    return false;
-  }
+  if (ahvn13valueStr.length !== 13) return false;
+  if (!ahvn13valueStr.startsWith('756')) return false;
+  return computeAhvn13checkDigit(ahvn13valueStr) === parseInt(ahvn13valueStr.substring(12, 13));
 }
 
 export function computeAhvn13checkDigit(ahvn13str: string): number {
@@ -79,15 +69,24 @@ export function computeAhvn13checkDigit(ahvn13str: string): number {
  * It is shown on the UI in friendly format with the help of the maskito library.
  * This function converts the inserted string (sourceAhv) into the formatted string (friendly = default, or electronic).
  * e.g. 7561234123412 -> 756.1234.1234.12
+ *
+ * PURELY A FORMATTER — it never throws and never judges the value. Every ssn field binds it
+ * inside a `linkedSignal` over live form data, so it sees every intermediate keystroke
+ * ('7562', '75629', …). Rejecting those with die() aborted template rendering mid-change-detection,
+ * which is why the field silently froze instead of showing its validation error. Incomplete input
+ * is handed back verbatim — reformatting it would fight the maskito mask under the user's cursor —
+ * and judging it is the Vest suite's job (ssnValidations → checkAhv), which surfaces the error note
+ * and keeps the save button hidden until the number is complete and valid.
+ *
  * @param sourceAhv the inserted string
  * @param format the destination format, either Electronic or Friendly, Friendly being the default
- * @returns the formatted ahv number
+ * @returns the formatted ahv number, or the input unchanged when it is not (yet) 13 digits long
  */
-export function formatAhv(sourceAhv: string, format = AhvFormat.Friendly): string {
-  if (sourceAhv === undefined || sourceAhv === null) die(`ahv.util.formatAhv(${sourceAhv}) is not a valid ahv number (null or undefined).`);
-  if (sourceAhv.length === 0) return ''; // empty string is ok (ahv is an optional field)
-  const src = sourceAhv.trim().replace(/\./g, '');
-  if (src.length !== 13 && src.length !== 0) die(`ahv.util.formatAhv(${src}) is not a valid ahv number (needs to be 13 digits).`);
+export function formatAhv(sourceAhv: string | undefined | null, format = AhvFormat.Friendly): string {
+  if (!sourceAhv) return ''; // empty/absent is ok (ahv is an optional field)
+  const trimmed = sourceAhv.trim();
+  const src = trimmed.replace(/\D/g, '');
+  if (src.length !== 13) return trimmed; // still typing (or garbage) — hand it back, let Vest flag it
 
   if (format === AhvFormat.Electronic) {
     return src;

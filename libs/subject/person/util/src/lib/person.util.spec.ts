@@ -23,10 +23,10 @@ describe('Person Utils', () => {
     person.firstName = 'John';
     person.lastName = 'Doe';
     person.gender = 'male';
-    person.dateOfBirth = '19900101';
+    // no dateOfBirth/ssnId here: both moved to the addresses vault in spec 1.19 Phase 4 and
+    // no longer exist on PersonModel (the index dropped them in Phase 3).
     person.favZipCode = '8000';
     person.bexioId = '42';
-    person.ssnId = '123.4567.8901.23';
     person.notes = 'Some notes';
   });
 
