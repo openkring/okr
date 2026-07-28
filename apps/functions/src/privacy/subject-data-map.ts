@@ -92,8 +92,24 @@ const EMAIL_TOKEN = /[^\s:,;<>()"']+@[^\s:,;<>()"']+/g;
  */
 function payloadNamesEmail(payload: string, email: string): boolean {
   if (!email) return false;
+  // Lowercased here rather than trusting ctx.email: SubjectCtx documents the invariant
+  // but nothing enforces it, and a mixed-case ctx would silently match nothing.
+  const wanted = email.toLowerCase();
   const tokens = payload.toLowerCase().match(EMAIL_TOKEN) ?? [];
-  return tokens.some((t) => t.replace(/[.,;]+$/, '') === email);
+  return tokens.some((t) => t.replace(/[.,;]+$/, '') === wanted);
+}
+
+/**
+ * Whether an expense still has an open accounting entry.
+ *
+ * Settled == booked. `bookingKey` and `status: 'validated'` are written in the same
+ * transaction (ocr/index.ts:416), so either signal counts — accepting both means an
+ * expense written before `bookingKey` existed clears instead of blocking forever, which
+ * is the same never-satisfiable-predicate shape C1 was about. `'error'` clears too: it
+ * is a dead end the member cannot influence.
+ */
+function expenseIsOpen(bookingKey: string, status: string): boolean {
+  return !bookingKey && status !== 'validated' && status !== 'error';
 }
 
 export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
@@ -314,7 +330,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // Guards the empty-string case: DEFAULT_KEY is '' and an empty ctx.personKey would
     // otherwise match every unconverted application in the tenant.
     matches: (doc, c) => (!!c.personKey && doc.get('personKey') === c.personKey)
-      || (!!c.email && String(doc.get('email') ?? '').toLowerCase() === c.email),
+      || (!!c.email && String(doc.get('email') ?? '').toLowerCase() === c.email.toLowerCase()),
     onExport: 'full',
     onErasure: 'delete',
     retention: APPLICATION_RECORD,
@@ -413,10 +429,9 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // `status: 'posted'` write in the repo is on a booking (bexio/journal.ts:110) — so
     // treating them as terminal blocked every filer forever. bookingKey is also the
     // field redoOcr itself guards on ("already booked", ocr/index.ts:577), which makes
-    // it the honest terminal signal. 'error' clears as well: it is a dead end the member
-    // cannot influence, so blocking their erasure on it would never resolve by itself.
+    // it the honest terminal signal. See expenseIsOpen for the exact rule.
     blocksErasure: (docs) => blockOpenInvoice(
-      docs.filter((d) => !d.get('bookingKey') && String(d.get('status') ?? '') !== 'error').length,
+      docs.filter((d) => expenseIsOpen(String(d.get('bookingKey') ?? ''), String(d.get('status') ?? ''))).length,
       'Sie haben noch eine Spesenabrechnung offen. Sobald sie verbucht ist, können wir Ihre Daten löschen.',
     ),
   },
@@ -673,7 +688,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'inQuery',
     matches: (doc, c) => doc.get('ownerUserId') === c.uid
       || (!!c.email && ((doc.get('signees') as { email?: string }[] | undefined) ?? [])
-        .some((s) => String(s?.email ?? '').toLowerCase() === c.email)),
+        .some((s) => String(s?.email ?? '').toLowerCase() === c.email.toLowerCase())),
     onExport: 'index',
     indexFields: { title: 'documentName', date: 'createdAt', route: '/esign' },
     // A qualified electronic signature loses its evidentiary value if the record is

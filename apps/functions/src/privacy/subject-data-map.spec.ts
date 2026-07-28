@@ -259,6 +259,14 @@ describe('SUBJECT_DATA_MAP — blocker predicates', () => {
     it('keys on bookingKey, the field redoOcr itself guards on (ocr/index.ts:577)', () => {
       expect(b?.([snap({ status: 'whatever', bookingKey: 'BK-1' })])).toBeUndefined();
     });
+
+    it('clears a booked expense that predates the bookingKey field', () => {
+      // an absent field reads as undefined, which would otherwise block forever — the
+      // same never-satisfiable shape as C1. 'validated' is written in the same
+      // transaction as bookingKey, so it is an equally valid booked signal.
+      expect(b?.([snap({ status: 'validated' })])).toBeUndefined();
+      expect(b?.([snap({})])?.code, 'a doc with neither signal is still open').toBe('openInvoice');
+    });
   });
 
   // C2 regression: same failure mode on esignList — a fully signed document blocked forever.
@@ -467,12 +475,26 @@ describe('resolveDocs', () => {
     expect([...scopes].sort()).toEqual(['docPath', 'inQuery', 'none', 'tenantsArray']);
   });
 
-  it('is what every row with a matches must be read through', async () => {
-    // documents the invariant the executor relies on: a row carrying matches over-fetches
+  // A `matches` that accepts everything silently disables the post-filter on a row whose
+  // find() deliberately over-fetches — the export then hands over other members' records
+  // and the executor anonymises or deletes them. An empty document belongs to nobody, so
+  // no row may claim it.
+  it('has no row whose matches accepts a document belonging to nobody', () => {
     const scanning = SUBJECT_DATA_MAP.filter((e) => e.matches);
     expect(scanning.length).toBeGreaterThanOrEqual(8);
+    const stranger: SubjectCtx = {
+      uid: 'no-such-uid', personKey: 'no-such-person', parentKey: 'person.no-such-person',
+      tenantId: 'no-such-tenant', email: 'nobody@example.invalid',
+    };
     for (const e of scanning) {
-      expect(typeof e.matches, `${e.collection}`).toBe('function');
+      expect(e.matches?.(qdoc('empty', {}), stranger), `${e.collection} matches an empty doc`).toBe(false);
+      expect(e.matches?.(qdoc('other', {
+        admins: [{ key: 'someone-else' }], participants: [{ key: 'someone-else' }],
+        subjects: [{ key: 'someone-else' }], responsiblePersons: [{ key: 'someone-else' }],
+        properties: { persons: [{ key: 'someone-else' }] },
+        personKey: 'someone-else', email: 'someone.else@scs.ch', ownerUserId: 'someone-else',
+        author: { key: 'someone-else' }, scope: 'auth', payload: 'someone.else@scs.ch: SUCCESS',
+      }), stranger), `${e.collection} matches another member's doc`).toBe(false);
     }
   });
 });
