@@ -13,6 +13,22 @@
  * (+ libs/shared/models/src/lib/privacy.model.ts). This script mirrors it 1:1 for
  * standalone execution — if the formula changes there, update this mirror.
  *
+ * ⚠️ THIS MIRROR HAS SILENTLY DRIFTED BEFORE. On 2026-07-28 it still lacked the
+ * favorite-only reduction (D-P4-6) and the `dod` channel floor, so running it would
+ * have REVERTED the reduction for every parent and admitted dod rows into the
+ * member-facing projection. A mirror that lags is worse than no mirror: it looks
+ * authoritative and writes stale data over good data.
+ *
+ * Before trusting it, diff it against the real thing. The reliable way to run the
+ * authoritative code standalone is to bundle it (esbuild resolves the @okr/* aliases
+ * from tsconfig.base.json, so no mirror is involved at all):
+ *
+ *   npx esbuild entry.ts --bundle --platform=node --format=cjs \
+ *     --tsconfig=tsconfig.base.json --external:firebase-admin --outfile=dist/tmp/run.cjs
+ *   node dist/tmp/run.cjs      # output must live inside the repo so firebase-admin resolves
+ *
+ * where entry.ts imports { writeAddressDirectory } from '@okr/shared-util-functions'.
+ *
  * Run with:  node scripts/rebuild-address-directory.mjs --dry     (inspect first)
  *            node scripts/rebuild-address-directory.mjs           (execute)
  * Requires:  gcloud auth application-default login  (or GOOGLE_APPLICATION_CREDENTIALS)
@@ -32,12 +48,14 @@ const DIRECTORY_COLLECTION = 'address-directory';
 /* ---------- mirrored privacy formula (see header for the authoritative source) ---------- */
 
 const ACCESSOR_RANK = { public: 0, registered: 1, privileged: 2, admin: 3 };
-const CHANNEL_SENSITIVITY_FLOOR = { ssn: 'privileged', dob: 'privileged', bankaccount: 'privileged' };
+const CHANNEL_SENSITIVITY_FLOOR = { ssn: 'privileged', dob: 'privileged', dod: 'privileged', bankaccount: 'privileged' };
 const CHANNEL_PRIVACY_INPUTS = {
   email:       { usageFlag: 'usageEmail',         tenantFloor: 'showEmail' },
   phone:       { usageFlag: 'usagePhone',         tenantFloor: 'showPhone' },
   postal:      { usageFlag: 'usagePostalAddress', tenantFloor: 'showPostalAddress' },
   dob:         { usageFlag: 'usageDateOfBirth',   tenantFloor: 'showDateOfBirth' },
+  // dod has no usage* flag: a deceased person expresses no preference
+  dod:         { tenantFloor: 'showDateOfDeath' },
   ssn:         { tenantFloor: 'showTaxId' },
   bankaccount: { tenantFloor: 'showIban' },
 };
@@ -78,16 +96,42 @@ function toDirectoryEntry(a) {
   };
 }
 
+/**
+ * Reduce a PERSON's addresses to ONE per channel (D-P4-6, 2026-07-27): the favorite,
+ * else the first non-CC one. Orgs are deliberately NOT reduced.
+ * Mirror of reduceToFavoriteAddresses in address-projection.util.ts.
+ */
+function reduceToFavoriteAddresses(addresses) {
+  const byChannel = new Map();
+  for (const a of addresses) {
+    const ch = a.addressChannel ?? '';
+    byChannel.set(ch, [...(byChannel.get(ch) ?? []), a]);
+  }
+  const reduced = [];
+  for (const candidates of byChannel.values()) {
+    const shareable = candidates.filter((a) => !a.isCc);
+    const picked = shareable.find((a) => a.isFavorite) ?? shareable[0];
+    if (picked) reduced.push(picked);
+  }
+  return reduced;
+}
+
 function buildDirectoryDoc(tenantId, parentKey, parentType, addresses, person, settings) {
   const visible = addresses.filter((a) =>
     !a.isArchived && ACCESSOR_RANK['registered'] >= ACCESSOR_RANK[effectiveAccessor(a, parentType, person, settings)]);
+  const projected = parentType === 'person' ? reduceToFavoriteAddresses(visible) : visible;
+  // for persons `projected` holds at most one address per channel, so the channel
+  // lookup already IS the favorite; orgs still require the explicit flag
+  const favorite = (channel) => parentType === 'person'
+    ? projected.find((a) => a.addressChannel === channel)
+    : projected.find((a) => a.isFavorite && a.addressChannel === channel);
   return {
     parentKey,
     parentType,
-    favEmail: visible.find((a) => a.isFavorite && a.addressChannel === 'email')?.email ?? '',
-    favPhone: visible.find((a) => a.isFavorite && a.addressChannel === 'phone')?.phone ?? '',
-    favZipCode: visible.find((a) => a.isFavorite && a.addressChannel === 'postal')?.zipCode ?? '',
-    entries: visible.map(toDirectoryEntry),
+    favEmail: favorite('email')?.email ?? '',
+    favPhone: favorite('phone')?.phone ?? '',
+    favZipCode: favorite('postal')?.zipCode ?? '',
+    entries: projected.map(toDirectoryEntry),
     isArchived: false,
     tenants: [tenantId],
     index: '',
