@@ -84,7 +84,7 @@ export class TextInput {
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
-  protected buttonCopyI18n = computed(() =>  { return { copy_conf: this.i18n().copy_conf ?? 'TEXT_INPUT: NYI'}});
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf }));
 
   // passing constants to the template
   readonly maskPredicate: MaskitoElementPredicate = async (el) => (el as unknown as HTMLIonInputElement).getInputElement();

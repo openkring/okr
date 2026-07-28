@@ -69,5 +69,5 @@ export class NumberInput {
   protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
-  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? '' } as ButtonCopyI18n));
+  protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf } as ButtonCopyI18n));
 }

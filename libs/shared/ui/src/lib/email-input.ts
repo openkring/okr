@@ -70,7 +70,7 @@ export class EmailInput {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldShowClearInput = computed(() => coerceBoolean(this.clearInput()));
-  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? 'EMAIL_INPUT: NYI' }));
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf }));
 
   constructor() {
     effect(() => {

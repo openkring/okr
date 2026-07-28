@@ -66,5 +66,5 @@ export class UrlInput {
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
 
-  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? 'URL_INPUT: NYI' } as ButtonCopyI18n));
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf } as ButtonCopyI18n));
 }

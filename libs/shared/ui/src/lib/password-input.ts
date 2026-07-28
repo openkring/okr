@@ -75,7 +75,7 @@ export class PasswordInput {
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
 
-  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? 'PASSWORD_INPUT: NYI' } as ButtonCopyI18n));
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf } as ButtonCopyI18n));
 
   // usefull masks: lowercaseWordMask, uppercaseWordMask, caseInsensitiveWordMask, passwordMask
   public mask = input<MaskitoOptions>(PasswordMask);

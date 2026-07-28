@@ -6,7 +6,7 @@ import { AsyncPipe } from '@angular/common';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean } from '@okr/shared-util-core';
-import { TranslatePipe } from '@okr/shared-i18n';
+import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
 import { ButtonCopyI18n } from './button-copy';
 import { EditorToolbar } from './editor-toolbar';
@@ -91,6 +91,10 @@ export class OkrEditor implements OnInit, OnDestroy {
   protected isClearable = computed(() => coerceBoolean(this.clearable()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
 
+  // Same fallback as ButtonCopy — this component shows the confirmation toast itself.
+  private readonly defaultI18n = inject(I18nService).translateAll({ copy_conf: '@copy.conf' });
+  protected readonly copyConf = computed(() => this.buttonCopyI18n().copy_conf ?? this.defaultI18n.copy_conf());
+
   public editor: Editor | undefined;
   protected toolbar = EditorToolbar;
 
@@ -110,7 +114,7 @@ export class OkrEditor implements OnInit, OnDestroy {
     const value = this.content();
     if (value !== undefined && value !== null) {
       copyToClipboard(value);
-      showToast(this.toastController, this.buttonCopyI18n().copy_conf);  
+      showToast(this.toastController, this.copyConf());
     }
   }
 }

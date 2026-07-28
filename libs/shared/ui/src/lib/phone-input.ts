@@ -71,7 +71,7 @@ export class PhoneInput {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
-  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? 'PHONE_INPUT: NYI' }));
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf }));
 
   // mask
   protected phoneMask = IntlPhoneMask;

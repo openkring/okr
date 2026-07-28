@@ -72,7 +72,7 @@ export class IbanInput {
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
 
-  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf ?? 'IBAN_INPUT: NYI' } as ButtonCopyI18n));
+  protected buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf } as ButtonCopyI18n));
 
   // passing constants to the template
   protected chIbanMask = ChIbanMask;
