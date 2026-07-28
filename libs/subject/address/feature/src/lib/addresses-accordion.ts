@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input } from "@angular/core";
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
 
-import { AddressModel, PrivacySettings, RoleName } from "@okr/shared-models";
+import { AddressModel, PrivacySettings } from "@okr/shared-models";
 import { SvgIconPipe } from "@okr/shared-pipes";
 import { EmptyList } from "@okr/shared-ui";
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser } from "@okr/shared-util-angular";
-import { coerceBoolean, getCategoryIcon, hasRole, isVisibleToUser } from "@okr/shared-util-core";
+import { coerceBoolean, getCategoryIcon, isVisibleToUser } from "@okr/shared-util-core";
 
 import { FavoriteColorPipe, FormatAddressPipe } from "@okr/subject-address-util";
 
@@ -89,6 +89,24 @@ export class AddressesAccordion {
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
+  /**
+   * Whether the ActionSheet may offer edit/delete instead of view-only.
+   *
+   * Two conditions, both necessary:
+   * - the view is editable at all (`readOnly` = false — e.g. the own profile, or a
+   *   person/org detail page opened with edit rights);
+   * - the user reads the RAW address vault (owner, privileged, memberAdmin — see
+   *   readsAddressVault). Everyone else is served materialized `address-directory`
+   *   entries (spec 1.19 Phase 4), which carry only the registered-visible fields:
+   *   saving one back would wipe every field the projection omits, so those must
+   *   stay strictly view-only regardless of the readOnly input.
+   *
+   * Notably this restores edit/delete for a plain member on their OWN addresses —
+   * the previous memberAdmin/admin role check locked owners out of their own vault
+   * while the "+" button still let them create addresses.
+   */
+  protected canModify = computed(() => !this.isReadOnly() && this.store.readsVault());
+
   // signals
   protected addresses = computed(() => this.store.addresses() ?? []);
   private currentUser = computed(() => this.store.currentUser());
@@ -137,7 +155,7 @@ export class AddressesAccordion {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, address: AddressModel): void {
     // on address
     actionSheetOptions.buttons.push(createActionSheetDivider());
-    if (this.hasRole('memberAdmin') || this.hasRole('admin')) {
+    if (this.canModify()) {
       actionSheetOptions.buttons.push(createActionSheetButton('edit', this.store.i18n.update_label(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('delete', this.store.i18n.delete_label(), this.imgixBaseUrl, 'trash'));
     } else {
@@ -239,10 +257,6 @@ export class AddressesAccordion {
   }
 
   /******************************** helpers ******************************************* */
-  protected hasRole(role?: RoleName): boolean {
-    return hasRole(role, this.store.currentUser());
-  }
-
   protected isVisibleToUser(address: AddressModel): boolean {
     switch(address.addressChannel) {
       case 'phone': 
