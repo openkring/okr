@@ -1,4 +1,5 @@
 export * from './lib/user.util';
+export * from './lib/policy-acceptance.util';
 export * from './lib/user-i18n';
 export * from './lib/fbuser.validations';
 export * from './lib/user.validations';

@@ -106,6 +106,8 @@ export class AppConfig {
   // privacy settings
   public dpoEmail = DEFAULT_EMAIL; // email address for DPO contact
   public dpoName = DEFAULT_NAME; // name of the DPO
+  public privacyPolicyVersion = ''; // e.g. '2026-07'; '' = tenant declares none
+  public privacyPolicyPageKey = ''; // CMS page key of the Datenschutzerklärung
 
   // can be overwritten in profile
   public showImages: PrivacyAccessor = 'public';
