@@ -1,6 +1,6 @@
 import { ErrorHandler } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChunkLoadErrorHandler, STALE_CHUNK_RELOAD_KEY, isStaleChunkError, registerStaleChunkRecovery } from './chunk-load-error-handler';
+import { ChunkLoadErrorHandler, STALE_CHUNK_RELOAD_KEY, isStaleChunkError } from './chunk-load-error-handler';
 
 describe('isStaleChunkError', () => {
   it('matches the per-browser dynamic-import failure messages', () => {
@@ -70,39 +70,5 @@ describe('ChunkLoadErrorHandler', () => {
     handler.handleError(err);
     expect(reload).not.toHaveBeenCalled();
     expect(delegate.handleError).toHaveBeenCalledWith(err);
-  });
-});
-
-describe('registerStaleChunkRecovery', () => {
-  const reload = vi.fn();
-
-  /** Dispatch an unhandledrejection-shaped event; jsdom does not synthesise one for us. */
-  function rejectWith(reason: unknown): Event & { defaultPrevented: boolean } {
-    const event = new Event('unhandledrejection', { cancelable: true });
-    Object.defineProperty(event, 'reason', { value: reason });
-    window.dispatchEvent(event);
-    return event as Event & { defaultPrevented: boolean };
-  }
-
-  beforeEach(() => {
-    sessionStorage.clear();
-    reload.mockClear();
-    Object.defineProperty(window, 'location', { value: { reload }, writable: true, configurable: true });
-  });
-
-  afterEach(() => vi.restoreAllMocks());
-
-  it('reloads on a stale-chunk rejection that never reached Angular ErrorHandler (SCS-1N)', () => {
-    registerStaleChunkRecovery();
-    const event = rejectWith(new Error('Failed to fetch dynamically imported module: https://x/src-AB12.js'));
-    expect(reload).toHaveBeenCalledTimes(1);
-    expect(event.defaultPrevented).toBe(true);
-  });
-
-  it('leaves unrelated rejections alone', () => {
-    registerStaleChunkRecovery();
-    const event = rejectWith(new Error('boom'));
-    expect(reload).not.toHaveBeenCalled();
-    expect(event.defaultPrevented).toBe(false);
   });
 });

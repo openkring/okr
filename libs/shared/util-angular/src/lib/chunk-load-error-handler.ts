@@ -35,72 +35,35 @@ export function isStaleChunkError(error: unknown): boolean {
   return STALE_CHUNK_RE.test(message);
 }
 
-/** Set once we trigger a recovery reload — the page is on its way out. */
-let recoveryInFlight = false;
-
-/**
- * True once a recovery reload has been triggered on this page. Sentry's beforeSend
- * uses it to drop the error we are already recovering from, so a routine
- * stale-client-after-deploy never becomes an issue.
- */
-export function isStaleChunkRecoveryInFlight(): boolean {
-  return recoveryInFlight;
-}
-
-/**
- * Recover from a stale lazy-chunk failure by reloading once, which fetches the current
- * deployment instead of leaving the user on a broken page (SCS-19).
- *
- * Returns true only when `error` was a stale-chunk failure AND the reload was triggered
- * — i.e. the caller may drop the error. Returns false for unrelated errors and for a
- * repeat failure suppressed by the loop guard (the chunk is *still* missing right after
- * a reload, i.e. a genuinely broken deploy rather than merely a stale client), so that
- * actionable case stays reportable.
- *
- * VersionCheckService already reloads when the *service worker* declares its state
- * unrecoverable, but that path can't fire before the SW takes control
- * (registerWhenStable:30000) or when the SW is disabled.
- */
-export function recoverFromStaleChunk(error: unknown): boolean {
-  if (!isStaleChunkError(error)) return false;
-  if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') return false;
-  const lastReloadAt = Number(sessionStorage.getItem(STALE_CHUNK_RELOAD_KEY) ?? 0);
-  if (Date.now() - lastReloadAt < RELOAD_MIN_INTERVAL_MS) return false;
-  sessionStorage.setItem(STALE_CHUNK_RELOAD_KEY, String(Date.now()));
-  recoveryInFlight = true;
-  window.location.reload();
-  return true;
-}
-
-/**
- * Recover from stale-chunk failures that never reach Angular's ErrorHandler.
- *
- * A rejected dynamic import often surfaces as an unhandled promise rejection instead
- * (SCS-1N: mechanism `auto.browser.global_handlers.onunhandledrejection`), so
- * ChunkLoadErrorHandler below never sees it and the user is left on a dead page.
- * Both paths share the same one-reload-per-minute guard.
- *
- * Call this BEFORE Sentry.init so this listener runs before Sentry's own
- * onunhandledrejection handler and the in-flight flag is set when beforeSend reads it.
- */
-export function registerStaleChunkRecovery(): void {
-  if (typeof window === 'undefined') return;
-  window.addEventListener('unhandledrejection', (event) => {
-    // preventDefault only silences the browser's own console report; Sentry's
-    // listener still fires, which is why beforeSend checks the in-flight flag.
-    if (recoverFromStaleChunk(event.reason)) event.preventDefault();
-  });
-}
-
 /**
  * ErrorHandler that recovers from stale lazy-chunk failures by reloading once, and
  * delegates every other error to the wrapped handler (Sentry's).
+ *
+ * VersionCheckService already reloads when the *service worker* declares its state
+ * unrecoverable, but that path can't fire before the SW takes control
+ * (registerWhenStable:30000) or when the SW is disabled — the dynamic import just
+ * rejects and bubbles to the global ErrorHandler. A guarded one-time reload fetches
+ * the current deployment instead of leaving the user on a broken page (SCS-19).
+ *
+ * If the reload is suppressed by the loop guard (the chunk is *still* missing right
+ * after a reload — i.e. a genuinely broken deploy, not merely a stale client), the
+ * error falls through to the delegate so Sentry still records the actionable case.
  */
 export class ChunkLoadErrorHandler implements ErrorHandler {
   constructor(private readonly delegate: ErrorHandler) {}
 
   handleError(error: unknown): void {
-    if (recoverFromStaleChunk(error)) return;
+    if (isStaleChunkError(error) && this.reloadOnce()) return;
     this.delegate.handleError(error);
+  }
+
+  /** Reload at most once per minute; returns true when a reload was triggered. */
+  private reloadOnce(): boolean {
+    if (typeof window === 'undefined' || typeof sessionStorage === 'undefined') return false;
+    const lastReloadAt = Number(sessionStorage.getItem(STALE_CHUNK_RELOAD_KEY) ?? 0);
+    if (Date.now() - lastReloadAt < RELOAD_MIN_INTERVAL_MS) return false;
+    sessionStorage.setItem(STALE_CHUNK_RELOAD_KEY, String(Date.now()));
+    window.location.reload();
+    return true;
   }
 }

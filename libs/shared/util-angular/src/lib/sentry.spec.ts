@@ -67,23 +67,6 @@ describe('beforeSend', () => {
     expect(beforeSend(event, {})).toBeNull();
   });
 
-  it('drops the stale-chunk error it is already recovering from (SCS-1N)', async () => {
-    // Fresh module registry so the recovery flag starts unset and both modules share it.
-    vi.resetModules();
-    const { recoverFromStaleChunk } = await import('./chunk-load-error-handler');
-    const { beforeSend: freshBeforeSend } = await import('./sentry');
-    const event = () => ({ environment: 'production', message: 'boom' }) as ErrorEvent;
-
-    expect(freshBeforeSend(event(), {})).not.toBeNull();
-
-    sessionStorage.clear();
-    vi.stubGlobal('location', Object.assign(new URL('https://seeclub.org/'), { reload: vi.fn() }));
-    expect(recoverFromStaleChunk(new Error('Failed to fetch dynamically imported module: https://x/src-AB12.js'))).toBe(true);
-
-    // The reload is under way — every event from this dying page is now noise.
-    expect(freshBeforeSend(event(), {})).toBeNull();
-  });
-
   it('keeps events from Capacitor native shells (localhost without an explicit port)', () => {
     vi.stubGlobal('location', new URL('https://localhost/home'));
     const event = { environment: 'production', message: 'boom' } as ErrorEvent;

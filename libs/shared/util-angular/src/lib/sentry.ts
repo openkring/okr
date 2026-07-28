@@ -3,7 +3,6 @@ import { addBreadcrumb, setTag, setUser } from '@sentry/angular';
 import type { BrowserOptions, ErrorEvent, EventHint } from '@sentry/angular';
 import { redactSensitive, stripPii } from '@okr/shared-util-core';
 import { catchError } from 'rxjs';
-import { isStaleChunkRecoveryInFlight } from './chunk-load-error-handler';
 
 /** Sentry configuration as emitted into environment.ts by set-env.js. */
 export interface SentryConfig {
@@ -26,12 +25,6 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
   // native shells (capacitor://localhost, https://localhost — no port) reporting.
   const loc = globalThis.location;
   if (loc && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(loc.hostname) && loc.port !== '') return null;
-
-  // A stale client after a deploy is expected, not a defect: registerStaleChunkRecovery
-  // already triggered the reload that fixes it, so don't also file an issue (SCS-1N).
-  // Only the *recovered* case is dropped — when the loop guard suppresses the reload
-  // (a genuinely broken deploy) the flag stays false and the event goes through.
-  if (isStaleChunkRecoveryInFlight()) return null;
 
   if (event.message) event.message = redactSensitive(event.message);
   event.exception?.values?.forEach((v) => { v.value = redactSensitive(v.value); });
