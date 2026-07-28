@@ -49,8 +49,6 @@ export interface SubjectCtx {
 export type TenantScope =
   /** `tenants: string[]` — keep only docs whose array contains `ctx.tenantId`. */
   | 'tenantsArray'
-  /** singular `tenantId` field — keep only docs where it equals `ctx.tenantId`. */
-  | 'tenantIdField'
   /** `find` already pins the tenant; no post-filter needed. */
   | 'inQuery'
   /** tenant is a document-path segment; read it off `doc.ref` (see the row comment). */
@@ -77,7 +75,10 @@ export interface RetentionRule {
  *
  * ## Contract every consumer MUST honour
  *
- * The three steps below are a **pipeline and the order is normative**:
+ * **Call `resolveDocs(entry, ctx)`. Do not call `find` yourself.** `find` is exported
+ * only so tests can assert its query shape; on its own it is not safe — 8 rows return
+ * documents belonging to other members and rely on `matches` to filter them out.
+ * `resolveDocs` runs the pipeline below in the normative order:
  *
  * ```
  *   docs = find(ctx).get()          // 1. query
@@ -86,17 +87,16 @@ export interface RetentionRule {
  *   blocker = blocksErasure?.(docs) // 4. sees ONLY the subject's own docs
  * ```
  *
- * 1. **Query.** `find` mirrors the existing query helpers in
- *    `@okr/shared-util-functions` (which do not filter by tenant either), so the map
- *    needs no new composite indexes.
- * 2. **Tenant.** Apply the row's `tenantScope`. It is required on every row precisely
- *    so that no consumer has to guess which mechanism a collection uses.
+ * 1. **Query.** `find` mostly mirrors the existing query helpers in
+ *    `@okr/shared-util-functions`, so the map needs few new composite indexes.
+ * 2. **Tenant.** `resolveDocs` applies the row's `tenantScope`. It is required on every
+ *    row precisely so that no consumer has to guess which mechanism a collection uses.
  * 3. **`matches`.** When present, the subject link cannot be expressed as a Firestore
  *    predicate (the subject sits inside an array of embedded maps, or is identified by
- *    e-mail inside free text). `find` is then a scan and the consumer MUST discard
- *    every doc for which `matches` returns false. Skipping it leaks other members'
- *    records into an export and anonymises strangers' documents on erasure.
- * 4. **`blocksErasure` runs LAST**, on the fully filtered set — it never sees a
+ *    e-mail inside free text). `find` is then a scan and the doc set MUST be narrowed
+ *    by `matches`. Skipping it leaks other members' records into an export and
+ *    anonymises strangers' documents on erasure.
+ * 4. **`blocksErasure` runs LAST**, on the output of `resolveDocs` — it never sees a
  *    document that failed `tenantScope` or `matches`. The `groups` row depends on
  *    this: it is handed only the groups the subject actually administers, so
  *    `admins.length <= 1` means "the subject is the last admin". Handing it the raw
@@ -110,6 +110,11 @@ export interface RetentionRule {
 export interface SubjectDataEntry {
   readonly collection: string;
   readonly dataClass: DataClass;
+  /**
+   * The raw query. **Not a supported access path** — call `resolveDocs(entry, ctx)`
+   * instead. On 8 rows this deliberately over-fetches and relies on `tenantScope` and
+   * `matches` to narrow the result; using it directly leaks other members' documents.
+   */
   readonly find: (ctx: SubjectCtx) => Query;
   /** How to keep this row's documents inside `ctx.tenantId`. See contract step 2. */
   readonly tenantScope: TenantScope;

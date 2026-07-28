@@ -162,11 +162,14 @@ describe('find() query shapes', () => {
     expect(values).toContain(CTX.uid);
   });
 
-  // I8: a pending application has no personKey; the e-mail is the only handle.
-  it('queries applications by e-mail as well as by personKey', () => {
+  // I8 + N2: a pending application has no personKey, and ApplicationModel.email is
+  // stored as typed — an equality query with the lowercased ctx.email would silently
+  // miss `Hans.Muster@example.ch`, and no post-filter can rescue an unfetched document.
+  // So the row scans the tenant and matches case-insensitively.
+  it('scans applications by tenant instead of querying the un-normalized email', () => {
     const r = record('applications');
-    expect(valueOf(r, 'personKey')).toBe(CTX.personKey);
-    expect(valueOf(r, 'email')).toBe(CTX.email);
+    expect(valueOf(r, 'tenants')).toBe(CTX.tenantId);
+    expect(fields(r), 'an email equality query cannot match un-normalized casing').not.toContain('email');
   });
 
   it('covers both sides of the two-sided relations', () => {
@@ -183,12 +186,33 @@ describe('find() query shapes', () => {
   });
 
   it('bounds every scan row by the tenant or by the section type', () => {
-    for (const c of ['groups', 'calevents', 'trips', 'transfers']) {
+    // N3: tenantScope is a POST-filter, so a scan row without a tenant leg in the query
+    // reads every tenant's documents off the server before anything is discarded.
+    for (const c of ['groups', 'calevents', 'trips', 'transfers', 'applications', 'activities']) {
       const r = record(c);
-      expect(valueOf(r, 'tenants'), `${c} scans unbounded`).toBe(CTX.tenantId);
+      expect(valueOf(r, 'tenants'), `${c} scans cross-tenant`).toBe(CTX.tenantId);
       expect(r.predicates.find((p) => p.field === 'tenants')?.op).toBe('array-contains');
     }
+    // sections is the one deliberate exception: bounded by a low-cardinality type
+    // instead, so it needs no composite index; tenantScope trims the remainder.
     expect(valueOf(record('sections'), 'type')).toBe('people');
+    expect(record('sections').predicates).toHaveLength(1);
+  });
+
+  // N3: the auth-log leg must not become an unbounded cross-tenant read.
+  it('keeps the activities tenant leg outside the OR so one array-contains suffices', () => {
+    const r = record('activities');
+    expect(valueOf(r, 'tenants')).toBe(CTX.tenantId);
+    expect(valueOf(r, 'author.key')).toBe(CTX.personKey);
+    expect(valueOf(r, 'scope')).toBe('auth');
+    expect(r.predicates.filter((p) => p.op === 'array-contains')).toHaveLength(1);
+  });
+
+  it('declares every scan row as inQuery so resolveDocs does not double-filter', () => {
+    for (const c of ['groups', 'calevents', 'trips', 'transfers', 'applications', 'activities']) {
+      const e = SUBJECT_DATA_MAP.find((x) => x.collection === c);
+      expect(e?.tenantScope, `${c} bounds by tenant in the query but claims otherwise`).toBe('inQuery');
+    }
   });
 
   it('reaches the subcollections by path, not by a field query', () => {

@@ -1,9 +1,10 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { DocumentSnapshot } from 'firebase-admin/firestore';
+import type { DocumentSnapshot, Query, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import * as models from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
-import { SUBJECT_DATA_MAP, entriesFor } from './subject-data-map';
+import type { SubjectCtx, SubjectDataEntry } from './types';
+import { SUBJECT_DATA_MAP, entriesFor, inTenant, resolveDocs } from './subject-data-map';
 
 describe('SUBJECT_DATA_MAP', () => {
   it('has no duplicate collection rows', () => {
@@ -227,15 +228,37 @@ describe('SUBJECT_DATA_MAP — blocker predicates', () => {
     expect(b?.([snap({ dateOfExit: '20250101' })])).toBeUndefined();
   });
 
-  // C1 regression: the predicate used literals that are not in ExpenseStatus, so every
-  // expense counted as open forever. At least one REAL status must clear the blocker.
-  it('expenses clears on a real terminal ExpenseStatus', () => {
-    const EXPENSE_STATUS = ['draft', 'processing', 'validated', 'error', 'posted', 'pending-export'] as const;
+  // C1 regression. The bug survived a fix round because both attempts picked status
+  // literals the code never writes to an expense, so every filer blocked forever. The
+  // old test could not catch that: it hardcoded the union and asserted only that SOME
+  // literal clears. These assertions pin the states the code ACTUALLY writes.
+  describe('expenses clears on the states the code actually writes', () => {
     const b = entry('expenses').blocksErasure;
-    const clearing = EXPENSE_STATUS.filter((s) => b?.([snap({ status: s })]) === undefined);
-    expect(clearing.length, 'no ExpenseStatus can ever clear the expenses blocker').toBeGreaterThan(0);
-    expect(clearing).toContain('posted');
-    expect(b?.([snap({ status: 'draft' })])?.code).toBe('openInvoice');
+
+    it('clears once booked — ocr/index.ts:416 sets bookingKey and validated together', () => {
+      expect(b?.([snap({ status: 'validated', bookingKey: 'BK-1' })])).toBeUndefined();
+    });
+
+    it('clears on error, a dead end the member cannot resolve', () => {
+      expect(b?.([snap({ status: 'error', bookingKey: '' })])).toBeUndefined();
+    });
+
+    it('blocks while the expense is still in flight', () => {
+      // 'processing' is written on create (expense/index.ts:57) and on redo (ocr:586)
+      expect(b?.([snap({ status: 'processing', bookingKey: '' })])?.code).toBe('openInvoice');
+    });
+
+    it('does NOT treat posted or pending-export as terminal — nothing writes them to an expense', () => {
+      // the sole `status: 'posted'` write in the repo is on a booking (bexio/journal.ts:110)
+      // and 'pending-export' exists only in the type and an i18n label. Keying the
+      // blocker on either IS the C1 bug; this fails if someone re-adds them.
+      expect(b?.([snap({ status: 'posted', bookingKey: '' })])?.code).toBe('openInvoice');
+      expect(b?.([snap({ status: 'pending-export', bookingKey: '' })])?.code).toBe('openInvoice');
+    });
+
+    it('keys on bookingKey, the field redoOcr itself guards on (ocr/index.ts:577)', () => {
+      expect(b?.([snap({ status: 'whatever', bookingKey: 'BK-1' })])).toBeUndefined();
+    });
   });
 
   // C2 regression: same failure mode on esignList — a fully signed document blocked forever.
@@ -333,5 +356,123 @@ describe('SUBJECT_DATA_MAP — matches() post-filters', () => {
       snap({ author: { key: '' }, scope: 'auth', payload: 'login x@y.ch' }),
       { ...ctx, personKey: '', email: '' },
     )).toBe(false);
+  });
+
+  // N1 regression: `payload.includes(email)` made johans@ match a request for hans@.
+  // This row exports in full and then deletes, so a collision hands one member's login
+  // history to another and erases it.
+  describe('activities e-mail matching is anchored, not a substring test', () => {
+    const m = entry('activities').matches;
+    const hans = { ...ctx, personKey: '', email: 'hans@scs.ch' };
+    const auth = (payload: string) => snap({ author: { key: '' }, scope: 'auth', payload });
+
+    it('does not let a longer local part collide', () => {
+      expect(m?.(auth('johans@scs.ch: SUCCESS'), hans)).toBe(false);
+      expect(m?.(auth('hansueli@scs.ch: SUCCESS'), hans)).toBe(false);
+      expect(m?.(auth('hans@scs.church: SUCCESS'), hans)).toBe(false);
+    });
+
+    it('still matches every real payload format', () => {
+      // auth.service.ts:68,72 — e-mail as prefix
+      expect(m?.(auth('hans@scs.ch: SUCCESS'), hans)).toBe(true);
+      expect(m?.(auth('Hans@SCS.ch: ERROR: FirebaseError(auth/wrong-password)'), hans)).toBe(true);
+      // logout.page.ts:32 / menu.store.ts:278 — e-mail as suffix
+      expect(m?.(auth('on url: hans@scs.ch'), hans)).toBe(true);
+      expect(m?.(auth('on menu: hans@scs.ch'), hans)).toBe(true);
+    });
+
+    it('ignores the token-free payloads', () => {
+      // auth.service.ts:83,86 — LoginWithToken carries no e-mail at all
+      expect(m?.(auth('LoginWithToken: SUCCESS'), hans)).toBe(false);
+    });
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────────────
+// resolveDocs — the only supported access path.
+//
+// `matches` is load-bearing on 8 rows; a consumer calling `entry.find(ctx).get()`
+// directly compiles fine and returns other members' documents. These tests pin the
+// pipeline order and the filtering so that the safe path stays the easy path.
+// ────────────────────────────────────────────────────────────────────────────────────
+describe('resolveDocs', () => {
+  const ctx: SubjectCtx = { uid: 'u1', personKey: 'p1', parentKey: 'person.p1', tenantId: 't1', email: 'a@b.ch' };
+
+  /** A QueryDocumentSnapshot stand-in that also carries a fake parent path. */
+  function qdoc(id: string, data: Record<string, unknown>, grandparentId?: string): QueryDocumentSnapshot {
+    return {
+      id,
+      ref: { parent: { parent: grandparentId ? { id: grandparentId } : null } },
+      get: (path: string) => path.split('.')
+        .reduce<unknown>((acc, k) => (acc == null ? undefined : (acc as Record<string, unknown>)[k]), data),
+    } as unknown as QueryDocumentSnapshot;
+  }
+
+  function fakeEntry(over: Partial<SubjectDataEntry>, docs: QueryDocumentSnapshot[]): SubjectDataEntry {
+    return {
+      collection: 'fake',
+      dataClass: 'log',
+      find: () => ({ get: async () => ({ docs }) }) as unknown as Query,
+      tenantScope: 'tenantsArray',
+      onExport: 'none',
+      onErasure: 'delete',
+      retention: { months: 12, legalBasis: 'test' },
+      ...over,
+    };
+  }
+
+  it('drops documents of another tenant when the row scopes by tenants[]', async () => {
+    const docs = [qdoc('a', { tenants: ['t1'] }), qdoc('b', { tenants: ['t2'] }), qdoc('c', {})];
+    const got = await resolveDocs(fakeEntry({}, docs), ctx);
+    expect(got.map((d) => d.id)).toEqual(['a']);
+  });
+
+  it('keeps everything when the query already pins the tenant', async () => {
+    const docs = [qdoc('a', {}), qdoc('b', { tenants: ['t2'] })];
+    const got = await resolveDocs(fakeEntry({ tenantScope: 'inQuery' }, docs), ctx);
+    expect(got.map((d) => d.id)).toEqual(['a', 'b']);
+  });
+
+  it('reads the tenant off the document path for docPath rows', async () => {
+    // esignAudit/{tenantId}/deletions/{esignId}
+    const docs = [qdoc('a', {}, 't1'), qdoc('b', {}, 't2'), qdoc('c', {})];
+    const got = await resolveDocs(fakeEntry({ tenantScope: 'docPath' }, docs), ctx);
+    expect(got.map((d) => d.id)).toEqual(['a']);
+  });
+
+  it('applies matches after the tenant filter, never instead of it', async () => {
+    const docs = [
+      qdoc('right', { tenants: ['t1'], owner: 'p1' }),
+      qdoc('wrongTenant', { tenants: ['t2'], owner: 'p1' }),
+      qdoc('wrongSubject', { tenants: ['t1'], owner: 'p9' }),
+    ];
+    const entryWithMatches = fakeEntry({ matches: (d, c) => d.get('owner') === c.personKey }, docs);
+    const got = await resolveDocs(entryWithMatches, ctx);
+    expect(got.map((d) => d.id)).toEqual(['right']);
+  });
+
+  it('passes everything through when a row has no matches', async () => {
+    const docs = [qdoc('a', { tenants: ['t1'] }), qdoc('b', { tenants: ['t1'] })];
+    const got = await resolveDocs(fakeEntry({}, docs), ctx);
+    expect(got).toHaveLength(2);
+  });
+
+  it('covers every TenantScope variant in inTenant', async () => {
+    const scopes = new Set(SUBJECT_DATA_MAP.map((e) => e.tenantScope));
+    for (const scope of scopes) {
+      const e = fakeEntry({ tenantScope: scope }, []);
+      expect(() => inTenant(e, qdoc('x', { tenants: ['t1'] }, 't1'), ctx), `${scope} not handled`).not.toThrow();
+    }
+    // the dead 'tenantIdField' variant was removed; nothing may reintroduce it silently
+    expect([...scopes].sort()).toEqual(['docPath', 'inQuery', 'none', 'tenantsArray']);
+  });
+
+  it('is what every row with a matches must be read through', async () => {
+    // documents the invariant the executor relies on: a row carrying matches over-fetches
+    const scanning = SUBJECT_DATA_MAP.filter((e) => e.matches);
+    expect(scanning.length).toBeGreaterThanOrEqual(8);
+    for (const e of scanning) {
+      expect(typeof e.matches, `${e.collection}`).toBe('function');
+    }
   });
 });

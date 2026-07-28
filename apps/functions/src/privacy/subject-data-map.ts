@@ -1,5 +1,5 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
-import type { DocumentSnapshot } from 'firebase-admin/firestore';
+import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import type { AvatarInfo } from '@okr/shared-models';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
 
@@ -12,8 +12,12 @@ import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
  * the entire reason this file exists.
  *
  * ## Reading a row
- * - `find`        mirrors the query helpers in `@okr/shared-util-functions` so that no
- *                 new composite index is needed.
+ * **Call `resolveDocs(entry, ctx)`** — it is the only supported access path and runs
+ * `find` → `tenantScope` → `matches` in the pinned order. `find` alone over-fetches on
+ * every row that carries a `matches`.
+ *
+ * - `find`        mostly mirrors the query helpers in `@okr/shared-util-functions` so
+ *                 that few new composite indexes are needed.
  * - `tenantScope` how the consumer keeps the result inside `ctx.tenantId`. Required on
  *                 every row because the mechanism differs per collection (`tenants[]`
  *                 array, singular `tenantId`, path segment, or already pinned by
@@ -56,8 +60,13 @@ const LOG_24M = { months: 24, legalBasis: 'Nachvollziehbarkeit von Datenänderun
 
 /**
  * Reads a (possibly dotted) `AvatarInfo[]` field and tells whether the subject is in it.
- * A missing `modelType` is read as `'person'`, matching `AVATAR_INFO_SHAPE`'s default —
- * older documents and hand-built section configs do not always set it.
+ *
+ * A missing `modelType` is read as `'person'`. This is defensive, not required by any
+ * current writer: `AVATAR_INFO_SHAPE.modelType` defaults to `'person'`, the section
+ * people-list writer sets it explicitly on both branches
+ * (`model-select.service.ts:67,78`), and `group.util.ts:51` ignores `modelType`
+ * altogether. Treating an absent value as a non-person would silently drop such a
+ * document from both export and erasure, which is the wrong way to be wrong.
  */
 function avatarArrayHolds(doc: DocumentSnapshot, field: string, personKey: string): boolean {
   if (!personKey) return false;
@@ -67,6 +76,24 @@ function avatarArrayHolds(doc: DocumentSnapshot, field: string, personKey: strin
 
 function blockOpenInvoice(count: number, detail: string): Blocker | undefined {
   return count === 0 ? undefined : { code: 'openInvoice', count, detail };
+}
+
+/** e-mail-shaped runs of text; `:` and whitespace terminate a token. */
+const EMAIL_TOKEN = /[^\s:,;<>()"']+@[^\s:,;<>()"']+/g;
+
+/**
+ * Whether a free-text activity payload names exactly this e-mail.
+ *
+ * Must not be a substring test: the payload formats are
+ * `${loginEmail}: SUCCESS` / `${loginEmail}: ERROR: …` (auth.service.ts:68,72) and
+ * `'on url: ' + email` / `'on menu: ' + email` (logout.page.ts:32, menu.store.ts:278),
+ * so the e-mail is sometimes a prefix and sometimes a suffix. A plain `includes` would
+ * make `johans@scs.ch` match a request for `hans@scs.ch`.
+ */
+function payloadNamesEmail(payload: string, email: string): boolean {
+  if (!email) return false;
+  const tokens = payload.toLowerCase().match(EMAIL_TOKEN) ?? [];
+  return tokens.some((t) => t.replace(/[.,;]+$/, '') === email);
 }
 
 export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
@@ -271,13 +298,19 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // Self-submitted membership application: ssnId + dateOfBirth + parent contact — the
     // most sensitive record in the inventory. `personKey` is only filled once the
     // application is converted into a person, so a pending or rejected application is
-    // reachable by e-mail ALONE. Querying personKey only would miss exactly the people
-    // whose data is most sensitive and who never became members.
-    find: (c: SubjectCtx) => db().collection('applications').where(Filter.or(
-      Filter.where('personKey', '==', c.personKey),
-      Filter.where('email', '==', c.email),
-    )),
-    tenantScope: 'tenantsArray',
+    // reachable by e-mail ALONE, and those are exactly the people whose data is most
+    // sensitive and who never became members.
+    //
+    // It is a tenant scan rather than `where('email','==',ctx.email)` because
+    // ApplicationModel.email is stored AS TYPED — nothing normalizes it on write, and
+    // getApplicationIndex does not include it either. An equality query with the
+    // contractually lowercased ctx.email silently misses `Hans.Muster@example.ch`, and
+    // no post-filter can rescue a document the query never fetched. Applications are
+    // low-cardinality (membership applications for one club), so the scan is cheap; the
+    // real fix is to normalize on write and add an `emailLower` field, after which this
+    // collapses to an equality.
+    find: (c: SubjectCtx) => db().collection('applications').where('tenants', 'array-contains', c.tenantId),
+    tenantScope: 'inQuery',
     // Guards the empty-string case: DEFAULT_KEY is '' and an empty ctx.personKey would
     // otherwise match every unconverted application in the tenant.
     matches: (doc, c) => (!!c.personKey && doc.get('personKey') === c.personKey)
@@ -371,14 +404,19 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onErasure: 'anonymize',
     anonymizeFields: ['userId', 'iban'],   // the IBAN is the payout account, not a booking fact
     retention: RETAIN_10Y,
-    // ExpenseStatus = draft | processing | validated | error | posted | pending-export.
-    // Terminal are the two that mean the accounting entry is settled: 'posted' (booked
-    // in okr's own ledger) and 'pending-export' (the entry is owned by an external
-    // backend, e.g. bexio). The other four — 'error' included — are states a treasurer
-    // can still resolve, so the block is always clearable. Naming a status outside this
-    // union would silently block every requester forever.
+    // Settled == the expense carries a bookingKey. That is what the CODE writes, not
+    // what ExpenseStatus declares. Expenses are CF-write-only (expense.service.ts:60)
+    // and the only status writes anywhere are 'processing' on create
+    // (expense/index.ts:57) and on redo (ocr/index.ts:586), and 'validated', set in the
+    // same transaction as the bookingKey (ocr/index.ts:416). 'posted' and
+    // 'pending-export' exist in the union but are NEVER written to an expense — the one
+    // `status: 'posted'` write in the repo is on a booking (bexio/journal.ts:110) — so
+    // treating them as terminal blocked every filer forever. bookingKey is also the
+    // field redoOcr itself guards on ("already booked", ocr/index.ts:577), which makes
+    // it the honest terminal signal. 'error' clears as well: it is a dead end the member
+    // cannot influence, so blocking their erasure on it would never resolve by itself.
     blocksErasure: (docs) => blockOpenInvoice(
-      docs.filter((d) => !['posted', 'pending-export'].includes(String(d.get('status') ?? ''))).length,
+      docs.filter((d) => !d.get('bookingKey') && String(d.get('status') ?? '') !== 'error').length,
       'Sie haben noch eine Spesenabrechnung offen. Sobald sie verbucht ist, können wir Ihre Daten löschen.',
     ),
   },
@@ -503,7 +541,11 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // (PeopleConfig) — which is structurally the same problem as groups.admins and
     // trips.participants, so the same scan + matches applies. No other section type
     // carries a person list.
-    find: (c: SubjectCtx) => db().collection('sections').where('type', '==', 'people'),
+    //
+    // Bounded by section type rather than by tenant: `type == 'people'` is low
+    // cardinality and needs only the default single-field index, and `tenantScope`
+    // trims the cross-tenant remainder in resolveDocs.
+    find: () => db().collection('sections').where('type', '==', 'people'),
     tenantScope: 'tenantsArray',
     matches: (doc, c) => avatarArrayHolds(doc, 'properties.persons', c.personKey),
     onExport: 'none',             // published page content, not the member's own record
@@ -571,17 +613,25 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // (login/logout) writes author = { key: '', modelType: 'user' } and puts the login
     // e-mail into the free-text `payload` — inventory §5 flags exactly this field.
     // There is no queryable handle for the latter, so the row also pulls `scope ==
-    // 'auth'` and matches on the payload. The scan is bounded by the auth log, runs
-    // only on an admin-triggered request, and collapses back to a single equality the
-    // day logAuth stamps the uid onto the activity.
-    find: (c: SubjectCtx) => db().collection('activities').where(Filter.or(
-      Filter.where('author.key', '==', c.personKey),
-      Filter.where('scope', '==', 'auth'),
-    )),
-    tenantScope: 'tenantsArray',
+    // 'auth'` and matches on the payload.
+    //
+    // The `tenants` leg is REQUIRED, not decorative: tenantScope is a post-filter, so
+    // without it this query reads every auth activity of every tenant off the server.
+    // It sits outside the Filter.or so the query still has a single array-contains;
+    // both disjuncts need a composite index (tenants + author.key, tenants + scope),
+    // which is why firestore.indexes.json gained two entries alongside this change.
+    find: (c: SubjectCtx) => db().collection('activities')
+      .where('tenants', 'array-contains', c.tenantId)
+      .where(Filter.or(
+        Filter.where('author.key', '==', c.personKey),
+        Filter.where('scope', '==', 'auth'),
+      )),
+    tenantScope: 'inQuery',
+    // payloadNamesEmail, not `includes`: the payload is free text and a substring test
+    // makes 'johans@scs.ch' match 'hans@scs.ch' — on a row that exports in full and
+    // then deletes, that is one member's login history handed to another and erased.
     matches: (doc, c) => (!!c.personKey && doc.get('author.key') === c.personKey)
-      || (!!c.email && doc.get('scope') === 'auth'
-        && String(doc.get('payload') ?? '').toLowerCase().includes(c.email)),
+      || (doc.get('scope') === 'auth' && payloadNamesEmail(String(doc.get('payload') ?? ''), c.email)),
     onExport: 'full',
     onErasure: 'delete',
     retention: LOG_24M,
@@ -661,6 +711,36 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
 
 export function entriesFor(mode: 'full' | 'index'): readonly SubjectDataEntry[] {
   return SUBJECT_DATA_MAP.filter((e) => e.onExport === mode);
+}
+
+/** Applies a row's `tenantScope`. Exported for tests; call `resolveDocs` instead. */
+export function inTenant(entry: SubjectDataEntry, doc: QueryDocumentSnapshot, ctx: SubjectCtx): boolean {
+  switch (entry.tenantScope) {
+    case 'tenantsArray':
+      return ((doc.get('tenants') as string[] | undefined) ?? []).includes(ctx.tenantId);
+    case 'docPath':
+      // e.g. esignAudit/{tenantId}/deletions/{esignId} — the tenant is the grandparent
+      return doc.ref.parent.parent?.id === ctx.tenantId;
+    case 'inQuery':
+    case 'none':
+      return true;
+  }
+}
+
+/**
+ * **The only supported way to read a row.** Runs the contract pipeline in the
+ * normative order: `find` → `tenantScope` → `matches`.
+ *
+ * Do not call `entry.find(ctx).get()` yourself. It compiles, it looks right, and on
+ * the 8 rows that carry a `matches` it returns other members' documents — which the
+ * export would then hand to the requester and the erasure executor would anonymise or
+ * delete. `find` is exported only so the tests can assert its query shape.
+ *
+ * The result is also what `blocksErasure` must be fed (contract step 4).
+ */
+export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Promise<QueryDocumentSnapshot[]> {
+  const snapshot = await entry.find(ctx).get();
+  return snapshot.docs.filter((doc) => inTenant(entry, doc, ctx) && (entry.matches?.(doc, ctx) ?? true));
 }
 
 // ──────────────────────────────────────────────────────────────────────────────────
