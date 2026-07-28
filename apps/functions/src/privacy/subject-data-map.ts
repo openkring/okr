@@ -12,17 +12,24 @@ import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
  * the entire reason this file exists.
  *
  * ## Reading a row
- * - `find`      mirrors the query helpers in `@okr/shared-util-functions` so that no
- *               new composite index is needed. It does NOT filter by tenant — see the
- *               consumer contract on `SubjectDataEntry`.
- * - `matches`   present only where the subject sits inside an array of embedded
- *               `AvatarInfo` maps, which Firestore cannot query. `find` is then a
- *               tenant-scoped scan and the consumer MUST apply `matches`.
- * - `onErasure` `'anonymize'` is reserved for records under a legal retention duty
- *               (GebüV / OR Art. 958f) and for club records whose substance belongs to
- *               the association: amounts, dates and document references stay, only the
- *               name fields and the person key are overwritten. Everything freely
- *               deletable is `'delete'`.
+ * - `find`        mirrors the query helpers in `@okr/shared-util-functions` so that no
+ *                 new composite index is needed.
+ * - `tenantScope` how the consumer keeps the result inside `ctx.tenantId`. Required on
+ *                 every row because the mechanism differs per collection (`tenants[]`
+ *                 array, singular `tenantId`, path segment, or already pinned by
+ *                 `find`).
+ * - `matches`     present where the subject link is not queryable — the subject sits
+ *                 inside an array of embedded `AvatarInfo` maps, or is identified only
+ *                 by e-mail inside free text. `find` is then a scan and the consumer
+ *                 MUST apply `matches`.
+ * - `onErasure`   `'anonymize'` is reserved for records under a legal retention duty
+ *                 (GebüV / OR Art. 958f) and for club records whose substance belongs
+ *                 to the association: amounts, dates and document references stay,
+ *                 only the name fields and the person key are overwritten. Everything
+ *                 freely deletable is `'delete'`.
+ *
+ * The pipeline order (query → tenant filter → `matches` → `blocksErasure`) is
+ * normative and is specified on `SubjectDataEntry`.
  *
  * ## Key shapes (see `SubjectCtx`)
  * `ctx.personKey` is the raw `persons` doc id and is what `memberKey`, `ownerKey`,
@@ -30,6 +37,8 @@ import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
  * `ctx.parentKey` is the prefixed `person.<okey>` form and is used ONLY by
  * `addresses.parentKey`, `address-directory.parentKey` and the `avatars` doc id.
  * `ctx.uid` is the Firebase Auth uid = the `users` doc id.
+ * `ctx.email` is the login e-mail and is the ONLY handle on `applications`,
+ * `esignList.signees[]` and the `logAuth` activities.
  *
  * The bottom of this file lists every Firestore collection deliberately left out and
  * why. Do not remove those comments — the privacy audit grades this file against the
@@ -45,10 +54,15 @@ const APPLICATION_RECORD = { months: 24, legalBasis: 'Nachweis über das Aufnahm
 const LOG_12M = { months: 12, legalBasis: 'Betriebssicherheit und Missbrauchserkennung — 12 Monate' } as const;
 const LOG_24M = { months: 24, legalBasis: 'Nachvollziehbarkeit von Datenänderungen — 24 Monate' } as const;
 
-/** Reads a nested `AvatarInfo` array field and tells whether the subject is in it. */
+/**
+ * Reads a (possibly dotted) `AvatarInfo[]` field and tells whether the subject is in it.
+ * A missing `modelType` is read as `'person'`, matching `AVATAR_INFO_SHAPE`'s default —
+ * older documents and hand-built section configs do not always set it.
+ */
 function avatarArrayHolds(doc: DocumentSnapshot, field: string, personKey: string): boolean {
+  if (!personKey) return false;
   const list = doc.get(field) as AvatarInfo[] | undefined;
-  return Array.isArray(list) && list.some((a) => a?.key === personKey && a?.modelType === 'person');
+  return Array.isArray(list) && list.some((a) => a?.key === personKey && (a?.modelType ?? 'person') === 'person');
 }
 
 function blockOpenInvoice(count: number, detail: string): Blocker | undefined {
@@ -63,6 +77,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // `okey` is the document id and is stripped before every write — it is NOT a field,
     // so this must be a documentId() query, not `where('okey', '==', …)`.
     find: (c: SubjectCtx) => db().collection('persons').where(FieldPath.documentId(), '==', c.personKey),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',          // only reached when tenants[] empties — see erasure executor
     retention: KEEP_WHILE_MEMBER,
@@ -74,15 +89,28 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // It also carries loginEmail, names, roles and UI preferences, all exported in full.
     dataClass: 'consent',
     find: (c: SubjectCtx) => db().collection('users').where(FieldPath.documentId(), '==', c.uid),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
     retention: KEEP_WHILE_MEMBER,
+  },
+  {
+    collection: 'users/fcmTokens',
+    dataClass: 'log',
+    // Deleting `users/{uid}` does NOT cascade to its subcollections, so the device push
+    // tokens would outlive the account without this row (firestore.rules:201).
+    find: (c: SubjectCtx) => db().collection('users').doc(c.uid).collection('fcmTokens'),
+    tenantScope: 'none',          // path is already pinned to the subject's uid
+    onExport: 'none',             // a push token is a device credential, not useful to the member
+    onErasure: 'delete',
+    retention: LOG_12M,
   },
   {
     collection: 'avatars',
     dataClass: 'identity',
     // the avatar doc id is the PREFIXED key: `person.<okey>` (newAvatarModel)
     find: (c: SubjectCtx) => db().collection('avatars').where(FieldPath.documentId(), '==', c.parentKey),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
     retention: KEEP_WHILE_MEMBER,
@@ -93,6 +121,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     collection: 'addresses',
     dataClass: 'contact',
     find: (c: SubjectCtx) => db().collection('addresses').where('parentKey', '==', c.parentKey),
+    tenantScope: 'tenantsArray',
     onExport: 'full',             // D-P5-1: the sanctioned vault egress
     onErasure: 'delete',
     retention: KEEP_WHILE_MEMBER,
@@ -103,6 +132,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // derived projection of `addresses` — never exported (it would duplicate the vault
     // rows) but it MUST be erased, otherwise contact data survives the deletion.
     find: (c: SubjectCtx) => db().collection('address-directory').where('parentKey', '==', c.parentKey),
+    tenantScope: 'tenantsArray',
     onExport: 'none',
     onErasure: 'delete',
     retention: KEEP_WHILE_MEMBER,
@@ -117,6 +147,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     find: (c: SubjectCtx) => db().collection('memberships')
       .where('memberKey', '==', c.personKey)
       .where('memberModelType', '==', 'person'),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
     retention: KEEP_WHILE_MEMBER,
@@ -134,6 +165,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     find: (c: SubjectCtx) => db().collection('ownerships')
       .where('ownerKey', '==', c.personKey)
       .where('ownerModelType', '==', 'person'),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
     retention: KEEP_WHILE_MEMBER,
@@ -144,6 +176,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     find: (c: SubjectCtx) => db().collection('workrels')
       .where('subjectKey', '==', c.personKey)
       .where('subjectModelType', '==', 'person'),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
     retention: KEEP_WHILE_MEMBER,
@@ -156,6 +189,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       Filter.where('subjectKey', '==', c.personKey),
       Filter.where('objectKey', '==', c.personKey),
     )),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
     retention: KEEP_WHILE_MEMBER,
@@ -167,6 +201,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       Filter.where('inviteeKey', '==', c.personKey),
       Filter.where('inviterKey', '==', c.personKey),
     )),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
     retention: KEEP_WHILE_MEMBER,
@@ -174,10 +209,20 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'responsibilities',
     dataClass: 'membership',
+    // responsibleAvatar / delegateAvatar are documented as "Person or Group", so the
+    // polymorphic key needs the modelType predicate — without it a group whose key
+    // collides with the person key gets its name anonymized.
     find: (c: SubjectCtx) => db().collection('responsibilities').where(Filter.or(
-      Filter.where('responsibleAvatar.key', '==', c.personKey),
-      Filter.where('delegateAvatar.key', '==', c.personKey),
+      Filter.and(
+        Filter.where('responsibleAvatar.key', '==', c.personKey),
+        Filter.where('responsibleAvatar.modelType', '==', 'person'),
+      ),
+      Filter.and(
+        Filter.where('delegateAvatar.key', '==', c.personKey),
+        Filter.where('delegateAvatar.modelType', '==', 'person'),
+      ),
     )),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     // the function/role history belongs to the association; only the name goes
     onErasure: 'anonymize',
@@ -192,11 +237,16 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     dataClass: 'membership',
     // `admins` is an array of embedded AvatarInfo maps — not queryable, hence the scan
     find: (c: SubjectCtx) => db().collection('groups').where('tenants', 'array-contains', c.tenantId),
+    tenantScope: 'inQuery',
     matches: (doc, c) => avatarArrayHolds(doc, 'admins', c.personKey),
     onExport: 'none',             // group membership is already covered by `memberships`
     onErasure: 'anonymize',
     anonymizeFields: ['admins'],  // remove the matching array element, keep the group
     retention: CLUB_RECORD,
+    // Correct ONLY because blocksErasure runs after `matches` (contract step 4): every
+    // doc reaching it is a group the subject actually administers, so <= 1 admin means
+    // they are the last one. On the raw scan this would fire on every admin-less group
+    // in the tenant and block erasure for everybody, forever.
     blocksErasure: (docs) => {
       const orphaned = docs.filter((d) => ((d.get('admins') as unknown[] | undefined) ?? []).length <= 1);
       return orphaned.length === 0 ? undefined : {
@@ -210,6 +260,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     dataClass: 'identity',
     // holds a plain-text dateOfBirth replica (inventory §5, sensitivity high)
     find: (c: SubjectCtx) => db().collection('competition-levels').where('personKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
     retention: KEEP_WHILE_MEMBER,
@@ -217,8 +268,20 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'applications',
     dataClass: 'identity',
-    // self-submitted membership application: dob + ssnId + parent contact details
-    find: (c: SubjectCtx) => db().collection('applications').where('personKey', '==', c.personKey),
+    // Self-submitted membership application: ssnId + dateOfBirth + parent contact — the
+    // most sensitive record in the inventory. `personKey` is only filled once the
+    // application is converted into a person, so a pending or rejected application is
+    // reachable by e-mail ALONE. Querying personKey only would miss exactly the people
+    // whose data is most sensitive and who never became members.
+    find: (c: SubjectCtx) => db().collection('applications').where(Filter.or(
+      Filter.where('personKey', '==', c.personKey),
+      Filter.where('email', '==', c.email),
+    )),
+    tenantScope: 'tenantsArray',
+    // Guards the empty-string case: DEFAULT_KEY is '' and an empty ctx.personKey would
+    // otherwise match every unconverted application in the tenant.
+    matches: (doc, c) => (!!c.personKey && doc.get('personKey') === c.personKey)
+      || (!!c.email && String(doc.get('email') ?? '').toLowerCase() === c.email),
     onExport: 'full',
     onErasure: 'delete',
     retention: APPLICATION_RECORD,
@@ -231,6 +294,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     find: (c: SubjectCtx) => db().collection('bookings')
       .where('counterparty.key', '==', c.personKey)
       .where('counterparty.modelType', '==', 'person'),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
     anonymizeFields: ['counterparty.key', 'counterparty.name1', 'counterparty.name2'],
@@ -242,6 +306,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     find: (c: SubjectCtx) => db().collection('invoices')
       .where('receiver.key', '==', c.personKey)
       .where('receiver.modelType', '==', 'person'),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
     anonymizeFields: ['receiver.key', 'receiver.name1', 'receiver.name2'],
@@ -255,6 +320,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     collection: 'invoice-positions',
     dataClass: 'financial',
     find: (c: SubjectCtx) => db().collection('invoice-positions').where('personKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
     anonymizeFields: ['personKey', 'firstName', 'lastName'],
@@ -266,9 +332,16 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     find: (c: SubjectCtx) => db().collection('scs-memberfees')
       .where('member.key', '==', c.personKey)
       .where('member.modelType', '==', 'person'),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
-    anonymizeFields: ['member.key', 'member.name1', 'member.name2'],
+    // memberBexioId / invoiceBexioId are stable join keys into bexio, where the name
+    // still lives; memberBirthYear + category is a quasi-identifier in a club this size.
+    // Clearing the name alone would leave the record trivially re-identifiable.
+    anonymizeFields: [
+      'member.key', 'member.name1', 'member.name2',
+      'memberBexioId', 'invoiceBexioId', 'memberBirthYear',
+    ],
     retention: RETAIN_10Y,
     blocksErasure: (docs) => blockOpenInvoice(
       docs.filter((d) => !['paid', 'cancelled'].includes(String(d.get('state') ?? ''))).length,
@@ -282,6 +355,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     find: (c: SubjectCtx) => db().collection('bills')
       .where('vendor.key', '==', c.personKey)
       .where('vendor.modelType', '==', 'person'),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
     anonymizeFields: ['vendor.key', 'vendor.name1', 'vendor.name2'],
@@ -292,13 +366,20 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     dataClass: 'financial',
     // linked by the Firebase Auth uid, not the personKey (createExpense CF)
     find: (c: SubjectCtx) => db().collection('expenses').where('userId', '==', c.uid),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
     anonymizeFields: ['userId', 'iban'],   // the IBAN is the payout account, not a booking fact
     retention: RETAIN_10Y,
+    // ExpenseStatus = draft | processing | validated | error | posted | pending-export.
+    // Terminal are the two that mean the accounting entry is settled: 'posted' (booked
+    // in okr's own ledger) and 'pending-export' (the entry is owned by an external
+    // backend, e.g. bexio). The other four — 'error' included — are states a treasurer
+    // can still resolve, so the block is always clearable. Naming a status outside this
+    // union would silently block every requester forever.
     blocksErasure: (docs) => blockOpenInvoice(
-      docs.filter((d) => !['booked', 'rejected'].includes(String(d.get('status') ?? ''))).length,
-      'Sie haben noch eine Spesenabrechnung offen. Sobald sie ausbezahlt oder abgelehnt ist, können wir Ihre Daten löschen.',
+      docs.filter((d) => !['posted', 'pending-export'].includes(String(d.get('status') ?? ''))).length,
+      'Sie haben noch eine Spesenabrechnung offen. Sobald sie verbucht ist, können wir Ihre Daten löschen.',
     ),
   },
 
@@ -310,6 +391,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       Filter.where('author.key', '==', c.personKey),
       Filter.where('assignee.key', '==', c.personKey),
     )),
+    tenantScope: 'tenantsArray',
     onExport: 'index',
     indexFields: { title: 'name', date: 'dueDate', route: '/task' },
     onErasure: 'anonymize',       // the task stays, the name does not
@@ -319,8 +401,17 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'comments',
     dataClass: 'communication',
-    // authorKey holds the personKey of the commenting user (createComment)
-    find: (c: SubjectCtx) => db().collection('comments').where('authorKey', '==', c.personKey),
+    // `authorKey` holds TWO different key shapes and both must be found:
+    //  - user-written comments store the personKey (CommentService.create)
+    //  - the auto-generated audit comments written on every create/update store
+    //    currentUser.okey = the users doc id = the uid (FirestoreService.createModel /
+    //    updateModel). Those are the bulk of the collection and carry `authorName` in
+    //    plaintext, so querying the personKey alone misses most of the subject's data.
+    find: (c: SubjectCtx) => db().collection('comments').where(Filter.or(
+      Filter.where('authorKey', '==', c.personKey),
+      Filter.where('authorKey', '==', c.uid),
+    )),
+    tenantScope: 'tenantsArray',
     onExport: 'index',
     indexFields: { title: 'description', date: 'creationDateTime', route: '/comment' },
     onErasure: 'anonymize',
@@ -331,6 +422,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     collection: 'docs',
     dataClass: 'content',
     find: (c: SubjectCtx) => db().collection('docs').where('authorKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
     onExport: 'index',
     indexFields: { title: 'title', date: 'dateOfDocCreation', route: '/document' },
     onErasure: 'anonymize',
@@ -342,9 +434,10 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     dataClass: 'content',
     // responsiblePersons[] and attendees[].person are embedded arrays — not queryable
     find: (c: SubjectCtx) => db().collection('calevents').where('tenants', 'array-contains', c.tenantId),
+    tenantScope: 'inQuery',
     matches: (doc, c) => avatarArrayHolds(doc, 'responsiblePersons', c.personKey)
-      || ((doc.get('attendees') as { person?: AvatarInfo }[] | undefined) ?? [])
-        .some((a) => a?.person?.key === c.personKey),
+      || (!!c.personKey && ((doc.get('attendees') as { person?: AvatarInfo }[] | undefined) ?? [])
+        .some((a) => a?.person?.key === c.personKey)),
     onExport: 'index',
     indexFields: { title: 'name', date: 'startDate', route: '/calevent' },
     onErasure: 'anonymize',
@@ -355,6 +448,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     collection: 'trips',
     dataClass: 'content',
     find: (c: SubjectCtx) => db().collection('trips').where('tenants', 'array-contains', c.tenantId),
+    tenantScope: 'inQuery',
     matches: (doc, c) => avatarArrayHolds(doc, 'participants', c.personKey),
     onExport: 'index',
     indexFields: { title: 'name', date: 'startDate', route: '/trip' },
@@ -363,11 +457,26 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: CLUB_RECORD,
   },
   {
+    collection: 'stats_members',
+    dataClass: 'content',
+    // stats_members/{personKey}/years/{year} — per-year km + trip count, derived from
+    // `trips` by the onTripWrite CF and readable by any signed-in user
+    // (firestore.rules:409-411). The whole subcollection is keyed by the subject's
+    // personKey, so it is deleted outright; the aggregate is rebuilt from the
+    // (anonymized) trips if it is ever needed again.
+    find: (c: SubjectCtx) => db().collection('stats_members').doc(c.personKey).collection('years'),
+    tenantScope: 'none',          // path is already pinned to the subject's personKey
+    onExport: 'full',
+    onErasure: 'delete',
+    retention: CLUB_RECORD,
+  },
+  {
     collection: 'reservations',
     dataClass: 'content',
     find: (c: SubjectCtx) => db().collection('reservations')
       .where('reserver.key', '==', c.personKey)
       .where('reserver.modelType', '==', 'person'),
+    tenantScope: 'tenantsArray',
     onExport: 'index',
     indexFields: { title: 'name', date: 'startDate', route: '/reservation' },
     onErasure: 'anonymize',
@@ -379,6 +488,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     dataClass: 'membership',
     // subjects[]/objects[] are embedded arrays — not queryable
     find: (c: SubjectCtx) => db().collection('transfers').where('tenants', 'array-contains', c.tenantId),
+    tenantScope: 'inQuery',
     matches: (doc, c) => avatarArrayHolds(doc, 'subjects', c.personKey) || avatarArrayHolds(doc, 'objects', c.personKey),
     onExport: 'full',
     onErasure: 'anonymize',       // the resource handover history stays with the club
@@ -386,10 +496,27 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: CLUB_RECORD,
   },
   {
+    collection: 'sections',
+    dataClass: 'content',
+    // A `people` section pins an explicit list of members onto a CMS page. For that
+    // section type the field path is fixed — `properties.persons: AvatarInfo[]`
+    // (PeopleConfig) — which is structurally the same problem as groups.admins and
+    // trips.participants, so the same scan + matches applies. No other section type
+    // carries a person list.
+    find: (c: SubjectCtx) => db().collection('sections').where('type', '==', 'people'),
+    tenantScope: 'tenantsArray',
+    matches: (doc, c) => avatarArrayHolds(doc, 'properties.persons', c.personKey),
+    onExport: 'none',             // published page content, not the member's own record
+    onErasure: 'anonymize',       // remove the matching entry, keep the section
+    anonymizeFields: ['properties.persons'],
+    retention: CLUB_RECORD,
+  },
+  {
     collection: 'whiteboards',
     dataClass: 'content',
     find: (c: SubjectCtx) => db().collection('whiteboards').where('author.key', '==', c.personKey),
-    onExport: 'none',             // no usable date field to build an index row from
+    tenantScope: 'tenantsArray',
+    onExport: 'full',             // authored content falls squarely under the right of access
     onErasure: 'anonymize',
     anonymizeFields: ['author.key', 'author.name1', 'author.name2'],
     retention: CLUB_RECORD,
@@ -398,7 +525,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     collection: 'instruments',
     dataClass: 'content',
     find: (c: SubjectCtx) => db().collection('instruments').where('author.key', '==', c.personKey),
-    onExport: 'none',             // no usable date field to build an index row from
+    tenantScope: 'tenantsArray',
+    onExport: 'full',             // authored content falls squarely under the right of access
     onErasure: 'anonymize',
     anonymizeFields: ['author.key', 'author.name1', 'author.name2'],
     retention: CLUB_RECORD,
@@ -408,6 +536,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     dataClass: 'content',
     // ownerKey is the personKey of the creator (enforced in firestore.rules)
     find: (c: SubjectCtx) => db().collection('folders').where('ownerKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
     onExport: 'none',
     onErasure: 'anonymize',
     anonymizeFields: ['ownerKey'],
@@ -417,6 +546,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     collection: 'assets',
     dataClass: 'membership',
     find: (c: SubjectCtx) => db().collection('assets').where('responsiblePersonKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
     onExport: 'none',             // the asset register is club property, not member data
     onErasure: 'anonymize',
     anonymizeFields: ['responsiblePersonKey'],
@@ -429,6 +559,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     dataClass: 'log',
     // userKey is the users doc id = the Firebase Auth uid; the doc also holds userEmail
     find: (c: SubjectCtx) => db().collection('sessions').where('userKey', '==', c.uid),
+    tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
     retention: LOG_12M,
@@ -436,8 +567,21 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'activities',
     dataClass: 'log',
-    // free-text payload may contain names and login e-mails (inventory §5)
-    find: (c: SubjectCtx) => db().collection('activities').where('author.key', '==', c.personKey),
+    // Two shapes again. ActivityService.log sets author.key = personKey, but logAuth
+    // (login/logout) writes author = { key: '', modelType: 'user' } and puts the login
+    // e-mail into the free-text `payload` — inventory §5 flags exactly this field.
+    // There is no queryable handle for the latter, so the row also pulls `scope ==
+    // 'auth'` and matches on the payload. The scan is bounded by the auth log, runs
+    // only on an admin-triggered request, and collapses back to a single equality the
+    // day logAuth stamps the uid onto the activity.
+    find: (c: SubjectCtx) => db().collection('activities').where(Filter.or(
+      Filter.where('author.key', '==', c.personKey),
+      Filter.where('scope', '==', 'auth'),
+    )),
+    tenantScope: 'tenantsArray',
+    matches: (doc, c) => (!!c.personKey && doc.get('author.key') === c.personKey)
+      || (!!c.email && doc.get('scope') === 'auth'
+        && String(doc.get('payload') ?? '').toLowerCase().includes(c.email)),
     onExport: 'full',
     onErasure: 'delete',
     retention: LOG_24M,
@@ -446,6 +590,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     collection: 'docGenerations',
     dataClass: 'log',
     find: (c: SubjectCtx) => db().collection('docGenerations').where('userId', '==', c.uid),
+    tenantScope: 'tenantsArray',
     onExport: 'none',             // metadata only; the generated file itself is in Storage
     onErasure: 'delete',
     retention: LOG_12M,
@@ -461,6 +606,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       Filter.where('createdBy', '==', c.uid),
       Filter.where('approvedBy', '==', c.uid),
     )),
+    tenantScope: 'tenantsArray',
     onExport: 'none',
     onErasure: 'retain',          // four-eyes evidence for a booked payment run
     retention: RETAIN_10Y,
@@ -468,16 +614,30 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'esignList',
     dataClass: 'content',
-    find: (c: SubjectCtx) => db().collection('esignList').where('ownerUserId', '==', c.uid),
+    // esign records carry a SINGULAR `tenantId`, not a `tenants[]` array
+    // (esign.model.ts:32, firestore.rules:414-415) — hence the tenant-scoped scan and
+    // tenantScope 'inQuery'. The scan is also what reaches documents the subject only
+    // SIGNED: signees[] carries their e-mail and name but no uid, so
+    // `ownerUserId == uid` alone would miss every document owned by someone else.
+    find: (c: SubjectCtx) => db().collection('esignList').where('tenantId', '==', c.tenantId),
+    tenantScope: 'inQuery',
+    matches: (doc, c) => doc.get('ownerUserId') === c.uid
+      || (!!c.email && ((doc.get('signees') as { email?: string }[] | undefined) ?? [])
+        .some((s) => String(s?.email ?? '').toLowerCase() === c.email)),
     onExport: 'index',
     indexFields: { title: 'documentName', date: 'createdAt', route: '/esign' },
     // A qualified electronic signature loses its evidentiary value if the record is
     // altered, so this is a genuine 'retain', not a convenience one.
     onErasure: 'retain',
     retention: RETAIN_10Y,
+    // EsignDocumentStatus = uploading | draft | in-progress | signed | withdrawn |
+    // rejected | error. Only 'in-progress' means the document is actually out for
+    // signature and waiting on a human. 'signed' / 'withdrawn' / 'rejected' are
+    // terminal, and 'uploading' / 'draft' / 'error' are the owner's or an admin's to
+    // clean up (esignDelete). Blocking on anything wider — in particular on 'signed' —
+    // would block a completed document forever.
     blocksErasure: (docs) => {
-      const pending = docs.filter((d) => !['completed', 'cancelled', 'declined', 'expired']
-        .includes(String(d.get('documentStatus') ?? '')));
+      const pending = docs.filter((d) => String(d.get('documentStatus') ?? '') === 'in-progress');
       return pending.length === 0 ? undefined : {
         code: 'pendingSignature', count: pending.length,
         detail: 'Ein Dokument wartet noch auf Ihre Unterschrift. Bitte unterschreiben Sie es oder brechen Sie den Vorgang ab, danach können wir Ihre Daten löschen.',
@@ -488,13 +648,16 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     collection: 'esignAudit',
     dataClass: 'log',
     // subcollection `esignAudit/{tenantId}/deletions/{esignId}`; holds the uid of the
-    // admin who deleted a signature record — tamper evidence, never exported.
+    // admin who deleted a signature record — tamper evidence, never exported. The
+    // collection-group query crosses tenants and the document has NO tenant field: the
+    // tenant is the grandparent path segment, i.e. `doc.ref.parent.parent.id`.
     find: (c: SubjectCtx) => db().collectionGroup('deletions').where('deletedBy', '==', c.uid),
+    tenantScope: 'docPath',
     onExport: 'none',
     onErasure: 'retain',
     retention: RETAIN_10Y,
   },
-] as const;
+];
 
 export function entriesFor(mode: 'full' | 'index'): readonly SubjectDataEntry[] {
   return SUBJECT_DATA_MAP.filter((e) => e.onExport === mode);
@@ -504,6 +667,9 @@ export function entriesFor(mode: 'full' | 'index'): readonly SubjectDataEntry[] 
 // Collections deliberately WITHOUT a row. Keep this list in sync with
 // `libs/shared/models/src/lib/**` — the privacy audit grades this file against the
 // live collection list and an unexplained omission becomes a permanent finding.
+// The completeness test derives the constant list from `@okr/shared-models` and parses
+// the comments below, so a newly added collection fails the test until it is a row,
+// a `not personal data:` line, or a `gap:` line.
 // ──────────────────────────────────────────────────────────────────────────────────
 // not personal data: accounts — chart of accounts (account numbers, names, hierarchy)
 // not personal data: accounting-configs — per-tenant accounting settings
@@ -537,10 +703,10 @@ export function entriesFor(mode: 'full' | 'index'): readonly SubjectDataEntry[] 
 //    are not rows because a `find` would be a guess; each needs a schema change first.
 //    Do not silently drop them from a later audit.
 // gap: payments — recipientName / recipientIban / recipientAddress are free text copied
-//   from the bill; PaymentModel has no person or org foreign key. Needs a recipientKey.
-// gap: sections — a `people` section embeds PeopleConfig.persons: AvatarInfo[] deep
-//   inside the polymorphic `properties` map; the field path differs per section type,
-//   so a reliable scan predicate does not exist yet.
+//   from the bill; PaymentModel has no person or org FK. A transitive route does exist
+//   (payments.billKey → the bills row), so a payment made against a bill the subject
+//   issued IS reachable; what stays unreachable is a payment whose recipient never had
+//   a bill in okr. A recipientKey + recipientModelType pair would turn this into a row.
 // gap: ocr-results — vendor/amount extracted from a receipt, linked only via
 //   correlationKey → expenses. Reachable transitively once the expense row is erased.
 // gap: expense-documents — OCR metadata for an expense receipt, linked only by
