@@ -13,7 +13,7 @@
   ],
   "references": [
     { "path": "../constants/tsconfig.lib.build.json" },
-    { "path": "../models/tsconfig.lib.json" },
+    { "path": "../models/tsconfig.lib.build.json" },
     { "path": "../util-core/tsconfig.lib.build.json" }
   ]
 }
