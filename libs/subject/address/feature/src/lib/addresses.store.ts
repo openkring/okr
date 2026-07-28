@@ -76,9 +76,18 @@ export const AddressStore = signalStore(
         parentKey: store.parentKey(),
         orderByParam: store.orderByParam(),
         currentUser: store.appStore.currentUser(),
+        tenantId: store.appStore.tenantId(),
       }),
       stream: ({params}) => {
         if (!params.parentKey?.length) return of([]);
+        // Gate on the LOADED UserModel (and tenantId) before touching Firestore — same
+        // rationale as the AppStore resources: firing while currentUser is still
+        // resolving picks the WRONG tier below (readsAddressVault sees `undefined` and
+        // falls to the directory branch), so the cold load subscribes to one listener
+        // and then immediately tears it down and opens another when currentUser lands.
+        // That attach/detach churn on a single watch stream is what tripped the
+        // Firestore target-management race (SCS-1S: assertion ca9, ve:-1).
+        if (!params.currentUser || !params.tenantId) return of([]);
         // Tiered source (spec 1.19 Phase 4 §A4): after the Phase 4 rules flip the raw
         // addresses collection is readable by the owner, privileged, and memberAdmin
         // (D-P4-1 as amended 2026-07-27 — memberAdmin maintains member contact data,
@@ -86,16 +95,16 @@ export const AddressStore = signalStore(
         // address-directory projection and see exactly the registered-visible
         // entries. 'all' stays raw — that list route is admin-guarded.
         if (readsAddressVault(params.currentUser, params.parentKey)) {
-          const dbQuery = getSystemQuery(store.appStore.tenantId());
+          const dbQuery = getSystemQuery(params.tenantId);
           if (params.parentKey !== 'all') { // for all we do not restrict the result set
             dbQuery.push({ key: 'parentKey', operator: '==', value: params.parentKey });
           }
           return store.appStore.firestoreService.searchData<AddressModel>(AddressCollection, dbQuery, params.orderByParam, 'asc');
         }
-        const directoryKey = getAddressDirectoryKey(store.appStore.tenantId(), params.parentKey);
+        const directoryKey = getAddressDirectoryKey(params.tenantId, params.parentKey);
         return store.appStore.firestoreService.readModel<AddressDirectoryModel>(AddressDirectoryCollection, directoryKey).pipe(
           map((directory) => (directory?.entries ?? []).map((entry) =>
-            directoryEntryToAddress(entry, store.appStore.tenantId(), params.parentKey)))
+            directoryEntryToAddress(entry, params.tenantId, params.parentKey)))
         );
       }
     }),
