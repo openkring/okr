@@ -1,0 +1,61 @@
+// markdownlint config for the whole workspace (VSCode extension + markdownlint-cli2).
+// Rationale: planning/ and docs/ are long-form prose specs, not published markdown.
+// We keep the rules that affect how a doc *renders* and drop the cosmetic ones.
+//
+// !! Do NOT run `markdownlint-cli2 --fix` with this config. Several rules below
+// !! are safe to *report* but destructive to *auto-fix* on these docs — see the
+// !! "never autofix" note at the bottom.
+{
+  "default": true,
+
+  // Line length: prose docs wrap at the editor, and .prettierrc uses printWidth 300.
+  // An 80-column rule produced ~14k warnings here on its own.
+  "MD013": false,
+
+  // Table pipe alignment/padding — purely cosmetic, and prettier does not
+  // reformat our tables to match it.
+  "MD060": false,
+
+  // Inline HTML is used deliberately (details/summary, anchors, the ER/architecture
+  // docs with their rendered HTML twins).
+  "MD033": false,
+
+  // Repeated headings are fine as long as they are under different parents
+  // (e.g. every spec section having its own "## Open questions").
+  "MD024": { "siblings_only": true },
+
+  // Bold-line-as-a-subheading is an established style in the specs.
+  "MD036": false,
+
+  // Ordered-list numbering is meaningful in the plans ("see step 7"), and lists
+  // that resume after a code block legitimately restart at n > 1. Off entirely:
+  // the autofix renumbers them and silently breaks cross-references.
+  "MD029": false,
+
+  // Headings ending in ":" introduce the block below them — an established style
+  // in the reference guides.
+  "MD026": false,
+
+  // Both _italic_ and *italic* occur; neither is wrong.
+  "MD049": false,
+
+  // False-positives on underscores inside globs (`_.d.ts, _.js`) and on
+  // backticks inside code samples.
+  "MD037": false,
+  "MD038": false,
+
+  // Specs start with a metadata block or a redirect line, not always an H1.
+  "MD041": false
+
+  // --- kept ON deliberately ---
+  // MD022 blanks-around-headings   } the structural blank-line rules: they
+  // MD031 blanks-around-fences     } genuinely change how a doc renders, and
+  // MD032 blanks-around-lists      } they are safe to auto-fix
+  // MD058 blanks-around-tables     }
+  // MD040 fenced-code-language     (no syntax highlighting without it)
+  //
+  // --- never autofix ---
+  // MD004 (rewrites a wrapped line starting with "+" into a bullet),
+  // MD018 (turns "#5 is out of order" into an H1), MD034 (wraps URLs inside
+  // code samples in angle brackets). Report only; fix these by hand.
+}

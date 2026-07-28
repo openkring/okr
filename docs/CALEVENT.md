@@ -26,6 +26,7 @@ the `calendars` query.
 **Endpoint:** `GET https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents?tenantId=<tenant>`
 
 **What it does:**
+
 1. Queries `calevents` where `calendars array-contains 'public'` and `isArchived == false`.
 2. Post-filters results by `tenants.includes(tenantId)` in JavaScript.
 3. Returns a JSON array of `CalEventDoc` objects.
