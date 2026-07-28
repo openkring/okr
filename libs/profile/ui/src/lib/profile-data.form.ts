@@ -4,12 +4,15 @@ import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic
 import { ChSsnMask } from "@okr/shared-config";
 import { CategoryListModel, UserModel } from "@okr/shared-models";
 import { CategorySelect, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { coerceBoolean } from "@okr/shared-util-core";
+import { coerceBoolean, isValidForFields } from "@okr/shared-util-core";
 import { DEFAULT_GENDER } from "@okr/shared-constants";
 import { AhvFormat, formatAhv } from "@okr/shared-util-angular";
 
 import { PersonFormModel, personValidations } from "@okr/subject-person-util";
 import { ProfileI18n } from '@okr/profile-util';
+
+/** The fields this accordion renders as editable — the ones its `valid` output may gate on. */
+const EDITED_FIELDS = ['ssnId'];
 
 @Component({
   selector: 'okr-profile-data-accordion',
@@ -121,7 +124,9 @@ export class ProfileDataAccordion {
   protected ssnMask = ChSsnMask;
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    // Only the ssn is editable here (dob and gender are rendered read-only), so only its
+    // validity may gate the save — see isValidForFields.
+    effect(() => this.valid.emit(isValidForFields(this.validationResult(), EDITED_FIELDS)));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

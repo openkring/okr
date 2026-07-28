@@ -4,10 +4,13 @@ import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic
 import { PrivacyUsages } from "@okr/shared-categories";
 import { PrivacyUsage, UserModel } from "@okr/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@okr/shared-ui";
-import { coerceBoolean } from "@okr/shared-util-core";
+import { coerceBoolean, isValidForFields } from "@okr/shared-util-core";
 
 import { PersonFormModel, personValidations } from "@okr/subject-person-util";
 import { ProfileI18n } from "@okr/profile-util";
+
+/** The person fields this accordion renders as editable — the ones its `valid` output may gate on. */
+const EDITED_FIELDS = ['usageImages', 'usageDateOfBirth', 'usagePostalAddress', 'usageEmail', 'usagePhone', 'usageName'];
 
 @Component({
   selector: 'okr-profile-privacy-accordion',
@@ -124,7 +127,9 @@ export class ProfilePrivacyAccordion {
   protected privacyUsages = PrivacyUsages;
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    // Only the usage* preferences are edited here; the rest of the person suite (tags, index,
+    // notes, …) is data this accordion never shows and must not gate its save — see isValidForFields.
+    effect(() => this.valid.emit(isValidForFields(this.validationResult(), EDITED_FIELDS)));
   }
 
   /******************************* actions *************************************** */

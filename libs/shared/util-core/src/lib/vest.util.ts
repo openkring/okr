@@ -302,10 +302,38 @@ export function tenantValidations(tenants: unknown, givenTenants: string) {
   });
 }
 
+/**
+ * Whether the given fields are free of validation errors — the validity a form should report.
+ *
+ * The model-wide suites (personValidations, userValidations, …) also validate data the form
+ * never renders: a person's `tags`, `index`, `notes`, `bexioId`. An error there makes
+ * `result.isValid()` false, which disables the change-confirmation bar with NOTHING on screen
+ * explaining why and no field to correct — that is how a legacy tag on a person document made
+ * the whole profile page unsavable. A form's save state must reflect the fields that form edits;
+ * data problems elsewhere belong in the AOC data-validation reports, which still run the full suite.
+ *
+ * @param result the suite result to inspect
+ * @param fieldNames the fields the form actually renders and edits
+ */
+export function isValidForFields(result: { hasErrors: (fieldName?: string) => boolean }, fieldNames: string[]): boolean {
+  return !fieldNames.some(fieldName => result.hasErrors(fieldName));
+}
+
 export function tagValidations(fieldName: string, tags: unknown, givenTags: string) {
   stringValidations(fieldName, tags, LONG_NAME_LENGTH);
-  const tagsArray = typeof tags === 'string' ? tags.split(',').filter(t => t.length > 0) : [];
-  stringArrayValidations(fieldName, tagsArray, givenTags.split(','));
+  // Both sides are trimmed: the configured lists in the `tags` collection are authored with
+  // ", " separators ("@tag.advertiser, @tag.bexio, …") while a model's own tags field is written
+  // without them, and stringArrayValidations matches exactly. Splitting untrimmed left every
+  // configured tag but the first with a leading space, so it could never match — which silently
+  // invalidated the ENTIRE form of any tagged person/org/document, on a field most forms don't
+  // even render (the profile page showed no error, it just refused to save).
+  const tagsArray = splitTags(typeof tags === 'string' ? tags : '');
+  stringArrayValidations(fieldName, tagsArray, splitTags(givenTags));
+}
+
+/** Splits a comma-separated tag string into trimmed, non-empty tags. */
+function splitTags(tags: string): string[] {
+  return tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 }
 
 export function urlValidations(fieldName: string, url: unknown) {

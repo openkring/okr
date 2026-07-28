@@ -5,10 +5,16 @@ import { AvatarUsages, DeliveryTypes, LanguageCategory, Languages, NameDisplays,
 import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
 import { FcmService } from "@okr/shared-data-access";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { coerceBoolean, hasRole } from "@okr/shared-util-core";
+import { coerceBoolean, hasRole, isValidForFields } from "@okr/shared-util-core";
 
 import { userValidations } from "@okr/user-util";
 import { ProfileI18n } from "@okr/profile-util";
+
+/** The user fields this accordion renders as editable — the ones its `valid` output may gate on. */
+const EDITED_FIELDS = [
+  'userLanguage', 'showDebugInfo', 'showArchivedData', 'showHelpers', 'useTouchId', 'useFaceId',
+  'avatarUsage', 'gravatarEmail', 'nameDisplay', 'personSortCriteria', 'newsDelivery', 'invoiceDelivery',
+];
 
 @Component({
   selector: 'okr-profile-settings-accordion',
@@ -186,7 +192,9 @@ export class ProfileSettingsAccordion {
   protected deliveryTypes = DeliveryTypes;
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    // The user suite also validates fields this accordion never shows (index, loginEmail,
+    // personKey, tags); an error there must not silently disable the save — see isValidForFields.
+    effect(() => this.valid.emit(isValidForFields(this.validationResult(), EDITED_FIELDS)));
   }
 
   protected async enableNotifications(): Promise<void> {
