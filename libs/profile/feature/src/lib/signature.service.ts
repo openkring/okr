@@ -5,7 +5,7 @@ import { AppStore } from '@okr/shared-feature';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
-import { AddressCollection, AddressModel, OrgModelName, PersonModelName } from '@okr/shared-models';
+import { AddressCollection, AddressModel, DirectoryEntry, OrgModelName, PersonModelName } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 import {
   adaptForClient,
@@ -52,19 +52,19 @@ export class SignatureService {
   private readonly orgKey = computed(() => this.defaultOrg()?.okey ?? '');
   private readonly personKey = computed(() => this.currentPerson()?.okey ?? '');
 
-  /** The default org's addresses, used to compose the postal address line + logo website link. */
-  private readonly orgAddressResource = rxResource({
-    params: () => {
-      const orgKey = this.orgKey();
-      if (!orgKey) return undefined;
-      return { orgKey, tenantId: this.tenantId() };
-    },
-    stream: ({ params }) =>
-      this.firestoreService.searchData<AddressModel>(
-        AddressCollection,
-        [...getSystemQuery(params.tenantId), { key: 'parentKey', operator: '==', value: `${OrgModelName}.${params.orgKey}` }],
-        'none',
-      ),
+  /**
+   * The default org's addresses, used to compose the postal address line + logo website link.
+   *
+   * Read from the `address-directory` projection, NOT from the raw addresses collection:
+   * since the privacy 1.19 Phase 4 lock the vault is readable only by the owner, privileged
+   * and memberAdmin, so a plain member querying `parentKey == 'org.<okey>'` gets "Missing or
+   * insufficient permissions". Org contact channels are public-tier, hence fully present in
+   * the projection — which the AppStore already streams tenant-wide (no extra subscription).
+   */
+  private readonly orgAddresses = computed<DirectoryEntry[]>(() => {
+    const orgKey = this.orgKey();
+    if (!orgKey) return [];
+    return this.appStore.getDirectoryEntry(`${OrgModelName}.${orgKey}`)?.entries ?? [];
   });
 
   /** The current person's own addresses, used to resolve the live favorite phone number. */
@@ -88,7 +88,7 @@ export class SignatureService {
     const org = this.defaultOrg();
     if (!person || !org) return null;
 
-    const addresses = this.orgAddressResource.value() ?? [];
+    const addresses = this.orgAddresses();
     const postal = pickAddress(addresses, 'postal');
     const web = pickAddress(addresses, 'web');
     const addressLine = composeOrgAddressLine(postal?.zipCode || org.favZipCode || '', postal?.city ?? '', postal?.countryCode ?? '');
@@ -170,8 +170,15 @@ export class SignatureService {
   }
 }
 
-/** Prefer a favorite address of the given channel, else the first of that channel. */
-function pickAddress(addresses: AddressModel[], channel: 'postal' | 'web' | 'phone' | 'email'): AddressModel | undefined {
+/**
+ * Prefer a favorite address of the given channel, else the first of that channel.
+ * Works on both sources feeding the signature: raw `AddressModel`s (the owner's own
+ * vault docs) and `DirectoryEntry`s (the org projection — never archived by construction).
+ */
+function pickAddress<T extends { addressChannel: string; isFavorite: boolean; isArchived?: boolean }>(
+  addresses: T[],
+  channel: 'postal' | 'web' | 'phone' | 'email',
+): T | undefined {
   const ofChannel = addresses.filter((a) => a.addressChannel === channel && !a.isArchived);
   return ofChannel.find((a) => a.isFavorite) ?? ofChannel[0];
 }
