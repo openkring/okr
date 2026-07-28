@@ -1,14 +1,17 @@
 # Org Domain
 
 ## Overview
+
 `OrgModel` represents an organization or company. The type field distinguishes subtypes (e.g. club, company, association). Orgs support membership hierarchies and can own resources, hold reservations, and maintain document archives. Addresses are stored separately in the `addresses` collection with `parentKey = 'org.<okey>'`.
 
 A denormalized snapshot of the primary contact details (favorite email, phone, and postal address) is stored directly on the `OrgModel` to avoid extra reads in list views.
 
 ## Firestore Collection
+
 Collection name: `orgs`
 
 ## Field Semantics
+
 | Field | Type | Description |
 |---|---|---|
 | `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
@@ -33,9 +36,11 @@ Collection name: `orgs`
 | `favCountryCode` | string | Denormalized favorite country code |
 
 ## Store: `OrgStore`
+
 NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 
 ### State
+
 | Property | Type | Description |
 |---|---|---|
 | `orgKey` | string | Key of the currently selected org |
@@ -44,6 +49,7 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `selectedType` | string | Type filter (default: `'all'`) |
 
 ### Key Methods
+
 | Method | Description |
 |---|---|
 | `setSearchTerm(term)` | Updates the text filter |
@@ -57,9 +63,11 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `export(type)` | Exports the org list (not yet implemented) |
 
 ## New Org Flow
+
 When creating a new org via `OrgNewModal`, the form (`OrgNewFormModel`) collects basic fields plus optional initial addresses (email, phone, URL, postal). After the org document is saved, the store creates separate `AddressModel` documents for each non-empty initial address and sets `parentKey = 'org.<newKey>'`.
 
 ## Components
+
 | Component | Description |
 |---|---|
 | `OrgList` | List with search, tag, and type filters; actions via ActionSheet or popover menu |
@@ -67,6 +75,7 @@ When creating a new org via `OrgNewModal`, the form (`OrgNewFormModel`) collects
 | `OrgEditModal` | Ionic modal for editing an existing org; includes embedded accordions for addresses, memberships, ownerships, reservations, documents, members, and comments |
 
 ## Embedded Accordions in `OrgEditModal`
+
 | Accordion | Visibility |
 |---|---|
 | `AddressesAccordion` | Always |
@@ -78,9 +87,11 @@ When creating a new org via `OrgNewModal`, the form (`OrgNewFormModel`) collects
 | `CommentsAccordion` | `privileged` role or write mode |
 
 ## Validation (`@okr/subject-org-util`)
+
 Vest suites: `org` (full model), `orgNewForm` (new-org creation form).
 
 ## Authorization
+
 - List / view: any authenticated user
 - Edit / create / delete: requires `'memberAdmin'` or `'admin'` role
 - Privileged accordions (ownerships, reservations, documents, comments): requires `'privileged'` or write access

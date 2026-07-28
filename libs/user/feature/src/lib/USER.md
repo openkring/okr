@@ -1,16 +1,20 @@
 # User Domain
 
 ## Overview
+
 `UserModel` links a Firebase Authentication account to a `PersonModel` and stores application-level settings and role-based authorization. Every user belongs to exactly one tenant. The `okey` matches the Firebase Auth UID.
 
 The user domain covers two concerns:
+
 1. **Admin management** — `UserList` + `UserListStore` + `UserEditPage` + `UserEditStore` for admins to view and edit all user accounts.
 2. **Firebase Auth management** — `FbuserEditModal` for viewing/editing the raw Firebase Auth account (email, displayName, emailVerified, disabled).
 
 ## Firestore Collection
+
 Collection name: `users`
 
 ## Field Semantics
+
 | Field | Type | Description |
 |---|---|---|
 | `okey` | string | Firestore document ID = Firebase Auth UID (stripped on write, re-attached on read) |
@@ -45,6 +49,7 @@ Collection name: `users`
 | `srvEmail` | boolean | User consents to service emails |
 
 ## Role Names (`Roles` type)
+
 | Role | Description |
 |---|---|
 | `anonymous` | Unauthenticated visitor |
@@ -59,20 +64,24 @@ Collection name: `users`
 | `admin` | Full access |
 
 ## Firebase User (`FirebaseUserModel`)
+
 The `FbuserEditModal` shows and edits the underlying Firebase Auth record directly. Fields: `uid`, `email`, `displayName`, `emailVerified`, `disabled`, `phone`, `photoUrl`. This model is not stored in Firestore — it is read/written via Firebase Admin SDK through a Cloud Function or directly in the admin console.
 
 ## Stores
 
 ### `UserListStore`
+
 Loads all users for the current tenant ordered by `loginEmail`.
 
 #### State
+
 | Property | Type | Description |
 |---|---|---|
 | `searchTerm` | string | Free-text filter against `index` |
 | `selectedTag` | string | Tag chip filter |
 
 #### Key Methods
+
 | Method | Description |
 |---|---|
 | `edit(user, readOnly)` | Navigates to `/user/<okey>` |
@@ -80,20 +89,24 @@ Loads all users for the current tenant ordered by `loginEmail`.
 | `export(type)` | Exports users as XLSX (`'raw'` or `'users'` format) |
 
 ### `UserEditStore`
+
 Manages a single user detail page. Loaded by `userKey` input.
 
 #### State
+
 | Property | Type | Description |
 |---|---|---|
 | `userKey` | string \| undefined | Key of the user being edited |
 
 #### Key Methods
+
 | Method | Description |
 |---|---|
 | `setUserKey(key)` | Triggers reload of the user resource |
 | `save(user)` | Creates or updates the user; navigates back on success |
 
 ## Components
+
 | Component | Description |
 |---|---|
 | `UserList` | List with search and tag filters; actions via ActionSheet (edit, delete, export) |
@@ -101,8 +114,10 @@ Manages a single user detail page. Loaded by `userKey` input.
 | `FbuserEditModal` | Ionic modal to view/edit raw Firebase Auth account fields |
 
 ## Validation (`@okr/user-util`)
+
 Vest suites: `user` (full model), `userModelForm`, `userAuthForm`, `userNotificationForm`, `userPrivacyForm`, `userDisplayForm`, `fbuserForm`.
 
 ## Authorization
+
 - List / view: requires `'admin'` role
 - Edit / delete: requires `'admin'` role

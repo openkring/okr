@@ -1,14 +1,17 @@
 # Page Domain
 
 ## Overview
+
 The Page domain models the top-level content containers of the CMS. A `PageModel` holds metadata (title, SEO tags, state) and an ordered list of section IDs. The `PageDispatcher` component reads a page from the route, loads it via `PageStore`, and switches on `page.type` to render the correct page component. This keeps routing simple (`/private/:id` or `/public/:id`) while still supporting many distinct page layouts.
 
 Pages are private by default (`isPrivate = true`). If a private page is reached through a `/public/` route, `PageDispatcher` immediately redirects to `/auth/login`.
 
 ## Firestore Collection
+
 Collection name: `pages`
 
 ## Field Semantics
+
 | Field | Type | Description |
 |---|---|---|
 | `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
@@ -32,6 +35,7 @@ Collection name: `pages`
 | `blogType` | BlogLayoutType | Layout variant for `blog` pages (see Blog Layout Types below) |
 
 ## Page Types
+
 | Type | Component | Description |
 |---|---|---|
 | `content` | `ContentPage` | Standard page with an ordered grid of sections |
@@ -45,6 +49,7 @@ Collection name: `pages`
 | `error` | `ErrorPage` | Error pages (e.g. 404, unknownPageType) |
 
 ## Blog Layout Types
+
 `minimal` | `grid` | `classic` | `magazine` | `bento` | `stream`
 
 `BlogPage` (`bk-blog-page`) reads `page.blogType` (default `minimal`) and `@switch`es to the
@@ -67,7 +72,9 @@ free of stubs/TODOs. A visual smoke test of each layout with sample data (and sc
 remaining manual step — it requires the running app and is tracked as a follow-up.
 
 ## Page Dispatcher
+
 `PageDispatcher` (`bk-page-dispatcher`) is the single routable entry point for all pages. It:
+
 1. Receives `id` from the route (supports `@TID@` substitution).
 2. Sets `pageId` on `PageStore`, triggering the Firestore live stream.
 3. Switches on `page.type` to render the matching page component with `@defer` for heavier types.
@@ -75,7 +82,9 @@ remaining manual step — it requires the running app and is tracked as a follow
 5. Re-loads on `ionViewWillEnter` to handle back-navigation from Ionic cache.
 
 ## State (PageStore)
+
 The `PageStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
+
 - `pageId` / `sectionId` — currently loaded identifiers
 - `searchTerm`, `selectedTag`, `selectedType`, `selectedState` — list filters
 - `pagesResource` — live Firestore stream of all pages (for admin list)
@@ -84,16 +93,20 @@ The `PageStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
 The `pageResource` resolves the full `sections` list reactively: any section document change propagates immediately to the UI.
 
 ## ContentPage Edit Mode
+
 `ContentPage` supports an in-place edit mode (toggled via the context menu). In edit mode:
+
 - Each section is wrapped in a coloured border indicating its `state` (draft=blue, inReview=yellow, published=green, cancelled/archived=red).
 - Clicking a section opens an ActionSheet with actions: edit, upload image, send email, remove from page.
 - Nested sections inside accordion sections are excluded from the top-level list to avoid duplication.
 - Only `published` sections are visible to non-admin users.
 
 ## Section Reference Placeholder
+
 Section IDs in `page.sections` may contain `@TID@`, which is resolved to the tenant ID at load time. This allows shared cross-tenant section references.
 
 ## Key Components
+
 | Component | Selector | Role |
 |---|---|---|
 | `PageDispatcher` | `bk-page-dispatcher` | Route entry point; dispatches to page type components |
@@ -110,6 +123,7 @@ Section IDs in `page.sections` may contain `@TID@`, which is resolved to the ten
 | `PageSortModal` | (modal) | Drag-to-reorder sections within a page |
 
 ## Data Access
+
 `PageService` (`@okr/cms-page-data-access`) and `SectionService` (`@okr/cms-section-data-access`) are the Firestore gateways. `PageStore` combines them: it first loads the `PageModel`, then fans out to individual section reads via `combineLatest`.
 
 ## External / Embedded Access (showMenu)
@@ -154,4 +168,5 @@ This pattern applies to any page that should be embeddable. Add `showMenu: false
 to the route `data` in `app.routes.ts`.
 
 ## Search Index Format
+
 `n:<name> k:<okey>`

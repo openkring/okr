@@ -1,14 +1,17 @@
 # Menu Domain
 
 ## Overview
+
 The Menu domain manages the navigation structure of the application. Each `MenuItemModel` represents one node in the navigation tree. Menu items can navigate to internal routes, open external URLs in the browser, act as group containers for sub-menus, serve as visual dividers, or trigger in-app calls (e.g. dismiss a popover with a value). Menu items are filtered by the `roleNeeded` field so that only users with the required role can see them.
 
 The `Menu` (`bk-menu`) is the primary rendering component. It receives a menu item name as input, loads the item from the `MenuStore`, and switches on the `action` field to render the appropriate UI (leaf item, sub-menu accordion, divider, main list, or context list). It is recursive: sub-menus render nested `<bk-menu>` components.
 
 ## Firestore Collection
+
 Collection name: `menuItems`
 
 ## Field Semantics
+
 | Field | Type | Description |
 |---|---|---|
 | `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
@@ -27,6 +30,7 @@ Collection name: `menuItems`
 | `tags` | string | Comma-separated tags for filtering |
 
 ## Action Types
+
 | Action | Behaviour |
 |---|---|
 | `navigate` | Navigates the Angular router to `url` with optional `data` params |
@@ -38,16 +42,20 @@ Collection name: `menuItems`
 | `call` | Dismisses the current popover, passing `url` as the selected value |
 
 ## Authorization
+
 The `roleNeeded` field is evaluated by `hasRole()` at render time. Items whose `roleNeeded` exceeds the current user's role are simply not rendered. Login/logout items are handled as special cases based on `url === '/auth/login'` or `'/auth/logout'`.
 
 ## State (MenuStore)
+
 The `MenuStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
+
 - `name` — the current menu item name being rendered
 - `searchTerm` / `selectedCategory` — filters used in the admin list view
 - `menuResource` — live Firestore stream for a single item (keyed by `name`)
 - `menuItemsResource` — live Firestore stream of all menu items (for admin list)
 
 ## Key Components
+
 | Component | Selector | Role |
 |---|---|---|
 | `Menu` | `bk-menu` | Recursive renderer; switches on `action` type |
@@ -55,15 +63,19 @@ The `MenuStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
 | `MenuItemModal` | (modal) | Edit/view modal for a single menu item |
 
 ## Data Access
+
 `MenuService` (`@okr/cms-menu-data-access`) is the Firestore gateway. It exposes:
+
 - `list()` — real-time stream of all menu items for the tenant
 - `read(name)` — real-time stream for a single item by name
 - `create / update / delete` — write operations guarded by the store
 
 ## Search Index Format
+
 `n:<name> a:<action> k:<okey>`
 
 ## Dynamic Label Tokens
+
 A menu item's `label` may contain dynamic tokens that are expanded at render time by
 `expandMenuTokens(label, ctx)` (`@okr/cms-menu-util`, see `menu-tokens.ts`). The token registry
 is the single source of truth:

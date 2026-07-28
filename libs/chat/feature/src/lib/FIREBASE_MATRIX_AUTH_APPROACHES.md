@@ -82,12 +82,14 @@ async initializeMatrix(): Promise<void> {
 ### Setup
 
 1. **Deploy functions:**
+
    ```bash
    nx build functions
    firebase deploy --only functions:getMatrixCredentials,functions:syncFirebaseProfileToMatrix
    ```
 
 2. **Set admin token:**
+
    ```bash
    firebase functions:config:set matrix.admin_token="YOUR_MATRIX_ADMIN_TOKEN"
    ```

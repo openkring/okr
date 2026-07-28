@@ -40,12 +40,15 @@ NgRx Signal Store (provided at component level). State:
 | `selectedType` | Location type filter (`'all'` or a specific type) |
 
 Key resource:
+
 - `locationsResource` — backed by `LocationService.list()` (real-time stream from `locations` collection).
 
 Computed:
+
 - `filteredLocations` — applies `nameMatches(index, searchTerm)`, `nameMatches(type, selectedType)`, and `chipMatches(tags, selectedTag)` filters client-side.
 
 Key actions:
+
 - `add(readOnly)` / `edit(location, readOnly)` — open `LocationEditModal` for create/update.
 - `delete(location, readOnly)` — calls `LocationService.delete`.
 - `showOnMap(location)` — opens `MapViewModal` centred on the location's coordinates.

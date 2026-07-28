@@ -1,14 +1,17 @@
 # Group Domain
 
 ## Overview
+
 `GroupModel` represents a named collection of persons (members), typically belonging to an organization. Groups support an optional set of collaborative features: content page, chat room, calendar, tasks, and file storage. A group can be administered by a designated group admin person.
 
 Groups are displayed in `GroupList` and explored in detail via `GroupViewPage`, which uses a segmented tab layout to switch between the group's features.
 
 ## Firestore Collection
+
 Collection name: `groups`
 
 ## Field Semantics
+
 | Field | Type | Description |
 |---|---|---|
 | `okey` | string | Firestore document ID; user-defined on creation — must be unique; stripped on write, re-attached on read |
@@ -34,7 +37,9 @@ Collection name: `groups`
 | `notifyType` | `'memberOnly'` \| `'membersAndMatchingVisibility'` | Controls who receives chat notifications. `'memberOnly'` (default): only registered group members. `'membersAndMatchingVisibility'`: members plus all users whose roles match `visibility`. |
 
 ## Related Collections Created on Group Creation
+
 When a new group is created, the store automatically provisions:
+
 | Collection | Document key | Purpose |
 |---|---|---|
 | `calendars` | `<groupOkey>` | Group calendar |
@@ -45,9 +50,11 @@ When a new group is created, the store automatically provisions:
 | Matrix room | — | Matrix group chat room via `MatrixChatService` |
 
 ## Store: `GroupStore`
+
 NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 
 ### State
+
 | Property | Type | Description |
 |---|---|---|
 | `searchTerm` | string | Free-text filter against `index` |
@@ -56,6 +63,7 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `selectedSegment` | string \| undefined | Active tab in `GroupViewPage` (default: `'content'`) |
 
 ### Key Methods
+
 | Method | Description |
 |---|---|
 | `setGroupKey(key)` | Loads a single group by key |
@@ -71,6 +79,7 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `createGroupCalendar(group)` | Creates a `CalendarModel` for the group |
 
 ## Components
+
 | Component | Description |
 |---|---|
 | `GroupList` | List with search/tag filters; shows member avatars; actions via ActionSheet (show, edit, delete, addPage); requires `'memberAdmin'` role for write actions |
@@ -78,6 +87,7 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `GroupViewPage` | Full-page view with segmented tabs: content, chat, calendar, tasks, files, members; resets `PageStore.pageId` on Ionic back-navigation via `ionViewWillEnter` |
 
 ## Segments in `GroupViewPage`
+
 | Segment | Component | Visibility |
 |---|---|---|
 | `content` | `PageDispatcher` (page: `<id>_content`) | when `hasContent` |
@@ -100,6 +110,7 @@ Instead, an `InjectionToken<Type<unknown>>` called `GROUP_EDIT_MODAL` is defined
 Any future feature lib that needs to open the group edit modal across a dependency boundary should follow the same pattern.
 
 ## Authorization
+
 - List / view: any authenticated user
 - Edit / create / delete: requires `'memberAdmin'` or `'admin'` role
 - Add page: requires `'admin'` role

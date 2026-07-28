@@ -62,11 +62,13 @@ NgRx Signal Store (provided at component level). State:
 | `selectedGender` | Gender filter (for lockers) |
 
 Key resource:
+
 - `resourceResource` — real-time stream from `resources` collection ordered by `name`.
 
 Computed per-type filtered lists (e.g. `filteredBoats`, `filteredRboats`, `filteredLockers`, etc.) apply text search, sub-type, gender, and tag filters.
 
 Key actions:
+
 - `add(isTypeEditable, readOnly)` / `edit(resource, isTypeEditable, readOnly)` — open `ResourceEditModal`.
 - `delete(resource, readOnly)` — call `ResourceService.delete`.
 - `export(type)` — not yet implemented.

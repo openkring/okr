@@ -1,14 +1,17 @@
 # Section Domain
 
 ## Overview
+
 Sections are the content building blocks rendered inside Pages. Each section has a `type` that determines both its data shape and which component renders it. The `SectionDispatcher` (`bk-section-dispatcher`) receives a `SectionModel` and switches on `section.type` to render the correct section component. Role-based visibility is enforced at the dispatcher level via `roleNeeded`.
 
 A section stores its type-specific configuration in the `properties` field. The base fields (`title`, `subTitle`, `content`, `color`, etc.) are shared across all section types; `properties` is a discriminated union typed per section.
 
 ## Firestore Collection
+
 Collection name: `sections`
 
 ## Base Section Fields
+
 | Field | Type | Description |
 |---|---|---|
 | `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
@@ -29,6 +32,7 @@ Collection name: `sections`
 | `tags` | string | Comma-separated tags for filtering |
 
 ### EditorConfig
+
 | Field | Type | Description |
 |---|---|---|
 | `htmlContent` | string | HTML from the rich-text editor |
@@ -36,6 +40,7 @@ Collection name: `sections`
 | `position` | ViewPosition | Image/content position relative to text |
 
 ## Section Types
+
 | Type | Config Interface | Description |
 |---|---|---|
 | `accordion` | `AccordionConfig` | Collapsible accordion; items reference other section keys |
@@ -66,7 +71,9 @@ Collection name: `sections`
 | `video` | `VideoConfig` | Embedded video (YouTube or other iframe) |
 
 ## Section Dispatcher
+
 `SectionDispatcher` (`bk-section-dispatcher`) is a pure presentational switch-component. It receives:
+
 - `section` — the `SectionModel` to render (required)
 - `currentUser` — used for `hasRole()` check against `roleNeeded`
 - `editMode` — passed down to section components that support inline editing
@@ -74,13 +81,16 @@ Collection name: `sections`
 Heavy sections (`cal`, `chart`, `slider`, `orgchart`) use Angular `@defer` to lazy-load on viewport or idle. Sections that do not match any known type fall back to `MissingSectionComponent`.
 
 ## State (SectionStore)
+
 The `SectionStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
+
 - `sectionId` — key of a single section being viewed/edited
 - `searchTerm`, `selSearchTerm`, `selectedTag`, `selectedCategory`, `selectedState` — list and selection-modal filters
 - `sectionsResource` — live Firestore stream of all sections (for admin list and select modal)
 - `sectionResource` — live Firestore stream for a single section
 
 Notable store actions:
+
 - `add()` — presents a card-select modal to choose a section type, then opens the edit modal
 - `edit()` — opens `SectionEditModalComponent`; creates or updates on confirm
 - `delete()` — confirmation-guarded deletion
@@ -89,6 +99,7 @@ Notable store actions:
 - `send(section)` — opens `MessageCenterModal` then calls the `sendEmail` Cloud Function (`europe-west6`)
 
 ## Key Components
+
 | Component | Selector | Role |
 |---|---|---|
 | `SectionDispatcher` | `bk-section-dispatcher` | Type switch; renders the correct section component |
@@ -105,11 +116,14 @@ Notable store actions:
 | `RagSectionComponent` | `bk-rag-section` | RAG chat interface |
 
 ## Data Access
+
 `SectionService` (`@okr/cms-section-data-access`) is the Firestore gateway:
+
 - `list()` — real-time stream of all sections for the tenant
 - `read(id)` — real-time stream for a single section
 - `searchByKeys(keys)` — one-time fetch of multiple sections by key (used by `PageSortModal`)
 - `create / update / delete` — write operations
 
 ## Content State Visibility
+
 In `ContentPage`, only sections with `state === 'published'` are shown to non-admin users. `contentAdmin` users see all states; section borders are colour-coded by state in edit mode.

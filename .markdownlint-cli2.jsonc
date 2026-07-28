@@ -1,0 +1,24 @@
+// Options for markdownlint-cli2 (the CLI). Rule configuration lives in
+// .markdownlint.jsonc, which this file does not override — the CLI reads both.
+//
+// Why this exists: .markdownlintignore is honoured by the VSCode extension but
+// NOT by markdownlint-cli2 (that file is a markdownlint-cli v1 feature). Without
+// the ignores below, a bare `npx markdownlint-cli2 "**/*.md"` walks node_modules
+// and dist and reports ~14k violations that are not ours.
+{
+  "globs": ["**/*.md"],
+  "ignores": [
+    "**/node_modules/**",
+    "dist/**",
+    "coverage/**",
+    ".nx/**",
+    ".angular/**",
+    ".firebase/**",
+    // Third-party / vendored skill installs — not ours to reformat.
+    ".superpowers/**",
+    ".claude/**",
+    ".agents/**",
+    ".codex/**",
+    ".opencode/**"
+  ]
+}

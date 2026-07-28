@@ -1,6 +1,7 @@
 # Auth Domain
 
 ## Overview
+
 The auth domain handles Firebase Authentication for the application. It provides login, password reset, and OIDC callback pages, route guards for authorization, and a modal variant of the login form. Authentication state is tracked globally by `AppStore` via `rxfire/auth`.
 
 There is no Firestore collection owned by this domain. After successful login the `AppStore` loads the `UserModel` from the `users` collection.
@@ -8,15 +9,19 @@ There is no Firestore collection owned by this domain. After successful login th
 ## Pages and Components
 
 ### `LoginPage` (`login.page.ts`)
+
 Full-page login form. Displays the tenant's logo and welcome banner image (served via Imgix). Collects `loginEmail` + `loginPassword` via `LoginForm` from `@okr/auth-ui`. On submit calls `AuthService.login()` which signs in with Firebase Auth and redirects to `AppConfig.rootUrl` on success, or back to `AppConfig.loginUrl` on failure.
 
 ### `LoginModal` (`login.modal.ts`)
+
 Ionic modal variant of the login form. Used when login needs to be embedded without full page navigation.
 
 ### `PasswordResetPage` (`password-reset.page.ts`)
+
 Accepts an email address and calls `AuthService.resetPassword()`, which sends a Firebase password-reset email and redirects to `AppConfig.loginUrl`.
 
 ### `ConfirmPasswordResetPage` (`confirm-password-reset.page.ts`)
+
 Handles the Firebase email-action link flow for completing a password reset.
 
 > **Removed (C-3):** the `MatrixOidcCallback` component and the OIDC bridge it
@@ -26,24 +31,32 @@ Handles the Firebase email-action link flow for completing a password reset.
 ## Route Guards
 
 ### `isAuthenticatedGuard` (`isAuthenticated.guard.ts`)
+
 `CanActivateFn`. Uses `rxfire/auth`'s `authState()` to check whether a Firebase user is currently signed in. Takes only the first emission (`take(1)`). Redirects to `/auth/login` if unauthenticated.
 
 ### `isPrivilegedGuard` (`isPrivileged.guard.ts`)
+
 `CanActivateFn` factory. Returns `true` when `hasRole('privileged', currentUser)` is true. Relies on `AppStore.currentUser()`.
 
 ### `isAdminGuard` (`isAdmin.guard.ts`)
+
 `CanActivateFn` factory. Returns `true` when `hasRole('admin', currentUser)` is true. Relies on `AppStore.currentUser()`.
 
 ## AuthService (`@okr/auth-data-access`)
+
 The `AuthService` is injected by `LoginPage` and `PasswordResetPage`. Key responsibilities:
+
 - `login(credentials, rootUrl, loginUrl)` — Firebase `signInWithEmailAndPassword`; redirects on success/failure.
 - `resetPassword(email, loginUrl)` — Firebase `sendPasswordResetEmail`.
 
 ## Auth Credentials Model (`AuthCredentials`)
+
 Defined in `@okr/shared-models`:
+
 ```ts
 { loginEmail: string; loginPassword: string; }
 ```
+
 Validated by the `authCredentials` Vest suite in `@okr/auth-util`.
 
 ---

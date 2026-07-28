@@ -1,6 +1,7 @@
 # Icon Domain
 
 ## Overview
+
 The Icon domain manages SVG icons that are stored in Firebase Storage and tracked as metadata records in Firestore. Each `IconModel` document describes a single `.svg` file: its name, type (icon set), storage path, file size, and a searchable keyword index.
 
 Icons are organised into named **icon sets** (subdirectories under `logo/` in Firebase Storage, e.g. `icons`, `general`, `sport`). The list of available sets is derived at runtime from the distinct `type` values found in the Firestore `icons` collection and also from the hardcoded `ICON_SETS` constant which serves as the canonical set list for the `sync` operation.
@@ -8,17 +9,21 @@ Icons are organised into named **icon sets** (subdirectories under `logo/` in Fi
 The `IconSelectModal` (re-exported from this library) is used across the application wherever users need to pick an SVG icon — e.g. in menu items, section headers, and category items.
 
 ## Firestore Collection
+
 Collection name: `icons`
 
 ## Firebase Storage Layout
+
 Icons are stored at: `logo/<type>/<name>.svg`
 
 Examples:
+
 - `logo/icons/folder.svg`
 - `logo/sport/rowing.svg`
 - `logo/general/home.svg`
 
 ## Field Semantics
+
 | Field | Type | Description |
 |---|---|---|
 | `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
@@ -34,13 +39,16 @@ Examples:
 | `notes` | string | Optional human-readable description |
 
 ## State (IconStore)
+
 The `IconStore` (NgRx Signal Store) holds:
+
 - `searchTerm` — text filter applied to `icon.index` and `icon.name`
 - `selectedDir` — active icon-set filter (empty = show all)
 - `selectedTag` — tag chip filter
 - `iconsResource` — live Firestore stream of all icons for the tenant
 
 Computed signals:
+
 - `icons` — all loaded `IconModel` instances
 - `filteredIcons` — icons matching the current `searchTerm`, `selectedDir`, and `selectedTag`
 - `iconsCount` — total count before filtering
@@ -48,6 +56,7 @@ Computed signals:
 - `tags` — tag chips from `AppStore.getTags('icon')`
 
 Notable store actions:
+
 | Method | Description |
 |---|---|
 | `add(readOnly)` | Picks an SVG file via `UploadService`, uploads to `logo/{selectedDir}/{name}.svg`, creates an `IconModel` in Firestore |
@@ -57,6 +66,7 @@ Notable store actions:
 | `export(type)` | Placeholder — not yet implemented |
 
 ## Key Components
+
 | Component | Selector | Role |
 |---|---|---|
 | `IconList` | `bk-icon-list` | Admin list/grid view with search, icon-set filter, view toggle, CRUD action sheet, and context menu |
@@ -64,6 +74,7 @@ Notable store actions:
 | `IconSelectModal` | `bk-icon-select-modal` | Selection modal used across the app to pick an SVG icon; returns the icon `name` string on confirm |
 
 ## Key Library Layers
+
 | Import alias | Purpose |
 |---|---|
 | `@okr/icon-data-access` | `IconService` — Firestore CRUD for the `icons` collection |
@@ -72,13 +83,16 @@ Notable store actions:
 | `@okr/icon-util` | `getIconIndex`, `getIconStoragePath`, `buildIconModel`, `buildIconModelFromStorage`, `iconValidations` |
 
 ## Data Access
+
 `IconService` (`@okr/icon-data-access`) is the Firestore gateway:
+
 - `list()` — real-time stream of all icons for the tenant, ordered by `name`
 - `create / update / delete` — write operations; `create` and `update` recompute `index` via `getIconIndex`
 
 `UploadService` (`@okr/avatar-data-access`) handles Firebase Storage uploads for the `add` operation.
 
 ## Icon Select Usage
+
 ```typescript
 // Open the icon picker from any component or store:
 const modal = await modalController.create({
@@ -93,6 +107,7 @@ if (role === 'confirm') {
 ```
 
 ## Sync Operation
+
 `sync()` is the recommended way to initially populate the `icons` Firestore collection from existing Storage files:
 
 1. Loads the current Firestore icons into a `Set` keyed by `type/name` to detect existing records.
@@ -104,8 +119,11 @@ if (role === 'confirm') {
 The operation is idempotent — running it multiple times will not create duplicates.
 
 ## Rendering Icons
+
 Icons are rendered with the `SvgIconPipe`:
+
 ```html
 <ion-icon src="{{ iconName | svgIcon:iconType }}" />
 ```
+
 The pipe resolves the Firebase Storage download URL from `name` and `type`.

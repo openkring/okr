@@ -69,6 +69,7 @@ NgRx Signal Store. Key state:
 | `searchTerm` / `selectedTag` / `selectedCategory` / `selectedYear` | Client-side filters |
 
 Key resources:
+
 - `caleventsResource` — loads and filters `CalEventModel` list from `calevents`.
 - `calendarsResource` — loads all `CalendarModel` records for the tenant.
 - `membershipsForCurrentUserResource` — resolves org keys the current user belongs to.

@@ -1,14 +1,17 @@
 # Address Domain
 
 ## Overview
+
 `AddressModel` stores contact and communication details for any subject (person or org). Each address belongs to exactly one parent subject via `parentKey` (format: `modelType.key`, e.g. `org.abc123` or `person.xyz789`). A single subject can have multiple addresses of different channels (email, phone, postal, web, social media, bank account, Twint).
 
 Addresses are shown in the `AddressesAccordion` inside the org-edit and person-edit modals, and in the `AddressesList` for standalone list views.
 
 ## Firestore Collection
+
 Collection name: `addresses`
 
 ## Field Semantics
+
 | Field | Type | Description |
 |---|---|---|
 | `okey` | string | Firestore document ID (stripped on write, re-attached on read) |
@@ -37,6 +40,7 @@ Collection name: `addresses`
 | `index` | string | Search index string (format: `n:<addressValue>`) |
 
 ## Address Channels
+
 | Channel | Primary Field | Action |
 |---|---|---|
 | `email` | `email` | Opens `mailto:` link |
@@ -52,16 +56,20 @@ Collection name: `addresses`
 | `twint` | — | Twint payment channel (no further action) |
 
 ## Swiss QR Bill Generation
+
 When `addressChannel === 'bankaccount'` the store can call the `generateQrBill` Cloud Function (region `europe-west6`). The function generates a Swiss QR-bill PDF, stores it in Firebase Storage, and returns the `storagePath`. The store then:
+
 1. Gets a download URL via the client Firebase Storage SDK.
 2. Ensures the `ezs` folder exists in the document tree.
 3. Creates a `DocumentModel` linked to that folder.
 4. Updates `address.url` with the download URL.
 
 ## Store: `AddressStore`
+
 NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 
 ### State
+
 | Property | Type | Description |
 |---|---|---|
 | `parentKey` | string | Key of the owning subject; set to `'all'` to load all addresses |
@@ -71,6 +79,7 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `orderByParam` | string | Firestore `orderBy` field (default: `addressChannel`) |
 
 ### Key Methods
+
 | Method | Description |
 |---|---|
 | `setParentKey(key)` | Loads addresses for a given parent |
@@ -83,6 +92,7 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `uploadFile(address)` | Uploads a file and links its URL to the address |
 
 ## Components
+
 | Component | Description |
 |---|---|
 | `AddressEditModal` | Ionic modal; hosts `AddressForm` from `@okr/subject-address-ui`; dismisses with `'confirm'` role |
@@ -90,9 +100,11 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 | `AddressesAccordion` | Accordion panel embedded in org/person edit modals |
 
 ## Validation (`@okr/subject-address-util`)
+
 Vest validation suites cover: `email`, `phone`, `iban`, and the composite `address` suite.
 
 ## Authorization
+
 - Read: any authenticated user with access to the parent subject
 - Create / Update: requires write access to the parent (typically `memberAdmin` or `admin`)
 - Delete: same as write; requires confirmation dialog

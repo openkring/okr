@@ -56,12 +56,14 @@ The `AocDataStore` supports operations over the following collections:
 ## Key Capabilities
 
 ### AocDataStore
+
 - `fixModels()` — Bulk-patch documents in any collection (dry-run mode supported). Developer configures collection name and field corrections directly in the method.
 - `validateModels()` — Run vest validation suites over all documents in a collection and log validation errors.
 - `createIndexesOnCollection()` — Regenerate the `index` field on every document in a collection using domain-specific index functions.
 - `fixUndefinedFields<T>()` / `fixTypes<T>()` — Utility methods for coercing field types during fix operations.
 
 ### AocContentStore
+
 - `findOrphanedSections()` — Lists sections not referenced by any page, accordion item, or `linkedSection`.
 - `findMissingSections()` — Lists page→section references where the section document does not exist.
 - `findOrphanedMenus()` — Lists menu items not referenced by any parent menu.
@@ -70,10 +72,12 @@ The `AocDataStore` supports operations over the following collections:
 - `editMenu()` / `removeMenu()` / `addMissingMenu()` / `removeMissingMenuRef()` — Repair actions on orphaned/missing menu items.
 
 ### AocTagStore
+
 - Reads from collection: `tags` (field `tagModel`, `tags` as comma-separated string).
 - Supports full CRUD on tag documents and individual tag string items.
 
 ### AocChatStore
+
 - Interfaces with the Matrix homeserver admin API (via `MatrixChatService`).
 - Provides room listing, member listing, room rename/alias/invite/delete, user provisioning, member kick/deactivate.
 

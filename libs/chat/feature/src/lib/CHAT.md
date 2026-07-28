@@ -53,6 +53,7 @@ Key `rxResource` bindings (all backed by `MatrixChatService` Observables):
 | `typingResource` | Typing notifications per room |
 
 Key actions (withMethods):
+
 - `setCurrentRoom(roomId)` — navigate to a room.
 - `sendMessage(roomId, body)` — send a plain text message.
 - `sendReaction(roomId, eventId, emoji)` — react to a message.
@@ -167,6 +168,7 @@ The poll creator sees an "Umfrage beenden" button on their poll card (single tap
 ### Send path
 
 `MatrixChatService.sendFile(roomId, file, threadId?)`:
+
 1. `client.uploadContent(file)` uploads to Synapse → returns an `mxc://<homeserver>/<mediaId>` URI.
 2. Sends an `m.image` / `m.file` event whose `content.url` is that `mxc://` URI.
 

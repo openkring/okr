@@ -31,6 +31,7 @@ Collection name: `tasks`
 ## Completion Logic
 
 A task is considered completed when `completionDate` is non-empty. The `setCompleted()` store method toggles completion:
+
 - If `completionDate` is empty → sets it to today's date and sets `state = 'done'`.
 - If `completionDate` is set → clears it and sets `state = 'planned'`.
 
@@ -49,16 +50,19 @@ NgRx Signal Store (provided at component level). State:
 | `selectedPriority` | Priority filter (`'all'` or a specific priority) |
 
 Key resources:
+
 - `tasksResource` — all tasks for the tenant ordered by `dueDate`.
 - `tasksForCurrentUserResource` — tasks where `assignee.key` or `author.key` equals the current user's `personKey`; only non-completed tasks (`completionDate == ''`).
 - `taskResource` — single task by `taskKey`.
 
 The `tasks` computed signal switches between resources based on `calendarName`:
+
 - `'all'` → `tasksResource`
 - `'my'` → `tasksForCurrentUserResource`
 - any other value → `tasksResource` filtered by calendar membership
 
 Key actions:
+
 - `add(readOnly)` — creates a new task pre-populated with the current user as both author and assignee, then opens the edit modal.
 - `edit(task, readOnly)` — opens `TaskEditModal`.
 - `delete(task, readOnly)` — calls `TaskService.delete`.
