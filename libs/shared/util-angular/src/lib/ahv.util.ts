@@ -27,6 +27,35 @@ export function ahvn2string(ahvn13value: number | string): string {
 }
 
 /**
+ * Whether an ssn field holds no number at all — either empty, or nothing but the scaffolding
+ * ChSsnMask leaves behind when its content is deleted (the mask opens with the literals
+ * '7','5','6','.', so a cleared field reads '756.' rather than ''). Such a value is an empty
+ * optional field, not an invalid AHV number: it must neither raise a validation error (which
+ * would hide the change-confirmation bar and make clearing the number unsavable) nor be stored.
+ */
+export function isBlankAhv(value: string | number | undefined | null): boolean {
+  const digits = String(value ?? '').replace(/\D/g, '');
+  // nothing, or nothing beyond the country code the mask itself supplies ('7', '75', '756').
+  // From the first digit the user actually contributes ('7561…') it is a partial number again,
+  // and an incomplete number SHOULD be reported.
+  return digits.length === 0 || '756'.startsWith(digits);
+}
+
+/**
+ * The AHV number reduced to what may safely leave the vault: the fixed country code and the
+ * last two digits, e.g. 756.0803.5816.61 → '756.****.****.61'. Enough to tell which number an
+ * audit entry refers to, without copying the AHV itself into a tenant-readable collection
+ * (privacy 1.19 gate: ssn/iban/dob are never replicated out of the addresses vault) and without
+ * undoing the erasure the log is recording.
+ * @returns the masked number, or '' when the input is not a complete 13-digit number
+ */
+export function maskAhv(value: string | number | undefined | null): string {
+  const digits = String(value ?? '').replace(/\D/g, '');
+  if (digits.length !== 13) return '';
+  return `756.****.****.${digits.substring(11, 13)}`;
+}
+
+/**
  * Whether the given value is a valid Swiss AHV number: 13 digits, country code 756, EAN13 checksum.
  * A silent predicate — it is the Vest ssn suite's test (ssnValidations), so it runs on every
  * keystroke and must not narrate the user's half-typed number into the console. An invalid value

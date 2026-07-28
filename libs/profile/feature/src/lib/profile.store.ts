@@ -7,7 +7,7 @@ import { from, of, take } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { PersonCollection, PersonModel, PersonModelName, UserCollection, UserModel } from '@okr/shared-models';
-import { AhvFormat, AppNavigationService, formatAhv } from '@okr/shared-util-angular';
+import { AhvFormat, AppNavigationService, formatAhv, isBlankAhv } from '@okr/shared-util-angular';
 import { debugItemLoaded } from '@okr/shared-util-core';
 import { FirestoreService } from '@okr/shared-data-access';
 
@@ -116,9 +116,14 @@ export const ProfileStore = signalStore(
           const newPerson = structuredClone(person);
           // ssn/dob go ONLY into the addresses vault (spec 1.19 Phase 4): take them
           // off the person object before the write and sync them afterwards.
+          //
+          // ssn: '' when the field was cleared (which erases the vault doc) — the mask
+          // scaffolding a cleared field leaves behind ('756.') is not a number and must not
+          // be stored. dob is deliberately NOT sent: the profile shows it read-only, so it
+          // has nothing to write, and passing the displayed value back would erase the vault
+          // dob whenever loadSensitive came up empty.
           const sensitive: SensitivePersonData = {
-            ssn: formatAhv(newPerson.ssnId ?? '', AhvFormat.Electronic),
-            dob: newPerson.dateOfBirth ?? '',
+            ssn: isBlankAhv(newPerson.ssnId) ? '' : formatAhv(newPerson.ssnId, AhvFormat.Electronic),
           };
           delete newPerson.ssnId;
           delete newPerson.dateOfBirth;

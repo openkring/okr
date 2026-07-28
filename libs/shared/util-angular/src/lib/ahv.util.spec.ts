@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ahvn2string, AhvFormat, computeAhvn13checkDigit, formatAhv } from './ahv.util';
+import { ahvn2string, AhvFormat, checkAhv, computeAhvn13checkDigit, formatAhv, isBlankAhv, maskAhv } from './ahv.util';
 
 describe('ahv.util', () => {
 
@@ -83,8 +83,69 @@ describe('formatAhv', () => {
         expect(formatAhv(undefined)).toEqual('');
     });
 
+    it('leaves a complete number alone regardless of separators', () => {
+        expect(formatAhv('756.0803.5816.61', AhvFormat.Friendly)).toEqual('756.0803.5816.61');
+    });
+
     it('strips separators and other non-digits before formatting', () => {
         expect(formatAhv(' 756 0803 5816 61 ')).toEqual('756.0803.5816.61');
         expect(formatAhv('756-0803-5816-61', AhvFormat.Electronic)).toEqual('7560803581661');
+    });
+});
+
+describe('isBlankAhv', () => {
+
+    // ChSsnMask opens with the literals '7','5','6','.', so a field the user has cleared reads
+    // '756.' (or a truncation of it), never ''. That is scaffolding, not a number.
+    it('treats an empty field and the bare mask scaffolding as blank', () => {
+        expect(isBlankAhv('')).toBe(true);
+        expect(isBlankAhv(null)).toBe(true);
+        expect(isBlankAhv(undefined)).toBe(true);
+        expect(isBlankAhv('.')).toBe(true);
+        expect(isBlankAhv('7')).toBe(true);
+        expect(isBlankAhv('75')).toBe(true);
+        expect(isBlankAhv('756')).toBe(true);
+        expect(isBlankAhv('756.')).toBe(true);
+    });
+
+    // from the first digit the user contributes it is a partial number, which must be reported
+    it('treats anything past the country code as a (partial) number', () => {
+        expect(isBlankAhv('756.0')).toBe(false);
+        expect(isBlankAhv('756292318310')).toBe(false);
+        expect(isBlankAhv('756.0803.5816.61')).toBe(false);
+        expect(isBlankAhv('123')).toBe(false);
+    });
+});
+
+describe('maskAhv', () => {
+
+    // the masked value is what an activity payload may carry: `activities` is tenant-readable,
+    // so the raw AHV must never be copied there (privacy 1.19 gate).
+    it('keeps only the country code and the last two digits', () => {
+        expect(maskAhv('7560803581661')).toEqual('756.****.****.61');
+        expect(maskAhv('756.0803.5816.61')).toEqual('756.****.****.61');
+    });
+
+    it('returns an empty string for anything that is not a complete number', () => {
+        expect(maskAhv('')).toEqual('');
+        expect(maskAhv(null)).toEqual('');
+        expect(maskAhv(undefined)).toEqual('');
+        expect(maskAhv('756.')).toEqual('');
+        expect(maskAhv('756292318310')).toEqual('');
+    });
+});
+
+describe('checkAhv', () => {
+
+    it('accepts a valid number in either notation', () => {
+        expect(checkAhv('7560803581661')).toBe(true);
+        expect(checkAhv('756.0803.5816.61')).toBe(true);
+    });
+
+    it('rejects empty, too short, wrong country code and bad checksum', () => {
+        expect(checkAhv('')).toBe(false);
+        expect(checkAhv('756292318310')).toBe(false);     // 12 digits
+        expect(checkAhv('1234567890123')).toBe(false);    // not 756
+        expect(checkAhv('7560803581662')).toBe(false);    // checksum off by one
     });
 });

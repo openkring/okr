@@ -7,7 +7,8 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserModel } from '@okr/shared-models';
-import { getFullName, getSystemQuery, hasRole } from '@okr/shared-util-core';
+import { getFullName, getStoreDateYear, getSystemQuery, hasRole } from '@okr/shared-util-core';
+import { maskAhv } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import {
@@ -98,7 +99,8 @@ export class PersonService {
   /**
    * Writes the sensitive scalar values into the addresses vault
    * (spec 1.19): ssn → 'ssn' channel, dob → 'dob' channel, dod → 'dod' channel.
-   * Empty/undefined values are no-ops — existing vault docs are never cleared here.
+   * An omitted (undefined) channel is a no-op — its vault doc is left untouched; an
+   * explicitly empty one ('') erases the doc, so a field can be cleared again.
    * Uses FirestoreService directly (not AddressService) — cross-scope data-access
    * imports violate the Nx module boundaries; this mirrors how person.store
    * already queries the addresses collection.
@@ -107,9 +109,10 @@ export class PersonService {
    */
   public async syncSensitiveChannels(key: string, sensitive: SensitivePersonData, currentUser?: UserModel): Promise<void> {
     const parentKey = `person.${key}`;
-    await this.upsertScalarChannel(parentKey, 'ssn', sensitive.ssn ?? '', currentUser);
-    await this.upsertScalarChannel(parentKey, 'dob', sensitive.dob ?? '', currentUser);
-    await this.upsertScalarChannel(parentKey, 'dod', sensitive.dod ?? '', currentUser);
+    // pass the values through as-is: `?? ''` here would turn "not supplied" into "clear it".
+    await this.upsertScalarChannel(parentKey, 'ssn', sensitive.ssn, currentUser);
+    await this.upsertScalarChannel(parentKey, 'dob', sensitive.dob, currentUser);
+    await this.upsertScalarChannel(parentKey, 'dod', sensitive.dod, currentUser);
   }
 
   /**
@@ -160,9 +163,16 @@ export class PersonService {
 
   /**
    * Upsert a sensitive scalar-channel address (one doc per parent and channel,
-   * no favorite/label semantics). Empty value or unchanged value → no-op (idempotent).
+   * no favorite/label semantics). Unchanged value → no-op (idempotent).
+   *
+   * `undefined` vs `''` are deliberately different: `undefined` means the caller did not
+   * supply this channel (its form never loaded it) and the vault is left untouched, while
+   * `''` is an explicit clear and ERASES the doc. The erase is a hard delete, not the usual
+   * soft archive — an archived doc would still carry the AHV number in the vault, and
+   * removing your own sensitive data has to actually remove it.
    */
-  private async upsertScalarChannel(parentKey: string, channel: SensitiveChannel, value: string, currentUser?: UserModel): Promise<void> {
+  private async upsertScalarChannel(parentKey: string, channel: SensitiveChannel, value: string | undefined, currentUser?: UserModel): Promise<void> {
+    if (value === undefined) return;                   // channel not supplied — never touch the vault
     const query = getSystemQuery(this.env.tenantId);
     query.push({ key: 'parentKey', operator: '==', value: parentKey });
     query.push({ key: 'addressChannel', operator: '==', value: channel });
@@ -177,7 +187,12 @@ export class PersonService {
       address.isFavorite = false;
       address.index = getAddressIndex(address);
       await this.firestoreService.createModel<AddressModel>(AddressCollection, address, undefined, undefined, currentUser);
-    } else if (value && current[channel] !== value) {
+    } else if (!value) {
+      const previous = maskSensitiveValue(channel, current[channel]);
+      await this.firestoreService.deleteObject(AddressCollection, current.okey);
+      void this.activityService.log('address', 'delete', currentUser,
+        `${current.okey}: ${channel} cleared for ${parentKey}${previous ? ` (was ${previous})` : ''}`);
+    } else if (current[channel] !== value) {
       current[channel] = value;
       current.index = getAddressIndex(current);
       await this.firestoreService.updateModel<AddressModel>(AddressCollection, current, false, undefined, undefined, currentUser);
@@ -280,4 +295,19 @@ export class PersonService {
   public list(orderBy = 'lastName', sortOrder = 'asc'): Observable<PersonModel[]> {
     return this.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
+}
+
+/**
+ * The value a cleared vault channel had, reduced to what may appear in an activity payload.
+ *
+ * `activities` is tenant-readable (rules: `allow read: if tenantRead()`), so the raw value must
+ * never land there: it would copy ssn/dob out of the vault into a collection every member can
+ * read, and it would outlive the erasure the entry is recording (privacy 1.19 gate). What is
+ * logged is only enough to identify WHICH value went: the AHV's country code + last two digits,
+ * and for the dates the year — the same granularity already replicated as memberBirthYear /
+ * deathYear.
+ */
+function maskSensitiveValue(channel: SensitiveChannel, value: string): string {
+  if (!value) return '';
+  return channel === 'ssn' ? maskAhv(value) : getStoreDateYear(value);
 }
