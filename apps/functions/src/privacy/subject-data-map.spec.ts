@@ -192,6 +192,86 @@ describe('SUBJECT_DATA_MAP — row invariants', () => {
   });
 });
 
+// ────────────────────────────────────────────────────────────────────────────────────
+// Tier (§3 of the membership-lifecycle spec) and tenant-exit disposition.
+//
+// `tier` is the legal basis of a row and is consumed by the erasure preview: a T2 row
+// is offered for immediate deletion even while the membership runs, because consent is
+// withdrawable at any time. `onTenantExit` has no consumer yet — it is declared here so
+// the classification happens once, while the rows are fresh.
+// ────────────────────────────────────────────────────────────────────────────────────
+describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
+  it('declares a tier and a tenant-exit disposition on every row', () => {
+    for (const e of SUBJECT_DATA_MAP) {
+      expect(['T1', 'T2', 'T3', 'T4'], `${e.collection} has no valid tier`).toContain(e.tier);
+      expect(['delete', 'anonymize', 'detach', 'retain'], `${e.collection} has no onTenantExit`)
+        .toContain(e.onTenantExit);
+    }
+  });
+
+  // The amendment's own instruction: "A row whose tier is T3 should already have a
+  // retention rule with a legal basis; if it does not, that mismatch is itself the
+  // finding." An accounting row with an indefinite retention is a row nobody can ever
+  // purge, which is the opposite of what OR 958f requires.
+  it('puts every T3 row on a finite clock with a named legal obligation', () => {
+    const t3 = SUBJECT_DATA_MAP.filter((e) => e.tier === 'T3');
+    expect(t3.length).toBeGreaterThan(0);
+    for (const e of t3) {
+      expect(e.retention.months, `${e.collection} is T3 but has no finite retention`).not.toBe('indefinite');
+      expect(e.retention.legalBasis, `${e.collection} is T3 but names no legal obligation`)
+        .toMatch(/GebüV|OR Art\./);
+    }
+  });
+
+  // The whole point of the C1 amendment: consent is withdrawable at any time, so a T2
+  // row must never be one the code refuses to erase.
+  it('never marks a T2 row as retained — consent is withdrawable', () => {
+    for (const e of SUBJECT_DATA_MAP.filter((x) => x.tier === 'T2')) {
+      expect(e.onErasure, `${e.collection} is voluntary but not erasable`).not.toBe('retain');
+      expect(e.onTenantExit, `${e.collection} is voluntary but survives the exit`).not.toBe('retain');
+    }
+  });
+
+  // A row's tier is the STRICTEST tier any of its documents can carry, because the
+  // preview offers the WHOLE row for immediate deletion. Pinning the T2 set makes
+  // widening it a deliberate act with a test to argue with.
+  it('classifies only wholly-voluntary rows as T2', () => {
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars']);
+  });
+
+  // Regression guard on the strictest-tier rule. `addresses` holds both the favorite
+  // e-mail the membership contract needs (T1) and the dob / second phone the member
+  // gave voluntarily (T2). Flipping the row to T2 would make the preview promise to
+  // delete the contact data the tenant is entitled to keep.
+  it('keeps the mixed vault row at its strictest tier', () => {
+    expect(entry('addresses').tier).toBe('T1');
+    expect(entry('persons').tier).toBe('T1');
+  });
+
+  it('declares the fields to overwrite on every row that anonymizes at either moment', () => {
+    for (const e of SUBJECT_DATA_MAP.filter((x) => x.onErasure === 'anonymize' || x.onTenantExit === 'anonymize')) {
+      expect(e.anonymizeFields?.length, `${e.collection} anonymizes nothing`).toBeGreaterThan(0);
+    }
+  });
+
+  // D-P5-2 / D-L2: these four documents are shared across tenancies. A tenant exit may
+  // only strip the tenant from them; the hard delete happens if and only if `tenants[]`
+  // empties. Deleting them outright would damage another tenancy — and disclose that it
+  // exists.
+  it('detaches the parent-owned, tenant-shared documents instead of deleting them', () => {
+    for (const c of ['persons', 'users', 'addresses', 'avatars']) {
+      expect(entry(c).onTenantExit, `${c} is deleted globally at tenant exit`).toBe('detach');
+    }
+  });
+
+  it('never deletes an accounting record at tenant exit', () => {
+    for (const e of SUBJECT_DATA_MAP.filter((x) => x.tier === 'T3')) {
+      expect(['anonymize', 'retain'], `${e.collection} deletes accounting data at exit`)
+        .toContain(e.onTenantExit);
+    }
+  });
+});
+
 describe('SUBJECT_DATA_MAP — blocker predicates', () => {
   const blocking = SUBJECT_DATA_MAP.filter((e) => e.blocksErasure);
 
@@ -220,6 +300,26 @@ describe('SUBJECT_DATA_MAP — blocker predicates', () => {
       expect(b?.detail.endsWith('.'), `${e.collection}: message is not a finished sentence`).toBe(true);
       expect(b?.detail, `${e.collection}: message leaks English`).not.toMatch(/\b(the|your|please)\b/i);
     }
+  });
+
+  // The C1 amendment: a blocker names the tiers it blocks, and none of them may block
+  // the consent tier — consent is withdrawable at any time, so no open invoice and no
+  // running membership can make an avatar unerasable.
+  it('scopes every blocker to the tiers it actually blocks, and never to T2', () => {
+    const open = snap({
+      dateOfExit: '', state: 'created', status: 'draft', documentStatus: 'in-progress',
+      paymentDate: '', admins: [{ key: 'p1' }],
+    });
+    for (const e of blocking) {
+      const b = e.blocksErasure?.([open]);
+      expect(b?.blocksTiers?.length, `${e.collection} does not say what it blocks`).toBeGreaterThan(0);
+      expect(b?.blocksTiers, `${e.collection} blocks voluntary data`).not.toContain('T2');
+    }
+  });
+
+  it('memberships blocks the contract tier only', () => {
+    const b = entry('memberships').blocksErasure?.([snap({ dateOfExit: '' })]);
+    expect(b?.blocksTiers).toEqual(['T1']);
   });
 
   it('memberships blocks only while the membership is running', () => {

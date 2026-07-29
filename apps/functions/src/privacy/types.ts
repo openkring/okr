@@ -56,11 +56,54 @@ export type TenantScope =
   /** no tenant dimension: the document path is already unique to the subject. */
   | 'none';
 
+/**
+ * Legal basis of a row — the four tiers of
+ * `planning/specs/2026-07-29-membership-lifecycle-erasure-spec.md` §3. The tier decides
+ * the row's lifecycle, and it is the reason erasure is not all-or-nothing.
+ *
+ * | Tier | Basis | While a member | At tenant exit |
+ * | --- | --- | --- | --- |
+ * | `T1` identity + membership | contract (Art. 6 I b / revDSG 31 II a) | refusable | delete or anonymize |
+ * | `T2` optional / voluntary  | consent (Art. 6 I a) | **erasable on demand** | delete, no grace (D-L3) |
+ * | `T3` accounting            | legal obligation (OR 958f, GebüV — 10 y) | refusable | pseudonymize, keep |
+ * | `T4` club record + logs    | legitimate interest (Art. 6 I f) | Art. 21 objection | anonymize, keep |
+ *
+ * **A row's tier is the STRICTEST tier any of its documents can carry.** The erasure
+ * preview offers a whole T2 row for immediate deletion, so classifying a row `T2` is a
+ * promise that *every* document in it is voluntary. `addresses` is where this bites: a
+ * member's favorite e-mail is contract data while their `dob` address and their second
+ * phone number are consent data. The row is therefore `T1`, and the finer per-document
+ * split belongs to `withdrawOptionalData` (spec §7), which is out of scope here.
+ */
+export type DataTier = 'T1' | 'T2' | 'T3' | 'T4';
+
+/**
+ * What the tenant-exit pipeline (spec §6 step 3) does with a row when the subject leaves
+ * *this* tenant.
+ *
+ * - `delete`    the documents are tenant-scoped and go away with the tenancy.
+ * - `anonymize` the record stays with the association and the identity is overwritten
+ *               (D-P5-6 / D-L4) — same `anonymizeFields` contract as `onErasure`.
+ * - `detach`    the document is SHARED across tenancies (`persons`, `users`, `addresses`,
+ *               `avatars`): remove `tenantId` from its own `tenants[]` and delete it only
+ *               if that array empties (D-L2). Never a global delete — that damages another
+ *               tenancy and discloses that it exists (D-P5-2).
+ * - `retain`    nothing happens at exit; the row's own `retention` rule governs.
+ */
+export type TenantExitAction = 'delete' | 'anonymize' | 'detach' | 'retain';
+
 /** A reason why an erasure request cannot be executed yet. */
 export interface Blocker {
   readonly code: 'activeMembership' | 'openInvoice' | 'pendingSignature' | 'soleAdmin';
   readonly count: number;
   readonly detail: string;      // German, shown verbatim to the user
+  /**
+   * The tiers this blocker actually blocks. `activeMembership` blocks `['T1']` only:
+   * Art. 17 I/III GDPR makes erasure conditional, not all-or-nothing, and the consent
+   * tier stays erasable while the membership runs. A blocker that omits this blocks
+   * everything.
+   */
+  readonly blocksTiers?: readonly DataTier[];
 }
 
 export interface RetentionRule {
@@ -110,6 +153,14 @@ export interface RetentionRule {
 export interface SubjectDataEntry {
   readonly collection: string;
   readonly dataClass: DataClass;
+  /** Legal basis — see `DataTier`. Consumed by the erasure preview's `canDeleteNow`. */
+  readonly tier: DataTier;
+  /**
+   * What the tenant-exit pipeline does with this row — see `TenantExitAction`. Declared
+   * with no consumer in this slice on purpose: the pipeline is a later slice, but
+   * classifying the rows is the actual work and it is the same work whenever it happens.
+   */
+  readonly onTenantExit: TenantExitAction;
   /**
    * The raw query. **Not a supported access path** — call `resolveDocs(entry, ctx)`
    * instead. On 8 rows this deliberately over-fetches and relies on `tenantScope` and

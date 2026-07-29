@@ -26,6 +26,13 @@ import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
  *                 inside an array of embedded `AvatarInfo` maps, or is identified only
  *                 by e-mail inside free text. `find` is then a scan and the consumer
  *                 MUST apply `matches`.
+ * - `tier`        the row's legal basis (T1 contract · T2 consent · T3 accounting ·
+ *                 T4 legitimate interest). It is the STRICTEST tier any document in the
+ *                 row can carry, because the erasure preview offers a whole T2 row for
+ *                 immediate deletion. See `DataTier` for why `addresses` is T1.
+ * - `onTenantExit` what the lifecycle pipeline does when the subject leaves this tenant.
+ *                 No consumer in this slice — declared so the classification is done
+ *                 once, next to the row it describes.
  * - `onErasure`   `'anonymize'` is reserved for records under a legal retention duty
  *                 (GebüV / OR Art. 958f) and for club records whose substance belongs
  *                 to the association: amounts, dates and document references stay,
@@ -74,8 +81,13 @@ function avatarArrayHolds(doc: DocumentSnapshot, field: string, personKey: strin
   return Array.isArray(list) && list.some((a) => a?.key === personKey && (a?.modelType ?? 'person') === 'person');
 }
 
+/**
+ * `blocksTiers: ['T1', 'T3']` — an unpaid record needs the debtor reachable (contract
+ * tier) and the accounting record intact (retention tier). It says nothing about the
+ * member's avatar or their voluntarily shared birthday, which stay erasable on demand.
+ */
 function blockOpenInvoice(count: number, detail: string): Blocker | undefined {
-  return count === 0 ? undefined : { code: 'openInvoice', count, detail };
+  return count === 0 ? undefined : { code: 'openInvoice', count, detail, blocksTiers: ['T1', 'T3'] };
 }
 
 /** e-mail-shaped runs of text; `:` and whitespace terminate a token. */
@@ -117,6 +129,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'persons',
     dataClass: 'identity',
+    tier: 'T1',
+    onTenantExit: 'detach',   // D-L2: shared across tenancies — strip the tenant, hard-delete only when tenants[] empties
     // `okey` is the document id and is stripped before every write — it is NOT a field,
     // so this must be a documentId() query, not `where('okey', '==', …)`.
     find: (c: SubjectCtx) => db().collection('persons').where(FieldPath.documentId(), '==', c.personKey),
@@ -131,6 +145,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // lives (policyAcceptedVersion/At, cookieConsent/At, plus the usage* privacy flags).
     // It also carries loginEmail, names, roles and UI preferences, all exported in full.
     dataClass: 'consent',
+    tier: 'T1',
+    onTenantExit: 'detach',   // D-L2: shared across tenancies — strip the tenant, hard-delete only when tenants[] empties
     find: (c: SubjectCtx) => db().collection('users').where(FieldPath.documentId(), '==', c.uid),
     tenantScope: 'tenantsArray',
     onExport: 'full',
@@ -140,6 +156,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'users/fcmTokens',
     dataClass: 'log',
+    tier: 'T1',
+    onTenantExit: 'retain',   // no tenant dimension of its own; the tokens die with the users doc
     // Deleting `users/{uid}` does NOT cascade to its subcollections, so the device push
     // tokens would outlive the account without this row (firestore.rules:201).
     find: (c: SubjectCtx) => db().collection('users').doc(c.uid).collection('fcmTokens'),
@@ -151,6 +169,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'avatars',
     dataClass: 'identity',
+    tier: 'T2',   // a picture is voluntary (spec §3) — erasable while the membership runs
+    onTenantExit: 'detach',   // D-L2: shared across tenancies — strip the tenant, hard-delete only when tenants[] empties; D-L3 is satisfied by the detach
     // the avatar doc id is the PREFIXED key: `person.<okey>` (newAvatarModel)
     find: (c: SubjectCtx) => db().collection('avatars').where(FieldPath.documentId(), '==', c.parentKey),
     tenantScope: 'tenantsArray',
@@ -163,6 +183,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'addresses',
     dataClass: 'contact',
+    tier: 'T1',   // strictest tier wins: the favorite contact address is contract data, the dob address is not
+    onTenantExit: 'detach',   // D-L2: shared across tenancies — strip the tenant, hard-delete only when tenants[] empties
     find: (c: SubjectCtx) => db().collection('addresses').where('parentKey', '==', c.parentKey),
     tenantScope: 'tenantsArray',
     onExport: 'full',             // D-P5-1: the sanctioned vault egress
@@ -172,6 +194,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'address-directory',
     dataClass: 'contact',
+    tier: 'T1',
+    onTenantExit: 'delete',   // one projection doc per tenant — this tenant's copy goes
     // derived projection of `addresses` — never exported (it would duplicate the vault
     // rows) but it MUST be erased, otherwise contact data survives the deletion.
     find: (c: SubjectCtx) => db().collection('address-directory').where('parentKey', '==', c.parentKey),
@@ -185,6 +209,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'memberships',
     dataClass: 'membership',
+    tier: 'T1',
+    onTenantExit: 'anonymize',   // spec §10: the membership record stays as club history, the member fields go
     // memberKey holds the RAW person okey; memberModelType disambiguates the
     // person/org/group key collision (see getAllMembershipsOfMember).
     find: (c: SubjectCtx) => db().collection('memberships')
@@ -193,18 +219,35 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
+    // Declared for `onTenantExit: 'anonymize'`, NOT for `onErasure` (which deletes the
+    // row outright when the member asks). The lifecycle pipeline keeps the membership as
+    // club history and overwrites exactly these fields — every one of them is a copy of
+    // person data (spec §10 lists them). `memberIsDeceased` is deliberately absent: it is
+    // a boolean, overwriting it would corrupt the deceased-list filter, and a flag with
+    // no name and no key beside it identifies nobody.
+    anonymizeFields: [
+      'memberKey', 'memberName1', 'memberName2', 'memberNickName', 'memberAbbreviation',
+      'memberBirthYear', 'memberDeathYear', 'memberZipCode', 'memberBexioId', 'memberId',
+    ],
     retention: KEEP_WHILE_MEMBER,
     blocksErasure: (docs) => {
       const active = docs.filter((d) => (d.get('dateOfExit') ?? '') === '');
       return active.length === 0 ? undefined : {
         code: 'activeMembership', count: active.length,
         detail: 'Sie haben eine laufende Mitgliedschaft. Solange sie besteht, brauchen wir Ihre Daten, um sie zu führen. Bitte treten Sie zuerst aus, dann können wir Ihre Daten löschen.',
+        // Art. 17 I/III GDPR makes erasure conditional, not all-or-nothing: the contract
+        // tier is refusable, the consent tier is not. Without this the preview tells the
+        // member "no" about their avatar too — data they are entitled to have erased
+        // while the membership runs.
+        blocksTiers: ['T1'],
       };
     },
   },
   {
     collection: 'ownerships',
     dataClass: 'membership',
+    tier: 'T1',
+    onTenantExit: 'delete',
     find: (c: SubjectCtx) => db().collection('ownerships')
       .where('ownerKey', '==', c.personKey)
       .where('ownerModelType', '==', 'person'),
@@ -216,6 +259,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'workrels',
     dataClass: 'membership',
+    tier: 'T1',
+    onTenantExit: 'delete',
     find: (c: SubjectCtx) => db().collection('workrels')
       .where('subjectKey', '==', c.personKey)
       .where('subjectModelType', '==', 'person'),
@@ -227,6 +272,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'personal-rels',
     dataClass: 'membership',
+    tier: 'T1',
+    onTenantExit: 'delete',
     // a person appears on either side of the relation
     find: (c: SubjectCtx) => db().collection('personal-rels').where(Filter.or(
       Filter.where('subjectKey', '==', c.personKey),
@@ -240,6 +287,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'invitations',
     dataClass: 'membership',
+    tier: 'T1',
+    onTenantExit: 'delete',
     find: (c: SubjectCtx) => db().collection('invitations').where(Filter.or(
       Filter.where('inviteeKey', '==', c.personKey),
       Filter.where('inviterKey', '==', c.personKey),
@@ -252,6 +301,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'responsibilities',
     dataClass: 'membership',
+    tier: 'T4',   // the function history is the association's record
+    onTenantExit: 'anonymize',
     // responsibleAvatar / delegateAvatar are documented as "Person or Group", so the
     // polymorphic key needs the modelType predicate — without it a group whose key
     // collides with the person key gets its name anonymized.
@@ -278,6 +329,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'groups',
     dataClass: 'membership',
+    tier: 'T1',   // administering a group is an organizational role, never voluntary
+    onTenantExit: 'anonymize',   // remove the subject from admins[]; the group stays
     // `admins` is an array of embedded AvatarInfo maps — not queryable, hence the scan
     find: (c: SubjectCtx) => db().collection('groups').where('tenants', 'array-contains', c.tenantId),
     tenantScope: 'inQuery',
@@ -295,12 +348,15 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       return orphaned.length === 0 ? undefined : {
         code: 'soleAdmin', count: orphaned.length,
         detail: 'Sie sind die einzige Person, die eine Ihrer Gruppen verwalten kann. Bitte geben Sie diese Aufgabe zuerst an jemanden ab, sonst bleibt die Gruppe ohne Verwaltung zurück.',
+        blocksTiers: ['T1'],   // the role has to be handed over; the avatar is unrelated
       };
     },
   },
   {
     collection: 'competition-levels',
     dataClass: 'identity',
+    tier: 'T1',
+    onTenantExit: 'delete',
     // holds a plain-text dateOfBirth replica (inventory §5, sensitivity high)
     find: (c: SubjectCtx) => db().collection('competition-levels').where('personKey', '==', c.personKey),
     tenantScope: 'tenantsArray',
@@ -311,6 +367,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'applications',
     dataClass: 'identity',
+    tier: 'T1',   // pre-contractual (Art. 6 I b covers the admission procedure)
+    onTenantExit: 'delete',   // the admission record's purpose ends with the membership it led to
     // Self-submitted membership application: ssnId + dateOfBirth + parent contact — the
     // most sensitive record in the inventory. `personKey` is only filled once the
     // application is converted into a person, so a pending or rejected application is
@@ -340,6 +398,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'bookings',
     dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('bookings')
       .where('counterparty.key', '==', c.personKey)
       .where('counterparty.modelType', '==', 'person'),
@@ -352,6 +412,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'invoices',
     dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('invoices')
       .where('receiver.key', '==', c.personKey)
       .where('receiver.modelType', '==', 'person'),
@@ -368,6 +430,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'invoice-positions',
     dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('invoice-positions').where('personKey', '==', c.personKey),
     tenantScope: 'tenantsArray',
     onExport: 'full',
@@ -378,6 +442,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'scs-memberfees',
     dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('scs-memberfees')
       .where('member.key', '==', c.personKey)
       .where('member.modelType', '==', 'person'),
@@ -400,6 +466,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'bills',
     dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
     // creditor invoices — `vendor` is usually an org, but a private person can bill too
     find: (c: SubjectCtx) => db().collection('bills')
       .where('vendor.key', '==', c.personKey)
@@ -413,6 +481,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'expenses',
     dataClass: 'financial',
+    tier: 'T3',
+    onTenantExit: 'anonymize',
     // linked by the Firebase Auth uid, not the personKey (createExpense CF)
     find: (c: SubjectCtx) => db().collection('expenses').where('userId', '==', c.uid),
     tenantScope: 'tenantsArray',
@@ -440,6 +510,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'tasks',
     dataClass: 'content',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('tasks').where(Filter.or(
       Filter.where('author.key', '==', c.personKey),
       Filter.where('assignee.key', '==', c.personKey),
@@ -454,6 +526,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'comments',
     dataClass: 'communication',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
     // `authorKey` holds TWO different key shapes and both must be found:
     //  - user-written comments store the personKey (CommentService.create)
     //  - the auto-generated audit comments written on every create/update store
@@ -474,6 +548,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'docs',
     dataClass: 'content',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('docs').where('authorKey', '==', c.personKey),
     tenantScope: 'tenantsArray',
     onExport: 'index',
@@ -485,6 +561,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'calevents',
     dataClass: 'content',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
     // responsiblePersons[] and attendees[].person are embedded arrays — not queryable
     find: (c: SubjectCtx) => db().collection('calevents').where('tenants', 'array-contains', c.tenantId),
     tenantScope: 'inQuery',
@@ -500,6 +578,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'trips',
     dataClass: 'content',
+    tier: 'T4',   // the logbook is the club's record, not the rower's
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('trips').where('tenants', 'array-contains', c.tenantId),
     tenantScope: 'inQuery',
     matches: (doc, c) => avatarArrayHolds(doc, 'participants', c.personKey),
@@ -512,6 +592,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'stats_members',
     dataClass: 'content',
+    tier: 'T4',
+    onTenantExit: 'delete',   // derived from trips and rebuildable — nothing to preserve
     // stats_members/{personKey}/years/{year} — per-year km + trip count, derived from
     // `trips` by the onTripWrite CF and readable by any signed-in user
     // (firestore.rules:409-411). The whole subcollection is keyed by the subject's
@@ -526,6 +608,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'reservations',
     dataClass: 'content',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('reservations')
       .where('reserver.key', '==', c.personKey)
       .where('reserver.modelType', '==', 'person'),
@@ -539,6 +623,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'transfers',
     dataClass: 'membership',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
     // subjects[]/objects[] are embedded arrays — not queryable
     find: (c: SubjectCtx) => db().collection('transfers').where('tenants', 'array-contains', c.tenantId),
     tenantScope: 'inQuery',
@@ -551,6 +637,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'sections',
     dataClass: 'content',
+    tier: 'T4',   // a published people list can be a board roster the club must publish — not voluntary as a row
+    onTenantExit: 'anonymize',   // remove the entry, keep the section
     // A `people` section pins an explicit list of members onto a CMS page. For that
     // section type the field path is fixed — `properties.persons: AvatarInfo[]`
     // (PeopleConfig) — which is structurally the same problem as groups.admins and
@@ -571,6 +659,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'whiteboards',
     dataClass: 'content',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('whiteboards').where('author.key', '==', c.personKey),
     tenantScope: 'tenantsArray',
     onExport: 'full',             // authored content falls squarely under the right of access
@@ -581,6 +671,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'instruments',
     dataClass: 'content',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('instruments').where('author.key', '==', c.personKey),
     tenantScope: 'tenantsArray',
     onExport: 'full',             // authored content falls squarely under the right of access
@@ -591,6 +683,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'folders',
     dataClass: 'content',
+    tier: 'T4',
+    onTenantExit: 'anonymize',
     // ownerKey is the personKey of the creator (enforced in firestore.rules)
     find: (c: SubjectCtx) => db().collection('folders').where('ownerKey', '==', c.personKey),
     tenantScope: 'tenantsArray',
@@ -602,6 +696,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'assets',
     dataClass: 'membership',
+    tier: 'T3',   // part of the Anlagebuchhaltung
+    onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('assets').where('responsiblePersonKey', '==', c.personKey),
     tenantScope: 'tenantsArray',
     onExport: 'none',             // the asset register is club property, not member data
@@ -614,6 +710,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'sessions',
     dataClass: 'log',
+    tier: 'T4',   // operational log (Betriebssicherheit) — legitimate interest, same basis as T4
+    onTenantExit: 'delete',
     // userKey is the users doc id = the Firebase Auth uid; the doc also holds userEmail
     find: (c: SubjectCtx) => db().collection('sessions').where('userKey', '==', c.uid),
     tenantScope: 'tenantsArray',
@@ -624,6 +722,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'activities',
     dataClass: 'log',
+    tier: 'T4',
+    onTenantExit: 'delete',
     // Two shapes again. ActivityService.log sets author.key = personKey, but logAuth
     // (login/logout) writes author = { key: '', modelType: 'user' } and puts the login
     // e-mail into the free-text `payload` — inventory §5 flags exactly this field.
@@ -654,6 +754,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'docGenerations',
     dataClass: 'log',
+    tier: 'T4',
+    onTenantExit: 'delete',
     find: (c: SubjectCtx) => db().collection('docGenerations').where('userId', '==', c.uid),
     tenantScope: 'tenantsArray',
     onExport: 'none',             // metadata only; the generated file itself is in Storage
@@ -667,6 +769,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // INSIDE pain001Xml belongs to third-party recipients, which is exactly why this
     // row must never be exported to the requesting member.
     dataClass: 'log',
+    tier: 'T3',
+    onTenantExit: 'retain',   // four-eyes evidence for a booked payment run
     find: (c: SubjectCtx) => db().collection('payment-orders').where(Filter.or(
       Filter.where('createdBy', '==', c.uid),
       Filter.where('approvedBy', '==', c.uid),
@@ -679,6 +783,8 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     collection: 'esignList',
     dataClass: 'content',
+    tier: 'T3',
+    onTenantExit: 'retain',   // a signature loses its evidentiary value if the record is altered
     // esign records carry a SINGULAR `tenantId`, not a `tenants[]` array
     // (esign.model.ts:32, firestore.rules:414-415) — hence the tenant-scoped scan and
     // tenantScope 'inQuery'. The scan is also what reaches documents the subject only
@@ -706,12 +812,15 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       return pending.length === 0 ? undefined : {
         code: 'pendingSignature', count: pending.length,
         detail: 'Ein Dokument wartet noch auf Ihre Unterschrift. Bitte unterschreiben Sie es oder brechen Sie den Vorgang ab, danach können wir Ihre Daten löschen.',
+        blocksTiers: ['T1'],   // the signature flow needs the signee reachable
       };
     },
   },
   {
     collection: 'esignAudit',
     dataClass: 'log',
+    tier: 'T3',
+    onTenantExit: 'retain',   // tamper evidence — altering it defeats its only purpose
     // subcollection `esignAudit/{tenantId}/deletions/{esignId}`; holds the uid of the
     // admin who deleted a signature record — tamper evidence, never exported. The
     // collection-group query crosses tenants and the document has NO tenant field: the
