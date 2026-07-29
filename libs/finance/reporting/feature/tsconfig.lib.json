@@ -13,5 +13,10 @@
     "lib": ["dom", "es2022"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
+  "references": [
+    { "path": "../../accounting/feature/tsconfig.lib.json" },
+    { "path": "../data-access/tsconfig.lib.json" },
+    { "path": "../../../shared/models/tsconfig.lib.json" }
+  ]
 }

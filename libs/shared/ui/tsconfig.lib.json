@@ -11,5 +11,16 @@
     "lib": ["dom", "es2022"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
+  "references": [
+    { "path": "../categories/tsconfig.lib.json" },
+    { "path": "../config/tsconfig.lib.json" },
+    { "path": "../constants/tsconfig.lib.json" },
+    { "path": "../data-access/tsconfig.lib.json" },
+    { "path": "../i18n/tsconfig.lib.json" },
+    { "path": "../models/tsconfig.lib.json" },
+    { "path": "../pipes/tsconfig.lib.json" },
+    { "path": "../util-angular/tsconfig.lib.json" },
+    { "path": "../util-core/tsconfig.lib.json" }
+  ]
 }

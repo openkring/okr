@@ -19,5 +19,8 @@
     "**/*.spec2.ts",
     "**/test-setup.ts",
     "vite.config.ts"
+  ],
+  "references": [
+    { "path": "../../shared/util-core/tsconfig.lib.json" }
   ]
 }

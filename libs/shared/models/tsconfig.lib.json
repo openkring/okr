@@ -15,5 +15,8 @@
     "**/*.spec.ts",
     "**/test-setup.ts",
     "vite.config.ts"
+  ],
+  "references": [
+    { "path": "../constants/tsconfig.lib.json" }
   ]
 }

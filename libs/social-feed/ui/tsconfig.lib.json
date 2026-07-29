@@ -13,5 +13,9 @@
     "lib": ["dom", "es2022"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"]
+  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
+  "references": [
+    { "path": "../../shared/models/tsconfig.lib.json" },
+    { "path": "../../shared/pipes/tsconfig.lib.json" }
+  ]
 }
