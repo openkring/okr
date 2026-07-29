@@ -884,6 +884,9 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 // not personal data: booking-lines — debit/credit lines, reference accounts and amounts
 // not personal data: calendars — calendar definitions (name, colour, visibility)
 // not personal data: categories — enum/value lists used by dropdowns
+// not personal data: erasure-log — CF-written evidence that an erasure ran: counts per
+//   collection and a salted, per-tenant pseudonym. Never a name, e-mail, personKey or
+//   uid, and never a statement about whether the person record survived (D-P5-2).
 // not personal data: exchange-rates — currency rates
 // not personal data: formDefinitions — form templates (field definitions, no submissions)
 // not personal data: i18nDefault — translation keys and default texts

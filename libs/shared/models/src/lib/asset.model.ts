@@ -36,6 +36,11 @@ export class AssetModel implements OkrModel, NamedModel {
   // ResourceModel holds brand, dimensions, serial; AssetModel holds financial history.
   public resourceKey = '';                          // optional ref to ResourceModel
 
+  // Stamped (StoreDateTime) when a data-subject erasure pseudonymized this record
+  // (privacy 1.19, D-P5-6): the name fields and the person link are overwritten, the
+  // amounts, dates and document references stay. '' = never anonymized.
+  public anonymizedAt = '';
+
   constructor(tenantId: string, accountingTenantId: string) {
     this.tenants = [tenantId];
     this.accountingTenantId = accountingTenantId;

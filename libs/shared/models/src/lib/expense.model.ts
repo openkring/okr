@@ -34,6 +34,11 @@ export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public accountingTenantId = '';
   public receiptCount = 0; // number of receipt files uploaded to the OCR pipeline; lets stage ② know when all receipts are in
 
+  // Stamped (StoreDateTime) when a data-subject erasure pseudonymized this record
+  // (privacy 1.19, D-P5-6): the name fields and the person link are overwritten, the
+  // amounts, dates and document references stay. '' = never anonymized.
+  public anonymizedAt = '';
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }

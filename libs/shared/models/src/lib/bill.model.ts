@@ -33,6 +33,11 @@ export class BillModel implements OkrModel, SearchableModel, TaggedModel {
 
   public accountingTenantId = '';   // = org.okey of the accounting tenant
 
+  // Stamped (StoreDateTime) when a data-subject erasure pseudonymized this record
+  // (privacy 1.19, D-P5-6): the name fields and the person link are overwritten, the
+  // amounts, dates and document references stay. '' = never anonymized.
+  public anonymizedAt = '';
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }
