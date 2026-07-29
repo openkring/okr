@@ -1,3 +1,4 @@
+import { Timestamp } from 'firebase-admin/firestore';
 import { describe, expect, it, vi } from 'vitest';
 import type { SubjectCtx, SubjectDataEntry } from './types';
 import { buildBundle } from './gather';
@@ -61,5 +62,24 @@ describe('buildBundle', () => {
   it('stamps the tenant it was generated for', async () => {
     const bundle = await buildBundle(ctx, [], async () => []);
     expect(bundle.tenantId).toBe('scs');
+  });
+
+  // Fix round 1: esignList.createdAt (esign.model.ts:48) is a genuine Firestore
+  // Timestamp, not a StoreDate string like every other index row's date field.
+  // String(timestamp) has no toString override to hit and silently renders
+  // "[object Object]" — this is the regression guard for that.
+  it('converts a Firestore Timestamp date field to a StoreDate string, not "[object Object]"', async () => {
+    const e = entry({
+      collection: 'esignList',
+      onExport: 'index',
+      indexFields: { title: 'documentName', date: 'createdAt', route: '/esign' },
+    });
+    const createdAt = Timestamp.fromDate(new Date('2026-01-15T10:30:00Z'));
+    const bundle = await buildBundle(ctx, [e], async () => [
+      { okey: 'e1', documentName: 'Statuten', createdAt },
+    ]);
+    expect(bundle.index['esignList']).toEqual([
+      { title: 'Statuten', date: '20260115', route: '/esign/e1' },
+    ]);
   });
 });

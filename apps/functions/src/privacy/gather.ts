@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase-admin/firestore';
+import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { resolveDocs, SUBJECT_DATA_MAP } from './subject-data-map';
 import type { SubjectCtx, SubjectDataEntry } from './types';
 
@@ -43,6 +45,29 @@ function withRoute(routePrefix: string, okey: string): string {
 }
 
 /**
+ * Normalizes an index row's `date` field to a StoreDate (`yyyyMMdd`) string, the shape
+ * every other index row's date field already is: `tasks.dueDate`,
+ * `comments.creationDateTime`, `docs.dateOfDocCreation`, `calevents/trips/reservations
+ * .startDate` are all `DEFAULT_DATE`/`DEFAULT_DATETIME`-typed strings.
+ *
+ * `esignList.createdAt` (see `esign.model.ts`) is the one exception in the map: it is a
+ * genuine Firestore `Timestamp`, not a StoreDate string. `String(timestamp)` has no
+ * `toString` override to hit and falls through to `Object.prototype.toString`, silently
+ * producing the literal `"[object Object]"` in a legally-mandated export. This detects
+ * that shape and routes it through the repo's mandatory date-conversion helpers
+ * (`convertDateFormatToString` / `DateFormat`, never a custom formatter) instead.
+ */
+function toIndexDateString(value: unknown): string {
+  if (value instanceof Timestamp) {
+    // yyyy-MM-ddTHH:mm:ss — Timestamp#toDate().toISOString() emits milliseconds + 'Z',
+    // which DateFormat.IsoDateTime does not expect; trim to the 19 chars it matches.
+    const isoDateTime = value.toDate().toISOString().slice(0, 19);
+    return convertDateFormatToString(isoDateTime, DateFormat.IsoDateTime, DateFormat.StoreDate, false);
+  }
+  return String(value ?? '');
+}
+
+/**
  * Pure assembly of a `SubjectDataBundle` from a set of map rows and an injected
  * `fetch`. Never touches Firestore itself — that is `fetch`'s job — so it is exercised
  * directly by `gather.spec.ts` with a fake fetcher and no emulator.
@@ -78,7 +103,7 @@ export async function buildBundle(
     bundle.index[entry.collection] = docs.map(
       (d): IndexRow => ({
         title: String(d[fields.title] ?? ''),
-        date: String(d[fields.date] ?? ''),
+        date: toIndexDateString(d[fields.date]),
         route: withRoute(fields.route, String(d['okey'] ?? '')),
       }),
     );
