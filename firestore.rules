@@ -126,7 +126,10 @@ service cloud.firestore {
 
     match /app-config/{tenant} {
       allow read: if true;
-      allow write: if isPrivileged();                 // app configuration is admin territory
+      // App configuration is admin territory — but only for your OWN tenant: the
+      // doc id IS the tenantId, so without this check a privileged user of tenant A
+      // could overwrite app-config/B.
+      allow write: if isPrivileged() && (tenant in callerTenants());
     }
     match /app-version/{doc} {
       allow read: if true;
@@ -186,15 +189,18 @@ service cloud.firestore {
                        || (isAdmin() && belongsToTenant(request.resource.data))
                     );
 
-      // Update your own doc but NOT roles / tenants / personKey; admins may update.
+      // Update your own doc but NOT roles / tenants / personKey; admins may update
+      // users of their own tenant only (both before and after the write, so an
+      // admin cannot pull a foreign user into their tenant or push one out).
       allow update: if signedIn() && (
                        (request.auth.uid == userId
                           && !request.resource.data.diff(resource.data).affectedKeys()
                                 .hasAny(['roles', 'tenants', 'personKey']))
-                       || isAdmin()
+                       || (isAdmin() && belongsToTenant(resource.data)
+                                     && belongsToTenant(request.resource.data))
                     );
 
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() && belongsToTenant(resource.data);
 
       // FCM push tokens are owned by the user. (C-1 — previously any authed user
       // could read/write anyone's tokens via the catch-all.)
