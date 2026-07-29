@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { renderExportReport, renderReadme } from './report';
+import { COLLECTION_LABELS, renderExportReport, renderReadme } from './report';
+import { SUBJECT_DATA_MAP } from './subject-data-map';
 
 const bundle = {
   generatedAt: '2026-07-28T10:00:00.000Z', tenantId: 'scs',
@@ -36,6 +37,17 @@ describe('renderExportReport', () => {
     const html = renderExportReport(bundle, 'Seeclub Stäfa');
     expect(html).toContain('Seeclub Stäfa');
     expect(html).toContain('2026-07-28');
+  });
+});
+
+describe('COLLECTION_LABELS', () => {
+  it('labels every collection SUBJECT_DATA_MAP actually exports (full or index)', () => {
+    const exported = SUBJECT_DATA_MAP.filter((e) => e.onExport === 'full' || e.onExport === 'index');
+    const unlabeled = exported.map((e) => e.collection).filter((c) => !(c in COLLECTION_LABELS));
+    // Fails here — not in production, as a raw Firestore collection name in a member's
+    // legal document — the moment a new exported row is added upstream without a
+    // matching German label in report.ts.
+    expect(unlabeled).toEqual([]);
   });
 });
 

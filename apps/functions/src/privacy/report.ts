@@ -49,31 +49,80 @@ interface IndexSection {
   readonly rows: readonly IndexRow[];
 }
 
-/** Known collections get a German section title; anything not listed here (a new
- * `SUBJECT_DATA_MAP` row this file hasn't been updated for) falls back to a
- * humanized version of the raw collection name rather than disappearing. */
-const COLLECTION_LABELS: Record<string, string> = {
+/**
+ * Every collection this file can be asked to label. MUST cover every row in
+ * `SUBJECT_DATA_MAP` with `onExport: 'full' | 'index'` — enforced by
+ * `report.spec.ts`'s "labels every exported collection" test, which walks the map and
+ * fails the moment a new exported row has no entry here. Without that guard a raw
+ * Firestore collection name (`scs-memberfees`, `personal-rels`, …) leaks into an
+ * otherwise all-German legal document as soon as someone adds a row upstream and
+ * forgets this file exists.
+ *
+ * Values are the SAME words the member already sees in the app for that data — the
+ * corresponding feature lib's `de.json` `list.title` (or the closest equivalent) —
+ * not an invented translation of the internal collection name. Source noted per row;
+ * three collections (`invoice-positions`, `stats_members`) have no member-facing list
+ * view of their own, so the label is the nearest shipped term for that concept
+ * (documented inline) rather than a guess.
+ */
+export const COLLECTION_LABELS: Record<string, string> = {
+  // — identity / membership —
   persons: 'Personendaten',
   users: 'Benutzerkonto',
-  addresses: 'Kontaktangaben',
+  avatars: 'Avatare', // libs/avatar/ui/src/i18n/de.json: avatars.title
+  addresses: 'Adressen', // libs/subject/address/feature/src/i18n/de.json: addresses
   memberships: 'Mitgliedschaften',
+  ownerships: 'Nutzungen', // libs/relationship/ownership/feature/src/i18n/de.json: list.all.title
+  workrels: 'Beschäftigungen', // libs/relationship/workrel/feature/src/i18n/de.json: list.title
+  'personal-rels': 'Persönliche Beziehungen', // libs/relationship/personal-rel/feature/src/i18n/de.json: list.title
+  invitations: 'Einladungen', // libs/relationship/invitation/feature/src/i18n/de.json: invitations
+  responsibilities: 'Verantwortlichkeiten', // libs/relationship/responsibility/feature/src/i18n/de.json: list.title
   groups: 'Gruppen',
+  // competition-levels is an admin-only derived cache with no member-facing list of
+  // its own; "Wettkampf-Kategorien" is the label already shipped for this exact data
+  // in the AOC admin tool (libs/aoc/feature/src/i18n/de.json).
+  'competition-levels': 'Wettkampf-Kategorien',
+  // "Anmeldungen" (the previous label here) collides with the login/auth terminology
+  // used elsewhere in this same document (`sessions`, `logAuth`) — this collection is
+  // the membership APPLICATION, whose shipped list title is "Anträge"
+  // (libs/subject/application/feature/src/i18n/de.json: list.title).
+  applications: 'Anträge',
+
+  // — financial (10-year retention) —
+  bookings: 'Buchungen', // libs/finance/booking/feature/src/i18n/de.json: list.title
   invoices: 'Rechnungen',
+  // invoice-positions has no page of its own — it's edited inline inside the invoice
+  // form; "Rechnungsposition(en)" is the term the invoice feature already uses for
+  // this exact concept (libs/finance/invoice/feature/src/i18n/de.json).
+  'invoice-positions': 'Rechnungspositionen',
+  'scs-memberfees': 'Mitgliedergebühren', // libs/relationship/membership/feature/src/i18n/de.json: scsMemberFee.list.title
+  bills: 'Kreditoren-Rechnungen', // libs/finance/bill/feature/src/i18n/de.json: list.title
   expenses: 'Spesen',
   'payment-orders': 'Zahlungsaufträge',
   paymentOrders: 'Zahlungsaufträge',
-  esignList: 'Unterschriebene Dokumente',
-  esignAudit: 'Unterschriften-Protokoll',
-  sessions: 'Anmeldesitzungen',
-  applications: 'Anmeldungen',
-  logAuth: 'Anmeldeprotokoll',
-  docs: 'Dokumente',
-  documents: 'Dokumente',
+
+  // — authored content —
   tasks: 'Aufgaben',
   comments: 'Kommentare',
+  docs: 'Dokumente',
+  documents: 'Dokumente',
   calevents: 'Kalendereinträge',
-  trips: 'Ausfahrten',
+  trips: 'Fahrten', // libs/geo/trip/feature/src/i18n/de.json: trips (not "Ausfahrten")
+  // stats_members has no list view either — it's the per-member half of the trip
+  // logbook's statistics view, already labelled "Personen-Statistik" there
+  // (libs/geo/trip/feature/src/i18n/de.json: stats.member_title).
+  stats_members: 'Personen-Statistik',
   reservations: 'Reservationen',
+  transfers: 'Transfers', // libs/relationship/transfer/feature/src/i18n/de.json: list.title
+  whiteboards: 'Whiteboards', // libs/instruments/whiteboard/feature/src/i18n/de.json: plural
+  instruments: 'Instrumente', // libs/instruments/feature/src/i18n/de.json: plural
+  esignList: 'Unterschriebene Dokumente',
+  esignAudit: 'Unterschriften-Protokoll',
+
+  // — logs —
+  sessions: 'Anmeldesitzungen',
+  activities: 'Aktivitäten', // libs/activity/feature/src/i18n/de.json: title
+  logAuth: 'Anmeldeprotokoll',
   docGenerations: 'Erzeugte Dokumente',
 };
 
