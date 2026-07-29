@@ -108,6 +108,7 @@ export class DocButton {
       } else if (this.autoOpenPreview() && response.outputFormat === 'pdf') {
         const modal = await this.modalController.create({
           component: PdfPreviewModal,
+          cssClass: 'wide-modal',
           componentProps: {
             url: response.url,
             title: response.filename,

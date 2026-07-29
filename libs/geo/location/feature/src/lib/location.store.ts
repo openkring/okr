@@ -160,6 +160,7 @@ export const LocationStore = signalStore(
         if (location) { // show a single location as the center of the map
           const modal = await store.modalController.create({
             component: MapViewModal,
+            cssClass: 'map-modal',
             componentProps: {
               title: location.name,
               center: {
@@ -190,6 +191,7 @@ export const LocationStore = signalStore(
 
           const modal = await store.modalController.create({
             component: MapViewModal,
+            cssClass: 'map-modal',
             componentProps: {
               title: store.i18n.locations(),
               center: { lat: center.latitude, lng: center.longitude, title: center.name, what3words: center.what3words, distance: center.distance },

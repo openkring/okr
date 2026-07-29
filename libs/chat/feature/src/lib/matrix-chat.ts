@@ -1253,6 +1253,7 @@ export class MatrixChat implements OnDestroy {
   private async openPollDetail(message: MatrixMessage): Promise<void> {
     const modal = await this.modalController.create({
       component: PollDetailModal,
+      cssClass: 'wide-modal',
       componentProps: {
         pollAnswers: message.pollAnswers ?? [],
         pollVotes: message.pollVotes ?? {},

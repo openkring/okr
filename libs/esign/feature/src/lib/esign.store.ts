@@ -63,6 +63,7 @@ export const EsignStore = signalStore(
       const { EsignViewModal } = await import('./esign-view.modal');
       const modal = await store.modalController.create({
         component: EsignViewModal,
+        cssClass: 'wide-modal',
         componentProps: { esign },
       });
       await modal.present();

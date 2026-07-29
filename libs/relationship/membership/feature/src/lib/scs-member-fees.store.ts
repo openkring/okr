@@ -426,6 +426,7 @@ export const _ScsMemberFeesStore = signalStore(
       if (!mcat) return;
       const modal = await store.modalController.create({
         component: MembershipEditModal,
+        cssClass: 'auto-height-modal',
         componentProps: {
           membership: { ...membership },
           currentUser: store.appStore.currentUser(),

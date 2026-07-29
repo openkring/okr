@@ -585,6 +585,7 @@ export const _MembershipStore = signalStore(
 
         const modal = await store.modalController.create({
           component: MembershipEditModal,
+          cssClass: 'auto-height-modal',
           componentProps: {
             membership,
             currentUser: store.currentUser(),

@@ -962,6 +962,7 @@ export const AocBexioStore = signalStore(
       if (!membership) return;
       const modal = await store.modalController.create({
         component: MembershipEditModal,
+        cssClass: 'auto-height-modal',
         componentProps: {
           membership: { ...membership },
           currentUser: store.currentUser(),

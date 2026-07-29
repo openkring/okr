@@ -688,6 +688,7 @@ export class CalEventList implements OnInit {
     const { ScheduleTableModal } = await import('./schedule-table.modal');
     const modal = await this.modalController.create({
       component: ScheduleTableModal,
+      cssClass: 'wide-modal',
       componentProps: { seriesId: calevent.seriesId },
       injector: this.injector,   // share CalEventList's CalEventStore instance with the root-injected modal
     });
