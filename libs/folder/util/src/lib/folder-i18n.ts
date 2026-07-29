@@ -1,6 +1,7 @@
 import { Signal } from '@angular/core';
 
 export const FOLDER_I18N_KEYS = {
+  as_title:                        '@actionsheet.title',
   delete_confirm:                  '@folder.operation.delete.confirm',
   plural:                          '@folder.plural',
   empty:                           '@folder.empty',

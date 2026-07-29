@@ -113,7 +113,7 @@ export class NewsSectionComponent implements OnInit {
 
   protected async showActions(article: ArticleSection): Promise<void> {
     if (this.editMode()) return;
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions);
     await this.executeActions(actionSheetOptions, article);
   }

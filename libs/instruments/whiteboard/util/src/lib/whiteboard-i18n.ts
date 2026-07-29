@@ -5,6 +5,7 @@ const U = '@whiteboard/ui.';
 
 /** Feature-level i18n keys for the whiteboard (list, editor page, item editor). */
 export const WHITEBOARD_I18N_KEYS = {
+  as_title:                  '@actionsheet.title',
   whiteboard:                F + 'whiteboard',
   plural:                    F + 'plural',
   desc:                      F + 'desc',

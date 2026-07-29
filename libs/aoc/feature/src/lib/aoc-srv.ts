@@ -396,7 +396,7 @@ protected async buildIndex(): Promise<void> {
    * @param menuItem 
    */
   protected async showIndexActions(item: SrvIndex): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.srv_person_update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.srv_membership_update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.store.i18n.srv_parentmembership_update(), this.imgixBaseUrl, 'edit'));
@@ -416,7 +416,7 @@ protected async buildIndex(): Promise<void> {
    * @param menuItem 
    */
   protected async showLicenseActions(item: SrvIndex): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.srv_person_update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.srv_membership_update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.store.i18n.srv_parentmembership_update(), this.imgixBaseUrl, 'edit'));
@@ -436,7 +436,7 @@ protected async buildIndex(): Promise<void> {
    * @param menuItem 
    */
   protected async showForeignerActions(item: SrvIndex): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.srv_person_update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.srv_membership_update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.store.i18n.srv_parentmembership_update(), this.imgixBaseUrl, 'edit'));
@@ -453,7 +453,7 @@ protected async buildIndex(): Promise<void> {
    * @param menuItem 
    */
   protected async showClubActions(item: SrvIndex): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
       actionSheetOptions.buttons.push(createActionSheetButton('person.edit', this.store.i18n.srv_person_update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('membership.edit', this.store.i18n.srv_membership_update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('parentMembership.edit', this.store.i18n.srv_parentmembership_update(), this.imgixBaseUrl, 'edit'));

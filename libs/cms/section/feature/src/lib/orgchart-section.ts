@@ -153,7 +153,7 @@ export class OrgchartSectionComponent {
   }
 
   protected async showActions(node: OrgchartTreeNode): Promise<void> {
-    const options = createActionSheetOptions('@actionsheet.label.choose');
+    const options = createActionSheetOptions(this.store.i18n.as_title());
     options.buttons = [
       createActionSheetButton('orgchart.addNewGroup', this.store.i18n.orgchart_group_add_new(), this.imgixBaseUrl, 'add-circle'),
       createActionSheetButton('orgchart.addExistingGroup', this.store.i18n.orgchart_group_add_existing(), this.imgixBaseUrl, 'search'),

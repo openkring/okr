@@ -153,10 +153,10 @@ export class AocTag {
 
   protected async showTagActions(tag: TagItem): Promise<void> {
     const base = this.aocTagStore.appStore.env.services.imgixBaseUrl;
-    const options: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    options.buttons.push(createActionSheetButton('tag.edit', base, 'edit', this.aocTagStore.i18n.tag_update()));
-    options.buttons.push(createActionSheetButton('tag.delete', base,'trash', this.aocTagStore.i18n.tag_delete()));
-    options.buttons.push(createActionSheetButton('cancel', base,'cancel', this.aocTagStore.i18n.cancel()));
+    const options: ActionSheetOptions = createActionSheetOptions(this.aocTagStore.i18n.as_title());
+    options.buttons.push(createActionSheetButton('tag.edit', this.aocTagStore.i18n.tag_update(), base, 'edit'));
+    options.buttons.push(createActionSheetButton('tag.delete', this.aocTagStore.i18n.tag_delete(), base, 'trash'));
+    options.buttons.push(createActionSheetButton('cancel', this.aocTagStore.i18n.cancel(), base, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
@@ -175,10 +175,10 @@ export class AocTag {
 
   protected async showTagStringActions(tag: TagItem, tagStr: string): Promise<void> {
     const base = this.aocTagStore.appStore.env.services.imgixBaseUrl;
-    const options: ActionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
-    options.buttons.push(createActionSheetButton('tag.string.edit', base, 'edit', this.aocTagStore.i18n.tag_string_update()));
-    options.buttons.push(createActionSheetButton('tag.string.remove', base, 'trash', this.aocTagStore.i18n.tag_string_remove()));
-    options.buttons.push(createActionSheetButton('cancel', base, 'cancel', this.aocTagStore.i18n.cancel()));
+    const options: ActionSheetOptions = createActionSheetOptions(this.aocTagStore.i18n.as_title());
+    options.buttons.push(createActionSheetButton('tag.string.edit', this.aocTagStore.i18n.tag_string_update(), base, 'edit'));
+    options.buttons.push(createActionSheetButton('tag.string.remove', this.aocTagStore.i18n.tag_string_remove(), base, 'trash'));
+    options.buttons.push(createActionSheetButton('cancel', this.aocTagStore.i18n.cancel(), base, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();

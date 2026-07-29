@@ -131,7 +131,7 @@ export class EventsSectionComponent implements OnInit {
    */
   protected async showActions(calevent: CalEventModel): Promise<void> {
     if (this.editMode()) return;
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, calevent);
     await this.executeActions(actionSheetOptions, calevent);
   }
@@ -175,9 +175,9 @@ export class EventsSectionComponent implements OnInit {
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
     if (this.canChange(calevent)) {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.calevent_edit(), this.imgixBaseUrl, 'edit'));
     } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.calevent_view(), this.imgixBaseUrl, 'eye-on'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.store.i18n.calevent_download(), this.imgixBaseUrl, 'calendar-number'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));

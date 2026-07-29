@@ -111,7 +111,7 @@ export class WhiteboardList {
   }
 
   protected async showActions(whiteboard: WhiteboardModel): Promise<void> {
-    const options = createActionSheetOptions('@actionsheet.label.choose');
+    const options = createActionSheetOptions(this.store.i18n.as_title());
     options.buttons.push(createActionSheetButton('whiteboard.open', this.store.i18n.as_open(), this.imgixBaseUrl, 'eye-on'));
     if (!this.readOnly()) {
       options.buttons.push(createActionSheetButton('whiteboard.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));

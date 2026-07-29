@@ -138,7 +138,7 @@ export class SectionAllList {
    * @param section 
    */
   protected async showActions(section: SectionModel): Promise<void> {
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, section);
     await this.executeActions(actionSheetOptions, section);
   }

@@ -131,7 +131,7 @@ export class TasksSectionComponent implements OnInit {
    */
   protected async showActions(task: TaskModel): Promise<void> {
     if (this.editMode()) return;
-    const actionSheetOptions = createActionSheetOptions('@actionsheet.label.choose');
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, task);
     await this.executeActions(actionSheetOptions, task);
   }
@@ -145,10 +145,10 @@ export class TasksSectionComponent implements OnInit {
         if (task.completionDate.length === 0) { // task is not yet completed.
             actionSheetOptions.buttons.push(createActionSheetButton('task.complete', this.store.i18n.task_complete(), this.imgixBaseUrl, 'checkbox-circle'));
         }
-        actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+        actionSheetOptions.buttons.push(createActionSheetButton('task.view', this.store.i18n.task_view(), this.imgixBaseUrl, 'eye-on'));
     }
     if (hasRole('eventAdmin', this.currentUser()) || hasRole('privileged', this.currentUser())) {
-        actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.edit(), this.imgixBaseUrl, 'edit'));
+        actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.task_edit(), this.imgixBaseUrl, 'edit'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
