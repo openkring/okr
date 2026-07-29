@@ -6,9 +6,12 @@ import { getAddressDirectoryKey } from './address-directory.model';
 describe('CHANNEL_SENSITIVITY_FLOOR / getChannelFloor', () => {
   it('floors the sensitive channels at privileged', () => {
     expect(CHANNEL_SENSITIVITY_FLOOR['ssn']).toBe('privileged');
-    expect(CHANNEL_SENSITIVITY_FLOOR['dob']).toBe('privileged');
     expect(CHANNEL_SENSITIVITY_FLOOR['dod']).toBe('privileged');
     expect(CHANNEL_SENSITIVITY_FLOOR['bankaccount']).toBe('privileged');
+  });
+
+  it('floors dob at registered — never public, but the person may share it with members (§A2 amendment 2026-07-28)', () => {
+    expect(CHANNEL_SENSITIVITY_FLOOR['dob']).toBe('registered');
   });
 
   it('returns public (no floor) for non-sensitive and unknown channels', () => {
@@ -54,8 +57,14 @@ describe('getEffectiveAccessor (spec 1.19 §A3: stricterAccessor(channelFloor, p
   });
 
   // -------- channel floor can never be lowered --------
-  it('person Public dob is still privileged (floor wins)', () => {
-    expect(getEffectiveAccessor('dob', 'person', PrivacyUsage.Public)).toBe('privileged');
+  it('person Public dob is capped at registered (floor wins, dob is never public)', () => {
+    expect(getEffectiveAccessor('dob', 'person', PrivacyUsage.Public)).toBe('registered');
+  });
+  it('person Protected dob -> privileged (preference beats the registered floor)', () => {
+    expect(getEffectiveAccessor('dob', 'person', PrivacyUsage.Protected)).toBe('privileged');
+  });
+  it('person Restricted dob -> registered (the scs case: members see a shared birthday)', () => {
+    expect(getEffectiveAccessor('dob', 'person', PrivacyUsage.Restricted, 'registered')).toBe('registered');
   });
   it('person ssn is privileged regardless of preference', () => {
     expect(getEffectiveAccessor('ssn', 'person', PrivacyUsage.Public)).toBe('privileged');
@@ -117,10 +126,24 @@ describe('getEffectiveAccessorForAddress (spec 1.19 Phase 4: channel → usage*/
     )).toBe('privileged');
   });
 
-  it('dob is privileged even for a Public preference (channel floor wins)', () => {
+  it('dob never goes public, even for a Public preference (channel floor wins)', () => {
     expect(getEffectiveAccessorForAddress(
       { addressChannel: 'dob' }, 'person',
       { usageDateOfBirth: PrivacyUsage.Public }, {},
+    )).toBe('registered');
+  });
+
+  it('dob with a Restricted preference and the scs tenant floor -> registered (members may see it)', () => {
+    expect(getEffectiveAccessorForAddress(
+      { addressChannel: 'dob' }, 'person',
+      { usageDateOfBirth: PrivacyUsage.Restricted }, { showDateOfBirth: 'registered' },
+    )).toBe('registered');
+  });
+
+  it('dob with a Protected preference stays privileged whatever the tenant floor says', () => {
+    expect(getEffectiveAccessorForAddress(
+      { addressChannel: 'dob' }, 'person',
+      { usageDateOfBirth: PrivacyUsage.Protected }, { showDateOfBirth: 'registered' },
     )).toBe('privileged');
   });
 

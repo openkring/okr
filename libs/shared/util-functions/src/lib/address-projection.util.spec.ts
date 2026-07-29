@@ -95,6 +95,14 @@ describe('buildDirectoryDoc', () => {
     expect(doc.entries.every(e => !['ssn', 'dob', 'bankaccount'].includes(e.addressChannel))).toBe(true);
   });
 
+  it('keeps dob out of the directory even now that its floor admits registered viewers (§A2 amendment)', () => {
+    // dob is member-visible since 2026-07-28, but DirectoryEntry carries no dob field — an entry
+    // here would be a valueless row that leaks the existence of the value. getAddressView serves it.
+    const sharingPerson = makePerson({ usageDateOfBirth: PrivacyUsage.Restricted });
+    const doc = buildDirectoryDoc('tenant1', 'person.p1', 'person', allAddresses, sharingPerson, { showDateOfBirth: 'registered' });
+    expect(doc.entries.some(e => e.addressChannel === 'dob')).toBe(false);
+  });
+
   it('excludes channels the person protected (Protected email -> no email entries, empty favEmail)', () => {
     const shyPerson = makePerson({ usageEmail: PrivacyUsage.Protected });
     const doc = buildDirectoryDoc('tenant1', 'person.p1', 'person', allAddresses, shyPerson);
@@ -123,15 +131,29 @@ describe('buildDirectoryDoc', () => {
 });
 
 describe('projectAddressesForViewer', () => {
-  it('registered viewer: contact channels only — no ssn/dob/iban docs at all', () => {
+  it('registered viewer: contact channels plus a shared dob — never ssn or iban', () => {
+    // a6 is the dob: member-visible since the §A2 amendment when the person leaves it at the
+    // Restricted default. a5 (ssn) and a7 (iban) stay privileged-floored.
     const visible = projectAddressesForViewer(allAddresses, 'registered', 'person', makePerson());
-    expect(visible.map(a => a.okey).sort()).toEqual(['a1', 'a3', 'a4']);
+    expect(visible.map(a => a.okey).sort()).toEqual(['a1', 'a3', 'a4', 'a6']);
+    expect(visible.find(a => a.okey === 'a6')?.dob).toBe('19851231');
   });
 
-  it('agrees with the materialized directory for a registered viewer', () => {
+  it('registered viewer: a Protected dob is withheld', () => {
+    const shyPerson = makePerson({ usageDateOfBirth: PrivacyUsage.Protected });
+    const visible = projectAddressesForViewer(allAddresses, 'registered', 'person', shyPerson);
+    expect(visible.some(a => a.addressChannel === 'dob')).toBe(false);
+  });
+
+  it('agrees with the materialized directory on the CONTACT channels for a registered viewer', () => {
+    // The two paths must not disagree about which contact address a member sees. dob is the one
+    // deliberate divergence: it is served on demand (person form) but never materialized into the
+    // directory, which has no field for it — see buildDirectoryDoc.
+    const contact = (channel: string) => !['ssn', 'dob', 'dod'].includes(channel);
     const visible = projectAddressesForViewer(allAddresses, 'registered', 'person', makePerson());
     const doc = buildDirectoryDoc('tenant1', 'person.p1', 'person', allAddresses, makePerson());
-    expect(visible.map(a => a.okey).sort()).toEqual(doc.entries.map(e => e.addressOkey).sort());
+    expect(visible.filter(a => contact(a.addressChannel)).map(a => a.okey).sort())
+      .toEqual(doc.entries.filter(e => contact(e.addressChannel)).map(e => e.addressOkey).sort());
   });
 
   it('does not reduce a privileged viewer to one address per channel', () => {

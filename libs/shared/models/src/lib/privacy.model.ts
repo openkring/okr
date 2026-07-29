@@ -19,8 +19,14 @@ import { PrivacyUsage } from './enums/privacy-usage.enum';
  */
 export const CHANNEL_SENSITIVITY_FLOOR: Record<string, PrivacyAccessor> = {
   ssn: 'privileged',         // AHV number — besonders schützenswert (revDSG)
-  dob: 'privileged',         // date of birth
-  dod: 'privileged',         // date of death — same class as dob; persons.isDeceased is the public marker
+  // date of birth — reclassified 2026-07-28 (§A2 amendment): a 'privileged' floor
+  // made both the tenant's showDateOfBirth and the person's own usageDateOfBirth
+  // inert (strictest wins), so a member's deliberate "Restricted" choice could never
+  // take effect and the person form drew an unfillable dob field. The floor stays at
+  // 'registered' rather than dropping out: a birthday is never public data, so it
+  // must not reach publicApi even if someone sets their preference to Public.
+  dob: 'registered',
+  dod: 'privileged',         // date of death — persons.isDeceased is the public marker
   bankaccount: 'privileged', // iban
 };
 

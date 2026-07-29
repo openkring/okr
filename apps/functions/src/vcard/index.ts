@@ -43,11 +43,21 @@ const SIGNED_URL_TTL_MS = 15 * 60 * 1000;
 
 const ALL_CHANNELS: VcardChannelType[] = ['phone', 'email', 'postal', 'web'];
 
-/** Tier-1 scope: favorites of every channel, nothing else. */
+/**
+ * Tier-1 scope: favorites of every channel, plus the birthday.
+ *
+ * `birthday: true` does NOT mean every tier-1 export carries a BDAY — it means the decision is
+ * the projection's, not this constant's. `assembleRecord` reads the dob from the addresses the
+ * `registered`-tier projection returned, so a person whose `usageDateOfBirth` is `Protected`
+ * simply has no dob address in hand and no BDAY is emitted. Public/Restricted (i.e. < Protected)
+ * export their birthday to fellow members, which is what the §A2 amendment made possible:
+ * before it, the `privileged` channel floor withheld the value anyway, so this flag was `false`
+ * to avoid promising something the projection would never deliver.
+ */
 const FAVORITES_SCOPE: ExportScope = {
   identity: true,
   addresses: ALL_CHANNELS,
-  birthday: false,
+  birthday: true,
   photo: false,
   workRels: false,
   personalRels: false,
@@ -193,9 +203,13 @@ async function assembleRecord(
     const displayName = `${data!['firstName'] ?? ''} ${data!['lastName'] ?? ''}`.trim() || (data!['lastName'] ?? key);
 
     if (scope.birthday) {
-      // Prefer the dob vault channel (spec 1.19 Phase 3), fall back to the person field.
+      // ONLY the projected dob vault channel — `addresses` has already been privacy-filtered for
+      // this caller's tier. The former `?? data['dateOfBirth']` fallback read the person document
+      // directly, which bypasses the §A3 formula: it is dead post-strip (persons carry no
+      // dateOfBirth and the rules reject writes that reintroduce it), but on any legacy document
+      // that still had one it would now hand a Protected person's birthday to a plain member.
       const dobAddr = addresses.find((a) => a['addressChannel'] === 'dob');
-      const dob = String(dobAddr?.['dob'] ?? data!['dateOfBirth'] ?? '');
+      const dob = String(dobAddr?.['dob'] ?? '');
       if (dob) {
         const iso = convertDateFormatToString(dob, DateFormat.StoreDate, DateFormat.IsoDate, false);
         if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) bday = iso;

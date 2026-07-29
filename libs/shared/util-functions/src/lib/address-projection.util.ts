@@ -10,6 +10,7 @@ import {
   DirectoryEntry,
   getAddressDirectoryKey,
   getEffectiveAccessorForAddress,
+  isSensitiveScalarChannel,
   OrgCollection,
   PersonCollection,
   PersonModel,
@@ -121,8 +122,14 @@ export function buildDirectoryDoc(
   doc.okey = getAddressDirectoryKey(tenantId, parentKey);
   doc.parentKey = parentKey;
   doc.parentType = parentType;
+  // Sensitive scalar channels never belong in the directory: DirectoryEntry has no ssn/dob/dod
+  // field, so admitting one would only add a valueless entry to every member's contact list —
+  // and it would leak the mere existence of the value. They are served on demand by
+  // getAddressView instead. The guard is explicit rather than implied by the accessor, because
+  // the dob floor is 'registered' since the §A2 amendment and would otherwise pass this filter.
   const visible = addresses.filter((address) =>
     !address.isArchived
+    && !isSensitiveScalarChannel(address.addressChannel ?? '')
     && accessorAllows('registered', getEffectiveAccessorForAddress(address, parentType, person, settings)));
   const projected = parentType === 'person' ? reduceToFavoriteAddresses(visible) : visible;
   doc.entries = projected.map(toDirectoryEntry);
@@ -144,8 +151,13 @@ export function buildDirectoryDoc(
  * field-blanking — no shell docs leak existence metadata).
  *
  * Below-privileged viewers get the same one-per-channel reduction as the
- * materialized directory — the two read paths MUST agree, or the detail view
- * would show more of a person than the list it was opened from.
+ * materialized directory — the two read paths MUST agree on CONTACT channels, or
+ * the detail view would show more of a person than the list it was opened from.
+ *
+ * The sensitive scalar channels are the deliberate exception: this path serves them
+ * (that is how the person form hydrates a shared dob), the directory does not
+ * materialize them. They are never rendered in the contact list on either path
+ * (addresses.store filters them out), so the two cannot visibly disagree.
  */
 export function projectAddressesForViewer(
   addresses: AddressModel[],

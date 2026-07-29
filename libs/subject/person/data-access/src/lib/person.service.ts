@@ -118,13 +118,19 @@ export class PersonService {
   /**
    * Loads the vault-backed ssn/dob/dod values for the person edit form (spec 1.19
    * Phase 4, D9): owner and privileged read the addresses vault directly (the
-   * rules allow it), memberAdmin goes through the getAddressView callable
-   * (privileged tier, D-P4-1), everyone else gets empty values (the form hides
-   * the fields via the privacy gates anyway).
+   * rules allow it), every other authenticated member goes through the
+   * getAddressView callable, which applies the §A3 formula for their tier
+   * server-side and hands back only the channels they may see.
+   *
+   * The callable branch used to be memberAdmin-only, which meant a plain member
+   * got `{}` without a single read — so a dob their colleague had deliberately
+   * shared (usageDateOfBirth: Restricted, tenant floor 'registered') still
+   * rendered as an empty field. Deciding visibility here duplicated the formula
+   * badly; the callable is the one place that owns it.
    */
   public async loadSensitive(personKey: string, currentUser?: UserModel): Promise<SensitivePersonData> {
-    if (!personKey) return {};
-    const isOwner = currentUser?.personKey === personKey;
+    if (!personKey || !currentUser) return {};
+    const isOwner = currentUser.personKey === personKey;
     if (isOwner || hasRole('privileged', currentUser)) {
       const [ssn, dob, dod] = await Promise.all([
         this.readScalarChannel(`person.${personKey}`, 'ssn'),
@@ -133,23 +139,20 @@ export class PersonService {
       ]);
       return { ssn, dob, dod };
     }
-    if (hasRole('memberAdmin', currentUser)) {
-      try {
-        const fn = httpsCallable<{ parentKeys: string[] }, { views: Record<string, AddressModel[]> }>(
-          this.functions, 'getAddressView');
-        const result = await fn({ parentKeys: [`person.${personKey}`] });
-        const addresses = result.data.views[`person.${personKey}`] ?? [];
-        return {
-          ssn: addresses.find((a) => a.addressChannel === 'ssn')?.ssn ?? '',
-          dob: addresses.find((a) => a.addressChannel === 'dob')?.dob ?? '',
-          dod: addresses.find((a) => a.addressChannel === 'dod')?.dod ?? '',
-        };
-      } catch (error) {
-        console.error('PersonService.loadSensitive: getAddressView failed', error);
-        return {};
-      }
+    try {
+      const fn = httpsCallable<{ parentKeys: string[] }, { views: Record<string, AddressModel[]> }>(
+        this.functions, 'getAddressView');
+      const result = await fn({ parentKeys: [`person.${personKey}`] });
+      const addresses = result.data.views[`person.${personKey}`] ?? [];
+      return {
+        ssn: addresses.find((a) => a.addressChannel === 'ssn')?.ssn ?? '',
+        dob: addresses.find((a) => a.addressChannel === 'dob')?.dob ?? '',
+        dod: addresses.find((a) => a.addressChannel === 'dod')?.dod ?? '',
+      };
+    } catch (error) {
+      console.error('PersonService.loadSensitive: getAddressView failed', error);
+      return {};
     }
-    return {};
   }
 
   /** Reads the value of a sensitive scalar-channel address ('' if none exists). */

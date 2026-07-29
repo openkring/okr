@@ -1,4 +1,4 @@
-import { PrivacyAccessor, PrivacySettings, RoleName, Roles, UserModel } from "@okr/shared-models";
+import { getEffectiveAccessorForAddress, PersonPrivacyPreferences, PrivacyAccessor, PrivacySettings, RoleName, Roles, UserModel } from "@okr/shared-models";
 import { die } from "./log.util";
 import { debugMessage } from "./debug.util";
 
@@ -108,6 +108,37 @@ export function isVisibleToUser(privacyAccessor?: PrivacyAccessor, currentUser?:
  */
 export function isSensitiveFieldVisible(privacyAccessor?: PrivacyAccessor, currentUser?: UserModel): boolean {
   return isVisibleToUser(privacyAccessor, currentUser) || hasRole('memberAdmin', currentUser);
+}
+
+/**
+ * Visibility of a vault-backed sensitive field (ssn/dob/dod) on a PERSON form —
+ * the full §A3 formula, not just the tenant floor.
+ *
+ * Gating on the tenant floor alone (`isSensitiveFieldVisible(priv().showDateOfBirth)`)
+ * promised more than the vault delivers: with scs's `showDateOfBirth: 'registered'`
+ * the dob field rendered for every member, while PersonService.loadSensitive —
+ * correctly applying the channel floor and the person's preference — returned
+ * nothing, so the field sat there empty. This is the same computation the server
+ * uses, so the field is shown exactly when it can be filled.
+ *
+ * Owner and memberAdmin bypass the formula: they are the authorized editors of
+ * these values (D9 / D-P4-1 as amended) and read them raw.
+ *
+ * @param channel     the vault channel — 'ssn' | 'dob' | 'dod'
+ * @param person      the person being viewed: their `usage*` preferences and `okey`
+ * @param settings    the tenant's PrivacySettings floors
+ * @param currentUser the viewer
+ */
+export function isVaultFieldVisible(
+  channel: string,
+  person?: Partial<PersonPrivacyPreferences> & { okey?: string },
+  settings?: Partial<PrivacySettings>,
+  currentUser?: UserModel,
+): boolean {
+  if (!currentUser) return false;
+  if (person?.okey && person.okey === currentUser.personKey) return true;   // owner reads their own vault
+  const accessor = getEffectiveAccessorForAddress({ addressChannel: channel }, 'person', person, settings);
+  return isSensitiveFieldVisible(accessor, currentUser);
 }
 
 export function areNotesVisible(currentUser?: UserModel, priv?: PrivacySettings, notes?: string, readonly?: boolean): boolean {

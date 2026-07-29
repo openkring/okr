@@ -1,4 +1,4 @@
-import { PrivacyAccessor, RoleName, Roles, UserModel } from '@okr/shared-models';
+import { PrivacyAccessor, PrivacyUsage, RoleName, Roles, UserModel } from '@okr/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   checkAuthorization,
@@ -8,6 +8,7 @@ import {
   isPrivileged,
   isPrivilegedOr,
   isSensitiveFieldVisible,
+  isVaultFieldVisible,
   isVisibleToUser
 } from './auth.util';
 import * as logUtil from './log.util';
@@ -419,6 +420,54 @@ describe('auth.util', () => {
 
     it('returns false for an undefined user', () => {
       expect(isSensitiveFieldVisible('privileged', undefined)).toBe(false);
+    });
+  });
+
+  describe('isVaultFieldVisible (§A3 formula, not just the tenant floor)', () => {
+    const scsFloors = { showDateOfBirth: 'registered', showTaxId: 'privileged', showDateOfDeath: 'privileged' } as const;
+    const member = (personKey: string) => ({ ...createUserWithRoles({ registered: true }), personKey }) as UserModel;
+
+    it('shows a member the dob of a person who shares it (Restricted + tenant floor registered)', () => {
+      const person = { okey: 'pOther', usageDateOfBirth: PrivacyUsage.Restricted };
+      expect(isVaultFieldVisible('dob', person, scsFloors, member('pMe'))).toBe(true);
+    });
+
+    it('hides the dob of a person who marked it Protected', () => {
+      const person = { okey: 'pOther', usageDateOfBirth: PrivacyUsage.Protected };
+      expect(isVaultFieldVisible('dob', person, scsFloors, member('pMe'))).toBe(false);
+    });
+
+    it('hides the dob from members when the tenant floor is privileged', () => {
+      const person = { okey: 'pOther', usageDateOfBirth: PrivacyUsage.Restricted };
+      expect(isVaultFieldVisible('dob', person, { showDateOfBirth: 'privileged' }, member('pMe'))).toBe(false);
+    });
+
+    it('always shows owners their own vault fields, whatever they chose', () => {
+      const person = { okey: 'pMe', usageDateOfBirth: PrivacyUsage.Protected };
+      expect(isVaultFieldVisible('dob', person, scsFloors, member('pMe'))).toBe(true);
+      expect(isVaultFieldVisible('ssn', person, scsFloors, member('pMe'))).toBe(true);
+    });
+
+    it('shows memberAdmin every vault field (the authorized editor, D9)', () => {
+      const person = { okey: 'pOther', usageDateOfBirth: PrivacyUsage.Protected };
+      const admin = { ...createUserWithRoles({ memberAdmin: true }), personKey: 'pAdmin' } as UserModel;
+      expect(isVaultFieldVisible('dob', person, scsFloors, admin)).toBe(true);
+      expect(isVaultFieldVisible('ssn', person, scsFloors, admin)).toBe(true);
+      expect(isVaultFieldVisible('dod', person, scsFloors, admin)).toBe(true);
+    });
+
+    it('keeps ssn and dod away from members regardless of the dob amendment', () => {
+      const person = { okey: 'pOther', usageDateOfBirth: PrivacyUsage.Public };
+      expect(isVaultFieldVisible('ssn', person, scsFloors, member('pMe'))).toBe(false);
+      expect(isVaultFieldVisible('dod', person, scsFloors, member('pMe'))).toBe(false);
+    });
+
+    it('treats a legacy person doc without usage* as Restricted', () => {
+      expect(isVaultFieldVisible('dob', { okey: 'pOther' }, scsFloors, member('pMe'))).toBe(true);
+    });
+
+    it('returns false without a user', () => {
+      expect(isVaultFieldVisible('dob', { okey: 'pOther' }, scsFloors, undefined)).toBe(false);
     });
   });
 });
