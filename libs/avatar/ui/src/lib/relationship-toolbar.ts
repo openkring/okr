@@ -1,11 +1,11 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonCol, IonGrid, IonItem, IonLabel, IonRow, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { ColorsIonic } from '@okr/shared-categories';
 
 import { AvatarInfo, CategoryListModel, ColorIonic, UserModel } from '@okr/shared-models';
-import { CategoryPlainNamePipe } from '@okr/shared-pipes';
+import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
 
 import { OkrAvatar } from './avatar';
@@ -14,9 +14,9 @@ import { OkrAvatar } from './avatar';
   selector: 'okr-relationship-toolbar',
   standalone: true,
   imports: [
-    CategoryPlainNamePipe,
+    CategoryPlainNamePipe, SvgIconPipe,
     OkrAvatar,
-    IonToolbar, IonItem, IonGrid, IonRow, IonCol, IonLabel
+    IonToolbar, IonItem, IonGrid, IonRow, IonCol, IonLabel, IonIcon
   ],
   template: `
   <ion-toolbar [color]="color() | categoryPlainName:colorsIonic">
@@ -36,7 +36,8 @@ import { OkrAvatar } from './avatar';
         </ion-col>
         <ion-col size="2" class="ion-align-items-center ion-justify-content-center">
           <ion-item lines="none" [color]="color() | categoryPlainName:colorsIonic">
-            <ion-label>{{ relDesc2() }}</ion-label>
+            <ion-label class="ion-hide-sm-down">{{ relDesc2() }}</ion-label>
+            <ion-icon class="ion-hide-sm-up rel-arrow" src="{{ 'arrow-forward' | svgIcon }}" />
           </ion-item>
         </ion-col>
         <ion-col size="5" class="ion-align-items-center ion-justify-content-center">
@@ -52,6 +53,7 @@ import { OkrAvatar } from './avatar';
     ion-thumbnail { margin: auto; height: 100px; text-align: right; position: relative;}
     .title { margin: auto; width: 100%; text-align: center;  }
     ion-icon { font-size: 80px;   }
+    .rel-arrow { font-size: 24px; margin: auto; }
     okr-avatar { width: 100%; height: 100%; }
   `]
 })
