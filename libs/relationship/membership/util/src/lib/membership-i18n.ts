@@ -43,7 +43,6 @@ export const MEMBERSHIP_I18N_KEYS = {
   category_label_new:             PFX + 'category.label.new',
   category_abbreviation:          PFX + 'category.abbreviation',
   category_helper:                PFX + 'category.helper',
-  category_name:                  PFX + 'category.name',
   category_change_label:          PFX + 'category.change.label',
   category_change_helper:         PFX + 'category.change.helper',
   category_change_helper_date:    PFX + 'category.change.helperDate',

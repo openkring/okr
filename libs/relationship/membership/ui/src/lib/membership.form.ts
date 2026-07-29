@@ -1,3 +1,4 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
 
@@ -5,8 +6,9 @@ import { BexioIdMask } from '@okr/shared-config';
 import { DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MSTATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_TAGS, END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { AppStore, OrgSelectModal, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { CategoryListModel, MembershipModel, PersonModel, PrivacySettings, RoleName, UserModel, REBATE_REASON_VALUES } from '@okr/shared-models';
+import { TranslatePipe } from '@okr/shared-i18n';
 import { CategorySelect, Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { areTagsVisible, coerceBoolean, getFullName, hasRole, isOrg, isPerson } from '@okr/shared-util-core';
+import { areTagsVisible, coerceBoolean, getFullName, getItemLabel, hasRole, isOrg, isPerson } from '@okr/shared-util-core';
 
 import { MembershipI18n, membershipValidations } from '@okr/relationship-membership-util';
 import { AvatarPipe } from '@okr/avatar-ui';
@@ -15,6 +17,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
   selector: 'okr-membership-form',
   standalone: true,
   imports: [
+    AsyncPipe, TranslatePipe,
     AvatarPipe,
     TextInput, DateInput,
     Chips, NotesInput, CategorySelect, NumberInput, StringSelect,
@@ -101,7 +104,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
                     <ion-col size="12" size-md="6">
                       <ion-item lines="none">
                         <ion-label>{{ i18n().category_label() }}:</ion-label>
-                        <ion-label>{{ i18n().category_name() }}</ion-label>
+                        <ion-label>{{ categoryLabel() | translate | async }}</ion-label>
                       </ion-item>
                       <ion-item lines="none">
                         <ion-note>{{ i18n().category_helper() }}</ion-note>
@@ -117,12 +120,14 @@ import { AvatarPipe } from '@okr/avatar-ui';
                       </ion-item>
                     </ion-col>
 
-                    <ion-col size="12" size-md="6">
-                      <okr-number-input [i18n]="rebateI18n()" [value]="rebate()" (valueChange)="onFieldChange('rebate', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-string-select [i18n]="rebateReasonI18n()" [selectedString]="rebateReason()" (selectedStringChange)="onFieldChange('rebateReason', $event)" [readOnly]="readOnly()" [stringList]="rebateReasons" />
-                    </ion-col>
+                    @if(canSeeFinancials()) {
+                      <ion-col size="12" size-md="6">
+                        <okr-number-input [i18n]="rebateI18n()" [value]="rebate()" (valueChange)="onFieldChange('rebate', $event)" [maxLength]=6 [readOnly]="isReadOnly()" />
+                      </ion-col>
+                      <ion-col size="12" size-md="6">
+                        <okr-string-select [i18n]="rebateReasonI18n()" [selectedString]="rebateReason()" (selectedStringChange)="onFieldChange('rebateReason', $event)" [readOnly]="readOnly()" [stringList]="rebateReasons" />
+                      </ion-col>
+                    }
                   </ion-row>
                 </ion-grid>
               }
@@ -130,17 +135,33 @@ import { AvatarPipe } from '@okr/avatar-ui';
               <!--------------------------------------------------- properties --------------------------------------------------->
               <ion-grid>
                 <ion-row>
-                  <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="memberIdI18n()" [value]="memberId()" (valueChange)="onFieldChange('memberId', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                  </ion-col>
+                  <!-- memberAdmin maintains the memberId; everyone else only sees it once it is set, read-only -->
+                  @if(hasRole('memberAdmin')) {
+                    <ion-col size="12" size-md="6">
+                      <okr-text-input [i18n]="memberIdI18n()" [value]="memberId()" (valueChange)="onFieldChange('memberId', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                    </ion-col>
+                  } @else if(memberId().length > 0) {
+                    <ion-col size="12" size-md="6">
+                      <okr-text-input [i18n]="memberIdI18n()" [value]="memberId()" [maxLength]=20 [readOnly]="true" />
+                    </ion-col>
+                  }
 
-                  <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="memberBexioIdI18n()" [value]="memberBexioId()" (valueChange)="onFieldChange('memberBexioId', $event)" [maxLength]=6 [mask]="bexioMask" [readOnly]="isReadOnly()" />
-                  </ion-col>
+                  @if(canSeeFinancials()) {
+                    <ion-col size="12" size-md="6">
+                      <okr-text-input [i18n]="memberBexioIdI18n()" [value]="memberBexioId()" (valueChange)="onFieldChange('memberBexioId', $event)" [maxLength]=6 [mask]="bexioMask" [readOnly]="isReadOnly()" />
+                    </ion-col>
+                  }
 
-                  <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="memberAbbreviationI18n()" [value]="memberAbbreviation()" (valueChange)="onFieldChange('memberAbbreviation', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
-                  </ion-col>
+                  <!-- same as memberId: maintained by memberAdmin, read-only and only shown when set for everyone else -->
+                  @if(hasRole('memberAdmin')) {
+                    <ion-col size="12" size-md="6">
+                      <okr-text-input [i18n]="memberAbbreviationI18n()" [value]="memberAbbreviation()" (valueChange)="onFieldChange('memberAbbreviation', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
+                    </ion-col>
+                  } @else if(memberAbbreviation().length > 0) {
+                    <ion-col size="12" size-md="6">
+                      <okr-text-input [i18n]="memberAbbreviationI18n()" [value]="memberAbbreviation()" [maxLength]=20 [readOnly]="true" />
+                    </ion-col>
+                  }
 
                   @if(hasRole('memberAdmin')) {
                   <ion-col size="12" size-md="6">
@@ -223,6 +244,8 @@ export class MembershipForm {
   protected dateOfEntry = linkedSignal(() => this.formData().dateOfEntry ?? DEFAULT_DATE);
   protected dateOfExit = linkedSignal(() => this.formData().dateOfExit ?? DEFAULT_DATE);
   protected currentMembershipCategoryItem = linkedSignal(() => this.formData().category ?? '');
+  // the configured category item (e.g. A1, J, K); resolved to its i18n key if the category is translated
+  protected categoryLabel = computed(() => getItemLabel(this.membershipCategories(), this.formData().category));
   protected orgFunction = linkedSignal(() => this.formData().orgFunction ?? '');
   protected order = computed(() => this.formData().order ?? 0);
   protected relLog = computed(() => this.formData().relLog ?? '');
@@ -231,7 +254,7 @@ export class MembershipForm {
   protected rebateReason = computed(() => this.formData().rebateReason ?? 'none');
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
-  protected membershipState = computed(() => this.formData().category ?? DEFAULT_MSTATE);
+  protected membershipState = computed(() => this.formData().state ?? DEFAULT_MSTATE);
   protected i18nBase = computed(() => this.membershipCategories().i18n);
   protected name = computed(() => this.membershipCategories().name);
   protected readonly locale = linkedSignal(() => this.appStore.appConfig().locale);
@@ -319,6 +342,14 @@ export class MembershipForm {
   /******************************* helpers *************************************** */
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
+  }
+
+  /**
+   * Fee-related fields (rebate, rebate reason, Bexio id) are only shown to the roles that
+   * actually maintain the member fees. A plain registered member must not see them.
+   */
+  protected canSeeFinancials(): boolean {
+    return this.hasRole('memberAdmin') || this.hasRole('treasurer');
   }
 
   protected areTagsVisible(): boolean {

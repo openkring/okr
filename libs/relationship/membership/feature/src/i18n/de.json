@@ -84,7 +84,6 @@
     },
     "abbreviation": "Kat.",
     "helper": "Die Mitgliederkategorie ist hier fix. Wenn du sie ändern willst, wähle die Aktion Kategorien-Wechsel in der Listen-Darstellung.",
-    "name": "Name der Kategorie",
     "change": {
       "label": "Mitglieder-Kategorie ändern",
       "helper": "Auf der linken Seite siehst du die aktuelle Mitgliederkategorie. Wähle auf der rechten Seite die neue Kategorie aus, in die das Mitglied wechseln soll.",
