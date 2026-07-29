@@ -39,6 +39,16 @@ service firebase.storage {
     function isPrivileged() {
       return hasRole('admin') || hasRole('privileged');
     }
+    // CF-only sub-prefix under tenant/{tenantId}/ — currently `private/exports/` (D-P5-1
+    // subject-access export ZIPs: AHV number, dob, IBAN in plaintext). NOTE: Storage
+    // Security Rules OR every matching `match` block's `allow` condition together, so a
+    // sibling `allow read, write: if false` block for this sub-path could NOT by itself
+    // override the broader `tenant/{tenantId}/{path=**}` grant below — both blocks match
+    // the same object, and the broader one would still independently grant `read`. The
+    // guard therefore has to live INSIDE that broader rule's own condition (see below).
+    function isPrivatePath(path) {
+      return path.matches('^private/.*');
+    }
     // Upload size cap (only valid when request.resource is present, i.e. create/update).
     function sizeOk() {
       return request.resource.size < 25 * 1024 * 1024;   // 25 MB cap
@@ -53,10 +63,27 @@ service firebase.storage {
     // confirmed and verified against real SDK uploads in staging.
 
     // ---- tenant-scoped data (dominant prefix) ----
+    // `!isPrivatePath(path)` carves the CF-only `private/` sub-prefix (see above) out of
+    // this grant. This is NOT optional decoration: the "specific match wins" mental model
+    // does not apply to Storage rules (see isPrivatePath's comment), so excluding the
+    // sub-path from THIS rule's own condition is the only way the deny below actually
+    // takes effect instead of being silently OR'd away.
     match /tenant/{tenantId}/{path=**} {
-      allow read:           if inTenant(tenantId);
-      allow create, update: if inTenant(tenantId) && sizeOk();
-      allow delete:         if inTenant(tenantId);
+      allow read:           if inTenant(tenantId) && !isPrivatePath(path);
+      allow create, update: if inTenant(tenantId) && !isPrivatePath(path) && sizeOk();
+      allow delete:         if inTenant(tenantId) && !isPrivatePath(path);
+    }
+
+    // ---- CF-only private data (D-P5-1): subject-access export ZIPs ----
+    // Contains a member's AHV number, date of birth and IBAN in plaintext — must never be
+    // client-readable. Written only by `exportMyData`, deleted only by `reapPrivacyExports`
+    // (both Cloud Functions, which bypass these rules via the Admin SDK); members are
+    // served exclusively through the 15-minute signed URL `exportMyData` returns. This
+    // block is redundant with the exclusion above (nothing else grants this path either,
+    // so the default-deny catch-all at the bottom would already deny it) but is kept
+    // explicit given the sensitivity of the data at this path.
+    match /tenant/{tenantId}/private/{path=**} {
+      allow read, write: if false;
     }
 
     // ---- esign (plural prefix) ----

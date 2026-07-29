@@ -28,6 +28,7 @@ import * as Esign from './esign';
 import * as Forms from './forms';
 import * as Vcard from './vcard';
 import * as Person from './person';
+import * as Privacy from './privacy';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -252,3 +253,8 @@ export { generatePain001 } from './payment/generate-pain001';
 export { generateInvoicePdf } from './payment/generate-invoice-pdf';
 export { parseQrInvoice } from './payment/parse-qr-invoice';
 export { generateDunningPdf } from './payment/generate-dunning-pdf';
+
+// privacy 1.19 Phase 5B: GDPR/revDSG subject-access export delivery (D-P5-1) —
+// exportMyData zips + signs the caller's own export, reapPrivacyExports reaps stale artifacts
+export const exportMyData = Privacy.exportMyData;
+export const reapPrivacyExports = Privacy.reapPrivacyExports;
