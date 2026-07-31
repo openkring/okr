@@ -95,3 +95,38 @@ export function findAllByField<T>(items$: Observable<T[]>, fieldName: string | u
     })
   );
 }
+/* -------------------------- search-index owner segment -------------------------- */
+/**
+ * The `o:` segment of a search index carries the resolved name of the record's
+ * owner, so a list grouped by owner can be searched by owner name.
+ *
+ * It is always the LAST segment, and it is the only one a Cloud Function owns:
+ * the client cannot keep it current (a person rename would stale every one of
+ * their address indexes), and the value segments cannot be rebuilt server-side
+ * without dragging Angular into the functions bundle. So the CF patches this
+ * segment alone — hence a pure string helper shared by both sides.
+ */
+const OWNER_SEGMENT = ' o:';
+
+/**
+ * Replace (or append) the ` o:<ownerName>` segment of a search index.
+ * @param index the existing index string (may predate the segment)
+ * @param ownerName the resolved owner name; `o:` is stripped from it so a later
+ *   call cannot mistake part of the name for the segment marker
+ */
+export function setIndexOwnerName(index: string, ownerName: string): string {
+  const base = stripIndexOwnerName(index);
+  return `${base}${OWNER_SEGMENT}${(ownerName ?? '').replace(/o:/g, '').trim()}`;
+}
+
+/** The index without its owner segment. */
+export function stripIndexOwnerName(index: string): string {
+  const at = (index ?? '').lastIndexOf(OWNER_SEGMENT);
+  return at === -1 ? (index ?? '') : index.substring(0, at);
+}
+
+/** The owner name carried by a search index, or '' when it has no owner segment. */
+export function getIndexOwnerName(index: string): string {
+  const at = (index ?? '').lastIndexOf(OWNER_SEGMENT);
+  return at === -1 ? '' : index.substring(at + OWNER_SEGMENT.length);
+}

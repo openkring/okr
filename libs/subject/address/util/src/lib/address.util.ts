@@ -366,21 +366,28 @@ export function computeFavoriteAddressInfo(addresses: AddressModel[]): {
 /**
  * Create an index entry for a given address based on its values.
  *
- * `p:` carries the parentKey (`person.<okey>` / `org.<okey>`). Without it the
- * global address list — which groups its rows by owner — could not be searched
- * by owner at all: typing a person's name matched only those addresses whose
- * VALUE happened to contain it (an email or a website), silently returning a
- * nonsense subset of that person's addresses.
+ * `p:` carries the parentKey (`person.<okey>` / `org.<okey>`) and `o:` the
+ * owner's resolved name. Without them the global address list — which groups its
+ * rows by owner — could not be searched by owner at all: typing a person's name
+ * matched only those addresses whose VALUE happened to contain it (an email or a
+ * website), silently returning a nonsense subset of that person's addresses.
+ *
+ * `ownerName` is resolved server-side by `onAddressChange`, which is the only
+ * place that sees every write path and can keep the name current: a person or
+ * org rename would otherwise leave every one of their address indexes stale
+ * (`onPersonChange`/`onOrgChange` re-index on rename). Client callers may omit
+ * it — the CF fills it in on the next write.
  *
  * The sensitive scalar channels (ssn/dob/dod) are deliberately NOT indexed by
  * value — an AHV number or a birth date must never end up in a substring-
- * searchable field (spec 1.19). They keep the `p:` part, so they can still be
+ * searchable field (spec 1.19). They keep `p:` and `o:`, so they can still be
  * found by owner.
  * @param address the address for which to create the index
+ * @param ownerName the resolved name of the parent person/org (optional)
  * @returns the index string
  */
-export function getAddressIndex(address: AddressModel): string {
-  return `n:${getAddressIndexValue(address)} p:${address.parentKey ?? ''}`;
+export function getAddressIndex(address: AddressModel, ownerName = ''): string {
+  return `n:${getAddressIndexValue(address)} p:${address.parentKey ?? ''} o:${ownerName.trim()}`;
 }
 
 /**
@@ -404,7 +411,7 @@ function getAddressIndexValue(address: AddressModel): string {
 }
 
 export function getAddressIndexInfo(): string {
-  return 'n:addressValue p:parentKey';
+  return 'n:addressValue p:parentKey o:ownerName';
 }
 
 

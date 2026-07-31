@@ -12,10 +12,13 @@ import {
   getAllReservationsOfReserver, getAllReservationsOfResource,
   getAllWorkrelsOfObject, getAllWorkrelsOfSubject,
   hasChanged,
+  isIndexOnlyChange,
   reapDeletedPerson,
   rebuildDirectoryForTenant,
+  syncAddressOwnerName,
   syncBirthYearReplicas,
   syncDateOfDeathReplicas,
+  syncOwnerNameOnAddresses,
   updateFavoriteZipCode,
   writeAddressDirectory
 } from "@okr/shared-util-functions";
@@ -109,6 +112,22 @@ export const onAddressChange = onDocumentWritten(
       // dob/dod (and an archive, where the channel is unchanged but the value is gone)
       const touchedChannels = new Set([before?.addressChannel, after?.addressChannel].filter(Boolean));
       const parentKeys = [...new Set([before?.parentKey, after?.parentKey].filter((key): key is string => !!key))];
+
+      // Stamp the owner's name into the search index so the admin address list —
+      // which groups its rows by owner — is searchable by owner. Only the client
+      // can build the value segments (formatIban lives in an Angular lib), so it
+      // writes those and we own `o:` alone. Writing back into `addresses` retriggers
+      // this function; syncAddressOwnerName read-compares and the second pass is a
+      // no-op, exactly like demoteFavorites below.
+      if (after) {
+        await syncAddressOwnerName(firestore, addressId, after);
+      }
+      // …and skip the rest on the invocation that write-back caused: no replication
+      // target derives from `index`, so there is nothing left to sync.
+      if (before && after && isIndexOnlyChange(before, after)) {
+        logger.debug(`address ${addressId}: index-only change, skipping replication`);
+        return;
+      }
 
       for (const parentKey of parentKeys) {
         const addresses = await getActiveAddresses(firestore, parentKey);
@@ -274,6 +293,17 @@ export const onPersonChange = onDocumentWritten(
     }
     const source = `person ${personId}`;
 
+    // A rename stales the `o:` segment of every one of this person's address
+    // indexes — they would silently drop out of an owner-name search until the
+    // next write to each address. Diff first: person writes are frequent.
+    if (!before || before.firstName !== person.firstName || before.lastName !== person.lastName) {
+      try {
+        await syncOwnerNameOnAddresses(firestore, `person.${personId}`);
+      } catch (error) {
+        logger.error(`Error refreshing the address index owner name of person ${personId}:`, { error });
+      }
+    }
+
     // Each relation type is synced independently. A failure in one (e.g. a missing
     // index) is logged but must NOT prevent the others from being updated.
 
@@ -363,6 +393,16 @@ export const onOrgChange = onDocumentWritten(
         await writeAddressDirectory(firestore, `org.${orgId}`);
       } catch (error) {
         logger.error(`Error rebuilding address directory for org ${orgId}:`, { error });
+      }
+    }
+
+    // a rename stales the `o:` segment of every address index of this org —
+    // same rationale as onPersonChange.
+    if (afterOrg && (!beforeOrg || beforeOrg['name'] !== afterOrg['name'])) {
+      try {
+        await syncOwnerNameOnAddresses(firestore, `org.${orgId}`);
+      } catch (error) {
+        logger.error(`Error refreshing the address index owner name of org ${orgId}:`, { error });
       }
     }
 

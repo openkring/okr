@@ -13,7 +13,7 @@ import { AddressCollection, AddressModel, OkrModel, CalEventCollection, CalEvent
   PersonModel, ReservationCollection, ReservationModel, SessionCollection, SessionModel, TaskCollection, TransferCollection, UserCollection,
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel,
   AvatarInfo, AVATAR_INFO_SHAPE, CategoryListModel, DbQuery, ResponsibilityModel, ResponsibilityCollection } from '@okr/shared-models';
-import { getCategoryIndex, getSystemQuery, removeProperty } from '@okr/shared-util-core';
+import { getCategoryIndex, getFullName, getSystemQuery, removeProperty } from '@okr/shared-util-core';
 import { confirm } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
@@ -552,7 +552,10 @@ export const AocDataStore = signalStore(
         console.log('AocDataStore.createIndex: creating indexes for ' + store.modelType() + ' models...');
         switch (store.modelType()) {
           case 'address':
-            this.createIndex<AddressModel>(AddressCollection, getAddressIndex, 'parentKey', true);
+            // resolve the owner name here rather than waiting for onAddressChange to
+            // stamp it — a backfill run should leave every index complete in one pass
+            this.createIndex<AddressModel>(AddressCollection,
+              (a) => getAddressIndex(a, this.getOwnerName(a.parentKey)), 'parentKey', true);
             break;
           case 'comment':
             this.createIndex<CommentModel>(CommentCollection, getCommentIndex);
@@ -633,6 +636,19 @@ export const AocDataStore = signalStore(
             console.log('AocDataStore.createIndexesOnCollection: unknown model type, cannot create index.');
             return;
         }
+      },
+
+      /** The display name behind an address `parentKey` (`person.<okey>` / `org.<okey>`). */
+      getOwnerName(parentKey: string): string {
+        const [modelType, key] = (parentKey ?? '').split('.');
+        if (modelType === 'person') {
+          const person = store.appStore.getPerson(key) as PersonModel | undefined;
+          return person ? getFullName(person.firstName, person.lastName) : '';
+        }
+        if (modelType === 'org') {
+          return (store.appStore.getOrg(key) as OrgModel | undefined)?.name ?? '';
+        }
+        return '';
       },
 
       /**

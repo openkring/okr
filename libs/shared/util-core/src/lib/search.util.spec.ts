@@ -10,7 +10,10 @@ import {
   findByField,
   findByKey,
   findUserByPersonKey,
-  getQuery
+  getIndexOwnerName,
+  getQuery,
+  setIndexOwnerName,
+  stripIndexOwnerName
 } from './search.util';
 
 // Mock Firebase Firestore
@@ -647,5 +650,39 @@ describe('search.util', () => {
       // Test user search with edge cases
       expect(findUserByPersonKey([], '')).toBeUndefined();
     });
+  });
+});
+describe('search index owner segment', () => {
+  it('appends the owner segment to an index that has none', () => {
+    expect(setIndexOwnerName('n:a@b.ch p:person.kaiser', 'Bruno Kaiser'))
+      .toBe('n:a@b.ch p:person.kaiser o:Bruno Kaiser');
+  });
+
+  it('replaces an existing owner segment rather than stacking a second one', () => {
+    const once = setIndexOwnerName('n:a@b.ch p:person.kaiser', 'Bruno Kaiser');
+    expect(setIndexOwnerName(once, 'Bruno Meier')).toBe('n:a@b.ch p:person.kaiser o:Bruno Meier');
+  });
+
+  it('is idempotent — the CF write-back must not retrigger itself forever', () => {
+    const once = setIndexOwnerName('n:a@b.ch p:person.kaiser', 'Bruno Kaiser');
+    expect(setIndexOwnerName(once, 'Bruno Kaiser')).toBe(once);
+  });
+
+  it('keeps a name containing spaces intact and round-trips it', () => {
+    const index = setIndexOwnerName('n:x p:org.scs', 'Seeclub Stäfa');
+    expect(getIndexOwnerName(index)).toBe('Seeclub Stäfa');
+    expect(stripIndexOwnerName(index)).toBe('n:x p:org.scs');
+  });
+
+  it('clears the segment for an unresolvable owner instead of leaving it stale', () => {
+    const index = setIndexOwnerName('n:x p:person.gone o:Old Name', '');
+    expect(index).toBe('n:x p:person.gone o:');
+    expect(getIndexOwnerName(index)).toBe('');
+  });
+
+  it('tolerates an empty index and a name carrying the segment marker', () => {
+    expect(setIndexOwnerName('', 'Bob')).toBe(' o:Bob');
+    expect(getIndexOwnerName('n:x p:person.a')).toBe('');
+    expect(setIndexOwnerName('n:x p:person.a', 'Bob o: Smith')).toBe('n:x p:person.a o:Bob  Smith');
   });
 });

@@ -360,18 +360,18 @@ describe('getAddressIndex', () => {
 
   it('appends the parentKey so the list can be searched by owner', () => {
     expect(getAddressIndex(address({ addressChannel: 'email', email: 'bruno@bkaiser.ch' })))
-      .toBe('n:bruno@bkaiser.ch p:person.kaiser');
+      .toBe('n:bruno@bkaiser.ch p:person.kaiser o:');
   });
 
   it('indexes every contact channel by value', () => {
     expect(getAddressIndex(address({ addressChannel: 'phone', phone: '+41 79 790 8929' })))
-      .toBe('n:+41797908929 p:person.kaiser');
+      .toBe('n:+41797908929 p:person.kaiser o:');
     expect(getAddressIndex(address({ addressChannel: 'web', url: 'https://www.brunokaiser.ch' })))
-      .toBe('n:https://www.brunokaiser.ch p:person.kaiser');
+      .toBe('n:https://www.brunokaiser.ch p:person.kaiser o:');
     expect(getAddressIndex(address({
       addressChannel: 'postal', streetName: 'Rainstrasse', streetNumber: '65',
       countryCode: 'CH', zipCode: '8712', city: 'Stäfa'
-    }))).toBe('n:Rainstrasse65CH8712Stäfa p:person.kaiser');
+    }))).toBe('n:Rainstrasse65CH8712Stäfa p:person.kaiser o:');
   });
 
   it('finds every address of an owner with one parentKey search term', () => {
@@ -379,21 +379,51 @@ describe('getAddressIndex', () => {
       address({ addressChannel: 'phone', phone: '+41 79 790 8929' }),
       address({ addressChannel: 'postal', streetName: 'Rainstrasse', zipCode: '8712', city: 'Stäfa' }),
       address({ addressChannel: 'email', email: 'bruno@bkaiser.ch' }),
-    ].map(getAddressIndex);
+    ].map((a) => getAddressIndex(a));
     expect(addresses.every((index) => index.includes('person.kaiser'))).toBe(true);
   });
 
   it('never indexes the value of a sensitive scalar channel', () => {
     expect(getAddressIndex(address({ addressChannel: 'ssn', ssn: '7562923183107' })))
-      .toBe('n: p:person.kaiser');
+      .toBe('n: p:person.kaiser o:');
     expect(getAddressIndex(address({ addressChannel: 'dob', dob: '19630412' })))
-      .toBe('n: p:person.kaiser');
+      .toBe('n: p:person.kaiser o:');
     expect(getAddressIndex(address({ addressChannel: 'dod', dod: '20240101' })))
-      .toBe('n: p:person.kaiser');
+      .toBe('n: p:person.kaiser o:');
   });
 
   it('tolerates fields missing on legacy documents (Firestore reads skip model defaults)', () => {
     const legacy = { addressChannel: 'phone', parentKey: 'person.kaiser' } as AddressModel;
-    expect(getAddressIndex(legacy)).toBe('n: p:person.kaiser');
+    expect(getAddressIndex(legacy)).toBe('n: p:person.kaiser o:');
+  });
+});
+
+describe('getAddressIndex — owner segment', () => {
+  const address = (overrides: Partial<AddressModel>): AddressModel =>
+    Object.assign(new AddressModel('tenant-1'), { parentKey: 'person.kaiser' }, overrides);
+
+  it('carries the resolved owner name so the list can be searched by name', () => {
+    expect(getAddressIndex(address({ addressChannel: 'phone', phone: '+41 79 790 8929' }), 'Bruno Kaiser'))
+      .toBe('n:+41797908929 p:person.kaiser o:Bruno Kaiser');
+  });
+
+  it('finds every address of an owner by name, whatever the channel', () => {
+    const indexes = [
+      address({ addressChannel: 'phone', phone: '+41 79 790 8929' }),
+      address({ addressChannel: 'postal', streetName: 'Rainstrasse', city: 'Stäfa' }),
+      address({ addressChannel: 'bankaccount', iban: 'CH98 0070 0112 9000 69345' }),
+      address({ addressChannel: 'ssn', ssn: '7562923183107' }),
+    ].map((a) => getAddressIndex(a, 'Bruno Kaiser'));
+    expect(indexes.every((i) => i.toLowerCase().includes('bruno'))).toBe(true);
+  });
+
+  it('defaults to an empty owner segment when no name is supplied', () => {
+    expect(getAddressIndex(address({ addressChannel: 'email', email: 'a@b.ch' })))
+      .toBe('n:a@b.ch p:person.kaiser o:');
+  });
+
+  it('trims the owner name', () => {
+    expect(getAddressIndex(address({ addressChannel: 'email', email: 'a@b.ch' }), '  Bruno Kaiser  '))
+      .toBe('n:a@b.ch p:person.kaiser o:Bruno Kaiser');
   });
 });
