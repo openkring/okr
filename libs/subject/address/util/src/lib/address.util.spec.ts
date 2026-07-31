@@ -3,7 +3,7 @@ import { AddressModel, UserModel } from '@okr/shared-models';
 import { getCountryName } from '@okr/shared-util-core';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
-import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, directoryEntryToAddress, getWebUrl, normalizeAddressValue, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyAddress, stringifyPostalAddress } from './address.util';
+import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, directoryEntryToAddress, getAddressIndex, getWebUrl, normalizeAddressValue, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyAddress, stringifyPostalAddress } from './address.util';
 
 // Mock all external dependencies
 vi.mock('@capacitor/browser', () => ({ Browser: { open: vi.fn() } }));
@@ -350,5 +350,50 @@ describe('shouldBecomeFavorite', () => {
   it('never flags a CC or archived address itself', () => {
     expect(shouldBecomeFavorite(address({ addressChannel: 'email', isCc: true }), [])).toBe(false);
     expect(shouldBecomeFavorite(address({ addressChannel: 'email', isArchived: true }), [])).toBe(false);
+  });
+});
+
+describe('getAddressIndex', () => {
+  const tenantId = 'tenant-1';
+  const address = (overrides: Partial<AddressModel>): AddressModel =>
+    Object.assign(new AddressModel(tenantId), { parentKey: 'person.kaiser' }, overrides);
+
+  it('appends the parentKey so the list can be searched by owner', () => {
+    expect(getAddressIndex(address({ addressChannel: 'email', email: 'bruno@bkaiser.ch' })))
+      .toBe('n:bruno@bkaiser.ch p:person.kaiser');
+  });
+
+  it('indexes every contact channel by value', () => {
+    expect(getAddressIndex(address({ addressChannel: 'phone', phone: '+41 79 790 8929' })))
+      .toBe('n:+41797908929 p:person.kaiser');
+    expect(getAddressIndex(address({ addressChannel: 'web', url: 'https://www.brunokaiser.ch' })))
+      .toBe('n:https://www.brunokaiser.ch p:person.kaiser');
+    expect(getAddressIndex(address({
+      addressChannel: 'postal', streetName: 'Rainstrasse', streetNumber: '65',
+      countryCode: 'CH', zipCode: '8712', city: 'Stäfa'
+    }))).toBe('n:Rainstrasse65CH8712Stäfa p:person.kaiser');
+  });
+
+  it('finds every address of an owner with one parentKey search term', () => {
+    const addresses = [
+      address({ addressChannel: 'phone', phone: '+41 79 790 8929' }),
+      address({ addressChannel: 'postal', streetName: 'Rainstrasse', zipCode: '8712', city: 'Stäfa' }),
+      address({ addressChannel: 'email', email: 'bruno@bkaiser.ch' }),
+    ].map(getAddressIndex);
+    expect(addresses.every((index) => index.includes('person.kaiser'))).toBe(true);
+  });
+
+  it('never indexes the value of a sensitive scalar channel', () => {
+    expect(getAddressIndex(address({ addressChannel: 'ssn', ssn: '7562923183107' })))
+      .toBe('n: p:person.kaiser');
+    expect(getAddressIndex(address({ addressChannel: 'dob', dob: '19630412' })))
+      .toBe('n: p:person.kaiser');
+    expect(getAddressIndex(address({ addressChannel: 'dod', dod: '20240101' })))
+      .toBe('n: p:person.kaiser');
+  });
+
+  it('tolerates fields missing on legacy documents (Firestore reads skip model defaults)', () => {
+    const legacy = { addressChannel: 'phone', parentKey: 'person.kaiser' } as AddressModel;
+    expect(getAddressIndex(legacy)).toBe('n: p:person.kaiser');
   });
 });

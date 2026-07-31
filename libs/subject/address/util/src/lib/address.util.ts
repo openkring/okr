@@ -2,7 +2,7 @@ import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { ToastController } from '@ionic/angular';
 
-import { AddressModel, DirectoryEntry, UserModel } from '@okr/shared-models';
+import { AddressModel, DirectoryEntry, isSensitiveScalarChannel, UserModel } from '@okr/shared-models';
 import { copyToClipboard, formatIban, formatPhoneNumber, IbanFormat, showToast } from '@okr/shared-util-angular';
 import { die, getCountryName, isType, replaceEndingSlash, replaceSubstring } from '@okr/shared-util-core';
 
@@ -365,26 +365,46 @@ export function computeFavoriteAddressInfo(addresses: AddressModel[]): {
 /*-------------------------- search index --------------------------------*/
 /**
  * Create an index entry for a given address based on its values.
+ *
+ * `p:` carries the parentKey (`person.<okey>` / `org.<okey>`). Without it the
+ * global address list — which groups its rows by owner — could not be searched
+ * by owner at all: typing a person's name matched only those addresses whose
+ * VALUE happened to contain it (an email or a website), silently returning a
+ * nonsense subset of that person's addresses.
+ *
+ * The sensitive scalar channels (ssn/dob/dod) are deliberately NOT indexed by
+ * value — an AHV number or a birth date must never end up in a substring-
+ * searchable field (spec 1.19). They keep the `p:` part, so they can still be
+ * found by owner.
  * @param address the address for which to create the index
  * @returns the index string
  */
 export function getAddressIndex(address: AddressModel): string {
+  return `n:${getAddressIndexValue(address)} p:${address.parentKey ?? ''}`;
+}
+
+/**
+ * The value part of the search index. Every field is coalesced: Firestore reads
+ * skip model defaults, so a legacy document can be missing any of them.
+ */
+function getAddressIndexValue(address: AddressModel): string {
+  if (isSensitiveScalarChannel(address.addressChannel)) return '';
   switch (address.addressChannel) {
-    case 'phone': 
-      return `n:${address.phone.replace(/\s/g, '')}`;
-    case 'email': 
-      return `n:${address.email}`;
-    case 'postal': 
-      return `n:${address.streetName}${address.streetNumber}${address.countryCode}${address.zipCode}${address.city}`;
+    case 'phone':
+      return (address.phone ?? '').replace(/\s/g, '');
+    case 'email':
+      return address.email ?? '';
+    case 'postal':
+      return `${address.streetName ?? ''}${address.streetNumber ?? ''}${address.countryCode ?? ''}${address.zipCode ?? ''}${address.city ?? ''}`;
     case 'bankaccount':
-      return `n:${formatIban(address.iban ?? '', IbanFormat.Electronic)}`;
+      return formatIban(address.iban ?? '', IbanFormat.Electronic);
     default:
-      return `n:${address.url}`;
+      return address.url ?? '';
   }
 }
 
 export function getAddressIndexInfo(): string {
-  return 'n:addressValue';
+  return 'n:addressValue p:parentKey';
 }
 
 

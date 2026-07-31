@@ -11,7 +11,7 @@ import { getDownloadURL, ref } from 'firebase/storage';
 import { FirestoreService } from '@okr/shared-data-access';
 import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
-import { AddressCollection, AddressDirectoryCollection, AddressDirectoryModel, AddressModel, AddressModelName, CategoryListModel, DefaultLanguage, DocumentModel, getAddressDirectoryKey, isSensitiveScalarChannel, OrgModel, PersonModel } from '@okr/shared-models';
+import { AddressCollection, AddressDirectoryCollection, AddressDirectoryModel, AddressModel, AddressModelName, CategoryListModel, DbQuery, DefaultLanguage, DocumentModel, getAddressDirectoryKey, isSensitiveScalarChannel, OrgModel, PersonModel } from '@okr/shared-models';
 import { AlertService, downloadToBrowser } from '@okr/shared-util-angular';
 import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@okr/shared-util-core';
 import { Languages } from '@okr/shared-categories';
@@ -36,6 +36,7 @@ export type AddressState = {
   selectedTag: string;
   selectedChannel: string;
   orderByParam: string;
+  showArchived: boolean;
 };
 
 export const initialState: AddressState = {
@@ -45,7 +46,8 @@ export const initialState: AddressState = {
   searchTerm: '',
   selectedTag: '',
   selectedChannel: '',
-  orderByParam: 'addressChannel'
+  orderByParam: 'addressChannel',
+  showArchived: false
 };
 
 export const AddressStore = signalStore(
@@ -75,6 +77,7 @@ export const AddressStore = signalStore(
       params: () => ({
         parentKey: store.parentKey(),
         orderByParam: store.orderByParam(),
+        showArchived: store.showArchived(),
         currentUser: store.appStore.currentUser(),
         tenantId: store.appStore.tenantId(),
       }),
@@ -95,7 +98,11 @@ export const AddressStore = signalStore(
         // address-directory projection and see exactly the registered-visible
         // entries. 'all' stays raw — that list route is admin-guarded.
         if (readsAddressVault(params.currentUser, params.parentKey)) {
-          const dbQuery = getSystemQuery(params.tenantId);
+          // showArchived drops the isArchived clause instead of adding a second query:
+          // Firestore cannot OR the two, and 'archived too' is a superset of 'active only'.
+          const dbQuery: DbQuery[] = params.showArchived
+            ? [{ key: 'tenants', operator: 'array-contains', value: params.tenantId }]
+            : getSystemQuery(params.tenantId);
           if (params.parentKey !== 'all') { // for all we do not restrict the result set
             dbQuery.push({ key: 'parentKey', operator: '==', value: params.parentKey });
           }
@@ -176,6 +183,15 @@ export const AddressStore = signalStore(
       setSelectedChannel(selectedChannel: string) {
         if (selectedChannel === 'all') selectedChannel = '';
         patchState(store, { selectedChannel });
+      },
+
+      /**
+       * Include soft-deleted (archived) addresses in the list. Admin-only surface:
+       * FirestoreService.deleteModel only sets isArchived, so this is the single
+       * place in the app where a deleted address is still reachable.
+       */
+      toggleShowArchived() {
+        patchState(store, { showArchived: !store.showArchived() });
       },
 
       setConfig(parentKey: string, orderByParam: string) {

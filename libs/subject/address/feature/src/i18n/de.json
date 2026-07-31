@@ -1,6 +1,7 @@
 {
   "addresses": "Adressen",
   "empty": "Keine Adressen gefunden",
+  "show_archived": "Gelöschte (archivierte) Adressen ein-/ausblenden",
   "currency": "CHF",
   "qrinvoice": "QR-Rechnung",
   "description": "Kontaktinformation zu einer Person oder Organisation",

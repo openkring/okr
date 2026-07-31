@@ -12,7 +12,7 @@ import { AddressCollection, AddressModel, OkrModel, CalEventCollection, CalEvent
   MenuItemModel, OrgCollection, OrgModel, OwnershipCollection, OwnershipModel, PageCollection, PageModel, PersonalRelCollection, PersonalRelModel, PersonCollection,
   PersonModel, ReservationCollection, ReservationModel, SessionCollection, SessionModel, TaskCollection, TransferCollection, UserCollection,
   WorkrelCollection, TaskModel, ResourceModel, ResourceCollection, TransferModel, UserModel, WorkrelModel, GroupModel, CategoryModel,
-  AvatarInfo, AVATAR_INFO_SHAPE, CategoryListModel, ResponsibilityModel, ResponsibilityCollection } from '@okr/shared-models';
+  AvatarInfo, AVATAR_INFO_SHAPE, CategoryListModel, DbQuery, ResponsibilityModel, ResponsibilityCollection } from '@okr/shared-models';
 import { getCategoryIndex, getSystemQuery, removeProperty } from '@okr/shared-util-core';
 import { confirm } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
@@ -552,7 +552,7 @@ export const AocDataStore = signalStore(
         console.log('AocDataStore.createIndex: creating indexes for ' + store.modelType() + ' models...');
         switch (store.modelType()) {
           case 'address':
-            this.createIndex<AddressModel>(AddressCollection, getAddressIndex, 'parentKey');
+            this.createIndex<AddressModel>(AddressCollection, getAddressIndex, 'parentKey', true);
             break;
           case 'comment':
             this.createIndex<CommentModel>(CommentCollection, getCommentIndex);
@@ -635,8 +635,15 @@ export const AocDataStore = signalStore(
         }
       },
 
-      createIndex<T extends OkrModel>(collection: string, generateIndexFn: (model: T) => string, orderBy = 'none'): void {
-        const dbQuery = getSystemQuery(store.appStore.tenantId());
+      /**
+       * @param includeArchived reindex soft-deleted documents too. Needed wherever a list can
+       *   surface archived documents (the admin address list's archived toggle) — otherwise they
+       *   keep a stale index forever and silently drop out of every search.
+       */
+      createIndex<T extends OkrModel>(collection: string, generateIndexFn: (model: T) => string, orderBy = 'none', includeArchived = false): void {
+        const dbQuery: DbQuery[] = includeArchived
+          ? [{ key: 'tenants', operator: 'array-contains', value: store.appStore.tenantId() }]
+          : getSystemQuery(store.appStore.tenantId());
         from(store.appStore.firestoreService.getDataOnce<T>(collection, dbQuery, orderBy, 'asc'))
           .subscribe(async (data) => {
             for (const model of data) {

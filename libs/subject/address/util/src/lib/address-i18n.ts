@@ -5,6 +5,7 @@ const PFX = '@subject/address/feature.';
 export const ADDRESSES_I18N_KEYS = {
   addresses:                       PFX + 'addresses',
   empty:                           PFX + 'empty',
+  show_archived:                   PFX + 'show_archived',
   name:                            '@name.label',
   currency:                        PFX + 'currency',
   qrinvoice:                       PFX + 'qrinvoice',

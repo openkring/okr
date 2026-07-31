@@ -59,6 +59,11 @@ import { AddressStore } from './addresses.store';
             </ion-col>
           </ion-row>
         </ion-grid>
+        <ion-buttons slot="end">
+          <ion-button fill="clear" (click)="toggleShowArchived()" [title]="store.i18n.show_archived()">
+            <ion-icon slot="icon-only" src="{{ 'archive' | svgIcon }}" [color]="showArchived() ? 'warning' : ''" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
@@ -83,6 +88,7 @@ import { AddressStore } from './addresses.store';
                   }
                   @if(address.isCc) { <ion-icon src="{{ 'cc-circle' | svgIcon }}" /> }
                   @if(address.isValidated) { <ion-icon src="{{ 'shield' | svgIcon }}" /> }
+                  @if(address.isArchived) { <ion-icon src="{{ 'archive' | svgIcon }}" color="warning" /> }
                   <ion-icon [src]="getChannelIcon(address.addressChannel) | svgIcon" />
                   <span class="ion-hide-md-down"> {{ getAddressUsage(address) }}</span>
                   {{ address | formatAddress }}
@@ -152,6 +158,7 @@ export class AddressesList {
   protected readOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   protected popupId = computed(() => 'c_addresses_' + generateRandomString(5));
   protected selectedChannel = computed(() => this.store.selectedChannel());
+  protected showArchived = computed(() => this.store.showArchived());
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
   protected channels = computed(() => this.store.getChannels());
@@ -178,6 +185,11 @@ export class AddressesList {
   }
   protected toggleExpandAll(): void {
     this.allExpanded.update(v => !v);
+  }
+
+  /** Include soft-deleted addresses. Admin-only list, so this is safe to expose here. */
+  protected toggleShowArchived(): void {
+    this.store.toggleShowArchived();
   }
 
   protected getParentName(parentKey: string): string {
