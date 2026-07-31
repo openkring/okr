@@ -1,6 +1,29 @@
 {
   "indexes": [
     {
+      "collectionGroup": "accounting-configs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "okey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "accounts",
       "queryScope": "COLLECTION",
       "fields": [
@@ -101,6 +124,20 @@
           "arrayConfig": "CONTAINS"
         },
         {
+          "fieldPath": "author.key",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "activities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
           "fieldPath": "isArchived",
           "order": "ASCENDING"
         },
@@ -114,6 +151,20 @@
         }
       ],
       "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "activities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "scope",
+          "order": "ASCENDING"
+        }
+      ]
     },
     {
       "collectionGroup": "addresses",
@@ -378,6 +429,52 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "addresses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "parentKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "assets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "assetNo",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "avatars",
       "queryScope": "COLLECTION",
       "fields": [
@@ -466,6 +563,33 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "booking-lines",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "bookings",
       "queryScope": "COLLECTION",
       "fields": [
@@ -479,6 +603,37 @@
         },
         {
           "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "bookings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
           "order": "ASCENDING"
         },
         {
@@ -781,83 +936,6 @@
       "density": "SPARSE_ALL"
     },
     {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "creationDateTime",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "userId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "creationDateTime",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "expenses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "accountingTenantId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "creationDateTime",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
       "collectionGroup": "docs",
       "queryScope": "COLLECTION",
       "fields": [
@@ -922,6 +1000,179 @@
         {
           "fieldPath": "__name__",
           "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "esignList",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "expense-documents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "expenseKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creationDateTime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creationDateTime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "okey",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creationDateTime",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "okey",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
         }
       ],
       "density": "SPARSE_ALL"
@@ -1009,6 +1260,29 @@
         },
         {
           "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "i18nTenantOverride",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "module",
           "order": "ASCENDING"
         },
         {
@@ -1238,6 +1512,29 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "distance",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "locations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -1334,6 +1631,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "memberModelType",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "orgName",
           "order": "ASCENDING"
         },
@@ -1350,10 +1651,6 @@
       "fields": [
         {
           "fieldPath": "memberKey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "memberModelType",
           "order": "ASCENDING"
         },
         {
@@ -1631,6 +1928,29 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "ocr-rules",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "ocrUsage",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "orgs",
       "queryScope": "COLLECTION",
       "fields": [
@@ -1685,48 +2005,6 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "resourceKey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "resourceModelType",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "ownerName2",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "ownerships",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "ownerKey",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "resourceName",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "ownerships",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
           "fieldPath": "ownerKey",
           "order": "ASCENDING"
         },
@@ -1736,6 +2014,48 @@
         },
         {
           "fieldPath": "resourceName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "ownerships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "ownerKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "resourceName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "ownerships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "resourceKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "resourceModelType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "ownerName2",
           "order": "ASCENDING"
         },
         {
@@ -1827,6 +2147,37 @@
           "arrayConfig": "CONTAINS"
         },
         {
+          "fieldPath": "ownerKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "ownerModelType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "state",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "resourceName",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "ownerships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
           "fieldPath": "resourceType",
           "order": "ASCENDING"
         },
@@ -1883,6 +2234,60 @@
         {
           "fieldPath": "__name__",
           "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "payment-orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "executionDate",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "periods",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "year",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
         }
       ],
       "density": "SPARSE_ALL"
@@ -2488,6 +2893,37 @@
         {
           "fieldPath": "roles.treasurer",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "vat-codes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "code",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
         }
       ],
       "density": "SPARSE_ALL"
@@ -2598,101 +3034,9 @@
         }
       ],
       "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "assets",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "accountingTenantId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "assetNo",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "bookings",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "accountingTenantId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "isArchived",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "date",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "activities",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "author.key",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "activities",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tenants",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "scope",
-          "order": "ASCENDING"
-        }
-      ]
     }
   ],
   "fieldOverrides": [
-    {
-      "collectionGroup": "emailEvents",
-      "fieldPath": "expiresAt",
-      "ttl": true,
-      "indexes": []
-    },
     {
       "collectionGroup": "deletions",
       "fieldPath": "deletedBy",
@@ -2710,6 +3054,12 @@
           "queryScope": "COLLECTION_GROUP"
         }
       ]
+    },
+    {
+      "collectionGroup": "emailEvents",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
     }
   ]
 }
