@@ -4,7 +4,7 @@ import { ActionSheetOptions, ActionSheetController, IonButton, IonButtons, IonCo
 import { ResponsibilityModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -29,7 +29,7 @@ import { ResponsibilityStore } from './responsibility.store';
     <ion-header>
       @if(contextMenuName() !== 'disable') {
         <ion-toolbar color="secondary">
-          @if(showMenu() === true) {
+          @if(showMenu()) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
           <ion-title>{{ count() }} {{ store.i18n.responsibilities() }}</ion-title>
@@ -47,16 +47,16 @@ import { ResponsibilityStore } from './responsibility.store';
       }
 
       <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
-      <ion-toolbar color="light">
+      <ion-toolbar color="light" class="ion-hide-md-down">
         <ion-grid>
           <ion-row>
-            <ion-col size="4">
+            <ion-col size="8">
               <ion-label>{{ store.i18n.responsibility() }}</ion-label>
             </ion-col>
-            <ion-col size="4">
+            <ion-col size="2">
               <ion-label>{{ store.i18n.responsible() }}</ion-label>
             </ion-col>
-            <ion-col size="4">
+            <ion-col size="2">
               <ion-label>{{ store.i18n.delegate() }}</ion-label>
             </ion-col>
           </ion-row>
@@ -74,20 +74,22 @@ import { ResponsibilityStore } from './responsibility.store';
           <ion-grid>
             @for(r of store.filteredResponsibilities(); track r.okey) {
               <ion-row (click)="showActions(r)">
-                <ion-col size="4">
+                <ion-col size="8">
                     <ion-label>
                       <ion-note color="medium" style="font-size:0.75rem">{{ r.okey }}</ion-note>
                       <div>{{ r.name }}</div>
                     </ion-label>
                 </ion-col>
-                <ion-col size="4">
+                <ion-col size="2">
                   @if(r.responsibleAvatar; as resp) {
-                    <ion-label><okr-avatar-display [avatars]="[resp]" [showName]="true" /></ion-label>
+                    <okr-avatar-display class="ion-hide-md-down" [avatars]="[resp]" [showName]="true" />
+                    <okr-avatar-display class="ion-hide-md-up" [avatars]="[resp]" [showName]="false" />
                   }
                 </ion-col>
-                <ion-col size="4">
+                <ion-col size="2">
                   @if(r.delegateAvatar; as del) {
-                    <ion-label><okr-avatar-display [avatars]="[del]" [showName]="true" /></ion-label>
+                    <okr-avatar-display class="ion-hide-md-down" [avatars]="[del]" [showName]="true" />
+                    <okr-avatar-display class="ion-hide-md-up" [avatars]="[del]" [showName]="false" />
                   }
                 </ion-col>
               </ion-row>
@@ -104,7 +106,9 @@ export class ResponsibilityList {
 
   public listId = input.required<string>();
   public contextMenuName = input.required<string>(); // the name of the context menu to use or 'disable' to disable the header toolbar with the context menu
-  public showMenu = input<boolean>(true);
+  // keepDefaultTrue: withComponentInputBinding() would otherwise set this to undefined on standalone
+  // routes (the route only binds listId/contextMenuName), which hides the main-menu hamburger.
+  public showMenu = input(true, { transform: keepDefaultTrue });
 
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
