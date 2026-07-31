@@ -40,7 +40,7 @@ describe('PrivacyRightsService', () => {
     it('surfaces the rate limit as a typed failure carrying the German message', async () => {
       callable.mockRejectedValue(functionsError(
         'functions/resource-exhausted',
-        'Ein Datenexport ist einmal pro Stunde möglich. Bitte versuchen Sie es später erneut.',
+        'Ein Datenexport ist einmal pro Stunde möglich. Bitte versuche es später noch einmal.',
       ));
       const result = await service.exportMyData();
       expect(result.ok).toBe(false);
@@ -71,12 +71,12 @@ describe('PrivacyRightsService', () => {
     it('surfaces a stale-token rejection as a typed failure, not a throw', async () => {
       callable.mockRejectedValue(functionsError(
         'functions/failed-precondition',
-        'Die Übersicht hat sich geändert. Bitte prüfen Sie sie erneut.',
+        'Die Übersicht hat sich geändert. Bitte prüfe sie noch einmal.',
       ));
       const result = await service.eraseMyData('tok-stale');
       expect(result.ok).toBe(false);
       expect(!result.ok && result.code).toBe('failed-precondition');
-      expect(!result.ok && result.message).toMatch(/erneut/);
+      expect(!result.ok && result.message).toMatch(/noch einmal/);
     });
 
     it('keeps a blocker rejection readable too', async () => {

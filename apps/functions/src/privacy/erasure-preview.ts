@@ -73,7 +73,7 @@ export const OUT_OF_REACH_PROCESSORS: readonly OutOfReachRow[] = [
   {
     key: 'srv',
     name: 'Regasoft (Verbandssystem Swiss Rowing)',
-    contact: 'Über die Datenschutz-Kontaktstelle des Vereins (siehe Impressum) — wir leiten Ihre Anfrage an den Verband weiter.',
+    contact: 'Über die Datenschutz-Kontaktstelle des Vereins (siehe Impressum) — wir leiten deine Anfrage an den Verband weiter.',
     dataClasses: ['identity', 'contact', 'membership'],
   },
   {
@@ -91,7 +91,7 @@ export const OUT_OF_REACH_PROCESSORS: readonly OutOfReachRow[] = [
   {
     key: 'matrix',
     name: 'Matrix-Chatserver',
-    contact: 'Die Inhalte Ihrer Chatnachrichten liegen auf dem Chatserver und werden durch diese Löschung nicht entfernt. Wenden Sie sich dafür an die Datenschutz-Kontaktstelle des Vereins (siehe Impressum).',
+    contact: 'Die Inhalte deiner Chatnachrichten liegen auf dem Chatserver und werden durch diese Löschung nicht entfernt. Wende dich dafür an die Datenschutz-Kontaktstelle des Vereins (siehe Impressum).',
     dataClasses: ['identity', 'communication'],
   },
   {
@@ -108,7 +108,7 @@ function soleAdminBlocker(): Blocker {
   return {
     code: 'soleAdmin',
     count: 1,
-    detail: 'Sie sind die einzige Person mit Administrationsrechten in diesem Verein. Bitte übertragen Sie diese Rolle zuerst an jemand anderen, sonst bleibt der Verein ohne Verwaltung zurück.',
+    detail: 'Du bist die einzige Person mit Administrationsrechten in diesem Verein. Bitte übertrage diese Rolle zuerst an jemand anderen, sonst bleibt der Verein ohne Verwaltung zurück.',
     blocksTiers: ['T1'],
   };
 }

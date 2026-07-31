@@ -59,7 +59,7 @@ export function toEraseResponse(result: ErasureResult): EraseMyDataResponse {
 export function assertExecutable(fresh: ErasurePreview, providedToken: string | undefined): void {
   if (!providedToken || fresh.previewToken !== providedToken) {
     throw new HttpsError('failed-precondition',
-      'Die Übersicht hat sich geändert. Bitte prüfen Sie sie erneut.');
+      'Die Übersicht hat sich geändert. Bitte prüfe sie noch einmal.');
   }
   if (fresh.blockers.length > 0) {
     throw new HttpsError('failed-precondition', 'Es bestehen noch offene Punkte.');

@@ -286,7 +286,10 @@ describe('SUBJECT_DATA_MAP — blocker predicates', () => {
   });
 
   it('writes each message as plain, complete German addressed to the member', () => {
-    const german = /\b(Sie|Ihre|Ihren|Ihnen|Ihr)\b/;
+    // house register is the informal 'du' (152 hits vs 18 across the de.json bundles,
+    // and Stage B's export README already uses it) — these details render in the same
+    // modal as the profile card's own strings, so they must not switch to 'Sie'.
+    const german = /\b(du|dein\w*|dir|dich|Du|Dein\w*)\b/;
     for (const e of blocking) {
       // force the blocking branch with a doc that fails every terminal-state test
       const b = e.blocksErasure?.([snap({

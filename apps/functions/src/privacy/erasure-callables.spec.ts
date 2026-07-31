@@ -28,6 +28,8 @@ describe('assertExecutable', () => {
   it('refuses a confirmation given for a different situation', () => {
     expect(() => assertExecutable(preview(), 'tok-stale')).toThrow(HttpsError);
     expect(() => assertExecutable(preview(), 'tok-stale')).toThrow(/geändert/);
+    // house register: informal, like every other member-facing string
+    expect(() => assertExecutable(preview(), 'tok-stale')).toThrow(/prüfe /);
   });
 
   it('refuses a missing token — a client that never previewed cannot erase', () => {

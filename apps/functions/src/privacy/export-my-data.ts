@@ -52,7 +52,7 @@ async function assertRateLimit(tenantId: string, uid: string): Promise<void> {
     .sort((a, b) => b - a)[0] ?? 0;
   if (isRateLimited(newest, Date.now())) {
     throw new HttpsError('resource-exhausted',
-      'Ein Datenexport ist einmal pro Stunde möglich. Bitte versuchen Sie es später erneut.');
+      'Ein Datenexport ist einmal pro Stunde möglich. Bitte versuche es später noch einmal.');
   }
 }
 

@@ -81,7 +81,7 @@ describe('buildPreview', () => {
   it('writes the sole-admin blocker in German and scopes it to the contract tier', async () => {
     const [blocker] = (await buildPreview(ctx, [], none, 0)).blockers;
     expect(blocker.detail.length).toBeGreaterThan(40);
-    expect(blocker.detail).toMatch(/\b(Sie|Ihre|Ihnen)\b/);
+    expect(blocker.detail).toMatch(/\b(du|dein\w*|dir|Du|Dein\w*)\b/);
     expect(blocker.detail.endsWith('.')).toBe(true);
     expect(blocker.blocksTiers).toEqual(['T1']);
   });

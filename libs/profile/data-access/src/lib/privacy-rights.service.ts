@@ -38,7 +38,7 @@ export type PrivacyRightsResult<T> = PrivacyRightsSuccess<T> | PrivacyRightsFail
 
 /** Last-resort text: every expected failure carries a server-authored German message, so
  * this only shows for a transport failure with nothing to say. */
-const GENERIC_FAILURE = 'Die Aktion konnte nicht ausgeführt werden. Bitte versuchen Sie es später erneut.';
+const GENERIC_FAILURE = 'Die Aktion konnte nicht ausgeführt werden. Bitte versuche es später noch einmal.';
 
 function toFailure(error: unknown): PrivacyRightsFailure {
   const raw = error as { code?: unknown; message?: unknown };

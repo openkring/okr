@@ -234,7 +234,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       const active = docs.filter((d) => (d.get('dateOfExit') ?? '') === '');
       return active.length === 0 ? undefined : {
         code: 'activeMembership', count: active.length,
-        detail: 'Sie haben eine laufende Mitgliedschaft. Solange sie besteht, brauchen wir Ihre Daten, um sie zu führen. Bitte treten Sie zuerst aus, dann können wir Ihre Daten löschen.',
+        detail: 'Du hast eine laufende Mitgliedschaft. Solange sie besteht, brauchen wir deine Daten, um sie zu führen. Bitte tritt zuerst aus, dann können wir deine Daten löschen.',
         // Art. 17 I/III GDPR makes erasure conditional, not all-or-nothing: the contract
         // tier is refusable, the consent tier is not. Without this the preview tells the
         // member "no" about their avatar too — data they are entitled to have erased
@@ -347,7 +347,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       const orphaned = docs.filter((d) => ((d.get('admins') as unknown[] | undefined) ?? []).length <= 1);
       return orphaned.length === 0 ? undefined : {
         code: 'soleAdmin', count: orphaned.length,
-        detail: 'Sie sind die einzige Person, die eine Ihrer Gruppen verwalten kann. Bitte geben Sie diese Aufgabe zuerst an jemanden ab, sonst bleibt die Gruppe ohne Verwaltung zurück.',
+        detail: 'Du bist die einzige Person, die eine deiner Gruppen verwalten kann. Bitte gib diese Aufgabe zuerst an jemanden ab, sonst bleibt die Gruppe ohne Verwaltung zurück.',
         blocksTiers: ['T1'],   // the role has to be handed over; the avatar is unrelated
       };
     },
@@ -424,7 +424,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: RETAIN_10Y,
     blocksErasure: (docs) => blockOpenInvoice(
       docs.filter((d) => (d.get('paymentDate') ?? '') === '' && d.get('state') !== 'cancelled').length,
-      'Auf Ihren Namen sind noch Rechnungen offen. Sobald sie bezahlt oder storniert sind, können wir Ihre Daten löschen.',
+      'Auf deinen Namen sind noch Rechnungen offen. Sobald sie bezahlt oder storniert sind, können wir deine Daten löschen.',
     ),
   },
   {
@@ -460,7 +460,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: RETAIN_10Y,
     blocksErasure: (docs) => blockOpenInvoice(
       docs.filter((d) => !['paid', 'cancelled'].includes(String(d.get('state') ?? ''))).length,
-      'Ihr Mitgliederbeitrag ist noch nicht beglichen. Sobald die Zahlung eingegangen ist, können wir Ihre Daten löschen.',
+      'Dein Mitgliederbeitrag ist noch nicht beglichen. Sobald die Zahlung eingegangen ist, können wir deine Daten löschen.',
     ),
   },
   {
@@ -502,7 +502,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // it the honest terminal signal. See expenseIsOpen for the exact rule.
     blocksErasure: (docs) => blockOpenInvoice(
       docs.filter((d) => expenseIsOpen(String(d.get('bookingKey') ?? ''), String(d.get('status') ?? ''))).length,
-      'Sie haben noch eine Spesenabrechnung offen. Sobald sie verbucht ist, können wir Ihre Daten löschen.',
+      'Du hast noch eine Spesenabrechnung offen. Sobald sie verbucht ist, können wir deine Daten löschen.',
     ),
   },
 
@@ -811,7 +811,7 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       const pending = docs.filter((d) => String(d.get('documentStatus') ?? '') === 'in-progress');
       return pending.length === 0 ? undefined : {
         code: 'pendingSignature', count: pending.length,
-        detail: 'Ein Dokument wartet noch auf Ihre Unterschrift. Bitte unterschreiben Sie es oder brechen Sie den Vorgang ab, danach können wir Ihre Daten löschen.',
+        detail: 'Ein Dokument wartet noch auf deine Unterschrift. Bitte unterschreibe es oder brich den Vorgang ab, danach können wir deine Daten löschen.',
         blocksTiers: ['T1'],   // the signature flow needs the signee reachable
       };
     },
