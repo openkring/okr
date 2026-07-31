@@ -1,7 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
-import { dateValidations, isAfterDate, isFutureDate, stringValidations } from '@okr/shared-util-core';
+import { dateValidations, isFutureDate, isStoreDateOrderValid, partialDateValidations, stringValidations } from '@okr/shared-util-core';
 
 import { PersonNewFormModel } from './person-new-form.model';
 import { ssnValidations } from './ssn.validations';
@@ -12,8 +12,9 @@ export const personNewFormValidations = staticSuite((model: PersonNewFormModel, 
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH, 2, true);
   stringValidations('gender', model.gender, WORD_LENGTH);
-  dateValidations('dateOfBirth', model.dateOfBirth);
-  dateValidations('dateOfDeath', model.dateOfDeath);
+  // dob/dod may be partial: year only ('19850000') or a birthday without a year ('00000415')
+  partialDateValidations('dateOfBirth', model.dateOfBirth);
+  partialDateValidations('dateOfDeath', model.dateOfDeath);
   ssnValidations('ssn', model.ssnId);
   stringValidations('bexioId', model.bexioId, SHORT_NAME_LENGTH);
 
@@ -52,8 +53,10 @@ export const personNewFormValidations = staticSuite((model: PersonNewFormModel, 
 
   omitWhen(model.dateOfDeath === '' || model.dateOfBirth === '', () => {
     test('dateOfDeath', '@personDateOfDeathAfterBirth', () => {
+      // compares at the coarsest precision the two dates share; a pair with no
+      // comparable year (a birthday without a year) reports no conflict
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      enforce(isAfterDate(model.dateOfDeath!, model.dateOfBirth!)).isTruthy();
+      enforce(isStoreDateOrderValid(model.dateOfBirth!, model.dateOfDeath!)).isTruthy();
     });
   })
   // cross collection validations
