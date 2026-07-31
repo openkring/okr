@@ -71,6 +71,13 @@ seed_user("uidA", {"tenants": ["t1"], "roles": {}})
 seed_user("uidB", {"tenants": ["t2"], "roles": {"admin": True}})
 A, B = jwt("uidA"), jwt("uidB")
 
+# privacy 1.19 Phase 5B (D-P5-1): a real export artifact in the CF-only prefix. Seeded
+# with the emulator's owner token (rules-bypassing, like the Admin SDK the CF uses), so
+# the read denials below are exercised against an object that actually exists.
+PRIVATE_OBJ = "tenant/t1/private/exports/uidA/20260729-abc.zip"
+if put_obj(PRIVATE_OBJ, "owner") != 200:
+    raise SystemExit("could not seed the private export artifact")
+
 # read: allowed -> 404 (missing) ; denied -> 403
 read_cases = [
     ("anon GET tenant/t1 -> DENY",            False, "tenant/t1/x.pdf", None),
@@ -84,6 +91,12 @@ read_cases = [
     ("anon GET logo (public) -> ALLOW",       True,  "logo/icons/x.svg", None),
     ("uidA GET unknown prefix -> DENY",       False, "random/x", A),
     ("uidA GET generated-docs/t1 -> ALLOW",   True,  "generated-docs/t1/u/x.pdf", A),
+    # privacy 1.19 Phase 5B (D-P5-1): the export ZIPs hold AHV, dob and IBAN in plaintext.
+    # No client may read them — not the owner of the export, not a tenant admin. They are
+    # served exclusively through the 15-minute signed URL exportMyData returns.
+    ("uidA GET own export ZIP -> DENY",       False, PRIVATE_OBJ, A),
+    ("uidB(admin t2) GET t1 export ZIP -> DENY", False, PRIVATE_OBJ, B),
+    ("anon GET export ZIP -> DENY",           False, PRIVATE_OBJ, None),
 ]
 # write(create): allowed -> 200 ; denied -> 403
 write_cases = [
@@ -97,6 +110,9 @@ write_cases = [
     ("uidB(admin) PUT logo -> ALLOW",       True,  "logo/icons/a.svg", B),
     ("uidA PUT generated-docs -> DENY",     False, "generated-docs/t1/u/a.pdf", A),
     ("uidA PUT unknown prefix -> DENY",     False, "random/a", A),
+    # nobody may plant or overwrite anything in the CF-only prefix
+    ("uidA PUT into private/ -> DENY",      False, "tenant/t1/private/exports/uidA/x.zip", A),
+    ("uidA PUT private/ (any depth) -> DENY", False, "tenant/t1/private/x.zip", A),
 ]
 
 passed = failed = 0

@@ -46,8 +46,16 @@ service firebase.storage {
     // override the broader `tenant/{tenantId}/{path=**}` grant below — both blocks match
     // the same object, and the broader one would still independently grant `read`. The
     // guard therefore has to live INSIDE that broader rule's own condition (see below).
-    function isPrivatePath(path) {
-      return path.matches('^private/.*');
+    //
+    // It takes the OBJECT NAME, not the `{path=**}` wildcard: a `**` wildcard binds a
+    // `Path`, which has no `matches()` method. Calling it there raises
+    // "Function not found error: Name: [matches]", the whole condition evaluates to an
+    // error, and the rule denies — which silently locked every member out of the entire
+    // `tenant/` prefix (read AND write) until the storage harness caught it.
+    // `resource.name` / `request.resource.name` are plain strings and hold the full
+    // object path, e.g. `tenant/scs/private/exports/<uid>/<stamp>-<uuid>.zip`.
+    function isPrivateObject(name) {
+      return name.matches('^tenant/[^/]+/private/.*');
     }
     // Upload size cap (only valid when request.resource is present, i.e. create/update).
     function sizeOk() {
@@ -63,15 +71,20 @@ service firebase.storage {
     // confirmed and verified against real SDK uploads in staging.
 
     // ---- tenant-scoped data (dominant prefix) ----
-    // `!isPrivatePath(path)` carves the CF-only `private/` sub-prefix (see above) out of
+    // `!isPrivateObject(...)` carves the CF-only `private/` sub-prefix (see above) out of
     // this grant. This is NOT optional decoration: the "specific match wins" mental model
-    // does not apply to Storage rules (see isPrivatePath's comment), so excluding the
+    // does not apply to Storage rules (see isPrivateObject's comment), so excluding the
     // sub-path from THIS rule's own condition is the only way the deny below actually
     // takes effect instead of being silently OR'd away.
+    //
+    // The `resource == null` arm keeps a read/delete of a MISSING object a clean 404
+    // instead of a permission error (the same trap the Firestore rules document at
+    // `tenantRead()`). It cannot leak a private object: there is nothing at that name to
+    // read, and any object that does exist there is denied by the second arm.
     match /tenant/{tenantId}/{path=**} {
-      allow read:           if inTenant(tenantId) && !isPrivatePath(path);
-      allow create, update: if inTenant(tenantId) && !isPrivatePath(path) && sizeOk();
-      allow delete:         if inTenant(tenantId) && !isPrivatePath(path);
+      allow read:           if inTenant(tenantId) && (resource == null || !isPrivateObject(resource.name));
+      allow create, update: if inTenant(tenantId) && !isPrivateObject(request.resource.name) && sizeOk();
+      allow delete:         if inTenant(tenantId) && (resource == null || !isPrivateObject(resource.name));
     }
 
     // ---- CF-only private data (D-P5-1): subject-access export ZIPs ----
