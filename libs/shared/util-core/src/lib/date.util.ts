@@ -831,15 +831,31 @@ export function parsePartialViewDate(view: string): string {
  * 'dd.MM.yyyy' — into a full StoreDate. Sibling to parsePartialViewDate: ChPartialDate (unlike
  * ChAnyDate's maskitoDateOptionsGenerator) does no auto-padding, so a partial-allowed date field
  * can hold a genuinely complete date ('5.4.1985') that never reaches 10 characters. Returns ''
- * for a still-typing fragment or a year outside the accepted StoreDate range.
+ * for a still-typing fragment, a nonexistent calendar date (29.2.1985 — 1985 is not a leap year;
+ * 31.4.1985 — April has 30 days), or a year outside the accepted StoreDate range (deliberately:
+ * '15.4.1700' returns '' here even though the pre-existing 10-char branch in date-input.ts still
+ * accepts '15.04.1700' — that asymmetry is harmless because partialDateValidations rejects an
+ * out-of-range year either way).
+ *
+ * Deliberately builds the candidate from the regex groups and classifies/validates it directly —
+ * same approach as parsePartialViewDate — instead of round-tripping through
+ * convertDateFormatToString. date-fns' parse() does NOT reject a nonexistent date: it returns an
+ * Invalid Date object, and parseDate only maps the end-future sentinel to null, not an Invalid
+ * Date, so convertDateFormatToString's isStrict=false escape hatch never fires and format()
+ * throws RangeError: Invalid time value.
+ *
+ * classifyStoreDate alone is not enough: it is a STRUCTURAL check only and treats Feb 29 as
+ * valid in every year (see its own doc comment — '19850229' classifies as 'full'), so a genuine
+ * full date also needs isValidPartialStoreDate's real-calendar check. Neither call reaches
+ * format() — isValidPartialStoreDate's checkDate only calls date-fns' isValid() — so nothing
+ * here can throw.
  */
 export function parseFullViewDate(view: string): string {
   const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(view);
   if (!match) return '';
   const [, day, month, year] = match;
-  const padded = `${day.padStart(2, '0')}.${month.padStart(2, '0')}.${year}`;
-  const store = convertDateFormatToString(padded, DateFormat.ViewDate, DateFormat.StoreDate, false);
-  return classifyStoreDate(store) === 'full' ? store : '';
+  const candidate = `${year}${month.padStart(2, '0')}${day.padStart(2, '0')}`;
+  return classifyStoreDate(candidate) === 'full' && isValidPartialStoreDate(candidate) ? candidate : '';
 }
 
 /**

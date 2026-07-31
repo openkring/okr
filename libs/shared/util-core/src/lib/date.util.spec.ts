@@ -569,5 +569,28 @@ describe('date.util', () => {
         it('returns empty for a year outside the accepted range', () => {
             expect(parseFullViewDate('15.04.1700')).toBe('');
         });
+
+        // regression: parseFullViewDate must never round-trip through date-fns' format() —
+        // parseDate returns an Invalid Date object (not null) for a date-fns cannot build, so
+        // the isStrict=false escape hatch in convertDateFormatToString never fires and format()
+        // throws RangeError: Invalid time value. classifyStoreDate must be the sole judge.
+        it('returns empty instead of throwing for a nonexistent calendar date (29 Feb, non-leap year)', () => {
+            expect(() => parseFullViewDate('29.2.1985')).not.toThrow();
+            expect(parseFullViewDate('29.2.1985')).toBe('');
+        });
+
+        it('returns empty instead of throwing for a day past the month\'s length (31 April)', () => {
+            expect(() => parseFullViewDate('31.4.1985')).not.toThrow();
+            expect(parseFullViewDate('31.4.1985')).toBe('');
+        });
+
+        it('returns empty instead of throwing for a zero day', () => {
+            expect(() => parseFullViewDate('0.4.1985')).not.toThrow();
+            expect(parseFullViewDate('0.4.1985')).toBe('');
+        });
+
+        it('still accepts 29 Feb on an actual leap year', () => {
+            expect(parseFullViewDate('29.2.1984')).toBe('19840229');
+        });
     });
 });

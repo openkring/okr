@@ -227,7 +227,8 @@ async function assembleRecord(
       // dateOfBirth and the rules reject writes that reintroduce it), but on any legacy document
       // that still had one it would now hand a Protected person's birthday to a plain member.
       const dobAddr = addresses.find((a) => a['addressChannel'] === 'dob');
-      bday = resolveBdayIso(dobAddr?.['dob'] as string | undefined);
+      // defensive coercion: a legacy Firestore doc could hold a non-string dob value
+      bday = resolveBdayIso(String(dobAddr?.['dob'] ?? ''));
     }
 
     if (scope.workRels) {

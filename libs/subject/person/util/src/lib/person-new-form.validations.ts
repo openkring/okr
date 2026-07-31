@@ -44,8 +44,8 @@ export const personNewFormValidations = staticSuite((model: PersonNewFormModel, 
   const dobPrecision = classifyStoreDate(model.dateOfBirth);
   omitWhen(model.dateOfBirth === '' || dobPrecision === 'dayMonthOnly', () => {
     test('dateOfBirth', '@personDateOfBirthNotFuture', () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       if (dobPrecision === 'yearOnly') {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         enforce(Number(model.dateOfBirth!.substring(0, 4))).lessThanOrEquals(getYear());
       } else {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
