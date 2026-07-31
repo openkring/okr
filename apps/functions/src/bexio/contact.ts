@@ -206,7 +206,18 @@ export const getBexioContacts = onCall(
         contact_type_id: c.contact_type_id
       }));
     } catch (error: unknown) {
-      logger.error(`${CF_NAME}: error`, error);
+      // Never log the raw axios error: its `config`/`request` fields serialize the
+      // request headers, which would write the Bexio API token into Cloud Logging.
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const body = JSON.stringify(error.response?.data);
+        logger.error(`${CF_NAME}: Bexio API error ${status}: ${body}`);
+        if (status === 401 || status === 403) {
+          throw new HttpsError('failed-precondition', `Bexio rejected the API token (${status}). The BEXIO_APIKEY secret has to be renewed.`);
+        }
+        throw new HttpsError('internal', `Bexio API error ${status}: ${body}`);
+      }
+      logger.error(`${CF_NAME}: unexpected error`, error);
       throw new HttpsError('internal', 'Bexio API request failed');
     }
   }

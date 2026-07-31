@@ -12,7 +12,8 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, AvatarInfo, InvoiceCollection, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
 import { getCatAbbreviation, getFullName, getSystemQuery, isMembership, isOrg, isPerson } from '@okr/shared-util-core';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { showToast } from '@okr/shared-util-angular';
 import { AocBexioContactEditModal } from './aoc-bexio-contact-edit.modal';
 import { createFavoriteAddress } from '@okr/subject-address-util';
 import { PersonService } from '@okr/subject-person-data-access';
@@ -73,6 +74,7 @@ interface BexioContact {
 
 export type AocBexioState = {
   index: BexioIndex[];
+  indexError: string; // '' = no error; otherwise the message to show next to the index
   isLoading: boolean;
   invoiceCount: number;
   lastSyncedAt: string; // "YYYY-MM-DD HH:mm:ss" or ''
@@ -89,6 +91,7 @@ export type AocBexioState = {
 
 const initialState: AocBexioState = {
   index: [],
+  indexError: '',
   isLoading: false,
   invoiceCount: -1,
   lastSyncedAt: '',
@@ -109,6 +112,7 @@ export const AocBexioStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
+    toastController: inject(ToastController),
     i18nService: inject(I18nService),
     personService: inject(PersonService),
     orgService: inject(OrgService),
@@ -124,7 +128,7 @@ export const AocBexioStore = signalStore(
   withMethods(store => ({
     async buildIndex(): Promise<void> {
       if (!isFirestoreInitializedCheck()) return;
-      patchState(store, { isLoading: true, index: [] });
+      patchState(store, { isLoading: true, index: [], indexError: '' });
 
       // 1. Load persons and orgs from AppStore (already in memory)
       const persons = store.appStore.allPersons();
@@ -365,7 +369,15 @@ export const AocBexioStore = signalStore(
         index.sort((a, b) => a.name2.localeCompare(b.name2));
         console.log(`Index built: ${index.length} entries`);
       } catch (e) {
-        console.log(`getBexioContacts Cloud Function failed: ${e}`);
+        // A failing Bexio fetch must not look like an empty result: the index still
+        // renders (BK data is valid), but the bx_* columns stay empty, so say why.
+        const code = (e as { code?: string }).code ?? '';
+        const message = code === 'functions/failed-precondition'
+          ? store.i18n.bexio_index_error_credentials()
+          : store.i18n.bexio_index_error_fetch();
+        console.error(`getBexioContacts Cloud Function failed: ${e}`);
+        patchState(store, { indexError: message });
+        showToast(store.toastController, message);
       }
 
       patchState(store, { index, isLoading: false });

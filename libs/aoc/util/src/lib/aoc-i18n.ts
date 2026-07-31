@@ -105,6 +105,8 @@ export const AOC_I18N_KEYS = {
   bexio_index_content:                      PFX + 'bexio.index.content',
   bexio_index_button:                       PFX + 'bexio.index.button',
   bexio_index_contactFilter_label:          PFX + 'bexio.index.contactFilter.label',
+  bexio_index_error_credentials:            PFX + 'bexio.index.error.credentials',
+  bexio_index_error_fetch:                  PFX + 'bexio.index.error.fetch',
 
   bexio_vendor_title:                       PFX + 'bexio.vendor.title',
   bexio_vendor_subtitle:                    PFX + 'bexio.vendor.subtitle',

@@ -277,6 +277,16 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 </ion-button>
               </ion-col>
             </ion-row>
+            @if(indexError()) {
+              <ion-row>
+                <ion-col size="12">
+                  <ion-item lines="none" color="danger">
+                    <ion-icon src="{{ 'alert' | svgIcon }}" slot="start" />
+                    <ion-label class="ion-text-wrap">{{ indexError() }}</ion-label>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            }
             <ion-row>
               <ion-col size="6">
                 <okr-string-select [i18n]="contactFilterI18n()" [selectedString]="contactFilter()" (selectedStringChange)="contactFilter.set($event)" [stringList]="contactFilters" [readOnly]="false" />
@@ -420,6 +430,7 @@ export class AocBexio implements OnInit {
   protected readonly store = inject(AocBexioStore);
 
   protected readonly isLoading = computed(() => this.store.isLoading());
+  protected readonly indexError = computed(() => this.store.indexError());
   protected readonly index = computed(() => this.store.index());
 
   protected readonly invoiceCount = computed(() => this.store.invoiceCount());

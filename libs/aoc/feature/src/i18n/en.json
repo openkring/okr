@@ -131,6 +131,10 @@
       "button": "Sync",
       "contactFilter": {
         "label": "Contact filter"
+      },
+      "error": {
+        "credentials": "Bexio rejected the API token. The API token (secret BEXIO_APIKEY) has to be renewed. Until then the Bexio columns stay empty.",
+        "fetch": "The Bexio contacts could not be loaded. The Bexio columns stay empty."
       }
     },
     "edit": {

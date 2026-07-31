@@ -131,6 +131,10 @@
       "button": "Sincronizar",
       "contactFilter": {
         "label": "Filtro de contactos"
+      },
+      "error": {
+        "credentials": "Bexio ha rechazado el token de API. El token de API (secreto BEXIO_APIKEY) debe renovarse. Hasta entonces, las columnas de Bexio permanecen vacías.",
+        "fetch": "No se han podido cargar los contactos de Bexio. Las columnas de Bexio permanecen vacías."
       }
     },
     "edit": {

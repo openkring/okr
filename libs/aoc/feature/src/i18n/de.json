@@ -131,6 +131,10 @@
       "button": "Sync",
       "contactFilter": {
         "label": "Kontakt-Filter"
+      },
+      "error": {
+        "credentials": "Bexio hat den API-Token abgelehnt. Der API-Token (Secret BEXIO_APIKEY) muss erneuert werden. Die Bexio-Spalten bleiben bis dahin leer.",
+        "fetch": "Die Bexio-Kontakte konnten nicht geladen werden. Die Bexio-Spalten bleiben leer."
       }
     },
     "edit": {

@@ -131,6 +131,10 @@
       "button": "Synchro",
       "contactFilter": {
         "label": "Filtre de contacts"
+      },
+      "error": {
+        "credentials": "Bexio a rejeté le jeton d'API. Le jeton d'API (secret BEXIO_APIKEY) doit être renouvelé. D'ici là, les colonnes Bexio restent vides.",
+        "fetch": "Les contacts Bexio n'ont pas pu être chargés. Les colonnes Bexio restent vides."
       }
     },
     "edit": {
