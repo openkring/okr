@@ -1,16 +1,17 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CategoryListModel, ResourceCollection, ResourceModel, ResourceModelName } from '@okr/shared-models';
-import { chipMatches, debugItemLoaded, getSystemQuery, isResource, nameMatches } from '@okr/shared-util-core';
+import { buildExportTable, chipMatches, debugItemLoaded, getSystemQuery, isResource, nameMatches } from '@okr/shared-util-core';
+import { exportCsv, getExportFileName, showToast } from '@okr/shared-util-angular';
 import { FirestoreService } from '@okr/shared-data-access';
 
 import { ResourceService } from '@okr/resource-data-access';
-import { RESOURCE_I18N_KEYS } from '@okr/resource-util';
+import { getResourceExportColumns, getResourceExportFileName, RESOURCE_I18N_KEYS, ResourceExportList } from '@okr/resource-util';
 
 export type ResourceState = {
   searchTerm: string;
@@ -37,6 +38,7 @@ export const ResourceStore = signalStore(
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
+    toastController: inject(ToastController),
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
@@ -218,8 +220,35 @@ export const ResourceStore = signalStore(
           store.resourceService.update(resource, store.currentUser()));
       },
 
-      async export(type: string): Promise<void> {
-        console.log(`ResourceListStore.export(${type}) is not yet implemented.`);
+      /**
+       * Export the currently filtered rows of one of the four resource lists as a CSV file.
+       * @param type the export flavour; only 'raw' exists today (menuItem `*-exportraw`)
+       * @param listType which list is asking — the store's state does not tell them apart
+       */
+      async export(type: string, listType: ResourceExportList = 'resource'): Promise<void> {
+        if (type !== 'raw') {
+          console.warn(`ResourceStore.export: type ${type} is not supported.`);
+          return;
+        }
+        const resources = listType === 'rboat'  ? store.filteredRboats()  ?? [] :
+                          listType === 'locker' ? store.filteredLockers() ?? [] :
+                          listType === 'key'    ? store.filteredKeys()    ?? [] :
+                                                  store.filteredResources() ?? [];
+        if (resources.length === 0) {
+          showToast(store.toastController, store.i18n.export_empty());
+          return;
+        }
+        // Category item labels are i18n keys, so they must be resolved before the (synchronous)
+        // cell accessors run — see I18nService.createLabelResolver.
+        const [resourceType, rboatType, rboatUsage, gender] = await Promise.all([
+          store.i18nService.createLabelResolver(store.appStore.getCategory('resource_type')),
+          store.i18nService.createLabelResolver(store.appStore.getCategory('rboat_type')),
+          store.i18nService.createLabelResolver(store.appStore.getCategory('rboat_usage')),
+          store.i18nService.createLabelResolver(store.appStore.getCategory('gender')),
+        ]);
+        const columns = getResourceExportColumns(listType, store.i18n, { resourceType, rboatType, rboatUsage, gender });
+        await exportCsv(buildExportTable(resources, columns), getExportFileName(getResourceExportFileName(listType), 'csv'));
+        showToast(store.toastController, store.i18n.export_conf());
       }
     }
   }),

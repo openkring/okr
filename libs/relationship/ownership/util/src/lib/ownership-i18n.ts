@@ -97,6 +97,33 @@ export const OWNERSHIP_I18N_KEYS = {
   // ownerType: explicit
   // state: explicit
   
+  // CSV export (context menu → exportRaw): toasts + column headers
+  export_empty:                     PFX + 'export.empty',
+  export_conf:                      PFX + 'export.conf',
+  export_ownerName1:                PFX + 'export.ownerName1',
+  export_ownerName2:                PFX + 'export.ownerName2',
+  export_ownerModelType:            PFX + 'export.ownerModelType',
+  export_resourceName:              PFX + 'export.resourceName',
+  export_resourceType:              PFX + 'export.resourceType',
+  export_subType:                   PFX + 'export.subType',
+  export_boatName:                  PFX + 'export.boatName',
+  export_boatType:                  PFX + 'export.boatType',
+  export_lockerNr:                  PFX + 'export.lockerNr',
+  export_keyNr:                     PFX + 'export.keyNr',
+  export_gender:                    PFX + 'export.gender',
+  export_type:                      PFX + 'export.type',
+  export_state:                     PFX + 'export.state',
+  export_validFrom:                 PFX + 'export.validFrom',
+  export_validTo:                   PFX + 'export.validTo',
+  export_count:                     PFX + 'export.count',
+  export_price:                     PFX + 'export.price',
+  export_currency:                  PFX + 'export.currency',
+  export_notes:                     PFX + 'export.notes',
+  export_tags:                      PFX + 'export.tags',
+  export_okey:                      PFX + 'export.okey',
+  export_ownerKey:                  PFX + 'export.ownerKey',
+  export_resourceKey:               PFX + 'export.resourceKey',
+
   as_title:                         '@actionsheet.title',
   select:                           '@select.label',
   cancel:                           '@cancel',

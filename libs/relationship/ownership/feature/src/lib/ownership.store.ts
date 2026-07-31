@@ -1,20 +1,20 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { AlertController, ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { ownerTypeMatches } from '@okr/shared-categories';
 import { AppStore } from '@okr/shared-feature';
 import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@okr/shared-models';
 import { selectDate } from '@okr/shared-ui';
-import { confirm, navigateByUrl } from '@okr/shared-util-angular';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, isOwnership, nameMatches } from '@okr/shared-util-core';
+import { confirm, exportCsv, getExportFileName, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, isOwnership, nameMatches } from '@okr/shared-util-core';
 import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
-import { newOwnership, OWNERSHIP_I18N_KEYS } from '@okr/relationship-ownership-util';
+import { getOwnershipExportColumns, getOwnershipExportFileName, newOwnership, OWNERSHIP_I18N_KEYS } from '@okr/relationship-ownership-util';
 
 export type OwnershipState = {
   // accordion state
@@ -64,6 +64,7 @@ export const OwnershipStore = signalStore(
     router: inject(Router),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
+    toastController: inject(ToastController),
     i18nService: inject(I18nService)
   })),
 
@@ -393,8 +394,39 @@ export const OwnershipStore = signalStore(
         await navigateByUrl(store.router, `/${path}/${ownership.ownerKey}`, { readOnly });
       },
 
-      async export(type: string): Promise<void> {
-        console.log(`OwnershipListStore.export(${type}) is not yet implemented.`);
+      /**
+       * Export the currently filtered rows of an ownership list as a CSV file.
+       * @param type the export flavour; only 'raw' exists today (menuItem `ownership-exportraw`)
+       * @param listId the list being exported — it decides both the rows and the columns
+       */
+      async export(type: string, listId = 'all'): Promise<void> {
+        if (type !== 'raw') {
+          console.warn(`OwnershipStore.export: type ${type} is not supported.`);
+          return;
+        }
+        const ownerships = listId === 'ownerships'   ? store.filteredOwnerships()   ?? [] :
+                           listId === 'lockers'      ? store.filteredLockers()      ?? [] :
+                           listId === 'keys'         ? store.filteredKeys()         ?? [] :
+                           listId === 'privateBoats' ? store.filteredPrivateBoats() ?? [] :
+                           listId === 'scsBoats'     ? store.filteredScsBoats()     ?? [] :
+                                                       store.filteredAllOwnerships() ?? [];
+        if (ownerships.length === 0) {
+          showToast(store.toastController, store.i18n.export_empty());
+          return;
+        }
+        // Coded values render as i18n keys, so they must be resolved before the (synchronous)
+        // cell accessors run. `type` and `state` have no category document behind them — the
+        // value resolver falls back to the raw code when a key is missing.
+        const [resourceType, rboatType, gender, ownershipType, state] = await Promise.all([
+          store.i18nService.createLabelResolver(store.appStore.getCategory('resource_type')),
+          store.i18nService.createLabelResolver(store.appStore.getCategory('rboat_type')),
+          store.i18nService.createLabelResolver(store.appStore.getCategory('gender')),
+          store.i18nService.createValueResolver('@relationship/ownership/feature.type', ownerships.map(o => o.type)),
+          store.i18nService.createValueResolver('@relationship/ownership/feature.state', ownerships.map(o => o.state)),
+        ]);
+        const columns = getOwnershipExportColumns(listId, store.i18n, { resourceType, rboatType, gender, type: ownershipType, state });
+        await exportCsv(buildExportTable(ownerships, columns), getExportFileName(getOwnershipExportFileName(listId), 'csv'));
+        showToast(store.toastController, store.i18n.export_conf());
       },
 
       async delete(ownership?: OwnershipModel, readOnly = true): Promise<void> {

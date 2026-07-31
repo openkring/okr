@@ -13,6 +13,7 @@
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
-    { "path": "../models/tsconfig.lib.json" }
+    { "path": "../models/tsconfig.lib.json" },
+    { "path": "../util-core/tsconfig.lib.json" }
   ]
 }

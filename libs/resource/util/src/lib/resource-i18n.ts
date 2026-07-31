@@ -92,7 +92,32 @@ export const RESOURCE_I18N_KEYS = {
   rboat_plural:             PFX + 'type.rboat.plural',
 
   realEstate_form_title:    PFX + 'type.realestate.formTitle',
-  other_form_title:         PFX + 'type.other.formTitle'
+  other_form_title:         PFX + 'type.other.formTitle',
+
+  // CSV export (context menu → exportRaw): toasts + column headers
+  export_empty:             PFX + 'export.empty',
+  export_conf:              PFX + 'export.conf',
+  export_name:              PFX + 'export.name',
+  export_type:              PFX + 'export.type',
+  export_subType:           PFX + 'export.subType',
+  export_boatType:          PFX + 'export.boatType',
+  export_gender:            PFX + 'export.gender',
+  export_usage:             PFX + 'export.usage',
+  export_seats:             PFX + 'export.seats',
+  export_brand:             PFX + 'export.brand',
+  export_model:             PFX + 'export.model',
+  export_id:                PFX + 'export.id',
+  export_currentValue:      PFX + 'export.currentValue',
+  export_weight:            PFX + 'export.weight',
+  export_load:              PFX + 'export.load',
+  export_length:            PFX + 'export.length',
+  export_width:             PFX + 'export.width',
+  export_color:             PFX + 'export.color',
+  export_description:       PFX + 'export.description',
+  export_tags:              PFX + 'export.tags',
+  export_keyNr:             PFX + 'export.keyNr',
+  export_lockerNr:          PFX + 'export.lockerNr',
+  export_okey:              PFX + 'export.okey',
 
 } satisfies Record<string, string>;
 

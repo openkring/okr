@@ -1,12 +1,13 @@
 import { Injectable, Signal, isDevMode } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HashMap, TranslocoService, getBrowserLang } from '@jsverse/transloco';
-import { Observable, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { Observable, firstValueFrom, of } from 'rxjs';
+import { catchError, defaultIfEmpty, switchMap, take } from 'rxjs/operators';
 import { selectLanguage } from './i18n.util';
 import { reportI18nIssue } from './i18n-sentry';
 
-import { AvailableLanguages, DefaultLanguageCode } from '@okr/shared-models';
+import { AvailableLanguages, CategoryListModel, DefaultLanguageCode } from '@okr/shared-models';
+import { getItemLabel } from '@okr/shared-util-core';
 
 @Injectable({
   providedIn: 'root'
@@ -99,4 +100,66 @@ export class I18nService {
       Object.entries(keys).map(([k, v]) => [k, toSignal(this.translate(v as string, params), { initialValue: '' })])
     ) as Record<K, Signal<string>>;
   }
+
+  /**
+   * Resolve a single key once, as a promise.
+   *
+   * `translate()`/`translateAll()` are the right tools for the template — they keep emitting
+   * on language changes. One-shot consumers (CSV exports, reports, generated file names) run
+   * inside an async method and need the value, not a stream. Never throws: an unresolvable
+   * key degrades to an empty string.
+   * @param key the translation key, e.g. '@resource/feature.rboat_type.b2x.label'
+   * @param argument optional interpolation parameters
+   */
+  public translateOnce(key: string | null | undefined, argument?: HashMap): Promise<string> {
+    return firstValueFrom(this.translate(key, argument).pipe(take(1), defaultIfEmpty('')));
+  }
+
+  /**
+   * Resolve every item label of a category once and return a synchronous lookup.
+   *
+   * Category item labels are stored as i18n *keys* (see `getItemLabel`), so a cell in an
+   * export cannot be rendered synchronously. Resolving the whole (small) category up front
+   * turns the export's inner loop back into plain synchronous code.
+   *
+   * The returned resolver falls back to the raw item name for anything it does not know —
+   * an unmapped code is more useful in a spreadsheet than an empty cell.
+   * @param category the category list, e.g. appStore.getCategory('rboat_type')
+   */
+  public async createLabelResolver(category?: CategoryListModel): Promise<(itemName?: string) => string> {
+    const labels = new Map<string, string>();
+    if (category?.items) {
+      await Promise.all(category.items.map(async (item) => {
+        const label = await this.translateOnce(getItemLabel(category, item.name));
+        if (isResolved(label, item.name)) labels.set(item.name, label);
+      }));
+    }
+    return (itemName?: string) => (itemName ? labels.get(itemName) ?? itemName : '');
+  }
+
+  /**
+   * Same as {@link createLabelResolver}, but for coded values that have i18n keys without a
+   * backing category document (e.g. an ownership's `state`). Resolves `<prefix>.<value>.label`
+   * for each distinct value once.
+   * @param prefix the key prefix, e.g. '@relationship/ownership/feature.state'
+   * @param values the distinct values to resolve
+   */
+  public async createValueResolver(prefix: string, values: Iterable<string>): Promise<(value?: string) => string> {
+    const labels = new Map<string, string>();
+    const distinct = [...new Set([...values].filter((value) => !!value))];
+    await Promise.all(distinct.map(async (value) => {
+      const label = await this.translateOnce(`${prefix}.${value}.label`);
+      if (isResolved(label, value)) labels.set(value, label);
+    }));
+    return (value?: string) => (value ? labels.get(value) ?? value : '');
+  }
+}
+
+/**
+ * Whether a translation actually resolved. The missing-key handler returns the key itself
+ * (scope-stripped) so the UI can show it — for an export that is worse than the raw code,
+ * so a result that still looks like `<...>.<itemName>.label` counts as unresolved.
+ */
+function isResolved(label: string, itemName: string): boolean {
+  return label.length > 0 && !label.endsWith(`${itemName}.label`);
 }

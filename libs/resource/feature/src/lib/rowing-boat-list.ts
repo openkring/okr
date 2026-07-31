@@ -129,7 +129,7 @@ export class RowingBoatList {
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
       case 'add':  await this.store.add(false, false); break;
-      case 'exportRaw': await this.store.export("raw"); break;
+      case 'exportRaw': await this.store.export('raw', 'rboat'); break;
       default: error(undefined, `RowingBoatList.call: unknown method ${selectedMethod}`);
     }
   }

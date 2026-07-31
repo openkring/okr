@@ -7,14 +7,14 @@ import { of, take } from 'rxjs';
 import { yearMatches } from '@okr/shared-categories';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
-import { confirm, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { confirm, exportCsv, getExportFileName, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, PersonModelName, ReservationModel, ResourceCollection, ResourceModel } from '@okr/shared-models';
 import { selectDate } from '@okr/shared-ui';
-import { chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isPerson, isResource, isValidAt, nameMatches } from '@okr/shared-util-core';
+import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isPerson, isResource, isValidAt, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ReservationService } from '@okr/relationship-reservation-data-access';
-import { isReservation, RESERVATION_I18N_KEYS, ReservationI18n } from '@okr/relationship-reservation-util';
+import { getReservationExportColumns, getReservationExportFileName, isReservation, RESERVATION_I18N_KEYS, ReservationI18n } from '@okr/relationship-reservation-util';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 
@@ -435,8 +435,31 @@ export const ReservationStore = signalStore(
         }
       },
 
+      /**
+       * Export the currently filtered reservations as a CSV file.
+       * @param type the export flavour; only 'raw' exists today (menuItem `reservation-exportraw`)
+       */
       async export(type: string): Promise<void> {
-        console.log(`ReservationStore.export(${type}) is not yet implemented.`);
+        if (type !== 'raw') {
+          console.warn(`ReservationStore.export: type ${type} is not supported.`);
+          return;
+        }
+        const reservations = store.filteredReservations() ?? [];
+        if (reservations.length === 0) {
+          showToast(store.toastController, store.i18n.export_empty());
+          return;
+        }
+        // Category item labels are i18n keys, so they must be resolved before the (synchronous)
+        // cell accessors run — see I18nService.createLabelResolver.
+        const [state, reason] = await Promise.all([
+          store.i18nService.createLabelResolver(store.appStore.getCategory('reservation_state')),
+          store.i18nService.createLabelResolver(store.appStore.getCategory('reservation_reason')),
+        ]);
+        // listId, not the route input: 'my' is rewritten to 'p_<personKey>' by setListId.
+        const listId = store.listId();
+        const columns = getReservationExportColumns(listId, store.i18n, { state, reason });
+        await exportCsv(buildExportTable(reservations, columns), getExportFileName(getReservationExportFileName(listId), 'csv'));
+        showToast(store.toastController, store.i18n.export_conf());
       },
 
       async selectCalevent(readOnly: boolean, periodicities: CategoryListModel, calevent?: CalEventModel): Promise<CalEventModel | undefined> {

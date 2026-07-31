@@ -133,7 +133,7 @@ export class ResourceList {
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
       case 'add':  await this.store.add(true, this.readOnly()); break;
-      case 'exportRaw': await this.store.export("raw"); break;
+      case 'exportRaw': await this.store.export('raw', 'resource'); break;
       default: error(undefined, `ResourceListComponent.call: unknown method ${selectedMethod}`);
     }
   }

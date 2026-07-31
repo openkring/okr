@@ -223,7 +223,7 @@ export class OwnershipList {
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
       case 'add': await this.store.add(undefined, PersonModelName, undefined, this.readOnly()); break;
-      case 'exportRaw': await this.store.export("raw"); break;
+      case 'exportRaw': await this.store.export('raw', this.listId()); break;
       default: error(undefined, `OwnershipList.call: unknown method ${selectedMethod}`);
     }
   }
