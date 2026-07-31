@@ -19,7 +19,7 @@ import {
   Roles,
   WorkrelCollection,
 } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat, getCountryData, getTodayStr } from '@okr/shared-util-core';
+import { classifyStoreDate, convertDateFormatToString, DateFormat, getCountryData, getTodayStr } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, projectAddressesForViewer } from '@okr/shared-util-functions';
 import {
   buildVCardFile,
@@ -149,6 +149,24 @@ function buildChannels(addresses: FsData[], scope: ExportScope, favoritesOnly: b
   return channels;
 }
 
+/**
+ * Convert a dob StoreDate into the vCard BDAY ISO date, or undefined when there is nothing
+ * renderable. Gated on classifyStoreDate === 'full': a partial dob (year-only '19850000', or a
+ * birthday without a year '00000415' — the primary motivating case for this feature, imported
+ * legacy member lists that carry only a year) reaches convertDateFormatToString's
+ * isStrict=false escape hatch, but parseDate only returns null for the end-future sentinel —
+ * a partial value parses to an Invalid Date, not null — so format() would throw
+ * RangeError: Invalid time value and fail the whole vcardExport batch for one such person.
+ *
+ * A future vCard 4.0 `BDAY:--0415` form could represent a year-unknown birthday; that is a
+ * product decision left to the human, so a non-full dob simply omits BDAY for now.
+ */
+export function resolveBdayIso(dob: string | undefined): string | undefined {
+  if (!dob || classifyStoreDate(dob) !== 'full') return undefined;
+  const iso = convertDateFormatToString(dob, DateFormat.StoreDate, DateFormat.IsoDate, false);
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : undefined;
+}
+
 async function fetchAvatarBase64(db: FirebaseFirestore.Firestore, key: string): Promise<string | undefined> {
   const snap = await db.collection(AvatarCollection).doc(key).get();
   const storagePath = snap.data()?.['storagePath'] as string | undefined;
@@ -209,11 +227,7 @@ async function assembleRecord(
       // dateOfBirth and the rules reject writes that reintroduce it), but on any legacy document
       // that still had one it would now hand a Protected person's birthday to a plain member.
       const dobAddr = addresses.find((a) => a['addressChannel'] === 'dob');
-      const dob = String(dobAddr?.['dob'] ?? '');
-      if (dob) {
-        const iso = convertDateFormatToString(dob, DateFormat.StoreDate, DateFormat.IsoDate, false);
-        if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) bday = iso;
-      }
+      bday = resolveBdayIso(dobAddr?.['dob'] as string | undefined);
     }
 
     if (scope.workRels) {

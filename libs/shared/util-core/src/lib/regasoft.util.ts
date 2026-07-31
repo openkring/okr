@@ -1,9 +1,16 @@
 import { classifyStoreDate, convertDateFormatToString, DateFormat } from './date.util';
 import { SrvIndex, SrvMismatch } from '@okr/shared-models';
 
-/** Convert StoreDate "YYYYMMDD" → Regasoft ISO datetime "YYYY-MM-DDTHH:mm:ss". Returns null for empty. */
+/**
+ * Convert StoreDate "YYYYMMDD" → Regasoft ISO datetime "YYYY-MM-DDTHH:mm:ss". Returns null for
+ * empty input AND for a partial date (year-only or birthday-without-year) — Regasoft has no
+ * partial-date representation, and converting one would reach format() with an Invalid Date
+ * and throw (parseDate only returns null for the end-future sentinel, not for a structurally
+ * partial StoreDate).
+ */
 export function storeDateToRegasoftDate(storeDate: string | undefined): string | null {
   if (!storeDate || storeDate.length < 8) return null;
+  if (classifyStoreDate(storeDate.substring(0, 8)) !== 'full') return null;
   const isoDate = convertDateFormatToString(storeDate.substring(0, 8), DateFormat.StoreDate, DateFormat.IsoDate, false);
   return isoDate ? `${isoDate}T00:00:00` : null;
 }

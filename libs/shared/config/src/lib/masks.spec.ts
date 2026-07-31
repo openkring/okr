@@ -96,4 +96,17 @@ describe('ChPartialDate', () => {
     expect(accepts('15.04.198x')).toBe(false);
     expect(accepts('15..04')).toBe(false);
   });
+
+  // regression: a complete but unpadded date must stay typeable. Unlike ChAnyDate
+  // (maskitoDateOptionsGenerator, which auto-pads), a bare-RegExp mask inserts nothing, so
+  // date-input's full-date branch has to accept these forms directly (see date.util's
+  // parseFullViewDate).
+  it('accepts a complete date with an unpadded day and/or month', () => {
+    expect(accepts('15.4.1985')).toBe(true);
+    expect(accepts('5.4.1985')).toBe(true);
+  });
+
+  it('rejects a double separator after the month', () => {
+    expect(accepts('15.04..')).toBe(false);
+  });
 });

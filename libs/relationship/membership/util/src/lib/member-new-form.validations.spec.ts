@@ -39,4 +39,22 @@ describe('memberNewFormValidations date fields', () => {
     const model = makeMember({ dateOfBirth: '19850000', dateOfDeath: '19850415' });
     expect(errorsFor(model, 'dateOfDeath')).toHaveLength(0);
   });
+
+  it('rejects a year-only date of birth in the future', () => {
+    const futureYear = new Date().getFullYear() + 5;
+    expect(errorsFor(makeMember({ dateOfBirth: `${futureYear}0000` }), 'dateOfBirth').length).toBeGreaterThan(0);
+  });
+
+  it('accepts a year-only date of birth that is the current year', () => {
+    const currentYear = new Date().getFullYear();
+    expect(errorsFor(makeMember({ dateOfBirth: `${currentYear}0000` }), 'dateOfBirth')).toHaveLength(0);
+  });
+
+  it('accepts a year-only date of birth in the past', () => {
+    expect(errorsFor(makeMember({ dateOfBirth: '19850000' }), 'dateOfBirth')).toHaveLength(0);
+  });
+
+  it('accepts a birthday without a year, even though the current year has no such date yet', () => {
+    expect(errorsFor(makeMember({ dateOfBirth: '00001231' }), 'dateOfBirth')).toHaveLength(0);
+  });
 });

@@ -1,7 +1,7 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
-import { dateValidations, isFutureDate, isStoreDateOrderValid, partialDateValidations, stringValidations } from '@okr/shared-util-core';
+import { classifyStoreDate, dateValidations, getYear, isFutureDate, isStoreDateOrderValid, partialDateValidations, stringValidations } from '@okr/shared-util-core';
 
 import { MemberNewFormModel } from './member-new-form.model';
 
@@ -34,17 +34,33 @@ export const memberNewFormValidations = staticSuite((model: MemberNewFormModel, 
   //tagValidations('tags', model.tags);
 
   // cross field validations
-  omitWhen(model.dateOfBirth === '', () => {
+  // isFutureDate parses a full StoreDate and would throw/misbehave on a partial one (a
+  // year-only value parses to an Invalid Date, not null — see date.util's classifyStoreDate
+  // doc). A year-only dob/dod is checked at year granularity instead; a birthday without a
+  // year has no year to compare and is skipped.
+  const dobPrecision = classifyStoreDate(model.dateOfBirth);
+  omitWhen(model.dateOfBirth === '' || dobPrecision === 'dayMonthOnly', () => {
     test('dateOfBirth', '@personDateOfBirthNotFuture', () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      enforce(isFutureDate(model.dateOfBirth!)).isFalsy();
+      if (dobPrecision === 'yearOnly') {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        enforce(Number(model.dateOfBirth!.substring(0, 4))).lessThanOrEquals(getYear());
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        enforce(isFutureDate(model.dateOfBirth!)).isFalsy();
+      }
     })
   });
 
-  omitWhen(model.dateOfDeath === '', () => {
+  const dodPrecision = classifyStoreDate(model.dateOfDeath);
+  omitWhen(model.dateOfDeath === '' || dodPrecision === 'dayMonthOnly', () => {
     test('dateOfDeath', '@personDateOfDeathNotFuture', () => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      enforce(isFutureDate(model.dateOfDeath!)).isFalsy();
+      if (dodPrecision === 'yearOnly') {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        enforce(Number(model.dateOfDeath!.substring(0, 4))).lessThanOrEquals(getYear());
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        enforce(isFutureDate(model.dateOfDeath!)).isFalsy();
+      }
     })
   });
 

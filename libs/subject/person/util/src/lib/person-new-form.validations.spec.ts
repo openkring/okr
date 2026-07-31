@@ -50,4 +50,24 @@ describe('personNewFormValidations date fields', () => {
     const model = makePerson({ dateOfBirth: '19850000', dateOfDeath: '19850415' });
     expect(errorsFor(model, 'dateOfDeath')).toHaveLength(0);
   });
+
+  it('rejects a year-only date of birth in the future', () => {
+    const futureYear = new Date().getFullYear() + 5;
+    expect(errorsFor(makePerson({ dateOfBirth: `${futureYear}0000` }), 'dateOfBirth').length).toBeGreaterThan(0);
+  });
+
+  it('accepts a year-only date of birth that is the current year', () => {
+    const currentYear = new Date().getFullYear();
+    expect(errorsFor(makePerson({ dateOfBirth: `${currentYear}0000` }), 'dateOfBirth')).toHaveLength(0);
+  });
+
+  it('accepts a year-only date of birth in the past', () => {
+    expect(errorsFor(makePerson({ dateOfBirth: '19850000' }), 'dateOfBirth')).toHaveLength(0);
+  });
+
+  it('accepts a birthday without a year, even though the current year has no such date yet', () => {
+    // dayMonthOnly has no year to compare — isFutureDate would otherwise evaluate it against
+    // the current year via date-fns parse and could reject it depending on today's date.
+    expect(errorsFor(makePerson({ dateOfBirth: '00001231' }), 'dateOfBirth')).toHaveLength(0);
+  });
 });

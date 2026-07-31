@@ -146,9 +146,18 @@ export function convertDateFromAnyFormatToString(value: string, toFormat = DateF
  */
 export function prettyFormatDate(storeDate: string | undefined, showYear = true, shortWeekday?: boolean): string {
     if (!storeDate || storeDate.length < 8) return '';
-    if (storeDate.substring(0, 8).endsWith('0000')) {
+    const precision = classifyStoreDate(storeDate.substring(0, 8));
+    if (precision === 'yearOnly') {
       return showYear ? storeDate.substring(0, 4) : '';
     }
+    if (precision === 'dayMonthOnly') {
+      // no year to show either way — render the day/month via the same partial formatter
+      // the person dob/dod input uses, instead of falling through to format() and throwing.
+      return formatPartialStoreDate(storeDate.substring(0, 8));
+    }
+    // 'none' (malformed / all-filler): same reasoning — do not reach convertDateFormatToString
+    // with something format() cannot render.
+    if (precision !== 'full') return '';
     return convertDateFormatToString(storeDate.substring(0, 8), DateFormat.StoreDate, showYear ? DateFormat.ViewDate : DateFormat.DDMM, false);
   }
 
@@ -815,6 +824,22 @@ export function parsePartialViewDate(view: string): string {
   }
 
   return '';
+}
+
+/**
+ * Parse an unpadded full ViewDate — 'd.M.yyyy', 'dd.M.yyyy', 'd.MM.yyyy' or the already-padded
+ * 'dd.MM.yyyy' — into a full StoreDate. Sibling to parsePartialViewDate: ChPartialDate (unlike
+ * ChAnyDate's maskitoDateOptionsGenerator) does no auto-padding, so a partial-allowed date field
+ * can hold a genuinely complete date ('5.4.1985') that never reaches 10 characters. Returns ''
+ * for a still-typing fragment or a year outside the accepted StoreDate range.
+ */
+export function parseFullViewDate(view: string): string {
+  const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(view);
+  if (!match) return '';
+  const [, day, month, year] = match;
+  const padded = `${day.padStart(2, '0')}.${month.padStart(2, '0')}.${year}`;
+  const store = convertDateFormatToString(padded, DateFormat.ViewDate, DateFormat.StoreDate, false);
+  return classifyStoreDate(store) === 'full' ? store : '';
 }
 
 /**

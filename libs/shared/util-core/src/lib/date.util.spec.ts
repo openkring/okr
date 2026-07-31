@@ -24,7 +24,9 @@ import {
     isStoreDateOrderValid,
     storeDatesAgree,
     parseDate,
-    parsePartialViewDate
+    parsePartialViewDate,
+    parseFullViewDate,
+    prettyFormatDate
 } from './date.util';
 describe('date.util', () => {
 
@@ -506,6 +508,66 @@ describe('date.util', () => {
         it('round-trips with parsePartialViewDate', () => {
             expect(parsePartialViewDate(formatPartialStoreDate('19850000'))).toBe('19850000');
             expect(parsePartialViewDate(formatPartialStoreDate('00000415'))).toBe('00000415');
+        });
+    });
+
+    describe('prettyFormatDate', () => {
+        it('renders a full date', () => {
+            expect(prettyFormatDate('19850415')).toBe('15.04.1985');
+        });
+
+        it('renders a year-only date as the bare year', () => {
+            expect(prettyFormatDate('19850000')).toBe('1985');
+        });
+
+        it('renders a day-month-only date without throwing (regression: used to fall through to format() and throw)', () => {
+            expect(prettyFormatDate('00000415')).toBe('15.04.');
+        });
+
+        it('renders a day-month-only date without the day/month when showYear is true and the year is unknown', () => {
+            // dayMonthOnly has no year to show either way — showYear only controls the full-date branch
+            expect(prettyFormatDate('00000415', true)).toBe('15.04.');
+            expect(prettyFormatDate('00000415', false)).toBe('15.04.');
+        });
+
+        it('returns empty for an unusable date', () => {
+            expect(prettyFormatDate(undefined)).toBe('');
+            expect(prettyFormatDate('')).toBe('');
+        });
+
+        it('returns empty instead of throwing for an all-filler date', () => {
+            expect(prettyFormatDate('00000000')).toBe('');
+        });
+    });
+
+    describe('parseFullViewDate', () => {
+        it('pads an unpadded d.M.yyyy into a full StoreDate', () => {
+            expect(parseFullViewDate('5.4.1985')).toBe('19850405');
+        });
+
+        it('pads a two-digit day with a single-digit month', () => {
+            expect(parseFullViewDate('15.4.1985')).toBe('19850415');
+        });
+
+        it('pads a single-digit day with a two-digit month', () => {
+            expect(parseFullViewDate('5.04.1985')).toBe('19850405');
+        });
+
+        it('accepts an already-padded dd.MM.yyyy', () => {
+            expect(parseFullViewDate('15.04.1985')).toBe('19850415');
+        });
+
+        it('returns empty for a still-typing fragment', () => {
+            expect(parseFullViewDate('')).toBe('');
+            expect(parseFullViewDate('15')).toBe('');
+            expect(parseFullViewDate('15.')).toBe('');
+            expect(parseFullViewDate('15.04')).toBe('');
+            expect(parseFullViewDate('15.04.')).toBe('');
+            expect(parseFullViewDate('1985')).toBe('');
+        });
+
+        it('returns empty for a year outside the accepted range', () => {
+            expect(parseFullViewDate('15.04.1700')).toBe('');
         });
     });
 });

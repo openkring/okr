@@ -4,7 +4,7 @@ import { MaskitoOptions } from '@maskito/core';
 
 import { DATE_LENGTH, InputMode } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { classifyStoreDate, coerceBoolean, convertDateFormatToString, DateFormat, formatPartialStoreDate, getTodayStr, isRenderableStoreDate, parsePartialViewDate } from '@okr/shared-util-core';
+import { classifyStoreDate, coerceBoolean, convertDateFormatToString, DateFormat, formatPartialStoreDate, getTodayStr, isRenderableStoreDate, parseFullViewDate, parsePartialViewDate } from '@okr/shared-util-core';
 import { ChAnyDate, ChPartialDate } from '@okr/shared-config';
 
 import { ViewDateInput, ViewDateInputI18n } from './viewdate-input';
@@ -152,6 +152,14 @@ export class DateInput {
       return;
     }
     if (!this.isPartialAllowed()) return;   // incomplete → user still typing
+
+    // ChPartialDate (unlike ChAnyDate) never auto-pads, so a complete date typed with a
+    // single-digit day/month ('5.4.1985') never reaches the 10-char branch above.
+    const full = parseFullViewDate(view);
+    if (full) {
+      this.storeDate.set(full);
+      return;
+    }
 
     // '1985' or '15.04.' — parsePartialViewDate returns '' for a fragment
     const partial = parsePartialViewDate(view);
