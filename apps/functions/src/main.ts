@@ -258,3 +258,9 @@ export { generateDunningPdf } from './payment/generate-dunning-pdf';
 // exportMyData zips + signs the caller's own export, reapPrivacyExports reaps stale artifacts
 export const exportMyData = Privacy.exportMyData;
 export const reapPrivacyExports = Privacy.reapPrivacyExports;
+
+// privacy 1.19 Phase 5B: tenant-scoped right to erasure (D-P5-2/D-P5-6, D-L2) —
+// previewMyErasure builds the honest preflight report, eraseMyData executes the erasure
+// the member confirmed (token-checked against a freshly rebuilt preview)
+export const previewMyErasure = Privacy.previewMyErasure;
+export const eraseMyData = Privacy.eraseMyData;

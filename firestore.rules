@@ -395,6 +395,14 @@ service cloud.firestore {
       allow read:  if signedIn() && (request.auth.uid == resource.data.userId || isAdmin());
       allow write: if false;
     }
+    // Evidence that a data-subject erasure ran (privacy 1.19, Phase 5B). Holds counts
+    // per collection and a salted pseudonym — no name, no e-mail, no personKey, no uid,
+    // and nothing that would reveal whether the person still exists in another tenant
+    // (D-P5-2). Written by eraseMyData under the Admin SDK; never from a client.
+    match /erasure-log/{docId} {
+      allow read:  if isAdmin() && (resource == null || belongsToTenant(resource.data));
+      allow write: if false;
+    }
     match /_rateLimits/{docId} {
       allow read, write: if false;
     }

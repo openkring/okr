@@ -42,6 +42,8 @@ def jwt(uid, email="u@test.ch"):
 
 def _val(v):
     if isinstance(v, bool):  return {"booleanValue": v}
+    # bool is a subclass of int — this branch must stay BELOW the bool one.
+    if isinstance(v, int):   return {"integerValue": str(v)}
     if isinstance(v, str):   return {"stringValue": v}
     if isinstance(v, list):  return {"arrayValue": {"values": [_val(x) for x in v]}}
     if isinstance(v, dict):  return {"mapValue": {"fields": {k: _val(x) for k, x in v.items()}}}
@@ -167,6 +169,10 @@ seed("docs/dInMine", {"tenants": ["t1"], "isArchived": False, "authorKey": "pC",
 # isAdmin()-only bypass (see task-4-report.md fix-report deviation note).
 seed("docs/dForD",  {"tenants": ["t1"], "isArchived": False, "authorKey": "pA", "folderKeys": ["fMine"], "fullPath": "d.jpg"})
 seed("folders/fT2", {"tenants": ["t2"], "isArchived": False, "name": "T2", "membersMayUpload": True, "ownerKey": "pB"})
+# privacy 1.19 Phase 5B: erasure-log — CF-written evidence, tenant-admin read only.
+seed("erasure-log/elA", {"tenants": ["t1"], "isArchived": False, "tenantId": "t1",
+                         "executedAt": "20260729120000", "pseudonym": "Gel\u00f6schtes Mitglied #abc12345",
+                         "counts": {"sessions": 3}, "trigger": "self"})
 
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
@@ -249,6 +255,17 @@ single_cases = [
      body({"favEmail": "forged@x.ch"}), ["favEmail"]),
     ("userA create address-directory -> DENY (CF-only)", False, POST, "address-directory?documentId=t1_person.pX", A,
      body({"tenants": ["t1"], "parentKey": "person.pX"}), None),
+    # privacy 1.19 Phase 5B: erasure-log — admin-of-this-tenant read, nobody writes
+    ("userD(admin t1) GET erasure-log -> ALLOW", True, GET, "erasure-log/elA", D, None, None),
+    ("userA(plain member t1) GET erasure-log -> DENY", False, GET, "erasure-log/elA", A, None, None),
+    ("userM(memberAdmin t1) GET erasure-log -> DENY (admin only)", False, GET, "erasure-log/elA", M, None, None),
+    ("userB(admin t2) GET erasure-log (t1) -> DENY (cross-tenant)", False, GET, "erasure-log/elA", B, None, None),
+    ("anon GET erasure-log -> DENY", False, GET, "erasure-log/elA", None, None, None),
+    ("userD(admin t1) PATCH erasure-log -> DENY (CF-only)", False, PATCH, "erasure-log/elA", D,
+     body({"pseudonym": "forged"}), ["pseudonym"]),
+    ("userD(admin t1) create erasure-log -> DENY (CF-only)", False, POST, "erasure-log?documentId=elX", D,
+     body({"tenants": ["t1"], "tenantId": "t1"}), None),
+    ("userD(admin t1) DELETE erasure-log -> DENY (CF-only)", False, DELETE, "erasure-log/elA", D, None, None),
     # ── privacy 1.19 Phase 4: addresses = PII vault, read owner ∨ privileged ──
     ("userE(plain) GET another's address -> DENY", False, GET, "addresses/adrO_email", E, None, None),
     ("userE(plain) GET another's ssn address -> DENY", False, GET, "addresses/adrO_ssn", E, None, None),
