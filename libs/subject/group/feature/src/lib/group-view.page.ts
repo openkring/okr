@@ -5,7 +5,7 @@ import { ViewWillEnter } from '@ionic/angular';
 import { GroupModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
+import { safeStructuredClone } from '@okr/shared-util-core';
 import { isAdminMember } from '@okr/subject-group-util';
 import { canManageFolders } from '@okr/folder-util';
 import { DEFAULT_ID, DEFAULT_NAME } from '@okr/shared-constants';
@@ -179,8 +179,6 @@ export class GroupViewPage implements ViewWillEnter {
 
   // inputs
   public groupKey = input.required<string>();
-  public readOnly = input(true);
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
  // signals
   protected formDirty = signal(false);

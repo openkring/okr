@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ViewWillEnter }
 
 import { PersonModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { getFullName, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { PersonFormModel } from '@okr/subject-person-util';
 
 import { MembershipAccordion } from '@okr/relationship-membership-feature';
@@ -91,8 +91,11 @@ export class PersonEditPage implements ViewWillEnter   {
 
   // inputs
   public personKey = input.required<string>();
-  public readOnly = input<boolean>(true);
-  protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  // Editing another person is memberAdmin-only, same rule as PersonList (self-service edits go
+  // through /person/profile). This used to be a readOnly input defaulting to true, but the page is
+  // only ever reached via the /person/:personKey route, where withComponentInputBinding() wrote
+  // undefined into it -> coerceBoolean(undefined) === false -> the page opened editable for everyone.
+  protected isReadOnly = computed(() => !hasRole('memberAdmin', this.currentUser()));
   
   // signals
   protected formDirty = signal(false);
@@ -202,7 +205,7 @@ export class PersonEditPage implements ViewWillEnter   {
   }
 
   protected getTitleLabel(readOnly: boolean, key: string): string {
-    if (this.readOnly()) {
+    if (readOnly) {
       return this.store.i18n.view();
     }
     if (key.length > 0) {

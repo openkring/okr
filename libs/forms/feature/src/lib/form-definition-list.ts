@@ -4,7 +4,7 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCh
 import { FormDefinitionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -72,7 +72,9 @@ export class FormDefinitionList {
   // inputs
   public readonly listId = input('all');                         // list partition; default 'all', route binding overrides it
   public readonly contextMenuName = input('forms-context');      // context menu for list-level actions
-  public readonly showMenuButton = input(true);                  // hide the side-menu button in embedded views
+  // hide the side-menu button in embedded views. keepDefaultTrue: withComponentInputBinding() would
+  // otherwise set this to undefined on standalone routes, which hides the main-menu hamburger.
+  public readonly showMenuButton = input(true, { transform: keepDefaultTrue });
 
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

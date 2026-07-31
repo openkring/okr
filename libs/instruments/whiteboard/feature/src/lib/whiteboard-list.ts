@@ -5,7 +5,7 @@ import { ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, Io
 import { RoleName, WhiteboardModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -31,7 +31,7 @@ import { WhiteboardStore } from './whiteboard.store';
     <ion-header>
       @if (contextMenuName() !== 'disable') {
         <ion-toolbar [color]="color()">
-          @if (showMenuButton() === true) {
+          @if (showMenuButton()) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
           <ion-title>{{ filteredCount() }}/{{ totalCount() }} {{ store.i18n.plural() }}</ion-title>
@@ -85,7 +85,9 @@ export class WhiteboardList {
 
   public readonly contextMenuName = input.required<string>();
   public color = input('secondary');
-  public showMenuButton = input<boolean>(true);
+  // keepDefaultTrue: withComponentInputBinding() would otherwise set this to undefined on standalone
+  // routes (the route only binds listId/contextMenuName), which hides the main-menu hamburger.
+  public showMenuButton = input(true, { transform: keepDefaultTrue });
 
   protected readonly filteredWhiteboards = computed(() => this.store.filteredWhiteboards());
   protected readonly totalCount = computed(() => this.store.whiteboards().length);
