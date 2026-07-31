@@ -1,4 +1,4 @@
-import { convertDateFormatToString, DateFormat } from './date.util';
+import { classifyStoreDate, convertDateFormatToString, DateFormat } from './date.util';
 import { SrvIndex, SrvMismatch } from '@okr/shared-models';
 
 /** Convert StoreDate "YYYYMMDD" → Regasoft ISO datetime "YYYY-MM-DDTHH:mm:ss". Returns null for empty. */
@@ -31,6 +31,12 @@ export function getMismatches(item: SrvIndex): SrvMismatch[] {
   const chkCI = (field: string, bk: string, r: string) => {
     if (r && bk.toLowerCase() !== r.toLowerCase()) result.push({ field, okrValue: bk, rValue: r });
   };
+  // A partial date (year only, or a birthday without a year) cannot be compared to
+  // Regasoft's full date. Reporting it would create a permanent, unresolvable mismatch.
+  const chkDate = (field: string, bk: string, r: string) => {
+    if (classifyStoreDate(bk) !== 'full' || classifyStoreDate(r) !== 'full') return;
+    if (bk !== r) result.push({ field, okrValue: bk, rValue: r });
+  };
 
   chk('firstName',   item.firstName,   item.rFirstName);
   chk('lastName',    item.lastName,    item.rLastName);
@@ -40,7 +46,7 @@ export function getMismatches(item: SrvIndex): SrvMismatch[] {
   chkCI('street',    item.mStreet,     item.rStreet);
   chk('zipCode',     item.mZipCode,    item.rZipCode);
   chkCI('city',      item.mCity,       item.rCity);
-  chk('dateOfBirth', item.dateOfBirth, item.rDateOfBirth);
+  chkDate('dateOfBirth', item.dateOfBirth, item.rDateOfBirth);
 
   if (item.pKey) {
     const expectedCat = item.mainClub ? item.rCategory : 'D';

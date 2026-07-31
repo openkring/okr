@@ -20,8 +20,8 @@ describe('computePersonFieldDiffs', () => {
   });
 
   it('reports a diff when the form adds a value the existing person lacks', () => {
-    const diffs = computePersonFieldDiffs(candidate({ dateOfBirth: '' }), form({ dateOfBirth: '1990-04-02' }));
-    expect(diffs).toEqual([{ field: 'dateOfBirth', existingValue: '', newValue: '1990-04-02' }]);
+    const diffs = computePersonFieldDiffs(candidate({ dateOfBirth: '' }), form({ dateOfBirth: '19900402' }));
+    expect(diffs).toEqual([{ field: 'dateOfBirth', existingValue: '', newValue: '19900402' }]);
   });
 
   it('reports a diff when values differ, mapping email/phone/zip to fav fields', () => {
@@ -43,5 +43,35 @@ describe('computePersonFieldDiffs', () => {
   it('treats whitespace-only differences as equal', () => {
     const diffs = computePersonFieldDiffs(candidate({ favEmail: 'a@x.ch' }), form({ email: '  a@x.ch  ' }));
     expect(diffs).toEqual([]);
+  });
+
+  it('does not propose overwriting a full birth date with a year-only entry of the same year', () => {
+    const diffs = computePersonFieldDiffs(candidate({ dateOfBirth: '19850415' }), form({ dateOfBirth: '19850000' }));
+    expect(diffs.find(d => d.field === 'dateOfBirth')).toBeUndefined();
+  });
+
+  it('does not propose overwriting a full birth date with a matching birthday', () => {
+    const diffs = computePersonFieldDiffs(candidate({ dateOfBirth: '19850415' }), form({ dateOfBirth: '00000415' }));
+    expect(diffs.find(d => d.field === 'dateOfBirth')).toBeUndefined();
+  });
+
+  it('still proposes a diff when the years genuinely disagree', () => {
+    const diffs = computePersonFieldDiffs(candidate({ dateOfBirth: '19850415' }), form({ dateOfBirth: '19860000' }));
+    expect(diffs.find(d => d.field === 'dateOfBirth')).toBeDefined();
+  });
+
+  it('still proposes a diff when the existing person has no birth date', () => {
+    const diffs = computePersonFieldDiffs(candidate({ dateOfBirth: '' }), form({ dateOfBirth: '19850000' }));
+    expect(diffs.find(d => d.field === 'dateOfBirth')).toBeDefined();
+  });
+
+  it('applies the same rule to dateOfDeath', () => {
+    const diffs = computePersonFieldDiffs(candidate({ dateOfDeath: '20200101' }), form({ dateOfDeath: '20200000' }));
+    expect(diffs.find(d => d.field === 'dateOfDeath')).toBeUndefined();
+  });
+
+  it('leaves non-date fields comparing as plain strings', () => {
+    const diffs = computePersonFieldDiffs(candidate({ firstName: 'Anna' }), form({ firstName: 'Anne' }));
+    expect(diffs.find(d => d.field === 'firstName')).toBeDefined();
   });
 });
