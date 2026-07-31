@@ -30,6 +30,7 @@ describe('masks exports', () => {
       'ChTimeMask',
       'UsPhoneMask',
       'ChPhoneMask',
+      'ChPartialDate',
     ].forEach(key => {
       expect(masks[key as keyof typeof masks]).toBeDefined();
     });
@@ -67,5 +68,32 @@ describe('masks exports', () => {
     expect(typeof masks.ChPastDate).toBe('object');
     expect(typeof masks.ChFutureDate).toBe('object');
     expect(typeof masks.ChTimeMask).toBe('object');
+  });
+});
+
+describe('ChPartialDate', () => {
+  const accepts = (value: string) => (masks.ChPartialDate.mask as RegExp).test(value);
+
+  it('accepts a complete date and every prefix of it', () => {
+    ['1', '15', '15.', '15.0', '15.04', '15.04.', '15.04.1', '15.04.1985'].forEach(v =>
+      expect(accepts(v)).toBe(true));
+  });
+
+  it('accepts a bare year and every prefix of it', () => {
+    ['1', '19', '198', '1985'].forEach(v => expect(accepts(v)).toBe(true));
+  });
+
+  it('accepts a birthday with a trailing dot', () => {
+    expect(accepts('15.04.')).toBe(true);
+  });
+
+  it('rejects a separator after more than two leading digits', () => {
+    expect(accepts('1985.')).toBe(false);
+  });
+
+  it('rejects more than four year digits and stray characters', () => {
+    expect(accepts('15.04.19855')).toBe(false);
+    expect(accepts('15.04.198x')).toBe(false);
+    expect(accepts('15..04')).toBe(false);
   });
 });

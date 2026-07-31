@@ -92,6 +92,20 @@ export const AltitudeMask = maskitoNumberOptionsGenerator({
   min: new Date(1850, 0, 1)
 });
 
+/**
+ * Permissive date mask for the person dateOfBirth/dateOfDeath fields, which accept a
+ * partial date: 'dd.mm.yyyy' | 'dd.mm.' (birthday, no year) | 'yyyy' (year only), plus
+ * every prefix of those while typing.
+ *
+ * Unlike ChAnyDate this does NOT auto-insert the separators — the first four digits are
+ * ambiguous ('1985' is either a year or the start of '19.85.'), so the user types the dots.
+ * It also deliberately does not bound month or day: partialDateValidations does that, and a
+ * mask that rejected them would block typing mid-value.
+ */
+export const ChPartialDate: MaskitoOptions = {
+  mask: /^(\d{1,4}|\d{1,2}\.(\d{0,2}|\d{1,2}\.\d{0,4}))$/,
+};
+
 export const ChPastDate = maskitoDateOptionsGenerator({
   mode: 'dd/mm/yyyy',
   separator: '.',
