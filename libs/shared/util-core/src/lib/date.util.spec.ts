@@ -9,6 +9,7 @@ import {
     DatePart,
     extractFromDate,
     formatDateToken,
+    getAge,
     getAgeFromBirthYear,
     getBirthYear,
     getStoreDateYear,
@@ -301,6 +302,48 @@ describe('date.util', () => {
         it('leaves full calendar validity to checkDate', () => {
             // 1985 was not a leap year; classify is structural, isValidPartialStoreDate rejects it.
             expect(classifyStoreDate('19850229')).toBe('full');
+        });
+    });
+
+    describe('getStoreDateYear with partial dates', () => {
+        it('returns the year of a full date', () => {
+            expect(getStoreDateYear('19850415')).toBe('1985');
+        });
+
+        it('returns the year of a year-only date', () => {
+            expect(getStoreDateYear('19850000')).toBe('1985');
+        });
+
+        it('never returns the filler as a year', () => {
+            // a '0000' birth year would put these people into a bogus year-0 cohort
+            // in the memberBirthYear replica (spec 1.19)
+            expect(getStoreDateYear('00000415')).toBe('');
+        });
+
+        it('returns an empty year for a malformed value', () => {
+            expect(getStoreDateYear('abcdefgh')).toBe('');
+            expect(getStoreDateYear('')).toBe('');
+            expect(getStoreDateYear(undefined)).toBe('');
+        });
+    });
+
+    describe('getAge with partial dates', () => {
+        it('computes the same age from a year-only date as from a full one', () => {
+            expect(getAge('19850415', false, 2026)).toBe(41);
+            expect(getAge('19850000', false, 2026)).toBe(41);
+        });
+
+        it('has no age for a date whose year is unknown', () => {
+            expect(getAge('00000415', false, 2026)).toBe(-1);
+        });
+
+        it('still buckets a year-only date by decade', () => {
+            expect(getAge('19850000', true, 2026)).toBe(4);
+        });
+
+        it('has no age for a malformed value', () => {
+            expect(getAge('19850000000', false, 2026)).toBe(-1);
+            expect(getAge('', false, 2026)).toBe(-1);
         });
     });
 });

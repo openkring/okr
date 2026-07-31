@@ -199,16 +199,14 @@ export function extractFromDate(value: unknown, part: DatePart): number {
 
 /**
  * Converts a birthdate into the current age.
- * @param the birthdate in StoreDate format (i.e. yyyymmdd)
+ * @param dateOfBirth the birthdate in StoreDate format (yyyymmdd); a year-only partial
+ *  ('19850000') yields the same age as a full date, a year-unknown one ('00000415') yields -1
  * @param byDecade if true, the age is returned in decades, otherwise in years
  * @param refYear the reference year for the calculation (default is the current year)
- *  if false: the age in years is returned
- *  if true: the age in decades is returned, i.e. 45 years = 4 decades, 8 years = 0 decades
  */
 export function getAge(dateOfBirth: string, byDecade = false, refYear = getYear()): number {
-  if (!dateOfBirth || dateOfBirth.length !== 8) return -1;
-  const birthYear = Number(convertDateFormat(dateOfBirth, DateFormat.StoreDate, DateFormat.Year));
-  const ageInYears =  refYear - birthYear;
+  const ageInYears = getAgeFromBirthYear(getStoreDateYear(dateOfBirth), refYear);
+  if (ageInYears === -1) return -1;
   return byDecade === true ? Math.floor(ageInYears / 10) : ageInYears;
 }
 
@@ -216,10 +214,14 @@ export function getAge(dateOfBirth: string, byDecade = false, refYear = getYear(
  * Extract the year (YYYY) from a StoreDate (yyyymmdd). This is the degraded-precision
  * replica every consumer outside the PII vault gets (spec 1.19): memberBirthYear from a
  * dob address, deathYear/memberDeathYear from a dod address.
+ *
+ * Returns '' — never the filler — when the year is not known, so a year-unknown person
+ * does not land in a year-0 cohort.
  */
 export function getStoreDateYear(storeDate?: string): string {
-  if (!storeDate || storeDate.length !== 8) return '';
-  return storeDate.substring(0, 4);
+  const precision = classifyStoreDate(storeDate);
+  if (precision !== 'full' && precision !== 'yearOnly') return '';
+  return (storeDate as string).substring(0, 4);
 }
 
 /**
