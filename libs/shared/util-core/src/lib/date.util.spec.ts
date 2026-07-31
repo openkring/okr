@@ -20,6 +20,7 @@ import {
     getYearDiff,
     isFutureDate,
     isValidPartialStoreDate,
+    isRenderableStoreDate,
     isStoreDateOrderValid,
     storeDatesAgree,
     parseDate,
@@ -370,6 +371,34 @@ describe('date.util', () => {
 
         it('accepts 29 February in a leap year', () => {
             expect(isValidPartialStoreDate('19880229')).toBe(true);
+        });
+    });
+
+    describe('isRenderableStoreDate', () => {
+        it('accepts a real, complete calendar date regardless of the MIN/MAX_STORE_YEAR range', () => {
+            expect(isRenderableStoreDate('19850415')).toBe(true);
+            expect(isRenderableStoreDate('18000101')).toBe(true);   // before MIN_STORE_YEAR
+            expect(isRenderableStoreDate('25001231')).toBe(true);   // after MAX_STORE_YEAR
+        });
+
+        it('accepts 29 February in a leap year', () => {
+            expect(isRenderableStoreDate('19880229')).toBe(true);
+        });
+
+        it('rejects a full date that is not a real calendar date', () => {
+            expect(isRenderableStoreDate('19850229')).toBe(false);  // 1985 was not a leap year
+        });
+
+        it('rejects a year-only or day-month-only partial (filler segments)', () => {
+            expect(isRenderableStoreDate('19850000')).toBe(false);
+            expect(isRenderableStoreDate('00000415')).toBe(false);
+        });
+
+        it('rejects malformed or empty values', () => {
+            expect(isRenderableStoreDate('')).toBe(false);
+            expect(isRenderableStoreDate(undefined)).toBe(false);
+            expect(isRenderableStoreDate('1985041')).toBe(false);
+            expect(isRenderableStoreDate('1985xxxx')).toBe(false);
         });
     });
 

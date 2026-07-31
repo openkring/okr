@@ -254,6 +254,19 @@ export function isValidPartialStoreDate(value: string): boolean {
 }
 
 /**
+ * True when a StoreDate is a real, complete calendar date — 8 digits, a month and day that
+ * exist, and parseable by date-fns. Unlike classifyStoreDate this applies NO year range: it
+ * exists so a strict date field renders whatever it holds, while still refusing the Invalid
+ * Date that would make format() throw.
+ */
+export function isRenderableStoreDate(value?: string): boolean {
+  if (!value || !/^\d{8}$/.test(value)) return false;
+  if (value.substring(0, 4) === STORE_DATE_FILLER || value.substring(4) === STORE_DATE_FILLER) return false;
+  const date = parseDate(value, DateFormat.StoreDate, false);
+  return !!date && isValid(date);
+}
+
+/**
  * True when `later` does not precede `earlier` at the coarsest precision the two share.
  * Two full dates must be strictly ordered; a year-granularity comparison allows the same
  * year (someone can be born and die in 1985). A pair that cannot be compared — either side

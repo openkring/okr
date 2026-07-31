@@ -49,7 +49,8 @@ const EDITED_FIELDS = ['ssnId'];
                   [storeDate]="dateOfBirth()"
                   (storeDateChange)="onFieldChange('dateOfBirth', $event)"
                   autocomplete="bday"
-                  [readOnly]="true" />
+                  [readOnly]="true"
+                  [allowPartial]="true" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-cat-select

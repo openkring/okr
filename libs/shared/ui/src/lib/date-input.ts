@@ -4,7 +4,7 @@ import { MaskitoOptions } from '@maskito/core';
 
 import { DATE_LENGTH, InputMode } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { classifyStoreDate, coerceBoolean, convertDateFormatToString, DateFormat, formatPartialStoreDate, getTodayStr, parsePartialViewDate } from '@okr/shared-util-core';
+import { classifyStoreDate, coerceBoolean, convertDateFormatToString, DateFormat, formatPartialStoreDate, getTodayStr, isRenderableStoreDate, parsePartialViewDate } from '@okr/shared-util-core';
 import { ChAnyDate, ChPartialDate } from '@okr/shared-config';
 
 import { ViewDateInput, ViewDateInputI18n } from './viewdate-input';
@@ -70,11 +70,19 @@ export class DateInput {
 
   protected viewDate = linkedSignal(() => {
     const store = this.storeDate();
+    if (!this.isPartialAllowed()) {
+      // strict fields: unchanged behaviour, minus the legacy Invalid-Date crash on a
+      // partial value. No year range — that would blank an out-of-range but otherwise
+      // valid stored date on the final keystroke.
+      return isRenderableStoreDate(store)
+        ? (convertDateFormatToString(store, DateFormat.StoreDate, DateFormat.ViewDate, false) ?? '')
+        : '';
+    }
     if (classifyStoreDate(store) === 'full') {
       return convertDateFormatToString(store, DateFormat.StoreDate, DateFormat.ViewDate, false) ?? '';
     }
     // '1985' or '15.04.' when partials are allowed; nothing otherwise
-    return this.isPartialAllowed() ? formatPartialStoreDate(store) : '';
+    return formatPartialStoreDate(store);
   });
 
   public i18n = input.required<DateInputI18n>();
@@ -88,6 +96,7 @@ export class DateInput {
   public showDateSelect = input(true);
   protected shouldShowDateSelect = computed(() => {
     if (!coerceBoolean(this.showDateSelect())) return false;
+    if (!this.isPartialAllowed()) return true;   // strict fields: unchanged behaviour
     const precision = classifyStoreDate(this.storeDate());
     return precision === 'full' || precision === 'none';   // 'none' includes empty: pick a fresh date
   });
@@ -111,6 +120,12 @@ export class DateInput {
 
   protected isoDate = computed(() => {
     const store = this.storeDate();
+    if (!this.isPartialAllowed()) {
+      // strict fields: unchanged behaviour, minus the legacy Invalid-Date crash — no year range.
+      return isRenderableStoreDate(store)
+        ? (convertDateFormatToString(store, DateFormat.StoreDate, DateFormat.IsoDate, false) || '')
+        : '';
+    }
     if (classifyStoreDate(store) !== 'full') return '';   // the picker needs a real date
     return convertDateFormatToString(store, DateFormat.StoreDate, DateFormat.IsoDate, false) || '';
   });
