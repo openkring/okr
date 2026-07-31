@@ -45,12 +45,12 @@
   "dateOfBirth": {
     "label": "Date de naissance",
     "placeholder": "TT.MM.JJJJ",
-    "helper": "La date de naissance de la personne."
+    "helper": "JJ.MM.AAAA – ou seulement l'année (AAAA), ou seulement le jour et le mois (JJ.MM.). Saisissez les points vous-même."
   },
   "dateOfDeath": {
     "label": "Date de décès",
     "placeholder": "TT.MM.JJJJ",
-    "helper": "La date de décès de la personne."
+    "helper": "JJ.MM.AAAA – ou seulement l'année (AAAA), ou seulement le jour et le mois (JJ.MM.). Saisissez les points vous-même."
   },
   "dateOfEntry": {
     "label": "Date d'entrée",

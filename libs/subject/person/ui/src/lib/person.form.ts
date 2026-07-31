@@ -45,13 +45,13 @@ import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
               <ion-row>
                 @if(isVaultFieldVisible('dob')) {
                   <ion-col size="12" size-md="6"> 
-                    <okr-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" autocomplete="bday" [readOnly]="isReadOnly()" />
+                    <okr-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" autocomplete="bday" [readOnly]="isReadOnly()" [allowPartial]="true" />
                   </ion-col>
                 }
 
                 @if(isDeathDateVisible()) {
                   <ion-col size="12" size-md="6">
-                    <okr-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [readOnly]="isReadOnly()" />
+                    <okr-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [readOnly]="isReadOnly()" [allowPartial]="true" />
                   </ion-col>
                 }
               </ion-row>

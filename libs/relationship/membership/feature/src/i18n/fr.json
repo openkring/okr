@@ -360,12 +360,12 @@
   "dateOfBirth": {
     "label": "Date de naissance",
     "placeholder": "dd.mm.yyyy",
-    "helper": "La personne est née à cette date."
+    "helper": "JJ.MM.AAAA – ou seulement l'année (AAAA), ou seulement le jour et le mois (JJ.MM.). Saisissez les points vous-même."
   },
   "dateOfDeath": {
     "label": "Date de décès",
     "placeholder": "dd.mm.yyyy",
-    "helper": "La personne est décédée à cette date."
+    "helper": "JJ.MM.AAAA – ou seulement l'année (AAAA), ou seulement le jour et le mois (JJ.MM.). Saisissez les points vous-même."
   },
   "mcat_scs": {
     "label": "Catégorie de membre",

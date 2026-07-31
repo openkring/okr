@@ -4,8 +4,8 @@ import { MaskitoOptions } from '@maskito/core';
 
 import { DATE_LENGTH, InputMode } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { coerceBoolean, convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
-import { ChAnyDate } from '@okr/shared-config';
+import { classifyStoreDate, coerceBoolean, convertDateFormatToString, DateFormat, formatPartialStoreDate, getTodayStr, parsePartialViewDate } from '@okr/shared-util-core';
+import { ChAnyDate, ChPartialDate } from '@okr/shared-config';
 
 import { ViewDateInput, ViewDateInputI18n } from './viewdate-input';
 import { DatePickerModal } from './date-picker.modal';
@@ -42,7 +42,7 @@ export interface DateInputI18n {
         [clearInput]="shouldShowClearInput()"
         [inputMode]="inputMode()"
         [maxLength]="maxLength()"
-        [mask]="mask()"
+        [mask]="effectiveMask()"
         [autocomplete]="autocomplete()"
       />
     </ion-item>
@@ -70,15 +70,11 @@ export class DateInput {
 
   protected viewDate = linkedSignal(() => {
     const store = this.storeDate();
-    if (!store || store.length !== 8) return '';     // make sure that we only send valid dates to date-fns/format
-
-    const converted = convertDateFormatToString(
-      store,
-      DateFormat.StoreDate,
-      DateFormat.ViewDate,
-      false
-    );
-    return converted ?? '';
+    if (classifyStoreDate(store) === 'full') {
+      return convertDateFormatToString(store, DateFormat.StoreDate, DateFormat.ViewDate, false) ?? '';
+    }
+    // '1985' or '15.04.' when partials are allowed; nothing otherwise
+    return this.isPartialAllowed() ? formatPartialStoreDate(store) : '';
   });
 
   public i18n = input.required<DateInputI18n>();
@@ -90,9 +86,22 @@ export class DateInput {
   public maxLength = input(DATE_LENGTH);
   public autocomplete = input('off'); // can be set to bday for birth date
   public showDateSelect = input(true);
-  protected shouldShowDateSelect = computed(() => coerceBoolean(this.showDateSelect()));
+  protected shouldShowDateSelect = computed(() => {
+    if (!coerceBoolean(this.showDateSelect())) return false;
+    const precision = classifyStoreDate(this.storeDate());
+    return precision === 'full' || precision === 'none';   // 'none' includes empty: pick a fresh date
+  });
   public locale = input('de-ch'); // mandatory locale for the input field, used for formatting
   public mask = input<MaskitoOptions>(ChAnyDate);
+
+  /**
+   * Accept a partial date: a year without a day ('19850000') or a birthday without a
+   * year ('00000415'). Person dateOfBirth/dateOfDeath only — every other date field
+   * must stay strict. Overrides `mask` with ChPartialDate while on.
+   */
+  public allowPartial = input(false);
+  protected isPartialAllowed = computed(() => coerceBoolean(this.allowPartial()));
+  protected effectiveMask = computed(() => this.isPartialAllowed() ? ChPartialDate : this.mask());
 
   protected viewDateI18n = computed(() => ({
     name: this.i18n().name,
@@ -100,12 +109,10 @@ export class DateInput {
     placeholder: this.i18n().placeholder
   } as ViewDateInputI18n));
 
-  protected isoDate = computed(() => { 
+  protected isoDate = computed(() => {
     const store = this.storeDate();
-    if (!store || store.length !== 8) return '';    // make sure that we only send valid dates to date-fns/format
-
-    const iso = convertDateFormatToString(store, DateFormat.StoreDate, DateFormat.IsoDate, false);
-    return iso || '';
+    if (classifyStoreDate(store) !== 'full') return '';   // the picker needs a real date
+    return convertDateFormatToString(store, DateFormat.StoreDate, DateFormat.IsoDate, false) || '';
   });
 
   // passing constants to the template
@@ -117,16 +124,24 @@ export class DateInput {
 
   // Sync viewDate → storeDate (on change)
   protected onViewDateChange(view: string) {
-    // Only convert if the view date is complete (10 chars: dd.MM.yyyy) or empty
     if (view.length === 0) {
       this.storeDate.set('');
-    } else
-    if (view?.length === 10 && view.includes('.')) {
+      return;
+    }
+    // a complete date: 10 chars, dd.MM.yyyy
+    if (view.length === 10 && view.includes('.')) {
       const store = convertDateFormatToString(view, DateFormat.ViewDate, DateFormat.StoreDate, false);
-      if (store) {  // store will be '' if conversion failed
+      if (store) {   // store will be '' if conversion failed
         this.storeDate.set(store);
       }
+      return;
     }
-    // If incomplete → do nothing (user still typing)
+    if (!this.isPartialAllowed()) return;   // incomplete → user still typing
+
+    // '1985' or '15.04.' — parsePartialViewDate returns '' for a fragment
+    const partial = parsePartialViewDate(view);
+    if (partial) {
+      this.storeDate.set(partial);
+    }
   }
 }

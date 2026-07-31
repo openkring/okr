@@ -360,12 +360,12 @@
   "dateOfBirth": {
     "label": "Date of birth",
     "placeholder": "dd.mm.yyyy",
-    "helper": "The person was born on this date."
+    "helper": "DD.MM.YYYY – or just the year (YYYY), or just the day and month (DD.MM.). Type the dots yourself."
   },
   "dateOfDeath": {
     "label": "Date of death",
     "placeholder": "dd.mm.yyyy",
-    "helper": "The person died on this date."
+    "helper": "DD.MM.YYYY – or just the year (YYYY), or just the day and month (DD.MM.). Type the dots yourself."
   },
   "mcat_scs": {
     "label": "Member category",
