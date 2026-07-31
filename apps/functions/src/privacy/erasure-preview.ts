@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
 import type { DocumentSnapshot } from 'firebase-admin/firestore';
+import type { ErasurePreview, OutOfReachRow, PreviewRow } from '@okr/shared-models';
 import { DateFormat, addDuration, convertDateFormatToString } from '@okr/shared-util-core';
 import { resolveDocs } from './subject-data-map';
-import type { Blocker, DataClass, DataTier, SubjectCtx, SubjectDataEntry } from './types';
+import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
 
 /**
  * The erasure preflight (5B, task C1) — the honest report a member sees before they
@@ -42,44 +43,15 @@ export type DocFetcher = (entry: SubjectDataEntry, ctx: SubjectCtx) => Promise<D
  */
 export const firestoreDocFetcher: DocFetcher = (entry, ctx) => resolveDocs(entry, ctx);
 
-export interface PreviewRow {
-  readonly collection: string;
-  readonly dataClass: DataClass;
-  readonly tier: DataTier;
-  readonly count: number;
-  /** StoreDate (`yyyyMMdd`). Only on rows that survive the erasure, and only when it can
-   * be computed — see `retentionEndOf`. */
-  readonly retentionEndsAt?: string;
-  /** German, from the row's `retention.legalBasis`. Only on rows that survive. */
-  readonly legalBasis?: string;
-}
-
 /**
- * A third party holding a copy of the subject's data that this erasure cannot reach.
- * Shaped to match what the 5C processor catalogue will produce, so the sibling plan can
- * swap the constant below for a real query without touching this type.
+ * The report shape itself is the wire contract in `@okr/shared-models`
+ * (`privacy-rights.model.ts`): the profile card renders exactly what this function
+ * returns, and a second declaration on the client would drift from it. `OutOfReachRow` is
+ * shaped to match what the 5C processor catalogue will produce, so the sibling plan can
+ * swap the constant below for a real query without touching the type. Re-exported here so
+ * the privacy module's own consumers keep one import site.
  */
-export interface OutOfReachRow {
-  readonly key: string;
-  readonly name: string;
-  readonly contact: string;
-  readonly dataClasses: readonly DataClass[];
-}
-
-export interface ErasurePreview {
-  readonly blockers: Blocker[];
-  readonly willDelete: PreviewRow[];
-  readonly willAnonymize: PreviewRow[];
-  readonly willRetain: PreviewRow[];
-  /**
-   * A SUBSET VIEW of `willDelete`, not a separate list: "of everything the erasure would
-   * remove, this much is available to you right now, while your membership continues".
-   * Empty when nothing is blocked — then the whole report is already the answer.
-   */
-  readonly canDeleteNow: PreviewRow[];
-  readonly outOfReach: OutOfReachRow[];
-  readonly previewToken: string;
-}
+export type { ErasurePreview, OutOfReachRow, PreviewRow } from '@okr/shared-models';
 
 /**
  * Seeded from `planning/reference/privacy-data-inventory.md` §4 (the third-party

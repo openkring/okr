@@ -7,6 +7,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
 import { AppConfigCollection, UserCollection } from '@okr/shared-models';
+import type { ExportMyDataResponse } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
@@ -30,11 +31,7 @@ function exportPrefix(tenantId: string, uid: string): string {
   return `tenant/${tenantId}/private/exports/${uid}/`;
 }
 
-export interface ExportMyDataResponse {
-  readonly downloadUrl: string;
-  readonly expiresAt: string;
-  readonly sizeBytes: number;
-}
+export type { ExportMyDataResponse } from '@okr/shared-models';
 
 /**
  * Pure rate-limit predicate: given the newest existing export artifact's creation time

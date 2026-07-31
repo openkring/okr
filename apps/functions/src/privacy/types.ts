@@ -1,13 +1,14 @@
 import type { DocumentSnapshot, Query } from 'firebase-admin/firestore';
+import type { Blocker, DataClass, DataTier } from '@okr/shared-models';
 
 /**
- * Coarse category a collection's personal data falls into. Used to group the export
- * document into sections a member can actually read ("Kontaktdaten", "Finanzen", …)
- * and to reason about erasure defaults.
+ * The wire-contract types (`DataClass`, `DataTier`, `Blocker`, `PreviewRow`,
+ * `ErasurePreview`, …) live in `@okr/shared-models/privacy-rights.model` because the
+ * profile card renders exactly what these callables return; a second declaration on the
+ * client would drift the first time a section is added. They are re-exported here so the
+ * privacy module keeps importing its vocabulary from one place.
  */
-export type DataClass =
-  | 'identity' | 'contact' | 'membership' | 'financial'
-  | 'communication' | 'content' | 'consent' | 'log';
+export type { Blocker, DataClass, DataTier } from '@okr/shared-models';
 
 /**
  * Everything a `find` needs to locate one data subject's records.
@@ -57,29 +58,9 @@ export type TenantScope =
   | 'none';
 
 /**
- * Legal basis of a row — the four tiers of
- * `planning/specs/2026-07-29-membership-lifecycle-erasure-spec.md` §3. The tier decides
- * the row's lifecycle, and it is the reason erasure is not all-or-nothing.
- *
- * | Tier | Basis | While a member | At tenant exit |
- * | --- | --- | --- | --- |
- * | `T1` identity + membership | contract (Art. 6 I b / revDSG 31 II a) | refusable | delete or anonymize |
- * | `T2` optional / voluntary  | consent (Art. 6 I a) | **erasable on demand** | delete, no grace (D-L3) |
- * | `T3` accounting            | legal obligation (OR 958f, GebüV — 10 y) | refusable | pseudonymize, keep |
- * | `T4` club record + logs    | legitimate interest (Art. 6 I f) | Art. 21 objection | anonymize, keep |
- *
- * **A row's tier is the STRICTEST tier any of its documents can carry.** The erasure
- * preview offers a whole T2 row for immediate deletion, so classifying a row `T2` is a
- * promise that *every* document in it is voluntary. `addresses` is where this bites: a
- * member's favorite e-mail is contract data while their `dob` address and their second
- * phone number are consent data. The row is therefore `T1`, and the finer per-document
- * split belongs to `withdrawOptionalData` (spec §7), which is out of scope here.
- */
-export type DataTier = 'T1' | 'T2' | 'T3' | 'T4';
-
-/**
- * What the tenant-exit pipeline (spec §6 step 3) does with a row when the subject leaves
- * *this* tenant.
+ * What the tenant-exit pipeline (membership-lifecycle spec §6 step 3) does with a row
+ * when the subject leaves *this* tenant. Server-side only — no client consumer, so it
+ * stays out of the wire contract.
  *
  * - `delete`    the documents are tenant-scoped and go away with the tenancy.
  * - `anonymize` the record stays with the association and the identity is overwritten
@@ -91,20 +72,6 @@ export type DataTier = 'T1' | 'T2' | 'T3' | 'T4';
  * - `retain`    nothing happens at exit; the row's own `retention` rule governs.
  */
 export type TenantExitAction = 'delete' | 'anonymize' | 'detach' | 'retain';
-
-/** A reason why an erasure request cannot be executed yet. */
-export interface Blocker {
-  readonly code: 'activeMembership' | 'openInvoice' | 'pendingSignature' | 'soleAdmin';
-  readonly count: number;
-  readonly detail: string;      // German, shown verbatim to the user
-  /**
-   * The tiers this blocker actually blocks. `activeMembership` blocks `['T1']` only:
-   * Art. 17 I/III GDPR makes erasure conditional, not all-or-nothing, and the consent
-   * tier stays erasable while the membership runs. A blocker that omits this blocks
-   * everything.
-   */
-  readonly blocksTiers?: readonly DataTier[];
-}
 
 export interface RetentionRule {
   readonly months: number | 'indefinite';

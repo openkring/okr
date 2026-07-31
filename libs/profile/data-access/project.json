@@ -4,17 +4,35 @@
   "sourceRoot": "libs/profile/data-access/src",
   "prefix": "okr",
   "projectType": "library",
-  "tags": ["type:data-access", "scope:profile", "platform:mobile", "platform:web"],
+  "tags": [
+    "type:data-access",
+    "scope:profile",
+    "platform:mobile",
+    "platform:web"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/libs/profile/data-access",
         "main": "libs/profile/data-access/src/index.ts",
         "tsConfig": "libs/profile/data-access/tsconfig.lib.json",
-        "assets": ["libs/profile/data-access/*.md"],
+        "assets": [
+          "libs/profile/data-access/*.md"
+        ],
         "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "configFile": "libs/profile/data-access/vite.config.ts"
       }
     },
     "lint": {

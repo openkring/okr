@@ -4,6 +4,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot } from 'firebase-admin/firestore';
 
 import { AppConfigCollection, UserCollection } from '@okr/shared-models';
+import type { EraseMyDataResponse } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 
@@ -45,11 +46,7 @@ const ERASURE_SECRETS = [
  * `personDeleted`/`authUserDeleted` would tell the caller whether their person record
  * survived, and it can only survive because another tenancy holds it (D-P5-2).
  */
-export interface EraseMyDataResponse {
-  readonly executedAt: string;
-  readonly pseudonym: string;
-  readonly counts: Record<string, number>;
-}
+export type { EraseMyDataResponse } from '@okr/shared-models';
 
 export function toEraseResponse(result: ErasureResult): EraseMyDataResponse {
   return { executedAt: result.executedAt, pseudonym: result.pseudonym, counts: result.counts };
