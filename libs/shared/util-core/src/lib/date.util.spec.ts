@@ -2,6 +2,7 @@ import { END_FUTURE_DATE_STR, MAX_YEAR, MIN_YEAR } from '@okr/shared-constants';
 import { describe, expect, it } from 'vitest';
 import {
     checkYearRange,
+    classifyStoreDate,
     compareDate,
     convertDateFormat, copyDate,
     DateFormat,
@@ -241,6 +242,65 @@ describe('date.util', () => {
             expect(getAgeFromBirthYear('', 2026)).toBe(-1);
             expect(getAgeFromBirthYear(undefined, 2026)).toBe(-1);
             expect(getAgeFromBirthYear('19851231', 2026)).toBe(-1);
+        });
+    });
+
+    describe('classifyStoreDate', () => {
+        it('classifies a complete date as full', () => {
+            expect(classifyStoreDate('19850415')).toBe('full');
+        });
+
+        it('classifies the year-only sentinel', () => {
+            expect(classifyStoreDate('19850000')).toBe('yearOnly');
+        });
+
+        it('classifies the day-month-only sentinel', () => {
+            expect(classifyStoreDate('00000415')).toBe('dayMonthOnly');
+        });
+
+        it('treats an empty or missing value as none', () => {
+            expect(classifyStoreDate('')).toBe('none');
+            expect(classifyStoreDate(undefined)).toBe('none');
+        });
+
+        it('rejects an all-filler value, which claims nothing', () => {
+            expect(classifyStoreDate('00000000')).toBe('none');
+        });
+
+        it('rejects a wrong length', () => {
+            expect(classifyStoreDate('1985041')).toBe('none');
+            expect(classifyStoreDate('198504150')).toBe('none');
+        });
+
+        it('rejects non-digits', () => {
+            expect(classifyStoreDate('1985xxxx')).toBe('none');
+            expect(classifyStoreDate('abcdefgh')).toBe('none');
+        });
+
+        it('rejects a year outside 1850-2100', () => {
+            expect(classifyStoreDate('18490415')).toBe('none');
+            expect(classifyStoreDate('21010415')).toBe('none');
+        });
+
+        it('accepts the range boundaries', () => {
+            expect(classifyStoreDate('18500415')).toBe('full');
+            expect(classifyStoreDate('21000415')).toBe('full');
+        });
+
+        it('rejects an impossible month or day', () => {
+            expect(classifyStoreDate('19851315')).toBe('none');  // month 13
+            expect(classifyStoreDate('19850400')).toBe('none');  // day 0
+            expect(classifyStoreDate('19850431')).toBe('none');  // 31 April
+            expect(classifyStoreDate('00000230')).toBe('none');  // 30 February
+        });
+
+        it('accepts 29 February without a year, since the leap question is unanswerable', () => {
+            expect(classifyStoreDate('00000229')).toBe('dayMonthOnly');
+        });
+
+        it('leaves full calendar validity to checkDate', () => {
+            // 1985 was not a leap year; classify is structural, isValidPartialStoreDate rejects it.
+            expect(classifyStoreDate('19850229')).toBe('full');
         });
     });
 });

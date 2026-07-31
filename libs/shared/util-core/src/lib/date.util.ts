@@ -19,6 +19,56 @@ export enum DateFormat {
 
 export const STORE_DATE_FILLER = '0000';
 
+/** Which parts of a StoreDate are actually known. Unknown parts hold STORE_DATE_FILLER. */
+export type DatePrecision = 'none' | 'full' | 'yearOnly' | 'dayMonthOnly';
+
+/** Year bounds a StoreDate is accepted in — the same range dateValidations enforces. */
+export const MIN_STORE_YEAR = 1850;
+export const MAX_STORE_YEAR = 2100;
+
+/**
+ * Highest day number each month can hold. February is 29 because a day-month-only
+ * date has no year with which to answer the leap question.
+ */
+const MAX_DAY_PER_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+/**
+ * Classify a StoreDate (yyyyMMdd) by which of its parts are known, using
+ * STORE_DATE_FILLER ('0000') in the unknown positions:
+ *   '19850415' -> 'full'   '19850000' -> 'yearOnly'   '00000415' -> 'dayMonthOnly'
+ *
+ * This is a STRUCTURAL check — shape, year range, month/day bounds — not full calendar
+ * validity: '19850229' classifies as 'full' and is rejected later by isValidPartialStoreDate.
+ *
+ * Every consumer of a possibly-partial date MUST classify it before parsing. '00000415' is
+ * a syntactically valid year-0 date, so a forgotten check yields a silently wrong answer
+ * rather than an error.
+ */
+export function classifyStoreDate(value?: string): DatePrecision {
+  if (!value || !/^\d{8}$/.test(value)) return 'none';
+
+  const year = value.substring(0, 4);
+  const monthDay = value.substring(4);
+  const hasYear = year !== STORE_DATE_FILLER;
+  const hasMonthDay = monthDay !== STORE_DATE_FILLER;
+
+  if (hasYear) {
+    const y = Number(year);
+    if (y < MIN_STORE_YEAR || y > MAX_STORE_YEAR) return 'none';
+  }
+  if (hasMonthDay) {
+    const month = Number(monthDay.substring(0, 2));
+    const day = Number(monthDay.substring(2));
+    if (month < 1 || month > 12) return 'none';
+    if (day < 1 || day > MAX_DAY_PER_MONTH[month - 1]) return 'none';
+  }
+
+  if (hasYear && hasMonthDay) return 'full';
+  if (hasYear) return 'yearOnly';
+  if (hasMonthDay) return 'dayMonthOnly';
+  return 'none';   // '00000000' — nothing is claimed
+}
+
 export enum DatePlaceholders {
     Date = 'dd.mm.yyyy',
     DateTime = 'dd.mm.yyyy hh:mm'
