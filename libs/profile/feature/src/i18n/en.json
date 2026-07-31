@@ -195,5 +195,75 @@
       "description": "The Seeclub Stäfa is a member of the Swiss Rowing Association SRV. As a member of the SCS you are automatically also a member of the SRV. The SRV requires us to forward personal information (name, first name, postal address, phone number) of all our members. By becoming a member of the SCS you implicitly consent to this data being passed on to the SRV annually.",
       "email": "To send the SRV news (formerly Swissrowing magazine), the SRV needs your email address. Here you have an opt-out option in case you do not want to receive this news. In that case your email will not be forwarded to the SRV at the next synchronization. You will then also no longer receive any news from the SRV."
     }
+  },
+  "policy": {
+    "title": "Privacy policy",
+    "prompt": "Our privacy policy has been updated. Please read and confirm it.",
+    "link": "Read the privacy policy",
+    "accept": "Read and accepted",
+    "accepted": "You have accepted the privacy policy",
+    "error": "The confirmation could not be saved"
+  },
+  "export": {
+    "title": "Download my data",
+    "description": "You receive a ZIP archive with all the data we hold about you — as a readable report and in raw format. For security reasons the download link is valid for 15 minutes only.",
+    "button": "Download my data",
+    "running": "Your archive is being assembled …",
+    "ready": "Your archive is ready.",
+    "download": "Download archive",
+    "expires": "The link is valid until",
+    "error": "The data export could not be created"
+  },
+  "erasure": {
+    "title": "Delete my data",
+    "description": "You can request the deletion of your data. We first show you what will be deleted, what we must keep for legal reasons and what we cannot reach.",
+    "button": "Delete my data",
+    "loading": "Building the overview …",
+    "intro": "This is what happens if you have your data deleted:",
+    "blockers": {
+      "title": "This stands in the way",
+      "intro": "These points must be settled first. While they are open we cannot carry out the deletion."
+    },
+    "delete": {
+      "title": "This will be deleted"
+    },
+    "anonymize": {
+      "title": "This will be anonymised",
+      "intro": "We have to keep these records, but your name and the link to you are overwritten. Amounts, dates and documents remain."
+    },
+    "retain": {
+      "title": "This stays unchanged",
+      "intro": "We cannot alter these records without destroying their purpose — a legally valid signature, for example."
+    },
+    "now": {
+      "title": "You can delete this right now",
+      "intro": "You provided these details voluntarily. You can have them deleted even while your membership continues."
+    },
+    "reach": {
+      "title": "This is beyond our reach",
+      "intro": "These parties hold their own copies of your data. We cannot delete them from here."
+    },
+    "records": "records",
+    "until": "kept until",
+    "confirm": {
+      "label": "To confirm, type",
+      "phrase": "DELETE",
+      "helper": "The deletion cannot be undone.",
+      "button": "Delete permanently now"
+    },
+    "running": "Your data is being deleted …",
+    "success": "Your data has been deleted.",
+    "error": "The deletion could not be carried out",
+    "empty": "We currently hold no data about you that would need deleting."
+  },
+  "dataClass": {
+    "identity": "Details about you",
+    "contact": "Contact details",
+    "membership": "Membership and roles",
+    "financial": "Finance and accounting",
+    "communication": "Messages and comments",
+    "content": "Content and contributions",
+    "consent": "Account and consents",
+    "log": "Logs"
   }
 }

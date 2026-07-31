@@ -195,5 +195,75 @@
       "description": "Il Seeclub Stäfa è membro della Federazione Svizzera di Canottaggio SRV. In qualità di membro dello SCS sei automaticamente anche membro dello SRV. Lo SRV ci richiede la trasmissione di informazioni personali (nome, cognome, indirizzo postale, numero di telefono) di tutti i nostri membri. Con l'adesione allo SCS acconsenti implicitamente a che questi dati vengano trasmessi annualmente allo SRV.",
       "email": "Per l'invio delle SRV News (in precedenza la rivista Swissrowing), lo SRV ha bisogno del tuo indirizzo e-mail. Qui hai la possibilità di disiscriverti nel caso in cui non desideri ricevere queste news. In tal caso la tua e-mail non verrà trasmessa allo SRV alla prossima sincronizzazione. Non riceverai allora nemmeno più news dallo SRV."
     }
+  },
+  "policy": {
+    "title": "Informativa sulla privacy",
+    "prompt": "La nostra informativa sulla privacy è stata aggiornata. Leggila e confermala.",
+    "link": "Leggi l'informativa sulla privacy",
+    "accept": "Letto e accettato",
+    "accepted": "Hai accettato l'informativa sulla privacy",
+    "error": "Non è stato possibile salvare la conferma"
+  },
+  "export": {
+    "title": "Scarica i miei dati",
+    "description": "Ricevi un archivio ZIP con tutti i dati che conserviamo su di te, come rapporto leggibile e in formato grezzo. Per motivi di sicurezza il link è valido solo 15 minuti.",
+    "button": "Scarica i miei dati",
+    "running": "Il tuo archivio è in preparazione …",
+    "ready": "Il tuo archivio è pronto.",
+    "download": "Scarica l'archivio",
+    "expires": "Il link è valido fino al",
+    "error": "Non è stato possibile creare l'esportazione dei dati"
+  },
+  "erasure": {
+    "title": "Cancella i miei dati",
+    "description": "Puoi chiedere la cancellazione dei tuoi dati. Ti mostriamo prima che cosa viene cancellato, che cosa dobbiamo conservare per legge e che cosa non possiamo raggiungere.",
+    "button": "Cancella i miei dati",
+    "loading": "Creazione del riepilogo …",
+    "intro": "Ecco che cosa succede se fai cancellare i tuoi dati:",
+    "blockers": {
+      "title": "Questo impedisce la cancellazione",
+      "intro": "Questi punti devono essere risolti prima. Finché restano aperti non possiamo eseguire la cancellazione."
+    },
+    "delete": {
+      "title": "Questo viene cancellato"
+    },
+    "anonymize": {
+      "title": "Questo viene reso anonimo",
+      "intro": "Dobbiamo conservare queste registrazioni, ma il tuo nome e il collegamento a te vengono sovrascritti. Importi, date e giustificativi restano."
+    },
+    "retain": {
+      "title": "Questo resta invariato",
+      "intro": "Non possiamo modificare queste registrazioni senza distruggerne lo scopo, ad esempio una firma giuridicamente valida."
+    },
+    "now": {
+      "title": "Questo puoi già cancellarlo",
+      "intro": "Hai fornito queste informazioni volontariamente. Puoi farle cancellare anche mentre la tua affiliazione continua."
+    },
+    "reach": {
+      "title": "Questo è fuori dalla nostra portata",
+      "intro": "Questi soggetti hanno copie proprie dei tuoi dati. Da qui non possiamo cancellarle."
+    },
+    "records": "voci",
+    "until": "conservato fino al",
+    "confirm": {
+      "label": "Per confermare digita",
+      "phrase": "CANCELLA",
+      "helper": "La cancellazione non può essere annullata.",
+      "button": "Cancella definitivamente"
+    },
+    "running": "I tuoi dati vengono cancellati …",
+    "success": "I tuoi dati sono stati cancellati.",
+    "error": "Non è stato possibile eseguire la cancellazione",
+    "empty": "Al momento non conserviamo dati che ti riguardano e che debbano essere cancellati."
+  },
+  "dataClass": {
+    "identity": "Dati che ti riguardano",
+    "contact": "Dati di contatto",
+    "membership": "Affiliazione e funzioni",
+    "financial": "Finanze e contabilità",
+    "communication": "Messaggi e commenti",
+    "content": "Contenuti e contributi",
+    "consent": "Account e consensi",
+    "log": "Registri"
   }
 }

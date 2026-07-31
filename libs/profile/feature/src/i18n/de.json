@@ -44,7 +44,7 @@
       "info": "Der Seeclub Stäfa ist Mitglied beim Schweizerischen Ruderverband SRV. Als Mitglied beim SCS bist du automatisch auch Mitglied beim SRV. Der SRV verlangt von uns die Weiterleitung von persönlichen Informationen (Name, Vorname, Post-Adresse, Tel. Nr., Geburtsdatum etc.) von allen unseren Mitgliedern. Mit der Mitgliedschaft beim SCS willigst du implizit ein, dass diese Daten an SRV weiter gegeben werden.",
       "label": "Möchtest du die SRV News erhalten ?",
       "helper": "Für den Versand der SRV-News (früheres Swissrowing Magazin) benötigt der SRV deine E-Mail Adresse. Hier hast du die Opt-out Möglichkeit, falls du diese News nicht erhalten möchtest. In diesem Fall wird deine E-Mail bei der nächsten Synchronisierung nicht an SRV weiter geleitet. Du erhälst so keine weiteren News von SRV mehr."
-    }   
+    }
   },
   "language": "Sprache",
   "update": {
@@ -143,7 +143,7 @@
     },
     "invoice": {
       "label": "Rechnungsversand",
-      "helper": "Wie sollen dir die Rechnungen geschickt werden ?" 
+      "helper": "Wie sollen dir die Rechnungen geschickt werden ?"
     },
     "messages": {
       "label": "Push-Benachrichtigungen",
@@ -160,7 +160,7 @@
     },
     "archived": {
       "label": "Archivierte Daten anzeigen",
-      "helper": "Zeigt archivierte Daten ebenfalls an. Kann nur von Admin im Profil eingeschaltet werden oder direkt in der Datenbank für einen anderen Benutzer." 
+      "helper": "Zeigt archivierte Daten ebenfalls an. Kann nur von Admin im Profil eingeschaltet werden oder direkt in der Datenbank für einen anderen Benutzer."
     },
     "helpers": {
       "label": "Hilfe-Texte anzeigen",
@@ -195,5 +195,75 @@
       "description": "Der Seeclub Stäfa ist Mitglied beim Schweizerischen Ruderverband SRV. Als Mitglied beim SCS bist du automatisch auch Mitglied beim SRV. Der SRV verlangt von uns die Weiterleitung von persönlichen Informationen (Name, Vorname, Post-Adresse, Tel Nr.) von allen unseren Mitgliedern. Mit der Mitgliedschaft beim SCS willigst du implizit ein, dass diese Daten jährlich an SRV weiter gegeben werden.",
       "email": "Für den Versand der SRV-News (früheres Swissrowing Magazin) benötigt der SRV deine Email Adresse. Hier hast du eine Opt-Out Möglichkeit, falls du diese News nicht erhalten möchtest. In diesem Fall wird deine Email bei der nächsten Synchronisierung nicht an SRV weiter geleitet. Du erhälst dann auch keine News von SRV mehr."
     }
+  },
+  "policy": {
+    "title": "Datenschutzerklärung",
+    "prompt": "Unsere Datenschutzerklärung wurde aktualisiert. Bitte lies sie durch und bestätige sie.",
+    "link": "Datenschutzerklärung lesen",
+    "accept": "Gelesen und akzeptiert",
+    "accepted": "Du hast die Datenschutzerklärung akzeptiert",
+    "error": "Die Bestätigung konnte nicht gespeichert werden"
+  },
+  "export": {
+    "title": "Meine Daten herunterladen",
+    "description": "Du erhältst ein ZIP-Archiv mit allen Daten, die wir über dich gespeichert haben — als lesbaren Bericht und im Rohformat. Der Download-Link ist aus Sicherheitsgründen nur 15 Minuten gültig.",
+    "button": "Meine Daten herunterladen",
+    "running": "Dein Archiv wird zusammengestellt …",
+    "ready": "Dein Archiv ist bereit.",
+    "download": "Archiv herunterladen",
+    "expires": "Der Link ist gültig bis",
+    "error": "Der Datenexport konnte nicht erstellt werden"
+  },
+  "erasure": {
+    "title": "Meine Daten löschen",
+    "description": "Du kannst die Löschung deiner Daten verlangen. Wir zeigen dir zuerst, was gelöscht wird, was wir aus gesetzlichen Gründen behalten müssen und was wir nicht erreichen können.",
+    "button": "Meine Daten löschen",
+    "loading": "Übersicht wird erstellt …",
+    "intro": "Das passiert, wenn du deine Daten löschen lässt:",
+    "blockers": {
+      "title": "Das steht der Löschung im Weg",
+      "intro": "Diese Punkte müssen zuerst erledigt sein. Solange sie offen sind, können wir die Löschung nicht ausführen."
+    },
+    "delete": {
+      "title": "Das wird gelöscht"
+    },
+    "anonymize": {
+      "title": "Das wird anonymisiert",
+      "intro": "Diese Einträge müssen wir aufbewahren, aber dein Name und die Verknüpfung zu dir werden überschrieben. Beträge, Daten und Belege bleiben erhalten."
+    },
+    "retain": {
+      "title": "Das bleibt unverändert",
+      "intro": "Diese Einträge können wir nicht verändern, ohne ihren Zweck zu zerstören — zum Beispiel eine rechtsgültige Unterschrift."
+    },
+    "now": {
+      "title": "Das kannst du jetzt schon löschen",
+      "intro": "Diese Angaben hast du freiwillig gemacht. Du kannst sie löschen lassen, auch während deine Mitgliedschaft weiterläuft."
+    },
+    "reach": {
+      "title": "Das liegt ausserhalb unserer Reichweite",
+      "intro": "Diese Stellen haben eigene Kopien deiner Daten. Wir können sie von hier aus nicht löschen."
+    },
+    "records": "Einträge",
+    "until": "aufbewahrt bis",
+    "confirm": {
+      "label": "Zum Bestätigen tippe",
+      "phrase": "LÖSCHEN",
+      "helper": "Die Löschung kann nicht rückgängig gemacht werden.",
+      "button": "Jetzt endgültig löschen"
+    },
+    "running": "Deine Daten werden gelöscht …",
+    "success": "Deine Daten wurden gelöscht.",
+    "error": "Die Löschung konnte nicht ausgeführt werden",
+    "empty": "Wir haben zurzeit keine Daten von dir, die gelöscht werden müssten."
+  },
+  "dataClass": {
+    "identity": "Angaben zu deiner Person",
+    "contact": "Kontaktdaten",
+    "membership": "Mitgliedschaft und Funktionen",
+    "financial": "Finanzen und Buchhaltung",
+    "communication": "Nachrichten und Kommentare",
+    "content": "Inhalte und Beiträge",
+    "consent": "Konto und Einwilligungen",
+    "log": "Protokolle"
   }
 }

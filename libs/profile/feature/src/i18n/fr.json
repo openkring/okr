@@ -195,5 +195,75 @@
       "description": "Le Seeclub Stäfa est membre de la Fédération Suisse d'Aviron SRV. En tant que membre du SCS, vous êtes automatiquement aussi membre du SRV. Le SRV exige de nous la transmission d'informations personnelles (nom, prénom, adresse postale, numéro de téléphone) de tous nos membres. Par votre adhésion au SCS, vous consentez implicitement à ce que ces données soient transmises annuellement au SRV.",
       "email": "Pour l'envoi des SRV News (anciennement le magazine Swissrowing), le SRV a besoin de votre adresse e-mail. Ici, vous avez la possibilité de vous désinscrire si vous ne souhaitez pas recevoir ces news. Dans ce cas, votre e-mail ne sera pas transmis au SRV lors de la prochaine synchronisation. Vous ne recevrez alors plus non plus de news du SRV."
     }
+  },
+  "policy": {
+    "title": "Déclaration de confidentialité",
+    "prompt": "Notre déclaration de confidentialité a été mise à jour. Merci de la lire et de la confirmer.",
+    "link": "Lire la déclaration de confidentialité",
+    "accept": "Lu et accepté",
+    "accepted": "Tu as accepté la déclaration de confidentialité",
+    "error": "La confirmation n'a pas pu être enregistrée"
+  },
+  "export": {
+    "title": "Télécharger mes données",
+    "description": "Tu reçois une archive ZIP contenant toutes les données que nous conservons à ton sujet — sous forme de rapport lisible et au format brut. Pour des raisons de sécurité, le lien n'est valable que 15 minutes.",
+    "button": "Télécharger mes données",
+    "running": "Ton archive est en préparation …",
+    "ready": "Ton archive est prête.",
+    "download": "Télécharger l'archive",
+    "expires": "Le lien est valable jusqu'au",
+    "error": "L'export des données n'a pas pu être créé"
+  },
+  "erasure": {
+    "title": "Supprimer mes données",
+    "description": "Tu peux demander la suppression de tes données. Nous te montrons d'abord ce qui sera supprimé, ce que nous devons conserver pour des raisons légales et ce que nous ne pouvons pas atteindre.",
+    "button": "Supprimer mes données",
+    "loading": "Création de l'aperçu …",
+    "intro": "Voici ce qui se passe si tu fais supprimer tes données :",
+    "blockers": {
+      "title": "Ce qui empêche la suppression",
+      "intro": "Ces points doivent d'abord être réglés. Tant qu'ils sont ouverts, nous ne pouvons pas effectuer la suppression."
+    },
+    "delete": {
+      "title": "Ce qui sera supprimé"
+    },
+    "anonymize": {
+      "title": "Ce qui sera anonymisé",
+      "intro": "Nous devons conserver ces écritures, mais ton nom et le lien vers toi sont écrasés. Les montants, les dates et les justificatifs subsistent."
+    },
+    "retain": {
+      "title": "Ce qui reste inchangé",
+      "intro": "Nous ne pouvons pas modifier ces enregistrements sans détruire leur finalité — une signature juridiquement valable, par exemple."
+    },
+    "now": {
+      "title": "Ce que tu peux déjà supprimer",
+      "intro": "Tu as fourni ces informations volontairement. Tu peux les faire supprimer même pendant que ton adhésion se poursuit."
+    },
+    "reach": {
+      "title": "Ce qui est hors de notre portée",
+      "intro": "Ces organismes détiennent leurs propres copies de tes données. Nous ne pouvons pas les supprimer d'ici."
+    },
+    "records": "entrées",
+    "until": "conservé jusqu'au",
+    "confirm": {
+      "label": "Pour confirmer, saisis",
+      "phrase": "SUPPRIMER",
+      "helper": "La suppression est irréversible.",
+      "button": "Supprimer définitivement"
+    },
+    "running": "Tes données sont en cours de suppression …",
+    "success": "Tes données ont été supprimées.",
+    "error": "La suppression n'a pas pu être effectuée",
+    "empty": "Nous ne détenons actuellement aucune donnée te concernant qui devrait être supprimée."
+  },
+  "dataClass": {
+    "identity": "Informations te concernant",
+    "contact": "Coordonnées",
+    "membership": "Adhésion et fonctions",
+    "financial": "Finances et comptabilité",
+    "communication": "Messages et commentaires",
+    "content": "Contenus et contributions",
+    "consent": "Compte et consentements",
+    "log": "Journaux"
   }
 }

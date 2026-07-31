@@ -195,5 +195,75 @@
       "description": "El Seeclub Stäfa es miembro de la Federación Suiza de Remo SRV. Como miembro del SCS, es usted automáticamente también miembro del SRV. El SRV nos exige la transmisión de información personal (nombre, apellido, dirección postal, número de teléfono) de todos nuestros miembros. Con la afiliación al SCS, usted consiente implícitamente que estos datos se transmitan anualmente al SRV.",
       "email": "Para el envío de las SRV News (antiguamente la revista Swissrowing), el SRV necesita su dirección de correo electrónico. Aquí tiene una posibilidad de darse de baja en caso de que no desee recibir estas noticias. En ese caso, su correo electrónico no se transmitirá al SRV en la próxima sincronización. Así tampoco recibirá ya más noticias del SRV."
     }
+  },
+  "policy": {
+    "title": "Declaración de privacidad",
+    "prompt": "Nuestra declaración de privacidad se ha actualizado. Léela y confírmala, por favor.",
+    "link": "Leer la declaración de privacidad",
+    "accept": "Leído y aceptado",
+    "accepted": "Has aceptado la declaración de privacidad",
+    "error": "No se pudo guardar la confirmación"
+  },
+  "export": {
+    "title": "Descargar mis datos",
+    "description": "Recibirás un archivo ZIP con todos los datos que tenemos sobre ti, como informe legible y en formato bruto. Por seguridad, el enlace de descarga solo es válido 15 minutos.",
+    "button": "Descargar mis datos",
+    "running": "Se está preparando tu archivo …",
+    "ready": "Tu archivo está listo.",
+    "download": "Descargar archivo",
+    "expires": "El enlace es válido hasta",
+    "error": "No se pudo crear la exportación de datos"
+  },
+  "erasure": {
+    "title": "Eliminar mis datos",
+    "description": "Puedes solicitar la eliminación de tus datos. Primero te mostramos qué se elimina, qué debemos conservar por motivos legales y qué no podemos alcanzar.",
+    "button": "Eliminar mis datos",
+    "loading": "Creando el resumen …",
+    "intro": "Esto es lo que ocurre si eliminas tus datos:",
+    "blockers": {
+      "title": "Esto impide la eliminación",
+      "intro": "Primero hay que resolver estos puntos. Mientras estén abiertos no podemos ejecutar la eliminación."
+    },
+    "delete": {
+      "title": "Esto se eliminará"
+    },
+    "anonymize": {
+      "title": "Esto se anonimizará",
+      "intro": "Debemos conservar estos registros, pero tu nombre y el vínculo contigo se sobrescriben. Los importes, las fechas y los comprobantes se mantienen."
+    },
+    "retain": {
+      "title": "Esto permanece sin cambios",
+      "intro": "No podemos modificar estos registros sin destruir su finalidad, por ejemplo una firma jurídicamente válida."
+    },
+    "now": {
+      "title": "Esto ya lo puedes eliminar",
+      "intro": "Estos datos los facilitaste voluntariamente. Puedes hacer que se eliminen aunque tu afiliación continúe."
+    },
+    "reach": {
+      "title": "Esto está fuera de nuestro alcance",
+      "intro": "Estas entidades tienen sus propias copias de tus datos. No podemos eliminarlas desde aquí."
+    },
+    "records": "registros",
+    "until": "conservado hasta",
+    "confirm": {
+      "label": "Para confirmar, escribe",
+      "phrase": "ELIMINAR",
+      "helper": "La eliminación no se puede deshacer.",
+      "button": "Eliminar definitivamente"
+    },
+    "running": "Se están eliminando tus datos …",
+    "success": "Tus datos se han eliminado.",
+    "error": "No se pudo ejecutar la eliminación",
+    "empty": "Actualmente no tenemos datos tuyos que haya que eliminar."
+  },
+  "dataClass": {
+    "identity": "Datos sobre ti",
+    "contact": "Datos de contacto",
+    "membership": "Afiliación y funciones",
+    "financial": "Finanzas y contabilidad",
+    "communication": "Mensajes y comentarios",
+    "content": "Contenidos y aportaciones",
+    "consent": "Cuenta y consentimientos",
+    "log": "Registros"
   }
 }
