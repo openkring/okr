@@ -33,14 +33,19 @@ import { AddressStore } from './addresses.store';
       <!-- title and actions -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-        <ion-title>{{ filteredAddressesCount()}}/{{addressesCount()}} {{ store.i18n.addresses() }}</ion-title>
+        <ion-title class="ion-hide-sm-down">{{ filteredAddressesCount()}}/{{addressesCount()}} {{ store.i18n.addresses() }}</ion-title>
+        <ion-title class="ion-hide-sm-up">{{ filteredAddressesCount()}} {{ store.i18n.addresses() }}</ion-title>
       </ion-toolbar>
 
     <!-- search and filters -->
-    <okr-list-filter 
+    <okr-list-filter class="ion-hide-sm-down"
       (searchTermChanged)="onSearchtermChange($event)"
       (typeChanged)="onChannelSelected($event)" [types]="channels()"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
+    />
+    <okr-list-filter class="ion-hide-sm-up"
+      (searchTermChanged)="onSearchtermChange($event)"
+      (typeChanged)="onChannelSelected($event)" [types]="channels()"
     />
 
       <!-- list header -->

@@ -26,7 +26,8 @@ import { ResourceStore } from './resource.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{selectedResourcesCount()}}/{{resourcesCount() }} {{ store.i18n.resources() }}</ion-title>
+      <ion-title class="ion-hide-sm-down">{{selectedResourcesCount()}}/{{resourcesCount() }} {{ store.i18n.resources() }}</ion-title>
+      <ion-title class="ion-hide-sm-up">{{selectedResourcesCount()}} {{ store.i18n.resources() }}</ion-title>
       @if(hasRole('privileged') || hasRole('resourceAdmin')) {
         <ion-buttons slot="end">
           <ion-button id="c_resource">
@@ -44,14 +45,17 @@ import { ResourceStore } from './resource.store';
     </ion-toolbar>
 
     <!-- search and filters -->
-    <okr-list-filter
+    <okr-list-filter class="ion-hide-sm-down"
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
      />
-
+    <okr-list-filter class="ion-hide-sm-up"
+      (searchTermChanged)="onSearchtermChange($event)"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+     />
   <!-- list header -->
-  <ion-toolbar color="primary">
+  <ion-toolbar color="primary" class="ion-hide-sm-down">
     <ion-item color="primary" lines="none">
       <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
       <ion-label><strong>{{ store.i18n.value() }}</strong></ion-label>
@@ -73,8 +77,8 @@ import { ResourceStore } from './resource.store';
         <ion-item class="ion-text-wrap" (click)="showActions(resource)">
           <ion-icon slot="start" src="{{ getIcon(resource) | svgIcon }}" />
           <ion-label>{{ resource?.name }}</ion-label>
-          <ion-label>{{ resource?.currentValue }}</ion-label>
-          <ion-label>{{ resource?.description }}</ion-label>
+          <ion-label class="ion-hide-sm-down">{{ resource?.currentValue }}</ion-label>
+          <ion-label class="ion-hide-sm-down">{{ resource?.description }}</ion-label>
         </ion-item>
       }
     </ion-list>
