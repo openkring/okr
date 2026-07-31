@@ -241,6 +241,51 @@ export function getAgeFromBirthYear(birthYear?: string, refYear = getYear()): nu
   return refYear - Number(birthYear);
 }
 
+/**
+ * Full validity of a possibly-partial StoreDate: the structural check from
+ * classifyStoreDate, plus real-calendar validity for a 'full' value (29.02.1985
+ * is structurally fine but does not exist).
+ */
+export function isValidPartialStoreDate(value: string): boolean {
+  const precision = classifyStoreDate(value);
+  if (precision === 'none') return false;
+  if (precision !== 'full') return true;
+  return checkDate('partialStoreDate', value, DateFormat.StoreDate, MIN_STORE_YEAR, MAX_STORE_YEAR, false);
+}
+
+/**
+ * True when `later` does not precede `earlier` at the coarsest precision the two share.
+ * Two full dates must be strictly ordered; a year-granularity comparison allows the same
+ * year (someone can be born and die in 1985). A pair that cannot be compared — either side
+ * missing, or either side a birthday with no year — returns true: absence of a comparable
+ * year is not evidence of a conflict.
+ */
+export function isStoreDateOrderValid(earlier: string, later: string): boolean {
+  const earlierPrecision = classifyStoreDate(earlier);
+  const laterPrecision = classifyStoreDate(later);
+  if (earlierPrecision === 'none' || laterPrecision === 'none') return true;
+  if (earlierPrecision === 'dayMonthOnly' || laterPrecision === 'dayMonthOnly') return true;
+  if (earlierPrecision === 'full' && laterPrecision === 'full') return later > earlier;
+  return later.substring(0, 4) >= earlier.substring(0, 4);
+}
+
+/**
+ * True when two StoreDates agree on every part that BOTH of them specify.
+ * '19850000' agrees with '19850415' (same year, no day/month claimed); '19860000' does not.
+ * Used to decide whether two half-known dates are in conflict or merely differently precise.
+ */
+export function storeDatesAgree(a: string, b: string): boolean {
+  const precisionA = classifyStoreDate(a);
+  const precisionB = classifyStoreDate(b);
+  if (precisionA === 'none' || precisionB === 'none') return false;
+
+  const yearsAgree = precisionA === 'dayMonthOnly' || precisionB === 'dayMonthOnly'
+    || a.substring(0, 4) === b.substring(0, 4);
+  const dayMonthAgree = precisionA === 'yearOnly' || precisionB === 'yearOnly'
+    || a.substring(4) === b.substring(4);
+  return yearsAgree && dayMonthAgree;
+}
+
 export function getDifferenceInHours(date1: Date, date2: Date): number {
   return differenceInHours(date1, date2);
 }

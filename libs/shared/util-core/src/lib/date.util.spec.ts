@@ -18,6 +18,9 @@ import {
     getYear,
     getYearDiff,
     isFutureDate,
+    isValidPartialStoreDate,
+    isStoreDateOrderValid,
+    storeDatesAgree,
     parseDate
 } from './date.util';
 describe('date.util', () => {
@@ -344,6 +347,81 @@ describe('date.util', () => {
         it('has no age for a malformed value', () => {
             expect(getAge('19850000000', false, 2026)).toBe(-1);
             expect(getAge('', false, 2026)).toBe(-1);
+        });
+    });
+
+    describe('isValidPartialStoreDate', () => {
+        it('accepts all three known-good shapes', () => {
+            expect(isValidPartialStoreDate('19850415')).toBe(true);
+            expect(isValidPartialStoreDate('19850000')).toBe(true);
+            expect(isValidPartialStoreDate('00000415')).toBe(true);
+        });
+
+        it('rejects a structurally impossible value', () => {
+            expect(isValidPartialStoreDate('00000000')).toBe(false);
+            expect(isValidPartialStoreDate('1985xxxx')).toBe(false);
+        });
+
+        it('rejects a full date that is not a real calendar date', () => {
+            expect(isValidPartialStoreDate('19850229')).toBe(false);  // 1985 was not a leap year
+        });
+
+        it('accepts 29 February in a leap year', () => {
+            expect(isValidPartialStoreDate('19880229')).toBe(true);
+        });
+    });
+
+    describe('isStoreDateOrderValid', () => {
+        it('requires two full dates to be strictly ordered', () => {
+            expect(isStoreDateOrderValid('19850415', '20200101')).toBe(true);
+            expect(isStoreDateOrderValid('20200101', '19850415')).toBe(false);
+            expect(isStoreDateOrderValid('19850415', '19850415')).toBe(false);
+        });
+
+        it('compares at year granularity when either side is year-only', () => {
+            expect(isStoreDateOrderValid('19850000', '20200101')).toBe(true);
+            expect(isStoreDateOrderValid('20200000', '19850415')).toBe(false);
+        });
+
+        it('allows the same year when comparing at year granularity', () => {
+            // born and died in 1985 is possible
+            expect(isStoreDateOrderValid('19850000', '19850415')).toBe(true);
+            expect(isStoreDateOrderValid('19850415', '19850000')).toBe(true);
+        });
+
+        it('reports no conflict when the pair cannot be compared', () => {
+            expect(isStoreDateOrderValid('00000415', '19850415')).toBe(true);
+            expect(isStoreDateOrderValid('19850415', '00000415')).toBe(true);
+            expect(isStoreDateOrderValid('', '19850415')).toBe(true);
+        });
+    });
+
+    describe('storeDatesAgree', () => {
+        it('is true for identical full dates', () => {
+            expect(storeDatesAgree('19850415', '19850415')).toBe(true);
+        });
+
+        it('is true when a year-only date matches the year of a full one', () => {
+            expect(storeDatesAgree('19850415', '19850000')).toBe(true);
+            expect(storeDatesAgree('19850000', '19850415')).toBe(true);
+        });
+
+        it('is true when a birthday matches the day and month of a full date', () => {
+            expect(storeDatesAgree('19850415', '00000415')).toBe(true);
+        });
+
+        it('is false when a part they both specify differs', () => {
+            expect(storeDatesAgree('19850415', '19860000')).toBe(false);
+            expect(storeDatesAgree('19850415', '00000416')).toBe(false);
+        });
+
+        it('is false when either side claims nothing', () => {
+            expect(storeDatesAgree('19850415', '')).toBe(false);
+            expect(storeDatesAgree('', '')).toBe(false);
+        });
+
+        it('is true for a year-only and a birthday, which overlap in nothing', () => {
+            expect(storeDatesAgree('19850000', '00000415')).toBe(true);
         });
     });
 });
