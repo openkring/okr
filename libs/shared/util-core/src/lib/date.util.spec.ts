@@ -9,6 +9,7 @@ import {
     DatePart,
     extractFromDate,
     formatDateToken,
+    formatPartialStoreDate,
     getAge,
     getAgeFromBirthYear,
     getBirthYear,
@@ -21,7 +22,8 @@ import {
     isValidPartialStoreDate,
     isStoreDateOrderValid,
     storeDatesAgree,
-    parseDate
+    parseDate,
+    parsePartialViewDate
 } from './date.util';
 describe('date.util', () => {
 
@@ -422,6 +424,59 @@ describe('date.util', () => {
 
         it('is true for a year-only and a birthday, which overlap in nothing', () => {
             expect(storeDatesAgree('19850000', '00000415')).toBe(true);
+        });
+    });
+
+    describe('parsePartialViewDate', () => {
+        it('reads four digits as a year-only date', () => {
+            expect(parsePartialViewDate('1985')).toBe('19850000');
+        });
+
+        it('reads a trailing-dot day and month as a birthday without a year', () => {
+            expect(parsePartialViewDate('15.04.')).toBe('00000415');
+        });
+
+        it('pads a single-digit day or month', () => {
+            expect(parsePartialViewDate('5.4.')).toBe('00000405');
+        });
+
+        it('returns empty for a fragment the user is still typing', () => {
+            expect(parsePartialViewDate('19')).toBe('');
+            expect(parsePartialViewDate('198')).toBe('');
+            expect(parsePartialViewDate('15.')).toBe('');
+            expect(parsePartialViewDate('15.04')).toBe('');    // no trailing dot yet
+            expect(parsePartialViewDate('15.04.19')).toBe('');
+        });
+
+        it('returns empty for a complete date, which the caller converts instead', () => {
+            expect(parsePartialViewDate('15.04.1985')).toBe('');
+        });
+
+        it('returns empty for an out-of-range or impossible value', () => {
+            expect(parsePartialViewDate('1700')).toBe('');
+            expect(parsePartialViewDate('31.02.')).toBe('');
+            expect(parsePartialViewDate('15.13.')).toBe('');
+        });
+    });
+
+    describe('formatPartialStoreDate', () => {
+        it('renders a year-only date as the bare year', () => {
+            expect(formatPartialStoreDate('19850000')).toBe('1985');
+        });
+
+        it('renders a birthday with a trailing dot', () => {
+            expect(formatPartialStoreDate('00000415')).toBe('15.04.');
+        });
+
+        it('returns empty for a full or unusable date', () => {
+            expect(formatPartialStoreDate('19850415')).toBe('');
+            expect(formatPartialStoreDate('')).toBe('');
+            expect(formatPartialStoreDate('00000000')).toBe('');
+        });
+
+        it('round-trips with parsePartialViewDate', () => {
+            expect(parsePartialViewDate(formatPartialStoreDate('19850000'))).toBe('19850000');
+            expect(parsePartialViewDate(formatPartialStoreDate('00000415'))).toBe('00000415');
         });
     });
 });

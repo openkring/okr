@@ -780,3 +780,42 @@ export function formatDateToken(isoDateTime: string): string {
     const timePart = isoDateTime.length >= 16 ? isoDateTime.substring(11, 16) : '00:00';
     return timePart === '00:00' ? viewDate : `${viewDate} ${timePart}`;
 }
+
+/**
+ * Parse the partial ViewDate forms the person dob/dod fields accept:
+ *   '1985'   -> '19850000'  (year only)
+ *   '15.04.' -> '00000415'  (birthday, year unknown — the trailing dot is what marks it finished)
+ * Returns '' for anything else, including a fragment still being typed ('15.04' has no
+ * trailing dot yet) and a complete date, which the caller converts with convertDateFormatToString.
+ */
+export function parsePartialViewDate(view: string): string {
+  const yearOnly = /^(\d{4})$/.exec(view);
+  if (yearOnly) {
+    const candidate = `${yearOnly[1]}${STORE_DATE_FILLER}`;
+    return classifyStoreDate(candidate) === 'yearOnly' ? candidate : '';
+  }
+
+  const dayMonth = /^(\d{1,2})\.(\d{1,2})\.$/.exec(view);
+  if (dayMonth) {
+    const candidate = `${STORE_DATE_FILLER}${dayMonth[2].padStart(2, '0')}${dayMonth[1].padStart(2, '0')}`;
+    return classifyStoreDate(candidate) === 'dayMonthOnly' ? candidate : '';
+  }
+
+  return '';
+}
+
+/**
+ * Render a partial StoreDate back into its ViewDate form — the inverse of
+ * parsePartialViewDate. Returns '' for anything that is not partial; a full date goes
+ * through convertDateFormatToString instead.
+ */
+export function formatPartialStoreDate(storeDate: string): string {
+  switch (classifyStoreDate(storeDate)) {
+    case 'yearOnly':
+      return storeDate.substring(0, 4);
+    case 'dayMonthOnly':
+      return `${storeDate.substring(6, 8)}.${storeDate.substring(4, 6)}.`;
+    default:
+      return '';
+  }
+}
