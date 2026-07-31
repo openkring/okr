@@ -14,6 +14,7 @@ import { PersonFormModel } from '@okr/subject-person-util';
 import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
 import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';
+import { DataRightsAccordion } from './data-rights.accordion';
 
 @Component({
   selector: 'okr-profile-edit-page',
@@ -22,6 +23,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
     AsyncPipe,
     AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
     ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
+    DataRightsAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
@@ -97,6 +99,8 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
                 />
               }
             }
+            <!-- privacy 1.19 Phase 5A/5B: policy acceptance, data export, data erasure -->
+            <okr-data-rights-accordion [i18n]="store.i18n" />
             <okr-email-signature-accordion [i18n]="store.i18n" />
           </ion-accordion-group>
         </ion-card-content>

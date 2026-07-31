@@ -20,6 +20,10 @@
     "@okr/avatar-feature": "*",
     "@okr/avatar-util": "*",
     "@okr/profile-data-access": "*",
-    "@okr/profile-ui": "*"
+    "@okr/profile-ui": "*",
+    "@okr/user-util": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-data-access": "*",
+    "@okr/profile-util": "*"
   }
 }
