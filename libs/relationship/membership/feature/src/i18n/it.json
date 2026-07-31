@@ -435,6 +435,35 @@
       "description": "Membro passivo"
     }
   },
+  "mstate_default": {
+    "all": {
+      "label": "Tutti gli stati"
+    },
+    "initial": {
+      "label": "Registrata",
+      "description": "L'adesione è registrata ma non ancora richiesta."
+    },
+    "applied": {
+      "label": "Richiesta",
+      "description": "L'adesione è stata richiesta."
+    },
+    "active": {
+      "label": "Attiva",
+      "description": "L'adesione è attualmente valida."
+    },
+    "passive": {
+      "label": "Passiva",
+      "description": "L'adesione è sospesa."
+    },
+    "terminated": {
+      "label": "Terminata",
+      "description": "L'adesione è terminata."
+    },
+    "cancelled": {
+      "label": "Annullata",
+      "description": "L'adesione è stata annullata."
+    }
+  },
   "mcat_default": {
     "label": "Categoria di membro",
     "helper": "Categoria di membro",
@@ -452,37 +481,6 @@
     "junior": {
       "label": "Giovani",
       "description": "Junior fino a max 18 anni."
-    },
-    "mcat_p13": {
-      "all": {
-        "label": "Tutti",
-        "description": "Tutti i membri P13"
-      },
-      "active": {
-        "label": "Attivo",
-        "description": "La persona vuole partecipare agli eventi."
-      },
-      "passive": {
-        "label": "Passivo",
-        "description": "La persona non vuole più partecipare agli eventi."
-      }
-    },
-    "mcat_test": {
-      "all": {
-        "label": "Tutte le categorie"
-      },
-      "active": {
-        "label": "Attivo",
-        "description": "La persona è un membro attivo."
-      },
-      "junior": {
-        "label": "Junior",
-        "description": "Junior fino a max 18 anni."
-      },
-      "passive": {
-        "label": "Passivo",
-        "description": "Membro passivo"
-      }
     },
     "state": {
       "helper": "Lo stato del membro non può essere modificato. Viene derivato automaticamente dalla categoria di membro. Lo stato può essere impostato per categoria nella definizione delle categorie.",
@@ -502,6 +500,37 @@
         "label": "Terminata",
         "description": "L'adesione è terminata, non è più valida."
       }
+    }
+  },
+  "mcat_test": {
+    "all": {
+      "label": "Tutte le categorie"
+    },
+    "active": {
+      "label": "Attivo",
+      "description": "La persona è un membro attivo."
+    },
+    "junior": {
+      "label": "Junior",
+      "description": "Junior fino a max 18 anni."
+    },
+    "passive": {
+      "label": "Passivo",
+      "description": "Membro passivo"
+    }
+  },
+  "mcat_p13": {
+    "all": {
+      "label": "Tutti",
+      "description": "Tutti i membri P13"
+    },
+    "active": {
+      "label": "Attivo",
+      "description": "La persona vuole partecipare agli eventi."
+    },
+    "passive": {
+      "label": "Passivo",
+      "description": "La persona non vuole più partecipare agli eventi."
     }
   }
 }

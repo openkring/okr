@@ -10,7 +10,6 @@
       "title": "Cronologia delle versioni"
     }
   },
-
   "upload": {
     "new": "Carica nuova versione",
     "single": {
@@ -42,6 +41,15 @@
   },
   "download": "Scarica documento",
   "share": "Condividi documento",
+  "folder": {
+    "open": "Apri cartella",
+    "edit": "Modifica cartella",
+    "delete": {
+      "label": "Elimina cartella",
+      "confirm": "Vuoi davvero eliminare questa cartella?"
+    },
+    "notEmpty": "La cartella non è vuota. Rimuovi prima tutti i file e le sottocartelle."
+  },
   "image": {
     "add": "Aggiungi immagine",
     "select": "Scegli immagine",
@@ -53,7 +61,6 @@
       "helper": "Il tipo dell'immagine"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "ID",
@@ -153,7 +160,6 @@
     "marketing": "Marketing",
     "avatar": "Avatar"
   },
-
   "document_type": {
     "name": "Tipo di documento",
     "label": "Tipo di documento",
@@ -230,6 +236,14 @@
     "external": {
       "label": "Esterno",
       "description": "Il file è salvato al di fuori dell'applicazione (URL assoluto verso una condivisione file, ad es. Google Drive, Dropbox)."
+    },
+    "expense": {
+      "label": "Nota spese",
+      "description": "Il documento è il giustificativo di una nota spese."
+    },
+    "accounting": {
+      "label": "Contabilità",
+      "description": "Il documento è un giustificativo contabile."
     }
   }
 }

@@ -710,5 +710,34 @@
     "title": "Switch app",
     "tooltip": "Switch to another app",
     "current": "Current"
+  },
+  "competition_level": {
+    "all": {
+      "label": "All categories"
+    },
+    "u15": {
+      "label": "U15",
+      "description": "Up to 14 years."
+    },
+    "u17": {
+      "label": "U17",
+      "description": "Up to 16 years."
+    },
+    "u19": {
+      "label": "U19",
+      "description": "Up to 18 years."
+    },
+    "u23": {
+      "label": "U23",
+      "description": "Up to 22 years."
+    },
+    "elite": {
+      "label": "Elite",
+      "description": "Open class."
+    },
+    "masters": {
+      "label": "Masters",
+      "description": "From 27 years."
+    }
   }
 }

@@ -710,5 +710,34 @@
     "title": "App wechseln",
     "tooltip": "Zu einer anderen App wechseln",
     "current": "Aktuell"
+  },
+  "competition_level": {
+    "all": {
+      "label": "Alle Kategorien"
+    },
+    "u15": {
+      "label": "U15",
+      "description": "Bis 14 Jahre."
+    },
+    "u17": {
+      "label": "U17",
+      "description": "Bis 16 Jahre."
+    },
+    "u19": {
+      "label": "U19",
+      "description": "Bis 18 Jahre."
+    },
+    "u23": {
+      "label": "U23",
+      "description": "Bis 22 Jahre."
+    },
+    "elite": {
+      "label": "Elite",
+      "description": "Offene Klasse."
+    },
+    "masters": {
+      "label": "Masters",
+      "description": "Ab 27 Jahren."
+    }
   }
 }

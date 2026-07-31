@@ -12,7 +12,9 @@
     "album": "Albums",
     "members": "Membres"
   },
-
+  "files": {
+    "conflict": "Le dossier de fichiers de ce groupe est déjà géré par une autre personne et ne peut pas être utilisé ici. Veuillez contacter un administrateur."
+  },
   "add": {
     "page": "Ajouter une page de groupe"
   },
@@ -88,7 +90,6 @@
       "error": "Le calendrier n'a pas pu être ajouté."
     }
   },
-
   "attributes": "Propriétés du groupe",
   "display": "Affichage",
   "access": "Accès et notifications",

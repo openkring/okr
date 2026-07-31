@@ -3,7 +3,6 @@
   "invitations": "Inviti",
   "description": "Un invito a un evento o a una manifestazione.",
   "empty": "Non è ancora stato creato alcun invito. Creane uno cliccando sul pulsante +.",
-
   "delete": {
     "label": "Elimina invito",
     "confirm": "Eliminare davvero l'invito ?",
@@ -30,7 +29,6 @@
   "resend": "Invia di nuovo l'invito",
   "subscribe": "Partecipo",
   "unsubscribe": "Non posso partecipare",
-
   "list": {
     "header": {
       "date": "Data",
@@ -40,7 +38,6 @@
       "state": "Stato"
     }
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "sssssss",
@@ -65,7 +62,6 @@
   "role": {
     "label": "Ruolo"
   },
-
   "invitation_state": {
     "label": "Stato",
     "helper": "Stato dell'invito",
@@ -87,6 +83,23 @@
     "maybe": {
       "label": "Forse",
       "description": "All'invito è stata data risposta con 'Forse'."
+    }
+  },
+  "invitation_role": {
+    "all": {
+      "label": "Tutti i ruoli"
+    },
+    "required": {
+      "label": "Obbligatorio",
+      "description": "La partecipazione è attesa."
+    },
+    "optional": {
+      "label": "Facoltativo",
+      "description": "La partecipazione è volontaria."
+    },
+    "info": {
+      "label": "Per informazione",
+      "description": "La persona è solo informata e non partecipa."
     }
   }
 }

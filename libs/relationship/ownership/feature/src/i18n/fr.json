@@ -38,8 +38,6 @@
   "relDesc1": "Utilisation de",
   "relDesc2": "par",
   "revreldesc": "est utilisé par",
-
-
   "create": {
     "label": "Ajouter une utilisation",
     "conf": "L'utilisation a été créée.",
@@ -80,7 +78,6 @@
     "edit": "Modifier l'utilisateur/trice",
     "view": "Afficher l'utilisateur/trice"
   },
-
   "list": {
     "empty": "Aucune utilisation trouvée.",
     "header": {
@@ -112,7 +109,6 @@
       "title": "Bateaux du club"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -208,6 +204,48 @@
       "description": "L'utilisation appartient à une organisation."
     }
   },
+  "owner_type": {
+    "all": {
+      "label": "Tous"
+    },
+    "person": {
+      "label": "Personnes",
+      "description": "L'utilisation appartient à une personne."
+    },
+    "men": {
+      "label": "Hommes",
+      "description": "L'utilisation appartient à un homme."
+    },
+    "women": {
+      "label": "Femmes",
+      "description": "L'utilisation appartient à une femme."
+    },
+    "orgs": {
+      "label": "Organisations",
+      "description": "L'utilisation appartient à une organisation."
+    }
+  },
+  "ocat_default": {
+    "all": {
+      "label": "Toutes les catégories"
+    },
+    "own": {
+      "label": "Propriété",
+      "description": "La ressource appartient à la personne ou à l'organisation utilisatrice."
+    },
+    "rent": {
+      "label": "Location",
+      "description": "La ressource est louée."
+    },
+    "lease": {
+      "label": "Leasing",
+      "description": "La ressource est en leasing."
+    },
+    "use": {
+      "label": "Utilisation",
+      "description": "La ressource est utilisée sans propriété ni contrat de location."
+    }
+  },
   "state": {
     "applied": {
       "label": "Demandé",
@@ -217,6 +255,38 @@
       "label": "Actif",
       "description": "Utilisation actuellement valable."
     }
+  },
+  "ostate_default": {
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "initial": {
+      "label": "Saisie",
+      "description": "L'utilisation est saisie mais pas encore demandée."
+    },
+    "planned": {
+      "label": "Planifiée",
+      "description": "L'utilisation est planifiée."
+    },
+    "applied": {
+      "label": "Demandée",
+      "description": "La personne a déposé une demande."
+    },
+    "active": {
+      "label": "Active",
+      "description": "Utilisation actuellement valable."
+    },
+    "passive": {
+      "label": "Passive",
+      "description": "L'utilisation est en veille."
+    },
+    "denied": {
+      "label": "Refusée",
+      "description": "La demande a été refusée."
+    },
+    "cancelled": {
+      "label": "Annulée",
+      "description": "L'utilisation a été annulée."
+    }
   }
-
 }

@@ -3,8 +3,7 @@
   "trips": "Fahrten",
   "desc": "Vor der Ausfahrt erfasst du hier im Logbuch deine geplante Fahrt. Du gibst damit an, wohin du rudern möchtest, mit welchem Boot und mit welchen Rudernden. Sicherheitsmässig ist dies wichtig, damit wir dich bei einem allfälligen Notfall schneller finden können. Ausserdem können andere Mitglieder sehen, welche Boote bereits reserviert sind. Nach der Fahrt schliesst du deine Ausfahrt ab. Deine Ausfahrt wird dann automatisch in den Bootsstatistiken nachgeführt.",
   "empty": "Es wurden keine Fahrten gefunden.",
-  
-  "create": { 
+  "create": {
     "label": "Neue Fahrt erfassen",
     "conf": "Die Fahrt wurde gespeichert.",
     "error": "Die Fahrt konnte nicht gespeichert werden.",
@@ -70,16 +69,14 @@
     "view_list": "Tabelle",
     "view_graph": "Verlauf"
   },
-  "update": { 
+  "update": {
     "label": "Fahrt ändern",
     "conf": "Die Fahrt wurde gespeichert.",
     "error": "Die Fahrt konnte nicht gespeichert werden."
   },
-
-  "list": { 
-    "title": "Logbuch" 
+  "list": {
+    "title": "Logbuch"
   },
-
   "warning": {
     "suspicious": "Verdächtige Aktivität erkannt. Bitte bestätigen.",
     "distance_zero": "Bitte eine sinnvolle Distanz zwischen 1 und 50 km eingeben.",
@@ -87,7 +84,6 @@
     "seats_mismatch": "Anzahl Teilnehmende entspricht nicht der Bootskapazität.",
     "note": "Um Missbräuche zu vermeiden, finden im Hintergrund verschiedene Checks statt. Sollte ein Missbrauch festgestellt werden, wird ein Bild vom User gemacht und damit der Admin notifiziert."
   },
-
   "boat": "Boot",
   "distance": {
     "label": "Distanz (km)",
@@ -112,7 +108,6 @@
     "empty": "Keine Orte gefunden",
     "none_selected": "Kein Ort ausgewählt"
   },
-
   "trip_state": {
     "label": "Status",
     "helper": "Status der Ausfahrt",
@@ -135,7 +130,23 @@
       "label": "Überarbeitet"
     }
   },
-
+  "trip_type": {
+    "all": {
+      "label": "Alle Typen"
+    },
+    "logbuch": {
+      "label": "Logbuch",
+      "description": "Eine Ausfahrt, die im Logbuch erfasst wird."
+    },
+    "private": {
+      "label": "Privat",
+      "description": "Eine private Ausfahrt."
+    },
+    "tracker": {
+      "label": "Tracker",
+      "description": "Eine mit dem Tracker aufgezeichnete Ausfahrt."
+    }
+  },
   "aoc": {
     "title": "Ausfahrten Administration",
     "trash": "Papierkorb",

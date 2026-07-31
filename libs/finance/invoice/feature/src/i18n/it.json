@@ -3,11 +3,9 @@
   "plural": "Fatture debitori",
   "aging": "Scadenzario debitori",
   "empty": "Nessuna fattura trovata",
-
   "list": {
     "title": "Panoramica fatture"
   },
-
   "id": {
     "label": "ID",
     "placeholder": "nnnnn",
@@ -69,26 +67,92 @@
       "helper": "Importo totale della fattura su tutte le voci."
     }
   },
+  "invoice_position_type": {
+    "all": {
+      "label": "Tutti i tipi"
+    },
+    "fix": {
+      "label": "Importo fisso",
+      "description": "Un importo fisso, indipendente da una quantità."
+    },
+    "unit": {
+      "label": "Unità",
+      "description": "Quantità per prezzo unitario."
+    },
+    "hours": {
+      "label": "Ore",
+      "description": "Numero di ore per tariffa oraria."
+    },
+    "days": {
+      "label": "Giorni",
+      "description": "Numero di giorni per tariffa giornaliera."
+    },
+    "deduction": {
+      "label": "Detrazione",
+      "description": "Una detrazione dall'importo della fattura."
+    },
+    "rebate": {
+      "label": "Sconto",
+      "description": "Uno sconto sull'importo della fattura."
+    }
+  },
+  "invoice_position_usage": {
+    "all": {
+      "label": "Tutti gli utilizzi"
+    },
+    "membershipFee": {
+      "label": "Quota associativa",
+      "description": "Quota associativa annuale."
+    },
+    "beverages": {
+      "label": "Bevande",
+      "description": "Consumo di bevande."
+    },
+    "insurance": {
+      "label": "Assicurazione",
+      "description": "Quota dell'assicurazione."
+    },
+    "lockerRental": {
+      "label": "Affitto armadietto",
+      "description": "Affitto di un armadietto."
+    },
+    "boatPlaceRental": {
+      "label": "Affitto posto barca",
+      "description": "Affitto di un posto barca."
+    },
+    "license": {
+      "label": "Licenza",
+      "description": "Tassa per una licenza."
+    },
+    "srvFee": {
+      "label": "Quota SRV",
+      "description": "Quota alla Federazione Svizzera di Canottaggio."
+    },
+    "other": {
+      "label": "Altro",
+      "description": "Un altro utilizzo."
+    }
+  },
   "unitPrice": {
-      "label": "Prezzo unitario",
-      "placeholder": "nn.nn",
-      "helper": "Il prezzo di una singola voce."
-    },
+    "label": "Prezzo unitario",
+    "placeholder": "nn.nn",
+    "helper": "Il prezzo di una singola voce."
+  },
   "accountId": {
-      "label": "Numero di conto",
-      "placeholder": "nnnn",
-      "helper": "Il numero univoco di un conto."
-    },
+    "label": "Numero di conto",
+    "placeholder": "nnnn",
+    "helper": "Il numero univoco di un conto."
+  },
   "header": {
-      "label": "Intestazione",
-      "placeholder": "Testo",
-      "helper": "Testo visualizzato sopra le voci della fattura sulla fattura."
-    },
+    "label": "Intestazione",
+    "placeholder": "Testo",
+    "helper": "Testo visualizzato sopra le voci della fattura sulla fattura."
+  },
   "footer": {
-      "label": "Piè di pagina",
-      "placeholder": "Testo",
-      "helper": "Testo visualizzato sotto le voci della fattura sulla fattura."
-    },
+    "label": "Piè di pagina",
+    "placeholder": "Testo",
+    "helper": "Testo visualizzato sotto le voci della fattura sulla fattura."
+  },
   "valid": {
     "from": {
       "label": "Valido dal",
@@ -111,7 +175,6 @@
     "label": "IVA",
     "type": "Aliquota IVA"
   },
-
   "add": {
     "position": "Aggiungere voce di fattura"
   },
@@ -132,14 +195,12 @@
     "error": "Non è stato possibile modificare la fattura."
   },
   "view": {
-    "label":  "Mostrare i dettagli della fattura",
+    "label": "Mostrare i dettagli della fattura",
     "pdf": "Scaricare la fattura in PDF"
   },
-
   "readonly": {
     "banner": "Questo elenco è di sola lettura. I debitori sono gestiti in Bexio."
   },
-
   "invoice_state": {
     "name": "Stato della fattura",
     "all": {

@@ -3,7 +3,6 @@
   "trips": "Uscite",
   "desc": "Prima dell'uscita, registra qui nel giornale di bordo la tua uscita pianificata. Indichi così dove desideri remare, con quale imbarcazione e con quali rematori. Per motivi di sicurezza questo è importante, affinché possiamo trovarti più rapidamente in caso di un'eventuale emergenza. Inoltre, altri membri possono vedere quali imbarcazioni sono già prenotate. Dopo l'uscita, chiudi la tua uscita. La tua uscita viene poi automaticamente registrata nelle statistiche delle imbarcazioni.",
   "empty": "Non è stata trovata nessuna uscita.",
-
   "create": {
     "label": "Registra nuova uscita",
     "conf": "L'uscita è stata salvata.",
@@ -75,11 +74,9 @@
     "conf": "L'uscita è stata salvata.",
     "error": "Non è stato possibile salvare l'uscita."
   },
-
   "list": {
     "title": "Giornale di bordo"
   },
-
   "warning": {
     "suspicious": "Rilevata attività sospetta. Si prega di confermare.",
     "distance_zero": "Inserire una distanza ragionevole tra 1 e 50 km.",
@@ -87,7 +84,6 @@
     "seats_mismatch": "Il numero di partecipanti non corrisponde alla capacità dell'imbarcazione.",
     "note": "Per evitare abusi, in background vengono eseguiti vari controlli. Qualora venga rilevato un abuso, viene scattata una foto dell'utente e l'amministratore viene notificato."
   },
-
   "boat": "Imbarcazione",
   "distance": {
     "label": "Distanza (km)",
@@ -112,7 +108,6 @@
     "empty": "Nessun luogo trovato",
     "none_selected": "Nessun luogo selezionato"
   },
-
   "trip_state": {
     "label": "Stato",
     "helper": "Stato dell'uscita",
@@ -135,7 +130,23 @@
       "label": "Rivista"
     }
   },
-
+  "trip_type": {
+    "all": {
+      "label": "Tutti i tipi"
+    },
+    "logbuch": {
+      "label": "Giornale di bordo",
+      "description": "Un'uscita registrata nel giornale di bordo."
+    },
+    "private": {
+      "label": "Privata",
+      "description": "Un'uscita privata."
+    },
+    "tracker": {
+      "label": "Tracker",
+      "description": "Un'uscita registrata con il tracker."
+    }
+  },
   "aoc": {
     "title": "Amministrazione delle uscite",
     "trash": "Cestino",

@@ -10,7 +10,6 @@
       "title": "Historique des versions"
     }
   },
-
   "upload": {
     "new": "Téléverser une nouvelle version",
     "single": {
@@ -42,6 +41,15 @@
   },
   "download": "Télécharger le document",
   "share": "Partager le document",
+  "folder": {
+    "open": "Ouvrir le dossier",
+    "edit": "Modifier le dossier",
+    "delete": {
+      "label": "Supprimer le dossier",
+      "confirm": "Voulez-vous vraiment supprimer ce dossier ?"
+    },
+    "notEmpty": "Le dossier n'est pas vide. Veuillez d'abord supprimer tous les fichiers et sous-dossiers."
+  },
   "image": {
     "add": "Ajouter une image",
     "select": "Choisir une image",
@@ -53,7 +61,6 @@
       "helper": "Le type de l'image"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "ID",
@@ -153,7 +160,6 @@
     "marketing": "Marketing",
     "avatar": "Avatar"
   },
-
   "document_type": {
     "name": "Type de document",
     "label": "Type de document",
@@ -230,6 +236,14 @@
     "external": {
       "label": "Externe",
       "description": "Le fichier est enregistré en dehors de l'application (URL absolue vers un partage de fichiers, p. ex. Google Drive, Dropbox)."
+    },
+    "expense": {
+      "label": "Note de frais",
+      "description": "Le document est le justificatif d'une note de frais."
+    },
+    "accounting": {
+      "label": "Comptabilité",
+      "description": "Le document est une pièce comptable."
     }
   }
 }

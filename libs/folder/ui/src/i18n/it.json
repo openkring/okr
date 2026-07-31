@@ -12,5 +12,9 @@
   "description": {
     "label": "Descrizione",
     "placeholder": ""
+  },
+  "membersMayUpload": {
+    "label": "I membri possono caricare file",
+    "helper": "I membri possono caricare immagini e file propri in questa cartella e modificare o eliminare i propri caricamenti."
   }
 }

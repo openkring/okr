@@ -3,7 +3,6 @@
   "invitations": "Einladungen",
   "description": "Eine Einladung zu einem Anlass oder Ereignis.",
   "empty": "Es sind noch keine Einladungen erstellt worden. Erstelle eine mit Klicken des + Buttons.",
-
   "delete": {
     "label": "Einladung löschen",
     "confirm": "Soll die Einladung wirklich gelöscht werden ?",
@@ -30,7 +29,6 @@
   "resend": "Einladung erneut senden",
   "subscribe": "Ich nehme teil",
   "unsubscribe": "Ich kann nicht teilnehmen",
-
   "list": {
     "header": {
       "date": "Datum",
@@ -40,10 +38,9 @@
       "state": "Status"
     }
   },
-
-  "okey": { 
-    "label": "ID", 
-    "placeholder": "sssssss", 
+  "okey": {
+    "label": "ID",
+    "placeholder": "sssssss",
     "helper": "Eine eindeutige ID der Einladung in der Datenbank."
   },
   "invitee": "Teilnehmer",
@@ -53,7 +50,7 @@
     "placeholder": "Freie Notizen."
   },
   "sentAt": {
-    "label": "Gesendet am", 
+    "label": "Gesendet am",
     "placeholder": "TT.MM.JJJJ",
     "helper": "Die Einladung wurde an diesem Datum versendet."
   },
@@ -65,7 +62,6 @@
   "role": {
     "label": "Rolle"
   },
-
   "invitation_state": {
     "label": "Status",
     "helper": "Status der Einladung",
@@ -87,6 +83,23 @@
     "maybe": {
       "label": "Vielleicht",
       "description": "Die Einladung wurde mit 'Vielleicht' beantwortet."
+    }
+  },
+  "invitation_role": {
+    "all": {
+      "label": "Alle Rollen"
+    },
+    "required": {
+      "label": "Erforderlich",
+      "description": "Die Teilnahme wird erwartet."
+    },
+    "optional": {
+      "label": "Optional",
+      "description": "Die Teilnahme ist freiwillig."
+    },
+    "info": {
+      "label": "Zur Information",
+      "description": "Die Person wird nur informiert und nimmt nicht teil."
     }
   }
 }

@@ -12,5 +12,9 @@
   "description": {
     "label": "Description",
     "placeholder": ""
+  },
+  "membersMayUpload": {
+    "label": "Les membres peuvent téléverser des fichiers",
+    "helper": "Les membres peuvent téléverser leurs propres images et fichiers dans ce dossier et modifier ou supprimer leurs propres téléversements."
   }
 }

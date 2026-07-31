@@ -38,8 +38,6 @@
   "relDesc1": "Uso de",
   "relDesc2": "por",
   "revreldesc": "es utilizado por",
-
-
   "create": {
     "label": "Añadir uso",
     "conf": "El uso se ha creado.",
@@ -80,7 +78,6 @@
     "edit": "Editar usuario/a",
     "view": "Ver usuario/a"
   },
-
   "list": {
     "empty": "No se encontraron usos.",
     "header": {
@@ -112,7 +109,6 @@
       "title": "Barcos del club"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -208,6 +204,48 @@
       "description": "El uso pertenece a una organización."
     }
   },
+  "owner_type": {
+    "all": {
+      "label": "Todos"
+    },
+    "person": {
+      "label": "Personas",
+      "description": "El uso pertenece a una persona."
+    },
+    "men": {
+      "label": "Hombres",
+      "description": "El uso pertenece a un hombre."
+    },
+    "women": {
+      "label": "Mujeres",
+      "description": "El uso pertenece a una mujer."
+    },
+    "orgs": {
+      "label": "Organizaciones",
+      "description": "El uso pertenece a una organización."
+    }
+  },
+  "ocat_default": {
+    "all": {
+      "label": "Todas las categorías"
+    },
+    "own": {
+      "label": "Propiedad",
+      "description": "El recurso pertenece a la persona u organización que lo usa."
+    },
+    "rent": {
+      "label": "Alquiler",
+      "description": "El recurso está alquilado."
+    },
+    "lease": {
+      "label": "Leasing",
+      "description": "El recurso está en leasing."
+    },
+    "use": {
+      "label": "Uso",
+      "description": "El recurso se usa sin propiedad ni contrato de alquiler."
+    }
+  },
   "state": {
     "applied": {
       "label": "Solicitado",
@@ -217,6 +255,38 @@
       "label": "Activo",
       "description": "Uso actualmente válido."
     }
+  },
+  "ostate_default": {
+    "all": {
+      "label": "Todos los estados"
+    },
+    "initial": {
+      "label": "Registrado",
+      "description": "El uso está registrado pero aún no solicitado."
+    },
+    "planned": {
+      "label": "Planificado",
+      "description": "El uso está planificado."
+    },
+    "applied": {
+      "label": "Solicitado",
+      "description": "La persona ha presentado una solicitud."
+    },
+    "active": {
+      "label": "Activo",
+      "description": "Uso actualmente vigente."
+    },
+    "passive": {
+      "label": "Pasivo",
+      "description": "El uso está inactivo."
+    },
+    "denied": {
+      "label": "Denegado",
+      "description": "La solicitud fue denegada."
+    },
+    "cancelled": {
+      "label": "Anulado",
+      "description": "El uso fue anulado."
+    }
   }
-
 }

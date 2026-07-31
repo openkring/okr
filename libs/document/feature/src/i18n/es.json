@@ -10,7 +10,6 @@
       "title": "Historial de versiones"
     }
   },
-
   "upload": {
     "new": "Subir nueva versión",
     "single": {
@@ -42,6 +41,15 @@
   },
   "download": "Descargar documento",
   "share": "Compartir documento",
+  "folder": {
+    "open": "Abrir carpeta",
+    "edit": "Editar carpeta",
+    "delete": {
+      "label": "Eliminar carpeta",
+      "confirm": "¿Realmente quieres eliminar esta carpeta?"
+    },
+    "notEmpty": "La carpeta no está vacía. Elimina primero todos los archivos y subcarpetas."
+  },
   "image": {
     "add": "Añadir imagen",
     "select": "Seleccionar imagen",
@@ -53,7 +61,6 @@
       "helper": "El tipo de la imagen"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "ID",
@@ -153,7 +160,6 @@
     "marketing": "Marketing",
     "avatar": "Avatar"
   },
-
   "document_type": {
     "name": "Tipo de documento",
     "label": "Tipo de documento",
@@ -230,6 +236,14 @@
     "external": {
       "label": "Externo",
       "description": "El archivo está guardado fuera de la aplicación (URL absoluta a un recurso compartido de archivos, p. ej. Google Drive, Dropbox)."
+    },
+    "expense": {
+      "label": "Gasto",
+      "description": "El documento es el justificante de una liquidación de gastos."
+    },
+    "accounting": {
+      "label": "Contabilidad",
+      "description": "El documento es un comprobante contable."
     }
   }
 }

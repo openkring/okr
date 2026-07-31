@@ -1,7 +1,6 @@
 {
   "accounts": "Conti",
   "empty": "Nessun conto trovato.",
-
   "create": "Aprire un nuovo conto",
   "delete": "Elimina conto",
   "select": {
@@ -10,7 +9,6 @@
   },
   "update": "Modifica conto",
   "view": "Visualizza dettagli del conto",
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -26,6 +24,43 @@
     "placeholder": "Nome",
     "error": "Il nome è obbligatorio e deve essere composto da caratteri alfanumerici.",
     "helper": "Un nome può essere composto da più parole. Sono ammessi solo lettere (incl. -) e numeri, nessun carattere speciale."
+  },
+  "account_type": {
+    "all": {
+      "label": "Tutti i tipi di conto"
+    },
+    "bank": {
+      "label": "Conto bancario",
+      "description": "Un conto presso una banca."
+    },
+    "user": {
+      "label": "Conto utente",
+      "description": "Il conto personale di un utente."
+    },
+    "twint": {
+      "label": "TWINT",
+      "description": "Un conto TWINT."
+    },
+    "paypal": {
+      "label": "PayPal",
+      "description": "Un conto PayPal."
+    },
+    "root": {
+      "label": "Piano dei conti",
+      "description": "La radice di un piano dei conti."
+    },
+    "group": {
+      "label": "Gruppo di conti",
+      "description": "Raggruppa altri gruppi o conti."
+    },
+    "leaf": {
+      "label": "Conto",
+      "description": "Un conto su cui si registra."
+    },
+    "other": {
+      "label": "Altro conto",
+      "description": "Un conto di un altro tipo."
+    }
   },
   "label": {
     "label": "Denominazione",

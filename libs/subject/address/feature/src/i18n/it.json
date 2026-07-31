@@ -1,10 +1,10 @@
 {
   "addresses": "Indirizzi",
   "empty": "Nessun indirizzo trovato",
+  "show_archived": "Mostra/nascondi gli indirizzi eliminati (archiviati)",
   "currency": "CHF",
   "qrinvoice": "Fattura QR",
   "description": "Informazioni di contatto di una persona o organizzazione",
-
   "browse": {
     "label": "Visualizzare",
     "description": "Aprire l'indirizzo come pagina web nel browser in una scheda esterna."
@@ -106,8 +106,6 @@
     "iban": "Mostrare la polizza di versamento QR",
     "postal": "Mostrare sulla mappa"
   },
-
-
   "address_usage": {
     "name": "Utilizzo",
     "helper": "Una denominazione di come viene utilizzato l'indirizzo, ad es. privato, lavoro.",
@@ -262,7 +260,6 @@
       "description": "QR code Twint"
     }
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssssss",

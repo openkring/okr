@@ -435,6 +435,35 @@
       "description": "Membre passif"
     }
   },
+  "mstate_default": {
+    "all": {
+      "label": "Tous les statuts"
+    },
+    "initial": {
+      "label": "Saisie",
+      "description": "L'adhésion est saisie mais pas encore demandée."
+    },
+    "applied": {
+      "label": "Demandée",
+      "description": "L'adhésion a été demandée."
+    },
+    "active": {
+      "label": "Active",
+      "description": "L'adhésion est actuellement valable."
+    },
+    "passive": {
+      "label": "Passive",
+      "description": "L'adhésion est en veille."
+    },
+    "terminated": {
+      "label": "Terminée",
+      "description": "L'adhésion a pris fin."
+    },
+    "cancelled": {
+      "label": "Annulée",
+      "description": "L'adhésion a été annulée."
+    }
+  },
   "mcat_default": {
     "label": "Catégorie de membre",
     "helper": "Catégorie de membre",
@@ -452,37 +481,6 @@
     "junior": {
       "label": "Jeunes",
       "description": "Junior jusqu'à 18 ans maximum."
-    },
-    "mcat_p13": {
-      "all": {
-        "label": "Tous",
-        "description": "Tous les membres P13"
-      },
-      "active": {
-        "label": "Actif",
-        "description": "La personne souhaite participer aux événements."
-      },
-      "passive": {
-        "label": "Passif",
-        "description": "La personne ne souhaite plus participer aux événements."
-      }
-    },
-    "mcat_test": {
-      "all": {
-        "label": "Toutes les catégories"
-      },
-      "active": {
-        "label": "Actif",
-        "description": "La personne est un membre actif."
-      },
-      "junior": {
-        "label": "Junior",
-        "description": "Junior jusqu'à 18 ans maximum."
-      },
-      "passive": {
-        "label": "Passif",
-        "description": "Membre passif"
-      }
     },
     "state": {
       "helper": "Le statut du membre ne peut pas être modifié. Il est dérivé automatiquement de la catégorie de membre. Le statut peut être défini par catégorie dans la définition des catégories.",
@@ -502,6 +500,37 @@
         "label": "Terminée",
         "description": "L'adhésion est terminée, elle n'est plus valide."
       }
+    }
+  },
+  "mcat_test": {
+    "all": {
+      "label": "Toutes les catégories"
+    },
+    "active": {
+      "label": "Actif",
+      "description": "La personne est un membre actif."
+    },
+    "junior": {
+      "label": "Junior",
+      "description": "Junior jusqu'à 18 ans maximum."
+    },
+    "passive": {
+      "label": "Passif",
+      "description": "Membre passif"
+    }
+  },
+  "mcat_p13": {
+    "all": {
+      "label": "Tous",
+      "description": "Tous les membres P13"
+    },
+    "active": {
+      "label": "Actif",
+      "description": "La personne souhaite participer aux événements."
+    },
+    "passive": {
+      "label": "Passif",
+      "description": "La personne ne souhaite plus participer aux événements."
     }
   }
 }

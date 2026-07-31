@@ -1,7 +1,6 @@
 {
   "accounts": "Konti",
   "empty": "Keine Konti gefunden.",
-
   "create": "Neues Konto eröffnen",
   "delete": "Konto löschen",
   "select": {
@@ -10,7 +9,6 @@
   },
   "update": "Konto editieren",
   "view": "Konto Details ansehen",
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -26,6 +24,43 @@
     "placeholder": "Name",
     "error": "Der Name ist obligatorisch und muss aus alphanumerischen Zeichen bestehen.",
     "helper": "Ein Name kann aus mehreren Wörtern bestehen. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
+  },
+  "account_type": {
+    "all": {
+      "label": "Alle Kontotypen"
+    },
+    "bank": {
+      "label": "Bankkonto",
+      "description": "Ein Konto bei einer Bank."
+    },
+    "user": {
+      "label": "Benutzerkonto",
+      "description": "Ein persönliches Konto einer Benutzerin oder eines Benutzers."
+    },
+    "twint": {
+      "label": "TWINT",
+      "description": "Ein TWINT-Konto."
+    },
+    "paypal": {
+      "label": "PayPal",
+      "description": "Ein PayPal-Konto."
+    },
+    "root": {
+      "label": "Kontenplan",
+      "description": "Die Wurzel eines Kontenplans."
+    },
+    "group": {
+      "label": "Kontogruppe",
+      "description": "Fasst weitere Gruppen oder Konten zusammen."
+    },
+    "leaf": {
+      "label": "Konto",
+      "description": "Ein Konto, auf das gebucht wird."
+    },
+    "other": {
+      "label": "Anderes Konto",
+      "description": "Ein Konto eines anderen Typs."
+    }
   },
   "label": {
     "label": "Bezeichnung",

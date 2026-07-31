@@ -145,6 +145,33 @@
     "helper": "Il tipo della risorsa.",
     "all": {
       "label": "Tutte le risorse"
+    },
+    "rboat": {
+      "label": "Barca a remi"
+    },
+    "boat": {
+      "label": "Barca"
+    },
+    "car": {
+      "label": "Veicolo"
+    },
+    "locker": {
+      "label": "Armadietto"
+    },
+    "key": {
+      "label": "Chiave"
+    },
+    "realestate": {
+      "label": "Immobile"
+    },
+    "pet": {
+      "label": "Animale domestico"
+    },
+    "other": {
+      "label": "Altra risorsa"
+    },
+    "legaldoc": {
+      "label": "Documento"
     }
   },
   "type": {

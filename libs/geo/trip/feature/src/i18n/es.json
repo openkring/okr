@@ -3,7 +3,6 @@
   "trips": "Salidas",
   "desc": "Antes de la salida, registre aquí en el cuaderno de bitácora su salida prevista. Con ello indica hacia dónde desea remar, con qué embarcación y con qué remeros. Por motivos de seguridad, esto es importante para que podamos encontrarle más rápido en caso de una posible emergencia. Además, otros miembros pueden ver qué embarcaciones ya están reservadas. Después de la salida, cierre su salida. Su salida se registra entonces automáticamente en las estadísticas de las embarcaciones.",
   "empty": "No se han encontrado salidas.",
-
   "create": {
     "label": "Registrar nueva salida",
     "conf": "La salida se ha guardado.",
@@ -75,11 +74,9 @@
     "conf": "La salida se ha guardado.",
     "error": "No se ha podido guardar la salida."
   },
-
   "list": {
     "title": "Cuaderno de bitácora"
   },
-
   "warning": {
     "suspicious": "Se ha detectado actividad sospechosa. Confirme por favor.",
     "distance_zero": "Introduzca una distancia razonable entre 1 y 50 km.",
@@ -87,7 +84,6 @@
     "seats_mismatch": "El número de participantes no coincide con la capacidad de la embarcación.",
     "note": "Para evitar abusos, se realizan varias comprobaciones en segundo plano. Si se detecta un abuso, se toma una imagen del usuario y se notifica al administrador."
   },
-
   "boat": "Embarcación",
   "distance": {
     "label": "Distancia (km)",
@@ -112,7 +108,6 @@
     "empty": "No se han encontrado lugares",
     "none_selected": "Ningún lugar seleccionado"
   },
-
   "trip_state": {
     "label": "Estado",
     "helper": "Estado de la salida",
@@ -135,7 +130,23 @@
       "label": "Revisada"
     }
   },
-
+  "trip_type": {
+    "all": {
+      "label": "Todos los tipos"
+    },
+    "logbuch": {
+      "label": "Cuaderno de bitácora",
+      "description": "Una salida registrada en el cuaderno de bitácora."
+    },
+    "private": {
+      "label": "Privada",
+      "description": "Una salida privada."
+    },
+    "tracker": {
+      "label": "Tracker",
+      "description": "Una salida registrada con el tracker."
+    }
+  },
   "aoc": {
     "title": "Administración de salidas",
     "trash": "Papelera",

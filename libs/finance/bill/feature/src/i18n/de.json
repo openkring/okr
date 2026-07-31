@@ -2,11 +2,9 @@
   "singular": "Lieferanten-Rechnung",
   "plural": "Lieferanten-Rechnungen",
   "empty": "Keine Rechnungen gefunden",
-
   "list": {
     "title": "Kreditoren-Rechnungen"
   },
-
   "id": {
     "label": "Rechnungs-Nr.",
     "placeholder": "nnnnn",
@@ -46,7 +44,6 @@
   "state": {
     "label": "Status"
   },
-
   "download": {
     "label": "Rechnung herunterladen"
   },
@@ -66,11 +63,9 @@
     "label": "Rechnung löschen",
     "confirm": "Soll die Rechnung wirklich gelöscht werden ?"
   },
-
   "readonly": {
     "banner": "Diese Liste ist readonly. Die Kreditoren werden in Bexio bewirtschaftet."
   },
-
   "bill_state": {
     "name": "Rechnungsstatus",
     "all": {
@@ -95,6 +90,10 @@
     "cancelled": {
       "label": "Storniert",
       "description": "Die Rechnung wurde storniert."
+    },
+    "todo": {
+      "label": "Zu bezahlen",
+      "description": "Die Rechnung ist erfasst und muss noch bezahlt werden."
     }
   }
 }

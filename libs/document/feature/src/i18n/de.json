@@ -10,7 +10,6 @@
       "title": "Versionsverlauf"
     }
   },
-
   "upload": {
     "new": "Neue Version hochladen",
     "single": {
@@ -62,7 +61,6 @@
       "helper": "Die Art des Bildes"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "ID",
@@ -162,7 +160,6 @@
     "marketing": "Marketing",
     "avatar": "Avatar"
   },
-
   "document_type": {
     "name": "Dokumentenart",
     "label": "Dokumentenart",
@@ -239,6 +236,14 @@
     "external": {
       "label": "Extern",
       "description": "Die Datei ist ausserhalb der Applikation gespeichert (Absolute URL auf einen File Share, z.B. Google Drive, Dropbox)."
+    },
+    "expense": {
+      "label": "Spesen",
+      "description": "Das Dokument ist der Beleg einer Spesenabrechnung."
+    },
+    "accounting": {
+      "label": "Buchhaltung",
+      "description": "Das Dokument ist ein Beleg aus der Buchhaltung."
     }
   }
 }

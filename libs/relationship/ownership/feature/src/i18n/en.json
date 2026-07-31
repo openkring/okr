@@ -38,8 +38,6 @@
   "relDesc1": "Usage of",
   "relDesc2": "by",
   "revreldesc": "is used by",
-
-
   "create": {
     "label": "Add usage",
     "conf": "Usage was created.",
@@ -80,7 +78,6 @@
     "edit": "Edit user",
     "view": "View user"
   },
-
   "list": {
     "empty": "No usages found.",
     "header": {
@@ -112,7 +109,6 @@
       "title": "Club boats"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -208,6 +204,48 @@
       "description": "The usage belongs to an organization."
     }
   },
+  "owner_type": {
+    "all": {
+      "label": "All"
+    },
+    "person": {
+      "label": "Persons",
+      "description": "The usage belongs to a person."
+    },
+    "men": {
+      "label": "Men",
+      "description": "The usage belongs to a man."
+    },
+    "women": {
+      "label": "Women",
+      "description": "The usage belongs to a woman."
+    },
+    "orgs": {
+      "label": "Organizations",
+      "description": "The usage belongs to an organization."
+    }
+  },
+  "ocat_default": {
+    "all": {
+      "label": "All categories"
+    },
+    "own": {
+      "label": "Ownership",
+      "description": "The resource belongs to the using person or organization."
+    },
+    "rent": {
+      "label": "Rental",
+      "description": "The resource is rented."
+    },
+    "lease": {
+      "label": "Lease",
+      "description": "The resource is leased."
+    },
+    "use": {
+      "label": "Usage",
+      "description": "The resource is used without ownership or a rental contract."
+    }
+  },
   "state": {
     "applied": {
       "label": "Applied",
@@ -217,6 +255,38 @@
       "label": "Active",
       "description": "Currently valid usage."
     }
+  },
+  "ostate_default": {
+    "all": {
+      "label": "All states"
+    },
+    "initial": {
+      "label": "Created",
+      "description": "The usage is recorded but not yet applied for."
+    },
+    "planned": {
+      "label": "Planned",
+      "description": "The usage is planned."
+    },
+    "applied": {
+      "label": "Applied",
+      "description": "The person has submitted a request."
+    },
+    "active": {
+      "label": "Active",
+      "description": "Currently valid usage."
+    },
+    "passive": {
+      "label": "Passive",
+      "description": "The usage is dormant."
+    },
+    "denied": {
+      "label": "Denied",
+      "description": "The request was denied."
+    },
+    "cancelled": {
+      "label": "Cancelled",
+      "description": "The usage was cancelled."
+    }
   }
-
 }

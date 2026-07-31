@@ -10,7 +10,6 @@
       "title": "Version history"
     }
   },
-
   "upload": {
     "new": "Upload new version",
     "single": {
@@ -42,6 +41,15 @@
   },
   "download": "Download document",
   "share": "Share document",
+  "folder": {
+    "open": "Open folder",
+    "edit": "Edit folder",
+    "delete": {
+      "label": "Delete folder",
+      "confirm": "Do you really want to delete this folder?"
+    },
+    "notEmpty": "The folder is not empty. Please remove all files and subfolders first."
+  },
   "image": {
     "add": "Add image",
     "select": "Select image",
@@ -53,7 +61,6 @@
       "helper": "The kind of image"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "ID",
@@ -153,7 +160,6 @@
     "marketing": "Marketing",
     "avatar": "Avatar"
   },
-
   "document_type": {
     "name": "Document type",
     "label": "Document type",
@@ -230,6 +236,14 @@
     "external": {
       "label": "External",
       "description": "The file is stored outside the application (absolute URL to a file share, e.g. Google Drive, Dropbox)."
+    },
+    "expense": {
+      "label": "Expense",
+      "description": "The document is the receipt of an expense report."
+    },
+    "accounting": {
+      "label": "Accounting",
+      "description": "The document is an accounting voucher."
     }
   }
 }

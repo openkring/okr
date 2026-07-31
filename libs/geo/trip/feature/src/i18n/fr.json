@@ -3,7 +3,6 @@
   "trips": "Sorties",
   "desc": "Avant de partir, enregistrez ici votre sortie prévue dans le carnet de bord. Vous indiquez ainsi où vous souhaitez ramer, avec quel bateau et avec quels rameurs. Pour des raisons de sécurité, cela est important afin que nous puissions vous retrouver plus rapidement en cas d'urgence. Les autres membres peuvent également voir quels bateaux sont déjà réservés. Après la sortie, vous clôturez votre sortie. Votre sortie est alors automatiquement reportée dans les statistiques des bateaux.",
   "empty": "Aucune sortie n'a été trouvée.",
-
   "create": {
     "label": "Enregistrer une nouvelle sortie",
     "conf": "La sortie a été enregistrée.",
@@ -75,11 +74,9 @@
     "conf": "La sortie a été enregistrée.",
     "error": "La sortie n'a pas pu être enregistrée."
   },
-
   "list": {
     "title": "Carnet de bord"
   },
-
   "warning": {
     "suspicious": "Activité suspecte détectée. Veuillez confirmer.",
     "distance_zero": "Veuillez saisir une distance raisonnable entre 1 et 50 km.",
@@ -87,7 +84,6 @@
     "seats_mismatch": "Le nombre de participants ne correspond pas à la capacité du bateau.",
     "note": "Afin d'éviter les abus, différents contrôles s'exécutent en arrière-plan. Si un abus est constaté, une photo de l'utilisateur est prise et l'administrateur en est notifié."
   },
-
   "boat": "Bateau",
   "distance": {
     "label": "Distance (km)",
@@ -112,7 +108,6 @@
     "empty": "Aucun lieu trouvé",
     "none_selected": "Aucun lieu sélectionné"
   },
-
   "trip_state": {
     "label": "Statut",
     "helper": "Statut de la sortie",
@@ -135,7 +130,23 @@
       "label": "Révisée"
     }
   },
-
+  "trip_type": {
+    "all": {
+      "label": "Tous les types"
+    },
+    "logbuch": {
+      "label": "Journal de bord",
+      "description": "Une sortie enregistrée dans le journal de bord."
+    },
+    "private": {
+      "label": "Privée",
+      "description": "Une sortie privée."
+    },
+    "tracker": {
+      "label": "Tracker",
+      "description": "Une sortie enregistrée avec le tracker."
+    }
+  },
   "aoc": {
     "title": "Administration des sorties",
     "trash": "Corbeille",

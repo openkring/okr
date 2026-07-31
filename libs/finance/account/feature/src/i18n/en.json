@@ -1,7 +1,6 @@
 {
   "accounts": "Accounts",
   "empty": "No accounts found.",
-
   "create": "Open a new account",
   "delete": "Delete account",
   "select": {
@@ -10,7 +9,6 @@
   },
   "update": "Edit account",
   "view": "View account details",
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -26,6 +24,43 @@
     "placeholder": "Name",
     "error": "The name is mandatory and must consist of alphanumeric characters.",
     "helper": "A name can consist of several words. Only letters (incl. -) and numbers are allowed, no special characters."
+  },
+  "account_type": {
+    "all": {
+      "label": "All account types"
+    },
+    "bank": {
+      "label": "Bank account",
+      "description": "An account held at a bank."
+    },
+    "user": {
+      "label": "User account",
+      "description": "A personal account of a user."
+    },
+    "twint": {
+      "label": "TWINT",
+      "description": "A TWINT account."
+    },
+    "paypal": {
+      "label": "PayPal",
+      "description": "A PayPal account."
+    },
+    "root": {
+      "label": "Chart of accounts",
+      "description": "The root of a chart of accounts."
+    },
+    "group": {
+      "label": "Account group",
+      "description": "Groups further groups or accounts together."
+    },
+    "leaf": {
+      "label": "Account",
+      "description": "An account that bookings are posted to."
+    },
+    "other": {
+      "label": "Other account",
+      "description": "An account of another type."
+    }
   },
   "label": {
     "label": "Label",

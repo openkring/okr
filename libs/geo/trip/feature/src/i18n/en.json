@@ -3,7 +3,6 @@
   "trips": "Trips",
   "desc": "Before heading out, record your planned trip here in the logbook. You state where you want to row, with which boat and with which rowers. For safety reasons this is important so that we can find you faster in case of an emergency. Other members can also see which boats are already reserved. After the trip, you complete your outing. Your outing is then automatically added to the boat statistics.",
   "empty": "No trips were found.",
-
   "create": {
     "label": "Record new trip",
     "conf": "The trip was saved.",
@@ -75,11 +74,9 @@
     "conf": "The trip was saved.",
     "error": "The trip could not be saved."
   },
-
   "list": {
     "title": "Logbook"
   },
-
   "warning": {
     "suspicious": "Suspicious activity detected. Please confirm.",
     "distance_zero": "Please enter a reasonable distance between 1 and 50 km.",
@@ -87,7 +84,6 @@
     "seats_mismatch": "The number of participants does not match the boat capacity.",
     "note": "To prevent misuse, various checks run in the background. Should misuse be detected, a picture of the user is taken and the admin is notified."
   },
-
   "boat": "Boat",
   "distance": {
     "label": "Distance (km)",
@@ -112,7 +108,6 @@
     "empty": "No locations found",
     "none_selected": "No location selected"
   },
-
   "trip_state": {
     "label": "Status",
     "helper": "Status of the outing",
@@ -135,7 +130,23 @@
       "label": "Revised"
     }
   },
-
+  "trip_type": {
+    "all": {
+      "label": "All types"
+    },
+    "logbuch": {
+      "label": "Logbook",
+      "description": "A trip recorded in the logbook."
+    },
+    "private": {
+      "label": "Private",
+      "description": "A private trip."
+    },
+    "tracker": {
+      "label": "Tracker",
+      "description": "A trip recorded with the tracker."
+    }
+  },
   "aoc": {
     "title": "Outings administration",
     "trash": "Trash",

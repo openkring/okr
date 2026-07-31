@@ -3,11 +3,9 @@
   "plural": "Facturas de deudores",
   "aging": "Antigüedad de deudores",
   "empty": "No se encontraron facturas",
-
   "list": {
     "title": "Resumen de facturas"
   },
-
   "id": {
     "label": "ID",
     "placeholder": "nnnnn",
@@ -69,26 +67,92 @@
       "helper": "Importe total de la factura de todas las posiciones."
     }
   },
+  "invoice_position_type": {
+    "all": {
+      "label": "Todos los tipos"
+    },
+    "fix": {
+      "label": "Importe fijo",
+      "description": "Un importe fijo, independiente de una cantidad."
+    },
+    "unit": {
+      "label": "Unidades",
+      "description": "Cantidad por precio unitario."
+    },
+    "hours": {
+      "label": "Horas",
+      "description": "Número de horas por tarifa horaria."
+    },
+    "days": {
+      "label": "Días",
+      "description": "Número de días por tarifa diaria."
+    },
+    "deduction": {
+      "label": "Deducción",
+      "description": "Una deducción del importe de la factura."
+    },
+    "rebate": {
+      "label": "Descuento",
+      "description": "Un descuento sobre el importe de la factura."
+    }
+  },
+  "invoice_position_usage": {
+    "all": {
+      "label": "Todos los usos"
+    },
+    "membershipFee": {
+      "label": "Cuota de socio",
+      "description": "Cuota anual de socio."
+    },
+    "beverages": {
+      "label": "Bebidas",
+      "description": "Consumo de bebidas."
+    },
+    "insurance": {
+      "label": "Seguro",
+      "description": "Parte del seguro."
+    },
+    "lockerRental": {
+      "label": "Alquiler de taquilla",
+      "description": "Alquiler de una taquilla."
+    },
+    "boatPlaceRental": {
+      "label": "Alquiler de plaza de barco",
+      "description": "Alquiler de una plaza de barco."
+    },
+    "license": {
+      "label": "Licencia",
+      "description": "Tasa por una licencia."
+    },
+    "srvFee": {
+      "label": "Cuota SRV",
+      "description": "Cuota a la Federación Suiza de Remo."
+    },
+    "other": {
+      "label": "Otro",
+      "description": "Otro uso."
+    }
+  },
   "unitPrice": {
-      "label": "Precio unitario",
-      "placeholder": "nn.nn",
-      "helper": "El precio de una sola posición."
-    },
+    "label": "Precio unitario",
+    "placeholder": "nn.nn",
+    "helper": "El precio de una sola posición."
+  },
   "accountId": {
-      "label": "Número de cuenta",
-      "placeholder": "nnnn",
-      "helper": "El número único de una cuenta."
-    },
+    "label": "Número de cuenta",
+    "placeholder": "nnnn",
+    "helper": "El número único de una cuenta."
+  },
   "header": {
-      "label": "Encabezado",
-      "placeholder": "Texto",
-      "helper": "Texto que se muestra encima de las posiciones de la factura en la factura."
-    },
+    "label": "Encabezado",
+    "placeholder": "Texto",
+    "helper": "Texto que se muestra encima de las posiciones de la factura en la factura."
+  },
   "footer": {
-      "label": "Pie de página",
-      "placeholder": "Texto",
-      "helper": "Texto que se muestra debajo de las posiciones de la factura en la factura."
-    },
+    "label": "Pie de página",
+    "placeholder": "Texto",
+    "helper": "Texto que se muestra debajo de las posiciones de la factura en la factura."
+  },
   "valid": {
     "from": {
       "label": "Válido desde",
@@ -111,7 +175,6 @@
     "label": "IVA",
     "type": "Tipo de IVA"
   },
-
   "add": {
     "position": "Añadir posición de factura"
   },
@@ -132,14 +195,12 @@
     "error": "No se pudo modificar la factura."
   },
   "view": {
-    "label":  "Mostrar detalles de la factura",
+    "label": "Mostrar detalles de la factura",
     "pdf": "Descargar factura como PDF"
   },
-
   "readonly": {
     "banner": "Esta lista es de solo lectura. Los deudores se gestionan en Bexio."
   },
-
   "invoice_state": {
     "name": "Estado de la factura",
     "all": {

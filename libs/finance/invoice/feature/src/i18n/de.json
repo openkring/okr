@@ -3,11 +3,9 @@
   "plural": "Debitoren Rechnungen",
   "aging": "Debitorenalterung",
   "empty": "Keine Rechnungen gefunden",
-
   "list": {
     "title": "Rechnungsübersicht"
   },
-
   "id": {
     "label": "ID",
     "placeholder": "nnnnn",
@@ -69,26 +67,92 @@
       "helper": "Totalbetrag auf der Rechnung über alle Positionen."
     }
   },
+  "invoice_position_type": {
+    "all": {
+      "label": "Alle Typen"
+    },
+    "fix": {
+      "label": "Pauschale",
+      "description": "Ein fixer Betrag, unabhängig von einer Menge."
+    },
+    "unit": {
+      "label": "Stückzahl",
+      "description": "Menge mal Einzelpreis."
+    },
+    "hours": {
+      "label": "Stunden",
+      "description": "Anzahl Stunden mal Stundenansatz."
+    },
+    "days": {
+      "label": "Tage",
+      "description": "Anzahl Tage mal Tagesansatz."
+    },
+    "deduction": {
+      "label": "Abzug",
+      "description": "Ein Abzug vom Rechnungsbetrag."
+    },
+    "rebate": {
+      "label": "Rabatt",
+      "description": "Ein Rabatt auf den Rechnungsbetrag."
+    }
+  },
+  "invoice_position_usage": {
+    "all": {
+      "label": "Alle Verwendungen"
+    },
+    "membershipFee": {
+      "label": "Mitgliederbeitrag",
+      "description": "Jahresbeitrag der Mitgliedschaft."
+    },
+    "beverages": {
+      "label": "Getränke",
+      "description": "Konsumation von Getränken."
+    },
+    "insurance": {
+      "label": "Versicherung",
+      "description": "Anteil an der Versicherung."
+    },
+    "lockerRental": {
+      "label": "Garderobenmiete",
+      "description": "Miete für eine Garderobe."
+    },
+    "boatPlaceRental": {
+      "label": "Bootsplatzmiete",
+      "description": "Miete für einen Bootsplatz."
+    },
+    "license": {
+      "label": "Lizenz",
+      "description": "Gebühr für eine Lizenz."
+    },
+    "srvFee": {
+      "label": "SRV-Beitrag",
+      "description": "Beitrag an den Schweizerischen Ruderverband."
+    },
+    "other": {
+      "label": "Anderes",
+      "description": "Eine andere Verwendung."
+    }
+  },
   "unitPrice": {
-      "label": "Einzelpreis",
-      "placeholder": "nn.nn",
-      "helper": "Der Preis einer einzelnen Position."
-    },
+    "label": "Einzelpreis",
+    "placeholder": "nn.nn",
+    "helper": "Der Preis einer einzelnen Position."
+  },
   "accountId": {
-      "label": "Kontonummer",
-      "placeholder": "nnnn",
-      "helper": "Die eindeutige Nummer eines Kontos."
-    },
+    "label": "Kontonummer",
+    "placeholder": "nnnn",
+    "helper": "Die eindeutige Nummer eines Kontos."
+  },
   "header": {
-      "label": "Kopfzeile",
-      "placeholder": "Text",
-      "helper": "Text, der über den Rechnungspositionen auf der Rechnung dargestellt wird."
-    },
+    "label": "Kopfzeile",
+    "placeholder": "Text",
+    "helper": "Text, der über den Rechnungspositionen auf der Rechnung dargestellt wird."
+  },
   "footer": {
-      "label": "Fusszeile",
-      "placeholder": "Text",
-      "helper": "Text, der unter den Rechnungspositionen auf der Rechnung dargestellt wird."
-    },
+    "label": "Fusszeile",
+    "placeholder": "Text",
+    "helper": "Text, der unter den Rechnungspositionen auf der Rechnung dargestellt wird."
+  },
   "valid": {
     "from": {
       "label": "Gültig ab",
@@ -111,7 +175,6 @@
     "label": "MwSt",
     "type": "MwSt Stz"
   },
-
   "add": {
     "position": "Rechnungsposition hinzufügen"
   },
@@ -132,14 +195,12 @@
     "error": "Die Rechnung konnte nicht geändert werden."
   },
   "view": {
-    "label":  "Rechnungsdetails anzeigen",
+    "label": "Rechnungsdetails anzeigen",
     "pdf": "Rechnung als PDF herunterladen"
   },
-
   "readonly": {
     "banner": "Diese Liste ist readonly. Die Debitoren werden in Bexio bewirtschaftet."
   },
-
   "invoice_state": {
     "name": "Rechnungsstatus",
     "all": {

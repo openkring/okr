@@ -1,10 +1,10 @@
 {
   "addresses": "Direcciones",
   "empty": "No se encontraron direcciones",
+  "show_archived": "Mostrar/ocultar direcciones eliminadas (archivadas)",
   "currency": "CHF",
   "qrinvoice": "Factura QR",
   "description": "Información de contacto de una persona u organización",
-
   "browse": {
     "label": "Ver",
     "description": "Abrir la dirección como página web en el navegador en una pestaña externa."
@@ -106,8 +106,6 @@
     "iban": "Mostrar boletín de pago QR",
     "postal": "Mostrar en el mapa"
   },
-
-
   "address_usage": {
     "name": "Uso",
     "helper": "Una denominación de cómo se utiliza la dirección, p. ej. privado, trabajo.",
@@ -262,7 +260,6 @@
       "description": "Código QR Twint"
     }
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssssss",

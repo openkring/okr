@@ -1,10 +1,10 @@
 {
   "addresses": "Addresses",
   "empty": "No addresses found",
+  "show_archived": "Show/hide deleted (archived) addresses",
   "currency": "CHF",
   "qrinvoice": "QR invoice",
   "description": "Contact information for a person or organization",
-
   "browse": {
     "label": "View",
     "description": "Open the address as a web page in the browser in an external tab."
@@ -106,8 +106,6 @@
     "iban": "Show QR payment slip",
     "postal": "Show on map"
   },
-
-
   "address_usage": {
     "name": "Usage",
     "helper": "A label for how the address is used, e.g. private, business.",
@@ -262,7 +260,6 @@
       "description": "Twint QR code"
     }
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssssss",

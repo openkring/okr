@@ -2,11 +2,9 @@
   "singular": "Facture fournisseur",
   "plural": "Factures fournisseurs",
   "empty": "Aucune facture trouvée",
-
   "list": {
     "title": "Factures créanciers"
   },
-
   "id": {
     "label": "N° de facture",
     "placeholder": "nnnnn",
@@ -46,7 +44,6 @@
   "state": {
     "label": "Statut"
   },
-
   "download": {
     "label": "Télécharger la facture"
   },
@@ -66,11 +63,9 @@
     "label": "Supprimer la facture",
     "confirm": "Voulez-vous vraiment supprimer la facture ?"
   },
-
   "readonly": {
     "banner": "Cette liste est en lecture seule. Les créanciers sont gérés dans Bexio."
   },
-
   "bill_state": {
     "name": "Statut de la facture",
     "all": {
@@ -95,6 +90,10 @@
     "cancelled": {
       "label": "Annulée",
       "description": "La facture a été annulée."
+    },
+    "todo": {
+      "label": "À payer",
+      "description": "La facture est saisie et doit encore être payée."
     }
   }
 }

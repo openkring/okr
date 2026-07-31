@@ -2,11 +2,9 @@
   "singular": "Factura de proveedor",
   "plural": "Facturas de proveedor",
   "empty": "No se han encontrado facturas",
-
   "list": {
     "title": "Facturas de acreedores"
   },
-
   "id": {
     "label": "N.º de factura",
     "placeholder": "nnnnn",
@@ -46,7 +44,6 @@
   "state": {
     "label": "Estado"
   },
-
   "download": {
     "label": "Descargar factura"
   },
@@ -66,11 +63,9 @@
     "label": "Eliminar factura",
     "confirm": "¿Desea realmente eliminar la factura ?"
   },
-
   "readonly": {
     "banner": "Esta lista es de solo lectura. Los acreedores se gestionan en Bexio."
   },
-
   "bill_state": {
     "name": "Estado de la factura",
     "all": {
@@ -95,6 +90,10 @@
     "cancelled": {
       "label": "Anulada",
       "description": "La factura se ha anulado."
+    },
+    "todo": {
+      "label": "Por pagar",
+      "description": "La factura está registrada y aún debe pagarse."
     }
   }
 }

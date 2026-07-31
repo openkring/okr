@@ -38,8 +38,6 @@
   "relDesc1": "Nutzung von",
   "relDesc2": "durch",
   "revreldesc": "wird benutzt von",
-
-
   "create": {
     "label": "Nutzung hinzufügen",
     "conf": "Nutzung wurde erstellt.",
@@ -80,7 +78,6 @@
     "edit": "Benutzer/in bearbeiten",
     "view": "Benutzer/in ansehen"
   },
-
   "list": {
     "empty": "Keine Nutzungen gefunden.",
     "header": {
@@ -112,7 +109,6 @@
       "title": "Club-Boote"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -208,6 +204,48 @@
       "description": "Die Nutzung gehört einer Organisation."
     }
   },
+  "owner_type": {
+    "all": {
+      "label": "Alle"
+    },
+    "person": {
+      "label": "Personen",
+      "description": "Die Nutzung gehört einer Person."
+    },
+    "men": {
+      "label": "Männer",
+      "description": "Die Nutzung gehört einem Mann."
+    },
+    "women": {
+      "label": "Frauen",
+      "description": "Die Nutzung gehört einer Frau."
+    },
+    "orgs": {
+      "label": "Organisationen",
+      "description": "Die Nutzung gehört einer Organisation."
+    }
+  },
+  "ocat_default": {
+    "all": {
+      "label": "Alle Kategorien"
+    },
+    "own": {
+      "label": "Eigentum",
+      "description": "Die Resource gehört der nutzenden Person oder Organisation."
+    },
+    "rent": {
+      "label": "Miete",
+      "description": "Die Resource ist gemietet."
+    },
+    "lease": {
+      "label": "Leasing",
+      "description": "Die Resource ist geleast."
+    },
+    "use": {
+      "label": "Nutzung",
+      "description": "Die Resource wird genutzt, ohne Eigentum oder Mietvertrag."
+    }
+  },
   "state": {
     "applied": {
       "label": "Beantragt",
@@ -217,6 +255,38 @@
       "label": "Aktiv",
       "description": "Aktuell gültige Nutzung."
     }
+  },
+  "ostate_default": {
+    "all": {
+      "label": "Alle Stati"
+    },
+    "initial": {
+      "label": "Erfasst",
+      "description": "Die Nutzung ist erfasst, aber noch nicht beantragt."
+    },
+    "planned": {
+      "label": "Geplant",
+      "description": "Die Nutzung ist geplant."
+    },
+    "applied": {
+      "label": "Beantragt",
+      "description": "Die Person hat einen Antrag gestellt."
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Aktuell gültige Nutzung."
+    },
+    "passive": {
+      "label": "Passiv",
+      "description": "Die Nutzung ruht."
+    },
+    "denied": {
+      "label": "Abgelehnt",
+      "description": "Der Antrag wurde abgelehnt."
+    },
+    "cancelled": {
+      "label": "Storniert",
+      "description": "Die Nutzung wurde storniert."
+    }
   }
-
 }

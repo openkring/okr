@@ -3,7 +3,6 @@
   "invitations": "Invitations",
   "description": "An invitation to an event or occasion.",
   "empty": "No invitations have been created yet. Create one by clicking the + button.",
-
   "delete": {
     "label": "Delete invitation",
     "confirm": "Do you really want to delete the invitation ?",
@@ -30,7 +29,6 @@
   "resend": "Resend invitation",
   "subscribe": "I'll attend",
   "unsubscribe": "I can't attend",
-
   "list": {
     "header": {
       "date": "Date",
@@ -40,7 +38,6 @@
       "state": "Status"
     }
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "sssssss",
@@ -65,7 +62,6 @@
   "role": {
     "label": "Role"
   },
-
   "invitation_state": {
     "label": "Status",
     "helper": "Status of the invitation",
@@ -87,6 +83,23 @@
     "maybe": {
       "label": "Maybe",
       "description": "The invitation was answered with 'Maybe'."
+    }
+  },
+  "invitation_role": {
+    "all": {
+      "label": "All roles"
+    },
+    "required": {
+      "label": "Required",
+      "description": "Attendance is expected."
+    },
+    "optional": {
+      "label": "Optional",
+      "description": "Attendance is voluntary."
+    },
+    "info": {
+      "label": "For information",
+      "description": "The person is only informed and does not attend."
     }
   }
 }

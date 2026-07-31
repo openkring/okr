@@ -435,6 +435,35 @@
       "description": "Passive member"
     }
   },
+  "mstate_default": {
+    "all": {
+      "label": "All states"
+    },
+    "initial": {
+      "label": "Created",
+      "description": "The membership is recorded but not yet applied for."
+    },
+    "applied": {
+      "label": "Applied",
+      "description": "The membership has been applied for."
+    },
+    "active": {
+      "label": "Active",
+      "description": "The membership is currently valid."
+    },
+    "passive": {
+      "label": "Passive",
+      "description": "The membership is dormant."
+    },
+    "terminated": {
+      "label": "Terminated",
+      "description": "The membership has ended."
+    },
+    "cancelled": {
+      "label": "Cancelled",
+      "description": "The membership was cancelled."
+    }
+  },
   "mcat_default": {
     "label": "Member category",
     "helper": "Member category",
@@ -452,37 +481,6 @@
     "junior": {
       "label": "Youth",
       "description": "Junior up to max 18 years."
-    },
-    "mcat_p13": {
-      "all": {
-        "label": "All",
-        "description": "All P13 members"
-      },
-      "active": {
-        "label": "Active",
-        "description": "The person wants to attend the events."
-      },
-      "passive": {
-        "label": "Passive",
-        "description": "The person no longer wants to attend the events."
-      }
-    },
-    "mcat_test": {
-      "all": {
-        "label": "All categories"
-      },
-      "active": {
-        "label": "Active",
-        "description": "The person is an active member."
-      },
-      "junior": {
-        "label": "Junior",
-        "description": "Junior up to max 18 years."
-      },
-      "passive": {
-        "label": "Passive",
-        "description": "Passive member"
-      }
     },
     "state": {
       "helper": "The member status cannot be edited. It is automatically derived from the member category. The status can be set per category in the category definition.",
@@ -502,6 +500,37 @@
         "label": "Ended",
         "description": "The membership is ended, no longer valid."
       }
+    }
+  },
+  "mcat_test": {
+    "all": {
+      "label": "All categories"
+    },
+    "active": {
+      "label": "Active",
+      "description": "The person is an active member."
+    },
+    "junior": {
+      "label": "Junior",
+      "description": "Junior up to max 18 years."
+    },
+    "passive": {
+      "label": "Passive",
+      "description": "Passive member"
+    }
+  },
+  "mcat_p13": {
+    "all": {
+      "label": "All",
+      "description": "All P13 members"
+    },
+    "active": {
+      "label": "Active",
+      "description": "The person wants to attend the events."
+    },
+    "passive": {
+      "label": "Passive",
+      "description": "The person no longer wants to attend the events."
     }
   }
 }

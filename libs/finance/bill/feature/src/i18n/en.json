@@ -2,11 +2,9 @@
   "singular": "Supplier invoice",
   "plural": "Supplier invoices",
   "empty": "No invoices found",
-
   "list": {
     "title": "Accounts payable invoices"
   },
-
   "id": {
     "label": "Invoice no.",
     "placeholder": "nnnnn",
@@ -46,7 +44,6 @@
   "state": {
     "label": "Status"
   },
-
   "download": {
     "label": "Download invoice"
   },
@@ -66,11 +63,9 @@
     "label": "Delete invoice",
     "confirm": "Do you really want to delete the invoice ?"
   },
-
   "readonly": {
     "banner": "This list is read-only. The accounts payable are managed in Bexio."
   },
-
   "bill_state": {
     "name": "Invoice status",
     "all": {
@@ -95,6 +90,10 @@
     "cancelled": {
       "label": "Cancelled",
       "description": "The invoice has been cancelled."
+    },
+    "todo": {
+      "label": "To pay",
+      "description": "The bill is recorded and still has to be paid."
     }
   }
 }

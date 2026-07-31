@@ -435,6 +435,35 @@
       "description": "Miembro pasivo"
     }
   },
+  "mstate_default": {
+    "all": {
+      "label": "Todos los estados"
+    },
+    "initial": {
+      "label": "Registrada",
+      "description": "La afiliación está registrada pero aún no solicitada."
+    },
+    "applied": {
+      "label": "Solicitada",
+      "description": "La afiliación ha sido solicitada."
+    },
+    "active": {
+      "label": "Activa",
+      "description": "La afiliación está vigente."
+    },
+    "passive": {
+      "label": "Pasiva",
+      "description": "La afiliación está inactiva."
+    },
+    "terminated": {
+      "label": "Finalizada",
+      "description": "La afiliación ha terminado."
+    },
+    "cancelled": {
+      "label": "Anulada",
+      "description": "La afiliación fue anulada."
+    }
+  },
   "mcat_default": {
     "label": "Categoría de miembro",
     "helper": "Categoría de miembro",
@@ -452,37 +481,6 @@
     "junior": {
       "label": "Jóvenes",
       "description": "Junior hasta máx. 18 años."
-    },
-    "mcat_p13": {
-      "all": {
-        "label": "Todos",
-        "description": "Todos los miembros P13"
-      },
-      "active": {
-        "label": "Activo",
-        "description": "La persona quiere participar en los eventos."
-      },
-      "passive": {
-        "label": "Pasivo",
-        "description": "La persona ya no quiere participar en los eventos."
-      }
-    },
-    "mcat_test": {
-      "all": {
-        "label": "Todas las categorías"
-      },
-      "active": {
-        "label": "Activo",
-        "description": "La persona es un miembro activo."
-      },
-      "junior": {
-        "label": "Junior",
-        "description": "Junior hasta máx. 18 años."
-      },
-      "passive": {
-        "label": "Pasivo",
-        "description": "Miembro pasivo"
-      }
     },
     "state": {
       "helper": "El estado del miembro no se puede editar. Se deriva automáticamente de la categoría de miembro. El estado se puede establecer por categoría en la definición de categorías.",
@@ -502,6 +500,37 @@
         "label": "Finalizada",
         "description": "La afiliación ha finalizado, ya no es válida."
       }
+    }
+  },
+  "mcat_test": {
+    "all": {
+      "label": "Todas las categorías"
+    },
+    "active": {
+      "label": "Activo",
+      "description": "La persona es un miembro activo."
+    },
+    "junior": {
+      "label": "Junior",
+      "description": "Junior hasta máx. 18 años."
+    },
+    "passive": {
+      "label": "Pasivo",
+      "description": "Miembro pasivo"
+    }
+  },
+  "mcat_p13": {
+    "all": {
+      "label": "Todos",
+      "description": "Todos los miembros P13"
+    },
+    "active": {
+      "label": "Activo",
+      "description": "La persona quiere participar en los eventos."
+    },
+    "passive": {
+      "label": "Pasivo",
+      "description": "La persona ya no quiere participar en los eventos."
     }
   }
 }

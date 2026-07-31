@@ -3,11 +3,9 @@
   "plural": "Accounts receivable invoices",
   "aging": "Accounts receivable aging",
   "empty": "No invoices found",
-
   "list": {
     "title": "Invoice overview"
   },
-
   "id": {
     "label": "ID",
     "placeholder": "nnnnn",
@@ -69,26 +67,92 @@
       "helper": "Total amount on the invoice across all items."
     }
   },
+  "invoice_position_type": {
+    "all": {
+      "label": "All types"
+    },
+    "fix": {
+      "label": "Fixed amount",
+      "description": "A fixed amount, independent of a quantity."
+    },
+    "unit": {
+      "label": "Units",
+      "description": "Quantity times unit price."
+    },
+    "hours": {
+      "label": "Hours",
+      "description": "Number of hours times hourly rate."
+    },
+    "days": {
+      "label": "Days",
+      "description": "Number of days times daily rate."
+    },
+    "deduction": {
+      "label": "Deduction",
+      "description": "A deduction from the invoice amount."
+    },
+    "rebate": {
+      "label": "Discount",
+      "description": "A discount on the invoice amount."
+    }
+  },
+  "invoice_position_usage": {
+    "all": {
+      "label": "All usages"
+    },
+    "membershipFee": {
+      "label": "Membership fee",
+      "description": "Annual membership fee."
+    },
+    "beverages": {
+      "label": "Beverages",
+      "description": "Consumption of beverages."
+    },
+    "insurance": {
+      "label": "Insurance",
+      "description": "Share of the insurance."
+    },
+    "lockerRental": {
+      "label": "Locker rental",
+      "description": "Rent for a locker."
+    },
+    "boatPlaceRental": {
+      "label": "Boat place rental",
+      "description": "Rent for a boat place."
+    },
+    "license": {
+      "label": "Licence",
+      "description": "Fee for a licence."
+    },
+    "srvFee": {
+      "label": "SRV fee",
+      "description": "Fee for the Swiss Rowing Association."
+    },
+    "other": {
+      "label": "Other",
+      "description": "Another usage."
+    }
+  },
   "unitPrice": {
-      "label": "Unit price",
-      "placeholder": "nn.nn",
-      "helper": "The price of a single item."
-    },
+    "label": "Unit price",
+    "placeholder": "nn.nn",
+    "helper": "The price of a single item."
+  },
   "accountId": {
-      "label": "Account number",
-      "placeholder": "nnnn",
-      "helper": "The unique number of an account."
-    },
+    "label": "Account number",
+    "placeholder": "nnnn",
+    "helper": "The unique number of an account."
+  },
   "header": {
-      "label": "Header",
-      "placeholder": "Text",
-      "helper": "Text displayed above the invoice items on the invoice."
-    },
+    "label": "Header",
+    "placeholder": "Text",
+    "helper": "Text displayed above the invoice items on the invoice."
+  },
   "footer": {
-      "label": "Footer",
-      "placeholder": "Text",
-      "helper": "Text displayed below the invoice items on the invoice."
-    },
+    "label": "Footer",
+    "placeholder": "Text",
+    "helper": "Text displayed below the invoice items on the invoice."
+  },
   "valid": {
     "from": {
       "label": "Valid from",
@@ -111,7 +175,6 @@
     "label": "VAT",
     "type": "VAT rate"
   },
-
   "add": {
     "position": "Add invoice item"
   },
@@ -132,14 +195,12 @@
     "error": "The invoice could not be changed."
   },
   "view": {
-    "label":  "Show invoice details",
+    "label": "Show invoice details",
     "pdf": "Download invoice as PDF"
   },
-
   "readonly": {
     "banner": "This list is read-only. The accounts receivable are managed in Bexio."
   },
-
   "invoice_state": {
     "name": "Invoice status",
     "all": {

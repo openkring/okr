@@ -3,11 +3,9 @@
   "plural": "Factures débiteurs",
   "aging": "Balance âgée des débiteurs",
   "empty": "Aucune facture trouvée",
-
   "list": {
     "title": "Aperçu des factures"
   },
-
   "id": {
     "label": "ID",
     "placeholder": "nnnnn",
@@ -69,26 +67,92 @@
       "helper": "Montant total de la facture sur toutes les positions."
     }
   },
+  "invoice_position_type": {
+    "all": {
+      "label": "Tous les types"
+    },
+    "fix": {
+      "label": "Forfait",
+      "description": "Un montant fixe, indépendant d'une quantité."
+    },
+    "unit": {
+      "label": "Unités",
+      "description": "Quantité multipliée par le prix unitaire."
+    },
+    "hours": {
+      "label": "Heures",
+      "description": "Nombre d'heures multiplié par le tarif horaire."
+    },
+    "days": {
+      "label": "Jours",
+      "description": "Nombre de jours multiplié par le tarif journalier."
+    },
+    "deduction": {
+      "label": "Déduction",
+      "description": "Une déduction du montant de la facture."
+    },
+    "rebate": {
+      "label": "Remise",
+      "description": "Une remise sur le montant de la facture."
+    }
+  },
+  "invoice_position_usage": {
+    "all": {
+      "label": "Toutes les utilisations"
+    },
+    "membershipFee": {
+      "label": "Cotisation de membre",
+      "description": "Cotisation annuelle de membre."
+    },
+    "beverages": {
+      "label": "Boissons",
+      "description": "Consommation de boissons."
+    },
+    "insurance": {
+      "label": "Assurance",
+      "description": "Part de l'assurance."
+    },
+    "lockerRental": {
+      "label": "Location de casier",
+      "description": "Loyer pour un casier."
+    },
+    "boatPlaceRental": {
+      "label": "Location de place de bateau",
+      "description": "Loyer pour une place de bateau."
+    },
+    "license": {
+      "label": "Licence",
+      "description": "Taxe pour une licence."
+    },
+    "srvFee": {
+      "label": "Cotisation SRV",
+      "description": "Cotisation à la Fédération Suisse d'Aviron."
+    },
+    "other": {
+      "label": "Autre",
+      "description": "Une autre utilisation."
+    }
+  },
   "unitPrice": {
-      "label": "Prix unitaire",
-      "placeholder": "nn.nn",
-      "helper": "Le prix d'une seule position."
-    },
+    "label": "Prix unitaire",
+    "placeholder": "nn.nn",
+    "helper": "Le prix d'une seule position."
+  },
   "accountId": {
-      "label": "Numéro de compte",
-      "placeholder": "nnnn",
-      "helper": "Le numéro unique d'un compte."
-    },
+    "label": "Numéro de compte",
+    "placeholder": "nnnn",
+    "helper": "Le numéro unique d'un compte."
+  },
   "header": {
-      "label": "En-tête",
-      "placeholder": "Texte",
-      "helper": "Texte affiché au-dessus des positions de facture sur la facture."
-    },
+    "label": "En-tête",
+    "placeholder": "Texte",
+    "helper": "Texte affiché au-dessus des positions de facture sur la facture."
+  },
   "footer": {
-      "label": "Pied de page",
-      "placeholder": "Texte",
-      "helper": "Texte affiché sous les positions de facture sur la facture."
-    },
+    "label": "Pied de page",
+    "placeholder": "Texte",
+    "helper": "Texte affiché sous les positions de facture sur la facture."
+  },
   "valid": {
     "from": {
       "label": "Valable à partir du",
@@ -111,7 +175,6 @@
     "label": "TVA",
     "type": "Taux TVA"
   },
-
   "add": {
     "position": "Ajouter une position de facture"
   },
@@ -132,14 +195,12 @@
     "error": "La facture n'a pas pu être modifiée."
   },
   "view": {
-    "label":  "Afficher les détails de la facture",
+    "label": "Afficher les détails de la facture",
     "pdf": "Télécharger la facture au format PDF"
   },
-
   "readonly": {
     "banner": "Cette liste est en lecture seule. Les débiteurs sont gérés dans Bexio."
   },
-
   "invoice_state": {
     "name": "Statut de la facture",
     "all": {

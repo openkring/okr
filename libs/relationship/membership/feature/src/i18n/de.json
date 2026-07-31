@@ -84,6 +84,7 @@
     },
     "abbreviation": "Kat.",
     "helper": "Die Mitgliederkategorie ist hier fix. Wenn du sie ändern willst, wähle die Aktion Kategorien-Wechsel in der Listen-Darstellung.",
+    "name": "Name der Kategorie",
     "change": {
       "label": "Mitglieder-Kategorie ändern",
       "helper": "Auf der linken Seite siehst du die aktuelle Mitgliederkategorie. Wähle auf der rechten Seite die neue Kategorie aus, in die das Mitglied wechseln soll.",
@@ -434,6 +435,35 @@
       "description": "Passiv Mitglied"
     }
   },
+  "mstate_default": {
+    "all": {
+      "label": "Alle Stati"
+    },
+    "initial": {
+      "label": "Erfasst",
+      "description": "Die Mitgliedschaft ist erfasst, aber noch nicht beantragt."
+    },
+    "applied": {
+      "label": "Beantragt",
+      "description": "Die Mitgliedschaft wurde beantragt."
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Die Mitgliedschaft ist aktuell gültig."
+    },
+    "passive": {
+      "label": "Passiv",
+      "description": "Die Mitgliedschaft ruht."
+    },
+    "terminated": {
+      "label": "Beendet",
+      "description": "Die Mitgliedschaft wurde beendet."
+    },
+    "cancelled": {
+      "label": "Storniert",
+      "description": "Die Mitgliedschaft wurde storniert."
+    }
+  },
   "mcat_default": {
     "label": "Mitglieder Kategorie",
     "helper": "Mitglieder Kategorie",
@@ -451,37 +481,6 @@
     "junior": {
       "label": "Jugendliche",
       "description": "Junior oder Juniorin bis max 18 Jahre."
-    },
-    "mcat_p13": {
-      "all": {
-        "label": "Alle",
-        "description": "Alle P13 Mitglieder"
-      },
-      "active": {
-        "label": "Aktiv",
-        "description": "Die Person will an den Anlässen dabei sein."
-      },
-      "passive": {
-        "label": "Passiv",
-        "description": "Die Person möchte nicht mehr an den Anlässen dabei sein."
-      }
-    },
-    "mcat_test": {
-      "all": {
-        "label": "Alle Kategorien"
-      },
-      "active": {
-        "label": "Aktiv",
-        "description": "Die Person ist ein Aktiv-Mitglied."
-      },
-      "junior": {
-        "label": "Junior/in",
-        "description": "Junior oder Juniorin bis max 18 Jahre."
-      },
-      "passive": {
-        "label": "Passiv",
-        "description": "Passiv Mitglied"
-      }
     },
     "state": {
       "helper": "Der Mitgliederstatus kann nicht editiert werden. Er wird automatisch von der Mitgliederkategorie abgeleitet. Der Status kann in der Kategorien-Definition pro Kategorie gesetzt werden.",
@@ -501,6 +500,37 @@
         "label": "Beendet",
         "description": "Die Mitgliedschaft ist beendet, nicht mehr gültig."
       }
+    }
+  },
+  "mcat_test": {
+    "all": {
+      "label": "Alle Kategorien"
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Die Person ist ein Aktiv-Mitglied."
+    },
+    "junior": {
+      "label": "Junior/in",
+      "description": "Junior oder Juniorin bis max 18 Jahre."
+    },
+    "passive": {
+      "label": "Passiv",
+      "description": "Passiv Mitglied"
+    }
+  },
+  "mcat_p13": {
+    "all": {
+      "label": "Alle",
+      "description": "Alle P13 Mitglieder"
+    },
+    "active": {
+      "label": "Aktiv",
+      "description": "Die Person will an den Anlässen dabei sein."
+    },
+    "passive": {
+      "label": "Passiv",
+      "description": "Die Person möchte nicht mehr an den Anlässen dabei sein."
     }
   }
 }
