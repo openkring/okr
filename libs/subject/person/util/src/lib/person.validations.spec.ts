@@ -84,3 +84,57 @@ describe('personValidations: ssnId', () => {
     }
   });
 });
+
+function makePerson(overrides: Partial<PersonFormModel> = {}): PersonFormModel {
+  return {
+    ...new PersonModel(tenantId),
+    firstName: 'Anna',
+    lastName: 'Muster',
+    dateOfBirth: '',
+    dateOfDeath: '',
+    ...overrides,
+  };
+}
+
+function errorsFor(model: PersonFormModel, field: string): string[] {
+  return personValidations(model, 't1', '').getErrors(field);
+}
+
+describe('personValidations date fields', () => {
+  it('accepts a full date of birth', () => {
+    expect(errorsFor(makePerson({ dateOfBirth: '19850415' }), 'dateOfBirth')).toHaveLength(0);
+  });
+
+  it('accepts a year-only date of birth', () => {
+    expect(errorsFor(makePerson({ dateOfBirth: '19850000' }), 'dateOfBirth')).toHaveLength(0);
+  });
+
+  it('accepts a birthday without a year', () => {
+    expect(errorsFor(makePerson({ dateOfBirth: '00000415' }), 'dateOfBirth')).toHaveLength(0);
+  });
+
+  it('still rejects a malformed date of birth', () => {
+    expect(errorsFor(makePerson({ dateOfBirth: '00000000' }), 'dateOfBirth').length).toBeGreaterThan(0);
+    expect(errorsFor(makePerson({ dateOfBirth: '19850229' }), 'dateOfBirth').length).toBeGreaterThan(0);
+  });
+
+  it('rejects a date of death before the date of birth', () => {
+    const model = makePerson({ dateOfBirth: '19850415', dateOfDeath: '19800101' });
+    expect(errorsFor(model, 'dateOfDeath').length).toBeGreaterThan(0);
+  });
+
+  it('rejects a death year before a year-only birth year', () => {
+    const model = makePerson({ dateOfBirth: '19850000', dateOfDeath: '19800101' });
+    expect(errorsFor(model, 'dateOfDeath').length).toBeGreaterThan(0);
+  });
+
+  it('allows birth and death in the same year at year granularity', () => {
+    const model = makePerson({ dateOfBirth: '19850000', dateOfDeath: '19850415' });
+    expect(errorsFor(model, 'dateOfDeath')).toHaveLength(0);
+  });
+
+  it('does not report a conflict when one side has no year', () => {
+    const model = makePerson({ dateOfBirth: '00000415', dateOfDeath: '19800101' });
+    expect(errorsFor(model, 'dateOfDeath')).toHaveLength(0);
+  });
+});

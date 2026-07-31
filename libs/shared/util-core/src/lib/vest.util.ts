@@ -1,6 +1,6 @@
 import { LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, STORE_DATE_LENGTH, STORE_DATETIME_LENGTH, TIME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { enforce, omitWhen, test } from 'vest';
-import { checkDate, DateFormat } from './date.util';
+import { checkDate, DateFormat, isValidPartialStoreDate } from './date.util';
 import { isArrayOfStrings, isAvatarInfo, isMoney } from './type.util';
 import { AddressableModel, AvatarInfo, OkrModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, MoneyModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from '@okr/shared-models';
 
@@ -181,6 +181,24 @@ export function dateValidations(fieldName: string, date: unknown) {
   omitWhen(date === '', () => {
     test(fieldName, 'invalidDate', () => {
       enforce(checkDate(fieldName, date as string, DateFormat.StoreDate, 1850, 2100, false)).isTruthy();
+    });
+  });
+}
+
+/**
+ * Like dateValidations, but also accepts the two partial StoreDate forms:
+ * '19850000' (year only) and '00000415' (birthday, year unknown).
+ *
+ * Use ONLY on the person dateOfBirth/dateOfDeath fields. Every other date field must
+ * stay on dateValidations — a partial value elsewhere is a bug, not an input.
+ */
+export function partialDateValidations(fieldName: string, date: unknown) {
+
+  stringValidations(fieldName, date, STORE_DATE_LENGTH, STORE_DATE_LENGTH);
+
+  omitWhen(date === '', () => {
+    test(fieldName, 'invalidDate', () => {
+      enforce(isValidPartialStoreDate(date as string)).isTruthy();
     });
   });
 }

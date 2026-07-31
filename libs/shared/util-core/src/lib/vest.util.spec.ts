@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { create } from 'vest';
 
-import { tagValidations } from './vest.util';
+import { partialDateValidations, tagValidations } from './vest.util';
 
 /**
  * The configured tag lists in the `tags` collection are authored with ", " separators
@@ -43,5 +43,40 @@ describe('tagValidations', () => {
     const result = runTags('@tag.bexio,@tag.doesnotexist', CONFIGURED);
     expect(result.getErrors()).toHaveProperty('tags[1]');
     expect(result.isValid()).toBe(false);
+  });
+});
+
+function runPartialDate(date: string) {
+  const suite = create(() => partialDateValidations('dateOfBirth', date));
+  return suite();
+}
+
+describe('partialDateValidations', () => {
+  it('accepts a full date', () => {
+    expect(runPartialDate('19850415').hasErrors('dateOfBirth')).toBe(false);
+  });
+
+  it('accepts a year-only date', () => {
+    expect(runPartialDate('19850000').hasErrors('dateOfBirth')).toBe(false);
+  });
+
+  it('accepts a birthday without a year', () => {
+    expect(runPartialDate('00000415').hasErrors('dateOfBirth')).toBe(false);
+  });
+
+  it('accepts an empty value, since the field is optional', () => {
+    expect(runPartialDate('').hasErrors('dateOfBirth')).toBe(false);
+  });
+
+  it('rejects an all-filler value', () => {
+    expect(runPartialDate('00000000').hasErrors('dateOfBirth')).toBe(true);
+  });
+
+  it('rejects a date that is not a real calendar date', () => {
+    expect(runPartialDate('19850229').hasErrors('dateOfBirth')).toBe(true);
+  });
+
+  it('rejects a wrong length', () => {
+    expect(runPartialDate('1985').hasErrors('dateOfBirth')).toBe(true);
   });
 });

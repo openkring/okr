@@ -2,7 +2,7 @@ import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { PrivacyUsage } from '@okr/shared-models';
-import { baseValidations, categoryValidations, dateValidations, isAfterDate, stringValidations } from '@okr/shared-util-core';
+import { baseValidations, categoryValidations, isStoreDateOrderValid, partialDateValidations, stringValidations } from '@okr/shared-util-core';
 
 import { PersonFormModel } from './person-form.model';
 import { ssnValidations } from './ssn.validations';
@@ -18,8 +18,9 @@ export const personValidations = staticSuite((model: PersonFormModel, tenants: s
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);
   stringValidations('gender', model.gender, WORD_LENGTH);
   ssnValidations('ssnId', model.ssnId ?? '');
-  dateValidations('dateOfBirth', model.dateOfBirth ?? '');
-  dateValidations('dateOfDeath', model.dateOfDeath ?? '');
+  // dob/dod may be partial: year only ('19850000') or a birthday without a year ('00000415')
+  partialDateValidations('dateOfBirth', model.dateOfBirth ?? '');
+  partialDateValidations('dateOfDeath', model.dateOfDeath ?? '');
   stringValidations('bexioId', model.bexioId, 6);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   //tagValidations('tags', model.tags);
@@ -35,8 +36,10 @@ export const personValidations = staticSuite((model: PersonFormModel, tenants: s
   // cross field validations
   omitWhen(!model.dateOfDeath || !model.dateOfBirth, () => {
     test('dateOfDeath', '@personDeathAfterBirth', () => {
+      // compares at the coarsest precision the two dates share; a pair with no
+      // comparable year (a birthday without a year) reports no conflict
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      enforce(isAfterDate(model.dateOfDeath!, model.dateOfBirth!)).isTruthy();
+      enforce(isStoreDateOrderValid(model.dateOfBirth!, model.dateOfDeath!)).isTruthy();
     });
   });
 
