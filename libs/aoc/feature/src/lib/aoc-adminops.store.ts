@@ -7,7 +7,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, OkrModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
-import { compareDate, getAge, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@okr/shared-util-core';
+import { compareDate, getAgeFromBirthYear, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@okr/shared-util-core';
 import { getMembershipCategoryChanges } from '@okr/relationship-membership-util';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
@@ -98,10 +98,10 @@ export const AocAdminOpsStore = signalStore(
                 if (m.category === 'junior' && m.orgKey === orgKey && m.relIsLast === true && compareDate(m.dateOfExit, getEndOfYear() + '')) {
                   // we have all current juniors of the given org
                   // now we filter the ones that are older than the given age or have no dateOfBirth.
-                  // Read the year-precision replica (memberBirthYear) first (spec 1.19); getAge only
-                  // subtracts years, so YYYY0101 is equivalent to the full date here.
-                  const age = getAge(m.memberBirthYear ? m.memberBirthYear + '0101' : '', false, refYear);
-                  if (age < 0 || age > age) return true;
+                  // Read the year-precision replica (memberBirthYear) — spec 1.19 D-P4-9: never pad
+                  // a year into a date, getAgeFromBirthYear takes the YYYY as it stands.
+                  const memberAge = getAgeFromBirthYear(m.memberBirthYear, refYear);
+                  if (memberAge < 0 || memberAge > age) return true;
                 }
               }
               return false;
@@ -111,9 +111,9 @@ export const AocAdminOpsStore = signalStore(
               if (isMembership(model, store.appStore.env.tenantId)) {
                 const m = model as MembershipModel;
                 const name = getFullName(m.memberName1, m.memberName2);
-                const age = getAge(m.memberBirthYear ? m.memberBirthYear + '0101' : '', false, refYear);
-                const message = age < 0 ? nodob : `${title}}: ${m.memberBirthYear} -> ${age}`;
-                if (age < 0) return { id: m.okey, name: name, message: nodob };
+                const memberAge = getAgeFromBirthYear(m.memberBirthYear, refYear);
+                const message = memberAge < 0 ? nodob : `${title}}: ${m.memberBirthYear} -> ${memberAge}`;
+                if (memberAge < 0) return { id: m.okey, name: name, message: nodob };
                 return { id: m.okey, name: name, message: message };
               }
               const m = model as OkrModel;

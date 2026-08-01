@@ -8,7 +8,7 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { OkrModel, LogInfo, logMessage, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel, SectionCollection, SectionModel, TABLE_SECTION_SHAPE } from '@okr/shared-models';
 import { error } from '@okr/shared-util-angular';
-import { DateFormat, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, getSystemQuery, getTodayStr, STORE_DATE_FILLER } from '@okr/shared-util-core';
 
 import { initializeAgeByGenderStatistics, updateAgeByGenderStats, AOC_I18N_KEYS } from '@okr/aoc-util';
 
@@ -87,8 +87,10 @@ export const AocStatisticsStore = signalStore(
         const activeMembers = await firstValueFrom(this.getActiveMembersOfDefaultOrg(log));
 
         for (const member of activeMembers) {
-          // year-precision replica (spec 1.19 Phase 4): decade stats need no full dob
-          updateAgeByGenderStats(ageByGenderStats, member.memberType, member.memberBirthYear ? member.memberBirthYear + '0101' : undefined);
+          // year-precision replica (spec 1.19 Phase 4): decade stats need no full dob. The year is
+          // padded with STORE_DATE_FILLER, never with a fabricated 01.01. (D-P4-9) — getAge reads
+          // the YYYY of a 'yearOnly' StoreDate and ignores the rest.
+          updateAgeByGenderStats(ageByGenderStats, member.memberType, member.memberBirthYear ? member.memberBirthYear + STORE_DATE_FILLER : undefined);
         }
         patchState(store, { log: logMessage(log, `aoc-statistics.updateAgeByGender: saving updated statistics to ${SectionCollection}/${sectionKey}...`) });
         
