@@ -2,6 +2,7 @@
 import { makeGatewayCallable } from './gateway';
 import { oecdAdapter } from './adapters/oecd';
 import { zefixSearchAdapter, zefixDetailsAdapter } from './adapters/zefix';
+import { searchChAdapter } from './adapters/searchch';
 
 /** New consumer (2.59). Client sends OecdParams, receives GatewayResult<OecdData>. */
 export const oecdQuery = makeGatewayCallable(oecdAdapter);
@@ -11,3 +12,7 @@ export const oecdQuery = makeGatewayCallable(oecdAdapter);
  *  nests the payload under `data` and adds attribution + freshness. */
 export const zefixSearch = makeGatewayCallable(zefixSearchAdapter);
 export const zefixGetByUid = makeGatewayCallable(zefixDetailsAdapter);
+
+/** search.ch person lookup — same callable name, tenant-scoped cache, per-tenant
+ *  key read from `app-secrets/{tenantId}` inside the adapter. */
+export const searchChSearchPerson = makeGatewayCallable(searchChAdapter);

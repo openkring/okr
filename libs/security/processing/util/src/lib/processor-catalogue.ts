@@ -346,6 +346,7 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     securityMeasures: [
       'Verschlüsselte Übertragung',
       'API-Schlüssel serverseitig in app-secrets, nie im Client',
+      'Antworten werden serverseitig max. 1 Stunde zwischengespeichert (apiCache, nur Admin-SDK, automatische Löschung per TTL); der Suchbegriff selbst nur als Hash',
     ],
     // search.ch veröffentlicht keinen Auftragsverarbeitungsvertrag. Bewusst leer.
     dpaUrl: '',
@@ -356,7 +357,7 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     // müssen.
     enabledWhen: (config) =>
       config?.integrations?.['searchch'] === true || config?.personLookupEnabled === true,
-    cloudFunctions: ['searchch/index.ts'],
+    cloudFunctions: ['_gateway/adapters/searchch.ts', 'searchch/parse.ts'],
     memberNoticeDe:
       'Beim Erfassen deiner Adresse wurde eine Suchanfrage mit deinem Namen und Ort an das Verzeichnis gesendet. Übermittelt wurde nur die Anfrage, nicht dein Datensatz.',
   },

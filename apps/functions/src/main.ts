@@ -17,7 +17,6 @@ import * as Booking from './booking';
 import * as Email from './email';
 import * as Bexio from './bexio';
 import * as Gateway from './_gateway';
-import * as SearchCh from './searchch';
 import * as Location from './location';
 import * as Srv from './srv';
 import * as Flighttracker from './flighttracker';
@@ -161,7 +160,8 @@ export const zefixGetByUid = Gateway.zefixGetByUid;
 export const oecdQuery = Gateway.oecdQuery;
 
 // search.ch person-address lookup
-export const searchChSearchPerson = SearchCh.searchChSearchPerson;
+// external-data-gateway: retrofitted onto the gateway (tenant-scoped cache + quota + attribution)
+export const searchChSearchPerson = Gateway.searchChSearchPerson;
 
 // google file search rag
 export const getOrCreateStore = Rag.getOrCreateStore;

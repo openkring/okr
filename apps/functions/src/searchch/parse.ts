@@ -47,6 +47,21 @@ function extraByType(extra: unknown, type: string): string {
   return hit ? textOf(hit) : '';
 }
 
+/**
+ * The Atom feed's own `<updated>` — the gateway renders it as "Stand: …".
+ * Read via the parser rather than a regex: entries carry an `<updated>` of their
+ * own, so a first-match regex would silently report an entry's timestamp when
+ * the feed-level element is absent.
+ */
+export function feedUpdatedAt(xml: string): string | null {
+  const parsed = parser.parse(xml) as Record<string, unknown>;
+  const feed = parsed?.['feed'] as Record<string, unknown> | undefined;
+  // textOf already unwraps the `#text` form fast-xml-parser produces when the
+  // element carries attributes.
+  const value = textOf(feed?.['updated']).trim();
+  return value.length === 0 ? null : value;
+}
+
 export function parseTelFeed(xml: string): PersonDirectoryResult[] {
   const parsed = parser.parse(xml) as Record<string, any>;
   const entries = parsed?.feed?.entry;
