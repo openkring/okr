@@ -65,27 +65,27 @@ import type { ProcessorCategory, ProcessorEntry } from '@okr/shared-models';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="4">
-              <ion-select [label]="i18n.filter_category()" [value]="category()" interface="popover"
-                          (ionChange)="category.set($event.detail.value)">
-                <ion-select-option [value]="undefined">{{ i18n.filter_all() }}</ion-select-option>
+              <ion-select [label]="i18n.filter_category()" [value]="category() ?? ALL" interface="popover"
+                          (ionChange)="setCategory($event.detail.value)">
+                <ion-select-option [value]="ALL">{{ i18n.filter_all() }}</ion-select-option>
                 @for (c of service.categories(); track c) {
                   <ion-select-option [value]="c">{{ categoryLabel(c) }}</ion-select-option>
                 }
               </ion-select>
             </ion-col>
             <ion-col size="6" size-md="4">
-              <ion-select [label]="i18n.filter_country()" [value]="country()" interface="popover"
-                          (ionChange)="country.set($event.detail.value)">
-                <ion-select-option [value]="undefined">{{ i18n.filter_all() }}</ion-select-option>
+              <ion-select [label]="i18n.filter_country()" [value]="country() ?? ALL" interface="popover"
+                          (ionChange)="setCountry($event.detail.value)">
+                <ion-select-option [value]="ALL">{{ i18n.filter_all() }}</ion-select-option>
                 @for (c of service.countries(); track c) {
                   <ion-select-option [value]="c">{{ c }}</ion-select-option>
                 }
               </ion-select>
             </ion-col>
             <ion-col size="6" size-md="4">
-              <ion-select [label]="i18n.filter_origin()" [value]="origin()" interface="popover"
-                          (ionChange)="origin.set($event.detail.value)">
-                <ion-select-option [value]="undefined">{{ i18n.filter_all() }}</ion-select-option>
+              <ion-select [label]="i18n.filter_origin()" [value]="origin() ?? ALL" interface="popover"
+                          (ionChange)="setOrigin($event.detail.value)">
+                <ion-select-option [value]="ALL">{{ i18n.filter_all() }}</ion-select-option>
                 <ion-select-option value="catalogue">{{ i18n.filter_origin_catalogue() }}</ion-select-option>
                 <ion-select-option value="tenant">{{ i18n.filter_origin_tenant() }}</ion-select-option>
               </ion-select>
@@ -142,6 +142,14 @@ export class ProcessingRegisterPage {
   private readonly alertService = inject(AlertService);
   protected readonly i18n = inject(I18nService).translateAll(PROCESSING_I18N_KEYS) as ProcessingI18n;
 
+  /**
+   * The sentinel value of the "all" option. It cannot be `undefined`: `ion-select` falls back
+   * to an option's text content when its `value` is undefined (`getOptionValue` in Ionic's
+   * select), so `[value]="undefined"` made picking "Alle" set the filter to the literal label
+   * "Alle" — a value nothing matches, which is why the filter could never be cleared.
+   */
+  protected readonly ALL = 'all';
+
   protected readonly category = signal<ProcessorCategory | undefined>(undefined);
   protected readonly country = signal<string | undefined>(undefined);
   protected readonly origin = signal<RegisterFilter['origin']>(undefined);
@@ -156,6 +164,18 @@ export class ProcessingRegisterPage {
       country: this.country(),
       origin: this.origin(),
     })());
+
+  protected setCategory(value: string): void {
+    this.category.set(value === this.ALL ? undefined : (value as ProcessorCategory));
+  }
+
+  protected setCountry(value: string): void {
+    this.country.set(value === this.ALL ? undefined : value);
+  }
+
+  protected setOrigin(value: string): void {
+    this.origin.set(value === this.ALL ? undefined : (value as RegisterFilter['origin']));
+  }
 
   protected roleLabel(entry: ProcessorEntry): string {
     switch (entry.role) {
