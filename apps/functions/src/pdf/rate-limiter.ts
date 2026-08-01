@@ -8,7 +8,8 @@ const MIN_INTERVAL_MS = {
 
 /**
  * Throws resource-exhausted if the user has generated too recently.
- * isAdmin is true when the user has admin or contentAdmin custom claim.
+ * isAdmin comes from `resolveIsAdmin` — the admin/contentAdmin claim or, in practice, the
+ * `roles` map on the caller's `users/{uid}` document.
  */
 export async function checkRateLimit(userId: string, isAdmin: boolean): Promise<void> {
   const db = getFirestore();

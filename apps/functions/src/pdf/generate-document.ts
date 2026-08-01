@@ -26,6 +26,7 @@ import { resolvePayee, renderQrSlipSvg, buildQrSlipPageHtml } from './qr-slip';
 import { buildQrSlipData } from '@okr/shared-util-functions';
 import { resolveAssetUrls } from './asset-resolver';
 import { checkRateLimit } from './rate-limiter';
+import { resolveIsAdmin } from './resolve-admin';
 import { sanitizeHtml } from './sanitize';
 
 // Handlebars helpers are registered lazily on first use (not at cold start) so the
@@ -92,9 +93,10 @@ export const generateDocument = onCall<GenerateDocumentRequest, Promise<Generate
     const tenantId = typeof request.auth.token['tenantId'] === 'string'
       ? request.auth.token['tenantId']
       : 'default';
-    const isAdmin: boolean =
-      request.auth.token['admin'] === true ||
-      request.auth.token['contentAdmin'] === true;
+    const isAdmin: boolean = await resolveIsAdmin(
+      userId,
+      request.auth.token as unknown as Record<string, unknown>
+    );
 
     // Only admin/contentAdmin may use raw-HTML mode
     if (rawHtml && !isAdmin) {
