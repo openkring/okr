@@ -81,7 +81,7 @@
   "userLanguage": { "label": "Langue" },
   "nameDisplay": { "label": "Affichage du nom" },
   "srv": { "description": "Les paramètres suivants s'appliquent à l'utilisation de vos données par le SRV." },
-  "usageImages": { "label": "Images" },
+  "usageImages": { "label": "Photos", "helper": "Déclaration de la personne : si elle peut être photographiée et si son image peut être publiée. Respectée sur le plan organisationnel, non imposée techniquement." },
   "usageDateOfBirth": { "label": "Date de naissance" },
   "usagePostalAddress": { "label": "Adresse postale" },
   "usageEmail": { "label": "E-mail" },

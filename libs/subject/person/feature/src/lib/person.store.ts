@@ -9,7 +9,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@okr/shared-models';
 import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@okr/shared-util-angular';
-import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches, PHOTO_USAGE_ALL, photoUsageMatches } from '@okr/shared-util-core';
 import { EmailAddressesModal, MapViewModal } from '@okr/shared-ui';
 import { Languages } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
@@ -33,6 +33,8 @@ export type PersonState = {
   searchTerm: string;
   selectedTag: string;
   selectedGender: string;
+  // the photo declaration (usageImages) — the filter that makes it consultable (D-P4-10)
+  selectedPhotoUsage: string;
 };
 export const initialState: PersonState = {
   orgId: '',
@@ -42,6 +44,7 @@ export const initialState: PersonState = {
   searchTerm: '',
   selectedTag: '',
   selectedGender: 'all',
+  selectedPhotoUsage: PHOTO_USAGE_ALL,
 };
 
 export const PersonStore = signalStore(
@@ -102,6 +105,7 @@ export const PersonStore = signalStore(
         state.persons().filter((person: PersonModel) => 
           nameMatches(person.index, state.searchTerm()) &&
           nameMatches(person.gender, state.selectedGender(), true) &&
+          photoUsageMatches(person.usageImages, state.selectedPhotoUsage()) &&
           chipMatches(person.tags, state.selectedTag())) ?? []
       ),
       
@@ -111,6 +115,7 @@ export const PersonStore = signalStore(
         state.deceased()?.filter((person: PersonModel) => 
           nameMatches(person.index, state.searchTerm()) &&
           nameMatches(person.gender, state.selectedGender(), true) &&
+          photoUsageMatches(person.usageImages, state.selectedPhotoUsage()) &&
           chipMatches(person.tags, state.selectedTag())) ?? []
       ),
       membershipCategory: computed<CategoryListModel | undefined>(() => state.appStore.tryGetCategory(state.membershipCategoryKey()) ?? state.defaultMcat()),
@@ -145,6 +150,11 @@ export const PersonStore = signalStore(
 
         setSelectedTag(selectedTag: string) {
             patchState(store, { selectedTag });
+        },
+
+        /** The photo declaration filter — see D-P4-10; only staff roles get the control. */
+        setSelectedPhotoUsage(selectedPhotoUsage: string) {
+            patchState(store, { selectedPhotoUsage });
         },
 
         setPersonKey(personKey: string): void {

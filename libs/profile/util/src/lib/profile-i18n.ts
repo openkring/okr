@@ -22,6 +22,7 @@ export const PROFILE_I18N_KEYS = {
   gravatar_placeholder:            PFX + 'gravatar.placeholder',
   gravatar_helper:                 PFX + 'gravatar.helper',
   usage_images:                    PFX + 'usage.images',
+  usage_images_helper:             PFX + 'usage.imagesHelper',
   usage_dob:                       PFX + 'usage.dob',
   usage_postal:                    PFX + 'usage.postal',
   usage_email:                     PFX + 'usage.email',

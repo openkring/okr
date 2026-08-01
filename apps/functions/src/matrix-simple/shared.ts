@@ -8,6 +8,8 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 
+import { objectsToPhotos } from '@okr/shared-util-core';
+
 export const matrixAdminToken = defineSecret('MATRIX_ADMIN_TOKEN');
 // Shared secret embedded in the Matrix push-gateway URL (SEC-2). Synapse stores the
 // secret-bearing URL via registerMatrixPusher and POSTs to it; matrixPushGateway rejects
@@ -127,11 +129,35 @@ export function personAvatarUrl(storagePath: string): string {
  */
 export async function resolvePersonAvatarUrl(personKey: string): Promise<string | undefined> {
   try {
+    if (await objectsToPhotoPublication(personKey)) return undefined;
     const snap = await getFirestore().collection('avatars').doc(`person.${personKey}`).get();
     const storagePath = snap.data()?.['storagePath'] as string | undefined;
     return storagePath ? personAvatarUrl(storagePath) : undefined;
   } catch {
     return undefined;
+  }
+}
+
+/**
+ * Honour the photo declaration (`persons.usageImages`, spec 1.19 D-P4-10) before copying a
+ * member's picture into the Matrix homeserver.
+ *
+ * The declaration is organisational, not a rule — but this is one of the few places where the
+ * code can honour it at no cost, and it is the place where it matters most: pushing the avatar
+ * to Synapse (etke.cc) copies the picture into a **second system**, with its own rooms, its own
+ * media repo and its own retention, without the member ever asking for it.
+ *
+ * Only `Protected` (2) skips: that tier is the outright objection to publication. `Restricted`
+ * (1) means "inside the club, yes; published, no", and the members-only chat is inside the club.
+ * A missing value is `Public` — legacy person documents carry no `usageImages`, and someone who
+ * never expressed anything has not objected.
+ */
+async function objectsToPhotoPublication(personKey: string): Promise<boolean> {
+  try {
+    const person = (await getFirestore().collection('persons').doc(personKey).get()).data();
+    return objectsToPhotos(person?.['usageImages']);
+  } catch {
+    return false;   // never let a failed lookup block the ordinary avatar sync
   }
 }
 

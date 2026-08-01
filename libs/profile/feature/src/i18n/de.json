@@ -33,7 +33,8 @@
     "helper": "Die E-Mail Adresse, die für den Gravatar verwendet wird (globally recognized avatar auf gravatar.com). Wenn du deinen Gravatar angibst, wird dieser anstelle eines hochgeladenen Bildes im Avatar der App verwendet."
   },
   "usage": {
-    "images": "Verwendung von Bildern",
+    "images": "Fotos von mir",
+    "imagesHelper": "Das ist deine Erklärung an den Verein, keine technische Sperre: Sie sagt der fotografierenden Person und der Inhaltsverwaltung, ob du fotografiert und ob dein Bild veröffentlicht werden darf. Die App kann ein einmal hochgeladenes Bild nicht nachträglich unsichtbar machen — wenn du dein Profilbild entfernen willst, lösche es im Profil.",
     "dob": "Verwendung des Geburtsdatums",
     "postal": "Verwendung der Postadresse",
     "email": "Verwendung der E-Mail Adresse",

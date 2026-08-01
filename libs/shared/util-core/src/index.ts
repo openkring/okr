@@ -13,6 +13,7 @@ export * from './lib/file.util';
 export * from './lib/icon.util';
 export * from './lib/img.util';
 export * from './lib/log.util';
+export * from './lib/photo-declaration.util';
 export * from './lib/query.util';
 export * from './lib/rank.util';
 export * from './lib/regasoft.util';

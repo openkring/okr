@@ -134,15 +134,17 @@ describe('check 8 — stale policy acceptance', () => {
   });
 });
 
-describe('check 10 — the standing reminder about avatars', () => {
-  it('always reports, so the known gap is never silently forgotten', async () => {
+describe('check 10 — the standing reminder about the photo declaration', () => {
+  it('always reports, so the organisational duty stays visible', async () => {
     const f = await check10.run(ctxWith({}));
     expect(f?.severity).toBe('info');
     expect(f?.checkId).toBe(10);
   });
 
-  it('explains what is not enforced', async () => {
+  it('names the setting and states the duty, not an open task', async () => {
     const f = await check10.run(ctxWith({}));
     expect(f?.detailDe).toContain('usageImages');
+    expect(f?.detailDe).toContain('Erklärung');
+    expect(f?.detailDe).toContain('keine offene Aufgabe');
   });
 });

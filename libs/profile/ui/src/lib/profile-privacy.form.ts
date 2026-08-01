@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
-import { PrivacyUsages } from "@okr/shared-categories";
+import { PhotoUsages, PrivacyUsages } from "@okr/shared-categories";
 import { PrivacyUsage, UserModel } from "@okr/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@okr/shared-ui";
 import { coerceBoolean, isValidForFields } from "@okr/shared-util-core";
@@ -42,7 +42,7 @@ const EDITED_FIELDS = ['usageImages', 'usageDateOfBirth', 'usagePostalAddress', 
             </ion-row>
             <ion-row> 
               <ion-col size="12" size-md="6">
-                <okr-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onUsageChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
+                <okr-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onUsageChange('usageImages', $event)" [categories]="photoUsages" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onUsageChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="isReadOnly()" />
@@ -82,7 +82,9 @@ const EDITED_FIELDS = ['usageImages', 'usageDateOfBirth', 'usagePostalAddress', 
   `,
 })
 export class ProfilePrivacyAccordion {
-  protected usageImagesI18n        = computed(() => ({ name: 'usageImages',        label: this.i18n().usage_images()  } as CategoryOldI18n));
+  // usageImages is a declaration, not an access control (D-P4-10): it is worded for photos and
+  // carries a helper that says so, because the app cannot enforce it and must not imply that it does.
+  protected usageImagesI18n        = computed(() => ({ name: 'usageImages',        label: this.i18n().usage_images(), helper: this.i18n().usage_images_helper() } as CategoryOldI18n));
   protected usageDateOfBirthI18n   = computed(() => ({ name: 'usageDateOfBirth',   label: this.i18n().usage_dob()     } as CategoryOldI18n));
   protected usagePostalAddressI18n = computed(() => ({ name: 'usagePostalAddress', label: this.i18n().usage_postal()  } as CategoryOldI18n));
   protected usageEmailI18n         = computed(() => ({ name: 'usageEmail',         label: this.i18n().usage_email()   } as CategoryOldI18n));
@@ -125,6 +127,7 @@ export class ProfilePrivacyAccordion {
 
   // passing constants to template
   protected privacyUsages = PrivacyUsages;
+  protected photoUsages = PhotoUsages;
 
   constructor() {
     // Only the usage* preferences are edited here; the rest of the person suite (tags, index,

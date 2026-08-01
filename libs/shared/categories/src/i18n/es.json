@@ -399,6 +399,23 @@
       "srvemail": "Para el envío de las SRV-News (antes revista Swissrowing), el SRV necesita su dirección de correo electrónico. Aquí tiene una opción de exclusión (opt-out) si no desea recibir estas noticias. En ese caso, su correo electrónico no se transmitirá al SRV en la próxima sincronización. Entonces tampoco recibirá más noticias del SRV."
     }
   },
+  "photoUsage": {
+    "all": {
+      "label": "Todos"
+    },
+    "public": {
+      "label": "Publicación permitida",
+      "description": "Las fotos mías también pueden utilizarse fuera del área de miembros, p. ej. en el sitio web, en publicaciones o en redes sociales."
+    },
+    "restricted": {
+      "label": "Solo en el área de miembros",
+      "description": "Las fotos mías pueden utilizarse dentro de la asociación (aplicación, área de miembros), pero no deben publicarse públicamente."
+    },
+    "protected": {
+      "label": "Sin publicación, por favor no me fotografíen",
+      "description": "Prefiero no ser fotografiado/a y las fotos mías no deben publicarse. La persona que fotografía y la administración de contenidos lo respetan."
+    }
+  },
   "regex": {
     "simpleName": {
       "label": "Nombre simple",

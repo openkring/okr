@@ -1,13 +1,15 @@
 import { Component, computed, inject, input } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { getPhotoUsageName, hasPhotoRestriction, hasRole, objectsToPhotos } from '@okr/shared-util-core';
+import { getPhotoUsageCategory } from '@okr/shared-categories';
 import { SIZE_MD } from '@okr/shared-constants';
-import { I18nService } from '@okr/shared-i18n';
+import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -19,7 +21,7 @@ import { PersonStore } from './person.store';
   selector: 'okr-person-list',
   standalone: true,
   imports: [
-    FullNamePipe, AvatarPipe, SvgIconPipe,
+    FullNamePipe, AvatarPipe, SvgIconPipe, TranslatePipe, AsyncPipe,
     Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonPopover,
@@ -28,6 +30,7 @@ import { PersonStore } from './person.store';
   providers: [PersonStore],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
+    ion-icon.photo-flag { color: var(--ion-color-medium); font-size: 18px; }
   `],
   template: `
   <ion-header>
@@ -53,10 +56,13 @@ import { PersonStore } from './person.store';
     </ion-toolbar>
 
     <!-- search and filters -->
+    <!-- the photo-declaration filter is a staff tool: it is what makes usageImages consultable
+         at all (D-P4-10). Members do not get it — the declaration is not theirs to browse. -->
     <okr-list-filter
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()" [hideTagsOnMobile]="true"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
+      (categoryChanged)="onPhotoUsageSelected($event)" [categories]="photoUsageCategory()"
     />
 
     <!-- list header -->
@@ -83,7 +89,11 @@ import { PersonStore } from './person.store';
               <ion-avatar slot="start">
                 <ion-img src="{{ personModelName + '.' + person.okey | avatar:personModelName }}" alt="Avatar Logo" />
               </ion-avatar>
-              <ion-label>{{person.firstName | fullName:person.lastName:nameDisplay()}}</ion-label>      
+              <ion-label>{{person.firstName | fullName:person.lastName:nameDisplay()}}</ion-label>
+              @if(showsPhotoFlag(person)) {
+                <ion-icon slot="end" class="photo-flag" src="{{ photoFlagIcon(person) | svgIcon }}"
+                  [title]="(photoFlagLabel(person) | translate | async) ?? ''" />
+              }
               <ion-label class="ion-hide-sm-down">
                 @if(favPhone(person); as phone) {
                   <span>{{phone}}</span>
@@ -135,6 +145,30 @@ export class PersonList {
   protected personModelName = PersonModelName;
   protected readonly vcardI18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
 
+  /********************* photo declaration (usageImages, D-P4-10) ****************************** */
+  // usageImages is a declaration honoured organisationally, not a rule. It is shown to the roles
+  // that act on it — memberAdmin maintains member data, contentAdmin publishes pictures — so that
+  // a member who declared an objection is not the only one who knows about it.
+  protected readonly showsPhotoDeclaration = computed(() =>
+    hasRole('contentAdmin', this.currentUser()) || hasRole('memberAdmin', this.currentUser()));
+
+  protected readonly photoUsageCategory = computed(() =>
+    this.showsPhotoDeclaration() ? getPhotoUsageCategory(this.store.appStore.tenantId()) : undefined);
+
+  /** A row is flagged only when the person restricted the use of their picture. */
+  protected showsPhotoFlag(person: PersonModel): boolean {
+    return this.showsPhotoDeclaration() && hasPhotoRestriction(person.usageImages);
+  }
+
+  protected photoFlagIcon(person: PersonModel): string {
+    return objectsToPhotos(person.usageImages) ? 'eye-off' : 'shield';
+  }
+
+  /** Data-driven key (depends on the person's tier) — the one sanctioned TranslatePipe case. */
+  protected photoFlagLabel(person: PersonModel): string {
+    return `@shared/categories.photoUsage.${getPhotoUsageName(person.usageImages)}.label`;
+  }
+
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
@@ -146,6 +180,10 @@ export class PersonList {
 
   protected onTypeSelected(type: string): void {
     this.store.setSelectedGender(type);
+  }
+
+  protected onPhotoUsageSelected(photoUsage: string): void {
+    this.store.setSelectedPhotoUsage(photoUsage);
   }
 
   /******************************** actions ******************************************* */

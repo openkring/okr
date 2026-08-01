@@ -33,7 +33,8 @@
     "helper": "La dirección de correo electrónico que se utiliza para el Gravatar (globally recognized avatar en gravatar.com). Si indica su Gravatar, este se utilizará en el avatar de la aplicación en lugar de una imagen subida."
   },
   "usage": {
-    "images": "Uso de imágenes",
+    "images": "Fotos mías",
+    "imagesHelper": "Esta es tu declaración a la asociación, no un bloqueo técnico: indica a la persona que fotografía y a la administración de contenidos si se te puede fotografiar y si tu imagen puede publicarse. La aplicación no puede ocultar posteriormente una imagen ya subida; para retirar tu foto de perfil, elimínala en tu perfil.",
     "dob": "Uso de la fecha de nacimiento",
     "postal": "Uso de la dirección postal",
     "email": "Uso de la dirección de correo electrónico",

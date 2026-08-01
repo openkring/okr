@@ -40,7 +40,7 @@ Collection name: `users`
 | `showArchivedData` | boolean | Setting: show archived records in lists |
 | `showDebugInfo` | boolean | Setting: show debug information in the UI |
 | `showHelpers` | boolean | Setting: show helper hints in forms |
-| `usageImages` | PrivacyUsage | Privacy: who can see the user's images |
+| `usageImages` | PrivacyUsage | Photo declaration (D-P4-10): may the person be photographed / their picture published — organisational, not enforced |
 | `usageDateOfBirth` | PrivacyUsage | Privacy: who can see date of birth |
 | `usagePostalAddress` | PrivacyUsage | Privacy: who can see postal address |
 | `usageEmail` | PrivacyUsage | Privacy: who can see email |

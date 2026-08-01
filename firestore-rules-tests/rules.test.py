@@ -379,6 +379,22 @@ single_cases = [
      body({"name": "Event2"}), ["name"]),
     ("userA DELETE foreign folder -> DENY", False, DELETE, "folders/fClosed", A, None, None),
     ("userA DELETE own folder -> ALLOW", True, DELETE, "folders/fMine", A, None, None),
+    # privacy 1.19 D-P4-10: a person's avatar is a picture OF that person — only they,
+    # memberAdmin or privileged may write it. Non-person avatars stay tenant content.
+    ("userA create own avatar -> ALLOW", True, POST, "avatars?documentId=person.pA", A,
+     body({"tenants": ["t1"], "isArchived": False, "storagePath": "tenant/t1/person/pA/avatar/a.jpg"}), None),
+    ("userA create foreign person avatar -> DENY", False, POST, "avatars?documentId=person.pC", A,
+     body({"tenants": ["t1"], "isArchived": False, "storagePath": "tenant/t1/person/pC/avatar/a.jpg"}), None),
+    ("userM(memberAdmin) create foreign person avatar -> ALLOW", True, POST, "avatars?documentId=person.pE", M,
+     body({"tenants": ["t1"], "isArchived": False, "storagePath": "tenant/t1/person/pE/avatar/a.jpg"}), None),
+    ("userA create org avatar (not a person) -> ALLOW", True, POST, "avatars?documentId=org.oA", A,
+     body({"tenants": ["t1"], "isArchived": False, "storagePath": "tenant/t1/org/oA/avatar/a.jpg"}), None),
+    ("userA PATCH own avatar -> ALLOW", True, PATCH, "avatars/person.pA", A,
+     body({"storagePath": "tenant/t1/person/pA/avatar/b.jpg"}), ["storagePath"]),
+    ("userA PATCH foreign person avatar -> DENY", False, PATCH, "avatars/person.pE", A,
+     body({"storagePath": "tenant/t1/person/pE/avatar/b.jpg"}), ["storagePath"]),
+    ("userA DELETE foreign person avatar -> DENY", False, DELETE, "avatars/person.pE", A, None, None),
+    ("userA DELETE own avatar -> ALLOW", True, DELETE, "avatars/person.pA", A, None, None),
 ]
 
 # (label, expect_allow, collection, tenant, token)

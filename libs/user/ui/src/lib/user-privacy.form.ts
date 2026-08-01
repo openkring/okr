@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
 
-import { PrivacyUsages } from "@okr/shared-categories";
+import { PhotoUsages, PrivacyUsages } from "@okr/shared-categories";
 import { PrivacyUsage, UserModel } from "@okr/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@okr/shared-ui";
 import { coerceBoolean } from "@okr/shared-util-core";
@@ -28,7 +28,7 @@ import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFor
           <ion-grid>
             <ion-row>
               <ion-col size="12" size-md="6">
-                <okr-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
+                <okr-category-old [i18n]="usageImagesI18n()" [value]="usageImages()" (valueChange)="onFieldChange('usageImages', $event)" [categories]="photoUsages" [readOnly]="readOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="usageDateOfBirthI18n()" [value]="usageDateOfBirth()" (valueChange)="onFieldChange('usageDateOfBirth', $event)" [categories]="privacyUsages" [readOnly]="readOnly()" />
@@ -67,7 +67,7 @@ import { USER_PRIVACY_FORM_SHAPE, UserI18n, UserPrivacyFormModel, userPrivacyFor
   `
 })
 export class UserPrivacyForm {
-  protected usageImagesI18n        = computed(() => ({ name: 'usageImages',        label: this.i18n().usageImages_label()        } as CategoryOldI18n));
+  protected usageImagesI18n        = computed(() => ({ name: 'usageImages',        label: this.i18n().usageImages_label(), helper: this.i18n().usageImages_helper() } as CategoryOldI18n));
   protected usageDateOfBirthI18n   = computed(() => ({ name: 'usageDateOfBirth',   label: this.i18n().usageDateOfBirth_label()   } as CategoryOldI18n));
   protected usagePostalAddressI18n = computed(() => ({ name: 'usagePostalAddress', label: this.i18n().usagePostalAddress_label() } as CategoryOldI18n));
   protected usageEmailI18n         = computed(() => ({ name: 'usageEmail',         label: this.i18n().usageEmail_label()         } as CategoryOldI18n));
@@ -102,6 +102,8 @@ export class UserPrivacyForm {
 
 // passing constants to template
   protected privacyUsages = PrivacyUsages;
+  // usageImages is a photo declaration, not an access control (D-P4-10) — own wording + helper.
+  protected photoUsages = PhotoUsages;
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));

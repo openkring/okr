@@ -117,15 +117,19 @@ export const check8: AuditCheck = {
 export const check10: AuditCheck = {
   id: 10,
   severity: 'info',
-  titleDe: 'Bekannte Lücke: Profilbilder werden nicht durchgesetzt',
-  // A constant reminder with no query. It exists so a gap that is understood and accepted
-  // stays visible: an unenforced control that nobody is reminded of becomes an unenforced
-  // control that everyone believes is enforced.
+  titleDe: 'Fotoerklärung: organisatorisch, nicht technisch durchgesetzt',
+  // A constant reminder with no query. It is NOT a gap report (D-P4-10): usageImages is a
+  // declaration addressed to the Fotografin und die Inhaltsverwaltung, and honouring it is a
+  // process, not a rule. The reminder exists because a process nobody is reminded of quietly
+  // stops happening — and because a member who declared an objection must not discover that
+  // nobody ever looked.
   run: async () => toFinding(check10,
-    'Die Einstellung usageImages und die Avatare werden derzeit nicht technisch durchgesetzt: '
-    + 'ein Profilbild ist über seine URL erreichbar, unabhängig von der gewählten Sichtbarkeit. '
-    + 'Das ist bekannt und beabsichtigt dokumentiert — es ist keine neue Feststellung, sondern '
-    + 'eine offene Aufgabe.',
+    'Die Einstellung usageImages ist eine Erklärung der Person — sie widerspricht dem '
+    + 'Fotografiert-werden bzw. der Veröffentlichung ihres Bildes — und wird organisatorisch '
+    + 'eingehalten, nicht technisch erzwungen: ein Profilbild bleibt über seine URL erreichbar, '
+    + 'unabhängig von der gewählten Stufe. Das ist so entschieden (D-P4-10) und keine offene '
+    + 'Aufgabe. Pflicht des Vereins: vor jedem Anlass und vor jeder Veröffentlichung die '
+    + 'Widersprüche in der Personenliste abrufen (Filter «Fotoerklärung») und einhalten.',
     '/security/privacy-audit', ['usageImages']),
 };
 

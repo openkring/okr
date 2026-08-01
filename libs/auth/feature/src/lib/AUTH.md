@@ -165,9 +165,15 @@ A person who has a `UserModel` (i.e. a registered user account) can tighten the 
 | `usageEmail` | Public / Restricted / Protected | `public` / `registered` / `privileged` |
 | `usagePhone` | Public / Restricted / Protected | `public` / `registered` / `privileged` |
 | `usagePostalAddress` | Public / Restricted / Protected | `public` / `registered` / `privileged` |
-| `usageImages` | Public / Restricted / Protected | `public` / `registered` / `privileged` |
+| `usageImages` | published / members only / no publication | — (declaration, see below) |
 
 Fields not listed here (gender, tax ID, IBAN, notes, etc.) are always governed by the tenant default only.
+
+**`usageImages` is not an accessor** (D-P4-10): it records the person's declaration about being
+photographed and about publication of their picture, addressed to the photographer and the
+contentAdmin. It maps to no rule and gates no read — avatar bytes are served unsigned from the
+imgix CDN regardless. Consult it before publishing member pictures; never present it as a
+technical restriction.
 
 ### Effective Accessor
 

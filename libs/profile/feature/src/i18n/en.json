@@ -33,7 +33,8 @@
     "helper": "The email address used for the Gravatar (globally recognized avatar on gravatar.com). If you enter your Gravatar, it will be used in the app's avatar instead of an uploaded image."
   },
   "usage": {
-    "images": "Use of images",
+    "images": "Pictures of me",
+    "imagesHelper": "This is your declaration to the club, not a technical block: it tells the photographer and the content administration whether you may be photographed and whether your picture may be published. The app cannot retroactively hide a picture that was uploaded — to remove your profile picture, delete it in your profile.",
     "dob": "Use of the date of birth",
     "postal": "Use of the postal address",
     "email": "Use of the email address",

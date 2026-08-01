@@ -66,6 +66,23 @@ service cloud.firestore {
     function canReadVault(data) {
       return ownsParent(data) || ((isPrivileged() || hasRole('memberAdmin')) && belongsToTenant(data));
     }
+    // ── avatars (privacy 1.19, D-P4-10) ─────────────────────────────────────────
+    // A person's avatar is a picture OF that person; the avatar doc id is the prefixed
+    // key `person.<personKey>` (newAvatarModel). Until 2026-08-01 any member of the
+    // tenant could create or replace it, i.e. upload a portrait of someone else as that
+    // person's picture — precisely the case the photo declaration (`usageImages`) is
+    // about. Person avatars are therefore owner-or-memberAdmin; every other avatar
+    // (org, resource, section, …) stays ordinary tenant content, written by whoever
+    // maintains that record. This is a write gate only: it does NOT make `usageImages`
+    // enforceable — the bytes are served unsigned from the imgix CDN.
+    function isPersonAvatar(id) {
+      return id.matches('^person[.].*');
+    }
+    function canWriteAvatar(id) {
+      return !isPersonAvatar(id)
+             || id == 'person.' + callerPersonKey()
+             || isPrivileged() || hasRole('memberAdmin');
+    }
     // A document belongs to the caller's tenant when their tenant is listed on the
     // document, or when the document is shared via the 'system' tenant.
     function belongsToTenant(data) {
@@ -248,7 +265,7 @@ service cloud.firestore {
       allow delete: if tenantDelete()
                      && (!isSensitiveChannel(resource.data) || canWriteSensitive(resource.data));
     }
-    match /avatars/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /avatars/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate() && canWriteAvatar(id); allow delete: if tenantDelete() && canWriteAvatar(id); }
     match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /calevents/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /comments/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }

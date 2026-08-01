@@ -81,7 +81,7 @@
   "userLanguage": { "label": "Language" },
   "nameDisplay": { "label": "Name display" },
   "srv": { "description": "The following settings apply to the use of your data by the SRV." },
-  "usageImages": { "label": "Images" },
+  "usageImages": { "label": "Photos", "helper": "The person's declaration: whether they may be photographed and whether their picture may be published. Honoured organisationally, not enforced technically." },
   "usageDateOfBirth": { "label": "Date of birth" },
   "usagePostalAddress": { "label": "Postal address" },
   "usageEmail": { "label": "E-mail" },

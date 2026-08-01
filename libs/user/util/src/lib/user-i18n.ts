@@ -87,6 +87,7 @@ export const USER_I18N_KEYS = {
   nameDisplay_label:                PFX + 'nameDisplay.label',
   srv_description:                  PFX + 'srv.description',
   usageImages_label:                PFX + 'usageImages.label',
+  usageImages_helper:               PFX + 'usageImages.helper',
   usageDateOfBirth_label:           PFX + 'usageDateOfBirth.label',
   usagePostalAddress_label:         PFX + 'usagePostalAddress.label',
   usageEmail_label:                 PFX + 'usageEmail.label',
