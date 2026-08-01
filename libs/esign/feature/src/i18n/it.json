@@ -1,8 +1,15 @@
 {
   "list": { "title": "Firme elettroniche" },
   "empty": "Nessun processo di firma trovato.",
+  "close": "Chiudere",
+  "retry": "Riprovare",
   "delete": { "error": "Non è stato possibile eliminare il processo di firma." },
-  "send": { "error": "Non è stato possibile inviare il documento." },
+  "send": {
+    "label": "Inviare",
+    "error": "Non è stato possibile inviare il documento.",
+    "ok": "Il documento è stato inviato per la firma.",
+    "failed": "Invio non riuscito"
+  },
   "upload": { "error": "File troppo grande (max. 40 MB) o formato errato." },
   "scan": { "no_fields": "Nessun campo di firma trovato nel documento. Utilizzare un PDF con Text Field Patterns incorporati." },
   "actionsheet": {
@@ -11,5 +18,57 @@
     "doc_share": "Condividere",
     "doc_send": "Inviare per e-mail",
     "delete": "Eliminare processo di firma"
+  },
+  "email": {
+    "title": "Inviare il documento per e-mail",
+    "sent": "L'e-mail è stata inviata.",
+    "recipients": {
+      "label": "Destinatari",
+      "placeholder": "nome@example.com, …",
+      "helper": "Uno o più indirizzi e-mail, separati da virgole"
+    },
+    "subject": {
+      "label": "Oggetto (facoltativo)",
+      "placeholder": "Oggetto dell'e-mail"
+    },
+    "body": {
+      "label": "Messaggio (facoltativo)",
+      "placeholder": "Lasciare vuoto per il testo predefinito"
+    },
+    "include_pdf": { "label": "Allegare il PDF firmato" }
+  },
+  "document": {
+    "title": "Inviare il documento",
+    "uploading": "Caricamento del file…",
+    "scanning": "Rilevamento dei campi di firma…",
+    "no_fields_hint": "Nessun campo di firma trovato in questo PDF. Aggiungere i segnaposto di testo DeepSign (p. es. #deepsign#nome@mail.com#) e riprovare.",
+    "signees_detected": "firmatari rilevati",
+    "page": "pagina",
+    "initiator": {
+      "label": "Iniziatore (nome visualizzato)",
+      "placeholder": "p. es. Comitato Seeclub",
+      "helper": "Viene mostrato nell'e-mail di invito"
+    },
+    "comment": {
+      "label": "Commento (facoltativo)",
+      "placeholder": "Messaggio ai firmatari"
+    },
+    "signature_mode": {
+      "label": "Tipo di firma",
+      "timestamp": "Marca temporale",
+      "advanced": "Avanzata (AES)",
+      "qualified": "Qualificata (QES)"
+    },
+    "jurisdiction": {
+      "label": "Ambito giuridico",
+      "zertes": "ZertES (Svizzera)",
+      "eidas": "eIDAS (UE)"
+    },
+    "send_mail": {
+      "label": "Invio e-mail",
+      "all": "A tutti i firmatari",
+      "others": "Solo agli altri",
+      "none": "Nessuna e-mail"
+    }
   }
 }

@@ -2,6 +2,8 @@ import { Component, computed, effect, inject, input, output, signal, viewChild }
 import { IonButton, IonButtons, IonCol, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonRow, IonSearchbar, IonSpinner, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { City } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { I18nService } from '@okr/shared-i18n';
+import { SWISSCITIES_I18N_KEYS, SwissCitiesI18n } from './swisscities-i18n';
 import { CitySearchStore } from './city-search.store';
 
 @Component({
@@ -19,13 +21,13 @@ import { CitySearchStore } from './city-search.store';
         <ion-col size="12">
           <ion-searchbar #okrSearchCity (ionInput)="onSearchtermChange($event)"
               type="search" inputmode="search"
-              [debounce]="debounce()" [placeholder]="placeholder()">
+              [debounce]="debounce()" [placeholder]="effectivePlaceholder()">
           </ion-searchbar>
           @if (store.loading()) { <ion-spinner name="dots" /> }
           <ion-popover [isOpen]="isPopoverOpen()" [showBackdrop]="true" [dismissOnSelect]="true" (didDismiss)="isPopoverOpen.set(false)">
             <ng-template>
               <ion-toolbar color="primary">
-                <ion-title>Ort suchen</ion-title>
+                <ion-title>{{ i18n.search_title() }}</ion-title>
                 <ion-buttons slot="end">
                   <ion-button (click)="isPopoverOpen.set(false)">
                     <ion-icon slot="icon-only" src="{{'cancel' | svgIcon }}" />
@@ -38,7 +40,7 @@ import { CitySearchStore } from './city-search.store';
                     <ion-label>{{ city.zipCode }} {{ city.name }}</ion-label>
                   </ion-item>
                 } @empty {
-                  <ion-item><ion-label>Keine Übereinstimmungen gefunden.</ion-label></ion-item>
+                  <ion-item><ion-label>{{ i18n.empty() }}</ion-label></ion-item>
                 }
               </ion-list>
             </ng-template>
@@ -50,12 +52,16 @@ import { CitySearchStore } from './city-search.store';
 })
 export class CitySearch {
   protected store = inject(CitySearchStore);
+  protected readonly i18n = inject(I18nService).translateAll(SWISSCITIES_I18N_KEYS) as SwissCitiesI18n;
+
   public countryCode = input('');
-  public placeholder = input('Stadt oder PLZ suchen');
+  /** empty → the translated default placeholder is used */
+  public placeholder = input('');
   public debounce = input(500);
 
   public citySelected = output<City>();
   protected isPopoverOpen = signal(false);
+  protected readonly effectivePlaceholder = computed(() => this.placeholder() || this.i18n.search_placeholder());
   protected hasDataset = computed(() => this.store.cities().length > 0 || this.store.loading());
   protected okrSearchCity = viewChild<IonSearchbar>('okrSearchCity');
 

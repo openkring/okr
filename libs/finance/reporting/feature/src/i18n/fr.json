@@ -1,0 +1,10 @@
+{
+  "balance": { "title": "Bilan" },
+  "income": { "title": "Compte de résultat" },
+  "cashflow": { "title": "Tableau des flux de trésorerie" },
+  "export": { "csv": "Exporter en CSV" },
+  "loading": "Chargement …",
+  "debit": "Débit",
+  "credit": "Crédit",
+  "net": "Solde"
+}

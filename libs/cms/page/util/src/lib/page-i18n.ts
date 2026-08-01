@@ -67,6 +67,7 @@ export const PAGE_I18N_KEYS = {
   graph_help_usage_edit:       PFX + 'type.graph.help.usage.edit',
   graph_help_usage_export:     PFX + 'type.graph.help.usage.export',
   graph_help_usage_roles:     PFX + 'type.graph.help.usage.roles',
+  chat_type_label:              PFX + 'page_type.chat.label',
   blog_type_label:              PFX + 'type.blog.label',
   blog_search:                  PFX + 'type.blog.search',
   blog_filter_all:              PFX + 'type.blog.filter.all',

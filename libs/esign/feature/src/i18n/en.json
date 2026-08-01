@@ -1,8 +1,15 @@
 {
   "list": { "title": "E-signatures" },
   "empty": "No signature processes found.",
+  "close": "Close",
+  "retry": "Try again",
   "delete": { "error": "Signature process could not be deleted." },
-  "send": { "error": "Document could not be sent." },
+  "send": {
+    "label": "Send",
+    "error": "Document could not be sent.",
+    "ok": "Document was sent for signature.",
+    "failed": "Sending failed"
+  },
   "upload": { "error": "File too large (max. 40 MB) or wrong format." },
   "scan": { "no_fields": "No signature fields found in the document. Please use a PDF with embedded Text Field Patterns." },
   "actionsheet": {
@@ -11,5 +18,57 @@
     "doc_share": "Share",
     "doc_send": "Send by e-mail",
     "delete": "Delete signature process"
+  },
+  "email": {
+    "title": "Send document by e-mail",
+    "sent": "E-mail was sent.",
+    "recipients": {
+      "label": "Recipients",
+      "placeholder": "name@example.com, …",
+      "helper": "One or more e-mail addresses, comma-separated"
+    },
+    "subject": {
+      "label": "Subject (optional)",
+      "placeholder": "Subject of the e-mail"
+    },
+    "body": {
+      "label": "Message (optional)",
+      "placeholder": "Leave empty for the default text"
+    },
+    "include_pdf": { "label": "Attach signed PDF" }
+  },
+  "document": {
+    "title": "Send document",
+    "uploading": "Uploading file…",
+    "scanning": "Detecting signature fields…",
+    "no_fields_hint": "No signature fields found in this PDF. Please add DeepSign text markers (e.g. #deepsign#name@mail.com#) and try again.",
+    "signees_detected": "signees detected",
+    "page": "page",
+    "initiator": {
+      "label": "Initiator (display name)",
+      "placeholder": "e.g. Board of Seeclub",
+      "helper": "Shown in the invitation e-mail"
+    },
+    "comment": {
+      "label": "Comment (optional)",
+      "placeholder": "Message to the signees"
+    },
+    "signature_mode": {
+      "label": "Signature type",
+      "timestamp": "Timestamp",
+      "advanced": "Advanced (AES)",
+      "qualified": "Qualified (QES)"
+    },
+    "jurisdiction": {
+      "label": "Jurisdiction",
+      "zertes": "ZertES (Switzerland)",
+      "eidas": "eIDAS (EU)"
+    },
+    "send_mail": {
+      "label": "E-mail dispatch",
+      "all": "To all signees",
+      "others": "Only to others",
+      "none": "No e-mails"
+    }
   }
 }

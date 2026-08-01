@@ -33,7 +33,6 @@
   "default": {
     "type": "Type par défaut"
   },
-
   "activity": {
     "empty": "Aucune activité disponible."
   },
@@ -313,7 +312,7 @@
       "title": "Contenu"
     },
     "image": {
-      "style":  "Styles de l'image (CSS)"
+      "style": "Styles de l'image (CSS)"
     },
     "roleNeeded": {
       "title": "Rôle requis :"
@@ -351,7 +350,7 @@
       "placeholder": "nnn",
       "helper": "Taille en kB."
     },
-    "slot":    {
+    "slot": {
       "label": "Slot",
       "helper": "Le slot désigne le positionnement de l'icône (au début = start, à la fin = end)"
     }
@@ -486,11 +485,11 @@
         "helper": "Le facteur de zoom est utilisé pour agrandir ou réduire l'affichage, par défaut = 2x.",
         "error": "Le facteur de zoom doit être un nombre entier composé uniquement de chiffres."
       },
-      "slot":    {
+      "slot": {
         "label": "Slot",
         "helper": "Le slot désigne le positionnement de l'icône (au début = start, à la fin = end)"
       },
-      "action":  {
+      "action": {
         "label": "Action de l'image",
         "placeholder": "action",
         "helper": "L'action exécutée lors d'un clic sur l'image, p. ex. open, download, etc."
@@ -571,7 +570,6 @@
       "placeholder": "n",
       "helper": "Facteur de zoom pour l'affichage d'une carte.",
       "error": "Le facteur de zoom doit être un nombre entier composé uniquement de chiffres."
-
     },
     "center": {
       "label": "Utiliser la position actuelle comme centre de la carte",
@@ -894,7 +892,7 @@
   "tripstats": {
     "title": "Sorties",
     "label": "Statistiques sur les sorties",
-    "empty":    "Aucune statistique trouvée pour cette année.",
+    "empty": "Aucune statistique trouvée pour cette année.",
     "col": {
       "name": "Nom",
       "km": "km",
@@ -939,7 +937,6 @@
       "helper": "L'URL de base est ajoutée comme préfixe à une URL relative."
     }
   },
-
   "section_type": {
     "label": "Type de section",
     "helper": "Le type d'une section, principalement utilisé comme filtre dans les listes de sections.",
@@ -1076,5 +1073,20 @@
       "edit": "Modifier la configuration de la vidéo",
       "description": "La section affiche une vidéo YouTube. Convient p. ex. pour des tutoriels, du marketing, etc."
     }
+  },
+  "message_center": {
+    "title": "Sélectionner les destinataires",
+    "subject": "Objet : ",
+    "from": "De : ",
+    "from_placeholder": "email@domain.com",
+    "cc": "CC : ",
+    "bcc": "BCC : ",
+    "address_list_placeholder": "email1@domain.com, email2@domain.com",
+    "hide_receivers": "Masquer les adresses des destinataires",
+    "provider": "Fournisseur",
+    "template": "Modèle : ",
+    "template_placeholder": "p. ex. scs_password_reset",
+    "all_groups": "Tous les groupes",
+    "search_placeholder": "Rechercher …"
   }
 }

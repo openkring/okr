@@ -1,0 +1,7 @@
+{
+  "search": {
+    "title": "Buscar localidad",
+    "placeholder": "Buscar ciudad o código postal"
+  },
+  "empty": "No se han encontrado coincidencias."
+}

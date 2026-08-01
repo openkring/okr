@@ -1,0 +1,10 @@
+{
+  "balance": { "title": "Balance de situación" },
+  "income": { "title": "Cuenta de resultados" },
+  "cashflow": { "title": "Estado de flujos de efectivo" },
+  "export": { "csv": "Exportar CSV" },
+  "loading": "Cargando …",
+  "debit": "Debe",
+  "credit": "Haber",
+  "net": "Saldo"
+}

@@ -1,0 +1,18 @@
+{
+  "list": { "title": "Zahlungsaufträge" },
+  "empty": "Keine Zahlungsaufträge gefunden.",
+  "approve": { "label": "Freigeben" },
+  "actionsheet": {
+    "view": "Zahlungsauftrag anzeigen",
+    "edit": "Zahlungsauftrag ändern",
+    "create": "Zahlungsauftrag erstellen"
+  },
+  "order": {
+    "title": "Zahlungsauftrag",
+    "download_pain001": "pain.001 herunterladen",
+    "status": "Status",
+    "execution": "Ausführungsdatum",
+    "created_by": "Erstellt von",
+    "approved_by": "Freigegeben von"
+  }
+}

@@ -1,7 +1,6 @@
 {
   "orgs": "Organizations",
   "empty": "No organizations found.",
-
   "copy": {
     "email": {
       "conf": "The emails were copied."
@@ -22,7 +21,6 @@
   "view": {
     "label": "View organization"
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssssss",
@@ -99,7 +97,6 @@
     "label": "Phone",
     "placeholder": "+41 XX XXX XX XX"
   },
-
   "org_type": {
     "label": "Organization type",
     "helper": "The type of an organization (e.g. company, association/club, administration, etc.).",
@@ -132,5 +129,11 @@
     "all": {
       "label": "All"
     }
+  },
+  "zefix": {
+    "title": "Zefix search",
+    "empty": "No matches found.",
+    "search_error": "Zefix search failed. Please try again.",
+    "details_error": "Details could not be loaded. Please try again."
   }
 }

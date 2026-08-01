@@ -1,0 +1,10 @@
+{
+  "balance": { "title": "Balance sheet" },
+  "income": { "title": "Income statement" },
+  "cashflow": { "title": "Cash flow statement" },
+  "export": { "csv": "Export CSV" },
+  "loading": "Loading …",
+  "debit": "Debit",
+  "credit": "Credit",
+  "net": "Net"
+}

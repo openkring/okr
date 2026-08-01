@@ -63,6 +63,14 @@
     "label": "Delete invoice",
     "confirm": "Do you really want to delete the invoice ?"
   },
+  "qr": {
+    "title": "Scan QR invoice",
+    "process": "Process",
+    "content": {
+      "label": "QR content (from camera or entered manually)",
+      "placeholder": "SPC | 0200 | …"
+    }
+  },
   "readonly": {
     "banner": "This list is read-only. The accounts payable are managed in Bexio."
   },

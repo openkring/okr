@@ -2,6 +2,13 @@
   "singular": "Invoice",
   "plural": "Accounts receivable invoices",
   "aging": "Accounts receivable aging",
+  "aging_bucket": {
+    "b0_30": "0–30 days",
+    "b31_60": "31–60 days",
+    "b61_90": "61–90 days",
+    "b90_plus": ">90 days"
+  },
+  "aging_due": "Due",
   "empty": "No invoices found",
   "list": {
     "title": "Invoice overview"

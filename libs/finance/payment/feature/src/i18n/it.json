@@ -1,0 +1,18 @@
+{
+  "list": { "title": "Ordini di pagamento" },
+  "empty": "Nessun ordine di pagamento trovato.",
+  "approve": { "label": "Approva" },
+  "actionsheet": {
+    "view": "Visualizza ordine di pagamento",
+    "edit": "Modifica ordine di pagamento",
+    "create": "Crea ordine di pagamento"
+  },
+  "order": {
+    "title": "Ordine di pagamento",
+    "download_pain001": "Scarica pain.001",
+    "status": "Stato",
+    "execution": "Data di esecuzione",
+    "created_by": "Creato da",
+    "approved_by": "Approvato da"
+  }
+}

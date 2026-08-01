@@ -2,6 +2,13 @@
   "singular": "Facture",
   "plural": "Factures débiteurs",
   "aging": "Balance âgée des débiteurs",
+  "aging_bucket": {
+    "b0_30": "0–30 jours",
+    "b31_60": "31–60 jours",
+    "b61_90": "61–90 jours",
+    "b90_plus": ">90 jours"
+  },
+  "aging_due": "Échéance",
   "empty": "Aucune facture trouvée",
   "list": {
     "title": "Aperçu des factures"

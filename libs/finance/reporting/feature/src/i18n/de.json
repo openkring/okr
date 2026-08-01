@@ -1,0 +1,10 @@
+{
+  "balance": { "title": "Bilanz" },
+  "income": { "title": "Erfolgsrechnung" },
+  "cashflow": { "title": "Geldflussrechnung" },
+  "export": { "csv": "CSV exportieren" },
+  "loading": "Wird geladen …",
+  "debit": "Soll",
+  "credit": "Haben",
+  "net": "Saldo"
+}

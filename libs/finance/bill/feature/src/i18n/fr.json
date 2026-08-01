@@ -63,6 +63,14 @@
     "label": "Supprimer la facture",
     "confirm": "Voulez-vous vraiment supprimer la facture ?"
   },
+  "qr": {
+    "title": "Scanner la facture QR",
+    "process": "Traiter",
+    "content": {
+      "label": "Contenu QR (caméra ou saisie manuelle)",
+      "placeholder": "SPC | 0200 | …"
+    }
+  },
   "readonly": {
     "banner": "Cette liste est en lecture seule. Les créanciers sont gérés dans Bexio."
   },

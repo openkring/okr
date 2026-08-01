@@ -1,7 +1,9 @@
-import { Component, computed, input, viewChild } from '@angular/core';
+import { Component, computed, inject, input, viewChild } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { I18nService } from '@okr/shared-i18n';
+import { PAGE_I18N_KEYS, PageI18n } from '@okr/cms-page-util';
 import { Menu } from '@okr/cms-menu-feature';
 import { MatrixChat } from '@okr/chat-feature';
 
@@ -28,7 +30,7 @@ import { MatrixChat } from '@okr/chat-feature';
       <ion-header>
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-          <ion-title>Chat</ion-title>
+          <ion-title>{{ i18n.chat_type_label() }}</ion-title>
           <!-- room context menu, hoisted from the room-list toolbar; action delegated to MatrixChat -->
           @if(canManageRooms()) {
             <ion-buttons slot="end">
@@ -55,6 +57,7 @@ import { MatrixChat } from '@okr/chat-feature';
   `
 })
 export class ChatPage {
+  protected readonly i18n = inject(I18nService).translateAll(PAGE_I18N_KEYS) as PageI18n;
 
   // inputs
   public color = input('secondary');

@@ -47,7 +47,7 @@ import { ZefixLookup } from './zefix-lookup';
               </ion-col>
               @if (isLegalEntity()) {
                 <ion-col size="2" class="ion-text-center">
-                  <okr-zefix-lookup [orgName]="name()" (detailsLoaded)="onZefixSelected($event)" />
+                  <okr-zefix-lookup [i18n]="i18n()" [orgName]="name()" (detailsLoaded)="onZefixSelected($event)" />
                 </ion-col>
               }
             </ion-row>

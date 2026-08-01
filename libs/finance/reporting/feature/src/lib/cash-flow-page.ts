@@ -4,8 +4,10 @@ import { IonContent, IonHeader, IonItem, IonLabel,
   IonList, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { BookingModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { ReportingService } from '@okr/finance-reporting-data-access';
+import { REPORTING_I18N_KEYS, ReportingI18n } from '@okr/finance-reporting-util';
 
 @Component({
   selector: 'okr-cash-flow-page',
@@ -13,10 +15,10 @@ import { ReportingService } from '@okr/finance-reporting-data-access';
   imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonLabel],
   template: `
     <ion-header>
-      <ion-toolbar><ion-title>Geldflussrechnung</ion-title></ion-toolbar>
+      <ion-toolbar><ion-title>{{ i18n.cashflow_title() }}</ion-title></ion-toolbar>
     </ion-header>
     <ion-content>
-      @if (journalResource.isLoading()) { <p>Loading...</p> }
+      @if (journalResource.isLoading()) { <p>{{ i18n.loading() }}</p> }
       @else {
         <ion-list>
           @for (b of journalResource.value() ?? []; track b.okey) {
@@ -30,6 +32,7 @@ import { ReportingService } from '@okr/finance-reporting-data-access';
   `,
 })
 export class CashFlowPage {
+  protected readonly i18n = inject(I18nService).translateAll(REPORTING_I18N_KEYS) as ReportingI18n;
   private readonly accountingStore = inject(AccountingStore);
   private readonly reportingService = inject(ReportingService);
 

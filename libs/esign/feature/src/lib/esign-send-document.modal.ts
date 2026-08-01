@@ -8,8 +8,9 @@ import {
 } from '@ionic/angular/standalone';
 
 import { NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { I18nService } from '@okr/shared-i18n';
 import { validateVestTree } from '@okr/shared-util-angular';
-import { EsignSendFormModel, esignSendValidations } from '@okr/esign-util';
+import { ESIGN_I18N_KEYS, EsignI18n, EsignSendFormModel, esignSendValidations } from '@okr/esign-util';
 import { EsignScanPredefinedResponse, EsignService } from '@okr/esign-data-access';
 
 type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' | 'error';
@@ -28,9 +29,9 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Dokument senden</ion-title>
+        <ion-title>{{ i18n.document_title() }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="close()">Schliessen</ion-button>
+          <ion-button (click)="close()">{{ i18n.close() }}</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -52,17 +53,14 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
 
             @switch (status()) {
               @case ('uploading') {
-                <ion-item lines="none"><ion-spinner name="dots" slot="start" /><ion-label>Datei wird hochgeladen…</ion-label></ion-item>
+                <ion-item lines="none"><ion-spinner name="dots" slot="start" /><ion-label>{{ i18n.uploading() }}</ion-label></ion-item>
               }
               @case ('scanning') {
-                <ion-item lines="none"><ion-spinner name="dots" slot="start" /><ion-label>Signaturfelder werden erkannt…</ion-label></ion-item>
+                <ion-item lines="none"><ion-spinner name="dots" slot="start" /><ion-label>{{ i18n.scanning() }}</ion-label></ion-item>
               }
               @case ('no-fields') {
                 <ion-item lines="none" color="warning">
-                  <ion-label class="ion-text-wrap">
-                    Keine Signaturfelder in diesem PDF gefunden. Bitte fügen Sie DeepSign-Textmarken
-                    (z. B. <code>#deepsign#name&#64;mail.com#</code>) ein und versuchen Sie es erneut.
-                  </ion-label>
+                  <ion-label class="ion-text-wrap">{{ i18n.no_fields_hint() }}</ion-label>
                 </ion-item>
               }
               @case ('error') {
@@ -75,12 +73,12 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
                 <ion-row>
                   <ion-col size="12">
                     <ion-item lines="none">
-                      <ion-label><h3>{{ scan.signatureFields.length }} Unterzeichner erkannt</h3></ion-label>
+                      <ion-label><h3>{{ scan.signatureFields.length }} {{ i18n.signees_detected() }}</h3></ion-label>
                     </ion-item>
                     @for (sf of scan.signatureFields; track sf.email) {
                       <ion-item lines="none">
                         <ion-label class="ion-text-wrap">
-                          <p>{{ sf.email }} · {{ sf.signatureType }} · Seite {{ sf.autographPosition.pageNumber }}</p>
+                          <p>{{ sf.email }} · {{ sf.signatureType }} · {{ i18n.page() }} {{ sf.autographPosition.pageNumber }}</p>
                         </ion-label>
                       </ion-item>
                     }
@@ -92,41 +90,41 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
             @if (status() === 'ready' || status() === 'sending') {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="initiatorI18n" [value]="formData().initiatorAliasName"
+                  <okr-text-input [i18n]="initiatorI18n()" [value]="formData().initiatorAliasName"
                     (valueChange)="onFieldChange('initiatorAliasName', $event)"
                     [readOnly]="false" [autofocus]="true" [maxLength]="30" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
-                    <ion-select label="Signaturart" labelPlacement="floating"
+                    <ion-select [label]="i18n.signature_mode_label()" labelPlacement="floating"
                       [value]="formData().signatureMode" (ionChange)="onFieldChange('signatureMode', $event.detail.value)">
-                      <ion-select-option value="timestamp">Zeitstempel</ion-select-option>
-                      <ion-select-option value="advanced">Fortgeschritten (AES)</ion-select-option>
-                      <ion-select-option value="qualified">Qualifiziert (QES)</ion-select-option>
+                      <ion-select-option value="timestamp">{{ i18n.signature_mode_timestamp() }}</ion-select-option>
+                      <ion-select-option value="advanced">{{ i18n.signature_mode_advanced() }}</ion-select-option>
+                      <ion-select-option value="qualified">{{ i18n.signature_mode_qualified() }}</ion-select-option>
                     </ion-select>
                   </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
-                    <ion-select label="Rechtsraum" labelPlacement="floating"
+                    <ion-select [label]="i18n.jurisdiction_label()" labelPlacement="floating"
                       [value]="formData().jurisdiction" (ionChange)="onFieldChange('jurisdiction', $event.detail.value)">
-                      <ion-select-option value="zertes">ZertES (Schweiz)</ion-select-option>
-                      <ion-select-option value="eidas">eIDAS (EU)</ion-select-option>
+                      <ion-select-option value="zertes">{{ i18n.jurisdiction_zertes() }}</ion-select-option>
+                      <ion-select-option value="eidas">{{ i18n.jurisdiction_eidas() }}</ion-select-option>
                     </ion-select>
                   </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
-                    <ion-select label="E-Mail-Versand" labelPlacement="floating"
+                    <ion-select [label]="i18n.send_mail_label()" labelPlacement="floating"
                       [value]="formData().sendMail" (ionChange)="onFieldChange('sendMail', $event.detail.value)">
-                      <ion-select-option value="all">An alle Unterzeichner</ion-select-option>
-                      <ion-select-option value="others">Nur an andere</ion-select-option>
-                      <ion-select-option value="none">Keine E-Mails</ion-select-option>
+                      <ion-select-option value="all">{{ i18n.send_mail_all() }}</ion-select-option>
+                      <ion-select-option value="others">{{ i18n.send_mail_others() }}</ion-select-option>
+                      <ion-select-option value="none">{{ i18n.send_mail_none() }}</ion-select-option>
                     </ion-select>
                   </ion-item>
                 </ion-col>
                 <ion-col size="12">
-                  <okr-notes-input [i18n]="commentI18n" [value]="formData().comment"
+                  <okr-notes-input [i18n]="commentI18n()" [value]="formData().comment"
                     (valueChange)="onFieldChange('comment', $event)" [readOnly]="false" />
                 </ion-col>
               </ion-row>
@@ -137,11 +135,11 @@ type SendStatus = 'uploading' | 'scanning' | 'ready' | 'no-fields' | 'sending' |
 
       @if (status() === 'ready' || status() === 'sending') {
         <ion-button expand="block" [disabled]="!canSend()" (click)="send()">
-          @if (status() === 'sending') { <ion-spinner name="dots" /> } @else { Senden }
+          @if (status() === 'sending') { <ion-spinner name="dots" /> } @else { {{ i18n.send() }} }
         </ion-button>
       }
       @if (status() === 'error') {
-        <ion-button expand="block" fill="outline" (click)="retry()">Erneut versuchen</ion-button>
+        <ion-button expand="block" fill="outline" (click)="retry()">{{ i18n.retry() }}</ion-button>
       }
     </ion-content>
   `,
@@ -150,6 +148,7 @@ export class EsignSendDocumentModal implements OnInit {
   public readonly file       = input.required<File>();
   public readonly tenantId   = input.required<string>();
 
+  protected readonly i18n = inject(I18nService).translateAll(ESIGN_I18N_KEYS) as EsignI18n;
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
   protected readonly esignService  = inject(EsignService);
@@ -178,14 +177,14 @@ export class EsignSendDocumentModal implements OnInit {
 
   protected readonly fileSizeKb = computed(() => Math.round(this.file().size / 1024));
 
-  // Inline German labels for the field primitives (this feature's modals are German-only).
-  protected readonly initiatorI18n: TextInputI18n = {
-    name: 'initiatorAliasName', label: 'Initiant (Anzeigename)',
-    placeholder: 'z. B. Vorstand Seeclub', helper: 'Wird in der Einladungs-E-Mail angezeigt',
-  };
-  protected readonly commentI18n: NotesInputI18n = {
-    name: 'comment', label: 'Kommentar (optional)', placeholder: 'Nachricht an die Unterzeichner',
-  };
+  // adapted at the shared/ui boundary (the field primitives define their own minimal interface)
+  protected readonly initiatorI18n = computed(() => ({
+    name: 'initiatorAliasName', label: this.i18n.initiator_label(),
+    placeholder: this.i18n.initiator_placeholder(), helper: this.i18n.initiator_helper(),
+  } as TextInputI18n));
+  protected readonly commentI18n = computed(() => ({
+    name: 'comment', label: this.i18n.comment_label(), placeholder: this.i18n.comment_placeholder(),
+  } as NotesInputI18n));
 
   public ngOnInit(): void {
     void this.prepare();
@@ -244,10 +243,10 @@ export class EsignSendDocumentModal implements OnInit {
         sendMail: vm.sendMail,
         source: 'user-upload',
       });
-      await this.presentToast('Dokument wurde zur Signatur versendet.', 'success');
+      await this.presentToast(this.i18n.send_ok(), 'success');
       await this.modalController.dismiss(response, 'confirm');
     } catch (error) {
-      await this.presentToast('Senden fehlgeschlagen: ' + this.toMessage(error), 'danger');
+      await this.presentToast(`${this.i18n.send_failed()}: ${this.toMessage(error)}`, 'danger');
       this.status.set('ready');
     }
   }

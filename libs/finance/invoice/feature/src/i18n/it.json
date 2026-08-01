@@ -2,6 +2,13 @@
   "singular": "Fattura",
   "plural": "Fatture debitori",
   "aging": "Scadenzario debitori",
+  "aging_bucket": {
+    "b0_30": "0–30 giorni",
+    "b31_60": "31–60 giorni",
+    "b61_90": "61–90 giorni",
+    "b90_plus": ">90 giorni"
+  },
+  "aging_due": "Scadenza",
   "empty": "Nessuna fattura trovata",
   "list": {
     "title": "Panoramica fatture"

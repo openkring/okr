@@ -26,6 +26,22 @@ export const SECTION_I18N_KEYS = {
   send_confirm2:              PFX + 'send.confirm2',
   email_conf:                 PFX + 'email.conf',
   email_error:                PFX + 'email.error',
+
+  // message-center modal (recipient picker)
+  mc_title:                   PFX + 'message_center.title',
+  mc_subject_label:           PFX + 'message_center.subject',
+  mc_from_label:              PFX + 'message_center.from',
+  mc_from_placeholder:        PFX + 'message_center.from_placeholder',
+  mc_cc_label:                PFX + 'message_center.cc',
+  mc_bcc_label:               PFX + 'message_center.bcc',
+  mc_address_list_placeholder: PFX + 'message_center.address_list_placeholder',
+  mc_hide_receivers:          PFX + 'message_center.hide_receivers',
+  mc_provider_label:          PFX + 'message_center.provider',
+  mc_template_label:          PFX + 'message_center.template',
+  mc_template_placeholder:    PFX + 'message_center.template_placeholder',
+  mc_all_groups:              PFX + 'message_center.all_groups',
+  mc_search_placeholder:      PFX + 'message_center.search_placeholder',
+  group_singular:             '@subject.group.singular',
   default_type:               PFX + 'default.type',
 
   // activity

@@ -4,8 +4,10 @@ import { from } from 'rxjs';
 import { IonButton, IonContent, IonHeader, IonItem, IonLabel,
   IonList, IonNote, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
+import { I18nService } from '@okr/shared-i18n';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { ReportingService } from '@okr/finance-reporting-data-access';
+import { REPORTING_I18N_KEYS, ReportingI18n } from '@okr/finance-reporting-util';
 
 @Component({
   selector: 'okr-balance-sheet-page',
@@ -14,20 +16,20 @@ import { ReportingService } from '@okr/finance-reporting-data-access';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Bilanz</ion-title>
-        <ion-button slot="end" fill="clear" (click)="exportCsv()">Export CSV</ion-button>
+        <ion-title>{{ i18n.balance_title() }}</ion-title>
+        <ion-button slot="end" fill="clear" (click)="exportCsv()">{{ i18n.export_csv() }}</ion-button>
       </ion-toolbar>
     </ion-header>
     <ion-content>
       @if (balancesResource.isLoading()) {
-        <p>Loading...</p>
+        <p>{{ i18n.loading() }}</p>
       } @else {
         <ion-list>
           @for (entry of balancesResource.value() ?? []; track entry.accountKey) {
             <ion-item>
               <ion-label>{{ entry.accountKey }}</ion-label>
               <ion-note slot="end">
-                Dr: {{ entry.totalDebit }} | Cr: {{ entry.totalCredit }} | Net: {{ entry.net }}
+                {{ i18n.debit() }}: {{ entry.totalDebit }} | {{ i18n.credit() }}: {{ entry.totalCredit }} | {{ i18n.net() }}: {{ entry.net }}
               </ion-note>
             </ion-item>
           }
@@ -37,6 +39,7 @@ import { ReportingService } from '@okr/finance-reporting-data-access';
   `,
 })
 export class BalanceSheetPage {
+  protected readonly i18n = inject(I18nService).translateAll(REPORTING_I18N_KEYS) as ReportingI18n;
   private readonly accountingStore = inject(AccountingStore);
   private readonly reportingService = inject(ReportingService);
 

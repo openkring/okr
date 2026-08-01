@@ -12,7 +12,7 @@
   },
   "view": "Sektionskonfiguration anzeigen",
   "edit": "Sektion bearbeiten",
-  "create": "Sektion erstellen",  
+  "create": "Sektion erstellen",
   "delete": {
     "label": "Sektion löschen",
     "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
@@ -33,7 +33,6 @@
   "default": {
     "type": "Default Typ"
   },
-
   "activity": {
     "empty": "Keine Aktivitäten vorhanden."
   },
@@ -56,25 +55,25 @@
       "label": "Effekt"
     },
     "recursive": {
-      "label": "Rekursiv", 
-      "helper": "Linkt auf Alben in den Subdirectories." 
+      "label": "Rekursiv",
+      "helper": "Linkt auf Alben in den Subdirectories."
     },
     "show": {
       "videos": {
-        "label": "Videos anzeigen", 
-        "helper": "Videos werden angezeigt." 
+        "label": "Videos anzeigen",
+        "helper": "Videos werden angezeigt."
       },
       "streaming": {
-        "label": "Streaming-Videos anzeigen", 
-        "helper": "Streaming Videos werden angezeigt." 
+        "label": "Streaming-Videos anzeigen",
+        "helper": "Streaming Videos werden angezeigt."
       },
       "docs": {
-        "label": "Dokumente anzeigen", 
-        "helper": "Zeigt Dokumente." 
+        "label": "Dokumente anzeigen",
+        "helper": "Zeigt Dokumente."
       },
       "pdfs": {
-        "label": "PDFs anzeigen", 
-        "helper": "Zeigt die PDFs an." 
+        "label": "PDFs anzeigen",
+        "helper": "Zeigt die PDFs an."
       }
     }
   },
@@ -227,9 +226,9 @@
     "type": {
       "label": "Chat-Typ"
     },
-    "showChannelList": { 
-      "label": "Kanal-Liste anzeigen", 
-      "helper": "Zeigt die Liste der verfügbaren Chat-Kanäle an." 
+    "showChannelList": {
+      "label": "Kanal-Liste anzeigen",
+      "helper": "Zeigt die Liste der verfügbaren Chat-Kanäle an."
     }
   },
   "context": {
@@ -284,20 +283,20 @@
       "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden, wenn das Feld leer bleibt, werden alle Ereignisse angezeigt."
     },
     "show": {
-      "past": { 
-        "label": "Vergangene Ereignisse anzeigen", 
-        "helper": "Wähle, ob vergangene Ereignisse in der Liste oder im Kalender angezeigt werden sollen." 
+      "past": {
+        "label": "Vergangene Ereignisse anzeigen",
+        "helper": "Wähle, ob vergangene Ereignisse in der Liste oder im Kalender angezeigt werden sollen."
       },
-      "future": { 
-        "label": "Kommende Ereignisse anzeigen", 
-        "helper": "Wähle, ob zukünftige Ereignisse in der Liste oder im Kalender angezeigt werden sollen." 
+      "future": {
+        "label": "Kommende Ereignisse anzeigen",
+        "helper": "Wähle, ob zukünftige Ereignisse in der Liste oder im Kalender angezeigt werden sollen."
       },
-      "time": { 
+      "time": {
         "label": "Zeit des Ereignisses anzeigen",
         "helper": "wähle, ob zum Datum auch die Zeit des Ereignisses angezeigt werden soll."
       },
-      "location": { 
-        "label": "Veranstaltungsort anzeigen", 
+      "location": {
+        "label": "Veranstaltungsort anzeigen",
         "helper": "Wähle, ob der Ort des Ereignisses angezeigt werden soll."
       }
     }
@@ -313,7 +312,7 @@
       "title": "Inhalt"
     },
     "image": {
-      "style":  "Bild Styles (CSS)"
+      "style": "Bild Styles (CSS)"
     },
     "roleNeeded": {
       "title": "Benötigte Rolle:"
@@ -346,12 +345,12 @@
     "helper": "Der Name des Symbols.",
     "title": "Icon Konfiguration",
     "subtitle": "Wähle ein Icon und seine Darstellung",
-    "size": { 
-      "label": "Grösse", 
-      "placeholder": "nnn", 
-      "helper": "Grösse in kB." 
+    "size": {
+      "label": "Grösse",
+      "placeholder": "nnn",
+      "helper": "Grösse in kB."
     },
-    "slot":    { 
+    "slot": {
       "label": "Slot",
       "helper": "Slot bezeichnet die Positionierung des Icons (am Anfang = start, am Schluss = end)"
     }
@@ -480,28 +479,28 @@
         "placeholder": "8px",
         "helper": "Die Abrundung der Ecken eines Rahmens."
       },
-      "zoom": { 
-        "label": "Zoom-Faktor", 
-        "placeholder": "n", 
+      "zoom": {
+        "label": "Zoom-Faktor",
+        "placeholder": "n",
         "helper": "Der Zoomfaktor wird verwendet, um die Darstellung zu vergrössern oder zu verkleinern, default = 2x.",
         "error": "Der Zoomfaktor muss eine Ganzzahl aus lauter Ziffern sein."
       },
-      "slot":    { 
+      "slot": {
         "label": "Slot",
         "helper": "Slot bezeichnet die Positionierung des Icons (am Anfang = start, am Schluss = end)"
       },
-      "action":  {
+      "action": {
         "label": "Bild-Aktion",
         "placeholder": "action",
         "helper": "Die Aktion, die beim Klick auf das Bild ausgeführt wird, z.B. open, download, etc."
       },
-      "isThumbnail": { 
-        "label": "Vorschaubild", 
+      "isThumbnail": {
+        "label": "Vorschaubild",
         "helper": "Das Bild wird als Thumbnail angezeigt."
       },
-      "fill": { 
-        "label": "Füllung", 
-        "helper": "Darstellungsart von Flächen" 
+      "fill": {
+        "label": "Füllung",
+        "helper": "Darstellungsart von Flächen"
       },
       "hasPriority": {
         "label": "Priorität",
@@ -543,39 +542,38 @@
       "helper": "Die maximale Anzahl Einträge, die angezeigt werden sollen.",
       "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden, wenn das Feld leer bleibt, werden alle Einträge angezeigt."
     },
-    "showPastItems": { 
-      "label": "Vergangene Ereignisse anzeigen", 
-      "helper": "Wähle, ob vergangene Ereignisse in der Liste oder im Kalender angezeigt werden sollen." 
+    "showPastItems": {
+      "label": "Vergangene Ereignisse anzeigen",
+      "helper": "Wähle, ob vergangene Ereignisse in der Liste oder im Kalender angezeigt werden sollen."
     },
-    "showUpcomingItems": { 
-      "label": "Kommende Ereignisse anzeigen", 
-      "helper": "Wähle, ob zukünftige Ereignisse in der Liste oder im Kalender angezeigt werden sollen." 
+    "showUpcomingItems": {
+      "label": "Kommende Ereignisse anzeigen",
+      "helper": "Wähle, ob zukünftige Ereignisse in der Liste oder im Kalender angezeigt werden sollen."
     }
   },
   "map": {
     "label": "Karte",
     "edit": "Karten-Konfiguration ändern",
     "description": "Sektion zeigt einen Kartenausschnitt",
-    "latitude": { 
-      "label": "Breitengrad", 
-      "placeholder": "nn.nnnnn", 
+    "latitude": {
+      "label": "Breitengrad",
+      "placeholder": "nn.nnnnn",
       "helper": "Der Breitengrad, z.B. 47.2266"
     },
-    "longitude": { 
-      "label": "Längengrad", 
-      "placeholder": "nn.nnnn", 
+    "longitude": {
+      "label": "Längengrad",
+      "placeholder": "nn.nnnn",
       "helper": "Der Längengrad, z.B. 8.7334"
     },
-    "zoom": { 
-      "label": "Zoom-Faktor", 
-      "placeholder": "n", 
-      "helper": "Zoom-Faktor für die Anzeige einer Karte.", 
+    "zoom": {
+      "label": "Zoom-Faktor",
+      "placeholder": "n",
+      "helper": "Zoom-Faktor für die Anzeige einer Karte.",
       "error": "Der Zoomfaktor muss eine Ganzzahl aus lauter Ziffern sein."
-
     },
-    "center": { 
-      "label": "Aktuellen Standort als Karten-Zentrum verwenden", 
-      "helper": "Der aktuelle GPS-Standort deines Gerätes wird als Karten-Zentrum verwendet." 
+    "center": {
+      "label": "Aktuellen Standort als Karten-Zentrum verwenden",
+      "helper": "Der aktuelle GPS-Standort deines Gerätes wird als Karten-Zentrum verwendet."
     },
     "coordinates": {
       "label": "Koordinaten",
@@ -672,13 +670,13 @@
       "responsibility": "Verantwortliche wählen"
     },
     "show": {
-      "name": { 
-        "label": "Name anzeigen", 
-        "helper": "Zeigt den Namen der Person." 
+      "name": {
+        "label": "Name anzeigen",
+        "helper": "Zeigt den Namen der Person."
       },
-      "label": { 
-        "label": "Beschriftung anzeigen", 
-        "helper": "Zeigt die Beschriftung an." 
+      "label": {
+        "label": "Beschriftung anzeigen",
+        "helper": "Zeigt die Beschriftung an."
       }
     }
   },
@@ -727,7 +725,7 @@
     "show": {
       "avatar": {
         "label": "Avatar anzeigen",
-        "helper": "Zeigt ein Avatar Bild der Person, Gruppe oder Organisation an." 
+        "helper": "Zeigt ein Avatar Bild der Person, Gruppe oder Organisation an."
       },
       "name": {
         "label": "Name anzeigen",
@@ -735,7 +733,7 @@
       },
       "description": {
         "label": "Beschreibung anzeigen",
-        "helper": "Zeigt eine kurze Beschreibung der Zuständigkeiten an." 
+        "helper": "Zeigt eine kurze Beschreibung der Zuständigkeiten an."
       }
     }
   },
@@ -792,7 +790,7 @@
         "label": "Gap / Abstand",
         "placeholder": "1px",
         "helper": "Der Zwischenraum zwischen den Zellen in der Tabelle in Pixel, z.B. 10px"
-      },      
+      },
       "backgroundColor": {
         "label": "Hintergrundfarbe",
         "placeholder": "#FFFFFF",
@@ -894,7 +892,7 @@
   "tripstats": {
     "title": "Ausfahrten",
     "label": "Statistiken über Ausfahrten",
-    "empty":    "Keine Statistiken für dieses Jahr gefunden.",
+    "empty": "Keine Statistiken für dieses Jahr gefunden.",
     "col": {
       "name": "Name",
       "km": "km",
@@ -939,7 +937,6 @@
       "helper": "Die Basis-URL wird einer relativen URL als Prefix voran gestellt."
     }
   },
-
   "section_type": {
     "label": "Sektions-Art",
     "helper": "Der Typ einer Sektion, hauptsächlich als Filter in Sektionslisten verwendet.",
@@ -1076,5 +1073,20 @@
       "edit": "Video Konfiguration ändern",
       "description": "Sektion zeigt ein Youtube Video. Geeignet z.B. für Anleitungen, Marketing etc."
     }
+  },
+  "message_center": {
+    "title": "Empfänger auswählen",
+    "subject": "Betreff: ",
+    "from": "Von: ",
+    "from_placeholder": "email@domain.com",
+    "cc": "CC: ",
+    "bcc": "BCC: ",
+    "address_list_placeholder": "email1@domain.com, email2@domain.com",
+    "hide_receivers": "Empfängeradressen verbergen",
+    "provider": "Provider",
+    "template": "Template: ",
+    "template_placeholder": "z.B. scs_password_reset",
+    "all_groups": "Alle Gruppen",
+    "search_placeholder": "Suchen …"
   }
 }

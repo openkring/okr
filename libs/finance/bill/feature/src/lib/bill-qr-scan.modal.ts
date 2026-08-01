@@ -8,6 +8,8 @@ import {
 } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
+import { BILL_I18N_KEYS, BillI18n } from '@okr/finance-bill-util';
 
 @Component({
   selector: 'okr-bill-qr-scan-modal',
@@ -21,23 +23,24 @@ import { AppStore } from '@okr/shared-feature';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>QR-Rechnung scannen</ion-title>
+        <ion-title>{{ i18n.qr_title() }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="dismiss()">Abbrechen</ion-button>
-          <ion-button (click)="parse()" [disabled]="!qrContent">Verarbeiten</ion-button>
+          <ion-button (click)="dismiss()">{{ i18n.cancel() }}</ion-button>
+          <ion-button (click)="parse()" [disabled]="!qrContent">{{ i18n.qr_process() }}</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content>
       <ion-item>
-        <ion-label position="stacked">QR-Inhalt (aus Kamera oder manuell)</ion-label>
-        <ion-textarea [(ngModel)]="qrContent" rows="10" placeholder="SPC&#10;0200&#10;..." />
+        <ion-label position="stacked">{{ i18n.qr_content_label() }}</ion-label>
+        <ion-textarea [(ngModel)]="qrContent" rows="10" [placeholder]="i18n.qr_content_placeholder()" />
       </ion-item>
       @if (error) { <p style="color:red">{{ error }}</p> }
     </ion-content>
   `,
 })
 export class BillQrScanModal {
+  protected readonly i18n = inject(I18nService).translateAll(BILL_I18N_KEYS) as BillI18n;
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
   private readonly functions = (() => {

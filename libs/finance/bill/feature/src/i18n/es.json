@@ -63,6 +63,14 @@
     "label": "Eliminar factura",
     "confirm": "¿Desea realmente eliminar la factura ?"
   },
+  "qr": {
+    "title": "Escanear factura QR",
+    "process": "Procesar",
+    "content": {
+      "label": "Contenido QR (cámara o manual)",
+      "placeholder": "SPC | 0200 | …"
+    }
+  },
   "readonly": {
     "banner": "Esta lista es de solo lectura. Los acreedores se gestionan en Bexio."
   },

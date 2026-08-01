@@ -33,7 +33,6 @@
   "default": {
     "type": "Default type"
   },
-
   "activity": {
     "empty": "No activities available."
   },
@@ -313,7 +312,7 @@
       "title": "Content"
     },
     "image": {
-      "style":  "Image styles (CSS)"
+      "style": "Image styles (CSS)"
     },
     "roleNeeded": {
       "title": "Required role:"
@@ -351,7 +350,7 @@
       "placeholder": "nnn",
       "helper": "Size in kB."
     },
-    "slot":    {
+    "slot": {
       "label": "Slot",
       "helper": "Slot indicates the positioning of the icon (at the start = start, at the end = end)"
     }
@@ -486,11 +485,11 @@
         "helper": "The zoom factor is used to enlarge or reduce the display, default = 2x.",
         "error": "The zoom factor must be a whole number of digits."
       },
-      "slot":    {
+      "slot": {
         "label": "Slot",
         "helper": "Slot indicates the positioning of the icon (at the start = start, at the end = end)"
       },
-      "action":  {
+      "action": {
         "label": "Image action",
         "placeholder": "action",
         "helper": "The action performed when clicking on the image, e.g. open, download, etc."
@@ -571,7 +570,6 @@
       "placeholder": "n",
       "helper": "Zoom factor for displaying a map.",
       "error": "The zoom factor must be a whole number of digits."
-
     },
     "center": {
       "label": "Use current location as map center",
@@ -894,7 +892,7 @@
   "tripstats": {
     "title": "Trips",
     "label": "Statistics on trips",
-    "empty":    "No statistics found for this year.",
+    "empty": "No statistics found for this year.",
     "col": {
       "name": "Name",
       "km": "km",
@@ -939,7 +937,6 @@
       "helper": "The base URL is prepended to a relative URL as a prefix."
     }
   },
-
   "section_type": {
     "label": "Section type",
     "helper": "The type of a section, mainly used as a filter in section lists.",
@@ -1076,5 +1073,20 @@
       "edit": "Change video configuration",
       "description": "Section shows a YouTube video. Suitable e.g. for instructions, marketing etc."
     }
+  },
+  "message_center": {
+    "title": "Select recipients",
+    "subject": "Subject: ",
+    "from": "From: ",
+    "from_placeholder": "email@domain.com",
+    "cc": "CC: ",
+    "bcc": "BCC: ",
+    "address_list_placeholder": "email1@domain.com, email2@domain.com",
+    "hide_receivers": "Hide recipient addresses",
+    "provider": "Provider",
+    "template": "Template: ",
+    "template_placeholder": "e.g. scs_password_reset",
+    "all_groups": "All groups",
+    "search_placeholder": "Search …"
   }
 }

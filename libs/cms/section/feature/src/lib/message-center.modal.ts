@@ -2,22 +2,13 @@ import { Component, computed, effect, inject, input, linkedSignal, signal } from
 import { rxResource } from '@angular/core/rxjs-interop';
 import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonInput, IonIcon, IonItem, IonList, IonSearchbar, IonSelect, IonSelectOption, IonTitle, IonToolbar, ModalController, IonLabel } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
-import { signalStore, withProps } from '@ngrx/signals';
 
 import { DeliveryTypes } from '@okr/shared-categories';
 import { AppStore } from '@okr/shared-feature';
 import { DeliveryType, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
-
-const MessageCenterStore = signalStore(
-  withProps(() => ({ i18nService: inject(I18nService) })),
-  withProps((store) => ({
-    i18n: store.i18nService.translateAll({
-      group_singular: '@subject.group.singular',
-    }),
-  })),
-);
+import { SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
 
 import { OkrAvatar } from '@okr/avatar-ui';
 import { MembershipService } from '@okr/relationship-membership-data-access';
@@ -28,7 +19,6 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
 @Component({
   selector: 'okr-message-center-modal',
   standalone: true,
-  providers: [MessageCenterStore],
   imports: [
     SvgIconPipe,
     OkrAvatar,
@@ -40,14 +30,14 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
       <!-- Title bar -->
       <ion-toolbar color="secondary">
         <ion-buttons slot="start">
-          <ion-button (click)="cancel()">Abbrechen</ion-button>
+          <ion-button (click)="cancel()">{{ i18n.cancel() }}</ion-button>
         </ion-buttons>
-        <ion-title>Empfänger auswählen</ion-title>
+        <ion-title>{{ i18n.mc_title() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="showInputFields.set(!showInputFields())">
             <ion-icon src="{{ (showInputFields() ? 'chevron-up' : 'chevron-down') | svgIcon }}" />
           </ion-button>
-          <ion-button (click)="ok()"><strong>OK</strong></ion-button>
+          <ion-button (click)="ok()"><strong>{{ i18n.ok() }}</strong></ion-button>
         </ion-buttons>
       </ion-toolbar>
 
@@ -55,7 +45,7 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
       @if (showInputFields()) {
         <ion-toolbar color="secondary">
           <ion-item lines="none" color="secondary">
-            <ion-input label="Betreff: " [value]="subject()"
+            <ion-input [label]="i18n.mc_subject_label()" [value]="subject()"
               (ionInput)="subject.set($any($event).detail.value ?? '')"
               [clearInput]="true" />
           </ion-item>
@@ -63,25 +53,25 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
 
         <ion-toolbar color="secondary">
           <ion-item lines="none" color="secondary">
-            <ion-input label="Von: " [value]="from()"
+            <ion-input [label]="i18n.mc_from_label()" [value]="from()"
               (ionInput)="from.set($any($event).detail.value ?? '')"
-              placeholder="email@domain.com" [clearInput]="true" />
+              [placeholder]="i18n.mc_from_placeholder()" [clearInput]="true" />
           </ion-item>
         </ion-toolbar>
 
         <ion-toolbar color="secondary">
           <ion-item lines="none" color="secondary">
-            <ion-input label="CC: " [value]="cc()"
+            <ion-input [label]="i18n.mc_cc_label()" [value]="cc()"
               (ionInput)="cc.set($any($event).detail.value ?? '')"
-              placeholder="email1@domain.com, email2@domain.com" [clearInput]="true" />
+              [placeholder]="i18n.mc_address_list_placeholder()" [clearInput]="true" />
           </ion-item>
         </ion-toolbar>
 
         <ion-toolbar color="secondary">
           <ion-item lines="none" color="secondary">
-            <ion-input label="BCC: " [value]="bcc()"
+            <ion-input [label]="i18n.mc_bcc_label()" [value]="bcc()"
               (ionInput)="bcc.set($any($event).detail.value ?? '')"
-              placeholder="email1@domain.com, email2@domain.com" [clearInput]="true" />
+              [placeholder]="i18n.mc_address_list_placeholder()" [clearInput]="true" />
           </ion-item>
         </ion-toolbar>
 
@@ -90,14 +80,14 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
             <ion-checkbox slot="start" style="margin-right: 12px;"
               [checked]="hideReceiverAddresses()"
               (ionChange)="hideReceiverAddresses.set($any($event).detail.checked)" />
-            <ion-label>Empfängeradressen verbergen</ion-label>
+            <ion-label>{{ i18n.mc_hide_receivers() }}</ion-label>
           </ion-item>
         </ion-toolbar>
 
         @if (isPrivileged()) {
           <ion-toolbar color="secondary">
             <ion-item lines="none" color="secondary">
-              <ion-label>Provider</ion-label>
+              <ion-label>{{ i18n.mc_provider_label() }}</ion-label>
               <ion-select [value]="provider()"
                 (ionChange)="provider.set($any($event).detail.value)">
                 @for (p of emailProviders; track p) {
@@ -109,9 +99,9 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
 
           <ion-toolbar color="secondary">
             <ion-item lines="none" color="secondary">
-              <ion-input label="Template: " [value]="template()"
+              <ion-input [label]="i18n.mc_template_label()" [value]="template()"
                 (ionInput)="template.set($any($event).detail.value ?? '')"
-                placeholder="z.B. scs_password_reset" [clearInput]="true" />
+                [placeholder]="i18n.mc_template_placeholder()" [clearInput]="true" />
             </ion-item>
           </ion-toolbar>
         }
@@ -120,11 +110,11 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
       <!-- Group selector (always visible) -->
       <ion-toolbar color="secondary">
         <ion-item lines="none" color="secondary">
-          <ion-label>{{ msgStore.i18n.group_singular() }}</ion-label>
+          <ion-label>{{ i18n.group_singular() }}</ion-label>
           <ion-select [value]="selectedGroupKey()"
             (ionChange)="selectedGroupKey.set($any($event).detail.value)"
-            placeholder="Alle Gruppen">
-            <ion-select-option value="all">Alle Gruppen</ion-select-option>
+            [placeholder]="i18n.mc_all_groups()">
+            <ion-select-option value="all">{{ i18n.mc_all_groups() }}</ion-select-option>
             @for(group of groups(); track group.okey) {
               <ion-select-option [value]="group.okey">{{ group.name }}</ion-select-option>
             }
@@ -140,7 +130,7 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
           (ionChange)="toggleAll($any($event).detail.checked)" />
         <ion-searchbar [value]="searchTerm()"
           (ionInput)="searchTerm.set($any($event).detail.value ?? '')"
-          placeholder="Suchen..." />
+          [placeholder]="i18n.mc_search_placeholder()" />
       </ion-toolbar>
     </ion-header>
 
@@ -162,7 +152,7 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
   `
 })
 export class MessageCenterModal {
-  protected readonly msgStore = inject(MessageCenterStore);
+  protected readonly i18n = inject(I18nService).translateAll(SECTION_I18N_KEYS) as SectionI18n;
   private readonly modalController = inject(ModalController);
   private readonly userService = inject(UserService);
   private readonly membershipService = inject(MembershipService);

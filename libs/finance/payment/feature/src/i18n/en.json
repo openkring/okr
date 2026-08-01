@@ -1,0 +1,18 @@
+{
+  "list": { "title": "Payment orders" },
+  "empty": "No payment orders found.",
+  "approve": { "label": "Approve" },
+  "actionsheet": {
+    "view": "View payment order",
+    "edit": "Edit payment order",
+    "create": "Create payment order"
+  },
+  "order": {
+    "title": "Payment order",
+    "download_pain001": "Download pain.001",
+    "status": "Status",
+    "execution": "Execution date",
+    "created_by": "Created by",
+    "approved_by": "Approved by"
+  }
+}

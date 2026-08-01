@@ -2,6 +2,13 @@
   "singular": "Rechnung",
   "plural": "Debitoren Rechnungen",
   "aging": "Debitorenalterung",
+  "aging_bucket": {
+    "b0_30": "0–30 Tage",
+    "b31_60": "31–60 Tage",
+    "b61_90": "61–90 Tage",
+    "b90_plus": ">90 Tage"
+  },
+  "aging_due": "Fällig",
   "empty": "Keine Rechnungen gefunden",
   "list": {
     "title": "Rechnungsübersicht"

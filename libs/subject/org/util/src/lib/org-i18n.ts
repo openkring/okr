@@ -66,8 +66,14 @@ export const ORG_I18N_KEYS = {
   phone_label:                     PFX + 'phone.label',
   phone_placeholder:               PFX + 'phone.placeholder',
 
+  // zefix-lookup (org/ui) — receives the full OrgI18n as [i18n]
+  zefix_title:                     PFX + 'zefix.title',
+  zefix_empty:                     PFX + 'zefix.empty',
+  zefix_search_error:              PFX + 'zefix.search_error',
+  zefix_details_error:             PFX + 'zefix.details_error',
+
   // org_type: resolved by cat-select
-  
+
 } satisfies Record<string, string>;
 
 export type OrgI18n = { [K in keyof typeof ORG_I18N_KEYS]: Signal<string> };

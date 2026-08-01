@@ -17,6 +17,8 @@
   "references": [
     { "path": "../../accounting/feature/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },
+    { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" }
   ]
 }

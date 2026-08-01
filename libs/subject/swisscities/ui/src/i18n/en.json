@@ -1,0 +1,7 @@
+{
+  "search": {
+    "title": "Find a place",
+    "placeholder": "Search city or postcode"
+  },
+  "empty": "No matches found."
+}

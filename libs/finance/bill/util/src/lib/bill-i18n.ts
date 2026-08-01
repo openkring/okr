@@ -54,6 +54,12 @@ export const BILL_I18N_KEYS = {
   // read-only banner (Bexio-managed)
   read_only_banner:     PFX + 'readonly.banner',
 
+  // QR-scan modal
+  qr_title:             PFX + 'qr.title',
+  qr_process:           PFX + 'qr.process',
+  qr_content_label:     PFX + 'qr.content.label',
+  qr_content_placeholder: PFX + 'qr.content.placeholder',
+
   as_title:             '@actionsheet.title',
   cancel:               '@cancel',
   ok:                   '@ok',

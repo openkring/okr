@@ -63,6 +63,14 @@
     "label": "Elimina fattura",
     "confirm": "Eliminare davvero la fattura ?"
   },
+  "qr": {
+    "title": "Scansiona fattura QR",
+    "process": "Elabora",
+    "content": {
+      "label": "Contenuto QR (fotocamera o manuale)",
+      "placeholder": "SPC | 0200 | …"
+    }
+  },
   "readonly": {
     "banner": "Questo elenco è di sola lettura. I creditori vengono gestiti in Bexio."
   },

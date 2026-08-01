@@ -1,8 +1,15 @@
 {
   "list": { "title": "E-Signaturen" },
   "empty": "Keine Signaturprozesse gefunden.",
+  "close": "Schliessen",
+  "retry": "Erneut versuchen",
   "delete": { "error": "Signaturprozess konnte nicht gelöscht werden." },
-  "send": { "error": "Dokument konnte nicht gesendet werden." },
+  "send": {
+    "label": "Senden",
+    "error": "Dokument konnte nicht gesendet werden.",
+    "ok": "Dokument wurde zur Signatur versendet.",
+    "failed": "Senden fehlgeschlagen"
+  },
   "upload": { "error": "Datei zu gross (max. 40 MB) oder falsches Format." },
   "scan": { "no_fields": "Keine Signaturfelder im Dokument gefunden. Bitte ein PDF mit eingebetteten Text Field Patterns verwenden." },
   "actionsheet": {
@@ -11,5 +18,57 @@
     "doc_share": "Teilen",
     "doc_send": "Per E-Mail senden",
     "delete": "Signaturprozess löschen"
+  },
+  "email": {
+    "title": "Dokument per E-Mail senden",
+    "sent": "E-Mail wurde versendet.",
+    "recipients": {
+      "label": "Empfänger",
+      "placeholder": "name@example.com, …",
+      "helper": "Eine oder mehrere E-Mail-Adressen, kommagetrennt"
+    },
+    "subject": {
+      "label": "Betreff (optional)",
+      "placeholder": "Betreff der E-Mail"
+    },
+    "body": {
+      "label": "Nachricht (optional)",
+      "placeholder": "Leer lassen für den Standardtext"
+    },
+    "include_pdf": { "label": "Signiertes PDF anhängen" }
+  },
+  "document": {
+    "title": "Dokument senden",
+    "uploading": "Datei wird hochgeladen…",
+    "scanning": "Signaturfelder werden erkannt…",
+    "no_fields_hint": "Keine Signaturfelder in diesem PDF gefunden. Bitte fügen Sie DeepSign-Textmarken (z. B. #deepsign#name@mail.com#) ein und versuchen Sie es erneut.",
+    "signees_detected": "Unterzeichner erkannt",
+    "page": "Seite",
+    "initiator": {
+      "label": "Initiant (Anzeigename)",
+      "placeholder": "z. B. Vorstand Seeclub",
+      "helper": "Wird in der Einladungs-E-Mail angezeigt"
+    },
+    "comment": {
+      "label": "Kommentar (optional)",
+      "placeholder": "Nachricht an die Unterzeichner"
+    },
+    "signature_mode": {
+      "label": "Signaturart",
+      "timestamp": "Zeitstempel",
+      "advanced": "Fortgeschritten (AES)",
+      "qualified": "Qualifiziert (QES)"
+    },
+    "jurisdiction": {
+      "label": "Rechtsraum",
+      "zertes": "ZertES (Schweiz)",
+      "eidas": "eIDAS (EU)"
+    },
+    "send_mail": {
+      "label": "E-Mail-Versand",
+      "all": "An alle Unterzeichner",
+      "others": "Nur an andere",
+      "none": "Keine E-Mails"
+    }
   }
 }

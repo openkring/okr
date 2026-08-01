@@ -8,6 +8,8 @@ import {
 
 import { Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { EsignRecord } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
+import { ESIGN_I18N_KEYS, EsignI18n } from '@okr/esign-util';
 import { EsignService } from '@okr/esign-data-access';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,9 +27,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
-        <ion-title>Dokument per E-Mail senden</ion-title>
+        <ion-title>{{ i18n.email_title() }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="close()">Schliessen</ion-button>
+          <ion-button (click)="close()">{{ i18n.close() }}</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -46,23 +48,23 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               </ion-col>
 
               <ion-col size="12">
-                <okr-text-input [i18n]="recipientsI18n" [value]="recipients()"
+                <okr-text-input [i18n]="recipientsI18n()" [value]="recipients()"
                   (valueChange)="recipients.set($event)"
                   [readOnly]="false" [autofocus]="true" [maxLength]="500" />
               </ion-col>
 
               <ion-col size="12">
-                <okr-text-input [i18n]="subjectI18n" [value]="subject()"
+                <okr-text-input [i18n]="subjectI18n()" [value]="subject()"
                   (valueChange)="subject.set($event)" [readOnly]="false" [maxLength]="120" />
               </ion-col>
 
               <ion-col size="12">
-                <okr-checkbox [i18n]="includePdfI18n" [checked]="includePdf()"
+                <okr-checkbox [i18n]="includePdfI18n()" [checked]="includePdf()"
                   (checkedChange)="includePdf.set($event)" [readOnly]="false" />
               </ion-col>
 
               <ion-col size="12">
-                <okr-notes-input [i18n]="bodyI18n" [value]="body()"
+                <okr-notes-input [i18n]="bodyI18n()" [value]="body()"
                   (valueChange)="body.set($event)" [readOnly]="false" />
               </ion-col>
             </ion-row>
@@ -71,7 +73,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       </ion-card>
 
       <ion-button expand="block" [disabled]="!canSend()" (click)="send()">
-        @if (status() === 'sending') { <ion-spinner name="dots" /> } @else { Senden }
+        @if (status() === 'sending') { <ion-spinner name="dots" /> } @else { {{ i18n.send() }} }
       </ion-button>
     </ion-content>
   `,
@@ -79,6 +81,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export class EsignSendEmailModal implements OnInit {
   public readonly esign = input.required<EsignRecord>();
 
+  protected readonly i18n = inject(I18nService).translateAll(ESIGN_I18N_KEYS) as EsignI18n;
   private readonly modalController = inject(ModalController);
   private readonly toastController = inject(ToastController);
   private readonly esignService    = inject(EsignService);
@@ -97,19 +100,21 @@ export class EsignSendEmailModal implements OnInit {
 
   protected readonly canSend = computed(() => this.status() === 'ready' && this.parsedRecipients().length > 0);
 
-  protected readonly recipientsI18n: TextInputI18n = {
-    name: 'recipients', label: 'Empfänger', placeholder: 'name@example.com, …',
-    helper: 'Eine oder mehrere E-Mail-Adressen, kommagetrennt',
-  };
-  protected readonly subjectI18n: TextInputI18n = {
-    name: 'subject', label: 'Betreff (optional)', placeholder: 'Betreff der E-Mail', helper: '',
-  };
-  protected readonly bodyI18n: NotesInputI18n = {
-    name: 'body', label: 'Nachricht (optional)', placeholder: 'Leer lassen für den Standardtext',
-  };
-  protected readonly includePdfI18n: CheckboxI18n = {
-    name: 'includeSignedPdf', label: 'Signiertes PDF anhängen', helper: '',
-  };
+  // adapted at the shared/ui boundary (the field primitives define their own minimal interface)
+  protected readonly recipientsI18n = computed(() => ({
+    name: 'recipients', label: this.i18n.recipients_label(),
+    placeholder: this.i18n.recipients_placeholder(), helper: this.i18n.recipients_helper(),
+  } as TextInputI18n));
+  protected readonly subjectI18n = computed(() => ({
+    name: 'subject', label: this.i18n.subject_label(),
+    placeholder: this.i18n.subject_placeholder(), helper: '',
+  } as TextInputI18n));
+  protected readonly bodyI18n = computed(() => ({
+    name: 'body', label: this.i18n.body_label(), placeholder: this.i18n.body_placeholder(),
+  } as NotesInputI18n));
+  protected readonly includePdfI18n = computed(() => ({
+    name: 'includeSignedPdf', label: this.i18n.include_pdf_label(), helper: '',
+  } as CheckboxI18n));
 
   public ngOnInit(): void {
     const emails = (this.esign().signees ?? []).map((s) => s.email).filter(Boolean);
@@ -128,11 +133,11 @@ export class EsignSendEmailModal implements OnInit {
         ...(this.body() ? { body: this.body() } : {}),
         includeSignedPdf: this.includePdf(),
       });
-      await this.presentToast('E-Mail wurde versendet.', 'success');
+      await this.presentToast(this.i18n.email_sent(), 'success');
       await this.modalController.dismiss(null, 'confirm');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await this.presentToast('Senden fehlgeschlagen: ' + message, 'danger');
+      await this.presentToast(`${this.i18n.send_failed()}: ${message}`, 'danger');
       this.status.set('ready');
     }
   }

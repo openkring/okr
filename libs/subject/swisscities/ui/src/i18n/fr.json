@@ -1,0 +1,7 @@
+{
+  "search": {
+    "title": "Rechercher une localité",
+    "placeholder": "Rechercher une ville ou un NPA"
+  },
+  "empty": "Aucune correspondance trouvée."
+}

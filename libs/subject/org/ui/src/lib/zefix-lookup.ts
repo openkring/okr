@@ -6,6 +6,7 @@ import {
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 
+import { OrgI18n } from '@okr/subject-org-util';
 import { ZefixCompanyDetails, ZefixSearchResult, ZefixService } from '@okr/subject-org-data-access';
 
 @Component({
@@ -27,7 +28,7 @@ import { ZefixCompanyDetails, ZefixSearchResult, ZefixService } from '@okr/subje
     <ion-popover [isOpen]="isPopoverOpen()" [showBackdrop]="true" [dismissOnSelect]="false" (didDismiss)="isPopoverOpen.set(false)">
       <ng-template>
         <ion-toolbar color="primary">
-          <ion-title>Zefix-Suche</ion-title>
+          <ion-title>{{ i18n().zefix_title() }}</ion-title>
           <ion-buttons slot="end">
             <ion-button (click)="isPopoverOpen.set(false)">
               <ion-icon slot="icon-only" src="{{'cancel' | svgIcon}}" />
@@ -49,7 +50,7 @@ import { ZefixCompanyDetails, ZefixSearchResult, ZefixService } from '@okr/subje
             </ion-item>
           } @empty {
             @if (!error()) {
-              <ion-item><ion-label>Keine Treffer gefunden.</ion-label></ion-item>
+              <ion-item><ion-label>{{ i18n().zefix_empty() }}</ion-label></ion-item>
             }
           }
         </ion-list>
@@ -60,6 +61,7 @@ import { ZefixCompanyDetails, ZefixSearchResult, ZefixService } from '@okr/subje
 export class ZefixLookup {
   private readonly zefixService = inject(ZefixService);
 
+  public readonly i18n = input.required<OrgI18n>();
   public orgName = input('');
   public detailsLoaded = output<ZefixCompanyDetails>();
 
@@ -81,7 +83,7 @@ export class ZefixLookup {
       this.results.set(results);
       this.isPopoverOpen.set(true);
     } catch {
-      this.error.set('Zefix-Suche fehlgeschlagen. Bitte erneut versuchen.');
+      this.error.set(this.i18n().zefix_search_error());
       this.isPopoverOpen.set(true);
     } finally {
       this.isLoading.set(false);
@@ -97,7 +99,7 @@ export class ZefixLookup {
       const details = await this.zefixService.getCompanyDetails(result.uid);
       this.detailsLoaded.emit(details);
     } catch {
-      this.error.set('Details konnten nicht geladen werden. Bitte erneut versuchen.');
+      this.error.set(this.i18n().zefix_details_error());
     } finally {
       this.isLoading.set(false);
     }

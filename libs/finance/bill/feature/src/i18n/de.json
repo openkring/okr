@@ -63,6 +63,14 @@
     "label": "Rechnung löschen",
     "confirm": "Soll die Rechnung wirklich gelöscht werden ?"
   },
+  "qr": {
+    "title": "QR-Rechnung scannen",
+    "process": "Verarbeiten",
+    "content": {
+      "label": "QR-Inhalt (aus Kamera oder manuell)",
+      "placeholder": "SPC | 0200 | …"
+    }
+  },
   "readonly": {
     "banner": "Diese Liste ist readonly. Die Kreditoren werden in Bexio bewirtschaftet."
   },

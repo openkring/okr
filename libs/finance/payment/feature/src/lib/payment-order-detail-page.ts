@@ -7,8 +7,10 @@ import { IonButton, IonContent, IonHeader, IonItem, IonLabel,
 
 import { PaymentModel, PaymentOrderModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-access';
+import { PAYMENT_I18N_KEYS, PaymentI18n } from '@okr/finance-payment-util';
 
 @Component({
   selector: 'okr-payment-order-detail-page',
@@ -17,18 +19,18 @@ import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-a
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Payment Order</ion-title>
+        <ion-title>{{ i18n.order_title() }}</ion-title>
         @if (orderResource.value()?.status === 'approved') {
-          <ion-button slot="end" fill="clear" (click)="generatePain001()">Download pain.001</ion-button>
+          <ion-button slot="end" fill="clear" (click)="generatePain001()">{{ i18n.download_pain001() }}</ion-button>
         }
       </ion-toolbar>
     </ion-header>
     <ion-content>
       @if (orderResource.value(); as order) {
-        <ion-item><ion-label>Status: {{ order.status }}</ion-label></ion-item>
-        <ion-item><ion-label>Execution: {{ order.executionDate }}</ion-label></ion-item>
-        <ion-item><ion-label>Created by: {{ order.createdBy }}</ion-label></ion-item>
-        <ion-item><ion-label>Approved by: {{ order.approvedBy }}</ion-label></ion-item>
+        <ion-item><ion-label>{{ i18n.status_label() }}: {{ order.status }}</ion-label></ion-item>
+        <ion-item><ion-label>{{ i18n.execution_label() }}: {{ order.executionDate }}</ion-label></ion-item>
+        <ion-item><ion-label>{{ i18n.created_by_label() }}: {{ order.createdBy }}</ion-label></ion-item>
+        <ion-item><ion-label>{{ i18n.approved_by_label() }}: {{ order.approvedBy }}</ion-label></ion-item>
       }
       <ion-list>
         @for (payment of paymentsResource.value() ?? []; track payment.okey) {
@@ -44,6 +46,7 @@ import { PaymentOrderService, PaymentService } from '@okr/finance-payment-data-a
   `,
 })
 export class PaymentOrderDetailPage {
+  protected readonly i18n = inject(I18nService).translateAll(PAYMENT_I18N_KEYS) as PaymentI18n;
   private readonly route = inject(ActivatedRoute);
   private readonly appStore = inject(AppStore);
   private readonly accountingStore = inject(AccountingStore);

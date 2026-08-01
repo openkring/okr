@@ -3,7 +3,9 @@ import { IonButton, IonButtons, IonCol, IonIcon, IonItem, IonLabel, IonList, Ion
 
 import { SwissCity } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { I18nService } from '@okr/shared-i18n';
 
+import { SWISSCITIES_I18N_KEYS, SwissCitiesI18n } from './swisscities-i18n';
 import { SwissCitiesSearchStore } from './swisscity-search.store';
 
 @Component({
@@ -22,13 +24,13 @@ import { SwissCitiesSearchStore } from './swisscity-search.store';
           type="search" 
           inputmode="search"
           [debounce]="debounce()"
-          [placeholder]="placeholder()"
+          [placeholder]="effectivePlaceholder()"
           [value]="searchTerm()">
       </ion-searchbar>
       <ion-popover [isOpen]="isPopoverOpen()" [showBackdrop]="true" [dismissOnSelect]="true" (didDismiss)="isPopoverOpen.set(false)">
         <ng-template>
           <ion-toolbar color="primary">
-            <ion-title>Ort suchen</ion-title>
+            <ion-title>{{ i18n.search_title() }}</ion-title>
             <ion-buttons slot="end">
               <ion-button (click)="isPopoverOpen.set(false)">
                 <ion-icon slot="icon-only" src="{{'cancel' | svgIcon }}" />
@@ -42,7 +44,7 @@ import { SwissCitiesSearchStore } from './swisscity-search.store';
               </ion-item>
             } @empty {
               <ion-item>
-                <ion-label>Keine Übereinstimmungen gefunden.</ion-label>
+                <ion-label>{{ i18n.empty() }}</ion-label>
               </ion-item>
             }
           </ion-list>
@@ -54,13 +56,17 @@ import { SwissCitiesSearchStore } from './swisscity-search.store';
 })
 export class SwissCitySearch implements OnInit {
   protected swissCitiesSearchStore = inject(SwissCitiesSearchStore);
+  protected readonly i18n = inject(I18nService).translateAll(SWISSCITIES_I18N_KEYS) as SwissCitiesI18n;
+
   public searchTerm = input('');
-  public placeholder = input('Stadt oder PLZ suchen');
+  /** empty → the translated default placeholder is used */
+  public placeholder = input('');
   public debounce = input(500);
   public setFocus = input(true);
 
   public citySelected = output<SwissCity>();
   protected isPopoverOpen = signal(false);
+  protected readonly effectivePlaceholder = computed(() => this.placeholder() || this.i18n.search_placeholder());
 
   protected okrSearchCity = viewChild<IonSearchbar>('okrSearchCity');
   // fires ionInput event for every change of the value

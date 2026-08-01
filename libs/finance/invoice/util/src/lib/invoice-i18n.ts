@@ -7,6 +7,11 @@ export const INVOICE_I18N_KEYS = {
   invoices:                   PFX + 'plural',
 
   invoice_aging:              PFX + 'aging',
+  aging_bucket_0_30:          PFX + 'aging_bucket.b0_30',
+  aging_bucket_31_60:         PFX + 'aging_bucket.b31_60',
+  aging_bucket_61_90:         PFX + 'aging_bucket.b61_90',
+  aging_bucket_90_plus:       PFX + 'aging_bucket.b90_plus',
+  aging_due_label:            PFX + 'aging_due',
   empty:                      PFX + 'empty',
 
   list_title:               PFX + 'list.title',

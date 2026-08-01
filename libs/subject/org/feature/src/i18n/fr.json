@@ -1,7 +1,6 @@
 {
   "orgs": "Organisations",
   "empty": "Aucune organisation trouvée.",
-
   "copy": {
     "email": {
       "conf": "Les e-mails ont été copiés."
@@ -22,7 +21,6 @@
   "view": {
     "label": "Afficher l'organisation"
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssssss",
@@ -99,7 +97,6 @@
     "label": "Téléphone",
     "placeholder": "+41 XX XXX XX XX"
   },
-
   "org_type": {
     "label": "Type d'organisation",
     "helper": "Le type d'une organisation (p. ex. entreprise, association/club, administration, etc.).",
@@ -132,5 +129,11 @@
     "all": {
       "label": "Tous"
     }
+  },
+  "zefix": {
+    "title": "Recherche Zefix",
+    "empty": "Aucun résultat trouvé.",
+    "search_error": "La recherche Zefix a échoué. Veuillez réessayer.",
+    "details_error": "Les détails n'ont pas pu être chargés. Veuillez réessayer."
   }
 }

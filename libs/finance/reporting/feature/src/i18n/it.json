@@ -1,0 +1,10 @@
+{
+  "balance": { "title": "Bilancio" },
+  "income": { "title": "Conto economico" },
+  "cashflow": { "title": "Rendiconto finanziario" },
+  "export": { "csv": "Esporta CSV" },
+  "loading": "Caricamento …",
+  "debit": "Dare",
+  "credit": "Avere",
+  "net": "Saldo"
+}

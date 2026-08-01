@@ -2,6 +2,13 @@
   "singular": "Factura",
   "plural": "Facturas de deudores",
   "aging": "Antigüedad de deudores",
+  "aging_bucket": {
+    "b0_30": "0–30 días",
+    "b31_60": "31–60 días",
+    "b61_90": "61–90 días",
+    "b90_plus": ">90 días"
+  },
+  "aging_due": "Vencimiento",
   "empty": "No se encontraron facturas",
   "list": {
     "title": "Resumen de facturas"
