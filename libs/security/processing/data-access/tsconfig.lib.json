@@ -1,0 +1,21 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "../../../../dist/libs/security/processing/data-access",
+    "declaration": true,
+    "composite": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "target": "es2020",
+    "types": [],
+    "tsBuildInfoFile": "../../../../dist/out-tsc/security-processing-data-access.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
+  "references": [
+    { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../../shared/feature/tsconfig.lib.json" },
+    { "path": "../../../shared/models/tsconfig.lib.json" }
+  ]
+}

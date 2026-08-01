@@ -194,6 +194,7 @@
       "@okr/resource-feature": ["libs/resource/feature/src/index.ts"],
       "@okr/resource-ui": ["libs/resource/ui/src/index.ts"],
       "@okr/resource-util": ["libs/resource/util/src/index.ts"],
+      "@okr/security-processing-data-access": ["libs/security/processing/data-access/src/index.ts"],
       "@okr/security-processing-util": ["libs/security/processing/util/src/index.ts"],
       "@okr/session-data-access": ["libs/session/data-access/src/index.ts"],
       "@okr/session-util": ["libs/session/util/src/index.ts"],
