@@ -1,6 +1,13 @@
 import { Signal } from '@angular/core';
 
-const PFX = '@security/processing.';
+/**
+ * The scope prefix MUST mirror the lib's path under `libs/`, because that is what
+ * `scripts/sync-i18n-assets.mjs` derives the asset output path from
+ * (`libs/security/processing/util/src/i18n` → `assets/i18n/security/processing/util`) and
+ * what `I18nService` builds its fetch URL from. This domain is three segments deep, so the
+ * `util` segment is part of the scope — dropping it 404s every key at runtime.
+ */
+const PFX = '@security/processing/util.';
 
 /**
  * Chrome only. The catalogue's own content — `purposes`, `securityMeasures`,

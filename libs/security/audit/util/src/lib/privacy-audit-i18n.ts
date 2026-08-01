@@ -1,6 +1,11 @@
 import { Signal } from '@angular/core';
 
-const PFX = '@security/audit.';
+/**
+ * Mirrors the lib path (`libs/security/audit/util/src/i18n` →
+ * `assets/i18n/security/audit/util`). The `util` segment is part of the scope — see the
+ * note in `processing-i18n.ts`.
+ */
+const PFX = '@security/audit/util.';
 
 /**
  * Chrome only. The check titles and explanations come from the server as `titleDe` /
