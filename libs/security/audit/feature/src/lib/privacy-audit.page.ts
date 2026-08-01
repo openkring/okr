@@ -68,11 +68,22 @@ import type { FindingSeverity, PrivacyAuditResult } from '@okr/shared-models';
         <ion-card-content>
           <ion-note>{{ i18n.subtitle() }}</ion-note>
           <div class="ion-margin-top">
-            <ion-button (click)="run()" [disabled]="isRunning()">
+            <ion-button (click)="run()" [disabled]="isRunning() || isRebuilding()">
               @if (isRunning()) {
                 <ion-spinner name="dots" slot="start" /> {{ i18n.running() }}
               } @else {
                 {{ i18n.run() }}
+              }
+            </ion-button>
+            <!-- The one repair reachable from here: check 3's fix is a single callable, so
+                 the screen that reports the staleness can also clear it. Everything else
+                 needs a human on the offending record. -->
+            <ion-button fill="outline" (click)="rebuildDirectory()"
+                        [disabled]="isRunning() || isRebuilding()">
+              @if (isRebuilding()) {
+                <ion-spinner name="dots" slot="start" /> {{ i18n.rebuild_running() }}
+              } @else {
+                {{ i18n.rebuild_action() }}
               }
             </ion-button>
           </div>
@@ -124,11 +135,13 @@ export class PrivacyAuditPage {
   private readonly appStore = inject(AppStore);
   private readonly docs = inject(DocGenerationService);
   private readonly alertService = inject(AlertService);
-  protected readonly i18n = inject(I18nService).translateAll(PRIVACY_AUDIT_I18N_KEYS) as PrivacyAuditI18n;
+  private readonly i18nService = inject(I18nService);
+  protected readonly i18n = this.i18nService.translateAll(PRIVACY_AUDIT_I18N_KEYS) as PrivacyAuditI18n;
 
   protected readonly result = signal<PrivacyAuditResult | undefined>(undefined);
   protected readonly isRunning = signal(false);
   protected readonly isExporting = signal(false);
+  protected readonly isRebuilding = signal(false);
   protected readonly error = signal<string | undefined>(undefined);
 
   protected readonly ranOn = computed(() =>
@@ -150,6 +163,41 @@ export class PrivacyAuditPage {
       this.error.set(`${error}`);
     } finally {
       this.isRunning.set(false);
+    }
+  }
+
+  /**
+   * Rebuilds the address-directory projection (check 3's remedy).
+   *
+   * Confirmed first: the callable rewrites the projection for **every** person and org in the
+   * database, not just this tenant's, and on a large database it runs for minutes. The result
+   * is reported rather than swallowed — a non-zero `crossTenantAddresses` means addresses were
+   * being served across tenant boundaries until this run, which an admin needs to be told
+   * about rather than find in a function log.
+   *
+   * The audit result on screen is deliberately left standing: it describes the tenant as of
+   * its own run, and re-running the audit is one click away.
+   */
+  protected async rebuildDirectory(): Promise<void> {
+    const question = await this.i18nService.translateOnce(PRIVACY_AUDIT_I18N_KEYS.rebuild_confirm);
+    if (!await this.alertService.confirm(question, true)) return;
+
+    this.isRebuilding.set(true);
+    try {
+      const summary = await this.service.rebuildAddressDirectory();
+      let message = await this.i18nService.translateOnce(
+        PRIVACY_AUDIT_I18N_KEYS.rebuild_done,
+        { persons: summary.persons, orgs: summary.orgs });
+      if (summary.crossTenantAddresses > 0) {
+        message += ' ' + await this.i18nService.translateOnce(
+          PRIVACY_AUDIT_I18N_KEYS.rebuild_cross,
+          { addresses: summary.crossTenantAddresses, parents: summary.parentsAffected });
+      }
+      await this.alertService.showToast(message);
+    } catch (error) {
+      this.alertService.error(`PrivacyAuditPage.rebuildDirectory: ${error}`);
+    } finally {
+      this.isRebuilding.set(false);
     }
   }
 

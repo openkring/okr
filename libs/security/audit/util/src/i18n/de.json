@@ -12,5 +12,12 @@
   "affected": "Betroffen:",
   "samples": "Beispiele:",
   "goToFix": "Zur Behebung",
+  "rebuild": {
+    "action": "Adressverzeichnis neu aufbauen",
+    "running": "Verzeichnis wird aufgebaut …",
+    "confirm": "Das Adressverzeichnis wird für alle Personen und Organisationen neu aufgebaut — auch für andere Mandanten. Die Adressen selbst bleiben unverändert, nur die Projektion wird überschrieben. Fortfahren?",
+    "done": "Verzeichnis neu aufgebaut: {{persons}} Personen, {{orgs}} Organisationen.",
+    "cross": "{{addresses}} mandantenfremde Adressen aus {{parents}} Profilen entfernt."
+  },
   "severity": { "error": "Fehler", "warning": "Warnungen", "info": "Hinweise" }
 }

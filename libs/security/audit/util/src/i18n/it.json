@@ -12,5 +12,12 @@
   "affected": "Interessati:",
   "samples": "Esempi:",
   "goToFix": "Vai alla correzione",
+  "rebuild": {
+    "action": "Ricostruire l'elenco degli indirizzi",
+    "running": "Ricostruzione dell'elenco …",
+    "confirm": "L'elenco degli indirizzi viene ricostruito per tutte le persone e organizzazioni — di tutti i clienti. Gli indirizzi stessi restano invariati; viene sovrascritta solo la proiezione. Continuare?",
+    "done": "Elenco ricostruito: {{persons}} persone, {{orgs}} organizzazioni.",
+    "cross": "{{addresses}} indirizzi di altri clienti rimossi da {{parents}} profili."
+  },
   "severity": { "error": "errori", "warning": "avvisi", "info": "note" }
 }

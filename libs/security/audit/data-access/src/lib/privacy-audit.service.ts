@@ -9,6 +9,14 @@ export interface RunPrivacyAuditRequest {
   tenantId: string;
 }
 
+/** What `rebuildAddressDirectory` reports back. Both cross-tenant counts are 0 once D-L1 has run. */
+export interface RebuildDirectoryResult {
+  persons: number;
+  orgs: number;
+  crossTenantAddresses: number;
+  parentsAffected: number;
+}
+
 /**
  * Thin wrapper around the admin-only `runPrivacyAudit` callable (spec 1.19 Phase 5D).
  *
@@ -34,6 +42,21 @@ export class PrivacyAuditService {
     const callable = httpsCallable<RunPrivacyAuditRequest, PrivacyAuditResult>(
       this.functions, 'runPrivacyAudit');
     const result = await callable({ tenantId });
+    return result.data;
+  }
+
+  /**
+   * Rebuilds the whole `address-directory` projection — the remedy check 3 prescribes.
+   *
+   * It lives next to the audit rather than in the address domain because the audit screen is
+   * where an admin is told to run it, and it is the only caller. Takes no arguments and is
+   * **not tenant-scoped**: the callable walks every person and org (spec 1.19 Phase 4). It is
+   * idempotent, so a second run costs time and nothing else.
+   */
+  public async rebuildAddressDirectory(): Promise<RebuildDirectoryResult> {
+    const callable = httpsCallable<Record<string, never>, RebuildDirectoryResult>(
+      this.functions, 'rebuildAddressDirectory');
+    const result = await callable({});
     return result.data;
   }
 }

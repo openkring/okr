@@ -12,5 +12,12 @@
   "affected": "Afectados:",
   "samples": "Ejemplos:",
   "goToFix": "Ir a la corrección",
+  "rebuild": {
+    "action": "Reconstruir el directorio de direcciones",
+    "running": "Reconstruyendo el directorio …",
+    "confirm": "El directorio de direcciones se reconstruye para todas las personas y organizaciones — de todos los clientes. Las direcciones en sí no se modifican; solo se sobrescribe la proyección. ¿Continuar?",
+    "done": "Directorio reconstruido: {{persons}} personas, {{orgs}} organizaciones.",
+    "cross": "{{addresses}} direcciones de otros clientes eliminadas de {{parents}} perfiles."
+  },
   "severity": { "error": "errores", "warning": "advertencias", "info": "avisos" }
 }

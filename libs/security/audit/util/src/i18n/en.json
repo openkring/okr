@@ -12,5 +12,12 @@
   "affected": "Affected:",
   "samples": "Examples:",
   "goToFix": "Go to fix",
+  "rebuild": {
+    "action": "Rebuild address directory",
+    "running": "Rebuilding directory …",
+    "confirm": "The address directory is rebuilt for every person and organisation — across all tenants. The addresses themselves stay untouched; only the projection is overwritten. Continue?",
+    "done": "Directory rebuilt: {{persons}} persons, {{orgs}} organisations.",
+    "cross": "{{addresses}} addresses of other tenants removed from {{parents}} profiles."
+  },
   "severity": { "error": "errors", "warning": "warnings", "info": "notices" }
 }
