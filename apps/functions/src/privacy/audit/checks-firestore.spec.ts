@@ -1,24 +1,6 @@
-import type { AppConfig } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 import { check1, check2, check3, check4, check9, check11 } from './checks-firestore';
-import type { AuditCtx, AuditDoc } from './types';
-
-type Fixture = Record<string, Record<string, unknown>[]> & { config?: Partial<AppConfig> };
-
-const toDocs = (rows: Record<string, unknown>[]): AuditDoc[] =>
-  rows.map((row) => ({
-    okey: String(row['okey'] ?? ''),
-    data: row,
-    // `updatedAt` mirrors the snapshot's server-side updateTime in production.
-    updatedAt: row['updatedAt'] as number | undefined,
-  }));
-
-export const ctxWith = (data: Fixture): AuditCtx => ({
-  tenantId: 'scs',
-  config: { integrations: {}, additionalProcessors: [], privacyPolicyVersion: '', ...(data.config ?? {}) } as AppConfig,
-  load: async (collection) => toDocs((data[collection] as Record<string, unknown>[]) ?? []),
-  listCollections: async () => Object.keys(data).filter((k) => k !== 'config'),
-});
+import { ctxWith } from './test-fixtures';
 
 describe('check 1 — resurrected sensitive keys on persons/orgs', () => {
   it('is clean when no person carries a forbidden key', async () => {
