@@ -61,6 +61,7 @@ export * from './lib/page.model';
 export * from './lib/person.model';
 export * from './lib/personal-rel.model';
 export * from './lib/privacy.model';
+export * from './lib/privacy-audit.model';
 export * from './lib/privacy-rights.model';
 export * from './lib/processor-entry.model';
 export * from './lib/regasoft.model';

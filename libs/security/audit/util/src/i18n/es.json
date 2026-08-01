@@ -1,0 +1,16 @@
+{
+  "title": "Auditoría de protección de datos",
+  "subtitle": "Comprueba los datos de este cliente frente a once reglas de protección de datos. La auditoría solo lee — no modifica nada. Cada hallazgo enlaza con el lugar donde se corrige.",
+  "run": "Iniciar auditoría",
+  "running": "Auditoría en curso …",
+  "export": "Exportar como PDF",
+  "clean": "Sin hallazgos.",
+  "notRun": "Todavía no ejecutada.",
+  "failed": "La auditoría ha fallado:",
+  "ranAt": "Ejecutada el",
+  "checksRun": "comprobaciones",
+  "affected": "Afectados:",
+  "samples": "Ejemplos:",
+  "goToFix": "Ir a la corrección",
+  "severity": { "error": "errores", "warning": "advertencias", "info": "avisos" }
+}

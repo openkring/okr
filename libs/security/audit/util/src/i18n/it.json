@@ -1,0 +1,16 @@
+{
+  "title": "Verifica della protezione dei dati",
+  "subtitle": "Verifica i dati di questo cliente rispetto a undici regole di protezione dei dati. La verifica si limita a leggere — non modifica nulla. Ogni rilievo rimanda al punto in cui va corretto.",
+  "run": "Avvia la verifica",
+  "running": "Verifica in corso …",
+  "export": "Esporta come PDF",
+  "clean": "Nessun rilievo.",
+  "notRun": "Non ancora eseguita.",
+  "failed": "La verifica non è riuscita:",
+  "ranAt": "Eseguita il",
+  "checksRun": "verifiche",
+  "affected": "Interessati:",
+  "samples": "Esempi:",
+  "goToFix": "Vai alla correzione",
+  "severity": { "error": "errori", "warning": "avvisi", "info": "note" }
+}

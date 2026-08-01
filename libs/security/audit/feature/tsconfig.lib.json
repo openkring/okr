@@ -1,0 +1,34 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "../../../../dist/libs/security/audit/feature",
+    "declaration": true,
+    "composite": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "target": "es2020",
+    "types": [],
+    "tsBuildInfoFile": "../../../../dist/out-tsc/security-audit-feature.tsbuildinfo"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.spec2.ts",
+    "**/test-setup.ts",
+    "vite.config.ts"
+  ],
+  "references": [
+    { "path": "../../../pdf-template/data-access/tsconfig.lib.json" },
+    { "path": "../data-access/tsconfig.lib.json" },
+    { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../../shared/feature/tsconfig.lib.json" },
+    { "path": "../../../shared/i18n/tsconfig.lib.json" },
+    { "path": "../../../shared/models/tsconfig.lib.json" },
+    { "path": "../../../shared/pipes/tsconfig.lib.json" },
+    { "path": "../../../shared/util-angular/tsconfig.lib.json" },
+    { "path": "../../../shared/util-core/tsconfig.lib.json" }
+  ]
+}

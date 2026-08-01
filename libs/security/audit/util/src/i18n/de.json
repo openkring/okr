@@ -1,0 +1,16 @@
+{
+  "title": "Datenschutz-Prüfung",
+  "subtitle": "Prüft die Daten dieses Mandanten gegen elf Datenschutzregeln. Die Prüfung liest nur — sie ändert nichts. Jede Feststellung verweist auf die Stelle, an der sie behoben wird.",
+  "run": "Prüfung starten",
+  "running": "Prüfung läuft …",
+  "export": "Als PDF exportieren",
+  "clean": "Keine Beanstandungen.",
+  "notRun": "Noch nicht ausgeführt.",
+  "failed": "Die Prüfung ist fehlgeschlagen:",
+  "ranAt": "Ausgeführt am",
+  "checksRun": "Prüfungen",
+  "affected": "Betroffen:",
+  "samples": "Beispiele:",
+  "goToFix": "Zur Behebung",
+  "severity": { "error": "Fehler", "warning": "Warnungen", "info": "Hinweise" }
+}

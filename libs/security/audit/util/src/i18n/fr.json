@@ -1,0 +1,16 @@
+{
+  "title": "Contrôle de protection des données",
+  "subtitle": "Vérifie les données de ce mandant selon onze règles de protection des données. Le contrôle se contente de lire — il ne modifie rien. Chaque constat renvoie à l'endroit où le corriger.",
+  "run": "Lancer le contrôle",
+  "running": "Contrôle en cours …",
+  "export": "Exporter en PDF",
+  "clean": "Aucun constat.",
+  "notRun": "Pas encore exécuté.",
+  "failed": "Le contrôle a échoué :",
+  "ranAt": "Exécuté le",
+  "checksRun": "contrôles",
+  "affected": "Concernés :",
+  "samples": "Exemples :",
+  "goToFix": "Corriger",
+  "severity": { "error": "erreurs", "warning": "avertissements", "info": "remarques" }
+}

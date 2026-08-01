@@ -1,4 +1,14 @@
-import type { AppConfig } from '@okr/shared-models';
+import type { AppConfig, PrivacyAuditResult, PrivacyFinding } from '@okr/shared-models';
+
+/**
+ * The wire types live in `@okr/shared-models/privacy-audit.model` — the admin screen
+ * renders exactly what this callable returns, and a second declaration on the client
+ * would drift the first time a check is added. Re-exported under the local names the
+ * check files use so the audit module keeps importing its vocabulary from one place.
+ */
+export type Finding = PrivacyFinding;
+export type AuditResult = PrivacyAuditResult;
+export type { PrivacyAuditResult, PrivacyFinding } from '@okr/shared-models';
 
 /**
  * The privacy audit (spec 1.19 Phase 5D) — eleven conformance checks run on demand
@@ -7,28 +17,6 @@ import type { AppConfig } from '@okr/shared-models';
  * **The audit reads; it never writes.** No check may fix what it finds. Every finding
  * carries a `fixRoute` pointing at the screen where a human does.
  */
-
-/**
- * One thing that is wrong, in a form safe to render to an admin and export to PDF.
- *
- * `sampleKeys` holds **document ids only** — never a name, an e-mail or a vault value.
- * The callable re-validates this before returning (belt and braces): a finding is the one
- * place in this system where data from every collection converges into a single document
- * that gets printed, so a leak here would be a leak of everything at once.
- */
-export interface Finding {
-  readonly checkId: number;
-  readonly severity: 'error' | 'warning' | 'info';
-  /** German, authored next to the check that produces it and rendered verbatim. */
-  readonly titleDe: string;
-  /** German — what to do about it. */
-  readonly detailDe: string;
-  readonly count: number;
-  /** ≤10 document ids. NEVER names, e-mails or vault values. */
-  readonly sampleKeys: string[];
-  /** Client route where a human fixes this. */
-  readonly fixRoute: string;
-}
 
 /**
  * Everything a check may read, **injected rather than fetched**, so every check is unit
@@ -65,14 +53,6 @@ export interface AuditCheck {
   readonly titleDe: string;
   /** `undefined` = clean. */
   readonly run: (ctx: AuditCtx) => Promise<Finding | undefined>;
-}
-
-export interface AuditResult {
-  readonly tenantId: string;
-  /** StoreDate (`yyyyMMdd`). */
-  readonly ranAt: string;
-  readonly findings: Finding[];
-  readonly checksRun: number;
 }
 
 /** Cap on `sampleKeys`. A finding is a pointer to a problem, not a data export. */

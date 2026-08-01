@@ -1,0 +1,16 @@
+{
+  "title": "Privacy audit",
+  "subtitle": "Checks this tenant's data against eleven privacy rules. The audit only reads — it changes nothing. Every finding links to the place where it is fixed.",
+  "run": "Start audit",
+  "running": "Audit running …",
+  "export": "Export as PDF",
+  "clean": "No findings.",
+  "notRun": "Not run yet.",
+  "failed": "The audit failed:",
+  "ranAt": "Run on",
+  "checksRun": "checks",
+  "affected": "Affected:",
+  "samples": "Examples:",
+  "goToFix": "Go to fix",
+  "severity": { "error": "errors", "warning": "warnings", "info": "notices" }
+}
