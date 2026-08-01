@@ -6,6 +6,7 @@ import {
 } from '@ionic/angular/standalone';
 
 import { PrivacyAuditService } from '@okr/security-audit-data-access';
+import type { RebuildDirectoryResult } from '@okr/security-audit-data-access';
 import {
   PRIVACY_AUDIT_I18N_KEYS, type PrivacyAuditI18n, buildAuditDocument,
 } from '@okr/security-audit-util';
@@ -90,6 +91,23 @@ import type { FindingSeverity, PrivacyAuditResult } from '@okr/shared-models';
         </ion-card-content>
       </ion-card>
 
+      <!-- The rebuild's outcome, kept on screen. A toast is the wrong instrument for an
+           operation that runs for a minute: it fires 3s after the admin has stopped
+           watching. The raw counter line is deliberately untranslated — it is the one part
+           that still says something if the i18n scope failed to load. -->
+      @if (rebuildSummary(); as summary) {
+        <ion-card>
+          <ion-card-content>
+            @if (rebuildMessage(); as message) { <p>{{ message }}</p> }
+            <ion-note class="samples">
+              persons {{ summary.persons }} · orgs {{ summary.orgs }} ·
+              crossTenantAddresses {{ summary.crossTenantAddresses }} ·
+              parentsAffected {{ summary.parentsAffected }}
+            </ion-note>
+          </ion-card-content>
+        </ion-card>
+      }
+
       @if (error(); as message) {
         <ion-card color="danger">
           <ion-card-content>{{ i18n.failed() }} {{ message }}</ion-card-content>
@@ -142,6 +160,8 @@ export class PrivacyAuditPage {
   protected readonly isRunning = signal(false);
   protected readonly isExporting = signal(false);
   protected readonly isRebuilding = signal(false);
+  protected readonly rebuildSummary = signal<RebuildDirectoryResult | undefined>(undefined);
+  protected readonly rebuildMessage = signal<string | undefined>(undefined);
   protected readonly error = signal<string | undefined>(undefined);
 
   protected readonly ranOn = computed(() =>
@@ -183,6 +203,8 @@ export class PrivacyAuditPage {
     if (!await this.alertService.confirm(question, true)) return;
 
     this.isRebuilding.set(true);
+    this.rebuildSummary.set(undefined);
+    this.rebuildMessage.set(undefined);
     try {
       const summary = await this.service.rebuildAddressDirectory();
       let message = await this.i18nService.translateOnce(
@@ -193,6 +215,9 @@ export class PrivacyAuditPage {
           PRIVACY_AUDIT_I18N_KEYS.rebuild_cross,
           { addresses: summary.crossTenantAddresses, parents: summary.parentsAffected });
       }
+      // Set the summary before the toast: the card is the record, the toast only the nudge.
+      this.rebuildSummary.set(summary);
+      this.rebuildMessage.set(message.trim() === '' ? undefined : message);
       await this.alertService.showToast(message);
     } catch (error) {
       this.alertService.error(`PrivacyAuditPage.rebuildDirectory: ${error}`);
