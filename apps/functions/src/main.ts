@@ -264,3 +264,8 @@ export const reapPrivacyExports = Privacy.reapPrivacyExports;
 // the member confirmed (token-checked against a freshly rebuilt preview)
 export const previewMyErasure = Privacy.previewMyErasure;
 export const eraseMyData = Privacy.eraseMyData;
+
+// privacy 1.19 Phase 5D: admin-only conformance audit — eleven checks over the tenant's
+// Firestore data, its Bearbeitungsverzeichnis and its policy state. Reads only; every
+// finding links to the screen where a human fixes it.
+export const runPrivacyAudit = Privacy.runPrivacyAudit;
