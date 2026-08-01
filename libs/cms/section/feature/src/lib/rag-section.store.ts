@@ -38,7 +38,12 @@ export interface RagChatEntry {
 }
 
 export type RagState = {
-    storeName: string;
+    /**
+     * Key of the section whose RagConfig drives the query. Replaces the former `storeName`:
+     * the store is now derived server-side from the caller's tenant, and the model/prompt/
+     * scope/token settings are read from this section document by the Cloud Function.
+     */
+    sectionKey: string;
     messages: RagMessage[];       // full history sent to the Cloud Function
     chatEntries: RagChatEntry[];  // display-friendly question/answer pairs
     isLoading: boolean;
@@ -46,7 +51,7 @@ export type RagState = {
 };
 
 const initialRagState: RagState = {
-    storeName: '',
+    sectionKey: '',
     messages: [],
     chatEntries: [],
     isLoading: false,
@@ -85,8 +90,8 @@ export const RagStore = signalStore(
         ragDocuments: computed(() => state.ragDocumentsResource.value() ?? []),
     })),
     withMethods((store) => ({
-        setStoreName(storeName: string): void {
-            patchState(store, { storeName });
+        setSectionKey(sectionKey: string): void {
+            patchState(store, { sectionKey });
         },
 
         reset(): void {
@@ -139,12 +144,12 @@ export const RagStore = signalStore(
             try {
                 const functions = getFunctions(getApp(), 'europe-west6');
                 const queryRag = httpsCallable<
-                    { storeName: string; question: string; history: RagMessage[] },
+                    { sectionKey: string; question: string; history: RagMessage[] },
                     { answer: string; sources: RagSource[] }
                 >(functions, 'queryRag');
 
                 const result = await queryRag({
-                    storeName: store.storeName(),
+                    sectionKey: store.sectionKey(),
                     question,
                     history: store.messages(),
                 });

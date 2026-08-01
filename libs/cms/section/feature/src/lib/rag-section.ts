@@ -199,7 +199,7 @@ export class RagSectionComponent {
     protected readonly title = computed(() => this.section()?.title);
     protected readonly subTitle = computed(() => this.section()?.subTitle);
     protected readonly config = computed(() => this.section()?.properties as RagConfig | undefined);
-    protected readonly storeName = computed(() => this.config()?.storeName ?? '');
+    protected readonly sectionKey = computed(() => this.section()?.okey ?? '');
     protected readonly isContentAdmin = computed(() => hasRole('contentAdmin', this.store.currentUser()));
     protected readonly reversedChatEntries = computed(() => [...this.store.chatEntries()].reverse());
 
@@ -209,7 +209,7 @@ export class RagSectionComponent {
     // constructor
     constructor() {
         effect(() => {
-            this.store.setStoreName(this.storeName());
+            this.store.setSectionKey(this.sectionKey());
         });
     }
 

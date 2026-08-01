@@ -455,6 +455,10 @@ export interface RagSection extends BaseSection {
 
 export interface RagConfig {
   model: string;            // LLM model id, e.g. 'gemini-3-flash-preview'
+  /** @deprecated Ignored by `queryRag` since the 1.18 tenant-scoping fix: the store is
+   * derived server-side as `{callerTenantId}-rag`, because a client-supplied name let any
+   * authenticated user read another tenant's store. Field kept so stored section configs
+   * stay valid; remove it in a schema change once the editor field is gone. */
   storeName: string;        // vector store name, e.g. 'scs-rag'
   systemPrompt?: string;    // optional system prompt steering the assistant
   documentScope?: string;   // optional folder path or tag limiting the retrieved documents

@@ -4,38 +4,41 @@ import { defineSecret } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { GoogleGenAI } from '@google/genai';
 import * as admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 import axios from 'axios';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { tmpdir } from 'os';
-import { checkAppCheckToken, checkAuthentication, checkStringField } from '@okr/shared-util-functions';
+import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, getCallerTenantId } from '@okr/shared-util-functions';
+import { AppConfigCollection, SectionCollection } from '@okr/shared-models';
+import {
+    defaultSystemPrompt,
+    ragStoreName,
+    resolveMaxOutputTokens,
+    resolveModel,
+    SCOPE_METADATA_KEY,
+    scopeFromPath,
+    scopeMetadataFilter,
+    tenantIdFromPath,
+} from './rag-config.util';
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
-// Pinned stable model. gemini-3-flash-preview (preview) is flagged for deprecation; gemini-3.6-flash
-// is Google's recommended stable replacement (same one used by the OCR extractor).
-const RAG_MODEL = 'gemini-3.6-flash';
+// --------------------------------- helpers ---------------------------------
 
-/** Storage path prefix watched for RAG documents. */
-const RAG_PATH_PREFIX = 'tenant/';
-const RAG_PATH_SUFFIX = '/rag/';
-
-/** Derive the RAG store name from a tenantId. */
-function ragStoreName(tenantId: string): string {
-    return `${tenantId}-rag`;
-}
-
-/** Extract tenantId from a RAG storage path: tenant/{tenantId}/rag/{fileName} */
-function tenantIdFromPath(objectName: string): string | null {
-    // e.g. "tenant/scs/rag/report.pdf"
-    const parts = objectName.split('/');
-    if (parts.length >= 4 && parts[0] === 'tenant' && parts[2] === 'rag') {
-        return parts[1];
+/**
+ * Resource name of an existing file search store, by display name, or null if there is
+ * none. Read paths use this rather than `getOrCreateFileStore`: a query must never mint
+ * a store as a side effect.
+ */
+async function findFileStore(ai: GoogleGenAI, storeName: string): Promise<string | null> {
+    for await (const store of await ai.fileSearchStores.list()) {
+        if (store.displayName === storeName && store.name) {
+            return store.name;
+        }
     }
     return null;
 }
-
-// --------------------------------- helpers ---------------------------------
 
 /**
  * Gets the resource name of an existing file search store by display name,
@@ -45,18 +48,15 @@ function tenantIdFromPath(objectName: string): string | null {
 async function getOrCreateFileStore(ai: GoogleGenAI, storeName: string): Promise<string> {
     logger.info(`getOrCreateFileStore: looking up store "${storeName}"`);
 
-    for await (const store of await ai.fileSearchStores.list()) {
-        if (store.displayName === storeName && store.name) {
-            return store.name;
-        }
-    }
+    const existing = await findFileStore(ai, storeName);
+    if (existing) return existing;
 
     logger.info(`getOrCreateFileStore: creating new store "${storeName}"`);
     const created = await ai.fileSearchStores.create({
         config: { displayName: storeName },
     });
     if (!created.name) {
-        throw new Error(`Store "${storeName}" was created but returned no resource name`);
+        throw new HttpsError('internal', `Store "${storeName}" was created but returned no resource name`);
     }
     return created.name;
 }
@@ -81,12 +81,18 @@ async function indexStorageFile(
     try {
         await file.download({ destination: tempFilePath });
 
+        // Index the folder path as `scope` metadata so a section can restrict retrieval via
+        // RagConfig.documentScope. Files uploaded flat into rag/ carry no scope and are
+        // therefore only reachable by an unscoped section — which is every section today.
+        const scope = scopeFromPath(objectName);
+
         await ai.fileSearchStores.uploadToFileSearchStore({
             fileSearchStoreName: storeResourceName,
             file: tempFilePath,
             config: {
                 displayName: path.basename(objectName),
                 mimeType: contentType || 'application/octet-stream',
+                ...(scope !== '' ? { customMetadata: [{ key: SCOPE_METADATA_KEY, stringValue: scope }] } : {}),
             },
         });
 
@@ -107,13 +113,7 @@ async function removeFromFileStore(
     const storeName = ragStoreName(tenantId);
     const displayName = path.basename(objectName);
 
-    let storeResourceName: string | null = null;
-    for await (const store of await ai.fileSearchStores.list()) {
-        if (store.displayName === storeName && store.name) {
-            storeResourceName = store.name;
-            break;
-        }
-    }
+    const storeResourceName = await findFileStore(ai, storeName);
     if (!storeResourceName) {
         logger.warn(`removeFromFileStore: store "${storeName}" not found, skipping`);
         return;
@@ -196,7 +196,12 @@ export const onRagFileDeleted = onObjectDeleted(
 // --------------------------------- onCall functions ---------------------------------
 
 /**
- * Ensures a RAG file search store exists for the tenant. Admin-only.
+ * Ensures a RAG file search store exists for the caller's own tenant. Admin-only.
+ *
+ * Provisioning escape hatch: the storage trigger creates the store on the first upload,
+ * so this only matters when an admin wants the store to exist beforehand. It takes no
+ * store name — the name is derived from the caller's tenant, so an admin of tenant A
+ * cannot reach into tenant B.
  */
 export const getOrCreateStore = onCall(
     {
@@ -205,13 +210,13 @@ export const getOrCreateStore = onCall(
         cors: true,
         secrets: [geminiApiKey],
     },
-    async (request: CallableRequest<{ storeName: string }>) => {
+    async (request: CallableRequest<void>) => {
         const CF_NAME = 'getOrCreateStore';
         checkAppCheckToken(request as any, CF_NAME);
-        checkAuthentication(request as any, CF_NAME);
-        const storeName = checkStringField(request as any, CF_NAME, 'storeName');
+        await checkAdminRole(request as any, CF_NAME);
+        const tenantId = await getCallerTenantId(request as any, CF_NAME);
         const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
-        const name = await getOrCreateFileStore(ai, storeName);
+        const name = await getOrCreateFileStore(ai, ragStoreName(tenantId));
         return { success: true, storeName: name };
     },
 );
@@ -224,9 +229,65 @@ export interface RagMessage {
 }
 
 export interface RagRequest {
-    storeName: string;
+    /**
+     * @deprecated Ignored. The store is derived server-side from the caller's tenant.
+     * Kept in the shape only so the released client, which still sends the CMS-configured
+     * `RagConfig.storeName`, keeps type-checking; drop it once no client sends it.
+     */
+    storeName?: string;
+    /**
+     * Key of the `sections` document whose `RagConfig` (model, systemPrompt, documentScope,
+     * maxTokens) drives this query. The config is read server-side from Firestore, never
+     * taken from the request: `systemPrompt` and `model` decide what the assistant does and
+     * what it costs, so they must come from the admin-authored CMS document rather than
+     * from whoever is typing in the chat box. Absent (pre-release client) → defaults.
+     */
+    sectionKey?: string;
     question: string;
     history?: RagMessage[];
+}
+
+/** The subset of `RagConfig` the callable applies, resolved and bounded. */
+interface ResolvedRagConfig {
+    model: string;
+    systemPrompt: string;
+    metadataFilter?: string;
+    maxOutputTokens?: number;
+}
+
+/**
+ * Load the section's `RagConfig` and fold it into what the query actually uses. The section
+ * must belong to the caller's tenant — otherwise a member could name another tenant's
+ * section and read its prompt. An unknown/foreign/non-rag key degrades to the defaults
+ * rather than failing: the chat keeps working, it just loses the tailoring.
+ */
+async function resolveConfig(tenantId: string, sectionKey: string | undefined): Promise<ResolvedRagConfig> {
+    const db = getFirestore();
+    const configSnap = await db.collection(AppConfigCollection).doc(tenantId).get();
+    const tenantName = String(configSnap.data()?.['appName'] ?? tenantId);
+
+    let properties: Record<string, unknown> = {};
+    if (sectionKey) {
+        const snap = await db.collection(SectionCollection).doc(sectionKey).get();
+        const section = snap.data();
+        const tenants = Array.isArray(section?.['tenants']) ? (section['tenants'] as string[]) : [];
+        if (!section || section['type'] !== 'rag' || !tenants.includes(tenantId)) {
+            logger.warn(`queryRag: section "${sectionKey}" is not a rag section of tenant ${tenantId} — using defaults`);
+        } else {
+            properties = (section['properties'] as Record<string, unknown>) ?? {};
+        }
+    }
+
+    const systemPrompt = typeof properties['systemPrompt'] === 'string' && properties['systemPrompt'].trim() !== ''
+        ? properties['systemPrompt']
+        : defaultSystemPrompt(tenantName);
+
+    return {
+        model: resolveModel(properties['model']),
+        systemPrompt,
+        metadataFilter: scopeMetadataFilter(properties['documentScope']),
+        maxOutputTokens: resolveMaxOutputTokens(properties['maxTokens']),
+    };
 }
 
 export interface RagSource {
@@ -242,6 +303,12 @@ export interface RagResponse {
 /**
  * Queries the RAG store using Google File Search and returns an answer with citations.
  * Authenticated users only (no admin role required).
+ *
+ * The store is derived from the CALLER'S OWN tenant (`users/{uid}.tenants[0]`), never from
+ * `request.data`. The callable used to pass the client's `storeName` straight through, so
+ * any authenticated user could send another tenant's store name (`{tenantId}-rag` is
+ * guessable) and read that tenant's indexed documents. Do not reintroduce a store or
+ * tenant parameter here.
  */
 export const queryRag = onCall(
     {
@@ -254,13 +321,21 @@ export const queryRag = onCall(
         const CF_NAME = 'queryRag';
         checkAppCheckToken(request as any, CF_NAME);
         checkAuthentication(request as any, CF_NAME);
-        const storeName = checkStringField(request as any, CF_NAME, 'storeName');
+        const tenantId = await getCallerTenantId(request as any, CF_NAME);
+        const storeName = ragStoreName(tenantId);
         const question = checkStringField(request as any, CF_NAME, 'question');
         const history: RagMessage[] = request.data.history ?? [];
+        const config = await resolveConfig(tenantId, request.data.sectionKey);
 
         try {
             const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
-            const storeResourceName = await getOrCreateFileStore(ai, storeName);
+            // Look up only — a query must not create an (empty) store as a side effect.
+            const storeResourceName = await findFileStore(ai, storeName);
+            if (!storeResourceName) {
+                logger.warn(`${CF_NAME}: no RAG store "${storeName}" for tenant ${tenantId}`);
+                throw new HttpsError('failed-precondition',
+                    'Für diesen Verein sind noch keine Dokumente hinterlegt.');
+            }
 
             const contents = [
                 ...history.map(m => ({ role: m.role, parts: [{ text: m.text }] })),
@@ -268,17 +343,17 @@ export const queryRag = onCall(
             ];
 
             const response = await ai.models.generateContent({
-                model: RAG_MODEL,
+                model: config.model,
                 contents,
                 config: {
-                    systemInstruction:
-                        'Du bist ein hilfreicher Assistent des Seeclubs Stäfa, einem Segelclub am Zürichsee. ' +
-                        'Du weisst, wie der Verein organisiert ist und welche Vorgaben beim Rudern gelten.' +
-                        'Beantworte Fragen ausschliesslich auf Deutsch. ' +
-                        'Stütze deine Antworten in erster Linie auf die bereitgestellten Vereinsdokumente. ' +
-                        'Wenn die Antwort nicht eindeutig aus den Dokumenten hervorgeht, ' +
-                        'weise darauf hin und ergänze mit allgemeinem Wissen über Segelvereine.',
-                    tools: [{ fileSearch: { fileSearchStoreNames: [storeResourceName] } }],
+                    systemInstruction: config.systemPrompt,
+                    tools: [{
+                        fileSearch: {
+                            fileSearchStoreNames: [storeResourceName],
+                            ...(config.metadataFilter ? { metadataFilter: config.metadataFilter } : {}),
+                        },
+                    }],
+                    ...(config.maxOutputTokens ? { maxOutputTokens: config.maxOutputTokens } : {}),
                 },
             });
 
@@ -292,6 +367,7 @@ export const queryRag = onCall(
 
             return { answer, sources };
         } catch (error: any) {
+            if (error instanceof HttpsError) throw error;   // keep the precise code/message
             logger.error(`${CF_NAME}: ERROR:`, error);
             throw new HttpsError('internal', `RAG query failed: ${error.message}`);
         }
