@@ -40,10 +40,20 @@ import { copyToClipboard, showToast } from '@okr/shared-util-angular';
     }
     .content {
       -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text;
-      h1 { line-height: 80px; color: #25265e;}
-      h2, h3 { color: #25265e; margin-bottom: 12px; }
+      /* Brand navy — same value as BRAND_COLOR in email-html.util.ts. Kept as a custom
+         property so the dark override below (and any theme) has a single place to change. */
+      --okr-editor-heading-color: #25265e;
+      h1 { line-height: 80px; color: var(--okr-editor-heading-color); }
+      h2, h3 { color: var(--okr-editor-heading-color); margin-bottom: 12px; }
       p { margin-bottom: 24px; line-height: 24px; }
       ul { list-style-position: inside; padding-left: 20px; margin-bottom: 12px;}
+    }
+    /* Unconditional navy scored 1.35:1 on the Ionic dark background (#121212) and 1.04:1 on the
+       editing surface (#2a2a2a) — effectively invisible, against a WCAG AA floor of 4.5:1. This
+       keeps the brand hue but mirrors its lightness: 8.55:1 and 6.55:1 respectively. Tied to
+       prefers-color-scheme to match dark.system.css; a switch to dark.class.css must update this. */
+    @media (prefers-color-scheme: dark) {
+      .content { --okr-editor-heading-color: #a9abe0; }
     }
   `],
   template: `
