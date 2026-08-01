@@ -116,10 +116,15 @@ import { ChatHelpModal } from './chat-help.modal';
       color: var(--ion-color-medium);
     }
 
+    /* The call overlay is deliberately theme-independent: a fullscreen video
+       surface stays black with white-on-black labels in light and dark mode
+       alike. Do not map these to --ion-background-color / --ion-text-color. */
     .video-call-overlay {
+      --okr-call-surface: #000;
+      --okr-call-on-surface: #fff;
       position: absolute;
       inset: 0;
-      background: #000;
+      background: var(--okr-call-surface);
       z-index: 100;
       display: flex;
       align-items: center;
@@ -139,7 +144,7 @@ import { ChatHelpModal } from './chat-help.modal';
       width: 120px;
       border-radius: 12px;
       object-fit: cover;
-      border: 2px solid rgba(255,255,255,0.4);
+      border: 2px solid color-mix(in srgb, var(--okr-call-on-surface) 40%, transparent);
     }
 
     .call-status-label {
@@ -147,7 +152,7 @@ import { ChatHelpModal } from './chat-help.modal';
       top: 24px;
       left: 0; right: 0;
       text-align: center;
-      color: #fff;
+      color: var(--okr-call-on-surface);
       font-size: 1rem;
       font-weight: 600;
       text-shadow: 0 1px 4px rgba(0,0,0,0.6);
