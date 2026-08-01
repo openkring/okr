@@ -1,11 +1,18 @@
-import { CategoryModel, Language } from '@okr/shared-models';
+import { CategoryModel, Language, LanguageCodes } from '@okr/shared-models';
 
 export type LanguageCategory = CategoryModel;
 
-// The `abbreviation` values (and their order) are parity-checked against AvailableLanguages
-// (@okr/shared-models) in language.spec.ts — drift fails the build. Keep this array's order
-// aligned with the Language enum.
-export const Languages: LanguageCategory[] = [
+/**
+ * Compile-time parity guard: one entry per code in `LanguageCodes` (@okr/shared-models), in the
+ * same order, with each `abbreviation` pinned to its code. Adding, removing or reordering a
+ * language on either side is a type error here — the code list has exactly one source of truth.
+ */
+type PinAbbreviations<T extends readonly string[]> = {
+  -readonly [K in keyof T]: LanguageCategory & { abbreviation: T[K] };
+};
+type LanguageCategories = PinAbbreviations<typeof LanguageCodes>;
+
+const LanguageEntries: LanguageCategories = [
   {
     id: Language.GE,
     abbreviation: 'de',
@@ -41,4 +48,7 @@ export const Languages: LanguageCategory[] = [
     i18nBase: '@shared/categories.language.it',
     icon: 'italian'
   }
-]
+];
+
+// Exported with the plain CategoryModel[] type consumers expect; the guard lives on LanguageEntries.
+export const Languages: LanguageCategory[] = LanguageEntries;
