@@ -78,34 +78,41 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
     }
     }
 
-    /* SCROLL-MARKER: Create dot for each slide */
+    /* SCROLL-MARKER: Create dot for each slide.
+       Colours are Ionic theme variables, not literals: --ion-color-light and its -contrast
+       flip with prefers-color-scheme (Ionic dark.system.css, refined per tenant in
+       theme/variables.scss), and --ion-color-primary carries the tenant brand. A hardcoded
+       grey/blue palette here rendered as white blocks on any dark surface. */
     .carousel-slide::scroll-marker {
     content: "";
     width: 15px;
     height: 15px;
-    background: #d1d5db;
-    border: 1px solid #9ca3af;
+    background: var(--ion-color-light);
+    border: 1px solid var(--ion-color-medium);
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s;
     }
 
     .carousel-slide::scroll-marker:hover {
-    background: #9ca3af;
+    background: var(--ion-color-medium);
     }
 
     /* SCROLL-MARKER: Highlight active dot */
     .carousel-slide::scroll-marker:target-current {
-    background: #3b82f6;
+    background: var(--ion-color-primary);
     transform: scale(1.3);
-    border: 1px solid black;
+    border: 1px solid var(--ion-color-primary-shade);
     }
 
-    /* SCROLL-BUTTON: Create arrow buttons */
+    /* SCROLL-BUTTON: Create arrow buttons.
+       --ion-color-light-contrast is the foreground Ionic pairs with --ion-color-light, so the
+       glyph stays legible in both schemes (#000 on #f6f8fc light, #fff on #444343 dark)
+       without needing its own media query. */
     .carousel::scroll-button(*) {
     border: none;
-    background: white;
-    color: #374151;
+    background: var(--ion-color-light);
+    color: var(--ion-color-light-contrast);
     font-size: 1.25rem;
     width: 40px;
     height: 40px;
@@ -120,8 +127,8 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
     }
 
     .carousel::scroll-button(*):hover:not(:disabled) {
-    background: #3b82f6;
-    color: white;
+    background: var(--ion-color-primary);
+    color: var(--ion-color-primary-contrast);
     }
 
     .carousel::scroll-button(*):disabled {
@@ -143,7 +150,7 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
     @if(section(); as section) {
       <ion-card>
         <okr-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
-        <ion-card-content background="black">
+        <ion-card-content>
             <div class="carousel-container">
                 <div class="carousel" #carouselEl>
                     @for(image of images(); track image.url) {
