@@ -30,7 +30,7 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | `fix-types`              | type-checking after editing TypeScript files.                                                                                                                                                                                                                                                                        |
 | `testing`                | writing or running tests — Vitest unit tests (only for util functions and services) or Playwright e2e; includes the `@angular/compiler` JIT-error fix.                                                                                                                                                               |
 | `authoring-docs`         | creating/saving a spec, design, or implementation plan doc.                                                                                                                                                                                                                                                          |
-| `pending-implementation` | creating/updating/regenerating `planning/PENDING_IMPLEMENTATION.md` — the TOC of specified-but-not-fully-implemented topics.                                                                                                                                                                                         |
+| `pending-implementation` | creating/updating/regenerating `planning/PENDING_IMPLEMENTATION.md` / `planning/DONE_IMPLEMENTATION.md` — the TOC of specified topics, open and completed.                                                                                                                                                                                         |
 | `creating-help-videos`   | creating/updating a step-by-step help/tutorial/onboarding video for end users (login, password reset, …) — German storyboard + Sprechertext + screenshot-capture guide per `tenant/topic`, for desktop and mobile.                                                                                                   |
 | `github-security`        | checking/configuring/accessing GitHub security on `openkring/okr` — Dependabot alerts & security updates, CodeQL code scanning, secret scanning & push protection — or looking up a GitHub security-alert email. Covers what's enabled and the `gh` CLI commands per alert type.                                     |
 | `person-profile`         | looking up a person's professional profile by name (currently LinkedIn via the `mcp-server-linkedin` MCP server) — search by first/last name, disambiguate candidates (name + company + city), then return education, certifications, skills, projects, contact_info.                                                |
@@ -40,8 +40,9 @@ Invoke the matching skill **before** starting work in its area — each one carr
 
 Docs are organised by **type**: `planning/ideas/` (seed/stub specs), `planning/specs/` (all spec & design docs,
 kept here for their whole life), `planning/plans/` (implementation plans), `planning/reference/` (reference
-docs). Specs are **not moved on completion**; status lives in `planning/PENDING_IMPLEMENTATION.md` (the TOC)
-via each entry's `State:` field. `docs/done/` is retired (archive for superseded docs only).
+docs). Specs are **not moved on completion**; status lives in `planning/PENDING_IMPLEMENTATION.md` (the TOC,
+chapters 1–3) and `planning/DONE_IMPLEMENTATION.md` (chapter 4, fully implemented) via each entry's
+`State:` field. `docs/done/` is retired (archive for superseded docs only).
 **This overrides the superpowers defaults:** the `brainstorming` skill must save design docs to
 `planning/specs/` and `writing-plans` must save plans to `planning/plans/` (not under `docs/superpowers/`).
 See the `authoring-docs` skill for the full convention.
