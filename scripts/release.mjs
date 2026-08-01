@@ -137,6 +137,14 @@ async function releaseApp(app) {
     console.log(`\n[3/7] Building ${app} (production, --skip-nx-cache)…`);
     run('bash', ['-c', `rm -rf dist/apps/${app}; set -a; source ./apps/${app}/.env; set +a; pnpm nx build ${app} --configuration production --skip-nx-cache`]);
 
+    // 3b. OSS attribution — must run AFTER the build, because it assembles the
+    //     `3rdpartylicenses.txt` that build just emitted. Generating it here (rather than
+    //     committing it) is what keeps the attribution from drifting from what actually ships.
+    //     Redundant for the websites, whose own `nx build` already produces it — idempotent
+    //     and a few milliseconds, so it runs unconditionally rather than behind a condition.
+    console.log(`\n[3b/7] Generating OSS attribution for ${app}…`);
+    run('node', ['scripts/gen-attribution.mjs', app]);
+
     // 4. Sentry source maps — MUST run before deploy (injects debug IDs into the built JS,
     //    uploads maps, finalizes the scs@<version> release). Skipped if SENTRY_* not exported.
     console.log('\n[4/7] Sentry source maps');
