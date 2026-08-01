@@ -2,10 +2,9 @@
  * Supported image MIME types for chat upload and preview.
  *
  * Conversion behaviour:
- *   HEIC / HEIF  — converted to JPEG via Safari's native createImageBitmap (fast path)
- *                  or libheif-js WASM (Chrome / Firefox fallback).
- *   AVIF         — converted to JPEG via createImageBitmap (all modern browsers)
- *                  or libheif-js WASM (older browser fallback).
+ *   HEIC / HEIF  — converted to JPEG via native createImageBitmap (Safari). Browsers
+ *                  without native HEIC support upload the file unconverted.
+ *   AVIF         — converted to JPEG via createImageBitmap (all modern browsers).
  *   SVG          — previewed and uploaded as-is; rendered natively by all browsers.
  *   All others   — uploaded as-is; the browser renders them natively.
  *
@@ -46,20 +45,22 @@ export function isAvifFile(file: File): boolean {
 }
 
 /**
- * Convert a HEIC/HEIF/AVIF file to JPEG.
+ * Convert a HEIC/HEIF/AVIF file to JPEG via createImageBitmap() — natively supported for
+ * AVIF in all modern browsers, and for HEIC/HEIF in Safari. Where the browser cannot decode
+ * the format (HEIC on Chrome/Firefox) the original file is returned unchanged and uploaded
+ * as-is; the recipient's browser may then be unable to preview it.
  *
- * Fast path: createImageBitmap() — natively supported for AVIF in all modern browsers,
- * and for HEIC/HEIF in Safari.
- * Fallback: libheif-js (WASM) — lazy-loaded (~2 MB), handles HEIC, HEIF and AVIF on
- * Chrome / Firefox. Requires 'wasm-unsafe-eval' in the Content-Security-Policy.
- * If both paths fail the original file is returned unchanged.
+ * There used to be a libheif-js (WASM) fallback covering exactly that gap. It was dropped
+ * deliberately: 1.4 MB of lazily-loaded WebAssembly and the only LGPL-3.0 dependency in the
+ * bundle, for a narrow slice of uploads that already degrade gracefully without it. Do not
+ * reintroduce a WASM decoder without weighing both costs again.
  *
  * Files that are not HEIC/HEIF/AVIF are returned immediately without any processing.
  */
 export async function convertHeicToJpeg(file: File): Promise<File> {
   if (!isHeicFile(file) && !isAvifFile(file)) return file;
 
-  // Fast path: Safari (HEIC/HEIF) and all modern browsers (AVIF) decode natively
+  // Safari (HEIC/HEIF) and all modern browsers (AVIF) decode natively
   try {
     const bitmap = await createImageBitmap(file);
     const canvas = document.createElement('canvas');
@@ -73,42 +74,7 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
     const jpegName = file.name.replace(/\.(heic|heif|avif)$/i, '.jpg');
     return new File([blob], jpegName, { type: 'image/jpeg' });
   } catch {
-    // Fall through to WASM-based decoder for Chrome/Firefox
-  }
-
-  // Fallback: libheif-js (WebAssembly) — lazy-loaded, ~2 MB, only on HEIC/HEIF/AVIF files
-  try {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore – libheif-js ships no TypeScript declarations
-    const mod: any = await import('libheif-js/wasm-bundle');
-    // In the browser the Emscripten factory returns a Promise (async WASM init);
-    // in Node.js it returns the module directly. Awaiting handles both.
-    const libheif: any = await (mod.default ?? mod);
-    const decoder = new libheif.HeifDecoder();
-    const data = decoder.decode(new Uint8Array(await file.arrayBuffer()));
-    if (!data.length) throw new Error('No images decoded from HEIC/AVIF');
-
-    const image = data[0];
-    const width = image.get_width();
-    const height = image.get_height();
-
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d')!;
-    const imageData = ctx.createImageData(width, height);
-
-    await new Promise<void>((resolve, reject) =>
-      image.display(imageData, (result: unknown) => (result ? resolve() : reject(new Error('HEIF display error'))))
-    );
-
-    ctx.putImageData(imageData, 0, 0);
-    const blob = await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob(b => b ? resolve(b) : reject(new Error('canvas.toBlob failed')), 'image/jpeg', 0.85)
-    );
-    const jpegName = file.name.replace(/\.(heic|heif|avif)$/i, '.jpg');
-    return new File([blob], jpegName, { type: 'image/jpeg' });
-  } catch {
+    // Browser cannot decode this format — upload the original untouched.
     return file;
   }
 }
