@@ -428,7 +428,9 @@
       "credit": {
         "label": "Fuente de la imagen",
         "placeholder": "p. ej. Foto: J. Muster / Keystone",
-        "helper": "Atribución de autoría de la imagen. Se muestra como fuente en la imagen cuando «Mostrar fuente» está activado."
+        "helper": "Atribución de autoría de la imagen. Se muestra como fuente en la imagen cuando «Mostrar fuente» está activado.",
+        "read": "Leer del archivo de imagen",
+        "readEmpty": "Este archivo de imagen no contiene datos de autoría."
       },
       "type": {
         "name": "type",

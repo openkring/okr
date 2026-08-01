@@ -142,13 +142,39 @@ export class ImagesConfiguration {
 
     // Best-effort: persist a DocumentModel record per uploaded file. A failure
     // here (permission, offline, …) is logged but never discards the images above.
-    await Promise.all(files.map((f, idx) => {
+    const documentKeys = await Promise.all(files.map((f, idx) => {
       const downloadUrl = urls[idx];
       if (!downloadUrl) return Promise.resolve(undefined);
       return this.uploadService
         .createAndSaveDocument(f, this.env.tenantId, `${basePath}/${f.name}`, downloadUrl, this.currentUser())
         .catch((ex: unknown) => { console.error('ImagesConfiguration.addImages: createAndSaveDocument failed', ex); return undefined; });
     }));
+
+    // seed the attribution from each file's own IPTC/EXIF metadata; '' for the many files that carry none
+    const credits = await Promise.all(files.map((f, idx) =>
+      urls[idx] ? this.uploadService.readImageCredit(`${basePath}/${f.name}`) : Promise.resolve('')));
+
+    // patch both back onto the images (keyed by storage path, because the list may have been
+    // reordered or edited while the documents and metadata were being fetched)
+    const patchByUrl = new Map<string, Partial<ImageConfig>>();
+    files.forEach((f, idx) => {
+      const patch: Partial<ImageConfig> = {};
+      if (documentKeys[idx]) patch.documentKey = documentKeys[idx];
+      if (credits[idx]) patch.credit = credits[idx];
+      if (Object.keys(patch).length > 0) patchByUrl.set(`${basePath}/${f.name}`, patch);
+    });
+    if (patchByUrl.size > 0) {
+      this.images.update(imgs => imgs.map(img => {
+        const patch = patchByUrl.get(img.url);
+        if (!patch) return img;
+        // never overwrite a value the user has already typed
+        return {
+          ...img,
+          documentKey: img.documentKey || patch.documentKey || '',
+          credit: img.credit || patch.credit || ''
+        };
+      }));
+    }
   }
 
   protected async showActions(img: ImageConfig, index: number): Promise<void> {

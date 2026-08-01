@@ -17,6 +17,7 @@ import {
     getSizedImgixParamsByExtension,
     getThumbnailUrl,
     buildOverlayParams,
+    extractCredit,
     IMGIX_JPG_PARAMS,
     IMGIX_JSON_PARAMS,
     IMGIX_PDF_PARAMS,
@@ -534,6 +535,69 @@ describe('img.util', () => {
     it('skips a toggled line whose value is empty', () => {
       const result = buildOverlayParams(img({ label: 'Sunset', credit: '' }), style({ showTitle: true, showSource: true }));
       expect(result).toContain('txt=' + encodeURIComponent('Sunset'));
+    });
+  });
+
+  describe('extractCredit', () => {
+    it('returns empty string for undefined data', () => {
+      expect(extractCredit(undefined)).toBe('');
+    });
+
+    it('returns empty string when the file carries no attribution at all', () => {
+      // the normal case: phone cameras write no attribution
+      expect(extractCredit({})).toBe('');
+      expect(extractCredit({ IPTC: {}, TIFF: {} })).toBe('');
+    });
+
+    it('prefers the explicit IPTC credit line over everything else', () => {
+      const data = {
+        IPTC: { Credit: 'Keystone', Byline: 'J. Doe', CopyrightNotice: '© 2026 Agency' },
+        TIFF: { Artist: 'Someone Else' }
+      };
+      expect(extractCredit(data)).toBe('Keystone');
+    });
+
+    it('falls back to the IPTC byline when there is no credit line', () => {
+      expect(extractCredit({ IPTC: { Byline: 'J. Doe' } })).toBe('J. Doe');
+    });
+
+    it('joins multiple byline creators', () => {
+      expect(extractCredit({ IPTC: { Byline: ['J. Doe', 'A. Muster'] } })).toBe('J. Doe, A. Muster');
+    });
+
+    it('falls back through copyright and source', () => {
+      expect(extractCredit({ IPTC: { CopyrightNotice: '© 2026 Agency' } })).toBe('© 2026 Agency');
+      expect(extractCredit({ IPTC: { Copyright: '© 2026 Agency' } })).toBe('© 2026 Agency');
+      expect(extractCredit({ IPTC: { Source: 'Bildarchiv' } })).toBe('Bildarchiv');
+    });
+
+    it('falls back to the EXIF/TIFF artist and copyright tags', () => {
+      expect(extractCredit({ TIFF: { Artist: 'J. Doe' } })).toBe('J. Doe');
+      expect(extractCredit({ TIFF: { Copyright: '© J. Doe' } })).toBe('© J. Doe');
+      // TIFF.Artist wins over TIFF.Copyright
+      expect(extractCredit({ TIFF: { Artist: 'J. Doe', Copyright: '© Agency' } })).toBe('J. Doe');
+    });
+
+    it('reads the shape imgix actually returns (verified against assets.imgix.net)', () => {
+      const kingfisher = {
+        IPTC: { Byline: ['Kajornyot Krunkitsatien'], Copyright: 'Kajornyot Krunkitsatien' },
+        TIFF: { Artist: 'Kajornyot Krunkitsatien', Copyright: 'Kajornyot Krunkitsatien' }
+      };
+      expect(extractCredit(kingfisher)).toBe('Kajornyot Krunkitsatien');
+    });
+
+    it('ignores blank and whitespace-only values', () => {
+      expect(extractCredit({ IPTC: { Credit: '   ', Byline: 'J. Doe' } })).toBe('J. Doe');
+      expect(extractCredit({ IPTC: { Byline: [] } })).toBe('');
+    });
+
+    it('trims the returned value', () => {
+      expect(extractCredit({ IPTC: { Credit: '  Keystone  ' } })).toBe('Keystone');
+    });
+
+    it('caps the value at the 150 chars the editors allow', () => {
+      const long = 'x'.repeat(300);
+      expect(extractCredit({ IPTC: { CopyrightNotice: long } })).toHaveLength(150);
     });
   });
 });

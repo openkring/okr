@@ -1,12 +1,15 @@
+import { HttpClient } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
 import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { ModalController } from "@ionic/angular/standalone";
+import { firstValueFrom } from "rxjs";
 
+import { ENV } from "@okr/shared-config";
 import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@okr/shared-models";
 import { error } from "@okr/shared-util-angular";
-import { isPhotoCancellation, warn } from "@okr/shared-util-core";
+import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellation, warn } from "@okr/shared-util-core";
 import { buildDocumentModel } from "@okr/document-util";
 import { DocumentService } from "@okr/document-data-access";
 import { DEFAULT_MIMETYPES } from "@okr/shared-constants";
@@ -18,6 +21,35 @@ import { UploadEntry, UploadTaskModal, showZoomedImage } from "@okr/shared-ui";
 export class UploadService {
   private readonly modalController = inject(ModalController);
   private readonly documentService = inject(DocumentService);
+  private readonly httpClient = inject(HttpClient);
+  private readonly env = inject(ENV);
+
+  /**
+   * Reads the attribution (photographer / agency / copyright) embedded in an image file.
+   *
+   * The metadata is read back through imgix (`fm=json`) rather than parsed in the browser, which
+   * keeps this dependency-free and reuses the CDN that already serves the file. Two consequences
+   * worth knowing:
+   * - the file must already be in storage, so this can only run *after* an upload completes. The
+   *   `fm=json` request itself triggers imgix's origin fetch, so a cold file simply answers slower.
+   * - most images carry no attribution at all (phone cameras write none), so '' is the normal
+   *   result. A failed lookup is likewise reported as '' — attribution is a nice-to-have and must
+   *   never break an upload.
+   *
+   * @param storagePath the storage path of the image, e.g. 'tenant/scs/section/123/photo.jpg'
+   * @returns the attribution found in the file's IPTC/EXIF metadata, or '' when there is none
+   */
+  public async readImageCredit(storagePath: string): Promise<string> {
+    if (!storagePath) return '';
+    try {
+      const url = getImgixJsonUrl(storagePath, this.env.services.imgixBaseUrl);
+      const data = await firstValueFrom(this.httpClient.get<ImageCreditMetaData>(url));
+      return extractCredit(data);
+    } catch (ex) {
+      warn(`UploadService.readImageCredit -> failed to read metadata of ${storagePath}: ${ex}`);
+      return '';
+    }
+  }
 
   /**
    * Upload a file into Firestorage and return the download URL.

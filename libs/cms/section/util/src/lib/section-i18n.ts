@@ -267,6 +267,8 @@ export const SECTION_I18N_KEYS = {
   image_edit_credit_label:                  PFX + 'image.edit.credit.label',
   image_edit_credit_placeholder:            PFX + 'image.edit.credit.placeholder',
   image_edit_credit_helper:                 PFX + 'image.edit.credit.helper',
+  image_edit_credit_read:                   PFX + 'image.edit.credit.read',
+  image_edit_credit_read_empty:             PFX + 'image.edit.credit.readEmpty',
   image_edit_type_name:                     PFX + 'image.edit.type.name',
   image_edit_type_label:                    PFX + 'image.edit.type.label',
   image_edit_type_helper:                   PFX + 'image.edit.type.helper',

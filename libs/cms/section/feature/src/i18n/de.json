@@ -428,7 +428,9 @@
       "credit": {
         "label": "Bildquelle",
         "placeholder": "z. B. Foto: J. Muster / Keystone",
-        "helper": "Urhebernachweis des Bildes. Wird als Quelle im Bild angezeigt, wenn «Quelle anzeigen» aktiviert ist."
+        "helper": "Urhebernachweis des Bildes. Wird als Quelle im Bild angezeigt, wenn «Quelle anzeigen» aktiviert ist.",
+        "read": "Aus Bilddatei auslesen",
+        "readEmpty": "Diese Bilddatei enthält keine Angaben zum Urheber."
       },
       "type": {
         "name": "type",

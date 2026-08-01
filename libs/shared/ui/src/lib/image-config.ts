@@ -29,6 +29,9 @@ export interface ImageConfigI18n {
   overlay_label:          Signal<string>;
   overlay_placeholder:    Signal<string>;
   overlay_helper:         Signal<string>;
+  credit_label:           Signal<string>;
+  credit_placeholder:     Signal<string>;
+  credit_helper:          Signal<string>;
 }
 
 @Component({
@@ -78,6 +81,9 @@ export interface ImageConfigI18n {
                 <okr-text-input [i18n]="actionUrlI18n()" [value]="actionUrl()" (valueChange)="onFieldChange('actionUrl', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="500" />
               </ion-col>
               <ion-col size="12">
+                <okr-text-input [i18n]="creditI18n()" [value]="credit()" (valueChange)="onFieldChange('credit', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="150" />
+              </ion-col>
+              <ion-col size="12">
                 <okr-text-input [i18n]="overlayI18n()" [value]="overlay()" (valueChange)="onFieldChange('overlay', $event)" [readOnly]="readOnly()" [copyable]="true" [showHelper]=true [maxLength]="100" />
               </ion-col>
             }
@@ -106,6 +112,7 @@ export class ImageConfigEdit {
   protected actionUrl = linkedSignal(() => this.formData().actionUrl ?? '');
   protected altText = linkedSignal(() => this.formData().altText ?? '');
   protected overlay = linkedSignal(() => this.formData().overlay ?? '');
+  protected credit = linkedSignal(() => this.formData().credit ?? '');
 
   // derived
   protected labelI18n = computed(() => ({ name: 'label', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper()} as TextInputI18n));
@@ -114,6 +121,7 @@ export class ImageConfigEdit {
   protected actionUrlI18n = computed(() => ({ name: 'actionUrl', label: this.i18n().actionUrl_label(), placeholder: this.i18n().actionUrl_placeholder(), helper: this.i18n().actionUrl_helper()} as TextInputI18n));
   protected altTextI18n = computed(() => ({ name: 'altText', label: this.i18n().altText_label(), placeholder: this.i18n().altText_placeholder(), helper: this.i18n().altText_helper()} as TextInputI18n));
   protected overlayI18n = computed(() => ({ name: 'overlay', label: this.i18n().overlay_label(), placeholder: this.i18n().overlay_placeholder(), helper: this.i18n().overlay_helper()} as TextInputI18n));
+  protected creditI18n = computed(() => ({ name: 'credit', label: this.i18n().credit_label(), placeholder: this.i18n().credit_placeholder(), helper: this.i18n().credit_helper()} as TextInputI18n));
 
   // passing constants to the template
   protected imageTypes = ImageTypes;

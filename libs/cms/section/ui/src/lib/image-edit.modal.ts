@@ -1,6 +1,7 @@
-import { Component, computed, inject, input, linkedSignal, model, Signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, inject, input, linkedSignal, model, signal, Signal } from '@angular/core';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow, ModalController } from '@ionic/angular/standalone';
 
+import { UploadService } from '@okr/avatar-data-access';
 import { ImageConfig, ImageType } from '@okr/shared-models';
 import { StringSelect, StringSelectI18n, TextInput, TextInputI18n, Header } from '@okr/shared-ui';
 import { SectionI18n } from '@okr/cms-section-util';
@@ -13,7 +14,7 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
   imports: [
     Header,
     TextInput, StringSelect,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol,
+    IonButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote, IonRow, IonCol,
   ],
   template: `
     <okr-header [i18n]="{ title: i18n().image_edit_title() }" [isModal]="true" [showOkButton]="true" (okClicked)="save()" />
@@ -41,6 +42,14 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
             </ion-col>
             <ion-col size="12">
               <okr-text-input [i18n]="creditI18n()" [value]="credit()" (valueChange)="onFieldChange('credit', $event)" [maxLength]="150" [readOnly]="readOnly()" />
+              @if(!readOnly() && url()) {
+                <ion-button size="small" fill="clear" [disabled]="readingCredit()" (click)="readCreditFromFile()">
+                  {{ i18n().image_edit_credit_read() }}
+                </ion-button>
+                @if(creditWasEmpty()) {
+                  <ion-note class="ion-padding-start" color="medium">{{ i18n().image_edit_credit_read_empty() }}</ion-note>
+                }
+              }
             </ion-col>
             <ion-col size="12">
               <okr-string-select [i18n]="imageTypeI18n()" [selectedString]="typeName()" (selectedStringChange)="onTypeChange($event)" [stringList]="imageTypeNames" [readOnly]="readOnly()" />
@@ -53,6 +62,11 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
 })
 export class ImageEditModal {
   private readonly modalController = inject(ModalController);
+  private readonly uploadService = inject(UploadService);
+
+  // state of the "read attribution from the image file" action
+  protected readonly readingCredit = signal(false);
+  protected readonly creditWasEmpty = signal(false);
 
   // inputs
   public formData = model.required<ImageConfig>();
@@ -115,6 +129,27 @@ export class ImageEditModal {
 
   protected onFieldChange(field: keyof ImageConfig, value: string): void {
     this.formData.update(vm => ({ ...vm, [field]: value }));
+  }
+
+  /**
+   * Reads the attribution embedded in the image file (IPTC/EXIF) and puts it into the credit field.
+   *
+   * This is the manual counterpart to the automatic read at upload time. It covers the two cases the
+   * upload-time read cannot: images added before the feature existed, and a cold file whose metadata
+   * was not available through imgix yet. It overwrites whatever is in the field, because the user
+   * asked for it explicitly.
+   */
+  protected async readCreditFromFile(): Promise<void> {
+    if (this.readOnly()) return;
+    this.readingCredit.set(true);
+    this.creditWasEmpty.set(false);
+    try {
+      const credit = await this.uploadService.readImageCredit(this.url());
+      if (credit) this.onFieldChange('credit', credit);
+      else this.creditWasEmpty.set(true);
+    } finally {
+      this.readingCredit.set(false);
+    }
   }
 
   protected onTypeChange(name: string): void {

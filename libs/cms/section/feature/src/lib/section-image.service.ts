@@ -57,19 +57,25 @@ export class SectionImageService {
     const urls = await this.uploadService.uploadFiles(uploads, labels.uploadTitle);
     if (!urls) return undefined;
 
-    const newImages: ImageConfig[] = files.map(f => ({
+    const documentKeys = await Promise.all(files.map((f, idx) => {
+      const downloadUrl = urls[idx];
+      if (!downloadUrl) return Promise.resolve(undefined);
+      return this.uploadService.createAndSaveDocument(f, tenantId, `${basePath}/${f.name}`, downloadUrl, currentUser);
+    }));
+
+    // seed the attribution from the file's own IPTC/EXIF metadata; '' for the many files that carry none
+    const credits = await Promise.all(files.map((f, idx) =>
+      urls[idx] ? this.uploadService.readImageCredit(`${basePath}/${f.name}`) : Promise.resolve('')));
+
+    const newImages: ImageConfig[] = files.map((f, idx) => ({
       label: f.name.replace(/\.[^.]+$/, ''),
       type: ImageType.Image,
       url: `${basePath}/${f.name}`,
       actionUrl: '',
       altText: f.name.replace(/\.[^.]+$/, ''),
       overlay: '',
-    }));
-
-    await Promise.all(files.map((f, idx) => {
-      const downloadUrl = urls[idx];
-      if (!downloadUrl) return Promise.resolve(undefined);
-      return this.uploadService.createAndSaveDocument(f, tenantId, `${basePath}/${f.name}`, downloadUrl, currentUser);
+      documentKey: documentKeys[idx] ?? '',
+      credit: credits[idx] ?? '',
     }));
 
     return applyImagesToSlot(section, slot, newImages);

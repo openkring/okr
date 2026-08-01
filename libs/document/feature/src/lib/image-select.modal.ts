@@ -88,13 +88,19 @@ export class ImageSelectModal {
       if (storageLocation) {
         const path = storageLocation + '/' + file.name;
         const downloadUrl = await this.uploadService.uploadFile(file, path, this.store.i18n.upload_single());
+        let documentKey: string | undefined;
+        let credit = '';
         if (downloadUrl) {
-          await this.uploadService.createAndSaveDocument(file, this.env.tenantId, path, downloadUrl, this.currentUser());
+          documentKey = await this.uploadService.createAndSaveDocument(file, this.env.tenantId, path, downloadUrl, this.currentUser());
+          // seed the attribution from the file's own IPTC/EXIF metadata; '' for the many files that carry none
+          credit = await this.uploadService.readImageCredit(path);
         }
         this.formData.update((vm) => ({
           ...vm,
           url: path,
-          actionUrl: getImgixUrlWithAutoParams(path)
+          actionUrl: getImgixUrlWithAutoParams(path),
+          documentKey: documentKey ?? vm.documentKey ?? '',
+          credit: credit || (vm.credit ?? '')
         }));
       }
     }

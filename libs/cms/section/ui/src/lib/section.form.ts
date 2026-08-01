@@ -431,7 +431,10 @@ export class SectionForm {
     altText_helper:           this.i18n().altText_helper,
     overlay_label:            this.i18n().image_edit_overlay_label,
     overlay_placeholder:      this.i18n().image_edit_overlay_placeholder,
-    overlay_helper:           this.i18n().image_edit_overlay_helper
+    overlay_helper:           this.i18n().image_edit_overlay_helper,
+    credit_label:             this.i18n().image_edit_credit_label,
+    credit_placeholder:       this.i18n().image_edit_credit_placeholder,
+    credit_helper:            this.i18n().image_edit_credit_helper
   }));
 
   // inputs
@@ -705,13 +708,16 @@ export class SectionForm {
     const fullPath = `${this.storagePath()}/${file.name}`;
     const downloadUrl = await this.uploadService.uploadFile(file, fullPath, this.i18n().image_upload());
     if (!downloadUrl) return;
-    await this.uploadService.createAndSaveDocument(file, this.tenantId(), fullPath, downloadUrl, this.currentUser());
+    const documentKey = await this.uploadService.createAndSaveDocument(file, this.tenantId(), fullPath, downloadUrl, this.currentUser());
     const newImage: ImageConfig = {
       ...(current ?? IMAGE_CONFIG_SHAPE),
       url: fullPath,
       label: file.name.replace(/\.[^.]+$/, ''),
       altText: file.name.replace(/\.[^.]+$/, ''),
       type: ImageType.Image,
+      documentKey: documentKey ?? '',
+      // seed the attribution from the file's own IPTC/EXIF metadata; '' for the many files that carry none
+      credit: await this.uploadService.readImageCredit(fullPath),
     };
     if (field === 'logo') this.onLogoConfigChange(newImage); else this.onHeroConfigChange(newImage);
   }

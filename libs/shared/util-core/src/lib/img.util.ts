@@ -167,6 +167,67 @@ export function buildOverlayParams(image: ImageConfig, style: ImageStyle): strin
 }
 
 /**
+ * The subset of an imgix `fm=json` response that can carry an attribution.
+ *
+ * Note that the dedicated *credit line* is an IPTC field, not an EXIF one: EXIF defines
+ * only `Artist` (0x013B) and `Copyright` (0x8298), and both are TIFF tags — which is why
+ * imgix reports them under `TIFF` rather than `Exif`. imgix also normalises the IPTC field
+ * names, e.g. IIM `By-line` is returned as `Byline` and may hold several creators.
+ */
+export interface ImageCreditMetaData {
+  IPTC?: {
+    Credit?: string;             // IIM 2:110 — the credit/provider line, e.g. "Keystone"
+    Byline?: string | string[];  // IIM 2:80  — the creator(s) of the image
+    CopyrightNotice?: string;    // IIM 2:116
+    Copyright?: string;          // as reported by imgix for some files
+    Source?: string;             // IIM 2:115 — the original owner of the rights
+  };
+  TIFF?: {
+    Artist?: string;             // EXIF/TIFF 0x013B
+    Copyright?: string;          // EXIF/TIFF 0x8298
+  };
+}
+
+/** the length ImageConfig.credit is capped at in the editors; some copyright notices are essays */
+const MAX_CREDIT_LENGTH = 150;
+
+/**
+ * Extracts an attribution string from the IPTC/EXIF metadata of an imgix `fm=json` response.
+ *
+ * Which key holds the attribution varies by how the file was produced, and no single key is
+ * dependable — imgix's own sample images never populate `IPTC.Credit` at all. So this walks a
+ * priority list and takes the first non-empty value rather than betting on one field:
+ * the explicit credit line, then the creator, then the copyright/source fallbacks, then the
+ * EXIF/TIFF equivalents. Multiple `Byline` creators are joined.
+ *
+ * Most photos carry nothing at all (phone cameras write no attribution), so an empty result is
+ * the normal case and must never be treated as a failure.
+ *
+ * @param data the parsed imgix `fm=json` response, or undefined
+ * @returns the attribution, trimmed and capped at 150 chars, or '' when the file carries none
+ */
+export function extractCredit(data: ImageCreditMetaData | undefined): string {
+  if (!data) return '';
+  const iptc = data.IPTC;
+  const tiff = data.TIFF;
+  const byline = Array.isArray(iptc?.Byline) ? iptc?.Byline.join(', ') : iptc?.Byline;
+  const candidates = [
+    iptc?.Credit,
+    byline,
+    iptc?.CopyrightNotice,
+    iptc?.Copyright,
+    iptc?.Source,
+    tiff?.Artist,
+    tiff?.Copyright
+  ];
+  for (const candidate of candidates) {
+    const value = typeof candidate === 'string' ? candidate.trim() : '';
+    if (value.length > 0) return value.slice(0, MAX_CREDIT_LENGTH);
+  }
+  return '';
+}
+
+/**
  * Returns the default imgix parameters for an image or pdf file.
  * @param pathOrExtension the path or extension of a file
  * @returns the imgix parameters for images and pdfs, or an empty string for other file types

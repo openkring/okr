@@ -428,7 +428,9 @@
       "credit": {
         "label": "Fonte dell'immagine",
         "placeholder": "ad es. Foto: J. Muster / Keystone",
-        "helper": "Attribuzione dell'immagine. Viene visualizzata come fonte nell'immagine quando «Mostrare la fonte» è attivato."
+        "helper": "Attribuzione dell'immagine. Viene visualizzata come fonte nell'immagine quando «Mostrare la fonte» è attivato.",
+        "read": "Leggi dal file immagine",
+        "readEmpty": "Questo file immagine non contiene informazioni sull'autore."
       },
       "type": {
         "name": "type",

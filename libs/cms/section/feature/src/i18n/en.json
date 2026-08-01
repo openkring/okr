@@ -428,7 +428,9 @@
       "credit": {
         "label": "Image source",
         "placeholder": "e.g. Photo: J. Muster / Keystone",
-        "helper": "Attribution of the image. Displayed as the source in the image when «Show source» is enabled."
+        "helper": "Attribution of the image. Displayed as the source in the image when «Show source» is enabled.",
+        "read": "Read from image file",
+        "readEmpty": "This image file contains no attribution data."
       },
       "type": {
         "name": "type",
