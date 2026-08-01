@@ -62,6 +62,7 @@ export * from './lib/person.model';
 export * from './lib/personal-rel.model';
 export * from './lib/privacy.model';
 export * from './lib/privacy-rights.model';
+export * from './lib/processor-entry.model';
 export * from './lib/regasoft.model';
 export * from './lib/reservation.model';
 export * from './lib/reservation-apply.model';

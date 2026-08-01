@@ -6,6 +6,7 @@
 
 import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_TITLE, DEFAULT_URL } from "@okr/shared-constants";
 import { AvailableLanguages } from "./enums/language.enum";
+import type { ProcessorEntry } from "./processor-entry.model";
 
 export type PrivacyAccessor = 'admin' | 'privileged' | 'registered' | 'public';
 
@@ -108,6 +109,29 @@ export class AppConfig {
   public dpoName = DEFAULT_NAME; // name of the DPO
   public privacyPolicyVersion = ''; // e.g. '2026-07'; '' = tenant declares none
   public privacyPolicyPageKey = ''; // CMS page key of the Datenschutzerklärung
+
+  /**
+   * Which third-party integrations actually receive this tenant's data, keyed by the
+   * `ProcessorEntry.key` of the matching PROCESSOR_CATALOGUE entry ('bexio', 'deepsign',
+   * 'matrix', …). Absent or `false` means the integration is off and the processor is
+   * NOT listed in the Bearbeitungsverzeichnis, NOT drawn on the processing map, and NOT
+   * claimed to hold a copy in the erasure report.
+   *
+   * A `true` key with no catalogue entry is register drift and is reported as an error by
+   * privacy-audit check 6 — that check is what replaces the dropped repo scanner (D-P5-5),
+   * so enabling an integration here without adding its catalogue entry fails the audit
+   * rather than passing silently.
+   *
+   * Legacy config docs have no `integrations` at all — always coalesce on read.
+   */
+  public integrations: Record<string, boolean> = {};
+
+  /**
+   * Tenant-added external parties that are not part of the shipped catalogue — the club's
+   * accountant, a mail recipient. A handful per tenant, hence a field and not a
+   * collection (D-P5-5). Legacy config docs lack it — coalesce to `[]` on read.
+   */
+  public additionalProcessors: ProcessorEntry[] = [];
 
   // can be overwritten in profile
   public showImages: PrivacyAccessor = 'public';
