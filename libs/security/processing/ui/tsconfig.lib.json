@@ -1,0 +1,21 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "../../../../dist/libs/security/processing/ui",
+    "declaration": true,
+    "composite": true,
+    "module": "preserve",
+    "target": "es2020",
+    "types": [],
+    "tsBuildInfoFile": "../../../../dist/out-tsc/security-processing-ui.tsbuildinfo",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
+  "references": [
+    { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../../shared/models/tsconfig.lib.json" }
+  ]
+}
