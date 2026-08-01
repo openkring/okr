@@ -14,12 +14,29 @@ function stableStringify(value: unknown): string {
 }
 
 /**
- * Cache document id: `{providerId}:{scopePrefix}{hash(params)}`.
- * Scope is folded into the KEY so isolation cannot be forgotten downstream:
+ * Everything in a cache document id that precedes the params hash:
+ * `{providerId}:{scopePrefix}`. Scope is folded in so isolation cannot be
+ * forgotten downstream:
  *  - shared → one entry serves everyone
  *  - tenant → `t:{tenantId}:` prefix
  *  - user   → `u:{uid}:` prefix
+ *
+ * Split out from `cacheKey` because `invalidateProvider` deletes by document-id
+ * RANGE over exactly this prefix. Building that range independently would let it
+ * drift from the writer and silently delete nothing — so both callers derive it
+ * here.
  */
+export function cacheKeyPrefix(
+  providerId: string,
+  scope: CacheScope,
+  ctx: Pick<GatewayContext, 'tenantId' | 'uid'>,
+): string {
+  const scopePrefix =
+    scope === 'tenant' ? `t:${ctx.tenantId}:` : scope === 'user' ? `u:${ctx.uid ?? 'anon'}:` : '';
+  return `${providerId}:${scopePrefix}`;
+}
+
+/** Cache document id: `{providerId}:{scopePrefix}{hash(params)}`. */
 export function cacheKey(
   providerId: string,
   scope: CacheScope,
@@ -27,7 +44,5 @@ export function cacheKey(
   params: unknown,
 ): string {
   const hash = createHash('sha256').update(stableStringify(params)).digest('hex').slice(0, 32);
-  const prefix =
-    scope === 'tenant' ? `t:${ctx.tenantId}:` : scope === 'user' ? `u:${ctx.uid ?? 'anon'}:` : '';
-  return `${providerId}:${prefix}${hash}`;
+  return `${cacheKeyPrefix(providerId, scope, ctx)}${hash}`;
 }

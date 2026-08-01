@@ -2,8 +2,21 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { checkRoles } from '@okr/shared-util-functions';
 import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
-import { storeDateToRegasoftDate, regasoftDateToStoreDate } from '@okr/shared-util-core';
-import { Club, RegasoftMember, SrvContactData, SrvMemberLicenseDetail } from '@okr/shared-models';
+import { storeDateToRegasoftDate } from '@okr/shared-util-core';
+import { RegasoftMember, SrvContactData, SrvMemberLicenseDetail } from '@okr/shared-models';
+
+import { runGateway, resolveTenantId } from '../_gateway/gateway';
+import { invalidateProvider } from '../_gateway/cache';
+import type { GatewayContext } from '../_gateway/provider';
+import {
+  SRV_SECRETS,
+  SRV_PROVIDER_IDS,
+  srvMembersAdapter,
+  srvMemberDetailAdapter,
+  mapSrvContact,
+  mapSrvLicensed,
+  selectLicensed,
+} from '../_gateway/adapters/srv';
 
 import { regasoftApiKey, regasoftClubId, REGASOFT_BASE } from './shared';
 
@@ -16,13 +29,45 @@ function regasoftHeaders(apiKey: string, clubId: string) {
 }
 
 /**
+ * The caller's gateway context. SRV adapters are `tenant`-scoped, so the tenant
+ * has to be resolved server-side; `checkRoles` has already established that the
+ * caller is a memberAdmin of it.
+ */
+async function srvContext(request: CallableRequest<unknown>): Promise<GatewayContext> {
+  const uid = request.auth?.uid ?? null;
+  const token = request.auth?.token as Record<string, unknown> | undefined;
+  return {
+    tenantId: await resolveTenantId(uid, 'tenant'),
+    uid,
+    isAdmin: token?.['admin'] === true,
+  };
+}
+
+/**
+ * Drop this tenant's cached SRV reads after we ourselves changed a member.
+ * Without it the read-through cache would keep serving the pre-edit member for
+ * up to the TTL — the admin's own change would appear not to have happened,
+ * which is the single most confusing failure a cache can produce.
+ *
+ * Fail-soft by construction (see invalidateProvider): the Regasoft write has
+ * already succeeded by this point, so a failure here is logged loudly, not
+ * raised.
+ */
+async function invalidateSrvCaches(ctx: GatewayContext): Promise<void> {
+  for (const providerId of SRV_PROVIDER_IDS) {
+    await invalidateProvider(providerId, 'tenant', ctx);
+  }
+}
+
+/**
  * Fetch all members from the Regasoft SRV API.
+ * Gateway-backed (cache + quota + retry); response shape unchanged.
  */
 export const getSrvContacts = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
-    secrets: [regasoftApiKey, regasoftClubId],
+    secrets: SRV_SECRETS,
   },
   async (request: CallableRequest) => {
     const CF_NAME = 'getSrvContacts';
@@ -33,63 +78,25 @@ export const getSrvContacts = onCall(
     // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
     await checkRoles(request, CF_NAME, ['memberAdmin']);
 
-    logger.info(`${CF_NAME}: fetching all SRV members`);
-
-    try {
-      const response = await axios.get<RegasoftMember[] | { data: RegasoftMember[] }>(`${REGASOFT_BASE}/api/club/members`, {
-        headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()),
-      });
-
-      const raw = response.data;
-      const members: RegasoftMember[] = Array.isArray(raw) ? raw : (raw as { data: RegasoftMember[] }).data ?? [];
-      logger.info(`${CF_NAME}: fetched ${members.length} members`);
-
-      return members.map(m => ({
-        srvId: m.id,
-        serviceId: m.serviceId,
-        firstName: m.firstName,
-        lastName: m.lastName,
-        email: m.email ?? null,
-        mobile: m.mobile ?? null,
-        telefon: m.telefon ?? null,
-        dateOfBirth: regasoftDateToStoreDate(m.birthday),
-        gender: m.gender,
-        membershipType: m.membershipType ?? null,
-        nationIOC: m.nationIOC ?? null,
-        hasNewsletter: m.hasNewsletter ?? false,
-        mainClub: m.mainClub ?? false,
-        hasLicense: m.hasLicense ?? false,
-        licenseId: m.licenseId ?? null,
-        licenseDate: regasoftDateToStoreDate(m.licenseDate),
-        licenseValidUntil: regasoftDateToStoreDate(m.licenseValidUntil),
-        leavingDate: regasoftDateToStoreDate(m.leavingDate),
-        dateOfDeath: regasoftDateToStoreDate(m.dateOfDeath),
-        street: m.street ?? null,
-        postcode: m.postcode ?? null,
-        city: m.city ?? null,
-        clubs: (m.personClubs ?? []) as Club[],
-      }));
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = JSON.stringify(error.response?.data);
-        logger.error(`${CF_NAME}: Regasoft API error ${status}: ${body}`);
-        throw new HttpsError('internal', `Regasoft API error ${status}: ${body}`);
-      }
-      logger.error(`${CF_NAME}: unexpected error`, error);
-      throw new HttpsError('internal', 'Regasoft API request failed');
-    }
+    const ctx = await srvContext(request);
+    const res = await runGateway(srvMembersAdapter, {}, ctx);
+    logger.info(`${CF_NAME}: ${res.data.length} members`, { cached: res.cached });
+    return res.data.map(mapSrvContact);
   }
 );
 
 /**
  * Fetch all members with an active license from the Regasoft SRV API.
+ *
+ * Shares the `srv-members` cache entry with getSrvContacts — same endpoint, and
+ * "licensed" is a local filter — so after an index build this costs no upstream
+ * call at all.
  */
 export const getSrvLicensedMembers = onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
-    secrets: [regasoftApiKey, regasoftClubId],
+    secrets: SRV_SECRETS,
   },
   async (request: CallableRequest) => {
     const CF_NAME = 'getSrvLicensedMembers';
@@ -100,38 +107,11 @@ export const getSrvLicensedMembers = onCall(
     // SRV member data is person PII — memberAdmin/admin only (privacy inventory §7.2).
     await checkRoles(request, CF_NAME, ['memberAdmin']);
 
-    logger.info(`${CF_NAME}: fetching licensed SRV members`);
-
-    try {
-      const response = await axios.get<RegasoftMember[] | { data: RegasoftMember[] }>(`${REGASOFT_BASE}/api/club/members`, {
-        headers: regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value()),
-      });
-
-      const raw = response.data;
-      const members: RegasoftMember[] = Array.isArray(raw) ? raw : (raw as { data: RegasoftMember[] }).data ?? [];
-      const licensed = members.filter(m => m.hasLicense === true);
-      logger.info(`${CF_NAME}: ${licensed.length} licensed members found`);
-
-      return licensed.map(m => ({
-        srvId: m.id,
-        firstName: m.firstName,
-        lastName: m.lastName,
-        licenseDate: regasoftDateToStoreDate(m.licenseDate ?? null),
-        licenseValidUntil: regasoftDateToStoreDate(m.licenseValidUntil ?? null),
-        licenseImage: m.licenseImage ?? null,
-        licenseImageName: m.licenseImageName ?? null,
-        licenseImageMimeType: m.licenseImageMimeType ?? null,
-      }));
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        const body = JSON.stringify(error.response?.data);
-        logger.error(`${CF_NAME}: Regasoft API error ${status}: ${body}`);
-        throw new HttpsError('internal', `Regasoft API error ${status}: ${body}`);
-      }
-      logger.error(`${CF_NAME}: unexpected error`, error);
-      throw new HttpsError('internal', 'Regasoft API request failed');
-    }
+    const ctx = await srvContext(request);
+    const res = await runGateway(srvMembersAdapter, {}, ctx);
+    const licensed = selectLicensed(res.data);
+    logger.info(`${CF_NAME}: ${licensed.length} licensed members`, { cached: res.cached });
+    return licensed.map(mapSrvLicensed);
   }
 );
 
@@ -161,42 +141,33 @@ export const getSrvMemberDetail = onCall(
 
     logger.info(`${CF_NAME}: fetching details for ${rids.length} members`);
 
-    const headers = regasoftHeaders(regasoftApiKey.value(), regasoftClubId.value());
+    // One gateway call PER rid, so each member's detail is cached individually
+    // and reused by the next index build (and by any other rid set that includes
+    // them). Keeping allSettled preserves the existing contract: a member whose
+    // record cannot be fetched is skipped, not fatal to the whole enrichment.
+    const ctx = await srvContext(request);
+    const unique = [...new Set(rids)];
     const results = await Promise.allSettled(
-      rids.map(rid =>
-        axios.get<RegasoftMember>(`${REGASOFT_BASE}/api/club/members/${rid}`, { headers })
-      )
+      unique.map(rid => runGateway(srvMemberDetailAdapter, { rid }, ctx))
     );
 
     const details: SrvMemberLicenseDetail[] = [];
+    let cachedCount = 0;
     for (let i = 0; i < results.length; i++) {
       const r = results[i];
       if (r.status === 'fulfilled') {
-        const raw = r.value.data as RegasoftMember | { data: RegasoftMember };
-        const m: RegasoftMember = 'data' in raw ? raw.data : raw;
-        details.push({
-          rid:                  m.id,
-          hasNewsletter:        m.hasNewsletter ?? false,
-          street:               m.street ?? '',
-          postcode:             m.postcode ?? '',
-          city:                 m.city ?? '',
-          licenseId:            m.licenseId != null ? String(m.licenseId) : '',
-          licenseDate:          regasoftDateToStoreDate(m.licenseDate),
-          licenseValidUntil:    regasoftDateToStoreDate(m.licenseValidUntil),
-          licenseImage:         m.licenseImage ?? null,
-          licenseImageName:     m.licenseImageName ?? null,
-          licenseImageMimeType: m.licenseImageMimeType ?? null,
-          inactiveDate:         regasoftDateToStoreDate(m.inactiveDate),
-          dateOfDeath:          regasoftDateToStoreDate(m.dateOfDeath),
-          leavingDate:          regasoftDateToStoreDate(m.leavingDate),
-          clubs:                m.personClubs ?? [],
-        });
+        if (r.value.cached) cachedCount++;
+        if (r.value.data) details.push(r.value.data);
       } else {
-        logger.warn(`${CF_NAME}: failed to fetch rid ${rids[i]}`, r.reason);
+        logger.warn(`${CF_NAME}: failed to fetch rid ${unique[i]}`, {
+          message: r.reason instanceof Error ? r.reason.message : String(r.reason),
+        });
       }
     }
 
-    logger.info(`${CF_NAME}: resolved ${details.length} of ${rids.length} members`);
+    logger.info(
+      `${CF_NAME}: resolved ${details.length} of ${unique.length} members (${cachedCount} from cache)`
+    );
     return details;
   }
 );
@@ -260,6 +231,7 @@ export const createSrvContact = onCall(
       );
 
       logger.info(`${CF_NAME}: created SRV member with id ${response.data.id}`);
+      await invalidateSrvCaches(await srvContext(request));
       return { id: String(response.data.id) };
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
@@ -324,6 +296,7 @@ export const updateSrvContact = onCall(
       );
 
       logger.info(`${CF_NAME}: updated SRV member ${srvId}`);
+      await invalidateSrvCaches(await srvContext(request));
       return { id: String(srvId) };
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {

@@ -5,10 +5,15 @@
 // access is denied in firestore.rules. Rows carry `expiresAt` for a native
 // Firestore TTL policy — no custom sweep. Cache-write must never fail the request.
 
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp, FieldPath } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
+import type { CacheScope, GatewayContext } from './provider';
+import { cacheKeyPrefix } from './cache-key';
 
 const COLLECTION = 'apiCache';
+
+/** Firestore caps a write batch at 500 operations. */
+const DELETE_BATCH = 500;
 
 export interface CacheEntry<R> {
   raw: R;
@@ -61,5 +66,68 @@ export async function writeCache<R>(
   } catch (err) {
     // Fail-soft: log and serve. A cache-write failure must not fail the request.
     logger.warn('apiCache write failed', { key, message: (err as Error).message });
+  }
+}
+
+/**
+ * Exclusive upper bound for a document-id prefix range: the prefix with its last
+ * character bumped to the next code unit. Exact, unlike the `''` sentinel
+ * commonly used for this, which merely assumes no id contains a higher char.
+ */
+export function prefixUpperBound(prefix: string): string {
+  if (prefix.length === 0) return '';
+  const last = prefix.charCodeAt(prefix.length - 1);
+  return prefix.slice(0, -1) + String.fromCharCode(last + 1);
+}
+
+/**
+ * Drop every cached entry for one provider within one scope — the read-through
+ * cache's missing half. A provider that is only ever read can rely on TTL alone;
+ * one whose data WE also mutate (srv: create/update a member) must be able to
+ * invalidate, or an admin's own edit stays invisible until the TTL lapses.
+ *
+ * Deletes by document-id RANGE over `cacheKeyPrefix(...)`, so no field query, no
+ * composite index and no schema change: the scope and tenant are already encoded
+ * in the id by the writer. Both bounds come from the same helper the writer uses.
+ *
+ * Fail-soft but LOUD. It runs after the upstream write has already succeeded, so
+ * throwing would report a failure for work that was done; but a silent miss means
+ * stale data, which is the bug this exists to prevent — hence `logger.error`.
+ * Returns the number of documents deleted (0 on failure).
+ */
+export async function invalidateProvider(
+  providerId: string,
+  scope: CacheScope,
+  ctx: Pick<GatewayContext, 'tenantId' | 'uid'>,
+): Promise<number> {
+  const prefix = cacheKeyPrefix(providerId, scope, ctx);
+  let deleted = 0;
+  try {
+    const db = getFirestore();
+    // Loop: one provider can hold more entries than a single batch allows.
+    for (;;) {
+      const snap = await db
+        .collection(COLLECTION)
+        .where(FieldPath.documentId(), '>=', prefix)
+        .where(FieldPath.documentId(), '<', prefixUpperBound(prefix))
+        .limit(DELETE_BATCH)
+        .get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      for (const doc of snap.docs) batch.delete(doc.ref);
+      await batch.commit();
+      deleted += snap.size;
+      if (snap.size < DELETE_BATCH) break;
+    }
+    logger.info('apiCache invalidated', { providerId, scope, deleted });
+    return deleted;
+  } catch (err) {
+    logger.error('apiCache invalidation FAILED — entries stay stale until TTL', {
+      providerId,
+      scope,
+      deleted,
+      message: (err as Error).message,
+    });
+    return 0;
   }
 }
