@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, Firestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import { logger } from 'firebase-functions/v2';
 
 import {
@@ -168,6 +169,9 @@ export interface ErasureOps {
   detachTenant(docs: readonly DocumentSnapshot[], tenantId: string): Promise<DetachResult>;
   loadAddresses(parentKey: string): Promise<DocumentSnapshot[]>;
   loadAvatar(parentKey: string): Promise<DocumentSnapshot | undefined>;
+  /** Delete the avatar's Storage object — §10: the image is a copy of person data and
+   *  `storage.rules` does not hide it, so it must be deleted, not merely dereferenced. */
+  deleteAvatarFile(storagePath: string): Promise<void>;
   loadPerson(personKey: string): Promise<DocumentSnapshot | undefined>;
   loadUser(uid: string): Promise<DocumentSnapshot | undefined>;
   /** Fresh read of `person.tenants` AFTER the detach, inside a transaction. */
@@ -197,6 +201,13 @@ export interface ErasureOptions {
 
 function tenantsOf(doc: DocumentSnapshot): string[] {
   return (doc.get('tenants') as string[] | undefined) ?? [];
+}
+
+/** Delete the image behind an avatar document that has just been deleted (§10, D-L2).
+ *  A document with no `storagePath` has no file to reap — that is not an error. */
+async function deleteAvatarObject(avatar: DocumentSnapshot, ops: ErasureOps): Promise<void> {
+  const storagePath = (avatar.get('storagePath') as string | undefined) ?? '';
+  if (storagePath !== '') await ops.deleteAvatarFile(storagePath);
 }
 
 /**
@@ -257,7 +268,13 @@ export async function executeErasure(
     ? await ops.detachTenant(stamped, ctx.tenantId)
     : { detached: 0, deleted: 0 };
   const avatar = await ops.loadAvatar(ctx.parentKey);
-  if (avatar && tenantsOf(avatar).includes(ctx.tenantId)) await ops.detachTenant([avatar], ctx.tenantId);
+  if (avatar && tenantsOf(avatar).includes(ctx.tenantId)) {
+    const avatarResult = await ops.detachTenant([avatar], ctx.tenantId);
+    // The Storage object dies with the document, never before it: while the avatar is
+    // still stamped with another tenant, that tenant is entitled to display it, and a
+    // deleted file would leave every remaining tenancy with a broken image.
+    if (avatarResult.deleted > 0) await deleteAvatarObject(avatar, ops);
+  }
 
   // 5 — the hard delete, only when this was the last tenancy. Re-read, never inferred
   //     from the preview: a join in another tenant between preview and execution would
@@ -274,6 +291,7 @@ export async function executeErasure(
     const remainingAvatar = await ops.loadAvatar(ctx.parentKey);
     const toDelete = [person, user, remainingAvatar].filter((d): d is DocumentSnapshot => !!d);
     if (toDelete.length > 0) await ops.deleteAll(toDelete);
+    if (remainingAvatar) await deleteAvatarObject(remainingAvatar, ops);
     await ops.deleteAuthUser(ctx.uid);
   }
 
@@ -370,6 +388,18 @@ export function firestoreErasureOps(db: Firestore = getFirestore()): ErasureOps 
     },
 
     loadAvatar: (parentKey) => docOrUndefined(db, AvatarCollection, parentKey),
+
+    deleteAvatarFile: async (storagePath) => {
+      try {
+        await getStorage().bucket().file(storagePath).delete();
+      } catch (err) {
+        // Best-effort, like deleteAuthUser: the document is already gone, and an image
+        // that was never uploaded (or already reaped) must not fail the erasure. It is
+        // logged, because a file that survives its document is a residual copy.
+        logger.warn(`eraseMyData: could not delete the avatar file at ${storagePath}: ${String(err)}`);
+      }
+    },
+
     loadPerson: (personKey) => docOrUndefined(db, PersonCollection, personKey),
     loadUser: (uid) => docOrUndefined(db, UserCollection, uid),
 

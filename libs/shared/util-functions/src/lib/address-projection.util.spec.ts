@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AddressModel, PersonModel, PrivacyUsage } from '@okr/shared-models';
 
-import { buildDirectoryDoc, projectAddressesForViewer, reduceToFavoriteAddresses, toDirectoryEntry } from './address-projection.util';
+import { buildDirectoryDoc, projectAddressesForViewer, reduceToFavoriteAddresses, scopeToTenant, toDirectoryEntry } from './address-projection.util';
 
 function makeAddress(overrides: Partial<AddressModel>): AddressModel {
   const address = new AddressModel('tenant1');
@@ -60,7 +60,54 @@ describe('reduceToFavoriteAddresses', () => {
   });
 });
 
+describe('scopeToTenant (D-L1, finding F1)', () => {
+  const foreignEmail = makeAddress({ okey: 'f1', addressChannel: 'email', email: 'club-b@example.com', isFavorite: true, tenants: ['tenant2'] });
+
+  it('keeps only the addresses the tenant itself collected', () => {
+    expect(scopeToTenant([favoriteEmail, foreignEmail], 'tenant1').map(a => a.okey)).toEqual(['a1']);
+    expect(scopeToTenant([favoriteEmail, foreignEmail], 'tenant2').map(a => a.okey)).toEqual(['f1']);
+  });
+
+  it('keeps an address shared by both tenants for both of them', () => {
+    const shared = makeAddress({ okey: 's1', addressChannel: 'email', tenants: ['tenant1', 'tenant2'] });
+    expect(scopeToTenant([shared], 'tenant1').map(a => a.okey)).toEqual(['s1']);
+    expect(scopeToTenant([shared], 'tenant2').map(a => a.okey)).toEqual(['s1']);
+  });
+
+  it('drops an address with no tenancy at all — it is invisible on the raw surface too', () => {
+    const orphan = makeAddress({ okey: 'x1', addressChannel: 'email', tenants: [] });
+    expect(scopeToTenant([orphan], 'tenant1')).toEqual([]);
+  });
+});
+
 describe('buildDirectoryDoc', () => {
+  it('F1: builds tenant1\'s doc from tenant1\'s addresses only, never from the ones tenant2 collected', () => {
+    // The person is a member of two clubs and deliberately gave each a different e-mail.
+    const foreignEmail = makeAddress({ okey: 'f1', addressChannel: 'email', email: 'club-b@example.com', isFavorite: true, tenants: ['tenant2'] });
+    const foreignPhone = makeAddress({ okey: 'f2', addressChannel: 'phone', phone: '+41799999999', isFavorite: true, tenants: ['tenant2'] });
+    const doc = buildDirectoryDoc('tenant1', 'person.p1', 'person', [...allAddresses, foreignEmail, foreignPhone], makePerson());
+    expect(doc.entries.map(e => e.addressOkey).sort()).toEqual(['a1', 'a3', 'a4']);
+    expect(doc.favEmail).toBe('fav@example.com');
+    expect(doc.favPhone).toBe('+41791234567');
+  });
+
+  it('F1: a person who joined a second tenant starts with an empty entry there (the accepted D-L1 cost)', () => {
+    const doc = buildDirectoryDoc('tenant2', 'person.p1', 'person', allAddresses, makePerson());
+    expect(doc.entries).toEqual([]);
+    expect(doc.favEmail).toBe('');
+    expect(doc.favZipCode).toBe('');
+  });
+
+  it('F1: a foreign favorite never displaces the tenant\'s own address', () => {
+    // Without the provenance filter the foreign favorite would win the reduction and
+    // tenant1 would show an e-mail the person gave to tenant2.
+    const foreignFavorite = makeAddress({ okey: 'f1', addressChannel: 'email', email: 'club-b@example.com', isFavorite: true, tenants: ['tenant2'] });
+    const doc = buildDirectoryDoc('tenant1', 'person.p1', 'person', [foreignFavorite, otherEmail], makePerson());
+    expect(doc.entries.map(e => e.addressOkey)).toEqual(['a2']);
+    expect(doc.favEmail).toBe('other@example.com');
+  });
+
+
   it('includes registered-visible contact channels and derives the fav* conveniences', () => {
     const doc = buildDirectoryDoc('tenant1', 'person.p1', 'person', allAddresses, makePerson());
     expect(doc.okey).toBe('tenant1_person.p1');

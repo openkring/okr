@@ -4,7 +4,7 @@ import { SwissQRBill } from 'swissqrbill/svg';
 import type { Data } from 'swissqrbill/types';
 
 import { AppConfigCollection, OrgCollection, AddressCollection, AddressModel } from '@okr/shared-models';
-import { pickFavoriteByChannel, QrPayee, QrSlipData } from '@okr/shared-util-functions';
+import { pickFavoriteByChannel, QrPayee, QrSlipData, scopeToTenant } from '@okr/shared-util-functions';
 
 /**
  * Resolve the payee (creditor) org: name from the org, IBAN from its favorite
@@ -26,9 +26,17 @@ export async function resolvePayee(db: Firestore, tenantId: string, payeeOrgId?:
   const orgSnap = await db.collection(OrgCollection).doc(orgId).get();
   const orgName = (orgSnap.data()?.['name'] as string) ?? '';
 
+  // D-L1: prefer this tenant's own addresses. An org shared by two tenants carries both
+  // tenants' bank addresses, and the OTHER tenant's favorite would otherwise decide which
+  // IBAN this payment slip asks money to be sent to. Unlike the directory projection this
+  // falls back to the unscoped set: an org address seeded without a `tenants[]` entry must
+  // not silently produce a QR bill with no IBAN, and org payment data is published to the
+  // payer by definition — the concern here is which IBAN is right, not who may see it.
   const addrSnap = await db.collection(AddressCollection)
     .where('parentKey', '==', `org.${orgId}`).get();
-  const addresses = addrSnap.docs.map(d => ({ okey: d.id, ...d.data() }) as AddressModel);
+  const allAddresses = addrSnap.docs.map(d => ({ okey: d.id, ...d.data() }) as AddressModel);
+  const ownAddresses = scopeToTenant(allAddresses, tenantId);
+  const addresses = ownAddresses.length > 0 ? ownAddresses : allAddresses;
 
   const bank = pickFavoriteByChannel(addresses, 'bankaccount');
   const postal = pickFavoriteByChannel(addresses, 'postal');

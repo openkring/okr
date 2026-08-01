@@ -105,10 +105,33 @@ export function reduceToFavoriteAddresses(addresses: AddressModel[]): AddressMod
 }
 
 /**
+ * D-L1 (spec 1.23 §5, finding F1) — **provenance scoping**. Tenancy is enforced on two
+ * independent surfaces: `person.tenants[]` drives the projection, `address.tenants[]`
+ * drives the raw vault read (`canReadVault` → `belongsToTenant`) and every client query.
+ * An address is stamped `[tenantId]` at creation and never gains a second tenant, so its
+ * `tenants[]` is a **provenance marker**: which tenant collected this datum.
+ *
+ * Without this filter, tenant B's directory doc is built from *all* of a shared person's
+ * addresses — including the ones collected by tenant A, which B's admins cannot even see
+ * raw. That is a cross-tenant delivery against purpose limitation (Art. 5 I b GDPR /
+ * revDSG Art. 6 III), and its inverse is the duplicate-vault-doc footgun of D-P4-1: the
+ * admin reads raw, does not find the foreign address, and upserts a second one.
+ *
+ * Cost, accepted at decision time: a person who joins a second tenant starts with an
+ * empty directory entry there and supplies their contact data again. An address carrying
+ * no tenant at all is invisible on the raw surface too, so it is dropped here as well —
+ * consistency with S2 is the whole point.
+ */
+export function scopeToTenant(addresses: AddressModel[], tenantId: string): AddressModel[] {
+  return addresses.filter((address) => (address.tenants ?? []).includes(tenantId));
+}
+
+/**
  * Build the materialized `address-directory` doc for one parent × tenant:
- * only addresses whose effective accessor (§A3) admits `registered` viewers,
- * reduced to one address per channel for persons (see reduceToFavoriteAddresses),
- * with the favorite email/phone/zip lifted into the fav* convenience fields.
+ * only addresses collected by that tenant (D-L1) whose effective accessor (§A3)
+ * admits `registered` viewers, reduced to one address per channel for persons
+ * (see reduceToFavoriteAddresses), with the favorite email/phone/zip lifted into
+ * the fav* convenience fields.
  */
 export function buildDirectoryDoc(
   tenantId: string,
@@ -127,7 +150,7 @@ export function buildDirectoryDoc(
   // and it would leak the mere existence of the value. They are served on demand by
   // getAddressView instead. The guard is explicit rather than implied by the accessor, because
   // the dob floor is 'registered' since the §A2 amendment and would otherwise pass this filter.
-  const visible = addresses.filter((address) =>
+  const visible = scopeToTenant(addresses, tenantId).filter((address) =>
     !address.isArchived
     && !isSensitiveScalarChannel(address.addressChannel ?? '')
     && accessorAllows('registered', getEffectiveAccessorForAddress(address, parentType, person, settings)));
@@ -158,6 +181,11 @@ export function buildDirectoryDoc(
  * (that is how the person form hydrates a shared dob), the directory does not
  * materialize them. They are never rendered in the contact list on either path
  * (addresses.store filters them out), so the two cannot visibly disagree.
+ *
+ * ⚠️ This function applies the viewer tier only. A caller that loads raw `addresses`
+ * docs itself must scope them by provenance first — `scopeToTenant` (D-L1), or an
+ * equivalent `belongsToTenant` filter as `vcardExport` does. `getProjectedAddresses`
+ * below does it for every consumer that goes through the chokepoint.
  */
 export function projectAddressesForViewer(
   addresses: AddressModel[],
@@ -197,14 +225,27 @@ async function loadPrivacySettings(firestore: Firestore, tenantId: string): Prom
   return snap.exists ? (snap.data() as Partial<PrivacySettings>) : undefined;
 }
 
+/** What one `writeAddressDirectory` pass did — the D-L1 migration measurement. */
+export interface DirectoryWriteResult {
+  /** projection docs written — one per tenant on the parent */
+  readonly written: number;
+  /**
+   * (tenant × address) pairs the D-L1 provenance filter kept out of a projection doc,
+   * i.e. how much cross-tenant contact data this parent was being served before the
+   * filter existed. Archived addresses are not counted — they were never projected.
+   */
+  readonly crossTenant: number;
+}
+
 /**
  * (Re)write the `address-directory` projection docs of one parent: one doc per
  * tenant on the parent, stale/orphaned docs deleted. Idempotent — safe to call
  * from triggers and from the rebuild backfill.
  */
-export async function writeAddressDirectory(firestore: Firestore, parentKey: string): Promise<void> {
+export async function writeAddressDirectory(firestore: Firestore, parentKey: string): Promise<DirectoryWriteResult> {
+  const empty: DirectoryWriteResult = { written: 0, crossTenant: 0 };
   const loaded = await loadParentAndAddresses(firestore, parentKey);
-  if (!loaded) return;
+  if (!loaded) return empty;
   const { parentType, parent, addresses } = loaded;
   const tenants: string[] = parent?.['tenants'] ?? [];
 
@@ -217,9 +258,11 @@ export async function writeAddressDirectory(firestore: Firestore, parentKey: str
       await doc.ref.delete();
     }
   }
-  if (!parent) return;
+  if (!parent) return empty;
 
+  let crossTenant = 0;
   for (const tenantId of tenants) {
+    crossTenant += addresses.filter((a) => !a.isArchived && !(a.tenants ?? []).includes(tenantId)).length;
     const settings = await loadPrivacySettings(firestore, tenantId);
     const dirDoc = buildDirectoryDoc(
       tenantId, parentKey, parentType, addresses,
@@ -231,10 +274,11 @@ export async function writeAddressDirectory(firestore: Firestore, parentKey: str
     void okey;
     await firestore.collection(AddressDirectoryCollection).doc(dirDoc.okey).set(JSON.parse(JSON.stringify(data)));
   }
+  return { written: tenants.length, crossTenant };
 }
 
 /** Iterate a collection in id-ordered pages; runs `fn` per doc id. Returns docs seen. */
-async function forEachDocId(base: Query<DocumentData>, fn: (id: string) => Promise<void>, batch = 400): Promise<number> {
+async function forEachDocId(base: Query<DocumentData>, fn: (id: string) => Promise<unknown>, batch = 400): Promise<number> {
   let last: string | undefined;
   let seen = 0;
   for (;;) {
@@ -259,20 +303,31 @@ async function forEachDocId(base: Query<DocumentData>, fn: (id: string) => Promi
  * stricter setting does not reach members until each parent's next address write.
  * Used by the app-config trigger and available for targeted backfills.
  */
-export async function rebuildDirectoryForTenant(firestore: Firestore, tenantId: string): Promise<{ persons: number; orgs: number }> {
+export async function rebuildDirectoryForTenant(
+  firestore: Firestore,
+  tenantId: string,
+): Promise<{ persons: number; orgs: number; crossTenantAddresses: number; parentsAffected: number }> {
+  let crossTenantAddresses = 0;
+  let parentsAffected = 0;
+  const tally = async (parentKey: string) => {
+    const { crossTenant } = await writeAddressDirectory(firestore, parentKey);
+    crossTenantAddresses += crossTenant;
+    if (crossTenant > 0) parentsAffected++;
+  };
   const persons = await forEachDocId(
     firestore.collection(PersonCollection).where('tenants', 'array-contains', tenantId),
-    (id) => writeAddressDirectory(firestore, `person.${id}`));
+    (id) => tally(`person.${id}`));
   const orgs = await forEachDocId(
     firestore.collection(OrgCollection).where('tenants', 'array-contains', tenantId),
-    (id) => writeAddressDirectory(firestore, `org.${id}`));
-  return { persons, orgs };
+    (id) => tally(`org.${id}`));
+  return { persons, orgs, crossTenantAddresses, parentsAffected };
 }
 
 /**
  * D8 chokepoint for Cloud-Function consumers (publicApi, vCard, SRV, replication,
  * RAG, QR-slip): privacy-filtered addresses of one parent for a viewer tier.
- * `tenantId` selects the tenant floor; defaults to the parent's first tenant.
+ * `tenantId` selects the tenant floor **and the address provenance** (D-L1); it
+ * defaults to the parent's first tenant, as before.
  */
 export async function getProjectedAddresses(
   firestore: Firestore,
@@ -285,8 +340,11 @@ export async function getProjectedAddresses(
   const { parentType, parent, addresses } = loaded;
   const effectiveTenant = tenantId ?? (parent['tenants'] ?? [])[0];
   const settings = effectiveTenant ? await loadPrivacySettings(firestore, effectiveTenant) : undefined;
+  // D-L1: a parent with no tenant at all has no provenance to scope by — it also has no
+  // tenant floor and no viewer, so leaving the set unfiltered changes nothing.
+  const scoped = effectiveTenant ? scopeToTenant(addresses, effectiveTenant) : addresses;
   return projectAddressesForViewer(
-    addresses, viewerAccessor, parentType,
+    scoped, viewerAccessor, parentType,
     parentType === 'person' ? (parent as Partial<PersonPrivacyPreferences>) : undefined,
     settings,
   );

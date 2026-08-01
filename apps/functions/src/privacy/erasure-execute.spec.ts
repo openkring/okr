@@ -200,7 +200,8 @@ function fakeOps(over: Partial<ErasureOps> & { addresses?: DocumentSnapshot[]; p
       return { detached: removed, deleted: gone };
     },
     loadAddresses: async () => addresses,
-    loadAvatar: async () => snap('avatar', { tenants: ['scs'] }),
+    loadAvatar: async () => snap('avatar', { tenants: ['scs'], storagePath: 'tenant/scs/avatar/person.p1.jpg' }),
+    deleteAvatarFile: async (storagePath) => { calls.push({ op: 'deleteAvatarFile', detail: storagePath }); },
     loadPerson: async () => snap('person', { tenants: personTenants }),
     loadUser: async () => snap('u1', { tenants: ['scs'] }),
     personTenantsAfterDetach: async () => personTenants,
@@ -303,6 +304,34 @@ describe('executeErasure', () => {
       const { ops, detached } = fakeOps({ personTenants: ['scs', 'p13'] });
       await executeErasure(ctx, cleanPreview, [], ops, { salt: SALT });
       expect(detached).toContain('avatar');
+    });
+
+    // §10: the image is a copy of person data and storage.rules does not hide it, so a
+    // file that outlives its document is a residual copy nobody can find again.
+    it('deletes the avatar file when the avatar document dies with the last tenancy', async () => {
+      const { ops, calls } = fakeOps({ personTenants: ['scs'] });
+      await executeErasure(ctx, cleanPreview, [], ops, { salt: SALT });
+      const reaped = calls.filter((c) => c.op === 'deleteAvatarFile');
+      expect(reaped.length).toBeGreaterThan(0);
+      expect(reaped[0].detail).toBe('tenant/scs/avatar/person.p1.jpg');
+    });
+
+    it('keeps the avatar file while another tenancy still holds the document', async () => {
+      const { ops, calls } = fakeOps({
+        personTenants: ['scs', 'p13'],
+        loadAvatar: async () => snap('avatar', { tenants: ['scs', 'p13'], storagePath: 'tenant/scs/avatar/person.p1.jpg' }),
+      });
+      await executeErasure(ctx, cleanPreview, [], ops, { salt: SALT });
+      expect(calls.some((c) => c.op === 'deleteAvatarFile')).toBe(false);
+    });
+
+    it('does not call Storage for an avatar document without a storagePath', async () => {
+      const { ops, calls } = fakeOps({
+        personTenants: ['scs'],
+        loadAvatar: async () => snap('avatar', { tenants: ['scs'] }),
+      });
+      await executeErasure(ctx, cleanPreview, [], ops, { salt: SALT });
+      expect(calls.some((c) => c.op === 'deleteAvatarFile')).toBe(false);
     });
   });
 
