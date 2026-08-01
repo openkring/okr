@@ -17,7 +17,7 @@
     "running": "Reconstruction de l'annuaire …",
     "confirm": "L'annuaire d'adresses est reconstruit pour toutes les personnes et organisations — tous mandants confondus. Les adresses elles-mêmes restent inchangées ; seule la projection est écrasée. Continuer ?",
     "done": "Annuaire reconstruit : {{persons}} personnes, {{orgs}} organisations.",
-    "cross": "{{addresses}} adresses d'autres mandants retirées de {{parents}} profils."
+    "cross": "{{addresses}} adresses d'autres mandants dans {{parents}} profils restent exclues."
   },
   "severity": { "error": "erreurs", "warning": "avertissements", "info": "remarques" }
 }

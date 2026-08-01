@@ -9,7 +9,15 @@ export interface RunPrivacyAuditRequest {
   tenantId: string;
 }
 
-/** What `rebuildAddressDirectory` reports back. Both cross-tenant counts are 0 once D-L1 has run. */
+/**
+ * What `rebuildAddressDirectory` reports back.
+ *
+ * `crossTenantAddresses`/`parentsAffected` are **not** a migration delta that falls to 0
+ * after the first run: they are recomputed from the address data every time and stay at
+ * whatever the data holds, because the filter excludes those addresses from the projection
+ * rather than deleting them. They drop only when the addresses themselves go or are
+ * re-tagged. See `writeAddressDirectory`.
+ */
 export interface RebuildDirectoryResult {
   persons: number;
   orgs: number;

@@ -17,7 +17,7 @@
     "running": "Verzeichnis wird aufgebaut …",
     "confirm": "Das Adressverzeichnis wird für alle Personen und Organisationen neu aufgebaut — auch für andere Mandanten. Die Adressen selbst bleiben unverändert, nur die Projektion wird überschrieben. Fortfahren?",
     "done": "Verzeichnis neu aufgebaut: {{persons}} Personen, {{orgs}} Organisationen.",
-    "cross": "{{addresses}} mandantenfremde Adressen aus {{parents}} Profilen entfernt."
+    "cross": "{{addresses}} mandantenfremde Adressen aus {{parents}} Profilen bleiben ausgeschlossen."
   },
   "severity": { "error": "Fehler", "warning": "Warnungen", "info": "Hinweise" }
 }

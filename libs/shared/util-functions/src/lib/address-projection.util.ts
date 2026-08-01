@@ -231,8 +231,14 @@ export interface DirectoryWriteResult {
   readonly written: number;
   /**
    * (tenant × address) pairs the D-L1 provenance filter kept out of a projection doc,
-   * i.e. how much cross-tenant contact data this parent was being served before the
-   * filter existed. Archived addresses are not counted — they were never projected.
+   * i.e. how much cross-tenant contact data this parent would be served without it.
+   * Archived addresses are not counted — they were never projected.
+   *
+   * A **standing measure, not a migration delta.** It is recomputed from the addresses on
+   * every call and does not fall to 0 after the backfill: the filter excludes those rows,
+   * it does not delete or re-tag them, so the same pairs are counted again next run. It
+   * drops only when the underlying addresses do. (The 1.23 F1 commit message called for
+   * 0 afterwards; that reading is wrong and cost one round of "did the rebuild fail?".)
    */
   readonly crossTenant: number;
 }
