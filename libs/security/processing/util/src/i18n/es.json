@@ -1,0 +1,67 @@
+{
+  "register": {
+    "title": "Registro de actividades de tratamiento",
+    "subtitle": "Destinatarios a los que se transmiten datos personales",
+    "empty": "Sin destinatarios activos",
+    "export": "Exportar como PDF",
+    "exporting": "Generando PDF …"
+  },
+  "filter": {
+    "all": "Todos",
+    "category": "Categoría",
+    "country": "País",
+    "originLabel": "Origen",
+    "originCatalogue": "Plataforma",
+    "originTenant": "Añadido por nosotros"
+  },
+  "field": {
+    "name": "Nombre",
+    "legalEntity": "Entidad jurídica",
+    "role": "Función",
+    "category": "Categoría",
+    "country": "País",
+    "transferMechanism": "Base de la transferencia",
+    "purposes": "Finalidades",
+    "dataClasses": "Categorías de datos",
+    "retention": "Conservación",
+    "securityMeasures": "Medidas de seguridad",
+    "dpa": "Contrato de encargo de tratamiento",
+    "privacy": "Política de privacidad",
+    "contact": "Contacto de protección de datos",
+    "cloudFunctions": "Funciones que transmiten"
+  },
+  "role": {
+    "processor": "Encargado del tratamiento",
+    "subProcessor": "Subencargado del tratamiento",
+    "jointController": "Corresponsables"
+  },
+  "category": {
+    "infrastructure": "Infraestructura",
+    "saasService": "Servicio SaaS",
+    "externalParty": "Tercero externo"
+  },
+  "transfer": {
+    "domestic": "Nacional (Suiza)",
+    "adequacyDecision": "Decisión de adecuación",
+    "scc": "Cláusulas contractuales tipo",
+    "consent": "Consentimiento",
+    "none": "Sin base indicada"
+  },
+  "controller": {
+    "note": "La asociación es la responsable de este tratamiento. bkaiser GmbH opera la plataforma como encargada del tratamiento; los proveedores indicados aquí como subencargados fueron contratados por ella y no directamente por la asociación."
+  },
+  "missing": {
+    "dpa": "No hay contrato de encargo de tratamiento registrado — solicítelo por escrito al proveedor."
+  },
+  "detail": {
+    "notFound": "Esta entrada no está activa para este cliente."
+  },
+  "map": {
+    "title": "Flujos de datos",
+    "legend": {
+      "ch": "Suiza",
+      "eu": "EEE",
+      "third": "Tercer país"
+    }
+  }
+}

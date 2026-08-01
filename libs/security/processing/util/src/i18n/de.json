@@ -1,0 +1,67 @@
+{
+  "register": {
+    "title": "Bearbeitungsverzeichnis",
+    "subtitle": "Empfänger, an die Personendaten übermittelt werden",
+    "empty": "Keine aktiven Empfänger",
+    "export": "Als PDF exportieren",
+    "exporting": "PDF wird erstellt …"
+  },
+  "filter": {
+    "all": "Alle",
+    "category": "Kategorie",
+    "country": "Land",
+    "originLabel": "Herkunft",
+    "originCatalogue": "Plattform",
+    "originTenant": "Selbst erfasst"
+  },
+  "field": {
+    "name": "Name",
+    "legalEntity": "Rechtsträger",
+    "role": "Rolle",
+    "category": "Kategorie",
+    "country": "Land",
+    "transferMechanism": "Übermittlungsgrundlage",
+    "purposes": "Zwecke",
+    "dataClasses": "Datenkategorien",
+    "retention": "Aufbewahrung",
+    "securityMeasures": "Sicherheitsmassnahmen",
+    "dpa": "Auftragsverarbeitungsvertrag",
+    "privacy": "Datenschutzerklärung",
+    "contact": "Datenschutz-Kontakt",
+    "cloudFunctions": "Übermittelnde Funktionen"
+  },
+  "role": {
+    "processor": "Auftragsbearbeiter",
+    "subProcessor": "Unterauftragsbearbeiter",
+    "jointController": "Gemeinsam Verantwortliche"
+  },
+  "category": {
+    "infrastructure": "Infrastruktur",
+    "saasService": "SaaS-Dienst",
+    "externalParty": "Externe Stelle"
+  },
+  "transfer": {
+    "domestic": "Inland (Schweiz)",
+    "adequacyDecision": "Angemessenheitsbeschluss",
+    "scc": "Standardvertragsklauseln",
+    "consent": "Einwilligung",
+    "none": "Keine Grundlage angegeben"
+  },
+  "controller": {
+    "note": "Verantwortlich für diese Bearbeitung ist der Verein. Die bkaiser GmbH betreibt die Plattform als Auftragsbearbeiterin; die hier als Unterauftragsbearbeiter bezeichneten Anbieter sind von ihr beigezogen, nicht vom Verein direkt beauftragt."
+  },
+  "missing": {
+    "dpa": "Kein Auftragsverarbeitungsvertrag hinterlegt — beim Anbieter schriftlich einfordern."
+  },
+  "detail": {
+    "notFound": "Dieser Eintrag ist für diesen Mandanten nicht aktiv."
+  },
+  "map": {
+    "title": "Datenflüsse",
+    "legend": {
+      "ch": "Schweiz",
+      "eu": "EWR",
+      "third": "Drittstaat"
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "register": {
+    "title": "Registre des activités de traitement",
+    "subtitle": "Destinataires auxquels des données personnelles sont transmises",
+    "empty": "Aucun destinataire actif",
+    "export": "Exporter en PDF",
+    "exporting": "Création du PDF …"
+  },
+  "filter": {
+    "all": "Tous",
+    "category": "Catégorie",
+    "country": "Pays",
+    "originLabel": "Origine",
+    "originCatalogue": "Plateforme",
+    "originTenant": "Saisi par nous"
+  },
+  "field": {
+    "name": "Nom",
+    "legalEntity": "Entité juridique",
+    "role": "Rôle",
+    "category": "Catégorie",
+    "country": "Pays",
+    "transferMechanism": "Base du transfert",
+    "purposes": "Finalités",
+    "dataClasses": "Catégories de données",
+    "retention": "Conservation",
+    "securityMeasures": "Mesures de sécurité",
+    "dpa": "Contrat de sous-traitance",
+    "privacy": "Déclaration de protection des données",
+    "contact": "Contact protection des données",
+    "cloudFunctions": "Fonctions de transmission"
+  },
+  "role": {
+    "processor": "Sous-traitant",
+    "subProcessor": "Sous-traitant ultérieur",
+    "jointController": "Responsables conjoints"
+  },
+  "category": {
+    "infrastructure": "Infrastructure",
+    "saasService": "Service SaaS",
+    "externalParty": "Tiers externe"
+  },
+  "transfer": {
+    "domestic": "National (Suisse)",
+    "adequacyDecision": "Décision d'adéquation",
+    "scc": "Clauses contractuelles types",
+    "consent": "Consentement",
+    "none": "Aucune base indiquée"
+  },
+  "controller": {
+    "note": "L'association est responsable de ce traitement. bkaiser GmbH exploite la plateforme en qualité de sous-traitant; les prestataires désignés ici comme sous-traitants ultérieurs ont été mandatés par elle et non directement par l'association."
+  },
+  "missing": {
+    "dpa": "Aucun contrat de sous-traitance enregistré — le demander par écrit au prestataire."
+  },
+  "detail": {
+    "notFound": "Cette entrée n'est pas active pour ce mandant."
+  },
+  "map": {
+    "title": "Flux de données",
+    "legend": {
+      "ch": "Suisse",
+      "eu": "EEE",
+      "third": "État tiers"
+    }
+  }
+}

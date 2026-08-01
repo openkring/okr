@@ -1,0 +1,67 @@
+{
+  "register": {
+    "title": "Record of processing activities",
+    "subtitle": "Recipients that personal data is transferred to",
+    "empty": "No active recipients",
+    "export": "Export as PDF",
+    "exporting": "Generating PDF …"
+  },
+  "filter": {
+    "all": "All",
+    "category": "Category",
+    "country": "Country",
+    "originLabel": "Origin",
+    "originCatalogue": "Platform",
+    "originTenant": "Added by us"
+  },
+  "field": {
+    "name": "Name",
+    "legalEntity": "Legal entity",
+    "role": "Role",
+    "category": "Category",
+    "country": "Country",
+    "transferMechanism": "Transfer mechanism",
+    "purposes": "Purposes",
+    "dataClasses": "Data categories",
+    "retention": "Retention",
+    "securityMeasures": "Security measures",
+    "dpa": "Data processing agreement",
+    "privacy": "Privacy policy",
+    "contact": "Data protection contact",
+    "cloudFunctions": "Transferring functions"
+  },
+  "role": {
+    "processor": "Processor",
+    "subProcessor": "Sub-processor",
+    "jointController": "Joint controller"
+  },
+  "category": {
+    "infrastructure": "Infrastructure",
+    "saasService": "SaaS service",
+    "externalParty": "External party"
+  },
+  "transfer": {
+    "domestic": "Domestic (Switzerland)",
+    "adequacyDecision": "Adequacy decision",
+    "scc": "Standard contractual clauses",
+    "consent": "Consent",
+    "none": "No mechanism declared"
+  },
+  "controller": {
+    "note": "The association is the controller for this processing. bkaiser GmbH operates the platform as processor; the providers listed here as sub-processors were engaged by it, not contracted by the association directly."
+  },
+  "missing": {
+    "dpa": "No data processing agreement on file — request one from the provider in writing."
+  },
+  "detail": {
+    "notFound": "This entry is not active for this tenant."
+  },
+  "map": {
+    "title": "Data flows",
+    "legend": {
+      "ch": "Switzerland",
+      "eu": "EEA",
+      "third": "Third country"
+    }
+  }
+}

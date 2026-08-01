@@ -1,0 +1,67 @@
+{
+  "register": {
+    "title": "Registro delle attività di trattamento",
+    "subtitle": "Destinatari a cui vengono trasmessi dati personali",
+    "empty": "Nessun destinatario attivo",
+    "export": "Esporta come PDF",
+    "exporting": "Creazione del PDF …"
+  },
+  "filter": {
+    "all": "Tutti",
+    "category": "Categoria",
+    "country": "Paese",
+    "originLabel": "Origine",
+    "originCatalogue": "Piattaforma",
+    "originTenant": "Inserito da noi"
+  },
+  "field": {
+    "name": "Nome",
+    "legalEntity": "Soggetto giuridico",
+    "role": "Ruolo",
+    "category": "Categoria",
+    "country": "Paese",
+    "transferMechanism": "Base del trasferimento",
+    "purposes": "Finalità",
+    "dataClasses": "Categorie di dati",
+    "retention": "Conservazione",
+    "securityMeasures": "Misure di sicurezza",
+    "dpa": "Contratto di responsabile del trattamento",
+    "privacy": "Informativa sulla privacy",
+    "contact": "Contatto per la protezione dei dati",
+    "cloudFunctions": "Funzioni che trasmettono"
+  },
+  "role": {
+    "processor": "Responsabile del trattamento",
+    "subProcessor": "Sub-responsabile del trattamento",
+    "jointController": "Contitolari"
+  },
+  "category": {
+    "infrastructure": "Infrastruttura",
+    "saasService": "Servizio SaaS",
+    "externalParty": "Soggetto esterno"
+  },
+  "transfer": {
+    "domestic": "Nazionale (Svizzera)",
+    "adequacyDecision": "Decisione di adeguatezza",
+    "scc": "Clausole contrattuali tipo",
+    "consent": "Consenso",
+    "none": "Nessuna base indicata"
+  },
+  "controller": {
+    "note": "L'associazione è titolare di questo trattamento. bkaiser GmbH gestisce la piattaforma in qualità di responsabile del trattamento; i fornitori qui indicati come sub-responsabili sono stati incaricati da essa e non direttamente dall'associazione."
+  },
+  "missing": {
+    "dpa": "Nessun contratto di responsabile del trattamento registrato — richiederlo per iscritto al fornitore."
+  },
+  "detail": {
+    "notFound": "Questa voce non è attiva per questo cliente."
+  },
+  "map": {
+    "title": "Flussi di dati",
+    "legend": {
+      "ch": "Svizzera",
+      "eu": "SEE",
+      "third": "Paese terzo"
+    }
+  }
+}
