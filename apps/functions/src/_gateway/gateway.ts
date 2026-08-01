@@ -8,7 +8,9 @@
 
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import type { ProviderAdapter, GatewayContext, GatewayResult } from './provider';
+import { getFirestore } from 'firebase-admin/firestore';
+import { tenantIdOfUserData } from '@okr/shared-util-functions';
+import type { ProviderAdapter, GatewayContext, GatewayResult, CacheScope } from './provider';
 import { cacheKey } from './cache-key';
 import { readCache, writeCache, isExpired, CacheEntry } from './cache';
 import { checkWindowQuota, getMonthlyCount, incrementMonthlyCount } from './quota';
@@ -101,6 +103,54 @@ export async function runGateway<P, R, M>(
   return wrap(raw, false);
 }
 
+/** Reads `users/{uid}.tenants[0]`. Seam so the callable is testable without Firestore. */
+async function readUserTenantId(uid: string): Promise<string> {
+  const snap = await getFirestore().collection('users').doc(uid).get();
+  return tenantIdOfUserData(snap.data());
+}
+
+/**
+ * The caller's tenant — always derived server-side from `users/{uid}.tenants[0]`,
+ * never from `request.data`. A client can put any string in the payload, so
+ * trusting it would let one tenant read or poison another tenant's cache
+ * partition (`t:{tenantId}:` prefix) and skew its quota bucket.
+ *
+ * Anonymous callers (only reachable on a `requiresAuth: false` adapter) and
+ * users not linked to a tenant resolve to `''`. That is fine for a
+ * `scope: 'shared'` or `scope: 'user'` adapter — neither folds tenantId into the
+ * cache key — but a `scope: 'tenant'` adapter is rejected rather than served
+ * from an unscoped `t::` partition shared by every unresolved caller.
+ *
+ * Cost: one Firestore document read per authenticated gateway call, on top of
+ * the quota/cache reads the flow already does.
+ */
+export async function resolveTenantId(
+  uid: string | null,
+  scope: CacheScope,
+  readTenantId: (uid: string) => Promise<string> = readUserTenantId,
+): Promise<string> {
+  const tenantId = uid ? await readTenantId(uid) : '';
+  if (tenantId === '' && scope === 'tenant') {
+    logger.error('gateway: tenant-scoped provider called without a resolvable tenant', { uid });
+    throw new HttpsError('failed-precondition', 'User is not linked to a tenant.');
+  }
+  return tenantId;
+}
+
+/**
+ * Drop a client-supplied `tenantId` from the call params. It is not input any
+ * more (see resolveTenantId), and leaving it in would fragment the shared cache
+ * — `cacheKey` hashes the params, so the same query sent with a different
+ * `tenantId` would miss the cache and burn a fresh upstream call.
+ */
+export function stripTenantId<P>(data: P): P {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return data;
+  if (!('tenantId' in (data as Record<string, unknown>))) return data;
+  const rest = { ...(data as Record<string, unknown>) };
+  delete rest['tenantId'];
+  return rest as P;
+}
+
 /**
  * Turn an adapter into a callable. Resolves auth/tenant context, enforces
  * requiresAuth, binds region + AppCheck + declared secrets.
@@ -113,19 +163,13 @@ export function makeGatewayCallable<P, R, M>(adapter: ProviderAdapter<P, R, M>) 
         throw new HttpsError('unauthenticated', 'Authentication required');
       }
       const token = request.auth?.token as Record<string, unknown> | undefined;
+      const uid = request.auth?.uid ?? null;
       const ctx: GatewayContext = {
-        // SECURITY — client-supplied tenantId. Safe ONLY while every adapter is
-        // `scope: 'shared'` (tenantId never enters the cache key) and
-        // `requiresAuth: true` (so the quota key uses uid, not this fallback).
-        // Before adding any `scope: 'tenant'` or `scope: 'user'` adapter, derive
-        // tenantId server-side from the auth token / user record — a client
-        // could otherwise send another tenant's id and read/poison its cache
-        // partition (cross-tenant leak). See spec PENDING §1.18.
-        tenantId: (request.data as { tenantId?: string })?.tenantId ?? 'scs',
-        uid: request.auth?.uid ?? null,
+        tenantId: await resolveTenantId(uid, adapter.scope),
+        uid,
         isAdmin: token?.['admin'] === true || token?.['contentAdmin'] === true,
       };
-      return runGateway(adapter, request.data, ctx);
+      return runGateway(adapter, stripTenantId(request.data), ctx);
     },
   );
 }

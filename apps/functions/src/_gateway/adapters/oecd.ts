@@ -14,8 +14,6 @@ export interface OecdParams {
   filter?: string;
   startPeriod?: string;
   endPeriod?: string;
-  /** Optional tenant tag (ignored for shared open data; present for the callable ctx). */
-  tenantId?: string;
 }
 
 export interface OecdObservation {

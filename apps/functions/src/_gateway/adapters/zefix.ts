@@ -57,7 +57,7 @@ export function mapZefixSearch(raw: unknown): ZefixSearchResponse {
   return { results };
 }
 
-export const zefixSearchAdapter: ProviderAdapter<{ name: string; tenantId?: string }, unknown, ZefixSearchResponse> = {
+export const zefixSearchAdapter: ProviderAdapter<{ name: string }, unknown, ZefixSearchResponse> = {
   id: 'zefix-search',
   baseUrl: ZEFIX_BASE,
   secrets: [zefixUid, zefixPwd],
@@ -117,7 +117,7 @@ export function mapZefixDetails(raw: unknown): ZefixCompanyDetails {
   };
 }
 
-export const zefixDetailsAdapter: ProviderAdapter<{ uid: string; tenantId?: string }, unknown, ZefixCompanyDetails> = {
+export const zefixDetailsAdapter: ProviderAdapter<{ uid: string }, unknown, ZefixCompanyDetails> = {
   id: 'zefix-details',
   baseUrl: ZEFIX_BASE,
   secrets: [zefixUid, zefixPwd],

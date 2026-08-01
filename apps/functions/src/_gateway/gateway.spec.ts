@@ -1,6 +1,6 @@
 // apps/functions/src/_gateway/gateway.spec.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { runGateway, GatewayDeps } from './gateway';
+import { runGateway, resolveTenantId, stripTenantId, GatewayDeps } from './gateway';
 import type { ProviderAdapter } from './provider';
 
 type P = { q: string };
@@ -94,5 +94,49 @@ describe('runGateway', () => {
     const deps = fakeDeps({ getMonthlyCount: vi.fn(async () => 5), readCache: vi.fn(async () => null) });
     await expect(runGateway(capped, { q: 'x' }, ctx, deps)).rejects.toThrow(/cap|exhausted|limit/i);
     expect(capped.fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('resolveTenantId', () => {
+  const read = vi.fn(async () => 'p13');
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it('derives the tenant from the caller record, never from the payload', async () => {
+    expect(await resolveTenantId('u1', 'shared', read)).toBe('p13');
+    expect(read).toHaveBeenCalledWith('u1');
+  });
+
+  it('resolves anonymous callers to the empty tenant without a lookup', async () => {
+    expect(await resolveTenantId(null, 'shared', read)).toBe('');
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it('resolves a user with no tenant link to the empty tenant on a shared provider', async () => {
+    expect(await resolveTenantId('u1', 'shared', vi.fn(async () => ''))).toBe('');
+  });
+
+  it('rejects an unresolvable tenant on a tenant-scoped provider', async () => {
+    await expect(resolveTenantId('u1', 'tenant', vi.fn(async () => ''))).rejects.toThrow(
+      /not linked to a tenant/i,
+    );
+    await expect(resolveTenantId(null, 'tenant', read)).rejects.toThrow(/not linked to a tenant/i);
+  });
+});
+
+describe('stripTenantId', () => {
+  it('removes a client-supplied tenantId so it cannot fragment the cache key', () => {
+    expect(stripTenantId({ q: 'x', tenantId: 'other' })).toEqual({ q: 'x' });
+  });
+
+  it('leaves params without a tenantId untouched', () => {
+    const params = { q: 'x' };
+    expect(stripTenantId(params)).toBe(params);
+  });
+
+  it('tolerates non-object payloads', () => {
+    expect(stripTenantId(undefined)).toBeUndefined();
+    expect(stripTenantId(null)).toBeNull();
+    expect(stripTenantId('x')).toBe('x');
   });
 });
