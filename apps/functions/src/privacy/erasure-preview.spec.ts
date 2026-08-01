@@ -1,8 +1,8 @@
 import type { DocumentSnapshot, Query, QueryDocumentSnapshot, Timestamp } from 'firebase-admin/firestore';
 import { describe, expect, it } from 'vitest';
-import {
-  OUT_OF_REACH_PROCESSORS, buildPreview, firestoreDocFetcher, previewTokenOf,
-} from './erasure-preview';
+import type { AppConfig } from '@okr/shared-models';
+import { outOfReachRows } from '@okr/security-processing-util';
+import { buildPreview, firestoreDocFetcher, previewTokenOf } from './erasure-preview';
 import type { SubjectCtx, SubjectDataEntry } from './types';
 
 const ctx: SubjectCtx = { uid: 'u1', personKey: 'p1', parentKey: 'person.p1', tenantId: 'scs', email: 'a@b.ch' };
@@ -149,13 +149,20 @@ describe('buildPreview', () => {
   });
 
   it('lists the processors beyond our reach', async () => {
-    const p = await buildPreview(ctx, [], none, 2);
+    const config = { integrations: { bexio: true, matrix: true } } as unknown as AppConfig;
+    const p = await buildPreview(ctx, [], none, 2, outOfReachRows(config));
     expect(p.outOfReach.length).toBeGreaterThan(0);
     for (const r of p.outOfReach) {
       expect(r.name.length, `${r.key} has no name`).toBeGreaterThan(0);
       expect(r.contact.length, `${r.key} has no contact channel`).toBeGreaterThan(20);
       expect(r.dataClasses.length, `${r.key} names no data categories`).toBeGreaterThan(0);
     }
+  });
+
+  it('names no third party at all when the caller supplies none', async () => {
+    // The default must be empty, not a fixed list: guessing here is a false statement to
+    // the member about where their data went.
+    expect((await buildPreview(ctx, [], none, 2)).outOfReach).toEqual([]);
   });
 });
 
@@ -272,13 +279,21 @@ describe('firestoreDocFetcher', () => {
   });
 });
 
-describe('OUT_OF_REACH_PROCESSORS', () => {
+describe('the out-of-reach list, now derived from the tenant config', () => {
+  const withMatrix = { integrations: { matrix: true } } as unknown as AppConfig;
+
   it('has a stable key per processor', () => {
-    const keys = OUT_OF_REACH_PROCESSORS.map((p) => p.key);
+    const keys = outOfReachRows(withMatrix).map((p) => p.key);
     expect(new Set(keys).size).toBe(keys.length);
   });
 
   it('names the Matrix homeserver, whose message bodies we cannot reach at all', () => {
-    expect(OUT_OF_REACH_PROCESSORS.map((p) => p.key)).toContain('matrix');
+    expect(outOfReachRows(withMatrix).map((p) => p.key)).toContain('matrix');
+  });
+
+  it('does NOT name the chat server for a tenant that never enabled it', () => {
+    // The whole point of the swap: as a constant this list told every tenant its data sat
+    // with processors it had never switched on.
+    expect(outOfReachRows({} as AppConfig).map((p) => p.key)).not.toContain('matrix');
   });
 });

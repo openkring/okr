@@ -4,7 +4,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot } from 'firebase-admin/firestore';
 
 import { AppConfigCollection, UserCollection } from '@okr/shared-models';
-import type { EraseMyDataResponse } from '@okr/shared-models';
+import type { AppConfig, EraseMyDataResponse } from '@okr/shared-models';
+import { outOfReachRows } from '@okr/security-processing-util';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 
@@ -83,9 +84,24 @@ async function loadOtherAdminCount(tenantId: string, uid: string): Promise<numbe
   return countOtherAdmins(snapshot.docs, uid);
 }
 
+/**
+ * The tenant's `app-config`, for the out-of-reach section. A missing document is not an
+ * error: `activeProcessors` then reports exactly the always-on platform layer, which is
+ * the truth for a tenant that has configured no integrations.
+ */
+async function loadAppConfig(tenantId: string): Promise<AppConfig> {
+  const snapshot = await getFirestore().doc(`${AppConfigCollection}/${tenantId}`).get();
+  return (snapshot.data() ?? {}) as AppConfig;
+}
+
 async function freshPreview(ctx: SubjectCtx): Promise<ErasurePreview> {
-  const otherAdmins = await loadOtherAdminCount(ctx.tenantId, ctx.uid);
-  return buildPreview(ctx, SUBJECT_DATA_MAP, firestoreDocFetcher, otherAdmins);
+  const [otherAdmins, config] = await Promise.all([
+    loadOtherAdminCount(ctx.tenantId, ctx.uid),
+    loadAppConfig(ctx.tenantId),
+  ]);
+  // The out-of-reach section is derived from what this tenant actually enabled, so a club
+  // that never switched on bexio is never told bexio holds its data (5C task A2 step 7).
+  return buildPreview(ctx, SUBJECT_DATA_MAP, firestoreDocFetcher, otherAdmins, outOfReachRows(config));
 }
 
 /**

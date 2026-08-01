@@ -54,53 +54,22 @@ export const firestoreDocFetcher: DocFetcher = (entry, ctx) => resolveDocs(entry
 export type { ErasurePreview, OutOfReachRow, PreviewRow } from '@okr/shared-models';
 
 /**
- * Seeded from `planning/reference/privacy-data-inventory.md` §4 (the third-party
- * transfer register).
+ * The out-of-reach list is **no longer a constant here.** It is derived per tenant by
+ * `outOfReachRows(appConfig)` from the 5C processor catalogue
+ * (`@okr/security-processing-util`) and passed into `buildPreview` by the callable.
  *
- * ⚠️ **Known gap, owned by task A2 of the sibling 5C plan.** This is a constant, so a
- * tenant that never enabled bexio is still told bexio holds their data. When the 5C
- * processor catalogue lands, replace it with a catalogue query filtered to the tenant's
- * enabled integrations. Until then a slightly over-broad list is the safer error: naming
- * a processor that holds nothing is a confusing report, omitting one that does is a
- * false statement about where the member's data went.
+ * That closes a gap this file knowingly shipped: as a constant it told every tenant that
+ * bexio, DeepSign and the Swiss Rowing federation held their data, including tenants that
+ * had never enabled any of them. The catalogue's `enabledWhen` predicates read
+ * `AppConfig.integrations`, so the report now names only parties this tenant actually
+ * transfers to — and privacy-audit check 6 fails if an integration is switched on without
+ * a catalogue entry, so the list cannot silently fall behind the code again.
  *
- * `contact` says how the member reaches the recipient. For a processor acting on the
- * club's instruction that is the club's own data-protection contact, which forwards the
- * request — that is what "processor" means. The Matrix homeserver is the exception: the
- * message bodies belong to the operator and no erasure here touches them.
+ * The member-facing wording lives on each catalogue entry as `memberNoticeDe`, separate
+ * from the register's `contact`: for a processor acting on the club's instruction the
+ * correct advice is "go through the club", and for the chat server the honest sentence is
+ * that this erasure does not touch the message bodies at all.
  */
-export const OUT_OF_REACH_PROCESSORS: readonly OutOfReachRow[] = [
-  {
-    key: 'srv',
-    name: 'Regasoft (Verbandssystem Swiss Rowing)',
-    contact: 'Über die Datenschutz-Kontaktstelle des Vereins (siehe Impressum) — wir leiten deine Anfrage an den Verband weiter.',
-    dataClasses: ['identity', 'contact', 'membership'],
-  },
-  {
-    key: 'bexio',
-    name: 'bexio AG (Buchhaltung)',
-    contact: 'Über die Datenschutz-Kontaktstelle des Vereins (siehe Impressum). Rechnungen unterliegen dort derselben zehnjährigen Aufbewahrungspflicht wie bei uns.',
-    dataClasses: ['identity', 'contact', 'financial'],
-  },
-  {
-    key: 'deepsign',
-    name: 'DeepSign (Swisscom Trust Services)',
-    contact: 'Über die Datenschutz-Kontaktstelle des Vereins (siehe Impressum). Signierte Dokumente bleiben als Beweismittel unverändert.',
-    dataClasses: ['identity', 'content'],
-  },
-  {
-    key: 'matrix',
-    name: 'Matrix-Chatserver',
-    contact: 'Die Inhalte deiner Chatnachrichten liegen auf dem Chatserver und werden durch diese Löschung nicht entfernt. Wende dich dafür an die Datenschutz-Kontaktstelle des Vereins (siehe Impressum).',
-    dataClasses: ['identity', 'communication'],
-  },
-  {
-    key: 'email',
-    name: 'E-Mail-Versanddienst',
-    contact: 'Bereits versandte E-Mails lassen sich nicht zurückholen. Zustellprotokolle beim Versanddienst löschen sich nach dessen eigener Frist.',
-    dataClasses: ['contact', 'communication'],
-  },
-];
 
 /** Tenant-level blocker: the last remaining admin cannot erase themselves out of the
  * tenant. Scoped to T1 — it is a role handover problem, not a reason to keep a photo. */
@@ -193,14 +162,17 @@ export function previewTokenOf(parts: PreviewTokenParts): string {
  *                         goes through `resolveDocs`, because `blocksErasure` is
  *                         contractually fed the tenant- and `matches`-filtered set only
  * @param otherAdminCount  admins of this tenant OTHER than the subject; `0` blocks
- * @param outOfReach       third-party copies (see `OUT_OF_REACH_PROCESSORS`)
+ * @param outOfReach       third-party copies, from `outOfReachRows(appConfig)`. Defaults
+ *                         to empty: a caller that cannot say which integrations this
+ *                         tenant enabled must not guess, because every name in this list
+ *                         is a statement to the member about where their data went.
  */
 export async function buildPreview(
   ctx: SubjectCtx,
   entries: readonly SubjectDataEntry[],
   fetchDocs: DocFetcher,
   otherAdminCount: number,
-  outOfReach: readonly OutOfReachRow[] = OUT_OF_REACH_PROCESSORS,
+  outOfReach: readonly OutOfReachRow[] = [],
 ): Promise<ErasurePreview> {
   const blockers: Blocker[] = [];
   const willDelete: PreviewRow[] = [];

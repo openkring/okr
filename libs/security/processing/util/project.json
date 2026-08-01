@@ -1,0 +1,31 @@
+{
+  "name": "security-processing-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/security/processing/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:util", "scope:security", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/security/processing/util",
+        "main": "libs/security/processing/util/src/index.ts",
+        "tsConfig": "libs/security/processing/util/tsconfig.lib.json",
+        "assets": ["libs/security/processing/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "configFile": "libs/security/processing/util/vite.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
