@@ -36,5 +36,32 @@
     },
     "readonly": {
         "banner": "Cette liste est en lecture seule. Les écritures sont gérées dans Bexio."
+    },
+    "review": {
+        "approve": "Approuver",
+        "correct": "Vérifier et corriger",
+        "reject": "Refuser",
+        "reason": {
+            "title": "Motif du refus",
+            "placeholder": "Pourquoi ce justificatif est-il refusé ?"
+        },
+        "badge": "à vérifier",
+        "approved": "Écriture approuvée",
+        "rejected": "Écriture refusée",
+        "failed": "L'écriture n'a pas pu être traitée."
+    },
+    "status": {
+        "draft": {
+            "label": "Brouillon"
+        },
+        "forReview": {
+            "label": "À vérifier"
+        },
+        "posted": {
+            "label": "Comptabilisée"
+        },
+        "cancelled": {
+            "label": "Annulée"
+        }
     }
 }

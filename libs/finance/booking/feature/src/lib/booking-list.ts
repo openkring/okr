@@ -11,7 +11,7 @@ import { hasRole } from '@okr/shared-util-core';
 import { Menu } from '@okr/cms-menu-feature';
 import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
-import { BookingAction, JournalRow } from '@okr/finance-booking-util';
+import { BookingAction, isForReview, JournalRow } from '@okr/finance-booking-util';
 import { BookingStore } from './booking.store';
 
 @Component({
@@ -29,7 +29,12 @@ import { BookingStore } from './booking.store';
   <ion-header>
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.list_title() }}</ion-title>
+      <ion-title>
+        {{ filteredCount() }}/{{ count() }} {{ store.i18n.list_title() }}
+        @if(forReviewCount() > 0) {
+          <span class="review-badge">{{ forReviewCount() }} {{ store.i18n.review_badge() }}</span>
+        }
+      </ion-title>
       @if(hasRole('privileged') || hasRole('admin')) {
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">
@@ -50,6 +55,7 @@ import { BookingStore } from './booking.store';
     <okr-list-filter
       (searchTermChanged)="store.setSearchTerm($event)"
       (yearChanged)="store.setSelectedYear($event)" [years]="years()" [selectedYear]="store.selectedYear()"
+      (stateChanged)="store.setSelectedStatus($event)" [states]="statusCategory()" [selectedState]="store.selectedStatus()"
     />
 
     <!-- list header -->
@@ -76,10 +82,15 @@ import { BookingStore } from './booking.store';
     } @else {
       <ion-list lines="inset">
         @for(row of filtered(); track row.okey) {
-          <ion-item button [detail]="false" (click)="showActions(row)">
+          <ion-item button [detail]="false" (click)="showActions(row)" [class.for-review]="isForReview(row)">
             <ion-grid>
               <ion-row>
-                <ion-col size="3" size-md="2">{{ row.date }}</ion-col>
+                <ion-col size="3" size-md="2">
+                  @if(isForReview(row)) {
+                    <ion-icon class="review-icon" src="{{ 'alert-circle' | svgIcon }}" [attr.aria-label]="store.i18n.status_forReview()" />
+                  }
+                  {{ row.date }}
+                </ion-col>
                 <ion-col size-md="2" class="ion-hide-sm-down">{{ row.creditAccount }}</ion-col>
                 <ion-col size-md="2" class="ion-hide-sm-down">{{ row.debitAccount }}</ion-col>
                 <ion-col size="5" size-md="4">{{ row.accountName }}</ion-col>
@@ -92,6 +103,16 @@ import { BookingStore } from './booking.store';
     }
   </ion-content>
   `,
+  styles: [`
+    .review-badge {
+      margin-left: 0.5rem; padding: 0.1rem 0.45rem;
+      border-radius: 0.75rem; font-size: 0.7rem; font-weight: 600;
+      background: var(--ion-color-warning); color: var(--ion-color-warning-contrast);
+      vertical-align: middle;
+    }
+    .review-icon { font-size: 1rem; vertical-align: text-bottom; color: var(--ion-color-warning-shade); }
+    ion-item.for-review { --background: rgba(var(--ion-color-warning-rgb), 0.12); }
+  `],
 })
 export class BookingList {
   protected readonly store = inject(BookingStore);
@@ -108,6 +129,12 @@ export class BookingList {
   protected readonly years = computed(() => this.store.years());
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly readOnly = computed(() => this.store.isReadOnly());
+  protected readonly forReviewCount = computed(() => this.store.forReviewCount());
+  protected readonly statusCategory = computed(() => this.store.statusCategory());
+
+  protected isForReview(row: JournalRow): boolean {
+    return isForReview(row.booking);
+  }
 
   /*-------------------------- popover context menu --------------------------------*/
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
@@ -126,11 +153,18 @@ export class BookingList {
     const lines = this.store.linesByBooking().get(booking.okey) ?? [];
     const actions = this.store.availableActions(booking);
     const options = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(options, actions);
+    this.addActionSheetButtons(options, actions, booking);
     await this.executeActions(options, booking, lines, actions);
   }
 
-  private addActionSheetButtons(options: ActionSheetOptions, actions: BookingAction[]): void {
+  private addActionSheetButtons(options: ActionSheetOptions, actions: BookingAction[], booking: BookingModel): void {
+    // Treasurer decision on an OCR-proposed booking comes first — it is why the row was opened.
+    if (this.store.canReview(booking)) {
+      options.buttons.push(createActionSheetButton('booking.approve', this.store.i18n.review_approve(), this.imgixBaseUrl, 'checkmark-circle'));
+      options.buttons.push(createActionSheetButton('booking.review',  this.store.i18n.review_correct(), this.imgixBaseUrl, 'edit'));
+      options.buttons.push(createActionSheetButton('booking.reject',  this.store.i18n.review_reject(),  this.imgixBaseUrl, 'close-circle'));
+      options.buttons.push(createActionSheetDivider());
+    }
     if (this.readOnly()) {
       options.buttons.push(createActionSheetButton('booking.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     } else {
@@ -154,6 +188,9 @@ export class BookingList {
     const { data } = await actionSheet.onDidDismiss();
     if (!data) return;
     const action: string = data.action;
+    if (action === 'booking.approve') { await this.store.approve(booking); return; }
+    if (action === 'booking.review')  { await this.store.openReview(booking, lines); return; }
+    if (action === 'booking.reject')  { await this.store.reject(booking); return; }
     if (action === 'booking.view')   { await this.store.openEdit(booking, lines, true); return; }
     if (action === 'booking.edit')   { await this.store.openEdit(booking, lines, this.readOnly()); return; }
     if (action === 'booking.delete') { await this.store.delete(booking); return; }

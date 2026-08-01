@@ -1,15 +1,42 @@
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
+import { getApp } from 'firebase/app';
 import { doc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { BookingCollection, BookingLineModel, BookingModel, UserModel } from '@okr/shared-models';
+import { AvatarInfo, BookingCollection, BookingLineModel, BookingModel, BookingStatus, UserModel } from '@okr/shared-models';
 import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 
 import { validateBookingBalance } from '@okr/finance-booking-util';
 
 import { BookingLineService } from './booking-line.service';
+
+/** One corrected booking line sent to `reviewBooking` (amounts in minor units). */
+export interface ReviewBookingLine {
+  accountKey: string;
+  debitAmount?: { amount: number; currency: string } | null;
+  creditAmount?: { amount: number; currency: string } | null;
+}
+
+/** Payload of the `reviewBooking` callable. `corrections` applies to 'approve' only. */
+export interface ReviewBookingPayload {
+  bookingKey: string;
+  decision: 'approve' | 'reject';
+  reason?: string;
+  corrections?: {
+    title?: string;
+    date?: string;
+    counterparty?: AvatarInfo | null;
+    lines?: ReviewBookingLine[];
+  };
+}
+
+export interface ReviewBookingResult {
+  bookingNo: number;
+  status: BookingStatus;
+}
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {
@@ -82,6 +109,20 @@ export class BookingService {
       { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
     ];
     return this.firestoreService.getDataOnce<BookingModel>(BookingCollection, query, orderBy, sortOrder);
+  }
+
+  /**
+   * Treasurer decision on a `forReview` booking (spec 1.20).
+   *
+   * `bookings` / `booking-lines` are CF-write-only, so this goes through the `reviewBooking`
+   * callable. The CF assigns `bookingNo` inside its transaction — do NOT pre-compute it with
+   * {@link nextSequence} here, that races a concurrent approval. `tenantId` is derived
+   * server-side from the caller and is deliberately not part of the payload.
+   */
+  public async reviewViaFunction(payload: ReviewBookingPayload): Promise<ReviewBookingResult> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'reviewBooking');
+    const result = await fn(payload);
+    return result.data as ReviewBookingResult;
   }
 
   public async nextSequence(year: number, accountingTenantId: string): Promise<number> {

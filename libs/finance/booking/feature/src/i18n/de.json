@@ -36,5 +36,32 @@
     },
     "readonly": {
         "banner": "Diese Liste ist readonly. Die Buchungen werden in Bexio bewirtschaftet."
+    },
+    "review": {
+        "approve": "Genehmigen",
+        "correct": "Prüfen & korrigieren",
+        "reject": "Ablehnen",
+        "reason": {
+            "title": "Grund der Ablehnung",
+            "placeholder": "Warum wird dieser Beleg abgelehnt?"
+        },
+        "badge": "zu prüfen",
+        "approved": "Buchung genehmigt",
+        "rejected": "Buchung abgelehnt",
+        "failed": "Die Buchung konnte nicht bearbeitet werden."
+    },
+    "status": {
+        "draft": {
+            "label": "Entwurf"
+        },
+        "forReview": {
+            "label": "Zu prüfen"
+        },
+        "posted": {
+            "label": "Verbucht"
+        },
+        "cancelled": {
+            "label": "Storniert"
+        }
     }
 }

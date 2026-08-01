@@ -21,6 +21,22 @@ export const BOOKING_I18N_KEYS = {
   action_noAddress:            PFX + 'action.noAddress',
   action_failed:               PFX + 'action.failed',
   read_only_banner:            PFX + 'readonly.banner',
+  // treasurer review of forReview bookings (OCR pipeline, spec 1.20)
+  review_approve:              PFX + 'review.approve',
+  review_correct:              PFX + 'review.correct',
+  review_reject:               PFX + 'review.reject',
+  review_reason_title:         PFX + 'review.reason.title',
+  review_reason_placeholder:   PFX + 'review.reason.placeholder',
+  review_badge:                PFX + 'review.badge',
+  review_approved:             PFX + 'review.approved',
+  review_rejected:             PFX + 'review.rejected',
+  review_failed:               PFX + 'review.failed',
+  // status labels double as the okr-list-filter category labels — getItemLabel builds
+  // `${i18n}.${category.name}.${item.name}.label`, so the '.label' suffix is mandatory here.
+  status_draft:                PFX + 'status.draft.label',
+  status_forReview:            PFX + 'status.forReview.label',
+  status_posted:               PFX + 'status.posted.label',
+  status_cancelled:            PFX + 'status.cancelled.label',
 } satisfies Record<string, string>;
 
 export type BookingI18n = { [K in keyof typeof BOOKING_I18N_KEYS]: Signal<string> };

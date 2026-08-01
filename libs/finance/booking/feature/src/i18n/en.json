@@ -36,5 +36,32 @@
     },
     "readonly": {
         "banner": "This list is read-only. The bookings are managed in Bexio."
+    },
+    "review": {
+        "approve": "Approve",
+        "correct": "Review & correct",
+        "reject": "Reject",
+        "reason": {
+            "title": "Reason for rejection",
+            "placeholder": "Why is this receipt rejected?"
+        },
+        "badge": "to review",
+        "approved": "Booking approved",
+        "rejected": "Booking rejected",
+        "failed": "The booking could not be processed."
+    },
+    "status": {
+        "draft": {
+            "label": "Draft"
+        },
+        "forReview": {
+            "label": "To review"
+        },
+        "posted": {
+            "label": "Posted"
+        },
+        "cancelled": {
+            "label": "Cancelled"
+        }
     }
 }

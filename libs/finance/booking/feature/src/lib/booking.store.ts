@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -13,14 +13,17 @@ import { exportCsv } from '@okr/shared-util-angular';
 
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { AccountService } from '@okr/finance-account-data-access';
-import { BookingLineService, BookingService } from '@okr/finance-booking-data-access';
+import { BookingLineService, BookingService, ReviewBookingLine } from '@okr/finance-booking-data-access';
 import {
   BOOKING_ACTIONS,
   BookingAction,
   BOOKING_I18N_KEYS,
   BookingI18n,
+  bookingStatusCategory,
   bookingYear,
   buildReceiptPayload,
+  canReviewBooking,
+  isForReview,
   JournalRow,
   journalToRows,
   matchActions,
@@ -40,13 +43,14 @@ export type { BookingI18n };
 const ALL_YEARS = 99;   // sentinel emitted by okr-year-select for "all years"
 
 export const BookingStore = signalStore(
-  withState({ searchTerm: '', selectedYear: getYear() }),
+  withState({ searchTerm: '', selectedYear: getYear(), selectedStatus: 'all' }),
   withProps(() => ({
     bookingService: inject(BookingService),
     bookingLineService: inject(BookingLineService),
     accountingStore: inject(AccountingStore),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
+    alertController: inject(AlertController),
     i18nService: inject(I18nService),
     accountService: inject(AccountService),
     personService: inject(PersonService),
@@ -109,14 +113,20 @@ export const BookingStore = signalStore(
     }),
   })),
   withComputed(store => ({
-    // journalRows narrowed by the selected year and the free-text search term.
+    // journalRows narrowed by the selected year, status and the free-text search term.
     filteredRows: computed<JournalRow[]>(() => {
       const year = store.selectedYear();
       const term = store.searchTerm();
+      const status = store.selectedStatus();
       return store.journalRows()
         .filter(r => year === ALL_YEARS || r.year === year)
+        .filter(r => status === 'all' || r.booking.status === status)
         .filter(r => matchesJournalSearch(r, term));
     }),
+    // Bookings awaiting a treasurer decision — drives the header badge (all years, unfiltered).
+    forReviewCount: computed<number>(() => store.bookings().filter(isForReview).length),
+    // Status filter options for okr-list-filter, built from the BookingStatus union.
+    statusCategory: computed(() => bookingStatusCategory(store.tenantId())),
   })),
   withMethods(store => ({
     setSearchTerm(term: string): void {
@@ -125,6 +135,10 @@ export const BookingStore = signalStore(
 
     setSelectedYear(year: number): void {
       patchState(store, { selectedYear: year });
+    },
+
+    setSelectedStatus(selectedStatus: string): void {
+      patchState(store, { selectedStatus });
     },
 
     async export(): Promise<void> {
@@ -171,6 +185,85 @@ export const BookingStore = signalStore(
     async delete(booking: BookingModel): Promise<void> {
       if (store.isReadOnly()) return;
       await store.bookingService.delete(booking, store.currentUser());
+      store.bookingsResource.reload();
+      store.linesResource.reload();
+    },
+
+    /*------------------- treasurer review of forReview bookings (spec 1.20) -------------------*/
+
+    /** Whether the approve/correct/reject actions are offered for this booking. */
+    canReview(booking: BookingModel): boolean {
+      return canReviewBooking(booking, store.currentUser(), store.isReadOnly());
+    },
+
+    /**
+     * Approve as proposed. The `bookingNo` comes back from the CF, which assigns it inside its
+     * transaction — never pre-compute it here (see BookingService.reviewViaFunction).
+     */
+    async approve(booking: BookingModel): Promise<void> {
+      await this.review({ bookingKey: booking.okey, decision: 'approve' });
+    },
+
+    /** Reject with a mandatory reason; the reason is appended to the booking's notes by the CF. */
+    async reject(booking: BookingModel): Promise<void> {
+      const alert = await store.alertController.create({
+        header: store.i18n.review_reason_title(),
+        inputs: [{
+          name: 'reason', type: 'textarea', attributes: { maxlength: 500 },
+          placeholder: store.i18n.review_reason_placeholder(),
+        }],
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.review_reject(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { data, role } = await alert.onDidDismiss<{ values: { reason: string } }>();
+      const reason = data?.values?.reason?.trim() ?? '';
+      if (role !== 'confirm' || reason.length === 0) return;   // cancelled, or no reason given
+      await this.review({ bookingKey: booking.okey, decision: 'reject', reason });
+    },
+
+    /**
+     * Correct, then approve: the OCR guesses the debit account, so the treasurer usually wants to
+     * fix something first. The edit modal's confirm cannot write Firestore (bookings are
+     * CF-write-only), so its result is sent to the CF as an `approve` with corrections.
+     */
+    async openReview(booking: BookingModel, lines: BookingLineModel[]): Promise<void> {
+      const modal = await store.modalController.create({
+        component: BookingEditModal,
+        componentProps: { booking, lines, readOnly: false, currentUser: store.currentUser() },
+      });
+      await modal.present();
+      const { data, role } = await modal.onDidDismiss<{ booking: BookingModel; lines: BookingLineModel[] }>();
+      if (role !== 'confirm' || !data) return;
+      await this.review({
+        bookingKey: booking.okey,
+        decision: 'approve',
+        corrections: {
+          title: data.booking.title,
+          date: data.booking.date,
+          counterparty: data.booking.counterparty ?? null,
+          lines: data.lines.map<ReviewBookingLine>(l => ({
+            accountKey: l.accountKey,
+            debitAmount:  l.debitAmount  ? { amount: l.debitAmount.amount,  currency: l.debitAmount.currency }  : null,
+            creditAmount: l.creditAmount ? { amount: l.creditAmount.amount, currency: l.creditAmount.currency } : null,
+          })),
+        },
+      });
+    },
+
+    /** Single call site for the reviewBooking CF: toasts the outcome and reloads both resources. */
+    async review(payload: Parameters<BookingService['reviewViaFunction']>[0]): Promise<void> {
+      try {
+        const result = await store.bookingService.reviewViaFunction(payload);
+        await this.toast(result.status === 'posted'
+          ? `${store.i18n.review_approved()} (${result.bookingNo})`
+          : store.i18n.review_rejected());
+      } catch {
+        await this.toast(store.i18n.review_failed());
+      }
+      // Reload either way: on failure the local state may still be stale from an earlier attempt.
       store.bookingsResource.reload();
       store.linesResource.reload();
     },

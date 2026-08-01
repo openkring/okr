@@ -213,6 +213,7 @@ interface OcrResultDoc {
   subject: string;
   llmProposedAccountId?: string;
   bookingKey: string;
+  taskKey?: string;
   tenants: string[];
 }
 
@@ -320,8 +321,13 @@ export const onOcrResultWritten = onDocumentWritten(
     }, { merge: true });
 
     // Open a review task for the treasurer (existing onTaskWritten sends the FCM push).
-    await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
+    // Deliberately AFTER the latch above: if task creation throws, the result is already marked
+    // processed, so a redelivery cannot create a second booking. taskKey is latched separately.
+    const taskKey = await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
       `Beleg prüfen: ${after.vendor} ${(amountCents / 100).toFixed(2)} ${currency}`, after);
+    // Latch the task onto the result so `reviewBooking` can close it from the booking (invoice usage
+    // has no expense doc to hang it on — see 2026-08-01-booking-review-ui-design.md §3).
+    if (taskKey) await resultRef.set({ taskKey }, { merge: true });
 
     logger.info(`onOcrResultWritten: booking ${bookingRef.id} forReview (rule=${rule?.okey ?? 'none'})`);
   },
@@ -370,7 +376,10 @@ async function handleExpenseResult(
       error: 'Beleg konnte nicht automatisch verarbeitet werden — bitte manuell erfassen.',
     }, { merge: true });
     const taskKey = await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '', 'Beleg manuell erfassen', after);
-    if (taskKey) await expenseRef.set({ taskKey }, { merge: true });
+    if (taskKey) {
+      await expenseRef.set({ taskKey }, { merge: true });
+      await resultRef.set({ taskKey }, { merge: true });
+    }
     return;
   }
 
@@ -418,10 +427,14 @@ async function handleExpenseResult(
   });
 
   // Task creation is I/O outside the transaction, and only on first creation of the booking.
+  // The Nth receipt of the same expense reuses the task the first one opened (expense.taskKey).
+  let taskKey = '';
   if (created) {
-    const taskKey = await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
+    taskKey = await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
       `Beleg prüfen: ${after.vendor} ${(amountCents / 100).toFixed(2)} ${currency}`, after, treasurer);
     if (taskKey) await expenseRef.set({ taskKey }, { merge: true });
+  } else {
+    taskKey = (expense['taskKey'] as string | undefined) ?? '';
   }
 
   // Latch: write resolution back + mark processed (idempotency — re-delivery sees bookingKey set).
@@ -431,6 +444,7 @@ async function handleExpenseResult(
     accountKey: debitAccountKey,
     llmProposedAccountKey: llmAccountKey,
     bookingKey: correlationKey,
+    taskKey,
   }, { merge: true });
 
   logger.info(`onOcrResultWritten: expense booking ${correlationKey} forReview (created=${created}, rule=${rule?.okey ?? 'none'})`);
@@ -514,7 +528,8 @@ async function handleExternalBackendResult(
     : false;
 
   if (!treasurer?.key) logger.warn(`handleExternalBackendResult: no treasurer for tenant ${tenantId} — task not created`);
-  await resultRef.set({ status: 'processed' }, { merge: true });
+  // Task id == expenseKey here, so latching it is free — kept for symmetry with the other two paths.
+  await resultRef.set({ status: 'processed', taskKey: treasurer?.key ? correlationKey : '' }, { merge: true });
   logger.info(`onOcrResultWritten: external-backend review task ${correlationKey} (created=${created})`);
 }
 

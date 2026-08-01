@@ -36,5 +36,32 @@
     },
     "readonly": {
         "banner": "Questo elenco è di sola lettura. Le registrazioni vengono gestite in Bexio."
+    },
+    "review": {
+        "approve": "Approva",
+        "correct": "Verifica e correggi",
+        "reject": "Rifiuta",
+        "reason": {
+            "title": "Motivo del rifiuto",
+            "placeholder": "Perché questo giustificativo viene rifiutato?"
+        },
+        "badge": "da verificare",
+        "approved": "Registrazione approvata",
+        "rejected": "Registrazione rifiutata",
+        "failed": "Impossibile elaborare la registrazione."
+    },
+    "status": {
+        "draft": {
+            "label": "Bozza"
+        },
+        "forReview": {
+            "label": "Da verificare"
+        },
+        "posted": {
+            "label": "Contabilizzata"
+        },
+        "cancelled": {
+            "label": "Annullata"
+        }
     }
 }

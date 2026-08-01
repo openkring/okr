@@ -13,6 +13,7 @@ import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
 import * as Expense from './expense';
+import * as Booking from './booking';
 import * as Email from './email';
 import * as Bexio from './bexio';
 import * as Gateway from './_gateway';
@@ -175,6 +176,8 @@ export const redoExpenseOcr = Ocr.redoExpenseOcr;
 // expense creation (CF-only writes to the `expenses` collection)
 export const createExpense = Expense.createExpense;
 export const deleteExpense = Expense.deleteExpense;
+// treasurer approve/reject on forReview bookings (bookings/booking-lines are CF-write-only)
+export const reviewBooking = Booking.reviewBooking;
 
 // address
 export const generateQrBill = Address.generateQrBill;

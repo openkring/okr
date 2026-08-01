@@ -47,6 +47,9 @@ export class OcrResultModel implements OkrModel, SearchableModel {
 
   // post-processing
   public bookingKey = '';           // set by stage ②; '' guards idempotency
+  public taskKey = '';              // → TaskModel; the treasurer review task stage ② opened ('' = none).
+                                    // Lets reviewBooking close the task for every usage, not just 'expense'
+                                    // (where task id == expense id == booking id).
   public error = '';
 
   constructor(tenantId: string) {
