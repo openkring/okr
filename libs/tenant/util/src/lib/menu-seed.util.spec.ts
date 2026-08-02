@@ -27,6 +27,16 @@ describe('planMenuOps', () => {
     expect(ops[0].fields.tenants).toEqual(['p13']);
   });
 
+  it('a created doc carries isArchived:false and a real index (task-8 review round 3, Important 3)', () => {
+    // Without these, MenuService.list()/.read() — which query `where('isArchived','==',
+    // false)` — never see the doc: Firestore's `==` excludes documents MISSING the field
+    // entirely, it does not treat a missing field as `false`. A created child menu doc
+    // would otherwise be permanently invisible to the app.
+    const ops = planMenuOps([spec], 'p13', new Map());
+    expect(ops[0].fields.isArchived).toBe(false);
+    expect(ops[0].fields.index).toBe('n:calevent-all a:navigate k:calevent-all');
+  });
+
   it('adds the tenant to an existing shared doc without duplicating it', () => {
     const existing = new Map([['calevent-all', existingDoc()]]);
     const ops = planMenuOps([spec], 'p13', existing);

@@ -14,6 +14,18 @@ export interface MenuOp {
   fields: Partial<MenuItemModel>;
 }
 
+/**
+ * Mirrors `getMenuIndex` (`libs/cms/menu/util/src/lib/menu.util.ts:32-34`:
+ * `'n:' + name + ' a:' + action + ' k:' + okey`), which every UI create/update path
+ * (`MenuService.create`/`update`) sets on write. Duplicated rather than imported: this is
+ * `type:util` in the `tenant` domain and `@okr/cms-menu-util` is a different domain —
+ * importing it here for a 3-concatenation string is not worth the cross-domain coupling.
+ * If the two ever need to change together, that is a signal to extract a shared helper.
+ */
+function menuIndex(name: string, action: string, okey: string): string {
+  return `n:${name} a:${action} k:${okey}`;
+}
+
 function structuralDrift(existing: MenuItemModel, spec: MenuSpec): Partial<MenuItemModel> {
   const drift: Partial<MenuItemModel> = {};
   for (const field of STRUCTURAL_FIELDS) {
@@ -50,6 +62,17 @@ export function planMenuOps(
           roleNeeded: spec.roleNeeded, icon: spec.icon, label: spec.label,
           tenants: [tenantId],
           menuItems: (spec.children ?? []).map(c => c.key),
+          // Both REQUIRED for the doc to actually render, not just for shape/search
+          // consistency (task-8 review round 3, Important 3): `MenuService.list()` /
+          // `.read()` query via `getSystemQuery`, which issues
+          // `where('isArchived', '==', false)` (`libs/shared/util-core/src/lib/
+          // query.util.ts:11-16`). Firestore's `==` filter excludes documents that are
+          // MISSING the field entirely — it does not default a missing field to `false`.
+          // Without this, every child doc this function creates is invisible to the app
+          // (`MenuService.read(name)` → `undefined` → `<okr-menu>` renders nothing),
+          // silently defeating the whole menu-seeding system on every brand-new key.
+          isArchived: false,
+          index: menuIndex(spec.name, spec.action, spec.key),
         },
       });
     } else {

@@ -244,10 +244,14 @@ describe('planRootMenuOp (root menu attachment — task-8 review round 2)', () =
 
     expect(op?.key).toBe('main_p13');
     expect(op?.op).toBe('create');
-    expect(op?.fields.tenants).toEqual(['p13']);
-    expect(op?.fields.name).toBe('main_p13');
-    expect(op?.fields.action).toBe('main');
-    expect(op?.fields.menuItems).toEqual(['calevent-all', 'aoc-menu']);
+    // FULL field object, not a subset (review round 3, Minor 2) — checking only a few
+    // fields is exactly how a missing `index` slipped past round 2's version of this test.
+    expect(op?.fields).toEqual({
+      okey: 'main_p13', name: 'main_p13', action: 'main', url: '', label: 'main', icon: '',
+      description: '', tags: '', data: [], isArchived: false,
+      index: 'n:main_p13 a:main k:main_p13',
+      roleNeeded: 'none', tenants: ['p13'], menuItems: ['calevent-all', 'aoc-menu'],
+    });
   });
 
   it('creates nothing for a brand-new tenant with nothing enabled yet', () => {
@@ -512,5 +516,36 @@ describe('applySelection (full write path — BUG 1 must survive past the pure p
     expect(fdb.dump(MenuItemCollection)['main_p13'].menuItems).toEqual(['home', 'profile', 'version']);
     const events = Object.values(fdb.dump(FeatureEventCollection));
     expect(events).toEqual([{ tenantId: 'p13', block: 'calevent', op: 'disable', at: expect.any(String), by: 'uid-admin-1' }]);
+  });
+
+  it('root menu removal survives a retry AFTER chunk 0 already committed (review round 3, Important 1) — fails on the pre-fix delta-based removeKeys', async () => {
+    const fdb = new FakeFirestore();
+    // Simulates the state immediately after a first `applySelection` attempt's chunk 0
+    // (config + events) landed but its root-menu write then failed: `enabledFeatures` is
+    // ALREADY the new, post-disable value, but `main_p13` still lists the disabled
+    // block's key — nothing removed it yet. A delta computed as `computeTransitions
+    // (previous, plan.enabled)` would see `previous == plan.enabled == []` here (the
+    // config doc already reflects the target state) and compute an EMPTY delta, so a
+    // removeKeys derived from that delta would never touch `aoc-menu` again — on this
+    // retry OR any future one. `removeKeys` must be derived from full catalogue state
+    // (every block not in `plan.enabled`) precisely so this retry still converges.
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    fdb.seed(MenuItemCollection, 'main_p13', {
+      okey: 'main_p13', name: 'main_p13', action: 'main', url: '', label: 'main', icon: '',
+      roleNeeded: 'none', tenants: ['p13'],
+      menuItems: ['home', 'profile', 'aoc-menu', 'version'],
+    });
+    const aocBlock = catalogueBlock('aoc', [{
+      key: 'aoc-menu', name: 'aoc-menu', url: '', action: 'sub',
+      roleNeeded: 'admin', icon: 'admin', label: 'AOC',
+    }]);
+    const plan: SelectionPlan = { enabled: [], withheld: [] }; // same target as before the "crash"
+
+    await applySelection(fdb as unknown as Firestore, [aocBlock], plan, 'p13', 'uid-admin-1');
+
+    expect(fdb.dump(MenuItemCollection)['main_p13'].menuItems).toEqual(['home', 'profile', 'version']);
+    // No spurious audit event: the config doc was already at the target value, so this
+    // retry is a real no-op for the (separately, correctly, delta-based) audit trail.
+    expect(Object.keys(fdb.dump(FeatureEventCollection))).toHaveLength(0);
   });
 });

@@ -198,14 +198,25 @@ export async function commitChunked(db: Firestore, writes: PendingWrite[]): Prom
 // ────────────────────────────────────────────────────────────────────────────────────
 // ROOT MENU ATTACHMENT (task-8 review round 2, repo-owner ruling) — every enabled block's
 // TOP-LEVEL menu key(s) must appear in the tenant's own root doc, `menuItems/main_<tenantId>`
-// (doc id == `name`; resolution rule verified against `menu-graph.store.ts:311-314`'s
-// `items.find(i => i.name === 'main_' + tenantId)`). Without this, a block's whole menu
-// subtree can be correctly created/updated by `planMenuOpsForBlocks` above and STILL
-// render nowhere, because nothing walks up from the root to discover it (task-8 report,
-// "Defect 3"). `FeatureBlock` deliberately does NOT get a `parentKey` — the ownership
-// direction is the opposite: a shared CHILD doc's own `tenants[]` is what a tenant
-// "inherits" a subtree through, the root doc is the one thing that is genuinely
-// per-tenant and never shared (verified against live Firestore: `main_scs`/`main_p13`/
+// (doc id == `name`). The LOAD-BEARING resolution rule (verified by reading the code, not
+// assumed) is `apps/scs-app/src/app/okr-root.ts:235` — `mainMenuName` is a computed
+// signal that resolves to `main_` + the current tenant id, fed into
+// `<okr-menu [menuName]>` → `MenuStore.setMenuName` →
+// `MenuService.read(name)` → `findByKey(this.list(), name, 'name')`
+// (`libs/cms/menu/data-access/src/lib/menu.service.ts:44-47`) — a plain equality lookup
+// by `name`, with NO fallback to a shared `'main'` doc. (`menu-graph.store.ts:311-314`'s
+// `items.find(...) ?? items.find(i => i.name === 'main' && ...)` fallback is the CMS
+// ADMIN graph-view tool only, not the app's actual render path — round-2 review correctly
+// flagged that citing it as load-bearing overstated the evidence; corrected here.) Since
+// nothing falls back, writing to any doc id other than `main_<tenantId>` for this tenant
+// would simply never render — so this function only ever targets that exact doc.
+//
+// Without this attachment, a block's whole menu subtree can be correctly created/updated
+// by `planMenuOpsForBlocks` above and STILL render nowhere, because nothing walks up from
+// the root to discover it (task-8 report, "Defect 3"). `FeatureBlock` deliberately does
+// NOT get a `parentKey` — the ownership direction is the opposite: a shared CHILD doc's
+// own `tenants[]` is what a tenant "inherits" a subtree through, the root doc is the one
+// thing that is genuinely per-tenant and never shared (verified against live Firestore:
 // `main_bko`/`main_test` each have `tenants` = exactly their own single tenant id, while
 // child keys like `misc-menu`/`cms`/`aoc-menu`/`help`/`version` recur across all of them).
 //
@@ -218,16 +229,37 @@ export async function commitChunked(db: Firestore, writes: PendingWrite[]): Prom
 //
 // Idempotency / chunk placement: computed from the SAME `existing` snapshot read once at
 // the top of `applySelection` (root doc, if present, is just another `MenuItemCollection`
-// doc, so it is already in that Map — no extra read). A retry after a partial failure
-// re-fetches `existing` fresh, so a key that already landed is already present and is not
-// re-appended, and a key already removed is not "re-removed" (removing an absent key is a
-// no-op) — this converges exactly like every other op in `menuWrites` does, so it belongs
-// in the SAME idempotent, safe-to-retry chunk (1..N), not the non-idempotent chunk 0. Race
-// safety is NO WORSE than the shared-parent ops above: both compute a full replacement
-// array from a live read and `set(..., {merge:true})` it — a genuinely concurrent editor
-// of the SAME array field can still race either kind of op equally; this task was not
-// asked to add transactions/locking, and doing so here without doing it for the
-// shared-parent ops too would be an inconsistent, undocumented improvement over them.
+// doc, so it is already in that Map — no extra read). ADDS are safe under retry because
+// `addKeys` is the FULL desired set (every enabled block's keys) — a key that already
+// landed is already present in `current` and is filtered out of `missing`, so it is not
+// re-appended. REMOVES must be equally full-state-derived, not delta-derived — see the
+// call site in `applySelection` for why (review round 2, Important 1: deriving removals
+// from `computeTransitions`'s delta broke convergence when chunk 0, which persists
+// `enabledFeatures`, commits but this op's own write then fails and is retried — the
+// retry recomputes `previous == plan.enabled`, so the delta is empty and a genuinely
+// disabled block's key would stick forever). With BOTH adds and removes derived from full
+// state, this converges exactly like every other op in `menuWrites` does regardless of
+// which write in the whole call failed and was retried, so it belongs in the SAME
+// idempotent, safe-to-retry chunk (1..N), not the non-idempotent chunk 0.
+//
+// Race safety is NO WORSE than the shared-parent ops above: both compute a full
+// replacement array from a live read and `set(..., {merge:true})` it — a genuinely
+// concurrent editor of the SAME array field can still race either kind of op equally.
+// CONSIDERED (round 2 review) and NOT adopted: `FieldValue.arrayUnion`/`arrayRemove` for
+// atomic, no-read, server-side transforms — they would remove this residual race for the
+// root doc specifically. Not used because (a) Firestore rejects two field transforms on
+// the SAME field in one write ("Cannot apply multiple field transforms on the same
+// field"), so a call that both adds and removes keys would need TWO separate document
+// writes instead of one, which does not fit this chunk cleanly (the whole point of
+// `menuWrites` is one `{menuItems: <value>}` write per doc per chunk pass); (b) it would
+// only close the race for THIS doc while leaving the identical race open on every
+// shared-parent doc `planMenuOpsForBlocks` touches — an inconsistent, undocumented
+// improvement over the rest of the file, not asked for by this task; (c) the computed
+// full-state replacement above already fully resolves the CONVERGENCE bug (Important 1),
+// which was the actually-reported failure — it does not need atomic transforms to do
+// that, only to close a race this task was never asked to close. If a future task adds
+// real concurrency protection, it should cover the shared-parent ops and this one
+// together, not this one alone.
 // ────────────────────────────────────────────────────────────────────────────────────
 export function planRootMenuOp(
   tenantId: string,
@@ -246,12 +278,18 @@ export function planRootMenuOp(
     // Field shape mirrors the real `main_bko`/`main_test` docs fetched from Firestore
     // (fields present on both: action, data, description, icon, isArchived, label,
     // menuItems, name, roleNeeded, tags, tenants, url) rather than inventing a shape.
+    // `index` matches `getMenuIndex` (`libs/cms/menu/util/src/lib/menu.util.ts:32-34`:
+    // `'n:' + name + ' a:' + action + ' k:' + okey`), which every UI create/update path
+    // (`MenuService.create`/`update`) sets on write — without it this doc is
+    // shape-inconsistent with every other menu doc and invisible to the admin menu-list
+    // search (index is a searchable field, not load-bearing for rendering).
     return {
       key,
       op: 'create',
       fields: {
         okey: key, name: key, action: 'main', url: '', label: 'main', icon: '',
         description: '', tags: '', data: [], isArchived: false,
+        index: `n:${key} a:main k:${key}`,
         roleNeeded: 'none', tenants: [tenantId], menuItems: wantedAdds,
       },
     };
@@ -341,11 +379,27 @@ export async function applySelection(
   await commitChunked(db, configAndEventWrites);
 
   // --- root menu attachment — see the long comment on planRootMenuOp above -----------
-  const disabledBlockIds = transitions.filter(t => t.op === 'disable').map(t => t.block);
+  // `removeKeys` MUST be derived from the FULL catalogue state (every block NOT in
+  // `plan.enabled`), not from `transitions`' delta (review round 2, Important 1). The
+  // delta is relative to `previous`, which was read from `enabledFeatures` BEFORE chunk 0
+  // (just above) persisted `plan.enabled` as the new `enabledFeatures` — so a retry after
+  // chunk 0 landed but this write failed re-reads `previous == plan.enabled`, computes an
+  // EMPTY delta, and would silently stop removing a block's key forever. Deriving from
+  // full state instead makes this call idempotent from ANY retry point, exactly like the
+  // shared-parent ops: it always recomputes "every currently-disabled block's keys must
+  // be absent" from scratch, regardless of what happened on a previous attempt.
+  //
+  // Accepted trade-off: a tenant admin who hand-adds a root menu entry whose key happens
+  // to collide with a catalogue block that has NEVER been enabled will have that entry
+  // silently stripped on every future `applyFeatureSelection` call for that tenant (it
+  // used to only be at risk during the specific call that disabled the colliding block,
+  // and would stick after one manual re-add). This is deliberate: correctness of the
+  // kill-switch/disable path — a disabled block's key must not survive a retry — matters
+  // more than an unlikely, self-inflicted key collision recovering on its own.
+  const enabledIds = new Set(plan.enabled);
   const addKeys = enabledBlocks.flatMap(b => b.menu.map(s => s.key));
-  const removeKeys = disabledBlockIds
-    .map(id => catalogue.find(b => b.id === id))
-    .filter((b): b is FeatureBlock => b !== undefined)
+  const removeKeys = catalogue
+    .filter(b => !enabledIds.has(b.id))
     .flatMap(b => b.menu.map(s => s.key));
   const rootOp = planRootMenuOp(tenantId, existing, addKeys, removeKeys);
 
