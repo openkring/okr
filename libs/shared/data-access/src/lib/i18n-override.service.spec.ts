@@ -10,7 +10,11 @@ vi.mock('@jsverse/transloco', () => ({
   TranslocoService: class {},
 }));
 
-vi.mock('@okr/shared-models', () => ({
+// Partial mock: only the collection name is pinned. Replacing the whole module breaks any
+// transitive importer that reads another export at module-eval time (e.g. shared-util-core's
+// photo-declaration.util reading PrivacyUsage).
+vi.mock('@okr/shared-models', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@okr/shared-models')>()),
   I18nTenantOverrideCollection: 'i18nTenantOverride',
 }));
 
