@@ -4,7 +4,7 @@ import type { FeatureBlock } from './feature-catalogue.types';
 
 const block = (id: string, dependsOn: string[] = []): FeatureBlock => ({
   id, bundle: 'special', label: `@f.${id}`, icon: 'help-circle',
-  defaultAvailability: 'ga', dependsOn, routes: () => [], menu: [], collections: [],
+  defaultAvailability: 'ga', dependsOn, menu: [], collections: [],
 });
 
 describe('resolveWithDeps', () => {

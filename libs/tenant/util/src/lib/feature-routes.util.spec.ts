@@ -1,18 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { composeFeatureRoutes, urlResolves } from './feature-routes.util';
-import type { FeatureBlock } from './feature-catalogue.types';
+import type { RouteSource } from './feature-routes.util';
 
-const block = (id: string, over: Partial<FeatureBlock>): FeatureBlock => ({
-  id, bundle: 'special', label: `@f.${id}`, icon: 'help-circle',
-  defaultAvailability: 'ga', dependsOn: [], routes: () => [], menu: [], collections: [],
-  ...over,
-});
+const routeSource = (routes: RouteSource['routes']): RouteSource => ({ routes });
 
 describe('composeFeatureRoutes', () => {
   it('concatenates every block route fragment', () => {
     const routes = composeFeatureRoutes([
-      block('a', { routes: () => [{ path: 'a' }] }),
-      block('b', { routes: () => [{ path: 'b' }] }),
+      routeSource(() => [{ path: 'a' }]),
+      routeSource(() => [{ path: 'b' }]),
     ]);
     expect(routes.map(r => r.path)).toEqual(['a', 'b']);
   });
@@ -20,8 +16,8 @@ describe('composeFeatureRoutes', () => {
 
 describe('urlResolves', () => {
   const routes = composeFeatureRoutes([
-    block('a', { routes: () => [{ path: 'calevent', children: [{ path: ':listId/:ctx' }] }] }),
-    block('b', { routes: () => [{ path: 'aoc', children: [{ path: 'roles' }] }] }),
+    routeSource(() => [{ path: 'calevent', children: [{ path: ':listId/:ctx' }] }]),
+    routeSource(() => [{ path: 'aoc', children: [{ path: 'roles' }] }]),
   ]);
 
   it('matches a literal segment', () => {

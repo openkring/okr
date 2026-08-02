@@ -420,20 +420,24 @@ export async function applySelection(
 // ────────────────────────────────────────────────────────────────────────────────────
 // The single server-side write path for a tenant's feature selection (D-BB-9).
 //
-// NOT wired to `FEATURE_CATALOGUE` here. `FEATURE_CATALOGUE` lives in `@okr/tenant-feature`
-// (HUMAN RULING A, plan progress ledger, 2026-08-02) because it names feature libs via
-// lazy `loadComponent` imports — but its two current blocks (`calevent`, `aoc`) also
-// import `isAdminGuard`/`isAuthenticatedGuard` from `@okr/auth-feature` EAGERLY (not
-// lazily) to populate `canActivate`. `@okr/auth-feature` imports `@angular/core` (`inject`)
-// and `@okr/shared-feature`'s `AppStore` (an NgRx Signal Store). Confirmed empirically:
-// adding `import { FEATURE_CATALOGUE } from '@okr/tenant-feature'` to this app and
-// building it grew `dist/apps/functions/main.cjs` from 3.9MB to 15MB, and the output
-// contains live `@angular/core` symbols (`inject(`, the `AppStore` class) — i.e. Angular
-// framework code would ship inside this Cloud Functions bundle and execute in Node,
-// which is exactly the "hack around it" this task was told not to do. See the task-8
-// report for the options put to the repo owner. Until that's resolved, wire this callable
-// with `createApplyFeatureSelection(catalogue)` where `catalogue` comes from wherever the
-// owner decides an Angular-free copy of the block data can live.
+// Takes `catalogue: FeatureBlock[]` as an explicit parameter rather than importing it,
+// because the catalogue used to be one array (`FEATURE_CATALOGUE` in `@okr/tenant-feature`)
+// that also named feature libs via lazy `loadComponent` imports AND eagerly imported
+// `isAdminGuard`/`isAuthenticatedGuard` from `@okr/auth-feature` to populate `canActivate`.
+// `@okr/auth-feature` imports `@angular/core` (`inject`) and `@okr/shared-feature`'s
+// `AppStore` (an NgRx Signal Store) — confirmed empirically (twice) that importing that
+// combined array here grew `dist/apps/functions/main.cjs` from 3.9MB to 15MB and shipped
+// live `@angular/core` symbols into the Node runtime.
+//
+// RESOLVED (task 8b, repo owner ruling 2026-08-02): the catalogue is split by
+// Angular-dependence. Pure metadata (id, dependsOn, bundle, menu specs, seed specs — zero
+// Angular imports) lives in `@okr/tenant-util`'s `FEATURE_BLOCKS`, which this app CAN
+// import and does — see `./index.ts`, which wires
+// `createApplyFeatureSelection(FEATURE_BLOCKS)`. The Angular route table (`canActivate`
+// guards, `loadComponent`) stays in `@okr/tenant-feature`'s `FEATURE_ROUTES`, joined to
+// `FEATURE_BLOCKS` by block `id`; `feature-catalogue.sync.spec.ts` in that lib fails CI if
+// the two ever drift apart. `applySelection`/`planSelection` below never call `.routes()`,
+// so the metadata-only array is sufficient for everything this file does.
 // ────────────────────────────────────────────────────────────────────────────────────
 export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
   return onCall(

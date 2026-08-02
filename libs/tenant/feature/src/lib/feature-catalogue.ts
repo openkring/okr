@@ -1,26 +1,30 @@
 import type { Route } from '@angular/router';
 import { isAdminGuard } from '@okr/auth-feature';
 import { isAuthenticatedGuard } from '@okr/auth-feature';
-import type { BundleId, FeatureBlock } from '@okr/tenant-util';
 
-export const FEATURE_BUNDLES: { id: BundleId; label: string; icon: string }[] = [
-  { id: 'core',          label: '@bundle.core.label',          icon: 'settings' },
-  { id: 'members',       label: '@bundle.members.label',       icon: 'people' },
-  { id: 'events',        label: '@bundle.events.label',        icon: 'calendar' },
-  { id: 'finance',       label: '@bundle.finance.label',       icon: 'cash' },
-  { id: 'documents',     label: '@bundle.documents.label',     icon: 'documents' },
-  { id: 'communication', label: '@bundle.communication.label', icon: 'chatbubbles' },
-  { id: 'special',       label: '@bundle.special.label',       icon: 'star' },
-];
+/**
+ * A feature block's Angular ROUTE fragment — `canActivate` guards + `loadComponent`. Split
+ * out of `@okr/tenant-util`'s `FeatureBlock` (metadata only) because blocks eagerly import
+ * `isAdminGuard`/`isAuthenticatedGuard` from `@okr/auth-feature`, which pulls in
+ * `@angular/core` (`inject`) and `@okr/shared-feature`'s `AppStore` (an NgRx Signal Store).
+ * `apps/functions` needs the metadata but must never import this: confirmed empirically —
+ * adding `FEATURE_CATALOGUE` (the old, unsplit export) to the Cloud Functions build grew
+ * `dist/apps/functions/main.cjs` from 3.9MB to 15MB and shipped live `@angular/core`
+ * symbols into the Node runtime (task-8 report).
+ *
+ * Joined to `FEATURE_BLOCKS` (`@okr/tenant-util`) by `id`. `feature-catalogue.sync.spec.ts`
+ * fails CI if the two arrays ever drift apart; `feature-catalogue.spec.ts` (route-coverage)
+ * fails if a menu url declared in `FEATURE_BLOCKS` resolves against no route here.
+ */
+export interface BlockRoutes {
+  /** Joins to `FeatureBlock.id` in `@okr/tenant-util`'s `FEATURE_BLOCKS`. */
+  id: string;
+  /** Lazy route fragment this block owns. Called only when composing the table. */
+  routes: () => Route[];
+}
 
-const calevent: FeatureBlock = {
+const calevent: BlockRoutes = {
   id: 'calevent',
-  bundle: 'events',
-  label: '@feature.calevent.label',
-  icon: 'calendar',
-  defaultAvailability: 'ga',
-  dependsOn: [],
-  collections: ['calevents'],
   routes: (): Route[] => [{
     path: 'calevent',
     canActivate: [isAuthenticatedGuard],
@@ -32,20 +36,10 @@ const calevent: FeatureBlock = {
       data: { color: 'secondary', view: 'grid', showMenu: true },
     }],
   }],
-  menu: [{
-    key: 'calevent-all', name: 'calevent-all', url: '/calevent/all/c-calevents',
-    action: 'navigate', roleNeeded: 'eventAdmin', icon: 'calendar', label: '@main.calevent.all',
-  }],
 };
 
-const aoc: FeatureBlock = {
+const aoc: BlockRoutes = {
   id: 'aoc',
-  bundle: 'special',
-  label: '@feature.aoc.label',
-  icon: 'admin',
-  defaultAvailability: 'ga',
-  dependsOn: [],
-  collections: [],
   routes: (): Route[] => [{
     path: 'aoc',
     canActivate: [isAdminGuard()],
@@ -58,24 +52,12 @@ const aoc: FeatureBlock = {
       { path: 'storage',    loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStorage) },
     ],
   }],
-  menu: [{
-    key: 'aoc-menu', name: 'aoc-menu', url: '', action: 'sub',
-    roleNeeded: 'admin', icon: 'admin', label: 'AOC - Operation Centre',
-    children: [
-      { key: 'aoc-admin',      name: 'aoc-admin',      url: '/aoc/adminops',   action: 'navigate', roleNeeded: 'admin', icon: 'admin',    label: '@main.aoc.admin' },
-      { key: 'aoc-auth',       name: 'aoc-auth',       url: '/aoc/roles',      action: 'navigate', roleNeeded: 'admin', icon: 'key',      label: '@main.aoc.auth' },
-      { key: 'aoc-content',    name: 'aoc-content',    url: '/aoc/content',    action: 'navigate', roleNeeded: 'admin', icon: 'page',     label: 'Content' },
-      { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: 'Daten' },
-      { key: 'aoc-statistics', name: 'aoc-statistics', url: '/aoc/statistics', action: 'navigate', roleNeeded: 'admin', icon: 'chart',    label: 'Statistiken' },
-      { key: 'aoc-storage',    name: 'aoc-storage',    url: '/aoc/storage',    action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: 'Storage' },
-    ],
-  }],
 };
 
 /**
- * Every feature block the platform ships. Adding a block here is the ONLY way to make a
- * feature reachable — the route-coverage test fails if a declared url ships no route.
- * Tasks 12-18 fill in the remaining blocks, one bundle each; these two exist because
- * they are p13's bug.
+ * Every feature block's Angular route fragment. Adding a block here is HALF of what makes
+ * a feature reachable — the matching metadata (id, dependsOn, bundle, menu, seed) must
+ * also be added to `FEATURE_BLOCKS` in `@okr/tenant-util`. Tasks 12-18 fill in the
+ * remaining blocks, one bundle each; these two exist because they are p13's bug.
  */
-export const FEATURE_CATALOGUE: FeatureBlock[] = [calevent, aoc];
+export const FEATURE_ROUTES: BlockRoutes[] = [calevent, aoc];

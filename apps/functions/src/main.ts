@@ -29,6 +29,7 @@ import * as Forms from './forms';
 import * as Vcard from './vcard';
 import * as Person from './person';
 import * as Privacy from './privacy';
+import * as Tenant from './tenant';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -272,3 +273,8 @@ export const eraseMyData = Privacy.eraseMyData;
 // Firestore data, its Bearbeitungsverzeichnis and its policy state. Reads only; every
 // finding links to the screen where a human fixes it.
 export const runPrivacyAudit = Privacy.runPrivacyAudit;
+
+// feature building blocks — admin-only, single server-side write path for a tenant's
+// feature selection (D-BB-9). Wired with the Angular-free metadata half of the catalogue
+// (`@okr/tenant-util`'s `FEATURE_BLOCKS`) — see `apps/functions/src/tenant/index.ts`.
+export const applyFeatureSelection = Tenant.applyFeatureSelection;

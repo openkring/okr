@@ -1,9 +1,22 @@
 import type { Route } from '@angular/router';
 import type { FeatureBlock, MenuSpec } from './feature-catalogue.types';
 
-/** Build the app's feature route table from the catalogue. Every fragment stays lazy. */
-export function composeFeatureRoutes(catalogue: FeatureBlock[]): Route[] {
-  return catalogue.flatMap(block => block.routes() as Route[]);
+/**
+ * Anything that owns a lazy Angular route fragment for one block. Deliberately NOT
+ * `FeatureBlock` — that type is the Angular-free metadata half (see its doc comment);
+ * the route half lives in `@okr/tenant-feature`'s `BlockRoutes`, which structurally
+ * satisfies this. `composeFeatureRoutes` itself stays here (not in `tenant-feature`)
+ * because it is a pure route-matching helper the route-coverage test needs regardless of
+ * which side owns the data — only `import type { Route }` is Angular-touching, and type
+ * imports are erased at compile time, so this never ships Angular code anywhere.
+ */
+export interface RouteSource {
+  routes: () => unknown[];
+}
+
+/** Build a flat route table from block route fragments. Every fragment stays lazy. */
+export function composeFeatureRoutes(sources: RouteSource[]): Route[] {
+  return sources.flatMap(source => source.routes() as Route[]);
 }
 
 /** Every non-empty `url` declared anywhere in the catalogue's menu specs. */

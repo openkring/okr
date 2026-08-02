@@ -11,7 +11,7 @@ import type { MenuItemModel } from '@okr/shared-models';
 
 const block = (id: string, over: Partial<FeatureBlock> = {}): FeatureBlock => ({
   id, bundle: 'special', label: `@f.${id}`, icon: 'help-circle',
-  defaultAvailability: 'ga', dependsOn: [], routes: () => [], menu: [], collections: [],
+  defaultAvailability: 'ga', dependsOn: [], menu: [], collections: [],
   ...over,
 });
 
@@ -66,11 +66,11 @@ describe('planMenuOpsForBlocks (BUG 1 regression — shared parent menu docs)', 
     });
     const blockA: FeatureBlock = {
       id: 'a', bundle: 'special', label: '@f.a', icon: 'help-circle', defaultAvailability: 'ga',
-      dependsOn: [], routes: () => [], collections: [], menu: [parentSpec('childX')],
+      dependsOn: [], collections: [], menu: [parentSpec('childX')],
     };
     const blockB: FeatureBlock = {
       id: 'b', bundle: 'special', label: '@f.b', icon: 'help-circle', defaultAvailability: 'ga',
-      dependsOn: [], routes: () => [], collections: [], menu: [parentSpec('childY')],
+      dependsOn: [], collections: [], menu: [parentSpec('childY')],
     };
     // The parent doc already exists in Firestore, with neither child yet.
     const existing = new Map<string, MenuItemModel>([
@@ -96,11 +96,11 @@ describe('planMenuOpsForBlocks (BUG 1 regression — shared parent menu docs)', 
     });
     const blockA: FeatureBlock = {
       id: 'a', bundle: 'special', label: '@f.a', icon: 'help-circle', defaultAvailability: 'ga',
-      dependsOn: [], routes: () => [], collections: [], menu: [parentSpec('childX')],
+      dependsOn: [], collections: [], menu: [parentSpec('childX')],
     };
     const blockB: FeatureBlock = {
       id: 'b', bundle: 'special', label: '@f.b', icon: 'help-circle', defaultAvailability: 'ga',
-      dependsOn: [], routes: () => [], collections: [], menu: [parentSpec('childY')],
+      dependsOn: [], collections: [], menu: [parentSpec('childY')],
     };
     const existing = new Map<string, MenuItemModel>(); // parent does not exist yet
 
@@ -127,7 +127,7 @@ describe('planMenuOpsForBlocks (BUG 1 regression — shared parent menu docs)', 
     });
     const oneBlockTwoTopLevelSpecs: FeatureBlock = {
       id: 'a', bundle: 'special', label: '@f.a', icon: 'help-circle', defaultAvailability: 'ga',
-      dependsOn: [], routes: () => [], collections: [],
+      dependsOn: [], collections: [],
       menu: [parentSpec('childX'), parentSpec('childY')],
     };
     const existing = new Map<string, MenuItemModel>(); // parent does not exist yet
@@ -147,7 +147,7 @@ describe('planMenuOpsForBlocks (BUG 1 regression — shared parent menu docs)', 
     });
     const oneBlockTwoTopLevelSpecs: FeatureBlock = {
       id: 'a', bundle: 'special', label: '@f.a', icon: 'help-circle', defaultAvailability: 'ga',
-      dependsOn: [], routes: () => [], collections: [],
+      dependsOn: [], collections: [],
       menu: [parentSpec('childX'), parentSpec('childY')],
     };
     const existing = new Map<string, MenuItemModel>();
@@ -398,7 +398,7 @@ describe('commitChunked (BUG 2 regression — actually crosses the batch boundar
 
 const catalogueBlock = (id: string, menu: MenuSpec[]): FeatureBlock => ({
   id, bundle: 'special', label: `@f.${id}`, icon: 'help-circle', defaultAvailability: 'ga',
-  dependsOn: [], routes: () => [], collections: [], menu,
+  dependsOn: [], collections: [], menu,
 });
 
 describe('applySelection (full write path — BUG 1 must survive past the pure planner)', () => {

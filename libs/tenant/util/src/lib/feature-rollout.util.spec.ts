@@ -4,7 +4,7 @@ import type { FeatureBlock, FeatureRollout } from './feature-catalogue.types';
 
 const block = (id: string, over: Partial<FeatureBlock> = {}): FeatureBlock => ({
   id, bundle: 'special', label: `@f.${id}`, icon: 'help-circle',
-  defaultAvailability: 'ga', dependsOn: [], routes: () => [], menu: [], collections: [],
+  defaultAvailability: 'ga', dependsOn: [], menu: [], collections: [],
   ...over,
 });
 

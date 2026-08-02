@@ -1,7 +1,7 @@
 import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { FEATURE_CATALOGUE } from './feature-catalogue';
+import { FEATURE_BLOCKS } from '@okr/tenant-util';
 import { NON_BLOCK_DOMAINS, PENDING_CLASSIFICATION } from './feature-catalogue.non-blocks';
 
 /** Repo-root-relative path to libs/, from this spec file's directory. */
@@ -34,7 +34,7 @@ function featureDomains(): string[] {
 describe('catalogue completeness', () => {
   it('every libs/*/feature domain is a block or an explicit non-block', () => {
     const known = new Set([
-      ...FEATURE_CATALOGUE.map(b => b.id),
+      ...FEATURE_BLOCKS.map(b => b.id),
       ...Object.keys(NON_BLOCK_DOMAINS),
       ...PENDING_CLASSIFICATION,
     ]);
@@ -43,13 +43,13 @@ describe('catalogue completeness', () => {
   });
 
   it('block ids are unique', () => {
-    const ids = FEATURE_CATALOGUE.map(b => b.id);
+    const ids = FEATURE_BLOCKS.map(b => b.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('every dependsOn target exists in the catalogue', () => {
-    const ids = new Set(FEATURE_CATALOGUE.map(b => b.id));
-    const dangling = FEATURE_CATALOGUE
+    const ids = new Set(FEATURE_BLOCKS.map(b => b.id));
+    const dangling = FEATURE_BLOCKS
       .flatMap(b => b.dependsOn.map(d => ({ block: b.id, dep: d })))
       .filter(({ dep }) => !ids.has(dep));
     expect(dangling).toEqual([]);
@@ -61,7 +61,7 @@ describe('catalogue completeness', () => {
       keys.push(s.key);
       (s.children ?? []).forEach(c => visit(c as never));
     };
-    FEATURE_CATALOGUE.forEach(b => b.menu.forEach(visit));
+    FEATURE_BLOCKS.forEach(b => b.menu.forEach(visit));
     expect(new Set(keys).size).toBe(keys.length);
   });
 });
