@@ -84,6 +84,16 @@ export class AppConfig {
   // Empty/undefined ⇒ all supported languages (see AppStore.enabledLanguageCodes).
   public enabledLanguages: string[] = [...AvailableLanguages];
 
+  /**
+   * Feature blocks this tenant has switched on, by stable catalogue block id.
+   *
+   * ⚠️ Legacy config docs have no `enabledFeatures` at all. Firestore reads do not apply
+   * model defaults, so `undefined` reaches the client — and it must be read as "every
+   * non-internal block" (D-BB-10), never as "nothing enabled", which would blank an
+   * existing tenant's whole menu. Always coalesce through `effectiveFeatures()`.
+   */
+  public enabledFeatures: string[] = [];
+
   // git repository information
   public gitRepo = DEFAULT_NAME; //  git repository name
   public gitOrg = DEFAULT_NAME; // git organization name

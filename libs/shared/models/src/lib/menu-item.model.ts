@@ -15,6 +15,13 @@ export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, Tag
   // The base icon/label are shown while it is inactive (false).
   public iconAlt?: string; // alternate icon for the active toggle state (e.g. eye-off)
   public labelAlt?: string; // alternate label (i18n) for the active toggle state
+  /**
+   * Set when a tenant customised a globally shared, catalogue-owned menu item: the doc
+   * was copied, the tenant removed from the shared doc's `tenants[]`, and this points at
+   * the shared original. A fork keeps its own label/icon/order; catalogue structural
+   * fixes no longer reach it automatically (D-BB-8).
+   */
+  public forkedFrom?: string;
   public data?: BaseProperty[] = []; // URL parameters that should be passed to the url
   public menuItems?: string[] = []; // the keys of the sub menu items
   public roleNeeded?: RoleName = 'contentAdmin'; // the role that is needed to see the menu item
