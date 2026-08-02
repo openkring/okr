@@ -8,7 +8,10 @@
   "dependencies": {
     "tslib": "^2.8.1",
     "@angular/router": "*",
+    "@okr/shared-models": "*",
+    "@okr/shared-feature": "*",
     "@okr/tenant-util": "*",
+    "@okr/tenant-data-access": "*",
     "@okr/auth-feature": "*",
     "@okr/aoc-feature": "*",
     "@okr/calevent-feature": "*"
