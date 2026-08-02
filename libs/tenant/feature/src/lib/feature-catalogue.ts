@@ -19,7 +19,7 @@ const calevent: FeatureBlock = {
   label: '@feature.calevent.label',
   icon: 'calendar',
   defaultAvailability: 'ga',
-  dependsOn: ['person'],
+  dependsOn: [],
   collections: ['calevents'],
   routes: (): Route[] => [{
     path: 'calevent',
