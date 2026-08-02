@@ -87,12 +87,20 @@ export class AppConfig {
   /**
    * Feature blocks this tenant has switched on, by stable catalogue block id.
    *
-   * ⚠️ Legacy config docs have no `enabledFeatures` at all. Firestore reads do not apply
-   * model defaults, so `undefined` reaches the client — and it must be read as "every
-   * non-internal block" (D-BB-10), never as "nothing enabled", which would blank an
-   * existing tenant's whole menu. Always coalesce through `effectiveFeatures()`.
+   * ⚠️ Deliberately left WITHOUT an initializer. `AppStore.appConfig()`
+   * (`libs/shared/feature/src/lib/app.store.ts`) hydrates the raw Firestore read via
+   * `Object.assign(new AppConfig(tenantId), loaded ?? {})` — `Object.assign` only copies
+   * keys that are actually PRESENT on `loaded`, so a legacy config doc with no
+   * `enabledFeatures` key leaves whatever this class sets as its own field untouched. Giving
+   * this field a `= []` default would therefore resurrect an empty array through that
+   * hydration path and read as "nothing enabled" for every pre-existing tenant, not as
+   * "every non-internal block" — the opposite of the intended semantics (D-BB-10). Anyone
+   * adding a new field here that must distinguish "legacy doc, no opinion" from "explicitly
+   * set to empty" needs the same treatment: no initializer, or `AppStore.appConfig()`'s
+   * `Object.assign` will silently paper over the distinction. Always coalesce through
+   * `effectiveFeatures()`, never with `?? []` at the call site.
    */
-  public enabledFeatures: string[] = [];
+  public enabledFeatures?: string[];
 
   // git repository information
   public gitRepo = DEFAULT_NAME; //  git repository name
