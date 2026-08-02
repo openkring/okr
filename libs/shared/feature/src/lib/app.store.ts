@@ -183,13 +183,19 @@ export const AppStore = signalStore(
         return store.firestoreService.searchData<CategoryListModel>(CategoryCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
+    // Deliberately NOT gated on fbUser, unlike the tenantRead-protected collections above:
+    // `app-config/{tenant}` is world-readable (firestore.rules: `allow read: if true`), so
+    // waiting for auth to settle only serialized this read behind the auth-restore round
+    // trip for no security benefit — and left anonymous visitors on the public welcome/login
+    // routes rendering the AppConfig class defaults (no tenant appName, logoUrl or theme)
+    // because fbUser stays null for them and the stream never fired. Keyed on tenantId
+    // alone, it starts at bootstrap and runs in parallel with auth restore.
     appConfigResource: rxResource({
-      params: () => ({ 
-        fbUser: store.fbUser(),
+      params: () => ({
         tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.fbUser || !params.tenantId) return of(undefined);
+        if (!params.tenantId) return of(undefined);
         return store.appConfigService.read(params.tenantId);
       }
     })
