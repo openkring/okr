@@ -1,5 +1,7 @@
 import type { Route } from '@angular/router';
-import type { BundleId, FeatureBlock } from './feature-catalogue.types';
+import { isAdminGuard } from '@okr/auth-feature';
+import { isAuthenticatedGuard } from '@okr/auth-feature';
+import type { BundleId, FeatureBlock } from '@okr/tenant-util';
 
 export const FEATURE_BUNDLES: { id: BundleId; label: string; icon: string }[] = [
   { id: 'core',          label: '@bundle.core.label',          icon: 'settings' },
@@ -21,6 +23,7 @@ const calevent: FeatureBlock = {
   collections: ['calevents'],
   routes: (): Route[] => [{
     path: 'calevent',
+    canActivate: [isAuthenticatedGuard],
     children: [{
       // No privileged guard: every authenticated member must reach the event list.
       // CalEventList gates create/edit/delete itself via canChange().
@@ -45,6 +48,7 @@ const aoc: FeatureBlock = {
   collections: [],
   routes: (): Route[] => [{
     path: 'aoc',
+    canActivate: [isAdminGuard()],
     children: [
       { path: 'adminops',   loadComponent: () => import('@okr/aoc-feature').then(m => m.AocAdminOps) },
       { path: 'roles',      loadComponent: () => import('@okr/aoc-feature').then(m => m.AocRoles) },

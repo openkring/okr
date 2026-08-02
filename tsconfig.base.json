@@ -240,6 +240,7 @@
       "@okr/task-feature": ["libs/task/feature/src/index.ts"],
       "@okr/task-ui": ["libs/task/ui/src/index.ts"],
       "@okr/task-util": ["libs/task/util/src/index.ts"],
+      "@okr/tenant-feature": ["libs/tenant/feature/src/index.ts"],
       "@okr/tenant-util": ["libs/tenant/util/src/index.ts"],
       "@okr/tools": ["tools/src/index.ts"],
       "@okr/trip-data-access": ["libs/geo/trip/data-access/src/index.ts"],

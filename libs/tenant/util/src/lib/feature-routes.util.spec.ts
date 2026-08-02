@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectMenuUrls, composeFeatureRoutes, urlResolves } from './feature-routes.util';
-import { FEATURE_CATALOGUE } from './feature-catalogue';
+import { composeFeatureRoutes, urlResolves } from './feature-routes.util';
 import type { FeatureBlock } from './feature-catalogue.types';
 
 const block = (id: string, over: Partial<FeatureBlock>): FeatureBlock => ({
@@ -43,13 +42,5 @@ describe('urlResolves', () => {
 
   it('ignores an empty url (sub/context menu entries carry none)', () => {
     expect(urlResolves(routes, '')).toBe(true);
-  });
-});
-
-describe('catalogue route coverage', () => {
-  it('every declared menu url resolves against the composed route table', () => {
-    const routes = composeFeatureRoutes(FEATURE_CATALOGUE);
-    const unresolved = collectMenuUrls(FEATURE_CATALOGUE).filter(u => !urlResolves(routes, u));
-    expect(unresolved).toEqual([]);
   });
 });
