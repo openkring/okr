@@ -14,6 +14,8 @@
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
+    { "path": "../../aoc/feature/tsconfig.lib.json" },
+    { "path": "../../calevent/feature/tsconfig.lib.json" },
     { "path": "../../shared/models/tsconfig.lib.json" }
   ]
 }
