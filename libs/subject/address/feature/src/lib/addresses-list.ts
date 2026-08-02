@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAccordionGroup, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetButton, ActionSheetController, ActionSheetOptions, IonAccordion, IonAccordionGroup, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { AddressModel, OrgModel, PersonModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, navigateByUrl } from '@okr/shared-util-angular';
 import { generateRandomString, getCategoryIcon, hasRole } from '@okr/shared-util-core';
 
 import { FavoriteColorPipe, FormatAddressPipe } from '@okr/subject-address-util';
@@ -262,7 +262,7 @@ export class AddressesList {
     switch(address.addressChannel) {
       case 'bankaccount':
         if (address.url) {
-          options.buttons.push(createActionSheetButton('iban.view', this.store.i18n.view_iban(), this.imgixBaseUrl, 'qrcode'));
+          options.buttons.push(this.createFileViewButton('iban.view', this.store.i18n.view_iban(), address));
         } else {
           options.buttons.push(createActionSheetButton('iban.generateQr', this.store.i18n.generate_qrezs(), this.imgixBaseUrl, 'qrcode'));
         }
@@ -278,7 +278,7 @@ export class AddressesList {
         break;
       case 'twint':
         if (address.url) {
-          options.buttons.push(createActionSheetButton('file.view', this.store.i18n.view_file(), this.imgixBaseUrl, 'document'));
+          options.buttons.push(this.createFileViewButton('file.view', this.store.i18n.view_file(), address, 'document'));
         } else {
           options.buttons.push(createActionSheetButton('file.upload', this.store.i18n.upload_file(), this.imgixBaseUrl, 'upload'));
         }
@@ -303,9 +303,20 @@ export class AddressesList {
   }
 
   /**
+   * Button that opens the file stored on the address (QR-bill PDF, TWINT image). The URL is opened
+   * from the synchronous tap handler (not the post-dismiss switch) so the user gesture survives —
+   * iOS/iPadOS Safari blocks window.open once the ActionSheet has dismissed.
+   */
+  private createFileViewButton(action: string, label: string, address: AddressModel, icon = 'qrcode'): ActionSheetButton {
+    const button = createActionSheetButton(action, label, this.imgixBaseUrl, icon);
+    button.handler = () => { this.store.openAddressFile(address); };
+    return button;
+  }
+
+  /**
    * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
-   * @param address 
+   * @param actionSheetOptions
+   * @param address
    */
   private async executeActions(actionSheetOptions: ActionSheetOptions, address: AddressModel): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
@@ -326,10 +337,6 @@ export class AddressesList {
         case 'subject.edit':
           await this.store.editSubject(address.parentKey);
           break;
-        case 'file.view':
-        case 'iban.view':
-          await downloadToBrowser(address.url);
-          break;
         case 'iban.generateQr':
           await this.store.generateQrEzs(address);
           break;
@@ -345,7 +352,8 @@ export class AddressesList {
         case 'file.upload':
           await this.store.uploadFile(address);
           break;
-        // 'web.open' is handled synchronously by the button handler (Safari popup blocker).
+        // 'web.open', 'iban.view' and 'file.view' are handled synchronously by their button
+        // handlers (Safari popup blocker).
       }
     }
   }
