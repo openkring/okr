@@ -33,27 +33,55 @@ function exportPrefix(tenantId: string, uid: string): string {
 
 export type { ExportMyDataResponse } from '@okr/shared-models';
 
+/** `@google-cloud/storage`'s `File`, reached through firebase-admin so we don't take a
+ * direct dependency on it just for a type. */
+type File = ReturnType<ReturnType<ReturnType<typeof getStorage>['bucket']>['file']>;
+
 /**
- * Pure rate-limit predicate: given the newest existing export artifact's creation time
- * (`0`/non-finite if the user has never exported), decide whether a new export is allowed
- * right now. Split out from `assertRateLimit` (which talks to `getStorage()`) so
- * `export-my-data.spec.ts` can exercise the one-per-hour rule without a Storage emulator.
+ * Pure cooldown predicate: given the newest existing export artifact's creation time
+ * (`0`/non-finite if the user has never exported), decide whether that artifact is still
+ * inside the one-per-hour window (D-P5-1). Inside the window we do NOT rebuild the export —
+ * we re-sign the artifact that is already there (see `findReusableExport`), so the member
+ * whose browser blocked the first download simply gets a fresh 15-minute URL for the ZIP
+ * that was already prepared. Split out from the Storage call so `export-my-data.spec.ts`
+ * can exercise the rule without a Storage emulator.
  */
 export function isRateLimited(newestCreatedAtMs: number, nowMs: number, cooldownMs = EXPORT_COOLDOWN_MS): boolean {
   if (!Number.isFinite(newestCreatedAtMs) || newestCreatedAtMs <= 0) return false;
   return nowMs - newestCreatedAtMs < cooldownMs;
 }
 
-/** Backed by the export artifacts already in Storage — no extra Firestore collection. */
-async function assertRateLimit(tenantId: string, uid: string): Promise<void> {
-  const [files] = await getStorage().bucket().getFiles({ prefix: exportPrefix(tenantId, uid), maxResults: 10 });
+/**
+ * The newest export artifact of this user if it is still inside the cooldown, else
+ * `undefined`. Backed by the artifacts already in Storage — no extra Firestore collection.
+ *
+ * Lists the WHOLE prefix on purpose: object names start with a `yyyyMMddHHmmss` stamp and
+ * Storage returns them lexicographically ascending, so a `maxResults` cap would return the
+ * OLDEST artifacts and make "newest" wrong. The reaper caps the prefix at 24 hours, so this
+ * is a handful of objects.
+ */
+async function findReusableExport(tenantId: string, uid: string): Promise<File | undefined> {
+  const [files] = await getStorage().bucket().getFiles({ prefix: exportPrefix(tenantId, uid) });
   const newest = files
-    .map((f) => new Date(f.metadata.timeCreated ?? 0).getTime())
-    .sort((a, b) => b - a)[0] ?? 0;
-  if (isRateLimited(newest, Date.now())) {
-    throw new HttpsError('resource-exhausted',
-      'Ein Datenexport ist einmal pro Stunde möglich. Bitte versuche es später noch einmal.');
-  }
+    .map((f) => ({ file: f, createdMs: new Date(f.metadata.timeCreated ?? 0).getTime() }))
+    .sort((a, b) => b.createdMs - a.createdMs)[0];
+  if (!newest) return undefined;
+  return isRateLimited(newest.createdMs, Date.now()) ? newest.file : undefined;
+}
+
+/**
+ * A signed URL that DOWNLOADS the ZIP instead of navigating to it: without an explicit
+ * content disposition the browser is free to render/handle the response, and the client can
+ * then only open it in a new tab — which is exactly what a popup blocker kills.
+ */
+async function signDownloadUrl(file: File, expiresAtMs: number): Promise<string> {
+  const filename = file.name.split('/').pop() ?? 'export.zip';
+  const [url] = await file.getSignedUrl({
+    action: 'read',
+    expires: expiresAtMs,
+    responseDisposition: `attachment; filename="${filename}"`,
+  });
+  return url;
 }
 
 /**
@@ -132,7 +160,18 @@ export const exportMyData = onCall<void, Promise<ExportMyDataResponse>>(
     }
     const ctx = buildSubjectCtx(uid, userSnap.data());
 
-    await assertRateLimit(ctx.tenantId, uid);
+    // One export per hour (D-P5-1) — but the cooldown must not cost the member the export
+    // they already paid for: if the artifact from the last hour is still there, hand back a
+    // fresh signed URL for it instead of an error. That is what makes a retry (blocked
+    // popup, closed tab, expired URL) work.
+    const reusable = await findReusableExport(ctx.tenantId, uid);
+    if (reusable) {
+      const expiresAtMs = Date.now() + SIGNED_URL_TTL_MS;
+      const downloadUrl = await signDownloadUrl(reusable, expiresAtMs);
+      const sizeBytes = Number(reusable.metadata.size ?? 0);
+      logger.info(`exportMyData: uid=${uid} tenant=${ctx.tenantId} reused existing artifact`);
+      return { downloadUrl, expiresAt: new Date(expiresAtMs).toISOString(), sizeBytes };
+    }
 
     const configSnap = await db.collection(AppConfigCollection).doc(ctx.tenantId).get();
     const config = configSnap.exists ? configSnap.data() : undefined;
@@ -165,7 +204,7 @@ export const exportMyData = onCall<void, Promise<ExportMyDataResponse>>(
     await file.save(buf, { contentType: 'application/zip', resumable: false });
 
     const expiresAtMs = Date.now() + SIGNED_URL_TTL_MS;
-    const [downloadUrl] = await file.getSignedUrl({ action: 'read', expires: expiresAtMs });
+    const downloadUrl = await signDownloadUrl(file, expiresAtMs);
 
     // no PII in logs — uid, tenant and byte count only
     logger.info(`exportMyData: uid=${uid} tenant=${ctx.tenantId} bytes=${buf.length}`);
