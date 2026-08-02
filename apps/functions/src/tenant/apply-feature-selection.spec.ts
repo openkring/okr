@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Firestore } from 'firebase-admin/firestore';
 import {
   applySelection, chunk, commitChunked, computeTransitions,
-  planMenuOpsForBlocks, planSelection,
+  planMenuOpsForBlocks, planRootMenuOp, planSelection,
 } from './apply-feature-selection';
 import type { PendingWrite, SelectionPlan } from './apply-feature-selection';
 import type { FeatureBlock, FeatureRollout, MenuSpec } from '@okr/tenant-util';
@@ -170,6 +170,100 @@ describe('computeTransitions', () => {
 
   it('reports nothing when the selection is unchanged (idempotent re-run)', () => {
     expect(computeTransitions(['a', 'b'], ['a', 'b'])).toEqual([]);
+  });
+});
+
+describe('planRootMenuOp (root menu attachment — task-8 review round 2)', () => {
+  const rootDoc = (over: Partial<MenuItemModel> = {}): MenuItemModel => ({
+    okey: 'main_p13', name: 'main_p13', index: '', action: 'main', url: '',
+    label: 'main', icon: '', tenants: ['p13'],
+    menuItems: ['home', 'profile', 'logout', 'login', 'misc-menu', 'cms', 'version'],
+    ...over,
+  } as MenuItemModel);
+
+  it('enabling a block appends its top-level key to an EXISTING root while preserving the other entries\' exact order', () => {
+    const existing = new Map<string, MenuItemModel>([['main_p13', rootDoc()]]);
+
+    const op = planRootMenuOp('p13', existing, ['aoc-menu'], []);
+
+    expect(op?.key).toBe('main_p13');
+    // every original entry survives, in the SAME order, with the new key appended LAST —
+    // not reordered, not alphabetised, not inserted anywhere else.
+    expect(op?.fields.menuItems).toEqual([
+      'home', 'profile', 'logout', 'login', 'misc-menu', 'cms', 'version', 'aoc-menu',
+    ]);
+  });
+
+  it('adding a key that is already present is a no-op (no duplicate, and no write at all if nothing else changed)', () => {
+    const existing = new Map<string, MenuItemModel>([['main_p13', rootDoc()]]);
+
+    const op = planRootMenuOp('p13', existing, ['cms'], []);
+
+    expect(op).toBeUndefined();
+  });
+
+  it('disabling removes its top-level key, preserving the order of everything else', () => {
+    const existing = new Map<string, MenuItemModel>([['main_p13', rootDoc()]]);
+
+    const op = planRootMenuOp('p13', existing, [], ['misc-menu']);
+
+    expect(op?.fields.menuItems).toEqual(['home', 'profile', 'logout', 'login', 'cms', 'version']);
+  });
+
+  it('does not remove a key a still/newly-enabled block also owns, even if a disabled block used to own it too', () => {
+    const existing = new Map<string, MenuItemModel>([['main_p13', rootDoc()]]);
+
+    // 'cms' is nominally being removed by a disabled block, but also being (re-)added by
+    // a currently-enabled one in the SAME call — it must survive, in its original spot.
+    const op = planRootMenuOp('p13', existing, ['cms'], ['cms']);
+
+    expect(op).toBeUndefined(); // nothing actually changes: 'cms' was already there and stays
+  });
+
+  it('re-running with the already-applied state is idempotent — no duplicate keys, no spurious write', () => {
+    const existing = new Map<string, MenuItemModel>([['main_p13', rootDoc()]]);
+    const firstRun = planRootMenuOp('p13', existing, ['aoc-menu'], []);
+    expect(firstRun?.fields.menuItems).toEqual([
+      'home', 'profile', 'logout', 'login', 'misc-menu', 'cms', 'version', 'aoc-menu',
+    ]);
+
+    // Simulate the write having landed, then re-run against the now-updated doc — the
+    // same shape `applySelection` re-fetches `existing` and recomputes from live state.
+    const afterFirstRun = new Map<string, MenuItemModel>([
+      ['main_p13', { ...rootDoc(), menuItems: firstRun!.fields.menuItems as string[] }],
+    ]);
+    const secondRun = planRootMenuOp('p13', afterFirstRun, ['aoc-menu'], []);
+
+    expect(secondRun).toBeUndefined(); // converged — nothing left to write
+  });
+
+  it('a tenant with no root doc gets one created with tenants: [tenantId] and the enabled blocks\' keys', () => {
+    const existing = new Map<string, MenuItemModel>(); // no main_p13 doc at all
+
+    const op = planRootMenuOp('p13', existing, ['calevent-all', 'aoc-menu'], []);
+
+    expect(op?.key).toBe('main_p13');
+    expect(op?.op).toBe('create');
+    expect(op?.fields.tenants).toEqual(['p13']);
+    expect(op?.fields.name).toBe('main_p13');
+    expect(op?.fields.action).toBe('main');
+    expect(op?.fields.menuItems).toEqual(['calevent-all', 'aoc-menu']);
+  });
+
+  it('creates nothing for a brand-new tenant with nothing enabled yet', () => {
+    const existing = new Map<string, MenuItemModel>();
+    expect(planRootMenuOp('p13', existing, [], [])).toBeUndefined();
+  });
+
+  it('self-heals a root doc whose tenants[] ever drifted from exactly [tenantId], without touching menuItems', () => {
+    const existing = new Map<string, MenuItemModel>([
+      ['main_p13', rootDoc({ tenants: ['p13', 'stray-other-tenant'] })],
+    ]);
+
+    const op = planRootMenuOp('p13', existing, [], []);
+
+    expect(op?.fields.tenants).toEqual(['p13']);
+    expect(op?.fields.menuItems).toBeUndefined(); // array itself is unchanged, not rewritten
   });
 });
 
@@ -349,6 +443,13 @@ describe('applySelection (full write path — BUG 1 must survive past the pure p
     expect(events.every((e) => e['by'] === 'uid-admin-1' && e['tenantId'] === 'p13')).toBe(true);
     expect(events.map((e) => e['block']).sort()).toEqual(['a', 'b']);
     expect(events.every((e) => e['op'] === 'enable')).toBe(true);
+
+    // ROOT MENU ATTACHMENT: no root doc existed, so a fresh one was created for this
+    // tenant only, seeded with the (single, shared) top-level key both blocks own.
+    const root = fdb.dump(MenuItemCollection)['main_p13'];
+    expect(root).toBeDefined();
+    expect(root.tenants).toEqual(['p13']);
+    expect(root.menuItems).toEqual(['shared-parent']);
   });
 
   it('a second call with the same selection (idempotent re-run) logs no new events', async () => {
@@ -361,5 +462,55 @@ describe('applySelection (full write path — BUG 1 must survive past the pure p
     await applySelection(fdb as unknown as Firestore, [block], plan, 'p13', 'uid-admin-1');
 
     expect(Object.keys(fdb.dump(FeatureEventCollection))).toHaveLength(1);
+  });
+
+  it('root menu attachment (task-8 review round 2): enabling a block appends its top-level key to the tenant\'s EXISTING, hand-curated root, in place, and re-running does not duplicate it', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    // A tenant's real root doc: hand-curated order, nothing to do with catalogue order.
+    fdb.seed(MenuItemCollection, 'main_p13', {
+      okey: 'main_p13', name: 'main_p13', action: 'main', url: '', label: 'main', icon: '',
+      roleNeeded: 'none', tenants: ['p13'],
+      menuItems: ['home', 'profile', 'logout', 'login', 'misc-menu', 'cms', 'version'],
+    });
+    const menuBlock = catalogueBlock('calevent', [{
+      key: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
+      roleNeeded: 'registered', icon: 'calendar', label: '@main.calevent.all',
+    }]);
+    const plan: SelectionPlan = { enabled: ['calevent'], withheld: [] };
+
+    await applySelection(fdb as unknown as Firestore, [menuBlock], plan, 'p13', 'uid-admin-1');
+
+    expect(fdb.dump(MenuItemCollection)['main_p13'].menuItems).toEqual([
+      'home', 'profile', 'logout', 'login', 'misc-menu', 'cms', 'version', 'calevent-all',
+    ]);
+
+    // Re-run the identical selection: must not duplicate the key.
+    await applySelection(fdb as unknown as Firestore, [menuBlock], plan, 'p13', 'uid-admin-1');
+    expect(fdb.dump(MenuItemCollection)['main_p13'].menuItems).toEqual([
+      'home', 'profile', 'logout', 'login', 'misc-menu', 'cms', 'version', 'calevent-all',
+    ]);
+  });
+
+  it('root menu attachment: disabling a block removes its top-level key from the tenant\'s root, leaving the rest untouched', async () => {
+    const fdb = new FakeFirestore();
+    // Previously enabled: 'calevent'. This call disables it (enabled becomes []).
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: ['calevent'] });
+    fdb.seed(MenuItemCollection, 'main_p13', {
+      okey: 'main_p13', name: 'main_p13', action: 'main', url: '', label: 'main', icon: '',
+      roleNeeded: 'none', tenants: ['p13'],
+      menuItems: ['home', 'profile', 'calevent-all', 'version'],
+    });
+    const menuBlock = catalogueBlock('calevent', [{
+      key: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
+      roleNeeded: 'registered', icon: 'calendar', label: '@main.calevent.all',
+    }]);
+    const plan: SelectionPlan = { enabled: [], withheld: [] };
+
+    await applySelection(fdb as unknown as Firestore, [menuBlock], plan, 'p13', 'uid-admin-1');
+
+    expect(fdb.dump(MenuItemCollection)['main_p13'].menuItems).toEqual(['home', 'profile', 'version']);
+    const events = Object.values(fdb.dump(FeatureEventCollection));
+    expect(events).toEqual([{ tenantId: 'p13', block: 'calevent', op: 'disable', at: expect.any(String), by: 'uid-admin-1' }]);
   });
 });

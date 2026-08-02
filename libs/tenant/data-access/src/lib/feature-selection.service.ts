@@ -7,7 +7,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 export interface ApplyFeatureSelectionResponse {
   enabled: string[];
   withheld: { id: string; reason: string }[];
-  seeded: string[];
+  applied: string[];
 }
 
 /**

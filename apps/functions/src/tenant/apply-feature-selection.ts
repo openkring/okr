@@ -195,6 +195,90 @@ export async function commitChunked(db: Firestore, writes: PendingWrite[]): Prom
   }
 }
 
+// ────────────────────────────────────────────────────────────────────────────────────
+// ROOT MENU ATTACHMENT (task-8 review round 2, repo-owner ruling) — every enabled block's
+// TOP-LEVEL menu key(s) must appear in the tenant's own root doc, `menuItems/main_<tenantId>`
+// (doc id == `name`; resolution rule verified against `menu-graph.store.ts:311-314`'s
+// `items.find(i => i.name === 'main_' + tenantId)`). Without this, a block's whole menu
+// subtree can be correctly created/updated by `planMenuOpsForBlocks` above and STILL
+// render nowhere, because nothing walks up from the root to discover it (task-8 report,
+// "Defect 3"). `FeatureBlock` deliberately does NOT get a `parentKey` — the ownership
+// direction is the opposite: a shared CHILD doc's own `tenants[]` is what a tenant
+// "inherits" a subtree through, the root doc is the one thing that is genuinely
+// per-tenant and never shared (verified against live Firestore: `main_scs`/`main_p13`/
+// `main_bko`/`main_test` each have `tenants` = exactly their own single tenant id, while
+// child keys like `misc-menu`/`cms`/`aoc-menu`/`help`/`version` recur across all of them).
+//
+// Unlike the additive shared-parent merges above, this is an ARRAY REPLACEMENT: a
+// tenant's root `menuItems[]` is their own hand-curated order (verified: `main_bko` has
+// 10 hand-ordered entries, `main_test` 16, neither alphabetical nor catalogue-ordered),
+// so this must never reorder or drop an existing entry — only append newly-enabled
+// blocks' keys at the end, and remove newly-disabled blocks' keys, leaving everything
+// else exactly where it was.
+//
+// Idempotency / chunk placement: computed from the SAME `existing` snapshot read once at
+// the top of `applySelection` (root doc, if present, is just another `MenuItemCollection`
+// doc, so it is already in that Map — no extra read). A retry after a partial failure
+// re-fetches `existing` fresh, so a key that already landed is already present and is not
+// re-appended, and a key already removed is not "re-removed" (removing an absent key is a
+// no-op) — this converges exactly like every other op in `menuWrites` does, so it belongs
+// in the SAME idempotent, safe-to-retry chunk (1..N), not the non-idempotent chunk 0. Race
+// safety is NO WORSE than the shared-parent ops above: both compute a full replacement
+// array from a live read and `set(..., {merge:true})` it — a genuinely concurrent editor
+// of the SAME array field can still race either kind of op equally; this task was not
+// asked to add transactions/locking, and doing so here without doing it for the
+// shared-parent ops too would be an inconsistent, undocumented improvement over them.
+// ────────────────────────────────────────────────────────────────────────────────────
+export function planRootMenuOp(
+  tenantId: string,
+  existing: Map<string, MenuItemModel>,
+  addKeys: string[],
+  removeKeys: string[],
+): MenuOp | undefined {
+  const key = `main_${tenantId}`;
+  const doc = existing.get(key);
+  const wantedAdds = [...new Set(addKeys)];
+
+  if (!doc) {
+    // Nothing enabled yet for a brand-new tenant with no root doc at all — nothing to
+    // seed a root with (there is no menu to show), so don't create an empty shell.
+    if (wantedAdds.length === 0) return undefined;
+    // Field shape mirrors the real `main_bko`/`main_test` docs fetched from Firestore
+    // (fields present on both: action, data, description, icon, isArchived, label,
+    // menuItems, name, roleNeeded, tags, tenants, url) rather than inventing a shape.
+    return {
+      key,
+      op: 'create',
+      fields: {
+        okey: key, name: key, action: 'main', url: '', label: 'main', icon: '',
+        description: '', tags: '', data: [], isArchived: false,
+        roleNeeded: 'none', tenants: [tenantId], menuItems: wantedAdds,
+      },
+    };
+  }
+
+  // Never remove a key that a still/newly-enabled block also wants — keeps its existing
+  // position instead of dropping and re-appending it at the end.
+  const removeSet = new Set(removeKeys.filter(k => !wantedAdds.includes(k)));
+  const current = doc.menuItems ?? [];
+  const kept = current.filter(k => !removeSet.has(k));
+  const missing = wantedAdds.filter(k => !kept.includes(k));
+  const menuItems = [...kept, ...missing];
+
+  const arrayChanged = menuItems.length !== current.length
+    || menuItems.some((k, i) => k !== current[i]);
+  // Per-tenant, never shared (see header comment) — self-heal if it ever drifted, but
+  // this is a no-op for every correctly-provisioned root doc.
+  const tenantsCorrect = doc.tenants?.length === 1 && doc.tenants[0] === tenantId;
+
+  if (!arrayChanged && tenantsCorrect) return undefined; // nothing to write
+
+  const fields: Partial<MenuItemModel> = {};
+  if (arrayChanged) fields.menuItems = menuItems;
+  if (!tenantsCorrect) fields.tenants = [tenantId];
+  return { key, op: 'update-structure', fields };
+}
+
 /**
  * The Firestore-touching half. Takes `catalogue`/`db` as explicit parameters rather than
  * importing them — see `createApplyFeatureSelection` below and the task-8 report for why.
@@ -256,12 +340,24 @@ export async function applySelection(
 
   await commitChunked(db, configAndEventWrites);
 
+  // --- root menu attachment — see the long comment on planRootMenuOp above -----------
+  const disabledBlockIds = transitions.filter(t => t.op === 'disable').map(t => t.block);
+  const addKeys = enabledBlocks.flatMap(b => b.menu.map(s => s.key));
+  const removeKeys = disabledBlockIds
+    .map(id => catalogue.find(b => b.id === id))
+    .filter((b): b is FeatureBlock => b !== undefined)
+    .flatMap(b => b.menu.map(s => s.key));
+  const rootOp = planRootMenuOp(tenantId, existing, addKeys, removeKeys);
+
   // --- menu + seed writes (chunks 1..N — naturally idempotent, safe to re-run) -------
-  const menuWrites: PendingWrite[] = menuOps.map(op => ({
-    ref: db.collection(MenuItemCollection).doc(op.key),
-    data: op.fields,
-    merge: true,
-  }));
+  const menuWrites: PendingWrite[] = [
+    ...menuOps.map(op => ({
+      ref: db.collection(MenuItemCollection).doc(op.key),
+      data: op.fields,
+      merge: true,
+    })),
+    ...(rootOp ? [{ ref: db.collection(MenuItemCollection).doc(rootOp.key), data: rootOp.fields, merge: true }] : []),
+  ];
   await commitChunked(db, [...menuWrites, ...seedWrites]);
 
   return { applied };
