@@ -34,7 +34,15 @@ export interface SelectionPlan {
 export interface ApplyFeatureSelectionResult {
   enabled: string[];
   withheld: { id: string; reason: string }[];
-  seeded: string[];
+  /**
+   * Every enabled block that `applySelection` actually processed (menu ops planned,
+   * `seed` docs written if any and absent). NOT "blocks that had seed specs" — most
+   * blocks have none, and this list still includes them, because their menu subtree was
+   * still applied. Named `applied`, not `seeded`, for exactly that reason (review fix
+   * round 1, minor 6): the old name implied every entry wrote a `SeedSpec` doc, which is
+   * false and would have misled Task 11's picker UI.
+   */
+  applied: string[];
 }
 
 // ────────────────────────────────────────────────────────────────────────────────────
@@ -78,14 +86,27 @@ export function planSelection(
 // `batch.set(parentRef, fields, {merge:true})` lands LAST wins for every field it
 // touches, so the other block's child is silently dropped (no error, no log).
 //
-// The fix: after planning a block, fold its ops' fields into `existing` before planning
-// the next block (and before the SAME block's own later specs, since one block's menu
-// tree can itself reference the same parent twice). Every later `planMenuOps` call then
-// sees the accumulated state, so `missingChildren`/`structuralDrift` are computed
-// relative to what will actually be in Firestore once earlier ops have applied — not the
-// stale original snapshot. Ops for the same key are additionally folded into ONE op
-// (latest value per field wins), which is both provably correct (see task-8 report) and
-// reduces the write-op count that BUG 2 has to fit under the batch limit.
+// The fix: fold each planned op's fields back into `existing` before planning the NEXT
+// top-level spec — across blocks, AND across a single block's own top-level `menu`
+// entries. `planMenuOps(specs, tenantId, existing)` is fully evaluated (it returns an
+// array) before any caller-side mutation of `existing` happens, and it recurses through
+// every spec it is given against that ONE snapshot — so passing it a whole block's
+// `menu` array in one call is exactly as stale-snapshot-prone as calling it once per
+// block was: two top-level specs in the SAME block that reference the same parent key
+// would still each compute their own `menuItems` against the pre-block snapshot, and the
+// shallow merge below would keep only the LAST one, silently losing the first child.
+// (Caught in review: `menu: [parent('childX'), parent('childY')]` on one block used to
+// yield `menuItems: ['childY']`.)
+//
+// The actual fix is therefore per TOP-LEVEL SPEC, not per block: call `planMenuOps` with
+// a single-spec array each time, and fold its ops into `existing` before the next spec —
+// whether that next spec belongs to the same block or the next one. Every later
+// `planMenuOps` call then sees the accumulated state, so `missingChildren`/
+// `structuralDrift` are computed relative to what will actually be in Firestore once
+// earlier ops have applied — not the stale original snapshot. Ops for the same key are
+// additionally folded into ONE op (latest value per field wins), which is both provably
+// correct (see task-8 report) and reduces the write-op count that BUG 2 has to fit under
+// the batch limit.
 // ────────────────────────────────────────────────────────────────────────────────────
 export function planMenuOpsForBlocks(
   blocks: FeatureBlock[],
@@ -96,14 +117,19 @@ export function planMenuOpsForBlocks(
   const opKind = new Map<string, MenuOp['op']>();
 
   for (const block of blocks) {
-    for (const op of planMenuOps(block.menu, tenantId, existing)) {
-      const priorFull = existing.get(op.key) ?? ({ okey: op.key } as MenuItemModel);
-      existing.set(op.key, { ...priorFull, ...op.fields });
+    for (const spec of block.menu) {
+      // ONE top-level spec per `planMenuOps` call — see the comment above for why.
+      for (const op of planMenuOps([spec], tenantId, existing)) {
+        const priorFull = existing.get(op.key) ?? ({ okey: op.key } as MenuItemModel);
+        existing.set(op.key, { ...priorFull, ...op.fields });
 
-      accumulatedFields.set(op.key, { ...(accumulatedFields.get(op.key) ?? {}), ...op.fields });
-      // 'create' only the first time we see the key; once created, later touches are
-      // structural/tenant updates even if this op object itself says 'create' again.
-      if (!opKind.has(op.key) || op.op !== 'create') opKind.set(op.key, op.op);
+        accumulatedFields.set(op.key, { ...(accumulatedFields.get(op.key) ?? {}), ...op.fields });
+        // Sticky 'create': once a key has been recorded as 'create', a later touch in
+        // this same run must not downgrade it, even though that later touch's OWN
+        // `planMenuOps` result (computed against the now-updated `existing`, where the
+        // doc already "exists") correctly reports itself as 'update-structure'.
+        if (opKind.get(op.key) !== 'create') opKind.set(op.key, op.op);
+      }
     }
   }
 
@@ -179,7 +205,7 @@ export async function applySelection(
   plan: SelectionPlan,
   tenantId: string,
   uid: string,
-): Promise<{ seeded: string[] }> {
+): Promise<{ applied: string[] }> {
   const enabledBlocks = plan.enabled
     .map(id => catalogue.find(b => b.id === id))
     .filter((b): b is FeatureBlock => b !== undefined);
@@ -194,7 +220,7 @@ export async function applySelection(
 
   // --- seed docs (create-if-absent; never rewritten once present) -------------------
   const seedWrites: PendingWrite[] = [];
-  const seeded: string[] = [];
+  const applied: string[] = [];
   for (const block of enabledBlocks) {
     for (const seed of block.seed ?? []) {
       const ref = db.collection(seed.collection).doc(seed.okey);
@@ -202,7 +228,7 @@ export async function applySelection(
         seedWrites.push({ ref, data: seed.data, merge: false });
       }
     }
-    seeded.push(block.id);
+    applied.push(block.id);
   }
 
   // --- enablement + audit trail (chunk 0 — see BUG 2 FIX above) ----------------------
@@ -238,7 +264,7 @@ export async function applySelection(
   }));
   await commitChunked(db, [...menuWrites, ...seedWrites]);
 
-  return { seeded };
+  return { applied };
 }
 
 // ────────────────────────────────────────────────────────────────────────────────────
@@ -273,7 +299,16 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
       const blockIds: string[] = Array.isArray(request.data?.blockIds) ? request.data.blockIds : [];
 
       const db = getFirestore();
-      const uid = request.auth?.uid ?? '';
+      // `checkAuthentication` above throws if `request.auth` is missing, but that is an
+      // external call TS cannot use to narrow `request.auth` here — the `?? ''` fallback
+      // it would otherwise take is a trap: `db.collection(...).doc('')` throws a raw
+      // Firestore INVALID_ARGUMENT instead of the intended `unauthenticated`, so if the
+      // guard above is ever loosened this fails with a confusing `internal` error
+      // instead of the correct one. Fail loudly and explicitly instead of coalescing.
+      const uid = request.auth?.uid;
+      if (!uid) {
+        throw new HttpsError('unauthenticated', 'applyFeatureSelection requires an authenticated caller.');
+      }
 
       // --- authorisation: admin OF this tenant, not admin of some other tenant ------
       // v1 scope only — no cross-tenant/operator branch (no operator role exists yet).
@@ -302,10 +337,10 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
       const plan = planSelection(catalogue, rollouts, blockIds, tenantId);
 
       // --- apply -------------------------------------------------------------------
-      const { seeded } = await applySelection(db, catalogue, plan, tenantId, uid);
+      const { applied } = await applySelection(db, catalogue, plan, tenantId, uid);
 
       logger.info(`${CF_NAME}: tenant=${tenantId} enabled=${plan.enabled.length} withheld=${plan.withheld.length}`);
-      return { enabled: plan.enabled, withheld: plan.withheld, seeded };
+      return { enabled: plan.enabled, withheld: plan.withheld, applied };
     },
   );
 }

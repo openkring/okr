@@ -110,6 +110,53 @@ describe('planMenuOpsForBlocks (BUG 1 regression — shared parent menu docs)', 
     expect(parentOps).toHaveLength(1);
     expect(parentOps[0].fields.menuItems).toEqual(['childX', 'childY']);
   });
+
+  it('does not lose a child when ONE block\'s own menu has two top-level specs sharing a parent (review fix round 1, minor 3)', () => {
+    // Regression for a bug the reviewer proved by hand: `planMenuOps(block.menu, …)` used
+    // to be called once per BLOCK, passing the whole `menu` array in one shot. Since
+    // `planMenuOps` fully evaluates against a single snapshot of `existing` before the
+    // caller gets to fold anything back, two top-level entries in the SAME block's `menu`
+    // that reference the same parent key were still computed against the same stale
+    // snapshot as each other — the inter-BLOCK fold never got a chance to run between
+    // them. `menu: [parent('childX'), parent('childY')]` on one block used to yield
+    // `menuItems: ['childY']` only. The fix folds per top-level SPEC, not per block.
+    const parentSpec = (child: string): MenuSpec => ({
+      key: 'shared-parent', name: 'shared-parent', url: '', action: 'sub',
+      roleNeeded: 'registered', icon: 'help-circle', label: '@shared',
+      children: [childSpec(child)],
+    });
+    const oneBlockTwoTopLevelSpecs: FeatureBlock = {
+      id: 'a', bundle: 'special', label: '@f.a', icon: 'help-circle', defaultAvailability: 'ga',
+      dependsOn: [], routes: () => [], collections: [],
+      menu: [parentSpec('childX'), parentSpec('childY')],
+    };
+    const existing = new Map<string, MenuItemModel>(); // parent does not exist yet
+
+    const ops = planMenuOpsForBlocks([oneBlockTwoTopLevelSpecs], 'p13', existing);
+
+    const parentOps = ops.filter(o => o.key === 'shared-parent');
+    expect(parentOps).toHaveLength(1);
+    expect(parentOps[0].fields.menuItems).toEqual(['childX', 'childY']);
+  });
+
+  it('records \'create\' for a brand-new key even though the SECOND touch (folded existing) reports update-structure (minor 4)', () => {
+    const parentSpec = (child: string): MenuSpec => ({
+      key: 'new-parent', name: 'new-parent', url: '', action: 'sub',
+      roleNeeded: 'registered', icon: 'help-circle', label: '@new',
+      children: [childSpec(child)],
+    });
+    const oneBlockTwoTopLevelSpecs: FeatureBlock = {
+      id: 'a', bundle: 'special', label: '@f.a', icon: 'help-circle', defaultAvailability: 'ga',
+      dependsOn: [], routes: () => [], collections: [],
+      menu: [parentSpec('childX'), parentSpec('childY')],
+    };
+    const existing = new Map<string, MenuItemModel>();
+
+    const ops = planMenuOpsForBlocks([oneBlockTwoTopLevelSpecs], 'p13', existing);
+
+    const parentOp = ops.find(o => o.key === 'new-parent');
+    expect(parentOp?.op).toBe('create');
+  });
 });
 
 describe('computeTransitions', () => {
@@ -284,9 +331,9 @@ describe('applySelection (full write path — BUG 1 must survive past the pure p
     const catalogue = [blockA, blockB];
     const plan: SelectionPlan = { enabled: ['a', 'b'], withheld: [] };
 
-    const { seeded } = await applySelection(fdb as unknown as Firestore, catalogue, plan, 'p13', 'uid-admin-1');
+    const { applied } = await applySelection(fdb as unknown as Firestore, catalogue, plan, 'p13', 'uid-admin-1');
 
-    expect(seeded.sort()).toEqual(['a', 'b']);
+    expect(applied.sort()).toEqual(['a', 'b']);
 
     // BUG 1: neither child was lost, and the pre-existing tenant wasn't dropped either.
     const parentDoc = fdb.dump(MenuItemCollection)['shared-parent'];

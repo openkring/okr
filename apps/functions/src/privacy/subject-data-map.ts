@@ -834,23 +834,30 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   {
     // Tenant-scoped audit trail written by `applyFeatureSelection` (feature building
     // blocks, task 8): one doc per enable/disable transition, `by` holding the acting
-    // admin's uid. Same "an admin's uid is recorded as the actor of a privileged
-    // operation" shape as `payment-orders.createdBy/approvedBy` and
-    // `esignAudit.deletedBy` above.
+    // admin's uid. It is the CLUB's usage/billing trail (FeatureEvent's own docstring in
+    // @okr/shared-models calls it "the usage trail billing needs"), naming an actor —
+    // structurally the same shape as `responsibilities`/`tasks`/`comments`/`calevents`/
+    // `sections` above (a tenant record that names a person), not the "subject's own
+    // activity log" shape of `sessions`/`activities`/`docGenerations` below. Anonymize,
+    // don't delete: erasing the acting admin must not erase the tenant's own record of
+    // which features were switched on and when.
     collection: 'featureEvents',
     dataClass: 'log',
     tier: 'T4',
-    onTenantExit: 'delete',
-    // FeatureEvent carries a SINGULAR `tenantId`, not a `tenants[]` array, so a second
-    // `.where('tenantId','==',…)` predicate would need a composite index. It is not
-    // needed: `UserModel.tenants` always holds exactly one tenant (general.util.ts,
-    // `tenantIdOfUserData`), so every event a uid ever appears on `by` for already
-    // belongs to that uid's one tenant — `by == c.uid` alone is exact, not a scan, so
-    // (unlike the other `inQuery` rows above) no `matches()` post-filter is needed.
+    onTenantExit: 'anonymize',   // the transition record is the tenant's, only the actor goes
+    // `by == c.uid` alone is NOT tenant-exact: a uid's CURRENT tenant (`UserModel.tenants`,
+    // always exactly one — `setTenant` in user.model.ts:56 overwrites it wholesale on a
+    // tenant move) is not the tenant an event was written in. An admin who moves from
+    // tenant A to tenant B still has `by == uid` events under A; without the `tenantId`
+    // post-filter, a `find` run with `ctx.tenantId == B` would return A's events too, and
+    // `resolveDocs` would then export/anonymize/delete another tenant's audit trail for an
+    // action performed in B. `tenantScope: 'inQuery'` + `matches` below closes that.
     find: (c: SubjectCtx) => db().collection('featureEvents').where('by', '==', c.uid),
-    tenantScope: 'none',
+    tenantScope: 'inQuery',
+    matches: (doc, c) => doc.get('tenantId') === c.tenantId,
     onExport: 'full',
-    onErasure: 'delete',
+    onErasure: 'anonymize',       // the transition record stays as the tenant's usage trail
+    anonymizeFields: ['by'],
     retention: LOG_24M,
   },
   {
