@@ -173,6 +173,12 @@ seed("folders/fT2", {"tenants": ["t2"], "isArchived": False, "name": "T2", "memb
 seed("erasure-log/elA", {"tenants": ["t1"], "isArchived": False, "tenantId": "t1",
                          "executedAt": "20260729120000", "pseudonym": "Gel\u00f6schtes Mitglied #abc12345",
                          "counts": {"sessions": 3}, "trigger": "self"})
+# feature-building-blocks (2026-08-01): feature-rollout is GLOBAL, no tenants[] field \u2014
+# operator-owned, CF-only write. featureEvents is its append-only audit trail, same shape.
+seed("feature-rollout/blockX", {"availability": "beta", "allowTenants": ["t1"], "denyTenants": [],
+                                "reason": "In geschlossener Beta", "updatedAt": "20260801000000", "updatedBy": "op"})
+seed("featureEvents/evA", {"tenantId": "t1", "block": "blockX", "op": "enable",
+                           "at": "20260801000000", "by": "op"})
 
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
@@ -266,6 +272,24 @@ single_cases = [
     ("userD(admin t1) create erasure-log -> DENY (CF-only)", False, POST, "erasure-log?documentId=elX", D,
      body({"tenants": ["t1"], "tenantId": "t1"}), None),
     ("userD(admin t1) DELETE erasure-log -> DENY (CF-only)", False, DELETE, "erasure-log/elA", D, None, None),
+    # feature-building-blocks (2026-08-01): feature-rollout — global, any authenticated
+    # user may read (the picker shows withheld blocks with their reason); no client,
+    # including an admin, may write — applyFeatureSelection (Admin SDK) is the sole writer.
+    ("userA(plain) GET feature-rollout -> ALLOW", True, GET, "feature-rollout/blockX", A, None, None),
+    ("userD(admin t1) GET feature-rollout -> ALLOW", True, GET, "feature-rollout/blockX", D, None, None),
+    ("anon GET feature-rollout -> DENY", False, GET, "feature-rollout/blockX", None, None, None),
+    ("userD(admin t1) PATCH feature-rollout -> DENY (CF-only)", False, PATCH, "feature-rollout/blockX", D,
+     body({"availability": "ga"}), ["availability"]),
+    ("userD(admin t1) create feature-rollout -> DENY (CF-only)", False, POST, "feature-rollout?documentId=blockY", D,
+     body({"availability": "ga", "allowTenants": [], "denyTenants": [], "reason": ""}), None),
+    ("userD(admin t1) DELETE feature-rollout -> DENY (CF-only)", False, DELETE, "feature-rollout/blockX", D, None, None),
+    # featureEvents — same shape: any authenticated user reads, nobody writes.
+    ("userA(plain) GET featureEvents -> ALLOW", True, GET, "featureEvents/evA", A, None, None),
+    ("anon GET featureEvents -> DENY", False, GET, "featureEvents/evA", None, None, None),
+    ("userD(admin t1) PATCH featureEvents -> DENY (CF-only)", False, PATCH, "featureEvents/evA", D,
+     body({"op": "disable"}), ["op"]),
+    ("userD(admin t1) create featureEvents -> DENY (CF-only)", False, POST, "featureEvents?documentId=evX", D,
+     body({"tenantId": "t1", "block": "blockX", "op": "enable", "at": "20260801000001", "by": "uidD"}), None),
     # ── privacy 1.19 Phase 4: addresses = PII vault, read owner ∨ privileged ──
     ("userE(plain) GET another's address -> DENY", False, GET, "addresses/adrO_email", E, None, None),
     ("userE(plain) GET another's ssn address -> DENY", False, GET, "addresses/adrO_ssn", E, None, None),

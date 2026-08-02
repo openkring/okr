@@ -449,6 +449,26 @@ service cloud.firestore {
     match /esignAudit/{tenantId}/{subcollection=**} {
       allow read, write: if false;
     }
+    // Feature rollout (spec 2026-08-01-feature-building-blocks, D-BB-9/D-BB-10): a GLOBAL,
+    // operator-owned collection — one doc per catalogue block id, no tenants[] field.
+    // Readable by any authenticated user: the picker must show *withheld* blocks with
+    // their reason, so a tenant can see a feature exists but is not available to them.
+    // `allow write: if false` is deliberate, not an oversight — there is no operator
+    // role in RoleName yet, and the sole writer is the applyFeatureSelection callable,
+    // which uses the Admin SDK and bypasses rules entirely. Do not "fix" this by adding
+    // an isAdmin()-style write rule; that would let a tenant admin grant themselves a
+    // beta/internal block outside the operator's control.
+    match /feature-rollout/{blockId} {
+      allow read:  if signedIn();
+      allow write: if false;
+    }
+    // Append-only audit trail of enable/disable transitions, written exclusively by the
+    // same applyFeatureSelection callable (Admin SDK). Same reasoning as above: no
+    // client — including an admin — may write here.
+    match /featureEvents/{eventId} {
+      allow read:  if signedIn();
+      allow write: if false;
+    }
 
     // ============================================================================
     //  Applications — anonymous membership submissions (shape-constrained), with

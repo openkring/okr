@@ -1,0 +1,27 @@
+{
+  "name": "tenant-data-access",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/tenant/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:tenant", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/tenant/data-access",
+        "main": "libs/tenant/data-access/src/index.ts",
+        "tsConfig": "libs/tenant/data-access/tsconfig.lib.json",
+        "assets": ["libs/tenant/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": { "configFile": "libs/tenant/data-access/vite.config.ts" }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}
