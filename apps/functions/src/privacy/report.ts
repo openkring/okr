@@ -124,6 +124,9 @@ export const COLLECTION_LABELS: Record<string, string> = {
   activities: 'Aktivitäten', // libs/activity/feature/src/i18n/de.json: title
   logAuth: 'Anmeldeprotokoll',
   docGenerations: 'Erzeugte Dokumente',
+  // feature building blocks (task 8): audit trail of enable/disable transitions the
+  // caller performed as a tenant admin via applyFeatureSelection.
+  featureEvents: 'Feature-Änderungen',
 };
 
 function humanizeCollectionName(collection: string): string {

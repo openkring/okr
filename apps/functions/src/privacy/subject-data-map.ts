@@ -831,6 +831,54 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onErasure: 'retain',
     retention: RETAIN_10Y,
   },
+  {
+    // Tenant-scoped audit trail written by `applyFeatureSelection` (feature building
+    // blocks, task 8): one doc per enable/disable transition, `by` holding the acting
+    // admin's uid. Same "an admin's uid is recorded as the actor of a privileged
+    // operation" shape as `payment-orders.createdBy/approvedBy` and
+    // `esignAudit.deletedBy` above.
+    collection: 'featureEvents',
+    dataClass: 'log',
+    tier: 'T4',
+    onTenantExit: 'delete',
+    // FeatureEvent carries a SINGULAR `tenantId`, not a `tenants[]` array, so a second
+    // `.where('tenantId','==',…)` predicate would need a composite index. It is not
+    // needed: `UserModel.tenants` always holds exactly one tenant (general.util.ts,
+    // `tenantIdOfUserData`), so every event a uid ever appears on `by` for already
+    // belongs to that uid's one tenant — `by == c.uid` alone is exact, not a scan, so
+    // (unlike the other `inQuery` rows above) no `matches()` post-filter is needed.
+    find: (c: SubjectCtx) => db().collection('featureEvents').where('by', '==', c.uid),
+    tenantScope: 'none',
+    onExport: 'full',
+    onErasure: 'delete',
+    retention: LOG_24M,
+  },
+  {
+    // `feature-rollout` is the operator/platform-staff kill-switch table (task 7) —
+    // GLOBAL, one doc per catalogue block id, not owned by any tenant. `updatedBy` is
+    // the uid of whichever operator last changed a block's rollout stage. No write path
+    // exists yet (rules deny all client writes; Task 7 only reads it), so the field is
+    // never populated today — declared now so the collection is classified before a
+    // future operator console starts writing it.
+    collection: 'feature-rollout',
+    dataClass: 'log',
+    tier: 'T4',
+    // Not tenant data at all — a member leaving one tenant has no bearing on a global,
+    // cross-tenant rollout record, so there is nothing for tenant-exit to do here.
+    onTenantExit: 'retain',
+    find: (c: SubjectCtx) => db().collection('feature-rollout').where('updatedBy', '==', c.uid),
+    // No tenant dimension whatsoever (see onTenantExit above) — `find` already returns
+    // exactly this subject's rows, nothing to post-filter.
+    tenantScope: 'none',
+    // Cross-tenant catalogue administration, not this member's own tenant data — out of
+    // scope for a tenant-scoped "my data" export (same reasoning as `payment-orders`).
+    onExport: 'none',
+    // Kill-switch history is operational integrity data akin to `esignAudit`/
+    // `payment-orders`: erasing it would let a past operator decision vanish from the
+    // platform's own audit trail.
+    onErasure: 'retain',
+    retention: { months: 'indefinite', legalBasis: 'Plattform-Betriebssicherheit — Nachvollziehbarkeit von Feature-Rollout-Entscheidungen' },
+  },
 ];
 
 export function entriesFor(mode: 'full' | 'index'): readonly SubjectDataEntry[] {

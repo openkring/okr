@@ -1,0 +1,311 @@
+import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import type { CallableRequest } from 'firebase-functions/v2/https';
+import { logger } from 'firebase-functions/v2';
+import { getFirestore } from 'firebase-admin/firestore';
+import type { Firestore, WriteBatch } from 'firebase-admin/firestore';
+
+import {
+  AppConfigCollection, FeatureEventCollection, FeatureRolloutCollection,
+  MenuItemCollection, UserCollection, type MenuItemModel,
+} from '@okr/shared-models';
+import {
+  planMenuOps, resolveAvailability, resolveWithDeps,
+  type FeatureBlock, type FeatureRollout, type MenuOp,
+} from '@okr/tenant-util';
+import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+
+const REGION = 'europe-west6';
+const CF_NAME = 'applyFeatureSelection';
+
+/**
+ * Firestore caps a WriteBatch at 500 operations (verified: firebase-admin 13.6.0,
+ * `firestore.WriteBatch` — `MAX_TRANSACTION_WRITES`/batch limit is unchanged from the
+ * documented 500). 400 leaves headroom, same margin the erasure pipeline uses
+ * (`apps/functions/src/privacy/erasure-execute.ts`).
+ */
+const BATCH_SIZE = 400;
+
+export interface SelectionPlan {
+  enabled: string[];
+  withheld: { id: string; reason: string }[];
+}
+
+export interface ApplyFeatureSelectionResult {
+  enabled: string[];
+  withheld: { id: string; reason: string }[];
+  seeded: string[];
+}
+
+// ────────────────────────────────────────────────────────────────────────────────────
+// Pure half: expand dependencies, then drop anything rollout withholds.
+// ────────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Pure half: expand dependencies, then drop anything rollout withholds. Withheld blocks
+ * are REPORTED, not thrown — a tenant asking for a killed block should be told why, not
+ * given an error for the whole call.
+ */
+export function planSelection(
+  catalogue: FeatureBlock[],
+  rollouts: FeatureRollout[],
+  requested: string[],
+  tenantId: string,
+): SelectionPlan {
+  const byId = new Map(catalogue.map(b => [b.id, b]));
+  const rolloutById = new Map(rollouts.map(r => [r.okey, r]));
+
+  const enabled: string[] = [];
+  const withheld: { id: string; reason: string }[] = [];
+
+  for (const id of resolveWithDeps(catalogue, requested)) {
+    const block = byId.get(id);
+    if (!block) continue;
+    const verdict = resolveAvailability(block, rolloutById.get(id), tenantId);
+    if (verdict.offered) enabled.push(id);
+    else withheld.push({ id, reason: verdict.reason });
+  }
+  return { enabled, withheld };
+}
+
+// ────────────────────────────────────────────────────────────────────────────────────
+// BUG 1 FIX — shared parent menu docs: thread planned ops back into `existing`.
+//
+// `planMenuOps` is pure and only sees the map it is given. If block A and block B both
+// append a child to the SAME parent menu doc, and both call `planMenuOps` against the
+// same pre-batch snapshot, each computes its own `menuItems: [...original, childX]` /
+// `[...original, childY]` — two independent ops for the same key. Whichever
+// `batch.set(parentRef, fields, {merge:true})` lands LAST wins for every field it
+// touches, so the other block's child is silently dropped (no error, no log).
+//
+// The fix: after planning a block, fold its ops' fields into `existing` before planning
+// the next block (and before the SAME block's own later specs, since one block's menu
+// tree can itself reference the same parent twice). Every later `planMenuOps` call then
+// sees the accumulated state, so `missingChildren`/`structuralDrift` are computed
+// relative to what will actually be in Firestore once earlier ops have applied — not the
+// stale original snapshot. Ops for the same key are additionally folded into ONE op
+// (latest value per field wins), which is both provably correct (see task-8 report) and
+// reduces the write-op count that BUG 2 has to fit under the batch limit.
+// ────────────────────────────────────────────────────────────────────────────────────
+export function planMenuOpsForBlocks(
+  blocks: FeatureBlock[],
+  tenantId: string,
+  existing: Map<string, MenuItemModel>,
+): MenuOp[] {
+  const accumulatedFields = new Map<string, Partial<MenuItemModel>>();
+  const opKind = new Map<string, MenuOp['op']>();
+
+  for (const block of blocks) {
+    for (const op of planMenuOps(block.menu, tenantId, existing)) {
+      const priorFull = existing.get(op.key) ?? ({ okey: op.key } as MenuItemModel);
+      existing.set(op.key, { ...priorFull, ...op.fields });
+
+      accumulatedFields.set(op.key, { ...(accumulatedFields.get(op.key) ?? {}), ...op.fields });
+      // 'create' only the first time we see the key; once created, later touches are
+      // structural/tenant updates even if this op object itself says 'create' again.
+      if (!opKind.has(op.key) || op.op !== 'create') opKind.set(op.key, op.op);
+    }
+  }
+
+  return [...accumulatedFields.entries()].map(([key, fields]) => ({
+    key,
+    op: opKind.get(key) ?? 'update-structure',
+    fields,
+  }));
+}
+
+// ────────────────────────────────────────────────────────────────────────────────────
+// BUG 2 FIX — Firestore batch limits.
+//
+// A `WriteBatch` caps at 500 operations. With ~29 blocks (Tasks 12-18), each contributing
+// several menu ops, seed docs, and a `featureEvents` entry per transition, a full
+// selection can exceed that comfortably. Chunking necessarily breaks atomicity across the
+// WHOLE call — a crash between chunk N and N+1 leaves a partially-applied selection.
+//
+// This is deliberately safe to re-run to convergence:
+//  - the config+events chunk is committed FIRST and alone. It is the only write in the
+//    whole operation that is NOT naturally idempotent (menu ops recompute from live
+//    Firestore state every call; seed docs are only written if absent) — a straight
+//    diff-and-log would re-emit "enable"/"disable" featureEvents for transitions already
+//    recorded if `enabledFeatures` had not yet been persisted. Committing it first and
+//    alone means: once it lands, a retry recomputes `previous == plan.enabled` (zero new
+//    diff) and emits nothing more — no duplicate audit entries. If it does NOT land, nothing
+//    downstream depended on it, so a full retry redoes it correctly.
+//  - every later chunk (menu ops, seed docs) is naturally idempotent: re-running plans
+//    against whatever Firestore already has, so a retry after a partial failure converges
+//    on the same end state instead of duplicating or corrupting it.
+// ────────────────────────────────────────────────────────────────────────────────────
+export function chunk<T>(items: readonly T[], size = BATCH_SIZE): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+export interface FeatureTransition {
+  block: string;
+  op: 'enable' | 'disable';
+}
+
+/** Pure: which blocks flipped on/off relative to what was previously persisted. */
+export function computeTransitions(previous: string[], enabled: string[]): FeatureTransition[] {
+  return [
+    ...enabled.filter(id => !previous.includes(id)).map((id): FeatureTransition => ({ block: id, op: 'enable' })),
+    ...previous.filter(id => !enabled.includes(id)).map((id): FeatureTransition => ({ block: id, op: 'disable' })),
+  ];
+}
+
+export interface PendingWrite {
+  ref: FirebaseFirestore.DocumentReference;
+  data: Record<string, unknown>;
+  merge: boolean;
+}
+
+export async function commitChunked(db: Firestore, writes: PendingWrite[]): Promise<void> {
+  for (const part of chunk(writes)) {
+    if (part.length === 0) continue;
+    const batch: WriteBatch = db.batch();
+    for (const w of part) batch.set(w.ref, w.data, { merge: w.merge });
+    await batch.commit();
+  }
+}
+
+/**
+ * The Firestore-touching half. Takes `catalogue`/`db` as explicit parameters rather than
+ * importing them — see `createApplyFeatureSelection` below and the task-8 report for why.
+ */
+export async function applySelection(
+  db: Firestore,
+  catalogue: FeatureBlock[],
+  plan: SelectionPlan,
+  tenantId: string,
+  uid: string,
+): Promise<{ seeded: string[] }> {
+  const enabledBlocks = plan.enabled
+    .map(id => catalogue.find(b => b.id === id))
+    .filter((b): b is FeatureBlock => b !== undefined);
+
+  // --- read the current menu snapshot (global collection, keyed by doc id) -----------
+  const menuSnap = await db.collection(MenuItemCollection).get();
+  const existing = new Map<string, MenuItemModel>(
+    menuSnap.docs.map(d => [d.id, { okey: d.id, tenants: [] as string[], ...d.data() } as MenuItemModel]),
+  );
+
+  const menuOps = planMenuOpsForBlocks(enabledBlocks, tenantId, existing);
+
+  // --- seed docs (create-if-absent; never rewritten once present) -------------------
+  const seedWrites: PendingWrite[] = [];
+  const seeded: string[] = [];
+  for (const block of enabledBlocks) {
+    for (const seed of block.seed ?? []) {
+      const ref = db.collection(seed.collection).doc(seed.okey);
+      if (!(await ref.get()).exists) {
+        seedWrites.push({ ref, data: seed.data, merge: false });
+      }
+    }
+    seeded.push(block.id);
+  }
+
+  // --- enablement + audit trail (chunk 0 — see BUG 2 FIX above) ----------------------
+  const configRef = db.collection(AppConfigCollection).doc(tenantId);
+  const configSnap = await configRef.get();
+  // Legacy doc with no `enabledFeatures` field: per D-BB-10 (see effectiveFeatures() in
+  // @okr/tenant-util) this reads as "every non-internal block", not as "nothing enabled" —
+  // otherwise a legacy tenant's FIRST applyFeatureSelection call would log a bogus
+  // "enable" event for every block it already had, cluttering an audit trail meant to
+  // record real transitions only.
+  const previous: string[] = configSnap.data()?.enabledFeatures
+    ?? catalogue.filter(b => b.defaultAvailability !== 'internal').map(b => b.id);
+
+  const transitions = computeTransitions(previous, plan.enabled);
+  const at = getTodayStr(DateFormat.StoreDateTime);
+
+  const configAndEventWrites: PendingWrite[] = [
+    { ref: configRef, data: { enabledFeatures: plan.enabled }, merge: true },
+    ...transitions.map((t): PendingWrite => ({
+      ref: db.collection(FeatureEventCollection).doc(),
+      data: { tenantId, block: t.block, op: t.op, at, by: uid },
+      merge: false,
+    })),
+  ];
+
+  await commitChunked(db, configAndEventWrites);
+
+  // --- menu + seed writes (chunks 1..N — naturally idempotent, safe to re-run) -------
+  const menuWrites: PendingWrite[] = menuOps.map(op => ({
+    ref: db.collection(MenuItemCollection).doc(op.key),
+    data: op.fields,
+    merge: true,
+  }));
+  await commitChunked(db, [...menuWrites, ...seedWrites]);
+
+  return { seeded };
+}
+
+// ────────────────────────────────────────────────────────────────────────────────────
+// The single server-side write path for a tenant's feature selection (D-BB-9).
+//
+// NOT wired to `FEATURE_CATALOGUE` here. `FEATURE_CATALOGUE` lives in `@okr/tenant-feature`
+// (HUMAN RULING A, plan progress ledger, 2026-08-02) because it names feature libs via
+// lazy `loadComponent` imports — but its two current blocks (`calevent`, `aoc`) also
+// import `isAdminGuard`/`isAuthenticatedGuard` from `@okr/auth-feature` EAGERLY (not
+// lazily) to populate `canActivate`. `@okr/auth-feature` imports `@angular/core` (`inject`)
+// and `@okr/shared-feature`'s `AppStore` (an NgRx Signal Store). Confirmed empirically:
+// adding `import { FEATURE_CATALOGUE } from '@okr/tenant-feature'` to this app and
+// building it grew `dist/apps/functions/main.cjs` from 3.9MB to 15MB, and the output
+// contains live `@angular/core` symbols (`inject(`, the `AppStore` class) — i.e. Angular
+// framework code would ship inside this Cloud Functions bundle and execute in Node,
+// which is exactly the "hack around it" this task was told not to do. See the task-8
+// report for the options put to the repo owner. Until that's resolved, wire this callable
+// with `createApplyFeatureSelection(catalogue)` where `catalogue` comes from wherever the
+// owner decides an Angular-free copy of the block data can live.
+// ────────────────────────────────────────────────────────────────────────────────────
+export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
+  return onCall(
+    { region: REGION, enforceAppCheck: true, cors: true },
+    async (request: CallableRequest): Promise<ApplyFeatureSelectionResult> => {
+      checkAppCheckToken(request, CF_NAME);
+      checkAuthentication(request, CF_NAME);
+
+      const tenantId = request.data?.tenantId;
+      if (typeof tenantId !== 'string' || tenantId.trim() === '') {
+        throw new HttpsError('invalid-argument', 'applyFeatureSelection requires a tenantId.');
+      }
+      const blockIds: string[] = Array.isArray(request.data?.blockIds) ? request.data.blockIds : [];
+
+      const db = getFirestore();
+      const uid = request.auth?.uid ?? '';
+
+      // --- authorisation: admin OF this tenant, not admin of some other tenant ------
+      // v1 scope only — no cross-tenant/operator branch (no operator role exists yet).
+      // Deliberately NOT `checkAdminRole` (@okr/shared-util-functions): that helper checks
+      // `roles.admin` globally (plus a legacy custom-claim bypass) but has no notion of
+      // WHICH tenant the caller administers — reusing it here would let any admin of any
+      // tenant apply a feature selection to every other tenant. One read of the caller's
+      // own `users/{uid}` doc gets both the role and the tenant membership in one shot.
+      const userSnap = await db.collection(UserCollection).doc(uid).get();
+      if (!userSnap.exists) {
+        throw new HttpsError('permission-denied', 'No user document for the caller.');
+      }
+      const roles = (userSnap.data()?.['roles'] ?? {}) as Record<string, boolean>;
+      if (roles['admin'] !== true) {
+        throw new HttpsError('permission-denied',
+          'Nur Administratoren können die Feature-Auswahl ändern.');
+      }
+      const callerTenants: string[] = userSnap.data()?.['tenants'] ?? [];
+      if (!callerTenants.includes(tenantId)) {
+        throw new HttpsError('permission-denied', 'Caller does not belong to this tenant.');
+      }
+
+      // --- plan ------------------------------------------------------------------
+      const rolloutSnap = await db.collection(FeatureRolloutCollection).get();
+      const rollouts = rolloutSnap.docs.map(d => ({ okey: d.id, ...d.data() }) as FeatureRollout);
+      const plan = planSelection(catalogue, rollouts, blockIds, tenantId);
+
+      // --- apply -------------------------------------------------------------------
+      const { seeded } = await applySelection(db, catalogue, plan, tenantId, uid);
+
+      logger.info(`${CF_NAME}: tenant=${tenantId} enabled=${plan.enabled.length} withheld=${plan.withheld.length}`);
+      return { enabled: plan.enabled, withheld: plan.withheld, seeded };
+    },
+  );
+}
