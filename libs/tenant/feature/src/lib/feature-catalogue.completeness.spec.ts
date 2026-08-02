@@ -7,11 +7,28 @@ import { NON_BLOCK_DOMAINS, PENDING_CLASSIFICATION } from './feature-catalogue.n
 /** Repo-root-relative path to libs/, from this spec file's directory. */
 const LIBS_DIR = join(__dirname, '../../../../..', 'libs');
 
+/**
+ * A top-level domain "has a feature lib" if `libs/<name>/feature` exists (flat domains
+ * like `calevent`) OR `libs/<name>/<sub>/feature` exists for any subdomain (container
+ * domains like `finance`, whose 13 subdomains each carry their own layer split). Per the
+ * repo owner's ruling, one catalogue block covers a whole container domain — e.g. one
+ * `finance` block for all finance subdomains — so completeness is judged, and each domain
+ * returned, at the TOP level only (deduplicated), never per-subdomain. Depth is capped at
+ * 2; no depth-3 `feature` directory exists today, and an unbounded walk would be slower
+ * and risk false positives from `node_modules`/`dist`.
+ */
 function featureDomains(): string[] {
-  return readdirSync(LIBS_DIR, { withFileTypes: true })
+  const topLevel = readdirSync(LIBS_DIR, { withFileTypes: true })
     .filter(e => e.isDirectory() && e.name !== 'node_modules')
-    .map(e => e.name)
-    .filter(name => existsSync(join(LIBS_DIR, name, 'feature')));
+    .map(e => e.name);
+
+  return topLevel.filter(name => {
+    const domainDir = join(LIBS_DIR, name);
+    if (existsSync(join(domainDir, 'feature'))) return true;
+    return readdirSync(domainDir, { withFileTypes: true })
+      .filter(e => e.isDirectory())
+      .some(e => existsSync(join(domainDir, e.name, 'feature')));
+  });
 }
 
 describe('catalogue completeness', () => {
