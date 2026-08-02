@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MenuItemModel } from '@okr/shared-models';
-import { planMenuOps } from './menu-seed.util';
+import { planMenuOps, STRUCTURAL_FIELDS } from './menu-seed.util';
 import type { MenuSpec } from './feature-catalogue.types';
 
 const spec: MenuSpec = {
@@ -77,5 +77,31 @@ describe('planMenuOps', () => {
     };
     const ops = planMenuOps([parentSpec], 'p13', new Map());
     expect(ops.map(o => o.key).sort()).toEqual(['calevent-all', 'main']);
+  });
+
+  it('detects drift for each structural field independently', () => {
+    for (const field of STRUCTURAL_FIELDS) {
+      const overrides: Partial<MenuItemModel> = { tenants: ['p13'] };
+      overrides[field as keyof MenuItemModel] = '/OLD/value' as never;
+      const existing = new Map([['calevent-all', existingDoc(overrides)]]);
+      const ops = planMenuOps([spec], 'p13', existing);
+      expect(ops).toHaveLength(1);
+      expect(ops[0].op).toBe('update-structure');
+      expect(ops[0].fields[field as keyof MenuItemModel]).toBeDefined();
+    }
+  });
+
+  it('handles a doc with undefined tenants from raw Firestore read', () => {
+    const doc = new MenuItemModel('scs');
+    Object.assign(doc, {
+      okey: 'calevent-all', name: 'calevent-all', url: '/calevent/all/c-calevents',
+      action: 'navigate', roleNeeded: 'registered', icon: 'calendar',
+      label: '@main.calevent.all', tenants: undefined,
+    });
+    const existing = new Map([['calevent-all', doc]]);
+    const ops = planMenuOps([spec], 'p13', existing);
+    expect(ops).toHaveLength(1);
+    expect(ops[0].op).toBe('add-tenant');
+    expect(ops[0].fields.tenants).toEqual(['p13']);
   });
 });

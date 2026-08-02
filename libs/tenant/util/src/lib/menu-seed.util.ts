@@ -16,9 +16,11 @@ export interface MenuOp {
 
 function structuralDrift(existing: MenuItemModel, spec: MenuSpec): Partial<MenuItemModel> {
   const drift: Partial<MenuItemModel> = {};
-  if (existing.url !== spec.url) drift.url = spec.url;
-  if (existing.action !== spec.action) drift.action = spec.action;
-  if (existing.roleNeeded !== spec.roleNeeded) drift.roleNeeded = spec.roleNeeded;
+  for (const field of STRUCTURAL_FIELDS) {
+    if (existing[field as keyof MenuItemModel] !== spec[field as keyof MenuSpec]) {
+      drift[field as keyof MenuItemModel] = spec[field as keyof MenuSpec] as never;
+    }
+  }
   return drift;
 }
 
@@ -60,8 +62,8 @@ export function planMenuOps(
         fields.menuItems = [...(doc.menuItems ?? []), ...missingChildren];
       }
 
-      const needsTenant = !doc.tenants.includes(tenantId);
-      if (needsTenant) fields.tenants = [...doc.tenants, tenantId];
+      const needsTenant = !(doc.tenants ?? []).includes(tenantId);
+      if (needsTenant) fields.tenants = [...(doc.tenants ?? []), tenantId];
 
       if (needsTenant || Object.keys(fields).length > 0) {
         ops.push({ key: spec.key, op: needsTenant ? 'add-tenant' : 'update-structure', fields });
