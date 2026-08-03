@@ -112,14 +112,65 @@ const calevent: FeatureBlock = {
   collections: ['calevents'],
   // Task 14: reconciled against every `calevent-feature` route in app.routes.ts. Only
   // `/yearlyevents` (`YearlyEvents`, same `calevents` collection, isPrivilegedGuard) was
-  // missing from the route fragment in `@okr/tenant-routes` — added there. No live
-  // `menuItems` doc exists under any name containing "yearlyevents" (verified by a
-  // name-equality query) — same "un-menu'd but real, guarded route" shape as `i18n`'s
-  // `/i18n/defaults` in the core bundle, so nothing to add here.
-  menu: [{
-    key: 'calevent-all', name: 'calevent-all', url: '/calevent/all/c-calevents',
-    action: 'navigate', roleNeeded: 'eventAdmin', icon: 'calendar', label: '@main.calevent.all',
-  }],
+  // missing from the route fragment in `@okr/tenant-routes` — added there.
+  //
+  // Fix round 1 (review, task 14) — CORRECTION: the original pass here claimed "No live
+  // `menuItems` doc exists under any name containing 'yearlyevents'". That was FALSE, and
+  // the query behind it was the wrong shape: it ran an exact-match `IN` filter for the
+  // literal string `'yearlyevents'` (the route/nav name), which by construction cannot
+  // match a differently-named doc — it never actually searched for "any name containing
+  // yearlyevents". `menuItems/c-yearlyevents` DOES exist live (verified, all 16 tenants):
+  // the context wrapper for `YearlyEvents`' own `:contextMenuName` route segment, `action:
+  // context`, `roleNeeded: contentAdmin`, children `yearlyevent-add`/`yearlyevent-export`
+  // (both `call`, generic, no tenant literal) — added below. There is still no live
+  // top-level `navigate` doc for `/yearlyevents` itself (a different, and still accurate,
+  // claim) — that part of the original comment was right; only the "no doc at all" framing
+  // was wrong. Same false-negative risk applies to any other "verified no live doc" claim
+  // in this codebase made via an exact-match query for the wrong string — worth an
+  // independent recheck wherever it matters, not assumed safe by precedent.
+  menu: [
+    {
+      key: 'calevent-all', name: 'calevent-all', url: '/calevent/all/c-calevents',
+      // Fix round 1: label corrected to the live value. Was '@main.calevent.all' (an i18n
+      // key format that IS genuinely used elsewhere, e.g. `aoc-admin`'s live label really is
+      // `@main.aoc.admin` — so this was an outlier on THIS doc, not evidence the format
+      // itself is wrong). `label` is not a `STRUCTURAL_FIELD` (menu-seed.util.ts), so no
+      // live doc was ever at risk — but a newly seeded tenant would have gotten the raw,
+      // untranslated key as its menu label instead of live tenants' actual "Alle Termine".
+      action: 'navigate', roleNeeded: 'eventAdmin', icon: 'calendar', label: 'Alle Termine',
+    },
+    // Fix round 1 (review Critical 2) — was missing entirely, present since Task 5.
+    // `calevent-all`'s own url ends in `/c-calevents`; verified live: `action: context`,
+    // `roleNeeded: privileged`, children `[calevent-add, calevent-export-raw,
+    // calevent-exportics, calevent-schedule, filter-toggle]`, all 16 tenants, all generic
+    // (no tenant literal in any child's own fields).
+    { key: 'c-calevents', name: 'c-calevents', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
+      { key: 'calevent-add', name: 'calevent-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Termin hinzufügen' },
+      { key: 'calevent-export-raw', name: 'calevent-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Termine exportieren' },
+      { key: 'calevent-exportics', name: 'calevent-exportics', url: 'exportIcs', action: 'call', roleNeeded: 'registered', icon: 'calendar', label: 'Kalender exportieren (ICS)' },
+      { key: 'calevent-schedule', name: 'calevent-schedule', url: 'schedule', action: 'call', roleNeeded: 'privileged', icon: 'calendar-number', label: '@main.schedule' },
+      // Live-data quirk: TWO `menuItems` docs share `name: 'filter-toggle'` — an
+      // `isArchived: true` one (`action: call`, `url: toggleFilter`, `roleNeeded:
+      // registered`, icon `search`) and a live, non-archived one (autoid doc, `action:
+      // toggle`, `url: toggleFilter`, `roleNeeded: contentAdmin`, icon `eye-on`) — same
+      // ambiguous-duplicate-name shape as `resource-menu`/`resource-menu-scs` (see the
+      // `resource` block). Rule 10 forbids cataloguing an `isArchived: true` doc (would
+      // resurrect a retired menu), so this mirrors the ACTIVE, non-archived doc's fields,
+      // not the archived one `c-calevents.menuItems` happens to also list by the same name.
+      // Same class of generic reusable leaf as `divider_empty` (noted on the `aoc` block) —
+      // kept here only because `c-calevents` itself references it.
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen' },
+    ] },
+    // Fix round 1 (review Critical 1) — the `/yearlyevents/:listId/:contextMenuName` route
+    // added above resolves its context menu to this doc; catalogued even though no
+    // top-level `navigate` MenuSpec references it (there is none live), because the ROUTE
+    // itself requires it. Verified live, all 16 tenants: `action: context`, `roleNeeded:
+    // contentAdmin`, children `[yearlyevent-add, yearlyevent-export]`, both generic.
+    { key: 'c-yearlyevents', name: 'c-yearlyevents', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'yearlyevent-add', name: 'yearlyevent-add', url: 'add', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: 'Anlass hinzufügen' },
+      { key: 'yearlyevent-export', name: 'yearlyevent-export', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Anlässe exportieren' },
+    ] },
+  ],
 };
 
 const aoc: FeatureBlock = {
@@ -620,6 +671,17 @@ const vcard: FeatureBlock = {
  *    `clubareal-menu`, a scs-only tenant-bespoke parent ("Clubareal"), and its url hardcodes
  *    a specific SCS reservation resource id (`r_scs_default`) — tenant-bespoke content, not
  *    a child of `resource-menu` at all (superseding the task-13 TODO's assumption that it was).
+ *  - `boat-menu` ("Ruderbetrieb und Boote") and `boathouse-menu` ("Bootshaus Projekt") — both
+ *    `tenants: ['scs']`, both tenant-authored groupings mixing generic specs this block DOES
+ *    catalogue (`boat-menu` lists `rboat-all`, `boats-club`, `boats-private` alongside
+ *    scs-authored siblings `ruderordnung`, `fahrordnung`, `boat-info`, `boot-strategie`,
+ *    `skiffplatz`, `boat-res`, `boat-maint`) with scs-only content (`boathouse-menu`'s
+ *    children — `bh_history`, `bh_varianten`, `bh_org`, `bh_projekt`, `bh_plaene`,
+ *    `bh_finance` — are entirely SCS boathouse-project pages, no generic sibling at all).
+ *    Same tenant-bespoke-grouping exclusion as `member-menu`/`sport-menu`: the parent DOCS
+ *    are excluded, not the generic specs they happen to also reference — `rboat-all`/
+ *    `boats-club`/`boats-private` are still catalogued here, just under `resourceMenuParent`,
+ *    not under a redeclaration of `boat-menu`.
  */
 const resource: FeatureBlock = {
   id: 'resource',
@@ -635,8 +697,22 @@ const resource: FeatureBlock = {
       { key: 'rboat-all', name: 'rboat-all', url: 'rboat/all/c-rboats', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'row_2x_side', label: 'Ruderboote' },
       // Navigates into `relationship`'s `/ownership/...` route (hence this block's
       // `dependsOn: ['relationship']`); `c-ownership`, the context wrapper both point at,
-      // is already catalogued by `relationship`. Icon copied verbatim, including the odd
-      // `//org.scs` value on the live doc.
+      // is already catalogued by `relationship`.
+      //
+      // `scsBoats` in the url is legacy NAMING, not a tenant-specific value: it's a
+      // first-class, hardcoded listId understood by `OwnershipList`/`OwnershipService` for
+      // EVERY tenant, not a per-tenant config value — `OwnershipExportList` (`ownership-
+      // export.ts:10`) types it as one of a fixed literal union (`'all' | 'ownerships' |
+      // 'scsBoats' | 'privateBoats' | 'lockers' | 'keys'`), and `ownership.store.ts:411`
+      // switches on it the same way for any tenant. Legacy-named, but genuinely generic
+      // code — correct to catalogue verbatim, not a tenant leak.
+      //
+      // `icon: '//org.scs'` is NOT the same case — flagging as a live-data defect rather
+      // than justifying it: this looks like a real scs-org storage asset path (an org
+      // logo/badge), which is genuinely tenant-specific. Mirrored verbatim per the
+      // mirror-rule (never invent), but a newly seeded tenant would get this literal value
+      // written into their own `boats-club` doc and it would render blank there — worth a
+      // decision by whoever owns menu-doc/icon hygiene, not silently "fixed" here.
       { key: 'boats-club', name: 'boats-club', url: '/ownership/scsBoats/c-ownership', action: 'navigate', roleNeeded: 'registered', icon: '//org.scs', label: 'Club-Boote' },
       { key: 'lockers-all', name: 'lockers-all', url: '/ownership/lockers/c-lockers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'lock-closed', label: 'Garderoben' },
       { key: 'keys-all', name: 'keys-all', url: '/ownership/keys/c-keys', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'key', label: 'Schlüssel' },

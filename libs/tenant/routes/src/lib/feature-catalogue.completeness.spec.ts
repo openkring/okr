@@ -1,7 +1,7 @@
 import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { FEATURE_BLOCKS } from '@okr/tenant-util';
+import { FEATURE_BLOCKS, collectMenuUrls } from '@okr/tenant-util';
 import type { MenuSpec } from '@okr/tenant-util';
 import { NON_BLOCK_DOMAINS, PENDING_CLASSIFICATION } from './feature-catalogue.non-blocks';
 
@@ -179,5 +179,54 @@ describe('catalogue completeness', () => {
 
     const violations = [...topLevelKeys].filter(k => childKeys.has(k));
     expect(violations).toEqual([]);
+  });
+
+  /**
+   * Fix round 1 (review, task 14, Important 4): mechanises convention rule 9 — "if a
+   * `navigate` url ends in `/c-something`, that wrapper doc must be catalogued too" — which
+   * nothing in the suite previously checked. That gap let a missing context wrapper land
+   * clean THREE times (`c-prel`, task 13 fix round 1; the `aoc` children, task 12 review
+   * round 2; and `c-calevents`, this task's own Critical 2 finding, present since task 5)
+   * before being caught by manual review each time.
+   *
+   * Walks every `navigate` url `collectMenuUrls` returns, extracts any path segment that
+   * starts with `c-`, and asserts it is a `key` somewhere in the catalogue's menu specs (at
+   * any depth, in any block) — a context wrapper doesn't need to be a TOP-level spec (most
+   * aren't reachable via a `navigate` url pointing directly at them; they're referenced only
+   * as another route's `:contextMenuName` segment), so this checks presence anywhere in the
+   * tree, not top-level presence.
+   *
+   * ALLOW-LIST, not a loose match: `c-address` is a real, already-documented exception — the
+   * `subject` block's `addresses` entry points at `/address/c-address`, but NO live
+   * `menuItems` doc named `c-address` exists anywhere (confirmed, task 13 fix round 1, by a
+   * name-equality query — zero hits). Inventing it would violate the mirror-verbatim rule;
+   * the gap is intentionally left live-data-accurate and flagged in the source comment on
+   * `addresses` instead. Any future addition to this list must carry the same kind of
+   * verified justification, not be added to silence a real gap.
+   */
+  it('every navigate url\'s c-* segment is a catalogued menu key (context-wrapper coverage)', () => {
+    const ALLOWED_UNCATALOGUED_WRAPPERS = new Set<string>([
+      // No live `menuItems/c-address` doc exists anywhere — see the comment on `addresses`
+      // in the `subject` block (task 13 fix round 1). Not invented, per the mirror rule.
+      'c-address',
+    ]);
+
+    const allKeys = new Set<string>();
+    const visit = (s: MenuSpec): void => {
+      allKeys.add(s.key);
+      (s.children ?? []).forEach(visit);
+    };
+    FEATURE_BLOCKS.forEach(b => b.menu.forEach(visit));
+
+    const missing = new Set<string>();
+    collectMenuUrls(FEATURE_BLOCKS).forEach(url => {
+      url.split('/').filter(Boolean).forEach(segment => {
+        if (segment.startsWith('c-') && !allKeys.has(segment) && !ALLOWED_UNCATALOGUED_WRAPPERS.has(segment)) {
+          missing.add(segment);
+        }
+      });
+    });
+
+    expect([...missing]).toEqual([]);
   });
 });
