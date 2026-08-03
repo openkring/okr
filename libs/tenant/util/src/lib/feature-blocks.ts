@@ -108,7 +108,12 @@ const calevent: FeatureBlock = {
   // Restored (task 13): calevents reference a subject (organizer/attendee) — see the
   // `subject` block below, which the task 6 brief's original 'person' name was ruled (repo
   // owner, 2026-08-02) to be renamed to under the container-level granularity ruling.
-  dependsOn: ['subject'],
+  //
+  // `document` added (task 16), by import evidence: `calevent-edit.modal.ts:12` and
+  // `calevent-view.modal.ts:12` both render `DocumentsAccordion` from `@okr/document-feature`
+  // — every event's attachments panel. Same reverse-edge class as the `pdf-template` edge
+  // `finance` gained in task 15, which its own brief also did not anticipate.
+  dependsOn: ['subject', 'document'],
   collections: ['calevents'],
   // Task 14: reconciled against every `calevent-feature` route in app.routes.ts. Only
   // `/yearlyevents` (`YearlyEvents`, same `calevents` collection, isPrivilegedGuard) was
@@ -179,7 +184,12 @@ const aoc: FeatureBlock = {
   label: '@tenant/util.feature.aoc.label',
   icon: 'admin',
   defaultAvailability: 'ga',
-  dependsOn: [],
+  // `document` added (task 16), by import evidence: three of this block's own stores —
+  // `aoc-content.store.ts:18`, `aoc-doc.store.ts:14` (`DocumentService`) and
+  // `aoc-data.store.ts:24` (`documentValidations`/`getDocumentIndex`) — read and repair the
+  // `docs` collection directly. The `aoc-doc` entry still listed in the TODO below is
+  // literally the "Dokumente" admin screen over it.
+  dependsOn: ['document'],
   collections: [],
   // TODO(task-15-18): the live `aoc-menu` doc's children[] (verified against Firestore,
   // task 12 review round 2) also lists these keys, still missing a home:
@@ -231,6 +241,16 @@ const cms: FeatureBlock = {
   icon: 'page',
   core: true,
   defaultAvailability: 'ga',
+  // Stays `[]` DELIBERATELY, though `libs/cms/section/feature`'s `rag-section.store.ts:15-17`
+  // really does inject `DocumentService`, `buildDocumentModel` AND `FolderService` (the RAG
+  // section indexes uploaded files). Not declared, because a `core: true` block declaring a
+  // non-core dependency would drag `document`/`folder` into `resolveWithDeps` for EVERY
+  // tenant — `cms` is always on, so the edge would silently make the whole `documents`
+  // bundle unswitchable and defeat the gate it exists to provide. The RAG section keeps
+  // working either way: it calls the services directly, and block enablement gates routes
+  // and menu seeding, not module loading. Flagged in the task-16 report as a product
+  // decision (should a tenant without `document` be offered a RAG section at all?), not
+  // silently encoded as a dependency here. (task 16)
   dependsOn: [],
   // Container domain: libs/cms/{icon,menu,page,section}, each owning its own Firestore collection.
   collections: ['icons', 'menuItems', 'pages', 'sections'],
@@ -371,6 +391,12 @@ const avatar: FeatureBlock = {
   icon: 'avatar-circle',
   core: true,
   defaultAvailability: 'ga',
+  // Stays `[]` DELIBERATELY, though `upload.service.ts:13-14` imports `buildDocumentModel`
+  // and `DocumentService` from `@okr/document-*` (every uploaded avatar is also recorded as
+  // a `docs` row). Same reasoning as on the `cms` block: a `core: true` block must not name
+  // a non-core dependency, or the always-on core makes `document` permanently on for every
+  // tenant. It would also be a dependsOn CYCLE — `libs/document` imports `UploadService`
+  // and `readAsFile` straight back out of `@okr/avatar-*`. (task 16)
   dependsOn: [],
   collections: ['avatars'],
   // No route of its own — avatar upload/selection is an embedded widget used from person,
@@ -467,7 +493,16 @@ const subject: FeatureBlock = {
   label: '@tenant/util.feature.subject.label',
   icon: 'id-card',
   defaultAvailability: 'ga',
-  dependsOn: [],
+  // Was `[]`. `document` + `folder` added (task 16), by import evidence, not by theme:
+  //  - `group-view.page.ts` renders `DocumentList` (`@okr/document-feature`) as the group's
+  //    whole "Dateien" segment, and injects `FolderService` + `canManageFolders`
+  //    (`@okr/folder-*`) to decide who may create folders in it.
+  //  - `addresses.store.ts:21-22` injects BOTH `DocumentService` and `FolderService`.
+  //  - `person-edit.modal.ts`, `person-edit.page.ts` and `org-edit.modal.ts` each render
+  //    `DocumentsAccordion` and use `getDocumentStoragePath`.
+  // No cycle: neither `libs/document` nor `libs/folder` imports any `@okr/subject-*` lib
+  // (verified by listing every `@okr/*` import in both domains).
+  dependsOn: ['document', 'folder'],
   // PersonCollection, OrgCollection, AddressCollection, GroupCollection,
   // ApplicationCollection, AddressDirectoryCollection (all from `@okr/shared-models`,
   // verified via each subdomain's own `*.service.ts`). `swisscities` owns NO collection —
@@ -544,7 +579,13 @@ const relationship: FeatureBlock = {
   label: '@tenant/util.feature.relationship.label',
   icon: 'link',
   defaultAvailability: 'ga',
-  dependsOn: ['subject'],
+  // `document` added (task 16), by import evidence: `membership-edit.modal.ts:11`,
+  // `ownership-edit.modal.ts:8` and `personal-rel-edit.modal.ts:11` each render
+  // `DocumentsAccordion` from `@okr/document-feature` (contracts/agreements attached to a
+  // membership, a boat ownership, a personal relationship). `folder` is NOT declared here:
+  // no `libs/relationship/**` file imports `@okr/folder-*` — it arrives transitively
+  // through `document`'s own `dependsOn`, which is where the real edge is.
+  dependsOn: ['subject', 'document'],
   // MembershipCollection, ReservationCollection, OwnershipCollection, InvitationCollection,
   // TransferCollection, PersonalRelCollection, ResponsibilityCollection, WorkrelCollection —
   // all verified via each subdomain's own `*.service.ts`.
@@ -1000,6 +1041,157 @@ const pdfTemplate: FeatureBlock = {
   ],
 };
 
+/**
+ * `libs/document/{data-access,feature,ui,util}` — the tenant's file library. `DocumentList`
+ * browses a folder tree of uploaded files (`/document/:listId/:contextMenuName`);
+ * `DocumentsAccordion` is the embedded attachments panel that person/org/calevent/
+ * membership/ownership/personal-rel edit modals render; plus the revisions modal and the
+ * image picker used by CMS sections. Owns `docs` (`DocumentCollection = 'docs'`,
+ * `document.service.ts`) — and only that: revisions are an array field ON `DocumentModel`,
+ * not a second collection (`document-revisions.modal.ts` reads `DocumentStore`, touches no
+ * collection of its own), and the file bytes live in Cloud Storage, not Firestore.
+ * Cross-checked against `apps/functions/src/privacy/subject-data-map.ts:549`, which knows
+ * exactly one document collection (`docs`, by `authorKey`).
+ *
+ * `dependsOn: ['folder']` — hard, not decorative. `document-list.ts` renders
+ * `FolderBreadcrumb` (`@okr/folder-ui`) in its permanent toolbar and gates on
+ * `canEditFolder` (`@okr/folder-util`); `document.store.ts` injects `FolderService`, calls
+ * `newFolderModel`, and dynamically imports `FolderEditModal` from `@okr/folder-feature`
+ * for the `addFolder` action. DocumentList cannot even draw its own header without folder.
+ *
+ * NOT declared although they ARE real runtime imports — `avatar` and `cms`:
+ * `document.store.ts` and `image-select.modal.ts` inject `UploadService`
+ * (`@okr/avatar-data-access`), `document.util.ts` uses `readAsFile` (`@okr/avatar-util`),
+ * and `document-list.ts` renders `Menu` (`@okr/cms-menu-feature`). Both targets are
+ * `core: true`, i.e. unconditionally effective for every tenant, and NO block in this
+ * catalogue declares a core dependency (every core block itself carries `dependsOn: []`) —
+ * following that convention rather than inventing an exception here. Declaring `avatar`
+ * would additionally create a dependsOn CYCLE, because `avatar`'s own `upload.service.ts`
+ * imports `DocumentService`/`buildDocumentModel` back out of this domain
+ * (`resolveWithDeps` terminates on cycles, so it would not crash — it would just be an
+ * unreadable statement of a mutual, always-satisfied relationship).
+ *
+ * MENU/ROUTE ROLE MISMATCH, reported not "fixed" (same class as `addresses` on the
+ * `subject` block): the live `document-all` doc's `roleNeeded` is `contentAdmin`, but the
+ * route it navigates to is guarded by `isPrivilegedGuard`. `hasRole` (`auth.util.ts`)
+ * satisfies `privileged` from `['privileged', 'admin']` only — `contentAdmin` is NOT in
+ * that list. So a contentAdmin-but-not-admin user sees the "Dokumente" entry and is then
+ * bounced by the route guard: a UX dead end, not an access leak (the guard is the stricter
+ * side). Copied verbatim per the mirror rule; flagged for whoever owns menuItems hygiene.
+ */
+// Named `documentBlock`, not `document`: a module-scope `const document` would shadow the
+// DOM global of that name for the whole file.
+const documentBlock: FeatureBlock = {
+  id: 'document',
+  bundle: 'documents',
+  label: '@tenant/util.feature.document.label',
+  icon: 'documents',
+  defaultAvailability: 'ga',
+  dependsOn: ['folder'],
+  collections: ['docs'],
+  menu: [
+    // Verified live: `document-all` is a CHILD of the shared `cms-menu` parent doc — its
+    // `menuItems` array reads `[cms-graph, menu-all, page-all, section-all, document-all,
+    // location-all, ...]`. Nested via `cmsMenuParent()` accordingly, never top-level
+    // (rule 2: mirror the live TREE SHAPE, not just the node).
+    cmsMenuParent([
+      { key: 'document-all', name: 'document-all', url: '/document/all/c-documents', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'documents', label: '@main.cms.documents' },
+    ]),
+    // The `:contextMenuName` wrapper `document-all`'s own url points at. Verified live,
+    // all 16 tenants: `action: context`, `roleNeeded: contentAdmin`, children
+    // `[document-add, document-export-raw, filter-toggle]`, all generic (no tenant literal
+    // in any field). NOTE the doc is named `c-documents`, NOT `c-docs` — `document-list.ts:60`
+    // has a stale code comment calling it "the c-docs addFiles menu item"; no `menuItems`
+    // doc named `c-docs` exists (checked two ways: a name-equality `IN` query returned
+    // nothing, and an ordered range scan of every doc whose `name` sorts in [`c-d`, `c-g`)
+    // returned exactly `c-documents`, `c-expense`, `c-folder`).
+    { key: 'c-documents', name: 'c-documents', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'document-add', name: 'document-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'upload', label: 'Dokument hinzufügen' },
+      { key: 'document-export-raw', name: 'document-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Export Rohdaten' },
+      // Same ACTIVE (non-archived) `filter-toggle` doc the `calevent` block already
+      // declares — field-identical here on purpose (two live docs share this name; the
+      // `isArchived: true` one must not be catalogued, rule 10). See the long note on
+      // `c-calevents` above.
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen' },
+    ] },
+    // `c-folder` is catalogued HERE, on `document`, despite its name — and it is catalogued
+    // at all despite NO catalogued (or live) `navigate` url pointing at it and no route
+    // naming it. Both decisions are evidence-based:
+    //
+    //  - WHY IT MUST BE CATALOGUED: it is referenced only from application CODE —
+    //    `group-view.page.ts:253` (`case 'files': return 'c-folder';`) hoists it as the
+    //    context menu of the group view's "Dateien" segment, which renders
+    //    `<okr-document-list contextMenuName="disable">` and delegates the action sheet to
+    //    the group toolbar. The wrapper-coverage test in `@okr/tenant-routes` structurally
+    //    cannot see this: it walks `navigate` urls for `c-*` segments, and nothing here is
+    //    a url or a route parameter. The live doc exists on `tenants: ['scs']` ONLY, so
+    //    every other tenant's group "Dateien" tab already renders an empty action menu
+    //    today — the exact p13 failure mode this catalogue exists to prevent. Same
+    //    precedent as `c-yearlyevents` (`calevent`) and the five accounting wrappers
+    //    (`finance`), both catalogued for the same reason.
+    //  - WHY `document` AND NOT `folder`: all three children are dispatched by
+    //    `DocumentList.onPopoverDismiss` (`document-list.ts:293-299`: `addFolder` →
+    //    `store.addFolder()`, `addFiles` → toolbar label→input, `toggleFilter` → local
+    //    signal). `FolderList.onPopoverDismiss` handles only `'add'` and is not rendered
+    //    anywhere in the app. Placing it on `folder` would seed a wrapper into tenants that
+    //    enable `folder` without `document` — where no screen ever renders it — and would
+    //    key its visibility (`blockOwnersOfMenuKey`) to a block that owns no screen.
+    { key: 'c-folder', name: 'c-folder', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
+      { key: 'folder-add', name: 'folder-add', url: 'addFolder', action: 'call', roleNeeded: 'registered', icon: 'folder', label: 'Ordner hinzufügen' },
+      { key: 'files-add', name: 'files-add', url: 'addFiles', action: 'call', roleNeeded: 'registered', icon: 'upload', label: 'Dateien hinzufügen' },
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen' },
+    ] },
+  ],
+};
+
+/**
+ * `libs/folder/{data-access,feature,ui,util}` — the folder tree documents are filed into
+ * (`FolderModel`, per-folder `membersMayUpload` permission, breadcrumb navigation). Owns
+ * `folders` (`FolderCollection = 'folders'`, `folder.service.ts`); cross-checked against
+ * `apps/functions/src/privacy/subject-data-map.ts:684` (`folders`, by `ownerKey`).
+ *
+ * JUDGEMENT CALL — kept as its OWN block rather than merged into `document`, and the
+ * argument cuts both ways; recording both so a later reader does not have to redo it:
+ *  - FOR MERGING (the honest case): this block ships NOTHING a tenant can see. No route
+ *    (`app.routes.ts` has no `folder` path — grepped), no live `menuItems` doc of its own,
+ *    and `FolderList` — its only list screen — is exported from `@okr/folder-feature` but
+ *    imported by nobody (only `whiteboard-list.ts` mentions it, in a comment, as a
+ *    structural precedent). The one live wrapper carrying folder actions (`c-folder`) is
+ *    dispatched by `DocumentList`, so it sits on `document` above. A tenant enabling
+ *    `folder` alone gets literally zero user-visible surface, and `document` already forces
+ *    `folder` on through `dependsOn`.
+ *  - FOR KEEPING IT SPLIT (what is implemented): (a) block ids are stable SKU keys other
+ *    tasks in this series reference by name, and the brief specifies two; (b) `folders` is
+ *    a distinct Firestore collection with its own retention/audit and its own privacy
+ *    subject-data-map entry, and `collections` is what the later retention pass acts on —
+ *    folding it into `document`'s array would work, but loses the 1:1 domain↔block mapping
+ *    the completeness test is built on; (c) folder is genuinely consumed WITHOUT document
+ *    by other domains (`cms/section`'s `rag-section.store.ts`, `subject/address`'s
+ *    `addresses.store.ts`, `subject/group`'s `group-view.page.ts` all inject `FolderService`
+ *    directly), so it is a real shared dependency, not a private implementation detail of
+ *    `document`.
+ * Raised with the controller rather than acted on unilaterally — see the task report.
+ *
+ * TODO(task 17/18 — `activity`): `folder.service.ts:11` imports `ActivityService` from
+ * `@okr/activity-data-access` and writes an audit entry on every folder mutation. `activity`
+ * is not yet a catalogue block (still in `PENDING_CLASSIFICATION`), and `dependsOn` targets
+ * must already exist (enforced by `feature-catalogue.completeness.spec.ts`), so the edge
+ * cannot be declared today. Identical situation to the two edges `finance` still owes.
+ */
+const folder: FeatureBlock = {
+  id: 'folder',
+  bundle: 'documents',
+  label: '@tenant/util.feature.folder.label',
+  icon: 'folder',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: ['folders'],
+  // No route and no live `menuItems` doc of its own — see the block comment above. The one
+  // live wrapper that carries folder ACTIONS (`c-folder`) is rendered and dispatched by
+  // `DocumentList`, so it is catalogued on the `document` block, not here.
+  menu: [],
+};
+
 // consent: judged CORE, not `members`. The cookie/analytics-consent banner
 // (`@okr/consent-ui`'s CookieBanner + `@okr/consent-data-access`) is wired into every
 // tenant app's root (`okr-root.ts`/`app.config.ts`), shown to every visitor — including
@@ -1034,4 +1226,5 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   subject, relationship, vcard,
   resource, mobility,
   finance, esign, pdfTemplate,
+  documentBlock, folder,
 ];

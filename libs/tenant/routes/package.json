@@ -52,6 +52,7 @@
     "@okr/finance-reporting-feature": "*",
     "@okr/finance-vat-code-feature": "*",
     "@okr/esign-feature": "*",
-    "@okr/pdf-template-feature": "*"
+    "@okr/pdf-template-feature": "*",
+    "@okr/document-feature": "*"
   }
 }

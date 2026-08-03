@@ -30,7 +30,9 @@
     "mobility":     { "label": "Mobilité" },
     "finance":      { "label": "Finances et comptabilité" },
     "esign":        { "label": "Signature électronique" },
-    "pdf-template": { "label": "Modèles PDF" }
+    "pdf-template": { "label": "Modèles PDF" },
+    "document":     { "label": "Documents" },
+    "folder":       { "label": "Dossiers" }
   },
   "picker": {
     "title": "Blocs fonctionnels",

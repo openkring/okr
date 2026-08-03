@@ -45,6 +45,7 @@
     { "path": "../../relationship/personal-rel/feature/tsconfig.lib.json" },
     { "path": "../../relationship/workrel/feature/tsconfig.lib.json" },
     { "path": "../../relationship/transfer/feature/tsconfig.lib.json" },
-    { "path": "../../relationship/responsibility/feature/tsconfig.lib.json" }
+    { "path": "../../relationship/responsibility/feature/tsconfig.lib.json" },
+    { "path": "../../document/feature/tsconfig.lib.json" }
   ]
 }

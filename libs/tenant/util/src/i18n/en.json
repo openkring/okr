@@ -30,7 +30,9 @@
     "mobility":     { "label": "Mobility" },
     "finance":      { "label": "Finance & accounting" },
     "esign":        { "label": "E-signature" },
-    "pdf-template": { "label": "PDF templates" }
+    "pdf-template": { "label": "PDF templates" },
+    "document":     { "label": "Documents" },
+    "folder":       { "label": "Folders" }
   },
   "picker": {
     "title": "Feature blocks",

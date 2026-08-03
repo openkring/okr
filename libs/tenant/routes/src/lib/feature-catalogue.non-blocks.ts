@@ -42,8 +42,18 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 // imports both (`@okr/activity-data-access`, `@okr/task-feature`): they are separate blocks
 // still to be catalogued, and `finance` therefore cannot yet declare them in `dependsOn` (the
 // completeness test rejects a dangling target). See the note on the `finance` block.
+// Task 16 (documents bundle) drained: document, folder. Kept as TWO blocks per the brief
+// even though `folder` ships no route and no menu of its own (its only list screen,
+// `FolderList`, is imported by nothing) — the argument for and against merging it into
+// `document` is recorded in full on the `folder` block in `feature-blocks.ts` and was raised
+// with the controller rather than acted on unilaterally, because block ids are stable SKU
+// keys other tasks reference by name.
+// `activity` is STILL not drained, and the two edges `finance` owes therefore still cannot
+// be declared: `@okr/activity-data-access` is imported by `finance` (audit-trail writes) AND
+// now demonstrably by `libs/folder/data-access/src/lib/folder.service.ts:11` as well, so
+// `folder` carries the same "not expressible yet" TODO. `task` likewise stays pending.
 export const PENDING_CLASSIFICATION: string[] = [
-  'activity', 'chat', 'document',
-  'folder', 'forms', 'games', 'instruments',
+  'activity', 'chat',
+  'forms', 'games', 'instruments',
   'social-feed', 'task',
 ];

@@ -610,6 +610,47 @@ const pdfTemplate: BlockRoutes = {
 };
 
 /**
+ * The single `document` top-level path, copied verbatim from `app.routes.ts` (including its
+ * `data` payload). No guard correction was needed: `isAuthenticatedGuard` and
+ * `isPrivilegedGuard` are plain `CanActivateFn`s and are correctly written uncalled here,
+ * exactly as the live file has them — neither is one of the `isAdminGuard`/`isAuditorGuard`
+ * factories that must be called.
+ *
+ * `isPrivilegedGuard` on the child is STRICTER than the live `document-all` menu doc's
+ * `roleNeeded: contentAdmin` — see the mismatch note on the `document` block in
+ * `@okr/tenant-util`'s `feature-blocks.ts`. Reported, not changed: weakening a guard in a
+ * cataloguing task is forbidden, and the direction here is safe (menu too permissive, guard
+ * correct).
+ */
+const documentBlock: BlockRoutes = {
+  id: 'document',
+  routes: (): Route[] => [{
+    path: 'document',
+    canActivate: [isAuthenticatedGuard],
+    children: [
+      { path: ':listId/:contextMenuName',
+        canActivate: [isPrivilegedGuard],
+        loadComponent: () => import('@okr/document-feature').then(m => m.DocumentList),
+        data: { color: 'secondary', view: 'list', showMenu: true },
+      },
+    ],
+  }],
+};
+
+/**
+ * No route fragment — deliberate, and verified rather than assumed: `app.routes.ts` contains
+ * no `folder` path (grepped for both the path and every `@okr/folder-*` import), and
+ * `FolderList`, the domain's only list screen, is exported from `@okr/folder-feature` but
+ * imported by no component anywhere in `libs/` or `apps/`. Folders are navigated through
+ * `DocumentList`'s breadcrumb, which belongs to the `document` block. The empty entry is
+ * still required: `feature-catalogue.sync.spec.ts` fails if an id exists on one side only.
+ */
+const folder: BlockRoutes = {
+  id: 'folder',
+  routes: (): Route[] => [],
+};
+
+/**
  * Every feature block's Angular route fragment. Adding a block here is HALF of what makes
  * a feature reachable — the matching metadata (id, dependsOn, bundle, menu, seed) must
  * also be added to `FEATURE_BLOCKS` in `@okr/tenant-util`. Tasks 12-18 fill in the
@@ -621,4 +662,5 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   subject, relationship, vcard,
   resource, mobility,
   finance, esign, pdfTemplate,
+  documentBlock, folder,
 ];

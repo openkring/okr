@@ -30,7 +30,9 @@
     "mobility":     { "label": "Movilidad" },
     "finance":      { "label": "Finanzas y contabilidad" },
     "esign":        { "label": "Firma electrónica" },
-    "pdf-template": { "label": "Plantillas PDF" }
+    "pdf-template": { "label": "Plantillas PDF" },
+    "document":     { "label": "Documentos" },
+    "folder":       { "label": "Carpetas" }
   },
   "picker": {
     "title": "Bloques de funciones",

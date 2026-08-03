@@ -22,6 +22,7 @@
     { "path": "../../cms/menu/feature/tsconfig.lib.json" },
     { "path": "../../cms/page/feature/tsconfig.lib.json" },
     { "path": "../../cms/section/feature/tsconfig.lib.json" },
+    { "path": "../../document/feature/tsconfig.lib.json" },
     { "path": "../../esign/feature/tsconfig.lib.json" },
     { "path": "../../finance/account/feature/tsconfig.lib.json" },
     { "path": "../../finance/accounting/feature/tsconfig.lib.json" },
