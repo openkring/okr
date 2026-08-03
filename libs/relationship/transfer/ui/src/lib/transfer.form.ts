@@ -28,8 +28,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
             (avatarsChange)="onFieldChange('subjects', $event)"
             [currentUser]="currentUser"
             [readOnly]="readOnly()"
-            title="@transfer.field.subjects"
-            addLabel="@transfer.operation.addSubject.label"
+            [title]="i18n().subject()"
           />
 
           <!-- objects -->
@@ -40,8 +39,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
             (avatarsChange)="onFieldChange('objects', $event)"
             [currentUser]="currentUser"
             [readOnly]="readOnly()"
-            title="@transfer.field.objects"
-            addLabel="@transfer.operation.addObject.label"
+            [title]="i18n().object()"
           />
 
           <ion-card>

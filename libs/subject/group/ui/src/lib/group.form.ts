@@ -86,7 +86,6 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
           [readOnly]="isReadOnly()"
           title="Gruppen-Administratoren"
           description="Diese Personen können die Gruppe verwalten, z.B. Mitglieder hinzufügen oder entfernen. Der erst genannte Administrator ist zudem der Hauptkontakt, dh. dieser Person werden Todo's automatisch zugewiesen."
-          addLabel="@calevent.field.responsible.addLabel"
         />
       }
 
