@@ -27,7 +27,10 @@
     "relationship": { "label": "Relaciones" },
     "vcard":        { "label": "Exportación vCard" },
     "resource":     { "label": "Recursos" },
-    "mobility":     { "label": "Movilidad" }
+    "mobility":     { "label": "Movilidad" },
+    "finance":      { "label": "Finanzas y contabilidad" },
+    "esign":        { "label": "Firma electrónica" },
+    "pdf-template": { "label": "Plantillas PDF" }
   },
   "picker": {
     "title": "Bloques de funciones",

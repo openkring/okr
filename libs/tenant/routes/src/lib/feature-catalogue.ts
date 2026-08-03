@@ -1,5 +1,5 @@
 import type { Route } from '@angular/router';
-import { isAdminGuard, isAuthenticatedGuard, isPrivilegedGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuthenticatedGuard, isPrivilegedGuard, isTreasurerGuard } from '@okr/auth-feature';
 
 /**
  * A feature block's Angular ROUTE fragment — `canActivate` guards + `loadComponent`. Split
@@ -462,6 +462,154 @@ const mobility: BlockRoutes = {
 };
 
 /**
+ * Four top-level paths, all copied verbatim from `app.routes.ts`. `scsmemberfees` sits
+ * between `expense` and `accounting` in the live file but belongs to `relationship` (already
+ * catalogued above), and `invoice-aging` sits between `icon` and `scsmemberfees`.
+ *
+ * `isTreasurerGuard` (on `accounting-ocr-rules`) is a plain `CanActivateFn`, NOT a factory —
+ * it stays UNCALLED, like `isAuthenticatedGuard`/`isPrivilegedGuard`. Only `isAdminGuard`/
+ * `isAuditorGuard` are `(): CanActivateFn` factories that must be written called.
+ */
+const finance: BlockRoutes = {
+  id: 'finance',
+  routes: (): Route[] => [
+    {
+      // No live `menuItems` doc points at this screen (verified twice: no doc named
+      // `invoice-aging`, and no doc whose `url` equals `/invoice-aging` or `invoice-aging`).
+      // Reachable today only by typing the URL — same "un-menu'd admin screen" shape as
+      // `i18n` and `applications`, not a route defect.
+      path: 'invoice-aging',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/finance-invoice-feature').then(m => m.InvoiceAging),
+    },
+    {
+      path: 'expense',
+      canActivate: [isAuthenticatedGuard],
+      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/finance-expense-feature').then(m => m.ExpenseList) }],
+    },
+    {
+      // `:accountingTenantId` is the LEGAL ENTITY whose books are shown (scs, gss, ...), not
+      // the okr tenant — which is why every live navigate entry into this subtree is
+      // necessarily tenant-authored and therefore excluded from the `finance` block's menu.
+      // See the block comment in `@okr/tenant-util`'s `feature-blocks.ts`.
+      path: 'accounting/:accountingTenantId',
+      canActivate: [isPrivilegedGuard],
+      loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingShell),
+      children: [
+        {
+          path: 'journal',
+          children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-booking-feature').then(m => m.BookingList) }],
+        },
+        {
+          path: 'invoice',
+          children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/finance-invoice-feature').then(m => m.InvoiceList) }],
+        },
+        {
+          path: 'bill',
+          children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/finance-bill-feature').then(m => m.BillList) }],
+        },
+        {
+          path: 'account',
+          children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/finance-account-feature').then(m => m.AccountList) }],
+        },
+        {
+          path: 'periods',
+          loadComponent: () => import('@okr/finance-period-feature').then(m => m.PeriodList),
+        },
+        {
+          // No live `menuItems` doc navigates here (verified: no `/accounting/scs/vat-codes`
+          // or `/accounting/gss/vat-codes` url, no `vat-codes`/`c-vat-codes` name) — the VAT
+          // code list is reachable only by typed URL today.
+          path: 'vat-codes',
+          loadComponent: () => import('@okr/finance-vat-code-feature').then(m => m.VatCodeList),
+        },
+        {
+          path: 'balance',
+          loadComponent: () => import('@okr/finance-reporting-feature').then(m => m.BalanceSheetPage),
+        },
+        {
+          path: 'income-statement',
+          loadComponent: () => import('@okr/finance-reporting-feature').then(m => m.IncomeStatementPage),
+        },
+        {
+          path: 'cash-flow',
+          loadComponent: () => import('@okr/finance-reporting-feature').then(m => m.CashFlowPage),
+        },
+        {
+          path: 'assets',
+          loadComponent: () => import('@okr/finance-asset-feature').then(m => m.AssetList),
+        },
+        {
+          path: 'depreciation-run',
+          loadComponent: () => import('@okr/finance-asset-feature').then(m => m.DepreciationRunPage),
+        },
+        {
+          path: 'payments',
+          loadComponent: () => import('@okr/finance-payment-feature').then(m => m.PaymentOrderList),
+        },
+        {
+          path: 'payments/:orderKey',
+          loadComponent: () => import('@okr/finance-payment-feature').then(m => m.PaymentOrderDetailPage),
+        },
+        {
+          // Copied verbatim INCLUDING the dead target: `journal-context` is not the name of
+          // any live `menuItems` document (verified by two independent query shapes — see the
+          // `finance` block comment in `feature-blocks.ts`). Landing on bare
+          // `/accounting/<tid>` therefore renders BookingList with an empty context menu; the
+          // working live entries navigate to `journal/c-journal` instead. Reported, not
+          // "fixed" here — inventing a route or a menu doc is out of scope for a cataloguing
+          // task, and changing the redirect target is an app-routes change.
+          path: '',
+          pathMatch: 'full',
+          redirectTo: 'journal/journal-context',
+        },
+      ],
+    },
+    {
+      path: 'accounting-ocr-rules/:accountingTenantId/:contextMenuName',
+      canActivate: [isTreasurerGuard],
+      loadComponent: () => import('@okr/finance-ocr-rule-feature').then(m => m.OcrRuleList),
+    },
+  ],
+};
+
+const esign: BlockRoutes = {
+  id: 'esign',
+  routes: (): Route[] => [{
+    path: 'esign',
+    canActivate: [isPrivilegedGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('@okr/esign-feature').then(m => m.EsignList),
+      },
+    ],
+  }],
+};
+
+const pdfTemplate: BlockRoutes = {
+  id: 'pdf-template',
+  routes: (): Route[] => [{
+    path: 'templates',
+    // Corrected from app.routes.ts:411's uncalled `isAdminGuard` — the factory written
+    // uncalled enforces NOTHING, so `/templates` (and its `:templateKey` editor) is currently
+    // open to any authenticated user in the live app. Same correction class as `user`,
+    // `security`, `i18n` and `subject`'s `address` fragment.
+    canActivate: [isAdminGuard()],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('@okr/pdf-template-feature').then(m => m.TemplateList),
+      },
+      {
+        path: ':templateKey',
+        loadComponent: () => import('@okr/pdf-template-feature').then(m => m.TemplateEditPage),
+      },
+    ],
+  }],
+};
+
+/**
  * Every feature block's Angular route fragment. Adding a block here is HALF of what makes
  * a feature reachable — the matching metadata (id, dependsOn, bundle, menu, seed) must
  * also be added to `FEATURE_BLOCKS` in `@okr/tenant-util`. Tasks 12-18 fill in the
@@ -472,4 +620,5 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
   subject, relationship, vcard,
   resource, mobility,
+  finance, esign, pdfTemplate,
 ];

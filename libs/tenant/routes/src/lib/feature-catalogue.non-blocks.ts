@@ -34,9 +34,16 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 // Task 13 (members bundle) drained: subject, relationship, vcard.
 // Task 14 (events bundle) drained: resource, mobility. (`calevent` was never in this list —
 // catalogued since task 5.)
+//
+// Task 15 (finance bundle) drained: finance, esign, pdf-template. Note `finance` is the
+// container domain for all THIRTEEN `libs/finance/*` subdomains (the task brief names twelve;
+// `exchange-rate` is a 13th, route-less and menu-less) — consistent with the top-level-only
+// keying described above. Neither `activity` nor `task` was drained here even though `finance`
+// imports both (`@okr/activity-data-access`, `@okr/task-feature`): they are separate blocks
+// still to be catalogued, and `finance` therefore cannot yet declare them in `dependsOn` (the
+// completeness test rejects a dangling target). See the note on the `finance` block.
 export const PENDING_CLASSIFICATION: string[] = [
   'activity', 'chat', 'document',
-  'esign', 'finance', 'folder', 'forms', 'games', 'instruments',
-  'pdf-template',
+  'folder', 'forms', 'games', 'instruments',
   'social-feed', 'task',
 ];

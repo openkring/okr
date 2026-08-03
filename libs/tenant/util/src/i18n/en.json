@@ -27,7 +27,10 @@
     "relationship": { "label": "Relationships" },
     "vcard":        { "label": "vCard export" },
     "resource":     { "label": "Resources" },
-    "mobility":     { "label": "Mobility" }
+    "mobility":     { "label": "Mobility" },
+    "finance":      { "label": "Finance & accounting" },
+    "esign":        { "label": "E-signature" },
+    "pdf-template": { "label": "PDF templates" }
   },
   "picker": {
     "title": "Feature blocks",

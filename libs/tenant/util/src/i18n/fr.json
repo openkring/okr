@@ -27,7 +27,10 @@
     "relationship": { "label": "Relations" },
     "vcard":        { "label": "Export vCard" },
     "resource":     { "label": "Ressources" },
-    "mobility":     { "label": "Mobilité" }
+    "mobility":     { "label": "Mobilité" },
+    "finance":      { "label": "Finances et comptabilité" },
+    "esign":        { "label": "Signature électronique" },
+    "pdf-template": { "label": "Modèles PDF" }
   },
   "picker": {
     "title": "Blocs fonctionnels",

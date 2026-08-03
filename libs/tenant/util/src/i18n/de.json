@@ -27,7 +27,10 @@
     "relationship": { "label": "Beziehungen" },
     "vcard":        { "label": "vCard-Export" },
     "resource":     { "label": "Ressourcen" },
-    "mobility":     { "label": "Mobilität" }
+    "mobility":     { "label": "Mobilität" },
+    "finance":      { "label": "Finanzen & Buchhaltung" },
+    "esign":        { "label": "E-Signatur" },
+    "pdf-template": { "label": "PDF-Vorlagen" }
   },
   "picker": {
     "title": "Feature-Bausteine",

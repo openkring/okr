@@ -763,6 +763,243 @@ const mobility: FeatureBlock = {
   ],
 };
 
+/**
+ * Container domain for `libs/finance/{account,accounting,asset,bill,booking,exchange-rate,
+ * expense,invoice,ocr-rule,payment,period,reporting,vat-code}` — ONE block, per the same
+ * container-level ruling as `subject`/`relationship`/`resource`. NOTE: that is THIRTEEN
+ * subdomains, not the twelve the task brief lists — `exchange-rate` is a real 13th
+ * (`ExchangeRateService`, `exchange-rates` collection) with no route and no menu of its own,
+ * consumed by booking/invoice for FX conversion. Counted here so it is not mistaken for an
+ * omission.
+ *
+ * `dependsOn`:
+ *  - `subject` — invoices/bills address persons and organisations; verified by import, not
+ *    assumed: `libs/finance` imports `@okr/subject-person-data-access`,
+ *    `@okr/subject-org-data-access`, `@okr/subject-address-data-access` and
+ *    `@okr/subject-address-util`. Both person and org live in the single `subject` block.
+ *  - `pdf-template` — NOT in the task brief, added on evidence: `booking.store.ts:37` imports
+ *    `DocGenerationService` from `@okr/pdf-template-data-access` and dispatches a
+ *    `generateDocument` action (`booking.store.ts:280`). A tenant with `finance` on and
+ *    `pdf-template` off would ship a booking screen whose document generation cannot work.
+ *
+ * NOT expressible yet (both are real runtime imports, both blocks land in tasks 16-18 —
+ * revisit then): `@okr/activity-data-access` (audit-trail writes from the finance stores) and
+ * `@okr/task-feature` (bill/expense approval tasks). `dependsOn` targets must already exist
+ * in the catalogue (enforced by `feature-catalogue.completeness.spec.ts`), so they cannot be
+ * declared here today.
+ *
+ * EXCLUDED, not modelled — the whole double-entry accounting nav, verified against Firestore:
+ *  - `scsf_fibu` ("SCS Buchhaltung") and `gssf_fibu` ("GSS Buchhaltung"), both `action: sub`,
+ *    both `tenants: ['scs']`, and ALL 24 of their `scsf_*`/`gssf_*` children. Every one of
+ *    those children hardcodes an accounting-tenant key in its url (`/accounting/scs/journal/
+ *    c-journal`, `/accounting/gss/bill/all/c-bill`, ...). This is STRUCTURAL, not sloppy
+ *    authoring: the route is `accounting/:accountingTenantId/...`, so a `navigate` entry into
+ *    accounting is *by construction* specific to one legal entity's books (SCS the club vs.
+ *    GSS the supporters' association) — there is no generic url to catalogue. Consequence,
+ *    stated plainly rather than hidden: a fresh tenant enabling `finance` gets the accounting
+ *    ROUTES and every context wrapper below, but must author its own `<x>f_fibu` submenu with
+ *    its own accounting-tenant key. Same for `ocr-rules` (`accounting-ocr-rules/scs/
+ *    ocr-rule-context`, a child of `scsf_fibu`) and `invoice-my` (`/accounting/scs/invoice/my/
+ *    c-invoice`, a child of `finance-menu`).
+ *  - `finance-menu`'s four remaining live children `f_fees`, `f_pay`, `f_gss`,
+ *    `f_versicherung` — all `/private/<id>/c-contentpage` CMS content pages authored by
+ *    `scs`, already covered generically by the core `cms` block's route; and `finance-docs`,
+ *    `action: 'browse'` pointing at an SCS-specific Nextcloud share link. Tenant-bespoke
+ *    content, same exclusion class as `member-menu`/`sport-menu`.
+ *  - `fibu` and `budget` — both live docs, both `action: 'divider'`, both `tenants: ['scs']`,
+ *    both labelled "tbd: ..." (placeholders for unbuilt screens). `divider` is not even a
+ *    member of `MenuSpec['action']`.
+ *
+ * DEAD LINK found and NOT invented around (report, don't fix): the `accounting/
+ * :accountingTenantId` route's own default child redirects to `journal/journal-context`
+ * (`app.routes.ts`), i.e. it names a `:contextMenuName` of `journal-context` — and NO live
+ * `menuItems` doc by that name exists. Verified twice, by two query shapes: a name-equality
+ * `IN` query returned zero hits, and a full 352-document dump of the collection masked to
+ * `name`/`url`/`action` contains no `journal-context` anywhere. The live tenant-authored
+ * entries (`scsf_journal`/`gssf_journal`) navigate to `.../journal/c-journal` instead and
+ * work. So the redirect target is a real dead context menu: landing on bare
+ * `/accounting/<tid>` renders BookingList with an empty action sheet. `c-journal` is
+ * catalogued below (it is the wrapper the working urls use); the redirect is copied verbatim
+ * into the route fragment, not "corrected", per the mirror rule.
+ */
+const finance: FeatureBlock = {
+  id: 'finance',
+  bundle: 'finance',
+  label: '@tenant/util.feature.finance.label',
+  icon: 'invoice',
+  defaultAvailability: 'ga',
+  dependsOn: ['subject', 'pdf-template'],
+  // Every `*Collection` constant in `@okr/shared-models` reachable from this domain, in
+  // subdomain order. The first seventeen are referenced by a `libs/finance/**` service
+  // (AccountCollection, AccountingConfigCollection, AssetCollection, AssetCategoryCollection,
+  // AssetMovementCollection, BillCollection, BookingCollection, BookingLineCollection,
+  // ExchangeRateCollection, ExpenseCollection, ExpenseDocumentCollection, InvoiceCollection,
+  // OcrRuleCollection, PaymentCollection, PaymentOrderCollection, PeriodCollection,
+  // VatCodeCollection — grepped, not guessed).
+  //
+  // The last two have NO client-side reference and are listed deliberately, because this
+  // array is what a later retention pass acts on and an omission there is silent data
+  // retained forever:
+  //  - `invoice-positions` (`InvoicePositionCollection`) — written by the Bexio replication
+  //    path, and the privacy subject-data-map already treats it as personal data
+  //    (`apps/functions/src/privacy/subject-data-map.ts:431` queries it by `personKey`; it
+  //    carries `firstName`/`lastName`/`anonymizedAt`). Unambiguously finance's.
+  //  - `ocr-results` (`OcrResultCollection`) — written and read only by Cloud Functions
+  //    (`apps/functions/src/ocr/index.ts`, `apps/functions/src/booking/index.ts`, which
+  //    reference it as a string literal `OCR_RESULT_COLLECTION`, which is why a grep for the
+  //    shared-models constant misses it). Holds scanned-bill OCR payloads keyed by
+  //    `bookingKey`/`correlationKey` — finance's, not a shared infrastructure collection.
+  collections: [
+    'accounts', 'accounting-configs', 'assets', 'asset-categories', 'asset-movements',
+    'bills', 'bookings', 'booking-lines', 'exchange-rates', 'expenses', 'expense-documents',
+    'invoices', 'invoice-positions', 'ocr-rules', 'ocr-results', 'payments', 'payment-orders',
+    'periods', 'vat-codes',
+  ],
+  menu: [
+    // `finance-menu` is a live root child of `main_scs` (`action: sub`, `roleNeeded:
+    // registered`, label `@main.finance.title`) whose own name/url/label carry no tenant key —
+    // so unlike `scsf_fibu`/`gssf_fibu` it IS catalogued, with only its two generic children.
+    // Declared inline rather than via a `financeMenuParent()` helper because, unlike
+    // `cms-menu`/`aoc-menu`/`subjects-menu`/`resource-menu`, no second block owns any of its
+    // children — every other live child is excluded (see the block comment). Children are
+    // APPENDED, never replaced (`planMenuOps`), so scs's existing six extra children survive.
+    {
+      key: 'finance-menu', name: 'finance-menu', url: '', action: 'sub',
+      roleNeeded: 'registered', icon: 'help-circle', label: '@main.finance.title', children: [
+        { key: 'expenses', name: 'expenses', url: '/expense/my/c-expense', action: 'navigate', roleNeeded: 'registered', icon: 'expense', label: 'Meine Spesen' },
+        { key: 'expenses-all', name: 'expenses-all', url: '/expense/all/c-expense', action: 'navigate', roleNeeded: 'treasurer', icon: 'expense', label: 'Alle Spesen' },
+      ],
+    },
+    { key: 'c-expense', name: 'c-expense', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
+      { key: 'expense-add', name: 'expense-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Neue Spesen-Abrechnung' },
+      // Live-data note: this doc's stale `index` string reads `a:callFunction`, but its
+      // `action` FIELD — the authoritative one, and the only one `MenuSpec` models — is
+      // `call`. `index` is regenerated from `name`/`action`/`okey` on every write
+      // (`menuIndex` in `menu-seed.util.ts`), so the drift self-heals; mirrored off `action`.
+      { key: 'expense-export', name: 'expense-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Export' },
+    ] },
+    // The five wrappers below are catalogued even though NO catalogued `navigate` url points
+    // at them — every live url that does is one of the excluded tenant-bespoke `scsf_*`/
+    // `gssf_*` entries. They are required all the same: each is the `:contextMenuName`
+    // segment of a route this block owns (`accounting/:tid/journal/:contextMenuName`,
+    // `.../invoice/:listId/:contextMenuName`, `.../bill/:listId/:contextMenuName`,
+    // `.../account/:contextMenuName`, `accounting-ocr-rules/:tid/:contextMenuName`). Without
+    // them the tenant is never added to their `tenants[]`, `MenuService.read` returns
+    // nothing, and every accounting list renders with an empty action sheet — the exact p13
+    // failure mode. Note the context-wrapper test in `@okr/tenant-routes` structurally CANNOT
+    // catch this class: it walks `navigate` urls for `c-*` segments, and these wrappers are
+    // reachable only through a route parameter (and `ocr-rule-context` does not even match
+    // the `c-` prefix). Same precedent as `c-yearlyevents` on the `calevent` block.
+    { key: 'c-journal', name: 'c-journal', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'journal-add', name: 'journal-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: 'Neue Buchung erfassen' },
+      { key: 'journal-export', name: 'journal-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Journal exportieren' },
+    ] },
+    { key: 'c-invoice', name: 'c-invoice', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'invoice-add', name: 'invoice-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: 'Neue Rechnung erstellen' },
+      { key: 'invoice-export-raw', name: 'invoice-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Rohdaten exportieren' },
+    ] },
+    { key: 'c-bill', name: 'c-bill', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'bill-add', name: 'bill-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: 'Kreditorenrechnung erstellen' },
+      { key: 'bill-scan', name: 'bill-scan', url: 'scan', action: 'call', roleNeeded: 'treasurer', icon: 'scan', label: 'Rechnung scannen' },
+      { key: 'bill-export-raw', name: 'bill-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Kreditorenrechnungen exportieren' },
+    ] },
+    { key: 'c-account', name: 'c-account', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
+      { key: 'account-create', name: 'account-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'edit', label: 'Kontoplan hinzufügen' },
+      { key: 'account-delete', name: 'account-delete', url: 'delete', action: 'call', roleNeeded: 'treasurer', icon: 'trash', label: 'Kontoplan löschen' },
+      { key: 'account-export', name: 'account-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Kontoplan herunterladen' },
+    ] },
+    // Not named `c-…` — the live doc really is `ocr-rule-context` (same naming outlier class
+    // as `forms-context`/`contextMenuChat`). Copied verbatim; renaming it would orphan the
+    // live doc.
+    { key: 'ocr-rule-context', name: 'ocr-rule-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'ocr-rule-add', name: 'ocr-rule-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: 'Neue OCR Regel' },
+      { key: 'ocr-rule-export', name: 'ocr-rule-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Export' },
+    ] },
+  ],
+};
+
+/**
+ * `libs/esign/{data-access,feature,util}` — send a PDF out for electronic signature
+ * (upload → field scan → invite signees → webhook-driven status), backed by the
+ * `apps/functions/src/esign/*` callables.
+ *
+ * `dependsOn: []` — the task brief asked for `dependsOn: ['finance']` ONLY if signing is
+ * genuinely unreachable except from finance documents. It is NOT, and the reasoning is
+ * evidence-based rather than assumed:
+ *  1. The route is a standalone top-level `/esign` (`isPrivilegedGuard`) rendering
+ *     `EsignList` — it is not nested under `accounting/:accountingTenantId` and takes no
+ *     finance parameter.
+ *  2. Grepping every importer of `@okr/esign-feature` / `-data-access` / `-util` across
+ *     `libs/` and `apps/` returns only esign's own five files plus `app.routes.ts`. No
+ *     finance (or document, or cms) component opens an esign modal.
+ *  3. The reverse direction is empty too: a case-insensitive grep for "esign" across
+ *     `libs/finance`, `libs/pdf-template` and `libs/document` matches nothing but unrelated
+ *     German/French/Spanish i18n strings containing the substring ("Design", "designa").
+ *  4. `EsignSendDocumentModal` uploads an arbitrary user-picked file to Storage and scans it
+ *     for form fields; nothing in its inputs references an invoice, bill or booking.
+ *  5. Its own imports are `@okr/shared-*` only — no cross-domain dependency at all.
+ * Signing a finance PDF is a plausible USE of the feature, but the code does not wire the
+ * two together, and a dependency the code does not have would wrongly force `finance` on for
+ * a tenant that only wants contracts signed.
+ *
+ * Live menu: a single `navigate` doc (`/esign`, `roleNeeded: contentAdmin`, icon `shield`,
+ * label "E-Signature") which is a CHILD of the shared `cms-menu` parent — verified in
+ * `cms-menu.menuItems`, which lists `[..., 'templates', 'forms-all', 'esign']`. Nested via
+ * `cmsMenuParent()` accordingly, not declared top-level.
+ */
+const esign: FeatureBlock = {
+  id: 'esign',
+  bundle: 'finance',
+  label: '@tenant/util.feature.esign.label',
+  icon: 'shield',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // `EsignCollection` = 'esignList' (client, `esign.service.ts`) and `EsignAuditCollection` =
+  // 'esignAudit' (Cloud Functions only, `apps/functions/src/esign/esign-delete.ts` — an
+  // append-only tombstone trail that must outlive the record it describes, so it is listed
+  // here explicitly for the retention pass rather than left implicit).
+  collections: ['esignList', 'esignAudit'],
+  menu: [
+    cmsMenuParent([
+      { key: 'esign', name: 'esign', url: '/esign', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'shield', label: 'E-Signature' },
+    ]),
+  ],
+};
+
+/**
+ * `libs/pdf-template/{data-access,feature,ui,util}` — Handlebars PDF templates plus the
+ * headless-Chrome rendering callable (`apps/functions/src/pdf/*`), used for invoices,
+ * bills, QR payment slips and CMS page exports.
+ *
+ * `dependsOn: []` deliberately, in the direction that surprises: pdf-template is a
+ * DEPENDENCY of other blocks (`finance` declares it above; `@okr/cms-page-feature`'s
+ * `page.store.ts` and `@okr/security-*-feature` also import it) and depends on nothing
+ * outside `@okr/shared-*` itself. Enabling it alone is meaningful — the `/templates` admin
+ * screen stands on its own.
+ *
+ * Live menu: a single `navigate` doc (`/templates`, `roleNeeded: contentAdmin`, icon `form`,
+ * label "Templates"), a CHILD of the shared `cms-menu` parent (verified in
+ * `cms-menu.menuItems`) — nested via `cmsMenuParent()`, not top-level.
+ */
+const pdfTemplate: FeatureBlock = {
+  id: 'pdf-template',
+  bundle: 'finance',
+  label: '@tenant/util.feature.pdf-template.label',
+  icon: 'form',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // `TemplateCollection` = 'templates' (client, `template.service.ts`) and
+  // `DocGenerationCollection` = 'docGenerations' (Cloud Functions only,
+  // `apps/functions/src/pdf/generate-document.ts` — the per-render audit record). Both from
+  // `@okr/shared-models`.
+  collections: ['templates', 'docGenerations'],
+  menu: [
+    cmsMenuParent([
+      { key: 'templates', name: 'templates', url: '/templates', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'form', label: 'Templates' },
+    ]),
+  ],
+};
+
 // consent: judged CORE, not `members`. The cookie/analytics-consent banner
 // (`@okr/consent-ui`'s CookieBanner + `@okr/consent-data-access`) is wired into every
 // tenant app's root (`okr-root.ts`/`app.config.ts`), shown to every visitor — including
@@ -796,4 +1033,5 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
   subject, relationship, vcard,
   resource, mobility,
+  finance, esign, pdfTemplate,
 ];

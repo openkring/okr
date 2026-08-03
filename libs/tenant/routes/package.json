@@ -36,6 +36,22 @@
     "@okr/relationship-personal-rel-feature": "*",
     "@okr/relationship-workrel-feature": "*",
     "@okr/relationship-transfer-feature": "*",
-    "@okr/relationship-responsibility-feature": "*"
+    "@okr/relationship-responsibility-feature": "*",
+    "@okr/resource-feature": "*",
+    "@okr/mobility-flighttracker-feature": "*",
+    "@okr/finance-account-feature": "*",
+    "@okr/finance-accounting-feature": "*",
+    "@okr/finance-asset-feature": "*",
+    "@okr/finance-bill-feature": "*",
+    "@okr/finance-booking-feature": "*",
+    "@okr/finance-expense-feature": "*",
+    "@okr/finance-invoice-feature": "*",
+    "@okr/finance-ocr-rule-feature": "*",
+    "@okr/finance-payment-feature": "*",
+    "@okr/finance-period-feature": "*",
+    "@okr/finance-reporting-feature": "*",
+    "@okr/finance-vat-code-feature": "*",
+    "@okr/esign-feature": "*",
+    "@okr/pdf-template-feature": "*"
   }
 }
