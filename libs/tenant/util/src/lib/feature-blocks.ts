@@ -75,22 +75,22 @@ function subjectsMenuParent(children: MenuSpec[]): MenuSpec {
 }
 
 /**
- * `resource-menu` is a fourth live shared parent (verified against Firestore, task 13). Its
- * live children today span TWO domains: `ownerships-all`, `reservation-all`, `transfer-all`
- * belong to `relationship` (declared here); `resource-all`, `rboat-all`, `lockers-all`,
- * `keys-all`, `boats-club`, `boats-private` belong to the still-`PENDING_CLASSIFICATION`
- * `resource` domain. Only `relationship` declares this parent today — a single declarer is
- * a valid, degenerate case of the shared-parent pattern (the co-declaration test only
- * requires every declaration to be field-identical, not that more than one exist yet).
- * TODO(future resource task): reuse this exact helper with `resource`'s own children —
- * do not hand-roll a second `resource-menu` node with different field values. ALSO (fix
- * round 1, review, task 13): that future `resource` block will need `dependsOn:
+ * `resource-menu` is a fourth live shared parent (verified against Firestore, task 13,
+ * re-verified task 14). Its live children span TWO domains: `ownerships-all`,
+ * `reservation-all`, `transfer-all` belong to `relationship` (declared here); `resource-all`,
+ * `rboat-all`, `lockers-all`, `keys-all`, `boats-club`, `boats-private` belong to `resource`
+ * (task 14, below) — both declare this SAME parent node (field-identical, only `children`
+ * differs), the shared-parent pattern.
+ *
+ * Task 13 fix round 1 TODO (now acted on, task 14): `resource` needs `dependsOn:
  * ['relationship']`, not just this shared parent — verified live, `boats-club`
  * (`/ownership/scsBoats/c-ownership`), `boats-private` (`/ownership/privateBoats/c-ownership`),
- * `keys-all` (`/ownership/keys/c-keys`), `lockers-all` (`/ownership/lockers/c-lockers`) and
- * `bh_res` (`/reservation/r_scs_default/c-reservations`) all navigate into routes this
- * `relationship` block owns (`ownership`/`reservation`), even though their own docs sit
- * under `resource-menu`, not `subjects-menu`/`resource-menu`'s relationship slice.
+ * `keys-all` (`/ownership/keys/c-keys`), `lockers-all` (`/ownership/lockers/c-lockers`) all
+ * navigate into routes `relationship` owns (`ownership`), even though their own docs sit
+ * under `resource-menu`, not `relationship`'s `resource-menu` slice. `bh_res`
+ * (`/reservation/r_scs_default/c-reservations`) turned out NOT to be a child of
+ * `resource-menu` at all (verified task 14: it is a child of the scs-only tenant-bespoke
+ * `clubareal-menu`) — see the exclusion note on the `resource` block below.
  */
 function resourceMenuParent(children: MenuSpec[]): MenuSpec {
   return {
@@ -110,6 +110,12 @@ const calevent: FeatureBlock = {
   // owner, 2026-08-02) to be renamed to under the container-level granularity ruling.
   dependsOn: ['subject'],
   collections: ['calevents'],
+  // Task 14: reconciled against every `calevent-feature` route in app.routes.ts. Only
+  // `/yearlyevents` (`YearlyEvents`, same `calevents` collection, isPrivilegedGuard) was
+  // missing from the route fragment in `@okr/tenant-routes` — added there. No live
+  // `menuItems` doc exists under any name containing "yearlyevents" (verified by a
+  // name-equality query) — same "un-menu'd but real, guarded route" shape as `i18n`'s
+  // `/i18n/defaults` in the core bundle, so nothing to add here.
   menu: [{
     key: 'calevent-all', name: 'calevent-all', url: '/calevent/all/c-calevents',
     action: 'navigate', roleNeeded: 'eventAdmin', icon: 'calendar', label: '@main.calevent.all',
@@ -124,7 +130,7 @@ const aoc: FeatureBlock = {
   defaultAvailability: 'ga',
   dependsOn: [],
   collections: [],
-  // TODO(task-13-18): the live `aoc-menu` doc's children[] (verified against Firestore,
+  // TODO(task-15-18): the live `aoc-menu` doc's children[] (verified against Firestore,
   // task 12 review round 2) also lists these keys, still missing a home:
   //  - aoc-sessions, aoc-chat, aoc-account, aoc-doc, aoc-bexio, aoc-srv: route to
   //    AocSession/AocChat/AocUserAccounts/AocDoc/AocBexio/AocSrv in `aoc-feature`, i.e.
@@ -132,10 +138,11 @@ const aoc: FeatureBlock = {
   //    bexio/srv) that never made it into this array when this block was first
   //    catalogued. Belongs HERE, as this block's own children — not a cross-domain gap.
   //  - activity-all → belongs to the future `activity` block.
-  //  - flighttracker → belongs to the future `mobility` block (live route is the
-  //    top-level `/flighttracker`, `mobility-flighttracker-feature`).
   //  - divider_empty → generic reusable divider, same class as `filter-toggle`/
   //    `menudivider` — not attributable to any single domain, correctly left uncatalogued.
+  // RESOLVED (task 14): `flighttracker` belongs to `mobility` (below) — nested under
+  // `aocMenuParent`, not top-level, mirroring its live tree position as a child of
+  // `aoc-menu`.
   // (user-all, priv-register, priv-audit — also live children of `aoc-menu` — are already
   // resolved: they're catalogued under `user`/`security` below, via `aocMenuParent`.)
   menu: [aocMenuParent([
@@ -591,6 +598,95 @@ const vcard: FeatureBlock = {
   menu: [],
 };
 
+/**
+ * Container domain for `libs/resource/{data-access,feature,ui,util}` — a SINGLE Firestore
+ * collection (`resources`) covers every resource `type` (`RESOURCE_TYPES` in
+ * `resource.service.ts`: `boat`, `rboat`, `car`, `locker`, `key`, `realestate`, `pet`);
+ * `ResourceList`, `RowingBoatList`, `LockerList`, `KeyList` (app.routes.ts's `/resource`,
+ * `/rboat`, `/locker`, `/key`) are the same list component filtered by type, not four
+ * separate domains — verified by reading `resource.service.ts` in full.
+ *
+ * `dependsOn: ['relationship']` — see the doc comment on `resourceMenuParent` above for why
+ * (`boats-club`/`boats-private`/`keys-all`/`lockers-all` below navigate into relationship's
+ * `/ownership` route).
+ *
+ * EXCLUDED, not modelled (verified against Firestore, task 14):
+ *  - `menuItems/resource-menu-scs` — a live data quirk: its `name` FIELD is also literally
+ *    "resource-menu" (only the doc id differs), but it is a tenant-bespoke reshaping for
+ *    `scs` only (label "Resourcen (Schlüssel, Chäschtli...)", children include
+ *    tenant-authored `res-misc`/`resource-other`) — same exclusion class as `member-menu`/
+ *    `sport-menu`. `resourceMenuParent()` mirrors the OTHER, generic doc (`tenants: ['test']`).
+ *  - `bh_res` (`/reservation/r_scs_default/c-reservations`) — verified to be a child of
+ *    `clubareal-menu`, a scs-only tenant-bespoke parent ("Clubareal"), and its url hardcodes
+ *    a specific SCS reservation resource id (`r_scs_default`) — tenant-bespoke content, not
+ *    a child of `resource-menu` at all (superseding the task-13 TODO's assumption that it was).
+ */
+const resource: FeatureBlock = {
+  id: 'resource',
+  bundle: 'events',
+  label: '@tenant/util.feature.resource.label',
+  icon: 'hammer',
+  defaultAvailability: 'ga',
+  dependsOn: ['relationship'],
+  collections: ['resources'],
+  menu: [
+    resourceMenuParent([
+      { key: 'resource-all', name: 'resource-all', url: 'resource/all/c-resources', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'hammer', label: 'Resourcen' },
+      { key: 'rboat-all', name: 'rboat-all', url: 'rboat/all/c-rboats', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'row_2x_side', label: 'Ruderboote' },
+      // Navigates into `relationship`'s `/ownership/...` route (hence this block's
+      // `dependsOn: ['relationship']`); `c-ownership`, the context wrapper both point at,
+      // is already catalogued by `relationship`. Icon copied verbatim, including the odd
+      // `//org.scs` value on the live doc.
+      { key: 'boats-club', name: 'boats-club', url: '/ownership/scsBoats/c-ownership', action: 'navigate', roleNeeded: 'registered', icon: '//org.scs', label: 'Club-Boote' },
+      { key: 'lockers-all', name: 'lockers-all', url: '/ownership/lockers/c-lockers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'lock-closed', label: 'Garderoben' },
+      { key: 'keys-all', name: 'keys-all', url: '/ownership/keys/c-keys', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'key', label: 'Schlüssel' },
+      { key: 'boats-private', name: 'boats-private', url: '/ownership/privateBoats/c-ownership', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'b1x', label: 'Privat Skiffs' },
+    ]),
+    { key: 'c-resources', name: 'c-resources', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'resource-add', name: 'resource-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Resource hinzufügen' },
+      { key: 'resource-exportraw', name: 'resource-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Rohdaten exportieren' },
+    ] },
+    { key: 'c-rboats', name: 'c-rboats', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'rboat-add', name: 'rboat-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Ruderboot hinzufügen' },
+      { key: 'rboat-exportraw', name: 'rboat-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Ruderboote exportieren' },
+    ] },
+    // `c-keys`/`c-lockers`: owned here (this block's own menu children), even though the
+    // list screen they act on (`keys-all`/`lockers-all` above) is relationship's
+    // OwnershipList filtered by type.
+    { key: 'c-keys', name: 'c-keys', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'key-add', name: 'key-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Schlüssel hinzufügen' },
+      { key: 'key-exportraw', name: 'key-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Schlüssel exportieren' },
+    ] },
+    { key: 'c-lockers', name: 'c-lockers', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'locker-add', name: 'locker-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Garderobe hinzufügen' },
+      { key: 'locker-exportraw', name: 'locker-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Garderoben exportieren' },
+    ] },
+  ],
+};
+
+/**
+ * `libs/mobility/flighttracker` — a live-flight-status lookup (`FlightTrackerService` calls
+ * the `getFlightInfo` Cloud Function). Owns no Firestore collection — no persisted state,
+ * purely a callable proxy; verified by reading `flighttracker.service.ts` in full.
+ */
+const mobility: FeatureBlock = {
+  id: 'mobility',
+  bundle: 'events',
+  label: '@tenant/util.feature.mobility.label',
+  icon: 'airplane',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: [],
+  // Live child of `aoc-menu` (task 12 review round 2 TODO on the `aoc` block, resolved
+  // here, task 14) — nested under `aocMenuParent`, not top-level, mirroring its live tree
+  // position.
+  menu: [
+    aocMenuParent([
+      { key: 'flighttracker', name: 'flighttracker', url: '/flighttracker', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'airplane', label: 'Flight Tracker' },
+    ]),
+  ],
+};
+
 // consent: judged CORE, not `members`. The cookie/analytics-consent banner
 // (`@okr/consent-ui`'s CookieBanner + `@okr/consent-data-access`) is wired into every
 // tenant app's root (`okr-root.ts`/`app.config.ts`), shown to every visitor — including
@@ -623,4 +719,5 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   calevent, aoc,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
   subject, relationship, vcard,
+  resource, mobility,
 ];

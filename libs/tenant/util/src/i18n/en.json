@@ -25,7 +25,9 @@
     "consent":  { "label": "Consent" },
     "subject":      { "label": "People, Organizations & Addresses" },
     "relationship": { "label": "Relationships" },
-    "vcard":        { "label": "vCard export" }
+    "vcard":        { "label": "vCard export" },
+    "resource":     { "label": "Resources" },
+    "mobility":     { "label": "Mobility" }
   },
   "picker": {
     "title": "Feature blocks",

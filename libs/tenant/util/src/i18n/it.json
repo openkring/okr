@@ -25,7 +25,9 @@
     "consent":  { "label": "Consenso" },
     "subject":      { "label": "Persone, organizzazioni e indirizzi" },
     "relationship": { "label": "Relazioni" },
-    "vcard":        { "label": "Esportazione vCard" }
+    "vcard":        { "label": "Esportazione vCard" },
+    "resource":     { "label": "Risorse" },
+    "mobility":     { "label": "Mobilità" }
   },
   "picker": {
     "title": "Blocchi funzionali",

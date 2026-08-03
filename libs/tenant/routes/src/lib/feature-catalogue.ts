@@ -51,6 +51,14 @@ const calevent: BlockRoutes = {
         data: { listId: 'public', view: 'list', showMenu: false },
       }],
     },
+    // Added (task 14 reconciliation): app.routes.ts's third `calevent-feature` route, missed
+    // when this block was first catalogued (task 5 copied only the list route). Same
+    // `calevents` collection as `CalEventList` — no new collection.
+    {
+      path: 'yearlyevents',
+      canActivate: [isAuthenticatedGuard],
+      children: [{ path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/calevent-feature').then(m => m.YearlyEvents) }],
+    },
   ],
 };
 
@@ -416,6 +424,43 @@ const vcard: BlockRoutes = {
   routes: (): Route[] => [],
 };
 
+const resource: BlockRoutes = {
+  id: 'resource',
+  routes: (): Route[] => [
+    {
+      path: 'resource',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/resource-feature').then(m => m.ResourceList) },
+      ],
+    },
+    {
+      path: 'rboat',
+      canActivate: [isAuthenticatedGuard],
+      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/resource-feature').then(m => m.RowingBoatList) }],
+    },
+    {
+      path: 'locker',
+      canActivate: [isAuthenticatedGuard],
+      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/resource-feature').then(m => m.LockerList) }],
+    },
+    {
+      path: 'key',
+      canActivate: [isAuthenticatedGuard],
+      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/resource-feature').then(m => m.KeyList) }],
+    },
+  ],
+};
+
+const mobility: BlockRoutes = {
+  id: 'mobility',
+  routes: (): Route[] => [{
+    path: 'flighttracker',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/mobility-flighttracker-feature').then(m => m.FlightTrackerSearch),
+  }],
+};
+
 /**
  * Every feature block's Angular route fragment. Adding a block here is HALF of what makes
  * a feature reachable — the matching metadata (id, dependsOn, bundle, menu, seed) must
@@ -426,4 +471,5 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   calevent, aoc,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
   subject, relationship, vcard,
+  resource, mobility,
 ];

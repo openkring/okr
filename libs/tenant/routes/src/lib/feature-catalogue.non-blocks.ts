@@ -32,9 +32,11 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 // block's entry.
 //
 // Task 13 (members bundle) drained: subject, relationship, vcard.
+// Task 14 (events bundle) drained: resource, mobility. (`calevent` was never in this list —
+// catalogued since task 5.)
 export const PENDING_CLASSIFICATION: string[] = [
   'activity', 'chat', 'document',
   'esign', 'finance', 'folder', 'forms', 'games', 'instruments',
-  'mobility', 'pdf-template', 'resource',
+  'pdf-template',
   'social-feed', 'task',
 ];

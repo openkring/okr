@@ -25,7 +25,9 @@
     "consent":  { "label": "Consentimiento" },
     "subject":      { "label": "Personas, organizaciones y direcciones" },
     "relationship": { "label": "Relaciones" },
-    "vcard":        { "label": "Exportación vCard" }
+    "vcard":        { "label": "Exportación vCard" },
+    "resource":     { "label": "Recursos" },
+    "mobility":     { "label": "Movilidad" }
   },
   "picker": {
     "title": "Bloques de funciones",

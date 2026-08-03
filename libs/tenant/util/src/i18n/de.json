@@ -25,7 +25,9 @@
     "consent":  { "label": "Einwilligung" },
     "subject":      { "label": "Personen, Organisationen & Adressen" },
     "relationship": { "label": "Beziehungen" },
-    "vcard":        { "label": "vCard-Export" }
+    "vcard":        { "label": "vCard-Export" },
+    "resource":     { "label": "Ressourcen" },
+    "mobility":     { "label": "Mobilität" }
   },
   "picker": {
     "title": "Feature-Bausteine",
