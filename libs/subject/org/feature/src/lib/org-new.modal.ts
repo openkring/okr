@@ -16,7 +16,7 @@ import { ORG_I18N_KEYS, ORG_NEW_FORM_SHAPE, OrgI18n, OrgNewFormModel } from '@ok
     IonContent
   ],
   template: `
-    <okr-header [i18n]="{ title: '@subject.org.operation.create.label' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.create() }" [isModal]="true" />
     @if(showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
