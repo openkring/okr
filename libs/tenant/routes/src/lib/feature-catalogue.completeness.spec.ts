@@ -125,6 +125,31 @@ describe('catalogue completeness', () => {
   });
 
   /**
+   * Fix round 1 (review, task 13): the field-identity tests above check that a REPEATED key
+   * always describes the same node, but say nothing about a key appearing TWICE as a
+   * sibling under the exact same parent — byte-identical copies pass both tests (identical
+   * "own fields" trivially match themselves) yet still corrupt the seeded doc. Reproduced
+   * live before fixing: temporarily duplicated the `group-add` entry under `c-groups` in
+   * `feature-blocks.ts` — all 10 existing tests (including both field-identity tests above)
+   * stayed GREEN. The consequence is concrete in `menu-seed.util.ts`'s `planMenuOps`: the
+   * create branch writes `menuItems: (spec.children ?? []).map(c => c.key)` with no dedup,
+   * and the update branch's `missingChildren` filter only compares against the live doc's
+   * existing `menuItems`, so a duplicate IN THE CATALOGUE sails through both paths — the
+   * seeded `c-groups.menuItems` becomes `['group-add','group-add','group-export-raw']`, and
+   * the action sheet renders "Gruppe hinzufügen" twice with nothing to ever prune it.
+   */
+  it('no parent repeats a sibling key among its own direct children', () => {
+    const violations: string[] = [];
+    const visit = (s: MenuSpec): void => {
+      const siblings = (s.children ?? []).map(c => c.key);
+      if (new Set(siblings).size !== siblings.length) violations.push(s.key);
+      (s.children ?? []).forEach(visit);
+    };
+    FEATURE_BLOCKS.forEach(b => b.menu.forEach(visit));
+    expect(violations, 'parent(s) with a duplicated sibling key').toEqual([]);
+  });
+
+  /**
    * The invariant the two tests above do NOT cover, and the blanket "unique across the
    * whole catalogue" test (that they replaced) used to: a key that is anyone's CHILD must
    * never ALSO be anyone's TOP-LEVEL spec — even with byte-identical own fields, even in a

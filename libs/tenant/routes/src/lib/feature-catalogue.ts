@@ -358,6 +358,16 @@ const relationship: BlockRoutes = {
       }],
     },
     {
+      // Route ships to every tenant enabling `relationship` (copied verbatim from
+      // app.routes.ts, no tenant gating in the route table itself), but the live menu is
+      // deliberately NOT modelled: `scsf_memberfees` (nav, /scsmemberfees/c-scsfees) and its
+      // wrapper `c-scsfees` (roleNeeded treasurer, children scsfees-reload/-export/-totals/
+      // -archive) exist on the `scs` tenant only and `ScsMemberFees` is an SCS-bespoke
+      // screen (fee-schedule import tied to that tenant's own billing setup) — same
+      // tenant-bespoke-content exclusion as `member-menu`/`membership-menu` above, just
+      // silent there before this fix (fix round 1, review). The route stays cheap to ship
+      // (lazy-loaded, unreachable without a menu entry or typed URL); only the menu is
+      // excluded.
       path: 'scsmemberfees',
       canActivate: [isAuthenticatedGuard],
       children: [{ path: ':contextMenuName', loadComponent: () => import('@okr/relationship-membership-feature').then(m => m.ScsMemberFees) }],

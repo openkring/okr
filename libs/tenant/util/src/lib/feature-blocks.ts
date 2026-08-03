@@ -83,7 +83,14 @@ function subjectsMenuParent(children: MenuSpec[]): MenuSpec {
  * a valid, degenerate case of the shared-parent pattern (the co-declaration test only
  * requires every declaration to be field-identical, not that more than one exist yet).
  * TODO(future resource task): reuse this exact helper with `resource`'s own children —
- * do not hand-roll a second `resource-menu` node with different field values.
+ * do not hand-roll a second `resource-menu` node with different field values. ALSO (fix
+ * round 1, review, task 13): that future `resource` block will need `dependsOn:
+ * ['relationship']`, not just this shared parent — verified live, `boats-club`
+ * (`/ownership/scsBoats/c-ownership`), `boats-private` (`/ownership/privateBoats/c-ownership`),
+ * `keys-all` (`/ownership/keys/c-keys`), `lockers-all` (`/ownership/lockers/c-lockers`) and
+ * `bh_res` (`/reservation/r_scs_default/c-reservations`) all navigate into routes this
+ * `relationship` block owns (`ownership`/`reservation`), even though their own docs sit
+ * under `resource-menu`, not `subjects-menu`/`resource-menu`'s relationship slice.
  */
 function resourceMenuParent(children: MenuSpec[]): MenuSpec {
   return {
@@ -242,7 +249,7 @@ const profile: FeatureBlock = {
   defaultAvailability: 'ga',
   dependsOn: [],
   // Self-service editing UI over PersonModel/AddressModel/UserModel — owns no collection of
-  // its own; those are owned by the (not-yet-catalogued) subject and user domains.
+  // its own; those are owned by the `subject` (task 13) and `user` (task 12) blocks.
   collections: [],
   menu: [
     { key: 'profile', name: 'profile', url: '/person/profile', action: 'navigate', roleNeeded: 'registered', icon: 'avatar-circle', label: '@main.profile' },
@@ -426,6 +433,10 @@ const subject: FeatureBlock = {
     subjectsMenuParent([
       { key: 'person-contacts', name: 'person-contacts', url: '/person/all/c-persons', action: 'navigate', roleNeeded: 'privileged', icon: 'id-card', label: '@main.members.person-contacts' },
       { key: 'org-all', name: 'org-all', url: '/org/all/c-orgs', action: 'navigate', roleNeeded: 'privileged', icon: 'company', label: 'Organisationen' },
+      // `addresses`' own url points at `/address/c-address`, but `c-address` has NO live
+      // `menuItems` doc anywhere (confirmed by a name-equality query, task 13 fix round 1) —
+      // correct not to invent it (mirror-verbatim rule), but the PII-vault list therefore
+      // renders with an empty context menu (no add/export action) for every tenant today.
       { key: 'addresses', name: 'addresses', url: '/address/c-address', action: 'navigate', roleNeeded: 'privileged', icon: 'address', label: 'Adressen' },
       { key: 'group-all', name: 'group-all', url: '/group/all/c-groups', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'persons', label: 'Alle Gruppen' },
     ]),
@@ -545,6 +556,14 @@ const relationship: FeatureBlock = {
     { key: 'c-wrel', name: 'c-wrel', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'wrel-add', name: 'wrel-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Beschäftigung hinzufügen' },
       { key: 'wrel-export-raw', name: 'wrel-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Beschäftigungen exportieren' },
+    ] },
+    // Fix round 1 (review): was missing entirely. `personal-rel-all` (above) and its route
+    // both shipped without this context wrapper, so a fresh tenant enabling `relationship`
+    // would render PersonalRelList with an empty action sheet — no add, no export. Verified
+    // live: `menuItems/c-prel`, roleNeeded `contentAdmin`, children `prel-add`/`prel-export-raw`.
+    { key: 'c-prel', name: 'c-prel', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'prel-add', name: 'prel-add', url: 'add', action: 'call', roleNeeded: 'memberAdmin', icon: 'add-circle', label: 'Neue Beziehung hinzufügen' },
+      { key: 'prel-export-raw', name: 'prel-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Beziehungen exportieren' },
     ] },
   ],
 };
