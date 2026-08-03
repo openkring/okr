@@ -22,7 +22,10 @@
     "category": { "label": "Catégories" },
     "comment":  { "label": "Commentaires" },
     "geo":      { "label": "Lieux et sorties" },
-    "consent":  { "label": "Consentement" }
+    "consent":  { "label": "Consentement" },
+    "subject":      { "label": "Personnes, organisations et adresses" },
+    "relationship": { "label": "Relations" },
+    "vcard":        { "label": "Export vCard" }
   },
   "picker": {
     "title": "Blocs fonctionnels",

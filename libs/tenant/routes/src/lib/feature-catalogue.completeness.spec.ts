@@ -88,15 +88,39 @@ describe('catalogue completeness', () => {
     expect(conflicts).toEqual([]);
   });
 
-  it('every menu key is unique WITHIN a single block\'s own tree', () => {
+  /**
+   * Originally a hard `Set.size === keys.length` uniqueness check — tightened (task 13,
+   * verified against Firestore) to the SAME "same node everywhere" tolerance as the
+   * cross-block test above, because a real live pattern violates plain uniqueness: the
+   * `relationship` block's two live context-menu wrappers, `c-membership` (the `membership`
+   * route's `:contextMenuName`, full admin list) and `c-groupmembers` (the `contact`
+   * route's, the group/org-scoped view), legitimately share several leaf action docs —
+   * `membership-add`, `membership-copyemail`, `membership-exportraw`,
+   * `membership-exportaddresses` each exist as ONE real Firestore doc, referenced as a
+   * child of BOTH wrapper docs (verified: `c-membership.menuItems` and
+   * `c-groupmembers.menuItems` both list all four). That is the intra-block instance of
+   * the exact same "shared node, redeclared verbatim" pattern the cross-block test already
+   * tolerates (`cmsMenuParent`/`aocMenuParent`/`subjectsMenuParent`/`resourceMenuParent`) —
+   * blanking one wrapper's children to force plain uniqueness would misrepresent the live
+   * doc (the same defect class as blanking a `call` url, see `feature-routes.util.spec.ts`).
+   * The real invariant — a key repeated ANYWHERE (same block or not) must always describe
+   * the same node — is still fully enforced, just via the same "own fields identical"
+   * comparison as the test above instead of a blanket ban on repetition.
+   */
+  it('every menu key that recurs within a single block\'s own tree describes the same node', () => {
+    type OwnFields = Omit<MenuSpec, 'children'>;
     FEATURE_BLOCKS.forEach(block => {
-      const keys: string[] = [];
+      const seen = new Map<string, OwnFields>();
+      const conflicts: string[] = [];
       const visit = (s: MenuSpec): void => {
-        keys.push(s.key);
+        const { children: _children, ...own } = s;
+        const prior = seen.get(s.key);
+        if (prior && JSON.stringify(prior) !== JSON.stringify(own)) conflicts.push(s.key);
+        seen.set(s.key, own);
         (s.children ?? []).forEach(visit);
       };
       block.menu.forEach(visit);
-      expect(new Set(keys).size, `block '${block.id}' repeats a menu key`).toBe(keys.length);
+      expect(conflicts, `block '${block.id}' repeats a menu key with different fields`).toEqual([]);
     });
   });
 

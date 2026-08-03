@@ -30,9 +30,11 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 // in this file's test suite catches that regression; only `feature-blocks.spec.ts`'s
 // key===name check and manual review would. Keep this in mind before ever deleting either
 // block's entry.
+//
+// Task 13 (members bundle) drained: subject, relationship, vcard.
 export const PENDING_CLASSIFICATION: string[] = [
   'activity', 'chat', 'document',
   'esign', 'finance', 'folder', 'forms', 'games', 'instruments',
-  'mobility', 'pdf-template', 'relationship', 'resource',
-  'social-feed', 'subject', 'task', 'vcard',
+  'mobility', 'pdf-template', 'resource',
+  'social-feed', 'task',
 ];

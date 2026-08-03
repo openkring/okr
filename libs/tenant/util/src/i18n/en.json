@@ -22,7 +22,10 @@
     "category": { "label": "Categories" },
     "comment":  { "label": "Comments" },
     "geo":      { "label": "Locations & Trips" },
-    "consent":  { "label": "Consent" }
+    "consent":  { "label": "Consent" },
+    "subject":      { "label": "People, Organizations & Addresses" },
+    "relationship": { "label": "Relationships" },
+    "vcard":        { "label": "vCard export" }
   },
   "picker": {
     "title": "Feature blocks",

@@ -59,13 +59,49 @@ function aocMenuParent(children: MenuSpec[]): MenuSpec {
   };
 }
 
+/**
+ * `subjects-menu` is a third live, genuinely SHARED parent `menuItems` doc (verified against
+ * Firestore, task 13), same pattern as `cmsMenuParent`/`aocMenuParent` above: its live
+ * children split across TWO domains in this bundle — `person-contacts`, `org-all`,
+ * `addresses`, `group-all` belong to `subject`; `personal-rel-all`, `workrel-all`,
+ * `responsibility-all` belong to `relationship`. Each owning block redeclares this SAME
+ * parent node with only its own slice of children (task 13).
+ */
+function subjectsMenuParent(children: MenuSpec[]): MenuSpec {
+  return {
+    key: 'subjects-menu', name: 'subjects-menu', url: '', action: 'sub',
+    roleNeeded: 'privileged', icon: 'help-circle', label: 'Subjekte', children,
+  };
+}
+
+/**
+ * `resource-menu` is a fourth live shared parent (verified against Firestore, task 13). Its
+ * live children today span TWO domains: `ownerships-all`, `reservation-all`, `transfer-all`
+ * belong to `relationship` (declared here); `resource-all`, `rboat-all`, `lockers-all`,
+ * `keys-all`, `boats-club`, `boats-private` belong to the still-`PENDING_CLASSIFICATION`
+ * `resource` domain. Only `relationship` declares this parent today — a single declarer is
+ * a valid, degenerate case of the shared-parent pattern (the co-declaration test only
+ * requires every declaration to be field-identical, not that more than one exist yet).
+ * TODO(future resource task): reuse this exact helper with `resource`'s own children —
+ * do not hand-roll a second `resource-menu` node with different field values.
+ */
+function resourceMenuParent(children: MenuSpec[]): MenuSpec {
+  return {
+    key: 'resource-menu', name: 'resource-menu', url: '', action: 'sub',
+    roleNeeded: 'resourceAdmin', icon: 'help-circle', label: 'Resourcen', children,
+  };
+}
+
 const calevent: FeatureBlock = {
   id: 'calevent',
   bundle: 'events',
   label: '@tenant/util.feature.calevent.label',
   icon: 'calendar',
   defaultAvailability: 'ga',
-  dependsOn: [],
+  // Restored (task 13): calevents reference a subject (organizer/attendee) — see the
+  // `subject` block below, which the task 6 brief's original 'person' name was ruled (repo
+  // owner, 2026-08-02) to be renamed to under the container-level granularity ruling.
+  dependsOn: ['subject'],
   collections: ['calevents'],
   menu: [{
     key: 'calevent-all', name: 'calevent-all', url: '/calevent/all/c-calevents',
@@ -353,6 +389,189 @@ const geo: FeatureBlock = {
   ],
 };
 
+/**
+ * Container domain for `libs/subject/{person,org,address,group,application,swisscities}`.
+ * Per the repo owner's 2026-08-02 granularity ruling, all five feature libs are ONE block
+ * (`subject`), not five — `person`/`org` blocks from an earlier draft of the plan do not
+ * exist. This is the bundle's dependency root: `calevent`, and later `finance`/others, name
+ * it in their own `dependsOn`.
+ */
+const subject: FeatureBlock = {
+  id: 'subject',
+  bundle: 'members',
+  label: '@tenant/util.feature.subject.label',
+  icon: 'id-card',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // PersonCollection, OrgCollection, AddressCollection, GroupCollection,
+  // ApplicationCollection, AddressDirectoryCollection (all from `@okr/shared-models`,
+  // verified via each subdomain's own `*.service.ts`). `swisscities` owns NO collection —
+  // `SwissCitiesCollection` exists in shared-models but is unreferenced by any service;
+  // `libs/subject/swisscities/ui` reads static bundled JSON assets
+  // (`src/assets/cities/*.json`) instead of Firestore, confirmed by reading its sources.
+  collections: ['persons', 'orgs', 'addresses', 'groups', 'applications', 'address-directory'],
+  // `application` has no live `menuItems` doc anywhere in the ~350-doc collection — the
+  // `/applications` screen (isPrivilegedGuard) is reachable today only by typing the URL,
+  // same "un-menu'd admin screen" shape as `i18n` in the core bundle.
+  //
+  // NOTE on `addresses`' roleNeeded vs. its route guard: the live doc's `roleNeeded` is
+  // `privileged`, but the route it points at (`/address/:contextMenuName`) is guarded by
+  // `isAdminGuard()` (stricter). Since `admin` already satisfies `privileged` in
+  // `hasRole`'s allow-list (`auth.util.ts`), this is NOT a privacy widening — a
+  // privileged-but-not-admin user would see this menu entry and then be denied by the
+  // route guard, a UX dead end, not an access leak. Copied verbatim per the rule (mirror
+  // live docs, don't invent); flagged in the task report for whoever owns menuItems data
+  // hygiene, not silently "fixed" here.
+  menu: [
+    subjectsMenuParent([
+      { key: 'person-contacts', name: 'person-contacts', url: '/person/all/c-persons', action: 'navigate', roleNeeded: 'privileged', icon: 'id-card', label: '@main.members.person-contacts' },
+      { key: 'org-all', name: 'org-all', url: '/org/all/c-orgs', action: 'navigate', roleNeeded: 'privileged', icon: 'company', label: 'Organisationen' },
+      { key: 'addresses', name: 'addresses', url: '/address/c-address', action: 'navigate', roleNeeded: 'privileged', icon: 'address', label: 'Adressen' },
+      { key: 'group-all', name: 'group-all', url: '/group/all/c-groups', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'persons', label: 'Alle Gruppen' },
+    ]),
+    // Live root-level sibling of `subjects-menu` in `main_scs`, NOT nested under it —
+    // mirrored verbatim (tree-shape rule).
+    { key: 'group-my', name: 'group-my', url: '/group/my/c-groups', action: 'navigate', roleNeeded: 'registered', icon: 'persons', label: 'Meine Gruppen' },
+    { key: 'c-persons', name: 'c-persons', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'person-add', name: 'person-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Person hinzufügen' },
+      { key: 'person-export', name: 'person-export', url: 'export', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Personen exportieren' },
+      { key: 'person-copy-emails', name: 'person-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: 'Email Adressen kopieren' },
+    ] },
+    { key: 'c-orgs', name: 'c-orgs', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'org-add', name: 'org-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Organisation hinzufügen' },
+      { key: 'org-export-addresses', name: 'org-export-addresses', url: 'exportAddresses', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Adressen exportieren' },
+      { key: 'org-copy-emails', name: 'org-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: 'Emails kopieren' },
+    ] },
+    { key: 'c-groups', name: 'c-groups', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
+      { key: 'group-add', name: 'group-add', url: 'add', action: 'call', roleNeeded: 'privileged', icon: 'add-circle', label: 'Gruppe hinzufügen' },
+      { key: 'group-export-raw', name: 'group-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'privileged', icon: 'download', label: 'Gruppen exportieren' },
+    ] },
+  ],
+};
+
+/**
+ * Container domain for `libs/relationship/{membership,reservation,ownership,invitation,
+ * transfer,personal-rel,responsibility,workrel}` — one block, per the same container-level
+ * ruling as `subject`. Depends on `subject`: every relationship links two subjects (person/
+ * org/group) or a subject and a resource.
+ *
+ * EXCLUDED, not modelled (verified against Firestore, task 13): the live `member-menu`
+ * (root child of `main_scs`, label `@main.members.title`) and `membership-menu` docs.
+ * Every one of their children is either already owned elsewhere generically (`member-info`
+ * → a plain CMS `/private/:id` content page, already covered by the core `cms` block) or
+ * bakes a literal tenant/org key into the URL and label — `scs-active`/`scs-passive`/
+ * `scs-entries`/`scs-exits`/`scs-deceased` (`/membership/<view>/scs/c-membership`,
+ * "SCS Aktive" etc.), `srv-all`/`p13-all` (same shape, org `srv`/`p13`), `scs-contacts`
+ * (`contact/active/scs/c-membership`). These are tenant-authored curated shortcuts over the
+ * generic `membership`/`contact` routes this block DOES own — cataloguing them would seed
+ * a menu item literally named "SCS Aktive" into every other tenant that ever enables this
+ * block, which is inventing tenant-specific content, the opposite of mirroring it. Same
+ * class of exclusion as `sport-menu` (noted on the `geo` block above): tenant-bespoke
+ * curation that predates/bypasses the catalogue, correctly left uncatalogued.
+ */
+const relationship: FeatureBlock = {
+  id: 'relationship',
+  bundle: 'members',
+  label: '@tenant/util.feature.relationship.label',
+  icon: 'link',
+  defaultAvailability: 'ga',
+  dependsOn: ['subject'],
+  // MembershipCollection, ReservationCollection, OwnershipCollection, InvitationCollection,
+  // TransferCollection, PersonalRelCollection, ResponsibilityCollection, WorkrelCollection —
+  // all verified via each subdomain's own `*.service.ts`.
+  collections: ['memberships', 'reservations', 'ownerships', 'invitations', 'transfers', 'personal-rels', 'responsibilities', 'workrels'],
+  menu: [
+    subjectsMenuParent([
+      { key: 'personal-rel-all', name: 'personal-rel-all', url: '/personalrel/all/c-prel', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'heart-outline', label: 'Persönliche Beziehungen' },
+      { key: 'workrel-all', name: 'workrel-all', url: '/workrel/all/c-wrel', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'work', label: 'Beschäftigungen' },
+      { key: 'responsibility-all', name: 'responsibility-all', url: '/responsibility/all/c-responsibility', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'target', label: 'Verantwortungen' },
+    ]),
+    resourceMenuParent([
+      { key: 'ownerships-all', name: 'ownerships-all', url: '/ownership/all/c-ownership', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'own', label: 'Alle Nutzungen' },
+      { key: 'reservation-all', name: 'reservation-all', url: '/reservation/all/c-reservations', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'reservation', label: 'Alle Reservationen' },
+      // Copied verbatim, including the missing leading slash — `urlResolves` matches by
+      // path segment, not string prefix, so this still resolves; not "fixed" per the
+      // mirror-verbatim rule.
+      { key: 'transfer-all', name: 'transfer-all', url: 'transfer/all/c-transfers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'arrow-forward', label: 'Transfers' },
+    ]),
+    // Live child of the tenant-bespoke `event-menu-scs` grouping (own name literally embeds
+    // "scs", same class as `sport-menu`), NOT of any generic shared parent — but the entry
+    // itself is generic (no tenant/org key in its own url), same shape as `logbuch` on the
+    // `geo` block above. Ruled (same precedent): stays a top-level entry here, the intended
+    // model for a fresh tenant; `scs`'s current nesting under its own bespoke event menu is
+    // pre-existing tenant curation, not evidence against cataloguing it as this block's own.
+    { key: 'invitation-all', name: 'invitation-all', url: '/invitation/all/c-invitation', action: 'navigate', roleNeeded: 'eventAdmin', icon: 'login', label: 'Einladungen' },
+    // `contextMenuName` wrapper for the `membership` route (`view: 'mcat'`, the full
+    // membership admin list). `c-groupmembers` (below) is the SEPARATE wrapper for the
+    // `contact` route (`view: 'contact'`) — app.routes.ts gives MembershipList two distinct
+    // top-level paths with different `data.view`, and each gets its own live context doc.
+    { key: 'c-membership', name: 'c-membership', url: '', action: 'context', roleNeeded: 'memberAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'member-add', name: 'member-add', url: 'memberAdd', action: 'call', roleNeeded: 'registered', icon: 'person-add', label: 'Neues Mitglied erfassen' },
+      { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Mitgliedschaft hinzufügen' },
+      { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'registered', icon: 'copy', label: 'Email Adressen kopieren' },
+      { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Mitgliedschaften exportieren' },
+      { key: 'membership-exportsrv', name: 'membership-exportsrv', url: 'exportSrv', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'SRV Liste exportieren' },
+      { key: 'membership-exportmembers', name: 'membership-exportmembers', url: 'exportMembers', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Mitgliederliste exportieren' },
+      { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Adressliste exportieren' },
+      { key: 'membership-exportclubdesk', name: 'membership-exportclubdesk', url: 'exportClubdesk', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Export für Clubdesk' },
+    ] },
+    { key: 'c-groupmembers', name: 'c-groupmembers', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
+      { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Mitgliedschaft hinzufügen' },
+      { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'registered', icon: 'copy', label: 'Email Adressen kopieren' },
+      { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Mitgliedschaften exportieren' },
+      { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Adressliste exportieren' },
+    ] },
+    // Live doc exists but currently has NO children (`menuItems: []` on the live doc) — no
+    // `invitation-add`/`invitation-export` action docs exist yet. Mirrored as found, not
+    // invented; `action: 'call'` entries can be added here later without touching this
+    // block's shape.
+    { key: 'c-invitation', name: 'c-invitation', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [] },
+    { key: 'c-ownership', name: 'c-ownership', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'ownership-add', name: 'ownership-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Nutzung hinzufügen' },
+      { key: 'ownership-exportraw', name: 'ownership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Exportieren' },
+    ] },
+    { key: 'c-reservations', name: 'c-reservations', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'reservation-add', name: 'reservation-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Reservation hinzufügen' },
+      { key: 'reservation-exportraw', name: 'reservation-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Reservationen exportieren' },
+    ] },
+    { key: 'c-transfers', name: 'c-transfers', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'transfer-add', name: 'transfer-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Transfer hinzufügen' },
+      { key: 'transfer-export-raw', name: 'transfer-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Transfers exportieren' },
+    ] },
+    { key: 'c-responsibility', name: 'c-responsibility', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'responsibility-add', name: 'responsibility-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@responsibility.operation.create.label' },
+      { key: 'responsibility-export-raw', name: 'responsibility-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@responsibility.operation.export.raw' },
+    ] },
+    { key: 'c-wrel', name: 'c-wrel', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'wrel-add', name: 'wrel-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Beschäftigung hinzufügen' },
+      { key: 'wrel-export-raw', name: 'wrel-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Beschäftigungen exportieren' },
+    ] },
+  ],
+};
+
+/**
+ * `libs/vcard/feature` — vCard export for a person/org (`VcardExportService`,
+ * `VcardExportScopeModal`). Depends on `subject` (exports a person/org's own data) and
+ * `relationship` (`vcard-export.service.ts` reads `PersonalRelCollection`/`WorkrelCollection`
+ * to decide export scope — verified by reading the file).
+ */
+const vcard: FeatureBlock = {
+  id: 'vcard',
+  bundle: 'members',
+  label: '@tenant/util.feature.vcard.label',
+  icon: 'download',
+  defaultAvailability: 'ga',
+  dependsOn: ['subject', 'relationship'],
+  // Owns no collection — reads AddressCollection (subject/address), AvatarCollection
+  // (avatar, core), PersonalRelCollection/WorkrelCollection (relationship), all owned
+  // elsewhere; verified by reading `vcard-export.service.ts` in full.
+  collections: [],
+  // No route — `VcardExportScopeModal` is opened from an ActionSheet on a person/org list,
+  // never routed to directly; confirmed no `vcard` path in `app.routes.ts` and no live
+  // `menuItems` doc under any name containing "vcard".
+  menu: [],
+};
+
 // consent: judged CORE, not `members`. The cookie/analytics-consent banner
 // (`@okr/consent-ui`'s CookieBanner + `@okr/consent-data-access`) is wired into every
 // tenant app's root (`okr-root.ts`/`app.config.ts`), shown to every visitor — including
@@ -384,4 +603,5 @@ const consent: FeatureBlock = {
 export const FEATURE_BLOCKS: FeatureBlock[] = [
   calevent, aoc,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
+  subject, relationship, vcard,
 ];

@@ -22,7 +22,10 @@
     "category": { "label": "Categorías" },
     "comment":  { "label": "Comentarios" },
     "geo":      { "label": "Ubicaciones y salidas" },
-    "consent":  { "label": "Consentimiento" }
+    "consent":  { "label": "Consentimiento" },
+    "subject":      { "label": "Personas, organizaciones y direcciones" },
+    "relationship": { "label": "Relaciones" },
+    "vcard":        { "label": "Exportación vCard" }
   },
   "picker": {
     "title": "Bloques de funciones",

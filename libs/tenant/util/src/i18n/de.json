@@ -22,7 +22,10 @@
     "category": { "label": "Kategorien" },
     "comment":  { "label": "Kommentare" },
     "geo":      { "label": "Standorte & Fahrten" },
-    "consent":  { "label": "Einwilligung" }
+    "consent":  { "label": "Einwilligung" },
+    "subject":      { "label": "Personen, Organisationen & Adressen" },
+    "relationship": { "label": "Beziehungen" },
+    "vcard":        { "label": "vCard-Export" }
   },
   "picker": {
     "title": "Feature-Bausteine",

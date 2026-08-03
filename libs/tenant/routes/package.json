@@ -23,6 +23,19 @@
     "@okr/i18n-feature": "*",
     "@okr/category-feature": "*",
     "@okr/location-feature": "*",
-    "@okr/trip-feature": "*"
+    "@okr/trip-feature": "*",
+    "@okr/subject-person-feature": "*",
+    "@okr/subject-org-feature": "*",
+    "@okr/subject-group-feature": "*",
+    "@okr/subject-address-feature": "*",
+    "@okr/application-feature": "*",
+    "@okr/relationship-membership-feature": "*",
+    "@okr/relationship-invitation-feature": "*",
+    "@okr/relationship-ownership-feature": "*",
+    "@okr/relationship-reservation-feature": "*",
+    "@okr/relationship-personal-rel-feature": "*",
+    "@okr/relationship-workrel-feature": "*",
+    "@okr/relationship-transfer-feature": "*",
+    "@okr/relationship-responsibility-feature": "*"
   }
 }
