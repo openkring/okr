@@ -10,7 +10,19 @@
   },
   "feature": {
     "calevent": { "label": "Calendar" },
-    "aoc":      { "label": "AOC – Operation Centre" }
+    "aoc":      { "label": "AOC – Operation Centre" },
+    "auth":     { "label": "Authentication" },
+    "cms":      { "label": "Content Management" },
+    "user":     { "label": "Users" },
+    "profile":  { "label": "Profile" },
+    "session":  { "label": "Sessions" },
+    "security": { "label": "Privacy & Security" },
+    "i18n":     { "label": "Translations" },
+    "avatar":   { "label": "Avatar" },
+    "category": { "label": "Categories" },
+    "comment":  { "label": "Comments" },
+    "geo":      { "label": "Locations & Trips" },
+    "consent":  { "label": "Consent" }
   },
   "picker": {
     "title": "Feature blocks",

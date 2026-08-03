@@ -1,6 +1,5 @@
 import type { Route } from '@angular/router';
-import { isAdminGuard } from '@okr/auth-feature';
-import { isAuthenticatedGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuthenticatedGuard, isPrivilegedGuard } from '@okr/auth-feature';
 
 /**
  * A feature block's Angular ROUTE fragment — `canActivate` guards + `loadComponent`. Split
@@ -54,10 +53,228 @@ const aoc: BlockRoutes = {
   }],
 };
 
+const auth: BlockRoutes = {
+  id: 'auth',
+  routes: (): Route[] => [{
+    path: 'auth',
+    children: [
+      { path: '', redirectTo: 'login', pathMatch: 'full' },
+      { path: 'login', loadComponent: () => import('@okr/auth-feature').then(m => m.LoginPage) },
+      { path: 'logout', canActivate: [isAuthenticatedGuard], loadComponent: () => import('@okr/auth-feature').then(m => m.LogoutPage) },
+      { path: 'pwdreset', loadComponent: () => import('@okr/auth-feature').then(m => m.PasswordResetPage) },
+      { path: 'confirm', loadComponent: () => import('@okr/auth-feature').then(m => m.ConfirmPasswordResetPage) },
+    ],
+  }],
+};
+
+const cms: BlockRoutes = {
+  id: 'cms',
+  routes: (): Route[] => [
+    {
+      path: 'public',
+      children: [
+        {
+          path: 'calendar',
+          loadComponent: () => import('@okr/calevent-feature').then(m => m.CalEventList),
+          data: { listId: 'public', view: 'list', showMenu: false },
+        },
+        {
+          path: 'news',
+          loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher),
+          data: { id: 'news', showMenu: false },
+        },
+        {
+          path: ':id/:contextMenuName',
+          loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher),
+          data: { color: 'secondary' },
+        },
+        {
+          path: ':id',
+          loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher),
+          data: { color: 'secondary' },
+        },
+      ],
+    },
+    {
+      path: 'private',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        {
+          path: ':id/:contextMenuName',
+          loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher),
+          data: { color: 'secondary' },
+        },
+        {
+          path: ':id',
+          loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher),
+          data: { color: 'secondary' },
+        },
+      ],
+    },
+    {
+      path: 'page',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageList) },
+      ],
+    },
+    {
+      path: 'section',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: 'all', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-section-feature').then(m => m.SectionAllList) },
+      ],
+    },
+    {
+      path: 'menu',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: 'all', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-menu-feature').then(m => m.MenuList) },
+      ],
+    },
+    {
+      path: 'icon',
+      canActivate: [isAuthenticatedGuard],
+      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/cms-icon-feature').then(m => m.IconList) }],
+    },
+  ],
+};
+
+const user: BlockRoutes = {
+  id: 'user',
+  routes: (): Route[] => [{
+    path: 'user',
+    canActivate: [isAuthenticatedGuard],
+    children: [
+      { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/user-feature').then(m => m.UserList) },
+      // Corrected from app.routes.ts's uncalled `isAdminGuard` (one of the 12 sites where
+      // the live route table writes the guard factory uncalled, which enforces nothing —
+      // see feature-catalogue.types.ts / the task brief).
+      { path: ':userKey', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/user-feature').then(m => m.UserEditPage) },
+    ],
+  }],
+};
+
+const profile: BlockRoutes = {
+  id: 'profile',
+  routes: (): Route[] => [{
+    // Shares the 'person' top-level path with the (not-yet-catalogued) subject domain's own
+    // route fragment — only the 'profile' child belongs to this block. composeFeatureRoutes
+    // just concatenates fragments for route-coverage matching, so two blocks each owning a
+    // 'person' fragment is safe; it is never used to assemble the real app.routes.ts.
+    path: 'person',
+    canActivate: [isAuthenticatedGuard],
+    children: [
+      { path: 'profile', loadComponent: () => import('@okr/profile-feature').then(m => m.ProfileEditPage), data: { preload: true } },
+    ],
+  }],
+};
+
+const session: BlockRoutes = {
+  id: 'session',
+  routes: (): Route[] => [],
+};
+
+const security: BlockRoutes = {
+  id: 'security',
+  routes: (): Route[] => [{
+    // Privacy 1.19 Phase 5C/5D — the Bearbeitungsverzeichnis and the privacy audit.
+    // Admin-only: both disclose the tenant's full processing landscape.
+    path: 'security',
+    // Corrected from app.routes.ts's uncalled `isAdminGuard` at this and the three
+    // `canActivate` sites below (4 of the 12 uncalled-guard sites live in this one fragment).
+    canActivate: [isAdminGuard()],
+    children: [
+      {
+        path: 'register',
+        canActivate: [isAdminGuard()],
+        loadComponent: () => import('@okr/security-processing-feature').then(m => m.ProcessingRegisterPage),
+      },
+      {
+        path: 'register/:key',
+        canActivate: [isAdminGuard()],
+        loadComponent: () => import('@okr/security-processing-feature').then(m => m.ProcessingActivityPage),
+      },
+      {
+        path: 'privacy-audit',
+        canActivate: [isAdminGuard()],
+        loadComponent: () => import('@okr/security-audit-feature').then(m => m.PrivacyAuditPage),
+      },
+    ],
+  }],
+};
+
+const i18n: BlockRoutes = {
+  id: 'i18n',
+  routes: (): Route[] => [{
+    path: 'i18n',
+    // Corrected from app.routes.ts's uncalled `isAdminGuard` (both this and the 'defaults'
+    // child below).
+    canActivate: [isAdminGuard()],
+    children: [
+      {
+        path: 'defaults',
+        canActivate: [isAdminGuard()],
+        loadComponent: () => import('@okr/i18n-feature').then(m => m.I18nDefaultList),
+      },
+      {
+        path: 'overrides',
+        canActivate: [isPrivilegedGuard],
+        loadComponent: () => import('@okr/i18n-feature').then(m => m.I18nOverrideList),
+      },
+    ],
+  }],
+};
+
+const avatar: BlockRoutes = {
+  id: 'avatar',
+  routes: (): Route[] => [],
+};
+
+const category: BlockRoutes = {
+  id: 'category',
+  routes: (): Route[] => [{
+    path: 'category',
+    canActivate: [isAuthenticatedGuard],
+    children: [
+      { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/category-feature').then(m => m.CategoryList) },
+    ],
+  }],
+};
+
+const comment: BlockRoutes = {
+  id: 'comment',
+  routes: (): Route[] => [],
+};
+
+const geo: BlockRoutes = {
+  id: 'geo',
+  routes: (): Route[] => [
+    {
+      path: 'location',
+      canActivate: [isAuthenticatedGuard],
+      children: [{ path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/location-feature').then(m => m.LocationList) }],
+    },
+    {
+      path: 'trips',
+      canActivate: [isAuthenticatedGuard],
+      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/trip-feature').then(m => m.TripList) }],
+    },
+  ],
+};
+
+const consent: BlockRoutes = {
+  id: 'consent',
+  routes: (): Route[] => [],
+};
+
 /**
  * Every feature block's Angular route fragment. Adding a block here is HALF of what makes
  * a feature reachable — the matching metadata (id, dependsOn, bundle, menu, seed) must
  * also be added to `FEATURE_BLOCKS` in `@okr/tenant-util`. Tasks 12-18 fill in the
  * remaining blocks, one bundle each; these two exist because they are p13's bug.
  */
-export const FEATURE_ROUTES: BlockRoutes[] = [calevent, aoc];
+export const FEATURE_ROUTES: BlockRoutes[] = [
+  calevent, aoc,
+  auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
+];

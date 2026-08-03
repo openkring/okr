@@ -20,6 +20,18 @@
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../auth/feature/tsconfig.lib.json" },
     { "path": "../../aoc/feature/tsconfig.lib.json" },
-    { "path": "../../calevent/feature/tsconfig.lib.json" }
+    { "path": "../../calevent/feature/tsconfig.lib.json" },
+    { "path": "../../cms/page/feature/tsconfig.lib.json" },
+    { "path": "../../cms/section/feature/tsconfig.lib.json" },
+    { "path": "../../cms/menu/feature/tsconfig.lib.json" },
+    { "path": "../../cms/icon/feature/tsconfig.lib.json" },
+    { "path": "../../user/feature/tsconfig.lib.json" },
+    { "path": "../../profile/feature/tsconfig.lib.json" },
+    { "path": "../../security/processing/feature/tsconfig.lib.json" },
+    { "path": "../../security/audit/feature/tsconfig.lib.json" },
+    { "path": "../../i18n/feature/tsconfig.lib.json" },
+    { "path": "../../category/feature/tsconfig.lib.json" },
+    { "path": "../../geo/location/feature/tsconfig.lib.json" },
+    { "path": "../../geo/trip/feature/tsconfig.lib.json" }
   ]
 }

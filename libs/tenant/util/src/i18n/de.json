@@ -10,7 +10,19 @@
   },
   "feature": {
     "calevent": { "label": "Kalender" },
-    "aoc":      { "label": "AOC – Operation Centre" }
+    "aoc":      { "label": "AOC – Operation Centre" },
+    "auth":     { "label": "Anmeldung" },
+    "cms":      { "label": "Content-Management" },
+    "user":     { "label": "Benutzer" },
+    "profile":  { "label": "Profil" },
+    "session":  { "label": "Sitzungen" },
+    "security": { "label": "Datenschutz & Sicherheit" },
+    "i18n":     { "label": "Übersetzungen" },
+    "avatar":   { "label": "Avatar" },
+    "category": { "label": "Kategorien" },
+    "comment":  { "label": "Kommentare" },
+    "geo":      { "label": "Standorte & Fahrten" },
+    "consent":  { "label": "Einwilligung" }
   },
   "picker": {
     "title": "Feature-Bausteine",

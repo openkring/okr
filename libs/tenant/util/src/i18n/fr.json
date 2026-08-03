@@ -10,7 +10,19 @@
   },
   "feature": {
     "calevent": { "label": "Calendrier" },
-    "aoc":      { "label": "AOC – Centre d'opérations" }
+    "aoc":      { "label": "AOC – Centre d'opérations" },
+    "auth":     { "label": "Authentification" },
+    "cms":      { "label": "Gestion de contenu" },
+    "user":     { "label": "Utilisateurs" },
+    "profile":  { "label": "Profil" },
+    "session":  { "label": "Sessions" },
+    "security": { "label": "Confidentialité et sécurité" },
+    "i18n":     { "label": "Traductions" },
+    "avatar":   { "label": "Avatar" },
+    "category": { "label": "Catégories" },
+    "comment":  { "label": "Commentaires" },
+    "geo":      { "label": "Lieux et sorties" },
+    "consent":  { "label": "Consentement" }
   },
   "picker": {
     "title": "Blocs fonctionnels",

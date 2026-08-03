@@ -11,6 +11,18 @@
     "@okr/tenant-util": "*",
     "@okr/auth-feature": "*",
     "@okr/aoc-feature": "*",
-    "@okr/calevent-feature": "*"
+    "@okr/calevent-feature": "*",
+    "@okr/cms-page-feature": "*",
+    "@okr/cms-section-feature": "*",
+    "@okr/cms-menu-feature": "*",
+    "@okr/cms-icon-feature": "*",
+    "@okr/user-feature": "*",
+    "@okr/profile-feature": "*",
+    "@okr/security-processing-feature": "*",
+    "@okr/security-audit-feature": "*",
+    "@okr/i18n-feature": "*",
+    "@okr/category-feature": "*",
+    "@okr/location-feature": "*",
+    "@okr/trip-feature": "*"
   }
 }

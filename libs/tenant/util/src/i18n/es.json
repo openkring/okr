@@ -10,7 +10,19 @@
   },
   "feature": {
     "calevent": { "label": "Calendario" },
-    "aoc":      { "label": "AOC – Centro de operaciones" }
+    "aoc":      { "label": "AOC – Centro de operaciones" },
+    "auth":     { "label": "Autenticación" },
+    "cms":      { "label": "Gestión de contenido" },
+    "user":     { "label": "Usuarios" },
+    "profile":  { "label": "Perfil" },
+    "session":  { "label": "Sesiones" },
+    "security": { "label": "Privacidad y seguridad" },
+    "i18n":     { "label": "Traducciones" },
+    "avatar":   { "label": "Avatar" },
+    "category": { "label": "Categorías" },
+    "comment":  { "label": "Comentarios" },
+    "geo":      { "label": "Ubicaciones y salidas" },
+    "consent":  { "label": "Consentimiento" }
   },
   "picker": {
     "title": "Bloques de funciones",

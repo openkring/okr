@@ -15,11 +15,16 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 // Per the repo owner's ruling, one catalogue block covers a whole container domain (e.g.
 // one `finance` block for all 13 `finance/*` subdomains, one `subject` block for
 // person/org/address/group/application) — so this list, like the catalogue itself, is
-// keyed by TOP-LEVEL domain name only, never per-subdomain. `consent` and `session` are
-// correctly absent: neither has a `feature` directory at depth 1 or depth 2.
+// keyed by TOP-LEVEL domain name only, never per-subdomain.
+//
+// Task 12 (core bundle) drained: auth, avatar, category, cms, comment, geo, i18n, profile,
+// security, user (plus consent and session, which — per the note this replaces — are
+// correctly absent from this list: neither has a `feature` directory at depth 1 or depth 2,
+// so `featureDomains()` never surfaces them, but both are still catalogued in
+// `FEATURE_BLOCKS` because the task brief names them explicitly).
 export const PENDING_CLASSIFICATION: string[] = [
-  'activity', 'auth', 'avatar', 'category', 'chat', 'cms', 'comment', 'document',
-  'esign', 'finance', 'folder', 'forms', 'games', 'geo', 'i18n', 'instruments',
-  'mobility', 'pdf-template', 'profile', 'relationship', 'resource', 'security',
-  'social-feed', 'subject', 'task', 'user', 'vcard',
+  'activity', 'chat', 'document',
+  'esign', 'finance', 'folder', 'forms', 'games', 'instruments',
+  'mobility', 'pdf-template', 'relationship', 'resource',
+  'social-feed', 'subject', 'task', 'vcard',
 ];

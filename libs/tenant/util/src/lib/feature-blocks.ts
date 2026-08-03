@@ -58,6 +58,263 @@ const aoc: FeatureBlock = {
   }],
 };
 
+const auth: FeatureBlock = {
+  id: 'auth',
+  bundle: 'core',
+  label: '@tenant/util.feature.auth.label',
+  icon: 'login',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // Firebase Auth (email/password) is the store of record — no Firestore collection is
+  // owned by this domain. `auth.service.ts` calls the Auth SDK directly and writes activity
+  // log entries via `ActivityService` (the `activity` domain's collection, not auth's own).
+  collections: [],
+  menu: [
+    { key: 'login', name: 'login', url: '/auth/login', action: 'navigate', roleNeeded: 'anonymous', icon: 'login', label: '@main.login' },
+    { key: 'logout', name: 'logout', url: '/auth/logout', action: 'navigate', roleNeeded: 'registered', icon: 'logout', label: '@main.logout' },
+  ],
+};
+
+const cms: FeatureBlock = {
+  id: 'cms',
+  bundle: 'core',
+  label: '@tenant/util.feature.cms.label',
+  icon: 'page',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // Container domain: libs/cms/{icon,menu,page,section}, each owning its own Firestore collection.
+  collections: ['icons', 'menuItems', 'pages', 'sections'],
+  // NOTE on `url: ''` below on every `call`/`toggle` entry: their LIVE Firestore `url` field
+  // holds a relative action verb ('add', 'exportRaw', 'toggleEditMode', ...) resolved by the
+  // list/page component's own action handler, not a router path — `urlResolves` (rightly)
+  // treats any non-empty `MenuSpec.url` as a route to verify, so copying that verb through
+  // verbatim makes `feature-catalogue.spec.ts`'s route-coverage test fail on a non-bug
+  // (confirmed RED, then fixed here). `action`/`roleNeeded`/`icon`/`label` are still copied
+  // verbatim from the live doc; only `url` is normalised to '' for non-`navigate` entries,
+  // the same way `sub`/`context` wrappers already carry `url: ''`.
+  menu: [
+    { key: 'icon-all', name: 'icon-all', url: '/icon/all/c-icon', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'icons', label: 'Icons' },
+    { key: 'c-icon', name: 'c-icon', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'icon-add', name: 'icon-add', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Icon hinzufügen' },
+      { key: 'icon-sync', name: 'icon-sync', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'sync', label: 'Storage synchronisieren' },
+      { key: 'icon-export-raw', name: 'icon-export-raw', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Rohdaten exportieren' },
+    ] },
+    { key: 'menu-all', name: 'menu-all', url: '/menu/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'menu', label: '@main.cms.menus' },
+    { key: 'c-menus', name: 'c-menus', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'menu-add', name: 'menu-add', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Menu hinzufügen' },
+      { key: 'menu-exportraw', name: 'menu-exportraw', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Menus exportieren' },
+    ] },
+    { key: 'page-all', name: 'page-all', url: '/page/all/c-pages', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'text', label: '@main.cms.pages' },
+    { key: 'c-pages', name: 'c-pages', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'page-add', name: 'page-add', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Seite hinzufügen' },
+      { key: 'page-exportraw', name: 'page-exportraw', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Seiten exportieren' },
+    ] },
+    { key: 'page-edit', name: 'page-edit', url: '', action: 'call', roleNeeded: 'registered', icon: 'edit', label: 'Seite konfigurieren' },
+    // Context menu of the PageDispatcher itself (rendering a CMS page + its sections) —
+    // spans both the page and section subdomains, which is why it lives on the unified
+    // cms block rather than being split.
+    { key: 'c-contentpage', name: 'c-contentpage', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: '', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: 'Edit Modus' },
+      { key: 'cp-sort-sections', name: 'cp-sort-sections', url: '', action: 'call', roleNeeded: 'registered', icon: 'sync-circle', label: 'Sektionen sortieren' },
+      { key: 'cp-select-section', name: 'cp-select-section', url: '', action: 'call', roleNeeded: 'registered', icon: 'reorder-four', label: 'Bestehende Sektion hinzufügen' },
+      { key: 'cp-add-section', name: 'cp-add-section', url: '', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Neue Sektion hinzufügen' },
+      { key: 'print', name: 'print', url: '', action: 'call', roleNeeded: 'registered', icon: 'print', label: 'Drucken' },
+      { key: 'cp-exportraw', name: 'cp-exportraw', url: '', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Seiteninhalt exportieren' },
+    ] },
+    { key: 'section-all', name: 'section-all', url: '/section/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'section', label: '@content.section.plural' },
+    { key: 'c-sections', name: 'c-sections', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'section-add', name: 'section-add', url: '', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Sektion hinzufügen' },
+      { key: 'section-exportraw', name: 'section-exportraw', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Sektionen exportieren' },
+    ] },
+  ],
+};
+
+const user: FeatureBlock = {
+  id: 'user',
+  bundle: 'core',
+  label: '@tenant/util.feature.user.label',
+  icon: 'people',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: ['users'],
+  menu: [
+    { key: 'user-all', name: 'user-all', url: '/user/all/c-users', action: 'navigate', roleNeeded: 'admin', icon: 'people', label: 'Users' },
+    // `url: ''` on the `call` children below: see the note on cms's menu array — their live
+    // `url` is a relative action verb ('add'/'exportRaw'/...), not a route.
+    { key: 'c-users', name: 'c-users', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
+      { key: 'user-add', name: 'user-add', url: '', action: 'call', roleNeeded: 'admin', icon: 'edit', label: 'Neuen User hinzufügen' },
+      { key: 'user-exportraw', name: 'user-exportraw', url: '', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Rohdaten exportieren' },
+      { key: 'user-exportusers', name: 'user-exportusers', url: '', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Userliste exportieren' },
+    ] },
+  ],
+};
+
+const profile: FeatureBlock = {
+  id: 'profile',
+  bundle: 'core',
+  label: '@tenant/util.feature.profile.label',
+  icon: 'avatar-circle',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // Self-service editing UI over PersonModel/AddressModel/UserModel — owns no collection of
+  // its own; those are owned by the (not-yet-catalogued) subject and user domains.
+  collections: [],
+  menu: [
+    { key: 'profile', name: 'profile', url: '/person/profile', action: 'navigate', roleNeeded: 'registered', icon: 'avatar-circle', label: '@main.profile' },
+  ],
+};
+
+const session: FeatureBlock = {
+  id: 'session',
+  bundle: 'core',
+  label: '@tenant/util.feature.session.label',
+  icon: 'time',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: ['sessions'],
+  // No route of its own (libs/session has data-access + util only, no feature/route layer)
+  // and no live menuItems document — device/session bookkeeping is invisible infrastructure,
+  // surfaced only through aoc's "User Sessions" admin screen (which belongs to the aoc block).
+  menu: [],
+};
+
+const security: FeatureBlock = {
+  id: 'security',
+  bundle: 'core',
+  label: '@tenant/util.feature.security.label',
+  icon: 'shield',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // Container domain: libs/security/{audit,processing}. Both are ephemeral/derived — the
+  // privacy audit runs a callable with no persisted result, and the processing register is
+  // computed from app-config on read. Neither owns a Firestore collection.
+  collections: [],
+  menu: [
+    { key: 'priv-register', name: 'priv-register', url: '/security/register', action: 'navigate', roleNeeded: 'admin', icon: 'doc-safe', label: 'GDPR Bearbeitungsverzeichnis' },
+    { key: 'priv-audit', name: 'priv-audit', url: '/security/privacy-audit', action: 'navigate', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: 'GDPR Privacy Audit' },
+  ],
+};
+
+const i18n: FeatureBlock = {
+  id: 'i18n',
+  bundle: 'core',
+  label: '@tenant/util.feature.i18n.label',
+  icon: 'globe',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: ['i18nDefault', 'i18nTenantOverride'],
+  // No live menuItems document was found for the admin screens at /i18n/defaults or
+  // /i18n/overrides — reachable today only by typing the URL. Not a route defect (both
+  // routes exist and are admin-guarded), just an un-menu'd admin screen.
+  menu: [],
+};
+
+const avatar: FeatureBlock = {
+  id: 'avatar',
+  bundle: 'core',
+  label: '@tenant/util.feature.avatar.label',
+  icon: 'avatar-circle',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: ['avatars'],
+  // No route of its own — avatar upload/selection is an embedded widget used from person,
+  // org, group, user and other edit forms, not a routable screen. No live menuItems document.
+  menu: [],
+};
+
+const category: FeatureBlock = {
+  id: 'category',
+  bundle: 'core',
+  label: '@tenant/util.feature.category.label',
+  icon: 'category',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: ['categories'],
+  menu: [
+    { key: 'category-all', name: 'category-all', url: '/category/all/c-category', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'category', label: '@category.plural' },
+    // `url: ''` on the `call` children below: see the note on cms's menu array — their live
+    // `url` is a relative action verb ('add'/'exportRaw'/...), not a route.
+    { key: 'c-category', name: 'c-category', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'category-add', name: 'category-add', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Kategorie hinzufügen' },
+      { key: 'category-exportraw', name: 'category-exportraw', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Exportieren' },
+    ] },
+  ],
+};
+
+const comment: FeatureBlock = {
+  id: 'comment',
+  bundle: 'core',
+  label: '@tenant/util.feature.comment.label',
+  icon: 'chatbubbles',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: ['comments'],
+  // No route of its own — comments are an embedded accordion/thread on person, org, user,
+  // calevent, task, resource and relationship detail views, not a routable screen. No live
+  // menuItems document.
+  menu: [],
+};
+
+const geo: FeatureBlock = {
+  id: 'geo',
+  bundle: 'core',
+  label: '@tenant/util.feature.geo.label',
+  icon: 'location',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // Container domain: libs/geo/{location,trip}, each owning its own Firestore collection.
+  collections: ['locations', 'trips'],
+  menu: [
+    { key: 'location-all', name: 'location-all', url: '/location/all/c-locations', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'location', label: 'Orte' },
+    // `url: ''` on every `call` child below: see the note on cms's menu array — their live
+    // `url` is a relative action verb ('add'/'showOnMap'/...), not a route.
+    { key: 'c-locations', name: 'c-locations', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'location-add', name: 'location-add', url: '', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: 'Ort hinzufügen' },
+      { key: 'location-show', name: 'location-show', url: '', action: 'call', roleNeeded: 'registered', icon: 'map', label: 'Auf Karte anzeigen' },
+      { key: 'location-exportraw', name: 'location-exportraw', url: '', action: 'call', roleNeeded: 'eventAdmin', icon: 'download', label: 'Orte exportieren' },
+    ] },
+    { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'tester', icon: 'track', label: 'Logbuch' },
+    { key: 'c-trips', name: 'c-trips', url: '', action: 'context', roleNeeded: 'kiosk', icon: 'help-circle', label: '', children: [
+      { key: 'trip-add', name: 'trip-add', url: '', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: 'Neue Fahrt erfassen' },
+      { key: 'trip-reportdamage', name: 'trip-reportdamage', url: '', action: 'call', roleNeeded: 'kiosk', icon: 'warning', label: 'Schaden melden' },
+      { key: 'trip-reportbug', name: 'trip-reportbug', url: '', action: 'call', roleNeeded: 'kiosk', icon: 'bug', label: 'Fehler melden' },
+      { key: 'trip-boatstats', name: 'trip-boatstats', url: '', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: 'Boots-Statistik anzeigen' },
+      { key: 'trip-personstats', name: 'trip-personstats', url: '', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: 'Personen-Statistik anzeigen' },
+      { key: 'trip-exportraw', name: 'trip-exportraw', url: '', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Rohdaten exportieren' },
+    ] },
+  ],
+};
+
+// consent: judged CORE, not `members`. The cookie/analytics-consent banner
+// (`@okr/consent-ui`'s CookieBanner + `@okr/consent-data-access`) is wired into every
+// tenant app's root (`okr-root.ts`/`app.config.ts`), shown to every visitor — including
+// anonymous, pre-login — and is a legal/compliance surface, not a togglable business
+// feature a tenant would ever want off. That is the definition of `core: true`, not a
+// `members`-bundle pick. It owns no Firestore collection (state lives in `localStorage`
+// via CONSENT_KEY) and no route (it is a banner component, not a routable screen).
+const consent: FeatureBlock = {
+  id: 'consent',
+  bundle: 'core',
+  label: '@tenant/util.feature.consent.label',
+  icon: 'lock',
+  core: true,
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: [],
+  menu: [],
+};
+
 /**
  * Every feature block's METADATA the platform ships. Adding a block here is HALF of what
  * makes a feature reachable — the matching Angular route fragment must also be added to
@@ -67,4 +324,7 @@ const aoc: FeatureBlock = {
  * Tasks 12-18 fill in the remaining blocks, one bundle each; these two exist because they
  * are p13's bug.
  */
-export const FEATURE_BLOCKS: FeatureBlock[] = [calevent, aoc];
+export const FEATURE_BLOCKS: FeatureBlock[] = [
+  calevent, aoc,
+  auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
+];
