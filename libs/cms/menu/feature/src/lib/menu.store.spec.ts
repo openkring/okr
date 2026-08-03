@@ -152,5 +152,26 @@ describe('MenuStore', () => {
       await TestBed.inject(ApplicationRef).whenStable();
       expect(store.menu()?.menuItems).toEqual(['my-custom-link']);
     });
+
+    // Regression, task 12 review round 3: 'user-all'/'priv-register'/'priv-audit' are
+    // children of the SHARED 'aoc-menu' parent, but they are owned by 'user'/'security'
+    // (both core: true, always effective) — NOT by 'aoc' (bundle 'special', togglable).
+    // `blockOfMenuKey` used to return only the FIRST declaring block in `FEATURE_BLOCKS`
+    // order ('aoc'), so switching 'aoc' off alone hid these two always-on blocks' own menu
+    // entries too. Fixed via `blockOwnersOfMenuKey` (multi-owner aware): visibility is now
+    // "ANY declaring block is effective", not just the first.
+    it('keeps a child owned by a DIFFERENT, still-effective co-declarer of a shared parent, even when the parent\'s first declarer is switched off', async () => {
+      store = makeStore(
+        menuServiceMock([], {
+          menuItems: ['user-all', 'priv-register', 'priv-audit', 'aoc-admin'],
+        }),
+        featureStoreMock(['user', 'security']) // 'aoc' deliberately NOT effective
+      );
+      store.setMenuName('aoc-menu');
+      await TestBed.inject(ApplicationRef).whenStable();
+      // 'aoc-admin' (owned only by the now-off 'aoc') is dropped; the three entries owned
+      // by 'user'/'security' (both still effective) survive.
+      expect(store.menu()?.menuItems).toEqual(['user-all', 'priv-register', 'priv-audit']);
+    });
   });
 });

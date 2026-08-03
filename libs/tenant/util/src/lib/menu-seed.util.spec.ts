@@ -171,4 +171,15 @@ describe('indexMenuDocsByName', () => {
     ]);
     expect(duplicates).toEqual([]);
   });
+
+  it('never lets a stored okey field override the REAL Firestore doc id (task 12 review round 3)', () => {
+    // The convention is to strip `okey` before write, but nothing on the read path
+    // enforces that — a doc that somehow carries its own (possibly stale) `okey` field
+    // must not have it override `id`, since `docId` (planMenuOps) is a downstream WRITE
+    // target: a wrong `okey` here would silently redirect a write to the wrong document.
+    const { byName } = indexMenuDocsByName([
+      { id: 'real-doc-id', data: { name: 'icon-all', okey: 'stale-or-wrong-id' } },
+    ]);
+    expect(byName.get('icon-all')?.okey).toBe('real-doc-id');
+  });
 });

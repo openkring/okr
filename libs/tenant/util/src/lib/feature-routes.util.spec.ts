@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blockOfMenuKey, collectMenuUrls, composeFeatureRoutes, urlResolves } from './feature-routes.util';
+import { blockOfMenuKey, blockOwnersOfMenuKey, collectMenuUrls, composeFeatureRoutes, urlResolves } from './feature-routes.util';
 import type { RouteSource } from './feature-routes.util';
 import type { FeatureBlock } from './feature-catalogue.types';
 
@@ -112,5 +112,59 @@ describe('blockOfMenuKey', () => {
 
   it('returns undefined for a tenant-authored key', () => {
     expect(blockOfMenuKey(localCatalogue, 'my-custom-link')).toBeUndefined();
+  });
+});
+
+// Fixture with a shared-parent key ('shared-menu') declared by TWO blocks — mirrors the
+// real `aoc-menu` situation (declared by `aoc`, `user`, `security`), local so this test
+// does not churn as tasks 12-18 add more real blocks that use the pattern.
+const sharedParentCatalogue: FeatureBlock[] = [
+  {
+    id: 'aoc', bundle: 'special', label: '@f.aoc', icon: 'admin',
+    defaultAvailability: 'ga', dependsOn: [], collections: [],
+    menu: [{
+      key: 'shared-menu', name: 'shared-menu', url: '', action: 'sub',
+      roleNeeded: 'admin', icon: 'admin', label: 'Shared',
+      children: [{
+        key: 'aoc-only-child', name: 'aoc-only-child', url: '/aoc/x', action: 'navigate',
+        roleNeeded: 'admin', icon: 'admin', label: 'Aoc Only',
+      }],
+    }],
+  },
+  {
+    id: 'user', bundle: 'core', label: '@f.user', icon: 'people', core: true,
+    defaultAvailability: 'ga', dependsOn: [], collections: [],
+    menu: [{
+      key: 'shared-menu', name: 'shared-menu', url: '', action: 'sub',
+      roleNeeded: 'admin', icon: 'admin', label: 'Shared',
+      children: [{
+        key: 'user-only-child', name: 'user-only-child', url: '/user/x', action: 'navigate',
+        roleNeeded: 'admin', icon: 'people', label: 'User Only',
+      }],
+    }],
+  },
+];
+
+describe('blockOwnersOfMenuKey (task 12 review round 3 — multi-owner visibility)', () => {
+  it('returns EVERY declaring block for a shared-parent key, not just the first', () => {
+    expect(blockOwnersOfMenuKey(sharedParentCatalogue, 'shared-menu').sort()).toEqual(['aoc', 'user']);
+  });
+
+  it('returns exactly one owner for a key only one block declares', () => {
+    expect(blockOwnersOfMenuKey(sharedParentCatalogue, 'user-only-child')).toEqual(['user']);
+  });
+
+  it('returns [] for a tenant-authored key', () => {
+    expect(blockOwnersOfMenuKey(sharedParentCatalogue, 'my-custom-link')).toEqual([]);
+  });
+
+  it('regression: aoc off + user (its co-declarer) on must still resolve the shared key to an effective owner', () => {
+    // This is exactly the bug the multi-owner fix closes: `blockOfMenuKey` alone would
+    // return only 'aoc' (first in array order) for 'shared-menu', so a naive
+    // `effective().has(blockOfMenuKey(...))` check would say the key is NOT visible even
+    // though 'user' — also a declarer — is fully effective.
+    const effective = new Set(['user']); // 'aoc' switched off
+    const owners = blockOwnersOfMenuKey(sharedParentCatalogue, 'shared-menu');
+    expect(owners.some(id => effective.has(id))).toBe(true);
   });
 });

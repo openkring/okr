@@ -24,7 +24,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 import { getTarget, isMenuItem } from '@okr/cms-menu-util';
 
 import { FeatureStore } from '@okr/tenant-feature';
-import { blockOfMenuKey, FEATURE_BLOCKS } from '@okr/tenant-util';
+import { blockOwnersOfMenuKey, FEATURE_BLOCKS } from '@okr/tenant-util';
 
 
 export type MenuState = {
@@ -64,11 +64,15 @@ export const _MenuStore = signalStore(
     i18n: store.i18nService.translateAll(MENU_I18N_KEYS),
     // A menu doc is rendered as a child only when its owning feature block is effective
     // for this tenant. `tenants[]` (query-level) still decides readability; enablement
-    // decides visibility on top of that (D-BB-8). `blockOfMenuKey` returns `undefined` for
-    // tenant-authored menu entries (not declared by any block) — those always render.
+    // decides visibility on top of that (D-BB-8). `blockOwnersOfMenuKey` returns every
+    // block that declares this key — a "shared parent" key like `aoc-menu` is declared by
+    // `aoc` (togglable) AND by `user`/`security` (always `core: true`), so visibility must
+    // be "ANY owner effective", not just the first — else disabling `aoc` alone would also
+    // hide `user`/`security`'s own, still-effective menu entries (task 12 review round 3).
+    // `[]` (no owners) means a tenant-authored menu entry — those always render.
     isVisible: (key: string): boolean => {
-      const blockId = blockOfMenuKey(FEATURE_BLOCKS, key);
-      return blockId === undefined || store.featureStore.effective().has(blockId);
+      const owners = blockOwnersOfMenuKey(FEATURE_BLOCKS, key);
+      return owners.length === 0 || owners.some(id => store.featureStore.effective().has(id));
     },
   })),
   withProps((store) => ({

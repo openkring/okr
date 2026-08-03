@@ -75,7 +75,12 @@ export function indexMenuDocsByName(
     const name = (data.name as string | undefined) ?? id;
     idsByName.set(name, [...(idsByName.get(name) ?? []), id]);
     if (!byName.has(name)) {
-      byName.set(name, { okey: id, tenants: [] as string[], ...data } as MenuItemModel);
+      // `okey` spread LAST, after `data`: a stored doc that happens to carry its own
+      // `okey` field (the convention is to strip it before write, but nothing enforces
+      // that on read) must never override the REAL Firestore doc id — `docId` is a write
+      // target downstream (`applySelection`), so a wrong `okey` here would silently
+      // redirect a write to the wrong document (task 12 review round 3).
+      byName.set(name, { tenants: [] as string[], ...data, okey: id } as MenuItemModel);
     }
   }
 

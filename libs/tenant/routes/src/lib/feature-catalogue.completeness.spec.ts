@@ -99,4 +99,36 @@ describe('catalogue completeness', () => {
       expect(new Set(keys).size, `block '${block.id}' repeats a menu key`).toBe(keys.length);
     });
   });
+
+  /**
+   * The invariant the two tests above do NOT cover, and the blanket "unique across the
+   * whole catalogue" test (that they replaced) used to: a key that is anyone's CHILD must
+   * never ALSO be anyone's TOP-LEVEL spec — even with byte-identical own fields, even in a
+   * different block (task 12 review round 3). `rootNavKeys()`
+   * (`apps/functions/src/tenant/apply-feature-selection.ts`) only ever looks at a block's
+   * TOP-LEVEL specs, never recursing into `children` — that is precisely why the
+   * cms-menu/aoc-menu restructuring works (a child stays un-attached to the root nav no
+   * matter how many blocks redeclare its parent). A key that is simultaneously someone's
+   * child (rendered inside a submenu) and someone's top-level spec (appended straight to
+   * `main_<tenantId>`) would render in BOTH places — the exact duplicate-root-nav defect
+   * Finding 1 (fix round 2) existed to prevent, reopened through a gap the field-identity
+   * check does not close (verified: temporarily adding `menu-all` as ALSO a top-level spec
+   * of `category` — byte-identical own fields, already a `cms-menu` child in `cms` — passed
+   * both existing tests above and was only caught once this test was added).
+   */
+  it('a key declared as anyone\'s child is never ALSO declared as anyone\'s top-level spec', () => {
+    const childKeys = new Set<string>();
+    const topLevelKeys = new Set<string>();
+
+    const visitChildren = (s: MenuSpec): void => {
+      (s.children ?? []).forEach(c => { childKeys.add(c.key); visitChildren(c); });
+    };
+    FEATURE_BLOCKS.forEach(b => b.menu.forEach(s => {
+      topLevelKeys.add(s.key);
+      visitChildren(s);
+    }));
+
+    const violations = [...topLevelKeys].filter(k => childKeys.has(k));
+    expect(violations).toEqual([]);
+  });
 });

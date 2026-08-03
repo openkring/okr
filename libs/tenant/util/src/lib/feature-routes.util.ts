@@ -20,18 +20,36 @@ export function composeFeatureRoutes(sources: RouteSource[]): Route[] {
 }
 
 /**
- * Which block owns a given `menuItems` doc id? Menu docs are globally shared, so this is
- * how a rendered tree learns whether its owning feature is on for this tenant. Returns
- * `undefined` for tenant-authored menu entries (not declared by any block's `menu`), which
- * are never filtered.
+ * EVERY block that declares a given `menuItems` doc id anywhere in its menu tree. A key can
+ * legitimately be declared by more than one block — the "shared parent" pattern
+ * (`cms-menu`/`aoc-menu`, see `cmsMenuParent`/`aocMenuParent` in `feature-blocks.ts`): each
+ * owning block redeclares the same parent node with only its own children.
+ *
+ * This is the multi-owner-aware replacement `blockOfMenuKey` (below) is now built on top
+ * of. It matters for real: `aoc-menu`'s declarers are `aoc` (bundle `special`, togglable)
+ * PLUS `user` and `security` (both `core: true`, always effective) — checking only the
+ * FIRST declaring block (`aoc`, first in `FEATURE_BLOCKS` order) would hide `user-all`/
+ * `priv-register`/`priv-audit` from the root nav the instant a tenant switches `aoc` off,
+ * even though both owning blocks are still fully effective (task 12 review round 3).
+ * Returns `[]` for a tenant-authored menu entry (not declared by any block), which is
+ * never filtered.
  */
-export function blockOfMenuKey(catalogue: FeatureBlock[], key: string): string | undefined {
+export function blockOwnersOfMenuKey(catalogue: FeatureBlock[], key: string): string[] {
   const hit = (specs: MenuSpec[]): boolean =>
     specs.some(s => s.key === key || hit(s.children ?? []));
-  for (const block of catalogue) {
-    if (hit(block.menu)) return block.id;
-  }
-  return undefined;
+  return catalogue.filter(block => hit(block.menu)).map(b => b.id);
+}
+
+/**
+ * Which block owns a given `menuItems` doc id? Returns the FIRST declaring block in
+ * catalogue order — a representative owner, not necessarily the only one. Most callers
+ * that need a correct VISIBILITY decision (is this key still effective for the tenant?)
+ * should use `blockOwnersOfMenuKey` instead and check whether ANY owner is effective; see
+ * its doc comment for why checking only the first owner is a real bug for a shared-parent
+ * key. Kept for callers that only need a single representative id (e.g. reporting).
+ */
+export function blockOfMenuKey(catalogue: FeatureBlock[], key: string): string | undefined {
+  return blockOwnersOfMenuKey(catalogue, key)[0];
 }
 
 /**

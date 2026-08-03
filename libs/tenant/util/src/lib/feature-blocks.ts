@@ -331,17 +331,16 @@ const geo: FeatureBlock = {
       { key: 'location-show', name: 'location-show', url: 'showOnMap', action: 'call', roleNeeded: 'registered', icon: 'map', label: 'Auf Karte anzeigen' },
       { key: 'location-exportraw', name: 'location-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'eventAdmin', icon: 'download', label: 'Orte exportieren' },
     ] },
-    // KNOWN RISK, flagged not fixed (task 12 review round 2): 'logbuch' is a top-level
-    // `navigate` entry NOT present in any live tenant's root `menuItems[]` (verified:
-    // main_scs does not list it) — reachable today only nested inside a TENANT-BESPOKE
-    // custom menu ('sport-menu', scs-only tenants, not a system-shared doc like
-    // cms-menu/aoc-menu). `rootNavKeys()` (apply-feature-selection.ts) still treats every
-    // top-level `navigate` entry as root-attachable, so the next `applyFeatureSelection`
-    // for a tenant whose bespoke menu already nests it would append a SECOND, duplicate
-    // root entry — the same failure class fixed above for the other 9 entries, but with no
-    // live SYSTEM parent to hang it under (nesting it under `c-trips` would not match live
-    // Firestore — inventing structure not seen in the data). Left top-level, unresolved,
-    // for an explicit ruling rather than a guessed fix.
+    // RULED (task 12 review round 3): 'logbuch' stays a top-level `navigate` entry — that
+    // IS the intended model, same as any other block-owned top-level nav item (`login`,
+    // `category-all`, ...). A fresh tenant enabling `geo` for the first time gets `logbuch`
+    // created AND attached to their root nav by `rootNavKeys()`/`planRootMenuOp`, exactly
+    // as designed. `scs` currently has the live `logbuch` doc (`tenants: ['scs']`) but does
+    // NOT list it in `main_scs.menuItems` — verified this is legacy DRIFT (it was authored
+    // directly onto the tenant-bespoke `sport-menu` custom grouping before this catalogue
+    // existed), not evidence against the model. The next `applyFeatureSelection` for `scs`
+    // will add the one missing, correctly `tester`-gated root entry — a one-time,
+    // intentional convergence, not a duplication bug.
     { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'tester', icon: 'track', label: 'Logbuch' },
     { key: 'c-trips', name: 'c-trips', url: '', action: 'context', roleNeeded: 'kiosk', icon: 'help-circle', label: '', children: [
       { key: 'trip-add', name: 'trip-add', url: 'add', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: 'Neue Fahrt erfassen' },
