@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MenuItemModel } from '@okr/shared-models';
-import { planMenuOps, STRUCTURAL_FIELDS } from './menu-seed.util';
+import { indexMenuDocsByName, planMenuOps, STRUCTURAL_FIELDS } from './menu-seed.util';
 import type { MenuSpec } from './feature-catalogue.types';
 
 const spec: MenuSpec = {
@@ -113,5 +113,62 @@ describe('planMenuOps', () => {
     expect(ops).toHaveLength(1);
     expect(ops[0].op).toBe('add-tenant');
     expect(ops[0].fields.tenants).toEqual(['p13']);
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────────────
+  // `docId` (task 12 review round 2, repo owner ruling): eleven live `menuItems` docs
+  // carry legacy autoids that differ from their `name` (e.g. `icon-all`'s real doc id is
+  // `ogwzpl15fpuhcxon5e7b`). `existing`/`existingByName` MUST be indexed by name (see
+  // `indexMenuDocsByName`), and the op's write target (`docId`) must be the EXISTING doc's
+  // real id when one is found — never `spec.key`, or every seed against such a doc would
+  // silently create a SECOND, duplicate `menuItems` doc under the catalogue key instead of
+  // updating the original.
+  // ──────────────────────────────────────────────────────────────────────────────────
+  it('resolves an existing doc by name even when its doc id is a legacy autoid, and targets that REAL doc id for the write', () => {
+    const legacyDoc = existingDoc({ okey: 'ogwzpl15fpuhcxon5e7b', tenants: ['scs'] });
+    const existing = new Map([['calevent-all', legacyDoc]]); // indexed by NAME, per indexMenuDocsByName
+    const ops = planMenuOps([spec], 'p13', existing);
+    expect(ops).toHaveLength(1);
+    expect(ops[0].op).toBe('add-tenant'); // recognized as an existing doc, NOT 'create'
+    expect(ops[0].key).toBe('calevent-all'); // catalogue identity unaffected
+    expect(ops[0].docId).toBe('ogwzpl15fpuhcxon5e7b'); // write targets the REAL doc, not a new one
+  });
+
+  it('a freshly created doc still gets docId === key === name, with okey unchanged (D-BB behaviour preserved)', () => {
+    const ops = planMenuOps([spec], 'p13', new Map());
+    expect(ops[0].docId).toBe('calevent-all');
+    expect(ops[0].key).toBe('calevent-all');
+    expect(ops[0].fields.okey).toBe('calevent-all');
+  });
+});
+
+describe('indexMenuDocsByName', () => {
+  it('indexes by the name field, not the Firestore doc id', () => {
+    const { byName } = indexMenuDocsByName([
+      { id: 'ogwzpl15fpuhcxon5e7b', data: { name: 'icon-all' } },
+    ]);
+    expect(byName.get('icon-all')?.okey).toBe('ogwzpl15fpuhcxon5e7b');
+    expect(byName.has('ogwzpl15fpuhcxon5e7b')).toBe(false);
+  });
+
+  it('falls back to the doc id when the data has no name field', () => {
+    const { byName } = indexMenuDocsByName([{ id: 'some-id', data: {} }]);
+    expect(byName.has('some-id')).toBe(true);
+  });
+
+  it('reports a name shared by two docs instead of silently picking one', () => {
+    const { duplicates } = indexMenuDocsByName([
+      { id: 'id-a', data: { name: 'icon-sync' } },
+      { id: 'id-b', data: { name: 'icon-sync' } },
+    ]);
+    expect(duplicates).toEqual([{ name: 'icon-sync', ids: ['id-a', 'id-b'] }]);
+  });
+
+  it('reports no duplicates when every name is unique', () => {
+    const { duplicates } = indexMenuDocsByName([
+      { id: 'id-a', data: { name: 'a' } },
+      { id: 'id-b', data: { name: 'b' } },
+    ]);
+    expect(duplicates).toEqual([]);
   });
 });

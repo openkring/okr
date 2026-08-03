@@ -2,6 +2,7 @@ import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { FEATURE_BLOCKS } from '@okr/tenant-util';
+import type { MenuSpec } from '@okr/tenant-util';
 import { NON_BLOCK_DOMAINS, PENDING_CLASSIFICATION } from './feature-catalogue.non-blocks';
 
 /** Repo-root-relative path to libs/, from this spec file's directory. */
@@ -55,13 +56,47 @@ describe('catalogue completeness', () => {
     expect(dangling).toEqual([]);
   });
 
-  it('every menu key is unique across the whole catalogue', () => {
-    const keys: string[] = [];
-    const visit = (s: { key: string; children?: { key: string }[] }): void => {
-      keys.push(s.key);
-      (s.children ?? []).forEach(c => visit(c as never));
+  /**
+   * A key legitimately recurs across blocks EXACTLY ONCE per genuine use case: a shared
+   * PARENT doc (`cms-menu`, `aoc-menu`) that multiple blocks each redeclare, verbatim,
+   * purely to attach their own child(ren) — see `cmsMenuParent`/`aocMenuParent` in
+   * `feature-blocks.ts` (task 12 review round 2) and `planMenuOpsForBlocks`'s "BUG 1 FIX"
+   * (`apps/functions/src/tenant/apply-feature-selection.ts`), which folds every block's
+   * redeclaration into ONE Firestore write. That is a deliberate, field-identical
+   * co-declaration — NOT the same as two blocks colliding on a key by accident, which
+   * would silently corrupt the shared doc's own fields depending on write order. This test
+   * enforces the narrower, correct invariant: every KEY's "own" fields (everything except
+   * `children`, which legitimately differs per redeclaration) must be identical everywhere
+   * that key appears, and every block's OWN tree must never repeat a key internally.
+   */
+  it('a menu key that recurs across blocks always describes the same node (shared-parent co-declarations only, no accidental collisions)', () => {
+    type OwnFields = Omit<MenuSpec, 'children'>;
+    const seen = new Map<string, OwnFields>();
+    const conflicts: string[] = [];
+
+    const visit = (spec: MenuSpec): void => {
+      const { children: _children, ...own } = spec;
+      const prior = seen.get(spec.key);
+      if (prior && JSON.stringify(prior) !== JSON.stringify(own)) {
+        conflicts.push(spec.key);
+      }
+      seen.set(spec.key, own);
+      (spec.children ?? []).forEach(visit);
     };
     FEATURE_BLOCKS.forEach(b => b.menu.forEach(visit));
-    expect(new Set(keys).size).toBe(keys.length);
+
+    expect(conflicts).toEqual([]);
+  });
+
+  it('every menu key is unique WITHIN a single block\'s own tree', () => {
+    FEATURE_BLOCKS.forEach(block => {
+      const keys: string[] = [];
+      const visit = (s: MenuSpec): void => {
+        keys.push(s.key);
+        (s.children ?? []).forEach(visit);
+      };
+      block.menu.forEach(visit);
+      expect(new Set(keys).size, `block '${block.id}' repeats a menu key`).toBe(keys.length);
+    });
   });
 });

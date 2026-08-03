@@ -9,7 +9,7 @@ import {
   MenuItemCollection, UserCollection, type MenuItemModel,
 } from '@okr/shared-models';
 import {
-  planMenuOps, resolveAvailability, resolveWithDeps,
+  indexMenuDocsByName, planMenuOps, resolveAvailability, resolveWithDeps,
   type FeatureBlock, type FeatureRollout, type MenuOp,
 } from '@okr/tenant-util';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -111,19 +111,24 @@ export function planSelection(
 export function planMenuOpsForBlocks(
   blocks: FeatureBlock[],
   tenantId: string,
-  existing: Map<string, MenuItemModel>,
+  existingByName: Map<string, MenuItemModel>,
 ): MenuOp[] {
   const accumulatedFields = new Map<string, Partial<MenuItemModel>>();
   const opKind = new Map<string, MenuOp['op']>();
+  // Real Firestore doc id per key — same for every touch of a given key within one run
+  // (derived from the same `existingByName` entry, or `spec.key` for a doc this run just
+  // created), so simply overwriting on each touch is correct.
+  const docIdByKey = new Map<string, string>();
 
   for (const block of blocks) {
     for (const spec of block.menu) {
       // ONE top-level spec per `planMenuOps` call — see the comment above for why.
-      for (const op of planMenuOps([spec], tenantId, existing)) {
-        const priorFull = existing.get(op.key) ?? ({ okey: op.key } as MenuItemModel);
-        existing.set(op.key, { ...priorFull, ...op.fields });
+      for (const op of planMenuOps([spec], tenantId, existingByName)) {
+        const priorFull = existingByName.get(op.key) ?? ({ okey: op.docId } as MenuItemModel);
+        existingByName.set(op.key, { ...priorFull, ...op.fields });
 
         accumulatedFields.set(op.key, { ...(accumulatedFields.get(op.key) ?? {}), ...op.fields });
+        docIdByKey.set(op.key, op.docId);
         // Sticky 'create': once a key has been recorded as 'create', a later touch in
         // this same run must not downgrade it, even though that later touch's OWN
         // `planMenuOps` result (computed against the now-updated `existing`, where the
@@ -135,6 +140,7 @@ export function planMenuOpsForBlocks(
 
   return [...accumulatedFields.entries()].map(([key, fields]) => ({
     key,
+    docId: docIdByKey.get(key) ?? key,
     op: opKind.get(key) ?? 'update-structure',
     fields,
   }));
@@ -285,6 +291,7 @@ export function planRootMenuOp(
     // search (index is a searchable field, not load-bearing for rendering).
     return {
       key,
+      docId: key, // the root doc's Firestore id always equals its name (main_<tenantId>)
       op: 'create',
       fields: {
         okey: key, name: key, action: 'main', url: '', label: 'main', icon: '',
@@ -314,7 +321,28 @@ export function planRootMenuOp(
   const fields: Partial<MenuItemModel> = {};
   if (arrayChanged) fields.menuItems = menuItems;
   if (!tenantsCorrect) fields.tenants = [tenantId];
-  return { key, op: 'update-structure', fields };
+  return { key, docId: key, op: 'update-structure', fields };
+}
+
+// ────────────────────────────────────────────────────────────────────────────────────
+// ROOT NAV FILTER (task 12 review round 2) — only a `navigate` or `sub` top-level spec
+// belongs in a tenant's root nav. `context` (context-menu wrappers, attached via the
+// `:contextMenuName` route param, never from a nav tree — they carry `url: ''`/`label: ''`)
+// and `call`/`toggle` (toolbar actions, not navigable destinations) top-level specs must
+// never reach `addKeys`/`removeKeys`. Before this fix, `addKeys` was every top-level key
+// with no filter at all: a bundle with 9 context wrappers + 1 stray top-level `call` entry
+// (task 12's `core` bundle, pre-fix) would have appended 10 blank rows to a tenant's root
+// nav on the very next `applyFeatureSelection` call. `navigate` survives (e.g. `login`/
+// `logout`, both top-level `navigate` specs that genuinely belong in the root nav); `sub`
+// survives too — a shared-parent wrapper like `cms-menu`/`aoc-menu` (see `cmsMenuParent`/
+// `aocMenuParent` in `feature-blocks.ts`) is ITSELF a real root nav entry, even though its
+// CHILDREN must not also be (and never were — `addKeys`/`removeKeys` only ever look at a
+// block's TOP-LEVEL specs, never recursing into `children`).
+// ────────────────────────────────────────────────────────────────────────────────────
+export function rootNavKeys(blocks: FeatureBlock[]): string[] {
+  return blocks.flatMap(b => b.menu
+    .filter(s => s.action === 'navigate' || s.action === 'sub')
+    .map(s => s.key));
 }
 
 /**
@@ -332,11 +360,20 @@ export async function applySelection(
     .map(id => catalogue.find(b => b.id === id))
     .filter((b): b is FeatureBlock => b !== undefined);
 
-  // --- read the current menu snapshot (global collection, keyed by doc id) -----------
+  // --- read the current menu snapshot (global collection, indexed by NAME) -----------
+  // Indexed by `name`, not doc id — see `indexMenuDocsByName`'s doc comment (task 12
+  // review round 2): the runtime already resolves menu docs by name, and eleven live docs
+  // carry legacy autoids that differ from their name. A name collision is a data-integrity
+  // problem this function refuses to paper over — see the throw right below.
   const menuSnap = await db.collection(MenuItemCollection).get();
-  const existing = new Map<string, MenuItemModel>(
-    menuSnap.docs.map(d => [d.id, { okey: d.id, tenants: [] as string[], ...d.data() } as MenuItemModel]),
+  const { byName: existing, duplicates } = indexMenuDocsByName(
+    menuSnap.docs.map(d => ({ id: d.id, data: d.data() as Partial<MenuItemModel> })),
   );
+  if (duplicates.length > 0) {
+    throw new HttpsError('failed-precondition',
+      `${CF_NAME}: duplicate menuItems name(s) found, refusing to apply — ` +
+      duplicates.map(d => `'${d.name}' (docs: ${d.ids.join(', ')})`).join('; '));
+  }
 
   const menuOps = planMenuOpsForBlocks(enabledBlocks, tenantId, existing);
 
@@ -397,7 +434,12 @@ export async function applySelection(
   // kill-switch/disable path — a disabled block's key must not survive a retry — matters
   // more than an unlikely, self-inflicted key collision recovering on its own.
   const enabledIds = new Set(plan.enabled);
-  const addKeys = enabledBlocks.flatMap(b => b.menu.map(s => s.key));
+  // `rootNavKeys` filters to `navigate`/`sub` top-level specs only — see its doc comment
+  // above. `removeKeys` deliberately stays UNFILTERED: a disabled block's context-wrapper/
+  // call keys were never added to the root nav by a post-fix `addKeys`, so removing them
+  // is a harmless no-op for a correctly-provisioned tenant, and self-heals any tenant that
+  // picked up a stray entry from a pre-fix `applyFeatureSelection` run.
+  const addKeys = rootNavKeys(enabledBlocks);
   const removeKeys = catalogue
     .filter(b => !enabledIds.has(b.id))
     .flatMap(b => b.menu.map(s => s.key));
@@ -406,11 +448,11 @@ export async function applySelection(
   // --- menu + seed writes (chunks 1..N — naturally idempotent, safe to re-run) -------
   const menuWrites: PendingWrite[] = [
     ...menuOps.map(op => ({
-      ref: db.collection(MenuItemCollection).doc(op.key),
+      ref: db.collection(MenuItemCollection).doc(op.docId),
       data: op.fields,
       merge: true,
     })),
-    ...(rootOp ? [{ ref: db.collection(MenuItemCollection).doc(rootOp.key), data: rootOp.fields, merge: true }] : []),
+    ...(rootOp ? [{ ref: db.collection(MenuItemCollection).doc(rootOp.docId), data: rootOp.fields, merge: true }] : []),
   ];
   await commitChunked(db, [...menuWrites, ...seedWrites]);
 

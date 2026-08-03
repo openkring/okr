@@ -1,4 +1,4 @@
-import type { BundleId, FeatureBlock } from './feature-catalogue.types';
+import type { BundleId, FeatureBlock, MenuSpec } from './feature-catalogue.types';
 
 /**
  * Bundle catalogue — pure presentational grouping data for the feature picker UI (id,
@@ -22,6 +22,43 @@ export const FEATURE_BUNDLES: { id: BundleId; label: string; icon: string }[] = 
   { id: 'special',       label: '@tenant/util.bundle.special.label',       icon: 'star' },
 ];
 
+/**
+ * `cms-menu` and `aoc-menu` are live, genuinely SHARED parent `menuItems` docs (verified
+ * against Firestore, task 12 review round 2) — `cms-menu`'s own `children[]` lists entries
+ * owned by `cms`, `category`, `geo`, AND several not-yet-catalogued domains (document,
+ * forms, esign, pdf-template, …); `aoc-menu`'s lists entries owned by `aoc`, `user`,
+ * `security`, AND two not-yet-catalogued domains (activity, mobility — see the TODO on the
+ * `aoc` block below). EVERY block that owns one of their children redeclares the SAME
+ * parent node (identical url/action/roleNeeded/icon/label, verbatim off the live doc —
+ * only `children` differs per block). This is not duplication-by-accident: it is the
+ * documented "shared parent" pattern `planMenuOpsForBlocks`
+ * (`apps/functions/src/tenant/apply-feature-selection.ts`, "BUG 1 FIX") exists specifically
+ * to fold into ONE Firestore write, and `feature-catalogue.completeness.spec.ts` has a
+ * dedicated test asserting every re-declaration of a shared key is field-identical (so a
+ * genuine conflicting redeclaration is still caught, just not a deliberate, consistent one).
+ *
+ * Before this (task 12 review round 2), every child below was catalogued as its own
+ * top-level `MenuSpec` — wrong on two counts: `apply-feature-selection.ts`'s
+ * `rootNavKeys()`/`addKeys` only ever looks at a block's TOP-LEVEL specs, so each of these
+ * would have been appended directly to a tenant's root nav (`menuItems/main_<tenantId>`)
+ * instead of staying nested under `cms-menu`/`aoc-menu` where the live app actually renders
+ * them — silently duplicating every one of these entries out of the submenu it actually
+ * lives in, on the next `applyFeatureSelection` call for an existing tenant.
+ */
+function cmsMenuParent(children: MenuSpec[]): MenuSpec {
+  return {
+    key: 'cms-menu', name: 'cms-menu', url: '', action: 'sub',
+    roleNeeded: 'contentAdmin', icon: 'news', label: '@main.cms.title', children,
+  };
+}
+
+function aocMenuParent(children: MenuSpec[]): MenuSpec {
+  return {
+    key: 'aoc-menu', name: 'aoc-menu', url: '', action: 'sub',
+    roleNeeded: 'admin', icon: 'admin', label: 'AOC - Operation Centre', children,
+  };
+}
+
 const calevent: FeatureBlock = {
   id: 'calevent',
   bundle: 'events',
@@ -44,18 +81,28 @@ const aoc: FeatureBlock = {
   defaultAvailability: 'ga',
   dependsOn: [],
   collections: [],
-  menu: [{
-    key: 'aoc-menu', name: 'aoc-menu', url: '', action: 'sub',
-    roleNeeded: 'admin', icon: 'admin', label: 'AOC - Operation Centre',
-    children: [
-      { key: 'aoc-admin',      name: 'aoc-admin',      url: '/aoc/adminops',   action: 'navigate', roleNeeded: 'admin', icon: 'admin',    label: '@main.aoc.admin' },
-      { key: 'aoc-auth',       name: 'aoc-auth',       url: '/aoc/roles',      action: 'navigate', roleNeeded: 'admin', icon: 'key',      label: '@main.aoc.auth' },
-      { key: 'aoc-content',    name: 'aoc-content',    url: '/aoc/content',    action: 'navigate', roleNeeded: 'admin', icon: 'page',     label: 'Content' },
-      { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: 'Daten' },
-      { key: 'aoc-statistics', name: 'aoc-statistics', url: '/aoc/statistics', action: 'navigate', roleNeeded: 'admin', icon: 'chart',    label: 'Statistiken' },
-      { key: 'aoc-storage',    name: 'aoc-storage',    url: '/aoc/storage',    action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: 'Storage' },
-    ],
-  }],
+  // TODO(task-13-18): the live `aoc-menu` doc's children[] (verified against Firestore,
+  // task 12 review round 2) also lists these keys, still missing a home:
+  //  - aoc-sessions, aoc-chat, aoc-account, aoc-doc, aoc-bexio, aoc-srv: route to
+  //    AocSession/AocChat/AocUserAccounts/AocDoc/AocBexio/AocSrv in `aoc-feature`, i.e.
+  //    genuine AOC screens (app.routes.ts's `aoc` children: sessions/chat/account/doc/
+  //    bexio/srv) that never made it into this array when this block was first
+  //    catalogued. Belongs HERE, as this block's own children — not a cross-domain gap.
+  //  - activity-all → belongs to the future `activity` block.
+  //  - flighttracker → belongs to the future `mobility` block (live route is the
+  //    top-level `/flighttracker`, `mobility-flighttracker-feature`).
+  //  - divider_empty → generic reusable divider, same class as `filter-toggle`/
+  //    `menudivider` — not attributable to any single domain, correctly left uncatalogued.
+  // (user-all, priv-register, priv-audit — also live children of `aoc-menu` — are already
+  // resolved: they're catalogued under `user`/`security` below, via `aocMenuParent`.)
+  menu: [aocMenuParent([
+    { key: 'aoc-admin',      name: 'aoc-admin',      url: '/aoc/adminops',   action: 'navigate', roleNeeded: 'admin', icon: 'admin',    label: '@main.aoc.admin' },
+    { key: 'aoc-auth',       name: 'aoc-auth',       url: '/aoc/roles',      action: 'navigate', roleNeeded: 'admin', icon: 'key',      label: '@main.aoc.auth' },
+    { key: 'aoc-content',    name: 'aoc-content',    url: '/aoc/content',    action: 'navigate', roleNeeded: 'admin', icon: 'page',     label: 'Content' },
+    { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: 'Daten' },
+    { key: 'aoc-statistics', name: 'aoc-statistics', url: '/aoc/statistics', action: 'navigate', roleNeeded: 'admin', icon: 'chart',    label: 'Statistiken' },
+    { key: 'aoc-storage',    name: 'aoc-storage',    url: '/aoc/storage',    action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: 'Storage' },
+  ])],
 };
 
 const auth: FeatureBlock = {
@@ -87,26 +134,32 @@ const cms: FeatureBlock = {
   // Container domain: libs/cms/{icon,menu,page,section}, each owning its own Firestore collection.
   collections: ['icons', 'menuItems', 'pages', 'sections'],
   menu: [
-    { key: 'icon-all', name: 'icon-all', url: '/icon/all/c-icon', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'icons', label: 'Icons' },
+    cmsMenuParent([
+      { key: 'menu-all', name: 'menu-all', url: '/menu/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'menu', label: '@main.cms.menus' },
+      { key: 'page-all', name: 'page-all', url: '/page/all/c-pages', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'text', label: '@main.cms.pages' },
+      { key: 'section-all', name: 'section-all', url: '/section/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'section', label: '@content.section.plural' },
+      { key: 'icon-all', name: 'icon-all', url: '/icon/all/c-icon', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'icons', label: 'Icons' },
+    ]),
     { key: 'c-icon', name: 'c-icon', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'icon-add', name: 'icon-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Icon hinzufügen' },
       { key: 'icon-sync', name: 'icon-sync', url: 'sync', action: 'call', roleNeeded: 'contentAdmin', icon: 'sync', label: 'Storage synchronisieren' },
       { key: 'icon-export-raw', name: 'icon-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Rohdaten exportieren' },
     ] },
-    { key: 'menu-all', name: 'menu-all', url: '/menu/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'menu', label: '@main.cms.menus' },
     { key: 'c-menus', name: 'c-menus', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'menu-add', name: 'menu-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Menu hinzufügen' },
       { key: 'menu-exportraw', name: 'menu-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Menus exportieren' },
     ] },
-    { key: 'page-all', name: 'page-all', url: '/page/all/c-pages', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'text', label: '@main.cms.pages' },
     { key: 'c-pages', name: 'c-pages', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'page-add', name: 'page-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Seite hinzufügen' },
       { key: 'page-exportraw', name: 'page-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Seiten exportieren' },
     ] },
-    { key: 'page-edit', name: 'page-edit', url: 'editPage', action: 'call', roleNeeded: 'registered', icon: 'edit', label: 'Seite konfigurieren' },
     // Context menu of the PageDispatcher itself (rendering a CMS page + its sections) —
     // spans both the page and section subdomains, which is why it lives on the unified
-    // cms block rather than being split.
+    // cms block rather than being split. `page-edit` is one of its live children, NOT a
+    // standalone top-level doc (task 12 review round 2: it had been mis-catalogued as its
+    // own top-level sibling, which would have both duplicated it out of this submenu AND
+    // appended it to the tenant's root nav — same defect class as the cms-menu/aoc-menu
+    // restructuring above).
     { key: 'c-contentpage', name: 'c-contentpage', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: 'Edit Modus' },
       { key: 'cp-sort-sections', name: 'cp-sort-sections', url: 'sortSections', action: 'call', roleNeeded: 'registered', icon: 'sync-circle', label: 'Sektionen sortieren' },
@@ -114,8 +167,8 @@ const cms: FeatureBlock = {
       { key: 'cp-add-section', name: 'cp-add-section', url: 'addSection', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Neue Sektion hinzufügen' },
       { key: 'print', name: 'print', url: 'print', action: 'call', roleNeeded: 'registered', icon: 'print', label: 'Drucken' },
       { key: 'cp-exportraw', name: 'cp-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Seiteninhalt exportieren' },
+      { key: 'page-edit', name: 'page-edit', url: 'editPage', action: 'call', roleNeeded: 'registered', icon: 'edit', label: 'Seite konfigurieren' },
     ] },
-    { key: 'section-all', name: 'section-all', url: '/section/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'section', label: '@content.section.plural' },
     { key: 'c-sections', name: 'c-sections', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'section-add', name: 'section-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Sektion hinzufügen' },
       { key: 'section-exportraw', name: 'section-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Sektionen exportieren' },
@@ -133,7 +186,9 @@ const user: FeatureBlock = {
   dependsOn: [],
   collections: ['users'],
   menu: [
-    { key: 'user-all', name: 'user-all', url: '/user/all/c-users', action: 'navigate', roleNeeded: 'admin', icon: 'people', label: 'Users' },
+    aocMenuParent([
+      { key: 'user-all', name: 'user-all', url: '/user/all/c-users', action: 'navigate', roleNeeded: 'admin', icon: 'people', label: 'Users' },
+    ]),
     { key: 'c-users', name: 'c-users', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
       { key: 'user-add', name: 'user-add', url: 'add', action: 'call', roleNeeded: 'admin', icon: 'edit', label: 'Neuen User hinzufügen' },
       { key: 'user-exportraw', name: 'user-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Rohdaten exportieren' },
@@ -186,8 +241,10 @@ const security: FeatureBlock = {
   // computed from app-config on read. Neither owns a Firestore collection.
   collections: [],
   menu: [
-    { key: 'priv-register', name: 'priv-register', url: '/security/register', action: 'navigate', roleNeeded: 'admin', icon: 'doc-safe', label: 'GDPR Bearbeitungsverzeichnis' },
-    { key: 'priv-audit', name: 'priv-audit', url: '/security/privacy-audit', action: 'navigate', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: 'GDPR Privacy Audit' },
+    aocMenuParent([
+      { key: 'priv-register', name: 'priv-register', url: '/security/register', action: 'navigate', roleNeeded: 'admin', icon: 'doc-safe', label: 'GDPR Bearbeitungsverzeichnis' },
+      { key: 'priv-audit', name: 'priv-audit', url: '/security/privacy-audit', action: 'navigate', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: 'GDPR Privacy Audit' },
+    ]),
   ],
 };
 
@@ -230,7 +287,9 @@ const category: FeatureBlock = {
   dependsOn: [],
   collections: ['categories'],
   menu: [
-    { key: 'category-all', name: 'category-all', url: '/category/all/c-category', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'category', label: '@category.plural' },
+    cmsMenuParent([
+      { key: 'category-all', name: 'category-all', url: '/category/all/c-category', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'category', label: '@category.plural' },
+    ]),
     { key: 'c-category', name: 'c-category', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'category-add', name: 'category-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Kategorie hinzufügen' },
       { key: 'category-exportraw', name: 'category-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Exportieren' },
@@ -264,12 +323,25 @@ const geo: FeatureBlock = {
   // Container domain: libs/geo/{location,trip}, each owning its own Firestore collection.
   collections: ['locations', 'trips'],
   menu: [
-    { key: 'location-all', name: 'location-all', url: '/location/all/c-locations', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'location', label: 'Orte' },
+    cmsMenuParent([
+      { key: 'location-all', name: 'location-all', url: '/location/all/c-locations', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'location', label: 'Orte' },
+    ]),
     { key: 'c-locations', name: 'c-locations', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'location-add', name: 'location-add', url: 'add', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: 'Ort hinzufügen' },
       { key: 'location-show', name: 'location-show', url: 'showOnMap', action: 'call', roleNeeded: 'registered', icon: 'map', label: 'Auf Karte anzeigen' },
       { key: 'location-exportraw', name: 'location-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'eventAdmin', icon: 'download', label: 'Orte exportieren' },
     ] },
+    // KNOWN RISK, flagged not fixed (task 12 review round 2): 'logbuch' is a top-level
+    // `navigate` entry NOT present in any live tenant's root `menuItems[]` (verified:
+    // main_scs does not list it) — reachable today only nested inside a TENANT-BESPOKE
+    // custom menu ('sport-menu', scs-only tenants, not a system-shared doc like
+    // cms-menu/aoc-menu). `rootNavKeys()` (apply-feature-selection.ts) still treats every
+    // top-level `navigate` entry as root-attachable, so the next `applyFeatureSelection`
+    // for a tenant whose bespoke menu already nests it would append a SECOND, duplicate
+    // root entry — the same failure class fixed above for the other 9 entries, but with no
+    // live SYSTEM parent to hang it under (nesting it under `c-trips` would not match live
+    // Firestore — inventing structure not seen in the data). Left top-level, unresolved,
+    // for an explicit ruling rather than a guessed fix.
     { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'tester', icon: 'track', label: 'Logbuch' },
     { key: 'c-trips', name: 'c-trips', url: '', action: 'context', roleNeeded: 'kiosk', icon: 'help-circle', label: '', children: [
       { key: 'trip-add', name: 'trip-add', url: 'add', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: 'Neue Fahrt erfassen' },

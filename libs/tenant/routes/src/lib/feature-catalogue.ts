@@ -24,17 +24,34 @@ export interface BlockRoutes {
 
 const calevent: BlockRoutes = {
   id: 'calevent',
-  routes: (): Route[] => [{
-    path: 'calevent',
-    canActivate: [isAuthenticatedGuard],
-    children: [{
-      // No privileged guard: every authenticated member must reach the event list.
-      // CalEventList gates create/edit/delete itself via canChange().
-      path: ':listId/:contextMenuName',
-      loadComponent: () => import('@okr/calevent-feature').then(m => m.CalEventList),
-      data: { color: 'secondary', view: 'grid', showMenu: true },
-    }],
-  }],
+  routes: (): Route[] => [
+    {
+      path: 'calevent',
+      canActivate: [isAuthenticatedGuard],
+      children: [{
+        // No privileged guard: every authenticated member must reach the event list.
+        // CalEventList gates create/edit/delete itself via canChange().
+        path: ':listId/:contextMenuName',
+        loadComponent: () => import('@okr/calevent-feature').then(m => m.CalEventList),
+        data: { color: 'secondary', view: 'grid', showMenu: true },
+      }],
+    },
+    // Owns only ITS OWN child of the shared 'public' path (task 12 review round 2: this
+    // fragment used to live verbatim inside the always-on `cms` block, which meant a
+    // tenant with `calevent` switched off would still ship `/public/calendar` rendering
+    // `CalEventList` once Task 19 drives the real route table from this catalogue — the
+    // enablement gate bypassed through a core block, and calevent-feature never actually
+    // droppable from the bundle. Same precedent as `profile` owning only its own child of
+    // the shared 'person' path.
+    {
+      path: 'public',
+      children: [{
+        path: 'calendar',
+        loadComponent: () => import('@okr/calevent-feature').then(m => m.CalEventList),
+        data: { listId: 'public', view: 'list', showMenu: false },
+      }],
+    },
+  ],
 };
 
 const aoc: BlockRoutes = {
@@ -71,13 +88,10 @@ const cms: BlockRoutes = {
   id: 'cms',
   routes: (): Route[] => [
     {
+      // 'calendar' deliberately NOT here — it moved to calevent's own 'public' fragment
+      // (task 12 review round 2). See the comment there for why.
       path: 'public',
       children: [
-        {
-          path: 'calendar',
-          loadComponent: () => import('@okr/calevent-feature').then(m => m.CalEventList),
-          data: { listId: 'public', view: 'list', showMenu: false },
-        },
         {
           path: 'news',
           loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher),

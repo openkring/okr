@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Firestore } from 'firebase-admin/firestore';
 import {
   applySelection, chunk, commitChunked, computeTransitions,
-  planMenuOpsForBlocks, planRootMenuOp, planSelection,
+  planMenuOpsForBlocks, planRootMenuOp, planSelection, rootNavKeys,
 } from './apply-feature-selection';
 import type { PendingWrite, SelectionPlan } from './apply-feature-selection';
 import type { FeatureBlock, FeatureRollout, MenuSpec } from '@okr/tenant-util';
@@ -156,6 +156,60 @@ describe('planMenuOpsForBlocks (BUG 1 regression — shared parent menu docs)', 
 
     const parentOp = ops.find(o => o.key === 'new-parent');
     expect(parentOp?.op).toBe('create');
+  });
+});
+
+describe('rootNavKeys (task 12 review round 2 — only navigate/sub top-level specs belong in a tenant\'s root nav)', () => {
+  const spec = (over: Partial<MenuSpec>): MenuSpec => ({
+    key: 'x', name: 'x', url: '', action: 'navigate', roleNeeded: 'registered',
+    icon: 'help-circle', label: '@x', ...over,
+  });
+
+  it('keeps a top-level navigate spec', () => {
+    const b = catalogueBlock('a', [spec({ key: 'login', name: 'login', action: 'navigate' })]);
+    expect(rootNavKeys([b])).toEqual(['login']);
+  });
+
+  it('keeps a top-level sub (shared-parent wrapper) spec', () => {
+    const b = catalogueBlock('a', [spec({ key: 'cms-menu', name: 'cms-menu', action: 'sub' })]);
+    expect(rootNavKeys([b])).toEqual(['cms-menu']);
+  });
+
+  it('drops a top-level context (context-menu wrapper) spec — it attaches via :contextMenuName, not the root nav', () => {
+    const b = catalogueBlock('a', [spec({ key: 'c-icon', name: 'c-icon', action: 'context', url: '', label: '' })]);
+    expect(rootNavKeys([b])).toEqual([]);
+  });
+
+  it('drops a top-level call spec — a toolbar action, not a navigable destination', () => {
+    const b = catalogueBlock('a', [spec({ key: 'page-edit', name: 'page-edit', action: 'call', url: 'editPage' })]);
+    expect(rootNavKeys([b])).toEqual([]);
+  });
+
+  it('drops a top-level toggle spec', () => {
+    const b = catalogueBlock('a', [spec({ key: 'editmode-toggle', name: 'editmode-toggle', action: 'toggle', url: 'toggleEditMode' })]);
+    expect(rootNavKeys([b])).toEqual([]);
+  });
+
+  it('does not recurse into children — a navigate child of a context wrapper never leaks into the root nav on its own', () => {
+    const b = catalogueBlock('a', [spec({
+      key: 'c-icon', name: 'c-icon', action: 'context', url: '', label: '',
+      children: [spec({ key: 'icon-all', name: 'icon-all', action: 'navigate' })],
+    })]);
+    expect(rootNavKeys([b])).toEqual([]);
+  });
+
+  it('reproduces the reported failure shape: a bundle with mostly context/call top-level specs contributes only its navigate/sub ones', () => {
+    // Mirrors task 12's `core` bundle pre-fix shape: 9 context wrappers + 1 stray
+    // top-level call entry alongside 2 genuine navigate entries.
+    const wrappers = Array.from({ length: 9 }, (_, i) =>
+      spec({ key: `c-${i}`, name: `c-${i}`, action: 'context', url: '', label: '' }));
+    const b = catalogueBlock('a', [
+      spec({ key: 'login', name: 'login', action: 'navigate' }),
+      spec({ key: 'logout', name: 'logout', action: 'navigate' }),
+      spec({ key: 'page-edit', name: 'page-edit', action: 'call', url: 'editPage' }),
+      ...wrappers,
+    ]);
+    expect(rootNavKeys([b])).toEqual(['login', 'logout']);
   });
 });
 
@@ -547,5 +601,66 @@ describe('applySelection (full write path — BUG 1 must survive past the pure p
     // No spurious audit event: the config doc was already at the target value, so this
     // retry is a real no-op for the (separately, correctly, delta-based) audit trail.
     expect(Object.keys(fdb.dump(FeatureEventCollection))).toHaveLength(0);
+  });
+
+  it('a context-menu wrapper top-level spec is seeded but NEVER appended to the tenant\'s root nav, while a navigate sibling is (task 12 review round 2)', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    fdb.seed(MenuItemCollection, 'main_p13', {
+      okey: 'main_p13', name: 'main_p13', action: 'main', url: '', label: 'main', icon: '',
+      roleNeeded: 'none', tenants: ['p13'], menuItems: ['home'],
+    });
+    const block = catalogueBlock('cms', [
+      { key: 'icon-all', name: 'icon-all', url: '/icon/all/c-icon', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'icons', label: 'Icons' },
+      { key: 'c-icon', name: 'c-icon', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+        { key: 'icon-add', name: 'icon-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Icon hinzufügen' },
+      ] },
+    ]);
+    const plan: SelectionPlan = { enabled: ['cms'], withheld: [] };
+
+    await applySelection(fdb as unknown as Firestore, [block], plan, 'p13', 'uid-admin-1');
+
+    // The root nav gains ONLY the navigate entry — the context wrapper and its call child
+    // are seeded as real menuItems docs (so the app can render the icon list's context
+    // menu) but never appended to the root nav.
+    expect(fdb.dump(MenuItemCollection)['main_p13'].menuItems).toEqual(['home', 'icon-all']);
+    expect(fdb.dump(MenuItemCollection)['c-icon']).toBeDefined();
+    expect(fdb.dump(MenuItemCollection)['icon-add']).toBeDefined();
+  });
+
+  it('resolves an existing doc by NAME even when its Firestore doc id is a legacy autoid, and writes to that REAL doc — no duplicate is created (task 12 review round 2, repo owner ruling)', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    // The live doc's REAL id is a legacy autoid that differs from its `name` field —
+    // exactly the shape of `icon-all`/`ogwzpl15fpuhcxon5e7b` etc.
+    fdb.seed(MenuItemCollection, 'ogwzpl15fpuhcxon5e7b', {
+      okey: 'ogwzpl15fpuhcxon5e7b', name: 'icon-all', url: '/icon/all/c-icon',
+      action: 'navigate', roleNeeded: 'contentAdmin', icon: 'icons', label: 'Icons',
+      tenants: ['scs'],
+    });
+    const block = catalogueBlock('cms', [
+      { key: 'icon-all', name: 'icon-all', url: '/icon/all/c-icon', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'icons', label: 'Icons' },
+    ]);
+    const plan: SelectionPlan = { enabled: ['cms'], withheld: [] };
+
+    await applySelection(fdb as unknown as Firestore, [block], plan, 'p13', 'uid-admin-1');
+
+    const menuDocs = fdb.dump(MenuItemCollection);
+    // The original legacy doc gained the new tenant — it was NOT recreated.
+    expect((menuDocs['ogwzpl15fpuhcxon5e7b'].tenants as string[]).sort()).toEqual(['p13', 'scs']);
+    // No second doc was created under the catalogue key.
+    expect(menuDocs['icon-all']).toBeUndefined();
+  });
+
+  it('refuses to apply when two live menuItems docs share the same name, rather than silently picking one (repo owner ruling)', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    fdb.seed(MenuItemCollection, 'legacy-id-a', { okey: 'legacy-id-a', name: 'icon-sync', tenants: ['scs'] });
+    fdb.seed(MenuItemCollection, 'legacy-id-b', { okey: 'legacy-id-b', name: 'icon-sync', tenants: ['test'] });
+    const block = catalogueBlock('cms', []);
+    const plan: SelectionPlan = { enabled: ['cms'], withheld: [] };
+
+    await expect(applySelection(fdb as unknown as Firestore, [block], plan, 'p13', 'uid-admin-1'))
+      .rejects.toThrow(/duplicate menuItems name.*icon-sync/i);
   });
 });

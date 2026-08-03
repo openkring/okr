@@ -22,6 +22,14 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 // correctly absent from this list: neither has a `feature` directory at depth 1 or depth 2,
 // so `featureDomains()` never surfaces them, but both are still catalogued in
 // `FEATURE_BLOCKS` because the task brief names them explicitly).
+//
+// CONSEQUENCE of that blind spot (task 12 review round 2, minor a): because
+// `featureDomains()` structurally cannot see `consent`/`session`, the completeness test
+// would NOT go red if either were ever removed from `FEATURE_BLOCKS` — there is no
+// `libs/consent/feature` or `libs/session/feature` directory to flag them missing. Nothing
+// in this file's test suite catches that regression; only `feature-blocks.spec.ts`'s
+// key===name check and manual review would. Keep this in mind before ever deleting either
+// block's entry.
 export const PENDING_CLASSIFICATION: string[] = [
   'activity', 'chat', 'document',
   'esign', 'finance', 'folder', 'forms', 'games', 'instruments',
