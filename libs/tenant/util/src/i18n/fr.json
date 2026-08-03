@@ -1,0 +1,24 @@
+{
+  "bundle": {
+    "core":          { "label": "Cœur" },
+    "members":       { "label": "Membres" },
+    "events":        { "label": "Événements" },
+    "finance":       { "label": "Finances" },
+    "documents":     { "label": "Documents" },
+    "communication": { "label": "Communication" },
+    "special":       { "label": "Spécial" }
+  },
+  "feature": {
+    "calevent": { "label": "Calendrier" },
+    "aoc":      { "label": "AOC – Centre d'opérations" }
+  },
+  "picker": {
+    "title": "Blocs fonctionnels",
+    "core_note": "Toujours actif",
+    "unavailable_reason_fallback": "Non disponible",
+    "dependents_confirm": "{{blocks}} dépendent de ce bloc et seront également désactivés. Continuer ?",
+    "removal_confirm": "L'enregistrement supprimera les entrées de menu des blocs suivants : {{blocks}}. Continuer ?",
+    "withheld_toast": "Non appliqué : {{blocks}}",
+    "applied_toast": "Enregistré : {{count}} blocs actifs."
+  }
+}

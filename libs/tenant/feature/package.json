@@ -10,6 +10,9 @@
     "@angular/router": "*",
     "@okr/shared-models": "*",
     "@okr/shared-feature": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-util-angular": "*",
     "@okr/tenant-util": "*",
     "@okr/tenant-data-access": "*"
   }

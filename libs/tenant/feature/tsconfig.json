@@ -20,6 +20,9 @@
     {"path": "../util/tsconfig.lib.json"},
     {"path": "../data-access/tsconfig.lib.json"},
     {"path": "../../shared/feature/tsconfig.lib.json"},
-    {"path": "../../shared/models/tsconfig.lib.json"}
+    {"path": "../../shared/models/tsconfig.lib.json"},
+    {"path": "../../shared/i18n/tsconfig.lib.json"},
+    {"path": "../../shared/pipes/tsconfig.lib.json"},
+    {"path": "../../shared/util-angular/tsconfig.lib.json"}
   ]
 }

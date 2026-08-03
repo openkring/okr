@@ -7,20 +7,25 @@ import type { BundleId, FeatureBlock } from './feature-catalogue.types';
  * anything that only needs bundle metadata (a Cloud Function report, the picker's util
  * layer) can depend on `@okr/tenant-util` alone.
  */
+// Keys are scoped to `@okr/tenant-util`'s own i18n scope (`libs/tenant/util/src/i18n/de.json`,
+// synced to `assets/i18n/tenant/util/`) — the PFX MUST be 'tenant/util.', matching the lib's
+// full physical path, not a bare 'tenant.'/'bundle.'/'feature.' prefix (that 404s silently;
+// see `feature-picker-i18n.ts` and `libs/security/audit/util`'s `PFX` for the verified
+// pattern this mirrors).
 export const FEATURE_BUNDLES: { id: BundleId; label: string; icon: string }[] = [
-  { id: 'core',          label: '@bundle.core.label',          icon: 'settings' },
-  { id: 'members',       label: '@bundle.members.label',       icon: 'people' },
-  { id: 'events',        label: '@bundle.events.label',        icon: 'calendar' },
-  { id: 'finance',       label: '@bundle.finance.label',       icon: 'cash' },
-  { id: 'documents',     label: '@bundle.documents.label',     icon: 'documents' },
-  { id: 'communication', label: '@bundle.communication.label', icon: 'chatbubbles' },
-  { id: 'special',       label: '@bundle.special.label',       icon: 'star' },
+  { id: 'core',          label: '@tenant/util.bundle.core.label',          icon: 'settings' },
+  { id: 'members',       label: '@tenant/util.bundle.members.label',       icon: 'people' },
+  { id: 'events',        label: '@tenant/util.bundle.events.label',        icon: 'calendar' },
+  { id: 'finance',       label: '@tenant/util.bundle.finance.label',       icon: 'cash' },
+  { id: 'documents',     label: '@tenant/util.bundle.documents.label',     icon: 'documents' },
+  { id: 'communication', label: '@tenant/util.bundle.communication.label', icon: 'chatbubbles' },
+  { id: 'special',       label: '@tenant/util.bundle.special.label',       icon: 'star' },
 ];
 
 const calevent: FeatureBlock = {
   id: 'calevent',
   bundle: 'events',
-  label: '@feature.calevent.label',
+  label: '@tenant/util.feature.calevent.label',
   icon: 'calendar',
   defaultAvailability: 'ga',
   dependsOn: [],
@@ -34,7 +39,7 @@ const calevent: FeatureBlock = {
 const aoc: FeatureBlock = {
   id: 'aoc',
   bundle: 'special',
-  label: '@feature.aoc.label',
+  label: '@tenant/util.feature.aoc.label',
   icon: 'admin',
   defaultAvailability: 'ga',
   dependsOn: [],

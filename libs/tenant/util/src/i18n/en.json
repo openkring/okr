@@ -1,0 +1,24 @@
+{
+  "bundle": {
+    "core":          { "label": "Core" },
+    "members":       { "label": "Members" },
+    "events":        { "label": "Events" },
+    "finance":       { "label": "Finance" },
+    "documents":     { "label": "Documents" },
+    "communication": { "label": "Communication" },
+    "special":       { "label": "Special" }
+  },
+  "feature": {
+    "calevent": { "label": "Calendar" },
+    "aoc":      { "label": "AOC – Operation Centre" }
+  },
+  "picker": {
+    "title": "Feature blocks",
+    "core_note": "Always on",
+    "unavailable_reason_fallback": "Not available",
+    "dependents_confirm": "{{blocks}} depend on this block and will also be switched off. Continue?",
+    "removal_confirm": "Saving will remove the menu entries of the following blocks: {{blocks}}. Continue?",
+    "withheld_toast": "Not applied: {{blocks}}",
+    "applied_toast": "Saved: {{count}} blocks active."
+  }
+}

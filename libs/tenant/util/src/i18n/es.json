@@ -1,0 +1,24 @@
+{
+  "bundle": {
+    "core":          { "label": "Núcleo" },
+    "members":       { "label": "Miembros" },
+    "events":        { "label": "Eventos" },
+    "finance":       { "label": "Finanzas" },
+    "documents":     { "label": "Documentos" },
+    "communication": { "label": "Comunicación" },
+    "special":       { "label": "Especial" }
+  },
+  "feature": {
+    "calevent": { "label": "Calendario" },
+    "aoc":      { "label": "AOC – Centro de operaciones" }
+  },
+  "picker": {
+    "title": "Bloques de funciones",
+    "core_note": "Siempre activo",
+    "unavailable_reason_fallback": "No disponible",
+    "dependents_confirm": "{{blocks}} dependen de este bloque y también se desactivarán. ¿Continuar?",
+    "removal_confirm": "Al guardar se eliminarán las entradas de menú de los siguientes bloques: {{blocks}}. ¿Continuar?",
+    "withheld_toast": "No aplicado: {{blocks}}",
+    "applied_toast": "Guardado: {{count}} bloques activos."
+  }
+}

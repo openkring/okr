@@ -1,0 +1,24 @@
+{
+  "bundle": {
+    "core":          { "label": "Kern" },
+    "members":       { "label": "Mitglieder" },
+    "events":        { "label": "Anlässe" },
+    "finance":       { "label": "Finanzen" },
+    "documents":     { "label": "Dokumente" },
+    "communication": { "label": "Kommunikation" },
+    "special":       { "label": "Spezial" }
+  },
+  "feature": {
+    "calevent": { "label": "Kalender" },
+    "aoc":      { "label": "AOC – Operation Centre" }
+  },
+  "picker": {
+    "title": "Feature-Bausteine",
+    "core_note": "Immer aktiv",
+    "unavailable_reason_fallback": "Nicht verfügbar",
+    "dependents_confirm": "{{blocks}} hängen von diesem Baustein ab und werden ebenfalls deaktiviert. Fortfahren?",
+    "removal_confirm": "Beim Speichern werden die Menüeinträge folgender Bausteine entfernt: {{blocks}}. Fortfahren?",
+    "withheld_toast": "Nicht übernommen: {{blocks}}",
+    "applied_toast": "Gespeichert: {{count}} Bausteine aktiv."
+  }
+}
