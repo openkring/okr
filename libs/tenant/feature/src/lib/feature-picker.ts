@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import type { CheckboxCustomEvent } from '@ionic/angular/standalone';
 import {
   IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider,
   IonItemGroup, IonLabel, IonList, IonMenuButton, IonNote, IonSpinner, IonTitle, IonToolbar,
@@ -11,14 +12,12 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService } from '@okr/shared-util-angular';
 import type { FeatureRolloutModel } from '@okr/shared-models';
 import {
-  FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, effectiveFeatures,
-  resolveAvailability, resolveWithDeps,
+  FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, resolveAvailability, resolveWithDeps,
 } from '@okr/tenant-util';
-import type { AvailabilityVerdict, FeatureBlock, FeaturePickerI18n } from '@okr/tenant-util';
+import type { AvailabilityVerdict, FeatureBlock } from '@okr/tenant-util';
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
 
-import { FeatureStore } from './feature.store';
-import { dependentsOf } from './feature-picker.util';
+import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.util';
 
 /**
  * The admin-facing feature-block picker — lets a tenant admin choose which catalogue blocks
@@ -34,16 +33,18 @@ import { dependentsOf } from './feature-picker.util';
  * list, so any block left unticked has its menu keys stripped from that tenant's root menu
  * document — on a hand-curated menu (scs today: 26 entries), a careless first save wipes most
  * of it. Two independent safety nets, both required, neither a substitute for the other:
- *  1. the checkbox state is seeded from what is actually live today (`currentEffective`,
- *     which is `FeatureStore.effective()` — the exact same D-BB-10-aware source `MenuStore`
- *     filters the rendered menu by), so an admin who saves without touching anything changes
- *     nothing;
+ *  1. the checkbox state is seeded, once, from `appConfig()?.enabledFeatures` verbatim
+ *     (`undefined` → every non-internal block, the literal D-BB-10 rule) — see the
+ *     constructor's doc comment for why that seed is gated on `appConfigResource` having
+ *     actually settled, not merely on `appConfig()` being readable (it's always readable);
  *  2. regardless of how the checkboxes got into their current state, `onSave` independently
- *     recomputes what would be live AFTER the save and, if that set is smaller than what is
- *     live now, blocks the write behind a confirmation naming exactly what disappears. This
- *     is what catches a legacy tenant's first save even when nothing looks "changed" from the
- *     admin's point of view (e.g. a picker bug or a partial catalogue leaves the seed
- *     incomplete) — belt AND suspenders, not either/or.
+ *     recomputes (`blocksRemovedBySave`, in `feature-picker.util.ts`) what would be live AFTER
+ *     the save and, if that set is smaller than what is live now, blocks the write behind a
+ *     confirmation naming exactly what disappears. This is what catches a legacy tenant's
+ *     first save even when nothing looks "changed" from the admin's point of view (e.g. a
+ *     picker bug or a partial catalogue leaves the seed incomplete) — belt AND suspenders,
+ *     not either/or. `blocksRemovedBySave` takes a single `rollouts` snapshot for both its
+ *     before/after computation on purpose (see its own doc comment).
  */
 @Component({
   selector: 'okr-feature-picker',
@@ -78,7 +79,7 @@ import { dependentsOf } from './feature-picker.util';
             <ion-item-group>
               <ion-item-divider>
                 <ion-icon slot="start" src="{{ group.bundle.icon | svgIcon }}" />
-                <ion-label>{{ bundleLabels[group.bundle.id]?.() ?? group.bundle.id }}</ion-label>
+                <ion-label>{{ bundleLabels[group.bundle.id]?.() || group.bundle.id }}</ion-label>
               </ion-item-divider>
               @for (block of group.blocks; track block.id) {
                 <ion-item>
@@ -87,8 +88,8 @@ import { dependentsOf } from './feature-picker.util';
                     slot="start"
                     [checked]="isChecked(block)"
                     [disabled]="isDisabled(block)"
-                    (ionChange)="onToggle(block, $any($event).detail.checked)">
-                    <ion-label>{{ blockLabels[block.id]?.() ?? block.id }}</ion-label>
+                    (ionChange)="onToggle(block, $event)">
+                    <ion-label>{{ blockLabels[block.id]?.() || block.id }}</ion-label>
                   </ion-checkbox>
                   @if (reasonOf(block); as reason) {
                     <ion-note slot="end" class="ion-text-wrap">{{ reason }}</ion-note>
@@ -104,7 +105,6 @@ import { dependentsOf } from './feature-picker.util';
 })
 export class FeaturePicker {
   private readonly appStore = inject(AppStore);
-  private readonly featureStore = inject(FeatureStore);
   private readonly rolloutService = inject(FeatureRolloutService);
   private readonly featureSelectionService = inject(FeatureSelectionService);
   private readonly i18nService = inject(I18nService);
@@ -113,27 +113,19 @@ export class FeaturePicker {
   protected readonly catalogue: FeatureBlock[] = FEATURE_BLOCKS;
   protected readonly bundles = FEATURE_BUNDLES;
 
-  protected readonly i18n = this.i18nService.translateAll(FEATURE_PICKER_I18N_KEYS) as FeaturePickerI18n;
+  protected readonly i18n = this.i18nService.translateAll(FEATURE_PICKER_I18N_KEYS);
 
   // Block/bundle labels are resolved dynamically from the catalogue (which grows with Tasks
   // 12-18) rather than hand-listed — `translateAll` over a record built from `label` fields
   // that are themselves static i18n keys, so this is still the store-driven static pattern,
   // not a `TranslatePipe`/data-driven case.
   protected readonly blockLabels = this.i18nService.translateAll(
-    Object.fromEntries(this.catalogue.map(block => [block.id, block.label])) as Record<string, string>);
+    Object.fromEntries(this.catalogue.map(block => [block.id, block.label])));
   protected readonly bundleLabels = this.i18nService.translateAll(
-    Object.fromEntries(this.bundles.map(bundle => [bundle.id, bundle.label])) as Record<string, string>);
+    Object.fromEntries(this.bundles.map(bundle => [bundle.id, bundle.label])));
 
   private readonly rollouts = toSignal(this.rolloutService.list(), { initialValue: [] as FeatureRolloutModel[] });
   private readonly tenantId = computed(() => this.appStore.tenantId());
-
-  /**
-   * What's live for this tenant right now. Deliberately `FeatureStore.effective()` — the
-   * exact set `MenuStore` filters the rendered menu tree by — rather than re-deriving it here,
-   * so "what's about to disappear" is always measured against what the admin can actually see
-   * today, D-BB-10 default included.
-   */
-  protected readonly currentEffective = computed(() => this.featureStore.effective());
 
   protected readonly availability = computed<Map<string, AvailabilityVerdict>>(() => {
     const rolloutById = new Map(this.rollouts().map(rollout => [rollout.okey, rollout]));
@@ -151,13 +143,26 @@ export class FeaturePicker {
   private seeded = false;
 
   constructor() {
-    // Seed the checkbox state ONCE from what's actually live for this tenant — not a
-    // `computed`/`linkedSignal` derived from the rollouts stream, which would silently wipe
-    // whatever the admin has since ticked/unticked every time that stream re-emits (a
+    // Seed the checkbox state ONCE — but only once `appConfigResource` has actually settled.
+    // `appStore.appConfig()` is NEVER nullish (`app.store.ts`'s `appConfig` computed always
+    // returns `Object.assign(new AppConfig(tenantId), loaded ?? {})`), so gating the seed on
+    // `appConfig()?.enabledFeatures` alone can't distinguish "not loaded yet" from "loaded,
+    // legacy tenant, field genuinely absent" — both read as `undefined`. Reading the
+    // resource's own settlement status (`resolved`/`error`/`local` — i.e. NOT still
+    // `idle`/`loading`/`reloading`) is the only way to tell them apart. Getting this wrong
+    // would latch "every non-internal block" in PERMANENTLY (seeded once, never re-run) and
+    // never re-seed once the real — possibly much narrower — `enabledFeatures` arrives; a
+    // hard reload straight onto this screen would then silently re-enable everything an admin
+    // had deliberately switched off the moment they save.
+    //
+    // Not a `computed`/`linkedSignal` derived from the live stream either, which would
+    // silently wipe whatever the admin has since ticked/unticked every time it re-emits (a
     // Firestore doc can change live under an open tab). `untracked` keeps the write itself
     // from being a tracked dependency of this same effect.
     effect(() => {
       if (this.seeded) return;
+      const status = this.appStore.appConfigResource.status();
+      if (status !== 'resolved' && status !== 'error' && status !== 'local') return; // still loading
       const enabled = this.appStore.appConfig()?.enabledFeatures
         ?? this.catalogue.filter(block => block.defaultAvailability !== 'internal').map(block => block.id);
       this.seeded = true;
@@ -180,8 +185,9 @@ export class FeaturePicker {
     return verdict.reason.length > 0 ? verdict.reason : this.i18n.unavailable_reason_fallback();
   }
 
-  protected async onToggle(block: FeatureBlock, checked: boolean): Promise<void> {
+  protected async onToggle(block: FeatureBlock, event: CheckboxCustomEvent): Promise<void> {
     if (block.core === true) return; // checkbox is disabled; defensive only
+    const checked = event.detail.checked;
 
     if (checked) {
       this.selection.set(new Set(resolveWithDeps(this.catalogue, [...this.selection(), block.id])));
@@ -195,68 +201,51 @@ export class FeaturePicker {
     // checkbox showing unchecked (ion-checkbox already flipped it optimistically) even though
     // logically nothing changed.
     const before = this.selection();
-    const affected = this.transitiveSelectedDependents(block.id, before);
+    const affected = transitiveDependentsOf(this.catalogue, block.id, before);
     const toRemove = new Set([block.id, ...affected]);
     this.selection.set(new Set([...before].filter(id => !toRemove.has(id))));
 
     if (affected.length === 0) return;
 
-    const names = affected.map(id => this.blockLabels[id]?.() ?? id).join(', ');
-    const message = await this.i18nService.translateOnce(FEATURE_PICKER_I18N_KEYS.dependents_confirm, { blocks: names });
+    const names = affected.map(id => this.blockLabels[id]?.() || id).join(', ');
+    const message = await this.translateOrFallback(FEATURE_PICKER_I18N_KEYS.dependents_confirm, { blocks: names }, names);
     if (await this.alertService.confirm(message, true)) return; // uncheck stands
 
     this.selection.set(new Set([...this.selection(), ...toRemove]));
   }
 
-  /**
-   * Every currently-SELECTED block that would break, transitively, if `id` were switched off.
-   * `dependentsOf` itself only returns direct dependents (see its doc comment) — the picker
-   * needs the whole chain in one confirmation, not one dialog per hop, and only the blocks the
-   * admin actually has on (an already-unticked dependent needs no warning).
-   */
-  private transitiveSelectedDependents(id: string, selected: Set<string>): string[] {
-    const out = new Set<string>();
-    const queue = [id];
-    while (queue.length > 0) {
-      const current = queue.shift() as string;
-      for (const dep of dependentsOf(this.catalogue, current)) {
-        if (selected.has(dep) && !out.has(dep)) {
-          out.add(dep);
-          queue.push(dep);
-        }
-      }
-    }
-    return [...out];
-  }
-
   protected async onSave(): Promise<void> {
     const tenantId = this.tenantId();
-    const blockIds = [...this.selection()];
+    const nextEnabled = [...this.selection()];
 
     // The removal-confirmation gate (see class doc comment) — independent of how the
-    // checkboxes got into their current state.
-    const after = effectiveFeatures({ catalogue: this.catalogue, rollouts: this.rollouts(), enabled: blockIds, tenantId });
-    const before = this.currentEffective();
-    const removed = [...before].filter(id => !after.has(id));
+    // checkboxes got into their current state. `currentEnabled` is read verbatim (never
+    // coalesced): `undefined` vs. `[]` is exactly the distinction `blocksRemovedBySave` (and
+    // D-BB-10) depend on.
+    const currentEnabled = this.appStore.appConfig()?.enabledFeatures;
+    const removed = blocksRemovedBySave({
+      catalogue: this.catalogue, rollouts: this.rollouts(), currentEnabled, nextEnabled, tenantId,
+    });
 
     if (removed.length > 0) {
-      const names = removed.map(id => this.blockLabels[id]?.() ?? id).join(', ');
-      const message = await this.i18nService.translateOnce(FEATURE_PICKER_I18N_KEYS.removal_confirm, { blocks: names });
+      const names = removed.map(id => this.blockLabels[id]?.() || id).join(', ');
+      const message = await this.translateOrFallback(FEATURE_PICKER_I18N_KEYS.removal_confirm, { blocks: names }, names);
       if (!await this.alertService.confirm(message, true)) return;
     }
 
     this.isSaving.set(true);
     try {
-      const response = await this.featureSelectionService.apply(tenantId, blockIds);
+      const response = await this.featureSelectionService.apply(tenantId, nextEnabled);
       if (response.withheld.length > 0) {
         const names = response.withheld
-          .map(entry => `${this.blockLabels[entry.id]?.() ?? entry.id} (${entry.reason})`)
+          .map(entry => `${this.blockLabels[entry.id]?.() || entry.id} (${entry.reason})`)
           .join('; ');
-        const message = await this.i18nService.translateOnce(FEATURE_PICKER_I18N_KEYS.withheld_toast, { blocks: names });
+        const message = await this.translateOrFallback(FEATURE_PICKER_I18N_KEYS.withheld_toast, { blocks: names }, names);
         await this.alertService.showToast(message);
       } else {
-        const message = await this.i18nService.translateOnce(
-          FEATURE_PICKER_I18N_KEYS.applied_toast, { count: response.applied.length });
+        const count = response.applied.length;
+        const message = await this.translateOrFallback(
+          FEATURE_PICKER_I18N_KEYS.applied_toast, { count }, String(count));
         await this.alertService.showToast(message);
       }
     } catch (error) {
@@ -264,5 +253,22 @@ export class FeaturePicker {
     } finally {
       this.isSaving.set(false);
     }
+  }
+
+  /**
+   * `I18nService.translate` degrades a failed scope load to `of('')` (see its doc comment) —
+   * silently, by design, for ordinary chrome text. But `dependents_confirm`/`removal_confirm`
+   * gate a destructive write behind `AlertService.confirm`, and `AlertOptions.message` has no
+   * separate "content failed to load" state: an empty string renders a real alert with NO
+   * message at all, just OK/Abbrechen buttons — the admin can confirm away a menu-stripping
+   * save without ever seeing what it strips. Never let that happen silently: fall back to the
+   * raw (untranslated) content, so the worst case is a dialog that lists block ids instead of
+   * translated labels, not a content-free prompt.
+   */
+  private async translateOrFallback(
+    key: string, params: Record<string, string | number>, fallback: string,
+  ): Promise<string> {
+    const message = await this.i18nService.translateOnce(key, params);
+    return message.length > 0 ? message : fallback;
   }
 }
