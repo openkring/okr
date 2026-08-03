@@ -41,7 +41,7 @@ export const SECTION_I18N_KEYS = {
   mc_template_placeholder:    PFX + 'message_center.template_placeholder',
   mc_all_groups:              PFX + 'message_center.all_groups',
   mc_search_placeholder:      PFX + 'message_center.search_placeholder',
-  group_singular:             '@subject.group.singular',
+  group_singular:             '@group',
   default_type:               PFX + 'default.type',
 
   // activity
