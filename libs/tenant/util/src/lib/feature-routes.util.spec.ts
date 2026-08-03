@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blockOfMenuKey, composeFeatureRoutes, urlResolves } from './feature-routes.util';
+import { blockOfMenuKey, collectMenuUrls, composeFeatureRoutes, urlResolves } from './feature-routes.util';
 import type { RouteSource } from './feature-routes.util';
 import type { FeatureBlock } from './feature-catalogue.types';
 
@@ -39,6 +39,53 @@ describe('urlResolves', () => {
 
   it('ignores an empty url (sub/context menu entries carry none)', () => {
     expect(urlResolves(routes, '')).toBe(true);
+  });
+});
+
+/**
+ * Pins the fix for a real regression (task 12, repo owner ruling 2026-08-03): a `call`/
+ * `toggle` `MenuSpec`'s `url` is an action verb read verbatim off the live `menuItems`
+ * Firestore doc (e.g. `'add'`, `'exportRaw'`, `'toggleEditMode'`), not a router path.
+ * `collectMenuUrls` must skip it — both because it is not a route to check, and because
+ * `menu-seed.util.ts` rewrites `url` (a `STRUCTURAL_FIELD`) on every seed, so a catalogue
+ * author "fixing" a route-coverage failure by blanking a `call` entry's `url` instead of
+ * excluding it here would ship an empty action verb to a live tenant's menu doc on the
+ * next seed, breaking that button. Without this test, the next person hits the same
+ * red route-coverage test and is tempted to blank the url again instead of filtering here.
+ */
+describe('collectMenuUrls', () => {
+  const catalogue: FeatureBlock[] = [{
+    id: 'widget', bundle: 'core', label: '@f.widget', icon: 'admin', core: true,
+    defaultAvailability: 'ga', dependsOn: [], collections: [],
+    menu: [
+      { key: 'widget-all', name: 'widget-all', url: '/widget/all', action: 'navigate', roleNeeded: 'admin', icon: 'admin', label: 'Widgets' },
+      { key: 'c-widget', name: 'c-widget', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
+        // 'add' is an action verb the list component dispatches on — not a route, even
+        // though it is a non-empty `url`.
+        { key: 'widget-add', name: 'widget-add', url: 'add', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: 'Add' },
+        { key: 'widget-toggle', name: 'widget-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'admin', icon: 'edit', label: 'Toggle' },
+      ] },
+    ],
+  }];
+
+  it('collects the url of a navigate entry', () => {
+    expect(collectMenuUrls(catalogue)).toContain('/widget/all');
+  });
+
+  it('excludes a call entry\'s non-route action-verb url', () => {
+    expect(collectMenuUrls(catalogue)).not.toContain('add');
+  });
+
+  it('excludes a toggle entry\'s non-route action-verb url', () => {
+    expect(collectMenuUrls(catalogue)).not.toContain('toggleEditMode');
+  });
+
+  it('does not fail route-coverage over an unroutable call/toggle url', () => {
+    // No route ships an 'add' or 'toggleEditMode' path anywhere — if collectMenuUrls
+    // leaked those, this composed (near-empty) route table would fail to resolve them.
+    const routes = composeFeatureRoutes([routeSource(() => [{ path: 'widget', children: [{ path: 'all' }] }])]);
+    const unresolved = collectMenuUrls(catalogue).filter(u => !urlResolves(routes, u));
+    expect(unresolved).toEqual([]);
   });
 });
 

@@ -34,11 +34,24 @@ export function blockOfMenuKey(catalogue: FeatureBlock[], key: string): string |
   return undefined;
 }
 
-/** Every non-empty `url` declared anywhere in the catalogue's menu specs. */
+/**
+ * Every non-empty `url` declared anywhere in the catalogue's menu specs, from `navigate`
+ * entries ONLY. `MenuSpec.action` is `'navigate' | 'sub' | 'context' | 'call' | 'toggle'`
+ * (`feature-catalogue.types.ts`) — only `navigate` carries a router path. `sub`/`context`
+ * wrapper docs carry no `url` at all, but `call`/`toggle` docs DO carry a non-empty `url`
+ * that is NOT a route: it's an action verb (`'add'`, `'exportRaw'`, `'toggleEditMode'`, ...)
+ * the owning list/page component's own handler dispatches on, read straight off the live
+ * `menuItems` Firestore doc. Those values are correct data — copy them verbatim — and must
+ * be excluded here, not blanked in the catalogue: `menu-seed.util.ts`'s
+ * `STRUCTURAL_FIELDS` includes `url` and rewrites it on every seed, so an empty `url` on a
+ * `call` entry would ship as a real seed value and silently break that menu item's action
+ * dispatch on the next seed against a live tenant. See `feature-routes.util.spec.ts` for
+ * the pinning test.
+ */
 export function collectMenuUrls(catalogue: FeatureBlock[]): string[] {
   const urls: string[] = [];
   const visit = (spec: MenuSpec): void => {
-    if (spec.url) urls.push(spec.url);
+    if (spec.action === 'navigate' && spec.url) urls.push(spec.url);
     (spec.children ?? []).forEach(visit);
   };
   catalogue.forEach(b => b.menu.forEach(visit));
@@ -53,7 +66,14 @@ const segmentsOf = (url: string): string[] => url.split('/').filter(Boolean);
  * does not ship, which is the p13 failure mode, not to reimplement the Angular matcher.
  */
 export function urlResolves(routes: Route[], url: string): boolean {
-  if (!url) return true;               // 'sub' / 'context' entries carry no url
+  // Empty for 'sub'/'context' wrapper entries (no url at all). A non-empty url here is
+  // guaranteed to be a real router path IF the caller sourced it from `collectMenuUrls` —
+  // that's where the `action === 'navigate'` filter lives, deliberately upstream of this
+  // function, because `urlResolves` is also called directly (e.g. from tests) against an
+  // arbitrary url and has no `MenuSpec`/`action` in scope to filter on here. `call`/
+  // `toggle` entries carry a non-route action-verb payload in `url` and must never reach
+  // this function through `collectMenuUrls`.
+  if (!url) return true;
 
   const match = (candidates: Route[], segments: string[]): boolean => {
     if (segments.length === 0) return true;

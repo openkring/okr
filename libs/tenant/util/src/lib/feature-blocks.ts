@@ -86,47 +86,39 @@ const cms: FeatureBlock = {
   dependsOn: [],
   // Container domain: libs/cms/{icon,menu,page,section}, each owning its own Firestore collection.
   collections: ['icons', 'menuItems', 'pages', 'sections'],
-  // NOTE on `url: ''` below on every `call`/`toggle` entry: their LIVE Firestore `url` field
-  // holds a relative action verb ('add', 'exportRaw', 'toggleEditMode', ...) resolved by the
-  // list/page component's own action handler, not a router path — `urlResolves` (rightly)
-  // treats any non-empty `MenuSpec.url` as a route to verify, so copying that verb through
-  // verbatim makes `feature-catalogue.spec.ts`'s route-coverage test fail on a non-bug
-  // (confirmed RED, then fixed here). `action`/`roleNeeded`/`icon`/`label` are still copied
-  // verbatim from the live doc; only `url` is normalised to '' for non-`navigate` entries,
-  // the same way `sub`/`context` wrappers already carry `url: ''`.
   menu: [
     { key: 'icon-all', name: 'icon-all', url: '/icon/all/c-icon', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'icons', label: 'Icons' },
     { key: 'c-icon', name: 'c-icon', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'icon-add', name: 'icon-add', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Icon hinzufügen' },
-      { key: 'icon-sync', name: 'icon-sync', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'sync', label: 'Storage synchronisieren' },
-      { key: 'icon-export-raw', name: 'icon-export-raw', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Rohdaten exportieren' },
+      { key: 'icon-add', name: 'icon-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Icon hinzufügen' },
+      { key: 'icon-sync', name: 'icon-sync', url: 'sync', action: 'call', roleNeeded: 'contentAdmin', icon: 'sync', label: 'Storage synchronisieren' },
+      { key: 'icon-export-raw', name: 'icon-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Rohdaten exportieren' },
     ] },
     { key: 'menu-all', name: 'menu-all', url: '/menu/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'menu', label: '@main.cms.menus' },
     { key: 'c-menus', name: 'c-menus', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'menu-add', name: 'menu-add', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Menu hinzufügen' },
-      { key: 'menu-exportraw', name: 'menu-exportraw', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Menus exportieren' },
+      { key: 'menu-add', name: 'menu-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Menu hinzufügen' },
+      { key: 'menu-exportraw', name: 'menu-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Menus exportieren' },
     ] },
     { key: 'page-all', name: 'page-all', url: '/page/all/c-pages', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'text', label: '@main.cms.pages' },
     { key: 'c-pages', name: 'c-pages', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'page-add', name: 'page-add', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Seite hinzufügen' },
-      { key: 'page-exportraw', name: 'page-exportraw', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Seiten exportieren' },
+      { key: 'page-add', name: 'page-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Seite hinzufügen' },
+      { key: 'page-exportraw', name: 'page-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Seiten exportieren' },
     ] },
-    { key: 'page-edit', name: 'page-edit', url: '', action: 'call', roleNeeded: 'registered', icon: 'edit', label: 'Seite konfigurieren' },
+    { key: 'page-edit', name: 'page-edit', url: 'editPage', action: 'call', roleNeeded: 'registered', icon: 'edit', label: 'Seite konfigurieren' },
     // Context menu of the PageDispatcher itself (rendering a CMS page + its sections) —
     // spans both the page and section subdomains, which is why it lives on the unified
     // cms block rather than being split.
     { key: 'c-contentpage', name: 'c-contentpage', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'editmode-toggle', name: 'editmode-toggle', url: '', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: 'Edit Modus' },
-      { key: 'cp-sort-sections', name: 'cp-sort-sections', url: '', action: 'call', roleNeeded: 'registered', icon: 'sync-circle', label: 'Sektionen sortieren' },
-      { key: 'cp-select-section', name: 'cp-select-section', url: '', action: 'call', roleNeeded: 'registered', icon: 'reorder-four', label: 'Bestehende Sektion hinzufügen' },
-      { key: 'cp-add-section', name: 'cp-add-section', url: '', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Neue Sektion hinzufügen' },
-      { key: 'print', name: 'print', url: '', action: 'call', roleNeeded: 'registered', icon: 'print', label: 'Drucken' },
-      { key: 'cp-exportraw', name: 'cp-exportraw', url: '', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Seiteninhalt exportieren' },
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: 'Edit Modus' },
+      { key: 'cp-sort-sections', name: 'cp-sort-sections', url: 'sortSections', action: 'call', roleNeeded: 'registered', icon: 'sync-circle', label: 'Sektionen sortieren' },
+      { key: 'cp-select-section', name: 'cp-select-section', url: 'selectSection', action: 'call', roleNeeded: 'registered', icon: 'reorder-four', label: 'Bestehende Sektion hinzufügen' },
+      { key: 'cp-add-section', name: 'cp-add-section', url: 'addSection', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Neue Sektion hinzufügen' },
+      { key: 'print', name: 'print', url: 'print', action: 'call', roleNeeded: 'registered', icon: 'print', label: 'Drucken' },
+      { key: 'cp-exportraw', name: 'cp-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Seiteninhalt exportieren' },
     ] },
     { key: 'section-all', name: 'section-all', url: '/section/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'section', label: '@content.section.plural' },
     { key: 'c-sections', name: 'c-sections', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'section-add', name: 'section-add', url: '', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Sektion hinzufügen' },
-      { key: 'section-exportraw', name: 'section-exportraw', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Sektionen exportieren' },
+      { key: 'section-add', name: 'section-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Sektion hinzufügen' },
+      { key: 'section-exportraw', name: 'section-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Sektionen exportieren' },
     ] },
   ],
 };
@@ -142,12 +134,10 @@ const user: FeatureBlock = {
   collections: ['users'],
   menu: [
     { key: 'user-all', name: 'user-all', url: '/user/all/c-users', action: 'navigate', roleNeeded: 'admin', icon: 'people', label: 'Users' },
-    // `url: ''` on the `call` children below: see the note on cms's menu array — their live
-    // `url` is a relative action verb ('add'/'exportRaw'/...), not a route.
     { key: 'c-users', name: 'c-users', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
-      { key: 'user-add', name: 'user-add', url: '', action: 'call', roleNeeded: 'admin', icon: 'edit', label: 'Neuen User hinzufügen' },
-      { key: 'user-exportraw', name: 'user-exportraw', url: '', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Rohdaten exportieren' },
-      { key: 'user-exportusers', name: 'user-exportusers', url: '', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Userliste exportieren' },
+      { key: 'user-add', name: 'user-add', url: 'add', action: 'call', roleNeeded: 'admin', icon: 'edit', label: 'Neuen User hinzufügen' },
+      { key: 'user-exportraw', name: 'user-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Rohdaten exportieren' },
+      { key: 'user-exportusers', name: 'user-exportusers', url: 'exportUsers', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Userliste exportieren' },
     ] },
   ],
 };
@@ -241,11 +231,9 @@ const category: FeatureBlock = {
   collections: ['categories'],
   menu: [
     { key: 'category-all', name: 'category-all', url: '/category/all/c-category', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'category', label: '@category.plural' },
-    // `url: ''` on the `call` children below: see the note on cms's menu array — their live
-    // `url` is a relative action verb ('add'/'exportRaw'/...), not a route.
     { key: 'c-category', name: 'c-category', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'category-add', name: 'category-add', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Kategorie hinzufügen' },
-      { key: 'category-exportraw', name: 'category-exportraw', url: '', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Exportieren' },
+      { key: 'category-add', name: 'category-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Kategorie hinzufügen' },
+      { key: 'category-exportraw', name: 'category-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Exportieren' },
     ] },
   ],
 };
@@ -277,21 +265,19 @@ const geo: FeatureBlock = {
   collections: ['locations', 'trips'],
   menu: [
     { key: 'location-all', name: 'location-all', url: '/location/all/c-locations', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'location', label: 'Orte' },
-    // `url: ''` on every `call` child below: see the note on cms's menu array — their live
-    // `url` is a relative action verb ('add'/'showOnMap'/...), not a route.
     { key: 'c-locations', name: 'c-locations', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'location-add', name: 'location-add', url: '', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: 'Ort hinzufügen' },
-      { key: 'location-show', name: 'location-show', url: '', action: 'call', roleNeeded: 'registered', icon: 'map', label: 'Auf Karte anzeigen' },
-      { key: 'location-exportraw', name: 'location-exportraw', url: '', action: 'call', roleNeeded: 'eventAdmin', icon: 'download', label: 'Orte exportieren' },
+      { key: 'location-add', name: 'location-add', url: 'add', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: 'Ort hinzufügen' },
+      { key: 'location-show', name: 'location-show', url: 'showOnMap', action: 'call', roleNeeded: 'registered', icon: 'map', label: 'Auf Karte anzeigen' },
+      { key: 'location-exportraw', name: 'location-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'eventAdmin', icon: 'download', label: 'Orte exportieren' },
     ] },
     { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'tester', icon: 'track', label: 'Logbuch' },
     { key: 'c-trips', name: 'c-trips', url: '', action: 'context', roleNeeded: 'kiosk', icon: 'help-circle', label: '', children: [
-      { key: 'trip-add', name: 'trip-add', url: '', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: 'Neue Fahrt erfassen' },
-      { key: 'trip-reportdamage', name: 'trip-reportdamage', url: '', action: 'call', roleNeeded: 'kiosk', icon: 'warning', label: 'Schaden melden' },
-      { key: 'trip-reportbug', name: 'trip-reportbug', url: '', action: 'call', roleNeeded: 'kiosk', icon: 'bug', label: 'Fehler melden' },
-      { key: 'trip-boatstats', name: 'trip-boatstats', url: '', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: 'Boots-Statistik anzeigen' },
-      { key: 'trip-personstats', name: 'trip-personstats', url: '', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: 'Personen-Statistik anzeigen' },
-      { key: 'trip-exportraw', name: 'trip-exportraw', url: '', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Rohdaten exportieren' },
+      { key: 'trip-add', name: 'trip-add', url: 'add', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: 'Neue Fahrt erfassen' },
+      { key: 'trip-reportdamage', name: 'trip-reportdamage', url: 'reportDamage', action: 'call', roleNeeded: 'kiosk', icon: 'warning', label: 'Schaden melden' },
+      { key: 'trip-reportbug', name: 'trip-reportbug', url: 'reportBug', action: 'call', roleNeeded: 'kiosk', icon: 'bug', label: 'Fehler melden' },
+      { key: 'trip-boatstats', name: 'trip-boatstats', url: 'showBoatStatistics', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: 'Boots-Statistik anzeigen' },
+      { key: 'trip-personstats', name: 'trip-personstats', url: 'showPersonStatistics', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: 'Personen-Statistik anzeigen' },
+      { key: 'trip-exportraw', name: 'trip-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Rohdaten exportieren' },
     ] },
   ],
 };
