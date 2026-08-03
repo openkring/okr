@@ -67,6 +67,12 @@
     },
     {
       "path": "../../../chat/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../tenant/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../tenant/util/tsconfig.lib.json"
     }
   ]
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { composeFeatureRoutes, urlResolves } from './feature-routes.util';
+import { blockOfMenuKey, composeFeatureRoutes, urlResolves } from './feature-routes.util';
 import type { RouteSource } from './feature-routes.util';
+import type { FeatureBlock } from './feature-catalogue.types';
 
 const routeSource = (routes: RouteSource['routes']): RouteSource => ({ routes });
 
@@ -38,5 +39,31 @@ describe('urlResolves', () => {
 
   it('ignores an empty url (sub/context menu entries carry none)', () => {
     expect(urlResolves(routes, '')).toBe(true);
+  });
+});
+
+// Local fixture, deliberately not the real FEATURE_BLOCKS: tasks 12-18 add ~29 more blocks
+// to that catalogue, and a test asserting against it would churn on every one of them.
+// Keep the nested `aoc-storage` case — it proves the recursion into `children` works.
+const localCatalogue: FeatureBlock[] = [{
+  id: 'aoc', bundle: 'special', label: '@f.aoc', icon: 'admin',
+  defaultAvailability: 'ga', dependsOn: [], collections: [],
+  menu: [{
+    key: 'aoc-menu', name: 'aoc-menu', url: '', action: 'sub',
+    roleNeeded: 'admin', icon: 'admin', label: 'AOC',
+    children: [{
+      key: 'aoc-storage', name: 'aoc-storage', url: '/aoc/storage', action: 'navigate',
+      roleNeeded: 'admin', icon: 'documents', label: 'Storage',
+    }],
+  }],
+}];
+
+describe('blockOfMenuKey', () => {
+  it('finds the owning block for a nested menu key', () => {
+    expect(blockOfMenuKey(localCatalogue, 'aoc-storage')).toBe('aoc');
+  });
+
+  it('returns undefined for a tenant-authored key', () => {
+    expect(blockOfMenuKey(localCatalogue, 'my-custom-link')).toBeUndefined();
   });
 });

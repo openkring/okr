@@ -23,6 +23,9 @@ import { MatrixChatService } from '@okr/chat-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
 import { getTarget, isMenuItem } from '@okr/cms-menu-util';
 
+import { FeatureStore } from '@okr/tenant-feature';
+import { blockOfMenuKey, FEATURE_BLOCKS } from '@okr/tenant-util';
+
 
 export type MenuState = {
   searchTerm: string;
@@ -44,6 +47,7 @@ export const _MenuStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     menuService: inject(MenuService),
+    featureStore: inject(FeatureStore),
     env: inject(ENV),
     modalController: inject(ModalController),
     appNavigationService: inject(AppNavigationService),
@@ -58,6 +62,14 @@ export const _MenuStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(MENU_I18N_KEYS),
+    // A menu doc is rendered as a child only when its owning feature block is effective
+    // for this tenant. `tenants[]` (query-level) still decides readability; enablement
+    // decides visibility on top of that (D-BB-8). `blockOfMenuKey` returns `undefined` for
+    // tenant-authored menu entries (not declared by any block) — those always render.
+    isVisible: (key: string): boolean => {
+      const blockId = blockOfMenuKey(FEATURE_BLOCKS, key);
+      return blockId === undefined || store.featureStore.effective().has(blockId);
+    },
   })),
   withProps((store) => ({
     menuItemsResource: rxResource({
@@ -123,7 +135,18 @@ export const _MenuStore = signalStore(
           nameMatches(menuItem.index, store.searchTerm()) && 
           nameMatches(menuItem.action, store.selectedCategory())   
       )),
-      menu: computed(() => store.menuResource.value() ?? undefined),
+      // The single computed the recursive `Menu` component reads (`menu.ts`'s
+      // `menuItem`), for every node in the tree including the tenant's root menu
+      // (`main_<tenantId>`, resolved the same way from `okr-root.ts`). Filtering here
+      // only drops entries from THIS node's `menuItems` (its children) — it never gates
+      // resolution of the node itself, so the root lookup always still resolves.
+      menu: computed(() => {
+        const item = store.menuResource.value() ?? undefined;
+        if (!item?.menuItems?.length) return item;
+        const menuItems = item.menuItems.filter(store.isVisible);
+        if (menuItems.length === item.menuItems.length) return item;
+        return Object.assign(Object.create(Object.getPrototypeOf(item)), item, { menuItems });
+      }),
       currentUser: computed(() => store.appStore.currentUser()),
       tenantId: computed(() => store.appStore.tenantId()),
       isMenuLoading: computed(() => store.menuResource.isLoading()),

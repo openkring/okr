@@ -21,6 +21,8 @@
     "@okr/cms-menu-util": "*",
     "@okr/auth-data-access": "*",
     "@okr/activity-data-access": "*",
-    "@okr/chat-data-access": "*"
+    "@okr/chat-data-access": "*",
+    "@okr/tenant-feature": "*",
+    "@okr/tenant-util": "*"
   }
 }

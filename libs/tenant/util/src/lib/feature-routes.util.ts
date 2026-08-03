@@ -19,6 +19,21 @@ export function composeFeatureRoutes(sources: RouteSource[]): Route[] {
   return sources.flatMap(source => source.routes() as Route[]);
 }
 
+/**
+ * Which block owns a given `menuItems` doc id? Menu docs are globally shared, so this is
+ * how a rendered tree learns whether its owning feature is on for this tenant. Returns
+ * `undefined` for tenant-authored menu entries (not declared by any block's `menu`), which
+ * are never filtered.
+ */
+export function blockOfMenuKey(catalogue: FeatureBlock[], key: string): string | undefined {
+  const hit = (specs: MenuSpec[]): boolean =>
+    specs.some(s => s.key === key || hit(s.children ?? []));
+  for (const block of catalogue) {
+    if (hit(block.menu)) return block.id;
+  }
+  return undefined;
+}
+
 /** Every non-empty `url` declared anywhere in the catalogue's menu specs. */
 export function collectMenuUrls(catalogue: FeatureBlock[]): string[] {
   const urls: string[] = [];

@@ -14,6 +14,7 @@ import { AuthService } from '@okr/auth-data-access';
 import { ActivityService } from '@okr/activity-data-access';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
+import { FeatureStore } from '@okr/tenant-feature';
 
 import { MenuStore } from './menu.store';
 
@@ -32,23 +33,33 @@ function appStoreMock() {
   };
 }
 
-function menuServiceMock(list: unknown[] = []) {
+function menuServiceMock(list: unknown[] = [], menuDoc?: unknown) {
   return {
     list: vi.fn(() => mockCollection(list)),
-    read: vi.fn(() => of(undefined)),
+    read: vi.fn(() => of(menuDoc)),
     create: vi.fn().mockResolvedValue('new-id'),
     update: vi.fn().mockResolvedValue('updated-id'),
     delete: vi.fn().mockResolvedValue(undefined)
   };
 }
 
-function makeStore(menuService = menuServiceMock()): MenuStore {
+/**
+ * `FeatureStore.effective` is a `Set<string>` of block ids offered to the tenant right now.
+ * A plain `signal()` stands in for the real computed — `MenuStore` only ever calls it, never
+ * cares that it isn't derived from rollouts/app-config.
+ */
+function featureStoreMock(effectiveIds: string[] = []) {
+  return { effective: signal(new Set(effectiveIds)) };
+}
+
+function makeStore(menuService = menuServiceMock(), featureStore = featureStoreMock()): MenuStore {
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     providers: [
       MenuStore,
       { provide: AppStore, useValue: appStoreMock() },
       { provide: MenuService, useValue: menuService },
+      { provide: FeatureStore, useValue: featureStore },
       { provide: ENV, useValue: { tenantId } },
       { provide: ModalController, useValue: {} },
       { provide: MenuController, useValue: {} },
@@ -103,5 +114,43 @@ describe('MenuStore', () => {
     store = makeStore({ ...menuServiceMock(), list: vi.fn(() => mockError('load failed')) });
     await TestBed.inject(ApplicationRef).whenStable();
     expect(store.isError()).toBe(true);
+  });
+
+  // `aoc-storage` is a real key from FEATURE_BLOCKS (@okr/tenant-util) — nested under the
+  // `aoc` block's menu, owned by block id 'aoc'. `my-custom-link` is not declared by any
+  // block, so it is a stand-in for a tenant-authored menu entry.
+  describe('feature-block visibility filter (D-BB-8)', () => {
+    it('renders a child menu item whose owning block is effective', async () => {
+      store = makeStore(
+        menuServiceMock([], { menuItems: ['aoc-storage', 'my-custom-link'] }),
+        featureStoreMock(['aoc'])
+      );
+      store.setMenuName('aoc-menu');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(store.menu()?.menuItems).toEqual(['aoc-storage', 'my-custom-link']);
+    });
+
+    it('drops a child menu item whose owning block is not effective, without dropping the node itself', async () => {
+      store = makeStore(
+        menuServiceMock([], { name: 'aoc-menu', menuItems: ['aoc-storage', 'my-custom-link'] }),
+        featureStoreMock([]) // 'aoc' not effective
+      );
+      store.setMenuName('aoc-menu');
+      await TestBed.inject(ApplicationRef).whenStable();
+      // The node itself (whose own key is also owned by the now-off 'aoc' block) still
+      // resolves — only its children are filtered. Never gate resolution on the node's own key.
+      expect(store.menu()).toBeDefined();
+      expect(store.menu()?.menuItems).toEqual(['my-custom-link']);
+    });
+
+    it('always renders a tenant-authored child that no block declares', async () => {
+      store = makeStore(
+        menuServiceMock([], { menuItems: ['my-custom-link'] }),
+        featureStoreMock([]) // nothing effective
+      );
+      store.setMenuName('main_p13');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(store.menu()?.menuItems).toEqual(['my-custom-link']);
+    });
   });
 });
