@@ -2,7 +2,7 @@ import type { BundleId, FeatureBlock } from './feature-catalogue.types';
 
 /**
  * Bundle catalogue — pure presentational grouping data for the feature picker UI (id,
- * i18n label key, icon). Lives here rather than in `@okr/tenant-feature` for the same
+ * i18n label key, icon). Lives here rather than in `@okr/tenant-routes` for the same
  * reason `FEATURE_BLOCKS` below does: it is plain data with zero Angular imports, so
  * anything that only needs bundle metadata (a Cloud Function report, the picker's util
  * layer) can depend on `@okr/tenant-util` alone.
@@ -56,8 +56,8 @@ const aoc: FeatureBlock = {
 /**
  * Every feature block's METADATA the platform ships. Adding a block here is HALF of what
  * makes a feature reachable — the matching Angular route fragment must also be added to
- * `FEATURE_ROUTES` in `@okr/tenant-feature` (`feature-catalogue.ts`), joined by `id`.
- * `feature-catalogue.sync.spec.ts` (in `@okr/tenant-feature`) fails CI if the two ever
+ * `FEATURE_ROUTES` in `@okr/tenant-routes` (`feature-catalogue.ts`), joined by `id`.
+ * `feature-catalogue.sync.spec.ts` (in `@okr/tenant-routes`) fails CI if the two ever
  * drift apart; `feature-catalogue.spec.ts` fails if a declared menu url ships no route.
  * Tasks 12-18 fill in the remaining blocks, one bundle each; these two exist because they
  * are p13's bug.

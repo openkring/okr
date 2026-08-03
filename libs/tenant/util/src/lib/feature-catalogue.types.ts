@@ -34,14 +34,18 @@ export interface SeedSpec {
  * import directly.
  *
  * The Angular ROUTE table (`canActivate` guards, `loadComponent`) is deliberately NOT a
- * field here — it lives in `@okr/tenant-feature`'s `BlockRoutes`/`FEATURE_ROUTES`, joined
+ * field here — it lives in `@okr/tenant-routes`'s `BlockRoutes`/`FEATURE_ROUTES`, joined
  * to this type by `id`. Blocks eagerly import `isAdminGuard`/`isAuthenticatedGuard` from
  * `@okr/auth-feature` to populate `canActivate`, and `@okr/auth-feature` pulls in
  * `@angular/core` + an NgRx Signal Store — verified (twice) to grow
  * `dist/apps/functions/main.cjs` from 3.9MB to 15MB and ship live `@angular/core` symbols
  * into the Node runtime if the two are kept together. See
- * `libs/tenant/feature/src/lib/feature-catalogue.sync.spec.ts` for the test that keeps the
- * two halves from drifting apart.
+ * `libs/tenant/routes/src/lib/feature-catalogue.sync.spec.ts` for the test that keeps the
+ * two halves from drifting apart. (`@okr/tenant-routes` was split out of `@okr/tenant-feature`
+ * in a later round specifically because blocks importing `aoc-feature`/`calevent-feature`
+ * for their route fragments created circular library dependencies back through
+ * `cms-menu-feature`, which those libs use for their own admin screens — see
+ * `feature.store.ts`'s doc comment.)
  */
 export interface FeatureBlock {
   /** STABLE, immutable — becomes a SKU key (D-BB-5). Never rename. */

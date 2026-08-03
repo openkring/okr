@@ -4,7 +4,7 @@ import { FEATURE_ROUTES } from './feature-catalogue';
 
 /**
  * Guards the metadata/route split (task 8b, repo owner ruling 2026-08-02): `FEATURE_BLOCKS`
- * (`@okr/tenant-util`, Angular-free) and `FEATURE_ROUTES` (`@okr/tenant-feature`, owns the
+ * (`@okr/tenant-util`, Angular-free) and `FEATURE_ROUTES` (`@okr/tenant-routes`, owns the
  * `canActivate`/`loadComponent` route table) are joined by `id` and MUST be kept in sync by
  * hand — nothing enforces the join at the type level, because the whole point of the split
  * is that the metadata half must not reference anything Angular-shaped. Drift here is a

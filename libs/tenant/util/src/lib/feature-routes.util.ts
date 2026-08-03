@@ -4,8 +4,8 @@ import type { FeatureBlock, MenuSpec } from './feature-catalogue.types';
 /**
  * Anything that owns a lazy Angular route fragment for one block. Deliberately NOT
  * `FeatureBlock` — that type is the Angular-free metadata half (see its doc comment);
- * the route half lives in `@okr/tenant-feature`'s `BlockRoutes`, which structurally
- * satisfies this. `composeFeatureRoutes` itself stays here (not in `tenant-feature`)
+ * the route half lives in `@okr/tenant-routes`'s `BlockRoutes`, which structurally
+ * satisfies this. `composeFeatureRoutes` itself stays here (not in `tenant-routes`)
  * because it is a pure route-matching helper the route-coverage test needs regardless of
  * which side owns the data — only `import type { Route }` is Angular-touching, and type
  * imports are erased at compile time, so this never ships Angular code anywhere.

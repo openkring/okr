@@ -2,21 +2,20 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "../../../dist/libs/tenant/feature",
+    "outDir": "../../../dist/libs/tenant/routes",
     "declaration": true,
     "composite": true,
     "module": "preserve",
     "moduleResolution": "bundler",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../dist/out-tsc/tenant-feature.tsbuildinfo"
+    "tsBuildInfoFile": "../../../dist/out-tsc/tenant-routes.tsbuildinfo"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
-    { "path": "../../shared/feature/tsconfig.lib.json" },
-    { "path": "../../shared/models/tsconfig.lib.json" },
-    { "path": "../data-access/tsconfig.lib.json" },
-    { "path": "../util/tsconfig.lib.json" }
+    { "path": "../../aoc/feature/tsconfig.lib.json" },
+    { "path": "../../auth/feature/tsconfig.lib.json" },
+    { "path": "../../calevent/feature/tsconfig.lib.json" }
   ]
 }
