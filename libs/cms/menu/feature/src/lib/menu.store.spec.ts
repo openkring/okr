@@ -132,7 +132,7 @@ describe('MenuStore', () => {
 
     it('drops a child menu item whose owning block is not effective, without dropping the node itself', async () => {
       store = makeStore(
-        menuServiceMock([], { name: 'aoc-menu', menuItems: ['aoc-storage', 'my-custom-link'] }),
+        menuServiceMock([], { okey: 'aoc-menu', name: 'aoc-menu', menuItems: ['aoc-storage', 'my-custom-link'] }),
         featureStoreMock([]) // 'aoc' not effective
       );
       store.setMenuName('aoc-menu');

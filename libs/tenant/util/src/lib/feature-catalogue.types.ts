@@ -7,7 +7,21 @@ export type BundleId =
   | 'core' | 'members' | 'events' | 'finance'
   | 'documents' | 'communication' | 'special';
 
-/** One node of a block's default menu subtree. `key` is the `menuItems` doc id. */
+/**
+ * One node of a block's default menu subtree.
+ *
+ * `key` and `name` MUST be identical — this is not enforced by the type, only by
+ * `feature-blocks.spec.ts`'s "every MenuSpec has key === name" test, so treat it as load-
+ * bearing anyway. `key` is the `menuItems` Firestore doc id (what `blockOfMenuKey` in
+ * `feature-routes.util.ts` matches against); `name` is the lookup field `MenuService.read`
+ * actually resolves a rendered menu node by (`findByKey(..., 'name')`). The two fields exist
+ * separately because `MenuItemModel` (the Firestore doc shape) has both — but the strings a
+ * rendered tree passes around (`MenuItemModel.menuItems: string[]`, what `menu.ts` binds
+ * `[menuName]` to) are always `name`s, never `key`s. `blockOfMenuKey` only works — i.e. the
+ * feature-block visibility filter only works — because every spec keeps them equal. Give
+ * `key` and `name` different values and the item silently misclassifies as tenant-authored
+ * and always renders, even when its owning block is off.
+ */
 export interface MenuSpec {
   key: string;
   name: string;

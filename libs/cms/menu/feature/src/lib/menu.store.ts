@@ -145,7 +145,7 @@ export const _MenuStore = signalStore(
         if (!item?.menuItems?.length) return item;
         const menuItems = item.menuItems.filter(store.isVisible);
         if (menuItems.length === item.menuItems.length) return item;
-        return Object.assign(Object.create(Object.getPrototypeOf(item)), item, { menuItems });
+        return { ...item, menuItems };
       }),
       currentUser: computed(() => store.appStore.currentUser()),
       tenantId: computed(() => store.appStore.tenantId()),

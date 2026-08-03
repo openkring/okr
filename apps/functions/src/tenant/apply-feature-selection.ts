@@ -434,7 +434,7 @@ export async function applySelection(
 // Angular imports) lives in `@okr/tenant-util`'s `FEATURE_BLOCKS`, which this app CAN
 // import and does — see `./index.ts`, which wires
 // `createApplyFeatureSelection(FEATURE_BLOCKS)`. The Angular route table (`canActivate`
-// guards, `loadComponent`) stays in `@okr/tenant-feature`'s `FEATURE_ROUTES`, joined to
+// guards, `loadComponent`) lives in `@okr/tenant-routes`'s `FEATURE_ROUTES`, joined to
 // `FEATURE_BLOCKS` by block `id`; `feature-catalogue.sync.spec.ts` in that lib fails CI if
 // the two ever drift apart. `applySelection`/`planSelection` below never call `.routes()`,
 // so the metadata-only array is sufficient for everything this file does.

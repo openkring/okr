@@ -2,7 +2,7 @@
 //
 // `applyFeatureSelection` is wired here with `FEATURE_BLOCKS` — the Angular-free metadata
 // half of the feature catalogue, imported from `@okr/tenant-util`. This app must NOT import
-// `FEATURE_ROUTES`/`FEATURE_CATALOGUE` from `@okr/tenant-feature`: that half names feature
+// `FEATURE_ROUTES`/`FEATURE_CATALOGUE` from `@okr/tenant-routes`: that half names feature
 // libs via lazy `loadComponent` imports and eagerly imports `isAdminGuard`/
 // `isAuthenticatedGuard` from `@okr/auth-feature`, which drags `@angular/core` and an NgRx
 // Signal Store into the Cloud Functions bundle (empirically verified, see the long comment
