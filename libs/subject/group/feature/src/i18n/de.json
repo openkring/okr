@@ -17,6 +17,10 @@
     "conflict": "Der Datei-Ordner dieser Gruppe wird bereits von einer anderen Person verwaltet und kann hier nicht verwendet werden. Bitte kontaktiere eine Administratorin oder einen Administrator."
   },
 
+  "admins": {
+    "title": "Gruppen-Administratoren",
+    "description": "Diese Personen können die Gruppe verwalten, z.B. Mitglieder hinzufügen oder entfernen. Der erst genannte Administrator ist zudem der Hauptkontakt, dh. dieser Person werden Todo's automatisch zugewiesen."
+  },
   "add": {
     "page": "Gruppen Page hinzufügen"
   },
