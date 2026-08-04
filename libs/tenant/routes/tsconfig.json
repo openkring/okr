@@ -18,6 +18,8 @@
   "exclude": ["dist/**/*"],
   "references": [
     { "path": "../util/tsconfig.lib.json" },
+    { "path": "../feature/tsconfig.lib.json" },
+    { "path": "../../shared/feature/tsconfig.lib.json" },
     { "path": "../../auth/feature/tsconfig.lib.json" },
     { "path": "../../aoc/feature/tsconfig.lib.json" },
     { "path": "../../calevent/feature/tsconfig.lib.json" },
