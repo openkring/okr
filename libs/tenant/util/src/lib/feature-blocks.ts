@@ -1476,9 +1476,12 @@ const chat: FeatureBlock = {
  * dropped at `:64-65`, where the `resolveAvailability` gate returns `offered: false` off this
  * very default. So the block never reaches a tenant — but note the gate at `:65`, not the
  * `requested` filter at `:56`, is the ONLY thing standing between a `disabled` default and every
- * legacy tenant on first deploy. Nothing pinned that until task 17 fix round 2; two tests in
- * `feature-rollout.util.spec.ts` now do ("never surfaces a block whose CATALOGUE DEFAULT is
- * disabled…"). Do not "simplify" that filter to cover `disabled` too without reading them.
+ * legacy tenant on first deploy. Nothing pinned that until task 17 fix round 2; FOUR tests in
+ * `feature-rollout.util.spec.ts` now do — one on `resolveAvailability` (the verdict off a
+ * catalogue default, allow-list or not) and three on `effectiveFeatures` (the legacy
+ * `undefined` config, an explicit enable, and a dependency drag), all three of which go red if
+ * the `:65` gate is removed. Do not "simplify" the `:56` filter to cover `disabled` too without
+ * reading them.
  */
 const socialFeed: FeatureBlock = {
   id: 'social-feed',

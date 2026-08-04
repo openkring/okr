@@ -68,9 +68,60 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 //    `matrix-chat.service.ts`). Under the dividing line now recorded in the series
 //    conventions, that is the "no edge" case. Cataloguing `activity` therefore does not
 //    require going back and adding edges to those blocks.
-//  - `task` IS still owed one edge, by `finance`: `expense.store.ts:123` dynamically imports
-//    `TaskEditModal` from `@okr/task-feature`, i.e. a component crossing the block boundary.
-//    A `TODO(task 18 — 'task')` on the `finance` block records it. Honour it when `task` lands.
+//  - `task` is owed TWO things, not one. Fix round 2 said "one edge, by `finance`"; that
+//    inventory was INCOMPLETE and would have left a broken screen behind (fix round 3).
+//
+//    (a) `finance` → `task` — a real EDGE. `expense.store.ts:123` destructures `TaskEditModal`
+//        out of a dynamic import of the task feature lib: a component crossing the block
+//        boundary, the first arm of the dividing line. A `TODO(task 18 — 'task')` on the
+//        `finance` block records it. Honour it.
+//
+//    (b) `subject` → `task` — the SAME first arm, and additionally a wrapper doc.
+//        `group-view.page.ts:18` imports `TaskList` from `@okr/task-feature` and renders it at
+//        template line 138 as `<okr-task-list … contextMenuName="c-tasks" …>`; the group
+//        toolbar hoists that key (`segmentContextMenuName()`, `case 'tasks': return 'c-tasks'`)
+//        and delegates the popover back to `TaskList.onPopoverDismiss` (line 332). This is
+//        structurally the `subject`-embeds-`DocumentList` archetype, one segment over.
+//        DECISION RULE for whoever catalogues `task` — do NOT guess, check `task`'s own
+//        `dependsOn` at the time:
+//          * if `task` does NOT depend on `subject` → declare `subject → task` as a normal EDGE;
+//          * if `task` DOES depend on `subject` → the edge would close a CYCLE. Do not declare
+//            it; CO-DECLARE `c-tasks` (and its children) on `subject` instead, exactly as
+//            `subject` co-declares `contextMenuChat` today. See that block for the pattern and
+//            the reasoning, and the `CalEventList`/`MembershipList` note below for why a cycle
+//            is the wrong answer even though nothing would crash.
+//        EVIDENCE AS OF TASK 17 (re-verify, do not inherit): `libs/task` imports no `@okr/subject-*`
+//        lib at all — its only non-`shared` imports are `comment`, `cms-menu`, `avatar` (all
+//        `core: true`) and `activity` (the no-edge class above). On that evidence the first
+//        branch applies and a plain edge is correct.
+//
+//    (c) `c-tasks` IS CATALOGUED NOWHERE — zero hits across `libs/tenant` — and whoever owns
+//        `task` must catalogue it, on the `task` block (its three children map 1:1 onto
+//        `TaskList.onPopoverDismiss`'s own verbs: `task-add`→`add`, `task-export`→`export`,
+//        `filter-toggle`→`toggleFilter`; same reason `c-folder` sits on `document`, the block
+//        whose list component dispatches it). This holds under BOTH branches of (b) — an edge
+//        does not catalogue a doc. It is one of the wrappers the automated coverage test
+//        structurally cannot see: it is hoisted in `group-view.page.ts`, never derived from a
+//        `navigate` url. Unlike `c-folder` it is NOT broken in production today — the live doc
+//        (`menuItems/c-tasks`, `action: context`, `roleNeeded: privileged`, children
+//        `[task-add, task-export, filter-toggle]`) is already on all 16 tenants — so this is an
+//        uncatalogued doc, not an outage. Note the two action children are narrower:
+//        `task-add`/`task-export` are `tenants: ['test','scs']` only.
+//
+// WHY `subject` DECLARES NO EDGE FOR `CalEventList` / `MembershipList`, which the same file also
+// embeds (`group-view.page.ts:20`/`:17`, rendered at template lines 129/162) — do not "fix" this
+// into a cycle: `calevent` and `relationship` BOTH already declare `dependsOn: ['subject', …]`,
+// so a reverse edge from `subject` would close a cycle in each case. `resolveWithDeps`
+// (`feature-deps.util.ts`) would not crash — its `visited` set makes cycles terminate, and
+// `feature-deps.util.spec.ts:40` pins exactly that — and NO test rejects a cycle in the real
+// catalogue, so nothing would go red. The damage would be silent instead: the edge makes
+// enablement mutual, so a tenant could never run `subject` without `calevent`/`relationship`,
+// and the picker's dependency messaging would state a falsehood. Their wrappers are handled the
+// right way already — `c-calevents` is catalogued on `calevent`, `c-groupmembers` on
+// `relationship` — which is the whole point: cataloguing the wrapper, not drawing the edge, is
+// what keeps the group view's segments working. `c-tasks` is the only one of the group view's
+// six hoisted wrappers (`c-contentpage`, `c-calevents`, `c-tasks`, `c-folder`,
+// `c-groupmembers`, `contextMenuChat`) still missing from the catalogue.
 export const PENDING_CLASSIFICATION: string[] = [
   'activity', 'games', 'instruments', 'task',
 ];
