@@ -652,15 +652,274 @@ describe('applySelection (full write path — BUG 1 must survive past the pure p
     expect(menuDocs['icon-all']).toBeUndefined();
   });
 
-  it('refuses to apply when two live menuItems docs share the same name, rather than silently picking one (repo owner ruling)', async () => {
+  it('refuses to apply when two live menuItems docs it must write share the same name, rather than silently picking one (repo owner ruling)', async () => {
     const fdb = new FakeFirestore();
     fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    // Two ACTIVE docs, neither naming `p13`, neither with `id === name`: the resolution
+    // ladder (task B-1) has nothing left to decide on, so the refusal must stand.
     fdb.seed(MenuItemCollection, 'legacy-id-a', { okey: 'legacy-id-a', name: 'icon-sync', tenants: ['scs'] });
     fdb.seed(MenuItemCollection, 'legacy-id-b', { okey: 'legacy-id-b', name: 'icon-sync', tenants: ['test'] });
-    const block = catalogueBlock('cms', []);
+    // The block must actually WRITE this name for the refusal to apply — see the
+    // "does NOT touch" test below for the other half of that rule.
+    const block = catalogueBlock('cms', [{
+      key: 'icon-sync', name: 'icon-sync', url: 'sync', action: 'call',
+      roleNeeded: 'contentAdmin', icon: 'sync', label: 'Icons synchronisieren',
+    }]);
     const plan: SelectionPlan = { enabled: ['cms'], withheld: [] };
 
     await expect(applySelection(fdb as unknown as Firestore, [block], plan, 'p13', 'uid-admin-1'))
-      .rejects.toThrow(/duplicate menuItems name.*icon-sync/i);
+      .rejects.toThrow(/cannot be resolved.*'icon-sync'.*legacy-id-a.*legacy-id-b/s);
+    // Nothing was written before the refusal.
+    expect(fdb.dump(MenuItemCollection)['icon-sync']).toBeUndefined();
+    expect(fdb.dump(AppConfigCollection)['p13']).toEqual({ enabledFeatures: [] });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// Task B-1 — the three live `menuItems` name collisions, end to end through the real
+// write path. Every fixture mirrors a document that exists in production (verified
+// against Firestore 2026-08-04); the pre-fix global duplicate guard threw on ALL of these
+// for EVERY tenant, so nothing below could run at all.
+// ─────────────────────────────────────────────────────────────────────────────────────
+describe('applySelection — live menuItems name collisions (task B-1)', () => {
+  /** `menuItems/resource-menu` (`tenants: ['test']`) — the generic doc, id === name. */
+  const seedResourceGeneric = (fdb: FakeFirestore): void => fdb.seed(MenuItemCollection, 'resource-menu', {
+    okey: 'resource-menu', name: 'resource-menu', url: '', action: 'sub',
+    roleNeeded: 'resourceAdmin', icon: 'help-circle', label: 'Resourcen', isArchived: false,
+    tenants: ['test'], menuItems: ['resource-all', 'rboat-all', 'ownerships-all'],
+  });
+  /** `menuItems/resource-menu-scs` — same `name`, tenant-bespoke reshaping for scs. */
+  const seedResourceBespoke = (fdb: FakeFirestore): void => fdb.seed(MenuItemCollection, 'resource-menu-scs', {
+    okey: 'resource-menu-scs', name: 'resource-menu', url: '', action: 'sub',
+    roleNeeded: 'resourceAdmin', icon: 'help-circle', label: 'Resourcen (Schlüssel, Chäschtli...)',
+    isArchived: false, tenants: ['scs'], menuItems: ['resource-all', 'lockers-all', 'res-misc'],
+  });
+  /** A `resource-menu` block whose subtree gains one child neither live doc has yet, so
+   * exactly one of the two docs is provably written and the other provably is not. */
+  const resourceBlock = catalogueBlock('resource', [{
+    key: 'resource-menu', name: 'resource-menu', url: '', action: 'sub',
+    roleNeeded: 'resourceAdmin', icon: 'help-circle', label: 'Resourcen',
+    children: [{
+      key: 'resource-new', name: 'resource-new', url: '/resource/new', action: 'navigate',
+      roleNeeded: 'resourceAdmin', icon: 'help-circle', label: 'Neu',
+    }],
+  }]);
+
+  it('resource-menu resolves to the TENANT-BESPOKE doc for scs — the generic doc is not touched', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'scs', { enabledFeatures: [] });
+    seedResourceGeneric(fdb);
+    seedResourceBespoke(fdb);
+
+    await applySelection(fdb as unknown as Firestore, [resourceBlock], { enabled: ['resource'], withheld: [] }, 'scs', 'uid-1');
+
+    const docs = fdb.dump(MenuItemCollection);
+    expect(docs['resource-menu-scs'].menuItems).toEqual(['resource-all', 'lockers-all', 'res-misc', 'resource-new']);
+    // The generic doc keeps test's ordering and membership — untouched.
+    expect(docs['resource-menu'].menuItems).toEqual(['resource-all', 'rboat-all', 'ownerships-all']);
+    expect(docs['resource-menu'].tenants).toEqual(['test']);
+  });
+
+  it('resource-menu resolves to the GENERIC doc for test — the scs doc is not touched', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'test', { enabledFeatures: [] });
+    seedResourceGeneric(fdb);
+    seedResourceBespoke(fdb);
+
+    await applySelection(fdb as unknown as Firestore, [resourceBlock], { enabled: ['resource'], withheld: [] }, 'test', 'uid-1');
+
+    const docs = fdb.dump(MenuItemCollection);
+    expect(docs['resource-menu'].menuItems).toEqual(['resource-all', 'rboat-all', 'ownerships-all', 'resource-new']);
+    expect(docs['resource-menu-scs'].menuItems).toEqual(['resource-all', 'lockers-all', 'res-misc']);
+    expect(docs['resource-menu-scs'].tenants).toEqual(['scs']);
+  });
+
+  it('resource-menu resolves to the GENERIC doc for a third tenant that inherits neither, and that tenant is added to it', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    seedResourceGeneric(fdb);
+    seedResourceBespoke(fdb);
+
+    await applySelection(fdb as unknown as Firestore, [resourceBlock], { enabled: ['resource'], withheld: [] }, 'p13', 'uid-1');
+
+    const docs = fdb.dump(MenuItemCollection);
+    expect(docs['resource-menu'].tenants).toEqual(['test', 'p13']);
+    expect(docs['resource-menu'].menuItems).toEqual(['resource-all', 'rboat-all', 'ownerships-all', 'resource-new']);
+    // The bespoke doc must NOT pick up an unrelated tenant.
+    expect(docs['resource-menu-scs'].tenants).toEqual(['scs']);
+    expect(docs['resource-menu-scs'].menuItems).toEqual(['resource-all', 'lockers-all', 'res-misc']);
+  });
+
+  it('filter-toggle resolves to the ACTIVE twin and leaves the ARCHIVED doc archived and unrewritten', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    // The stale, archived `action: 'call'` version, whose doc id is the catalogue key.
+    fdb.seed(MenuItemCollection, 'filter-toggle', {
+      okey: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'call',
+      roleNeeded: 'registered', icon: 'search', label: 'Filter ein-/ausblenden',
+      isArchived: true, tenants: ['scs'], menuItems: [],
+    });
+    // The live one, on a legacy autoid, carrying fields MenuSpec cannot even express.
+    fdb.seed(MenuItemCollection, 'zjbhk84hfrfc32yb6td5', {
+      okey: 'zjbhk84hfrfc32yb6td5', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle',
+      roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen',
+      labelAlt: 'Filter ausblenden', iconAlt: 'eye-off', isArchived: false, tenants: ['scs'], menuItems: [],
+    });
+    const block = catalogueBlock('calevent', [{
+      key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle',
+      roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen',
+    }]);
+
+    await applySelection(fdb as unknown as Firestore, [block], { enabled: ['calevent'], withheld: [] }, 'p13', 'uid-1');
+
+    const docs = fdb.dump(MenuItemCollection);
+    expect(docs['zjbhk84hfrfc32yb6td5'].tenants).toEqual(['scs', 'p13']);
+    expect(docs['zjbhk84hfrfc32yb6td5'].labelAlt).toBe('Filter ausblenden'); // not clobbered
+    // The archived doc is the trap: a merge write here would un-archive it (the create
+    // path writes `isArchived: false`) and resurrect the collision as two ACTIVE docs.
+    expect(docs['filter-toggle']).toEqual({
+      okey: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'call',
+      roleNeeded: 'registered', icon: 'search', label: 'Filter ein-/ausblenden',
+      isArchived: true, tenants: ['scs'], menuItems: [],
+    });
+  });
+
+  // ── the archived-document-id trap (task B-1 brief) ────────────────────────────────
+  // The catalogue's spec key for `filter-toggle` IS the archived document's id. These two
+  // tests pin down what happens on each of the two possible live cleanups, and are the
+  // evidence behind the recommendation "DELETE the archived doc, do not un-archive it".
+  const filterToggleSpec: MenuSpec = {
+    key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle',
+    roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen',
+  };
+  const archivedFilterToggle = {
+    okey: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'call',
+    roleNeeded: 'registered', icon: 'search', label: 'Filter ein-/ausblenden',
+    isArchived: true, tenants: ['scs'], menuItems: [],
+  };
+
+  it('CREATE PATH: with only the ARCHIVED doc left, the seed writes to that same doc id and un-archives it, replacing its tenants', async () => {
+    // Not a bug in this change — `spec.key` is the only id a create has — but it is why
+    // the archived twin must be DELETED rather than left behind: were the ACTIVE twin ever
+    // removed first, this write resurrects the stale doc and drops `scs` from its tenants.
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    fdb.seed(MenuItemCollection, 'filter-toggle', { ...archivedFilterToggle });
+    const block = catalogueBlock('calevent', [filterToggleSpec]);
+
+    await applySelection(fdb as unknown as Firestore, [block], { enabled: ['calevent'], withheld: [] }, 'p13', 'uid-1');
+
+    const doc = fdb.dump(MenuItemCollection)['filter-toggle'];
+    expect(doc.isArchived).toBe(false);        // resurrected
+    expect(doc.action).toBe('toggle');         // rewritten from the catalogue
+    expect(doc.tenants).toEqual(['p13']);      // scs dropped — the create path owns the field
+    expect(Object.keys(fdb.dump(MenuItemCollection))).toEqual(['filter-toggle']); // no second doc
+  });
+
+  it('UN-ARCHIVING the stale twin instead of deleting it silently moves the seed target onto it', async () => {
+    // Same two docs as the passing collision test above, except `isArchived: false` on the
+    // stale one. Rung 3 can no longer separate them (both name scs), so rung 4 picks the
+    // one whose id equals the name — the STALE doc. This is exactly the regression the
+    // live-data recommendation exists to prevent.
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'scs', { enabledFeatures: [] });
+    fdb.seed(MenuItemCollection, 'filter-toggle', { ...archivedFilterToggle, isArchived: false });
+    fdb.seed(MenuItemCollection, 'zjbhk84hfrfc32yb6td5', {
+      okey: 'zjbhk84hfrfc32yb6td5', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle',
+      roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen',
+      labelAlt: 'Filter ausblenden', iconAlt: 'eye-off', isArchived: false, tenants: ['scs'], menuItems: [],
+    });
+    const block = catalogueBlock('calevent', [filterToggleSpec]);
+
+    await applySelection(fdb as unknown as Firestore, [block], { enabled: ['calevent'], withheld: [] }, 'scs', 'uid-1');
+
+    const docs = fdb.dump(MenuItemCollection);
+    expect(docs['filter-toggle'].action).toBe('toggle');   // the stale doc got the seed
+    expect(docs['zjbhk84hfrfc32yb6td5'].action).toBe('toggle'); // the real one, untouched
+    expect(docs['zjbhk84hfrfc32yb6td5'].roleNeeded).toBe('contentAdmin');
+  });
+
+  it('byte-identical event-menu twins resolve to the doc whose id equals the name, and the stale twin is not written', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'test', { enabledFeatures: [] });
+    const twin = {
+      name: 'event-menu', url: '', action: 'sub', roleNeeded: 'registered',
+      icon: 'help-circle', label: 'Events', isArchived: false, tenants: ['test'],
+      menuItems: ['calevent-all'],
+    };
+    // `info_menu` seeded FIRST: first-seen (the pre-fix tie-break) would pick the stale twin.
+    fdb.seed(MenuItemCollection, 'info_menu', { ...twin, okey: 'info_menu' });
+    fdb.seed(MenuItemCollection, 'event-menu', { ...twin, okey: 'event-menu' });
+    const block = catalogueBlock('calevent', [{
+      key: 'event-menu', name: 'event-menu', url: '', action: 'sub',
+      roleNeeded: 'registered', icon: 'help-circle', label: 'Events',
+      children: [{
+        key: 'calevent-new', name: 'calevent-new', url: '/calevent/new', action: 'navigate',
+        roleNeeded: 'registered', icon: 'calendar', label: 'Neu',
+      }],
+    }]);
+
+    await applySelection(fdb as unknown as Firestore, [block], { enabled: ['calevent'], withheld: [] }, 'test', 'uid-1');
+
+    const docs = fdb.dump(MenuItemCollection);
+    expect(docs['event-menu'].menuItems).toEqual(['calevent-all', 'calevent-new']);
+    expect(docs['info_menu'].menuItems).toEqual(['calevent-all']);
+  });
+
+  it('an ambiguous name the selection does NOT touch no longer aborts the run (the event-menu case: no catalogue block owns that name)', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    // Genuinely undecidable for p13 — two active docs, neither naming p13, neither
+    // `id === name`. Under the pre-fix global guard this alone killed every tenant's seed.
+    fdb.seed(MenuItemCollection, 'legacy-id-a', { okey: 'legacy-id-a', name: 'event-menu', tenants: ['test'], isArchived: false });
+    fdb.seed(MenuItemCollection, 'legacy-id-b', { okey: 'legacy-id-b', name: 'event-menu', tenants: ['scs'], isArchived: false });
+    const block = catalogueBlock('calevent', [{
+      key: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
+      roleNeeded: 'registered', icon: 'calendar', label: '@main.calevent.all',
+    }]);
+
+    await applySelection(fdb as unknown as Firestore, [block], { enabled: ['calevent'], withheld: [] }, 'p13', 'uid-1');
+
+    const docs = fdb.dump(MenuItemCollection);
+    expect(docs['calevent-all']).toBeDefined();          // the run completed
+    expect(docs['main_p13'].menuItems).toEqual(['calevent-all']);
+    // …and the untouchable pair was left exactly as it was.
+    expect(docs['legacy-id-a']).toEqual({ okey: 'legacy-id-a', name: 'event-menu', tenants: ['test'], isArchived: false });
+    expect(docs['legacy-id-b']).toEqual({ okey: 'legacy-id-b', name: 'event-menu', tenants: ['scs'], isArchived: false });
+  });
+
+  it('refuses when a nested CHILD spec name is ambiguous, not just a top-level one', async () => {
+    // The touched set must be the whole subtree: a child doc is written exactly like a
+    // top-level one, so an unresolvable child is just as unsafe to guess at.
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    fdb.seed(MenuItemCollection, 'legacy-id-a', { okey: 'legacy-id-a', name: 'icon-add', tenants: ['scs'], isArchived: false });
+    fdb.seed(MenuItemCollection, 'legacy-id-b', { okey: 'legacy-id-b', name: 'icon-add', tenants: ['test'], isArchived: false });
+    const block = catalogueBlock('cms', [{
+      key: 'c-icon', name: 'c-icon', url: '', action: 'context', roleNeeded: 'contentAdmin',
+      icon: 'help-circle', label: '', children: [{
+        key: 'icon-add', name: 'icon-add', url: 'add', action: 'call',
+        roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Icon hinzufügen',
+      }],
+    }]);
+
+    await expect(applySelection(fdb as unknown as Firestore, [block], { enabled: ['cms'], withheld: [] }, 'p13', 'uid-1'))
+      .rejects.toThrow(/cannot be resolved.*'icon-add'.*legacy-id-a.*legacy-id-b/s);
+    expect(fdb.dump(MenuItemCollection)['c-icon']).toBeUndefined(); // nothing written
+  });
+
+  it('refuses when the tenant\'s own ROOT doc name is ambiguous, even though no menu spec names it', async () => {
+    // `planRootMenuOp` reads `main_<tenantId>` straight out of the same index, so that
+    // name is part of the touched set even though it appears in no block's `menu`.
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    // Two autoid docs both claiming `name: 'main_p13'` and both naming p13 — no rung of
+    // the ladder can separate them (neither has `id === name`).
+    fdb.seed(MenuItemCollection, 'legacy-root-a', { okey: 'legacy-root-a', name: 'main_p13', tenants: ['p13'], isArchived: false, menuItems: ['home'] });
+    fdb.seed(MenuItemCollection, 'legacy-root-b', { okey: 'legacy-root-b', name: 'main_p13', tenants: ['p13'], isArchived: false, menuItems: ['other'] });
+    const block = catalogueBlock('calevent', []);
+
+    await expect(applySelection(fdb as unknown as Firestore, [block], { enabled: ['calevent'], withheld: [] }, 'p13', 'uid-1'))
+      .rejects.toThrow(/cannot be resolved.*'main_p13'.*legacy-root-a.*legacy-root-b/s);
   });
 });

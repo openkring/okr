@@ -26,17 +26,89 @@ export interface MenuOp {
 
 export interface MenuNameCollision {
   name: string;
+  /** The doc ids that SURVIVED the resolution ladder and are therefore still tied — not
+   * every doc that shares the name. An archived twin, or a twin the ladder deselected, is
+   * deliberately absent: it is not a candidate and naming it in an error would send the
+   * reader after the wrong document. */
   ids: string[];
 }
 
 export interface MenuNameIndex {
   /** Live `menuItems` docs keyed by their `name` field (not doc id) — see the module
-   * doc comment on `indexMenuDocsByName` for why. */
+   * doc comment on `indexMenuDocsByName` for why. One entry per name, already resolved
+   * for the requested tenant. A name whose only live docs are all archived is ABSENT (see
+   * step 1 of the ladder), which puts it on `planMenuOps`' create path. */
   byName: Map<string, MenuItemModel>;
-  /** Every `name` shared by more than one live doc. Non-empty means the index is NOT
-   * trustworthy for those names — the caller must refuse to proceed rather than silently
-   * pick one (repo owner ruling, task 12 review round 2). */
-  duplicates: MenuNameCollision[];
+  /** Every `name` the ladder could NOT narrow to a single document for this tenant. The
+   * caller must refuse to proceed — but ONLY for the names its own run actually writes
+   * (see `menuSpecNames` and `applySelection`): a genuinely ambiguous name elsewhere in
+   * this globally-shared collection is somebody else's data problem, not a reason to
+   * block every tenant's seeding forever. */
+  ambiguous: MenuNameCollision[];
+}
+
+/**
+ * Every `name` a set of menu specs writes to, including nested children — the exact set of
+ * names a seeding run must be able to resolve unambiguously. Used by `applySelection` to
+ * scope the ambiguity refusal to the names it actually touches.
+ */
+export function menuSpecNames(specs: MenuSpec[]): string[] {
+  return specs.flatMap(s => [s.name, ...menuSpecNames(s.children ?? [])]);
+}
+
+/**
+ * Narrow the live documents sharing one `name` down to the single one a seed for
+ * `tenantId` should write to. Returns 0 (nothing live to extend → create path), 1
+ * (resolved), or ≥2 (genuinely ambiguous for this tenant) candidates.
+ *
+ * The ladder, in order, and why each rung exists — all three rungs are load-bearing against
+ * documents that exist in production today (verified directly against Firestore 2026-08-04,
+ * 358 `menuItems` docs, exactly three colliding names):
+ *
+ *  1. ARCHIVED DOCS ARE NOT CANDIDATES. `MenuService.list`/`.read` query through
+ *     `getSystemQuery`, which issues `where('isArchived', '==', false)`
+ *     (`libs/shared/util-core/src/lib/query.util.ts`) — an archived doc is invisible at
+ *     runtime, so seeding it would write structural fixes into a document no app will ever
+ *     render. Live case: `menuItems/filter-toggle` (`isArchived: true`, a stale `action:
+ *     'call'` version) vs `menuItems/zjbhk84hfrfc32yb6td5` (`isArchived: false`, the real
+ *     `action: 'toggle'` one carrying `labelAlt`/`iconAlt`). Only strictly `=== true` is
+ *     excluded: a doc MISSING the field is equally invisible to that Firestore query, but
+ *     dropping it here would send the seed down the create path and write a SECOND doc
+ *     under that name — making the collision worse rather than better. Missing `isArchived`
+ *     is a data defect to repair, not one to route around.
+ *  2. One candidate left → done.
+ *  3. PREFER A DOC THIS TENANT ALREADY INHERITS. Menu docs are globally shared and a tenant
+ *     inherits a subtree by having its id in `tenants[]`, so an existing membership is the
+ *     strongest possible statement of which doc is *this* tenant's. Live case: `name:
+ *     'resource-menu'` is carried by `menuItems/resource-menu` (`tenants: ['test']`, 9
+ *     children) AND `menuItems/resource-menu-scs` (`tenants: ['scs']`, a 6-child bespoke
+ *     reshaping). `scs` must extend the bespoke one; `test` must extend the generic one.
+ *  4. PREFER THE GENERIC DOC (`id === name`). The tie-break for a tenant that inherits
+ *     neither — and for twins nobody has claimed. A tenant-bespoke variant's id carries a
+ *     tenant suffix (`resource-menu-scs`) and a stale twin gets an unrelated id
+ *     (`info_menu`, byte-identical to `menuItems/event-menu`, both `name: 'event-menu'`,
+ *     both `tenants: ['test']`), so `id === name` picks the document that is canonical for
+ *     everyone. Applied INSIDE rung 3's survivors, never over the whole set: if two docs
+ *     both name this tenant, the answer must come from among those two.
+ *
+ * Rungs 3 and 4 can point at different documents (for `scs`, rung 3 says
+ * `resource-menu-scs` and rung 4 would say `resource-menu`) — that is the point, and rung 3
+ * deliberately wins. Rung 4 only ever runs on a set rung 3 could not decide.
+ */
+function resolveCandidates(
+  name: string,
+  group: { id: string; data: Partial<MenuItemModel> }[],
+  tenantId: string,
+): { id: string; data: Partial<MenuItemModel> }[] {
+  const active = group.filter(d => d.data.isArchived !== true); // 1
+  if (active.length <= 1) return active;                        // 2
+
+  const scoped = active.filter(d => (d.data.tenants ?? []).includes(tenantId)); // 3
+  const narrowed = scoped.length > 0 ? scoped : active;
+  if (narrowed.length === 1) return narrowed;
+
+  const generic = narrowed.filter(d => d.id === name); // 4 — doc ids are unique, so ≤ 1
+  return generic.length === 1 ? generic : narrowed;
 }
 
 /**
@@ -59,36 +131,46 @@ export interface MenuNameIndex {
  * structural-drift update again.
  *
  * A NAME COLLISION (two live docs sharing one `name`) is a data-integrity problem this
- * function must not paper over by silently picking one — `duplicates` reports it instead;
- * `byName` still contains ONE of the colliding docs (first-seen, arbitrary) purely so a
- * caller that ignores `duplicates` fails loudly downstream rather than crashing here, but
- * the intended caller contract is: check `duplicates` first and refuse to proceed if
- * non-empty (see `applySelection` in `apps/functions/src/tenant/apply-feature-selection.ts`).
+ * function must not paper over by blindly picking one. It is resolved instead, per TENANT,
+ * by the ladder in `resolveCandidates` above — archived docs out, then the doc this tenant
+ * already inherits, then the generic (`id === name`) doc. `MenuService.read` is itself
+ * tenant-scoped, so name uniqueness is only ever required WITHIN a tenant; a global
+ * uniqueness demand (the pre-fix behaviour) refuses to seed anybody because of a collision
+ * that no single tenant can even observe. Whatever the ladder cannot decide is reported in
+ * `ambiguous` and the caller refuses — but only for the names its own run writes; see
+ * `MenuNameIndex.ambiguous` and `applySelection`.
+ *
+ * `byName` still holds one arbitrary survivor for an `ambiguous` name, purely so a caller
+ * that ignores `ambiguous` fails loudly downstream rather than crashing here.
  */
 export function indexMenuDocsByName(
   docs: { id: string; data: Partial<MenuItemModel> }[],
+  tenantId: string,
 ): MenuNameIndex {
-  const byName = new Map<string, MenuItemModel>();
-  const idsByName = new Map<string, string[]>();
-
-  for (const { id, data } of docs) {
-    const name = (data.name as string | undefined) ?? id;
-    idsByName.set(name, [...(idsByName.get(name) ?? []), id]);
-    if (!byName.has(name)) {
-      // `okey` spread LAST, after `data`: a stored doc that happens to carry its own
-      // `okey` field (the convention is to strip it before write, but nothing enforces
-      // that on read) must never override the REAL Firestore doc id — `docId` is a write
-      // target downstream (`applySelection`), so a wrong `okey` here would silently
-      // redirect a write to the wrong document (task 12 review round 3).
-      byName.set(name, { tenants: [] as string[], ...data, okey: id } as MenuItemModel);
-    }
+  const groups = new Map<string, { id: string; data: Partial<MenuItemModel> }[]>();
+  for (const doc of docs) {
+    const name = (doc.data.name as string | undefined) ?? doc.id;
+    groups.set(name, [...(groups.get(name) ?? []), doc]);
   }
 
-  const duplicates: MenuNameCollision[] = [...idsByName.entries()]
-    .filter(([, ids]) => ids.length > 1)
-    .map(([name, ids]) => ({ name, ids }));
+  const byName = new Map<string, MenuItemModel>();
+  const ambiguous: MenuNameCollision[] = [];
 
-  return { byName, duplicates };
+  for (const [name, group] of groups) {
+    const candidates = resolveCandidates(name, group, tenantId);
+    if (candidates.length > 1) ambiguous.push({ name, ids: candidates.map(d => d.id) });
+
+    const winner = candidates[0];
+    if (!winner) continue; // every doc of this name is archived → create path
+    // `okey` spread LAST, after `data`: a stored doc that happens to carry its own
+    // `okey` field (the convention is to strip it before write, but nothing enforces
+    // that on read) must never override the REAL Firestore doc id — `docId` is a write
+    // target downstream (`applySelection`), so a wrong `okey` here would silently
+    // redirect a write to the wrong document (task 12 review round 3).
+    byName.set(name, { tenants: [] as string[], ...winner.data, okey: winner.id } as MenuItemModel);
+  }
+
+  return { byName, ambiguous };
 }
 
 /**

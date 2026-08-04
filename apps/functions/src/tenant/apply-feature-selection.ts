@@ -9,7 +9,7 @@ import {
   MenuItemCollection, UserCollection, type MenuItemModel,
 } from '@okr/shared-models';
 import {
-  indexMenuDocsByName, planMenuOps, resolveAvailability, resolveWithDeps,
+  indexMenuDocsByName, menuSpecNames, planMenuOps, resolveAvailability, resolveWithDeps,
   type FeatureBlock, type FeatureRollout, type MenuOp,
 } from '@okr/tenant-util';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -361,18 +361,46 @@ export async function applySelection(
     .filter((b): b is FeatureBlock => b !== undefined);
 
   // --- read the current menu snapshot (global collection, indexed by NAME) -----------
+  // The read stays UNSCOPED on purpose. Menu docs are globally shared and a tenant inherits
+  // a subtree by having its id appended to `tenants[]`; a read filtered on
+  // `tenants array-contains tenantId` could not see the very document it is supposed to
+  // extend, so the seed would create a duplicate instead of extending. That is the core
+  // mechanism, not an oversight.
+  //
   // Indexed by `name`, not doc id — see `indexMenuDocsByName`'s doc comment (task 12
   // review round 2): the runtime already resolves menu docs by name, and eleven live docs
-  // carry legacy autoids that differ from their name. A name collision is a data-integrity
-  // problem this function refuses to paper over — see the throw right below.
+  // carry legacy autoids that differ from their name.
+  //
+  // NAME COLLISIONS (task B-1). The pre-fix code refused to run if ANY two docs anywhere in
+  // this collection shared a name. Three such pairs exist in production, so the guard fired
+  // unconditionally and no tenant could ever be seeded. Two of the three are not even
+  // defects: `resource-menu`/`resource-menu-scs` is the legitimate generic-plus-bespoke
+  // override pattern, and both are active. The guard's premise was too coarse rather than
+  // wrong — `MenuService.read` is TENANT-SCOPED, so name uniqueness is only ever required
+  // WITHIN one tenant. `indexMenuDocsByName` therefore resolves each name for THIS tenant
+  // (archived docs out, then the doc the tenant already inherits, then the generic
+  // `id === name` doc) and reports only what it genuinely could not decide.
+  //
+  // The refusal is then scoped to the names THIS run writes: every menu spec name of every
+  // enabled block, children included, plus the tenant's own root doc. An ambiguity anywhere
+  // else in this shared collection cannot affect what this run writes and must not block
+  // it — that is precisely how one stale twin under `event-menu` (a tenant-bespoke name no
+  // catalogue block touches) killed seeding for every tenant.
   const menuSnap = await db.collection(MenuItemCollection).get();
-  const { byName: existing, duplicates } = indexMenuDocsByName(
+  const { byName: existing, ambiguous } = indexMenuDocsByName(
     menuSnap.docs.map(d => ({ id: d.id, data: d.data() as Partial<MenuItemModel> })),
+    tenantId,
   );
-  if (duplicates.length > 0) {
+  const touched = new Set<string>([
+    ...enabledBlocks.flatMap(b => menuSpecNames(b.menu)),
+    `main_${tenantId}`, // planRootMenuOp reads this one straight out of `existing`
+  ]);
+  const blocking = ambiguous.filter(a => touched.has(a.name));
+  if (blocking.length > 0) {
     throw new HttpsError('failed-precondition',
-      `${CF_NAME}: duplicate menuItems name(s) found, refusing to apply — ` +
-      duplicates.map(d => `'${d.name}' (docs: ${d.ids.join(', ')})`).join('; '));
+      `${CF_NAME}: menuItems name(s) needed by this selection cannot be resolved to a ` +
+      `single document for tenant '${tenantId}', refusing to apply — ` +
+      blocking.map(a => `'${a.name}' (candidates: ${a.ids.join(', ')})`).join('; '));
   }
 
   const menuOps = planMenuOpsForBlocks(enabledBlocks, tenantId, existing);
