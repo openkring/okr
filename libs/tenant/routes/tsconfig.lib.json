@@ -36,6 +36,7 @@
     { "path": "../../finance/period/feature/tsconfig.lib.json" },
     { "path": "../../finance/reporting/feature/tsconfig.lib.json" },
     { "path": "../../finance/vat-code/feature/tsconfig.lib.json" },
+    { "path": "../../forms/feature/tsconfig.lib.json" },
     { "path": "../../geo/location/feature/tsconfig.lib.json" },
     { "path": "../../geo/trip/feature/tsconfig.lib.json" },
     { "path": "../../i18n/feature/tsconfig.lib.json" },

@@ -113,6 +113,13 @@ const calevent: FeatureBlock = {
   // `calevent-view.modal.ts:12` both render `DocumentsAccordion` from `@okr/document-feature`
   // — every event's attachments panel. Same reverse-edge class as the `pdf-template` edge
   // `finance` gained in task 15, which its own brief also did not anticipate.
+  //
+  // `chat` deliberately NOT declared (task 17): `calevent-list.ts:221,726` injects
+  // `MatrixChatService` only to `sendMessage(roomId, message)` — announce an event into an
+  // existing room. It renders no chat component, navigates to no chat screen, and needs no
+  // menu doc `chat` owns. A pure data-access service call is not a `dependsOn` edge (the
+  // service class ships in the bundle regardless). See the `chat` block for the full story
+  // and for the two blocks that DO/DON'T declare it (`subject` / `relationship`).
   dependsOn: ['subject', 'document'],
   collections: ['calevents'],
   // Task 14: reconciled against every `calevent-feature` route in app.routes.ts. Only
@@ -526,7 +533,23 @@ const subject: FeatureBlock = {
   // own (equally real) `document` edges to keep the bundle switchable, but that only holds
   // for a tenant enabling neither `subject` nor anything depending on it. All three
   // comments must be read together; none tells the whole story alone.
-  dependsOn: ['document', 'folder'],
+  //
+  // `chat` added (task 17), by the SAME criterion as `document` and on the SAME screen:
+  // `group-view.page.ts` renders the group's "Chat" segment as
+  // `<okr-page-dispatcher id="{{id + '_chat'}}" [isGroupView]="true">` (lines 118-120) and
+  // hoists that segment's context menu out of the dispatcher (`segmentContextMenuName()`,
+  // line 256 → `PageDispatcher.hoistMenuName()` → `page.dispatcher.ts:161`, which resolves
+  // to `contextMenuChat` whenever the route carries no `:contextMenuName`). `contextMenuChat`
+  // is a menu doc the `chat` block owns, so without `chat` the tenant is never added to its
+  // `tenants[]`, `MenuService.read` returns nothing, and the group's chat segment renders
+  // with an empty room menu — structurally identical to the `c-folder`/"Dateien" case that
+  // produced the `document` edge above. Note the consequence honestly: `subject` is the
+  // block essentially every tenant enables, so this edge makes `chat` — an EXTERNAL,
+  // GDPR-relevant processor (Matrix/etke.cc) — de-facto always-on for anyone running member
+  // management, exactly as it already did for `documents`. See the `chat` block below for
+  // the full story, including why `relationship` and `calevent` (which also inject
+  // `MatrixChatService`) deliberately do NOT declare the same edge.
+  dependsOn: ['document', 'folder', 'chat'],
   // PersonCollection, OrgCollection, AddressCollection, GroupCollection,
   // ApplicationCollection, AddressDirectoryCollection (all from `@okr/shared-models`,
   // verified via each subdomain's own `*.service.ts`). `swisscities` owns NO collection —
@@ -609,6 +632,18 @@ const relationship: FeatureBlock = {
   // membership, a boat ownership, a personal relationship). `folder` is NOT declared here:
   // no `libs/relationship/**` file imports `@okr/folder-*` — it arrives transitively
   // through `document`'s own `dependsOn`, which is where the real edge is.
+  //
+  // `chat` deliberately NOT declared (task 17), although `membership.store.ts:722` and
+  // `reservation.store.ts:430` both `createDirectRoom(...)` and then
+  // `navigateByUrl(store.router, '/private/chat/c-contentpage', ...)`. That destination is
+  // cms's `private/:id/:contextMenuName` route with cms's OWN `c-contentpage` wrapper — both
+  // `core: true` and unconditionally seeded — so nothing the `chat` block gates is required
+  // for the navigation to land on a working screen. Contrast `subject`, which embeds the
+  // chat page AND depends on `contextMenuChat`, a doc `chat` owns, and therefore does
+  // declare it. Note this distinction changes nothing in practice: `relationship` depends on
+  // `subject`, and `resolveWithDeps` is transitive, so `chat` reaches every tenant with
+  // `relationship` anyway. It is drawn so the edge list keeps meaning what it says. See the
+  // `chat` block for the full story.
   dependsOn: ['subject', 'document'],
   // MembershipCollection, ReservationCollection, OwnershipCollection, InvitationCollection,
   // TransferCollection, PersonalRelCollection, ResponsibilityCollection, WorkrelCollection —
@@ -1227,6 +1262,233 @@ const folder: FeatureBlock = {
   menu: [],
 };
 
+/**
+ * `libs/chat/{data-access,feature,ui,util}` — the club chat, backed by a HOSTED MATRIX
+ * homeserver (etke.cc), not by Firestore. `MatrixChatService` talks to `matrix-js-sdk`
+ * directly and swaps a Firebase ID token for Matrix credentials through the
+ * `apps/functions/src/matrix-simple/*` callables.
+ *
+ * NO ROUTE OF ITS OWN — verified, not assumed. `app.routes.ts` has no `chat` path and
+ * imports no `@okr/chat-*` lib. The chat SCREEN is a CMS page: the live `chat` menu doc
+ * navigates to `/private/chat/contextMenuChat`, i.e. cms's `private/:id/:contextMenuName`
+ * route → `PageDispatcher` → `page.dispatcher.ts:53` `@case ('chat')` → `ChatPage`
+ * (`libs/cms/page/feature/chat.page.ts`) → `MatrixChat` (`@okr/chat-feature`). So this
+ * block's `FEATURE_ROUTES` entry is `routes: () => []` and its menu url resolves against the
+ * `cms` block's route table. That is also why it declares no dependency on `cms`: `cms` is
+ * `core: true`, hence unconditionally effective, and no block in this catalogue declares a
+ * core dependency (same convention as the `document` block's `avatar`/`cms` note).
+ *
+ * `contextMenuChat` IS CATALOGUED HERE AND THE TEST CANNOT SEE IT. Three independent reasons
+ * it must be, none of which the wrapper-coverage test in `@okr/tenant-routes` can catch —
+ * that test walks `navigate` urls looking for segments starting with `c-`, and this doc's
+ * name does not carry the `c-` prefix at all (same naming-outlier class as `forms-context`
+ * below and `ocr-rule-context` on `finance`):
+ *  1. it is the `:contextMenuName` segment of the live `chat` doc's own url;
+ *  2. `page.dispatcher.ts:161` HOISTS it in component code as the default whenever the route
+ *     carries no `:contextMenuName` (`case 'chat': return this.contextMenuName() ??
+ *     'contextMenuChat'`) — the same class of code-hoisted wrapper as `c-folder` on the
+ *     `document` block (task 16);
+ *  3. `group-view.page.ts` reaches it through that same hoist for the group's "Chat" segment,
+ *     which is why `subject` declares `dependsOn: ['chat']` — see the note there.
+ * The live doc is on `tenants: ['scs']` ONLY (its two children `chat-room-add`/
+ * `chat-room-edit` likewise), so every other tenant's chat room menu is empty TODAY. That is
+ * the exact p13 failure mode this catalogue exists to close, and cataloguing it closes it.
+ *
+ * REVERSE EDGES — who reaches into chat, and who declares it. Nine files outside `libs/chat`
+ * import a `@okr/chat-*` lib; read this list together with the comments on the three blocks
+ * named, none of which tells the whole story alone:
+ *  - `subject` — DECLARES the edge (`group-view.page.ts` embeds the chat page and depends on
+ *    `contextMenuChat`; `person.store.ts:425` also navigates to the chat page).
+ *  - `relationship` — does NOT (navigates to `/private/chat/c-contentpage`, i.e. cms's own
+ *    always-on wrapper; and inherits `chat` transitively through `subject` anyway).
+ *  - `calevent` — does NOT (`sendMessage` only, no screen, no menu doc).
+ *  - `cms` (`page`, `section`, `menu` subdomains) and `avatar` — `core: true`, so by the
+ *    settled convention they never declare a non-core edge; note `cms/page` is the block that
+ *    physically renders `MatrixChat`.
+ *  - `aoc` — does NOT: `aoc-chat.ts`/`aoc-chat.store.ts` use `@okr/chat-util` helpers and
+ *    `MatrixMediaService` to build `aoc`'s OWN admin screen (`/aoc/chat`, still listed in the
+ *    TODO on that block). It renders nothing of chat's surface and needs no doc catalogued
+ *    here.
+ *
+ * `dependsOn: []`. `matrix-chat.service.ts:14` imports `ActivityService`
+ * (`@okr/activity-data-access`) for audit-trail writes and `libs/chat/feature` imports
+ * `@okr/avatar-data-access`; neither is an edge under the settled semantics — `avatar` is
+ * core, and a data-access service import breaks no route and no menu row of chat's (the
+ * service class ships in the bundle regardless). NOTE this is a DIFFERENT reading from the
+ * "not expressible yet" TODOs `finance` and `folder` carry for their own `ActivityService`
+ * imports; those are left untouched here (task 17 does not catalogue `activity`), but they
+ * are flagged in the task-17 report as possibly over-broad for exactly this reason.
+ *
+ * PRIVACY — checked, not fixed (task 17 gate): chat transfers personal data (identity,
+ * message content, avatars) to a third party, and it IS already registered:
+ * `PROCESSOR_CATALOGUE` (`libs/security/processing/util/.../processor-catalogue.ts`) carries
+ * `key: 'matrix'` — etke.cc / Etke Lda (PT), role `processor`, `transferMechanism:
+ * 'adequacyDecision'`, `dpaUrl: ''` (deliberately empty; the register's check 5 reports the
+ * gap). No entry was added or invented. ONE COUPLING WORTH A DECISION, reported not acted
+ * on: that entry's `enabledWhen` is `byIntegration('matrix')`, i.e. it keys off
+ * `app-config.integrations.matrix`, NOT off this block being enabled — so a tenant can end up
+ * with the `chat` block on and Matrix missing from its Bearbeitungsverzeichnis, or vice
+ * versa. Wiring the two together is a `security` change, out of scope for a cataloguing task.
+ *
+ * `defaultAvailability: 'ga'` PER THE TASK BRIEF, and flagged rather than decided: this is
+ * the one block in the catalogue whose operation requires a self-hosted external server, a
+ * per-tenant Matrix account namespace and a signed processor relationship that does not yet
+ * have a DPA. `'internal'` is a defensible alternative and the repo owner should rule — see
+ * the task-17 report.
+ */
+const chat: FeatureBlock = {
+  id: 'chat',
+  bundle: 'communication',
+  label: '@tenant/util.feature.chat.label',
+  icon: 'chatbubbles',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // Genuinely empty: rooms, memberships, messages, receipts and polls all live on the Matrix
+  // homeserver. Verified three ways — no `*Collection` constant from `@okr/shared-models` is
+  // referenced anywhere under `libs/chat`; the `matrix-simple` Cloud Functions only READ
+  // collections other blocks own (`users`, `persons`, `avatars`, `groups`, memberships) plus
+  // the `users/{uid}/fcmTokens` subcollection; and `apps/functions/src/privacy/
+  // subject-data-map.ts` has no chat entry at all — consistent with the processor entry's own
+  // `memberNoticeDe`, which warns members that a deletion request cannot reach chat content.
+  collections: [],
+  menu: [
+    // Live root child of BOTH `main_scs` and `main_test` (not nested under any submenu), on
+    // all 16 tenants — mirrored as a top-level `navigate` spec accordingly.
+    { key: 'chat', name: 'chat', url: '/private/chat/contextMenuChat', action: 'navigate', roleNeeded: 'registered', icon: 'chatbubbles', label: 'Chat' },
+    // Not named `c-…`; see the long note above for why the wrapper-coverage test structurally
+    // cannot reach this one and why it must be catalogued regardless.
+    { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
+      { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: 'Chat Raum hinzufügen' },
+      { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: 'Chat Raum bearbeiten' },
+    ] },
+  ],
+};
+
+/**
+ * `libs/social-feed/{data-access,feature,ui}` — a three-file, four-class stub: a
+ * `SocialFeedService`, a `SocialFeedList`, a `SocialPost` presentational component and a
+ * `social-feed.routes.ts`.
+ *
+ * IT IS NOT WIRED INTO ANYTHING TODAY, and every part of that claim was checked:
+ *  - `app.routes.ts` has no `feed` (or `social`) path and imports no `@okr/social-feed-*` lib;
+ *  - a grep for `@okr/social-feed` across all of `libs/` and `apps/` returns ZERO hits outside
+ *    `libs/social-feed` itself — no component, no store, no route table consumes it;
+ *  - its own `social-feed.routes.ts` exports a `routes` array (`/feed` → `SocialFeedList`)
+ *    that no application registers;
+ *  - `social-feed.service.ts` fetches `http://localhost:3333/api/feed` over plain
+ *    `HttpClient` — a hard-coded dev-loopback URL, not a configured backend. There is no
+ *    Firestore access and no `SocialPostCollection` in `@okr/shared-models` (only the
+ *    `SocialPostModel` type), hence `collections: []`.
+ * It is catalogued because the completeness test requires every `libs/<domain>/feature` to be
+ * either a block or an explicit non-block, and because the brief names it as one of this
+ * bundle's three domains. It is a real (if unfinished) product feature rather than
+ * infrastructure, so `NON_BLOCK_DOMAINS` would be the wrong home.
+ *
+ * `defaultAvailability: 'ga'` PER THE TASK BRIEF, and flagged rather than decided — the same
+ * treatment `chat` gets above, for the opposite reason: shipping a stub that points at
+ * `localhost` at GA is the strongest `'internal'` (or `'disabled'`) candidate in the whole
+ * catalogue. Enabling it costs a tenant nothing today (no route, no menu row, so
+ * `applyFeatureSelection` writes nothing for it), which is precisely why the wrong value here
+ * is easy to miss later. Repo owner's call — see the task-17 report.
+ */
+const socialFeed: FeatureBlock = {
+  id: 'social-feed',
+  bundle: 'communication',
+  label: '@tenant/util.feature.social-feed.label',
+  icon: 'news',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: [],
+  // No live `menuItems` doc under any feed-related name. Verified with TWO query shapes, per
+  // the `c-yearlyevents` lesson: a name-equality `IN` query over
+  // [feed, social-feed, c-feed, ...] returned zero hits, AND two ordered range scans of the
+  // whole collection — every doc whose `name` sorts in ['f','g') and in ['s','t') — contain
+  // no feed/social entry (the ['f','g') scan is also what confirms there is exactly one
+  // `forms-all`/`forms-context`/`forms-add` doc each, below).
+  menu: [],
+};
+
+/**
+ * `libs/forms/{data-access,feature,ui,util}` — the form BUILDER (`FormDefinitionList`,
+ * `FormBuilderEditor`, the field-type library) plus the renderer the CMS `form` section
+ * embeds. A published form is submitted through the `submitForm` callable
+ * (`apps/functions/src/forms/index.ts`), which spam-checks it, optionally encrypts file
+ * uploads, and writes the record to the target named on the form definition.
+ *
+ * `dependsOn: []` — the judgement call, argued rather than assumed. `libs/forms` imports
+ * nothing outside `@okr/shared-*` except `@okr/cms-menu-feature` (the `Menu` component in
+ * `form-definition-list.ts`), and `cms` is `core: true`, so by the settled convention no edge
+ * is declared for it. The interesting case is the SUBMISSION TARGET, which points OUT of this
+ * block: `FORM_MAPPINGS` (`libs/forms/util/src/lib/form-mappings.ts`) currently has exactly
+ * two entries, `applications.default` and `applications.junior`, and BOTH write into the
+ * `applications` collection — which the `subject` block owns, and whose only screen is
+ * `subject`'s `/applications` route. Not declared as an edge, because the criterion is
+ * "X's own routes and menus are broken without Y's", and forms' are not: the builder, the
+ * `/forms` list and the rendered CMS section all work standalone, and a form definition may
+ * equally use the `kind: 'url'` target, which involves `subject` not at all. STATE THE
+ * CONSEQUENCE PLAINLY instead of hiding it: a tenant that enables `forms` without `subject`
+ * can publish an application form whose submissions land in `applications` with no screen in
+ * the app able to read them. That is a product decision (should the mapping picker be gated
+ * on the target block?), flagged in the task-17 report, not silently encoded here.
+ *
+ * The callable additionally READS `sections`/`formDefinitions`/`responsibilities` and writes
+ * `tasks` and `activities` for the notification path — `responsibilities` belongs to
+ * `relationship`, `tasks`/`activities` to the still-uncatalogued `task`/`activity` domains.
+ * Those are Cloud-Function-side effects with no screen of forms' behind them, so they are
+ * likewise not edges; noted so a later reader does not mistake the omission for an oversight.
+ *
+ * GUARD/MENU ROLE MISMATCH, reported not "fixed" (same class as `document-all` and
+ * `addresses`): the live `forms-all` doc's `roleNeeded` is `contentAdmin`, but the `/forms`
+ * route is guarded by `isAdminGuard` — and `hasRole` (`auth.util.ts`) does not satisfy
+ * `admin` from `contentAdmin`. A contentAdmin-but-not-admin user therefore sees the
+ * "Formulare" entry and is bounced by the guard: a UX dead end, not an access leak (the guard
+ * is the stricter side). Copied verbatim per the mirror rule. Note the route fragment in
+ * `@okr/tenant-routes` DOES correct that guard from app.routes.ts's uncalled `isAdminGuard`
+ * to `isAdminGuard()` — see the comment there; today the uncalled factory enforces nothing,
+ * so `/forms` is currently open to any authenticated user in the live app.
+ */
+const forms: FeatureBlock = {
+  id: 'forms',
+  bundle: 'communication',
+  label: '@tenant/util.feature.forms.label',
+  icon: 'form',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // `FormDefinitionCollection` = 'formDefinitions' (`@okr/shared-models`, used by
+  // `form-definition.service.ts`) is the only collection the client touches.
+  //
+  // `rateLimits` has NO client-side reference and is listed deliberately, on the same
+  // reasoning as `ocr-results` on the `finance` block: this array is what a later retention
+  // pass acts on, and an omission there is data retained forever in silence. It is written
+  // ONLY by `submitForm`'s `checkRateLimit` (`apps/functions/src/forms/index.ts:166` — the
+  // sole reference to this name anywhere in the repo; the unrelated `_rateLimits` collection,
+  // with a leading underscore, belongs to the PDF and public-API limiters). Each doc holds a
+  // hashed IP and user agent plus an `expiresAt`, i.e. pseudonymised personal data with a
+  // self-expiry — but the expiry is a field, not an enforced TTL policy, so it belongs on
+  // forms' ledger rather than nobody's.
+  //
+  // Submission records themselves are NOT listed: they are written into whatever collection
+  // the form definition's target names (today always `applications`, owned by `subject` — see
+  // the block comment), so listing them here would claim ownership of another block's data.
+  collections: ['formDefinitions', 'rateLimits'],
+  menu: [
+    // Verified live: `forms-all` is a CHILD of the shared `cms-menu` parent doc — its
+    // `menuItems` array reads `[..., 'templates', 'forms-all', 'esign']`. Nested via
+    // `cmsMenuParent()` accordingly, never top-level (rule 2: mirror the live TREE SHAPE).
+    // Present on all 16 tenants.
+    cmsMenuParent([
+      { key: 'forms-all', name: 'forms-all', url: '/forms/all/forms-context', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'list', label: '@main.cms.forms' },
+    ]),
+    // The `:contextMenuName` wrapper `forms-all`'s own url points at. Not named `c-…`, so the
+    // wrapper-coverage test does not see it either (same outlier class as `contextMenuChat`
+    // above and `ocr-rule-context` on `finance`); catalogued explicitly. Verified live on all
+    // 16 tenants: `action: context`, `roleNeeded: privileged`, exactly one child.
+    { key: 'forms-context', name: 'forms-context', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
+      { key: 'forms-add', name: 'forms-add', url: 'add', action: 'call', roleNeeded: 'privileged', icon: 'add-circle', label: '@context.forms.add' },
+    ] },
+  ],
+};
+
 // consent: judged CORE, not `members`. The cookie/analytics-consent banner
 // (`@okr/consent-ui`'s CookieBanner + `@okr/consent-data-access`) is wired into every
 // tenant app's root (`okr-root.ts`/`app.config.ts`), shown to every visitor — including
@@ -1262,4 +1524,5 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   resource, mobility,
   finance, esign, pdfTemplate,
   documentBlock, folder,
+  chat, socialFeed, forms,
 ];

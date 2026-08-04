@@ -32,7 +32,10 @@
     "esign":        { "label": "Firma electrónica" },
     "pdf-template": { "label": "Plantillas PDF" },
     "document":     { "label": "Documentos" },
-    "folder":       { "label": "Carpetas" }
+    "folder":       { "label": "Carpetas" },
+    "chat":         { "label": "Chat" },
+    "social-feed":  { "label": "Muro social" },
+    "forms":        { "label": "Formularios" }
   },
   "picker": {
     "title": "Bloques de funciones",

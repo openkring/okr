@@ -32,7 +32,10 @@
     "esign":        { "label": "E-Signatur" },
     "pdf-template": { "label": "PDF-Vorlagen" },
     "document":     { "label": "Dokumente" },
-    "folder":       { "label": "Ordner" }
+    "folder":       { "label": "Ordner" },
+    "chat":         { "label": "Chat" },
+    "social-feed":  { "label": "Social Feed" },
+    "forms":        { "label": "Formulare" }
   },
   "picker": {
     "title": "Feature-Bausteine",

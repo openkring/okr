@@ -32,7 +32,10 @@
     "esign":        { "label": "Firma elettronica" },
     "pdf-template": { "label": "Modelli PDF" },
     "document":     { "label": "Documenti" },
-    "folder":       { "label": "Cartelle" }
+    "folder":       { "label": "Cartelle" },
+    "chat":         { "label": "Chat" },
+    "social-feed":  { "label": "Feed sociale" },
+    "forms":        { "label": "Moduli" }
   },
   "picker": {
     "title": "Blocchi funzionali",

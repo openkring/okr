@@ -651,6 +651,62 @@ const folder: BlockRoutes = {
 };
 
 /**
+ * No route fragment — deliberate, and verified rather than assumed: `app.routes.ts` has no
+ * `chat` path and imports no `@okr/chat-*` lib anywhere. The chat SCREEN is a CMS page — the
+ * live `chat` menu doc navigates to `/private/chat/contextMenuChat`, which resolves against
+ * the `cms` block's `private/:id/:contextMenuName` fragment above and renders
+ * `PageDispatcher` → `ChatPage` (`@case ('chat')`, `page.dispatcher.ts:53`) → `MatrixChat`.
+ * The empty entry is still required: `feature-catalogue.sync.spec.ts` fails if an id exists
+ * on one side only.
+ *
+ * CONSEQUENCE WORTH KNOWING before Task 19 drives the real route table from this catalogue:
+ * because the chat screen rides on a `core: true` block's route, disabling `chat` will remove
+ * its menu rows but NOT make `/private/chat/...` unreachable — a typed URL (or an existing
+ * deep link) still renders the chat page, and `MatrixInitializationService` is started
+ * unconditionally from `app.config.ts`'s bootstrap listener regardless of block selection.
+ * Reported, not "fixed": gating either of those is an app change, not a cataloguing change.
+ */
+const chat: BlockRoutes = {
+  id: 'chat',
+  routes: (): Route[] => [],
+};
+
+/**
+ * No route fragment. `app.routes.ts` has no `feed`/`social` path and imports no
+ * `@okr/social-feed-*` lib; the domain's own `social-feed.routes.ts` (`/feed` →
+ * `SocialFeedList`) is exported from `@okr/social-feed-feature` but registered by no
+ * application, and nothing anywhere outside `libs/social-feed` imports the domain at all.
+ * Deliberately NOT lifted into this table: copying that unused fragment here would invent a
+ * route the app does not have, and would make a `localhost`-backed stub reachable. See the
+ * block comment in `@okr/tenant-util`'s `feature-blocks.ts`.
+ */
+const socialFeed: BlockRoutes = {
+  id: 'social-feed',
+  routes: (): Route[] => [],
+};
+
+/**
+ * The single `forms` top-level path, copied verbatim from `app.routes.ts:291-297` apart from
+ * the one permitted guard correction.
+ *
+ * GUARD CORRECTED: app.routes.ts:293 writes `canActivate: [isAdminGuard]` — the factory
+ * UNCALLED, which enforces nothing, so `/forms/:listId/:contextMenuName` (the whole form
+ * builder, including every form definition's field config and encryption setup) is open to
+ * any authenticated user in the live app today. Written called here. Same correction class as
+ * `user`, `security`, `i18n`, `subject`'s `address` fragment and `pdf-template`.
+ */
+const forms: BlockRoutes = {
+  id: 'forms',
+  routes: (): Route[] => [{
+    path: 'forms',
+    canActivate: [isAdminGuard()],
+    children: [
+      { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/forms-feature').then(m => m.FormDefinitionList) },
+    ],
+  }],
+};
+
+/**
  * Every feature block's Angular route fragment. Adding a block here is HALF of what makes
  * a feature reachable — the matching metadata (id, dependsOn, bundle, menu, seed) must
  * also be added to `FEATURE_BLOCKS` in `@okr/tenant-util`. Tasks 12-18 fill in the
@@ -663,4 +719,5 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   resource, mobility,
   finance, esign, pdfTemplate,
   documentBlock, folder,
+  chat, socialFeed, forms,
 ];

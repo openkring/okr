@@ -52,8 +52,22 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 // be declared: `@okr/activity-data-access` is imported by `finance` (audit-trail writes) AND
 // now demonstrably by `libs/folder/data-access/src/lib/folder.service.ts:11` as well, so
 // `folder` carries the same "not expressible yet" TODO. `task` likewise stays pending.
+//
+// Task 17 (communication bundle) drained: chat, social-feed, forms. All three stay BLOCKS,
+// none moved to `NON_BLOCK_DOMAINS` — including `social-feed`, which today is an unwired stub
+// (no app route, no importer anywhere, a `localhost` data source) but is an unfinished
+// product feature rather than infrastructure; the full evidence is on its block in
+// `feature-blocks.ts`. `chat` and `social-feed` both ship `routes: () => []`: chat's screen is
+// a CMS page rendered through the `cms` block's route, and social-feed has no registered route
+// at all.
+//
+// `activity` and `task` are STILL not drained (neither is in this bundle), so the TODOs on the
+// `finance` and `folder` blocks stay exactly as they are — nothing in this task could clear
+// them. One observation for whoever does: `chat` also imports `@okr/activity-data-access`
+// (`matrix-chat.service.ts:14`) and deliberately does NOT record an owed edge for it, because
+// under the settled `dependsOn` semantics a data-access service import breaks no route and no
+// menu row. That is arguably true of `finance`'s and `folder`'s `ActivityService` TODOs too —
+// see the note on the `chat` block, and re-read all three before acting on them.
 export const PENDING_CLASSIFICATION: string[] = [
-  'activity', 'chat',
-  'forms', 'games', 'instruments',
-  'social-feed', 'task',
+  'activity', 'games', 'instruments', 'task',
 ];
