@@ -57,6 +57,88 @@ describe('catalogue completeness', () => {
   });
 
   /**
+   * Every `dependsOn` cycle, as readable paths (`a → b → c → a`). Empty for an acyclic graph.
+   *
+   * Three-colour DFS: 0 = unvisited, 1 = on the current stack (grey), 2 = fully explored
+   * (black). Re-reaching a GREY node means the current stack has closed a loop, and the loop
+   * is exactly the stack from that node onward — which is what makes the path reportable.
+   * Re-reaching a BLACK node is just a diamond (two blocks sharing a dependency, e.g.
+   * `calevent` and `relationship` both → `subject`), NOT a cycle: a plain "already visited"
+   * check, like the one in `resolveWithDeps`, cannot tell those two cases apart, which is
+   * precisely why that function terminates on a cycle instead of detecting one.
+   *
+   * A self-dependency (`x` listing `x`) is reported by the same mechanism, as `x → x`: `x` is
+   * grey while its own `dependsOn` is being walked.
+   *
+   * An unknown id is skipped rather than throwing — a dangling target is a different defect
+   * with its own test above, and this one should stay readable when both fail at once.
+   */
+  function dependsOnCycles(): string[] {
+    const byId = new Map(FEATURE_BLOCKS.map(b => [b.id, b]));
+    const colour = new Map<string, 0 | 1 | 2>();
+    const stack: string[] = [];
+    const cycles = new Set<string>();
+
+    const visit = (id: string): void => {
+      const seen = colour.get(id) ?? 0;
+      if (seen === 1) {
+        cycles.add([...stack.slice(stack.indexOf(id)), id].join(' → '));
+        return;
+      }
+      if (seen === 2) return;
+
+      colour.set(id, 1);
+      stack.push(id);
+      (byId.get(id)?.dependsOn ?? []).forEach(visit);
+      stack.pop();
+      colour.set(id, 2);
+    };
+
+    FEATURE_BLOCKS.forEach(b => visit(b.id));
+    return [...cycles];
+  }
+
+  /**
+   * NOTHING ELSE CATCHES THIS (added task 17 fix round 4, before task 18 writes its edges).
+   * `resolveWithDeps` (`feature-deps.util.ts`) guards recursion with a visited set, so a cycle
+   * TERMINATES rather than hanging — `feature-deps.util.spec.ts` pins that termination — and
+   * the "every dependsOn target exists" test above is satisfied by a cycle too, since both
+   * ends of it are real block ids. So before this test, a cycle went completely undetected.
+   *
+   * It is a hard failure, not a warning, because the damage is silent and product-visible:
+   *  - ENABLEMENT BECOMES MUTUAL. `resolveWithDeps` feeds the enablement selection, so
+   *    `a → b → a` means no tenant can ever run `a` without `b` or `b` without `a`. Two
+   *    separately-priced SKUs quietly fuse into one, and a bundle stops being switchable —
+   *    the exact property this catalogue exists to provide.
+   *  - THE PICKER STATES A FALSEHOOD. `@tenant/util.picker.dependents_confirm` ("X depends on
+   *    this block and will also be disabled") is generated from this graph; on a cycle it
+   *    describes a dependency direction that is not real.
+   *
+   * The live temptation this guards is concrete: `group-view.page.ts` embeds `CalEventList`,
+   * `MembershipList` and `TaskList`, and `calevent`/`relationship` ALREADY declare
+   * `dependsOn: ['subject', …]`. Adding the mirror-image edge to `subject` looks like the
+   * consistent thing to do and would close a cycle. The correct move there is to catalogue the
+   * embedded component's context wrapper on the block that owns it (or co-declare it), never to
+   * draw the reverse edge — see the note above `PENDING_CLASSIFICATION` in
+   * `feature-catalogue.non-blocks.ts`.
+   *
+   * If a future design genuinely needs mutual dependencies, this test is the wrong answer and
+   * the MODEL needs revisiting — do not soften the assertion to make a cycle pass.
+   */
+  it('the dependsOn graph over the real catalogue is acyclic', () => {
+    expect(dependsOnCycles()).toEqual([]);
+  });
+
+  // Degenerate cycle of length one, called out separately so its failure message names the
+  // defect instead of reading as a generic loop. `resolveWithDeps` swallows it completely: the
+  // block is added to the accumulator before its own `dependsOn` is walked, so `x → x` is a
+  // silent no-op at runtime and nothing else would ever surface it.
+  it('no block depends on itself', () => {
+    const selfDependent = FEATURE_BLOCKS.filter(b => b.dependsOn.includes(b.id)).map(b => b.id);
+    expect(selfDependent).toEqual([]);
+  });
+
+  /**
    * A key legitimately recurs across blocks EXACTLY ONCE per genuine use case: a shared
    * PARENT doc (`cms-menu`, `aoc-menu`) that multiple blocks each redeclare, verbatim,
    * purely to attach their own child(ren) — see `cmsMenuParent`/`aocMenuParent` in

@@ -113,10 +113,16 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 // into a cycle: `calevent` and `relationship` BOTH already declare `dependsOn: ['subject', …]`,
 // so a reverse edge from `subject` would close a cycle in each case. `resolveWithDeps`
 // (`feature-deps.util.ts`) would not crash — its `visited` set makes cycles terminate, and
-// `feature-deps.util.spec.ts:40` pins exactly that — and NO test rejects a cycle in the real
-// catalogue, so nothing would go red. The damage would be silent instead: the edge makes
-// enablement mutual, so a tenant could never run `subject` without `calevent`/`relationship`,
-// and the picker's dependency messaging would state a falsehood. Their wrappers are handled the
+// `feature-deps.util.spec.ts:40` pins exactly that. UNTIL TASK 17 FIX ROUND 4 nothing rejected
+// such a cycle either, so it would simply have gone green; there is now a guard —
+// `feature-catalogue.completeness.spec.ts`, "the dependsOn graph over the real catalogue is
+// acyclic" (plus "no block depends on itself"), which fails naming the offending path, e.g.
+// `calevent → subject → calevent`. Do not soften it to make an edge pass. The reason it exists
+// is that the damage is otherwise SILENT and product-visible: the edge makes enablement mutual,
+// so a tenant could never run `subject` without `calevent`/`relationship` (two separately
+// switchable blocks quietly fuse into one), and the picker's `dependents_confirm` messaging,
+// generated from this same graph, would state a dependency direction that is not real.
+// Their wrappers are handled the
 // right way already — `c-calevents` is catalogued on `calevent`, `c-groupmembers` on
 // `relationship` — which is the whole point: cataloguing the wrapper, not drawing the edge, is
 // what keeps the group view's segments working. `c-tasks` is the only one of the group view's
