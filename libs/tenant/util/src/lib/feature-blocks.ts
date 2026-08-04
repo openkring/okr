@@ -1452,19 +1452,41 @@ const chat: FeatureBlock = {
  * bundle's three domains. It is a real (if unfinished) product feature rather than
  * infrastructure, so `NON_BLOCK_DOMAINS` would be the wrong home.
  *
- * `defaultAvailability: 'ga'` PER THE TASK BRIEF, and flagged rather than decided — the same
- * treatment `chat` gets above, for the opposite reason: shipping a stub that points at
- * `localhost` at GA is the strongest `'internal'` (or `'disabled'`) candidate in the whole
- * catalogue. Enabling it costs a tenant nothing today (no route, no menu row, so
- * `applyFeatureSelection` writes nothing for it), which is precisely why the wrong value here
- * is easy to miss later. Repo owner's call — see the task-17 report.
+ * `defaultAvailability: 'disabled'` — DELIBERATE, RULED BY THE REPO OWNER on 2026-08-04, NOT
+ * an oversight and NOT a kill-switch pulled after a regression. If you have landed here because
+ * you found the only `disabled` block in the catalogue and wondered whether someone forgot to
+ * flip it back: they did not. The ruling, in the owner's terms, was that this is a
+ * not-yet-completed feature that is not really used and should not appear among the features a
+ * tenant can select — the evidence above (no app route, zero importers, a hard-coded
+ * `http://localhost:3333/api/feed`) is exactly why. FINISH THE FEATURE FIRST, THEN RAISE THE
+ * VALUE — do not raise it to make a picker row appear.
+ *
+ * WHY `'disabled'` AND NOT `'internal'`, which is the more obvious choice for something
+ * unfinished: `resolveAvailability` (`feature-rollout.util.ts:35-40`) short-circuits `'disabled'`
+ * to `offered: false` for EVERYONE, whereas `'internal'` still offers the block to any tenant an
+ * operator lists in a `feature-rollout/{blockId}` doc's `allowTenants`. The owner wants it
+ * unselectable, not selectively available. A rollout doc can still override this later
+ * (`:29` prefers `rollout.availability` over the catalogue default in BOTH directions), so the
+ * value here is a default, not a lock — it is the right shape for "not ready yet".
+ *
+ * D-BB-10 INTERACTION, checked rather than assumed, because it is the one way a `disabled`
+ * block could leak: `effectiveFeatures` (`:55-57`) treats a legacy config (`enabled ===
+ * undefined`) as "every non-`internal` block", which by construction DOES put this block into
+ * `requested` and, via `resolveWithDeps`, into `withDeps`. It is `wanted` at `:63` and then
+ * dropped at `:64-65`, where the `resolveAvailability` gate returns `offered: false` off this
+ * very default. So the block never reaches a tenant — but note the gate at `:65`, not the
+ * `requested` filter at `:56`, is the ONLY thing standing between a `disabled` default and every
+ * legacy tenant on first deploy. Nothing pinned that until task 17 fix round 2; two tests in
+ * `feature-rollout.util.spec.ts` now do ("never surfaces a block whose CATALOGUE DEFAULT is
+ * disabled…"). Do not "simplify" that filter to cover `disabled` too without reading them.
  */
 const socialFeed: FeatureBlock = {
   id: 'social-feed',
   bundle: 'communication',
   label: '@tenant/util.feature.social-feed.label',
   icon: 'news',
-  defaultAvailability: 'ga',
+  // Owner ruling 2026-08-04 — see the block comment above before changing this.
+  defaultAvailability: 'disabled',
   dependsOn: [],
   collections: [],
   // No live `menuItems` doc under any feed-related name. Verified with TWO query shapes, per
