@@ -118,8 +118,9 @@ const calevent: FeatureBlock = {
   // `MatrixChatService` only to `sendMessage(roomId, message)` — announce an event into an
   // existing room. It renders no chat component, navigates to no chat screen, and needs no
   // menu doc `chat` owns. A pure data-access service call is not a `dependsOn` edge (the
-  // service class ships in the bundle regardless). See the `chat` block for the full story
-  // and for the two blocks that DO/DON'T declare it (`subject` / `relationship`).
+  // service class ships in the bundle regardless). No block declares an edge to `chat` — see
+  // that block for the full story, and `subject` for the menu-doc co-declaration that stands
+  // in for the one edge that was briefly drawn (fix round 1).
   dependsOn: ['subject', 'document'],
   collections: ['calevents'],
   // Task 14: reconciled against every `calevent-feature` route in app.routes.ts. Only
@@ -534,22 +535,35 @@ const subject: FeatureBlock = {
   // for a tenant enabling neither `subject` nor anything depending on it. All three
   // comments must be read together; none tells the whole story alone.
   //
-  // `chat` added (task 17), by the SAME criterion as `document` and on the SAME screen:
-  // `group-view.page.ts` renders the group's "Chat" segment as
-  // `<okr-page-dispatcher id="{{id + '_chat'}}" [isGroupView]="true">` (lines 118-120) and
-  // hoists that segment's context menu out of the dispatcher (`segmentContextMenuName()`,
-  // line 256 → `PageDispatcher.hoistMenuName()` → `page.dispatcher.ts:161`, which resolves
-  // to `contextMenuChat` whenever the route carries no `:contextMenuName`). `contextMenuChat`
-  // is a menu doc the `chat` block owns, so without `chat` the tenant is never added to its
-  // `tenants[]`, `MenuService.read` returns nothing, and the group's chat segment renders
-  // with an empty room menu — structurally identical to the `c-folder`/"Dateien" case that
-  // produced the `document` edge above. Note the consequence honestly: `subject` is the
-  // block essentially every tenant enables, so this edge makes `chat` — an EXTERNAL,
-  // GDPR-relevant processor (Matrix/etke.cc) — de-facto always-on for anyone running member
-  // management, exactly as it already did for `documents`. See the `chat` block below for
-  // the full story, including why `relationship` and `calevent` (which also inject
-  // `MatrixChatService`) deliberately do NOT declare the same edge.
-  dependsOn: ['document', 'folder', 'chat'],
+  // NO `chat` EDGE — and the group view's chat segment is protected anyway, by CO-DECLARING
+  // `contextMenuChat` in this block's own `menu` below instead (task 17 fix round 1). The
+  // two halves of the story:
+  //
+  //  - WHAT IS REAL: `group-view.page.ts` renders the group's "Chat" segment as
+  //    `<okr-page-dispatcher id="{{id + '_chat'}}" [isGroupView]="true">` (lines 118-120) and
+  //    hoists that segment's context menu out of the dispatcher (`segmentContextMenuName()`,
+  //    line 256 → `PageDispatcher.hoistMenuName()` → `page.dispatcher.ts:161`, which resolves
+  //    to `contextMenuChat` whenever the route carries no `:contextMenuName`). Without that
+  //    menu doc on the tenant, `MenuService.read` returns nothing and the segment renders
+  //    with an empty room menu.
+  //  - WHY THAT IS *NOT* THE `document` CASE, precisely (the first pass called the two
+  //    "structurally identical" — WRONG, and the difference is the whole argument): the
+  //    "Dateien" segment imports and renders `DocumentList` from `@okr/document-feature`
+  //    (`group-view.page.ts:19`, template line 152), i.e. a COMPONENT crosses the block
+  //    boundary — that is an edge under the settled dividing line. The chat segment renders
+  //    `PageDispatcher` from `@okr/cms-page-feature`, which is `core: true`; NO chat
+  //    component crosses the boundary here at all. Only the menu-doc half of the analogy
+  //    holds, and a menu doc is not a reason to drag a whole block in.
+  //
+  // The edge was therefore dropped in favour of co-declaration, per the conventions' "when
+  // only a menu doc is at stake, co-declare it" rule. An edge would have made `chat` — an
+  // EXTERNAL processor (Matrix/etke.cc) with no DPA — de-facto always-on for every
+  // member-management tenant, and, because `resolveWithDeps` also feeds `rootNavKeys`, would
+  // have appended chat's top-level `navigate` row (`roleNeeded: registered`) to their root
+  // menus: a far bigger footprint than the room popover it was drawn to protect. It would
+  // not even have made the segment functional — `integrations.matrix` gates the Matrix client
+  // independently of block selection. See the `chat` block below for the full picture.
+  dependsOn: ['document', 'folder'],
   // PersonCollection, OrgCollection, AddressCollection, GroupCollection,
   // ApplicationCollection, AddressDirectoryCollection (all from `@okr/shared-models`,
   // verified via each subdomain's own `*.service.ts`). `swisscities` owns NO collection —
@@ -583,6 +597,23 @@ const subject: FeatureBlock = {
     // Live root-level sibling of `subjects-menu` in `main_scs`, NOT nested under it —
     // mirrored verbatim (tree-shape rule).
     { key: 'group-my', name: 'group-my', url: '/group/my/c-groups', action: 'navigate', roleNeeded: 'registered', icon: 'persons', label: 'Meine Gruppen' },
+    // CO-DECLARED with the `chat` block (task 17 fix round 1) — field-identical there, only
+    // this comment differs. It is here, not behind a `dependsOn: ['chat']`, because the group
+    // view's "Chat" segment resolves ITS context menu to this key
+    // (`group-view.page.ts:256` → `page.dispatcher.ts:161`) while embedding only
+    // `PageDispatcher`, a `core: true` component — a menu doc is the ONLY thing that crosses
+    // the block boundary, so co-declaration delivers the whole protection and `chat` stays
+    // switchable. See the long note above `dependsOn` for the full argument, and the `chat`
+    // block for the doc's own provenance. The machinery supports this deliberately: the
+    // cross-block field-identity test in `feature-catalogue.completeness.spec.ts` tolerates a
+    // consistent redeclaration, `planMenuOpsForBlocks` folds both copies into ONE Firestore
+    // write, `blockOwnersOfMenuKey` resolves visibility to "any effective owner", and
+    // `rootNavKeys` filters to `navigate`/`sub` so this `context` spec never reaches a root
+    // nav. If you edit either copy, edit both.
+    { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
+      { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: 'Chat Raum hinzufügen' },
+      { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: 'Chat Raum bearbeiten' },
+    ] },
     { key: 'c-persons', name: 'c-persons', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'person-add', name: 'person-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Person hinzufügen' },
       { key: 'person-export', name: 'person-export', url: 'export', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Personen exportieren' },
@@ -638,12 +669,10 @@ const relationship: FeatureBlock = {
   // `navigateByUrl(store.router, '/private/chat/c-contentpage', ...)`. That destination is
   // cms's `private/:id/:contextMenuName` route with cms's OWN `c-contentpage` wrapper — both
   // `core: true` and unconditionally seeded — so nothing the `chat` block gates is required
-  // for the navigation to land on a working screen. Contrast `subject`, which embeds the
-  // chat page AND depends on `contextMenuChat`, a doc `chat` owns, and therefore does
-  // declare it. Note this distinction changes nothing in practice: `relationship` depends on
-  // `subject`, and `resolveWithDeps` is transitive, so `chat` reaches every tenant with
-  // `relationship` anyway. It is drawn so the edge list keeps meaning what it says. See the
-  // `chat` block for the full story.
+  // for the navigation to land on a working screen, and no menu doc of chat's is involved.
+  // NO block declares an edge to `chat`; `subject`, whose group view does hoist chat's
+  // `contextMenuChat`, CO-DECLARES that one doc instead of depending on the block (fix round
+  // 1). See the `chat` block for the full story.
   dependsOn: ['subject', 'document'],
   // MembershipCollection, ReservationCollection, OwnershipCollection, InvitationCollection,
   // TransferCollection, PersonalRelCollection, ResponsibilityCollection, WorkrelCollection —
@@ -877,16 +906,37 @@ const mobility: FeatureBlock = {
  *    assumed: `libs/finance` imports `@okr/subject-person-data-access`,
  *    `@okr/subject-org-data-access`, `@okr/subject-address-data-access` and
  *    `@okr/subject-address-util`. Both person and org live in the single `subject` block.
- *  - `pdf-template` — NOT in the task brief, added on evidence: `booking.store.ts:37` imports
- *    `DocGenerationService` from `@okr/pdf-template-data-access` and dispatches a
- *    `generateDocument` action (`booking.store.ts:280`). A tenant with `finance` on and
- *    `pdf-template` off would ship a booking screen whose document generation cannot work.
+ *  - `pdf-template` — NOT in the task brief, added on evidence. RESTATED (task 17 fix round 1)
+ *    because the original wording rested it on the wrong clause: `booking.store.ts:37` does
+ *    import `DocGenerationService` from `@okr/pdf-template-data-access`, but a data-access
+ *    service import is explicitly NOT an edge (see `folder`/`chat` → `activity` below). The
+ *    edge stands on the DATA clause instead: the `generateDocument` action
+ *    (`booking.store.ts:279-317`) calls `generate({ templateId: action.templateId, … })`, and
+ *    that id must name a document in `templates` — a collection whose only writer is
+ *    `TemplateService`, which is referenced nowhere outside `libs/pdf-template` (grepped
+ *    across `libs/` and `apps/`: zero hits). Templates are therefore authorable ONLY on
+ *    `pdf-template`'s own routes (`/templates`, `/templates/:templateKey`). With
+ *    `pdf-template` off, a tenant has no screen able to create one, so finance's document
+ *    generation is not degraded but permanently dead — "X needs data only Y's screens can
+ *    author", the fourth arm of the dividing line.
  *
- * NOT expressible yet (both are real runtime imports, both blocks land in tasks 16-18 —
- * revisit then): `@okr/activity-data-access` (audit-trail writes from the finance stores) and
- * `@okr/task-feature` (bill/expense approval tasks). `dependsOn` targets must already exist
- * in the catalogue (enforced by `feature-catalogue.completeness.spec.ts`), so they cannot be
- * declared here today.
+ * STILL OWED, and it is a real edge — `task`: `expense.store.ts:123` destructures
+ * `TaskEditModal` out of a dynamic import of the `task` feature lib, i.e. finance's own expense
+ * screen opens a COMPONENT out of another block's feature lib (the first arm of the dividing
+ * line, same shape as `subject` embedding `DocumentList`). NOTE the lib name is spelled out
+ * here rather than written as a literal dynamic-import expression on purpose: the
+ * `lib-refs`/`gen-lib-references` scanner matches `import('@okr/…')` anywhere in a file,
+ * COMMENTS INCLUDED, and quoting that call verbatim makes it record a `tenant/util →
+ * task/feature` reference and abort on the resulting cycle. `task` is not yet a catalogue block
+ * and `dependsOn` targets must already exist (enforced by
+ * `feature-catalogue.completeness.spec.ts`), so it cannot be declared today.
+ * TODO(task 18 — `task`): add `'task'` to `dependsOn` when that block lands.
+ *
+ * NO EDGE for `@okr/activity-data-access` (task 17 fix round 1 — a TODO claiming one used to
+ * sit here and was wrong): `bill.service.ts:9` and `invoice.service.ts:9` inject
+ * `ActivityService` purely to write audit-trail entries. That effect is invisible on finance's
+ * own surface — no route and no menu row of finance's breaks without it — which is the
+ * settled "no edge" case, identical to `folder` and `chat`.
  *
  * EXCLUDED, not modelled — the whole double-entry accounting nav, verified against Firestore:
  *  - `scsf_fibu` ("SCS Buchhaltung") and `gssf_fibu` ("GSS Buchhaltung"), both `action: sub`,
@@ -1242,11 +1292,13 @@ const documentBlock: FeatureBlock = {
  *    FOR-MERGING case above is correspondingly stronger than the original wording implied.
  * Raised with the controller rather than acted on unilaterally — see the task report.
  *
- * TODO(task 17/18 — `activity`): `folder.service.ts:11` imports `ActivityService` from
- * `@okr/activity-data-access` and writes an audit entry on every folder mutation. `activity`
- * is not yet a catalogue block (still in `PENDING_CLASSIFICATION`), and `dependsOn` targets
- * must already exist (enforced by `feature-catalogue.completeness.spec.ts`), so the edge
- * cannot be declared today. Identical situation to the two edges `finance` still owes.
+ * NO `activity` EDGE IS OWED — a TODO claiming one used to sit here and was removed in task 17
+ * fix round 1. `folder.service.ts:11` does import `ActivityService` from
+ * `@okr/activity-data-access`, but all it does with it is `activityService.log('folder', …)`
+ * at lines 36/47/54 — audit-trail writes whose effect is invisible on this block's own
+ * surface. No route and no menu row of `folder`'s breaks without `activity`, so under the
+ * settled dividing line that is the "no edge" case (same as `finance` and `chat`). Nothing is
+ * pending here for task 18.
  */
 const folder: FeatureBlock = {
   id: 'folder',
@@ -1288,36 +1340,44 @@ const folder: FeatureBlock = {
  *     carries no `:contextMenuName` (`case 'chat': return this.contextMenuName() ??
  *     'contextMenuChat'`) — the same class of code-hoisted wrapper as `c-folder` on the
  *     `document` block (task 16);
- *  3. `group-view.page.ts` reaches it through that same hoist for the group's "Chat" segment,
- *     which is why `subject` declares `dependsOn: ['chat']` — see the note there.
+ *  3. `group-view.page.ts` reaches it through that same hoist for the group's "Chat" segment —
+ *     which is why the `subject` block CO-DECLARES this same wrapper (field-identical) in its
+ *     own `menu` rather than depending on `chat`. See the note there; the two copies must be
+ *     kept in step.
  * The live doc is on `tenants: ['scs']` ONLY (its two children `chat-room-add`/
  * `chat-room-edit` likewise), so every other tenant's chat room menu is empty TODAY. That is
  * the exact p13 failure mode this catalogue exists to close, and cataloguing it closes it.
  *
- * REVERSE EDGES — who reaches into chat, and who declares it. Nine files outside `libs/chat`
- * import a `@okr/chat-*` lib; read this list together with the comments on the three blocks
- * named, none of which tells the whole story alone:
- *  - `subject` — DECLARES the edge (`group-view.page.ts` embeds the chat page and depends on
- *    `contextMenuChat`; `person.store.ts:425` also navigates to the chat page).
+ * WHO REACHES INTO CHAT, AND WHO DECLARES AN EDGE. Exactly 14 files outside `libs/chat` import
+ * a `@okr/chat-*` lib (re-derived, fix round 1 — the first pass said "nine", which was simply
+ * miscounted): 11 non-spec files under `libs/`, 2 `.spec.ts` files (`menu.store.spec.ts`,
+ * `section.store.spec.ts`), and `apps/scs-app/src/app/app.config.ts:142`. NOBODY declares an
+ * edge to `chat`; read this list together with the comments on the blocks named, none of which
+ * tells the whole story alone:
+ *  - `subject` — does NOT declare an edge; CO-DECLARES `contextMenuChat` instead. Its group
+ *    view embeds `PageDispatcher` (core), not a chat component, so only a menu doc crosses the
+ *    boundary. `person.store.ts:425` additionally navigates to the chat page, which is cms's
+ *    route. Full argument on that block.
  *  - `relationship` — does NOT (navigates to `/private/chat/c-contentpage`, i.e. cms's own
- *    always-on wrapper; and inherits `chat` transitively through `subject` anyway).
+ *    always-on wrapper).
  *  - `calevent` — does NOT (`sendMessage` only, no screen, no menu doc).
- *  - `cms` (`page`, `section`, `menu` subdomains) and `avatar` — `core: true`, so by the
- *    settled convention they never declare a non-core edge; note `cms/page` is the block that
- *    physically renders `MatrixChat`.
+ *  - `cms` (`page`, `section`, `menu` subdomains) — `core: true`, so by the settled convention
+ *    it never declares a non-core edge; note `cms/page` is the block that physically renders
+ *    `MatrixChat`.
  *  - `aoc` — does NOT: `aoc-chat.ts`/`aoc-chat.store.ts` use `@okr/chat-util` helpers and
  *    `MatrixMediaService` to build `aoc`'s OWN admin screen (`/aoc/chat`, still listed in the
  *    TODO on that block). It renders nothing of chat's surface and needs no doc catalogued
  *    here.
+ * (`avatar` is deliberately NOT in this list — fix round 1 corrected a reversed direction. No
+ * `libs/avatar/**` file imports `@okr/chat-*`; the import runs the other way, see below.)
  *
  * `dependsOn: []`. `matrix-chat.service.ts:14` imports `ActivityService`
  * (`@okr/activity-data-access`) for audit-trail writes and `libs/chat/feature` imports
- * `@okr/avatar-data-access`; neither is an edge under the settled semantics — `avatar` is
- * core, and a data-access service import breaks no route and no menu row of chat's (the
- * service class ships in the bundle regardless). NOTE this is a DIFFERENT reading from the
- * "not expressible yet" TODOs `finance` and `folder` carry for their own `ActivityService`
- * imports; those are left untouched here (task 17 does not catalogue `activity`), but they
- * are flagged in the task-17 report as possibly over-broad for exactly this reason.
+ * `@okr/avatar-data-access`; neither is an edge under the settled dividing line — `avatar` is
+ * core, and `ActivityService.log` is a write whose effect is invisible on chat's own surface
+ * (no screen and no menu row of chat's breaks without it). Fix round 1: that reading has since
+ * been adopted as the convention, and the correspondingly over-broad `activity` TODOs on
+ * `finance` and `folder` were removed.
  *
  * PRIVACY — checked, not fixed (task 17 gate): chat transfers personal data (identity,
  * message content, avatars) to a third party, and it IS already registered:
@@ -1345,18 +1405,26 @@ const chat: FeatureBlock = {
   dependsOn: [],
   // Genuinely empty: rooms, memberships, messages, receipts and polls all live on the Matrix
   // homeserver. Verified three ways — no `*Collection` constant from `@okr/shared-models` is
-  // referenced anywhere under `libs/chat`; the `matrix-simple` Cloud Functions only READ
-  // collections other blocks own (`users`, `persons`, `avatars`, `groups`, memberships) plus
-  // the `users/{uid}/fcmTokens` subcollection; and `apps/functions/src/privacy/
+  // referenced anywhere under `libs/chat`; the `matrix-simple` Cloud Functions READ
+  // collections other blocks own (`users`, `persons`, `avatars`, `groups`, memberships) and
+  // write back only `groups.matrixRoomId` (`matrix-simple/shared.ts:465`, a room-id cache on
+  // a `subject`-owned doc — fix round 1: the first pass said "only READ", which was false)
+  // plus the `users/{uid}/fcmTokens` subcollection; and `apps/functions/src/privacy/
   // subject-data-map.ts` has no chat entry at all — consistent with the processor entry's own
   // `memberNoticeDe`, which warns members that a deletion request cannot reach chat content.
+  // Writing one field onto another block's collection does not make it chat's: `collections`
+  // records OWNERSHIP, and `groups` is owned (and retention-governed) by `subject`.
   collections: [],
   menu: [
     // Live root child of BOTH `main_scs` and `main_test` (not nested under any submenu), on
     // all 16 tenants — mirrored as a top-level `navigate` spec accordingly.
     { key: 'chat', name: 'chat', url: '/private/chat/contextMenuChat', action: 'navigate', roleNeeded: 'registered', icon: 'chatbubbles', label: 'Chat' },
     // Not named `c-…`; see the long note above for why the wrapper-coverage test structurally
-    // cannot reach this one and why it must be catalogued regardless.
+    // cannot reach this one and why it must be catalogued regardless. CO-DECLARED, verbatim,
+    // on the `subject` block as well (the group view's "Chat" segment hoists this key) — the
+    // supported shared-declaration pattern, folded into one Firestore write by
+    // `planMenuOpsForBlocks`. Keep the two copies field-identical; the cross-block identity
+    // test in `feature-catalogue.completeness.spec.ts` enforces it.
     { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
       { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: 'Chat Raum hinzufügen' },
       { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: 'Chat Raum bearbeiten' },

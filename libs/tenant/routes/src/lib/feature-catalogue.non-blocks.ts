@@ -48,10 +48,8 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 // `document` is recorded in full on the `folder` block in `feature-blocks.ts` and was raised
 // with the controller rather than acted on unilaterally, because block ids are stable SKU
 // keys other tasks reference by name.
-// `activity` is STILL not drained, and the two edges `finance` owes therefore still cannot
-// be declared: `@okr/activity-data-access` is imported by `finance` (audit-trail writes) AND
-// now demonstrably by `libs/folder/data-access/src/lib/folder.service.ts:11` as well, so
-// `folder` carries the same "not expressible yet" TODO. `task` likewise stays pending.
+// (Task 15/16 also left "not expressible yet" TODOs for `activity` on `finance` and `folder`.
+// Those were RETRACTED in task 17 fix round 1 — see the next paragraph.)
 //
 // Task 17 (communication bundle) drained: chat, social-feed, forms. All three stay BLOCKS,
 // none moved to `NON_BLOCK_DOMAINS` — including `social-feed`, which today is an unwired stub
@@ -61,13 +59,18 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
 // a CMS page rendered through the `cms` block's route, and social-feed has no registered route
 // at all.
 //
-// `activity` and `task` are STILL not drained (neither is in this bundle), so the TODOs on the
-// `finance` and `folder` blocks stay exactly as they are — nothing in this task could clear
-// them. One observation for whoever does: `chat` also imports `@okr/activity-data-access`
-// (`matrix-chat.service.ts:14`) and deliberately does NOT record an owed edge for it, because
-// under the settled `dependsOn` semantics a data-access service import breaks no route and no
-// menu row. That is arguably true of `finance`'s and `folder`'s `ActivityService` TODOs too —
-// see the note on the `chat` block, and re-read all three before acting on them.
+// `activity` and `task` are still not drained (neither is in this bundle), but the picture for
+// them changed in task 17 fix round 1, so READ THIS BEFORE TASK 18:
+//  - `activity` is owed NOTHING. The TODOs on `finance` and `folder` were removed. Every
+//    import of `@okr/activity-data-access` from an already-catalogued block turns out to be
+//    `ActivityService.log(...)` — an audit-trail write invisible on the calling block's own
+//    surface (`folder.service.ts:36/47/54`, `bill.service.ts`/`invoice.service.ts`,
+//    `matrix-chat.service.ts`). Under the dividing line now recorded in the series
+//    conventions, that is the "no edge" case. Cataloguing `activity` therefore does not
+//    require going back and adding edges to those blocks.
+//  - `task` IS still owed one edge, by `finance`: `expense.store.ts:123` dynamically imports
+//    `TaskEditModal` from `@okr/task-feature`, i.e. a component crossing the block boundary.
+//    A `TODO(task 18 — 'task')` on the `finance` block records it. Honour it when `task` lands.
 export const PENDING_CLASSIFICATION: string[] = [
   'activity', 'games', 'instruments', 'task',
 ];
