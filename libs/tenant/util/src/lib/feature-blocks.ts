@@ -287,7 +287,10 @@ const aoc: FeatureBlock = {
     // administration, which is where an editor would look for them, even though both urls
     // point into `/aoc/*` and both routes are gated by this block's `isAdminGuard()` parent.
     // Declared through `cmsMenuParent()` accordingly (rule 2: mirror the live TREE SHAPE), so
-    // the `aoc` block is the sixth block to co-declare that shared parent.
+    // the `aoc` block is the EIGHTH to co-declare that shared parent — counted, not estimated:
+    // `cmsMenuParent()` is invoked by `aoc`, `cms`, `category`, `geo`, `esign`, `pdf-template`,
+    // `document` and `forms`. (`aocMenuParent()` has five callers: `aoc`, `user`, `security`,
+    // `mobility`, `activity`.)
     //
     // Neither name carries an `aoc-`/`tag-` prefix consistently: the doc for `/aoc/tag` is
     // named `tag-all` and the one for `aoc/website` is named `aoc-website`. Both copied as
@@ -1719,11 +1722,18 @@ const consent: FeatureBlock = {
  * subject, task, user. Counted and re-derived rather than eyeballed, and so is the next claim:
  * `ActivityService` is the ONLY symbol any of them imports from the lib, and across all 35 files
  * it is called in exactly two ways — `activityService.log(…)` (95 call sites) and
- * `activityService.logAuth(…)` (6, all in `auth`). Both are audit-trail WRITES whose effect is
- * invisible on the calling block's own surface, which is the "no edge" side of the dividing line
- * recorded in the series conventions. Two `TODO`s claiming an edge was owed (on `finance` and
- * `folder`) were retracted in task 17 for exactly this reason; cataloguing this block does not
- * reopen them.
+ * `activityService.logAuth(…)` (6: five in `auth`, plus `libs/cms/menu/feature`'s
+ * `menu.store.ts:305`, the log-out entry in the main menu). COUNT THEM THE SAME WAY IF YOU
+ * RECHECK, or you will get different numbers and think the comment rotted: both figures EXCLUDE
+ * `libs/tenant`, whose only hits are prose in this very file — a bare
+ * `grep -rn "activityService\.log(" libs` returns 97, of which two are the comment you are
+ * reading and the `folder` note further up. Neither verb has a single call in a `.spec.ts`.
+ * BOTH VERBS are audit-trail WRITES whose effect is invisible on the calling block's own surface,
+ * which is the "no edge" side of the dividing line recorded in the series conventions. That
+ * holds for the one non-`auth` `logAuth` site too: it records a log-out from the main menu,
+ * gates nothing, and `cms` is `core: true` in any case.
+ * Two `TODO`s claiming an edge was owed (on `finance` and `folder`) were retracted in task 17
+ * for exactly this reason; cataloguing this block does not reopen them.
  *
  * STATE THE CONSEQUENCE PLAINLY rather than let the empty `dependsOn` imply the opposite: this
  * block gates the SCREEN, never the logging. `ActivityService` ships in every bundle and keeps

@@ -39,7 +39,7 @@
     "activity":     { "label": "Actividad del sistema" },
     "task":         { "label": "Tareas" },
     "instruments":  { "label": "Instrumentos estratégicos y pizarras" },
-    "games":        { "label": "Cuestionario" }
+    "games":        { "label": "Quiz" }
   },
   "picker": {
     "title": "Bloques de funciones",

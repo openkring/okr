@@ -66,15 +66,18 @@ const calevent: BlockRoutes = {
  * RECONCILED (task 18) against every `aoc` child in `app.routes.ts:388-408`. Task 5 copied
  * SIX of them; the live app declares SIXTEEN. The ten added here — `chat`, `account`,
  * `sessions`, `doc`, `tag`, `email`, `bexio`, `srv`, `trip`, `website` — were unreachable
- * through the catalogue, which matters concretely for four of them: `aoc-sessions`,
+ * through the catalogue, which matters concretely for SIX of them: `aoc-sessions`,
  * `aoc-chat`, `aoc-account`, `aoc-doc`, `aoc-bexio` and `aoc-srv` are live children of the
  * shared `aoc-menu` doc (they are now catalogued as menu specs on the `aoc` block too), so
- * before this the seeded submenu could point at routes this table did not have.
+ * before this the seeded submenu could point at routes this table did not have. The other
+ * four (`tag`, `email`, `trip`, `website`) were simply unrouted here: `tag` and `website` do
+ * have live docs, but under `cms-menu` rather than `aoc-menu` (see the `aoc` block in
+ * `feature-blocks.ts`), and `email`/`trip` have no menu doc at all.
  *
  * GUARD: the parent `isAdminGuard()` was already written CALLED here; `app.routes.ts:389`
  * still has it UNCALLED (`canActivate: [isAdminGuard]`), i.e. the whole `/aoc/*` admin
  * console is open to any authenticated user in the live app today. Unchanged by this task,
- * restated because five more admin screens now hang off it. The `website` child's own
+ * restated because TEN more admin screens now hang off it. The `website` child's own
  * `isPrivilegedGuard` is copied verbatim: it is WEAKER than the parent's admin gate and
  * therefore inert while the parent gate holds — not "fixed", per the never-weaken-and-never-
  * invent rule.

@@ -37,7 +37,7 @@
     "social-feed":  { "label": "Feed sociale" },
     "forms":        { "label": "Moduli" },
     "activity":     { "label": "Attività di sistema" },
-    "task":         { "label": "Compiti" },
+    "task":         { "label": "Da fare" },
     "instruments":  { "label": "Strumenti strategici e lavagne" },
     "games":        { "label": "Quiz" }
   },

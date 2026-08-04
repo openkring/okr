@@ -66,8 +66,10 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
  * and names the offending path. Do not soften it to make an edge pass.
  *
  * ALSO SETTLED, so it is not rediscovered as a gap: `activity` is owed NO edges at all. Every
- * import of `@okr/activity-data-access` from a catalogued block is an `ActivityService.log(…)`
- * audit-trail write, invisible on the calling block's own surface — the "no edge" side of the
- * dividing line. Two TODOs claiming otherwise (on `finance` and `folder`) were retracted in
- * task 17. See the `activity` block's own comment for what that means for retention.
+ * import of `@okr/activity-data-access` from a catalogued block resolves to one of exactly TWO
+ * calls — `ActivityService.log(…)` or `…logAuth(…)` (the log-in/log-out variant, six sites: five
+ * in `auth`, one in `cms/menu`) — and both are audit-trail writes, invisible on the calling
+ * block's own surface, i.e. the "no edge" side of the dividing line. Two TODOs claiming
+ * otherwise (on `finance` and `folder`) were retracted in task 17. See the `activity` block's
+ * own comment for the exact counts, how to reproduce them, and what this means for retention.
  */
