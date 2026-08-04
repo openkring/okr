@@ -245,12 +245,22 @@ const cms: FeatureBlock = {
   // really does inject `DocumentService`, `buildDocumentModel` AND `FolderService` (the RAG
   // section indexes uploaded files). Not declared, because a `core: true` block declaring a
   // non-core dependency would drag `document`/`folder` into `resolveWithDeps` for EVERY
-  // tenant — `cms` is always on, so the edge would silently make the whole `documents`
-  // bundle unswitchable and defeat the gate it exists to provide. The RAG section keeps
-  // working either way: it calls the services directly, and block enablement gates routes
-  // and menu seeding, not module loading. Flagged in the task-16 report as a product
-  // decision (should a tenant without `document` be offered a RAG section at all?), not
-  // silently encoded as a dependency here. (task 16)
+  // tenant — `cms` is always on, so the edge would make the whole `documents` bundle
+  // unswitchable and defeat the gate it exists to provide.
+  //
+  // BE PRECISE ABOUT WHAT THAT BUYS (fix round 1 — the original wording overclaimed):
+  // withholding preserves switchability IN PRINCIPLE, not in practice. `subject` (the
+  // `members` root, see its own `dependsOn` below) DOES declare `['document', 'folder']`,
+  // and `resolveWithDeps` walks transitively — so for any tenant that runs member
+  // management, `documents` is already de-facto always-on. The only tenant this actually
+  // keeps a live switch for is one that enables neither `subject` nor anything depending on
+  // it. All three edges (`cms`→withheld, `avatar`→withheld, `subject`→declared) are honest;
+  // reconstruct real reachability from all three, never from this comment alone.
+  //
+  // The RAG section keeps working either way: it calls the services directly, and block
+  // enablement gates routes and menu seeding, not module loading. Flagged in the task-16
+  // report as a product decision (should a tenant without `document` be offered a RAG
+  // section at all?), not silently encoded as a dependency here. (task 16)
   dependsOn: [],
   // Container domain: libs/cms/{icon,menu,page,section}, each owning its own Firestore collection.
   collections: ['icons', 'menuItems', 'pages', 'sections'],
@@ -396,7 +406,13 @@ const avatar: FeatureBlock = {
   // a `docs` row). Same reasoning as on the `cms` block: a `core: true` block must not name
   // a non-core dependency, or the always-on core makes `document` permanently on for every
   // tenant. It would also be a dependsOn CYCLE — `libs/document` imports `UploadService`
-  // and `readAsFile` straight back out of `@okr/avatar-*`. (task 16)
+  // and `readAsFile` straight back out of `@okr/avatar-*`.
+  //
+  // Same honest caveat as on `cms` (fix round 1): this preserves switchability only IN
+  // PRINCIPLE. `subject` declares `dependsOn: ['document', 'folder']` and `resolveWithDeps`
+  // is transitive, so any tenant with member management already has `documents` on
+  // regardless. Read all three comments (`cms`, here, `subject`) together — no one of them
+  // states the full reachability. (task 16)
   dependsOn: [],
   collections: ['avatars'],
   // No route of its own — avatar upload/selection is an embedded widget used from person,
@@ -502,6 +518,14 @@ const subject: FeatureBlock = {
   //    `DocumentsAccordion` and use `getDocumentStoragePath`.
   // No cycle: neither `libs/document` nor `libs/folder` imports any `@okr/subject-*` lib
   // (verified by listing every `@okr/*` import in both domains).
+  //
+  // THIS IS THE EDGE THAT ACTUALLY DECIDES REACHABILITY (fix round 1). `subject` is the
+  // `members` root essentially every tenant enables, and `resolveWithDeps` walks
+  // transitively — so this single edge makes the `documents` bundle de-facto always-on for
+  // any tenant with member management. The `cms` and `avatar` blocks above withhold their
+  // own (equally real) `document` edges to keep the bundle switchable, but that only holds
+  // for a tenant enabling neither `subject` nor anything depending on it. All three
+  // comments must be read together; none tells the whole story alone.
   dependsOn: ['document', 'folder'],
   // PersonCollection, OrgCollection, AddressCollection, GroupCollection,
   // ApplicationCollection, AddressDirectoryCollection (all from `@okr/shared-models`,
@@ -1165,11 +1189,22 @@ const documentBlock: FeatureBlock = {
  *    a distinct Firestore collection with its own retention/audit and its own privacy
  *    subject-data-map entry, and `collections` is what the later retention pass acts on —
  *    folding it into `document`'s array would work, but loses the 1:1 domain↔block mapping
- *    the completeness test is built on; (c) folder is genuinely consumed WITHOUT document
- *    by other domains (`cms/section`'s `rag-section.store.ts`, `subject/address`'s
- *    `addresses.store.ts`, `subject/group`'s `group-view.page.ts` all inject `FolderService`
- *    directly), so it is a real shared dependency, not a private implementation detail of
- *    `document`.
+ *    the completeness test is built on; (c) three domains outside `libs/document` reach
+ *    `FolderService`/`canManageFolders` DIRECTLY rather than through `DocumentService` —
+ *    `cms/section`'s `rag-section.store.ts:17`, `subject/address`'s `addresses.store.ts:22`,
+ *    `subject/group`'s `group-view.page.ts:10,16` — so `folder` is a real API surface of its
+ *    own, not an implementation detail hidden behind `document`'s.
+ *
+ *    CORRECTED (fix round 1): (c) previously claimed those three consume `folder` WITHOUT
+ *    `document`. That was FALSE, and the correction matters because this comment is the
+ *    input to the repo owner's merge ruling. Swept every file importing `@okr/folder-*`
+ *    outside `libs/folder` and `libs/document`: there are exactly THREE, and all three ALSO
+ *    import `@okr/document-*` in the same file — `rag-section.store.ts:15-16`
+ *    (`DocumentService`, `buildDocumentModel`), `addresses.store.ts:21` (`DocumentService`),
+ *    `group-view.page.ts:15,19` (`getDocumentStoragePath`, `DocumentList`). The number of
+ *    consumers of `folder` without `document` is ZERO. So (c) is about API COUPLING (who
+ *    calls what), NOT about `folder` being independently usable — it is not, and the
+ *    FOR-MERGING case above is correspondingly stronger than the original wording implied.
  * Raised with the controller rather than acted on unilaterally — see the task report.
  *
  * TODO(task 17/18 — `activity`): `folder.service.ts:11` imports `ActivityService` from
