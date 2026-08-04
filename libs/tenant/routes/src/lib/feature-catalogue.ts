@@ -678,18 +678,18 @@ const documentBlock: BlockRoutes = {
   }],
 };
 
-/**
- * No route fragment — deliberate, and verified rather than assumed: `app.routes.ts` contains
- * no `folder` path (grepped for both the path and every `@okr/folder-*` import), and
- * `FolderList`, the domain's only list screen, is exported from `@okr/folder-feature` but
- * imported by no component anywhere in `libs/` or `apps/`. Folders are navigated through
- * `DocumentList`'s breadcrumb, which belongs to the `document` block. The empty entry is
- * still required: `feature-catalogue.sync.spec.ts` fails if an id exists on one side only.
+/*
+ * `folder` HAD AN ENTRY HERE (an empty one) UNTIL 2026-08-04, when the repo owner ruled the
+ * block merged into `document`. It is gone rather than emptied: `feature-catalogue.sync.spec.ts`
+ * fails if an id exists on one side of the catalogue only, so a leftover entry here would go
+ * red the moment the block disappeared from `FEATURE_BLOCKS`. The domain itself still exists —
+ * `libs/folder/**` is untouched, and `libs/folder/feature` is why `folder` now appears in
+ * `NON_BLOCK_DOMAINS`. Nothing was lost by dropping the fragment: `app.routes.ts` contains no
+ * `folder` path (grepped for both the path and every `@okr/folder-*` import), and `FolderList`,
+ * the domain's only list screen, is exported from `@okr/folder-feature` but imported by no
+ * component anywhere in `libs/` or `apps/`. Folders are navigated through `DocumentList`'s
+ * breadcrumb, which belongs to the `document` block above.
  */
-const folder: BlockRoutes = {
-  id: 'folder',
-  routes: (): Route[] => [],
-};
 
 /**
  * No route fragment — deliberate, and verified rather than assumed: `app.routes.ts` has no
@@ -832,8 +832,14 @@ const instruments: BlockRoutes = {
  * The single `quiz` top-level path, copied verbatim from `app.routes.ts:52-56`. No guard
  * correction needed (`isAuthenticatedGuard` is a plain `CanActivateFn`). `libs/games/quiz` is
  * the domain's only subdomain and `QuizPage` its only screen — see the block comment in
- * `feature-blocks.ts` for what that screen actually contains and why its `defaultAvailability`
- * is flagged for the repo owner rather than decided here.
+ * `feature-blocks.ts` for what that screen actually contains.
+ *
+ * THE FRAGMENT STAYS EVEN THOUGH THE BLOCK IS `defaultAvailability: 'disabled'` (repo owner's
+ * ruling, 2026-08-04). Disabling is not deleting: the route is what the catalogue would compose
+ * if the block were ever raised again by a `feature-rollout/games` doc, and emptying it would
+ * throw that away for no gain. The practical effect of the ruling is that once task 19 drives
+ * the app's route table from this catalogue, no tenant composes this fragment and `/quiz`
+ * disappears — which is exactly what was ruled.
  */
 const games: BlockRoutes = {
   id: 'games',
@@ -856,6 +862,6 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   subject, relationship, vcard,
   resource, mobility,
   finance, esign, pdfTemplate,
-  documentBlock, folder,
+  documentBlock,
   chat, socialFeed, forms,
 ];

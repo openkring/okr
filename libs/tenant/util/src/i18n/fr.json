@@ -32,7 +32,6 @@
     "esign":        { "label": "Signature électronique" },
     "pdf-template": { "label": "Modèles PDF" },
     "document":     { "label": "Documents" },
-    "folder":       { "label": "Dossiers" },
     "chat":         { "label": "Chat" },
     "social-feed":  { "label": "Fil social" },
     "forms":        { "label": "Formulaires" },

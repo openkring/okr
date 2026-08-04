@@ -204,7 +204,8 @@ const aoc: FeatureBlock = {
   // it imports the util layer of a dozen domains the same way. No component crosses the
   // boundary, aoc navigates into no task screen, and no menu doc of task's is involved: the
   // "no edge" side of the settled dividing line, one step further from an edge than the
-  // data-access-service case (`folder`/`chat`/`finance` → `activity`). Same for the `activity`
+  // data-access-service case (`chat`/`finance` → `activity`, and `folder.service.ts`, whose
+  // domain now sits inside the `document` block). Same for the `activity`
   // domain, whose `activity-all` menu doc is a child of the SHARED `aoc-menu` parent this
   // block also declares — a shared parent is not an edge either (see `activity` below, which
   // owns that spec and co-declares the same parent).
@@ -334,13 +335,14 @@ const cms: FeatureBlock = {
   // Stays `[]` DELIBERATELY, though `libs/cms/section/feature`'s `rag-section.store.ts:15-17`
   // really does inject `DocumentService`, `buildDocumentModel` AND `FolderService` (the RAG
   // section indexes uploaded files). Not declared, because a `core: true` block declaring a
-  // non-core dependency would drag `document`/`folder` into `resolveWithDeps` for EVERY
-  // tenant — `cms` is always on, so the edge would make the whole `documents` bundle
-  // unswitchable and defeat the gate it exists to provide.
+  // non-core dependency would drag `document` — which since the 2026-08-04 merge covers the
+  // `folders` collection and `libs/folder` too — into `resolveWithDeps` for EVERY tenant;
+  // `cms` is always on, so the edge would make the whole `documents` bundle unswitchable and
+  // defeat the gate it exists to provide.
   //
   // BE PRECISE ABOUT WHAT THAT BUYS (fix round 1 — the original wording overclaimed):
   // withholding preserves switchability IN PRINCIPLE, not in practice. `subject` (the
-  // `members` root, see its own `dependsOn` below) DOES declare `['document', 'folder']`,
+  // `members` root, see its own `dependsOn` below) DOES declare `document`,
   // and `resolveWithDeps` walks transitively — so for any tenant that runs member
   // management, `documents` is already de-facto always-on. The only tenant this actually
   // keeps a live switch for is one that enables neither `subject` nor anything depending on
@@ -499,7 +501,7 @@ const avatar: FeatureBlock = {
   // and `readAsFile` straight back out of `@okr/avatar-*`.
   //
   // Same honest caveat as on `cms` (fix round 1): this preserves switchability only IN
-  // PRINCIPLE. `subject` declares `dependsOn: ['document', 'folder']` and `resolveWithDeps`
+  // PRINCIPLE. `subject` declares `document` in its `dependsOn` and `resolveWithDeps`
   // is transitive, so any tenant with member management already has `documents` on
   // regardless. Read all three comments (`cms`, here, `subject`) together — no one of them
   // states the full reachability. (task 16)
@@ -599,10 +601,11 @@ const subject: FeatureBlock = {
   label: '@tenant/util.feature.subject.label',
   icon: 'id-card',
   defaultAvailability: 'ga',
-  // Was `[]`. `document` + `folder` added (task 16), by import evidence, not by theme:
+  // Was `[]`. `document` (+ the then-separate `folder`, merged into it on 2026-08-04) added
+  // in task 16, by import evidence, not by theme:
   //  - `group-view.page.ts` renders `DocumentList` (`@okr/document-feature`) as the group's
   //    whole "Dateien" segment, and injects `FolderService` + `canManageFolders`
-  //    (`@okr/folder-*`) to decide who may create folders in it.
+  //    (`@okr/folder-*`, now part of the `document` block) to decide who may create folders.
   //  - `addresses.store.ts:21-22` injects BOTH `DocumentService` and `FolderService`.
   //  - `person-edit.modal.ts`, `person-edit.page.ts` and `org-edit.modal.ts` each render
   //    `DocumentsAccordion` and use `getDocumentStoragePath`.
@@ -670,7 +673,9 @@ const subject: FeatureBlock = {
   // block instead. `c-tasks` is catalogued on `task` for the same reason — cataloguing the
   // wrapper is what keeps the segment working; the edge is what makes `task` reachable at all
   // for a tenant that enabled `subject` and not `task`.
-  dependsOn: ['document', 'folder', 'task'],
+  // `folder` was a third entry here until the owner's 2026-08-04 merge ruling folded that
+  // block into `document`; the folder code this block reaches into is unchanged.
+  dependsOn: ['document', 'task'],
   // PersonCollection, OrgCollection, AddressCollection, GroupCollection,
   // ApplicationCollection, AddressDirectoryCollection (all from `@okr/shared-models`,
   // verified via each subdomain's own `*.service.ts`). `swisscities` owns NO collection —
@@ -767,9 +772,9 @@ const relationship: FeatureBlock = {
   // `document` added (task 16), by import evidence: `membership-edit.modal.ts:11`,
   // `ownership-edit.modal.ts:8` and `personal-rel-edit.modal.ts:11` each render
   // `DocumentsAccordion` from `@okr/document-feature` (contracts/agreements attached to a
-  // membership, a boat ownership, a personal relationship). `folder` is NOT declared here:
-  // no `libs/relationship/**` file imports `@okr/folder-*` — it arrives transitively
-  // through `document`'s own `dependsOn`, which is where the real edge is.
+  // membership, a boat ownership, a personal relationship). There is no separate folder edge
+  // to declare: `folder` was merged into `document` on 2026-08-04, and no
+  // `libs/relationship/**` file imports `@okr/folder-*` in any case.
   //
   // `chat` deliberately NOT declared (task 17), although `membership.store.ts:722` and
   // `reservation.store.ts:430` both `createDirectRoom(...)` and then
@@ -1016,7 +1021,8 @@ const mobility: FeatureBlock = {
  *  - `pdf-template` — NOT in the task brief, added on evidence. RESTATED (task 17 fix round 1)
  *    because the original wording rested it on the wrong clause: `booking.store.ts:37` does
  *    import `DocGenerationService` from `@okr/pdf-template-data-access`, but a data-access
- *    service import is explicitly NOT an edge (see `folder`/`chat` → `activity` below). The
+ *    service import is explicitly NOT an edge (see `chat` → `activity`, and the
+ *    folder-service case recorded on `document`). The
  *    edge stands on the DATA clause instead: the `generateDocument` action
  *    (`booking.store.ts:279-317`) calls `generate({ templateId: action.templateId, … })`, and
  *    that id must name a document in `templates` — a collection whose only writer is
@@ -1044,7 +1050,8 @@ const mobility: FeatureBlock = {
  * sit here and was wrong): `bill.service.ts:9` and `invoice.service.ts:9` inject
  * `ActivityService` purely to write audit-trail entries. That effect is invisible on finance's
  * own surface — no route and no menu row of finance's breaks without it — which is the
- * settled "no edge" case, identical to `folder` and `chat`.
+ * settled "no edge" case, identical to `chat` and to the folder-service finding now recorded
+ * on `document`.
  *
  * EXCLUDED, not modelled — the whole double-entry accounting nav, verified against Firestore:
  *  - `scsf_fibu` ("SCS Buchhaltung") and `gssf_fibu` ("GSS Buchhaltung"), both `action: sub`,
@@ -1263,18 +1270,58 @@ const pdfTemplate: FeatureBlock = {
  * browses a folder tree of uploaded files (`/document/:listId/:contextMenuName`);
  * `DocumentsAccordion` is the embedded attachments panel that person/org/calevent/
  * membership/ownership/personal-rel edit modals render; plus the revisions modal and the
- * image picker used by CMS sections. Owns `docs` (`DocumentCollection = 'docs'`,
- * `document.service.ts`) — and only that: revisions are an array field ON `DocumentModel`,
- * not a second collection (`document-revisions.modal.ts` reads `DocumentStore`, touches no
- * collection of its own), and the file bytes live in Cloud Storage, not Firestore.
- * Cross-checked against `apps/functions/src/privacy/subject-data-map.ts:549`, which knows
- * exactly one document collection (`docs`, by `authorKey`).
+ * image picker used by CMS sections. Owns TWO collections: `docs` (`DocumentCollection =
+ * 'docs'`, `document.service.ts`) and — since the 2026-08-04 merge described below —
+ * `folders` (`FolderCollection = 'folders'`, `folder.service.ts`). Nothing beyond those two:
+ * document revisions are an array field ON `DocumentModel`, not a collection
+ * (`document-revisions.modal.ts` reads `DocumentStore`, touches no collection of its own),
+ * and the file bytes live in Cloud Storage, not Firestore. Cross-checked against
+ * `apps/functions/src/privacy/subject-data-map.ts`, which knows exactly these two:
+ * `docs` at :549 (by `authorKey`) and `folders` at :684 (by `ownerKey`).
  *
- * `dependsOn: ['folder']` — hard, not decorative. `document-list.ts` renders
- * `FolderBreadcrumb` (`@okr/folder-ui`) in its permanent toolbar and gates on
- * `canEditFolder` (`@okr/folder-util`); `document.store.ts` injects `FolderService`, calls
- * `newFolderModel`, and dynamically imports `FolderEditModal` from `@okr/folder-feature`
- * for the `addFolder` action. DocumentList cannot even draw its own header without folder.
+ * `folder` WAS A SEPARATE BLOCK UNTIL 2026-08-04 AND IS NOW PART OF THIS ONE — repo owner's
+ * ruling ("merge into `document`"). `libs/folder/{data-access,feature,ui,util}` still exists
+ * and still owns the folder tree documents are filed into (`FolderModel`, the per-folder
+ * `membersMayUpload` permission, breadcrumb navigation); what was removed is the separate
+ * catalogue SKU, which could never be switched off independently. The evidence behind the
+ * ruling, gathered in tasks 16-17 and still true:
+ *  - `folder` shipped no route (`app.routes.ts` has no `folder` path) and no live `menuItems`
+ *    doc of its own, and `FolderList` — its only list screen — is exported from
+ *    `@okr/folder-feature` but imported by no component anywhere in `libs/` or `apps/` (only
+ *    `whiteboard-list.ts` mentions it, in a comment, as a structural precedent). A tenant
+ *    enabling `folder` alone got no user-visible surface whatsoever.
+ *  - the one live wrapper carrying folder ACTIONS (`c-folder`) is dispatched by `DocumentList`
+ *    and was therefore already catalogued here rather than on `folder` — see the note on that
+ *    spec below.
+ *  - this block declared `dependsOn: ['folder']`, so `resolveWithDeps` forced the two on
+ *    together for every tenant regardless.
+ *  - CONSUMER SWEEP (task 17 fix round 1 — the finding the ruling rests on): exactly THREE
+ *    files outside `libs/folder` and `libs/document` import a `@okr/folder-*` lib —
+ *    `rag-section.store.ts:17` (`cms/section`), `addresses.store.ts:22` (`subject/address`)
+ *    and `group-view.page.ts:10,16` (`subject/group`) — and every one of the three imports
+ *    `@okr/document-*` in the SAME file (`rag-section.store.ts:15-16`, `addresses.store.ts:21`,
+ *    `group-view.page.ts:15,19`). The number of consumers of `folder` without `document` is
+ *    ZERO. `folder` is a real API surface, but never was an independently usable feature.
+ * The code coupling that made the old edge "hard, not decorative" is unchanged and now runs
+ * inside one block: `document-list.ts` renders `FolderBreadcrumb` (`@okr/folder-ui`) in its
+ * permanent toolbar and gates on `canEditFolder` (`@okr/folder-util`); `document.store.ts`
+ * injects `FolderService`, calls `newFolderModel`, and dynamically loads `FolderEditModal`
+ * out of the folder feature lib for the `addFolder` action. `DocumentList` cannot draw its own
+ * header without folder code.
+ *
+ * `libs/folder` consequently carries a `NON_BLOCK_DOMAINS` entry in
+ * `feature-catalogue.non-blocks.ts`. That is not bookkeeping: the completeness test flags any
+ * `libs/<domain>/feature` directory that is neither a catalogue block nor a listed non-block,
+ * and `libs/folder/feature` exists. `folders` moved into this block's `collections` (a plain
+ * `string[]` — nothing requires a 1:1 domain↔block mapping) because that array is what the
+ * retention pass acts on, and `document` is now the block gating both collections' screens.
+ *
+ * `dependsOn: []` — `folder` was the only entry and is now the same block. NO `activity` EDGE
+ * is owed either, a finding inherited from the deleted block and still true: `folder.service.ts:11`
+ * imports `ActivityService` (`@okr/activity-data-access`) and does nothing with it but
+ * `activityService.log('folder', …)` at lines 36/47/54 — audit-trail writes whose effect is
+ * invisible on this block's own surface. No route and no menu row here breaks without
+ * `activity`, which is the settled "no edge" case (same as `finance` and `chat`).
  *
  * NOT declared although they ARE real runtime imports — `avatar` and `cms`:
  * `document.store.ts` and `image-select.modal.ts` inject `UploadService`
@@ -1304,8 +1351,10 @@ const documentBlock: FeatureBlock = {
   label: '@tenant/util.feature.document.label',
   icon: 'documents',
   defaultAvailability: 'ga',
-  dependsOn: ['folder'],
-  collections: ['docs'],
+  // Was `['folder']`; emptied by the owner's 2026-08-04 merge ruling — see the block comment.
+  dependsOn: [],
+  // `docs` + `folders` — the second arrived with the `folder` merge (2026-08-04).
+  collections: ['docs', 'folders'],
   menu: [
     // Verified live: `document-all` is a CHILD of the shared `cms-menu` parent doc — its
     // `menuItems` array reads `[cms-graph, menu-all, page-all, section-all, document-all,
@@ -1346,80 +1395,19 @@ const documentBlock: FeatureBlock = {
     //    today — the exact p13 failure mode this catalogue exists to prevent. Same
     //    precedent as `c-yearlyevents` (`calevent`) and the five accounting wrappers
     //    (`finance`), both catalogued for the same reason.
-    //  - WHY `document` AND NOT `folder`: all three children are dispatched by
-    //    `DocumentList.onPopoverDismiss` (`document-list.ts:293-299`: `addFolder` →
-    //    `store.addFolder()`, `addFiles` → toolbar label→input, `toggleFilter` → local
-    //    signal). `FolderList.onPopoverDismiss` handles only `'add'` and is not rendered
-    //    anywhere in the app. Placing it on `folder` would seed a wrapper into tenants that
-    //    enable `folder` without `document` — where no screen ever renders it — and would
-    //    key its visibility (`blockOwnersOfMenuKey`) to a block that owns no screen.
+    //  - WHY IT SITS ON `document` DESPITE THE NAME: decided in task 16, when `folder` was
+    //    still a separate block — moot as a placement question since the 2026-08-04 merge
+    //    (there is nowhere else to put it), but kept because the dispatching evidence is what
+    //    a reader needs. All three children are dispatched by `DocumentList.onPopoverDismiss`
+    //    (`document-list.ts:293-299`: `addFolder` → `store.addFolder()`, `addFiles` → toolbar
+    //    label→input, `toggleFilter` → local signal). `FolderList.onPopoverDismiss` handles
+    //    only `'add'` and is not rendered anywhere in the app.
     { key: 'c-folder', name: 'c-folder', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'folder-add', name: 'folder-add', url: 'addFolder', action: 'call', roleNeeded: 'registered', icon: 'folder', label: 'Ordner hinzufügen' },
       { key: 'files-add', name: 'files-add', url: 'addFiles', action: 'call', roleNeeded: 'registered', icon: 'upload', label: 'Dateien hinzufügen' },
       { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen' },
     ] },
   ],
-};
-
-/**
- * `libs/folder/{data-access,feature,ui,util}` — the folder tree documents are filed into
- * (`FolderModel`, per-folder `membersMayUpload` permission, breadcrumb navigation). Owns
- * `folders` (`FolderCollection = 'folders'`, `folder.service.ts`); cross-checked against
- * `apps/functions/src/privacy/subject-data-map.ts:684` (`folders`, by `ownerKey`).
- *
- * JUDGEMENT CALL — kept as its OWN block rather than merged into `document`, and the
- * argument cuts both ways; recording both so a later reader does not have to redo it:
- *  - FOR MERGING (the honest case): this block ships NOTHING a tenant can see. No route
- *    (`app.routes.ts` has no `folder` path — grepped), no live `menuItems` doc of its own,
- *    and `FolderList` — its only list screen — is exported from `@okr/folder-feature` but
- *    imported by nobody (only `whiteboard-list.ts` mentions it, in a comment, as a
- *    structural precedent). The one live wrapper carrying folder actions (`c-folder`) is
- *    dispatched by `DocumentList`, so it sits on `document` above. A tenant enabling
- *    `folder` alone gets literally zero user-visible surface, and `document` already forces
- *    `folder` on through `dependsOn`.
- *  - FOR KEEPING IT SPLIT (what is implemented): (a) block ids are stable SKU keys other
- *    tasks in this series reference by name, and the brief specifies two; (b) `folders` is
- *    a distinct Firestore collection with its own retention/audit and its own privacy
- *    subject-data-map entry, and `collections` is what the later retention pass acts on —
- *    folding it into `document`'s array would work, but loses the 1:1 domain↔block mapping
- *    the completeness test is built on; (c) three domains outside `libs/document` reach
- *    `FolderService`/`canManageFolders` DIRECTLY rather than through `DocumentService` —
- *    `cms/section`'s `rag-section.store.ts:17`, `subject/address`'s `addresses.store.ts:22`,
- *    `subject/group`'s `group-view.page.ts:10,16` — so `folder` is a real API surface of its
- *    own, not an implementation detail hidden behind `document`'s.
- *
- *    CORRECTED (fix round 1): (c) previously claimed those three consume `folder` WITHOUT
- *    `document`. That was FALSE, and the correction matters because this comment is the
- *    input to the repo owner's merge ruling. Swept every file importing `@okr/folder-*`
- *    outside `libs/folder` and `libs/document`: there are exactly THREE, and all three ALSO
- *    import `@okr/document-*` in the same file — `rag-section.store.ts:15-16`
- *    (`DocumentService`, `buildDocumentModel`), `addresses.store.ts:21` (`DocumentService`),
- *    `group-view.page.ts:15,19` (`getDocumentStoragePath`, `DocumentList`). The number of
- *    consumers of `folder` without `document` is ZERO. So (c) is about API COUPLING (who
- *    calls what), NOT about `folder` being independently usable — it is not, and the
- *    FOR-MERGING case above is correspondingly stronger than the original wording implied.
- * Raised with the controller rather than acted on unilaterally — see the task report.
- *
- * NO `activity` EDGE IS OWED — a TODO claiming one used to sit here and was removed in task 17
- * fix round 1. `folder.service.ts:11` does import `ActivityService` from
- * `@okr/activity-data-access`, but all it does with it is `activityService.log('folder', …)`
- * at lines 36/47/54 — audit-trail writes whose effect is invisible on this block's own
- * surface. No route and no menu row of `folder`'s breaks without `activity`, so under the
- * settled dividing line that is the "no edge" case (same as `finance` and `chat`). Nothing is
- * pending here for task 18.
- */
-const folder: FeatureBlock = {
-  id: 'folder',
-  bundle: 'documents',
-  label: '@tenant/util.feature.folder.label',
-  icon: 'folder',
-  defaultAvailability: 'ga',
-  dependsOn: [],
-  collections: ['folders'],
-  // No route and no live `menuItems` doc of its own — see the block comment above. The one
-  // live wrapper that carries folder ACTIONS (`c-folder`) is rendered and dispatched by
-  // `DocumentList`, so it is catalogued on the `document` block, not here.
-  menu: [],
 };
 
 /**
@@ -1485,7 +1473,8 @@ const folder: FeatureBlock = {
  * core, and `ActivityService.log` is a write whose effect is invisible on chat's own surface
  * (no screen and no menu row of chat's breaks without it). Fix round 1: that reading has since
  * been adopted as the convention, and the correspondingly over-broad `activity` TODOs on
- * `finance` and `folder` were removed.
+ * `finance` and on the then-separate `folder` block (merged into `document` on 2026-08-04)
+ * were removed.
  *
  * PRIVACY — checked, not fixed (task 17 gate): chat transfers personal data (identity,
  * message content, avatars) to a third party, and it IS already registered:
@@ -1498,11 +1487,15 @@ const folder: FeatureBlock = {
  * with the `chat` block on and Matrix missing from its Bearbeitungsverzeichnis, or vice
  * versa. Wiring the two together is a `security` change, out of scope for a cataloguing task.
  *
- * `defaultAvailability: 'ga'` PER THE TASK BRIEF, and flagged rather than decided: this is
- * the one block in the catalogue whose operation requires a self-hosted external server, a
- * per-tenant Matrix account namespace and a signed processor relationship that does not yet
- * have a DPA. `'internal'` is a defensible alternative and the repo owner should rule — see
- * the task-17 report.
+ * `defaultAvailability: 'ga'` — RULED BY THE REPO OWNER on 2026-08-04 ("keep at ga"), after
+ * task 17 flagged it rather than decided it. What was flagged: this is the one block in the
+ * catalogue whose operation requires a self-hosted external server, a per-tenant Matrix account
+ * namespace and a signed processor relationship that does not yet have a DPA, and `'internal'`
+ * was the defensible alternative. THE OWNER REVIEWED THE `dpaUrl: ''` GAP DESCRIBED ABOVE ON
+ * THAT DATE AND ACCEPTED IT, keeping the block generally available. Read the empty DPA as a
+ * known, accepted gap — not as an unnoticed oversight — but note that it is still a real gap:
+ * privacy-audit check 5 keeps reporting it, and nothing here suppresses that. Closing it means
+ * filling in `dpaUrl` in `PROCESSOR_CATALOGUE`, not changing this line.
  */
 const chat: FeatureBlock = {
   id: 'chat',
@@ -1562,8 +1555,10 @@ const chat: FeatureBlock = {
  *
  * `defaultAvailability: 'disabled'` — DELIBERATE, RULED BY THE REPO OWNER on 2026-08-04, NOT
  * an oversight and NOT a kill-switch pulled after a regression. If you have landed here because
- * you found the only `disabled` block in the catalogue and wondered whether someone forgot to
- * flip it back: they did not. The ruling, in the owner's terms, was that this is a
+ * you found a `disabled` block in the catalogue and wondered whether someone forgot to
+ * flip it back: they did not. (There are TWO such blocks, both ruled on the same day — see
+ * `games`, whose case differs in one respect worth reading: it owns a live route.) The ruling,
+ * in the owner's terms, was that this is a
  * not-yet-completed feature that is not really used and should not appear among the features a
  * tenant can select — the evidence above (no app route, zero importers, a hard-coded
  * `http://localhost:3333/api/feed`) is exactly why. FINISH THE FEATURE FIRST, THEN RAISE THE
@@ -1727,12 +1722,15 @@ const consent: FeatureBlock = {
  * RECHECK, or you will get different numbers and think the comment rotted: both figures EXCLUDE
  * `libs/tenant`, whose only hits are prose in this very file — a bare
  * `grep -rn "activityService\.log(" libs` returns 97, of which two are the comment you are
- * reading and the `folder` note further up. Neither verb has a single call in a `.spec.ts`.
+ * reading and the folder-service note on the `document` block further up (it moved there with
+ * the 2026-08-04 merge; the hit count is unchanged). Neither verb has a single call in a
+ * `.spec.ts`.
  * BOTH VERBS are audit-trail WRITES whose effect is invisible on the calling block's own surface,
  * which is the "no edge" side of the dividing line recorded in the series conventions. That
  * holds for the one non-`auth` `logAuth` site too: it records a log-out from the main menu,
  * gates nothing, and `cms` is `core: true` in any case.
- * Two `TODO`s claiming an edge was owed (on `finance` and `folder`) were retracted in task 17
+ * Two `TODO`s claiming an edge was owed (on `finance` and on the then-separate `folder` block,
+ * since merged into `document`) were retracted in task 17
  * for exactly this reason; cataloguing this block does not reopen them.
  *
  * STATE THE CONSEQUENCE PLAINLY rather than let the empty `dependsOn` imply the opposite: this
@@ -1802,7 +1800,7 @@ const activity: FeatureBlock = {
  *    `core: true`, and a core block declaring a non-core dependency would drag `task` into
  *    every tenant through `resolveWithDeps` and destroy its switchability, buying nothing (the
  *    classes ship in the bundle either way). Same reasoning, same shape, as `cms` withholding
- *    its `document`/`folder` edges. CONSEQUENCE, stated rather than hidden: a tenant with
+ *    its `document` edge. CONSEQUENCE, stated rather than hidden: a tenant with
  *    `task` disabled can still be given a CMS page carrying a `tasks` section, and that section
  *    will list and edit tasks with no `/task` route and no todo menu row anywhere. A product
  *    decision (should the section picker be gated on the owning block?), flagged in the task-18
@@ -1851,8 +1849,9 @@ const task: FeatureBlock = {
     { key: 'task-all', name: 'task-all', url: '/task/all/c-tasks', action: 'navigate', roleNeeded: 'privileged', icon: 'todo', label: 'Alle Todos' },
     { key: 'task-my', name: 'task-my', url: '/task/my/c-tasks', action: 'navigate', roleNeeded: 'registered', icon: 'todo', label: 'Meine Aufgaben' },
     // `c-tasks` — catalogued here, on the block whose `TaskList.onPopoverDismiss` dispatches all
-    // three children (`add`, `export`, `toggleFilter`), exactly as `c-folder` sits on `document`
-    // rather than `folder`. It is reached THREE ways, only the first of which any test can see:
+    // three children (`add`, `export`, `toggleFilter`), exactly as `c-folder` sits on the
+    // `document` block that dispatches it rather than on the folder domain it is named after.
+    // It is reached THREE ways, only the first of which any test can see:
     // as the `:contextMenuName` segment of both urls above; hoisted in application code by the
     // group view's toolbar (`group-view.page.ts`, `case 'tasks': return 'c-tasks'`) for the
     // embedded "Aufgaben" segment; and through `subject`'s `dependsOn: [… 'task']`, which is what
@@ -1949,29 +1948,50 @@ const instruments: FeatureBlock = {
  * ONLY `@okr/*` import in any file is `@okr/shared-ui` — hence `dependsOn: []` and
  * `collections: []` are both structural, not unresearched.
  *
- * It is a BLOCK, not a `NON_BLOCK_DOMAINS` entry: it is a user-facing routed screen, i.e. a
- * product feature (however slight), not cross-cutting infrastructure — the same call made for
- * `social-feed`, whose block comment argues it at length.
+ * It is a BLOCK, not a `NON_BLOCK_DOMAINS` entry, and being disabled below does not change
+ * that: it is a user-facing routed screen, i.e. a product feature (however slight), not
+ * cross-cutting infrastructure. `defaultAvailability` — never that list — is the lever for
+ * keeping a feature out of a tenant's picker; the same call was made for `social-feed`, whose
+ * block comment argues it at length.
  *
- * `defaultAvailability: 'ga'` PER THE TASK BRIEF, and FLAGGED FOR THE REPO OWNER rather than
- * decided here — this is the closest analogue in the catalogue to `social-feed`, which the owner
- * ruled down to `'disabled'` on 2026-08-04 as "not really used, should not appear among the
- * features a tenant can select". The two are NOT identical and the difference cuts toward
- * leaving it `'ga'`: `social-feed` has no app route, no importer and a hard-coded
- * `http://localhost:3333` backend, whereas `/quiz` is really registered in `app.routes.ts` and
- * really works today for any authenticated user. Dropping it to `'disabled'` would therefore
- * REMOVE a live route once Task 19 drives the real route table from this catalogue — a
- * behaviour change, which a cataloguing task must not make unilaterally. At `'ga'` the cost is
- * a picker row offering a hard-coded "NgRx Quiz" to every tenant; a `feature-rollout/games` doc
- * overrides it either way (`feature-rollout.util.ts:29`, both directions). See the task-18
- * report.
+ * `defaultAvailability: 'disabled'` — RULED BY THE REPO OWNER on 2026-08-04 ("disabled —
+ * remove it"), NOT an oversight and NOT a kill-switch pulled after a regression. If you have
+ * landed here because you found a `disabled` block and wondered whether someone forgot to flip
+ * it back: they did not. The owner's reasoning is the evidence above — what ships at `/quiz` is
+ * a hard-coded "NgRx Quiz" demonstration of Signal-Store state management, with no service, no
+ * Firestore and no tenant-authorable content. It is not something a tenant should be offered.
+ * The task-18 comment this replaces flagged the value for exactly this ruling; it has now been
+ * made, and it went the other way.
+ *
+ * CONSEQUENCE, INTENDED AND STATED PLAINLY — this is where `games` differs from `social-feed`,
+ * the catalogue's other `disabled` block. `social-feed` ships `routes: () => []` and is
+ * reachable from nowhere, so disabling it removes nothing. `games` owns a REGISTERED, WORKING
+ * route: `/quiz` is in `app.routes.ts:52-56` behind `isAuthenticatedGuard` and renders today
+ * for any authenticated user. `'disabled'` therefore REMOVES `/quiz` from every tenant once
+ * task 19 drives the real route table from this catalogue. That behaviour change is the point
+ * of the ruling, not a side effect of it — and it is the whole of the change: nothing else in
+ * the repo links to `/quiz` (no live `menuItems` doc, see the `menu` note below; no `routerLink`
+ * or `navigateByUrl` anywhere in `libs/` or `apps/`), so no other screen acquires a dead link.
+ *
+ * THE BLOCK AND ITS ROUTE FRAGMENT BOTH STAY — disabling is not deleting. The block keeps its
+ * `FEATURE_ROUTES` entry (the real `quiz` fragment, not an empty one), so the catalogue still
+ * records that the domain exists and what it would route to, the sitemap still shows it, and a
+ * rollout doc or a later rollout decision can raise it again with no code change
+ * (`feature-rollout.util.ts:29` prefers `rollout.availability` over the catalogue default in
+ * BOTH directions). WHY `'disabled'` AND NOT `'internal'`: `resolveAvailability`
+ * (`feature-rollout.util.ts:35-40`) short-circuits `'disabled'` to `offered: false` for
+ * EVERYONE, whereas `'internal'` still offers the block to any tenant an operator allow-lists.
+ * The owner wants it unselectable, not selectively available — see the `social-feed` block for
+ * the same argument at length, including the D-BB-10 legacy-config interaction that keeps a
+ * `disabled` default from reaching tenants whose `app-config` predates `enabledFeatures`.
  */
 const games: FeatureBlock = {
   id: 'games',
   bundle: 'special',
   label: '@tenant/util.feature.games.label',
   icon: 'star',
-  defaultAvailability: 'ga',
+  // Owner ruling 2026-08-04 — see the block comment above before changing this.
+  defaultAvailability: 'disabled',
   dependsOn: [],
   // Structurally empty: no Firestore access anywhere in the domain and no `*Collection` constant
   // for it in `@okr/shared-models` (the quiz's questions are a hard-coded literal in
@@ -2004,6 +2024,6 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   subject, relationship, vcard,
   resource, mobility,
   finance, esign, pdfTemplate,
-  documentBlock, folder,
+  documentBlock,
   chat, socialFeed, forms,
 ];

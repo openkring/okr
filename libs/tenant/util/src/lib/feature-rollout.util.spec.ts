@@ -33,7 +33,8 @@ describe('resolveAvailability', () => {
 
   // The case above pins a rollout DOC set to `disabled`. This pins the other source of the
   // same verdict — a block whose CATALOGUE DEFAULT is `disabled` and that has no rollout doc
-  // at all. `social-feed` ships exactly that shape (owner ruling 2026-08-04), and an
+  // at all. `social-feed` and `games` both ship exactly that shape (owner rulings
+  // 2026-08-04), and an
   // allow-list must not rescue it the way it rescues `internal`/`beta`.
   it('withholds a block whose catalogue default is disabled, allow-list or not', () => {
     const disabledByDefault = block('a', { defaultAvailability: 'disabled' });
@@ -106,7 +107,7 @@ describe('effectiveFeatures', () => {
    * `resolveAvailability` gate at `:64-65`. If that gate is ever reordered, narrowed, or moved
    * behind the `core` check, every legacy tenant (`enabledFeatures` still absent from their
    * `app-config` doc) would silently pick up every disabled block on the next deploy.
-   * `social-feed` is the live instance of this shape.
+   * `social-feed` and `games` are the live instances of this shape.
    */
   it('never surfaces a block whose CATALOGUE DEFAULT is disabled, on a legacy config (D-BB-10)', () => {
     const eff = effectiveFeatures({ catalogue, rollouts: [], enabled: undefined, tenantId: 'scs' });

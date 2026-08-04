@@ -15,16 +15,24 @@
  * with no routable screen), or it is cross-cutting infrastructure (add it below with a
  * one-line reason). "Later" is not one of the options; do not reintroduce the array.
  *
- * THE BAR FOR THIS LIST IS INFRASTRUCTURE, NOT UNFINISHEDNESS. Both entries below are
- * cross-cutting machinery with no product surface of their own. An incomplete or barely-used
- * product FEATURE still belongs in the catalogue as a block — `social-feed` (an unwired stub
- * with a `localhost` data source) and `games` (a hard-coded in-memory quiz) were both argued
- * out at length and both stayed blocks, with `defaultAvailability` — not this list — as the
- * lever for keeping them out of a tenant's picker.
+ * THE BAR FOR THIS LIST IS INFRASTRUCTURE OR A MERGED DOMAIN — NEVER UNFINISHEDNESS. Two of
+ * the three entries below are cross-cutting machinery with no product surface of their own;
+ * the third (`folder`) is a domain whose product surface is catalogued, but under ANOTHER
+ * block's id after the repo owner merged it. An incomplete or barely-used product FEATURE
+ * still belongs in the catalogue as a block of its own — `social-feed` (an unwired stub with a
+ * `localhost` data source) and `games` (a hard-coded in-memory quiz) were both argued out at
+ * length and both stayed blocks; the owner then ruled both `defaultAvailability: 'disabled'`
+ * on 2026-08-04, which is the lever for keeping a feature out of a tenant's picker. This list
+ * is not that lever, and "not finished yet" is not a reason to be on it.
  */
 export const NON_BLOCK_DOMAINS: Record<string, string> = {
   shared: 'cross-cutting infrastructure, not a feature',
   tenant: 'this domain — the catalogue itself',
+  // Owner ruling 2026-08-04: merged into the `document` block, which now declares the `folders`
+  // collection this domain owns. `libs/folder/**` still exists (and `libs/folder/feature` is
+  // why this entry is required), but it ships no route and no menu doc of its own — every one
+  // of its consumers also uses `@okr/document-*`. Full argument on the `document` block.
+  folder: 'merged into the `document` block (2026-08-04); `document` declares its `folders` collection',
 };
 
 /*
@@ -50,7 +58,8 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
  * edge would close a cycle in both cases. The resolution, settled across tasks 16-18 and not
  * to be re-argued:
  *  - `document` / `task` — no existing edge in the other direction, so `subject` declares a
- *    plain EDGE to each (`dependsOn: ['document', 'folder', 'task']`).
+ *    plain EDGE to each (`dependsOn: ['document', 'task']`; it read `['document', 'folder',
+ *    'task']` until the `folder` block was merged into `document` on 2026-08-04).
  *  - `calevent` / `relationship` — NO reverse edge. Their wrappers are catalogued on the block
  *    that owns the dispatching component (`c-calevents` on `calevent`, `c-groupmembers` on
  *    `relationship`), which is what actually keeps the segments working.
@@ -70,6 +79,7 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
  * calls — `ActivityService.log(…)` or `…logAuth(…)` (the log-in/log-out variant, six sites: five
  * in `auth`, one in `cms/menu`) — and both are audit-trail writes, invisible on the calling
  * block's own surface, i.e. the "no edge" side of the dividing line. Two TODOs claiming
- * otherwise (on `finance` and `folder`) were retracted in task 17. See the `activity` block's
+ * otherwise (on `finance` and on the then-separate `folder` block, since merged into
+ * `document`) were retracted in task 17. See the `activity` block's
  * own comment for the exact counts, how to reproduce them, and what this means for retention.
  */
