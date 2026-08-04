@@ -837,9 +837,11 @@ const instruments: BlockRoutes = {
  * THE FRAGMENT STAYS EVEN THOUGH THE BLOCK IS `defaultAvailability: 'disabled'` (repo owner's
  * ruling, 2026-08-04). Disabling is not deleting: the route is what the catalogue would compose
  * if the block were ever raised again by a `feature-rollout/games` doc, and emptying it would
- * throw that away for no gain. The practical effect of the ruling is that once task 19 drives
- * the app's route table from this catalogue, no tenant composes this fragment and `/quiz`
- * disappears — which is exactly what was ruled.
+ * throw that away for no gain. The ruling only bites once task 19 composes the app's table PER
+ * BLOCK with `isFeatureEnabledGuard(block.id)` prepended to each fragment's `canActivate` —
+ * `composeFeatureRoutes` alone flat-maps every fragment in unconditionally, so catalogue-driving
+ * by itself would leave `/quiz` live. See the `games` block comment in `feature-blocks.ts` for
+ * why static pre-filtering is not an alternative.
  */
 const games: BlockRoutes = {
   id: 'games',

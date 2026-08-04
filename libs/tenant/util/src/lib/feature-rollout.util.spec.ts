@@ -33,9 +33,8 @@ describe('resolveAvailability', () => {
 
   // The case above pins a rollout DOC set to `disabled`. This pins the other source of the
   // same verdict — a block whose CATALOGUE DEFAULT is `disabled` and that has no rollout doc
-  // at all. `social-feed` and `games` both ship exactly that shape (owner rulings
-  // 2026-08-04), and an
-  // allow-list must not rescue it the way it rescues `internal`/`beta`.
+  // at all. `social-feed` and `games` both ship exactly that shape (owner rulings 2026-08-04),
+  // and an allow-list must not rescue it the way it rescues `internal`/`beta`.
   it('withholds a block whose catalogue default is disabled, allow-list or not', () => {
     const disabledByDefault = block('a', { defaultAvailability: 'disabled' });
     expect(resolveAvailability(disabledByDefault, undefined, 'scs').offered).toBe(false);

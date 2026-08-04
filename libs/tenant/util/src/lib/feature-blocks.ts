@@ -342,8 +342,8 @@ const cms: FeatureBlock = {
   //
   // BE PRECISE ABOUT WHAT THAT BUYS (fix round 1 — the original wording overclaimed):
   // withholding preserves switchability IN PRINCIPLE, not in practice. `subject` (the
-  // `members` root, see its own `dependsOn` below) DOES declare `document`,
-  // and `resolveWithDeps` walks transitively — so for any tenant that runs member
+  // `members` root, see its own `dependsOn` below) DOES declare `document`, and
+  // `resolveWithDeps` walks transitively — so for any tenant that runs member
   // management, `documents` is already de-facto always-on. The only tenant this actually
   // keeps a live switch for is one that enables neither `subject` nor anything depending on
   // it. All three edges (`cms`→withheld, `avatar`→withheld, `subject`→declared) are honest;
@@ -1021,13 +1021,12 @@ const mobility: FeatureBlock = {
  *  - `pdf-template` — NOT in the task brief, added on evidence. RESTATED (task 17 fix round 1)
  *    because the original wording rested it on the wrong clause: `booking.store.ts:37` does
  *    import `DocGenerationService` from `@okr/pdf-template-data-access`, but a data-access
- *    service import is explicitly NOT an edge (see `chat` → `activity`, and the
- *    folder-service case recorded on `document`). The
- *    edge stands on the DATA clause instead: the `generateDocument` action
- *    (`booking.store.ts:279-317`) calls `generate({ templateId: action.templateId, … })`, and
- *    that id must name a document in `templates` — a collection whose only writer is
- *    `TemplateService`, which is referenced nowhere outside `libs/pdf-template` (grepped
- *    across `libs/` and `apps/`: zero hits). Templates are therefore authorable ONLY on
+ *    service import is explicitly NOT an edge (see `chat` → `activity`, and the folder-service
+ *    case recorded on `document`). The edge stands on the DATA clause instead: the
+ *    `generateDocument` action (`booking.store.ts:279-317`) calls `generate({ templateId:
+ *    action.templateId, … })`, and that id must name a document in `templates` — a collection
+ *    whose only writer is `TemplateService`, referenced nowhere outside `libs/pdf-template`
+ *    (grepped across `libs/` and `apps/`: zero hits). Templates are therefore authorable ONLY on
  *    `pdf-template`'s own routes (`/templates`, `/templates/:templateKey`). With
  *    `pdf-template` off, a tenant has no screen able to create one, so finance's document
  *    generation is not degraded but permanently dead — "X needs data only Y's screens can
@@ -1050,8 +1049,8 @@ const mobility: FeatureBlock = {
  * sit here and was wrong): `bill.service.ts:9` and `invoice.service.ts:9` inject
  * `ActivityService` purely to write audit-trail entries. That effect is invisible on finance's
  * own surface — no route and no menu row of finance's breaks without it — which is the
- * settled "no edge" case, identical to `chat` and to the folder-service finding now recorded
- * on `document`.
+ * settled "no edge" case, identical to `chat` and to the folder-service finding now
+ * recorded on the `document` block.
  *
  * EXCLUDED, not modelled — the whole double-entry accounting nav, verified against Firestore:
  *  - `scsf_fibu` ("SCS Buchhaltung") and `gssf_fibu` ("GSS Buchhaltung"), both `action: sub`,
@@ -1473,8 +1472,8 @@ const documentBlock: FeatureBlock = {
  * core, and `ActivityService.log` is a write whose effect is invisible on chat's own surface
  * (no screen and no menu row of chat's breaks without it). Fix round 1: that reading has since
  * been adopted as the convention, and the correspondingly over-broad `activity` TODOs on
- * `finance` and on the then-separate `folder` block (merged into `document` on 2026-08-04)
- * were removed.
+ * `finance` and on the then-separate `folder` block (merged into `document` on
+ * 2026-08-04) were removed.
  *
  * PRIVACY — checked, not fixed (task 17 gate): chat transfers personal data (identity,
  * message content, avatars) to a third party, and it IS already registered:
@@ -1724,14 +1723,13 @@ const consent: FeatureBlock = {
  * `grep -rn "activityService\.log(" libs` returns 97, of which two are the comment you are
  * reading and the folder-service note on the `document` block further up (it moved there with
  * the 2026-08-04 merge; the hit count is unchanged). Neither verb has a single call in a
- * `.spec.ts`.
- * BOTH VERBS are audit-trail WRITES whose effect is invisible on the calling block's own surface,
- * which is the "no edge" side of the dividing line recorded in the series conventions. That
- * holds for the one non-`auth` `logAuth` site too: it records a log-out from the main menu,
- * gates nothing, and `cms` is `core: true` in any case.
+ * `.spec.ts`. BOTH VERBS are audit-trail WRITES whose effect is invisible on the calling block's
+ * own surface, which is the "no edge" side of the dividing line recorded in the series
+ * conventions. That holds for the one non-`auth` `logAuth` site too: it records a log-out from
+ * the main menu, gates nothing, and `cms` is `core: true` in any case.
  * Two `TODO`s claiming an edge was owed (on `finance` and on the then-separate `folder` block,
- * since merged into `document`) were retracted in task 17
- * for exactly this reason; cataloguing this block does not reopen them.
+ * since merged into `document`) were retracted in task 17 for exactly this reason; cataloguing
+ * this block does not reopen them.
  *
  * STATE THE CONSEQUENCE PLAINLY rather than let the empty `dependsOn` imply the opposite: this
  * block gates the SCREEN, never the logging. `ActivityService` ships in every bundle and keeps
@@ -1967,11 +1965,22 @@ const instruments: FeatureBlock = {
  * the catalogue's other `disabled` block. `social-feed` ships `routes: () => []` and is
  * reachable from nowhere, so disabling it removes nothing. `games` owns a REGISTERED, WORKING
  * route: `/quiz` is in `app.routes.ts:52-56` behind `isAuthenticatedGuard` and renders today
- * for any authenticated user. `'disabled'` therefore REMOVES `/quiz` from every tenant once
- * task 19 drives the real route table from this catalogue. That behaviour change is the point
- * of the ruling, not a side effect of it — and it is the whole of the change: nothing else in
- * the repo links to `/quiz` (no live `menuItems` doc, see the `menu` note below; no `routerLink`
- * or `navigateByUrl` anywhere in `libs/` or `apps/`), so no other screen acquires a dead link.
+ * for any authenticated user. So the ruling only takes effect through task 19 — and WHAT TASK
+ * 19 HAS TO DO IS NARROWER THAN "DRIVE THE ROUTE TABLE FROM THE CATALOGUE", which is why the
+ * requirement is recorded here rather than only in a task report. `composeFeatureRoutes`
+ * (`feature-routes.util.ts:18-20`) is a bare `sources.flatMap(source => source.routes())`:
+ * no effective-set filter, no per-block gate — and `feature-catalogue.spec.ts:7` already calls
+ * it as `composeFeatureRoutes(FEATURE_ROUTES)`. Composing the app's table that way ships
+ * `/quiz` fully live behind nothing but `isAuthenticatedGuard`, and this ruling has ZERO effect.
+ * What actually removes it is composing PER BLOCK with `isFeatureEnabledGuard(block.id)`
+ * (`@okr/tenant-feature`; used nowhere in the repo today) prepended to each fragment's
+ * `canActivate`. Static pre-filtering is not available as an alternative: the effective set is
+ * a computed over async app-config and rollout data, and does not exist at bootstrap, when the
+ * route table is assembled. Done that way `/quiz` disappears for every tenant, which is the
+ * point of the ruling rather than a side effect of it — and it is the whole of the change:
+ * nothing else in the repo links to `/quiz` (no live `menuItems` doc, see the `menu` note
+ * below; no `routerLink` or `navigateByUrl` anywhere in `libs/` or `apps/`), so no other screen
+ * acquires a dead link.
  *
  * THE BLOCK AND ITS ROUTE FRAGMENT BOTH STAY — disabling is not deleting. The block keeps its
  * `FEATURE_ROUTES` entry (the real `quiz` fragment, not an empty one), so the catalogue still
