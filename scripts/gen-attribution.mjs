@@ -66,12 +66,14 @@ const TARGETS = {
   },
   'kring-website': {
     label: 'Kring',
-    webFonts: 'apps/kring-website',
+    // self-hosted since 2026-08-04 (spec C6, defect W6) — the OFL text must travel with the files
+    selfHostedFonts: 'apps/kring-website/assets/fonts',
+    vendored: 'apps/kring-website/assets',
     out: 'dist/apps/kring-website/licenses.html',
   },
   'okr-website': {
     label: 'openkring',
-    webFonts: 'apps/okr-website',
+    selfHostedFonts: 'apps/okr-website/assets/fonts',
     out: 'dist/apps/okr-website/licenses.html',
   },
   'p13-website': {
@@ -128,9 +130,9 @@ function collectBundle(relPath) {
 }
 
 /** Self-hosted font files ship the actual bytes, so the full license text must ship too. */
-function collectSelfHostedFonts(relDir) {
+function collectLicenseDir(relDir) {
   const dir = join(ROOT, relDir);
-  if (!existsSync(dir)) throw new Error(`missing font directory ${relDir}`);
+  if (!existsSync(dir)) throw new Error(`missing license directory ${relDir}`);
   return readdirSync(dir)
     .filter(f => /^LICENSE.*\.txt$/i.test(f))
     .sort()
@@ -318,7 +320,16 @@ function buildSections(name, target) {
       title: 'Fonts',
       blurb: 'Typefaces served directly from this site. The Open Font License requires its text to accompany the font files.',
       format: 'text',
-      entries: collectSelfHostedFonts(target.selfHostedFonts),
+      entries: collectLicenseDir(target.selfHostedFonts),
+    });
+  }
+  if (target.vendored) {
+    sections.push({
+      id: 'vendored',
+      title: 'Vendored libraries',
+      blurb: 'Libraries copied into this site instead of loaded from a public CDN, so that no request leaves your browser to a third party. Their licenses require the text to travel with the copy.',
+      format: 'text',
+      entries: collectLicenseDir(target.vendored),
     });
   }
   if (target.webFonts) {
