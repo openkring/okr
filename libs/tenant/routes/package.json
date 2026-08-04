@@ -54,6 +54,11 @@
     "@okr/esign-feature": "*",
     "@okr/pdf-template-feature": "*",
     "@okr/document-feature": "*",
-    "@okr/forms-feature": "*"
+    "@okr/forms-feature": "*",
+    "@okr/activity-feature": "*",
+    "@okr/task-feature": "*",
+    "@okr/instruments-feature": "*",
+    "@okr/instruments-whiteboard-feature": "*",
+    "@okr/games-quiz-feature": "*"
   }
 }

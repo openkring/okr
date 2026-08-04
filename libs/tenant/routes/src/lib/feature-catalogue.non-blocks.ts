@@ -3,131 +3,71 @@
  * The completeness test fails on any domain that is neither a catalogue block nor listed
  * here — mirroring the privacy subject-data-map pattern, so a new domain cannot be
  * forgotten silently.
+ *
+ * THERE IS NO ESCAPE HATCH ANY MORE, and that is deliberate. A temporary
+ * `PENDING_CLASSIFICATION` array existed from task 6 to task 18 so the catalogue could be
+ * filled one bundle at a time; it was drained bundle by bundle and DELETED, not left empty,
+ * in task 18 — an empty "add it here for now" list gets refilled by the next person, and the
+ * completeness test then silently stops meaning anything. If you are adding a new
+ * `libs/<domain>/feature` and the test is red: decide. Either it is a product feature (add a
+ * `FeatureBlock` to `FEATURE_BLOCKS` in `@okr/tenant-util` AND a `BlockRoutes` entry to
+ * `FEATURE_ROUTES` here — the sync test requires both, `routes: () => []` is fine for a domain
+ * with no routable screen), or it is cross-cutting infrastructure (add it below with a
+ * one-line reason). "Later" is not one of the options; do not reintroduce the array.
+ *
+ * THE BAR FOR THIS LIST IS INFRASTRUCTURE, NOT UNFINISHEDNESS. Both entries below are
+ * cross-cutting machinery with no product surface of their own. An incomplete or barely-used
+ * product FEATURE still belongs in the catalogue as a block — `social-feed` (an unwired stub
+ * with a `localhost` data source) and `games` (a hard-coded in-memory quiz) were both argued
+ * out at length and both stayed blocks, with `defaultAvailability` — not this list — as the
+ * lever for keeping them out of a tenant's picker.
  */
 export const NON_BLOCK_DOMAINS: Record<string, string> = {
   shared: 'cross-cutting infrastructure, not a feature',
   tenant: 'this domain — the catalogue itself',
 };
 
-// ⚠️ TEMPORARY — drained bundle by bundle in Tasks 12-18, deleted entirely in Task 18.
-// Every entry here is a top-level `libs/` domain that is NOT yet reachable through the
-// catalogue, verified by running the completeness test RED with this array emptied.
-// Per the repo owner's ruling, one catalogue block covers a whole container domain (e.g.
-// one `finance` block for all 13 `finance/*` subdomains, one `subject` block for
-// person/org/address/group/application) — so this list, like the catalogue itself, is
-// keyed by TOP-LEVEL domain name only, never per-subdomain.
-//
-// Task 12 (core bundle) drained: auth, avatar, category, cms, comment, geo, i18n, profile,
-// security, user (plus consent and session, which — per the note this replaces — are
-// correctly absent from this list: neither has a `feature` directory at depth 1 or depth 2,
-// so `featureDomains()` never surfaces them, but both are still catalogued in
-// `FEATURE_BLOCKS` because the task brief names them explicitly).
-//
-// CONSEQUENCE of that blind spot (task 12 review round 2, minor a): because
-// `featureDomains()` structurally cannot see `consent`/`session`, the completeness test
-// would NOT go red if either were ever removed from `FEATURE_BLOCKS` — there is no
-// `libs/consent/feature` or `libs/session/feature` directory to flag them missing. Nothing
-// in this file's test suite catches that regression; only `feature-blocks.spec.ts`'s
-// key===name check and manual review would. Keep this in mind before ever deleting either
-// block's entry.
-//
-// Task 13 (members bundle) drained: subject, relationship, vcard.
-// Task 14 (events bundle) drained: resource, mobility. (`calevent` was never in this list —
-// catalogued since task 5.)
-//
-// Task 15 (finance bundle) drained: finance, esign, pdf-template. Note `finance` is the
-// container domain for all THIRTEEN `libs/finance/*` subdomains (the task brief names twelve;
-// `exchange-rate` is a 13th, route-less and menu-less) — consistent with the top-level-only
-// keying described above. Neither `activity` nor `task` was drained here even though `finance`
-// imports both (`@okr/activity-data-access`, `@okr/task-feature`): they are separate blocks
-// still to be catalogued, and `finance` therefore cannot yet declare them in `dependsOn` (the
-// completeness test rejects a dangling target). See the note on the `finance` block.
-// Task 16 (documents bundle) drained: document, folder. Kept as TWO blocks per the brief
-// even though `folder` ships no route and no menu of its own (its only list screen,
-// `FolderList`, is imported by nothing) — the argument for and against merging it into
-// `document` is recorded in full on the `folder` block in `feature-blocks.ts` and was raised
-// with the controller rather than acted on unilaterally, because block ids are stable SKU
-// keys other tasks reference by name.
-// (Task 15/16 also left "not expressible yet" TODOs for `activity` on `finance` and `folder`.
-// Those were RETRACTED in task 17 fix round 1 — see the next paragraph.)
-//
-// Task 17 (communication bundle) drained: chat, social-feed, forms. All three stay BLOCKS,
-// none moved to `NON_BLOCK_DOMAINS` — including `social-feed`, which today is an unwired stub
-// (no app route, no importer anywhere, a `localhost` data source) but is an unfinished
-// product feature rather than infrastructure; the full evidence is on its block in
-// `feature-blocks.ts`. `chat` and `social-feed` both ship `routes: () => []`: chat's screen is
-// a CMS page rendered through the `cms` block's route, and social-feed has no registered route
-// at all.
-//
-// `activity` and `task` are still not drained (neither is in this bundle), but the picture for
-// them changed in task 17 fix round 1, so READ THIS BEFORE TASK 18:
-//  - `activity` is owed NOTHING. The TODOs on `finance` and `folder` were removed. Every
-//    import of `@okr/activity-data-access` from an already-catalogued block turns out to be
-//    `ActivityService.log(...)` — an audit-trail write invisible on the calling block's own
-//    surface (`folder.service.ts:36/47/54`, `bill.service.ts`/`invoice.service.ts`,
-//    `matrix-chat.service.ts`). Under the dividing line now recorded in the series
-//    conventions, that is the "no edge" case. Cataloguing `activity` therefore does not
-//    require going back and adding edges to those blocks.
-//  - `task` is owed TWO things, not one. Fix round 2 said "one edge, by `finance`"; that
-//    inventory was INCOMPLETE and would have left a broken screen behind (fix round 3).
-//
-//    (a) `finance` → `task` — a real EDGE. `expense.store.ts:123` destructures `TaskEditModal`
-//        out of a dynamic import of the task feature lib: a component crossing the block
-//        boundary, the first arm of the dividing line. A `TODO(task 18 — 'task')` on the
-//        `finance` block records it. Honour it.
-//
-//    (b) `subject` → `task` — the SAME first arm, and additionally a wrapper doc.
-//        `group-view.page.ts:18` imports `TaskList` from `@okr/task-feature` and renders it at
-//        template line 138 as `<okr-task-list … contextMenuName="c-tasks" …>`; the group
-//        toolbar hoists that key (`segmentContextMenuName()`, `case 'tasks': return 'c-tasks'`)
-//        and delegates the popover back to `TaskList.onPopoverDismiss` (line 332). This is
-//        structurally the `subject`-embeds-`DocumentList` archetype, one segment over.
-//        DECISION RULE for whoever catalogues `task` — do NOT guess, check `task`'s own
-//        `dependsOn` at the time:
-//          * if `task` does NOT depend on `subject` → declare `subject → task` as a normal EDGE;
-//          * if `task` DOES depend on `subject` → the edge would close a CYCLE. Do not declare
-//            it; CO-DECLARE `c-tasks` (and its children) on `subject` instead, exactly as
-//            `subject` co-declares `contextMenuChat` today. See that block for the pattern and
-//            the reasoning, and the `CalEventList`/`MembershipList` note below for why a cycle
-//            is the wrong answer even though nothing would crash.
-//        EVIDENCE AS OF TASK 17 (re-verify, do not inherit): `libs/task` imports no `@okr/subject-*`
-//        lib at all — its only non-`shared` imports are `comment`, `cms-menu`, `avatar` (all
-//        `core: true`) and `activity` (the no-edge class above). On that evidence the first
-//        branch applies and a plain edge is correct.
-//
-//    (c) `c-tasks` IS CATALOGUED NOWHERE — zero hits across `libs/tenant` — and whoever owns
-//        `task` must catalogue it, on the `task` block (its three children map 1:1 onto
-//        `TaskList.onPopoverDismiss`'s own verbs: `task-add`→`add`, `task-export`→`export`,
-//        `filter-toggle`→`toggleFilter`; same reason `c-folder` sits on `document`, the block
-//        whose list component dispatches it). This holds under BOTH branches of (b) — an edge
-//        does not catalogue a doc. It is one of the wrappers the automated coverage test
-//        structurally cannot see: it is hoisted in `group-view.page.ts`, never derived from a
-//        `navigate` url. Unlike `c-folder` it is NOT broken in production today — the live doc
-//        (`menuItems/c-tasks`, `action: context`, `roleNeeded: privileged`, children
-//        `[task-add, task-export, filter-toggle]`) is already on all 16 tenants — so this is an
-//        uncatalogued doc, not an outage. Note the two action children are narrower:
-//        `task-add`/`task-export` are `tenants: ['test','scs']` only.
-//
-// WHY `subject` DECLARES NO EDGE FOR `CalEventList` / `MembershipList`, which the same file also
-// embeds (`group-view.page.ts:20`/`:17`, rendered at template lines 129/162) — do not "fix" this
-// into a cycle: `calevent` and `relationship` BOTH already declare `dependsOn: ['subject', …]`,
-// so a reverse edge from `subject` would close a cycle in each case. `resolveWithDeps`
-// (`feature-deps.util.ts`) would not crash — its `visited` set makes cycles terminate, and
-// `feature-deps.util.spec.ts:40` pins exactly that. UNTIL TASK 17 FIX ROUND 4 nothing rejected
-// such a cycle either, so it would simply have gone green; there is now a guard —
-// `feature-catalogue.completeness.spec.ts`, "the dependsOn graph over the real catalogue is
-// acyclic" (plus "no block depends on itself"), which fails naming the offending path, e.g.
-// `calevent → subject → calevent`. Do not soften it to make an edge pass. The reason it exists
-// is that the damage is otherwise SILENT and product-visible: the edge makes enablement mutual,
-// so a tenant could never run `subject` without `calevent`/`relationship` (two separately
-// switchable blocks quietly fuse into one), and the picker's `dependents_confirm` messaging,
-// generated from this same graph, would state a dependency direction that is not real.
-// Their wrappers are handled the
-// right way already — `c-calevents` is catalogued on `calevent`, `c-groupmembers` on
-// `relationship` — which is the whole point: cataloguing the wrapper, not drawing the edge, is
-// what keeps the group view's segments working. `c-tasks` is the only one of the group view's
-// six hoisted wrappers (`c-contentpage`, `c-calevents`, `c-tasks`, `c-folder`,
-// `c-groupmembers`, `contextMenuChat`) still missing from the catalogue.
-export const PENDING_CLASSIFICATION: string[] = [
-  'activity', 'games', 'instruments', 'task',
-];
+/*
+ * ── Catalogue decisions worth preserving (this block documents no symbol) ──────────────────
+ *
+ * A KNOWN BLIND SPOT IN THE COMPLETENESS TEST, recorded here because nothing else catches it
+ * (task 12 review round 2, minor a). `featureDomains()` finds a domain only through a
+ * `libs/<name>/feature` or `libs/<name>/<sub>/feature` directory. `consent` and `session` have
+ * neither — yet both ARE catalogued in `FEATURE_BLOCKS` (their briefs named them explicitly,
+ * and both are real `core: true` blocks). The test would therefore NOT go red if either were
+ * ever deleted from `FEATURE_BLOCKS`: there is no directory to flag them missing. Only
+ * `feature-blocks.spec.ts`'s own assertions and manual review would notice. Keep this in mind
+ * before removing either block's entry.
+ *
+ * WHY NO REVERSE EDGES WERE DRAWN FOR THE GROUP VIEW'S EMBEDDED LISTS — the single decision
+ * this file's history exists to preserve, because it is the one a future reader is most likely
+ * to "fix" into a cycle. `libs/subject/group/feature/group-view.page.ts` embeds FOUR other
+ * blocks' list components as segments — `CalEventList`, `MembershipList`, `DocumentList` and
+ * `TaskList` — plus a `PageDispatcher` for the chat segment, and hoists SIX context wrappers
+ * out of them (`c-contentpage`, `c-calevents`, `c-tasks`, `c-folder`, `c-groupmembers`,
+ * `contextMenuChat`). Under the dividing line each embedded component looks like an edge, but
+ * `calevent` and `relationship` ALREADY declare `dependsOn: ['subject', …]`, so the mirror
+ * edge would close a cycle in both cases. The resolution, settled across tasks 16-18 and not
+ * to be re-argued:
+ *  - `document` / `task` — no existing edge in the other direction, so `subject` declares a
+ *    plain EDGE to each (`dependsOn: ['document', 'folder', 'task']`).
+ *  - `calevent` / `relationship` — NO reverse edge. Their wrappers are catalogued on the block
+ *    that owns the dispatching component (`c-calevents` on `calevent`, `c-groupmembers` on
+ *    `relationship`), which is what actually keeps the segments working.
+ *  - `chat` — no edge either; `subject` CO-DECLARES `contextMenuChat` instead, because only a
+ *    menu doc crosses that boundary (the segment embeds core `PageDispatcher`, not a chat
+ *    component). An edge would have made an external processor with no DPA always-on for every
+ *    member-management tenant.
+ * A cycle would not crash — `resolveWithDeps` (`feature-deps.util.ts`) terminates on one, and
+ * `feature-deps.util.spec.ts:40` pins that — which is exactly why the damage is silent:
+ * enablement becomes MUTUAL (two separately switchable blocks quietly fuse into one) and the
+ * picker's `dependents_confirm` message, generated from the same graph, states a dependency
+ * direction that is not real. `feature-catalogue.completeness.spec.ts` now rejects any cycle
+ * and names the offending path. Do not soften it to make an edge pass.
+ *
+ * ALSO SETTLED, so it is not rediscovered as a gap: `activity` is owed NO edges at all. Every
+ * import of `@okr/activity-data-access` from a catalogued block is an `ActivityService.log(…)`
+ * audit-trail write, invisible on the calling block's own surface — the "no edge" side of the
+ * dividing line. Two TODOs claiming otherwise (on `finance` and `folder`) were retracted in
+ * task 17. See the `activity` block's own comment for what that means for retention.
+ */

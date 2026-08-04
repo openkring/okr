@@ -197,31 +197,110 @@ const aoc: FeatureBlock = {
   // `aoc-data.store.ts:24` (`documentValidations`/`getDocumentIndex`) — read and repair the
   // `docs` collection directly. The `aoc-doc` entry still listed in the TODO below is
   // literally the "Dokumente" admin screen over it.
+  //
+  // NO `task` EDGE, although `aoc-data.store.ts:35` imports from `@okr/task-util`
+  // (`getTaskIndex`, `taskValidations`). That lib is PURE FUNCTIONS — the "Daten" screen
+  // re-derives search indexes and validates documents for every collection in the tenant, so
+  // it imports the util layer of a dozen domains the same way. No component crosses the
+  // boundary, aoc navigates into no task screen, and no menu doc of task's is involved: the
+  // "no edge" side of the settled dividing line, one step further from an edge than the
+  // data-access-service case (`folder`/`chat`/`finance` → `activity`). Same for the `activity`
+  // domain, whose `activity-all` menu doc is a child of the SHARED `aoc-menu` parent this
+  // block also declares — a shared parent is not an edge either (see `activity` below, which
+  // owns that spec and co-declares the same parent).
   dependsOn: ['document'],
-  collections: [],
-  // TODO(task-15-18): the live `aoc-menu` doc's children[] (verified against Firestore,
-  // task 12 review round 2) also lists these keys, still missing a home:
-  //  - aoc-sessions, aoc-chat, aoc-account, aoc-doc, aoc-bexio, aoc-srv: route to
-  //    AocSession/AocChat/AocUserAccounts/AocDoc/AocBexio/AocSrv in `aoc-feature`, i.e.
-  //    genuine AOC screens (app.routes.ts's `aoc` children: sessions/chat/account/doc/
-  //    bexio/srv) that never made it into this array when this block was first
-  //    catalogued. Belongs HERE, as this block's own children — not a cross-domain gap.
-  //  - activity-all → belongs to the future `activity` block.
-  //  - divider_empty → generic reusable divider, same class as `filter-toggle`/
-  //    `menudivider` — not attributable to any single domain, correctly left uncatalogued.
-  // RESOLVED (task 14): `flighttracker` belongs to `mobility` (below) — nested under
-  // `aocMenuParent`, not top-level, mirroring its live tree position as a child of
-  // `aoc-menu`.
-  // (user-all, priv-register, priv-audit — also live children of `aoc-menu` — are already
-  // resolved: they're catalogued under `user`/`security` below, via `aocMenuParent`.)
-  menu: [aocMenuParent([
-    { key: 'aoc-admin',      name: 'aoc-admin',      url: '/aoc/adminops',   action: 'navigate', roleNeeded: 'admin', icon: 'admin',    label: '@main.aoc.admin' },
-    { key: 'aoc-auth',       name: 'aoc-auth',       url: '/aoc/roles',      action: 'navigate', roleNeeded: 'admin', icon: 'key',      label: '@main.aoc.auth' },
-    { key: 'aoc-content',    name: 'aoc-content',    url: '/aoc/content',    action: 'navigate', roleNeeded: 'admin', icon: 'page',     label: 'Content' },
-    { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: 'Daten' },
-    { key: 'aoc-statistics', name: 'aoc-statistics', url: '/aoc/statistics', action: 'navigate', roleNeeded: 'admin', icon: 'chart',    label: 'Statistiken' },
-    { key: 'aoc-storage',    name: 'aoc-storage',    url: '/aoc/storage',    action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: 'Storage' },
-  ])],
+  // Was `[]` with no justification (task 5); researched and corrected in task 18, in step with
+  // the `tag`/`website` routes added to this block's route fragment. `tags` (`TagCollection`,
+  // `tag.model.ts:14`) and `websiteContent` (`WebsiteContentCollection`,
+  // `website-content.model.ts:18`) are written ONLY by this domain — `aoc-tag.store.ts`
+  // (create/update/delete) and `aoc-website.store.ts` (create/update/delete) are the sole
+  // writers anywhere in `libs/` or `apps/`. `app.store.ts:173` READS `tags` as global
+  // reference data, which does not make it shared: `collections` records OWNERSHIP (it feeds
+  // the retention + audit pass), the same rule applied to `groups` on the `chat` block.
+  //
+  // Nothing else is aoc's, though this domain touches ~28 `*Collection` constants: every
+  // other one is another block's, read (and in the repair screens, rewritten) by the admin
+  // console. Listing them here would claim ownership of data governed elsewhere and would
+  // double-count it in the retention pass.
+  collections: ['tags', 'websiteContent'],
+  // The task-12 TODO that stood here is fully RESOLVED — every live child of `aoc-menu` now
+  // has a home. For the record, in the live doc's own child order (`aoc-admin, aoc-auth,
+  // aoc-content, aoc-data, aoc-statistics, aoc-storage, user-all, aoc-sessions, aoc-chat,
+  // aoc-account, aoc-doc, aoc-bexio, aoc-srv, activity-all, flighttracker, priv-register,
+  // priv-audit, divider_empty`):
+  //  - the twelve `aoc-*` entries are this block's own, all twelve declared below (task 18
+  //    added the last six: sessions/chat/account/doc/bexio/srv, whose routes were also missing
+  //    from `FEATURE_ROUTES` until now);
+  //  - `user-all` → `user`; `priv-register`/`priv-audit` → `security`; `flighttracker` →
+  //    `mobility` (task 14); `activity-all` → `activity` (task 18) — each via `aocMenuParent`;
+  //  - `divider_empty` stays uncatalogued, and now for a HARD reason rather than a soft one:
+  //    its live `action` is `divider`, which is not a member of `MenuSpec['action']` at all,
+  //    so it is not expressible here. Same as `fibu`/`budget` on the `finance` block.
+  //
+  // TWO AOC SCREENS ARE ROUTED BUT UN-MENU'D, stated so the omission is not read as an
+  // oversight: `/aoc/email` (`AocEmail`) and `/aoc/trip` (`AocTrip`) have NO live `menuItems`
+  // doc. Verified with two query shapes, per the `c-yearlyevents` lesson: a name-equality `IN`
+  // query over [aoc-trip, aoc-website, aoc-tag, aoc-email, …] returned `aoc-website` only, and
+  // an ordered range scan of every doc whose `name` sorts in ['a','b') returned 21 documents
+  // whose `aoc-*` members are EXACTLY the twelve leaves declared below plus the `aoc-menu`
+  // parent and `aoc-website` — no `aoc-email`, no `aoc-trip`, under any spelling. Both screens
+  // are reachable only by typing the URL, the same "un-menu'd admin screen" shape as `i18n` and
+  // `subject`'s `/applications`. (`/aoc/tag`'s doc is named `tag-all`, not `aoc-tag` — see
+  // below.)
+  menu: [
+    aocMenuParent([
+      { key: 'aoc-admin',      name: 'aoc-admin',      url: '/aoc/adminops',   action: 'navigate', roleNeeded: 'admin', icon: 'admin',    label: '@main.aoc.admin' },
+      { key: 'aoc-auth',       name: 'aoc-auth',       url: '/aoc/roles',      action: 'navigate', roleNeeded: 'admin', icon: 'key',      label: '@main.aoc.auth' },
+      { key: 'aoc-content',    name: 'aoc-content',    url: '/aoc/content',    action: 'navigate', roleNeeded: 'admin', icon: 'page',     label: 'Content' },
+      { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: 'Daten' },
+      { key: 'aoc-statistics', name: 'aoc-statistics', url: '/aoc/statistics', action: 'navigate', roleNeeded: 'admin', icon: 'chart',    label: 'Statistiken' },
+      { key: 'aoc-storage',    name: 'aoc-storage',    url: '/aoc/storage',    action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: 'Storage' },
+      // Added task 18, verbatim off the live docs (all six `tenants: ['scs']` only — i.e.
+      // every other tenant's AOC submenu is missing them today, which is exactly what
+      // cataloguing them fixes).
+      { key: 'aoc-sessions',   name: 'aoc-sessions',   url: '/aoc/sessions',   action: 'navigate', roleNeeded: 'admin', icon: 'history',  label: 'User Sessions' },
+      { key: 'aoc-chat',       name: 'aoc-chat',       url: '/aoc/chat',       action: 'navigate', roleNeeded: 'admin', icon: 'chatbubbles', label: 'Chat Admin' },
+      { key: 'aoc-account',    name: 'aoc-account',    url: '/aoc/account',    action: 'navigate', roleNeeded: 'admin', icon: 'person',   label: 'User Accounts' },
+      { key: 'aoc-doc',        name: 'aoc-doc',        url: '/aoc/doc',        action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: 'Dokumente' },
+      { key: 'aoc-bexio',      name: 'aoc-bexio',      url: '/aoc/bexio',      action: 'navigate', roleNeeded: 'admin', icon: 'bank',     label: 'Bexio' },
+      // `roleNeeded: contentAdmin` (not `admin`) is the LIVE value, copied verbatim — and it
+      // is inert either way: the `/aoc` route parent is `isAdminGuard()`, so a
+      // contentAdmin-but-not-admin user sees the row and is bounced. Same UX-dead-end class as
+      // `addresses` (`subject`), `document-all` (`document`) and `forms-all` (`forms`), not an
+      // access leak.
+      //
+      // `icon: '//org.srv'` is a LIVE-DATA DEFECT, flagged rather than justified — identical
+      // to `boats-club`'s `//org.scs` on the `resource` block: it is a storage asset path for
+      // one specific organisation (SRV, the Swiss rowing federation), so a newly seeded tenant
+      // gets this literal written into its own `aoc-srv` doc and renders a blank icon.
+      // Mirrored verbatim per the never-invent rule; a decision for whoever owns menu-doc icon
+      // hygiene. NOTE the SCREEN itself is generic despite the name (an SRV membership
+      // reconciliation admin tool), which is why the entry is catalogued at all rather than
+      // excluded as tenant-bespoke — the tenant literal is in the icon only, not in the
+      // url/label/name.
+      { key: 'aoc-srv',        name: 'aoc-srv',        url: '/aoc/srv',        action: 'navigate', roleNeeded: 'contentAdmin', icon: '//org.srv', label: 'SRV' },
+    ]),
+    // TREE-SHAPE SURPRISE, verified rather than assumed (task 18): these two AOC screens hang
+    // off `cms-menu`, NOT `aoc-menu`. The live `cms-menu.menuItems` array reads `[cms-graph,
+    // menu-all, page-all, section-all, document-all, location-all, test-sections,
+    // category-all, icon-all, tag-all, aoc-website, templates, forms-all, esign]` — content
+    // administration, which is where an editor would look for them, even though both urls
+    // point into `/aoc/*` and both routes are gated by this block's `isAdminGuard()` parent.
+    // Declared through `cmsMenuParent()` accordingly (rule 2: mirror the live TREE SHAPE), so
+    // the `aoc` block is the sixth block to co-declare that shared parent.
+    //
+    // Neither name carries an `aoc-`/`tag-` prefix consistently: the doc for `/aoc/tag` is
+    // named `tag-all` and the one for `aoc/website` is named `aoc-website`. Both copied as
+    // found; `key`/`name` must equal the live `name`, never a tidier invention.
+    //
+    // `aoc-website`'s url has NO LEADING SLASH (`aoc/website`, not `/aoc/website`) — copied
+    // verbatim, same as `transfer-all`/`resource-all`/`rboat-all` on other blocks;
+    // `urlResolves` matches by path segment, so it still resolves against the route above.
+    cmsMenuParent([
+      { key: 'tag-all',     name: 'tag-all',     url: '/aoc/tag',   action: 'navigate', roleNeeded: 'contentAdmin', icon: 'tag',   label: 'Tags' },
+      { key: 'aoc-website', name: 'aoc-website', url: 'aoc/website', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'globe', label: 'Website editieren' },
+    ]),
+  ],
 };
 
 const auth: FeatureBlock = {
@@ -563,7 +642,32 @@ const subject: FeatureBlock = {
   // menus: a far bigger footprint than the room popover it was drawn to protect. It would
   // not even have made the segment functional — `integrations.matrix` gates the Matrix client
   // independently of block selection. See the `chat` block below for the full picture.
-  dependsOn: ['document', 'folder'],
+  //
+  // `task` ADDED (task 18) — a real EDGE, and the FIRST arm of the dividing line, not the
+  // menu-doc arm: `group-view.page.ts:18` imports `TaskList` from `@okr/task-feature` and
+  // renders it as the group view's whole "Aufgaben" segment (template line 138,
+  // `<okr-task-list … contextMenuName="c-tasks">`); the group toolbar hoists that wrapper key
+  // (`segmentContextMenuName()`, `case 'tasks': return 'c-tasks'`) and delegates the popover
+  // back to `TaskList.onPopoverDismiss` (line 332). A COMPONENT crosses the block boundary —
+  // structurally the same as `DocumentList` in the "Dateien" segment, one segment over, and
+  // unlike the chat segment, which embeds only core `PageDispatcher`.
+  //
+  // WHY AN EDGE HERE BUT CO-DECLARATION FOR `chat`, and why this one does NOT close a cycle —
+  // the two questions are the same question. The handoff note left this branch open on
+  // purpose: an edge is correct only if `task` does not itself depend on `subject`. RE-VERIFIED
+  // at the time of writing rather than inherited: every `@okr/*` import under `libs/task` is
+  // `@okr/task-*`, `@okr/shared-*`, `@okr/comment-feature`, `@okr/cms-menu-feature`,
+  // `@okr/avatar-*` (all three `core: true`) and `@okr/activity-data-access` (the settled
+  // no-edge class) — no `@okr/subject-*` lib anywhere. `task` therefore ships `dependsOn: []`
+  // and this edge leaves the graph acyclic; the guard in
+  // `feature-catalogue.completeness.spec.ts` confirms it. Contrast `CalEventList` and
+  // `MembershipList`, which the SAME file embeds: `calevent` and `relationship` both already
+  // declare `dependsOn: ['subject', …]`, so the mirror-image edge there WOULD close a cycle,
+  // which is why their wrappers (`c-calevents`, `c-groupmembers`) are catalogued on the owning
+  // block instead. `c-tasks` is catalogued on `task` for the same reason — cataloguing the
+  // wrapper is what keeps the segment working; the edge is what makes `task` reachable at all
+  // for a tenant that enabled `subject` and not `task`.
+  dependsOn: ['document', 'folder', 'task'],
   // PersonCollection, OrgCollection, AddressCollection, GroupCollection,
   // ApplicationCollection, AddressDirectoryCollection (all from `@okr/shared-models`,
   // verified via each subdomain's own `*.service.ts`). `swisscities` owns NO collection —
@@ -920,17 +1024,18 @@ const mobility: FeatureBlock = {
  *    generation is not degraded but permanently dead — "X needs data only Y's screens can
  *    author", the fourth arm of the dividing line.
  *
- * STILL OWED, and it is a real edge — `task`: `expense.store.ts:123` destructures
- * `TaskEditModal` out of a dynamic import of the `task` feature lib, i.e. finance's own expense
- * screen opens a COMPONENT out of another block's feature lib (the first arm of the dividing
- * line, same shape as `subject` embedding `DocumentList`). NOTE the lib name is spelled out
- * here rather than written as a literal dynamic-import expression on purpose: the
- * `lib-refs`/`gen-lib-references` scanner matches `import('@okr/…')` anywhere in a file,
- * COMMENTS INCLUDED, and quoting that call verbatim makes it record a `tenant/util →
- * task/feature` reference and abort on the resulting cycle. `task` is not yet a catalogue block
- * and `dependsOn` targets must already exist (enforced by
- * `feature-catalogue.completeness.spec.ts`), so it cannot be declared today.
- * TODO(task 18 — `task`): add `'task'` to `dependsOn` when that block lands.
+ *  - `task` — DECLARED (task 18), discharging the TODO that stood here. `expense.store.ts:123`
+ *    destructures `TaskEditModal` out of a dynamic import of the `task` feature lib, i.e.
+ *    finance's own expense screen opens a COMPONENT out of another block's feature lib: the
+ *    first arm of the dividing line, same shape as `subject` embedding `DocumentList`. Being a
+ *    DYNAMIC import changes nothing about the edge — `dependsOn` gates the enablement
+ *    selection, never module loading, and the action is on finance's own surface (the expense
+ *    detail's "Aufgabe erstellen"), which is the whole test. Acyclic: `task` declares
+ *    `dependsOn: []`.
+ *    NOTE the lib name is spelled out here rather than written as a literal dynamic-import
+ *    expression on purpose: the `lib-refs`/`gen-lib-references` scanner matches
+ *    `import('@okr/…')` anywhere in a file, COMMENTS INCLUDED, and quoting that call verbatim
+ *    makes it record a `tenant/util → task/feature` reference and abort on the resulting cycle.
  *
  * NO EDGE for `@okr/activity-data-access` (task 17 fix round 1 — a TODO claiming one used to
  * sit here and was wrong): `bill.service.ts:9` and `invoice.service.ts:9` inject
@@ -978,7 +1083,7 @@ const finance: FeatureBlock = {
   label: '@tenant/util.feature.finance.label',
   icon: 'invoice',
   defaultAvailability: 'ga',
-  dependsOn: ['subject', 'pdf-template'],
+  dependsOn: ['subject', 'pdf-template', 'task'],
   // Every `*Collection` constant in `@okr/shared-models` reachable from this domain, in
   // subdomain order. The first seventeen are referenced by a `libs/finance/**` service
   // (AccountCollection, AccountingConfigCollection, AssetCollection, AssetCategoryCollection,
@@ -1602,16 +1707,289 @@ const consent: FeatureBlock = {
 };
 
 /**
+ * `libs/activity/{data-access,feature,util}` — the tenant's AUDIT TRAIL. `ActivityService.log`
+ * appends one `ActivityModel` row per meaningful mutation; `ActivityList` (`/activity`,
+ * admin-only) is the screen that reads them back, and `ActivityViewModal` renders a single
+ * entry.
+ *
+ * `dependsOn: []`, and — the point worth understanding — NOTHING DEPENDS ON IT EITHER, by the
+ * settled rule rather than by omission. THIRTY-FIVE files under `libs/` outside `libs/activity`
+ * import `@okr/activity-data-access` (34 sources + `menu.store.spec.ts`), spread over twelve
+ * domains: auth, calevent, chat, cms, finance, folder, instruments, relationship, resource,
+ * subject, task, user. Counted and re-derived rather than eyeballed, and so is the next claim:
+ * `ActivityService` is the ONLY symbol any of them imports from the lib, and across all 35 files
+ * it is called in exactly two ways — `activityService.log(…)` (95 call sites) and
+ * `activityService.logAuth(…)` (6, all in `auth`). Both are audit-trail WRITES whose effect is
+ * invisible on the calling block's own surface, which is the "no edge" side of the dividing line
+ * recorded in the series conventions. Two `TODO`s claiming an edge was owed (on `finance` and
+ * `folder`) were retracted in task 17 for exactly this reason; cataloguing this block does not
+ * reopen them.
+ *
+ * STATE THE CONSEQUENCE PLAINLY rather than let the empty `dependsOn` imply the opposite: this
+ * block gates the SCREEN, never the logging. `ActivityService` ships in every bundle and keeps
+ * writing to `activities` whatever a tenant selects, so a tenant with `activity` switched off
+ * accumulates an audit trail it has no screen to read. That is the correct trade (an audit
+ * trail a tenant can silently disable would be worse than useless), but it means `collections`
+ * below is load-bearing for the retention pass even for tenants that never enable the block.
+ *
+ * SECOND WAY THE DATA IS REACHABLE WITHOUT THIS BLOCK, checked rather than assumed:
+ * `activities-section.store.ts:14` (`libs/cms/section/feature`) imports `ActivityViewModal`
+ * from `@okr/activity-feature` — a COMPONENT crossing the boundary, which for any non-core
+ * block would be an edge. `cms` is `core: true`, so by the settled convention it declares no
+ * non-core dependency (see the long note on the `cms` block), and the CMS `activities` section
+ * therefore renders activity entries on a content page for every tenant regardless. Flagged as
+ * a product question — should a tenant without `activity` be offered that section? — not
+ * silently encoded as a dependency.
+ */
+const activity: FeatureBlock = {
+  id: 'activity',
+  bundle: 'special',
+  label: '@tenant/util.feature.activity.label',
+  icon: 'history',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // `ActivityCollection` = 'activities' (`@okr/shared-models`, `activity.model.ts:43`), written
+  // by `activity.service.ts` and read by `activity.store.ts`. The only collection this domain
+  // touches — grepped, not assumed.
+  collections: ['activities'],
+  // Live child of the shared `aoc-menu` parent (`aoc-menu.menuItems` lists `activity-all`
+  // between `aoc-srv` and `flighttracker`) — the last of that doc's children to find a home,
+  // and nested via `aocMenuParent()` accordingly, never top-level (rule 2). `tenants: ['scs']`
+  // only today, so 15 of the 16 tenants' AOC submenus are missing it.
+  //
+  // No context wrapper is owed: `/activity` takes no `:contextMenuName` segment and
+  // `ActivityList` binds no `okr-menu` at all (verified — no `contextMenuName`/`menuName`
+  // anywhere under `libs/activity`).
+  menu: [
+    aocMenuParent([
+      { key: 'activity-all', name: 'activity-all', url: '/activity', action: 'navigate', roleNeeded: 'admin', icon: 'stackoverflow', label: 'System-Aktivitäten' },
+    ]),
+  ],
+};
+
+/**
+ * `libs/task/{data-access,feature,ui,util}` — the shared todo list. `TaskList` renders both the
+ * tenant-wide list (`/task/all/c-tasks`) and a member's own (`/task/my/c-tasks`), and is ALSO
+ * embedded, un-routed, in two other places: the group view's "Aufgaben" segment
+ * (`group-view.page.ts:18`) and, through `TaskEditModal`, finance's expense screen
+ * (`expense.store.ts:123`) and the CMS `tasks` section (`tasks-section.store.ts:14`).
+ *
+ * `dependsOn: []` — verified by listing every `@okr/*` import under `libs/task`: `@okr/task-*`,
+ * `@okr/shared-*`, `@okr/comment-feature`, `@okr/cms-menu-feature`, `@okr/avatar-*` (three
+ * `core: true` blocks, which by the settled convention are never declared) and
+ * `@okr/activity-data-access` (`task.service.ts` — `ActivityService.log`, the settled no-edge
+ * class). Notably NO `@okr/subject-*` import, which is what makes the reverse edge safe.
+ *
+ * WHO DEPENDS ON THIS BLOCK, and who deliberately does not — read together, none tells the
+ * whole story alone:
+ *  - `subject` — DOES (task 18). Its group view embeds `TaskList` itself. Full argument on that
+ *    block; acyclic precisely because of the empty `dependsOn` above.
+ *  - `finance` — DOES (task 18), discharging the TODO left there in task 15: the expense screen
+ *    opens `TaskEditModal` out of this block's feature lib.
+ *  - `cms` (`section`) — does NOT, and this is the interesting one: `tasks-section.store.ts`
+ *    imports `TaskService`, `TaskEditModal` AND `isTask`, i.e. it both reads tasks and opens
+ *    task's edit modal. That is unambiguously an edge by the dividing line — but `cms` is
+ *    `core: true`, and a core block declaring a non-core dependency would drag `task` into
+ *    every tenant through `resolveWithDeps` and destroy its switchability, buying nothing (the
+ *    classes ship in the bundle either way). Same reasoning, same shape, as `cms` withholding
+ *    its `document`/`folder` edges. CONSEQUENCE, stated rather than hidden: a tenant with
+ *    `task` disabled can still be given a CMS page carrying a `tasks` section, and that section
+ *    will list and edit tasks with no `/task` route and no todo menu row anywhere. A product
+ *    decision (should the section picker be gated on the owning block?), flagged in the task-18
+ *    report — the same open question `forms` raises about its `applications` submission target.
+ *  - `geo`, `relationship`, `subject/application`, `aoc` — do NOT: `trip.store.ts:15`,
+ *    `membership.store.ts:20` and `application.service.ts:25` inject `TaskService` (a
+ *    data-access service, the settled no-edge class — they create follow-up tasks as a side
+ *    effect), and `aoc-data.store.ts:35` imports pure helpers from `@okr/task-util`. No screen
+ *    of theirs renders a task component. (`geo` is core anyway.)
+ *
+ * MENU TREE SHAPE — no generic parent exists, so both entries are TOP-LEVEL here, following the
+ * `logbuch` (geo) and `invitation-all` (relationship) precedent rather than inventing a
+ * grouping. Verified live: every parent that lists `task-all` is tenant-bespoke — `board-menu`
+ * (`tenants: ['scs']`, label `@main.board.title`), `event-menu-scs` (`['scs']`, name embeds the
+ * tenant), and `event-menu` (`['test']`); `task-my` sits only under `event-menu-scs`. The
+ * ENTRIES themselves are generic (no tenant or org key in name, url or label), which is exactly
+ * the `logbuch` shape: catalogue the entry, exclude the bespoke parent. A fresh tenant gets both
+ * as root nav rows via `rootNavKeys()`; scs's existing curation is untouched, because
+ * `planMenuOps` appends children and never replaces them.
+ *
+ * LIVE-DATA DEFECT FOUND, reported not worked around (and NOT the known `resource-menu` /
+ * `filter-toggle` pair): TWO `menuItems` documents carry the same `name: 'event-menu'` —
+ * `menuItems/event-menu` and `menuItems/info_menu` — with byte-identical content down to the
+ * stale `index` string. Neither is archived. It is a third instance of the duplicate-`name`
+ * class that currently makes the seeding callable throw for every tenant, and it is inert for
+ * THIS catalogue only because `event-menu` is tenant-bespoke and therefore excluded. Handed to
+ * the dedicated de-duplication task; nothing here works around it.
+ */
+const task: FeatureBlock = {
+  id: 'task',
+  bundle: 'special',
+  label: '@tenant/util.feature.task.label',
+  icon: 'todo',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // `TaskCollection` = 'tasks' (`@okr/shared-models`, `task.model.ts:37`) — the only collection
+  // this domain touches (`task.service.ts` + `task.store.ts`, grepped). Note the `submitForm`
+  // callable also writes `tasks` for its notification path (`apps/functions/src/forms/index.ts`,
+  // see the `forms` block) — a Cloud-Function write into THIS block's collection, which is why
+  // it is listed here and not there: `collections` records ownership, and the retention pass
+  // must find `tasks` exactly once.
+  collections: ['tasks'],
+  menu: [
+    // Both verbatim off the live docs. `task-all` is `tenants: ['test','scs']`, `task-my`
+    // `['scs']` — so most tenants have neither row today.
+    { key: 'task-all', name: 'task-all', url: '/task/all/c-tasks', action: 'navigate', roleNeeded: 'privileged', icon: 'todo', label: 'Alle Todos' },
+    { key: 'task-my', name: 'task-my', url: '/task/my/c-tasks', action: 'navigate', roleNeeded: 'registered', icon: 'todo', label: 'Meine Aufgaben' },
+    // `c-tasks` — catalogued here, on the block whose `TaskList.onPopoverDismiss` dispatches all
+    // three children (`add`, `export`, `toggleFilter`), exactly as `c-folder` sits on `document`
+    // rather than `folder`. It is reached THREE ways, only the first of which any test can see:
+    // as the `:contextMenuName` segment of both urls above; hoisted in application code by the
+    // group view's toolbar (`group-view.page.ts`, `case 'tasks': return 'c-tasks'`) for the
+    // embedded "Aufgaben" segment; and through `subject`'s `dependsOn: [… 'task']`, which is what
+    // gets this doc onto a tenant that runs member management. Unlike `c-folder`, it is NOT
+    // broken in production: the live doc is already on all 16 tenants — an uncatalogued doc, not
+    // an outage.
+    //
+    // ROLE SPREAD IS REAL, not a transcription slip: the wrapper is `privileged` while both
+    // action children are `registered` (a member may add their own todo and export the list from
+    // a popover they can only open in a context that already grants it). Copied verbatim.
+    { key: 'c-tasks', name: 'c-tasks', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
+      { key: 'task-add', name: 'task-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Neuen Task erstellen' },
+      // Live-data note, same class as `expense-export` on `finance`: this doc's stale `index`
+      // string reads `a:callFunction k:test-export` (with a typo'd key), but its `action` FIELD —
+      // the authoritative one, and the only one `MenuSpec` models — is `call`. `index` is
+      // regenerated from `name`/`action`/`okey` on every write (`menuIndex`, `menu-seed.util.ts`),
+      // so the drift self-heals; mirrored off `action`.
+      { key: 'task-export', name: 'task-export', url: 'export', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Aufgaben exportieren' },
+      // The same ACTIVE (non-archived) `filter-toggle` doc `c-calevents` and `c-documents`
+      // already declare — field-identical here on purpose (two live docs share this name; the
+      // `isArchived: true` one must not be catalogued, rule 10). See the long note on
+      // `c-calevents`. `TaskList` binds it through `[toggleStates]="{ toggleFilter: showFilter() }"`
+      // (`task-list.ts:72`), so the `toggle` action and the `toggleFilter` url are both load-bearing.
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen' },
+    ] },
+  ],
+};
+
+/**
+ * Container domain for `libs/instruments/{data-access,feature,ui,util}` plus
+ * `libs/instruments/whiteboard/{data-access,feature,ui,util}` — ONE block over TWO top-level
+ * route paths (`/instruments`, `/whiteboard`), per the container-level granularity ruling, the
+ * same shape as `resource` and `finance`.
+ *
+ * Two related strategy primitives: an INSTRUMENT is a declarative grid of ranked topic cards
+ * (`InstrumentType` = `swot` | `pestel` | `bmc` | `eisenhower` — one collection, one renderer,
+ * discriminated by `type`); a WHITEBOARD is the free canvas of stickers and labels the
+ * instrument model's own doc comment deliberately keeps separate from it.
+ *
+ * `dependsOn: []` — every `@okr/*` import under `libs/instruments` is `@okr/instruments-*`,
+ * `@okr/shared-*`, `@okr/cms-menu-feature` (`core: true`) or `@okr/activity-data-access` (the
+ * settled no-edge class). ONE near-miss worth naming so a later reader does not re-open it:
+ * `InstrumentTopic` carries a polymorphic `sourceType`/`sourceKey` pair documented as
+ * `'task' | 'objective' | 'risk'`, i.e. a topic card may LINK to a task. That is not an edge and
+ * not even a code dependency — the primitive renders a source chip from display data handed to
+ * it and emits an intent; it imports nothing from `@okr/task-*` (grepped).
+ *
+ * NOTHING DEPENDS ON IT either: before this task, the only files outside `libs/instruments`
+ * naming an `@okr/instruments-*` alias at all were `apps/scs-app/src/app/app.routes.ts` and the
+ * two shared models (`instrument.model.ts`, `whiteboard.model.ts`, in doc comments) — plus, from
+ * now on, this block's route fragment in `@okr/tenant-routes`. No other block embeds an
+ * instrument or whiteboard component.
+ */
+const instruments: FeatureBlock = {
+  id: 'instruments',
+  bundle: 'special',
+  label: '@tenant/util.feature.instruments.label',
+  icon: 'target',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // `InstrumentCollection` = 'instruments' (`instrument.model.ts:77`) and `WhiteboardCollection`
+  // = 'whiteboards' (`whiteboard.model.ts:71`), one per subdomain, both from `@okr/shared-models`
+  // and both referenced by their own service + store (grepped). Topic cards and canvas items are
+  // EMBEDDED arrays on those documents, not subcollections — stated explicitly in both models'
+  // doc comments — so there is no third collection.
+  collections: ['instruments', 'whiteboards'],
+  // NO LIVE `menuItems` DOC EXISTS FOR EITHER SUBDOMAIN, and neither list screen has a context
+  // wrapper — verified with two query shapes per the `c-yearlyevents` lesson, because a
+  // single-shape "no doc" claim has been wrong here before:
+  //  - a name-equality `IN` query over [quiz, games, instruments-all, instrument-all,
+  //    whiteboard-all, c-instruments, c-whiteboards, c-whiteboard, c-instrument] returned zero
+  //    hits;
+  //  - three ordered range scans over the whole collection — every doc whose `name` sorts in
+  //    ['i','j'), in ['w','x') and in ['c-i','c-z') — returned 11, 4 and 26 documents
+  //    respectively (each well under the query's 40-60 doc limit, so none was truncated), none
+  //    of them instrument- or whiteboard-related.
+  // So this is genuinely `menu: []`, not an oversight. CONSEQUENCE, reported and deliberately
+  // not invented around: both list routes take a `:contextMenuName` segment and `WhiteboardList`
+  // renders `<okr-menu [menuName]="contextMenuName()">` from it, so until someone authors those
+  // docs the screens have no add/export action and are reachable only by typing a URL. Authoring
+  // them is a data change (and the values would be guesses); cataloguing invented docs would
+  // seed them into all 16 tenants.
+  menu: [],
+};
+
+/**
+ * `libs/games/quiz/feature` — the domain's ONLY subdomain and only screen: `QuizPage` +
+ * `QuizStore`, routed at `/quiz` behind `isAuthenticatedGuard`.
+ *
+ * WHAT IT ACTUALLY IS, checked before classifying it: a self-contained, in-memory quiz. Its
+ * whole state is a hard-coded literal in `quiz.state.ts` (`initialState`, `title: 'NgRx Quiz'`,
+ * a fixed question list and a 180-second timer); `quiz.store.ts` scores answers against it with
+ * `patchState` and nothing else. There is no service, no Firestore access, and the domain's
+ * ONLY `@okr/*` import in any file is `@okr/shared-ui` — hence `dependsOn: []` and
+ * `collections: []` are both structural, not unresearched.
+ *
+ * It is a BLOCK, not a `NON_BLOCK_DOMAINS` entry: it is a user-facing routed screen, i.e. a
+ * product feature (however slight), not cross-cutting infrastructure — the same call made for
+ * `social-feed`, whose block comment argues it at length.
+ *
+ * `defaultAvailability: 'ga'` PER THE TASK BRIEF, and FLAGGED FOR THE REPO OWNER rather than
+ * decided here — this is the closest analogue in the catalogue to `social-feed`, which the owner
+ * ruled down to `'disabled'` on 2026-08-04 as "not really used, should not appear among the
+ * features a tenant can select". The two are NOT identical and the difference cuts toward
+ * leaving it `'ga'`: `social-feed` has no app route, no importer and a hard-coded
+ * `http://localhost:3333` backend, whereas `/quiz` is really registered in `app.routes.ts` and
+ * really works today for any authenticated user. Dropping it to `'disabled'` would therefore
+ * REMOVE a live route once Task 19 drives the real route table from this catalogue — a
+ * behaviour change, which a cataloguing task must not make unilaterally. At `'ga'` the cost is
+ * a picker row offering a hard-coded "NgRx Quiz" to every tenant; a `feature-rollout/games` doc
+ * overrides it either way (`feature-rollout.util.ts:29`, both directions). See the task-18
+ * report.
+ */
+const games: FeatureBlock = {
+  id: 'games',
+  bundle: 'special',
+  label: '@tenant/util.feature.games.label',
+  icon: 'star',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  // Structurally empty: no Firestore access anywhere in the domain and no `*Collection` constant
+  // for it in `@okr/shared-models` (the quiz's questions are a hard-coded literal in
+  // `quiz.state.ts`). See the block comment.
+  collections: [],
+  // No live `menuItems` doc — verified with the same two query shapes as `instruments` above (a
+  // name-equality `IN` query including `quiz` and `games`, zero hits; plus an ordered range scan
+  // of every doc whose `name` sorts in ['q','s'), which returned 18 documents — all `r*`, i.e.
+  // not a single doc whose name begins with `q` exists at all). `/quiz` is reachable only by
+  // typing the URL today. The route takes
+  // no `:contextMenuName` segment and `QuizPage` binds no `okr-menu`, so no wrapper is owed.
+  menu: [],
+};
+
+/**
  * Every feature block's METADATA the platform ships. Adding a block here is HALF of what
  * makes a feature reachable — the matching Angular route fragment must also be added to
  * `FEATURE_ROUTES` in `@okr/tenant-routes` (`feature-catalogue.ts`), joined by `id`.
  * `feature-catalogue.sync.spec.ts` (in `@okr/tenant-routes`) fails CI if the two ever
  * drift apart; `feature-catalogue.spec.ts` fails if a declared menu url ships no route.
- * Tasks 12-18 fill in the remaining blocks, one bundle each; these two exist because they
- * are p13's bug.
+ * Tasks 12-18 filled in the blocks, one bundle each; the first two exist because they are
+ * p13's bug. The catalogue is now COMPLETE: `feature-catalogue.completeness.spec.ts` (in
+ * `@okr/tenant-routes`) fails on any `libs/<domain>/feature` domain that is neither listed here nor
+ * in `NON_BLOCK_DOMAINS`, with no escape hatch — `PENDING_CLASSIFICATION` was drained and
+ * DELETED in task 18. A new domain must therefore be classified, not deferred.
  */
 export const FEATURE_BLOCKS: FeatureBlock[] = [
-  calevent, aoc,
+  calevent, aoc, activity, task, instruments, games,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
   subject, relationship, vcard,
   resource, mobility,

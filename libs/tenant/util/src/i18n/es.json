@@ -35,7 +35,11 @@
     "folder":       { "label": "Carpetas" },
     "chat":         { "label": "Chat" },
     "social-feed":  { "label": "Muro social" },
-    "forms":        { "label": "Formularios" }
+    "forms":        { "label": "Formularios" },
+    "activity":     { "label": "Actividad del sistema" },
+    "task":         { "label": "Tareas" },
+    "instruments":  { "label": "Instrumentos estratégicos y pizarras" },
+    "games":        { "label": "Cuestionario" }
   },
   "picker": {
     "title": "Bloques de funciones",

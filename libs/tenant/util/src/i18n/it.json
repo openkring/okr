@@ -35,7 +35,11 @@
     "folder":       { "label": "Cartelle" },
     "chat":         { "label": "Chat" },
     "social-feed":  { "label": "Feed sociale" },
-    "forms":        { "label": "Moduli" }
+    "forms":        { "label": "Moduli" },
+    "activity":     { "label": "Attività di sistema" },
+    "task":         { "label": "Compiti" },
+    "instruments":  { "label": "Strumenti strategici e lavagne" },
+    "games":        { "label": "Quiz" }
   },
   "picker": {
     "title": "Blocchi funzionali",

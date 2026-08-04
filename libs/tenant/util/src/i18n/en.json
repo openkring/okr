@@ -35,7 +35,11 @@
     "folder":       { "label": "Folders" },
     "chat":         { "label": "Chat" },
     "social-feed":  { "label": "Social feed" },
-    "forms":        { "label": "Forms" }
+    "forms":        { "label": "Forms" },
+    "activity":     { "label": "System activity" },
+    "task":         { "label": "Tasks" },
+    "instruments":  { "label": "Strategy instruments & whiteboards" },
+    "games":        { "label": "Quiz" }
   },
   "picker": {
     "title": "Feature blocks",

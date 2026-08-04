@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { FEATURE_BLOCKS, collectMenuUrls } from '@okr/tenant-util';
 import type { MenuSpec } from '@okr/tenant-util';
-import { NON_BLOCK_DOMAINS, PENDING_CLASSIFICATION } from './feature-catalogue.non-blocks';
+import { NON_BLOCK_DOMAINS } from './feature-catalogue.non-blocks';
 
 /** Repo-root-relative path to libs/, from this spec file's directory. */
 const LIBS_DIR = join(__dirname, '../../../../..', 'libs');
@@ -33,11 +33,18 @@ function featureDomains(): string[] {
 }
 
 describe('catalogue completeness', () => {
+  /**
+   * THE ASSERTION THIS TEST WAS ALWAYS MEANT TO MAKE. From task 6 to task 18 the `known` set
+   * also folded in a temporary `PENDING_CLASSIFICATION` array, so the test only ever proved
+   * "classified or explicitly deferred". Task 18 drained and DELETED that array, and this now
+   * passes on its own merits: every `libs/<domain>/feature` domain is a catalogue block or a
+   * listed non-block. Do not reintroduce an escape hatch to make a new domain pass — see the
+   * note in `feature-catalogue.non-blocks.ts` for the two options.
+   */
   it('every libs/*/feature domain is a block or an explicit non-block', () => {
     const known = new Set([
       ...FEATURE_BLOCKS.map(b => b.id),
       ...Object.keys(NON_BLOCK_DOMAINS),
-      ...PENDING_CLASSIFICATION,
     ]);
     const unclassified = featureDomains().filter(d => !known.has(d));
     expect(unclassified).toEqual([]);
@@ -119,8 +126,9 @@ describe('catalogue completeness', () => {
    * `dependsOn: ['subject', …]`. Adding the mirror-image edge to `subject` looks like the
    * consistent thing to do and would close a cycle. The correct move there is to catalogue the
    * embedded component's context wrapper on the block that owns it (or co-declare it), never to
-   * draw the reverse edge — see the note above `PENDING_CLASSIFICATION` in
-   * `feature-catalogue.non-blocks.ts`.
+   * draw the reverse edge. Task 18 settled each of the four cases — `document` and `task` got a
+   * real edge (neither depends back on `subject`), `calevent`/`relationship` did not, `chat` got
+   * a menu-doc co-declaration; the full reasoning is in `feature-catalogue.non-blocks.ts`.
    *
    * If a future design genuinely needs mutual dependencies, this test is the wrong answer and
    * the MODEL needs revisiting — do not soften the assertion to make a cycle pass.

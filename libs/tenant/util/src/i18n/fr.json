@@ -35,7 +35,11 @@
     "folder":       { "label": "Dossiers" },
     "chat":         { "label": "Chat" },
     "social-feed":  { "label": "Fil social" },
-    "forms":        { "label": "Formulaires" }
+    "forms":        { "label": "Formulaires" },
+    "activity":     { "label": "Activités du système" },
+    "task":         { "label": "Tâches" },
+    "instruments":  { "label": "Instruments stratégiques et tableaux blancs" },
+    "games":        { "label": "Quiz" }
   },
   "picker": {
     "title": "Blocs fonctionnels",

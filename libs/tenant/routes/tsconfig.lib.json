@@ -14,6 +14,7 @@
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
+    { "path": "../../activity/feature/tsconfig.lib.json" },
     { "path": "../../aoc/feature/tsconfig.lib.json" },
     { "path": "../../auth/feature/tsconfig.lib.json" },
     { "path": "../../calevent/feature/tsconfig.lib.json" },
@@ -37,9 +38,12 @@
     { "path": "../../finance/reporting/feature/tsconfig.lib.json" },
     { "path": "../../finance/vat-code/feature/tsconfig.lib.json" },
     { "path": "../../forms/feature/tsconfig.lib.json" },
+    { "path": "../../games/quiz/feature/tsconfig.lib.json" },
     { "path": "../../geo/location/feature/tsconfig.lib.json" },
     { "path": "../../geo/trip/feature/tsconfig.lib.json" },
     { "path": "../../i18n/feature/tsconfig.lib.json" },
+    { "path": "../../instruments/feature/tsconfig.lib.json" },
+    { "path": "../../instruments/whiteboard/feature/tsconfig.lib.json" },
     { "path": "../../mobility/flighttracker/feature/tsconfig.lib.json" },
     { "path": "../../pdf-template/feature/tsconfig.lib.json" },
     { "path": "../../profile/feature/tsconfig.lib.json" },
@@ -59,6 +63,7 @@
     { "path": "../../subject/group/feature/tsconfig.lib.json" },
     { "path": "../../subject/org/feature/tsconfig.lib.json" },
     { "path": "../../subject/person/feature/tsconfig.lib.json" },
+    { "path": "../../task/feature/tsconfig.lib.json" },
     { "path": "../../user/feature/tsconfig.lib.json" }
   ]
 }

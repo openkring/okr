@@ -62,6 +62,33 @@ const calevent: BlockRoutes = {
   ],
 };
 
+/**
+ * RECONCILED (task 18) against every `aoc` child in `app.routes.ts:388-408`. Task 5 copied
+ * SIX of them; the live app declares SIXTEEN. The ten added here — `chat`, `account`,
+ * `sessions`, `doc`, `tag`, `email`, `bexio`, `srv`, `trip`, `website` — were unreachable
+ * through the catalogue, which matters concretely for four of them: `aoc-sessions`,
+ * `aoc-chat`, `aoc-account`, `aoc-doc`, `aoc-bexio` and `aoc-srv` are live children of the
+ * shared `aoc-menu` doc (they are now catalogued as menu specs on the `aoc` block too), so
+ * before this the seeded submenu could point at routes this table did not have.
+ *
+ * GUARD: the parent `isAdminGuard()` was already written CALLED here; `app.routes.ts:389`
+ * still has it UNCALLED (`canActivate: [isAdminGuard]`), i.e. the whole `/aoc/*` admin
+ * console is open to any authenticated user in the live app today. Unchanged by this task,
+ * restated because five more admin screens now hang off it. The `website` child's own
+ * `isPrivilegedGuard` is copied verbatim: it is WEAKER than the parent's admin gate and
+ * therefore inert while the parent gate holds — not "fixed", per the never-weaken-and-never-
+ * invent rule.
+ *
+ * `trip` LOADS ANOTHER BLOCK'S FEATURE LIB — `@okr/trip-feature` is `libs/geo/trip/feature`,
+ * i.e. the `geo` block's, and `AocTrip` has no counterpart in `@okr/aoc-feature` (there is no
+ * `aoc-trip.ts`). It is kept here rather than moved to `geo` and this is the INVERSE of the
+ * Task 12 defect, not a repeat of it: that rule ("a `core: true` block must not own a route
+ * that loads another block's feature lib") exists because a core block's route bypasses the
+ * enablement gate of the lib it loads. Here the OWNER (`aoc`) is gated and the TARGET (`geo`)
+ * is `core: true`, hence always effective — so nothing is bypassed in either direction, and
+ * the screen is an AOC admin screen sitting under aoc's own admin path. Moving it to `geo`
+ * would instead put a child of aoc's admin path into an always-on block.
+ */
 const aoc: BlockRoutes = {
   id: 'aoc',
   routes: (): Route[] => [{
@@ -72,8 +99,19 @@ const aoc: BlockRoutes = {
       { path: 'roles',      loadComponent: () => import('@okr/aoc-feature').then(m => m.AocRoles) },
       { path: 'content',    loadComponent: () => import('@okr/aoc-feature').then(m => m.AocContent) },
       { path: 'data',       loadComponent: () => import('@okr/aoc-feature').then(m => m.AocData) },
+      { path: 'chat',       loadComponent: () => import('@okr/aoc-feature').then(m => m.AocChat) },
+      { path: 'account',    loadComponent: () => import('@okr/aoc-feature').then(m => m.AocUserAccounts) },
       { path: 'statistics', loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStatistics) },
       { path: 'storage',    loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStorage) },
+      { path: 'doc',        loadComponent: () => import('@okr/aoc-feature').then(m => m.AocDoc) },
+      { path: 'tag',        loadComponent: () => import('@okr/aoc-feature').then(m => m.AocTag) },
+      { path: 'email',      loadComponent: () => import('@okr/aoc-feature').then(m => m.AocEmail) },
+      { path: 'bexio',      loadComponent: () => import('@okr/aoc-feature').then(m => m.AocBexio) },
+      { path: 'srv',        loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSrv) },
+      { path: 'sessions',   loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
+      // See the block comment: `@okr/trip-feature` is `geo`'s lib, deliberately.
+      { path: 'trip',       loadComponent: () => import('@okr/trip-feature').then(m => m.AocTrip) },
+      { path: 'website',    canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocWebsite) },
     ],
   }],
 };
@@ -707,13 +745,110 @@ const forms: BlockRoutes = {
 };
 
 /**
+ * The single `activity` top-level path, copied from `app.routes.ts:286-290` apart from the
+ * one permitted guard correction. No `:contextMenuName` segment — `ActivityList` renders no
+ * context menu at all (verified: no `contextMenuName`/`menuName` binding anywhere under
+ * `libs/activity`), so no wrapper doc is owed.
+ *
+ * GUARD CORRECTED: `app.routes.ts:288` writes `canActivate: [isAdminGuard]` — the factory
+ * UNCALLED, which enforces nothing, so `/activity` (the whole tenant's audit trail: who
+ * changed which person, membership, invoice or document, and when) is readable by any
+ * authenticated user in the live app today. Written called here. Same correction class as
+ * `user`, `security`, `i18n`, `subject`'s `address` fragment, `pdf-template` and `forms`.
+ */
+const activity: BlockRoutes = {
+  id: 'activity',
+  routes: (): Route[] => [{
+    path: 'activity',
+    canActivate: [isAdminGuard()],
+    loadComponent: () => import('@okr/activity-feature').then(m => m.ActivityList),
+  }],
+};
+
+/**
+ * The single `task` top-level path, copied VERBATIM from `app.routes.ts:260-264` — no guard
+ * correction was needed or made. Note the deliberate asymmetry with most list routes: only
+ * `isAuthenticatedGuard` on the parent and NO privileged guard on the child, because every
+ * member must reach their own todo list (`task-my` → `/task/my/c-tasks`, `roleNeeded:
+ * registered`). `TaskList` gates create/edit itself. Same shape and same reason as
+ * `calevent`'s list route.
+ */
+const task: BlockRoutes = {
+  id: 'task',
+  routes: (): Route[] => [{
+    path: 'task',
+    canActivate: [isAuthenticatedGuard],
+    children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/task-feature').then(m => m.TaskList), data: { color: 'secondary' } }],
+  }],
+};
+
+/**
+ * TWO top-level paths, both copied verbatim from `app.routes.ts:265-281`: `whiteboard`
+ * (`libs/instruments/whiteboard`) and `instruments` (`libs/instruments`). One block for both,
+ * per the container-level granularity ruling — the same "several top-level paths, one block"
+ * shape as `resource` and `finance`.
+ *
+ * NO GUARD CORRECTION: every guard here is a plain `CanActivateFn` (`isAuthenticatedGuard`,
+ * `isPrivilegedGuard`), correctly uncalled in the source. Neither path uses `isAdminGuard`.
+ *
+ * BOTH `:contextMenuName` SEGMENTS ARE DEAD TODAY — reported, not invented around. The two
+ * list routes take a `:contextMenuName` parameter and `WhiteboardList` renders `<okr-menu
+ * [menuName]="contextMenuName()">` from it (`whiteboard-list.ts:46`), but NO live `menuItems`
+ * doc named `c-instruments`/`c-whiteboards` (or anything else instrument- or whiteboard-
+ * related) exists — verified with two query shapes per the `c-yearlyevents` lesson: a
+ * name-equality `IN` query over the plausible names returned zero hits, and an ordered range
+ * scan of every doc whose `name` sorts in [`c-i`, `c-z`) returned 26 docs, none of them
+ * instruments'. There is also no `navigate` doc pointing at either path, so nothing reaches
+ * these screens through a menu at all today. Inventing the wrappers would violate the
+ * mirror-verbatim rule; the block therefore ships `menu: []` and the gap is stated on the
+ * block in `feature-blocks.ts`.
+ */
+const instruments: BlockRoutes = {
+  id: 'instruments',
+  routes: (): Route[] => [
+    {
+      path: 'whiteboard',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/instruments-whiteboard-feature').then(m => m.WhiteboardList), data: { color: 'secondary' } },
+        { path: ':whiteboardKey', loadComponent: () => import('@okr/instruments-whiteboard-feature').then(m => m.WhiteboardEditorPage) },
+      ],
+    },
+    {
+      path: 'instruments',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        { path: 'board/:instrumentKey', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/instruments-feature').then(m => m.InstrumentPage), data: { color: 'secondary' } },
+        { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/instruments-feature').then(m => m.InstrumentList), data: { color: 'secondary' } },
+      ],
+    },
+  ],
+};
+
+/**
+ * The single `quiz` top-level path, copied verbatim from `app.routes.ts:52-56`. No guard
+ * correction needed (`isAuthenticatedGuard` is a plain `CanActivateFn`). `libs/games/quiz` is
+ * the domain's only subdomain and `QuizPage` its only screen — see the block comment in
+ * `feature-blocks.ts` for what that screen actually contains and why its `defaultAvailability`
+ * is flagged for the repo owner rather than decided here.
+ */
+const games: BlockRoutes = {
+  id: 'games',
+  routes: (): Route[] => [{
+    path: 'quiz',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/games-quiz-feature').then(m => m.QuizPage),
+  }],
+};
+
+/**
  * Every feature block's Angular route fragment. Adding a block here is HALF of what makes
  * a feature reachable — the matching metadata (id, dependsOn, bundle, menu, seed) must
- * also be added to `FEATURE_BLOCKS` in `@okr/tenant-util`. Tasks 12-18 fill in the
- * remaining blocks, one bundle each; these two exist because they are p13's bug.
+ * also be added to `FEATURE_BLOCKS` in `@okr/tenant-util`. Tasks 12-18 filled in the
+ * blocks, one bundle each; the first two exist because they are p13's bug.
  */
 export const FEATURE_ROUTES: BlockRoutes[] = [
-  calevent, aoc,
+  calevent, aoc, activity, task, instruments, games,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
   subject, relationship, vcard,
   resource, mobility,
