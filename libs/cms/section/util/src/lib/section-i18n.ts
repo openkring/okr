@@ -475,6 +475,20 @@ export const SECTION_I18N_KEYS = {
   toc_numbered_label:                       PFX + 'toc.numbered.label',
   toc_numbered_helper:                      PFX + 'toc.numbered.helper',
 
+  // testimonial
+  testimonial_title:                        PFX + 'testimonial.title',
+  testimonial_subtitle:                     PFX + 'testimonial.subtitle',
+  testimonial_list_label:                   PFX + 'testimonial.listLabel',
+  testimonial_more:                         PFX + 'testimonial.more',
+  testimonial_link:                         PFX + 'testimonial.link',
+  testimonial_entries_label:                PFX + 'testimonial.entries.label',
+  testimonial_entries_helper:               PFX + 'testimonial.entries.helper',
+  testimonial_entries_error:                PFX + 'testimonial.entries.error',
+  testimonial_carousel_label:               PFX + 'testimonial.carousel.label',
+  testimonial_carousel_helper:              PFX + 'testimonial.carousel.helper',
+  testimonial_columns_label:                PFX + 'testimonial.columns.label',
+  testimonial_columns_helper:               PFX + 'testimonial.columns.helper',
+
   // responsibility-config
   responsibility_edit:                      PFX + 'responsibility.edit',
   responsibility_okey_label:                PFX + 'responsibility.okey.label',

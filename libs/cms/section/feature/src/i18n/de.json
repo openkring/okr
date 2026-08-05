@@ -1148,5 +1148,26 @@
       "label": "Nummerierung anzeigen",
       "helper": "Stellt jedem Eintrag seine Position voran (1., 2., …)."
     }
+  },
+  "testimonial": {
+    "label": "Stimmen",
+    "title": "Stimmen-Konfiguration",
+    "subtitle": "Zitate von Mitgliedern, Kundinnen oder Partnern — als Raster oder Karussell.",
+    "listLabel": "Stimmen",
+    "more": "Mehr lesen",
+    "link": "Zur ganzen Geschichte",
+    "entries": {
+      "label": "Stimmen (JSON)",
+      "helper": "Liste von Objekten mit quote, authorName, authorRole, imageUrl, detail, link. Pflicht sind quote und authorName, alles andere ist optional. Beispiel: [{\"quote\": \"Der Verein hat mir eine zweite Familie gegeben.\", \"authorName\": \"Anna Muster\", \"authorRole\": \"Mitglied seit 2019\", \"imageUrl\": \"\", \"detail\": \"\", \"link\": \"\"}]. Ein veröffentlichtes Zitat braucht die Einwilligung der zitierten Person.",
+      "error": "Ungültiges JSON — die Stimmen wurden nicht übernommen."
+    },
+    "carousel": {
+      "label": "Als Karussell darstellen",
+      "helper": "Statt im Raster liegen die Stimmen in einer horizontal scrollbaren Reihe (Wischen auf dem Handy)."
+    },
+    "columns": {
+      "label": "Spalten",
+      "helper": "Anzahl Spalten im Raster ab Tablet-Breite (1–4); auf dem Handy immer einspaltig."
+    }
   }
 }

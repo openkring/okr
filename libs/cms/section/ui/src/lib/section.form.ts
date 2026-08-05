@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@okr/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -38,6 +38,7 @@ import { TrackerConfiguration } from './tracker-configuration';
 import { SankeyConfiguration } from './sankey-configuration';
 import { SpiderConfiguration } from './spider-configuration';
 import { TocConfiguration } from './toc-configuration';
+import { TestimonialConfiguration } from './testimonial-configuration';
 
 @Component({
   selector: 'okr-section-form',
@@ -50,7 +51,7 @@ import { TocConfiguration } from './toc-configuration';
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
-    MemberConfiguration, RagConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration
+    MemberConfiguration, RagConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -378,6 +379,15 @@ import { TocConfiguration } from './toc-configuration';
             />
           }
         }
+        @case('testimonial') {
+          @if(testimonialConfig(); as testimonialConfig) {
+            <okr-testimonial-config
+              [formData]="testimonialConfig" (formDataChange)="onTestimonialConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
         @case('toc') {
           @if(tocConfig(); as tocConfig) {
             <okr-toc-config
@@ -495,6 +505,7 @@ export class SectionForm {
   protected sankeyConfig = linkedSignal(() => this.getSankeyConfig());
   protected spiderConfig = linkedSignal(() => this.getSpiderConfig());
   protected tocConfig = linkedSignal(() => this.getTocConfig());
+  protected testimonialConfig = linkedSignal(() => this.getTestimonialConfig());
   protected memberConfig = linkedSignal(() => this.getMemberConfig());
   protected ragConfig = linkedSignal(() => this.getRagConfig());
   protected eventsConfig = linkedSignal(() => this.getEventsConfig());
@@ -621,6 +632,12 @@ export class SectionForm {
   private getTocConfig(): TocConfig | undefined {
     if (this.formData().type === 'toc') {
       return ((this.formData() as TocSection).properties as TocConfig);
+    }
+  }
+
+  private getTestimonialConfig(): TestimonialConfig | undefined {
+    if (this.formData().type === 'testimonial') {
+      return ((this.formData() as TestimonialSection).properties as TestimonialConfig);
     }
   }
 
@@ -918,6 +935,16 @@ export class SectionForm {
         ...section,
         properties: config
       } as TocSection);
+    }
+  }
+
+  protected onTestimonialConfigChange(config: TestimonialConfig): void {
+    const section = this.formData();
+    if (section.type === 'testimonial') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as TestimonialSection);
     }
   }
 

@@ -9,7 +9,7 @@ import type {
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { AlbumStyle } from './enums/album-style.enum';
@@ -442,6 +442,18 @@ export const TOC_SECTION_SHAPE = {
   type: 'toc' as const,
   properties: TOC_CONFIG_SHAPE,
 } as TocSection;
+
+// --------------------------------------- TESTIMONIAL ----------------------------------------
+export const TESTIMONIAL_CONFIG_SHAPE: TestimonialConfig = {
+  entries: [],
+  layout: 'grid',
+  columns: 3,
+};
+export const TESTIMONIAL_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'testimonial' as const,
+  properties: TESTIMONIAL_CONFIG_SHAPE,
+} as TestimonialSection;
 
 // --------------------------------------- FORM ----------------------------------------
 export const FORM_SECTION_CONFIG_SHAPE: FormSectionConfig = {

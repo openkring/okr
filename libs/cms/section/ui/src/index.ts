@@ -21,3 +21,4 @@ export * from './lib/trip-stats-configuration';
 export * from './lib/sankey-configuration';
 export * from './lib/spider-configuration';
 export * from './lib/toc-configuration';
+export * from './lib/testimonial-configuration';

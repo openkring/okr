@@ -18,14 +18,14 @@ export const SectionModelName = 'section';
 export type SectionType =
     'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' |
     'people' | 'responsibility' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
-    'news' | 'activities' | 'messages' | 'rag' | 'orgchart' | 'context' | 'member-age' | 'member-cat' | 'trip-stats' | 'form' | 'sankey' | 'spider' | 'toc';
+    'news' | 'activities' | 'messages' | 'rag' | 'orgchart' | 'context' | 'member-age' | 'member-cat' | 'trip-stats' | 'form' | 'sankey' | 'spider' | 'toc' | 'testimonial';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -120,6 +120,33 @@ export interface TocConfig {
   numbered: boolean;
 }
 
+// --------------------------------------- TESTIMONIAL ----------------------------------------
+export interface TestimonialSection extends BaseSection {
+  type: 'testimonial';
+  properties: TestimonialConfig;
+}
+
+/**
+ * One voice. The author is free text on purpose: most testimonials come from people without an
+ * account, and a published quote must not drag a `PersonModel` onto a public page (→ 1.19).
+ */
+export interface TestimonialEntry {
+  quote: string;        // the short, prominent quote
+  authorName: string;
+  authorRole: string;   // role and/or organisation, free text
+  imageUrl: string;     // optional portrait; '' renders the quote without an image
+  detail: string;       // optional long version, expanded inline by the reader
+  link: string;         // optional link to the full story or a video review
+}
+
+export interface TestimonialConfig {
+  entries: TestimonialEntry[];
+  /** 'grid' wraps responsively, 'carousel' scroll-snaps horizontally. Default 'grid'. */
+  layout: 'grid' | 'carousel';
+  /** Columns from md up (1–4); mobile is always one column. Default 3. */
+  columns: number;
+}
+
 // --------------------------------------- MEMBER AGE ----------------------------------------
 export interface MemberAgeSection extends BaseSection {
   type: 'member-age';
@@ -172,7 +199,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
