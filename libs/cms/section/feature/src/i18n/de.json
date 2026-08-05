@@ -1169,5 +1169,16 @@
       "label": "Spalten",
       "helper": "Anzahl Spalten im Raster ab Tablet-Breite (1–4); auf dem Handy immer einspaltig."
     }
+  },
+  "timeline": {
+    "label": "Zeitstrahl",
+    "title": "Zeitstrahl-Konfiguration",
+    "subtitle": "Alle Termine des gewählten Kalenders als Chronologie.",
+    "listLabel": "Zeitstrahl",
+    "empty": "Dieser Kalender enthält keine Termine.",
+    "vertical": {
+      "label": "Vertikal darstellen",
+      "helper": "Statt horizontal (Standard) liegen die Ereignisse untereinander — passend für lange Chronologien."
+    }
   }
 }

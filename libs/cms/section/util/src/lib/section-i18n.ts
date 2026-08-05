@@ -489,6 +489,14 @@ export const SECTION_I18N_KEYS = {
   testimonial_columns_label:                PFX + 'testimonial.columns.label',
   testimonial_columns_helper:               PFX + 'testimonial.columns.helper',
 
+  // timeline
+  timeline_title:                           PFX + 'timeline.title',
+  timeline_subtitle:                        PFX + 'timeline.subtitle',
+  timeline_list_label:                      PFX + 'timeline.listLabel',
+  timeline_empty:                           PFX + 'timeline.empty',
+  timeline_vertical_label:                  PFX + 'timeline.vertical.label',
+  timeline_vertical_helper:                 PFX + 'timeline.vertical.helper',
+
   // responsibility-config
   responsibility_edit:                      PFX + 'responsibility.edit',
   responsibility_okey_label:                PFX + 'responsibility.okey.label',

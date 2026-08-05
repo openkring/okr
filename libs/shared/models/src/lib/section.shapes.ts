@@ -9,7 +9,7 @@ import type {
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { AlbumStyle } from './enums/album-style.enum';
@@ -454,6 +454,16 @@ export const TESTIMONIAL_SECTION_SHAPE = {
   type: 'testimonial' as const,
   properties: TESTIMONIAL_CONFIG_SHAPE,
 } as TestimonialSection;
+
+// --------------------------------------- TIMELINE ----------------------------------------
+export const TIMELINE_CONFIG_SHAPE: TimelineConfig = {
+  orientation: 'horizontal',
+};
+export const TIMELINE_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'timeline' as const,
+  properties: TIMELINE_CONFIG_SHAPE,
+} as TimelineSection;
 
 // --------------------------------------- FORM ----------------------------------------
 export const FORM_SECTION_CONFIG_SHAPE: FormSectionConfig = {
