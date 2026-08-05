@@ -110,6 +110,25 @@ export interface MenuDocInput {
   isArchived?: boolean;
 }
 
+/**
+ * An OWNER RULING that replaces menu-evidence attribution for one tenant.
+ *
+ * Everything downstream is unchanged: the core union, `resolveWithDeps`, and above all the
+ * availability gate still run exactly as for a derived tenant. So an override CANNOT
+ * introduce a `disabled` block or bypass a `denyTenants` entry — it only replaces the
+ * question "what does the menu data prove?" with "what did the owner rule?".
+ */
+export interface OwnerOverride {
+  /** e.g. `'R-8'` — the ruling id, so the array is traceable to a decision. */
+  ruling: string;
+  /** ISO date of the ruling. */
+  date: string;
+  /** Why the derivation was overridden. Shown in the dry-run and stored in the report. */
+  reason: string;
+  /** The requested block ids, pre-gate. */
+  ids: string[];
+}
+
 export interface DerivationInput {
   catalogue: FeatureBlock[];
   rollouts: FeatureRollout[];
@@ -117,6 +136,12 @@ export interface DerivationInput {
   tenantId: string;
   /** Defaults to `'exclusive'` — see the policy discussion above. */
   policy?: AttributionPolicy;
+  /**
+   * When present, the tenant's block set comes from this ruling instead of its menu
+   * evidence. Menu evidence is still COMPUTED and reported (so the divergence stays
+   * visible), it just does not decide the array.
+   */
+  override?: OwnerOverride;
 }
 
 export interface DerivationResult {
@@ -136,6 +161,10 @@ export interface DerivationResult {
   uncatalogued: string[];
   /** Count of live menu docs considered for this tenant. */
   docCount: number;
+  /** The owner ruling that produced `enabled`, when one replaced the derivation. */
+  override?: OwnerOverride;
+  /** What the menu evidence WOULD have produced, present only when an override applied. */
+  derivedInstead?: string[];
 }
 
 const isLiveForTenant = (doc: MenuDocInput, tenantId: string): boolean =>
@@ -181,7 +210,10 @@ export function deriveEnabledFeatures(input: DerivationInput): DerivationResult 
   }
   // policy === 'exclusive': co-declared documents are evidence of nothing.
 
-  const attributed = Object.keys(evidence);
+  // An owner ruling replaces WHAT IS REQUESTED, and nothing else. The evidence above is
+  // still computed and returned so the divergence from the data stays visible.
+  const derivedAttribution = Object.keys(evidence);
+  const attributed = input.override ? input.override.ids : derivedAttribution;
 
   // Union the core blocks, then close over dependencies — the same expansion the runtime's
   // `effectiveFeatures` performs, so the stored array and the runtime agree.
@@ -218,5 +250,8 @@ export function deriveEnabledFeatures(input: DerivationInput): DerivationResult 
     gatedOut: gatedOut.sort((a, b) => a.id.localeCompare(b.id)),
     uncatalogued: [...uncatalogued].sort(),
     docCount: mine.length,
+    ...(input.override
+      ? { override: input.override, derivedInstead: [...derivedAttribution].sort() }
+      : {}),
   };
 }

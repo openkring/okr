@@ -93,6 +93,41 @@ const APP_CONFIG = 'app-config';
 const MENU_ITEMS = 'menuItems';
 const FEATURE_ROLLOUT = 'feature-rollout';
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ * OWNER OVERRIDES — a ruling replaces the derivation for one tenant.
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠️ DO NOT "CORRECT" THESE BACK TO THE DERIVED VALUE. ⚠️
+ *
+ * An entry here means the menu data does NOT reflect what the tenant is for, and the owner
+ * has said so explicitly. Re-deriving it would quietly undo a deliberate decision — for
+ * `okr` specifically, it would cut the demo tenant from 28 blocks back to 12 and gut the
+ * thing it exists to demonstrate.
+ *
+ * An override replaces only WHAT IS REQUESTED. The core union, `resolveWithDeps` and above
+ * all the availability gate still run identically, so an override can never introduce a
+ * `disabled` block or bypass a `denyTenants` entry — `feature-backfill.util.spec.ts` pins
+ * both. That is what makes it safe to hand the whole catalogue in below and let the gate
+ * subtract, rather than naming the excluded blocks.
+ */
+const OWNER_OVERRIDES = {
+  okr: {
+    ruling: 'R-8',
+    date: '2026-08-05',
+    reason:
+      'Owner ruling: `okr` is the demo tenant and gets EVERY non-disabled block. Its own ' +
+      'app-config.description ("demo tenant: all feature blocks, seed dataset, daily reset") ' +
+      'is the intent; its thin menu data (8 docs, evidencing only auth+profile) does not ' +
+      'reflect what the tenant is for. The block set therefore comes from the CATALOGUE, ' +
+      'passed through the same availability gate as every derived tenant — so social-feed ' +
+      'and games are excluded by mechanism, not by name.',
+    // Whole catalogue in; the gate decides what comes out. Deliberately not a literal list:
+    // a block added to the catalogue later should reach the demo tenant automatically.
+    ids: () => FEATURE_BLOCKS.map((b) => b.id),
+  },
+};
+
 /** Below this many evidenced (non-core, non-dep) blocks a tenant's result is suspect. */
 const NEAR_EMPTY_THRESHOLD = 3;
 
@@ -215,13 +250,18 @@ async function main() {
   for (const cfg of configs) {
     const tenantId = cfg.id;
     const current = cfg.data().enabledFeatures;
+    const ruling = OWNER_OVERRIDES[tenantId];
+    const override = ruling ? { ...ruling, ids: ruling.ids() } : undefined;
     const out = deriveEnabledFeatures({
-      catalogue: FEATURE_BLOCKS, rollouts, menuDocs, tenantId, policy: POLICY,
+      catalogue: FEATURE_BLOCKS, rollouts, menuDocs, tenantId, policy: POLICY, override,
     });
 
     const evidenced = Object.keys(out.evidence).sort();
     const noContent = !contentIds.has(tenantId);
-    const nearEmpty = evidenced.length < NEAR_EMPTY_THRESHOLD;
+    // An overridden tenant is NOT judged by its evidence — that is the whole point of the
+    // ruling. It is still judged by the checks the ruling does not speak to (empty result,
+    // and content existing under its own id at all).
+    const nearEmpty = !override && evidenced.length < NEAR_EMPTY_THRESHOLD;
     const isSuspect = out.enabled.length === 0 || nearEmpty || noContent;
     if (isSuspect) suspect.push({ tenantId, evidenced: evidenced.length, noContent });
 
@@ -230,6 +270,12 @@ async function main() {
     log(`\n${'─'.repeat(96)}`);
     log(`TENANT ${tenantId}${cfg.data().isArchived === true ? '  [app-config isArchived]' : ''}`);
     log('─'.repeat(96));
+    if (override) {
+      log(`  *** OWNER OVERRIDE ${override.ruling} (${override.date}) — NOT a derivation ***`);
+      log(`  *** ${override.reason.replace(/(.{88}) /g, '$1\n  *** ')}`);
+      log(`  *** menu evidence would have given: [${(out.derivedInstead ?? []).join(', ') || 'nothing'}]`);
+      log('  *** Do not "correct" this back to the derived value — see OWNER_OVERRIDES in this script.');
+    }
     log(`  current enabledFeatures : ${current === undefined ? '<field absent>' : JSON.stringify(current)}`);
     log(`  live menu docs          : ${out.docCount} (${out.uncatalogued.length} tenant-authored / uncatalogued)`);
     log(`  proposed (${String(out.enabled.length).padStart(2)} blocks)   : ${JSON.stringify(out.enabled)}`);
@@ -350,6 +396,18 @@ function printSanityChecks(results, contentIds) {
   const noContent = results.filter((r) => !contentIds.has(r.tenantId)).map((r) => r.tenantId);
   check('every tenant has menu content under its own id', noContent.length === 0,
     noContent.length ? `no content for: ${noContent.join(', ')}` : 'all tenants have content');
+
+  // R-8: okr must come out as the full non-disabled catalogue.
+  if (byId.okr) {
+    const expected = FEATURE_BLOCKS.filter((b) => b.defaultAvailability !== 'disabled')
+      .map((b) => b.id).sort();
+    const got = byId.okr.enabled;
+    const same = got.length === expected.length && got.every((id, i) => id === expected[i]);
+    check('okr (R-8 override) is the full non-disabled catalogue', same,
+      `${got.length} blocks, expected ${expected.length}` +
+      (same ? '' : ` — missing: ${expected.filter((e) => !got.includes(e)).join(', ') || 'none'}` +
+                    ` / extra: ${got.filter((g) => !expected.includes(g)).join(', ') || 'none'}`));
+  }
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

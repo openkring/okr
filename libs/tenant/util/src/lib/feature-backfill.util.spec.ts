@@ -174,6 +174,68 @@ describe('deriveEnabledFeatures — core, dependencies and the availability gate
   });
 });
 
+describe('deriveEnabledFeatures — owner override (R-8)', () => {
+  const override = (ids: string[]) => ({
+    ruling: 'R-8', date: '2026-08-05', reason: 'test', ids,
+  });
+
+  it('replaces the derived set with the ruling, and reports what it overrode', () => {
+    const catalogue = [block('alpha', { menu: [spec('alpha-all')] }), block('beta'), block('gamma')];
+    const out = deriveEnabledFeatures({
+      catalogue, rollouts: [], menuDocs: [doc('alpha-all', ['t1'])], tenantId: 't1',
+      override: override(['beta', 'gamma']),
+    });
+    expect(out.enabled).toEqual(['beta', 'gamma']);
+    expect(out.derivedInstead).toEqual(['alpha']);   // the evidence is still computed
+    expect(out.evidence).toEqual({ alpha: ['alpha-all'] });
+    expect(out.override?.ruling).toBe('R-8');
+  });
+
+  it('CANNOT smuggle a disabled block past the gate', () => {
+    // The whole safety argument for allowing overrides at all. An owner ruling replaces the
+    // request, never the gate.
+    const catalogue = [block('dead', { defaultAvailability: 'disabled' }), block('ok')];
+    const out = deriveEnabledFeatures({
+      catalogue, rollouts: [], menuDocs: [], tenantId: 't1',
+      override: override(['dead', 'ok']),
+    });
+    expect(out.enabled).toEqual(['ok']);
+    expect(out.gatedOut.map(g => g.id)).toEqual(['dead']);
+  });
+
+  it('CANNOT bypass a denyTenants entry', () => {
+    const catalogue = [block('opt-a')];
+    const out = deriveEnabledFeatures({
+      catalogue, rollouts: [rollout('opt-a', { denyTenants: ['t1'] })],
+      menuDocs: [], tenantId: 't1', override: override(['opt-a']),
+    });
+    expect(out.enabled).toEqual([]);
+  });
+
+  it('still unions core blocks in', () => {
+    const catalogue = [block('core-a', { core: true }), block('opt-a')];
+    const out = deriveEnabledFeatures({
+      catalogue, rollouts: [], menuDocs: [], tenantId: 't1', override: override(['opt-a']),
+    });
+    expect(out.enabled).toEqual(['core-a', 'opt-a']);
+  });
+
+  it('the R-8 shape — every catalogue id in, every non-disabled block out', () => {
+    // Exactly what the script asks for okr: hand it the whole catalogue and let the gate
+    // subtract. Nothing names social-feed or games.
+    const expected = FEATURE_BLOCKS
+      .filter(b => b.defaultAvailability !== 'disabled').map(b => b.id).sort();
+    const out = deriveEnabledFeatures({
+      catalogue: FEATURE_BLOCKS, rollouts: [], menuDocs: [], tenantId: 'okr',
+      override: override(FEATURE_BLOCKS.map(b => b.id)),
+    });
+    expect(out.enabled).toEqual(expected);
+    expect(out.enabled).toHaveLength(28);
+    FEATURE_BLOCKS.filter(b => b.defaultAvailability === 'disabled')
+      .forEach(b => expect(out.enabled).not.toContain(b.id));
+  });
+});
+
 describe('deriveEnabledFeatures — against the real catalogue', () => {
   const realDocs = (names: string[], tenantId: string): MenuDocInput[] =>
     names.map(n => doc(n, [tenantId]));
