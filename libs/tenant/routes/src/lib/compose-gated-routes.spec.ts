@@ -193,7 +193,12 @@ describe('composeGatedFeatureRoutes', () => {
    * The gate is applied to the top-level fragment ONLY, never pushed down into `children`: a
    * child inherits its ancestor's `canActivate`, so duplicating it would cost an extra
    * `inject`/`Set.has` per segment and buy nothing. Also pins that a child's OWN guards come
-   * through untouched — `cms`'s `/page` child carries `isPrivilegedGuard`.
+   * through untouched — `user`'s list child carries `isPrivilegedGuard`.
+   *
+   * That example used to be `cms`'s `/page` child; ruling R-6 (2026-08-05) swapped it to
+   * `isContentAdminGuard()`, a FACTORY whose every call mints a fresh closure — nothing left to
+   * compare by reference. `isPrivilegedGuard` is a plain `CanActivateFn` registered uncalled and
+   * stays identity-comparable, which is the whole point of this assertion.
    */
   it('does not touch children (the subtree is passed through by reference)', () => {
     FEATURE_ROUTES.forEach(block => {
@@ -203,7 +208,7 @@ describe('composeGatedFeatureRoutes', () => {
       });
     });
 
-    expect(fragmentOf('cms', 'page').children?.[0].canActivate).toEqual([isPrivilegedGuard]);
+    expect(fragmentOf('user', 'user').children?.[0].canActivate).toEqual([isPrivilegedGuard]);
   });
 
   /** Nothing is dropped: one composed fragment per fragment the catalogue declares. */

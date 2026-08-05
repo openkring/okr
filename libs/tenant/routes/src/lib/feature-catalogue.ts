@@ -84,9 +84,11 @@ const calevent: BlockRoutes = {
  * changed nothing: Angular evaluates an ancestor's `canActivate` before activating any
  * descendant, so the parent `isAdminGuard()` would still have bounced every non-admin before
  * the child guard ran. The gate therefore moved DOWN — the parent keeps only the floor every
- * `/aoc` screen shares (`isPrivilegedGuard`), and each of the FOURTEEN children the ruling
- * does not touch now carries its own `isAdminGuard()`. Effective access for those fourteen is
- * byte-for-byte what it was; only its expression changed.
+ * `/aoc` screen shares, and each child the ruling does not touch carries its own
+ * `isAdminGuard()`. Effective access for those children is byte-for-byte what it was; only its
+ * expression changed. (That first pass made the floor `isPrivilegedGuard` and left FOURTEEN
+ * admin children; ruling R-5, below, superseded both numbers — read on before relying on this
+ * paragraph.)
  *
  * Two alternatives were considered and rejected. (1) Weakening the parent WITHOUT re-gating
  * the children would relax fourteen genuinely admin-only screens — roles, user accounts,
@@ -110,6 +112,9 @@ const calevent: BlockRoutes = {
  * every child stays guarded, but it makes a forgotten child guard mean "open to any logged-in
  * member" rather than "still contentAdmin-only" — the tightest floor that satisfies the ruling
  * is the one that fails safest.
+ *
+ * Ruling R-6 (same day) swapped seven MORE routes to `isContentAdminGuard()`, but none of them
+ * is under `/aoc` — so the union above is unchanged and this floor still holds.
  *
  * ⚠️ CONSEQUENCE: a child added here without a `canActivate` inherits the FLOOR
  * (`contentAdmin`), not `admin`. `feature-catalogue.guards.spec.ts` fails if any `/aoc` child
@@ -227,21 +232,34 @@ const cms: BlockRoutes = {
       path: 'page',
       canActivate: [isAuthenticatedGuard],
       children: [
-        { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageList) },
+        // ACCESS REDUCED by owner ruling R-6, 2026-08-05 — this is not a tidy-up. The route now
+        // matches the `page-all` menu doc's `roleNeeded: contentAdmin`, and a `privileged`-only
+        // user LOSES access to the page editor they can open today: `privileged` and
+        // `contentAdmin` are disjoint apart from `admin` (`hasRole` maps each to
+        // `[<role>, 'admin']`), so this swap admits contentAdmins and excludes privileged. The
+        // owner was offered a union guard that would have kept both and chose the swap
+        // deliberately: privileged was never meant to do CMS work.
+        { path: ':listId/:contextMenuName', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageList) },
       ],
     },
     {
       path: 'section',
       canActivate: [isAuthenticatedGuard],
       children: [
-        { path: 'all', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-section-feature').then(m => m.SectionAllList) },
+        // ACCESS REDUCED by owner ruling R-6, 2026-08-05: matches the `section-all` menu doc's
+        // `roleNeeded: contentAdmin`, and a `privileged`-only user loses access to the section
+        // list. See the `page` fragment above for the full rationale.
+        { path: 'all', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-section-feature').then(m => m.SectionAllList) },
       ],
     },
     {
       path: 'menu',
       canActivate: [isAuthenticatedGuard],
       children: [
-        { path: 'all', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-menu-feature').then(m => m.MenuList) },
+        // ACCESS REDUCED by owner ruling R-6, 2026-08-05: matches the `menu-all` menu doc's
+        // `roleNeeded: contentAdmin`, and a `privileged`-only user loses access to the menu
+        // editor. See the `page` fragment above for the full rationale.
+        { path: 'all', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-menu-feature').then(m => m.MenuList) },
       ],
     },
     {
@@ -349,7 +367,12 @@ const category: BlockRoutes = {
     path: 'category',
     canActivate: [isAuthenticatedGuard],
     children: [
-      { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/category-feature').then(m => m.CategoryList) },
+      // ACCESS REDUCED by owner ruling R-6, 2026-08-05: the route now matches the
+      // `category-all` menu doc's `roleNeeded: contentAdmin`, and a `privileged`-only user
+      // LOSES access to the category admin screen — `privileged` and `contentAdmin` are
+      // disjoint apart from `admin`. The owner chose this swap over a union guard deliberately;
+      // see the `page` fragment in the `cms` block for the full rationale.
+      { path: ':listId/:contextMenuName', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/category-feature').then(m => m.CategoryList) },
     ],
   }],
 };
@@ -365,7 +388,12 @@ const geo: BlockRoutes = {
     {
       path: 'location',
       canActivate: [isAuthenticatedGuard],
-      children: [{ path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/location-feature').then(m => m.LocationList) }],
+      // ACCESS REDUCED by owner ruling R-6, 2026-08-05: the child now matches the
+      // `location-all` menu doc's `roleNeeded: contentAdmin`, and a `privileged`-only user
+      // LOSES access to the locations admin screen — `privileged` and `contentAdmin` are
+      // disjoint apart from `admin`. The owner chose this swap over a union guard deliberately;
+      // see the `page` fragment in the `cms` block for the full rationale.
+      children: [{ path: ':listId/:contextMenuName', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/location-feature').then(m => m.LocationList) }],
     },
     {
       path: 'trips',
@@ -668,7 +696,13 @@ const esign: BlockRoutes = {
   id: 'esign',
   routes: (): Route[] => [{
     path: 'esign',
-    canActivate: [isPrivilegedGuard],
+    // ACCESS REDUCED by owner ruling R-6, 2026-08-05: the route now matches the `esign` menu
+    // doc's `roleNeeded: contentAdmin`, and a `privileged`-only user LOSES access to the
+    // e-signature screen — `privileged` and `contentAdmin` are disjoint apart from `admin`. The
+    // owner chose this swap over a union guard deliberately; see the `page` fragment in the
+    // `cms` block for the full rationale. The guard sits on the top-level fragment here (the
+    // block has a single, empty-path child), so this one line is the whole gate.
+    canActivate: [isContentAdminGuard()],
     children: [
       {
         path: '',
@@ -710,16 +744,13 @@ const pdfTemplate: BlockRoutes = {
 
 /**
  * The single `document` top-level path, copied verbatim from `app.routes.ts` (including its
- * `data` payload). No guard correction was needed: `isAuthenticatedGuard` and
- * `isPrivilegedGuard` are plain `CanActivateFn`s and are correctly written uncalled here,
- * exactly as the live file has them — neither is one of the `isAdminGuard`/`isAuditorGuard`
- * factories that must be called.
+ * `data` payload). The parent's `isAuthenticatedGuard` is a plain `CanActivateFn`, correctly
+ * written uncalled here exactly as the live file has it.
  *
- * `isPrivilegedGuard` on the child is STRICTER than the live `document-all` menu doc's
- * `roleNeeded: contentAdmin` — see the mismatch note on the `document` block in
- * `@okr/tenant-util`'s `feature-blocks.ts`. Reported, not changed: weakening a guard in a
- * cataloguing task is forbidden, and the direction here is safe (menu too permissive, guard
- * correct).
+ * The child's guard was the FIRST instance of the menu-vs-route mismatch to be written down —
+ * `isPrivilegedGuard` where the live `document-all` menu doc says `roleNeeded: contentAdmin` —
+ * and was reported rather than changed at the time, because weakening a guard inside a
+ * cataloguing task was out of bounds. Ruling R-6 (2026-08-05) closed it; see the guard itself.
  */
 const documentBlock: BlockRoutes = {
   id: 'document',
@@ -727,8 +758,13 @@ const documentBlock: BlockRoutes = {
     path: 'document',
     canActivate: [isAuthenticatedGuard],
     children: [
+      // ACCESS REDUCED by owner ruling R-6, 2026-08-05: the route now matches the
+      // `document-all` menu doc's `roleNeeded: contentAdmin`, and a `privileged`-only user
+      // LOSES access to the document list — `privileged` and `contentAdmin` are disjoint apart
+      // from `admin`. The owner chose this swap over a union guard deliberately; see the `page`
+      // fragment in the `cms` block for the full rationale.
       { path: ':listId/:contextMenuName',
-        canActivate: [isPrivilegedGuard],
+        canActivate: [isContentAdminGuard()],
         loadComponent: () => import('@okr/document-feature').then(m => m.DocumentList),
         data: { color: 'secondary', view: 'list', showMenu: true },
       },
