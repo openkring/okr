@@ -69,13 +69,24 @@ export const FeatureStore = signalStore(
      * `fbUser()` is tri-state: `undefined` while auth is still restoring (NOT settled — a
      * returning user's session is about to resolve), `null` signed out, a `User` signed in.
      *
-     * The `readinessTimedOut` escape hatch is the same watchdog `isAppReady` uses. Every
-     * ERROR path already settles on its own (`FirestoreService` catches stream errors and
-     * falls back, so both sources emit), but a Firestore listener that neither resolves nor
-     * errors — an offline/blocked network — would otherwise hang navigation forever, which is
-     * strictly worse than the fail-open this whole signal exists to fix. When the app-level
-     * watchdog has already given up and opened navigation, this gate gives up with it and
-     * degrades to the old cold-start behaviour.
+     * The `readinessTimedOut` clause is the same watchdog `isAppReady` uses, and it covers
+     * exactly one case: the whole session is stalled (the user doc never loaded either), the
+     * watchdog fired, and navigation was opened without data — this gate gives up with it
+     * rather than being the one thing still blocking.
+     *
+     * ⚠️ IT IS NOT A GENERAL STALL GUARANTEE, and must not be read as one. `app.store.ts` arms
+     * that timer only while `authed && !isDataReady()` and RESETS the flag once `isDataReady()`
+     * is true; `isDataReady` reads `currentUserResource` and `categoriesResource` and never
+     * `appConfigResource` or the rollout listen. A signed-in user whose user doc and categories
+     * resolve normally while app-config or the rollout listen stalls WITHOUT resolving or
+     * erroring therefore never sees this clause fire, and `settled` stays false forever. What
+     * saves navigation in that case is `isFeatureEnabledGuard`'s OWN `timer(READINESS_TIMEOUT_MS)`
+     * — the guarantee lives there, not here.
+     *
+     * ERROR paths, by contrast, settle on their own: `FirestoreService.searchData` catches
+     * stream errors and falls back to `[]`, and an errored `appConfigResource` reports
+     * `status() === 'error'`, which counts as settled. Only a listener that never answers at
+     * all needs the guard's timer.
      */
     settled: computed(() => {
       if (store._appStore.fbUser() === null) return true;

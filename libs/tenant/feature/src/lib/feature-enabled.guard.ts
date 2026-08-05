@@ -1,8 +1,9 @@
 import { inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Router, type CanActivateFn } from '@angular/router';
+import { race, timer } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
-import { AppStore } from '@okr/shared-feature';
+import { AppStore, READINESS_TIMEOUT_MS } from '@okr/shared-feature';
 import { FeatureStore } from './feature.store';
 
 /**
@@ -20,15 +21,29 @@ import { FeatureStore } from './feature.store';
  * and this guard holds activation until it is. Same shape as `isAppReadyGuard`
  * (`@okr/auth-feature`), deliberately: an Observable that emits exactly once and completes.
  *
- * ⚠️ COMPLETION IS NOT OPTIONAL. This guard is prepended to EVERY block's top-level fragments
- * — `core: true` blocks and public routes included (see `composeGatedFeatureRoutes`) — so an
- * Observable that never emits does not break one screen, it breaks every navigation in the
- * app. `settled` is `true` immediately for anonymous visitors and has a watchdog fallback for
- * authenticated ones precisely so this cannot happen; `take(1)` completes the stream the
- * instant it does emit.
+ * WHY THE `race` WITH A TIMER — and why `AppStore.readinessTimedOut` is NOT enough on its own.
+ * That watchdog arms only while `authed && !isDataReady()` and RESETS to false the moment
+ * `isDataReady()` flips true; `isDataReady` reads `currentUserResource` and `categoriesResource`
+ * and never touches `appConfigResource` or the rollout listen. So for a signed-in user whose
+ * user doc and categories resolve normally while `app-config` (or the rollout listen) stalls
+ * without resolving OR erroring, the watchdog never fires and `settled` never flips — and this
+ * guard is prepended to EVERY block's fragments, so every navigation in the app would hang
+ * forever. The independent `timer` closes that hole regardless of what `isDataReady()` thinks.
+ * `READINESS_TIMEOUT_MS` is the watchdog's own constant, reused so the two gates cannot drift
+ * to different grace periods.
  *
- * The verdict is read INSIDE the `map`, not captured up front: by the time `settled` flips,
- * `effective()` holds the loaded answer rather than the default it had at subscription time.
+ * ⚠️ WHAT THE TIMEOUT DECIDES ON. When the timer wins, the verdict is computed from whatever
+ * `effective()` holds at that moment — i.e. the cold-start defaults, which fail OPEN. That is
+ * the deliberate trade-off, and the same one `isAppReady`'s watchdog makes: this is a PACKAGING
+ * gate, not an authorisation boundary (every fragment keeps its own role guard, and Firestore
+ * rules remain the data boundary), so after a stalled load it is better to show a screen the
+ * tenant may not have enabled than to strand every navigation on a dead gate.
+ *
+ * ⚠️ COMPLETION IS NOT OPTIONAL. `take(1)` completes the stream on whichever branch wins; the
+ * anonymous fast path inside `settled` and this timer are what guarantee one always does.
+ *
+ * The verdict is read INSIDE the `map`, not captured up front: by the time either branch fires,
+ * `effective()` holds whatever is known then rather than the value it had at subscription time.
  */
 export function isFeatureEnabledGuard(blockId: string): CanActivateFn {
   return () => {
@@ -36,8 +51,10 @@ export function isFeatureEnabledGuard(blockId: string): CanActivateFn {
     const appStore = inject(AppStore);
     const router = inject(Router);
 
-    return toObservable(featureStore.settled).pipe(
-      filter(Boolean),
+    return race(
+      toObservable(featureStore.settled).pipe(filter(Boolean), take(1)),
+      timer(READINESS_TIMEOUT_MS),
+    ).pipe(
       take(1),
       map(() => featureStore.effective().has(blockId)
         ? true

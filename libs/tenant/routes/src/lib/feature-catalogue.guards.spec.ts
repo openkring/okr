@@ -1,8 +1,8 @@
 import { Injector, runInInjectionContext } from '@angular/core';
-import { UrlTree, type ActivatedRouteSnapshot, type CanActivateFn, type Route, type RouterStateSnapshot } from '@angular/router';
+import { RedirectCommand, UrlTree, type ActivatedRouteSnapshot, type CanActivateFn, type Route, type RouterStateSnapshot } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 
-import { isAdminGuard, isAuditorGuard, isContentAdminGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuditorGuard, isAuthenticatedGuard, isContentAdminGuard } from '@okr/auth-feature';
 import { AppStore } from '@okr/shared-feature';
 
 import { FEATURE_ROUTES } from './feature-catalogue';
@@ -83,9 +83,14 @@ const REGISTERED = injectorFor({ registered: true });
  *   `if (result === true) continue; else if (result === false || isRedirect(result)) return result;`
  *   …and after the loop, `return true`.
  *
- * So ONLY `false` and a `UrlTree`/`RedirectCommand` block navigation. Anything else — notably
- * the inner function returned by a guard FACTORY someone forgot to call — matches no branch and
- * the router activates the route.
+ * `isRedirect` is `isUrlTree(val) || val instanceof RedirectCommand`, so BOTH are modelled here.
+ * No guard in this catalogue returns a `RedirectCommand` today — it is included because the
+ * cost of it being absent is a test that silently reads a redirect as "allow", which is exactly
+ * the failure this function exists to prevent.
+ *
+ * So ONLY `false` and a redirect block navigation. Anything else — notably the inner function
+ * returned by a guard FACTORY someone forgot to call — matches no branch and the router
+ * activates the route.
  *
  * ⚠️ Deliberately NOT `result === true`. An earlier version of this spec used that, which made
  * an uncalled factory read as "blocked" while the real router reads it as "allow everyone" — a
@@ -95,30 +100,41 @@ const REGISTERED = injectorFor({ registered: true });
 function routerActivates(result: unknown): boolean {
   if (result === false) return false;
   if (result instanceof UrlTree) return false;
+  if (result instanceof RedirectCommand) return false;
   return true;
 }
 
 /**
- * Runs a route's whole ancestor→self guard chain the way the router would: every guard must
- * allow.
+ * `isAuthenticatedGuard` is the only non-role guard these chains contain. It injects `AUTH`/
+ * `Router` and answers over Firebase auth state, which this harness has no business standing
+ * up — and every persona here is a signed-in user, so it is never the discriminator.
  *
- * Guards that throw for want of DI we did not provide are treated as allowing. In practice that
- * is only `isAuthenticatedGuard` (it injects `AUTH`/`Router` and returns an Observable over
- * Firebase auth state), and every persona below is a signed-in user with roles, so it is never
- * the discriminator — the question this file asks is always about ROLE strength. The feature
- * gate composed by `composeGatedFeatureRoutes` is not part of the chain either: that is a
+ * It is skipped by IDENTITY, not by catching what it throws. Catching used to be how this
+ * worked, and it meant ANY guard that started throwing — say a role guard after a DI refactor —
+ * silently read as "allows" in every persona test, turning this whole file green for the worst
+ * possible reason. Identity is stable here because `isAuthenticatedGuard` is a plain
+ * `CanActivateFn` registered uncalled, not a factory.
+ */
+const NON_ROLE_GUARDS: ReadonlySet<CanActivateFn> = new Set([isAuthenticatedGuard]);
+
+/**
+ * Runs a route's whole ancestor→self guard chain the way the router would: every guard must
+ * allow. A guard that throws fails the suite, loudly, naming itself.
+ *
+ * The feature gate composed by `composeGatedFeatureRoutes` is not part of the chain: that is a
  * per-tenant packaging question and `compose-gated-routes.spec.ts` owns it.
  */
 function activates(injector: Injector, ...chain: Route[]): boolean {
   const guards = chain.flatMap(route => (route.canActivate ?? []) as CanActivateFn[]);
   expect(guards.length, 'route chain has no guard at all').toBeGreaterThan(0);
   return guards.every(guard => {
+    if (NON_ROLE_GUARDS.has(guard)) return true;
     let result: unknown;
     try {
       result = runInInjectionContext(injector, () =>
         guard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot));
-    } catch {
-      return true; // not a role guard in this harness — see the doc comment
+    } catch (err) {
+      throw new Error(`role guard threw instead of deciding — a "passing" test here would be a lie: ${String(err)}`);
     }
     return routerActivates(result);
   });

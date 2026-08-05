@@ -1,10 +1,10 @@
 import { ApplicationRef, provideZonelessChangeDetection, runInInjectionContext, signal, type EnvironmentProviders, type Provider } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 import { DefaultUrlSerializer, Router, type ActivatedRouteSnapshot, type RouterStateSnapshot, type UrlTree } from '@angular/router';
-import { NEVER, Subject, isObservable, type Observable } from 'rxjs';
-import { describe, expect, it } from 'vitest';
+import { NEVER, Subject, catchError, isObservable, of, throwError, type Observable } from 'rxjs';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { AppStore } from '@okr/shared-feature';
+import { AppStore, READINESS_TIMEOUT_MS } from '@okr/shared-feature';
 import { FeatureRolloutModel } from '@okr/shared-models';
 import { FeatureRolloutService } from '@okr/tenant-data-access';
 
@@ -166,9 +166,42 @@ describe('FeatureStore.settled', () => {
     const { store } = await makeFeatureStore(appStoreMock({ readinessTimedOut: true }), NEVER);
     expect(store.settled()).toBe(true);
   });
+
+  /**
+   * THE ERROR PATH, which is correct by construction but was previously untested. A denied or
+   * dropped `feature-rollout` listen does NOT reach this store as an error: `FirestoreService`
+   * .searchData` wraps every stream in `catchError(() => of([]))` (it must — an errored stream
+   * reaching a consuming `rxResource` re-throws inside change detection and crashes the app,
+   * SCS-13). So the store sees an ordinary `[]`, which is a LOADED value and settles. The
+   * `catchError` here stands in for the one the service applies, deliberately: without that
+   * layer the test would assert behaviour production cannot produce.
+   */
+  it('settles when the rollout listen fails the way FirestoreService reports failures', async () => {
+    const denied$ = throwError(() => new Error('permission-denied'))
+      .pipe(catchError(() => of([] as FeatureRolloutModel[])));
+    const { store } = await makeFeatureStore(appStoreMock({ appConfigSettled: true }), denied$);
+
+    expect(store.settled()).toBe(true);
+  });
+
+  /**
+   * The same failure WITHOUT that service-level `catchError` — pinned because it is the shape
+   * of the dependency, not a scenario: if anyone removes `searchData`'s `catchError`, a raw
+   * stream error propagates into `toSignal`, which re-throws on read, and every read of
+   * `settled`/`effective` throws inside a guard. Named here so that removal is a red test with
+   * an obvious cause rather than a mystery navigation crash.
+   */
+  it('would THROW on a raw stream error — i.e. FirestoreService\'s catchError is load-bearing', async () => {
+    const raw$ = throwError(() => new Error('permission-denied')) as Observable<FeatureRolloutModel[]>;
+    const { store } = await makeFeatureStore(appStoreMock({ appConfigSettled: true }), raw$);
+
+    expect(() => store.settled()).toThrow();
+  });
 });
 
 describe('isFeatureEnabledGuard', () => {
+  afterEach(() => { vi.useRealTimers(); });
+
   /**
    * THE FAIL-OPEN. Before `enabledFeatures` lands it reads as `undefined`, which means "every
    * non-internal block" (D-BB-10) — so a `ga` block the tenant deliberately switched off is in
@@ -220,6 +253,38 @@ describe('isFeatureEnabledGuard', () => {
 
     expect(run.verdict).toBe(true);
     expect(run.completed).toBe(true);
+  });
+
+  /**
+   * THE HOLE `AppStore.readinessTimedOut` CANNOT COVER, and the reason this guard carries its
+   * own timer.
+   *
+   * `app.store.ts` arms the watchdog only while `authed && !isDataReady()` and RESETS the flag
+   * once `isDataReady()` is true — and `isDataReady` reads `currentUserResource` and
+   * `categoriesResource`, never `appConfigResource` and never the rollout listen. This test is
+   * that exact user: signed in, session healthy (`readinessTimedOut: false`, i.e. `isDataReady()`
+   * true), while app-config never settles and the rollout listen never answers. `settled` stays
+   * false forever, and since this guard is prepended to EVERY block's fragments, without the
+   * timer every navigation in the app hangs forever.
+   *
+   * Fake timers are installed AFTER `createApplication` so the app's own bootstrap scheduling is
+   * unaffected; only the guard's `timer` is advanced.
+   */
+  it('emits anyway when app-config stalls while the session is otherwise healthy', async () => {
+    const appStore = appStoreMock({ appConfigSettled: false, readinessTimedOut: false });
+    const { store, appRef } = await makeFeatureStore(appStore, NEVER);
+    expect(store.settled(), 'precondition: nothing has settled').toBe(false);
+
+    vi.useFakeTimers();
+    const run = runGuard('cms', appRef);
+    run.flush();
+    expect(run.emissions, 'decided before either source or the timer').toBe(0);
+
+    vi.advanceTimersByTime(READINESS_TIMEOUT_MS);
+
+    expect(run.emissions, 'navigation would hang forever on a stalled app-config read').toBe(1);
+    expect(run.completed).toBe(true);
+    expect(store.settled(), 'the timer must not fake settled-ness, only stop waiting for it').toBe(false);
   });
 
   /**

@@ -39,8 +39,18 @@ export type AppState = {
   readinessTimedOut: boolean;
 };
 
-/** Grace period for an authenticated user's UserModel to load before we stop blocking. */
-const READINESS_TIMEOUT_MS = 10_000;
+/**
+ * Grace period for an authenticated user's UserModel to load before we stop blocking.
+ *
+ * Exported because a second gate needs the same number: `isFeatureEnabledGuard`
+ * (`@okr/tenant-feature`) waits for `FeatureStore.settled`, which depends on `app-config` and
+ * the `feature-rollout` listen — NEITHER of which the watchdog below can see (it arms only
+ * while `authed && !isDataReady()`, and `isDataReady` reads `currentUserResource` and
+ * `categoriesResource` only). That guard therefore carries its own timer of this length rather
+ * than relying on `readinessTimedOut`. One constant, so the two gates cannot drift to different
+ * grace periods.
+ */
+export const READINESS_TIMEOUT_MS = 10_000;
 
 const initialState: AppState = {
   tenantId: '',
