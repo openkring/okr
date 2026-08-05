@@ -163,6 +163,16 @@ function refuse(message) {
   process.exit(2);
 }
 
+if (WRITE && CHECK_ONLY) {
+  refuse(
+    '--check and --write are mutually exclusive.\n' +
+    '--check returns after the drift guard and never reaches the write branch, so the\n' +
+    'combination silently performs NO write while looking like it asked for one. Believing\n' +
+    'you wrote when you did not is its own failure mode: the next run reports the same\n' +
+    'orphans, and the natural conclusion is that the write failed rather than never ran.\n' +
+    'Pick one: --check to inspect the guard, --write (with --remove/--strip-tenant-id) to act.',
+  );
+}
 if (WRITE && REMOVE.length === 0 && !STRIP_ONLY) {
   refuse(
     '--write requires either --remove=<id,id,…> or --strip-tenant-id.\n' +
@@ -279,6 +289,53 @@ function deriveCollections() {
  *
  * Cost: `limit(1)` against ~12 collections. Negligible next to the 71 k-document census.
  */
+/**
+ * Return one document in `collection` whose `tenants` field is an ARRAY, or undefined if
+ * the collection contains no such document. Exactly one `limit(1)` read.
+ *
+ * ⚠️ WHY NOT `where('tenants', '!=', null).limit(1)` — IT HAS A PROVEN FALSE NEGATIVE. ⚠️
+ *
+ * Firestore orders query results by VALUE TYPE FIRST, and its type order puts String
+ * BEFORE Array (Null < Boolean < Number < Timestamp < String < Bytes < Reference <
+ * GeoPoint < Array < Map). So `!= null` ordered ascending returns whichever document has
+ * the LOWEST-TYPED `tenants` value — and a single malformed string-valued field outranks
+ * every correct array in the collection.
+ *
+ * That is not hypothetical. On the narrowed-regex run the old probe named 16 collections
+ * and MISSED `tags`, which holds 72 genuine `tenants[]` documents, because
+ * `tags/all_tenants` carries `tenants` as the STRING "[test, default, scs, …]" and sorts
+ * first. The one dead legacy document this task set out to clean up was blinding the guard
+ * meant to protect the cleanup. Verified directly:
+ *     tags  !=null → all_tenants (string)   >=[] → account_default (array)
+ *
+ * THE FIX — query the type range instead of sampling it. Because Array values are
+ * contiguous in the type order and only Map sorts above them, `where('tenants', '>=', [])`
+ * matches exactly {arrays} ∪ {maps}, and `[]` (the empty array) is the least of all arrays.
+ * Ascending, the first result is therefore an ARRAY whenever any array exists — regardless
+ * of how many strings, numbers or nulls the collection also holds.
+ *
+ * WHAT THIS GUARANTEES: if the collection contains ≥1 array-valued `tenants`, this returns
+ * one. No number of malformed lower-typed values can hide it. That is soundness, not just
+ * a wider sample — `.limit(20) + .some(Array.isArray)` merely raises the number of
+ * malformed documents needed to blind it from 1 to 20, and a two-ended asc/desc read is
+ * still defeated by a single map-valued field at the top end.
+ *
+ * WHAT IT DOES NOT GUARANTEE: nothing about HOW MANY such documents exist, nor that a
+ * collection returning none is semantically tenant-scoped-but-empty. Those are the census's
+ * job, not the probe's — the probe answers exactly one question, "does the data contradict
+ * the classification", and answers it soundly.
+ */
+async function firstArrayValuedTenants(collection) {
+  const snap = await db.collection(collection)
+    .where('tenants', '>=', [])       // arrays and maps only — see above
+    .orderBy('tenants', 'asc')        // …so the first hit is an array if one exists
+    .select('tenants').limit(1).get();
+  const doc = snap.docs[0];
+  if (!doc) return undefined;
+  const tenants = doc.get('tenants');
+  return Array.isArray(tenants) ? { id: doc.id, tenants } : undefined;
+}
+
 async function refuseOnMisclassifiedCollection(scan, liveWithoutModel, liveCollections) {
   const suspects = [
     ...scan.unscoped
@@ -289,10 +346,8 @@ async function refuseOnMisclassifiedCollection(scan, liveWithoutModel, liveColle
 
   const wrong = [];
   for (const s of suspects) {
-    const snap = await db.collection(s.collection)
-      .where('tenants', '!=', null).select('tenants').limit(1).get();
-    const hit = snap.docs.find(d => Array.isArray(d.get('tenants')));
-    if (hit) wrong.push({ ...s, docId: hit.id, tenants: hit.get('tenants') });
+    const hit = await firstArrayValuedTenants(s.collection);
+    if (hit) wrong.push({ ...s, docId: hit.id, tenants: hit.tenants });
   }
 
   log(`\n  classification probe: ${suspects.length} excluded/unmodelled collection(s) checked ` +
@@ -774,8 +829,24 @@ async function applyWrites({ stripTargets, present, docsByCollection }) {
     batch = db.batch();
     ops = 0;
   };
+  /**
+   * `update`, never `set(…, { merge: true })`.
+   *
+   * `set` with merge CREATES the document if it does not exist. The census is minutes old
+   * by the time these writes land, and the owner has been DELETING documents concurrently
+   * all week (`app-config` went 19 → 14 → 5 in an hour, and one document vanished between
+   * two consecutive snapshots of an earlier task). With `set(merge)` a document deleted
+   * after the census would be RESURRECTED here as a near-empty husk — an `app-config` doc
+   * with no fields, or a content doc whose only field is `tenants` — quietly undoing a
+   * deliberate deletion and leaving a broken record behind.
+   *
+   * `update` throws NOT_FOUND instead, which fails the whole batch. That is the right
+   * trade: the run aborts having written nothing of that batch, the operator re-runs, and
+   * because every operation here is idempotent a re-run is free. Failing closed on a
+   * concurrent delete beats silently re-creating what someone chose to remove.
+   */
   const queue = async (ref, data) => {
-    batch.set(ref, data, { merge: true });
+    batch.update(ref, data);
     if (++ops >= BATCH_SIZE) await flush();
   };
 
@@ -802,7 +873,21 @@ async function applyWrites({ stripTargets, present, docsByCollection }) {
     }
   }
 
-  await flush();
+  try {
+    await flush();
+  } catch (e) {
+    if (String(e?.code) === '5' || /NOT_FOUND|No document to update/i.test(String(e?.message))) {
+      refuse(
+        'a document in this batch no longer exists — it was deleted after the census was read.\n\n' +
+        `Firestore said: ${e.message}\n\n` +
+        'NOTHING in that batch was written (batches are atomic). This is the intended\n' +
+        'behaviour: the alternative, set(merge), would have RESURRECTED the deleted document.\n' +
+        'Simply re-run — every operation here is idempotent, and the fresh census will not\n' +
+        'include the deleted document.',
+      );
+    }
+    throw e;
+  }
   log('\n  done.');
   log('\n  NEXT: re-run the dry run to confirm the sweep landed BEFORE running');
   log('        applyFeatureSelection. See "REQUIRED SEQUENCE" in this file\'s header.');
