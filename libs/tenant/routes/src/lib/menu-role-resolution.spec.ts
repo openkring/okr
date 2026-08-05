@@ -56,20 +56,47 @@ function chainFor(routes: Route[], segments: string[], acc: CanActivateFn[] = []
   return undefined;
 }
 
+/**
+ * Who is asking. `signedIn` is not cosmetic: it decides how `isAuthenticatedGuard` is treated
+ * (see `activates`), which is the difference between modelling a member and modelling a visitor.
+ */
+interface Persona { injector: Injector; signedIn: boolean; }
+
 /** Roles is a flag map (`{ admin: true }`), not an array — see `checkAuthorization`. */
-const personaWith = (roles: Record<string, boolean>): Injector =>
-  Injector.create({ providers: [{ provide: AppStore, useValue: { currentUser: () => ({ roles }) } }] });
+const asMember = (roles: Record<string, boolean>): Persona => ({
+  injector: Injector.create({ providers: [{ provide: AppStore, useValue: { currentUser: () => ({ roles }) } }] }),
+  signedIn: true,
+});
+
+/** A signed-out visitor: no `currentUser`, so `checkAuthorization` denies every role guard. */
+const VISITOR: Persona = {
+  injector: Injector.create({ providers: [{ provide: AppStore, useValue: { currentUser: () => undefined } }] }),
+  signedIn: false,
+};
 
 /** A plain signed-in member with no admin role of any kind. */
-const MEMBER = personaWith({ registered: true });
+const MEMBER = asMember({ registered: true });
+
+/**
+ * The audience a `roleNeeded` names. `anonymous` means "visible only to signed-out users"
+ * (`hasRole`'s own semantics), and `public`/`none` mean "everyone", whose strictest member is
+ * likewise a signed-out visitor — so all three model as `VISITOR`. Everything else is a
+ * signed-in user holding exactly that role.
+ */
+function personaFor(roleNeeded: string): Persona {
+  return ['anonymous', 'public', 'none'].includes(roleNeeded) ? VISITOR : asMember({ [roleNeeded]: true });
+}
 
 /**
  * `isAuthenticatedGuard` is the only non-role guard these chains contain. It injects `AUTH`/
- * `Router` and answers over Firebase auth state, which this harness has no business standing
- * up — and every persona here is a signed-in user, so it is never the discriminator. Skipped by
- * IDENTITY (it is a plain `CanActivateFn`, not a factory, so identity is stable) rather than by
- * catching whatever it throws: a ROLE guard that starts throwing after a DI refactor must fail
- * this suite loudly, not be silently read as "allows".
+ * `Router` and answers over Firebase auth state, which this harness has no business standing up.
+ * For a SIGNED-IN persona it is never the discriminator, so it is skipped; for a VISITOR it is
+ * precisely the discriminator, so it BLOCKS. Getting that second half wrong would let an
+ * `anonymous` menu doc pointing behind an auth wall read as reachable.
+ *
+ * Skipped by IDENTITY (a plain `CanActivateFn`, not a factory, so identity is stable) rather
+ * than by catching what it throws: a ROLE guard that starts throwing after a DI refactor must
+ * fail this suite loudly, not be silently read as "allows".
  */
 const NON_ROLE_GUARDS: ReadonlySet<CanActivateFn> = new Set([isAuthenticatedGuard]);
 
@@ -77,25 +104,42 @@ const NON_ROLE_GUARDS: ReadonlySet<CanActivateFn> = new Set([isAuthenticatedGuar
 const blocks = (result: unknown): boolean =>
   result === false || result instanceof UrlTree || result instanceof RedirectCommand;
 
-function activates(chain: CanActivateFn[], persona: Injector): boolean {
+function activates(chain: CanActivateFn[], persona: Persona): boolean {
   return chain.every(guard => {
-    if (NON_ROLE_GUARDS.has(guard)) return true;
-    return !blocks(runInInjectionContext(persona, () =>
-      guard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)));
+    if (NON_ROLE_GUARDS.has(guard)) return persona.signedIn;
+    let result: unknown;
+    try {
+      result = runInInjectionContext(persona.injector, () =>
+        guard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot));
+    } catch (err) {
+      throw new Error(`role guard threw instead of deciding — a "passing" test here would be a lie: ${String(err)}`);
+    }
+    return !blocks(result);
   });
 }
 
 interface NavDoc { key: string; url: string; roleNeeded: string; }
 
-/** Roles that gate nothing, so there is no stricter/weaker question to ask. */
+/**
+ * Roles that name no privilege, so "is the route WEAKER than this?" is meaningless — the
+ * comparison persona for direction 2 is itself a plain `registered` member.
+ *
+ * ⚠️ This exclusion applies to DIRECTION 2 ONLY. Direction 1 runs over every doc: a
+ * `roleNeeded: registered` row pointing at an admin-only route is a perfectly real dead end,
+ * and scoping these out of both directions (as this file first did) would hide it. Eight docs
+ * are in this bucket today — seven `registered` plus `login` (`anonymous`) — all resolving to
+ * routes with no role guard at all, so direction 1 is currently silent on them. Latent, not live.
+ */
 const UNGATED_ROLES = ['public', 'none', 'anonymous', 'registered'];
+
+const isGated = (doc: NavDoc): boolean => !UNGATED_ROLES.includes(doc.roleNeeded);
 
 function navDocs(): NavDoc[] {
   const out: NavDoc[] = [];
   const visit = (spec: MenuSpec): void => {
     // Only `navigate` carries a router path — `call`/`toggle` docs put an ACTION VERB in `url`
     // (`add`, `exportRaw`), which is correct data and must not be resolved as a route.
-    if (spec.action === 'navigate' && spec.url && spec.roleNeeded && !UNGATED_ROLES.includes(spec.roleNeeded)) {
+    if (spec.action === 'navigate' && spec.url && spec.roleNeeded) {
       out.push({ key: spec.key, url: spec.url, roleNeeded: spec.roleNeeded });
     }
     (spec.children ?? []).forEach(visit);
@@ -107,7 +151,10 @@ function navDocs(): NavDoc[] {
 }
 
 const ROUTES = FEATURE_ROUTES.flatMap(block => block.routes());
+/** Every `navigate` doc that declares a role — direction 1's population. */
 const DOCS = navDocs();
+/** Those naming a privilege above plain membership — direction 2's population. */
+const GATED = DOCS.filter(isGated);
 
 /**
  * KNOWN-OPEN, route STRICTER than the menu doc. One entry, and it must stay one line with a
@@ -157,22 +204,29 @@ const KNOWN_WEAKER_THAN_MENU: readonly string[] = [
 
 describe('menu roleNeeded vs. the route it navigates to', () => {
   /**
-   * Guards the three assertions below against passing VACUOUSLY. If the resolver stopped
-   * matching, every "no mismatch" list would be empty for the wrong reason.
+   * Guards the assertions below against passing VACUOUSLY. If the resolver stopped matching,
+   * every "no mismatch" list would be empty for the wrong reason. The second expectation pins
+   * that direction 1's population is strictly larger than direction 2's — i.e. the ungated docs
+   * really are being checked, which is the whole point of the scoping fix.
    */
-  it('every gated navigate doc resolves against the composed route table', () => {
-    expect(DOCS.length, 'no navigate docs found — the walk is broken').toBeGreaterThan(30);
+  it('every navigate doc that declares a role resolves against the composed route table', () => {
+    expect(GATED.length, 'no gated navigate docs found — the walk is broken').toBeGreaterThan(30);
+    expect(DOCS.length, 'ungated docs are not reaching direction 1').toBeGreaterThan(GATED.length);
     expect(DOCS.filter(doc => !chainFor(ROUTES, seg(doc.url))).map(d => `${d.key} → ${d.url}`)).toEqual([]);
   });
 
   /**
    * DIRECTION 1 — the dead-end class the rulings closed. The role the doc declares must be able
    * to open the screen the doc points at.
+   *
+   * Runs over EVERY doc, ungated ones included: `roleNeeded: registered` pointing at an
+   * admin-only route, or `anonymous` pointing behind an auth wall, are dead ends exactly like
+   * `contentAdmin` pointing at an admin route. Only direction 2 has a reason to skip them.
    */
   it('the role a menu doc declares can open the route it points at', () => {
     const deadEnds = DOCS
       .filter(doc => !KNOWN_DEAD_ENDS.includes(doc.key))
-      .filter(doc => !activates(chainFor(ROUTES, seg(doc.url)) as CanActivateFn[], personaWith({ [doc.roleNeeded]: true })))
+      .filter(doc => !activates(chainFor(ROUTES, seg(doc.url)) as CanActivateFn[], personaFor(doc.roleNeeded)))
       .map(doc => `${doc.key} → ${doc.url} (menu says ${doc.roleNeeded}, route is stricter)`);
 
     expect(deadEnds, 'menu row visible, navigation silently cancelled').toEqual([]);
@@ -183,7 +237,7 @@ describe('menu roleNeeded vs. the route it navigates to', () => {
     const fixed = KNOWN_DEAD_ENDS.filter(key => {
       const doc = DOCS.find(d => d.key === key);
       if (!doc) return true; // doc gone — the exclusion is stale either way
-      return activates(chainFor(ROUTES, seg(doc.url)) as CanActivateFn[], personaWith({ [doc.roleNeeded]: true }));
+      return activates(chainFor(ROUTES, seg(doc.url)) as CanActivateFn[], personaFor(doc.roleNeeded));
     });
 
     expect(fixed, 'resolved — delete it from KNOWN_DEAD_ENDS').toEqual([]);
@@ -192,10 +246,11 @@ describe('menu roleNeeded vs. the route it navigates to', () => {
   /**
    * DIRECTION 2 — route weaker than the doc declares. Asserted as an exact SET so it fails both
    * ways: a new too-weak route appears, or one of the inventoried ones is fixed without the
-   * list being updated.
+   * list being updated. Gated docs only: the comparison persona IS a `registered` member, so
+   * asking whether a `registered` doc is "weaker than declared" compares a role with itself.
    */
   it('no route is reachable by a plain member unless it is in the known inventory', () => {
-    const weaker = DOCS
+    const weaker = GATED
       .filter(doc => activates(chainFor(ROUTES, seg(doc.url)) as CanActivateFn[], MEMBER))
       .map(doc => doc.key);
 
