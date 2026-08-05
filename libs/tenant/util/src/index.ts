@@ -1,4 +1,5 @@
 export * from './lib/feature-catalogue.types';
+export * from './lib/feature-backfill.util';
 export * from './lib/feature-blocks';
 export * from './lib/feature-deps.util';
 export * from './lib/feature-picker-i18n';
