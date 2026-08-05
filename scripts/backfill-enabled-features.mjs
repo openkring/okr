@@ -139,12 +139,55 @@ async function main() {
       `| ${MENU_ITEMS}: ${menuSnap.size} docs | ${FEATURE_ROLLOUT}: ${rolloutSnap.size} docs`);
   log('='.repeat(96));
 
-  // ── Provenance check: do the tenant ids in menuItems.tenants[] line up with app-config?
-  // A tenant whose content is tagged under a DIFFERENT id derives as core-only, which
-  // would look like a real (empty) result and is not one.
+  // ── A tenant's identity is its app-config DOCUMENT ID, never the `tenantId` FIELD.
+  // Verified across the whole system, because this is the one thing the backfill must not
+  // get wrong:
+  //   - `AppConfigService.read(key)` -> `readObject(AppConfigCollection, key)` -> `.doc(key)`;
+  //   - `AppStore` passes `store.tenantId()` (= `env.tenantId`) as that key AND as the value
+  //     for `getSystemQuery(tenantId)`, i.e. `tenants array-contains <same string>`, so the
+  //     config lookup and every content query use ONE identifier;
+  //   - `env.tenantId` is derived in `set-env.js` from the Nx project name
+  //     (`projectName.replace(/-app$/, '')`) — `scs-app` -> `scs`;
+  //   - every Cloud Function does `.doc(tenantId)` too, including
+  //     `apply-feature-selection.ts`, which uses the SAME string for the config doc id, for
+  //     `tenants: [tenantId]` on the menu docs it writes, and for `main_${tenantId}`.
+  // NOTHING anywhere queries `where('tenantId', ...)` on `app-config`. The field is written
+  // but never read as a key, so it CANNOT redirect a config to another tenant's content.
+  // Keying this backfill on the field instead would make the proposed arrays disagree with
+  // both the runtime gate and the function that later rewrites them.
   const configIds = new Set(configSnap.docs.map((d) => d.id));
   const contentIds = new Set();
   menuDocs.forEach((d) => (d.tenants ?? []).forEach((t) => contentIds.add(t)));
+
+  // The field is inert, but a disagreement is still a real data defect worth surfacing.
+  const fieldDisagrees = configSnap.docs
+    .filter((d) => d.data().tenantId !== undefined && d.data().tenantId !== d.id)
+    .map((d) => ({ okey: d.id, field: d.data().tenantId }));
+  const fieldMissing = configSnap.docs.filter((d) => d.data().tenantId === undefined).map((d) => d.id);
+
+  if (fieldDisagrees.length || fieldMissing.length) {
+    log('\n' + '~'.repeat(96));
+    log('~~ app-config.tenantId FIELD disagrees with the DOCUMENT ID');
+    log('~'.repeat(96));
+    fieldDisagrees.forEach((f) => log(`~~   app-config/${f.okey}  ->  tenantId: "${f.field}"`));
+    if (fieldMissing.length) log(`~~   no tenantId field at all: ${fieldMissing.join(', ')}`);
+    log('~~ The DOCUMENT ID is the real identity (see the comment above this check): the app');
+    log('~~ reads app-config by doc id and queries content with the same string, and no code');
+    log('~~ path anywhere queries the tenantId field. So the field is INERT — it does not');
+    log('~~ redirect these configs to another tenant\'s content, and this backfill deliberately');
+    log('~~ does NOT key on it. Reported because a stale field value is still a defect.');
+    // Show what the (incorrect) field-keyed view would look like, so the difference is
+    // visible rather than merely asserted.
+    const fieldIds = new Set(configSnap.docs.map((d) => d.data().tenantId ?? d.id));
+    const fieldCfgNoContent = [...fieldIds].filter((t) => !contentIds.has(t)).sort();
+    const fieldContentNoCfg = [...contentIds].filter((t) => !fieldIds.has(t)).sort();
+    log('~~ For comparison only — if the FIELD were used as the key, the orphan lists would be:');
+    log(`~~   config w/o content (${fieldCfgNoContent.length}): ${fieldCfgNoContent.join(', ') || '(none)'}`);
+    log(`~~   content w/o config (${fieldContentNoCfg.length}): ${fieldContentNoCfg.join(', ') || '(none)'}`);
+    log('~~ Tidier arithmetic, but it would map two config docs onto one tenant and write the');
+    log('~~ same array into both. Not adopted.');
+    log('~'.repeat(96));
+  }
   const configWithoutContent = [...configIds].filter((t) => !contentIds.has(t)).sort();
   const contentWithoutConfig = [...contentIds].filter((t) => !configIds.has(t)).sort();
 
@@ -156,7 +199,11 @@ async function main() {
     log(`!!   ${configWithoutContent.join(', ') || '(none)'}`);
     log(`!! menuItems.tenants[] ids with NO ${APP_CONFIG} doc (${contentWithoutConfig.length}):`);
     log(`!!   ${contentWithoutConfig.join(', ') || '(none)'}`);
-    log('!! These two lists are almost certainly the same tenants under two id generations.');
+    log('!! Six of each side (blk/kw83b/pz75/rain65/rain73/silcrest7 vs cwst/kwo/pzu/r65/sc7/sps)');
+    log('!! look like the same tenants under two id generations. The remaining entries are a');
+    log('!! DIFFERENT problem: `demo` and `elab` are real configs with no content of their own,');
+    log('!! and `test` is substantial content (the 2nd largest tenant) with NO app-config doc at');
+    log('!! all — see the tenantId-field note above; the field does not bridge them.');
     log('!! Until an operator supplies the mapping, every tenant in the first list derives as');
     log('!! CORE-ONLY. That is a data-provenance gap, NOT a real feature set — do not write it.');
     log('!'.repeat(96));

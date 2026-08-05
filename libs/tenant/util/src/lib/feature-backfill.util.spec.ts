@@ -95,6 +95,19 @@ describe('deriveEnabledFeatures — document selection', () => {
     expect(out.docCount).toBe(0);
   });
 
+  it('selects content by the tenant id it is GIVEN — the caller must pass the app-config doc id', () => {
+    // Pins the identity contract. `app-config/demo` and `app-config/elab` both carry a stale
+    // `tenantId: "test"` FIELD, but the whole system joins on the DOCUMENT ID: the app reads
+    // app-config via `.doc(env.tenantId)` and queries content with `tenants array-contains`
+    // the same string, `set-env.js` derives it from the Nx project name, and
+    // `apply-feature-selection.ts` reuses it for the config doc, `tenants: [tenantId]` and
+    // `main_<tenantId>`. Nothing queries the field. Deriving 'demo' must therefore look at
+    // 'demo' content and find none — NOT silently fall through to 'test' content.
+    const docs = [doc('alpha-all', ['test']), doc('beta-all', ['test'])];
+    expect(derive(sharedParentCatalogue, docs, { tenantId: 'demo' }).enabled).toEqual([]);
+    expect(derive(sharedParentCatalogue, docs, { tenantId: 'test' }).enabled).toEqual(['alpha', 'beta']);
+  });
+
   it('reports tenant-authored names as uncatalogued without attributing them', () => {
     const out = derive(sharedParentCatalogue, [doc('scs-news', ['t1']), doc('alpha-all', ['t1'])]);
     expect(out.uncatalogued).toEqual(['scs-news']);
