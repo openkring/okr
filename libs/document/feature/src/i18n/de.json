@@ -245,5 +245,21 @@
       "label": "Buchhaltung",
       "description": "Das Dokument ist ein Beleg aus der Buchhaltung."
     }
+  },
+  "vectorize": {
+    "label": "In SVG umwandeln (Vektorisieren)",
+    "title": "Vektorisieren",
+    "source": "Original",
+    "result": "SVG",
+    "preset": {
+      "label": "Vorlage",
+      "logo": "Logo / Strichzeichnung",
+      "photo": "Farbgrafik"
+    },
+    "detail": "Detailgrad",
+    "generate": "Erzeugen",
+    "hint": "Für Logos und flächige Farbgrafiken. Fotos ergeben sehr grosse SVG-Dateien und selten ein brauchbares Resultat.",
+    "empty": "Noch kein SVG erzeugt.",
+    "error": "Das SVG konnte nicht erzeugt werden."
   }
 }

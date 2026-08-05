@@ -245,5 +245,21 @@
       "label": "Contabilidad",
       "description": "El documento es un comprobante contable."
     }
+  },
+  "vectorize": {
+    "label": "Convertir a SVG (vectorizar)",
+    "title": "Vectorizar",
+    "source": "Original",
+    "result": "SVG",
+    "preset": {
+      "label": "Ajuste",
+      "logo": "Logotipo / dibujo lineal",
+      "photo": "Gráfico en color"
+    },
+    "detail": "Nivel de detalle",
+    "generate": "Generar",
+    "hint": "Para logotipos y gráficos de color plano. Las fotografías producen archivos SVG muy grandes y rara vez un resultado utilizable.",
+    "empty": "Todavía no se ha generado ningún SVG.",
+    "error": "No se pudo generar el SVG."
   }
 }

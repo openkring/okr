@@ -460,6 +460,21 @@ export const DocumentStore = signalStore(
         await downloadFile(document.url, name);
       },
 
+      /**
+       * Open the vectorize modal (raster → SVG). The CF persists the rendering itself, so there is
+       * nothing to save here; the document stream picks up the new `renderings[]` entry.
+       */
+      async vectorize(document: DocumentModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
+        const { VectorizeModal } = await import('./vectorize.modal');
+        const modal = await store.modalController.create({
+          component: VectorizeModal,
+          componentProps: { document }
+        });
+        await modal.present();
+        await modal.onWillDismiss();
+      },
+
       async showRevisions(document: DocumentModel): Promise<void> {
         const revisions = await this.getRevisions(document);
         const { DocumentRevisionsModal } = await import('./document-revisions.modal');

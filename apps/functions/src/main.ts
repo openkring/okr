@@ -12,6 +12,7 @@ import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
+import * as Vectorize from './vectorize';
 import * as Expense from './expense';
 import * as Booking from './booking';
 import * as Email from './email';
@@ -173,6 +174,8 @@ export const onRagFileDeleted = Rag.onRagFileDeleted;
 export const onOcrFileFinalized = Ocr.onOcrFileFinalized;
 export const onOcrResultWritten = Ocr.onOcrResultWritten;
 export const redoExpenseOcr = Ocr.redoExpenseOcr;
+// document renderings: raster → SVG (vtracer)
+export const vectorizeDocument = Vectorize.vectorizeDocument;
 // expense creation (CF-only writes to the `expenses` collection)
 export const createExpense = Expense.createExpense;
 export const deleteExpense = Expense.deleteExpense;
