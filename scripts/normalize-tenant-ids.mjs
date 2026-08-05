@@ -33,6 +33,24 @@
  *   remove with --remove=<a,b,c>. There is no "remove everything the dry run listed"
  *   shortcut: the whole point of the review step is that a human chooses the list.
  *
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ * REQUIRED SEQUENCE — the sweep and step 2.2 write the same documents
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ * `applyFeatureSelection` ADDS tenants to `menuItems.tenants[]`; this script REMOVES them.
+ * They touch the same collection, so the order matters and they must not overlap:
+ *
+ *   1. dry run, reviewed by the owner
+ *   2. `--write --strip-tenant-id`     (job 1; touches only app-config)
+ *   3. `--write --remove=<ids>`        (job 2.1; the sweep)
+ *   4. DRY RUN AGAIN — confirm the sweep landed and the counts are what you expect
+ *   5. only then `applyFeatureSelection(...)` for `okr` / `kring`   (job 2.2)
+ *   6. only then re-run the `enabledFeatures` backfill
+ *
+ * Step 4 is not optional. Do not run 3 and 5 concurrently. The writes themselves are
+ * concurrency-safe (`FieldValue.arrayRemove`, see `applyWrites`), so an overlap can no
+ * longer silently revert a seed — but the REPORTED counts would still be computed against
+ * a database being changed underneath them, and a count nobody can trust is not a review.
+ *
  * Usage:
  *   node scripts/normalize-tenant-ids.mjs                       # dry run (default)
  *   node scripts/normalize-tenant-ids.mjs --json                # machine-readable
@@ -153,6 +171,7 @@ if (WRITE && REMOVE.length === 0 && !STRIP_ONLY) {
     'quarantined ones — in a single unreviewed command.',
   );
 }
+// ── STATIC refusals — decidable without touching Firestore. ─────────────────────────────
 for (const id of REMOVE) {
   if (PRESERVED_TENANTS[id]) {
     refuse(`"${id}" is in PRESERVED_TENANTS (${PRESERVED_TENANTS[id].ruling}) and must not be removed.\n` +
@@ -169,6 +188,61 @@ for (const id of REMOVE) {
   }
 }
 
+/**
+ * ── DYNAMIC refusals — need the live `app-config` set and the computed orphan set. ──────
+ *
+ * ⚠️ THIS IS THE GUARD THAT STOPS A ONE-CHARACTER TYPO DESTROYING PRODUCTION. ⚠️
+ *
+ * The static list above checks only the three hand-maintained exception sets. It does NOT
+ * check that the id being removed is actually an orphan — so before this function existed,
+ * `--write --remove=scs` was ACCEPTED and would have stripped the live production tenant
+ * from every document that carries it, in one command, with no confirmation.
+ *
+ * That is not a hypothetical: this script's own dry run prints a copy-pasteable
+ * `--remove=…` line containing `sc7`, which is one character away from `scs`. Adjacent on
+ * the list, adjacent on the keyboard, and the failure is silent and total.
+ *
+ * Two independent conditions, both required:
+ *   1. NOT a live tenant — refuse anything with an `app-config` document. A tenant that
+ *      exists is never an orphan, whatever the operator typed.
+ *   2. IN the computed orphan set — refuse anything the dry run did not itself derive as
+ *      sweepable. This catches ids that are neither live nor orphaned (typos that match
+ *      nothing, ids from a stale copy-paste, ids already swept by an earlier run).
+ * Condition 2 alone would be enough to stop `scs` today, but condition 1 is stated
+ * separately and first because it is the one that must never depend on a derivation being
+ * correct — it is checked against the authoritative `app-config` set directly.
+ */
+function refuseUnsafeRemovals(configIds, sweepable) {
+  const live = REMOVE.filter(id => configIds.includes(id));
+  if (live.length > 0) {
+    refuse(
+      `${live.map(id => `"${id}"`).join(', ')} ${live.length === 1 ? 'is a LIVE TENANT' : 'are LIVE TENANTS'} — ` +
+      `${live.length === 1 ? 'it has' : 'they have'} an app-config document.\n\n` +
+      'Removing a live tenant from tenants[] would detach that tenant from its own data and\n' +
+      'is never what normalisation means. If a tenant is genuinely being retired, delete its\n' +
+      'app-config document first — deliberately, as its own reviewed step — and only then is\n' +
+      'its id an orphan this script will touch.\n\n' +
+      `live app-config ids: ${configIds.join(', ')}\n` +
+      'Check for a typo: `sc7` and `scs` differ by one character and sit next to each other\n' +
+      'in this script\'s own suggested command line.',
+    );
+  }
+
+  const notOrphaned = REMOVE.filter(id => !sweepable.includes(id) && !QUARANTINED.includes(id));
+  if (notOrphaned.length > 0) {
+    refuse(
+      `${notOrphaned.map(id => `"${id}"`).join(', ')} ${notOrphaned.length === 1 ? 'is' : 'are'} ` +
+      'not in the computed orphan set.\n\n' +
+      'Only ids this run itself derived as sweepable may be removed — the operator does not\n' +
+      'get to name an id the analysis did not produce. An id can miss the set because it is\n' +
+      'a typo that matches nothing, because it was already swept by an earlier run, or\n' +
+      'because the data changed since the dry run was reviewed. All three mean: re-run the\n' +
+      'dry run and read it again.\n\n' +
+      `sweepable this run: ${sweepable.join(', ') || '(none)'}`,
+    );
+  }
+}
+
 if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
 const db = getFirestore();
 
@@ -180,6 +254,63 @@ function deriveCollections() {
     .filter(f => f.endsWith('.ts') && !f.endsWith('.spec.ts'))
     .map(f => ({ file: f, source: fs.readFileSync(path.join(MODELS_DIR, f), 'utf8') }));
   return scanCollections(files);
+}
+
+/**
+ * ⚠️ THE CHECK THAT CATCHES A COLLECTION THE MODEL LAYER DESCRIBES *WRONGLY*. ⚠️
+ *
+ * `liveWithoutModel` (computed in main) subtracts BOTH `scoped` AND `unscoped`, so it can
+ * only ever surface a collection the model layer does not describe at all. That is a real
+ * but different failure. The failure that ACTUALLY OCCURRED while writing this script was
+ * the other one: a narrowed `tenants` member regex moved nineteen collections — `persons`,
+ * `orgs`, `users`, `transfers` among them — out of `scoped` and into `unscoped`. From
+ * there they are subtracted out of `liveWithoutModel` as well, so the bidirectional
+ * reconciliation printed no warning at all: the scan silently fell 63 → 44 collections and
+ * 71 426 → 67 909 documents, `transfers` appeared in the "excluded" line as though that
+ * were normal, and the exit code did not change. Only a unit test caught it — and a unit
+ * test lives next to the regex it guards and is editable in the same breath.
+ *
+ * So the reconciliation is not enough, and this is the check that actually bites: go to
+ * the DATA. Every collection classified as unscoped, and every live collection with no
+ * model at all, is probed for a single document carrying a `tenants` array. One hit means
+ * the classification is wrong — a tenant-scoped collection is about to be skipped — and
+ * the run is REFUSED rather than reported, because a migration that silently skips a
+ * collection is exactly the failure mode this whole script exists to avoid.
+ *
+ * Cost: `limit(1)` against ~12 collections. Negligible next to the 71 k-document census.
+ */
+async function refuseOnMisclassifiedCollection(scan, liveWithoutModel, liveCollections) {
+  const suspects = [
+    ...scan.unscoped
+      .filter(u => liveCollections.has(u.collection))
+      .map(u => ({ collection: u.collection, why: `classified unscoped: ${u.reason}` })),
+    ...liveWithoutModel.map(c => ({ collection: c, why: 'no *Collection constant in shared-models' })),
+  ];
+
+  const wrong = [];
+  for (const s of suspects) {
+    const snap = await db.collection(s.collection)
+      .where('tenants', '!=', null).select('tenants').limit(1).get();
+    const hit = snap.docs.find(d => Array.isArray(d.get('tenants')));
+    if (hit) wrong.push({ ...s, docId: hit.id, tenants: hit.get('tenants') });
+  }
+
+  log(`\n  classification probe: ${suspects.length} excluded/unmodelled collection(s) checked ` +
+      `for a stray tenants[] — ${wrong.length === 0 ? 'none found (classification holds)' : `${wrong.length} MISCLASSIFIED`}`);
+
+  if (wrong.length === 0) return;
+
+  console.error('\nREFUSED: a collection classified as NOT tenant-scoped contains documents that ' +
+                'carry a tenants[] array.\n');
+  for (const w of wrong) {
+    console.error(`  ${w.collection}  (${w.why})`);
+    console.error(`      e.g. ${w.collection}/${w.docId} → tenants: ${JSON.stringify(w.tenants)}`);
+  }
+  console.error('\nThe derivation and the data disagree. Either the model is missing a `tenants`');
+  console.error('member / a *Collection constant, or scanCollections cannot read the shape it is');
+  console.error('written in. Until that is resolved this migration would silently SKIP the');
+  console.error('collection(s) above — leaving orphan ids in place while reporting success.\n');
+  process.exit(2);
 }
 
 async function main() {
@@ -227,6 +358,8 @@ async function main() {
     liveWithoutModel.forEach(c => log(`      ${c}`));
   }
 
+  await refuseOnMisclassifiedCollection(scan, liveWithoutModel, liveCollections);
+
   // ── census ───────────────────────────────────────────────────────────────────────────
   const present = scoped.filter(c => liveCollections.has(c));
   const census = {};       // collection -> { tenantId: docCount }
@@ -258,9 +391,15 @@ async function main() {
   log(`\n  scanned ${present.length} live collection(s), ` +
       `${Object.values(docsByCollection).reduce((n, d) => n + d.length, 0)} document(s) with a tenants[] array`);
   if (noArrayCount) {
-    log(`  ⚠️  ${noArrayCount} document(s) in a tenant-scoped collection have NO tenants array ` +
+    log(`  ${noArrayCount} document(s) in a tenant-scoped collection have NO tenants ARRAY ` +
         `(${Object.entries(noArrayWhere).map(([c, n]) => `${c}:${n}`).join(', ')}) — ` +
-        'invisible to every tenant-scoped query. Skipped here; a separate data defect.');
+        'invisible to every tenant-scoped query, skipped here. Both are identified:');
+    log('      tags/all_tenants — `tenants` is a STRING, not an array ("[test, default, scs, …]"),');
+    log('        with tagModel: \'\'. Documented in the `tag-model` skill: zero code references,');
+    log('        safe to delete. Not a defect this script needs to route around.');
+    log('      ownerships/izeqYTgIIfJnKa5NtIkK — an EMPTY document (zero fields). Genuinely');
+    log('        ⚠️  UNEXPLAINED; most likely a Firestore "missing document" left behind as the');
+    log('        parent of a subcollection, or a partial write. Flagged, not swept, not guessed.');
   }
 
   // ── the app-config set, re-queried live ──────────────────────────────────────────────
@@ -303,6 +442,46 @@ async function main() {
     log(`${indent}${id} — ${total(fp)} document(s) across ${fp.length} collection(s)`);
     fp.forEach(x => log(`${indent}  ${x.collection.padEnd(22)} ${String(x.docs).padStart(6)}`));
   };
+
+  /**
+   * How many documents would be left with an EMPTY `tenants[]` — i.e. permanently
+   * unreachable by any tenant-scoped query — if `ids` were removed.
+   *
+   * Computed for ANY id set, not just the sweepable one. That distinction is the whole
+   * point: "detached" and "unreachable" are different numbers, and the second is the one
+   * that should drive an irreversible decision. A document losing one of several tenants
+   * survives; a document losing its only tenant is gone from the application even though
+   * the row is still there. Reporting only the first understates a quarantined id's true
+   * cost by an order of magnitude — `test` detaches 2 307 documents but strands a much
+   * smaller, much more consequential subset, including person records.
+   */
+  const emptiesFor = (ids) => {
+    const idSet = new Set(ids);
+    const byCollection = {};
+    const docIds = {};
+    let totalEmpties = 0;
+    for (const c of present) {
+      let n = 0;
+      for (const d of docsByCollection[c]) {
+        if (d.tenants.length === 0) continue;               // already empty — not caused by us
+        if (!d.tenants.some(t => idSet.has(t))) continue;    // untouched
+        if (d.tenants.some(t => !idSet.has(t))) continue;    // a tenant survives
+        n++;
+        (docIds[c] ??= []).push(d.id);
+      }
+      if (n > 0) { byCollection[c] = n; totalEmpties += n; }
+    }
+    return { byCollection, docIds, total: totalEmpties };
+  };
+
+  const printEmpties = (label, e, indent = '      ') => {
+    log(`${indent}${label}: ${e.total} document(s) left with an EMPTY tenants[]`);
+    Object.entries(e.byCollection)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .forEach(([c, n]) => log(`${indent}  ${c.padEnd(22)} ${String(n).padStart(6)}`));
+  };
+
+  const sweepable = drift.unknown.map(u => u.tenantId).filter(id => !QUARANTINED.includes(id));
 
   log('\n' + '='.repeat(100));
   log('PRESERVED — NOT swept (owner ruling). Footprint shown so the exemption can be narrowed.');
@@ -347,12 +526,28 @@ async function main() {
       log(`  ⚠️  ${id} carries the MAJORITY of: ` +
           near.map(n => `${n.collection} (${n.docs})`).join(', '));
     }
+
+    // ── THE NUMBER THAT SHOULD ACTUALLY DRIVE THE RULING ──────────────────────────────
+    // "2 307 documents detached" is the headline, but most of those documents have another
+    // tenant and survive. The documents that do NOT are the irreversible part, and they
+    // were previously invisible here because the empties calculation ran only over the
+    // sweepable set — which excludes quarantined ids by construction.
+    const eAlone = emptiesFor([id]);
+    log('');
+    log(`  ⚠️⚠️  REMOVING "${id}" ALONE WOULD PERMANENTLY STRAND ${eAlone.total} DOCUMENT(S):`);
+    printEmpties(`${id} only`, eAlone);
+    const persons = eAlone.byCollection['persons'] ?? 0;
+    if (persons > 0) {
+      log(`  ⚠️⚠️  ${persons} of those are PERSON records — personal data that would become`);
+      log('        unreachable through the application while remaining stored. That is a privacy');
+      log('        question (revDSG retention/erasure), not just a data-hygiene one.');
+    }
+    const eBoth = emptiesFor([...sweepable, id]);
+    log(`  Combined with the ${sweepable.length} sweepable orphan(s): ${eBoth.total} document(s) stranded in total.`);
     log('  DO NOT include it in --remove without --i-really-mean-test and an explicit owner say-so.');
   }
 
   // ── 2.1 orphan removal plan ──────────────────────────────────────────────────────────
-  const sweepable = drift.unknown.map(u => u.tenantId).filter(id => !QUARANTINED.includes(id));
-
   log('\n' + '='.repeat(100));
   log('STEP 2.1 — ORPHAN REMOVAL (per collection, per id)');
   log('='.repeat(100));
@@ -386,9 +581,37 @@ async function main() {
   rule();
   log(`  ${'TOTAL'.padEnd(22)} ${String(grandTouched).padStart(8)}   ${String(grandEmptied).padStart(30)}`);
   if (grandEmptied > 0) {
+    const e = emptiesFor(sweepable);
     log('\n  ⚠️  Documents left with an EMPTY tenants[] become invisible to every tenant-scoped');
     log('      query (getSystemQuery issues `tenants array-contains <id>`). They are NOT deleted');
     log('      by this script — deletion is a separate decision — but they will be unreachable.');
+    // Naming the menuItems docs specifically: a zero-tenant menu document is worse than
+    // merely unreachable. `indexMenuDocsByName` groups live docs by their `name` FIELD and
+    // `resolveCandidates` then picks among them; a stranded doc under a GENERIC name stays
+    // a candidate for every future tenant seed (rung 3 skips it — no tenant claims it — but
+    // rung 4 prefers `id === name`, which is exactly what a generic leftover looks like).
+    // So it can win the tie-break and be extended by applyFeatureSelection later.
+    for (const c of ['menuItems']) {
+      if (!e.docIds[c]) continue;
+      log(`\n  ⚠️  RECOMMEND DELETING rather than emptying these ${c} doc(s): ${e.docIds[c].join(', ')}`);
+      log('      A zero-tenant menu doc is not inert: indexMenuDocsByName indexes by the `name`');
+      log('      FIELD, and resolveCandidates\' rung 4 PREFERS the doc whose id equals its name —');
+      log('      precisely the shape a generic leftover has. It can therefore be selected and');
+      log('      extended by a later applyFeatureSelection run for an unrelated tenant.');
+    }
+  }
+
+  // ── what the guard will say AFTER the sanctioned sweep ────────────────────────────────
+  const remainingAfterSweep = drift.unknown
+    .map(u => u.tenantId)
+    .filter(id => !sweepable.includes(id));
+  log('\n  AFTER a --remove of the sweepable set, the drift guard will still report: ' +
+      `${remainingAfterSweep.join(', ') || '(nothing — it would go green)'}`);
+  if (remainingAfterSweep.length) {
+    log('  i.e. --check STILL EXITS 3 after a fully successful sweep, because ' +
+        `${remainingAfterSweep.join(', ')} ${remainingAfterSweep.length === 1 ? 'remains' : 'remain'}`);
+    log('  quarantined and unresolved. A persistent red here is NOT a failed sweep — the guard');
+    log('  goes green only once the quarantined id(s) are ruled on, one way or the other.');
   }
 
   // ── 2.2 — what kring/okr are missing ─────────────────────────────────────────────────
@@ -412,8 +635,15 @@ async function main() {
     log('    node scripts/normalize-tenant-ids.mjs --write --strip-tenant-id');
     log('  To sweep orphans, name them explicitly after the counts above have been reviewed:');
     log(`    node scripts/normalize-tenant-ids.mjs --write --remove=${sweepable.join(',') || '<ids>'}`);
+    log('  ⚠️  That line contains `sc7`, one character from the live tenant `scs`. A live tenant');
+    log('      id is refused outright, as is any id not in the sweepable set above — but read it.');
     log('  Step 2.2 is NOT written by this script — see its section above.');
+    log('  Required order: strip → sweep → DRY RUN AGAIN → applyFeatureSelection → backfill.');
   } else {
+    // Both refusals need live data: `configIds` is authoritative, `sweepable` is derived.
+    // Checked here — after the census, before the first write — so no write path exists
+    // that has not passed them.
+    refuseUnsafeRemovals(configIds, sweepable);
     await applyWrites({ stripTargets, present, docsByCollection });
   }
 
@@ -501,6 +731,36 @@ async function reportStep22(configSnap, menuDocs) {
   void indexMenuDocsByName;
 }
 
+/**
+ * ⚠️ WHY THIS WRITES `FieldValue.arrayRemove` AND NOT A COMPUTED ARRAY. ⚠️
+ *
+ * The census is read at the START of the run — a 71 000-document scan across 45
+ * collections that takes minutes. The earlier implementation then wrote
+ * `set({ tenants: <array computed from that snapshot> }, { merge: true })`, which replaces
+ * the WHOLE array with a value derived from data that is by then minutes stale. Any write
+ * that landed in between was silently reverted.
+ *
+ * That is not theoretical here: step 2.2 is `applyFeatureSelection`, whose entire job is
+ * to ADD tenants to `menuItems.tenants[]`. Run it concurrently with — or simply between
+ * the read and the write of — this sweep, and the sweep quietly undoes it. The tenant
+ * would appear to have been seeded, and would silently not be.
+ *
+ * `FieldValue.arrayRemove(...ids)` is evaluated by the SERVER against the document's
+ * current value. It removes exactly the named elements and touches nothing else, so a
+ * concurrent `add-tenant` survives. It is also idempotent by construction — removing an
+ * absent element is a no-op — which is what makes a partial earlier run safe to re-run.
+ * No read-modify-write, therefore no race and no need for a transaction.
+ *
+ * Chosen over the alternatives deliberately:
+ *   - a per-document transaction would also be correct, but costs a re-read per document
+ *     and buys nothing `arrayRemove` does not already give;
+ *   - a freshness check (re-read, compare, then write) narrows the window without closing
+ *     it — the classic check-then-act race.
+ *
+ * The candidate list still comes from the stale census, which is fine: a document that
+ * gained one of these ids after the census would merely be missed, and the next dry run
+ * would show it. Missing a document is recoverable; clobbering one is not.
+ */
 async function applyWrites({ stripTargets, present, docsByCollection }) {
   log('\n' + '='.repeat(100));
   log('WRITING');
@@ -519,7 +779,10 @@ async function applyWrites({ stripTargets, present, docsByCollection }) {
     if (++ops >= BATCH_SIZE) await flush();
   };
 
-  if (STRIP_ONLY || REMOVE.length === 0) {
+  // `--write` is unreachable without one of these two (guarded at parse time), so the
+  // strip runs exactly when it was asked for. (An earlier `|| REMOVE.length === 0`
+  // disjunct here was dead code: that state is refused before Firestore is even opened.)
+  if (STRIP_ONLY) {
     for (const id of stripTargets) {
       await queue(db.collection(APP_CONFIG).doc(id), { tenantId: FieldValue.delete() });
       log(`  ${APP_CONFIG}/${id}: delete tenantId`);
@@ -530,9 +793,9 @@ async function applyWrites({ stripTargets, present, docsByCollection }) {
     for (const c of present) {
       let touched = 0;
       for (const d of docsByCollection[c]) {
-        const next = d.tenants.filter(t => !REMOVE.includes(t));
-        if (next.length === d.tenants.length) continue; // idempotent: nothing to do
-        await queue(db.collection(c).doc(d.id), { tenants: next });
+        if (!d.tenants.some(t => REMOVE.includes(t))) continue; // idempotent: nothing to do
+        // Server-evaluated, order-independent, concurrency-safe — see the comment above.
+        await queue(db.collection(c).doc(d.id), { tenants: FieldValue.arrayRemove(...REMOVE) });
         touched++;
       }
       if (touched) log(`  ${c}: ${touched} document(s) updated`);
@@ -541,6 +804,8 @@ async function applyWrites({ stripTargets, present, docsByCollection }) {
 
   await flush();
   log('\n  done.');
+  log('\n  NEXT: re-run the dry run to confirm the sweep landed BEFORE running');
+  log('        applyFeatureSelection. See "REQUIRED SEQUENCE" in this file\'s header.');
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
