@@ -26,4 +26,27 @@ describe('AppConfig', () => {
     const hydrated = Object.assign(new AppConfig('scs'), explicitlyEmptyDoc);
     expect(hydrated.enabledFeatures).toEqual([]);
   });
+
+  it('carries NO tenantId field — the document id is the only tenant identity', () => {
+    // Removed 2026-08-05 by owner instruction. A duplicated `tenantId` field was
+    // write-only (nothing queries `where('tenantId', …)` on app-config), it went stale,
+    // and it misled a migration into keying on it. The constructor still TAKES a tenantId
+    // to seed the per-tenant defaults, but must not retain it.
+    const config = new AppConfig('scs');
+    expect('tenantId' in config).toBe(false);
+    expect(config.ownerOrgId).toBe('scs'); // the ctor param is still doing its job
+  });
+
+  it('does not resurrect tenantId from a legacy Firestore doc that still has the field', () => {
+    // The live documents keep the stale field until `scripts/normalize-tenant-ids.mjs`
+    // strips it. Object.assign copies whatever keys the raw read carries, so a legacy doc
+    // WILL put `tenantId` back onto the hydrated object. That is tolerable only because
+    // nothing reads it — this test exists to make the window explicit and to fail loudly
+    // if anyone starts depending on it again.
+    const legacyDoc = { tenantId: 'stale-value' };
+    const hydrated = Object.assign(new AppConfig('scs'), legacyDoc) as unknown as Record<string, unknown>;
+    // it is present because the DOC has it, never because the CLASS declares it
+    expect(hydrated['tenantId']).toBe('stale-value');
+    expect('tenantId' in new AppConfig('scs')).toBe(false);
+  });
 });

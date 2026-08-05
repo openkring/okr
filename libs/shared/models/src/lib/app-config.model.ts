@@ -1,7 +1,7 @@
 /* this model is used to read the config data from the database
    the data is then made available to the application via the AppStore
    firebase config as well as API credentials are stored in the environment files, read by set-env.js during build and written into the environment.ts file
-   tenantId is used as the key to query the correct app-specific configuration document from the database
+   the tenant id is the DOCUMENT ID of this document and is used to query it; it is not stored as a field (see the AppConfig class comment)
 */
 
 import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_TITLE, DEFAULT_URL } from "@okr/shared-constants";
@@ -58,8 +58,24 @@ export interface PrivacySettings {
   showComments: PrivacyAccessor;
   showDocuments: PrivacyAccessor;
 }
+/**
+ * ⚠️ THERE IS DELIBERATELY NO `tenantId` FIELD ON THIS CLASS. ⚠️
+ *
+ * A tenant's identity is the app-config DOCUMENT ID and nothing else. The whole system
+ * joins on it: `AppConfigService.read(key)` → `readObject(AppConfigCollection, key)` →
+ * `.doc(key)`; `AppStore` passes `store.tenantId()` (= `env.tenantId`, derived in
+ * `set-env.js` from the Nx project name) as that key AND as the value for
+ * `getSystemQuery(tenantId)`, i.e. `tenants array-contains <same string>`; every Cloud
+ * Function does `.doc(tenantId)` too, `apply-feature-selection.ts` included. Nothing
+ * anywhere issues `where('tenantId', …)` against `app-config`.
+ *
+ * A duplicated `tenantId` field was therefore write-only and could — and did — go stale.
+ * It misled one migration attempt into keying on it, which would have mapped two config
+ * docs onto one tenant. Removed 2026-08-05 by owner instruction, together with the field
+ * on the live documents (`scripts/normalize-tenant-ids.mjs`). Do not reintroduce it:
+ * `AppConfig` has no identity of its own, only the one its document id gives it.
+ */
 export class AppConfig {
-  public tenantId = ''; // tenant ID, must be identical to the docId of the AppConfig document, is set automatically
   public isArchived = false;
   public description = '';
 
@@ -186,8 +202,11 @@ export class AppConfig {
   public useFaceId = false; // whether to use Face ID for authentication
   public useTouchId = false; // whether to use Touch ID for authentication
 
+  /**
+   * `tenantId` is a CONSTRUCTOR PARAMETER only — it seeds the per-tenant default paths
+   * below. It is deliberately not retained as a field; see the class doc comment.
+   */
   constructor(tenantId: string) {
-    this.tenantId = tenantId;
     this.logoUrl = `tenant/${tenantId}/logo/logo_round.svg`;
     this.welcomeBannerUrl = `tenant/${tenantId}/app/welcome.jpg`;
     this.notfoundBannerUrl = `tenant/${tenantId}/app/not-found.jpg`;
