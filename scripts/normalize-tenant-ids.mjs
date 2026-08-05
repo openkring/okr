@@ -287,7 +287,9 @@ function deriveCollections() {
  * the run is REFUSED rather than reported, because a migration that silently skips a
  * collection is exactly the failure mode this whole script exists to avoid.
  *
- * Cost: `limit(1)` against ~12 collections. Negligible next to the 71 k-document census.
+ * Cost: one `limit(1)` read per suspect — 9 collections on a healthy run, 26 when the
+ * derivation is broken (which is when it matters). Negligible next to the 71 k-document
+ * census.
  */
 /**
  * Return one document in `collection` whose `tenants` field is an ARRAY, or undefined if
@@ -295,11 +297,17 @@ function deriveCollections() {
  *
  * ⚠️ WHY NOT `where('tenants', '!=', null).limit(1)` — IT HAS A PROVEN FALSE NEGATIVE. ⚠️
  *
- * Firestore orders query results by VALUE TYPE FIRST, and its type order puts String
- * BEFORE Array (Null < Boolean < Number < Timestamp < String < Bytes < Reference <
- * GeoPoint < Array < Map). So `!= null` ordered ascending returns whichever document has
- * the LOWEST-TYPED `tenants` value — and a single malformed string-valued field outranks
- * every correct array in the collection.
+ * Firestore sorts values of DIFFERENT types by a fixed type order before comparing values
+ * within a type. The documented order (identical in the Firebase and Google Cloud tables)
+ * is:
+ *
+ *     Null < Boolean < NaN < Number < Timestamp < String < Bytes < Reference
+ *           < GeoPoint < Array < Vector embedding < Map
+ *
+ * `!= null` is an inequality against a value, not a type constraint, so it SPANS every
+ * type above Null. Ordered ascending it therefore returns whichever document holds the
+ * LOWEST-TYPED `tenants` value — and one malformed string-valued field outranks every
+ * correct array in the collection.
  *
  * That is not hypothetical. On the narrowed-regex run the old probe named 16 collections
  * and MISSED `tags`, which holds 72 genuine `tenants[]` documents, because
@@ -308,17 +316,40 @@ function deriveCollections() {
  * meant to protect the cleanup. Verified directly:
  *     tags  !=null → all_tenants (string)   >=[] → account_default (array)
  *
- * THE FIX — query the type range instead of sampling it. Because Array values are
- * contiguous in the type order and only Map sorts above them, `where('tenants', '>=', [])`
- * matches exactly {arrays} ∪ {maps}, and `[]` (the empty array) is the least of all arrays.
- * Ascending, the first result is therefore an ARRAY whenever any array exists — regardless
- * of how many strings, numbers or nulls the collection also holds.
+ * THE FIX — constrain the TYPE instead of sampling the order. Firestore BOUNDS A RANGE
+ * FILTER BY THE TYPE OF ITS OPERAND: a range comparison only ever matches values of the
+ * same type as the value compared against. So `where('tenants', '>=', [])` selects
+ * EXACTLY the array-typed values — not "arrays and everything above them". Proven on
+ * production `tags`, which holds 72 arrays and 1 string:
+ *     >= ''  → 1 document  (the String; the 72 arrays are excluded even though Array > String)
+ *     >= []  → 72 documents (every array; zero non-arrays)
+ *     orderBy asc, no filter → 73 documents, spanning both types
+ *
+ * Within the array type `[]` is the least value, so `>= []` admits every array including
+ * the empty one. Type-bounding is what makes this sound; the ordering merely picks which
+ * array comes back first, and any of them answers the question.
+ *
+ * ⚠️ DO NOT "SIMPLIFY" THIS BACK TO AN ORDER-BASED ARGUMENT. ⚠️ An earlier version of this
+ * comment claimed arrays were contiguous with "Map the only type above" and that `>= []`
+ * matched `{arrays} ∪ {maps}`. Both are false — Vector embedding sits between Array and
+ * Map, and the filter is type-bounded so no map is ever matched. The code was right by
+ * accident under that reasoning; someone reasoning from it could weaken this and be wrong.
  *
  * WHAT THIS GUARANTEES: if the collection contains ≥1 array-valued `tenants`, this returns
- * one. No number of malformed lower-typed values can hide it. That is soundness, not just
- * a wider sample — `.limit(20) + .some(Array.isArray)` merely raises the number of
- * malformed documents needed to blind it from 1 to 20, and a two-ended asc/desc read is
- * still defeated by a single map-valued field at the top end.
+ * one. NO number of values of any other type — string, number, bytes, geopoint, vector,
+ * map — can hide it, because none of them is in the filter's type range at all. That is
+ * soundness, not merely a wider sample:
+ *   - `.limit(20) + .some(Array.isArray)` still spans all types, so it only raises the
+ *     number of malformed documents needed to blind it from 1 to 20;
+ *   - a two-ended asc/desc read on `!= null` still spans all types, and the descending end
+ *     is claimed by the types ABOVE Array — Vector embedding and Map, not Map alone.
+ * (Verified on the emulator: a map alongside real arrays, 50 maps + 1 array, all eight
+ * lower types + 1 array, and a vector + array all return the array; maps-only, vector-only
+ * and field-absent correctly return nothing.)
+ *
+ * The `Array.isArray` check below is therefore redundant under the documented semantics.
+ * It is kept deliberately: it costs nothing and it makes the function's contract true by
+ * inspection rather than by trusting a doc page.
  *
  * WHAT IT DOES NOT GUARANTEE: nothing about HOW MANY such documents exist, nor that a
  * collection returning none is semantically tenant-scoped-but-empty. Those are the census's
@@ -327,8 +358,8 @@ function deriveCollections() {
  */
 async function firstArrayValuedTenants(collection) {
   const snap = await db.collection(collection)
-    .where('tenants', '>=', [])       // arrays and maps only — see above
-    .orderBy('tenants', 'asc')        // …so the first hit is an array if one exists
+    .where('tenants', '>=', [])       // type-bounded: array-typed values ONLY — see above
+    .orderBy('tenants', 'asc')        // any array answers the question; this picks the least
     .select('tenants').limit(1).get();
   const doc = snap.docs[0];
   if (!doc) return undefined;
@@ -787,6 +818,59 @@ async function reportStep22(configSnap, menuDocs) {
 }
 
 /**
+ * A batched writer whose NOT_FOUND handling covers EVERY commit, not just the last one.
+ *
+ * ⚠️ THIS EXISTS BECAUSE WRAPPING ONLY THE FINAL FLUSH IS A TRAP. ⚠️
+ * The first version caught NOT_FOUND around the closing `flush()` only. Any INTERMEDIATE
+ * flush — one triggered by crossing BATCH_SIZE mid-run — escaped as a raw stack trace and
+ * exit 1. At 247 ops that was latent (a single batch, so the only flush was the last one).
+ * R-10 is ~1 905 strips plus ~402 deletes: intermediate flushes are guaranteed, and a
+ * concurrently deleted document is exactly the case `update()`-over-`set(merge)` exists to
+ * handle. A mid-run raw crash on a DESTRUCTIVE, IRREVERSIBLE pass is the worst available
+ * failure mode: an unknown number of batches already committed, and no read-back.
+ *
+ * So the handling lives inside `flush` itself, and every code path that commits goes
+ * through it. `committed` is reported on failure so the operator knows how far it got.
+ */
+function makeBatcher(label) {
+  let batch = db.batch();
+  let ops = 0;
+  let committed = 0;
+
+  const flush = async () => {
+    if (ops === 0) return;
+    const n = ops;
+    try {
+      await batch.commit();
+    } catch (e) {
+      const notFound = String(e?.code) === '5' || /NOT_FOUND|No document to update/i.test(String(e?.message));
+      if (notFound) {
+        refuse(
+          `${label}: a document in this batch no longer exists — it was deleted after the census.\n\n` +
+          `Firestore said: ${e.message}\n\n` +
+          `NOTHING in this batch of ${n} operation(s) was written (batches are atomic), but ` +
+          `${committed} operation(s)\nin EARLIER batches were already committed. This is the ` +
+          'intended behaviour: the alternative,\nset(merge), would have RESURRECTED the deleted ' +
+          'document.\n\nRe-run — every operation here is idempotent, and the fresh census will ' +
+          'not include the\ndeleted document. Then verify by read-back.',
+        );
+      }
+      throw e;
+    }
+    committed += n;
+    batch = db.batch();
+    ops = 0;
+  };
+
+  return {
+    /** `fn` receives the batch; queue one operation. Flushes automatically at BATCH_SIZE. */
+    add: async (fn) => { fn(batch); if (++ops >= BATCH_SIZE) await flush(); },
+    flush,
+    get committed() { return committed; },
+  };
+}
+
+/**
  * ⚠️ WHY THIS WRITES `FieldValue.arrayRemove` AND NOT A COMPUTED ARRAY. ⚠️
  *
  * The census is read at the START of the run — a 71 000-document scan across 45
@@ -821,14 +905,7 @@ async function applyWrites({ stripTargets, present, docsByCollection }) {
   log('WRITING');
   log('='.repeat(100));
 
-  let ops = 0;
-  let batch = db.batch();
-  const flush = async () => {
-    if (ops === 0) return;
-    await batch.commit();
-    batch = db.batch();
-    ops = 0;
-  };
+  const batcher = makeBatcher('orphan sweep');
   /**
    * `update`, never `set(…, { merge: true })`.
    *
@@ -845,10 +922,7 @@ async function applyWrites({ stripTargets, present, docsByCollection }) {
    * because every operation here is idempotent a re-run is free. Failing closed on a
    * concurrent delete beats silently re-creating what someone chose to remove.
    */
-  const queue = async (ref, data) => {
-    batch.update(ref, data);
-    if (++ops >= BATCH_SIZE) await flush();
-  };
+  const queue = (ref, data) => batcher.add(w => w.update(ref, data));
 
   // `--write` is unreachable without one of these two (guarded at parse time), so the
   // strip runs exactly when it was asked for. (An earlier `|| REMOVE.length === 0`
@@ -873,22 +947,10 @@ async function applyWrites({ stripTargets, present, docsByCollection }) {
     }
   }
 
-  try {
-    await flush();
-  } catch (e) {
-    if (String(e?.code) === '5' || /NOT_FOUND|No document to update/i.test(String(e?.message))) {
-      refuse(
-        'a document in this batch no longer exists — it was deleted after the census was read.\n\n' +
-        `Firestore said: ${e.message}\n\n` +
-        'NOTHING in that batch was written (batches are atomic). This is the intended\n' +
-        'behaviour: the alternative, set(merge), would have RESURRECTED the deleted document.\n' +
-        'Simply re-run — every operation here is idempotent, and the fresh census will not\n' +
-        'include the deleted document.',
-      );
-    }
-    throw e;
-  }
-  log('\n  done.');
+  // NOT_FOUND handling lives inside makeBatcher's flush, so EVERY commit is covered —
+  // including the intermediate ones this loop triggers past BATCH_SIZE.
+  await batcher.flush();
+  log(`\n  done — ${batcher.committed} operation(s) committed.`);
   log('\n  NEXT: re-run the dry run to confirm the sweep landed BEFORE running');
   log('        applyFeatureSelection. See "REQUIRED SEQUENCE" in this file\'s header.');
 }
