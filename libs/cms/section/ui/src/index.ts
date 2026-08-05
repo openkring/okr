@@ -19,3 +19,4 @@ export * from './lib/emergency-button-widget';
 
 export * from './lib/trip-stats-configuration';
 export * from './lib/sankey-configuration';
+export * from './lib/spider-configuration';

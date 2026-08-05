@@ -453,6 +453,19 @@ export const SECTION_I18N_KEYS = {
   sankey_layoutIterations_label:            PFX + 'sankey.layoutIterations.label',
   sankey_layoutIterations_helper:           PFX + 'sankey.layoutIterations.helper',
 
+  // spider config
+  spider_title:                             PFX + 'spider.title',
+  spider_subtitle:                          PFX + 'spider.subtitle',
+  spider_axes_label:                        PFX + 'spider.axes.label',
+  spider_axes_helper:                       PFX + 'spider.axes.helper',
+  spider_axes_error:                        PFX + 'spider.axes.error',
+  spider_series_label:                      PFX + 'spider.series.label',
+  spider_series_helper:                     PFX + 'spider.series.helper',
+  spider_series_error:                      PFX + 'spider.series.error',
+  spider_areaOpacity_label:                 PFX + 'spider.areaOpacity.label',
+  spider_showLegend_label:                  PFX + 'spider.showLegend.label',
+  spider_showLegend_helper:                 PFX + 'spider.showLegend.helper',
+
   // responsibility-config
   responsibility_edit:                      PFX + 'responsibility.edit',
   responsibility_okey_label:                PFX + 'responsibility.okey.label',

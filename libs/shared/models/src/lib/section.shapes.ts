@@ -9,7 +9,7 @@ import type {
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { AlbumStyle } from './enums/album-style.enum';
@@ -417,6 +417,20 @@ export const SANKEY_SECTION_SHAPE = {
   type: 'sankey' as const,
   properties: SANKEY_CONFIG_SHAPE,
 } as SankeySection;
+
+// --------------------------------------- SPIDER ----------------------------------------
+export const SPIDER_CONFIG_SHAPE: SpiderConfig = {
+  axes: [],
+  series: [],
+  shape: 'polygon',
+  areaOpacity: 0.2,
+  showLegend: true,
+};
+export const SPIDER_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'spider' as const,
+  properties: SPIDER_CONFIG_SHAPE,
+} as SpiderSection;
 
 // --------------------------------------- FORM ----------------------------------------
 export const FORM_SECTION_CONFIG_SHAPE: FormSectionConfig = {

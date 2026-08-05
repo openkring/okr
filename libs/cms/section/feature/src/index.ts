@@ -5,6 +5,7 @@ export * from './lib/calendar-section';
 export * from './lib/card-select.modal';
 export * from './lib/chart-section';
 export * from './lib/sankey-section';
+export * from './lib/spider-section';
 export * from './lib/iframe-section';
 export * from './lib/map-section';
 export * from './lib/missing-section';

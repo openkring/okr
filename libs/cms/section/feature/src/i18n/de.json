@@ -1112,5 +1112,27 @@
       "label": "Layout-Iterationen",
       "helper": "0 behält die Reihenfolge der Knoten bei; höhere Werte lassen ECharts die Knoten automatisch anordnen."
     }
+  },
+  "spider": {
+    "label": "Spinnennetz",
+    "title": "Spinnennetz-Konfiguration",
+    "subtitle": "Achsen mit Maximalwert und eine oder mehrere Wertereihen darüber.",
+    "axes": {
+      "label": "Achsen (JSON)",
+      "helper": "Liste der Achsen als JSON, z.B. [{\"name\":\"Technik\",\"maxValue\":10}]. Mindestens 3 Achsen, sonst wird nichts gezeichnet.",
+      "error": "Ungültiges JSON – die Änderungen wurden nicht übernommen."
+    },
+    "series": {
+      "label": "Wertereihen (JSON)",
+      "helper": "Liste der Reihen als JSON, z.B. [{\"name\":\"Selbstbild\",\"values\":[8,6,4]}]. Die Werte sind index-parallel zu den Achsen; fehlende Werte zählen als 0, zu grosse werden auf das Achsenmaximum begrenzt.",
+      "error": "Ungültiges JSON – die Änderungen wurden nicht übernommen."
+    },
+    "areaOpacity": {
+      "label": "Deckkraft der Fläche (0–1)"
+    },
+    "showLegend": {
+      "label": "Legende anzeigen",
+      "helper": "Blendet die Namen der Wertereihen unter dem Diagramm ein."
+    }
   }
 }

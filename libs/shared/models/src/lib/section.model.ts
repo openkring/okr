@@ -18,14 +18,14 @@ export const SectionModelName = 'section';
 export type SectionType =
     'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' |
     'people' | 'responsibility' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
-    'news' | 'activities' | 'messages' | 'rag' | 'orgchart' | 'context' | 'member-age' | 'member-cat' | 'trip-stats' | 'form' | 'sankey';
+    'news' | 'activities' | 'messages' | 'rag' | 'orgchart' | 'context' | 'member-age' | 'member-cat' | 'trip-stats' | 'form' | 'sankey' | 'spider';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -81,6 +81,32 @@ export interface SankeyConfig {
   layoutIterations: number; // default 0 — keeps the node order as given
 }
 
+// --------------------------------------- SPIDER ----------------------------------------
+export interface SpiderSection extends BaseSection {
+  type: 'spider';
+  properties: SpiderConfig;
+}
+
+/** One axis of the net; `maxValue` scales this axis only. */
+export interface SpiderAxis {
+  name: string;
+  maxValue: number;
+}
+
+/** One value series drawn over the axes; `values` is index-parallel to `axes`. */
+export interface SpiderSeries {
+  name: string;
+  values: number[];
+}
+
+export interface SpiderConfig {
+  axes: SpiderAxis[];
+  series: SpiderSeries[];   // one or more (Ist/Soll, Selbst-/Fremdbild, Person A vs. B)
+  shape: 'polygon' | 'circle'; // default 'polygon'
+  areaOpacity: number;      // default 0.2 — 0 draws lines only
+  showLegend: boolean;      // default true
+}
+
 // --------------------------------------- MEMBER AGE ----------------------------------------
 export interface MemberAgeSection extends BaseSection {
   type: 'member-age';
@@ -133,7 +159,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
