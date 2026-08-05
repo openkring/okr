@@ -440,6 +440,19 @@ export const SECTION_I18N_KEYS = {
   rag_config_maxTokens_placeholder:         PFX + 'rag.config.maxTokens.placeholder',
   rag_config_maxTokens_helper:              PFX + 'rag.config.maxTokens.helper',
 
+  // sankey config
+  sankey_title:                             PFX + 'sankey.title',
+  sankey_subtitle:                          PFX + 'sankey.subtitle',
+  sankey_empty:                             PFX + 'sankey.empty',
+  sankey_flows_label:                       PFX + 'sankey.flows.label',
+  sankey_flows_helper:                      PFX + 'sankey.flows.helper',
+  sankey_flows_error:                       PFX + 'sankey.flows.error',
+  sankey_nodeWidth_label:                   PFX + 'sankey.nodeWidth.label',
+  sankey_nodeGap_label:                     PFX + 'sankey.nodeGap.label',
+  sankey_lineOpacity_label:                 PFX + 'sankey.lineOpacity.label',
+  sankey_layoutIterations_label:            PFX + 'sankey.layoutIterations.label',
+  sankey_layoutIterations_helper:           PFX + 'sankey.layoutIterations.helper',
+
   // responsibility-config
   responsibility_edit:                      PFX + 'responsibility.edit',
   responsibility_okey_label:                PFX + 'responsibility.okey.label',

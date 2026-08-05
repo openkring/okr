@@ -9,7 +9,7 @@ import type {
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, RagConfig, RagSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { AlbumStyle } from './enums/album-style.enum';
@@ -403,6 +403,20 @@ export const RAG_SECTION_SHAPE = {
   type: 'rag' as const,
   properties: RAG_CONFIG_SHAPE,
 } as RagSection;
+
+// --------------------------------------- SANKEY ----------------------------------------
+export const SANKEY_CONFIG_SHAPE: SankeyConfig = {
+  flows: [],
+  nodeWidth: 40,
+  nodeGap: 20,
+  lineOpacity: 0.6,
+  layoutIterations: 0,
+};
+export const SANKEY_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'sankey' as const,
+  properties: SANKEY_CONFIG_SHAPE,
+} as SankeySection;
 
 // --------------------------------------- FORM ----------------------------------------
 export const FORM_SECTION_CONFIG_SHAPE: FormSectionConfig = {

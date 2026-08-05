@@ -18,3 +18,4 @@ export * from './lib/persons-widget';
 export * from './lib/emergency-button-widget';
 
 export * from './lib/trip-stats-configuration';
+export * from './lib/sankey-configuration';

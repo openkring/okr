@@ -1088,5 +1088,29 @@
     "template_placeholder": "z.B. scs_password_reset",
     "all_groups": "Alle Gruppen",
     "search_placeholder": "Suchen …"
+  },
+  "sankey": {
+    "label": "Sankey",
+    "title": "Sankey-Konfiguration",
+    "subtitle": "Flüsse zwischen Knoten; die Knoten ergeben sich aus den Flüssen.",
+    "empty": "Noch keine Flüsse erfasst.",
+    "flows": {
+      "label": "Flüsse (JSON)",
+      "helper": "Liste von Flüssen als JSON, z.B. [{\"source\":\"Beiträge\",\"target\":\"Verein\",\"value\":100}]. Quelle und Ziel sind freie Knotennamen, der Wert muss positiv sein.",
+      "error": "Ungültiges JSON – die Änderungen wurden nicht übernommen."
+    },
+    "nodeWidth": {
+      "label": "Knotenbreite (px)"
+    },
+    "nodeGap": {
+      "label": "Knotenabstand (px)"
+    },
+    "lineOpacity": {
+      "label": "Deckkraft der Flüsse (0–1)"
+    },
+    "layoutIterations": {
+      "label": "Layout-Iterationen",
+      "helper": "0 behält die Reihenfolge der Knoten bei; höhere Werte lassen ECharts die Knoten automatisch anordnen."
+    }
   }
 }

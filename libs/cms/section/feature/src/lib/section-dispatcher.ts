@@ -32,6 +32,7 @@ import { ContextDiagramSectionComponent } from './context-diagram-section';
 import { ResponsibilitySectionComponent } from './responsibility-section';
 import { MemberAgeSectionComponent } from './member-age-section';
 import { MemberCatSectionComponent } from './member-cat-section';
+import { SankeySectionComponent } from './sankey-section';
 import { TripStatsSectionComponent } from './trip-stats-section';
 import { FormSectionComponent } from './form-section';
 import { SectionStore } from './section.store';
@@ -51,7 +52,7 @@ import { SectionStore } from './section.store';
     ArticleSectionComponent, MissingSectionComponent, TableSectionComponent, VideoSectionComponent, EventsSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
-    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent,
+    InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent, SankeySectionComponent,
     IonItem, IonLabel, Spinner, DeferError,
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
     TripStatsSectionComponent,
@@ -169,6 +170,9 @@ import { SectionStore } from './section.store';
           }
           @case('trip-stats') {
             <okr-trip-stats-section [section]="section" [editMode]="editMode()" />
+          }
+          @case('sankey') {
+            <okr-sankey-section [section]="section" />
           }
           @case('form') {
             <okr-form-section [section]="section" [editMode]="editMode()" />
