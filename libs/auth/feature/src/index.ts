@@ -2,6 +2,7 @@ export * from './lib/isAdmin.guard';
 export * from './lib/isAppReady.guard';
 export * from './lib/isAuditor.guard';
 export * from './lib/isAuthenticated.guard';
+export * from './lib/isContentAdmin.guard';
 export * from './lib/isPrivileged.guard';
 export * from './lib/isTreasurer.guard';
 export * from './lib/kioskLock.guard';

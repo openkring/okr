@@ -7,22 +7,35 @@ import { AppStore } from '@okr/shared-feature';
 import { FEATURE_ROUTES } from './feature-catalogue';
 
 /**
- * THE SAFETY NET FOR THE 2026-08-05 RULING, and specifically for how it was applied to `/aoc`.
+ * THE SAFETY NET FOR THE 2026-08-05 RULINGS, and specifically for how they were applied to
+ * `/aoc`.
  *
- * The ruling softened four routes to match their menu documents. Two of them (`aoc/website`,
- * `/aoc/srv`) sit under the `/aoc` parent, whose `isAdminGuard()` Angular evaluates FIRST — so
- * softening the children alone would have been a no-op. The admin gate therefore moved down
- * onto the fourteen children the ruling does not name, and the parent keeps only the
- * `isPrivilegedGuard` floor.
+ * Five live menu documents declare `roleNeeded: contentAdmin` while their routes demanded more.
+ * Ruling R-5 added `isContentAdminGuard` and put it on all five. Three of them (`aoc/website`,
+ * `/aoc/srv`, `/aoc/tag`) sit under the `/aoc` parent, whose guard Angular evaluates FIRST — so
+ * the parent had to become a floor a contentAdmin can pass (`isContentAdminGuard()`, the union
+ * of what the children require), while each of the thirteen children the rulings do not name
+ * carries its own `isAdminGuard()`.
  *
- * That arrangement is correct but fragile in one specific way: a child added to `/aoc` without
- * its own `canActivate` silently inherits `privileged` where it used to inherit `admin`. This
- * spec is what makes that fail loudly. It asserts BEHAVIOUR, not guard identity —
- * `isAdminGuard()` mints a fresh closure per call, so there is nothing to compare by reference,
- * and behaviour is the property that matters anyway.
+ * Two things that arrangement can silently lose, both pinned below: a `/aoc` child added
+ * without its own guard now inherits the contentAdmin FLOOR rather than `admin`, and a revert
+ * of any of the five to `isPrivilegedGuard` would look harmless while re-breaking the exact
+ * role the menu documents name. Assertions are BEHAVIOURAL, not by guard identity —
+ * `isAdminGuard()`/`isContentAdminGuard()` mint a fresh closure per call, so there is nothing
+ * to compare by reference, and behaviour is the property that matters anyway.
  */
 
-const AOC_SOFTENED = ['srv', 'website'] as const;
+/** The `/aoc` children ruled down to contentAdmin. Everything else under `/aoc` is admin-only. */
+const AOC_CONTENT_ADMIN = ['tag', 'srv', 'website'] as const;
+
+/** All five routes ruled to match their menu doc's `roleNeeded: contentAdmin`. */
+const RULED = [
+  { menuDoc: 'templates', blockId: 'pdf-template', path: 'templates', child: undefined },
+  { menuDoc: 'forms-all', blockId: 'forms', path: 'forms', child: undefined },
+  { menuDoc: 'aoc-website', blockId: 'aoc', path: 'aoc', child: 'website' },
+  { menuDoc: 'aoc-srv', blockId: 'aoc', path: 'aoc', child: 'srv' },
+  { menuDoc: 'tag-all', blockId: 'aoc', path: 'aoc', child: 'tag' },
+] as const;
 
 /** Roles is a flag map (`{ admin: true }`), not an array — see `checkAuthorization`. */
 function injectorFor(roles: Record<string, boolean>): Injector {
@@ -32,8 +45,8 @@ function injectorFor(roles: Record<string, boolean>): Injector {
 }
 
 const ADMIN = injectorFor({ admin: true });
-const PRIVILEGED = injectorFor({ privileged: true });
 const CONTENT_ADMIN = injectorFor({ contentAdmin: true });
+const PRIVILEGED = injectorFor({ privileged: true });
 const REGISTERED = injectorFor({ registered: true });
 
 /**
@@ -63,64 +76,94 @@ function aocChild(path: string): { parent: Route; child: Route } {
   return { parent, child: child as Route };
 }
 
-describe('/aoc guards after the 2026-08-05 ruling', () => {
-  it('every child the ruling does NOT name stays admin-only', () => {
-    const { children = [] } = fragmentOf('aoc', 'aoc');
-    const leaked = children
-      .filter(child => !AOC_SOFTENED.includes(child.path as typeof AOC_SOFTENED[number]))
-      .filter(child => activates(PRIVILEGED, child)) // the child's OWN guard must reject
-      .map(child => child.path);
+/** The full guard chain of a ruled route, parent included where there is one. */
+function chainOf(entry: typeof RULED[number]): Route[] {
+  const fragment = fragmentOf(entry.blockId, entry.path);
+  return entry.child ? [fragment, aocChild(entry.child).child] : [fragment];
+}
 
-    expect(leaked, 'a /aoc child is reachable by a non-admin — the parent no longer covers it').toEqual([]);
+describe('the five routes ruled to match their menu documents', () => {
+  /**
+   * THE RULING ITSELF, and the test that fails on a revert to `isPrivilegedGuard`. That guard
+   * is `hasRole('privileged')` → `['privileged', 'admin']`, which never admitted `contentAdmin`
+   * — the very role all five menu documents name. This assertion is the difference between the
+   * dead end being narrowed and being closed.
+   */
+  it('a contentAdmin reaches all five', () => {
+    const blocked = RULED
+      .filter(entry => !activates(CONTENT_ADMIN, ...chainOf(entry)))
+      .map(entry => entry.menuDoc);
+
+    expect(blocked, 'menu row visible, navigation still cancelled — the ruling is not in effect').toEqual([]);
+  });
+
+  it('an admin reaches all five too (softening never locks admins out)', () => {
+    expect(RULED.filter(entry => !activates(ADMIN, ...chainOf(entry))).map(e => e.menuDoc)).toEqual([]);
+  });
+
+  /**
+   * `privileged` is NOT `contentAdmin`: the two are siblings and neither implies the other
+   * (`hasRole` maps each to `[<role>, 'admin']`). A privileged-only user passing any of the
+   * five would mean a guard drifted back to `isPrivilegedGuard`.
+   */
+  it('a privileged-only user reaches none of the five', () => {
+    expect(RULED.filter(entry => activates(PRIVILEGED, ...chainOf(entry))).map(e => e.menuDoc)).toEqual([]);
+  });
+
+  it('a merely-registered member reaches none of the five', () => {
+    expect(RULED.filter(entry => activates(REGISTERED, ...chainOf(entry))).map(e => e.menuDoc)).toEqual([]);
+  });
+});
+
+describe('/aoc guards after the 2026-08-05 rulings', () => {
+  /**
+   * The floor is no longer `admin`, so "the parent will catch it" is no longer true. Every
+   * child must state its own requirement — this is what makes the next test meaningful.
+   */
+  it('every /aoc child carries its own guard', () => {
+    const { children = [] } = fragmentOf('aoc', 'aoc');
+    const unguarded = children.filter(c => (c.canActivate ?? []).length === 0).map(c => c.path);
+
+    expect(unguarded, 'child would silently inherit the contentAdmin floor').toEqual([]);
     expect(children.length, 'children were added or removed; re-check the ruling list').toBe(16);
   });
 
-  it('an admin still reaches every /aoc screen', () => {
+  it('every child the rulings do NOT name stays admin-only', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
+    const others = children.filter(c => !AOC_CONTENT_ADMIN.includes(c.path as typeof AOC_CONTENT_ADMIN[number]));
+
+    expect(others.length, 'expected thirteen admin-only /aoc children').toBe(13);
+    // The child's OWN guard must reject both non-admin roles, independently of the floor.
+    expect(others.filter(c => activates(CONTENT_ADMIN, c)).map(c => c.path)).toEqual([]);
+    expect(others.filter(c => activates(PRIVILEGED, c)).map(c => c.path)).toEqual([]);
+  });
+
+  it('an admin still reaches every /aoc screen', () => {
     const parent = fragmentOf('aoc', 'aoc');
-    const blocked = children.filter(child => !activates(ADMIN, parent, child)).map(child => child.path);
+    const blocked = (parent.children ?? []).filter(c => !activates(ADMIN, parent, c)).map(c => c.path);
 
     expect(blocked).toEqual([]);
   });
 
-  it('the two softened screens are reachable by a privileged non-admin', () => {
-    AOC_SOFTENED.forEach(path => {
-      const { parent, child } = aocChild(path);
-      expect(activates(PRIVILEGED, parent, child), `/aoc/${path} still blocked`).toBe(true);
-    });
-  });
-
-  it('the /aoc floor still keeps a merely-registered user out', () => {
-    const { children = [] } = fragmentOf('aoc', 'aoc');
+  it('the /aoc floor still keeps a merely-registered user out of everything', () => {
     const parent = fragmentOf('aoc', 'aoc');
-    const reachable = children.filter(child => activates(REGISTERED, parent, child)).map(child => child.path);
+    const reachable = (parent.children ?? []).filter(c => activates(REGISTERED, parent, c)).map(c => c.path);
 
     expect(reachable).toEqual([]);
   });
 
   /**
-   * THE RULING'S RESIDUE, pinned so it is not mistaken for a passing requirement. The menu docs
-   * say `contentAdmin`; the strongest available softening is `isPrivilegedGuard`
-   * (`hasRole('privileged')` → `['privileged', 'admin']`), which does not include
-   * `contentAdmin`. A user whose only role is `contentAdmin` therefore still sees the menu row
-   * and still cannot navigate. Change this expectation only together with a real
-   * contentAdmin-aware guard.
+   * The floor must not be the thing that decides: a contentAdmin has to clear the PARENT (so
+   * the three ruled children are reachable) and still be stopped by each admin-only child. Both
+   * halves in one assertion, because getting either wrong reintroduces the defeat-by-ancestor
+   * bug the restructuring exists to avoid.
    */
-  it('a contentAdmin-only user is STILL blocked (no isContentAdminGuard exists)', () => {
-    const { parent, child } = aocChild('website');
-    expect(activates(CONTENT_ADMIN, parent, child)).toBe(false);
-    expect(activates(CONTENT_ADMIN, fragmentOf('pdf-template', 'templates'))).toBe(false);
-    expect(activates(CONTENT_ADMIN, fragmentOf('forms', 'forms'))).toBe(false);
-  });
-});
+  it('a contentAdmin clears the floor but only reaches the three ruled screens', () => {
+    const parent = fragmentOf('aoc', 'aoc');
+    const reachable = (parent.children ?? [])
+      .filter(c => activates(CONTENT_ADMIN, parent, c))
+      .map(c => c.path as string);
 
-describe('the two softened top-level fragments', () => {
-  it('/templates and /forms admit a privileged non-admin, and no one below that', () => {
-    ([['pdf-template', 'templates'], ['forms', 'forms']] as const).forEach(([blockId, path]) => {
-      const fragment = fragmentOf(blockId, path);
-      expect(activates(PRIVILEGED, fragment), `/${path} still admin-only`).toBe(true);
-      expect(activates(ADMIN, fragment), `/${path} locked out admins`).toBe(true);
-      expect(activates(REGISTERED, fragment), `/${path} open to any member`).toBe(false);
-    });
+    expect(reachable.sort()).toEqual([...AOC_CONTENT_ADMIN].sort());
   });
 });

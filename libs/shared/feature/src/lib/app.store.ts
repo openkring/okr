@@ -273,6 +273,12 @@ export const AppStore = signalStore(
     // as opposed to still idle/loading/reloading. The one and only definition of that
     // question; read it instead of re-deriving the status triple at each call site.
     //
+    // NOT here for access: `appConfigResource` is a `withProps` member and therefore already
+    // public (only `_`-prefixed members are hidden from the store's type), and consumers did
+    // read `.status()` directly. This exists for SINGLE-SOURCING — the alternative was a second
+    // hand-maintained copy of "which ResourceStatus values count as settled" in `FeatureStore`,
+    // and two copies drifting apart is the bug class this signal was introduced to fix.
+    //
     // Why a status check and not a value check: `appConfig()` is NEVER nullish (it always
     // returns `Object.assign(new AppConfig(tenantId), loaded ?? {})`), and an absent
     // `enabledFeatures` reads as `undefined` both while loading AND on a legacy doc that
