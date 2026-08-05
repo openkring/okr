@@ -265,10 +265,14 @@ const aoc: FeatureBlock = {
       { key: 'aoc-doc',        name: 'aoc-doc',        url: '/aoc/doc',        action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: 'Dokumente' },
       { key: 'aoc-bexio',      name: 'aoc-bexio',      url: '/aoc/bexio',      action: 'navigate', roleNeeded: 'admin', icon: 'bank',     label: 'Bexio' },
       // `roleNeeded: contentAdmin` (not `admin`) is the LIVE value, copied verbatim — and it
-      // is inert either way: the `/aoc` route parent is `isAdminGuard()`, so a
-      // contentAdmin-but-not-admin user sees the row and is bounced. Same UX-dead-end class as
-      // `addresses` (`subject`), `document-all` (`document`) and `forms-all` (`forms`), not an
-      // access leak.
+      // is now HONOURED. It used to be inert: the `/aoc` route parent was `isAdminGuard()`, so
+      // a contentAdmin-but-not-admin user saw the row and was bounced. Owner ruling R-5
+      // (2026-08-05) added `isContentAdminGuard` and put it on `/aoc/srv`, and moved the `/aoc`
+      // parent down to a contentAdmin FLOOR so the child guard is actually reached — see the
+      // `aoc` block in `@okr/tenant-routes`' route catalogue for the floor's derivation. The
+      // same ruling covered `/aoc/tag` and `aoc/website`; R-6 (same day) covered `document-all`
+      // and `forms-all`. `addresses` (`subject`) is a DIFFERENT pair (menu `privileged` vs.
+      // route `admin`) and is still open — see its own note.
       //
       // `icon: '//org.srv'` is a LIVE-DATA DEFECT, flagged rather than justified — identical
       // to `boats-club`'s `//org.scs` on the `resource` block: it is a storage asset path for
@@ -687,14 +691,21 @@ const subject: FeatureBlock = {
   // `/applications` screen (isPrivilegedGuard) is reachable today only by typing the URL,
   // same "un-menu'd admin screen" shape as `i18n` in the core bundle.
   //
-  // NOTE on `addresses`' roleNeeded vs. its route guard: the live doc's `roleNeeded` is
-  // `privileged`, but the route it points at (`/address/:contextMenuName`) is guarded by
-  // `isAdminGuard()` (stricter). Since `admin` already satisfies `privileged` in
-  // `hasRole`'s allow-list (`auth.util.ts`), this is NOT a privacy widening — a
-  // privileged-but-not-admin user would see this menu entry and then be denied by the
-  // route guard, a UX dead end, not an access leak. Copied verbatim per the rule (mirror
-  // live docs, don't invent); flagged in the task report for whoever owns menuItems data
-  // hygiene, not silently "fixed" here.
+  // NOTE on `addresses`' roleNeeded vs. its route guard — STILL OPEN, deliberately NOT closed
+  // by the 2026-08-05 rulings. The live doc's `roleNeeded` is `privileged`, but the route it
+  // points at (`/address/:contextMenuName`) is guarded by `isAdminGuard()` (stricter). Since
+  // `admin` already satisfies `privileged` in `hasRole`'s allow-list (`auth.util.ts`), this is
+  // NOT a privacy widening — a privileged-but-not-admin user sees this menu entry and is then
+  // denied by the route guard, a UX dead end, not an access leak.
+  //
+  // R-5 and R-6 (2026-08-05) closed twelve mismatches of the neighbouring class — menu doc says
+  // `contentAdmin`, route said `admin` or `privileged` — by adding `isContentAdminGuard` and
+  // applying it. This one is a DIFFERENT pair (`privileged` vs. `admin`) and no ruling covers
+  // it, so the flag stands: still copied verbatim per the mirror rule, still for whoever owns
+  // menuItems data hygiene to decide, and still not silently "fixed" here. Note the direction
+  // matters for who decides — closing it means either widening the route to `privileged` (a
+  // real access increase over the PII vault's list screen, not a cosmetic fix) or tightening
+  // the menu doc to `admin`; neither is a cataloguing decision.
   menu: [
     subjectsMenuParent([
       { key: 'person-contacts', name: 'person-contacts', url: '/person/all/c-persons', action: 'navigate', roleNeeded: 'privileged', icon: 'id-card', label: '@main.members.person-contacts' },
@@ -1334,13 +1345,20 @@ const pdfTemplate: FeatureBlock = {
  * (`resolveWithDeps` terminates on cycles, so it would not crash — it would just be an
  * unreadable statement of a mutual, always-satisfied relationship).
  *
- * MENU/ROUTE ROLE MISMATCH, reported not "fixed" (same class as `addresses` on the
- * `subject` block): the live `document-all` doc's `roleNeeded` is `contentAdmin`, but the
- * route it navigates to is guarded by `isPrivilegedGuard`. `hasRole` (`auth.util.ts`)
- * satisfies `privileged` from `['privileged', 'admin']` only — `contentAdmin` is NOT in
- * that list. So a contentAdmin-but-not-admin user sees the "Dokumente" entry and is then
- * bounced by the route guard: a UX dead end, not an access leak (the guard is the stricter
- * side). Copied verbatim per the mirror rule; flagged for whoever owns menuItems hygiene.
+ * MENU/ROUTE ROLE MISMATCH — RESOLVED by owner ruling R-6 (2026-08-05). This was the first
+ * instance of the class to be written down: the live `document-all` doc's `roleNeeded` is
+ * `contentAdmin`, while the route it navigates to was guarded by `isPrivilegedGuard`, and
+ * `hasRole` (`auth.util.ts`) satisfies `privileged` from `['privileged', 'admin']` only —
+ * `contentAdmin` is NOT in that list — so a contentAdmin-but-not-admin user saw the "Dokumente"
+ * entry and was bounced. R-6 swapped that route guard to `isContentAdminGuard()`, so the doc's
+ * declared role is now the role the route enforces, and the hygiene flag is discharged: nothing
+ * is left for whoever owns menuItems data to decide here.
+ *
+ * ⚠️ R-6 was an ACCESS REDUCTION, not a tidy-up: `privileged` and `contentAdmin` are disjoint
+ * apart from `admin`, so a privileged-only user LOST the document list. The owner was offered a
+ * union guard that would have kept both and chose the swap. If someone reports that regression
+ * as a bug, it is the ruling working as intended — see the guard's own comment in the route
+ * catalogue (`@okr/tenant-routes`).
  */
 // Named `documentBlock`, not `document`: a module-scope `const document` would shadow the
 // DOM global of that name for the whole file.
@@ -1632,15 +1650,19 @@ const socialFeed: FeatureBlock = {
  * Those are Cloud-Function-side effects with no screen of forms' behind them, so they are
  * likewise not edges; noted so a later reader does not mistake the omission for an oversight.
  *
- * GUARD/MENU ROLE MISMATCH, reported not "fixed" (same class as `document-all` and
- * `addresses`): the live `forms-all` doc's `roleNeeded` is `contentAdmin`, but the `/forms`
- * route is guarded by `isAdminGuard` — and `hasRole` (`auth.util.ts`) does not satisfy
- * `admin` from `contentAdmin`. A contentAdmin-but-not-admin user therefore sees the
- * "Formulare" entry and is bounced by the guard: a UX dead end, not an access leak (the guard
- * is the stricter side). Copied verbatim per the mirror rule. Note the route fragment in
- * `@okr/tenant-routes` DOES correct that guard from app.routes.ts's uncalled `isAdminGuard`
- * to `isAdminGuard()` — see the comment there; today the uncalled factory enforces nothing,
- * so `/forms` is currently open to any authenticated user in the live app.
+ * GUARD/MENU ROLE MISMATCH — RESOLVED by owner ruling R-5 (2026-08-05). The live `forms-all`
+ * doc's `roleNeeded` is `contentAdmin`, while the `/forms` route required `admin`, and
+ * `hasRole` (`auth.util.ts`) does not satisfy `admin` from `contentAdmin` — so a
+ * contentAdmin-but-not-admin user saw the "Formulare" entry and was bounced. R-5 swapped the
+ * route guard to `isContentAdminGuard()`, so the doc's declared role is the role the route
+ * enforces and the hygiene flag is discharged. No one lost access: `admin` satisfies
+ * `contentAdmin` in the same allow-list.
+ *
+ * SEPARATE AND STILL TRUE in the live app: `app.routes.ts` writes that guard as an UNCALLED
+ * factory, which enforces nothing, so `/forms` — the whole form builder, including every form
+ * definition's field config and encryption setup — is open to any authenticated user until the
+ * composed route table replaces that file. The route fragment in `@okr/tenant-routes` has it
+ * written called; see the comment there.
  */
 const forms: FeatureBlock = {
   id: 'forms',
