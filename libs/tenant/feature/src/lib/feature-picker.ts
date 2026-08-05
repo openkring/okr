@@ -147,9 +147,9 @@ export class FeaturePicker {
     // `appStore.appConfig()` is NEVER nullish (`app.store.ts`'s `appConfig` computed always
     // returns `Object.assign(new AppConfig(tenantId), loaded ?? {})`), so gating the seed on
     // `appConfig()?.enabledFeatures` alone can't distinguish "not loaded yet" from "loaded,
-    // legacy tenant, field genuinely absent" — both read as `undefined`. Reading the
-    // resource's own settlement status (`resolved`/`error`/`local` — i.e. NOT still
-    // `idle`/`loading`/`reloading`) is the only way to tell them apart. Getting this wrong
+    // legacy tenant, field genuinely absent" — both read as `undefined`. Only the resource's
+    // own settlement status tells them apart, which is what `AppStore.isAppConfigSettled`
+    // wraps (shared with `FeatureStore.settled`, so the two cannot drift). Getting this wrong
     // would latch "every non-internal block" in PERMANENTLY (seeded once, never re-run) and
     // never re-seed once the real — possibly much narrower — `enabledFeatures` arrives; a
     // hard reload straight onto this screen would then silently re-enable everything an admin
@@ -161,8 +161,7 @@ export class FeaturePicker {
     // from being a tracked dependency of this same effect.
     effect(() => {
       if (this.seeded) return;
-      const status = this.appStore.appConfigResource.status();
-      if (status !== 'resolved' && status !== 'error' && status !== 'local') return; // still loading
+      if (!this.appStore.isAppConfigSettled()) return; // still loading
       const enabled = this.appStore.appConfig()?.enabledFeatures
         ?? this.catalogue.filter(block => block.defaultAvailability !== 'internal').map(block => block.id);
       this.seeded = true;

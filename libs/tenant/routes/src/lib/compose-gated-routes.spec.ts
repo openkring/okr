@@ -1,5 +1,7 @@
-import { runInInjectionContext, Injector } from '@angular/core';
+import { ApplicationRef, provideZonelessChangeDetection, runInInjectionContext, signal } from '@angular/core';
+import { createApplication } from '@angular/platform-browser';
 import { DefaultUrlSerializer, Router, type ActivatedRouteSnapshot, type CanActivateFn, type Route, type RouterStateSnapshot, type UrlTree } from '@angular/router';
+import type { Observable } from 'rxjs';
 import { describe, expect, it } from 'vitest';
 
 import { isAdminGuard, isAuthenticatedGuard, isPrivilegedGuard } from '@okr/auth-feature';
@@ -19,21 +21,25 @@ const ROOT_URL = '/public/welcome';
  * Firestore (`FeatureRolloutService`, `AppConfigService`) and turn a route-composition test
  * into an integration test of the data layer. `Router` is stubbed down to `parseUrl` alone,
  * backed by the REAL `DefaultUrlSerializer` so the redirect target is a genuine `UrlTree`
- * rather than a string.
+ * rather than a string. `settled: true` throughout: WHETHER the gate waits is
+ * `feature-enabled.guard.spec.ts`'s subject, this file's is what it decides once it has.
  *
- * A bare `Injector.create`, NOT `TestBed`: `TestBed.configureTestingModule` compiles a test
- * NgModule and, in doing so, walks every JIT-compiled Angular class this spec's import graph
- * has pulled in — `@okr/tenant-feature`'s barrel exports `FeaturePicker`, an Ionic
- * standalone component — and blows up in `applyProviderOverridesInScope` with
- * "Cannot read properties of null (reading 'ngModule')". None of that machinery is needed
- * to call one `CanActivateFn` in an injection context.
+ * `createApplication`, NOT `TestBed` and no longer a bare `Injector.create`. `TestBed`
+ * compiles a test NgModule and walks every JIT-compiled Angular class this spec's import
+ * graph has pulled in — `@okr/tenant-feature`'s barrel exports `FeaturePicker`, an Ionic
+ * standalone component — and blows up in `applyProviderOverridesInScope` with "Cannot read
+ * properties of null (reading 'ngModule')". A bare `Injector.create` was enough while the
+ * guard was synchronous, but it has no `ChangeDetectionScheduler`, so the `toObservable` the
+ * guard now uses to wait for `FeatureStore.settled` throws NG0201 inside `effect()`.
+ * `createApplication` gives a real environment injector without compiling a module scope.
  */
-function injectorFor(effective: string[]): Injector {
+async function appFor(effective: string[]): Promise<ApplicationRef> {
   const serializer = new DefaultUrlSerializer();
-  return Injector.create({
+  return createApplication({
     providers: [
+      provideZonelessChangeDetection(),
       { provide: Router, useValue: { parseUrl: (url: string): UrlTree => serializer.parse(url) } },
-      { provide: FeatureStore, useValue: { effective: () => new Set(effective) } },
+      { provide: FeatureStore, useValue: { settled: signal(true), effective: signal(new Set(effective)) } },
       { provide: AppStore, useValue: { appConfig: () => ({ rootUrl: ROOT_URL }) } },
     ],
   });
@@ -46,12 +52,22 @@ function injectorFor(effective: string[]): Injector {
  * the role guards read `AppStore.currentUser()`, none of which a route-composition test has
  * any business standing up — and when the feature gate blocks, the router never reaches
  * them either.
+ *
+ * `appRef.tick()` flushes the effect behind the guard's `toObservable`; the `toBeDefined`
+ * doubles as a hang check, since `settled` is stubbed true and the verdict is therefore owed
+ * on the first flush.
  */
-function featureVerdict(route: Route, injector: Injector): true | UrlTree {
+function featureVerdict(route: Route, appRef: ApplicationRef): true | UrlTree {
   const guard = (route.canActivate ?? [])[0] as CanActivateFn;
   expect(guard, 'fragment has no canActivate — composition did not gate it').toBeTypeOf('function');
-  const verdict = runInInjectionContext(injector, () =>
+  const result = runInInjectionContext(appRef.injector, () =>
     guard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot));
+
+  let verdict: true | UrlTree | undefined;
+  (result as Observable<true | UrlTree>).subscribe(v => { verdict = v; });
+  appRef.tick();
+
+  expect(verdict, 'guard did not resolve although the effective set was settled').toBeDefined();
   return verdict as true | UrlTree;
 }
 
@@ -93,16 +109,16 @@ describe('composeGatedFeatureRoutes', () => {
    * would stay reachable behind nothing but `isAuthenticatedGuard` and the ruling would do
    * nothing at all.
    */
-  it('a route belonging to a block the tenant does not have is NOT reachable', () => {
-    const injector = injectorFor(allBlockIds().filter(id => id !== 'games'));
-    const verdict = featureVerdict(fragmentOf('games', 'quiz'), injector);
+  it('a route belonging to a block the tenant does not have is NOT reachable', async () => {
+    const appRef = await appFor(allBlockIds().filter(id => id !== 'games'));
+    const verdict = featureVerdict(fragmentOf('games', 'quiz'), appRef);
 
     expect(verdict).not.toBe(true);
     expect(String(verdict)).toBe(ROOT_URL);
   });
 
-  it('the same route IS reachable for a tenant that has the block', () => {
-    expect(featureVerdict(fragmentOf('games', 'quiz'), injectorFor(['games']))).toBe(true);
+  it('the same route IS reachable for a tenant that has the block', async () => {
+    expect(featureVerdict(fragmentOf('games', 'quiz'), await appFor(['games']))).toBe(true);
   });
 
   /**
@@ -112,13 +128,13 @@ describe('composeGatedFeatureRoutes', () => {
    * without a redeploy" lever, and it only exists if the guard is applied to core blocks
    * too. `cms` is `core: true`; `/private` is a fragment only `cms` owns.
    */
-  it('a core: true block is gated as well (rollout can still kill it)', () => {
+  it('a core: true block is gated as well (rollout can still kill it)', async () => {
     expect(FEATURE_BLOCKS.find(b => b.id === 'cms')?.core).toBe(true);
 
-    const withoutCms = injectorFor(allBlockIds().filter(id => id !== 'cms'));
+    const withoutCms = await appFor(allBlockIds().filter(id => id !== 'cms'));
     expect(featureVerdict(fragmentOf('cms', 'private'), withoutCms)).not.toBe(true);
 
-    expect(featureVerdict(fragmentOf('cms', 'private'), injectorFor(['cms']))).toBe(true);
+    expect(featureVerdict(fragmentOf('cms', 'private'), await appFor(['cms']))).toBe(true);
   });
 
   /**

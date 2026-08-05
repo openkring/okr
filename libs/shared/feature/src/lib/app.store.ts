@@ -269,6 +269,21 @@ export const AppStore = signalStore(
     // Note: rendering before readiness is tolerated — getCategory degrades to an empty
     // category until the stream emits (the watchdog can open navigation without data).
     areCategoriesReady: computed(() => !state.categoriesResource.isLoading()),
+    // True once the app-config read has SETTLED — resolved, errored, or served locally —
+    // as opposed to still idle/loading/reloading. The one and only definition of that
+    // question; read it instead of re-deriving the status triple at each call site.
+    //
+    // Why a status check and not a value check: `appConfig()` is NEVER nullish (it always
+    // returns `Object.assign(new AppConfig(tenantId), loaded ?? {})`), and an absent
+    // `enabledFeatures` reads as `undefined` both while loading AND on a legacy doc that
+    // genuinely has no such field — where `undefined` means "every non-internal block"
+    // (D-BB-10). Only the resource's own status separates the two. Consumers:
+    // `FeatureStore.settled` (holds the feature route gate until the effective set is real)
+    // and `FeaturePicker`'s one-shot seed.
+    isAppConfigSettled: computed(() => {
+      const status = state.appConfigResource.status();
+      return status === 'resolved' || status === 'error' || status === 'local';
+    }),
     // True once the auth state is settled: either logged out (fbUser === null) or
     // logged in with the UserModel loaded. Undefined fbUser (auth still restoring) or
     // a set fbUser without currentUser yet (post-login load window) → not ready.

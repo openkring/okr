@@ -47,19 +47,17 @@ import { FEATURE_ROUTES, type BlockRoutes } from './feature-catalogue';
  * shape of a feature it is not entitled to (the guard redirects to the tenant's `rootUrl`
  * rather than 404-vs-403, for the same reason — see `isFeatureEnabledGuard`).
  *
- * KNOWN GAP, DELIBERATELY NOT PAPERED OVER (task 19). `isFeatureEnabledGuard` reads
- * `effective()` synchronously and has no notion of "not loaded yet". During the cold-start
- * window the two async inputs read as their defaults — `appConfig().enabledFeatures` is
- * `undefined` (meaning "every non-internal block", D-BB-10) and `rollouts` is `[]` (meaning
- * "every block's catalogue `defaultAvailability`"). The gate therefore FAILS OPEN for a
- * `ga` block the tenant has switched off, and would FAIL CLOSED for a `beta`/`internal`
- * block a rollout doc allow-lists (no such block exists in the catalogue today, so that
- * half is currently theoretical). Failing open is the strictly safer of the two for a
- * navigation gate — a deep link never dead-ends on a cold start — but it does mean this
- * guard is a NAVIGATION gate, not an authorisation boundary. Role guards and Firestore
- * rules remain the security boundary. Raised for the owner rather than worked around here,
- * because making the guard wait would need `FeatureStore` to expose a loaded/settled
- * signal, and that is a design change to the store, not to this composition.
+ * THE COLD-START GAP, CLOSED IN TASK G. `isFeatureEnabledGuard` used to read `effective()`
+ * synchronously, with no notion of "not loaded yet": during the cold-start window the two
+ * async inputs read as their defaults — `appConfig().enabledFeatures` `undefined` (meaning
+ * "every non-internal block", D-BB-10) and `rollouts` `[]` (meaning "every block's catalogue
+ * `defaultAvailability`") — so the gate FAILED OPEN for a `ga` block the tenant had switched
+ * off and would have FAILED CLOSED for a `beta`/`internal` block a rollout doc allow-lists.
+ * The guard now waits on `FeatureStore.settled` (an Observable, `isAppReadyGuard`'s shape)
+ * before deciding. It remains a NAVIGATION gate rather than an authorisation boundary: role
+ * guards and Firestore rules are the security boundary, and this gate deliberately treats a
+ * signed-out visitor as settled — anonymous navigation is decided on catalogue defaults alone,
+ * because `feature-rollout` is not readable without auth.
  */
 export function composeGatedFeatureRoutes(sources: BlockRoutes[] = FEATURE_ROUTES): Route[] {
   return sources.flatMap(source => {
