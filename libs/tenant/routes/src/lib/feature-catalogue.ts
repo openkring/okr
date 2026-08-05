@@ -74,13 +74,37 @@ const calevent: BlockRoutes = {
  * have live docs, but under `cms-menu` rather than `aoc-menu` (see the `aoc` block in
  * `feature-blocks.ts`), and `email`/`trip` have no menu doc at all.
  *
- * GUARD: the parent `isAdminGuard()` was already written CALLED here; `app.routes.ts:389`
- * still has it UNCALLED (`canActivate: [isAdminGuard]`), i.e. the whole `/aoc/*` admin
- * console is open to any authenticated user in the live app today. Unchanged by this task,
- * restated because TEN more admin screens now hang off it. The `website` child's own
- * `isPrivilegedGuard` is copied verbatim: it is WEAKER than the parent's admin gate and
- * therefore inert while the parent gate holds — not "fixed", per the never-weaken-and-never-
- * invent rule.
+ * GUARD: `app.routes.ts:389` has `canActivate: [isAdminGuard]` — the factory UNCALLED, i.e.
+ * the whole `/aoc/*` admin console is open to any authenticated user in the live app today.
+ * Written CALLED here, and that correction stands for every screen below.
+ *
+ * WHERE THE ADMIN GATE NOW SITS, AND WHY IT MOVED (owner ruling, 2026-08-05). The ruling
+ * softens `aoc/website` and `/aoc/srv` to match their menu documents (`aoc-website` and
+ * `aoc-srv`, both `roleNeeded: contentAdmin`). Softening those two children ALONE would have
+ * changed nothing: Angular evaluates an ancestor's `canActivate` before activating any
+ * descendant, so the parent `isAdminGuard()` would still have bounced every non-admin before
+ * the child guard ran. The gate therefore moved DOWN — the parent keeps only the floor every
+ * `/aoc` screen shares (`isPrivilegedGuard`), and each of the FOURTEEN children the ruling
+ * does not touch now carries its own `isAdminGuard()`. Effective access for those fourteen is
+ * byte-for-byte what it was; only its expression changed.
+ *
+ * Two alternatives were considered and rejected. (1) Weakening the parent WITHOUT re-gating
+ * the children would relax fourteen genuinely admin-only screens — roles, user accounts,
+ * storage, data — to `privileged`, which is not what was ruled. (2) Splitting `/aoc` into two
+ * sibling fragments (one admin, one privileged) would lean on the router backtracking to a
+ * later sibling when a child fails to match, while a FAILED GUARD does not backtrack at all —
+ * a subtle dependency on recognizer behaviour for no benefit over an explicit per-child guard.
+ *
+ * ⚠️ CONSEQUENCE: a child added here without a `canActivate` is now `privileged`, not `admin`.
+ * `feature-catalogue.guards.spec.ts` fails if any `/aoc` child other than the two the ruling
+ * names lacks its own admin gate — do not delete that test, it is the whole safety net of this
+ * arrangement.
+ *
+ * ⚠️ THE RULING IS ONLY PARTLY SATISFIABLE with the guards this repo has. `isPrivilegedGuard`
+ * is `hasRole('privileged')`, which resolves to `['privileged', 'admin']` — a user whose only
+ * role is `contentAdmin` STILL cannot reach these screens, so the row-visible-but-navigation-
+ * cancels dead end persists for exactly that role. Closing it would need an
+ * `isContentAdminGuard` that does not exist; raised for the owner rather than invented here.
  *
  * `trip` LOADS ANOTHER BLOCK'S FEATURE LIB — `@okr/trip-feature` is `libs/geo/trip/feature`,
  * i.e. the `geo` block's, and `AocTrip` has no counterpart in `@okr/aoc-feature` (there is no
@@ -96,24 +120,36 @@ const aoc: BlockRoutes = {
   id: 'aoc',
   routes: (): Route[] => [{
     path: 'aoc',
-    canActivate: [isAdminGuard()],
+    // The FLOOR every `/aoc` screen shares, not the admin gate — see the block comment. The
+    // admin gate lives on the fourteen children below that the 2026-08-05 ruling does not name.
+    canActivate: [isPrivilegedGuard],
     children: [
-      { path: 'adminops',   loadComponent: () => import('@okr/aoc-feature').then(m => m.AocAdminOps) },
-      { path: 'roles',      loadComponent: () => import('@okr/aoc-feature').then(m => m.AocRoles) },
-      { path: 'content',    loadComponent: () => import('@okr/aoc-feature').then(m => m.AocContent) },
-      { path: 'data',       loadComponent: () => import('@okr/aoc-feature').then(m => m.AocData) },
-      { path: 'chat',       loadComponent: () => import('@okr/aoc-feature').then(m => m.AocChat) },
-      { path: 'account',    loadComponent: () => import('@okr/aoc-feature').then(m => m.AocUserAccounts) },
-      { path: 'statistics', loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStatistics) },
-      { path: 'storage',    loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStorage) },
-      { path: 'doc',        loadComponent: () => import('@okr/aoc-feature').then(m => m.AocDoc) },
-      { path: 'tag',        loadComponent: () => import('@okr/aoc-feature').then(m => m.AocTag) },
-      { path: 'email',      loadComponent: () => import('@okr/aoc-feature').then(m => m.AocEmail) },
-      { path: 'bexio',      loadComponent: () => import('@okr/aoc-feature').then(m => m.AocBexio) },
+      { path: 'adminops',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocAdminOps) },
+      { path: 'roles',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocRoles) },
+      { path: 'content',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocContent) },
+      { path: 'data',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocData) },
+      { path: 'chat',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocChat) },
+      { path: 'account',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocUserAccounts) },
+      { path: 'statistics', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStatistics) },
+      { path: 'storage',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStorage) },
+      { path: 'doc',        canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocDoc) },
+      // `tag-all`, the live menu doc for this url, ALSO declares `roleNeeded: contentAdmin` —
+      // the same mismatch as `aoc-srv`/`aoc-website`, but the 2026-08-05 ruling names only
+      // those two, so this one stays admin-gated and is reported rather than softened.
+      { path: 'tag',        canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocTag) },
+      { path: 'email',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocEmail) },
+      { path: 'bexio',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocBexio) },
+      // SOFTENED by owner ruling, 2026-08-05, to match the live `aoc-srv` menu doc's
+      // `roleNeeded: contentAdmin`. No `canActivate` of its own on purpose: the parent's
+      // `isPrivilegedGuard` IS the gate, and repeating it here would only run it twice.
       { path: 'srv',        loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSrv) },
-      { path: 'sessions',   loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
+      { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
       // See the block comment: `@okr/trip-feature` is `geo`'s lib, deliberately.
-      { path: 'trip',       loadComponent: () => import('@okr/trip-feature').then(m => m.AocTrip) },
+      { path: 'trip',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/trip-feature').then(m => m.AocTrip) },
+      // SOFTENED by owner ruling, 2026-08-05, to match the live `aoc-website` menu doc's
+      // `roleNeeded: contentAdmin`. Its `isPrivilegedGuard` was copied verbatim from
+      // `app.routes.ts` and used to be inert under the parent's admin gate; with the gate moved
+      // down to the other children it is now the operative guard, exactly as the live app wrote it.
       { path: 'website',    canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocWebsite) },
     ],
   }],
@@ -636,7 +672,15 @@ const pdfTemplate: BlockRoutes = {
     // uncalled enforces NOTHING, so `/templates` (and its `:templateKey` editor) is currently
     // open to any authenticated user in the live app. Same correction class as `user`,
     // `security`, `i18n` and `subject`'s `address` fragment.
-    canActivate: [isAdminGuard()],
+    //
+    // SOFTENED to `isPrivilegedGuard` by owner ruling, 2026-08-05: the live `templates` menu
+    // doc declares `roleNeeded: contentAdmin` for both `/templates` and `/templates/:templateKey`,
+    // and the menu documents are the better record of who was meant to have access — under a
+    // called `isAdminGuard()` a contentAdmin sees the row and the navigation silently cancels.
+    // (`isPrivilegedGuard` is a plain `CanActivateFn`, hence uncalled — unlike the
+    // `isAdminGuard`/`isAuditorGuard` factories. It admits `privileged` and `admin`, NOT
+    // `contentAdmin`; see the ruling note on the `aoc` block.)
+    canActivate: [isPrivilegedGuard],
     children: [
       {
         path: '',
@@ -733,14 +777,20 @@ const socialFeed: BlockRoutes = {
  * GUARD CORRECTED: app.routes.ts:293 writes `canActivate: [isAdminGuard]` — the factory
  * UNCALLED, which enforces nothing, so `/forms/:listId/:contextMenuName` (the whole form
  * builder, including every form definition's field config and encryption setup) is open to
- * any authenticated user in the live app today. Written called here. Same correction class as
- * `user`, `security`, `i18n`, `subject`'s `address` fragment and `pdf-template`.
+ * any authenticated user in the live app today. The correction (a real guard where there was
+ * none) stands; only its STRENGTH changed.
+ *
+ * SOFTENED to `isPrivilegedGuard` by owner ruling, 2026-08-05, to match the live `forms-all`
+ * menu doc's `roleNeeded: contentAdmin` — the menu documents are the better record of who was
+ * meant to have access, and under a called `isAdminGuard()` a contentAdmin sees the row and
+ * the navigation silently cancels. (`isPrivilegedGuard` admits `privileged` and `admin`, NOT
+ * `contentAdmin`; see the ruling note on the `aoc` block.)
  */
 const forms: BlockRoutes = {
   id: 'forms',
   routes: (): Route[] => [{
     path: 'forms',
-    canActivate: [isAdminGuard()],
+    canActivate: [isPrivilegedGuard],
     children: [
       { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/forms-feature').then(m => m.FormDefinitionList) },
     ],
