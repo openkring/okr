@@ -1134,5 +1134,19 @@
       "label": "Legende anzeigen",
       "helper": "Blendet die Namen der Wertereihen unter dem Diagramm ein."
     }
+  },
+  "toc": {
+    "label": "Inhaltsverzeichnis",
+    "title": "Inhaltsverzeichnis-Konfiguration",
+    "subtitle": "Listet die Sections dieser Seite auf; ein Klick springt zur gewählten Section.",
+    "navLabel": "Inhaltsverzeichnis",
+    "sectionKeys": {
+      "label": "Sections (okey pro Zeile)",
+      "helper": "Leer lassen, um alle Sections der Seite aufzulisten (empfohlen – so bleibt das Verzeichnis automatisch aktuell). Sonst einen Section-Schlüssel pro Zeile; die Reihenfolge kommt immer von der Seite."
+    },
+    "numbered": {
+      "label": "Nummerierung anzeigen",
+      "helper": "Stellt jedem Eintrag seine Position voran (1., 2., …)."
+    }
   }
 }

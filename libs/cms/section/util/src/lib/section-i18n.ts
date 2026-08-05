@@ -466,6 +466,15 @@ export const SECTION_I18N_KEYS = {
   spider_showLegend_label:                  PFX + 'spider.showLegend.label',
   spider_showLegend_helper:                 PFX + 'spider.showLegend.helper',
 
+  // toc config
+  toc_title:                                PFX + 'toc.title',
+  toc_subtitle:                             PFX + 'toc.subtitle',
+  toc_nav_label:                            PFX + 'toc.navLabel',
+  toc_sectionKeys_label:                    PFX + 'toc.sectionKeys.label',
+  toc_sectionKeys_helper:                   PFX + 'toc.sectionKeys.helper',
+  toc_numbered_label:                       PFX + 'toc.numbered.label',
+  toc_numbered_helper:                      PFX + 'toc.numbered.helper',
+
   // responsibility-config
   responsibility_edit:                      PFX + 'responsibility.edit',
   responsibility_okey_label:                PFX + 'responsibility.okey.label',

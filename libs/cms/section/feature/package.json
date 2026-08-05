@@ -17,6 +17,7 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
     "@okr/cms-section-data-access": "*",
+    "@okr/cms-page-data-access": "*",
     "@okr/cms-section-util": "*",
     "@okr/cms-section-ui": "*",
     "@okr/calevent-data-access": "*",

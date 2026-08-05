@@ -40,3 +40,4 @@ export * from './lib/member-age-section';
 export * from './lib/member-age-section.store';
 export * from './lib/trip-stats-section';
 export * from './lib/trip-stats-section.store';
+export * from './lib/toc-section';

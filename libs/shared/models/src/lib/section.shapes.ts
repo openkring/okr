@@ -9,7 +9,7 @@ import type {
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { AlbumStyle } from './enums/album-style.enum';
@@ -431,6 +431,17 @@ export const SPIDER_SECTION_SHAPE = {
   type: 'spider' as const,
   properties: SPIDER_CONFIG_SHAPE,
 } as SpiderSection;
+
+// --------------------------------------- TOC ----------------------------------------
+export const TOC_CONFIG_SHAPE: TocConfig = {
+  sectionKeys: [],
+  numbered: false,
+};
+export const TOC_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'toc' as const,
+  properties: TOC_CONFIG_SHAPE,
+} as TocSection;
 
 // --------------------------------------- FORM ----------------------------------------
 export const FORM_SECTION_CONFIG_SHAPE: FormSectionConfig = {

@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@okr/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -37,6 +37,7 @@ import { TableHeader } from './table-header';
 import { TrackerConfiguration } from './tracker-configuration';
 import { SankeyConfiguration } from './sankey-configuration';
 import { SpiderConfiguration } from './spider-configuration';
+import { TocConfiguration } from './toc-configuration';
 
 @Component({
   selector: 'okr-section-form',
@@ -49,7 +50,7 @@ import { SpiderConfiguration } from './spider-configuration';
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
-    MemberConfiguration, RagConfiguration, SankeyConfiguration, SpiderConfiguration
+    MemberConfiguration, RagConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -377,6 +378,15 @@ import { SpiderConfiguration } from './spider-configuration';
             />
           }
         }
+        @case('toc') {
+          @if(tocConfig(); as tocConfig) {
+            <okr-toc-config
+              [formData]="tocConfig" (formDataChange)="onTocConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
         @case('rag') {
           @if(ragConfig(); as ragConfig) {
             <okr-rag-config
@@ -484,6 +494,7 @@ export class SectionForm {
   protected chartConfig = linkedSignal(() => this.getChartConfig());
   protected sankeyConfig = linkedSignal(() => this.getSankeyConfig());
   protected spiderConfig = linkedSignal(() => this.getSpiderConfig());
+  protected tocConfig = linkedSignal(() => this.getTocConfig());
   protected memberConfig = linkedSignal(() => this.getMemberConfig());
   protected ragConfig = linkedSignal(() => this.getRagConfig());
   protected eventsConfig = linkedSignal(() => this.getEventsConfig());
@@ -604,6 +615,12 @@ export class SectionForm {
   private getSpiderConfig(): SpiderConfig | undefined {
     if (this.formData().type === 'spider') {
       return ((this.formData() as SpiderSection).properties as SpiderConfig);
+    }
+  }
+
+  private getTocConfig(): TocConfig | undefined {
+    if (this.formData().type === 'toc') {
+      return ((this.formData() as TocSection).properties as TocConfig);
     }
   }
 
@@ -891,6 +908,16 @@ export class SectionForm {
         ...section,
         properties: config
       } as SpiderSection);
+    }
+  }
+
+  protected onTocConfigChange(config: TocConfig): void {
+    const section = this.formData();
+    if (section.type === 'toc') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as TocSection);
     }
   }
 
