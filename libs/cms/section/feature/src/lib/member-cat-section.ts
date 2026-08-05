@@ -5,12 +5,13 @@ import { MemberCatSection } from '@okr/shared-models';
 import { EmptyList, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 
 import { MemberCatSectionStore } from './member-cat-section.store';
+import { MemberBarChart } from './member-bar-chart';
 
 @Component({
   selector: 'okr-member-cat-section',
   standalone: true,
   imports: [
-    Spinner, EmptyList, OptionalCardHeader,
+    Spinner, EmptyList, OptionalCardHeader, MemberBarChart,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol
   ],
   providers: [MemberCatSectionStore],
@@ -28,6 +29,12 @@ import { MemberCatSectionStore } from './member-cat-section.store';
       <ion-card>
         <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
+          @if(isBarChart()) {
+            <okr-member-bar-chart
+              [rows]="store.rows()"
+              [maleLabel]="store.i18n.member_cat_male()"
+              [femaleLabel]="store.i18n.member_cat_female()" />
+          } @else {
           <ion-grid>
             <ion-row class="header-row">
               <ion-col>{{ store.i18n.member_cat_category() }}</ion-col>
@@ -44,6 +51,7 @@ import { MemberCatSectionStore } from './member-cat-section.store';
               </ion-row>
             }
           </ion-grid>
+          }
         </ion-card-content>
       </ion-card>
     }
@@ -59,6 +67,8 @@ export class MemberCatSectionComponent {
   // derived
   protected title = computed(() => this.store.appStore.replacePlaceholders(this.section()?.title ?? ''));
   protected subTitle = computed(() => this.store.appStore.replacePlaceholders(this.section()?.subTitle ?? ''));
+
+  protected readonly isBarChart = computed(() => this.section()?.properties?.chartType === 'bar');
 
   protected readonly isEmpty = computed(() => {
     const rows = this.store.rows();
