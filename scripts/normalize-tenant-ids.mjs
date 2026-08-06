@@ -231,6 +231,35 @@ const R11_ACCEPTED_DANGLES = [
   },
 ];
 
+/**
+ * ⚠️ STALE DENORMALISED SEARCH INDEX — one targeted repair, not a sweep. ⚠️
+ *
+ * `MembershipModel.index` denormalises the foreign keys for search:
+ *     "mn:<name> mk:<memberKey> ok:<orgKey> on:<orgName>"
+ * The owner's repointing (see R-11) updated `orgKey` but NOT `index`, so this document now
+ * searches by a deleted organisation's key.
+ *
+ * A full scan of all 1 702 memberships found the pattern is BROADER than this document —
+ * 22 carry an `index` whose `ok:` disagrees with `orgKey`. They split three ways:
+ *   -  1  kZn8vywT51xeyijAcReK  [test,scs]  in the STRIP set — repaired here, by instruction.
+ *   -  1  jg8crnouuuo2ey7y6f7d  [test]      in the DELETE set — no repair needed, it goes away.
+ *   - 20  [scs]-only, pre-existing and unrelated: `orgKey` was migrated to group names
+ *         (`breitensport`, `leistungssport`, `Redaktion`) while `index` kept the old key.
+ *         OUTSIDE the R-10/R-11 write scope. REPORTED, deliberately NOT fixed here — a
+ *         silent bulk rewrite of live scs search data is not what was authorised.
+ *
+ * Verified before writing: the new org (`IUEMOYsvj2XAbiniZQQT`) carries the same name
+ * "Segelclub Stäfa", so only the `ok:` token changes and `on:` stays correct.
+ */
+const R11_INDEX_FIXES = [
+  {
+    collection: 'memberships', docId: 'kZn8vywT51xeyijAcReK', field: 'index',
+    expectContains: 'ok:BCYEdhxc48jzU8RlfPde',
+    from: 'ok:BCYEdhxc48jzU8RlfPde', to: 'ok:IUEMOYsvj2XAbiniZQQT',
+    why: 'orgKey was repointed to the live scs org; the denormalised index still named the deleted one',
+  },
+];
+
 /** Key a dangle the same way the allow-list spells it. */
 const dangleKey = (childColl, docId, field, parentColl, parentKey) =>
   `${childColl}/${docId}#${field}->${parentColl}/${parentKey}`;
@@ -951,22 +980,55 @@ async function runR10({ present, docsByCollection, sweepable, footprint, empties
   log(`\n  R-11 retagged OUT of the delete set (${part.retaggedOut.length}): ${part.retaggedOut.join(', ') || '(none)'}`);
   log('\n  RECONCILIATION against the previously reported figures');
   rule();
-  log(`    documents carrying "test"      : ${fpTotal}   (expected 2307)`);
-  log(`    delete set (test-only, R-11 adj): ${part.delCount}   vs ${expectedDelete}   (expected 400 = 402 - 2 retagged out)`);
-  log(`    strip set  (test + others)     : ${part.stripCount}   vs ${expectedStrip}   (expected 1905)`);
+  log(`    documents carrying "test"      : ${fpTotal}`);
+  log(`    delete set (test-only, R-11 adj): ${part.delCount}   (internal cross-check: ${expectedDelete})`);
+  log(`    strip set  (test + others)     : ${part.stripCount}   (internal cross-check: ${expectedStrip})`);
   const mismatches = [];
   if (part.delCount !== expectedDelete) mismatches.push(`delete set ${part.delCount} != emptiesFor([test]) ${expectedDelete}`);
   if (part.stripCount !== expectedStrip) mismatches.push(`strip set ${part.stripCount} != ${expectedStrip}`);
   if (part.delCount + part.stripCount + part.retaggedOut.length !== fpTotal) mismatches.push(`delete+strip+retagged ${part.delCount + part.stripCount + part.retaggedOut.length} != footprint ${fpTotal}`);
-  if (fpTotal !== 2307 || part.delCount !== 400 || part.stripCount !== 1905) {
-    mismatches.push('figures differ from the R-11-adjusted expectation (2307 carrying test / ' +
-                    '400 delete / 1905 strip) — THE DATA MOVED');
+  /**
+   * Two baselines, because applying the R-11 retags legitimately moves the numbers.
+   *
+   * PRE-RETAG  2307 carrying test / 400 delete / 1905 strip
+   * POST-RETAG 2303 carrying test / 398 delete / 1905 strip
+   *
+   * The −4 is fully accounted for and is a consequence of OUR OWN authorised write, not of
+   * anything moving underneath us:
+   *   −2  the retagged entities themselves (orgs/p13, persons/WeJRI923rpCaEEOj5kLr) stop
+   *       carrying `test` — that is the point of the retag;
+   *   −2  their `address-directory` PROJECTIONS, rewritten by the replication Cloud Function
+   *       seconds later (verified: address-directory/test_org.p13 and
+   *       test_person.WeJRI923rpCaEEOj5kLr deleted, p13_org.p13 ['p13'] and
+   *       scs_person.WeJRI923rpCaEEOj5kLr ['scs'] created at 09:48:51/09:48:52 — the only two
+   *       documents written to that collection in sixteen hours).
+   * The projections correctly follow their parents out of the delete set; deleting them
+   * would have been wrong.
+   *
+   * The expectation is RE-BASELINED rather than the check relaxed: a run matching neither
+   * baseline still fails. `retaggedOut` distinguishes them — it is 2 before the retag write
+   * and 0 after, because the retagged documents no longer carry `test` at all.
+   */
+  // A THIRD baseline for the completed state. Without it, every run after R-10 succeeds
+  // reports "THE DATA MOVED" forever — a guard that is permanently red teaches people to
+  // ignore it, which is worse than not having it. Zero is the intended terminal state.
+  const retagApplied = part.retaggedOut.length === 0;
+  const baseline = (fpTotal === 0 && part.delCount === 0 && part.stripCount === 0)
+    ? { label: 'R-10 COMPLETE (test fully removed)', carrying: 0, del: 0, strip: 0 }
+    : retagApplied
+      ? { label: 'POST-retag', carrying: 2303, del: 398, strip: 1905 }
+      : { label: 'PRE-retag',  carrying: 2307, del: 400, strip: 1905 };
+  log(`    baseline in force              : ${baseline.label} ` +
+      `(${baseline.carrying} carrying / ${baseline.del} delete / ${baseline.strip} strip)`);
+  if (fpTotal !== baseline.carrying || part.delCount !== baseline.del || part.stripCount !== baseline.strip) {
+    mismatches.push(`figures differ from the ${baseline.label} expectation ` +
+      `(${baseline.carrying} carrying test / ${baseline.del} delete / ${baseline.strip} strip) — THE DATA MOVED`);
   }
   if (mismatches.length) {
     log('    ⚠️  ' + mismatches.join('\n    ⚠️  '));
     log('    A number that moved means the database changed since the reviewed dry run.');
   } else {
-    log('    ✓ internally consistent AND identical to the reviewed figures (2307 / 402 / 1905).');
+    log(`    ✓ internally consistent AND identical to the ${baseline.label} expectation.`);
   }
 
   const order = reportOrderInteraction(present, docsByCollection, sweepable);
@@ -1334,8 +1396,40 @@ async function applyR11Retags() {
   await b.flush();
   log(`  committed: ${b.committed} operation(s)`);
 
+  // Same invocation as the retags: both are corrections to the mis-tagging/repointing that
+  // R-11 resolves, and neither belongs in the strip or delete passes.
+  if (R11_INDEX_FIXES.length) {
+    log('\n  STALE INDEX REPAIR');
+    const ib = makeBatcher('R-11 index repair');
+    for (const f of R11_INDEX_FIXES) {
+      const snap = await db.collection(f.collection).doc(f.docId).get();
+      if (!snap.exists) refuse(`${f.collection}/${f.docId} does not exist — cannot repair its index.`);
+      const cur = String(snap.get(f.field) ?? '');
+      if (!cur.includes(f.expectContains)) {
+        log(`    ${f.collection}/${f.docId}: already repaired or changed underneath us — SKIPPED`);
+        log(`      current ${f.field}: ${JSON.stringify(cur)}`);
+        continue;
+      }
+      const next = cur.split(f.from).join(f.to);
+      await ib.add(w => w.update(db.collection(f.collection).doc(f.docId), { [f.field]: next }));
+      log(`    ${f.collection}/${f.docId}.${f.field}`);
+      log(`      ${f.why}`);
+      log(`      before: ${JSON.stringify(cur)}`);
+      log(`      after : ${JSON.stringify(next)}`);
+    }
+    await ib.flush();
+    log(`    committed: ${ib.committed} operation(s)`);
+  }
+
   log('\n  READ-BACK:');
   let ok = true;
+  for (const f of R11_INDEX_FIXES) {
+    const d = await db.collection(f.collection).doc(f.docId).get();
+    const v = String(d.get(f.field) ?? '');
+    const good = v.includes(f.to) && !v.includes(f.from);
+    if (!good) ok = false;
+    log(`    ${f.collection}/${f.docId}.${f.field} = ${JSON.stringify(v)}  ${good ? '✓' : '⚠️ MISMATCH'}`);
+  }
   for (const r of R11_RETAGS) {
     const d = await db.collection(r.collection).doc(r.docId).get();
     const got = d.get('tenants');
