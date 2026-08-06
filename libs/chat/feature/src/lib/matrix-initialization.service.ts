@@ -1,4 +1,4 @@
-import { inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
+import { computed, inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
@@ -144,8 +144,14 @@ export class MatrixInitializationService {
           }
         });
 
-        // Keep the PWA app icon badge in sync with the total unread count (chat + future: tasks).
+        // Keep the PWA app icon badge in sync with the total notification count.
         // This covers the foreground case; the service worker handles the background case.
+        //
+        // The total is chat unread + open assigned tasks, matching the main-menu badge
+        // (MenuStore.notificationCount) exactly. setAppBadge writes an ABSOLUTE value, so a
+        // writer that knows only its own half silently destroys the other's: this used to
+        // publish the chat count alone, which meant opening the PWA cleared a task-driven
+        // badge (resume reconcile → clearAppBadge) while the tasks were still open.
         if ('setAppBadge' in navigator) {
           const applyBadge = (count: number) => {
             const nav = navigator as Navigator & {
@@ -159,8 +165,11 @@ export class MatrixInitializationService {
             }
           };
 
+          const badgeTotal = computed(() =>
+            this.matrixChatStore.totalUnreadCount() + this.appStore.openTaskCount());
+
           runInInjectionContext(this.injector, () =>
-            toObservable(this.matrixChatStore.totalUnreadCount).subscribe(applyBadge)
+            toObservable(badgeTotal).subscribe(applyBadge)
           );
 
           // Reconcile the badge whenever the PWA becomes visible again. A background push
@@ -171,7 +180,7 @@ export class MatrixInitializationService {
           // above corrects it again once the count settles.
           document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-              applyBadge(this.matrixChatStore.totalUnreadCount());
+              applyBadge(badgeTotal());
             }
           });
         }

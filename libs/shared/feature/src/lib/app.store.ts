@@ -8,7 +8,7 @@ import { App } from '@capacitor/app';
 
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
-import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, UserCollection, UserModel } from '@okr/shared-models';
+import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
 import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
@@ -173,6 +173,24 @@ export const AppStore = signalStore(
         return store.firestoreService.searchData<TagModel>(TagCollection, getSystemQuery(params.tenantId), 'tagModel', 'asc');
       }
     }),
+    // Open tasks assigned to the signed-in user — the single source of truth for the task half
+    // of every notification badge (the main-menu badge and the PWA app-icon badge). It lives
+    // here because those two writers sit in unrelated libs (cms/menu/feature and chat/feature)
+    // and each computing its own count is exactly how they drifted apart: the menu counted
+    // authored tasks the user could neither see nor complete, and the app-icon badge dropped
+    // tasks entirely. `assignee` only — a notification means "you have something to do".
+    openTasksResource: rxResource({
+      params: () => ({
+        personKey: store.currentUserResource.value()?.personKey,
+        tenantId: store.tenantId()
+      }),
+      stream: ({params}) => {
+        if (!params.personKey || !params.tenantId) return of([]);
+        const taskQuery = getSystemQuery(params.tenantId);
+        taskQuery.push({ key: 'completionDate', operator: '==', value: '' });
+        return store.firestoreService.searchData<TaskModel>(TaskCollection, taskQuery, 'dueDate', 'asc');
+      }
+    }),
     categoriesResource: rxResource({
       params: () => ({
         fbUser: store.fbUser(),
@@ -221,6 +239,12 @@ export const AppStore = signalStore(
       allResources: computed(() => state.resourcesResource.value() ?? []),
       allTags: computed(() => state.tagsResource.value() ?? []),
       allCategories: computed(() => state.categoriesResource.value() ?? []),
+      /** Number of open tasks assigned to the signed-in user — the task half of every badge. */
+      openTaskCount: computed(() => {
+        const personKey = state.currentUserResource.value()?.personKey;
+        if (!personKey) return 0;
+        return (state.openTasksResource.value() ?? []).filter((t: TaskModel) => t.assignee?.key === personKey).length;
+      }),
       appConfig: computed(() => {
         const loaded = state.appConfigResource.value();
         return Object.assign(new AppConfig(state.tenantId()), loaded ?? {});
