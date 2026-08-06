@@ -67,7 +67,11 @@ export const getAddressView = onCall<GetAddressViewRequest, Promise<GetAddressVi
       if (!isOwner && !sharesTenant) continue;
 
       const viewerAccessor: PrivacyAccessor = isOwner ? 'admin' : elevated ? 'privileged' : 'registered';
-      views[parentKey] = await getProjectedAddresses(db, parentKey, viewerAccessor, callerTenants[0]);
+      // provenance = the tenant caller and parent actually share, not the caller's first one —
+      // a dual-tenant parent would otherwise be projected under the wrong tenant's floor.
+      const provenanceTenant = parentTenants.find((t) => callerTenants.includes(t))
+        ?? parentTenants[0] ?? '';
+      views[parentKey] = await getProjectedAddresses(db, parentKey, viewerAccessor, provenanceTenant);
     }
 
     // no PII in logs — counts and keys only
