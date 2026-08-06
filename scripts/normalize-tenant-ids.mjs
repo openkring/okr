@@ -354,6 +354,15 @@ if (DISABLE_AUTH && !AUTH_BACKUP) {
   refuse('--disable-auth requires --auth-backup=<path>. Custom claims and metadata are not\n' +
          'recoverable from Firestore; the export is the only record that lets a disable be undone.');
 }
+if (DELETE_EMPTIES && !VERIFY_AGAINST) {
+  refuse(
+    '--delete-empties requires --verify-against=<pre-state path>.\n\n' +
+    'The count gate (exactly R12_EXPECTED_STRANDED documents) is NECESSARY BUT NOT SUFFICIENT:\n' +
+    'a set of the right size but the wrong membership would pass it. Every document about to be\n' +
+    'deleted must be shown to have its full contents in the pre-state backup first — the same\n' +
+    'standard --r10-delete already holds itself to with --backup.',
+  );
+}
 if (DELETE_EMPTIES && REMOVE.length > 0) {
   refuse(
     '--delete-empties must be its own invocation, AFTER the sweep.\n\n' +
@@ -952,8 +961,12 @@ async function main() {
   }
 
   // ── R-12 — Auth backup / disable, sweep pre-state, stranded-document deletion ────────
+  // Predicted (pre-sweep) and current (post-sweep) stranded sets. Both are needed: which one
+  // is populated depends on whether the sweep has already run, and deriving from the wrong
+  // one silently yields an empty set — see authUidsFromEmpties and currentlyEmpty.
   let r12Empties = emptiesFor(sweepable);
-  const r12Uids = authUidsFromEmpties(r12Empties);
+  const r12Current = currentlyEmpty(present, docsByCollection);
+  const r12Uids = authUidsFromEmpties(r12Empties, r12Current);
 
   if (AUTH_BACKUP) {
     const a = await exportAuthState(r12Uids, path.resolve(ROOT, AUTH_BACKUP));
@@ -970,8 +983,16 @@ async function main() {
   if (WRITE && DISABLE_AUTH) await disableAuthAccounts(r12Uids);
 
   if (SWEEP_PRESTATE) {
+    // Union of predicted and current, for the same reason authUidsFromEmpties takes both:
+    // pre-sweep the union IS the predicted set, post-sweep it IS the current one, so the
+    // export backs up the right documents whichever side of the write it is run on.
+    const prestateEmpties = {
+      docIds: mergeDocIds(r12Empties.docIds, r12Current.docIds),
+      total: 0,
+    };
+    prestateEmpties.total = Object.values(prestateEmpties.docIds).reduce((n, a) => n + a.length, 0);
     const ps = await exportSweepPrestate(REMOVE.length ? REMOVE : sweepable, present,
-      docsByCollection, r12Empties, path.resolve(ROOT, SWEEP_PRESTATE));
+      docsByCollection, prestateEmpties, path.resolve(ROOT, SWEEP_PRESTATE));
     log('\n' + '='.repeat(100));
     log('R-12 — SWEEP PRE-STATE EXPORT');
     log('='.repeat(100));
@@ -1000,7 +1021,7 @@ async function main() {
     // Independent of the count: every document about to be deleted must have its FULL
     // contents in the pre-state backup. A matching count with a different membership would
     // otherwise pass.
-    if (VERIFY_AGAINST) {
+    {
       const bk = JSON.parse(fs.readFileSync(path.resolve(ROOT, VERIFY_AGAINST), 'utf8'));
       const backed = new Set(bk.deleted.map(d => `${d.collection}/${d.docId}`));
       const notBacked = Object.entries(stranded.docIds)
@@ -1554,6 +1575,17 @@ function reportUncheckedParents(del) {
  * window before it can exist, and disabling is reversible where deleting is not.
  */
 
+/** Union of two {collection: [docId]} maps, deduped and sorted. */
+function mergeDocIds(a = {}, b = {}) {
+  const out = {};
+  for (const src of [a, b]) {
+    for (const [c, ids] of Object.entries(src)) {
+      out[c] = [...new Set([...(out[c] ?? []), ...ids])].sort();
+    }
+  }
+  return out;
+}
+
 /**
  * Documents that ALREADY have an empty `tenants[]` — the post-sweep stranded set.
  *
@@ -1609,9 +1641,85 @@ const R12_EXPECTED_STRANDED = {
        'of the sweep; verified absent 2026-08-06',
 };
 
-/** The Auth accounts implied by the stranded `users` documents — derived, never hardcoded. */
-function authUidsFromEmpties(empties) {
-  return [...(empties.docIds['users'] ?? [])].sort();
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ * THE ONLY WAY AN EXPORT IS EVER WRITTEN. Every backup path goes through here.
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠️ DO NOT ADD ANOTHER `fs.writeFileSync` FOR AN EXPORT. ⚠️
+ *
+ * There were three export paths and only one grew a write-once guard, because the guard was
+ * added where a bug had been observed rather than where the hazard lives. The other two were
+ * then reproduced destroying real backups, with NO `--write` flag involved:
+ *   - `--auth-backup=<existing>`  turned the 11-account Auth export into `{"accounts":[]}`;
+ *   - `--r10 --backup=<existing>` reduced the 398-document R-10 backup — the only copy of 32
+ *     deleted person records — to zero.
+ * Three guards that can drift apart is the defect. One chokepoint is the fix.
+ *
+ * It enforces three things, all of which have failed in practice on this task:
+ *
+ *  1. WRITE-ONCE. An export never overwrites an existing file. A backup path that silently
+ *     clobbers is a footgun, and it fired three times.
+ *  2. READ-BACK. The file is re-read from disk and counted; nothing is trusted from the
+ *     in-memory object that was just serialised.
+ *  3. THE COUNT CHECK CAN GO RED. An export whose read-back count is ZERO, or does not match
+ *     the caller's expectation, is REFUSED. The old code printed `read back & count: 0 ✓` on
+ *     an emptied Auth backup — an integrity check that certifies the corruption it should
+ *     catch. A check that cannot fail is not a check.
+ */
+function writeExportFile({ filePath, payload, counts, expected, label }) {
+  const abs = path.resolve(ROOT, filePath);
+  if (fs.existsSync(abs)) {
+    refuse(`${label}: ${abs} already exists.\n` +
+           'An export is WRITE-ONCE — refusing to overwrite a backup. Choose a new path, or use\n' +
+           'a read-only flag (--verify-against) if you meant to READ it.');
+  }
+  fs.mkdirSync(path.dirname(abs), { recursive: true });
+  fs.writeFileSync(abs, JSON.stringify(payload, null, 1));
+
+  const back = JSON.parse(fs.readFileSync(abs, 'utf8'));   // read from DISK, not from `payload`
+  const got = counts(back);
+  const entries = Object.entries(got);
+
+  // A rejected export must not leave a file behind: a zero-record artefact sitting at the
+  // path is indistinguishable from a real backup to the next reader, and write-once would
+  // then block the retry that would have produced a good one.
+  const reject = (msg) => { fs.unlinkSync(abs); refuse(`${label}: ${msg}`); };
+
+  if (entries.every(([, n]) => n === 0)) {
+    reject(`the export read back EMPTY (${entries.map(([k, n]) => `${k}=${n}`).join(', ')}).\n` +
+           'An export with zero records is not a backup. This usually means the set was derived\n' +
+           'from the wrong side of a write — see currentlyEmpty() vs emptiesFor(). Nothing that\n' +
+           'depends on this backup may proceed. (The empty file was removed.)');
+  }
+  if (expected) {
+    const bad = Object.entries(expected).filter(([k, n]) => got[k] !== n);
+    if (bad.length) {
+      reject('read-back does not match the expected counts.\n' +
+             bad.map(([k, n]) => `  ${k}: expected ${n}, read back ${got[k]}`).join('\n') +
+             '\nRefusing to treat this file as a backup. (The file was removed.)');
+    }
+  }
+  return { path: abs, counts: got };
+}
+
+/**
+ * The Auth accounts implied by the stranded `users` documents — derived, never hardcoded.
+ *
+ * ⚠️ TAKES THE UNION OF THE PREDICTED AND THE CURRENT STRANDED SETS. ⚠️
+ * The Auth backup runs BEFORE the sweep, when the users are only PREDICTED to be stranded
+ * (`emptiesFor`); a re-run afterwards sees them ALREADY stranded (`currentlyEmpty`), and the
+ * predictive function correctly returns nothing then. Feeding this from `emptiesFor` alone —
+ * which is what it did — meant a post-sweep `--auth-backup` derived ZERO accounts, wrote an
+ * empty file over the real one, and reported success. The union is correct in both phases and
+ * is the same predictive-vs-current trap that `currentlyEmpty()` was introduced to fix; this
+ * is the third instance of it on this task.
+ */
+function authUidsFromEmpties(predicted, current) {
+  return [...new Set([
+    ...(predicted?.docIds?.['users'] ?? []),
+    ...(current?.docIds?.['users'] ?? []),
+  ])].sort();
 }
 
 /**
@@ -1636,11 +1744,15 @@ async function exportAuthState(uids, filePath) {
       out.accounts.push({ uid, error: String(e?.code ?? e?.message ?? e) });
     }
   }
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(out, null, 1));
-  const back = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  return { path: filePath, written: out.accounts.length, verified: back.accounts.length,
-           enabled: back.accounts.filter(a => a.disabled === false).length };
+  const res = writeExportFile({
+    filePath, payload: out, label: 'Auth state export',
+    counts: (o) => ({ accounts: o.accounts.length }),
+    expected: { accounts: uids.length },
+  });
+  const back = JSON.parse(fs.readFileSync(res.path, 'utf8'));
+  return { path: res.path, written: out.accounts.length, verified: res.counts.accounts,
+           enabled: back.accounts.filter(a => a.disabled === false).length,
+           withClaims: back.accounts.filter(a => a.customClaims).length };
 }
 
 /** Disable the accounts, then read every one back from Auth. */
@@ -1672,14 +1784,7 @@ async function disableAuthAccounts(uids) {
  *     document survives, so its old array is otherwise unrecoverable.
  */
 async function exportSweepPrestate(removeIds, present, docsByCollection, empties, filePath) {
-  // ⚠️ NEVER overwrite an existing export. A backup path that silently clobbers is a footgun,
-  // and it fired once: passing --sweep-prestate to a post-sweep run re-exported an empty
-  // snapshot over the real one (36+247 -> 0+0). Only a redundant second copy saved it. An
-  // export is write-once; use --verify-against to READ a prior one.
-  if (fs.existsSync(filePath)) {
-    refuse(`${filePath} already exists. A pre-state export is WRITE-ONCE — refusing to overwrite\n` +
-           'a backup. Choose a new path, or use --verify-against=<path> if you meant to READ it.');
-  }
+
   const out = {
     ruling: 'R-12', date: '2026-08-06', exportedAt: new Date().toISOString(),
     removeIds: [...removeIds],
@@ -1706,11 +1811,12 @@ async function exportSweepPrestate(removeIds, present, docsByCollection, empties
       });
     }
   }
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(out, null, 1));
-  const back = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  return { path: filePath, deleted: out.deleted.length, modified: out.modified.length,
-           verifiedDeleted: back.deleted.length, verifiedModified: back.modified.length };
+  const res = writeExportFile({
+    filePath, payload: out, label: 'sweep pre-state export',
+    counts: (o) => ({ deleted: o.deleted.length, modified: o.modified.length }),
+  });
+  return { path: res.path, deleted: out.deleted.length, modified: out.modified.length,
+           verifiedDeleted: res.counts.deleted, verifiedModified: res.counts.modified };
 }
 
 /** Delete the stranded documents. Re-derived set only — never a list carried across runs. */
@@ -1860,11 +1966,11 @@ async function exportBackup(del, filePath) {
       out.documents.push({ collection: coll, docId: id, data: snap.data() });
     }
   }
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(out, null, 1));
-  // read back — verify, do not assume
-  const readBack = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  return { path: filePath, written: out.documents.length, verified: readBack.documents.length };
+  const res = writeExportFile({
+    filePath, payload: out, label: 'R-10 delete-set backup',
+    counts: (o) => ({ documents: o.documents.length }),
+  });
+  return { path: res.path, written: out.documents.length, verified: res.counts.documents };
 }
 
 /**
