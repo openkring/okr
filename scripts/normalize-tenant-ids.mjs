@@ -319,7 +319,8 @@ const REMOVE = (valueOf('remove') ?? '').split(',').map(s => s.trim()).filter(Bo
 // `--write` alone, so no existing or copy-pasted invocation can start deleting.
 const AUTH_BACKUP = valueOf('auth-backup');       // export Auth state for the owner_* accounts
 const DISABLE_AUTH = has('--disable-auth');       // with --write: disable them (reversible)
-const SWEEP_PRESTATE = valueOf('sweep-prestate'); // export the 36 full + the 247 tenants[] mapping
+const SWEEP_PRESTATE = valueOf('sweep-prestate'); // WRITE the 36 full + the 247 tenants[] mapping
+const VERIFY_AGAINST = valueOf('verify-against'); // READ-ONLY: a prior pre-state, for cross-checks
 const DELETE_EMPTIES = has('--delete-empties');   // with --write: delete the stranded documents
 const R11_RETAG = has('--r11-retag');   // with --write: apply the two R-11 retags
 const R10_ANALYSE = has('--r10');            // read-only analysis: partition, cascade, order
@@ -951,7 +952,7 @@ async function main() {
   }
 
   // ── R-12 — Auth backup / disable, sweep pre-state, stranded-document deletion ────────
-  const r12Empties = emptiesFor(sweepable);
+  let r12Empties = emptiesFor(sweepable);
   const r12Uids = authUidsFromEmpties(r12Empties);
 
   if (AUTH_BACKUP) {
@@ -985,19 +986,42 @@ async function main() {
   }
 
   if (WRITE && DELETE_EMPTIES) {
-    // Step 4 of the ruling: the RE-DERIVED stranded set must match what was backed up.
+    // Step 4 of the ruling: the RE-DERIVED stranded set must match what was signed off.
+    // Post-sweep the documents are ALREADY empty, so the set comes from currentlyEmpty(),
+    // not from the predictive emptiesFor() — see that function's comment.
+    const stranded = currentlyEmpty(present, docsByCollection);
     log('\n' + '='.repeat(100));
     log('R-12 — RE-DERIVED STRANDED SET (post-sweep) vs the backup');
     log('='.repeat(100));
-    log(`    re-derived from today's data: ${r12Empties.total} document(s)`);
-    Object.entries(r12Empties.docIds).sort().forEach(([c, ids]) =>
-      log(`      ${c.padEnd(22)} ${String(ids.length).padStart(4)}`));
-    if (r12Empties.total !== 36) {
-      refuse(`the re-derived stranded set is ${r12Empties.total}, not the 36 that were reviewed and\n` +
-             'backed up. The sweep did not do what the dry run predicted. NOTHING has been deleted.\n' +
-             'Investigate the difference before proceeding.');
+    log(`    re-derived from today's data: ${stranded.total} document(s)`);
+    Object.entries(stranded.docIds).sort().forEach(([c, ids]) =>
+      log(`      ${c.padEnd(22)} ${String(ids.length).padStart(4)}  ${ids.join(', ')}`));
+
+    // Independent of the count: every document about to be deleted must have its FULL
+    // contents in the pre-state backup. A matching count with a different membership would
+    // otherwise pass.
+    if (VERIFY_AGAINST) {
+      const bk = JSON.parse(fs.readFileSync(path.resolve(ROOT, VERIFY_AGAINST), 'utf8'));
+      const backed = new Set(bk.deleted.map(d => `${d.collection}/${d.docId}`));
+      const notBacked = Object.entries(stranded.docIds)
+        .flatMap(([c, ids]) => ids.map(i => `${c}/${i}`))
+        .filter(k => !backed.has(k));
+      if (notBacked.length) {
+        refuse(`${notBacked.length} document(s) in the stranded set are NOT in the pre-state backup:\n  ` +
+               notBacked.join('\n  ') + '\nRefusing to delete what is not backed up.');
+      }
+      log(`    ✓ all ${stranded.total} are present in the pre-state backup (${backed.size} documents)`);
     }
-    log('    ✓ exactly 36, matching the reviewed and backed-up set');
+    r12Empties = stranded;
+    if (r12Empties.total !== R12_EXPECTED_STRANDED.count) {
+      refuse(`the re-derived stranded set is ${r12Empties.total}, not the ` +
+             `${R12_EXPECTED_STRANDED.count} that were reviewed and signed off.\n` +
+             `(Originally ${R12_EXPECTED_STRANDED.was}; ${R12_EXPECTED_STRANDED.why}.)\n` +
+             'The sweep did not do what the dry run predicted. NOTHING has been deleted.\n' +
+             'Investigate the difference before proceeding — do not adjust this number to match.');
+    }
+    log(`    ✓ exactly ${R12_EXPECTED_STRANDED.count}, matching the reviewed and signed-off set`);
+    log(`      (R-12 named ${R12_EXPECTED_STRANDED.was}; ${R12_EXPECTED_STRANDED.why})`);
     await deleteEmpties(r12Empties);
   }
 
@@ -1530,6 +1554,61 @@ function reportUncheckedParents(del) {
  * window before it can exist, and disabling is reversible where deleting is not.
  */
 
+/**
+ * Documents that ALREADY have an empty `tenants[]` — the post-sweep stranded set.
+ *
+ * ⚠️ NOT the same thing as `emptiesFor(sweepable)`, and the difference is a real trap. ⚠️
+ * `emptiesFor` PREDICTS which documents a future removal would strand, so it requires the
+ * document to still carry one of the ids being removed and explicitly skips anything already
+ * empty. Once the sweep has run, no document carries those ids any more, so `emptiesFor`
+ * correctly returns ZERO — a prediction about an operation that already happened.
+ *
+ * Wiring `--delete-empties` to the predictive function made the gate refuse with 0 instead
+ * of 14. The gate was right and the derivation was wrong; this is the correct derivation for
+ * the post-sweep state. Fixed here rather than by relaxing the gate.
+ */
+function currentlyEmpty(present, docsByCollection) {
+  const docIds = {};
+  let total = 0;
+  for (const c of present) {
+    for (const d of docsByCollection[c]) {
+      if (!Array.isArray(d.tenants) || d.tenants.length !== 0) continue;
+      (docIds[c] ??= []).push(d.id);
+      total++;
+    }
+  }
+  return { docIds, total };
+}
+
+/**
+ * ⚠️ THE EXPECTED SIZE OF THE STRANDED SET. THIS IS A GATE — KEEP IT EXACT. ⚠️
+ *
+ * R-12 ruled "delete all 36 empties". The sweep then ran, and the re-derived set came back
+ * as 14, not 36. The gate fired and NOTHING was deleted, which is what it is for.
+ *
+ * Cause, verified rather than assumed (2026-08-06): the replication Cloud Function deleted
+ * all 22 `address-directory` projections by itself, as a consequence of the sweep removing
+ * the orphan ids from `persons/kaiser` and `persons/cU69I31GKSZKW8Oic44l`. Confirmed by
+ * read-back — 22/22 individually absent, ZERO `address-directory` documents with an
+ * orphan-tenant prefix remaining, and the collection total moving 892 → 838 (R-10's 54
+ * deletions) → 816 (these 22). The remaining 14 are a strict SUBSET of the backed-up 36
+ * with zero extras, so deleting them EXECUTES R-12 exactly rather than extending it.
+ *
+ * Controller-authorised 2026-08-06 as a subset of the existing owner ruling R-12 — not a
+ * new ruling, and not an owner decision.
+ *
+ * ⚠️ DO NOT relax this to `<= 36`, "subset of the backup", or a range. ⚠️ The value is an
+ * exact expectation that a human re-derived and signed off; a predicate that accepts a
+ * family of sets is not a gate, it is a formality. If the number moves again, it must stop
+ * again and be explained again.
+ */
+const R12_EXPECTED_STRANDED = {
+  count: 14,
+  was: 36,
+  why: '22 address-directory projections were deleted by the replication CF as a consequence ' +
+       'of the sweep; verified absent 2026-08-06',
+};
+
 /** The Auth accounts implied by the stranded `users` documents — derived, never hardcoded. */
 function authUidsFromEmpties(empties) {
   return [...(empties.docIds['users'] ?? [])].sort();
@@ -1593,6 +1672,14 @@ async function disableAuthAccounts(uids) {
  *     document survives, so its old array is otherwise unrecoverable.
  */
 async function exportSweepPrestate(removeIds, present, docsByCollection, empties, filePath) {
+  // ⚠️ NEVER overwrite an existing export. A backup path that silently clobbers is a footgun,
+  // and it fired once: passing --sweep-prestate to a post-sweep run re-exported an empty
+  // snapshot over the real one (36+247 -> 0+0). Only a redundant second copy saved it. An
+  // export is write-once; use --verify-against to READ a prior one.
+  if (fs.existsSync(filePath)) {
+    refuse(`${filePath} already exists. A pre-state export is WRITE-ONCE — refusing to overwrite\n` +
+           'a backup. Choose a new path, or use --verify-against=<path> if you meant to READ it.');
+  }
   const out = {
     ruling: 'R-12', date: '2026-08-06', exportedAt: new Date().toISOString(),
     removeIds: [...removeIds],
