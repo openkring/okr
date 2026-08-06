@@ -857,6 +857,25 @@ async function main() {
   const remainingAfterSweep = drift.unknown
     .map(u => u.tenantId)
     .filter(id => !sweepable.includes(id));
+  // Per-id footprints. The owner approves deletions against document counts, not bare ids —
+  // `bka` proved that having no app-config today does not mean a tenant is dead. Uses the
+  // census (array-valued `tenants` only), so the string-valued `tags/all_tenants` document
+  // cannot inflate a count via substring matching, which a naive `.includes()` scan does.
+  log('\n  PER-ID FOOTPRINT (every document each id appears on)');
+  rule();
+  for (const id of sweepable) {
+    const fp = footprint(id);
+    log(`    ${id.padEnd(6)} ${String(total(fp)).padStart(5)} docs | ` +
+        fp.map(x => `${x.collection}:${x.docs}`).join(' '));
+  }
+  const emp = emptiesFor(sweepable);
+  log('\n  DOCUMENTS THAT WOULD BE LEFT TENANT-LESS — the irreversible-in-effect part');
+  rule();
+  Object.entries(emp.docIds).sort().forEach(([c, ids]) => {
+    log(`    ${c.padEnd(20)} ${String(ids.length).padStart(4)}  ${ids.slice(0, 12).join(', ')}${ids.length > 12 ? ', …' : ''}`);
+  });
+  log(`    ${'TOTAL'.padEnd(20)} ${String(emp.total).padStart(4)}`);
+
   log('\n  AFTER a --remove of the sweepable set, the drift guard will still report: ' +
       `${remainingAfterSweep.join(', ') || '(nothing — it would go green)'}`);
   if (remainingAfterSweep.length) {
@@ -873,6 +892,21 @@ async function main() {
   } else {
     log('\n  (R-10 analysis not run — pass --r10 for the test delete/strip partition, the');
     log('   cascade check and the order interaction with the orphan sweep.)');
+  }
+
+  // ── 2.1 cascade — the same mis-tagging class R-10's STOP 2 exposed ───────────────────
+  //
+  // R-10 found live tenants (p13, scs) pointing at documents tagged ['test']. Nothing makes
+  // `test` special in that respect: `sc7`, `kwo`, `pzu` and the rest can carry the same
+  // defect. A document the sweep leaves with an EMPTY tenants[] is unreachable by every
+  // tenant-scoped query, so a live tenant referencing one is the exact analogue of STOP 2 —
+  // and it must be surfaced BEFORE the owner rules, not discovered afterwards.
+  const sweepEmpties = emptiesFor(sweepable);
+  if (Object.keys(sweepEmpties.docIds).length > 0) {
+    await reportCascade(sweepEmpties.docIds, configIds, sweepable,
+      'ORPHAN SWEEP — documents that would be left tenant-less');
+  } else {
+    log('\n  (orphan sweep would strand no documents — no cascade to check)');
   }
 
   // ── 2.2 — what kring/okr are missing ─────────────────────────────────────────────────
@@ -1242,13 +1276,13 @@ const CASCADE_EDGES = [
  * Neither is a warning. If either fires the delete does not proceed without a further
  * owner ruling.
  */
-async function reportCascade(del, configIds) {
+async function reportCascade(del, configIds, removeIds = [R10.tenant], label = 'R-10 delete set') {
   const delSets = Object.fromEntries(Object.entries(del).map(([c, ids]) => [c, new Set(ids)]));
   const parentsOf = (coll) => del[coll] ?? [];
 
   log('\n' + '!'.repeat(100));
-  log(`!! CASCADE CHECK — what references the ${(del['persons'] ?? []).length} person(s) and the other ` +
-      'documents about to be deleted');
+  log(`!! CASCADE CHECK (${label}) — what references the ${(del['persons'] ?? []).length} person(s) ` +
+      'and the other documents in scope');
   log('!'.repeat(100));
 
   const surviving = [];
@@ -1263,7 +1297,7 @@ async function reportCascade(del, configIds) {
         if (delSets[childColl]?.has(d.id)) { alsoDeleted++; continue; }
         const x = d.data();
         const t = Array.isArray(x.tenants) ? x.tenants : [];
-        const after = t.filter(v => v !== R10.tenant);          // tenants after the R-10 strip
+        const after = t.filter(v => !removeIds.includes(v));    // tenants after the removal
         surviving.push({
           childColl, field, parentColl, parentKey: pk, docId: d.id, label, personIdentity,
           tenants: t, after,
