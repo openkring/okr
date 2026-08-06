@@ -170,6 +170,74 @@ const R10 = {
   tenant: 'test',
 };
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ * R-11 — OWNER RULINGS, 2026-08-06. Resolves the two cascade STOPs that blocked R-10.
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ *
+ * The cascade check refused R-10 twice, and the owner ruled on the specifics rather than
+ * on the category. Two documents are RETAGGED out of the delete set; two resulting dangles
+ * are ACCEPTED. Both halves are encoded as data, below, so the STOP still fires for
+ * anything that is not exactly what was ruled on.
+ *
+ * RETAGS — the mis-tagging class. These documents are tagged `['test']` but are demonstrably
+ * live-tenant data; the tag is the defect, not the document.
+ *   orgs/p13                      → ['p13']   It is `app-config/p13.ownerOrgId`. Deleting it
+ *                                             would have taken out the live p13 tenant's own
+ *                                             owner organisation, and 13 p13 memberships
+ *                                             point at it.
+ *   persons/WeJRI923rpCaEEOj5kLr  → ['scs']   "Jan Paulich", who carries a live scs
+ *                                             membership. A person with live scs membership
+ *                                             is scs data. Retagging keeps person and
+ *                                             membership consistent, so no identity is
+ *                                             orphaned and the erasure pipeline can still
+ *                                             reach him from the person record.
+ */
+const R11_RETAGS = [
+  { collection: 'orgs',    docId: 'p13',                  tenants: ['p13'],
+    why: 'app-config/p13.ownerOrgId — the live p13 tenant\'s own owner org, mis-tagged as test' },
+  { collection: 'persons', docId: 'WeJRI923rpCaEEOj5kLr', tenants: ['scs'],
+    why: '"Jan Paulich" — carries a live scs membership; person + membership stay consistent' },
+];
+
+/**
+ * ⚠️ ACCEPTED DANGLING REFERENCES — R-11, 2026-08-06. NOT A BLANKET OVERRIDE. ⚠️
+ *
+ * The owner ruled that `orgs/BCYEdhxc48jzU8RlfPde` ("Segelclub Stäfa") and
+ * `resources/test_default` ("Bootshaus") ARE deleted per R-10, with the consequence stated:
+ * exactly two live `scs` documents are left pointing at records that no longer exist.
+ *
+ * That consequence is accepted for THESE TWO PAIRS ONLY. It is deliberately expressed as an
+ * allow-list of (referencing document, field, target document) triples rather than as a
+ * `--force` flag, because a flag would accept a CATEGORY — every present and future dangle
+ * — whereas the owner accepted two specific documents. Any dangle not listed here still
+ * fires STOP 2 and still blocks the delete.
+ *
+ * If a third dangle appears, the correct response is to stop and ask, not to extend this
+ * list on your own authority.
+ */
+const R11_ACCEPTED_DANGLES = [
+  {
+    ref: 'memberships/kZn8vywT51xeyijAcReK', field: 'orgKey',
+    target: 'orgs/BCYEdhxc48jzU8RlfPde',
+    ruling: 'R-11 (2026-08-06)',
+    why: 'org "Segelclub Stäfa" is deleted per R-10; this scs membership keeps naming it',
+  },
+  {
+    ref: 'ownerships/qtTudReXwaTlJnALHDkM', field: 'resourceKey',
+    target: 'resources/test_default',
+    ruling: 'R-11 (2026-08-06)',
+    why: 'resource "Bootshaus" is deleted per R-10; this scs ownership keeps naming it',
+  },
+];
+
+/** Key a dangle the same way the allow-list spells it. */
+const dangleKey = (childColl, docId, field, parentColl, parentKey) =>
+  `${childColl}/${docId}#${field}->${parentColl}/${parentKey}`;
+const ACCEPTED_DANGLE_KEYS = new Set(
+  R11_ACCEPTED_DANGLES.map(d => `${d.ref}#${d.field}->${d.target}`),
+);
+
 const ARGS = process.argv.slice(2);
 const has = (flag) => ARGS.includes(flag);
 const valueOf = (name) => {
@@ -186,6 +254,7 @@ const REMOVE = (valueOf('remove') ?? '').split(',').map(s => s.trim()).filter(Bo
 
 // ── R-10 flags. The DELETE path has its own flag, deliberately NOT reachable from
 // `--write` alone, so no existing or copy-pasted invocation can start deleting.
+const R11_RETAG = has('--r11-retag');   // with --write: apply the two R-11 retags
 const R10_ANALYSE = has('--r10');            // read-only analysis: partition, cascade, order
 const R10_STRIP = has('--r10-strip');        // with --write: strip 'test' from multi-tenant docs
 const R10_DELETE = has('--r10-delete');      // with --write: DELETE the test-only documents
@@ -210,8 +279,18 @@ if (WRITE && CHECK_ONLY) {
     'Pick one: --check to inspect the guard, --write (with --remove/--strip-tenant-id) to act.',
   );
 }
-if ((R10_STRIP || R10_DELETE) && !WRITE) {
-  refuse('--r10-strip / --r10-delete are write operations and require --write as well.');
+if ((R10_STRIP || R10_DELETE || R11_RETAG) && !WRITE) {
+  refuse('--r10-strip / --r10-delete / --r11-retag are write operations and require --write as well.');
+}
+if (R11_RETAG && (R10_STRIP || R10_DELETE)) {
+  refuse(
+    '--r11-retag must be run as its own invocation, before --r10-strip / --r10-delete.\n\n' +
+    'The census and the delete/strip partition are computed at the START of a run. The retags\n' +
+    'MOVE TWO DOCUMENTS OUT OF THE DELETE SET, so a partition computed before them is stale by\n' +
+    'exactly the documents the retags were meant to rescue — orgs/p13 and the person would be\n' +
+    'deleted anyway, which is the outcome R-11 exists to prevent.\n\n' +
+    'Run:  --write --r11-retag        then re-run --r10 and check, then --write --r10-strip --r10-delete',
+  );
 }
 if (R10_DELETE) {
   // The delete is irreversible and destroys 402 documents including person records.
@@ -231,7 +310,7 @@ if (R10_DELETE) {
     refuse('--r10-delete also requires --i-really-mean-test.');
   }
 }
-if (WRITE && REMOVE.length === 0 && !STRIP_ONLY && !R10_STRIP && !R10_DELETE) {
+if (WRITE && REMOVE.length === 0 && !STRIP_ONLY && !R10_STRIP && !R10_DELETE && !R11_RETAG) {
   refuse(
     '--write requires either --remove=<id,id,…> or --strip-tenant-id.\n' +
     'There is deliberately no "remove everything the dry run found" flag: the dry run exists\n' +
@@ -797,6 +876,7 @@ async function main() {
     // Checked here — after the census, before the first write — so no write path exists
     // that has not passed them.
     refuseUnsafeRemovals(configIds, sweepable);
+    if (R11_RETAG) await applyR11Retags();
     if (R10_STRIP || R10_DELETE) {
       // Last line of defence: refuse on anything the read-only analysis flagged. The
       // operator's flags say "I have reviewed this"; these checks verify the thing they
@@ -863,19 +943,24 @@ async function runR10({ present, docsByCollection, sweepable, footprint, empties
 
   // ── RECONCILIATION — a moved number means the data moved underneath us ───────────────
   const fpTotal = footprint(R10.tenant).reduce((n, x) => n + x.docs, 0);
-  const expectedDelete = emptiesFor([R10.tenant]).total;
-  const expectedStrip = fpTotal - expectedDelete;
+  // emptiesFor() knows nothing about R-11, so subtract the retagged-out documents to compare
+  // like with like. Both retag targets are test-ONLY today, hence they land in the delete
+  // side of that figure.
+  const expectedDelete = emptiesFor([R10.tenant]).total - part.retaggedOut.length;
+  const expectedStrip = fpTotal - part.retaggedOut.length - expectedDelete;
+  log(`\n  R-11 retagged OUT of the delete set (${part.retaggedOut.length}): ${part.retaggedOut.join(', ') || '(none)'}`);
   log('\n  RECONCILIATION against the previously reported figures');
   rule();
-  log(`    documents carrying "test"      : ${fpTotal}   (previously reported: 2307)`);
-  log(`    delete set (test-only)         : ${part.delCount}   vs emptiesFor([test]) = ${expectedDelete}   (previously: 402)`);
-  log(`    strip set  (test + others)     : ${part.stripCount}   vs ${fpTotal} - ${expectedDelete} = ${expectedStrip}   (previously: 1905)`);
+  log(`    documents carrying "test"      : ${fpTotal}   (expected 2307)`);
+  log(`    delete set (test-only, R-11 adj): ${part.delCount}   vs ${expectedDelete}   (expected 400 = 402 - 2 retagged out)`);
+  log(`    strip set  (test + others)     : ${part.stripCount}   vs ${expectedStrip}   (expected 1905)`);
   const mismatches = [];
   if (part.delCount !== expectedDelete) mismatches.push(`delete set ${part.delCount} != emptiesFor([test]) ${expectedDelete}`);
   if (part.stripCount !== expectedStrip) mismatches.push(`strip set ${part.stripCount} != ${expectedStrip}`);
-  if (part.delCount + part.stripCount !== fpTotal) mismatches.push(`delete+strip ${part.delCount + part.stripCount} != footprint ${fpTotal}`);
-  if (fpTotal !== 2307 || part.delCount !== 402 || part.stripCount !== 1905) {
-    mismatches.push(`figures differ from the reviewed dry run (2307 / 402 / 1905) — THE DATA MOVED`);
+  if (part.delCount + part.stripCount + part.retaggedOut.length !== fpTotal) mismatches.push(`delete+strip+retagged ${part.delCount + part.stripCount + part.retaggedOut.length} != footprint ${fpTotal}`);
+  if (fpTotal !== 2307 || part.delCount !== 400 || part.stripCount !== 1905) {
+    mismatches.push('figures differ from the R-11-adjusted expectation (2307 carrying test / ' +
+                    '400 delete / 1905 strip) — THE DATA MOVED');
   }
   if (mismatches.length) {
     log('    ⚠️  ' + mismatches.join('\n    ⚠️  '));
@@ -958,9 +1043,17 @@ function makeBatcher(label) {
 function partitionR10(present, docsByCollection) {
   const del = {};    // collection -> [docId]        tenants === ['test']
   const strip = {};  // collection -> [docId]        tenants ⊇ {test}, |tenants| > 1
+  const retaggedOut = [];
+  // R-11 ruled these are NOT test data — the tag is the defect. They leave the delete set
+  // BY RULING, so the partition must reflect that whether or not `--r11-retag` has been
+  // applied yet. Otherwise the dry run the owner reviews and the backup taken from it would
+  // both still contain the two documents R-11 exists to rescue.
+  const retagIds = new Set(R11_RETAGS.map(r => `${r.collection}/${r.docId}`));
+
   for (const c of present) {
     for (const d of docsByCollection[c]) {
       if (!d.tenants.includes(R10.tenant)) continue;
+      if (retagIds.has(`${c}/${d.id}`)) { retaggedOut.push(`${c}/${d.id}`); continue; }
       // A set, so a hypothetical ['test','test'] still counts as test-only rather than
       // silently taking the strip path and leaving a duplicate behind.
       const distinct = new Set(d.tenants);
@@ -969,7 +1062,7 @@ function partitionR10(present, docsByCollection) {
     }
   }
   const count = (m) => Object.values(m).reduce((n, a) => n + a.length, 0);
-  return { del, strip, delCount: count(del), stripCount: count(strip) };
+  return { del, strip, retaggedOut, delCount: count(del), stripCount: count(strip) };
 }
 
 /**
@@ -1125,7 +1218,13 @@ async function reportCascade(del, configIds) {
   log(`  children that SURVIVE their deleted parent                           : ${surviving.length}`);
 
   const orphanedPII = surviving.filter(r => r.personIdentity && r.parentColl === 'persons');
-  const liveDangling = surviving.filter(r => r.liveTenants.length > 0);
+  const allLiveDangling = surviving.filter(r => r.liveTenants.length > 0);
+  // R-11 accepted exactly two (referencing doc, field, target doc) triples — never a
+  // category. Anything not matching one of them still blocks.
+  const isAccepted = (r) => ACCEPTED_DANGLE_KEYS.has(
+    dangleKey(r.childColl, r.docId, r.field, r.parentColl, r.parentKey));
+  const acceptedDangles = allLiveDangling.filter(isAccepted);
+  const liveDangling = allLiveDangling.filter(r => !isAccepted(r));
 
   if (surviving.length > 0) {
     log('\n  SURVIVING CHILDREN (tenants shown as they will read AFTER the R-10 strip):');
@@ -1168,12 +1267,34 @@ async function reportCascade(del, configIds) {
     log('  ask for this and it must not be discovered after the fact. Needs the owner\'s ruling.');
     log('⚠'.repeat(50));
   }
+  {
+    log('\n  ACCEPTED DANGLING REFERENCES (R-11, 2026-08-06) — ruled on individually, not waived');
+    rule();
+    if (acceptedDangles.length === 0) {
+      log(`    none matched this run — all ${R11_ACCEPTED_DANGLES.length} allow-list entr(y/ies) are INERT.`);
+      log('    An allow-list that matches nothing is not a failure, but it IS a claim that has');
+      log('    stopped being true and must not be left unexamined: it means the dangle the owner');
+      log('    accepted no longer occurs. Verify WHY before treating the list as dead weight.');
+    }
+    acceptedDangles.forEach(r => {
+      const spec = R11_ACCEPTED_DANGLES.find(d => `${d.ref}#${d.field}->${d.target}` ===
+        dangleKey(r.childColl, r.docId, r.field, r.parentColl, r.parentKey));
+      log(`    ${r.childColl}/${r.docId}.${r.field} → ${r.parentColl}/${r.parentKey}  [${r.after.join(',')}]`);
+      log(`      ${spec?.ruling}: ${spec?.why}`);
+    });
+    const unused = R11_ACCEPTED_DANGLES.filter(d => !acceptedDangles.some(r =>
+      `${d.ref}#${d.field}->${d.target}` === dangleKey(r.childColl, r.docId, r.field, r.parentColl, r.parentKey)));
+    if (unused.length) {
+      log(`    NOTE: ${unused.length} allow-list entr(y/ies) did not match anything this run:`);
+      unused.forEach(d => log(`      ${d.ref}#${d.field} -> ${d.target}  (stale? already resolved?)`));
+    }
+  }
   if (stops.length === 0) {
-    log('\n  ✓ No surviving child carries a deleted person\'s identity, and no live tenant is left');
-    log('    holding a dangling reference. The delete is safe on both counts.');
+    log('\n  ✓ No surviving child carries a deleted person\'s identity, and every remaining');
+    log('    live-tenant dangle is one the owner ruled on individually (R-11). Safe on both counts.');
   }
 
-  return { surviving, alsoDeleted, orphanedPII, liveDangling, stops };
+  return { surviving, alsoDeleted, orphanedPII, liveDangling, acceptedDangles, stops };
 }
 
 /** Parent collections in the delete set that no edge in CASCADE_EDGES covers. */
@@ -1189,6 +1310,42 @@ function reportUncheckedParents(del) {
   log('    each other by key within the CMS; both are in the delete set together (12 pages,');
   log('    13 sections), so a cross-tenant dangle there is possible in principle — reported as');
   log('    a known gap rather than silently claimed clean.');
+}
+
+/**
+ * Apply the R-11 retags. These are the PRECONDITION for R-10, not part of it: they move two
+ * documents OUT of the delete set by correcting a tag that was wrong, which is why they run
+ * first and why the analysis must be re-run afterwards rather than reused.
+ *
+ * `set(..., {merge:true})` is deliberately NOT used (see makeBatcher); `update` fails if the
+ * document has gone. Each retag is verified by read-back immediately, because everything
+ * downstream depends on these two having landed.
+ */
+async function applyR11Retags() {
+  log('\n' + '='.repeat(100));
+  log('R-11 — RETAGS (precondition for R-10)');
+  log('='.repeat(100));
+  const b = makeBatcher('R-11 retag');
+  for (const r of R11_RETAGS) {
+    await b.add(w => w.update(db.collection(r.collection).doc(r.docId), { tenants: r.tenants }));
+    log(`  ${r.collection}/${r.docId} → [${r.tenants.join(',')}]`);
+    log(`      ${r.why}`);
+  }
+  await b.flush();
+  log(`  committed: ${b.committed} operation(s)`);
+
+  log('\n  READ-BACK:');
+  let ok = true;
+  for (const r of R11_RETAGS) {
+    const d = await db.collection(r.collection).doc(r.docId).get();
+    const got = d.get('tenants');
+    const good = Array.isArray(got) && got.length === r.tenants.length &&
+                 r.tenants.every((t, i) => got[i] === t);
+    if (!good) ok = false;
+    log(`    ${r.collection}/${r.docId} reads [${(got ?? []).join(',')}]  ${good ? '✓' : '⚠️ MISMATCH'}`);
+  }
+  if (!ok) refuse('an R-11 retag did not read back as expected. Nothing further will run.');
+  return true;
 }
 
 /**
