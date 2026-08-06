@@ -1,4 +1,4 @@
-import { test, expect, chromium, type Page } from '@playwright/test';
+import { test, expect, chromium, type Locator, type Page } from '@playwright/test';
 
 /**
  * Feature-block toggle + route gate (plan 2026-08-01-feature-building-blocks, task 21).
@@ -53,9 +53,27 @@ const PICKER_URL = '/tenant/features';
 async function connectToChrome(): Promise<{ browser: Awaited<ReturnType<typeof chromium.connectOverCDP>>, page: Page }> {
   const browser = await chromium.connectOverCDP('http://localhost:9222');
   const context = browser.contexts()[0];
-  const page = context.pages()[0] ?? await context.newPage();
+  // Always open OUR OWN tab rather than reusing `pages()[0]` or hunting for one already on
+  // the app. This Chrome is a human's: index 0 is whatever they opened first (Firebase
+  // console, DevTools), and a tab we adopt can be navigated away mid-run — a real failure
+  // here produced a Google results page as the test's "page snapshot". The Firebase Auth
+  // session lives in IndexedDB, which is per-profile, so a fresh tab is still signed in.
+  const page = await context.newPage();
   await page.bringToFront();
   return { browser, page };
+}
+
+/**
+ * Sets an `ion-checkbox` to `checked`.
+ *
+ * `Locator.setChecked` fails here with "Clicking the checkbox did not change its state" — it
+ * clicks and then re-reads faster than Ionic reflects the new state onto `aria-checked`, so
+ * its own verification loses the race. A plain click flips it reliably; we assert the
+ * resulting state ourselves instead of letting setChecked do it.
+ */
+async function setCheckbox(box: Locator, checked: boolean): Promise<void> {
+  if (await box.getAttribute('aria-checked') !== String(checked)) await box.click();
+  await expect(box).toHaveAttribute('aria-checked', String(checked), { timeout: 15000 });
 }
 
 /** Clicks the picker's save button and clears the removal/dependents confirmation if one appears. */
@@ -69,7 +87,7 @@ async function saveSelection(page: Page): Promise<void> {
 async function setBlock(page: Page, checked: boolean): Promise<void> {
   await page.goto(`${BASE_URL}${PICKER_URL}`);
   const row = page.locator('okr-feature-picker ion-item').filter({ hasText: TOGGLE_BLOCK_LABEL });
-  await row.locator('ion-checkbox').setChecked(checked);
+  await setCheckbox(row.locator('ion-checkbox'), checked);
   await saveSelection(page);
 }
 
@@ -80,6 +98,12 @@ test('feature picker: enabling a block adds its menu entry without a reload', as
     await page.goto(`${BASE_URL}${PICKER_URL}`);
     const picker = page.locator('okr-feature-picker');
 
+    // `goto` resolves on `load`, but Angular bootstraps after that — main.ts awaits an App
+    // Check token (racing a 5s timeout) before bootstrapApplication. Checking visibility
+    // straight after `goto` therefore samples an empty DOM and the skip below fires on a
+    // route that works, reporting a masked pass. Wait for the component, then skip.
+    await picker.waitFor({ state: 'visible', timeout: 30000 }).catch(() => undefined);
+
     // NOT a soft assertion: `FeaturePicker` is routed from NOWHERE today — `FEATURE_ROUTES`
     // has no `tenant` entry (the domain is in `NON_BLOCK_DOMAINS`: "this domain — the
     // catalogue itself") and `app.routes.ts` is nothing but `composeGatedFeatureRoutes()`
@@ -89,16 +113,23 @@ test('feature picker: enabling a block adds its menu entry without a reload', as
       `no route renders FeaturePicker (${PICKER_URL} falls through to the catch-all ErrorPage)`);
 
     const row = picker.locator('ion-item').filter({ hasText: TOGGLE_BLOCK_LABEL });
+    await row.waitFor({ state: 'visible', timeout: 15000 }).catch(() => undefined);
     test.skip(!await row.isVisible().catch(() => false),
       'block not offered to this tenant — serve p13-app (see TOGGLE_BLOCK_LABEL)');
 
-    await row.locator('ion-checkbox').setChecked(true);
+    await setCheckbox(row.locator('ion-checkbox'), true);
     await saveSelection(page);
     toggled = true;
 
     // No reload: the root menu is driven by AppStore's live `app-config` stream, so the new
     // entry must appear while the browser is still sitting on the picker url.
-    await page.locator('ion-menu-button').first().click();
+    //
+    // Open the menu only if it is collapsed. At desktop width Ionic renders the split-pane
+    // menu permanently, and `ion-menu-button` is present-but-hidden — an unconditional
+    // `.click()` on it hangs for the WHOLE test timeout, because Playwright's default
+    // `actionTimeout` is 0 (unbounded), not 30s like assertions.
+    const menuButton = page.locator('ion-menu-button').first();
+    if (await menuButton.isVisible().catch(() => false)) await menuButton.click();
     await expect(page.locator('ion-menu ion-item').filter({ hasText: TOGGLE_MENU_LABEL }))
       .toBeVisible({ timeout: 30000 });
     await expect(page).toHaveURL(`${BASE_URL}${PICKER_URL}`);
@@ -106,6 +137,7 @@ test('feature picker: enabling a block adds its menu entry without a reload', as
     // Leave `enabledFeatures` exactly as found — a leaked toggle changes what a real tenant
     // can reach. Runs even when an assertion above threw.
     if (toggled) await setBlock(page, false);
+    await page.close(); // close OUR tab; leaves the human's tabs alone
     await browser.close(); // disconnect CDP without closing Chrome
   }
 });
@@ -118,6 +150,7 @@ test('feature gate: a disabled block url redirects to the tenant rootUrl', async
       await expect(page).toHaveURL(`${BASE_URL}${ROOT_URL}`, { timeout: 30000 });
     }
   } finally {
+    await page.close();
     await browser.close();
   }
 });
