@@ -65,6 +65,7 @@
 
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 import { createJiti } from 'jiti';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -267,6 +268,39 @@ const ACCEPTED_DANGLE_KEYS = new Set(
   R11_ACCEPTED_DANGLES.map(d => `${d.ref}#${d.field}->${d.target}`),
 );
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ * NON-ARRAY `tenants` — EXCLUDED FROM EVERY WRITE, BY NAME. R-12, 2026-08-06.
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ *
+ * ⚠️ `tags/all_tenants` HAS NOW CAUSED TWO SEPARATE DEFECTS. IT DOES NOT GET A THIRD. ⚠️
+ *
+ * Its `tenants` field is a STRING, not an array:
+ *     "[test, default, scs, bka, bko, bkg, p13, kwo, kwa, pzu, sc7, r65]"
+ * That single malformed document has already:
+ *   1. BLINDED the classification probe — `where('tenants','!=',null)` orders by type and
+ *      String sorts before Array, so it was returned instead of any of the 72 real arrays
+ *      in `tags`, and the probe judged the collection correctly-unscoped (fix round 2);
+ *   2. SKEWED a footprint count — a naive `(tenants||[]).includes(id)` does SUBSTRING
+ *      matching on a string, silently adding +1 to bka/bko/kwo/kwa/pzu/sc7/r65.
+ *
+ * The write hazard is the third face of the same thing: `FieldValue.arrayRemove(...)`
+ * against a string-valued field is meaningless — at best a no-op, at worst it replaces the
+ * field with an array and destroys the original value.
+ *
+ * The census already excludes it structurally (it requires `Array.isArray`), so this
+ * constant is belt-and-braces. It exists because "excluded by accident, as a side effect of
+ * a type check elsewhere" is not the same as "excluded on purpose, by name, with a reason"
+ * — and only the second survives someone refactoring the census.
+ */
+const NON_ARRAY_TENANTS_DOCS = [
+  { path: 'tags/all_tenants',
+    why: '`tenants` is a STRING, not an array. Documented in the `tag-model` skill: tagModel is ' +
+         'empty, there are zero code references, and deleting it changes no behaviour. It is a ' +
+         'deletion candidate for the owner, NOT something this script may write to.' },
+];
+const NON_ARRAY_TENANTS_PATHS = new Set(NON_ARRAY_TENANTS_DOCS.map(d => d.path));
+
 const ARGS = process.argv.slice(2);
 const has = (flag) => ARGS.includes(flag);
 const valueOf = (name) => {
@@ -283,6 +317,10 @@ const REMOVE = (valueOf('remove') ?? '').split(',').map(s => s.trim()).filter(Bo
 
 // ── R-10 flags. The DELETE path has its own flag, deliberately NOT reachable from
 // `--write` alone, so no existing or copy-pasted invocation can start deleting.
+const AUTH_BACKUP = valueOf('auth-backup');       // export Auth state for the owner_* accounts
+const DISABLE_AUTH = has('--disable-auth');       // with --write: disable them (reversible)
+const SWEEP_PRESTATE = valueOf('sweep-prestate'); // export the 36 full + the 247 tenants[] mapping
+const DELETE_EMPTIES = has('--delete-empties');   // with --write: delete the stranded documents
 const R11_RETAG = has('--r11-retag');   // with --write: apply the two R-11 retags
 const R10_ANALYSE = has('--r10');            // read-only analysis: partition, cascade, order
 const R10_STRIP = has('--r10-strip');        // with --write: strip 'test' from multi-tenant docs
@@ -308,8 +346,26 @@ if (WRITE && CHECK_ONLY) {
     'Pick one: --check to inspect the guard, --write (with --remove/--strip-tenant-id) to act.',
   );
 }
-if ((R10_STRIP || R10_DELETE || R11_RETAG) && !WRITE) {
-  refuse('--r10-strip / --r10-delete / --r11-retag are write operations and require --write as well.');
+if ((R10_STRIP || R10_DELETE || R11_RETAG || DISABLE_AUTH || DELETE_EMPTIES) && !WRITE) {
+  refuse('--r10-strip / --r10-delete / --r11-retag / --disable-auth / --delete-empties are write\noperations and require --write as well.');
+}
+if (DISABLE_AUTH && !AUTH_BACKUP) {
+  refuse('--disable-auth requires --auth-backup=<path>. Custom claims and metadata are not\n' +
+         'recoverable from Firestore; the export is the only record that lets a disable be undone.');
+}
+if (DELETE_EMPTIES && REMOVE.length > 0) {
+  refuse(
+    '--delete-empties must be its own invocation, AFTER the sweep.\n\n' +
+    'The stranded set must be RE-DERIVED from post-sweep data, not carried over from the\n' +
+    'census this run began with. Running both together would delete a set computed before\n' +
+    'the sweep that produced it — and the owner ruling requires the re-derived set to be\n' +
+    'compared against the backup before anything is deleted.\n\n' +
+    'Run:  --write --remove=<ids> --sweep-prestate=<path>   then   --write --delete-empties',
+  );
+}
+if (WRITE && REMOVE.length > 0 && !SWEEP_PRESTATE) {
+  refuse('a sweep requires --sweep-prestate=<path>: arrayRemove is only reversible if the\n' +
+         'per-document tenants[] mapping was captured first.');
 }
 if (R11_RETAG && (R10_STRIP || R10_DELETE)) {
   refuse(
@@ -339,7 +395,7 @@ if (R10_DELETE) {
     refuse('--r10-delete also requires --i-really-mean-test.');
   }
 }
-if (WRITE && REMOVE.length === 0 && !STRIP_ONLY && !R10_STRIP && !R10_DELETE && !R11_RETAG) {
+if (WRITE && REMOVE.length === 0 && !STRIP_ONLY && !R10_STRIP && !R10_DELETE && !R11_RETAG && !DISABLE_AUTH && !DELETE_EMPTIES) {
   refuse(
     '--write requires either --remove=<id,id,…> or --strip-tenant-id.\n' +
     'There is deliberately no "remove everything the dry run found" flag: the dry run exists\n' +
@@ -894,6 +950,57 @@ async function main() {
     log('   cascade check and the order interaction with the orphan sweep.)');
   }
 
+  // ── R-12 — Auth backup / disable, sweep pre-state, stranded-document deletion ────────
+  const r12Empties = emptiesFor(sweepable);
+  const r12Uids = authUidsFromEmpties(r12Empties);
+
+  if (AUTH_BACKUP) {
+    const a = await exportAuthState(r12Uids, path.resolve(ROOT, AUTH_BACKUP));
+    log('\n' + '='.repeat(100));
+    log('R-12 — FIREBASE AUTH STATE EXPORT');
+    log('='.repeat(100));
+    log(`    accounts (derived from the stranded \`users\` docs): ${r12Uids.length}`);
+    log(`    file             : ${a.path}`);
+    log(`    written          : ${a.written}`);
+    log(`    read back & count: ${a.verified}  ${a.verified === r12Uids.length ? '✓' : '⚠️ MISMATCH'}`);
+    log(`    currently ENABLED: ${a.enabled}`);
+    if (a.verified !== r12Uids.length) refuse('the Auth export does not read back with the expected count.');
+  }
+  if (WRITE && DISABLE_AUTH) await disableAuthAccounts(r12Uids);
+
+  if (SWEEP_PRESTATE) {
+    const ps = await exportSweepPrestate(REMOVE.length ? REMOVE : sweepable, present,
+      docsByCollection, r12Empties, path.resolve(ROOT, SWEEP_PRESTATE));
+    log('\n' + '='.repeat(100));
+    log('R-12 — SWEEP PRE-STATE EXPORT');
+    log('='.repeat(100));
+    log(`    file                  : ${ps.path}`);
+    log(`    full docs (to delete) : ${ps.deleted}  read back ${ps.verifiedDeleted} ` +
+        `${ps.deleted === ps.verifiedDeleted ? '✓' : '⚠️'}`);
+    log(`    tenants[] mappings    : ${ps.modified}  read back ${ps.verifiedModified} ` +
+        `${ps.modified === ps.verifiedModified ? '✓' : '⚠️'}`);
+    if (ps.deleted !== ps.verifiedDeleted || ps.modified !== ps.verifiedModified) {
+      refuse('the sweep pre-state does not read back with the expected counts.');
+    }
+  }
+
+  if (WRITE && DELETE_EMPTIES) {
+    // Step 4 of the ruling: the RE-DERIVED stranded set must match what was backed up.
+    log('\n' + '='.repeat(100));
+    log('R-12 — RE-DERIVED STRANDED SET (post-sweep) vs the backup');
+    log('='.repeat(100));
+    log(`    re-derived from today's data: ${r12Empties.total} document(s)`);
+    Object.entries(r12Empties.docIds).sort().forEach(([c, ids]) =>
+      log(`      ${c.padEnd(22)} ${String(ids.length).padStart(4)}`));
+    if (r12Empties.total !== 36) {
+      refuse(`the re-derived stranded set is ${r12Empties.total}, not the 36 that were reviewed and\n` +
+             'backed up. The sweep did not do what the dry run predicted. NOTHING has been deleted.\n' +
+             'Investigate the difference before proceeding.');
+    }
+    log('    ✓ exactly 36, matching the reviewed and backed-up set');
+    await deleteEmpties(r12Empties);
+  }
+
   // ── 2.1 cascade — the same mis-tagging class R-10's STOP 2 exposed ───────────────────
   //
   // R-10 found live tenants (p13, scs) pointing at documents tagged ['test']. Nothing makes
@@ -1409,6 +1516,137 @@ function reportUncheckedParents(del) {
 }
 
 /**
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ * R-12 (2026-08-06) — the orphan sweep, with the Auth precondition.
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ *
+ * Owner ruling: DISABLE the 11 `owner_*` Firebase Auth accounts FIRST, then sweep, then
+ * DELETE all 36 stranded documents.
+ *
+ * The ordering is the whole point. Each of those user documents backs a live, ENABLED,
+ * `admin: true` Auth account on its own real domain. Sweep first and the account can still
+ * authenticate while its `users/{uid}` document has become invisible to every tenant-scoped
+ * query — a login that succeeds into a document-less session. Disabling first removes that
+ * window before it can exist, and disabling is reversible where deleting is not.
+ */
+
+/** The Auth accounts implied by the stranded `users` documents — derived, never hardcoded. */
+function authUidsFromEmpties(empties) {
+  return [...(empties.docIds['users'] ?? [])].sort();
+}
+
+/**
+ * Export full Auth state for the accounts about to be disabled. This is the ONLY record
+ * that lets the disable be undone precisely — custom claims and metadata are not recoverable
+ * from Firestore. Written, then read back and counted.
+ */
+async function exportAuthState(uids, filePath) {
+  const auth = getAuth();
+  const out = { ruling: 'R-12', date: '2026-08-06', exportedAt: new Date().toISOString(), accounts: [] };
+  for (const uid of uids) {
+    try {
+      const u = await auth.getUser(uid);
+      out.accounts.push({
+        uid: u.uid, email: u.email ?? null, emailVerified: u.emailVerified,
+        displayName: u.displayName ?? null, disabled: u.disabled,
+        customClaims: u.customClaims ?? null,
+        metadata: { creationTime: u.metadata.creationTime, lastSignInTime: u.metadata.lastSignInTime },
+        providerData: u.providerData.map(pd => ({ providerId: pd.providerId, uid: pd.uid, email: pd.email ?? null })),
+      });
+    } catch (e) {
+      out.accounts.push({ uid, error: String(e?.code ?? e?.message ?? e) });
+    }
+  }
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(out, null, 1));
+  const back = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  return { path: filePath, written: out.accounts.length, verified: back.accounts.length,
+           enabled: back.accounts.filter(a => a.disabled === false).length };
+}
+
+/** Disable the accounts, then read every one back from Auth. */
+async function disableAuthAccounts(uids) {
+  const auth = getAuth();
+  log('\n' + '='.repeat(100));
+  log('R-12 — DISABLING FIREBASE AUTH ACCOUNTS (reversible; precondition for the sweep)');
+  log('='.repeat(100));
+  for (const uid of uids) {
+    await auth.updateUser(uid, { disabled: true });
+    log(`  ${uid}: disabled`);
+  }
+  log('\n  READ-BACK from Firebase Auth:');
+  let allOk = true;
+  for (const uid of uids) {
+    const u = await auth.getUser(uid);
+    if (!u.disabled) allOk = false;
+    log(`    ${uid.padEnd(14)} disabled=${u.disabled} ${u.disabled ? '✓' : '⚠️ NOT DISABLED'}`);
+  }
+  if (!allOk) refuse('an Auth account did not read back as disabled. The sweep must not proceed.');
+  return true;
+}
+
+/**
+ * Pre-state for the sweep. Two halves, both required:
+ *   - the FULL contents of every document that will be deleted;
+ *   - the `tenants[]` of every document that will be MODIFIED, plus exactly which ids are
+ *     being removed from it. `arrayRemove` is only reversible if that mapping exists — the
+ *     document survives, so its old array is otherwise unrecoverable.
+ */
+async function exportSweepPrestate(removeIds, present, docsByCollection, empties, filePath) {
+  const out = {
+    ruling: 'R-12', date: '2026-08-06', exportedAt: new Date().toISOString(),
+    removeIds: [...removeIds],
+    deleted: [],   // full documents
+    modified: [],  // { collection, docId, tenantsBefore, removing, tenantsAfter }
+  };
+  const emptySet = {};
+  for (const [c, ids] of Object.entries(empties.docIds)) emptySet[c] = new Set(ids);
+
+  for (const [c, ids] of Object.entries(empties.docIds)) {
+    for (const id of ids) {
+      const snap = await db.collection(c).doc(id).get();
+      if (snap.exists) out.deleted.push({ collection: c, docId: id, data: snap.data() });
+    }
+  }
+  for (const c of present) {
+    for (const d of docsByCollection[c]) {
+      const removing = d.tenants.filter(t => removeIds.includes(t));
+      if (removing.length === 0) continue;
+      out.modified.push({
+        collection: c, docId: d.id, tenantsBefore: [...d.tenants], removing,
+        tenantsAfter: d.tenants.filter(t => !removeIds.includes(t)),
+        willBeEmpty: emptySet[c]?.has(d.id) ?? false,
+      });
+    }
+  }
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(out, null, 1));
+  const back = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  return { path: filePath, deleted: out.deleted.length, modified: out.modified.length,
+           verifiedDeleted: back.deleted.length, verifiedModified: back.modified.length };
+}
+
+/** Delete the stranded documents. Re-derived set only — never a list carried across runs. */
+async function deleteEmpties(empties) {
+  log('\n' + '='.repeat(100));
+  log('R-12 — DELETING STRANDED DOCUMENTS (irreversible)');
+  log('='.repeat(100));
+  const b = makeBatcher('R-12 delete empties');
+  for (const [c, ids] of Object.entries(empties.docIds).sort()) {
+    for (const id of ids) {
+      if (NON_ARRAY_TENANTS_PATHS.has(`${c}/${id}`)) {
+        log(`    SKIPPED ${c}/${id} — non-array tenants, excluded by name`);
+        continue;
+      }
+      await b.add(w => w.delete(db.collection(c).doc(id)));
+    }
+    log(`    ${c.padEnd(22)} ${String(ids.length).padStart(4)} deleted`);
+  }
+  await b.flush();
+  log(`    committed: ${b.committed} operation(s)`);
+}
+
+/**
  * Apply the R-11 retags. These are the PRECONDITION for R-10, not part of it: they move two
  * documents OUT of the delete set by correcting a tag that was wrong, which is why they run
  * first and why the analysis must be re-run afterwards rather than reused.
@@ -1682,6 +1920,14 @@ async function applyWrites({ stripTargets, present, docsByCollection }) {
     for (const c of present) {
       let touched = 0;
       for (const d of docsByCollection[c]) {
+        // Belt-and-braces over the census's Array.isArray filter — see NON_ARRAY_TENANTS_DOCS.
+        // arrayRemove against a string-valued field is meaningless at best and destructive at
+        // worst, and this document has already caused two defects.
+        if (NON_ARRAY_TENANTS_PATHS.has(`${c}/${d.id}`)) {
+          log(`  SKIPPED ${c}/${d.id} — non-array tenants, excluded by name`);
+          continue;
+        }
+        if (!Array.isArray(d.tenants)) continue;
         if (!d.tenants.some(t => REMOVE.includes(t))) continue; // idempotent: nothing to do
         // Server-evaluated, order-independent, concurrency-safe — see the comment above.
         await queue(db.collection(c).doc(d.id), { tenants: FieldValue.arrayRemove(...REMOVE) });
