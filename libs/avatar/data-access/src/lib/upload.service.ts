@@ -9,7 +9,7 @@ import { firstValueFrom } from "rxjs";
 import { ENV } from "@okr/shared-config";
 import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@okr/shared-models";
 import { error } from "@okr/shared-util-angular";
-import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellation, warn } from "@okr/shared-util-core";
+import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellation, sanitizeFileName, warn } from "@okr/shared-util-core";
 import { buildDocumentModel } from "@okr/document-util";
 import { DocumentService } from "@okr/document-data-access";
 import { DEFAULT_MIMETYPES } from "@okr/shared-constants";
@@ -170,10 +170,10 @@ export class UploadService {
 
     const path = storagePath ?? `tenant/${tenantId}/${DocumentModelName}`;
     const title = modalTitle ?? `Uploading ${file.name}`;
-    const downloadUrl = await this.uploadFile(file, `${path}/${file.name}`, title);
+    const downloadUrl = await this.uploadFile(file, `${path}/${sanitizeFileName(file.name)}`, title);
     if (!downloadUrl) return undefined;
 
-    return buildDocumentModel(file, tenantId, `${path}/${file.name}`, downloadUrl);
+    return buildDocumentModel(file, tenantId, `${path}/${sanitizeFileName(file.name)}`, downloadUrl);
   }
 
   /**

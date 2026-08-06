@@ -38,9 +38,11 @@ export function getImgixUrl(path: string | undefined, params = 'auto=compress,en
   const _urlType = checkUrlType(_path);
   switch (_urlType) {
     case 'imgix':
-    case 'assets':
     case 'https': return _path;
-    case 'storage': return _path + '?' + params;
+    // A literal space in the path breaks srcset parsing (the browser splits candidates on
+    // whitespace), so the image silently fails to load even though the URL works in src.
+    case 'assets': return encodeURI(_path);
+    case 'storage': return encodeURI(_path) + '?' + params;
     default: die('img.util.getImgixUrl -> invalid url type: ' + _urlType);
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation } from './file.util';
+import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation, sanitizeFileName } from './file.util';
 
 describe('file.util', () => {
 
@@ -148,4 +148,25 @@ describe('file.util', () => {
         expect(isPhotoCancellation(null)).toBe(false);
         expect(isPhotoCancellation({})).toBe(false);
     });
+});
+describe('sanitizeFileName', () => {
+  it('should replace spaces so the name is srcset-safe', () => {
+    expect(sanitizeFileName('Bildschirmfoto 2026-08-01.jpg')).toBe('Bildschirmfoto-2026-08-01.jpg');
+  });
+
+  it('should fold umlauts and accents to ascii', () => {
+    expect(sanitizeFileName('Grün Café.png')).toBe('Grun-Cafe.png');
+  });
+
+  it('should collapse runs of unsafe characters and keep the extension', () => {
+    expect(sanitizeFileName('a // b ?? c.pdf')).toBe('a-b-c.pdf');
+  });
+
+  it('should leave an already safe name unchanged', () => {
+    expect(sanitizeFileName('logo_v2-final.svg')).toBe('logo_v2-final.svg');
+  });
+
+  it('should never return an empty name', () => {
+    expect(sanitizeFileName('***')).toBe('file');
+  });
 });

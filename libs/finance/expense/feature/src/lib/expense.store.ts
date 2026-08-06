@@ -7,6 +7,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { ENV } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
+import { sanitizeFileName } from '@okr/shared-util-core';
 import { showToast } from '@okr/shared-util-angular';
 import { AddressModel, ExpenseModel, PersonModelName } from '@okr/shared-models';
 
@@ -228,7 +229,7 @@ export const ExpenseStore = signalStore(
       patchState(store, { submitStep: 'upload' });
       try {
         for (const file of files) {
-          const storagePath = `tenant/${tenantId}/ocr/expense/${expenseKey}/${file.name}`;
+          const storagePath = `tenant/${tenantId}/ocr/expense/${expenseKey}/${sanitizeFileName(file.name)}`;
           const downloadUrl = await store.uploadService.uploadFile(file, storagePath, file.name);
           if (!downloadUrl) throw new Error('Upload returned no URL for ' + file.name);
         }

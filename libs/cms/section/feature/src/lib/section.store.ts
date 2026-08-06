@@ -11,7 +11,7 @@ import { catchError, of } from 'rxjs';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@okr/shared-models';
-import { chipMatches, debugData, debugItemLoaded, debugMessage, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, debugData, debugItemLoaded, debugMessage, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, showToast } from '@okr/shared-util-angular';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -277,7 +277,7 @@ export const _SectionStore = signalStore(
         if (!file) return;
 
         // 2) upload the image file into Firestorage
-        const storagePath = `tenant/${store.tenantId()}/section/${section.okey}/image/${file.name}`;
+        const storagePath = `tenant/${store.tenantId()}/section/${section.okey}/image/${sanitizeFileName(file.name)}`;
         const downloadUrl = await store.uploadService.uploadFile(file, storagePath, 'Upload Section Image');
         if (!downloadUrl) return;
 
@@ -316,7 +316,7 @@ export const _SectionStore = signalStore(
         if (!file) return;
 
         // 2) upload the file into Firestorage
-        const storagePath = `tenant/${store.tenantId()}/section/${section.okey}/file/${file.name}`;
+        const storagePath = `tenant/${store.tenantId()}/section/${section.okey}/file/${sanitizeFileName(file.name)}`;
         const downloadUrl = await store.uploadService.uploadFile(file, storagePath, 'Upload Section File');
         if (!downloadUrl) return;
 

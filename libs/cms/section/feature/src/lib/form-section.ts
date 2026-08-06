@@ -6,6 +6,7 @@ import { from, of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
+import { sanitizeFileName } from '@okr/shared-util-core';
 import { Spinner } from '@okr/shared-ui';
 import { FormDefinitionModel, FormSection } from '@okr/shared-models';
 
@@ -226,7 +227,7 @@ export class FormSectionComponent {
 
     for (const [key, val] of Object.entries(result)) {
       if (!(val instanceof File)) continue;
-      const path = `forms/${def.formKey}/${crypto.randomUUID()}-${val.name}`;
+      const path = `forms/${def.formKey}/${crypto.randomUUID()}-${sanitizeFileName(val.name)}`;
 
       if (encryptFileUpload && def.encryptionSalt && password) {
         const { encryptFile } = await import('@okr/forms-util');

@@ -13,7 +13,7 @@ import { IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { ImageConfig, ImageType, UserModel } from '@okr/shared-models';
 import { ImageDetailModal, UploadEntry } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } from '@okr/shared-util-angular';
-import { IMGIX_THUMBNAIL_PARAMS } from '@okr/shared-util-core';
+import { IMGIX_THUMBNAIL_PARAMS, sanitizeFileName } from '@okr/shared-util-core';
 import { UploadService } from '@okr/avatar-data-access';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { SectionI18n } from '@okr/cms-section-util';
@@ -118,7 +118,9 @@ export class ImagesConfiguration {
     if (!files.length) return;
 
     const basePath = this.storagePath();
-    const uploads: UploadEntry[] = files.map(f => ({ file: f, fullPath: `${basePath}/${f.name}` }));
+    // the storage path must be sanitized (spaces/umlauts break the image url); labels keep the raw name
+    const pathOf = (f: File) => `${basePath}/${sanitizeFileName(f.name)}`;
+    const uploads: UploadEntry[] = files.map(f => ({ file: f, fullPath: pathOf(f) }));
 
     const urls = await this.uploadService.uploadFiles(uploads, this.i18n().image_upload() ?? '');
     if (!urls) return;
@@ -130,7 +132,7 @@ export class ImagesConfiguration {
     const newImages: ImageConfig[] = uploaded.map(f => ({
       label: f.name.replace(/\.[^.]+$/, ''),
       type: ImageType.Image,
-      url: `${basePath}/${f.name}`,
+      url: pathOf(f),
       actionUrl: '',
       altText: f.name.replace(/\.[^.]+$/, ''),
       overlay: '',
@@ -146,13 +148,13 @@ export class ImagesConfiguration {
       const downloadUrl = urls[idx];
       if (!downloadUrl) return Promise.resolve(undefined);
       return this.uploadService
-        .createAndSaveDocument(f, this.env.tenantId, `${basePath}/${f.name}`, downloadUrl, this.currentUser())
+        .createAndSaveDocument(f, this.env.tenantId, pathOf(f), downloadUrl, this.currentUser())
         .catch((ex: unknown) => { console.error('ImagesConfiguration.addImages: createAndSaveDocument failed', ex); return undefined; });
     }));
 
     // seed the attribution from each file's own IPTC/EXIF metadata; '' for the many files that carry none
     const credits = await Promise.all(files.map((f, idx) =>
-      urls[idx] ? this.uploadService.readImageCredit(`${basePath}/${f.name}`) : Promise.resolve('')));
+      urls[idx] ? this.uploadService.readImageCredit(pathOf(f)) : Promise.resolve('')));
 
     // patch both back onto the images (keyed by storage path, because the list may have been
     // reordered or edited while the documents and metadata were being fetched)
@@ -161,7 +163,7 @@ export class ImagesConfiguration {
       const patch: Partial<ImageConfig> = {};
       if (documentKeys[idx]) patch.documentKey = documentKeys[idx];
       if (credits[idx]) patch.credit = credits[idx];
-      if (Object.keys(patch).length > 0) patchByUrl.set(`${basePath}/${f.name}`, patch);
+      if (Object.keys(patch).length > 0) patchByUrl.set(pathOf(f), patch);
     });
     if (patchByUrl.size > 0) {
       this.images.update(imgs => imgs.map(img => {

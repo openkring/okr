@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, model, output
 
 import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { ModelSelectService } from '@okr/shared-feature';
 import { UploadService } from '@okr/avatar-data-access';
@@ -790,7 +790,7 @@ export class SectionForm {
     }
     const file = await this.uploadService.pickFile(IMAGE_MIMETYPES);
     if (!file) return;
-    const fullPath = `${this.storagePath()}/${file.name}`;
+    const fullPath = `${this.storagePath()}/${sanitizeFileName(file.name)}`;
     const downloadUrl = await this.uploadService.uploadFile(file, fullPath, this.i18n().image_upload());
     if (!downloadUrl) return;
     const documentKey = await this.uploadService.createAndSaveDocument(file, this.tenantId(), fullPath, downloadUrl, this.currentUser());

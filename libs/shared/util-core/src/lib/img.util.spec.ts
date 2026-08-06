@@ -277,6 +277,13 @@ describe('img.util', () => {
       expect(result).toBe(url);
     });
 
+    it('should encode spaces in storage paths (a literal space breaks srcset)', () => {
+      const result = getImgixUrl('tenant/scs/section/abc/Bildschirmfoto 2026-08-01.jpg');
+
+      expect(result).toContain('Bildschirmfoto%202026-08-01.jpg');
+      expect(result).not.toContain(' ');
+    });
+
     it('should add default params to storage URLs', () => {
       const url = 'tenant/images/photo.jpg';
       const result = getImgixUrl(url);
@@ -491,7 +498,7 @@ describe('img.util', () => {
     it('should handle special characters in paths', () => {
       const path = 'tenant/images/photo with spaces.jpg';
       const result = getImgixUrl(path);
-      expect(result).toBe('tenant/images/photo with spaces.jpg?auto=compress,enhance');
+      expect(result).toBe('tenant/images/photo%20with%20spaces.jpg?auto=compress,enhance');
     });
 
     it('should handle very long paths', () => {

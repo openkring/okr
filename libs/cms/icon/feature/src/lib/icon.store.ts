@@ -8,7 +8,7 @@ import { getMetadata, listAll, ref } from 'firebase/storage';
 import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { IconModel } from '@okr/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
 
 import { UploadService } from '@okr/avatar-data-access';
 
@@ -112,7 +112,7 @@ export const IconStore = signalStore(
         // use current filter type or fall back to first available set or 'icons'
         const type = store.selectedDir();
         if (!type || type.length === 0) return;
-        const fullPath = getIconStoragePath(type, file.name.replace('.svg', ''));
+        const fullPath = getIconStoragePath(type, sanitizeFileName(file.name).replace('.svg', ''));
         const downloadUrl = await store.uploadService.uploadFile(file, `${fullPath}.svg`.replace('.svg.svg', '.svg'), '@icon.operation.upload');
         if (!downloadUrl) return;
 

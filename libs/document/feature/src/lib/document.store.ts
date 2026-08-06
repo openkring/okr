@@ -8,7 +8,7 @@ import { firstValueFrom, Observable, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { CategoryListModel, DocumentCollection, DocumentModel, DocumentModelName, FolderModel } from '@okr/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, fileName, getSystemQuery, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, debugItemLoaded, debugListLoaded, fileName, getSystemQuery, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
 import { confirm, AppNavigationService, downloadFile } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -286,7 +286,7 @@ export const DocumentStore = signalStore(
         const basePath = `tenant/${tenantId}/${DocumentModelName}`;
 
         for (const file of files) {
-          const fullPath = `${basePath}/${file.name}`;
+          const fullPath = `${basePath}/${sanitizeFileName(file.name)}`;
           const downloadUrl = await store.uploadService.uploadFile(file, fullPath, file.name);
           if (!downloadUrl) continue;
 

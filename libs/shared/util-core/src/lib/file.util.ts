@@ -24,6 +24,21 @@ export function fileName(fullPath: string, dirSep = '/'): string {
 }
   
 /**
+ * Makes a user-supplied file name safe to use in a storage path and in a URL.
+ * Umlauts and accents are folded to ASCII (Bildschirmfoto Grün.jpg -> Bildschirmfoto-Grun.jpg),
+ * everything else outside [A-Za-z0-9._-] becomes a dash, repeats are collapsed.
+ * Spaces are the ones that actually bite: a literal space in an image url breaks srcset parsing
+ * in the browser, so the image never loads (see getImgixUrl, which encodes on the read side).
+ * @param name the raw file name (no directories)
+ * @returns the sanitized file name, never empty
+ */
+export function sanitizeFileName(name: string): string {
+  const ascii = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const safe = ascii.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-{2,}/g, '-').replace(/^-|-$/g, '');
+  return safe.length > 0 ? safe : 'file';
+}
+
+/**
  * Strips the fileName off a fullPath.
  * e.g. path/to/a/filename.txt -> path/to/a
  * Will not work on Urls (because of / in queries).
