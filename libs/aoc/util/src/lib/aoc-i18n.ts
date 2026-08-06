@@ -22,6 +22,7 @@ export const AOC_I18N_KEYS = {
   account_user_conf:                      PFX + 'account.user.update.conf',
   account_user_error:                     PFX + 'account.user.update.error',
 
+  account_fbuser_create_conf:             PFX + 'account.fbuser.create.conf',
   account_fbuser_delete:                  PFX + 'account.fbuser.delete.label',
   account_fbuser_delete_confirm:          PFX + 'account.fbuser.delete.confirm',
   account_fbuser_delete_conf:             PFX + 'account.fbuser.delete.conf',

@@ -26,6 +26,9 @@
         "error": "Der Firebase User konnte nicht gelöscht werden.",
         "conf": "Der Firebase User wurde gelöscht.",
         "confirm": "Soll der Firebase User wirklich gelöscht werden ?"
+      },
+      "create": {
+        "conf": "Der Firebase User wurde erstellt."
       }
     },
     "email": {
