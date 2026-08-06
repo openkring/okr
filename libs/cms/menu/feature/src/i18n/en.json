@@ -208,8 +208,13 @@
     "plural": "Categories"
   },
   "responsibility": {
-    "export": {
-      "raw": "Export responsibilities (raw data)"
+    "operation": {
+      "create": {
+        "label": "Add responsibility"
+      },
+      "export": {
+        "raw": "Export responsibilities (raw data)"
+      }
     }
   },
   "content": {

@@ -208,8 +208,13 @@
     "plural": "Categorías"
   },
   "responsibility": {
-    "export": {
-      "raw": "Exportar responsabilidades (datos en bruto)"
+    "operation": {
+      "create": {
+        "label": "Añadir responsabilidad"
+      },
+      "export": {
+        "raw": "Exportar responsabilidades (datos en bruto)"
+      }
     }
   },
   "content": {

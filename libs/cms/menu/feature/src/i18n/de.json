@@ -208,8 +208,13 @@
     "plural": "Kategorien"
   },
   "responsibility": {
-    "export": {
-      "raw": "Verantwortlichkeiten exportieren (Rohdaten)"
+    "operation": {
+      "create": {
+        "label": "Verantwortlichkeit hinzufügen"
+      },
+      "export": {
+        "raw": "Verantwortlichkeiten exportieren (Rohdaten)"
+      }
     }
   },
   "content": {
