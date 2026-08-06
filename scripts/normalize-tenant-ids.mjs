@@ -141,6 +141,35 @@ const NON_TENANT_MARKERS = {
  */
 const QUARANTINED = ['test'];
 
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ * R-10 — OWNER RULING, 2026-08-05. `test` leaves quarantine. VERBATIM:
+ * ═══════════════════════════════════════════════════════════════════════════════════════
+ *
+ *   "delete all firestore documents that have 'test' as the only tenant ['test'].
+ *    firestore documents that have 'test' and some other tenantIds (e.g. ['scs','test']),
+ *    must be kept, but the tenantId 'test' removed from the tenants field ['scs']."
+ *
+ * Two dispositions, decided per document by its CURRENT `tenants[]`:
+ *   tenants === ['test']              → DELETE the document      (irreversible)
+ *   tenants ⊇ {test} and |tenants|>1  → KEEP, strip 'test' only
+ *
+ * ⚠️ "test-only" MEANS LITERALLY `['test']` AS THE DATA READS TODAY. ⚠️
+ * It is not "would be test-only after the orphan sweep". Those are different document sets
+ * and the ORDER of the two operations changes which documents die — see
+ * `reportOrderInteraction`. The ruling speaks about the data the owner looked at, so R-10
+ * is evaluated against today's `tenants[]` and the difference is reported to the owner as
+ * its own line rather than being silently folded into either operation.
+ *
+ * `bka` (R-9) is unaffected by this: a `['test','bka']` document is NOT test-only, so it
+ * takes the strip path and keeps `bka`. That is the 958 `transfers` rows.
+ */
+const R10 = {
+  ruling: 'R-10',
+  date: '2026-08-05',
+  tenant: 'test',
+};
+
 const ARGS = process.argv.slice(2);
 const has = (flag) => ARGS.includes(flag);
 const valueOf = (name) => {
@@ -154,6 +183,14 @@ const JSON_OUT = has('--json');
 const STRIP_ONLY = has('--strip-tenant-id');
 const TEST_CONFIRMED = has('--i-really-mean-test');
 const REMOVE = (valueOf('remove') ?? '').split(',').map(s => s.trim()).filter(Boolean);
+
+// ── R-10 flags. The DELETE path has its own flag, deliberately NOT reachable from
+// `--write` alone, so no existing or copy-pasted invocation can start deleting.
+const R10_ANALYSE = has('--r10');            // read-only analysis: partition, cascade, order
+const R10_STRIP = has('--r10-strip');        // with --write: strip 'test' from multi-tenant docs
+const R10_DELETE = has('--r10-delete');      // with --write: DELETE the test-only documents
+const R10_BACKUP = valueOf('backup');        // required for --r10-delete
+const CASCADE_ACK = has('--cascade-reviewed'); // required for --r10-delete
 
 const log = (...a) => { if (!JSON_OUT) console.log(...a); };
 const rule = (ch = '─') => log(ch.repeat(100));
@@ -173,7 +210,28 @@ if (WRITE && CHECK_ONLY) {
     'Pick one: --check to inspect the guard, --write (with --remove/--strip-tenant-id) to act.',
   );
 }
-if (WRITE && REMOVE.length === 0 && !STRIP_ONLY) {
+if ((R10_STRIP || R10_DELETE) && !WRITE) {
+  refuse('--r10-strip / --r10-delete are write operations and require --write as well.');
+}
+if (R10_DELETE) {
+  // The delete is irreversible and destroys 402 documents including person records.
+  // Three independent preconditions, each naming something a human had to have done.
+  if (!R10_BACKUP) {
+    refuse('--r10-delete requires --backup=<path>. Deletion is irreversible; the full contents\n' +
+           'of every document to be deleted must be exported and verified first.');
+  }
+  if (!CASCADE_ACK) {
+    refuse('--r10-delete requires --cascade-reviewed.\n' +
+           'Deleting a person does not delete their addresses: `addresses` links by\n' +
+           'parentKey ("person.<okey>"), a foreign key, NOT by tenants[] — so a child with\n' +
+           'another tenant survives its parent and becomes orphaned personal data.\n' +
+           'Run with --r10 first, read the CASCADE CHECK, and only then pass this flag.');
+  }
+  if (!TEST_CONFIRMED) {
+    refuse('--r10-delete also requires --i-really-mean-test.');
+  }
+}
+if (WRITE && REMOVE.length === 0 && !STRIP_ONLY && !R10_STRIP && !R10_DELETE) {
   refuse(
     '--write requires either --remove=<id,id,…> or --strip-tenant-id.\n' +
     'There is deliberately no "remove everything the dry run found" flag: the dry run exists\n' +
@@ -700,6 +758,15 @@ async function main() {
     log('  goes green only once the quarantined id(s) are ruled on, one way or the other.');
   }
 
+  // ── R-10 ─────────────────────────────────────────────────────────────────────────────
+  let r10 = null;
+  if (R10_ANALYSE || R10_STRIP || R10_DELETE) {
+    r10 = await runR10({ present, docsByCollection, sweepable, footprint, emptiesFor, configIds });
+  } else {
+    log('\n  (R-10 analysis not run — pass --r10 for the test delete/strip partition, the');
+    log('   cascade check and the order interaction with the orphan sweep.)');
+  }
+
   // ── 2.2 — what kring/okr are missing ─────────────────────────────────────────────────
   await reportStep22(configSnap, docsByCollection[MENU_ITEMS] ?? []);
 
@@ -730,6 +797,25 @@ async function main() {
     // Checked here — after the census, before the first write — so no write path exists
     // that has not passed them.
     refuseUnsafeRemovals(configIds, sweepable);
+    if (R10_STRIP || R10_DELETE) {
+      // Last line of defence: refuse on anything the read-only analysis flagged. The
+      // operator's flags say "I have reviewed this"; these checks verify the thing they
+      // claim to have reviewed is still true of the data in front of us right now.
+      if (r10.mismatches.length) {
+        refuse('the R-10 reconciliation does not match the reviewed figures:\n  ' +
+               r10.mismatches.join('\n  ') + '\nThe data moved. Re-run the dry run and have it reviewed again.');
+      }
+      if (R10_DELETE && r10.cascade.stops.length > 0) {
+        refuse('the CASCADE CHECK found blocking conditions:\n  - ' + r10.cascade.stops.join('\n  - ') +
+               '\nSee the CASCADE CHECK above. These need an owner ruling, not a flag. ' +
+               '--cascade-reviewed\nacknowledges that you READ the check; it does not override a STOP.');
+      }
+      if (R10_DELETE && r10.backup.verified !== r10.part.delCount) {
+        refuse(`backup holds ${r10.backup.verified} document(s) but the delete set is ${r10.part.delCount}. ` +
+               'Refusing to delete what is not backed up.');
+      }
+      await applyR10Writes(r10.part);
+    }
     await applyWrites({ stripTargets, present, docsByCollection });
   }
 
@@ -743,6 +829,432 @@ async function main() {
   }
 
   if (!drift.ok && !WRITE) process.exitCode = 3;
+}
+
+// ═════════════════════════════════════════════════════════════════════════════════════════
+// R-10 — partition, order interaction, cascade, backup.
+// ═════════════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * The R-10 pipeline, in the order the owner asked for: partition → reconcile → order
+ * interaction → cascade → backup. Every stage is READ-ONLY. Nothing here writes; the write
+ * decision is taken by the caller, and only after this has returned a clean bill.
+ */
+async function runR10({ present, docsByCollection, sweepable, footprint, emptiesFor, configIds }) {
+  const part = partitionR10(present, docsByCollection);
+
+  log('\n' + '='.repeat(100));
+  log(`R-10 (${R10.date}) — "${R10.tenant}" DELETE / STRIP PARTITION`);
+  log('='.repeat(100));
+  log('  Ruling, verbatim:');
+  log('    "delete all firestore documents that have \'test\' as the only tenant [\'test\'].');
+  log('     firestore documents that have \'test\' and some other tenantIds (e.g. [\'scs\',\'test\']),');
+  log('     must be kept, but the tenantId \'test\' removed from the tenants field [\'scs\']."');
+  log('');
+  log('  collection                DELETE (tenants===[test])   STRIP (test + others)');
+  rule();
+  const colls = [...new Set([...Object.keys(part.del), ...Object.keys(part.strip)])].sort();
+  for (const c of colls) {
+    log(`  ${c.padEnd(24)} ${String((part.del[c] ?? []).length).padStart(12)}   ` +
+        `${String((part.strip[c] ?? []).length).padStart(21)}`);
+  }
+  rule();
+  log(`  ${'TOTAL'.padEnd(24)} ${String(part.delCount).padStart(12)}   ${String(part.stripCount).padStart(21)}`);
+
+  // ── RECONCILIATION — a moved number means the data moved underneath us ───────────────
+  const fpTotal = footprint(R10.tenant).reduce((n, x) => n + x.docs, 0);
+  const expectedDelete = emptiesFor([R10.tenant]).total;
+  const expectedStrip = fpTotal - expectedDelete;
+  log('\n  RECONCILIATION against the previously reported figures');
+  rule();
+  log(`    documents carrying "test"      : ${fpTotal}   (previously reported: 2307)`);
+  log(`    delete set (test-only)         : ${part.delCount}   vs emptiesFor([test]) = ${expectedDelete}   (previously: 402)`);
+  log(`    strip set  (test + others)     : ${part.stripCount}   vs ${fpTotal} - ${expectedDelete} = ${expectedStrip}   (previously: 1905)`);
+  const mismatches = [];
+  if (part.delCount !== expectedDelete) mismatches.push(`delete set ${part.delCount} != emptiesFor([test]) ${expectedDelete}`);
+  if (part.stripCount !== expectedStrip) mismatches.push(`strip set ${part.stripCount} != ${expectedStrip}`);
+  if (part.delCount + part.stripCount !== fpTotal) mismatches.push(`delete+strip ${part.delCount + part.stripCount} != footprint ${fpTotal}`);
+  if (fpTotal !== 2307 || part.delCount !== 402 || part.stripCount !== 1905) {
+    mismatches.push(`figures differ from the reviewed dry run (2307 / 402 / 1905) — THE DATA MOVED`);
+  }
+  if (mismatches.length) {
+    log('    ⚠️  ' + mismatches.join('\n    ⚠️  '));
+    log('    A number that moved means the database changed since the reviewed dry run.');
+  } else {
+    log('    ✓ internally consistent AND identical to the reviewed figures (2307 / 402 / 1905).');
+  }
+
+  const order = reportOrderInteraction(present, docsByCollection, sweepable);
+  const cascade = await reportCascade(part.del, configIds);
+  reportUncheckedParents(part.del);
+
+  let backup = null;
+  if (R10_BACKUP) {
+    backup = await exportBackup(part.del, path.resolve(ROOT, R10_BACKUP));
+    log('\n  BACKUP EXPORT');
+    rule();
+    log(`    file            : ${backup.path}`);
+    log(`    documents written: ${backup.written}`);
+    log(`    read back & count: ${backup.verified}  ${backup.verified === part.delCount ? '✓ matches the delete set' : '⚠️ MISMATCH'}`);
+  }
+
+  return { part, order, cascade, backup, mismatches };
+}
+
+/**
+ * A batched writer whose NOT_FOUND handling covers EVERY commit, not just the last one.
+ *
+ * ⚠️ THIS EXISTS BECAUSE WRAPPING ONLY THE FINAL FLUSH IS A TRAP. ⚠️
+ * The first version caught NOT_FOUND around the closing `flush()` only. Any INTERMEDIATE
+ * flush — one triggered by crossing BATCH_SIZE mid-run — escaped as a raw stack trace and
+ * exit 1. At 247 ops that was latent (a single batch, so the only flush was the last one).
+ * R-10 is ~1 905 strips plus ~402 deletes: intermediate flushes are guaranteed, and a
+ * concurrently deleted document is exactly the case `update()`-over-`set(merge)` exists to
+ * handle. A mid-run raw crash on a DESTRUCTIVE, IRREVERSIBLE pass is the worst available
+ * failure mode: an unknown number of batches already committed, and no read-back.
+ *
+ * So the handling lives inside `flush` itself, and every code path that commits goes
+ * through it. `committed` is reported on failure so the operator knows how far it got.
+ */
+function makeBatcher(label) {
+  let batch = db.batch();
+  let ops = 0;
+  let committed = 0;
+
+  const flush = async () => {
+    if (ops === 0) return;
+    const n = ops;
+    try {
+      await batch.commit();
+    } catch (e) {
+      const notFound = String(e?.code) === '5' || /NOT_FOUND|No document to update/i.test(String(e?.message));
+      if (notFound) {
+        refuse(
+          `${label}: a document in this batch no longer exists — it was deleted after the census.\n\n` +
+          `Firestore said: ${e.message}\n\n` +
+          `NOTHING in this batch of ${n} operation(s) was written (batches are atomic), but ` +
+          `${committed} operation(s)\nin EARLIER batches were already committed. This is the ` +
+          'intended behaviour: the alternative,\nset(merge), would have RESURRECTED the deleted ' +
+          'document.\n\nRe-run — every operation here is idempotent, and the fresh census will ' +
+          'not include the\ndeleted document. Then verify by read-back.',
+        );
+      }
+      throw e;
+    }
+    committed += n;
+    batch = db.batch();
+    ops = 0;
+  };
+
+  return {
+    /** `fn` receives the batch; queue one operation. Flushes automatically at BATCH_SIZE. */
+    add: async (fn) => { fn(batch); if (++ops >= BATCH_SIZE) await flush(); },
+    flush,
+    get committed() { return committed; },
+  };
+}
+
+/** Split every document carrying `test` into the ruling's two dispositions. */
+function partitionR10(present, docsByCollection) {
+  const del = {};    // collection -> [docId]        tenants === ['test']
+  const strip = {};  // collection -> [docId]        tenants ⊇ {test}, |tenants| > 1
+  for (const c of present) {
+    for (const d of docsByCollection[c]) {
+      if (!d.tenants.includes(R10.tenant)) continue;
+      // A set, so a hypothetical ['test','test'] still counts as test-only rather than
+      // silently taking the strip path and leaving a duplicate behind.
+      const distinct = new Set(d.tenants);
+      if (distinct.size === 1) (del[c] ??= []).push(d.id);
+      else (strip[c] ??= []).push(d.id);
+    }
+  }
+  const count = (m) => Object.values(m).reduce((n, a) => n + a.length, 0);
+  return { del, strip, delCount: count(del), stripCount: count(strip) };
+}
+
+/**
+ * ⚠️ THE ORDER OF R-10 AND THE ORPHAN SWEEP CHANGES WHICH DOCUMENTS DIE. ⚠️
+ *
+ * A document reading `['sc7','test']` today is NOT test-only, so R-10 strips `test` and
+ * leaves `['sc7']` — which the 11-id orphan sweep then empties. Run the orphan sweep FIRST
+ * and the same document reads `['test']`, which R-10 then DELETES. Same two operations,
+ * same ruling, opposite outcome for the document.
+ *
+ * This is not something to let fall out of an implementation detail. R-10 is evaluated
+ * against TODAY's data, as the owner wrote it, and the affected documents are reported
+ * here as their own line so the owner can rule on the residue explicitly.
+ */
+function reportOrderInteraction(present, docsByCollection, sweepable) {
+  const affected = {};
+  for (const c of present) {
+    for (const d of docsByCollection[c]) {
+      if (!d.tenants.includes(R10.tenant)) continue;
+      const others = d.tenants.filter(t => t !== R10.tenant);
+      if (others.length === 0) continue;                        // already test-only
+      if (others.some(t => !sweepable.includes(t))) continue;    // a real tenant survives
+      (affected[c] ??= []).push({ id: d.id, tenants: d.tenants });
+    }
+  }
+  const total = Object.values(affected).reduce((n, a) => n + a.length, 0);
+
+  log('\n' + '='.repeat(100));
+  log('R-10 × ORPHAN SWEEP — ORDER INTERACTION (report only; nothing is folded in silently)');
+  log('='.repeat(100));
+  if (total === 0) {
+    log('  No document carries `test` together with ONLY sweepable-orphan ids. The two');
+    log('  operations are independent on today\'s data and the order does not matter.');
+    return { total, affected };
+  }
+  log(`  ${total} document(s) carry \`test\` plus ONLY sweepable-orphan ids and nothing else.`);
+  log('  For these, the order of operations decides their fate:');
+  log(`    R-10 first (WHAT THIS SCRIPT DOES): not test-only today → 'test' stripped, document KEPT,`);
+  log('      then the orphan sweep empties its tenants[] → survives as an unreachable document.');
+  log('    Orphan sweep first: becomes [\'test\'] → R-10 would DELETE it.');
+  Object.entries(affected).sort().forEach(([c, list]) => {
+    log(`      ${c.padEnd(22)} ${String(list.length).padStart(5)}   e.g. ${list.slice(0, 3).map(x => `${x.id}[${x.tenants.join(',')}]`).join(', ')}`);
+  });
+  log('  ⚠️  RESIDUE FOR THE OWNER: applying R-10 as written leaves these alive but tenant-less.');
+  log('      They are NOT deleted by this script. Ruling needed on whether they should be.');
+  return { total, affected };
+}
+
+/**
+ * ⚠️ THE CASCADE CHECK — run BEFORE any delete, and it can stop the whole operation. ⚠️
+ *
+ * Deleting a person document does NOT remove that person's data. This repo deliberately
+ * keeps sensitive personal data OUT of the person record: `addresses` is a flat top-level
+ * collection linked by `parentKey: 'person.<okey>'`, holding email, phone, postal address,
+ * IBAN and the sensitive `ssn`/`dob` channels. That link is a FOREIGN KEY, not a
+ * `tenants[]` relationship — so a child document with its own, different tenant is NOT
+ * touched by R-10 and SURVIVES its parent.
+ *
+ * The result would be orphaned personal data with no person record to reach it: invisible
+ * to the app, unreachable by the erasure pipeline (which walks from the person), and still
+ * stored. That is a revDSG retention problem, not untidiness — and "delete the person,
+ * keep their address vault" is not a coherent outcome and is not what R-10 asks for.
+ *
+ * So this is a STOP condition, not a warning: if any person in the delete set has a
+ * surviving PII child, the delete does not proceed without a further owner ruling.
+ */
+/**
+ * Every foreign key that points INTO a collection with documents in the delete set.
+ *
+ * `carriesPersonIdentity` marks children that DENORMALISE a person's name/gender onto
+ * themselves. That flag is the difference between a broken link and a privacy problem:
+ * `memberships` deliberately copies `memberName1`/`memberName2`/`memberType` ("we
+ * deliberately do not use a nested object here to simplify queries" — membership.model.ts),
+ * so a surviving membership still SAYS "Jan Paulich, male" long after the person record is
+ * gone. Restricting the PII notion to the `addresses` vault would have missed exactly that.
+ */
+const CASCADE_EDGES = [
+  // child collection      field           parent        key builder             label                                   personIdentity
+  ['addresses',          'parentKey',      'persons',    k => `person.${k}`, 'PII VAULT — email/phone/postal/IBAN/ssn/dob', true],
+  ['address-directory',  'parentKey',      'persons',    k => `person.${k}`, 'PII projection',                             true],
+  ['users',              'personKey',      'persons',    k => k,             'login account',                              true],
+  ['memberships',        'memberKey',      'persons',    k => k,             'membership (denormalises member name+gender)', true],
+  ['ownerships',         'ownerKey',       'persons',    k => k,             'ownership (denormalises owner name)',        true],
+  ['personal-rels',      'subjectKey',     'persons',    k => k,             'personal relation (subject)',                true],
+  ['personal-rels',      'objectKey',      'persons',    k => k,             'personal relation (object)',                 true],
+  ['workrels',           'subjectKey',     'persons',    k => k,             'work relation (subject)',                    true],
+  ['workrels',           'objectKey',      'persons',    k => k,             'work relation (object)',                     true],
+  ['comments',           'authorKey',      'persons',    k => k,             'authored comment',                           true],
+  ['comments',           'parentKey',      'persons',    k => `person.${k}`, 'comment on the person',                      true],
+  ['docs',               'authorKey',      'persons',    k => k,             'authored document',                          true],
+  ['addresses',          'parentKey',      'orgs',       k => `org.${k}`,    'org addresses (PII)',                        false],
+  ['address-directory',  'parentKey',      'orgs',       k => `org.${k}`,    'org address projection',                     false],
+  ['memberships',        'orgKey',         'orgs',       k => k,             'membership in this org',                     false],
+  ['ownerships',         'resourceKey',    'resources',  k => k,             'ownership of this resource',                 false],
+  ['reservations',       'resourceKey',    'resources',  k => k,             'reservation of this resource',               false],
+];
+
+/**
+ * ⚠️ THE CASCADE CHECK — run BEFORE any delete, and it can stop the whole operation. ⚠️
+ *
+ * Deleting a document does not delete what points AT it. Those links are FOREIGN KEYS, not
+ * `tenants[]` relationships, so R-10 does not touch a child that carries a different
+ * tenant — the child simply outlives its parent. Two distinct harms result, and both are
+ * stop conditions:
+ *
+ *  1. ORPHANED PERSONAL DATA. A surviving child that denormalises a deleted person's
+ *     identity keeps that personal data alive under ANOTHER tenant, invisible to the app
+ *     and unreachable by the erasure pipeline (which walks from the person record). That is
+ *     a revDSG retention problem, not untidiness.
+ *  2. A LIVE TENANT LEFT WITH A DANGLING REFERENCE. A surviving child whose remaining
+ *     tenants include a real, live tenant now points at a document that no longer exists.
+ *     R-10 is a cleanup of a dead test tenant; breaking `p13` or `scs` is not something it
+ *     asks for and not something to discover afterwards.
+ *
+ * Neither is a warning. If either fires the delete does not proceed without a further
+ * owner ruling.
+ */
+async function reportCascade(del, configIds) {
+  const delSets = Object.fromEntries(Object.entries(del).map(([c, ids]) => [c, new Set(ids)]));
+  const parentsOf = (coll) => del[coll] ?? [];
+
+  log('\n' + '!'.repeat(100));
+  log(`!! CASCADE CHECK — what references the ${(del['persons'] ?? []).length} person(s) and the other ` +
+      'documents about to be deleted');
+  log('!'.repeat(100));
+
+  const surviving = [];
+  let alsoDeleted = 0;
+  let probes = 0;
+
+  for (const [childColl, field, parentColl, mk, label, personIdentity] of CASCADE_EDGES) {
+    for (const pk of parentsOf(parentColl)) {
+      probes++;
+      const snap = await db.collection(childColl).where(field, '==', mk(pk)).get();
+      for (const d of snap.docs) {
+        if (delSets[childColl]?.has(d.id)) { alsoDeleted++; continue; }
+        const x = d.data();
+        const t = Array.isArray(x.tenants) ? x.tenants : [];
+        const after = t.filter(v => v !== R10.tenant);          // tenants after the R-10 strip
+        surviving.push({
+          childColl, field, parentColl, parentKey: pk, docId: d.id, label, personIdentity,
+          tenants: t, after,
+          liveTenants: after.filter(v => configIds.includes(v)),
+          who: [x.memberName1, x.memberName2].filter(Boolean).join(' ') ||
+               [x.ownerName1, x.ownerName2].filter(Boolean).join(' ') || '',
+        });
+      }
+    }
+  }
+
+  log(`  ${CASCADE_EDGES.length} edge type(s), ${probes} FK probe(s)`);
+  log(`  children that are ALSO in the delete set (die with the parent, fine) : ${alsoDeleted}`);
+  log(`  children that SURVIVE their deleted parent                           : ${surviving.length}`);
+
+  const orphanedPII = surviving.filter(r => r.personIdentity && r.parentColl === 'persons');
+  const liveDangling = surviving.filter(r => r.liveTenants.length > 0);
+
+  if (surviving.length > 0) {
+    log('\n  SURVIVING CHILDREN (tenants shown as they will read AFTER the R-10 strip):');
+    const by = {};
+    surviving.forEach(r => { (by[`${r.parentColl} → ${r.childColl}.${r.field}`] ??= []).push(r); });
+    for (const [k, rows] of Object.entries(by).sort()) {
+      log(`    ${k}  — ${rows.length}`);
+      rows.slice(0, 15).forEach(r => log(
+        `        ${r.docId}  [${r.tenants.join(',')}] → [${r.after.join(',') || '(empty)'}]` +
+        `${r.who ? `  "${r.who}"` : ''}  →missing ${r.parentColl}/${r.parentKey}`));
+      if (rows.length > 15) log(`        … and ${rows.length - 15} more`);
+    }
+  }
+
+  const stops = [];
+  if (orphanedPII.length > 0) {
+    stops.push(`${orphanedPII.length} document(s) carrying a DELETED PERSON's identity survive`);
+    log('\n' + '⚠'.repeat(50));
+    log('  STOP 1 — ORPHANED PERSONAL DATA');
+    log(`  ${orphanedPII.length} surviving document(s) denormalise the identity of a person in the`);
+    log('  delete set. After R-10 the person record is gone but the name/gender remains, under a');
+    log('  DIFFERENT tenant, unreachable by the erasure pipeline (which walks from the person).');
+    orphanedPII.forEach(r => log(`      ${r.childColl}/${r.docId}  "${r.who}"  → [${r.after.join(',')}]  (${r.label})`));
+    log('  revDSG retention problem. R-10 does not speak to it. Needs the owner\'s ruling.');
+    log('⚠'.repeat(50));
+  }
+  if (liveDangling.length > 0) {
+    stops.push(`${liveDangling.length} document(s) of LIVE tenants would point at a deleted document`);
+    log('\n' + '⚠'.repeat(50));
+    log('  STOP 2 — LIVE TENANTS LEFT WITH DANGLING REFERENCES');
+    const byTenant = {};
+    liveDangling.forEach(r => r.liveTenants.forEach(t => { (byTenant[t] ??= []).push(r); }));
+    for (const [t, rows] of Object.entries(byTenant).sort()) {
+      log(`      tenant "${t}": ${rows.length} document(s) would reference a deleted parent`);
+      const byEdge = {};
+      rows.forEach(r => { (byEdge[`${r.childColl}.${r.field} → ${r.parentColl}`] ??= []).push(r); });
+      Object.entries(byEdge).sort().forEach(([e, rs]) => log(`         ${e}: ${rs.length}`));
+    }
+    log('  These are LIVE, in-use tenants. R-10 is a cleanup of a dead test tenant; it does not');
+    log('  ask for this and it must not be discovered after the fact. Needs the owner\'s ruling.');
+    log('⚠'.repeat(50));
+  }
+  if (stops.length === 0) {
+    log('\n  ✓ No surviving child carries a deleted person\'s identity, and no live tenant is left');
+    log('    holding a dangling reference. The delete is safe on both counts.');
+  }
+
+  return { surviving, alsoDeleted, orphanedPII, liveDangling, stops };
+}
+
+/** Parent collections in the delete set that no edge in CASCADE_EDGES covers. */
+function reportUncheckedParents(del) {
+  const covered = new Set(CASCADE_EDGES.map(e => e[2]));
+  const uncovered = Object.keys(del).filter(c => !covered.has(c)).sort();
+  log('\n  PARENT COLLECTIONS IN THE DELETE SET WITH NO FK EDGE MODELLED HERE');
+  rule();
+  log(`    ${uncovered.join(', ') || '(none)'}`);
+  log('    These are checked for tenant scope but NOT for inbound foreign keys. Most are leaf');
+  log('    or self-contained (comments, invitations, tags, tasks, calevents, locations,');
+  log('    calendars, docs, sections, menuItems, personal-rels). `pages`/`sections` reference');
+  log('    each other by key within the CMS; both are in the delete set together (12 pages,');
+  log('    13 sections), so a cross-tenant dangle there is possible in principle — reported as');
+  log('    a known gap rather than silently claimed clean.');
+}
+
+/**
+ * Apply R-10. STRIP first, then DELETE — deliberately, not arbitrarily.
+ *
+ * The strip path is reversible in practice (the id can be added back); the delete path is
+ * not. Doing the reversible half first means that if anything fails midway, the failure
+ * happens before the irreversible half rather than after it. The two sets are disjoint by
+ * construction (a document is either test-only or it is not), so neither pass can affect
+ * the other's membership and the order cannot change the outcome — only the blast radius
+ * of a mid-run failure.
+ *
+ * The strip uses `FieldValue.arrayRemove('test')` and `update`, for the same reasons the
+ * orphan sweep does: server-evaluated so a concurrent write survives, and never resurrects
+ * a concurrently deleted document.
+ */
+async function applyR10Writes(part) {
+  log('\n' + '='.repeat(100));
+  log('R-10 — WRITING (strip first, then the irreversible delete)');
+  log('='.repeat(100));
+
+  if (R10_STRIP) {
+    const b = makeBatcher('R-10 strip');
+    log('\n  STRIP PASS');
+    for (const [c, ids] of Object.entries(part.strip).sort()) {
+      for (const id of ids) {
+        await b.add(w => w.update(db.collection(c).doc(id), { tenants: FieldValue.arrayRemove(R10.tenant) }));
+      }
+      log(`    ${c.padEnd(24)} ${String(ids.length).padStart(5)} stripped`);
+    }
+    await b.flush();
+    log(`    committed: ${b.committed} operation(s)`);
+  }
+
+  if (R10_DELETE) {
+    const b = makeBatcher('R-10 delete');
+    log('\n  DELETE PASS — irreversible');
+    for (const [c, ids] of Object.entries(part.del).sort()) {
+      for (const id of ids) await b.add(w => w.delete(db.collection(c).doc(id)));
+      log(`    ${c.padEnd(24)} ${String(ids.length).padStart(5)} deleted`);
+    }
+    await b.flush();
+    log(`    committed: ${b.committed} operation(s)`);
+  }
+  log('\n  R-10 writes committed. Verify by READ-BACK, never from these counts.');
+}
+
+/**
+ * Export every document that is about to be deleted, in full, before deleting it.
+ * Deletion is irreversible; a few hundred documents cost nothing to keep.
+ * Written, then READ BACK and counted — an export nobody verified is not a backup.
+ */
+async function exportBackup(del, filePath) {
+  const out = { ruling: R10.ruling, date: R10.date, exportedAt: new Date().toISOString(), documents: [] };
+  for (const [coll, ids] of Object.entries(del)) {
+    for (const id of ids) {
+      const snap = await db.collection(coll).doc(id).get();
+      if (!snap.exists) continue; // deleted underneath us since the census
+      out.documents.push({ collection: coll, docId: id, data: snap.data() });
+    }
+  }
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(out, null, 1));
+  // read back — verify, do not assume
+  const readBack = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  return { path: filePath, written: out.documents.length, verified: readBack.documents.length };
 }
 
 /**
@@ -815,59 +1327,6 @@ async function reportStep22(configSnap, menuDocs) {
   // `indexMenuDocsByName` is imported so this file fails loudly if the seed API it defers
   // to ever changes shape, rather than silently reporting against a stale contract.
   void indexMenuDocsByName;
-}
-
-/**
- * A batched writer whose NOT_FOUND handling covers EVERY commit, not just the last one.
- *
- * ⚠️ THIS EXISTS BECAUSE WRAPPING ONLY THE FINAL FLUSH IS A TRAP. ⚠️
- * The first version caught NOT_FOUND around the closing `flush()` only. Any INTERMEDIATE
- * flush — one triggered by crossing BATCH_SIZE mid-run — escaped as a raw stack trace and
- * exit 1. At 247 ops that was latent (a single batch, so the only flush was the last one).
- * R-10 is ~1 905 strips plus ~402 deletes: intermediate flushes are guaranteed, and a
- * concurrently deleted document is exactly the case `update()`-over-`set(merge)` exists to
- * handle. A mid-run raw crash on a DESTRUCTIVE, IRREVERSIBLE pass is the worst available
- * failure mode: an unknown number of batches already committed, and no read-back.
- *
- * So the handling lives inside `flush` itself, and every code path that commits goes
- * through it. `committed` is reported on failure so the operator knows how far it got.
- */
-function makeBatcher(label) {
-  let batch = db.batch();
-  let ops = 0;
-  let committed = 0;
-
-  const flush = async () => {
-    if (ops === 0) return;
-    const n = ops;
-    try {
-      await batch.commit();
-    } catch (e) {
-      const notFound = String(e?.code) === '5' || /NOT_FOUND|No document to update/i.test(String(e?.message));
-      if (notFound) {
-        refuse(
-          `${label}: a document in this batch no longer exists — it was deleted after the census.\n\n` +
-          `Firestore said: ${e.message}\n\n` +
-          `NOTHING in this batch of ${n} operation(s) was written (batches are atomic), but ` +
-          `${committed} operation(s)\nin EARLIER batches were already committed. This is the ` +
-          'intended behaviour: the alternative,\nset(merge), would have RESURRECTED the deleted ' +
-          'document.\n\nRe-run — every operation here is idempotent, and the fresh census will ' +
-          'not include the\ndeleted document. Then verify by read-back.',
-        );
-      }
-      throw e;
-    }
-    committed += n;
-    batch = db.batch();
-    ops = 0;
-  };
-
-  return {
-    /** `fn` receives the batch; queue one operation. Flushes automatically at BATCH_SIZE. */
-    add: async (fn) => { fn(batch); if (++ops >= BATCH_SIZE) await flush(); },
-    flush,
-    get committed() { return committed; },
-  };
 }
 
 /**
