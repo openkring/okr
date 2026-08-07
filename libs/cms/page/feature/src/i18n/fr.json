@@ -136,17 +136,17 @@
   "notfound": {
     "error": "Page introuvable",
     "title": "404 Not Found",
-    "subTitle": "échoué dans les roseaux ?",
+    "subTitle": "C'est une impasse.",
     "abstract": "La page HTML demandée est introuvable. Réessayer avec une autre URL, c.-à-d. cliquer sur le menu en haut à gauche et choisir une fonction.",
-    "logoAltText": "Logo du Seeclub Stäfa",
-    "bannerAltText": "Image de fond depuis les roseaux avec coucher de soleil sur le lac de Zurich."
+    "logoAltText": "Logo de l'application",
+    "bannerAltText": "Image de fond de la page d'erreur."
   },
   "unknownpagetype": {
     "title": "404 Not Found",
-    "subTitle": "échoué dans les roseaux ?",
+    "subTitle": "C'est une impasse.",
     "abstract": "Une page HTML d'un type inconnu a été appelée. Veuillez réessayer avec une autre URL, c.-à-d. cliquer sur le menu en haut à gauche et choisir une fonction.",
-    "logoAltText": "Logo du Seeclub Stäfa",
-    "bannerAltText": "Image de fond depuis les roseaux avec coucher de soleil sur le lac de Zurich."
+    "logoAltText": "Logo de l'application",
+    "bannerAltText": "Image de fond de la page d'erreur."
   },
 
   "content_state": {

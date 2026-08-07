@@ -136,17 +136,17 @@
   "notfound": {
     "error": "Pagina non trovata",
     "title": "404 Not Found",
-    "subTitle": "finito tra le canne ?",
+    "subTitle": "Qui la strada finisce.",
     "abstract": "La pagina HTML richiesta non è stata trovata. Riprovare con un altro URL, ovvero fare clic sul menu in alto a sinistra e scegliere una funzione.",
-    "logoAltText": "Logo del Seeclub Stäfa",
-    "bannerAltText": "Immagine di sfondo dalle canne con tramonto sul lago di Zurigo."
+    "logoAltText": "Logo dell'applicazione",
+    "bannerAltText": "Immagine di sfondo della pagina di errore."
   },
   "unknownpagetype": {
     "title": "404 Not Found",
-    "subTitle": "finito tra le canne ?",
+    "subTitle": "Qui la strada finisce.",
     "abstract": "È stata richiamata una pagina HTML con un tipo sconosciuto. Si prega di riprovare con un altro URL, ovvero fare clic sul menu in alto a sinistra e scegliere una funzione.",
-    "logoAltText": "Logo del Seeclub Stäfa",
-    "bannerAltText": "Immagine di sfondo dalle canne con tramonto sul lago di Zurigo."
+    "logoAltText": "Logo dell'applicazione",
+    "bannerAltText": "Immagine di sfondo della pagina di errore."
   },
 
   "content_state": {

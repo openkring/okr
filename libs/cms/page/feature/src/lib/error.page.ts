@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, Signal } from '@angular/core';
 import { IonCol, IonContent, IonGrid, IonIcon, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs';
@@ -9,6 +9,14 @@ import { DEFAULT_BANNER_URL } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
 import { PageStore } from './page.store';
+import { PFX } from './scope';
+
+/** maps the route/dispatcher error name to the i18n block that holds its texts */
+const ERROR_I18N_BLOCK: Record<string, string> = {
+  notfound: 'notfound',
+  pageNotFound: 'notfound',
+  unknownPageType: 'unknownpagetype',
+};
 
 /**
  * ErrorPage is a simple component that displays a user-friendly error message.
@@ -116,40 +124,11 @@ export class ErrorPage {
 
   public readonly errorName = input('notfound');
 
-  protected title = toSignal(
-    toObservable(computed(() => this.store.page()?.title)).pipe(
-      switchMap(key => this.i18nService.translate(key))
-    ),
-    { initialValue: '' }
-  );
-
-  protected subTitle = toSignal(
-    toObservable(computed(() => this.store.page()?.subTitle)).pipe(
-      switchMap(key => this.i18nService.translate(key))
-    ),
-    { initialValue: '' }
-  );
-
-  protected abstract = toSignal(
-    toObservable(computed(() => this.store.page()?.abstract)).pipe(
-      switchMap(key => this.i18nService.translate(key))
-    ),
-    { initialValue: '' }
-  );
-
-  protected logoAltText = toSignal(
-    toObservable(computed(() => this.store.page()?.logoAltText)).pipe(
-      switchMap(key => this.i18nService.translate(key || `${this.store.tenantId()} Logo`))
-    ),
-    { initialValue: '' }
-  );
-
-  protected bannerAltText = toSignal(
-    toObservable(computed(() => this.store.page()?.bannerAltText)).pipe(
-      switchMap(key => this.i18nService.translate(key || `${this.store.tenantId()} Banner`))
-    ),
-    { initialValue: '' }
-  );
+  protected title = this.text('title');
+  protected subTitle = this.text('subTitle');
+  protected abstract = this.text('abstract');
+  protected logoAltText = this.text('logoAltText');
+  protected bannerAltText = this.text('bannerAltText');
 
   protected page = computed(() => this.store.page());
   // the error page is reached exactly when no page doc could be resolved, so it must not depend on
@@ -163,6 +142,25 @@ export class ErrorPage {
     effect(() => {
       this.store.setPageId(this.errorName());
     });
+  }
+
+  /**
+   * Resolve one text field of the error page.
+   *
+   * The error page is shown exactly when a page could not be resolved, so a tenant-owned page doc
+   * is the exception, not the rule — without a fallback every tenant but the one owning the doc
+   * renders an empty 404. So fall back to this lib's own `<errorBlock>.<field>` key, which every
+   * tenant has: creating a pageNotFound_<tenantId> doc per tenant is not required, it only
+   * overrides. A doc value is either a full '@scope.key' or plain text (I18nService.translate
+   * passes non-'@' values through verbatim).
+   */
+  private text(field: 'title' | 'subTitle' | 'abstract' | 'logoAltText' | 'bannerAltText'): Signal<string> {
+    return toSignal(
+      toObservable(computed(() => this.store.page()?.[field] || `${PFX}${ERROR_I18N_BLOCK[this.errorName()] ?? 'notfound'}.${field}`)).pipe(
+        switchMap(key => this.i18nService.translate(key))
+      ),
+      { initialValue: '' }
+    );
   }
 
   protected async gotoHome(): Promise<void> {

@@ -136,17 +136,17 @@
   "notfound": {
     "error": "Seite nicht gefunden",
     "title": "404 Not Found",
-    "subTitle": "im Schilf gelandet ?",
+    "subTitle": "Hier geht es nicht weiter.",
     "abstract": "Die angeforderte HTML Seite konnte nicht gefunden werden. Probiere es erneut mit einer anderen URL, dh. klicke oben links aufs Menü und wähle eine Funktion.",
-    "logoAltText": "Logo des Seeclub Stäfa",
-    "bannerAltText": "Hintergrundbild aus dem Schilf heraus mit Sonnenuntergang auf dem Zürichsee."
+    "logoAltText": "Logo der Applikation",
+    "bannerAltText": "Hintergrundbild der Fehlerseite."
   },
   "unknownpagetype": {
     "title": "404 Not Found",
-    "subTitle": "im Schilf gelandet ?",
+    "subTitle": "Hier geht es nicht weiter.",
     "abstract": "Es wurde eine HTML-Seite mit einem unbekannten Typ aufgerufen. Bitte versuche es erneut mit einer anderen URL, dh. klicke oben links aufs Menü und wähle eine Funktion.",
-    "logoAltText": "Logo des Seeclub Stäfa",
-    "bannerAltText": "Hintergrundbild aus dem Schilf heraus mit Sonnenuntergang auf dem Zürichsee."
+    "logoAltText": "Logo der Applikation",
+    "bannerAltText": "Hintergrundbild der Fehlerseite."
   },
 
   "content_state": {

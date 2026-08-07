@@ -136,17 +136,17 @@
   "notfound": {
     "error": "Página no encontrada",
     "title": "404 Not Found",
-    "subTitle": "¿acabó en los juncos ?",
+    "subTitle": "Esto es un callejón sin salida.",
     "abstract": "La página HTML solicitada no se pudo encontrar. Inténtelo de nuevo con otra URL, es decir, haga clic en el menú de la parte superior izquierda y elija una función.",
-    "logoAltText": "Logo del Seeclub Stäfa",
-    "bannerAltText": "Imagen de fondo desde los juncos con puesta de sol en el lago de Zúrich."
+    "logoAltText": "Logo de la aplicación",
+    "bannerAltText": "Imagen de fondo de la página de error."
   },
   "unknownpagetype": {
     "title": "404 Not Found",
-    "subTitle": "¿acabó en los juncos ?",
+    "subTitle": "Esto es un callejón sin salida.",
     "abstract": "Se llamó a una página HTML con un tipo desconocido. Por favor, inténtelo de nuevo con otra URL, es decir, haga clic en el menú de la parte superior izquierda y elija una función.",
-    "logoAltText": "Logo del Seeclub Stäfa",
-    "bannerAltText": "Imagen de fondo desde los juncos con puesta de sol en el lago de Zúrich."
+    "logoAltText": "Logo de la aplicación",
+    "bannerAltText": "Imagen de fondo de la página de error."
   },
 
   "content_state": {

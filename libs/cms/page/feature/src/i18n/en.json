@@ -136,17 +136,17 @@
   "notfound": {
     "error": "Page not found",
     "title": "404 Not Found",
-    "subTitle": "ended up in the reeds ?",
+    "subTitle": "This is a dead end.",
     "abstract": "The requested HTML page could not be found. Try again with a different URL, i.e. click the menu at the top left and choose a function.",
-    "logoAltText": "Logo of Seeclub Stäfa",
-    "bannerAltText": "Background image from within the reeds with sunset on Lake Zurich."
+    "logoAltText": "Logo of the application",
+    "bannerAltText": "Background image of the error page."
   },
   "unknownpagetype": {
     "title": "404 Not Found",
-    "subTitle": "ended up in the reeds ?",
+    "subTitle": "This is a dead end.",
     "abstract": "An HTML page with an unknown type was called. Please try again with a different URL, i.e. click the menu at the top left and choose a function.",
-    "logoAltText": "Logo of Seeclub Stäfa",
-    "bannerAltText": "Background image from within the reeds with sunset on Lake Zurich."
+    "logoAltText": "Logo of the application",
+    "bannerAltText": "Background image of the error page."
   },
 
   "content_state": {
