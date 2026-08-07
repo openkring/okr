@@ -43,7 +43,7 @@ export const MENU_I18N_KEYS = {
   url_label:                      PFX + 'url.label',
 
   category_plural:                PFX + 'category.plural',
-  responsibility_export_raw:      PFX + 'responsibility.export.raw',
+  responsibility_export_raw:      PFX + 'responsibility.operation.export.raw',
   content_section_plural:         PFX + 'content.section.plural',
 
   // menu_action is directly referenced
