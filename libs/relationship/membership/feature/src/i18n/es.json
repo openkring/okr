@@ -435,7 +435,7 @@
       "description": "Miembro pasivo"
     }
   },
-  "mstate_default": {
+  "mstate": {
     "all": {
       "label": "Todos los estados"
     },
@@ -464,7 +464,7 @@
       "description": "La afiliación fue anulada."
     }
   },
-  "mcat_default": {
+  "mcat": {
     "label": "Categoría de miembro",
     "helper": "Categoría de miembro",
     "all": {

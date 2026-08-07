@@ -435,7 +435,7 @@
       "description": "Passiv Mitglied"
     }
   },
-  "mstate_default": {
+  "mstate": {
     "all": {
       "label": "Alle Stati"
     },
@@ -464,7 +464,7 @@
       "description": "Die Mitgliedschaft wurde storniert."
     }
   },
-  "mcat_default": {
+  "mcat": {
     "label": "Mitglieder Kategorie",
     "helper": "Mitglieder Kategorie",
     "all": {

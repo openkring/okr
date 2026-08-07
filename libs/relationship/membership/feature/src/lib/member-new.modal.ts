@@ -103,7 +103,7 @@ export class MemberNewModal {
 
         // Resilient lookup: tryGetCategory returns undefined (instead of crashing
         // via AppStore.getCategory's die()) when the org's configured category is
-        // missing — e.g. the org.model default 'mcat_default', for which no DB
+        // missing — e.g. the org.model default 'mcat', for which no DB
         // category exists. In that case we keep the current default (this.mcat()).
         if (membershipCategoryKey) {
           const membershipCategory = this.appStore.tryGetCategory(membershipCategoryKey);

@@ -75,9 +75,9 @@ export const PersonStore = signalStore(
       showGender: computed(() => hasRole(state.appStore.privacySettings().showGender, state.appStore.currentUser())),
       currentUser: computed(() => state.appStore.currentUser()),
       tenantId: computed(() => state.appStore.tenantId()),
-      membershipCategoryKey: computed(() => state.appStore.getOrg(state.orgId())?.membershipCategoryKey ?? 'mcat_default'),
+      membershipCategoryKey: computed(() => state.appStore.getOrg(state.orgId())?.membershipCategoryKey ?? 'mcat'),
       defaultResource : computed(() => state.appStore.defaultResource() ?? new ResourceModel(state.appStore.env.tenantId)),
-      defaultMcat: computed(() => state.appStore.tryGetCategory('mcat_default'))
+      defaultMcat: computed(() => state.appStore.tryGetCategory('mcat'))
     };
   }),
 

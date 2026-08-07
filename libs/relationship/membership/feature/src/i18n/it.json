@@ -435,7 +435,7 @@
       "description": "Membro passivo"
     }
   },
-  "mstate_default": {
+  "mstate": {
     "all": {
       "label": "Tutti gli stati"
     },
@@ -464,7 +464,7 @@
       "description": "L'adesione è stata annullata."
     }
   },
-  "mcat_default": {
+  "mcat": {
     "label": "Categoria di membro",
     "helper": "Categoria di membro",
     "all": {

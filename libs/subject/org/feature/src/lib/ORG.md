@@ -22,7 +22,7 @@ Collection name: `orgs`
 | `dateOfLiquidation` | string | ISO date string of the liquidation date (empty if active) |
 | `taxId` | string | Tax identification number |
 | `bexioId` | string | External Bexio accounting system ID |
-| `membershipCategoryKey` | string | Key of the membership category used for this org (default: `'mcat_default'`) |
+| `membershipCategoryKey` | string | Key of the membership category used for this org (default: `'mcat'`) |
 | `notes` | string | Free-text notes |
 | `tags` | string | Space-separated chip tags for filtering |
 | `isArchived` | boolean | Soft-delete flag |

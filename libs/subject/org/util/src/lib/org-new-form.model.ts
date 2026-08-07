@@ -35,7 +35,7 @@ export const ORG_NEW_FORM_SHAPE: OrgNewFormModel = {
   url: DEFAULT_URL,
   taxId: DEFAULT_ID,
   bexioId: DEFAULT_ID,
-  membershipCategoryKey: 'mcat_default',
+  membershipCategoryKey: 'mcat',
   tags: DEFAULT_TAGS,
   notes: DEFAULT_NOTES
 };

@@ -435,7 +435,7 @@
       "description": "Passive member"
     }
   },
-  "mstate_default": {
+  "mstate": {
     "all": {
       "label": "All states"
     },
@@ -464,7 +464,7 @@
       "description": "The membership was cancelled."
     }
   },
-  "mcat_default": {
+  "mcat": {
     "label": "Member category",
     "helper": "Member category",
     "all": {

@@ -437,8 +437,8 @@ export const OwnershipStore = signalStore(
           store.i18nService.createLabelResolver(store.appStore.getCategory('resource_type')),
           store.i18nService.createLabelResolver(store.appStore.getCategory('rboat_type')),
           store.i18nService.createLabelResolver(store.appStore.getCategory('gender')),
-          store.i18nService.createValueResolver('@relationship/ownership/feature.ocat_default', ownerships.map(o => o.type)),
-          store.i18nService.createValueResolver('@relationship/ownership/feature.ostate_default', ownerships.map(o => o.state)),
+          store.i18nService.createValueResolver('@relationship/ownership/feature.ocat', ownerships.map(o => o.type)),
+          store.i18nService.createValueResolver('@relationship/ownership/feature.ostate', ownerships.map(o => o.state)),
         ]);
         const columns = getOwnershipExportColumns(listId, store.i18n, { resourceType, rboatType, gender, type: ownershipType, state });
         await exportCsv(buildExportTable(ownerships, columns), getExportFileName(getOwnershipExportFileName(listId), 'csv'));

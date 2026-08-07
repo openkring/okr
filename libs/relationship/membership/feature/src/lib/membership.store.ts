@@ -151,7 +151,7 @@ export const _MembershipStore = signalStore(
       allMemberships: computed(() => state.showOnlyCurrent() ? 
         state.allMembershipsResource.value()?.filter(m => isAfterDate(m.dateOfExit, getTodayStr(DateFormat.StoreDate))) ?? [] : 
         state.allMembershipsResource.value()?.filter(m => m.relIsLast === true) ?? []),
-      defaultMcat: computed(() => state.appStore.tryGetCategory('mcat_default')),
+      defaultMcat: computed(() => state.appStore.tryGetCategory('mcat')),
       ownershipsOfMember: computed(() => state.ownershipsOfMemberResource.value() ?? []),
     };
   }),
@@ -192,7 +192,7 @@ export const _MembershipStore = signalStore(
       membershipCategoryKey: computed(() => {
         if (state.orgType() === 'group') return undefined;
         const org = state.org() as OrgModel | undefined;
-        return org?.membershipCategoryKey ?? 'mcat_default';
+        return org?.membershipCategoryKey ?? 'mcat';
       }),
 
       personMembers: computed(() => state.members().filter((membership: MembershipModel) =>

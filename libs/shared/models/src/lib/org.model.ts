@@ -17,7 +17,7 @@ export class OrgModel implements OkrModel, NamedModel, AddressableModel, Searcha
   public notes = DEFAULT_NOTES;
   public tags = DEFAULT_TAGS;
   public bexioId = DEFAULT_ID;
-  public membershipCategoryKey = 'mcat_default';
+  public membershipCategoryKey = 'mcat';
 
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;

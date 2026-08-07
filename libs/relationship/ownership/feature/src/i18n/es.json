@@ -225,7 +225,7 @@
       "description": "El uso pertenece a una organización."
     }
   },
-  "ocat_default": {
+  "ocat": {
     "all": {
       "label": "Todas las categorías"
     },
@@ -256,7 +256,7 @@
       "description": "Uso actualmente válido."
     }
   },
-  "ostate_default": {
+  "ostate": {
     "all": {
       "label": "Todos los estados"
     },

@@ -219,7 +219,7 @@ export const MEMBERSHIP_I18N_KEYS = {
 
   // mcat_scs: explicit
   // mcat_srv: explicit
-  // mcat_default: explicit
+  // mcat: explicit
   key:                            '@key',
   select:                         '@select.label',
   search:                         '@search.label',
