@@ -23,7 +23,7 @@
  */
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
-import { collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
+import { arrayRemove, collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
 import { catchError, firstValueFrom, Observable, of, shareReplay } from 'rxjs';
 
@@ -553,6 +553,51 @@ export class FirestoreService {
   public clearCache(collectionName: string, dbQuery: DbQuery[], orderByParam = 'name', sortOrderParam = 'asc') {
     const cacheKey = JSON.stringify({ collectionName, dbQuery, orderByParam, sortOrderParam });
     this.queryCache.delete(cacheKey);
+  }
+
+  /**
+   * Copy-on-write split of a document shared by several tenants.
+   *
+   * When the current tenant edits a document whose `tenants[]` also lists other tenants, the
+   * shared document must NOT be mutated. Instead, atomically:
+   *   a) create a NEW document (random id) with the edits and `tenants: [currentTenant]`, and
+   *   b) remove the current tenant from the source document's `tenants[]`.
+   * Both halves in one batch — a partial apply would leave the tenant in two definitions or in
+   * none, and nothing in the app would report it (see the `tag-model` skill).
+   *
+   * @param collectionName the collection holding the shared document
+   * @param source the shared document as read (okey set)
+   * @param changes the current tenant's edits, merged onto the source
+   * @return the key of the new tenant-specific document, or undefined on failure
+   */
+  public async forkModel<T extends OkrModel>(
+    collectionName: string,
+    source: T,
+    changes: Partial<T>,
+    errorMessage?: string,
+  ): Promise<string | undefined> {
+    if (!isBrowser(this.platformId)) {
+      return this.okrError(undefined, 'FirestoreService.forkModel: This method can only be called in the browser context.', true);
+    }
+    if (!source?.okey) {
+      return this.okrError(undefined, 'FirestoreService.forkModel: source.okey is mandatory.', true);
+    }
+    const tenantId = this.env.tenantId;
+    const newKey = generateRandomString(20);
+    const forked = removeUndefinedFields(removeKeyFromOkrModel(structuredClone({ ...source, ...changes })));
+    forked.tenants = [tenantId];
+
+    try {
+      const batch = this.getBatch();
+      batch.set(doc(this.firestore, `${collectionName}/${newKey}`), forked);
+      batch.update(doc(this.firestore, `${collectionName}/${source.okey}`), { tenants: arrayRemove(tenantId) });
+      await batch.commit();
+      return newKey;
+    }
+    catch (ex) {
+      console.error(`FirestoreService.forkModel(${collectionName}/${source.okey}) -> ERROR:`, ex);
+      return this.okrError(this.toastController, errorMessage ?? `Could not fork model ${collectionName}/${source.okey}.`);
+    }
   }
 
   /**

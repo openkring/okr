@@ -21,6 +21,11 @@ export interface TagItem extends OkrModel {
   tags: string;
 }
 
+/** True when this definition belongs to the given tenant alone (i.e. it may be edited in place). */
+function isOwnedBy(tag: TagItem, tenantId: string): boolean {
+  return tag.tenants?.length === 1 && tag.tenants[0] === tenantId;
+}
+
 export type AocTagState = {
   searchTerm: string;
   selectedTagKey: string | undefined;
@@ -74,7 +79,25 @@ export const AocTagStore = signalStore(
       return tag.tags.split(',').map(s => s.trim()).filter(Boolean);
     }),
   })),
-  withMethods(store => ({
+  withMethods(store => {
+    /**
+     * Persist an edited tag list — copy-on-write.
+     *
+     * A definition shared with other tenants must never be mutated: the edit is forked into a new
+     * document (random id, same tagModel, tenants = [currentTenant]) while the current tenant is
+     * removed from the shared one, atomically. Only a definition owned by this tenant alone is
+     * updated in place. See the `tag-model` skill.
+     */
+    const saveTags = async (tag: TagItem, tags: string, confirmMessage: string, errorMessage: string): Promise<void> => {
+      if (isOwnedBy(tag, store.appStore.env.tenantId)) {
+        await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags }, false, confirmMessage, errorMessage, store.appStore.currentUser());
+        return;
+      }
+      const forkedKey = await store.firestoreService.forkModel<TagItem>(TagCollection, tag, { tags }, errorMessage);
+      if (forkedKey) patchState(store, { selectedTagKey: forkedKey });
+    };
+
+    return {
     setSearchTerm(searchTerm: string): void {
       patchState(store, { searchTerm });
     },
@@ -91,6 +114,12 @@ export const AocTagStore = signalStore(
       const tenantId = store.appStore.env.tenantId;
       const modelName = await okrPrompt(store.alertController, store.i18n.tag_create(), store.i18n.tag_create_placeholder(), store.i18n.ok(), store.i18n.cancel());
       if (!modelName?.trim()) return;
+      // invariant: exactly ONE non-archived definition per (tagModel, tenant) — getTags() takes the first match.
+      const existing = (store.tagsResource.value() ?? []) as TagItem[];
+      if (existing.some(t => t.tagModel === modelName.trim())) {
+        await confirm(store.alertController, store.i18n.tag_create_error(), store.i18n.ok(), store.i18n.cancel(), true);
+        return;
+      }
       const tag = new TagModel(tenantId);
       tag.tagModel = modelName.trim();
       tag.tags = '';
@@ -103,6 +132,12 @@ export const AocTagStore = signalStore(
       if (store.selectedTagKey() === tag.okey) {
         patchState(store, { selectedTagKey: undefined });
       }
+      // a shared definition is not ours to delete — opt this tenant out of it instead.
+      if (!isOwnedBy(tag, store.appStore.env.tenantId)) {
+        const tenants = (tag.tenants ?? []).filter(t => t !== store.appStore.env.tenantId);
+        await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tenants }, false, store.i18n.tag_delete_conf(), store.i18n.tag_delete_error(), store.appStore.currentUser());
+        return;
+      }
       await store.firestoreService.deleteModel<TagItem>(TagCollection, { ...tag }, store.i18n.tag_delete_conf(), store.i18n.tag_delete_error(), store.appStore.currentUser());
     },
 
@@ -111,13 +146,13 @@ export const AocTagStore = signalStore(
       if (!newStr?.trim()) return;
       const existing = tag.tags ? tag.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
       const updated = [...existing, newStr.trim()].join(',');
-      await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags: updated }, false, store.i18n.tag_add_conf(), store.i18n.tag_add_error(), store.appStore.currentUser());
+      await saveTags(tag, updated, store.i18n.tag_add_conf(), store.i18n.tag_add_error());
     },
 
     async removeTagString(tag: TagItem, tagStr: string): Promise<void> {
       const existing = tag.tags ? tag.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
       const updated = existing.filter(s => s !== tagStr).join(',');
-      await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags: updated }, false, store.i18n.tag_remove_conf(), store.i18n.tag_remove_error(), store.appStore.currentUser());
+      await saveTags(tag, updated, store.i18n.tag_remove_conf(), store.i18n.tag_remove_error());
     },
 
     async editTagString(tag: TagItem, tagStr: string): Promise<void> {
@@ -125,7 +160,8 @@ export const AocTagStore = signalStore(
       if (!edited?.trim() || edited.trim() === tagStr) return;
       const existing = tag.tags ? tag.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
       const updated = existing.map(s => (s === tagStr ? edited.trim() : s)).join(',');
-      await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags: updated }, false, store.i18n.tag_update_conf(), store.i18n.tag_update_error(), store.appStore.currentUser());
+      await saveTags(tag, updated, store.i18n.tag_update_conf(), store.i18n.tag_update_error());
     },
-  }))
+    };
+  })
 );

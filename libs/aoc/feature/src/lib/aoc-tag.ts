@@ -67,7 +67,7 @@ import { AocTagStore, TagItem } from './aoc-tag.store';
                       <ion-icon slot="start" src="{{ 'tags' | svgIcon }}" />
                       <ion-label>
                         <h3>{{ tag.tagModel }}</h3>
-                        <p>okey: {{ tag.okey }}</p>
+                        <p>{{ tag.tenants.join(', ') }}</p>
                       </ion-label>
                       <ion-note slot="end">{{ tagCount(tag) }}</ion-note>
                     </ion-item>
