@@ -29,6 +29,11 @@ export const FEATURE_PICKER_I18N_KEYS = {
   removal_confirm: PFX + 'picker.removal_confirm',
   withheld_toast: PFX + 'picker.withheld_toast',
   applied_toast: PFX + 'picker.applied_toast',
+  drift_title: PFX + 'picker.drift_title',
+  drift_note: PFX + 'picker.drift_note',
+  drift_apply: PFX + 'picker.drift_apply',
+  drift_forked: PFX + 'picker.drift_forked',
+  drift_edited: PFX + 'picker.drift_edited',
 } satisfies Record<string, string>;
 
 export type FeaturePickerI18n = { [K in keyof typeof FEATURE_PICKER_I18N_KEYS]: Signal<string> };

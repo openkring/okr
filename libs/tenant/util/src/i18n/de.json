@@ -1,44 +1,118 @@
 {
   "bundle": {
-    "core":          { "label": "Kern" },
-    "members":       { "label": "Mitglieder" },
-    "events":        { "label": "Anlässe" },
-    "finance":       { "label": "Finanzen" },
-    "documents":     { "label": "Dokumente" },
-    "communication": { "label": "Kommunikation" },
-    "special":       { "label": "Spezial" }
+    "core": {
+      "label": "Kern"
+    },
+    "members": {
+      "label": "Mitglieder"
+    },
+    "events": {
+      "label": "Anlässe"
+    },
+    "finance": {
+      "label": "Finanzen"
+    },
+    "documents": {
+      "label": "Dokumente"
+    },
+    "communication": {
+      "label": "Kommunikation"
+    },
+    "special": {
+      "label": "Spezial"
+    }
   },
   "feature": {
-    "calevent": { "label": "Kalender" },
-    "aoc":      { "label": "AOC – Operation Centre" },
-    "auth":     { "label": "Anmeldung" },
-    "cms":      { "label": "Content-Management" },
-    "user":     { "label": "Benutzer" },
-    "profile":  { "label": "Profil" },
-    "session":  { "label": "Sitzungen" },
-    "security": { "label": "Datenschutz & Sicherheit" },
-    "i18n":     { "label": "Übersetzungen" },
-    "avatar":   { "label": "Avatar" },
-    "category": { "label": "Kategorien" },
-    "comment":  { "label": "Kommentare" },
-    "geo":      { "label": "Standorte & Fahrten" },
-    "consent":  { "label": "Einwilligung" },
-    "subject":      { "label": "Personen, Organisationen & Adressen" },
-    "relationship": { "label": "Beziehungen" },
-    "vcard":        { "label": "vCard-Export" },
-    "resource":     { "label": "Ressourcen" },
-    "mobility":     { "label": "Mobilität" },
-    "finance":      { "label": "Finanzen & Buchhaltung" },
-    "esign":        { "label": "E-Signatur" },
-    "pdf-template": { "label": "PDF-Vorlagen" },
-    "document":     { "label": "Dokumente" },
-    "chat":         { "label": "Chat" },
-    "social-feed":  { "label": "Social Feed" },
-    "forms":        { "label": "Formulare" },
-    "activity":     { "label": "System-Aktivitäten" },
-    "task":         { "label": "Aufgaben" },
-    "instruments":  { "label": "Strategie-Instrumente & Whiteboards" },
-    "games":        { "label": "Quiz" }
+    "calevent": {
+      "label": "Kalender"
+    },
+    "aoc": {
+      "label": "AOC – Operation Centre"
+    },
+    "auth": {
+      "label": "Anmeldung"
+    },
+    "cms": {
+      "label": "Content-Management"
+    },
+    "user": {
+      "label": "Benutzer"
+    },
+    "profile": {
+      "label": "Profil"
+    },
+    "session": {
+      "label": "Sitzungen"
+    },
+    "security": {
+      "label": "Datenschutz & Sicherheit"
+    },
+    "i18n": {
+      "label": "Übersetzungen"
+    },
+    "avatar": {
+      "label": "Avatar"
+    },
+    "category": {
+      "label": "Kategorien"
+    },
+    "comment": {
+      "label": "Kommentare"
+    },
+    "geo": {
+      "label": "Standorte & Fahrten"
+    },
+    "consent": {
+      "label": "Einwilligung"
+    },
+    "subject": {
+      "label": "Personen, Organisationen & Adressen"
+    },
+    "relationship": {
+      "label": "Beziehungen"
+    },
+    "vcard": {
+      "label": "vCard-Export"
+    },
+    "resource": {
+      "label": "Ressourcen"
+    },
+    "mobility": {
+      "label": "Mobilität"
+    },
+    "finance": {
+      "label": "Finanzen & Buchhaltung"
+    },
+    "esign": {
+      "label": "E-Signatur"
+    },
+    "pdf-template": {
+      "label": "PDF-Vorlagen"
+    },
+    "document": {
+      "label": "Dokumente"
+    },
+    "chat": {
+      "label": "Chat"
+    },
+    "social-feed": {
+      "label": "Social Feed"
+    },
+    "forms": {
+      "label": "Formulare"
+    },
+    "activity": {
+      "label": "System-Aktivitäten"
+    },
+    "task": {
+      "label": "Aufgaben"
+    },
+    "instruments": {
+      "label": "Strategie-Instrumente & Whiteboards"
+    },
+    "games": {
+      "label": "Quiz"
+    }
   },
   "picker": {
     "title": "Feature-Bausteine",
@@ -47,6 +121,11 @@
     "dependents_confirm": "{{blocks}} hängen von diesem Baustein ab und werden ebenfalls deaktiviert. Fortfahren?",
     "removal_confirm": "Beim Speichern werden die Menüeinträge folgender Bausteine entfernt: {{blocks}}. Fortfahren?",
     "withheld_toast": "Nicht übernommen: {{blocks}}",
-    "applied_toast": "Gespeichert: {{count}} Bausteine aktiv."
+    "applied_toast": "Gespeichert: {{count}} Bausteine aktiv.",
+    "drift_title": "Struktur veraltet",
+    "drift_note": "Für diesen Mandanten angepasste Menüeinträge folgen der Katalogstruktur nicht mehr (Ziel, Aktion oder benötigte Rolle). Bezeichnung, Symbol und Reihenfolge bleiben unverändert.",
+    "drift_apply": "Struktur übernehmen",
+    "drift_forked": "eigene Kopie",
+    "drift_edited": "direkt bearbeitet"
   }
 }

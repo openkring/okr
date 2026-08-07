@@ -10,12 +10,14 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService } from '@okr/shared-util-angular';
-import type { FeatureRolloutModel } from '@okr/shared-models';
+import type { FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
-  FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, resolveAvailability, resolveWithDeps,
+  FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, effectiveFeatures,
+  findStructuralDrift, indexMenuDocsByName, resolveAvailability, resolveWithDeps,
 } from '@okr/tenant-util';
-import type { AvailabilityVerdict, FeatureBlock } from '@okr/tenant-util';
+import type { AvailabilityVerdict, FeatureBlock, MenuStructureDrift } from '@okr/tenant-util';
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
+import { MenuService } from '@okr/cms-menu-data-access';
 
 import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.util';
 
@@ -74,6 +76,28 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
 
     <ion-content>
       <ion-list>
+        @if (drift().length > 0) {
+          <ion-item-group>
+            <ion-item-divider color="warning">
+              <ion-icon slot="start" src="{{ 'alert-circle' | svgIcon }}" />
+              <ion-label>{{ i18n.drift_title() }}</ion-label>
+              <ion-button slot="end" fill="clear" (click)="onApplyStructure()" [disabled]="isSaving()">
+                {{ i18n.drift_apply() }}
+              </ion-button>
+            </ion-item-divider>
+            <ion-item lines="none">
+              <ion-note class="ion-text-wrap">{{ i18n.drift_note() }}</ion-note>
+            </ion-item>
+            @for (entry of drift(); track entry.docId) {
+              <ion-item>
+                <ion-label>{{ entry.name }}</ion-label>
+                <ion-note slot="end">
+                  {{ entry.forked ? i18n.drift_forked() : i18n.drift_edited() }}
+                </ion-note>
+              </ion-item>
+            }
+          </ion-item-group>
+        }
         @for (group of bundleGroups; track group.bundle.id) {
           @if (group.blocks.length > 0) {
             <ion-item-group>
@@ -109,6 +133,7 @@ export class FeaturePicker {
   private readonly featureSelectionService = inject(FeatureSelectionService);
   private readonly i18nService = inject(I18nService);
   private readonly alertService = inject(AlertService);
+  private readonly menuService = inject(MenuService);
 
   protected readonly catalogue: FeatureBlock[] = FEATURE_BLOCKS;
   protected readonly bundles = FEATURE_BUNDLES;
@@ -126,6 +151,42 @@ export class FeaturePicker {
 
   private readonly rollouts = toSignal(this.rolloutService.list(), { initialValue: [] as FeatureRolloutModel[] });
   private readonly tenantId = computed(() => this.appStore.tenantId());
+
+  private readonly menuDocs = toSignal(this.menuService.list(), { initialValue: [] as MenuItemModel[] });
+
+  /**
+   * The blocks that are LIVE for this tenant right now — not `selection()`, which may hold
+   * unsaved ticks. Mirrors `FeatureStore.effective()` on the picker's own inputs rather than
+   * injecting that store, so the drift warning describes the deployed state and the
+   * «Struktur übernehmen» button can never enable or disable anything as a side effect.
+   */
+  private readonly liveBlocks = computed(() => effectiveFeatures({
+    catalogue: this.catalogue,
+    rollouts: this.rollouts(),
+    // NOT coalesced to [] — undefined means "every non-internal block" (D-BB-10).
+    enabled: this.appStore.appConfig()?.enabledFeatures,
+    tenantId: this.tenantId(),
+  }));
+
+  /**
+   * Menu documents of the live blocks whose `url`/`action`/`roleNeeded` no longer match the
+   * catalogue — design §5's missing half. A fork (D-BB-8) is the expected cause: once a tenant
+   * edits a shared menu item, later catalogue structural fixes land on the shared original the
+   * tenant has been detached from, and nothing else would ever tell them.
+   *
+   * `indexMenuDocsByName`'s ambiguous names are ignored on purpose: an unresolvable name is a
+   * data problem for `applyFeatureSelection` to refuse loudly at write time, not something to
+   * dress up as "your structure is outdated" on a read-only screen.
+   */
+  protected readonly drift = computed<MenuStructureDrift[]>(() => {
+    const live = new Set(this.liveBlocks());
+    const specs = this.catalogue.filter(block => live.has(block.id)).flatMap(block => block.menu);
+    // `indexMenuDocsByName` takes the Firestore-snapshot shape ({id, data}); `MenuService.list`
+    // already re-attached `okey`, so the id is the doc's own key.
+    const { byName } = indexMenuDocsByName(
+      this.menuDocs().map(doc => ({ id: doc.okey, data: doc })), this.tenantId());
+    return findStructuralDrift(specs, byName);
+  });
 
   protected readonly availability = computed<Map<string, AvailabilityVerdict>>(() => {
     const rolloutById = new Map(this.rollouts().map(rollout => [rollout.okey, rollout]));
@@ -249,6 +310,29 @@ export class FeaturePicker {
       }
     } catch (error) {
       this.alertService.error(`FeaturePicker.onSave: ${error}`);
+    } finally {
+      this.isSaving.set(false);
+    }
+  }
+
+  /**
+   * Replay the catalogue's structural fields onto this tenant's menu documents — «Struktur
+   * übernehmen» (design §5).
+   *
+   * It re-applies the **live** block list, not `selection()`: `applyFeatureSelection` already
+   * emits `update-structure` ops for every enabled block on each run (`planMenuOpsForBlocks`),
+   * so replaying the current state is the whole fix and needs no second callable. Sending
+   * `selection()` instead would silently commit whatever the admin has ticked since opening
+   * the screen — a menu-stripping save behind a button that promises only to fix structure.
+   */
+  protected async onApplyStructure(): Promise<void> {
+    this.isSaving.set(true);
+    try {
+      await this.featureSelectionService.apply(this.tenantId(), [...this.liveBlocks()]);
+      // `drift()` recomputes itself from the live menu stream once the writes land.
+      await this.alertService.showToast(this.i18n.drift_apply());
+    } catch (error) {
+      this.alertService.error(`FeaturePicker.onApplyStructure: ${error}`);
     } finally {
       this.isSaving.set(false);
     }

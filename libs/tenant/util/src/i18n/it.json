@@ -1,44 +1,118 @@
 {
   "bundle": {
-    "core":          { "label": "Nucleo" },
-    "members":       { "label": "Membri" },
-    "events":        { "label": "Eventi" },
-    "finance":       { "label": "Finanze" },
-    "documents":     { "label": "Documenti" },
-    "communication": { "label": "Comunicazione" },
-    "special":       { "label": "Speciale" }
+    "core": {
+      "label": "Nucleo"
+    },
+    "members": {
+      "label": "Membri"
+    },
+    "events": {
+      "label": "Eventi"
+    },
+    "finance": {
+      "label": "Finanze"
+    },
+    "documents": {
+      "label": "Documenti"
+    },
+    "communication": {
+      "label": "Comunicazione"
+    },
+    "special": {
+      "label": "Speciale"
+    }
   },
   "feature": {
-    "calevent": { "label": "Calendario" },
-    "aoc":      { "label": "AOC – Centro operativo" },
-    "auth":     { "label": "Autenticazione" },
-    "cms":      { "label": "Gestione dei contenuti" },
-    "user":     { "label": "Utenti" },
-    "profile":  { "label": "Profilo" },
-    "session":  { "label": "Sessioni" },
-    "security": { "label": "Privacy e sicurezza" },
-    "i18n":     { "label": "Traduzioni" },
-    "avatar":   { "label": "Avatar" },
-    "category": { "label": "Categorie" },
-    "comment":  { "label": "Commenti" },
-    "geo":      { "label": "Luoghi e uscite" },
-    "consent":  { "label": "Consenso" },
-    "subject":      { "label": "Persone, organizzazioni e indirizzi" },
-    "relationship": { "label": "Relazioni" },
-    "vcard":        { "label": "Esportazione vCard" },
-    "resource":     { "label": "Risorse" },
-    "mobility":     { "label": "Mobilità" },
-    "finance":      { "label": "Finanze e contabilità" },
-    "esign":        { "label": "Firma elettronica" },
-    "pdf-template": { "label": "Modelli PDF" },
-    "document":     { "label": "Documenti" },
-    "chat":         { "label": "Chat" },
-    "social-feed":  { "label": "Feed sociale" },
-    "forms":        { "label": "Moduli" },
-    "activity":     { "label": "Attività di sistema" },
-    "task":         { "label": "Da fare" },
-    "instruments":  { "label": "Strumenti strategici e lavagne" },
-    "games":        { "label": "Quiz" }
+    "calevent": {
+      "label": "Calendario"
+    },
+    "aoc": {
+      "label": "AOC – Centro operativo"
+    },
+    "auth": {
+      "label": "Autenticazione"
+    },
+    "cms": {
+      "label": "Gestione dei contenuti"
+    },
+    "user": {
+      "label": "Utenti"
+    },
+    "profile": {
+      "label": "Profilo"
+    },
+    "session": {
+      "label": "Sessioni"
+    },
+    "security": {
+      "label": "Privacy e sicurezza"
+    },
+    "i18n": {
+      "label": "Traduzioni"
+    },
+    "avatar": {
+      "label": "Avatar"
+    },
+    "category": {
+      "label": "Categorie"
+    },
+    "comment": {
+      "label": "Commenti"
+    },
+    "geo": {
+      "label": "Luoghi e uscite"
+    },
+    "consent": {
+      "label": "Consenso"
+    },
+    "subject": {
+      "label": "Persone, organizzazioni e indirizzi"
+    },
+    "relationship": {
+      "label": "Relazioni"
+    },
+    "vcard": {
+      "label": "Esportazione vCard"
+    },
+    "resource": {
+      "label": "Risorse"
+    },
+    "mobility": {
+      "label": "Mobilità"
+    },
+    "finance": {
+      "label": "Finanze e contabilità"
+    },
+    "esign": {
+      "label": "Firma elettronica"
+    },
+    "pdf-template": {
+      "label": "Modelli PDF"
+    },
+    "document": {
+      "label": "Documenti"
+    },
+    "chat": {
+      "label": "Chat"
+    },
+    "social-feed": {
+      "label": "Feed sociale"
+    },
+    "forms": {
+      "label": "Moduli"
+    },
+    "activity": {
+      "label": "Attività di sistema"
+    },
+    "task": {
+      "label": "Da fare"
+    },
+    "instruments": {
+      "label": "Strumenti strategici e lavagne"
+    },
+    "games": {
+      "label": "Quiz"
+    }
   },
   "picker": {
     "title": "Blocchi funzionali",
@@ -47,6 +121,11 @@
     "dependents_confirm": "{{blocks}} dipendono da questo blocco e verranno anch'essi disattivati. Continuare?",
     "removal_confirm": "Il salvataggio rimuoverà le voci di menu dei seguenti blocchi: {{blocks}}. Continuare?",
     "withheld_toast": "Non applicato: {{blocks}}",
-    "applied_toast": "Salvato: {{count}} blocchi attivi."
+    "applied_toast": "Salvato: {{count}} blocchi attivi.",
+    "drift_title": "Struttura non aggiornata",
+    "drift_note": "Le voci di menu adattate per questo cliente non seguono più la struttura del catalogo (destinazione, azione o ruolo richiesto). Etichetta, icona e ordine restano invariati.",
+    "drift_apply": "Adotta la struttura",
+    "drift_forked": "copia propria",
+    "drift_edited": "modificato direttamente"
   }
 }

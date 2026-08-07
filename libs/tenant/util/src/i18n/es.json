@@ -1,44 +1,118 @@
 {
   "bundle": {
-    "core":          { "label": "Núcleo" },
-    "members":       { "label": "Miembros" },
-    "events":        { "label": "Eventos" },
-    "finance":       { "label": "Finanzas" },
-    "documents":     { "label": "Documentos" },
-    "communication": { "label": "Comunicación" },
-    "special":       { "label": "Especial" }
+    "core": {
+      "label": "Núcleo"
+    },
+    "members": {
+      "label": "Miembros"
+    },
+    "events": {
+      "label": "Eventos"
+    },
+    "finance": {
+      "label": "Finanzas"
+    },
+    "documents": {
+      "label": "Documentos"
+    },
+    "communication": {
+      "label": "Comunicación"
+    },
+    "special": {
+      "label": "Especial"
+    }
   },
   "feature": {
-    "calevent": { "label": "Calendario" },
-    "aoc":      { "label": "AOC – Centro de operaciones" },
-    "auth":     { "label": "Autenticación" },
-    "cms":      { "label": "Gestión de contenido" },
-    "user":     { "label": "Usuarios" },
-    "profile":  { "label": "Perfil" },
-    "session":  { "label": "Sesiones" },
-    "security": { "label": "Privacidad y seguridad" },
-    "i18n":     { "label": "Traducciones" },
-    "avatar":   { "label": "Avatar" },
-    "category": { "label": "Categorías" },
-    "comment":  { "label": "Comentarios" },
-    "geo":      { "label": "Ubicaciones y salidas" },
-    "consent":  { "label": "Consentimiento" },
-    "subject":      { "label": "Personas, organizaciones y direcciones" },
-    "relationship": { "label": "Relaciones" },
-    "vcard":        { "label": "Exportación vCard" },
-    "resource":     { "label": "Recursos" },
-    "mobility":     { "label": "Movilidad" },
-    "finance":      { "label": "Finanzas y contabilidad" },
-    "esign":        { "label": "Firma electrónica" },
-    "pdf-template": { "label": "Plantillas PDF" },
-    "document":     { "label": "Documentos" },
-    "chat":         { "label": "Chat" },
-    "social-feed":  { "label": "Muro social" },
-    "forms":        { "label": "Formularios" },
-    "activity":     { "label": "Actividad del sistema" },
-    "task":         { "label": "Tareas" },
-    "instruments":  { "label": "Instrumentos estratégicos y pizarras" },
-    "games":        { "label": "Quiz" }
+    "calevent": {
+      "label": "Calendario"
+    },
+    "aoc": {
+      "label": "AOC – Centro de operaciones"
+    },
+    "auth": {
+      "label": "Autenticación"
+    },
+    "cms": {
+      "label": "Gestión de contenido"
+    },
+    "user": {
+      "label": "Usuarios"
+    },
+    "profile": {
+      "label": "Perfil"
+    },
+    "session": {
+      "label": "Sesiones"
+    },
+    "security": {
+      "label": "Privacidad y seguridad"
+    },
+    "i18n": {
+      "label": "Traducciones"
+    },
+    "avatar": {
+      "label": "Avatar"
+    },
+    "category": {
+      "label": "Categorías"
+    },
+    "comment": {
+      "label": "Comentarios"
+    },
+    "geo": {
+      "label": "Ubicaciones y salidas"
+    },
+    "consent": {
+      "label": "Consentimiento"
+    },
+    "subject": {
+      "label": "Personas, organizaciones y direcciones"
+    },
+    "relationship": {
+      "label": "Relaciones"
+    },
+    "vcard": {
+      "label": "Exportación vCard"
+    },
+    "resource": {
+      "label": "Recursos"
+    },
+    "mobility": {
+      "label": "Movilidad"
+    },
+    "finance": {
+      "label": "Finanzas y contabilidad"
+    },
+    "esign": {
+      "label": "Firma electrónica"
+    },
+    "pdf-template": {
+      "label": "Plantillas PDF"
+    },
+    "document": {
+      "label": "Documentos"
+    },
+    "chat": {
+      "label": "Chat"
+    },
+    "social-feed": {
+      "label": "Muro social"
+    },
+    "forms": {
+      "label": "Formularios"
+    },
+    "activity": {
+      "label": "Actividad del sistema"
+    },
+    "task": {
+      "label": "Tareas"
+    },
+    "instruments": {
+      "label": "Instrumentos estratégicos y pizarras"
+    },
+    "games": {
+      "label": "Quiz"
+    }
   },
   "picker": {
     "title": "Bloques de funciones",
@@ -47,6 +121,11 @@
     "dependents_confirm": "{{blocks}} dependen de este bloque y también se desactivarán. ¿Continuar?",
     "removal_confirm": "Al guardar se eliminarán las entradas de menú de los siguientes bloques: {{blocks}}. ¿Continuar?",
     "withheld_toast": "No aplicado: {{blocks}}",
-    "applied_toast": "Guardado: {{count}} bloques activos."
+    "applied_toast": "Guardado: {{count}} bloques activos.",
+    "drift_title": "Estructura desactualizada",
+    "drift_note": "Las entradas de menú adaptadas para este cliente ya no siguen la estructura del catálogo (destino, acción o rol necesario). La etiqueta, el icono y el orden no cambian.",
+    "drift_apply": "Adoptar la estructura",
+    "drift_forked": "copia propia",
+    "drift_edited": "editado directamente"
   }
 }

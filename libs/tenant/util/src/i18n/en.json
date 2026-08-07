@@ -1,44 +1,118 @@
 {
   "bundle": {
-    "core":          { "label": "Core" },
-    "members":       { "label": "Members" },
-    "events":        { "label": "Events" },
-    "finance":       { "label": "Finance" },
-    "documents":     { "label": "Documents" },
-    "communication": { "label": "Communication" },
-    "special":       { "label": "Special" }
+    "core": {
+      "label": "Core"
+    },
+    "members": {
+      "label": "Members"
+    },
+    "events": {
+      "label": "Events"
+    },
+    "finance": {
+      "label": "Finance"
+    },
+    "documents": {
+      "label": "Documents"
+    },
+    "communication": {
+      "label": "Communication"
+    },
+    "special": {
+      "label": "Special"
+    }
   },
   "feature": {
-    "calevent": { "label": "Calendar" },
-    "aoc":      { "label": "AOC – Operation Centre" },
-    "auth":     { "label": "Authentication" },
-    "cms":      { "label": "Content Management" },
-    "user":     { "label": "Users" },
-    "profile":  { "label": "Profile" },
-    "session":  { "label": "Sessions" },
-    "security": { "label": "Privacy & Security" },
-    "i18n":     { "label": "Translations" },
-    "avatar":   { "label": "Avatar" },
-    "category": { "label": "Categories" },
-    "comment":  { "label": "Comments" },
-    "geo":      { "label": "Locations & Trips" },
-    "consent":  { "label": "Consent" },
-    "subject":      { "label": "People, Organizations & Addresses" },
-    "relationship": { "label": "Relationships" },
-    "vcard":        { "label": "vCard export" },
-    "resource":     { "label": "Resources" },
-    "mobility":     { "label": "Mobility" },
-    "finance":      { "label": "Finance & accounting" },
-    "esign":        { "label": "E-signature" },
-    "pdf-template": { "label": "PDF templates" },
-    "document":     { "label": "Documents" },
-    "chat":         { "label": "Chat" },
-    "social-feed":  { "label": "Social feed" },
-    "forms":        { "label": "Forms" },
-    "activity":     { "label": "System activity" },
-    "task":         { "label": "Tasks" },
-    "instruments":  { "label": "Strategy instruments & whiteboards" },
-    "games":        { "label": "Quiz" }
+    "calevent": {
+      "label": "Calendar"
+    },
+    "aoc": {
+      "label": "AOC – Operation Centre"
+    },
+    "auth": {
+      "label": "Authentication"
+    },
+    "cms": {
+      "label": "Content Management"
+    },
+    "user": {
+      "label": "Users"
+    },
+    "profile": {
+      "label": "Profile"
+    },
+    "session": {
+      "label": "Sessions"
+    },
+    "security": {
+      "label": "Privacy & Security"
+    },
+    "i18n": {
+      "label": "Translations"
+    },
+    "avatar": {
+      "label": "Avatar"
+    },
+    "category": {
+      "label": "Categories"
+    },
+    "comment": {
+      "label": "Comments"
+    },
+    "geo": {
+      "label": "Locations & Trips"
+    },
+    "consent": {
+      "label": "Consent"
+    },
+    "subject": {
+      "label": "People, Organizations & Addresses"
+    },
+    "relationship": {
+      "label": "Relationships"
+    },
+    "vcard": {
+      "label": "vCard export"
+    },
+    "resource": {
+      "label": "Resources"
+    },
+    "mobility": {
+      "label": "Mobility"
+    },
+    "finance": {
+      "label": "Finance & accounting"
+    },
+    "esign": {
+      "label": "E-signature"
+    },
+    "pdf-template": {
+      "label": "PDF templates"
+    },
+    "document": {
+      "label": "Documents"
+    },
+    "chat": {
+      "label": "Chat"
+    },
+    "social-feed": {
+      "label": "Social feed"
+    },
+    "forms": {
+      "label": "Forms"
+    },
+    "activity": {
+      "label": "System activity"
+    },
+    "task": {
+      "label": "Tasks"
+    },
+    "instruments": {
+      "label": "Strategy instruments & whiteboards"
+    },
+    "games": {
+      "label": "Quiz"
+    }
   },
   "picker": {
     "title": "Feature blocks",
@@ -47,6 +121,11 @@
     "dependents_confirm": "{{blocks}} depend on this block and will also be switched off. Continue?",
     "removal_confirm": "Saving will remove the menu entries of the following blocks: {{blocks}}. Continue?",
     "withheld_toast": "Not applied: {{blocks}}",
-    "applied_toast": "Saved: {{count}} blocks active."
+    "applied_toast": "Saved: {{count}} blocks active.",
+    "drift_title": "Structure out of date",
+    "drift_note": "Menu entries adapted for this tenant no longer follow the catalogue structure (target, action or required role). Label, icon and order stay untouched.",
+    "drift_apply": "Adopt structure",
+    "drift_forked": "own copy",
+    "drift_edited": "edited directly"
   }
 }

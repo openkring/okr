@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { MenuItemModel } from '@okr/shared-models';
-import { indexMenuDocsByName, menuSpecNames, planMenuOps, STRUCTURAL_FIELDS } from './menu-seed.util';
+import {
+  findStructuralDrift, indexMenuDocsByName, menuSpecNames, planMenuOps, STRUCTURAL_FIELDS,
+} from './menu-seed.util';
 import type { MenuSpec } from './feature-catalogue.types';
 
 const spec: MenuSpec = {
@@ -316,5 +318,49 @@ describe('menuSpecNames', () => {
 
   it('is empty for a block with no menu at all', () => {
     expect(menuSpecNames([])).toEqual([]);
+  });
+});
+
+describe('findStructuralDrift', () => {
+  const index = (...docs: MenuItemModel[]) => new Map(docs.map(d => [d.name, d]));
+
+  it('reports nothing when the document matches the catalogue', () => {
+    expect(findStructuralDrift([spec], index(existingDoc()))).toEqual([]);
+  });
+
+  it('reports a forked document whose url the catalogue has since changed', () => {
+    const fork = existingDoc({
+      okey: 'calevent-all_p13', url: '/calevent/old', forkedFrom: 'calevent-all',
+    });
+    const drift = findStructuralDrift([spec], index(fork));
+    expect(drift).toEqual([{
+      name: 'calevent-all',
+      docId: 'calevent-all_p13',          // the FORK's id, not the spec key
+      forked: true,
+      fields: { url: '/calevent/all/c-calevents' },
+    }]);
+  });
+
+  it('distinguishes a directly-edited document from a fork', () => {
+    const edited = existingDoc({ roleNeeded: 'admin' });   // no forkedFrom
+    expect(findStructuralDrift([spec], index(edited))[0]).toMatchObject({
+      forked: false, fields: { roleNeeded: 'registered' },
+    });
+  });
+
+  it('walks children, so a stale grandchild is not missed', () => {
+    const parent: MenuSpec = {
+      key: 'c-icon', name: 'c-icon', url: '', action: 'context', roleNeeded: 'contentAdmin',
+      icon: 'help-circle', label: '', children: [spec],
+    };
+    const drift = findStructuralDrift([parent], index(
+      existingDoc({ okey: 'c-icon', name: 'c-icon', url: '', action: 'context', roleNeeded: 'contentAdmin' }),
+      existingDoc({ action: 'call' }),
+    ));
+    expect(drift.map(d => d.name)).toEqual(['calevent-all']);
+  });
+
+  it('does not report a document that does not exist yet — that is the create path', () => {
+    expect(findStructuralDrift([spec], index())).toEqual([]);
   });
 });

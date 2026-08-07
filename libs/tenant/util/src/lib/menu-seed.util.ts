@@ -185,7 +185,7 @@ function menuIndex(name: string, action: string, okey: string): string {
   return `n:${name} a:${action} k:${okey}`;
 }
 
-function structuralDrift(existing: MenuItemModel, spec: MenuSpec): Partial<MenuItemModel> {
+export function structuralDrift(existing: MenuItemModel, spec: MenuSpec): Partial<MenuItemModel> {
   const drift: Partial<MenuItemModel> = {};
   for (const field of STRUCTURAL_FIELDS) {
     if (existing[field as keyof MenuItemModel] !== spec[field as keyof MenuSpec]) {
@@ -193,6 +193,59 @@ function structuralDrift(existing: MenuItemModel, spec: MenuSpec): Partial<MenuI
     }
   }
   return drift;
+}
+
+/** One live menu document whose structural fields no longer match the catalogue (design §5). */
+export interface MenuStructureDrift {
+  /** The spec's (and the document's) `name` — the identity the app resolves menus by. */
+  name: string;
+  /** The real Firestore doc id, which for eleven legacy docs is NOT the name. */
+  docId: string;
+  /**
+   * True when this tenant forked the shared document (D-BB-8, `MenuService.fork`). This is
+   * the case §5 was written for: after a fork, a catalogue structural fix lands on the
+   * shared original the tenant no longer belongs to, so the fork silently keeps the old
+   * `url`/`action`/`roleNeeded`. Drift on a non-forked doc means someone edited the
+   * document directly instead — same fix, different cause, worth telling apart.
+   */
+  forked: boolean;
+  /** The catalogue values that would be written — exactly `planMenuOps`' `update-structure` fields. */
+  fields: Partial<MenuItemModel>;
+}
+
+/**
+ * Every live menu document of `specs` whose structural fields drift from the catalogue —
+ * the read-only half of the same comparison `planMenuOps` performs before writing, so the
+ * picker can *show* what an apply would change without doing it (design §5).
+ *
+ * Deliberately reuses `structuralDrift`: a second implementation of "what counts as drift"
+ * would let the warning and the write disagree, which is worse than no warning at all.
+ *
+ * Documents that do not exist yet are NOT drift — they are `planMenuOps`' create path, and
+ * reporting "outdated" for a menu item the tenant has never had would be a lie.
+ */
+export function findStructuralDrift(
+  specs: MenuSpec[],
+  existingByName: Map<string, MenuItemModel>,
+): MenuStructureDrift[] {
+  const found: MenuStructureDrift[] = [];
+  const visit = (spec: MenuSpec): void => {
+    const doc = existingByName.get(spec.name);
+    if (doc) {
+      const fields = structuralDrift(doc, spec);
+      if (Object.keys(fields).length > 0) {
+        found.push({
+          name: spec.name,
+          docId: doc.okey,
+          forked: (doc.forkedFrom ?? '').length > 0,
+          fields,
+        });
+      }
+    }
+    (spec.children ?? []).forEach(visit);
+  };
+  specs.forEach(visit);
+  return found;
 }
 
 /**
