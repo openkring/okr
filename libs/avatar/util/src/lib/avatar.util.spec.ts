@@ -21,7 +21,7 @@ describe('newAvatarModel', () => {
     const fileName = 'avatar.png';
     const result = newAvatarModel(tenantIds, modelType, key, fileName);
 
-    expect(result.okey).toBe('person.abc123');
+    expect(result.okey).toBe('tenant1.person.abc123');
     expect(result.tenants).toEqual(['tenant1', 'tenant2']);
     expect(result.storagePath).toContain('tenant/tenant1/person/abc123/');
     expect(result.isArchived).toBe(false);

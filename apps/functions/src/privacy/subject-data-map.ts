@@ -171,8 +171,11 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     dataClass: 'identity',
     tier: 'T2',   // a picture is voluntary (spec §3) — erasable while the membership runs
     onTenantExit: 'detach',   // D-L2: shared across tenancies — strip the tenant, hard-delete only when tenants[] empties; D-L3 is satisfied by the detach
-    // the avatar doc id is the PREFIXED key: `person.<okey>` (newAvatarModel)
-    find: (c: SubjectCtx) => db().collection('avatars').where(FieldPath.documentId(), '==', c.parentKey),
+    // the avatar doc id is the PREFIXED key, either bare (`person.<okey>`, the shared
+    // default) or tenant-scoped (`<tenant>.person.<okey>`, this tenant's own picture) —
+    // see avatar.util.avatarDocId. Both belong to the subject.
+    find: (c: SubjectCtx) => db().collection('avatars')
+      .where(FieldPath.documentId(), 'in', [c.parentKey, `${c.tenantId}.${c.parentKey}`]),
     tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',

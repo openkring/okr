@@ -93,11 +93,17 @@ def parent_query(parentKey, token=None, tenant=None):
     except urllib.error.HTTPError as e:
         return e.code
 
-def list_query(coll, tenant=None, token=None):
-    """Mirrors getSystemQuery(tenant): isArchived==false [+ tenants array-contains tenant]."""
+def list_query(coll, tenant=None, token=None, with_shared=False):
+    """Mirrors getSystemQuery(tenant): isArchived==false [+ tenants array-contains tenant].
+    with_shared mirrors the AvatarService stream, which also pulls the shared defaults:
+    tenants array-contains-any [tenant, 'system']."""
     filters = [{"fieldFilter": {"field": {"fieldPath": "isArchived"},
                                 "op": "EQUAL", "value": {"booleanValue": False}}}]
-    if tenant is not None:
+    if tenant is not None and with_shared:
+        filters.append({"fieldFilter": {"field": {"fieldPath": "tenants"}, "op": "ARRAY_CONTAINS_ANY",
+                                        "value": {"arrayValue": {"values": [{"stringValue": tenant},
+                                                                            {"stringValue": "system"}]}}}})
+    elif tenant is not None:
         filters.append({"fieldFilter": {"field": {"fieldPath": "tenants"},
                                         "op": "ARRAY_CONTAINS", "value": {"stringValue": tenant}}})
     where = filters[0] if len(filters) == 1 else {"compositeFilter": {"op": "AND", "filters": filters}}
@@ -183,6 +189,20 @@ seed("feature-rollout/blockX", {"availability": "beta", "allowTenants": ["t1"], 
                                 "reason": "In geschlossener Beta", "updatedAt": "20260801000000", "updatedBy": "op"})
 seed("featureEvents/evA", {"tenantId": "t1", "block": "blockX", "op": "enable",
                            "at": "20260801000000", "by": "op"})
+# avatars: the AvatarService bulk stream (tenants array-contains) mixes person and
+# non-person docs — both must pass the read rule or the whole query is denied and
+# every avatar in the app silently falls back to the default icon.
+seed("avatars/t1.person.pSeed", {"tenants": ["t1"], "isArchived": False,
+                                 "storagePath": "tenant/t1/person/pSeed/avatar/a.jpg"})
+seed("avatars/t1.org.oSeed",    {"tenants": ["t1"], "isArchived": False,
+                                 "storagePath": "tenant/t1/org/oSeed/avatar/a.jpg"})
+# the shared default: a bare doc id every tenant falls back to.
+seed("avatars/person.pShared",  {"tenants": ["system"], "isArchived": False,
+                                 "storagePath": "tenant/t1/person/pShared/avatar/a.jpg"})
+# app-config: enabledFeatures is a BILLING boundary (1.32 §8.5) — the tenant's own admins
+# may keep editing everything else in their config, but not the paid-add-on subset.
+seed("app-config/t1", {"tenantId": "t1", "gitOrg": "openkring",
+                       "enabledFeatures": ["calevent", "task"]})
 
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
@@ -205,6 +225,20 @@ single_cases = [
     ("userA(no role) GET sessions/sX -> DENY (was signedIn)", False, GET, "sessions/sX", A, None, None),
     ("userB(admin t2) GET sessions/sX (t1) -> DENY (cross-tenant)", False, GET, "sessions/sX", B, None, None),
     ("userD(admin t1) GET sessions/sX -> ALLOW", True, GET, "sessions/sX", D, None, None),
+    # 1.32 §8.5: enabledFeatures is a billing boundary. Everything else in app-config
+    # stays tenant-admin territory; only the paid-add-on subset is server-side.
+    ("userD(admin t1) PATCH app-config/t1 gitOrg -> ALLOW", True, PATCH, "app-config/t1", D,
+     body({"gitOrg": "bkaiser-org"}), ["gitOrg"]),
+    ("userD(admin t1) PATCH app-config/t1 enabledFeatures -> DENY (billing boundary)", False,
+     PATCH, "app-config/t1", D, body({"enabledFeatures": ["calevent", "task", "finance"]}),
+     ["enabledFeatures"]),
+    # affectedKeys() reports only CHANGED keys — the AOC editor writing the document back
+    # with the same value must keep working, or the whole config screen breaks.
+    ("userD(admin t1) PATCH app-config/t1 enabledFeatures unchanged -> ALLOW", True,
+     PATCH, "app-config/t1", D, body({"enabledFeatures": ["calevent", "task"]}),
+     ["enabledFeatures"]),
+    ("userB(admin t2) PATCH app-config/t1 -> DENY (cross-tenant)", False, PATCH,
+     "app-config/t1", B, body({"gitOrg": "evil"}), ["gitOrg"]),
     # C-1: tenant isolation
     ("userA GET persons/pA (own tenant) -> ALLOW", True, GET, "persons/pA", A, None, None),
     ("userA GET persons/pB (other tenant) -> DENY", False, GET, "persons/pB", A, None, None),
@@ -419,20 +453,26 @@ single_cases = [
     ("userA DELETE own folder -> ALLOW", True, DELETE, "folders/fMine", A, None, None),
     # privacy 1.19 D-P4-10: a person's avatar is a picture OF that person — only they,
     # memberAdmin or privileged may write it. Non-person avatars stay tenant content.
-    ("userA create own avatar -> ALLOW", True, POST, "avatars?documentId=person.pA", A,
+    # the doc id is tenant-scoped (`t1.person.pA`); a bare id (`person.pA`) is the shared
+    # default the app falls back to. canWriteAvatar accepts both shapes for the subject.
+    ("userA create own avatar -> ALLOW", True, POST, "avatars?documentId=t1.person.pA", A,
      body({"tenants": ["t1"], "isArchived": False, "storagePath": "tenant/t1/person/pA/avatar/a.jpg"}), None),
-    ("userA create foreign person avatar -> DENY", False, POST, "avatars?documentId=person.pC", A,
+    ("userA create own SHARED default avatar (bare id) -> ALLOW", True, POST, "avatars?documentId=person.pA", A,
+     body({"tenants": ["system"], "isArchived": False, "storagePath": "tenant/t1/person/pA/avatar/a.jpg"}), None),
+    ("userA create foreign person avatar -> DENY", False, POST, "avatars?documentId=t1.person.pC", A,
      body({"tenants": ["t1"], "isArchived": False, "storagePath": "tenant/t1/person/pC/avatar/a.jpg"}), None),
-    ("userM(memberAdmin) create foreign person avatar -> ALLOW", True, POST, "avatars?documentId=person.pE", M,
+    ("userA create foreign SHARED default avatar (bare id) -> DENY", False, POST, "avatars?documentId=person.pC", A,
+     body({"tenants": ["system"], "isArchived": False, "storagePath": "tenant/t1/person/pC/avatar/a.jpg"}), None),
+    ("userM(memberAdmin) create foreign person avatar -> ALLOW", True, POST, "avatars?documentId=t1.person.pE", M,
      body({"tenants": ["t1"], "isArchived": False, "storagePath": "tenant/t1/person/pE/avatar/a.jpg"}), None),
-    ("userA create org avatar (not a person) -> ALLOW", True, POST, "avatars?documentId=org.oA", A,
+    ("userA create org avatar (not a person) -> ALLOW", True, POST, "avatars?documentId=t1.org.oA", A,
      body({"tenants": ["t1"], "isArchived": False, "storagePath": "tenant/t1/org/oA/avatar/a.jpg"}), None),
-    ("userA PATCH own avatar -> ALLOW", True, PATCH, "avatars/person.pA", A,
+    ("userA PATCH own avatar -> ALLOW", True, PATCH, "avatars/t1.person.pA", A,
      body({"storagePath": "tenant/t1/person/pA/avatar/b.jpg"}), ["storagePath"]),
-    ("userA PATCH foreign person avatar -> DENY", False, PATCH, "avatars/person.pE", A,
+    ("userA PATCH foreign person avatar -> DENY", False, PATCH, "avatars/t1.person.pE", A,
      body({"storagePath": "tenant/t1/person/pE/avatar/b.jpg"}), ["storagePath"]),
-    ("userA DELETE foreign person avatar -> DENY", False, DELETE, "avatars/person.pE", A, None, None),
-    ("userA DELETE own avatar -> ALLOW", True, DELETE, "avatars/person.pA", A, None, None),
+    ("userA DELETE foreign person avatar -> DENY", False, DELETE, "avatars/t1.person.pE", A, None, None),
+    ("userA DELETE own avatar -> ALLOW", True, DELETE, "avatars/t1.person.pA", A, None, None),
 ]
 
 # (label, expect_allow, collection, tenant, token)
@@ -455,6 +495,15 @@ list_cases = [
     ("userP(privileged) LIST addresses array-contains t1 -> ALLOW", True, "addresses", "t1", P),
     ("userM(memberAdmin) LIST addresses t1 -> ALLOW (D-P4-1 amended)", True, "addresses", "t1", M),
     ("userM(memberAdmin) LIST addresses t2 (cross-tenant) -> DENY", False, "addresses", "t2", M),
+    # AvatarService streams the whole avatars collection for the tenant (person + org + …)
+    ("userA LIST avatars array-contains t1 -> ALLOW", True, "avatars", "t1", A),
+    ("anon LIST avatars t1 -> DENY", False, "avatars", "t1", None),
+]
+
+# the AvatarService stream: tenants array-contains-any [tenant, 'system'] (own + shared defaults)
+shared_list_cases = [
+    ("userA LIST avatars array-contains-any [t1, system] -> ALLOW", True, "avatars", "t1", A),
+    ("anon LIST avatars [t1, system] -> DENY", False, "avatars", "t1", None),
 ]
 
 # (label, expect_allow, parentKey, token, tenant) — addresses query by parentKey
@@ -480,6 +529,12 @@ for label, expect, method, path, token, data, mask in single_cases:
 
 for label, expect, coll, tenant, token in list_cases:
     code = list_query(coll, tenant=tenant, token=token)
+    ok = (code == 200) == expect
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
+
+for label, expect, coll, tenant, token in shared_list_cases:
+    code = list_query(coll, tenant=tenant, token=token, with_shared=True)
     ok = (code == 200) == expect
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")

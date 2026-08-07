@@ -10,7 +10,7 @@ import { APP_STORE_MIN, AppStoreMin, FirestoreService } from '@okr/shared-data-a
 import { AvatarCollection, AvatarModel } from '@okr/shared-models';
 import { addImgixParams } from '@okr/shared-util-core';
 
-import { newAvatarModel, readAsFile } from '@okr/avatar-util';
+import { avatarDocId, newAvatarModel, readAsFile } from '@okr/avatar-util';
 import { UploadService } from './upload.service';
 
 export interface UserPhoto {
@@ -22,8 +22,10 @@ export interface UserPhoto {
   providedIn: 'root',
 })
 export class AvatarService {
-  // Cache for avatar storagePaths to avoid repeated Firestore reads
-  // Key format: modelType.documentId (e.g., "person.abc123" or "org.xyz789")
+  // Cache for avatar storagePaths to avoid repeated Firestore reads.
+  // Key format: the avatar doc id — either tenant-scoped ("p13.person.abc123", this
+  // tenant's own picture) or bare ("person.abc123", the shared default). Lookups go
+  // through resolveStoragePath(), which prefers the tenant-scoped entry.
   // Using signal to ensure reactivity and real-time updates from Firestore
   private storagePathCache = signal(new Map<string, string | null>());
 
@@ -47,7 +49,9 @@ export class AvatarService {
         switchMap((isAuthenticated) => isAuthenticated
           ? this.firestoreService.searchData<AvatarModel>(
               AvatarCollection,
-              [{ key: 'tenants', operator: 'array-contains', value: this.env.tenantId }],
+              // 'system' avatars are the shared defaults (a picture every tenant may show);
+              // they arrive in the same stream as this tenant's own avatars.
+              [{ key: 'tenants', operator: 'array-contains-any', value: [this.env.tenantId, 'system'] }],
               'none'
             )
           : of([] as AvatarModel[])
@@ -80,16 +84,19 @@ export class AvatarService {
 
   /**
    * Read an avatar model from Firestore by its key.
+   * Reads this tenant's own avatar and falls back to the shared default (see avatarDocId).
    * @param key the key of the avatar in the format ModelType.ModelKey e.g. org.1123123asdf
    * @returns an Observable of the avatar model or undefined if not found
    */
   public read(key: string): Observable<AvatarModel | undefined> {
     if (!key || key.length === 0) return of(undefined);
-    return this.firestoreService.readModel<AvatarModel>(AvatarCollection, key);
+    return this.firestoreService.readModel<AvatarModel>(AvatarCollection, avatarDocId(this.env.tenantId, key)).pipe(
+      switchMap(avatar => avatar ? of(avatar) : this.firestoreService.readModel<AvatarModel>(AvatarCollection, key))
+    );
   }
 
   public getRelStorageUrl(key: string): Observable<string> {
-    return this.firestoreService.readModel<AvatarModel>(AvatarCollection, key).pipe(
+    return this.read(key).pipe(
       take(1), // Complete after first emission to prevent memory leaks
       map(avatar => {
         return avatar?.storagePath ?? '';
@@ -126,9 +133,8 @@ export class AvatarService {
       return `${imgixBaseUrl}/logo/icons/${defaultIcon}.svg`;
     }
 
-    const cache = this.storagePathCache();
-    const storagePath = cache.get(key);
-    
+    const storagePath = this.resolveStoragePath(key);
+
     // If not in cache or null, return default icon
     if (!storagePath) {
       return `${imgixBaseUrl}/logo/icons/${defaultIcon}.svg`;
@@ -147,7 +153,17 @@ export class AvatarService {
    */
   public getCachedStoragePath(key: string): string | null {
     if (!key || key.length === 0) return null;
+    return this.resolveStoragePath(key);
+  }
+
+  /**
+   * Resolves a subject key to a cached storagePath: this tenant's own avatar wins,
+   * the shared default (bare doc id, tenants: ['system']) is the fallback.
+   * @param key the key of the avatar in the format ModelType.ModelKey e.g. person.1123123asdf
+   * @returns the storagePath or null when neither is cached
+   */
+  private resolveStoragePath(key: string): string | null {
     const cache = this.storagePathCache();
-    return cache.get(key) ?? null;
+    return cache.get(avatarDocId(this.env.tenantId, key)) ?? cache.get(key) ?? null;
   }
 }

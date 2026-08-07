@@ -75,12 +75,14 @@ service cloud.firestore {
     // (org, resource, section, …) stays ordinary tenant content, written by whoever
     // maintains that record. This is a write gate only: it does NOT make `usageImages`
     // enforceable — the bytes are served unsigned from the imgix CDN.
+    // The doc id is tenant-scoped (`p13.person.kaiser`, this tenant's own picture) or bare
+    // (`person.kaiser`, the shared default every tenant falls back to) — both shapes count.
     function isPersonAvatar(id) {
-      return id.matches('^person[.].*');
+      return id.matches('^([^.]+[.])?person[.].*');
     }
     function canWriteAvatar(id) {
       return !isPersonAvatar(id)
-             || id == 'person.' + callerPersonKey()
+             || id.matches('^([^.]+[.])?person[.]' + callerPersonKey() + '$')
              || isPrivileged() || hasRole('memberAdmin');
     }
     // A document belongs to the caller's tenant when their tenant is listed on the
@@ -310,7 +312,13 @@ service cloud.firestore {
     // so cross-tenant access leaks nothing; canWriteAvatar still limits writes to the
     // subject, privileged or memberAdmin. Non-person avatars (org, resource, section, …)
     // stay ordinary tenant content.
-    match /avatars/{id}            { allow read: if isPersonAvatar(id) ? userExists() : tenantRead(); allow create, update: if (isPersonAvatar(id) ? userExists() : tenantCreate()) && canWriteAvatar(id); allow delete: if (isPersonAvatar(id) ? userExists() : tenantDelete()) && canWriteAvatar(id); }
+    // Read is NOT id-conditional: AvatarService streams the whole collection
+    // (tenants array-contains <tenant>, person + org + resource docs mixed), and a rule
+    // whose outcome depends on {id} is not provable for a list query — Firestore denied
+    // the whole stream, so every avatar in every app fell back to the default icon.
+    // A plain `userExists()` read is the same exposure the person case already accepted:
+    // the doc carries only a storagePath and the bytes are served unsigned from imgix.
+    match /avatars/{id}            { allow read: if userExists(); allow create, update: if (isPersonAvatar(id) ? userExists() : tenantCreate()) && canWriteAvatar(id); allow delete: if (isPersonAvatar(id) ? userExists() : tenantDelete()) && canWriteAvatar(id); }
     match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /calevents/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /comments/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }

@@ -18,6 +18,7 @@ import {
   resolvePersonDisplayName,
   setMatrixDisplayName,
   resolvePersonAvatarUrl,
+  getUserTenants,
   personAvatarUrl,
   setMatrixAvatarUrl,
   uploadUrlToMatrixMedia,
@@ -82,7 +83,7 @@ export const getMatrixCredentials = onCall(
       // the image we upload to the Synapse media repo to obtain the spec-compliant mxc://
       // URI actually stored in avatar_url (see the fill block below).
       const desiredAvatarUrl =
-        (await resolvePersonAvatarUrl(personKey)) ||
+        (await resolvePersonAvatarUrl(personKey, await getUserTenants(firebaseUid))) ||
         userRecord.photoURL ||
         undefined;
 
@@ -384,7 +385,7 @@ export const syncFirebaseProfileToMatrix = onCall(
       // Fill an empty Matrix avatar from the person's avatar (never overwrite a custom one).
       // Stored as a spec-compliant mxc:// URI (uploaded to the Synapse media repo) so
       // Element and bridges render it. Best-effort — an upload failure never breaks the sync.
-      const desiredAvatarUrl = await resolvePersonAvatarUrl(personKey);
+      const desiredAvatarUrl = await resolvePersonAvatarUrl(personKey, await getUserTenants(firebaseUid));
       if (desiredAvatarUrl) {
         const checkResp = await fetch(
           `${MATRIX_HOMESERVER}/_synapse/admin/v2/users/${encodeURIComponent(matrixUserId)}`,
@@ -578,16 +579,24 @@ export const repairMatrixAvatars = onCall(
     const dryRun = (request.data as { dryRun?: boolean } | undefined)?.dryRun !== false; // default true
     const adminToken = matrixAdminToken.value();
 
-    // 1. Build localpart → avatar URL from a single avatars scan. Only person avatars
-    //    (doc id `person.<key>`) map to Matrix users; skip org/resource/etc. avatars.
+    // 1. Build localpart → avatar URL from a single avatars scan. Only person avatars map to
+    //    Matrix users; skip org/resource/etc. avatars. The doc id is either the bare shared
+    //    default `person.<key>` or a tenant's own `<tenant>.person.<key>` — the shared default
+    //    wins (one Matrix identity per person, see resolvePersonAvatarUrl), a tenant avatar
+    //    only fills in when there is no default.
     const avatarByLocalpart = new Map<string, string>();
+    const sharedDefaults = new Set<string>();
     const avatarsSnap = await getFirestore().collection('avatars').get();
     avatarsSnap.forEach((doc) => {
-      if (!doc.id.startsWith('person.')) return;
+      const match = /^(?:[^.]+\.)?person\.(.+)$/.exec(doc.id);
+      if (!match) return;
       const storagePath = doc.data()['storagePath'] as string | undefined;
       if (!storagePath) return;
-      const personKey = doc.id.slice('person.'.length);
-      avatarByLocalpart.set(personKey.toLowerCase(), personAvatarUrl(storagePath));
+      const localpart = match[1].toLowerCase();
+      const isSharedDefault = doc.id.startsWith('person.');
+      if (sharedDefaults.has(localpart) && !isSharedDefault) return;
+      if (isSharedDefault) sharedDefaults.add(localpart);
+      avatarByLocalpart.set(localpart, personAvatarUrl(storagePath));
     });
 
     const result: AvatarRepairResult = {

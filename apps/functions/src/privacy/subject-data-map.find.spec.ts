@@ -97,15 +97,16 @@ describe('find() query shapes', () => {
   it('finds persons and users and avatars by document id', () => {
     expect(valueOf(record('persons'), '__name__')).toBe(CTX.personKey);
     expect(valueOf(record('users'), '__name__')).toBe(CTX.uid);
-    // the avatar doc id is the PREFIXED key
-    expect(valueOf(record('avatars'), '__name__')).toBe(CTX.parentKey);
+    // the avatar doc id is the PREFIXED key, bare (shared default) or tenant-scoped
+    expect(valueOf(record('avatars'), '__name__')).toEqual([CTX.parentKey, `${CTX.tenantId}.${CTX.parentKey}`]);
   });
 
   it('uses the PREFIXED parentKey for the vault and its projection, and nowhere else', () => {
     expect(valueOf(record('addresses'), 'parentKey')).toBe(CTX.parentKey);
     expect(valueOf(record('address-directory'), 'parentKey')).toBe(CTX.parentKey);
     const prefixUsers = SUBJECT_DATA_MAP
-      .filter((e) => record(e.collection).predicates.some((p) => p.value === CTX.parentKey))
+      .filter((e) => record(e.collection).predicates.some((p) => p.value === CTX.parentKey
+        || (Array.isArray(p.value) && p.value.includes(CTX.parentKey))))
       .map((e) => e.collection);
     expect(prefixUsers.sort()).toEqual(['address-directory', 'addresses', 'avatars']);
   });

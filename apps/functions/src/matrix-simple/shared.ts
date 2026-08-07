@@ -122,19 +122,42 @@ export function personAvatarUrl(storagePath: string): string {
 }
 
 /**
- * Resolve a person's avatar URL from `avatars/person.<personKey>` (the same doc id
- * the app builds as `${PersonModelName}.${personKey}`). The `personKey` must be the
- * raw (case-sensitive) Firestore doc id. Returns undefined when the person has no
- * avatar doc or the doc carries no `storagePath`.
+ * Resolve a person's avatar URL from the `avatars` collection. The `personKey` must be the
+ * raw (case-sensitive) Firestore doc id. Returns undefined when the person has no avatar
+ * doc or the doc carries no `storagePath`.
+ *
+ * Avatar doc ids come in two shapes (see avatar.util.avatarDocId): the bare `person.<key>`
+ * is the shared default, `<tenant>.person.<key>` is one tenant's own picture. Matrix is a
+ * single homeserver with ONE identity per person, so the shared default wins here and the
+ * caller's tenant avatars are only a fallback — a per-tenant picture is a presentation
+ * choice inside that app, not the person's global identity.
+ *
+ * @param personKey the person's Firestore doc id
+ * @param tenantIds the caller's tenants, used only as a fallback source
  */
-export async function resolvePersonAvatarUrl(personKey: string): Promise<string | undefined> {
+export async function resolvePersonAvatarUrl(personKey: string, tenantIds: string[] = []): Promise<string | undefined> {
   try {
     if (await objectsToPhotoPublication(personKey)) return undefined;
-    const snap = await getFirestore().collection('avatars').doc(`person.${personKey}`).get();
-    const storagePath = snap.data()?.['storagePath'] as string | undefined;
-    return storagePath ? personAvatarUrl(storagePath) : undefined;
+    const db = getFirestore();
+    const ids = [`person.${personKey}`, ...tenantIds.map(tenantId => `${tenantId}.person.${personKey}`)];
+    const snaps = await db.getAll(...ids.map(id => db.collection('avatars').doc(id)));
+    for (const snap of snaps) {
+      const storagePath = snap.data()?.['storagePath'] as string | undefined;
+      if (storagePath) return personAvatarUrl(storagePath);
+    }
+    return undefined;
   } catch {
     return undefined;
+  }
+}
+
+/** The caller's tenants from users/{uid}; empty when the doc is missing. */
+export async function getUserTenants(uid: string): Promise<string[]> {
+  try {
+    const doc = await getFirestore().collection('users').doc(uid).get();
+    return (doc.data()?.['tenants'] ?? []) as string[];
+  } catch {
+    return [];
   }
 }
 
@@ -226,8 +249,8 @@ export async function uploadUrlToMatrixMedia(imageUrl: string, token: string): P
  * Synapse media repo. Returns undefined when the person has no avatar. May throw on upload
  * failure; callers wrap it so avatar sync never breaks the surrounding flow.
  */
-export async function resolvePersonAvatarMxc(personKey: string, token: string): Promise<string | undefined> {
-  const httpUrl = await resolvePersonAvatarUrl(personKey);
+export async function resolvePersonAvatarMxc(personKey: string, token: string, tenantIds: string[] = []): Promise<string | undefined> {
+  const httpUrl = await resolvePersonAvatarUrl(personKey, tenantIds);
   if (!httpUrl) return undefined;
   return uploadUrlToMatrixMedia(httpUrl, token);
 }

@@ -5,10 +5,23 @@ import { Platform } from '@ionic/angular';
 import { AvatarDirectory, AvatarModel, OrgModelName, PersonModelName } from '@okr/shared-models';
 import { blobToFile, die, getPartsOfTupel } from '@okr/shared-util-core';
 
+/**
+ * Builds the avatar doc id. It is tenant-scoped (`p13.person.kaiser`) because persons are
+ * shared across tenants but their picture is not: each tenant may show its own.
+ * A bare, un-prefixed id (`person.kaiser`) is the shared default, used by every tenant that
+ * has no own avatar for that subject — see AvatarService.getAvatarUrl, which looks up the
+ * tenant-scoped id first and falls back to the bare one.
+ * @param tenantId the tenant the avatar belongs to
+ * @param key the subject key in the form `<modelType>.<okey>`, e.g. person.kaiser
+ */
+export function avatarDocId(tenantId: string, key: string): string {
+  return `${tenantId}.${key}`;
+}
+
 export function newAvatarModel(tenantIds: string[], modelType: string, key: string, fileName: string): AvatarModel {
   const [fn, ext] = getPartsOfTupel(fileName);
   return {
-    okey: modelType + '.' + key,
+    okey: avatarDocId(tenantIds[0], `${modelType}.${key}`),
     tenants: tenantIds,
     storagePath: `tenant/${tenantIds[0]}/${modelType}/${key}/${AvatarDirectory}/${fn}.${ext}`,
     isArchived: false,
