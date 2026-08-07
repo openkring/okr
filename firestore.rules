@@ -285,7 +285,15 @@ service cloud.firestore {
       allow delete: if tenantDelete()
                      && (!isSensitiveChannel(resource.data) || canWriteSensitive(resource.data));
     }
-    match /avatars/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate() && canWriteAvatar(id); allow delete: if tenantDelete() && canWriteAvatar(id); }
+    // Person avatars follow the person, not the uploading tenant. Persons are shared
+    // across tenants (persons/kaiser lives in 6) but newAvatarModel stamps the avatar
+    // doc with the single tenant that uploaded it, so every OTHER tenant hit "Missing
+    // or insufficient permissions" on avatars/person.<key> — read and re-upload alike.
+    // The doc carries only a storagePath and the bytes are served unsigned from imgix,
+    // so cross-tenant access leaks nothing; canWriteAvatar still limits writes to the
+    // subject, privileged or memberAdmin. Non-person avatars (org, resource, section, …)
+    // stay ordinary tenant content.
+    match /avatars/{id}            { allow read: if isPersonAvatar(id) ? userExists() : tenantRead(); allow create, update: if (isPersonAvatar(id) ? userExists() : tenantCreate()) && canWriteAvatar(id); allow delete: if (isPersonAvatar(id) ? userExists() : tenantDelete()) && canWriteAvatar(id); }
     match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /calevents/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /comments/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
