@@ -47,6 +47,16 @@ export class MeteringRecordModel implements OkrModel {
   /** Stable add-on ids (`ADD_ON_PRICES`), which count toward the 10 % (pricing §8.2). */
   public addOns: string[] = [];
 
+  /**
+   * The `prospects/{okey}` this tenant came from, when it came from the pool (C5 §7).
+   *
+   * Carried from the FIRST version of the payload on purpose: conversion is **observed** through
+   * this field, never self-declared, and a lead that converted before the field existed could
+   * never be attributed to the partner who earned it. Empty for a customer the partner found
+   * themselves — which is the normal case and not an error.
+   */
+  public prospectKey = '';
+
   public version = '';
   public activationDate = '';
   public contact: MeteringContact = { name: '', role: '', email: '' };
