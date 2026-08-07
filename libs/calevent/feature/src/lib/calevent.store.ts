@@ -153,7 +153,8 @@ export const CalEventStore = signalStore(
     caleventsResource: rxResource({
       params: () => ({
         calendarName: store.calendarName(),
-        calendarsOfCurrentUser: store.calendarsForCurrentUserResource.value() ?? []
+        calendarsOfCurrentUser: store.calendarsForCurrentUserResource.value() ?? [],
+        selectedYear: store.selectedYear()
       }),
       stream: ({ params }) => {
         const calName = params.calendarName;
@@ -165,6 +166,7 @@ export const CalEventStore = signalStore(
         }
         const allEvents$ = store.appStore.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.env.tenantId), 'startDate', 'asc');
         const maxEvents = store.maxEvents();
+        const yearFilterActive = params.selectedYear !== new Date().getFullYear();
         return allEvents$.pipe(
           map(events => {
             const seen = new Set<string>();
@@ -184,12 +186,17 @@ export const CalEventStore = signalStore(
                   continue;
                 }
               }
-              // Filter by showPastEvents/showUpcomingEvents for all calendar types
-              if (store.showPastEvents() === false && isAfterDate(store.startDate(), e.startDate)) {
-                continue;
-              }
-              if (store.showUpcomingEvents() === false && isAfterOrEqualDate(e.startDate, store.startDate())) {
-                continue;
+              // Filter by showPastEvents/showUpcomingEvents for all calendar types.
+              // Skipped when a year other than the current one is selected (99 = all years):
+              // otherwise this cutoff would drop every past event before yearMatches() ever
+              // runs, making 'Alle Jahre' and any past year silently empty.
+              if (!yearFilterActive) {
+                if (store.showPastEvents() === false && isAfterDate(store.startDate(), e.startDate)) {
+                  continue;
+                }
+                if (store.showUpcomingEvents() === false && isAfterOrEqualDate(e.startDate, store.startDate())) {
+                  continue;
+                }
               }
               seen.add(e.okey);
               result.push(e);

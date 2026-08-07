@@ -140,7 +140,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
             (searchTermChanged)="onSearchtermChange($event)"
             (tagChanged)="onTagSelected($event)" [tags]="tags()"
             (typeChanged)="onTypeSelected($event)" [types]="types()"
-            (yearChanged)="onYearSelected($event)" [years]="years()"
+            (yearChanged)="onYearSelected($event)" [years]="years()" [selectedYear]="store.selectedYear()"
           />
         }
 
@@ -229,6 +229,9 @@ export class CalEventList implements OnInit {
   public contextMenuName = input.required<string>(); // the name of the context menu to use or 'disable' to disable the header toolbar with the context menu
   public color = input('secondary');
   public view = input<'list' | 'grid'>('grid'); // initial view mode
+  // initial year filter; 99 = all years. Query params arrive as strings, hence the Number() transform
+  // (unbound route inputs arrive as undefined -> NaN -> falls back to the current year).
+  public year = input(getYear(), { transform: (value: unknown) => Number(value) || getYear() });
   public showMenu = input<boolean>(true);   // for /public/calendar
   // withComponentInputBinding() sets unbound route inputs to undefined, overriding the input(true)
   // default — keepDefaultTrue restores the intended default while an explicit [x]="false" still wins.
@@ -376,6 +379,7 @@ export class CalEventList implements OnInit {
 
   constructor() {
     effect(() => this.store.setCalendarName(this.listId()));
+    effect(() => this.store.setSelectedYear(this.year()));
 
     // List view: scroll to the first event that is today or in the future.
     effect(() => {
@@ -393,7 +397,7 @@ export class CalEventList implements OnInit {
       const events = this.filteredCalEvents();
       if (this.isListView() || this.isLoading()) return;
       const currentYear = new Date().getFullYear();
-      if (year === currentYear) {
+      if (year === currentYear || year === 99) {   // 99 = all years -> today, not the oldest event
         this.fullCalendar()?.getApi()?.today();
       } else {
         const first = events[0];

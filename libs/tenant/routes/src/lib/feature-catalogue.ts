@@ -33,7 +33,10 @@ const calevent: BlockRoutes = {
         // CalEventList gates create/edit/delete itself via canChange().
         path: ':listId/:contextMenuName',
         loadComponent: () => import('@okr/calevent-feature').then(m => m.CalEventList),
-        data: { color: 'secondary', view: 'grid', showMenu: true },
+        // No `view` here: route `data` outranks query params in Angular's input binder
+        // ({...queryParams, ...params, ...data}), so a `data.view` would make menu urls
+        // like `/calevent/all/c-calevents?view=list` impossible. 'grid' is the input default.
+        data: { color: 'secondary', showMenu: true },
       }],
     },
     // Owns only ITS OWN child of the shared 'public' path (task 12 review round 2: this
