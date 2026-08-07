@@ -72,6 +72,11 @@ export function buildSentryOptions(
       // doesn't reply in time the injected JS rejects with this. It surfaces as an
       // onunhandledrejection with no stacktrace and nothing actionable on our side.
       /WKWebView API client did not respond to this postMessage/i,
+      // Browser-extension bridge, not our code (SCS-2B): a content script injected into the
+      // page calls chrome/browser.runtime.sendMessage() and the extension's background page
+      // is gone (tab closed, extension reloaded). Arrives as an onunhandledrejection with no
+      // stacktrace; nothing on our side is actionable.
+      /Invalid call to runtime\.sendMessage\(\)/i,
     ],
 
     // Crashes inside third-party scripts we load but don't own. reCAPTCHA (pulled in by
