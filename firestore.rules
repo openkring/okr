@@ -146,7 +146,24 @@ service cloud.firestore {
       // App configuration is admin territory — but only for your OWN tenant: the
       // doc id IS the tenantId, so without this check a privileged user of tenant A
       // could overwrite app-config/B.
-      allow write: if isPrivileged() && (tenant in callerTenants());
+      allow create, delete: if isPrivileged() && (tenant in callerTenants());
+      // ...except for the fields that are NOT the tenant's own business.
+      //
+      // `enabledFeatures` is a BILLING boundary (1.32 §8.5): a tenant admin who can
+      // switch on a paid add-on is one who can stop paying for it. Feature selection is
+      // server-side by design anyway (D-BB-9 — the `applyFeatureSelection` callable uses
+      // the Admin SDK and bypasses rules), so denying it here costs the client nothing;
+      // `feature-selection.service.ts` never writes the field.
+      //
+      // The same list takes the E2EE key-management flag when 1.33 lands. There it is a
+      // SECURITY boundary, and sharpest in the DOWNGRADE direction — a tenant admin must
+      // not be able to turn self-managed keys back off for everyone.
+      //
+      // `affectedKeys()` reports only keys whose value actually CHANGED, so the AOC
+      // config editor writing the whole document back with the field untouched still passes.
+      allow update: if isPrivileged() && (tenant in callerTenants())
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(['enabledFeatures']);
     }
     match /app-version/{doc} {
       allow read: if true;
