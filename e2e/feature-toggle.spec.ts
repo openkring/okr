@@ -117,6 +117,18 @@ test('feature picker: enabling a block adds its menu entry without a reload', as
     test.skip(!await row.isVisible().catch(() => false),
       'block not offered to this tenant — serve p13-app (see TOGGLE_BLOCK_LABEL)');
 
+    // The block MUST start off, or this proves nothing: with it already on, the checkbox set
+    // below is a no-op and the menu row the assertion finds was there before the test ran —
+    // a green earned by the tenant's existing config, not by the toggle. That is what happens
+    // on scs, where `finance` is enabled. Skip rather than pass.
+    //
+    // ⚠️ Skipping here also protects the tenant: the `finally` restores by switching the block
+    // OFF, which is only "as found" when it was off to begin with. Running this against scs
+    // disabled `finance` on a live tenant and removed its whole "Finanzen" menu subtree.
+    test.skip(await row.locator('ion-checkbox').getAttribute('aria-checked') === 'true',
+      'block already enabled for this tenant — the assertion would pass vacuously and the ' +
+      'restore would disable a block that was on. Serve p13-app.');
+
     await setCheckbox(row.locator('ion-checkbox'), true);
     await saveSelection(page);
     toggled = true;
