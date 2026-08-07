@@ -933,6 +933,25 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 // the comments below, so a newly added collection fails the test until it is a row,
 // a `not personal data:` line, or a `gap:` line.
 // ──────────────────────────────────────────────────────────────────────────────────
+// not personal data: partners — the partner COMPANY's operational record (C3 §5): contract
+//   dates, status, heartbeat, the reporting identity's uid. Its people live on the partner's
+//   Org in `bkg` (orgKey), which the orgs row already covers.
+// not personal data: commissionEntries — a ledger line (C3 §7): partnerKey, tenantId, band,
+//   amounts. No natural person appears on it; the contact-of-record stays on the metering
+//   record it was derived from.
+// gap: meteringRecords — carries ONE business-role contact per reported tenant (C2 §7:
+//   `contact.name/role/email`, never member data). It is personal data of a natural person and
+//   bkaiser is its INDEPENDENT CONTROLLER, not a processor — so it is deliberately not reachable
+//   from a tenant member's own erasure: the contact is a person at the partner's END CUSTOMER,
+//   who is not a subject of any bkaiser-hosted tenant and whose erasure request reaches bkaiser
+//   directly, never through `eraseMyData`. Turning it into a row would require SubjectCtx to
+//   carry an identity that does not exist in this system. Retention and the direct-request path
+//   are C3 §9's open item.
+// gap: prospects — a lead is a natural person, but their e-mail lives in an `addresses`
+//   document (`parentKey = 'prospect.<okey>'`), not on the prospect, so `SubjectCtx.email`
+//   cannot reach it in one query: the row needs a resolver going addresses → parentKey →
+//   prospect. It must land WITH the signup Cloud Function, i.e. still before the first prospect
+//   exists (C5 §4). Until then a prospect's own data is reachable only by hand.
 // not personal data: accounts — chart of accounts (account numbers, names, hierarchy)
 // not personal data: accounting-configs — per-tenant accounting settings
 // not personal data: app-config — tenant configuration; opEmail/dpoEmail are operator

@@ -239,6 +239,9 @@ export const mergePersonIntoTenant = Person.mergePersonIntoTenant;
 // org cross-tenant share — dual-tenant orgs for the partner channel (spec 1.26 C1 §6)
 export { mergeOrgIntoTenant } from './org';
 
+// partner channel — C3 metering ingest + commission run, C5 prospect signup
+export { pushMetering, runCommission, checkPartnerHeartbeats, submitProspect } from './business';
+
 // privacy 1.19 Phase 3: one-time backfill of the ssn/dob vault + memberBirthYear
 export { migrateSensitiveData } from './person/migrate-sensitive-data';
 

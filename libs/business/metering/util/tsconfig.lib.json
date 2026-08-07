@@ -12,5 +12,9 @@
     "tsBuildInfoFile": "../../../../dist/out-tsc/business-metering-util.tsbuildinfo"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"]
+  "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
+  "references": [
+    { "path": "../../../shared/models/tsconfig.lib.json" },
+    { "path": "../../../shared/util-core/tsconfig.lib.json" }
+  ]
 }

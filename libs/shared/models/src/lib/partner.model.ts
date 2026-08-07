@@ -43,6 +43,19 @@ export class PartnerModel implements OkrModel, NamedModel, SearchableModel, Tagg
   /** openkring version last reported, for the C2 §5 supported-version matrix (current + previous minor). */
   public reportedVersion = '';
 
+  /**
+   * Firebase Auth uid of the partner's **reporting identity** in `kring` — the account their
+   * installation signs in as to push metering and to read the prospect pool.
+   *
+   * Deliberately an identity recorded HERE rather than a new `partner` value in `Roles`: this uid
+   * can do exactly what the partner-facing callables let it do and nothing else, whereas a role
+   * would also have to be kept out of the eight billable roles (pricing §9.1) and out of every
+   * `isPrivileged()` path in `firestore.rules`. Row-level pool access is served by a callable for
+   * the same reason the avatars regression taught us — a rule whose outcome depends on document
+   * content is not provable for a list query.
+   */
+  public serviceUid = '';
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }
