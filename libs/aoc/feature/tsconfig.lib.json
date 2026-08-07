@@ -2,7 +2,7 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "../../../dist/out-tsc/libs/aoc-feature",
+    "outDir": "../../../dist/libs/aoc/feature",
     "declaration": true,
     "composite": true,
     "module": "preserve",

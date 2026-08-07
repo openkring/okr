@@ -2,7 +2,7 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "../../../dist/out-tsc/libs/resource-data-access",
+    "outDir": "../../../dist/libs/resource/data-access",
     "declaration": true,
     "composite": true,
     "module": "preserve",

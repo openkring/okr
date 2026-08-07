@@ -2,7 +2,7 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "../../../dist/out-tsc/auth/data-access",
+    "outDir": "../../../dist/libs/auth/data-access",
     "declaration": true,
     "composite": true,
     "module": "preserve",
