@@ -7,7 +7,7 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@okr/shared-util-core": "*",
-    "@okr/consent-data-access": "*"
+    "@okr/consent-data-access": "*",
+    "@okr/shared-i18n": "*"
   }
 }

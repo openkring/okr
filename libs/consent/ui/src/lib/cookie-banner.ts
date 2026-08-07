@@ -7,6 +7,9 @@ import {
 } from '@ionic/angular/standalone';
 
 import { ConsentService } from '@okr/consent-data-access';
+import { I18nService } from '@okr/shared-i18n';
+
+import { CONSENT_I18N_KEYS, ConsentI18n } from './consent-i18n';
 
 @Component({
   selector: 'okr-cookie-banner',
@@ -46,21 +49,18 @@ import { ConsentService } from '@okr/consent-data-access';
   `],
   template: `
     @if (needsBanner()) {
-      <div class="cookie-banner" role="dialog" aria-label="Cookie-Einstellungen" aria-live="polite">
-        <p class="banner-text">
-          Wir verwenden Cookies und ähnliche Technologien. Notwendige Cookies sind immer aktiv.
-          Analytische Cookies helfen uns, die App zu verbessern — nur mit Ihrer Zustimmung.
-        </p>
+      <div class="cookie-banner" role="dialog" [attr.aria-label]="i18n.banner_aria()" aria-live="polite">
+        <p class="banner-text">{{ i18n.banner_text() }}</p>
 
         <div class="banner-actions">
           <ion-button expand="block" color="primary" (click)="acceptAll()">
-            Alle akzeptieren
+            {{ i18n.banner_acceptAll() }}
           </ion-button>
           <ion-button expand="block" color="primary" fill="outline" (click)="rejectAll()">
-            Nur notwendige
+            {{ i18n.banner_rejectAll() }}
           </ion-button>
           <ion-button expand="block" color="medium" fill="outline" (click)="toggleCustomize()">
-            Anpassen
+            {{ i18n.banner_customize() }}
           </ion-button>
         </div>
 
@@ -69,15 +69,15 @@ import { ConsentService } from '@okr/consent-data-access';
             <ion-list lines="none">
               <ion-item>
                 <ion-label>
-                  <h3>Notwendig</h3>
-                  <p>Authentifizierung, Sitzung, Sicherheit</p>
+                  <h3>{{ i18n.necessary_title() }}</h3>
+                  <p>{{ i18n.necessary_description() }}</p>
                 </ion-label>
                 <ion-toggle [checked]="true" [disabled]="true" slot="end" />
               </ion-item>
               <ion-item>
                 <ion-label>
-                  <h3>Analyse</h3>
-                  <p>Firebase Analytics — hilft uns, die App zu verbessern</p>
+                  <h3>{{ i18n.analytics_title() }}</h3>
+                  <p>{{ i18n.analytics_description() }}</p>
                 </ion-label>
                 <ion-toggle
                   [checked]="analyticsToggle()"
@@ -87,8 +87,8 @@ import { ConsentService } from '@okr/consent-data-access';
               </ion-item>
               <ion-item>
                 <ion-label>
-                  <h3>Marketing</h3>
-                  <p>Aktuell keine Marketing-Dienste aktiv</p>
+                  <h3>{{ i18n.marketing_title() }}</h3>
+                  <p>{{ i18n.marketing_description() }}</p>
                 </ion-label>
                 <ion-toggle
                   [checked]="marketingToggle()"
@@ -98,7 +98,7 @@ import { ConsentService } from '@okr/consent-data-access';
               </ion-item>
             </ion-list>
             <ion-button expand="block" color="primary" (click)="saveCustom()">
-              Einstellungen speichern
+              {{ i18n.banner_save() }}
             </ion-button>
           </div>
         }
@@ -108,6 +108,8 @@ import { ConsentService } from '@okr/consent-data-access';
 })
 export class CookieBanner {
   private readonly consentService = inject(ConsentService);
+
+  protected readonly i18n = inject(I18nService).translateAll(CONSENT_I18N_KEYS) as ConsentI18n;
 
   protected readonly needsBanner = toSignal(
     this.consentService.consent$.pipe(map(s => !s.decided)),

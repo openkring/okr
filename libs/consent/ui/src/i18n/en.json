@@ -1,0 +1,24 @@
+{
+  "consent": {
+    "banner": {
+      "aria": "Cookie settings",
+      "text": "We use cookies and similar technologies. Necessary cookies are always active. Analytics cookies help us improve the app — only with your consent.",
+      "acceptAll": "Accept all",
+      "rejectAll": "Necessary only",
+      "customize": "Customize",
+      "save": "Save settings"
+    },
+    "necessary": {
+      "title": "Necessary",
+      "description": "Authentication, session, security"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "Firebase Analytics — helps us improve the app"
+    },
+    "marketing": {
+      "title": "Marketing",
+      "description": "No marketing services active at the moment"
+    }
+  }
+}
