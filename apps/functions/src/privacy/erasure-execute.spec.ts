@@ -200,7 +200,7 @@ function fakeOps(over: Partial<ErasureOps> & { addresses?: DocumentSnapshot[]; p
       return { detached: removed, deleted: gone };
     },
     loadAddresses: async () => addresses,
-    loadAvatar: async () => snap('avatar', { tenants: ['scs'], storagePath: 'tenant/scs/avatar/person.p1.jpg' }),
+    loadAvatars: async () => [snap('avatar', { tenants: ['scs'], storagePath: 'tenant/scs/avatar/person.p1.jpg' })],
     deleteAvatarFile: async (storagePath) => { calls.push({ op: 'deleteAvatarFile', detail: storagePath }); },
     loadPerson: async () => snap('person', { tenants: personTenants }),
     loadUser: async () => snap('u1', { tenants: ['scs'] }),
@@ -319,16 +319,34 @@ describe('executeErasure', () => {
     it('keeps the avatar file while another tenancy still holds the document', async () => {
       const { ops, calls } = fakeOps({
         personTenants: ['scs', 'p13'],
-        loadAvatar: async () => snap('avatar', { tenants: ['scs', 'p13'], storagePath: 'tenant/scs/avatar/person.p1.jpg' }),
+        loadAvatars: async () => [snap('avatar', { tenants: ['scs', 'p13'], storagePath: 'tenant/scs/avatar/person.p1.jpg' })],
       });
       await executeErasure(ctx, cleanPreview, [], ops, { salt: SALT });
       expect(calls.some((c) => c.op === 'deleteAvatarFile')).toBe(false);
     });
 
+    // 2026-08-07: avatar doc ids became tenant-scoped (`scs.person.p1`) while the bare id
+    // stayed as the shared default. Both belong to the subject, and the tenant-scoped one is
+    // exactly the picture this tenant's erasure has to take with it — reaping only the bare
+    // id would leave a live, unsigned imgix URL behind an erasure (spec 5.6 §5).
+    it('reaps the tenant-scoped avatar file as well as the shared default', async () => {
+      const { ops, calls } = fakeOps({
+        personTenants: ['scs'],
+        loadAvatars: async () => [
+          snap('avatar', { tenants: ['scs'], storagePath: 'tenant/scs/avatar/person.p1.jpg' }),
+          snap('scs.avatar', { tenants: ['scs'], storagePath: 'tenant/scs/avatar/scs.person.p1.jpg' }),
+        ],
+      });
+      await executeErasure(ctx, cleanPreview, [], ops, { salt: SALT });
+      const reaped = calls.filter((c) => c.op === 'deleteAvatarFile').map((c) => c.detail);
+      expect(reaped).toContain('tenant/scs/avatar/person.p1.jpg');
+      expect(reaped).toContain('tenant/scs/avatar/scs.person.p1.jpg');
+    });
+
     it('does not call Storage for an avatar document without a storagePath', async () => {
       const { ops, calls } = fakeOps({
         personTenants: ['scs'],
-        loadAvatar: async () => snap('avatar', { tenants: ['scs'] }),
+        loadAvatars: async () => [snap('avatar', { tenants: ['scs'] })],
       });
       await executeErasure(ctx, cleanPreview, [], ops, { salt: SALT });
       expect(calls.some((c) => c.op === 'deleteAvatarFile')).toBe(false);

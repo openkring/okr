@@ -168,7 +168,15 @@ export interface ErasureOps {
   /** arrayRemove(tenantId) on each doc; hard-delete the ones whose `tenants[]` empties. */
   detachTenant(docs: readonly DocumentSnapshot[], tenantId: string): Promise<DetachResult>;
   loadAddresses(parentKey: string): Promise<DocumentSnapshot[]>;
-  loadAvatar(parentKey: string): Promise<DocumentSnapshot | undefined>;
+  /**
+   * BOTH avatar documents of the subject: the bare `person.<okey>` shared default and the
+   * tenant-scoped `<tenantId>.person.<okey>` (`avatar.util.avatarDocId`, 2026-08-07). Looking
+   * up the bare id alone stopped finding a tenant's own picture the moment ids became
+   * tenant-scoped — the document would still be deleted by its `SUBJECT_DATA_MAP` row, but the
+   * Storage object behind it would never be reaped, leaving an unsigned imgix URL alive after
+   * an erasure (spec 5.6 §5, the exact case that was closed).
+   */
+  loadAvatars(parentKey: string, tenantId: string): Promise<DocumentSnapshot[]>;
   /** Delete the avatar's Storage object — §10: the image is a copy of person data and
    *  `storage.rules` does not hide it, so it must be deleted, not merely dereferenced. */
   deleteAvatarFile(storagePath: string): Promise<void>;
@@ -267,12 +275,14 @@ export async function executeErasure(
   const addressResult = stamped.length > 0
     ? await ops.detachTenant(stamped, ctx.tenantId)
     : { detached: 0, deleted: 0 };
-  const avatar = await ops.loadAvatar(ctx.parentKey);
-  if (avatar && tenantsOf(avatar).includes(ctx.tenantId)) {
+  for (const avatar of await ops.loadAvatars(ctx.parentKey, ctx.tenantId)) {
+    if (!tenantsOf(avatar).includes(ctx.tenantId)) continue;
     const avatarResult = await ops.detachTenant([avatar], ctx.tenantId);
     // The Storage object dies with the document, never before it: while the avatar is
     // still stamped with another tenant, that tenant is entitled to display it, and a
-    // deleted file would leave every remaining tenancy with a broken image.
+    // deleted file would leave every remaining tenancy with a broken image. Per document,
+    // not per subject — a tenant-scoped avatar empties on this detach while the shared
+    // default usually survives it.
     if (avatarResult.deleted > 0) await deleteAvatarObject(avatar, ops);
   }
 
@@ -288,10 +298,10 @@ export async function executeErasure(
     if (leftover.length > 0) await ops.deleteAll(leftover);
     const person = await ops.loadPerson(ctx.personKey);
     const user = await ops.loadUser(ctx.uid);
-    const remainingAvatar = await ops.loadAvatar(ctx.parentKey);
-    const toDelete = [person, user, remainingAvatar].filter((d): d is DocumentSnapshot => !!d);
+    const remainingAvatars = await ops.loadAvatars(ctx.parentKey, ctx.tenantId);
+    const toDelete = [person, user, ...remainingAvatars].filter((d): d is DocumentSnapshot => !!d);
     if (toDelete.length > 0) await ops.deleteAll(toDelete);
-    if (remainingAvatar) await deleteAvatarObject(remainingAvatar, ops);
+    for (const avatar of remainingAvatars) await deleteAvatarObject(avatar, ops);
     await ops.deleteAuthUser(ctx.uid);
   }
 
@@ -387,7 +397,10 @@ export function firestoreErasureOps(db: Firestore = getFirestore()): ErasureOps 
       return snapshot.docs;
     },
 
-    loadAvatar: (parentKey) => docOrUndefined(db, AvatarCollection, parentKey),
+    loadAvatars: async (parentKey, tenantId) => (await Promise.all([
+      docOrUndefined(db, AvatarCollection, parentKey),                 // shared default
+      docOrUndefined(db, AvatarCollection, `${tenantId}.${parentKey}`), // this tenant's own
+    ])).filter((d): d is DocumentSnapshot => !!d),
 
     deleteAvatarFile: async (storagePath) => {
       try {
