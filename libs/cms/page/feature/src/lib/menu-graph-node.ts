@@ -67,6 +67,20 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
       flex: 1;
       min-width: 0;
     }
+    .node-meta {
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+      font-size: 0.8rem;
+      color: var(--ion-color-medium);
+    }
+    .node-col {
+      width: 100px;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .edit-btn {
       --padding-start: 4px;
       --padding-end: 4px;
@@ -114,9 +128,9 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
           }
         </div>
 
-        <div  class="ion-hide-sm-down">
-          <span class="node-name">{{node().state}}</span>
-          <span class="node-name">{{node().roleNeeded}}</span>
+        <div class="ion-hide-sm-down node-meta">
+          <span class="node-col">{{ node().state }}</span>
+          <span class="node-col">{{ node().roleNeeded }}</span>
         </div>
 
         <!-- Edit button -->
