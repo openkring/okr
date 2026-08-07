@@ -54,7 +54,46 @@ export class MenuService {
    */
   public async update(menuItem: MenuItemModel, currentUser?: UserModel): Promise<string | undefined> {
     menuItem.index = getMenuIndex(menuItem);
+    const others = menuItem.tenants.filter(t => t !== this.env.tenantId);
+    if (others.length > 0 && menuItem.tenants.includes(this.env.tenantId)) {
+      return await this.fork(menuItem, others, currentUser);
+    }
     return await this.firestoreService.updateModel<MenuItemModel>(MenuItemCollection, menuItem, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+  }
+
+  /**
+   * Copy-on-write for a menu document shared with other tenants (D-BB-8, design §5).
+   *
+   * The feature catalogue seeds ONE `menuItems` document per key and adds each tenant to its
+   * `tenants[]` — so editing it in place renames it for all of them. Instead we copy it to a
+   * tenant-private document, remove this tenant from the shared original, and point the copy
+   * back at it via `forkedFrom`. The fork keeps the same `name`: parents reference children by
+   * name, and `MenuService.read` resolves by name, so nothing else has to be rewritten. After
+   * the detach, this tenant's query returns exactly one document for that name again.
+   *
+   * A later catalogue structural fix (url/action/roleNeeded) reaches the shared original and no
+   * longer this fork — that is the deliberate trade of D-BB-8, and what `forkedFrom` exists to
+   * make detectable.
+   *
+   * Order is create-then-detach on purpose: if the detach fails the tenant sees two documents
+   * for one name (recoverable — the next edit retries the detach), whereas detach-first would
+   * lose the menu item outright if the copy then failed.
+   *
+   * A document scoped to the `system` tenant only (this tenant not in `tenants[]`) is NOT
+   * forked: there is nothing to detach, so a copy would leave two resolvable documents for one
+   * name. There are none in the `menuItems` collection today (verified 2026-08-07).
+   *
+   * ponytail: no fork-back / "structur übernehmen" action yet — the picker half of §5. Add it
+   * when a catalogue structural fix first has to be replayed onto a fork.
+   */
+  private async fork(menuItem: MenuItemModel, others: string[], currentUser?: UserModel): Promise<string | undefined> {
+    const sharedKey = menuItem.okey;
+    // createModel forces tenants = [env.tenantId] and honours a preset okey.
+    const forked: MenuItemModel = { ...menuItem, okey: `${menuItem.name}_${this.env.tenantId}`, forkedFrom: sharedKey };
+    const key = await this.firestoreService.createModel<MenuItemModel>(MenuItemCollection, forked, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+    if (!key) return undefined;   // copy failed → leave the shared document untouched
+    await this.firestoreService.updateObject<Partial<MenuItemModel>>(MenuItemCollection, sharedKey, { tenants: others });
+    return key;
   }
 
   /**

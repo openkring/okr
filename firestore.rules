@@ -172,7 +172,27 @@ service cloud.firestore {
     // app shell's menu store (ungated); categories are CMS select-lists. Low
     // sensitivity, kept public-readable; writes are content-role gated.
     match /categories/{id}      { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
-    match /menuItems/{id}       { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
+    // Fork-on-edit (feature-building-blocks D-BB-8): a tenant customising a SHARED,
+    // catalogue-owned menu doc copies it and then detaches itself from the original. That
+    // detach leaves a document the caller no longer belongs to, so the ordinary
+    // belongsToTenant(request.resource.data) check would deny it. Allow exactly that one
+    // shape: the caller already belonged, `tenants` is the ONLY field changed, and the new
+    // value is the old one minus the caller's own tenant — so it can drop itself and nobody
+    // else, and cannot smuggle any other edit through the same write.
+    function isSelfDetach() {
+      return isContentManager()
+             && belongsToTenant(resource.data)
+             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tenants'])
+             && request.resource.data.tenants == resource.data.tenants.removeAll(callerTenants());
+    }
+    // Nobody may evict ANOTHER tenant from a shared menu doc — that would break their menu
+    // from across the tenant boundary. Un-seeding is applyFeatureSelection's job (Admin SDK,
+    // rules bypassed), never a client's. Every tenant but the caller's own must survive the
+    // write; the caller's own may go (that is isSelfDetach) or stay (an ordinary edit).
+    function keepsForeignTenants() {
+      return request.resource.data.tenants.hasAll(resource.data.tenants.removeAll(callerTenants()));
+    }
+    match /menuItems/{id}       { allow read: if true; allow create: if isContentManager() && belongsToTenant(request.resource.data); allow update: if keepsForeignTenants() && ((isContentManager() && belongsToTenant(request.resource.data)) || isSelfDetach()); allow delete: if isContentManager() && belongsToTenant(resource.data); }
     // tags/orgs/resources: NOT public. Read only by authenticated tenant members
     // (AppStore loads them post-login). The static websites get any org info via
     // the publicApi CF, never by reading these collections directly. (M-7)

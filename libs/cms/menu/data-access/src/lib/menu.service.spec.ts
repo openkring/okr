@@ -15,6 +15,7 @@ function createFirestoreMock() {
   return {
     createModel: vi.fn().mockResolvedValue('new-id'),
     updateModel: vi.fn().mockResolvedValue('updated-id'),
+    updateObject: vi.fn().mockResolvedValue('shared'),
     deleteModel: vi.fn().mockResolvedValue(undefined),
     searchData: vi.fn().mockReturnValue(of([]))
   };
@@ -64,6 +65,58 @@ describe('MenuService', () => {
     expect(firestore.updateModel).toHaveBeenCalledTimes(1);
     expect(firestore.updateModel.mock.calls[0][0]).toBe(MenuItemCollection);
     expect(firestore.updateModel.mock.calls[0][2]).toBe(false); // not a full overwrite
+  });
+
+  // Fork on first edit (D-BB-8): editing a menu doc shared with other tenants must not
+  // rename it for them.
+  describe('fork on edit', () => {
+    function sharedItem(): MenuItemModel {
+      const item = new MenuItemModel(tenantId);
+      item.okey = 'calevent-all';
+      item.name = 'calevent-all';
+      item.tenants = ['scs', tenantId, 'okr'];
+      return item;
+    }
+
+    it('copies the shared doc to a tenant-private one and detaches this tenant', async () => {
+      const id = await service.update(sharedItem());
+
+      expect(firestore.updateModel).not.toHaveBeenCalled();
+      expect(id).toBe('new-id');
+
+      const forked = firestore.createModel.mock.calls[0][1] as MenuItemModel;
+      expect(forked.okey).toBe('calevent-all_p13');
+      expect(forked.name).toBe('calevent-all');   // parents reference children by name
+      expect(forked.forkedFrom).toBe('calevent-all');
+
+      const [collection, key, patch] = firestore.updateObject.mock.calls[0];
+      expect(collection).toBe(MenuItemCollection);
+      expect(key).toBe('calevent-all');
+      expect(patch).toEqual({ tenants: ['scs', 'okr'] });   // only this tenant dropped
+    });
+
+    it('leaves the shared doc alone when the copy fails', async () => {
+      firestore.createModel.mockResolvedValueOnce(undefined);
+      const id = await service.update(sharedItem());
+      expect(id).toBeUndefined();
+      expect(firestore.updateObject).not.toHaveBeenCalled();
+    });
+
+    it('updates in place when the doc belongs to this tenant only', async () => {
+      const item = sharedItem();
+      item.tenants = [tenantId];
+      await service.update(item);
+      expect(firestore.createModel).not.toHaveBeenCalled();
+      expect(firestore.updateModel).toHaveBeenCalledTimes(1);
+    });
+
+    it('updates in place when this tenant is not on the doc (nothing to detach)', async () => {
+      const item = sharedItem();
+      item.tenants = ['system'];
+      await service.update(item);
+      expect(firestore.createModel).not.toHaveBeenCalled();
+      expect(firestore.updateModel).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('delete() (soft archive) calls deleteModel on the collection', async () => {

@@ -136,6 +136,10 @@ seed("tags/tgA",     {"tenants": ["t1"], "isArchived": False, "tagModel": "x"})
 # CMS content stays public-readable.
 seed("pages/home",   {"tenants": ["t1"], "isArchived": False, "title": "Home"})
 seed("sections/secA",{"tenants": ["t1"], "isArchived": False, "type": "article"})
+# fork-on-edit (D-BB-8): shared catalogue-owned menu docs a tenant may detach itself from.
+seed("menuItems/shared1", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared1", "label": "L"})
+seed("menuItems/shared2", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared2", "label": "L"})
+seed("menuItems/shared3", {"tenants": ["t1", "t2"], "isArchived": False, "name": "shared3", "label": "L"})
 # privacy 1.19 Phase 4: address-directory projection — CF-written, tenant-readable.
 seed("address-directory/t1_person.pA", {"tenants": ["t1"], "isArchived": False,
                                         "parentKey": "person.pA", "favEmail": "a@t1.ch"})
@@ -240,6 +244,16 @@ single_cases = [
      body({"tenants": ["t1"], "type": "article"}), None),
     ("userC(contentAdmin) create pages cross-tenant t2 -> DENY", False, POST, "pages?documentId=pg3", C,
      body({"tenants": ["t2"], "title": "T"}), None),
+    # fork-on-edit (D-BB-8): the detach half of the copy-on-write. A contentAdmin may drop
+    # its OWN tenant from a shared menu doc — and nothing else, by any other means.
+    ("userC(contentAdmin) detach own tenant from shared menu -> ALLOW", True, PATCH,
+     "menuItems/shared1", C, body({"tenants": ["t2"]}), ["tenants"]),
+    ("userC drops the OTHER tenant instead -> DENY", False, PATCH,
+     "menuItems/shared2", C, body({"tenants": ["t1"]}), ["tenants"]),
+    ("userC detaches AND edits the label in one write -> DENY", False, PATCH,
+     "menuItems/shared3", C, body({"tenants": ["t2"], "label": "Renamed"}), ["tenants", "label"]),
+    ("userA(no content role) detaches own tenant -> DENY", False, PATCH,
+     "menuItems/shared3", A, body({"tenants": ["t2"]}), ["tenants"]),
     # M-7: orgs/resources/tags no longer public — anon DENY, tenant member ALLOW, cross-tenant DENY.
     ("anon GET orgs/oA -> DENY", False, GET, "orgs/oA", None, None, None),
     ("anon GET resources/rA -> DENY", False, GET, "resources/rA", None, None, None),
