@@ -243,6 +243,7 @@
       "@okr/tenant-data-access": ["libs/tenant/data-access/src/index.ts"],
       "@okr/tenant-feature": ["libs/tenant/feature/src/index.ts"],
       "@okr/tenant-routes": ["libs/tenant/routes/src/index.ts"],
+      "@okr/business-metering-util": ["libs/business/metering/util/src/index.ts"],
       "@okr/tenant-util": ["libs/tenant/util/src/index.ts"],
       "@okr/tools": ["tools/src/index.ts"],
       "@okr/trip-data-access": ["libs/geo/trip/data-access/src/index.ts"],

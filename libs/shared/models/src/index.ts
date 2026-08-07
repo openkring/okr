@@ -37,6 +37,8 @@ export * from './lib/expense.model';
 export * from './lib/expense-document.model';
 export * from './lib/esign.model';
 export * from './lib/feature-rollout.model';
+export * from './lib/partner.model';
+export * from './lib/metering.model';
 export * from './lib/firebase-user.model';
 export * from './lib/folder.model';
 export * from './lib/geoposition.model';
