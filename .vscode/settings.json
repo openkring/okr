@@ -78,5 +78,6 @@
     "PATH": "$HOME/.nvm/versions/node/v20.19.3/bin:$PATH"
   },
 
-  "angular.enable-strict-mode-prompt": false
+  "angular.enable-strict-mode-prompt": false,
+  "claudeCode.allowDangerouslySkipPermissions": true
 }
