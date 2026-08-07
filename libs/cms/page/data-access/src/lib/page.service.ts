@@ -1,5 +1,5 @@
 import { Injectable, inject } from "@angular/core";
-import { Observable } from "rxjs";
+import { map, Observable } from "rxjs";
 
 import { ENV } from "@okr/shared-config";
 import { FirestoreService } from "@okr/shared-data-access";
@@ -40,11 +40,16 @@ export class PageService {
 
   /**
    * Lookup a page in the cached list by its document id and return it as an Observable.
+   * Menu items are shared across tenants (e.g. menuItems/home -> /private/welcome), so the same
+   * page id arrives for every tenant while each tenant owns its own doc named `<key>_<tenantId>`
+   * (welcome_p13, welcome_kring, ...). Prefer that doc, fall back to the unsuffixed one.
    * @param key the document id of the page
    * @returns an Observable of the PageModel
    */
     public read(key: string | undefined): Observable<PageModel | undefined> {
-      return findByKey<PageModel>(this.list(), key);  
+      if (!key || key.length === 0) return findByKey<PageModel>(this.list(), key);
+      const tenantKey = `${key}_${this.env.tenantId}`;
+      return this.list().pipe(map(pages => pages.find(p => p.okey === tenantKey) ?? pages.find(p => p.okey === key)));
     }
 
   /**

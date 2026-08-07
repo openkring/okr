@@ -9,7 +9,6 @@ import { DEFAULT_BANNER_URL } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
 import { PageStore } from './page.store';
-import { PFX } from './scope';
 
 /**
  * ErrorPage is a simple component that displays a user-friendly error message.
@@ -81,11 +80,13 @@ import { PFX } from './scope';
       <div class="error-container">
         <img class="error-image" [src]="bannerUrl()" alt="Background" />
         <ion-grid class="error-form">
-          <ion-row>
-            <ion-col>
-              <ion-img class="logo" [src]="logoUrl()" (click)="gotoHome()" alt="{{ logoAltText() }}" />
-            </ion-col>
-          </ion-row>
+          @if (logoUrl(); as logoUrl) {
+            <ion-row>
+              <ion-col>
+                <ion-img class="logo" [src]="logoUrl" (click)="gotoHome()" alt="{{ logoAltText() }}" />
+              </ion-col>
+            </ion-row>
+          }
           <ion-row>
             <ion-col>
               <ion-label class="title"><strong>{{ title() }}</strong></ion-label>
@@ -117,42 +118,46 @@ export class ErrorPage {
 
   protected title = toSignal(
     toObservable(computed(() => this.store.page()?.title)).pipe(
-      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+      switchMap(key => this.i18nService.translate(key))
     ),
     { initialValue: '' }
   );
 
   protected subTitle = toSignal(
     toObservable(computed(() => this.store.page()?.subTitle)).pipe(
-      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+      switchMap(key => this.i18nService.translate(key))
     ),
     { initialValue: '' }
   );
 
   protected abstract = toSignal(
     toObservable(computed(() => this.store.page()?.abstract)).pipe(
-      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+      switchMap(key => this.i18nService.translate(key))
     ),
     { initialValue: '' }
   );
 
   protected logoAltText = toSignal(
     toObservable(computed(() => this.store.page()?.logoAltText)).pipe(
-      switchMap(key => this.i18nService.translate(key ? PFX + key : `${this.store.tenantId()} Logo`))
+      switchMap(key => this.i18nService.translate(key || `${this.store.tenantId()} Logo`))
     ),
     { initialValue: '' }
   );
 
   protected bannerAltText = toSignal(
     toObservable(computed(() => this.store.page()?.bannerAltText)).pipe(
-      switchMap(key => this.i18nService.translate(key ? PFX + key : `${this.store.tenantId()} Banner`))
+      switchMap(key => this.i18nService.translate(key || `${this.store.tenantId()} Banner`))
     ),
     { initialValue: '' }
   );
 
   protected page = computed(() => this.store.page());
-  protected logoUrl = computed(() => this.store.getImgixUrl(this.page()?.logoUrl) ?? '');
-  protected bannerUrl = computed(() => this.store.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
+  // the error page is reached exactly when no page doc could be resolved, so it must not depend on
+  // one: app-config carries a per-tenant logo and not-found banner. tenant/default/app/banner.jpg
+  // does not exist in the bucket, it is only the last resort before an empty src.
+  protected logoUrl = computed(() => this.store.getImgixUrl(this.page()?.logoUrl || this.store.getConfigAttribute('logoUrl')) ?? '');
+  protected bannerUrl = computed(() => this.store.getImgixUrl(
+    this.page()?.bannerUrl || this.store.getConfigAttribute('notfoundBannerUrl') || DEFAULT_BANNER_URL));
 
   constructor() {
     effect(() => {

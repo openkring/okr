@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -81,6 +81,19 @@ describe('PageService', () => {
     expect(collection).toBe(PageCollection);
     expect(orderBy).toBe('name');
     expect(sortOrder).toBe('desc');
+  });
+
+  it('read() prefers the tenant-suffixed page over the shared one', async () => {
+    const shared = { okey: 'welcome' } as PageModel;
+    const mine = { okey: `welcome_${tenantId}` } as PageModel;
+    firestore.searchData.mockReturnValue(of([shared, mine]));
+    await expect(firstValueFrom(service.read('welcome'))).resolves.toBe(mine);
+
+    firestore.searchData.mockReturnValue(of([shared]));
+    await expect(firstValueFrom(service.read('welcome'))).resolves.toBe(shared);
+
+    firestore.searchData.mockReturnValue(of([]));
+    await expect(firstValueFrom(service.read('welcome'))).resolves.toBeUndefined();
   });
 
   it('propagates errors from the underlying write', async () => {

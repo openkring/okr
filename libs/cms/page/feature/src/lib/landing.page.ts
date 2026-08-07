@@ -9,7 +9,6 @@ import { DEFAULT_BANNER_URL } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
 import { PageStore } from './page.store';
-import { PFX } from './scope';
 
 /**
  * LandingPage is a page that greets users when they visit the application.
@@ -129,35 +128,35 @@ export class LandingPage {
 
   protected title = toSignal(
     toObservable(computed(() => this.store.page()?.title)).pipe(
-      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+      switchMap(key => this.i18nService.translate(key))
     ),
     { initialValue: '' }
   );
 
   protected subTitle = toSignal(
     toObservable(computed(() => this.store.page()?.subTitle)).pipe(
-      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+      switchMap(key => this.i18nService.translate(key))
     ),
     { initialValue: '' }
   );
 
   protected abstract = toSignal(
     toObservable(computed(() => this.store.page()?.abstract)).pipe(
-      switchMap(key => this.i18nService.translate(key ? PFX + key : undefined))
+      switchMap(key => this.i18nService.translate(key))
     ),
     { initialValue: '' }
   );
 
   protected logoAltText = toSignal(
     toObservable(computed(() => this.store.page()?.logoAltText)).pipe(
-      switchMap(key => this.i18nService.translate(key ? PFX + key : `${this.store.tenantId()} Logo`))
+      switchMap(key => this.i18nService.translate(key || `${this.store.tenantId()} Logo`))
     ),
     { initialValue: '' }
   );
 
   protected bannerAltText = toSignal(
     toObservable(computed(() => this.store.page()?.bannerAltText)).pipe(
-      switchMap(key => this.i18nService.translate(key ? PFX + key : `${this.store.tenantId()} Banner`))
+      switchMap(key => this.i18nService.translate(key || `${this.store.tenantId()} Banner`))
     ),
     { initialValue: '' }
   );
