@@ -6,6 +6,8 @@ import { error, showToast } from '@okr/shared-util-angular';
 import { die } from '@okr/shared-util-core';
 import { getApp } from 'firebase/app';
 
+import { AOC_I18N_KEYS } from './aoc-i18n';
+
 export function getLogInfo(key: string | undefined, name: string | undefined, message: string, isVerbose = true): LogInfo {
   if (isVerbose === true) console.log(`${key}/${name}: ${message}`);
   return {
@@ -57,7 +59,7 @@ export async function createFirebaseAccount(toastController: ToastController, lo
     const result = await createFirebaseUserFunction({ email: loginEmail, password, displayName });
     const data = result.data as { uid: string };
 
-    await showToast(toastController, '@auth.operation.create.confirmation');
+    await showToast(toastController, AOC_I18N_KEYS.account_fbuser_create_conf);
     console.log(`adminops.util.createFirebaseAccount: successfully created user ${data.uid} for ${loginEmail}`);
     return data.uid;
   } catch (ex) {

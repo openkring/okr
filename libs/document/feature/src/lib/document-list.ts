@@ -16,6 +16,9 @@ import { canEditFolder } from '@okr/folder-util';
 
 import { DocumentStore } from './document.store';
 
+/** vtracer takes raster input only — mirrors the guard in the vectorizeDocument CF. */
+const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
+
 @Component({
   selector: 'okr-document-list',
   standalone: true,
@@ -342,6 +345,10 @@ export class DocumentList {
     if (canEditDocument(document, folder, this.currentUser(), this.groupAdmin())) {
       actionSheetOptions.buttons.push(createActionSheetButton('document.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('document.update', this.store.i18n.upload_new(), this.imgixBaseUrl, 'upload'));
+      // raster → SVG is the only conversion offered today, so only JPG/PNG can be vectorized
+      if (VECTORIZABLE_MIME_TYPES.includes(document.mimeType)) {
+        actionSheetOptions.buttons.push(createActionSheetButton('document.vectorize', this.store.i18n.vectorize(), this.imgixBaseUrl, 'image'));
+      }
     } else {
       actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
@@ -389,6 +396,9 @@ export class DocumentList {
           break;
         case 'document.showRevisions':
           await this.store.showRevisions(document);
+          break;
+        case 'document.vectorize':
+          await this.store.vectorize(document, !canEditDocument(document, this.currentFolder(), this.currentUser(), this.groupAdmin()));
           break;
       }
     }

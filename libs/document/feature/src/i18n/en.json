@@ -245,5 +245,21 @@
       "label": "Accounting",
       "description": "The document is an accounting voucher."
     }
+  },
+  "vectorize": {
+    "label": "Convert to SVG (vectorize)",
+    "title": "Vectorize",
+    "source": "Original",
+    "result": "SVG",
+    "preset": {
+      "label": "Preset",
+      "logo": "Logo / line art",
+      "photo": "Colour graphic"
+    },
+    "detail": "Level of detail",
+    "generate": "Generate",
+    "hint": "For logos and flat colour graphics. Photographs produce very large SVG files and rarely a usable result.",
+    "empty": "No SVG generated yet.",
+    "error": "The SVG could not be generated."
   }
 }

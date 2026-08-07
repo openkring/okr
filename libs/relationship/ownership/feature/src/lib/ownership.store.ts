@@ -3,17 +3,19 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { firstValueFrom } from 'rxjs';
 
 import { ownerTypeMatches } from '@okr/shared-categories';
 import { AppStore } from '@okr/shared-feature';
 import { OrgModel, OwnershipModel, PersonModel, ResourceModel } from '@okr/shared-models';
 import { selectDate } from '@okr/shared-ui';
 import { confirm, exportCsv, getExportFileName, navigateByUrl, showToast } from '@okr/shared-util-angular';
-import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, isOwnership, nameMatches } from '@okr/shared-util-core';
+import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, die, getTodayStr, isAfterDate, isOwnership, isResource, nameMatches } from '@okr/shared-util-core';
 import { DEFAULT_RBOAT_TYPE, DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
+import { ResourceService } from '@okr/resource-data-access';
 import { getOwnershipExportColumns, getOwnershipExportFileName, newOwnership, OWNERSHIP_I18N_KEYS } from '@okr/relationship-ownership-util';
 
 export type OwnershipState = {
@@ -60,6 +62,7 @@ export const OwnershipStore = signalStore(
   withState(initialState),
   withProps(() => ({
     ownershipService: inject(OwnershipService),
+    resourceService: inject(ResourceService),
     appStore: inject(AppStore),
     router: inject(Router),
     modalController: inject(ModalController),
@@ -374,13 +377,26 @@ export const OwnershipStore = signalStore(
       },   
 
       /**
-       * Navigate to the detail page of the owned resource (e.g. a rowing boat).
+       * Show a modal to edit/view the owned resource (e.g. a rowing boat).
+       * There is no resource detail route, so we open the resource edit modal directly.
        * @param ownership the Ownership whose resource should be opened
-       * @param readOnly whether the resource page opens in read-only (view) mode
+       * @param readOnly whether the modal opens in read-only (view) mode
        */
       async openResource(ownership: OwnershipModel, readOnly = true): Promise<void> {
         if (!ownership.resourceKey) return;
-        await navigateByUrl(store.router, `/resource/${ownership.resourceKey}`, { readOnly });
+        const resource = await firstValueFrom(store.resourceService.read(ownership.resourceKey));
+        if (!resource) return;
+        const { ResourceEditModal } = await import('@okr/resource-feature');
+        const modal = await store.modalController.create({
+          component: ResourceEditModal,
+          componentProps: { resource, isTypeEditable: false, readOnly }
+        });
+        modal.present();
+        const { data, role } = await modal.onDidDismiss();
+        if (role === 'confirm' && data && !readOnly && isResource(data, store.tenantId())) {
+          await store.resourceService.update(data, store.currentUser());
+        }
+        this.reload();
       },
 
       /**
@@ -421,8 +437,8 @@ export const OwnershipStore = signalStore(
           store.i18nService.createLabelResolver(store.appStore.getCategory('resource_type')),
           store.i18nService.createLabelResolver(store.appStore.getCategory('rboat_type')),
           store.i18nService.createLabelResolver(store.appStore.getCategory('gender')),
-          store.i18nService.createValueResolver('@relationship/ownership/feature.type', ownerships.map(o => o.type)),
-          store.i18nService.createValueResolver('@relationship/ownership/feature.state', ownerships.map(o => o.state)),
+          store.i18nService.createValueResolver('@relationship/ownership/feature.ocat_default', ownerships.map(o => o.type)),
+          store.i18nService.createValueResolver('@relationship/ownership/feature.ostate_default', ownerships.map(o => o.state)),
         ]);
         const columns = getOwnershipExportColumns(listId, store.i18n, { resourceType, rboatType, gender, type: ownershipType, state });
         await exportCsv(buildExportTable(ownerships, columns), getExportFileName(getOwnershipExportFileName(listId), 'csv'));

@@ -145,6 +145,73 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
     content: ">";
     right: 1.5rem;
     }
+
+    /* FALLBACK for Safari / Firefox, which do not implement CSS Overflow 5
+       (::scroll-button, ::scroll-marker, scroll-state()) as of 2026-08. There the
+       carousel still swipes and snaps, but has no arrows and no dots — on desktop
+       nothing signals that it scrolls. These elements restore both.
+       They are gated in TypeScript (showFallbackNav), not by @supports, so the
+       scroll listener behind the dots does not run at all on Chromium. Styles
+       deliberately mirror ::scroll-button / ::scroll-marker above. */
+    .carousel-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: var(--ion-color-light);
+    color: var(--ion-color-light-contrast);
+    font-size: 1.25rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    }
+
+    .carousel-nav:hover {
+    background: var(--ion-color-primary);
+    color: var(--ion-color-primary-contrast);
+    }
+
+    .carousel-nav.left { left: 1.5rem; }
+    .carousel-nav.right { right: 1.5rem; }
+
+    .carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    }
+
+    .carousel-dots button {
+    width: 15px;
+    height: 15px;
+    padding: 0;
+    background: var(--ion-color-light);
+    border: 1px solid var(--ion-color-medium);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    }
+
+    .carousel-dots button:hover {
+    background: var(--ion-color-medium);
+    }
+
+    .carousel-dots button.active {
+    background: var(--ion-color-primary);
+    transform: scale(1.3);
+    border: 1px solid var(--ion-color-primary-shade);
+    }
   `],
   template: `
     @if(section(); as section) {
@@ -152,13 +219,28 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
         <okr-optional-card-header  [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
             <div class="carousel-container">
-                <div class="carousel" #carouselEl>
+                <div class="carousel" #carouselEl (scroll)="onScroll()">
                     @for(image of images(); track image.url) {
                         <div class="carousel-slide">
                             <okr-img [image]="image" [imageStyle]="carouselImageStyle()" [gallery]="images()" />
                         </div>
                     }
                 </div>
+                @if(showFallbackNav && images().length > 1) {
+                    <button type="button" class="carousel-nav left"
+                        aria-label="Vorheriges Bild" (click)="scrollByPage(-1)">&lsaquo;</button>
+                    <button type="button" class="carousel-nav right"
+                        aria-label="Nächstes Bild" (click)="scrollByPage(1)">&rsaquo;</button>
+                    <div class="carousel-dots" role="tablist">
+                        @for(image of images(); track image.url; let i = $index) {
+                            <button type="button" role="tab"
+                                [class.active]="i === activeIndex()"
+                                [attr.aria-selected]="i === activeIndex()"
+                                [attr.aria-label]="'Bild ' + (i + 1)"
+                                (click)="scrollTo(i)"></button>
+                        }
+                    </div>
+                }
             </div>
         </ion-card-content>
       </ion-card>
@@ -185,6 +267,40 @@ export class SliderSectionComponent implements AfterViewInit, OnDestroy {
       if (w > 0) this.containerWidth.set(w);
     });
     this.resizeObserver.observe(el);
+  }
+
+  // Fallback navigation for browsers without CSS Overflow 5 (Safari, Firefox).
+  // Probing the property rather than the pseudo-elements: CSS.supports parses a
+  // plain declaration reliably everywhere, selector(::scroll-button(*)) does not.
+  // On the server CSS is undefined — the fallback renders, which is correct there
+  // (client hydration is disabled, so the browser re-renders from scratch anyway).
+  protected readonly showFallbackNav = typeof CSS === 'undefined' || !CSS.supports('scroll-marker-group', 'after');
+  protected readonly activeIndex = signal(0);
+
+  // Distance between two slides. Derived from the real scroll range instead of
+  // clientWidth, because the 1rem flex gap makes each slide clientWidth + gap wide —
+  // using clientWidth alone drifts by one gap per slide and lands on the wrong image.
+  private slideStep(el: HTMLElement): number {
+    const count = this.images().length;
+    return count > 1 ? (el.scrollWidth - el.clientWidth) / (count - 1) : 0;
+  }
+
+  protected onScroll(): void {
+    if (!this.showFallbackNav) return;
+    const el = this.carouselEl()?.nativeElement as HTMLElement | undefined;
+    if (!el) return;
+    const step = this.slideStep(el);
+    if (step > 0) this.activeIndex.set(Math.round(el.scrollLeft / step));
+  }
+
+  protected scrollByPage(direction: 1 | -1): void {
+    const el = this.carouselEl()?.nativeElement as HTMLElement | undefined;
+    if (el) el.scrollBy({ left: direction * this.slideStep(el), behavior: 'smooth' });
+  }
+
+  protected scrollTo(index: number): void {
+    const el = this.carouselEl()?.nativeElement as HTMLElement | undefined;
+    if (el) el.scrollTo({ left: index * this.slideStep(el), behavior: 'smooth' });
   }
 
   public ngOnDestroy(): void {

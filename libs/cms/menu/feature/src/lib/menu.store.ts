@@ -4,13 +4,13 @@ import { MenuController, ModalController, PopoverController } from '@ionic/angul
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
-import { combineLatest, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { ENV } from '@okr/shared-config';
 import { AppStore, withErrorState } from '@okr/shared-feature';
-import { CategoryListModel, MenuItemModel, TaskCollection, TaskModel } from '@okr/shared-models';
-import { debugData, die, getSystemQuery, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
+import { CategoryListModel, MenuItemModel } from '@okr/shared-models';
+import { debugData, die, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
 import { AppNavigationService, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -101,30 +101,22 @@ export const _MenuStore = signalStore(
         );
       }
     }),
-    notificationCountResource: rxResource({
+    // Chat half of the badge. The task half comes from AppStore.openTaskCount (see
+    // notificationCount below) — the single source shared with the PWA app-icon badge,
+    // so the two can no longer disagree about what counts as a notification.
+    chatUnreadResource: rxResource({
       params: () => ({
         name: store.name(),
         personKey: store.appStore.currentUser()?.personKey,
-        tenantId: store.appStore.env.tenantId,
       }),
       stream: ({ params }): Observable<number> => {
-        const { name, personKey, tenantId } = params;
-        // Only activate real subscriptions for the dashboard menu item.
-        // All other menu instances return 0 immediately — no Firestore or Matrix connections.
+        const { name, personKey } = params;
+        // Only activate a real subscription for the dashboard menu item.
+        // All other menu instances return 0 immediately — no Matrix connection.
         if (name !== 'dashboard' || !personKey) return of(0);
 
-        const chatCount$ = store.matrixChatService.rooms.pipe(
+        return store.matrixChatService.rooms.pipe(
           map(rooms => rooms.reduce((sum: number, r) => sum + r.unreadCount, 0))
-        );
-
-        const taskQuery = getSystemQuery(tenantId);
-        taskQuery.push({ key: 'completionDate', operator: '==', value: '' });
-        const taskCount$ = store.appStore.firestoreService.searchData<TaskModel>(TaskCollection, taskQuery, 'dueDate', 'asc').pipe(
-          map(tasks => tasks.filter(t => t.assignee?.key === personKey || t.author?.key === personKey).length)
-        );
-
-        return combineLatest([chatCount$, taskCount$]).pipe(
-          map(([chat, tasks]) => chat + tasks)
         );
       }
     }),
@@ -155,7 +147,12 @@ export const _MenuStore = signalStore(
       tenantId: computed(() => store.appStore.tenantId()),
       isMenuLoading: computed(() => store.menuResource.isLoading()),
       isLoading: computed(() => store.menuItemsResource.isLoading() || store.menuResource.isLoading()),
-      notificationCount: computed(() => store.notificationCountResource.value() ?? 0),
+      // Chat unread + open assigned tasks. The dashboard menu item is the only one that
+      // subscribes to chat, so every other instance contributes 0 there; gate the task half
+      // on the same name so a non-dashboard menu never shows a badge either.
+      notificationCount: computed(() =>
+        (store.chatUnreadResource.value() ?? 0) +
+        (store.name() === 'dashboard' ? store.appStore.openTaskCount() : 0)),
     };
   }),
 

@@ -180,7 +180,8 @@ export function parseDate(value: string, fromFormat: DateFormat, isStrict=true):
         }
     }
     const date =  parse(value, fromFormat, new Date());
-    return (!date || isEndFutureDate(date)) ? null : date;
+    // date-fns parse() returns an Invalid Date (truthy, NaN time) on unparseable input
+    return (!isValid(date) || isEndFutureDate(date)) ? null : date;
 }
 
 export function isEndFutureDate(date: Date): boolean {
@@ -351,14 +352,13 @@ export function getWeekdayI18nKey(storeDate: string, shortWeekday = true): strin
 export function checkDate(fieldName: string, value: string, dateFormat: DateFormat, minYear: number, maxYear: number, isStrict: boolean): boolean {
     const date = parseDate(value, dateFormat, isStrict);
     if (!date) {
-        if (isStrict === true) {
+        // parseDate returns null both for an empty value and for an unparseable one — only
+        // the empty case may pass when the field is optional.
+        if (!value || value.length === 0) {
+            if (isStrict === false) return true;
             warn(`date.util/checkDate: date ${fieldName} is mandatory`);
             return false;
-        } else {
-            return true;
         }
-    }
-    if (!isValid(date)) {
         warn(`date.util/checkDate: date ${fieldName} is not valid`);
         return false;
     }

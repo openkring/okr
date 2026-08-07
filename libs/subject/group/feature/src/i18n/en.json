@@ -15,6 +15,10 @@
   "files": {
     "conflict": "The file folder of this group is already managed by another person and cannot be used here. Please contact an administrator."
   },
+  "admins": {
+    "title": "Group administrators",
+    "description": "These people can manage the group, e.g. add or remove members. The administrator listed first is also the main contact, i.e. todos are assigned to that person automatically."
+  },
   "add": {
     "page": "Add group page"
   },

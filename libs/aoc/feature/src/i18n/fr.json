@@ -26,6 +26,9 @@
         "error": "L'utilisateur Firebase n'a pas pu être supprimé.",
         "conf": "L'utilisateur Firebase a été supprimé.",
         "confirm": "Voulez-vous vraiment supprimer l'utilisateur Firebase ?"
+      },
+      "create": {
+        "conf": "L'utilisateur Firebase a été créé."
       }
     },
     "email": {

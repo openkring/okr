@@ -34,14 +34,7 @@ export const ArticleStore = signalStore(
       currentUser: computed(() => store.appStore.currentUser()),
       imageStyle: computed(() => store.config().imageStyle),
 
-      images: computed((): ImageConfig[] => {
-        const config = store.config() as any;
-        if (!config) return [];
-        // backward compat: support legacy single-image field
-        if (Array.isArray(config.images) && config.images.length > 0) return config.images;
-        if (config.image) return [config.image];    // backward compatibility
-        return [];
-      })
+      images: computed((): ImageConfig[] => store.config()?.images ?? [])
     };
   }),
   withComputed((store) => {

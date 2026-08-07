@@ -245,5 +245,21 @@
       "label": "Contabilità",
       "description": "Il documento è un giustificativo contabile."
     }
+  },
+  "vectorize": {
+    "label": "Converti in SVG (vettorizza)",
+    "title": "Vettorizza",
+    "source": "Originale",
+    "result": "SVG",
+    "preset": {
+      "label": "Preimpostazione",
+      "logo": "Logo / disegno al tratto",
+      "photo": "Grafica a colori"
+    },
+    "detail": "Livello di dettaglio",
+    "generate": "Genera",
+    "hint": "Per loghi e grafiche a colori piatti. Le fotografie producono file SVG molto grandi e raramente un risultato utilizzabile.",
+    "empty": "Nessun SVG ancora generato.",
+    "error": "Non è stato possibile generare il SVG."
   }
 }

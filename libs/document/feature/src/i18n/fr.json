@@ -245,5 +245,21 @@
       "label": "Comptabilité",
       "description": "Le document est une pièce comptable."
     }
+  },
+  "vectorize": {
+    "label": "Convertir en SVG (vectoriser)",
+    "title": "Vectoriser",
+    "source": "Original",
+    "result": "SVG",
+    "preset": {
+      "label": "Préréglage",
+      "logo": "Logo / dessin au trait",
+      "photo": "Graphique couleur"
+    },
+    "detail": "Niveau de détail",
+    "generate": "Générer",
+    "hint": "Pour les logos et les graphiques en aplats de couleur. Les photographies produisent des fichiers SVG très volumineux et rarement un résultat exploitable.",
+    "empty": "Aucun SVG généré pour le moment.",
+    "error": "Le SVG n'a pas pu être généré."
   }
 }

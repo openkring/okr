@@ -22,7 +22,7 @@ type FsData = Record<string, any>;
 
 /** Throw unless the caller has admin or memberAdmin in their users/{uid}.roles.
  *  Returns the caller's tenants array (from users/{uid}.tenants). */
-async function requireMemberAdmin(uid: string | undefined, fnName: string): Promise<string[]> {
+export async function requireMemberAdmin(uid: string | undefined, fnName: string): Promise<string[]> {
   if (!uid) throw new HttpsError('unauthenticated', 'Not authenticated.');
   const snap = await getFirestore().collection(UserCollection).doc(uid).get();
   const data = snap.data() ?? {};

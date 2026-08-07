@@ -1088,5 +1088,97 @@
     "template_placeholder": "z.B. scs_password_reset",
     "all_groups": "Alle Gruppen",
     "search_placeholder": "Suchen …"
+  },
+  "sankey": {
+    "label": "Sankey",
+    "title": "Sankey-Konfiguration",
+    "subtitle": "Flüsse zwischen Knoten; die Knoten ergeben sich aus den Flüssen.",
+    "empty": "Noch keine Flüsse erfasst.",
+    "flows": {
+      "label": "Flüsse (JSON)",
+      "helper": "Liste von Flüssen als JSON, z.B. [{\"source\":\"Beiträge\",\"target\":\"Verein\",\"value\":100}]. Quelle und Ziel sind freie Knotennamen, der Wert muss positiv sein.",
+      "error": "Ungültiges JSON – die Änderungen wurden nicht übernommen."
+    },
+    "nodeWidth": {
+      "label": "Knotenbreite (px)"
+    },
+    "nodeGap": {
+      "label": "Knotenabstand (px)"
+    },
+    "lineOpacity": {
+      "label": "Deckkraft der Flüsse (0–1)"
+    },
+    "layoutIterations": {
+      "label": "Layout-Iterationen",
+      "helper": "0 behält die Reihenfolge der Knoten bei; höhere Werte lassen ECharts die Knoten automatisch anordnen."
+    }
+  },
+  "spider": {
+    "label": "Spinnennetz",
+    "title": "Spinnennetz-Konfiguration",
+    "subtitle": "Achsen mit Maximalwert und eine oder mehrere Wertereihen darüber.",
+    "axes": {
+      "label": "Achsen (JSON)",
+      "helper": "Liste der Achsen als JSON, z.B. [{\"name\":\"Technik\",\"maxValue\":10}]. Mindestens 3 Achsen, sonst wird nichts gezeichnet.",
+      "error": "Ungültiges JSON – die Änderungen wurden nicht übernommen."
+    },
+    "series": {
+      "label": "Wertereihen (JSON)",
+      "helper": "Liste der Reihen als JSON, z.B. [{\"name\":\"Selbstbild\",\"values\":[8,6,4]}]. Die Werte sind index-parallel zu den Achsen; fehlende Werte zählen als 0, zu grosse werden auf das Achsenmaximum begrenzt.",
+      "error": "Ungültiges JSON – die Änderungen wurden nicht übernommen."
+    },
+    "areaOpacity": {
+      "label": "Deckkraft der Fläche (0–1)"
+    },
+    "showLegend": {
+      "label": "Legende anzeigen",
+      "helper": "Blendet die Namen der Wertereihen unter dem Diagramm ein."
+    }
+  },
+  "toc": {
+    "label": "Inhaltsverzeichnis",
+    "title": "Inhaltsverzeichnis-Konfiguration",
+    "subtitle": "Listet die Sections dieser Seite auf; ein Klick springt zur gewählten Section.",
+    "navLabel": "Inhaltsverzeichnis",
+    "sectionKeys": {
+      "label": "Sections (okey pro Zeile)",
+      "helper": "Leer lassen, um alle Sections der Seite aufzulisten (empfohlen – so bleibt das Verzeichnis automatisch aktuell). Sonst einen Section-Schlüssel pro Zeile; die Reihenfolge kommt immer von der Seite."
+    },
+    "numbered": {
+      "label": "Nummerierung anzeigen",
+      "helper": "Stellt jedem Eintrag seine Position voran (1., 2., …)."
+    }
+  },
+  "testimonial": {
+    "label": "Stimmen",
+    "title": "Stimmen-Konfiguration",
+    "subtitle": "Zitate von Mitgliedern, Kundinnen oder Partnern — als Raster oder Karussell.",
+    "listLabel": "Stimmen",
+    "more": "Mehr lesen",
+    "link": "Zur ganzen Geschichte",
+    "entries": {
+      "label": "Stimmen (JSON)",
+      "helper": "Liste von Objekten mit quote, authorName, authorRole, imageUrl, detail, link. Pflicht sind quote und authorName, alles andere ist optional. Beispiel: [{\"quote\": \"Der Verein hat mir eine zweite Familie gegeben.\", \"authorName\": \"Anna Muster\", \"authorRole\": \"Mitglied seit 2019\", \"imageUrl\": \"\", \"detail\": \"\", \"link\": \"\"}]. Ein veröffentlichtes Zitat braucht die Einwilligung der zitierten Person.",
+      "error": "Ungültiges JSON — die Stimmen wurden nicht übernommen."
+    },
+    "carousel": {
+      "label": "Als Karussell darstellen",
+      "helper": "Statt im Raster liegen die Stimmen in einer horizontal scrollbaren Reihe (Wischen auf dem Handy)."
+    },
+    "columns": {
+      "label": "Spalten",
+      "helper": "Anzahl Spalten im Raster ab Tablet-Breite (1–4); auf dem Handy immer einspaltig."
+    }
+  },
+  "timeline": {
+    "label": "Zeitstrahl",
+    "title": "Zeitstrahl-Konfiguration",
+    "subtitle": "Alle Termine des gewählten Kalenders als Chronologie.",
+    "listLabel": "Zeitstrahl",
+    "empty": "Dieser Kalender enthält keine Termine.",
+    "vertical": {
+      "label": "Vertikal darstellen",
+      "helper": "Statt horizontal (Standard) liegen die Ereignisse untereinander — passend für lange Chronologien."
+    }
   }
 }

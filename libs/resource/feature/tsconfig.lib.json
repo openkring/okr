@@ -2,7 +2,7 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "../../../dist/out-tsc/libs/resource-feature",
+    "outDir": "../../../dist/libs/resource/feature",
     "declaration": true,
     "composite": true,
     "module": "preserve",

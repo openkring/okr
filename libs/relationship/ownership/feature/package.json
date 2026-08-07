@@ -20,6 +20,8 @@
     "@okr/relationship-ownership-ui": "*",
     "@okr/relationship-ownership-util": "*",
     "@okr/avatar-ui": "*",
-    "@okr/cms-menu-feature": "*"
+    "@okr/cms-menu-feature": "*",
+    "@okr/resource-data-access": "*",
+    "@okr/resource-feature": "*"
   }
 }

@@ -15,6 +15,10 @@
   "files": {
     "conflict": "La cartella dei file di questo gruppo è già gestita da un'altra persona e non può essere utilizzata qui. Contatta un amministratore."
   },
+  "admins": {
+    "title": "Amministratori del gruppo",
+    "description": "Queste persone possono gestire il gruppo, ad es. aggiungere o rimuovere membri. Il primo amministratore indicato è anche il contatto principale, ovvero i compiti gli vengono assegnati automaticamente."
+  },
   "add": {
     "page": "Aggiungi pagina di gruppo"
   },

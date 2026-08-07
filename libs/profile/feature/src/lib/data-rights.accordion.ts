@@ -194,7 +194,12 @@ export class DataRightsAccordion {
     // The signed URL lives 15 minutes and the ZIP holds AHV, dob and IBAN in plaintext:
     // hand it straight to the browser rather than parking it in a signal where it would
     // sit in memory (and in a screenshot) for the rest of the session.
-    window.open(result.value.downloadUrl, '_blank', 'noopener');
+    //
+    // NOT window.open: by the time the callable resolves we are no longer in the user
+    // gesture, so a popup blocker silently swallows the download. The signed URL carries
+    // `Content-Disposition: attachment`, so navigating the current window downloads the ZIP
+    // and leaves the profile page exactly where it is.
+    window.location.assign(result.value.downloadUrl);
   }
 
   protected async openErasure(): Promise<void> {

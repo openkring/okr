@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, input } from "@angular/core";
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
+import { ActionSheetButton, ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList } from "@ionic/angular/standalone";
 
 import { AddressModel, PrivacySettings } from "@okr/shared-models";
 import { SvgIconPipe } from "@okr/shared-pipes";
 import { EmptyList } from "@okr/shared-ui";
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadToBrowser } from "@okr/shared-util-angular";
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from "@okr/shared-util-angular";
 import { coerceBoolean, getCategoryIcon, isVisibleToUser } from "@okr/shared-util-core";
 
 import { FavoriteColorPipe, FormatAddressPipe } from "@okr/subject-address-util";
@@ -168,7 +168,7 @@ export class AddressesAccordion {
     switch(address.addressChannel) {
       case 'bankaccount':
         if (address.url) {
-          actionSheetOptions.buttons.push(createActionSheetButton('iban.view', this.store.i18n.view_iban(), this.imgixBaseUrl, 'qrcode'));
+          actionSheetOptions.buttons.push(this.createFileViewButton('iban.view', this.store.i18n.view_iban(), address));
         } else if (!this.isReadOnly()) {
           actionSheetOptions.buttons.push(createActionSheetButton('iban.generateQr', this.store.i18n.generate_qrezs(), this.imgixBaseUrl, 'qrcode'));
         }
@@ -184,7 +184,7 @@ export class AddressesAccordion {
         break;
      case 'twint':
         if (address.url) {
-          actionSheetOptions.buttons.push(createActionSheetButton('file.view', this.store.i18n.view_file(), this.imgixBaseUrl, 'qrcode'));
+          actionSheetOptions.buttons.push(this.createFileViewButton('file.view', this.store.i18n.view_file(), address));
         } else if (!this.isReadOnly()) {
           actionSheetOptions.buttons.push(createActionSheetButton('file.upload', this.store.i18n.upload_file(), this.imgixBaseUrl, 'qrcode'));
         }
@@ -205,9 +205,20 @@ export class AddressesAccordion {
   }
 
   /**
+   * Button that opens the file stored on the address (QR-bill PDF, TWINT image). The URL is opened
+   * from the synchronous tap handler (not the post-dismiss switch) so the user gesture survives —
+   * iOS/iPadOS Safari blocks window.open once the ActionSheet has dismissed.
+   */
+  private createFileViewButton(action: string, label: string, address: AddressModel): ActionSheetButton {
+    const button = createActionSheetButton(action, label, this.imgixBaseUrl, 'qrcode');
+    button.handler = () => { this.store.openAddressFile(address); };
+    return button;
+  }
+
+  /**
    * Displays the ActionSheet, waits for the user to select an action and executes the selected action.
-   * @param actionSheetOptions 
-   * @param address 
+   * @param actionSheetOptions
+   * @param address
    */
   private async executeActions(actionSheetOptions: ActionSheetOptions, address: AddressModel): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
@@ -228,10 +239,6 @@ export class AddressesAccordion {
         case 'edit':
           await this.store.edit(address, this.isReadOnly());
           break;
-        case 'file.view':
-        case 'iban.view':
-          await downloadToBrowser(address.url);
-          break;
         case 'iban.generateQr':
           await this.store.generateQrEzs(address);
           break;
@@ -247,7 +254,8 @@ export class AddressesAccordion {
         case 'file.upload':
           await this.store.uploadFile(address);
           break;
-        // 'web.open' is handled synchronously by the button handler (Safari popup blocker).
+        // 'web.open', 'iban.view' and 'file.view' are handled synchronously by their button
+        // handlers (Safari popup blocker).
       }
     }
   }

@@ -165,7 +165,7 @@ import { PageStore } from './page.store';
             <ion-row>
               @for(section of visibleSections(); track section.okey) {
                 @if(getColSizes(section.colSize); as colSizes) {
-                  <ion-col size="{{colSizes.size}}" 
+                  <ion-col size="{{colSizes.size}}" [id]="section.okey"
                     class="section-item" (click)="showActions(section)"
                     [class.edit-mode]="editMode()"
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"

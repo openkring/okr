@@ -332,19 +332,21 @@ export async function rebuildDirectoryForTenant(
 /**
  * D8 chokepoint for Cloud-Function consumers (publicApi, vCard, SRV, replication,
  * RAG, QR-slip): privacy-filtered addresses of one parent for a viewer tier.
- * `tenantId` selects the tenant floor **and the address provenance** (D-L1); it
- * defaults to the parent's first tenant, as before.
+ * `tenantId` selects the tenant floor **and the address provenance** (D-L1) and is
+ * **required**: it used to default to `parent.tenants[0]`, which silently gave a
+ * dual-tenant org (`['bkg','kring']`) bkg provenance wherever the caller forgot it
+ * (spec 1.26 C1 §6, follow-up (b)). Pass `''` only for a parent with no tenant.
  */
 export async function getProjectedAddresses(
   firestore: Firestore,
   parentKey: string,
   viewerAccessor: PrivacyAccessor,
-  tenantId?: string,
+  tenantId: string,
 ): Promise<AddressModel[]> {
   const loaded = await loadParentAndAddresses(firestore, parentKey);
   if (!loaded || !loaded.parent) return [];
   const { parentType, parent, addresses } = loaded;
-  const effectiveTenant = tenantId ?? (parent['tenants'] ?? [])[0];
+  const effectiveTenant = tenantId;
   const settings = effectiveTenant ? await loadPrivacySettings(firestore, effectiveTenant) : undefined;
   // D-L1: a parent with no tenant at all has no provenance to scope by — it also has no
   // tenant floor and no viewer, so leaving the set unfiltered changes nothing.

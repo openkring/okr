@@ -4,7 +4,7 @@ import {
     checkYearRange,
     classifyStoreDate,
     compareDate,
-    convertDateFormat, copyDate,
+    convertDateFormat, convertDateFormatToString, copyDate,
     DateFormat,
     DatePart,
     extractFromDate,
@@ -103,7 +103,15 @@ describe('date.util', () => {
     });
 
     // TBD: convertDateFormatToString
-    // TBD: parseDate
+    // parseDate — date-fns parse() yields an Invalid Date (truthy) rather than null for
+    // unparseable input; without the isValid() guard format() throws RangeError (SCS-29).
+    it('parseDate() returns null for an unparseable value', () => {
+        expect(parseDate('not-a-date', DateFormat.IsoDate, false)).toBeNull();
+        expect(parseDate('2026-02-30', DateFormat.IsoDate, false)).toBeNull();
+    });
+    it('convertDateFormatToString() returns empty instead of throwing for an invalid date (isStrict=false)', () => {
+        expect(convertDateFormatToString('2026-02-30', DateFormat.IsoDate, DateFormat.StoreDate, false)).toBe('');
+    });
     // extractFromDate
     it('extractFromDate()', () => {
         const _date = parseDate('19991203091510', DateFormat.StoreDateTime);

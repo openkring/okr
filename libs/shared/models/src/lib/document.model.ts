@@ -15,6 +15,26 @@ export const EZS_DIR = 'ezs';
  *
  * fullPath is set explicitly. All other parts can be derived from fullPath.
  */
+/**
+ * An alternate FORMAT of one document (raster → svg, docx → pdf), i.e. a conversion the CDN
+ * can not perform. Anything imgix derives from the original by URL parameters (resize, crop,
+ * webp/avif, quality, rotation) is NOT a rendering.
+ * `format` is the key within the array: one entry per format, regenerating replaces it in place.
+ */
+export interface DocumentRendering {
+  format: string;      // lowercase extension — 'svg' | 'pdf'
+  fullPath: string;    // storage path of this rendering
+  mimeType: string;
+  size: number;
+  generator: string;   // 'vtracer' | 'libreoffice' — what produced it, for regeneration & debugging
+}
+
+/** Points at one document, optionally at a specific rendering of it. */
+export interface DocumentRef {
+  docKey: string;
+  format: string;      // '' = the original (DocumentModel.fullPath)
+}
+
 export class DocumentModel implements OkrModel, SearchableModel, TaggedModel {
   public okey = DEFAULT_KEY;
   public tenants: string[] = DEFAULT_TENANTS;
@@ -44,6 +64,9 @@ export class DocumentModel implements OkrModel, SearchableModel, TaggedModel {
   public hash = ''; // hash value of the file (SHA-256)
   public priorVersionKey = DEFAULT_KEY; // this links to prior version of the document
   public version = '';  // this is an arbitrary version string, e.g. a timestamp that can be user defined
+  // alternate FORMATS of this document (see DocumentRendering). fullPath stays the original and is
+  // deliberately not mirrored here. Legacy docs have no such field -> always read with `?? []`.
+  public renderings: DocumentRendering[] = [];
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

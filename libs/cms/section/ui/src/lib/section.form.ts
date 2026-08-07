@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@okr/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, debugFormModel, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { ModelSelectService } from '@okr/shared-feature';
 import { UploadService } from '@okr/avatar-data-access';
@@ -35,6 +35,11 @@ import { InvitationsConfiguration } from './invitations-configuration';
 import { ImagesConfiguration } from './images-configuration';
 import { TableHeader } from './table-header';
 import { TrackerConfiguration } from './tracker-configuration';
+import { SankeyConfiguration } from './sankey-configuration';
+import { SpiderConfiguration } from './spider-configuration';
+import { TocConfiguration } from './toc-configuration';
+import { TestimonialConfiguration } from './testimonial-configuration';
+import { TimelineConfiguration } from './timeline-configuration';
 
 @Component({
   selector: 'okr-section-form',
@@ -47,7 +52,7 @@ import { TrackerConfiguration } from './tracker-configuration';
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
-    MemberConfiguration, RagConfiguration
+    MemberConfiguration, RagConfiguration, SankeyConfiguration, SpiderConfiguration, TocConfiguration, TestimonialConfiguration, TimelineConfiguration
 ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -357,6 +362,51 @@ import { TrackerConfiguration } from './tracker-configuration';
             />
           }
         }
+        @case('sankey') {
+          @if(sankeyConfig(); as sankeyConfig) {
+            <okr-sankey-config
+              [formData]="sankeyConfig" (formDataChange)="onSankeyConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
+        @case('spider') {
+          @if(spiderConfig(); as spiderConfig) {
+            <okr-spider-config
+              [formData]="spiderConfig" (formDataChange)="onSpiderConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
+        @case('testimonial') {
+          @if(testimonialConfig(); as testimonialConfig) {
+            <okr-testimonial-config
+              [formData]="testimonialConfig" (formDataChange)="onTestimonialConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
+        @case('timeline') {
+          @if(timelineConfig(); as timelineConfig) {
+            <okr-timeline-config
+              [formData]="timelineConfig" (formDataChange)="onTimelineConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
+        @case('toc') {
+          @if(tocConfig(); as tocConfig) {
+            <okr-toc-config
+              [formData]="tocConfig" (formDataChange)="onTocConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [i18n]="i18n()"
+            />
+          }
+        }
         @case('rag') {
           @if(ragConfig(); as ragConfig) {
             <okr-rag-config
@@ -462,6 +512,11 @@ export class SectionForm {
   protected chatConfig = linkedSignal(() => this.getChatConfig());
   protected calendarConfig = linkedSignal(() => this.getCalendarConfig());
   protected chartConfig = linkedSignal(() => this.getChartConfig());
+  protected sankeyConfig = linkedSignal(() => this.getSankeyConfig());
+  protected spiderConfig = linkedSignal(() => this.getSpiderConfig());
+  protected tocConfig = linkedSignal(() => this.getTocConfig());
+  protected testimonialConfig = linkedSignal(() => this.getTestimonialConfig());
+  protected timelineConfig = linkedSignal(() => this.getTimelineConfig());
   protected memberConfig = linkedSignal(() => this.getMemberConfig());
   protected ragConfig = linkedSignal(() => this.getRagConfig());
   protected eventsConfig = linkedSignal(() => this.getEventsConfig());
@@ -570,6 +625,36 @@ export class SectionForm {
   private getChartConfig(): ChartOption | undefined {
     if (this.formData().type === 'chart') {
       return ((this.formData() as ChartSection).properties as ChartOption);
+    }
+  }
+
+  private getSankeyConfig(): SankeyConfig | undefined {
+    if (this.formData().type === 'sankey') {
+      return ((this.formData() as SankeySection).properties as SankeyConfig);
+    }
+  }
+
+  private getSpiderConfig(): SpiderConfig | undefined {
+    if (this.formData().type === 'spider') {
+      return ((this.formData() as SpiderSection).properties as SpiderConfig);
+    }
+  }
+
+  private getTocConfig(): TocConfig | undefined {
+    if (this.formData().type === 'toc') {
+      return ((this.formData() as TocSection).properties as TocConfig);
+    }
+  }
+
+  private getTestimonialConfig(): TestimonialConfig | undefined {
+    if (this.formData().type === 'testimonial') {
+      return ((this.formData() as TestimonialSection).properties as TestimonialConfig);
+    }
+  }
+
+  private getTimelineConfig(): TimelineConfig | undefined {
+    if (this.formData().type === 'timeline') {
+      return ((this.formData() as TimelineSection).properties as TimelineConfig);
     }
   }
 
@@ -705,7 +790,7 @@ export class SectionForm {
     }
     const file = await this.uploadService.pickFile(IMAGE_MIMETYPES);
     if (!file) return;
-    const fullPath = `${this.storagePath()}/${file.name}`;
+    const fullPath = `${this.storagePath()}/${sanitizeFileName(file.name)}`;
     const downloadUrl = await this.uploadService.uploadFile(file, fullPath, this.i18n().image_upload());
     if (!downloadUrl) return;
     const documentKey = await this.uploadService.createAndSaveDocument(file, this.tenantId(), fullPath, downloadUrl, this.currentUser());
@@ -837,6 +922,56 @@ export class SectionForm {
         ...section,
         properties: config
       } as ChartSection);
+    }
+  }
+
+  protected onSankeyConfigChange(config: SankeyConfig): void {
+    const section = this.formData();
+    if (section.type === 'sankey') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as SankeySection);
+    }
+  }
+
+  protected onSpiderConfigChange(config: SpiderConfig): void {
+    const section = this.formData();
+    if (section.type === 'spider') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as SpiderSection);
+    }
+  }
+
+  protected onTocConfigChange(config: TocConfig): void {
+    const section = this.formData();
+    if (section.type === 'toc') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as TocSection);
+    }
+  }
+
+  protected onTestimonialConfigChange(config: TestimonialConfig): void {
+    const section = this.formData();
+    if (section.type === 'testimonial') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as TestimonialSection);
+    }
+  }
+
+  protected onTimelineConfigChange(config: TimelineConfig): void {
+    const section = this.formData();
+    if (section.type === 'timeline') {
+      this.formData.set({
+        ...section,
+        properties: config
+      } as TimelineSection);
     }
   }
 

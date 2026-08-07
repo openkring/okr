@@ -1,11 +1,13 @@
 import { Injectable, inject } from '@angular/core';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FullMetadata, deleteObject, getDownloadURL, getMetadata, listAll, ref } from "firebase/storage";
 import { Observable, firstValueFrom, of } from 'rxjs';
 
 import { ENV, STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { DocumentCollection, DocumentModel, UserModel } from '@okr/shared-models';
+import { DocumentCollection, DocumentModel, DocumentRendering, UserModel } from '@okr/shared-models';
 import { error } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, fileSizeUnit, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
 
@@ -91,7 +93,42 @@ export class DocumentService {
    */
   public async hardDelete(document: DocumentModel): Promise<void> {
     await deleteObject(ref(this.storage, document.fullPath));
+    await this.deleteRenderings(document);
     await this.firestoreService.deleteObject(DocumentCollection, document.okey, PFX + 'remove.conf');
+  }
+
+  /**
+   * Delete every rendering (alternate format) of a document from Storage — without this, each
+   * vectorized document leaves an orphaned SVG behind. Best-effort per entry: a rendering that is
+   * already gone must not abort the deletion of the others.
+   * `renderings` is coalesced: legacy documents have no such field.
+   */
+  private async deleteRenderings(document: DocumentModel): Promise<void> {
+    await Promise.all((document.renderings ?? []).map(async (rendering) => {
+      try {
+        await deleteObject(ref(this.storage, rendering.fullPath));
+      } catch (ex) {
+        error(undefined, `DocumentService.deleteRenderings: could not delete ${rendering.fullPath}: ${JSON.stringify(ex)}`);
+      }
+    }));
+  }
+
+  /*-------------------------- RENDERINGS --------------------------------*/
+  /**
+   * Generate an SVG rendering of a JPG/PNG document (vtracer, via the vectorizeDocument CF).
+   * The CF writes both the Storage object and the `renderings[]` entry, so there is no save step
+   * here; re-running with different settings replaces the previous result.
+   * @param docKey the document to vectorize
+   * @param preset 'logo' (line art, binary) or 'photo' (flat colour graphics)
+   * @param detail maps onto vtracer's filterSpeckle — lower keeps more small shapes
+   * @returns the new rendering
+   */
+  public async vectorize(docKey: string, preset: 'logo' | 'photo' = 'logo', detail?: number): Promise<DocumentRendering> {
+    const fn = httpsCallable<{ docKey: string; tenantId: string; preset: string; detail?: number }, DocumentRendering>(
+      getFunctions(getApp(), 'europe-west6'), 'vectorizeDocument'
+    );
+    const result = await fn({ docKey, tenantId: this.tenantId, preset, detail });
+    return result.data;
   }
 
  /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

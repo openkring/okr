@@ -405,6 +405,16 @@ export const AddressStore = signalStore(
         if (url) openExternalUrl(url);
       },
 
+      /**
+       * Open the file stored on an address (the generated QR-bill PDF of a bankaccount address,
+       * the uploaded TWINT image). Synchronous on purpose, for the same reason as openWeb:
+       * on iOS/iPadOS Safari window.open is blocked once the ActionSheet has dismissed, so this
+       * must run inside the button's user-gesture handler and NOT after onDidDismiss.
+       */
+      openAddressFile(address: AddressModel): void {
+        if (address.url) openExternalUrl(address.url);
+      },
+
       /***************************  use an address *************************** */
       /**
        * Use an address, e.g. browse to a web address or call a phone number.

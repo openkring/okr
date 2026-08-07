@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@google-cloud/functions-framework": "^3.4.0",
+    "@neplex/vectorizer": "^0.1.0",
     "@sparticuz/chromium": "^149.0.0",
     "@types/pdfkit": "0.17.5",
     "axios": "1.10.0",

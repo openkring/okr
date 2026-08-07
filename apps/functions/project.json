@@ -47,6 +47,7 @@
           "swissqrbill",
           "puppeteer-core",
           "@sparticuz/chromium",
+          "@neplex/vectorizer",
           "handlebars",
           "html-to-docx",
           "sanitize-html",

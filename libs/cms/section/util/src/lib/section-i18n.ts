@@ -440,6 +440,63 @@ export const SECTION_I18N_KEYS = {
   rag_config_maxTokens_placeholder:         PFX + 'rag.config.maxTokens.placeholder',
   rag_config_maxTokens_helper:              PFX + 'rag.config.maxTokens.helper',
 
+  // sankey config
+  sankey_title:                             PFX + 'sankey.title',
+  sankey_subtitle:                          PFX + 'sankey.subtitle',
+  sankey_empty:                             PFX + 'sankey.empty',
+  sankey_flows_label:                       PFX + 'sankey.flows.label',
+  sankey_flows_helper:                      PFX + 'sankey.flows.helper',
+  sankey_flows_error:                       PFX + 'sankey.flows.error',
+  sankey_nodeWidth_label:                   PFX + 'sankey.nodeWidth.label',
+  sankey_nodeGap_label:                     PFX + 'sankey.nodeGap.label',
+  sankey_lineOpacity_label:                 PFX + 'sankey.lineOpacity.label',
+  sankey_layoutIterations_label:            PFX + 'sankey.layoutIterations.label',
+  sankey_layoutIterations_helper:           PFX + 'sankey.layoutIterations.helper',
+
+  // spider config
+  spider_title:                             PFX + 'spider.title',
+  spider_subtitle:                          PFX + 'spider.subtitle',
+  spider_axes_label:                        PFX + 'spider.axes.label',
+  spider_axes_helper:                       PFX + 'spider.axes.helper',
+  spider_axes_error:                        PFX + 'spider.axes.error',
+  spider_series_label:                      PFX + 'spider.series.label',
+  spider_series_helper:                     PFX + 'spider.series.helper',
+  spider_series_error:                      PFX + 'spider.series.error',
+  spider_areaOpacity_label:                 PFX + 'spider.areaOpacity.label',
+  spider_showLegend_label:                  PFX + 'spider.showLegend.label',
+  spider_showLegend_helper:                 PFX + 'spider.showLegend.helper',
+
+  // toc config
+  toc_title:                                PFX + 'toc.title',
+  toc_subtitle:                             PFX + 'toc.subtitle',
+  toc_nav_label:                            PFX + 'toc.navLabel',
+  toc_sectionKeys_label:                    PFX + 'toc.sectionKeys.label',
+  toc_sectionKeys_helper:                   PFX + 'toc.sectionKeys.helper',
+  toc_numbered_label:                       PFX + 'toc.numbered.label',
+  toc_numbered_helper:                      PFX + 'toc.numbered.helper',
+
+  // testimonial
+  testimonial_title:                        PFX + 'testimonial.title',
+  testimonial_subtitle:                     PFX + 'testimonial.subtitle',
+  testimonial_list_label:                   PFX + 'testimonial.listLabel',
+  testimonial_more:                         PFX + 'testimonial.more',
+  testimonial_link:                         PFX + 'testimonial.link',
+  testimonial_entries_label:                PFX + 'testimonial.entries.label',
+  testimonial_entries_helper:               PFX + 'testimonial.entries.helper',
+  testimonial_entries_error:                PFX + 'testimonial.entries.error',
+  testimonial_carousel_label:               PFX + 'testimonial.carousel.label',
+  testimonial_carousel_helper:              PFX + 'testimonial.carousel.helper',
+  testimonial_columns_label:                PFX + 'testimonial.columns.label',
+  testimonial_columns_helper:               PFX + 'testimonial.columns.helper',
+
+  // timeline
+  timeline_title:                           PFX + 'timeline.title',
+  timeline_subtitle:                        PFX + 'timeline.subtitle',
+  timeline_list_label:                      PFX + 'timeline.listLabel',
+  timeline_empty:                           PFX + 'timeline.empty',
+  timeline_vertical_label:                  PFX + 'timeline.vertical.label',
+  timeline_vertical_helper:                 PFX + 'timeline.vertical.helper',
+
   // responsibility-config
   responsibility_edit:                      PFX + 'responsibility.edit',
   responsibility_okey_label:                PFX + 'responsibility.okey.label',

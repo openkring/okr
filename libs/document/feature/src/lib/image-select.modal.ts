@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, ImageConfigEdit } from '@okr/shared-ui';
-import { coerceBoolean, getImgixUrlWithAutoParams } from '@okr/shared-util-core';
+import { coerceBoolean, getImgixUrlWithAutoParams, sanitizeFileName } from '@okr/shared-util-core';
 
 import { UploadService } from '@okr/avatar-data-access';
 import { getDocumentStoragePath, pickPhoto } from '@okr/document-util';
@@ -86,7 +86,7 @@ export class ImageSelectModal {
     if (file && key) {
       const storageLocation = getDocumentStoragePath(this.env.tenantId, this.modelType(), key);
       if (storageLocation) {
-        const path = storageLocation + '/' + file.name;
+        const path = storageLocation + '/' + sanitizeFileName(file.name);
         const downloadUrl = await this.uploadService.uploadFile(file, path, this.store.i18n.upload_single());
         let documentKey: string | undefined;
         let credit = '';

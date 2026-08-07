@@ -2,7 +2,7 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "../../../dist/out-tsc/libs/social-feed-data-access",
+    "outDir": "../../../dist/libs/social-feed/data-access",
     "declaration": true,
     "composite": true,
     "module": "preserve",

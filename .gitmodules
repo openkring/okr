@@ -22,3 +22,12 @@
 [submodule "apps/p13-app"]
 	path = apps/p13-app
 	url = git@github.com:bkaiser-org/p13-app.git
+[submodule "apps/kring-app"]
+	path = apps/kring-app
+	url = git@github.com:bkaiser-org/kring-app.git
+[submodule "apps/bkg-app"]
+	path = apps/bkg-app
+	url = git@github.com:bkaiser-org/bkg-app.git
+[submodule "apps/okr-app"]
+	path = apps/okr-app
+	url = git@github.com:bkaiser-org/okr-app.git

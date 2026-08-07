@@ -41,7 +41,7 @@ export const TEMPLATE_I18N_KEYS = {
   revert_conf:      PFX + 'revert.conf',
   revert_error:     PFX + 'revert.error',
 
-  name:             '@name',
+  name:             '@name.label',
   category:   PFX + 'category.label',
   language:   PFX + 'language.label',
   status:     PFX + 'status.label',

@@ -36,6 +36,13 @@ describe('buildSentryOptions', () => {
     expect(matches('JSON Parse error: Unexpected token "<"')).toBe(false);
   });
 
+  it('suppresses browser-extension runtime.sendMessage noise (SCS-2B)', () => {
+    const patterns = (buildSentryOptions(cfg, []).ignoreErrors ?? []) as RegExp[];
+    const matches = (msg: string) => patterns.some((p) => p instanceof RegExp && p.test(msg));
+    expect(matches('Error: Invalid call to runtime.sendMessage(). Tab not found.')).toBe(true);
+    expect(matches('Failed to send message to the server')).toBe(false);
+  });
+
   it('drops events originating inside the Google reCAPTCHA script (SCS-1Q)', () => {
     const patterns = (buildSentryOptions(cfg, []).denyUrls ?? []) as RegExp[];
     const matches = (url: string) => patterns.some((p) => p instanceof RegExp && p.test(url));

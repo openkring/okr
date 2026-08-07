@@ -63,7 +63,7 @@ const featureRoutes: Route[] = [
 ];
 
 export const appRoutes: Route[] = [
-  { path: '', pathMatch: 'full', redirectTo: 'public/welcome' },
+  { path: '', pathMatch: 'full', redirectTo: 'public/welcome_<%= tenantId %>' },
   {
     // Componentless parent: applies the app-ready gate to every feature route without
     // ever removing the router outlet from the DOM.

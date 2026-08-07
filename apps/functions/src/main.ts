@@ -12,6 +12,7 @@ import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
+import * as Vectorize from './vectorize';
 import * as Expense from './expense';
 import * as Booking from './booking';
 import * as Email from './email';
@@ -174,6 +175,8 @@ export const onRagFileDeleted = Rag.onRagFileDeleted;
 export const onOcrFileFinalized = Ocr.onOcrFileFinalized;
 export const onOcrResultWritten = Ocr.onOcrResultWritten;
 export const redoExpenseOcr = Ocr.redoExpenseOcr;
+// document renderings: raster → SVG (vtracer)
+export const vectorizeDocument = Vectorize.vectorizeDocument;
 // expense creation (CF-only writes to the `expenses` collection)
 export const createExpense = Expense.createExpense;
 export const deleteExpense = Expense.deleteExpense;
@@ -232,6 +235,9 @@ export const vcardExport = Vcard.vcardExport;
 // person duplicate detection + cross-tenant merge
 export const findPersonDuplicates = Person.findPersonDuplicates;
 export const mergePersonIntoTenant = Person.mergePersonIntoTenant;
+
+// org cross-tenant share — dual-tenant orgs for the partner channel (spec 1.26 C1 §6)
+export { mergeOrgIntoTenant } from './org';
 
 // privacy 1.19 Phase 3: one-time backfill of the ssn/dob vault + memberBirthYear
 export { migrateSensitiveData } from './person/migrate-sensitive-data';

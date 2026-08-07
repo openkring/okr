@@ -43,15 +43,17 @@ describe('buildSubjectCtx', () => {
   });
 });
 
+// True = the newest artifact is still inside the cooldown, so the callable re-signs THAT
+// artifact instead of building a new one (the member never sees an error for retrying).
 describe('isRateLimited', () => {
   const ONE_HOUR = 60 * 60 * 1000;
   const now = Date.parse('2026-07-28T12:00:00.000Z');
 
-  it('allows the first export ever (no prior artifact, newest = 0)', () => {
+  it('builds a fresh export when there is no prior artifact (newest = 0)', () => {
     expect(isRateLimited(0, now)).toBe(false);
   });
 
-  it('blocks a second export inside the same hour', () => {
+  it('reuses the artifact when a second export is requested inside the same hour', () => {
     const newest = now - 5 * 60 * 1000; // 5 min ago
     expect(isRateLimited(newest, now, ONE_HOUR)).toBe(true);
   });

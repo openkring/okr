@@ -8,7 +8,7 @@ import { firstValueFrom, Observable, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { CategoryListModel, DocumentCollection, DocumentModel, DocumentModelName, FolderModel } from '@okr/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, fileName, getSystemQuery, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, debugItemLoaded, debugListLoaded, fileName, getSystemQuery, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
 import { confirm, AppNavigationService, downloadFile } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -286,7 +286,7 @@ export const DocumentStore = signalStore(
         const basePath = `tenant/${tenantId}/${DocumentModelName}`;
 
         for (const file of files) {
-          const fullPath = `${basePath}/${file.name}`;
+          const fullPath = `${basePath}/${sanitizeFileName(file.name)}`;
           const downloadUrl = await store.uploadService.uploadFile(file, fullPath, file.name);
           if (!downloadUrl) continue;
 
@@ -458,6 +458,21 @@ export const DocumentStore = signalStore(
         if (!document?.url) return;
         const name = fileName(document.fullPath) || document.title || 'document';
         await downloadFile(document.url, name);
+      },
+
+      /**
+       * Open the vectorize modal (raster → SVG). The CF persists the rendering itself, so there is
+       * nothing to save here; the document stream picks up the new `renderings[]` entry.
+       */
+      async vectorize(document: DocumentModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
+        const { VectorizeModal } = await import('./vectorize.modal');
+        const modal = await store.modalController.create({
+          component: VectorizeModal,
+          componentProps: { document }
+        });
+        await modal.present();
+        await modal.onWillDismiss();
       },
 
       async showRevisions(document: DocumentModel): Promise<void> {

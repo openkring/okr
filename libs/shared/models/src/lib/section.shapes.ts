@@ -9,7 +9,7 @@ import type {
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, RagConfig, RagSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
 import { AlbumStyle } from './enums/album-style.enum';
@@ -403,6 +403,67 @@ export const RAG_SECTION_SHAPE = {
   type: 'rag' as const,
   properties: RAG_CONFIG_SHAPE,
 } as RagSection;
+
+// --------------------------------------- SANKEY ----------------------------------------
+export const SANKEY_CONFIG_SHAPE: SankeyConfig = {
+  flows: [],
+  nodeWidth: 40,
+  nodeGap: 20,
+  lineOpacity: 0.6,
+  layoutIterations: 0,
+};
+export const SANKEY_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'sankey' as const,
+  properties: SANKEY_CONFIG_SHAPE,
+} as SankeySection;
+
+// --------------------------------------- SPIDER ----------------------------------------
+export const SPIDER_CONFIG_SHAPE: SpiderConfig = {
+  axes: [],
+  series: [],
+  shape: 'polygon',
+  areaOpacity: 0.2,
+  showLegend: true,
+};
+export const SPIDER_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'spider' as const,
+  properties: SPIDER_CONFIG_SHAPE,
+} as SpiderSection;
+
+// --------------------------------------- TOC ----------------------------------------
+export const TOC_CONFIG_SHAPE: TocConfig = {
+  sectionKeys: [],
+  numbered: false,
+};
+export const TOC_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'toc' as const,
+  properties: TOC_CONFIG_SHAPE,
+} as TocSection;
+
+// --------------------------------------- TESTIMONIAL ----------------------------------------
+export const TESTIMONIAL_CONFIG_SHAPE: TestimonialConfig = {
+  entries: [],
+  layout: 'grid',
+  columns: 3,
+};
+export const TESTIMONIAL_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'testimonial' as const,
+  properties: TESTIMONIAL_CONFIG_SHAPE,
+} as TestimonialSection;
+
+// --------------------------------------- TIMELINE ----------------------------------------
+export const TIMELINE_CONFIG_SHAPE: TimelineConfig = {
+  orientation: 'horizontal',
+};
+export const TIMELINE_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'timeline' as const,
+  properties: TIMELINE_CONFIG_SHAPE,
+} as TimelineSection;
 
 // --------------------------------------- FORM ----------------------------------------
 export const FORM_SECTION_CONFIG_SHAPE: FormSectionConfig = {

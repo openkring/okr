@@ -3,6 +3,7 @@ import { ActionSheetController, AlertController } from '@ionic/angular/standalon
 
 import { ImageConfig, ImageType, SectionModel, UserModel } from '@okr/shared-models';
 import { IMAGE_MIMETYPES } from '@okr/shared-constants';
+import { sanitizeFileName } from '@okr/shared-util-core';
 import { confirm, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 import { UploadService } from '@okr/avatar-data-access';
 import { applyImagesToSlot, getSectionImageSlots, ImageSlot, isSlotOccupied } from '@okr/cms-section-util';
@@ -53,24 +54,26 @@ export class SectionImageService {
       : [await this.uploadService.pickFile(IMAGE_MIMETYPES)].filter((f): f is File => !!f);
     if (!files.length) return undefined;
 
-    const uploads = files.map(f => ({ file: f, fullPath: `${basePath}/${f.name}` }));
+    // the storage path must be sanitized (spaces/umlauts break the image url); labels keep the raw name
+    const pathOf = (f: File) => `${basePath}/${sanitizeFileName(f.name)}`;
+    const uploads = files.map(f => ({ file: f, fullPath: pathOf(f) }));
     const urls = await this.uploadService.uploadFiles(uploads, labels.uploadTitle);
     if (!urls) return undefined;
 
     const documentKeys = await Promise.all(files.map((f, idx) => {
       const downloadUrl = urls[idx];
       if (!downloadUrl) return Promise.resolve(undefined);
-      return this.uploadService.createAndSaveDocument(f, tenantId, `${basePath}/${f.name}`, downloadUrl, currentUser);
+      return this.uploadService.createAndSaveDocument(f, tenantId, pathOf(f), downloadUrl, currentUser);
     }));
 
     // seed the attribution from the file's own IPTC/EXIF metadata; '' for the many files that carry none
     const credits = await Promise.all(files.map((f, idx) =>
-      urls[idx] ? this.uploadService.readImageCredit(`${basePath}/${f.name}`) : Promise.resolve('')));
+      urls[idx] ? this.uploadService.readImageCredit(pathOf(f)) : Promise.resolve('')));
 
     const newImages: ImageConfig[] = files.map((f, idx) => ({
       label: f.name.replace(/\.[^.]+$/, ''),
       type: ImageType.Image,
-      url: `${basePath}/${f.name}`,
+      url: pathOf(f),
       actionUrl: '',
       altText: f.name.replace(/\.[^.]+$/, ''),
       overlay: '',

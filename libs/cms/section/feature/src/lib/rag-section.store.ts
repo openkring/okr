@@ -9,6 +9,7 @@ import { map } from 'rxjs/operators';
 import { AppStore } from '@okr/shared-feature';
 import { DocumentModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
+import { sanitizeFileName } from '@okr/shared-util-core';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { UploadService } from '@okr/avatar-data-access';
@@ -112,14 +113,14 @@ export const RagStore = signalStore(
 
             await store.folderService.ensureGroupFolder(RAG_FOLDER_KEY, 'RAG', tenantId, currentUser ?? undefined);
 
-            const uploads = files.map(file => ({ file, fullPath: `${storagePath}/${file.name}` }));
+            const uploads = files.map(file => ({ file, fullPath: `${storagePath}/${sanitizeFileName(file.name)}` }));
             const downloadUrls = await store.uploadService.uploadFiles(uploads, store.i18n.rag_upload());
             if (!downloadUrls) return;
 
             await Promise.all(files.map(async (file, i) => {
                 const downloadUrl = downloadUrls[i];
                 if (!downloadUrl) return;
-                const document = await buildDocumentModel(file, tenantId, `${storagePath}/${file.name}`, downloadUrl, currentUser ?? undefined);
+                const document = await buildDocumentModel(file, tenantId, `${storagePath}/${sanitizeFileName(file.name)}`, downloadUrl, currentUser ?? undefined);
                 document.folderKeys = [RAG_FOLDER_KEY];
                 await store.documentService.create(document, currentUser ?? undefined);
             }));
