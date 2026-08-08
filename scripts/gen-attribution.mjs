@@ -78,23 +78,10 @@ const TARGETS = {
   },
   'p13-website': {
     label: 'P13',
-    webFonts: 'apps/p13-website',
+    // self-hosted since 2026-08-08 (spec C6, defect W6) — the OFL text must travel with the files
+    selfHostedFonts: 'apps/p13-website/assets/fonts',
     out: 'dist/apps/p13-website/licenses.html',
   },
-};
-
-/**
- * Google-Fonts families are delivered by Google, not by us — we redistribute nothing and
- * owe no notice. They are listed anyway so the page describes everything a visitor loads.
- * An unmapped family is reported, never guessed.
- */
-const WEB_FONT_LICENSES = {
-  Inter: 'OFL-1.1',
-  'Inter Tight': 'OFL-1.1',
-  'IBM Plex Serif': 'OFL-1.1',
-  'JetBrains Mono': 'OFL-1.1',
-  'Space Grotesk': 'OFL-1.1',
-  'Plus Jakarta Sans': 'OFL-1.1',
 };
 
 /** Permissive / attribution-only licenses. Anything else is reported, not blocked. */
@@ -151,34 +138,6 @@ function detectLicenseId(text) {
   if (/Apache License[\s\S]{0,120}Version 2\.0/i.test(text)) return 'Apache-2.0';
   if (/\bMIT License\b/i.test(text)) return 'MIT';
   return 'Unknown';
-}
-
-/**
- * Read the families straight out of the site's `fonts.googleapis.com/css2?family=…` link
- * rather than hardcoding them, so the list cannot silently drift when typography changes.
- */
-function collectWebFonts(relDir) {
-  const dir = join(ROOT, relDir);
-  if (!existsSync(dir)) throw new Error(`missing site directory ${relDir}`);
-  const htmlFiles = [
-    ...readdirSync(dir)
-      .filter(f => f.endsWith('.html'))
-      .map(f => join(dir, f)),
-    ...(existsSync(join(dir, 'assets'))
-      ? readdirSync(join(dir, 'assets'))
-          .filter(f => f.endsWith('.html'))
-          .map(f => join(dir, 'assets', f))
-      : []),
-  ];
-  const families = new Set();
-  for (const file of htmlFiles) {
-    const html = readFileSync(file, 'utf8');
-    for (const m of html.matchAll(/fonts\.googleapis\.com\/css2\?([^"'\s>]+)/g)) {
-      const params = new URLSearchParams(m[1].replace(/&amp;/g, '&'));
-      for (const family of params.getAll('family')) families.add(family.split(':')[0].trim());
-    }
-  }
-  return [...families].sort().map(name => ({ name, license: WEB_FONT_LICENSES[name] ?? 'Unknown', text: null }));
 }
 
 /**
@@ -330,16 +289,6 @@ function buildSections(name, target) {
       blurb: 'Libraries copied into this site instead of loaded from a public CDN, so that no request leaves your browser to a third party. Their licenses require the text to travel with the copy.',
       format: 'text',
       entries: collectLicenseDir(target.vendored),
-    });
-  }
-  if (target.webFonts) {
-    sections.push({
-      id: 'fonts',
-      title: 'Fonts',
-      blurb: 'Typefaces this site loads from Google Fonts. The files are served by Google; only the families are listed here.',
-      format: 'table',
-      nameLabel: 'Font family',
-      entries: collectWebFonts(target.webFonts),
     });
   }
   if (target.serverDeps) {
