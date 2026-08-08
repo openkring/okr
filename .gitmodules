@@ -31,3 +31,6 @@
 [submodule "apps/okr-app"]
 	path = apps/okr-app
 	url = git@github.com:bkaiser-org/okr-app.git
+[submodule "apps/bkg-website"]
+	path = apps/bkg-website
+	url = git@github.com:bkaiser-org/bkg-website.git
