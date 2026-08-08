@@ -17,6 +17,8 @@ import {
 import type { BandId, MeteringPayload } from '@okr/business-metering-util';
 import { convertProspect } from '@okr/business-prospect-util';
 
+export { pushMeteringToPlatform } from './push';
+
 const REGION = 'europe-west6';
 
 /** Everything the partner channel writes lives in the platform tenant (C3 §6). */
@@ -34,7 +36,10 @@ function nowStamp(): string {
  * billable roles (pricing §9.1) and every `isPrivileged()` branch in `firestore.rules`.
  */
 async function requirePartner(request: CallableRequest, fnName: string): Promise<PartnerModel> {
-  checkAppCheckToken(request, fnName);
+  // NO App Check here, deliberately: the caller is the partner's scheduled Cloud Function (C3 §3),
+  // and App Check attests *client apps* — there is no server attestation to obtain, so requiring it
+  // would make the push impossible rather than safer. The credential is the service identity's ID
+  // token, which bkaiser issues and can disable unilaterally.
   checkAuthentication(request, fnName);
   const uid = request.auth?.uid ?? '';
   const snap = await getFirestore().collection(PartnerCollection)
