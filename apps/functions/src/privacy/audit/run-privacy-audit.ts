@@ -94,7 +94,14 @@ export function firestoreLoader(tenantId: string): AuditCtx['load'] {
     const hit = cache.get(collection);
     if (hit) return hit;
 
-    const pending = getFirestore().collection(collection).limit(SCAN_LIMIT).get()
+    // Subject-data-map rows name subcollections as 'parent/child' (e.g. 'users/fcmTokens').
+    // That is not a valid collection path, so read them as a collection group.
+    const sub = collection.includes('/');
+    const ref = sub
+      ? getFirestore().collectionGroup(collection.slice(collection.lastIndexOf('/') + 1))
+      : getFirestore().collection(collection);
+
+    const pending = ref.limit(SCAN_LIMIT).get()
       .then((snapshot) => snapshot.docs
         .filter((doc) => {
           const tenants = doc.get('tenants');

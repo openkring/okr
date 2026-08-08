@@ -64,18 +64,21 @@ export const cleanupOrphanSessions = onSchedule(
     const db = getFirestore();
     const thresholdStr = subDuration(getTodayStr(DateFormat.StoreDateTime), { minutes: 30 }, DateFormat.StoreDateTime);
 
+    // ponytail: single-field query + in-memory cutoff filter, so no composite index is needed.
+    // Bounded by the number of concurrently-open sessions; add an (isActive, lastSeenAt) index
+    // if that ever grows past a few thousand.
     const snap = await db.collection(SESSION_COLLECTION)
       .where('isActive', '==', true)
-      .where('lastSeenAt', '<', thresholdStr)
       .get();
 
-    if (snap.empty) {
+    const docs = snap.docs.filter((doc) => (doc.get('lastSeenAt') as string) < thresholdStr);
+
+    if (docs.length === 0) {
       logger.info('cleanupOrphanSessions: no orphans found');
       return;
     }
 
     const BATCH_SIZE = 500;
-    const docs = snap.docs;
     for (let i = 0; i < docs.length; i += BATCH_SIZE) {
       const chunk = docs.slice(i, i + BATCH_SIZE);
       const batch = db.batch();
@@ -87,7 +90,7 @@ export const cleanupOrphanSessions = onSchedule(
       }
       await batch.commit();
     }
-    logger.info(`cleanupOrphanSessions: closed ${snap.size} orphaned sessions`);
+    logger.info(`cleanupOrphanSessions: closed ${docs.length} orphaned sessions`);
   }
 );
 
