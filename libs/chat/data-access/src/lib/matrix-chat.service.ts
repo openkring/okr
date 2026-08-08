@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, initMatrixLogLevel, buildMentionContent, escapeHtml, MentionRef, resolveMatrixDisplayName } from '@okr/chat-util';
+import { convertHeicToJpeg, initMatrixLogLevel, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 
 import { isServiceAccount as isServiceAccountHelper } from './matrix-helpers';
@@ -1239,6 +1239,9 @@ private async buildAndEmitRoomsList(): Promise<void> {
       // For group rooms: use room name/avatar with member-count fallback
       let name: string;
       let avatarUrl: string | undefined;
+      // The DM counterpart's Matrix user id — the tenant filter resolves the DM's tenant from
+      // it (the localpart is the person okey), so DMs need no room-state marker at all.
+      let directUserId: string | undefined;
 
       if (isDirect) {
         const otherMember = room.getMembers().find(m =>
@@ -1249,6 +1252,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
         if (otherMember) {
           // rawDisplayName is null when no display name is set.
           // otherMember.name falls back to the full "@user:server" string — skip it.
+          directUserId = otherMember.userId;
           name = otherMember.rawDisplayName || otherMember.userId.split(':')[0].substring(1);
           // Store raw mxc:// URL; resolved to blob URL below via resolveMediaUrl
           avatarUrl = (otherMember as any)?.getMxcAvatarUrl?.() as string | undefined;
@@ -1283,6 +1287,8 @@ private async buildAndEmitRoomsList(): Promise<void> {
         // for the single open room on demand.
         members: [],
         typingUsers: this.typingByRoom.get(room.roomId) ?? [],
+        tenants: this.getRoomTenants(room),
+        directUserId,
       };
     })
     .sort((a, b) => {
@@ -1337,6 +1343,28 @@ private async buildAndEmitRoomsList(): Promise<void> {
    *   which is present on the invitee's m.room.member event when a room was
    *   created with is_direct:true and the invitee hasn't joined yet.
    */
+  /**
+   * Tenant marker for a room created from this app: the room belongs to the tenant it was
+   * created in. Without it the room would show up in every tenant's chat list, because one
+   * Matrix account serves the person everywhere.
+   */
+  private tenantMarkerState(): ICreateRoomOpts['initial_state'] {
+    const tenantId = this.appStore.tenantId();
+    if (!tenantId) return undefined;
+    return [{ type: OKR_TENANT_EVENT, state_key: '', content: { tenants: [tenantId] } }];
+  }
+
+  /**
+   * Read the room's tenant marker (`org.okr.tenant` state event). Undefined for rooms
+   * created before the marker existed — those stay visible in every tenant until
+   * `backfillMatrixRoomTenants` stamps them.
+   */
+  private getRoomTenants(room: Room): string[] | undefined {
+    const state = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
+    const tenants = state?.getStateEvents(OKR_TENANT_EVENT, '')?.getContent()?.['tenants'] as string[] | undefined;
+    return tenants?.length ? tenants : undefined;
+  }
+
   private isDirectRoom(room: Room): boolean {
     if (this.roomHasName(room)) return false;
 
@@ -1809,6 +1837,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
       is_direct: true,
       visibility: Visibility.Private,
       invite: [matrixUserId],
+      initial_state: this.tenantMarkerState(),
     };
 
     const result = await this.client.createRoom(opts);
@@ -1834,6 +1863,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
       preset,
       visibility,
       invite: userIds,
+      initial_state: this.tenantMarkerState(),
     };
 
     const result = await this.client.createRoom(opts);

@@ -280,6 +280,17 @@
         "skipped_has": "Konten mit eigenem Avatar übersprungen.",
         "confirm": "{{ count }} Avatare jetzt aus den Personen-Avataren setzen?",
         "conf": "{{ count }} Avatare repariert."
+      },
+      "tenants": {
+        "label": "Chat-Räume Mandanten zuordnen",
+        "description": "Ein Matrix-Konto gilt für alle Mandanten. Diese Reparatur markiert bestehende Gruppen-Räume mit den Mandanten ihrer Gruppe, damit im Chat nur noch die Räume dieses Mandanten erscheinen. Direktnachrichten werden bewusst nicht markiert (sie werden über die Gegenseite zugeordnet); Räume ohne eindeutige Zuordnung bleiben unmarkiert und weiterhin überall sichtbar.",
+        "scan": "Prüfen",
+        "action": "Zuordnen",
+        "none": "Alle Räume sind bereits zugeordnet – nichts zu tun.",
+        "preview": "Zuzuordnende Räume",
+        "ambiguous": "Räume ohne eindeutige Zuordnung übersprungen (bleiben überall sichtbar).",
+        "confirm": "{{ count }} Chat-Räume jetzt den Mandanten zuordnen?",
+        "conf": "{{ count }} Chat-Räume zugeordnet."
       }
     }
   },

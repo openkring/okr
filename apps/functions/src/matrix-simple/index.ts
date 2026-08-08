@@ -12,6 +12,7 @@
  *  - credentials.ts     token exchange, user provisioning, profile sync, deactivation
  *  - rooms.ts           group-room resolve/access/invite/kick + admin room management
  *  - push.ts            call notifications, pusher registration, push gateway
+ *  - tenant-backfill.ts backfill of the org.okr.tenant room marker
  *  - membership-sync.ts Firestore trigger + reconcile (membership → room sync)
  */
 
@@ -19,3 +20,4 @@ export * from './shared';
 export * from './credentials';
 export * from './rooms';
 export * from './push';
+export * from './tenant-backfill';

@@ -4,6 +4,7 @@
 // invite/kick, rename, list, details, members, delete, aliases.
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { getFirestore } from 'firebase-admin/firestore';
 
 import {
   matrixAdminToken,
@@ -17,6 +18,7 @@ import {
   kickUserFromRoom,
   requireParam,
   checkRateLimit,
+  serverHostname,
 } from './shared';
 
 /**
@@ -273,15 +275,18 @@ export const renameMatrixRoom = onCall(
   async (request): Promise<{ roomId: string; name: string }> => {
     await requireRole(request, 'renameMatrixRoom', ['admin']);
 
-    const { groupId, name } = request.data as { groupId: string; name: string };
-    requireParam(groupId, 'groupId');
+    // Accepts EITHER a roomId (AOC's room list, which knows no group) or a groupId. The AOC
+    // room actions always send roomId; requiring groupId is what made every rename from that
+    // screen fail with 400 invalid-argument.
+    const { groupId, roomId: roomIdArg, name } = request.data as { groupId?: string; roomId?: string; name: string };
     requireParam(name, 'name');
+    if (!groupId && !roomIdArg) throw new HttpsError('invalid-argument', 'Either roomId or groupId is required');
 
     const adminToken = matrixAdminToken.value();
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
 
-    // Step 1: Resolve the group's room (do not create)
-    const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: false });
+    // Step 1: Resolve the room — given directly, or via the group (do not create)
+    const roomId = roomIdArg ?? await resolveGroupRoom(groupId!, hostname, adminToken, { create: false });
     if (!roomId) throw new HttpsError('not-found', `No room found for group "${groupId}"`);
 
     // Step 2: Ensure the admin is in the room (needed to send state events; ARCH-5 helper)
@@ -312,6 +317,14 @@ export interface AdminRoom {
   joinedMembers: number;
   creator?: string;
   public: boolean;
+  /**
+   * Label for a room that carries no `m.room.name` — `DM: Anna Muster ↔ Bruno Kaiser`, or
+   * `Raum: …` for a nameless multi-person room. Derived for display only, NEVER written to
+   * room state: a DM has no name by design (each side shows the other person), and our own
+   * client treats "has a name" as "is not a DM" (isDirectRoom), so naming one would make it
+   * render as a group room.
+   */
+  derivedName?: string;
 }
 
 /**
@@ -377,13 +390,82 @@ export const listMatrixRooms = onCall(
       const joinedSet = new Set(joinedRoomIds);
       const allRooms = await fetchAllRooms();
       const filtered = allRooms.filter(r => joinedSet.has(r.roomId));
+      await addDerivedNames(filtered, adminToken);
       return { rooms: filtered, total: filtered.length };
     }
 
     const rooms = await fetchAllRooms();
+    await addDerivedNames(rooms, adminToken);
     return { rooms, total: rooms.length };
   }
 );
+
+
+/** Service/bot accounts that must not appear in a derived room label. */
+const LABEL_HIDDEN_LOCALPARTS = new Set(['bk2-bot', 'baibot', 'signalbot']);
+
+/**
+ * Fill `derivedName` on every room that has no `m.room.name`, so the admin room list shows
+ * "DM: Anna Muster ↔ Bruno Kaiser" instead of a blank row and an opaque room id.
+ *
+ * A Matrix localpart IS the person okey (lowercased), so one read of `persons` resolves every
+ * member to a real name. Bridge puppets (`@signal_…`) have no person, so they fall back to their
+ * Matrix profile display name — mautrix fills it with the real contact name, which turns
+ * "DM: signal_9f3a-…" into "DM: Maria Gauer". Mutates `rooms` in place; failures are swallowed —
+ * a missing label must never fail the list.
+ */
+async function addDerivedNames(rooms: AdminRoom[], adminToken: string): Promise<void> {
+  const unnamed = rooms.filter(r => !r.name).slice(0, 120);
+  if (!unnamed.length) return;
+  try {
+    const personsSnap = await getFirestore().collection('persons').get();
+    const nameByKey = new Map<string, string>();
+    for (const doc of personsSnap.docs) {
+      const full = [doc.data()['firstName'], doc.data()['lastName']].filter(Boolean).join(' ').trim();
+      if (full) nameByKey.set(doc.id.toLowerCase(), full);
+    }
+
+    // Matrix profile lookups for members that are not okr persons (bridge puppets), cached
+    // per localpart because the same contact recurs across rooms.
+    const profileCache = new Map<string, string>();
+    const resolveProfile = async (localpart: string): Promise<string> => {
+      const cached = profileCache.get(localpart);
+      if (cached !== undefined) return cached;
+      let label = localpart;
+      try {
+        const userId = `@${localpart}:${serverHostname()}`;
+        const resp = await fetch(
+          `${MATRIX_HOMESERVER}/_matrix/client/v3/profile/${encodeURIComponent(userId)}/displayname`,
+          { headers: { Authorization: `Bearer ${adminToken}` } }
+        );
+        if (resp.ok) label = (await resp.json() as { displayname?: string }).displayname || localpart;
+      } catch { /* keep the localpart */ }
+      profileCache.set(localpart, label);
+      return label;
+    };
+
+    await Promise.all(unnamed.map(async room => {
+      const resp = await fetch(
+        `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(room.roomId)}/members`,
+        { headers: { Authorization: `Bearer ${adminToken}` } }
+      );
+      if (!resp.ok) return;
+      const { members } = await resp.json() as { members: string[] };
+      const localparts = members
+        .map(m => m.split(':')[0].replace(/^@/, '').toLowerCase())
+        .filter(localpart => !LABEL_HIDDEN_LOCALPARTS.has(localpart));
+      const labels = await Promise.all(
+        localparts.map(async localpart => nameByKey.get(localpart) ?? await resolveProfile(localpart))
+      );
+      if (!labels.length) return;
+      room.derivedName = labels.length <= 2
+        ? `DM: ${labels.join(' ↔ ')}`
+        : `Raum: ${labels.slice(0, 3).join(', ')}${labels.length > 3 ? ` (+${labels.length - 3})` : ''}`;
+    }));
+  } catch (err) {
+    console.warn('addDerivedNames: could not derive room labels:', err);
+  }
+}
 
 export interface RoomDetails {
   id: string;
@@ -610,10 +692,13 @@ export const deleteMatrixRoom = onCall(
 
     console.log(`deleteMatrixRoom: deleting room ${roomId}`);
 
+    // Synapse removed `POST /_synapse/admin/v1/rooms/<id>/delete` — it answers M_UNRECOGNIZED
+    // ("Unrecognized request", HTTP 404), which this function reported as a bare 500. The
+    // replacement is the async v2 endpoint; it returns a delete_id to poll, same as before.
     const deleteResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/delete`,
+      `${MATRIX_HOMESERVER}/_synapse/admin/v2/rooms/${encodeURIComponent(roomId)}`,
       {
-        method: 'POST',
+        method: 'DELETE',
         headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           block: false,

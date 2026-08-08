@@ -280,6 +280,17 @@
         "skipped_has": "Account con avatar proprio ignorati.",
         "confirm": "Impostare ora {{ count }} avatar a partire dagli avatar delle persone?",
         "conf": "{{ count }} avatar riparati."
+      },
+      "tenants": {
+        "label": "Assegnare le chat ai tenant",
+        "description": "Un account Matrix vale per tutti i tenant. Questa riparazione contrassegna le stanze di gruppo esistenti con i tenant del loro gruppo, così la chat elenca solo le stanze di questo tenant. I messaggi diretti non vengono contrassegnati di proposito (sono assegnati tramite l'interlocutore); le stanze senza assegnazione univoca restano non contrassegnate e visibili ovunque.",
+        "scan": "Verifica",
+        "action": "Assegna",
+        "none": "Tutte le stanze sono già assegnate: nulla da fare.",
+        "preview": "Stanze da assegnare",
+        "ambiguous": "stanze senza assegnazione univoca ignorate (restano visibili ovunque).",
+        "confirm": "Assegnare ora {{ count }} stanze ai loro tenant?",
+        "conf": "{{ count }} stanze assegnate."
       }
     }
   },

@@ -22,6 +22,8 @@ export interface AdminRoom {
   joinedMembers: number;
   creator?: string;
   public: boolean;
+  /** Display label for a room without an m.room.name — "DM: A ↔ B". Derived server-side. */
+  derivedName?: string;
 }
 
 export interface RoomDetails {
@@ -82,6 +84,21 @@ export interface AvatarRepairResult {
   skippedHasAvatar: number;
   applied: boolean;
 }
+/** One room the tenant backfill would stamp. */
+export interface TenantBackfillEntry {
+  roomId: string;
+  name: string;
+  tenants: string[];
+}
+
+export interface TenantBackfillResult {
+  stamped: number;
+  alreadyMarked: number;
+  ambiguous: string[];
+  changes: Record<string, string[]>;
+  names: Record<string, string>;
+  dryRun: boolean;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type DetailsTarget = 'room' | 'member';
@@ -102,6 +119,11 @@ export type AocChatState = {
   avatarRepairSkippedHas: number;
   avatarRepairScanning: boolean;
   avatarRepairApplying: boolean;
+  // tenant backfill — stamp rooms with the tenants they belong to
+  tenantRepairPreview: TenantBackfillEntry[] | undefined; // undefined = not yet scanned
+  tenantRepairAmbiguous: number;
+  tenantRepairScanning: boolean;
+  tenantRepairApplying: boolean;
 };
 
 const initialState: AocChatState = {
@@ -118,6 +140,10 @@ const initialState: AocChatState = {
   avatarRepairSkippedHas: 0,
   avatarRepairScanning: false,
   avatarRepairApplying: false,
+  tenantRepairPreview: undefined,
+  tenantRepairAmbiguous: 0,
+  tenantRepairScanning: false,
+  tenantRepairApplying: false,
 };
 
 function getFn() {
@@ -553,6 +579,73 @@ export const AocChatStore = signalStore(
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       } finally {
         patchState(store, { avatarRepairApplying: false });
+      }
+    },
+
+    // ─── tenant backfill ───────────────────────────────────────────────────────
+
+    /**
+     * Dry-run the tenant backfill: lists the rooms that would be stamped with the tenants
+     * they belong to (`org.okr.tenant` room state). Writes nothing.
+     */
+    async previewTenantRepair(): Promise<void> {
+      patchState(store, { tenantRepairScanning: true });
+      try {
+        const fn = httpsCallable<{ dryRun?: boolean }, TenantBackfillResult>(
+          getFn(), 'backfillMatrixRoomTenants'
+        );
+        const dry = await fn({ dryRun: true });
+        patchState(store, {
+          tenantRepairPreview: Object.entries(dry.data.changes)
+            .map(([roomId, tenants]) => ({ roomId, name: dry.data.names?.[roomId] ?? '', tenants })),
+          tenantRepairAmbiguous: dry.data.ambiguous.length,
+        });
+      } catch (e) {
+        patchState(store, { tenantRepairPreview: undefined, tenantRepairAmbiguous: 0 });
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { tenantRepairScanning: false });
+      }
+    },
+
+    /**
+     * Apply the previewed tenant backfill. Confirms, then re-runs with dryRun=false so the
+     * written set reflects the state at write time. Idempotent — already-marked rooms are
+     * skipped server-side, so re-running only picks up what is new.
+     */
+    async applyTenantRepair(): Promise<void> {
+      const preview = store.tenantRepairPreview();
+      if (!preview || preview.length === 0) return;
+      const message = await firstValueFrom(
+        store.i18nService.translate('@aoc/feature.chat.repair.tenants.confirm', { count: preview.length })
+      );
+      const alert = await store.alertController.create({
+        header: store.i18n.chat_repair_tenants(),
+        message,
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.chat_repair_tenants_action(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm') return;
+
+      patchState(store, { tenantRepairApplying: true });
+      try {
+        const fn = httpsCallable<{ dryRun?: boolean }, TenantBackfillResult>(
+          getFn(), 'backfillMatrixRoomTenants'
+        );
+        const applied = await fn({ dryRun: false });
+        const conf = await firstValueFrom(
+          store.i18nService.translate('@aoc/feature.chat.repair.tenants.conf', { count: applied.data.stamped })
+        );
+        patchState(store, { tenantRepairPreview: [], tenantRepairAmbiguous: applied.data.ambiguous.length });
+        await showToast(store.toastController, conf);
+      } catch (e) {
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { tenantRepairApplying: false });
       }
     },
 

@@ -82,3 +82,71 @@ export function formatReceiptTime(ts: number): string {
 export function resolveMatrixDisplayName(rawDisplayName: string | null | undefined, userId: string): string {
   return rawDisplayName || userId.split(':')[0].replace(/^@/, '');
 }
+
+/**
+ * Custom room state event carrying the okr tenants a room belongs to: `{ tenants: string[] }`.
+ * Kept in sync with `OKR_TENANT_EVENT` in `apps/functions/src/matrix-simple/shared.ts`
+ * (the Cloud Functions cannot import from libs).
+ */
+export const OKR_TENANT_EVENT = 'org.okr.tenant';
+
+/**
+ * Localpart prefixes used by the mautrix bridge family for their puppet ("ghost") users —
+ * `@signal_<uuid>`, `@whatsapp_<number>`, … A ghost is the bridged contact themselves, not an
+ * okr person and not a bot, so it must NOT go into SERVICE_ACCOUNT_LOCALPARTS (that set hides
+ * an account from member lists, receipts and calls, which would be wrong for a real
+ * counterpart). It only tells the tenant filter "this DM's counterpart can never match a
+ * person okey, so don't hide the room for failing to".
+ */
+export const BRIDGE_GHOST_PREFIXES = ['signal_', 'whatsapp_', 'telegram_', 'discord_', 'slack_', 'instagram_', 'messenger_', 'gmessages_', 'twitter_'];
+
+/** True if the Matrix localpart is a bridge puppet rather than an okr person account. */
+export function isBridgeGhost(localpart: string): boolean {
+  return BRIDGE_GHOST_PREFIXES.some(prefix => localpart.startsWith(prefix));
+}
+
+/**
+ * Matrix accounts are ONE per person across all tenants (shared homeserver), so the joined-room
+ * list mixes every tenant's chats. This keeps only the rooms of the tenant whose app is running.
+ *
+ * Per room, in order:
+ *  1. `tenants` — the `org.okr.tenant` marker written at room creation (and backfilled onto
+ *     existing group rooms). Authoritative.
+ *  2. no marker, but a `#group_…` canonical alias (mapped onto `topic` by MatrixChatService):
+ *     a group room, kept when it matches one of this tenant's groups — by the persisted
+ *     `matrixRoomId`, or by the alias localpart derived from the group okey (same derivation as
+ *     `groupRoomAliasLocalpart` in the Cloud Functions) for groups whose chat was never opened.
+ *  3. a DM (`directUserId`): kept when the counterpart is a person of this tenant. DMs carry no
+ *     marker by design — stamping one would mean force-joining the admin bot into a private
+ *     two-person conversation — and they need none: a DM belongs where both people are.
+ *     A bridged counterpart (`@signal_…` and friends) is not an okr person and can never match,
+ *     so it is kept rather than hidden everywhere; DMs with a service/bot account never reach
+ *     this rule at all, because MatrixChatService leaves `directUserId` unset for them.
+ *  4. anything else (ad-hoc room, unresolvable DM counterpart): kept. Hiding a room we cannot
+ *     classify would lose a conversation.
+ *
+ * `personKeys` are this tenant's person okeys, lowercased — a Matrix localpart IS the person okey.
+ */
+export function filterRoomsOfTenant<T extends {
+  roomId: string; topic?: string; tenants?: string[]; directUserId?: string;
+}>(
+  rooms: T[],
+  groups: { okey: string; matrixRoomId?: string }[],
+  personKeys: Set<string>,
+  tenantId: string
+): T[] {
+  const roomIds = new Set(groups.map(g => g.matrixRoomId).filter(Boolean));
+  const aliases = new Set(groups.map(g => `#group_${g.okey.toLowerCase().replace(/[^a-z0-9._~-]/g, '_')}`));
+  return rooms.filter(r => {
+    if (r.tenants?.length) return r.tenants.includes(tenantId);
+    // Lowercased: rooms created by an older code path kept the okey's original case
+    // (`#group_Trainerteam`), while the alias derived from a group okey is lowercased.
+    const alias = r.topic?.toLowerCase();
+    if (alias?.startsWith('#group_')) return roomIds.has(r.roomId) || aliases.has(alias.split(':')[0]);
+    if (r.directUserId) {
+      const localpart = r.directUserId.split(':')[0].replace(/^@/, '').toLowerCase();
+      return isBridgeGhost(localpart) || personKeys.has(localpart);
+    }
+    return true;
+  });
+}

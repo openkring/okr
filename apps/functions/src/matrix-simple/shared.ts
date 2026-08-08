@@ -473,6 +473,10 @@ export async function resolveGroupRoom(
           preset: 'private_chat',
           visibility: 'private',
           creation_content: { 'm.federate': false },
+          // Tenant marker (see OKR_TENANT_EVENT): the group's tenants become the room's.
+          initial_state: [
+            { type: OKR_TENANT_EVENT, state_key: '', content: { tenants: groupSnap.data()?.['tenants'] ?? [] } },
+          ],
         }),
       }
     );
@@ -491,6 +495,64 @@ export async function resolveGroupRoom(
   }
 
   return roomId;
+}
+
+/**
+ * Custom room state event carrying the okr tenants a room belongs to: `{ tenants: string[] }`.
+ * One Matrix account serves a person in EVERY tenant, so without this marker the joined-room
+ * list of the scs app and the p13 app are identical. Kept in sync with `OKR_TENANT_EVENT` in
+ * `@okr/chat-util` (libs cannot be imported here).
+ */
+export const OKR_TENANT_EVENT = 'org.okr.tenant';
+
+/**
+ * Stamp a room with the tenants it belongs to. Best-effort: a failure only means the room
+ * stays unmarked, and unmarked rooms remain visible in every tenant (never hidden).
+ */
+export async function setRoomTenants(roomId: string, tenants: string[], adminToken: string): Promise<boolean> {
+  if (!tenants.length) return false;
+  await ensureAdminInRoom(roomId, adminToken);
+
+  const put = () => fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/${OKR_TENANT_EVENT}/`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenants }),
+    }
+  );
+
+  let resp = await put();
+  if (resp.status === 403) {
+    // The admin had to join this room just now, and the membership is not visible to the
+    // very next request yet — the write then 403s even though the join succeeded. Observed
+    // on 8 group rooms in the first backfill run: they stayed unmarked and reappeared as
+    // "to assign" on the next scan, while a second run wrote them without complaint.
+    // One short retry turns that two-run dance into one.
+    const firstErr = await resp.text();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    resp = await put();
+    if (!resp.ok) {
+      console.warn(`setRoomTenants: ${roomId} → 403 (${firstErr}); retry → ${resp.status}: ${await resp.text()}`);
+      return false;
+    }
+    console.log(`setRoomTenants: ${roomId} written on retry after join`);
+  } else if (!resp.ok) {
+    console.warn(`setRoomTenants: failed for ${roomId} → ${resp.status}: ${await resp.text()}`);
+    return false;
+  }
+  return true;
+}
+
+/** Read the tenants marker of a room; empty array when the room is unmarked. */
+export async function getRoomTenants(roomId: string, adminToken: string): Promise<string[]> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/${OKR_TENANT_EVENT}/`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  if (!resp.ok) return [];
+  const content = await resp.json() as { tenants?: string[] };
+  return content.tenants ?? [];
 }
 
 /** Hostname used as the Matrix server_name (homeserver host without the `matrix.` prefix). */
@@ -522,8 +584,61 @@ export async function ensureAdminInRoom(roomId: string, adminToken: string): Pro
       body: JSON.stringify({ user_id: adminUserId }),
     }
   );
-  if (!joinResp.ok) {
-    console.warn(`ensureAdminInRoom: join for ${adminUserId} → ${joinResp.status}: ${await joinResp.text()}`);
+  if (joinResp.ok) return;
+
+  const joinErr = await joinResp.text();
+  if (joinResp.status !== 403) {
+    console.warn(`ensureAdminInRoom: join for ${adminUserId} → ${joinResp.status}: ${joinErr}`);
+    return;
+  }
+
+  // 403 on an invite-only room the admin is not in yet: the admin-join API can only add a
+  // user to a room the admin is already in. `make_room_admin` is the documented escalation —
+  // it uses a local member that still holds power in the room to invite + promote the given
+  // user (PL 100). It is what makes AOC room actions (rename, alias, invite) work on rooms
+  // nobody explicitly added the bot to. Requires a local user with power in the room; if
+  // there is none, Synapse says so and the follow-up call surfaces the real failure.
+  const promote = () => fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/make_room_admin`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: adminUserId }),
+    }
+  );
+
+  // Synapse rate-limits make_room_admin to roughly one call per minute. A backfill over
+  // several rooms therefore gets one success and then a wall of
+  // `429 M_LIMIT_EXCEEDED {retry_after_ms: ~60000}` — which looked like a permission problem
+  // but is pure pacing. Wait out the interval Synapse names (capped, once) instead of failing.
+  let promoteResp = await promote();
+  if (promoteResp.status === 429) {
+    const body = await promoteResp.text();
+    let waitMs = 60_000;
+    try { waitMs = (JSON.parse(body) as { retry_after_ms?: number }).retry_after_ms ?? waitMs; } catch { /* keep default */ }
+    waitMs = Math.min(waitMs + 2_000, 90_000);
+    console.log(`ensureAdminInRoom: make_room_admin rate-limited for ${roomId}, waiting ${Math.round(waitMs / 1000)}s`);
+    await new Promise(resolve => setTimeout(resolve, waitMs));
+    promoteResp = await promote();
+  }
+  if (!promoteResp.ok) {
+    console.warn(`ensureAdminInRoom: join → 403 (${joinErr}); make_room_admin → ${promoteResp.status}: ${await promoteResp.text()}`);
+    return;
+  }
+
+  // make_room_admin invites and promotes; the invite still has to be accepted.
+  const retryResp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: adminUserId }),
+    }
+  );
+  if (!retryResp.ok) {
+    console.warn(`ensureAdminInRoom: join after make_room_admin → ${retryResp.status}: ${await retryResp.text()}`);
+  } else {
+    console.log(`ensureAdminInRoom: ${adminUserId} joined ${roomId} via make_room_admin`);
   }
 }
 

@@ -280,6 +280,17 @@
         "skipped_has": "Accounts with their own avatar skipped.",
         "confirm": "Set {{ count }} avatars from the person avatars now?",
         "conf": "{{ count }} avatars repaired."
+      },
+      "tenants": {
+        "label": "Assign chat rooms to tenants",
+        "description": "One Matrix account serves every tenant. This repair marks existing group rooms with their group's tenants, so the chat only lists this tenant's rooms. Direct messages are deliberately left unmarked (they are placed by their counterpart); rooms without an unambiguous assignment stay unmarked and remain visible everywhere.",
+        "scan": "Scan",
+        "action": "Assign",
+        "none": "All rooms are already assigned — nothing to do.",
+        "preview": "Rooms to assign",
+        "ambiguous": "rooms without an unambiguous assignment skipped (they stay visible everywhere).",
+        "confirm": "Assign {{ count }} chat rooms to their tenants now?",
+        "conf": "{{ count }} chat rooms assigned."
       }
     }
   },

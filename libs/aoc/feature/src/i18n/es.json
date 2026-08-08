@@ -280,6 +280,17 @@
         "skipped_has": "Cuentas con su propio avatar omitidas.",
         "confirm": "¿Establecer ahora {{ count }} avatares a partir de los avatares de las personas?",
         "conf": "{{ count }} avatares reparados."
+      },
+      "tenants": {
+        "label": "Asignar salas de chat a los inquilinos",
+        "description": "Una cuenta de Matrix sirve para todos los inquilinos. Esta reparación marca las salas de grupo existentes con los inquilinos de su grupo, para que el chat solo muestre las salas de este inquilino. Los mensajes directos no se marcan a propósito (se asignan por su interlocutor); las salas sin asignación inequívoca quedan sin marcar y siguen visibles en todas partes.",
+        "scan": "Comprobar",
+        "action": "Asignar",
+        "none": "Todas las salas ya están asignadas: nada que hacer.",
+        "preview": "Salas por asignar",
+        "ambiguous": "salas sin asignación inequívoca omitidas (siguen visibles en todas partes).",
+        "confirm": "¿Asignar ahora {{ count }} salas de chat a sus inquilinos?",
+        "conf": "{{ count }} salas de chat asignadas."
       }
     }
   },

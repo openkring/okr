@@ -51,6 +51,20 @@ export interface MatrixRoom {
   lastMessage?: MatrixMessage;
   members: MatrixMember[];
   typingUsers: string[];
+  /**
+   * The okr tenants this room belongs to, read from the room's `org.okr.tenant` state event
+   * (see OKR_TENANT_EVENT in `@okr/chat-util`). NOT a Firestore field — a Matrix room is not a
+   * Firestore document; this only mirrors room state. Undefined for rooms created before the
+   * marker existed and not covered by `backfillMatrixRoomTenants`; such rooms stay visible in
+   * every tenant.
+   */
+  tenants?: string[];
+  /**
+   * For a DM: the other member's Matrix user id (`@<personKey>:<server>`). Lets the tenant
+   * filter place a DM without any room state — a DM belongs to the tenants the two people
+   * actually share. Undefined for group rooms.
+   */
+  directUserId?: string;
 }
 
 export const ROOM_SHAPE: MatrixRoom = {

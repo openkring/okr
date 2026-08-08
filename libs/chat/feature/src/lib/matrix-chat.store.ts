@@ -16,7 +16,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef } from '@okr/chat-util';
+import { filterRoomsOfTenant, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -122,7 +122,15 @@ export const _MatrixChatStore = signalStore(
       currentUser: computed(() => state.appStore.currentUser()),
       imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
       syncState: computed(() => state.syncStateResource.value() || 'STOPPED'),
-      rooms: computed(() => state.roomsResource.value() || []),
+      // One Matrix account spans all tenants, so the raw list contains other tenants' group
+      // rooms and DMs too — filtered down to this tenant (see filterRoomsOfTenant).
+      // Everything derived from `rooms` (unread badges included) inherits the filter.
+      rooms: computed(() => filterRoomsOfTenant(
+        state.roomsResource.value() || [],
+        state.appStore.allGroups(),
+        new Set(state.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase())),
+        state.appStore.tenantId(),
+      )),
       imageUrl: computed(() => state.imageUrlResource.value()),
       activeCall: computed(() => state.activeCallResource.value() as MatrixCall | null | undefined),
       callState: computed(() => state.callStateResource.value()),

@@ -279,6 +279,57 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
         </ion-card-content>
       </ion-card>
 
+      <!-- Tenant backfill — stamp rooms with the tenants they belong to -->
+      <ion-card class="repair-card">
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.chat_repair_tenants() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="repair-desc">{{ store.i18n.chat_repair_tenants_description() }}</p>
+          <div class="repair-actions">
+            <ion-button size="small" fill="outline" (click)="onPreviewTenantRepair()" [disabled]="tenantRepairScanning() || tenantRepairApplying()">
+              @if (tenantRepairScanning()) {
+                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+              } @else {
+                <ion-icon slot="start" src="{{'search' | svgIcon}}" />
+              }
+              {{ store.i18n.chat_repair_tenants_scan() }}
+            </ion-button>
+            @if (tenantRepairPreview()?.length) {
+              <ion-button size="small" color="primary" (click)="onApplyTenantRepair()" [disabled]="tenantRepairApplying()">
+                @if (tenantRepairApplying()) {
+                  <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+                } @else {
+                  <ion-icon slot="start" src="{{'edit' | svgIcon}}" />
+                }
+                {{ store.i18n.chat_repair_tenants_action() }} ({{ tenantRepairPreview()!.length }})
+              </ion-button>
+            }
+          </div>
+
+          @if (tenantRepairPreview(); as preview) {
+            @if (preview.length === 0) {
+              <ion-note color="medium">{{ store.i18n.chat_repair_tenants_none() }}</ion-note>
+            } @else {
+              <div class="repair-preview-title">{{ store.i18n.chat_repair_tenants_preview() }} ({{ preview.length }})</div>
+              <ion-list lines="inset" class="repair-list">
+                @for (entry of preview; track entry.roomId) {
+                  <ion-item>
+                    <ion-label>
+                      <div>{{ entry.name || entry.roomId }}</div>
+                      <ion-note color="medium" style="font-size:0.75rem">{{ entry.tenants.join(', ') }} — {{ entry.roomId }}</ion-note>
+                    </ion-label>
+                  </ion-item>
+                }
+              </ion-list>
+            }
+            @if (tenantRepairAmbiguous() > 0) {
+              <ion-note color="medium" class="repair-skipped">{{ tenantRepairAmbiguous() }} {{ store.i18n.chat_repair_tenants_skipped() }}</ion-note>
+            }
+          }
+        </ion-card-content>
+      </ion-card>
+
       </div>
 
       <!-- 3-column layout -->
@@ -308,7 +359,7 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
                     <ion-icon slot="start" src="{{'people' | svgIcon}}" />
                   }
                   <ion-label>
-                    <div>{{ room.name }}</div>
+                    <div>{{ room.name || room.derivedName }}</div>
                     <ion-note color="medium" style="font-size:0.75rem">
                       {{ room.canonicalAlias ?? room.roomId }}
                     </ion-note>
@@ -455,6 +506,12 @@ export class AocChat {
   protected readonly avatarRepairScanning = computed(() => this.store.avatarRepairScanning());
   protected readonly avatarRepairApplying = computed(() => this.store.avatarRepairApplying());
 
+  // tenant backfill
+  protected readonly tenantRepairPreview = computed(() => this.store.tenantRepairPreview());
+  protected readonly tenantRepairAmbiguous = computed(() => this.store.tenantRepairAmbiguous());
+  protected readonly tenantRepairScanning = computed(() => this.store.tenantRepairScanning());
+  protected readonly tenantRepairApplying = computed(() => this.store.tenantRepairApplying());
+
   // constants
   private imgixBaseUrl = this.store.imgixBaseUrl();
   protected isPhotoUrl = isMatrixPhotoUrl;
@@ -498,6 +555,14 @@ export class AocChat {
 
   protected onApplyAvatarRepair(): void {
     this.store.applyAvatarRepair();
+  }
+
+  protected onPreviewTenantRepair(): void {
+    this.store.previewTenantRepair();
+  }
+
+  protected onApplyTenantRepair(): void {
+    this.store.applyTenantRepair();
   }
 
   // ─── room click → action sheet ──────────────────────────────────────────────

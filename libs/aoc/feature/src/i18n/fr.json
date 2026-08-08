@@ -280,6 +280,17 @@
         "skipped_has": "Comptes avec leur propre avatar ignorés.",
         "confirm": "Définir maintenant {{ count }} avatars à partir des avatars de personnes ?",
         "conf": "{{ count }} avatars réparés."
+      },
+      "tenants": {
+        "label": "Attribuer les salons de discussion aux locataires",
+        "description": "Un compte Matrix vaut pour tous les locataires. Cette réparation marque les salons de groupe existants avec les locataires de leur groupe, afin que la discussion n'affiche que les salons de ce locataire. Les messages directs ne sont volontairement pas marqués (ils sont attribués via leur interlocuteur) ; les salons sans attribution univoque restent non marqués et visibles partout.",
+        "scan": "Vérifier",
+        "action": "Attribuer",
+        "none": "Tous les salons sont déjà attribués — rien à faire.",
+        "preview": "Salons à attribuer",
+        "ambiguous": "salons sans attribution univoque ignorés (ils restent visibles partout).",
+        "confirm": "Attribuer maintenant {{ count }} salons à leurs locataires ?",
+        "conf": "{{ count }} salons attribués."
       }
     }
   },

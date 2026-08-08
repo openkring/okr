@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, hashUserIdToColor, formatReceiptTime, resolveMatrixDisplayName } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, isBridgeGhost, hashUserIdToColor, formatReceiptTime, resolveMatrixDisplayName } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -76,5 +76,41 @@ describe('resolveMatrixDisplayName', () => {
 
   it('never returns the full Matrix user id', () => {
     expect(resolveMatrixDisplayName(null, '@p123abc:bkchat.etke.host')).not.toContain(':');
+  });
+});
+
+describe('filterRoomsOfTenant', () => {
+  const rooms = [
+    { roomId: '!a:hs', topic: '#group_trainerteam:hs' },       // other tenant's group (unmarked)
+    { roomId: '!b:hs', topic: '#group_P13_Board:hs' },         // legacy mixed-case alias -> still matches
+    { roomId: '!c:hs', topic: '#group_whatever:hs' },          // matched via matrixRoomId
+    { roomId: '!d:hs', directUserId: '@Anna:hs' },             // DM with a person of this tenant
+    { roomId: '!e:hs', directUserId: '@zoe:hs' },              // DM with someone from another tenant
+    { roomId: '!j:hs', directUserId: '@signal_9f3a-uuid:hs' }, // bridged DM: ghost is no person -> kept
+    { roomId: '!f:hs' },                                        // ad-hoc, unclassifiable -> kept
+    { roomId: '!g:hs', tenants: ['p13'] },                      // marked: this tenant
+    { roomId: '!h:hs', tenants: ['scs'] },                      // marked: other tenant
+    { roomId: '!i:hs', topic: '#group_p13_board:hs', tenants: ['scs'] }, // marker wins over alias
+  ];
+  const groups = [{ okey: 'p13 board' }, { okey: 'other', matrixRoomId: '!c:hs' }];
+  const personKeys = new Set(['anna', 'bruno']);
+
+  it('keeps this tenant’s marked, group and DM rooms plus unclassifiable ones', () => {
+    expect(filterRoomsOfTenant(rooms, groups, personKeys, 'p13').map(r => r.roomId))
+      .toEqual(['!b:hs', '!c:hs', '!d:hs', '!j:hs', '!f:hs', '!g:hs']);
+  });
+
+  it('hides every unmarked group room when the tenant has no groups', () => {
+    expect(filterRoomsOfTenant(rooms, [], personKeys, 'p13').map(r => r.roomId))
+      .toEqual(['!d:hs', '!j:hs', '!f:hs', '!g:hs']);
+  });
+});
+
+describe('isBridgeGhost', () => {
+  it('recognises mautrix puppet localparts, not ordinary person keys', () => {
+    expect(isBridgeGhost('signal_9f3a-uuid')).toBe(true);
+    expect(isBridgeGhost('whatsapp_41791234567')).toBe(true);
+    expect(isBridgeGhost('anna')).toBe(false);
+    expect(isBridgeGhost('bk2-bot')).toBe(false);
   });
 });

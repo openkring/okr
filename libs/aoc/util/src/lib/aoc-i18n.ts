@@ -196,6 +196,14 @@ export const AOC_I18N_KEYS = {
   chat_repair_avatars_preview:              PFX + 'chat.repair.avatars.preview',
   chat_repair_avatars_skipped:              PFX + 'chat.repair.avatars.skipped_has',
 
+  chat_repair_tenants:                      PFX + 'chat.repair.tenants.label',
+  chat_repair_tenants_description:          PFX + 'chat.repair.tenants.description',
+  chat_repair_tenants_scan:                 PFX + 'chat.repair.tenants.scan',
+  chat_repair_tenants_action:               PFX + 'chat.repair.tenants.action',
+  chat_repair_tenants_none:                 PFX + 'chat.repair.tenants.none',
+  chat_repair_tenants_preview:              PFX + 'chat.repair.tenants.preview',
+  chat_repair_tenants_skipped:              PFX + 'chat.repair.tenants.ambiguous',
+
   chat_user_deactivate:                     PFX + 'chat.user.deactivate.label',
   chat_user_deactivate_confirm:             PFX + 'chat.user.deactivate.confirm',
   chat_user_deactivate_action:              PFX + 'chat.user.deactivate.action',
