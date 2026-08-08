@@ -76,6 +76,11 @@ const TARGETS = {
     selfHostedFonts: 'apps/okr-website/assets/fonts',
     out: 'dist/apps/okr-website/licenses.html',
   },
+  'bkg-website': {
+    label: 'bkaiser GmbH',
+    selfHostedFonts: 'apps/bkg-website/assets/fonts',
+    out: 'dist/apps/bkg-website/licenses.html',
+  },
   'p13-website': {
     label: 'P13',
     // self-hosted since 2026-08-08 (spec C6, defect W6) — the OFL text must travel with the files
