@@ -5,8 +5,8 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import {
-  CommissionEntryCollection, MeteringRecordCollection, PartnerCollection, ProspectCollection,
-  AddressCollection,
+  CommissionEntryCollection, MeteringRecordCollection, OrgCollection, PartnerCollection,
+  ProspectCollection, AddressCollection,
 } from '@okr/shared-models';
 import type { MeteringRecordModel, PartnerModel, ProspectModel } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -114,6 +114,19 @@ export const pushMetering = onCall(
         status: next.status, convertedTenantId: next.convertedTenantId, convertedAt: next.convertedAt,
       });
       converted.push(row.prospectKey as string);
+    }
+
+    // 1.26 §6 follow-up (c): nothing stops a `bkg` user dropping `kring` from the partner org's
+    // `tenants`, which silently breaks the join between the ledger and the company that gets the
+    // invoice. Checked here because this is the only moment the join is actually exercised, and
+    // logged rather than thrown: the partner did their duty, the defect is on bkaiser's side.
+    if (partner.orgKey) {
+      const org = await db.collection(OrgCollection).doc(partner.orgKey).get();
+      if (!org.exists) {
+        logger.error(`pushMetering: partner ${partner.okey} references a missing org ${partner.orgKey}`);
+      } else if (!((org.get('tenants') as string[] | undefined) ?? []).includes(PLATFORM_TENANT)) {
+        logger.error(`pushMetering: org ${partner.orgKey} of partner ${partner.okey} is no longer shared into ${PLATFORM_TENANT} — the invoicing join is broken`);
+      }
     }
 
     // The under-report signal (C3 §6): a tenant that was there last month and is gone now.
