@@ -249,6 +249,7 @@
       "@okr/business-partner-ui": ["libs/business/partner/ui/src/index.ts"],
       "@okr/business-partner-feature": ["libs/business/partner/feature/src/index.ts"],
       "@okr/business-prospect-util": ["libs/business/prospect/util/src/index.ts"],
+      "@okr/business-ticket-util": ["libs/business/ticket/util/src/index.ts"],
       "@okr/tenant-util": ["libs/tenant/util/src/index.ts"],
       "@okr/tools": ["tools/src/index.ts"],
       "@okr/trip-data-access": ["libs/geo/trip/data-access/src/index.ts"],

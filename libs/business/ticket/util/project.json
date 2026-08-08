@@ -1,0 +1,27 @@
+{
+  "name": "business-ticket-util",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/business/ticket/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:util", "scope:business", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/business/ticket/util",
+        "main": "libs/business/ticket/util/src/index.ts",
+        "tsConfig": "libs/business/ticket/util/tsconfig.lib.json",
+        "assets": ["libs/business/ticket/util/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": { "configFile": "libs/business/ticket/util/vite.config.ts" }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}
