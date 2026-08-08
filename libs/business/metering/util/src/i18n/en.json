@@ -1,0 +1,33 @@
+{
+  "period": {
+    "label": "Period"
+  },
+  "records": {
+    "plural": "Metering records",
+    "empty": "No metering records were received for this period.",
+    "header": {
+      "customer": "Customer",
+      "partner": "Partner",
+      "users": "Users (priv.)",
+      "addOns": "Add-ons",
+      "received": "Received"
+    }
+  },
+  "entries": {
+    "plural": "Commissions",
+    "empty": "No commission has been computed for this period yet.",
+    "header": {
+      "customer": "Customer",
+      "band": "Band",
+      "subtotal": "Subtotal",
+      "commission": "Commission"
+    },
+    "total": "Total commission"
+  },
+  "run": {
+    "label": "Run commission",
+    "confirm": "Compute the commission for this period? Existing lines of the period are overwritten.",
+    "conf": "The commission has been computed.",
+    "error": "The commission could not be computed."
+  }
+}

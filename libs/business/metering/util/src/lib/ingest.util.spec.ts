@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   HEARTBEAT_NOTICE_DAYS, HEARTBEAT_TERMINATION_DAYS, commissionEntryId, heartbeatStatus,
-  meteringRecordId, missingTenants, toMeteringRecord, validatePayload,
+  meteringRecordId, missingTenants, periodOf, recentPeriods, shiftPeriod, toMeteringRecord,
+  validatePayload,
 } from './ingest.util';
 import type { MeteringPayload, MeteringPayloadRow } from './ingest.util';
 
@@ -154,5 +155,36 @@ describe('missingTenants — the only under-report bkaiser can see from outside'
 
   it('is empty when nothing vanished', () => {
     expect(missingTenants(['a'], ['a', 'b'])).toEqual([]);
+  });
+});
+
+// The one piece of arithmetic not delegated elsewhere: it finds the two previous months a
+// hysteresis decision reads, and it fills the period picker. A wrong year boundary would silently
+// drop the history and re-band every tenant each January.
+describe('shiftPeriod', () => {
+  it('steps back inside a year', () => {
+    expect(shiftPeriod('2026-08', -1)).toBe('2026-07');
+    expect(shiftPeriod('2026-08', -2)).toBe('2026-06');
+  });
+
+  it('crosses the year boundary in both directions', () => {
+    expect(shiftPeriod('2026-01', -1)).toBe('2025-12');
+    expect(shiftPeriod('2026-01', -2)).toBe('2025-11');
+    expect(shiftPeriod('2025-12', 1)).toBe('2026-01');
+  });
+
+  it('keeps the two-digit month padding', () => {
+    expect(shiftPeriod('2026-10', -1)).toBe('2026-09');
+    expect(shiftPeriod('2026-11', -2)).toBe('2026-09');
+  });
+});
+
+describe('periodOf / recentPeriods', () => {
+  it('takes the period from a yyyymmdd store date', () => {
+    expect(periodOf('20260803')).toBe('2026-08');
+  });
+
+  it('lists the current month first and walks backwards', () => {
+    expect(recentPeriods(3, '20260115')).toEqual(['2026-01', '2025-12', '2025-11']);
   });
 });

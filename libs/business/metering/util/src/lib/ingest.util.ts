@@ -182,3 +182,31 @@ export function missingTenants(previous: readonly string[], current: readonly st
   const now = new Set(current);
   return previous.filter(id => !now.has(id));
 }
+
+/**
+ * `yyyy-mm` ± n months, without pulling a date library into a two-line calculation.
+ *
+ * Lives here rather than in the Cloud Function it was written for: the commission UI needs the
+ * same arithmetic to offer periods, and two copies of a month shift is how one of them drifts.
+ */
+export function shiftPeriod(period: string, months: number): string {
+  const [year, month] = period.split('-').map(Number);
+  const zero = year * 12 + (month - 1) + months;
+  return `${Math.floor(zero / 12)}-${String((zero % 12) + 1).padStart(2, '0')}`;
+}
+
+/** The period a `yyyymmdd` store date falls in. */
+export function periodOf(today = getTodayStr()): string {
+  return `${today.slice(0, 4)}-${today.slice(4, 6)}`;
+}
+
+/**
+ * The `count` most recent periods, newest first — the picker on the metering screen.
+ *
+ * Starts at the CURRENT month, not the last closed one: a partner may push mid-month (a retry, a
+ * correction), and a picker that could not show the running month would make those invisible.
+ */
+export function recentPeriods(count = 12, today = getTodayStr()): string[] {
+  const current = periodOf(today);
+  return Array.from({ length: count }, (_, i) => shiftPeriod(current, -i));
+}

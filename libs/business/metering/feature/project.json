@@ -1,0 +1,24 @@
+{
+  "name": "business-metering-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/business/metering/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:business", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/business/metering/feature",
+        "main": "libs/business/metering/feature/src/index.ts",
+        "tsConfig": "libs/business/metering/feature/tsconfig.lib.json",
+        "assets": ["libs/business/metering/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

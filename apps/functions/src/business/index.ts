@@ -12,7 +12,7 @@ import type { MeteringRecordModel, PartnerModel, ProspectModel } from '@okr/shar
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import {
   commissionEntryId, commissionForTenant, heartbeatStatus, meteringRecordId, missingTenants,
-  toMeteringRecord, validatePayload,
+  shiftPeriod, toMeteringRecord, validatePayload,
 } from '@okr/business-metering-util';
 import type { BandId, MeteringPayload } from '@okr/business-metering-util';
 import { convertProspect } from '@okr/business-prospect-util';
@@ -136,13 +136,6 @@ export const pushMetering = onCall(
     };
   },
 );
-
-/** `yyyy-mm` ± n months, without pulling a date library into a two-line calculation. */
-export function shiftPeriod(period: string, months: number): string {
-  const [year, month] = period.split('-').map(Number);
-  const zero = year * 12 + (month - 1) + months;
-  return `${Math.floor(zero / 12)}-${String((zero % 12) + 1).padStart(2, '0')}`;
-}
 
 /**
  * C3 §7 — the monthly commission run. Admin-triggered rather than scheduled: a run is cheap to

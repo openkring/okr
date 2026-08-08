@@ -1,5 +1,5 @@
 {
-  "name": "@okr/business-metering-util",
+  "name": "@okr/business-metering-data-access",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,9 +7,12 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
+    "@okr/shared-config": "*",
+    "@okr/shared-data-access": "*",
     "@okr/shared-models": "*",
-    "@okr/shared-constants": "*",
     "@okr/shared-util-core": "*",
-    "@angular/core": "*"
+    "@angular/core": "*",
+    "firebase": "*",
+    "rxjs": "*"
   }
 }

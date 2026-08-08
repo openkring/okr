@@ -1,0 +1,33 @@
+{
+  "period": {
+    "label": "Période"
+  },
+  "records": {
+    "plural": "Relevés",
+    "empty": "Aucun relevé reçu pour cette période.",
+    "header": {
+      "customer": "Client",
+      "partner": "Partenaire",
+      "users": "Utilisateurs (priv.)",
+      "addOns": "Options",
+      "received": "Reçu le"
+    }
+  },
+  "entries": {
+    "plural": "Commissions",
+    "empty": "Aucune commission calculée pour cette période.",
+    "header": {
+      "customer": "Client",
+      "band": "Palier",
+      "subtotal": "Sous-total",
+      "commission": "Commission"
+    },
+    "total": "Total commission"
+  },
+  "run": {
+    "label": "Calculer la commission",
+    "confirm": "Calculer la commission de cette période ? Les lignes existantes de la période seront écrasées.",
+    "conf": "La commission a été calculée.",
+    "error": "La commission n'a pas pu être calculée."
+  }
+}

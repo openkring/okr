@@ -564,6 +564,36 @@ service cloud.firestore {
     }
 
     // ============================================================================
+    //  Partner channel (spec 1.25 / C3) — bkaiser's back office, in tenant `kring`.
+    //  Admin-read only: the registry carries a partner's contractual status and the
+    //  credential-like `serviceUid`, and the ledger is the evidence the 10 % share is
+    //  audited from.
+    // ============================================================================
+
+    match /partners/{partnerId} {
+      allow read:   if isAdmin() && (resource == null || belongsToTenant(resource.data));
+      allow create: if isAdmin() && belongsToTenant(request.resource.data);
+      // `lastHeartbeatAt` and `reportedVersion` are the ingest function's to write.
+      // An admin who could set them could fake the very heartbeat C2 §13.3's
+      // termination right is read from.
+      allow update: if isAdmin() && belongsToTenant(resource.data)
+                     && request.resource.data.lastHeartbeatAt == resource.data.lastHeartbeatAt
+                     && request.resource.data.reportedVersion == resource.data.reportedVersion;
+      allow delete: if false;   // the UI archives (isArchived); history stays readable
+    }
+
+    // Written exclusively by the Admin SDK (`pushMetering`, `runCommission`). A client
+    // that could write either side could make the audit agree with itself.
+    match /meteringRecords/{recordId} {
+      allow read:  if isAdmin() && (resource == null || belongsToTenant(resource.data));
+      allow write: if false;
+    }
+    match /commissionEntries/{entryId} {
+      allow read:  if isAdmin() && (resource == null || belongsToTenant(resource.data));
+      allow write: if false;
+    }
+
+    // ============================================================================
     //  Default deny — no catch-all grant. Any collection not matched above is
     //  denied. (C-1: the previous `match /{document=**} { allow read, write:
     //  if request.auth != null }` is removed entirely.)

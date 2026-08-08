@@ -2080,6 +2080,7 @@ const business: FeatureBlock = {
     // Top-level, not nested: `kring` has no back-office parent menu to hang this under, and the
     // only tenant that ever renders it is `kring` itself.
     { key: 'partner-all', name: 'partner-all', url: '/partner/all/partner-context', action: 'navigate', roleNeeded: 'admin', icon: 'org', label: '@business/partner/util.plural' },
+    { key: 'metering-all', name: 'metering-all', url: '/metering', action: 'navigate', roleNeeded: 'admin', icon: 'chart', label: '@business/metering/util.records.plural' },
   ],
 };
 

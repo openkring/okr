@@ -1,0 +1,33 @@
+{
+  "period": {
+    "label": "Periode"
+  },
+  "records": {
+    "plural": "Meldungen",
+    "empty": "Für diese Periode wurden keine Meldungen empfangen.",
+    "header": {
+      "customer": "Kunde",
+      "partner": "Partner",
+      "users": "Benutzer (priv.)",
+      "addOns": "Add-ons",
+      "received": "Empfangen"
+    }
+  },
+  "entries": {
+    "plural": "Provisionen",
+    "empty": "Für diese Periode wurde noch keine Provision berechnet.",
+    "header": {
+      "customer": "Kunde",
+      "band": "Band",
+      "subtotal": "Zwischentotal",
+      "commission": "Provision"
+    },
+    "total": "Total Provision"
+  },
+  "run": {
+    "label": "Provision berechnen",
+    "confirm": "Provision für diese Periode berechnen? Bestehende Zeilen der Periode werden überschrieben.",
+    "conf": "Die Provision wurde berechnet.",
+    "error": "Die Provision konnte nicht berechnet werden."
+  }
+}

@@ -965,13 +965,22 @@ const games: BlockRoutes = {
  */
 const business: BlockRoutes = {
   id: 'business',
-  routes: (): Route[] => [{
-    path: 'partner',
-    canActivate: [isAdminGuard()],
-    children: [
-      { path: ':listId/:contextMenuName', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/business-partner-feature').then(m => m.PartnerList) },
-    ],
-  }],
+  routes: (): Route[] => [
+    {
+      path: 'partner',
+      canActivate: [isAdminGuard()],
+      children: [
+        { path: ':listId/:contextMenuName', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/business-partner-feature').then(m => m.PartnerList) },
+      ],
+    },
+    // No `:contextMenuName`: the ledger has exactly one action (run the commission), and it is a
+    // toolbar button. A context menu would mean a menu doc in Firestore per tenant for one entry.
+    {
+      path: 'metering',
+      canActivate: [isAdminGuard()],
+      loadComponent: () => import('@okr/business-metering-feature').then(m => m.MeteringList),
+    },
+  ],
 };
 
 /**

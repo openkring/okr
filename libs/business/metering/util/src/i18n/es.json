@@ -1,0 +1,33 @@
+{
+  "period": {
+    "label": "Periodo"
+  },
+  "records": {
+    "plural": "Reportes",
+    "empty": "No se recibieron reportes para este periodo.",
+    "header": {
+      "customer": "Cliente",
+      "partner": "Socio",
+      "users": "Usuarios (priv.)",
+      "addOns": "Complementos",
+      "received": "Recibido"
+    }
+  },
+  "entries": {
+    "plural": "Comisiones",
+    "empty": "Todavía no se ha calculado ninguna comisión para este periodo.",
+    "header": {
+      "customer": "Cliente",
+      "band": "Banda",
+      "subtotal": "Subtotal",
+      "commission": "Comisión"
+    },
+    "total": "Comisión total"
+  },
+  "run": {
+    "label": "Calcular comisión",
+    "confirm": "¿Calcular la comisión de este periodo? Las líneas existentes del periodo se sobrescriben.",
+    "conf": "La comisión se ha calculado.",
+    "error": "No se pudo calcular la comisión."
+  }
+}

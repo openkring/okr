@@ -1,0 +1,33 @@
+{
+  "period": {
+    "label": "Periodo"
+  },
+  "records": {
+    "plural": "Segnalazioni",
+    "empty": "Nessuna segnalazione ricevuta per questo periodo.",
+    "header": {
+      "customer": "Cliente",
+      "partner": "Partner",
+      "users": "Utenti (priv.)",
+      "addOns": "Add-on",
+      "received": "Ricevuto"
+    }
+  },
+  "entries": {
+    "plural": "Provvigioni",
+    "empty": "Per questo periodo non è ancora stata calcolata alcuna provvigione.",
+    "header": {
+      "customer": "Cliente",
+      "band": "Banda",
+      "subtotal": "Subtotale",
+      "commission": "Provvigione"
+    },
+    "total": "Totale provvigioni"
+  },
+  "run": {
+    "label": "Calcola provvigione",
+    "confirm": "Calcolare la provvigione per questo periodo? Le righe esistenti del periodo verranno sovrascritte.",
+    "conf": "La provvigione è stata calcolata.",
+    "error": "Impossibile calcolare la provvigione."
+  }
+}
