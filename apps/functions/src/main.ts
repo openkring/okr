@@ -287,3 +287,7 @@ export const runPrivacyAudit = Privacy.runPrivacyAudit;
 // feature selection (D-BB-9). Wired with the Angular-free metadata half of the catalogue
 // (`@okr/tenant-util`'s `FEATURE_BLOCKS`) — see `apps/functions/src/tenant/index.ts`.
 export const applyFeatureSelection = Tenant.applyFeatureSelection;
+
+// public, unauthenticated health check for external uptime monitoring (BetterStack).
+// Verifies the backend is up and can reach Firestore. See ./health.
+export { healthz } from './health';
