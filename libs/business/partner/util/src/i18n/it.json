@@ -1,0 +1,98 @@
+{
+  "singular": "Partner",
+  "plural": "Partner",
+  "description": "Partner commerciali con installazione propria",
+  "empty": "Nessun partner registrato.",
+  "list": {
+    "header": {
+      "name": "Nome",
+      "status": "Stato",
+      "heartbeat": "Ultima segnalazione"
+    }
+  },
+  "create": {
+    "label": "Crea partner",
+    "conf": "Il partner è stato creato.",
+    "error": "Non è stato possibile creare il partner."
+  },
+  "update": {
+    "label": "Modifica partner",
+    "conf": "Il partner è stato salvato.",
+    "error": "Non è stato possibile salvare il partner."
+  },
+  "delete": {
+    "label": "Elimina partner",
+    "conf": "Il partner è stato archiviato.",
+    "confirm": "Archiviare davvero questo partner? Le segnalazioni e le provvigioni restano.",
+    "error": "Non è stato possibile archiviare il partner."
+  },
+  "view": {
+    "label": "Visualizza partner"
+  },
+  "cancel": {
+    "label": "Annulla"
+  },
+  "save": {
+    "label": "Salva"
+  },
+  "name": {
+    "label": "Nome",
+    "placeholder": "Ragione sociale del partner",
+    "helper": "Il nome del partner nel contratto."
+  },
+  "orgKey": {
+    "label": "Organizzazione",
+    "placeholder": "Chiave dell'organizzazione in bkg",
+    "helper": "Rimanda all'organizzazione con indirizzo, IDI e dati di fatturazione."
+  },
+  "status": {
+    "label": "Stato",
+    "placeholder": "prospect · active · suspended · terminated",
+    "helper": "Solo un partner attivo può inviare segnalazioni e riservare lead.",
+    "prospect": {
+      "label": "Potenziale"
+    },
+    "active": {
+      "label": "Attivo"
+    },
+    "suspended": {
+      "label": "Sospeso"
+    },
+    "terminated": {
+      "label": "Disdetto"
+    }
+  },
+  "contractStart": {
+    "label": "Inizio contratto",
+    "placeholder": "Data",
+    "helper": "Inizio del contratto di partnership."
+  },
+  "contractEnd": {
+    "label": "Fine contratto",
+    "placeholder": "Data",
+    "helper": "Vuoto finché il contratto è in corso."
+  },
+  "serviceUid": {
+    "label": "Identità di segnalazione (uid)",
+    "placeholder": "uid Firebase Auth",
+    "helper": "L'identità con cui l'installazione del partner trasmette i suoi numeri."
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Note interne"
+  },
+  "heartbeat": {
+    "ok": "aggiornato",
+    "notice": "diffida dovuta",
+    "termination": "diritto di disdetta"
+  },
+  "as": {
+    "title": "Partner",
+    "edit": "Modifica",
+    "delete": "Archivia"
+  },
+  "changeConfirmation": {
+    "cancel": "Annulla",
+    "ok": "Salva"
+  }
+}

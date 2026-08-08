@@ -1,0 +1,98 @@
+{
+  "singular": "Partner",
+  "plural": "Partner",
+  "description": "Selbst hostende Vertriebspartner",
+  "empty": "Noch keine Partner erfasst.",
+  "list": {
+    "header": {
+      "name": "Name",
+      "status": "Status",
+      "heartbeat": "Letzte Meldung"
+    }
+  },
+  "create": {
+    "label": "Partner erstellen",
+    "conf": "Der Partner wurde erstellt.",
+    "error": "Der Partner konnte nicht erstellt werden."
+  },
+  "update": {
+    "label": "Partner bearbeiten",
+    "conf": "Der Partner wurde gespeichert.",
+    "error": "Der Partner konnte nicht gespeichert werden."
+  },
+  "delete": {
+    "label": "Partner löschen",
+    "conf": "Der Partner wurde archiviert.",
+    "confirm": "Soll dieser Partner wirklich archiviert werden? Meldungen und Provisionen bleiben erhalten.",
+    "error": "Der Partner konnte nicht archiviert werden."
+  },
+  "view": {
+    "label": "Partner ansehen"
+  },
+  "cancel": {
+    "label": "Abbrechen"
+  },
+  "save": {
+    "label": "Speichern"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Firmenname des Partners",
+    "helper": "Wie der Partner im Vertrag heisst."
+  },
+  "orgKey": {
+    "label": "Organisation",
+    "placeholder": "Schlüssel der Organisation in bkg",
+    "helper": "Verweist auf die Organisation mit Adresse, UID und Rechnungsdaten."
+  },
+  "status": {
+    "label": "Status",
+    "placeholder": "prospect · active · suspended · terminated",
+    "helper": "Nur ein aktiver Partner darf Meldungen senden und Leads beanspruchen.",
+    "prospect": {
+      "label": "Interessent"
+    },
+    "active": {
+      "label": "Aktiv"
+    },
+    "suspended": {
+      "label": "Gesperrt"
+    },
+    "terminated": {
+      "label": "Gekündigt"
+    }
+  },
+  "contractStart": {
+    "label": "Vertragsbeginn",
+    "placeholder": "Datum",
+    "helper": "Beginn des Partnervertrags."
+  },
+  "contractEnd": {
+    "label": "Vertragsende",
+    "placeholder": "Datum",
+    "helper": "Leer, solange der Vertrag läuft."
+  },
+  "serviceUid": {
+    "label": "Melde-Identität (uid)",
+    "placeholder": "Firebase-Auth-uid",
+    "helper": "Mit dieser Identität meldet die Installation des Partners ihre Zahlen."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Interne Notizen"
+  },
+  "heartbeat": {
+    "ok": "aktuell",
+    "notice": "Mahnung fällig",
+    "termination": "Kündigungsrecht"
+  },
+  "as": {
+    "title": "Partner",
+    "edit": "Bearbeiten",
+    "delete": "Archivieren"
+  },
+  "changeConfirmation": {
+    "cancel": "Abbrechen",
+    "ok": "Speichern"
+  }
+}

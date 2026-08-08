@@ -958,6 +958,23 @@ const games: BlockRoutes = {
 };
 
 /**
+ * The partner channel (spec 1.25 / C3 §5). `isAdminGuard` because the registry carries each
+ * partner's contractual status and the `serviceUid` their installation reports with — an
+ * operator-grade screen, not a member-facing one. `kring-app` also declares this route by hand
+ * (it does not compose the catalogue yet); the two must stay identical.
+ */
+const business: BlockRoutes = {
+  id: 'business',
+  routes: (): Route[] => [{
+    path: 'partner',
+    canActivate: [isAdminGuard()],
+    children: [
+      { path: ':listId/:contextMenuName', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/business-partner-feature').then(m => m.PartnerList) },
+    ],
+  }],
+};
+
+/**
  * Every feature block's Angular route fragment. Adding a block here is HALF of what makes
  * a feature reachable — the matching metadata (id, dependsOn, bundle, menu, seed) must
  * also be added to `FEATURE_BLOCKS` in `@okr/tenant-util`. Tasks 12-18 filled in the
@@ -971,4 +988,5 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   finance, esign, pdfTemplate,
   documentBlock,
   chat, socialFeed, forms,
+  business,
 ];

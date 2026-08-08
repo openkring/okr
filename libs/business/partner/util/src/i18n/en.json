@@ -1,0 +1,98 @@
+{
+  "singular": "Partner",
+  "plural": "Partners",
+  "description": "Self-hosting sales partners",
+  "empty": "No partners yet.",
+  "list": {
+    "header": {
+      "name": "Name",
+      "status": "Status",
+      "heartbeat": "Last report"
+    }
+  },
+  "create": {
+    "label": "Create partner",
+    "conf": "The partner was created.",
+    "error": "The partner could not be created."
+  },
+  "update": {
+    "label": "Edit partner",
+    "conf": "The partner was saved.",
+    "error": "The partner could not be saved."
+  },
+  "delete": {
+    "label": "Delete partner",
+    "conf": "The partner was archived.",
+    "confirm": "Really archive this partner? Metering records and commissions are kept.",
+    "error": "The partner could not be archived."
+  },
+  "view": {
+    "label": "View partner"
+  },
+  "cancel": {
+    "label": "Cancel"
+  },
+  "save": {
+    "label": "Save"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Partner company name",
+    "helper": "The name the partner has in the contract."
+  },
+  "orgKey": {
+    "label": "Organisation",
+    "placeholder": "Key of the organisation in bkg",
+    "helper": "Points at the organisation holding address, UID and invoicing data."
+  },
+  "status": {
+    "label": "Status",
+    "placeholder": "prospect · active · suspended · terminated",
+    "helper": "Only an active partner may push metering and claim leads.",
+    "prospect": {
+      "label": "Prospect"
+    },
+    "active": {
+      "label": "Active"
+    },
+    "suspended": {
+      "label": "Suspended"
+    },
+    "terminated": {
+      "label": "Terminated"
+    }
+  },
+  "contractStart": {
+    "label": "Contract start",
+    "placeholder": "Date",
+    "helper": "Start of the partner contract."
+  },
+  "contractEnd": {
+    "label": "Contract end",
+    "placeholder": "Date",
+    "helper": "Empty while the contract is running."
+  },
+  "serviceUid": {
+    "label": "Reporting identity (uid)",
+    "placeholder": "Firebase Auth uid",
+    "helper": "The identity the partner's installation signs in as to report its numbers."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Internal notes"
+  },
+  "heartbeat": {
+    "ok": "up to date",
+    "notice": "notice due",
+    "termination": "termination right"
+  },
+  "as": {
+    "title": "Partner",
+    "edit": "Edit",
+    "delete": "Archive"
+  },
+  "changeConfirmation": {
+    "cancel": "Cancel",
+    "ok": "Save"
+  }
+}

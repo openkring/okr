@@ -55,6 +55,13 @@ export const PARTNER_I18N_KEYS = {
   heartbeat_ok:         PFX + 'heartbeat.ok',
   heartbeat_notice:     PFX + 'heartbeat.notice',
   heartbeat_termination: PFX + 'heartbeat.termination',
+
+  // action sheet + change confirmation
+  as_title:             PFX + 'as.title',
+  as_edit:              PFX + 'as.edit',
+  as_delete:            PFX + 'as.delete',
+  changeConfirmation_cancel: PFX + 'changeConfirmation.cancel',
+  changeConfirmation_ok: PFX + 'changeConfirmation.ok',
 } satisfies Record<string, string>;
 
 export type PartnerI18n = { [K in keyof typeof PARTNER_I18N_KEYS]: Signal<string> };

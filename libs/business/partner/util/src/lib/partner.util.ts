@@ -1,4 +1,4 @@
-import { PartnerModel, PartnerStatus } from '@okr/shared-models';
+import { CategoryItemModel, CategoryListModel, PartnerModel, PartnerStatus } from '@okr/shared-models';
 import { addIndexElement, isType } from '@okr/shared-util-core';
 
 /**
@@ -28,6 +28,37 @@ export function getPartnerIndex(partner: PartnerModel): string {
 export const PARTNER_STATUSES: readonly PartnerStatus[] = [
   'prospect', 'active', 'suspended', 'terminated',
 ];
+
+/**
+ * A blank partner for the create form. `status` starts at `prospect`: a partner becomes `active`
+ * when the contract is signed, and defaulting to `active` would let an unsigned record push
+ * metering the moment somebody pasted a `serviceUid` into it.
+ */
+export function newPartnerModel(tenantId: string): PartnerModel {
+  return new PartnerModel(tenantId);
+}
+
+/** Icons per status, by the same convention as the booking status category. */
+const STATUS_ICONS: Record<PartnerStatus, string> = {
+  prospect: 'create',
+  active: 'checkmark-circle',
+  suspended: 'alert-circle',
+  terminated: 'close-circle',
+};
+
+/**
+ * The status picker, built in code rather than read from the `categories` collection:
+ * `PartnerStatus` is a compile-time union owned by `shared-models`, and a per-tenant category
+ * document could drift out of it — which would let somebody store a status no code branches on.
+ */
+export function partnerStatusCategory(tenantId: string): CategoryListModel {
+  const category = new CategoryListModel(tenantId);
+  category.name = 'status';
+  category.i18n = '@business/partner/util';
+  category.translateItems = true;
+  category.items = PARTNER_STATUSES.map(s => new CategoryItemModel(s, STATUS_ICONS[s]));
+  return category;
+}
 
 /** Only an active partner may push metering or claim leads (C2 §13.3). */
 export function isPartnerOperational(partner: PartnerModel): boolean {

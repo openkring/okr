@@ -1,0 +1,98 @@
+{
+  "singular": "Partenaire",
+  "plural": "Partenaires",
+  "description": "Partenaires commerciaux auto-hébergés",
+  "empty": "Aucun partenaire pour l'instant.",
+  "list": {
+    "header": {
+      "name": "Nom",
+      "status": "Statut",
+      "heartbeat": "Dernier rapport"
+    }
+  },
+  "create": {
+    "label": "Créer un partenaire",
+    "conf": "Le partenaire a été créé.",
+    "error": "Le partenaire n'a pas pu être créé."
+  },
+  "update": {
+    "label": "Modifier le partenaire",
+    "conf": "Le partenaire a été enregistré.",
+    "error": "Le partenaire n'a pas pu être enregistré."
+  },
+  "delete": {
+    "label": "Supprimer le partenaire",
+    "conf": "Le partenaire a été archivé.",
+    "confirm": "Archiver vraiment ce partenaire ? Les relevés et les commissions sont conservés.",
+    "error": "Le partenaire n'a pas pu être archivé."
+  },
+  "view": {
+    "label": "Consulter le partenaire"
+  },
+  "cancel": {
+    "label": "Annuler"
+  },
+  "save": {
+    "label": "Enregistrer"
+  },
+  "name": {
+    "label": "Nom",
+    "placeholder": "Raison sociale du partenaire",
+    "helper": "Le nom du partenaire dans le contrat."
+  },
+  "orgKey": {
+    "label": "Organisation",
+    "placeholder": "Clé de l'organisation dans bkg",
+    "helper": "Renvoie à l'organisation portant l'adresse, l'IDE et les données de facturation."
+  },
+  "status": {
+    "label": "Statut",
+    "placeholder": "prospect · active · suspended · terminated",
+    "helper": "Seul un partenaire actif peut transmettre des relevés et réserver des prospects.",
+    "prospect": {
+      "label": "Prospect"
+    },
+    "active": {
+      "label": "Actif"
+    },
+    "suspended": {
+      "label": "Suspendu"
+    },
+    "terminated": {
+      "label": "Résilié"
+    }
+  },
+  "contractStart": {
+    "label": "Début du contrat",
+    "placeholder": "Date",
+    "helper": "Début du contrat de partenariat."
+  },
+  "contractEnd": {
+    "label": "Fin du contrat",
+    "placeholder": "Date",
+    "helper": "Vide tant que le contrat court."
+  },
+  "serviceUid": {
+    "label": "Identité de rapport (uid)",
+    "placeholder": "uid Firebase Auth",
+    "helper": "L'identité avec laquelle l'installation du partenaire transmet ses chiffres."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Notes internes"
+  },
+  "heartbeat": {
+    "ok": "à jour",
+    "notice": "mise en demeure due",
+    "termination": "droit de résiliation"
+  },
+  "as": {
+    "title": "Partenaire",
+    "edit": "Modifier",
+    "delete": "Archiver"
+  },
+  "changeConfirmation": {
+    "cancel": "Annuler",
+    "ok": "Enregistrer"
+  }
+}

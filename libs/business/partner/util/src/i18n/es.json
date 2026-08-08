@@ -1,0 +1,98 @@
+{
+  "singular": "Socio",
+  "plural": "Socios",
+  "description": "Socios comerciales con instalación propia",
+  "empty": "Todavía no hay socios.",
+  "list": {
+    "header": {
+      "name": "Nombre",
+      "status": "Estado",
+      "heartbeat": "Último informe"
+    }
+  },
+  "create": {
+    "label": "Crear socio",
+    "conf": "El socio se ha creado.",
+    "error": "No se ha podido crear el socio."
+  },
+  "update": {
+    "label": "Editar socio",
+    "conf": "El socio se ha guardado.",
+    "error": "No se ha podido guardar el socio."
+  },
+  "delete": {
+    "label": "Eliminar socio",
+    "conf": "El socio se ha archivado.",
+    "confirm": "¿Archivar realmente este socio? Los registros y las comisiones se conservan.",
+    "error": "No se ha podido archivar el socio."
+  },
+  "view": {
+    "label": "Ver socio"
+  },
+  "cancel": {
+    "label": "Cancelar"
+  },
+  "save": {
+    "label": "Guardar"
+  },
+  "name": {
+    "label": "Nombre",
+    "placeholder": "Razón social del socio",
+    "helper": "El nombre del socio en el contrato."
+  },
+  "orgKey": {
+    "label": "Organización",
+    "placeholder": "Clave de la organización en bkg",
+    "helper": "Apunta a la organización con dirección, UID y datos de facturación."
+  },
+  "status": {
+    "label": "Estado",
+    "placeholder": "prospect · active · suspended · terminated",
+    "helper": "Solo un socio activo puede enviar registros y reservar oportunidades.",
+    "prospect": {
+      "label": "Posible socio"
+    },
+    "active": {
+      "label": "Activo"
+    },
+    "suspended": {
+      "label": "Suspendido"
+    },
+    "terminated": {
+      "label": "Rescindido"
+    }
+  },
+  "contractStart": {
+    "label": "Inicio del contrato",
+    "placeholder": "Fecha",
+    "helper": "Inicio del contrato de colaboración."
+  },
+  "contractEnd": {
+    "label": "Fin del contrato",
+    "placeholder": "Fecha",
+    "helper": "Vacío mientras el contrato esté vigente."
+  },
+  "serviceUid": {
+    "label": "Identidad de informe (uid)",
+    "placeholder": "uid de Firebase Auth",
+    "helper": "La identidad con la que la instalación del socio informa sus cifras."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Notas internas"
+  },
+  "heartbeat": {
+    "ok": "al día",
+    "notice": "aviso pendiente",
+    "termination": "derecho de rescisión"
+  },
+  "as": {
+    "title": "Socio",
+    "edit": "Editar",
+    "delete": "Archivar"
+  },
+  "changeConfirmation": {
+    "cancel": "Cancelar",
+    "ok": "Guardar"
+  }
+}

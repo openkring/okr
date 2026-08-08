@@ -223,8 +223,13 @@ describe('deriveEnabledFeatures — owner override (R-8)', () => {
   it('the R-8 shape — every catalogue id in, every non-disabled block out', () => {
     // Exactly what the script asks for okr: hand it the whole catalogue and let the gate
     // subtract. Nothing names social-feed or games.
+    // `internal` is subtracted for the same reason `disabled` is: the gate runs
+    // `resolveAvailability`, which offers an internal block only to a tenant an allow-listing
+    // rollout doc names — and `rollouts: []` names nobody. The `business` block (partner
+    // channel) is the first internal one, which is what made this filter's omission visible.
     const expected = FEATURE_BLOCKS
-      .filter(b => b.defaultAvailability !== 'disabled').map(b => b.id).sort();
+      .filter(b => b.defaultAvailability !== 'disabled' && b.defaultAvailability !== 'internal')
+      .map(b => b.id).sort();
     const out = deriveEnabledFeatures({
       catalogue: FEATURE_BLOCKS, rollouts: [], menuDocs: [], tenantId: 'okr',
       override: override(FEATURE_BLOCKS.map(b => b.id)),

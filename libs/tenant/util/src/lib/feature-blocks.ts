@@ -2049,6 +2049,40 @@ const games: FeatureBlock = {
  * in `NON_BLOCK_DOMAINS`, with no escape hatch — `PENDING_CLASSIFICATION` was drained and
  * DELETED in task 18. A new domain must therefore be classified, not deferred.
  */
+/**
+ * `libs/business/*` — the self-hosting **partner channel** (spec 1.25): the partner registry,
+ * metering ingest + commission ledger, and the shared prospect pool.
+ *
+ * **One block for the whole container, not one per subdomain** (owner ruling 2026-08-08, and the
+ * same rule `finance` follows). The three subdomains are one commercial decision — bkaiser either
+ * runs a partner channel or does not — and metering without a partner registry is meaningless, so
+ * splitting them would mint SKUs nobody can buy independently.
+ *
+ * `defaultAvailability: 'internal'` is load-bearing, not caution: these screens are bkaiser's own
+ * back office. A *tenant* must never be offered them — the partner-facing surface is the callable
+ * API their installation pushes to, never this UI. The block exists in the catalogue so the
+ * collections below are covered by the retention/audit pass, which is exactly what an
+ * unregistered domain would silently escape.
+ *
+ * `collections` lists all four the channel owns, including `prospects` and `meteringRecords`,
+ * which carry a contact-of-record and a lead's contact details respectively — i.e. personal data
+ * with a retention duty (C5 §7: 24 months after last contact).
+ */
+const business: FeatureBlock = {
+  id: 'business',
+  bundle: 'special',
+  label: '@tenant/util.feature.business.label',
+  icon: 'org',
+  defaultAvailability: 'internal',
+  dependsOn: ['subject'],   // a partner IS an Org (C1 §3); the registry references it by `orgKey`
+  collections: ['partners', 'meteringRecords', 'commissionEntries', 'prospects'],
+  menu: [
+    // Top-level, not nested: `kring` has no back-office parent menu to hang this under, and the
+    // only tenant that ever renders it is `kring` itself.
+    { key: 'partner-all', name: 'partner-all', url: '/partner/all/partner-context', action: 'navigate', roleNeeded: 'admin', icon: 'org', label: '@business/partner/util.plural' },
+  ],
+};
+
 export const FEATURE_BLOCKS: FeatureBlock[] = [
   calevent, aoc, activity, task, instruments, games,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
@@ -2057,4 +2091,5 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   finance, esign, pdfTemplate,
   documentBlock,
   chat, socialFeed, forms,
+  business,
 ];

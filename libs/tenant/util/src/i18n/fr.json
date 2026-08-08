@@ -112,6 +112,9 @@
     },
     "games": {
       "label": "Quiz"
+    },
+    "business": {
+      "label": "Canal partenaires"
     }
   },
   "picker": {
