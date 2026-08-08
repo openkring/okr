@@ -1,5 +1,6 @@
 import { Inject, Injectable, InjectionToken } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
+import { distinctUntilChanged } from 'rxjs/operators';
 
 import { I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
@@ -36,7 +37,14 @@ export class I18nOverrideService {
     if (this.appStore.currentUser()) {
       this.applyOverrides(lang);
     }
-    this.translocoService.langChanges$.subscribe((newLang: string) => {
+    // `distinctUntilChanged` is load-bearing, not a tidy-up. `setTranslation` below calls
+    // Transloco's `setActiveLang` internally, which pushes the CURRENT language back through
+    // this same BehaviorSubject. Without the filter, the very first applied override re-enters
+    // `applyOverrides` -> `setTranslation` -> `langChanges$` and pegs the main thread in an
+    // infinite loop: the tab freezes right after login, logs nothing, and cannot even be
+    // reloaded. It only reproduces for a signed-in user of a tenant that HAS override
+    // documents, which is why it surfaced only once the per-tenant CMS texts were seeded.
+    this.translocoService.langChanges$.pipe(distinctUntilChanged()).subscribe((newLang: string) => {
       if (this.appStore.currentUser()) {
         this.applyOverrides(newLang);
       }
