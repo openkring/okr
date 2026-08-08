@@ -236,7 +236,11 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
   // preview offers the WHOLE row for immediate deletion. Pinning the T2 set makes
   // widening it a deliberate act with a test to argue with.
   it('classifies only wholly-voluntary rows as T2', () => {
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars']);
+    // `prospects` joined 2026-08-08 (C5): a lead is collected on consent and nothing else —
+    // no contract, no accounting duty, no club record — which is exactly what C5 §7 means by
+    // "a revocation beats an active claim, immediately". The claim a partner holds is a
+    // promise bkaiser made to the partner, never a ground to keep processing the person.
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite

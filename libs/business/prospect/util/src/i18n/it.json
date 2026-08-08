@@ -1,0 +1,29 @@
+{
+  "plural": "Potenziali clienti",
+  "empty": "Non è ancora arrivato nessun potenziale cliente.",
+  "header": {
+    "name": "Associazione / organizzazione",
+    "segment": "Segmento",
+    "status": "Stato",
+    "partner": "Partner",
+    "expires": "Riservato fino al"
+  },
+  "status": {
+    "open": "Aperto",
+    "claimed": "Riservato",
+    "converted": "Diventato cliente",
+    "expired": "Scaduto",
+    "withdrawn": "Revocato"
+  },
+  "as": {
+    "title": "Potenziale cliente",
+    "revoke": "Revocare il consenso",
+    "cancel": "Annulla"
+  },
+  "revoke": {
+    "confirm": "Revocare davvero il consenso? La voce esce subito dal pool e ogni riserva in corso viene terminata.",
+    "conf": "Il consenso è stato revocato.",
+    "error": "Non è stato possibile revocare il consenso.",
+    "notify": "Informare subito questo partner che il contatto deve cessare. Della propria copia risponde il partner stesso:"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "business-prospect-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/business/prospect/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:business", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/business/prospect/data-access",
+        "main": "libs/business/prospect/data-access/src/index.ts",
+        "tsConfig": "libs/business/prospect/data-access/tsconfig.lib.json",
+        "assets": ["libs/business/prospect/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

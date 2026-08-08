@@ -3105,6 +3105,29 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "prospects",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "consentAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "accounting-configs",
       "queryScope": "COLLECTION",
       "fields": [

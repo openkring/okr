@@ -1,0 +1,29 @@
+{
+  "plural": "Prospects",
+  "empty": "No prospects have come in yet.",
+  "header": {
+    "name": "Club / organisation",
+    "segment": "Segment",
+    "status": "Status",
+    "partner": "Partner",
+    "expires": "Held until"
+  },
+  "status": {
+    "open": "Open",
+    "claimed": "Claimed",
+    "converted": "Converted",
+    "expired": "Expired",
+    "withdrawn": "Withdrawn"
+  },
+  "as": {
+    "title": "Prospect",
+    "revoke": "Withdraw consent",
+    "cancel": "Cancel"
+  },
+  "revoke": {
+    "confirm": "Really withdraw consent? The entry leaves the pool immediately and any running claim is terminated.",
+    "conf": "Consent has been withdrawn.",
+    "error": "Consent could not be withdrawn.",
+    "notify": "Please tell this partner at once that contact must stop. They are responsible for their own copy:"
+  }
+}

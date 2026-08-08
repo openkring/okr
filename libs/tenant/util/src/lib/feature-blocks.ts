@@ -2081,6 +2081,7 @@ const business: FeatureBlock = {
     // only tenant that ever renders it is `kring` itself.
     { key: 'partner-all', name: 'partner-all', url: '/partner/all/partner-context', action: 'navigate', roleNeeded: 'admin', icon: 'org', label: '@business/partner/util.plural' },
     { key: 'metering-all', name: 'metering-all', url: '/metering', action: 'navigate', roleNeeded: 'admin', icon: 'chart', label: '@business/metering/util.records.plural' },
+    { key: 'prospect-all', name: 'prospect-all', url: '/prospect', action: 'navigate', roleNeeded: 'admin', icon: 'target', label: '@business/prospect/util.plural' },
   ],
 };
 

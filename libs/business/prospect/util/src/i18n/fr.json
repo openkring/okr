@@ -1,0 +1,29 @@
+{
+  "plural": "Prospects",
+  "empty": "Aucun prospect n'est encore arrivé.",
+  "header": {
+    "name": "Association / organisation",
+    "segment": "Segment",
+    "status": "Statut",
+    "partner": "Partenaire",
+    "expires": "Réservé jusqu'au"
+  },
+  "status": {
+    "open": "Ouvert",
+    "claimed": "Réservé",
+    "converted": "Devenu client",
+    "expired": "Expiré",
+    "withdrawn": "Révoqué"
+  },
+  "as": {
+    "title": "Prospect",
+    "revoke": "Révoquer le consentement",
+    "cancel": "Annuler"
+  },
+  "revoke": {
+    "confirm": "Révoquer vraiment le consentement ? L'entrée quitte immédiatement le pool et toute réservation en cours prend fin.",
+    "conf": "Le consentement a été révoqué.",
+    "error": "Le consentement n'a pas pu être révoqué.",
+    "notify": "Merci d'informer immédiatement ce partenaire que tout contact doit cesser. Il répond lui-même de sa propre copie :"
+  }
+}

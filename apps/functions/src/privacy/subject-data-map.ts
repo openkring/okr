@@ -1,5 +1,6 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
 import type { AvatarInfo } from '@okr/shared-models';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
 
@@ -124,6 +125,56 @@ function expenseIsOpen(bookingKey: string, status: string): boolean {
   return !bookingKey && status !== 'validated' && status !== 'error';
 }
 
+// ─────────────────────────── prospects: the two-hop resolver (C5 §4) ────────────────────────────
+// A prospect is a natural person who signed up on kring.ch. They have no uid and no personKey, so
+// like `applications` they are reachable by e-mail alone — except that a prospect's e-mail is
+// deliberately NOT a field on the prospect: it is an `addresses` document with
+// `parentKey = 'prospect.<okey>'`, in the same PII vault, under the same rules, as every other
+// contact datum (C5 §5). One `where('email','==',ctx.email)` therefore cannot reach the prospect,
+// and no `matches` post-filter can rescue it — the hop addresses → parentKey → prospects has to
+// happen before the prospects query exists at all. That is what `SubjectDataEntry.resolve` is for.
+
+/** Firestore caps a disjunctive `in` at 30 values. Prospect key sets are tiny; chunk rather than truncate. */
+const IN_CHUNK = 30;
+
+function chunk<T>(items: T[], size = IN_CHUNK): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+/**
+ * Hop 1 — every `addresses.parentKey` of the form `prospect.<okey>` that carries this e-mail.
+ *
+ * An equality query is correct here, unlike on `applications`: `submitProspect` lowercases the
+ * address before writing it (`business/index.ts`) and `SubjectCtx.email` is lowercased by contract,
+ * so the two forms cannot disagree. If a second writer of prospect addresses ever appears, it must
+ * normalize too — or this becomes a scan, as `applications` already is.
+ */
+async function prospectParentKeys(ctx: SubjectCtx): Promise<string[]> {
+  if (!ctx.email) return [];
+  const snap = await db().collection('addresses')
+    .where('addressChannel', '==', 'email')
+    .where('email', '==', ctx.email)
+    .get();
+  const prefix = `${PROSPECT_PARENT_PREFIX}.`;
+  return [...new Set(snap.docs
+    .map((d) => (d.get('parentKey') as string | undefined) ?? '')
+    .filter((k) => k.startsWith(prefix)))];
+}
+
+async function docsByIds(collection: string, ids: string[]): Promise<QueryDocumentSnapshot[]> {
+  const snaps = await Promise.all(chunk(ids).map((ids) =>
+    db().collection(collection).where(FieldPath.documentId(), 'in', ids).get()));
+  return snaps.flatMap((s) => s.docs);
+}
+
+async function docsByParentKeys(parentKeys: string[]): Promise<QueryDocumentSnapshot[]> {
+  const snaps = await Promise.all(chunk(parentKeys).map((keys) =>
+    db().collection('addresses').where('parentKey', 'in', keys).get()));
+  return snaps.flatMap((s) => s.docs);
+}
+
 export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
   // ─────────────────────────────── identity & consent ───────────────────────────────
   {
@@ -189,6 +240,17 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tier: 'T1',   // strictest tier wins: the favorite contact address is contract data, the dob address is not
     onTenantExit: 'detach',   // D-L2: shared across tenancies — strip the tenant, hard-delete only when tenants[] empties
     find: (c: SubjectCtx) => db().collection('addresses').where('parentKey', '==', c.parentKey),
+    // The subject's own vault, PLUS the vault of any prospect record they created before they had
+    // an account (C5 §5 — a lead's e-mail is an address, not a field). Without the second half a
+    // prospect address outlives the prospect row that `onErasure: 'delete'` removes: contact data
+    // surviving an erasure, orphaned, which is precisely what D-P5-3 exists to prevent.
+    resolve: async (c: SubjectCtx) => {
+      const own = await db().collection('addresses').where('parentKey', '==', c.parentKey).get();
+      const prospectKeys = await prospectParentKeys(c);
+      if (prospectKeys.length === 0) return own.docs;
+      const fromProspects = await docsByParentKeys(prospectKeys);
+      return [...own.docs, ...fromProspects];
+    },
     tenantScope: 'tenantsArray',
     onExport: 'full',             // D-P5-1: the sanctioned vault egress
     onErasure: 'delete',
@@ -395,6 +457,38 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onExport: 'full',
     onErasure: 'delete',
     retention: APPLICATION_RECORD,
+  },
+  {
+    collection: 'prospects',
+    dataClass: 'identity',
+    // T2, not T1: consent is the legal basis (Vertragswerk Teil III.2) and consent is
+    // withdrawable at any time, so nothing may block this row — which is the same statement
+    // C5 §7 makes as "a revocation beats an active claim, immediately". A claim is a promise
+    // bkaiser made to a partner; it is not a ground to keep processing.
+    tier: 'T2',
+    // `delete`, not `retain`: a T2 row may never survive an exit, because consent is
+    // withdrawable at any time and leaving is not weaker than asking. The record lives in
+    // `kring` for its whole life (C5 §2), so in practice this fires only for someone who both
+    // signed up as a lead and held a `kring` account.
+    onTenantExit: 'delete',
+    // Not the access path: `find` cannot express the addresses → parentKey → prospects hop, so
+    // this row carries a `resolve` (see the block above `prospectParentKeys`). Kept, and kept
+    // narrow, because the shape tests read it and because a `find` that returned the whole
+    // collection would be a live foot-gun for anyone who ignored the contract.
+    find: (c: SubjectCtx) => db().collection('prospects').where('tenants', 'array-contains', c.tenantId),
+    resolve: async (c: SubjectCtx) => {
+      const parentKeys = await prospectParentKeys(c);
+      if (parentKeys.length === 0) return [];
+      const prefix = `${PROSPECT_PARENT_PREFIX}.`;
+      return await docsByIds('prospects', parentKeys.map((k) => k.slice(prefix.length)));
+    },
+    tenantScope: 'tenantsArray',
+    // The lead's own record — name of the Verein, segment, source, and who holds the claim. It
+    // is exactly the disclosure-to-a-third-party the signup notice announced, so the person is
+    // entitled to see it in full.
+    onExport: 'full',
+    onErasure: 'delete',
+    retention: APPLICATION_RECORD,   // 24 months from last contact (C5 §7) — the existing tier, reused
   },
 
   // ─────────────────── financial records under the 10-year retention ────────────────
@@ -921,8 +1015,8 @@ export function inTenant(entry: SubjectDataEntry, doc: QueryDocumentSnapshot, ct
  * The result is also what `blocksErasure` must be fed (contract step 4).
  */
 export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Promise<QueryDocumentSnapshot[]> {
-  const snapshot = await entry.find(ctx).get();
-  return snapshot.docs.filter((doc) => inTenant(entry, doc, ctx) && (entry.matches?.(doc, ctx) ?? true));
+  const docs = entry.resolve ? await entry.resolve(ctx) : (await entry.find(ctx).get()).docs;
+  return docs.filter((doc) => inTenant(entry, doc, ctx) && (entry.matches?.(doc, ctx) ?? true));
 }
 
 // ──────────────────────────────────────────────────────────────────────────────────
@@ -947,11 +1041,6 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   directly, never through `eraseMyData`. Turning it into a row would require SubjectCtx to
 //   carry an identity that does not exist in this system. Retention and the direct-request path
 //   are C3 §9's open item.
-// gap: prospects — a lead is a natural person, but their e-mail lives in an `addresses`
-//   document (`parentKey = 'prospect.<okey>'`), not on the prospect, so `SubjectCtx.email`
-//   cannot reach it in one query: the row needs a resolver going addresses → parentKey →
-//   prospect. It must land WITH the signup Cloud Function, i.e. still before the first prospect
-//   exists (C5 §4). Until then a prospect's own data is reachable only by hand.
 // not personal data: accounts — chart of accounts (account numbers, names, hierarchy)
 // not personal data: accounting-configs — per-tenant accounting settings
 // not personal data: app-config — tenant configuration; opEmail/dpoEmail are operator

@@ -1,0 +1,29 @@
+{
+  "plural": "Clientes potenciales",
+  "empty": "Todavía no ha llegado ningún cliente potencial.",
+  "header": {
+    "name": "Asociación / organización",
+    "segment": "Segmento",
+    "status": "Estado",
+    "partner": "Socio",
+    "expires": "Reservado hasta"
+  },
+  "status": {
+    "open": "Abierto",
+    "claimed": "Reservado",
+    "converted": "Convertido en cliente",
+    "expired": "Caducado",
+    "withdrawn": "Revocado"
+  },
+  "as": {
+    "title": "Cliente potencial",
+    "revoke": "Revocar el consentimiento",
+    "cancel": "Cancelar"
+  },
+  "revoke": {
+    "confirm": "¿Revocar realmente el consentimiento? La entrada sale del pool de inmediato y se termina cualquier reserva en curso.",
+    "conf": "El consentimiento ha sido revocado.",
+    "error": "No se ha podido revocar el consentimiento.",
+    "notify": "Informa de inmediato a este socio de que debe cesar el contacto. De su propia copia responde el socio mismo:"
+  }
+}

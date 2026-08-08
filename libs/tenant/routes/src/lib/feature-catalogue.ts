@@ -980,6 +980,14 @@ const business: BlockRoutes = {
       canActivate: [isAdminGuard()],
       loadComponent: () => import('@okr/business-metering-feature').then(m => m.MeteringList),
     },
+    // The lead pool (spec 1.30 / C5). Same block, not a second one: it is the same back office,
+    // and a partner reaches the pool through callables rather than through any route here.
+    // No `:contextMenuName` either — one action (revoke consent), reached from the row.
+    {
+      path: 'prospect',
+      canActivate: [isAdminGuard()],
+      loadComponent: () => import('@okr/business-prospect-feature').then(m => m.ProspectList),
+    },
   ],
 };
 

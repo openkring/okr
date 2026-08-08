@@ -1,4 +1,4 @@
-import type { DocumentSnapshot, Query } from 'firebase-admin/firestore';
+import type { DocumentSnapshot, Query, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import type { Blocker, DataClass, DataTier } from '@okr/shared-models';
 
 /**
@@ -134,6 +134,20 @@ export interface SubjectDataEntry {
    * `matches` to narrow the result; using it directly leaks other members' documents.
    */
   readonly find: (ctx: SubjectCtx) => Query;
+  /**
+   * Replaces step 1 for a row whose subject link needs **a query to find the query**.
+   *
+   * Exactly one row needs this and it is not an abstraction looking for a use: a prospect
+   * (C5) is identified only by e-mail, and that e-mail deliberately lives in an `addresses`
+   * document (`parentKey = 'prospect.<okey>'`), never on the prospect itself. Reaching it
+   * costs two round trips — addresses → `parentKey` → prospects — which a synchronous
+   * `find` cannot express at all. `addresses` carries the mirror image of the same hop.
+   *
+   * When present, `resolve` supplies the document set and `find` is used only by the query-
+   * shape tests. `tenantScope` and `matches` still run on the result, unchanged: the extra
+   * hop replaces the query, never the filters.
+   */
+  readonly resolve?: (ctx: SubjectCtx) => Promise<QueryDocumentSnapshot[]>;
   /** How to keep this row's documents inside `ctx.tenantId`. See contract step 2. */
   readonly tenantScope: TenantScope;
   readonly onExport: 'full' | 'index' | 'none';

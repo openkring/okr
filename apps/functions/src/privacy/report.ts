@@ -87,6 +87,10 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // the membership APPLICATION, whose shipped list title is "Anträge"
   // (libs/subject/application/feature/src/i18n/de.json: list.title).
   applications: 'Anträge',
+  // The lead pool (C5). "Interessenten" and not "Leads": the export is read by the person
+  // themselves, in the informal du of the house register, and it has to say plainly that we
+  // recorded their interest and passed it to a partner.
+  prospects: 'Interessenten',
 
   // — financial (10-year retention) —
   bookings: 'Buchungen', // libs/finance/booking/feature/src/i18n/de.json: list.title

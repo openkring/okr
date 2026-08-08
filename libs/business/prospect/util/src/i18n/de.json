@@ -1,0 +1,29 @@
+{
+  "plural": "Interessenten",
+  "empty": "Es sind noch keine Interessenten eingegangen.",
+  "header": {
+    "name": "Verein / Organisation",
+    "segment": "Segment",
+    "status": "Status",
+    "partner": "Partner",
+    "expires": "Reserviert bis"
+  },
+  "status": {
+    "open": "Offen",
+    "claimed": "Reserviert",
+    "converted": "Kunde geworden",
+    "expired": "Abgelaufen",
+    "withdrawn": "Widerrufen"
+  },
+  "as": {
+    "title": "Interessent",
+    "revoke": "Einwilligung widerrufen",
+    "cancel": "Abbrechen"
+  },
+  "revoke": {
+    "confirm": "Einwilligung wirklich widerrufen? Der Eintrag verlässt den Pool sofort und eine laufende Reservation wird beendet.",
+    "conf": "Die Einwilligung wurde widerrufen.",
+    "error": "Die Einwilligung konnte nicht widerrufen werden.",
+    "notify": "Bitte diesen Partner umgehend informieren, dass der Kontakt einzustellen ist. Für die eigene Kopie ist der Partner selbst verantwortlich:"
+  }
+}

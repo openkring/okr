@@ -1,5 +1,5 @@
 // apps/functions/src/business/index.ts
-import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -8,8 +8,9 @@ import {
   CommissionEntryCollection, MeteringRecordCollection, OrgCollection, PartnerCollection,
   ProspectCollection, AddressCollection,
 } from '@okr/shared-models';
-import type { MeteringRecordModel, PartnerModel, ProspectModel } from '@okr/shared-models';
+import type { MeteringRecordModel, ProspectModel } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { PLATFORM_TENANT, REGION, nowStamp, requirePartner } from './shared';
 import {
   commissionEntryId, commissionForTenant, heartbeatStatus, meteringRecordId, missingTenants,
   shiftPeriod, toMeteringRecord, validatePayload,
@@ -18,39 +19,7 @@ import type { BandId, MeteringPayload } from '@okr/business-metering-util';
 import { convertProspect } from '@okr/business-prospect-util';
 
 export { pushMeteringToPlatform } from './push';
-
-const REGION = 'europe-west6';
-
-/** Everything the partner channel writes lives in the platform tenant (C3 §6). */
-const PLATFORM_TENANT = 'kring';
-
-function nowStamp(): string {
-  return new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-}
-
-/**
- * Resolve the calling installation to a partner record.
- *
- * The identity is a uid recorded on the partner (`serviceUid`), not a `partner` role: this uid can
- * do exactly what these callables allow and nothing else, and it stays out of both the eight
- * billable roles (pricing §9.1) and every `isPrivileged()` branch in `firestore.rules`.
- */
-async function requirePartner(request: CallableRequest, fnName: string): Promise<PartnerModel> {
-  // NO App Check here, deliberately: the caller is the partner's scheduled Cloud Function (C3 §3),
-  // and App Check attests *client apps* — there is no server attestation to obtain, so requiring it
-  // would make the push impossible rather than safer. The credential is the service identity's ID
-  // token, which bkaiser issues and can disable unilaterally.
-  checkAuthentication(request, fnName);
-  const uid = request.auth?.uid ?? '';
-  const snap = await getFirestore().collection(PartnerCollection)
-    .where('serviceUid', '==', uid).limit(1).get();
-  if (snap.empty) {
-    logger.error(`${fnName}: uid ${uid} is not a registered partner identity`);
-    throw new HttpsError('permission-denied', 'Not a registered partner identity.');
-  }
-  const doc = snap.docs[0];
-  return { ...(doc.data() as PartnerModel), okey: doc.id };
-}
+export { listProspects, claimProspect, releaseProspect, revokeProspect } from './prospect';
 
 /**
  * C3 §6 — the metering ingest. Push, never pull: a pull would mean every partner exposing an

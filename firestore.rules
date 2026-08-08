@@ -593,6 +593,25 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // The prospect pool (spec 1.30 / C5). Without this match the collection falls through to
+    // the default deny below and the registry reads as permanently empty — the exact trap
+    // that cost C3 a silent-empty screen.
+    //
+    // Admin-only, and no partner clause at all. A partner's access is "the open pool plus my
+    // own claims, never another partner's": that is a predicate over document CONTENT, which
+    // Firestore cannot evaluate for a list query. Any rule written to make such a list pass
+    // grants more than it appears to. Partners therefore read and claim through the callables
+    // (`listProspects` / `claimProspect` / `releaseProspect`), authenticated by
+    // `PartnerModel.serviceUid` — never against a role and never against this rule.
+    //
+    // Writes are the Admin SDK's alone: `submitProspect` creates the record, `pushMetering`
+    // observes the conversion (C5 §7 — never self-declared), and `revokeProspect` terminates
+    // a claim. An admin who could edit a claim here could also register a conversion by hand.
+    match /prospects/{prospectId} {
+      allow read:  if isAdmin() && (resource == null || belongsToTenant(resource.data));
+      allow write: if false;
+    }
+
     // ============================================================================
     //  Default deny — no catch-all grant. Any collection not matched above is
     //  denied. (C-1: the previous `match /{document=**} { allow read, write:
