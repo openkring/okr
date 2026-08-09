@@ -441,9 +441,9 @@
     },
     "createAll": {
       "label": "Für alle Dateien Dokumente erstellen",
-      "confirm": "Für alle {{count}} Dateien einen Datenbank-Eintrag erstellen?",
-      "running": "{{done}} von {{count}} erstellt …",
-      "conf": "{{done}} von {{count}} Dokumenten erstellt."
+      "confirm": "Für alle {count} Dateien einen Datenbank-Eintrag erstellen?",
+      "running": "{done} von {count} erstellt …",
+      "conf": "{done} von {count} Dokumenten erstellt."
     }
   },
   "roles": {

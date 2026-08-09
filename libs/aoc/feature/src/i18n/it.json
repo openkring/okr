@@ -441,9 +441,9 @@
     },
     "createAll": {
       "label": "Crea documenti per tutti i file",
-      "confirm": "Creare una voce di database per tutti i {{count}} file?",
-      "running": "{{done}} di {{count}} creati …",
-      "conf": "{{done}} di {{count}} documenti creati."
+      "confirm": "Creare una voce di database per tutti i {count} file?",
+      "running": "{done} di {count} creati …",
+      "conf": "{done} di {count} documenti creati."
     }
   },
   "roles": {

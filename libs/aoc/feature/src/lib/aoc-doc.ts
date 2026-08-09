@@ -7,6 +7,7 @@ import { fileSizeUnit } from '@okr/shared-util-core';
 import { FileLogoPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 
+import { fill } from '@okr/aoc-util';
 import { AocDocStore, BULK_CREATE_THRESHOLD, StorageFileInfo } from './aoc-doc.store';
 
 @Component({
@@ -109,11 +110,9 @@ export class AocDoc {
 
   /** While the run is going, the button doubles as the progress indicator. */
   protected readonly bulkCreateLabel = computed(() => {
-    const total = this.missingDocs().length;
     if (!this.isCreatingAll()) return this.store.i18n.doc_create_all();
-    return this.store.i18n.doc_create_all_running()
-      .replace('{{done}}', String(this.store.createdCount()))
-      .replace('{{count}}', String(total));
+    return fill(this.store.i18n.doc_create_all_running(),
+      { done: this.store.createdCount(), count: this.missingDocs().length });
   });
 
   // constants

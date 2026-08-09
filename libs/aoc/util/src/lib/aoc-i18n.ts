@@ -560,3 +560,18 @@ export const TENANT_SWITCHER_I18N_KEYS = {
 };
 
 export type AocI18n = { [K in keyof typeof AOC_I18N_KEYS]: Signal<string> };
+
+/**
+ * Fill a `{name}` placeholder in an already-resolved i18n string.
+ *
+ * SINGLE braces on purpose. The store i18n pattern resolves keys through
+ * `I18nService.translateAll`, and Transloco interpolates its own `{{name}}` syntax during
+ * that resolution — with no params supplied it substitutes the empty string, so a `{{name}}`
+ * placeholder is already gone by the time the signal is read (symptom: a label rendering as
+ * "von erstellt"). Single braces pass through Transloco untouched and are substituted here.
+ * Any translation string used with this helper must therefore use `{name}`, never `{{name}}`.
+ */
+export function fill(template: string, params: Record<string, string | number>): string {
+  // split/join, not replaceAll: this lib's tsconfig target predates String.replaceAll.
+  return Object.entries(params).reduce((s, [k, v]) => s.split(`{${k}}`).join(String(v)), template);
+}

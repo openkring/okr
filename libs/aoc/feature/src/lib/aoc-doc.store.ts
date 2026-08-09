@@ -15,7 +15,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { DocumentService } from '@okr/document-data-access';
 import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@okr/document-util';
-import { AOC_I18N_KEYS } from '@okr/aoc-util';
+import { AOC_I18N_KEYS, fill } from '@okr/aoc-util';
 
 /** One object under `tenant/{tenantId}/`, as returned by the `listTenantStorageFiles` callable. */
 export type TenantStorageFile = {
@@ -71,11 +71,6 @@ async function listTenantStorageFiles(tenantId: string): Promise<TenantStorageFi
 /** Convert an ISO 8601 date string from Firebase Storage metadata to the app's store date format. */
 function isoToStoreDate(iso: string): string {
   return convertDateFormatToString(iso.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
-}
-
-/** Fill a `{{name}}` placeholder in an already-resolved i18n string. */
-function fill(template: string, params: Record<string, string | number>): string {
-  return Object.entries(params).reduce((s, [k, v]) => s.replaceAll(`{{${k}}}`, String(v)), template);
 }
 
 /** Build the DocumentModel for one orphaned storage file. Shared by the single and bulk create. */

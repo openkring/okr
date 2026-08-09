@@ -441,9 +441,9 @@
     },
     "createAll": {
       "label": "Crear documentos para todos los archivos",
-      "confirm": "¿Crear una entrada de base de datos para los {{count}} archivos?",
-      "running": "{{done}} de {{count}} creados …",
-      "conf": "{{done}} de {{count}} documentos creados."
+      "confirm": "¿Crear una entrada de base de datos para los {count} archivos?",
+      "running": "{done} de {count} creados …",
+      "conf": "{done} de {count} documentos creados."
     }
   },
   "roles": {
