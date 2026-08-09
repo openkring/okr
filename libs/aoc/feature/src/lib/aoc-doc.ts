@@ -54,11 +54,17 @@ import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
             <ion-list lines="inset">
               @for(doc of missingDocs(); track doc.fullPath) {
                 <ion-item (click)="showFileActions(doc)" button>
+                  <!-- The scan returns EVERY object under the tenant prefix, so this list can be
+                       hundreds of rows and each thumbnail is a distinct imgix URL. Fetching them
+                       all at once gets the burst rate-limited (429) — and the 429 hits whatever
+                       is in flight, including the shared filetype logos. Both attributes below
+                       defer the request until the row is near the viewport. The logos need no
+                       extra cache: ion-icon already dedupes identical srcs process-wide. -->
                   <ion-thumbnail slot="start">
                     @if(isImageOrPdf(doc)) {
-                      <img src="{{ doc.fullPath | thumbnailUrl}}" />
+                      <img src="{{ doc.fullPath | thumbnailUrl}}" loading="lazy" decoding="async" />
                     } @else {
-                      <ion-icon style="width: 100%; height: 100%;" src="{{ doc.fullPath | fileLogo }}" />
+                      <ion-icon style="width: 100%; height: 100%;" src="{{ doc.fullPath | fileLogo }}" lazy="true" />
                     }
                   </ion-thumbnail>
                   <ion-label>
