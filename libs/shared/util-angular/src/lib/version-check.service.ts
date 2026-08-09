@@ -4,7 +4,7 @@ import { AlertController } from '@ionic/angular/standalone';
 import { SwUpdate } from '@angular/service-worker';
 import { doc, onSnapshot } from 'firebase/firestore';
 
-import { FIRESTORE } from '@okr/shared-config';
+import { ENV, FIRESTORE } from '@okr/shared-config';
 
 import packageJson from '../../../../../package.json';
 
@@ -12,6 +12,16 @@ export interface AppVersionConfig {
   minVersion: string;
   latestVersion: string;
   forceUpdate?: boolean;
+  /**
+   * What is actually live per app, keyed by `environment.appId` ('scs', 'p13', …).
+   *
+   * Apps deploy on their own cadence out of one monorepo version, so `latestVersion` — a single
+   * number for the whole fleet — names a build that may never have been deployed to *this* app.
+   * The map is display truth; `latestVersion` stays as the fallback for installations that don't
+   * maintain it. `minVersion`/`forceUpdate` deliberately stay global: only raise `minVersion` to a
+   * version that has been deployed to every app, or you force clients toward a build they cannot get.
+   */
+  deployed?: Record<string, string>;
 }
 
 export const AppVersionCollection = 'app-version';  // same for collection and document id
@@ -41,6 +51,8 @@ export class VersionCheckService {
   private readonly swUpdate = inject(SwUpdate);
   public readonly firestore = inject(FIRESTORE);
 
+  /** Which app this build is, so the deployed-version map can be read for it. */
+  private readonly appId = inject(ENV, { optional: true })?.appId ?? '';
   private readonly currentVersion = packageJson.version;
   private versionConfig: AppVersionConfig | undefined;
   private alertShown = false;
@@ -50,8 +62,10 @@ export class VersionCheckService {
     return this.currentVersion;
   }
 
+  /** The version live for THIS app, falling back to the fleet-wide `latestVersion`. */
   getLatestVersion(): string | undefined {
-    return this.versionConfig?.latestVersion;
+    const config = this.versionConfig;
+    return config?.deployed?.[this.appId] ?? config?.latestVersion;
   }
 
   /**
@@ -173,7 +187,7 @@ export class VersionCheckService {
     this.alertShown = true;
 
     const config = this.versionConfig;
-    const latestVersion = config?.latestVersion;
+    const latestVersion = this.getLatestVersion();
     const forceUpdate = config?.forceUpdate === true ||
       (config?.minVersion !== undefined && this.compareVersions(this.currentVersion, config.minVersion) < 0);
 

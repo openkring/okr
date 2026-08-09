@@ -19,6 +19,7 @@ const pkgPath = join(repoRoot, 'package.json');
 // app -> hosting site id (from firebase.json). Keep in sync with the firebase-deploy skill.
 const SITES = {
   'scs-app': 'scs-app-54aef',
+  'p13-app': 'p13-app-54aef',
   'okr-website': 'okr-website-54aef',
   'kring-website': 'kring-website-54aef',
   'p13-website': 'p13-website-54aef',
@@ -187,15 +188,22 @@ async function releaseApp(app) {
   }
 
   // 6. app-version doc — ask each release (default yes only for the prod app)
+  //    `deployed.<appId>` is what this release actually put live; `latestVersion` is the fleet-wide
+  //    fallback for installations that don't maintain the map. `minVersion` is global — raising it
+  //    to a version only one app has would force every other app's clients toward a build that was
+  //    never deployed for them, so only raise it after all apps are on `next`.
+  const appKey = app.replace(/-(app|website)$/, '');
   console.log('\n[6/7] app-version update');
   let appVersionPending = false;
-  if (await confirm(`Update app-version.latestVersion to ${next}? (triggers the in-app update prompt)`, app === PROD_APP)) {
-    const minAns = await ask('  minVersion — leave blank to keep unchanged, or enter a value to force-update older clients: ');
+  if (await confirm(`Update app-version.deployed.${appKey} to ${next}? (names the version this app's update prompt shows)`, app === PROD_APP)) {
+    const minAns = await ask('  minVersion — leave blank to keep unchanged; only raise it once ALL apps are on this version: ');
     appVersionPending = true;
     console.log('\n  ⚠ ACTION REQUIRED — this script does NOT write Firestore. YOU must apply this manually:');
     console.log('     Firestore doc  app-version/app-version  (default database):');
-    console.log(`        latestVersion: "${next}"`);
-    console.log(`        minVersion:    ${minAns ? `"${minAns}"  (CHANGED — forces update below this)` : '(keep current)'}`);
+    console.log(`        deployed.${appKey}: "${next}"`);
+    const fallbackNote = app === PROD_APP ? '' : ' — leave as is if another app is newer';
+    console.log(`        latestVersion: "${next}"   (fleet-wide fallback${fallbackNote})`);
+    console.log(`        minVersion:    ${minAns ? `"${minAns}"  (CHANGED — forces update below this, ALL apps)` : '(keep current)'}`);
     console.log('     via the Firebase console, the Firebase MCP firestore_update_document tool, or firebase-admin.');
     console.log('     Until you do this, deployed clients will NOT see the update prompt.');
   } else {
@@ -214,7 +222,7 @@ async function releaseApp(app) {
 
   console.log(`\n✔ ${app} released as v${next}.`);
   if (appVersionPending)
-    console.log(`  ⚠ REMINDER: you still need to set app-version/app-version → latestVersion "${next}" in Firestore yourself (not done by this script).`);
+    console.log(`  ⚠ REMINDER: you still need to set app-version/app-version → deployed.${appKey} "${next}" in Firestore yourself (not done by this script).`);
 }
 
 // ---- functions -----------------------------------------------------------

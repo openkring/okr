@@ -26,6 +26,7 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('@okr/shared-config', () => ({
   FIRESTORE: Symbol('FIRESTORE'),
+  ENV: Symbol('ENV'),
 }));
 
 vi.mock('./platform.util', () => ({
@@ -35,7 +36,8 @@ vi.mock('./platform.util', () => ({
 import { inject, PLATFORM_ID } from '@angular/core';
 import { AlertController } from '@ionic/angular/standalone';
 import { SwUpdate } from '@angular/service-worker';
-import { FIRESTORE } from '@okr/shared-config';
+import { ENV, FIRESTORE } from '@okr/shared-config';
+import type { AppVersionConfig } from './version-check.service';
 import { UNRECOVERABLE_RELOAD_KEY, VersionCheckService } from './version-check.service';
 
 describe('VersionCheckService unrecoverable-state handling', () => {
@@ -56,6 +58,7 @@ describe('VersionCheckService unrecoverable-state handling', () => {
       if (token === SwUpdate) return mockSwUpdate;
       if (token === PLATFORM_ID) return 'browser';
       if (token === FIRESTORE) return {};
+      if (token === ENV) return { appId: 'p13' };
       return undefined;
     });
     const service = new VersionCheckService();
@@ -103,5 +106,31 @@ describe('VersionCheckService unrecoverable-state handling', () => {
     const { reloadSpy } = makeService();
     unrecoverable.next({ type: 'UNRECOVERABLE_STATE', reason: 'Hash mismatch' });
     expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
+  // Apps release on their own cadence, so the fleet-wide latestVersion is the wrong number to show
+  // to an app that is behind (or ahead) of it — deployed[appId] wins when it is there.
+  describe('getLatestVersion', () => {
+    const setConfig = (service: VersionCheckService, config: AppVersionConfig) => {
+      (service as unknown as { versionConfig?: AppVersionConfig }).versionConfig = config;
+    };
+
+    it('prefers the version deployed for this app', () => {
+      const { service } = makeService();               // appId 'p13'
+      setConfig(service, { minVersion: '7.0.0', latestVersion: '7.11.1', deployed: { scs: '7.11.1', p13: '7.12.0' } });
+      expect(service.getLatestVersion()).toBe('7.12.0');
+    });
+
+    it('falls back to latestVersion when this app has no entry', () => {
+      const { service } = makeService();
+      setConfig(service, { minVersion: '7.0.0', latestVersion: '7.11.1', deployed: { scs: '7.11.1' } });
+      expect(service.getLatestVersion()).toBe('7.11.1');
+    });
+
+    it('falls back to latestVersion when there is no deployed map at all', () => {
+      const { service } = makeService();
+      setConfig(service, { minVersion: '7.0.0', latestVersion: '7.11.1' });
+      expect(service.getLatestVersion()).toBe('7.11.1');
+    });
   });
 });

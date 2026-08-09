@@ -162,10 +162,19 @@ async function disabledUids(): Promise<Set<string>> {
   return uids;
 }
 
-/** The running version, read from the `app-version` doc the release already maintains. */
-async function installedVersion(): Promise<string> {
+/**
+ * The running version, read from the `app-version` doc the release already maintains.
+ *
+ * Exported because bkaiser's own installation IS the current openkring release, which makes this
+ * the supported-version window's reference point in `ticket.ts` (C4 §3) as well as the version a
+ * partner reports here. One doc, one meaning — a second "current version" constant is a second
+ * thing that goes stale on release day.
+ */
+export async function installedVersion(): Promise<string> {
   const doc = await getFirestore().collection('app-version').doc('app-version').get();
-  return (doc.get('version') ?? '') as string;
+  // `latestVersion` is the field the release actually maintains; `version` was never written by any
+  // release and read empty, which silently sent every ticket into the §3 window gate with no version.
+  return (doc.get('latestVersion') ?? doc.get('version') ?? '') as string;
 }
 
 interface PushResponse {
