@@ -306,6 +306,11 @@ describe('img.util', () => {
       expect(result).toBe('https://example.com/image.jpg');
       expect(mockWarn).toHaveBeenCalled();
     });
+
+    it('should return an empty string for a key (never throw inside a template computed)', () => {
+      expect(getImgixUrl('someDocumentKey')).toBe('');
+      expect(mockWarn).toHaveBeenCalled();
+    });
   });
 
   describe('getImgixUrlWithAutoParams', () => {

@@ -16,3 +16,6 @@ export const applyFeatureSelection = createApplyFeatureSelection(FEATURE_BLOCKS)
 
 export { createApplyFeatureSelection, applySelection, planSelection } from './apply-feature-selection';
 export type { ApplyFeatureSelectionResult, SelectionPlan } from './apply-feature-selection';
+
+export { listTenantStorageFiles } from './list-storage-files';
+export type { TenantStorageFile } from './list-storage-files';

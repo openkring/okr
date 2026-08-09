@@ -294,6 +294,11 @@ export const runPrivacyAudit = Privacy.runPrivacyAudit;
 // (`@okr/tenant-util`'s `FEATURE_BLOCKS`) — see `apps/functions/src/tenant/index.ts`.
 export const applyFeatureSelection = Tenant.applyFeatureSelection;
 
+// admin-only listing of a tenant's Storage objects (AOC "Dateien ohne DB-Eintrag").
+// A client-side listAll() cannot work: storage.rules authorises via the cross-service
+// firestore.get(), which does not resolve on a `list` request — see ./tenant/list-storage-files.ts.
+export const listTenantStorageFiles = Tenant.listTenantStorageFiles;
+
 // public, unauthenticated health check for external uptime monitoring (BetterStack).
 // Verifies the backend is up and can reach Firestore. See ./health.
 export { healthz } from './health';

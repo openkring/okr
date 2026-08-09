@@ -43,7 +43,11 @@ export function getImgixUrl(path: string | undefined, params = 'auto=compress,en
     // whitespace), so the image silently fails to load even though the URL works in src.
     case 'assets': return encodeURI(_path);
     case 'storage': return encodeURI(_path) + '?' + params;
-    default: die('img.util.getImgixUrl -> invalid url type: ' + _urlType);
+    // A 'key' (or anything unrecognised) is not renderable here. This runs inside template
+    // computeds, so throwing would tear down the whole view for one bad url -> warn + empty.
+    default:
+      warn('img.util.getImgixUrl -> invalid url type: ' + _urlType + ' (path: ' + _path + ')');
+      return '';
   }
 }
 

@@ -1,5 +1,7 @@
 import { computed, inject } from '@angular/core';
-import { FirebaseStorage, StorageReference, deleteObject, getDownloadURL, getMetadata, listAll, ref } from 'firebase/storage';
+import { deleteObject, getDownloadURL, ref } from 'firebase/storage';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { AlertController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -7,7 +9,7 @@ import { STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { DocumentCollection, DocumentModel } from '@okr/shared-models';
-import { confirm, copyToClipboardWithConfirmation, downloadToBrowser } from '@okr/shared-util-angular';
+import { confirm, copyToClipboardWithConfirmation, downloadToBrowser, showToast } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getFullName, getTodayStr } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -15,14 +17,19 @@ import { DocumentService } from '@okr/document-data-access';
 import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@okr/document-util';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
-export type StorageFileInfo = {
+/** One object under `tenant/{tenantId}/`, as returned by the `listTenantStorageFiles` callable. */
+export type TenantStorageFile = {
   fullPath: string;
-  downloadUrl: string;
   size: number;
   contentType: string;
   timeCreated: string;   // ISO 8601, e.g. "2024-01-17T10:30:00.000Z"
   updated: string;       // ISO 8601
   md5Hash: string;       // base64-encoded MD5 hash from Firebase Storage metadata
+};
+
+/** A `TenantStorageFile` with no Firestore document, plus the download URL for the actions. */
+export type StorageFileInfo = TenantStorageFile & {
+  downloadUrl: string;
 };
 
 export type AocDocState = {
@@ -35,10 +42,22 @@ export const initialState: AocDocState = {
   isChecking: false,
 };
 
-async function listStorageFilesRecursively(storage: FirebaseStorage, path: string): Promise<StorageReference[]> {
-  const result = await listAll(ref(storage, path));
-  const nested = await Promise.all(result.prefixes.map(prefix => listStorageFilesRecursively(storage, prefix.fullPath)));
-  return [...result.items, ...nested.flat()];
+/**
+ * Lists every object under `tenant/{tenantId}/` via the `listTenantStorageFiles` callable.
+ *
+ * NOT a client-side `listAll()`: `storage.rules` authorises every tenant path through the
+ * cross-service `firestore.get()` on the caller's `users/{uid}` doc, and that call does not
+ * resolve on a Storage `list` request — so listing 403s for everyone while `get`/`create`
+ * on the very same prefix succeed. Making it work client-side would mean granting `list` to
+ * any `signedIn()` caller, i.e. letting every tenant enumerate every other tenant's file
+ * names. See `apps/functions/src/tenant/list-storage-files.ts`.
+ */
+async function listTenantStorageFiles(tenantId: string): Promise<TenantStorageFile[]> {
+  const fn = httpsCallable<{ tenantId: string }, { files: TenantStorageFile[] }>(
+    getFunctions(getApp(), 'europe-west6'), 'listTenantStorageFiles'
+  );
+  const result = await fn({ tenantId });
+  return result.data.files ?? [];
 }
 
 /** Convert an ISO 8601 date string from Firebase Storage metadata to the app's store date format. */
@@ -69,41 +88,37 @@ export const AocDocStore = signalStore(
     async checkFilesInStore(): Promise<void> {
       patchState(store, { isChecking: true, missingDocs: [] });
 
-      // Load all existing Firestore document fullPaths
-      const allDocs = await store.documentService.listOnce();
-      const existingPaths = new Set(allDocs.map(d => d.fullPath).filter(Boolean));
+      try {
+        // Load all existing Firestore document fullPaths
+        const allDocs = await store.documentService.listOnce();
+        const existingPaths = new Set(allDocs.map(d => d.fullPath).filter(Boolean));
 
-      // Recursively list all files in storage under tenant/${tenantId}
-      const tenantRoot = `tenant/${store.appStore.env.tenantId}`;
-      const storageRefs = await listStorageFilesRecursively(store.storage, tenantRoot);
+        // List all files in storage under tenant/${tenantId} (metadata included)
+        const storageFiles = await listTenantStorageFiles(store.appStore.env.tenantId);
 
-      // Fetch metadata + URL only for files without a Firestore document
-      const missing: StorageFileInfo[] = [];
-      await Promise.all(
-        storageRefs
-          .filter(fileRef => !existingPaths.has(fileRef.fullPath))
-          .map(async fileRef => {
-            try {
-              const [metadata, downloadUrl] = await Promise.all([
-                getMetadata(fileRef),
-                getDownloadURL(fileRef),
-              ]);
-              missing.push({
-                fullPath: fileRef.fullPath,
-                downloadUrl,
-                size: metadata.size,
-                contentType: metadata.contentType ?? '',
-                timeCreated: metadata.timeCreated,
-                updated: metadata.updated,
-                md5Hash: metadata.md5Hash ?? '',
-              });
-            } catch {
-              // skip files that are inaccessible
-            }
-          })
-      );
+        // Fetch the download URL only for files without a Firestore document. `get` is
+        // allowed by storage.rules for a tenant member, unlike `list` above.
+        const missing: StorageFileInfo[] = [];
+        await Promise.all(
+          storageFiles
+            .filter(file => !existingPaths.has(file.fullPath))
+            .map(async file => {
+              try {
+                const downloadUrl = await getDownloadURL(ref(store.storage, file.fullPath));
+                missing.push({ ...file, downloadUrl });
+              } catch {
+                // skip files that are inaccessible
+              }
+            })
+        );
 
-      patchState(store, { missingDocs: missing, isChecking: false });
+        patchState(store, { missingDocs: missing });
+      } catch (e) {
+        // storage/unauthorized (rules or App Check) would otherwise leave the button disabled forever
+        await showToast(store.toastController, (e as Error).message);
+      } finally {
+        patchState(store, { isChecking: false });
+      }
     },
 
     clearMissingDocs(): void {
