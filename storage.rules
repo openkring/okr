@@ -47,16 +47,13 @@ service firebase.storage {
     // the same object, and the broader one would still independently grant `read`. The
     // guard therefore has to live INSIDE that broader rule's own condition (see below).
     //
-    // It takes the OBJECT NAME, not the `{path=**}` wildcard: a `**` wildcard binds a
-    // `Path`, which has no `matches()` method. Calling it there raises
-    // "Function not found error: Name: [matches]", the whole condition evaluates to an
-    // error, and the rule denies — which silently locked every member out of the entire
-    // `tenant/` prefix (read AND write) until the storage harness caught it.
-    // `resource.name` / `request.resource.name` are plain strings and hold the full
-    // object path, e.g. `tenant/scs/private/exports/<uid>/<stamp>-<uuid>.zip`.
-    function isPrivateObject(name) {
-      return name.matches('^tenant/[^/]+/private/.*');
-    }
+    // It is carved out by MATCH SHAPE, not by inspecting `resource.name`: a `list`
+    // request carries no `resource` at all, so any condition that touches `resource`
+    // (even `resource == null`) raises "Null value error", the whole condition
+    // evaluates to an error, and the rule denies. That is what broke `listAll()` on
+    // the entire `tenant/` prefix. Binding the first sub-segment as `{sub}` lets us
+    // exclude `private/` without reading any object metadata.
+    //
     // Upload size cap (only valid when request.resource is present, i.e. create/update).
     function sizeOk() {
       return request.resource.size < 25 * 1024 * 1024;   // 25 MB cap
@@ -71,20 +68,22 @@ service firebase.storage {
     // confirmed and verified against real SDK uploads in staging.
 
     // ---- tenant-scoped data (dominant prefix) ----
-    // `!isPrivateObject(...)` carves the CF-only `private/` sub-prefix (see above) out of
-    // this grant. This is NOT optional decoration: the "specific match wins" mental model
-    // does not apply to Storage rules (see isPrivateObject's comment), so excluding the
-    // sub-path from THIS rule's own condition is the only way the deny below actually
-    // takes effect instead of being silently OR'd away.
+    // `sub != 'private'` carves the CF-only `private/` sub-prefix (see above) out of this
+    // grant. This is NOT optional decoration: the "specific match wins" mental model does
+    // not apply to Storage rules, so excluding the sub-path from THIS rule's own condition
+    // is the only way the deny below actually takes effect instead of being silently OR'd
+    // away. The exclusion must not touch `resource` — see the note above.
     //
-    // The `resource == null` arm keeps a read/delete of a MISSING object a clean 404
-    // instead of a permission error (the same trap the Firestore rules document at
-    // `tenantRead()`). It cannot leak a private object: there is nothing at that name to
-    // read, and any object that does exist there is denied by the second arm.
-    match /tenant/{tenantId}/{path=**} {
-      allow read:           if inTenant(tenantId) && (resource == null || !isPrivateObject(resource.name));
-      allow create, update: if inTenant(tenantId) && !isPrivateObject(request.resource.name) && sizeOk();
-      allow delete:         if inTenant(tenantId) && (resource == null || !isPrivateObject(resource.name));
+    // The bare `/tenant/{tenantId}` block exists for `listAll(ref('tenant/<id>'))`: a list
+    // is evaluated against the PREFIX path, which has no sub-segment to bind, so the
+    // recursive block below does not match it.
+    match /tenant/{tenantId} {
+      allow read: if inTenant(tenantId);
+    }
+    match /tenant/{tenantId}/{sub}/{path=**} {
+      allow read:           if inTenant(tenantId) && sub != 'private';
+      allow create, update: if inTenant(tenantId) && sub != 'private' && sizeOk();
+      allow delete:         if inTenant(tenantId) && sub != 'private';
     }
 
     // ---- CF-only private data (D-P5-1): subject-access export ZIPs ----
