@@ -220,9 +220,11 @@ export const AocDocStore = signalStore(
       const files = store.missingDocs();
       if (files.length === 0) return;
 
+      // `isCancellable` MUST be true: with false, `confirm` renders a single OK button that
+      // dismisses without role 'confirm', so it always resolves false and the run never starts.
       const ok = await confirm(store.alertController,
         fill(store.i18n.doc_create_all_confirm(), { count: files.length }),
-        store.i18n.ok(), store.i18n.cancel(), false);
+        store.i18n.ok(), store.i18n.cancel(), true);
       if (!ok) return;
 
       patchState(store, { isCreatingAll: true, createdCount: 0 });
