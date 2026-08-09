@@ -9,7 +9,7 @@ import {
   claimProspect as applyClaim, isVisibleToPartner, releaseClaim, revokeConsent,
 } from '@okr/business-prospect-util';
 
-import { PLATFORM_TENANT, REGION, requireAdmin, requirePartner } from './shared';
+import { PLATFORM_TENANT, REGION, nowStamp, requireAdmin, requirePartner } from './shared';
 
 /**
  * C5 §5 — the partner-facing half of the prospect pool.
@@ -45,6 +45,85 @@ interface PoolRow {
 }
 
 const db = () => getFirestore();
+
+/**
+ * C5 §2/§5 — the ONLY writer of a prospect, and the reason there is one.
+ *
+ * A prospect is **two writes**: the record, and its contact details as `AddressModel`s under
+ * `parentKey = 'prospect.<okey>'`. The form builder's generic `SubmissionTargetCollection` path
+ * writes exactly one document into one collection — which is all `applications` needs, because an
+ * application keeps the applicant's e-mail as a plain field. A prospect deliberately does not
+ * (see the `prospect.model.ts` class comment), so the builder cannot be the writer: it would
+ * either drop the e-mail into a loose field on `prospects` — the one thing C5 §5 forbids — or
+ * grow a second copy of this logic beside `submitProspect`.
+ *
+ * So both front doors call in here instead: `submitProspect` (App Check, direct callable) and
+ * `submitForm` for the `prospects.*` mappings. Consent lives here for the same reason — it is the
+ * legal basis (Vertragswerk Teil III.2) and the signup notice states the onward transfer to a
+ * partner, so a submission without it must not be stored **by any caller**. A checkbox that
+ * arrives as `false` passes the builder's required-field check (`false` is neither undefined nor
+ * `''`), which is precisely why this refusal cannot be delegated to the form definition.
+ *
+ * @returns the new prospect's okey.
+ */
+export async function createProspect(values: Record<string, unknown>): Promise<string> {
+  // Anything that is not a string is not a contact datum — a file upload or an object arriving
+  // under one of these keys is dropped, never stringified into '[object Object]'.
+  const str = (key: string) => (typeof values[key] === 'string' ? (values[key] as string).trim() : '');
+  const name = str('name');
+  const email = str('email').toLowerCase();
+  const phone = str('phone');
+  if (name.length === 0 || email.length === 0) {
+    throw new HttpsError('invalid-argument', 'name and email are required.');
+  }
+  const consent = values['consent'];
+  if (consent !== true && consent !== 'true') {
+    throw new HttpsError('failed-precondition', 'Consent is required.');
+  }
+
+  const at = nowStamp();
+  const ref = db().collection(ProspectCollection).doc();
+  const prospect: Omit<ProspectModel, 'okey'> = {
+    tenants: [PLATFORM_TENANT],
+    isArchived: false,
+    name,
+    index: `name:${name.toLowerCase()}`,
+    tags: '',
+    notes: '',
+    segment: (str('segment') || 'club') as ProspectModel['segment'],
+    contactName: str('contactName'),
+    source: (str('source') || 'kring.ch').slice(0, 60),
+    status: 'open',
+    claimedByPartnerKey: '',
+    claimedAt: '',
+    claimExpiresAt: '',
+    convertedTenantId: '',
+    convertedAt: '',
+    consentAt: at,
+    revokedAt: '',
+  };
+  await ref.set(prospect);
+
+  // Written raw rather than through `AddressService`: this is the Admin SDK, and the invariant that
+  // service protects — at most one favorite per parent AND channel — cannot be violated by a
+  // freshly created parent that has no other address of either channel.
+  const address = (channel: 'email' | 'phone', value: Record<string, string>) => ({
+    tenants: [PLATFORM_TENANT],
+    isArchived: false,
+    parentKey: `prospect.${ref.id}`,
+    addressChannel: channel,
+    label: 'signup',
+    isFavorite: true,
+    ...value,
+  });
+  await db().collection(AddressCollection).add(address('email', { email }));
+  if (phone.length > 0) {
+    await db().collection(AddressCollection).add(address('phone', { phone }));
+  }
+
+  logger.info(`createProspect: created ${ref.id} from ${prospect.source}`);
+  return ref.id;
+}
 
 /** Firestore caps a disjunctive `in` at 30 values. */
 function chunk<T>(items: T[], size = 30): T[][] {

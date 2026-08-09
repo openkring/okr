@@ -6,7 +6,13 @@ import { isDisplayField } from './field-kind';
 export function validatorsFor(field: Field): ValidatorFn[] {
   const fns: ValidatorFn[] = [];
   if (isDisplayField(field.type)) return fns;
-  if (field.required) fns.push(Validators.required);
+  // A single checkbox needs `requiredTrue`: Angular's `required` treats `false` as a present value
+  // (it only rejects null/undefined/empty string/empty array), so an unticked required consent box
+  // would pass client validation and only be refused server-side. Option lists keep `required` —
+  // there the value is an array and "at least one" is the right rule.
+  if (field.required) {
+    fns.push(field.type === 'checkbox' && !field.options?.length ? Validators.requiredTrue : Validators.required);
+  }
 
   switch (field.type) {
     case 'text':

@@ -7,6 +7,7 @@ import { createHmac, createHash } from 'node:crypto';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { getAppEmailConfig } from '../auth/email-templates';
+import { createProspect } from '../business/prospect';
 
 const REGION = 'europe-west6';
 const formsHmacSecret = defineSecret('FORMS_HMAC_SECRET');
@@ -104,6 +105,23 @@ const FORM_MAPPINGS: FormMapping[] = [
     modelType: 'ApplicationModel',
     collectionName: 'applications',
     defaults: { state: 'applied', source: 'form' },
+  },
+  {
+    mappingKey: 'applications.junior',
+    label: 'Applications (Junioren)',
+    modelType: 'ApplicationModel',
+    collectionName: 'applications',
+    defaults: { state: 'applied', source: 'form', applicationAs: 'youth' },
+  },
+  {
+    // C5 §2 — the kring.ch lead form. NOT written by the generic collection path below: a prospect
+    // is two documents (the record + its contact details in the address vault), so this mapping is
+    // dispatched to `createProspect`. See the doc comment there.
+    mappingKey: 'prospects.default',
+    label: 'Prospects (kring.ch)',
+    modelType: 'ProspectModel',
+    collectionName: 'prospects',
+    defaults: { source: 'kring.ch' },
   },
 ];
 
@@ -493,19 +511,34 @@ export const submitForm = onCall(
         throw new HttpsError('failed-precondition', `Unknown mapping: ${target.mappingKey}`);
       }
 
-      const record: Record<string, unknown> = {
-        ...cleanValues,
-        ...(mapping.defaults ?? {}),   // defaults always win
-        tenants: [payload.tenantId],
-        submittedAt: payload.meta.submittedAt,
-        isSpam,
-        spamReasons: spamReasons.length > 0 ? spamReasons : undefined,
-        formKey: payload.formKey,
-      };
-
-      const docRef = await db.collection(target.collectionName).add(record);
-      submissionId = docRef.id;
       collectionName = target.collectionName;
+
+      if (mapping.collectionName === 'prospects') {
+        // C5 §5 — the one target that is not a single document. The record and its contact
+        // details (an `addresses` doc under `parentKey = 'prospect.<okey>'`) are written together
+        // by `createProspect`, which also refuses a submission without consent — a checkbox that
+        // arrives as `false` passes the required-field check above, so that refusal has to live
+        // with the write. A spam-flagged lead is NOT stored: unlike an application, which an admin
+        // reviews in the back office, a prospect would go straight into the partner pool.
+        if (isSpam) {
+          submissionId = crypto.randomUUID();
+        } else {
+          submissionId = await createProspect({ ...cleanValues, ...(mapping.defaults ?? {}) });
+        }
+      } else {
+        const record: Record<string, unknown> = {
+          ...cleanValues,
+          ...(mapping.defaults ?? {}),   // defaults always win
+          tenants: [payload.tenantId],
+          submittedAt: payload.meta.submittedAt,
+          isSpam,
+          spamReasons: spamReasons.length > 0 ? spamReasons : undefined,
+          formKey: payload.formKey,
+        };
+
+        const docRef = await db.collection(target.collectionName).add(record);
+        submissionId = docRef.id;
+      }
 
     } else {
       if (!isSpam) {

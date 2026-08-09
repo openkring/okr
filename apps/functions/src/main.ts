@@ -244,6 +244,9 @@ export { mergeOrgIntoTenant } from './org';
 export { pushMetering, runCommission, checkPartnerHeartbeats, submitProspect, pushMeteringToPlatform } from './business';
 // C5 §5 — the partner-facing pool, and bkaiser's revocation lever
 export { listProspects, claimProspect, releaseProspect, revokeProspect } from './business';
+// C5 §5 — the same pool as the PARTNER's installation reaches it: an in-product proxy over the
+// four above, so no partner hand-rolls a client (the C3 `pushMeteringToPlatform` argument).
+export { listPoolProspects, claimPoolProspect, releasePoolProspect } from './business';
 
 // privacy 1.19 Phase 3: one-time backfill of the ssn/dob vault + memberBirthYear
 export { migrateSensitiveData } from './person/migrate-sensitive-data';

@@ -24,7 +24,7 @@ const REGION = 'europe-west6';
  * installation belongs to partner X" — and splitting it lets an installation end up half
  * configured, which pushes nothing while looking configured.
  */
-const meteringConfig = defineSecret('METERING_CONFIG');
+export const meteringConfig = defineSecret('METERING_CONFIG');
 
 interface TenantConfig {
   tenantId: string;
@@ -37,7 +37,7 @@ interface TenantConfig {
   contact?: { name: string; role: string; email: string };
 }
 
-interface MeteringConfig {
+export interface MeteringConfig {
   partnerKey: string;
   /** The bkaiser `pushMetering` callable, e.g. `https://<region>-<project>.cloudfunctions.net/pushMetering`. */
   endpoint: string;
@@ -49,7 +49,12 @@ interface MeteringConfig {
   tenants: TenantConfig[];
 }
 
-function readConfig(): MeteringConfig | undefined {
+/**
+ * The installation's partner identity, or `undefined` for the overwhelmingly common case of an
+ * installation that is not a partner's. Shared with `pool-client.ts`: one secret, one decision —
+ * "this installation belongs to partner X" — and everything that talks to bkaiser reads it here.
+ */
+export function readConfig(): MeteringConfig | undefined {
   const raw = meteringConfig.value();
   if (!raw) return undefined;
   try {
@@ -95,7 +100,7 @@ export const pushMeteringToPlatform = onSchedule(
     }
 
     const payload: MeteringPayload = { partnerKey: config.partnerKey, period, tenants };
-    const result = await callPushMetering(config, payload);
+    const result = await callPlatform<PushResponse>(config, 'pushMetering', payload);
     logger.info(`pushMeteringToPlatform: ${period} — ${tenants.length} tenants pushed, ` +
       `${result.accepted} accepted, ${result.rejected?.length ?? 0} rejected`);
   },
@@ -169,13 +174,21 @@ interface PushResponse {
 }
 
 /**
- * Call the bkaiser callable over HTTPS with an ID token of the partner's service identity.
+ * Call one of bkaiser's partner-facing callables over HTTPS with an ID token of the partner's
+ * service identity. `pushMetering` uses it, and so does every pool call in `pool-client.ts`.
  *
  * Password sign-in via the REST API rather than a service-account key: the credential bkaiser hands
  * a partner has to be revocable by bkaiser alone, and a user in the `kring` project is (disable the
  * account and the pushes stop), whereas a key minted in the partner's own project is not.
+ *
+ * The sibling endpoints are derived from the configured `pushMetering` URL rather than configured
+ * one by one: they are the same deployment, and a second URL in the secret is a second thing that
+ * can be half-configured — the failure mode `MeteringConfig` exists to avoid.
  */
-async function callPushMetering(config: MeteringConfig, payload: MeteringPayload): Promise<PushResponse> {
+export async function callPlatform<T>(
+  config: MeteringConfig, functionName: string, payload: unknown,
+): Promise<T> {
+  const endpoint = config.endpoint.replace(/pushMetering\/?$/, functionName);
   const signIn = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${config.apiKey}`,
     {
@@ -190,16 +203,16 @@ async function callPushMetering(config: MeteringConfig, payload: MeteringPayload
   }
   const { idToken } = await signIn.json() as { idToken: string };
 
-  const response = await fetch(config.endpoint, {
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
     body: JSON.stringify({ data: payload }),
   });
   if (!response.ok) {
-    // Thrown, not logged: `retryCount` retries the run, and a silent failure here is exactly the
-    // absent heartbeat that costs the partner their contract.
-    throw new Error(`pushMetering failed: ${response.status} ${await response.text()}`);
+    // Thrown, not logged: `retryCount` retries the run, and a silent failure of `pushMetering` is
+    // exactly the absent heartbeat that costs the partner their contract.
+    throw new Error(`${functionName} failed: ${response.status} ${await response.text()}`);
   }
-  const body = await response.json() as { result: PushResponse };
+  const body = await response.json() as { result: T };
   return body.result;
 }

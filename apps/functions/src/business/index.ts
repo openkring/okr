@@ -6,7 +6,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 import {
   CommissionEntryCollection, MeteringRecordCollection, OrgCollection, PartnerCollection,
-  ProspectCollection, AddressCollection,
+  ProspectCollection,
 } from '@okr/shared-models';
 import type { MeteringRecordModel, ProspectModel } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -19,7 +19,9 @@ import type { BandId, MeteringPayload } from '@okr/business-metering-util';
 import { convertProspect } from '@okr/business-prospect-util';
 
 export { pushMeteringToPlatform } from './push';
+export { listPoolProspects, claimPoolProspect, releasePoolProspect } from './pool-client';
 export { listProspects, claimProspect, releaseProspect, revokeProspect } from './prospect';
+import { createProspect } from './prospect';
 
 /**
  * C3 §6 — the metering ingest. Push, never pull: a pull would mean every partner exposing an
@@ -228,55 +230,6 @@ export const submitProspect = onCall(
   { region: REGION },
   async (request) => {
     checkAppCheckToken(request, 'submitProspect');
-
-    const data = (request.data ?? {}) as Record<string, string>;
-    const name = (data['name'] ?? '').trim();
-    const contactName = (data['contactName'] ?? '').trim();
-    const email = (data['email'] ?? '').trim().toLowerCase();
-    if (name.length === 0 || email.length === 0) {
-      throw new HttpsError('invalid-argument', 'name and email are required.');
-    }
-    // Consent is the legal basis (Vertragswerk Teil III.2) and the notice states the onward
-    // transfer to a partner, so a submission without it must not be stored at all.
-    if (data['consent'] !== 'true' && (request.data ?? {}).consent !== true) {
-      throw new HttpsError('failed-precondition', 'Consent is required.');
-    }
-
-    const db = getFirestore();
-    const at = nowStamp();
-    const ref = db.collection(ProspectCollection).doc();
-    const prospect: Omit<ProspectModel, 'okey'> = {
-      tenants: [PLATFORM_TENANT],
-      isArchived: false,
-      name,
-      index: `name:${name.toLowerCase()}`,
-      tags: '',
-      notes: '',
-      segment: (data['segment'] as ProspectModel['segment']) ?? 'club',
-      contactName,
-      source: (data['source'] ?? 'kring.ch').slice(0, 60),
-      status: 'open',
-      claimedByPartnerKey: '',
-      claimedAt: '',
-      claimExpiresAt: '',
-      convertedTenantId: '',
-      convertedAt: '',
-      consentAt: at,
-      revokedAt: '',
-    };
-    await ref.set(prospect);
-
-    await db.collection(AddressCollection).add({
-      tenants: [PLATFORM_TENANT],
-      isArchived: false,
-      parentKey: `prospect.${ref.id}`,
-      addressChannel: 'email',
-      email,
-      label: 'signup',
-      isFavorite: true,
-    });
-
-    logger.info(`submitProspect: created ${ref.id} from ${prospect.source}`);
-    return { okey: ref.id };
+    return { okey: await createProspect((request.data ?? {}) as Record<string, unknown>) };
   },
 );
