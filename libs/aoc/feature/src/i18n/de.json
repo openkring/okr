@@ -438,6 +438,12 @@
       "title": "Dateien ohne DB-Eintrag",
       "content": "Listet alle Dateien in Firebase Storage auf, für die kein Eintrag in der Firestore docs-Kollektion existiert.",
       "button": "Prüfen"
+    },
+    "createAll": {
+      "label": "Für alle Dateien Dokumente erstellen",
+      "confirm": "Für alle {{count}} Dateien einen Datenbank-Eintrag erstellen?",
+      "running": "{{done}} von {{count}} erstellt …",
+      "conf": "{{done}} von {{count}} Dokumenten erstellt."
     }
   },
   "roles": {

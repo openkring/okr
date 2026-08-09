@@ -438,6 +438,12 @@
       "title": "Fichiers sans entrée en BD",
       "content": "Liste tous les fichiers dans Firebase Storage pour lesquels aucune entrée n'existe dans la collection docs de Firestore.",
       "button": "Vérifier"
+    },
+    "createAll": {
+      "label": "Créer des documents pour tous les fichiers",
+      "confirm": "Créer une entrée de base de données pour les {{count}} fichiers ?",
+      "running": "{{done}} sur {{count}} créés …",
+      "conf": "{{done}} sur {{count}} documents créés."
     }
   },
   "roles": {

@@ -438,6 +438,12 @@
       "title": "File senza voce nel DB",
       "content": "Elenca tutti i file in Firebase Storage per i quali non esiste alcuna voce nella collezione docs di Firestore.",
       "button": "Verificare"
+    },
+    "createAll": {
+      "label": "Crea documenti per tutti i file",
+      "confirm": "Creare una voce di database per tutti i {{count}} file?",
+      "running": "{{done}} di {{count}} creati …",
+      "conf": "{{done}} di {{count}} documenti creati."
     }
   },
   "roles": {

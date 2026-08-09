@@ -321,6 +321,11 @@ export const AOC_I18N_KEYS = {
   doc_create_conf:                          PFX + 'doc.create.conf',
   doc_create_error:                         PFX + 'doc.create.error',
 
+  doc_create_all:                           PFX + 'doc.createAll.label',
+  doc_create_all_confirm:                   PFX + 'doc.createAll.confirm',
+  doc_create_all_running:                   PFX + 'doc.createAll.running',
+  doc_create_all_conf:                      PFX + 'doc.createAll.conf',
+
   doc_delete:                               PFX + 'doc.delete.label',
   doc_delete_confirm:                       PFX + 'doc.delete.confirm',
   doc_delete_conf:                          PFX + 'doc.delete.conf',

@@ -7,7 +7,7 @@ import { fileSizeUnit } from '@okr/shared-util-core';
 import { FileLogoPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 
-import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
+import { AocDocStore, BULK_CREATE_THRESHOLD, StorageFileInfo } from './aoc-doc.store';
 
 @Component({
   selector: 'okr-aoc-doc',
@@ -50,6 +50,19 @@ import { AocDocStore, StorageFileInfo } from './aoc-doc.store';
               </ion-col>
             </ion-row>
           </ion-grid>
+          @if(showBulkCreate()) {
+            <ion-grid>
+              <ion-row>
+                <ion-col>
+                  <okr-button
+                    [label]="bulkCreateLabel()"
+                    iconName="add-circle"
+                    [disabled]="isCreatingAll()"
+                    (click)="store.createAllDbEntries()" />
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          }
           @if(missingDocs().length > 0) {
             <ion-list lines="inset">
               @for(doc of missingDocs(); track doc.fullPath) {
@@ -89,6 +102,19 @@ export class AocDoc {
   // computed
   protected readonly missingDocs = computed(() => this.store.missingDocs());
   protected readonly isChecking = computed(() => this.store.isChecking());
+  protected readonly isCreatingAll = computed(() => this.store.isCreatingAll());
+
+  /** Creating one by one via the ActionSheet stops being reasonable past a handful of files. */
+  protected readonly showBulkCreate = computed(() => this.missingDocs().length > BULK_CREATE_THRESHOLD);
+
+  /** While the run is going, the button doubles as the progress indicator. */
+  protected readonly bulkCreateLabel = computed(() => {
+    const total = this.missingDocs().length;
+    if (!this.isCreatingAll()) return this.store.i18n.doc_create_all();
+    return this.store.i18n.doc_create_all_running()
+      .replace('{{done}}', String(this.store.createdCount()))
+      .replace('{{count}}', String(total));
+  });
 
   // constants
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;

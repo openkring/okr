@@ -8,7 +8,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { DocumentCollection, DocumentModel } from '@okr/shared-models';
+import { DocumentCollection, DocumentModel, UserModel } from '@okr/shared-models';
 import { confirm, copyToClipboardWithConfirmation, downloadToBrowser, showToast } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getFullName, getTodayStr } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
@@ -35,12 +35,20 @@ export type StorageFileInfo = TenantStorageFile & {
 export type AocDocState = {
   missingDocs: StorageFileInfo[];
   isChecking: boolean;
+  /** Files already processed by the bulk create; 0 while it is not running (see `isCreatingAll`). */
+  createdCount: number;
+  isCreatingAll: boolean;
 };
 
 export const initialState: AocDocState = {
   missingDocs: [],
   isChecking: false,
+  createdCount: 0,
+  isCreatingAll: false,
 };
+
+/** Above this many orphans, offer the bulk create instead of one ActionSheet per file. */
+export const BULK_CREATE_THRESHOLD = 10;
 
 /**
  * Lists every object under `tenant/{tenantId}/` via the `listTenantStorageFiles` callable.
@@ -63,6 +71,47 @@ async function listTenantStorageFiles(tenantId: string): Promise<TenantStorageFi
 /** Convert an ISO 8601 date string from Firebase Storage metadata to the app's store date format. */
 function isoToStoreDate(iso: string): string {
   return convertDateFormatToString(iso.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate);
+}
+
+/** Fill a `{{name}}` placeholder in an already-resolved i18n string. */
+function fill(template: string, params: Record<string, string | number>): string {
+  return Object.entries(params).reduce((s, [k, v]) => s.replaceAll(`{{${k}}}`, String(v)), template);
+}
+
+/** Build the DocumentModel for one orphaned storage file. Shared by the single and bulk create. */
+function buildDocument(file: StorageFileInfo, tenantId: string, currentUser: UserModel | undefined): DocumentModel {
+  // 1. Derive dates: prefer filename date prefix, then storage metadata, then today
+  const rawFileName = file.fullPath.split('/').pop() ?? '';
+  const fileNameDate = extractDateFromFileName(rawFileName);
+  const creationDate = fileNameDate
+    ?? (file.timeCreated ? isoToStoreDate(file.timeCreated) : getTodayStr());
+  const updateDate = fileNameDate
+    ?? (file.updated ? isoToStoreDate(file.updated) : creationDate);
+
+  // 2. Human-readable title from file name
+  const title = extractTitleFromFileName(rawFileName) || rawFileName;
+
+  // 3. Tags from storage path (includes tenant, model type, and keyword tags)
+  const tags = extractTagsFromStoragePath(file.fullPath);
+
+  const document = new DocumentModel(tenantId);
+  document.title = title;
+  document.altText = title;
+  document.fullPath = file.fullPath;
+  document.url = file.downloadUrl;
+  document.mimeType = file.contentType;
+  document.size = file.size;
+  document.source = 'storage';
+  document.hash = file.md5Hash;
+  document.dateOfDocCreation = creationDate;
+  document.dateOfDocLastUpdate = updateDate;
+  document.version = creationDate;
+  document.folderKeys = [];
+  document.tags = tags;
+  document.authorKey = currentUser?.personKey ?? '';
+  document.authorName = getFullName(currentUser?.firstName, currentUser?.lastName);
+  document.index = getDocumentIndex(document);
+  return document;
 }
 
 export const AocDocStore = signalStore(
@@ -148,45 +197,57 @@ export const AocDocStore = signalStore(
 
     async createDbEntry(file: StorageFileInfo): Promise<void> {
       const currentUser = store.currentUser();
-      const tenantId = store.appStore.env.tenantId;
-
-      // 1. Derive dates: prefer filename date prefix, then storage metadata, then today
-      const rawFileName = file.fullPath.split('/').pop() ?? '';
-      const fileNameDate = extractDateFromFileName(rawFileName);
-      const creationDate = fileNameDate
-        ?? (file.timeCreated ? isoToStoreDate(file.timeCreated) : getTodayStr());
-      const updateDate = fileNameDate
-        ?? (file.updated ? isoToStoreDate(file.updated) : creationDate);
-
-      // 2. Human-readable title from file name
-      const title = extractTitleFromFileName(rawFileName) || rawFileName;
-
-      // 3. Tags from storage path (includes tenant, model type, and keyword tags)
-      const tags = extractTagsFromStoragePath(file.fullPath);
-
-      const document = new DocumentModel(tenantId);
-      document.title = title;
-      document.altText = title;
-      document.fullPath = file.fullPath;
-      document.url = file.downloadUrl;
-      document.mimeType = file.contentType;
-      document.size = file.size;
-      document.source = 'storage';
-      document.hash = file.md5Hash;
-      document.dateOfDocCreation = creationDate;
-      document.dateOfDocLastUpdate = updateDate;
-      document.version = creationDate;
-      document.folderKeys = [];
-      document.tags = tags;
-      document.authorKey = currentUser?.personKey ?? '';
-      document.authorName = getFullName(currentUser?.firstName, currentUser?.lastName);
-      document.index = getDocumentIndex(document);
+      const document = buildDocument(file, store.appStore.env.tenantId, currentUser);
       await store.firestoreService.createModel<DocumentModel>(
         DocumentCollection, document, store.i18n.doc_create_conf(), store.i18n.doc_create_error(), currentUser
       );
       patchState(store, {
         missingDocs: store.missingDocs().filter(d => d.fullPath !== file.fullPath),
       });
+    },
+
+    /**
+     * Create a DB entry for every listed file, one at a time.
+     *
+     * Deliberately sequential rather than `Promise.all`: the list is unbounded (it can be the
+     * whole tenant bucket), and firing hundreds of concurrent Firestore writes is what makes
+     * these bulk actions fall over — each `createModel` write also triggers the replication
+     * triggers server-side. Sequential keeps it to one in-flight write, makes the progress
+     * count honest, and is fast enough for a rarely-used admin repair action. A failed file
+     * is skipped, not retried, so one bad document cannot abort the whole run.
+     */
+    async createAllDbEntries(): Promise<void> {
+      const files = store.missingDocs();
+      if (files.length === 0) return;
+
+      const ok = await confirm(store.alertController,
+        fill(store.i18n.doc_create_all_confirm(), { count: files.length }),
+        store.i18n.ok(), store.i18n.cancel(), false);
+      if (!ok) return;
+
+      patchState(store, { isCreatingAll: true, createdCount: 0 });
+      const currentUser = store.currentUser();
+      const tenantId = store.appStore.env.tenantId;
+      const failed: StorageFileInfo[] = [];
+
+      for (const file of files) {
+        try {
+          // No per-file confirmation toast, and errors are suppressed: hundreds of toasts
+          // would bury the screen. The single summary toast below reports the outcome.
+          const key = await store.firestoreService.createModel<DocumentModel>(
+            DocumentCollection, buildDocument(file, tenantId, currentUser), undefined, undefined, currentUser, true
+          );
+          if (!key) failed.push(file);
+        } catch {
+          failed.push(file);
+        }
+        patchState(store, { createdCount: store.createdCount() + 1 });
+      }
+
+      // Whatever failed stays in the list so it is still visible and retryable per file.
+      patchState(store, { missingDocs: failed, isCreatingAll: false, createdCount: 0 });
+      await showToast(store.toastController,
+        fill(store.i18n.doc_create_all_conf(), { done: files.length - failed.length, count: files.length }));
     },
   }))
 );

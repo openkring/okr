@@ -438,6 +438,12 @@
       "title": "Files without DB entry",
       "content": "Lists all files in Firebase Storage for which no entry exists in the Firestore docs collection.",
       "button": "Check"
+    },
+    "createAll": {
+      "label": "Create documents for all files",
+      "confirm": "Create a database entry for all {{count}} files?",
+      "running": "{{done}} of {{count}} created …",
+      "conf": "{{done}} of {{count}} documents created."
     }
   },
   "roles": {
