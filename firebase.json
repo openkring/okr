@@ -247,6 +247,34 @@
       ],
       "headers": [
         {
+          "comment": "The '**/*.html' glob matches the file name, not the served path. With cleanUrls the entry points are served as '/', '/licenses' and '/assets/brand-styleguide', which fell through to Firebase's 1h default and served the previous release after a deploy. Each needs its own source.",
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/licenses",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/assets/brand-styleguide",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
           "source": "**/*.html",
           "headers": [
             {
