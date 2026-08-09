@@ -126,6 +126,10 @@
         {
           "fieldPath": "author.key",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
         }
       ]
     },
@@ -162,6 +166,10 @@
         },
         {
           "fieldPath": "scope",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
           "order": "ASCENDING"
         }
       ]
