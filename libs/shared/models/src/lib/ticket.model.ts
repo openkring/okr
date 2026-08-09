@@ -18,6 +18,24 @@ export type TicketStatus = 'submitted' | 'accepted' | 'waiting-on-partner' | 're
 export type TicketClassification = 'unclassified' | 'defect' | 'misconfiguration' | 'how-to';
 
 /**
+ * Whether the released-fix leg is owed at all (C4 §8, decided 2026-08-09).
+ *
+ * **Two values, not a severity taxonomy.** C2 §3 promises a fix in a minor release within 3 working
+ * days; without any cap that promise covers a cosmetic defect, which is the money risk §8 was
+ * asking about. A four- or five-level scale would answer it too, but every level needs its own
+ * deadline, its own triage argument with the partner, and its own row in the §5 statistics — and
+ * the only decision the deadline actually turns on is binary: can the tenant work or not.
+ *
+ * Submissions start `blocking`, so both clocks run from the moment the queue accepts them and the
+ * partner never loses time to our triage backlog. A downgrade at triage clears `fixDueAt` (see
+ * `setSeverity`); the workaround leg is unaffected, because a workaround is owed either way.
+ *
+ * ponytail: add a third value plus a `{severity → work days}` map here if partners ever argue about
+ * the boundary. Until then a scale is a taxonomy nobody has asked for.
+ */
+export type TicketSeverity = 'blocking' | 'non-blocking';
+
+/**
  * `tickets/{okey}` — one 3LS escalation from a partner, in tenant `kring` (spec C4).
  *
  * One queue at bkaiser; the partner's own 1LS/2LS system stays theirs and escalated tickets mirror
@@ -77,11 +95,31 @@ export class TicketModel implements OkrModel, NamedModel, SearchableModel, Tagge
    * Storage paths of attachments. **Off by default** (§6.1): a screenshot is the one place an
    * unredacted member list walks in, so `redactionConfirmed` must be explicitly set by the partner
    * before any path may be added, and the files inherit the ticket's retention.
+   *
+   * **Path (§8, decided 2026-08-09): `tenant/kring/private/tickets/{okey}/{filename}`.** Not a
+   * partner-scoped prefix — `private/` is the one prefix `storage.rules` denies to *every* client
+   * (D-P5-1), so an attachment is unreadable by any browser including bkaiser's own admin, and is
+   * fetched by a signed URL from a Cloud Function or not at all. A `tenant/kring/partners/{key}/`
+   * prefix would have been readable by every `kring` member, which is a wider audience than the
+   * queue has. The partner scope lives in the path segment `{okey}` via the ticket's `partnerKey`.
+   *
+   * **Retention: the ticket's, 24 months** (`LOG_24M`), declared on the `tickets` row in
+   * `subject-data-map.ts`.
+   *
+   * ponytail: no reaper. Attachments are off unless a partner confirms redaction, so today the set
+   * is empty and a scheduled sweep would be a job that deletes nothing. Add one modelled on
+   * `reapPrivacyExports` when the first attachment is actually written.
    */
   public attachmentPaths: string[] = [];
   public redactionConfirmed = false;
 
   public status: TicketStatus = 'submitted';
+
+  /**
+   * Whether the released-fix leg is owed (§8). Set by bkaiser at triage, like `classification` —
+   * a partner declaring their own ticket blocking would be declaring bkaiser's deadline.
+   */
+  public severity: TicketSeverity = 'blocking';
 
   /**
    * Set by bkaiser after triage, with `classificationReason` shown on the ticket, and

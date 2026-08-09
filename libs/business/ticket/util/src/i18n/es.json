@@ -1,0 +1,142 @@
+{
+  "singular": "Escalado",
+  "plural": "Escalados",
+  "description": {
+    "label": "Descripción del socio",
+    "placeholder": "Texto libre — filtrado en el servidor antes de guardarse"
+  },
+  "empty": "No hay escalados en la cola.",
+  "view": {
+    "label": "Ver escalado"
+  },
+  "header": {
+    "name": "Título",
+    "partner": "Socio",
+    "version": "Versión",
+    "status": "Estado",
+    "classification": "Clasificación",
+    "sla": "Plazo"
+  },
+  "status": {
+    "submitted": {
+      "label": "Recibido"
+    },
+    "accepted": {
+      "label": "Aceptado"
+    },
+    "waiting-on-partner": {
+      "label": "Esperando al socio"
+    },
+    "resolved": {
+      "label": "Resuelto"
+    },
+    "closed": {
+      "label": "Cerrado"
+    },
+    "rejected": {
+      "label": "Rechazado"
+    }
+  },
+  "classification": {
+    "label": "Clasificación",
+    "placeholder": "unclassified · defect · misconfiguration · how-to",
+    "helper": "Determina el cupo y la facturación. Solo un defecto del producto es gratuito.",
+    "unclassified": {
+      "label": "Sin clasificar"
+    },
+    "defect": {
+      "label": "Defecto del producto (gratuito)"
+    },
+    "misconfiguration": {
+      "label": "Configuración errónea (facturable)"
+    },
+    "how-to": {
+      "label": "Consulta de uso (facturable)"
+    }
+  },
+  "severity": {
+    "label": "Gravedad",
+    "placeholder": "blocking · non-blocking",
+    "helper": "Solo en casos bloqueantes se debe una versión corregida en 3 días laborables.",
+    "blocking": {
+      "label": "Bloqueante"
+    },
+    "non-blocking": {
+      "label": "No bloqueante"
+    }
+  },
+  "appVersion": {
+    "label": "Versión de openkring",
+    "placeholder": "p. ej. 7.11.0",
+    "helper": "Un aviso fuera de la ventana de soporte se rechaza, no se pone en cola."
+  },
+  "affectedTenantId": {
+    "label": "Inquilino afectado",
+    "placeholder": "Id del inquilino en la instalación del socio",
+    "helper": "Un inquilino del socio, no uno nuestro."
+  },
+  "firebaseProjectId": {
+    "label": "Proyecto de Firebase",
+    "placeholder": "Id del proyecto de la instalación",
+    "helper": "Lo rellena automáticamente la instalación del socio."
+  },
+  "sentryEventUrl": {
+    "label": "Evento de Sentry",
+    "placeholder": "Enlace al evento",
+    "helper": "Ya depurado por el filtro beforeSend de la instalación."
+  },
+  "platform": {
+    "label": "Navegador / plataforma",
+    "placeholder": "p. ej. Chrome 140 / macOS",
+    "helper": "Según lo indicado por el socio."
+  },
+  "feature": {
+    "label": "Bloque funcional",
+    "placeholder": "p. ej. subject",
+    "helper": "Dónde ocurrió — sustituye a «ya le mando una captura»."
+  },
+  "reproSteps": {
+    "label": "Pasos para reproducirlo",
+    "placeholder": "Qué se hizo hasta que ocurrió"
+  },
+  "classificationReason": {
+    "label": "Motivo de la clasificación",
+    "placeholder": "¿Por qué esta clasificación?",
+    "helper": "Obligatorio: la clasificación decide la facturación y queda registrada."
+  },
+  "fixVersion": {
+    "label": "Corregido en la versión",
+    "placeholder": "p. ej. 7.12.0",
+    "helper": "La versión menor que entregó la corrección."
+  },
+  "as": {
+    "title": "Escalado",
+    "open": "Abrir",
+    "accept": "Aceptar",
+    "wait": "Esperar al socio",
+    "resume": "Reanudar",
+    "workaround": "Solución provisional entregada",
+    "fix": "Corrección publicada",
+    "close": "Cerrar",
+    "comment": "Comentar",
+    "cancel": "Cancelar"
+  },
+  "comment": {
+    "prompt": "Comentario para el socio",
+    "conf": "Se ha añadido el comentario.",
+    "thread": "Hilo"
+  },
+  "triage": {
+    "conf": "El escalado se ha actualizado.",
+    "error": "El escalado no se ha podido actualizar."
+  },
+  "classify": {
+    "conf": "La clasificación se ha guardado.",
+    "error": "La clasificación no se ha podido guardar.",
+    "needsReason": "Una clasificación necesita un motivo — decide si el trabajo se factura."
+  },
+  "changeConfirmation": {
+    "cancel": "Cancelar",
+    "ok": "Guardar"
+  }
+}

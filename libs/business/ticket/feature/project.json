@@ -1,0 +1,24 @@
+{
+  "name": "business-ticket-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/business/ticket/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:business", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/business/ticket/feature",
+        "main": "libs/business/ticket/feature/src/index.ts",
+        "tsConfig": "libs/business/ticket/feature/tsconfig.lib.json",
+        "assets": ["libs/business/ticket/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "singular": "Escalation",
+  "plural": "Escalations",
+  "description": {
+    "label": "Partner's description",
+    "placeholder": "Free text — filtered server-side before it is stored"
+  },
+  "empty": "No escalations in the queue.",
+  "view": {
+    "label": "View escalation"
+  },
+  "header": {
+    "name": "Title",
+    "partner": "Partner",
+    "version": "Version",
+    "status": "Status",
+    "classification": "Classification",
+    "sla": "Due"
+  },
+  "status": {
+    "submitted": {
+      "label": "Submitted"
+    },
+    "accepted": {
+      "label": "Accepted"
+    },
+    "waiting-on-partner": {
+      "label": "Waiting on partner"
+    },
+    "resolved": {
+      "label": "Resolved"
+    },
+    "closed": {
+      "label": "Closed"
+    },
+    "rejected": {
+      "label": "Rejected"
+    }
+  },
+  "classification": {
+    "label": "Classification",
+    "placeholder": "unclassified · defect · misconfiguration · how-to",
+    "helper": "Drives quota and billing. Only a product defect is free of charge.",
+    "unclassified": {
+      "label": "Not yet classified"
+    },
+    "defect": {
+      "label": "Product defect (free)"
+    },
+    "misconfiguration": {
+      "label": "Misconfiguration (chargeable)"
+    },
+    "how-to": {
+      "label": "How-to question (chargeable)"
+    }
+  },
+  "severity": {
+    "label": "Severity",
+    "placeholder": "blocking · non-blocking",
+    "helper": "A released fix within 3 working days is owed only for blocking issues.",
+    "blocking": {
+      "label": "Blocking"
+    },
+    "non-blocking": {
+      "label": "Non-blocking"
+    }
+  },
+  "appVersion": {
+    "label": "openkring version",
+    "placeholder": "e.g. 7.11.0",
+    "helper": "Submissions outside the support window are rejected, not queued."
+  },
+  "affectedTenantId": {
+    "label": "Affected tenant",
+    "placeholder": "Tenant id inside the partner's installation",
+    "helper": "A tenant of the partner's, not one of ours."
+  },
+  "firebaseProjectId": {
+    "label": "Firebase project",
+    "placeholder": "Project id of the installation",
+    "helper": "Filled in automatically by the partner's installation."
+  },
+  "sentryEventUrl": {
+    "label": "Sentry event",
+    "placeholder": "Link to the event",
+    "helper": "Already scrubbed by the installation's beforeSend gate."
+  },
+  "platform": {
+    "label": "Browser / platform",
+    "placeholder": "e.g. Chrome 140 / macOS",
+    "helper": "As reported by the partner."
+  },
+  "feature": {
+    "label": "Feature block",
+    "placeholder": "e.g. subject",
+    "helper": "Where it happened — replaces \"let me send you a screenshot\"."
+  },
+  "reproSteps": {
+    "label": "Steps to reproduce",
+    "placeholder": "What was done until it happened"
+  },
+  "classificationReason": {
+    "label": "Reason for the classification",
+    "placeholder": "Why this classification?",
+    "helper": "Mandatory: the classification drives billing and is recorded."
+  },
+  "fixVersion": {
+    "label": "Fixed in version",
+    "placeholder": "e.g. 7.12.0",
+    "helper": "The minor release that shipped the fix."
+  },
+  "as": {
+    "title": "Escalation",
+    "open": "Open",
+    "accept": "Accept",
+    "wait": "Wait on partner",
+    "resume": "Resume",
+    "workaround": "Workaround delivered",
+    "fix": "Fix released",
+    "close": "Close",
+    "comment": "Comment",
+    "cancel": "Cancel"
+  },
+  "comment": {
+    "prompt": "Comment to the partner",
+    "conf": "The comment was added.",
+    "thread": "Thread"
+  },
+  "triage": {
+    "conf": "The escalation was updated.",
+    "error": "The escalation could not be updated."
+  },
+  "classify": {
+    "conf": "The classification was saved.",
+    "error": "The classification could not be saved.",
+    "needsReason": "A classification needs a reason — it decides whether the work is billed."
+  },
+  "changeConfirmation": {
+    "cancel": "Cancel",
+    "ok": "Save"
+  }
+}

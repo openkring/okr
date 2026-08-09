@@ -21,6 +21,8 @@ import { convertProspect } from '@okr/business-prospect-util';
 export { pushMeteringToPlatform } from './push';
 export { listPoolProspects, claimPoolProspect, releasePoolProspect } from './pool-client';
 export { listProspects, claimProspect, releaseProspect, revokeProspect } from './prospect';
+export { submitTicket, listTickets, commentTicket, classifyTicket, triageTicket } from './ticket';
+export { submitSupportTicket, listSupportTickets, commentSupportTicket } from './ticket-client';
 import { createProspect } from './prospect';
 
 /**

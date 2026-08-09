@@ -983,6 +983,50 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onErasure: 'retain',
     retention: { months: 'indefinite', legalBasis: 'Plattform-Betriebssicherheit — Nachvollziehbarkeit von Feature-Rollout-Entscheidungen' },
   },
+  {
+    /**
+     * C4 — one 3LS escalation from a partner, in tenant `kring`.
+     *
+     * **A row, not a `not personal data:` line.** The diagnostic format (§6.1) is genuinely
+     * hostile to member data — `refs[]` carries okey ids never contents, there is no log-paste
+     * field, `description` passes through `redactSensitive` server-side before it is written, and
+     * an attachment path may only be added once the partner sets `redactionConfirmed`. That is
+     * what keeps the *partner's customers* out of this collection, and it is why the WIP
+     * classification looked right. It is not what decides this row.
+     *
+     * What decides it is `classifiedBy`: a Firebase Auth uid of a bkaiser staff member. This file
+     * classifies a uid-bearing collection as a row every other time it appears — `featureEvents.by`,
+     * `feature-rollout.updatedBy`, `esignAudit.deletedBy`, `payment-orders.createdBy` — and
+     * `erasure-log` earns its `not personal data:` line by explicitly carrying no uid at all. So
+     * "diagnostics, not member data" answers the wrong question: the subject here is the classifier,
+     * not the reporter.
+     *
+     * There is no reporter to reach. A submission arrives on the partner's **service identity**
+     * (`PartnerModel.serviceUid`), so `partnerKey` names a company, and the comment thread reuses
+     * the `comments` collection, which is already a row of its own. A natural person at the
+     * partner's END CUSTOMER can still surface inside `description` despite the redaction — that is
+     * the same shape as the `meteringRecords` gap below and it is unreachable for the same reason:
+     * bkaiser is that person's independent controller and their request arrives directly, never
+     * through `eraseMyData`.
+     */
+    collection: 'tickets',
+    dataClass: 'log',
+    tier: 'T4',
+    // Not the classifier's own tenant data at all — the ticket belongs to the escalation queue, and
+    // a staff member moving out of `kring` must not take the queue's audit trail with them.
+    onTenantExit: 'retain',
+    find: (c: SubjectCtx) => db().collection('tickets').where('classifiedBy', '==', c.uid),
+    tenantScope: 'tenantsArray',
+    // Cross-tenant channel administration, not this member's own tenant data — same reasoning as
+    // `payment-orders` and `feature-rollout`.
+    onExport: 'none',
+    // `retain`, not `anonymize`. The classification decides whether an escalation is free or
+    // chargeable (C4 §4), and `TicketModel` states outright that *who set it and when are part of
+    // the record*. Blanking `classifiedBy` would erase the only evidence behind an invoice —
+    // structurally the same call `payment-orders` makes for four-eyes evidence.
+    onErasure: 'retain',
+    retention: LOG_24M,   // §6.1 fixes this tier explicitly; attachments inherit it (see `attachmentPaths`)
+  },
 ];
 
 export function entriesFor(mode: 'full' | 'index'): readonly SubjectDataEntry[] {

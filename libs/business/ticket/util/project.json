@@ -1,6 +1,6 @@
 {
   "name": "business-ticket-util",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/business/ticket/util/src",
   "prefix": "okr",
   "projectType": "library",

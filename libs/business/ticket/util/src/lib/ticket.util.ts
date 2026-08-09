@@ -1,5 +1,8 @@
-import { TicketClassification, TicketModel } from '@okr/shared-models';
-import { addWorkDays, getTodayStr, redactSensitive } from '@okr/shared-util-core';
+import {
+  CategoryItemModel, CategoryListModel, TicketClassification, TicketModel, TicketSeverity,
+  TicketStatus,
+} from '@okr/shared-models';
+import { addIndexElement, addWorkDays, getTodayStr, isType, redactSensitive } from '@okr/shared-util-core';
 
 /**
  * The pure half of the 3LS escalation queue (spec C4), so the callables are only auth, reads and
@@ -133,6 +136,21 @@ export function classifyTicket(
   return { ...ticket, classification, classificationReason: reason, classifiedBy: by, classifiedAt: today };
 }
 
+/**
+ * Set the severity, i.e. decide whether the released-fix leg is owed at all (§8).
+ *
+ * A downgrade **clears `fixDueAt`**, which is what makes the field mean anything: `isSlaBreached`
+ * already reads an empty `dueAt` as "not promised", so no second branch is needed anywhere. An
+ * upgrade recomputes the deadline from `submittedAt` rather than from today — the partner reported
+ * when they reported, and our triage delay is not theirs to absorb.
+ *
+ * The workaround leg is untouched in both directions: a workaround is owed whatever the severity.
+ */
+export function setSeverity(ticket: TicketModel, severity: TicketSeverity): TicketModel {
+  const owed = severity === 'blocking' && ticket.submittedAt.length > 0;
+  return { ...ticket, severity, fixDueAt: owed ? addWorkDays(ticket.submittedAt, FIX_WORK_DAYS) : '' };
+}
+
 /** Park a ticket on the partner — from here the clock stops for the §5 statistics. */
 export function waitOnPartner(ticket: TicketModel, today = getTodayStr()): TicketModel {
   if (ticket.status === 'waiting-on-partner') return ticket;
@@ -194,4 +212,112 @@ export function isSlaBreached(ticket: TicketModel, leg: 'workaround' | 'fix', to
   // subtracted, otherwise every ticket where we asked a question breaches by construction.
   const effectiveDue = ticket.waitingDays > 0 ? addWorkDays(dueAt, ticket.waitingDays) : dueAt;
   return (reachedAt.length > 0 ? reachedAt : today) > effectiveDue;
+}
+
+// ───────────────────────────── the UI's pure half (list + triage form) ──────────────────────────
+
+/** Type guard for a ticket document, in the repo's existing `isType` idiom. */
+export function isTicket(ticket: unknown, tenantId: string): ticket is TicketModel {
+  return isType<TicketModel>(ticket, new TicketModel(tenantId));
+}
+
+/**
+ * The search index.
+ *
+ * `sentryEventJson` and `description` are deliberately NOT indexed. They are the two fields §6.1
+ * treats as contaminated-by-default, and an index field is readable by every member of the tenant
+ * the record lives in — indexing them would route redacted free text straight back out through the
+ * one field no privacy rule looks at.
+ */
+export function getTicketIndex(ticket: TicketModel): string {
+  let index = addIndexElement('', 'name', ticket.name);
+  index = addIndexElement(index, 'partner', ticket.partnerKey);
+  index = addIndexElement(index, 'tenant', ticket.affectedTenantId);
+  index = addIndexElement(index, 'version', ticket.appVersion);
+  return index;
+}
+
+export const TICKET_STATUSES: readonly TicketStatus[] = [
+  'submitted', 'accepted', 'waiting-on-partner', 'resolved', 'closed', 'rejected',
+];
+
+export const TICKET_CLASSIFICATIONS: readonly TicketClassification[] = [
+  'unclassified', 'defect', 'misconfiguration', 'how-to',
+];
+
+export const TICKET_SEVERITIES: readonly TicketSeverity[] = ['blocking', 'non-blocking'];
+
+const STATUS_ICONS: Record<TicketStatus, string> = {
+  submitted: 'send',
+  accepted: 'checkmark',
+  'waiting-on-partner': 'stop',
+  resolved: 'bulb',
+  closed: 'lock-closed',
+  rejected: 'cancel',
+};
+
+const CLASSIFICATION_ICONS: Record<TicketClassification, string> = {
+  unclassified: 'help-circle',
+  defect: 'hammer',
+  misconfiguration: 'settings',
+  'how-to': 'chat',
+};
+
+const SEVERITY_ICONS: Record<TicketSeverity, string> = {
+  blocking: 'alert-circle',
+  'non-blocking': 'checkmark',
+};
+
+/**
+ * The two audited pickers, built in code rather than read from the `categories` collection.
+ *
+ * Same reasoning as `partnerStatusCategory`, with more at stake: `TicketClassification` decides
+ * whether an escalation is billed, and a per-tenant category document could drift out of the
+ * compile-time union — which would let somebody store a classification `isChargeable` does not
+ * know about, i.e. silently free.
+ */
+export function ticketClassificationCategory(tenantId: string): CategoryListModel {
+  const category = new CategoryListModel(tenantId);
+  category.name = 'classification';
+  category.i18n = '@business/ticket/util';
+  category.translateItems = true;
+  category.items = TICKET_CLASSIFICATIONS.map(c => new CategoryItemModel(c, CLASSIFICATION_ICONS[c]));
+  return category;
+}
+
+/** The queue's status filter. Same build-in-code reasoning as the two pickers above. */
+export function ticketStatusCategory(tenantId: string): CategoryListModel {
+  const category = new CategoryListModel(tenantId);
+  category.name = 'status';
+  category.i18n = '@business/ticket/util';
+  category.translateItems = true;
+  category.items = TICKET_STATUSES.map(s => new CategoryItemModel(s, STATUS_ICONS[s]));
+  return category;
+}
+
+export function ticketSeverityCategory(tenantId: string): CategoryListModel {
+  const category = new CategoryListModel(tenantId);
+  category.name = 'severity';
+  category.i18n = '@business/ticket/util';
+  category.translateItems = true;
+  category.items = TICKET_SEVERITIES.map(s => new CategoryItemModel(s, SEVERITY_ICONS[s]));
+  return category;
+}
+
+/**
+ * §5's cause mix, for one partner's tickets or the whole queue.
+ *
+ * `rejected` submissions are counted separately rather than folded into a cause: a ticket refused
+ * by the version window never had a cause established, and counting it as anything else would
+ * make the honest measure of a partner's triage quality (§5) read worse or better than it is.
+ */
+export function causeMix(tickets: readonly TicketModel[]): Record<TicketClassification | 'rejected', number> {
+  const mix: Record<TicketClassification | 'rejected', number> = {
+    unclassified: 0, defect: 0, misconfiguration: 0, 'how-to': 0, rejected: 0,
+  };
+  for (const ticket of tickets) {
+    if (ticket.status === 'rejected') mix.rejected++;
+    else mix[ticket.classification]++;
+  }
+  return mix;
 }

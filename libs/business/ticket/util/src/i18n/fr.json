@@ -1,0 +1,142 @@
+{
+  "singular": "Escalade",
+  "plural": "Escalades",
+  "description": {
+    "label": "Description du partenaire",
+    "placeholder": "Texte libre — filtré côté serveur avant d'être enregistré"
+  },
+  "empty": "Aucune escalade dans la file d'attente.",
+  "view": {
+    "label": "Consulter l'escalade"
+  },
+  "header": {
+    "name": "Titre",
+    "partner": "Partenaire",
+    "version": "Version",
+    "status": "Statut",
+    "classification": "Qualification",
+    "sla": "Échéance"
+  },
+  "status": {
+    "submitted": {
+      "label": "Reçue"
+    },
+    "accepted": {
+      "label": "Acceptée"
+    },
+    "waiting-on-partner": {
+      "label": "En attente du partenaire"
+    },
+    "resolved": {
+      "label": "Résolue"
+    },
+    "closed": {
+      "label": "Clôturée"
+    },
+    "rejected": {
+      "label": "Refusée"
+    }
+  },
+  "classification": {
+    "label": "Qualification",
+    "placeholder": "unclassified · defect · misconfiguration · how-to",
+    "helper": "Détermine le quota et la facturation. Seul un défaut du produit est gratuit.",
+    "unclassified": {
+      "label": "Pas encore qualifiée"
+    },
+    "defect": {
+      "label": "Défaut du produit (gratuit)"
+    },
+    "misconfiguration": {
+      "label": "Mauvaise configuration (facturable)"
+    },
+    "how-to": {
+      "label": "Question d'utilisation (facturable)"
+    }
+  },
+  "severity": {
+    "label": "Gravité",
+    "placeholder": "blocking · non-blocking",
+    "helper": "Une version corrigée sous 3 jours ouvrables n'est due que pour un cas bloquant.",
+    "blocking": {
+      "label": "Bloquant"
+    },
+    "non-blocking": {
+      "label": "Non bloquant"
+    }
+  },
+  "appVersion": {
+    "label": "Version openkring",
+    "placeholder": "p. ex. 7.11.0",
+    "helper": "Une annonce hors de la fenêtre de support est refusée, pas mise en file."
+  },
+  "affectedTenantId": {
+    "label": "Locataire concerné",
+    "placeholder": "Identifiant du locataire dans l'installation du partenaire",
+    "helper": "Un locataire du partenaire, pas l'un des nôtres."
+  },
+  "firebaseProjectId": {
+    "label": "Projet Firebase",
+    "placeholder": "Identifiant du projet de l'installation",
+    "helper": "Rempli automatiquement par l'installation du partenaire."
+  },
+  "sentryEventUrl": {
+    "label": "Événement Sentry",
+    "placeholder": "Lien vers l'événement",
+    "helper": "Déjà nettoyé par le filtre beforeSend de l'installation."
+  },
+  "platform": {
+    "label": "Navigateur / plateforme",
+    "placeholder": "p. ex. Chrome 140 / macOS",
+    "helper": "Tel qu'annoncé par le partenaire."
+  },
+  "feature": {
+    "label": "Bloc fonctionnel",
+    "placeholder": "p. ex. subject",
+    "helper": "Où cela s'est produit — remplace « je vous envoie une capture »."
+  },
+  "reproSteps": {
+    "label": "Étapes de reproduction",
+    "placeholder": "Ce qui a été fait jusqu'à l'apparition du problème"
+  },
+  "classificationReason": {
+    "label": "Motif de la qualification",
+    "placeholder": "Pourquoi cette qualification ?",
+    "helper": "Obligatoire : la qualification détermine la facturation et est journalisée."
+  },
+  "fixVersion": {
+    "label": "Corrigé en version",
+    "placeholder": "p. ex. 7.12.0",
+    "helper": "La version mineure qui a livré la correction."
+  },
+  "as": {
+    "title": "Escalade",
+    "open": "Ouvrir",
+    "accept": "Accepter",
+    "wait": "Attendre le partenaire",
+    "resume": "Reprendre",
+    "workaround": "Contournement livré",
+    "fix": "Correction livrée",
+    "close": "Clôturer",
+    "comment": "Commenter",
+    "cancel": "Annuler"
+  },
+  "comment": {
+    "prompt": "Commentaire au partenaire",
+    "conf": "Le commentaire a été ajouté.",
+    "thread": "Fil"
+  },
+  "triage": {
+    "conf": "L'escalade a été mise à jour.",
+    "error": "L'escalade n'a pas pu être mise à jour."
+  },
+  "classify": {
+    "conf": "La qualification a été enregistrée.",
+    "error": "La qualification n'a pas pu être enregistrée.",
+    "needsReason": "Une qualification exige un motif — elle décide de la facturation."
+  },
+  "changeConfirmation": {
+    "cancel": "Annuler",
+    "ok": "Enregistrer"
+  }
+}

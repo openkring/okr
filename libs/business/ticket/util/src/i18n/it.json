@@ -1,0 +1,142 @@
+{
+  "singular": "Escalation",
+  "plural": "Escalation",
+  "description": {
+    "label": "Descrizione del partner",
+    "placeholder": "Testo libero — filtrato lato server prima di essere salvato"
+  },
+  "empty": "Nessuna escalation in coda.",
+  "view": {
+    "label": "Visualizza l'escalation"
+  },
+  "header": {
+    "name": "Titolo",
+    "partner": "Partner",
+    "version": "Versione",
+    "status": "Stato",
+    "classification": "Classificazione",
+    "sla": "Scadenza"
+  },
+  "status": {
+    "submitted": {
+      "label": "Ricevuta"
+    },
+    "accepted": {
+      "label": "Accettata"
+    },
+    "waiting-on-partner": {
+      "label": "In attesa del partner"
+    },
+    "resolved": {
+      "label": "Risolta"
+    },
+    "closed": {
+      "label": "Chiusa"
+    },
+    "rejected": {
+      "label": "Respinta"
+    }
+  },
+  "classification": {
+    "label": "Classificazione",
+    "placeholder": "unclassified · defect · misconfiguration · how-to",
+    "helper": "Determina il contingente e la fatturazione. Solo un difetto del prodotto è gratuito.",
+    "unclassified": {
+      "label": "Non ancora classificata"
+    },
+    "defect": {
+      "label": "Difetto del prodotto (gratuito)"
+    },
+    "misconfiguration": {
+      "label": "Configurazione errata (fatturabile)"
+    },
+    "how-to": {
+      "label": "Domanda d'uso (fatturabile)"
+    }
+  },
+  "severity": {
+    "label": "Gravità",
+    "placeholder": "blocking · non-blocking",
+    "helper": "Una versione corretta entro 3 giorni lavorativi è dovuta solo nei casi bloccanti.",
+    "blocking": {
+      "label": "Bloccante"
+    },
+    "non-blocking": {
+      "label": "Non bloccante"
+    }
+  },
+  "appVersion": {
+    "label": "Versione di openkring",
+    "placeholder": "p. es. 7.11.0",
+    "helper": "Una segnalazione fuori dalla finestra di supporto viene respinta, non messa in coda."
+  },
+  "affectedTenantId": {
+    "label": "Tenant interessato",
+    "placeholder": "Id del tenant nell'installazione del partner",
+    "helper": "Un tenant del partner, non uno dei nostri."
+  },
+  "firebaseProjectId": {
+    "label": "Progetto Firebase",
+    "placeholder": "Id del progetto dell'installazione",
+    "helper": "Compilato automaticamente dall'installazione del partner."
+  },
+  "sentryEventUrl": {
+    "label": "Evento Sentry",
+    "placeholder": "Link all'evento",
+    "helper": "Già ripulito dal filtro beforeSend dell'installazione."
+  },
+  "platform": {
+    "label": "Browser / piattaforma",
+    "placeholder": "p. es. Chrome 140 / macOS",
+    "helper": "Come segnalato dal partner."
+  },
+  "feature": {
+    "label": "Blocco funzionale",
+    "placeholder": "p. es. subject",
+    "helper": "Dove si è verificato — sostituisce «le mando uno screenshot»."
+  },
+  "reproSteps": {
+    "label": "Passi per riprodurlo",
+    "placeholder": "Che cosa è stato fatto finché si è verificato"
+  },
+  "classificationReason": {
+    "label": "Motivo della classificazione",
+    "placeholder": "Perché questa classificazione?",
+    "helper": "Obbligatorio: la classificazione decide la fatturazione e viene registrata."
+  },
+  "fixVersion": {
+    "label": "Corretto nella versione",
+    "placeholder": "p. es. 7.12.0",
+    "helper": "La versione minore che ha consegnato la correzione."
+  },
+  "as": {
+    "title": "Escalation",
+    "open": "Apri",
+    "accept": "Accetta",
+    "wait": "Attendi il partner",
+    "resume": "Riprendi",
+    "workaround": "Soluzione temporanea consegnata",
+    "fix": "Correzione rilasciata",
+    "close": "Chiudi",
+    "comment": "Commenta",
+    "cancel": "Annulla"
+  },
+  "comment": {
+    "prompt": "Commento al partner",
+    "conf": "Il commento è stato aggiunto.",
+    "thread": "Conversazione"
+  },
+  "triage": {
+    "conf": "L'escalation è stata aggiornata.",
+    "error": "Non è stato possibile aggiornare l'escalation."
+  },
+  "classify": {
+    "conf": "La classificazione è stata salvata.",
+    "error": "Non è stato possibile salvare la classificazione.",
+    "needsReason": "Una classificazione richiede un motivo — decide se il lavoro viene fatturato."
+  },
+  "changeConfirmation": {
+    "cancel": "Annulla",
+    "ok": "Salva"
+  }
+}

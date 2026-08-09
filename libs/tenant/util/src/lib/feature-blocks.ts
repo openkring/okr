@@ -2051,7 +2051,7 @@ const games: FeatureBlock = {
  */
 /**
  * `libs/business/*` — the self-hosting **partner channel** (spec 1.25): the partner registry,
- * metering ingest + commission ledger, and the shared prospect pool.
+ * metering ingest + commission ledger, the shared prospect pool, and the 3LS escalation queue.
  *
  * **One block for the whole container, not one per subdomain** (owner ruling 2026-08-08, and the
  * same rule `finance` follows). The three subdomains are one commercial decision — bkaiser either
@@ -2064,9 +2064,11 @@ const games: FeatureBlock = {
  * collections below are covered by the retention/audit pass, which is exactly what an
  * unregistered domain would silently escape.
  *
- * `collections` lists all four the channel owns, including `prospects` and `meteringRecords`,
- * which carry a contact-of-record and a lead's contact details respectively — i.e. personal data
- * with a retention duty (C5 §7: 24 months after last contact).
+ * `collections` lists all five the channel owns. `prospects` and `meteringRecords` carry a lead's
+ * contact details and a contact-of-record respectively; `tickets` carries the classifier's uid and
+ * a partner's redacted free text (C4 §6.1). All three are personal data with a retention duty —
+ * 24 months for the prospects (C5 §7) and for the escalation queue (C4 §6.1, `LOG_24M`), which is
+ * exactly what an unregistered domain would silently escape.
  */
 const business: FeatureBlock = {
   id: 'business',
@@ -2075,13 +2077,14 @@ const business: FeatureBlock = {
   icon: 'org',
   defaultAvailability: 'internal',
   dependsOn: ['subject'],   // a partner IS an Org (C1 §3); the registry references it by `orgKey`
-  collections: ['partners', 'meteringRecords', 'commissionEntries', 'prospects'],
+  collections: ['partners', 'meteringRecords', 'commissionEntries', 'prospects', 'tickets'],
   menu: [
     // Top-level, not nested: `kring` has no back-office parent menu to hang this under, and the
     // only tenant that ever renders it is `kring` itself.
     { key: 'partner-all', name: 'partner-all', url: '/partner/all/partner-context', action: 'navigate', roleNeeded: 'admin', icon: 'org', label: '@business/partner/util.plural' },
     { key: 'metering-all', name: 'metering-all', url: '/metering', action: 'navigate', roleNeeded: 'admin', icon: 'chart', label: '@business/metering/util.records.plural' },
     { key: 'prospect-all', name: 'prospect-all', url: '/prospect', action: 'navigate', roleNeeded: 'admin', icon: 'target', label: '@business/prospect/util.plural' },
+    { key: 'ticket-all', name: 'ticket-all', url: '/ticket/all', action: 'navigate', roleNeeded: 'admin', icon: 'hammer', label: '@business/ticket/util.plural' },
   ],
 };
 

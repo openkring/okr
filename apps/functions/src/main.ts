@@ -248,6 +248,11 @@ export { listProspects, claimProspect, releaseProspect, revokeProspect } from '.
 // four above, so no partner hand-rolls a client (the C3 `pushMeteringToPlatform` argument).
 export { listPoolProspects, claimPoolProspect, releasePoolProspect } from './business';
 
+// C4 §3/§4 — the 3LS escalation queue. bkaiser-side (partner-authenticated submit/list/comment plus
+// the admin-only classify/triage), and the partner-side proxy every installation ships.
+export { submitTicket, listTickets, commentTicket, classifyTicket, triageTicket } from './business';
+export { submitSupportTicket, listSupportTickets, commentSupportTicket } from './business';
+
 // privacy 1.19 Phase 3: one-time backfill of the ssn/dob vault + memberBirthYear
 export { migrateSensitiveData } from './person/migrate-sensitive-data';
 

@@ -988,6 +988,18 @@ const business: BlockRoutes = {
       canActivate: [isAdminGuard()],
       loadComponent: () => import('@okr/business-prospect-feature').then(m => m.ProspectList),
     },
+    // The 3LS escalation queue (spec 1.29 / C4). Still the same block: it is the same back office,
+    // and a partner reaches the queue through callables rather than through any route here.
+    // `:listId` partitions by status ('all' is the whole queue); the detail view is a page because
+    // an escalation is worked over days and linked to by URL.
+    {
+      path: 'ticket',
+      canActivate: [isAdminGuard()],
+      children: [
+        { path: ':listId', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/business-ticket-feature').then(m => m.TicketList) },
+        { path: 'detail/:ticketKey', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/business-ticket-feature').then(m => m.TicketPage) },
+      ],
+    },
   ],
 };
 

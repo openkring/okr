@@ -201,6 +201,13 @@ seed("avatars/person.pShared",  {"tenants": ["system"], "isArchived": False,
                                  "storagePath": "tenant/t1/person/pShared/avatar/a.jpg"})
 # app-config: enabledFeatures is a BILLING boundary (1.32 §8.5) — the tenant's own admins
 # may keep editing everything else in their config, but not the paid-add-on subset.
+# C4 / 1.29 — the 3LS escalation queue. Admin-read only, and NOBODY writes it from a client:
+# the classification decides free vs. chargeable and is audited (reason + author), which only the
+# `classifyTicket` callable can require. Seeded in t1 so the cross-tenant case has something to miss.
+seed("tickets/tk1", {"tenants": ["t1"], "isArchived": False, "partnerKey": "p1",
+                     "name": "Mitgliederliste laedt nicht", "appVersion": "7.11.0",
+                     "status": "submitted", "classification": "unclassified", "classifiedBy": ""})
+
 seed("app-config/t1", {"tenantId": "t1", "gitOrg": "openkring",
                        "enabledFeatures": ["calevent", "task"]})
 
@@ -239,6 +246,16 @@ single_cases = [
      ["enabledFeatures"]),
     ("userB(admin t2) PATCH app-config/t1 -> DENY (cross-tenant)", False, PATCH,
      "app-config/t1", B, body({"gitOrg": "evil"}), ["gitOrg"]),
+    # C4 / 1.29: the escalation queue is admin-read, client-write-never
+    ("anon GET tickets/tk1 -> DENY", False, GET, "tickets/tk1", None, None, None),
+    ("userA(no role) GET tickets/tk1 -> DENY", False, GET, "tickets/tk1", A, None, None),
+    ("userP(privileged) GET tickets/tk1 -> DENY (admin only)", False, GET, "tickets/tk1", P, None, None),
+    ("userD(admin t1) GET tickets/tk1 -> ALLOW", True, GET, "tickets/tk1", D, None, None),
+    ("userB(admin t2) GET tickets/tk1 (t1) -> DENY (cross-tenant)", False, GET, "tickets/tk1", B, None, None),
+    # the one that matters: an admin who could write this could bill a partner with no reason
+    # on the record, and could hand-edit waitingDays out of the SLA statistics.
+    ("userD(admin t1) PATCH tickets/tk1 classification -> DENY (callable only)", False, PATCH,
+     "tickets/tk1", D, body({"classification": "misconfiguration"}), ["classification"]),
     # C-1: tenant isolation
     ("userA GET persons/pA (own tenant) -> ALLOW", True, GET, "persons/pA", A, None, None),
     ("userA GET persons/pB (other tenant) -> DENY", False, GET, "persons/pB", A, None, None),
@@ -498,6 +515,11 @@ list_cases = [
     # AvatarService streams the whole avatars collection for the tenant (person + org + …)
     ("userA LIST avatars array-contains t1 -> ALLOW", True, "avatars", "t1", A),
     ("anon LIST avatars t1 -> DENY", False, "avatars", "t1", None),
+    # C4 / 1.29: a partner has no account here at all — they list through `listTickets`,
+    # authenticated by PartnerModel.serviceUid. The rule only ever serves bkaiser's own back office.
+    ("userD(admin t1) LIST tickets array-contains t1 -> ALLOW", True, "tickets", "t1", D),
+    ("userA(no role) LIST tickets array-contains t1 -> DENY", False, "tickets", "t1", A),
+    ("userB(admin t2) LIST tickets array-contains t1 -> DENY (cross-tenant)", False, "tickets", "t1", B),
 ]
 
 # the AvatarService stream: tenants array-contains-any [tenant, 'system'] (own + shared defaults)

@@ -612,6 +612,23 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // The 3LS escalation queue (spec 1.29 / C4). Same shape as `prospects` above, and the
+    // argument is not re-derived: "my tickets, never another partner's" is a predicate over
+    // document CONTENT, which Firestore cannot evaluate for a list query, so a partner reads
+    // and writes through the callables (`submitTicket` / `listTickets` / `commentTicket`),
+    // authenticated by `PartnerModel.serviceUid` — never a `partner` role, never this rule.
+    //
+    // Writes are the Admin SDK's alone even for bkaiser's own admins, and that is the point.
+    // `classification` decides free vs. chargeable (C4 §4) and is an AUDITED field: it may only
+    // be set together with a reason and an author, which `classifyTicket` enforces and a rule
+    // cannot. An admin who could write this document directly could bill a partner with no
+    // reason on the record. Status and the two SLA legs go through `triageTicket` for the same
+    // reason — `waitingDays` is banked on each transition and is not reconstructible afterwards.
+    match /tickets/{ticketId} {
+      allow read:  if isAdmin() && (resource == null || belongsToTenant(resource.data));
+      allow write: if false;
+    }
+
     // ============================================================================
     //  Default deny — no catch-all grant. Any collection not matched above is
     //  denied. (C-1: the previous `match /{document=**} { allow read, write:

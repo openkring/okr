@@ -2,8 +2,8 @@ import { TicketModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 import {
   acceptSubmission, classifyTicket, isChargeable, isSlaBreached, isVersionSupported,
-  netResolutionDays, rejectSubmission, resumeFromPartner, slaDeadlines, validateSubmission,
-  waitOnPartner, workDaysBetween,
+  causeMix, getTicketIndex, isTicket, netResolutionDays, rejectSubmission, resumeFromPartner,
+  setSeverity, slaDeadlines, validateSubmission, waitOnPartner, workDaysBetween,
 } from './ticket.util';
 
 /** A complete §3 submission. Mondays used throughout so working-day maths is easy to read. */
@@ -172,5 +172,65 @@ describe('rejectSubmission', () => {
     const t = rejectSubmission(submission(), 'version 5.0.0 out of window', '20260810');
     expect(t).toMatchObject({ status: 'rejected', closedAt: '20260810' });
     expect(t.rejectedReason).toContain('5.0.0');
+  });
+});
+
+describe('setSeverity', () => {
+  const accepted = acceptSubmission(submission(), '20260810');
+
+  it('drops the released-fix deadline when the tenant can still work — §8', () => {
+    const t = setSeverity(accepted, 'non-blocking');
+    expect(t.fixDueAt).toBe('');
+    // the workaround leg is owed either way, so it must survive the downgrade untouched
+    expect(t.workaroundDueAt).toBe(accepted.workaroundDueAt);
+    expect(isSlaBreached(t, 'fix', '20260901')).toBe(false);
+  });
+
+  it('recomputes an upgrade from the submission date, not from the triage date', () => {
+    const t = setSeverity(setSeverity(accepted, 'non-blocking'), 'blocking');
+    expect(t.fixDueAt).toBe(accepted.fixDueAt);
+  });
+
+  it('promises nothing for a ticket that never started the clock', () => {
+    expect(setSeverity(submission(), 'blocking').fixDueAt).toBe('');
+  });
+});
+
+describe('getTicketIndex', () => {
+  it('indexes what the queue is searched by', () => {
+    const index = getTicketIndex(submission());
+    expect(index).toContain('Mitgliederliste');
+    expect(index).toContain('verein-x');
+    expect(index).toContain('7.11.0');
+  });
+
+  it('never indexes the two contaminated-by-default fields (§6.1)', () => {
+    const index = getTicketIndex(submission({
+      description: 'Kontakt hans.muster@example.ch',
+      sentryEventJson: '{"user":"hans"}',
+    }));
+    expect(index).not.toContain('example.ch');
+    expect(index).not.toContain('hans');
+  });
+});
+
+describe('isTicket', () => {
+  it('rejects what is not a ticket', () => {
+    expect(isTicket(submission(), 'kring')).toBe(true);
+    expect(isTicket(undefined, 'kring')).toBe(false);
+    expect(isTicket('ticket', 'kring')).toBe(false);
+  });
+});
+
+describe('causeMix', () => {
+  it('counts a rejected submission apart from every cause — §5', () => {
+    const mix = causeMix([
+      submission({ classification: 'defect' }),
+      submission({ classification: 'how-to' }),
+      // classified BEFORE being refused: it must still not count as a cause
+      submission({ classification: 'defect', status: 'rejected' }),
+      submission(),
+    ]);
+    expect(mix).toEqual({ unclassified: 1, defect: 1, misconfiguration: 0, 'how-to': 1, rejected: 1 });
   });
 });

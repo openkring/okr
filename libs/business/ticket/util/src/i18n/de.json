@@ -1,0 +1,142 @@
+{
+  "singular": "Eskalation",
+  "plural": "Eskalationen",
+  "description": {
+    "label": "Beschreibung des Partners",
+    "placeholder": "Freitext — serverseitig gefiltert, bevor er gespeichert wird"
+  },
+  "empty": "Keine Eskalationen in der Warteschlange.",
+  "view": {
+    "label": "Eskalation ansehen"
+  },
+  "header": {
+    "name": "Titel",
+    "partner": "Partner",
+    "version": "Version",
+    "status": "Status",
+    "classification": "Einstufung",
+    "sla": "Frist"
+  },
+  "status": {
+    "submitted": {
+      "label": "Eingegangen"
+    },
+    "accepted": {
+      "label": "Angenommen"
+    },
+    "waiting-on-partner": {
+      "label": "Wartet auf Partner"
+    },
+    "resolved": {
+      "label": "Behoben"
+    },
+    "closed": {
+      "label": "Abgeschlossen"
+    },
+    "rejected": {
+      "label": "Abgewiesen"
+    }
+  },
+  "classification": {
+    "label": "Einstufung",
+    "placeholder": "unclassified · defect · misconfiguration · how-to",
+    "helper": "Entscheidet über Kontingent und Verrechnung. Nur ein Produktfehler ist kostenlos.",
+    "unclassified": {
+      "label": "Noch nicht eingestuft"
+    },
+    "defect": {
+      "label": "Produktfehler (kostenlos)"
+    },
+    "misconfiguration": {
+      "label": "Fehlkonfiguration (verrechenbar)"
+    },
+    "how-to": {
+      "label": "Anwendungsfrage (verrechenbar)"
+    }
+  },
+  "severity": {
+    "label": "Dringlichkeit",
+    "placeholder": "blocking · non-blocking",
+    "helper": "Nur bei «blockierend» ist eine behobene Fassung innert 3 Arbeitstagen geschuldet.",
+    "blocking": {
+      "label": "Blockierend"
+    },
+    "non-blocking": {
+      "label": "Nicht blockierend"
+    }
+  },
+  "appVersion": {
+    "label": "openkring-Version",
+    "placeholder": "z.B. 7.11.0",
+    "helper": "Meldungen ausserhalb des Supportfensters werden abgewiesen, nicht eingereiht."
+  },
+  "affectedTenantId": {
+    "label": "Betroffener Mandant",
+    "placeholder": "Mandanten-ID in der Installation des Partners",
+    "helper": "Ein Mandant des Partners, nicht einer von uns."
+  },
+  "firebaseProjectId": {
+    "label": "Firebase-Projekt",
+    "placeholder": "Projekt-ID der Installation",
+    "helper": "Wird von der Installation des Partners automatisch mitgeschickt."
+  },
+  "sentryEventUrl": {
+    "label": "Sentry-Ereignis",
+    "placeholder": "Link zum Ereignis",
+    "helper": "Bereits durch den beforeSend-Filter der Installation bereinigt."
+  },
+  "platform": {
+    "label": "Browser / Plattform",
+    "placeholder": "z.B. Chrome 140 / macOS",
+    "helper": "Wie vom Partner gemeldet."
+  },
+  "feature": {
+    "label": "Funktionsblock",
+    "placeholder": "z.B. subject",
+    "helper": "Wo es auftrat — ersetzt «ich schicke Ihnen mal einen Screenshot»."
+  },
+  "reproSteps": {
+    "label": "Schritte zur Reproduktion",
+    "placeholder": "Was gemacht wurde, bis es auftrat"
+  },
+  "classificationReason": {
+    "label": "Begründung der Einstufung",
+    "placeholder": "Warum diese Einstufung?",
+    "helper": "Pflichtfeld: die Einstufung entscheidet über die Verrechnung und wird protokolliert."
+  },
+  "fixVersion": {
+    "label": "Behoben in Version",
+    "placeholder": "z.B. 7.12.0",
+    "helper": "Die Minor-Release, welche die Behebung ausgeliefert hat."
+  },
+  "as": {
+    "title": "Eskalation",
+    "open": "Öffnen",
+    "accept": "Annehmen",
+    "wait": "Auf Partner warten",
+    "resume": "Wieder aufnehmen",
+    "workaround": "Umgehung geliefert",
+    "fix": "Behebung ausgeliefert",
+    "close": "Abschliessen",
+    "comment": "Kommentieren",
+    "cancel": "Abbrechen"
+  },
+  "comment": {
+    "prompt": "Kommentar an den Partner",
+    "conf": "Der Kommentar wurde hinzugefügt.",
+    "thread": "Verlauf"
+  },
+  "triage": {
+    "conf": "Die Eskalation wurde aktualisiert.",
+    "error": "Die Eskalation konnte nicht aktualisiert werden."
+  },
+  "classify": {
+    "conf": "Die Einstufung wurde gespeichert.",
+    "error": "Die Einstufung konnte nicht gespeichert werden.",
+    "needsReason": "Eine Einstufung braucht eine Begründung — sie entscheidet über die Verrechnung."
+  },
+  "changeConfirmation": {
+    "cancel": "Abbrechen",
+    "ok": "Speichern"
+  }
+}
