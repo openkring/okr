@@ -24,10 +24,10 @@
  *   node scripts/set-kiosk-call-policy.mjs --kiosk=<personKey>
  *
  *   # 2. dry run: show the power levels that would be written
- *   node scripts/set-kiosk-call-policy.mjs --kiosk=<personKey> --admins=<k1,k2> --room='!abc:server'
+ *   node scripts/set-kiosk-call-policy.mjs --kiosk=<personKey> --admins=<k1,k2> --room='!abc123…'
  *
  *   # 3. write it
- *   node scripts/set-kiosk-call-policy.mjs --kiosk=<personKey> --admins=<k1,k2> --room='!abc:server' --write
+ *   node scripts/set-kiosk-call-policy.mjs --kiosk=<personKey> --admins=<k1,k2> --room='!abc123…' --write
  *
  * personKeys are the `persons` document ids (the Matrix localpart is that key lowercased).
  * Re-running is safe and is how you add an admin later.
@@ -44,7 +44,7 @@ const WRITE = ARGS.includes('--write');
 
 const kioskKey = value('kiosk');
 const adminKeys = (value('admins') ?? '').split(',').map(s => s.trim()).filter(Boolean);
-const roomId = value('room');
+const roomArg = value('room');
 
 if (!kioskKey) {
   console.error('Missing --kiosk=<personKey>. See the header of this file for usage.');
@@ -71,7 +71,7 @@ async function call(path, init = {}) {
 }
 
 /** Without --room: list the kiosk's rooms so the caller can pick the one to lock. */
-if (!roomId) {
+if (!roomArg) {
   const { joined_rooms: rooms } = await call(`/_synapse/admin/v1/users/${encodeURIComponent(kioskUserId)}/joined_rooms`);
   console.log(`Rooms joined by ${kioskUserId}:\n`);
   for (const id of rooms ?? []) {
@@ -90,6 +90,76 @@ if (!adminKeys.length) {
   console.error('Missing --admins=<personKey,...> — at least one admin must keep power level 100.');
   process.exit(1);
 }
+
+/**
+ * Room ids of recent room versions are a bare hash with NO ':server' suffix, so an id copied
+ * with one appended resolves to nothing and every later call fails with a confusing
+ * "can't join remote room". Accept both shapes: verify the id, and retry without the domain.
+ */
+async function resolveRoomId(candidate) {
+  for (const id of [candidate, candidate.split(':')[0]]) {
+    try {
+      await call(`/_synapse/admin/v1/rooms/${encodeURIComponent(id)}`);
+      if (id !== candidate) console.log(`note: '${candidate}' is unknown; using '${id}'`);
+      return id;
+    } catch { /* try the next shape */ }
+  }
+  throw new Error(`No room '${candidate}' on ${HOMESERVER}. Run without --room to list the kiosk's rooms.`);
+}
+
+const roomId = await resolveRoomId(roomArg);
+
+/**
+ * The admin token belongs to @bk2-bot, which is not a member of a DM between two members —
+ * and Synapse refuses to read or write room state for a non-member. Join it first, exactly
+ * as the ensureAdminInRoom helper behind setKioskCallRoomPolicy does: the admin-join API
+ * works only for rooms the bot can already see, so an invite-only room needs the documented
+ * make_room_admin escalation (a local member with power invites and promotes the bot) before
+ * the join succeeds.
+ */
+async function ensureBotInRoom() {
+  const { user_id: botUserId } = await call('/_matrix/client/v3/account/whoami');
+
+  /** 'joined' — including when it already was — or 'forbidden', which needs the escalation. */
+  const join = async () => {
+    try {
+      await call(`/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
+        { method: 'POST', body: JSON.stringify({ user_id: botUserId }) });
+      return 'joined';
+    } catch (error) {
+      const message = String(error);
+      // Synapse answers a redundant join with 403 "already in the room" — that is success
+      if (message.includes('already in the room')) return 'joined';
+      if (message.includes('403')) return 'forbidden';
+      throw error;
+    }
+  };
+
+  if (await join() === 'joined') return botUserId;
+
+  console.log(`${botUserId} is not in the room yet — escalating via make_room_admin…`);
+  const promote = () => call(`/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/make_room_admin`,
+    { method: 'POST', body: JSON.stringify({ user_id: botUserId }) });
+  try {
+    await promote();
+  } catch (error) {
+    // Synapse rate-limits make_room_admin to about one call per minute
+    const retryAfter = /retry_after_ms[":\s]+(\d+)/.exec(String(error))?.[1];
+    if (!retryAfter) throw error;
+    const waitMs = Math.min(Number(retryAfter) + 2_000, 90_000);
+    console.log(`rate-limited, waiting ${Math.round(waitMs / 1000)}s…`);
+    await new Promise(resolve => setTimeout(resolve, waitMs));
+    await promote();
+  }
+  // make_room_admin only invites — the invite still has to be accepted
+  if (await join() === 'forbidden') {
+    throw new Error(`${botUserId} still cannot join ${roomId}. Is there a local member with power in it?`);
+  }
+  return botUserId;
+}
+
+const botUserId = await ensureBotInRoom();
+console.log(`admin bot   : ${botUserId} (in room)`);
 
 const adminUserIds = adminKeys.map(mxid);
 const stateUrl = `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.power_levels/`;
