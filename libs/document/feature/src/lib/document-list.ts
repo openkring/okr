@@ -1,11 +1,11 @@
 import { Component, computed, inject, input, linkedSignal, effect, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonThumbnail, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonThumbnail, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 
-import { DocumentModel, FolderModel, RoleName } from '@okr/shared-models';
+import { DocumentModel, FolderModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, RoleName } from '@okr/shared-models';
 import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
 import { FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe, FileLogoPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner, showZoomedImage } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
@@ -80,7 +80,7 @@ const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [excludeNames]="['addFiles']" [toggleStates]="{ toggleFilter: showFilter() }"/>
+                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [excludeNames]="['addFiles']" [toggleStates]="{ toggleFilter: showFilter(), toggleEditMode: editMode() }"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -89,14 +89,13 @@ const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
       }
     </ion-toolbar>
 
-    <!-- search and filters — hidden by default; toggled via the context-menu 'toggleFilter' action -->
-    @if(showFilter()) {
-      <okr-list-filter
-        (searchTermChanged)="onSearchtermChange($event)"
-        (tagChanged)="onTagSelected($event)" [tags]="tags()"
-        (typeChanged)="onTypeSelected($event)" [types]="types()"
-      />
-    }
+    <!-- search and filters — always visible from md up; on smaller screens hidden by default
+         and toggled via the context-menu 'toggleFilter' action -->
+    <okr-list-filter [class.ion-hide-sm-down]="!showFilter()"
+      (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+    />
 
     <!-- list header -->
     @if(isListView()) {
@@ -215,12 +214,13 @@ const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
 export class DocumentList {
   protected readonly store = inject(DocumentStore);
   private readonly actionSheetController = inject(ActionSheetController);
+  private readonly modalController = inject(ModalController);
 
   // inputs
   public readonly listId = input.required<string>();  // preset filter, e.g. p:path (with wildcard), t:tag, k:parentKey
   public readonly contextMenuName = input.required<string>();
   public color = input('secondary');
-  public view = input<'list' | 'grid'>('list'); // initial view mode
+  public view = input<'list' | 'grid'>('grid'); // initial view mode
   // keepDefaultTrue: withComponentInputBinding() would otherwise set this to undefined on standalone
   public showMenuButton = input(true, { transform: keepDefaultTrue });
   public groupAdmin = input(false);
@@ -245,6 +245,9 @@ export class DocumentList {
   public isListView = linkedSignal(() => this.view() === 'list');
   // filter row hidden by default; toggled via the context-menu 'toggleFilter' action
   protected readonly showFilter = signal(false);
+  // read-only by default: tapping a folder navigates into it, tapping a file opens the viewer overlay.
+  // The context-menu 'toggleEditMode' action flips this to show the per-item action sheets.
+  protected readonly editMode = signal(false);
   // list view → show the 'grid' icon (switch to grid); grid view → show the 'list' icon
   protected readonly viewIcon = computed(() => this.isListView() ? 'grid' : 'list');
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()) && !this.groupAdmin());
@@ -253,7 +256,7 @@ export class DocumentList {
   protected popupId = computed(() => `c_docs_${this.listId}`);
   protected readonly folderKey = computed(() => this.getFolderName(this.store.listId()));
 
-  private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+  private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
     effect(() => this.store.setListId(this.listId()));
@@ -299,6 +302,7 @@ export class DocumentList {
       case 'addFolder': await this.store.addFolder(); break;
       case 'exportRaw': await this.store.export('raw'); break;
       case 'toggleFilter': this.showFilter.update(v => !v); break;
+      case 'toggleEditMode': this.editMode.update(v => !v); break;
       default: error(undefined, `DocumentList.call: unknown method ${selectedMethod}`);
     }
   }
@@ -309,14 +313,41 @@ export class DocumentList {
    * @param document 
    */
   protected async showActions(document: DocumentModel): Promise<void> {
+    if (!this.editMode()) {
+      await this.openViewer(document);
+      return;
+    }
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, document);
     await this.executeActions(actionSheetOptions, document);
   }
 
-  /** Folder tap: plain members navigate straight in; folder managers get an action sheet. */
+  /**
+   * Read-only tap on a file: show it in the same full-screen overlay the article section uses
+   * (prev/next across the sibling images of this folder, download). Non-image files (pdf, office,
+   * …) have no image rendering — open them in the browser instead.
+   */
+  private async openViewer(document: DocumentModel): Promise<void> {
+    if (!document.mimeType.startsWith('image/')) {
+      await this.store.preview(document, false);
+      return;
+    }
+    const gallery = this.galleryImages();
+    const startIndex = Math.max(0, gallery.findIndex((img) => img.documentKey === document.okey));
+    await showZoomedImage(this.modalController, document.fullPath, document.title, IMAGE_STYLE_SHAPE,
+      document.altText, 'full-modal', gallery, startIndex);
+  }
+
+  /** Every image of the current (filtered) list, in display order — the viewer's prev/next range. */
+  private galleryImages(): ImageConfig[] {
+    return this.filteredDocuments()
+      .filter((doc) => doc.mimeType.startsWith('image/'))
+      .map((doc) => ({ ...IMAGE_CONFIG_SHAPE, label: doc.title, url: doc.fullPath, altText: doc.altText, documentKey: doc.okey }));
+  }
+
+  /** Folder tap: outside edit mode (or for plain members) navigate straight in; folder managers get an action sheet. */
   protected async showFolderActions(folder: FolderModel): Promise<void> {
-    if (!canEditFolder(folder, this.currentUser(), this.groupAdmin())) {
+    if (!this.editMode() || !canEditFolder(folder, this.currentUser(), this.groupAdmin())) {
       this.onSubfolderClick(folder.okey);
       return;
     }
@@ -412,6 +443,11 @@ export class DocumentList {
   /** Whether the filter row is currently visible. Public so a parent (group view) can reflect it in a hoisted toggle menu item. */
   public isFilterVisible(): boolean {
     return this.showFilter();
+  }
+
+  /** Whether edit mode is on. Public so a parent (group view) can reflect it in a hoisted toggle menu item. */
+  public isEditMode(): boolean {
+    return this.editMode();
   }
 
   /******************************* helpers *************************************** */

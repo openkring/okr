@@ -281,6 +281,7 @@ export class GroupViewPage implements ViewWillEnter {
     switch (this.selectedSegment()) {
       case 'files':
         states['toggleFilter'] = this.documentList()?.isFilterVisible() ?? false;
+        states['toggleEditMode'] = this.documentList()?.isEditMode() ?? false;
         break;
       case 'tasks':
         states['toggleFilter'] = this.taskList()?.isFilterVisible() ?? false;

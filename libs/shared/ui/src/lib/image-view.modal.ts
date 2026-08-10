@@ -6,6 +6,7 @@ import { ImageConfig, ImageStyle } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { getImgixUrl } from '@okr/shared-util-core';
+import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { Header } from './header';
 
@@ -52,6 +53,17 @@ import { Header } from './header';
     }
     .nav-button.prev { left: 0.5rem; }
     .nav-button.next { right: 0.5rem; }
+    .download-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      z-index: 10;
+      --border-radius: 50%;
+      --padding-start: 0;
+      --padding-end: 0;
+      width: 44px;
+      height: 44px;
+    }
     .counter {
       position: absolute;
       bottom: 0.5rem;
@@ -75,6 +87,9 @@ import { Header } from './header';
               </ion-button>
             }
             <img [src]="imgixUrl()" [alt]="currentAltText()" />
+            <ion-button class="download-button" fill="solid" color="light" (click)="download()" aria-label="Download">
+              <ion-icon slot="icon-only" src="{{ 'download' | svgIcon }}" />
+            </ion-button>
             @if (hasMultiple()) {
               <ion-button class="nav-button next" fill="solid" color="light" (click)="next()" aria-label="Next image">
                 <ion-icon slot="icon-only" src="{{ 'chevron-forward' | svgIcon }}" />
@@ -125,6 +140,10 @@ export class ImageViewModal {
     const url = getImgixUrl(this.currentUrl(), 'auto=format,compress,enhance&fit=max&w=2000');
     return url.startsWith('tenant') ? this.imgixBaseUrl + '/' + url : url;
   });
+
+  protected async download(): Promise<void> {
+    await downloadToBrowser(this.imgixUrl());
+  }
 
   protected next(): void {
     const count = this.gallery().length;

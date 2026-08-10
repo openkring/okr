@@ -1390,6 +1390,9 @@ const documentBlock: FeatureBlock = {
     // nothing, and an ordered range scan of every doc whose `name` sorts in [`c-d`, `c-g`)
     // returned exactly `c-documents`, `c-expense`, `c-folder`).
     { key: 'c-documents', name: 'c-documents', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      // Same shared `editmode-toggle` doc `c-contentpage` declares. `DocumentList` opens read-only
+      // (tap a folder → navigate, tap a file → viewer overlay); this flips it to the action sheets.
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: 'Edit Modus' },
       { key: 'document-add', name: 'document-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'upload', label: 'Dokument hinzufügen' },
       { key: 'document-export-raw', name: 'document-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Export Rohdaten' },
       // Same ACTIVE (non-archived) `filter-toggle` doc the `calevent` block already
@@ -1421,6 +1424,7 @@ const documentBlock: FeatureBlock = {
     //    label→input, `toggleFilter` → local signal). `FolderList.onPopoverDismiss` handles
     //    only `'add'` and is not rendered anywhere in the app.
     { key: 'c-folder', name: 'c-folder', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: 'Edit Modus' },
       { key: 'folder-add', name: 'folder-add', url: 'addFolder', action: 'call', roleNeeded: 'registered', icon: 'folder', label: 'Ordner hinzufügen' },
       { key: 'files-add', name: 'files-add', url: 'addFiles', action: 'call', roleNeeded: 'registered', icon: 'upload', label: 'Dateien hinzufügen' },
       { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen' },
