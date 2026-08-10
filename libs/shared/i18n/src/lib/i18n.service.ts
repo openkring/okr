@@ -116,6 +116,26 @@ export class I18nService {
   }
 
   /**
+   * Resolve a MAIN-BUNDLE key in a specific language, loading that language's bundle if it is
+   * not the active one. Used by editors that show all supported languages side by side (e.g. the
+   * AOC tag editor). Scoped keys (`@domain/layer.key`) are NOT supported — Transloco needs the
+   * scope passed separately there; those keys return ''.
+   * @param key the translation key, e.g. '@tag.ezs'
+   * @param lang one of AvailableLanguages
+   */
+  public async translateInLang(key: string | null | undefined, lang: string): Promise<string> {
+    if (!key?.startsWith('@')) return key ?? '';
+    const translationKey = key.substring(1);
+    const dotIndex = translationKey.indexOf('.');
+    const prefix = dotIndex === -1 ? translationKey : translationKey.substring(0, dotIndex);
+    if (prefix.includes('/')) return '';
+    await firstValueFrom(this.translocoService.load(lang));
+    const value = this.translocoService.translate(translationKey, {}, lang);
+    // the missing-key handler echoes the key back — an editor wants an empty field instead
+    return value === translationKey ? '' : value;
+  }
+
+  /**
    * Resolve every item label of a category once and return a synchronous lookup.
    *
    * Category item labels are stored as i18n *keys* (see `getItemLabel`), so a cell in an
