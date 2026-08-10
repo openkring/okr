@@ -69,6 +69,24 @@ async function resolveTreasurer(tenantId: string, reviewAssigneePersonKey: strin
   return { key: u['personKey'] ?? '', name1: u['firstName'] ?? '', name2: u['lastName'] ?? '' };
 }
 
+/**
+ * Review-task label for an expense: "Spesen von <Submitter>: <Vendor> <Amount> <Currency>".
+ * The submitter name is stamped onto the expense by createExpense; legacy docs written before
+ * that field existed fall back to one users lookup, and to the bare receipt label if even that
+ * fails (deleted user).
+ */
+async function expenseTaskName(
+  expense: FirebaseFirestore.DocumentData | undefined, vendor: string, amountCents: number, currency: string,
+): Promise<string> {
+  const receipt = `${vendor} ${(amountCents / 100).toFixed(2)} ${currency}`.trim();
+  let name = (expense?.['userName'] as string | undefined) ?? '';
+  if (!name && expense?.['userId']) {
+    const u = (await getFirestore().collection(USERS_COLLECTION).doc(expense['userId']).get()).data();
+    name = `${u?.['firstName'] ?? ''} ${u?.['lastName'] ?? ''}`.trim();
+  }
+  return name ? `Spesen von ${name}: ${receipt}` : `Beleg prüfen: ${receipt}`;
+}
+
 /** Build a compact "id name" chart-of-accounts list of leaf accounts for the LLM account hint. */
 async function loadLeafAccountList(accountingTenantId: string): Promise<string> {
   const db = getFirestore();
@@ -431,7 +449,7 @@ async function handleExpenseResult(
   let taskKey = '';
   if (created) {
     taskKey = await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
-      `Beleg prüfen: ${after.vendor} ${(amountCents / 100).toFixed(2)} ${currency}`, after, treasurer);
+      await expenseTaskName(expense, after.vendor, amountCents, currency), after, treasurer);
     if (taskKey) await expenseRef.set({ taskKey }, { merge: true });
   } else {
     taskKey = (expense['taskKey'] as string | undefined) ?? '';
@@ -504,6 +522,7 @@ async function handleExternalBackendResult(
 
   // Resolve the treasurer NOW — resolveTreasurer runs queries, which a transaction cannot do.
   const treasurer = await resolveTreasurer(tenantId, cfg['reviewAssigneePersonKey'] ?? '');
+  const taskName = await expenseTaskName(expense, after.vendor, amountCents, currency);
 
   // Deterministic task id = expenseKey → exactly one task per expense (idempotent, create-if-absent).
   const taskRef = db.collection(TASK_COLLECTION).doc(correlationKey);
@@ -512,7 +531,7 @@ async function handleExternalBackendResult(
         if ((await tx.get(taskRef)).exists) return false;
         tx.set(taskRef, {
           tenants: [tenantId], isArchived: false,
-          name: `Beleg in Bexio erfassen: ${after.vendor} ${(amountCents / 100).toFixed(2)} ${currency}`.slice(0, 200),
+          name: taskName.slice(0, 200),
           index: '', tags: '',
           notes: `Externe Buchhaltung — bitte manuell verbuchen. OCR-Beleg: ${after.storagePath}`,
           author: null,

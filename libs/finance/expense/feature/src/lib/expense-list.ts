@@ -63,6 +63,9 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
               <ion-label>
                 <h3>{{ expense.abstract }}</h3>
                 <p>{{ toCHF(expense.amountTotal) }} {{ expense.currency }} · {{ expense.status }}</p>
+                @if (listId() === 'all' && expense.userName) {
+                  <p>{{ expense.userName }}</p>
+                }
               </ion-label>
             </ion-item>
           }

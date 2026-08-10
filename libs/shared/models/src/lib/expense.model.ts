@@ -31,6 +31,7 @@ export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public bookingKey = '';
   public taskKey = DEFAULT_KEY;   // FK → tasks; the OCR review task for this expense (set by the OCR pipeline)
   public userId = DEFAULT_KEY;
+  public userName = '';           // submitter's display name, stamped by the createExpense CF (legacy docs: '')
   public accountingTenantId = '';
   public receiptCount = 0; // number of receipt files uploaded to the OCR pipeline; lets stage ② know when all receipts are in
 

@@ -55,7 +55,8 @@ export const createExpense = onCall(
       transferTo: d.transferTo === 'issuer' ? 'issuer' : 'me', iban: d.iban ?? '',
       category: d.category ?? '', costCenterId: d.costCenterId ?? '', note: d.note ?? '',
       status: 'processing', bookingKey: '',
-      userId: uid, accountingTenantId: d.tenantId,
+      userId: uid, userName: `${user['firstName'] ?? ''} ${user['lastName'] ?? ''}`.trim(),
+      accountingTenantId: d.tenantId,
       receiptCount,
     });
     logger.info(`createExpense: ${ref.id} for tenant ${d.tenantId} (receipts=${receiptCount})`);
