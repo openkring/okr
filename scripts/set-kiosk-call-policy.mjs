@@ -16,6 +16,14 @@
  * get PL 100, the kiosk account gets 0. Synapse then rejects a call invite from anyone
  * else, which is the actual enforcement; the kiosk client's own check only mirrors it.
  *
+ * ROOM VERSION 12 CAVEAT: creators hold implicit power that no power_levels event can
+ * change, and the server rejects any event that even names them. A DM opened with the
+ * TrustedPrivateChat preset (what createDirectRoom uses) makes BOTH parties creators, so
+ * in such a room the admin needs no promotion and the kiosk cannot be demoted — the script
+ * leaves creators out and says so. The gate still holds: nobody below creator/PL 100 can
+ * ring the kiosk. For a room where the kiosk must be a plain member, create it with a
+ * non-trusted preset instead of a DM.
+ *
  * PREREQUISITES
  *   gcloud auth login                       # to read the MATRIX_ADMIN_TOKEN secret
  *
@@ -165,9 +173,33 @@ const adminUserIds = adminKeys.map(mxid);
 const stateUrl = `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.power_levels/`;
 const current = await call(stateUrl);
 
+/**
+ * Room version 12 gave creators implicit, immutable power, and the server REJECTS a
+ * power_levels event that mentions one ("Creator user … must not appear in content.users").
+ * A DM opened with the TrustedPrivateChat preset makes BOTH parties creators, so in such a
+ * room neither the admin needs promoting nor can the kiosk be demoted — leave them out.
+ */
+const { creator } = await call(`/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}`);
+const { additional_creators: additionalCreators } =
+  await call(`/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.create/`);
+const creators = new Set([creator, ...(additionalCreators ?? [])].filter(Boolean));
+
 const users = { ...current.users };
-for (const userId of adminUserIds) users[userId] = ADMIN_POWER_LEVEL;
-users[kioskUserId] = 0; // the kiosk answers calls, it never places or moderates them
+for (const userId of adminUserIds) {
+  if (creators.has(userId)) {
+    console.log(`note: ${userId} is a room creator — implicit power, cannot be listed`);
+    continue;
+  }
+  users[userId] = ADMIN_POWER_LEVEL;
+}
+// the kiosk answers calls, it never places or moderates them — unless it co-created the room
+if (creators.has(kioskUserId)) {
+  console.log(`WARNING: ${kioskUserId} is a room creator and keeps implicit power here, so it`);
+  console.log('         can also place calls in this room. Admin-only ringing still holds:');
+  console.log('         no one below creator/PL 100 can send m.call.invite after this write.');
+} else {
+  users[kioskUserId] = 0;
+}
 
 const next = {
   ...current,
@@ -184,8 +216,8 @@ const next = {
 };
 
 console.log(`room   : ${roomId}`);
-console.log(`kiosk  : ${kioskUserId} (power level 0)`);
-console.log(`admins : ${adminUserIds.join(', ')} (power level ${ADMIN_POWER_LEVEL})`);
+console.log(`kiosk  : ${kioskUserId} (${creators.has(kioskUserId) ? 'creator, implicit power' : 'power level 0'})`);
+console.log(`admins : ${adminUserIds.map(id => `${id} (${creators.has(id) ? 'creator, implicit power' : `power level ${ADMIN_POWER_LEVEL}`})`).join(', ')}`);
 console.log(`\ncurrent power_levels:\n${JSON.stringify(current, null, 2)}`);
 console.log(`\nwould write:\n${JSON.stringify(next, null, 2)}`);
 
