@@ -11,6 +11,7 @@ import { generateRandomString, hasRole } from '@okr/shared-util-core';
 import { AvatarPipe, AvatarDisplay } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
 import { MemberAvatarsPipe } from '@okr/relationship-membership-feature';
+import { isAdminMember } from '@okr/subject-group-util';
 
 import { GroupStore } from './group.store';
 
@@ -134,12 +135,13 @@ export class GroupList {
    * @param group 
    */
   protected async showActions(group: GroupModel): Promise<void> {
-    if (this.readOnly()) {
-      await this.store.view(group, this.readOnly());
+    const readOnly = this.readOnly() && !this.isGroupAdmin(group);
+    if (readOnly) {
+      await this.store.view(group, readOnly);
     } else {
       const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
       await this.addActionSheetButtons(actionSheetOptions, group);
-      await this.executeActions(actionSheetOptions, group);
+      await this.executeActions(actionSheetOptions, group, readOnly);
     }
   }
 
@@ -150,9 +152,10 @@ export class GroupList {
   private async addActionSheetButtons(actionSheetOptions: ActionSheetOptions, group: GroupModel): Promise<void> {
     actionSheetOptions.buttons.push(createActionSheetButton('as_show', this.store.i18n.show(), this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('as_edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
-    if (hasRole('admin', this.store.appStore.currentUser())) {
+    const isAdmin = hasRole('admin', this.store.appStore.currentUser());
+    if (isAdmin || this.isGroupAdmin(group)) {
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      if (await this.store.doesGroupContentPageExist(group.okey) === false) {
+      if (isAdmin && await this.store.doesGroupContentPageExist(group.okey) === false) {
         actionSheetOptions.buttons.push(createActionSheetButton('as_addPage', this.store.i18n.add_page(), this.imgixBaseUrl, 'add'));
       }
       actionSheetOptions.buttons.push(createActionSheetButton('as_delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
@@ -165,7 +168,7 @@ export class GroupList {
    * @param actionSheetOptions 
    * @param group 
    */
-  private async executeActions(actionSheetOptions: ActionSheetOptions, group: GroupModel): Promise<void> {
+  private async executeActions(actionSheetOptions: ActionSheetOptions, group: GroupModel, readOnly: boolean): Promise<void> {
     if (actionSheetOptions.buttons.length > 0) {
       const actionSheet = await this.actionSheetController.create(actionSheetOptions);
       await actionSheet.present();
@@ -173,20 +176,20 @@ export class GroupList {
       if (!data) return;
       switch (data.action) {
         case 'as_delete':
-          await this.store.delete(group, this.readOnly());
+          await this.store.delete(group, readOnly);
           break;
         case 'as_addPage':
           // tbd: add default article section explaining how to add content to the group page
           await this.store.createGroupPage(group, 'intro', 'Gruppe: ' + group.name);
           break;
         case 'as_edit':
-          await this.store.edit(group, this.readOnly());
+          await this.store.edit(group, readOnly);
           break;
         case 'as_view':
           await this.store.edit(group, true);
           break;
         case 'as_show':
-          await this.store.view(group, this.readOnly());
+          await this.store.view(group, readOnly);
           break;
       }
     }
@@ -195,6 +198,11 @@ export class GroupList {
   /******************************** helpers ******************************************* */
   protected hasRole(role?: RoleName): boolean {
     return hasRole(role, this.store.currentUser());
+  }
+
+  /** True if the current user is listed as an admin of this specific group. */
+  private isGroupAdmin(group: GroupModel): boolean {
+    return isAdminMember(group, this.currentUser()?.personKey);
   }
 
   protected canChange(): boolean {
