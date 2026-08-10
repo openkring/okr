@@ -171,16 +171,39 @@ async function main() {
   }
 
   console.log('─'.repeat(78));
-  console.log('METERING_CONFIG credentials — printed ONCE, stored nowhere. Do not commit them.');
+  console.log('Sign-in credentials — printed ONCE, stored nowhere. Do not commit them.');
   console.log('─'.repeat(78));
   for (const c of credentials) {
     console.log(`  partnerKey ${c.partnerKey}`);
-    console.log(`  serviceEmail    ${c.email}`);
-    console.log(`  servicePassword ${c.password ?? '(unchanged — re-run with --reset-password to mint a new one)'}`);
+    console.log(`  email      ${c.email}`);
+    console.log(`  password   ${c.password ?? '(unchanged — re-run with --reset-password to mint a new one)'}`);
     console.log('');
   }
-  console.log('Each partner installation needs ONE METERING_CONFIG secret carrying these plus its');
-  console.log('own endpoint, apiKey and tenants[] — see apps/functions/src/business/push.ts.\n');
+  console.log('─'.repeat(78));
+  console.log('⚠️  The password is NOT what goes into METERING_CONFIG.');
+  console.log('─'.repeat(78));
+  console.log(`
+App Check is ENFORCED on identitytoolkit for this project, and a Cloud Function has no
+attestation to present — so a partner installation cannot sign in with a password at all
+(401 "Firebase App Check token is invalid", before the credential is even looked at). What
+it uses instead is a REFRESH token, exchanged against securetoken, which is not enforced.
+
+Mint one per partner, ONCE, from an attested client:
+
+  1. Open an App-Check-registered app (e.g. the kring app) in a browser.
+  2. Sign in with the e-mail + password above.
+  3. In devtools, read the refresh token the SDK stored:
+
+       JSON.parse(localStorage.getItem(
+         Object.keys(localStorage).find(k => k.startsWith('firebase:authUser:'))
+       )).stsTokenManager.refreshToken
+
+  4. Put THAT string into the installation's METERING_CONFIG as \`serviceRefreshToken\`,
+     alongside its own endpoint, apiKey and tenants[] — see apps/functions/src/business/push.ts.
+  5. Sign out of the browser. The refresh token stays valid; it dies only to
+     revokeRefreshTokens(uid), to disabling the account, or to a password change — all of
+     which are bkaiser's alone, which is the revocability C3 §3 asked for.
+`);
 }
 
 main().catch((error) => { console.error(error); exit(1); });

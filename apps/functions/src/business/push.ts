@@ -41,10 +41,19 @@ export interface MeteringConfig {
   partnerKey: string;
   /** The bkaiser `pushMetering` callable, e.g. `https://<region>-<project>.cloudfunctions.net/pushMetering`. */
   endpoint: string;
-  /** The partner's service identity in the `kring` project — the uid on `partners.serviceUid`. */
+  /**
+   * The partner's service identity in the `kring` project — the account on `partners.serviceUid`.
+   * Not used to authenticate (see `serviceRefreshToken`); kept because a log line naming a uid is
+   * unreadable and every diagnosis of this path starts with "which identity was that?".
+   */
   serviceEmail: string;
-  servicePassword: string;
-  /** Web API key of the `kring` project, needed to exchange the password for an ID token. */
+  /**
+   * A Firebase **refresh token** for that identity, minted once by bkaiser and handed over with the
+   * rest of this secret. Replaced the password on 2026-08-09 — see `callPlatform` for why the
+   * password could not work at all.
+   */
+  serviceRefreshToken: string;
+  /** Web API key of the `kring` project, needed to exchange the refresh token for an ID token. */
   apiKey: string;
   tenants: TenantConfig[];
 }
@@ -61,6 +70,15 @@ export function readConfig(): MeteringConfig | undefined {
     const config = JSON.parse(raw) as MeteringConfig;
     if (!config.partnerKey || !config.endpoint || !Array.isArray(config.tenants)) {
       logger.error('pushMeteringToPlatform: METERING_CONFIG is incomplete — nothing pushed.');
+      return undefined;
+    }
+    if (!config.serviceRefreshToken) {
+      // Checked by name rather than left to fail at the exchange: a config still carrying the
+      // pre-2026-08-09 `servicePassword` parses fine, looks configured, and then dies one layer
+      // down with an opaque token error. Say which field is missing, once, here.
+      logger.error('pushMeteringToPlatform: METERING_CONFIG has no serviceRefreshToken. ' +
+        'The password was replaced by a refresh token on 2026-08-09 (App Check enforces ' +
+        'identitytoolkit; see callPlatform) — re-mint the secret.');
       return undefined;
     }
     return config;
@@ -183,12 +201,52 @@ interface PushResponse {
 }
 
 /**
- * Call one of bkaiser's partner-facing callables over HTTPS with an ID token of the partner's
- * service identity. `pushMetering` uses it, and so does every pool call in `pool-client.ts`.
+ * Exchange the configured refresh token for a short-lived Firebase ID token.
  *
- * Password sign-in via the REST API rather than a service-account key: the credential bkaiser hands
- * a partner has to be revocable by bkaiser alone, and a user in the `kring` project is (disable the
- * account and the pushes stop), whereas a key minted in the partner's own project is not.
+ * **Why not `signInWithPassword`, which this used until 2026-08-09.** App Check is `ENFORCED` on
+ * `identitytoolkit.googleapis.com` for this project, and App Check attests *client apps* — a Cloud
+ * Function has no attestation to obtain, so it has no token to present. Every sign-in endpoint there
+ * (`signInWithPassword`, `signInWithCustomToken`, `signUp`) therefore answers
+ * `401 "Firebase App Check token is invalid."` **before** it looks at the credential, which is why
+ * minting a custom token instead does not help either. `securetoken.googleapis.com` is a different
+ * service and is not enforced — verified against the live project, where an invalid refresh token
+ * gets past the gate and fails as `400 INVALID_REFRESH_TOKEN`.
+ *
+ * **Revocability is what §3 cared about, and it is stronger here than with a password.** A refresh
+ * token dies three ways, all of them bkaiser's alone: `revokeRefreshTokens(uid)`, disabling the
+ * account, and a password change. The one-time mint still needs an attested client, so it happens
+ * once per partner at provisioning — where the password used to be handed over — and enforcement
+ * stays fully on for the login form.
+ *
+ * No caching. One extra round trip per platform call, on a path used monthly (`pushMetering`) or by
+ * a human pressing a button; a cached token would buy nothing and add a stale-credential failure
+ * mode across warm instances.
+ */
+export async function idTokenFor(config: MeteringConfig): Promise<string> {
+  const response = await fetch(`https://securetoken.googleapis.com/v1/token?key=${config.apiKey}`, {
+    method: 'POST',
+    // Form-encoded, which is the documented shape for this endpoint.
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token', refresh_token: config.serviceRefreshToken,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`token exchange failed for ${config.serviceEmail}: ${response.status} ${await response.text()}`);
+  }
+  // The endpoint answers snake_case to a form-encoded request and camelCase to a JSON one. Both are
+  // read rather than assumed: picking the wrong one yields `undefined`, which then travels onward as
+  // the string "Bearer undefined" and fails as an auth error three layers away from its cause.
+  const body = await response.json() as { id_token?: string; idToken?: string };
+  const idToken = body.id_token ?? body.idToken;
+  if (!idToken) throw new Error(`token exchange for ${config.serviceEmail} returned no id_token`);
+  return idToken;
+}
+
+/**
+ * Call one of bkaiser's partner-facing callables over HTTPS with an ID token of the partner's
+ * service identity. `pushMetering` uses it, every pool call in `pool-client.ts` does, and so does
+ * every escalation call in `ticket-client.ts`.
  *
  * The sibling endpoints are derived from the configured `pushMetering` URL rather than configured
  * one by one: they are the same deployment, and a second URL in the secret is a second thing that
@@ -198,19 +256,7 @@ export async function callPlatform<T>(
   config: MeteringConfig, functionName: string, payload: unknown,
 ): Promise<T> {
   const endpoint = config.endpoint.replace(/pushMetering\/?$/, functionName);
-  const signIn = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${config.apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: config.serviceEmail, password: config.servicePassword, returnSecureToken: true,
-      }),
-    });
-  if (!signIn.ok) {
-    throw new Error(`metering sign-in failed: ${signIn.status} ${await signIn.text()}`);
-  }
-  const { idToken } = await signIn.json() as { idToken: string };
+  const idToken = await idTokenFor(config);
 
   const response = await fetch(endpoint, {
     method: 'POST',
