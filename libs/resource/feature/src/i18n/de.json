@@ -594,6 +594,14 @@
     "b8p": {
       "label": "8+",
       "description": "Achter mit"
+    },
+    "b8m": {
+      "label": "8-",
+      "description": "Achter ohne"
+    },
+    "b8x": {
+      "label": "8x",
+      "description": "Doppelachter"
     }
   },
   "rboat_usage": {
