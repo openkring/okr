@@ -45,15 +45,15 @@
   "select": {
     "participant": {
       "title": "Elegir participante",
-      "add": "Seleccionar"
+      "add": "Elegir persona"
     },
     "boat": {
       "title": "Elegir embarcación",
-      "add": "Seleccionar"
+      "add": "Elegir embarcación"
     },
     "location": {
       "title": "Elegir destino",
-      "add": "Seleccionar"
+      "add": "Elegir destino"
     }
   },
   "show": {
@@ -79,10 +79,9 @@
   },
   "warning": {
     "suspicious": "Se ha detectado actividad sospechosa. Confirme por favor.",
-    "distance_zero": "Introduzca una distancia razonable entre 1 y 50 km.",
-    "distance_high": "Introduzca una distancia razonable entre 1 y 50 km.",
+    "distance_zero": "Introduzca una distancia entre 1 y 500 km.",
     "seats_mismatch": "El número de participantes no coincide con la capacidad de la embarcación.",
-    "note": "Para evitar abusos, se realizan varias comprobaciones en segundo plano. Si se detecta un abuso, se toma una imagen del usuario y se notifica al administrador."
+    "note": "Para evitar abusos, se realizan varias comprobaciones en segundo plano. Si se detecta un abuso, se notifica al administrador."
   },
   "boat": "Embarcación",
   "distance": {
@@ -158,5 +157,37 @@
     "hard_delete_confirm": "¿Eliminar la salida definitivamente? Esta acción no se puede deshacer.",
     "restore_conf": "Salida restaurada.",
     "restore_error": "La restauración ha fallado."
-  }
+  },
+  "info": {
+    "intro": "Antes de la salida, registre aquí en el cuaderno de bitácora su salida prevista.",
+    "before": {
+      "title": "Antes de la salida",
+      "text": "Indica adónde quiere remar, con qué embarcación y con qué remeros."
+    },
+    "why": {
+      "title": "Por qué es importante",
+      "text": "Por motivos de seguridad es importante, para poder encontrarle más rápido en caso de emergencia. Además, otros socios pueden ver qué embarcaciones ya están reservadas."
+    },
+    "reservation": {
+      "title": "Reserva",
+      "text": "Según acuerdo de la junta directiva, las embarcaciones solo deben reservarse a corto plazo y in situ, en el quiosco del cuaderno de bitácora."
+    },
+    "after": {
+      "title": "Después de la salida",
+      "text": "Después de la salida cierra su travesía. Esta se traslada automáticamente a las estadísticas de embarcaciones."
+    }
+  },
+  "call": {
+    "support": {
+      "label": "Llamar al soporte",
+      "none": "No hay ninguna persona de soporte asignada al cuaderno de bitácora.",
+      "error": "No se pudo iniciar la llamada al soporte."
+    }
+  },
+  "rigging": {
+    "title": "¿Cómo se rema?",
+    "scull": "Scull",
+    "sweep": "Remo de punta"
+  },
+  "person": "Persona"
 }

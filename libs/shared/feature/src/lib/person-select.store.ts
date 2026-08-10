@@ -1,10 +1,12 @@
 import { computed, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
-import { PersonModel, UserModel } from '@okr/shared-models';
-import { chipMatches, nameMatches } from '@okr/shared-util-core';
+import { MembershipCollection, MembershipModel, PersonModel, UserModel } from '@okr/shared-models';
+import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { AppStore } from './app.store';
@@ -35,21 +37,53 @@ export const PersonSelectStore = signalStore(
     i18n: inject(I18nService).translateAll(SHARED_FEATURE_I18N_KEYS) as SharedFeatureI18n
   })),
 
+  withProps((store) => ({
+    // Active memberships of the default org — the "current members" the first lookup level offers.
+    activeMembershipsResource: rxResource({
+      params: () => ({
+        currentUser: store.appStore.currentUser(),
+        orgKey: store.appStore.defaultOrg()?.okey,
+        tenantId: store.appStore.tenantId(),
+      }),
+      stream: ({ params }) => {
+        if (!params.orgKey) return of([] as MembershipModel[]);
+        const query = getSystemQuery(params.tenantId);
+        query.push({ key: 'orgKey', operator: '==', value: params.orgKey });
+        query.push({ key: 'state', operator: '==', value: 'active' });
+        query.push({ key: 'memberModelType', operator: '==', value: 'person' });
+        query.push({ key: 'relIsLast', operator: '==', value: true });
+        return store.firestoreService.searchData<MembershipModel>(MembershipCollection, query, 'memberName2', 'asc');
+      },
+    }),
+  })),
+
   withComputed((store) => {
     return {
-      persons: computed(() => store.appStore.allPersons()),
-      isLoading: computed(() => store.appStore.isLoading())
+      // A deceased person is never offered, on either level.
+      persons: computed(() => store.appStore.allPersons().filter((p: PersonModel) => !p.isDeceased)),
+      isLoading: computed(() => store.appStore.isLoading()),
+      // state === 'active' is not enough: scs has memberships left at 'active' with a dateOfExit
+      // years in the past (e.g. exited 2016-12-31), so the exit date decides who is current.
+      memberKeys: computed(() => {
+        const today = getTodayStr(DateFormat.StoreDate);
+        return new Set(
+          (store.activeMembershipsResource.value() ?? [])
+            .filter((m: MembershipModel) => isAfterDate(m.dateOfExit, today))
+            .map((m: MembershipModel) => m.memberKey)
+        );
+      }),
     }
   }),
 
   withComputed((store) => {
+    const matches = (person: PersonModel) =>
+      nameMatches(person.index, store.searchTerm()) && chipMatches(person.tags, store.selectedTag());
     return {
       personsCount: computed(() => store.persons()?.length ?? 0),
-      filteredPersons: computed(() =>
-        store.persons()?.filter((person: PersonModel) =>
-          nameMatches(person.index, store.searchTerm()) &&
-          chipMatches(person.tags, store.selectedTag()))
-      ),
+      /** Level 1: current members only. */
+      memberMatches: computed(() => store.persons().filter(p => store.memberKeys().has(p.okey) && matches(p))),
+      /** Level 2: every living person, members or not. */
+      personMatches: computed(() => store.persons().filter(matches)),
       customLabel: computed(() => normalizeWhitespace(store.searchTerm())),
       hasExactMatch: computed(() => {
         const q = normalizeForCompare(store.searchTerm());
@@ -63,6 +97,18 @@ export const PersonSelectStore = signalStore(
       store.allowCustom()
       && store.customLabel().length >= MIN_CUSTOM_SEARCH_LENGTH
       && !store.hasExactMatch()
+    ),
+    /**
+     * Two-level lookup: members first, and only when the term finds none of them does the
+     * list widen to every living person. Picking a guest or a former member therefore takes
+     * one extra keystroke, not a mode switch.
+     */
+    filteredPersons: computed(() =>
+      store.memberMatches().length > 0 ? store.memberMatches() : store.personMatches()
+    ),
+    /** True while the widened level is on display, so the list can say so. */
+    isBeyondMembers: computed(() =>
+      store.memberMatches().length === 0 && store.personMatches().length > 0
     ),
   })),
 

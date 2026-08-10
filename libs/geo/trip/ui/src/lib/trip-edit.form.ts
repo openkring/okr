@@ -58,12 +58,12 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
                 <ion-item lines="none">
                   @if(formData().resource; as boat) {
                     <ion-icon slot="start" src="{{ getIcon(boat) | svgIcon }}" />
-                    <ion-label>{{ boat.name2 }}</ion-label>
+                    <ion-label>{{ boat.name2 }} {{ riggingLabel(boat) }}</ion-label>
                     @if(!isReadOnly()) {
                       <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearBoat()" />
                     }
                   } @else if(!isReadOnly()) {
-                    <ion-button size="large" (click)="boatSelectClicked.emit()">
+                    <ion-button (click)="boatSelectClicked.emit()">
                       <ion-icon slot="start" src="{{'boat' | svgIcon }}" />
                       {{ i18n().select_boat_add() }}
                     </ion-button>
@@ -92,7 +92,7 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
                       <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
                     }
                   } @else if(!isReadOnly()) {
-                    <ion-button size="large" (click)="locationSelectClicked.emit()">
+                    <ion-button (click)="locationSelectClicked.emit()">
                       <ion-icon slot="start" src="{{'location' | svgIcon }}" />
                       {{ i18n().select_location_add() }}
                     </ion-button>
@@ -104,7 +104,8 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
             <!-- distance -->
             @if(formData().locations.length > 0 || formData().customLocationLabel) {
               <ion-row>
-                <ion-col size="12" size-md="6">
+                <!-- offset 6: the distance lines up under the boat/location controls, not under their labels -->
+                <ion-col size="6" offset="6">
                   <okr-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onDistanceChange($event)"
                     [readOnly]="isReadOnly()" [min]="1" [max]="maxDistance" [selectOnFocus]="true" />
                 </ion-col>
@@ -150,6 +151,7 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
           [readOnly]="isReadOnly()"
           [currentUser]="currentUser"
           [title]="i18n().select_participant_add()"
+          [label]="i18n().person()"
           [showButton]="true"
         />
       }
@@ -235,6 +237,19 @@ export class TripEditForm {
 
   protected getParticipantName(participant: AvatarInfo): string {
     return getAvatarName(participant, this.currentUser()?.nameDisplay);
+  }
+
+  /**
+   * '(Skull)' / '(Riemen)' behind the boat name — only for a convertible boat (rboat_type
+   * 'b<seats>mx'), where the rigging was the crew's choice and the trip stores the decision.
+   * Every other boat carries its rigging in its type already, so the suffix would be noise.
+   */
+  protected riggingLabel(boat: AvatarInfo): string {
+    const resourceSubType = this.boats().find(b => b.okey === boat.key)?.subType ?? '';
+    if (!/^b\d+mx$/.test(resourceSubType)) return '';
+    if (boat.subType.endsWith('x')) return `(${this.i18n().rigging_scull()})`;
+    if (boat.subType.endsWith('m')) return `(${this.i18n().rigging_sweep()})`;
+    return '';
   }
 
   protected getIcon(boat: AvatarInfo): string {

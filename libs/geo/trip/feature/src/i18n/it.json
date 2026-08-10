@@ -45,15 +45,15 @@
   "select": {
     "participant": {
       "title": "Scegli partecipante",
-      "add": "Seleziona"
+      "add": "Scegli persona"
     },
     "boat": {
       "title": "Scegli imbarcazione",
-      "add": "Seleziona"
+      "add": "Scegli imbarcazione"
     },
     "location": {
       "title": "Scegli destinazione",
-      "add": "Seleziona"
+      "add": "Scegli destinazione"
     }
   },
   "show": {
@@ -79,10 +79,9 @@
   },
   "warning": {
     "suspicious": "Rilevata attività sospetta. Si prega di confermare.",
-    "distance_zero": "Inserire una distanza ragionevole tra 1 e 50 km.",
-    "distance_high": "Inserire una distanza ragionevole tra 1 e 50 km.",
+    "distance_zero": "Inserire una distanza tra 1 e 500 km.",
     "seats_mismatch": "Il numero di partecipanti non corrisponde alla capacità dell'imbarcazione.",
-    "note": "Per evitare abusi, in background vengono eseguiti vari controlli. Qualora venga rilevato un abuso, viene scattata una foto dell'utente e l'amministratore viene notificato."
+    "note": "Per evitare abusi, in background vengono eseguiti vari controlli. Qualora venga rilevato un abuso, l'amministratore viene avvisato."
   },
   "boat": "Imbarcazione",
   "distance": {
@@ -158,5 +157,37 @@
     "hard_delete_confirm": "Eliminare definitivamente l'uscita? Questa azione non può essere annullata.",
     "restore_conf": "Uscita ripristinata.",
     "restore_error": "Ripristino non riuscito."
-  }
+  },
+  "info": {
+    "intro": "Prima dell'uscita, registra qui nel giornale di bordo la tua uscita prevista.",
+    "before": {
+      "title": "Prima dell'uscita",
+      "text": "Indichi dove vuoi remare, con quale imbarcazione e con quali vogatori."
+    },
+    "why": {
+      "title": "Perché è importante",
+      "text": "Per motivi di sicurezza è importante, così possiamo trovarti più rapidamente in caso di emergenza. Inoltre gli altri soci vedono quali imbarcazioni sono già prenotate."
+    },
+    "reservation": {
+      "title": "Prenotazione",
+      "text": "Come da delibera del comitato, le imbarcazioni vanno prenotate solo a breve termine e sul posto, al chiosco del giornale di bordo."
+    },
+    "after": {
+      "title": "Dopo l'uscita",
+      "text": "Dopo l'uscita chiudi la tua uscita. Viene poi riportata automaticamente nelle statistiche delle imbarcazioni."
+    }
+  },
+  "call": {
+    "support": {
+      "label": "Chiama il supporto",
+      "none": "Per il giornale di bordo non è indicata alcuna persona di supporto.",
+      "error": "Non è stato possibile avviare la chiamata al supporto."
+    }
+  },
+  "rigging": {
+    "title": "Come si voga?",
+    "scull": "Doppio remo",
+    "sweep": "Remo singolo"
+  },
+  "person": "Persona"
 }

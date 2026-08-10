@@ -604,6 +604,7 @@ export const SECTION_I18N_KEYS = {
   tripstats_col_name:                       PFX + 'tripstats.col.name',
   tripstats_col_km:                         PFX + 'tripstats.col.km',
   tripstats_col_trips:                      PFX + 'tripstats.col.trips',
+  tripstats_col_type:                       PFX + 'tripstats.col.type',
 
   // video
   video_edit:                               PFX + 'video.edit',

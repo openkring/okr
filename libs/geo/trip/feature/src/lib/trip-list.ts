@@ -3,7 +3,7 @@ import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonContent, 
 
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
 import { RoleName, TripModel } from '@okr/shared-models';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -60,12 +60,8 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
       }
 
       <ion-toolbar>
-        <okr-list-filter class="ion-hide-sm-down"
-          (searchTermChanged)="store.setSearchTerm($event)"
-          (stateChanged)="store.setSelectedState($event)" [states]="states()"
-          (yearChanged)="store.setSelectedYear($event)" [years]="years()"
-        />
-        <okr-list-filter class="ion-hide-sm-up"
+        <!-- search + year only, 6 cols each up to md, 3 cols each above -->
+        <okr-list-filter [mdSize]="3"
           (searchTermChanged)="store.setSearchTerm($event)"
           (yearChanged)="store.setSelectedYear($event)" [years]="years()"
         />
@@ -180,7 +176,9 @@ export class TripList {
       case 'showBoatStatistics': await this.store.showBoatStatistics(); break;
       case 'showPersonStatistics': await this.store.showPersonStatistics(); break;
       case 'exportRaw': await this.store.export('raw'); break;
-      default: error(undefined, `IconList.onPopoverDismiss: unknown method ${selectedMethod}`);
+      // console.error, not error(): that helper stays silent unless isDebugMode is passed, which
+      // turned a menu item whose url does not match any case here into a dead, unreported click.
+      default: console.error(`TripList.onPopoverDismiss: no handler for menu url '${selectedMethod}'`);
     }
   }
 

@@ -164,5 +164,30 @@
       "none": "Für das Logbuch ist keine Support-Person hinterlegt.",
       "error": "Der Support-Anruf konnte nicht gestartet werden."
     }
+  },
+  "person": "Person",
+  "info": {
+    "intro": "Vor der Ausfahrt erfasst du hier im Logbuch deine geplante Fahrt.",
+    "before": {
+      "title": "Vor der Ausfahrt",
+      "text": "Du gibst damit an, wohin du rudern möchtest, mit welchem Boot und mit welchen Rudernden."
+    },
+    "why": {
+      "title": "Warum es wichtig ist",
+      "text": "Sicherheitsmässig ist dies wichtig, damit wir dich bei einem allfälligen Notfall schneller finden können. Ausserdem können andere Mitglieder sehen, welche Boote bereits reserviert sind."
+    },
+    "after": {
+      "title": "Nach der Fahrt",
+      "text": "Nach der Fahrt schliesst du deine Ausfahrt ab. Deine Ausfahrt wird dann automatisch in den Bootsstatistiken nachgeführt."
+    },
+    "reservation": {
+      "title": "Reservation",
+      "text": "Gemäss Vorstandsbeschluss sollen Boote nur kurzfristig und vor Ort am Logbuch Kiosk reserviert werden."
+    }
+  },
+  "rigging": {
+    "title": "Wie wird gerudert?",
+    "scull": "Skull",
+    "sweep": "Riemen"
   }
 }

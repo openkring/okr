@@ -12,6 +12,21 @@ import { TranslatePipe } from '@okr/shared-i18n';
     TranslatePipe, AsyncPipe,
     IonSelect, IonSelectOption, IonLabel
   ],
+  styles: [`
+    /* The select stretches its value across the full column, leaving the year marooned
+       far from its caret. Shrink it to its content and centre the pair in the column. */
+    ion-select {
+      width: fit-content;
+      /* wide enough for 'Alle Jahre' + caret: below this the select clips its own value
+         AND the popover it opens (Ionic sizes the option list from the select's width) */
+      min-width: 140px;
+      margin-inline: auto;
+      --padding-start: 0;
+      --padding-end: 0;
+    }
+    ion-select::part(label) { flex: none; }
+    ion-select::part(icon) { margin-inline-start: 4px; }
+  `],
   template: `
   @if(isReadOnly()) {
     <ion-label>{{ label() }}</ion-label>

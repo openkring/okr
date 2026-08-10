@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonAvatar, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
+import { IonAvatar, IonContent, IonIcon, IonImg, IonItem, IonItemDivider, IonLabel, IonList, ModalController } from '@ionic/angular/standalone';
 
 import { PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -19,7 +19,7 @@ export type PersonSelectResult =
   imports: [
     Header, Spinner,
     FullNamePipe, AvatarPipe, EmptyList, SvgIconPipe,
-    IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList, IonIcon,
+    IonContent, IonItem, IonItemDivider, IonLabel, IonAvatar, IonImg, IonList, IonIcon,
   ],
   providers: [PersonSelectStore],
   styles: [`
@@ -53,6 +53,12 @@ export type PersonSelectResult =
         @if(selectedPersonsCount() === 0 && !store.showCustomEntry()) {
           <okr-empty-list [message]="store.i18n.person_empty()" />
         } @else {
+          @if(store.isBeyondMembers()) {
+            <!-- no member matched, so the list widened — say so, or the extra names look like members -->
+            <ion-item-divider color="light">
+              <ion-label>{{ store.i18n.person_beyond_members() }}</ion-label>
+            </ion-item-divider>
+          }
           @for(person of filteredPersons(); track $index) {
             <ion-list lines="none">
               <ion-item class="item" (click)="select(person)">

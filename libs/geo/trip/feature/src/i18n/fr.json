@@ -45,15 +45,15 @@
   "select": {
     "participant": {
       "title": "Choisir un participant",
-      "add": "Sélectionner"
+      "add": "Choisir une personne"
     },
     "boat": {
       "title": "Choisir un bateau",
-      "add": "Sélectionner"
+      "add": "Choisir un bateau"
     },
     "location": {
       "title": "Choisir une destination",
-      "add": "Sélectionner"
+      "add": "Choisir une destination"
     }
   },
   "show": {
@@ -79,10 +79,9 @@
   },
   "warning": {
     "suspicious": "Activité suspecte détectée. Veuillez confirmer.",
-    "distance_zero": "Veuillez saisir une distance raisonnable entre 1 et 50 km.",
-    "distance_high": "Veuillez saisir une distance raisonnable entre 1 et 50 km.",
+    "distance_zero": "Veuillez saisir une distance entre 1 et 500 km.",
     "seats_mismatch": "Le nombre de participants ne correspond pas à la capacité du bateau.",
-    "note": "Afin d'éviter les abus, différents contrôles s'exécutent en arrière-plan. Si un abus est constaté, une photo de l'utilisateur est prise et l'administrateur en est notifié."
+    "note": "Afin d'éviter les abus, différents contrôles s'exécutent en arrière-plan. En cas d'abus constaté, l'administrateur est notifié."
   },
   "boat": "Bateau",
   "distance": {
@@ -158,5 +157,37 @@
     "hard_delete_confirm": "Supprimer définitivement la sortie ? Cette action est irréversible.",
     "restore_conf": "Sortie restaurée.",
     "restore_error": "La restauration a échoué."
-  }
+  },
+  "info": {
+    "intro": "Avant de partir, enregistrez ici votre sortie prévue dans le carnet de bord.",
+    "before": {
+      "title": "Avant la sortie",
+      "text": "Vous indiquez où vous souhaitez ramer, avec quel bateau et avec quels rameurs."
+    },
+    "why": {
+      "title": "Pourquoi c'est important",
+      "text": "Pour des raisons de sécurité, cela nous permet de vous retrouver plus vite en cas d'urgence. Les autres membres voient également quels bateaux sont déjà réservés."
+    },
+    "reservation": {
+      "title": "Réservation",
+      "text": "Conformément à la décision du comité, les bateaux ne doivent être réservés qu'à court terme et sur place, au kiosque du carnet de bord."
+    },
+    "after": {
+      "title": "Après la sortie",
+      "text": "Après la sortie, vous clôturez votre trajet. Il est ensuite repris automatiquement dans les statistiques des bateaux."
+    }
+  },
+  "call": {
+    "support": {
+      "label": "Appeler le support",
+      "none": "Aucune personne de support n'est définie pour le carnet de bord.",
+      "error": "L'appel au support n'a pas pu être établi."
+    }
+  },
+  "rigging": {
+    "title": "Comment ramez-vous ?",
+    "scull": "Couple",
+    "sweep": "Pointe"
+  },
+  "person": "Personne"
 }

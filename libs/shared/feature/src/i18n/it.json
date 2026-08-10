@@ -15,7 +15,8 @@
     "select": "Scegliere la persona",
     "empty": "Nessuna persona trovata.",
     "custom_use": "usare come ospite",
-    "label": "Persona"
+    "label": "Persona",
+    "beyond_members": "Nessun socio trovato – tutte le persone:"
   },
   "resource": {
     "select": "Scegliere la risorsa",

@@ -896,7 +896,8 @@
     "col": {
       "name": "Name",
       "km": "km",
-      "trips": "Fahrten"
+      "trips": "Fahrten",
+      "type": "Bootstyp"
     },
     "type": {
       "view": {

@@ -201,4 +201,12 @@ describe('groupTripsByDay', () => {
     expect(groups[1].date).toBe('20240601');
     expect(groups[1].trips).toHaveLength(2);
   });
+
+  it('sorts the trips within a day newest first, like the days', () => {
+    const early = makeTrip({ startDate: '20240601', startTime: '08:00', okey: 'early' });
+    const late  = makeTrip({ startDate: '20240601', startTime: '17:30', okey: 'late' });
+    const noon  = makeTrip({ startDate: '20240601', startTime: '1200', okey: 'noon' });  // legacy HHmm
+    const groups = groupTripsByDay([early, late, noon]);
+    expect(groups[0].trips.map(t => t.okey)).toEqual(['late', 'noon', 'early']);
+  });
 });

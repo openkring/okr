@@ -45,15 +45,15 @@
   "select": {
     "participant": {
       "title": "Select participant",
-      "add": "Select"
+      "add": "Choose person"
     },
     "boat": {
       "title": "Select boat",
-      "add": "Select"
+      "add": "Choose boat"
     },
     "location": {
       "title": "Select destination",
-      "add": "Select"
+      "add": "Choose destination"
     }
   },
   "show": {
@@ -79,10 +79,9 @@
   },
   "warning": {
     "suspicious": "Suspicious activity detected. Please confirm.",
-    "distance_zero": "Please enter a reasonable distance between 1 and 50 km.",
-    "distance_high": "Please enter a reasonable distance between 1 and 50 km.",
+    "distance_zero": "Please enter a distance between 1 and 500 km.",
     "seats_mismatch": "The number of participants does not match the boat capacity.",
-    "note": "To prevent misuse, various checks run in the background. Should misuse be detected, a picture of the user is taken and the admin is notified."
+    "note": "To prevent misuse, various checks run in the background. Should misuse be detected, the admin is notified."
   },
   "boat": "Boat",
   "distance": {
@@ -158,5 +157,37 @@
     "hard_delete_confirm": "Permanently delete outing? This cannot be undone.",
     "restore_conf": "Outing restored.",
     "restore_error": "Restore failed."
-  }
+  },
+  "info": {
+    "intro": "Before heading out, record your planned trip here in the logbook.",
+    "before": {
+      "title": "Before the outing",
+      "text": "You state where you want to row, in which boat and with which rowers."
+    },
+    "why": {
+      "title": "Why it matters",
+      "text": "For safety reasons this is important, so that we can find you faster in an emergency. Other members can also see which boats are already reserved."
+    },
+    "reservation": {
+      "title": "Reservation",
+      "text": "By decision of the board, boats should only be reserved at short notice and on site at the logbook kiosk."
+    },
+    "after": {
+      "title": "After the outing",
+      "text": "After the outing you close your trip. It is then carried over into the boat statistics automatically."
+    }
+  },
+  "call": {
+    "support": {
+      "label": "Call support",
+      "none": "No support person is assigned to the logbook.",
+      "error": "The support call could not be started."
+    }
+  },
+  "rigging": {
+    "title": "How are you rowing?",
+    "scull": "Sculling",
+    "sweep": "Sweep"
+  },
+  "person": "Person"
 }

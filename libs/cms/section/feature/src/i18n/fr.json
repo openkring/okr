@@ -896,7 +896,8 @@
     "col": {
       "name": "Nom",
       "km": "km",
-      "trips": "Sorties"
+      "trips": "Sorties",
+      "type": "Type de bateau"
     },
     "type": {
       "view": {

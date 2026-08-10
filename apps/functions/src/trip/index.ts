@@ -152,3 +152,109 @@ export const onTripStatsReconcile = onSchedule(
     logger.info(`onTripStatsReconcile: processed ${snap.size} trips, wrote ${boatTotals.size} boat + ${memberTotals.size} member docs for ${yearStr}`);
   }
 );
+
+/*----------------------------- open-trip watchdog ---------------------------------*/
+
+/** A trip still open this long after it started gets a task raised for the Logbuch owner. */
+const OPEN_TRIP_LIMIT_MS = 4 * 60 * 60 * 1000;
+/** Responsibility that owns the Logbuch — the same one the client notifies for bug reports. */
+const LOGBUCH_RESPONSIBILITY = 'Logbuch2';
+/** Tasks raised by this watchdog carry it, so a second run recognises its own work. */
+const OPEN_TRIP_TASK_TAG = 'logbuch-open-trip';
+
+interface AvatarInfoDoc {
+  key: string;
+  name1: string;
+  name2: string;
+  label: string;
+  modelType: string;
+  type: string;
+  subType: string;
+}
+
+/** Milliseconds since a trip's start. `startTime` is 'HH:mm' or legacy 'HHmm'. */
+function tripStartMs(startDate: string, startTime: string): number | undefined {
+  if (!/^\d{8}$/.test(startDate ?? '')) return undefined;
+  const hhmm = (startTime ?? '').replace(/\D/g, '').padStart(4, '0');
+  const iso = `${startDate.substring(0, 4)}-${startDate.substring(4, 6)}-${startDate.substring(6, 8)}`
+    + `T${hhmm.substring(0, 2)}:${hhmm.substring(2, 4)}:00`;
+  const ms = new Date(iso).getTime();
+  return Number.isFinite(ms) ? ms : undefined;
+}
+
+/**
+ * Hourly watchdog: a trip that is still 'open' more than 4 h after it started is either a boat
+ * that never came back or — far more often — a crew that forgot to close the entry. Either way
+ * someone has to look at it, so raise a task for the Logbuch responsibility.
+ *
+ * Idempotent without touching the trip document: the task name embeds the trip id and the
+ * watchdog checks for an existing task before writing, so re-running never duplicates.
+ */
+export const onOpenTripCheck = onSchedule(
+  { schedule: '5 * * * *', timeZone: 'Europe/Zurich', region: REGION },
+  async () => {
+    const db = getFirestore();
+    const now = Date.now();
+
+    const snap = await db.collection('trips').where('state', 'in', ['open', 'open.rev']).get();
+    const overdue = snap.docs.filter(doc => {
+      const t = doc.data() as TripDoc & { startTime?: string };
+      const startMs = tripStartMs(t.startDate, t.startTime ?? '');
+      return startMs !== undefined && now - startMs > OPEN_TRIP_LIMIT_MS;
+    });
+    if (!overdue.length) return;
+
+    // One responsibility lookup per tenant — the assignee differs per tenant.
+    const assignees = new Map<string, AvatarInfoDoc | undefined>();
+    async function assigneeFor(tenantId: string): Promise<AvatarInfoDoc | undefined> {
+      if (assignees.has(tenantId)) return assignees.get(tenantId);
+      const respSnap = await db.collection('responsibilities')
+        .where('name', '==', LOGBUCH_RESPONSIBILITY)
+        .where('tenants', 'array-contains', tenantId)
+        .limit(1)
+        .get();
+      const avatar = respSnap.docs[0]?.data()?.['responsibleAvatar'] as AvatarInfoDoc | undefined;
+      assignees.set(tenantId, avatar);
+      return avatar;
+    }
+
+    let created = 0;
+    for (const doc of overdue) {
+      const trip = doc.data() as TripDoc & { tenants?: string[]; name?: string };
+      const tenantId = trip.tenants?.[0];
+      if (!tenantId) continue;
+
+      const assignee = await assigneeFor(tenantId);
+      if (!assignee?.key) {
+        logger.warn(`onOpenTripCheck: no ${LOGBUCH_RESPONSIBILITY} responsible for tenant ${tenantId}`);
+        continue;
+      }
+
+      const taskName = `Offene Fahrt prüfen: ${doc.id}`;
+      const existing = await db.collection('tasks').where('name', '==', taskName).limit(1).get();
+      if (!existing.empty) continue;
+
+      await db.collection('tasks').add({
+        tenants: [tenantId],
+        isArchived: false,
+        name: taskName,
+        index: `n:${taskName}|ask:${assignee.key}`,
+        tags: OPEN_TRIP_TASK_TAG,
+        notes: `Die Fahrt vom ${trip.startDate} ist seit über 4 Stunden offen und wurde nicht abgeschlossen.`,
+        author: null,
+        assignee,
+        state: 'initial',
+        dueDate: '',
+        completionDate: '',
+        priority: 'medium',
+        importance: 'medium',
+        calendars: [],
+        rank: '',
+        created: FieldValue.serverTimestamp(),
+      });
+      created++;
+    }
+
+    logger.info(`onOpenTripCheck: ${overdue.length} overdue trip(s), ${created} task(s) created`);
+  }
+);

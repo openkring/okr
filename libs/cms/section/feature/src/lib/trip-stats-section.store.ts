@@ -16,13 +16,22 @@ export interface StatsRow {
   name: string;
   km: number;
   trips: number;
+  /** '<modelType>.<okey>' — what the avatar pipe resolves. */
+  avatarKey: string;
+  /** Boats only: the raw `rboat_type` item name; the component turns it into a label. */
+  subType: string;
 }
+
+export type StatsSortField = 'name' | 'type' | 'km' | 'trips';
+
+/** Text columns read best A→Z, number columns biggest-first. */
+const SORTS_ASCENDING_BY_DEFAULT: ReadonlySet<StatsSortField> = new Set<StatsSortField>(['name', 'type']);
 
 type TripStatsSectionState = {
   viewType: 'list' | 'graph';
   contentType: 'boat' | 'member';
   selectedYear: number;
-  sortField: 'km' | 'trips';
+  sortField: StatsSortField;
   sortAsc: boolean;
   searchTerm: string;
 };
@@ -47,6 +56,8 @@ export const TripStatsSectionStore = signalStore(
     i18n: store.i18nService.translateAll(SECTION_I18N_KEYS),
   })),
   withComputed(store => ({
+    /** Boat-type category, used by the list to label the rboat-type column. */
+    rboatTypes: computed(() => store.appStore.tryGetCategory('rboat_type')),
     entityKeys: computed(() => {
       if (store.contentType() === 'boat') {
         return store.appStore.allResources()
@@ -111,17 +122,35 @@ export const TripStatsSectionStore = signalStore(
       return raw
         .map(({ key, stats }: { key: string; stats: YearStats | undefined }) => {
           let name: string;
+          let subType = '';
           if (contentType === 'boat') {
-            name = store.appStore.allResources().find((r: ResourceModel) => r.okey === key)?.name ?? key;
+            const boat = store.appStore.allResources().find((r: ResourceModel) => r.okey === key);
+            name = boat?.name ?? key;
+            subType = boat?.subType ?? '';
           } else {
             const p = store.appStore.allPersons().find((p: PersonModel) => p.okey === key);
             name = p ? `${p.firstName} ${p.lastName}`.trim() : key;
           }
-          return { key, name, km: stats?.totalKm ?? 0, trips: stats?.tripCount ?? 0 };
+          const modelType = contentType === 'boat' ? 'resource' : 'person';
+          return {
+            key,
+            name,
+            subType,
+            avatarKey: `${modelType}.${key}`,
+            km: stats?.totalKm ?? 0,
+            trips: stats?.tripCount ?? 0,
+          };
         })
         .filter(r => r.km > 0 && (!term || r.name.toLowerCase().includes(term)))
+        // `diff` is always the descending comparator; sortAsc flips it, for text and numbers alike
         .sort((a, b) => {
-          const diff = sortField === 'km' ? b.km - a.km : b.trips - a.trips;
+          let diff: number;
+          switch (sortField) {
+            case 'name':  diff = b.name.localeCompare(a.name); break;
+            case 'type':  diff = b.subType.localeCompare(a.subType); break;
+            case 'trips': diff = b.trips - a.trips; break;
+            default:      diff = b.km - a.km;
+          }
           return sortAsc ? -diff : diff;
         });
     }),
@@ -170,9 +199,11 @@ export const TripStatsSectionStore = signalStore(
       patchState(store, { searchTerm });
     },
 
-    setSort(field: 'km' | 'trips'): void {
+    setSort(field: StatsSortField): void {
       patchState(store, {
-        sortAsc:   store.sortField() === field ? !store.sortAsc() : false,
+        sortAsc:   store.sortField() === field
+          ? !store.sortAsc()
+          : SORTS_ASCENDING_BY_DEFAULT.has(field),
         sortField: field,
       });
     },

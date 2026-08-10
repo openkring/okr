@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonImg, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonImg, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, IonRow, ItemReorderEventDetail, ToastController } from '@ionic/angular/standalone';
 
 import { NAME_LENGTH } from '@okr/shared-constants';
 
@@ -26,7 +26,8 @@ import { AvatarPipe } from './avatar.pipe';
   imports: [
     SvgIconPipe, AvatarPipe,
     AvatarDisplay,
-    IonList, IonItem, IonLabel, IonIcon, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton, IonAvatar, IonImg
+    IonList, IonItem, IonLabel, IonIcon, IonReorderGroup, IonReorder, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonButton, IonAvatar, IonImg,
+    IonGrid, IonRow, IonCol
 ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
@@ -39,23 +40,37 @@ import { AvatarPipe } from './avatar.pipe';
     <ion-card>
       <ion-card-header>
         <ion-card-title>
-          <ion-item lines="none" no-padding>
-            @if(showsButton()) {
-              @if(!isReadOnly()) {
-                <ion-button size="large" (click)="selectClicked.emit()">
-                  <ion-icon slot="start" src="{{ selectIcon() | svgIcon }}" />
-                  {{ cardTitle() }}
-                </ion-button>
-              }
-            } @else {
+          @if(showsButton()) {
+            <!-- label left / control right, the same 6-6 split the sibling fields use -->
+            <ion-grid class="ion-no-padding">
+              <ion-row>
+                <ion-col size="6">
+                  <ion-item lines="none">
+                    <ion-label>{{ label() }}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="6">
+                  <ion-item lines="none">
+                    @if(!isReadOnly()) {
+                      <ion-button (click)="selectClicked.emit()">
+                        <ion-icon slot="start" src="{{ selectIcon() | svgIcon }}" />
+                        {{ cardTitle() }}
+                      </ion-button>
+                    }
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          } @else {
+            <ion-item lines="none" no-padding>
               <div class="title">{{ cardTitle() }}</div>
               @if(!isReadOnly()) {
                 <ion-button slot="end" fill="clear" (click)="selectClicked.emit()" size="large">
                   <ion-icon class="add-icon" color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
                 </ion-button>
               }
-            }
-          </ion-item>
+            </ion-item>
+          }
         </ion-card-title>
       </ion-card-header>
       <ion-card-content class="ion-no-padding">
@@ -116,8 +131,10 @@ export class Avatars {
   public readOnly = input.required<boolean>();
   public description = input<string>();
   public maxLength = input(NAME_LENGTH);
-  /** true: the header is a single select button (labelled with `title`) instead of title + '+' icon. */
+  /** true: the header is a field label + a select button (labelled with `title`), not title + '+' icon. */
   public showButton = input(false);
+  /** Field label shown left of that button (showButton only). */
+  public label = input('');
   /** Icon of that select button. */
   public selectIcon = input('person');
 

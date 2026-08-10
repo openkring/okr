@@ -75,7 +75,16 @@ export function groupTripsByDay(trips: TripModel[]): { date: string; trips: Trip
   }
   return Array.from(map.entries())
     .sort(([a], [b]) => b.localeCompare(a))
-    .map(([date, trips]) => ({ date, trips }));
+    // trips within a day sort like the days themselves: newest first.
+    // startTime is 'HH:mm' or legacy 'HHmm' — strip non-digits so both compare correctly.
+    .map(([date, trips]) => ({
+      date,
+      trips: [...trips].sort((a, b) => startTimeKey(b).localeCompare(startTimeKey(a))),
+    }));
+}
+
+function startTimeKey(trip: TripModel): string {
+  return (trip.startTime ?? '').replace(/\D/g, '').padStart(4, '0');
 }
 
 export function matchesStateFilter(state: string, filter: string): boolean {

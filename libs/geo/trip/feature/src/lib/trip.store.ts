@@ -194,7 +194,34 @@ export const TripStore = signalStore(
     },
 
     async selectResourceAvatar(): Promise<AvatarInfo | undefined> {
-      return await store.modelSelectService.selectResourceAvatar('@tag.okBoat', undefined, store.i18n.select_boat_title());
+      const boat = await store.modelSelectService.selectResourceAvatar('@tag.okBoat', undefined, store.i18n.select_boat_title());
+      if (!boat) return undefined;
+      const subType = await this.resolveRigging(boat.subType);
+      return subType === boat.subType ? boat : { ...boat, subType };
+    },
+
+    /**
+     * A convertible boat (rboat_type 'b<seats>mx') can be rowed either sculled or swept, and the
+     * boat document cannot say which — only the crew that takes it out can. Ask, and store the
+     * decided rigging on the trip ('b2mx' -> 'b2x' | 'b2m') so later statistics can group by it.
+     * Every other type already carries its rigging and passes through untouched.
+     */
+    async resolveRigging(subType: string): Promise<string> {
+      const match = /^b(\d+)mx$/.exec(subType ?? '');
+      if (!match) return subType;
+      const seats = match[1];
+      const sheet = await store.actionSheetController.create({
+        header: store.i18n.rigging_title(),
+        // no cancel and no backdrop dismiss: the trip needs one of the two answers
+        backdropDismiss: false,
+        buttons: [
+          { text: store.i18n.rigging_scull(), data: { rigging: 'x' } },
+          { text: store.i18n.rigging_sweep(), data: { rigging: 'm' } },
+        ],
+      });
+      await sheet.present();
+      const { data } = await sheet.onDidDismiss();
+      return data?.rigging ? `b${seats}${data.rigging}` : subType;
     },
 
     async selectLocationForTrip(): Promise<LocationSelectResult | undefined> {

@@ -39,37 +39,37 @@ import { StringSelect } from './string-select';
       <ion-grid class="ion-no-padding ion-align-items-center">
         <ion-row class="ion-align-items-center">
           @if(showSearch()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
               <okr-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@search.label' | translate | async }}" />
             </ion-col>
           }
           @if(showTags()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding" [class.ion-hide-sm-down]="hideTagsOnMobile()">
+            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '2')" class="ion-no-padding" [class.ion-hide-sm-down]="hideTagsOnMobile()">
               <okr-single-tag [selectedTag]="selectedTag()" (selectedTagChange)="tagChanged.emit($event)" [tags]="tags()" />
             </ion-col>
           }
           @if(showCategory()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
               <okr-cat-select [selectedItemName]="selectedCategory()" (selectedItemNameChange)="categoryChanged.emit($event)" [category]="categories()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
           @if(showType()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
               <okr-cat-select [selectedItemName]="selectedType()" (selectedItemNameChange)="typeChanged.emit($event)" [category]="types()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
           @if(showYear()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '2')" class="ion-no-padding">
               <okr-year-select [selectedYear]="selectedYear()" (selectedYearChange)="yearChanged.emit($event)" [years]="yearList()" [label]="yearLabel()!" [readOnly]="false" [showAllYears]="true" />
             </ion-col>
           }
           @if(showState()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : '2'" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '2')" class="ion-no-padding">
               <okr-cat-select [selectedItemName]="selectedState()" (selectedItemNameChange)="stateChanged.emit($event)" [category]="states()!" [withAll]="true" [readOnly]="false" [showIcons]="shouldShowIcons()" />
             </ion-col>
           }
           @if(showStrings()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : '3'" class="ion-no-padding">
+            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
               <okr-string-select [i18n]="{ name: stringsName(), label: stringsLabel() }" [selectedString]="selectedString()" (selectedStringChange)="stringsChanged.emit($event)" [stringList]="strings()" [readOnly]="false" />
             </ion-col>
           }
@@ -111,6 +111,8 @@ export class ListFilter {
   public showSearch = input(true);
   public yearLabel = input<string>();
   public compact = input(false);
+  /** Uniform size-md for every filter column, overriding the per-filter defaults (compact wins). */
+  public mdSize = input<number>();
   public hideTagsOnMobile = input(false); // hide the tag filter on small screens (sm and down)
 
   public isListView = linkedSignal(() => this.initialView() === 'list');

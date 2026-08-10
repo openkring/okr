@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { IonContent, IonLabel, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
+import { IonContent, IonLabel, IonSegment, IonSegmentButton, IonToolbar } from '@ionic/angular/standalone';
 
 import { I18nService } from '@okr/shared-i18n';
 import { TripStatsSection } from '@okr/shared-models';
@@ -18,11 +18,13 @@ import { TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
   standalone: true,
   imports: [
     Header, TripStatsSectionComponent,
-    IonContent, IonSegment, IonSegmentButton, IonLabel,
+    IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar,
   ],
   template: `
     <okr-header [i18n]="{ title: title() }" [isModal]="true" />
-    <ion-content>
+    <!-- segment in its own light toolbar and the list edge-to-edge in the content:
+         the layout every other segmented modal uses (e.g. okr-location-select-modal) -->
+    <ion-toolbar color="light">
       <ion-segment [value]="viewType()" (ionChange)="onViewChange($event)">
         <ion-segment-button value="list">
           <ion-label>{{ i18n.stats_view_list() }}</ion-label>
@@ -31,6 +33,8 @@ import { TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
           <ion-label>{{ i18n.stats_view_graph() }}</ion-label>
         </ion-segment-button>
       </ion-segment>
+    </ion-toolbar>
+    <ion-content>
       <okr-trip-stats-section [section]="section()" />
     </ion-content>
   `,

@@ -1,12 +1,11 @@
 import { Component, ElementRef, OnDestroy, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { IonAvatar, IonContent, IonIcon, IonImg, IonItem, IonLabel, IonList, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
+import { IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSegment, IonSegmentButton, IonToolbar, ModalController, ToastController } from '@ionic/angular/standalone';
 import type * as L from 'leaflet';
 
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
-import { LocationModel, LocationModelName, UserModel } from '@okr/shared-models';
+import { LocationModel, UserModel } from '@okr/shared-models';
 import { copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 
-import { AvatarPipe } from '@okr/avatar-ui';
 import { SvgIconPipe, getSvgIconUrl } from '@okr/shared-pipes';
 
 import { FIT_PADDING, MAX_FIT_ZOOM, LocationSelectStore } from './location-select.store';
@@ -20,14 +19,15 @@ export type LocationSelectResult =
   standalone: true,
   imports: [
     Header, Spinner,
-    AvatarPipe, EmptyList, SvgIconPipe,
-    IonContent, IonItem, IonLabel, IonAvatar, IonImg, IonList, IonIcon,
+    EmptyList, SvgIconPipe,
+    IonContent, IonItem, IonLabel, IonList, IonIcon, IonNote,
     IonSegment, IonSegmentButton, IonToolbar
   ],
   providers: [LocationSelectStore],
   styles: [`
     .item { padding: 0px; min-height: 40px; }
-    ion-avatar { margin-top: 0px; margin-bottom: 0px; }
+    /* fixed width so the location names line up in a column */
+    .distance { width: 56px; text-align: right; margin-inline-end: 12px; font-variant-numeric: tabular-nums; }
     ion-list { padding: 0px; }
     #location-map { width: 100%; height: 100%; }
   `],
@@ -73,9 +73,8 @@ export type LocationSelectResult =
             @for(location of filteredLocations(); track $index) {
               <ion-list lines="none">
                 <ion-item class="item" (click)="select(location)">
-                  <ion-avatar slot="start">
-                    <ion-img src="{{ 'location.' + location.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
-                  </ion-avatar>
+                  <!-- the distance is what a rower picks by; the location icons were all the same -->
+                  <ion-note slot="start" class="distance">{{ location.distance }} km</ion-note>
                   <ion-label>{{location.name}}</ion-label>
                 </ion-item>
               </ion-list>
@@ -109,7 +108,6 @@ export class LocationSelectModal implements OnDestroy {
   protected selectedLocationsCount = computed(() => this.filteredLocations().length);
   protected isLoading = computed(() => this.store.isLoading());
 
-  protected defaultIcon = this.store.appStore.getCategoryIcon('model_type', LocationModelName);
 
   // Leaflet state (lazily initialized)
   private leafletModule?: typeof import('leaflet');
