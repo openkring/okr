@@ -20,6 +20,7 @@
     { "path": "../../business/metering/feature/tsconfig.lib.json" },
     { "path": "../../business/partner/feature/tsconfig.lib.json" },
     { "path": "../../business/prospect/feature/tsconfig.lib.json" },
+    { "path": "../../business/ticket/feature/tsconfig.lib.json" },
     { "path": "../../calevent/feature/tsconfig.lib.json" },
     { "path": "../../category/feature/tsconfig.lib.json" },
     { "path": "../../cms/icon/feature/tsconfig.lib.json" },
