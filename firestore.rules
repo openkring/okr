@@ -435,7 +435,7 @@ service cloud.firestore {
     // competition-levels keep their full dateOfBirth (SRV admin data) — read is
     // privileged-only (D-P4-3): only the AOC admin console consumes them.
     match /competition-levels/{id} { allow read: if isPrivileged() && tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
-    match /formDefinitions/{id}    { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /formDefinitions/{id}    { allow read: if tenantRead(); allow create, update: if isContentManager() && tenantCreate(); allow delete: if isContentManager() && tenantDelete(); }
     match /periods/{id}            { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
     match /responsibilities/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
     match /vat-codes/{id}          { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }

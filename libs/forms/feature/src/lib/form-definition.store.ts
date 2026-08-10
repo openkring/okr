@@ -44,7 +44,8 @@ export const FormDefinitionStore = signalStore(
   withComputed(store => ({
     currentUser: computed(() => store.appStore.currentUser()),
     isLoading: computed(() => store.formsResource.isLoading()),
-    canWrite: computed(() => hasRole('admin', store.appStore.currentUser())),
+    // contentAdmin (and admin, folded in by hasRole) — matches isContentAdminGuard() on the forms route
+    canWrite: computed(() => hasRole('contentAdmin', store.appStore.currentUser())),
     formsCount: computed(() => (store.formsResource.value() ?? []).filter((f: FormDefinitionModel) => !f.isArchived).length),
     filteredForms: computed(() => {
       const all = store.formsResource.value() ?? [];
