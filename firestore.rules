@@ -395,6 +395,17 @@ service cloud.firestore {
     match /websiteContent/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /workrels/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
 
+    // Kiosk device telemetry (battery + heartbeat), document id = the kiosk user's uid.
+    // A device may only write its OWN doc; any member of the tenant may read it, admins
+    // may clean up a retired kiosk. Never carries PII — uid, device model, battery, time.
+    match /kiosk-status/{uid} {
+      allow read: if tenantRead();
+      allow create, update: if signedIn() && request.auth.uid == uid
+                            && request.resource.data.uid == uid
+                            && belongsToTenant(request.resource.data);
+      allow delete: if isAdmin() && belongsToTenant(resource.data);
+    }
+
     // ============================================================================
     //  Read-only on the client (written by Cloud Functions / bexio sync / seed).
     //  Tenant-scoped read; writes denied. If an admin UI legitimately writes one

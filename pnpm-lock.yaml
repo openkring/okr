@@ -73,6 +73,9 @@ importers:
       '@capacitor/core':
         specifier: ^8.2.0
         version: 8.2.0
+      '@capacitor/device':
+        specifier: ^8.0.3
+        version: 8.0.3(@capacitor/core@8.2.0)
       '@capacitor/filesystem':
         specifier: ^8.1.2
         version: 8.1.2(@capacitor/core@8.2.0)
@@ -1664,6 +1667,11 @@ packages:
 
   '@capacitor/core@8.2.0':
     resolution: {integrity: sha512-oKaoNeNtH2iIZMDFVrb1atoyRECDGHcfLMunJ5KWN8DtvpVBeeA4c41e20NTuhMxw1cSYbpq2PV2hb+/9CJxlQ==}
+
+  '@capacitor/device@8.0.3':
+    resolution: {integrity: sha512-rliPCCZwxtjU6200jJNDAsQhioyozV3fGgiP+NgRqtDOI7i+Jdz+DYNwEup+3MGZZ4NEmkuFaBeWLM3T01vJRg==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/filesystem@8.1.2':
     resolution: {integrity: sha512-doaaMfGoFR2hWU6aV6u83I+5ZsGyJVq+Gz4r9lMpJzUKMm1eMu0hLnFdV1aXZlU9FlK/RndFrVD8oRZfNOqWgQ==}
@@ -6644,6 +6652,7 @@ packages:
 
   crypto-js@4.2.0:
     resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+    deprecated: Active development of CryptoJS has been discontinued. This library is no longer maintained.
 
   crypto-random-string@2.0.0:
     resolution: {integrity: sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==}
@@ -14058,6 +14067,10 @@ snapshots:
   '@capacitor/core@8.2.0':
     dependencies:
       tslib: 2.8.1
+
+  '@capacitor/device@8.0.3(@capacitor/core@8.2.0)':
+    dependencies:
+      '@capacitor/core': 8.2.0
 
   '@capacitor/filesystem@8.1.2(@capacitor/core@8.2.0)':
     dependencies:
