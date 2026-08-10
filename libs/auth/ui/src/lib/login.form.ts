@@ -42,7 +42,7 @@ export interface LoginFormI18n {
                   (valueChange)="onEmailChange($event)"
                   [autofocus]="true"
                   [copyable]="false"
-                  [clearInput]="false"
+                  [clearInput]="true"
                   [readOnly]="false"
                   autocomplete="username email"
                 />
