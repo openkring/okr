@@ -45,15 +45,15 @@
   "select": {
     "participant": {
       "title": "Teilnehmer wählen",
-      "add": "Auswählen"
+      "add": "Person wählen"
     },
     "boat": {
       "title": "Boot wählen",
-      "add": "Auswählen"
+      "add": "Boot wählen"
     },
     "location": {
       "title": "Zielort wählen",
-      "add": "Auswählen"
+      "add": "Ziel wählen"
     }
   },
   "show": {
@@ -79,10 +79,9 @@
   },
   "warning": {
     "suspicious": "Verdächtige Aktivität erkannt. Bitte bestätigen.",
-    "distance_zero": "Bitte eine sinnvolle Distanz zwischen 1 und 50 km eingeben.",
-    "distance_high": "Bitte eine sinnvolle Distanz zwischen 1 und 50 km eingeben.",
+    "distance_zero": "Bitte eine Distanz zwischen 1 und 500 km eingeben.",
     "seats_mismatch": "Anzahl Teilnehmende entspricht nicht der Bootskapazität.",
-    "note": "Um Missbräuche zu vermeiden, finden im Hintergrund verschiedene Checks statt. Sollte ein Missbrauch festgestellt werden, wird ein Bild vom User gemacht und damit der Admin notifiziert."
+    "note": "Um Missbräuche zu vermeiden, finden im Hintergrund verschiedene Checks statt. Sollte ein Missbrauch festgestellt werden, wird der Admin notifiziert."
   },
   "boat": "Boot",
   "distance": {
@@ -158,5 +157,12 @@
     "hard_delete_confirm": "Ausfahrt endgültig löschen? Dies kann nicht rückgängig gemacht werden.",
     "restore_conf": "Ausfahrt wiederhergestellt.",
     "restore_error": "Wiederherstellen fehlgeschlagen."
+  },
+  "call": {
+    "support": {
+      "label": "Support anrufen",
+      "none": "Für das Logbuch ist keine Support-Person hinterlegt.",
+      "error": "Der Support-Anruf konnte nicht gestartet werden."
+    }
   }
 }

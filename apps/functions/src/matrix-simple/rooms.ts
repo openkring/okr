@@ -22,6 +22,13 @@ import {
 } from './shared';
 
 /**
+ * Matrix power level a caller must hold to ring a kiosk device. 100 = room admin.
+ * Kept in sync with KIOSK_CALLER_MIN_POWER_LEVEL in `@okr/chat-data-access`, which is the
+ * kiosk client's local mirror of this rule (libs cannot be imported here).
+ */
+const KIOSK_ADMIN_POWER_LEVEL = 100;
+
+/**
  * Request access to the Matrix room for a specific group.
  *
  * The caller must be authenticated with Firebase. The function looks up the
@@ -759,5 +766,86 @@ export const addMatrixRoomAlias = onCall(
 
     console.log(`addMatrixRoomAlias: alias ${fullAlias} added to room ${roomId}`);
     return { alias: fullAlias };
+  }
+);
+
+/**
+ * Lock a kiosk call room down so that only admins can ring the kiosk device.
+ *
+ * A kiosk device answers incoming calls automatically (it is unattended, nobody can tap
+ * "answer"), so "who may call it" is a security boundary, not a UI preference. The client-side
+ * check in MatrixCallService is defence in depth; THIS is the enforcement: the homeserver
+ * rejects an `m.call.invite` from anyone below power level 100, so a non-admin member of the
+ * room — or a tampered client — cannot make the kiosk's camera and microphone go live.
+ *
+ * Idempotent: run it again after adding an admin. Existing power levels are merged, so any
+ * unrelated per-user levels the room already carries survive.
+ */
+export const setKioskCallRoomPolicy = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ roomId: string; adminUserIds: string[] }> => {
+    await requireRole(request, 'setKioskCallRoomPolicy', ['admin']);
+
+    const { roomId, adminPersonKeys, kioskPersonKey } = request.data as {
+      roomId: string;
+      adminPersonKeys: string[];
+      kioskPersonKey: string;
+    };
+    requireParam(roomId, 'roomId');
+    requireParam(kioskPersonKey, 'kioskPersonKey');
+    if (!Array.isArray(adminPersonKeys) || adminPersonKeys.length === 0) {
+      throw new HttpsError('invalid-argument', 'adminPersonKeys must be a non-empty array');
+    }
+
+    const hostname = serverHostname();
+    const adminToken = matrixAdminToken.value();
+    const mxid = (personKey: string) => `@${personKey.toLowerCase()}:${hostname}`;
+    const adminUserIds = adminPersonKeys.map(key => mxid(requireParam(key, 'adminPersonKey')));
+
+    await ensureAdminInRoom(roomId, adminToken);
+
+    // Merge into the room's current power levels rather than overwriting them.
+    const stateUrl = `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.power_levels/`;
+    const currentResp = await fetch(stateUrl, { headers: { Authorization: `Bearer ${adminToken}` } });
+    const current = currentResp.ok
+      ? await currentResp.json() as { users?: Record<string, number>; events?: Record<string, number> }
+      : {};
+
+    const users: Record<string, number> = { ...current.users };
+    for (const userId of adminUserIds) users[userId] = KIOSK_ADMIN_POWER_LEVEL;
+    // The kiosk itself is a passive endpoint: it may talk, never invite, kick or call out.
+    users[mxid(kioskPersonKey)] = 0;
+
+    const body = {
+      ...current,
+      users,
+      events: {
+        ...current.events,
+        // the actual gate — everything below is consistency, this line is the control
+        'm.call.invite': KIOSK_ADMIN_POWER_LEVEL,
+        'm.call.candidates': KIOSK_ADMIN_POWER_LEVEL,
+        'm.room.power_levels': KIOSK_ADMIN_POWER_LEVEL,
+      },
+      invite: KIOSK_ADMIN_POWER_LEVEL,
+      kick: KIOSK_ADMIN_POWER_LEVEL,
+      ban: KIOSK_ADMIN_POWER_LEVEL,
+    };
+
+    const resp = await fetch(stateUrl, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+      throw new HttpsError('internal', `Failed to set kiosk call policy on ${roomId}: ${await resp.text()}`);
+    }
+
+    console.log(`setKioskCallRoomPolicy: ${roomId} locked to ${adminUserIds.join(', ')}`);
+    return { roomId, adminUserIds };
   }
 );

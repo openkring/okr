@@ -5,6 +5,12 @@ import { addIndexElement, DateFormat, getCurrentTime, getTodayStr, parseDate } f
 
 /** Editing of an ended trip is allowed for this long after its endTime. */
 export const TRIP_EDIT_WINDOW_MS = 15 * 60 * 1000;
+/** Deleting an ended trip is allowed for this long after its endTime (admins: unlimited). */
+export const TRIP_DELETE_WINDOW_MS = 30 * 60 * 1000;
+/** Default distance (km) of a new trip. */
+export const DEFAULT_TRIP_DISTANCE_KM = 1;
+/** Highest distance (km) accepted for a trip. */
+export const MAX_TRIP_DISTANCE_KM = 500;
 
 export function newTrip(tenantId: string, type = ''): TripModel {
   const trip = new TripModel(tenantId);
@@ -13,7 +19,19 @@ export function newTrip(tenantId: string, type = ''): TripModel {
 
   trip.startTime = getCurrentTime();
   trip.state = 'draft';
+  trip.distance = DEFAULT_TRIP_DISTANCE_KM;
   return trip;
+}
+
+/** Whether `now` still lies within `windowMs` after the trip's endTime (true while it is not ended). */
+function isWithinEndWindow(trip: TripModel, windowMs: number, now: number): boolean {
+  if (!trip.endDate || !trip.endTime) return true;
+  // endTime may be 'HH:mm' (DateFormat.Time, what getCurrentTime emits) or legacy 'HHmm';
+  // strip non-digits so both yield the 'HHmm' StoreDateTime expects.
+  const endHHmm = trip.endTime.replace(/\D/g, '').padStart(4, '0');
+  const endDate = parseDate(`${trip.endDate}${endHHmm}00`, DateFormat.StoreDateTime, false);
+  if (!endDate) return true;
+  return now - endDate.getTime() <= windowMs;
 }
 
 /**
@@ -21,13 +39,15 @@ export function newTrip(tenantId: string, type = ''): TripModel {
  * its endTime. Afterwards it should only be opened read-only.
  */
 export function isTripEditable(trip: TripModel, now: number = Date.now()): boolean {
-  if (!trip.endDate || !trip.endTime) return true;
-  // endTime may be 'HH:mm' (DateFormat.Time, what getCurrentTime emits) or legacy 'HHmm';
-  // strip non-digits so both yield the 'HHmm' StoreDateTime expects.
-  const endHHmm = trip.endTime.replace(/\D/g, '').padStart(4, '0');
-  const endDate = parseDate(`${trip.endDate}${endHHmm}00`, DateFormat.StoreDateTime, false);
-  if (!endDate) return true;
-  return now - endDate.getTime() <= TRIP_EDIT_WINDOW_MS;
+  return isWithinEndWindow(trip, TRIP_EDIT_WINDOW_MS, now);
+}
+
+/**
+ * A trip may be deleted while it is not yet ended, or within TRIP_DELETE_WINDOW_MS (30 min) after
+ * its endTime. Admins may delete at any time.
+ */
+export function isTripDeletable(trip: TripModel, isAdmin: boolean, now: number = Date.now()): boolean {
+  return isAdmin || isWithinEndWindow(trip, TRIP_DELETE_WINDOW_MS, now);
 }
 
 export function newTripName(trip: TripModel): string {

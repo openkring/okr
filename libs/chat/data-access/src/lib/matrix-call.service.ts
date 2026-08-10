@@ -8,7 +8,16 @@ import { UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { ActivityService } from '@okr/activity-data-access';
 
+import { isKioskOnly } from '@okr/shared-util-core';
+
 import { isServiceAccount } from './matrix-helpers';
+
+/**
+ * Power level a caller must hold in the call room before an unattended kiosk device
+ * auto-accepts. 100 = room admin in Matrix; the kiosk room's `m.call.invite` power level
+ * must be set to the same value so the homeserver rejects everyone else server-side.
+ */
+export const KIOSK_CALLER_MIN_POWER_LEVEL = 100;
 
 /**
  * WebRTC video-call handling on top of matrix-js-sdk.
@@ -53,10 +62,50 @@ export class MatrixCallService {
 
   /** Wire up an incoming call emitted by the MatrixClient ('Call.incoming'). */
   public handleIncomingCall(call: MatrixCall): void {
+    // A kiosk device is unattended: nobody can tap "answer", so it decides for itself.
+    // It answers admins automatically and rejects everyone else rather than ring forever.
+    if (isKioskOnly(this.appStore.currentUser())) {
+      void this.handleKioskIncomingCall(call);
+      return;
+    }
     this.setupCallListeners(call);
     this.activeCall$.next(call);
     this.callState$.next('ringing');
     // No local notice here — the caller already sent a persistent notice visible to all room members.
+  }
+
+  /**
+   * Auto-accept on a kiosk device — but only for a caller the homeserver ranks as an admin
+   * of the call room (power level >= KIOSK_CALLER_MIN_POWER_LEVEL). The power level is the
+   * same state the homeserver itself enforces `m.call.invite` against, so this local check
+   * mirrors the server-side rule instead of inventing a second, weaker one.
+   */
+  private async handleKioskIncomingCall(call: MatrixCall): Promise<void> {
+    const currentUser = this.appStore.currentUser();
+    const callerId = call.getOpponentMember()?.userId;
+    if (!this.isAdminCaller(call, callerId)) {
+      void this.activityService.log('chat', 'kioskcall', currentUser, `${call.roomId}: REJECTED caller=${callerId ?? 'unknown'} (not a room admin)`);
+      call.reject();
+      return;
+    }
+    this.setupCallListeners(call);
+    this.activeCall$.next(call);
+    this.callState$.next('ringing');
+    try {
+      await call.answer(true, true);
+      void this.activityService.log('chat', 'kioskcall', currentUser, `${call.roomId}: AUTO-ANSWERED caller=${callerId}`);
+    } catch (error) {
+      void this.activityService.log('chat', 'kioskcall', currentUser, `${call.roomId}: ERROR auto-answer failed caller=${callerId} (${error})`);
+      this.activeCall$.next(null);
+      this.callState$.next(null);
+    }
+  }
+
+  /** True if the caller holds admin power level in the room the call came in on. */
+  private isAdminCaller(call: MatrixCall, callerId: string | undefined): boolean {
+    if (!callerId || isServiceAccount(callerId)) return false;
+    const member = this.client?.getRoom(call.roomId)?.getMember(callerId);
+    return (member?.powerLevel ?? 0) >= KIOSK_CALLER_MIN_POWER_LEVEL;
   }
 
   public async startVideoCall(roomId: string, currentUser: UserModel | undefined): Promise<void> {
@@ -120,11 +169,20 @@ export class MatrixCallService {
       this.callState$.next(state);
     });
 
-    call.on(CallEvent.Hangup as any, () => {
-      this.activeCall$.next(null);
-      this.callState$.next(null);
-      this.callFeeds$.next([]);
+    call.on(CallEvent.Hangup as any, () => this.resetCall());
+
+    // Without this a failed call leaves the overlay up with no way to dismiss it —
+    // fatal on an unattended kiosk, and merely annoying in the chat view.
+    call.on(CallEvent.Error as any, (error: unknown) => {
+      console.warn('MatrixCallService: call error, clearing call state:', error);
+      this.resetCall();
     });
+  }
+
+  private resetCall(): void {
+    this.activeCall$.next(null);
+    this.callState$.next(null);
+    this.callFeeds$.next([]);
   }
 
   /** Send a notice message to a room so it persists across reloads. Fire-and-forget. */

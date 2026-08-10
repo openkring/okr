@@ -1,4 +1,4 @@
-import { Component, computed, input, model } from '@angular/core';
+import { Component, computed, input, model, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonItem, IonNote } from '@ionic/angular/standalone';
 
@@ -27,7 +27,11 @@ export interface NumberInputI18n {
   template: `
   <ion-item lines="none">
     <ion-input
+      #input
       type="number"
+      (ionFocus)="onFocus()"
+      [min]="min()"
+      [max]="max()"
       [name]="i18n().name"
       [ngModel]="value()"
       (ngModelChange)="value.set($event)"
@@ -63,6 +67,13 @@ export class NumberInput {
   public copyable = input(false);
   public inputMode = input<InputMode>('decimal');
   public clearInput = input(true);
+  public min = input<number>();
+  public max = input<number>();
+  /** true: focusing selects the current value, so typing replaces it instead of appending to it. */
+  public selectOnFocus = input(false);
+
+  // view children
+  private readonly inputRef = viewChild.required<IonInput>('input');
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -70,4 +81,10 @@ export class NumberInput {
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected shouldClearInput = computed(() => coerceBoolean(this.clearInput()));
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf } as ButtonCopyI18n));
+
+  protected async onFocus(): Promise<void> {
+    if (!coerceBoolean(this.selectOnFocus())) return;
+    const el = await this.inputRef().getInputElement();
+    el.select();
+  }
 }

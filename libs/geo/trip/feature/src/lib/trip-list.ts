@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonChip, IonCol, IonContent, IonFab, IonFabButton, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -8,9 +8,9 @@ import { RoleName, TripModel } from '@okr/shared-models';
 
 import { Menu } from '@okr/cms-menu-feature';
 
-import { formatTripTime, isTripEditable } from '@okr/trip-util';
+import { formatTripTime, isTripDeletable, isTripEditable } from '@okr/trip-util';
 import { TripStore } from './trip.store';
-import { getWeekdayI18nKey, getYear, getYearList, hasRole } from '@okr/shared-util-core';
+import { getCategoryIcon, getWeekdayI18nKey, getYear, getYearList, hasRole } from '@okr/shared-util-core';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -25,13 +25,13 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
     Spinner, EmptyList, ListFilter, AvatarDisplay, Menu,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonMenuButton,
     IonIcon, IonContent, IonList, IonItem, IonLabel, IonItemDivider, IonPopover,
-    IonChip, IonBackdrop, IonFab, IonFabButton
+    IonBackdrop, IonFab, IonFabButton
   ],
   providers: [TripStore],
   template: `
     <ion-header>
       @if(contextMenuName() !== 'disable') {
-        <ion-toolbar color="secondary">
+        <ion-toolbar color="secondary" [class.kiosk-toolbar]="hasRole('kiosk')">
           @if(showMenuButton() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
@@ -47,7 +47,6 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon}}" />
               </ion-button>
               <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"
-                style="--width: max-content"
                 (ionPopoverDidDismiss)="onPopoverDismiss($event)">
                 <ng-template>
                   <ion-content>
@@ -87,6 +86,9 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
             </ion-item-divider>
             @for (trip of day.trips; track trip.okey) {
               <ion-item button (click)="showActions(trip)">
+                @if(stateIcon(trip.state); as icon) {
+                  <ion-icon slot="start" [color]="stateColor(trip.state)" src="{{ icon | svgIcon }}" />
+                }
                 <ion-label>
                   {{ formatTime(trip.startTime) }}
                   {{ trip.resource?.name2 }}
@@ -95,7 +97,6 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
                 <ion-label slot="end">
                   {{ trip.distance }} km
                 </ion-label>
-                <ion-chip slot="end" class="ion-hide-sm-down" [color]="stateColor(trip.state)">{{ trip.state }}</ion-chip>
               </ion-item>
             }
           }
@@ -111,6 +112,16 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
     </ion-content>
   `,
   styles: [`
+    /* kiosk (tablet, large font): grow the toolbar by 50% and park the end buttons
+       at its bottom, away from the right border, so they stay in thumb reach */
+    .kiosk-toolbar {
+      --min-height: 84px; /* 56px default toolbar + 50% */
+    }
+    .kiosk-toolbar ion-buttons[slot="end"] {
+      align-self: flex-end;
+      margin-bottom: 8px;
+      margin-inline-end: 24px;
+    }
     .kiosk-fab {
       --border-radius: 50%;
       width: 96px;
@@ -165,6 +176,7 @@ export class TripList {
       case 'add': await this.store.createTrip(); break;
       case 'reportDamage': await this.store.reportDamage(this.currentUser()); break;
       case 'reportBug': await this.store.reportBug(this.currentUser()); break;
+      case 'callSupport': await this.store.callSupport(); break;
       case 'showBoatStatistics': await this.store.showBoatStatistics(); break;
       case 'showPersonStatistics': await this.store.showPersonStatistics(); break;
       case 'exportRaw': await this.store.export('raw'); break;
@@ -173,6 +185,11 @@ export class TripList {
   }
 
   /******************************* actions *************************************** */
+
+  /** Icon of the trip state, from the `trip_state` category. Compound states ('open.rev') use their base state. */
+  protected stateIcon(state: string): string {
+    return getCategoryIcon(this.states(), state.split('.')[0]);
+  }
 
   protected stateColor(state: string): string {
     if (state === 'open' || state.startsWith('open')) return 'success';
@@ -198,7 +215,8 @@ export class TripList {
     if (canWrite && isOpen) {
       options.buttons.push(createActionSheetButton('end', this.store.i18n.end(), this.store.imgixBaseUrl(), 'stop-circle'));
     }
-    if (canWrite && !isDeleted) {
+    // deleting is limited to 30 min after the trip was closed; admins may delete anytime
+    if (canWrite && !isDeleted && isTripDeletable(trip, this.hasRole('admin'))) {
       options.buttons.push(createActionSheetButton('delete', this.store.i18n.delete(), this.store.imgixBaseUrl(), 'trash'));
     }
     options.buttons.push(createActionSheetButton('report_damage', this.store.i18n.report_damage(), this.store.imgixBaseUrl(), 'warning'));

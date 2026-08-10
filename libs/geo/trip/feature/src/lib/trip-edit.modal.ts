@@ -7,7 +7,7 @@ import { AvatarInfo, ResourceModel, TripModel, UserModel } from '@okr/shared-mod
 
 import { TripEditForm } from '@okr/trip-ui';
 import { TripStore } from './trip.store';
-import { getTripIndex, newTripName } from '@okr/trip-util';
+import { DEFAULT_TRIP_DISTANCE_KM, getTripIndex, newTripName } from '@okr/trip-util';
 import { TripService } from '@okr/trip-data-access';
 
 @Component({
@@ -160,7 +160,7 @@ export class TripEditModal {
     } else {
       this.onFieldChange('customLocationLabel', result.label);
       this.onFieldChange('locations', []);
-      this.onFieldChange('distance', 0);
+      this.onFieldChange('distance', DEFAULT_TRIP_DISTANCE_KM);
     }
   }
 

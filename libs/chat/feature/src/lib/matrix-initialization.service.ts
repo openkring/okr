@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
+import { ApplicationRef, computed, createComponent, EnvironmentInjector, inject, Injectable, Injector, runInInjectionContext } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
@@ -11,6 +11,9 @@ import { filter, switchMap, take, tap } from 'rxjs/operators';
 import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { FcmService } from '@okr/shared-data-access';
+import { isKioskOnly } from '@okr/shared-util-core';
+
+import { KioskCallWindow } from './kiosk-call-window';
 import { MatrixChatStore } from './matrix-chat.store';
 
 /**
@@ -27,7 +30,10 @@ export class MatrixInitializationService {
   private readonly fcmService = inject(FcmService);
   private readonly router = inject(Router);
   private readonly injector = inject(Injector);
+  private readonly environmentInjector = inject(EnvironmentInjector);
+  private readonly appRef = inject(ApplicationRef);
   private initializationStarted = false;
+  private kioskCallWindowMounted = false;
 
   /**
    * Start watching for user authentication and initialize Matrix when ready.
@@ -56,6 +62,19 @@ export class MatrixInitializationService {
   }
 
   /**
+   * Mount the floating call window on a kiosk device, once, outside the router outlet, so an
+   * auto-answered admin call is visible on top of the Logbuch without taking it over.
+   * Non-kiosk users never get it — they answer calls in the chat view as before.
+   */
+  private mountKioskCallWindow(): void {
+    if (this.kioskCallWindowMounted || !isKioskOnly(this.appStore.currentUser())) return;
+    this.kioskCallWindowMounted = true;
+    const ref = createComponent(KioskCallWindow, { environmentInjector: this.environmentInjector });
+    this.appRef.attachView(ref.hostView);
+    document.body.appendChild(ref.location.nativeElement);
+  }
+
+  /**
    * Initialize Matrix chat by getting credentials and starting the client.
    */
   private async initializeMatrix(): Promise<void> {
@@ -66,6 +85,8 @@ export class MatrixInitializationService {
       await this.matrixService.ensureInitialized();
 
       console.log('MatrixInitializationService: Matrix client initialized successfully');
+
+      this.mountKioskCallWindow();
 
       // Register for FCM push notifications and wire up the Matrix push gateway.
       // Awaited so the token is available for pusher registration below.

@@ -25,9 +25,10 @@ import { AvatarPipe } from '@okr/avatar-ui';
     ion-icon { color: var(--ion-color-dark); margin-inline-end: 8px; }
     .letter { color: black; }
 
-    /* keep each menu-item label on a single line so a max-content popover
-       (e.g. the trips-list context menu on iPad) grows to fit the full text */
-    ion-label { white-space: nowrap; }
+    /* Never truncate a menu-item label: with the global 'ion-popover { --width: max-content }'
+       the popover grows to fit the full text, and only once it hits the viewport cap
+       (small screens) does the label wrap onto a second line. */
+    ion-label { white-space: normal; overflow: visible; text-overflow: clip; }
 
     @media (prefers-color-scheme: dark) {
       ion-item:hover::part(native) {

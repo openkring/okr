@@ -33,17 +33,27 @@ import { AvatarPipe } from './avatar.pipe';
     .title { font-size: 1.25rem; font-weight: 500; margin-left: 0;}
     ion-card-header { padding: 0; }
     ion-avatar { width: 30px; height: 30px; }
+    .add-icon { font-size: 32px; }
   `],
   template: `
     <ion-card>
       <ion-card-header>
         <ion-card-title>
           <ion-item lines="none" no-padding>
-            <div class="title">{{ cardTitle() }}</div>
-            @if(!isReadOnly()) {
-                <ion-button slot="end" fill="clear" (click)="selectClicked.emit()" size="default">
-                  <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+            @if(showsButton()) {
+              @if(!isReadOnly()) {
+                <ion-button size="large" (click)="selectClicked.emit()">
+                  <ion-icon slot="start" src="{{ selectIcon() | svgIcon }}" />
+                  {{ cardTitle() }}
                 </ion-button>
+              }
+            } @else {
+              <div class="title">{{ cardTitle() }}</div>
+              @if(!isReadOnly()) {
+                <ion-button slot="end" fill="clear" (click)="selectClicked.emit()" size="large">
+                  <ion-icon class="add-icon" color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+                </ion-button>
+              }
             }
           </ion-item>
         </ion-card-title>
@@ -106,11 +116,16 @@ export class Avatars {
   public readOnly = input.required<boolean>();
   public description = input<string>();
   public maxLength = input(NAME_LENGTH);
+  /** true: the header is a single select button (labelled with `title`) instead of title + '+' icon. */
+  public showButton = input(false);
+  /** Icon of that select button. */
+  public selectIcon = input('person');
 
   // coerced boolean inputs
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected isEditable = computed(() => coerceBoolean(this.editable()));
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected showsButton = computed(() => coerceBoolean(this.showButton()));
 
   // view children
   public stringInput = viewChild<IonInput>('stringInput');

@@ -1,9 +1,7 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ActionSheetController, ModalController, Platform } from '@ionic/angular/standalone';
+import { ActionSheetController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { Capacitor } from '@capacitor/core';
 
 import { AppStore, LocationSelectResult, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -14,13 +12,14 @@ import { yearMatches } from '@okr/shared-categories';
 
 import { TaskService } from '@okr/task-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
-import { UploadService } from '@okr/avatar-data-access';
-import { readAsFile } from '@okr/avatar-util';
 import { LocationService } from '@okr/location-data-access';
 
 import { TripService } from '@okr/trip-data-access';
 import { groupTripsByDay, newTrip, TRIP_I18N_KEYS } from '@okr/trip-util';
 
+
+/** Name of the responsibility that owns the Logbuch — gets the bug reports and the support calls. */
+const LOGBUCH_RESPONSIBILITY = 'Logbuch2';
 
 const SUSPICIOUS_WINDOW_MS = 15 * 60 * 1000;
 const SUSPICIOUS_TRIP_COUNT = 3;
@@ -70,12 +69,11 @@ export const TripStore = signalStore(
     locationService: inject(LocationService),
     modelSelectService: inject(ModelSelectService),
     responsibilityService: inject(ResponsibilityService),
-    uploadService: inject(UploadService),
     modalController: inject(ModalController),
     actionSheetController: inject(ActionSheetController),
     alertService: inject(AlertService),
-    platform: inject(Platform),
     i18nService: inject(I18nService),
+    injector: inject(Injector),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(TRIP_I18N_KEYS),
@@ -185,26 +183,9 @@ export const TripStore = signalStore(
       const confirmed = await store.alertService.confirm(store.i18n.delete_confirm(), true);
       if (!confirmed) return;
 
-      let photoUrl: string | undefined;
-      try {
-        const photo = await Camera.getPhoto({
-          quality: 80,
-          allowEditing: false,
-          resultType: CameraResultType.Uri,
-          source: Capacitor.isNativePlatform() ? CameraSource.Prompt : CameraSource.Photos,
-        });
-        const file = await readAsFile(photo, store.platform);
-        if (file) {
-          const fullPath = `${store.tenantId()}/trips/${trip.okey}/images/delete_${Date.now()}.jpg`;
-          photoUrl = await store.uploadService.uploadFile(file, fullPath, 'Löschfoto');
-        }
-      } catch {
-        // photo capture is optional — proceed without it
-      }
-
       const reason = store.i18n.delete_reason();
-      await store.tripService.softDelete(trip, reason, photoUrl, store.currentUser());
-      await this.notifyResponsibility('trip', `Trip gelöscht: ${trip.name}`, reason, photoUrl, store.currentUser());
+      await store.tripService.softDelete(trip, reason, undefined, store.currentUser());
+      await this.notifyResponsibility('trip', `Trip gelöscht: ${trip.name}`, reason, undefined, store.currentUser());
       store.tripsResource.reload();
     },
 
@@ -249,30 +230,13 @@ export const TripStore = signalStore(
       const confirmed = await store.alertService.confirm(store.i18n.warning_suspicious(), true);
       if (!confirmed) return;
 
-      let photoUrl: string | undefined;
-      try {
-        const photo = await Camera.getPhoto({
-          quality: 80,
-          allowEditing: false,
-          resultType: CameraResultType.Uri,
-          source: Capacitor.isNativePlatform() ? CameraSource.Prompt : CameraSource.Photos,
-        });
-        const file = await readAsFile(photo, store.platform);
-        if (file) {
-          const fullPath = `${store.tenantId()}/trips/${trip.okey}/images/flag_${Date.now()}.jpg`;
-          photoUrl = await store.uploadService.uploadFile(file, fullPath, 'Verdacht-Foto');
-        }
-      } catch {
-        // photo capture optional
-      }
-
       const updatedTrip = { ...trip, flagged: true };
       await store.tripService.update(updatedTrip as TripModel, store.currentUser());
       await this.notifyResponsibility(
         'trip',
         `Verdächtige Aktivität: ${trip.name} (${reasons.join(', ')})`,
         reasons.join(', '),
-        photoUrl,
+        undefined,
         store.currentUser(),
       );
       store.tripsResource.reload();
@@ -296,7 +260,7 @@ export const TripStore = signalStore(
       const taskName = trip ?
         `${user} ${store.i18n.report_bug_trip()} ${trip.name}` :
         `${user} ${store.i18n.report_bug_plain()}`;
-      await this.notifyResponsibility('Logbuch2', taskName, message, undefined, store.currentUser());
+      await this.notifyResponsibility(LOGBUCH_RESPONSIBILITY, taskName, message, undefined, store.currentUser());
     },
 
     async notifyResponsibility(
@@ -317,6 +281,32 @@ export const TripStore = signalStore(
       task.notes = photoUrl ? `${notes}\nFoto: ${photoUrl}` : notes;
       task.tags = responsibilityName;
       await store.taskService.create(task, currentUser);
+    },
+
+    /**
+     * Place a video call to whoever is responsible for the Logbuch.
+     *
+     * matrix-js-sdk is ~700KB, so the chat data-access lib is pulled in dynamically — the
+     * trips bundle stays free of it and only a kiosk that actually calls support loads it.
+     */
+    async callSupport(): Promise<void> {
+      const responsibilities = await store.responsibilityService.listOnce();
+      const responsible = responsibilities.find(r => r.name === LOGBUCH_RESPONSIBILITY)?.responsibleAvatar;
+      // a group is a valid responsible party for tasks, but there is nobody to ring
+      if (!responsible?.key || responsible.modelType !== 'person') {
+        await store.alertService.showToast(store.i18n.call_support_none());
+        return;
+      }
+      try {
+        const { MatrixChatService } = await import('@okr/chat-data-access');
+        const matrixService = store.injector.get(MatrixChatService);
+        await matrixService.ensureInitialized();
+        const room = await matrixService.createDirectRoom(responsible.key);
+        await matrixService.startVideoCall(room.roomId, store.currentUser());
+      } catch (error) {
+        console.error('TripStore.callSupport: failed to start the support call:', error);
+        await store.alertService.showToast(store.i18n.call_support_error());
+      }
     },
 
     async export(type: string): Promise<void> {

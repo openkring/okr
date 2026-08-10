@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
+import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
@@ -10,7 +10,7 @@ import { DEFAULT_NOTES } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { Avatars, AvatarPipe } from '@okr/avatar-ui';
-import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
+import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } from '@okr/trip-util';
 
 
 @Component({
@@ -18,7 +18,7 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
   standalone: true,
   imports: [
     SvgIconPipe, AvatarPipe,
-    IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton,
+    IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton,
     IonList, IonAvatar, IonImg,
     NotesInput, Avatars, NumberInput
   ],
@@ -105,17 +105,8 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
             @if(formData().locations.length > 0 || formData().customLocationLabel) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onFieldChange('distance', $event)" [readOnly]="isReadOnly()" />
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <ion-item lines="none">
-                    @if (formData().distance === 0) {
-                      <ion-chip color="warning">{{ i18n().warning_distance_zero() }}</ion-chip>
-                    }
-                    @if (formData().distance > 50) {
-                      <ion-chip color="warning">{{ i18n().warning_distance_high() }}</ion-chip>
-                    }
-                  </ion-item>
+                  <okr-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onDistanceChange($event)"
+                    [readOnly]="isReadOnly()" [min]="1" [max]="maxDistance" [selectOnFocus]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -158,7 +149,8 @@ import { formatTripTime, TripI18n, tripValidationSuite } from '@okr/trip-util';
           (avatarsChange)="onFieldChange('participants', $event)"
           [readOnly]="isReadOnly()"
           [currentUser]="currentUser"
-          [title]="i18n().select_participant_title()"
+          [title]="i18n().select_participant_add()"
+          [showButton]="true"
         />
       }
 
@@ -203,7 +195,8 @@ export class TripEditForm {
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
   protected participants = linkedSignal(() => this.formData()?.participants ?? []);
-  protected distance = computed(() => this.formData().distance ?? 0);
+  // no `?? 0` fallback: a cleared field must stay empty instead of snapping back to a value
+  protected distance = computed(() => this.formData().distance);
 
   protected distanceI18n = computed(() => ({
     name: 'distance',
@@ -214,11 +207,17 @@ export class TripEditForm {
 
   // constants
   protected formatTime = formatTripTime;
+  protected readonly maxDistance = MAX_TRIP_DISTANCE_KM;
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo | AvatarInfo[] | undefined): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
     debugFormModel<TripModel>('TripEditForm', this.formData(), this.currentUser());
+  }
+
+  /** Caps the distance at MAX_TRIP_DISTANCE_KM silently — no validation warning, the value just stops growing. */
+  protected onDistanceChange(distance: number): void {
+    this.onFieldChange('distance', distance == null ? distance : Math.min(distance, MAX_TRIP_DISTANCE_KM));
   }
 
   protected clearBoat(): void {

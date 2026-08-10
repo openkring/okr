@@ -39,6 +39,10 @@ export const TRIP_I18N_KEYS = {
 
   search:                   PFX + 'search.label',
 
+  call_support:             PFX + 'call.support.label',
+  call_support_none:        PFX + 'call.support.none',
+  call_support_error:       PFX + 'call.support.error',
+
   select_participant_title: PFX + 'select.participant.title', 
   select_participant_add:   PFX + 'select.participant.add', 
   select_boat_title:        PFX + 'select.boat.title', 
@@ -63,7 +67,6 @@ export const TRIP_I18N_KEYS = {
 
   warning_suspicious:       PFX + 'warning.suspicious',
   warning_distance_zero:    PFX + 'warning.distance_zero',
-  warning_distance_high:    PFX + 'warning.distance_high',
   warning_seats_mismatch:   PFX + 'warning.seats_mismatch',
   warning_note:             PFX + 'warning.note',
 

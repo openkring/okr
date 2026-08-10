@@ -8,6 +8,7 @@ import {
   matchesStateFilter,
   compareTripDate,
   formatTripTime,
+  isTripDeletable,
   isTripEditable,
   TRIP_EDIT_WINDOW_MS,
 } from './trip.util';
@@ -163,6 +164,29 @@ describe('isTripEditable', () => {
   it('is NOT editable more than 15 min after ending', () => {
     // ended at 11:40, 20 min ago
     expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '1140' }), now)).toBe(false);
+  });
+});
+
+describe('isTripDeletable', () => {
+  // reference "now": 2024-06-01 12:00:00 local time
+  const now = new Date(2024, 5, 1, 12, 0, 0).getTime();
+
+  it('is deletable while the trip is not yet ended', () => {
+    expect(isTripDeletable(makeTrip({ endDate: '', endTime: '' }), false, now)).toBe(true);
+  });
+
+  it('is deletable within 30 min after ending', () => {
+    // ended at 11:40, 20 min ago
+    expect(isTripDeletable(makeTrip({ endDate: '20240601', endTime: '11:40' }), false, now)).toBe(true);
+  });
+
+  it('is NOT deletable more than 30 min after ending', () => {
+    // ended at 11:20, 40 min ago
+    expect(isTripDeletable(makeTrip({ endDate: '20240601', endTime: '1120' }), false, now)).toBe(false);
+  });
+
+  it('is always deletable for an admin', () => {
+    expect(isTripDeletable(makeTrip({ endDate: '20240501', endTime: '1120' }), true, now)).toBe(true);
   });
 });
 

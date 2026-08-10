@@ -45,10 +45,12 @@ export const ResourceSelectStore = signalStore(
     return {
       resources: computed(() => state.resourcesResource.value()),
       resourcesCount: computed(() => state.resourcesResource.value()?.length ?? 0), 
-      filteredResources: computed(() => 
-        state.resourcesResource.value()?.filter((resource: ResourceModel) => 
+      // Firestore orders by raw byte value; re-sort locale-aware so umlauts/case land where a reader expects them
+      filteredResources: computed(() =>
+        state.resourcesResource.value()?.filter((resource: ResourceModel) =>
           nameMatches(resource.index, state.searchTerm()) &&
           chipMatches(resource.tags, state.selectedTag()))
+          .sort((a, b) => a.name.localeCompare(b.name))
       ),
       isLoading: computed(() => state.resourcesResource.isLoading()),
     }

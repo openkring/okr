@@ -3,6 +3,8 @@ import { enforce, only, staticSuite, test } from 'vest';
 import { TripModel } from '@okr/shared-models';
 import { dateValidations, timeValidations } from '@okr/shared-util-core';
 
+import { MAX_TRIP_DISTANCE_KM } from './trip.util';
+
 export const tripValidationSuite = staticSuite((trip: TripModel, field?: string) => {
   if (field) only(field);
 
@@ -21,6 +23,7 @@ export const tripValidationSuite = staticSuite((trip: TripModel, field?: string)
 
   test('distance', '@geo/trip/feature.warning.distance_zero', () => {
     enforce(trip.distance).greaterThan(0);
+    enforce(trip.distance).lessThanOrEquals(MAX_TRIP_DISTANCE_KM);
   });
 
   test('participants', '@trip/field.participants', () => {
