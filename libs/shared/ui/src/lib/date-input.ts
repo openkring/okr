@@ -49,6 +49,7 @@ export interface DateInputI18n {
 
     <okr-date-picker-modal #datePicker
       [isoDate]="isoDate()"
+      [locale]="locale()"
       (dateSelected)="updateStoreDate($event, isoFormat)"
     />
 
