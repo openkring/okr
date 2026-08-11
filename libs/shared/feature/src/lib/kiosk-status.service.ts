@@ -166,7 +166,14 @@ export class KioskStatusService {
     const uid = this.appStore.fbUser()?.uid;
     if (!uid || !currentUser) return;
     try {
-      const [info, battery] = await Promise.all([Device.getInfo(), Device.getBatteryInfo()]);
+      // getBatteryInfo() THROWS (not: returns empty) when `navigator.getBattery` is missing —
+      // i.e. on every iOS Safari, which is the kiosk. Inside the Promise.all that rejection
+      // took the whole report down with it and no heartbeat was ever written. The battery is
+      // the optional half of this document; the heartbeat is the half that matters.
+      const [info, battery] = await Promise.all([
+        Device.getInfo(),
+        Device.getBatteryInfo().catch(() => ({})),
+      ]);
       const status = toKioskStatus(
         uid, currentUser.tenants, info, battery, new Date().toISOString(), packageJson.version, this.locked()
       );
