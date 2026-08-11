@@ -7,11 +7,12 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
+import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, PersonModelName, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
 import { convertHeicToJpeg, initMatrixLogLevel, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
+import { AvatarService } from '@okr/avatar-data-access';
 
 import { isServiceAccount as isServiceAccountHelper } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -31,6 +32,7 @@ export class MatrixChatService {
   
   private client: MatrixClient | null = null;
   private readonly activityService = inject(ActivityService);
+  private readonly avatarService = inject(AvatarService);
   // ARCH-1: promise-cached so concurrent callers (early-init service + chat component)
   // share one in-flight initialization instead of each minting a Matrix token.
   private initPromise: Promise<void> | null = null;
@@ -682,6 +684,38 @@ export class MatrixChatService {
     return this.client!.mxcUrlToHttp(user.avatarUrl, size, size, 'crop', true) ?? undefined;
   }
 
+  /** Patch a single message's senderAvatar in place on the room's message subject. */
+  private patchSenderAvatar(subject: BehaviorSubject<MatrixMessage[] | null>, eventId: string, senderAvatar: string): void {
+    const msgs = subject.value ?? [];
+    const idx = msgs.findIndex(m => m.eventId === eventId);
+    if (idx < 0) return;
+    const updated = [...msgs];
+    updated[idx] = { ...updated[idx], senderAvatar };
+    subject.next(updated);
+  }
+
+  /**
+   * The tenant's own avatar for a Matrix user, or undefined when this tenant has no picture
+   * for that person.
+   *
+   * A Matrix profile is global — one identity per person across every tenant (see
+   * matrix-simple/shared.resolvePersonAvatarUrl), so its picture can only ever be right for
+   * one of them. The app's avatars are tenant-scoped (`<tenant>.person.<okey>` with the bare
+   * `person.<okey>` as shared default, see avatarDocId), so wherever the chat renders a
+   * *person* we prefer the local avatar and fall back to the Matrix profile picture. The
+   * bridge between the two is the localpart: it is the person okey, lowercased.
+   *
+   * @param userId the Matrix user id, e.g. `@kaiser:bkchat.etke.host`
+   * @param size the desired edge length in px
+   */
+  private personAvatarUrl(userId?: string | null, size = 96): string | undefined {
+    if (!userId) return undefined;
+    const key = `person.${userId.replace(/^@/, '').split(':')[0]}`;
+    return this.avatarService.getCachedStoragePath(key)
+      ? this.avatarService.getAvatarUrl(key, PersonModelName, size)
+      : undefined;
+  }
+
   /**
    * Get messages for a specific room.
    * If the subject was previously created before the client was ready (empty subject,
@@ -727,7 +761,8 @@ export class MatrixChatService {
       const mxcUrl = (member as any)?.getMxcAvatarUrl?.() as string | undefined;
       // resolveMediaUrl fetches with Authorization header and returns a blob URL,
       // avoiding M_NOT_FOUND from servers with authenticated media enabled.
-      const avatarUrl = mxcUrl ? (await this.resolveMediaUrl(mxcUrl) || undefined) : undefined;
+      const avatarUrl = this.personAvatarUrl(member.userId)
+        ?? (mxcUrl ? (await this.resolveMediaUrl(mxcUrl) || undefined) : undefined);
       const entry: MatrixReadReceipt = {
         userId: member.userId,
         displayName: member.rawDisplayName || member.userId.split(':')[0].substring(1),
@@ -838,7 +873,8 @@ export class MatrixChatService {
           const mxcUrl = msg.content.url ?? msg.content.file?.url;
           const senderMember = room.getMember(e.getSender()!);
           const senderAvatarMxc = (senderMember as any)?.getMxcAvatarUrl?.() as string | undefined;
-          const senderAvatar = senderAvatarMxc ? await this.resolveMediaUrl(senderAvatarMxc) : undefined;
+          const senderAvatar = this.personAvatarUrl(e.getSender())
+            ?? (senderAvatarMxc ? await this.resolveMediaUrl(senderAvatarMxc) : undefined);
 
           // Attach poll tally and ended flag for poll.start events
           if (e.getType() === 'org.matrix.msc3381.poll.start') {
@@ -901,19 +937,16 @@ export class MatrixChatService {
           }
         });
       }
-      // Async-resolve sender avatar via authenticated fetch
+      // Sender avatar: the tenant's own picture wins, otherwise async-resolve the Matrix
+      // profile picture via authenticated fetch.
       const senderMember = room.getMember(event.getSender()!);
       const senderAvatarMxc = (senderMember as any)?.getMxcAvatarUrl?.() as string | undefined;
-      if (senderAvatarMxc) {
+      const localSenderAvatar = this.personAvatarUrl(event.getSender());
+      if (localSenderAvatar) {
+        this.patchSenderAvatar(subject, message.eventId, localSenderAvatar);
+      } else if (senderAvatarMxc) {
         this.resolveMediaUrl(senderAvatarMxc).then(url => {
-          if (!url) return;
-          const msgs = subject.value ?? [];
-          const idx = msgs.findIndex(m => m.eventId === message.eventId);
-          if (idx >= 0) {
-            const updated = [...msgs];
-            updated[idx] = { ...updated[idx], senderAvatar: url };
-            subject.next(updated);
-          }
+          if (url) this.patchSenderAvatar(subject, message.eventId, url);
         });
       }
 
@@ -1068,7 +1101,9 @@ export class MatrixChatService {
       const member = room.getMember(sender);
       const displayName = member?.name ?? sender;
       const mxcAvatarUrl: string | undefined = (member as any)?.getMxcAvatarUrl?.() || undefined;
-      const voter: MatrixReadReceipt = { userId: sender, displayName, avatarUrl: mxcAvatarUrl, ts };
+      // A local avatar is already an https url — resolveVoterAvatars only touches mxc:// ones.
+      const avatarUrl = this.personAvatarUrl(sender) ?? mxcAvatarUrl;
+      const voter: MatrixReadReceipt = { userId: sender, displayName, avatarUrl, ts };
       for (const answerId of answerIds) {
         pollVotes[answerId] = (pollVotes[answerId] ?? 0) + 1;
         if (!pollVoters[answerId]) pollVoters[answerId] = [];
@@ -1206,7 +1241,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
           const content = event.getContent();
           const senderId = event.getSender();
           const sender = senderId ? this.client!.getUser(senderId) ?? undefined : undefined;
-          const avatarUrl = this.getAvatarUrl(sender, 32);
+          const avatarUrl = this.personAvatarUrl(senderId, 32) ?? this.getAvatarUrl(sender, 32);
 
           lastMessage = {
             eventId: event.getId()!,
@@ -1254,8 +1289,10 @@ private async buildAndEmitRoomsList(): Promise<void> {
           // otherMember.name falls back to the full "@user:server" string — skip it.
           directUserId = otherMember.userId;
           name = otherMember.rawDisplayName || otherMember.userId.split(':')[0].substring(1);
-          // Store raw mxc:// URL; resolved to blob URL below via resolveMediaUrl
-          avatarUrl = (otherMember as any)?.getMxcAvatarUrl?.() as string | undefined;
+          // The tenant's own picture wins; otherwise the raw mxc:// URL, resolved to a blob
+          // URL below via resolveMediaUrl (which skips anything that isn't mxc://).
+          avatarUrl = this.personAvatarUrl(otherMember.userId)
+            ?? (otherMember as any)?.getMxcAvatarUrl?.() as string | undefined;
         } else {
           name = room.name || 'Direct message';
           avatarUrl = undefined;

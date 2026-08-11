@@ -11,6 +11,7 @@
     "@okr/shared-config": "*",
     "@okr/shared-data-access": "*",
     "@okr/shared-util-core": "*",
-    "@okr/chat-util": "*"
+    "@okr/chat-util": "*",
+    "@okr/avatar-data-access": "*"
   }
 }

@@ -66,6 +66,11 @@ export class AvatarService {
       const newCache = new Map<string, string | null>();
       for (const avatar of avatarList) {
         newCache.set(avatar.okey, avatar.storagePath || null);
+        // Lowercased alias, so a caller holding only a lowercased subject key can look the
+        // avatar up (Matrix localparts are the person okey lowercased — see MatrixChatService
+        // .personAvatarUrl). The exact-case entry always wins.
+        const lower = avatar.okey.toLowerCase();
+        if (!newCache.has(lower)) newCache.set(lower, avatar.storagePath || null);
       }
       
       this.storagePathCache.set(newCache);
