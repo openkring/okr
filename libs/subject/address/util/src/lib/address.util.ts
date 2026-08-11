@@ -39,6 +39,23 @@ export function shouldBecomeFavorite(address: AddressModel, siblings: AddressMod
     && sibling.isFavorite && !sibling.isCc && !sibling.isArchived);
 }
 
+/**
+ * How a just-saved address made the user's OWN favorite email diverge from the
+ * email they log in with — the trigger to ask for a login-email change (the login
+ * lives in Firebase Auth, only an admin can change it). Two ways to diverge:
+ * 'changed'   — another/edited address became the favorite email
+ * 'unfavored' — the login address itself lost its favorite flag, leaving the login
+ *               email pointing at a non-favorite (or at no) contact address.
+ */
+export function loginEmailDivergence(address: AddressModel, personKey?: string, loginEmail?: string): 'changed' | 'unfavored' | undefined {
+  if (!personKey || !loginEmail || !address.email) return undefined;
+  if (address.addressChannel !== 'email' || address.isArchived) return undefined;
+  if (address.parentKey !== 'person.' + personKey) return undefined;
+  const isLoginEmail = address.email.toLowerCase() === loginEmail.toLowerCase();
+  if (address.isFavorite) return isLoginEmail ? undefined : 'changed';
+  return isLoginEmail ? 'unfavored' : undefined;
+}
+
 /*-------------------------- address creation --------------------------------*/
 
 /**

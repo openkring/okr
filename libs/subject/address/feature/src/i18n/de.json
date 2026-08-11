@@ -57,6 +57,13 @@
     "qrezs": "QR EZS generieren"
   },
   "hide": "Ausblenden",
+  "login_email": {
+    "unfavored": "Diese E-Mail-Adresse ist nicht mehr deine bevorzugte, du meldest dich aber damit an. Soll deine Login-E-Mail-Adresse geändert werden? Ein Administrator erhält dafür eine Aufgabe.",
+    "unknown": "noch offen",
+    "confirm": "Deine bevorzugte E-Mail-Adresse hat sich geändert. Soll auch deine Login-E-Mail-Adresse angepasst werden? Ein Administrator erhält dafür eine Aufgabe.",
+    "task": "Login-E-Mail-Adresse ändern",
+    "notes": "Login-E-Mail-Adresse durch einen Administrator ändern"
+  },
   "locate": {
     "label": "Adresse lokalisieren",
     "description": "Die Adresse auf einer Karte geographisch lokalisieren."

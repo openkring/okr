@@ -3,7 +3,7 @@ import { AddressModel, UserModel } from '@okr/shared-models';
 import { getCountryName } from '@okr/shared-util-core';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
-import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, directoryEntryToAddress, getAddressIndex, getWebUrl, normalizeAddressValue, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyAddress, stringifyPostalAddress } from './address.util';
+import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, directoryEntryToAddress, getAddressIndex, getWebUrl, loginEmailDivergence, normalizeAddressValue, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyAddress, stringifyPostalAddress } from './address.util';
 
 // Mock all external dependencies
 vi.mock('@capacitor/browser', () => ({ Browser: { open: vi.fn() } }));
@@ -425,5 +425,40 @@ describe('getAddressIndex — owner segment', () => {
   it('trims the owner name', () => {
     expect(getAddressIndex(address({ addressChannel: 'email', email: 'a@b.ch' }), '  Bruno Kaiser  '))
       .toBe('n:a@b.ch p:person.kaiser o:Bruno Kaiser');
+  });
+});
+
+describe('loginEmailDivergence', () => {
+  const fav = (patch: Partial<AddressModel> = {}): AddressModel =>
+    Object.assign(new AddressModel('tenant-1'), {
+      addressChannel: 'email', email: 'new@b.ch', isFavorite: true, parentKey: 'person.p1'
+    }, patch);
+
+  it("returns 'changed' when another address became the own favorite email", () => {
+    expect(loginEmailDivergence(fav(), 'p1', 'old@b.ch')).toBe('changed');
+  });
+
+  it("returns 'unfavored' when the login address itself lost the favorite flag", () => {
+    expect(loginEmailDivergence(fav({ email: 'old@b.ch', isFavorite: false }), 'p1', 'old@b.ch')).toBe('unfavored');
+  });
+
+  it('is silent while favorite and login still match (case-insensitive)', () => {
+    expect(loginEmailDivergence(fav({ email: 'OLD@b.ch' }), 'p1', 'old@b.ch')).toBeUndefined();
+  });
+
+  it('is silent for a non-favorite address that is not the login email', () => {
+    expect(loginEmailDivergence(fav({ isFavorite: false }), 'p1', 'old@b.ch')).toBeUndefined();
+  });
+
+  it('ignores other people, other channels and archived addresses', () => {
+    expect(loginEmailDivergence(fav(), 'p2', 'old@b.ch')).toBeUndefined();
+    expect(loginEmailDivergence(fav({ addressChannel: 'phone' }), 'p1', 'old@b.ch')).toBeUndefined();
+    expect(loginEmailDivergence(fav({ isArchived: true }), 'p1', 'old@b.ch')).toBeUndefined();
+  });
+
+  it('is silent without a person key, login email or address value', () => {
+    expect(loginEmailDivergence(fav(), undefined, 'old@b.ch')).toBeUndefined();
+    expect(loginEmailDivergence(fav(), 'p1', undefined)).toBeUndefined();
+    expect(loginEmailDivergence(fav({ email: '' }), 'p1', 'old@b.ch')).toBeUndefined();
   });
 });

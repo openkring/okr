@@ -56,6 +56,13 @@
     "qrezs": "Générer le bulletin de versement QR"
   },
   "hide": "Masquer",
+  "login_email": {
+    "unfavored": "Cette adresse e-mail n’est plus votre favorite, mais vous vous connectez toujours avec. Faut-il modifier votre adresse e-mail de connexion ? Un administrateur recevra une tâche à cet effet.",
+    "unknown": "à définir",
+    "confirm": "Votre adresse e-mail favorite a changé. Faut-il aussi modifier votre adresse e-mail de connexion ? Un administrateur recevra une tâche à cet effet.",
+    "task": "Modifier l’adresse e-mail de connexion",
+    "notes": "Un administrateur doit modifier l’adresse e-mail de connexion"
+  },
   "locate": {
     "label": "Localiser l'adresse",
     "description": "Localiser géographiquement l'adresse sur une carte."

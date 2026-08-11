@@ -11,9 +11,9 @@ import { getDownloadURL, ref } from 'firebase/storage';
 import { FirestoreService } from '@okr/shared-data-access';
 import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
-import { AddressCollection, AddressDirectoryCollection, AddressDirectoryModel, AddressModel, AddressModelName, CategoryListModel, DbQuery, DefaultLanguage, DocumentModel, getAddressDirectoryKey, isSensitiveScalarChannel, OrgModel, PersonModel } from '@okr/shared-models';
+import { AddressCollection, AddressDirectoryCollection, AddressDirectoryModel, AddressModel, AddressModelName, CategoryListModel, DbQuery, DefaultLanguage, DocumentModel, getAddressDirectoryKey, isSensitiveScalarChannel, OrgModel, PersonModel, TaskModel } from '@okr/shared-models';
 import { AlertService, downloadToBrowser } from '@okr/shared-util-angular';
-import { chipMatches, getModelAndKey, getSystemQuery, nameMatches, warn } from '@okr/shared-util-core';
+import { chipMatches, getAvatarInfoForCurrentUser, getModelAndKey, getSystemQuery, nameMatches, warn } from '@okr/shared-util-core';
 import { Languages } from '@okr/shared-categories';
 import { MapViewModal } from '@okr/shared-ui';
 
@@ -22,7 +22,8 @@ import { DocumentService } from '@okr/document-data-access';
 import { FolderService } from '@okr/folder-data-access';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
-import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, directoryEntryToAddress, getWebUrl, isAddress, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyPostalAddress } from '@okr/subject-address-util';
+import { TaskService } from '@okr/task-data-access';
+import { ADDRESSES_I18N_KEYS, browseUrl, copyAddress, directoryEntryToAddress, getWebUrl, isAddress, loginEmailDivergence, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AddressEditModal } from './address-edit.modal';
 import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
@@ -65,6 +66,7 @@ export const AddressStore = signalStore(
     uploadService: inject(UploadService),
     documentService: inject(DocumentService),
     folderService: inject(FolderService),
+    taskService: inject(TaskService),
     i18n: inject(I18nService).translateAll(ADDRESSES_I18N_KEYS),
     storage: inject(STORAGE),
     qrBillFn: httpsCallable<{ tenantId: string; addressOkey: string; data: Record<string, unknown> }, { storagePath: string }>(
@@ -238,8 +240,40 @@ export const AddressStore = signalStore(
               await store.addressService.update(data, store.currentUser());
             }
             this.reload();
+            await this.offerLoginEmailChange(data);
         }
         }
+      },
+
+      /**
+       * The favorite email is the person's contact address; the login email lives in
+       * Firebase Auth and cannot be changed from the client. So when a user changes
+       * their OWN favorite email away from the address they log in with — by pointing
+       * it at another address OR by un-favoring the login address — ask whether the
+       * login should follow and open a task for the admin: no silent divergence, no
+       * self-service auth change.
+       */
+      async offerLoginEmailChange(address: AddressModel): Promise<void> {
+        const currentUser = store.currentUser();
+        const loginEmail = store.appStore.loginEmail();
+        if (!currentUser) return;
+        const divergence = loginEmailDivergence(address, currentUser.personKey, loginEmail);
+        if (!divergence) return;
+
+        // un-favored: the login address is no longer the favorite, and nothing was
+        // promoted in its place — the admin has to pick the new login email.
+        const target = divergence === 'changed' ? address.email : store.i18n.login_email_unknown();
+        const message = divergence === 'changed' ? store.i18n.login_email_confirm() : store.i18n.login_email_unfavored();
+        const confirmed = await store.alertService.confirm(`${message} (${loginEmail} → ${target})`, true);
+        if (confirmed !== true) return;
+
+        const task = new TaskModel(store.tenantId());
+        task.name = `${store.i18n.login_email_task()}: ${target}`;
+        task.notes = `${store.i18n.login_email_notes()}: ${loginEmail} → ${target}`;
+        task.author = getAvatarInfoForCurrentUser(currentUser);
+        // ponytail: unassigned — tasks are visible to privileged users; assign an admin
+        // person here once "who is THE admin" is a lookup rather than a convention.
+        await store.taskService.create(task, currentUser);
       },
 
       async editSubject(parentKey: string): Promise<void> {

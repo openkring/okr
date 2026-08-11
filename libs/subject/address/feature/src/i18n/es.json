@@ -56,6 +56,13 @@
     "qrezs": "Generar boletín de pago QR"
   },
   "hide": "Ocultar",
+  "login_email": {
+    "unfavored": "Esta dirección de correo ya no es tu favorita, pero sigues iniciando sesión con ella. ¿Debe cambiarse tu correo de inicio de sesión? Un administrador recibirá una tarea para ello.",
+    "unknown": "por definir",
+    "confirm": "Tu dirección de correo favorita ha cambiado. ¿También se debe cambiar tu correo de inicio de sesión? Un administrador recibirá una tarea para ello.",
+    "task": "Cambiar el correo de inicio de sesión",
+    "notes": "Un administrador debe cambiar el correo de inicio de sesión"
+  },
   "locate": {
     "label": "Localizar dirección",
     "description": "Localizar geográficamente la dirección en un mapa."

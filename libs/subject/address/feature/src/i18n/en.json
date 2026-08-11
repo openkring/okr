@@ -56,6 +56,13 @@
     "qrezs": "Generate QR payment slip"
   },
   "hide": "Hide",
+  "login_email": {
+    "unfavored": "This email address is no longer your favorite one, but you still log in with it. Should your login email address be changed? An administrator will receive a task for it.",
+    "unknown": "to be defined",
+    "confirm": "Your favorite email address has changed. Should your login email address be changed too? An administrator will receive a task for it.",
+    "task": "Change login email address",
+    "notes": "An administrator has to change the login email address"
+  },
   "locate": {
     "label": "Locate address",
     "description": "Locate the address geographically on a map."

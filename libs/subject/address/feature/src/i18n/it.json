@@ -56,6 +56,13 @@
     "qrezs": "Generare la polizza di versamento QR"
   },
   "hide": "Nascondere",
+  "login_email": {
+    "unfavored": "Questo indirizzo e-mail non è più il tuo preferito, ma lo usi ancora per accedere. Deve essere modificato l'indirizzo e-mail di accesso? Un amministratore riceverà un'attività in merito.",
+    "unknown": "da definire",
+    "confirm": "Il tuo indirizzo e-mail preferito è cambiato. Deve essere modificato anche l'indirizzo e-mail di accesso? Un amministratore riceverà un'attività in merito.",
+    "task": "Modificare l'indirizzo e-mail di accesso",
+    "notes": "Un amministratore deve modificare l'indirizzo e-mail di accesso"
+  },
   "locate": {
     "label": "Localizzare l'indirizzo",
     "description": "Localizzare geograficamente l'indirizzo su una mappa."
