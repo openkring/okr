@@ -1462,6 +1462,37 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "invoices",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "accountingTenantId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "receiver.key",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "invoiceDate",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "journallogs",
       "queryScope": "COLLECTION",
       "fields": [

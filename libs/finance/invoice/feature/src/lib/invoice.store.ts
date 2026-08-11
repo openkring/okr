@@ -61,15 +61,27 @@ export const InvoiceStore = signalStore(
       params: () => ({
         currentUser: store.appStore.currentUser(),
         accountingTenantId: store.accountingStore.accountingTenantId(),
+        listId: store.listId(),
         version: store.version(),
       }),
       stream: ({ params }) => {
         if (!params.currentUser || !params.accountingTenantId) return of([]);
+        // The 'my' list constrains receiver.key SERVER-side, not only in
+        // filteredInvoices: the invoices rule now grants a plain member read access
+        // to their own invoices only, and Firestore validates a list request against
+        // the query, not the rows it happens to return. Without this where-clause the
+        // whole query is denied for anyone below treasurer. Privileged screens keep
+        // the unconstrained query (their read passes via the isPrivileged branch).
+        const personKey = params.currentUser.personKey;
+        if (params.listId === 'my' && !personKey) return of([]);
         return store.firestoreService.searchData<InvoiceModel>(
           InvoiceCollection,
           [
             ...getSystemQuery(store.appStore.tenantId()),
             { key: 'accountingTenantId', operator: '==' as const, value: params.accountingTenantId },
+            ...(params.listId === 'my'
+              ? [{ key: 'receiver.key', operator: '==' as const, value: personKey }]
+              : []),
           ],
           'invoiceDate',
           'desc'
