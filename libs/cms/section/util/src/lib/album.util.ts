@@ -1,153 +1,42 @@
-import { HttpClient } from "@angular/common/http";
-import { FirebaseStorage, listAll, ref, StorageReference } from "firebase/storage";
-import { firstValueFrom } from "rxjs";
-
-import { AlbumConfig, BackgroundStyle, ImageActionType, ImageConfig, ImageMetaData, ImageStyle, ImageType } from "@okr/shared-models";
-import { buildOverlayParams, debugData, die, getImageType, getImgixJsonUrl, getSizedImgixParamsByExtension } from "@okr/shared-util-core";
-import { DEFAULT_ALBUM_HEIGHT, DEFAULT_ALBUM_WIDTH, DEFAULT_BORDER, DEFAULT_BORDER_RADIUS, DEFAULT_SIZES, THUMBNAIL_SIZE } from "@okr/shared-constants";
-
-
-export async function listAllFilesFromDirectory(
-  storage: FirebaseStorage,
-  config: AlbumConfig,
-  imgixBaseUrl: string,
-  directory: string): Promise<ImageConfig[]> {
-  const images: ImageConfig[] = [];
-  try {
-    const listRef = ref(storage, directory);
-
-    // listAll returns prefixes (= subdirectories) and items (= files)
-    const result = await listAll(listRef);
-
-    // list all subdirectories in the directory
-    result.prefixes.forEach((_dir) => {
-      images.push(getImage(imgixBaseUrl, directory, _dir, ImageType.Dir));
-    });
-
-    // list all files in the directory
-    result.items.forEach((_file) => {
-      const imageType = getImageType(_file.name);
-      switch (imageType) {
-        case ImageType.Image:
-          images.push(getImage(imgixBaseUrl, directory, _file, imageType));
-          break;
-        case ImageType.Video:
-          if (config.showVideos) {
-            images.push(getImage(imgixBaseUrl, directory, _file, imageType));
-          }
-          break;
-        case ImageType.StreamingVideo:
-          if (config.showStreamingVideos) {
-            images.push(getImage(imgixBaseUrl, directory, _file, imageType));
-          }
-          break;
-        case ImageType.Pdf:
-          if (config.showPdfs) {
-            images.push(getImage(imgixBaseUrl, directory, _file, imageType));
-          }
-          break;
-        case ImageType.Doc:
-          if (config.showDocs) {
-            images.push(getImage(imgixBaseUrl, directory, _file, imageType));
-          }
-          break;
-        case ImageType.Audio:
-        default:
-          break;
-      }
-    });
-  }
-  catch (ex) {
-    console.error('AlbumlistAllFilesFromCurrentDirectory -> error: ', ex);
-  }
-  return images;
-}
+import { AlbumConfig, BackgroundStyle, DocumentModel, ImageConfig, ImageStyle, ImageType } from "@okr/shared-models";
+import { buildOverlayParams, die, getSizedImgixParamsByExtension } from "@okr/shared-util-core";
 
 /**
- * Return a thumbnail representation of the file given based on its mime type.
- * image:  thumbnail image
- * video:  move icon to download the video
- * streaming video: ix-player (okr-video)
- * other:  file icon to download the file
- * @param ref 
- * @param url 
- * @param actionUrl 
- * @returns 
+ * Map a DocumentModel to the ImageConfig the album renders.
+ * fullPath is the storage path — the imgix pipes/overlays expect exactly that.
  */
-export function getImage(imgixBaseUrl: string, directory: string, ref: StorageReference, imageType: ImageType): ImageConfig {
-  const label = (imageType === ImageType.Dir) ? ref.name + ' directory' : ref.name;
+export function toImageConfig(doc: DocumentModel): ImageConfig {
+  const fileName = doc.fullPath.split('/').pop() ?? doc.fullPath;
   return {
-    label: ref.name,
-    type: imageType,
-    url: getUrl(imgixBaseUrl, directory, imageType, ref.name),
-    actionUrl: getActionUrl(imgixBaseUrl, directory, imageType, ref.name),
-    altText: label,
-    overlay: 'label'
+    label: doc.title || fileName,
+    type: getDocumentImageType(doc.mimeType),
+    url: doc.fullPath,
+    actionUrl: doc.url,
+    altText: doc.altText || doc.title || fileName,
+    overlay: '',
+    documentKey: doc.okey,
+    credit: doc.credit
   };
 }
 
-export function getImageStyle(imageType: ImageType): ImageStyle {
-  return {
-    imgIxParams: '',
-    width: (imageType === ImageType.Image) ? DEFAULT_ALBUM_WIDTH + '' : THUMBNAIL_SIZE + '',
-    height: (imageType === ImageType.Image) ? DEFAULT_ALBUM_HEIGHT + '' : THUMBNAIL_SIZE + '',
-    sizes: DEFAULT_SIZES,
-    border: DEFAULT_BORDER,
-    borderRadius: DEFAULT_BORDER_RADIUS,
-    isThumbnail: false,
-    slot: 'icon-only',
-    fill: imageType === ImageType.Image,
-    hasPriority: false,
-    action: getActionFromImageType(imageType),
-    zoomFactor: 2
-  };
+export function getDocumentImageType(mimeType: string): ImageType {
+  if (mimeType.startsWith('image/')) return ImageType.Image;
+  if (mimeType.startsWith('video/')) return ImageType.Video;
+  if (mimeType.startsWith('audio/')) return ImageType.Audio;
+  if (mimeType === 'application/pdf') return ImageType.Pdf;
+  return ImageType.Doc;
 }
 
-export function getUrl(imgixBaseUrl: string, directory: string, imageType: ImageType, fileName: string): string {
-  switch (imageType) {
-    case ImageType.Image: return `${directory}/${fileName}`;
-    case ImageType.Video: return 'logo/filetypes/video.svg';
-    case ImageType.StreamingVideo: return `${imgixBaseUrl}/${directory}/${fileName}`;
-    case ImageType.Audio: return 'logo/filetypes/audio.svg';
-    case ImageType.Pdf: return `${directory}/${fileName}`;
-    case ImageType.Doc: return 'logo/filetypes/doc.svg';
-    case ImageType.Dir: return 'logo/filetypes/folder.svg';
-    default: return 'logo/filetypes/file.svg';
+/** Whether a document is shown in an album with the given config. Images are always shown. */
+export function isVisibleInAlbum(doc: DocumentModel, config: AlbumConfig): boolean {
+  switch (getDocumentImageType(doc.mimeType)) {
+    case ImageType.Image: return true;
+    case ImageType.Pdf: return config.showPdfs;
+    case ImageType.Video: return config.showVideos;
+    case ImageType.StreamingVideo: return config.showStreamingVideos;
+    case ImageType.Doc: return config.showDocs;
+    default: return false;
   }
-}
-
-export function getActionUrl(imgixBaseUrl: string, directory: string, imageType: ImageType, fileName: string): string {
-  const downloadUrl = `${imgixBaseUrl}/${directory}/${fileName}`;
-  switch (imageType) {
-    case ImageType.Video:
-    case ImageType.Audio:
-    case ImageType.Doc:
-    case ImageType.Pdf: return downloadUrl;
-    case ImageType.Dir: return `${directory}/${fileName}`;
-    default: return '';
-  }
-}
-
-export function getActionFromImageType(imageType: ImageType): ImageActionType {
-  switch (imageType) {
-    case ImageType.Image: return ImageActionType.OpenSlider;
-    case ImageType.Pdf:
-    case ImageType.Audio:
-    case ImageType.Doc:
-    case ImageType.Video: return ImageActionType.Download;
-    case ImageType.Dir: return ImageActionType.OpenDirectory;
-    default: return ImageActionType.None;
-  }
-}
-
-// plus: ImageAction.type -> ImageAction.Download 
-export function convertThumbnailToFullImage(imageStyle: ImageStyle, width: number, height: number): ImageStyle {
-  const image = structuredClone(imageStyle);
-  image.isThumbnail = false;
-  image.fill = true;
-  image.width = width + '';
-  image.height = height + '';
-  return image;
 }
 
 export function getBackgroundStyle(imgixBaseUrl: string, imageStyle: ImageStyle, url: string, image?: ImageConfig): BackgroundStyle {
@@ -163,42 +52,4 @@ export function getBackgroundStyle(imgixBaseUrl: string, imageStyle: ImageStyle,
     'background-position': 'center',
     'border': '1px'
   };
-}
-
-interface ImageMetaDataResponse {
-  GPS?: { Altitude?: number; Latitude?: number; Longitude?: number; Speed?: number; ImgDirection?: number; };
-  'Content-Length'?: number;
-  PixelHeight?: number;
-  PixelWidth?: number;
-  TIFF?: { Make?: string; Model?: string; Software?: string; };
-  Exif?: { FocalLength?: number; FocalLengthIn35mmFilm?: number; FNumber?: number; ExposureTime?: number; ISOSpeedRatings?: number; LensModel?: string; };
-}
-
-export async function getImageMetaData(httpClient: HttpClient, imgixBaseUrl: string, image?: ImageConfig): Promise<ImageMetaData | undefined> {
-  if (!image) die('album.util.getMetaData -> image is mandatory')
-  if (!image.url) die('album.util.getMetaData -> image url is not set');
-  const url = getImgixJsonUrl(image.url, imgixBaseUrl);
-  const data = await firstValueFrom(httpClient.get<ImageMetaDataResponse>(url));
-  debugData('album.util.getMetaData -> data: ', data);
-  const metaData: ImageMetaData = {
-    altitude: data.GPS?.Altitude ?? 0,
-    latitude: data.GPS?.Latitude ?? 0,
-    longitude: data.GPS?.Longitude ?? 0,
-    speed: data.GPS?.Speed ?? 0,
-    direction: data.GPS?.ImgDirection ?? 0,
-    size: data['Content-Length'] ?? 0,
-    height: data.PixelHeight ?? 0,
-    width: data.PixelWidth ?? 0,
-    cameraMake: data.TIFF?.Make ?? '',
-    cameraModel: data.TIFF?.Model ?? '',
-    software: data.TIFF?.Software ?? '',
-    focalLength: data.Exif?.FocalLength ?? 0,
-    focalLengthIn35mmFilm: data.Exif?.FocalLengthIn35mmFilm ?? 0,
-    aperture: data.Exif?.FNumber ?? 0,
-    exposureTime: data.Exif?.ExposureTime ?? 0,
-    iso: data.Exif?.ISOSpeedRatings ?? 0,
-    lensModel: data.Exif?.LensModel ?? ''
-  };
-  debugData('album.util.getMetaData -> metaData: ', metaData);
-  return metaData;
 }

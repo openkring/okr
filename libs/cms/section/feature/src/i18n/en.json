@@ -43,20 +43,16 @@
     "zoom": "Zoom image",
     "zoomed": "Enlarged image",
     "edit": "Edit album configuration",
-    "directory": {
-      "label": "Directory",
-      "placeholder": "sssss/ssss",
-      "helper": "A path to a directory in storage."
+    "folder": {
+      "label": "Folder",
+      "placeholder": "sssssssss",
+      "helper": "The key (okey) of the folder the album starts at. Empty = name of the section."
     },
     "style": {
       "label": "Album style"
     },
     "effect": {
       "label": "Effect"
-    },
-    "recursive": {
-      "label": "Recursive",
-      "helper": "Links to albums in the subdirectories."
     },
     "show": {
       "videos": {
@@ -1089,5 +1085,24 @@
     "template_placeholder": "e.g. scs_password_reset",
     "all_groups": "All groups",
     "search_placeholder": "Search …"
+  },
+  "album_style": {
+    "label": "Album style",
+    "helper": "Determines how the images of an album are displayed.",
+    "grid": {
+      "label": "Grid"
+    },
+    "pinterest": {
+      "label": "Pinterest"
+    },
+    "imgix": {
+      "label": "Imgix"
+    },
+    "list": {
+      "label": "List"
+    },
+    "avatar": {
+      "label": "List with thumbnail"
+    }
   }
 }

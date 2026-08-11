@@ -1,6 +1,6 @@
 import { provideImgixLoader } from '@angular/common';
 import { Component, HostListener, computed, inject, input, linkedSignal } from '@angular/core';
-import { IonButton, IonContent, IonIcon } from '@ionic/angular/standalone';
+import { IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular/standalone';
 
 import { ImageConfig, ImageStyle } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
@@ -9,6 +9,7 @@ import { getImgixUrl } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { Header } from './header';
+import { ImageDetailModal } from './image-detail.modal';
 
 @Component({
   selector: 'okr-image-view-modal',
@@ -53,10 +54,9 @@ import { Header } from './header';
     }
     .nav-button.prev { left: 0.5rem; }
     .nav-button.next { right: 0.5rem; }
-    .download-button {
+    .download-button, .info-button {
       position: absolute;
       top: 0.5rem;
-      right: 0.5rem;
       z-index: 10;
       --border-radius: 50%;
       --padding-start: 0;
@@ -64,6 +64,8 @@ import { Header } from './header';
       width: 44px;
       height: 44px;
     }
+    .download-button { right: 0.5rem; }
+    .info-button { left: 0.5rem; }
     .counter {
       position: absolute;
       bottom: 0.5rem;
@@ -87,6 +89,11 @@ import { Header } from './header';
               </ion-button>
             }
             <img [src]="imgixUrl()" [alt]="currentAltText()" />
+            @if (hasInfo()) {
+              <ion-button class="info-button" fill="solid" color="light" (click)="showInfo()" aria-label="Info">
+                <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
+              </ion-button>
+            }
             <ion-button class="download-button" fill="solid" color="light" (click)="download()" aria-label="Download">
               <ion-icon slot="icon-only" src="{{ 'download' | svgIcon }}" />
             </ion-button>
@@ -101,7 +108,8 @@ import { Header } from './header';
   `
 })
 export class ImageViewModal {
-  private env = inject(ENV);
+  private readonly env = inject(ENV);
+  private readonly modalController = inject(ModalController);
 
   // inputs
   // Single-image entry point (kept for callers that zoom one image).
@@ -124,6 +132,7 @@ export class ImageViewModal {
     return [{ url: this.url(), altText: this.altText() }];
   });
   protected hasMultiple = computed(() => this.gallery().length > 1);
+  protected hasInfo = computed(() => !this.currentUrl().startsWith('http'));
 
   // Writable, seeded once from startIndex (a static input); user navigation writes it directly.
   protected currentIndex = linkedSignal(() => this.startIndex());
@@ -143,6 +152,19 @@ export class ImageViewModal {
 
   protected async download(): Promise<void> {
     await downloadToBrowser(this.imgixUrl());
+  }
+
+  /** The read-only info modal reads storage metadata + EXIF, so it only works for storage paths. */
+  protected async showInfo(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: ImageDetailModal,
+      componentProps: {
+        fullPath: this.currentUrl(),
+        title: this.currentAltText() || (this.currentUrl().split('/').pop() ?? ''),
+      },
+    });
+    await modal.present();
+    await modal.onWillDismiss();
   }
 
   protected next(): void {

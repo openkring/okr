@@ -36,6 +36,10 @@
     "@okr/forms-ui": "*",
     "@okr/chat-data-access": "*",
     "@capacitor/core": "*",
-    "@capacitor/geolocation": "*"
+    "@capacitor/geolocation": "*",
+    "@okr/folder-data-access": "*",
+    "@okr/shared-data-access": "*",
+    "@okr/document-data-access": "*",
+    "@okr/folder-ui": "*"
   }
 }

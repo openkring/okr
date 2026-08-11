@@ -1,7 +1,7 @@
 import { only, staticSuite } from 'vest';
 
 import { LONG_NAME_LENGTH } from '@okr/shared-constants';
-import { AlbumSection, AlbumStyle, GalleryEffect, ImageActionType } from '@okr/shared-models';
+import { AlbumSection, GalleryEffect, ImageActionType } from '@okr/shared-models';
 import { booleanValidations, categoryValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 import { baseSectionValidations } from './base-section.validations';
@@ -12,9 +12,8 @@ export const albumSectionValidations = staticSuite((model: AlbumSection, field?:
 
   baseSectionValidations(model, field);
 
-    stringValidations('directory', model.properties?.directory, LONG_NAME_LENGTH);
-    categoryValidations('albumStyle', model.properties?.albumStyle, AlbumStyle);
-    booleanValidations('recursive', model.properties?.recursive, false);
+    stringValidations('folder', model.properties?.folder, LONG_NAME_LENGTH);
+    stringValidations('albumStyle', model.properties?.albumStyle);
     booleanValidations('showVideos', model.properties?.showVideos, false);
     booleanValidations('showStreamingVideos', model.properties?.showStreamingVideos, false);
     booleanValidations('showDocs', model.properties?.showDocs, false);

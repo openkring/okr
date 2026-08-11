@@ -12,7 +12,6 @@ import type {
   PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
-import { AlbumStyle } from './enums/album-style.enum';
 import { ButtonAction } from './enums/button-action.enum';
 import { ColorIonic } from './enums/color-ionic.enum';
 import { GalleryEffect } from './enums/gallery-effect.enum';
@@ -58,10 +57,9 @@ export const BASE_SECTION_SHAPE = {
 // --------------------------------------- CONCRETE SECTION CONFIG SHAPES ----------------------------------------
 // --------------------------------------- ALBUM ----------------------------------------
 export const ALBUM_CONFIG_SHAPE = {
-    directory: '',
+    folder: '',
     imageStyle: IMAGE_STYLE_SHAPE,
-    albumStyle: AlbumStyle.Grid,
-    recursive: false,
+    albumStyle: 'grid',
     showVideos: false,
     showStreamingVideos: false,
     showDocs: false,

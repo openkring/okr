@@ -1,17 +1,17 @@
 import { Component, computed, input, linkedSignal, model, Signal, signal } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
-import { AlbumConfig } from '@okr/shared-models';
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { AlbumConfig, CategoryListModel } from '@okr/shared-models';
+import { CategoryOld, CategoryOldI18n, CategorySelect, Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { GalleryEffects } from '@okr/shared-categories';
 
-import { AlbumStyles, SectionI18n } from '@okr/cms-section-util';
+import { SectionI18n } from '@okr/cms-section-util';
 
 @Component({
   selector: 'okr-album-config',
   standalone: true,
   imports: [
-    TextInput, CategoryOld, Checkbox,
+    TextInput, CategoryOld, CategorySelect, Checkbox,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -29,13 +29,12 @@ import { AlbumStyles, SectionI18n } from '@okr/cms-section-util';
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              <okr-text-input [i18n]="directoryI18n()" [value]="directory()" (valueChange)="onFieldChange('directory', $event)"  [readOnly]="readOnly()" [showHelper]=true />
+              <okr-text-input [i18n]="folderI18n()" [value]="folder()" (valueChange)="onFieldChange('folder', $event)"  [readOnly]="readOnly()" [showHelper]=true />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <okr-category-old [i18n]="albumStyleI18n()" [value]="albumStyle()" (valueChange)="onFieldChange('albumStyle', $event)" [categories]="albumStyles" [readOnly]="readOnly()" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <okr-checkbox [i18n]="recursiveI18n()" [checked]="recursive()" (checkedChange)="onFieldChange('recursive', $event)" [showHelper]="true" [readOnly]="readOnly()" />
+              @if(albumStyles().items.length > 0) {
+                <okr-cat-select [category]="albumStyles()" [selectedItemName]="albumStyle()" (selectedItemNameChange)="onFieldChange('albumStyle', $event)" [withAll]="false" [readOnly]="readOnly()" />
+              }
             </ion-col>
             <ion-col size="12" size-md="6">
               <okr-checkbox [i18n]="showVideosI18n()" [checked]="showVideos()" (checkedChange)="onFieldChange('showVideos', $event)" [showHelper]="true" [readOnly]="readOnly()" />
@@ -64,12 +63,12 @@ export class AlbumConfiguration {
   public intro = input<string>();
   public readonly readOnly = input(true);
   public readonly i18n = input.required<SectionI18n>();
+  public readonly albumStyles = input.required<CategoryListModel>();
 
   // linked signals (fields)
-  protected directory = linkedSignal(() => this.formData().directory);
+  protected folder = linkedSignal(() => this.formData().folder);
   protected albumStyle = linkedSignal(() => this.formData().albumStyle);
   protected imageStyle = linkedSignal(() => this.formData().imageStyle);
-  protected recursive = linkedSignal(() => this.formData().recursive);
   protected showVideos = linkedSignal(() => this.formData().showVideos);
   protected showStreamingVideos = linkedSignal(() => this.formData().showStreamingVideos);
   protected showDocs = linkedSignal(() => this.formData().showDocs);
@@ -77,23 +76,15 @@ export class AlbumConfiguration {
   protected effect = linkedSignal(() => this.formData().effect);
 
   // passing constants to template
-  protected albumStyles = AlbumStyles;
   protected galleryEffects = GalleryEffects;
 
-  protected directoryI18n = computed(() => ({
-    name: 'directory',
-    label: this.i18n().album_directory_label(),
-    placeholder: this.i18n().album_directory_placeholder(),
-    helper: this.i18n().album_directory_helper(),
+  protected folderI18n = computed(() => ({
+    name: 'folder',
+    label: this.i18n().album_folder_label(),
+    placeholder: this.i18n().album_folder_placeholder(),
+    helper: this.i18n().album_folder_helper(),
   } as TextInputI18n));
-  protected albumStyleI18n = computed(() => ({ name: 'albumStyle', label: this.i18n().album_style_label() } as CategoryOldI18n));
   protected effectI18n     = computed(() => ({ name: 'effect',     label: this.i18n().album_effect_label()     } as CategoryOldI18n));
-
-  protected recursiveI18n = computed(() => ({
-    name: 'recursive',
-    label: this.i18n().album_recursive_label(),
-    helper: this.i18n().album_recursive_helper(),
-  } as CheckboxI18n));
 
   protected showVideosI18n = computed(() => ({
     name: 'showVideos',

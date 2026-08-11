@@ -1,9 +1,10 @@
-import { Component, computed, effect, ElementRef, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, input, signal, viewChild, viewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { AccordionSection, ArticleSection, ButtonSection, RoleName, SectionModel } from '@okr/shared-models';
+import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
@@ -124,6 +125,15 @@ import { PageStore } from './page.store';
 }
 `],
   template: `
+    @if(albumSection()) {
+      <!-- The menu's 'files-add' item renders a <label for="doc-files-input"> — Safari only opens the
+           dialog from a trusted click, not from the popover-dismiss event. Same pattern (and id) as
+           the document list; kept outside all Ionic components so the label lookup crosses no shadow root. -->
+      <input id="doc-files-input" type="file" multiple
+             [accept]="acceptMimeTypes"
+             style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;"
+             (change)="onFilesSelected($event)" />
+    }
     @if(showMenu()) {
       <ion-header>
         <ion-toolbar [color]="color()" id="bkheader">
@@ -138,7 +148,7 @@ import { PageStore } from './page.store';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <okr-menu [menuName]="contextMenuName" [forceVisible]="groupAdmin()" [toggleStates]="{ toggleEditMode: editMode() }"/>
+                      <okr-menu [menuName]="contextMenuName" [forceVisible]="groupAdmin()" [excludeNames]="hiddenMenuItems()" [toggleStates]="{ toggleEditMode: editMode() }"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -213,6 +223,7 @@ export class ContentPage {
   // element explicitly — otherwise viewChild returns the IonContent instance
   // and `.nativeElement` is undefined ("no renderer container").
   private printRoot = viewChild('printRoot', { read: ElementRef });
+  private sectionDispatchers = viewChildren(SectionDispatcher);
   private routeFragment = toSignal(this.route.fragment);
 
   // inputs
@@ -232,6 +243,17 @@ export class ContentPage {
   public isEditModeActive(): boolean {
     return this.editMode();
   }
+  /**
+   * Context-menu items that change the page structure. They are only offered in edit mode;
+   * read-only mode keeps the edit-mode toggle, print, export and the album file upload.
+   */
+  private static readonly EDIT_MODE_ONLY_MENU_ITEMS = ['cp-sort-sections', 'cp-select-section', 'cp-add-section', 'page-edit'];
+  protected albumSection = computed(() => this.sectionDispatchers().map(d => d.albumSection()).find(Boolean));
+  protected hiddenMenuItems = computed(() => [
+    ...(this.editMode() ? [] : ContentPage.EDIT_MODE_ONLY_MENU_ITEMS),
+    ...(this.albumSection() ? [] : ['files-add']),   // uploading needs an album to upload into
+  ]);
+
   protected page = computed(() => this.store.page());
   protected sections = computed(() => this.store.pageSections());
   protected isEmptyPage = computed(() => this.sections().length === 0);
@@ -326,8 +348,22 @@ export class ContentPage {
       case 'addSection':    await this.addSection(); break;
       case 'exportRaw': await this.store.export("raw"); break;
       case 'print': await this.store.print(this.printRoot()?.nativeElement, this.visibleSections()); break;
+      case 'addFiles': break; // handled by the toolbar label→input (Safari-compatible)
       default: error(undefined, `ContentPage.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
+  }
+
+  protected readonly acceptMimeTypes = DEFAULT_MIMETYPES.join(',');
+
+  /**
+   * Upload the picked files into the album section of this page. The album owns the folder the
+   * user has browsed to, so the upload is delegated to it rather than handled here.
+   */
+  protected async onFilesSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    await this.albumSection()?.addFiles(files);
   }
 
   protected async addSection(): Promise<void> {

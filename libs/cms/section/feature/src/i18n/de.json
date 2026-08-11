@@ -43,20 +43,16 @@
     "zoom": "Bild zoomen",
     "zoomed": "Vergrössertes Bild",
     "edit": "Albumskonfiguration bearbeiten",
-    "directory": {
-      "label": "Verzeichnis",
-      "placeholder": "sssss/ssss",
-      "helper": "Ein Pfad zu einem Verzeichnis im Storage."
+    "folder": {
+      "label": "Ordner",
+      "placeholder": "sssssssss",
+      "helper": "Der Schlüssel (okey) des Ordners, mit dem das Album startet. Leer = Name der Sektion."
     },
     "style": {
       "label": "Album-Stil"
     },
     "effect": {
       "label": "Effekt"
-    },
-    "recursive": {
-      "label": "Rekursiv",
-      "helper": "Linkt auf Alben in den Subdirectories."
     },
     "show": {
       "videos": {
@@ -1180,6 +1176,25 @@
     "vertical": {
       "label": "Vertikal darstellen",
       "helper": "Statt horizontal (Standard) liegen die Ereignisse untereinander — passend für lange Chronologien."
+    }
+  },
+  "album_style": {
+    "label": "Album-Stil",
+    "helper": "Bestimmt, wie die Bilder eines Albums dargestellt werden.",
+    "grid": {
+      "label": "Raster"
+    },
+    "pinterest": {
+      "label": "Pinterest"
+    },
+    "imgix": {
+      "label": "Imgix"
+    },
+    "list": {
+      "label": "Liste"
+    },
+    "avatar": {
+      "label": "Liste mit Vorschaubild"
     }
   }
 }

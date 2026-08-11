@@ -39,6 +39,7 @@ import { SectionStore } from './section.store';
             [showForm]="showForm()"
             [roles]="roles()"
             [states]="states()"
+            [albumStyles]="albumStyles()"
             [allTags]="tags()"
             [tenantId]="tenantId()"
             [readOnly]="isReadOnly()"
@@ -60,6 +61,7 @@ export class SectionEditModal {
   public states = input.required<CategoryListModel>();
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected albumStyles = computed(() => this.store.appStore.getCategory('album_style'));
 
   // signals
   protected initialData = signal<SectionModel | undefined>(undefined);

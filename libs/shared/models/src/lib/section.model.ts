@@ -1,7 +1,6 @@
 import type { CalendarOptions } from '@fullcalendar/core';
 import type { EChartsOption } from 'echarts';
 
-import { AlbumStyle } from './enums/album-style.enum';
 import { ButtonAction } from './enums/button-action.enum';
 import { ColorIonic } from './enums/color-ionic.enum';
 import { GalleryEffect } from './enums/gallery-effect.enum';
@@ -272,10 +271,9 @@ export interface AlbumSection extends BaseSection {
 }
 
 export interface AlbumConfig {
-  directory: string;
+  folder: string;          // okey of the FolderModel the album starts at; defaults to the section name
   imageStyle: ImageStyle;
-  albumStyle: AlbumStyle;
-  recursive: boolean;
+  albumStyle: string;      // item name of the 'album_style' category (grid | pinterest | imgix | list | avatar)
   showVideos: boolean;
   showStreamingVideos: boolean;
   showDocs: boolean;

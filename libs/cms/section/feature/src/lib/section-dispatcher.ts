@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, viewChild } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular/standalone';
 
 import { RoleName, SectionModel, UserModel } from '@okr/shared-models';
@@ -212,6 +212,12 @@ export class SectionDispatcher {
   public section = input.required<SectionModel>();
   public currentUser = input.required<UserModel | undefined>();
   public editMode = input.required<boolean>();
+
+  /**
+   * The rendered album section, if this dispatcher renders one. Exposed so the hosting page can
+   * route its context-menu 'addFiles' action to the album (which owns the current folder).
+   */
+  public readonly albumSection = viewChild(AlbumSectionComponent);
 
   // derived
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.store.i18n.copy_conf() } as ButtonCopyI18n));

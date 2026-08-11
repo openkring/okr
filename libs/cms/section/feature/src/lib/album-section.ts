@@ -1,30 +1,24 @@
 import { NgStyle } from '@angular/common';
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject, input, linkedSignal, PLATFORM_ID, viewChild } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
-import { AlbumSection, AlbumStyle, BackgroundStyle, ImageActionType, ImageConfig, ImageStyle, ImageType } from '@okr/shared-models';
+import { AlbumSection, BackgroundStyle, ImageConfig, ImageType } from '@okr/shared-models';
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
-import { browse, CategoryOld, CategoryOldI18n, Img, Label, showZoomedImage, Spinner, Video } from '@okr/shared-ui';
-import { downloadToBrowser, isBrowser } from '@okr/shared-util-angular';
-import { debugData, debugMessage } from '@okr/shared-util-core';
+import { browse, CategorySelect, Label, Spinner, showZoomedImage, Video } from '@okr/shared-ui';
+import { downloadToBrowser } from '@okr/shared-util-angular';
 
-import { AlbumStyles, convertThumbnailToFullImage, getBackgroundStyle } from '@okr/cms-section-util';
+import { FolderBreadcrumb } from '@okr/folder-ui';
+
+import { getBackgroundStyle } from '@okr/cms-section-util';
 
 import { AlbumStore } from './album-section.store';
 
 /**
- * A Section that shows a hierarchical file structure as an album.
- * All files within a directory are listed with thumbnail images.
- * There are several styles to display the images: grid, pinterest, imgix, list, avatarList.
- * A click on an image can trigger different actions: zoom, open directory, open file, open link, open modal, open dialog (configurable ImageAction).
- * 
- * TBD:
- * - change dir icon to dir and name of dir (later: add a background image)
- * - optimize the styling of the images (e.g. imgix)
- * - add a toolbar in AlbumSection to allow the user to change the album style
- * - show exif info for images as an overlay (imgix fm=json)
- * - support non-image files (thumbnail for pdfs, other files should be presented with the filetype icons)
- * - implement the different image actions
- * - implement multiple file upload (drag and drop)
+ * A Section that shows an album of folders and documents (see the folder/document domains).
+ * It starts at AlbumConfig.folder — or, when that is empty, at the folder whose okey equals the
+ * section name — and lets the user browse into its subfolders.
+ * A folder is rendered with the first image it contains as background, overlaid with the folder
+ * icon and its name. Clicking an image opens the full-screen viewer (prev/next/download/info).
+ * The album style (grid | pinterest | imgix | list | avatar) comes from the 'album_style' category.
  */
 @Component({
   selector: 'okr-album-section',
@@ -32,7 +26,7 @@ import { AlbumStore } from './album-section.store';
   imports: [
     NgStyle,
     SvgIconPipe, JpgUrlPipe, PdfUrlPipe, ThumbnailUrlPipe,
-    Spinner, Label, Img, CategoryOld, Video,
+    Spinner, Label, CategorySelect, Video, FolderBreadcrumb,
     IonCard, IonCardContent, IonList, IonThumbnail,
     IonGrid, IonRow, IonCol, IonItem, IonToolbar, IonTitle, IonIcon, IonLabel
   ],
@@ -47,9 +41,31 @@ import { AlbumStore } from './album-section.store';
     @media(min-width: 720px) { .pinterest-album { column-count: 4; } }
     .pinterest-image { margin: 2px; text-align: center; }
 
-    @media(min-width: 0px) { .imgix-image { sizes: 100vw; } }
-    @media(min-width: 640px) { .imgix-image { sizes: 50vw; } }
-    @media(min-width: 960px) { .imgix-image { sizes: 33vw; } }
+    .folder-tile {
+      position: relative;
+      width: 100%;
+      padding-bottom: 75%;
+      overflow: hidden;
+      border-radius: 6px;
+      background: var(--ion-color-light);
+      cursor: pointer;
+    }
+    .folder-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .folder-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      color: #fff;
+      text-align: center;
+      padding: 4px;
+    }
+    .folder-overlay ion-icon { font-size: 2rem; }
+    .folder-overlay span { font-size: 0.85rem; font-weight: 600; overflow-wrap: anywhere; }
   `],
   providers: [AlbumStore],
   template: `
@@ -59,143 +75,109 @@ import { AlbumStore } from './album-section.store';
       <ion-toolbar>
         <ion-grid>
           <ion-row>
-            <ion-col size="8">
-                @if(isTopDirectory() === false) {
-                  <ion-item lines="none">
-                    <ion-icon src="{{ 'arrow-up-circle' | svgIcon}}" (click)="goUp()" slot="start" />
-                    <ion-title>{{ title() }}</ion-title>
-                  </ion-item>
+            <ion-col size="6" size-md="8">
+              <ion-item lines="none">
+                @if(isTopFolder() === false) {
+                  <ion-icon src="{{ 'arrow-up-circle' | svgIcon}}" (click)="goUp()" slot="start" />
                 }
+                @if(currentFolderKey(); as folderKey) {
+                  <okr-folder-breadcrumb [folderKey]="folderKey" (folderSelected)="openFolder($event)" />
+                } @else {
+                  <ion-title>{{ title() }}</ion-title>
+                }
+              </ion-item>
             </ion-col>
             <ion-col size="6" size-md="4">
-                <okr-category-old [i18n]="albumStyleI18n()" [value]="albumStyle()" (valueChange)="onAlbumStyleChange($event)" [categories]="albumStyles" [readOnly]="false" />
+              <!-- the category is empty until the reference data has loaded — okr-cat-select needs at least one item -->
+              @if(albumStyles().items.length > 0) {
+                <okr-cat-select [category]="albumStyles()" [selectedItemName]="albumStyle()"
+                  (selectedItemNameChange)="onAlbumStyleChange($event)" [withAll]="false" [readOnly]="false" />
+              }
             </ion-col>
           </ion-row>
         </ion-grid>
       </ion-toolbar>
       <ion-card>
         <ion-card-content>
-            @if(images(); as images) {
-              @switch (albumStyle()) {
-                @case(AS.Pinterest) {
-                  <!--
-                    With Pinterest-style album, the images are not strictly aligned and just take the
-                    space available.
-                    source: https://ionicacademy.com/ionic-image-gallery-responsive/ 
-                  -->
-                  <div class="pinterest-album">
-                    @for(image of images; track $index) {
-                      @if(image.url; as url) {
-                        <div class="pinterest-image">
-                          @switch(image.type) {
-                            @case(IT.Dir) {
-                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
-                              <ion-label>{{ image.label }}</ion-label>
-                            } @case(IT.Image) {
-                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
-                            } @case(IT.StreamingVideo) {
-                              <okr-video [url]="image.url" />
-                            } @case (IT.Pdf) {
-                              <img [src]="url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
-                            }
-                            @default {
-                              <img [src]="url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
-                              <ion-label>{{ image.label }}</ion-label>
-                            }
-                          }
-                        </div>
+          <!-- subfolders: cover image (or light background) + folder icon and name overlay -->
+          @if(folders().length > 0) {
+            <ion-grid>
+              <ion-row>
+                @for(folder of folders(); track folder.okey) {
+                  <ion-col size="6" size-md="4" size-xl="3">
+                    <div class="folder-tile" (click)="openFolder(folder.okey)">
+                      @if(folder.coverUrl) {
+                        <img [src]="folder.coverUrl | thumbnailUrl" [alt]="folder.label" loading="lazy" />
                       }
-                    }
-                  </div>
+                      <div class="folder-overlay">
+                        <ion-icon src="{{ 'folder' | svgIcon }}" />
+                        <span>{{ folder.label }} ({{ folder.fileCount }})</span>
+                      </div>
+                    </div>
+                  </ion-col>
                 }
-                @case(AS.Imgix) {
-                  <div class="imgix-album">
-                    @for(image of images; track $index) {
-                      @if(image.url; as url) {
-                        <div class="imgix-image">
-                          @switch(image.type) {
-                            @case(IT.Dir) {
-                              <okr-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()" />
-                              <ion-label>{{ image.label }}</ion-label>
-                            } @case(IT.Image) {
-                              <okr-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
-                            } @case(IT.StreamingVideo) {
-                              <okr-video [url]="image.url" />
-                            } @case (IT.Pdf) {
-                              <img [src]="image.url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
-                            }
-                            @default {
-                              <okr-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
-                              <ion-label>{{ image.label }}</ion-label>
-                            }
-                          }
-                        </div>
-                      }
-                    }
-                  </div>
+              </ion-row>
+            </ion-grid>
+          }
 
-                }
-                @case(AS.List) {
-                  <ion-list>
-                    @for(image of images; track image) {
-                      <ion-item (click)="onImageClicked(image)">
-                        <ion-label>{{ image.label }}</ion-label>
-                      </ion-item>
-                    }
-                  </ion-list>
-                }
-                @case(AS.AvatarList) {
-                  <ion-list>
-                    @for(image of images; track $index) {
-                      @if(image.url; as url) {
-                        <ion-item>
-                          <ion-thumbnail slot="start">
-                            <img [src]="url | thumbnailUrl" [alt]="image.altText" (click)="onImageClicked(image, $index)" />
-                          </ion-thumbnail>
-                          <ion-label>{{ image.label }}</ion-label>
-                        </ion-item>
+          @if(images().length > 0) {
+            @switch (albumStyle()) {
+              @case('pinterest') {
+                <!-- images are not strictly aligned and just take the space available -->
+                <div class="pinterest-album">
+                  @for(image of images(); track $index) {
+                    <div class="pinterest-image">
+                      @switch(image.type) {
+                        @case(IT.StreamingVideo) { <okr-video [url]="image.url" /> }
+                        @case(IT.Pdf) { <img [src]="image.url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image)" /> }
+                        @default { <img [src]="image.url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image)" /> }
                       }
-                    }
-                  </ion-list>
-                }
-                @default { <!-- grid -->
-                  <!-- 
-                    we set the image to the background-image attribute of a div so we
-                    can scale it to fill the whole column more easily.
-                    source: https://ionicacademy.com/ionic-image-gallery-responsive/ 
-                  -->
-                  <ion-grid>
-                    <ion-row>
-                      @for(image of images; track $index) {
-                        @if(image.url; as url) {
-                          <!-- 2 images on small screens, 3 on medium, 4 images on large screens -->
-                          <ion-col size="6" size-xl="3" size-md="4">
-                            @switch(image.type) {
-                              @case(IT.Dir) {
-                                <okr-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
-                                <ion-label>{{ image.label }}</ion-label>
-                              } @case(IT.Image) {
-                                <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image, $index)"></div>
-                              } @case(IT.StreamingVideo) {
-                                <okr-video [url]="image.url" />
-                              } @case (IT.Pdf) {
-                                <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image, $index)"></div>
-                              }
-                              @default {
-                                <okr-img [image]="image" [imageStyle]="imageStyle()" (click)="onImageClicked(image, $index)" [zoomTitle]="store.i18n.album_zoomed()"/>
-                                <ion-label>{{ image.label }}</ion-label>
-                              }
-                            }
-                          </ion-col>
-                        }
-                      }
-                    </ion-row>
-                  </ion-grid>
-                }
+                    </div>
+                  }
+                </div>
               }
-            } @else {
-              <okr-label>{{ store.i18n.no_images() }}</okr-label>
+              @case('list') {
+                <ion-list>
+                  @for(image of images(); track $index) {
+                    <ion-item button (click)="onImageClicked(image)">
+                      <ion-label>{{ image.label }}</ion-label>
+                    </ion-item>
+                  }
+                </ion-list>
+              }
+              @case('avatar') {
+                <ion-list>
+                  @for(image of images(); track $index) {
+                    <ion-item button (click)="onImageClicked(image)">
+                      <ion-thumbnail slot="start">
+                        <img [src]="image.url | thumbnailUrl" [alt]="image.altText" />
+                      </ion-thumbnail>
+                      <ion-label>{{ image.label }}</ion-label>
+                    </ion-item>
+                  }
+                </ion-list>
+              }
+              @default { <!-- grid (default) and imgix -->
+                <ion-grid>
+                  <ion-row>
+                    @for(image of images(); track $index) {
+                      <!-- 2 images on small screens, 3 on medium, 4 on large screens -->
+                      <ion-col size="6" size-xl="3" size-md="4">
+                        @switch(image.type) {
+                          @case(IT.StreamingVideo) { <okr-video [url]="image.url" /> }
+                          @default {
+                            <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image)"></div>
+                          }
+                        }
+                      </ion-col>
+                    }
+                  </ion-row>
+                </ion-grid>
+              }
             }
+          } @else if(folders().length === 0) {
+            <okr-label>{{ store.i18n.album_empty() }}</okr-label>
+          }
         </ion-card-content>
       </ion-card>
     }
@@ -204,7 +186,6 @@ import { AlbumStore } from './album-section.store';
 export class AlbumSectionComponent {
   private readonly modalController = inject(ModalController);
   protected store = inject(AlbumStore);
-  private readonly platformId = inject(PLATFORM_ID);
 
   // inputs
   public section = input<AlbumSection>();
@@ -212,85 +193,67 @@ export class AlbumSectionComponent {
 
   // derived
   protected imgixBaseUrl = computed(() => this.store.imgixBaseUrl());
-  protected imageContainer = viewChild('.imgix-image', { read: ElementRef });
-  protected metaData = computed(() => this.store.metaData());
-
-  protected directory = computed(() => this.store.currentDirectory());
-  protected image = computed(() => this.store.currentImage());
   protected imageStyle = computed(() => this.store.imageStyle());
-  protected albumStyle = linkedSignal(() => this.store.albumStyle());
+  protected albumStyle = computed(() => this.store.albumStyle());
+  protected albumStyles = computed(() => this.store.appStore.getCategory('album_style'));
   protected images = computed(() => this.store.images());
+  protected folders = computed(() => this.store.folders());
   protected isLoading = computed(() => this.store.isLoading());
-  protected error = computed(() => this.store.error());
   protected title = computed(() => this.store.title());
-  protected currentDirLength = computed(() => this.store.currentDirLength());
-  protected parentDirectory = computed(() => this.store.parentDirectory());
-  protected isTopDirectory = computed(() => this.store.currentDirLength() === this.store.initialDirLength());
-
-  // i18n
-  protected albumStyleI18n = computed(() => ({ name: 'albumStyle', label: this.store.i18n.album_style_label() } as CategoryOldI18n));
+  protected isTopFolder = computed(() => this.store.isTopFolder());
+  protected currentFolderKey = computed(() => this.store.currentFolderKey());
 
   // passing constants to template
   protected IT = ImageType;
-  protected AS = AlbumStyle;
-  protected albumStyles = AlbumStyles;
 
   constructor() {
     effect(() => {
-      this.store.setConfig(this.section()?.properties);  // this also updates the current directory and the albumStyle in the store
+      const section = this.section();
+      this.store.setConfig(section?.properties, section?.name, section?.okey);
     });
   }
-  
-  protected async onImageClicked(image: ImageConfig, index = 0): Promise<void> {
+
+  /**
+   * Upload files into the folder currently browsed. Public: the hosting page owns the file input
+   * (Safari needs the trusted click on a <label>) and routes the selected files here, because the
+   * album owns the current folder.
+   */
+  public async addFiles(files: File[]): Promise<void> {
+    await this.store.addFiles(files);
+  }
+
+  /**
+   * Images open the full-screen viewer with prev/next across the sibling images of this folder,
+   * download and an info button (storage metadata + EXIF). Other files are downloaded / opened.
+   */
+  protected async onImageClicked(image: ImageConfig): Promise<void> {
     if (this.editMode()) return;
-    this.store.setImage(image);    // loads metadata
-    debugData('AlbumSectionComponent.onImageClicked -> image: ', image, this.store.currentUser());
-    debugData('AlbumSectionComponent.onImageClicked -> metaData: ', this.metaData(), this.store.currentUser());
-    // tbd: show the metadata to the user, e.g. in a modal or as an overlay
-    // tbd: put the following into the store as a method, triggered by an effect each time the image changes
-    switch (this.imageStyle().action) {
-      case ImageActionType.Download: await downloadToBrowser(image.actionUrl); break;
-      case ImageActionType.Zoom: await showZoomedImage(this.modalController, image.url, this.store.i18n.album_zoomed(), this.imageStyle(), image.altText, 'full-modal'); break;
-      case ImageActionType.OpenSlider: this.store.openGallery(this.images(), this.title(), index); break;
-      case ImageActionType.OpenDirectory: this.store.setDirectory(image.actionUrl); break;
-      case ImageActionType.FollowLink: browse(image.actionUrl); break;
-      case ImageActionType.None: break;
-      default: debugMessage('AlbumSectionComponent.onImageClicked -> no action defined', this.store.currentUser());
+    if (image.type !== ImageType.Image) {
+      if (image.actionUrl) await downloadToBrowser(image.actionUrl);
+      else browse(image.url);
+      return;
     }
+    const gallery = this.images().filter((img) => img.type === ImageType.Image);
+    const startIndex = Math.max(0, gallery.findIndex((img) => img.documentKey === image.documentKey));
+    await showZoomedImage(this.modalController, image.url, image.label, this.imageStyle(),
+      image.altText, 'full-modal', gallery, startIndex);
   }
 
   protected getBackgroundStyle(image: ImageConfig): BackgroundStyle {
     return getBackgroundStyle(this.imgixBaseUrl(), this.imageStyle(), image.url, image);
   }
 
-  protected onAlbumStyleChange(albumStyle: AlbumStyle): void {
+  protected onAlbumStyleChange(albumStyle: string): void {
     this.store.setAlbumStyle(albumStyle);
+  }
+
+  protected openFolder(folderKey: string): void {
+    if (this.editMode()) return;
+    this.store.setFolder(folderKey);
   }
 
   protected goUp(): void {
     if (this.editMode()) return;
     this.store.goUp();
-  }
-
-  protected convertThumbnailToFullImage(): ImageStyle {
-    return convertThumbnailToFullImage(this.imageStyle(), this.getValue('width', 900), this.getValue('height', 300));
-  }
-
-  /**
-   * This is used to get the width and height of the image container element imgix-image
-   * @param key 
-   * @param defaultValue 
-   * @returns 
-   */
-  private getValue(key: 'width' | 'height', defaultValue: number): number {
-    if (isBrowser(this.platformId)) {
-      const el = this.imageContainer();
-      if (el) {
-        const value = (el.nativeElement[key] ?? defaultValue) as number;
-        debugMessage(`AlbumSectionComponent.getValue -> imgix-image.${key} -> ${value}`);
-        return value;
-      }
-    }
-    return defaultValue;
   }
 }

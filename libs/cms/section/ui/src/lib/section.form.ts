@@ -80,6 +80,7 @@ import { TimelineConfiguration } from './timeline-configuration';
               [formData]="albumConfig" (formDataChange)="onAlbumConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
+              [albumStyles]="albumStyles()"
             />
           }
         }
@@ -494,6 +495,7 @@ export class SectionForm {
   public readonly allTags = input.required<string>();
   public readonly roles = input.required<CategoryListModel>();
   public readonly states = input.required<CategoryListModel>();
+  public readonly albumStyles = input.required<CategoryListModel>();
   public readonly tenantId = input.required<string>();
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

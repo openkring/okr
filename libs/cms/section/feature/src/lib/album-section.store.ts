@@ -1,128 +1,187 @@
-import { computed, inject, resource, Signal } from '@angular/core';
+import { computed, inject } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { of } from 'rxjs';
 
-import { STORAGE } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { ALBUM_CONFIG_SHAPE, AlbumConfig, AlbumStyle, ImageConfig, ImageType } from '@okr/shared-models';
-import { debugMessage } from '@okr/shared-util-core';
+import { ALBUM_CONFIG_SHAPE, AlbumConfig, DocumentCollection, DocumentModel, FolderModel, ImageConfig, SectionModelName } from '@okr/shared-models';
+import { debugMessage, getSystemQuery, sanitizeFileName } from '@okr/shared-util-core';
 import { showImageSlider } from '@okr/shared-ui';
 
-import { getImageMetaData, listAllFilesFromDirectory, SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { UploadService } from '@okr/avatar-data-access';
+import { DocumentService } from '@okr/document-data-access';
+import { FolderService } from '@okr/folder-data-access';
 
-import { HttpClient } from '@angular/common/http';
+import { isVisibleInAlbum, SECTION_I18N_KEYS, toImageConfig } from '@okr/cms-section-util';
 
 export interface AlbumState {
   config: AlbumConfig;
-  currentDirectory: string; // not the same as config.directory, but the current directory in the album
-  currentImage: ImageConfig | undefined; // the currently selected image, if any
+  sectionKey: string;       // okey of the album section — the storage path of uploaded files
+  rootFolderKey: string;    // the album's starting folder (config.folder, or the section name)
+  currentFolderKey: string; // the folder currently browsed; starts at rootFolderKey
 }
 
 export const initialState: AlbumState = {
   config: ALBUM_CONFIG_SHAPE,
-  currentDirectory: '',
-  currentImage: undefined
+  sectionKey: '',
+  rootFolderKey: '',
+  currentFolderKey: ''
 };
 
 export const AlbumStore = signalStore(
   withState(initialState),
   withProps(() => ({
-    storage: inject(STORAGE),
     appStore: inject(AppStore),
+    firestoreService: inject(FirestoreService),
+    folderService: inject(FolderService),
+    documentService: inject(DocumentService),
+    uploadService: inject(UploadService),
     modalController: inject(ModalController),
-    httpClient: inject(HttpClient),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
   })),
 
-  withComputed((state) => {
-    return {
-      albumStyle: computed(() => state.config()?.albumStyle ?? AlbumStyle.Grid),
-      title: computed(() => state.currentDirectory().split('/').pop()),
-      currentDirLength: computed(() => state.currentDirectory().split('/').length),
-      initialDirLength: computed(() => {
-        const initialDir = state.config().directory;
-        return !initialDir ? 0 : initialDir.split('/').length;
-      }),
-      parentDirectory: computed(() => state.currentDirectory().split('/').slice(0, -1).join('/')),
-      imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
-      currentUser: computed(() => state.appStore.currentUser()),
-      imageStyle: computed(() => state.config().imageStyle),
-    };
-  }),
+  withComputed((state) => ({
+    imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
+    currentUser: computed(() => state.appStore.currentUser()),
+    imageStyle: computed(() => state.config().imageStyle),
+    albumStyle: computed(() => state.config().albumStyle || 'grid'),
+    isTopFolder: computed(() => state.currentFolderKey() === state.rootFolderKey()),
+  })),
 
   withProps((store) => ({
-    filesResource: resource({
-      params: () => store.currentDirectory(),
-      loader: async ({ params }) => { // currentDirectory
-        if (!params || params.length === 0) return [];
-        const files =  await listAllFilesFromDirectory(store.storage, store.config(), store.imgixBaseUrl(), params);
-        debugMessage(`AlbumStore.filesResource: loaded ${files.length} files from ${params}`, store.currentUser());
-        return files;
+    // All documents of the tenant. The album needs more than the current folder's files: the folder
+    // tiles are rendered with the first image found *inside* each subfolder.
+    documentsResource: rxResource({
+      params: () => ({ currentUser: store.currentUser() }),
+      stream: ({ params }) => {
+        if (!params.currentUser) return of<DocumentModel[]>([]);
+        return store.firestoreService.searchData<DocumentModel>(
+          DocumentCollection, getSystemQuery(store.appStore.tenantId()), 'fullPath', 'asc');
       }
     }),
 
-    metaDataResource: resource({
-      params: () => store.currentImage(),
-      loader: async ({ params }) => { // currentImage
-        const meta = await getImageMetaData(store.httpClient, store.imgixBaseUrl(), params);
-        debugMessage(`AlbumStore.metaDataResource: loaded metadata for ${params?.url}`, store.currentUser());
-        return meta;
+    subFoldersResource: rxResource({
+      params: () => ({ folderKey: store.currentFolderKey(), currentUser: store.currentUser() }),
+      stream: ({ params }) => {
+        if (!params.currentUser || !params.folderKey) return of<FolderModel[]>([]);
+        return store.folderService.listByParent(params.folderKey);
+      }
+    }),
+
+    currentFolderResource: rxResource({
+      params: () => ({ folderKey: store.currentFolderKey(), currentUser: store.currentUser() }),
+      stream: ({ params }) => {
+        if (!params.currentUser || !params.folderKey) return of<FolderModel | undefined>(undefined);
+        return store.folderService.read(params.folderKey);
       }
     })
   })),
 
-  withComputed((state) => {
-    return {
-      images: computed(() => state.filesResource.value() || []),
-      metaData: computed(() => state.metaDataResource.value() || {}),
-      isLoading: computed(() => state.filesResource.isLoading()),
-      error: computed(() => state.filesResource.error()),
-    }
-  }),
+  withComputed((state) => ({
+    documents: computed(() => state.documentsResource.value() ?? []),
+    currentFolder: computed(() => state.currentFolderResource.value()),
+    isLoading: computed(() => state.documentsResource.isLoading() || state.subFoldersResource.isLoading()),
+    error: computed(() => state.documentsResource.error() ?? state.subFoldersResource.error()),
+  })),
 
-  withMethods((store) => {
-    return {
-      /******************************* Setters *************************** */
-      /**
-       * Updates the current directory which triggers the loading of all its files.
-       * @param directory the new currentDirectory
-       */
-      setDirectory(currentDirectory?: string): void {
-        if (!currentDirectory || currentDirectory.length === 0) return;
-        debugMessage(`AlbumStore.setDirectory(${currentDirectory})`, store.currentUser());
-        patchState(store, { currentDirectory });
-      },
+  withComputed((state) => ({
+    title: computed(() => state.currentFolder()?.title || state.currentFolder()?.name || ''),
+    parentFolderKey: computed(() => state.currentFolder()?.parents?.[0] ?? ''),
 
-      setImage(image?: ImageConfig): void {
-        if (image && image.type !== ImageType.Dir) {
-          patchState(store, { currentImage: image });
-        } else {
-          patchState(store, { currentImage: undefined });
-        }
-      },
+    // the files of the current folder, in display order
+    images: computed<ImageConfig[]>(() => {
+      const config = state.config();
+      const folderKey = state.currentFolderKey();
+      return state.documents()
+        .filter((doc) => (doc.folderKeys ?? []).includes(folderKey) && isVisibleInAlbum(doc, config))
+        .map(toImageConfig);
+    }),
 
-      setAlbumStyle(albumStyle: AlbumStyle): void {
-        patchState(store, { config: { ...store.config(), albumStyle } });
-      },
+    // subfolders with their cover image (= first image document inside the folder, if any)
+    // and the number of files they hold
+    folders: computed(() => {
+      const documents = state.documents();
+      return (state.subFoldersResource.value() ?? []).map((folder) => {
+        const files = documents.filter((doc) => (doc.folderKeys ?? []).includes(folder.okey));
+        return {
+          okey: folder.okey,
+          label: folder.title || folder.name,
+          fileCount: files.length,
+          coverUrl: files.find((doc) => doc.mimeType.startsWith('image/'))?.fullPath ?? ''
+        };
+      });
+    })
+  })),
 
-      setConfig(config?: AlbumConfig): void {
-        config ??= ALBUM_CONFIG_SHAPE;
-        config.albumStyle ??= AlbumStyle.Grid;
-        config.directory ??= `tenant/${store.appStore.env.tenantId}/album`;
-        patchState(store, { config, currentDirectory: config.directory }); 
-        debugMessage(`AlbumStore.setConfig: directory=${store.currentDirectory()} and config.`, store.currentUser());
-      },
+  withMethods((store) => ({
+    /** Browse into a folder; triggers the reload of its files and subfolders. */
+    setFolder(currentFolderKey?: string): void {
+      if (!currentFolderKey) return;
+      debugMessage(`AlbumStore.setFolder(${currentFolderKey})`, store.currentUser());
+      patchState(store, { currentFolderKey });
+    },
 
-      goUp(): void {
-        this.setDirectory(store.parentDirectory());
-      },
+    setAlbumStyle(albumStyle: string): void {
+      patchState(store, { config: { ...store.config(), albumStyle } });
+    },
 
-      async openGallery(files: ImageConfig[], title = '', initialSlide = 0): Promise<void> {
-        const images = files.filter((file) => file.type === ImageType.Image);
-        const startIndex = Math.max(0, Math.min(initialSlide, images.length - 1));
-        await showImageSlider(store.modalController, images, startIndex);
+    /**
+     * @param config the section's AlbumConfig
+     * @param sectionName used as the folder key when the config does not name one
+     * @param sectionKey okey of the section — part of the storage path of uploaded files
+     */
+    setConfig(config?: AlbumConfig, sectionName = '', sectionKey = ''): void {
+      const _config = { ...ALBUM_CONFIG_SHAPE, ...(config ?? {}) };
+      const rootFolderKey = _config.folder || sectionName;
+      if (store.rootFolderKey() === rootFolderKey) {
+        patchState(store, { config: _config, sectionKey });   // keep the browsing position
+        return;
       }
+      patchState(store, { config: _config, sectionKey, rootFolderKey, currentFolderKey: rootFolderKey });
+      debugMessage(`AlbumStore.setConfig: folder=${rootFolderKey}`, store.currentUser());
+    },
+
+    /**
+     * Upload the given files to tenant/<tid>/section/<sectionKey>/album and create a DocumentModel
+     * per file, assigned to the folder currently being browsed.
+     */
+    async addFiles(files: File[]): Promise<void> {
+      const currentUser = store.currentUser();
+      const folderKey = store.currentFolderKey();
+      if (!currentUser || !folderKey || files.length === 0) return;
+
+      const tenantId = store.appStore.tenantId();
+      const basePath = `tenant/${tenantId}/${SectionModelName}/${store.sectionKey()}/album`;
+      const tags = `@tag.${tenantId},@tag.${SectionModelName},@tag.album`;
+
+      for (const file of files) {
+        const fullPath = `${basePath}/${sanitizeFileName(file.name)}`;
+        const downloadUrl = await store.uploadService.uploadFile(file, fullPath, file.name);
+        if (!downloadUrl) continue;
+
+        const doc = await store.documentService.getDocumentFromFile(file, fullPath);
+        doc.url = downloadUrl;
+        doc.tags = tags;
+        doc.folderKeys = [folderKey];
+        doc.authorKey = currentUser.personKey;
+        doc.authorName = `${currentUser.firstName} ${currentUser.lastName}`;
+        doc.version = '1.0';
+        await store.documentService.create(doc, currentUser);
+      }
+      store.documentsResource.reload();
+    },
+
+    goUp(): void {
+      if (store.isTopFolder()) return;
+      this.setFolder(store.parentFolderKey());
+    },
+
+    async openGallery(images: ImageConfig[], initialSlide = 0): Promise<void> {
+      const startIndex = Math.max(0, Math.min(initialSlide, images.length - 1));
+      await showImageSlider(store.modalController, images, startIndex);
     }
-  })
+  }))
 );

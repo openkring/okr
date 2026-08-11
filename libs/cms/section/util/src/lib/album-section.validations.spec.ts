@@ -13,9 +13,9 @@ describe('albumSectionValidations', () => {
     expect(albumSectionValidations(model).hasErrors('title')).toBe(true);
   });
 
-  it('flags a non-string directory', () => {
-    const model = { ...ALBUM_SECTION_SHAPE, properties: { ...ALBUM_SECTION_SHAPE.properties, directory: 123 } } as unknown as AlbumSection;
-    expect(albumSectionValidations(model).hasErrors('directory')).toBe(true);
+  it('flags a non-string folder', () => {
+    const model = { ...ALBUM_SECTION_SHAPE, properties: { ...ALBUM_SECTION_SHAPE.properties, folder: 123 } } as unknown as AlbumSection;
+    expect(albumSectionValidations(model).hasErrors('folder')).toBe(true);
   });
 
   it('does not throw for a section whose properties lack imageStyle', () => {

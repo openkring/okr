@@ -2,11 +2,11 @@ import { Component, computed, inject, input } from '@angular/core';
 import { IonButtons, IonContent, IonHeader, IonMenuButton, IonToolbar } from '@ionic/angular/standalone';
 
 import { Header, Spinner } from '@okr/shared-ui';
-import { extractFirstPartOfOptionalTupel, getPartsOfTupel } from '@okr/shared-util-core';
+import { extractFirstPartOfOptionalTupel } from '@okr/shared-util-core';
 
 import { AlbumSectionComponent } from '@okr/cms-section-feature';
 import { createSection } from '@okr/cms-section-util';
-import { ALBUM_CONFIG_SHAPE, AlbumSection, AlbumStyle } from '@okr/shared-models';
+import { ALBUM_CONFIG_SHAPE, AlbumSection } from '@okr/shared-models';
 
 import { PageStore } from './page.store';
 
@@ -48,7 +48,7 @@ export class AlbumPage {
   // inputs
   public contextMenuName = input<string>();
   public color = input('secondary');
-  public id = input.required<string>();     // typically the year of the album
+  public id = input.required<string>();     // the okey of the FolderModel the album starts at
   // id is passed to the album-section as well where it is used as the title
   // the id can be followed by @tenantId to specify the tenantId of the owner of the album
   // e.g. 2021@p13
@@ -59,15 +59,7 @@ export class AlbumPage {
 
   protected section = computed(() => {
     const section = createSection('album', this.tenantId()) as AlbumSection;
-    section.properties = ALBUM_CONFIG_SHAPE;
-    section.properties.albumStyle = AlbumStyle.Pinterest;
-    const id = this.id();
-    if (id.indexOf('@') === -1) {   // show the default album of the current tenant
-      section.properties.directory = `tenant/${this.tenantId()}/album/${id}`; // show default album
-    } else {                         // show the album from a different tenant
-      const [key, tenantId] = getPartsOfTupel(id, '@');
-      section.properties.directory = `tenant/${tenantId}/album/${key}`;
-    }
+    section.properties = { ...ALBUM_CONFIG_SHAPE, folder: extractFirstPartOfOptionalTupel(this.id(), '@') };
     return section;
   });
 }

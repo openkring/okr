@@ -43,20 +43,16 @@
     "zoom": "Ingrandire l'immagine",
     "zoomed": "Immagine ingrandita",
     "edit": "Modificare la configurazione dell'album",
-    "directory": {
-      "label": "Directory",
-      "placeholder": "sssss/ssss",
-      "helper": "Un percorso verso una directory nello storage."
+    "folder": {
+      "label": "Cartella",
+      "placeholder": "sssssssss",
+      "helper": "La chiave (okey) della cartella da cui parte l'album. Vuoto = nome della sezione."
     },
     "style": {
       "label": "Stile dell'album"
     },
     "effect": {
       "label": "Effetto"
-    },
-    "recursive": {
-      "label": "Ricorsivo",
-      "helper": "Collega agli album nelle sottodirectory."
     },
     "show": {
       "videos": {
@@ -1089,5 +1085,24 @@
     "template_placeholder": "p. es. scs_password_reset",
     "all_groups": "Tutti i gruppi",
     "search_placeholder": "Cerca …"
+  },
+  "album_style": {
+    "label": "Stile album",
+    "helper": "Determina come vengono mostrate le immagini di un album.",
+    "grid": {
+      "label": "Griglia"
+    },
+    "pinterest": {
+      "label": "Pinterest"
+    },
+    "imgix": {
+      "label": "Imgix"
+    },
+    "list": {
+      "label": "Elenco"
+    },
+    "avatar": {
+      "label": "Elenco con anteprima"
+    }
   }
 }

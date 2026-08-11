@@ -30,6 +30,7 @@
     { "path": "../../../document/data-access/tsconfig.lib.json" },
     { "path": "../../../document/util/tsconfig.lib.json" },
     { "path": "../../../folder/data-access/tsconfig.lib.json" },
+    { "path": "../../../folder/ui/tsconfig.lib.json" },
     { "path": "../../../forms/ui/tsconfig.lib.json" },
     { "path": "../../../forms/util/tsconfig.lib.json" },
     { "path": "../../../geo/trip/data-access/tsconfig.lib.json" },

@@ -96,7 +96,6 @@ export * from './lib/website-content.model';
 export * from './lib/pdf-template.model';
 
 // enums
-export * from './lib/enums/album-style.enum';
 export * from './lib/enums/avatar-usage.enum';
 export * from './lib/enums/button-action.enum';
 export * from './lib/enums/color-ionic.enum';

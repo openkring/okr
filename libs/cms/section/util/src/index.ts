@@ -1,4 +1,3 @@
-export * from './lib/album-style';
 export * from './lib/album.util';
 export * from './lib/section.util';
 export * from './lib/article-image-migration.util';

@@ -85,7 +85,7 @@ import { MenuStore } from './menu.store';
                       <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
                     }
                   } @else {
-                    <okr-menu [menuName]="menuItemName" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                    <okr-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
                   }
                 }
               </ion-list>
