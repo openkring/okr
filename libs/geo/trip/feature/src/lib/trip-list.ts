@@ -161,10 +161,8 @@ export class TripList {
   private readonly contextMenu = toSignal(toObservable(this.contextMenuName).pipe(
     switchMap(name => this.menuService.read(name))
   ));
-  // a kiosk-only user is not 'registered' (see hasRole), so the menu's roleNeeded alone would hide it there
   protected readonly canOpenContextMenu = computed(() =>
-    !this.store.locked() &&
-    (this.hasRole('kiosk') || hasRole(this.contextMenu()?.roleNeeded, this.currentUser())));
+    !this.store.locked() && hasRole(this.contextMenu()?.roleNeeded, this.currentUser()));
 
   // filters
   protected selectedState = linkedSignal(() => this.store.selectedState());

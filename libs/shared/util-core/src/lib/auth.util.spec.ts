@@ -106,6 +106,18 @@ describe('auth.util', () => {
       expect(result).toBe(true);
     });
 
+    it('should return true when user has kiosk role and checks for registered (kiosk is a logged-in account)', () => {
+      const user = createUserWithRoles({ kiosk: true });
+      const result = hasRole('registered', user);
+      expect(result).toBe(true);
+    });
+
+    it('should return false when user has kiosk role and checks for privileged', () => {
+      const user = createUserWithRoles({ kiosk: true });
+      const result = hasRole('privileged', user);
+      expect(result).toBe(false);
+    });
+
     it('should return true when user has privileged role and checks for privileged', () => {
       const user = createUserWithRoles({ privileged: true });
       const result = hasRole('privileged', user);

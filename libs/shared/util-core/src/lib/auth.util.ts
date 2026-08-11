@@ -32,7 +32,10 @@ export function hasRole(role: RoleName | undefined, currentUser?: UserModel): bo
     case 'none': return true;
     case 'anonymous': return !currentUser; // visible only to unauthenticated users
     case 'public': return true; // visible to everyone, authenticated or not
-    case 'registered': roles = ['registered', 'privileged', 'contentAdmin', 'resourceAdmin', 'eventAdmin', 'memberAdmin', 'treasurer', 'admin']; break;
+    // 'kiosk' counts as registered: it is a real logged-in account, and a kiosk-only user is
+    // route-locked to /trips anyway (kioskLock.guard), so this widens nothing it can reach.
+    // Without it, every menu item gated 'registered' vanishes on the kiosk (empty context menu).
+    case 'registered': roles = ['registered', 'privileged', 'contentAdmin', 'resourceAdmin', 'eventAdmin', 'memberAdmin', 'treasurer', 'admin', 'kiosk']; break;
     case 'privileged': roles = ['privileged', 'admin']; break;
     case 'memberAdmin': roles = ['memberAdmin', 'admin']; break;
     case 'contentAdmin': roles = ['contentAdmin', 'admin']; break;
