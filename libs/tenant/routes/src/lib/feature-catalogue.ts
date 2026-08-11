@@ -611,6 +611,24 @@ const finance: BlockRoutes = {
       children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/finance-expense-feature').then(m => m.ExpenseList) }],
     },
     {
+      // A member's OWN invoices. The whole `accounting/:accountingTenantId` subtree below is
+      // `isPrivilegedGuard`, so the `invoice-my` menu item (roleNeeded: 'registered', url
+      // `/accounting/scs/invoice/my/c-invoice`) dead-ended for every plain member. This is the
+      // same screen, authenticated-only, with `listId` pinned to 'my' by route data rather than
+      // a param — so a member cannot type their way to the `all` list. `AccountingShell` is
+      // reused verbatim: it only maps `:accountingTenantId` into the root AccountingStore.
+      // Reads are already permitted — `invoices` is `tenantRead` in firestore.rules — and
+      // InvoiceList's own `canChange()`/`canDelete()` keep edit/delete at treasurer/admin.
+      path: 'my-invoice/:accountingTenantId',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/finance-accounting-feature').then(m => m.AccountingShell),
+      children: [{
+        path: ':contextMenuName',
+        data: { listId: 'my' },
+        loadComponent: () => import('@okr/finance-invoice-feature').then(m => m.InvoiceList),
+      }],
+    },
+    {
       // `:accountingTenantId` is the LEGAL ENTITY whose books are shown (scs, gss, ...), not
       // the okr tenant — which is why every live navigate entry into this subtree is
       // necessarily tenant-authored and therefore excluded from the `finance` block's menu.
