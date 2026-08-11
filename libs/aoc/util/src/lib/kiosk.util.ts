@@ -1,0 +1,37 @@
+/**
+ * Pure helpers for the AOC kiosk screen. A kiosk reports every 15 minutes
+ * (`KioskStatusService.REPORT_INTERVAL_MS`), so its liveness is judged purely from the age of
+ * the last `seen` timestamp — see `isKioskOnline`.
+ */
+
+/**
+ * A kiosk is considered online while its heartbeat is younger than two report intervals.
+ * One interval would flag every kiosk that reports a few seconds late; two is late enough to
+ * mean "the app is not running" rather than "the report is in flight".
+ */
+export const KIOSK_OFFLINE_AFTER_MS = 2 * 15 * 60 * 1000;
+
+export function isKioskOnline(seen: string | undefined, nowMs: number): boolean {
+  if (!seen) return false;
+  const seenMs = Date.parse(seen);
+  if (Number.isNaN(seenMs)) return false;
+  return nowMs - seenMs < KIOSK_OFFLINE_AFTER_MS;
+}
+
+/** Human-readable age of the last heartbeat, e.g. "vor 3 Min.", "vor 2 Std.", "vor 4 Tagen". */
+export function formatSeenAge(seen: string | undefined, nowMs: number): string {
+  if (!seen) return 'nie';
+  const seenMs = Date.parse(seen);
+  if (Number.isNaN(seenMs)) return 'nie';
+  const minutes = Math.max(0, Math.floor((nowMs - seenMs) / 60000));
+  if (minutes < 1) return 'gerade eben';
+  if (minutes < 60) return `vor ${minutes} Min.`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `vor ${hours} Std.`;
+  return `vor ${Math.floor(hours / 24)} Tagen`;
+}
+
+/** Battery as a percentage, or '—' when the platform hides it (iOS Safari reports -1). */
+export function formatBattery(batteryLevel: number | undefined): string {
+  return batteryLevel === undefined || batteryLevel < 0 ? '—' : `${batteryLevel}%`;
+}

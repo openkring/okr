@@ -107,7 +107,7 @@ const calevent: BlockRoutes = {
  * the same defeat-by-ancestor as softening the children alone.
  *
  * The floor is now `isContentAdminGuard()`, and that is not a guess: it is the UNION of what
- * the children require. Thirteen require `admin` (`['admin']`); three require `contentAdmin`
+ * the children require. Fourteen require `admin` (`['admin']`); three require `contentAdmin`
  * (`['contentAdmin', 'admin']`). The union is `['contentAdmin', 'admin']`, i.e. exactly
  * `hasRole('contentAdmin')`. No `/aoc` child admits `privileged` any more (the one that did,
  * `website`, is now contentAdmin-gated), so nothing is locked out by it. Dropping the floor to
@@ -139,7 +139,7 @@ const aoc: BlockRoutes = {
   routes: (): Route[] => [{
     path: 'aoc',
     // The FLOOR every `/aoc` screen shares — the union of the children's own requirements, NOT
-    // the admin gate. The admin gate lives on the thirteen children below that the 2026-08-05
+    // the admin gate. The admin gate lives on the fourteen children below that the 2026-08-05
     // rulings do not name. See the block comment for why it is contentAdmin and not privileged
     // (R-5) nor merely authenticated.
     canActivate: [isContentAdminGuard()],
@@ -153,6 +153,7 @@ const aoc: BlockRoutes = {
       { path: 'statistics', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStatistics) },
       { path: 'storage',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStorage) },
       { path: 'doc',        canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocDoc) },
+      { path: 'kiosk',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocKiosk) },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `tag-all` menu doc's
       // `roleNeeded: contentAdmin`. The fifth mismatch, found while applying the first four and
       // explicitly folded into the ruling.

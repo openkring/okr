@@ -250,14 +250,14 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
     const unguarded = children.filter(c => (c.canActivate ?? []).length === 0).map(c => c.path);
 
     expect(unguarded, 'child would silently inherit the contentAdmin floor').toEqual([]);
-    expect(children.length, 'children were added or removed; re-check the ruling list').toBe(16);
+    expect(children.length, 'children were added or removed; re-check the ruling list').toBe(17);
   });
 
   it('every child the rulings do NOT name stays admin-only', () => {
     const { children = [] } = fragmentOf('aoc', 'aoc');
     const others = children.filter(c => !AOC_CONTENT_ADMIN.includes(c.path as typeof AOC_CONTENT_ADMIN[number]));
 
-    expect(others.length, 'expected thirteen admin-only /aoc children').toBe(13);
+    expect(others.length, 'expected fourteen admin-only /aoc children').toBe(14);
     // The child's OWN guard must reject both non-admin roles, independently of the floor.
     expect(others.filter(c => activates(CONTENT_ADMIN, c)).map(c => c.path)).toEqual([]);
     expect(others.filter(c => activates(PRIVILEGED, c)).map(c => c.path)).toEqual([]);
@@ -282,7 +282,7 @@ describe('/aoc guards after the 2026-08-05 rulings', () => {
    * the three ruled children are reachable) and still be stopped by each admin-only child. Both
    * halves in one assertion, because getting either wrong reintroduces the defeat-by-ancestor
    * bug the restructuring exists to avoid. R-6 touched no `/aoc` route, so the floor is still
-   * the union of these children: thirteen `['admin']` ∪ three `['contentAdmin', 'admin']`.
+   * the union of these children: fourteen `['admin']` ∪ three `['contentAdmin', 'admin']`.
    */
   it('a contentAdmin clears the floor but only reaches the three ruled screens', () => {
     const parent = fragmentOf('aoc', 'aoc');

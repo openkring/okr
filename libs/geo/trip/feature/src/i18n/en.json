@@ -189,5 +189,6 @@
     "scull": "Sculling",
     "sweep": "Sweep"
   },
-  "person": "Person"
+  "person": "Person",
+  "locked": "The logbook is currently locked. Trips cannot be created or changed."
 }

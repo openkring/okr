@@ -189,5 +189,6 @@
     "title": "Wie wird gerudert?",
     "scull": "Skull",
     "sweep": "Riemen"
-  }
+  },
+  "locked": "Das Logbuch ist zurzeit gesperrt. Es können keine Fahrten erfasst oder geändert werden."
 }

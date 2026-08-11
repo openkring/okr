@@ -33,6 +33,8 @@
     { "path": "../../document/data-access/tsconfig.lib.json" },
     { "path": "../../document/util/tsconfig.lib.json" },
     { "path": "../../geo/location/util/tsconfig.lib.json" },
+    { "path": "../../geo/trip/data-access/tsconfig.lib.json" },
+    { "path": "../../geo/trip/util/tsconfig.lib.json" },
     { "path": "../../relationship/membership/data-access/tsconfig.lib.json" },
     { "path": "../../relationship/membership/feature/tsconfig.lib.json" },
     { "path": "../../relationship/membership/util/tsconfig.lib.json" },

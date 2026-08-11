@@ -189,5 +189,6 @@
     "scull": "Scull",
     "sweep": "Remo de punta"
   },
-  "person": "Persona"
+  "person": "Persona",
+  "locked": "El cuaderno de bitácora está bloqueado actualmente. No se pueden registrar ni modificar salidas."
 }

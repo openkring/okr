@@ -264,6 +264,9 @@ const aoc: FeatureBlock = {
       { key: 'aoc-account',    name: 'aoc-account',    url: '/aoc/account',    action: 'navigate', roleNeeded: 'admin', icon: 'person',   label: 'User Accounts' },
       { key: 'aoc-doc',        name: 'aoc-doc',        url: '/aoc/doc',        action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: 'Dokumente' },
       { key: 'aoc-bexio',      name: 'aoc-bexio',      url: '/aoc/bexio',      action: 'navigate', roleNeeded: 'admin', icon: 'bank',     label: 'Bexio' },
+      // NEW (not mirrored off a live doc, unlike its siblings above): the kiosk monitoring +
+      // remote-operations screen, seeded with the block. See the `kiosk` skill.
+      { key: 'aoc-kiosk',      name: 'aoc-kiosk',      url: '/aoc/kiosk',      action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: 'Kiosk' },
       // `roleNeeded: contentAdmin` (not `admin`) is the LIVE value, copied verbatim — and it
       // is now HONOURED. It used to be inert: the `/aoc` route parent was `isAdminGuard()`, so
       // a contentAdmin-but-not-admin user saw the row and was bounced. Owner ruling R-5

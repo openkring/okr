@@ -400,8 +400,10 @@ service cloud.firestore {
     // may clean up a retired kiosk. Never carries PII — uid, device model, battery, time.
     match /kiosk-status/{uid} {
       allow read: if tenantRead();
-      allow create, update: if signedIn() && request.auth.uid == uid
-                            && request.resource.data.uid == uid
+      // the device writes its own telemetry; an admin may write the doc too, to set
+      // `reloadAt` (the remote "reload yourself" command the kiosk listens for)
+      allow create, update: if signedIn()
+                            && (isAdmin() || (request.auth.uid == uid && request.resource.data.uid == uid))
                             && belongsToTenant(request.resource.data);
       allow delete: if isAdmin() && belongsToTenant(resource.data);
     }

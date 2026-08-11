@@ -1,5 +1,5 @@
-import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
-import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Component, computed, DestroyRef, effect, inject, input, linkedSignal } from '@angular/core';
+import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRefresher, IonRefresherContent, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -25,7 +25,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
     Spinner, EmptyList, ListFilter, AvatarDisplay, Menu,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonMenuButton,
     IonIcon, IonContent, IonList, IonItem, IonLabel, IonItemDivider, IonPopover,
-    IonBackdrop, IonFab, IonFabButton
+    IonBackdrop, IonFab, IonFabButton, IonRefresher, IonRefresherContent
   ],
   providers: [TripStore],
   template: `
@@ -69,6 +69,10 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
     </ion-header>
 
     <ion-content>
+      <!-- pull down to rebuild the Firestore listener: the kiosk has no browser chrome to reload with -->
+      <ion-refresher slot="fixed" (ionRefresh)="reload($event)">
+        <ion-refresher-content />
+      </ion-refresher>
       @if (store.isLoading()) {
         <okr-spinner />
         <ion-backdrop />
@@ -98,7 +102,14 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
           }
         </ion-list>
       }
-      @if (hasRole('kiosk')) {
+      @if (hasRole('kiosk') && store.locked()) {
+        <!-- remotely locked from the AOC kiosk screen: readable, but no new entries -->
+        <ion-item color="warning" lines="none">
+          <ion-icon slot="start" src="{{ 'lock' | svgIcon }}" />
+          <ion-label class="ion-text-wrap">{{ store.i18n.locked() }}</ion-label>
+        </ion-item>
+      }
+      @if (hasRole('kiosk') && store.canWrite()) {
         <ion-fab slot="fixed" vertical="bottom" horizontal="end" style="margin-bottom: 50px; margin-right: 50px;">
           <ion-fab-button class="kiosk-fab" (click)="store.createTrip()">
             <ion-icon src="{{ 'add' | svgIcon }}" />
@@ -158,6 +169,22 @@ export class TripList {
   constructor() {
     // the listId (a `trip_type` category value, e.g. 'logbuch') partitions the list by trip type
     effect(() => this.store.setType(this.listId()));
+
+    // A kiosk iPad sleeps for hours; iOS suspends the page and the Firestore listen stream can
+    // come back dead (or has errored into the empty-list fallback), leaving the list frozen.
+    // Rebuild it whenever the device wakes up. Cheap: one re-subscribe, not a page reload.
+    document.addEventListener('visibilitychange', this.reloadOnWake);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('visibilitychange', this.reloadOnWake));
+  }
+
+  private readonly reloadOnWake = (): void => {
+    if (!document.hidden) this.store.tripsResource.reload();
+  };
+
+  /** Manual refresh (pull-to-refresh). Completes at once — the spinner is driven by store.isLoading(). */
+  protected reload(event?: CustomEvent): void {
+    this.store.tripsResource.reload();
+    (event?.target as HTMLIonRefresherElement | null)?.complete();
   }
 
   /******************************* context menu *************************************** */

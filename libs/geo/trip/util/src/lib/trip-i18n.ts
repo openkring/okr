@@ -11,6 +11,7 @@ export const TRIP_I18N_KEYS = {
   trips:                    PFX + 'trips',
   desc:                     PFX + 'desc',
   empty:                    PFX + 'empty',
+  locked:                   PFX + 'locked',
 
   create:                   PFX + 'create.label',
   create_conf:              PFX + 'create.conf',

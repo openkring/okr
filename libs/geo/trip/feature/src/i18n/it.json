@@ -189,5 +189,6 @@
     "scull": "Doppio remo",
     "sweep": "Remo singolo"
   },
-  "person": "Persona"
+  "person": "Persona",
+  "locked": "Il libro di bordo è attualmente bloccato. Non è possibile registrare o modificare uscite."
 }

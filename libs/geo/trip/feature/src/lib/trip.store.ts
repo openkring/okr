@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ActionSheetController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, LocationSelectResult, ModelSelectService } from '@okr/shared-feature';
+import { AppStore, KioskStatusService, LocationSelectResult, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, PersonModel, TaskModel, TripModel, UserModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
@@ -68,6 +68,7 @@ export const TripStore = signalStore(
     taskService: inject(TaskService),
     locationService: inject(LocationService),
     modelSelectService: inject(ModelSelectService),
+    kioskStatusService: inject(KioskStatusService),
     responsibilityService: inject(ResponsibilityService),
     modalController: inject(ModalController),
     actionSheetController: inject(ActionSheetController),
@@ -100,9 +101,13 @@ export const TripStore = signalStore(
     tenantId: computed(() => store.appStore.tenantId()),
     imgixBaseUrl: computed(() => store.appStore.env.services.imgixBaseUrl),
     isLoading: computed(() => store.tripsResource.isLoading()),
+    // `locked` is the remote read-only switch an admin flips from the AOC kiosk screen; it is
+    // always false for a non-kiosk user, so gating everyone on it here is safe.
     canWrite: computed(() =>
-      hasRole('kiosk', store.appStore.currentUser()) || hasRole('admin', store.appStore.currentUser())
+      !store.kioskStatusService.locked() &&
+      (hasRole('kiosk', store.appStore.currentUser()) || hasRole('admin', store.appStore.currentUser()))
     ),
+    locked: computed(() => store.kioskStatusService.locked()),
     locations: computed(() => store.locationsResource.value() ?? []),
     trips: computed(() => store.tripsResource.value() ?? [])
   })),

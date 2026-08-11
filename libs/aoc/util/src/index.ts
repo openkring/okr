@@ -4,3 +4,4 @@ export * from './lib/srv.util';
 export * from './lib/aoc-i18n';
 export * from './lib/tenant-switcher.util';
 export * from './lib/tag-string.validations';
+export * from './lib/kiosk.util';

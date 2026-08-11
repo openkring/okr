@@ -189,5 +189,6 @@
     "scull": "Couple",
     "sweep": "Pointe"
   },
-  "person": "Personne"
+  "person": "Personne",
+  "locked": "Le carnet de bord est actuellement verrouillé. Aucune sortie ne peut être saisie ou modifiée."
 }
