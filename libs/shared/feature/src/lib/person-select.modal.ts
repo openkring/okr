@@ -82,6 +82,8 @@ export class PersonSelectModal {
   public selectedTag = input.required<string>();
   public currentUser = input.required<UserModel>();
   public allowCustom = input<boolean>(false);
+  /** Opt-in two-level lookup (members of the default org first). Off everywhere but trip/logbuch. */
+  public membersFirst = input<boolean>(false);
 
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
   protected filteredPersons = computed(() => this.store.filteredPersons() ?? []);
@@ -99,6 +101,9 @@ export class PersonSelectModal {
     });
     effect(() => {
       this.store.setAllowCustom(this.allowCustom());
+    });
+    effect(() => {
+      this.store.setMembersFirst(this.membersFirst());
     });
   }
 

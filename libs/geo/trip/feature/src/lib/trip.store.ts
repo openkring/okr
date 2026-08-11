@@ -195,7 +195,8 @@ export const TripStore = signalStore(
     },
 
     async selectPersonAvatar(): Promise<AvatarInfo | undefined> {
-      return await store.modelSelectService.selectPersonAvatar(undefined, undefined, true);
+      // logbuch: crew is normally current members, so offer those first (two-level lookup)
+      return await store.modelSelectService.selectPersonAvatar(undefined, undefined, true, true);
     },
 
     async selectResourceAvatar(): Promise<AvatarInfo | undefined> {

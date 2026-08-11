@@ -19,6 +19,7 @@ export type PersonSelectState = {
   currentUser: UserModel | undefined;
   selectedTag: string;
   allowCustom: boolean;
+  membersFirst: boolean;
 };
 
 export const personInitialState: PersonSelectState = {
@@ -26,6 +27,7 @@ export const personInitialState: PersonSelectState = {
   currentUser: undefined,
   selectedTag: '',
   allowCustom: false,
+  membersFirst: false,
 };
 
 export const PersonSelectStore = signalStore(
@@ -99,16 +101,18 @@ export const PersonSelectStore = signalStore(
       && !store.hasExactMatch()
     ),
     /**
-     * Two-level lookup: members first, and only when the term finds none of them does the
-     * list widen to every living person. Picking a guest or a former member therefore takes
-     * one extra keystroke, not a mode switch.
+     * Default: every living person. Only with membersFirst (opt-in, currently the trip/logbuch
+     * lookup) does the two-level mode apply — members first, widening to everyone only when the
+     * term finds no member. Picking a guest or a former member then takes one extra keystroke.
      */
     filteredPersons: computed(() =>
-      store.memberMatches().length > 0 ? store.memberMatches() : store.personMatches()
+      store.membersFirst() && store.memberMatches().length > 0
+        ? store.memberMatches()
+        : store.personMatches()
     ),
     /** True while the widened level is on display, so the list can say so. */
     isBeyondMembers: computed(() =>
-      store.memberMatches().length === 0 && store.personMatches().length > 0
+      store.membersFirst() && store.memberMatches().length === 0 && store.personMatches().length > 0
     ),
   })),
 
@@ -129,6 +133,10 @@ export const PersonSelectStore = signalStore(
 
       setAllowCustom(allowCustom: boolean) {
         patchState(store, { allowCustom });
+      },
+
+      setMembersFirst(membersFirst: boolean) {
+        patchState(store, { membersFirst });
       }
     }
   }),

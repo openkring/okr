@@ -22,7 +22,7 @@ export class ModelSelectService {
    * Opens the person-select modal. When allowCustom is true and the user types a name that
    * matches no existing person, the modal offers a custom entry (returned as kind: 'custom').
    */
-  private async openPersonSelect(selectedTag = DEFAULT_TAGS, allowCustom = false): Promise<PersonSelectResult | undefined> {
+  private async openPersonSelect(selectedTag = DEFAULT_TAGS, allowCustom = false, membersFirst = false): Promise<PersonSelectResult | undefined> {
     const modal = await this.modalController.create({
       component: PersonSelectModal,
       cssClass: 'list-modal',
@@ -30,6 +30,7 @@ export class ModelSelectService {
         selectedTag,
         currentUser: this.appStore.currentUser(),
         allowCustom,
+        membersFirst,
       },
     });
     modal.present();
@@ -52,8 +53,8 @@ export class ModelSelectService {
    * Returns an AvatarInfo for the selected person. When allowCustom is true and the user enters
    * a name that matches no existing person, a custom avatar (key '') with that name is returned.
    */
-  public async selectPersonAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL, allowCustom = false): Promise<AvatarInfo | undefined> {
-    const result = await this.openPersonSelect(selectedTag, allowCustom);
+  public async selectPersonAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL, allowCustom = false, membersFirst = false): Promise<AvatarInfo | undefined> {
+    const result = await this.openPersonSelect(selectedTag, allowCustom, membersFirst);
     if (!result) return undefined;
     if (result.kind === 'custom') {
       const parts = normalizeWhitespace(result.label).split(' ');
