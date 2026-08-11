@@ -569,6 +569,18 @@ export function getDayDiff(fromDate: string, toDate: string): number {
 }
 
 /**
+ * Check if a date lies in the past, i.e. before today. Today itself is not past.
+ * An empty or unparsable date is not considered past.
+ * @param date a date in StoreDate format (i.e. yyyymmdd)
+ * @param dateFormat the format of the date (default is StoreDate)
+ */
+export function isPastDate(date: string, dateFormat = DateFormat.StoreDate): boolean {
+    if (!date || date === END_FUTURE_DATE_STR) return false;
+    const parsedDate = parseDate(date, dateFormat, false);
+    return !!parsedDate && format(parsedDate, 'yyyyMMdd') < getTodayStr(DateFormat.StoreDate);
+}
+
+/**
  * Check if a date is in the future.
  * @param date a date in StoreDate format (i.e. yyyymmdd)
  * @param dateFormat the format of the date (default is StoreDate)

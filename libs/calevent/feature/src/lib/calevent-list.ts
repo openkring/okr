@@ -22,7 +22,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, formatScheduleCloseMessage, getCalEventCssClass } from '@okr/calevent-util';
+import { CalEventDurationPipe, formatScheduleCloseMessage, getCalEventCssClass, isPastCalevent } from '@okr/calevent-util';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
 
@@ -589,18 +589,20 @@ export class CalEventList implements OnInit {
    * @param calEvent 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
+    // attendance actions (subscribe/unsubscribe) make no sense for past events
+    const showAttendance = !isPastCalevent(calevent);
     if (calevent.isOpen) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
-      if (state !== 'accepted') {
+      if (showAttendance && state !== 'accepted') {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
       }
-      if (state !== 'declined') {
+      if (showAttendance && state !== 'declined') {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
       }
     } else {  // invitation
       // get invitation for current user
       const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.okey);
-      if (inv) {
+      if (inv && showAttendance) {
         if (inv.state !== 'accepted') {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
         }
@@ -608,10 +610,12 @@ export class CalEventList implements OnInit {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
         }
       }
-      if (this.store.isGroupCalevent(calevent)) {
+      if (showAttendance && this.store.isGroupCalevent(calevent)) {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.store.i18n.invite_members(), this.imgixBaseUrl, 'add'));
       }
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.store.i18n.invite_person(), this.imgixBaseUrl, 'person-add'));
+      if (showAttendance) {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.store.i18n.invite_person(), this.imgixBaseUrl, 'person-add'));
+      }
     }
     // Show schedule-poll buttons for proposed events
     if (calevent.state === 'proposed') {

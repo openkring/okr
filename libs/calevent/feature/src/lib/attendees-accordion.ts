@@ -10,7 +10,7 @@ import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, CaleventI18n, isPastCalevent } from '@okr/calevent-util';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 
@@ -94,7 +94,8 @@ export class AttendeesAccordion {
    * @param attendee 
    */
   protected async showActions(attendee: Attendee): Promise<void> {
-    if (this.isReadOnly()) return;
+    // attendance can no longer be changed for past events
+    if (this.isReadOnly() || isPastCalevent(this.calevent())) return;
     const actionSheetOptions = createActionSheetOptions(this.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, attendee);
     await this.executeActions(actionSheetOptions, attendee);

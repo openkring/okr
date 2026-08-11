@@ -1,7 +1,7 @@
 import { EventInput } from '@fullcalendar/core';
 
 import { CalEventModel } from '@okr/shared-models';
-import { addTime, convertDateFormatToString, DateFormat, getIsoDateTime, isType } from '@okr/shared-util-core';
+import { addTime, convertDateFormatToString, DateFormat, getIsoDateTime, isPastDate, isType } from '@okr/shared-util-core';
 
 export function isCalEvent(calEvent: unknown, tenantId: string): calEvent is CalEventModel {
   return isType(calEvent, new CalEventModel(tenantId));
@@ -15,6 +15,15 @@ export function isCalEvent(calEvent: unknown, tenantId: string): calEvent is Cal
  */
 export function isFullDayEvent(calevent: CalEventModel): boolean {
   return !calevent.startTime || calevent.startTime.length === 0;
+}
+
+/**
+ * Check whether a CalEvent lies in the past (i.e. its last day is before today).
+ * Used to hide attendance actions (subscribe/unsubscribe) for events that are over.
+ * @param calevent
+ */
+export function isPastCalevent(calevent: CalEventModel): boolean {
+  return isPastDate(calevent.endDate || calevent.startDate);
 }
 
 export function convertCalEventToFullCalendar(calevent: CalEventModel): EventInput {

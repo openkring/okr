@@ -1,7 +1,7 @@
 import { CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, isCalEvent, isFullDayEvent, isSchedulePoll } from './calevent.util';
+import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, isCalEvent, isFullDayEvent, isPastCalevent, isSchedulePoll } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -143,5 +143,26 @@ describe('formatScheduleCloseMessage', () => {
   it('omits blank author message', () => {
     const msg = formatScheduleCloseMessage('Ausflug', '20250622', '  ');
     expect(msg.split('\n')).toHaveLength(2);
+  });
+});
+
+describe('isPastCalevent', () => {
+  const event = (startDate: string, endDate = ''): CalEventModel =>
+    ({ ...new CalEventModel('t1'), startDate, endDate });
+
+  it('is past when startDate is before today', () => {
+    expect(isPastCalevent(event('20200101'))).toBe(true);
+  });
+
+  it('is not past for a future event', () => {
+    expect(isPastCalevent(event('20990101'))).toBe(false);
+  });
+
+  it('uses endDate for multi-day events', () => {
+    expect(isPastCalevent(event('20200101', '20990101'))).toBe(false);
+  });
+
+  it('is not past without a date', () => {
+    expect(isPastCalevent(event(''))).toBe(false);
   });
 });

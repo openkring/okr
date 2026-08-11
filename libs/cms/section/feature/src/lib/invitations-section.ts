@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 
 import { InvitationModel, InvitationsConfig, InvitationsSection, InvitationState } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
-import { getAttendanceColor, getAttendanceIcon, hasRole } from '@okr/shared-util-core';
+import { getAttendanceColor, getAttendanceIcon, hasRole, isPastDate } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { InvitationSectionStore } from './invitations-section.store';
@@ -144,7 +144,8 @@ export class InvitationsSectionComponent implements OnInit {
    * @param calevent 
    */
   protected async showActions(inv: InvitationModel): Promise<void> {
-    if (this.editMode()) return;
+    // attendance can no longer be changed for past events
+    if (this.editMode() || isPastDate(inv.date)) return;
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, inv);
     await this.executeActions(actionSheetOptions, inv);
