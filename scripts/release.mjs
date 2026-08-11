@@ -122,12 +122,19 @@ async function releaseApp(app) {
 
   // 2. version bump (confirm) — bump BEFORE build so the nx config cache busts
   const current = readVersion();
-  const kindAns = (await ask(`\n[2/6] Bump version from ${current} — patch/minor/major? [patch] `)).toLowerCase() || 'patch';
-  const kind = ['patch', 'minor', 'major'].includes(kindAns) ? kindAns : 'patch';
-  const next = bump(current, kind);
-  if (!(await confirm(`Set version ${current} -> ${next}?`, true))) abort('Aborted at version bump.');
-  writeFileSync(pkgPath, readFileSync(pkgPath, 'utf8').replace(`"version": "${current}"`, `"version": "${next}"`));
-  console.log(`package.json version -> ${next}`);
+  // 'none' ships a SECOND app at the version the first app of this release just cut, so both
+  // apps land on one number and one tag. It skips the bump, the release commit and the tag
+  // (they already exist) — everything else, including the live-version verify, still runs.
+  const kindAns = (await ask(`\n[2/6] Bump version from ${current} — patch/minor/major/none? [patch] `)).toLowerCase() || 'patch';
+  const kind = ['patch', 'minor', 'major', 'none'].includes(kindAns) ? kindAns : 'patch';
+  const next = kind === 'none' ? current : bump(current, kind);
+  if (kind === 'none') {
+    console.log(`Keeping version ${current} — no bump, no release commit, no tag.`);
+  } else {
+    if (!(await confirm(`Set version ${current} -> ${next}?`, true))) abort('Aborted at version bump.');
+    writeFileSync(pkgPath, readFileSync(pkgPath, 'utf8').replace(`"version": "${current}"`, `"version": "${next}"`));
+    console.log(`package.json version -> ${next}`);
+  }
 
   try {
     // 3. prod build (source .env so FIREBASE_WEBAPP_CONFIG is set for the prod config target)
@@ -212,13 +219,17 @@ async function releaseApp(app) {
 
   // 7. commit + tag + push (confirm push — outward-facing)
   console.log('\n[7/7] Commit + tag');
-  run('git', ['add', 'package.json']);
-  run('git', ['commit', '-m', `release: v${next}`]);
-  run('git', ['tag', '-a', `v${next}`, '-m', `release v${next}`]);
-  if (await confirm(`Push commit + tag v${next} to origin/main?`, true))
-    run('git', ['push', 'origin', 'main', '--follow-tags']);
-  else
-    console.log(`  Not pushed. Push later with:  git push origin main --follow-tags`);
+  if (kind === 'none') {
+    console.log(`  Skipped — v${next} was already committed and tagged by the app that cut it.`);
+  } else {
+    run('git', ['add', 'package.json']);
+    run('git', ['commit', '-m', `release: v${next}`]);
+    run('git', ['tag', '-a', `v${next}`, '-m', `release v${next}`]);
+    if (await confirm(`Push commit + tag v${next} to origin/main?`, true))
+      run('git', ['push', 'origin', 'main', '--follow-tags']);
+    else
+      console.log(`  Not pushed. Push later with:  git push origin main --follow-tags`);
+  }
 
   console.log(`\n✔ ${app} released as v${next}.`);
   if (appVersionPending)
