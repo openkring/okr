@@ -50,7 +50,9 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
         --padding-start: 12px;
         --padding-end: 12px;
       }
-      full-calendar { width: 100%; height: 800px;}
+      /* no fixed height: the calendar uses height:'auto' and must size to its content,
+         otherwise the last hours of the time grid get clipped on narrow screens. */
+      full-calendar { width: 100%; }
 
       :host ::ng-deep .fc-toolbar-title {
         font-size: 0.9rem !important;

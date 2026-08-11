@@ -25,12 +25,12 @@ import { CalendarStore } from './calendar-section.store';
   styles: [`
     ion-card-content { padding: 0px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
-    full-calendar { width: 100%; height: 800px;}
+    /* no fixed height: the calendar uses height:'auto' and must size to its content,
+       otherwise the last hours of the time grid get clipped on narrow screens. */
+    full-calendar { width: 100%; }
     .fc-toolbar-title { font-size: 0.5em; }
 
     @media (max-width: 600px) {
-      /* On mobile we render the agenda/month list, which sizes to its content. */
-      full-calendar { height: auto; }
       :host ::ng-deep .fc-toolbar-title { font-size: 1em; }
     }
   `],
