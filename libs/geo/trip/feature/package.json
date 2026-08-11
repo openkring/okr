@@ -19,6 +19,7 @@
     "@okr/relationship-responsibility-data-access": "*",
     "@okr/avatar-data-access": "*",
     "@okr/avatar-util": "*",
+    "@okr/cms-menu-data-access": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/cms-section-feature": "*",
     "@okr/location-data-access": "*",

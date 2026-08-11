@@ -1,4 +1,6 @@
 import { Component, computed, DestroyRef, effect, inject, input, linkedSignal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { switchMap } from 'rxjs/operators';
 import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRefresher, IonRefresherContent, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
@@ -7,6 +9,7 @@ import { createActionSheetButton, createActionSheetOptions, keepDefaultTrue } fr
 import { RoleName, TripModel } from '@okr/shared-models';
 
 import { Menu } from '@okr/cms-menu-feature';
+import { MenuService } from '@okr/cms-menu-data-access';
 
 import { formatTripTime, isTripDeletable, isTripEditable } from '@okr/trip-util';
 import { TripStore } from './trip.store';
@@ -41,7 +44,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
               <ion-icon slot="icon-only" src="{{'info-circle' | svgIcon}}" />
             </ion-button>
           </ion-buttons>
-          @if (store.canWrite()) {  <!-- kiosk or admin -->
+          @if (canOpenContextMenu()) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon}}" />
@@ -142,6 +145,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
 export class TripList {
   protected readonly store = inject(TripStore);
   private readonly actionSheetController = inject(ActionSheetController);
+  private readonly menuService = inject(MenuService);
 
   // inputs
   public listId = input('all');
@@ -152,6 +156,13 @@ export class TripList {
 
   // derived
   protected readonly popupId = computed(() => 'c_trips_' + this.listId());
+
+  // the context menu doc carries its own roleNeeded; honour it instead of hard-coding kiosk/admin
+  private readonly contextMenu = toSignal(toObservable(this.contextMenuName).pipe(
+    switchMap(name => this.menuService.read(name))
+  ));
+  protected readonly canOpenContextMenu = computed(() =>
+    !this.store.locked() && hasRole(this.contextMenu()?.roleNeeded, this.currentUser()));
 
   // filters
   protected selectedState = linkedSignal(() => this.store.selectedState());
