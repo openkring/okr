@@ -13,6 +13,9 @@ export const CALEVENT_I18N_KEYS = {
   attendance_add:             PFX + 'attendance.add',
   attendance_exists:          PFX + 'attendance.exists',
   attendance_empty:           PFX + 'attendance.empty',
+  // the organiser changes someone else's attendance (invitation_* is the first-person variant)
+  attendance_subscribe:       PFX + 'attendance.subscribe',
+  attendance_unsubscribe:     PFX + 'attendance.unsubscribe',
 
   create:                     PFX + 'create.label',
   create_conf:                PFX + 'create.conf',
@@ -32,6 +35,9 @@ export const CALEVENT_I18N_KEYS = {
   delete_series_all:          PFX + 'delete.series.all',
 
   download_ics:               PFX + 'download.ics',
+
+  copy:                       PFX + 'copy.label',
+  filter_all:                 PFX + 'filter.all',
 
   quick_entry_label:          PFX + 'quickEntry.label',
   quick_entry_placeholder:    PFX + 'quickEntry.placeholder',

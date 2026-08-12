@@ -16,7 +16,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, QuickEntryService } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceState, getAvatarInfo, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -27,6 +27,9 @@ import { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
+
+type AttendanceState = 'accepted' | 'declined' | 'invited';
+type AttendanceFilter = AttendanceState | 'all';
 
 @Component({
     selector: 'okr-calevent-list',
@@ -149,6 +152,16 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
         <!-- list header -->
       @if(isListView()) {
         <ion-toolbar>
+          <!-- attendance filter: cycles all -> accepted -> declined -> open -->
+          <ion-buttons slot="start">
+            <ion-button (click)="cycleAttendanceFilter()">
+              @if(attendanceFilter() === 'all') {
+                <ion-label>{{ store.i18n.filter_all() }}</ion-label>
+              } @else {
+                <ion-icon slot="icon-only" src="{{ getAttendanceIcon(attendanceFilter()) | svgIcon }}" color="{{ getAttendanceColor(attendanceFilter()) }}" />
+              }
+            </ion-button>
+          </ion-buttons>
           <ion-grid>
             <ion-row>
               <ion-col size="6" size-md="3">
@@ -194,6 +207,9 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
           <ion-list lines="inset">
             @for(event of filteredCalEvents(); track event.okey; let i = $index) {
               <ion-item [id]="'calevent-' + i" (click)="showActions(event)" [class]="getCalEventCssClass(event.state)">
+                @if(attendanceState(event); as state) {
+                  <ion-icon slot="start" src="{{ getAttendanceIcon(state) | svgIcon }}" color="{{ getAttendanceColor(state) }}" />
+                }
                 <ion-label>{{ event | calEventDuration }}</ion-label>
                 <ion-label>{{event.name}}</ion-label>
                 <ion-label class="ion-hide-md-down">{{ event.locationKey | part:true }}</ion-label>
@@ -246,9 +262,17 @@ export class CalEventList implements OnInit {
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
   protected selectedType = linkedSignal(() => this.store.selectedCategory());
 
+  // attendance filter: 'all' shows everything, the other values match the attendance state of the current user
+  protected attendanceFilter = signal<AttendanceFilter>('all');
+
   // data
   protected calEventsCount = computed(() => this.store.calEventsCount());
-  protected filteredCalEvents = computed(() => this.store.filteredCalEvents() ?? []);
+  protected filteredCalEvents = computed(() => {
+    const events = this.store.filteredCalEvents() ?? [];
+    const filter = this.attendanceFilter();
+    if (filter === 'all') return events;
+    return events.filter(event => this.attendanceState(event) === filter);
+  });
   protected filteredCalEventsCount = computed(() => this.filteredCalEvents().length);
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
@@ -366,6 +390,9 @@ export class CalEventList implements OnInit {
     },
   };
 
+  // the year the calendar was last navigated for; -1 = never
+  private navigatedYear = -1;
+
   // double-click tracking
   private lastClickDateStr: string | null = null;
   private lastClickTime = 0;
@@ -394,10 +421,14 @@ export class CalEventList implements OnInit {
     });
 
     // Calendar view: start at today for the current year; jump to first event when a past/future year is selected.
+    // Only reacts to an actual year change — otherwise every reload (save, subscribe, invitation answer) would
+    // throw the user back to today instead of leaving the calendar on the week/day they were looking at.
     effect(() => {
       const year = this.store.selectedYear();
       const events = this.filteredCalEvents();
       if (this.isListView() || this.isLoading()) return;
+      if (year === this.navigatedYear) return;
+      this.navigatedYear = year;
       const currentYear = new Date().getFullYear();
       if (year === currentYear || year === 99) {   // 99 = all years -> today, not the oldest event
         this.fullCalendar()?.getApi()?.today();
@@ -550,7 +581,13 @@ export class CalEventList implements OnInit {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
-      case 'add':  await this.store.add(!this.canChange(), undefined, undefined, !this.isListView()); break;
+      case 'add': {
+        const isGrid = !this.isListView();
+        const viewType = this.currentViewType();
+        const created = await this.store.add(!this.canChange(), undefined, undefined, isGrid);
+        if (isGrid && created) this.navigateCalendarTo(created.startDate, viewType);
+        break;
+      }
       case 'exportRaw': await this.store.export("raw"); break;
       case 'exportIcs': 
         const cal =  this.store.calendar();
@@ -577,13 +614,9 @@ export class CalEventList implements OnInit {
    */
   protected async showActions(calEvent: CalEventModel): Promise<void> {
     if (!this.showMenu()) return;
-    if (this.canChange(calEvent)) {
-      const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-      this.addActionSheetButtons(actionSheetOptions, calEvent);
-      await this.executeActions(actionSheetOptions, calEvent);
-    } else {
-      await this.store.view(calEvent);
-    }
+    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    this.addActionSheetButtons(actionSheetOptions, calEvent);
+    await this.executeActions(actionSheetOptions, calEvent);
   }
 
   /**
@@ -593,6 +626,7 @@ export class CalEventList implements OnInit {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
     // attendance actions (subscribe/unsubscribe) make no sense for past events
     const showAttendance = !isPastCalevent(calevent);
+    const canChange = this.canChange(calevent);
     if (calevent.isOpen) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
       if (showAttendance && state !== 'accepted') {
@@ -612,10 +646,10 @@ export class CalEventList implements OnInit {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
         }
       }
-      if (showAttendance && this.store.isGroupCalevent(calevent)) {
+      if (canChange && showAttendance && this.store.isGroupCalevent(calevent)) {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.store.i18n.invite_members(), this.imgixBaseUrl, 'add'));
       }
-      if (showAttendance) {
+      if (canChange && showAttendance) {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.store.i18n.invite_person(), this.imgixBaseUrl, 'person-add'));
       }
     }
@@ -624,7 +658,7 @@ export class CalEventList implements OnInit {
       actionSheetOptions.buttons.push(
         createActionSheetButton('calevent.viewSchedule', this.store.i18n.schedule_view(), this.imgixBaseUrl, 'list')
       );
-      if (this.canChange(calevent)) {
+      if (canChange) {
         actionSheetOptions.buttons.push(
           createActionSheetButton('calevent.closeSchedule', this.store.i18n.schedule_close(), this.imgixBaseUrl, 'lock-closed')
         );
@@ -634,9 +668,13 @@ export class CalEventList implements OnInit {
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.store.i18n.download_ics(), this.imgixBaseUrl, 'calendar-number'));
 
     actionSheetOptions.buttons.push(createActionSheetDivider());
-    // tbd: not sure who should have permission to change events, we currently leave it open
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+    if (canChange) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.copy', this.store.i18n.copy(), this.imgixBaseUrl, 'copy'));
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+    } else {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+    }
 
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -667,17 +705,33 @@ export class CalEventList implements OnInit {
         break;
         case 'calevent.delete': {
           const isGrid = !this.isListView();
+          const viewType = this.currentViewType();
           const targetDate = calEvent.startDate;
           await this.store.delete(calEvent, false);
-          if (isGrid) this.navigateCalendarTo(targetDate);
+          if (isGrid) this.navigateCalendarTo(targetDate, viewType);
           break;
         }
-        case 'calevent.edit':
-          const isGrid = !this.isListView();
-          const targetDate = calEvent.startDate;
-          await this.store.edit(calEvent, false, false, false, isGrid);
-          if (isGrid) this.navigateCalendarTo(targetDate);
+        case 'calevent.view':
+          await this.store.view(calEvent);
           break;
+        case 'calevent.edit': {
+          const isGrid = !this.isListView();
+          const viewType = this.currentViewType();
+          const saved = await this.store.edit(calEvent, false, false, false, isGrid);
+          // navigate to the date of the saved event (it may have been moved), fall back to the original date
+          if (isGrid) this.navigateCalendarTo(saved?.startDate ?? calEvent.startDate, viewType);
+          break;
+        }
+        case 'calevent.copy': {
+          const isGrid = !this.isListView();
+          const viewType = this.currentViewType();
+          // a copy is a brand-new event: drop identity, series membership and attendances
+          // the edit modal deep-clones its input, so a shallow copy is enough here
+          const copy: CalEventModel = { ...calEvent, okey: '', seriesId: '', attendees: [] };
+          const created = await this.store.edit(copy, true, false, true, isGrid);
+          if (isGrid && created) this.navigateCalendarTo(created.startDate, viewType);
+          break;
+        }
         case 'calevent.inviteGroup':
           await this.store.inviteGroupMembers(calEvent, false);
           break;
@@ -793,8 +847,9 @@ export class CalEventList implements OnInit {
     if (this.canChange()) {
       const startDate = format(arg.date as Date, DateFormat.StoreDate);
       const startTime = format(arg.date as Date, 'HH:mm');
-      await this.store.add(false, startDate, startTime, true);
-      this.navigateCalendarTo(startDate);
+      const viewType = currentView;
+      const created = await this.store.add(false, startDate, startTime, true);
+      this.navigateCalendarTo(created?.startDate ?? startDate, viewType);
     }
   }
 
@@ -844,17 +899,48 @@ export class CalEventList implements OnInit {
 
   /******************************* helpers *************************************** */
 
-  /** Navigate the FullCalendar to the week containing the given storeDate (YYYYMMDD).
+  /** The FullCalendar view the user is currently on ('timeGridWeek', 'dayGridMonth', …). */
+  private currentViewType(): string | undefined {
+    return this.fullCalendar()?.getApi()?.view.type;
+  }
+
+  /** Navigate the FullCalendar to the period containing the given storeDate (YYYYMMDD), restoring
+   *  the view the user came from (a click may have switched week -> day while the modal opened).
    *  Uses a 300ms delay to let the post-save reload complete before navigating. */
-  private navigateCalendarTo(storeDate: string): void {
+  private navigateCalendarTo(storeDate: string, viewType?: string): void {
     if (!storeDate || storeDate.length < 8) return;
     const iso = `${storeDate.slice(0,4)}-${storeDate.slice(4,6)}-${storeDate.slice(6,8)}`;
-    setTimeout(() => this.fullCalendar()?.getApi()?.gotoDate(iso), 300);
+    setTimeout(() => {
+      const api = this.fullCalendar()?.getApi();
+      if (!api) return;
+      if (viewType && viewType !== api.view.type) api.changeView(viewType, iso);
+      else api.gotoDate(iso);
+    }, 300);
   }
 
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.currentUser());
   }
+
+  /**
+   * Attendance state of the current user for the given event: open events read it from the attendees list,
+   * closed ones from the invitation. Returns undefined if the user is neither attendee nor invitee (-> no icon).
+   */
+  protected attendanceState(event: CalEventModel): AttendanceState | undefined {
+    const state = event.isOpen
+      ? getAttendanceState(event, this.currentUser()?.personKey ?? '')
+      : this.store.invitations().find(inv => inv.caleventKey === event.okey)?.state;
+    if (!state) return undefined;
+    return state === 'accepted' || state === 'declined' ? state : 'invited';
+  }
+
+  protected cycleAttendanceFilter(): void {
+    const values: AttendanceFilter[] = ['all', 'accepted', 'declined', 'invited'];
+    this.attendanceFilter.update(current => values[(values.indexOf(current) + 1) % values.length]);
+  }
+
+  protected getAttendanceIcon = getAttendanceIcon;
+  protected getAttendanceColor = getAttendanceColor;
 
   /**
    * CalendarEvents may be created, changed or deleted by the following users:

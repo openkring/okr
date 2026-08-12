@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { Attendee, CalEventModel, MembershipModel, UserModel } from '@okr/shared-models';
@@ -52,6 +52,9 @@ import { AvatarPipe } from '@okr/avatar-ui';
                 <ion-img src="{{ 'person.' + attendee.person.key | avatar:'person' }}" alt="attendee avatar" />
               </ion-avatar>
               <ion-label>{{ attendee.person.name1| fullName: attendee.person.name2 }}</ion-label>
+              @if(!isReadOnly()) {
+                <ion-icon slot="end" color="danger" src="{{'cancel' | svgIcon }}" (click)="remove(attendee, $event)" />
+              }
             </ion-item>
           }
         </ion-list>
@@ -82,7 +85,10 @@ export class AttendeesAccordion {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // derived field
-  protected attendees = computed(() => this.calevent().attendees || []);
+  // linkedSignal, not computed: add()/changeState() must publish a NEW array through a signal.
+  // Mutating calevent().attendees in place changed the rendered length between the change-detection
+  // and the verification pass -> NG0100 (ExpressionChangedAfterItHasBeenChecked).
+  protected attendees = linkedSignal(() => this.calevent().attendees || []);
   protected acceptedCount = computed(() =>
     this.attendees().filter(inv => inv.state === 'accepted').length
   );
@@ -106,11 +112,15 @@ export class AttendeesAccordion {
    * @param attendee 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, attendee: Attendee): void {
+    // first person for my own attendance, third person when the organiser changes someone else's
+    const isMe = attendee.person.key === this.currentUser()?.personKey;
+    const subscribe = isMe ? this.i18n.invitation_subscribe() : this.i18n.attendance_subscribe();
+    const unsubscribe = isMe ? this.i18n.invitation_unsubscribe() : this.i18n.attendance_unsubscribe();
     if (attendee.state !== 'accepted') {
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkmark'));
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', subscribe, this.imgixBaseUrl, 'checkmark'));
     }
     if (attendee.state !== 'declined') {
-    actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', unsubscribe, this.imgixBaseUrl, 'cancel'));
     }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
@@ -159,8 +169,7 @@ export class AttendeesAccordion {
     const data = result?.kind === 'predefined' ? result.person : undefined;
     if (role === 'confirm') {
       if (data && isPerson(data, this.tenantId())) {
-        const calevent = this.calevent();
-        if (calevent.attendees.find(att => att.person.key === data.okey)) {
+        if (this.attendees().some(att => att.person.key === data.okey)) {
           error(this.toastController, this.i18n.attendance_exists());
           return;
         }
@@ -176,15 +185,27 @@ export class AttendeesAccordion {
             },
             state: 'accepted',
         };
-        calevent.attendees.push(attendee);
-        await this.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.i18n.update_conf(), this.i18n.update_error(), this.currentUser());
+        await this.saveAttendees([...this.attendees(), attendee]);
       }
     }
   }
 
   private async changeState(attendee: Attendee, newState: 'accepted' | 'declined'): Promise<void> {
-    attendee.state = newState;
+    await this.saveAttendees(this.attendees().map(a => a === attendee ? { ...a, state: newState } : a));
+  }
+
+  /** Removes the attendee from the calevent (organiser/admin only). */
+  protected async remove(attendee: Attendee, event: Event): Promise<void> {
+    event.stopPropagation();   // do not open the attendance ActionSheet of the row
+    if (this.isReadOnly()) return;
+    await this.saveAttendees(this.attendees().filter(a => a !== attendee));
+  }
+
+  /** Publishes the new attendee list to the template, the shared calevent object (the parent form saves it) and Firestore. */
+  private async saveAttendees(attendees: Attendee[]): Promise<void> {
     const calevent = this.calevent();
+    calevent.attendees = attendees;
+    this.attendees.set(attendees);
     await this.firestoreService.updateModel<CalEventModel>('calevents', calevent, false, this.i18n.update_conf(), this.i18n.update_error(), this.currentUser());
   }
 

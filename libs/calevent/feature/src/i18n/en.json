@@ -2,14 +2,15 @@
   "calevent": "Event",
   "calevents": "Events",
   "empty": "No events have been created yet. Create one by clicking the + button.",
-
   "attendance": {
     "accepted": "Attendances",
     "attendees": "Attendees",
     "helper": "People attending the event.",
     "add": "Add attendees",
     "exists": "This person is already registered as an attendee.",
-    "empty": "No attendees found."
+    "empty": "No attendees found.",
+    "subscribe": "This person attends",
+    "unsubscribe": "This person does not attend"
   },
   "create": {
     "label": "Create a new event",
@@ -34,6 +35,12 @@
   },
   "download": {
     "ics": "Download appointment (ICS)"
+  },
+  "copy": {
+    "label": "Copy event"
+  },
+  "filter": {
+    "all": "All"
   },
   "quickEntry": {
     "label": "Quick entry",
@@ -72,7 +79,6 @@
     "label": "Show event details",
     "album": "View album"
   },
-
   "invite": {
     "person": {
       "label": "Invite person",
@@ -176,7 +182,6 @@
       "description": "The event never takes place, it has no periodicity."
     }
   },
-
   "list": {
     "header": {
       "name": "Event",
@@ -187,7 +192,6 @@
       "description": "Topic"
     }
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
@@ -255,7 +259,6 @@
     "placeholder": "HH:MM",
     "helper": "The event starts at this time."
   },
-
   "calevent_type": {
     "name": "Type of event",
     "label": "Type of event",
@@ -362,7 +365,6 @@
       "description": "The event cannot be assigned to any of the other types."
     }
   },
-
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "The repeat-until date is mandatory with this periodicity",
     "caleventRepeatUntilDateAfterStartDate": "The repeat-until date must be after the start date",

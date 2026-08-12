@@ -4,8 +4,8 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonIcon, IonIte
 import { CalEventModel, CalEventModelName, CategoryListModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
-import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@okr/shared-util-core';
-import { addTime } from '@okr/shared-util-core';
+import { addTime, convertDateFormatToString, DateFormat, getWeekdayI18nKey, hasRole } from '@okr/shared-util-core';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 
 import { InviteesAccordion } from '@okr/relationship-invitation-feature';
@@ -34,7 +34,7 @@ function storeToView(d: string): string {
     .view-label { font-size: 0.9rem; color: var(--ion-color-medium); margin-bottom: 2px; }
     .view-value { font-size: 1rem; margin-bottom: 8px; }
     ion-item { --padding-start: 0; --inner-padding-end: 0; }
-    .responsible-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 4px 0; }
+    .responsible-row { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 4px 0; }
     .responsible-name { font-size: 0.9rem; }
   `],
   template: `
@@ -82,14 +82,16 @@ function storeToView(d: string): string {
                 <ion-label>
                     <p class="view-label">{{ i18n.responsible() }}</p>
                     <div class="responsible-row">
-                      <okr-avatar-display [avatars]="calevent().responsiblePersons" [showName]="true" />
+                      @for(person of responsiblePersons(); track $index) {
+                        <okr-avatar-display [avatars]="person" [showName]="true" />
+                      }
                     </div>
                 </ion-label>
                 </ion-item>
             }
 
-            <!-- Description / notes -->
-            @if(calevent().description) {
+            <!-- Description / notes: internal data, not shown to plain registered users -->
+            @if(calevent().description && expertMode()) {
                 <ion-item lines="none">
                 <ion-icon slot="start" src="{{'notes' | svgIcon}}" />
                 <ion-label class="ion-text-wrap">
@@ -123,8 +125,9 @@ function storeToView(d: string): string {
               } @else {
                 <okr-invitees-accordion [calevent]="calevent()" [readOnly]="true" />
               }
+              <!-- documents: only the organiser (edit modal) may add/delete; commenting is open to every registered user -->
               <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="true" />
-              <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="true" />
+              <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="false" />
             </ion-accordion-group>
           </ion-card-content>
         </ion-card>
@@ -135,6 +138,7 @@ function storeToView(d: string): string {
 })
 export class CalEventViewModal {
   private readonly modalController = inject(ModalController);
+  private readonly appStore = inject(AppStore);
   protected readonly i18n = inject(I18nService).translateAll(CALEVENT_I18N_KEYS) as CaleventI18n;
 
   // inputs (keep signature identical so all callers continue to work unchanged)
@@ -143,6 +147,9 @@ export class CalEventViewModal {
   public locale = input.required<string>();
 
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().okey}`);
+  /** one single-element array per person, so each avatar is rendered with its name on its own line */
+  protected readonly responsiblePersons = computed(() => this.calevent().responsiblePersons.map(p => [p]));
+  protected readonly expertMode = computed(() => hasRole('admin', this.appStore.currentUser()));
 
   private get wdAbbr() {
     return {

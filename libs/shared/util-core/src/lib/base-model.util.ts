@@ -77,7 +77,7 @@ export function addIndexElement(index: string, key: string, value: string | numb
       case 'declined':
         return 'cancel';
       default:
-        return 'help-circle';
+        return 'help';
     }
   }
 

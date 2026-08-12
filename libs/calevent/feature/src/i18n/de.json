@@ -2,14 +2,15 @@
   "calevent": "Ereignis",
   "calevents": "Ereignisse",
   "empty": "Es sind noch keine Ereignisse erstellt worden. Erstelle eines mit Klicken des + Buttons.",
-
   "attendance": {
     "accepted": "Teilnahmen",
     "attendees": "Teilnehmende",
     "helper": "Personen, die am Anlass teilnehmen.",
     "add": "Teilnehmende hinzufügen",
     "exists": "Diese Person ist bereits als Teilnehmende erfasst.",
-    "empty": "Keine Teilnehmenden gefunden."
+    "empty": "Keine Teilnehmenden gefunden.",
+    "subscribe": "Diese Person nimmt teil",
+    "unsubscribe": "Diese Person nimmt nicht teil"
   },
   "create": {
     "label": "Neues Ereignis erstellen",
@@ -34,6 +35,12 @@
   },
   "download": {
     "ics": "Termin herunterladen (ICS)"
+  },
+  "copy": {
+    "label": "Ereignis kopieren"
+  },
+  "filter": {
+    "all": "Alle"
   },
   "quickEntry": {
     "label": "Schnelleingabe",
@@ -72,7 +79,6 @@
     "label": "Details des Ereignisses anzeigen",
     "album": "Album ansehen"
   },
-
   "invite": {
     "person": {
       "label": "Person einladen",
@@ -176,7 +182,6 @@
       "description": "Das Ereignis findet nie statt, hat keine Periodizität."
     }
   },
-
   "list": {
     "header": {
       "name": "Anlass",
@@ -187,7 +192,6 @@
       "description": "Thema"
     }
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
@@ -255,7 +259,6 @@
     "placeholder": "HH:MM",
     "helper": "Zu dieser Zeit startet das Ereignis."
   },
-
   "calevent_type": {
     "name": "Art des Anlasses",
     "label": "Art des Anlasses",
@@ -362,7 +365,6 @@
       "description": "Der Anlass kann keiner der anderen Arten zugeordnet werden."
     }
   },
-
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "Das Wiederholen-bis Datum ist mit dieser Periodizität obligatorisch",
     "caleventRepeatUntilDateAfterStartDate": "Das Wiederholen-bis Datum muss nach dem Startdatum liegen",

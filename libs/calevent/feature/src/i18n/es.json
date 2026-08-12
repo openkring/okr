@@ -2,14 +2,15 @@
   "calevent": "Evento",
   "calevents": "Eventos",
   "empty": "Todavía no se ha creado ningún evento. Crear uno haciendo clic en el botón +.",
-
   "attendance": {
     "accepted": "Asistencias",
     "attendees": "Asistentes",
     "helper": "Personas que asisten al evento.",
     "add": "Añadir asistentes",
     "exists": "Esta persona ya está registrada como asistente.",
-    "empty": "No se han encontrado asistentes."
+    "empty": "No se han encontrado asistentes.",
+    "subscribe": "Esta persona asiste",
+    "unsubscribe": "Esta persona no asiste"
   },
   "create": {
     "label": "Crear un nuevo evento",
@@ -34,6 +35,12 @@
   },
   "download": {
     "ics": "Descargar cita (ICS)"
+  },
+  "copy": {
+    "label": "Copiar evento"
+  },
+  "filter": {
+    "all": "Todos"
   },
   "quickEntry": {
     "label": "Entrada rápida",
@@ -72,7 +79,6 @@
     "label": "Mostrar los detalles del evento",
     "album": "Ver álbum"
   },
-
   "invite": {
     "person": {
       "label": "Invitar a una persona",
@@ -176,7 +182,6 @@
       "description": "El evento nunca tiene lugar, no tiene periodicidad."
     }
   },
-
   "list": {
     "header": {
       "name": "Evento",
@@ -187,7 +192,6 @@
       "description": "Tema"
     }
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
@@ -255,7 +259,6 @@
     "placeholder": "HH:MM",
     "helper": "El evento comienza a esta hora."
   },
-
   "calevent_type": {
     "name": "Tipo de evento",
     "label": "Tipo de evento",
@@ -362,7 +365,6 @@
       "description": "El evento no puede asignarse a ninguno de los otros tipos."
     }
   },
-
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "La fecha de repetir hasta es obligatoria con esta periodicidad",
     "caleventRepeatUntilDateAfterStartDate": "La fecha de repetir hasta debe ser posterior a la fecha de inicio",

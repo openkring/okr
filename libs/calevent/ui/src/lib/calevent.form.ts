@@ -108,6 +108,8 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
       />
     }
 
+    <!-- calendars, tags and notes are internal organisation data: not shown to plain registered users -->
+    @if(expertMode()) {
     <okr-strings
       [strings]="calendars()"
       (stringsChange)="onFieldChange('calendars', $event)"
@@ -119,6 +121,7 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
       [add]="i18n().calendar_add()"
       [selectLabel]="i18n().calendar_select()"
     />
+    }
 
   <!---------------------------------------------------
     TAG, NOTES

@@ -2,14 +2,15 @@
   "calevent": "Evento",
   "calevents": "Eventi",
   "empty": "Non è ancora stato creato alcun evento. Crearne uno facendo clic sul pulsante +.",
-
   "attendance": {
     "accepted": "Partecipazioni",
     "attendees": "Partecipanti",
     "helper": "Persone che partecipano all'evento.",
     "add": "Aggiungi partecipanti",
     "exists": "Questa persona è già registrata come partecipante.",
-    "empty": "Nessun partecipante trovato."
+    "empty": "Nessun partecipante trovato.",
+    "subscribe": "Questa persona partecipa",
+    "unsubscribe": "Questa persona non partecipa"
   },
   "create": {
     "label": "Creare un nuovo evento",
@@ -34,6 +35,12 @@
   },
   "download": {
     "ics": "Scarica appuntamento (ICS)"
+  },
+  "copy": {
+    "label": "Copia evento"
+  },
+  "filter": {
+    "all": "Tutti"
   },
   "quickEntry": {
     "label": "Inserimento rapido",
@@ -72,7 +79,6 @@
     "label": "Mostra i dettagli dell'evento",
     "album": "Visualizza album"
   },
-
   "invite": {
     "person": {
       "label": "Invitare una persona",
@@ -176,7 +182,6 @@
       "description": "L'evento non ha mai luogo, non ha periodicità."
     }
   },
-
   "list": {
     "header": {
       "name": "Evento",
@@ -187,7 +192,6 @@
       "description": "Argomento"
     }
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
@@ -255,7 +259,6 @@
     "placeholder": "HH:MM",
     "helper": "L'evento inizia a quest'ora."
   },
-
   "calevent_type": {
     "name": "Tipo di evento",
     "label": "Tipo di evento",
@@ -362,7 +365,6 @@
       "description": "L'evento non può essere assegnato a nessuno degli altri tipi."
     }
   },
-
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "La data di ripeti fino al è obbligatoria con questa periodicità",
     "caleventRepeatUntilDateAfterStartDate": "La data di ripeti fino al deve essere successiva alla data di inizio",

@@ -30,7 +30,7 @@ export interface TimeInputI18n {
   styles: [`ion-item.helper { --min-height: 0; }`],
   template: `
     <ion-item lines="none">
-        <ion-icon src="{{'calendar' | svgIcon }}" slot="start" (click)="selectTime()" />
+        <ion-icon src="{{'time' | svgIcon }}" slot="start" (click)="selectTime()" />
         <ion-input
           type="text"
           [name]="i18n().name"

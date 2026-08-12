@@ -59,8 +59,9 @@ import { AttendeesAccordion } from './attendees-accordion';
                 @else {
                   <okr-invitees-accordion [calevent]="formData" [readOnly]="isReadOnly()" />
                 }
+                <!-- documents: organiser/admin only; commenting is open to every registered user -->
                 <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
-                <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+                <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="false" />
               </ion-accordion-group>
             </ion-card-content>
           </ion-card>
