@@ -8,6 +8,7 @@ import * as Address from './address';
 import * as Calendar from './calendar';
 import * as Replication from './replication';
 import * as Auth from './auth';
+import * as AccountSync from './auth/account-sync';
 import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as Rag from './rag';
@@ -112,6 +113,9 @@ export const backfillMatrixRoomTenants = MatrixSimple.backfillMatrixRoomTenants;
 // membership → Matrix-room sync (server-side backstop; chat design review #3)
 export const onMembershipWritten = MatrixMembershipSync.onMembershipWritten;
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;
+
+// membership → user-account sync (spec 2026-08-12-membership-account-sync-design.md)
+export const onMembershipAccountSync = AccountSync.onMembershipAccountSync;
 
 // oidc-bridge removed (C-3): unused, insecure OIDC IdP. Matrix auth uses the
 // token-exchange approach (getMatrixCredentials in matrix-simple) instead.

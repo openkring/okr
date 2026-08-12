@@ -13,14 +13,17 @@
 // the audit trail. UserModel.isArchived is deliberately NOT used — nothing reads it
 // (neither the guards nor the rules), so archiving would revoke nothing.
 
+import { randomBytes } from 'node:crypto';
+
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { logger } from 'firebase-functions/v2';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 
 import { AvatarInfo } from '@okr/shared-models';
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 
-import { MembershipDoc } from './account-sync.decide';
+import { decideAccountAction, MembershipDoc } from './account-sync.decide';
 
 const CF_NAME = 'accountSync';
 
@@ -70,17 +73,18 @@ async function logActivity(
  * tenants, so there is no meaningful "first" tenant on a membership.
  */
 async function resolveDefaultOrgTenant(m: MembershipDoc | undefined): Promise<string> {
-  if (!m || m.orgModelType !== 'org' || !m.orgKey) return '';
+  if (m?.orgModelType !== 'org' || !m.orgKey) return '';
   const snap = await getFirestore().collection('app-config').doc(m.orgKey).get();
   return snap.exists ? m.orgKey : '';
 }
 
-/** 24 characters of randomness — the user never sees it; admins send a reset via AOC. */
+/**
+ * Cryptographically random password. Nobody ever sees it — the account is onboarded by
+ * an admin via AOC → "Passwort senden" — but it protects a real Firebase Auth identity,
+ * so it must not come from Math.random.
+ */
 function randomPassword(): string {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
-  let out = '';
-  for (let i = 0; i < 24; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)];
-  return out;
+  return randomBytes(32).toString('base64url');
 }
 
 /**
@@ -190,3 +194,39 @@ export async function closeAccount(personKey: string, tenantId: string): Promise
     await logActivity(tenantId, 'update', { personKey, membershipKey: doc.id, orgKey: m.orgKey, endedBy: 'accountSync' });
   }
 }
+
+/**
+ * Firestore trigger: open/close the user account when a person's membership in the
+ * DEFAULT ORG becomes active or stops being active.
+ *
+ * A second trigger on memberships/{id} alongside matrix-simple's onMembershipWritten —
+ * Firebase supports several triggers per path, and keeping chat sync and account sync
+ * separate means a failure in one cannot affect the other.
+ *
+ * Errors are logged, never thrown: a throw would make Firebase retry and could
+ * retry-storm the membership write, and a missed account can always be opened with the
+ * syncPersonAccount callable.
+ */
+export const onMembershipAccountSync = onDocumentWritten(
+  { document: 'memberships/{membershipId}', region: 'europe-west6' },
+  async (event) => {
+    const before = event.data?.before?.exists ? (event.data.before.data() as MembershipDoc) : undefined;
+    const after = event.data?.after?.exists ? (event.data.after.data() as MembershipDoc) : undefined;
+
+    try {
+      const tenantId = await resolveDefaultOrgTenant(after ?? before);
+      if (!tenantId) return; // not a default-org membership
+
+      const today = getTodayStr(DateFormat.StoreDate);
+      const action = decideAccountAction(before, after, tenantId, today);
+      if (action === 'none') return;
+
+      const personKey = (after ?? before)?.memberKey ?? '';
+      if (!personKey) return;
+      if (action === 'open') await openAccount(personKey, tenantId);
+      else await closeAccount(personKey, tenantId);
+    } catch (error) {
+      logger.error(`${CF_NAME}: failed for membership ${event.params.membershipId}`, error);
+    }
+  }
+);
