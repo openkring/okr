@@ -20,9 +20,11 @@ import { getAuth } from 'firebase-admin/auth';
 import { logger } from 'firebase-functions/v2';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 
 import { AvatarInfo } from '@okr/shared-models';
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
+import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
 
 import { decideAccountAction, MembershipDoc, shiftDaysBack } from './account-sync.decide';
 
@@ -267,5 +269,32 @@ export const sweepExpiredMemberships = onSchedule(
       }
     }
     logger.info(`${CF_NAME}: sweep processed ${expired.size} expired memberships, closed ${closed}`);
+  }
+);
+
+/**
+ * Manual entry point for the person-list actions. Calls exactly the same
+ * openAccount/closeAccount as the trigger — one implementation, two entry points.
+ */
+export const syncPersonAccount = onCall(
+  { cors: true, region: 'europe-west6', enforceAppCheck: true },
+  async (request: CallableRequest<{ personKey?: string; tenantId?: string; action?: string }>) => {
+    checkAppCheckToken(request as never, 'syncPersonAccount');
+    checkAuthentication(request as never, 'syncPersonAccount');
+    await checkRoles(request as never, 'syncPersonAccount', ['admin', 'memberAdmin']);
+
+    const personKey = request.data?.personKey ?? '';
+    const tenantId = request.data?.tenantId ?? '';
+    const action = request.data?.action ?? '';
+    if (!personKey || !tenantId) {
+      throw new HttpsError('invalid-argument', 'personKey and tenantId are required');
+    }
+    if (action !== 'open' && action !== 'close') {
+      throw new HttpsError('invalid-argument', "action must be 'open' or 'close'");
+    }
+
+    if (action === 'open') await openAccount(personKey, tenantId);
+    else await closeAccount(personKey, tenantId);
+    return { ok: true };
   }
 );

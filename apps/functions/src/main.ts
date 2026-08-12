@@ -117,6 +117,7 @@ export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoom
 // membership → user-account sync (spec 2026-08-12-membership-account-sync-design.md)
 export const onMembershipAccountSync = AccountSync.onMembershipAccountSync;
 export const sweepExpiredMemberships = AccountSync.sweepExpiredMemberships;
+export const syncPersonAccount = AccountSync.syncPersonAccount;
 
 // oidc-bridge removed (C-3): unused, insecure OIDC IdP. Matrix auth uses the
 // token-exchange approach (getMatrixCredentials in matrix-simple) instead.
