@@ -1,4 +1,5 @@
 import { TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom } from 'rxjs';
 import { AlertController, AlertOptions, ToastController } from '@ionic/angular';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 
@@ -8,16 +9,25 @@ export function initAlertTranslation(service: TranslocoService): void {
   _translocoService = service;
 }
 
-function t(key: string | null | undefined): string {
+async function t(key: string | null | undefined): Promise<string> {
   if (!key) return '';
   if (!key.startsWith('@')) return key;
   if (!_translocoService) return key;
-  return _translocoService.translate(key.substring(1));
+  const translationKey = key.substring(1);
+  const dotIndex = translationKey.indexOf('.');
+  const prefix = dotIndex === -1 ? '' : translationKey.substring(0, dotIndex);
+  // scoped key (`@domain/layer.key`): its bundle is lazy-loaded, so load it before translating
+  if (prefix.includes('/')) {
+    const lang = _translocoService.getActiveLang();
+    await firstValueFrom(_translocoService.load(`${prefix}/${lang}`));
+    return _translocoService.translate(translationKey.substring(dotIndex + 1), {}, prefix);
+  }
+  return _translocoService.translate(translationKey);
 }
 
 export function error(toastController: ToastController | undefined, message: string, isDebugMode = false): undefined {
   if (isDebugMode === true) {
-    console.error(t(message));
+    console.error(message);
   }
   if (toastController) {
     showToast(toastController, message);
@@ -27,7 +37,7 @@ export function error(toastController: ToastController | undefined, message: str
 
 export async function showToast(toastController: ToastController, message: string): Promise<void> {
   const _toast = await toastController.create({
-    message: t(message),
+    message: await t(message),
     duration: TOAST_LENGTH
   });
   _toast.present();

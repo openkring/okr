@@ -2,6 +2,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 import { AlertController, ToastController } from '@ionic/angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { of } from 'rxjs';
 import { okrPrompt, confirm, error, initAlertTranslation, PromptInputType, showToast } from './alert.util';
 
 vi.mock('@ionic/angular', () => ({
@@ -24,7 +25,9 @@ describe('alert.util', () => {
     vi.clearAllMocks();
 
     mockTransloco = {
-      translate: vi.fn((key: string) => `[${key}]`)
+      translate: vi.fn((key: string, _params?: unknown, scope?: string) => (scope ? `[${scope}:${key}]` : `[${key}]`)),
+      getActiveLang: vi.fn(() => 'de'),
+      load: vi.fn(() => of({}))
     } as any;
     initAlertTranslation(mockTransloco);
 
@@ -55,10 +58,9 @@ describe('alert.util', () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
     });
 
-    it('should log translated message in debug mode', () => {
+    it('should log the raw message in debug mode', () => {
       error(undefined, '@error.general', true);
-      expect(mockTransloco.translate).toHaveBeenCalledWith('error.general');
-      expect(console.error).toHaveBeenCalledWith('[error.general]');
+      expect(console.error).toHaveBeenCalledWith('@error.general');
     });
 
     it('should not log when debug mode is false', () => {
@@ -66,8 +68,9 @@ describe('alert.util', () => {
       expect(console.error).not.toHaveBeenCalled();
     });
 
-    it('should show toast when toastController is provided', () => {
+    it('should show toast when toastController is provided', async () => {
       error(mockToastController, 'Error', false);
+      await Promise.resolve();
       expect(mockToastController.create).toHaveBeenCalled();
     });
 
@@ -90,6 +93,16 @@ describe('alert.util', () => {
         duration: TOAST_LENGTH
       });
       expect(mockToast.present).toHaveBeenCalled();
+    });
+
+    it('should load the lazy scope bundle for a scoped @key', async () => {
+      await showToast(mockToastController, '@aoc/feature.account.fbuser.create.conf');
+      expect(mockTransloco.load).toHaveBeenCalledWith('aoc/feature/de');
+      expect(mockTransloco.translate).toHaveBeenCalledWith('account.fbuser.create.conf', {}, 'aoc/feature');
+      expect(mockToastController.create).toHaveBeenCalledWith({
+        message: '[aoc/feature:account.fbuser.create.conf]',
+        duration: TOAST_LENGTH
+      });
     });
 
     it('should pass plain string through without translating', async () => {
