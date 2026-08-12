@@ -14,6 +14,8 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore } from 'firebase-admin/firestore';
 
+import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
+
 import {
   MATRIX_HOMESERVER,
   matrixAdminToken,
@@ -45,15 +47,18 @@ interface MembershipDoc {
 
 /**
  * A membership grants group-chat access iff it links a person to a group and is
- * neither archived nor ended. Active dateOfExit is '' (never set) or '9999*'
- * (the "open end" convention checked by MembershipService.endMembershipByDate).
+ * active today (not archived, and either never ended or with a future exit date).
+ *
+ * NOTE: this used to treat ANY dateOfExit other than '' / '9999*' as inactive, which
+ * kicked members the moment an admin entered a FUTURE exit date — months early, and
+ * inconsistent with MembershipService.isMemberOf, which compares with isAfterDate.
+ * isActiveMembership is now the single shared definition
+ * (planning/specs/2026-08-12-membership-account-sync-design.md).
  */
-function grantsChatAccess(doc: MembershipDoc | undefined): boolean {
+function grantsChatAccess(doc: MembershipDoc | undefined, today: string): boolean {
   if (!doc) return false;
   if (doc.orgModelType !== 'group' || doc.memberModelType !== 'person') return false;
-  if (doc.isArchived) return false;
-  const exit = doc.dateOfExit ?? '';
-  return exit === '' || exit.startsWith('9999');
+  return isActiveMembership(doc, today);
 }
 
 /**
@@ -78,8 +83,9 @@ export const onMembershipWritten = onDocumentWritten(
     const before = event.data?.before?.exists ? (event.data.before.data() as MembershipDoc) : undefined;
     const after = event.data?.after?.exists ? (event.data.after.data() as MembershipDoc) : undefined;
 
-    const had = grantsChatAccess(before);
-    const has = grantsChatAccess(after);
+    const today = getTodayStr(DateFormat.StoreDate);
+    const had = grantsChatAccess(before, today);
+    const has = grantsChatAccess(after, today);
     const rekeyed = had && has && (before!.memberKey !== after!.memberKey || before!.orgKey !== after!.orgKey);
     if (had === has && !rekeyed) return; // no chat-relevant transition
 
@@ -141,6 +147,7 @@ export const reconcileGroupRoomMembers = onCall(
     const adminToken = matrixAdminToken.value();
 
     // Desired members: personKeys of active group memberships
+    const today = getTodayStr(DateFormat.StoreDate);
     const snap = await getFirestore()
       .collection(MEMBERSHIP_COLLECTION)
       .where('orgKey', '==', groupId)
@@ -150,7 +157,7 @@ export const reconcileGroupRoomMembers = onCall(
     const desired = new Set(
       snap.docs
         .map((d) => d.data() as MembershipDoc)
-        .filter((m) => grantsChatAccess(m))
+        .filter((m) => grantsChatAccess(m, today))
         .map((m) => m.memberKey.toLowerCase())
     );
 
