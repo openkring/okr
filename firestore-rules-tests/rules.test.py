@@ -134,6 +134,9 @@ seed("persons/pB", {"tenants": ["t2"], "isArchived": False, "lastName": "BB"})
 seed("memberships/mA", {"tenants": ["t1"], "isArchived": False, "x": "1"})
 seed("sessions/sX", {"isActive": True, "userKey": "", "tenants": ["t1"]})
 seed("invoices/iA", {"tenants": ["t1"], "isArchived": False, "amount": "100"})
+# invoice addressed to userA's person — plain members read only their own (my-invoice).
+seed("invoices/iOwnA", {"tenants": ["t1"], "isArchived": False, "amount": "100",
+                        "receiver": {"key": "pA", "name": "AA"}})
 # M-7: orgs/resources/tags are no longer public — tenant-scoped read.
 seed("orgs/oA",      {"tenants": ["t1"], "isArchived": False, "name": "Org A"})
 seed("orgs/oB",      {"tenants": ["t2"], "isArchived": False, "name": "Org B"})
@@ -260,7 +263,9 @@ single_cases = [
     ("userA GET persons/pA (own tenant) -> ALLOW", True, GET, "persons/pA", A, None, None),
     ("userA GET persons/pB (other tenant) -> DENY", False, GET, "persons/pB", A, None, None),
     ("userA GET memberships/mA -> ALLOW", True, GET, "memberships/mA", A, None, None),
-    ("userA GET invoices/iA (read) -> ALLOW", True, GET, "invoices/iA", A, None, None),
+    ("userA GET invoices/iA (foreign invoice) -> DENY", False, GET, "invoices/iA", A, None, None),
+    ("userA GET invoices/iOwnA (own invoice) -> ALLOW", True, GET, "invoices/iOwnA", A, None, None),
+    ("userD(admin t1) GET invoices/iA -> ALLOW", True, GET, "invoices/iA", D, None, None),
     # C-1: self role-escalation blocked
     ("userA PATCH own roles.admin=true -> DENY", False, PATCH, "users/uidA", A,
      body({"roles": {"admin": True}}), ["roles"]),
