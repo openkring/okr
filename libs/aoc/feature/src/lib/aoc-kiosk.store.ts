@@ -1,7 +1,10 @@
 import { computed, inject, Injector, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
+
+import { KIOSK_COUNTDOWN_DEFAULT, KioskMessageFormData } from '@okr/aoc-util';
 
 import { KioskStatus, KioskStatusCollection, AppStore } from '@okr/shared-feature';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -27,6 +30,7 @@ export const AocKioskStore = signalStore(
     userService: inject(UserService),
     tripService: inject(TripService),
     alertService: inject(AlertService),
+    modalController: inject(ModalController),
     injector: inject(Injector),
   })),
   withProps(store => ({
@@ -80,13 +84,29 @@ export const AocKioskStore = signalStore(
       await this.sendCommand(kiosk, { reloadAt: new Date().toISOString() }, 'Neuladen ausgelöst.');
     },
 
-    /** Pop a message on the kiosk screen (e.g. "Bitte Boot 3 nicht mehr benutzen"). */
+    /**
+     * Pop a message on the kiosk screen (e.g. "Bitte Boot 3 nicht mehr benutzen"), optionally
+     * with a countdown after which the device closes it again — nobody may be standing in
+     * front of an unattended kiosk to press OK.
+     */
     async sendAlert(kiosk: KioskStatus): Promise<void> {
-      const message = await store.alertService.okrPrompt('Mitteilung senden', 'Text der Mitteilung');
-      if (!message) return;
-      await this.sendCommand(
-        kiosk, { alertAt: new Date().toISOString(), alertMessage: message }, 'Mitteilung gesendet.'
-      );
+      const { KioskMessageEditModal } = await import('./kiosk-message-edit.modal');
+      const modal = await store.modalController.create({
+        component: KioskMessageEditModal,
+        componentProps: {
+          kioskMessage: { message: '', withCountdown: false, countdown: KIOSK_COUNTDOWN_DEFAULT } as KioskMessageFormData,
+          title: `Mitteilung an ${kiosk.device}`,
+        },
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<KioskMessageFormData>();
+      if (role !== 'confirm' || !data?.message) return;
+      await this.sendCommand(kiosk, {
+        alertAt: new Date().toISOString(),
+        alertMessage: data.message,
+        // 0 = no countdown; the device then waits for OK as before
+        alertCountdown: data.withCountdown ? data.countdown : 0,
+      }, 'Mitteilung gesendet.');
     },
 
     /** Read-only mode: the Logbuch stays visible, new and changed trips are refused. */

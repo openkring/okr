@@ -44,6 +44,12 @@ export interface KioskStatus {
   /** Remote alert: a new timestamp pops `alertMessage` on the device once. */
   alertAt?: string;
   alertMessage?: string;
+  /**
+   * Seconds after which the device closes the message by itself, counting down on screen.
+   * 0 or missing: the message stays until someone presses OK — which on an unattended kiosk
+   * may be never, hence this field.
+   */
+  alertCountdown?: number;
   /** Read-only mode: the device stays up and readable but refuses new/changed entries. */
   locked?: boolean;
 }
@@ -142,7 +148,7 @@ export class KioskStatusService {
       this.locked.set(status.locked === true);
       if (status.alertAt && localStorage.getItem(ALERT_AT_KEY) !== status.alertAt) {
         localStorage.setItem(ALERT_AT_KEY, status.alertAt);
-        void this.showAlert(status.alertMessage ?? '');
+        void this.showAlert(status.alertMessage ?? '', status.alertCountdown ?? 0);
       }
       // reload last: it tears the page down, so any state above is already persisted
       if (status.reloadAt && localStorage.getItem(RELOAD_AT_KEY) !== status.reloadAt) {
@@ -152,13 +158,32 @@ export class KioskStatusService {
     }, (ex) => console.error('KioskStatusService.listenForCommands -> ERROR:', ex));
   }
 
-  private async showAlert(message: string): Promise<void> {
+  /**
+   * `countdown` > 0: the remaining seconds are shown under the text and tick down once a
+   * second; at 0 the alert closes itself. The interval is also cleared when the user presses
+   * OK first, so it cannot outlive the alert.
+   */
+  private async showAlert(message: string, countdown: number): Promise<void> {
     const alert = await this.alertController.create({
       header: 'Mitteilung',
       message,
       buttons: ['OK'],
     });
     await alert.present();
+    if (countdown <= 0) return;
+
+    let remaining = Math.round(countdown);
+    alert.message = `${message}\n\n(schliesst in ${remaining} s)`;
+    const timer = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(timer);
+        void alert.dismiss();
+        return;
+      }
+      alert.message = `${message}\n\n(schliesst in ${remaining} s)`;
+    }, 1000);
+    void alert.onDidDismiss().then(() => clearInterval(timer));
   }
 
   private async report(): Promise<void> {

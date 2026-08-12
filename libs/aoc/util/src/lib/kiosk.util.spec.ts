@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBattery, formatSeenAge, isKioskOnline, KIOSK_OFFLINE_AFTER_MS } from './kiosk.util';
+import { formatBattery, formatSeenAge, isKioskOnline, KIOSK_COUNTDOWN_DEFAULT, kioskMessageValidations, KIOSK_OFFLINE_AFTER_MS } from './kiosk.util';
 
 const now = Date.parse('2026-08-11T12:00:00.000Z');
 const ago = (ms: number) => new Date(now - ms).toISOString();
@@ -39,5 +39,21 @@ describe('formatBattery', () => {
     expect(formatBattery(0)).toBe('0%');
     expect(formatBattery(-1)).toBe('—');
     expect(formatBattery(undefined)).toBe('—');
+  });
+});
+
+describe('kioskMessageValidations', () => {
+  const data = (over = {}) => ({ message: 'Boot 3 defekt', withCountdown: false, countdown: KIOSK_COUNTDOWN_DEFAULT, ...over });
+
+  it('requires a message', () => {
+    expect(kioskMessageValidations(data()).isValid()).toBe(true);
+    expect(kioskMessageValidations(data({ message: '' })).isValid()).toBe(false);
+  });
+
+  it('checks the seconds only while the countdown is enabled', () => {
+    expect(kioskMessageValidations(data({ countdown: 0 })).isValid()).toBe(true);
+    expect(kioskMessageValidations(data({ withCountdown: true, countdown: 0 })).isValid()).toBe(false);
+    expect(kioskMessageValidations(data({ withCountdown: true, countdown: 10 })).isValid()).toBe(true);
+    expect(kioskMessageValidations(data({ withCountdown: true, countdown: 99999 })).isValid()).toBe(false);
   });
 });
