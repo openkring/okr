@@ -19,11 +19,12 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { logger } from 'firebase-functions/v2';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 
 import { AvatarInfo } from '@okr/shared-models';
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 
-import { decideAccountAction, MembershipDoc } from './account-sync.decide';
+import { decideAccountAction, MembershipDoc, shiftDaysBack } from './account-sync.decide';
 
 const CF_NAME = 'accountSync';
 
@@ -228,5 +229,43 @@ export const onMembershipAccountSync = onDocumentWritten(
     } catch (error) {
       logger.error(`${CF_NAME}: failed for membership ${event.params.membershipId}`, error);
     }
+  }
+);
+
+/**
+ * Daily sweep: close accounts whose membership exit date has passed since the last run.
+ *
+ * A date-aware predicate has no write to react to on the day an exit date takes effect,
+ * so the trigger alone would never close these. closeAccount is idempotent, so an
+ * overlapping window is harmless.
+ */
+export const sweepExpiredMemberships = onSchedule(
+  { schedule: '30 3 * * *', timeZone: 'Europe/Zurich', region: 'europe-west6' },
+  async () => {
+    const today = getTodayStr(DateFormat.StoreDate);
+    // ponytail: 7-day catch-up window. If runs can be missed for longer, store a
+    // watermark document instead of widening this.
+    const from = shiftDaysBack(today, 7);
+
+    const expired = await getFirestore().collection('memberships')
+      .where('dateOfExit', '>=', from)
+      .where('dateOfExit', '<=', today)
+      .get();
+
+    let closed = 0;
+    for (const doc of expired.docs) {
+      const m = doc.data() as MembershipDoc;
+      try {
+        if (m.memberModelType !== 'person') continue;
+        if (isActiveMembership(m, today)) continue; // not expired after all
+        const tenantId = await resolveDefaultOrgTenant(m);
+        if (!tenantId) continue;
+        await closeAccount(m.memberKey, tenantId);
+        closed++;
+      } catch (error) {
+        logger.error(`${CF_NAME}: sweep failed for membership ${doc.id}`, error);
+      }
+    }
+    logger.info(`${CF_NAME}: sweep processed ${expired.size} expired memberships, closed ${closed}`);
   }
 );

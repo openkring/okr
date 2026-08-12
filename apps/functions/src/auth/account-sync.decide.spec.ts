@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decideAccountAction, MembershipDoc } from './account-sync.decide';
+import { decideAccountAction, MembershipDoc, shiftDaysBack } from './account-sync.decide';
 
 const TENANT = 'scs';
 const TODAY = '20260812';
@@ -64,5 +64,27 @@ describe('decideAccountAction', () => {
   it('is none when both sides are inactive', () => {
     const ended = active({ dateOfExit: '20250101' });
     expect(decideAccountAction(ended, ended, TENANT, TODAY)).toBe('none');
+  });
+});
+
+describe('shiftDaysBack', () => {
+  it('stays inside the month', () => {
+    expect(shiftDaysBack('20260812', 7)).toBe('20260805');
+  });
+
+  it('crosses a month boundary', () => {
+    expect(shiftDaysBack('20260803', 7)).toBe('20260727');
+  });
+
+  it('crosses a year boundary', () => {
+    expect(shiftDaysBack('20260102', 7)).toBe('20251226');
+  });
+
+  it('handles a leap day', () => {
+    expect(shiftDaysBack('20280301', 1)).toBe('20280229');
+  });
+
+  it('pads single-digit months and days', () => {
+    expect(shiftDaysBack('20260908', 7)).toBe('20260901');
   });
 });

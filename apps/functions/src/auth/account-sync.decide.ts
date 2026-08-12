@@ -51,3 +51,18 @@ export function decideAccountAction(
   if (had && !has) return 'close';
   return 'none';
 }
+
+/**
+ * Subtract n days from a StoreDate (yyyyMMdd) and return a StoreDate.
+ * Used for the sweep's catch-up window; UTC throughout, so no DST surprises.
+ */
+export function shiftDaysBack(storeDate: string, days: number): string {
+  const year = Number(storeDate.slice(0, 4));
+  const month = Number(storeDate.slice(4, 6));
+  const day = Number(storeDate.slice(6, 8));
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() - days);
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+  return `${date.getUTCFullYear()}${mm}${dd}`;
+}
