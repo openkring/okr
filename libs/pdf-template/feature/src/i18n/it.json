@@ -5,7 +5,6 @@
     "title": "Modelli di documento"
   },
   "empty": "Nessun modello trovato.",
-
   "archive": {
     "label": "Archiviare modello"
   },
@@ -51,8 +50,6 @@
     "conf": "Ripristinata l'ultima versione.",
     "error": "Ripristino non riuscito."
   },
-
-
   "doc": {
     "generate": {
       "label": "Crea documento",
@@ -65,9 +62,15 @@
       "unavailable": "Anteprima non disponibile. Si prega di scaricare.",
       "empty": "Nessun documento caricato."
     },
-    "close": { "label": "Chiudi" },
-    "download": { "label": "Scarica" },
-    "send": { "label": "Invia" }
+    "close": {
+      "label": "Chiudi"
+    },
+    "download": {
+      "label": "Scarica"
+    },
+    "send": {
+      "label": "Invia"
+    }
   },
   "composer": {
     "title": "Invia documento",
@@ -101,9 +104,11 @@
       "conf": "Documento inviato a {{ recipients }}",
       "error": "Invio non riuscito: {{ error }}"
     },
-    "revert": { "label": "Annulla" }
+    "revert": {
+      "label": "Annulla"
+    },
+    "title_plain": "Inviare e-mail"
   },
-
   "category": {
     "label": "Categoria"
   },

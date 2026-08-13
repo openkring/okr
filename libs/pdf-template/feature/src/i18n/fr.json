@@ -5,7 +5,6 @@
     "title": "Modèles de document"
   },
   "empty": "Aucun modèle trouvé.",
-
   "archive": {
     "label": "Archiver le modèle"
   },
@@ -51,8 +50,6 @@
     "conf": "Rétabli à la dernière version.",
     "error": "Échec du rétablissement."
   },
-
-
   "doc": {
     "generate": {
       "label": "Créer un document",
@@ -65,9 +62,15 @@
       "unavailable": "Aperçu non disponible. Veuillez télécharger.",
       "empty": "Aucun document chargé."
     },
-    "close": { "label": "Fermer" },
-    "download": { "label": "Télécharger" },
-    "send": { "label": "Envoyer" }
+    "close": {
+      "label": "Fermer"
+    },
+    "download": {
+      "label": "Télécharger"
+    },
+    "send": {
+      "label": "Envoyer"
+    }
   },
   "composer": {
     "title": "Envoyer le document",
@@ -101,9 +104,11 @@
       "conf": "Document envoyé à {{ recipients }}",
       "error": "Échec de l'envoi : {{ error }}"
     },
-    "revert": { "label": "Annuler" }
+    "revert": {
+      "label": "Annuler"
+    },
+    "title_plain": "Envoyer un e-mail"
   },
-
   "category": {
     "label": "Catégorie"
   },

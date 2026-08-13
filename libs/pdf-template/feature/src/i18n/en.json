@@ -5,7 +5,6 @@
     "title": "Document templates"
   },
   "empty": "No templates found.",
-
   "archive": {
     "label": "Archive template"
   },
@@ -51,8 +50,6 @@
     "conf": "Reverted to last version.",
     "error": "Revert failed."
   },
-
-
   "doc": {
     "generate": {
       "label": "Create document",
@@ -65,9 +62,15 @@
       "unavailable": "Preview not available. Please download.",
       "empty": "No document loaded."
     },
-    "close": { "label": "Close" },
-    "download": { "label": "Download" },
-    "send": { "label": "Send" }
+    "close": {
+      "label": "Close"
+    },
+    "download": {
+      "label": "Download"
+    },
+    "send": {
+      "label": "Send"
+    }
   },
   "composer": {
     "title": "Send document",
@@ -101,9 +104,11 @@
       "conf": "Document sent to {{ recipients }}",
       "error": "Sending failed: {{ error }}"
     },
-    "revert": { "label": "Discard" }
+    "revert": {
+      "label": "Discard"
+    },
+    "title_plain": "Send email"
   },
-
   "category": {
     "label": "Category"
   },

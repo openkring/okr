@@ -26,6 +26,7 @@
     "@okr/avatar-ui": "*",
     "@okr/comment-feature": "*",
     "@okr/cms-menu-feature": "*",
-    "@okr/vcard-feature": "*"
+    "@okr/vcard-feature": "*",
+    "@okr/pdf-template-feature": "*"
   }
 }

@@ -531,6 +531,8 @@
     "invoice-add": "Neue Rechnung erstellen",
     "scsw_statuten": "Statuten",
     "filter-toggle-show": "Filter anzeigen",
-    "filter-toggle-show_alt": "Filter ausblenden"
+    "filter-toggle-show_alt": "Filter ausblenden",
+    "membership-sendemail": "Email senden",
+    "person-send-email": "Email senden"
   }
 }

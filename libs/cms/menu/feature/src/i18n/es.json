@@ -531,6 +531,8 @@
     "invoice-add": "Crear nueva factura",
     "scsw_statuten": "Estatutos",
     "filter-toggle-show": "Mostrar filtro",
-    "filter-toggle-show_alt": "Ocultar filtro"
+    "filter-toggle-show_alt": "Ocultar filtro",
+    "membership-sendemail": "Enviar correo",
+    "person-send-email": "Enviar correo"
   }
 }

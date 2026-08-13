@@ -315,6 +315,7 @@ export class MembershipList {
       case 'exportClubdesk': await this.store.export("clubdesk", this.filteredMemberships()); break;
       case 'exportAddresses': await this.store.export("address", this.filteredMemberships()); break;
       case 'copyEmailAddresses': await this.store.copyEmailAddresses(this.listId(), this.readOnly()); break;
+      case 'sendEmailToList': await this.store.sendEmailToList(this.listId()); break;
       default: error(undefined, `MembershipList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
     this.cdr.markForCheck();

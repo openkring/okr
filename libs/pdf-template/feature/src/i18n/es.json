@@ -5,7 +5,6 @@
     "title": "Plantillas de documento"
   },
   "empty": "No se han encontrado plantillas.",
-
   "archive": {
     "label": "Archivar plantilla"
   },
@@ -51,8 +50,6 @@
     "conf": "Revertido a la última versión.",
     "error": "Error al revertir."
   },
-
-
   "doc": {
     "generate": {
       "label": "Crear documento",
@@ -65,9 +62,15 @@
       "unavailable": "Vista previa no disponible. Por favor, descárguelo.",
       "empty": "Ningún documento cargado."
     },
-    "close": { "label": "Cerrar" },
-    "download": { "label": "Descargar" },
-    "send": { "label": "Enviar" }
+    "close": {
+      "label": "Cerrar"
+    },
+    "download": {
+      "label": "Descargar"
+    },
+    "send": {
+      "label": "Enviar"
+    }
   },
   "composer": {
     "title": "Enviar documento",
@@ -101,9 +104,11 @@
       "conf": "Documento enviado a {{ recipients }}",
       "error": "Error al enviar: {{ error }}"
     },
-    "revert": { "label": "Descartar" }
+    "revert": {
+      "label": "Descartar"
+    },
+    "title_plain": "Enviar correo"
   },
-
   "category": {
     "label": "Categoría"
   },

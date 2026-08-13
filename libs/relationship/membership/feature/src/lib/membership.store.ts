@@ -16,6 +16,7 @@ import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresse
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 import { EmailAddressesModal, selectDate } from '@okr/shared-ui';
+import { openBulkEmailFlow } from '@okr/pdf-template-feature';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
@@ -859,24 +860,27 @@ export const _MembershipStore = signalStore(
       },
 
       // persons, orgs, active, applied, passive, cancelled, deceased, entries, exits, all, memberships
+      /** The memberships currently shown by the given list tab. */
+      getFilteredMemberships(listId: string): MembershipModel[] {
+        switch (listId) {
+          case 'persons': return store.filteredPersons() ?? [];
+          case 'orgs': return store.filteredOrgs() ?? [];
+          case 'active': return store.filteredActive();
+          case 'applied': return store.filteredApplied();
+          case 'passive': return store.filteredPassive();
+          case 'cancelled': return store.filteredCancelled();
+          case 'deceased': return store.filteredDeceased();
+          case 'entries': return store.filteredEntries();
+          case 'exits': return store.filteredExits();
+          case 'all':
+          case 'memberships': return store.filteredMembers() ?? [];
+          default: return [];
+        }
+      },
+
       async copyEmailAddresses(listId: string, readOnly = true): Promise<void> {
         const persons = store.appStore.allPersons();
-        let filteredMemberships: MembershipModel[] = [];
-        switch (listId) {
-          case 'persons': filteredMemberships = store.filteredPersons() ?? []; break;
-          case 'orgs': filteredMemberships = store.filteredOrgs() ?? []; break;
-          case 'active': filteredMemberships = store.filteredActive(); break;
-          case 'applied': filteredMemberships = store.filteredApplied(); break;
-          case 'passive': filteredMemberships = store.filteredPassive(); break;
-          case 'cancelled': filteredMemberships = store.filteredCancelled(); break;
-          case 'deceased': filteredMemberships = store.filteredDeceased(); break;
-          case 'entries': filteredMemberships = store.filteredEntries(); break;
-          case 'exits': filteredMemberships = store.filteredExits(); break;
-          case 'all':
-          case 'memberships': filteredMemberships = store.filteredMembers() ?? []; break;
-        }
-
-        const memberKeySet = new Set(filteredMemberships.map(m => m.memberKey));
+        const memberKeySet = new Set(this.getFilteredMemberships(listId).map(m => m.memberKey));
         const filteredPersons = persons.filter(p => p.okey && memberKeySet.has(p.okey));
 
         const mainEmails = getMainEmailAddresses(filteredPersons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
@@ -913,6 +917,22 @@ export const _MembershipStore = signalStore(
             await store.personService.update(personData, store.currentUser());
           }
         }
+      },
+
+      /**
+       * Bulk mail to the currently filtered members: first the distribution-list modal
+       * (to/cc/bcc), then the email composer, which sends the mail in throttled blocks.
+       */
+      async sendEmailToList(listId: string): Promise<void> {
+        const memberKeySet = new Set(this.getFilteredMemberships(listId).map(m => m.memberKey));
+        const filteredPersons = store.appStore.allPersons().filter(p => p.okey && memberKeySet.has(p.okey));
+        const recipients = getMainEmailAddresses(filteredPersons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
+        await openBulkEmailFlow({
+          modalController: store.modalController,
+          firestoreService: store.firestoreService,
+          appStore: store.appStore,
+          tenantId: store.tenantId(),
+        }, recipients);
       },
 
       async editPerson(membership?: MembershipModel, readOnly = true): Promise<void> {

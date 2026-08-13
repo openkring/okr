@@ -1,6 +1,39 @@
 import { AddressModel, PersonModel } from '@okr/shared-models';
 import { getFullName } from '@okr/shared-util-core';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Splits a free-text field into individual email addresses (comma, semicolon or whitespace
+ * separated), lower-cases them and drops anything that is not a plausible address.
+ */
+export function parseEmailList(raw: string): string[] {
+  return raw
+    .split(/[,;\s]+/)
+    .map(e => e.trim().toLowerCase())
+    .filter(e => EMAIL_RE.test(e));
+}
+
+/** Appends `raw`'s addresses to `existing`, preserving order and dropping duplicates. */
+export function mergeEmailList(existing: string[], raw: string): string[] {
+  const seen = new Set(existing.map(e => e.toLowerCase()));
+  const added = parseEmailList(raw).filter(e => !seen.has(e) && (seen.add(e), true));
+  return [...existing, ...added];
+}
+
+/**
+ * Splits recipients into blocks for a throttled bulk send. Mailgun accepts at most 1000
+ * recipients per message, so a mailing list has to go out in several messages.
+ */
+export function chunkRecipients(recipients: string[], size: number): string[][] {
+  if (size < 1) throw new Error('chunkRecipients: size must be >= 1');
+  const chunks: string[][] = [];
+  for (let i = 0; i < recipients.length; i += size) {
+    chunks.push(recipients.slice(i, i + size));
+  }
+  return chunks;
+}
+
 export type EmailEntry = {
   email: string;
   memberKey: string;

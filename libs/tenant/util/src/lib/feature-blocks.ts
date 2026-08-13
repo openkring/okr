@@ -750,6 +750,7 @@ const subject: FeatureBlock = {
       { key: 'person-add', name: 'person-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Person hinzufügen' },
       { key: 'person-export', name: 'person-export', url: 'export', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Personen exportieren' },
       { key: 'person-copy-emails', name: 'person-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: 'Email Adressen kopieren' },
+      { key: 'person-send-email', name: 'person-send-email', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: 'Email senden' },
     ] },
     { key: 'c-orgs', name: 'c-orgs', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'org-add', name: 'org-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Organisation hinzufügen' },
@@ -839,6 +840,7 @@ const relationship: FeatureBlock = {
       { key: 'member-add', name: 'member-add', url: 'memberAdd', action: 'call', roleNeeded: 'registered', icon: 'person-add', label: 'Neues Mitglied erfassen' },
       { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Mitgliedschaft hinzufügen' },
       { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'registered', icon: 'copy', label: 'Email Adressen kopieren' },
+      { key: 'membership-sendemail', name: 'membership-sendemail', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: 'Email senden' },
       { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Mitgliedschaften exportieren' },
       { key: 'membership-exportsrv', name: 'membership-exportsrv', url: 'exportSrv', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'SRV Liste exportieren' },
       { key: 'membership-exportmembers', name: 'membership-exportmembers', url: 'exportMembers', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Mitgliederliste exportieren' },
@@ -848,6 +850,7 @@ const relationship: FeatureBlock = {
     { key: 'c-groupmembers', name: 'c-groupmembers', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
       { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Mitgliedschaft hinzufügen' },
       { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'registered', icon: 'copy', label: 'Email Adressen kopieren' },
+      { key: 'membership-sendemail', name: 'membership-sendemail', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: 'Email senden' },
       { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Mitgliedschaften exportieren' },
       { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Adressliste exportieren' },
     ] },

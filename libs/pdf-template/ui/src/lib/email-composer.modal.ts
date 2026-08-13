@@ -45,7 +45,7 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
-        <ion-title>{{ i18n.title() }}</ion-title>
+        <ion-title>{{ headerTitle() }}@if (progress(); as p) { <span> — {{ p }}</span> }</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="cancel()">
             <ion-icon src="{{ 'cancel-circle' | svgIcon }}" slot="icon-only" />
@@ -80,11 +80,11 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
                 </ion-row>
                 <ion-row>
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="ccI18n()" [value]="cc()"
+                    <okr-text-input [i18n]="ccI18n()" [value]="ccField()"
                       (valueChange)="onFieldChange('cc', $event)" [maxLength]="200" [readOnly]="false" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <okr-text-input [i18n]="bccI18n()" [value]="bcc()"
+                    <okr-text-input [i18n]="bccI18n()" [value]="bccField()"
                       (valueChange)="onFieldChange('bcc', $event)" [maxLength]="200" [readOnly]="false" />
                   </ion-col>
                 </ion-row>
@@ -96,10 +96,12 @@ const MAX_ATTACHMENT_BYTES = 7 * 1024 * 1024;
                 </ion-row>
                 <ion-row class="ion-align-items-center">
                   <ion-col size="9">
-                    <ion-chip [outline]="true">
-                      <ion-icon src="{{ 'attach' | svgIcon }}" />
-                      <ion-label>{{ filename() }}</ion-label>
-                    </ion-chip>
+                    @if (filename().length > 0) {
+                      <ion-chip [outline]="true">
+                        <ion-icon src="{{ 'attach' | svgIcon }}" />
+                        <ion-label>{{ filename() }}</ion-label>
+                      </ion-chip>
+                    }
                     @for (att of extraAttachments(); track att.filename) {
                       <ion-chip [outline]="true">
                         <ion-icon src="{{ 'attach' | svgIcon }}" />
@@ -145,9 +147,13 @@ export class EmailComposerModal {
 
   // inputs
   public readonly to            = input<string>('');
+  public readonly cc            = input<string>('');
+  public readonly bcc           = input<string>('');
   public readonly recipientName = input<string | undefined>(undefined);
-  public readonly storagePath   = input.required<string>();
-  public readonly filename      = input.required<string>();
+  /** Storage path of a generated document to attach. Empty when composing a plain mail. */
+  public readonly storagePath   = input<string>('');
+  /** Filename of that document — drives the attachment chip and the subject prefix. */
+  public readonly filename      = input<string>('');
   public readonly outputFormat  = input<'pdf' | 'docx' | 'html'>('pdf');
 
   // form model + signal-forms validation
@@ -157,6 +163,12 @@ export class EmailComposerModal {
 
   protected readonly isDirty = signal(false);
   protected readonly isSending = signal(false);
+  /** Without an attached document this is a plain mail, not "send document". */
+  protected readonly headerTitle = computed(() =>
+    this.filename().length === 0 ? this.i18n.title_plain() : this.i18n.title());
+
+  /** "<block>/<blocks>" while a chunked bulk send is running, empty for a single message. */
+  protected readonly progress = signal('');
   protected readonly showForm = signal(true);
   protected readonly extraAttachments = signal<InlineAttachment[]>([]);
   protected readonly showConfirmation = computed(() =>
@@ -165,8 +177,8 @@ export class EmailComposerModal {
   // field accessors
   protected readonly toField  = computed(() => this.formData().to);
   protected readonly from     = computed(() => this.formData().from);
-  protected readonly cc       = computed(() => this.formData().cc);
-  protected readonly bcc      = computed(() => this.formData().bcc);
+  protected readonly ccField  = computed(() => this.formData().cc);
+  protected readonly bccField = computed(() => this.formData().bcc);
   protected readonly subject  = computed(() => this.formData().subject);
   protected readonly body     = computed(() => this.formData().body);
 
@@ -211,7 +223,7 @@ export class EmailComposerModal {
     // is still pristine.
     effect(() => {
       const prefix = this.i18n.subject_prefix();
-      if (prefix.length === 0) return;
+      if (prefix.length === 0 || this.filename().length === 0) return;
       untracked(() => {
         if (this.isDirty()) return;
         this.formData.update((vm) => ({ ...vm, subject: `${prefix} ${this.filename()}` }));
@@ -226,11 +238,18 @@ export class EmailComposerModal {
       to: this.to(),
       // Default sender on the app's own domain (e.g. app@seeclub.org), derived from app config.
       from: domain ? `app@${domain}` : '',
-      cc: '',
-      bcc: '',
-      subject: prefix ? `${prefix} ${this.filename()}` : this.filename(),
+      cc: this.cc(),
+      bcc: this.bcc(),
+      subject: this.initialSubject(prefix),
       body: '<p></p>',
     };
+  }
+
+  /** Without an attached document there is nothing to derive a subject from — leave it empty. */
+  private initialSubject(prefix: string): string {
+    const filename = this.filename();
+    if (filename.length === 0) return '';
+    return prefix ? `${prefix} ${filename}` : filename;
   }
 
   protected onFieldChange(field: keyof EmailComposerFormModel, value: string): void {
@@ -313,13 +332,17 @@ export class EmailComposerModal {
         storagePath: this.storagePath(),
         filename: this.filename(),
         extraAttachments: this.extraAttachments(),
+        onProgress: (block, blocks) => this.progress.set(blocks > 1 ? `${block}/${blocks}` : ''),
       });
 
       await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_conf, { recipients: recipients.join(', ') });
       await this.modalController.dismiss({ sent: true }, 'confirm');
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_error, { error: message }, 'danger');
+      // A bulk send aborts on the first failing block — say how far it got, never claim success.
+      const sent = this.progress();
+      await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_error,
+        { error: sent ? `${message} (${sent})` : message }, 'danger');
       this.isSending.set(false);
     }
   }

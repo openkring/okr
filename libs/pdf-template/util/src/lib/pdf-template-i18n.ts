@@ -82,6 +82,8 @@ export type PdfPreviewI18n = { [K in keyof typeof PDF_PREVIEW_I18N_KEYS]: Signal
 /** Keys for EmailComposerModal (compose + send the generated document by email). */
 export const EMAIL_COMPOSER_I18N_KEYS = {
   title:            PFX + 'composer.title',
+  /** Header when no document is attached (plain / bulk mail). */
+  title_plain:      PFX + 'composer.title_plain',
 
   to_label:         PFX + 'composer.to.label',
   to_placeholder:   PFX + 'composer.to.placeholder',

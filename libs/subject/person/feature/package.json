@@ -37,6 +37,7 @@
     "@okr/cms-menu-feature": "*",
     "@okr/category-data-access": "*",
     "@okr/vcard-util": "*",
-    "@okr/vcard-feature": "*"
+    "@okr/vcard-feature": "*",
+    "@okr/pdf-template-feature": "*"
   }
 }

@@ -1,11 +1,10 @@
 {
   "template": "PDF Vorlage",
   "templates": "PDF Vorlagen",
-  "list": { 
-    "title": "Dokumentvorlagen" 
+  "list": {
+    "title": "Dokumentvorlagen"
   },
   "empty": "Keine Vorlagen gefunden.",
-
   "archive": {
     "label": "Vorlage archivieren"
   },
@@ -51,8 +50,6 @@
     "conf": "Auf letzte Version zurückgesetzt.",
     "error": "Zurücksetzen fehlgeschlagen."
   },
-
-
   "doc": {
     "generate": {
       "label": "Dokument erstellen",
@@ -65,9 +62,15 @@
       "unavailable": "Vorschau nicht verfügbar. Bitte herunterladen.",
       "empty": "Kein Dokument geladen."
     },
-    "close": { "label": "Schliessen" },
-    "download": { "label": "Herunterladen" },
-    "send": { "label": "Senden" }
+    "close": {
+      "label": "Schliessen"
+    },
+    "download": {
+      "label": "Herunterladen"
+    },
+    "send": {
+      "label": "Senden"
+    }
   },
   "composer": {
     "title": "Dokument senden",
@@ -101,25 +104,27 @@
       "conf": "Dokument gesendet an {{ recipients }}",
       "error": "Senden fehlgeschlagen: {{ error }}"
     },
-    "revert": { "label": "Verwerfen" }
+    "revert": {
+      "label": "Verwerfen"
+    },
+    "title_plain": "Email senden"
   },
-
   "category": {
     "label": "Kategorie"
   },
   "language": {
-    "label": "Sprache" 
+    "label": "Sprache"
   },
-  "status": { 
-    "label": "Status" 
+  "status": {
+    "label": "Status"
   },
-  "version": { 
-    "label": "Version" 
+  "version": {
+    "label": "Version"
   },
-  "html": { 
-    "label": "HTML" 
+  "html": {
+    "label": "HTML"
   },
-  "css": { 
-    "label": "CSS" 
+  "css": {
+    "label": "CSS"
   }
 }

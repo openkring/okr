@@ -96,5 +96,21 @@
       "message": "Caution: if you forget the password, the text can no longer be decrypted!",
       "placeholder": "Password"
     }
+  },
+  "distribution": {
+    "title": "Prepare distribution list",
+    "empty": "No addresses selected.",
+    "next": "Next",
+    "segment": {
+      "to": "To",
+      "cc": "cc",
+      "bcc": "bcc"
+    },
+    "add": {
+      "label": "Add address",
+      "placeholder": "name@domain.com, ...",
+      "helper": "Separate several addresses with a comma or semicolon.",
+      "invalid": "No valid email address found."
+    }
   }
 }

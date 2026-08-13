@@ -96,5 +96,21 @@
       "message": "Achtung: wenn du das Passwort vergisst, kann der Text nicht mehr entschlüsselt werden !",
       "placeholder": "Passwort"
     }
+  },
+  "distribution": {
+    "title": "Verteiler vorbereiten",
+    "empty": "Keine Adressen ausgewählt.",
+    "next": "Weiter",
+    "segment": {
+      "to": "An",
+      "cc": "cc",
+      "bcc": "bcc"
+    },
+    "add": {
+      "label": "Adresse hinzufügen",
+      "placeholder": "name@domain.ch, ...",
+      "helper": "Mehrere Adressen mit Komma oder Semikolon trennen.",
+      "invalid": "Keine gültige E-Mail Adresse gefunden."
+    }
   }
 }

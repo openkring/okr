@@ -24,6 +24,7 @@
     { "path": "../../../comment/feature/tsconfig.lib.json" },
     { "path": "../../../document/feature/tsconfig.lib.json" },
     { "path": "../../../document/util/tsconfig.lib.json" },
+    { "path": "../../../pdf-template/feature/tsconfig.lib.json" },
     { "path": "../../../relationship/membership/feature/tsconfig.lib.json" },
     { "path": "../../../relationship/ownership/feature/tsconfig.lib.json" },
     { "path": "../../../relationship/personal-rel/feature/tsconfig.lib.json" },
