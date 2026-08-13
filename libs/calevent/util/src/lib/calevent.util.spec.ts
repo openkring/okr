@@ -1,7 +1,7 @@
 import { CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, isCalEvent, isFullDayEvent, isPastCalevent, isSchedulePoll } from './calevent.util';
+import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalevent, isSchedulePoll } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -35,6 +35,22 @@ describe('CalEvent Utils', () => {
     baseCalEvent.startDate = '20251010';
     baseCalEvent.startTime = '10:00';
     baseCalEvent.durationMinutes = 60;
+  });
+
+  describe('isPersonalCalevent', () => {
+    it('returns true when the event belongs to no calendar', () => {
+      baseCalEvent.calendars = [];
+      expect(isPersonalCalevent(baseCalEvent)).toBe(true);
+    });
+
+    it('returns false when the event belongs to a calendar', () => {
+      baseCalEvent.calendars = ['scs'];
+      expect(isPersonalCalevent(baseCalEvent)).toBe(false);
+    });
+
+    it('treats a legacy doc without calendars as personal', () => {
+      expect(isPersonalCalevent({ ...baseCalEvent, calendars: undefined } as unknown as CalEventModel)).toBe(true);
+    });
   });
 
   describe('isCalEvent', () => {

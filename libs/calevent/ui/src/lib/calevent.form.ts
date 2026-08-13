@@ -2,21 +2,21 @@ import { Component, computed, effect, inject, input, linkedSignal, model, output
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
-import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { ModelSelectService } from '@okr/shared-feature';
 
 import { Avatars } from '@okr/avatar-ui';
-import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
+import { CaleventI18n, calEventValidations, isPersonalCalevent } from '@okr/calevent-util';
 
 @Component({
   selector: 'okr-calevent-form',
   standalone: true,
   imports: [
     CategorySelect, Chips, NotesInput, DateInput, TimeInput, NumberInput,
-    TextInput, ErrorNote, StringList, Avatars, Checkbox,
+    TextInput, ErrorNote, StringList, Avatars, Checkbox, UrlInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -48,11 +48,14 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
                 <okr-error-note [errors]="nameErrors()" />
               </ion-col>
             </ion-row>
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <okr-checkbox [i18n]="fullDayI18n()" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
-              </ion-col>
-            </ion-row>
+            <!-- personal events support a reduced feature set: no fullDay, no series, no location, no url -->
+            @if(!isPersonal()) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-checkbox [i18n]="fullDayI18n()" [checked]="fullDay()" (checkedChange)="onFullDayChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+            }
             @if(!fullDay()) {
               <ion-row>
                 <ion-col size="12" size-md="6" size-lg="4">
@@ -75,21 +78,33 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
                 </ion-col>
               </ion-row>
             }
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <okr-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
-              </ion-col>
-              @if(isRecurring()) {
+            @if(!isPersonal()) {
+              <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-date-input [i18n]="repeatUntilDateI18n()" [storeDate]="repeatUntilDate()" (storeDateChange)="onFieldChange('repeatUntilDate', $event)" [locale]="locale()" [mask]="chFutureDate" [readOnly]="isReadOnly()" />
+                  <okr-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
                 </ion-col>
-              }
-            </ion-row>
-            @if(expertMode()) {
+                @if(isRecurring()) {
+                  <ion-col size="12" size-md="6">
+                    <okr-date-input [i18n]="repeatUntilDateI18n()" [storeDate]="repeatUntilDate()" (storeDateChange)="onFieldChange('repeatUntilDate', $event)" [locale]="locale()" [mask]="chFutureDate" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                }
+              </ion-row>
+            }
+            @if(expertMode() && !isPersonal()) {
               <ion-row>
                 <ion-col size="12">
                   <!-- tbd: locationKey is currently only a text field, should be [key]@[name], e.g.  qlöh1341hkqj@Stäfa -->
                   <okr-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+              </ion-row>
+            }
+            @if(!isPersonal()) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-url [i18n]="urlI18n()" [value]="url()" (valueChange)="onFieldChange('url', $event)" [readOnly]="isReadOnly()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-text-input [i18n]="urlLabelI18n()" [value]="urlLabel()" (valueChange)="onFieldChange('urlLabel', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             }
@@ -98,18 +113,19 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
     </ion-card>
 
     @if(currentUser(); as currentUser) {
+      <!-- personal event: the organiser is the creator and cannot be changed -->
       <okr-avatars name="responsiblePersons"
         [avatars]="responsiblePersons()" (avatarsChange)="onFieldChange('responsiblePersons', $event)"
         (selectClicked)="selectPerson()"
         [currentUser]="currentUser"
-        [readOnly]="isReadOnly()"
+        [readOnly]="isReadOnly() || isPersonal()"
         [title]="i18n().responsible()"
         [description]="i18n().responsible_description()"
       />
     }
 
     <!-- calendars, tags and notes are internal organisation data: not shown to plain registered users -->
-    @if(expertMode()) {
+    @if(expertMode() && !isPersonal()) {
     <okr-strings
       [strings]="calendars()"
       (stringsChange)="onFieldChange('calendars', $event)"
@@ -126,11 +142,11 @@ import { CaleventI18n, calEventValidations } from '@okr/calevent-util';
   <!---------------------------------------------------
     TAG, NOTES
     --------------------------------------------------->
-    @if(expertMode()) {
+    @if(expertMode() && !isPersonal()) {
       <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
     }
 
-    @if(hasRole('admin')) {
+    @if(hasRole('admin') && !isPersonal()) {
       <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
     }
   </form>
@@ -177,6 +193,8 @@ export class CalEventForm {
   protected periodicity = linkedSignal(() => this.formData().periodicity ?? DEFAULT_PERIODICITY);
   protected isRecurring = computed(() => this.periodicity() && this.periodicity() !== 'once');
   protected repeatUntilDate = linkedSignal(() => this.formData().repeatUntilDate ?? DEFAULT_DATE);
+  protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
+  protected urlLabel = linkedSignal(() => this.formData().urlLabel ?? DEFAULT_LABEL);
   protected locationKey = linkedSignal(() => this.formData().locationKey ?? DEFAULT_KEY);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
@@ -192,6 +210,8 @@ export class CalEventForm {
   } as AvatarInfo));
 });
   protected expertMode = computed(() => this.hasRole('admin'));
+  /** A personal event (no calendar) supports a reduced feature set — see isPersonalCalevent(). */
+  protected isPersonal = computed(() => isPersonalCalevent(this.formData()));
 
   // passing constants to template
   protected chFutureDate = ChFutureDate;
@@ -217,6 +237,20 @@ export class CalEventForm {
     label: this.i18n().name_label(),
     placeholder: this.i18n().name_placeholder(),
     helper: this.i18n().name_helper()
+  } as TextInputI18n));
+
+  protected urlI18n = computed(() => ({
+    name: 'url',
+    label: this.i18n().url(),
+    placeholder: this.i18n().url_placeholder(),
+    helper: this.i18n().url_helper()
+  } as UrlInputI18n));
+
+  protected urlLabelI18n = computed(() => ({
+    name: 'urlLabel',
+    label: this.i18n().urlLabel_label(),
+    placeholder: this.i18n().urlLabel_placeholder(),
+    helper: this.i18n().urlLabel_helper()
   } as TextInputI18n));
 
   protected locationKeyI18n = computed(() => ({

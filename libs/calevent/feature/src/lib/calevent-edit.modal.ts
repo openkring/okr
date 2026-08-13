@@ -11,7 +11,7 @@ import { CalEventForm } from '@okr/calevent-ui';
 import { InviteesAccordion } from '@okr/relationship-invitation-feature';
 import { DocumentsAccordion } from '@okr/document-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
-import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, CaleventI18n, isPersonalCalevent } from '@okr/calevent-util';
 
 import { AttendeesAccordion } from './attendees-accordion';
 
@@ -59,8 +59,11 @@ import { AttendeesAccordion } from './attendees-accordion';
                 @else {
                   <okr-invitees-accordion [calevent]="formData" [readOnly]="isReadOnly()" />
                 }
-                <!-- documents: organiser/admin only; commenting is open to every registered user -->
-                <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+                <!-- documents: organiser/admin only, and not supported on personal events;
+                     commenting is open to every registered user -->
+                @if(!isPersonal()) {
+                  <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="isReadOnly()" />
+                }
                 <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="false" />
               </ion-accordion-group>
             </ion-card-content>
@@ -103,6 +106,7 @@ export class CalEventEditModal {
   });
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().okey}`);
   protected isNew = computed(() => !this.formData()?.okey);
+  protected isPersonal = computed(() => isPersonalCalevent(this.calevent()));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

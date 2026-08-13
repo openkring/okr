@@ -26,6 +26,17 @@ export function isPastCalevent(calevent: CalEventModel): boolean {
   return isPastDate(calevent.endDate || calevent.startDate);
 }
 
+/**
+ * A personal CalEvent belongs to no calendar: it is created by a plain registered user, shown only
+ * to its organiser (responsiblePersons) and its invitees, and never appears in a shared calendar.
+ * Personal events support a reduced feature set (no series, no fullDay, no location, no url,
+ * no tags, no description, no documents) — see CalEventForm.
+ * @param calevent
+ */
+export function isPersonalCalevent(calevent: CalEventModel): boolean {
+  return (calevent.calendars?.length ?? 0) === 0;
+}
+
 export function convertCalEventToFullCalendar(calevent: CalEventModel): EventInput {
   if (isFullDayEvent(calevent)) {
     return convertFullDayCalEventToFullCalendar(calevent);

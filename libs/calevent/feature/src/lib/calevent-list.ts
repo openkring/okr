@@ -22,7 +22,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, formatScheduleCloseMessage, getCalEventCssClass, isPastCalevent } from '@okr/calevent-util';
+import { CalEventDurationPipe, formatScheduleCloseMessage, getCalEventCssClass, isPastCalevent, isPersonalCalevent } from '@okr/calevent-util';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
 
@@ -107,7 +107,7 @@ type AttendanceFilter = AttendanceState | 'all';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [toggleStates]="{ toggleFilter: showFilter() }"/>
+                      <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin() || isPersonalCalendar()" [toggleStates]="{ toggleFilter: showFilter() }"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -282,6 +282,8 @@ export class CalEventList implements OnInit {
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
   public isListView = linkedSignal(() => this.view() === 'list');
   protected expertMode = computed(() => this.hasRole('admin'));
+  /** The 'personal' calendar: every registered user may create and manage their own events here. */
+  protected isPersonalCalendar = computed(() => this.store.calendarName() === 'personal');
   private readonly firstFutureIndex = computed(() => {
     const today = format(new Date(), 'yyyyMMdd');
     return this.filteredCalEvents().findIndex(e => e.startDate >= today);
@@ -638,11 +640,13 @@ export class CalEventList implements OnInit {
     } else {  // invitation
       // get invitation for current user
       const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.okey);
-      if (inv && showAttendance) {
-        if (inv.state !== 'accepted') {
+      // the organiser of a personal event has no invitation but may still accept/decline (attendees list)
+      const ownState = inv ?? { state: getAttendanceState(calevent, this.currentUser()?.personKey ?? '') };
+      if ((inv || isPersonalCalevent(calevent)) && showAttendance) {
+        if (ownState.state !== 'accepted') {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
         }
-        if (inv.state !== 'declined') {
+        if (ownState.state !== 'declined') {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
         }
       }
@@ -929,7 +933,9 @@ export class CalEventList implements OnInit {
   protected attendanceState(event: CalEventModel): AttendanceState | undefined {
     const state = event.isOpen
       ? getAttendanceState(event, this.currentUser()?.personKey ?? '')
-      : this.store.invitations().find(inv => inv.caleventKey === event.okey)?.state;
+      // no invitation (e.g. the organiser of a personal event) -> fall back to the attendees list
+      : this.store.invitations().find(inv => inv.caleventKey === event.okey)?.state
+        ?? getAttendanceState(event, this.currentUser()?.personKey ?? '');
     if (!state) return undefined;
     return state === 'accepted' || state === 'declined' ? state : 'invited';
   }
@@ -951,6 +957,9 @@ export class CalEventList implements OnInit {
    * @returns 
    */
   public canChange(calevent?: CalEventModel): boolean {
+    // 0) personal calendar: any registered user may create an event there. Per-event rights still
+    //    come from step 3 (responsiblePersons), so an invitee stays read-only on someone else's event.
+    if (this.isPersonalCalendar() && !calevent) return true;
     // 1) general roles
     if (this.hasRole('eventAdmin')) return true;
     if (this.hasRole('privileged')) return true;

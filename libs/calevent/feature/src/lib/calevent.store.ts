@@ -19,7 +19,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
-import { CALEVENT_I18N_KEYS, getCaleventIndex, isCalEvent } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, getCaleventIndex, isCalEvent, isPersonalCalevent } from '@okr/calevent-util';
 import { RegressionSelectionModal } from '@okr/calevent-ui';
 
 const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';
@@ -154,7 +154,9 @@ export const CalEventStore = signalStore(
       params: () => ({
         calendarName: store.calendarName(),
         calendarsOfCurrentUser: store.calendarsForCurrentUserResource.value() ?? [],
-        selectedYear: store.selectedYear()
+        selectedYear: store.selectedYear(),
+        personKey: store.appStore.currentUser()?.personKey ?? '',
+        invitedEventKeys: (store.invitationsForCurrentUserResource.value() ?? []).map(inv => inv.caleventKey)
       }),
       stream: ({ params }) => {
         const calName = params.calendarName;
@@ -176,8 +178,16 @@ export const CalEventStore = signalStore(
               if (seen.has(e.okey)) {
                 continue;
               }
-              // Filter by calendar(s)
-              if (calName === 'my') {
+              // Personal events (no calendar) are visible to their organiser and their invitees only,
+              // and never show up in a shared calendar. The 'personal' calendar shows nothing else.
+              if (isPersonalCalevent(e)) {
+                if (calName !== 'personal' && calName !== 'all' && calName !== 'my') continue;
+                const isOrganiser = e.responsiblePersons?.some(p => p.key === params.personKey) === true;
+                const isInvitee = params.invitedEventKeys.includes(e.okey);
+                if (!params.personKey || (!isOrganiser && !isInvitee)) continue;
+              } else if (calName === 'personal') {
+                continue;
+              } else if (calName === 'my') {
                 if (!store.calendarsForCurrentUserResource.value()?.some(key => e.calendars?.includes(key))) {
                   continue;
                 }
@@ -358,16 +368,26 @@ export const CalEventStore = signalStore(
 
       /******************************* CRUD on single event  *************************************** */
       async add(readOnly = true, startDate?: string, startTime?: string, skipReload = false): Promise<CalEventModel | undefined> {
-        if (readOnly) return undefined;
+        const cal = store.calendarName();
+        const personal = cal === 'personal';
+        if (readOnly && !personal) return undefined;
         const newCalevent = new CalEventModel(store.tenantId());
         newCalevent.startDate = startDate ?? getTodayStr();
         newCalevent.startTime = startTime ?? '09:00';
-        const cal = store.calendarName();
-        newCalevent.calendars = cal === 'all' || cal.startsWith('my') || cal.length === 0 ? [store.tenantId()] : [cal];
-        newCalevent.isOpen = store.calendar()?.defaultIsOpen ?? true;
+        if (personal) {
+          // personal event: no calendar, organiser is the creator and cannot be changed
+          newCalevent.calendars = [];
+          newCalevent.isOpen = false;
+          const user = store.currentUser();
+          const avatar = user ? getAvatarInfoForCurrentUser(user) : undefined;
+          newCalevent.responsiblePersons = avatar ? [avatar] : [];
+        } else {
+          newCalevent.calendars = cal === 'all' || cal.startsWith('my') || cal.length === 0 ? [store.tenantId()] : [cal];
+          newCalevent.isOpen = store.calendar()?.defaultIsOpen ?? true;
+        }
         const untilDate = addMonths(new Date(), 3);
         newCalevent.repeatUntilDate = format(untilDate, DateFormat.StoreDate);
-        return await this.edit(newCalevent, true, readOnly, false, skipReload);
+        return await this.edit(newCalevent, true, false, false, skipReload);
       },
 
       async schedule(): Promise<void> {
@@ -683,24 +703,24 @@ export const CalEventStore = signalStore(
 
       /******************************* subscriptions *************************************** */
       async subscribe(calEvent: CalEventModel): Promise<void> {
-        if (calEvent.isOpen) {
-          await this.changeAttendanceState(calEvent, 'accepted');
-        } else {
-          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
-          if (inv) {
-            await this.changeInvitationState(inv, 'accepted');
-          }
-        }
+        await this.changeOwnAttendance(calEvent, 'accepted');
       },
 
       async unsubscribe(calEvent: CalEventModel): Promise<void> {
-        if (calEvent.isOpen) {
-          await this.changeAttendanceState(calEvent, 'declined');
+        await this.changeOwnAttendance(calEvent, 'declined');
+      },
+
+      /**
+       * Sets the current user's attendance on the given event. Invited users answer their invitation,
+       * everybody else (open events, and the organiser of a personal event who never got an
+       * invitation) is recorded in the attendees list.
+       */
+      async changeOwnAttendance(calEvent: CalEventModel, newState: 'accepted' | 'declined'): Promise<void> {
+        const inv = calEvent.isOpen ? undefined : store.invitations().find(inv => inv.caleventKey === calEvent.okey);
+        if (inv) {
+          await this.changeInvitationState(inv, newState);
         } else {
-          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
-          if (inv) {
-            await this.changeInvitationState(inv, 'declined');
-          }
+          await this.changeAttendanceState(calEvent, newState);
         }
       },
 
