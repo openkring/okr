@@ -55,8 +55,34 @@ function escapeText(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
 }
 
+// ponytail: hardcoded Swiss timezone; make it a tenant/app-config setting if a
+// non-CH tenant ever appears. StoreDate/StoreTime are local wall-clock values.
+const TZID = 'Europe/Zurich';
+
+/** Minimal VTIMEZONE for Europe/Zurich — Outlook only honours TZID when the zone is defined. */
+const VTIMEZONE = [
+  'BEGIN:VTIMEZONE',
+  `TZID:${TZID}`,
+  'BEGIN:DAYLIGHT',
+  'TZOFFSETFROM:+0100',
+  'TZOFFSETTO:+0200',
+  'TZNAME:CEST',
+  'DTSTART:19700329T020000',
+  'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
+  'END:DAYLIGHT',
+  'BEGIN:STANDARD',
+  'TZOFFSETFROM:+0200',
+  'TZOFFSETTO:+0100',
+  'TZNAME:CET',
+  'DTSTART:19701025T030000',
+  'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
+  'END:STANDARD',
+  'END:VTIMEZONE',
+];
+
 /**
- * Convert StoreDate (yyyyMMdd) + StoreTime (HH:mm) to ICS datetime string (yyyyMMddTHHmmssZ).
+ * Convert StoreDate (yyyyMMdd) + StoreTime (HH:mm) to a local ICS datetime (yyyyMMddTHHmmss).
+ * No `Z` — the value is local to TZID and must be emitted with `;TZID=…`.
  * Returns undefined if startDate is empty or invalid.
  */
 function toIcsDateTime(storeDate: string, storeTime: string): string | undefined {
@@ -67,7 +93,7 @@ function toIcsDateTime(storeDate: string, storeTime: string): string | undefined
   const timeParts = storeTime?.split(':') ?? [];
   const hh = timeParts[0]?.padStart(2, '0') ?? '00';
   const mm = timeParts[1]?.padStart(2, '0') ?? '00';
-  return `${year}${month}${day}T${hh}${mm}00Z`;
+  return `${year}${month}${day}T${hh}${mm}00`;
 }
 
 /**
@@ -79,7 +105,7 @@ function toIcsDate(storeDate: string): string | undefined {
   return storeDate;
 }
 
-/** Add `durationMinutes` to a StoreDate+StoreTime pair and return ICS datetime. */
+/** Add `durationMinutes` to a StoreDate+StoreTime pair and return a local ICS datetime. */
 function addMinutes(storeDate: string, storeTime: string, minutes: number): string {
   const timeParts = storeTime?.split(':') ?? [];
   const hh = parseInt(timeParts[0] ?? '0', 10);
@@ -92,7 +118,8 @@ function addMinutes(storeDate: string, storeTime: string, minutes: number): stri
   );
   date.setMinutes(date.getMinutes() + minutes);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}T${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}00Z`;
+  // local getters: pure wall-clock arithmetic, independent of the server's TZ
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
 }
 
 /** Add one day to a StoreDate string (yyyyMMdd), returning the next day's StoreDate. */
@@ -141,7 +168,7 @@ function locationName(locationKey: string): string {
 }
 
 /** Build the full ICS text for a list of CalEventDoc objects. */
-function buildICS(calendarName: string, events: CalEventDoc[]): string {
+export function buildICS(calendarName: string, events: CalEventDoc[]): string {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
   const dtstamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
@@ -153,16 +180,17 @@ function buildICS(calendarName: string, events: CalEventDoc[]): string {
     foldLine(`X-WR-CALNAME:${escapeText(calendarName)}`),
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
+    ...VTIMEZONE,
   ];
 
   for (const e of events) {
     const uid = `${e.okey}@bkaiser.ch`;
     const dtstart = e.fullDay
       ? `DTSTART;VALUE=DATE:${toIcsDate(e.startDate)}`
-      : `DTSTART:${toIcsDateTime(e.startDate, e.startTime)}`;
+      : `DTSTART;TZID=${TZID}:${toIcsDateTime(e.startDate, e.startTime)}`;
     const dtend = e.fullDay
       ? `DTEND;VALUE=DATE:${toIcsDate(e.endDate && e.endDate.length === 8 ? nextDay(e.endDate) : nextDay(e.startDate))}`
-      : `DTEND:${addMinutes(e.startDate, e.startTime, e.durationMinutes || 60)}`;
+      : `DTEND;TZID=${TZID}:${addMinutes(e.startDate, e.startTime, e.durationMinutes || 60)}`;
     const rrule = toRRule(e.periodicity, e.repeatUntilDate);
     const loc = locationName(e.locationKey);
 
