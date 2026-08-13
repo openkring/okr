@@ -587,6 +587,10 @@
       "label": "4x",
       "description": "Quatre de couple"
     },
+    "b4mx": {
+      "label": "4-/4x",
+      "description": "Quatre convertible"
+    },
     "b5x": {
       "label": "5x",
       "description": "Cinq de couple"

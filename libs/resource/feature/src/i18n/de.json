@@ -587,6 +587,10 @@
       "label": "4x",
       "description": "Doppelvierer"
     },
+    "b4mx": {
+      "label": "4-/4x",
+      "description": "Vierer umrüstbar"
+    },
     "b5x": {
       "label": "5x",
       "description": "Doppelfünfer"

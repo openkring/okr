@@ -587,6 +587,10 @@
       "label": "4x",
       "description": "Cuádruple par"
     },
+    "b4mx": {
+      "label": "4-/4x",
+      "description": "Cuatro convertible"
+    },
     "b5x": {
       "label": "5x",
       "description": "Quíntuple par"
