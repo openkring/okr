@@ -29,7 +29,6 @@ import { TripService } from '@okr/trip-data-access';
           [formData]="formData" (formDataChange)="onTripChange($event)"
           [currentUser]="currentUser()"
           [tenantId]="tenantId()"
-          [mode]="mode()"
           [boats]="boats()"
           [category]="category()"
           [locations]="store.locations()"
@@ -51,7 +50,7 @@ export class TripEditModal {
 
   // inputs
   public readonly trip = input.required<TripModel>();
-  public readonly mode = input.required<'add' | 'edit' | 'end' | 'view'>();
+  public readonly mode = input.required<'add' | 'edit' | 'end'>();
 
   // signals
   // 'end' starts dirty so the change-confirmation toolbar shows immediately and the trip can be saved right away
@@ -76,7 +75,6 @@ export class TripEditModal {
       case 'add':  return this.store.i18n.create();
       case 'edit': return this.store.i18n.update();
       case 'end':  return this.store.i18n.end();
-      case 'view': return this.store.i18n.view();
     }
   });
 

@@ -1,15 +1,15 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonImg, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@okr/shared-models';
 import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
-import { debugFormModel, getAvatarName, getDurationLabel, hasRole } from '@okr/shared-util-core';
+import { debugFormModel, getDurationLabel, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
-import { Avatars, AvatarPipe } from '@okr/avatar-ui';
+import { Avatars } from '@okr/avatar-ui';
 import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } from '@okr/trip-util';
 
 
@@ -17,15 +17,13 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
   selector: 'okr-trip-edit-form',
   standalone: true,
   imports: [
-    SvgIconPipe, AvatarPipe,
-    IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonButton,
-    IonList, IonAvatar, IonImg,
+    SvgIconPipe,
+    IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonCard, IonCardContent, IonButton,
     NotesInput, Avatars, NumberInput
   ],
   styles: [`
     ion-thumbnail { width: 30px; height: 30px; }
     ion-avatar { width: 30px; height: 30px; }
-    ion-card-header { padding: 0; }
     .title { font-size: 1.25rem; font-weight: 500; margin-left: 0; }
   `],
   template: `
@@ -59,10 +57,8 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
                   @if(formData().resource; as boat) {
                     <ion-icon slot="start" src="{{ getIcon(boat) | svgIcon }}" />
                     <ion-label>{{ boat.name2 }} {{ riggingLabel(boat) }}</ion-label>
-                    @if(!isReadOnly()) {
-                      <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearBoat()" />
-                    }
-                  } @else if(!isReadOnly()) {
+                    <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearBoat()" />
+                  } @else {
                     <ion-button (click)="boatSelectClicked.emit()">
                       <ion-icon slot="start" src="{{'boat' | svgIcon }}" />
                       {{ i18n().select_boat_add() }}
@@ -83,15 +79,11 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
                 <ion-item lines="none">
                   @if(formData().locations.length > 0) {
                     <ion-label>{{ formData().locations[0]?.name2 }}</ion-label>
-                    @if(!isReadOnly()) {
-                      <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
-                    }
+                    <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
                   } @else if(formData().customLocationLabel) {
                     <ion-label>{{ formData().customLocationLabel }}</ion-label>
-                    @if(!isReadOnly()) {
-                      <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
-                    }
-                  } @else if(!isReadOnly()) {
+                    <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearLocation()" />
+                  } @else {
                     <ion-button (click)="locationSelectClicked.emit()">
                       <ion-icon slot="start" src="{{'location' | svgIcon }}" />
                       {{ i18n().select_location_add() }}
@@ -107,7 +99,7 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
                 <!-- offset 6: the distance lines up under the boat/location controls, not under their labels -->
                 <ion-col size="6" offset="6">
                   <okr-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onDistanceChange($event)"
-                    [readOnly]="isReadOnly()" [min]="1" [max]="maxDistance" [selectOnFocus]="true" />
+                    [readOnly]="false" [min]="1" [max]="maxDistance" [selectOnFocus]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -116,39 +108,11 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
       </ion-card>
 
       <!-- participants -->
-      @if(isReadOnly()) {
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>
-              <ion-item lines="none">
-                <div class="title">{{ i18n().select_participant_title() }}</div>
-              </ion-item>
-            </ion-card-title>
-          </ion-card-header>
-          <ion-card-content class="ion-no-padding">
-            @if(participants().length > 0) {
-              <ion-list>
-                @for(participant of participants(); track participant.key) {
-                  <ion-item lines="none">
-                    <ion-avatar slot="start">
-                      <ion-img src="{{ participant.modelType + '.' + participant.key | avatar }}" alt="Avatar" />
-                    </ion-avatar>
-                    <ion-label>{{ getParticipantName(participant) }}</ion-label>
-                  </ion-item>
-                }
-              </ion-list>
-            } @else {
-              <ion-item lines="none">
-                <ion-label>-</ion-label>
-              </ion-item>
-            }
-          </ion-card-content>
-        </ion-card>
-      } @else if(currentUser(); as currentUser) {
+      @if(currentUser(); as currentUser) {
         <okr-avatars (selectClicked)="personSelectClicked.emit()"
           [avatars]="participants()"
           (avatarsChange)="onFieldChange('participants', $event)"
-          [readOnly]="isReadOnly()"
+          [readOnly]="false"
           [currentUser]="currentUser"
           [title]="i18n().select_participant_add()"
           [label]="i18n().person()"
@@ -157,7 +121,7 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
       }
 
     @if(hasRole('admin')) {
-      <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
+      <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="false" />
     }
   `,
 })
@@ -167,7 +131,6 @@ export class TripEditForm {
   public readonly formData = model.required<TripModel>();
   protected readonly currentUser = input<UserModel | undefined>();
   public readonly tenantId = input.required<string>();
-  public readonly mode = input.required<'add' | 'edit' | 'end' | 'view'>();
   public readonly boats = input.required<ResourceModel[]>();
   public readonly locations = input.required<LocationModel[]>();
   public readonly category = input.required<CategoryListModel>();
@@ -189,7 +152,6 @@ export class TripEditForm {
   }
 
   // derived
-  protected isReadOnly = computed(() => this.mode() === 'view');
   protected duration = computed(() =>
     getDurationLabel(this.formData().startDate, this.formData().startTime, this.formData().endTime)
   );
@@ -233,10 +195,6 @@ export class TripEditForm {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
-  }
-
-  protected getParticipantName(participant: AvatarInfo): string {
-    return getAvatarName(participant, this.currentUser()?.nameDisplay);
   }
 
   /**

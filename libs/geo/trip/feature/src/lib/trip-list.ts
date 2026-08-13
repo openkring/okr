@@ -67,8 +67,8 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
       }
 
       <ion-toolbar>
-        <!-- search + year only, 6 cols each up to md, 3 cols each above -->
-        <okr-list-filter [mdSize]="3"
+        <!-- search + year only, 6 cols each at every breakpoint -->
+        <okr-list-filter [mdSize]="6"
           (searchTermChanged)="store.setSearchTerm($event)"
           (yearChanged)="store.setSelectedYear($event)" [years]="years()"
         />
@@ -244,13 +244,11 @@ export class TripList {
     const isOpen = trip.state === 'open' || trip.state === 'open.rev';
     const isDeleted = trip.state === 'deleted';
 
-    if (canWrite && !isDeleted) {
-      if (isTripEditable(trip)) {
-        options.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), this.store.imgixBaseUrl(), 'edit'));
-      } else {
-        // more than 15 min after the trip ended: read-only view instead of edit
-        options.buttons.push(createActionSheetButton('view', this.store.i18n.view(), this.store.imgixBaseUrl(), 'eye-on'));
-      }
+    if (canWrite && !isDeleted && isTripEditable(trip, this.hasRole('admin'))) {
+      options.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), this.store.imgixBaseUrl(), 'edit'));
+    } else {
+      // no write access, or more than 15 min after the trip ended: read-only view instead of edit
+      options.buttons.push(createActionSheetButton('view', this.store.i18n.view(), this.store.imgixBaseUrl(), 'eye-on'));
     }
     if (canWrite && isOpen) {
       options.buttons.push(createActionSheetButton('end', this.store.i18n.end(), this.store.imgixBaseUrl(), 'stop-circle'));

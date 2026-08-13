@@ -149,8 +149,8 @@ export const TripStore = signalStore(
 
     /******************************* CRUD on single trip  *************************************** */
 
-    async openTripModal(trip: TripModel, mode: 'add' | 'edit' | 'end' | 'view'): Promise<void> {
-      if (mode !== 'view' && !store.canWrite()) return;
+    async openTripModal(trip: TripModel, mode: 'add' | 'edit' | 'end'): Promise<void> {
+      if (!store.canWrite()) return;
       const { TripEditModal } = await import('./trip-edit.modal');
       const modal = await store.modalController.create({
         component: TripEditModal,
@@ -179,8 +179,16 @@ export const TripStore = signalStore(
       await this.openTripModal(trip, 'end');
     },
 
+    /** Read-only, easy-to-read representation — open to every registered user, not just writers. */
     async viewTrip(trip: TripModel): Promise<void> {
-      await this.openTripModal(trip, 'view');
+      const { TripViewModal } = await import('./trip-view.modal');
+      const modal = await store.modalController.create({
+        component: TripViewModal,
+        cssClass: 'wide-modal',
+        componentProps: { trip },
+      });
+      await modal.present();
+      await modal.onDidDismiss();
     },
 
     async deleteTrip(trip: TripModel): Promise<void> {
