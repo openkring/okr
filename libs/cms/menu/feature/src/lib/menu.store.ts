@@ -14,7 +14,7 @@ import { debugData, die, nameMatches, safeStructuredClone, warn } from '@okr/sha
 import { AppNavigationService, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
-import { expandMenuTokens, MENU_I18N_KEYS } from '@okr/cms-menu-util';
+import { MENU_I18N_KEYS, resolveMenuLabelKey } from '@okr/cms-menu-util';
 
 import { AuthService } from '@okr/auth-data-access';
 import { ActivityService } from '@okr/activity-data-access';
@@ -163,14 +163,7 @@ export const _MenuStore = signalStore(
         // toggle items show labelAlt while active; base label otherwise
         const useAlt = item?.action === 'toggle' && store.toggleActive();
         const menuLabel = (useAlt ? (item?.labelAlt ?? item?.label) : item?.label) ?? '';
-        const expanded = expandMenuTokens(menuLabel, { version: store.versionService.getCurrentVersion() });
-        if (expanded !== menuLabel) {
-          return expanded;  // a dynamic token (e.g. @VERSION@) was expanded
-        }
-        if (menuLabel.startsWith('@')) {
-          return '@cms/menu/feature.' + menuLabel.substring(1);
-        }
-        return menuLabel;
+        return resolveMenuLabelKey(menuLabel, { version: store.versionService.getCurrentVersion() });
       })).pipe(switchMap(key => store.i18nService.translate(key))),
       { initialValue: '' }
     ),

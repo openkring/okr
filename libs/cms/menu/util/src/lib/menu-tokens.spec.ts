@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { expandMenuTokens } from './menu-tokens';
+import { expandMenuTokens, resolveMenuLabelKey } from './menu-tokens';
 
 const ctx = { version: '4.2.0' };
 
@@ -23,5 +23,24 @@ describe('expandMenuTokens', () => {
 
   it('returns a token-free label unchanged', () => {
     expect(expandMenuTokens('Home', ctx)).toBe('Home');
+  });
+});
+
+describe('resolveMenuLabelKey', () => {
+  it('scopes a bare key to the menu scope', () => {
+    expect(resolveMenuLabelKey('@home', ctx)).toBe('@cms/menu/feature.home');
+  });
+
+  it('leaves an already-scoped key untouched (SCS-47)', () => {
+    expect(resolveMenuLabelKey('@system/workflow/feature.plural', ctx))
+      .toBe('@system/workflow/feature.plural');
+  });
+
+  it('expands tokens instead of scoping them', () => {
+    expect(resolveMenuLabelKey('@VERSION@', ctx)).toBe('v4.2.0');
+  });
+
+  it('returns a plain label unchanged', () => {
+    expect(resolveMenuLabelKey('Home', ctx)).toBe('Home');
   });
 });

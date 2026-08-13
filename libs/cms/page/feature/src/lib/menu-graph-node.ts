@@ -7,7 +7,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { MenuItemModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { VersionCheckService } from '@okr/shared-util-angular';
-import { expandMenuTokens } from '@okr/cms-menu-util';
+import { resolveMenuLabelKey } from '@okr/cms-menu-util';
 import { DependencyNode, MenuGraphStore } from './menu-graph.store';
 
 /**
@@ -162,10 +162,7 @@ export class MenuGraphNode {
     const node = this.node();
     if (node.nodeType !== 'menu') return '';
     const rawLabel = (node.model as MenuItemModel).label ?? '';
-    const expanded = expandMenuTokens(rawLabel, { version: this.versionService.getCurrentVersion() });
-    if (expanded !== rawLabel) return expanded;            // a dynamic token (e.g. @VERSION@) was expanded
-    if (rawLabel.startsWith('@')) return '@cms/menu/feature.' + rawLabel.substring(1);
-    return rawLabel;
+    return resolveMenuLabelKey(rawLabel, { version: this.versionService.getCurrentVersion() });
   });
 
   /** The translated menu label shown as the main node label (empty for non-menu nodes or label-less items). */

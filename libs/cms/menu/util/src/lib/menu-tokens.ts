@@ -28,3 +28,19 @@ export function expandMenuTokens(label: string, ctx: MenuTokenContext): string {
   }
   return result;
 }
+
+/**
+ * Turns a menu item's stored `label` into the key to hand to `I18nService.translate()`:
+ * expands dynamic tokens, and prefixes bare `@key` labels with the menu scope. A label that
+ * already carries its own scope (`@domain/layer.key` — the segment before the first dot
+ * contains a `/`, the same test I18nService uses) is left alone; double-scoping it produced
+ * misses like `@cms/menu/feature.system/workflow/feature.plural`.
+ */
+export function resolveMenuLabelKey(label: string, ctx: MenuTokenContext): string {
+  const expanded = expandMenuTokens(label, ctx);
+  if (expanded !== label) return expanded;  // a dynamic token (e.g. @VERSION@) was expanded
+  if (!label.startsWith('@')) return label;
+  const body = label.substring(1);
+  const head = body.split('.', 1)[0];
+  return head.includes('/') ? label : '@cms/menu/feature.' + body;
+}
