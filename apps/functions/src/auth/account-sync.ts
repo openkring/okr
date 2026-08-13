@@ -22,9 +22,10 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 
-import { AvatarInfo } from '@okr/shared-models';
+import { AvatarInfo, UserModel } from '@okr/shared-models';
 import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-core';
 import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
+import { getUserIndex } from '@okr/user-util';
 
 import { decideAccountAction, MembershipDoc, shiftDaysBack } from './account-sync.decide';
 
@@ -135,21 +136,20 @@ export async function openAccount(personKey: string, tenantId: string): Promise<
     return;
   }
 
-  // 4. the user document (mirrors createUserFromPerson, adminops.util.ts:209, which is a
-  //    client lib and cannot be imported here)
-  await userRef.set({
-    okey: uid,
-    loginEmail: favEmail,
-    personKey,
-    firstName,
-    lastName,
-    tenants: [tenantId],
-    isArchived: false,
-    roles: { registered: true },
-    index: `${firstName} ${lastName} ${favEmail}`.toLowerCase(),
-    notes: '',
-    tags: [],
-  });
+  // 4. the user document. Built from `new UserModel(tenantId)` rather than a hand-written
+  //    field list, so every default (settings, delivery prefs and especially the usage*
+  //    privacy flags) is materialized. Firestore reads do NOT apply model defaults — a
+  //    field missing from the document reads back as undefined, so a partially written
+  //    user would have undefined privacy flags instead of PrivacyUsage.Restricted.
+  const user = new UserModel(tenantId);
+  user.okey = uid;
+  user.loginEmail = favEmail;
+  user.personKey = personKey;
+  user.firstName = firstName;
+  user.lastName = lastName;
+  user.roles = { registered: true };
+  user.index = getUserIndex(user);
+  await userRef.set({ ...user });
 
   logger.info(`${CF_NAME}: opened account users/${uid} for person ${personKey} (${tenantId})`);
   await logActivity(tenantId, 'create', { personKey, uid, loginEmail: favEmail });
