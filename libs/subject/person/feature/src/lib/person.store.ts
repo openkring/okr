@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { Photo } from '@capacitor/camera';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
@@ -433,7 +435,40 @@ export const PersonStore = signalStore(
         async isPersonUser(personKey: string): Promise<boolean> {
             return store.firestoreService.isPersonUser(personKey);
         },
-        
+
+        /**
+         * Open a user account for a person (memberAdmin/admin only). The same
+         * operation runs automatically when the person gains an active membership in
+         * the default org — see syncPersonAccount / onMembershipAccountSync
+         * (planning/specs/2026-08-12-membership-account-sync-design.md).
+         */
+        async openUserAccount(person?: PersonModel): Promise<void> {
+            if (!person) return;
+            await this.syncUserAccount(person, 'open', store.i18n.open_account_conf());
+        },
+
+        /** Close a person's user account: deletes users/{uid}, keeps the Auth identity. */
+        async closeUserAccount(person?: PersonModel): Promise<void> {
+            if (!person) return;
+            const confirmed = await store.alertService.confirm(store.i18n.close_account_confirm(), true);
+            if (confirmed !== true) return;
+            await this.syncUserAccount(person, 'close', store.i18n.close_account_conf());
+        },
+
+        async syncUserAccount(person: PersonModel, action: 'open' | 'close', confirmation: string): Promise<void> {
+            try {
+                const functions = getFunctions(getApp(), 'europe-west6');
+                const syncPersonAccount = httpsCallable(functions, 'syncPersonAccount');
+                await syncPersonAccount({ personKey: person.okey, tenantId: store.tenantId(), action });
+                await showToast(store.toastController, confirmation);
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : store.i18n.account_error();
+                void store.activityService.log('user', action === 'open' ? 'create' : 'delete', store.currentUser(), `ERROR: ${person.okey} ${msg}`);
+                await showToast(store.toastController, store.i18n.account_error());
+            }
+        },
+
+
         async showOnMap(person?: PersonModel): Promise<void> {
             if (!person) return;
             const postalAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [

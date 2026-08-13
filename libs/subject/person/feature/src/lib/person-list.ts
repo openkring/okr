@@ -225,9 +225,17 @@ export class PersonList {
     actionSheetOptions.buttons.push(createActionSheetDivider());
 
     // all users
+    const isUser = await this.store.isPersonUser(person.okey);
     // no direct chat to oneself
-    if (person.okey !== this.currentUser()?.personKey && await this.store.isPersonUser(person.okey)) {
+    if (person.okey !== this.currentUser()?.personKey && isUser) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.chat', this.store.i18n.send_message(), this.imgixBaseUrl, 'chatbubbles'));
+    }
+    // open/close the user account — normally automatic on membership changes in the
+    // default org, this is the manual override (spec 2026-08-12-membership-account-sync)
+    if (this.hasRole('memberAdmin')) {
+      actionSheetOptions.buttons.push(isUser
+        ? createActionSheetButton('person.closeAccount', this.store.i18n.close_account(), this.imgixBaseUrl, 'lock-closed')
+        : createActionSheetButton('person.openAccount', this.store.i18n.open_account(), this.imgixBaseUrl, 'person-add'));
     }
     if (this.favEmail(person)) {
       actionSheetOptions.buttons.push(createActionSheetButton('person.copyemail', this.store.i18n.copy_email(), this.imgixBaseUrl, 'copy'));
@@ -291,6 +299,12 @@ export class PersonList {
           break;
         case 'person.vcard':
           await this.store.exportVcard(person);
+          break;
+        case 'person.openAccount':
+          await this.store.openUserAccount(person);
+          break;
+        case 'person.closeAccount':
+          await this.store.closeUserAccount(person);
           break;
       }
     }

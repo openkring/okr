@@ -118,6 +118,14 @@ export const PERSON_I18N_KEYS = {
     delete_confirm:             PFX + 'delete.confirm',
     delete_error:               PFX + 'delete.error',
 
+    // user account (membership account sync, spec 2026-08-12)
+    open_account:               PFX + 'account.open',
+    open_account_conf:          PFX + 'account.openConf',
+    close_account:              PFX + 'account.close',
+    close_account_confirm:      PFX + 'account.closeConfirm',
+    close_account_conf:         PFX + 'account.closeConf',
+    account_error:              PFX + 'account.error',
+
     // gender (resolved in cat-select)
     gender_label:               PFX + 'gender.label',
     gender_helper:              PFX + 'gender.helper',
