@@ -369,6 +369,7 @@
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "The repeat-until date is mandatory with this periodicity",
     "caleventRepeatUntilDateAfterStartDate": "The repeat-until date must be after the start date",
+    "caleventMaxDatesPerSeries": "The series would have too many occurrences (100 at most). Please shorten the repeat-until date.",
     "caleventEndDateAfterStartDate": "The end date must be after the start date.",
     "caleventStartDateMandatory": "The start date is mandatory.",
     "caleventEndDateMandatory": "The end date is mandatory.",

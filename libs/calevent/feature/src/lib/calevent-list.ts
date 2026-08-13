@@ -11,6 +11,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
 
+import { DEFAULT_DATE } from '@okr/shared-constants';
 import { CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -729,9 +730,12 @@ export class CalEventList implements OnInit {
         case 'calevent.copy': {
           const isGrid = !this.isListView();
           const viewType = this.currentViewType();
-          // a copy is a brand-new event: drop identity, series membership and attendances
-          // the edit modal deep-clones its input, so a shallow copy is enough here
-          const copy: CalEventModel = { ...calEvent, okey: '', seriesId: '', attendees: [] };
+          // a copy is a brand-new SINGLE event: drop identity, series membership, attendances and
+          // the recurrence rule — keeping the periodicity would silently mass-create a second
+          // series (or, with a repeat-until date already passed, create nothing at all).
+          // The user can still turn the copy into a series in the modal.
+          // The edit modal deep-clones its input, so a shallow copy is enough here.
+          const copy: CalEventModel = { ...calEvent, okey: '', seriesId: '', attendees: [], periodicity: 'once', repeatUntilDate: DEFAULT_DATE };
           const created = await this.store.edit(copy, true, false, true, isGrid);
           if (isGrid && created) this.navigateCalendarTo(created.startDate, viewType);
           break;

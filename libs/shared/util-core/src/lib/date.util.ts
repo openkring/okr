@@ -1,4 +1,4 @@
-import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { END_FUTURE_DATE_STR, MAX_DATES_PER_SERIES } from '@okr/shared-constants';
 import { add, compareAsc, differenceInCalendarDays, differenceInHours, Duration, addBusinessDays, format, getISODay, isAfter, isFuture, isValid, parse } from 'date-fns';
 import { die, warn } from './log.util';
 
@@ -760,7 +760,8 @@ export function calculateRecurringDates(startDate: string, endDate: string, peri
     const dates: string[] = [];
     if (!startDate || startDate.length !== 8) return dates;
     let currentDate = startDate;
-    const maxIterations = 100; // to avoid infinite loops
+    // one more than a series may hold, so callers can still detect an oversized range
+    const maxIterations = MAX_DATES_PER_SERIES; // to avoid infinite loops
     let iteration = 0;
 
     while (currentDate && (endDate === END_FUTURE_DATE_STR || compareDate(currentDate, endDate) <= 0)) {

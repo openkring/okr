@@ -4,13 +4,13 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { addMonths, format } from 'date-fns';
-import { doc } from 'firebase/firestore';
+import { doc, WriteBatch } from 'firebase/firestore';
 import { from, firstValueFrom, map, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, subDuration, warn } from '@okr/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, subDuration, warn } from '@okr/shared-util-core';
 import { error, navigateByUrl, confirm } from '@okr/shared-util-angular';
 import { yearMatches } from '@okr/shared-categories';
 import { MAX_DATES_PER_SERIES } from '@okr/shared-constants';
@@ -19,14 +19,13 @@ import { I18nService } from '@okr/shared-i18n';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
-import { CALEVENT_I18N_KEYS, getCaleventIndex, isCalEvent, isPersonalCalevent } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalevent, planSeriesReconcile } from '@okr/calevent-util';
 import { RegressionSelectionModal } from '@okr/calevent-ui';
 
 const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';
 
 export type CalEventState = {
   calendarName: string; // all, my, or specific calendar name, tbd: my_pkey (for another user)
-  seriesId: string;
   scheduleSeriesId: string;
   maxEvents: number | undefined; // max events to show, undefined means all
   showPastEvents: boolean; // whether to show past events
@@ -45,7 +44,6 @@ export type CalEventState = {
 
 export const initialState: CalEventState = {
   calendarName: '',
-  seriesId: '',
   scheduleSeriesId: '',
   maxEvents: undefined,
   showPastEvents: false,
@@ -282,13 +280,7 @@ export const CalEventStore = signalStore(
           nameMatches(calEvent.type, state.selectedCategory()) &&
           yearMatches(calEvent.startDate, state.selectedYear()) &&
           chipMatches(calEvent.tags, state.selectedTag()))
-      ),
-      seriesEvents: computed(() => {
-        if (state.seriesId().length === 0) {
-          return [];
-        }
-        return state.calEvents().filter((calEvent: CalEventModel) => calEvent.seriesId === state.seriesId());
-      })
+      )
     };
   }),
 
@@ -465,12 +457,15 @@ export const CalEventStore = signalStore(
         if (role === 'confirm' && data && !readOnly) {
           if (isCalEvent(data, store.tenantId())) {
             if (data.periodicity === 'once') {
-              await isNew ?
-                store.calEventService.create(data,  store.currentUser()) :
-                store.calEventService.update(data,  store.currentUser());
+              // `await isNew ? a : b` awaits the boolean, not the write — reload() then raced the save
+              await (isNew
+                ? store.calEventService.create(data, store.currentUser())
+                : store.calEventService.update(data, store.currentUser()));
             } else { // recurring event
               if (isNew) {
                 await this.createNewEventSeries(data);
+              } else if (!data.seriesId) { // a single event turned into a series
+                await this.convertEventToSeries(data);
               } else {  // editing existing series
                 const regressionType = await this.askForRegressionType();
                 if (!regressionType) return undefined;
@@ -505,6 +500,8 @@ export const CalEventStore = signalStore(
         if (readOnly === true) return false;
         if (calevent.periodicity === 'once') {
           await store.calEventService.update(calevent, store.currentUser());
+        } else if (!calevent.seriesId) { // a single event turned into a series
+          await this.convertEventToSeries(calevent);
         } else {  // series
           const regressionType = await this.askForRegressionType();
           if (!regressionType) return false;
@@ -523,11 +520,13 @@ export const CalEventStore = signalStore(
         if (result === true) {
           if (calevent.periodicity === 'once') {
             await store.calEventService.delete(calevent,  store.currentUser());
+            await this.archiveInvitationsOf([calevent.okey]);
           } else { // recurring event
             const regressionType = await this.askForRegressionType('delete');
             if (!regressionType) return;
             if (regressionType === 'current') {
               await store.calEventService.delete(calevent,  store.currentUser());
+              await this.archiveInvitationsOf([calevent.okey]);
             } else { // future or all
               await this.deleteEventSeries(calevent, regressionType);
             }
@@ -541,18 +540,81 @@ export const CalEventStore = signalStore(
       },
 
       /******************************* CRUD on calevent series *************************************** */
+      /**
+       * Loads all live occurrences of a series straight from Firestore, sorted by date.
+       * Series writes must NOT read from calEvents(): that list is already narrowed by the
+       * selected calendar, showPastEvents/showUpcomingEvents and maxEvents, so operating on it
+       * silently skips occurrences (by default every past one).
+       */
+      async loadSeriesEvents(seriesId: string): Promise<CalEventModel[]> {
+        if (!seriesId || seriesId.length === 0) return [];
+        const query = getSystemQuery(store.tenantId());
+        query.push({ key: 'seriesId', operator: '==', value: seriesId });
+        const events = await store.firestoreService.getDataOnce<CalEventModel>(CalEventCollection, query, 'none');
+        return events.sort((a, b) => compareDate(a.startDate, b.startDate));
+      },
+
+      /**
+       * Archives every invitation pointing at one of the given events. Invitations are per
+       * occurrence (caleventKey), so archiving an occurrence without them leaves them dangling.
+       * @param batch an open batch to join, or undefined to commit on its own
+       */
+      async archiveInvitationsOf(eventKeys: string[], batch?: WriteBatch): Promise<void> {
+        if (eventKeys.length === 0) return;
+        const all = await store.firestoreService.getDataOnce<InvitationModel>(InvitationCollection, getSystemQuery(store.tenantId()), 'none');
+        const orphans = all.filter(inv => eventKeys.includes(inv.caleventKey));
+        if (orphans.length === 0) return;
+        const target = batch ?? store.firestoreService.getBatch();
+        for (const inv of orphans) {
+          target.update(doc(store.firestoreService.firestore, `${InvitationCollection}/${inv.okey}`), { isArchived: true });
+        }
+        if (!batch) await target.commit();
+      },
+
+      /**
+       * Calculates the dates of a series and reports the two ways it can fail (empty range,
+       * too many occurrences) instead of writing a truncated or empty series.
+       */
+      getSeriesDates(startDate: string, repeatUntilDate: string, periodicity: string): string[] | undefined {
+        const dates = calculateRecurringDates(startDate, repeatUntilDate, periodicity);
+        if (dates.length === 0) {
+          error(store.toastController, `CalEventStore: no dates between ${startDate} and ${repeatUntilDate} for periodicity '${periodicity}'.`);
+          return undefined;
+        }
+        if (dates.length > MAX_DATES_PER_SERIES) {
+          error(store.toastController, `CalEventStore: calculated dates (${dates.length}) exceed maximum allowed (${MAX_DATES_PER_SERIES}).`);
+          return undefined;
+        }
+        return dates;
+      },
+
       async createNewEventSeries(calevent: CalEventModel): Promise<void> {
+        const dates = this.getSeriesDates(calevent.startDate, calevent.repeatUntilDate, calevent.periodicity);
+        if (!dates) return;
         calevent.seriesId = generateRandomString(18); // all members of the series will get this seriesId plus an index as their okey
         let index = 0;
-        const dates = calculateRecurringDates(calevent.startDate, calevent.repeatUntilDate, calevent.periodicity);
-        if (dates.length > MAX_DATES_PER_SERIES) {
-          error(store.toastController, `CalEventStore.createNewEventSeries: calculated dates (${dates.length}) exceed maximum allowed (${MAX_DATES_PER_SERIES}). Aborting series creation.`);
-          return;
-        }
         for (const date of dates) {
-          const okey = calevent.seriesId + (index).toString().padStart(2, '0');
-          const inst = { ...calevent, startDate: date, okey };
+          const okey = calevent.seriesId + pad(index, 2);
+          const inst = { ...structuredClone(calevent), startDate: date, okey, attendees: [] };
           await store.calEventService.create(inst, store.currentUser());
+          index++;
+        }
+      },
+
+      /**
+       * Turns an existing single event into the first occurrence of a new series: the original
+       * document keeps its key (and with it its attendees and invitations), the remaining
+       * occurrences are created next to it.
+       */
+      async convertEventToSeries(calevent: CalEventModel): Promise<void> {
+        const dates = this.getSeriesDates(calevent.startDate, calevent.repeatUntilDate, calevent.periodicity);
+        if (!dates) return;
+        calevent.seriesId = generateRandomString(18);
+        await store.calEventService.update(calevent, store.currentUser());
+        let index = 1;
+        for (const date of dates.slice(1)) { // dates[0] is the original event's own date
+          const okey = calevent.seriesId + pad(index, 2);
+          await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [] }, store.currentUser());
           index++;
         }
       },
@@ -564,24 +626,51 @@ export const CalEventStore = signalStore(
         await store.calEventService.update(calevent, store.currentUser());
       },
 
+      /**
+       * Applies an edit to a series and reconciles its occurrences with the edited recurrence
+       * rule: a longer range creates the missing occurrences, a shorter one archives the surplus
+       * (together with their invitations), a moved start date shifts the whole affected range.
+       * Only the shared fields are propagated — attendees stay with their occurrence.
+       */
       async updateEventSeries(calevent: CalEventModel, scope: 'future' | 'all'): Promise<void> {
-        patchState(store, { seriesId: calevent.seriesId || '' });
-        if (store.seriesEvents().length === 0) return;
-        const batch = store.firestoreService.getBatch();
-        for (const inst of store.seriesEvents()) {
-          const shouldUpdate = scope === 'all' || (scope === 'future' && isAfterOrEqualDate(inst.startDate, calevent.startDate));
-          if (!shouldUpdate) continue;
-          const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${inst.okey}`);
+        const series = await this.loadSeriesEvents(calevent.seriesId);
+        if (series.length === 0) return;
+        const original = series.find(e => e.okey === calevent.okey);
+        // the edited occurrence may have been moved; shift the whole affected range by the same delta
+        const dayShift = original ? getDayDiff(original.startDate, calevent.startDate) : 0;
+        // 'future' cuts at the occurrence's STORED date — the new one may lie before or after it
+        const cutoff = original?.startDate ?? calevent.startDate;
+        const affected = scope === 'all' ? series : series.filter(e => isAfterOrEqualDate(e.startDate, cutoff));
+        if (affected.length === 0) return;
 
-          // Update in series
-          const storedModel = removeKeyFromOkrModel(structuredClone(calevent));
-          batch.update(ref, {
-            ...storedModel,
-            startDate: inst.startDate, // keep original date
-            index: getCaleventIndex(storedModel) // regenerate the index
-          });
+        const anchor = addDuration(affected[0].startDate, { days: dayShift });
+        const dates = this.getSeriesDates(anchor, calevent.repeatUntilDate, calevent.periodicity);
+        if (!dates) return;
+        const plan = planSeriesReconcile(affected, dates);
+
+        // ponytail: one batch, so a series reconcile is capped at Firestore's 500 writes
+        // (~100 occurrences + their invitations). Chunk the commits if that ceiling is ever hit.
+        const batch = store.firestoreService.getBatch();
+        for (const { event, startDate } of plan.updates) {
+          const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${event.okey}`);
+          batch.update(ref, getSeriesUpdateFields(calevent, startDate));
         }
+        for (const dropped of plan.archives) {
+          const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${dropped.okey}`);
+          batch.update(ref, { isArchived: true });
+        }
+        await this.archiveInvitationsOf(plan.archives.map(e => e.okey), batch);
         await batch.commit();
+
+        // new occurrences are brand-new documents: no attendees and no invitations are inherited
+        const taken = new Set(series.map(e => e.okey));
+        let index = series.length;
+        for (const date of plan.creates) {
+          while (taken.has(calevent.seriesId + pad(index, 2))) index++;
+          const okey = calevent.seriesId + pad(index, 2);
+          taken.add(okey);
+          await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [], isArchived: false }, store.currentUser());
+        }
       },
 
       async askForRegressionType(mode: 'update' | 'delete' = 'update'): Promise<'current' | 'future' | 'all' | undefined> {
@@ -613,15 +702,16 @@ export const CalEventStore = signalStore(
       },
 
       async deleteEventSeries(calevent: CalEventModel, scope: 'future' | 'all'): Promise<void> {
-        patchState(store, { seriesId: calevent.seriesId || '' });
-        if (store.seriesEvents().length === 0) return;
+        const series = await this.loadSeriesEvents(calevent.seriesId);
+        if (series.length === 0) return;
+        const doomed = scope === 'all' ? series : series.filter(e => isAfterOrEqualDate(e.startDate, calevent.startDate));
+        if (doomed.length === 0) return;
         const batch = store.firestoreService.getBatch();
-        for (const inst of store.seriesEvents()) {
-          const shouldUpdate = scope === 'all' || (scope === 'future' && isAfterOrEqualDate(inst.startDate, calevent.startDate));
-          if (!shouldUpdate) continue;
+        for (const inst of doomed) {
           const ref = doc(store.firestoreService.firestore, `${CalEventCollection}/${inst.okey}`);
-          batch.update(ref, { ...inst, isArchived: true });
+          batch.update(ref, { isArchived: true }); // never spread the model back in — it carries okey, which must not be stored
         }
+        await this.archiveInvitationsOf(doomed.map(e => e.okey), batch);
         await batch.commit();
       },
 

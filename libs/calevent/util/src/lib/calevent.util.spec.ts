@@ -1,7 +1,7 @@
 import { CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalevent, isSchedulePoll } from './calevent.util';
+import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalevent, isSchedulePoll, planSeriesReconcile } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -180,5 +180,53 @@ describe('isPastCalevent', () => {
 
   it('is not past without a date', () => {
     expect(isPastCalevent(event(''))).toBe(false);
+  });
+});
+
+describe('series reconcile', () => {
+  const occurrence = (okey: string, startDate: string): CalEventModel =>
+    ({ ...new CalEventModel('t1'), okey, startDate, seriesId: 's1' });
+
+  it('keeps the documents of an unchanged range', () => {
+    const affected = [occurrence('s100', '20260601'), occurrence('s101', '20260608')];
+    const plan = planSeriesReconcile(affected, ['20260601', '20260608']);
+    expect(plan.updates.map(u => [u.event.okey, u.startDate])).toEqual([['s100', '20260601'], ['s101', '20260608']]);
+    expect(plan.archives).toEqual([]);
+    expect(plan.creates).toEqual([]);
+  });
+
+  it('creates the occurrences a longer range adds', () => {
+    const affected = [occurrence('s100', '20260601')];
+    const plan = planSeriesReconcile(affected, ['20260601', '20260608', '20260615']);
+    expect(plan.updates).toHaveLength(1);
+    expect(plan.creates).toEqual(['20260608', '20260615']);
+    expect(plan.archives).toEqual([]);
+  });
+
+  it('archives the occurrences a shorter range drops', () => {
+    const affected = [occurrence('s100', '20260601'), occurrence('s101', '20260608'), occurrence('s102', '20260615')];
+    const plan = planSeriesReconcile(affected, ['20260601']);
+    expect(plan.updates).toHaveLength(1);
+    expect(plan.archives.map(e => e.okey)).toEqual(['s101', 's102']);
+    expect(plan.creates).toEqual([]);
+  });
+
+  it('shifts every occurrence when the series moves', () => {
+    const affected = [occurrence('s100', '20260601'), occurrence('s101', '20260608')];
+    const plan = planSeriesReconcile(affected, ['20260602', '20260609']);
+    expect(plan.updates.map(u => u.startDate)).toEqual(['20260602', '20260609']);
+  });
+
+  it('propagates shared fields but never okey, attendees or isArchived', () => {
+    const edited: CalEventModel = { ...new CalEventModel('t1'), okey: 's100', name: 'Training', startDate: '20260601',
+      attendees: [{ person: { key: 'p1', name1: 'A', name2: 'B', modelType: 'person', type: '', subType: '', label: '' }, state: 'accepted' }] };
+    const fields = getSeriesUpdateFields(edited, '20260608');
+    expect(fields['name']).toBe('Training');
+    expect(fields['startDate']).toBe('20260608');
+    expect(fields['index']).toContain('20260608');   // index carries the target occurrence's date
+    expect(fields).not.toHaveProperty('okey');
+    expect(fields).not.toHaveProperty('attendees');
+    expect(fields).not.toHaveProperty('isArchived');
+    expect(fields).not.toHaveProperty('tenants');
   });
 });

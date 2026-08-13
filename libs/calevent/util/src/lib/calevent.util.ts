@@ -72,6 +72,63 @@ export function convertFullCalendarToCalEvent(event: EventInput, tenantId: strin
   return new CalEventModel(tenantId);
 }
 
+/*-------------------------- SERIES --------------------------------*/
+/**
+ * The fields a series edit propagates to its sibling occurrences.
+ * Everything else is either per-occurrence (okey, startDate, attendees — one occurrence's
+ * attendance must never overwrite another's) or must not be touched by an edit (tenants,
+ * isArchived).
+ * @param edited the edited occurrence, carrying the new values
+ * @param startDate the date of the target occurrence (its own, possibly shifted, date)
+ * @returns a plain object ready for a Firestore update()
+ */
+export function getSeriesUpdateFields(edited: CalEventModel, startDate: string): Record<string, unknown> {
+  const target = { ...edited, startDate };
+  return {
+    name: target.name,
+    description: target.description,
+    type: target.type,
+    tags: target.tags,
+    startDate,
+    startTime: target.startTime,
+    fullDay: target.fullDay,
+    durationMinutes: target.durationMinutes,
+    endDate: target.endDate,
+    periodicity: target.periodicity,
+    repeatUntilDate: target.repeatUntilDate,
+    seriesId: target.seriesId,
+    locationKey: target.locationKey,
+    calendars: target.calendars,
+    url: target.url,
+    urlLabel: target.urlLabel,
+    responsiblePersons: target.responsiblePersons,
+    isOpen: target.isOpen,
+    state: target.state,
+    index: getCaleventIndex(target)
+  };
+}
+
+export type SeriesPlan = {
+  updates: { event: CalEventModel; startDate: string }[]; // occurrences that survive, with their (possibly shifted) date
+  archives: CalEventModel[];                              // occurrences dropped because the range shrank
+  creates: string[];                                      // dates that have no occurrence yet
+};
+
+/**
+ * Reconciles the occurrences of a series against the dates it should have after an edit.
+ * Pairing is positional on the date-sorted lists, so an unchanged prefix keeps its documents —
+ * and with them its attendees and invitations.
+ * @param affected the existing occurrences in scope, sorted by startDate ascending
+ * @param dates the recalculated dates for exactly those occurrences, sorted ascending
+ */
+export function planSeriesReconcile(affected: CalEventModel[], dates: string[]): SeriesPlan {
+  return {
+    updates: affected.slice(0, dates.length).map((event, i) => ({ event, startDate: dates[i] })),
+    archives: affected.slice(dates.length),
+    creates: dates.slice(affected.length)
+  };
+}
+
 /*-------------------------- SEARCH --------------------------------*/
 export function getCaleventIndex(calevent: CalEventModel): string {
   const persons = calevent.responsiblePersons.map(p => p.name2).join(',');

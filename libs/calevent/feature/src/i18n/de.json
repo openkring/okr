@@ -369,6 +369,7 @@
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "Das Wiederholen-bis Datum ist mit dieser Periodizität obligatorisch",
     "caleventRepeatUntilDateAfterStartDate": "Das Wiederholen-bis Datum muss nach dem Startdatum liegen",
+    "caleventMaxDatesPerSeries": "Die Serie hätte zu viele Termine (maximal 100). Bitte das Wiederholen-bis Datum verkürzen.",
     "caleventEndDateAfterStartDate": "Das Enddatum muss nach dem Startdatum liegen.",
     "caleventStartDateMandatory": "Das Startdatum ist obligatorisch.",
     "caleventEndDateMandatory": "Das Enddatum ist obligatorisch.",

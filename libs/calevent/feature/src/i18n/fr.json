@@ -369,6 +369,7 @@
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "La date de répétition jusqu'au est obligatoire avec cette périodicité",
     "caleventRepeatUntilDateAfterStartDate": "La date de répétition jusqu'au doit être postérieure à la date de début",
+    "caleventMaxDatesPerSeries": "La série aurait trop d’occurrences (100 au maximum). Veuillez raccourcir la date de répétition-jusqu’à.",
     "caleventEndDateAfterStartDate": "La date de fin doit être postérieure à la date de début.",
     "caleventStartDateMandatory": "La date de début est obligatoire.",
     "caleventEndDateMandatory": "La date de fin est obligatoire.",
