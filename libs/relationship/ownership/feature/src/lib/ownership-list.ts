@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonBackdrop, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@okr/shared-i18n';
@@ -7,13 +7,15 @@ import { OwnershipModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { DurationPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getCategoryIcon, getYearList, hasRole, isOngoing } from '@okr/shared-util-core';
+import { getCategoryIcon, getItemLabel, getYearList, hasRole, isOngoing } from '@okr/shared-util-core';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
 import { getOwnerName } from '@okr/relationship-ownership-util';
 
 import { OwnershipStore } from './ownership.store';
+
+type OwnershipSortField = 'owner' | 'name' | 'type' | 'duration';
 
 @Component({
   selector: 'okr-ownership-list',
@@ -25,6 +27,7 @@ import { OwnershipStore } from './ownership.store';
     IonLabel, IonContent, IonItem, IonBackdrop, IonAvatar, IonImg, IonList, IonPopover
   ],
   providers: [OwnershipStore],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
     <ion-header>
     <ion-toolbar color="secondary">
@@ -62,16 +65,16 @@ import { OwnershipStore } from './ownership.store';
     <ion-toolbar color="primary" class="ion-hide-md-down">
       @if(listId() === 'scsBoats') {
         <ion-item color="primary" lines="none">
-          <ion-label><strong>{{ store.i18n.boat_name() }}</strong></ion-label>
-          <ion-label><strong>{{ store.i18n.boat_type() }}</strong></ion-label>
-          <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.duration() }}</strong></ion-label>
+          <ion-label class="clickable" (click)="setSort('name')"><strong>{{ store.i18n.boat_name() }}{{ sortIcon('name') }}</strong></ion-label>
+          <ion-label class="clickable" (click)="setSort('type')"><strong>{{ store.i18n.boat_type() }}{{ sortIcon('type') }}</strong></ion-label>
+          <ion-label class="ion-hide-md-down clickable" (click)="setSort('duration')"><strong>{{ store.i18n.duration() }}{{ sortIcon('duration') }}</strong></ion-label>
         </ion-item>
       }
       @else {
         <ion-item lines="none" color="primary">
-          <ion-label><strong>{{ store.i18n.owner_name() }}</strong></ion-label>
-          <ion-label><strong>{{ store.i18n.resource_name() }}</strong></ion-label>
-          <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.duration() }}</strong></ion-label>
+          <ion-label class="clickable" (click)="setSort('owner')"><strong>{{ store.i18n.owner_name() }}{{ sortIcon('owner') }}</strong></ion-label>
+          <ion-label class="clickable" (click)="setSort('name')"><strong>{{ store.i18n.resource_name() }}{{ sortIcon('name') }}</strong></ion-label>
+          <ion-label class="ion-hide-md-down clickable" (click)="setSort('duration')"><strong>{{ store.i18n.duration() }}{{ sortIcon('duration') }}</strong></ion-label>
         </ion-item>
       }
     </ion-toolbar>
@@ -87,12 +90,12 @@ import { OwnershipStore } from './ownership.store';
         <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <ion-list lines="inset">
-          @for(ownership of filteredOwnerships(); track $index) {
+          @for(ownership of filteredOwnerships(); track ownership.okey) {
             @if(listId() === 'scsBoats') {
               <ion-item class="ion-text-wrap" (click)="showActions(ownership)">
                 <ion-icon slot="start" src="{{ getIcon(ownership) | svgIcon }}" />
                 <ion-label>{{ ownership.resourceName }}</ion-label>
-                <ion-label>{{ ownership.resourceSubType }}</ion-label>
+                <ion-label>{{ typeLabel(ownership.resourceSubType) | translate | async }}</ion-label>
                 <ion-label class="ion-hide-md-down">{{ ownership.validFrom | duration:ownership.validTo }}</ion-label>
               </ion-item>
             }
@@ -127,16 +130,30 @@ export class OwnershipList {
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
 
+  // sort state (local: the store serves every ownership list variant)
+  private sortField = signal<OwnershipSortField>('name');
+  private sortAsc   = signal(true);
+
   protected filteredOwnerships = computed(() => {
-    switch (this.listId()) {
-      case 'ownerships':    return this.store.filteredOwnerships() ?? [];
-      case 'lockers':       return this.store.filteredLockers() ?? [];
-      case 'keys':          return this.store.filteredKeys() ?? [];
-      case 'privateBoats':  return this.store.filteredPrivateBoats();
-      case 'scsBoats':      return this.store.filteredScsBoats();
-      case 'all':
-      default:              return this.store.filteredAllOwnerships() ?? [];
-    }
+    const list = (() => {
+      switch (this.listId()) {
+        case 'ownerships':    return this.store.filteredOwnerships() ?? [];
+        case 'lockers':       return this.store.filteredLockers() ?? [];
+        case 'keys':          return this.store.filteredKeys() ?? [];
+        case 'privateBoats':  return this.store.filteredPrivateBoats();
+        case 'scsBoats':      return this.store.filteredScsBoats();
+        case 'all':
+        default:              return this.store.filteredAllOwnerships() ?? [];
+      }
+    })();
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'owner'    ? getOwnerName(a).localeCompare(getOwnerName(b)) :
+      field === 'type'     ? (a.resourceSubType ?? '').localeCompare(b.resourceSubType ?? '') :
+      field === 'duration' ? (a.validFrom ?? '').localeCompare(b.validFrom ?? '') :
+                             (a.resourceName ?? '').localeCompare(b.resourceName ?? '')
+    ));
   });
   protected ownershipsCount = computed(() => {
     switch (this.listId()) {
@@ -190,7 +207,23 @@ export class OwnershipList {
   private rboatTypes = computed(() => this.store.appStore.tryGetCategory('rboat_type'));
   private resourceTypes = computed(() => this.store.appStore.tryGetCategory('resource_type'));
 
-  /******************************** setters (filter) ******************************************* */
+  /** i18n key of an rboat_type item — data-driven, so it goes through TranslatePipe, not the store. */
+  protected typeLabel(subType: string): string {
+    const category = this.rboatTypes();
+    return category ? getItemLabel(category, subType) : subType;
+  }
+
+  protected sortIcon(field: OwnershipSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: OwnershipSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }
