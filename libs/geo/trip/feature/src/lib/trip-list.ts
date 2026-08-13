@@ -3,7 +3,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
 import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRefresher, IonRefresherContent, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
+import { ConnectionStatusButton, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
 import { RoleName, TripModel } from '@okr/shared-models';
@@ -25,7 +25,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
   standalone: true,
   imports: [
     SvgIconPipe, PrettyDatePipe, TranslatePipe, AsyncPipe,
-    Spinner, EmptyList, ListFilter, AvatarDisplay, Menu,
+    Spinner, EmptyList, ListFilter, AvatarDisplay, Menu, ConnectionStatusButton,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonMenuButton,
     IonIcon, IonContent, IonList, IonItem, IonLabel, IonItemDivider, IonPopover,
     IonBackdrop, IonFab, IonFabButton, IonRefresher, IonRefresherContent
@@ -35,7 +35,11 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
     <ion-header>
       @if(contextMenuName() !== 'disable') {
         <ion-toolbar color="secondary" [class.kiosk-toolbar]="hasRole('kiosk')">
-          @if(showMenuButton() === true) {
+          @if(hasRole('kiosk')) {
+            <!-- the kiosk has no menu, so the connection dot takes the hamburger's place —
+                 it is the one thing someone standing at the boathouse iPad needs to see -->
+            <ion-buttons slot="start"><okr-connection-status-button /></ion-buttons>
+          } @else if(showMenuButton() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
           <ion-title>{{ store.i18n.list_title() }}</ion-title>
@@ -108,7 +112,7 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
       @if (hasRole('kiosk') && store.locked()) {
         <!-- remotely locked from the AOC kiosk screen: readable, but no new entries -->
         <ion-item color="warning" lines="none">
-          <ion-icon slot="start" src="{{ 'lock' | svgIcon }}" />
+          <ion-icon slot="start" src="{{ 'lock-closed' | svgIcon }}" />
           <ion-label class="ion-text-wrap">{{ store.i18n.locked() }}</ion-label>
         </ion-item>
       }

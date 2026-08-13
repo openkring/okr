@@ -115,7 +115,11 @@ export class KioskStatusService {
   public readonly locked = signal(false);
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => clearInterval(this.timer));
+    inject(DestroyRef).onDestroy(() => {
+      clearInterval(this.timer);
+      document.removeEventListener('visibilitychange', this.reportOnWake);
+      window.removeEventListener('online', this.reportOnWake);
+    });
     effect(() => {
       const currentUser = this.appStore.currentUser();
       // currentUser resolves a moment after fbUser; roles are only known once it does.
@@ -123,9 +127,19 @@ export class KioskStatusService {
       if (this.timer) return; // already reporting
       void this.report();
       this.timer = setInterval(() => void this.report(), REPORT_INTERVAL_MS);
+      // iOS suspends a backgrounded/asleep page entirely — the interval above simply does not
+      // fire, so the kiosk goes silent for hours and looks dead in AOC even though it is fine.
+      // Report again the moment the page wakes or the network returns; both are the events that
+      // actually end an outage. No retry loop: Firestore already queues writes while offline.
+      document.addEventListener('visibilitychange', this.reportOnWake);
+      window.addEventListener('online', this.reportOnWake);
       this.listenForCommands();
     });
   }
+
+  private readonly reportOnWake = (): void => {
+    if (document.visibilityState === 'visible') void this.report();
+  };
 
   /**
    * Remote control from the AOC kiosk screen: an admin writes to `kiosk-status/{uid}` and the
