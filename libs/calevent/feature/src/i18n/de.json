@@ -59,7 +59,8 @@
       "add": "Termin hinzufügen",
       "confirm": "Termine übernehmen"
     },
-    "view": "Abstimmung anzeigen"
+    "view": "Abstimmung anzeigen",
+    "groupOnly": "Eine Terminabstimmung ist nur in einem Gruppenkalender möglich. Bitte wähle zuerst einen Gruppenkalender aus."
   },
   "update": {
     "label": "Ereignis ändern",

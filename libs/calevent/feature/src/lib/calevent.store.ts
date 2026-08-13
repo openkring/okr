@@ -371,7 +371,7 @@ export const CalEventStore = signalStore(
       },
 
       async schedule(): Promise<void> {
-        if (!store.isGroupCalendar()) return;
+        if (!store.isGroupCalendar()) return error(store.toastController, CALEVENT_I18N_KEYS.schedule_group_only);
         const { ScheduleNewModal } = await import('./schedule-new.modal');
         const modal = await store.modalController.create({
           component: ScheduleNewModal,
@@ -504,7 +504,7 @@ export const CalEventStore = signalStore(
           if (calevent.periodicity === 'once') {
             await store.calEventService.delete(calevent,  store.currentUser());
           } else { // recurring event
-            const regressionType = await this.askForRegressionType();
+            const regressionType = await this.askForRegressionType('delete');
             if (!regressionType) return;
             if (regressionType === 'current') {
               await store.calEventService.delete(calevent,  store.currentUser());
@@ -564,9 +564,23 @@ export const CalEventStore = signalStore(
         await batch.commit();
       },
 
-      async askForRegressionType(): Promise<'current' | 'future' | 'all' | undefined> {
+      async askForRegressionType(mode: 'update' | 'delete' = 'update'): Promise<'current' | 'future' | 'all' | undefined> {
+        const i18n = mode === 'delete' ? {
+          title: store.i18n.delete_series_label(),
+          intro: store.i18n.delete_series_intro(),
+          current: store.i18n.delete_series_current(),
+          future: store.i18n.delete_series_future(),
+          all: store.i18n.delete_series_all()
+        } : {
+          title: store.i18n.update_series_label(),
+          intro: store.i18n.update_series_intro(),
+          current: store.i18n.update_series_current(),
+          future: store.i18n.update_series_future(),
+          all: store.i18n.update_series_all()
+        };
         const modal = await store.modalController.create({
           component: RegressionSelectionModal,
+          componentProps: { i18n }
         });
         await modal.present();
         const { data, role } = await modal.onDidDismiss();

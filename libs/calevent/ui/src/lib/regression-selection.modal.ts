@@ -11,28 +11,28 @@ import { Header } from '@okr/shared-ui';
     IonContent, IonRadioGroup, IonRadio, IonLabel, IonItem, IonList
   ],
   template: `
-    <okr-header [i18n]="{ title: title() }" [showOkButton]="true" (okClicked)="save()" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n().title }" [showOkButton]="true" (okClicked)="save()" [isModal]="true" />
     <ion-content class="ion-no-padding">
       <ion-item>
-        <ion-label>{{'@calevent.operation.seriesupdate.intro' }}</ion-label>
+        <ion-label class="ion-text-wrap">{{ i18n().intro }}</ion-label>
       </ion-item>
       <ion-list>
         <ion-radio-group [value]="selectedOption()" (ionChange)="selectedOption.set($event.detail.value)">
           <ion-item>
             <ion-label class="ion-text-wrap">
-              {{'@calevent.operation.seriesupdate.current' }}
+              {{ i18n().current }}
             </ion-label>
             <ion-radio slot="start" value="current" />
           </ion-item>
           <ion-item>
             <ion-label class="ion-text-wrap">
-              {{'@calevent.operation.seriesupdate.future' }}
+              {{ i18n().future }}
             </ion-label>
             <ion-radio slot="start" value="future" />
           </ion-item>
           <ion-item>
             <ion-label class="ion-text-wrap">
-              {{'@calevent.operation.seriesupdate.all' }}
+              {{ i18n().all }}
             </ion-label>
             <ion-radio slot="start" value="all" />
           </ion-item>
@@ -45,7 +45,7 @@ export class RegressionSelectionModal {
   private modalController = inject(ModalController);
 
   // inputs
-  public title = input('@calevent.operation.seriesupdate.label');
+  public readonly i18n = input.required<{ title: string, intro: string, current: string, future: string, all: string }>();
 
   // state
   protected selectedOption = signal('current');

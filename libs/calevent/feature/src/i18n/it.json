@@ -59,7 +59,8 @@
       "add": "Aggiungi data",
       "confirm": "Applica date"
     },
-    "view": "Mostra il sondaggio"
+    "view": "Mostra il sondaggio",
+    "groupOnly": "Un sondaggio date è possibile solo in un calendario di gruppo. Seleziona prima un calendario di gruppo."
   },
   "update": {
     "label": "Modificare l'evento",

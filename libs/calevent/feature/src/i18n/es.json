@@ -59,7 +59,8 @@
       "add": "Añadir fecha",
       "confirm": "Aplicar fechas"
     },
-    "view": "Mostrar la encuesta"
+    "view": "Mostrar la encuesta",
+    "groupOnly": "Una encuesta de fechas solo es posible en un calendario de grupo. Selecciona primero un calendario de grupo."
   },
   "update": {
     "label": "Modificar evento",

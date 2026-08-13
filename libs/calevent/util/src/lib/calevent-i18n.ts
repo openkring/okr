@@ -51,6 +51,7 @@ export const CALEVENT_I18N_KEYS = {
   schedule_date_add:          PFX + 'schedule.date.add',
   schedule_date_confirm:      PFX + 'schedule.date.confirm',
   schedule_view:              PFX + 'schedule.view',
+  schedule_group_only:        PFX + 'schedule.groupOnly',
 
   update:                     PFX + 'update.label',
   update_conf:                PFX + 'update.conf',

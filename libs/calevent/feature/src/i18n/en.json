@@ -59,7 +59,8 @@
       "add": "Add date",
       "confirm": "Apply dates"
     },
-    "view": "Show poll"
+    "view": "Show poll",
+    "groupOnly": "A date poll is only possible in a group calendar. Please select a group calendar first."
   },
   "update": {
     "label": "Edit event",
