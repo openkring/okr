@@ -1,10 +1,14 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ResourceModel, RoleName } from '@okr/shared-models';
+import { TranslatePipe } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getCategoryIcon, hasRole } from '@okr/shared-util-core';
+import { getCategoryIcon, getItemLabel, hasRole } from '@okr/shared-util-core';
+
+type BoatSortField = 'name' | 'type' | 'load';
 
 import { Menu } from '@okr/cms-menu-feature';
 
@@ -14,11 +18,12 @@ import { ResourceStore } from './resource.store';
   selector: 'okr-rowing-boat-list',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    AsyncPipe, SvgIconPipe, TranslatePipe,
     Menu, ListFilter, Spinner, EmptyList,
     IonHeader, IonToolbar, IonButtons, IonTitle, IonButton, IonMenuButton, IonList, IonPopover, IonIcon, IonItem, IonLabel, IonContent
   ],
   providers: [ResourceStore],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
   <ion-header>
     <!-- title and actions -->
@@ -55,9 +60,9 @@ import { ResourceStore } from './resource.store';
     <!-- list header -->
   <ion-toolbar color="primary" class="ion-hide-sm-down">
     <ion-item color="primary" lines="none">
-      <ion-label><strong>{{ store.i18n.rboat_name() }}</strong></ion-label>
-      <ion-label><strong>{{ store.i18n.rboat_type() }}</strong></ion-label>
-      <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.load_label() }}</strong></ion-label>
+      <ion-label class="clickable" (click)="setSort('name')"><strong>{{ store.i18n.rboat_name() }}{{ sortIcon('name') }}</strong></ion-label>
+      <ion-label class="clickable" (click)="setSort('type')"><strong>{{ store.i18n.rboat_type() }}{{ sortIcon('type') }}</strong></ion-label>
+      <ion-label class="ion-hide-md-down clickable" (click)="setSort('load')"><strong>{{ store.i18n.load_label() }}{{ sortIcon('load') }}</strong></ion-label>
     </ion-item>
   </ion-toolbar>
 </ion-header>
@@ -71,11 +76,11 @@ import { ResourceStore } from './resource.store';
       <okr-empty-list [message]="store.i18n.rboat_empty()" />
     } @else {
       <ion-list lines="inset">
-        @for(boat of filteredBoats(); track $index) {
+        @for(boat of filteredBoats(); track boat.okey) {
           <ion-item class="ion-text-wrap" (click)="showActions(boat)">
             <ion-icon slot="start" src="{{ getCategoryIcon(boat) | svgIcon }}" />
             <ion-label>{{ boat.name }}</ion-label>
-            <ion-label>{{ boat.subType }}</ion-label>
+            <ion-label>{{ typeLabel(boat.subType) | translate | async }}</ion-label>
             <ion-label class="ion-hide-md-down">{{ boat?.load }}</ion-label>
           </ion-item>
         }
@@ -93,8 +98,20 @@ export class RowingBoatList {
   public listId = input.required<string>();
   public contextMenuName = input.required<string>();
 
+  // sort state (local: the store is shared by all resource lists)
+  private sortField = signal<BoatSortField>('name');
+  private sortAsc   = signal(true);
+
   // data
-  protected filteredBoats = computed(() => this.store.filteredRboats() ?? []);
+  protected filteredBoats = computed(() => {
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...(this.store.filteredRboats() ?? [])].sort((a, b) => dir * (
+      field === 'type' ? a.subType.localeCompare(b.subType) :
+      field === 'load' ? (a.load ?? '').localeCompare(b.load ?? '', undefined, { numeric: true }) :
+                         a.name.localeCompare(b.name)
+    ));
+  });
   protected boatsCount = computed(() => this.store.rboatsCount());
   protected selectedBoatsCount = computed(() => this.filteredBoats().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -110,7 +127,23 @@ export class RowingBoatList {
     return this.store.appStore.getCategoryItem('rboat_type', resource.subType)?.icon;
   }
 
-  /******************************** setters (filter) ******************************************* */
+  /** i18n key of an rboat_type item — data-driven, so it goes through TranslatePipe, not the store. */
+  protected typeLabel(subType: string): string {
+    const category = this.types();
+    return category ? getItemLabel(category, subType) : subType;
+  }
+
+  protected sortIcon(field: BoatSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: BoatSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }
