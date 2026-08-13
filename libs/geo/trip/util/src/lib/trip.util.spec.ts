@@ -139,31 +139,35 @@ describe('isTripEditable', () => {
   const now = new Date(2024, 5, 1, 12, 0, 0).getTime();
 
   it('is editable when the trip has no endDate/endTime (not yet ended)', () => {
-    expect(isTripEditable(makeTrip({ endDate: '', endTime: '' }), now)).toBe(true);
+    expect(isTripEditable(makeTrip({ endDate: '', endTime: '' }), false, now)).toBe(true);
   });
 
   it('is editable right after ending', () => {
     // ended at 11:55, 5 min ago
-    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '1155' }), now)).toBe(true);
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '1155' }), false, now)).toBe(true);
   });
 
   it('handles HH:mm endTime (the format getCurrentTime emits)', () => {
     // ended at 11:55, 5 min ago — same instant, but colon-separated
-    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '11:55' }), now)).toBe(true);
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '11:55' }), false, now)).toBe(true);
     // ended at 11:40, 20 min ago — outside the 15 min window
-    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '11:40' }), now)).toBe(false);
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '11:40' }), false, now)).toBe(false);
   });
 
   it('is editable exactly at the 15 min window boundary', () => {
     const endMs = now - TRIP_EDIT_WINDOW_MS;
     const end = new Date(endMs);
     const endTime = `${`${end.getHours()}`.padStart(2, '0')}${`${end.getMinutes()}`.padStart(2, '0')}`;
-    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime }), now)).toBe(true);
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime }), false, now)).toBe(true);
   });
 
   it('is NOT editable more than 15 min after ending', () => {
     // ended at 11:40, 20 min ago
-    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '1140' }), now)).toBe(false);
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '1140' }), false, now)).toBe(false);
+  });
+
+  it('is editable anytime for an admin', () => {
+    expect(isTripEditable(makeTrip({ endDate: '20240601', endTime: '1140' }), true, now)).toBe(true);
   });
 });
 

@@ -36,10 +36,10 @@ function isWithinEndWindow(trip: TripModel, windowMs: number, now: number): bool
 
 /**
  * A trip may be edited while it is not yet ended, or within TRIP_EDIT_WINDOW_MS (15 min) after
- * its endTime. Afterwards it should only be opened read-only.
+ * its endTime. Afterwards it should only be opened read-only. Admins may edit at any time.
  */
-export function isTripEditable(trip: TripModel, now: number = Date.now()): boolean {
-  return isWithinEndWindow(trip, TRIP_EDIT_WINDOW_MS, now);
+export function isTripEditable(trip: TripModel, isAdmin = false, now: number = Date.now()): boolean {
+  return isAdmin || isWithinEndWindow(trip, TRIP_EDIT_WINDOW_MS, now);
 }
 
 /**
