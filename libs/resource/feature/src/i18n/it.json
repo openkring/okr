@@ -28,10 +28,8 @@
   "resources": "Risorse",
   "desc": "Qualcosa che si può utilizzare, prenotare o possedere (barca, auto, immobile, chiave, armadietto, ecc.).",
   "all": "Tutte le risorse",
-
   "empty": "Nessuna risorsa trovata.",
   "other_attributes": "Altri dati",
-
   "create": {
     "label": "Registrare una nuova risorsa",
     "conf": "La nuova risorsa è stata salvata.",
@@ -54,7 +52,6 @@
   "select": {
     "label": "Scegliere la risorsa"
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -139,7 +136,6 @@
     "error": "Il nome è obbligatorio e deve essere composto da caratteri alfanumerici.",
     "helper": "Un nome può essere composto da più parole. Sono ammesse solo lettere (incl. -) e numeri, nessun carattere speciale."
   },
-
   "resource_type": {
     "label": "Tipo di risorsa",
     "helper": "Il tipo della risorsa.",
@@ -181,7 +177,6 @@
       "description": "Il tipo di risorsa non è impostato o è sconosciuto.",
       "formTitle": "Dati della risorsa"
     },
-
     "boat": {
       "label": "Barca",
       "plural": "Barche",
@@ -216,7 +211,6 @@
       "formTitle": "",
       "description": "Una conferma sotto forma di documento ufficiale."
     },
-
     "rboat": {
       "label": "Barca a remi",
       "plural": "Barche a remi",
@@ -245,7 +239,6 @@
         "label": "Mostrare la barca a remi"
       }
     },
-
     "car": {
       "label": "Veicolo",
       "title": "Veicoli",
@@ -271,7 +264,6 @@
         "label": "Mostrare il veicolo"
       }
     },
-
     "clubBoat": {
       "label": "Barca del club",
       "title": "Barche del club"
@@ -280,7 +272,6 @@
       "label": "Barca privata",
       "title": "Barche private"
     },
-
     "other": {
       "label": "Altra risorsa",
       "description": "Risorsa che non può essere assegnata a nessun tipo predefinito",
@@ -305,7 +296,6 @@
         "label": "Mostrare la risorsa"
       }
     },
-
     "motorBoat": {
       "label": "Motoscafo",
       "title": "Motoscafi",
@@ -468,7 +458,6 @@
       "description": "La risorsa è archiviata, ovvero l'utilizzo precedente non è più attuale."
     }
   },
-
   "boat": {
     "singular": "Barca",
     "plural": "Barche",
@@ -524,7 +513,6 @@
       "description": "SUP o tavola da surf"
     }
   },
-
   "rboat": {
     "singular": "Barca a remi",
     "plural": "Barche a remi",
@@ -587,6 +575,10 @@
       "label": "4x",
       "description": "Quattro di coppia"
     },
+    "b4mx": {
+      "label": "4-/4x",
+      "description": "Quattro convertibile"
+    },
     "b5x": {
       "label": "5x",
       "description": "Cinque di coppia"
@@ -594,6 +586,14 @@
     "b8p": {
       "label": "8+",
       "description": "Otto con"
+    },
+    "b8m": {
+      "label": "8-",
+      "description": "Otto senza"
+    },
+    "b8x": {
+      "label": "8x",
+      "description": "Otto di coppia"
     }
   },
   "rboat_usage": {

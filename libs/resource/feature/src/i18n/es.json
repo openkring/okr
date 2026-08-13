@@ -28,10 +28,8 @@
   "resources": "Recursos",
   "desc": "Algo que se puede usar, reservar o poseer (barco, coche, inmueble, llave, taquilla, etc.).",
   "all": "Todos los recursos",
-
   "empty": "No se han encontrado recursos.",
   "other_attributes": "Otros datos",
-
   "create": {
     "label": "Registrar un nuevo recurso",
     "conf": "El nuevo recurso se ha guardado.",
@@ -54,7 +52,6 @@
   "select": {
     "label": "Elegir el recurso"
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -139,7 +136,6 @@
     "error": "El nombre es obligatorio y debe estar compuesto por caracteres alfanuméricos.",
     "helper": "Un nombre puede estar compuesto por varias palabras. Solo se permiten letras (incl. -) y números, sin caracteres especiales."
   },
-
   "resource_type": {
     "label": "Tipo de recurso",
     "helper": "El tipo del recurso.",
@@ -181,7 +177,6 @@
       "description": "El tipo de recurso no está definido o es desconocido.",
       "formTitle": "Datos del recurso"
     },
-
     "boat": {
       "label": "Barco",
       "plural": "Barcos",
@@ -216,7 +211,6 @@
       "formTitle": "",
       "description": "Una confirmación en forma de documento oficial."
     },
-
     "rboat": {
       "label": "Bote de remo",
       "plural": "Botes de remo",
@@ -245,7 +239,6 @@
         "label": "Mostrar el bote de remo"
       }
     },
-
     "car": {
       "label": "Vehículo",
       "title": "Vehículos",
@@ -271,7 +264,6 @@
         "label": "Mostrar el vehículo"
       }
     },
-
     "clubBoat": {
       "label": "Barco del club",
       "title": "Barcos del club"
@@ -280,7 +272,6 @@
       "label": "Barco privado",
       "title": "Barcos privados"
     },
-
     "other": {
       "label": "Otro recurso",
       "description": "Recurso que no se puede asignar a ningún tipo predefinido",
@@ -305,7 +296,6 @@
         "label": "Mostrar el recurso"
       }
     },
-
     "motorBoat": {
       "label": "Lancha motora",
       "title": "Lanchas motoras",
@@ -468,7 +458,6 @@
       "description": "El recurso está archivado, es decir, el uso anterior ya no está vigente."
     }
   },
-
   "boat": {
     "singular": "Barco",
     "plural": "Barcos",
@@ -524,7 +513,6 @@
       "description": "SUP o tabla de surf"
     }
   },
-
   "rboat": {
     "singular": "Bote de remo",
     "plural": "Botes de remo",
@@ -598,6 +586,14 @@
     "b8p": {
       "label": "8+",
       "description": "Ocho con timonel"
+    },
+    "b8m": {
+      "label": "8-",
+      "description": "Ocho sin timonel"
+    },
+    "b8x": {
+      "label": "8x",
+      "description": "Óctuple par"
     }
   },
   "rboat_usage": {

@@ -28,10 +28,8 @@
   "resources": "Ressources",
   "desc": "Quelque chose que l'on peut utiliser, réserver ou posséder (bateau, voiture, bien immobilier, clé, casier, etc.).",
   "all": "Toutes les ressources",
-
   "empty": "Aucune ressource trouvée.",
   "other_attributes": "Autres informations",
-
   "create": {
     "label": "Saisir une nouvelle ressource",
     "conf": "La nouvelle ressource a été enregistrée.",
@@ -54,7 +52,6 @@
   "select": {
     "label": "Choisir la ressource"
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -139,7 +136,6 @@
     "error": "Le nom est obligatoire et doit être composé de caractères alphanumériques.",
     "helper": "Un nom peut être composé de plusieurs mots. Seules les lettres (y compris -) et les chiffres sont autorisés, aucun caractère spécial."
   },
-
   "resource_type": {
     "label": "Type de ressource",
     "helper": "Le type de la ressource.",
@@ -181,7 +177,6 @@
       "description": "Le type de ressource n'est pas défini ou est inconnu.",
       "formTitle": "Informations sur la ressource"
     },
-
     "boat": {
       "label": "Bateau",
       "plural": "Bateaux",
@@ -216,7 +211,6 @@
       "formTitle": "",
       "description": "Une confirmation sous la forme d'un document officiel."
     },
-
     "rboat": {
       "label": "Bateau d'aviron",
       "plural": "Bateaux d'aviron",
@@ -245,7 +239,6 @@
         "label": "Afficher le bateau d'aviron"
       }
     },
-
     "car": {
       "label": "Véhicule",
       "title": "Véhicules",
@@ -271,7 +264,6 @@
         "label": "Afficher le véhicule"
       }
     },
-
     "clubBoat": {
       "label": "Bateau du club",
       "title": "Bateaux du club"
@@ -280,7 +272,6 @@
       "label": "Bateau privé",
       "title": "Bateaux privés"
     },
-
     "other": {
       "label": "Autre ressource",
       "description": "Ressource qui ne peut être attribuée à aucun type prédéfini",
@@ -305,7 +296,6 @@
         "label": "Afficher la ressource"
       }
     },
-
     "motorBoat": {
       "label": "Bateau à moteur",
       "title": "Bateaux à moteur",
@@ -468,7 +458,6 @@
       "description": "La ressource est archivée, c.-à-d. que l'utilisation antérieure n'est plus d'actualité."
     }
   },
-
   "boat": {
     "singular": "Bateau",
     "plural": "Bateaux",
@@ -524,7 +513,6 @@
       "description": "SUP ou planche de surf"
     }
   },
-
   "rboat": {
     "singular": "Bateau d'aviron",
     "plural": "Bateaux d'aviron",
@@ -598,6 +586,14 @@
     "b8p": {
       "label": "8+",
       "description": "Huit avec barreur"
+    },
+    "b8m": {
+      "label": "8-",
+      "description": "Huit sans barreur"
+    },
+    "b8x": {
+      "label": "8x",
+      "description": "Huit de couple"
     }
   },
   "rboat_usage": {
