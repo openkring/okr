@@ -95,25 +95,30 @@ import 'emoji-picker-element';
     .buttons-row {
       display: flex;
       align-items: center;
-      padding: 2px 4px 4px;
+      /* 12px side padding keeps the outer icons off the screen edge on phones */
+      padding: 4px 12px 13px;
+      gap: 4px;
       flex-shrink: 0;
     }
     .spacer { flex: 1; }
     .action-button {
-      --padding-start: 8px;
-      --padding-end: 8px;
+      --padding-start: 6px;
+      --padding-end: 6px;
       margin: 0;
       flex-shrink: 0;
-      height: 40px;
+      width: 44px;
+      height: 44px;
     }
+    .action-button ion-icon { font-size: 26px; }
     .send-button {
       --background: var(--ion-color-primary);
       --border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       margin: 0;
       flex-shrink: 0;
     }
+    .send-button ion-icon { font-size: 22px; }
 
     /* ── Typing indicator ────────────────────────────────────── */
     .typing-indicator {

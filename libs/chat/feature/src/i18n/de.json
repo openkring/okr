@@ -164,8 +164,8 @@
     "title": "Umfrage erstellen",
     "create": "Umfrage erstellen",
     "allowMultipleAnswers": {
-      "label": "Mehrere Optionen möglich",
-      "helper": "Es können mehrere Optionen zur gleichen Frage gewählt werden (Multiple Choice)."
+      "label": "Mehrere Antworten möglich",
+      "helper": "Es können mehrere Antworten auf die gleiche Frage gegeben werden (Multiple Choice)."
     },
     "question": {
       "label": "Frage oder Thema",
