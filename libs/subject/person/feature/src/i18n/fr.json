@@ -147,6 +147,15 @@
     "error": "La personne n'a pas pu être supprimée."
   },
 
+  "account": {
+    "open": "Ouvrir le compte",
+    "openConf": "Le compte utilisateur a été ouvert.",
+    "close": "Fermer le compte",
+    "closeConfirm": "Voulez-vous vraiment fermer le compte utilisateur ?",
+    "closeConf": "Le compte utilisateur a été fermé.",
+    "error": "Le compte utilisateur n'a pas pu être modifié."
+  },
+
   "gender": {
     "label": "Sexe",
     "helper": "Le sexe d'une personne",

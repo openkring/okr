@@ -147,6 +147,15 @@
     "error": "Die Person konnte nicht gelöscht werden."
   },
 
+  "account": {
+    "open": "Konto eröffnen",
+    "openConf": "Das Benutzerkonto wurde eröffnet.",
+    "close": "Konto schliessen",
+    "closeConfirm": "Soll das Benutzerkonto wirklich geschlossen werden ? Die Person verliert den Zugang zur App.",
+    "closeConf": "Das Benutzerkonto wurde geschlossen.",
+    "error": "Das Benutzerkonto konnte nicht geändert werden."
+  },
+
   "gender": {
     "label": "Geschlecht",
     "helper": "Das Geschlecht einer Person",

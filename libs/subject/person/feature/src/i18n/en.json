@@ -147,6 +147,15 @@
     "error": "The person could not be deleted."
   },
 
+  "account": {
+    "open": "Open account",
+    "openConf": "The user account was opened.",
+    "close": "Close account",
+    "closeConfirm": "Do you really want to close the user account ?",
+    "closeConf": "The user account was closed.",
+    "error": "The user account could not be changed."
+  },
+
   "gender": {
     "label": "Gender",
     "helper": "The gender of a person",

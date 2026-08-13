@@ -147,6 +147,15 @@
     "error": "Impossibile eliminare la persona."
   },
 
+  "account": {
+    "open": "Apri account",
+    "openConf": "L'account utente è stato aperto.",
+    "close": "Chiudi account",
+    "closeConfirm": "Vuoi davvero chiudere l'account utente ?",
+    "closeConf": "L'account utente è stato chiuso.",
+    "error": "Non è stato possibile modificare l'account utente."
+  },
+
   "gender": {
     "label": "Sesso",
     "helper": "Il sesso di una persona",
