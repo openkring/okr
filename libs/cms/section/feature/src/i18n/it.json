@@ -1086,6 +1086,98 @@
     "all_groups": "Tutti i gruppi",
     "search_placeholder": "Cerca …"
   },
+  "sankey": {
+    "label": "Sankey",
+    "title": "Configurazione Sankey",
+    "subtitle": "Flussi tra i nodi; i nodi derivano dai flussi.",
+    "empty": "Nessun flusso registrato finora.",
+    "flows": {
+      "label": "Flussi (JSON)",
+      "helper": "Elenco di flussi in JSON, ad es. [{\"source\":\"Quote\",\"target\":\"Club\",\"value\":100}]. Origine e destinazione sono nomi di nodo liberi; il valore deve essere positivo.",
+      "error": "JSON non valido: le modifiche non sono state applicate."
+    },
+    "nodeWidth": {
+      "label": "Larghezza dei nodi (px)"
+    },
+    "nodeGap": {
+      "label": "Distanza tra i nodi (px)"
+    },
+    "lineOpacity": {
+      "label": "Opacità dei flussi (0–1)"
+    },
+    "layoutIterations": {
+      "label": "Iterazioni di layout",
+      "helper": "0 mantiene l’ordine dei nodi; valori più alti lasciano che ECharts disponga i nodi automaticamente."
+    }
+  },
+  "spider": {
+    "label": "Grafico radar",
+    "title": "Configurazione del grafico radar",
+    "subtitle": "Assi con un valore massimo e una o più serie tracciate su di essi.",
+    "axes": {
+      "label": "Assi (JSON)",
+      "helper": "Elenco degli assi in JSON, ad es. [{\"name\":\"Tecnica\",\"maxValue\":10}]. Almeno 3 assi, altrimenti non viene disegnato nulla.",
+      "error": "JSON non valido: le modifiche non sono state applicate."
+    },
+    "series": {
+      "label": "Serie (JSON)",
+      "helper": "Elenco delle serie in JSON, ad es. [{\"name\":\"Autovalutazione\",\"values\":[8,6,4]}]. I valori sono paralleli per indice agli assi; i valori mancanti contano come 0, quelli troppo grandi vengono limitati al massimo dell’asse.",
+      "error": "JSON non valido: le modifiche non sono state applicate."
+    },
+    "areaOpacity": {
+      "label": "Opacità dell’area (0–1)"
+    },
+    "showLegend": {
+      "label": "Mostra la legenda",
+      "helper": "Mostra i nomi delle serie sotto il grafico."
+    }
+  },
+  "toc": {
+    "label": "Indice",
+    "title": "Configurazione dell’indice",
+    "subtitle": "Elenca le sezioni di questa pagina; un clic salta alla sezione scelta.",
+    "navLabel": "Indice",
+    "sectionKeys": {
+      "label": "Sezioni (un okey per riga)",
+      "helper": "Lasciare vuoto per elencare tutte le sezioni della pagina (consigliato: così l’indice resta aggiornato automaticamente). Altrimenti una chiave di sezione per riga; l’ordine proviene sempre dalla pagina."
+    },
+    "numbered": {
+      "label": "Mostra la numerazione",
+      "helper": "Antepone a ogni voce la sua posizione (1., 2., …)."
+    }
+  },
+  "testimonial": {
+    "label": "Testimonianze",
+    "title": "Configurazione delle testimonianze",
+    "subtitle": "Citazioni di membri, clienti o partner — a griglia o come carosello.",
+    "listLabel": "Testimonianze",
+    "more": "Leggi di più",
+    "link": "Leggi tutta la storia",
+    "entries": {
+      "label": "Testimonianze (JSON)",
+      "helper": "Elenco di oggetti con quote, authorName, authorRole, imageUrl, detail, link. quote e authorName sono obbligatori, tutto il resto è facoltativo. Esempio: [{\"quote\": \"Il club mi ha dato una seconda famiglia.\", \"authorName\": \"Anna Muster\", \"authorRole\": \"Membro dal 2019\", \"imageUrl\": \"\", \"detail\": \"\", \"link\": \"\"}]. Una citazione pubblicata richiede il consenso della persona citata.",
+      "error": "JSON non valido — le testimonianze non sono state applicate."
+    },
+    "carousel": {
+      "label": "Mostra come carosello",
+      "helper": "Invece che in una griglia, le testimonianze si trovano in una riga scorrevole in orizzontale (scorrimento sul cellulare)."
+    },
+    "columns": {
+      "label": "Colonne",
+      "helper": "Numero di colonne della griglia a partire dalla larghezza del tablet (1–4); sul cellulare sempre una sola colonna."
+    }
+  },
+  "timeline": {
+    "label": "Cronologia",
+    "title": "Configurazione della cronologia",
+    "subtitle": "Tutti gli appuntamenti del calendario scelto come cronologia.",
+    "listLabel": "Cronologia",
+    "empty": "Questo calendario non contiene appuntamenti.",
+    "vertical": {
+      "label": "Mostra in verticale",
+      "helper": "Invece che in orizzontale (impostazione predefinita), gli eventi sono impilati — adatto a cronologie lunghe."
+    }
+  },
   "album_style": {
     "label": "Stile album",
     "helper": "Determina come vengono mostrate le immagini di un album.",

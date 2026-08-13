@@ -1086,6 +1086,98 @@
     "all_groups": "Tous les groupes",
     "search_placeholder": "Rechercher …"
   },
+  "sankey": {
+    "label": "Sankey",
+    "title": "Configuration Sankey",
+    "subtitle": "Flux entre les nœuds ; les nœuds découlent des flux.",
+    "empty": "Aucun flux saisi pour le moment.",
+    "flows": {
+      "label": "Flux (JSON)",
+      "helper": "Liste de flux au format JSON, p. ex. [{\"source\":\"Cotisations\",\"target\":\"Club\",\"value\":100}]. La source et la cible sont des noms de nœuds libres, la valeur doit être positive.",
+      "error": "JSON invalide – les modifications n’ont pas été appliquées."
+    },
+    "nodeWidth": {
+      "label": "Largeur des nœuds (px)"
+    },
+    "nodeGap": {
+      "label": "Écart entre les nœuds (px)"
+    },
+    "lineOpacity": {
+      "label": "Opacité des flux (0–1)"
+    },
+    "layoutIterations": {
+      "label": "Itérations de mise en page",
+      "helper": "0 conserve l’ordre des nœuds ; des valeurs plus élevées laissent ECharts disposer les nœuds automatiquement."
+    }
+  },
+  "spider": {
+    "label": "Radar",
+    "title": "Configuration du radar",
+    "subtitle": "Des axes avec une valeur maximale et une ou plusieurs séries tracées dessus.",
+    "axes": {
+      "label": "Axes (JSON)",
+      "helper": "Liste des axes au format JSON, p. ex. [{\"name\":\"Technique\",\"maxValue\":10}]. Au moins 3 axes, sinon rien n’est dessiné.",
+      "error": "JSON invalide – les modifications n’ont pas été appliquées."
+    },
+    "series": {
+      "label": "Séries (JSON)",
+      "helper": "Liste des séries au format JSON, p. ex. [{\"name\":\"Auto-évaluation\",\"values\":[8,6,4]}]. Les valeurs sont parallèles aux axes par leur index ; les valeurs manquantes comptent pour 0, les valeurs trop grandes sont limitées au maximum de l’axe.",
+      "error": "JSON invalide – les modifications n’ont pas été appliquées."
+    },
+    "areaOpacity": {
+      "label": "Opacité de la surface (0–1)"
+    },
+    "showLegend": {
+      "label": "Afficher la légende",
+      "helper": "Affiche les noms des séries sous le graphique."
+    }
+  },
+  "toc": {
+    "label": "Table des matières",
+    "title": "Configuration de la table des matières",
+    "subtitle": "Liste les sections de cette page ; un clic saute à la section choisie.",
+    "navLabel": "Table des matières",
+    "sectionKeys": {
+      "label": "Sections (un okey par ligne)",
+      "helper": "Laisser vide pour lister toutes les sections de la page (recommandé — la table reste ainsi à jour automatiquement). Sinon une clé de section par ligne ; l’ordre provient toujours de la page."
+    },
+    "numbered": {
+      "label": "Afficher la numérotation",
+      "helper": "Fait précéder chaque entrée de sa position (1., 2., …)."
+    }
+  },
+  "testimonial": {
+    "label": "Témoignages",
+    "title": "Configuration des témoignages",
+    "subtitle": "Citations de membres, de clientes ou de partenaires — en grille ou en carrousel.",
+    "listLabel": "Témoignages",
+    "more": "Lire la suite",
+    "link": "Lire toute l’histoire",
+    "entries": {
+      "label": "Témoignages (JSON)",
+      "helper": "Liste d’objets avec quote, authorName, authorRole, imageUrl, detail, link. quote et authorName sont obligatoires, tout le reste est facultatif. Exemple : [{\"quote\": \"Le club m’a donné une seconde famille.\", \"authorName\": \"Anna Muster\", \"authorRole\": \"Membre depuis 2019\", \"imageUrl\": \"\", \"detail\": \"\", \"link\": \"\"}]. Une citation publiée nécessite le consentement de la personne citée.",
+      "error": "JSON invalide — les témoignages n’ont pas été appliqués."
+    },
+    "carousel": {
+      "label": "Afficher en carrousel",
+      "helper": "Au lieu d’une grille, les témoignages sont placés dans une rangée à défilement horizontal (balayage sur mobile)."
+    },
+    "columns": {
+      "label": "Colonnes",
+      "helper": "Nombre de colonnes de la grille à partir de la largeur tablette (1–4) ; toujours une seule colonne sur mobile."
+    }
+  },
+  "timeline": {
+    "label": "Frise chronologique",
+    "title": "Configuration de la frise chronologique",
+    "subtitle": "Tous les événements du calendrier choisi sous forme de chronologie.",
+    "listLabel": "Frise chronologique",
+    "empty": "Ce calendrier ne contient aucun événement.",
+    "vertical": {
+      "label": "Afficher verticalement",
+      "helper": "Au lieu de l’horizontale (par défaut), les événements sont empilés — adapté aux longues chronologies."
+    }
+  },
   "album_style": {
     "label": "Style d'album",
     "helper": "Détermine comment les images d'un album sont affichées.",

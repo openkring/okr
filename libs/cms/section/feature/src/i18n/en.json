@@ -1086,6 +1086,98 @@
     "all_groups": "All groups",
     "search_placeholder": "Search …"
   },
+  "sankey": {
+    "label": "Sankey",
+    "title": "Sankey configuration",
+    "subtitle": "Flows between nodes; the nodes follow from the flows.",
+    "empty": "No flows recorded yet.",
+    "flows": {
+      "label": "Flows (JSON)",
+      "helper": "List of flows as JSON, e.g. [{\"source\":\"Fees\",\"target\":\"Club\",\"value\":100}]. Source and target are free-form node names; the value must be positive.",
+      "error": "Invalid JSON – the changes were not applied."
+    },
+    "nodeWidth": {
+      "label": "Node width (px)"
+    },
+    "nodeGap": {
+      "label": "Node gap (px)"
+    },
+    "lineOpacity": {
+      "label": "Flow opacity (0–1)"
+    },
+    "layoutIterations": {
+      "label": "Layout iterations",
+      "helper": "0 keeps the order of the nodes; higher values let ECharts arrange the nodes automatically."
+    }
+  },
+  "spider": {
+    "label": "Radar chart",
+    "title": "Radar chart configuration",
+    "subtitle": "Axes with a maximum value, and one or more series plotted across them.",
+    "axes": {
+      "label": "Axes (JSON)",
+      "helper": "List of axes as JSON, e.g. [{\"name\":\"Technique\",\"maxValue\":10}]. At least 3 axes, otherwise nothing is drawn.",
+      "error": "Invalid JSON – the changes were not applied."
+    },
+    "series": {
+      "label": "Series (JSON)",
+      "helper": "List of series as JSON, e.g. [{\"name\":\"Self-assessment\",\"values\":[8,6,4]}]. The values are index-parallel to the axes; missing values count as 0, values that are too large are capped at the axis maximum.",
+      "error": "Invalid JSON – the changes were not applied."
+    },
+    "areaOpacity": {
+      "label": "Area opacity (0–1)"
+    },
+    "showLegend": {
+      "label": "Show legend",
+      "helper": "Displays the names of the series below the chart."
+    }
+  },
+  "toc": {
+    "label": "Table of contents",
+    "title": "Table-of-contents configuration",
+    "subtitle": "Lists the sections of this page; a click jumps to the selected section.",
+    "navLabel": "Table of contents",
+    "sectionKeys": {
+      "label": "Sections (one okey per line)",
+      "helper": "Leave empty to list all sections of the page (recommended — the table then stays up to date automatically). Otherwise one section key per line; the order always comes from the page."
+    },
+    "numbered": {
+      "label": "Show numbering",
+      "helper": "Prefixes each entry with its position (1., 2., …)."
+    }
+  },
+  "testimonial": {
+    "label": "Testimonials",
+    "title": "Testimonial configuration",
+    "subtitle": "Quotes from members, customers or partners — as a grid or a carousel.",
+    "listLabel": "Testimonials",
+    "more": "Read more",
+    "link": "Read the full story",
+    "entries": {
+      "label": "Testimonials (JSON)",
+      "helper": "List of objects with quote, authorName, authorRole, imageUrl, detail, link. quote and authorName are required, everything else is optional. Example: [{\"quote\": \"The club gave me a second family.\", \"authorName\": \"Anna Muster\", \"authorRole\": \"Member since 2019\", \"imageUrl\": \"\", \"detail\": \"\", \"link\": \"\"}]. A published quote requires the consent of the person quoted.",
+      "error": "Invalid JSON — the testimonials were not applied."
+    },
+    "carousel": {
+      "label": "Display as carousel",
+      "helper": "Instead of a grid, the testimonials sit in a horizontally scrollable row (swipe on mobile)."
+    },
+    "columns": {
+      "label": "Columns",
+      "helper": "Number of grid columns from tablet width upwards (1–4); always a single column on mobile."
+    }
+  },
+  "timeline": {
+    "label": "Timeline",
+    "title": "Timeline configuration",
+    "subtitle": "All events of the selected calendar as a chronology.",
+    "listLabel": "Timeline",
+    "empty": "This calendar contains no events.",
+    "vertical": {
+      "label": "Display vertically",
+      "helper": "Instead of horizontally (the default), the events are stacked — suitable for long chronologies."
+    }
+  },
   "album_style": {
     "label": "Album style",
     "helper": "Determines how the images of an album are displayed.",

@@ -1086,6 +1086,98 @@
     "all_groups": "Todos los grupos",
     "search_placeholder": "Buscar …"
   },
+  "sankey": {
+    "label": "Sankey",
+    "title": "Configuración de Sankey",
+    "subtitle": "Flujos entre nodos; los nodos se derivan de los flujos.",
+    "empty": "Todavía no se ha registrado ningún flujo.",
+    "flows": {
+      "label": "Flujos (JSON)",
+      "helper": "Lista de flujos en JSON, p. ej. [{\"source\":\"Cuotas\",\"target\":\"Club\",\"value\":100}]. El origen y el destino son nombres de nodo libres; el valor debe ser positivo.",
+      "error": "JSON no válido: los cambios no se han aplicado."
+    },
+    "nodeWidth": {
+      "label": "Ancho de nodo (px)"
+    },
+    "nodeGap": {
+      "label": "Separación entre nodos (px)"
+    },
+    "lineOpacity": {
+      "label": "Opacidad de los flujos (0–1)"
+    },
+    "layoutIterations": {
+      "label": "Iteraciones de diseño",
+      "helper": "0 mantiene el orden de los nodos; valores más altos permiten que ECharts disponga los nodos automáticamente."
+    }
+  },
+  "spider": {
+    "label": "Gráfico radial",
+    "title": "Configuración del gráfico radial",
+    "subtitle": "Ejes con un valor máximo y una o varias series representadas sobre ellos.",
+    "axes": {
+      "label": "Ejes (JSON)",
+      "helper": "Lista de ejes en JSON, p. ej. [{\"name\":\"Técnica\",\"maxValue\":10}]. Al menos 3 ejes; de lo contrario no se dibuja nada.",
+      "error": "JSON no válido: los cambios no se han aplicado."
+    },
+    "series": {
+      "label": "Series (JSON)",
+      "helper": "Lista de series en JSON, p. ej. [{\"name\":\"Autoevaluación\",\"values\":[8,6,4]}]. Los valores son paralelos por índice a los ejes; los valores que falten cuentan como 0 y los demasiado grandes se limitan al máximo del eje.",
+      "error": "JSON no válido: los cambios no se han aplicado."
+    },
+    "areaOpacity": {
+      "label": "Opacidad del área (0–1)"
+    },
+    "showLegend": {
+      "label": "Mostrar leyenda",
+      "helper": "Muestra los nombres de las series debajo del gráfico."
+    }
+  },
+  "toc": {
+    "label": "Índice",
+    "title": "Configuración del índice",
+    "subtitle": "Enumera las secciones de esta página; al hacer clic se salta a la sección elegida.",
+    "navLabel": "Índice",
+    "sectionKeys": {
+      "label": "Secciones (un okey por línea)",
+      "helper": "Déjalo vacío para enumerar todas las secciones de la página (recomendado: así el índice se mantiene actualizado automáticamente). Si no, una clave de sección por línea; el orden procede siempre de la página."
+    },
+    "numbered": {
+      "label": "Mostrar numeración",
+      "helper": "Antepone a cada entrada su posición (1., 2., …)."
+    }
+  },
+  "testimonial": {
+    "label": "Testimonios",
+    "title": "Configuración de testimonios",
+    "subtitle": "Citas de miembros, clientas o socios: en cuadrícula o en carrusel.",
+    "listLabel": "Testimonios",
+    "more": "Leer más",
+    "link": "Leer la historia completa",
+    "entries": {
+      "label": "Testimonios (JSON)",
+      "helper": "Lista de objetos con quote, authorName, authorRole, imageUrl, detail, link. quote y authorName son obligatorios; todo lo demás es opcional. Ejemplo: [{\"quote\": \"El club me dio una segunda familia.\", \"authorName\": \"Anna Muster\", \"authorRole\": \"Miembro desde 2019\", \"imageUrl\": \"\", \"detail\": \"\", \"link\": \"\"}]. Una cita publicada requiere el consentimiento de la persona citada.",
+      "error": "JSON no válido: los testimonios no se han aplicado."
+    },
+    "carousel": {
+      "label": "Mostrar como carrusel",
+      "helper": "En lugar de una cuadrícula, los testimonios se colocan en una fila con desplazamiento horizontal (deslizar en el móvil)."
+    },
+    "columns": {
+      "label": "Columnas",
+      "helper": "Número de columnas de la cuadrícula a partir del ancho de tableta (1–4); en el móvil siempre una sola columna."
+    }
+  },
+  "timeline": {
+    "label": "Línea de tiempo",
+    "title": "Configuración de la línea de tiempo",
+    "subtitle": "Todas las citas del calendario elegido como cronología.",
+    "listLabel": "Línea de tiempo",
+    "empty": "Este calendario no contiene ninguna cita.",
+    "vertical": {
+      "label": "Mostrar en vertical",
+      "helper": "En lugar de horizontal (predeterminado), los eventos se apilan: adecuado para cronologías largas."
+    }
+  },
   "album_style": {
     "label": "Estilo de álbum",
     "helper": "Determina cómo se muestran las imágenes de un álbum.",

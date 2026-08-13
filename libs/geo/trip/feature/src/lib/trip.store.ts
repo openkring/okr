@@ -200,7 +200,8 @@ export const TripStore = signalStore(
     },
 
     async selectResourceAvatar(): Promise<AvatarInfo | undefined> {
-      const boat = await store.modelSelectService.selectResourceAvatar('@tag.okBoat', undefined, store.i18n.select_boat_title());
+      // selectedTag is a raw tag name matched against resource.tags — never an i18n key
+      const boat = await store.modelSelectService.selectResourceAvatar('okBoat', undefined, store.i18n.select_boat_title());
       if (!boat) return undefined;
       const subType = await this.resolveRigging(boat.subType);
       return subType === boat.subType ? boat : { ...boat, subType };
