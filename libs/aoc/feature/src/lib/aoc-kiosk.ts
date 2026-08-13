@@ -102,7 +102,7 @@ import { AocKioskStore } from './aoc-kiosk.store';
                     <ion-icon slot="start" src="{{ 'video' | svgIcon }}" /> Videoanruf
                   </ion-button>
                   <ion-button [color]="kiosk.locked ? 'warning' : 'medium'" fill="outline" (click)="store.toggleLock(kiosk)">
-                    <ion-icon slot="start" src="{{ (kiosk.locked ? 'lock-open' : 'lock') | svgIcon }}" />
+                    <ion-icon slot="start" src="{{ (kiosk.locked ? 'lock-open' : 'lock-closed') | svgIcon }}" />
                     {{ kiosk.locked ? 'Entsperren' : 'Sperren' }}
                   </ion-button>
                 </ion-col>
