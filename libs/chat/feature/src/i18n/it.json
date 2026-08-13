@@ -164,16 +164,16 @@
     "title": "Crea sondaggio",
     "create": "Crea sondaggio",
     "allowMultipleAnswers": {
-      "label": "Più risposte possibili",
-      "helper": "Si possono dare più risposte alla stessa domanda (scelta multipla)."
+      "label": "Più opzioni possibili",
+      "helper": "Si possono scegliere più opzioni per la stessa domanda (scelta multipla)."
     },
     "question": {
       "label": "Domanda o argomento",
       "placeholder": "Scrivi qualcosa..."
     },
     "answer": {
-      "create": "Risposte",
-      "add": "Aggiungi risposta"
+      "create": "Opzioni",
+      "add": "Aggiungi opzione"
     },
     "results": {
       "show": "Mostra i risultati della votazione",

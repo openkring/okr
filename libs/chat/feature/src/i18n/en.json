@@ -164,16 +164,16 @@
     "title": "Create survey",
     "create": "Create survey",
     "allowMultipleAnswers": {
-      "label": "Multiple answers possible",
-      "helper": "Several answers can be given to the same question (multiple choice)."
+      "label": "Multiple options possible",
+      "helper": "Several options can be selected for the same question (multiple choice)."
     },
     "question": {
       "label": "Question or topic",
       "placeholder": "Write something..."
     },
     "answer": {
-      "create": "Answers",
-      "add": "Add answer"
+      "create": "Options",
+      "add": "Add option"
     },
     "results": {
       "show": "Show voting results",

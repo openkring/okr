@@ -164,16 +164,16 @@
     "title": "Crear encuesta",
     "create": "Crear encuesta",
     "allowMultipleAnswers": {
-      "label": "Varias respuestas posibles",
-      "helper": "Se pueden dar varias respuestas a la misma pregunta (opción múltiple)."
+      "label": "Varias opciones posibles",
+      "helper": "Se pueden elegir varias opciones para la misma pregunta (opción múltiple)."
     },
     "question": {
       "label": "Pregunta o tema",
       "placeholder": "Escribe algo..."
     },
     "answer": {
-      "create": "Respuestas",
-      "add": "Añadir respuesta"
+      "create": "Opciones",
+      "add": "Añadir opción"
     },
     "results": {
       "show": "Mostrar los resultados de la votación",

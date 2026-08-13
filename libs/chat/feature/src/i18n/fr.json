@@ -164,16 +164,16 @@
     "title": "Créer un sondage",
     "create": "Créer un sondage",
     "allowMultipleAnswers": {
-      "label": "Plusieurs réponses possibles",
-      "helper": "Plusieurs réponses peuvent être données à la même question (choix multiple)."
+      "label": "Plusieurs options possibles",
+      "helper": "Plusieurs options peuvent être choisies pour la même question (choix multiple)."
     },
     "question": {
       "label": "Question ou sujet",
       "placeholder": "Écrivez quelque chose..."
     },
     "answer": {
-      "create": "Réponses",
-      "add": "Ajouter une réponse"
+      "create": "Options",
+      "add": "Ajouter une option"
     },
     "results": {
       "show": "Afficher les résultats du vote",
