@@ -330,6 +330,29 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
         </ion-card-content>
       </ion-card>
 
+      <!-- Group-room member reconciliation — additive-only, so no preview step -->
+      <ion-card class="repair-card">
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.chat_repair_members() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="repair-desc">{{ store.i18n.chat_repair_members_description() }}</p>
+          <div class="repair-actions">
+            <ion-button size="small" color="primary" (click)="onApplyMemberRepair()" [disabled]="memberRepairApplying()">
+              @if (memberRepairApplying()) {
+                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+              } @else {
+                <ion-icon slot="start" src="{{'reload' | svgIcon}}" />
+              }
+              {{ store.i18n.chat_repair_members_action() }}
+            </ion-button>
+          </div>
+          @if (memberRepairJoined() > 0) {
+            <ion-note color="medium" class="repair-skipped">{{ memberRepairJoined() }}</ion-note>
+          }
+        </ion-card-content>
+      </ion-card>
+
       </div>
 
       <!-- 3-column layout -->
@@ -511,6 +534,8 @@ export class AocChat {
   protected readonly tenantRepairAmbiguous = computed(() => this.store.tenantRepairAmbiguous());
   protected readonly tenantRepairScanning = computed(() => this.store.tenantRepairScanning());
   protected readonly tenantRepairApplying = computed(() => this.store.tenantRepairApplying());
+  protected readonly memberRepairApplying = computed(() => this.store.memberRepairApplying());
+  protected readonly memberRepairJoined = computed(() => this.store.memberRepairJoined());
 
   // constants
   private imgixBaseUrl = this.store.imgixBaseUrl();
@@ -563,6 +588,10 @@ export class AocChat {
 
   protected onApplyTenantRepair(): void {
     this.store.applyTenantRepair();
+  }
+
+  protected onApplyMemberRepair(): void {
+    this.store.applyMemberRepair();
   }
 
   // ─── room click → action sheet ──────────────────────────────────────────────

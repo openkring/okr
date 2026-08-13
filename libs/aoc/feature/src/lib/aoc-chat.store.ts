@@ -124,6 +124,8 @@ export type AocChatState = {
   tenantRepairAmbiguous: number;
   tenantRepairScanning: boolean;
   tenantRepairApplying: boolean;
+  memberRepairApplying: boolean;
+  memberRepairJoined: number;
 };
 
 const initialState: AocChatState = {
@@ -144,6 +146,8 @@ const initialState: AocChatState = {
   tenantRepairAmbiguous: 0,
   tenantRepairScanning: false,
   tenantRepairApplying: false,
+  memberRepairApplying: false,
+  memberRepairJoined: 0,
 };
 
 function getFn() {
@@ -646,6 +650,61 @@ export const AocChatStore = signalStore(
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       } finally {
         patchState(store, { tenantRepairApplying: false });
+      }
+    },
+
+    // ─── group-room member reconciliation ──────────────────────────────────────
+
+    /**
+     * Force-join every person with an active group membership into their group's Matrix
+     * room, for all groups of this tenant.
+     *
+     * There is no dry run: reconcileGroupRoomMembers is additive-only — it joins missing
+     * members and merely *reports* room members without a membership (course participants
+     * are legitimate), so applying it can never remove anyone.
+     *
+     * Needed after the 2026-08-13 fix to grantsChatAccess, which used to treat a FUTURE
+     * membership exit date as already-inactive and kicked those members from their group
+     * rooms months early. Those members are not restored automatically.
+     */
+    async applyMemberRepair(): Promise<void> {
+      const groups = store.appStore.allGroups();
+      const message = await firstValueFrom(
+        store.i18nService.translate('@aoc/feature.chat.repair.members.confirm', { count: groups.length })
+      );
+      const alert = await store.alertController.create({
+        header: store.i18n.chat_repair_members(),
+        message,
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.chat_repair_members_action(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm') return;
+
+      patchState(store, { memberRepairApplying: true, memberRepairJoined: 0 });
+      try {
+        const fn = httpsCallable<{ groupId: string }, { roomId: string; joined: string[]; alreadyIn: string[]; extras: string[] }>(
+          getFn(), 'reconcileGroupRoomMembers'
+        );
+        let joined = 0;
+        for (const group of groups) {
+          try {
+            const result = await fn({ groupId: group.okey });
+            joined += result.data.joined.length;
+          } catch (e) {
+            // A group without a chat room throws; that is expected, not a failure of the run.
+            console.warn(`reconcileGroupRoomMembers: skipped group ${group.okey}: ${(e as Error).message}`);
+          }
+        }
+        patchState(store, { memberRepairJoined: joined });
+        await showToast(store.toastController, `${store.i18n.chat_repair_members()}: ${joined}`);
+      } catch (e) {
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { memberRepairApplying: false });
       }
     },
 

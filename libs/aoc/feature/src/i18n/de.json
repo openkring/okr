@@ -291,6 +291,12 @@
         "ambiguous": "Räume ohne eindeutige Zuordnung übersprungen (bleiben überall sichtbar).",
         "confirm": "{{ count }} Chat-Räume jetzt den Mandanten zuordnen?",
         "conf": "{{ count }} Chat-Räume zugeordnet."
+      },
+      "members": {
+        "label": "Gruppen-Chat-Mitglieder abgleichen",
+        "description": "Trägt jede Person mit aktiver Gruppen-Mitgliedschaft in den Chat-Raum ihrer Gruppe ein. Nötig für Mitglieder, die durch einen früheren Fehler zu früh aus ihren Räumen entfernt wurden. Rein additiv: es wird nur eingetragen, nie entfernt – Raum-Mitglieder ohne Mitgliedschaft (z.B. Kursteilnehmende) bleiben unberührt.",
+        "action": "Abgleichen",
+        "confirm": "Mitglieder aller {count} Gruppen jetzt abgleichen?"
       }
     }
   },

@@ -204,6 +204,11 @@ export const AOC_I18N_KEYS = {
   chat_repair_tenants_preview:              PFX + 'chat.repair.tenants.preview',
   chat_repair_tenants_skipped:              PFX + 'chat.repair.tenants.ambiguous',
 
+  chat_repair_members:                      PFX + 'chat.repair.members.label',
+  chat_repair_members_description:          PFX + 'chat.repair.members.description',
+  chat_repair_members_action:               PFX + 'chat.repair.members.action',
+  chat_repair_members_confirm:              PFX + 'chat.repair.members.confirm',
+
   chat_user_deactivate:                     PFX + 'chat.user.deactivate.label',
   chat_user_deactivate_confirm:             PFX + 'chat.user.deactivate.confirm',
   chat_user_deactivate_action:              PFX + 'chat.user.deactivate.action',
