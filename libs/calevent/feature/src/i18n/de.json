@@ -373,5 +373,10 @@
     "caleventStartDateMandatory": "Das Startdatum ist obligatorisch.",
     "caleventEndDateMandatory": "Das Enddatum ist obligatorisch.",
     "caleventModelType": "Der ModelType muss EventModel sein."
+  },
+  "urlLabel": {
+    "label": "Link-Bezeichnung",
+    "placeholder": "z.B. Ausschreibung",
+    "helper": "Text, der anstelle der URL angezeigt wird. Leer lassen, um die URL selbst anzuzeigen."
   }
 }

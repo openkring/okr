@@ -1,4 +1,4 @@
-import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL } from '@okr/shared-constants';
+import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_ID, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TIME, DEFAULT_URL } from '@okr/shared-constants';
 import { AvatarInfo } from './avatar-info';
 import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model';
 
@@ -30,6 +30,7 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
   public locationKey = DEFAULT_KEY; // name@key, e.g. 'Bucharest@qwerlkjqrw869sdf'
   public calendars: string[] = DEFAULT_CALENDARS; // list of calendar keys this event belongs to
   public url = DEFAULT_URL; // a link to a website or a document
+  public urlLabel = DEFAULT_LABEL; // the text shown for the url link; falls back to the url itself when empty
   public responsiblePersons: AvatarInfo[] = []; // list of persons responsible for the event
 
   // attendees are only used for open events, where there are no invitations sent

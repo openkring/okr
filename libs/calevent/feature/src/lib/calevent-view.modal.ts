@@ -107,7 +107,7 @@ function storeToView(d: string): string {
                 <ion-icon slot="start" src="{{'link' | svgIcon}}" />
                 <ion-label>
                     <p class="view-label">{{ i18n.url() }}</p>
-                    <p class="view-value">{{ calevent().url }}</p>
+                    <p class="view-value">{{ urlLabel() }}</p>
                 </ion-label>
                 </ion-item>
             }
@@ -149,6 +149,8 @@ export class CalEventViewModal {
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().okey}`);
   /** one single-element array per person, so each avatar is rendered with its name on its own line */
   protected readonly responsiblePersons = computed(() => this.calevent().responsiblePersons.map(p => [p]));
+  /** the link text: the label if set, else the raw url */
+  protected readonly urlLabel = computed(() => this.calevent().urlLabel || this.calevent().url);
   protected readonly expertMode = computed(() => hasRole('admin', this.appStore.currentUser()));
 
   private get wdAbbr() {

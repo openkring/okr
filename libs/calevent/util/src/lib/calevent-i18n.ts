@@ -145,6 +145,11 @@ export const CALEVENT_I18N_KEYS = {
   topic:                          '@topic',
   date:                           '@date',
   url:                            '@url.label',
+  url_placeholder:                '@url.placeholder',
+  url_helper:                     '@url.helper',
+  urlLabel_label:                 PFX + 'urlLabel.label',
+  urlLabel_placeholder:           PFX + 'urlLabel.placeholder',
+  urlLabel_helper:                PFX + 'urlLabel.helper',
 
   okey_label:                     PFX + 'okey.label',
   okey_placeholder:               PFX + 'okey.placeholder',
