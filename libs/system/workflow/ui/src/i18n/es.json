@@ -1,0 +1,42 @@
+{
+  "name": {
+    "label": "Nombre",
+    "placeholder": "Introducir nombre",
+    "helper": ""
+  },
+  "event": {
+    "label": "Evento",
+    "helper": ""
+  },
+  "probe": {
+    "label": "Condición",
+    "helper": ""
+  },
+  "probeArg": {
+    "label": "Argumento de la condición",
+    "placeholder": "p.ej. key",
+    "helper": "Solo para condiciones con argumento, p.ej. hasOwnershipOfType"
+  },
+  "responsibilityKey": {
+    "label": "Responsabilidad",
+    "placeholder": "p.ej. treasurer",
+    "helper": "Clave de la responsabilidad que recibe la tarea"
+  },
+  "messageKey": {
+    "label": "Mensaje (clave i18n)",
+    "placeholder": "@system/workflow/messages.exitTreasurer",
+    "helper": "El marcador {name} se sustituye por el nombre del miembro"
+  },
+  "dueInDays": {
+    "label": "Vence en días",
+    "helper": "0 = sin fecha de vencimiento"
+  },
+  "order": {
+    "label": "Orden",
+    "helper": "Solo para la legibilidad"
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": ""
+  }
+}

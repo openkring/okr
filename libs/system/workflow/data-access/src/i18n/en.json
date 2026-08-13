@@ -1,0 +1,15 @@
+{
+  "create": {
+    "label": "Add rule",
+    "conf": "The rule was added.",
+    "error": "The rule could not be added."
+  },
+  "update": {
+    "conf": "The rule was changed.",
+    "error": "The rule could not be changed."
+  },
+  "delete": {
+    "conf": "The rule was deleted.",
+    "error": "The rule could not be deleted."
+  }
+}

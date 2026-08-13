@@ -1,0 +1,42 @@
+{
+  "name": {
+    "label": "Name",
+    "placeholder": "Enter name",
+    "helper": ""
+  },
+  "event": {
+    "label": "Event",
+    "helper": ""
+  },
+  "probe": {
+    "label": "Condition",
+    "helper": ""
+  },
+  "probeArg": {
+    "label": "Condition argument",
+    "placeholder": "e.g. key",
+    "helper": "Only for conditions taking an argument, e.g. hasOwnershipOfType"
+  },
+  "responsibilityKey": {
+    "label": "Responsibility",
+    "placeholder": "e.g. treasurer",
+    "helper": "Key of the responsibility that receives the task"
+  },
+  "messageKey": {
+    "label": "Message (i18n key)",
+    "placeholder": "@system/workflow/messages.exitTreasurer",
+    "helper": "The {name} placeholder is replaced with the member's name"
+  },
+  "dueInDays": {
+    "label": "Due in days",
+    "helper": "0 = no due date"
+  },
+  "order": {
+    "label": "Order",
+    "helper": "For readability only"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": ""
+  }
+}

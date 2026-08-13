@@ -27,6 +27,8 @@ import { DateFormat, getTodayStr, isActiveMembership } from '@okr/shared-util-co
 import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
 import { getUserIndex } from '@okr/user-util';
 
+import { runWorkflow } from '../workflow';
+
 import { decideAccountAction, MembershipDoc, shiftDaysBack } from './account-sync.decide';
 
 const CF_NAME = 'accountSync';
@@ -199,6 +201,33 @@ export async function closeAccount(personKey: string, tenantId: string): Promise
 }
 
 /**
+ * Hand a domain event to the workflow engine (spec 1.35). Consequences beyond the
+ * account invariant — "tell the treasurer", "check the keys" — are tenant-scoped rules
+ * in `workflow-rules`, not code.
+ *
+ * Best-effort: runWorkflow never throws, and a swallowed rule must not affect the
+ * membership write.
+ */
+async function emitMembershipEvent(
+  event: string,
+  m: MembershipDoc | undefined,
+  membershipId: string,
+  tenantId: string,
+  today: string,
+): Promise<void> {
+  if (!m?.memberKey) return;
+  await runWorkflow({
+    tenantId,
+    event,
+    personKey: m.memberKey,
+    relatedKey: `membership.${membershipId}`,
+    subjectName: `${m.memberName1 ?? ''} ${m.memberName2 ?? ''}`.trim(),
+    subjectCategory: m.category ?? '',
+    today,
+  });
+}
+
+/**
  * Firestore trigger: open/close the user account when a person's membership in the
  * DEFAULT ORG becomes active or stops being active.
  *
@@ -222,12 +251,23 @@ export const onMembershipAccountSync = onDocumentWritten(
 
       const today = getTodayStr(DateFormat.StoreDate);
       const action = decideAccountAction(before, after, tenantId, today);
-      if (action === 'none') return;
 
       const personKey = (after ?? before)?.memberKey ?? '';
       if (!personKey) return;
+
+      // 1. the invariant: opening/closing the account stays in code, never in a rule
       if (action === 'open') await openAccount(personKey, tenantId);
-      else await closeAccount(personKey, tenantId);
+      if (action === 'close') await closeAccount(personKey, tenantId);
+
+      // 2. the policy: whatever else should happen is data (spec 1.35). Emitted here
+      //    because this function has already computed before/after, the tenant and the
+      //    active-state transition — one definition of "ended", not two.
+      const membershipId = event.params.membershipId;
+      if (action === 'open') await emitMembershipEvent('membership.created', after ?? before, membershipId, tenantId, today);
+      if (action === 'close') await emitMembershipEvent('membership.ended', after ?? before, membershipId, tenantId, today);
+      if (action === 'none' && before && after && (before.category ?? '') !== (after.category ?? '')) {
+        await emitMembershipEvent('membership.categoryChanged', after, membershipId, tenantId, today);
+      }
     } catch (error) {
       logger.error(`${CF_NAME}: failed for membership ${event.params.membershipId}`, error);
     }
@@ -263,6 +303,12 @@ export const sweepExpiredMemberships = onSchedule(
         const tenantId = await resolveDefaultOrgTenant(m);
         if (!tenantId) continue;
         await closeAccount(m.memberKey, tenantId);
+        // Emit only on the day the exit date takes effect. closeAccount is idempotent
+        // and the catch-up window is 7 days wide, so an unconditional emit would re-fire
+        // the event every day for a week — and dedup only protects an OPEN task.
+        if (m.dateOfExit === today) {
+          await emitMembershipEvent('membership.ended', m, doc.id, tenantId, today);
+        }
         closed++;
       } catch (error) {
         logger.error(`${CF_NAME}: sweep failed for membership ${doc.id}`, error);

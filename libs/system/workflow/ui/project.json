@@ -1,0 +1,33 @@
+{
+  "name": "system-workflow-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/system/workflow/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:ui",
+    "scope:workflow",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/system/workflow/ui",
+        "main": "libs/system/workflow/ui/src/index.ts",
+        "tsConfig": "libs/system/workflow/ui/tsconfig.lib.json",
+        "assets": [
+          "libs/system/workflow/ui/*.md"
+        ],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

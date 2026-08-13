@@ -1,0 +1,62 @@
+{
+  "plural": "Workflow rules",
+  "empty": "No workflow rules are defined.",
+  "operation": {
+    "create": {
+      "label": "Create rule"
+    },
+    "edit": {
+      "label": "Edit rule"
+    },
+    "view": {
+      "label": "View rule"
+    },
+    "delete": {
+      "confirm": "Do you really want to delete this rule ?"
+    }
+  },
+  "actionsheet": {
+    "edit": "Edit rule",
+    "delete": "Delete rule"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "confirmation": "Save"
+  },
+  "workflow_event": {
+    "name": "Event",
+    "membership": {
+      "created": {
+        "label": "Membership started"
+      },
+      "ended": {
+        "label": "Membership ended"
+      },
+      "categoryChanged": {
+        "label": "Membership category changed"
+      }
+    }
+  },
+  "workflow_probe": {
+    "name": "Condition",
+    "always": {
+      "label": "Always"
+    },
+    "hasActiveOwnerships": {
+      "label": "Has active ownerships"
+    },
+    "hasOwnershipOfType": {
+      "label": "Has ownership of type …"
+    },
+    "hasOpenInvoices": {
+      "label": "Has open invoices"
+    },
+    "categoryIs": {
+      "label": "New category is …"
+    },
+    "categoryIs:passive,hasActiveOwnerships": {
+      "label": "Switch to passive with active ownerships"
+    }
+  }
+}

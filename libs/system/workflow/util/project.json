@@ -1,0 +1,42 @@
+{
+  "name": "system-workflow-util",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/system/workflow/util/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:util",
+    "scope:workflow",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/system/workflow/util",
+        "main": "libs/system/workflow/util/src/index.ts",
+        "tsConfig": "libs/system/workflow/util/tsconfig.lib.json",
+        "assets": [
+          "libs/system/workflow/util/*.md"
+        ],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "configFile": "libs/system/workflow/util/vite.config.ts"
+      }
+    }
+  }
+}

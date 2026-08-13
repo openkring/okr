@@ -1,0 +1,33 @@
+{
+  "name": "system-workflow-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/system/workflow/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:feature",
+    "scope:workflow",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/system/workflow/feature",
+        "main": "libs/system/workflow/feature/src/index.ts",
+        "tsConfig": "libs/system/workflow/feature/tsconfig.lib.json",
+        "assets": [
+          "libs/system/workflow/feature/*.md"
+        ],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

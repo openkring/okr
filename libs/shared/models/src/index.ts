@@ -87,6 +87,7 @@ export * from './lib/transfer.model';
 export * from './lib/trip.model';
 export * from './lib/user.model';
 export * from './lib/whiteboard.model';
+export * from './lib/workflow-rule.model';
 export * from './lib/workrel.model';
 export * from './lib/year-config.model';
 export * from './lib/i18n.model';

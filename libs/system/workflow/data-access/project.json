@@ -1,0 +1,33 @@
+{
+  "name": "system-workflow-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/system/workflow/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:data-access",
+    "scope:workflow",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/system/workflow/data-access",
+        "main": "libs/system/workflow/data-access/src/index.ts",
+        "tsConfig": "libs/system/workflow/data-access/tsconfig.lib.json",
+        "assets": [
+          "libs/system/workflow/data-access/*.md"
+        ],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

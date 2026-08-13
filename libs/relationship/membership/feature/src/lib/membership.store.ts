@@ -11,13 +11,12 @@ import { ExportFormats, memberTypeMatches, yearMatches } from '@okr/shared-categ
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@okr/shared-models';
-import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, debugMessage, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@okr/shared-util-core';
+import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@okr/shared-util-core';
 import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 import { EmailAddressesModal, selectDate } from '@okr/shared-ui';
 
-import { TaskService } from '@okr/task-data-access';
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { convertFormToNewPerson, convertMemberAndOrgToMembership, convertNewMemberFormToEmailAddress, convertNewMemberFormToMembership, convertNewMemberFormToPhoneAddress, convertNewMemberFormToPostalAddress, convertNewMemberFormToWebAddress, convertToAddressDataRow, convertToClubdeskImportRow, convertToSrvDataRow, getGroupsOfMember, getRelLogEntry, MemberContact, MemberNewFormModel, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
@@ -86,7 +85,6 @@ export const _MembershipStore = signalStore(
     router: inject(Router),
     personService: inject(PersonService),
     addressService: inject(AddressService),
-    taskService: inject(TaskService),
     ownershipService: inject(OwnershipService),
     matrixService: inject(MatrixChatService),
     activityService: inject(ActivityService),
@@ -562,13 +560,9 @@ export const _MembershipStore = signalStore(
         const mcatAbbreviation = getCatAbbreviation(store.membershipCategory(), vm.category);
         const membership = convertNewMemberFormToMembership(vm, personKey, store.tenantId(), mcatAbbreviation);
         membership.index = 'mn:' + membership.memberName1 + ' ' + membership.memberName2 + ' mk:' + membership.memberKey + ' ok:' + membership.orgKey;
-        const key = await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, store.i18n.create_conf(), store.i18n.create_error(), store.appStore.currentUser());
-        if (membership.orgModelType === OrgModelName) { // do not add a task for a group membership
-          // create a task for the treasurer (this triggers the onTaskWritten CF which notifies the assignee)
-          const memberName = getFullName(membership.memberName1, membership.memberName2);
-          await this.addTask(membership, store.appStore.getGroup('treasurer'), `Neumitglied ${memberName} -> bitte Gebühren prüfen.`);
-        }
-        return key;
+        // Consequences of a new membership (notify the treasurer, …) are workflow rules
+        // evaluated server-side by the memberships trigger — spec 1.35, no client code.
+        return await store.firestoreService.createModel<MembershipModel>(MembershipCollection, membership, store.i18n.create_conf(), store.i18n.create_error(), store.appStore.currentUser());
       },
 
       saveAddress(address: AddressModel, avatarKey: string): void {
@@ -609,13 +603,9 @@ export const _MembershipStore = signalStore(
               data.memberBirthYear = getBirthYear(dobByKey.get(data.memberKey) ?? '');
             }
             if (!data.okey) {
-              // create new membership
+              // create new membership. The follow-up tasks are workflow rules (spec 1.35),
+              // evaluated server-side by the memberships trigger.
               store.membershipService.create(data, store.currentUser());
-              if (data.orgModelType === OrgModelName) { // do not add a task for a group membership
-                // create a task for the treasurer
-                const memberName = getFullName(data.memberName1, data.memberName2);
-                await this.addTask(data, store.appStore.getGroup('treasurer'), `Neumitglied ${memberName} -> bitte Gebühren prüfen.`);
-              }
               if (data.orgModelType === GroupModelName && data.memberModelType === PersonModelName) {
                 // invite the new member to the group's Matrix chat room
                 try {
@@ -649,25 +639,10 @@ export const _MembershipStore = signalStore(
         }
         const sDate = convertDateFormatToString(endDate.substring(0, 10), DateFormat.IsoDate, DateFormat.StoreDate, false);
         await store.membershipService.endMembershipByDate(membership, sDate, store.currentUser());
-        if (membership.orgModelType === GroupModelName && membership.memberModelType === PersonModelName) {
-          // remove the member from the group's Matrix chat room
-          try {
-            await store.matrixService.kickFromGroupRoom(membership.orgKey, membership.memberKey);
-            void store.activityService.log('chat', 'kickfromgroup', store.currentUser(), `SUCCESS: ${membership.memberKey} from ${membership.orgKey}`);
-
-          } catch (err) {
-            console.warn('MembershipStore.end: Could not kick from group chat:', err);
-            void store.activityService.log('chat', 'kickfromgroup', store.currentUser(), `ERROR: ${membership.memberKey} from ${membership.orgKey}`);
-          }
-        }
-        const memberName = getFullName(membership.memberName1, membership.memberName2);
-        const ownerships = store.ownershipsOfMember();
-        if (ownerships.length > 0) {
-          await this.addTask(membership, store.appStore.getGroup('resourceAdmin'), `${memberName} ist ausgetreten -> bitte Schlüssel und/oder Chäschtli prüfen.`);
-        } else {
-          debugMessage('MembershipStore.end: no ownerships found for member, no task needed for resourceAdmin', store.currentUser());
-        }
-        await this.addTask(membership, store.appStore.getGroup('treasurer'), `${memberName} ist ausgetreten -> bitte Gebühren prüfen.`);
+        // No eager kickFromGroupRoom here: onMembershipWritten does the removal server-side
+        // and is date-aware (spec 1.34) — kicking from the client would throw a member with a
+        // FUTURE exit date out of their rooms months early. The follow-up tasks (treasurer,
+        // resourceAdmin) are workflow rules evaluated server-side (spec 1.35).
       },
 
       /**
@@ -688,21 +663,6 @@ export const _MembershipStore = signalStore(
             : (membership.memberName2 || membership.memberName1),
         };
         await store.vcardExportService.exportSingle(target, kind, store.currentUser()?.roles, store.appStore.tenantId());
-      },
-
-      /**
-       * Adds a new task to a group membership. 
-       * The task is assigned to the group and the author is the current user. 
-       * The task is initially assigned to the mainContact of the group resourceAdmin.
-       * If the mainContact does not exist, the author is assigned, but can be changed in the task edit modal.
-       * This is currently only implemented for memberships in Seeclub Stäfa (okey = 'scs').
-       * @param membership the membership for which to create the task. We need the membership to get the group (org) for which the task is created and to check if it is a SCS membership.
-       * @param group the group to which the task is assigned.
-       * @param name the name of the task to create. It should contain all relevant information about the reason for creating the task, so that the responsible person can directly act on it without having to look up additional information.
-       * @returns 
-       */
-      async addTask(membership: MembershipModel, group?: GroupModel, name?: string): Promise<void> {
-        await store.taskService.addTaskFromGroupMembership(membership, group, name, store.currentUser());
       },
 
       /**
@@ -748,17 +708,9 @@ export const _MembershipStore = signalStore(
           modal.present();
           const { data, role } = await modal.onDidDismiss();
           if (role === 'confirm' && data !== undefined) {   // result is vm: CategoryChangeFormModel
+            // The category write emits membership.categoryChanged; who gets told about a
+            // switch to passive is a workflow rule now (spec 1.35), not an if block here.
             await store.membershipService.saveMembershipCategoryChange(membership, data, membershipCategory, store.currentUser());
-            if (data.membershipCategoryNew === 'passive') {
-              const memberName = getFullName(membership.memberName1, membership.memberName2);
-              const ownerships = store.ownershipsOfMember();
-              if (ownerships.length > 0) {
-                await this.addTask(membership, store.appStore.getGroup('resourceAdmin'), `${memberName} wechselt auf Passiv. Bitte Schlüssel und/oder Chäschtli prüfen.`);
-              } else {
-                debugMessage('MembershipStore.changeMembershipCategory: no ownerships found for member, no task needed for resourceAdmin', store.currentUser());
-              }
-              await this.addTask(membership, store.appStore.getGroup('treasurer'), `${memberName} wechselt auf Passiv. Bitte Gebühren prüfen.`);
-            }
           }
           this.refreshData();
         }

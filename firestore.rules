@@ -467,6 +467,10 @@ service cloud.firestore {
     match /periods/{id}            { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
     match /responsibilities/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
     match /vat-codes/{id}          { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    // workflow-rules decide who gets notified about a membership event (spec 1.35).
+    // Admin-only writes: a mis-edited rule silently stops a notification. The engine
+    // itself runs in a Cloud Function and bypasses these rules.
+    match /workflow-rules/{id}     { allow read: if tenantRead(); allow create, update: if isAdmin() && tenantCreate(); allow delete: if isAdmin() && tenantDelete(); }
 
     // ============================================================================
     //  Templates (PDF) — role-gated; converted from dead claim checks to get()-roles.

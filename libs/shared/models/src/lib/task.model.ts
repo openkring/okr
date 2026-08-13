@@ -29,6 +29,13 @@ export class TaskModel implements OkrModel, PersistedModel, NamedModel, Searchab
   // fractional Kanban rank within its (state) partition; '' = not yet ranked (sorts by dueDate)
   public rank = '';
 
+  // What this task is about — set by the workflow engine (spec 1.35), used for the
+  // back-link in the task UI and to deduplicate re-triggered tasks. Legacy documents
+  // read these as undefined (Firestore reads do not apply model defaults), so every
+  // consumer must coalesce.
+  public relatedModelType = '';  // 'membership' | 'person' | …
+  public relatedKey = '';        // '<modelType>.<okey>', prefixed per the addresses parentKey convention
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }

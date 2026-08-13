@@ -1,0 +1,15 @@
+{
+  "create": {
+    "label": "Regel hinzufügen",
+    "conf": "Die Regel wurde hinzugefügt.",
+    "error": "Die Regel konnte nicht hinzugefügt werden."
+  },
+  "update": {
+    "conf": "Die Regel wurde geändert.",
+    "error": "Die Regel konnte nicht geändert werden."
+  },
+  "delete": {
+    "conf": "Die Regel wurde gelöscht.",
+    "error": "Die Regel konnte nicht gelöscht werden."
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": {
+    "label": "Nom",
+    "placeholder": "Saisir le nom",
+    "helper": ""
+  },
+  "event": {
+    "label": "Événement",
+    "helper": ""
+  },
+  "probe": {
+    "label": "Condition",
+    "helper": ""
+  },
+  "probeArg": {
+    "label": "Argument de la condition",
+    "placeholder": "p.ex. key",
+    "helper": "Uniquement pour les conditions avec argument, p.ex. hasOwnershipOfType"
+  },
+  "responsibilityKey": {
+    "label": "Responsabilité",
+    "placeholder": "p.ex. treasurer",
+    "helper": "Clé de la responsabilité qui reçoit la tâche"
+  },
+  "messageKey": {
+    "label": "Message (clé i18n)",
+    "placeholder": "@system/workflow/messages.exitTreasurer",
+    "helper": "Le paramètre {name} est remplacé par le nom du membre"
+  },
+  "dueInDays": {
+    "label": "Échéance en jours",
+    "helper": "0 = pas d'échéance"
+  },
+  "order": {
+    "label": "Ordre",
+    "helper": "Pour la lisibilité uniquement"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": ""
+  }
+}

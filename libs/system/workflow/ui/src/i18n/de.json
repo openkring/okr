@@ -1,0 +1,42 @@
+{
+  "name": {
+    "label": "Name",
+    "placeholder": "Name eingeben",
+    "helper": ""
+  },
+  "event": {
+    "label": "Ereignis",
+    "helper": ""
+  },
+  "probe": {
+    "label": "Bedingung",
+    "helper": ""
+  },
+  "probeArg": {
+    "label": "Argument der Bedingung",
+    "placeholder": "z.B. key",
+    "helper": "Nur für Bedingungen mit Argument, z.B. hasOwnershipOfType"
+  },
+  "responsibilityKey": {
+    "label": "Verantwortlichkeit",
+    "placeholder": "z.B. treasurer",
+    "helper": "Schlüssel der Verantwortlichkeit, die die Aufgabe erhält"
+  },
+  "messageKey": {
+    "label": "Meldung (i18n-Schlüssel)",
+    "placeholder": "@system/workflow/messages.exitTreasurer",
+    "helper": "Platzhalter {name} wird durch den Namen des Mitglieds ersetzt"
+  },
+  "dueInDays": {
+    "label": "Fällig in Tagen",
+    "helper": "0 = kein Fälligkeitsdatum"
+  },
+  "order": {
+    "label": "Reihenfolge",
+    "helper": "Nur für die Lesbarkeit"
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": ""
+  }
+}

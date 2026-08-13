@@ -1115,6 +1115,9 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 // not personal data: templates — PDF/document templates
 // not personal data: vat-codes — VAT rate definitions
 // not personal data: websiteContent — public marketing content
+// not personal data: workflow-rules — tenant policy ("on this event, notify whoever is
+//   responsible"). References a responsibility role, never a person; the tasks it opens
+//   are the personal-data side and are covered by the `tasks` row.
 //
 // ── KNOWN GAPS: these DO hold personal data but carry no usable subject link. They
 //    are not rows because a `find` would be a guess; each needs a schema change first.

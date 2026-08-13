@@ -33,6 +33,12 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
   // why this entry is required), but it ships no route and no menu doc of its own — every one
   // of its consumers also uses `@okr/document-*`. Full argument on the `document` block.
   folder: 'merged into the `document` block (2026-08-04); `document` declares its `folders` collection',
+  // `libs/system/workflow/**` (spec 1.35). The rule ENGINE runs in a Cloud Function and fires
+  // on every membership write regardless of any tenant setting, so a block toggle could not
+  // turn the behaviour off — it would only hide the admin screen and leave rules running
+  // invisibly. Its ROUTE is contributed by the `aoc` block (the AOC submenu owns its menu row);
+  // this domain itself stays uncatalogued — control plane, not a product feature.
+  system: 'control plane (workflow rules); the rule engine is server-side and cannot be block-gated',
 };
 
 /*

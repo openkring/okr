@@ -3,8 +3,8 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { GroupModel, MembershipModel, TaskCollection, TaskModel, UserModel } from '@okr/shared-models';
-import { findByKey, getAvatarInfo, getSystemQuery } from '@okr/shared-util-core';
+import { TaskCollection, TaskModel, UserModel } from '@okr/shared-models';
+import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { getTaskIndex } from '@okr/task-util';
@@ -128,28 +128,4 @@ export class TaskService {
     console.log('TaskService.export: not yet implemented.');
   }
 
-  /*-------------------------- other --------------------------------*/
-    /**
-   * Adds a new task to a group membership. 
-   * The task is assigned to the group and the author is the current user. 
-   * The task is initially assigned to the mainContact of the group. The mainContact is the first admin defined.
-   * This is currently only implemented for memberships in Seeclub Stäfa (orgKey = 'scs').
-   * @param membership the membership for which to create the task. We need the membership to get the group (org) for which the task is created and to check if it is a SCS membership.
-   * @param group the group to which the task is assigned.
-   * @param name the name of the task to create. It should contain all relevant information about the reason for creating the task, so that the responsible person can directly act on it without having to look up additional information.
-   * @returns 
-   */
-  public async addTaskFromGroupMembership(membership: MembershipModel, group?: GroupModel, name?: string, currentUser?: UserModel): Promise<void> {
-    console.log('TaskService.addTaskFromGroupMembership: ', { membership, group, name });
-    if (!membership || !group || !name || !currentUser) return;
-    if (membership.orgKey !== 'scs') return;  
-    const author = getAvatarInfo(currentUser, 'user-person');
-    if (!author) return;
-    const task = new TaskModel(this.env.tenantId);
-    task.name = name;
-    task.author = author;
-    task.assignee = group.admins[0] ?? author;
-    task.calendars = [group.okey];  // task is assigned to the group calendar
-    await this.create(task, currentUser);
-  }
 }

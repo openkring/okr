@@ -174,6 +174,18 @@ const aoc: BlockRoutes = {
       // parent and — per R-5 — is the wrong role for this screen either way.
       { path: 'website',    canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocWebsite) },
     ],
+  },
+  // Workflow rules (spec 1.35). A TOP-LEVEL fragment, not an `/aoc` child, because the
+  // screen is a standard list + edit modal from `@okr/system-workflow-feature` rather than
+  // an AOC console panel — but it is contributed by THIS block because its menu row lives
+  // in the AOC submenu and `system` is not a block of its own (see NON_BLOCK_DOMAINS: the
+  // rule ENGINE is a Cloud Function that cannot be gated). Same owner-vs-target split as
+  // `aoc/trip` above, in the same direction: aoc owns the entry point, another lib ships
+  // the screen.
+  {
+    path: 'workflow/:listId/:contextMenuName',
+    canActivate: [isAdminGuard()],
+    loadComponent: () => import('@okr/system-workflow-feature').then(m => m.WorkflowRuleList),
   }],
 };
 

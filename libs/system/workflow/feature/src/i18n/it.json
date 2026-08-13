@@ -1,0 +1,62 @@
+{
+  "plural": "Regole di workflow",
+  "empty": "Nessuna regola di workflow definita.",
+  "operation": {
+    "create": {
+      "label": "Crea regola"
+    },
+    "edit": {
+      "label": "Modifica regola"
+    },
+    "view": {
+      "label": "Mostra regola"
+    },
+    "delete": {
+      "confirm": "Vuoi davvero eliminare questa regola ?"
+    }
+  },
+  "actionsheet": {
+    "edit": "Modifica regola",
+    "delete": "Elimina regola"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Annulla",
+    "confirmation": "Salva"
+  },
+  "workflow_event": {
+    "name": "Evento",
+    "membership": {
+      "created": {
+        "label": "Adesione iniziata"
+      },
+      "ended": {
+        "label": "Adesione terminata"
+      },
+      "categoryChanged": {
+        "label": "Categoria di socio modificata"
+      }
+    }
+  },
+  "workflow_probe": {
+    "name": "Condizione",
+    "always": {
+      "label": "Sempre"
+    },
+    "hasActiveOwnerships": {
+      "label": "Ha assegnazioni attive"
+    },
+    "hasOwnershipOfType": {
+      "label": "Ha assegnazione di tipo …"
+    },
+    "hasOpenInvoices": {
+      "label": "Ha fatture aperte"
+    },
+    "categoryIs": {
+      "label": "La nuova categoria è …"
+    },
+    "categoryIs:passive,hasActiveOwnerships": {
+      "label": "Passaggio a passivo con assegnazioni attive"
+    }
+  }
+}

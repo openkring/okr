@@ -1,0 +1,62 @@
+{
+  "plural": "Règles de workflow",
+  "empty": "Aucune règle de workflow n'est définie.",
+  "operation": {
+    "create": {
+      "label": "Créer une règle"
+    },
+    "edit": {
+      "label": "Modifier la règle"
+    },
+    "view": {
+      "label": "Afficher la règle"
+    },
+    "delete": {
+      "confirm": "Voulez-vous vraiment supprimer cette règle ?"
+    }
+  },
+  "actionsheet": {
+    "edit": "Modifier la règle",
+    "delete": "Supprimer la règle"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Annuler",
+    "confirmation": "Enregistrer"
+  },
+  "workflow_event": {
+    "name": "Événement",
+    "membership": {
+      "created": {
+        "label": "Adhésion commencée"
+      },
+      "ended": {
+        "label": "Adhésion terminée"
+      },
+      "categoryChanged": {
+        "label": "Catégorie de membre modifiée"
+      }
+    }
+  },
+  "workflow_probe": {
+    "name": "Condition",
+    "always": {
+      "label": "Toujours"
+    },
+    "hasActiveOwnerships": {
+      "label": "A des attributions actives"
+    },
+    "hasOwnershipOfType": {
+      "label": "A une attribution du type …"
+    },
+    "hasOpenInvoices": {
+      "label": "A des factures ouvertes"
+    },
+    "categoryIs": {
+      "label": "La nouvelle catégorie est …"
+    },
+    "categoryIs:passive,hasActiveOwnerships": {
+      "label": "Passage en passif avec attributions actives"
+    }
+  }
+}

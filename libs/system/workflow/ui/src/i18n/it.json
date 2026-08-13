@@ -1,0 +1,42 @@
+{
+  "name": {
+    "label": "Nome",
+    "placeholder": "Inserire il nome",
+    "helper": ""
+  },
+  "event": {
+    "label": "Evento",
+    "helper": ""
+  },
+  "probe": {
+    "label": "Condizione",
+    "helper": ""
+  },
+  "probeArg": {
+    "label": "Argomento della condizione",
+    "placeholder": "p.es. key",
+    "helper": "Solo per condizioni con argomento, p.es. hasOwnershipOfType"
+  },
+  "responsibilityKey": {
+    "label": "Responsabilità",
+    "placeholder": "p.es. treasurer",
+    "helper": "Chiave della responsabilità che riceve il compito"
+  },
+  "messageKey": {
+    "label": "Messaggio (chiave i18n)",
+    "placeholder": "@system/workflow/messages.exitTreasurer",
+    "helper": "Il segnaposto {name} viene sostituito con il nome del membro"
+  },
+  "dueInDays": {
+    "label": "Scadenza in giorni",
+    "helper": "0 = nessuna scadenza"
+  },
+  "order": {
+    "label": "Ordine",
+    "helper": "Solo per la leggibilità"
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": ""
+  }
+}

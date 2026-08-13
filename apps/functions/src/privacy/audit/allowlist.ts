@@ -37,4 +37,5 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'templates',
   'vat-codes',
   'websiteContent',
+  'workflow-rules',
 ]);

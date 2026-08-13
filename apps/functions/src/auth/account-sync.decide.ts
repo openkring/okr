@@ -16,6 +16,11 @@ export interface MembershipDoc {
   dateOfExit?: string;
   isArchived?: boolean;
   tenants?: string[];
+  // read by the workflow engine (spec 1.35) for the categoryChanged event and the
+  // {name} placeholder of a rule's message
+  category?: string;
+  memberName1?: string;
+  memberName2?: string;
 }
 
 export type AccountAction = 'open' | 'close' | 'none';

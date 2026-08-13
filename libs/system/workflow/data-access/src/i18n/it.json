@@ -1,0 +1,15 @@
+{
+  "create": {
+    "label": "Aggiungi regola",
+    "conf": "La regola è stata aggiunta.",
+    "error": "Impossibile aggiungere la regola."
+  },
+  "update": {
+    "conf": "La regola è stata modificata.",
+    "error": "Impossibile modificare la regola."
+  },
+  "delete": {
+    "conf": "La regola è stata eliminata.",
+    "error": "Impossibile eliminare la regola."
+  }
+}

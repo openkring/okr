@@ -1,0 +1,62 @@
+{
+  "plural": "Workflow-Regeln",
+  "empty": "Es sind keine Workflow-Regeln definiert.",
+  "operation": {
+    "create": {
+      "label": "Regel erstellen"
+    },
+    "edit": {
+      "label": "Regel ändern"
+    },
+    "view": {
+      "label": "Regel anzeigen"
+    },
+    "delete": {
+      "confirm": "Soll die Regel wirklich gelöscht werden ?"
+    }
+  },
+  "actionsheet": {
+    "edit": "Regel ändern",
+    "delete": "Regel löschen"
+  },
+  "changeConfirmation": {
+    "ok": "OK",
+    "cancel": "Abbrechen",
+    "confirmation": "Speichern"
+  },
+  "workflow_event": {
+    "name": "Ereignis",
+    "membership": {
+      "created": {
+        "label": "Mitgliedschaft begonnen"
+      },
+      "ended": {
+        "label": "Mitgliedschaft beendet"
+      },
+      "categoryChanged": {
+        "label": "Mitgliederkategorie geändert"
+      }
+    }
+  },
+  "workflow_probe": {
+    "name": "Bedingung",
+    "always": {
+      "label": "Immer"
+    },
+    "hasActiveOwnerships": {
+      "label": "Hat aktive Zuteilungen"
+    },
+    "hasOwnershipOfType": {
+      "label": "Hat Zuteilung des Typs …"
+    },
+    "hasOpenInvoices": {
+      "label": "Hat offene Rechnungen"
+    },
+    "categoryIs": {
+      "label": "Neue Kategorie ist …"
+    },
+    "categoryIs:passive,hasActiveOwnerships": {
+      "label": "Wechsel auf Passiv mit aktiven Zuteilungen"
+    }
+  }
+}

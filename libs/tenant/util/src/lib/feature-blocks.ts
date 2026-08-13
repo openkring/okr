@@ -267,6 +267,11 @@ const aoc: FeatureBlock = {
       // NEW (not mirrored off a live doc, unlike its siblings above): the kiosk monitoring +
       // remote-operations screen, seeded with the block. See the `kiosk` skill.
       { key: 'aoc-kiosk',      name: 'aoc-kiosk',      url: '/aoc/kiosk',      action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: 'Kiosk' },
+      // NEW with spec 1.35, seeded live for `scs` in the same change. It hangs under the AOC
+      // submenu but its ROUTE is not an `/aoc/*` child and not block-gated: the rule engine is
+      // a Cloud Function that fires on every membership write, so gating the screen would hide
+      // rules that keep running. See `system` in NON_BLOCK_DOMAINS.
+      { key: 'workflow-all',   name: 'workflow-all',   url: '/workflow/all/workflow-context', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@system/workflow/feature.plural' },
       // `roleNeeded: contentAdmin` (not `admin`) is the LIVE value, copied verbatim — and it
       // is now HONOURED. It used to be inert: the `/aoc` route parent was `isAdminGuard()`, so
       // a contentAdmin-but-not-admin user saw the row and was bounced. Owner ruling R-5
@@ -1725,7 +1730,7 @@ const consent: FeatureBlock = {
   id: 'consent',
   bundle: 'core',
   label: '@tenant/util.feature.consent.label',
-  icon: 'lock',
+  icon: 'lock-closed',
   core: true,
   defaultAvailability: 'ga',
   dependsOn: [],

@@ -42,7 +42,6 @@
     { "path": "../../../subject/group/util/tsconfig.lib.json" },
     { "path": "../../../subject/person/data-access/tsconfig.lib.json" },
     { "path": "../../../subject/person/ui/tsconfig.lib.json" },
-    { "path": "../../../task/data-access/tsconfig.lib.json" },
     { "path": "../../../vcard/feature/tsconfig.lib.json" }
   ]
 }
