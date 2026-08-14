@@ -1,0 +1,92 @@
+{
+  "plural": "Meetings",
+  "empty": "No meetings yet.",
+  "operation": {
+    "create": {
+      "label": "Create meeting"
+    },
+    "edit": {
+      "label": "Edit meeting"
+    },
+    "view": {
+      "label": "View meeting"
+    },
+    "delete": {
+      "confirm": "Should the meeting really be deleted ?"
+    }
+  },
+  "actionsheet": {
+    "edit": "Edit",
+    "minutes": "Minutes",
+    "delete": "Delete"
+  },
+  "changeConfirmation": {
+    "ok": "Save",
+    "cancel": "Cancel",
+    "confirmation": "Save changes ?"
+  },
+  "name": {
+    "label": "Name",
+    "placeholder": "Board meeting 3/2026",
+    "helper": "Name of the meeting, e.g. body and sequence number."
+  },
+  "meetingDate": {
+    "label": "Date",
+    "placeholder": "31.12.2026"
+  },
+  "startTime": {
+    "label": "Start",
+    "placeholder": "19:00"
+  },
+  "groupKey": {
+    "label": "Body",
+    "placeholder": "Board",
+    "helper": "Only members of this body can see the meeting."
+  },
+  "locationKey": {
+    "label": "Location",
+    "placeholder": "Clubhouse"
+  },
+  "state": {
+    "label": "State"
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Internal notes"
+  },
+  "agenda": {
+    "title": "Agenda",
+    "empty": "No agenda items yet.",
+    "add": "Add agenda item",
+    "item": {
+      "placeholder": "Title of the agenda item"
+    },
+    "kind": {
+      "info": "Information",
+      "discussion": "Discussion",
+      "decision": "Decision"
+    },
+    "timeBox": "Time box",
+    "carried": "carried over",
+    "minutes": {
+      "label": "Minutes",
+      "placeholder": "What was discussed ?"
+    },
+    "decision": {
+      "label": "Decision",
+      "placeholder": "What was decided ?"
+    },
+    "addTask": "Create action item"
+  },
+  "attendees": {
+    "title": "Attendees",
+    "empty": "No attendees recorded.",
+    "state": {
+      "present": "present",
+      "excused": "excused",
+      "absent": "absent",
+      "invited": "invited"
+    },
+    "presentCount": "Present"
+  }
+}

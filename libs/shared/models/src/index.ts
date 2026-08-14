@@ -55,6 +55,7 @@ export * from './lib/invoice.model';
 export * from './lib/scs-member-fee.model';
 export * from './lib/location.model';
 export * from './lib/log-info.model';
+export * from './lib/meeting.model';
 export * from './lib/membership.model';
 export * from './lib/menu-item.model';
 export * from './lib/money.model';

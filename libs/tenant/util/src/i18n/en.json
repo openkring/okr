@@ -115,6 +115,9 @@
     },
     "business": {
       "label": "Partner channel"
+    },
+    "meeting": {
+      "label": "Meetings & minutes"
     }
   },
   "picker": {

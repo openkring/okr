@@ -115,6 +115,9 @@
     },
     "business": {
       "label": "Partnerkanal"
+    },
+    "meeting": {
+      "label": "Sitzungen & Protokolle"
     }
   },
   "picker": {

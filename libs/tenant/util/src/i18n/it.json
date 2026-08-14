@@ -115,6 +115,9 @@
     },
     "business": {
       "label": "Canale partner"
+    },
+    "meeting": {
+      "label": "Riunioni e verbali"
     }
   },
   "picker": {

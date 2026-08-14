@@ -63,7 +63,7 @@
       "path": "../../../comment/feature/tsconfig.lib.json"
     },
     {
-      "path": "../../../document/feature/tsconfig.lib.json"
+      "path": "../../../content/document/feature/tsconfig.lib.json"
     },
     {
       "path": "../../../cms/menu/feature/tsconfig.lib.json"

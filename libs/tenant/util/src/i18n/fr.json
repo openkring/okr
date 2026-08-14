@@ -115,6 +115,9 @@
     },
     "business": {
       "label": "Canal partenaires"
+    },
+    "meeting": {
+      "label": "Séances & procès-verbaux"
     }
   },
   "picker": {

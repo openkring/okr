@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Add meeting",
+    "conf": "The meeting has been added.",
+    "error": "The meeting could not be added."
+  },
+  "update": {
+    "conf": "The meeting has been changed.",
+    "error": "The meeting could not be changed."
+  },
+  "delete": {
+    "conf": "The meeting has been deleted.",
+    "confirm": "Should the meeting really be deleted ?",
+    "error": "The meeting could not be deleted."
+  }
+}

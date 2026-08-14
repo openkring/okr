@@ -1,0 +1,92 @@
+{
+  "plural": "Riunioni",
+  "empty": "Nessuna riunione.",
+  "operation": {
+    "create": {
+      "label": "Crea riunione"
+    },
+    "edit": {
+      "label": "Modifica riunione"
+    },
+    "view": {
+      "label": "Visualizza riunione"
+    },
+    "delete": {
+      "confirm": "La riunione deve essere davvero eliminata ?"
+    }
+  },
+  "actionsheet": {
+    "edit": "Modifica",
+    "minutes": "Verbale",
+    "delete": "Elimina"
+  },
+  "changeConfirmation": {
+    "ok": "Salva",
+    "cancel": "Annulla",
+    "confirmation": "Salvare le modifiche ?"
+  },
+  "name": {
+    "label": "Denominazione",
+    "placeholder": "Riunione del comitato 3/2026",
+    "helper": "Nome della riunione, p.es. organo e numero."
+  },
+  "meetingDate": {
+    "label": "Data",
+    "placeholder": "31.12.2026"
+  },
+  "startTime": {
+    "label": "Inizio",
+    "placeholder": "19:00"
+  },
+  "groupKey": {
+    "label": "Organo",
+    "placeholder": "Comitato",
+    "helper": "Solo i membri di questo organo vedono la riunione."
+  },
+  "locationKey": {
+    "label": "Luogo",
+    "placeholder": "Casa del club"
+  },
+  "state": {
+    "label": "Stato"
+  },
+  "notes": {
+    "label": "Osservazioni",
+    "placeholder": "Note interne"
+  },
+  "agenda": {
+    "title": "Ordine del giorno",
+    "empty": "Nessun punto all'ordine del giorno.",
+    "add": "Aggiungi punto",
+    "item": {
+      "placeholder": "Titolo del punto"
+    },
+    "kind": {
+      "info": "Informazione",
+      "discussion": "Discussione",
+      "decision": "Decisione"
+    },
+    "timeBox": "Tempo previsto",
+    "carried": "rinviato",
+    "minutes": {
+      "label": "Verbale",
+      "placeholder": "Cosa è stato discusso ?"
+    },
+    "decision": {
+      "label": "Decisione",
+      "placeholder": "Cosa è stato deciso ?"
+    },
+    "addTask": "Crea attività"
+  },
+  "attendees": {
+    "title": "Partecipanti",
+    "empty": "Nessun partecipante registrato.",
+    "state": {
+      "present": "presente",
+      "excused": "giustificato",
+      "absent": "assente",
+      "invited": "invitato"
+    },
+    "presentCount": "Presenti"
+  }
+}

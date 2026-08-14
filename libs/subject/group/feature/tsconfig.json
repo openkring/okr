@@ -60,10 +60,10 @@
       "path": "../../../avatar/ui/tsconfig.lib.json"
     },
     {
-      "path": "../../../document/util/tsconfig.lib.json"
+      "path": "../../../content/document/util/tsconfig.lib.json"
     },
     {
-      "path": "../../../folder/util/tsconfig.lib.json"
+      "path": "../../../content/folder/util/tsconfig.lib.json"
     },
     {
       "path": "../../../comment/feature/tsconfig.lib.json"

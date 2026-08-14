@@ -1046,13 +1046,29 @@ const business: BlockRoutes = {
  * also be added to `FEATURE_BLOCKS` in `@okr/tenant-util`. Tasks 12-18 filled in the
  * blocks, one bundle each; the first two exist because they are p13's bug.
  */
+/**
+ * `meeting` (spec 2.7) — one list route, guarded `isAuthenticatedGuard` rather than
+ * `isPrivilegedGuard`: an ordinary board member must be able to read their own group's
+ * agenda and minutes. WHICH meetings they see is decided in `MeetingStore.visibleMeetings`
+ * by group membership, not by the route guard — see the visibility section of the spec and
+ * the ceiling it records (query-layer scoping, `firestore.rules` still tenant-wide).
+ */
+const meeting: BlockRoutes = {
+  id: 'meeting',
+  routes: (): Route[] => [{
+    path: 'meeting',
+    canActivate: [isAuthenticatedGuard],
+    children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/content-meeting-feature').then(m => m.MeetingList), data: { color: 'secondary' } }],
+  }],
+};
+
 export const FEATURE_ROUTES: BlockRoutes[] = [
   calevent, aoc, activity, task, instruments, games,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
   subject, relationship, vcard,
   resource, mobility,
   finance, esign, pdfTemplate,
-  documentBlock,
+  documentBlock, meeting,
   chat, socialFeed, forms,
   business,
 ];

@@ -387,6 +387,11 @@ service cloud.firestore {
                      && indexHasNoSensitivePii();
       allow delete: if tenantDelete();
     }
+    // Meetings (spec 2.7). Group scoping is enforced in MeetingStore.visibleMeetings, NOT
+    // here: a rules-level group check costs a get() per document read. A tenant member with
+    // API access can therefore read another group's minutes — recorded ceiling, not an
+    // oversight. Tightening this is the upgrade path named in the spec.
+    match /meetings/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /reservations/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /scs-memberfees/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
     match /tasks/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }

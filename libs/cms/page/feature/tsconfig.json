@@ -69,7 +69,7 @@
       "path": "../../../cms/section/util/tsconfig.lib.json"
     },
     {
-      "path": "../../../pdf-template/data-access/tsconfig.lib.json"
+      "path": "../../../content/pdf-template/data-access/tsconfig.lib.json"
     }
   ]
 }

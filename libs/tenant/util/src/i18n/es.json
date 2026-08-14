@@ -115,6 +115,9 @@
     },
     "business": {
       "label": "Canal de socios"
+    },
+    "meeting": {
+      "label": "Reuniones y actas"
     }
   },
   "picker": {

@@ -33,6 +33,22 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
   // why this entry is required), but it ships no route and no menu doc of its own — every one
   // of its consumers also uses `@okr/content-document-*`. Full argument on the `document` block.
   folder: 'merged into the `document` block (2026-08-04); `document` declares its `folders` collection',
+  // The `content` CONTAINER created on 2026-08-14, when `document`, `folder`, `esign` and
+  // `pdf-template` moved from `libs/<domain>/` into `libs/content/<domain>/` and `meeting`
+  // (spec 2.7) was added beside them. It is listed here rather than made a block because its
+  // four subdomains are ALREADY catalogued individually — `document`, `esign`, `pdf-template`,
+  // `meeting` — and those ids are SKU keys that must never be renamed. That is a real
+  // divergence from the one-block-per-container shape `finance`/`subject`/`relationship`
+  // follow: those containers were catalogued as containers from the start, these blocks
+  // predate their container. Collapsing them into one `content` block is a pricing decision,
+  // not a refactor, and is deliberately NOT made here.
+  //
+  // CONSEQUENT BLIND SPOT, same class as the `consent`/`session` one recorded below: because
+  // `featureDomains()` judges at the TOP level only, `document`/`esign`/`pdf-template`/
+  // `meeting` are no longer visible to the completeness test at all — deleting any of their
+  // blocks would not turn it red. Recorded, not fixed; fixing it means teaching the test which
+  // directories are containers, which is the same open question as the paragraph above.
+  content: 'container directory (2026-08-14 move); its subdomains are catalogued individually as `document`, `esign`, `pdf-template` and `meeting`',
   // `libs/system/workflow/**` (spec 1.35). The rule ENGINE runs in a Cloud Function and fires
   // on every membership write regardless of any tenant setting, so a block toggle could not
   // turn the behaviour off — it would only hide the admin screen and leave rules running

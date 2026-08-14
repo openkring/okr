@@ -1,0 +1,92 @@
+{
+  "plural": "Reuniones",
+  "empty": "Todavía no hay reuniones.",
+  "operation": {
+    "create": {
+      "label": "Crear reunión"
+    },
+    "edit": {
+      "label": "Editar reunión"
+    },
+    "view": {
+      "label": "Ver reunión"
+    },
+    "delete": {
+      "confirm": "¿Debe eliminarse realmente la reunión ?"
+    }
+  },
+  "actionsheet": {
+    "edit": "Editar",
+    "minutes": "Acta",
+    "delete": "Eliminar"
+  },
+  "changeConfirmation": {
+    "ok": "Guardar",
+    "cancel": "Cancelar",
+    "confirmation": "¿Guardar los cambios ?"
+  },
+  "name": {
+    "label": "Denominación",
+    "placeholder": "Reunión de la junta 3/2026",
+    "helper": "Nombre de la reunión, p.ej. órgano y número."
+  },
+  "meetingDate": {
+    "label": "Fecha",
+    "placeholder": "31.12.2026"
+  },
+  "startTime": {
+    "label": "Inicio",
+    "placeholder": "19:00"
+  },
+  "groupKey": {
+    "label": "Órgano",
+    "placeholder": "Junta",
+    "helper": "Solo los miembros de este órgano ven la reunión."
+  },
+  "locationKey": {
+    "label": "Lugar",
+    "placeholder": "Casa del club"
+  },
+  "state": {
+    "label": "Estado"
+  },
+  "notes": {
+    "label": "Observaciones",
+    "placeholder": "Notas internas"
+  },
+  "agenda": {
+    "title": "Orden del día",
+    "empty": "Aún no hay puntos del orden del día.",
+    "add": "Añadir punto",
+    "item": {
+      "placeholder": "Título del punto"
+    },
+    "kind": {
+      "info": "Información",
+      "discussion": "Discusión",
+      "decision": "Decisión"
+    },
+    "timeBox": "Tiempo previsto",
+    "carried": "aplazado",
+    "minutes": {
+      "label": "Acta",
+      "placeholder": "¿Qué se discutió ?"
+    },
+    "decision": {
+      "label": "Decisión",
+      "placeholder": "¿Qué se decidió ?"
+    },
+    "addTask": "Crear tarea"
+  },
+  "attendees": {
+    "title": "Participantes",
+    "empty": "No hay participantes registrados.",
+    "state": {
+      "present": "presente",
+      "excused": "excusado",
+      "absent": "ausente",
+      "invited": "invitado"
+    },
+    "presentCount": "Presentes"
+  }
+}

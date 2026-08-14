@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Sitzung hinzufügen",
+    "conf": "Die Sitzung wurde hinzugefügt.",
+    "error": "Die Sitzung konnte nicht hinzugefügt werden."
+  },
+  "update": {
+    "conf": "Die Sitzung wurde geändert.",
+    "error": "Die Sitzung konnte nicht geändert werden."
+  },
+  "delete": {
+    "conf": "Die Sitzung wurde gelöscht.",
+    "confirm": "Soll die Sitzung wirklich gelöscht werden ?",
+    "error": "Die Sitzung konnte nicht gelöscht werden."
+  }
+}

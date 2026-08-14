@@ -1,0 +1,92 @@
+{
+  "plural": "Sitzungen",
+  "empty": "Keine Sitzungen vorhanden.",
+  "operation": {
+    "create": {
+      "label": "Sitzung erstellen"
+    },
+    "edit": {
+      "label": "Sitzung bearbeiten"
+    },
+    "view": {
+      "label": "Sitzung ansehen"
+    },
+    "delete": {
+      "confirm": "Soll die Sitzung wirklich gelöscht werden ?"
+    }
+  },
+  "actionsheet": {
+    "edit": "Bearbeiten",
+    "minutes": "Protokoll",
+    "delete": "Löschen"
+  },
+  "changeConfirmation": {
+    "ok": "Speichern",
+    "cancel": "Abbrechen",
+    "confirmation": "Änderungen speichern ?"
+  },
+  "name": {
+    "label": "Bezeichnung",
+    "placeholder": "Vorstandssitzung 3/2026",
+    "helper": "Name der Sitzung, z.B. Gremium und laufende Nummer."
+  },
+  "meetingDate": {
+    "label": "Datum",
+    "placeholder": "31.12.2026"
+  },
+  "startTime": {
+    "label": "Beginn",
+    "placeholder": "19:00"
+  },
+  "groupKey": {
+    "label": "Gremium",
+    "placeholder": "Vorstand",
+    "helper": "Nur Mitglieder dieses Gremiums sehen die Sitzung."
+  },
+  "locationKey": {
+    "label": "Ort",
+    "placeholder": "Clubhaus"
+  },
+  "state": {
+    "label": "Status"
+  },
+  "notes": {
+    "label": "Bemerkungen",
+    "placeholder": "Interne Notizen"
+  },
+  "agenda": {
+    "title": "Traktanden",
+    "empty": "Noch keine Traktanden erfasst.",
+    "add": "Traktandum hinzufügen",
+    "item": {
+      "placeholder": "Titel des Traktandums"
+    },
+    "kind": {
+      "info": "Information",
+      "discussion": "Diskussion",
+      "decision": "Beschluss"
+    },
+    "timeBox": "Zeitbudget",
+    "carried": "übertragen",
+    "minutes": {
+      "label": "Protokoll",
+      "placeholder": "Was wurde besprochen ?"
+    },
+    "decision": {
+      "label": "Beschluss",
+      "placeholder": "Was wurde beschlossen ?"
+    },
+    "addTask": "Pendenz erstellen"
+  },
+  "attendees": {
+    "title": "Teilnehmende",
+    "empty": "Keine Teilnehmenden erfasst.",
+    "state": {
+      "present": "anwesend",
+      "excused": "entschuldigt",
+      "absent": "abwesend",
+      "invited": "eingeladen"
+    },
+    "presentCount": "Anwesend"
+  }
+}

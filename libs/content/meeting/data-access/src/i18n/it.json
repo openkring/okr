@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Aggiungi riunione",
+    "conf": "La riunione è stata aggiunta.",
+    "error": "La riunione non è stata aggiunta."
+  },
+  "update": {
+    "conf": "La riunione è stata modificata.",
+    "error": "La riunione non è stata modificata."
+  },
+  "delete": {
+    "conf": "La riunione è stata eliminata.",
+    "confirm": "La riunione deve essere davvero eliminata ?",
+    "error": "La riunione non è stata eliminata."
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "plural": "Séances",
+  "empty": "Aucune séance.",
+  "operation": {
+    "create": {
+      "label": "Créer une séance"
+    },
+    "edit": {
+      "label": "Modifier la séance"
+    },
+    "view": {
+      "label": "Consulter la séance"
+    },
+    "delete": {
+      "confirm": "La séance doit-elle vraiment être supprimée ?"
+    }
+  },
+  "actionsheet": {
+    "edit": "Modifier",
+    "minutes": "Procès-verbal",
+    "delete": "Supprimer"
+  },
+  "changeConfirmation": {
+    "ok": "Enregistrer",
+    "cancel": "Annuler",
+    "confirmation": "Enregistrer les modifications ?"
+  },
+  "name": {
+    "label": "Désignation",
+    "placeholder": "Séance du comité 3/2026",
+    "helper": "Nom de la séance, p.ex. organe et numéro."
+  },
+  "meetingDate": {
+    "label": "Date",
+    "placeholder": "31.12.2026"
+  },
+  "startTime": {
+    "label": "Début",
+    "placeholder": "19:00"
+  },
+  "groupKey": {
+    "label": "Organe",
+    "placeholder": "Comité",
+    "helper": "Seuls les membres de cet organe voient la séance."
+  },
+  "locationKey": {
+    "label": "Lieu",
+    "placeholder": "Club-house"
+  },
+  "state": {
+    "label": "Statut"
+  },
+  "notes": {
+    "label": "Remarques",
+    "placeholder": "Notes internes"
+  },
+  "agenda": {
+    "title": "Ordre du jour",
+    "empty": "Aucun point à l'ordre du jour.",
+    "add": "Ajouter un point",
+    "item": {
+      "placeholder": "Titre du point"
+    },
+    "kind": {
+      "info": "Information",
+      "discussion": "Discussion",
+      "decision": "Décision"
+    },
+    "timeBox": "Temps imparti",
+    "carried": "reporté",
+    "minutes": {
+      "label": "Procès-verbal",
+      "placeholder": "Qu'a-t-on discuté ?"
+    },
+    "decision": {
+      "label": "Décision",
+      "placeholder": "Qu'a-t-on décidé ?"
+    },
+    "addTask": "Créer une tâche"
+  },
+  "attendees": {
+    "title": "Participants",
+    "empty": "Aucun participant enregistré.",
+    "state": {
+      "present": "présent",
+      "excused": "excusé",
+      "absent": "absent",
+      "invited": "invité"
+    },
+    "presentCount": "Présents"
+  }
+}

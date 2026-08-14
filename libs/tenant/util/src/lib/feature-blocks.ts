@@ -2113,13 +2113,39 @@ const business: FeatureBlock = {
   ],
 };
 
+/**
+ * `libs/content/meeting/{data-access,feature,ui,util}` — agenda, attendance and minutes of a
+ * board or commission meeting (spec 2.7, roadmap A4). Owns one collection, `meetings`; the
+ * agenda is an embedded array on the document, not a subcollection.
+ *
+ * `dependsOn: ['subject', 'relationship', 'task']` — `subject` for the person avatars of
+ * chair/secretary/attendees, `relationship` because both the visibility filter and the
+ * attendee seed read group memberships (`MembershipService`), and `task` because an action
+ * item IS a `TaskModel` carrying `relatedModelType: 'meeting'` / `relatedKey:
+ * 'meeting.<okey>'`. `document`/`pdf-template` are NOT declared: the minutes PDF is a later
+ * phase (see the spec's out-of-scope section), and declaring the edge before the code exists
+ * would be cataloguing an intention.
+ */
+const meeting: FeatureBlock = {
+  id: 'meeting',
+  bundle: 'documents',
+  label: '@tenant/util.feature.meeting.label',
+  icon: 'meeting',
+  defaultAvailability: 'ga',
+  dependsOn: ['subject', 'relationship', 'task'],
+  collections: ['meetings'],
+  menu: [
+    { key: 'meeting-all', name: 'meeting-all', url: '/meeting/all/meeting-context', action: 'navigate', roleNeeded: 'registered', icon: 'meeting', label: '@content/meeting/feature.plural' },
+  ],
+};
+
 export const FEATURE_BLOCKS: FeatureBlock[] = [
   calevent, aoc, activity, task, instruments, games,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
   subject, relationship, vcard,
   resource, mobility,
   finance, esign, pdfTemplate,
-  documentBlock,
+  documentBlock, meeting,
   chat, socialFeed, forms,
   business,
 ];

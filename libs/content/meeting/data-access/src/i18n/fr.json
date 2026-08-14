@@ -1,0 +1,16 @@
+{
+  "create": {
+    "label": "Ajouter une séance",
+    "conf": "La séance a été ajoutée.",
+    "error": "La séance n'a pas pu être ajoutée."
+  },
+  "update": {
+    "conf": "La séance a été modifiée.",
+    "error": "La séance n'a pas pu être modifiée."
+  },
+  "delete": {
+    "conf": "La séance a été supprimée.",
+    "confirm": "La séance doit-elle vraiment être supprimée ?",
+    "error": "La séance n'a pas pu être supprimée."
+  }
+}

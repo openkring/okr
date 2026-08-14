@@ -66,7 +66,7 @@
       "path": "../../geo/location/util/tsconfig.lib.json"
     },
     {
-      "path": "../../document/util/tsconfig.lib.json"
+      "path": "../../content/document/util/tsconfig.lib.json"
     },
     {
       "path": "../../relationship/membership/util/tsconfig.lib.json"

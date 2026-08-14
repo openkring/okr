@@ -2,11 +2,17 @@
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["node", "vitest"],
+    "types": [
+      "node",
+      "vitest"
+    ],
     "declaration": true,
     "module": "preserve",
     "moduleResolution": "bundler",
-    "lib": ["dom", "es2022"]
+    "lib": [
+      "dom",
+      "es2022"
+    ]
   },
   "angularCompilerOptions": {
     "strictTemplates": true,
@@ -14,40 +20,113 @@
     "disableTypeScriptVersionCheck": true,
     "compileNonExportedClasses": true
   },
-  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
-  "exclude": ["dist/**/*"],
+  "include": [
+    "src/**/*",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ],
+  "exclude": [
+    "dist/**/*"
+  ],
   "references": [
-    { "path": "../util/tsconfig.lib.json" },
-    { "path": "../feature/tsconfig.lib.json" },
-    { "path": "../../shared/feature/tsconfig.lib.json" },
-    { "path": "../../auth/feature/tsconfig.lib.json" },
-    { "path": "../../aoc/feature/tsconfig.lib.json" },
-    { "path": "../../calevent/feature/tsconfig.lib.json" },
-    { "path": "../../cms/page/feature/tsconfig.lib.json" },
-    { "path": "../../cms/section/feature/tsconfig.lib.json" },
-    { "path": "../../cms/menu/feature/tsconfig.lib.json" },
-    { "path": "../../cms/icon/feature/tsconfig.lib.json" },
-    { "path": "../../user/feature/tsconfig.lib.json" },
-    { "path": "../../profile/feature/tsconfig.lib.json" },
-    { "path": "../../security/processing/feature/tsconfig.lib.json" },
-    { "path": "../../security/audit/feature/tsconfig.lib.json" },
-    { "path": "../../i18n/feature/tsconfig.lib.json" },
-    { "path": "../../category/feature/tsconfig.lib.json" },
-    { "path": "../../geo/location/feature/tsconfig.lib.json" },
-    { "path": "../../geo/trip/feature/tsconfig.lib.json" },
-    { "path": "../../subject/person/feature/tsconfig.lib.json" },
-    { "path": "../../subject/org/feature/tsconfig.lib.json" },
-    { "path": "../../subject/group/feature/tsconfig.lib.json" },
-    { "path": "../../subject/address/feature/tsconfig.lib.json" },
-    { "path": "../../subject/application/feature/tsconfig.lib.json" },
-    { "path": "../../relationship/membership/feature/tsconfig.lib.json" },
-    { "path": "../../relationship/invitation/feature/tsconfig.lib.json" },
-    { "path": "../../relationship/ownership/feature/tsconfig.lib.json" },
-    { "path": "../../relationship/reservation/feature/tsconfig.lib.json" },
-    { "path": "../../relationship/personal-rel/feature/tsconfig.lib.json" },
-    { "path": "../../relationship/workrel/feature/tsconfig.lib.json" },
-    { "path": "../../relationship/transfer/feature/tsconfig.lib.json" },
-    { "path": "../../relationship/responsibility/feature/tsconfig.lib.json" },
-    { "path": "../../document/feature/tsconfig.lib.json" }
+    {
+      "path": "../util/tsconfig.lib.json"
+    },
+    {
+      "path": "../feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../auth/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../aoc/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../calevent/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../cms/page/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../cms/section/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../cms/menu/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../cms/icon/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../user/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../profile/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../security/processing/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../security/audit/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../i18n/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../category/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../geo/location/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../geo/trip/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../subject/person/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../subject/org/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../subject/group/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../subject/address/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../subject/application/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/membership/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/invitation/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/ownership/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/reservation/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/personal-rel/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/workrel/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/transfer/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/responsibility/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../content/document/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../content/meeting/feature/tsconfig.lib.json"
+    }
   ]
 }
