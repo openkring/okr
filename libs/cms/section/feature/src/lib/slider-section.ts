@@ -1,8 +1,10 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, computed, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, input, signal, viewChild } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import { IMAGE_STYLE_SHAPE, SliderSection } from '@okr/shared-models';
 import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { I18nService } from '@okr/shared-i18n';
+import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 
 /**
@@ -228,9 +230,9 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
                 </div>
                 @if(showFallbackNav && images().length > 1) {
                     <button type="button" class="carousel-nav left"
-                        [attr.aria-label]="store.i18n.slider_prev_image()" (click)="scrollByPage(-1)">&lsaquo;</button>
+                        [attr.aria-label]="i18n.slider_prev_image()" (click)="scrollByPage(-1)">&lsaquo;</button>
                     <button type="button" class="carousel-nav right"
-                        [attr.aria-label]="store.i18n.slider_next_image()" (click)="scrollByPage(1)">&rsaquo;</button>
+                        [attr.aria-label]="i18n.slider_next_image()" (click)="scrollByPage(1)">&rsaquo;</button>
                     <div class="carousel-dots" role="tablist">
                         @for(image of images(); track image.url; let i = $index) {
                             <button type="button" role="tab"
@@ -250,6 +252,13 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
   `
 })
 export class SliderSectionComponent implements AfterViewInit, OnDestroy {
+
+  // This section renders standalone (no section store); the two arrow labels are
+  // screen-reader-only text, so resolving them here is cheaper than threading an input down.
+  protected readonly i18n = inject(I18nService).translateAll({
+    slider_prev_image: SECTION_I18N_KEYS.slider_prev_image,
+    slider_next_image: SECTION_I18N_KEYS.slider_next_image,
+  });
 
   // inputs
   public section = input<SliderSection>();

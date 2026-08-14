@@ -510,6 +510,7 @@ export const AOC_I18N_KEYS = {
   roles_user:                               PFX + 'roles.user',
   roles_result:                             PFX + 'roles.result',
   location:                                 '@location',
+  close:                                    '@shared/ui.close',
 
   srv_license_create:                       PFX + 'srv.license.create.label',
   srv_license_download:                     PFX + 'srv.license.download.label',
