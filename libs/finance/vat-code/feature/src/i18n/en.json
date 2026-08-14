@@ -1,0 +1,25 @@
+{
+  "list": {
+    "title": "VAT codes"
+  },
+  "empty": "No VAT codes found.",
+  "code": {
+    "label": "Code"
+  },
+  "rate": {
+    "label": "Rate"
+  },
+  "account": {
+    "label": "Account",
+    "helper": "The account this VAT code books to (output tax 2200, input tax 1170)."
+  },
+  "actionsheet": {
+    "view": "View VAT code",
+    "edit": "Edit VAT code",
+    "create": "Create VAT code",
+    "delete": "Delete VAT code"
+  },
+  "seed": {
+    "label": "Create standard VAT codes"
+  }
+}

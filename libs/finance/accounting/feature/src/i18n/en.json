@@ -1,6 +1,17 @@
 {
-    "readonly": {
-        "title": "Attention",
-        "msg": "This accounting is read-only. The bookings are made in Bexio."
+  "readonly": {
+    "title": "Attention",
+    "msg": "This accounting is read-only. The bookings are made in Bexio."
+  },
+  "settings": {
+    "title": "Accounting settings",
+    "expenseAccount": {
+      "label": "Default expense account",
+      "helper": "Account an expense is booked to when no OCR rule matches."
+    },
+    "payablesAccount": {
+      "label": "Employee payables account",
+      "helper": "Account a reimbursement to an employee is booked against."
     }
+  }
 }

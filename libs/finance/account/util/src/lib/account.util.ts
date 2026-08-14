@@ -24,6 +24,12 @@ export function getAccountIndexInfo(): string {
 /** How many tiers of the account tree are expanded by default (root = tier 0). */
 export const DEFAULT_EXPAND_DEPTH = 2;
 
+/** Accounts that are not referenced as any other account's parentKey (i.e. bookable leaves). */
+export function leafAccounts(accounts: AccountModel[]): AccountModel[] {
+  const parents = new Set(accounts.map(a => a.parentKey).filter(k => !!k));
+  return accounts.filter(a => !parents.has(a.okey));
+}
+
 /*-------------------------- tree --------------------------------*/
 /**
  * Build a flat, ordered list of visible account nodes for tree display.

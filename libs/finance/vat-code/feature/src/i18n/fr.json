@@ -1,0 +1,25 @@
+{
+  "list": {
+    "title": "Codes TVA"
+  },
+  "empty": "Aucun code TVA trouvé.",
+  "code": {
+    "label": "Code"
+  },
+  "rate": {
+    "label": "Taux"
+  },
+  "account": {
+    "label": "Compte",
+    "helper": "Le compte sur lequel ce code TVA est comptabilisé (TVA due 2200, impôt préalable 1170)."
+  },
+  "actionsheet": {
+    "view": "Afficher le code TVA",
+    "edit": "Modifier le code TVA",
+    "create": "Créer un code TVA",
+    "delete": "Supprimer le code TVA"
+  },
+  "seed": {
+    "label": "Créer les codes TVA standard"
+  }
+}

@@ -1,6 +1,17 @@
 {
-    "readonly": {
-        "title": "Attention",
-        "msg": "Cette comptabilité est en lecture seule. Les écritures sont effectuées dans Bexio."
+  "readonly": {
+    "title": "Attention",
+    "msg": "Cette comptabilité est en lecture seule. Les écritures sont effectuées dans Bexio."
+  },
+  "settings": {
+    "title": "Paramètres de comptabilité",
+    "expenseAccount": {
+      "label": "Compte de charges par défaut",
+      "helper": "Compte utilisé pour une note de frais lorsqu'aucune règle OCR ne s'applique."
+    },
+    "payablesAccount": {
+      "label": "Compte créanciers employés",
+      "helper": "Compte utilisé pour le remboursement d'un employé."
     }
+  }
 }

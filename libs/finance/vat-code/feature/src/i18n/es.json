@@ -1,0 +1,25 @@
+{
+  "list": {
+    "title": "Códigos de IVA"
+  },
+  "empty": "No se han encontrado códigos de IVA.",
+  "code": {
+    "label": "Código"
+  },
+  "rate": {
+    "label": "Tipo"
+  },
+  "account": {
+    "label": "Cuenta",
+    "helper": "La cuenta en la que se contabiliza este código de IVA (IVA repercutido 2200, soportado 1170)."
+  },
+  "actionsheet": {
+    "view": "Ver código de IVA",
+    "edit": "Editar código de IVA",
+    "create": "Crear código de IVA",
+    "delete": "Eliminar código de IVA"
+  },
+  "seed": {
+    "label": "Crear los códigos de IVA estándar"
+  }
+}

@@ -85,6 +85,7 @@
       "@okr/finance-account-util": ["libs/finance/account/util/src/index.ts"],
       "@okr/finance-accounting-data-access": ["libs/finance/accounting/data-access/src/index.ts"],
       "@okr/finance-accounting-feature": ["libs/finance/accounting/feature/src/index.ts"],
+      "@okr/finance-accounting-ui": ["libs/finance/accounting/ui/src/index.ts"],
       "@okr/finance-accounting-util": ["libs/finance/accounting/util/src/index.ts"],
       "@okr/finance-asset-data-access": ["libs/finance/asset/data-access/src/index.ts"],
       "@okr/finance-asset-feature": ["libs/finance/asset/feature/src/index.ts"],

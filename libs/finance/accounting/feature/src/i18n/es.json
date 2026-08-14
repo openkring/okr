@@ -1,6 +1,17 @@
 {
-    "readonly": {
-        "title": "Atención",
-        "msg": "Esta contabilidad es de solo lectura. Los asientos se realizan en Bexio."
+  "readonly": {
+    "title": "Atención",
+    "msg": "Esta contabilidad es de solo lectura. Los asientos se realizan en Bexio."
+  },
+  "settings": {
+    "title": "Ajustes de contabilidad",
+    "expenseAccount": {
+      "label": "Cuenta de gastos predeterminada",
+      "helper": "Cuenta a la que se contabiliza un gasto cuando ninguna regla OCR coincide."
+    },
+    "payablesAccount": {
+      "label": "Cuenta a pagar a empleados",
+      "helper": "Cuenta contra la que se contabiliza el reembolso a un empleado."
     }
+  }
 }

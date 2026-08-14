@@ -1,0 +1,25 @@
+{
+  "list": {
+    "title": "MWST-Codes"
+  },
+  "empty": "Keine MWST-Codes gefunden.",
+  "code": {
+    "label": "Code"
+  },
+  "rate": {
+    "label": "Satz"
+  },
+  "account": {
+    "label": "Konto",
+    "helper": "Das Konto, auf das dieser MWST-Code gebucht wird (Umsatzsteuer 2200, Vorsteuer 1170)."
+  },
+  "actionsheet": {
+    "view": "MWST-Code ansehen",
+    "edit": "MWST-Code ändern",
+    "create": "MWST-Code erstellen",
+    "delete": "MWST-Code löschen"
+  },
+  "seed": {
+    "label": "Standard-MWST-Codes erstellen"
+  }
+}

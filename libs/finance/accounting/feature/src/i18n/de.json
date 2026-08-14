@@ -1,6 +1,17 @@
 {
-    "readonly": {
-        "title": "Achtung",
-        "msg": "Diese Buchhaltung ist read-only. Die Buchungen werden in Bexio gemacht."
+  "readonly": {
+    "title": "Achtung",
+    "msg": "Diese Buchhaltung ist read-only. Die Buchungen werden in Bexio gemacht."
+  },
+  "settings": {
+    "title": "Buchhaltungs-Einstellungen",
+    "expenseAccount": {
+      "label": "Standard-Aufwandkonto",
+      "helper": "Konto, auf das eine Spesenbuchung gebucht wird, wenn keine OCR-Regel greift."
+    },
+    "payablesAccount": {
+      "label": "Kreditorenkonto Mitarbeitende",
+      "helper": "Konto, gegen das die Rückerstattung an Mitarbeitende gebucht wird."
     }
+  }
 }

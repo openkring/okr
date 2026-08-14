@@ -12,9 +12,10 @@ import { downloadTextFile } from '@okr/shared-util-angular';
 import { AccountingStore } from '@okr/finance-accounting-feature';
 import { AccountService } from '@okr/finance-account-data-access';
 import { AccountStore } from '@okr/finance-account-feature';
+import { leafAccounts } from '@okr/finance-account-util';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { OcrRuleService } from '@okr/finance-ocr-rule-data-access';
-import { OCR_RULE_I18N_KEYS, leafAccounts, normalizeParty } from '@okr/finance-ocr-rule-util';
+import { OCR_RULE_I18N_KEYS, normalizeParty } from '@okr/finance-ocr-rule-util';
 
 import { OcrRuleEditModal } from './ocr-rule-edit.modal';
 

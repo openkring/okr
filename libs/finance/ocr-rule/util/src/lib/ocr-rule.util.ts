@@ -1,5 +1,3 @@
-import { AccountModel } from '@okr/shared-models';
-
 // KEEP IN SYNC with normalizeVendor() in apps/functions/src/ocr/ocr-extract.util.ts.
 // apps/functions and libs are separate TS build roots and cannot share code, so this is
 // an intentional duplicate. The matcher only normalizes the extracted vendor, never the
@@ -15,10 +13,4 @@ export function normalizeParty(raw: string): string {
     .replace(/\s+/g, ' ')
     .trim();
   return base.split(' ').filter(w => w.length > 0 && !LEGAL_SUFFIXES.includes(w)).join(' ');
-}
-
-/** Accounts that are not referenced as any other account's parentKey (i.e. bookable leaves). */
-export function leafAccounts(accounts: AccountModel[]): AccountModel[] {
-  const parents = new Set(accounts.map(a => a.parentKey).filter(k => !!k));
-  return accounts.filter(a => !parents.has(a.okey));
 }

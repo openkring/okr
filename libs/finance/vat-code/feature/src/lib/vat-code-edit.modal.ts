@@ -1,9 +1,13 @@
-import { Component, inject, input, OnInit } from '@angular/core';
+import { Component, computed, inject, input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ModalController, IonButton, IonButtons, IonContent, IonHeader,
   IonInput, IonItem, IonLabel, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
-import { VatCodeModel, UserModel } from '@okr/shared-models';
+import { AccountModel, VatCodeModel, UserModel } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
+
+import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
+import { VAT_CODE_I18N_KEYS, VatCodeI18n } from '@okr/finance-vat-code-util';
 
 @Component({
   selector: 'okr-vat-code-edit-modal',
@@ -12,6 +16,7 @@ import { VatCodeModel, UserModel } from '@okr/shared-models';
     FormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
     IonContent, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption,
+    AccountSelect,
   ],
   template: `
     <ion-header>
@@ -45,6 +50,9 @@ import { VatCodeModel, UserModel } from '@okr/shared-models';
           <ion-select-option value="output">Output (Umsatzsteuer)</ion-select-option>
         </ion-select>
       </ion-item>
+      <okr-account-select [i18n]="accountI18n()" [accounts]="accounts()"
+        [selectedKey]="edit.accountKey" (selectedKeyChange)="edit.accountKey = $event"
+        [readOnly]="readOnly()" />
       <ion-item>
         <ion-label position="stacked">Valid From (YYYYMMDD)</ion-label>
         <ion-input [(ngModel)]="edit.validFrom" [readonly]="readOnly()" />
@@ -60,8 +68,14 @@ export class VatCodeEditModal implements OnInit {
   public readonly vatCode = input.required<VatCodeModel>();
   public readonly readOnly = input<boolean>(true);
   public readonly currentUser = input<UserModel | undefined>(undefined);
+  public readonly accounts = input<AccountModel[]>([]);
 
   private readonly modalController = inject(ModalController);
+  // Direct inject (no store): the store opens this modal, importing it back would be circular.
+  private readonly i18n = inject(I18nService).translateAll(VAT_CODE_I18N_KEYS) as VatCodeI18n;
+  protected accountI18n = computed(() => ({
+    name: 'accountKey', label: this.i18n.account_label(), helper: this.i18n.account_helper()
+  } as AccountSelectI18n));
   protected edit!: VatCodeModel;
 
   ngOnInit(): void {

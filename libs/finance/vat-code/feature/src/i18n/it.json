@@ -1,0 +1,25 @@
+{
+  "list": {
+    "title": "Codici IVA"
+  },
+  "empty": "Nessun codice IVA trovato.",
+  "code": {
+    "label": "Codice"
+  },
+  "rate": {
+    "label": "Aliquota"
+  },
+  "account": {
+    "label": "Conto",
+    "helper": "Il conto su cui viene registrato questo codice IVA (IVA a debito 2200, a credito 1170)."
+  },
+  "actionsheet": {
+    "view": "Visualizza codice IVA",
+    "edit": "Modifica codice IVA",
+    "create": "Crea codice IVA",
+    "delete": "Elimina codice IVA"
+  },
+  "seed": {
+    "label": "Crea i codici IVA standard"
+  }
+}

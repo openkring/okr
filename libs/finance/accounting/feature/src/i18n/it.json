@@ -1,6 +1,17 @@
 {
-    "readonly": {
-        "title": "Attenzione",
-        "msg": "Questa contabilità è di sola lettura. Le registrazioni vengono effettuate in Bexio."
+  "readonly": {
+    "title": "Attenzione",
+    "msg": "Questa contabilità è di sola lettura. Le registrazioni vengono effettuate in Bexio."
+  },
+  "settings": {
+    "title": "Impostazioni di contabilità",
+    "expenseAccount": {
+      "label": "Conto costi predefinito",
+      "helper": "Conto su cui viene registrata una spesa quando nessuna regola OCR corrisponde."
+    },
+    "payablesAccount": {
+      "label": "Conto debiti verso dipendenti",
+      "helper": "Conto su cui viene registrato il rimborso a un dipendente."
     }
+  }
 }

@@ -5,6 +5,8 @@ export const VAT_CODE_I18N_KEYS = {
   empty:      '@finance/vat-code/feature.empty',
   code_label: '@finance/vat-code/feature.code.label',
   rate_label: '@finance/vat-code/feature.rate.label',
+  account_label:  '@finance/vat-code/feature.account.label',
+  account_helper: '@finance/vat-code/feature.account.helper',
   as_view:    '@finance/vat-code/feature.actionsheet.view',
   as_edit:    '@finance/vat-code/feature.actionsheet.edit',
   as_create:  '@finance/vat-code/feature.actionsheet.create',

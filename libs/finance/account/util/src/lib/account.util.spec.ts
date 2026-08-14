@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AccountModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { flattenAccountForest, flattenAccountTree, getAccountIndex, getDefaultExpandedKeys, isAccount } from './account.util';
+import { flattenAccountForest, flattenAccountTree, getAccountIndex, getDefaultExpandedKeys, isAccount, leafAccounts } from './account.util';
 
 vi.mock('@okr/shared-util-core', async importOriginal => {
   const actual = await importOriginal<typeof coreUtils>();
@@ -175,5 +175,20 @@ describe('Account Utils', () => {
         expect(flattenAccountForest(noRoots, [])).toHaveLength(0);
       });
     });
+  });
+});
+
+describe('leafAccounts', () => {
+  const mk = (okey: string, parentKey: string): AccountModel =>
+    Object.assign(new AccountModel('t'), { okey, parentKey });
+
+  it('returns only accounts that are no other account\'s parent', () => {
+    expect(leafAccounts([mk('a', ''), mk('b', 'a'), mk('c', 'b')]).map(a => a.okey)).toEqual(['c']);
+  });
+  it('treats a flat list (no children) as all leaves', () => {
+    expect(leafAccounts([mk('x', ''), mk('y', '')]).map(a => a.okey)).toEqual(['x', 'y']);
+  });
+  it('handles an empty list', () => {
+    expect(leafAccounts([])).toEqual([]);
   });
 });
