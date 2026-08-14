@@ -5,6 +5,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from '@okr/shared-feature';
 import { AuthService } from '@okr/auth-data-access';
 import { AlertService, navigateByUrl } from '@okr/shared-util-angular';
+import { fill } from '@okr/shared-util-core';
 import { Router } from '@angular/router';
 import { AUTH_I18N_KEYS, AuthI18n } from '@okr/auth-util';
 
@@ -38,7 +39,7 @@ export const AuthStore = signalStore(
       async confirmPasswordReset(oobCode: string, continueUrl: string, loginPassword: string): Promise<boolean> {
         const email = await store.authService.confirmPasswordReset(oobCode, loginPassword);
         if (email) {
-          await store.alertService.showToast(`Passwort für ${email} wurde geändert.`);
+          await store.alertService.showToast(fill(store.i18n.password_changed(), { email }));
           navigateByUrl(store.router, continueUrl);
           return true;
         } else {

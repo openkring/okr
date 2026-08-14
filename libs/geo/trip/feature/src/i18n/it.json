@@ -190,5 +190,9 @@
     "sweep": "Remo singolo"
   },
   "person": "Persona",
-  "locked": "Il libro di bordo è attualmente bloccato. Non è possibile registrare o modificare uscite."
+  "locked": "Il libro di bordo è attualmente bloccato. Non è possibile registrare o modificare uscite.",
+  "notify": {
+    "deleted": "Uscita eliminata: {name}",
+    "suspicious": "Attività sospetta: {name} ({reasons})"
+  }
 }

@@ -201,7 +201,11 @@
   "calendar": {
     "title": "Kalender",
     "add": "Neuen Kalendar erstellen",
-    "select": "Kalender wählen"
+    "select": "Kalender wählen",
+    "today": "Heute",
+    "month": "Monat",
+    "week": "Woche",
+    "day": "Tag"
   },
   "date": {
     "start": {

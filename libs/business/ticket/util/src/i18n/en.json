@@ -138,5 +138,8 @@
   "changeConfirmation": {
     "cancel": "Cancel",
     "ok": "Save"
+  },
+  "validation": {
+    "classificationReason": "A classification needs a reason — it decides whether the work is charged."
   }
 }

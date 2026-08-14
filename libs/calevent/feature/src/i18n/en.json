@@ -201,7 +201,11 @@
   "calendar": {
     "title": "Calendar",
     "add": "Create a new calendar",
-    "select": "Select calendar"
+    "select": "Select calendar",
+    "today": "Today",
+    "month": "Month",
+    "week": "Week",
+    "day": "Day"
   },
   "date": {
     "start": {
@@ -374,5 +378,10 @@
     "caleventStartDateMandatory": "The start date is mandatory.",
     "caleventEndDateMandatory": "The end date is mandatory.",
     "caleventModelType": "The ModelType must be EventModel."
+  },
+  "urlLabel": {
+    "label": "Link label",
+    "placeholder": "e.g. Race announcement",
+    "helper": "Text shown instead of the URL. Leave empty to show the URL itself."
   }
 }

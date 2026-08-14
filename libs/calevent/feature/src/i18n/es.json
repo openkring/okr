@@ -201,7 +201,11 @@
   "calendar": {
     "title": "Calendario",
     "add": "Crear un nuevo calendario",
-    "select": "Seleccionar calendario"
+    "select": "Seleccionar calendario",
+    "today": "Hoy",
+    "month": "Mes",
+    "week": "Semana",
+    "day": "Día"
   },
   "date": {
     "start": {
@@ -374,5 +378,10 @@
     "caleventStartDateMandatory": "La fecha de inicio es obligatoria.",
     "caleventEndDateMandatory": "La fecha de fin es obligatoria.",
     "caleventModelType": "El ModelType debe ser EventModel."
+  },
+  "urlLabel": {
+    "label": "Etiqueta del enlace",
+    "placeholder": "p. ej. Convocatoria",
+    "helper": "Texto que se muestra en lugar de la URL. Déjelo vacío para mostrar la propia URL."
   }
 }

@@ -266,5 +266,13 @@
     "content": "Content and contributions",
     "consent": "Account and consents",
     "log": "Logs"
+  },
+  "push": {
+    "title": "Push notifications",
+    "active": "Active",
+    "blocked": "Blocked – open system settings → notifications",
+    "hint": "Enable to be notified outside the app as well.",
+    "renew": "Renew",
+    "enable": "Enable"
   }
 }

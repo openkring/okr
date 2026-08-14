@@ -304,6 +304,12 @@
         "ambiguous": "stanze senza assegnazione univoca ignorate (restano visibili ovunque).",
         "confirm": "Assegnare ora {{ count }} stanze ai loro tenant?",
         "conf": "{{ count }} stanze assegnate."
+      },
+      "members": {
+        "label": "Riconciliare i membri della chat di gruppo",
+        "description": "Aggiunge ogni persona con un’affiliazione attiva alla stanza chat del suo gruppo. Necessario per i membri rimossi troppo presto dalle loro stanze a causa di un errore precedente. Puramente additivo: si aggiunge soltanto, mai si rimuove — i membri della stanza senza affiliazione (p. es. partecipanti a un corso) restano invariati.",
+        "action": "Riconciliare",
+        "confirm": "Riconciliare ora i membri di tutti i {count} gruppi?"
       }
     }
   },

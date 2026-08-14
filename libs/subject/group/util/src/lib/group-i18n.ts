@@ -92,6 +92,7 @@ export const GROUP_I18N_KEYS = {
 
   admins_title:                    PFX + 'admins.title',
   admins_description:              PFX + 'admins.description',
+  page_title:               PFX + 'page.title',
 } satisfies Record<string, string>;
 
 export type GroupI18n = { [K in keyof typeof GROUP_I18N_KEYS]: Signal<string> };

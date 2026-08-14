@@ -5,6 +5,8 @@ import { SwUpdate } from '@angular/service-worker';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 import { ENV, FIRESTORE } from '@okr/shared-config';
+import { I18nService } from '@okr/shared-i18n';
+import { fill } from '@okr/shared-util-core';
 
 import packageJson from '../../../../../package.json';
 
@@ -47,6 +49,11 @@ const UNRECOVERABLE_RELOAD_MIN_INTERVAL_MS = 60 * 1000; // 1 minute
 @Injectable({ providedIn: 'root' })
 export class VersionCheckService {
   private readonly alertController = inject(AlertController);
+  // Main-bundle keys (no scope): they are in memory at startup, which this service needs.
+  private readonly updateI18n = inject(I18nService).translateAll({
+    header: '@appUpdate.header', message: '@appUpdate.message',
+    messageWithVersion: '@appUpdate.messageWithVersion', now: '@appUpdate.now', later: '@appUpdate.later',
+  });
   private readonly platformId = inject(PLATFORM_ID);
   private readonly swUpdate = inject(SwUpdate);
   public readonly firestore = inject(FIRESTORE);
@@ -191,24 +198,26 @@ export class VersionCheckService {
     const forceUpdate = config?.forceUpdate === true ||
       (config?.minVersion !== undefined && this.compareVersions(this.currentVersion, config.minVersion) < 0);
 
-    const versionText = latestVersion ? `Eine neue Version (${latestVersion})` : 'Eine neue Version';
-    const message = `${versionText} der App ist verfügbar. Du verwendest aktuell Version ${this.currentVersion}. Bitte aktualisiere die App, um die neuesten Funktionen und Verbesserungen zu nutzen.`;
+    const i18n = this.updateI18n;
+    const message = latestVersion
+      ? fill(i18n.messageWithVersion(), { latest: latestVersion, current: this.currentVersion })
+      : fill(i18n.message(), { current: this.currentVersion });
     const alert = await this.alertController.create({
-      header: 'Update verfügbar',
+      header: i18n.header(),
       message,
       backdropDismiss: !forceUpdate,
       buttons: forceUpdate ? [
         {
-          text: 'Jetzt aktualisieren',
+          text: i18n.now(),
           role: 'confirm'
         }
       ] : [
         {
-          text: 'Später',
+          text: i18n.later(),
           role: 'cancel'
         },
         {
-          text: 'Jetzt aktualisieren',
+          text: i18n.now(),
           role: 'confirm'
         }
       ]

@@ -55,7 +55,7 @@ function cmsMenuParent(children: MenuSpec[]): MenuSpec {
 function aocMenuParent(children: MenuSpec[]): MenuSpec {
   return {
     key: 'aoc-menu', name: 'aoc-menu', url: '', action: 'sub',
-    roleNeeded: 'admin', icon: 'admin', label: 'AOC - Operation Centre', children,
+    roleNeeded: 'admin', icon: 'admin', label: '@item.aoc-menu', children,
   };
 }
 
@@ -70,7 +70,7 @@ function aocMenuParent(children: MenuSpec[]): MenuSpec {
 function subjectsMenuParent(children: MenuSpec[]): MenuSpec {
   return {
     key: 'subjects-menu', name: 'subjects-menu', url: '', action: 'sub',
-    roleNeeded: 'privileged', icon: 'help-circle', label: 'Subjekte', children,
+    roleNeeded: 'privileged', icon: 'help-circle', label: '@item.subjects-menu', children,
   };
 }
 
@@ -95,7 +95,7 @@ function subjectsMenuParent(children: MenuSpec[]): MenuSpec {
 function resourceMenuParent(children: MenuSpec[]): MenuSpec {
   return {
     key: 'resource-menu', name: 'resource-menu', url: '', action: 'sub',
-    roleNeeded: 'resourceAdmin', icon: 'help-circle', label: 'Resourcen', children,
+    roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '@item.resource-menu', children,
   };
 }
 
@@ -150,7 +150,7 @@ const calevent: FeatureBlock = {
       // itself is wrong). `label` is not a `STRUCTURAL_FIELD` (menu-seed.util.ts), so no
       // live doc was ever at risk — but a newly seeded tenant would have gotten the raw,
       // untranslated key as its menu label instead of live tenants' actual "Alle Termine".
-      action: 'navigate', roleNeeded: 'eventAdmin', icon: 'calendar', label: 'Alle Termine',
+      action: 'navigate', roleNeeded: 'eventAdmin', icon: 'calendar', label: '@item.calevent-all',
     },
     // Fix round 1 (review Critical 2) — was missing entirely, present since Task 5.
     // `calevent-all`'s own url ends in `/c-calevents`; verified live: `action: context`,
@@ -158,9 +158,9 @@ const calevent: FeatureBlock = {
     // calevent-exportics, calevent-schedule, filter-toggle]`, all 16 tenants, all generic
     // (no tenant literal in any child's own fields).
     { key: 'c-calevents', name: 'c-calevents', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
-      { key: 'calevent-add', name: 'calevent-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Termin hinzufügen' },
-      { key: 'calevent-export-raw', name: 'calevent-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Termine exportieren' },
-      { key: 'calevent-exportics', name: 'calevent-exportics', url: 'exportIcs', action: 'call', roleNeeded: 'registered', icon: 'calendar', label: 'Kalender exportieren (ICS)' },
+      { key: 'calevent-add', name: 'calevent-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.calevent-add' },
+      { key: 'calevent-export-raw', name: 'calevent-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.calevent-export-raw' },
+      { key: 'calevent-exportics', name: 'calevent-exportics', url: 'exportIcs', action: 'call', roleNeeded: 'registered', icon: 'calendar', label: '@item.calevent-exportics' },
       { key: 'calevent-schedule', name: 'calevent-schedule', url: 'schedule', action: 'call', roleNeeded: 'privileged', icon: 'calendar-number', label: '@main.schedule' },
       // Live-data quirk: TWO `menuItems` docs share `name: 'filter-toggle'` — an
       // `isArchived: true` one (`action: call`, `url: toggleFilter`, `roleNeeded:
@@ -172,7 +172,7 @@ const calevent: FeatureBlock = {
       // not the archived one `c-calevents.menuItems` happens to also list by the same name.
       // Same class of generic reusable leaf as `divider_empty` (noted on the `aoc` block) —
       // kept here only because `c-calevents` itself references it.
-      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen' },
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
     ] },
     // Fix round 1 (review Critical 1) — the `/yearlyevents/:listId/:contextMenuName` route
     // added above resolves its context menu to this doc; catalogued even though no
@@ -180,8 +180,8 @@ const calevent: FeatureBlock = {
     // itself requires it. Verified live, all 16 tenants: `action: context`, `roleNeeded:
     // contentAdmin`, children `[yearlyevent-add, yearlyevent-export]`, both generic.
     { key: 'c-yearlyevents', name: 'c-yearlyevents', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'yearlyevent-add', name: 'yearlyevent-add', url: 'add', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: 'Anlass hinzufügen' },
-      { key: 'yearlyevent-export', name: 'yearlyevent-export', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Anlässe exportieren' },
+      { key: 'yearlyevent-add', name: 'yearlyevent-add', url: 'add', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: '@item.yearlyevent-add' },
+      { key: 'yearlyevent-export', name: 'yearlyevent-export', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.yearlyevent-export' },
     ] },
   ],
 };
@@ -252,21 +252,21 @@ const aoc: FeatureBlock = {
     aocMenuParent([
       { key: 'aoc-admin',      name: 'aoc-admin',      url: '/aoc/adminops',   action: 'navigate', roleNeeded: 'admin', icon: 'admin',    label: '@main.aoc.admin' },
       { key: 'aoc-auth',       name: 'aoc-auth',       url: '/aoc/roles',      action: 'navigate', roleNeeded: 'admin', icon: 'key',      label: '@main.aoc.auth' },
-      { key: 'aoc-content',    name: 'aoc-content',    url: '/aoc/content',    action: 'navigate', roleNeeded: 'admin', icon: 'page',     label: 'Content' },
-      { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: 'Daten' },
-      { key: 'aoc-statistics', name: 'aoc-statistics', url: '/aoc/statistics', action: 'navigate', roleNeeded: 'admin', icon: 'chart',    label: 'Statistiken' },
-      { key: 'aoc-storage',    name: 'aoc-storage',    url: '/aoc/storage',    action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: 'Storage' },
+      { key: 'aoc-content',    name: 'aoc-content',    url: '/aoc/content',    action: 'navigate', roleNeeded: 'admin', icon: 'page',     label: '@item.aoc-content' },
+      { key: 'aoc-data',       name: 'aoc-data',       url: '/aoc/data',       action: 'navigate', roleNeeded: 'admin', icon: 'database', label: '@item.aoc-data' },
+      { key: 'aoc-statistics', name: 'aoc-statistics', url: '/aoc/statistics', action: 'navigate', roleNeeded: 'admin', icon: 'chart',    label: '@item.aoc-statistics' },
+      { key: 'aoc-storage',    name: 'aoc-storage',    url: '/aoc/storage',    action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: '@item.aoc-storage' },
       // Added task 18, verbatim off the live docs (all six `tenants: ['scs']` only — i.e.
       // every other tenant's AOC submenu is missing them today, which is exactly what
       // cataloguing them fixes).
-      { key: 'aoc-sessions',   name: 'aoc-sessions',   url: '/aoc/sessions',   action: 'navigate', roleNeeded: 'admin', icon: 'history',  label: 'User Sessions' },
-      { key: 'aoc-chat',       name: 'aoc-chat',       url: '/aoc/chat',       action: 'navigate', roleNeeded: 'admin', icon: 'chatbubbles', label: 'Chat Admin' },
-      { key: 'aoc-account',    name: 'aoc-account',    url: '/aoc/account',    action: 'navigate', roleNeeded: 'admin', icon: 'person',   label: 'User Accounts' },
-      { key: 'aoc-doc',        name: 'aoc-doc',        url: '/aoc/doc',        action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: 'Dokumente' },
-      { key: 'aoc-bexio',      name: 'aoc-bexio',      url: '/aoc/bexio',      action: 'navigate', roleNeeded: 'admin', icon: 'bank',     label: 'Bexio' },
+      { key: 'aoc-sessions',   name: 'aoc-sessions',   url: '/aoc/sessions',   action: 'navigate', roleNeeded: 'admin', icon: 'history',  label: '@item.aoc-sessions' },
+      { key: 'aoc-chat',       name: 'aoc-chat',       url: '/aoc/chat',       action: 'navigate', roleNeeded: 'admin', icon: 'chatbubbles', label: '@item.aoc-chat' },
+      { key: 'aoc-account',    name: 'aoc-account',    url: '/aoc/account',    action: 'navigate', roleNeeded: 'admin', icon: 'person',   label: '@item.aoc-account' },
+      { key: 'aoc-doc',        name: 'aoc-doc',        url: '/aoc/doc',        action: 'navigate', roleNeeded: 'admin', icon: 'documents', label: '@item.aoc-doc' },
+      { key: 'aoc-bexio',      name: 'aoc-bexio',      url: '/aoc/bexio',      action: 'navigate', roleNeeded: 'admin', icon: 'bank',     label: '@item.aoc-bexio' },
       // NEW (not mirrored off a live doc, unlike its siblings above): the kiosk monitoring +
       // remote-operations screen, seeded with the block. See the `kiosk` skill.
-      { key: 'aoc-kiosk',      name: 'aoc-kiosk',      url: '/aoc/kiosk',      action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: 'Kiosk' },
+      { key: 'aoc-kiosk',      name: 'aoc-kiosk',      url: '/aoc/kiosk',      action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.aoc-kiosk' },
       // NEW with spec 1.35, seeded live for `scs` in the same change. It hangs under the AOC
       // submenu but its ROUTE is not an `/aoc/*` child and not block-gated: the rule engine is
       // a Cloud Function that fires on every membership write, so gating the screen would hide
@@ -291,7 +291,7 @@ const aoc: FeatureBlock = {
       // reconciliation admin tool), which is why the entry is catalogued at all rather than
       // excluded as tenant-bespoke — the tenant literal is in the icon only, not in the
       // url/label/name.
-      { key: 'aoc-srv',        name: 'aoc-srv',        url: '/aoc/srv',        action: 'navigate', roleNeeded: 'contentAdmin', icon: '//org.srv', label: 'SRV' },
+      { key: 'aoc-srv',        name: 'aoc-srv',        url: '/aoc/srv',        action: 'navigate', roleNeeded: 'contentAdmin', icon: '//org.srv', label: '@item.aoc-srv' },
     ]),
     // TREE-SHAPE SURPRISE, verified rather than assumed (task 18): these two AOC screens hang
     // off `cms-menu`, NOT `aoc-menu`. The live `cms-menu.menuItems` array reads `[cms-graph,
@@ -313,8 +313,8 @@ const aoc: FeatureBlock = {
     // verbatim, same as `transfer-all`/`resource-all`/`rboat-all` on other blocks;
     // `urlResolves` matches by path segment, so it still resolves against the route above.
     cmsMenuParent([
-      { key: 'tag-all',     name: 'tag-all',     url: '/aoc/tag',   action: 'navigate', roleNeeded: 'contentAdmin', icon: 'tag',   label: 'Tags' },
-      { key: 'aoc-website', name: 'aoc-website', url: 'aoc/website', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'globe', label: 'Website editieren' },
+      { key: 'tag-all',     name: 'tag-all',     url: '/aoc/tag',   action: 'navigate', roleNeeded: 'contentAdmin', icon: 'tag',   label: '@item.tag-all' },
+      { key: 'aoc-website', name: 'aoc-website', url: 'aoc/website', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'globe', label: '@item.aoc-website' },
     ]),
   ],
 };
@@ -373,20 +373,20 @@ const cms: FeatureBlock = {
       { key: 'menu-all', name: 'menu-all', url: '/menu/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'menu', label: '@main.cms.menus' },
       { key: 'page-all', name: 'page-all', url: '/page/all/c-pages', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'text', label: '@main.cms.pages' },
       { key: 'section-all', name: 'section-all', url: '/section/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'section', label: '@content.section.plural' },
-      { key: 'icon-all', name: 'icon-all', url: '/icon/all/c-icon', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'icons', label: 'Icons' },
+      { key: 'icon-all', name: 'icon-all', url: '/icon/all/c-icon', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'icons', label: '@item.icon-all' },
     ]),
     { key: 'c-icon', name: 'c-icon', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'icon-add', name: 'icon-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Icon hinzufügen' },
-      { key: 'icon-sync', name: 'icon-sync', url: 'sync', action: 'call', roleNeeded: 'contentAdmin', icon: 'sync', label: 'Storage synchronisieren' },
-      { key: 'icon-export-raw', name: 'icon-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Rohdaten exportieren' },
+      { key: 'icon-add', name: 'icon-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.icon-add' },
+      { key: 'icon-sync', name: 'icon-sync', url: 'sync', action: 'call', roleNeeded: 'contentAdmin', icon: 'sync', label: '@item.icon-sync' },
+      { key: 'icon-export-raw', name: 'icon-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.icon-export-raw' },
     ] },
     { key: 'c-menus', name: 'c-menus', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'menu-add', name: 'menu-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Menu hinzufügen' },
-      { key: 'menu-exportraw', name: 'menu-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Menus exportieren' },
+      { key: 'menu-add', name: 'menu-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.menu-add' },
+      { key: 'menu-exportraw', name: 'menu-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.menu-exportraw' },
     ] },
     { key: 'c-pages', name: 'c-pages', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'page-add', name: 'page-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Seite hinzufügen' },
-      { key: 'page-exportraw', name: 'page-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Seiten exportieren' },
+      { key: 'page-add', name: 'page-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.page-add' },
+      { key: 'page-exportraw', name: 'page-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.page-exportraw' },
     ] },
     // Context menu of the PageDispatcher itself (rendering a CMS page + its sections) —
     // spans both the page and section subdomains, which is why it lives on the unified
@@ -396,17 +396,17 @@ const cms: FeatureBlock = {
     // appended it to the tenant's root nav — same defect class as the cms-menu/aoc-menu
     // restructuring above).
     { key: 'c-contentpage', name: 'c-contentpage', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: 'Edit Modus' },
-      { key: 'cp-sort-sections', name: 'cp-sort-sections', url: 'sortSections', action: 'call', roleNeeded: 'registered', icon: 'sync-circle', label: 'Sektionen sortieren' },
-      { key: 'cp-select-section', name: 'cp-select-section', url: 'selectSection', action: 'call', roleNeeded: 'registered', icon: 'reorder-four', label: 'Bestehende Sektion hinzufügen' },
-      { key: 'cp-add-section', name: 'cp-add-section', url: 'addSection', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Neue Sektion hinzufügen' },
-      { key: 'print', name: 'print', url: 'print', action: 'call', roleNeeded: 'registered', icon: 'print', label: 'Drucken' },
-      { key: 'cp-exportraw', name: 'cp-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Seiteninhalt exportieren' },
-      { key: 'page-edit', name: 'page-edit', url: 'editPage', action: 'call', roleNeeded: 'registered', icon: 'edit', label: 'Seite konfigurieren' },
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
+      { key: 'cp-sort-sections', name: 'cp-sort-sections', url: 'sortSections', action: 'call', roleNeeded: 'registered', icon: 'sync-circle', label: '@item.cp-sort-sections' },
+      { key: 'cp-select-section', name: 'cp-select-section', url: 'selectSection', action: 'call', roleNeeded: 'registered', icon: 'reorder-four', label: '@item.cp-select-section' },
+      { key: 'cp-add-section', name: 'cp-add-section', url: 'addSection', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.cp-add-section' },
+      { key: 'print', name: 'print', url: 'print', action: 'call', roleNeeded: 'registered', icon: 'print', label: '@item.print' },
+      { key: 'cp-exportraw', name: 'cp-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.cp-exportraw' },
+      { key: 'page-edit', name: 'page-edit', url: 'editPage', action: 'call', roleNeeded: 'registered', icon: 'edit', label: '@item.page-edit' },
     ] },
     { key: 'c-sections', name: 'c-sections', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'section-add', name: 'section-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Sektion hinzufügen' },
-      { key: 'section-exportraw', name: 'section-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Sektionen exportieren' },
+      { key: 'section-add', name: 'section-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.section-add' },
+      { key: 'section-exportraw', name: 'section-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.section-exportraw' },
     ] },
   ],
 };
@@ -422,12 +422,12 @@ const user: FeatureBlock = {
   collections: ['users'],
   menu: [
     aocMenuParent([
-      { key: 'user-all', name: 'user-all', url: '/user/all/c-users', action: 'navigate', roleNeeded: 'admin', icon: 'people', label: 'Users' },
+      { key: 'user-all', name: 'user-all', url: '/user/all/c-users', action: 'navigate', roleNeeded: 'admin', icon: 'people', label: '@item.user-all' },
     ]),
     { key: 'c-users', name: 'c-users', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
-      { key: 'user-add', name: 'user-add', url: 'add', action: 'call', roleNeeded: 'admin', icon: 'edit', label: 'Neuen User hinzufügen' },
-      { key: 'user-exportraw', name: 'user-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Rohdaten exportieren' },
-      { key: 'user-exportusers', name: 'user-exportusers', url: 'exportUsers', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Userliste exportieren' },
+      { key: 'user-add', name: 'user-add', url: 'add', action: 'call', roleNeeded: 'admin', icon: 'edit', label: '@item.user-add' },
+      { key: 'user-exportraw', name: 'user-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: '@item.user-exportraw' },
+      { key: 'user-exportusers', name: 'user-exportusers', url: 'exportUsers', action: 'call', roleNeeded: 'admin', icon: 'download', label: '@item.user-exportusers' },
     ] },
   ],
 };
@@ -477,8 +477,8 @@ const security: FeatureBlock = {
   collections: [],
   menu: [
     aocMenuParent([
-      { key: 'priv-register', name: 'priv-register', url: '/security/register', action: 'navigate', roleNeeded: 'admin', icon: 'doc-safe', label: 'GDPR Bearbeitungsverzeichnis' },
-      { key: 'priv-audit', name: 'priv-audit', url: '/security/privacy-audit', action: 'navigate', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: 'GDPR Privacy Audit' },
+      { key: 'priv-register', name: 'priv-register', url: '/security/register', action: 'navigate', roleNeeded: 'admin', icon: 'doc-safe', label: '@item.priv-register' },
+      { key: 'priv-audit', name: 'priv-audit', url: '/security/privacy-audit', action: 'navigate', roleNeeded: 'admin', icon: 'checkbox-circle-double', label: '@item.priv-audit' },
     ]),
   ],
 };
@@ -538,8 +538,8 @@ const category: FeatureBlock = {
       { key: 'category-all', name: 'category-all', url: '/category/all/c-category', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'category', label: '@category.plural' },
     ]),
     { key: 'c-category', name: 'c-category', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'category-add', name: 'category-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Kategorie hinzufügen' },
-      { key: 'category-exportraw', name: 'category-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Exportieren' },
+      { key: 'category-add', name: 'category-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.category-add' },
+      { key: 'category-exportraw', name: 'category-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.category-exportraw' },
     ] },
   ],
 };
@@ -571,12 +571,12 @@ const geo: FeatureBlock = {
   collections: ['locations', 'trips'],
   menu: [
     cmsMenuParent([
-      { key: 'location-all', name: 'location-all', url: '/location/all/c-locations', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'location', label: 'Orte' },
+      { key: 'location-all', name: 'location-all', url: '/location/all/c-locations', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'location', label: '@item.location-all' },
     ]),
     { key: 'c-locations', name: 'c-locations', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'location-add', name: 'location-add', url: 'add', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: 'Ort hinzufügen' },
-      { key: 'location-show', name: 'location-show', url: 'showOnMap', action: 'call', roleNeeded: 'registered', icon: 'map', label: 'Auf Karte anzeigen' },
-      { key: 'location-exportraw', name: 'location-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'eventAdmin', icon: 'download', label: 'Orte exportieren' },
+      { key: 'location-add', name: 'location-add', url: 'add', action: 'call', roleNeeded: 'eventAdmin', icon: 'add-circle', label: '@item.location-add' },
+      { key: 'location-show', name: 'location-show', url: 'showOnMap', action: 'call', roleNeeded: 'registered', icon: 'map', label: '@item.location-show' },
+      { key: 'location-exportraw', name: 'location-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'eventAdmin', icon: 'download', label: '@item.location-exportraw' },
     ] },
     // RULED (task 12 review round 3): 'logbuch' stays a top-level `navigate` entry — that
     // IS the intended model, same as any other block-owned top-level nav item (`login`,
@@ -588,15 +588,15 @@ const geo: FeatureBlock = {
     // existed), not evidence against the model. The next `applyFeatureSelection` for `scs`
     // will add the one missing, correctly `tester`-gated root entry — a one-time,
     // intentional convergence, not a duplication bug.
-    { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'tester', icon: 'track', label: 'Logbuch' },
+    { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'tester', icon: 'track', label: '@item.logbuch' },
     { key: 'c-trips', name: 'c-trips', url: '', action: 'context', roleNeeded: 'kiosk', icon: 'help-circle', label: '', children: [
-      { key: 'trip-add', name: 'trip-add', url: 'add', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: 'Neue Fahrt erfassen' },
-      { key: 'trip-reportdamage', name: 'trip-reportdamage', url: 'reportDamage', action: 'call', roleNeeded: 'kiosk', icon: 'warning', label: 'Schaden melden' },
-      { key: 'trip-reportbug', name: 'trip-reportbug', url: 'reportBug', action: 'call', roleNeeded: 'kiosk', icon: 'bug', label: 'Fehler melden' },
-      { key: 'trip-callsupport', name: 'trip-callsupport', url: 'callSupport', action: 'call', roleNeeded: 'kiosk', icon: 'video', label: 'Support anrufen' },
-      { key: 'trip-boatstats', name: 'trip-boatstats', url: 'showBoatStatistics', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: 'Boots-Statistik anzeigen' },
-      { key: 'trip-personstats', name: 'trip-personstats', url: 'showPersonStatistics', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: 'Personen-Statistik anzeigen' },
-      { key: 'trip-exportraw', name: 'trip-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: 'Rohdaten exportieren' },
+      { key: 'trip-add', name: 'trip-add', url: 'add', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: '@item.trip-add' },
+      { key: 'trip-reportdamage', name: 'trip-reportdamage', url: 'reportDamage', action: 'call', roleNeeded: 'kiosk', icon: 'warning', label: '@item.trip-reportdamage' },
+      { key: 'trip-reportbug', name: 'trip-reportbug', url: 'reportBug', action: 'call', roleNeeded: 'kiosk', icon: 'bug', label: '@item.trip-reportbug' },
+      { key: 'trip-callsupport', name: 'trip-callsupport', url: 'callSupport', action: 'call', roleNeeded: 'kiosk', icon: 'video', label: '@item.trip-callsupport' },
+      { key: 'trip-boatstats', name: 'trip-boatstats', url: 'showBoatStatistics', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: '@item.trip-boatstats' },
+      { key: 'trip-personstats', name: 'trip-personstats', url: 'showPersonStatistics', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: '@item.trip-personstats' },
+      { key: 'trip-exportraw', name: 'trip-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: '@item.trip-exportraw' },
     ] },
   ],
 };
@@ -718,17 +718,17 @@ const subject: FeatureBlock = {
   menu: [
     subjectsMenuParent([
       { key: 'person-contacts', name: 'person-contacts', url: '/person/all/c-persons', action: 'navigate', roleNeeded: 'privileged', icon: 'id-card', label: '@main.members.person-contacts' },
-      { key: 'org-all', name: 'org-all', url: '/org/all/c-orgs', action: 'navigate', roleNeeded: 'privileged', icon: 'company', label: 'Organisationen' },
+      { key: 'org-all', name: 'org-all', url: '/org/all/c-orgs', action: 'navigate', roleNeeded: 'privileged', icon: 'company', label: '@item.org-all' },
       // `addresses`' own url points at `/address/c-address`, but `c-address` has NO live
       // `menuItems` doc anywhere (confirmed by a name-equality query, task 13 fix round 1) —
       // correct not to invent it (mirror-verbatim rule), but the PII-vault list therefore
       // renders with an empty context menu (no add/export action) for every tenant today.
-      { key: 'addresses', name: 'addresses', url: '/address/c-address', action: 'navigate', roleNeeded: 'privileged', icon: 'address', label: 'Adressen' },
-      { key: 'group-all', name: 'group-all', url: '/group/all/c-groups', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'persons', label: 'Alle Gruppen' },
+      { key: 'addresses', name: 'addresses', url: '/address/c-address', action: 'navigate', roleNeeded: 'privileged', icon: 'address', label: '@item.addresses' },
+      { key: 'group-all', name: 'group-all', url: '/group/all/c-groups', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'persons', label: '@item.group-all' },
     ]),
     // Live root-level sibling of `subjects-menu` in `main_scs`, NOT nested under it —
     // mirrored verbatim (tree-shape rule).
-    { key: 'group-my', name: 'group-my', url: '/group/my/c-groups', action: 'navigate', roleNeeded: 'registered', icon: 'persons', label: 'Meine Gruppen' },
+    { key: 'group-my', name: 'group-my', url: '/group/my/c-groups', action: 'navigate', roleNeeded: 'registered', icon: 'persons', label: '@item.group-my' },
     // CO-DECLARED with the `chat` block (task 17 fix round 1) — field-identical there, only
     // this comment differs. It is here, not behind a `dependsOn: ['chat']`, because the group
     // view's "Chat" segment resolves ITS context menu to this key
@@ -743,23 +743,23 @@ const subject: FeatureBlock = {
     // `rootNavKeys` filters to `navigate`/`sub` so this `context` spec never reaches a root
     // nav. If you edit either copy, edit both.
     { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
-      { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: 'Chat Raum hinzufügen' },
-      { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: 'Chat Raum bearbeiten' },
+      { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: '@item.chat-room-add' },
+      { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: '@item.chat-room-edit' },
     ] },
     { key: 'c-persons', name: 'c-persons', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'person-add', name: 'person-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Person hinzufügen' },
-      { key: 'person-export', name: 'person-export', url: 'export', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Personen exportieren' },
-      { key: 'person-copy-emails', name: 'person-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: 'Email Adressen kopieren' },
-      { key: 'person-send-email', name: 'person-send-email', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: 'Email senden' },
+      { key: 'person-add', name: 'person-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.person-add' },
+      { key: 'person-export', name: 'person-export', url: 'export', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.person-export' },
+      { key: 'person-copy-emails', name: 'person-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: '@item.person-copy-emails' },
+      { key: 'person-send-email', name: 'person-send-email', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: '@item.person-send-email' },
     ] },
     { key: 'c-orgs', name: 'c-orgs', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'org-add', name: 'org-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Organisation hinzufügen' },
-      { key: 'org-export-addresses', name: 'org-export-addresses', url: 'exportAddresses', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Adressen exportieren' },
-      { key: 'org-copy-emails', name: 'org-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: 'Emails kopieren' },
+      { key: 'org-add', name: 'org-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.org-add' },
+      { key: 'org-export-addresses', name: 'org-export-addresses', url: 'exportAddresses', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.org-export-addresses' },
+      { key: 'org-copy-emails', name: 'org-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: '@item.org-copy-emails' },
     ] },
     { key: 'c-groups', name: 'c-groups', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
-      { key: 'group-add', name: 'group-add', url: 'add', action: 'call', roleNeeded: 'privileged', icon: 'add-circle', label: 'Gruppe hinzufügen' },
-      { key: 'group-export-raw', name: 'group-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'privileged', icon: 'download', label: 'Gruppen exportieren' },
+      { key: 'group-add', name: 'group-add', url: 'add', action: 'call', roleNeeded: 'privileged', icon: 'add-circle', label: '@item.group-add' },
+      { key: 'group-export-raw', name: 'group-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'privileged', icon: 'download', label: '@item.group-export-raw' },
     ] },
   ],
 };
@@ -813,17 +813,17 @@ const relationship: FeatureBlock = {
   collections: ['memberships', 'reservations', 'ownerships', 'invitations', 'transfers', 'personal-rels', 'responsibilities', 'workrels'],
   menu: [
     subjectsMenuParent([
-      { key: 'personal-rel-all', name: 'personal-rel-all', url: '/personalrel/all/c-prel', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'heart-outline', label: 'Persönliche Beziehungen' },
-      { key: 'workrel-all', name: 'workrel-all', url: '/workrel/all/c-wrel', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'work', label: 'Beschäftigungen' },
-      { key: 'responsibility-all', name: 'responsibility-all', url: '/responsibility/all/c-responsibility', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'target', label: 'Verantwortungen' },
+      { key: 'personal-rel-all', name: 'personal-rel-all', url: '/personalrel/all/c-prel', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'heart-outline', label: '@item.personal-rel-all' },
+      { key: 'workrel-all', name: 'workrel-all', url: '/workrel/all/c-wrel', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'work', label: '@item.workrel-all' },
+      { key: 'responsibility-all', name: 'responsibility-all', url: '/responsibility/all/c-responsibility', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'target', label: '@item.responsibility-all' },
     ]),
     resourceMenuParent([
-      { key: 'ownerships-all', name: 'ownerships-all', url: '/ownership/all/c-ownership', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'own', label: 'Alle Nutzungen' },
-      { key: 'reservation-all', name: 'reservation-all', url: '/reservation/all/c-reservations', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'reservation', label: 'Alle Reservationen' },
+      { key: 'ownerships-all', name: 'ownerships-all', url: '/ownership/all/c-ownership', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'own', label: '@item.ownerships-all' },
+      { key: 'reservation-all', name: 'reservation-all', url: '/reservation/all/c-reservations', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'reservation', label: '@item.reservation-all' },
       // Copied verbatim, including the missing leading slash — `urlResolves` matches by
       // path segment, not string prefix, so this still resolves; not "fixed" per the
       // mirror-verbatim rule.
-      { key: 'transfer-all', name: 'transfer-all', url: 'transfer/all/c-transfers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'arrow-forward', label: 'Transfers' },
+      { key: 'transfer-all', name: 'transfer-all', url: 'transfer/all/c-transfers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'arrow-forward', label: '@item.transfer-all' },
     ]),
     // Live child of the tenant-bespoke `event-menu-scs` grouping (own name literally embeds
     // "scs", same class as `sport-menu`), NOT of any generic shared parent — but the entry
@@ -831,28 +831,28 @@ const relationship: FeatureBlock = {
     // `geo` block above. Ruled (same precedent): stays a top-level entry here, the intended
     // model for a fresh tenant; `scs`'s current nesting under its own bespoke event menu is
     // pre-existing tenant curation, not evidence against cataloguing it as this block's own.
-    { key: 'invitation-all', name: 'invitation-all', url: '/invitation/all/c-invitation', action: 'navigate', roleNeeded: 'eventAdmin', icon: 'login', label: 'Einladungen' },
+    { key: 'invitation-all', name: 'invitation-all', url: '/invitation/all/c-invitation', action: 'navigate', roleNeeded: 'eventAdmin', icon: 'login', label: '@item.invitation-all' },
     // `contextMenuName` wrapper for the `membership` route (`view: 'mcat'`, the full
     // membership admin list). `c-groupmembers` (below) is the SEPARATE wrapper for the
     // `contact` route (`view: 'contact'`) — app.routes.ts gives MembershipList two distinct
     // top-level paths with different `data.view`, and each gets its own live context doc.
     { key: 'c-membership', name: 'c-membership', url: '', action: 'context', roleNeeded: 'memberAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'member-add', name: 'member-add', url: 'memberAdd', action: 'call', roleNeeded: 'registered', icon: 'person-add', label: 'Neues Mitglied erfassen' },
-      { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Mitgliedschaft hinzufügen' },
-      { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'registered', icon: 'copy', label: 'Email Adressen kopieren' },
-      { key: 'membership-sendemail', name: 'membership-sendemail', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: 'Email senden' },
-      { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Mitgliedschaften exportieren' },
-      { key: 'membership-exportsrv', name: 'membership-exportsrv', url: 'exportSrv', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'SRV Liste exportieren' },
-      { key: 'membership-exportmembers', name: 'membership-exportmembers', url: 'exportMembers', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Mitgliederliste exportieren' },
-      { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Adressliste exportieren' },
-      { key: 'membership-exportclubdesk', name: 'membership-exportclubdesk', url: 'exportClubdesk', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Export für Clubdesk' },
+      { key: 'member-add', name: 'member-add', url: 'memberAdd', action: 'call', roleNeeded: 'registered', icon: 'person-add', label: '@item.member-add' },
+      { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.membership-add' },
+      { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'registered', icon: 'copy', label: '@item.membership-copyemail' },
+      { key: 'membership-sendemail', name: 'membership-sendemail', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: '@item.membership-sendemail' },
+      { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportraw' },
+      { key: 'membership-exportsrv', name: 'membership-exportsrv', url: 'exportSrv', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportsrv' },
+      { key: 'membership-exportmembers', name: 'membership-exportmembers', url: 'exportMembers', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportmembers' },
+      { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportaddresses' },
+      { key: 'membership-exportclubdesk', name: 'membership-exportclubdesk', url: 'exportClubdesk', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.membership-exportclubdesk' },
     ] },
     { key: 'c-groupmembers', name: 'c-groupmembers', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
-      { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Mitgliedschaft hinzufügen' },
-      { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'registered', icon: 'copy', label: 'Email Adressen kopieren' },
-      { key: 'membership-sendemail', name: 'membership-sendemail', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: 'Email senden' },
-      { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Mitgliedschaften exportieren' },
-      { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Adressliste exportieren' },
+      { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.membership-add' },
+      { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'registered', icon: 'copy', label: '@item.membership-copyemail' },
+      { key: 'membership-sendemail', name: 'membership-sendemail', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: '@item.membership-sendemail' },
+      { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportraw' },
+      { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportaddresses' },
     ] },
     // Live doc exists but currently has NO children (`menuItems: []` on the live doc) — no
     // `invitation-add`/`invitation-export` action docs exist yet. Mirrored as found, not
@@ -860,32 +860,32 @@ const relationship: FeatureBlock = {
     // block's shape.
     { key: 'c-invitation', name: 'c-invitation', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [] },
     { key: 'c-ownership', name: 'c-ownership', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'ownership-add', name: 'ownership-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Nutzung hinzufügen' },
-      { key: 'ownership-exportraw', name: 'ownership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Exportieren' },
+      { key: 'ownership-add', name: 'ownership-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.ownership-add' },
+      { key: 'ownership-exportraw', name: 'ownership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.ownership-exportraw' },
     ] },
     { key: 'c-reservations', name: 'c-reservations', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'reservation-add', name: 'reservation-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Reservation hinzufügen' },
-      { key: 'reservation-exportraw', name: 'reservation-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Reservationen exportieren' },
+      { key: 'reservation-add', name: 'reservation-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.reservation-add' },
+      { key: 'reservation-exportraw', name: 'reservation-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.reservation-exportraw' },
     ] },
     { key: 'c-transfers', name: 'c-transfers', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'transfer-add', name: 'transfer-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Transfer hinzufügen' },
-      { key: 'transfer-export-raw', name: 'transfer-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Transfers exportieren' },
+      { key: 'transfer-add', name: 'transfer-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.transfer-add' },
+      { key: 'transfer-export-raw', name: 'transfer-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.transfer-export-raw' },
     ] },
     { key: 'c-responsibility', name: 'c-responsibility', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'responsibility-add', name: 'responsibility-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@responsibility.operation.create.label' },
       { key: 'responsibility-export-raw', name: 'responsibility-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@responsibility.operation.export.raw' },
     ] },
     { key: 'c-wrel', name: 'c-wrel', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'wrel-add', name: 'wrel-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: 'Beschäftigung hinzufügen' },
-      { key: 'wrel-export-raw', name: 'wrel-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Beschäftigungen exportieren' },
+      { key: 'wrel-add', name: 'wrel-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.wrel-add' },
+      { key: 'wrel-export-raw', name: 'wrel-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.wrel-export-raw' },
     ] },
     // Fix round 1 (review): was missing entirely. `personal-rel-all` (above) and its route
     // both shipped without this context wrapper, so a fresh tenant enabling `relationship`
     // would render PersonalRelList with an empty action sheet — no add, no export. Verified
     // live: `menuItems/c-prel`, roleNeeded `contentAdmin`, children `prel-add`/`prel-export-raw`.
     { key: 'c-prel', name: 'c-prel', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'prel-add', name: 'prel-add', url: 'add', action: 'call', roleNeeded: 'memberAdmin', icon: 'add-circle', label: 'Neue Beziehung hinzufügen' },
-      { key: 'prel-export-raw', name: 'prel-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: 'Beziehungen exportieren' },
+      { key: 'prel-add', name: 'prel-add', url: 'add', action: 'call', roleNeeded: 'memberAdmin', icon: 'add-circle', label: '@item.prel-add' },
+      { key: 'prel-export-raw', name: 'prel-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.prel-export-raw' },
     ] },
   ],
 };
@@ -957,8 +957,8 @@ const resource: FeatureBlock = {
   collections: ['resources'],
   menu: [
     resourceMenuParent([
-      { key: 'resource-all', name: 'resource-all', url: 'resource/all/c-resources', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'hammer', label: 'Resourcen' },
-      { key: 'rboat-all', name: 'rboat-all', url: 'rboat/all/c-rboats', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'row_2x_side', label: 'Ruderboote' },
+      { key: 'resource-all', name: 'resource-all', url: 'resource/all/c-resources', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'hammer', label: '@item.resource-all' },
+      { key: 'rboat-all', name: 'rboat-all', url: 'rboat/all/c-rboats', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'row_2x_side', label: '@item.rboat-all' },
       // Navigates into `relationship`'s `/ownership/...` route (hence this block's
       // `dependsOn: ['relationship']`); `c-ownership`, the context wrapper both point at,
       // is already catalogued by `relationship`.
@@ -977,29 +977,29 @@ const resource: FeatureBlock = {
       // mirror-rule (never invent), but a newly seeded tenant would get this literal value
       // written into their own `boats-club` doc and it would render blank there — worth a
       // decision by whoever owns menu-doc/icon hygiene, not silently "fixed" here.
-      { key: 'boats-club', name: 'boats-club', url: '/ownership/scsBoats/c-ownership', action: 'navigate', roleNeeded: 'registered', icon: '//org.scs', label: 'Club-Boote' },
-      { key: 'lockers-all', name: 'lockers-all', url: '/ownership/lockers/c-lockers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'lock-closed', label: 'Garderoben' },
-      { key: 'keys-all', name: 'keys-all', url: '/ownership/keys/c-keys', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'key', label: 'Schlüssel' },
-      { key: 'boats-private', name: 'boats-private', url: '/ownership/privateBoats/c-ownership', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'b1x', label: 'Privat Skiffs' },
+      { key: 'boats-club', name: 'boats-club', url: '/ownership/scsBoats/c-ownership', action: 'navigate', roleNeeded: 'registered', icon: '//org.scs', label: '@item.boats-club' },
+      { key: 'lockers-all', name: 'lockers-all', url: '/ownership/lockers/c-lockers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'lock-closed', label: '@item.lockers-all' },
+      { key: 'keys-all', name: 'keys-all', url: '/ownership/keys/c-keys', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'key', label: '@item.keys-all' },
+      { key: 'boats-private', name: 'boats-private', url: '/ownership/privateBoats/c-ownership', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'b1x', label: '@item.boats-private' },
     ]),
     { key: 'c-resources', name: 'c-resources', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'resource-add', name: 'resource-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Resource hinzufügen' },
-      { key: 'resource-exportraw', name: 'resource-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Rohdaten exportieren' },
+      { key: 'resource-add', name: 'resource-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.resource-add' },
+      { key: 'resource-exportraw', name: 'resource-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.resource-exportraw' },
     ] },
     { key: 'c-rboats', name: 'c-rboats', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'rboat-add', name: 'rboat-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Ruderboot hinzufügen' },
-      { key: 'rboat-exportraw', name: 'rboat-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Ruderboote exportieren' },
+      { key: 'rboat-add', name: 'rboat-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.rboat-add' },
+      { key: 'rboat-exportraw', name: 'rboat-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.rboat-exportraw' },
     ] },
     // `c-keys`/`c-lockers`: owned here (this block's own menu children), even though the
     // list screen they act on (`keys-all`/`lockers-all` above) is relationship's
     // OwnershipList filtered by type.
     { key: 'c-keys', name: 'c-keys', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'key-add', name: 'key-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Schlüssel hinzufügen' },
-      { key: 'key-exportraw', name: 'key-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Schlüssel exportieren' },
+      { key: 'key-add', name: 'key-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.key-add' },
+      { key: 'key-exportraw', name: 'key-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.key-exportraw' },
     ] },
     { key: 'c-lockers', name: 'c-lockers', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'locker-add', name: 'locker-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: 'Garderobe hinzufügen' },
-      { key: 'locker-exportraw', name: 'locker-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: 'Garderoben exportieren' },
+      { key: 'locker-add', name: 'locker-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.locker-add' },
+      { key: 'locker-exportraw', name: 'locker-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.locker-exportraw' },
     ] },
   ],
 };
@@ -1022,7 +1022,7 @@ const mobility: FeatureBlock = {
   // position.
   menu: [
     aocMenuParent([
-      { key: 'flighttracker', name: 'flighttracker', url: '/flighttracker', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'airplane', label: 'Flight Tracker' },
+      { key: 'flighttracker', name: 'flighttracker', url: '/flighttracker', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'airplane', label: '@item.flighttracker' },
     ]),
   ],
 };
@@ -1153,17 +1153,17 @@ const finance: FeatureBlock = {
     {
       key: 'finance-menu', name: 'finance-menu', url: '', action: 'sub',
       roleNeeded: 'registered', icon: 'help-circle', label: '@main.finance.title', children: [
-        { key: 'expenses', name: 'expenses', url: '/expense/my/c-expense', action: 'navigate', roleNeeded: 'registered', icon: 'expense', label: 'Meine Spesen' },
-        { key: 'expenses-all', name: 'expenses-all', url: '/expense/all/c-expense', action: 'navigate', roleNeeded: 'treasurer', icon: 'expense', label: 'Alle Spesen' },
+        { key: 'expenses', name: 'expenses', url: '/expense/my/c-expense', action: 'navigate', roleNeeded: 'registered', icon: 'expense', label: '@item.expenses' },
+        { key: 'expenses-all', name: 'expenses-all', url: '/expense/all/c-expense', action: 'navigate', roleNeeded: 'treasurer', icon: 'expense', label: '@item.expenses-all' },
       ],
     },
     { key: 'c-expense', name: 'c-expense', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
-      { key: 'expense-add', name: 'expense-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Neue Spesen-Abrechnung' },
+      { key: 'expense-add', name: 'expense-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.expense-add' },
       // Live-data note: this doc's stale `index` string reads `a:callFunction`, but its
       // `action` FIELD — the authoritative one, and the only one `MenuSpec` models — is
       // `call`. `index` is regenerated from `name`/`action`/`okey` on every write
       // (`menuIndex` in `menu-seed.util.ts`), so the drift self-heals; mirrored off `action`.
-      { key: 'expense-export', name: 'expense-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Export' },
+      { key: 'expense-export', name: 'expense-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.expense-export' },
     ] },
     // The five wrappers below are catalogued even though NO catalogued `navigate` url points
     // at them — every live url that does is one of the excluded tenant-bespoke `scsf_*`/
@@ -1178,29 +1178,29 @@ const finance: FeatureBlock = {
     // reachable only through a route parameter (and `ocr-rule-context` does not even match
     // the `c-` prefix). Same precedent as `c-yearlyevents` on the `calevent` block.
     { key: 'c-journal', name: 'c-journal', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
-      { key: 'journal-add', name: 'journal-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: 'Neue Buchung erfassen' },
-      { key: 'journal-export', name: 'journal-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Journal exportieren' },
+      { key: 'journal-add', name: 'journal-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.journal-add' },
+      { key: 'journal-export', name: 'journal-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.journal-export' },
     ] },
     { key: 'c-invoice', name: 'c-invoice', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
-      { key: 'invoice-add', name: 'invoice-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: 'Neue Rechnung erstellen' },
-      { key: 'invoice-export-raw', name: 'invoice-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Rohdaten exportieren' },
+      { key: 'invoice-add', name: 'invoice-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.invoice-add' },
+      { key: 'invoice-export-raw', name: 'invoice-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.invoice-export-raw' },
     ] },
     { key: 'c-bill', name: 'c-bill', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
-      { key: 'bill-add', name: 'bill-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: 'Kreditorenrechnung erstellen' },
-      { key: 'bill-scan', name: 'bill-scan', url: 'scan', action: 'call', roleNeeded: 'treasurer', icon: 'scan', label: 'Rechnung scannen' },
-      { key: 'bill-export-raw', name: 'bill-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Kreditorenrechnungen exportieren' },
+      { key: 'bill-add', name: 'bill-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add', label: '@item.bill-add' },
+      { key: 'bill-scan', name: 'bill-scan', url: 'scan', action: 'call', roleNeeded: 'treasurer', icon: 'scan', label: '@item.bill-scan' },
+      { key: 'bill-export-raw', name: 'bill-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.bill-export-raw' },
     ] },
     { key: 'c-account', name: 'c-account', url: '', action: 'context', roleNeeded: 'treasurer', icon: 'help-circle', label: '', children: [
-      { key: 'account-create', name: 'account-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'edit', label: 'Kontoplan hinzufügen' },
-      { key: 'account-delete', name: 'account-delete', url: 'delete', action: 'call', roleNeeded: 'treasurer', icon: 'trash', label: 'Kontoplan löschen' },
-      { key: 'account-export', name: 'account-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Kontoplan herunterladen' },
+      { key: 'account-create', name: 'account-create', url: 'create', action: 'call', roleNeeded: 'treasurer', icon: 'edit', label: '@item.account-create' },
+      { key: 'account-delete', name: 'account-delete', url: 'delete', action: 'call', roleNeeded: 'treasurer', icon: 'trash', label: '@item.account-delete' },
+      { key: 'account-export', name: 'account-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.account-export' },
     ] },
     // Not named `c-…` — the live doc really is `ocr-rule-context` (same naming outlier class
     // as `forms-context`/`contextMenuChat`). Copied verbatim; renaming it would orphan the
     // live doc.
     { key: 'ocr-rule-context', name: 'ocr-rule-context', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
-      { key: 'ocr-rule-add', name: 'ocr-rule-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: 'Neue OCR Regel' },
-      { key: 'ocr-rule-export', name: 'ocr-rule-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: 'Export' },
+      { key: 'ocr-rule-add', name: 'ocr-rule-add', url: 'add', action: 'call', roleNeeded: 'treasurer', icon: 'add-circle', label: '@item.ocr-rule-add' },
+      { key: 'ocr-rule-export', name: 'ocr-rule-export', url: 'export', action: 'call', roleNeeded: 'treasurer', icon: 'download', label: '@item.ocr-rule-export' },
     ] },
   ],
 };
@@ -1248,7 +1248,7 @@ const esign: FeatureBlock = {
   collections: ['esignList', 'esignAudit'],
   menu: [
     cmsMenuParent([
-      { key: 'esign', name: 'esign', url: '/esign', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'shield', label: 'E-Signature' },
+      { key: 'esign', name: 'esign', url: '/esign', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'shield', label: '@item.esign' },
     ]),
   ],
 };
@@ -1282,7 +1282,7 @@ const pdfTemplate: FeatureBlock = {
   collections: ['templates', 'docGenerations'],
   menu: [
     cmsMenuParent([
-      { key: 'templates', name: 'templates', url: '/templates', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'form', label: 'Templates' },
+      { key: 'templates', name: 'templates', url: '/templates', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'form', label: '@item.templates' },
     ]),
   ],
 };
@@ -1403,14 +1403,14 @@ const documentBlock: FeatureBlock = {
     { key: 'c-documents', name: 'c-documents', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       // Same shared `editmode-toggle` doc `c-contentpage` declares. `DocumentList` opens read-only
       // (tap a folder → navigate, tap a file → viewer overlay); this flips it to the action sheets.
-      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: 'Edit Modus' },
-      { key: 'document-add', name: 'document-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'upload', label: 'Dokument hinzufügen' },
-      { key: 'document-export-raw', name: 'document-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Export Rohdaten' },
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
+      { key: 'document-add', name: 'document-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'upload', label: '@item.document-add' },
+      { key: 'document-export-raw', name: 'document-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.document-export-raw' },
       // Same ACTIVE (non-archived) `filter-toggle` doc the `calevent` block already
       // declares — field-identical here on purpose (two live docs share this name; the
       // `isArchived: true` one must not be catalogued, rule 10). See the long note on
       // `c-calevents` above.
-      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen' },
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
     ] },
     // `c-folder` is catalogued HERE, on `document`, despite its name — and it is catalogued
     // at all despite NO catalogued (or live) `navigate` url pointing at it and no route
@@ -1435,10 +1435,10 @@ const documentBlock: FeatureBlock = {
     //    label→input, `toggleFilter` → local signal). `FolderList.onPopoverDismiss` handles
     //    only `'add'` and is not rendered anywhere in the app.
     { key: 'c-folder', name: 'c-folder', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
-      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: 'Edit Modus' },
-      { key: 'folder-add', name: 'folder-add', url: 'addFolder', action: 'call', roleNeeded: 'registered', icon: 'folder', label: 'Ordner hinzufügen' },
-      { key: 'files-add', name: 'files-add', url: 'addFiles', action: 'call', roleNeeded: 'registered', icon: 'upload', label: 'Dateien hinzufügen' },
-      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen' },
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
+      { key: 'folder-add', name: 'folder-add', url: 'addFolder', action: 'call', roleNeeded: 'registered', icon: 'folder', label: '@item.folder-add' },
+      { key: 'files-add', name: 'files-add', url: 'addFiles', action: 'call', roleNeeded: 'registered', icon: 'upload', label: '@item.files-add' },
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
     ] },
   ],
 };
@@ -1552,7 +1552,7 @@ const chat: FeatureBlock = {
   menu: [
     // Live root child of BOTH `main_scs` and `main_test` (not nested under any submenu), on
     // all 16 tenants — mirrored as a top-level `navigate` spec accordingly.
-    { key: 'chat', name: 'chat', url: '/private/chat/contextMenuChat', action: 'navigate', roleNeeded: 'registered', icon: 'chatbubbles', label: 'Chat' },
+    { key: 'chat', name: 'chat', url: '/private/chat/contextMenuChat', action: 'navigate', roleNeeded: 'registered', icon: 'chatbubbles', label: '@item.chat' },
     // Not named `c-…`; see the long note above for why the wrapper-coverage test structurally
     // cannot reach this one and why it must be catalogued regardless. CO-DECLARED, verbatim,
     // on the `subject` block as well (the group view's "Chat" segment hoists this key) — the
@@ -1560,8 +1560,8 @@ const chat: FeatureBlock = {
     // `planMenuOpsForBlocks`. Keep the two copies field-identical; the cross-block identity
     // test in `feature-catalogue.completeness.spec.ts` enforces it.
     { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
-      { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: 'Chat Raum hinzufügen' },
-      { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: 'Chat Raum bearbeiten' },
+      { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: '@item.chat-room-add' },
+      { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: '@item.chat-room-edit' },
     ] },
   ],
 };
@@ -1806,7 +1806,7 @@ const activity: FeatureBlock = {
   // anywhere under `libs/activity`).
   menu: [
     aocMenuParent([
-      { key: 'activity-all', name: 'activity-all', url: '/activity', action: 'navigate', roleNeeded: 'admin', icon: 'stackoverflow', label: 'System-Aktivitäten' },
+      { key: 'activity-all', name: 'activity-all', url: '/activity', action: 'navigate', roleNeeded: 'admin', icon: 'stackoverflow', label: '@item.activity-all' },
     ]),
   ],
 };
@@ -1882,8 +1882,8 @@ const task: FeatureBlock = {
   menu: [
     // Both verbatim off the live docs. `task-all` is `tenants: ['test','scs']`, `task-my`
     // `['scs']` — so most tenants have neither row today.
-    { key: 'task-all', name: 'task-all', url: '/task/all/c-tasks', action: 'navigate', roleNeeded: 'privileged', icon: 'todo', label: 'Alle Todos' },
-    { key: 'task-my', name: 'task-my', url: '/task/my/c-tasks', action: 'navigate', roleNeeded: 'registered', icon: 'todo', label: 'Meine Aufgaben' },
+    { key: 'task-all', name: 'task-all', url: '/task/all/c-tasks', action: 'navigate', roleNeeded: 'privileged', icon: 'todo', label: '@item.task-all' },
+    { key: 'task-my', name: 'task-my', url: '/task/my/c-tasks', action: 'navigate', roleNeeded: 'registered', icon: 'todo', label: '@item.task-my' },
     // `c-tasks` — catalogued here, on the block whose `TaskList.onPopoverDismiss` dispatches all
     // three children (`add`, `export`, `toggleFilter`), exactly as `c-folder` sits on the
     // `document` block that dispatches it rather than on the folder domain it is named after.
@@ -1899,19 +1899,19 @@ const task: FeatureBlock = {
     // action children are `registered` (a member may add their own todo and export the list from
     // a popover they can only open in a context that already grants it). Copied verbatim.
     { key: 'c-tasks', name: 'c-tasks', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
-      { key: 'task-add', name: 'task-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: 'Neuen Task erstellen' },
+      { key: 'task-add', name: 'task-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.task-add' },
       // Live-data note, same class as `expense-export` on `finance`: this doc's stale `index`
       // string reads `a:callFunction k:test-export` (with a typo'd key), but its `action` FIELD —
       // the authoritative one, and the only one `MenuSpec` models — is `call`. `index` is
       // regenerated from `name`/`action`/`okey` on every write (`menuIndex`, `menu-seed.util.ts`),
       // so the drift self-heals; mirrored off `action`.
-      { key: 'task-export', name: 'task-export', url: 'export', action: 'call', roleNeeded: 'registered', icon: 'download', label: 'Aufgaben exportieren' },
+      { key: 'task-export', name: 'task-export', url: 'export', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.task-export' },
       // The same ACTIVE (non-archived) `filter-toggle` doc `c-calevents` and `c-documents`
       // already declare — field-identical here on purpose (two live docs share this name; the
       // `isArchived: true` one must not be catalogued, rule 10). See the long note on
       // `c-calevents`. `TaskList` binds it through `[toggleStates]="{ toggleFilter: showFilter() }"`
       // (`task-list.ts:72`), so the `toggle` action and the `toggleFilter` url are both load-bearing.
-      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: 'Filter anzeigen' },
+      { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
     ] },
   ],
 };

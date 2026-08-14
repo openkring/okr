@@ -345,10 +345,10 @@ export class CalEventList implements OnInit {
     },
     locale: 'de',
     buttonText: {
-      today: 'Heute',
-      month: 'Monat',
-      week: 'Woche',
-      day: 'Tag',
+      today: this.store.i18n.cal_today(),
+      month: this.store.i18n.cal_month(),
+      week:  this.store.i18n.cal_week(),
+      day:   this.store.i18n.cal_day(),
     },
     views: {
       timeGridWeek: {

@@ -62,6 +62,10 @@
       "ch": "Schweiz",
       "eu": "EWR",
       "third": "Drittstaat"
+    },
+    "aria": {
+      "empty": "Datenflussdiagramm: keine aktiven Empfänger",
+      "flow": "Datenflussdiagramm: Daten fliessen an {names}"
     }
   }
 }

@@ -137,7 +137,7 @@ const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
                   </ion-thumbnail>
                   <ion-label>
                     <h3>{{ folder.title || folder.name }}</h3>
-                    <p>{{ folderDocumentCounts().get(folder.okey) ?? 0 }} Dateien</p>
+                    <p>{{ folderDocumentCounts().get(folder.okey) ?? 0 }} {{ store.i18n.file_count() }}</p>
                   </ion-label>
                 </ion-item>
               </ion-col>

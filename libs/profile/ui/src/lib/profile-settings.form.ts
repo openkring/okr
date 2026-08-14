@@ -97,18 +97,18 @@ const EDITED_FIELDS = [
                 <ion-col size="12">
                   <ion-item lines="none">
                     <ion-label>
-                      <h3>Push-Benachrichtigungen</h3>
+                      <h3>{{ i18n().push_title() }}</h3>
                       @if (notificationPermission() === 'granted') {
-                        <p style="color: var(--ion-color-success)">Aktiv</p>
+                        <p style="color: var(--ion-color-success)">{{ i18n().push_active() }}</p>
                       } @else if (notificationPermission() === 'denied') {
-                        <p style="color: var(--ion-color-danger)">Blockiert – Systemeinstellungen → Mitteilungen öffnen</p>
+                        <p style="color: var(--ion-color-danger)">{{ i18n().push_blocked() }}</p>
                       } @else {
-                        <p>Aktivieren, um auch ausserhalb der App benachrichtigt zu werden.</p>
+                        <p>{{ i18n().push_hint() }}</p>
                       }
                     </ion-label>
                     @if (notificationPermission() !== 'denied') {
                       <ion-button slot="end" fill="outline" size="small" (click)="enableNotifications()">
-                        {{ notificationPermission() === 'granted' ? 'Erneuern' : 'Aktivieren' }}
+                        {{ notificationPermission() === 'granted' ? i18n().push_renew() : i18n().push_enable() }}
                       </ion-button>
                     }
                   </ion-item>

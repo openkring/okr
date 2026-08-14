@@ -55,6 +55,8 @@ export class ApplicationService {
     mail_conf:          PFX + 'mail.confirmation_sent',
     mail_decision_conf: PFX + 'mail.decision_sent',
     mail_failed:        PFX + 'mail.send_failed',
+    mail_accepted:      PFX + 'mail.subject_accepted',
+    mail_rejected:      PFX + 'mail.subject_rejected',
   });
 
   private readonly sendEmailFn = httpsCallable<unknown, void>(
@@ -358,8 +360,8 @@ export class ApplicationService {
         cc: cc.length > 0 ? cc : undefined,
         appId: this.env.appId,
         subject: template === 'application.accepted'
-          ? 'Ihr Antrag wurde angenommen'
-          : 'Ihr Antrag wurde nicht angenommen',
+          ? this.i18n.mail_accepted()
+          : this.i18n.mail_rejected(),
         html: '',
         // from omitted: the sendEmail CF supplies the app's verified sender address.
         provider: 'mailtrap_api',

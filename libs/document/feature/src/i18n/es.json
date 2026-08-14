@@ -261,5 +261,6 @@
     "hint": "Para logotipos y gráficos de color plano. Las fotografías producen archivos SVG muy grandes y rara vez un resultado utilizable.",
     "empty": "Todavía no se ha generado ningún SVG.",
     "error": "No se pudo generar el SVG."
-  }
+  },
+  "fileCount": "archivos"
 }

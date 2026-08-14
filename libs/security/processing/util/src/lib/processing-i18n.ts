@@ -66,6 +66,8 @@ export const PROCESSING_I18N_KEYS = {
   map_legend_ch: PFX + 'map.legend.ch',
   map_legend_eu: PFX + 'map.legend.eu',
   map_legend_third: PFX + 'map.legend.third',
+  map_aria_empty: PFX + 'map.aria.empty',
+  map_aria_flow:  PFX + 'map.aria.flow',
 } satisfies Record<string, string>;
 
 export type ProcessingI18n = { [K in keyof typeof PROCESSING_I18N_KEYS]: Signal<string> };

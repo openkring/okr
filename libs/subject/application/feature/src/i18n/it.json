@@ -68,7 +68,9 @@
     "submitted": "Ricevuta",
     "reviewed": "In elaborazione dal",
     "reviewer": "Responsabile dell'elaborazione",
-    "reason": "Osservazione"
+    "reason": "Osservazione",
+    "gender_male": "maschile",
+    "gender_female": "femminile"
   },
   "validation": {
     "email_required": "L'e-mail è obbligatoria (del richiedente oppure del genitore).",
@@ -92,5 +94,9 @@
     "closed_approved": "Accettata",
     "closed_denied": "Rifiutata",
     "closed_cancelled": "Ritirata"
+  },
+  "mail": {
+    "subject_accepted": "La sua richiesta è stata accettata",
+    "subject_rejected": "La sua richiesta non è stata accettata"
   }
 }

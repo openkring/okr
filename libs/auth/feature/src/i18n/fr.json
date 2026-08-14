@@ -10,7 +10,8 @@
     "label": "Mot de passe",
     "placeholder": "Mot de passe",
     "error": "Le mot de passe doit comporter au moins 6 caractères et peut contenir les caractères spéciaux suivants : -_!@?:;äüö$*+&()=.,£$%",
-    "helper": "Si vous n'avez pas encore de mot de passe ou si vous ne le connaissez pas, vous pouvez cliquer sur le bouton 'Réinitialiser le mot de passe' ci-dessous et définir un nouveau mot de passe."
+    "helper": "Si vous n'avez pas encore de mot de passe ou si vous ne le connaissez pas, vous pouvez cliquer sur le bouton 'Réinitialiser le mot de passe' ci-dessous et définir un nouveau mot de passe.",
+    "changed": "Le mot de passe de {email} a été modifié."
   },
   "pwdreset": {
     "title": "Définir le mot de passe",
@@ -20,7 +21,6 @@
     "savepwd": "Enregistrer le mot de passe"
   },
   "pwdconfirm": "Définir le mot de passe",
-
   "roles": {
     "label": "Rôles",
     "helper": "Les rôles regroupent des autorisations en une fonction spécifique.",
@@ -72,5 +72,8 @@
       "label": "tester",
       "description": "Testeur"
     }
+  },
+  "background": {
+    "alt": "Image d’arrière-plan"
   }
 }

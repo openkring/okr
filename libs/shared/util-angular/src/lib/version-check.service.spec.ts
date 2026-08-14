@@ -37,6 +37,8 @@ import { inject, PLATFORM_ID } from '@angular/core';
 import { AlertController } from '@ionic/angular/standalone';
 import { SwUpdate } from '@angular/service-worker';
 import { ENV, FIRESTORE } from '@okr/shared-config';
+import { I18nService } from '@okr/shared-i18n';
+
 import type { AppVersionConfig } from './version-check.service';
 import { UNRECOVERABLE_RELOAD_KEY, VersionCheckService } from './version-check.service';
 
@@ -59,6 +61,9 @@ describe('VersionCheckService unrecoverable-state handling', () => {
       if (token === PLATFORM_ID) return 'browser';
       if (token === FIRESTORE) return {};
       if (token === ENV) return { appId: 'p13' };
+      // the update alert resolves its labels through translateAll (main-bundle keys)
+      if (token === I18nService) return { translateAll: (keys: Record<string, string>) =>
+        Object.fromEntries(Object.keys(keys).map(k => [k, () => k])) };
       return undefined;
     });
     const service = new VersionCheckService();

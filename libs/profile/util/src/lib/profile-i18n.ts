@@ -166,6 +166,14 @@ export const PROFILE_I18N_KEYS = {
   save:                            '@save.label',
   cancel:                          '@cancel',
   ok:                              '@ok',
+
+  // push-notification settings block
+  push_title:                 PFX + 'push.title',
+  push_active:                PFX + 'push.active',
+  push_blocked:               PFX + 'push.blocked',
+  push_hint:                  PFX + 'push.hint',
+  push_renew:                 PFX + 'push.renew',
+  push_enable:                PFX + 'push.enable',
 } satisfies Record<string, string>;
 
 export type ProfileI18n = { [K in keyof typeof PROFILE_I18N_KEYS]: Signal<string> };

@@ -124,6 +124,8 @@ export const TRIP_I18N_KEYS = {
   save:                     '@save.label',
   cancel:                   '@cancel',
   ok:                       '@ok',
+  notify_deleted:           PFX + 'notify.deleted',
+  notify_suspicious:        PFX + 'notify.suspicious',
 } satisfies Record<string, string>;
 
 export type TripI18n = { [K in keyof typeof TRIP_I18N_KEYS]: Signal<string> };

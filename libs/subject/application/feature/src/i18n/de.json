@@ -68,7 +68,9 @@
     "submitted": "Eingegangen",
     "reviewed": "In Bearbeitung seit",
     "reviewer": "Bearbeiter",
-    "reason": "Bemerkung"
+    "reason": "Bemerkung",
+    "gender_male": "männlich",
+    "gender_female": "weiblich"
   },
   "validation": {
     "email_required": "E-Mail ist erforderlich (entweder Antragsteller/in oder Elternteil).",
@@ -92,5 +94,9 @@
     "closed_approved": "Angenommen",
     "closed_denied": "Abgelehnt",
     "closed_cancelled": "Zurückgezogen"
+  },
+  "mail": {
+    "subject_accepted": "Ihr Antrag wurde angenommen",
+    "subject_rejected": "Ihr Antrag wurde nicht angenommen"
   }
 }

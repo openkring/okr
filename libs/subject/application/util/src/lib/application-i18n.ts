@@ -71,7 +71,11 @@ export const APPLICATION_I18N_KEYS = {
   state_reviewing:         PFX + 'state.reviewing',
   state_closed_approved:   PFX + 'state.closed_approved',
   state_closed_denied:     PFX + 'state.closed_denied',
-  state_closed_cancelled:  PFX + 'state.closed_cancelled'
+  state_closed_cancelled:  PFX + 'state.closed_cancelled',
+  gender_male:              PFX + 'field.gender_male',
+  gender_female:            PFX + 'field.gender_female',
+  mail_accepted:            PFX + 'mail.subject_accepted',
+  mail_rejected:            PFX + 'mail.subject_rejected',
 } satisfies Record<string, string>;
 
 export type ApplicationI18n = { [K in keyof typeof APPLICATION_I18N_KEYS]: Signal<string> };

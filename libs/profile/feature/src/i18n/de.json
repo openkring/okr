@@ -266,5 +266,13 @@
     "content": "Inhalte und Beiträge",
     "consent": "Konto und Einwilligungen",
     "log": "Protokolle"
+  },
+  "push": {
+    "title": "Push-Benachrichtigungen",
+    "active": "Aktiv",
+    "blocked": "Blockiert – Systemeinstellungen → Mitteilungen öffnen",
+    "hint": "Aktivieren, um auch ausserhalb der App benachrichtigt zu werden.",
+    "renew": "Erneuern",
+    "enable": "Aktivieren"
   }
 }

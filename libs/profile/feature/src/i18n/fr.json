@@ -266,5 +266,13 @@
     "content": "Contenus et contributions",
     "consent": "Compte et consentements",
     "log": "Journaux"
+  },
+  "push": {
+    "title": "Notifications push",
+    "active": "Actif",
+    "blocked": "Bloqué – ouvrez les réglages système → notifications",
+    "hint": "Activez pour être notifié également en dehors de l’application.",
+    "renew": "Renouveler",
+    "enable": "Activer"
   }
 }

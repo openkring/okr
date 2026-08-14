@@ -190,5 +190,9 @@
     "sweep": "Remo de punta"
   },
   "person": "Persona",
-  "locked": "El cuaderno de bitácora está bloqueado actualmente. No se pueden registrar ni modificar salidas."
+  "locked": "El cuaderno de bitácora está bloqueado actualmente. No se pueden registrar ni modificar salidas.",
+  "notify": {
+    "deleted": "Salida eliminada: {name}",
+    "suspicious": "Actividad sospechosa: {name} ({reasons})"
+  }
 }

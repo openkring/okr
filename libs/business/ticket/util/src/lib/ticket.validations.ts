@@ -24,7 +24,7 @@ export const ticketValidations = staticSuite(
     // chargeable, so it may never be recorded without a reason. Enforced twice on purpose — the
     // callable is the authority (a form cannot be trusted), the form is what stops the operator
     // finding out only after pressing save.
-    test('classificationReason', 'Eine Einstufung braucht eine Begründung — sie entscheidet über die Verrechnung.', () => {
+    test('classificationReason', '@business/ticket/util.validation.classificationReason', () => {
       if (model.classification === 'unclassified') return;
       enforce(model.classificationReason?.trim() ?? '').isNotEmpty();
     });

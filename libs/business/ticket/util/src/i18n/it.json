@@ -138,5 +138,8 @@
   "changeConfirmation": {
     "cancel": "Annulla",
     "ok": "Salva"
+  },
+  "validation": {
+    "classificationReason": "Una classificazione richiede una motivazione: determina la fatturazione."
   }
 }

@@ -201,7 +201,11 @@
   "calendar": {
     "title": "Calendario",
     "add": "Creare un nuovo calendario",
-    "select": "Seleziona calendario"
+    "select": "Seleziona calendario",
+    "today": "Oggi",
+    "month": "Mese",
+    "week": "Settimana",
+    "day": "Giorno"
   },
   "date": {
     "start": {
@@ -374,5 +378,10 @@
     "caleventStartDateMandatory": "La data di inizio è obbligatoria.",
     "caleventEndDateMandatory": "La data di fine è obbligatoria.",
     "caleventModelType": "Il ModelType deve essere EventModel."
+  },
+  "urlLabel": {
+    "label": "Etichetta del link",
+    "placeholder": "p. es. Bando di gara",
+    "helper": "Testo mostrato al posto dell’URL. Lasciare vuoto per mostrare l’URL stesso."
   }
 }

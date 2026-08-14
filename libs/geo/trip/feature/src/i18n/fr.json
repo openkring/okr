@@ -190,5 +190,9 @@
     "sweep": "Pointe"
   },
   "person": "Personne",
-  "locked": "Le carnet de bord est actuellement verrouillé. Aucune sortie ne peut être saisie ou modifiée."
+  "locked": "Le carnet de bord est actuellement verrouillé. Aucune sortie ne peut être saisie ou modifiée.",
+  "notify": {
+    "deleted": "Sortie supprimée : {name}",
+    "suspicious": "Activité suspecte : {name} ({reasons})"
+  }
 }

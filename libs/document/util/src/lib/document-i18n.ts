@@ -135,6 +135,7 @@ export const DOCUMENT_I18N_KEYS = {
   ok:                           '@ok',
   cancel:                       '@cancel',
   save:                         '@save.label',
+  file_count:       '@document/feature.fileCount',
 } satisfies Record<string, string>;
 
 export type DocumentI18n = { [K in keyof typeof DOCUMENT_I18N_KEYS]: Signal<string> };

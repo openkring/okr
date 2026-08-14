@@ -190,5 +190,9 @@
     "scull": "Skull",
     "sweep": "Riemen"
   },
-  "locked": "Das Logbuch ist zurzeit gesperrt. Es können keine Fahrten erfasst oder geändert werden."
+  "locked": "Das Logbuch ist zurzeit gesperrt. Es können keine Fahrten erfasst oder geändert werden.",
+  "notify": {
+    "deleted": "Trip gelöscht: {name}",
+    "suspicious": "Verdächtige Aktivität: {name} ({reasons})"
+  }
 }

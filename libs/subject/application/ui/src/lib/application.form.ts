@@ -57,8 +57,8 @@ import { ApplicationI18n, needsSsn } from '@okr/application-util';
         <ion-item>
           <ion-label>{{ i18n().gender() }}</ion-label>
           <ion-radio-group name="gender" [(ngModel)]="gender" [disabled]="isReadOnly()" (ionChange)="emitChange()">
-            <ion-radio value="male">männlich</ion-radio>
-            <ion-radio value="female">weiblich</ion-radio>
+            <ion-radio value="male">{{ i18n().gender_male() }}</ion-radio>
+            <ion-radio value="female">{{ i18n().gender_female() }}</ion-radio>
           </ion-radio-group>
         </ion-item>
         <ion-item>

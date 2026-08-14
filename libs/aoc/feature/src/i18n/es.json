@@ -304,6 +304,12 @@
         "ambiguous": "salas sin asignación inequívoca omitidas (siguen visibles en todas partes).",
         "confirm": "¿Asignar ahora {{ count }} salas de chat a sus inquilinos?",
         "conf": "{{ count }} salas de chat asignadas."
+      },
+      "members": {
+        "label": "Conciliar los miembros del chat de grupo",
+        "description": "Añade a cada persona con una afiliación activa a la sala de chat de su grupo. Necesario para los miembros que un error anterior eliminó demasiado pronto de sus salas. Puramente aditivo: solo se añade, nunca se elimina; los miembros de la sala sin afiliación (p. ej. participantes de un curso) no se ven afectados.",
+        "action": "Conciliar",
+        "confirm": "¿Conciliar ahora los miembros de los {count} grupos?"
       }
     }
   },

@@ -10,7 +10,8 @@
     "label": "Password",
     "placeholder": "Password",
     "error": "The password must be at least 6 characters long and may contain the following special characters: -_!@?:;äüö$*+&()=.,£$%",
-    "helper": "If you do not yet have a password or do not know it, you can click the 'Reset password' button below and set a new password."
+    "helper": "If you do not yet have a password or do not know it, you can click the 'Reset password' button below and set a new password.",
+    "changed": "The password for {email} was changed."
   },
   "pwdreset": {
     "title": "Set password",
@@ -20,7 +21,6 @@
     "savepwd": "Save password"
   },
   "pwdconfirm": "Set password",
-
   "roles": {
     "label": "Roles",
     "helper": "Roles group permissions into a specific function.",
@@ -72,5 +72,8 @@
       "label": "tester",
       "description": "Tester"
     }
+  },
+  "background": {
+    "alt": "Background image"
   }
 }

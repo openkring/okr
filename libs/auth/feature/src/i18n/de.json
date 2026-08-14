@@ -10,7 +10,8 @@
     "label": "Passwort",
     "placeholder": "Passwort",
     "error": "Das Passwort muss mindestens 6 Zeichen lang sein und darf die folgenden Sonderzeichen enthalten: -_!@?:;äüö$*+&()=.,£$%",
-    "helper": "Falls du noch kein Passwort hast oder dieses nicht kennst, kannst du unten auf den Button 'Passwort zurücksetzen' klicken und ein neues Passwort setzen."
+    "helper": "Falls du noch kein Passwort hast oder dieses nicht kennst, kannst du unten auf den Button 'Passwort zurücksetzen' klicken und ein neues Passwort setzen.",
+    "changed": "Passwort für {email} wurde geändert."
   },
   "pwdreset": {
     "title": "Passwort setzen",
@@ -20,7 +21,6 @@
     "savepwd": "Passwort speichern"
   },
   "pwdconfirm": "Passwort setzen",
-
   "roles": {
     "label": "Rollen",
     "helper": "Rollen gruppieren Berechtigungen zu einer bestimmten Funktion.",
@@ -72,5 +72,8 @@
       "label": "tester",
       "description": "Tester"
     }
+  },
+  "background": {
+    "alt": "Hintergrundbild"
   }
 }

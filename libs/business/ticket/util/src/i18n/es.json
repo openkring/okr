@@ -138,5 +138,8 @@
   "changeConfirmation": {
     "cancel": "Cancelar",
     "ok": "Guardar"
+  },
+  "validation": {
+    "classificationReason": "Una clasificación necesita un motivo: determina la facturación."
   }
 }

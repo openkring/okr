@@ -304,6 +304,12 @@
         "ambiguous": "rooms without an unambiguous assignment skipped (they stay visible everywhere).",
         "confirm": "Assign {{ count }} chat rooms to their tenants now?",
         "conf": "{{ count }} chat rooms assigned."
+      },
+      "members": {
+        "label": "Reconcile group-chat members",
+        "description": "Adds every person with an active group membership to their group's chat room. Needed for members who were removed from their rooms too early by an earlier bug. Purely additive: members are only added, never removed — room members without a membership (e.g. course participants) are left untouched.",
+        "action": "Reconcile",
+        "confirm": "Reconcile the members of all {count} groups now?"
       }
     }
   },

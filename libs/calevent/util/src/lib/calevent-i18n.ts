@@ -201,6 +201,12 @@ export const CALEVENT_I18N_KEYS = {
 
   // calevent_type: explicit
 
+
+  // FullCalendar toolbar buttons
+  cal_today:                  PFX + 'calendar.today',
+  cal_month:                  PFX + 'calendar.month',
+  cal_week:                   PFX + 'calendar.week',
+  cal_day:                    PFX + 'calendar.day',
 } satisfies Record<string, string>;
 
 export type CaleventI18n = { [K in keyof typeof CALEVENT_I18N_KEYS]: Signal<string> };

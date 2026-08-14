@@ -56,7 +56,8 @@
       "label": "Create a new web page",
       "conf": "Web page has been created.",
       "error": "Web page could not be created."
-    }
+    },
+    "title": "Group: {name}"
   },
   "article": {
     "title": "Article",

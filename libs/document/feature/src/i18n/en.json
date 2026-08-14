@@ -261,5 +261,6 @@
     "hint": "For logos and flat colour graphics. Photographs produce very large SVG files and rarely a usable result.",
     "empty": "No SVG generated yet.",
     "error": "The SVG could not be generated."
-  }
+  },
+  "fileCount": "files"
 }

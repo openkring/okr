@@ -266,5 +266,13 @@
     "content": "Contenuti e contributi",
     "consent": "Account e consensi",
     "log": "Registri"
+  },
+  "push": {
+    "title": "Notifiche push",
+    "active": "Attivo",
+    "blocked": "Bloccato – aprire le impostazioni di sistema → notifiche",
+    "hint": "Attivare per ricevere notifiche anche fuori dall’app.",
+    "renew": "Rinnovare",
+    "enable": "Attivare"
   }
 }

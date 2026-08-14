@@ -8,6 +8,8 @@
   "dependencies": {
     "tslib": "^2.8.1",
     "@okr/shared-models": "*",
-    "@okr/security-processing-util": "*"
+    "@okr/security-processing-util": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-util-core": "*"
   }
 }

@@ -7,7 +7,7 @@ import { AppStore, KioskStatusService, LocationSelectResult, ModelSelectService 
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, PersonModel, TaskModel, TripModel, UserModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
-import { getAvatarInfoForCurrentUser, getFullName, getYear, hasRole, nameMatches } from '@okr/shared-util-core';
+import { fill, getAvatarInfoForCurrentUser, getFullName, getYear, hasRole, nameMatches } from '@okr/shared-util-core';
 import { yearMatches } from '@okr/shared-categories';
 
 import { TaskService } from '@okr/task-data-access';
@@ -198,7 +198,7 @@ export const TripStore = signalStore(
 
       const reason = store.i18n.delete_reason();
       await store.tripService.softDelete(trip, reason, undefined, store.currentUser());
-      await this.notifyResponsibility('trip', `Trip gelöscht: ${trip.name}`, reason, undefined, store.currentUser());
+      await this.notifyResponsibility('trip', fill(store.i18n.notify_deleted(), { name: trip.name }), reason, undefined, store.currentUser());
       store.tripsResource.reload();
     },
 
@@ -276,7 +276,7 @@ export const TripStore = signalStore(
       await store.tripService.update(updatedTrip as TripModel, store.currentUser());
       await this.notifyResponsibility(
         'trip',
-        `Verdächtige Aktivität: ${trip.name} (${reasons.join(', ')})`,
+        fill(store.i18n.notify_suspicious(), { name: trip.name, reasons: reasons.join(', ') }),
         reasons.join(', '),
         undefined,
         store.currentUser(),

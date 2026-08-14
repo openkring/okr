@@ -138,5 +138,8 @@
   "changeConfirmation": {
     "cancel": "Abbrechen",
     "ok": "Speichern"
+  },
+  "validation": {
+    "classificationReason": "Eine Einstufung braucht eine Begründung — sie entscheidet über die Verrechnung."
   }
 }

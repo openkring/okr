@@ -261,5 +261,6 @@
     "hint": "Pour les logos et les graphiques en aplats de couleur. Les photographies produisent des fichiers SVG très volumineux et rarement un résultat exploitable.",
     "empty": "Aucun SVG généré pour le moment.",
     "error": "Le SVG n'a pas pu être généré."
-  }
+  },
+  "fileCount": "fichiers"
 }

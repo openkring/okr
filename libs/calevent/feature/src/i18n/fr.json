@@ -201,7 +201,11 @@
   "calendar": {
     "title": "Calendrier",
     "add": "Créer un nouveau calendrier",
-    "select": "Sélectionner un calendrier"
+    "select": "Sélectionner un calendrier",
+    "today": "Aujourd’hui",
+    "month": "Mois",
+    "week": "Semaine",
+    "day": "Jour"
   },
   "date": {
     "start": {
@@ -374,5 +378,10 @@
     "caleventStartDateMandatory": "La date de début est obligatoire.",
     "caleventEndDateMandatory": "La date de fin est obligatoire.",
     "caleventModelType": "Le ModelType doit être EventModel."
+  },
+  "urlLabel": {
+    "label": "Libellé du lien",
+    "placeholder": "p. ex. Avis de course",
+    "helper": "Texte affiché à la place de l’URL. Laisser vide pour afficher l’URL elle-même."
   }
 }

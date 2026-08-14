@@ -190,5 +190,9 @@
     "sweep": "Sweep"
   },
   "person": "Person",
-  "locked": "The logbook is currently locked. Trips cannot be created or changed."
+  "locked": "The logbook is currently locked. Trips cannot be created or changed.",
+  "notify": {
+    "deleted": "Trip deleted: {name}",
+    "suspicious": "Suspicious activity: {name} ({reasons})"
+  }
 }

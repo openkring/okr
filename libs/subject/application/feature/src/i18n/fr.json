@@ -68,7 +68,9 @@
     "submitted": "Reçue",
     "reviewed": "En traitement depuis",
     "reviewer": "Responsable du traitement",
-    "reason": "Remarque"
+    "reason": "Remarque",
+    "gender_male": "masculin",
+    "gender_female": "féminin"
   },
   "validation": {
     "email_required": "L'e-mail est obligatoire (soit le demandeur, soit le parent).",
@@ -92,5 +94,9 @@
     "closed_approved": "Acceptée",
     "closed_denied": "Refusée",
     "closed_cancelled": "Retirée"
+  },
+  "mail": {
+    "subject_accepted": "Votre demande a été acceptée",
+    "subject_rejected": "Votre demande n’a pas été acceptée"
   }
 }

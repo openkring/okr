@@ -11,6 +11,7 @@
     "vest": "*",
     "@okr/shared-models": "*",
     "@okr/shared-constants": "*",
-    "@okr/shared-util-core": "*"
+    "@okr/shared-util-core": "*",
+    "@okr/shared-i18n": "*"
   }
 }

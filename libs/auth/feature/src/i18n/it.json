@@ -10,7 +10,8 @@
     "label": "Password",
     "placeholder": "Password",
     "error": "La password deve essere lunga almeno 6 caratteri e può contenere i seguenti caratteri speciali: -_!@?:;äüö$*+&()=.,£$%",
-    "helper": "Se non si dispone ancora di una password o non la si conosce, è possibile fare clic sul pulsante 'Reimposta password' qui sotto e impostare una nuova password."
+    "helper": "Se non si dispone ancora di una password o non la si conosce, è possibile fare clic sul pulsante 'Reimposta password' qui sotto e impostare una nuova password.",
+    "changed": "La password di {email} è stata modificata."
   },
   "pwdreset": {
     "title": "Imposta password",
@@ -20,7 +21,6 @@
     "savepwd": "Salva password"
   },
   "pwdconfirm": "Imposta password",
-
   "roles": {
     "label": "Ruoli",
     "helper": "I ruoli raggruppano le autorizzazioni in una funzione specifica.",
@@ -72,5 +72,8 @@
       "label": "tester",
       "description": "Tester"
     }
+  },
+  "background": {
+    "alt": "Immagine di sfondo"
   }
 }

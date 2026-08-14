@@ -261,5 +261,6 @@
     "hint": "Per loghi e grafiche a colori piatti. Le fotografie producono file SVG molto grandi e raramente un risultato utilizzabile.",
     "empty": "Nessun SVG ancora generato.",
     "error": "Non è stato possibile generare il SVG."
-  }
+  },
+  "fileCount": "file"
 }

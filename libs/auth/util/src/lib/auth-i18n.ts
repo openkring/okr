@@ -28,6 +28,9 @@ export const AUTH_I18N_KEYS = {
   ok:                       '@ok',
   validation_emailRequired: '@validation.emailRequired',
   validation_passwordRequired: '@validation.passwordRequired',
+
+  background_alt:           PFX + 'background.alt',
+  password_changed:         PFX + 'password.changed',
 } satisfies Record<string, string>;
 
 export type AuthI18n = { [K in keyof typeof AUTH_I18N_KEYS]: Signal<string> };

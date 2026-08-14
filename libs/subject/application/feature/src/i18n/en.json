@@ -68,7 +68,9 @@
     "submitted": "Received",
     "reviewed": "Under review since",
     "reviewer": "Reviewer",
-    "reason": "Remark"
+    "reason": "Remark",
+    "gender_male": "male",
+    "gender_female": "female"
   },
   "validation": {
     "email_required": "Email is required (either applicant or parent).",
@@ -92,5 +94,9 @@
     "closed_approved": "Accepted",
     "closed_denied": "Rejected",
     "closed_cancelled": "Withdrawn"
+  },
+  "mail": {
+    "subject_accepted": "Your application was accepted",
+    "subject_rejected": "Your application was not accepted"
   }
 }

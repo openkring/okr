@@ -12,11 +12,9 @@
     "album": "Alben",
     "members": "Mitglieder"
   },
-
   "files": {
     "conflict": "Der Datei-Ordner dieser Gruppe wird bereits von einer anderen Person verwaltet und kann hier nicht verwendet werden. Bitte kontaktiere eine Administratorin oder einen Administrator."
   },
-
   "admins": {
     "title": "Gruppen-Administratoren",
     "description": "Diese Personen können die Gruppe verwalten, z.B. Mitglieder hinzufügen oder entfernen. Der erst genannte Administrator ist zudem der Hauptkontakt, dh. dieser Person werden Todo's automatisch zugewiesen."
@@ -58,7 +56,8 @@
       "label": "Neue Webseite erstellen",
       "conf": "Webseite wurde erstellt.",
       "error": "Webseite konnte nicht erstellt werden."
-    }
+    },
+    "title": "Gruppe: {name}"
   },
   "article": {
     "title": "Artikel",
@@ -96,7 +95,6 @@
       "error": "Der Kalender konnte nicht hinzugefügt werden."
     }
   },
-
   "attributes": "Gruppen-Eigenschaften",
   "display": "Darstellung",
   "access": "Zugang & Benachrichtigungen",

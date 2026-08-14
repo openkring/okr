@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import {
-  NODE_HEIGHT, NODE_WIDTH, layoutProcessingMap,
+  NODE_HEIGHT, NODE_WIDTH, layoutProcessingMap, PROCESSING_I18N_KEYS,
 } from '@okr/security-processing-util';
+import { I18nService } from '@okr/shared-i18n';
+import { fill } from '@okr/shared-util-core';
 import type { ProcessorEntry } from '@okr/shared-models';
 
 /**
@@ -76,6 +78,8 @@ export class ProcessingMap {
   protected readonly hubWidth = 150;
   protected readonly hubHeight = 52;
 
+  private readonly i18n = inject(I18nService).translateAll(PROCESSING_I18N_KEYS);
+
   protected readonly layout = computed(() =>
     layoutProcessingMap(this.entries(), this.width(), this.height()));
 
@@ -83,7 +87,7 @@ export class ProcessingMap {
   protected readonly ariaLabel = computed(() => {
     const names = this.layout().nodes.map((n) => `${n.name} (${n.country})`);
     return names.length === 0
-      ? 'Datenflussdiagramm: keine aktiven Empfänger'
-      : `Datenflussdiagramm: Daten fliessen an ${names.join(', ')}`;
+      ? this.i18n.map_aria_empty()
+      : fill(this.i18n.map_aria_flow(), { names: names.join(', ') });
   });
 }

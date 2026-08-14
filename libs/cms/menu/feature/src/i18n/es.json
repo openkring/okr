@@ -533,6 +533,8 @@
     "filter-toggle-show": "Mostrar filtro",
     "filter-toggle-show_alt": "Ocultar filtro",
     "membership-sendemail": "Enviar correo",
-    "person-send-email": "Enviar correo"
+    "person-send-email": "Enviar correo",
+    "aoc-kiosk": "Kiosco",
+    "trip-callsupport": "Llamar al soporte"
   }
 }

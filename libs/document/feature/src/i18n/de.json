@@ -261,5 +261,6 @@
     "hint": "Für Logos und flächige Farbgrafiken. Fotos ergeben sehr grosse SVG-Dateien und selten ein brauchbares Resultat.",
     "empty": "Noch kein SVG erzeugt.",
     "error": "Das SVG konnte nicht erzeugt werden."
-  }
+  },
+  "fileCount": "Dateien"
 }

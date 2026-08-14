@@ -6,7 +6,7 @@ import { GroupModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { generateRandomString, hasRole } from '@okr/shared-util-core';
+import { fill, generateRandomString, hasRole } from '@okr/shared-util-core';
 
 import { AvatarPipe, AvatarDisplay } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
@@ -180,7 +180,7 @@ export class GroupList {
           break;
         case 'as_addPage':
           // tbd: add default article section explaining how to add content to the group page
-          await this.store.createGroupPage(group, 'intro', 'Gruppe: ' + group.name);
+          await this.store.createGroupPage(group, 'intro', fill(this.store.i18n.page_title(), { name: group.name }));
           break;
         case 'as_edit':
           await this.store.edit(group, readOnly);

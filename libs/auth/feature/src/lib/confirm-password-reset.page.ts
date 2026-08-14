@@ -36,7 +36,7 @@ import { AuthStore } from './auth.store';
     <okr-header [i18n]="{ title: store.i18n.pwdconfirm() }" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
-        <img class="background-image" [src]="backgroundImageUrl()" alt="Ruderer des Seeclub Stäfa" />
+        <img class="background-image" [src]="backgroundImageUrl()" [alt]="store.i18n.background_alt()" />
         <div class="login-form">
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="store.gotoHome()" />
           <ion-label class="title"><strong>{{ store.i18n.newpwd() }}</strong></ion-label>

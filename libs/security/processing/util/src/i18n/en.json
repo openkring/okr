@@ -62,6 +62,10 @@
       "ch": "Switzerland",
       "eu": "EEA",
       "third": "Third country"
+    },
+    "aria": {
+      "empty": "Data-flow diagram: no active recipients",
+      "flow": "Data-flow diagram: data flows to {names}"
     }
   }
 }

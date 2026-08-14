@@ -56,7 +56,8 @@
       "label": "Crear una nueva página web",
       "conf": "La página web se ha creado.",
       "error": "No se ha podido crear la página web."
-    }
+    },
+    "title": "Grupo: {name}"
   },
   "article": {
     "title": "Artículo",

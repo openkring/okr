@@ -10,7 +10,8 @@
     "label": "Contraseña",
     "placeholder": "Contraseña",
     "error": "La contraseña debe tener al menos 6 caracteres y puede contener los siguientes caracteres especiales: -_!@?:;äüö$*+&()=.,£$%",
-    "helper": "Si aún no tiene una contraseña o no la conoce, puede hacer clic en el botón 'Restablecer contraseña' de abajo y establecer una nueva contraseña."
+    "helper": "Si aún no tiene una contraseña o no la conoce, puede hacer clic en el botón 'Restablecer contraseña' de abajo y establecer una nueva contraseña.",
+    "changed": "Se ha cambiado la contraseña de {email}."
   },
   "pwdreset": {
     "title": "Establecer contraseña",
@@ -20,7 +21,6 @@
     "savepwd": "Guardar contraseña"
   },
   "pwdconfirm": "Establecer contraseña",
-
   "roles": {
     "label": "Roles",
     "helper": "Los roles agrupan permisos en una función determinada.",
@@ -72,5 +72,8 @@
       "label": "tester",
       "description": "Probador"
     }
+  },
+  "background": {
+    "alt": "Imagen de fondo"
   }
 }

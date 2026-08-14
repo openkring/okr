@@ -62,6 +62,10 @@
       "ch": "Suiza",
       "eu": "EEE",
       "third": "Tercer país"
+    },
+    "aria": {
+      "empty": "Diagrama de flujo de datos: sin destinatarios activos",
+      "flow": "Diagrama de flujo de datos: los datos fluyen a {names}"
     }
   }
 }
