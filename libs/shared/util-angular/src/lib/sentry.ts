@@ -33,6 +33,18 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
   // (a genuinely broken deploy) the flag stays false and the event goes through.
   if (isStaleChunkRecoveryInFlight()) return null;
 
+  // Injected in-app-browser script, not our code (SCS-4A): the Google iOS app scans the
+  // page with a recursive DOM walker (findTopmostVisibleElement → isOpaqueElement → isImage)
+  // that blows the stack on a long CMS page. The frames carry OUR page URL because the
+  // script is injected inline, so denyUrls can't catch it and the message
+  // ("Maximum call stack size exceeded") is too generic for ignoreErrors — match the
+  // function names instead. Nothing on our side is actionable.
+  const injectedScanner = /^(findTopmostVisibleElement|isOpaqueElement|isImage)$/;
+  const fromInjectedScanner = event.exception?.values?.some((v) =>
+    v.stacktrace?.frames?.some((f) => injectedScanner.test(f.function ?? '')),
+  );
+  if (fromInjectedScanner) return null;
+
   if (event.message) event.message = redactSensitive(event.message);
   event.exception?.values?.forEach((v) => { v.value = redactSensitive(v.value); });
   event.breadcrumbs?.forEach((b) => { b.message = redactSensitive(b.message); });

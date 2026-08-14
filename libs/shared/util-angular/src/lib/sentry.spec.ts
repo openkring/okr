@@ -97,6 +97,19 @@ describe('beforeSend', () => {
     expect(beforeSend(event, {})).not.toBeNull();
   });
 
+  it('drops the Google in-app browser DOM-scanner stack overflow (SCS-4A)', () => {
+    const event = {
+      environment: 'production',
+      exception: {
+        values: [{
+          value: 'Maximum call stack size exceeded.',
+          stacktrace: { frames: [{ function: 'isImage' }, { function: 'findTopmostVisibleElement' }] },
+        }],
+      },
+    } as unknown as ErrorEvent;
+    expect(beforeSend(event, {})).toBeNull();
+  });
+
   it('redacts the message of a production event', () => {
     const event = { environment: 'production', message: 'fail for a@b.ch' } as ErrorEvent;
     const out = beforeSend(event, {});
