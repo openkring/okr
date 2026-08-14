@@ -213,7 +213,7 @@
     "legaldoc": {
       "label": "Ausweis",
       "title": "Ausweise",
-      "formTitle": "",
+      "formTitle": "Angaben zum Ausweis",
       "description": "Eine Bestätigung in Form eines offiziellen Dokumentes."
     },
 

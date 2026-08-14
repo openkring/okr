@@ -17,31 +17,31 @@
   },
   "name": {
     "label": "Anlass",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "z.B. Jubiläum",
+    "helper": "Anlass der Übergabe."
   },
   "label": {
     "label": "Bezeichnung",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "z.B. Leihgabe",
+    "helper": "Kurze Bezeichnung der Übergabe."
   },
   "currency": {
     "label": "Währung",
     "placeholder": "CHF",
-    "helper": ""
+    "helper": "Währung des Preises."
   },
   "price": {
     "label": "Preis",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "z.B. 250.00",
+    "helper": "Vereinbarter Preis; 0 = kostenlos."
   },
   "notes": {
     "label": "Notizen",
-    "placeholder": ""
+    "placeholder": "Notizen erfassen"
   },
   "dateOfTransfer": {
     "label": "Datum",
     "placeholder": "TT.MM.JJJJ",
-    "helper": ""
+    "helper": "Datum der Übergabe."
   }
 }

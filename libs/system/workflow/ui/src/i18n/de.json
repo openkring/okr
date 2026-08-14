@@ -2,15 +2,15 @@
   "name": {
     "label": "Name",
     "placeholder": "Name eingeben",
-    "helper": ""
+    "helper": "Interner Name des Workflow-Schritts."
   },
   "event": {
     "label": "Ereignis",
-    "helper": ""
+    "helper": "Ereignis, das den Workflow auslöst."
   },
   "probe": {
     "label": "Bedingung",
-    "helper": ""
+    "helper": "Bedingung, die erfüllt sein muss, damit die Aufgabe erstellt wird."
   },
   "probeArg": {
     "label": "Argument der Bedingung",
@@ -37,6 +37,6 @@
   },
   "notes": {
     "label": "Notizen",
-    "placeholder": ""
+    "placeholder": "Notizen erfassen"
   }
 }

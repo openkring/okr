@@ -2,16 +2,16 @@
   "name": {
     "label": "Name",
     "placeholder": "Enter name",
-    "helper": ""
+    "helper": "Internal name of the folder."
   },
   "title": {
     "label": "Title",
     "placeholder": "Enter title",
-    "helper": ""
+    "helper": "Title shown to users."
   },
   "description": {
     "label": "Description",
-    "placeholder": ""
+    "placeholder": "Enter a description"
   },
   "membersMayUpload": {
     "label": "Members may upload files",

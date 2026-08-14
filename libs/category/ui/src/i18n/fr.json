@@ -1,26 +1,26 @@
 {
   "okey": {
     "label": "Clé du doc.",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "Attribué automatiquement",
+    "helper": "Clé unique du document dans la base de données."
   },
   "name": {
     "label": "Nom",
     "placeholder": "Saisir le nom",
-    "helper": ""
+    "helper": "Nom interne de la catégorie."
   },
   "i18nBase": {
     "label": "Base i18n",
-    "placeholder": "",
+    "placeholder": "p.ex. @category.priority",
     "helper": "Clé de base pour les traductions"
   },
   "notes": {
     "label": "Notes",
-    "placeholder": ""
+    "placeholder": "Saisir des notes"
   },
   "translateItems": {
     "label": "Traduire les entrées",
-    "helper": ""
+    "helper": "Traduire les entrées via la clé de base i18n au lieu d'afficher le texte saisi."
   },
 
   "priority": {

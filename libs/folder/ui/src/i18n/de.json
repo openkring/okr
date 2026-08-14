@@ -2,16 +2,16 @@
   "name": {
     "label": "Name",
     "placeholder": "Name eingeben",
-    "helper": ""
+    "helper": "Interner Name des Ordners."
   },
   "title": {
     "label": "Titel",
     "placeholder": "Titel eingeben",
-    "helper": ""
+    "helper": "Titel, der den Benutzern angezeigt wird."
   },
   "description": {
     "label": "Beschreibung",
-    "placeholder": ""
+    "placeholder": "Beschreibung eingeben"
   },
   "membersMayUpload": {
     "label": "Mitglieder dürfen Dateien hochladen",

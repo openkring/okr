@@ -208,7 +208,7 @@
     "legaldoc": {
       "label": "Document",
       "title": "Documents",
-      "formTitle": "",
+      "formTitle": "Informations sur le document",
       "description": "Une confirmation sous la forme d'un document officiel."
     },
     "rboat": {

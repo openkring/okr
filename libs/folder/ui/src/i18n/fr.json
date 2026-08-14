@@ -2,16 +2,16 @@
   "name": {
     "label": "Nom",
     "placeholder": "Saisir le nom",
-    "helper": ""
+    "helper": "Nom interne du dossier."
   },
   "title": {
     "label": "Titre",
     "placeholder": "Saisir le titre",
-    "helper": ""
+    "helper": "Titre affiché aux utilisateurs."
   },
   "description": {
     "label": "Description",
-    "placeholder": ""
+    "placeholder": "Saisir une description"
   },
   "membersMayUpload": {
     "label": "Les membres peuvent téléverser des fichiers",

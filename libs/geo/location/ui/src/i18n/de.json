@@ -1,56 +1,56 @@
 {
   "okey": {
     "label": "Dok.-Schlüssel",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "Wird automatisch vergeben",
+    "helper": "Eindeutiger Schlüssel des Dokuments in der Datenbank."
   },
   "name": {
     "label": "Name",
     "placeholder": "Name eingeben",
-    "helper": ""
+    "helper": "Name des Ortes."
   },
   "latitude": {
     "label": "Breitengrad",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "z.B. 47.2410",
+    "helper": "Breitengrad in Dezimalgrad (-90 bis 90)."
   },
   "longitude": {
     "label": "Längengrad",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "z.B. 8.7210",
+    "helper": "Längengrad in Dezimalgrad (-180 bis 180)."
   },
   "placeId": {
     "label": "Orts-ID",
-    "placeholder": "",
+    "placeholder": "z.B. ChIJ…",
     "helper": "Google Maps Orts-Identifikator"
   },
   "what3words": {
     "label": "What3Words",
-    "placeholder": "",
+    "placeholder": "z.B. wort.wort.wort",
     "helper": "What3Words-Adresse (z.B. word.word.word)"
   },
   "seaLevel": {
     "label": "Meereshöhe",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "z.B. 406",
+    "helper": "Höhe über Meer in Metern."
   },
   "speed": {
     "label": "Geschwindigkeit",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "z.B. 12",
+    "helper": "Geschwindigkeit in km/h."
   },
   "direction": {
     "label": "Richtung",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "z.B. 270",
+    "helper": "Richtung in Grad (0 = Nord, 90 = Ost)."
   },
   "distance": {
     "label": "Distanz",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "z.B. 1500",
+    "helper": "Distanz in Metern."
   },
   "notes": {
     "label": "Notizen",
-    "placeholder": ""
+    "placeholder": "Notizen erfassen"
   }
 }

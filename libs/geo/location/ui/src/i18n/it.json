@@ -1,56 +1,56 @@
 {
   "okey": {
     "label": "Chiave doc.",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "Assegnato automaticamente",
+    "helper": "Chiave univoca del documento nel database."
   },
   "name": {
     "label": "Nome",
     "placeholder": "Inserire il nome",
-    "helper": ""
+    "helper": "Nome del luogo."
   },
   "latitude": {
     "label": "Latitudine",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "es. 47.2410",
+    "helper": "Latitudine in gradi decimali (da -90 a 90)."
   },
   "longitude": {
     "label": "Longitudine",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "es. 8.7210",
+    "helper": "Longitudine in gradi decimali (da -180 a 180)."
   },
   "placeId": {
     "label": "ID luogo",
-    "placeholder": "",
+    "placeholder": "es. ChIJ…",
     "helper": "Identificatore di luogo di Google Maps"
   },
   "what3words": {
     "label": "What3Words",
-    "placeholder": "",
+    "placeholder": "es. parola.parola.parola",
     "helper": "Indirizzo What3Words (es. word.word.word)"
   },
   "seaLevel": {
     "label": "Altitudine",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "es. 406",
+    "helper": "Altitudine sul livello del mare in metri."
   },
   "speed": {
     "label": "Velocità",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "es. 12",
+    "helper": "Velocità in km/h."
   },
   "direction": {
     "label": "Direzione",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "es. 270",
+    "helper": "Direzione in gradi (0 = nord, 90 = est)."
   },
   "distance": {
     "label": "Distanza",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "es. 1500",
+    "helper": "Distanza in metri."
   },
   "notes": {
     "label": "Note",
-    "placeholder": ""
+    "placeholder": "Inserire note"
   }
 }

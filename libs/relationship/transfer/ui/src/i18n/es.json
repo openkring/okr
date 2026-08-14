@@ -17,31 +17,31 @@
   },
   "name": {
     "label": "Ocasión",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ej. aniversario",
+    "helper": "Motivo de la transferencia."
   },
   "label": {
     "label": "Denominación",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ej. préstamo",
+    "helper": "Denominación breve de la transferencia."
   },
   "currency": {
     "label": "Moneda",
     "placeholder": "CHF",
-    "helper": ""
+    "helper": "Moneda del precio."
   },
   "price": {
     "label": "Precio",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ej. 250.00",
+    "helper": "Precio acordado; 0 = gratuito."
   },
   "notes": {
     "label": "Notas",
-    "placeholder": ""
+    "placeholder": "Introducir notas"
   },
   "dateOfTransfer": {
     "label": "Fecha",
     "placeholder": "DD.MM.AAAA",
-    "helper": ""
+    "helper": "Fecha de la transferencia."
   }
 }

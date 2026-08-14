@@ -2,15 +2,15 @@
   "name": {
     "label": "Nom",
     "placeholder": "Saisir le nom",
-    "helper": ""
+    "helper": "Nom interne de l'étape du flux de travail."
   },
   "event": {
     "label": "Événement",
-    "helper": ""
+    "helper": "Événement qui déclenche le flux de travail."
   },
   "probe": {
     "label": "Condition",
-    "helper": ""
+    "helper": "Condition à remplir pour que la tâche soit créée."
   },
   "probeArg": {
     "label": "Argument de la condition",
@@ -37,6 +37,6 @@
   },
   "notes": {
     "label": "Notes",
-    "placeholder": ""
+    "placeholder": "Saisir des notes"
   }
 }

@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "The accounting configuration was added.",
+    "error": "The accounting configuration could not be added."
+  },
+  "update": {
+    "conf": "The accounting configuration was changed.",
+    "error": "The accounting configuration could not be changed."
+  },
+  "delete": {
+    "conf": "The accounting configuration was deleted.",
+    "error": "The accounting configuration could not be deleted."
+  }
+}

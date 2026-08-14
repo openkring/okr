@@ -2,11 +2,11 @@
   "name": {
     "label": "Name",
     "placeholder": "Name of the whiteboard",
-    "helper": ""
+    "helper": "Internal name of the whiteboard."
   },
   "description": {
     "label": "Description",
-    "placeholder": ""
+    "placeholder": "Enter a description"
   },
   "item": {
     "text": {

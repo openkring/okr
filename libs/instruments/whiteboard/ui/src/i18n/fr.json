@@ -2,11 +2,11 @@
   "name": {
     "label": "Nom",
     "placeholder": "Nom du tableau blanc",
-    "helper": ""
+    "helper": "Nom interne du tableau blanc."
   },
   "description": {
     "label": "Description",
-    "placeholder": ""
+    "placeholder": "Saisir une description"
   },
   "item": {
     "text": {

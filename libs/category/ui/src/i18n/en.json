@@ -1,26 +1,26 @@
 {
   "okey": {
     "label": "Doc. key",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "Assigned automatically",
+    "helper": "Unique key of the document in the database."
   },
   "name": {
     "label": "Name",
     "placeholder": "Enter name",
-    "helper": ""
+    "helper": "Internal name of the category."
   },
   "i18nBase": {
     "label": "i18n base",
-    "placeholder": "",
+    "placeholder": "e.g. @category.priority",
     "helper": "Base key for translations"
   },
   "notes": {
     "label": "Notes",
-    "placeholder": ""
+    "placeholder": "Enter notes"
   },
   "translateItems": {
     "label": "Translate entries",
-    "helper": ""
+    "helper": "Translate the items via the i18n base key instead of showing the stored text."
   },
 
   "priority": {

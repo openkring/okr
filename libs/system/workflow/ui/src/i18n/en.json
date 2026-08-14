@@ -2,15 +2,15 @@
   "name": {
     "label": "Name",
     "placeholder": "Enter name",
-    "helper": ""
+    "helper": "Internal name of the workflow step."
   },
   "event": {
     "label": "Event",
-    "helper": ""
+    "helper": "Event that triggers the workflow."
   },
   "probe": {
     "label": "Condition",
-    "helper": ""
+    "helper": "Condition that must hold for the task to be created."
   },
   "probeArg": {
     "label": "Condition argument",
@@ -37,6 +37,6 @@
   },
   "notes": {
     "label": "Notes",
-    "placeholder": ""
+    "placeholder": "Enter notes"
   }
 }

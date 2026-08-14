@@ -1,56 +1,56 @@
 {
   "okey": {
     "label": "Clé du doc.",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "Attribué automatiquement",
+    "helper": "Clé unique du document dans la base de données."
   },
   "name": {
     "label": "Nom",
     "placeholder": "Saisir le nom",
-    "helper": ""
+    "helper": "Nom du lieu."
   },
   "latitude": {
     "label": "Latitude",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ex. 47.2410",
+    "helper": "Latitude en degrés décimaux (-90 à 90)."
   },
   "longitude": {
     "label": "Longitude",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ex. 8.7210",
+    "helper": "Longitude en degrés décimaux (-180 à 180)."
   },
   "placeId": {
     "label": "ID de lieu",
-    "placeholder": "",
+    "placeholder": "p.ex. ChIJ…",
     "helper": "Identifiant de lieu Google Maps"
   },
   "what3words": {
     "label": "What3Words",
-    "placeholder": "",
+    "placeholder": "p.ex. mot.mot.mot",
     "helper": "Adresse What3Words (p. ex. word.word.word)"
   },
   "seaLevel": {
     "label": "Altitude",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ex. 406",
+    "helper": "Altitude au-dessus du niveau de la mer en mètres."
   },
   "speed": {
     "label": "Vitesse",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ex. 12",
+    "helper": "Vitesse en km/h."
   },
   "direction": {
     "label": "Direction",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ex. 270",
+    "helper": "Direction en degrés (0 = nord, 90 = est)."
   },
   "distance": {
     "label": "Distance",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ex. 1500",
+    "helper": "Distance en mètres."
   },
   "notes": {
     "label": "Notes",
-    "placeholder": ""
+    "placeholder": "Saisir des notes"
   }
 }

@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "Die Buchhaltungs-Konfiguration wurde hinzugefügt.",
+    "error": "Die Buchhaltungs-Konfiguration konnte nicht hinzugefügt werden."
+  },
+  "update": {
+    "conf": "Die Buchhaltungs-Konfiguration wurde geändert.",
+    "error": "Die Buchhaltungs-Konfiguration konnte nicht geändert werden."
+  },
+  "delete": {
+    "conf": "Die Buchhaltungs-Konfiguration wurde gelöscht.",
+    "error": "Die Buchhaltungs-Konfiguration konnte nicht gelöscht werden."
+  }
+}

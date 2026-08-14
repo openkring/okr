@@ -1,56 +1,56 @@
 {
   "okey": {
     "label": "Clave del doc.",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "Se asigna automáticamente",
+    "helper": "Clave única del documento en la base de datos."
   },
   "name": {
     "label": "Nombre",
     "placeholder": "Introducir el nombre",
-    "helper": ""
+    "helper": "Nombre del lugar."
   },
   "latitude": {
     "label": "Latitud",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ej. 47.2410",
+    "helper": "Latitud en grados decimales (-90 a 90)."
   },
   "longitude": {
     "label": "Longitud",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ej. 8.7210",
+    "helper": "Longitud en grados decimales (-180 a 180)."
   },
   "placeId": {
     "label": "ID de lugar",
-    "placeholder": "",
+    "placeholder": "p.ej. ChIJ…",
     "helper": "Identificador de lugar de Google Maps"
   },
   "what3words": {
     "label": "What3Words",
-    "placeholder": "",
+    "placeholder": "p.ej. palabra.palabra.palabra",
     "helper": "Dirección What3Words (p. ej. word.word.word)"
   },
   "seaLevel": {
     "label": "Altitud",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ej. 406",
+    "helper": "Altitud sobre el nivel del mar en metros."
   },
   "speed": {
     "label": "Velocidad",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ej. 12",
+    "helper": "Velocidad en km/h."
   },
   "direction": {
     "label": "Dirección",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ej. 270",
+    "helper": "Dirección en grados (0 = norte, 90 = este)."
   },
   "distance": {
     "label": "Distancia",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ej. 1500",
+    "helper": "Distancia en metros."
   },
   "notes": {
     "label": "Notas",
-    "placeholder": ""
+    "placeholder": "Introducir notas"
   }
 }

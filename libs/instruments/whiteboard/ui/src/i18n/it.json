@@ -2,11 +2,11 @@
   "name": {
     "label": "Nome",
     "placeholder": "Nome della lavagna",
-    "helper": ""
+    "helper": "Nome interno della lavagna."
   },
   "description": {
     "label": "Descrizione",
-    "placeholder": ""
+    "placeholder": "Inserire una descrizione"
   },
   "item": {
     "text": {

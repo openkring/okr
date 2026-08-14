@@ -1,0 +1,14 @@
+{
+  "create": {
+    "conf": "La configurazione contabile è stata aggiunta.",
+    "error": "Non è stato possibile aggiungere la configurazione contabile."
+  },
+  "update": {
+    "conf": "La configurazione contabile è stata modificata.",
+    "error": "Non è stato possibile modificare la configurazione contabile."
+  },
+  "delete": {
+    "conf": "La configurazione contabile è stata eliminata.",
+    "error": "Non è stato possibile eliminare la configurazione contabile."
+  }
+}

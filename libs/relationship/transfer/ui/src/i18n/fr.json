@@ -17,31 +17,31 @@
   },
   "name": {
     "label": "Occasion",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ex. jubilé",
+    "helper": "Occasion du transfert."
   },
   "label": {
     "label": "Désignation",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ex. prêt",
+    "helper": "Désignation courte du transfert."
   },
   "currency": {
     "label": "Devise",
     "placeholder": "CHF",
-    "helper": ""
+    "helper": "Devise du prix."
   },
   "price": {
     "label": "Prix",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "p.ex. 250.00",
+    "helper": "Prix convenu ; 0 = gratuit."
   },
   "notes": {
     "label": "Notes",
-    "placeholder": ""
+    "placeholder": "Saisir des notes"
   },
   "dateOfTransfer": {
     "label": "Date",
     "placeholder": "JJ.MM.AAAA",
-    "helper": ""
+    "helper": "Date du transfert."
   }
 }

@@ -2,11 +2,11 @@
   "name": {
     "label": "Nombre",
     "placeholder": "Nombre de la pizarra",
-    "helper": ""
+    "helper": "Nombre interno de la pizarra."
   },
   "description": {
     "label": "Descripción",
-    "placeholder": ""
+    "placeholder": "Introducir una descripción"
   },
   "item": {
     "text": {

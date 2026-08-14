@@ -2,15 +2,15 @@
   "name": {
     "label": "Nombre",
     "placeholder": "Introducir nombre",
-    "helper": ""
+    "helper": "Nombre interno del paso del flujo de trabajo."
   },
   "event": {
     "label": "Evento",
-    "helper": ""
+    "helper": "Evento que activa el flujo de trabajo."
   },
   "probe": {
     "label": "Condición",
-    "helper": ""
+    "helper": "Condición que debe cumplirse para crear la tarea."
   },
   "probeArg": {
     "label": "Argumento de la condición",
@@ -37,6 +37,6 @@
   },
   "notes": {
     "label": "Notas",
-    "placeholder": ""
+    "placeholder": "Introducir notas"
   }
 }

@@ -2,16 +2,16 @@
   "name": {
     "label": "Nome",
     "placeholder": "Inserire il nome",
-    "helper": ""
+    "helper": "Nome interno della cartella."
   },
   "title": {
     "label": "Titolo",
     "placeholder": "Inserire il titolo",
-    "helper": ""
+    "helper": "Titolo mostrato agli utenti."
   },
   "description": {
     "label": "Descrizione",
-    "placeholder": ""
+    "placeholder": "Inserire una descrizione"
   },
   "membersMayUpload": {
     "label": "I membri possono caricare file",

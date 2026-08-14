@@ -2,15 +2,15 @@
   "name": {
     "label": "Nome",
     "placeholder": "Inserire il nome",
-    "helper": ""
+    "helper": "Nome interno del passo del flusso di lavoro."
   },
   "event": {
     "label": "Evento",
-    "helper": ""
+    "helper": "Evento che attiva il flusso di lavoro."
   },
   "probe": {
     "label": "Condizione",
-    "helper": ""
+    "helper": "Condizione che deve essere soddisfatta perché il compito venga creato."
   },
   "probeArg": {
     "label": "Argomento della condizione",
@@ -37,6 +37,6 @@
   },
   "notes": {
     "label": "Note",
-    "placeholder": ""
+    "placeholder": "Inserire note"
   }
 }

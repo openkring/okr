@@ -1,26 +1,26 @@
 {
   "okey": {
     "label": "Dok.-Schlüssel",
-    "placeholder": "",
-    "helper": ""
+    "placeholder": "Wird automatisch vergeben",
+    "helper": "Eindeutiger Schlüssel des Dokuments in der Datenbank."
   },
   "name": {
     "label": "Name",
     "placeholder": "Name eingeben",
-    "helper": ""
+    "helper": "Interner Name der Kategorie."
   },
   "i18nBase": {
     "label": "i18n Basis",
-    "placeholder": "",
+    "placeholder": "z.B. @category.priority",
     "helper": "Basis-Schlüssel für Übersetzungen"
   },
   "notes": {
     "label": "Notizen",
-    "placeholder": ""
+    "placeholder": "Notizen erfassen"
   },
   "translateItems": {
     "label": "Einträge übersetzen",
-    "helper": ""
+    "helper": "Einträge über den i18n-Basisschlüssel übersetzen statt den erfassten Text anzeigen."
   },
 
   "priority": {
