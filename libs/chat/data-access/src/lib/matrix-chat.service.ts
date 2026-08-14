@@ -64,6 +64,11 @@ export class MatrixChatService {
   // mention-candidate lists) must depend on this counter instead of `rooms`.
   private readonly roomStateVersion$ = new BehaviorSubject<number>(0);
   private roomsUpdateSub: Subscription | null = null;
+  // Bound once so add/removeEventListener see the same reference (see setupEventHandlers).
+  private readonly kickSync = (): void => {
+    if (document.visibilityState !== 'visible') return;
+    this.client?.retryImmediately();
+  };
   private readonly typingByRoom = new Map<string, string[]>(); // roomId -> typing userIds
   private readonly receipts$ = new Map<string, BehaviorSubject<Map<string, MatrixReadReceipt[]>>>();
   // Rooms joined via CF admin API that haven't appeared in a sync cycle yet.
@@ -414,6 +419,8 @@ export class MatrixChatService {
   async disconnect(): Promise<void> {
     this.roomsUpdateSub?.unsubscribe();
     this.roomsUpdateSub = null;
+    document.removeEventListener('visibilitychange', this.kickSync);
+    window.removeEventListener('online', this.kickSync);
     this.media.setClient(null);  // revokes + clears the blob-URL cache
     this.calls.setClient(null);  // resets call state
     this.typingByRoom.clear();
@@ -437,6 +444,19 @@ export class MatrixChatService {
    */
   private setupEventHandlers(): void {
     if (!this.client) return;
+
+    // Nudge the sync loop when the tab becomes visible again or the network returns.
+    // A desktop tab that survived sleep/hibernate or a network drop keeps a dead long-poll
+    // `/sync` socket: background tabs have their timers frozen, so the SDK's own retry may
+    // never fire and the state stays 'SYNCING' — silently stale, no error, no overlay
+    // (matrix-chat.ts only shows one for non-PREPARED/SYNCING states). The phone doesn't
+    // hit this because iOS kills and reloads the PWA, which re-initializes from scratch.
+    // retryImmediately() is a no-op when the loop is healthy.
+    // Re-registered on the fallback path in initialize(), hence the remove-first.
+    document.removeEventListener('visibilitychange', this.kickSync);
+    window.removeEventListener('online', this.kickSync);
+    document.addEventListener('visibilitychange', this.kickSync);
+    window.addEventListener('online', this.kickSync);
 
     // Debounce room list rebuilds so rapid-fire Timeline/RoomState events collapse into one update
     this.roomsUpdateSub?.unsubscribe();

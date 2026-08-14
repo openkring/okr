@@ -25,7 +25,7 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
 import { arrayRemove, collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
-import { catchError, firstValueFrom, Observable, of, shareReplay } from 'rxjs';
+import { catchError, firstValueFrom, Observable, of, ReplaySubject, share, timer } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
@@ -46,6 +46,7 @@ export class FirestoreService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly toastController = inject(ToastController);
   private readonly queryCache = new Map<string, Observable<unknown>>();
+  private readonly docCache = new Map<string, Observable<unknown>>();
   private readonly i18nService = inject(I18nService);
   private readonly auth = inject(AUTH);
 
@@ -191,6 +192,53 @@ export class FirestoreService {
   }
 
   /**
+   * Shared, cached docData listener for a single document — the readModel/readObject twin of
+   * searchData's queryCache.
+   *
+   * Without it every subscriber to the same document opened its OWN Firestore listener and threw
+   * it away on destroy, so a doc read by several components (or re-read on back-navigation)
+   * rendered empty until a fresh snapshot arrived. Same 30 s grace window as searchData: the
+   * listener and the last snapshot outlive the last unsubscribe, which is what makes a revisit
+   * paint instantly on Safari / Firefox / iOS — those run on memoryLocalCache (see
+   * @okr/shared-config firestore.ts), so there is no local copy and the refill is a full round
+   * trip over forced long polling.
+   *
+   * catchError guards the open listener against an async PERMISSION_DENIED on sign-out / token
+   * refresh (SCS-1E) which the callers' synchronous try/catch cannot see: unguarded it lands in
+   * a consuming rxResource whose .value() re-throws inside change detection and crashes the app.
+   * Emitting undefined reads as "no current user" to the downstream guards, which short-circuit
+   * to empty lists — the correct sign-out behaviour. The poisoned entry is evicted so a later
+   * re-subscription builds a fresh listener.
+   *
+   * @param path the full document path, `collection/key`
+   * @param withOkey attach the Firestore document id as `okey` (models yes, plain objects no)
+   */
+  private sharedDoc<T>(path: string, withOkey: boolean): Observable<T | undefined> {
+    const cacheKey = `${withOkey ? 'model' : 'object'}:${path}`;
+    const cached = this.docCache.get(cacheKey) as Observable<T | undefined> | undefined;
+    if (cached) return cached;
+
+    const ref = doc(this.firestore, path);
+    const data$ = (withOkey
+      ? docData(ref, { idField: 'okey' }) as Observable<T>
+      : docData(ref) as Observable<T>
+    ).pipe(
+      catchError((err) => {
+        this.reportStreamError(`sharedDoc(${path})`, err);
+        this.docCache.delete(cacheKey);
+        return of(undefined);
+      }),
+      share({
+        connector: () => new ReplaySubject<T | undefined>(1),
+        resetOnRefCountZero: () => timer(30_000),
+      })
+    );
+
+    this.docCache.set(cacheKey, data$);
+    return data$;
+  }
+
+  /**
    * Lookup a model in the Firestore database and return it as an Observable.
    * @param collectionName the name of the Firestore collection (this can be a path)
    * @param key the key of the document in the database
@@ -209,18 +257,7 @@ export class FirestoreService {
     }
     try {
       // we need to add the firestore document id as okey into the model
-      // catchError guards against ASYNC stream errors the synchronous try/catch below cannot see:
-      // the docData listener stays open, so a sign-out or token refresh makes the server reject it
-      // with PERMISSION_DENIED (SCS-1E, on users/{uid} whose rule requires signedIn()). Unguarded,
-      // that error lands in the consuming rxResource, whose .value() re-throws inside change
-      // detection and crashes the app. Emitting undefined instead reads as "no current user" to the
-      // downstream guards, which then short-circuit to empty lists — the correct sign-out behaviour.
-      return (docData(doc(this.firestore, `${collectionName}/${key}`), { idField: 'okey' }) as Observable<T>).pipe(
-        catchError((err) => {
-          this.reportStreamError(`readModel(${collectionName}/${key})`, err);
-          return of(undefined);
-        })
-      );
+      return this.sharedDoc<T>(`${collectionName}/${key}`, true);
     }
     catch (ex) {
       console.error(`FirestoreService.readModel(${collectionName}/${key}) -> ERROR: `, ex);
@@ -246,14 +283,7 @@ export class FirestoreService {
       return of(this.okrError(undefined, 'FirestoreService.readObject: key is mandatory.', true));
     }
     try {
-      // see readModel: guards the open listener against an async PERMISSION_DENIED on sign-out /
-      // token refresh, which the synchronous try/catch below cannot catch.
-      return (docData(doc(this.firestore, `${collectionName}/${key}`)) as Observable<T>).pipe(
-        catchError((err) => {
-          this.reportStreamError(`readObject(${collectionName}/${key})`, err);
-          return of(undefined);
-        })
-      );
+      return this.sharedDoc<T>(`${collectionName}/${key}`, false);
     }
     catch (ex) {
       console.error(`FirestoreService.readObject(${collectionName}/${key}) -> ERROR: `, ex);
@@ -490,7 +520,18 @@ export class FirestoreService {
           this.queryCache.delete(cacheKey);
           return of<T[]>([]);
         }),
-        shareReplay({ bufferSize: 1, refCount: true })
+        // Keep the listener AND the last snapshot alive for 30 s after the last unsubscribe.
+        // shareReplay({refCount: true}) tore both down the instant a list view was destroyed, so
+        // navigating away and straight back re-opened the listener and rendered EMPTY until a
+        // fresh snapshot arrived — the reported "an item is missing, then it reappears". Safari /
+        // Firefox / iOS feel it worst: they run on memoryLocalCache (see @okr/shared-config
+        // firestore.ts), so there is no local copy to paint from, and the refill is a full round
+        // trip over forced long polling. The grace window makes back-navigation instant while
+        // still releasing genuinely idle queries.
+        share({
+          connector: () => new ReplaySubject<T[]>(1),
+          resetOnRefCountZero: () => timer(30_000),
+        })
       );
 
       this.queryCache.set(cacheKey, data$);

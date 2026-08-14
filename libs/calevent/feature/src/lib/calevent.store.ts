@@ -294,8 +294,10 @@ export const CalEventStore = signalStore(
         store.caleventsResource.reload();
         store.calendarsResource.reload();
         store.invitationsForCurrentUserResource.reload();
-        // Clear the Firestore cache to ensure fresh data
-        store.firestoreService.clearCache(CalendarCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
+        // No firestoreService.clearCache() here: searchData hands back a LIVE collectionData
+        // listener, so a write propagates on its own in the next snapshot — there is nothing
+        // stale to evict. Evicting mid-flight only opened a second listener alongside the one
+        // the current subscribers still hold.
       },
 
       /******************************** setters (filter) ******************************************* */

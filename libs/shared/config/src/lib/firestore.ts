@@ -88,6 +88,13 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
     const baseOptions = {
       experimentalForceLongPolling: useLongPolling,
       experimentalAutoDetectLongPolling: !useLongPolling,
+      // Cap how long the server holds a long-poll response open (SDK default: 30 s, range 5–30).
+      // With the default, an intermediary that buffers the response (corporate proxy, some mobile
+      // carriers, AV/TLS-inspection middleboxes) can sit on a snapshot for the full 30 s — the
+      // reported "a calevent is missing, then it reappears later". Lowering it bounds that stall
+      // at ~15 s at the cost of more frequent poll round trips. Only takes effect when long
+      // polling is actually in use (Safari / Firefox / all iOS browsers).
+      experimentalLongPollingOptions: { timeoutSeconds: 15 },
       ignoreUndefinedProperties: true,
     };
 
