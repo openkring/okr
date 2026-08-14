@@ -39,6 +39,7 @@ import { SwUpdate } from '@angular/service-worker';
 import { ENV, FIRESTORE } from '@okr/shared-config';
 import { I18nService } from '@okr/shared-i18n';
 
+import packageJson from '../../../../../package.json';
 import type { AppVersionConfig } from './version-check.service';
 import { UNRECOVERABLE_RELOAD_KEY, VersionCheckService } from './version-check.service';
 
@@ -136,6 +137,34 @@ describe('VersionCheckService unrecoverable-state handling', () => {
       const { service } = makeService();
       setConfig(service, { minVersion: '7.0.0', latestVersion: '7.11.1' });
       expect(service.getLatestVersion()).toBe('7.11.1');
+    });
+
+    // `deployed.<appId>` is set by hand AFTER the hosting deploy, so a client can get
+    // VERSION_READY while the doc still names the version it is already running.
+    describe('the update prompt', () => {
+      const promptMessage = async (configured: string, appData?: Record<string, string>): Promise<string> => {
+        const { service } = makeService();
+        setConfig(service, { minVersion: '7.0.0', latestVersion: configured, deployed: { p13: configured } });
+        mockAlertController.create.mockResolvedValue({
+          present: vi.fn(), onWillDismiss: vi.fn().mockResolvedValue({ role: 'cancel' }),
+        });
+        mockSwUpdate.versionUpdates.next(
+          { type: 'VERSION_READY', latestVersion: { hash: 'h', appData } } as unknown as VersionEvent);
+        await vi.waitFor(() => expect(mockAlertController.create).toHaveBeenCalled());
+        return mockAlertController.create.mock.calls[0][0].message;
+      };
+
+      it('does not quote a configured version that is not newer than the running one', async () => {
+        expect(await promptMessage(packageJson.version)).toBe('message');
+      });
+
+      it('quotes the configured version when it really is newer', async () => {
+        expect(await promptMessage('99.0.0')).toBe('messageWithVersion');
+      });
+
+      it('prefers the incoming build version from the ngsw manifest over the lagging doc', async () => {
+        expect(await promptMessage(packageJson.version, { version: '99.0.0' })).toBe('messageWithVersion');
+      });
     });
   });
 });

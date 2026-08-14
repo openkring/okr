@@ -13,6 +13,8 @@ import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+import { stampNgswVersion } from './stamp-ngsw-version.mjs';
+
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pkgPath = join(repoRoot, 'package.json');
 
@@ -136,6 +138,11 @@ async function releaseApp(app) {
     console.log(`package.json version -> ${next}`);
   }
 
+  // 2b. stamp the version into the service worker's manifest, so clients running the OLD build
+  //     read the incoming version off ngsw.json instead of the hand-updated Firestore doc.
+  //     Lives in the app submodule — reverted below if the build/deploy fails.
+  const stamped = app.endsWith('-app') && stampNgswVersion(app, next);
+
   try {
     // 3. prod build (source .env so FIREBASE_WEBAPP_CONFIG is set for the prod config target)
     //    --skip-nx-cache is mandatory: a version bump is meant to bust the cache via the config
@@ -191,6 +198,7 @@ async function releaseApp(app) {
     }
   } catch (e) {
     run('git', ['checkout', '--', 'package.json']);
+    if (stamped) run('git', ['-C', `apps/${app}`, 'checkout', '--', 'ngsw-config.json']);
     abort(`Build/deploy failed — reverted version bump. ${e.message ?? ''}`);
   }
 
@@ -232,6 +240,8 @@ async function releaseApp(app) {
   }
 
   console.log(`\n✔ ${app} released as v${next}.`);
+  if (stamped)
+    console.log(`  ⚠ apps/${app}/ngsw-config.json now carries appData.version ${next} — commit it in the submodule and bump the pointer.`);
   if (appVersionPending)
     console.log(`  ⚠ REMINDER: you still need to set app-version/app-version → deployed.${appKey} "${next}" in Firestore yourself (not done by this script).`);
 }

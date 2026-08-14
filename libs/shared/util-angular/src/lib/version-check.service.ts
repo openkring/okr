@@ -115,7 +115,10 @@ export class VersionCheckService {
 
     this.swUpdate.versionUpdates.subscribe((evt) => {
       if (evt.type === 'VERSION_READY') {
-        void this.promptForUpdate();
+        // set-env.js stamps the build version into ngsw-config.json's appData, so the incoming
+        // manifest names the version we are about to activate — no Firestore round trip needed.
+        const version = (evt.latestVersion.appData as { version?: string } | undefined)?.version;
+        void this.promptForUpdate(version);
       } else if (evt.type === 'VERSION_INSTALLATION_FAILED') {
         console.error('VersionCheckService: failed to install the new version:', evt.error);
       }
@@ -189,12 +192,21 @@ export class VersionCheckService {
     return 0;
   }
 
-  private async promptForUpdate(): Promise<void> {
+  /**
+   * @param incomingVersion version the service worker just downloaded, read from the new build's
+   * own manifest (ngsw appData). Undefined for builds made before that stamp existed.
+   */
+  private async promptForUpdate(incomingVersion?: string): Promise<void> {
     if (this.alertShown) return; // a prompt is already open — don't stack alerts
     this.alertShown = true;
 
     const config = this.versionConfig;
-    const latestVersion = this.getLatestVersion();
+    // Prefer the incoming build's own version. The Firestore fallback lags — `deployed.<appId>`
+    // is set by hand after the hosting deploy — so it can still name the version we already run;
+    // then quote nothing ("new version 7.13.2 available, you run 7.13.2") and use the plain message.
+    const configured = incomingVersion ?? this.getLatestVersion();
+    const latestVersion = configured && this.compareVersions(configured, this.currentVersion) > 0
+      ? configured : undefined;
     const forceUpdate = config?.forceUpdate === true ||
       (config?.minVersion !== undefined && this.compareVersions(this.currentVersion, config.minVersion) < 0);
 
