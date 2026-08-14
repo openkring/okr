@@ -844,7 +844,7 @@ const relationship: FeatureBlock = {
     { key: 'c-membership', name: 'c-membership', url: '', action: 'context', roleNeeded: 'memberAdmin', icon: 'help-circle', label: '', children: [
       { key: 'member-add', name: 'member-add', url: 'memberAdd', action: 'call', roleNeeded: 'registered', icon: 'person-add', label: '@item.member-add' },
       { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.membership-add' },
-      { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'registered', icon: 'copy', label: '@item.membership-copyemail' },
+      { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: '@item.membership-copyemail' },
       { key: 'membership-sendemail', name: 'membership-sendemail', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: '@item.membership-sendemail' },
       { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportraw' },
       { key: 'membership-exportsrv', name: 'membership-exportsrv', url: 'exportSrv', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportsrv' },
@@ -854,7 +854,7 @@ const relationship: FeatureBlock = {
     ] },
     { key: 'c-groupmembers', name: 'c-groupmembers', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
       { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.membership-add' },
-      { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'registered', icon: 'copy', label: '@item.membership-copyemail' },
+      { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: '@item.membership-copyemail' },
       { key: 'membership-sendemail', name: 'membership-sendemail', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: '@item.membership-sendemail' },
       { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportraw' },
       { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportaddresses' },
