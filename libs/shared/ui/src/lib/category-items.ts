@@ -1,4 +1,4 @@
-import { Component, input, model, output } from '@angular/core';
+import { Component, computed, inject, input, model, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonIcon, IonInput, IonItem, IonLabel, IonList, IonReorder, IonReorderGroup, ItemReorderEventDetail } from '@ionic/angular/standalone';
 import { MaskitoDirective } from '@maskito/angular';
 import { MaskitoElementPredicate } from '@maskito/core';
@@ -7,6 +7,7 @@ import { LowercaseWordMask } from '@okr/shared-config';
 import { CategoryItemModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { die } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
 export interface CategoryItemsI18n {
   title: string;
@@ -29,8 +30,8 @@ export interface CategoryItemsI18n {
   template: `
     <ion-card>
       <ion-card-header>
-        <ion-card-title>{{ i18n().title }}</ion-card-title>
-        <ion-card-subtitle>{{ i18n().subTitle }}</ion-card-subtitle>
+        <ion-card-title>{{ labels().title }}</ion-card-title>
+        <ion-card-subtitle>{{ labels().subTitle }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         <ion-item lines="none">
@@ -62,13 +63,13 @@ export interface CategoryItemsI18n {
             [counter]="true"
             [maxlength]="20"
             placeholder="ssssss"/>
-          <ion-button [disabled]="isDisabled()" (click)="add()">{{ i18n().add }}</ion-button>
+          <ion-button [disabled]="isDisabled()" (click)="add()">{{ labels().add }}</ion-button>
         </ion-item>
 
         @if(items(); as items) {
           @if(items.length === 0) {
             <ion-item lines="none">
-              <ion-label>{{ i18n().empty }}</ion-label>
+              <ion-label>{{ labels().empty }}</ion-label>
             </ion-item>
           } @else {
             <ion-list>
@@ -95,7 +96,19 @@ export interface CategoryItemsI18n {
 })
 export class CategoryItems {
   public items = model.required<CategoryItemModel[]>();
-  public i18n = input<CategoryItemsI18n>({ title: 'Kategorie-Einträge', subTitle: '', add: 'Hinzufügen', empty: 'Keine Einträge' });
+  public i18n = input<Partial<CategoryItemsI18n>>({});
+
+  // Domain-agnostic defaults resolved here; a caller may still override any single label.
+  private readonly defaults = inject(I18nService).translateAll({
+    title: '@shared/ui.categoryItems.title', subTitle: '@shared/ui.categoryItems.subTitle',
+    add: '@shared/ui.categoryItems.add', empty: '@shared/ui.categoryItems.empty',
+  });
+  protected readonly labels = computed<CategoryItemsI18n>(() => ({
+    title:    this.i18n().title    ?? this.defaults.title(),
+    subTitle: this.i18n().subTitle ?? this.defaults.subTitle(),
+    add:      this.i18n().add      ?? this.defaults.add(),
+    empty:    this.i18n().empty    ?? this.defaults.empty(),
+  }));
   public wordMask = input(LowercaseWordMask);
   public hasAbbreviation = input<boolean>(false);
   public changed = output<CategoryItemModel[]>();

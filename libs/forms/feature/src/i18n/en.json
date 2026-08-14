@@ -25,9 +25,16 @@
   },
   "field": {
     "title": "Configure field",
-    "add": "Add field"
+    "add": "Add field",
+    "text": "Text *",
+    "label": "Label *",
+    "key": "Field name (snake_case) *",
+    "width_full": "Full (100%)",
+    "width_half": "Half (50%)",
+    "width_third": "Third (33%)",
+    "placeholder": "Placeholder",
+    "apply": "Apply"
   },
-
   "canvas_empty": "Drag fields here from the library.",
   "library": "Field library",
   "key": "Field name (snake_case)",
@@ -47,7 +54,6 @@
   "url": {
     "label": "Target URL"
   },
-
   "create": {
     "label": "Create new form",
     "conf": "The form was created.",
@@ -68,5 +74,49 @@
     "label": "Edit form",
     "conf": "The form was saved.",
     "error": "The form could not be saved."
+  },
+  "builder": {
+    "preview_empty": "No fields to preview yet.",
+    "discard": "Discard",
+    "source": {
+      "copy": "Copy",
+      "paste": "Paste",
+      "copied": "Copied to the clipboard.",
+      "copy_failed": "Copy failed (clipboard not available).",
+      "invalid_json": "Invalid JSON in the clipboard.",
+      "invalid_format": "Invalid format: expected an object with a \"fields\" array.",
+      "applied": "{count} fields taken from the clipboard. Confirm to save."
+    }
+  },
+  "definition": {
+    "create_title": "New form",
+    "edit_title": "Edit form",
+    "name": "Name *",
+    "name_placeholder": "Contact form",
+    "target_kind": "Store submissions in",
+    "target_url_short": "External URL",
+    "collection": "Collection",
+    "select_placeholder": "Select…",
+    "pdf_template": "PDF template ID (optional)",
+    "pdf_template_placeholder": "Template ID from the document generator",
+    "fields": "Fields ({count}) – editable in the form editor"
+  },
+  "decrypt": {
+    "title": "Decrypt files",
+    "hint": "Enter the encryption password. The key never leaves the browser.",
+    "password": "Password",
+    "password_placeholder": "Enter password",
+    "running": "Decrypting…",
+    "action": "Decrypt & download",
+    "failed": "Decryption failed. Wrong password?"
+  },
+  "encryption": {
+    "title": "Enable encryption",
+    "warning": "This password is shown only once. If it is lost, encrypted files are lost irrecoverably. Store it in a password manager.",
+    "password": "Encryption password (shown once)",
+    "copied": "Password copied.",
+    "confirm": "I have stored the password safely and understand that losing it means the irrecoverable loss of all encrypted files.",
+    "saving": "Saving…",
+    "activate": "Activate"
   }
 }

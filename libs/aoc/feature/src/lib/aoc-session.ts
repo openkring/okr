@@ -194,7 +194,7 @@ export class AocSession {
     } else {
       options.buttons.push(createActionSheetButton('session.hideAnonymous', this.store.i18n.session_hide_anonymous(), this.imgixBaseUrl, 'eye-off'));
     }
-    options.buttons.push(createActionSheetButton('cancel', 'Abbrechen', this.imgixBaseUrl, 'cancel'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
 
     const actionSheet = await this.actionSheetController.create(options);
     await actionSheet.present();

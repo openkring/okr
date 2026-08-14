@@ -29,7 +29,10 @@
   "publish": {
     "label": "Vorlage veröffentlichen",
     "conf": "Vorlage veröffentlicht.",
-    "error": "Veröffentlichung fehlgeschlagen."
+    "error": "Veröffentlichung fehlgeschlagen.",
+    "title": "Version {version} veröffentlichen",
+    "changelog": "Änderungsnotiz (Pflicht)",
+    "changelog_placeholder": "Beschreibe die Änderungen in dieser Version…"
   },
   "save": {
     "draft": {
@@ -126,5 +129,41 @@
   },
   "css": {
     "label": "CSS"
+  },
+  "edit": {
+    "fallback_name": "Vorlage",
+    "published": "(Veröffentlicht)",
+    "draft": "(Entwurf)",
+    "publish": "Veröffentlichen",
+    "tab": {
+      "metadata": "Metadaten",
+      "html": "HTML",
+      "preview": "Vorschau"
+    },
+    "category": {
+      "invoice": "Rechnung",
+      "expense": "Spesen",
+      "report": "Bericht",
+      "dunning": "Mahnung",
+      "other": "Sonstiges"
+    },
+    "output_format": "Ausgabeformat",
+    "sample_data": "Beispieldaten (JSON)",
+    "qr_slip": "QR-Einzahlungsschein anhängen",
+    "qr_slip_amount": "Betrag im Einzahlungsschein ausfüllen",
+    "payee_org": "Zahlungsempfänger-Organisation (Org-ID, leer = Standard-Org)",
+    "html_placeholder": "HTML / Handlebars …",
+    "preview_send": "Senden",
+    "preview_download": "Herunterladen",
+    "preview_none": "Keine Vorschau verfügbar."
+  },
+  "validation": {
+    "to_required": "Mindestens eine Empfängeradresse ist erforderlich.",
+    "to_invalid": "Ungültige Empfängeradresse.",
+    "from_required": "Absenderadresse ist erforderlich.",
+    "from_invalid": "Ungültige Absenderadresse.",
+    "subject_required": "Betreff ist erforderlich.",
+    "cc_invalid": "Ungültige CC-Adresse.",
+    "bcc_invalid": "Ungültige BCC-Adresse."
   }
 }

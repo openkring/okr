@@ -397,7 +397,7 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
         <!-- Column 2: Members -->
         <div class="column">
           <div class="column-header">
-            <span>Mitglieder ({{ members().length }})</span>
+            <span>{{ store.i18n.chat_members() }} ({{ members().length }})</span>
             @if (isLoadingMembers()) { <ion-spinner name="dots" style="width:16px;height:16px" /> }
           </div>
           <div class="column-scroll">

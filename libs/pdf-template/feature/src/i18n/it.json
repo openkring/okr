@@ -29,7 +29,10 @@
   "publish": {
     "label": "Pubblicare modello",
     "conf": "Modello pubblicato.",
-    "error": "Pubblicazione non riuscita."
+    "error": "Pubblicazione non riuscita.",
+    "title": "Pubblicare la versione {version}",
+    "changelog": "Nota di modifica (obbligatoria)",
+    "changelog_placeholder": "Descrivere le modifiche di questa versione…"
   },
   "save": {
     "draft": {
@@ -126,5 +129,41 @@
   },
   "css": {
     "label": "CSS"
+  },
+  "edit": {
+    "fallback_name": "Modello",
+    "published": "(Pubblicato)",
+    "draft": "(Bozza)",
+    "publish": "Pubblicare",
+    "tab": {
+      "metadata": "Metadati",
+      "html": "HTML",
+      "preview": "Anteprima"
+    },
+    "category": {
+      "invoice": "Fattura",
+      "expense": "Spese",
+      "report": "Rapporto",
+      "dunning": "Sollecito",
+      "other": "Altro"
+    },
+    "output_format": "Formato di output",
+    "sample_data": "Dati di esempio (JSON)",
+    "qr_slip": "Allegare la polizza di versamento QR",
+    "qr_slip_amount": "Indicare l’importo sulla polizza di versamento",
+    "payee_org": "Organizzazione beneficiaria (ID org, vuoto = org predefinita)",
+    "html_placeholder": "HTML / Handlebars …",
+    "preview_send": "Inviare",
+    "preview_download": "Scaricare",
+    "preview_none": "Nessuna anteprima disponibile."
+  },
+  "validation": {
+    "to_required": "È richiesto almeno un indirizzo destinatario.",
+    "to_invalid": "Indirizzo destinatario non valido.",
+    "from_required": "È richiesto un indirizzo mittente.",
+    "from_invalid": "Indirizzo mittente non valido.",
+    "subject_required": "È richiesto un oggetto.",
+    "cc_invalid": "Indirizzo Cc non valido.",
+    "bcc_invalid": "Indirizzo Ccn non valido."
   }
 }

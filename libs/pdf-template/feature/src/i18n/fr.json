@@ -29,7 +29,10 @@
   "publish": {
     "label": "Publier le modèle",
     "conf": "Modèle publié.",
-    "error": "Échec de la publication."
+    "error": "Échec de la publication.",
+    "title": "Publier la version {version}",
+    "changelog": "Note de modification (obligatoire)",
+    "changelog_placeholder": "Décrivez les modifications de cette version…"
   },
   "save": {
     "draft": {
@@ -126,5 +129,41 @@
   },
   "css": {
     "label": "CSS"
+  },
+  "edit": {
+    "fallback_name": "Modèle",
+    "published": "(Publié)",
+    "draft": "(Brouillon)",
+    "publish": "Publier",
+    "tab": {
+      "metadata": "Métadonnées",
+      "html": "HTML",
+      "preview": "Aperçu"
+    },
+    "category": {
+      "invoice": "Facture",
+      "expense": "Frais",
+      "report": "Rapport",
+      "dunning": "Rappel",
+      "other": "Autre"
+    },
+    "output_format": "Format de sortie",
+    "sample_data": "Données d’exemple (JSON)",
+    "qr_slip": "Joindre le bulletin de versement QR",
+    "qr_slip_amount": "Indiquer le montant sur le bulletin de versement",
+    "payee_org": "Organisation bénéficiaire (ID org, vide = org par défaut)",
+    "html_placeholder": "HTML / Handlebars …",
+    "preview_send": "Envoyer",
+    "preview_download": "Télécharger",
+    "preview_none": "Aucun aperçu disponible."
+  },
+  "validation": {
+    "to_required": "Au moins une adresse de destinataire est requise.",
+    "to_invalid": "Adresse de destinataire non valide.",
+    "from_required": "Une adresse d’expéditeur est requise.",
+    "from_invalid": "Adresse d’expéditeur non valide.",
+    "subject_required": "Un objet est requis.",
+    "cc_invalid": "Adresse Cc non valide.",
+    "bcc_invalid": "Adresse Cci non valide."
   }
 }

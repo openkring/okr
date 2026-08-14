@@ -25,9 +25,16 @@
   },
   "field": {
     "title": "Configurar campo",
-    "add": "Añadir campo"
+    "add": "Añadir campo",
+    "text": "Texto *",
+    "label": "Etiqueta *",
+    "key": "Nombre del campo (snake_case) *",
+    "width_full": "Completo (100%)",
+    "width_half": "Mitad (50%)",
+    "width_third": "Tercio (33%)",
+    "placeholder": "Marcador de posición",
+    "apply": "Aplicar"
   },
-
   "canvas_empty": "Arrastre aquí los campos desde la biblioteca.",
   "library": "Biblioteca de campos",
   "key": "Nombre del campo (snake_case)",
@@ -47,7 +54,6 @@
   "url": {
     "label": "URL de destino"
   },
-
   "create": {
     "label": "Crear nuevo formulario",
     "conf": "El formulario se ha creado.",
@@ -68,5 +74,49 @@
     "label": "Modificar formulario",
     "conf": "El formulario se ha guardado.",
     "error": "No se pudo guardar el formulario."
+  },
+  "builder": {
+    "preview_empty": "Todavía no hay campos para previsualizar.",
+    "discard": "Descartar",
+    "source": {
+      "copy": "Copiar",
+      "paste": "Pegar",
+      "copied": "Copiado al portapapeles.",
+      "copy_failed": "Error al copiar (portapapeles no disponible).",
+      "invalid_json": "JSON no válido en el portapapeles.",
+      "invalid_format": "Formato no válido: se esperaba un objeto con un array \"fields\".",
+      "applied": "{count} campos tomados del portapapeles. Confirme para guardar."
+    }
+  },
+  "definition": {
+    "create_title": "Nuevo formulario",
+    "edit_title": "Editar formulario",
+    "name": "Nombre *",
+    "name_placeholder": "Formulario de contacto",
+    "target_kind": "Guardar los envíos en",
+    "target_url_short": "URL externa",
+    "collection": "Colección",
+    "select_placeholder": "Seleccionar…",
+    "pdf_template": "ID de plantilla PDF (opcional)",
+    "pdf_template_placeholder": "ID de plantilla del generador de documentos",
+    "fields": "Campos ({count}) – editables en el editor de formularios"
+  },
+  "decrypt": {
+    "title": "Descifrar archivos",
+    "hint": "Introduzca la contraseña de cifrado. La clave nunca sale del navegador.",
+    "password": "Contraseña",
+    "password_placeholder": "Introducir contraseña",
+    "running": "Descifrando…",
+    "action": "Descifrar y descargar",
+    "failed": "Error al descifrar. ¿Contraseña incorrecta?"
+  },
+  "encryption": {
+    "title": "Activar el cifrado",
+    "warning": "Esta contraseña se muestra una sola vez. Si se pierde, los archivos cifrados se pierden de forma irrecuperable. Guárdela en un gestor de contraseñas.",
+    "password": "Contraseña de cifrado (mostrada una sola vez)",
+    "copied": "Contraseña copiada.",
+    "confirm": "He guardado la contraseña de forma segura y entiendo que perderla significa la pérdida irrecuperable de todos los archivos cifrados.",
+    "saving": "Guardando…",
+    "activate": "Activar"
   }
 }

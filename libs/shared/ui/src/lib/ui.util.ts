@@ -79,7 +79,8 @@ export async function selectDate(modalController: ModalController, isoDate?: str
     cssClass,
     componentProps: {
       isoDate,
-      i18n: { title: headerTitle ?? 'Datum auswählen', ok: 'OK', cancel: 'Abbrechen' },
+      // labels: DateSelectModal resolves its own defaults; only an explicit title overrides them.
+      i18n: headerTitle ? { title: headerTitle } : {},
       intro,
       locale: 'de-ch'
     }

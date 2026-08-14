@@ -5,10 +5,12 @@ import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonNote, IonSegment,
 import { AppStore } from '@okr/shared-feature';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { safeStructuredClone } from '@okr/shared-util-core';
+import { fill, safeStructuredClone } from '@okr/shared-util-core';
 import { Field, FieldType, FormDefinitionModel } from '@okr/shared-models';
 
 import { FormDefinitionService } from '@okr/forms-data-access';
+import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
+import { I18nService } from '@okr/shared-i18n';
 import { FIELD_TYPE_DEFS, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@okr/forms-ui';
 
 import { FieldConfigModal } from './field-config.modal';
@@ -53,9 +55,9 @@ function newField(type: FieldType, order: number): Field {
     .source-view   { margin: 8px 16px; padding: 12px; background: var(--ion-color-light); border-radius: 6px; font-family: monospace; font-size: 12px; white-space: pre; overflow: auto; }
   `],
   template: `
-    <okr-header [i18n]="{ title: 'Formular-Editor: ' + formData().name }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.title() + ': ' + formData().name }" [isModal]="true" />
     @if (isDirty()) {
-      <okr-change-confirmation [i18n]="changeConfirmationI18n" (saveClicked)="save()" (cancelClicked)="cancel()" />
+      <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="save()" (cancelClicked)="cancel()" />
     }
     <ion-content>
       <div class="editor-layout" cdkDropListGroup>
@@ -83,7 +85,7 @@ function newField(type: FieldType, order: number): Field {
               (cdkDropListDropped)="onDrop($event)"
             >
               @if (fields().length === 0) {
-                <div class="canvas-empty">Ziehe Felder aus der Bibliothek hierher.</div>
+                <div class="canvas-empty">{{ i18n.canvas_empty() }}</div>
               }
               @for (field of fields(); track field.id) {
                 <div class="field-row" cdkDrag [cdkDragData]="field">
@@ -108,7 +110,7 @@ function newField(type: FieldType, order: number): Field {
             </div>
           } @else if (viewMode() === 'preview') {
             @if (fields().length === 0) {
-              <div class="canvas-empty">Noch keine Felder zum Vorschauen.</div>
+              <div class="canvas-empty">{{ i18n.preview_empty() }}</div>
             } @else {
               <div style="padding: 8px 16px 24px;">
                 <okr-form-renderer [definition]="previewDefinition()" [showSubmit]="false" />
@@ -118,10 +120,10 @@ function newField(type: FieldType, order: number): Field {
             <div class="source-actions">
               <ion-button size="small" fill="outline" (click)="copySource()">
                 <ion-icon src="{{ 'copy' | svgIcon }}" slot="start" />
-                Kopieren
+                {{ i18n.source_copy() }}
               </ion-button>
               <ion-button size="small" fill="outline" (click)="pasteSource()">
-                Einfügen
+                {{ i18n.source_paste() }}
               </ion-button>
             </div>
             @if (sourceMessage()) {
@@ -146,7 +148,12 @@ export class FormBuilderEditor {
   protected viewMode = signal<'editor' | 'preview' | 'source'>('editor');
   private readonly originalFieldsJson = signal('');
 
-  protected readonly changeConfirmationI18n: ChangeConfirmationI18n = { cancel: 'Verwerfen', save: 'Speichern' };
+  // Direct inject (no store): the store opens this editor, importing it back would be circular.
+  protected readonly i18n = inject(I18nService).translateAll(FORM_I18N_KEYS) as FormI18n;
+
+  protected readonly changeConfirmationI18n = computed<ChangeConfirmationI18n>(() => ({
+    cancel: this.i18n.discard(), save: this.i18n.save(),
+  }));
 
   /** Live form definition for the preview, reflecting the current (unsaved) fields. */
   protected previewDefinition = computed<FormDefinitionModel>(() => ({
@@ -225,10 +232,10 @@ export class FormBuilderEditor {
     try {
       await navigator.clipboard.writeText(this.sourceCode());
       this.sourceError.set(false);
-      this.sourceMessage.set('In die Zwischenablage kopiert.');
+      this.sourceMessage.set(this.i18n.source_copied());
     } catch {
       this.sourceError.set(true);
-      this.sourceMessage.set('Kopieren fehlgeschlagen (Zwischenablage nicht verfügbar).');
+      this.sourceMessage.set(this.i18n.source_copy_failed());
     }
   }
 
@@ -239,12 +246,12 @@ export class FormBuilderEditor {
       parsed = JSON.parse(await navigator.clipboard.readText());
     } catch {
       this.sourceError.set(true);
-      this.sourceMessage.set('Ungültiges JSON in der Zwischenablage.');
+      this.sourceMessage.set(this.i18n.source_invalid_json());
       return;
     }
     if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as { fields?: unknown }).fields)) {
       this.sourceError.set(true);
-      this.sourceMessage.set('Ungültiges Format: erwartet ein Objekt mit einem "fields"-Array.');
+      this.sourceMessage.set(this.i18n.source_invalid_format());
       return;
     }
     const incoming = parsed as Partial<FormDefinitionModel> & { fields: Field[] };
@@ -261,6 +268,6 @@ export class FormBuilderEditor {
     });
     this.fields.set(fields);
     this.sourceError.set(false);
-    this.sourceMessage.set(`${fields.length} Felder aus der Zwischenablage übernommen. Zum Speichern bestätigen.`);
+    this.sourceMessage.set(fill(this.i18n.source_applied(), { count: fields.length }));
   }
 }

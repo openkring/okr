@@ -12,6 +12,9 @@ import { Browser } from '@capacitor/browser';
 import { EsignRecord, EsignSignee } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EsignService } from '@okr/esign-data-access';
+import { I18nService } from '@okr/shared-i18n';
+import { ESIGN_I18N_KEYS, EsignI18n } from '@okr/esign-util';
+import { fill } from '@okr/shared-util-core';
 
 @Component({
   selector: 'okr-esign-view-modal',
@@ -51,7 +54,7 @@ import { EsignService } from '@okr/esign-data-access';
         @if(previewUrl()) {
           <ion-row>
             <ion-col>
-              <iframe [src]="previewUrl()" class="preview-frame" title="PDF Vorschau"></iframe>
+              <iframe [src]="previewUrl()" class="preview-frame" [title]="i18n.view_preview_title()"></iframe>
             </ion-col>
           </ion-row>
         }
@@ -59,11 +62,11 @@ import { EsignService } from '@okr/esign-data-access';
         <!-- Summary -->
         <ion-row>
           <ion-col>
-            <p class="section-title">Details</p>
+            <p class="section-title">{{ i18n.view_details() }}</p>
             <ion-list lines="none">
               <ion-item>
                 <ion-label>
-                  <p class="meta-label">Status</p>
+                  <p class="meta-label">{{ i18n.view_status() }}</p>
                   <ion-chip [outline]="true" size="small"
                     [color]="esignService.statusColor(esign().documentStatus)">
                     {{ esignService.statusLabel(esign().documentStatus) }}
@@ -72,13 +75,13 @@ import { EsignService } from '@okr/esign-data-access';
               </ion-item>
               <ion-item>
                 <ion-label>
-                  <p class="meta-label">Initiator</p>
+                  <p class="meta-label">{{ i18n.view_initiator() }}</p>
                   <p class="meta-value">{{ esign().initiatorAliasName }}</p>
                 </ion-label>
               </ion-item>
               <ion-item>
                 <ion-label>
-                  <p class="meta-label">Signaturmodus</p>
+                  <p class="meta-label">{{ i18n.view_signature_mode() }}</p>
                   <p class="meta-value">{{ esign().signatureMode }} ({{ esign().jurisdiction }})</p>
                 </ion-label>
               </ion-item>
@@ -89,7 +92,7 @@ import { EsignService } from '@okr/esign-data-access';
         <!-- Signees -->
         <ion-row>
           <ion-col>
-            <p class="section-title">Unterzeichner</p>
+            <p class="section-title">{{ i18n.view_signees() }}</p>
             @for(signee of esign().signees; track signee.signeeId) {
               <div class="signee-row">
                 <ion-chip [outline]="true" size="small"
@@ -100,7 +103,7 @@ import { EsignService } from '@okr/esign-data-access';
                   <p class="meta-value">{{ signee.name ?? signee.email }}</p>
                   <p class="meta-label">{{ signee.email }}</p>
                   @if(signee.signedTime) {
-                    <p class="meta-label">Unterzeichnet: {{ signee.signedTime.toDate() | date }}</p>
+                    <p class="meta-label">{{ i18n.view_signed_at() }} {{ signee.signedTime.toDate() | date }}</p>
                   }
                   @if(signee.signeeComment) {
                     <p class="meta-label">{{ signee.signeeComment }}</p>
@@ -108,7 +111,7 @@ import { EsignService } from '@okr/esign-data-access';
                 </ion-label>
                 @if(canResend(signee)) {
                   <ion-button size="small" fill="outline" (click)="resendInvitation(signee)">
-                    Erneut senden
+                    {{ i18n.view_resend() }}
                   </ion-button>
                 }
               </div>
@@ -120,7 +123,7 @@ import { EsignService } from '@okr/esign-data-access';
         <ion-row>
           <ion-col>
             <p class="events-toggle" (click)="showEvents.set(!showEvents())">
-              {{ showEvents() ? '▲ Ereignisse ausblenden' : '▼ Ereignisse anzeigen' }}
+              {{ showEvents() ? i18n.view_events_hide() : i18n.view_events_show() }}
             </p>
             @if(showEvents()) {
               @for(event of esign().events; track event.at) {
@@ -136,17 +139,17 @@ import { EsignService } from '@okr/esign-data-access';
     <ion-footer>
       <ion-toolbar color="light">
         <ion-buttons slot="start">
-          <ion-button (click)="refresh()" title="Vorschau aktualisieren">
+          <ion-button (click)="refresh()" [title]="i18n.view_refresh()">
             <ion-icon src="{{ 'reload' | svgIcon }}" slot="icon-only" />
           </ion-button>
           @if(esign().documentStatus === 'signed') {
-            <ion-button (click)="downloadSigned()" title="Signiertes PDF herunterladen">
+            <ion-button (click)="downloadSigned()" [title]="i18n.view_download()">
               <ion-icon src="{{ 'download' | svgIcon }}" slot="icon-only" />
             </ion-button>
           }
         </ion-buttons>
         <ion-buttons slot="end">
-          <ion-button color="danger" (click)="requestDelete()" title="Löschen">
+          <ion-button color="danger" (click)="requestDelete()" [title]="i18n.view_delete()">
             <ion-icon src="{{ 'trash' | svgIcon }}" slot="icon-only" />
           </ion-button>
         </ion-buttons>
@@ -161,6 +164,9 @@ export class EsignViewModal {
   private readonly modalController  = inject(ModalController);
   private readonly toastController  = inject(ToastController);
   private readonly sanitizer        = inject(DomSanitizer);
+
+  // Direct inject (no store): EsignStore opens this modal, importing it back would be circular.
+  protected readonly i18n           = inject(I18nService).translateAll(ESIGN_I18N_KEYS) as EsignI18n;
 
   protected readonly previewUrl     = signal<SafeResourceUrl | null>(null);
   protected readonly showEvents     = signal(false);
@@ -178,7 +184,7 @@ export class EsignViewModal {
       if (url) this.previewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
     } catch {
       const toast = await this.toastController.create({
-        message: 'Vorschau konnte nicht geladen werden.',
+        message: this.i18n.view_preview_error(),
         duration: 3000,
         color: 'danger',
       });
@@ -200,14 +206,14 @@ export class EsignViewModal {
     try {
       await this.esignService.resendInvitation(this.esign().esignId, signee.signeeId);
       const toast = await this.toastController.create({
-        message: `Einladung an ${signee.email} erneut gesendet.`,
+        message: fill(this.i18n.view_resend_ok(), { email: signee.email }),
         duration: 2000,
         color: 'success',
       });
       await toast.present();
     } catch {
       const toast = await this.toastController.create({
-        message: 'Einladung konnte nicht gesendet werden.',
+        message: this.i18n.view_resend_error(),
         duration: 3000,
         color: 'danger',
       });
@@ -229,7 +235,7 @@ export class EsignViewModal {
         this.modalController.dismiss(null, 'deleted');
       } catch {
         const toast = await this.toastController.create({
-          message: 'Dokument konnte nicht gelöscht werden.',
+          message: this.i18n.view_doc_delete_error(),
           duration: 3000,
           color: 'danger',
         });
@@ -244,11 +250,11 @@ export class EsignViewModal {
 
   protected signeeStatusLabel(status: EsignSignee['signStatus']): string {
     const map: Record<EsignSignee['signStatus'], string> = {
-      'on-hold':    'Wartend',
-      'pending':    'Ausstehend',
-      'in-progress': 'In Bearbeitung',
-      'signed':     'Unterzeichnet',
-      'rejected':   'Abgelehnt',
+      'on-hold':     this.i18n.signee_on_hold(),
+      'pending':     this.i18n.signee_pending(),
+      'in-progress': this.i18n.signee_in_progress(),
+      'signed':      this.i18n.signee_signed(),
+      'rejected':    this.i18n.signee_rejected(),
     };
     return map[status] ?? status;
   }

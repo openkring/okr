@@ -3,7 +3,8 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
-import { KioskMessageFormData } from '@okr/aoc-util';
+import { AOC_I18N_KEYS, AocI18n, KioskMessageFormData } from '@okr/aoc-util';
+import { I18nService } from '@okr/shared-i18n';
 
 import { KioskMessageForm } from './kiosk-message.form';
 
@@ -22,7 +23,7 @@ import { KioskMessageForm } from './kiosk-message.form';
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
-    <okr-header [i18n]="{ title: title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: labels().title }" [isModal]="true" />
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
@@ -43,9 +44,16 @@ export class KioskMessageEditModal {
 
   // inputs
   public kioskMessage = input.required<KioskMessageFormData>();
-  public title = input('Mitteilung senden');
-  public okLabel = input('Senden');
-  public cancelLabel = input('Abbrechen');
+  public title = input<string>();
+  public okLabel = input<string>();
+  public cancelLabel = input<string>();
+
+  private readonly i18n = inject(I18nService).translateAll(AOC_I18N_KEYS) as AocI18n;
+  protected readonly labels = computed(() => ({
+    title:  this.title()  ?? this.i18n.kiosk_message_title(),
+    ok:     this.okLabel() ?? this.i18n.kiosk_message_send(),
+    cancel: this.cancelLabel() ?? this.i18n.cancel(),
+  }));
 
   // signals
   protected formDirty = signal(false);

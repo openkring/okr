@@ -1,7 +1,8 @@
-import { Component, inject, input, viewChild } from '@angular/core';
+import { Component, computed, inject, input, viewChild } from '@angular/core';
 import { IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
 
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
 import { Header } from './header';
 
@@ -20,7 +21,7 @@ export interface DateSelectModalI18n {
     IonContent, IonDatetime
   ],
   template: `
-    <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" />
+    <okr-header [i18n]="{ title: labels().title }" [isModal]="true" />
     <ion-content class="ion-padding">
       @if(intro(); as intro) {
         @if(intro.length > 0) {
@@ -37,8 +38,8 @@ export interface DateSelectModalI18n {
         firstDayOfWeek="1"
         [showDefaultButtons]="true"
         [showAdjacentDays]="true"
-        [doneText]="i18n().ok"
-        [cancelText]="i18n().cancel"
+        [doneText]="labels().ok"
+        [cancelText]="labels().cancel"
         size="cover"
         [preferWheel]="false"
         style="height: 380px; --padding-start: 0;"
@@ -54,7 +55,15 @@ export class DateSelectModal {
 
   // inputs
   public isoDate = input(getTodayStr(DateFormat.IsoDate)); // mandatory date in isoDate format (yyyy-MM-dd)
-  public i18n = input<DateSelectModalI18n>({ title: 'Datum auswählen', ok: 'OK', cancel: 'Abbrechen' });
+  public i18n = input<Partial<DateSelectModalI18n>>({});
+
+  // Domain-agnostic defaults resolved here; a caller may still override any single label.
+  private readonly defaults = inject(I18nService).translateAll({ title: '@shared/ui.select.date', ok: '@ok', cancel: '@cancel' });
+  protected readonly labels = computed<DateSelectModalI18n>(() => ({
+    title:  this.i18n().title  ?? this.defaults.title(),
+    ok:     this.i18n().ok     ?? this.defaults.ok(),
+    cancel: this.i18n().cancel ?? this.defaults.cancel(),
+  }));
   public locale = input('de-ch'); // locale for the input field, used for formatting
   public intro = input<string>();
 

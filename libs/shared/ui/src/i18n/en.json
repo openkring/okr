@@ -10,7 +10,8 @@
     "category": "Choose category",
     "date": "Choose date",
     "tag": "Choose day",
-    "time": "Choose time"
+    "time": "Choose time",
+    "dateTime": "Select date & time"
   },
   "deleteContent": "Delete content",
   "search": {
@@ -20,7 +21,8 @@
   "categoryItems": {
     "empty": "No elements have been defined in this category yet.",
     "title": "Elements",
-    "subTitle": "The individual elements of a category. Each element is shown on its own line."
+    "subTitle": "The individual elements of a category. Each element is shown on its own line.",
+    "add": "Add"
   },
   "color": {
     "select": "Color selection",
@@ -112,5 +114,25 @@
       "helper": "Separate several addresses with a comma or semicolon.",
       "invalid": "No valid email address found."
     }
-  }
+  },
+  "duration": {
+    "title": "Select period",
+    "from": "From",
+    "to": "To"
+  },
+  "image": {
+    "title": "Image details",
+    "name": "Name",
+    "path": "Storage path",
+    "mime": "MIME type",
+    "size": "Size",
+    "created": "Created",
+    "modified": "Modified",
+    "md5": "MD5 (Base64)",
+    "downloadUrl": "Download URL",
+    "noExif": "No EXIF data available.",
+    "exifError": "EXIF data could not be read."
+  },
+  "close": "Close",
+  "withTime": "with time"
 }

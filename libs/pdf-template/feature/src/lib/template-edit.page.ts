@@ -76,13 +76,13 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
           <ion-back-button defaultHref="/templates" />
         </ion-buttons>
         <ion-title>
-          {{ template()?.name || 'Vorlage' }} · v{{ editorVersion().version }}
-          {{ readOnly() ? '(Veröffentlicht)' : '(Entwurf)' }}
+          {{ template()?.name || store.i18n.edit_fallback_name() }} · v{{ editorVersion().version }}
+          {{ readOnly() ? store.i18n.edit_published() : store.i18n.edit_draft() }}
         </ion-title>
         @if(!readOnly() && hasSavedDraft()) {
           <ion-buttons slot="end">
             <ion-button fill="solid" color="primary" (click)="publish()" [disabled]="saving()">
-              Veröffentlichen
+              {{ store.i18n.edit_publish() }}
             </ion-button>
           </ion-buttons>
         }
@@ -94,9 +94,9 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
       }
 
       <ion-segment [ngModel]="activeTab()" (ngModelChange)="onTabChange($any($event))">
-        <ion-segment-button value="metadata"><ion-label>Metadaten</ion-label></ion-segment-button>
-        <ion-segment-button value="html"><ion-label>HTML</ion-label></ion-segment-button>
-        <ion-segment-button value="preview"><ion-label>Vorschau</ion-label></ion-segment-button>
+        <ion-segment-button value="metadata"><ion-label>{{ store.i18n.tab_metadata() }}</ion-label></ion-segment-button>
+        <ion-segment-button value="html"><ion-label>{{ store.i18n.tab_html() }}</ion-label></ion-segment-button>
+        <ion-segment-button value="preview"><ion-label>{{ store.i18n.tab_preview() }}</ion-label></ion-segment-button>
       </ion-segment>
     </ion-header>
 
@@ -104,25 +104,25 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
       @if(activeTab() === 'metadata') {
         @if(template(); as tmpl) {
           <ion-item>
-            <ion-label position="stacked">Name</ion-label>
+            <ion-label position="stacked">{{ store.i18n.name() }}</ion-label>
             <ion-input [ngModel]="tmpl.name" (ngModelChange)="onTemplateFieldChange('name', $event)" [disabled]="readOnly()" />
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Beschreibung</ion-label>
+            <ion-label position="stacked">{{ store.i18n.description() }}</ion-label>
             <ion-input [ngModel]="tmpl.description" (ngModelChange)="onTemplateFieldChange('description', $event)" [disabled]="readOnly()" />
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Kategorie</ion-label>
+            <ion-label position="stacked">{{ store.i18n.category() }}</ion-label>
             <ion-select [ngModel]="tmpl.category" (ngModelChange)="onTemplateFieldChange('category', $event)" [disabled]="readOnly()">
-              <ion-select-option value="invoice">Rechnung</ion-select-option>
-              <ion-select-option value="expense">Spesen</ion-select-option>
-              <ion-select-option value="report">Bericht</ion-select-option>
-              <ion-select-option value="dunning">Mahnung</ion-select-option>
-              <ion-select-option value="other">Sonstiges</ion-select-option>
+              <ion-select-option value="invoice">{{ store.i18n.cat_invoice() }}</ion-select-option>
+              <ion-select-option value="expense">{{ store.i18n.cat_expense() }}</ion-select-option>
+              <ion-select-option value="report">{{ store.i18n.cat_report() }}</ion-select-option>
+              <ion-select-option value="dunning">{{ store.i18n.cat_dunning() }}</ion-select-option>
+              <ion-select-option value="other">{{ store.i18n.cat_other() }}</ion-select-option>
             </ion-select>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Sprache</ion-label>
+            <ion-label position="stacked">{{ store.i18n.language() }}</ion-label>
             <ion-select [ngModel]="tmpl.language" (ngModelChange)="onTemplateFieldChange('language', $event)" [disabled]="readOnly()">
               <ion-select-option value="de">Deutsch</ion-select-option>
               <ion-select-option value="fr">Français</ion-select-option>
@@ -131,7 +131,7 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
             </ion-select>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Ausgabeformat</ion-label>
+            <ion-label position="stacked">{{ store.i18n.output_format() }}</ion-label>
             <ion-select [ngModel]="tmpl.defaultOutputFormat" (ngModelChange)="onTemplateFieldChange('defaultOutputFormat', $event)" [disabled]="readOnly()">
               <ion-select-option value="pdf">PDF</ion-select-option>
               <ion-select-option value="docx">DOCX</ion-select-option>
@@ -139,7 +139,7 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
             </ion-select>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Beispieldaten (JSON)</ion-label>
+            <ion-label position="stacked">{{ store.i18n.sample_data() }}</ion-label>
             <ion-textarea
               [ngModel]="tmpl.sampleData"
               (ngModelChange)="onTemplateFieldChange('sampleData', $event)"
@@ -155,7 +155,7 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
               [checked]="tmpl.attachQrSlip"
               (ionChange)="onTemplateFieldChange('attachQrSlip', $any($event).detail.checked)"
               [disabled]="readOnly()">
-              QR-Einzahlungsschein anhängen
+              {{ store.i18n.qr_slip() }}
             </ion-checkbox>
           </ion-item>
           <ion-item>
@@ -163,11 +163,11 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
               [checked]="tmpl.qrSlipWithAmount"
               (ionChange)="onTemplateFieldChange('qrSlipWithAmount', $any($event).detail.checked)"
               [disabled]="readOnly() || !tmpl.attachQrSlip">
-              Betrag im Einzahlungsschein ausfüllen
+              {{ store.i18n.qr_slip_amount() }}
             </ion-checkbox>
           </ion-item>
           <ion-item>
-            <ion-label position="stacked">Zahlungsempfänger-Organisation (Org-ID, leer = Standard-Org)</ion-label>
+            <ion-label position="stacked">{{ store.i18n.payee_org() }}</ion-label>
             <ion-input [ngModel]="tmpl.payeeOrgId" (ngModelChange)="onTemplateFieldChange('payeeOrgId', $event)" [disabled]="readOnly()" />
           </ion-item>
         }
@@ -180,7 +180,7 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
           (input)="onVersionChange('html', $any($event.target).value)"
           [readOnly]="readOnly()"
           spellcheck="false"
-          placeholder="HTML / Handlebars …"
+          [placeholder]="store.i18n.html_placeholder()"
         ></textarea>
       }
 
@@ -193,17 +193,17 @@ type EditorTab = 'metadata' | 'html' | 'css' | 'preview';
           <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px;">
             <ion-button fill="outline" size="small" (click)="store.sendPreview()">
               <ion-icon src="{{ 'send' | svgIcon }}" slot="start" />
-              Senden
+              {{ store.i18n.preview_send() }}
             </ion-button>
             <ion-button fill="outline" size="small" (click)="downloadPreview()">
               <ion-icon src="{{ 'download' | svgIcon }}" slot="start" />
-              Herunterladen
+              {{ store.i18n.preview_download() }}
             </ion-button>
           </div>
-          <iframe [src]="url" class="preview-frame" title="Vorschau"></iframe>
+          <iframe [src]="url" class="preview-frame" [title]="store.i18n.tab_preview()"></iframe>
         } @else {
           <div class="preview-placeholder">
-            <p>Keine Vorschau verfügbar.</p>
+            <p>{{ store.i18n.preview_none() }}</p>
           </div>
         }
       }

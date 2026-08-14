@@ -2,6 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal, viewChild } f
 import { IonButton, IonButtons, IonCheckbox, IonContent, IonDatetime, IonInput, IonItem, ModalController } from '@ionic/angular/standalone';
 
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
 import { Header } from './header';
 
@@ -20,7 +21,7 @@ export interface DateTimeSelectModalI18n {
     IonContent, IonDatetime, IonItem, IonCheckbox, IonInput, IonButtons, IonButton
   ],
   template: `
-    <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" />
+    <okr-header [i18n]="{ title: labels().title }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-datetime
         #datetimePicker
@@ -37,7 +38,7 @@ export interface DateTimeSelectModalI18n {
       />
       <ion-item lines="none">
         <ion-checkbox labelPlacement="end" [checked]="withTime()" (ionChange)="withTime.set($any($event).detail.checked)">
-          {{ i18n().withTime }}
+          {{ labels().withTime }}
         </ion-checkbox>
         @if (withTime()) {
           <ion-input
@@ -50,8 +51,8 @@ export interface DateTimeSelectModalI18n {
         }
       </ion-item>
       <ion-buttons class="ion-justify-content-end">
-        <ion-button (click)="cancel()">{{ i18n().cancel }}</ion-button>
-        <ion-button (click)="confirm()">{{ i18n().ok }}</ion-button>
+        <ion-button (click)="cancel()">{{ labels().cancel }}</ion-button>
+        <ion-button (click)="confirm()">{{ labels().ok }}</ion-button>
       </ion-buttons>
     </ion-content>
   `,
@@ -61,7 +62,18 @@ export class DateTimeSelectModal {
   protected readonly datetimePicker = viewChild.required<IonDatetime>('datetimePicker');
 
   public isoDateTime = input(getTodayStr(DateFormat.IsoDate) + 'T08:00:00');
-  public i18n = input<DateTimeSelectModalI18n>({ title: 'Datum & Zeit auswählen', ok: 'OK', cancel: 'Abbrechen', withTime: 'mit Uhrzeit' });
+  public i18n = input<Partial<DateTimeSelectModalI18n>>({});
+
+  // Domain-agnostic defaults resolved here; a caller may still override any single label.
+  private readonly defaults = inject(I18nService).translateAll({
+    title: '@shared/ui.select.dateTime', ok: '@ok', cancel: '@cancel', withTime: '@shared/ui.withTime',
+  });
+  protected readonly labels = computed<DateTimeSelectModalI18n>(() => ({
+    title:    this.i18n().title    ?? this.defaults.title(),
+    ok:       this.i18n().ok       ?? this.defaults.ok(),
+    cancel:   this.i18n().cancel   ?? this.defaults.cancel(),
+    withTime: this.i18n().withTime ?? this.defaults.withTime(),
+  }));
 
   /** Time is opt-in: unchecked returns a date-only token, checked appends the time below. */
   protected readonly withTime = signal(false);

@@ -1,17 +1,53 @@
 {
-  "list": { "title": "Signatures électroniques" },
+  "list": {
+    "title": "Signatures électroniques",
+    "waiting_for": "En attente de {email}",
+    "signed_of": "{signed} / {total} signé(s)",
+    "open_error": "Le document n'a pas pu être ouvert."
+  },
   "empty": "Aucun processus de signature trouvé.",
   "close": "Fermer",
   "retry": "Réessayer",
-  "delete": { "error": "Le processus de signature n'a pas pu être supprimé." },
+  "delete": {
+    "error": "Le processus de signature n'a pas pu être supprimé.",
+    "upload": {
+      "title": "Abandonner l'envoi ?",
+      "body": "Cet envoi n'a jamais atteint DeepSign et sera supprimé localement uniquement.",
+      "confirm": "Abandonner"
+    },
+    "draft": {
+      "title": "Supprimer le processus de signature ?",
+      "body": "Le document sera supprimé de DeepSign. Aucune invitation n'a encore été envoyée.",
+      "confirm": "Supprimer"
+    },
+    "progress": {
+      "title": "Retirer et supprimer ?",
+      "body": "Le processus de signature sera d'abord retiré, puis supprimé. Les signataires en attente reçoivent une notification de retrait de DeepSign. <strong>Cette action est irréversible.</strong>",
+      "confirm": "Retirer et supprimer"
+    },
+    "signed": {
+      "title": "Supprimer le document signé ?",
+      "body": "<span class=\"warn\">Le PDF signé sera définitivement supprimé.</span> Assurez-vous d'en avoir téléchargé une copie.",
+      "confirm": "Supprimer le PDF signé"
+    },
+    "default": {
+      "title": "Supprimer le processus de signature ?",
+      "body": "Le processus de signature et son historique seront supprimés.",
+      "confirm": "Supprimer"
+    }
+  },
   "send": {
     "label": "Envoyer",
     "error": "Le document n'a pas pu être envoyé.",
     "ok": "Le document a été envoyé pour signature.",
     "failed": "Échec de l'envoi"
   },
-  "upload": { "error": "Fichier trop volumineux (max. 40 MB) ou format incorrect." },
-  "scan": { "no_fields": "Aucun champ de signature trouvé dans le document. Veuillez utiliser un PDF avec des Text Field Patterns intégrés." },
+  "upload": {
+    "error": "Fichier trop volumineux (max. 40 MB) ou format incorrect."
+  },
+  "scan": {
+    "no_fields": "Aucun champ de signature trouvé dans le document. Veuillez utiliser un PDF avec des Text Field Patterns intégrés."
+  },
   "actionsheet": {
     "view": "Afficher l'état de la signature",
     "doc_view": "Afficher le PDF",
@@ -35,7 +71,9 @@
       "label": "Message (facultatif)",
       "placeholder": "Laisser vide pour le texte par défaut"
     },
-    "include_pdf": { "label": "Joindre le PDF signé" }
+    "include_pdf": {
+      "label": "Joindre le PDF signé"
+    }
   },
   "document": {
     "title": "Envoyer le document",
@@ -70,5 +108,39 @@
       "others": "Uniquement aux autres",
       "none": "Aucun e-mail"
     }
+  },
+  "filter": {
+    "all": "Tous",
+    "in_progress": "En cours",
+    "signed": "Signé",
+    "rejected": "Refusé",
+    "draft": "Brouillon",
+    "withdrawn": "Retiré"
+  },
+  "view": {
+    "preview_title": "Aperçu PDF",
+    "details": "Détails",
+    "status": "Statut",
+    "initiator": "Initiateur",
+    "signature_mode": "Mode de signature",
+    "signees": "Signataires",
+    "signed_at": "Signé :",
+    "resend": "Renvoyer",
+    "events_show": "▼ Afficher les événements",
+    "events_hide": "▲ Masquer les événements",
+    "refresh": "Actualiser l'aperçu",
+    "download": "Télécharger le PDF signé",
+    "delete": "Supprimer",
+    "preview_error": "L'aperçu n'a pas pu être chargé.",
+    "resend_ok": "Invitation renvoyée à {email}.",
+    "resend_error": "L'invitation n'a pas pu être envoyée.",
+    "doc_delete_error": "Le document n'a pas pu être supprimé."
+  },
+  "signee": {
+    "on_hold": "En attente",
+    "pending": "À signer",
+    "in_progress": "En cours",
+    "signed": "Signé",
+    "rejected": "Refusé"
   }
 }

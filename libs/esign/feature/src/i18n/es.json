@@ -1,17 +1,53 @@
 {
-  "list": { "title": "Firmas electrónicas" },
+  "list": {
+    "title": "Firmas electrónicas",
+    "waiting_for": "Esperando a {email}",
+    "signed_of": "{signed} / {total} firmado(s)",
+    "open_error": "No se pudo abrir el documento."
+  },
   "empty": "No se han encontrado procesos de firma.",
   "close": "Cerrar",
   "retry": "Intentar de nuevo",
-  "delete": { "error": "No se ha podido eliminar el proceso de firma." },
+  "delete": {
+    "error": "No se ha podido eliminar el proceso de firma.",
+    "upload": {
+      "title": "¿Descartar la subida?",
+      "body": "Esta subida nunca llegó a DeepSign y solo se eliminará localmente.",
+      "confirm": "Descartar"
+    },
+    "draft": {
+      "title": "¿Eliminar el proceso de firma?",
+      "body": "El documento se eliminará de DeepSign. Todavía no se han enviado invitaciones.",
+      "confirm": "Eliminar"
+    },
+    "progress": {
+      "title": "¿Retirar y eliminar?",
+      "body": "El proceso de firma se retirará primero y luego se eliminará. Los firmantes pendientes reciben una notificación de retirada de DeepSign. <strong>Esto no se puede deshacer.</strong>",
+      "confirm": "Retirar y eliminar"
+    },
+    "signed": {
+      "title": "¿Eliminar el documento firmado?",
+      "body": "<span class=\"warn\">El PDF firmado se eliminará permanentemente.</span> Asegúrese de haber descargado una copia.",
+      "confirm": "Eliminar el PDF firmado"
+    },
+    "default": {
+      "title": "¿Eliminar el proceso de firma?",
+      "body": "Se eliminarán el proceso de firma y su historial.",
+      "confirm": "Eliminar"
+    }
+  },
   "send": {
     "label": "Enviar",
     "error": "No se ha podido enviar el documento.",
     "ok": "El documento se ha enviado para su firma.",
     "failed": "Error al enviar"
   },
-  "upload": { "error": "Archivo demasiado grande (máx. 40 MB) o formato incorrecto." },
-  "scan": { "no_fields": "No se han encontrado campos de firma en el documento. Utilice un PDF con Text Field Patterns incrustados." },
+  "upload": {
+    "error": "Archivo demasiado grande (máx. 40 MB) o formato incorrecto."
+  },
+  "scan": {
+    "no_fields": "No se han encontrado campos de firma en el documento. Utilice un PDF con Text Field Patterns incrustados."
+  },
   "actionsheet": {
     "view": "Mostrar estado de la firma",
     "doc_view": "Mostrar PDF",
@@ -35,7 +71,9 @@
       "label": "Mensaje (opcional)",
       "placeholder": "Dejar vacío para el texto predeterminado"
     },
-    "include_pdf": { "label": "Adjuntar el PDF firmado" }
+    "include_pdf": {
+      "label": "Adjuntar el PDF firmado"
+    }
   },
   "document": {
     "title": "Enviar documento",
@@ -70,5 +108,39 @@
       "others": "Solo a los demás",
       "none": "Sin correos"
     }
+  },
+  "filter": {
+    "all": "Todos",
+    "in_progress": "En curso",
+    "signed": "Firmado",
+    "rejected": "Rechazado",
+    "draft": "Borrador",
+    "withdrawn": "Retirado"
+  },
+  "view": {
+    "preview_title": "Vista previa del PDF",
+    "details": "Detalles",
+    "status": "Estado",
+    "initiator": "Iniciador",
+    "signature_mode": "Modo de firma",
+    "signees": "Firmantes",
+    "signed_at": "Firmado:",
+    "resend": "Reenviar",
+    "events_show": "▼ Mostrar eventos",
+    "events_hide": "▲ Ocultar eventos",
+    "refresh": "Actualizar vista previa",
+    "download": "Descargar PDF firmado",
+    "delete": "Eliminar",
+    "preview_error": "No se pudo cargar la vista previa.",
+    "resend_ok": "Invitación reenviada a {email}.",
+    "resend_error": "No se pudo enviar la invitación.",
+    "doc_delete_error": "No se pudo eliminar el documento."
+  },
+  "signee": {
+    "on_hold": "En espera",
+    "pending": "Pendiente",
+    "in_progress": "En curso",
+    "signed": "Firmado",
+    "rejected": "Rechazado"
   }
 }

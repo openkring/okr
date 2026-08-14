@@ -166,6 +166,19 @@
         "unmatched": "Aucune correspondance trouvée pour :"
       },
       "link": "Relier"
+    },
+    "filter": {
+      "all": "Tous",
+      "persons": "Personnes uniquement",
+      "members": "Membres uniquement",
+      "orgs": "Organisations uniquement",
+      "mismatch": "Écarts uniquement"
+    },
+    "from_date": "À partir du",
+    "root_name": "Nom racine",
+    "col": {
+      "bexio_id": "ID Bexio",
+      "source": "Source"
     }
   },
   "chat": {
@@ -488,7 +501,10 @@
       "helper": "Vous pouvez définir ici un mot de passe pour l'utilisateur sélectionné (p. ex. à des fins de test). Un champ de mot de passe vide génère un mot de passe aléatoire. L'utilisateur peut ensuite définir son propre mot de passe via une réinitialisation.",
       "set": "Définir un nouveau mot de passe pour l'utilisateur sélectionné sans déclencher d'e-mail de réinitialisation. Un champ de mot de passe vide génère un mot de passe aléatoire.",
       "reset": "Envoyer un e-mail de réinitialisation de mot de passe à l'utilisateur sélectionné."
-    }
+    },
+    "person": "Personne :",
+    "user": "Utilisateur :",
+    "result": "Résultat"
   },
   "session": {
     "title": "Sessions",
@@ -556,7 +572,10 @@
       "title": "Synchroniser les membres SRV",
       "subtitle": "Compare les adhésions SRV actuelles (orgKey=srv) avec les membres du portail Regasoft. Rapprochement primaire via memberId = serviceId, repli via le nom.",
       "reset": "Réinitialiser l'index",
-      "button": "Construire l'index"
+      "button": "Construire l'index",
+      "building": "Construction de l’index...",
+      "none": "Pas encore d’index. Construisez-le.",
+      "summary": "{shown} sur {total} entrées : {scs} SCS, {srv} SRV, {regasoft} Regasoft"
     },
     "person": {
       "update": {
@@ -596,7 +615,47 @@
       },
       "download": {
         "label": "Télécharger la licence"
-      }
+      },
+      "title": "Licences",
+      "empty": "Aucun membre licencié dans l’index.",
+      "count": "{count} membres avec une licence active"
+    },
+    "show": "Afficher",
+    "hide": "Masquer",
+    "col": {
+      "name": "Nom",
+      "age": "Âge",
+      "category": "Cat",
+      "member_id": "BK memberId",
+      "service_id": "ID SRV",
+      "nation": "Nation",
+      "membership_type": "Type d’affiliation",
+      "license": "Licence",
+      "license_until": "Licence valable jusqu’au",
+      "other_clubs": "Autres clubs",
+      "attribute": "Attribut",
+      "regasoft": "Regasoft"
+    },
+    "foreign": {
+      "title": "Membres étrangers",
+      "empty": "Aucun membre étranger dans l’index.",
+      "count": "{count} membres de nationalité étrangère"
+    },
+    "clubs": {
+      "title": "Membres dans d’autres clubs",
+      "empty": "Aucun membre d’un autre club dans l’index.",
+      "count": "{count} membres dans d’autres clubs",
+      "subtitle": "{count} membres également dans d’autres clubs SRV"
+    },
+    "filter": {
+      "all": "Tous",
+      "bk": "Uniquement dans BK",
+      "srv": "Uniquement dans SRV",
+      "both": "Les deux"
+    },
+    "mismatch": {
+      "yes": "oui",
+      "no": "non"
     }
   },
   "statistics": {
@@ -758,6 +817,36 @@
     "masters": {
       "label": "Masters",
       "description": "À partir de 27 ans."
+    }
+  },
+  "kiosk": {
+    "title": "Appareils kiosque",
+    "empty": "Aucun appareil kiosque ne s’est encore annoncé.",
+    "no_trips": "Aucune sortie enregistrée aujourd’hui.",
+    "lock": "Verrouiller",
+    "unlock": "Déverrouiller",
+    "reload": {
+      "conf": "Rechargement déclenché.",
+      "ask": "{device} : recharger l’appareil maintenant ? Toute saisie en cours sera perdue."
+    },
+    "message": {
+      "sent": "Message envoyé.",
+      "title": "Envoyer un message",
+      "send": "Envoyer",
+      "label": "Texte du message",
+      "placeholder": "p. ex. ne plus utiliser le bateau 3"
+    },
+    "locked": {
+      "conf": "Kiosque verrouillé."
+    },
+    "unlocked": {
+      "conf": "Kiosque déverrouillé."
+    },
+    "no_person": "Aucune personne n’est associée à ce kiosque — appel impossible.",
+    "call_failed": "L’appel n’a pas pu être démarré.",
+    "countdown": {
+      "label": "Fermer automatiquement le message",
+      "seconds": "Compte à rebours (secondes)"
     }
   }
 }

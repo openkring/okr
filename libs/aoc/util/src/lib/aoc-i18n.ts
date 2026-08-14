@@ -438,6 +438,79 @@ export const AOC_I18N_KEYS = {
   srv_regasoft_add:                         PFX + 'srv.regasoft.add.label',
   srv_regasoft_update:                      PFX + 'srv.regasoft.update.label',
 
+  srv_show:                                 PFX + 'srv.show',
+  srv_hide:                                 PFX + 'srv.hide',
+  srv_index_building:                       PFX + 'srv.index.building',
+  srv_index_none:                           PFX + 'srv.index.none',
+  srv_index_summary:                        PFX + 'srv.index.summary',
+  srv_col_name:                             PFX + 'srv.col.name',
+  srv_col_age:                              PFX + 'srv.col.age',
+  srv_col_category:                         PFX + 'srv.col.category',
+  srv_col_member_id:                        PFX + 'srv.col.member_id',
+  srv_col_service_id:                       PFX + 'srv.col.service_id',
+  srv_col_nation:                           PFX + 'srv.col.nation',
+  srv_col_membership_type:                  PFX + 'srv.col.membership_type',
+  srv_col_license:                          PFX + 'srv.col.license',
+  srv_col_license_until:                    PFX + 'srv.col.license_until',
+  srv_col_other_clubs:                      PFX + 'srv.col.other_clubs',
+  srv_col_attribute:                        PFX + 'srv.col.attribute',
+  srv_col_person:                           '@person',
+  srv_col_member:                           '@membership',
+  srv_col_regasoft:                         PFX + 'srv.col.regasoft',
+  srv_foreign_title:                        PFX + 'srv.foreign.title',
+  srv_foreign_empty:                        PFX + 'srv.foreign.empty',
+  srv_foreign_count:                        PFX + 'srv.foreign.count',
+  srv_license_title:                        PFX + 'srv.license.title',
+  srv_license_empty:                        PFX + 'srv.license.empty',
+  srv_license_count:                        PFX + 'srv.license.count',
+  srv_clubs_title:                          PFX + 'srv.clubs.title',
+  srv_clubs_empty:                          PFX + 'srv.clubs.empty',
+  srv_clubs_count:                          PFX + 'srv.clubs.count',
+  srv_clubs_subtitle:                       PFX + 'srv.clubs.subtitle',
+  srv_filter_all:                           PFX + 'srv.filter.all',
+  srv_filter_bk:                            PFX + 'srv.filter.bk',
+  srv_filter_srv:                           PFX + 'srv.filter.srv',
+  srv_filter_both:                          PFX + 'srv.filter.both',
+  srv_mismatch_yes:                         PFX + 'srv.mismatch.yes',
+  srv_mismatch_no:                          PFX + 'srv.mismatch.no',
+
+  // bexio console
+  bexio_filter_all:                         PFX + 'bexio.filter.all',
+  bexio_filter_persons:                     PFX + 'bexio.filter.persons',
+  bexio_filter_members:                     PFX + 'bexio.filter.members',
+  bexio_filter_orgs:                        PFX + 'bexio.filter.orgs',
+  bexio_filter_mismatch:                    PFX + 'bexio.filter.mismatch',
+  bexio_from_date:                          PFX + 'bexio.from_date',
+  bexio_root_name:                          PFX + 'bexio.root_name',
+  bexio_col_bexio_id:                       PFX + 'bexio.col.bexio_id',
+  bexio_col_source:                         PFX + 'bexio.col.source',
+
+  // kiosk console
+  kiosk_title:                              PFX + 'kiosk.title',
+  kiosk_empty:                              PFX + 'kiosk.empty',
+  kiosk_no_trips:                           PFX + 'kiosk.no_trips',
+  kiosk_lock:                               PFX + 'kiosk.lock',
+  kiosk_unlock:                             PFX + 'kiosk.unlock',
+  kiosk_reload_conf:                        PFX + 'kiosk.reload.conf',
+  kiosk_reload_ask:                         PFX + 'kiosk.reload.ask',
+  kiosk_message_sent:                       PFX + 'kiosk.message.sent',
+  kiosk_locked_conf:                        PFX + 'kiosk.locked.conf',
+  kiosk_unlocked_conf:                      PFX + 'kiosk.unlocked.conf',
+  kiosk_no_person:                          PFX + 'kiosk.no_person',
+  kiosk_call_failed:                        PFX + 'kiosk.call_failed',
+  kiosk_message_title:                      PFX + 'kiosk.message.title',
+  kiosk_message_send:                       PFX + 'kiosk.message.send',
+  kiosk_message_label:                      PFX + 'kiosk.message.label',
+  kiosk_message_placeholder:                PFX + 'kiosk.message.placeholder',
+  kiosk_countdown_label:                    PFX + 'kiosk.countdown.label',
+  kiosk_countdown_seconds:                  PFX + 'kiosk.countdown.seconds',
+
+  // roles console
+  roles_person:                             PFX + 'roles.person',
+  roles_user:                               PFX + 'roles.user',
+  roles_result:                             PFX + 'roles.result',
+  location:                                 '@location',
+
   srv_license_create:                       PFX + 'srv.license.create.label',
   srv_license_download:                     PFX + 'srv.license.download.label',
 
@@ -566,17 +639,6 @@ export const TENANT_SWITCHER_I18N_KEYS = {
 
 export type AocI18n = { [K in keyof typeof AOC_I18N_KEYS]: Signal<string> };
 
-/**
- * Fill a `{name}` placeholder in an already-resolved i18n string.
- *
- * SINGLE braces on purpose. The store i18n pattern resolves keys through
- * `I18nService.translateAll`, and Transloco interpolates its own `{{name}}` syntax during
- * that resolution — with no params supplied it substitutes the empty string, so a `{{name}}`
- * placeholder is already gone by the time the signal is read (symptom: a label rendering as
- * "von erstellt"). Single braces pass through Transloco untouched and are substituted here.
- * Any translation string used with this helper must therefore use `{name}`, never `{{name}}`.
- */
-export function fill(template: string, params: Record<string, string | number>): string {
-  // split/join, not replaceAll: this lib's tsconfig target predates String.replaceAll.
-  return Object.entries(params).reduce((s, [k, v]) => s.split(`{${k}}`).join(String(v)), template);
-}
+// `fill` now lives in @okr/shared-util-core so every domain can use it; re-exported
+// here so the existing `import { fill } from '@okr/aoc-util'` call sites keep working.
+export { fill } from '@okr/shared-util-core';

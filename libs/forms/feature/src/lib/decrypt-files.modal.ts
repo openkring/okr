@@ -6,7 +6,8 @@ import { inject } from '@angular/core';
 
 import { Header } from '@okr/shared-ui';
 
-import { EncryptedFileMetadata, decryptFile } from '@okr/forms-util';
+import { I18nService } from '@okr/shared-i18n';
+import { EncryptedFileMetadata, decryptFile, FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
 
 @Component({
   selector: 'okr-decrypt-files-modal',
@@ -16,19 +17,19 @@ import { EncryptedFileMetadata, decryptFile } from '@okr/forms-util';
     IonContent, IonList, IonItem, IonLabel, IonInput, IonNote, IonButton,
   ],
   template: `
-    <okr-header [i18n]="{ title: 'Dateien entschlüsseln' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.decrypt_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
 
       <ion-note color="medium" style="display:block; padding:12px; border-radius:8px; margin-bottom:16px;">
-        Geben Sie das Verschlüsselungspasswort ein. Der Schlüssel verlässt niemals den Browser.
+        {{ i18n.decrypt_hint() }}
       </ion-note>
 
       <ion-item>
-        <ion-label position="stacked">Passwort</ion-label>
+        <ion-label position="stacked">{{ i18n.decrypt_password() }}</ion-label>
         <ion-input
           type="password"
           [(ngModel)]="password"
-          placeholder="Passwort eingeben"
+          [placeholder]="i18n.decrypt_password_ph()"
           (keyup.enter)="decryptAll()"
         />
       </ion-item>
@@ -43,7 +44,7 @@ import { EncryptedFileMetadata, decryptFile } from '@okr/forms-util';
         [disabled]="!password || decrypting()"
         (click)="decryptAll()"
       >
-        {{ decrypting() ? 'Wird entschlüsselt…' : 'Entschlüsseln & herunterladen' }}
+        {{ decrypting() ? i18n.decrypt_running() : i18n.decrypt_action() }}
       </ion-button>
 
       @if (files().length > 1) {
@@ -59,7 +60,7 @@ import { EncryptedFileMetadata, decryptFile } from '@okr/forms-util';
       }
 
       <ion-button expand="block" fill="outline" color="medium" (click)="dismiss()" style="margin-top:8px;">
-        Schliessen
+        {{ i18n.close() }}
       </ion-button>
     </ion-content>
   `,
@@ -68,6 +69,10 @@ export class DecryptFilesModal {
   private readonly modalController = inject(ModalController);
 
   public readonly files = input.required<EncryptedFileMetadata[]>();
+
+  // Direct inject (no store): the store opens this modal, importing it back would be circular.
+  protected readonly i18n = inject(I18nService).translateAll(FORM_I18N_KEYS) as FormI18n;
+
 
   protected password = '';
   protected readonly decrypting = signal(false);
@@ -95,7 +100,7 @@ export class DecryptFilesModal {
       }
       await this.modalController.dismiss(null, 'confirm');
     } catch {
-      this.errorMsg.set('Entschlüsselung fehlgeschlagen. Falsches Passwort?');
+      this.errorMsg.set(this.i18n.decrypt_failed());
     } finally {
       this.decrypting.set(false);
     }

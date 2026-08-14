@@ -25,9 +25,16 @@
   },
   "field": {
     "title": "Feld konfigurieren",
-    "add": "Feld hinzufügen"
+    "add": "Feld hinzufügen",
+    "text": "Text *",
+    "label": "Label *",
+    "key": "Feldname (snake_case) *",
+    "width_full": "Ganz (100%)",
+    "width_half": "Halb (50%)",
+    "width_third": "Drittel (33%)",
+    "placeholder": "Platzhalter",
+    "apply": "Übernehmen"
   },
-
   "canvas_empty": "Ziehe Felder aus der Bibliothek hierher.",
   "library": "Feldbibliothek",
   "key": "Feldname (snake_case)",
@@ -47,7 +54,6 @@
   "url": {
     "label": "Ziel-URL"
   },
-
   "create": {
     "label": "Neues Formular erstellen",
     "conf": "Das Formular wurde erstellt.",
@@ -68,5 +74,49 @@
     "label": "Formular ändern",
     "conf": "Das Formular wurde gespeichert.",
     "error": "Das Formular konnte nicht gespeichert werden."
+  },
+  "builder": {
+    "preview_empty": "Noch keine Felder zum Vorschauen.",
+    "discard": "Verwerfen",
+    "source": {
+      "copy": "Kopieren",
+      "paste": "Einfügen",
+      "copied": "In die Zwischenablage kopiert.",
+      "copy_failed": "Kopieren fehlgeschlagen (Zwischenablage nicht verfügbar).",
+      "invalid_json": "Ungültiges JSON in der Zwischenablage.",
+      "invalid_format": "Ungültiges Format: erwartet ein Objekt mit einem \"fields\"-Array.",
+      "applied": "{count} Felder aus der Zwischenablage übernommen. Zum Speichern bestätigen."
+    }
+  },
+  "definition": {
+    "create_title": "Neues Formular",
+    "edit_title": "Formular bearbeiten",
+    "name": "Name *",
+    "name_placeholder": "Kontaktformular",
+    "target_kind": "Einreichungen speichern in",
+    "target_url_short": "Externe URL",
+    "collection": "Sammlung",
+    "select_placeholder": "Auswählen…",
+    "pdf_template": "PDF-Template-ID (optional)",
+    "pdf_template_placeholder": "Template-ID aus dem Dokument-Generator",
+    "fields": "Felder ({count}) – im Formular-Editor anpassbar"
+  },
+  "decrypt": {
+    "title": "Dateien entschlüsseln",
+    "hint": "Geben Sie das Verschlüsselungspasswort ein. Der Schlüssel verlässt niemals den Browser.",
+    "password": "Passwort",
+    "password_placeholder": "Passwort eingeben",
+    "running": "Wird entschlüsselt…",
+    "action": "Entschlüsseln & herunterladen",
+    "failed": "Entschlüsselung fehlgeschlagen. Falsches Passwort?"
+  },
+  "encryption": {
+    "title": "Verschlüsselung aktivieren",
+    "warning": "Dieses Passwort wird nur einmal angezeigt. Wenn es verloren geht, sind verschlüsselte Dateien unwiederbringlich verloren. Speichern Sie es in einem Passwort-Manager.",
+    "password": "Verschlüsselungspasswort (einmalig angezeigt)",
+    "copied": "Passwort kopiert.",
+    "confirm": "Ich habe das Passwort sicher gespeichert und verstehe, dass ein Verlust den unwiederbringlichen Verlust aller verschlüsselten Dateien bedeutet.",
+    "saving": "Wird gespeichert…",
+    "activate": "Aktivieren"
   }
 }

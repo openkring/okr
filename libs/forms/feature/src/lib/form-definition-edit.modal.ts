@@ -7,7 +7,9 @@ import { Header } from '@okr/shared-ui';
 import { FormDefinitionModel, SubmissionTarget } from '@okr/shared-models';
 import { safeStructuredClone } from '@okr/shared-util-core';
 import { FormDefinitionService } from '@okr/forms-data-access';
-import { FORM_MAPPINGS, getPrefillFields } from '@okr/forms-util';
+import { FORM_MAPPINGS, getPrefillFields, FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
+import { I18nService } from '@okr/shared-i18n';
+import { fill } from '@okr/shared-util-core';
 
 @Component({
   selector: 'okr-form-definition-edit-modal',
@@ -25,33 +27,33 @@ import { FORM_MAPPINGS, getPrefillFields } from '@okr/forms-util';
 
         <!-- Name -->
         <ion-item>
-          <ion-label position="stacked">Name *</ion-label>
-          <ion-input [ngModel]="formData().name" (ngModelChange)="patch({ name: $event })" placeholder="Kontaktformular" />
+          <ion-label position="stacked">{{ i18n.def_name() }}</ion-label>
+          <ion-input [ngModel]="formData().name" (ngModelChange)="patch({ name: $event })" [placeholder]="i18n.def_name_placeholder()" />
         </ion-item>
 
         <!-- Description -->
         <ion-item>
-          <ion-label position="stacked">Beschreibung</ion-label>
+          <ion-label position="stacked">{{ i18n.description() }}</ion-label>
           <ion-textarea [ngModel]="formData().description" (ngModelChange)="patch({ description: $event })" rows="3" />
         </ion-item>
 
         <!-- form key (read-only after creation) -->
         @if (mode() === 'edit') {
           <ion-item>
-            <ion-label position="stacked">Form-Key (unveränderlich)</ion-label>
+            <ion-label position="stacked">{{ i18n.form_key() }}</ion-label>
             <ion-input [value]="formData().formKey" [readonly]="true" />
           </ion-item>
         }
 
         <!-- Target type -->
         <ion-item>
-          <ion-label position="stacked">Einreichungen speichern in</ion-label>
+          <ion-label position="stacked">{{ i18n.def_target_kind() }}</ion-label>
           <ion-radio-group [ngModel]="targetKind()" (ngModelChange)="setTargetKind($event)">
             <ion-item>
-              <ion-radio value="collection" />&nbsp;Firestore-Sammlung (empfohlen)
+              <ion-radio value="collection" />&nbsp;{{ i18n.target_collection() }}
             </ion-item>
             <ion-item>
-              <ion-radio value="url" />&nbsp;Externe URL
+              <ion-radio value="url" />&nbsp;{{ i18n.def_target_url_short() }}
             </ion-item>
           </ion-radio-group>
         </ion-item>
@@ -59,8 +61,8 @@ import { FORM_MAPPINGS, getPrefillFields } from '@okr/forms-util';
         <!-- Collection picker -->
         @if (targetKind() === 'collection') {
           <ion-item>
-            <ion-label position="stacked">Sammlung</ion-label>
-            <ion-select [ngModel]="collectionMappingKey()" (ngModelChange)="setMappingKey($event)" placeholder="Auswählen…">
+            <ion-label position="stacked">{{ i18n.def_collection() }}</ion-label>
+            <ion-select [ngModel]="collectionMappingKey()" (ngModelChange)="setMappingKey($event)" [placeholder]="i18n.def_select_placeholder()">
               @for (m of formMappings; track m.mappingKey) {
                 <ion-select-option [value]="m.mappingKey">{{ m.label }}</ion-select-option>
               }
@@ -71,21 +73,21 @@ import { FORM_MAPPINGS, getPrefillFields } from '@okr/forms-util';
         <!-- URL input -->
         @if (targetKind() === 'url') {
           <ion-item>
-            <ion-label position="stacked">Ziel-URL</ion-label>
+            <ion-label position="stacked">{{ i18n.url_label() }}</ion-label>
             <ion-input [ngModel]="urlTarget()" (ngModelChange)="setUrl($event)" placeholder="https://…" type="url" />
           </ion-item>
         }
 
         <!-- PDF template (optional) -->
         <ion-item>
-          <ion-label position="stacked">PDF-Template-ID (optional)</ion-label>
-          <ion-input [ngModel]="formData().pdfTemplateId" (ngModelChange)="patch({ pdfTemplateId: $event })" placeholder="Template-ID aus dem Dokument-Generator" />
+          <ion-label position="stacked">{{ i18n.def_pdf_template() }}</ion-label>
+          <ion-input [ngModel]="formData().pdfTemplateId" (ngModelChange)="patch({ pdfTemplateId: $event })" [placeholder]="i18n.def_pdf_template_ph()" />
         </ion-item>
 
         <!-- Field preview (prefilled from the selected collection) -->
         @if (formData().fields.length > 0) {
           <ion-item lines="none">
-            <ion-label position="stacked">Felder ({{ formData().fields.length }}) – im Formular-Editor anpassbar</ion-label>
+            <ion-label position="stacked">{{ fieldsLabel() }}</ion-label>
           </ion-item>
           @for (field of formData().fields; track field.id) {
             <ion-item>
@@ -101,7 +103,7 @@ import { FORM_MAPPINGS, getPrefillFields } from '@okr/forms-util';
       </ion-list>
 
       <ion-button expand="block" [disabled]="!isValid()" (click)="save()" style="margin: 16px;">
-        Speichern
+        {{ i18n.save() }}
       </ion-button>
     </ion-content>
   `,
@@ -117,9 +119,15 @@ export class FormDefinitionEditModal {
   protected readonly formMappings = FORM_MAPPINGS;
   protected formData = linkedSignal(() => safeStructuredClone(this.form()) ?? this.form());
 
+  // Direct inject (no store): the store opens this modal, importing it back would be circular.
+  protected readonly i18n = inject(I18nService).translateAll(FORM_I18N_KEYS) as FormI18n;
+
   protected readonly title = computed(() =>
-    this.mode() === 'create' ? 'Neues Formular' : 'Formular bearbeiten'
+    this.mode() === 'create' ? this.i18n.def_create_title() : this.i18n.def_edit_title()
   );
+
+  protected readonly fieldsLabel = computed(() =>
+    fill(this.i18n.def_fields(), { count: this.formData().fields.length }));
 
   protected readonly targetKind = computed(() => this.formData().target.kind);
 

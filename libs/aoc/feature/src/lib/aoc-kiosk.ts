@@ -34,7 +34,7 @@ import { AocKioskStore } from './aoc-kiosk.store';
     .metric .caption { font-size: 0.8rem; color: var(--ion-color-medium); }
   `],
   template: `
-    <okr-header [i18n]="{ title: 'Kiosk-Geräte' }" />
+    <okr-header [i18n]="{ title: store.i18n.kiosk_title() }" />
     <ion-content>
       <ion-button fill="clear" (click)="store.refresh()">
         <ion-icon slot="start" src="{{ 'reload' | svgIcon }}" /> Aktualisieren
@@ -43,7 +43,7 @@ import { AocKioskStore } from './aoc-kiosk.store';
       @if (store.isLoading()) {
         <okr-spinner />
       } @else if (store.kiosks().length === 0) {
-        <okr-empty-list message="Kein Kiosk-Gerät hat sich bisher gemeldet." />
+        <okr-empty-list [message]="store.i18n.kiosk_empty()" />
       }
 
       @for (kiosk of store.kiosks(); track kiosk.uid) {
@@ -103,7 +103,7 @@ import { AocKioskStore } from './aoc-kiosk.store';
                   </ion-button>
                   <ion-button [color]="kiosk.locked ? 'warning' : 'medium'" fill="outline" (click)="store.toggleLock(kiosk)">
                     <ion-icon slot="start" src="{{ (kiosk.locked ? 'lock-open' : 'lock-closed') | svgIcon }}" />
-                    {{ kiosk.locked ? 'Entsperren' : 'Sperren' }}
+                    {{ kiosk.locked ? store.i18n.kiosk_unlock() : store.i18n.kiosk_lock() }}
                   </ion-button>
                 </ion-col>
               </ion-row>
@@ -119,7 +119,7 @@ import { AocKioskStore } from './aoc-kiosk.store';
         </ion-card-header>
         <ion-card-content>
           @if (store.todaysTrips().length === 0) {
-            <okr-empty-list message="Heute wurde noch keine Fahrt erfasst." />
+            <okr-empty-list [message]="store.i18n.kiosk_no_trips()" />
           } @else {
             <ion-list lines="inset">
               @for (trip of store.todaysTrips(); track trip.okey) {

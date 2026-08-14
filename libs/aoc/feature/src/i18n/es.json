@@ -166,6 +166,19 @@
         "unmatched": "No se encontró coincidencia para:"
       },
       "link": "Vincular"
+    },
+    "filter": {
+      "all": "Todos",
+      "persons": "Solo personas",
+      "members": "Solo miembros",
+      "orgs": "Solo organizaciones",
+      "mismatch": "Solo discrepancias"
+    },
+    "from_date": "Desde la fecha",
+    "root_name": "Nombre raíz",
+    "col": {
+      "bexio_id": "ID de Bexio",
+      "source": "Origen"
     }
   },
   "chat": {
@@ -488,7 +501,10 @@
       "helper": "Aquí puede establecer una contraseña para el usuario seleccionado (p. ej. con fines de prueba). Un campo de contraseña vacío genera una contraseña aleatoria. El usuario puede después establecer su propia contraseña mediante un restablecimiento.",
       "set": "Establecer una nueva contraseña para el usuario seleccionado sin activar un correo de restablecimiento. Un campo de contraseña vacío genera una contraseña aleatoria.",
       "reset": "Enviar un correo de restablecimiento de contraseña al usuario seleccionado."
-    }
+    },
+    "person": "Persona:",
+    "user": "Usuario:",
+    "result": "Resultado"
   },
   "session": {
     "title": "Sesiones",
@@ -556,7 +572,10 @@
       "title": "Sincronizar miembros de SRV",
       "subtitle": "Compara las membresías SRV actuales (orgKey=srv) con los miembros del portal Regasoft. Cotejo primario vía memberId = serviceId, alternativa vía nombre.",
       "reset": "Restablecer índice",
-      "button": "Construir índice"
+      "button": "Construir índice",
+      "building": "Construyendo el índice...",
+      "none": "Todavía no hay índice. Constrúyalo.",
+      "summary": "{shown} de {total} entradas: {scs} SCS, {srv} SRV, {regasoft} Regasoft"
     },
     "person": {
       "update": {
@@ -596,7 +615,47 @@
       },
       "download": {
         "label": "Descargar licencia"
-      }
+      },
+      "title": "Licencias",
+      "empty": "No hay miembros con licencia en el índice.",
+      "count": "{count} miembros con licencia activa"
+    },
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "col": {
+      "name": "Nombre",
+      "age": "Edad",
+      "category": "Cat",
+      "member_id": "BK memberId",
+      "service_id": "ID SRV",
+      "nation": "Nación",
+      "membership_type": "Tipo de afiliación",
+      "license": "Licencia",
+      "license_until": "Licencia válida hasta",
+      "other_clubs": "Otros clubes",
+      "attribute": "Atributo",
+      "regasoft": "Regasoft"
+    },
+    "foreign": {
+      "title": "Miembros extranjeros",
+      "empty": "No hay miembros extranjeros en el índice.",
+      "count": "{count} miembros con nacionalidad extranjera"
+    },
+    "clubs": {
+      "title": "Miembros en otros clubes",
+      "empty": "No hay miembros de otros clubes en el índice.",
+      "count": "{count} miembros en otros clubes",
+      "subtitle": "{count} miembros también en otros clubes SRV"
+    },
+    "filter": {
+      "all": "Todos",
+      "bk": "Solo en BK",
+      "srv": "Solo en SRV",
+      "both": "Ambos"
+    },
+    "mismatch": {
+      "yes": "sí",
+      "no": "no"
     }
   },
   "statistics": {
@@ -758,6 +817,36 @@
     "masters": {
       "label": "Masters",
       "description": "Desde 27 años."
+    }
+  },
+  "kiosk": {
+    "title": "Dispositivos kiosco",
+    "empty": "Ningún dispositivo kiosco se ha anunciado todavía.",
+    "no_trips": "Hoy no se ha registrado ninguna salida.",
+    "lock": "Bloquear",
+    "unlock": "Desbloquear",
+    "reload": {
+      "conf": "Recarga activada.",
+      "ask": "{device}: ¿recargar el dispositivo ahora? Se perderá cualquier entrada abierta."
+    },
+    "message": {
+      "sent": "Mensaje enviado.",
+      "title": "Enviar mensaje",
+      "send": "Enviar",
+      "label": "Texto del mensaje",
+      "placeholder": "p. ej. no usar más el barco 3"
+    },
+    "locked": {
+      "conf": "Kiosco bloqueado."
+    },
+    "unlocked": {
+      "conf": "Kiosco desbloqueado."
+    },
+    "no_person": "No hay ninguna persona asignada a este kiosco: no se puede llamar.",
+    "call_failed": "No se pudo iniciar la llamada.",
+    "countdown": {
+      "label": "Cerrar el mensaje automáticamente",
+      "seconds": "Cuenta atrás (segundos)"
     }
   }
 }

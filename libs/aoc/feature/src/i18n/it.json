@@ -166,6 +166,19 @@
         "unmatched": "Nessuna corrispondenza trovata per:"
       },
       "link": "Collegare"
+    },
+    "filter": {
+      "all": "Tutti",
+      "persons": "Solo persone",
+      "members": "Solo membri",
+      "orgs": "Solo organizzazioni",
+      "mismatch": "Solo differenze"
+    },
+    "from_date": "Dalla data",
+    "root_name": "Nome radice",
+    "col": {
+      "bexio_id": "ID Bexio",
+      "source": "Origine"
     }
   },
   "chat": {
@@ -488,7 +501,10 @@
       "helper": "Qui è possibile impostare una password per l'utente selezionato (ad es. a scopo di test). Un campo password vuoto genera una password casuale. L'utente può poi impostare la propria password tramite una reimpostazione.",
       "set": "Impostare una nuova password per l'utente selezionato senza attivare un'e-mail di reimpostazione. Un campo password vuoto genera una password casuale.",
       "reset": "Inviare un'e-mail di reimpostazione della password all'utente selezionato."
-    }
+    },
+    "person": "Persona:",
+    "user": "Utente:",
+    "result": "Risultato"
   },
   "session": {
     "title": "Sessioni",
@@ -556,7 +572,10 @@
       "title": "Sincronizzare i soci SRV",
       "subtitle": "Confronta le iscrizioni SRV attuali (orgKey=srv) con i soci del portale Regasoft. Confronto primario tramite memberId = serviceId, ripiego tramite nome.",
       "reset": "Reimpostare l'indice",
-      "button": "Costruire l'indice"
+      "button": "Costruire l'indice",
+      "building": "Costruzione dell’indice...",
+      "none": "Nessun indice. Costruire l’indice.",
+      "summary": "{shown} di {total} voci: {scs} SCS, {srv} SRV, {regasoft} Regasoft"
     },
     "person": {
       "update": {
@@ -596,7 +615,47 @@
       },
       "download": {
         "label": "Scaricare la licenza"
-      }
+      },
+      "title": "Licenze",
+      "empty": "Nessun membro con licenza nell’indice.",
+      "count": "{count} membri con licenza attiva"
+    },
+    "show": "Mostrare",
+    "hide": "Nascondere",
+    "col": {
+      "name": "Nome",
+      "age": "Età",
+      "category": "Cat",
+      "member_id": "BK memberId",
+      "service_id": "ID SRV",
+      "nation": "Nazione",
+      "membership_type": "Tipo di affiliazione",
+      "license": "Licenza",
+      "license_until": "Licenza valida fino al",
+      "other_clubs": "Altre società",
+      "attribute": "Attributo",
+      "regasoft": "Regasoft"
+    },
+    "foreign": {
+      "title": "Membri stranieri",
+      "empty": "Nessun membro straniero nell’indice.",
+      "count": "{count} membri di nazionalità straniera"
+    },
+    "clubs": {
+      "title": "Membri in altre società",
+      "empty": "Nessun membro di altre società nell’indice.",
+      "count": "{count} membri in altre società",
+      "subtitle": "{count} membri anche in altre società SRV"
+    },
+    "filter": {
+      "all": "Tutti",
+      "bk": "Solo in BK",
+      "srv": "Solo in SRV",
+      "both": "Entrambi"
+    },
+    "mismatch": {
+      "yes": "sì",
+      "no": "no"
     }
   },
   "statistics": {
@@ -758,6 +817,36 @@
     "masters": {
       "label": "Masters",
       "description": "Dai 27 anni."
+    }
+  },
+  "kiosk": {
+    "title": "Dispositivi kiosk",
+    "empty": "Nessun dispositivo kiosk si è ancora annunciato.",
+    "no_trips": "Oggi non è stata registrata alcuna uscita.",
+    "lock": "Bloccare",
+    "unlock": "Sbloccare",
+    "reload": {
+      "conf": "Ricaricamento avviato.",
+      "ask": "{device}: ricaricare ora il dispositivo? Ogni immissione aperta andrà persa."
+    },
+    "message": {
+      "sent": "Messaggio inviato.",
+      "title": "Inviare un messaggio",
+      "send": "Inviare",
+      "label": "Testo del messaggio",
+      "placeholder": "p. es. non usare più la barca 3"
+    },
+    "locked": {
+      "conf": "Kiosk bloccato."
+    },
+    "unlocked": {
+      "conf": "Kiosk sbloccato."
+    },
+    "no_person": "A questo kiosk non è associata alcuna persona — chiamata non possibile.",
+    "call_failed": "Non è stato possibile avviare la chiamata.",
+    "countdown": {
+      "label": "Chiudere automaticamente il messaggio",
+      "seconds": "Conto alla rovescia (secondi)"
     }
   }
 }

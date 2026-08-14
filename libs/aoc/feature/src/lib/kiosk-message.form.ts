@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
@@ -6,11 +6,12 @@ import { Checkbox, CheckboxI18n, NotesInput, NotesInputI18n, NumberInput, Number
 import { coerceBoolean } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 
-import { KIOSK_COUNTDOWN_MAX, KIOSK_COUNTDOWN_MIN, KioskMessageFormData, kioskMessageValidations } from '@okr/aoc-util';
+import { AOC_I18N_KEYS, AocI18n, KIOSK_COUNTDOWN_MAX, KIOSK_COUNTDOWN_MIN, KioskMessageFormData, kioskMessageValidations } from '@okr/aoc-util';
+import { I18nService } from '@okr/shared-i18n';
 
 /**
  * The message an admin pops on a kiosk device, plus an optional countdown after which the
- * device closes it by itself. Labels are hardcoded German like the rest of the AOC console.
+ * device closes it by itself.
  */
 @Component({
   selector: 'okr-kiosk-message-form',
@@ -72,6 +73,8 @@ export class KioskMessageForm {
     effect(() => this.valid.emit(this.kioskMessageForm().valid()));
   }
 
+  private readonly i18n = inject(I18nService).translateAll(AOC_I18N_KEYS) as AocI18n;
+
   protected readonly min = KIOSK_COUNTDOWN_MIN;
   protected readonly max = KIOSK_COUNTDOWN_MAX;
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -80,15 +83,15 @@ export class KioskMessageForm {
   protected readonly countdown = computed(() => this.formData()?.countdown ?? KIOSK_COUNTDOWN_MIN);
 
   protected messageI18n = computed(() => ({
-    name: 'message', label: 'Text der Mitteilung', placeholder: 'z.B. Boot 3 bitte nicht mehr benutzen'
+    name: 'message', label: this.i18n.kiosk_message_label(), placeholder: this.i18n.kiosk_message_placeholder()
   } as NotesInputI18n));
 
   protected countdownEnabledI18n = computed(() => ({
-    name: 'withCountdown', label: 'Mitteilung automatisch schliessen', helper: ''
+    name: 'withCountdown', label: this.i18n.kiosk_countdown_label(), helper: ''
   } as CheckboxI18n));
 
   protected countdownI18n = computed(() => ({
-    name: 'countdown', label: 'Countdown (Sekunden)', placeholder: '10', helper: ''
+    name: 'countdown', label: this.i18n.kiosk_countdown_seconds(), placeholder: '10', helper: ''
   } as NumberInputI18n));
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

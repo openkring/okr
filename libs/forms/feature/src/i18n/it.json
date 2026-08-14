@@ -25,9 +25,16 @@
   },
   "field": {
     "title": "Configura campo",
-    "add": "Aggiungi campo"
+    "add": "Aggiungi campo",
+    "text": "Testo *",
+    "label": "Etichetta *",
+    "key": "Nome del campo (snake_case) *",
+    "width_full": "Intero (100%)",
+    "width_half": "Metà (50%)",
+    "width_third": "Terzo (33%)",
+    "placeholder": "Segnaposto",
+    "apply": "Applicare"
   },
-
   "canvas_empty": "Trascina qui i campi dalla libreria.",
   "library": "Libreria di campi",
   "key": "Nome del campo (snake_case)",
@@ -47,7 +54,6 @@
   "url": {
     "label": "URL di destinazione"
   },
-
   "create": {
     "label": "Crea nuovo modulo",
     "conf": "Il modulo è stato creato.",
@@ -68,5 +74,49 @@
     "label": "Modifica modulo",
     "conf": "Il modulo è stato salvato.",
     "error": "Impossibile salvare il modulo."
+  },
+  "builder": {
+    "preview_empty": "Nessun campo da visualizzare in anteprima.",
+    "discard": "Annullare",
+    "source": {
+      "copy": "Copiare",
+      "paste": "Incollare",
+      "copied": "Copiato negli appunti.",
+      "copy_failed": "Copia non riuscita (appunti non disponibili).",
+      "invalid_json": "JSON non valido negli appunti.",
+      "invalid_format": "Formato non valido: previsto un oggetto con un array \"fields\".",
+      "applied": "{count} campi ripresi dagli appunti. Confermare per salvare."
+    }
+  },
+  "definition": {
+    "create_title": "Nuovo modulo",
+    "edit_title": "Modificare il modulo",
+    "name": "Nome *",
+    "name_placeholder": "Modulo di contatto",
+    "target_kind": "Salvare gli invii in",
+    "target_url_short": "URL esterno",
+    "collection": "Raccolta",
+    "select_placeholder": "Selezionare…",
+    "pdf_template": "ID modello PDF (facoltativo)",
+    "pdf_template_placeholder": "ID modello dal generatore di documenti",
+    "fields": "Campi ({count}) – modificabili nell’editor dei moduli"
+  },
+  "decrypt": {
+    "title": "Decifrare i file",
+    "hint": "Inserire la password di cifratura. La chiave non lascia mai il browser.",
+    "password": "Password",
+    "password_placeholder": "Inserire la password",
+    "running": "Decifratura in corso…",
+    "action": "Decifrare e scaricare",
+    "failed": "Decifratura non riuscita. Password errata?"
+  },
+  "encryption": {
+    "title": "Attivare la cifratura",
+    "warning": "Questa password viene mostrata una sola volta. Se viene persa, i file cifrati sono irrimediabilmente persi. Conservarla in un gestore di password.",
+    "password": "Password di cifratura (mostrata una sola volta)",
+    "copied": "Password copiata.",
+    "confirm": "Ho salvato la password in modo sicuro e comprendo che la sua perdita comporta la perdita irrimediabile di tutti i file cifrati.",
+    "saving": "Salvataggio…",
+    "activate": "Attivare"
   }
 }

@@ -1,7 +1,8 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { IonModal, IonContent, IonDatetime } from '@ionic/angular/standalone';
 
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
 export interface DatePickerModalI18n {
   ok: string;
@@ -28,8 +29,8 @@ export interface DatePickerModalI18n {
             [firstDayOfWeek]="1"
             [showDefaultButtons]="true"
             [showAdjacentDays]="true"
-            [doneText]="i18n().ok"
-            [cancelText]="i18n().cancel"
+            [doneText]="labels().ok"
+            [cancelText]="labels().cancel"
             size="cover"
             [preferWheel]="false"
             style="height: 380px; --padding-start: 0;"
@@ -44,7 +45,14 @@ export interface DatePickerModalI18n {
 export class DatePickerModal {
   // inputs
   isoDate = input<string>(getTodayStr(DateFormat.IsoDate)); // yyyy-MM-dd
-  public i18n = input<DatePickerModalI18n>({ ok: 'OK', cancel: 'Abbrechen' });
+  public i18n = input<Partial<DatePickerModalI18n>>({});
+
+  // Domain-agnostic defaults resolved here; a caller may still override any single label.
+  private readonly defaults = inject(I18nService).translateAll({ ok: '@ok', cancel: '@cancel' });
+  protected readonly labels = computed<DatePickerModalI18n>(() => ({
+    ok:     this.i18n().ok     ?? this.defaults.ok(),
+    cancel: this.i18n().cancel ?? this.defaults.cancel(),
+  }));
   public locale = input('de-ch'); // locale for the calendar, used for formatting
 
   // outputs

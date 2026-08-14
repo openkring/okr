@@ -29,7 +29,10 @@
   "publish": {
     "label": "Publicar plantilla",
     "conf": "Plantilla publicada.",
-    "error": "Error en la publicación."
+    "error": "Error en la publicación.",
+    "title": "Publicar la versión {version}",
+    "changelog": "Nota de cambios (obligatoria)",
+    "changelog_placeholder": "Describa los cambios de esta versión…"
   },
   "save": {
     "draft": {
@@ -126,5 +129,41 @@
   },
   "css": {
     "label": "CSS"
+  },
+  "edit": {
+    "fallback_name": "Plantilla",
+    "published": "(Publicado)",
+    "draft": "(Borrador)",
+    "publish": "Publicar",
+    "tab": {
+      "metadata": "Metadatos",
+      "html": "HTML",
+      "preview": "Vista previa"
+    },
+    "category": {
+      "invoice": "Factura",
+      "expense": "Gastos",
+      "report": "Informe",
+      "dunning": "Recordatorio de pago",
+      "other": "Otros"
+    },
+    "output_format": "Formato de salida",
+    "sample_data": "Datos de ejemplo (JSON)",
+    "qr_slip": "Adjuntar boletín de pago QR",
+    "qr_slip_amount": "Indicar el importe en el boletín de pago",
+    "payee_org": "Organización beneficiaria (ID de org, vacío = org predeterminada)",
+    "html_placeholder": "HTML / Handlebars …",
+    "preview_send": "Enviar",
+    "preview_download": "Descargar",
+    "preview_none": "No hay vista previa disponible."
+  },
+  "validation": {
+    "to_required": "Se requiere al menos una dirección de destinatario.",
+    "to_invalid": "Dirección de destinatario no válida.",
+    "from_required": "Se requiere una dirección de remitente.",
+    "from_invalid": "Dirección de remitente no válida.",
+    "subject_required": "Se requiere un asunto.",
+    "cc_invalid": "Dirección CC no válida.",
+    "bcc_invalid": "Dirección CCO no válida."
   }
 }

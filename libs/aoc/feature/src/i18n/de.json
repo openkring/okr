@@ -166,6 +166,19 @@
         "unmatched": "Keine Übereinstimmung gefunden für:"
       },
       "link": "Verknüpfen"
+    },
+    "filter": {
+      "all": "Alle",
+      "persons": "Nur Personen",
+      "members": "Nur Mitglieder",
+      "orgs": "Nur Orgs",
+      "mismatch": "Nur Abweichungen"
+    },
+    "from_date": "Ab Datum",
+    "root_name": "Root-Name",
+    "col": {
+      "bexio_id": "Bexio ID",
+      "source": "Quelle"
     }
   },
   "chat": {
@@ -494,7 +507,10 @@
       "helper": "Du kannst hier ein Passwort für den selektierten User setzen (z.B. für Testzwecke). Ein leeres Passwort-Feld führt zu einem zufälligen Passwort. Der User kann anschliessend mit Passwort Reset sein eigenes Passwort setzen.",
       "set": "Setze ein neues Passwort für den ausgewählten User, ohne eine Passwort-Reset Email auszulösen. Ein leeres Passwort-Feld führt zu einem zufälligen Passwort.",
       "reset": "Sende eine Passwort-Reset Email an den ausgewählten User."
-    }
+    },
+    "person": "Person:",
+    "user": "User:",
+    "result": "Resultat"
   },
   "session": {
     "title": "Sessions",
@@ -562,7 +578,10 @@
       "title": "SRV Mitglieder synchronisieren",
       "subtitle": "Vergleicht die aktuellen SRV-Mitgliedschaften (orgKey=srv) mit den Mitgliedern im Regasoft-Portal. Primärer Abgleich via memberId = serviceId, Fallback via Name.",
       "reset": "Index zurücksetzen",
-      "button": "Index aufbauen"
+      "button": "Index aufbauen",
+      "building": "Index wird aufgebaut...",
+      "none": "Noch kein Index. Index aufbauen.",
+      "summary": "{shown} von {total} Einträgen: {scs} SCS, {srv} SRV, {regasoft} Regasoft"
     },
     "person": {
       "update": {
@@ -602,7 +621,47 @@
       },
       "download": {
         "label": "Lizenz herunterladen"
-      }
+      },
+      "title": "Lizenzen",
+      "empty": "Keine lizenzierten Mitglieder im Index.",
+      "count": "{count} Mitglieder mit aktiver Lizenz"
+    },
+    "show": "Einblenden",
+    "hide": "Ausblenden",
+    "col": {
+      "name": "Name",
+      "age": "Alter",
+      "category": "Kat",
+      "member_id": "BK memberId",
+      "service_id": "SRV ID",
+      "nation": "Nation",
+      "membership_type": "Mitgliedschaftstyp",
+      "license": "Lizenz",
+      "license_until": "Lizenz gültig bis",
+      "other_clubs": "Andere Vereine",
+      "attribute": "Attribut",
+      "regasoft": "Regasoft"
+    },
+    "foreign": {
+      "title": "Ausländische Mitglieder",
+      "empty": "Keine ausländischen Mitglieder im Index.",
+      "count": "{count} Mitglieder mit ausländischer Nationalität"
+    },
+    "clubs": {
+      "title": "Mitglieder in anderen Vereinen",
+      "empty": "Keine Mitglieder in anderen Vereinen im Index.",
+      "count": "{count} Mitglieder in anderen Vereinen",
+      "subtitle": "{count} Mitglieder auch in anderen SRV-Vereinen"
+    },
+    "filter": {
+      "all": "Alle",
+      "bk": "Nur in BK",
+      "srv": "Nur in SRV",
+      "both": "Beide"
+    },
+    "mismatch": {
+      "yes": "ja",
+      "no": "nein"
     }
   },
   "statistics": {
@@ -764,6 +823,36 @@
     "masters": {
       "label": "Masters",
       "description": "Ab 27 Jahren."
+    }
+  },
+  "kiosk": {
+    "title": "Kiosk-Geräte",
+    "empty": "Kein Kiosk-Gerät hat sich bisher gemeldet.",
+    "no_trips": "Heute wurde noch keine Fahrt erfasst.",
+    "lock": "Sperren",
+    "unlock": "Entsperren",
+    "reload": {
+      "conf": "Neuladen ausgelöst.",
+      "ask": "{device}: Gerät jetzt neu laden? Eine offene Eingabe geht dabei verloren."
+    },
+    "message": {
+      "sent": "Mitteilung gesendet.",
+      "title": "Mitteilung senden",
+      "send": "Senden",
+      "label": "Text der Mitteilung",
+      "placeholder": "z.B. Boot 3 bitte nicht mehr benutzen"
+    },
+    "locked": {
+      "conf": "Kiosk gesperrt."
+    },
+    "unlocked": {
+      "conf": "Kiosk entsperrt."
+    },
+    "no_person": "Zu diesem Kiosk ist keine Person hinterlegt — Anruf nicht möglich.",
+    "call_failed": "Der Anruf konnte nicht gestartet werden.",
+    "countdown": {
+      "label": "Mitteilung automatisch schliessen",
+      "seconds": "Countdown (Sekunden)"
     }
   }
 }

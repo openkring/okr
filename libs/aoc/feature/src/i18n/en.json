@@ -166,6 +166,19 @@
         "unmatched": "No match found for:"
       },
       "link": "Link"
+    },
+    "filter": {
+      "all": "All",
+      "persons": "Persons only",
+      "members": "Members only",
+      "orgs": "Orgs only",
+      "mismatch": "Mismatches only"
+    },
+    "from_date": "From date",
+    "root_name": "Root name",
+    "col": {
+      "bexio_id": "Bexio ID",
+      "source": "Source"
     }
   },
   "chat": {
@@ -488,7 +501,10 @@
       "helper": "Here you can set a password for the selected user (e.g. for testing purposes). An empty password field results in a random password. The user can then set their own password with a password reset.",
       "set": "Set a new password for the selected user without triggering a password reset email. An empty password field results in a random password.",
       "reset": "Send a password reset email to the selected user."
-    }
+    },
+    "person": "Person:",
+    "user": "User:",
+    "result": "Result"
   },
   "session": {
     "title": "Sessions",
@@ -556,7 +572,10 @@
       "title": "Sync SRV members",
       "subtitle": "Compares the current SRV memberships (orgKey=srv) with the members in the Regasoft portal. Primary reconciliation via memberId = serviceId, fallback via name.",
       "reset": "Reset index",
-      "button": "Build index"
+      "button": "Build index",
+      "building": "Building the index...",
+      "none": "No index yet. Build the index.",
+      "summary": "{shown} of {total} entries: {scs} SCS, {srv} SRV, {regasoft} Regasoft"
     },
     "person": {
       "update": {
@@ -596,7 +615,47 @@
       },
       "download": {
         "label": "Download license"
-      }
+      },
+      "title": "Licenses",
+      "empty": "No licensed members in the index.",
+      "count": "{count} members with an active license"
+    },
+    "show": "Show",
+    "hide": "Hide",
+    "col": {
+      "name": "Name",
+      "age": "Age",
+      "category": "Cat",
+      "member_id": "BK memberId",
+      "service_id": "SRV ID",
+      "nation": "Nation",
+      "membership_type": "Membership type",
+      "license": "License",
+      "license_until": "License valid until",
+      "other_clubs": "Other clubs",
+      "attribute": "Attribute",
+      "regasoft": "Regasoft"
+    },
+    "foreign": {
+      "title": "Foreign members",
+      "empty": "No foreign members in the index.",
+      "count": "{count} members with a foreign nationality"
+    },
+    "clubs": {
+      "title": "Members in other clubs",
+      "empty": "No members in other clubs in the index.",
+      "count": "{count} members in other clubs",
+      "subtitle": "{count} members also in other SRV clubs"
+    },
+    "filter": {
+      "all": "All",
+      "bk": "Only in BK",
+      "srv": "Only in SRV",
+      "both": "Both"
+    },
+    "mismatch": {
+      "yes": "yes",
+      "no": "no"
     }
   },
   "statistics": {
@@ -758,6 +817,36 @@
     "masters": {
       "label": "Masters",
       "description": "From 27 years."
+    }
+  },
+  "kiosk": {
+    "title": "Kiosk devices",
+    "empty": "No kiosk device has reported yet.",
+    "no_trips": "No trip recorded today.",
+    "lock": "Lock",
+    "unlock": "Unlock",
+    "reload": {
+      "conf": "Reload triggered.",
+      "ask": "{device}: reload the device now? Any open input will be lost."
+    },
+    "message": {
+      "sent": "Message sent.",
+      "title": "Send message",
+      "send": "Send",
+      "label": "Message text",
+      "placeholder": "e.g. do not use boat 3 any more"
+    },
+    "locked": {
+      "conf": "Kiosk locked."
+    },
+    "unlocked": {
+      "conf": "Kiosk unlocked."
+    },
+    "no_person": "No person is assigned to this kiosk — a call is not possible.",
+    "call_failed": "The call could not be started.",
+    "countdown": {
+      "label": "Close the message automatically",
+      "seconds": "Countdown (seconds)"
     }
   }
 }

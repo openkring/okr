@@ -4,7 +4,8 @@ import { ModalController } from '@ionic/angular/standalone';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
 import { firstValueFrom } from 'rxjs';
 
-import { KIOSK_COUNTDOWN_DEFAULT, KioskMessageFormData } from '@okr/aoc-util';
+import { AOC_I18N_KEYS, fill, KIOSK_COUNTDOWN_DEFAULT, KioskMessageFormData } from '@okr/aoc-util';
+import { I18nService } from '@okr/shared-i18n';
 
 import { KioskStatus, KioskStatusCollection, AppStore } from '@okr/shared-feature';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -32,6 +33,10 @@ export const AocKioskStore = signalStore(
     alertService: inject(AlertService),
     modalController: inject(ModalController),
     injector: inject(Injector),
+    i18nService: inject(I18nService),
+  })),
+  withProps(store => ({
+    i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
   })),
   withProps(store => ({
     kiosksResource: rxResource({
@@ -78,10 +83,10 @@ export const AocKioskStore = signalStore(
     /** Reload the kiosk's browser page — the way to pull a freshly deployed version onto it. */
     async reloadKiosk(kiosk: KioskStatus): Promise<void> {
       const confirmed = await store.alertService.confirm(
-        `${kiosk.device}: Gerät jetzt neu laden? Eine offene Eingabe geht dabei verloren.`, true
+        fill(store.i18n.kiosk_reload_ask(), { device: kiosk.device }), true
       );
       if (!confirmed) return;
-      await this.sendCommand(kiosk, { reloadAt: new Date().toISOString() }, 'Neuladen ausgelöst.');
+      await this.sendCommand(kiosk, { reloadAt: new Date().toISOString() }, store.i18n.kiosk_reload_conf());
     },
 
     /**
@@ -106,13 +111,13 @@ export const AocKioskStore = signalStore(
         alertMessage: data.message,
         // 0 = no countdown; the device then waits for OK as before
         alertCountdown: data.withCountdown ? data.countdown : 0,
-      }, 'Mitteilung gesendet.');
+      }, store.i18n.kiosk_message_sent());
     },
 
     /** Read-only mode: the Logbuch stays visible, new and changed trips are refused. */
     async toggleLock(kiosk: KioskStatus): Promise<void> {
       const locked = kiosk.locked !== true;
-      await this.sendCommand(kiosk, { locked }, locked ? 'Kiosk gesperrt.' : 'Kiosk entsperrt.');
+      await this.sendCommand(kiosk, { locked }, locked ? store.i18n.kiosk_locked_conf() : store.i18n.kiosk_unlocked_conf());
     },
 
     async sendCommand(kiosk: KioskStatus, command: Partial<KioskStatus>, confirmMessage: string): Promise<void> {
@@ -131,7 +136,7 @@ export const AocKioskStore = signalStore(
     async callKiosk(kiosk: KioskStatus): Promise<void> {
       const user = await firstValueFrom(store.userService.read(kiosk.uid));
       if (!user?.personKey) {
-        await store.alertService.showToast('Zu diesem Kiosk ist keine Person hinterlegt — Anruf nicht möglich.');
+        await store.alertService.showToast(store.i18n.kiosk_no_person());
         return;
       }
       try {
@@ -142,7 +147,7 @@ export const AocKioskStore = signalStore(
         await matrixService.startVideoCall(room.roomId, store.appStore.currentUser());
       } catch (error) {
         console.error('AocKioskStore.callKiosk: failed to start the call:', error);
-        await store.alertService.showToast('Der Anruf konnte nicht gestartet werden.');
+        await store.alertService.showToast(store.i18n.kiosk_call_failed());
       }
     },
   })),

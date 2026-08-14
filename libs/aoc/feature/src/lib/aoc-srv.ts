@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, OnInit, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonRow, IonSpinner, IonTitle, IonToolbar, ToastController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -10,6 +10,7 @@ import { AvatarLabel } from '@okr/avatar-ui';
 
 import { AocSrvStore, getMismatches } from './aoc-srv.store';
 import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
+import { fill } from '@okr/shared-util-core';
 
 @Component({
   selector: 'okr-aoc-srv',
@@ -43,20 +44,19 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
             <ion-row>
               <ion-col size="9">
                 @if(isLoading()) {
-                  Wird geladen...
+                  {{ store.i18n.loading() }}
                 } @else if(isBusy()) {
-                  <ion-spinner name="crescent" /> Index wird aufgebaut...
+                  <ion-spinner name="crescent" /> {{ store.i18n.srv_index_building() }}
                 } @else if(index().length === 0) {
-                  Noch kein Index. Index aufbauen.
+                  {{ store.i18n.srv_index_none() }}
                 } @else {
-                  {{ filteredIndex().length }} von {{ index().length }} Einträgen: 
-                  {{ mainMembers() }} SCS, {{ parentMembers() }} SRV, {{ regasoftItems() }} Regasoft
+                  {{ indexSummary() }}
                 }
               </ion-col>
               <ion-col size="3">
                 <ion-button fill="clear" [disabled]="index().length === 0" (click)="showIndex.set(!showIndex())">
                   <ion-icon src="{{ (showIndex() ? 'eye-off' : 'eye-on') | svgIcon }}" slot="start" />
-                  {{ showIndex() ? 'Ausblenden' : 'Einblenden' }}
+                  {{ showIndex() ? store.i18n.srv_hide() : store.i18n.srv_show() }}
                 </ion-button>
                 @if(index().length > 0) {
                   <ion-button color="medium" (click)="store.resetIndex()">
@@ -80,14 +80,14 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
               <ion-row>
                 <okr-list-filter
                   (searchTermChanged)="store.setSearchTerm($event)"
-                  stringsName="srvFilter" [strings]="filters" [selectedString]="filter()" (stringsChanged)="filter.set($event)"
+                  stringsName="srvFilter" [strings]="filters()" [selectedString]="filter()" (stringsChanged)="filter.set($event)"
                 />
               </ion-row>
               <ion-row>
-                <ion-col size="6"><strong>Name</strong></ion-col>
-                <ion-col size="1"><strong>Alter</strong></ion-col>
-                <ion-col size="1"><strong>Kat</strong></ion-col>
-                <ion-col size="2"><strong>BK memberId</strong></ion-col>
+                <ion-col size="6"><strong>{{ store.i18n.srv_col_name() }}</strong></ion-col>
+                <ion-col size="1"><strong>{{ store.i18n.srv_col_age() }}</strong></ion-col>
+                <ion-col size="1"><strong>{{ store.i18n.srv_col_category() }}</strong></ion-col>
+                <ion-col size="2"><strong>{{ store.i18n.srv_col_member_id() }}</strong></ion-col>
                 <ion-col size="2"><strong>SRV serviceId</strong></ion-col>
               </ion-row>
               @for(item of filteredIndex(); track $index) {
@@ -136,7 +136,7 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
       <!-- ── Foreign nations card ───────────────────────────────────────── -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Ausländische Mitglieder</ion-card-title>
+          <ion-card-title>{{ store.i18n.srv_foreign_title() }}</ion-card-title>
           <ion-card-subtitle>nationIOC ≠ SUI</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
@@ -144,24 +144,24 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
             <ion-row>
               <ion-col size="9">
                 @if(store.foreignNationMembers().length === 0) {
-                  Keine ausländischen Mitglieder im Index.
+                  {{ store.i18n.srv_foreign_empty() }}
                 } @else {
-                  {{ store.foreignNationMembers().length }} Mitglieder mit ausländischer Nationalität
+                  {{ foreignCount() }}
                 }
               </ion-col>
               <ion-col size="3">
                 <ion-button fill="clear" [disabled]="index().length === 0" (click)="showForeigners.set(!showForeigners())">
                   <ion-icon src="{{ (showForeigners() ? 'eye-off' : 'eye-on') | svgIcon }}" slot="start" />
-                  {{ showForeigners() ? 'Ausblenden' : 'Einblenden' }}
+                  {{ showForeigners() ? store.i18n.srv_hide() : store.i18n.srv_show() }}
                 </ion-button>
               </ion-col>
             </ion-row>
             @if(showForeigners()) {
               <ion-row>
-                <ion-col size="5"><strong>Name</strong></ion-col>
-                <ion-col size="2"><strong>SRV ID</strong></ion-col>
-                <ion-col size="2"><strong>Nation</strong></ion-col>
-                <ion-col size="3"><strong>Mitgliedschaftstyp</strong></ion-col>
+                <ion-col size="5"><strong>{{ store.i18n.srv_col_name() }}</strong></ion-col>
+                <ion-col size="2"><strong>{{ store.i18n.srv_col_service_id() }}</strong></ion-col>
+                <ion-col size="2"><strong>{{ store.i18n.srv_col_nation() }}</strong></ion-col>
+                <ion-col size="3"><strong>{{ store.i18n.srv_col_membership_type() }}</strong></ion-col>
               </ion-row>
               @for(item of store.foreignNationMembers(); track item.rid) {
                 <ion-row (click)="showForeignerActions(item)">
@@ -198,31 +198,31 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
       <!-- ── Lizenzen card ──────────────────────────────────────────────── -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Lizenzen</ion-card-title>
-          <ion-card-subtitle>{{ licensedFromIndex().length }} Mitglieder mit aktiver Lizenz</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.srv_license_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ licenseCount() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(licensedFromIndex().length === 0) {
-                  Keine lizenzierten Mitglieder im Index.
+                  {{ store.i18n.srv_license_empty() }}
                 } @else {
-                  {{ licensedFromIndex().length }} Mitglieder mit aktiver Lizenz
+                  {{ licenseCount() }}
                 }
               </ion-col>
               <ion-col size="3">
                 <ion-button fill="clear" [disabled]="index().length === 0" (click)="showLicenses.set(!showLicenses())">
                   <ion-icon src="{{ (showLicenses() ? 'eye-off' : 'eye-on') | svgIcon }}" slot="start" />
-                  {{ showLicenses() ? 'Ausblenden' : 'Einblenden' }}
+                  {{ showLicenses() ? store.i18n.srv_hide() : store.i18n.srv_show() }}
                 </ion-button>
               </ion-col>
             </ion-row>
             @if(showLicenses() && licensedFromIndex().length > 0) {
               <ion-row>
-                <ion-col size="6"><strong>Name</strong></ion-col>
-                <ion-col size="3"><strong>Lizenz</strong></ion-col>
-                <ion-col size="3"><strong>Lizenz gültig bis</strong></ion-col>
+                <ion-col size="6"><strong>{{ store.i18n.srv_col_name() }}</strong></ion-col>
+                <ion-col size="3"><strong>{{ store.i18n.srv_col_license() }}</strong></ion-col>
+                <ion-col size="3"><strong>{{ store.i18n.srv_col_license_until() }}</strong></ion-col>
               </ion-row>
               @for(item of licensedFromIndex(); track item.rid) {
                 <ion-row (click)="showLicenseActions(item)">
@@ -256,30 +256,30 @@ import { copyToClipboardWithConfirmation, createActionSheetButton, createActionS
       <!-- ── Andere Vereine card ───────────────────────────────────────── -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Mitglieder in anderen Vereinen</ion-card-title>
-          <ion-card-subtitle>{{ store.doubleMembers().length }} Mitglieder auch in anderen SRV-Vereinen</ion-card-subtitle>
+          <ion-card-title>{{ store.i18n.srv_clubs_title() }}</ion-card-title>
+          <ion-card-subtitle>{{ clubsSubtitle() }}</ion-card-subtitle>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
             <ion-row>
               <ion-col size="9">
                 @if(store.doubleMembers().length === 0) {
-                  Keine Mitglieder in anderen Vereinen im Index.
+                  {{ store.i18n.srv_clubs_empty() }}
                 } @else {
-                  {{ store.doubleMembers().length }} Mitglieder in anderen Vereinen
+                  {{ clubsCount() }}
                 }
               </ion-col>
               <ion-col size="3">
                 <ion-button fill="clear" [disabled]="index().length === 0" (click)="showClubs.set(!showClubs())">
                   <ion-icon src="{{ (showClubs() ? 'eye-off' : 'eye-on') | svgIcon }}" slot="start" />
-                  {{ showClubs() ? 'Ausblenden' : 'Einblenden' }}
+                  {{ showClubs() ? store.i18n.srv_hide() : store.i18n.srv_show() }}
                 </ion-button>
               </ion-col>
             </ion-row>
             @if(showClubs() && store.doubleMembers().length > 0) {
               <ion-row>
-                <ion-col size="6"><strong>Name</strong></ion-col>
-                <ion-col size="6"><strong>Andere Vereine</strong></ion-col>
+                <ion-col size="6"><strong>{{ store.i18n.srv_col_name() }}</strong></ion-col>
+                <ion-col size="6"><strong>{{ store.i18n.srv_col_other_clubs() }}</strong></ion-col>
               </ion-row>
               @for(item of store.doubleMembers(); track item.rid) {
                 <ion-row (click)="showClubActions(item)">
@@ -324,9 +324,29 @@ export class AocSrv implements OnInit {
   protected parentMembers = computed(() => this.store.parentMemberships().length);
   protected regasoftItems = computed(() => this.store.regasoftItems());
 
-  // filters
-  protected filters       = ['Alle', 'Nur in BK', 'Nur in SRV', 'Beide'];
-  protected filter        = signal<string>(this.filters[0]);
+  // filters — the list-filter works on display strings, so the stable key is derived by position.
+  private readonly filterKeys = ['all', 'bk', 'srv', 'both'] as const;
+  protected filters = computed(() => [
+    this.store.i18n.srv_filter_all(), this.store.i18n.srv_filter_bk(),
+    this.store.i18n.srv_filter_srv(), this.store.i18n.srv_filter_both(),
+  ]);
+  protected filter = linkedSignal(() => this.filters()[0]);
+  private readonly filterKey = computed(() =>
+    this.filterKeys[Math.max(0, this.filters().indexOf(this.filter()))]);
+
+  // parameterised labels
+  protected readonly indexSummary = computed(() => fill(this.store.i18n.srv_index_summary(), {
+    shown: this.filteredIndex().length, total: this.index().length,
+    scs: this.mainMembers(), srv: this.parentMembers(), regasoft: this.regasoftItems(),
+  }));
+  protected readonly foreignCount = computed(() =>
+    fill(this.store.i18n.srv_foreign_count(), { count: this.store.foreignNationMembers().length }));
+  protected readonly licenseCount = computed(() =>
+    fill(this.store.i18n.srv_license_count(), { count: this.licensedFromIndex().length }));
+  protected readonly clubsCount = computed(() =>
+    fill(this.store.i18n.srv_clubs_count(), { count: this.store.doubleMembers().length }));
+  protected readonly clubsSubtitle = computed(() =>
+    fill(this.store.i18n.srv_clubs_subtitle(), { count: this.store.doubleMembers().length }));
   protected isBusy        = signal(false);
   protected showIndex     = signal(false);
   protected showLicenses   = signal(false);
@@ -344,10 +364,10 @@ export class AocSrv implements OnInit {
   protected readonly filteredIndex = computed(() => {
     const term = this.store.searchTerm().toLowerCase().trim();
     let items = this.index();
-    switch (this.filter()) {
-      case 'Nur in BK':  items = items.filter(i => !!i.mKey && !i.rid); break;
-      case 'Nur in SRV': items = items.filter(i => !i.mKey && !!i.rid); break;
-      case 'Beide':      items = items.filter(i => !!i.mKey && !!i.rid); break;
+    switch (this.filterKey()) {
+      case 'bk':   items = items.filter(i => !!i.mKey && !i.rid); break;
+      case 'srv':  items = items.filter(i => !i.mKey && !!i.rid); break;
+      case 'both': items = items.filter(i => !!i.mKey && !!i.rid); break;
     }
     return term ? items.filter(i => i.indexField?.includes(term)) : items;
   });

@@ -30,7 +30,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
       @if(bexioIndex(); as bx) {
       <ion-grid>
         <ion-row class="table-header"> <!-- header -->
-          <ion-col size="3"><strong>Quelle</strong></ion-col>
+          <ion-col size="3"><strong>{{ i18n.bexio_col_source() }}</strong></ion-col>
           <ion-col size="3"><strong>{{ effectiveType() }}</strong></ion-col>
           <ion-col size="3"><strong>Membership</strong></ion-col>
           <ion-col size="3"><strong>Bexio</strong></ion-col>
@@ -66,7 +66,7 @@ type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
           <ion-col size="3" [class.mismatch]="streetMismatch()">{{bx_street()}}</ion-col>
         </ion-row>
         <ion-row> <!-- zip/city -->
-          <ion-col size="3" class="row-label">Ort</ion-col>
+          <ion-col size="3" class="row-label">{{ i18n.location() }}</ion-col>
           <ion-col size="3">{{zipCity()}}</ion-col>
           <ion-col size="3"></ion-col>
           <ion-col size="3" [class.mismatch]="zipCityMismatch()">{{bx_zipCity()}}</ion-col>

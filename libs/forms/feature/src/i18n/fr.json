@@ -25,9 +25,16 @@
   },
   "field": {
     "title": "Configurer le champ",
-    "add": "Ajouter un champ"
+    "add": "Ajouter un champ",
+    "text": "Texte *",
+    "label": "Libellé *",
+    "key": "Nom du champ (snake_case) *",
+    "width_full": "Entière (100%)",
+    "width_half": "Moitié (50%)",
+    "width_third": "Tiers (33%)",
+    "placeholder": "Texte indicatif",
+    "apply": "Appliquer"
   },
-
   "canvas_empty": "Faites glisser les champs de la bibliothèque ici.",
   "library": "Bibliothèque de champs",
   "key": "Nom du champ (snake_case)",
@@ -47,7 +54,6 @@
   "url": {
     "label": "URL cible"
   },
-
   "create": {
     "label": "Créer un nouveau formulaire",
     "conf": "Le formulaire a été créé.",
@@ -68,5 +74,49 @@
     "label": "Modifier le formulaire",
     "conf": "Le formulaire a été enregistré.",
     "error": "Le formulaire n'a pas pu être enregistré."
+  },
+  "builder": {
+    "preview_empty": "Aucun champ à prévisualiser pour le moment.",
+    "discard": "Annuler les modifications",
+    "source": {
+      "copy": "Copier",
+      "paste": "Coller",
+      "copied": "Copié dans le presse-papiers.",
+      "copy_failed": "Échec de la copie (presse-papiers indisponible).",
+      "invalid_json": "JSON invalide dans le presse-papiers.",
+      "invalid_format": "Format invalide : un objet avec un tableau \"fields\" est attendu.",
+      "applied": "{count} champs repris du presse-papiers. Confirmez pour enregistrer."
+    }
+  },
+  "definition": {
+    "create_title": "Nouveau formulaire",
+    "edit_title": "Modifier le formulaire",
+    "name": "Nom *",
+    "name_placeholder": "Formulaire de contact",
+    "target_kind": "Enregistrer les envois dans",
+    "target_url_short": "URL externe",
+    "collection": "Collection",
+    "select_placeholder": "Sélectionner…",
+    "pdf_template": "ID du modèle PDF (facultatif)",
+    "pdf_template_placeholder": "ID du modèle du générateur de documents",
+    "fields": "Champs ({count}) – modifiables dans l’éditeur de formulaire"
+  },
+  "decrypt": {
+    "title": "Déchiffrer les fichiers",
+    "hint": "Saisissez le mot de passe de chiffrement. La clé ne quitte jamais le navigateur.",
+    "password": "Mot de passe",
+    "password_placeholder": "Saisir le mot de passe",
+    "running": "Déchiffrement…",
+    "action": "Déchiffrer et télécharger",
+    "failed": "Échec du déchiffrement. Mot de passe incorrect ?"
+  },
+  "encryption": {
+    "title": "Activer le chiffrement",
+    "warning": "Ce mot de passe n’est affiché qu’une seule fois. S’il est perdu, les fichiers chiffrés sont définitivement perdus. Conservez-le dans un gestionnaire de mots de passe.",
+    "password": "Mot de passe de chiffrement (affiché une seule fois)",
+    "copied": "Mot de passe copié.",
+    "confirm": "J’ai enregistré le mot de passe en lieu sûr et je comprends que sa perte entraîne la perte irrécupérable de tous les fichiers chiffrés.",
+    "saving": "Enregistrement…",
+    "activate": "Activer"
   }
 }

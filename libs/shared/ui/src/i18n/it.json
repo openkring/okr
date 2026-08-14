@@ -10,7 +10,8 @@
     "category": "Scegli categoria",
     "date": "Scegli data",
     "tag": "Scegli giorno",
-    "time": "Scegli ora"
+    "time": "Scegli ora",
+    "dateTime": "Seleziona data e ora"
   },
   "deleteContent": "Elimina contenuto",
   "search": {
@@ -20,7 +21,8 @@
   "categoryItems": {
     "empty": "Non è ancora stato definito alcun elemento in questa categoria.",
     "title": "Elementi",
-    "subTitle": "I singoli elementi di una categoria. Ogni elemento viene mostrato su una riga propria."
+    "subTitle": "I singoli elementi di una categoria. Ogni elemento viene mostrato su una riga propria.",
+    "add": "Aggiungere"
   },
   "color": {
     "select": "Selezione del colore",
@@ -112,5 +114,25 @@
       "helper": "Separare più indirizzi con una virgola o un punto e virgola.",
       "invalid": "Nessun indirizzo e-mail valido trovato."
     }
-  }
+  },
+  "duration": {
+    "title": "Seleziona periodo",
+    "from": "Da",
+    "to": "A"
+  },
+  "image": {
+    "title": "Dettagli immagine",
+    "name": "Nome",
+    "path": "Percorso di archiviazione",
+    "mime": "Tipo MIME",
+    "size": "Dimensione",
+    "created": "Creato",
+    "modified": "Modificato",
+    "md5": "MD5 (Base64)",
+    "downloadUrl": "URL di download",
+    "noExif": "Nessun dato EXIF disponibile.",
+    "exifError": "Non è stato possibile leggere i dati EXIF."
+  },
+  "close": "Chiudere",
+  "withTime": "con orario"
 }

@@ -52,7 +52,7 @@ import { AocRolesStore } from './aoc-roles.store';
             @if(selectedPerson(); as person) {
             <ion-row>
               <ion-col size="3">
-                <ion-label>Person:</ion-label>
+                <ion-label>{{ store.i18n.roles_person() }}</ion-label>
               </ion-col>
               <ion-col size="3">
                 <ion-label>{{ person.firstName }} {{ person.lastName }}</ion-label>
@@ -67,7 +67,7 @@ import { AocRolesStore } from './aoc-roles.store';
             } @if(selectedUser(); as user) {
             <ion-row>
               <ion-col size="3">
-                <ion-label>User:</ion-label>
+                <ion-label>{{ store.i18n.roles_user() }}</ion-label>
               </ion-col>
               <ion-col size="3">
                 <ion-label>{{ user.firstName }} {{ user.lastName }}</ion-label>
@@ -215,7 +215,7 @@ import { AocRolesStore } from './aoc-roles.store';
         </ion-card-content>
       </ion-card>
       <okr-chips chipName="role" [storedChips]="roles()" (storedChipsChange)="onRoleChange($event)" [allChips]="allRoleNames()" [readOnly]="false" />
-      <okr-result-log [title]="logTitle()"  cardTitle="Resultat" [log]="logInfo()" />
+      <okr-result-log [title]="logTitle()"  [cardTitle]="store.i18n.roles_result()" [log]="logInfo()" />
     </ion-content>
   `,
 })

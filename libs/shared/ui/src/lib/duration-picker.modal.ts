@@ -3,6 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonCol, IonContent, IonDatetime, IonGrid, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { validateVestTree } from '@okr/shared-util-angular';
+import { I18nService } from '@okr/shared-i18n';
 import {
   convertDateFormatToString,
   convertDateFromAnyFormatToString,
@@ -45,10 +46,10 @@ export interface DurationPickerModalI18n {
     IonContent, IonGrid, IonRow, IonCol, IonDatetime,
   ],
   template: `
-    <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" />
+    <okr-header [i18n]="{ title: labels().title }" [isModal]="true" />
     @if (showConfirmation()) {
       <okr-change-confirmation
-        [i18n]="{ cancel: i18n().cancel, save: i18n().save }"
+        [i18n]="{ cancel: labels().cancel, save: labels().save }"
         (saveClicked)="save()"
         (cancelClicked)="revert()" />
     }
@@ -57,7 +58,7 @@ export interface DurationPickerModalI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <div class="duration-header">{{ i18n().from }}</div>
+              <div class="duration-header">{{ labels().from }}</div>
               <ion-datetime
                 [presentation]="presentation()"
                 [value]="formData().from"
@@ -69,7 +70,7 @@ export interface DurationPickerModalI18n {
                 (ionChange)="onFromChange($any($event.detail.value))" />
             </ion-col>
             <ion-col size="12" size-md="6">
-              <div class="duration-header">{{ i18n().to }}</div>
+              <div class="duration-header">{{ labels().to }}</div>
               <ion-datetime
                 [presentation]="presentation()"
                 [value]="formData().to"
@@ -94,9 +95,20 @@ export class DurationPickerModal {
   public readonly toDateTime = input<string>();
   public readonly showDate = input(true);
   public readonly showTime = input(false);
-  public readonly i18n = input<DurationPickerModalI18n>({
-    title: 'Zeitraum wählen', from: 'Von', to: 'Bis', cancel: 'Abbrechen', save: 'Speichern',
+  public readonly i18n = input<Partial<DurationPickerModalI18n>>({});
+
+  // Domain-agnostic defaults resolved here; a caller may still override any single label.
+  private readonly defaults = inject(I18nService).translateAll({
+    title: '@shared/ui.duration.title', from: '@shared/ui.duration.from', to: '@shared/ui.duration.to',
+    cancel: '@cancel', save: '@save.label',
   });
+  protected readonly labels = computed<DurationPickerModalI18n>(() => ({
+    title:  this.i18n().title  ?? this.defaults.title(),
+    from:   this.i18n().from   ?? this.defaults.from(),
+    to:     this.i18n().to     ?? this.defaults.to(),
+    cancel: this.i18n().cancel ?? this.defaults.cancel(),
+    save:   this.i18n().save   ?? this.defaults.save(),
+  }));
 
   // coerced flags (componentProps may pass strings)
   protected readonly showDateFlag = computed(() => coerceBoolean(this.showDate()));

@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonSpinner, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { getDownloadURL, getMetadata, ref } from 'firebase/storage';
 import exifr from 'exifr';
 
 import { STORAGE } from '@okr/shared-config';
 import { fileSizeUnit } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
 
 export interface ImageDetailRow { label: string; value: string; }
 
@@ -32,9 +33,9 @@ export interface ImageDetailRow { label: string; value: string; }
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
-        <ion-title>{{ title() }}</ion-title>
+        <ion-title>{{ labels().title }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="close()">{{ closeLabel() }}</ion-button>
+          <ion-button (click)="close()">{{ labels().close }}</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -69,7 +70,7 @@ export interface ImageDetailRow { label: string; value: string; }
           }
         </ion-grid>
       } @else {
-        <p class="hint">{{ exifHint() }}</p>
+        <p class="hint">{{ exifHint() || i18n.noExif() }}</p>
       }
     </ion-content>
   `,
@@ -82,14 +83,28 @@ export class ImageDetailModal implements OnInit {
   public fullPath = input.required<string>();
   /** Optional extra context rows shown above the storage metadata. */
   public extraRows = input<ImageDetailRow[]>([]);
-  public title = input('Bild-Details');
-  public closeLabel = input('Schliessen');
+  public title = input<string>();
+  public closeLabel = input<string>();
+
+  // Domain-agnostic labels resolved here; a caller may still override title/closeLabel.
+  protected readonly i18n = inject(I18nService).translateAll({
+    title: '@shared/ui.image.title', close: '@shared/ui.close', name: '@shared/ui.image.name',
+    path: '@shared/ui.image.path', mime: '@shared/ui.image.mime', size: '@shared/ui.image.size',
+    created: '@shared/ui.image.created', modified: '@shared/ui.image.modified',
+    md5: '@shared/ui.image.md5', downloadUrl: '@shared/ui.image.downloadUrl',
+    noExif: '@shared/ui.image.noExif', exifError: '@shared/ui.image.exifError',
+  });
+  protected readonly labels = computed(() => ({
+    title: this.title() ?? this.i18n.title(),
+    close: this.closeLabel() ?? this.i18n.close(),
+  }));
 
   protected readonly downloadUrl = signal<string | undefined>(undefined);
   protected readonly rows = signal<ImageDetailRow[]>([]);
   protected readonly exifLoading = signal(true);
   protected readonly exifRows = signal<ImageDetailRow[]>([]);
-  protected readonly exifHint = signal('Keine EXIF-Daten vorhanden.');
+  /** Empty until an EXIF read actually fails; the template falls back to the generic no-EXIF hint. */
+  protected readonly exifHint = signal('');
 
   protected fileName(): string {
     const p = this.fullPath();
@@ -108,17 +123,17 @@ export class ImageDetailModal implements OnInit {
       this.downloadUrl.set(downloadUrl);
       this.rows.set([
         ...this.extraRows(),
-        { label: 'Name', value: this.fileName() },
-        { label: 'Speicherpfad', value: fullPath },
-        { label: 'MIME-Typ', value: metadata.contentType ?? '' },
-        { label: 'Grösse', value: fileSizeUnit(metadata.size) },
-        { label: 'Erstellt', value: this.formatIso(metadata.timeCreated) },
-        { label: 'Geändert', value: this.formatIso(metadata.updated) },
-        { label: 'MD5 (Base64)', value: metadata.md5Hash ?? '' },
-        { label: 'Download-URL', value: downloadUrl },
+        { label: this.i18n.name(),        value: this.fileName() },
+        { label: this.i18n.path(),        value: fullPath },
+        { label: this.i18n.mime(),        value: metadata.contentType ?? '' },
+        { label: this.i18n.size(),        value: fileSizeUnit(metadata.size) },
+        { label: this.i18n.created(),     value: this.formatIso(metadata.timeCreated) },
+        { label: this.i18n.modified(),    value: this.formatIso(metadata.updated) },
+        { label: this.i18n.md5(),         value: metadata.md5Hash ?? '' },
+        { label: this.i18n.downloadUrl(), value: downloadUrl },
       ]);
     } catch {
-      this.rows.set([...this.extraRows(), { label: 'Speicherpfad', value: fullPath }]);
+      this.rows.set([...this.extraRows(), { label: this.i18n.path(), value: fullPath }]);
     }
 
     // EXIF parsed from the original bytes (NOT the imgix-transformed image)
@@ -126,7 +141,7 @@ export class ImageDetailModal implements OnInit {
       const exif = url ? await exifr.parse(url, true) : undefined;
       this.exifRows.set(exif ? this.toExifRows(exif as Record<string, unknown>) : []);
     } catch {
-      this.exifHint.set('EXIF-Daten konnten nicht gelesen werden.');
+      this.exifHint.set(this.i18n.exifError());
       this.exifRows.set([]);
     } finally {
       this.exifLoading.set(false);

@@ -1,17 +1,53 @@
 {
-  "list": { "title": "E-Signaturen" },
+  "list": {
+    "title": "E-Signaturen",
+    "waiting_for": "Wartet auf {email}",
+    "signed_of": "{signed} / {total} unterzeichnet",
+    "open_error": "Dokument konnte nicht geöffnet werden."
+  },
   "empty": "Keine Signaturprozesse gefunden.",
   "close": "Schliessen",
   "retry": "Erneut versuchen",
-  "delete": { "error": "Signaturprozess konnte nicht gelöscht werden." },
+  "delete": {
+    "error": "Signaturprozess konnte nicht gelöscht werden.",
+    "upload": {
+      "title": "Upload verwerfen?",
+      "body": "Dieser Upload hat DeepSign nie erreicht und wird nur lokal entfernt.",
+      "confirm": "Verwerfen"
+    },
+    "draft": {
+      "title": "Signaturprozess löschen?",
+      "body": "Das Dokument wird aus DeepSign gelöscht. Es wurden noch keine Einladungen verschickt.",
+      "confirm": "Löschen"
+    },
+    "progress": {
+      "title": "Zurückziehen und löschen?",
+      "body": "Der Signaturprozess wird zunächst zurückgezogen und dann gelöscht. Ausstehende Unterzeichner erhalten eine Rückzugsbenachrichtigung von DeepSign. <strong>Dies kann nicht rückgängig gemacht werden.</strong>",
+      "confirm": "Zurückziehen & löschen"
+    },
+    "signed": {
+      "title": "Unterzeichnetes Dokument löschen?",
+      "body": "<span class=\"warn\">Das unterzeichnete PDF wird dauerhaft gelöscht.</span> Bitte stellen Sie sicher, dass Sie eine Kopie heruntergeladen haben.",
+      "confirm": "Unterzeichnetes PDF löschen"
+    },
+    "default": {
+      "title": "Signaturprozess löschen?",
+      "body": "Der Signaturprozess und sein Verlauf werden entfernt.",
+      "confirm": "Löschen"
+    }
+  },
   "send": {
     "label": "Senden",
     "error": "Dokument konnte nicht gesendet werden.",
     "ok": "Dokument wurde zur Signatur versendet.",
     "failed": "Senden fehlgeschlagen"
   },
-  "upload": { "error": "Datei zu gross (max. 40 MB) oder falsches Format." },
-  "scan": { "no_fields": "Keine Signaturfelder im Dokument gefunden. Bitte ein PDF mit eingebetteten Text Field Patterns verwenden." },
+  "upload": {
+    "error": "Datei zu gross (max. 40 MB) oder falsches Format."
+  },
+  "scan": {
+    "no_fields": "Keine Signaturfelder im Dokument gefunden. Bitte ein PDF mit eingebetteten Text Field Patterns verwenden."
+  },
   "actionsheet": {
     "view": "Signaturstatus anzeigen",
     "doc_view": "PDF anzeigen",
@@ -35,7 +71,9 @@
       "label": "Nachricht (optional)",
       "placeholder": "Leer lassen für den Standardtext"
     },
-    "include_pdf": { "label": "Signiertes PDF anhängen" }
+    "include_pdf": {
+      "label": "Signiertes PDF anhängen"
+    }
   },
   "document": {
     "title": "Dokument senden",
@@ -70,5 +108,39 @@
       "others": "Nur an andere",
       "none": "Keine E-Mails"
     }
+  },
+  "filter": {
+    "all": "Alle",
+    "in_progress": "In Bearbeitung",
+    "signed": "Unterzeichnet",
+    "rejected": "Abgelehnt",
+    "draft": "Entwurf",
+    "withdrawn": "Zurückgezogen"
+  },
+  "view": {
+    "preview_title": "PDF-Vorschau",
+    "details": "Details",
+    "status": "Status",
+    "initiator": "Initiant",
+    "signature_mode": "Signaturmodus",
+    "signees": "Unterzeichner",
+    "signed_at": "Unterzeichnet:",
+    "resend": "Erneut senden",
+    "events_show": "▼ Ereignisse anzeigen",
+    "events_hide": "▲ Ereignisse ausblenden",
+    "refresh": "Vorschau aktualisieren",
+    "download": "Signiertes PDF herunterladen",
+    "delete": "Löschen",
+    "preview_error": "Vorschau konnte nicht geladen werden.",
+    "resend_ok": "Einladung an {email} erneut gesendet.",
+    "resend_error": "Einladung konnte nicht gesendet werden.",
+    "doc_delete_error": "Dokument konnte nicht gelöscht werden."
+  },
+  "signee": {
+    "on_hold": "Wartend",
+    "pending": "Ausstehend",
+    "in_progress": "In Bearbeitung",
+    "signed": "Unterzeichnet",
+    "rejected": "Abgelehnt"
   }
 }

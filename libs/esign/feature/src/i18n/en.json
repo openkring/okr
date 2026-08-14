@@ -1,17 +1,53 @@
 {
-  "list": { "title": "E-signatures" },
+  "list": {
+    "title": "E-signatures",
+    "waiting_for": "Waiting for {email}",
+    "signed_of": "{signed} / {total} signed",
+    "open_error": "Document could not be opened."
+  },
   "empty": "No signature processes found.",
   "close": "Close",
   "retry": "Try again",
-  "delete": { "error": "Signature process could not be deleted." },
+  "delete": {
+    "error": "Signature process could not be deleted.",
+    "upload": {
+      "title": "Discard upload?",
+      "body": "This upload never reached DeepSign and will only be removed locally.",
+      "confirm": "Discard"
+    },
+    "draft": {
+      "title": "Delete signature process?",
+      "body": "The document will be deleted from DeepSign. No invitations have been sent yet.",
+      "confirm": "Delete"
+    },
+    "progress": {
+      "title": "Withdraw and delete?",
+      "body": "The signature process will first be withdrawn and then deleted. Pending signees receive a withdrawal notification from DeepSign. <strong>This cannot be undone.</strong>",
+      "confirm": "Withdraw & delete"
+    },
+    "signed": {
+      "title": "Delete signed document?",
+      "body": "<span class=\"warn\">The signed PDF will be permanently deleted.</span> Please make sure you have downloaded a copy.",
+      "confirm": "Delete signed PDF"
+    },
+    "default": {
+      "title": "Delete signature process?",
+      "body": "The signature process and its history will be removed.",
+      "confirm": "Delete"
+    }
+  },
   "send": {
     "label": "Send",
     "error": "Document could not be sent.",
     "ok": "Document was sent for signature.",
     "failed": "Sending failed"
   },
-  "upload": { "error": "File too large (max. 40 MB) or wrong format." },
-  "scan": { "no_fields": "No signature fields found in the document. Please use a PDF with embedded Text Field Patterns." },
+  "upload": {
+    "error": "File too large (max. 40 MB) or wrong format."
+  },
+  "scan": {
+    "no_fields": "No signature fields found in the document. Please use a PDF with embedded Text Field Patterns."
+  },
   "actionsheet": {
     "view": "Show signature status",
     "doc_view": "Show PDF",
@@ -35,7 +71,9 @@
       "label": "Message (optional)",
       "placeholder": "Leave empty for the default text"
     },
-    "include_pdf": { "label": "Attach signed PDF" }
+    "include_pdf": {
+      "label": "Attach signed PDF"
+    }
   },
   "document": {
     "title": "Send document",
@@ -70,5 +108,39 @@
       "others": "Only to others",
       "none": "No e-mails"
     }
+  },
+  "filter": {
+    "all": "All",
+    "in_progress": "In progress",
+    "signed": "Signed",
+    "rejected": "Rejected",
+    "draft": "Draft",
+    "withdrawn": "Withdrawn"
+  },
+  "view": {
+    "preview_title": "PDF preview",
+    "details": "Details",
+    "status": "Status",
+    "initiator": "Initiator",
+    "signature_mode": "Signature mode",
+    "signees": "Signees",
+    "signed_at": "Signed:",
+    "resend": "Send again",
+    "events_show": "▼ Show events",
+    "events_hide": "▲ Hide events",
+    "refresh": "Refresh preview",
+    "download": "Download signed PDF",
+    "delete": "Delete",
+    "preview_error": "Preview could not be loaded.",
+    "resend_ok": "Invitation resent to {email}.",
+    "resend_error": "Invitation could not be sent.",
+    "doc_delete_error": "Document could not be deleted."
+  },
+  "signee": {
+    "on_hold": "On hold",
+    "pending": "Pending",
+    "in_progress": "In progress",
+    "signed": "Signed",
+    "rejected": "Rejected"
   }
 }

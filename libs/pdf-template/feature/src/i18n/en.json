@@ -29,7 +29,10 @@
   "publish": {
     "label": "Publish template",
     "conf": "Template published.",
-    "error": "Publishing failed."
+    "error": "Publishing failed.",
+    "title": "Publish version {version}",
+    "changelog": "Change note (required)",
+    "changelog_placeholder": "Describe the changes in this version…"
   },
   "save": {
     "draft": {
@@ -126,5 +129,41 @@
   },
   "css": {
     "label": "CSS"
+  },
+  "edit": {
+    "fallback_name": "Template",
+    "published": "(Published)",
+    "draft": "(Draft)",
+    "publish": "Publish",
+    "tab": {
+      "metadata": "Metadata",
+      "html": "HTML",
+      "preview": "Preview"
+    },
+    "category": {
+      "invoice": "Invoice",
+      "expense": "Expenses",
+      "report": "Report",
+      "dunning": "Dunning letter",
+      "other": "Other"
+    },
+    "output_format": "Output format",
+    "sample_data": "Sample data (JSON)",
+    "qr_slip": "Attach QR payment slip",
+    "qr_slip_amount": "Fill the amount on the payment slip",
+    "payee_org": "Payee organisation (org ID, empty = default org)",
+    "html_placeholder": "HTML / Handlebars …",
+    "preview_send": "Send",
+    "preview_download": "Download",
+    "preview_none": "No preview available."
+  },
+  "validation": {
+    "to_required": "At least one recipient address is required.",
+    "to_invalid": "Invalid recipient address.",
+    "from_required": "A sender address is required.",
+    "from_invalid": "Invalid sender address.",
+    "subject_required": "A subject is required.",
+    "cc_invalid": "Invalid CC address.",
+    "bcc_invalid": "Invalid BCC address."
   }
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, OnInit, signal } from '@angular/core';
 import { StringSelectI18n } from '@okr/shared-ui';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonItem, IonLabel, IonRow, IonSpinner, IonCardSubtitle } from '@ionic/angular/standalone';
 
@@ -8,8 +8,6 @@ import { Header, StringSelect } from '@okr/shared-ui';
 import { AvatarLabel } from '@okr/avatar-ui';
 import { ColorIonic } from '@okr/shared-models';
 import { DateFormat, getFullName, getTodayStr, isAfterDate } from '@okr/shared-util-core';
-
-export const CONTACT_FILTERS = ['Alle', 'Nur Personen', 'Nur Mitglieder', 'Nur Orgs', 'Nur Abweichungen'];
 
 import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
 
@@ -64,7 +62,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
               <ion-col size="6">
                 <ion-item lines="none">
                   <ion-input
-                    label="Ab Datum"
+                    [label]="store.i18n.bexio_from_date()"
                     labelPlacement="floating"
                     placeholder="JJJJ-MM-TT"
                     [value]="invoiceFromDate()"
@@ -127,7 +125,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
               <ion-col size="6">
                 <ion-item lines="none">
                   <ion-input
-                    label="Ab Datum"
+                    [label]="store.i18n.bexio_from_date()"
                     labelPlacement="floating"
                     placeholder="JJJJ-MM-TT"
                     [value]="billFromDate()"
@@ -230,7 +228,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
               <ion-col size="6">
                 <ion-item lines="none">
                   <ion-input
-                    label="Root-Name"
+                    [label]="store.i18n.bexio_root_name()"
                     labelPlacement="floating"
                     placeholder="z.B. bexio"
                     [value]="clearRootName()"
@@ -289,7 +287,7 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
             }
             <ion-row>
               <ion-col size="6">
-                <okr-string-select [i18n]="contactFilterI18n()" [selectedString]="contactFilter()" (selectedStringChange)="contactFilter.set($event)" [stringList]="contactFilters" [readOnly]="false" />
+                <okr-string-select [i18n]="contactFilterI18n()" [selectedString]="contactFilter()" (selectedStringChange)="contactFilter.set($event)" [stringList]="contactFilters()" [readOnly]="false" />
               </ion-col>
             </ion-row>
             @if(filteredIndex().length > 0) {
@@ -299,10 +297,10 @@ import { AocBexioStore, BexioIndex } from './aoc-bexio.store';
                 </ion-item>
               </ion-row>
               <ion-row>
-                <ion-col size="5"><strong>Name</strong></ion-col>
-                <ion-col size="1"><strong>Kat</strong></ion-col>
+                <ion-col size="5"><strong>{{ store.i18n.srv_col_name() }}</strong></ion-col>
+                <ion-col size="1"><strong>{{ store.i18n.srv_col_category() }}</strong></ion-col>
                 <ion-col size="3"><strong>BK Bexio ID</strong></ion-col>
-                <ion-col size="3"><strong>Bexio ID</strong></ion-col>
+                <ion-col size="3"><strong>{{ store.i18n.bexio_col_bexio_id() }}</strong></ion-col>
               </ion-row>
               @for(item of filteredIndex(); track item.key + '_' + item.okey + '_' + item.bx_id) {
                 <ion-row style="cursor: pointer" (click)="edit(item)">
@@ -468,19 +466,27 @@ export class AocBexio implements OnInit {
     this.store.loadJournalStats();
   }
 
-  protected readonly contactFilters = CONTACT_FILTERS;
-  protected contactFilter = signal(CONTACT_FILTERS[0]);
+  // the string-select works on display strings, so the stable key is derived by position
+  private readonly contactFilterKeys = ['all', 'persons', 'members', 'orgs', 'mismatch'] as const;
+  protected readonly contactFilters = computed(() => [
+    this.store.i18n.bexio_filter_all(), this.store.i18n.bexio_filter_persons(),
+    this.store.i18n.bexio_filter_members(), this.store.i18n.bexio_filter_orgs(),
+    this.store.i18n.bexio_filter_mismatch(),
+  ]);
+  protected contactFilter = linkedSignal(() => this.contactFilters()[0]);
+  private readonly contactFilterKey = computed(() =>
+    this.contactFilterKeys[Math.max(0, this.contactFilters().indexOf(this.contactFilter()))]);
   protected readonly contactFilterI18n = computed(() => ({
     name: 'bexioContactFilter',
     label: this.store.i18n.bexio_index_contactFilter_label(),
   } as StringSelectI18n));
   protected readonly filteredIndex = computed(() => {
     const today = getTodayStr(DateFormat.StoreDate);
-    switch (this.contactFilter()) {
-      case 'Nur Personen':    return this.index().filter(i => i.type === 'person');
-      case 'Nur Mitglieder':  return this.index().filter(i => isAfterDate(i.dateOfExit, today));
-      case 'Nur Orgs':        return this.index().filter(i => i.type === 'org');
-      case 'Nur Abweichungen': return this.index().filter(i => !this.store.compareAddressData(i));
+    switch (this.contactFilterKey()) {
+      case 'persons':  return this.index().filter(i => i.type === 'person');
+      case 'members':  return this.index().filter(i => isAfterDate(i.dateOfExit, today));
+      case 'orgs':     return this.index().filter(i => i.type === 'org');
+      case 'mismatch': return this.index().filter(i => !this.store.compareAddressData(i));
       default:                return this.index();
     }
   });

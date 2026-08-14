@@ -1,5 +1,5 @@
 // libs/esign/feature/src/lib/esign-list.ts
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActionSheetController, ActionSheetOptions, ModalController, ToastController } from '@ionic/angular/standalone';
 import {
@@ -12,6 +12,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AppStore } from '@okr/shared-feature';
 import { EsignService } from '@okr/esign-data-access';
+import { fill } from '@okr/shared-util-core';
 import { Browser } from '@capacitor/browser';
 
 import { EsignStore } from './esign.store';
@@ -47,7 +48,7 @@ import { EsignStore } from './esign.store';
       </ion-toolbar>
       <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
       <div class="filter-row">
-        @for(f of statusFilters; track f.value) {
+        @for(f of statusFilters(); track f.value) {
           <ion-chip
             [outline]="store.statusFilter() !== f.value"
             [color]="f.color"
@@ -97,23 +98,23 @@ export class EsignList {
   private readonly toastController = inject(ToastController);
   private readonly appStore = inject(AppStore);
 
-  protected readonly statusFilters = [
-    { value: 'all'         as const, label: 'Alle',          color: 'medium'  },
-    { value: 'in-progress' as const, label: 'In Bearbeitung', color: 'warning' },
-    { value: 'signed'      as const, label: 'Unterzeichnet',  color: 'success' },
-    { value: 'rejected'    as const, label: 'Abgelehnt',      color: 'danger'  },
-    { value: 'draft'       as const, label: 'Entwurf',        color: 'medium'  },
-    { value: 'withdrawn'   as const, label: 'Zurückgezogen',  color: 'medium'  },
-  ];
+  protected readonly statusFilters = computed(() => [
+    { value: 'all'         as const, label: this.store.i18n.filter_all(),         color: 'medium'  },
+    { value: 'in-progress' as const, label: this.store.i18n.filter_in_progress(), color: 'warning' },
+    { value: 'signed'      as const, label: this.store.i18n.filter_signed(),      color: 'success' },
+    { value: 'rejected'    as const, label: this.store.i18n.filter_rejected(),    color: 'danger'  },
+    { value: 'draft'       as const, label: this.store.i18n.filter_draft(),       color: 'medium'  },
+    { value: 'withdrawn'   as const, label: this.store.i18n.filter_withdrawn(),   color: 'medium'  },
+  ]);
 
   protected subtitle(esign: EsignRecord): string {
     const total  = esign.signees?.length ?? 0;
     const signed = esign.signees?.filter(s => s.signStatus === 'signed').length ?? 0;
     if (esign.documentStatus === 'in-progress') {
       const next = esign.signees?.find(s => s.signStatus === 'pending' || s.signStatus === 'in-progress');
-      if (next) return `Wartet auf ${next.email}`;
+      if (next) return fill(this.store.i18n.waiting_for(), { email: next.email });
     }
-    return `${signed} / ${total} unterzeichnet`;
+    return fill(this.store.i18n.signed_of(), { signed, total });
   }
 
   protected async showActions(esign: EsignRecord): Promise<void> {
@@ -145,7 +146,7 @@ export class EsignList {
       handler: () => { this.store.openDeleteConfirm(esign); },
     });
 
-    options.buttons.push({ text: 'Abbrechen', role: 'cancel' });
+    options.buttons.push({ text: this.store.i18n.cancel(), role: 'cancel' });
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();
@@ -160,7 +161,7 @@ export class EsignList {
       }
     } catch {
       const toast = await this.toastController.create({
-        message: 'Dokument konnte nicht geöffnet werden.',
+        message: this.store.i18n.open_error(),
         duration: 3000,
         color: 'danger',
       });

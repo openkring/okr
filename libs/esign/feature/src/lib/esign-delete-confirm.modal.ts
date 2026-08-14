@@ -6,6 +6,8 @@ import {
 } from '@ionic/angular/standalone';
 
 import { EsignRecord } from '@okr/shared-models';
+import { I18nService } from '@okr/shared-i18n';
+import { ESIGN_I18N_KEYS, EsignI18n } from '@okr/esign-util';
 
 interface DeleteConfig {
   title: string;
@@ -30,7 +32,7 @@ interface DeleteConfig {
       <ion-toolbar color="secondary">
         <ion-title>{{ cfg().title }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="cancel()">Abbrechen</ion-button>
+          <ion-button (click)="cancel()">{{ i18n.cancel() }}</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -42,7 +44,7 @@ interface DeleteConfig {
     <ion-footer>
       <ion-toolbar color="light">
         <ion-buttons slot="end">
-          <ion-button (click)="cancel()">Abbrechen</ion-button>
+          <ion-button (click)="cancel()">{{ i18n.cancel() }}</ion-button>
           <ion-button color="danger" (click)="confirm()">{{ cfg().confirmLabel }}</ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -53,40 +55,23 @@ export class EsignDeleteConfirmModal {
   public readonly esign = input.required<EsignRecord>();
   private readonly modalController = inject(ModalController);
 
+  // Direct inject (no store): EsignStore opens this modal, importing it back would be circular.
+  protected readonly i18n = inject(I18nService).translateAll(ESIGN_I18N_KEYS) as EsignI18n;
+
   protected readonly cfg = computed<DeleteConfig>(() => {
-    const status = this.esign().documentStatus;
-    switch (status) {
+    const i18n = this.i18n;
+    switch (this.esign().documentStatus) {
       case 'uploading':
       case 'error':
-        return {
-          title: 'Upload verwerfen?',
-          body: 'Dieser Upload hat DeepSign nie erreicht und wird nur lokal entfernt.',
-          confirmLabel: 'Verwerfen',
-        };
+        return { title: i18n.del_upload_title(), body: i18n.del_upload_body(), confirmLabel: i18n.del_upload_confirm() };
       case 'draft':
-        return {
-          title: 'Signaturprozess löschen?',
-          body: 'Das Dokument wird aus DeepSign gelöscht. Es wurden noch keine Einladungen verschickt.',
-          confirmLabel: 'Löschen',
-        };
+        return { title: i18n.del_draft_title(), body: i18n.del_draft_body(), confirmLabel: i18n.del_draft_confirm() };
       case 'in-progress':
-        return {
-          title: 'Zurückziehen und löschen?',
-          body: 'Der Signaturprozess wird zunächst zurückgezogen und dann gelöscht. Ausstehende Unterzeichner erhalten eine Rückzugsbenachrichtigung von DeepSign. <strong>Dies kann nicht rückgängig gemacht werden.</strong>',
-          confirmLabel: 'Zurückziehen & löschen',
-        };
+        return { title: i18n.del_progress_title(), body: i18n.del_progress_body(), confirmLabel: i18n.del_progress_confirm() };
       case 'signed':
-        return {
-          title: 'Unterzeichnetes Dokument löschen?',
-          body: '<span class="warn">Das unterzeichnete PDF wird dauerhaft gelöscht.</span> Bitte stellen Sie sicher, dass Sie eine Kopie heruntergeladen haben.',
-          confirmLabel: 'Unterzeichnetes PDF löschen',
-        };
+        return { title: i18n.del_signed_title(), body: i18n.del_signed_body(), confirmLabel: i18n.del_signed_confirm() };
       default:
-        return {
-          title: 'Signaturprozess löschen?',
-          body: 'Der Signaturprozess und sein Verlauf werden entfernt.',
-          confirmLabel: 'Löschen',
-        };
+        return { title: i18n.del_default_title(), body: i18n.del_default_body(), confirmLabel: i18n.del_default_confirm() };
     }
   });
 
