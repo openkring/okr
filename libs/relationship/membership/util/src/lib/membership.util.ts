@@ -1,4 +1,4 @@
-import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@okr/shared-constants';
+import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_MCAT, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_ORG_TYPE, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { AddressModel, AvatarInfo, CategoryItemModel, GroupModel, GroupModelName, MembershipModel, MoneyModel, OrgModel, OrgModelName, PersonModel, PersonModelName } from '@okr/shared-models';
 import { addIndexElement, convertDateFormatToString, DateFormat, die, getBirthYear, getStoreDateYear, getTodayStr } from '@okr/shared-util-core';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
@@ -135,38 +135,41 @@ export function convertMemberAndOrgToMembership(
   return membership;
 }
 
+// Firestore reads return the raw doc: a field added to the model after the doc was written
+// is undefined, not its class default. Every copied field is coalesced — an undefined lands
+// in the membership, fails the notUndefined validation, and silently blocks the save button.
 export function addPersonInfoToMembership(membership: MembershipModel, person: PersonModel): MembershipModel {
-  membership.memberKey = person.okey;
-  membership.memberName1 = person.firstName;
-  membership.memberName2 = person.lastName;
+  membership.memberKey = person.okey ?? DEFAULT_KEY;
+  membership.memberName1 = person.firstName ?? DEFAULT_NAME;
+  membership.memberName2 = person.lastName ?? DEFAULT_NAME;
   membership.memberModelType = PersonModelName;
-  membership.memberType = person.gender;
+  membership.memberType = person.gender ?? DEFAULT_GENDER;
   // person.dateOfBirth was stripped (spec 1.19 Phase 4): memberBirthYear keeps its
   // current value (class default for a fresh membership).
   membership.memberIsDeceased = person.isDeceased ?? false;
   membership.memberDeathYear = person.deathYear ?? '';
-  membership.memberZipCode = person.favZipCode;
-  membership.memberBexioId = person.bexioId;
+  membership.memberZipCode = person.favZipCode ?? '';
+  membership.memberBexioId = person.bexioId ?? '';
   return membership;
 }
 
 export function addOrgInfoToMembership(membership: MembershipModel, org: OrgModel): MembershipModel {
-  membership.memberKey = org.okey;
+  membership.memberKey = org.okey ?? DEFAULT_KEY;
   membership.memberName1 = DEFAULT_NAME;
-  membership.memberName2 = org.name;
+  membership.memberName2 = org.name ?? DEFAULT_NAME;
   membership.memberModelType = OrgModelName;
-  membership.memberType = org.type;
+  membership.memberType = org.type ?? DEFAULT_ORG_TYPE;
   membership.memberIsDeceased = (org.dateOfLiquidation ?? '').length > 0;
   membership.memberDeathYear = getStoreDateYear(org.dateOfLiquidation);
-  membership.memberZipCode = org.favZipCode;
-  membership.memberBexioId = org.bexioId;
+  membership.memberZipCode = org.favZipCode ?? '';
+  membership.memberBexioId = org.bexioId ?? '';
   return membership;
 }
 
 export function addGroupInfoToMembership(membership: MembershipModel, group: GroupModel): MembershipModel {
-  membership.memberKey = group.okey;
+  membership.memberKey = group.okey ?? DEFAULT_KEY;
   membership.memberName1 = DEFAULT_NAME;
-  membership.memberName2 = group.name;
+  membership.memberName2 = group.name ?? DEFAULT_NAME;
   membership.memberModelType = GroupModelName;
   return membership;
 }

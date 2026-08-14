@@ -1,4 +1,4 @@
-import { LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, STORE_DATE_LENGTH, STORE_DATETIME_LENGTH, TIME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
+import { END_FUTURE_DATE_STR, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, STORE_DATE_LENGTH, STORE_DATETIME_LENGTH, TIME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { enforce, omitWhen, test } from 'vest';
 import { checkDate, DateFormat, isValidPartialStoreDate } from './date.util';
 import { isArrayOfStrings, isAvatarInfo, isMoney } from './type.util';
@@ -178,7 +178,10 @@ export function dateValidations(fieldName: string, date: unknown) {
 
   stringValidations(fieldName, date, STORE_DATE_LENGTH, STORE_DATE_LENGTH);
 
-  omitWhen(date === '', () => {
+  // END_FUTURE_DATE_STR ('99991231') is the open-ended sentinel used by every validity
+  // period (membership dateOfExit, esign validTo, …) — it is outside the 1850..2100 range
+  // on purpose and must not be reported as an invalid date.
+  omitWhen(date === '' || date === END_FUTURE_DATE_STR, () => {
     test(fieldName, 'invalidDate', () => {
       enforce(checkDate(fieldName, date as string, DateFormat.StoreDate, 1850, 2100, false)).isTruthy();
     });

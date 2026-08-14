@@ -71,9 +71,11 @@ import { AvatarPipe } from '@okr/avatar-ui';
                     </ion-col>
                   </ion-row>
                   <ion-row>
-                    <ion-col size="12">
-                      <okr-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
-                    </ion-col>
+                    @if(membershipCategories(); as categories) {
+                      <ion-col size="12">
+                        <okr-cat-select [category]="categories" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
+                      </ion-col>
+                    }
                     <ion-col size="12">
                       <okr-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
                     </ion-col>
@@ -210,7 +212,9 @@ export class MembershipForm {
   public readonly formData = model.required<MembershipModel>();
   public readonly currentUser = input<UserModel | undefined>();
   public showForm = input(true);   // used for initializing the form and resetting vest validations
-  public membershipCategories = input.required<CategoryListModel>();
+  // optional: a group membership has no category list, and not every tenant uses the
+  // shared 'mcat' definition — the form then simply shows no category picker
+  public membershipCategories = input<CategoryListModel | undefined>();
   public readonly allTags = input.required<string>();
   public readonly priv = input.required<PrivacySettings>();
   public readOnly = input<boolean>(true);
@@ -245,7 +249,10 @@ export class MembershipForm {
   protected dateOfExit = linkedSignal(() => this.formData().dateOfExit ?? DEFAULT_DATE);
   protected currentMembershipCategoryItem = linkedSignal(() => this.formData().category ?? '');
   // the configured category item (e.g. A1, J, K); resolved to its i18n key if the category is translated
-  protected categoryLabel = computed(() => getItemLabel(this.membershipCategories(), this.formData().category));
+  protected categoryLabel = computed(() => {
+    const categories = this.membershipCategories();
+    return categories ? getItemLabel(categories, this.formData().category) : this.formData().category;
+  });
   protected orgFunction = linkedSignal(() => this.formData().orgFunction ?? '');
   protected order = computed(() => this.formData().order ?? 0);
   protected relLog = computed(() => this.formData().relLog ?? '');
@@ -255,8 +262,6 @@ export class MembershipForm {
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected membershipState = computed(() => this.formData().state ?? DEFAULT_MSTATE);
-  protected i18nBase = computed(() => this.membershipCategories().i18n);
-  protected name = computed(() => this.membershipCategories().name);
   protected readonly locale = linkedSignal(() => this.appStore.appConfig().locale);
   protected okey = computed(() => this.formData().okey ?? '');
 
@@ -266,7 +271,12 @@ export class MembershipForm {
   protected rebateReasons = REBATE_REASON_VALUES;
 
   constructor() {
-    effect(() => this.valid.emit(this.validationResult().isValid()));
+    effect(() => {
+      const result = this.validationResult();
+      // a disabled save button is otherwise silent — name the offending fields
+      if (!result.isValid()) console.warn('MembershipForm: form is invalid:', result.getErrors());
+      this.valid.emit(result.isValid());
+    });
   }
 
   /******************************* actions *************************************** */

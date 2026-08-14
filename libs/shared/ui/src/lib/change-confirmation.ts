@@ -19,11 +19,13 @@ export interface ChangeConfirmationI18n {
   ],
   template: `
     <ion-toolbar [color]="color() | categoryPlainName:colorsIonic" mode="md">
-      <ion-buttons slot="start">
-        <ion-button (click)="cancelClicked.emit()">{{ i18n().cancel }}</ion-button>
-      </ion-buttons>
+      @if(showCancel()) {
+        <ion-buttons slot="start">
+          <ion-button (click)="cancelClicked.emit()">{{ i18n().cancel }}</ion-button>
+        </ion-buttons>
+      }
       <ion-buttons slot="end">
-        <ion-button (click)="saveClicked.emit()">{{ i18n().save }}</ion-button>
+        <ion-button [disabled]="saveDisabled()" (click)="saveClicked.emit()">{{ i18n().save }}</ion-button>
       </ion-buttons>
     </ion-toolbar>
   `
@@ -32,6 +34,8 @@ export class ChangeConfirmation {
   // inputs
   public i18n = input.required<ChangeConfirmationI18n>();
   public color = input<ColorIonic>(ColorIonic.Warning);
+  public saveDisabled = input(false); // lets a modal show the toolbar from the start and only gate saving
+  public showCancel = input(true);    // set false where a reset button makes no sense (e.g. a new membership)
 
   // outputs
   public saveClicked = output(); // event to notify the parent component about ok button clicked
