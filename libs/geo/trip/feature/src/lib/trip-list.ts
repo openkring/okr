@@ -13,7 +13,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 
 import { formatTripTime, isTripDeletable, isTripEditable } from '@okr/trip-util';
 import { TripStore } from './trip.store';
-import { getCategoryIcon, getWeekdayI18nKey, getYear, getYearList, hasRole } from '@okr/shared-util-core';
+import { getCategoryIcon, getWeekdayI18nKey, getYear, getYearList, hasRole, isKioskOnly } from '@okr/shared-util-core';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -34,8 +34,8 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
   template: `
     <ion-header>
       @if(contextMenuName() !== 'disable') {
-        <ion-toolbar color="secondary" [class.kiosk-toolbar]="hasRole('kiosk')">
-          @if(hasRole('kiosk')) {
+        <ion-toolbar color="secondary" [class.kiosk-toolbar]="isKiosk()">
+          @if(isKiosk()) {
             <!-- the kiosk has no menu, so the connection dot takes the hamburger's place —
                  it is the one thing someone standing at the boathouse iPad needs to see -->
             <ion-buttons slot="start"><okr-connection-status-button /></ion-buttons>
@@ -109,14 +109,14 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
           }
         </ion-list>
       }
-      @if (hasRole('kiosk') && store.locked()) {
+      @if (isKiosk() && store.locked()) {
         <!-- remotely locked from the AOC kiosk screen: readable, but no new entries -->
         <ion-item color="warning" lines="none">
           <ion-icon slot="start" src="{{ 'lock-closed' | svgIcon }}" />
           <ion-label class="ion-text-wrap">{{ store.i18n.locked() }}</ion-label>
         </ion-item>
       }
-      @if (hasRole('kiosk') && store.canWrite()) {
+      @if (isKiosk() && store.canWrite()) {
         <ion-fab slot="fixed" vertical="bottom" horizontal="end" style="margin-bottom: 50px; margin-right: 50px;">
           <ion-fab-button class="kiosk-fab" (click)="store.createTrip()">
             <ion-icon src="{{ 'add' | svgIcon }}" />
@@ -174,6 +174,9 @@ export class TripList {
 
   // derived
   protected currentUser = computed(() => this.store.currentUser());
+  // kiosk-ONLY, not hasRole('kiosk'): that also matches admin and leaked the kiosk toolbar
+  // (connection dot instead of hamburger, giant FAB) into the normal app list.
+  protected readonly isKiosk = computed(() => isKioskOnly(this.currentUser()));
   protected states = computed(() => this.store.appStore.tryGetCategory('trip_state'));
   protected readonly years = computed(() => getYearList(getYear(), 5));
 
@@ -244,14 +247,14 @@ export class TripList {
     const isOpen = trip.state === 'open' || trip.state === 'open.rev';
     const isDeleted = trip.state === 'deleted';
 
-    if (canWrite && !isDeleted && isTripEditable(trip, this.hasRole('admin'))) {
+    if (canWrite && isOpen) {
+      // 'end' opens the same edit form, so offering edit/view next to it only confuses
+      options.buttons.push(createActionSheetButton('end', this.store.i18n.end(), this.store.imgixBaseUrl(), 'stop-circle'));
+    } else if (canWrite && !isDeleted && isTripEditable(trip, this.hasRole('admin'))) {
       options.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), this.store.imgixBaseUrl(), 'edit'));
     } else {
       // no write access, or more than 15 min after the trip ended: read-only view instead of edit
       options.buttons.push(createActionSheetButton('view', this.store.i18n.view(), this.store.imgixBaseUrl(), 'eye-on'));
-    }
-    if (canWrite && isOpen) {
-      options.buttons.push(createActionSheetButton('end', this.store.i18n.end(), this.store.imgixBaseUrl(), 'stop-circle'));
     }
     // deleting is limited to 30 min after the trip was closed; admins may delete anytime
     if (canWrite && !isDeleted && isTripDeletable(trip, this.hasRole('admin'))) {
