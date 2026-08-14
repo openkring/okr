@@ -23,6 +23,10 @@ export const provideTransloco = (
         defaultLang: config.defaultLang,
         reRenderOnLangChange: true,
         prodMode: !isDevMode(),
+        // An empty value is a deliberate "no helper/placeholder here", not a missing key —
+        // without this, Transloco routes ~40 intentionally-blank bundle entries through
+        // SentryMissingHandler and each one opens its own i18n missing-key ticket.
+        missingHandler: { allowEmpty: true },
       }),
     },
     { provide: TRANSLOCO_LOADER, useClass: TranslocoHttpLoader },
