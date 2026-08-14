@@ -7,6 +7,7 @@ import { AppStore } from '@okr/shared-feature';
 import { FEATURE_BLOCKS, type MenuSpec } from '@okr/tenant-util';
 
 import { FEATURE_ROUTES } from './feature-catalogue';
+import { UNGATED_ROUTES } from './ungated-routes';
 
 /**
  * DOES EVERY MENU ROW ACTUALLY OPEN, FOR THE ROLE IT DECLARES?
@@ -150,7 +151,9 @@ function navDocs(): NavDoc[] {
   return [...new Map(out.map(d => [`${d.key}::${d.url}`, d])).values()];
 }
 
-const ROUTES = FEATURE_ROUTES.flatMap(block => block.routes());
+// UNGATED_ROUTES appended for the same reason as in feature-catalogue.spec.ts: a menu row
+// may point at a control-plane screen that is deliberately not a gateable feature.
+const ROUTES = [...FEATURE_ROUTES.flatMap(block => block.routes()), ...UNGATED_ROUTES];
 /** Every `navigate` doc that declares a role — direction 1's population. */
 const DOCS = navDocs();
 /** Those naming a privilege above plain membership — direction 2's population. */

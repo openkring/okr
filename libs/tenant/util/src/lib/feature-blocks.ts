@@ -272,6 +272,11 @@ const aoc: FeatureBlock = {
       // a Cloud Function that fires on every membership write, so gating the screen would hide
       // rules that keep running. See `system` in NON_BLOCK_DOMAINS.
       { key: 'workflow-all',   name: 'workflow-all',   url: '/workflow/all/workflow-context', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@system/workflow/feature.plural' },
+      // The feature picker itself (`tenant/features`, `isAdminGuard`). Like `workflow-all` it
+      // hangs under the AOC submenu but its route is deliberately NOT block-gated — it is the
+      // screen you use to switch a block back on. Plain label, no i18n key: `resolveMenuLabelKey`
+      // passes a non-`@` label through unchanged.
+      { key: 'tenant-features', name: 'tenant-features', url: '/tenant/features', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: 'Features' },
       // `roleNeeded: contentAdmin` (not `admin`) is the LIVE value, copied verbatim — and it
       // is now HONOURED. It used to be inert: the `/aoc` route parent was `isAdminGuard()`, so
       // a contentAdmin-but-not-admin user saw the row and was bounced. Owner ruling R-5
