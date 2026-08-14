@@ -220,7 +220,8 @@
       "helper": "Free text for unstructured context on this element."
     },
     "type": {
-      "label": "Chat type"
+      "label": "Chat type",
+      "description": "<p>Choose the chat type based on your use case:</p><ul><li><strong>messaging</strong>: Good default for dating, marketplace and other social app chat use cases.</li><li><strong>ai</strong>: Chat with AI support (LLM-style), including text, voice and video.</li><li><strong>livestream</strong>: Chat for livestreams (shopping) and events.</li><li><strong>team</strong>: Internal team chat, similar to Slack.</li><li><strong>gaming</strong>: Chat for video gaming communities.</li></ul>"
     },
     "showChannelList": {
       "label": "Show channel list",
@@ -759,7 +760,9 @@
     }
   },
   "slider": {
-    "label": "Slider"
+    "label": "Slider",
+    "nextImage": "Next image",
+    "prevImage": "Previous image"
   },
   "table": {
     "label": "Table",
@@ -1196,5 +1199,8 @@
     "avatar": {
       "label": "List with thumbnail"
     }
+  },
+  "buttonAction": {
+    "intro": "<ul><li><strong>Download:</strong> The button downloads the file referenced by the URL. The URL must point to a file in Firebase Storage.</li><li><strong>Navigate:</strong> The button navigates to the given URL. The URL must be an internal route (see the MenuItem configuration).</li><li><strong>Browse:</strong> The button links to an external URL (https://domain.com/path).</li><li><strong>Zoom:</strong> The file referenced by the URL is shown in a zoom viewer (typically an image). The URL must point to a file in Firebase Storage.</li><li><strong>None:</strong> No action is performed. The URL is ignored. This is the default setting.</li></ul>"
   }
 }

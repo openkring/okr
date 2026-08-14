@@ -72,7 +72,19 @@ export const RESPONSIBILITY_I18N_KEYS = {
   copy_conf:                       '@copy.conf',
   ok:                              '@ok',
   cancel:                          '@cancel',
-  save:                            '@save.label'
+  save:                            '@save.label',
+
+  // section/card titles and inline labels
+  card_main:                         PFX + 'card.main',
+  card_person:                       PFX + 'card.person',
+  card_delegate:                     PFX + 'card.delegate',
+  select_action:                     PFX + 'select.action',
+  remove:                            PFX + 'remove',
+  no_parent:                         PFX + 'no_parent',
+  responsible_unset:                 PFX + 'responsible_unset',
+  delegate_unset:                    PFX + 'delegate_unset',
+  delegate_expired:                  PFX + 'delegate_expired',
+  list_empty_short:                  PFX + 'list.empty_short',
 } satisfies Record<string, string>;
 
 export type ResponsibilityI18n = { [K in keyof typeof RESPONSIBILITY_I18N_KEYS]: Signal<string> };

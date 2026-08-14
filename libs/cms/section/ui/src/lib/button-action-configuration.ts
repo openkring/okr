@@ -17,6 +17,7 @@ interface ButtonActionI18n {
   altText_placeholder:                  Signal<string>;
   altText_helper:                       Signal<string>;
   button_action_label:                  Signal<string>;
+  button_action_intro:                  Signal<string>;
 }
 
 @Component({
@@ -35,7 +36,7 @@ interface ButtonActionI18n {
         <ion-card-subtitle>{{ i18n().button_action_subtitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
-        @if(intro(); as intro) {
+        @if(introHtml(); as intro) {
           @if(intro.length > 0) {
             <small><div [innerHTML]="intro"></div></small>
           }
@@ -65,15 +66,9 @@ export class ButtonActionConfiguration {
   // inputs
   public formData = model.required<ButtonActionConfig>();
   public readonly i18n = input.required<ButtonActionI18n>();
-  public intro = input<string>(`
-  <ul>
-  <li><strong>Download:</strong> Der Button startet einen Download der mittels URL referenzierten Datei. Die URL muss auf eine Datei im Firebase Storage zeigen.</li>
-  <li><strong>Navigieren:</strong> Der Button navigiert zur angegebenen URL. Die URL muss eine interne Route sein (siehe dazu die MenuItem Konfiguration).</li>
-  <li><strong>Browse:</strong> Der Button linkt auf eine externe URL (https://domain.com/path).</li>
-  <li><strong>Zoom:</strong> Die in der URL referenzierte Datei wird in einem Zoom-Viewer angezeigt (typischerweise ein Bild). Die URL muss auf eine Datei im Firebase Storage zeigen.</li>
-  <li><strong>Keine:</strong> Keine Aktion wird ausgeführt. Die URL wird ignoriert. Dies ist die Default-Einstellung.</li>
-  </ul>
-  `);
+  /** Optional override; defaults to the translated action-type explainer. */
+  public intro = input<string>();
+  protected readonly introHtml = computed(() => this.intro() ?? this.i18n().button_action_intro());
 
   public readonly readOnly = input(true);
 

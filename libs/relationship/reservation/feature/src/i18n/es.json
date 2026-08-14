@@ -33,7 +33,6 @@
   "reldesc1": "Reserva de ",
   "reldesc2": "por",
   "newDesc": "... desea reservar el siguiente recurso:",
-
   "create": {
     "label": "Nueva reserva",
     "conf": "La reserva se ha guardado.",
@@ -71,7 +70,6 @@
     "phone": "Llamar a la persona que reserva",
     "chat": "Chat directo con la persona que reserva"
   },
-
   "list": {
     "title": "Reservas",
     "header": {
@@ -85,7 +83,6 @@
       "category": "Tipo"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -121,11 +118,11 @@
       "helper": "La reserva finaliza en esta fecha."
     }
   },
-  "startTime":    {
+  "startTime": {
     "label": "Hora de inicio",
     "placeholder": "HH:MM"
   },
-  "fullDay":      {
+  "fullDay": {
     "label": "Todo el día",
     "helper": "La reserva se aplica durante todo el día."
   },
@@ -167,7 +164,6 @@
     "label": "Por la presente confirmo que he leído las disposiciones anteriores y que las cumpliré.",
     "helper": "El alquiler de las instalaciones del club solo se realiza si se cumplen las disposiciones anteriores. El club se reserva el derecho de cancelar el evento o de cobrar al arrendatario los posibles daños o gastos adicionales en caso de incumplimiento de las disposiciones."
   },
-
   "reservation_reason": {
     "label": "Motivo de la reserva",
     "helper": "Una categorización aproximada del tipo de reserva para el filtrado de la lista de reservas.",
@@ -223,7 +219,6 @@
       "description": "Reservado para un evento del club"
     }
   },
-
   "reservation_state": {
     "label": "Estado",
     "helper": "El estado de tramitación de la reserva (inicial/solicitada/reservada/completada/cancelada/rechazada).",
@@ -254,5 +249,14 @@
       "label": "Rechazada",
       "description": "La reserva fue rechazada."
     }
+  },
+  "card": {
+    "time": "Datos horarios",
+    "event": "Datos del evento",
+    "process": "Proceso de reserva y tasas"
+  },
+  "apply": {
+    "invalid": "La inscripción todavía no se puede enviar. Compruebe: {fields}",
+    "confirmation": "Confirmación"
   }
 }

@@ -14,5 +14,22 @@
     "edit": "Regel bearbeiten",
     "delete": "Regel löschen",
     "account": "Buchungskonto bearbeiten"
+  },
+  "edit": {
+    "title_readonly": "OCR-Regel",
+    "title": "OCR-Regel bearbeiten",
+    "title_new": "Neue OCR-Regel",
+    "usage": "Verwendung",
+    "usage_expense": "Spesen (expense)",
+    "usage_invoice": "Rechnung (invoice)",
+    "usage_paper": "Beleg (paper)",
+    "party": "Partei (Lieferant)",
+    "aliases": "Aliase (kommagetrennt)",
+    "stored_as": "wird gespeichert als:",
+    "account": "Sollkonto",
+    "vat": "MWST-Code (optional)",
+    "cost_center": "Kostenstelle (optional)",
+    "rank": "Rang",
+    "active": "Aktiv"
   }
 }

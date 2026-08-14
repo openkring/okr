@@ -9,7 +9,6 @@
   "person1": "Person1",
   "type": "Beziehungsart",
   "person2": "Person2",
-
   "create": {
     "label": "Neue Beziehung erstellen",
     "conf": "Die Beziehung wurde gespeichert.",
@@ -37,7 +36,6 @@
   "view": {
     "label": "Beziehungsdetails anzeigen"
   },
-
   "list": {
     "title": "Persönliche Beziehungen",
     "empty": "Keine persönlichen Beziehungen gefunden.",
@@ -47,7 +45,6 @@
       "type": "Beziehungsart"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -75,7 +72,6 @@
       "helper": "Die Beziehung endet an diesem Datum."
     }
   },
-
   "personalrel_type": {
     "label": "Beziehungs-Art",
     "helper": "Die Art der Beziehung zwischen zwei Personen.",
@@ -119,5 +115,9 @@
       "label": "Andere Beziehung",
       "description": "Beziehung, die nicht in die anderen Kategorien passt."
     }
+  },
+  "card": {
+    "persons": "Personen",
+    "validity": "Gültigkeit"
   }
 }

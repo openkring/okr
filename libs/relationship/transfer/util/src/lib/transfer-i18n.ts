@@ -85,6 +85,11 @@ export const TRANSFER_I18N_KEYS = {
   cancel:                          '@cancel',
   ok:                              '@ok',
   save:                            '@save.label',
+
+  // section/card titles and inline labels
+  card_resource:                     PFX + 'card.resource',
+  card_transfer:                     PFX + 'card.transfer',
+  card_fees:                         PFX + 'card.fees',
 } satisfies Record<string, string>;
 
 export type TransferI18n = { [K in keyof typeof TRANSFER_I18N_KEYS]: Signal<string> };

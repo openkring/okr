@@ -5,8 +5,6 @@
   "empty": "Keine Transfers gefunden.",
   "reldesc": "überträgt an",
   "revreldesc": "transferiert von",
-
-
   "add": {
     "subject": {
       "label": "Person oder Organisation hinzufügen",
@@ -40,7 +38,6 @@
   "view": {
     "label": "Transfer Details anzeigen"
   },
-
   "list": {
     "title": "Transfers",
     "header": {
@@ -53,7 +50,6 @@
       "state": "Status"
     }
   },
-
   "subject": "Von",
   "object": "An",
   "date": "Datum",
@@ -61,8 +57,6 @@
   "name": "Anlass",
   "state": "Status",
   "type": "Transfer-Art",
-
-
   "transfer_type": {
     "all": {
       "label": "Alle"
@@ -100,7 +94,6 @@
       "description": "Transfer durch Buchung"
     }
   },
-
   "transfer_state": {
     "all": {
       "label": "Alle Stati"
@@ -125,5 +118,10 @@
       "label": "Abgebrochen",
       "description": "Der Transfer wurde abgebrochen."
     }
+  },
+  "card": {
+    "resource": "Resource",
+    "transfer": "Transfer",
+    "fees": "Gebühren"
   }
 }

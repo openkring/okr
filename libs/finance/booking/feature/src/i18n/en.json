@@ -1,67 +1,71 @@
 {
-    "list": {
-        "title": "Bookings"
+  "list": {
+    "title": "Bookings"
+  },
+  "empty": "No bookings found.",
+  "as": {
+    "title": "Booking"
+  },
+  "cancel": {
+    "label": "Cancel"
+  },
+  "col": {
+    "date": "Date",
+    "credit": "Credit",
+    "debit": "Debit",
+    "name": "Text",
+    "amount": "Amount"
+  },
+  "view": {
+    "label": "Show booking details"
+  },
+  "edit": {
+    "label": "Change booking"
+  },
+  "create": {
+    "label": "Create booking"
+  },
+  "delete": {
+    "label": "Delete booking"
+  },
+  "action": {
+    "createReceipt": "Create donation receipt",
+    "counterpartyRequired": "Please first enter the sender (counterparty).",
+    "noAddress": "No address is stored for the counterparty.",
+    "failed": "The document could not be created."
+  },
+  "readonly": {
+    "banner": "This list is read-only. The bookings are managed in Bexio."
+  },
+  "review": {
+    "approve": "Approve",
+    "correct": "Review & correct",
+    "reject": "Reject",
+    "reason": {
+      "title": "Reason for rejection",
+      "placeholder": "Why is this receipt rejected?"
     },
-    "empty": "No bookings found.",
-    "as": {
-        "title": "Booking"
+    "badge": "to review",
+    "approved": "Booking approved",
+    "rejected": "Booking rejected",
+    "failed": "The booking could not be processed."
+  },
+  "status": {
+    "draft": {
+      "label": "Draft"
     },
-    "cancel": {
-        "label": "Cancel"
+    "forReview": {
+      "label": "To review"
     },
-    "col": {
-        "date": "Date",
-        "credit": "Credit",
-        "debit": "Debit",
-        "name": "Text",
-        "amount": "Amount"
+    "posted": {
+      "label": "Posted"
     },
-    "view": {
-        "label": "Show booking details"
-    },
-    "edit": {
-        "label": "Change booking"
-    },
-    "create": {
-        "label": "Create booking"
-    },
-    "delete": {
-        "label": "Delete booking"
-    },
-    "action": {
-        "createReceipt": "Create donation receipt",
-        "counterpartyRequired": "Please first enter the sender (counterparty).",
-        "noAddress": "No address is stored for the counterparty.",
-        "failed": "The document could not be created."
-    },
-    "readonly": {
-        "banner": "This list is read-only. The bookings are managed in Bexio."
-    },
-    "review": {
-        "approve": "Approve",
-        "correct": "Review & correct",
-        "reject": "Reject",
-        "reason": {
-            "title": "Reason for rejection",
-            "placeholder": "Why is this receipt rejected?"
-        },
-        "badge": "to review",
-        "approved": "Booking approved",
-        "rejected": "Booking rejected",
-        "failed": "The booking could not be processed."
-    },
-    "status": {
-        "draft": {
-            "label": "Draft"
-        },
-        "forReview": {
-            "label": "To review"
-        },
-        "posted": {
-            "label": "Posted"
-        },
-        "cancelled": {
-            "label": "Cancelled"
-        }
+    "cancelled": {
+      "label": "Cancelled"
     }
+  },
+  "counterparty": {
+    "title": "Counterparty",
+    "select": "select"
+  }
 }

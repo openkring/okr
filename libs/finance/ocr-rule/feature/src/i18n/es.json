@@ -14,5 +14,22 @@
     "edit": "Editar regla",
     "delete": "Eliminar regla",
     "account": "Editar cuenta contable"
+  },
+  "edit": {
+    "title_readonly": "Regla OCR",
+    "title": "Editar la regla OCR",
+    "title_new": "Nueva regla OCR",
+    "usage": "Uso",
+    "usage_expense": "Gastos (expense)",
+    "usage_invoice": "Factura (invoice)",
+    "usage_paper": "Comprobante (paper)",
+    "party": "Parte (proveedor)",
+    "aliases": "Alias (separados por comas)",
+    "stored_as": "se guarda como:",
+    "account": "Cuenta de cargo",
+    "vat": "Código de IVA (opcional)",
+    "cost_center": "Centro de costes (opcional)",
+    "rank": "Rango",
+    "active": "Activo"
   }
 }

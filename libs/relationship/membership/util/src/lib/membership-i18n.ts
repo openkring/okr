@@ -229,6 +229,7 @@ export const MEMBERSHIP_I18N_KEYS = {
   email:                          '@email',
   ok:                             '@ok',
   cancel:                         '@cancel',
+  count_label:                    PFX + 'count.label',
   save:                           '@save.label',
 
 } satisfies Record<string, string>;

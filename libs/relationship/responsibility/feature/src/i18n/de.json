@@ -5,7 +5,6 @@
   "responsible": "Verantwortlich",
   "desc": "Eine Zuständigkeit einer Person für gewisse Tätigkeiten.",
   "empty": "Keine Verantwortungen gefunden.",
-
   "create": {
     "label": "Verantwortlichkeit hinzufügen",
     "conf": "Verantwortlichkeit wurde erstellt.",
@@ -22,7 +21,8 @@
   },
   "select": {
     "responsible": "Verantwortliche wählen",
-    "delegate": "Stellvertretung wählen"
+    "delegate": "Stellvertretung wählen",
+    "action": "Auswählen"
   },
   "update": {
     "label": "Verantwortlichkeit ändern",
@@ -35,7 +35,6 @@
   "view": {
     "label": "Verantwortlichkeitsdetails anzeigen"
   },
-
   "list": {
     "title": "Verantwortlichkeiten",
     "header": {
@@ -44,9 +43,9 @@
       "validFrom": "Gültig ab",
       "validTo": "Gültig bis",
       "category": "Typ"
-    }
+    },
+    "empty_short": "Keine Einträge"
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
@@ -74,7 +73,6 @@
       "helper": "Bis zu diesem Tag bleibt die Verantwortung gültig."
     }
   },
-
   "delegate": {
     "label": "Stellvertretung",
     "from": {
@@ -87,6 +85,15 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "Die Stellvertretung endet an diesem Tag."
     }
-  }
+  },
+  "card": {
+    "main": "Verantwortlichkeit",
+    "person": "Verantwortliche Person",
+    "delegate": "Stellvertretung"
+  },
+  "remove": "Entfernen",
+  "no_parent": "Kein Elternelement",
+  "responsible_unset": "Verantwortlicher unbestimmt",
+  "delegate_unset": "Stellvertreter unbestimmt",
+  "delegate_expired": "Delegation abgelaufen"
 }
-

@@ -8,7 +8,8 @@ import {
 } from '@ionic/angular/standalone';
 
 import { ExpenseModel } from '@okr/shared-models';
-import { centsToCHF } from '@okr/finance-expense-util';
+import { centsToCHF, EXPENSE_I18N_KEYS, ExpenseI18n } from '@okr/finance-expense-util';
+import { I18nService } from '@okr/shared-i18n';
 import { ExpenseReceipt, ExpenseService } from '@okr/finance-expense-data-access';
 
 @Component({
@@ -23,7 +24,7 @@ import { ExpenseReceipt, ExpenseService } from '@okr/finance-expense-data-access
       <ion-toolbar>
         <ion-title>{{ expense().abstract }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="dismiss()">Schliessen</ion-button>
+          <ion-button (click)="dismiss()">{{ i18n.close() }}</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -31,24 +32,24 @@ import { ExpenseReceipt, ExpenseService } from '@okr/finance-expense-data-access
       <ion-list>
         <ion-item>
           <ion-label>
-            <h3>Betrag</h3>
+            <h3>{{ i18n.amount() }}</h3>
             <p>{{ toCHF(expense().amountTotal) }} {{ expense().currency }}</p>
           </ion-label>
         </ion-item>
         <ion-item>
           <ion-label>
-            <h3>IBAN</h3>
+            <h3>{{ i18n.detail_iban() }}</h3>
             <p>{{ expense().iban }}</p>
           </ion-label>
         </ion-item>
         <ion-item>
-          <ion-label><h3>Status</h3></ion-label>
+          <ion-label><h3>{{ i18n.detail_status() }}</h3></ion-label>
           <ion-badge slot="end">{{ expense().status }}</ion-badge>
         </ion-item>
         @if (expense().bookingKey) {
           <ion-item>
             <ion-label>
-              <h3>Buchungsreferenz</h3>
+              <h3>{{ i18n.detail_booking_ref() }}</h3>
               <p>{{ expense().bookingKey }}</p>
             </ion-label>
           </ion-item>
@@ -56,7 +57,7 @@ import { ExpenseReceipt, ExpenseService } from '@okr/finance-expense-data-access
         @if (expense().note) {
           <ion-item>
             <ion-label>
-              <h3>Notiz</h3>
+              <h3>{{ i18n.detail_note() }}</h3>
               <p>{{ expense().note }}</p>
             </ion-label>
           </ion-item>
@@ -68,7 +69,7 @@ import { ExpenseReceipt, ExpenseService } from '@okr/finance-expense-data-access
           @for (receipt of receipts(); track receipt.url; let i = $index) {
             <ion-item button (click)="open(receipt.url)">
               <ion-label>
-                <h3>Beleg {{ i + 1 }}</h3>
+                <h3>{{ i18n.detail_receipt() }} {{ i + 1 }}</h3>
                 <p>{{ receipt.name }}</p>
               </ion-label>
             </ion-item>
@@ -83,6 +84,8 @@ export class ExpenseDetailModal {
 
   private readonly modalController = inject(ModalController);
   private readonly expenseService = inject(ExpenseService);
+  // Direct inject (no store): the store opens this modal, importing it back would be circular.
+  protected readonly i18n = inject(I18nService).translateAll(EXPENSE_I18N_KEYS) as ExpenseI18n;
 
   protected readonly toCHF = centsToCHF;
 

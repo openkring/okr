@@ -25,7 +25,7 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
     
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Personen</ion-card-title>
+          <ion-card-title>{{ i18n().card_persons() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -82,7 +82,7 @@ import { personalRelValidations, PersonalRelI18n } from '@okr/relationship-perso
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Gültigkeit</ion-card-title>
+          <ion-card-title>{{ i18n().card_validity() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>

@@ -76,7 +76,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Zeitliche Angaben</ion-card-title>
+          <ion-card-title>{{ i18n().card_time() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -113,7 +113,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Angaben zum Anlass</ion-card-title>
+          <ion-card-title>{{ i18n().card_event() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -145,7 +145,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Reservations-Prozess und Gebühren</ion-card-title>
+          <ion-card-title>{{ i18n().card_process() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>

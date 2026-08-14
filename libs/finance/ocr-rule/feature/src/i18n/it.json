@@ -14,5 +14,22 @@
     "edit": "Modifica regola",
     "delete": "Elimina regola",
     "account": "Modifica conto contabile"
+  },
+  "edit": {
+    "title_readonly": "Regola OCR",
+    "title": "Modificare la regola OCR",
+    "title_new": "Nuova regola OCR",
+    "usage": "Utilizzo",
+    "usage_expense": "Spese (expense)",
+    "usage_invoice": "Fattura (invoice)",
+    "usage_paper": "Giustificativo (paper)",
+    "party": "Parte (fornitore)",
+    "aliases": "Alias (separati da virgole)",
+    "stored_as": "salvato come:",
+    "account": "Conto di addebito",
+    "vat": "Codice IVA (facoltativo)",
+    "cost_center": "Centro di costo (facoltativo)",
+    "rank": "Rango",
+    "active": "Attivo"
   }
 }

@@ -18,7 +18,8 @@
     "status": "Status",
     "booking": "Booking reference",
     "note": "Note",
-    "receipt": "Receipt"
+    "receipt": "Receipt",
+    "booking_ref": "Booking reference"
   },
   "field": {
     "abstract": "Subject",
@@ -85,5 +86,8 @@
   "delete": {
     "confirm": "Really delete this expense?",
     "error": "Expense could not be deleted."
+  },
+  "export": {
+    "todo": "Export coming soon."
   }
 }

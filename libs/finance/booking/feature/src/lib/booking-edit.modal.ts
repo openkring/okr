@@ -5,7 +5,8 @@ import { ActionSheetController, ModalController, IonButton, IonButtons, IonConte
 
 import { AvatarInfo, BookingLineModel, BookingModel, UserModel, VatCodeModel } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
-import { validateBookingBalance } from '@okr/finance-booking-util';
+import { BOOKING_I18N_KEYS, BookingI18n, validateBookingBalance } from '@okr/finance-booking-util';
+import { I18nService } from '@okr/shared-i18n';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { AvatarSelect } from '@okr/avatar-ui';
 
@@ -42,7 +43,7 @@ import { AvatarSelect } from '@okr/avatar-ui';
       <okr-avatar-select
         name="counterparty"
         title="Gegenpartei"
-        selectLabel="auswählen"
+        [selectLabel]="i18n.counterparty_select()"
         [avatar]="counterparty()"
         [clearable]="true"
         [readOnly]="readOnly()"
@@ -99,6 +100,8 @@ export class BookingEditModal implements OnInit {
   private readonly vatCodeService = inject(VatCodeService);
   private readonly modelSelectService = inject(ModelSelectService);
   private readonly actionSheetCtrl = inject(ActionSheetController);
+  // Direct inject (no store): the store opens this modal, importing it back would be circular.
+  protected readonly i18n = inject(I18nService).translateAll(BOOKING_I18N_KEYS) as BookingI18n;
   protected counterparty = signal<AvatarInfo | undefined>(undefined);
 
   protected editBooking!: BookingModel;
@@ -137,11 +140,11 @@ export class BookingEditModal implements OnInit {
 
   protected async selectCounterparty(): Promise<void> {
     const sheet = await this.actionSheetCtrl.create({
-      header: 'Gegenpartei',
+      header: this.i18n.counterparty_title(),
       buttons: [
-        { text: 'Person', role: 'person' },
-        { text: 'Organisation', role: 'org' },
-        { text: 'Abbrechen', role: 'cancel' },
+        { text: this.i18n.counterparty_person(), role: 'person' },
+        { text: this.i18n.counterparty_org(), role: 'org' },
+        { text: this.i18n.cancel(), role: 'cancel' },
       ],
     });
     await sheet.present();

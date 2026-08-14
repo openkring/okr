@@ -220,7 +220,8 @@
       "helper": "Freitext für unstrukturierten Kontext zu diesem Element."
     },
     "type": {
-      "label": "Chat-Typ"
+      "label": "Chat-Typ",
+      "description": "<p>Wähle den Chat-Typ basierend auf deinem Anwendungsfall:</p><ul><li><strong>messaging</strong>: Guter Standard für Dating-, Marktplatz- und andere soziale Chat-Anwendungen.</li><li><strong>ai</strong>: Chat mit KI-Unterstützung (LLM-Stil), inklusive Text, Sprache und Video.</li><li><strong>livestream</strong>: Chat für Livestreams (Shopping) und Events.</li><li><strong>team</strong>: Interner Team-Chat, ähnlich wie Slack.</li><li><strong>gaming</strong>: Chat für Video-Gaming-Communities.</li></ul>"
     },
     "showChannelList": {
       "label": "Kanal-Liste anzeigen",
@@ -759,7 +760,9 @@
     }
   },
   "slider": {
-    "label": "Slider"
+    "label": "Slider",
+    "nextImage": "Nächstes Bild",
+    "prevImage": "Vorheriges Bild"
   },
   "table": {
     "label": "Tabelle",
@@ -1196,5 +1199,8 @@
     "avatar": {
       "label": "Liste mit Vorschaubild"
     }
+  },
+  "buttonAction": {
+    "intro": "<ul><li><strong>Download:</strong> Der Button startet einen Download der mittels URL referenzierten Datei. Die URL muss auf eine Datei im Firebase Storage zeigen.</li><li><strong>Navigieren:</strong> Der Button navigiert zur angegebenen URL. Die URL muss eine interne Route sein (siehe dazu die MenuItem Konfiguration).</li><li><strong>Browse:</strong> Der Button linkt auf eine externe URL (https://domain.com/path).</li><li><strong>Zoom:</strong> Die in der URL referenzierte Datei wird in einem Zoom-Viewer angezeigt (typischerweise ein Bild). Die URL muss auf eine Datei im Firebase Storage zeigen.</li><li><strong>Keine:</strong> Keine Aktion wird ausgeführt. Die URL wird ignoriert. Dies ist die Default-Einstellung.</li></ul>"
   }
 }

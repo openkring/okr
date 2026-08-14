@@ -14,5 +14,22 @@
     "edit": "Modifier la règle",
     "delete": "Supprimer la règle",
     "account": "Modifier le compte comptable"
+  },
+  "edit": {
+    "title_readonly": "Règle OCR",
+    "title": "Modifier la règle OCR",
+    "title_new": "Nouvelle règle OCR",
+    "usage": "Utilisation",
+    "usage_expense": "Frais (expense)",
+    "usage_invoice": "Facture (invoice)",
+    "usage_paper": "Justificatif (paper)",
+    "party": "Partie (fournisseur)",
+    "aliases": "Alias (séparés par des virgules)",
+    "stored_as": "enregistré comme :",
+    "account": "Compte de débit",
+    "vat": "Code TVA (facultatif)",
+    "cost_center": "Centre de coûts (facultatif)",
+    "rank": "Rang",
+    "active": "Actif"
   }
 }

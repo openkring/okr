@@ -24,7 +24,7 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
     
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Beschäftigung</ion-card-title>
+          <ion-card-title>{{ i18n().card_employment() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -81,7 +81,7 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Gültigkeit und Status</ion-card-title>
+          <ion-card-title>{{ i18n().card_validity() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -105,7 +105,7 @@ import { workrelValidations, WorkrelI18n } from '@okr/relationship-workrel-util'
 
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Kompensation</ion-card-title>
+          <ion-card-title>{{ i18n().card_compensation() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>

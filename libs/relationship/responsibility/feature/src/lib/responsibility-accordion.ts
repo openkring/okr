@@ -36,7 +36,7 @@ import { ResponsibilityStore } from './responsibility.store';
             </ion-item>
           }
           @empty {
-            <ion-item><ion-label color="medium">Keine Einträge</ion-label></ion-item>
+            <ion-item><ion-label color="medium">{{ store.i18n.list_empty_short() }}</ion-label></ion-item>
           }
         </ion-list>
       </ion-accordion>

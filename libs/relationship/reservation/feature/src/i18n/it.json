@@ -33,7 +33,6 @@
   "reldesc1": "Prenotazione di ",
   "reldesc2": "da parte di",
   "newDesc": "... desidera prenotare la seguente risorsa:",
-
   "create": {
     "label": "Nuova prenotazione",
     "conf": "La prenotazione è stata salvata.",
@@ -71,7 +70,6 @@
     "phone": "Chiama la persona che prenota",
     "chat": "Chat diretta con la persona che prenota"
   },
-
   "list": {
     "title": "Prenotazioni",
     "header": {
@@ -85,7 +83,6 @@
       "category": "Tipo"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -121,11 +118,11 @@
       "helper": "La prenotazione termina in questa data."
     }
   },
-  "startTime":    {
+  "startTime": {
     "label": "Ora di inizio",
     "placeholder": "HH:MM"
   },
-  "fullDay":      {
+  "fullDay": {
     "label": "Tutto il giorno",
     "helper": "La prenotazione vale per l'intera giornata."
   },
@@ -167,7 +164,6 @@
     "label": "Con la presente confermo di aver letto le disposizioni sopra riportate e di attenermi ad esse.",
     "helper": "L'affitto delle strutture del club avviene solo se vengono rispettate le disposizioni sopra riportate. Il club si riserva il diritto di annullare l'evento o di addebitare al locatario eventuali danni o spese aggiuntive in caso di mancato rispetto delle disposizioni."
   },
-
   "reservation_reason": {
     "label": "Motivo della prenotazione",
     "helper": "Una categorizzazione approssimativa del tipo di prenotazione per il filtraggio dell'elenco delle prenotazioni.",
@@ -223,7 +219,6 @@
       "description": "Prenotato per un evento del club"
     }
   },
-
   "reservation_state": {
     "label": "Stato",
     "helper": "Lo stato di elaborazione della prenotazione (iniziale/richiesta/prenotata/completata/annullata/rifiutata).",
@@ -254,5 +249,14 @@
       "label": "Rifiutata",
       "description": "La prenotazione è stata rifiutata."
     }
+  },
+  "card": {
+    "time": "Indicazioni orarie",
+    "event": "Dati dell’evento",
+    "process": "Processo di prenotazione e tasse"
+  },
+  "apply": {
+    "invalid": "L’iscrizione non può ancora essere inviata. Verificare: {fields}",
+    "confirmation": "Conferma"
   }
 }

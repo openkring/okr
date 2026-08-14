@@ -1,67 +1,71 @@
 {
-    "list": {
-        "title": "Registrazioni"
+  "list": {
+    "title": "Registrazioni"
+  },
+  "empty": "Nessuna registrazione trovata.",
+  "as": {
+    "title": "Registrazione"
+  },
+  "cancel": {
+    "label": "Annulla"
+  },
+  "col": {
+    "date": "Data",
+    "credit": "Avere",
+    "debit": "Dare",
+    "name": "Testo",
+    "amount": "Importo"
+  },
+  "view": {
+    "label": "Mostra dettagli della registrazione"
+  },
+  "edit": {
+    "label": "Modifica registrazione"
+  },
+  "create": {
+    "label": "Crea registrazione"
+  },
+  "delete": {
+    "label": "Elimina registrazione"
+  },
+  "action": {
+    "createReceipt": "Crea attestazione di donazione",
+    "counterpartyRequired": "Inserire prima il mittente (controparte).",
+    "noAddress": "Nessun indirizzo registrato per la controparte.",
+    "failed": "Impossibile creare il documento."
+  },
+  "readonly": {
+    "banner": "Questo elenco è di sola lettura. Le registrazioni vengono gestite in Bexio."
+  },
+  "review": {
+    "approve": "Approva",
+    "correct": "Verifica e correggi",
+    "reject": "Rifiuta",
+    "reason": {
+      "title": "Motivo del rifiuto",
+      "placeholder": "Perché questo giustificativo viene rifiutato?"
     },
-    "empty": "Nessuna registrazione trovata.",
-    "as": {
-        "title": "Registrazione"
+    "badge": "da verificare",
+    "approved": "Registrazione approvata",
+    "rejected": "Registrazione rifiutata",
+    "failed": "Impossibile elaborare la registrazione."
+  },
+  "status": {
+    "draft": {
+      "label": "Bozza"
     },
-    "cancel": {
-        "label": "Annulla"
+    "forReview": {
+      "label": "Da verificare"
     },
-    "col": {
-        "date": "Data",
-        "credit": "Avere",
-        "debit": "Dare",
-        "name": "Testo",
-        "amount": "Importo"
+    "posted": {
+      "label": "Contabilizzata"
     },
-    "view": {
-        "label": "Mostra dettagli della registrazione"
-    },
-    "edit": {
-        "label": "Modifica registrazione"
-    },
-    "create": {
-        "label": "Crea registrazione"
-    },
-    "delete": {
-        "label": "Elimina registrazione"
-    },
-    "action": {
-        "createReceipt": "Crea attestazione di donazione",
-        "counterpartyRequired": "Inserire prima il mittente (controparte).",
-        "noAddress": "Nessun indirizzo registrato per la controparte.",
-        "failed": "Impossibile creare il documento."
-    },
-    "readonly": {
-        "banner": "Questo elenco è di sola lettura. Le registrazioni vengono gestite in Bexio."
-    },
-    "review": {
-        "approve": "Approva",
-        "correct": "Verifica e correggi",
-        "reject": "Rifiuta",
-        "reason": {
-            "title": "Motivo del rifiuto",
-            "placeholder": "Perché questo giustificativo viene rifiutato?"
-        },
-        "badge": "da verificare",
-        "approved": "Registrazione approvata",
-        "rejected": "Registrazione rifiutata",
-        "failed": "Impossibile elaborare la registrazione."
-    },
-    "status": {
-        "draft": {
-            "label": "Bozza"
-        },
-        "forReview": {
-            "label": "Da verificare"
-        },
-        "posted": {
-            "label": "Contabilizzata"
-        },
-        "cancelled": {
-            "label": "Annullata"
-        }
+    "cancelled": {
+      "label": "Annullata"
     }
+  },
+  "counterparty": {
+    "title": "Controparte",
+    "select": "selezionare"
+  }
 }

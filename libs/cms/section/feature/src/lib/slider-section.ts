@@ -228,9 +228,9 @@ import { Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
                 </div>
                 @if(showFallbackNav && images().length > 1) {
                     <button type="button" class="carousel-nav left"
-                        aria-label="Vorheriges Bild" (click)="scrollByPage(-1)">&lsaquo;</button>
+                        [attr.aria-label]="store.i18n.slider_prev_image()" (click)="scrollByPage(-1)">&lsaquo;</button>
                     <button type="button" class="carousel-nav right"
-                        aria-label="Nächstes Bild" (click)="scrollByPage(1)">&rsaquo;</button>
+                        [attr.aria-label]="store.i18n.slider_next_image()" (click)="scrollByPage(1)">&rsaquo;</button>
                     <div class="carousel-dots" role="tablist">
                         @for(image of images(); track image.url; let i = $index) {
                             <button type="button" role="tab"

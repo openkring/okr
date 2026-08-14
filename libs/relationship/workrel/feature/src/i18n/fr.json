@@ -5,7 +5,6 @@
   "reldesc": "travaille pour",
   "revreldesc": "emploie",
   "empty": "Aucune relation de travail trouvée.",
-
   "create": {
     "label": "Ajouter un emploi",
     "conf": "L'emploi a été créé.",
@@ -31,8 +30,6 @@
   "view": {
     "label": "Afficher les détails de l'emploi"
   },
-
-
   "list": {
     "title": "Emplois",
     "empty": "Aucune relation de travail trouvée.",
@@ -42,7 +39,6 @@
       "type": "Type de relation"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -85,7 +81,6 @@
   "subject": "Personne",
   "type": "Type de relation",
   "object": "Organisation",
-
   "workrel_type": {
     "name": "Type de travail",
     "label": "Type d'emploi",
@@ -142,7 +137,6 @@
       "description": "Relation qui ne rentre dans aucune des autres catégories."
     }
   },
-
   "workrel_state": {
     "label": "Statut",
     "helper": "Statut d'un emploi : Initial / Postulé / Actif / Passif / Terminé / Annulé",
@@ -173,5 +167,10 @@
       "label": "Annulé",
       "description": "La relation de travail a été annulée."
     }
+  },
+  "card": {
+    "employment": "Emploi",
+    "validity": "Validité et statut",
+    "compensation": "Rémunération"
   }
 }

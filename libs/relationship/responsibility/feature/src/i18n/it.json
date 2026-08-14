@@ -5,7 +5,6 @@
   "responsible": "Responsabile",
   "desc": "Una competenza di una persona per determinate attività.",
   "empty": "Nessuna responsabilità trovata.",
-
   "create": {
     "label": "Aggiungi responsabilità",
     "conf": "La responsabilità è stata creata.",
@@ -22,7 +21,8 @@
   },
   "select": {
     "responsible": "Scegli il responsabile",
-    "delegate": "Scegli il sostituto"
+    "delegate": "Scegli il sostituto",
+    "action": "Selezionare"
   },
   "update": {
     "label": "Modifica responsabilità",
@@ -35,7 +35,6 @@
   "view": {
     "label": "Visualizza dettagli della responsabilità"
   },
-
   "list": {
     "title": "Responsabilità",
     "header": {
@@ -44,9 +43,9 @@
       "validFrom": "Valido dal",
       "validTo": "Valido fino al",
       "category": "Tipo"
-    }
+    },
+    "empty_short": "Nessuna voce"
   },
-
   "okey": {
     "label": "ID",
     "placeholder": "ssssssss",
@@ -74,7 +73,6 @@
       "helper": "La responsabilità rimane valida fino a questo giorno."
     }
   },
-
   "delegate": {
     "label": "Sostituzione",
     "from": {
@@ -87,5 +85,15 @@
       "placeholder": "dd.mm.yyyy",
       "helper": "La sostituzione termina questo giorno."
     }
-  }
+  },
+  "card": {
+    "main": "Responsabilità",
+    "person": "Persona responsabile",
+    "delegate": "Supplenza"
+  },
+  "remove": "Rimuovere",
+  "no_parent": "Nessun elemento padre",
+  "responsible_unset": "Responsabile non definito",
+  "delegate_unset": "Supplente non definito",
+  "delegate_expired": "Delega scaduta"
 }

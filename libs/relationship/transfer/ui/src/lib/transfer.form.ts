@@ -44,7 +44,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>Resource</ion-card-title>
+              <ion-card-title>{{ i18n().card_resource() }}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
               <ion-item lines="none">
@@ -57,7 +57,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>Transfer</ion-card-title>
+              <ion-card-title>{{ i18n().card_transfer() }}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
               <ion-grid>
@@ -90,7 +90,7 @@ import { transferValidations, TransferI18n } from '@okr/relationship-transfer-ut
 
           <ion-card>
             <ion-card-header>
-              <ion-card-title>Gebühren</ion-card-title>
+              <ion-card-title>{{ i18n().card_fees() }}</ion-card-title>
             </ion-card-header>
             <ion-card-content>
               <ion-grid>

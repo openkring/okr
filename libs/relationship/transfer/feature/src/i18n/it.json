@@ -5,8 +5,6 @@
   "empty": "Nessun trasferimento trovato.",
   "reldesc": "trasferisce a",
   "revreldesc": "trasferito da",
-
-
   "add": {
     "subject": {
       "label": "Aggiungi persona o organizzazione",
@@ -40,7 +38,6 @@
   "view": {
     "label": "Mostra dettagli del trasferimento"
   },
-
   "list": {
     "title": "Trasferimenti",
     "header": {
@@ -53,7 +50,6 @@
       "state": "Stato"
     }
   },
-
   "subject": "Da",
   "object": "A",
   "date": "Data",
@@ -61,8 +57,6 @@
   "name": "Occasione",
   "state": "Stato",
   "type": "Tipo di trasferimento",
-
-
   "transfer_type": {
     "all": {
       "label": "Tutti"
@@ -100,7 +94,6 @@
       "description": "Trasferimento tramite registrazione"
     }
   },
-
   "transfer_state": {
     "all": {
       "label": "Tutti gli stati"
@@ -125,5 +118,10 @@
       "label": "Annullato",
       "description": "Il trasferimento è stato annullato."
     }
+  },
+  "card": {
+    "resource": "Risorsa",
+    "transfer": "Trasferimento",
+    "fees": "Tasse"
   }
 }

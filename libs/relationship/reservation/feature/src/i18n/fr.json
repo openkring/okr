@@ -33,7 +33,6 @@
   "reldesc1": "Réservation de ",
   "reldesc2": "par",
   "newDesc": "... souhaite réserver la ressource suivante :",
-
   "create": {
     "label": "Nouvelle réservation",
     "conf": "La réservation a été enregistrée.",
@@ -71,7 +70,6 @@
     "phone": "Appeler la personne qui réserve",
     "chat": "Chat direct avec la personne qui réserve"
   },
-
   "list": {
     "title": "Réservations",
     "header": {
@@ -85,7 +83,6 @@
       "category": "Type"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -121,11 +118,11 @@
       "helper": "La réservation se termine à cette date."
     }
   },
-  "startTime":    {
+  "startTime": {
     "label": "Heure de début",
     "placeholder": "HH:MM"
   },
-  "fullDay":      {
+  "fullDay": {
     "label": "Toute la journée",
     "helper": "La réservation s'applique à toute la journée."
   },
@@ -167,7 +164,6 @@
     "label": "Je confirme par la présente avoir lu les dispositions ci-dessus et m'y conformer.",
     "helper": "La location des installations du club n'a lieu que si les dispositions ci-dessus sont respectées. Le club se réserve le droit d'annuler la manifestation ou de facturer au locataire les éventuels dommages ou frais supplémentaires en cas de non-respect des dispositions."
   },
-
   "reservation_reason": {
     "label": "Motif de la réservation",
     "helper": "Une catégorisation approximative du type de réservation pour le filtrage de la liste des réservations.",
@@ -223,7 +219,6 @@
       "description": "Réservé pour un événement du club"
     }
   },
-
   "reservation_state": {
     "label": "Statut",
     "helper": "L'état de traitement de la réservation (initial/demandé/réservé/terminé/annulé/refusé).",
@@ -254,5 +249,14 @@
       "label": "Refusé",
       "description": "La réservation a été refusée."
     }
+  },
+  "card": {
+    "time": "Informations horaires",
+    "event": "Détails de l’événement",
+    "process": "Processus de réservation et frais"
+  },
+  "apply": {
+    "invalid": "L’inscription ne peut pas encore être envoyée. Veuillez vérifier : {fields}",
+    "confirmation": "Confirmation"
   }
 }

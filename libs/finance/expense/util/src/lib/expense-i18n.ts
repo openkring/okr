@@ -29,6 +29,14 @@ export const EXPENSE_I18N_KEYS = {
   delete_error:       PFX + 'delete.error',
   redo_conf:          PFX + 'redo.conf',
   redo_error:         PFX + 'redo.error',
+  amount:             PFX + 'detail.amount',
+  detail_iban:        PFX + 'detail.iban',
+  detail_status:      PFX + 'detail.status',
+  detail_booking_ref: PFX + 'detail.booking_ref',
+  detail_note:        PFX + 'detail.note',
+  detail_receipt:     PFX + 'detail.receipt',
+  close:              '@shared/ui.close',
+  export_todo:        PFX + 'export.todo',
 } satisfies Record<string, string>;
 
 export type ExpenseI18n = { [K in keyof typeof EXPENSE_I18N_KEYS]: Signal<string> };

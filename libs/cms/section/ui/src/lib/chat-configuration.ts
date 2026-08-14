@@ -7,6 +7,7 @@ import { DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_URL } from '@okr/share
 
 interface ChatConfigI18n {
   chat_title:      Signal<string>;
+  chat_type_description: Signal<string>;
   chat_subtitle:   Signal<string>;
   chat_id_label:          Signal<string>;
   chat_id_placeholder:    Signal<string>;
@@ -58,7 +59,7 @@ interface ChatConfigI18n {
             <ion-col size="12" size-md="6">
               <okr-string-select [i18n]="typeI18n()" [selectedString]="type()" (selectedStringChange)="onFieldChange('type', $event)" [readOnly]="readOnly()" [stringList]="['messaging', 'ai', 'livestream', 'team', 'gaming']" />
               <small>
-                <div [innerHTML]="typeDescription"></div>
+                <div [innerHTML]="typeDescription()"></div>
               </small>
             </ion-col>
             <ion-col size="12" size-md="6">
@@ -126,16 +127,7 @@ export class ChatConfiguration {
     helper: this.i18n().chat_showChannelList_helper(),
   } as CheckboxI18n));
 
-  protected typeDescription = `
-  <p>Wähle den Chat-Typ basierend auf deinem Anwendungsfall:</p>
-  <ul>
-    <li><strong>messaging</strong>: Good default for dating, marketplace, and other social app chat use cases.</li>
-    <li><strong>ai</strong>: Chat mit KI-Unterstützung (LLM-style), including text, voice & video.</li>
-    <li><strong>livestream</strong>: Chat für Livestreams (Shopping) und Events.</li>
-    <li><strong>team</strong>: Interner Team-Chat, similar to Slack.</li>
-    <li><strong>gaming</strong>: Chat für Video Gaming-Communities.</li>
-  </ul>
-  `;
+  protected typeDescription = computed(() => this.i18n().chat_type_description());
 
   protected onFieldChange(fieldName: string, $event: string | boolean): void {
     this.formData.update((vm) => ({ ...vm, [fieldName]: $event }));

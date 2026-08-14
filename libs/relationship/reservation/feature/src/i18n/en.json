@@ -33,7 +33,6 @@
   "reldesc1": "Reservation of ",
   "reldesc2": "by",
   "newDesc": "... would like to reserve the following resource:",
-
   "create": {
     "label": "New reservation",
     "conf": "The reservation has been saved.",
@@ -71,7 +70,6 @@
     "phone": "Call reserving person",
     "chat": "Direct chat with reserving person"
   },
-
   "list": {
     "title": "Reservations",
     "header": {
@@ -85,7 +83,6 @@
       "category": "Type"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -121,11 +118,11 @@
       "helper": "The reservation ends on this date."
     }
   },
-  "startTime":    {
+  "startTime": {
     "label": "Start time",
     "placeholder": "HH:MM"
   },
-  "fullDay":      {
+  "fullDay": {
     "label": "All day",
     "helper": "The reservation applies for the whole day."
   },
@@ -167,7 +164,6 @@
     "label": "I hereby confirm that I have read the above terms and will abide by them.",
     "helper": "The club facilities are only rented out if the above terms are observed. The club reserves the right to cancel the event or to charge the renter for any damages or additional expenses in the event of non-compliance with the terms."
   },
-
   "reservation_reason": {
     "label": "Reason for the reservation",
     "helper": "A rough categorization of the reservation type for filtering the reservation list.",
@@ -223,7 +219,6 @@
       "description": "Reserved for a club event"
     }
   },
-
   "reservation_state": {
     "label": "Status",
     "helper": "The processing status of the reservation (initial/applied/reserved/completed/cancelled/denied).",
@@ -254,5 +249,14 @@
       "label": "Denied",
       "description": "The reservation was denied."
     }
+  },
+  "card": {
+    "time": "Timing",
+    "event": "Event details",
+    "process": "Reservation process and fees"
+  },
+  "apply": {
+    "invalid": "The application cannot be submitted yet. Please check: {fields}",
+    "confirmation": "Confirmation"
   }
 }

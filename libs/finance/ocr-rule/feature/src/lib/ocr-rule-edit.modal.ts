@@ -4,7 +4,8 @@ import { ModalController, IonButton, IonButtons, IonContent, IonHeader, IonInput
   IonItem, IonLabel, IonNote, IonSelect, IonSelectOption, IonTitle, IonToggle, IonToolbar } from '@ionic/angular/standalone';
 
 import { AccountModel, OcrRuleModel, VatCodeModel } from '@okr/shared-models';
-import { normalizeParty } from '@okr/finance-ocr-rule-util';
+import { normalizeParty, OCR_RULE_I18N_KEYS, OcrRuleI18n } from '@okr/finance-ocr-rule-util';
+import { I18nService } from '@okr/shared-i18n';
 
 @Component({
   selector: 'okr-ocr-rule-edit-modal',
@@ -17,36 +18,36 @@ import { normalizeParty } from '@okr/finance-ocr-rule-util';
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>{{ readOnly() ? 'OCR-Regel' : (rule().okey ? 'OCR-Regel bearbeiten' : 'Neue OCR-Regel') }}</ion-title>
+        <ion-title>{{ readOnly() ? i18n.edit_title_ro() : (rule().okey ? i18n.edit_title() : i18n.edit_title_new()) }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="dismiss()">Abbrechen</ion-button>
+          <ion-button (click)="dismiss()">{{ i18n.cancel() }}</ion-button>
           @if (!readOnly()) {
-            <ion-button (click)="save()">Speichern</ion-button>
+            <ion-button (click)="save()">{{ i18n.save() }}</ion-button>
           }
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content>
       <ion-item>
-        <ion-label position="stacked">Verwendung</ion-label>
+        <ion-label position="stacked">{{ i18n.f_usage() }}</ion-label>
         <ion-select [(ngModel)]="edit.ocrUsage" [disabled]="readOnly()">
-          <ion-select-option value="expense">Spesen (expense)</ion-select-option>
-          <ion-select-option value="invoice">Rechnung (invoice)</ion-select-option>
-          <ion-select-option value="paper">Beleg (paper)</ion-select-option>
+          <ion-select-option value="expense">{{ i18n.f_usage_expense() }}</ion-select-option>
+          <ion-select-option value="invoice">{{ i18n.f_usage_invoice() }}</ion-select-option>
+          <ion-select-option value="paper">{{ i18n.f_usage_paper() }}</ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item>
-        <ion-label position="stacked">Partei (Lieferant)</ion-label>
+        <ion-label position="stacked">{{ i18n.f_party() }}</ion-label>
         <ion-input [(ngModel)]="edit.party" [readonly]="readOnly()" />
-        <ion-note slot="helper">wird gespeichert als: {{ preview(edit.party) || '—' }}</ion-note>
+        <ion-note slot="helper">{{ i18n.f_stored_as() }} {{ preview(edit.party) || '—' }}</ion-note>
       </ion-item>
       <ion-item>
-        <ion-label position="stacked">Aliase (kommagetrennt)</ion-label>
+        <ion-label position="stacked">{{ i18n.f_aliases() }}</ion-label>
         <ion-input [(ngModel)]="aliasText" [readonly]="readOnly()" />
-        <ion-note slot="helper">wird gespeichert als: {{ aliasPreview() || '—' }}</ion-note>
+        <ion-note slot="helper">{{ i18n.f_stored_as() }} {{ aliasPreview() || '—' }}</ion-note>
       </ion-item>
       <ion-item>
-        <ion-label position="stacked">Sollkonto</ion-label>
+        <ion-label position="stacked">{{ i18n.f_account() }}</ion-label>
         <ion-select [(ngModel)]="edit.accountKey" [disabled]="readOnly()">
           @for (a of accounts(); track a.okey) {
             <ion-select-option [value]="a.okey">{{ a.id }} — {{ a.name }}</ion-select-option>
@@ -54,7 +55,7 @@ import { normalizeParty } from '@okr/finance-ocr-rule-util';
         </ion-select>
       </ion-item>
       <ion-item>
-        <ion-label position="stacked">MWST-Code (optional)</ion-label>
+        <ion-label position="stacked">{{ i18n.f_vat() }}</ion-label>
         <ion-select [(ngModel)]="edit.vatCode" [disabled]="readOnly()">
           <ion-select-option [value]="''">—</ion-select-option>
           @for (v of vatCodes(); track v.okey) {
@@ -63,15 +64,15 @@ import { normalizeParty } from '@okr/finance-ocr-rule-util';
         </ion-select>
       </ion-item>
       <ion-item>
-        <ion-label position="stacked">Kostenstelle (optional)</ion-label>
+        <ion-label position="stacked">{{ i18n.f_cost_center() }}</ion-label>
         <ion-input [(ngModel)]="edit.costCenterId" [readonly]="readOnly()" />
       </ion-item>
       <ion-item>
-        <ion-label position="stacked">Rang</ion-label>
+        <ion-label position="stacked">{{ i18n.f_rank() }}</ion-label>
         <ion-input type="number" [(ngModel)]="edit.rank" [readonly]="readOnly()" />
       </ion-item>
       <ion-item>
-        <ion-label>Aktiv</ion-label>
+        <ion-label>{{ i18n.f_active() }}</ion-label>
         <ion-toggle slot="end" [(ngModel)]="edit.active" [disabled]="readOnly()" />
       </ion-item>
     </ion-content>
@@ -84,6 +85,8 @@ export class OcrRuleEditModal implements OnInit {
   public readonly vatCodes = input<VatCodeModel[]>([]);
 
   private readonly modalController = inject(ModalController);
+  // Direct inject (no store): the store opens this modal, importing it back would be circular.
+  protected readonly i18n = inject(I18nService).translateAll(OCR_RULE_I18N_KEYS) as OcrRuleI18n;
   protected edit!: OcrRuleModel;
   protected aliasText = '';
 

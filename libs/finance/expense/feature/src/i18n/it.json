@@ -18,7 +18,8 @@
     "status": "Stato",
     "booking": "Riferimento di registrazione",
     "note": "Nota",
-    "receipt": "Ricevuta"
+    "receipt": "Giustificativo",
+    "booking_ref": "Riferimento di registrazione"
   },
   "field": {
     "abstract": "Oggetto",
@@ -85,5 +86,8 @@
   "delete": {
     "confirm": "Eliminare davvero questa spesa?",
     "error": "Non è stato possibile eliminare la spesa."
+  },
+  "export": {
+    "todo": "Esportazione disponibile a breve."
   }
 }

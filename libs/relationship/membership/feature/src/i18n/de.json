@@ -532,5 +532,8 @@
       "label": "Passiv",
       "description": "Die Person möchte nicht mehr an den Anlässen dabei sein."
     }
+  },
+  "count": {
+    "label": "Anzahl"
   }
 }

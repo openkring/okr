@@ -61,7 +61,11 @@ export const PERSONAL_REL_I18N_KEYS = {
   as_title:                        '@actionsheet.title',
   ok:                              '@ok',
   cancel:                          '@cancel',
-  save:                            '@save.label'
+  save:                            '@save.label',
+
+  // section/card titles and inline labels
+  card_persons:                      PFX + 'card.persons',
+  card_validity:                     PFX + 'card.validity',
 } satisfies Record<string, string>;
 
 export type PersonalRelI18n = { [K in keyof typeof PERSONAL_REL_I18N_KEYS]: Signal<string> };

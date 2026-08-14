@@ -72,7 +72,7 @@ const CHF = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFr
 
         <ion-row>
           <ion-col size="6"><ion-label class="status-header">Stati</ion-label></ion-col>
-          <ion-col size="3"><ion-label class="status-header ion-text-end">Anzahl</ion-label></ion-col>
+          <ion-col size="3"><ion-label class="status-header ion-text-end">{{ store.i18n.count_label() }}</ion-label></ion-col>
           <ion-col size="3"><ion-label class="status-header ion-text-end">%</ion-label></ion-col>
         </ion-row>
         <ion-row class="status-row">

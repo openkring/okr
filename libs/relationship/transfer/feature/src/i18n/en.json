@@ -5,8 +5,6 @@
   "empty": "No transfers found.",
   "reldesc": "transfers to",
   "revreldesc": "transferred from",
-
-
   "add": {
     "subject": {
       "label": "Add person or organization",
@@ -40,7 +38,6 @@
   "view": {
     "label": "Show transfer details"
   },
-
   "list": {
     "title": "Transfers",
     "header": {
@@ -53,7 +50,6 @@
       "state": "Status"
     }
   },
-
   "subject": "From",
   "object": "To",
   "date": "Date",
@@ -61,8 +57,6 @@
   "name": "Occasion",
   "state": "Status",
   "type": "Transfer type",
-
-
   "transfer_type": {
     "all": {
       "label": "All"
@@ -100,7 +94,6 @@
       "description": "Transfer through booking"
     }
   },
-
   "transfer_state": {
     "all": {
       "label": "All statuses"
@@ -125,5 +118,10 @@
       "label": "Cancelled",
       "description": "The transfer was cancelled."
     }
+  },
+  "card": {
+    "resource": "Resource",
+    "transfer": "Transfer",
+    "fees": "Fees"
   }
 }

@@ -5,8 +5,6 @@
   "empty": "Aucun transfert trouvé.",
   "reldesc": "transfère à",
   "revreldesc": "transféré de",
-
-
   "add": {
     "subject": {
       "label": "Ajouter une personne ou une organisation",
@@ -40,7 +38,6 @@
   "view": {
     "label": "Afficher les détails du transfert"
   },
-
   "list": {
     "title": "Transferts",
     "header": {
@@ -53,7 +50,6 @@
       "state": "Statut"
     }
   },
-
   "subject": "De",
   "object": "À",
   "date": "Date",
@@ -61,8 +57,6 @@
   "name": "Occasion",
   "state": "Statut",
   "type": "Type de transfert",
-
-
   "transfer_type": {
     "all": {
       "label": "Tous"
@@ -100,7 +94,6 @@
       "description": "Transfert par écriture"
     }
   },
-
   "transfer_state": {
     "all": {
       "label": "Tous les statuts"
@@ -125,5 +118,10 @@
       "label": "Annulé",
       "description": "Le transfert a été annulé."
     }
+  },
+  "card": {
+    "resource": "Ressource",
+    "transfer": "Transfert",
+    "fees": "Frais"
   }
 }

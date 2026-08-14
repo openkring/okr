@@ -22,7 +22,7 @@ import { LowercaseWordMask } from '@okr/shared-config';
       <!-- Responsible -->
       <ion-card class="ion-no-padding">
         <ion-card-header>
-          <ion-card-title>Verantwortlichkeit</ion-card-title>
+          <ion-card-title>{{ i18n().card_main() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -45,8 +45,8 @@ import { LowercaseWordMask } from '@okr/shared-config';
             <ion-row>
               <ion-col size="12">
                 <ion-item lines="none">
-                  <ion-label>{{ parentName() || 'Kein Elternelement' }}</ion-label>
-                  <ion-button slot="end" fill="clear" (click)="selectParent.emit()">Auswählen</ion-button>
+                  <ion-label>{{ parentName() || i18n().no_parent() }}</ion-label>
+                  <ion-button slot="end" fill="clear" (click)="selectParent.emit()">{{ i18n().select_action() }}</ion-button>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -57,7 +57,7 @@ import { LowercaseWordMask } from '@okr/shared-config';
       <!-- Responsible -->
       <ion-card class="ion-no-padding">
         <ion-card-header>
-          <ion-card-title>Verantwortliche Person</ion-card-title>
+          <ion-card-title>{{ i18n().card_person() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -65,7 +65,7 @@ import { LowercaseWordMask } from '@okr/shared-config';
               <ion-col size="12">
                 <ion-item lines="none">
                   <ion-label>{{ responsibleName() }}</ion-label>
-                  <ion-button slot="end" fill="clear" (click)="selectResponsible.emit()">Auswählen</ion-button>
+                  <ion-button slot="end" fill="clear" (click)="selectResponsible.emit()">{{ i18n().select_action() }}</ion-button>
                 </ion-item>
               </ion-col>
               <ion-col size="12" size-md="6">
@@ -82,7 +82,7 @@ import { LowercaseWordMask } from '@okr/shared-config';
       <!-- Delegation -->
       <ion-card>
         <ion-card-header>
-          <ion-card-title>Stellvertretung</ion-card-title>
+          <ion-card-title>{{ i18n().card_delegate() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -90,9 +90,9 @@ import { LowercaseWordMask } from '@okr/shared-config';
               <ion-col size="12">
                 <ion-item lines="none">
                   <ion-label>{{ delegateName() }}</ion-label>
-                  <ion-button slot="end" fill="clear" (click)="selectDelegate.emit()">Auswählen</ion-button>
+                  <ion-button slot="end" fill="clear" (click)="selectDelegate.emit()">{{ i18n().select_action() }}</ion-button>
                   @if(formData().delegateAvatar) {
-                    <ion-button slot="end" fill="clear" color="danger" (click)="clearDelegate.emit()">Entfernen</ion-button>
+                    <ion-button slot="end" fill="clear" color="danger" (click)="clearDelegate.emit()">{{ i18n().remove() }}</ion-button>
                   }
                 </ion-item>
               </ion-col>
@@ -107,7 +107,7 @@ import { LowercaseWordMask } from '@okr/shared-config';
                   <ion-row>
                     <ion-col>
                       <ion-item lines="none">
-                        <ion-text color="medium">Delegation abgelaufen</ion-text>
+                        <ion-text color="medium">{{ i18n().delegate_expired() }}</ion-text>
                       </ion-item>
                     </ion-col>
                   </ion-row>
@@ -160,8 +160,8 @@ export class ResponsibilityForm {
   protected validTo = linkedSignal(() => this.formData().validTo ?? DEFAULT_DATE);
   protected delegateValidFrom = linkedSignal(() => this.formData().delegateValidFrom ?? DEFAULT_DATE);
   protected delegateValidTo = linkedSignal(() => this.formData().delegateValidTo ?? DEFAULT_DATE);
-  protected responsibleName = computed(() => getAvatarName(this.formData().responsibleAvatar) || 'Verantwortlicher unbestimmt');
-  protected delegateName = computed(() => getAvatarName(this.formData().delegateAvatar) || 'Stellvertreter unbestimmt');
+  protected responsibleName = computed(() => getAvatarName(this.formData().responsibleAvatar) || this.i18n().responsible_unset());
+  protected delegateName = computed(() => getAvatarName(this.formData().delegateAvatar) || this.i18n().delegate_unset());
   protected delegateExpired = computed(() => !isDelegateActive(this.formData()));
 
   // passing constants to template

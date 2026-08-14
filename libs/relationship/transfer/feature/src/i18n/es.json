@@ -5,8 +5,6 @@
   "empty": "No se encontraron transferencias.",
   "reldesc": "transfiere a",
   "revreldesc": "transferido de",
-
-
   "add": {
     "subject": {
       "label": "Añadir persona u organización",
@@ -40,7 +38,6 @@
   "view": {
     "label": "Mostrar detalles de la transferencia"
   },
-
   "list": {
     "title": "Transferencias",
     "header": {
@@ -53,7 +50,6 @@
       "state": "Estado"
     }
   },
-
   "subject": "De",
   "object": "A",
   "date": "Fecha",
@@ -61,8 +57,6 @@
   "name": "Ocasión",
   "state": "Estado",
   "type": "Tipo de transferencia",
-
-
   "transfer_type": {
     "all": {
       "label": "Todos"
@@ -100,7 +94,6 @@
       "description": "Transferencia mediante asiento"
     }
   },
-
   "transfer_state": {
     "all": {
       "label": "Todos los estados"
@@ -125,5 +118,10 @@
       "label": "Cancelada",
       "description": "La transferencia fue cancelada."
     }
+  },
+  "card": {
+    "resource": "Recurso",
+    "transfer": "Transferencia",
+    "fees": "Tasas"
   }
 }

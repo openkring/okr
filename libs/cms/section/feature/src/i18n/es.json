@@ -220,7 +220,8 @@
       "helper": "Texto libre para un contexto no estructurado sobre este elemento."
     },
     "type": {
-      "label": "Tipo de chat"
+      "label": "Tipo de chat",
+      "description": "<p>Elija el tipo de chat según su caso de uso:</p><ul><li><strong>messaging</strong>: buena opción predeterminada para citas, marketplace y otros chats sociales.</li><li><strong>ai</strong>: chat con asistencia de IA (estilo LLM), con texto, voz y vídeo.</li><li><strong>livestream</strong>: chat para livestreams (shopping) y eventos.</li><li><strong>team</strong>: chat interno de equipo, similar a Slack.</li><li><strong>gaming</strong>: chat para comunidades de videojuegos.</li></ul>"
     },
     "showChannelList": {
       "label": "Mostrar lista de canales",
@@ -759,7 +760,9 @@
     }
   },
   "slider": {
-    "label": "Slider"
+    "label": "Slider",
+    "nextImage": "Imagen siguiente",
+    "prevImage": "Imagen anterior"
   },
   "table": {
     "label": "Tabla",
@@ -1196,5 +1199,8 @@
     "avatar": {
       "label": "Lista con miniatura"
     }
+  },
+  "buttonAction": {
+    "intro": "<ul><li><strong>Download:</strong> el botón descarga el archivo referenciado por la URL. La URL debe apuntar a un archivo en Firebase Storage.</li><li><strong>Navegar:</strong> el botón navega a la URL indicada. La URL debe ser una ruta interna (véase la configuración de MenuItem).</li><li><strong>Browse:</strong> el botón enlaza a una URL externa (https://domain.com/path).</li><li><strong>Zoom:</strong> el archivo referenciado por la URL se muestra en un visor de zoom (normalmente una imagen). La URL debe apuntar a un archivo en Firebase Storage.</li><li><strong>Ninguna:</strong> no se ejecuta ninguna acción. La URL se ignora. Es la configuración predeterminada.</li></ul>"
   }
 }

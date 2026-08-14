@@ -158,7 +158,7 @@ zukünftige Veranstaltungen zu sperren.
 
       <ion-card>
         <ion-card-header>
-            <ion-card-title>Bestätigung</ion-card-title>
+            <ion-card-title>{{ i18n().apply_confirmation() }}</ion-card-title>
             </ion-card-header>
         <ion-card-content class="ion-no-padding">
           <okr-checkbox [i18n]="isConfirmedI18n()" [checked]="isConfirmed()" (checkedChange)="onFieldChange('isConfirmed', $event)" [showHelper]="false" [readOnly]="false" />

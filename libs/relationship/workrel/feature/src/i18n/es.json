@@ -5,7 +5,6 @@
   "reldesc": "trabaja para",
   "revreldesc": "emplea a",
   "empty": "No se han encontrado relaciones laborales.",
-
   "create": {
     "label": "Añadir empleo",
     "conf": "El empleo se ha creado.",
@@ -31,8 +30,6 @@
   "view": {
     "label": "Ver detalles del empleo"
   },
-
-
   "list": {
     "title": "Empleos",
     "empty": "No se han encontrado relaciones laborales.",
@@ -42,7 +39,6 @@
       "type": "Tipo de relación"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -85,7 +81,6 @@
   "subject": "Persona",
   "type": "Tipo de relación",
   "object": "Organización",
-
   "workrel_type": {
     "name": "Tipo de trabajo",
     "label": "Tipo de empleo",
@@ -142,7 +137,6 @@
       "description": "Relación que no encaja en las demás categorías."
     }
   },
-
   "workrel_state": {
     "label": "Estado",
     "helper": "Estado de un empleo: Inicial / Solicitado / Activo / Pasivo / Finalizado / Cancelado",
@@ -173,5 +167,10 @@
       "label": "Cancelado",
       "description": "La relación laboral se ha cancelado."
     }
+  },
+  "card": {
+    "employment": "Empleo",
+    "validity": "Validez y estado",
+    "compensation": "Remuneración"
   }
 }

@@ -33,7 +33,6 @@
   "reldesc1": "Reservation von ",
   "reldesc2": "durch",
   "newDesc": "... möchte die folgende Resource reservieren:",
-
   "create": {
     "label": "Neue Reservation",
     "conf": "Die Reservation wurde gespeichert.",
@@ -55,7 +54,7 @@
     "confirm": "Möchtest du diese Reservation wirklich absagen?"
   },
   "select": {
-    "label": "Auswählen" 
+    "label": "Auswählen"
   },
   "update": {
     "label": "Reservation ändern",
@@ -71,7 +70,6 @@
     "phone": "Reservierende Person anrufen",
     "chat": "Direkt Chat mit reservierender Person"
   },
-
   "list": {
     "title": "Reservationen",
     "header": {
@@ -85,7 +83,6 @@
       "category": "Typ"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -96,9 +93,9 @@
     "placeholder": "Name der Reservation",
     "helper": "Eine kurze Beschreibung."
   },
-  "notes": { 
-    "label": "Notizen", 
-    "placeholder": "Interne Notizen. Benutze Hinweise für öffentliche Informationen." 
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Interne Notizen. Benutze Hinweise für öffentliche Informationen."
   },
   "reserver": {
     "label": "Kontakt",
@@ -110,24 +107,24 @@
     "helper": "Eine Beschreibung des Reservations-Objekts"
   },
   "date": {
-    "start": { 
-      "label": "Startdatum", 
-      "placeholder": "TT.MM.JJJJ", 
-      "helper": "Die Reservation ist ab diesem Datum gültig." 
+    "start": {
+      "label": "Startdatum",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "Die Reservation ist ab diesem Datum gültig."
     },
-    "end": { 
-      "label": "Enddatum", 
-      "placeholder": "TT.MM.JJJJ", 
-      "helper": "Die Reservation endet an diesem Datum." 
+    "end": {
+      "label": "Enddatum",
+      "placeholder": "TT.MM.JJJJ",
+      "helper": "Die Reservation endet an diesem Datum."
     }
   },
-  "startTime":    { 
-    "label": "Startzeit", 
-    "placeholder": "HH:MM" 
+  "startTime": {
+    "label": "Startzeit",
+    "placeholder": "HH:MM"
   },
-  "fullDay":      { 
-    "label": "Ganztägig", 
-    "helper": "Die Reservation gilt während des ganzen Tages." 
+  "fullDay": {
+    "label": "Ganztägig",
+    "helper": "Die Reservation gilt während des ganzen Tages."
   },
   "durationMinutes": {
     "label": "Dauer (Minuten)",
@@ -154,9 +151,9 @@
     "placeholder": "nn",
     "helper": "Sortierkriterium z.B. bei Wartelisten"
   },
-  "description": { 
-    "label": "Hinweise zur Reservation", 
-    "placeholder": "Diese Hinweise sind für alle Anwender sichtbar. Du kannst beliebige Kontext-Information einfügen, welche für diese Reservation wichtig sind." 
+  "description": {
+    "label": "Hinweise zur Reservation",
+    "placeholder": "Diese Hinweise sind für alle Anwender sichtbar. Du kannst beliebige Kontext-Information einfügen, welche für diese Reservation wichtig sind."
   },
   "price": {
     "label": "Preis",
@@ -167,7 +164,6 @@
     "label": "Hiermit bestätige ich, die obigen Bestimmungen gelesen zu haben und mich daran zu halten.",
     "helper": "Die Vermietung der Clubanlagen erfolgt nur, wenn die obigen Bestimmungen eingehalten werden. Der Club behält sich vor, bei Missachtung der Bestimmungen die Veranstaltung abzusagen oder dem Mieter allfällige Schäden oder Mehraufwände zu verrechnen."
   },
-
   "reservation_reason": {
     "label": "Grund der Reservation",
     "helper": "Eine grobe Kategorisierung der Reservations-Art für die Filterung der Reservationsliste.",
@@ -223,7 +219,6 @@
       "description": "Reserviert für einen Clubanlass"
     }
   },
-
   "reservation_state": {
     "label": "Status",
     "helper": "Der Bearbeitungs-Stand der Reservation (initial/angefragt/reserviert/abgeschlossen/abgesagt/abgelehnt).",
@@ -254,5 +249,14 @@
       "label": "Abgelehnt",
       "description": "Die Reservation wurde abgelehnt."
     }
+  },
+  "card": {
+    "time": "Zeitliche Angaben",
+    "event": "Angaben zum Anlass",
+    "process": "Reservations-Prozess und Gebühren"
+  },
+  "apply": {
+    "invalid": "Die Anmeldung kann noch nicht abgeschickt werden. Bitte prüfen: {fields}",
+    "confirmation": "Bestätigung"
   }
 }

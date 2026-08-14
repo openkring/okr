@@ -3,7 +3,7 @@ import { IonContent, IonNote, ModalController } from '@ionic/angular/standalone'
 
 import { AvatarInfo, CalEventModel, PersonModelName, ReservationApplyModel, ResourceModelName, RoleName } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { getAvatarName, hasRole } from '@okr/shared-util-core';
+import { fill, getAvatarName, hasRole } from '@okr/shared-util-core';
 
 import { CalEventEditModal } from '@okr/calevent-feature';
 import { isCalEvent } from '@okr/calevent-util';
@@ -31,7 +31,7 @@ import { ReservationStore } from './reservation.store';
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     } @else if(showValidationHint()) {
       <ion-note color="danger" class="validation-hint">
-        Die Anmeldung kann noch nicht abgeschickt werden. Bitte prüfen: {{ invalidFields().join(', ') }}
+        {{ validationHint() }}
       </ion-note>
     }
     <ion-content>
@@ -93,6 +93,7 @@ export class ReservationApplyModal {
   protected showConfirmation = computed(() => this.formData()?.isConfirmed === true && this.formValid());
   // the user has accepted the contract and expects a save bar -> explain why it is still missing
   protected showValidationHint = computed(() => this.formData()?.isConfirmed === true && !this.formValid() && this.invalidFields().length > 0);
+  protected validationHint = computed(() => fill(this.store.i18n.apply_invalid(), { fields: this.invalidFields().join(', ') }));
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
   protected readonly toolbarTitle = computed(() => this.store.i18n.reldesc1() + this.resourceName + this.store.i18n.reldesc1() + this.reserverName());
   protected reserverAvatar = computed<AvatarInfo | undefined>(() => this.formData()?.reserver);

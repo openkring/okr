@@ -5,7 +5,6 @@
   "reldesc": "works for",
   "revreldesc": "employs",
   "empty": "No employment relationships found.",
-
   "create": {
     "label": "Add employment",
     "conf": "Employment was created.",
@@ -31,8 +30,6 @@
   "view": {
     "label": "View employment details"
   },
-
-
   "list": {
     "title": "Employments",
     "empty": "No employment relationships found.",
@@ -42,7 +39,6 @@
       "type": "Relationship type"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -85,7 +81,6 @@
   "subject": "Person",
   "type": "Relationship type",
   "object": "Organization",
-
   "workrel_type": {
     "name": "Work type",
     "label": "Employment type",
@@ -142,7 +137,6 @@
       "description": "Relationship that does not fit into the other categories."
     }
   },
-
   "workrel_state": {
     "label": "Status",
     "helper": "Status of an employment: Initial / Applied / Active / Passive / Terminated / Cancelled",
@@ -173,5 +167,10 @@
       "label": "Cancelled",
       "description": "The employment relationship was cancelled."
     }
+  },
+  "card": {
+    "employment": "Employment",
+    "validity": "Validity and status",
+    "compensation": "Compensation"
   }
 }

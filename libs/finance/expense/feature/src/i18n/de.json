@@ -18,7 +18,8 @@
     "status": "Status",
     "booking": "Buchungsreferenz",
     "note": "Notiz",
-    "receipt": "Beleg"
+    "receipt": "Beleg",
+    "booking_ref": "Buchungsreferenz"
   },
   "field": {
     "abstract": "Betreff",
@@ -85,5 +86,8 @@
   "delete": {
     "confirm": "Diese Spese wirklich löschen?",
     "error": "Spese konnte nicht gelöscht werden."
+  },
+  "export": {
+    "todo": "Export folgt in Kürze."
   }
 }

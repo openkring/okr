@@ -18,7 +18,8 @@
     "status": "Estado",
     "booking": "Referencia de asiento",
     "note": "Nota",
-    "receipt": "Comprobante"
+    "receipt": "Comprobante",
+    "booking_ref": "Referencia de asiento"
   },
   "field": {
     "abstract": "Asunto",
@@ -85,5 +86,8 @@
   "delete": {
     "confirm": "¿Eliminar realmente este gasto?",
     "error": "No se pudo eliminar el gasto."
+  },
+  "export": {
+    "todo": "La exportación estará disponible próximamente."
   }
 }

@@ -532,5 +532,8 @@
       "label": "Pasivo",
       "description": "La persona ya no quiere participar en los eventos."
     }
+  },
+  "count": {
+    "label": "Cantidad"
   }
 }

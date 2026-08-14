@@ -79,6 +79,11 @@ export const WORKREL_I18N_KEYS = {
   cancel:                          '@cancel',
   ok:                              '@ok',
   save:                            '@save.label',
+
+  // section/card titles and inline labels
+  card_employment:                   PFX + 'card.employment',
+  card_validity:                     PFX + 'card.validity',
+  card_compensation:                 PFX + 'card.compensation',
 } satisfies Record<string, string>;
 
 export type WorkrelI18n = { [K in keyof typeof WORKREL_I18N_KEYS]: Signal<string> };

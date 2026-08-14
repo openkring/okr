@@ -14,5 +14,22 @@
     "edit": "Edit rule",
     "delete": "Delete rule",
     "account": "Edit posting account"
+  },
+  "edit": {
+    "title_readonly": "OCR rule",
+    "title": "Edit OCR rule",
+    "title_new": "New OCR rule",
+    "usage": "Usage",
+    "usage_expense": "Expense",
+    "usage_invoice": "Invoice",
+    "usage_paper": "Receipt (paper)",
+    "party": "Party (supplier)",
+    "aliases": "Aliases (comma-separated)",
+    "stored_as": "stored as:",
+    "account": "Debit account",
+    "vat": "VAT code (optional)",
+    "cost_center": "Cost center (optional)",
+    "rank": "Rank",
+    "active": "Active"
   }
 }

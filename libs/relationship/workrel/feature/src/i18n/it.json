@@ -5,7 +5,6 @@
   "reldesc": "lavora per",
   "revreldesc": "impiega",
   "empty": "Nessun rapporto di lavoro trovato.",
-
   "create": {
     "label": "Aggiungi impiego",
     "conf": "L'impiego è stato creato.",
@@ -31,8 +30,6 @@
   "view": {
     "label": "Visualizza dettagli dell'impiego"
   },
-
-
   "list": {
     "title": "Impieghi",
     "empty": "Nessun rapporto di lavoro trovato.",
@@ -42,7 +39,6 @@
       "type": "Tipo di relazione"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -85,7 +81,6 @@
   "subject": "Persona",
   "type": "Tipo di relazione",
   "object": "Organizzazione",
-
   "workrel_type": {
     "name": "Tipo di lavoro",
     "label": "Tipo di impiego",
@@ -142,7 +137,6 @@
       "description": "Relazione che non rientra nelle altre categorie."
     }
   },
-
   "workrel_state": {
     "label": "Stato",
     "helper": "Stato di un impiego: Iniziale / Candidato / Attivo / Passivo / Terminato / Annullato",
@@ -173,5 +167,10 @@
       "label": "Annullato",
       "description": "Il rapporto di lavoro è stato annullato."
     }
+  },
+  "card": {
+    "employment": "Impiego",
+    "validity": "Validità e stato",
+    "compensation": "Compenso"
   }
 }

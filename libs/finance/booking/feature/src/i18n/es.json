@@ -1,67 +1,71 @@
 {
-    "list": {
-        "title": "Asientos"
+  "list": {
+    "title": "Asientos"
+  },
+  "empty": "No se encontraron asientos.",
+  "as": {
+    "title": "Asiento"
+  },
+  "cancel": {
+    "label": "Cancelar"
+  },
+  "col": {
+    "date": "Fecha",
+    "credit": "Haber",
+    "debit": "Debe",
+    "name": "Texto",
+    "amount": "Importe"
+  },
+  "view": {
+    "label": "Mostrar detalles del asiento"
+  },
+  "edit": {
+    "label": "Modificar asiento"
+  },
+  "create": {
+    "label": "Crear asiento"
+  },
+  "delete": {
+    "label": "Eliminar asiento"
+  },
+  "action": {
+    "createReceipt": "Crear certificado de donación",
+    "counterpartyRequired": "Por favor, introduzca primero el remitente (contraparte).",
+    "noAddress": "No hay ninguna dirección registrada para la contraparte.",
+    "failed": "El documento no se pudo crear."
+  },
+  "readonly": {
+    "banner": "Esta lista es de solo lectura. Los asientos se gestionan en Bexio."
+  },
+  "review": {
+    "approve": "Aprobar",
+    "correct": "Revisar y corregir",
+    "reject": "Rechazar",
+    "reason": {
+      "title": "Motivo del rechazo",
+      "placeholder": "¿Por qué se rechaza este comprobante?"
     },
-    "empty": "No se encontraron asientos.",
-    "as": {
-        "title": "Asiento"
+    "badge": "por revisar",
+    "approved": "Asiento aprobado",
+    "rejected": "Asiento rechazado",
+    "failed": "No se pudo procesar el asiento."
+  },
+  "status": {
+    "draft": {
+      "label": "Borrador"
     },
-    "cancel": {
-        "label": "Cancelar"
+    "forReview": {
+      "label": "Por revisar"
     },
-    "col": {
-        "date": "Fecha",
-        "credit": "Haber",
-        "debit": "Debe",
-        "name": "Texto",
-        "amount": "Importe"
+    "posted": {
+      "label": "Contabilizado"
     },
-    "view": {
-        "label": "Mostrar detalles del asiento"
-    },
-    "edit": {
-        "label": "Modificar asiento"
-    },
-    "create": {
-        "label": "Crear asiento"
-    },
-    "delete": {
-        "label": "Eliminar asiento"
-    },
-    "action": {
-        "createReceipt": "Crear certificado de donación",
-        "counterpartyRequired": "Por favor, introduzca primero el remitente (contraparte).",
-        "noAddress": "No hay ninguna dirección registrada para la contraparte.",
-        "failed": "El documento no se pudo crear."
-    },
-    "readonly": {
-        "banner": "Esta lista es de solo lectura. Los asientos se gestionan en Bexio."
-    },
-    "review": {
-        "approve": "Aprobar",
-        "correct": "Revisar y corregir",
-        "reject": "Rechazar",
-        "reason": {
-            "title": "Motivo del rechazo",
-            "placeholder": "¿Por qué se rechaza este comprobante?"
-        },
-        "badge": "por revisar",
-        "approved": "Asiento aprobado",
-        "rejected": "Asiento rechazado",
-        "failed": "No se pudo procesar el asiento."
-    },
-    "status": {
-        "draft": {
-            "label": "Borrador"
-        },
-        "forReview": {
-            "label": "Por revisar"
-        },
-        "posted": {
-            "label": "Contabilizado"
-        },
-        "cancelled": {
-            "label": "Anulado"
-        }
+    "cancelled": {
+      "label": "Anulado"
     }
+  },
+  "counterparty": {
+    "title": "Contraparte",
+    "select": "seleccionar"
+  }
 }

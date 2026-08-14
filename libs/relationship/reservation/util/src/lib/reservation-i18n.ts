@@ -148,6 +148,13 @@ export const RESERVATION_I18N_KEYS = {
   cancel:                          '@cancel',
   save:                            '@save.label',
 
+
+  // section/card titles and inline labels
+  card_time:                         PFX + 'card.time',
+  card_event:                        PFX + 'card.event',
+  card_process:                      PFX + 'card.process',
+  apply_invalid:                     PFX + 'apply.invalid',
+  apply_confirmation:                PFX + 'apply.confirmation',
 } satisfies Record<string, string>;
 
 export type ReservationI18n = { [K in keyof typeof RESERVATION_I18N_KEYS]: Signal<string> };

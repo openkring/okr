@@ -156,7 +156,7 @@ export class ExpenseList {
   private async exportExpenses(): Promise<void> {
     // TODO: implement expense export (treasurer only). Wired via the 'expense-export' context-menu item.
     const toast = await this.toastController.create({
-      message: 'Export folgt in Kürze.',
+      message: this.store.i18n.export_todo(),
       duration: 2500,
     });
     await toast.present();

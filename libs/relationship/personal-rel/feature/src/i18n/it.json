@@ -9,7 +9,6 @@
   "person1": "Persona1",
   "type": "Tipo di relazione",
   "person2": "Persona2",
-
   "create": {
     "label": "Creare nuova relazione",
     "conf": "La relazione è stata salvata.",
@@ -37,7 +36,6 @@
   "view": {
     "label": "Mostrare i dettagli della relazione"
   },
-
   "list": {
     "title": "Relazioni personali",
     "empty": "Nessuna relazione personale trovata.",
@@ -47,7 +45,6 @@
       "type": "Tipo di relazione"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -75,7 +72,6 @@
       "helper": "La relazione termina in questa data."
     }
   },
-
   "personalrel_type": {
     "label": "Tipo di relazione",
     "helper": "Il tipo di relazione tra due persone.",
@@ -119,5 +115,9 @@
       "label": "Altra relazione",
       "description": "Relazione che non rientra nelle altre categorie."
     }
+  },
+  "card": {
+    "persons": "Persone",
+    "validity": "Validità"
   }
 }

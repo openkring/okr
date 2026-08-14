@@ -18,7 +18,8 @@
     "status": "Statut",
     "booking": "Référence d'écriture",
     "note": "Note",
-    "receipt": "Justificatif"
+    "receipt": "Justificatif",
+    "booking_ref": "Référence d’écriture"
   },
   "field": {
     "abstract": "Objet",
@@ -85,5 +86,8 @@
   "delete": {
     "confirm": "Supprimer vraiment ces frais ?",
     "error": "Les frais n'ont pas pu être supprimés."
+  },
+  "export": {
+    "todo": "Export bientôt disponible."
   }
 }

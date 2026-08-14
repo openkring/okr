@@ -5,7 +5,6 @@
   "reldesc": "arbeitet für",
   "revreldesc": "beschäftigt",
   "empty": "Keine Arbeits-Beziehungen gefunden.",
-
   "create": {
     "label": "Beschäftigung hinzufügen",
     "conf": "Beschäftigung wurde erstellt.",
@@ -31,8 +30,6 @@
   "view": {
     "label": "Beschäftigungs Details anzeigen"
   },
-
-
   "list": {
     "title": "Beschäftigungen",
     "empty": "Keine Arbeits Beziehungen gefunden.",
@@ -42,7 +39,6 @@
       "type": "Beziehungsart"
     }
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -85,7 +81,6 @@
   "subject": "Person",
   "type": "Beziehungsart",
   "object": "Organisation",
-
   "workrel_type": {
     "name": "Arbeits-Art",
     "label": "Beschäftigungs-Typ",
@@ -142,7 +137,6 @@
       "description": "Beziehung, die nicht in die anderen Kategorien passt."
     }
   },
-
   "workrel_state": {
     "label": "Status",
     "helper": "Status einer Beschäftigung: Initial / Angemeldet / Aktiv / Passiv / Beendet / Abgebrochen",
@@ -173,5 +167,10 @@
       "label": "Abgebrochen",
       "description": "Die Arbeitsbeziehung wurde abgebrochen."
     }
+  },
+  "card": {
+    "employment": "Beschäftigung",
+    "validity": "Gültigkeit und Status",
+    "compensation": "Kompensation"
   }
 }

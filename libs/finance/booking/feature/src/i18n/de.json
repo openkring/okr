@@ -1,67 +1,71 @@
 {
-    "list": {
-        "title": "Buchungen"
+  "list": {
+    "title": "Buchungen"
+  },
+  "empty": "Keine Buchungen gefunden.",
+  "as": {
+    "title": "Buchung"
+  },
+  "cancel": {
+    "label": "Abbrechen"
+  },
+  "col": {
+    "date": "Datum",
+    "credit": "Haben",
+    "debit": "Soll",
+    "name": "Text",
+    "amount": "Betrag"
+  },
+  "view": {
+    "label": "Buchungsdetails anzeigen"
+  },
+  "edit": {
+    "label": "Buchung ändern"
+  },
+  "create": {
+    "label": "Buchung erstellen"
+  },
+  "delete": {
+    "label": "Buchung löschen"
+  },
+  "action": {
+    "createReceipt": "Gönnerbestätigung erstellen",
+    "counterpartyRequired": "Bitte zuerst den Absender (Gegenpartei) erfassen.",
+    "noAddress": "Für die Gegenpartei ist keine Adresse hinterlegt.",
+    "failed": "Das Dokument konnte nicht erstellt werden."
+  },
+  "readonly": {
+    "banner": "Diese Liste ist readonly. Die Buchungen werden in Bexio bewirtschaftet."
+  },
+  "review": {
+    "approve": "Genehmigen",
+    "correct": "Prüfen & korrigieren",
+    "reject": "Ablehnen",
+    "reason": {
+      "title": "Grund der Ablehnung",
+      "placeholder": "Warum wird dieser Beleg abgelehnt?"
     },
-    "empty": "Keine Buchungen gefunden.",
-    "as": {
-        "title": "Buchung"
+    "badge": "zu prüfen",
+    "approved": "Buchung genehmigt",
+    "rejected": "Buchung abgelehnt",
+    "failed": "Die Buchung konnte nicht bearbeitet werden."
+  },
+  "status": {
+    "draft": {
+      "label": "Entwurf"
     },
-    "cancel": {
-        "label": "Abbrechen"
+    "forReview": {
+      "label": "Zu prüfen"
     },
-    "col": {
-        "date": "Datum",
-        "credit": "Haben",
-        "debit": "Soll",
-        "name": "Text",
-        "amount": "Betrag"
+    "posted": {
+      "label": "Verbucht"
     },
-    "view": {
-        "label": "Buchungsdetails anzeigen"
-    },
-    "edit": {
-        "label": "Buchung ändern"
-    },
-    "create": {
-        "label": "Buchung erstellen"
-    },
-    "delete": {
-        "label": "Buchung löschen"
-    },
-    "action": {
-        "createReceipt": "Gönnerbestätigung erstellen",
-        "counterpartyRequired": "Bitte zuerst den Absender (Gegenpartei) erfassen.",
-        "noAddress": "Für die Gegenpartei ist keine Adresse hinterlegt.",
-        "failed": "Das Dokument konnte nicht erstellt werden."
-    },
-    "readonly": {
-        "banner": "Diese Liste ist readonly. Die Buchungen werden in Bexio bewirtschaftet."
-    },
-    "review": {
-        "approve": "Genehmigen",
-        "correct": "Prüfen & korrigieren",
-        "reject": "Ablehnen",
-        "reason": {
-            "title": "Grund der Ablehnung",
-            "placeholder": "Warum wird dieser Beleg abgelehnt?"
-        },
-        "badge": "zu prüfen",
-        "approved": "Buchung genehmigt",
-        "rejected": "Buchung abgelehnt",
-        "failed": "Die Buchung konnte nicht bearbeitet werden."
-    },
-    "status": {
-        "draft": {
-            "label": "Entwurf"
-        },
-        "forReview": {
-            "label": "Zu prüfen"
-        },
-        "posted": {
-            "label": "Verbucht"
-        },
-        "cancelled": {
-            "label": "Storniert"
-        }
+    "cancelled": {
+      "label": "Storniert"
     }
+  },
+  "counterparty": {
+    "title": "Gegenpartei",
+    "select": "auswählen"
+  }
 }
