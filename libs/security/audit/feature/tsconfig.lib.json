@@ -21,7 +21,7 @@
     "vite.config.ts"
   ],
   "references": [
-    { "path": "../../../pdf-template/data-access/tsconfig.lib.json" },
+    { "path": "../../../content/pdf-template/data-access/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../../shared/feature/tsconfig.lib.json" },

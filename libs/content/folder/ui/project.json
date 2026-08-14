@@ -1,0 +1,24 @@
+{
+  "name": "content-folder-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/content/folder/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:content", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/content/folder/ui",
+        "main": "libs/content/folder/ui/src/index.ts",
+        "tsConfig": "libs/content/folder/ui/tsconfig.lib.json",
+        "assets": ["libs/content/folder/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

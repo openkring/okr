@@ -1,0 +1,27 @@
+{
+  "name": "content-esign-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/content/esign/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:content", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/content/esign/feature",
+        "main": "libs/content/esign/feature/src/index.ts",
+        "tsConfig": "libs/content/esign/feature/tsconfig.lib.json",
+        "assets": [
+          "libs/content/esign/feature/*.md",
+          { "glob": "**/*.json", "input": "libs/content/esign/feature/src/i18n", "output": "i18n/esign" }
+        ],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

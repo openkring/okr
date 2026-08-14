@@ -13,9 +13,9 @@ import { sanitizeFileName } from '@okr/shared-util-core';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { UploadService } from '@okr/avatar-data-access';
-import { DocumentService } from '@okr/document-data-access';
-import { buildDocumentModel } from '@okr/document-util';
-import { FolderService } from '@okr/folder-data-access';
+import { DocumentService } from '@okr/content-document-data-access';
+import { buildDocumentModel } from '@okr/content-document-util';
+import { FolderService } from '@okr/content-folder-data-access';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 const RAG_FOLDER_KEY = 'rag';

@@ -5,7 +5,7 @@ import { AvatarInfo, OwnershipModel, OwnershipModelName, ResourceModelName, Role
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
 
-import { DocumentsAccordion } from '@okr/document-feature';
+import { DocumentsAccordion } from '@okr/content-document-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
 import { OwnershipForm } from '@okr/relationship-ownership-ui';
 import { getOwnerName } from '@okr/relationship-ownership-util';

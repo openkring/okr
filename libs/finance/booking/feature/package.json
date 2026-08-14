@@ -27,7 +27,7 @@
     "@okr/subject-person-data-access": "*",
     "@okr/subject-org-data-access": "*",
     "@okr/subject-address-data-access": "*",
-    "@okr/pdf-template-data-access": "*",
+    "@okr/content-pdf-template-data-access": "*",
     "@okr/avatar-ui": "*"
   }
 }

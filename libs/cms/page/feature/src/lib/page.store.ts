@@ -17,7 +17,7 @@ import { SectionSelectModal } from '@okr/cms-section-feature';
 import { SectionService } from '@okr/cms-section-data-access';
 import { isPage, PAGE_I18N_KEYS } from '@okr/cms-page-util';
 
-import { DocGenerationService } from '@okr/pdf-template-data-access';
+import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 import { PagePrintService } from './page-print.service';
 
 export type PageState = {

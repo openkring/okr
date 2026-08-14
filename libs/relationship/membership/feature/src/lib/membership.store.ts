@@ -16,7 +16,7 @@ import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresse
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 import { EmailAddressesModal, selectDate } from '@okr/shared-ui';
-import { openBulkEmailFlow } from '@okr/pdf-template-feature';
+import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
 
 import { OwnershipService } from '@okr/relationship-ownership-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';

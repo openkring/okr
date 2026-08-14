@@ -13,7 +13,7 @@ import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, Me
 import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches, PHOTO_USAGE_ALL, photoUsageMatches } from '@okr/shared-util-core';
 import { EmailAddressesModal, MapViewModal } from '@okr/shared-ui';
-import { openBulkEmailFlow } from '@okr/pdf-template-feature';
+import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
 import { Languages } from '@okr/shared-categories';
 import { I18nService } from '@okr/shared-i18n';
 

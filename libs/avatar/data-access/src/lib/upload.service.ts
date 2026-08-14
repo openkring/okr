@@ -10,8 +10,8 @@ import { ENV } from "@okr/shared-config";
 import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@okr/shared-models";
 import { error } from "@okr/shared-util-angular";
 import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellation, sanitizeFileName, warn } from "@okr/shared-util-core";
-import { buildDocumentModel } from "@okr/document-util";
-import { DocumentService } from "@okr/document-data-access";
+import { buildDocumentModel } from "@okr/content-document-util";
+import { DocumentService } from "@okr/content-document-data-access";
 import { DEFAULT_MIMETYPES } from "@okr/shared-constants";
 import { UploadEntry, UploadTaskModal, showZoomedImage } from "@okr/shared-ui";
 

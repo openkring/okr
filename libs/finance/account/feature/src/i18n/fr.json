@@ -2,6 +2,7 @@
   "accounts": "Comptes",
   "empty": "Aucun compte trouvé.",
   "create": "Ouvrir un nouveau compte",
+  "seed": "Créer le plan comptable PME standard",
   "delete": "Supprimer le compte",
   "select": {
     "root": "Sélectionner le plan comptable",

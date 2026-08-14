@@ -15,7 +15,7 @@
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
-    { "path": "../../../pdf-template/data-access/tsconfig.lib.json" },
+    { "path": "../../../content/pdf-template/data-access/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },
     { "path": "../ui/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },

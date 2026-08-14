@@ -7,6 +7,7 @@ export const ACCOUNT_I18N_KEYS = {
   empty:                PFX + 'empty',
 
   create:               PFX + 'create',
+  seed:                 PFX + 'seed',
   delete:               PFX + 'delete',
   select_root:          PFX + 'select.root',
   select_hint:          PFX + 'select.hint',

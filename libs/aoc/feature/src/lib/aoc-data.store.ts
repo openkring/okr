@@ -21,7 +21,7 @@ import { AOC_I18N_KEYS } from '@okr/aoc-util';
 import { addressValidations, computeFavoriteAddressInfo, getAddressIndex } from '@okr/subject-address-util';
 import { commentValidations, getCommentIndex } from '@okr/comment-util';
 import { calEventValidations, getCaleventIndex } from '@okr/calevent-util';
-import { documentValidations, getDocumentIndex } from '@okr/document-util';
+import { documentValidations, getDocumentIndex } from '@okr/content-document-util';
 import { getLocationIndex, locationValidations } from '@okr/location-util';
 import { getMembershipIndex, membershipValidations } from '@okr/relationship-membership-util';
 import { getMenuIndex, menuItemValidations } from '@okr/cms-menu-util';

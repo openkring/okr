@@ -135,6 +135,13 @@ export const AccountStore = signalStore(
       store.accountsResource.reload();
     },
 
+    /** Seeds the standard Swiss KMU chart of accounts — offered while the tenant has no accounts. */
+    async seedStandard(): Promise<void> {
+      if (store.isReadOnly()) return;
+      await store.accountService.seedChartOfAccounts(store.appStore.tenantId(), store.accountingStore.accountingTenantId());
+      store.accountsResource.reload();
+    },
+
     async exportPlan(): Promise<void> {
       console.log('AccountStore.exportPlan is not yet implemented.');
     },

@@ -7,7 +7,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AccountCollection, AccountModel, UserModel } from '@okr/shared-models';
 import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 
-import { getAccountIndex } from '@okr/finance-account-util';
+import { buildChartOfAccounts, getAccountIndex } from '@okr/finance-account-util';
 import { PFX } from './scope';
 
 @Injectable({
@@ -74,6 +74,19 @@ export class AccountService {
     if (!node) return [];
     const children = accounts.filter(a => a.parentKey === key);
     return [node, ...children.flatMap(c => this.collectSubtree(accounts, c.okey))];
+  }
+
+  /**
+   * Seeds the standard Swiss KMU chart of accounts for an accounting tenant, in one batched write.
+   * okeys are derived from the account number, so a second run overwrites the seeded accounts
+   * instead of duplicating them (manually added accounts keep their random okey and survive).
+   * @param tenantId
+   * @param accountingTenantId
+   * @returns true if the chart was written.
+   */
+  public async seedChartOfAccounts(tenantId: string, accountingTenantId: string): Promise<boolean> {
+    const accounts = buildChartOfAccounts(tenantId, accountingTenantId);
+    return await this.firestoreService.createModels<AccountModel>(AccountCollection, accounts, PFX + 'create.error');
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

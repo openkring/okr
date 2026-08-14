@@ -8,7 +8,7 @@ import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { CommentsAccordion } from '@okr/comment-feature';
-import { DocumentsAccordion } from '@okr/document-feature';
+import { DocumentsAccordion } from '@okr/content-document-feature';
 import { PersonalRelForm } from '@okr/relationship-personal-rel-ui';
 import { PersonalRelStore } from './personal-rel.store';
 

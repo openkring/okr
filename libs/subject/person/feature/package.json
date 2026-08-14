@@ -38,6 +38,6 @@
     "@okr/category-data-access": "*",
     "@okr/vcard-util": "*",
     "@okr/vcard-feature": "*",
-    "@okr/pdf-template-feature": "*"
+    "@okr/content-pdf-template-feature": "*"
   }
 }

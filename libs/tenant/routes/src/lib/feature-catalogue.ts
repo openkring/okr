@@ -740,7 +740,7 @@ const esign: BlockRoutes = {
     children: [
       {
         path: '',
-        loadComponent: () => import('@okr/esign-feature').then(m => m.EsignList),
+        loadComponent: () => import('@okr/content-esign-feature').then(m => m.EsignList),
       },
     ],
   }],
@@ -766,11 +766,11 @@ const pdfTemplate: BlockRoutes = {
     children: [
       {
         path: '',
-        loadComponent: () => import('@okr/pdf-template-feature').then(m => m.TemplateList),
+        loadComponent: () => import('@okr/content-pdf-template-feature').then(m => m.TemplateList),
       },
       {
         path: ':templateKey',
-        loadComponent: () => import('@okr/pdf-template-feature').then(m => m.TemplateEditPage),
+        loadComponent: () => import('@okr/content-pdf-template-feature').then(m => m.TemplateEditPage),
       },
     ],
   }],
@@ -799,7 +799,7 @@ const documentBlock: BlockRoutes = {
       // fragment in the `cms` block for the full rationale.
       { path: ':listId/:contextMenuName',
         canActivate: [isContentAdminGuard()],
-        loadComponent: () => import('@okr/document-feature').then(m => m.DocumentList),
+        loadComponent: () => import('@okr/content-document-feature').then(m => m.DocumentList),
         data: { color: 'secondary', view: 'list', showMenu: true },
       },
     ],
@@ -811,10 +811,10 @@ const documentBlock: BlockRoutes = {
  * block merged into `document`. It is gone rather than emptied: `feature-catalogue.sync.spec.ts`
  * fails if an id exists on one side of the catalogue only, so a leftover entry here would go
  * red the moment the block disappeared from `FEATURE_BLOCKS`. The domain itself still exists —
- * `libs/folder/**` is untouched, and `libs/folder/feature` is why `folder` now appears in
+ * `libs/content/folder/**` is untouched, and `libs/content/folder/feature` is why `folder` now appears in
  * `NON_BLOCK_DOMAINS`. Nothing was lost by dropping the fragment: `app.routes.ts` contains no
- * `folder` path (grepped for both the path and every `@okr/folder-*` import), and `FolderList`,
- * the domain's only list screen, is exported from `@okr/folder-feature` but imported by no
+ * `folder` path (grepped for both the path and every `@okr/content-folder-*` import), and `FolderList`,
+ * the domain's only list screen, is exported from `@okr/content-folder-feature` but imported by no
  * component anywhere in `libs/` or `apps/`. Folders are navigated through `DocumentList`'s
  * breadcrumb, which belongs to the `document` block above.
  */

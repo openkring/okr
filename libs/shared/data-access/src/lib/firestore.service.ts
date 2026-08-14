@@ -148,6 +148,41 @@ export class FirestoreService {
   }
 
   /**
+   * Creates many models in a single batched write — for seeding (chart of accounts, VAT codes, ...)
+   * where createModel() in a loop would fire one toast and one comment per document.
+   * Firestore caps a batch at 500 writes; larger lists are committed in chunks.
+   * @param collectionName The name of the collection.
+   * @param models The models to write. A model with an okey keeps it (re-seeding overwrites).
+   * @param errorMessage Optional error message to show in a toast if the write fails.
+   * @return true if all writes were committed.
+   */
+  public async createModels<T extends OkrModel>(collectionName: string, models: T[], errorMessage?: string): Promise<boolean> {
+    if (!isBrowser(this.platformId)) {
+      this.okrError(undefined, 'FirestoreService.createModels: This method can only be called in the browser context.', true);
+      return false;
+    }
+
+    try {
+      for (let i = 0; i < models.length; i += 500) {
+        const batch = this.getBatch();
+        for (const model of models.slice(i, i + 500)) {
+          const key = model.okey?.length > 0 ? model.okey : generateRandomString(20);
+          const persistedModel = removeKeyFromOkrModel(model);
+          persistedModel.tenants = [this.env.tenantId];
+          batch.set(doc(this.firestore, `${collectionName}/${key}`), structuredClone(persistedModel));
+        }
+        await batch.commit();
+      }
+      return true;
+    }
+    catch (ex) {
+      console.error(`FirestoreService.createModels(${collectionName}, ${models.length}) -> ERROR:`, ex);
+      this.okrError(this.toastController, errorMessage ?? `Could not create ${models.length} models in ${collectionName}.`);
+      return false;
+    }
+  }
+
+  /**
    * Stores a document in Firestore.
    * Use this method to save any data other than a OkrModel. For saving a OkrModel, use createModel()
    * @param collectionName The name of the collection.

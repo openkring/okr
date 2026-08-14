@@ -8,7 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from '@okr/shared-feature';
 
 import { CommentsAccordion } from '@okr/comment-feature';
-import { DocumentsAccordion } from '@okr/document-feature';
+import { DocumentsAccordion } from '@okr/content-document-feature';
 
 import { MembershipForm } from '@okr/relationship-membership-ui';
 import { RelationshipToolbar } from '@okr/avatar-ui';

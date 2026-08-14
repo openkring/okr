@@ -6,7 +6,7 @@ import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shar
 import { browse, CategorySelect, Label, Spinner, showZoomedImage, Video } from '@okr/shared-ui';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
-import { FolderBreadcrumb } from '@okr/folder-ui';
+import { FolderBreadcrumb } from '@okr/content-folder-ui';
 
 import { getBackgroundStyle } from '@okr/cms-section-util';
 

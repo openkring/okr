@@ -2,6 +2,7 @@
   "accounts": "Konti",
   "empty": "Keine Konti gefunden.",
   "create": "Neues Konto eröffnen",
+  "seed": "Standard-Kontenrahmen KMU erstellen",
   "delete": "Konto löschen",
   "select": {
     "root": "Kontoplan wählen",

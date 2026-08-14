@@ -2,6 +2,7 @@
   "accounts": "Conti",
   "empty": "Nessun conto trovato.",
   "create": "Aprire un nuovo conto",
+  "seed": "Crea il piano dei conti standard PMI",
   "delete": "Elimina conto",
   "select": {
     "root": "Seleziona piano dei conti",

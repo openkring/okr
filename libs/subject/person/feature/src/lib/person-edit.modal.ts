@@ -8,8 +8,8 @@ import { coerceBoolean, getFullName, hasRole, safeStructuredClone } from '@okr/s
 
 import { AvatarToolbar } from '@okr/avatar-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
-import { getDocumentStoragePath } from '@okr/document-util';
-import { DocumentsAccordion } from '@okr/document-feature';
+import { getDocumentStoragePath } from '@okr/content-document-util';
+import { DocumentsAccordion } from '@okr/content-document-feature';
 
 import { MembershipAccordion } from '@okr/relationship-membership-feature';
 import { OwnershipAccordion } from '@okr/relationship-ownership-feature';

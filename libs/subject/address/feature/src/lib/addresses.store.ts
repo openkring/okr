@@ -18,8 +18,8 @@ import { Languages } from '@okr/shared-categories';
 import { MapViewModal } from '@okr/shared-ui';
 
 import { UploadService } from '@okr/avatar-data-access';
-import { DocumentService } from '@okr/document-data-access';
-import { FolderService } from '@okr/folder-data-access';
+import { DocumentService } from '@okr/content-document-data-access';
+import { FolderService } from '@okr/content-folder-data-access';
 
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
 import { TaskService } from '@okr/task-data-access';

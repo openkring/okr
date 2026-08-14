@@ -2,6 +2,7 @@
   "accounts": "Accounts",
   "empty": "No accounts found.",
   "create": "Open a new account",
+  "seed": "Create standard SME chart of accounts",
   "delete": "Delete account",
   "select": {
     "root": "Select chart of accounts",

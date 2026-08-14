@@ -1,0 +1,24 @@
+{
+  "name": "content-pdf-template-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/content/pdf-template/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:content", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/content/pdf-template/feature",
+        "main": "libs/content/pdf-template/feature/src/index.ts",
+        "tsConfig": "libs/content/pdf-template/feature/tsconfig.lib.json",
+        "assets": ["libs/content/pdf-template/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

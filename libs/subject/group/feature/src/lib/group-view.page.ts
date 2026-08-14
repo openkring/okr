@@ -7,16 +7,16 @@ import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/sha
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { safeStructuredClone } from '@okr/shared-util-core';
 import { isAdminMember } from '@okr/subject-group-util';
-import { canManageFolders } from '@okr/folder-util';
+import { canManageFolders } from '@okr/content-folder-util';
 import { DEFAULT_ID, DEFAULT_NAME } from '@okr/shared-constants';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { PageDispatcher, PageStore } from '@okr/cms-page-feature';
-import { getDocumentStoragePath } from '@okr/document-util';
-import { FolderService } from '@okr/folder-data-access';
+import { getDocumentStoragePath } from '@okr/content-document-util';
+import { FolderService } from '@okr/content-folder-data-access';
 import { MembershipList } from '@okr/relationship-membership-feature';
 import { TaskList } from '@okr/task-feature';
-import { DocumentList } from '@okr/document-feature';
+import { DocumentList } from '@okr/content-document-feature';
 import { CalEventList } from '@okr/calevent-feature';
 
 import { GroupStore } from './group.store';

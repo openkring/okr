@@ -12,8 +12,8 @@ import { debugMessage, getSystemQuery, sanitizeFileName } from '@okr/shared-util
 import { showImageSlider } from '@okr/shared-ui';
 
 import { UploadService } from '@okr/avatar-data-access';
-import { DocumentService } from '@okr/document-data-access';
-import { FolderService } from '@okr/folder-data-access';
+import { DocumentService } from '@okr/content-document-data-access';
+import { FolderService } from '@okr/content-folder-data-access';
 
 import { isVisibleInAlbum, SECTION_I18N_KEYS, toImageConfig } from '@okr/cms-section-util';
 

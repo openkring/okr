@@ -110,7 +110,7 @@ const calevent: FeatureBlock = {
   // owner, 2026-08-02) to be renamed to under the container-level granularity ruling.
   //
   // `document` added (task 16), by import evidence: `calevent-edit.modal.ts:12` and
-  // `calevent-view.modal.ts:12` both render `DocumentsAccordion` from `@okr/document-feature`
+  // `calevent-view.modal.ts:12` both render `DocumentsAccordion` from `@okr/content-document-feature`
   // — every event's attachments panel. Same reverse-edge class as the `pdf-template` edge
   // `finance` gained in task 15, which its own brief also did not anticipate.
   //
@@ -308,7 +308,7 @@ const aoc: FeatureBlock = {
     // the `aoc` block is the EIGHTH to co-declare that shared parent — counted, not estimated:
     // `cmsMenuParent()` is invoked by `aoc`, `cms`, `category`, `geo`, `esign`, `pdf-template`,
     // `document` and `forms`. (`aocMenuParent()` has five callers: `aoc`, `user`, `security`,
-    // `mobility`, `activity`.)
+    // `mobility`, `activity`, `business`.)
     //
     // Neither name carries an `aoc-`/`tag-` prefix consistently: the doc for `/aoc/tag` is
     // named `tag-all` and the one for `aoc/website` is named `aoc-website`. Both copied as
@@ -511,7 +511,7 @@ const avatar: FeatureBlock = {
   core: true,
   defaultAvailability: 'ga',
   // Stays `[]` DELIBERATELY, though `upload.service.ts:13-14` imports `buildDocumentModel`
-  // and `DocumentService` from `@okr/document-*` (every uploaded avatar is also recorded as
+  // and `DocumentService` from `@okr/content-document-*` (every uploaded avatar is also recorded as
   // a `docs` row). Same reasoning as on the `cms` block: a `core: true` block must not name
   // a non-core dependency, or the always-on core makes `document` permanently on for every
   // tenant. It would also be a dependsOn CYCLE — `libs/document` imports `UploadService`
@@ -621,9 +621,9 @@ const subject: FeatureBlock = {
   defaultAvailability: 'ga',
   // Was `[]`. `document` (+ the then-separate `folder`, merged into it on 2026-08-04) added
   // in task 16, by import evidence, not by theme:
-  //  - `group-view.page.ts` renders `DocumentList` (`@okr/document-feature`) as the group's
+  //  - `group-view.page.ts` renders `DocumentList` (`@okr/content-document-feature`) as the group's
   //    whole "Dateien" segment, and injects `FolderService` + `canManageFolders`
-  //    (`@okr/folder-*`, now part of the `document` block) to decide who may create folders.
+  //    (`@okr/content-folder-*`, now part of the `document` block) to decide who may create folders.
   //  - `addresses.store.ts:21-22` injects BOTH `DocumentService` and `FolderService`.
   //  - `person-edit.modal.ts`, `person-edit.page.ts` and `org-edit.modal.ts` each render
   //    `DocumentsAccordion` and use `getDocumentStoragePath`.
@@ -651,7 +651,7 @@ const subject: FeatureBlock = {
   //    with an empty room menu.
   //  - WHY THAT IS *NOT* THE `document` CASE, precisely (the first pass called the two
   //    "structurally identical" — WRONG, and the difference is the whole argument): the
-  //    "Dateien" segment imports and renders `DocumentList` from `@okr/document-feature`
+  //    "Dateien" segment imports and renders `DocumentList` from `@okr/content-document-feature`
   //    (`group-view.page.ts:19`, template line 152), i.e. a COMPONENT crosses the block
   //    boundary — that is an edge under the settled dividing line. The chat segment renders
   //    `PageDispatcher` from `@okr/cms-page-feature`, which is `core: true`; NO chat
@@ -797,10 +797,10 @@ const relationship: FeatureBlock = {
   defaultAvailability: 'ga',
   // `document` added (task 16), by import evidence: `membership-edit.modal.ts:11`,
   // `ownership-edit.modal.ts:8` and `personal-rel-edit.modal.ts:11` each render
-  // `DocumentsAccordion` from `@okr/document-feature` (contracts/agreements attached to a
+  // `DocumentsAccordion` from `@okr/content-document-feature` (contracts/agreements attached to a
   // membership, a boat ownership, a personal relationship). There is no separate folder edge
   // to declare: `folder` was merged into `document` on 2026-08-04, and no
-  // `libs/relationship/**` file imports `@okr/folder-*` in any case.
+  // `libs/relationship/**` file imports `@okr/content-folder-*` in any case.
   //
   // `chat` deliberately NOT declared (task 17), although `membership.store.ts:722` and
   // `reservation.store.ts:430` both `createDirectRoom(...)` and then
@@ -1048,7 +1048,7 @@ const mobility: FeatureBlock = {
  *    `@okr/subject-address-util`. Both person and org live in the single `subject` block.
  *  - `pdf-template` — NOT in the task brief, added on evidence. RESTATED (task 17 fix round 1)
  *    because the original wording rested it on the wrong clause: `booking.store.ts:37` does
- *    import `DocGenerationService` from `@okr/pdf-template-data-access`, but a data-access
+ *    import `DocGenerationService` from `@okr/content-pdf-template-data-access`, but a data-access
  *    service import is explicitly NOT an edge (see `chat` → `activity`, and the folder-service
  *    case recorded on `document`). The edge stands on the DATA clause instead: the
  *    `generateDocument` action (`booking.store.ts:279-317`) calls `generate({ templateId:
@@ -1211,7 +1211,7 @@ const finance: FeatureBlock = {
 };
 
 /**
- * `libs/esign/{data-access,feature,util}` — send a PDF out for electronic signature
+ * `libs/content/esign/{data-access,feature,util}` — send a PDF out for electronic signature
  * (upload → field scan → invite signees → webhook-driven status), backed by the
  * `apps/functions/src/esign/*` callables.
  *
@@ -1221,7 +1221,7 @@ const finance: FeatureBlock = {
  *  1. The route is a standalone top-level `/esign` (`isPrivilegedGuard`) rendering
  *     `EsignList` — it is not nested under `accounting/:accountingTenantId` and takes no
  *     finance parameter.
- *  2. Grepping every importer of `@okr/esign-feature` / `-data-access` / `-util` across
+ *  2. Grepping every importer of `@okr/content-esign-feature` / `-data-access` / `-util` across
  *     `libs/` and `apps/` returns only esign's own five files plus `app.routes.ts`. No
  *     finance (or document, or cms) component opens an esign modal.
  *  3. The reverse direction is empty too: a case-insensitive grep for "esign" across
@@ -1259,7 +1259,7 @@ const esign: FeatureBlock = {
 };
 
 /**
- * `libs/pdf-template/{data-access,feature,ui,util}` — Handlebars PDF templates plus the
+ * `libs/content/pdf-template/{data-access,feature,ui,util}` — Handlebars PDF templates plus the
  * headless-Chrome rendering callable (`apps/functions/src/pdf/*`), used for invoices,
  * bills, QR payment slips and CMS page exports.
  *
@@ -1293,7 +1293,7 @@ const pdfTemplate: FeatureBlock = {
 };
 
 /**
- * `libs/document/{data-access,feature,ui,util}` — the tenant's file library. `DocumentList`
+ * `libs/content/document/{data-access,feature,ui,util}` — the tenant's file library. `DocumentList`
  * browses a folder tree of uploaded files (`/document/:listId/:contextMenuName`);
  * `DocumentsAccordion` is the embedded attachments panel that person/org/calevent/
  * membership/ownership/personal-rel edit modals render; plus the revisions modal and the
@@ -1307,14 +1307,14 @@ const pdfTemplate: FeatureBlock = {
  * `docs` at :549 (by `authorKey`) and `folders` at :684 (by `ownerKey`).
  *
  * `folder` WAS A SEPARATE BLOCK UNTIL 2026-08-04 AND IS NOW PART OF THIS ONE — repo owner's
- * ruling ("merge into `document`"). `libs/folder/{data-access,feature,ui,util}` still exists
+ * ruling ("merge into `document`"). `libs/content/folder/{data-access,feature,ui,util}` still exists
  * and still owns the folder tree documents are filed into (`FolderModel`, the per-folder
  * `membersMayUpload` permission, breadcrumb navigation); what was removed is the separate
  * catalogue SKU, which could never be switched off independently. The evidence behind the
  * ruling, gathered in tasks 16-17 and still true:
  *  - `folder` shipped no route (`app.routes.ts` has no `folder` path) and no live `menuItems`
  *    doc of its own, and `FolderList` — its only list screen — is exported from
- *    `@okr/folder-feature` but imported by no component anywhere in `libs/` or `apps/` (only
+ *    `@okr/content-folder-feature` but imported by no component anywhere in `libs/` or `apps/` (only
  *    `whiteboard-list.ts` mentions it, in a comment, as a structural precedent). A tenant
  *    enabling `folder` alone got no user-visible surface whatsoever.
  *  - the one live wrapper carrying folder ACTIONS (`c-folder`) is dispatched by `DocumentList`
@@ -1323,15 +1323,15 @@ const pdfTemplate: FeatureBlock = {
  *  - this block declared `dependsOn: ['folder']`, so `resolveWithDeps` forced the two on
  *    together for every tenant regardless.
  *  - CONSUMER SWEEP (task 17 fix round 1 — the finding the ruling rests on): exactly THREE
- *    files outside `libs/folder` and `libs/document` import a `@okr/folder-*` lib —
+ *    files outside `libs/folder` and `libs/document` import a `@okr/content-folder-*` lib —
  *    `rag-section.store.ts:17` (`cms/section`), `addresses.store.ts:22` (`subject/address`)
  *    and `group-view.page.ts:10,16` (`subject/group`) — and every one of the three imports
- *    `@okr/document-*` in the SAME file (`rag-section.store.ts:15-16`, `addresses.store.ts:21`,
+ *    `@okr/content-document-*` in the SAME file (`rag-section.store.ts:15-16`, `addresses.store.ts:21`,
  *    `group-view.page.ts:15,19`). The number of consumers of `folder` without `document` is
  *    ZERO. `folder` is a real API surface, but never was an independently usable feature.
  * The code coupling that made the old edge "hard, not decorative" is unchanged and now runs
- * inside one block: `document-list.ts` renders `FolderBreadcrumb` (`@okr/folder-ui`) in its
- * permanent toolbar and gates on `canEditFolder` (`@okr/folder-util`); `document.store.ts`
+ * inside one block: `document-list.ts` renders `FolderBreadcrumb` (`@okr/content-folder-ui`) in its
+ * permanent toolbar and gates on `canEditFolder` (`@okr/content-folder-util`); `document.store.ts`
  * injects `FolderService`, calls `newFolderModel`, and dynamically loads `FolderEditModal`
  * out of the folder feature lib for the `addFolder` action. `DocumentList` cannot draw its own
  * header without folder code.
@@ -1339,7 +1339,7 @@ const pdfTemplate: FeatureBlock = {
  * `libs/folder` consequently carries a `NON_BLOCK_DOMAINS` entry in
  * `feature-catalogue.non-blocks.ts`. That is not bookkeeping: the completeness test flags any
  * `libs/<domain>/feature` directory that is neither a catalogue block nor a listed non-block,
- * and `libs/folder/feature` exists. `folders` moved into this block's `collections` (a plain
+ * and `libs/content/folder/feature` exists. `folders` moved into this block's `collections` (a plain
  * `string[]` — nothing requires a 1:1 domain↔block mapping) because that array is what the
  * retention pass acts on, and `document` is now the block gating both collections' screens.
  *
@@ -2105,7 +2105,11 @@ const business: FeatureBlock = {
     { key: 'partner-all', name: 'partner-all', url: '/partner/all/partner-context', action: 'navigate', roleNeeded: 'admin', icon: 'org', label: '@business/partner/util.plural' },
     { key: 'metering-all', name: 'metering-all', url: '/metering', action: 'navigate', roleNeeded: 'admin', icon: 'chart', label: '@business/metering/util.records.plural' },
     { key: 'prospect-all', name: 'prospect-all', url: '/prospect', action: 'navigate', roleNeeded: 'admin', icon: 'target', label: '@business/prospect/util.plural' },
-    { key: 'ticket-all', name: 'ticket-all', url: '/ticket/all', action: 'navigate', roleNeeded: 'admin', icon: 'hammer', label: '@business/ticket/util.plural' },
+    // The escalation queue is an admin screen, so it hangs under the shared `aoc-menu` parent
+    // rather than top-level like its three siblings above.
+    aocMenuParent([
+      { key: 'ticket-all', name: 'ticket-all', url: '/ticket/all', action: 'navigate', roleNeeded: 'admin', icon: 'hammer', label: '@business/ticket/util.plural' },
+    ]),
   ],
 };
 

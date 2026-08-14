@@ -34,7 +34,7 @@ import {
 import { PersonService } from '@okr/subject-person-data-access';
 import { OrgService } from '@okr/subject-org-data-access';
 import { AddressService } from '@okr/subject-address-data-access';
-import { DocGenerationService } from '@okr/pdf-template-data-access';
+import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 
 import { BookingEditModal } from './booking-edit.modal';
 

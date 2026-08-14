@@ -9,7 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { CalEventForm } from '@okr/calevent-ui';
 import { InviteesAccordion } from '@okr/relationship-invitation-feature';
-import { DocumentsAccordion } from '@okr/document-feature';
+import { DocumentsAccordion } from '@okr/content-document-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
 import { CALEVENT_I18N_KEYS, CaleventI18n, isPersonalCalevent } from '@okr/calevent-util';
 

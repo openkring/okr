@@ -11,7 +11,7 @@ export interface DocumentRendering {
  * document key. Keying on docKey (not baseName) avoids colliding with an independently uploaded
  * `logo.svg` in the same directory and with two documents sharing a base name. The path stays under
  * the same tenant prefix as the source, so the existing storage.rules tenant scoping applies.
- * Mirrors `renderingPath()` in libs/document/util — the CF bundle can not import from libs/document.
+ * Mirrors `renderingPath()` in libs/content/document/util — the CF bundle can not import from libs/document.
  */
 export function renderingPath(sourceFullPath: string, docKey: string, format: string): string {
   const slash = sourceFullPath.lastIndexOf('/');

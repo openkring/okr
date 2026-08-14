@@ -29,6 +29,11 @@ import { AccountStore } from './account.store';
     <ion-toolbar color="secondary" id="bkheader">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
       <ion-title>{{ store.i18n.accounts() }}</ion-title>
+      @if(!store.isReadOnly() && !readOnly() && visibleNodes().length === 0) {
+        <ion-buttons slot="end">
+          <ion-button fill="clear" (click)="store.seedStandard()">{{ store.i18n.seed() }}</ion-button>
+        </ion-buttons>
+      }
       @if(hasRole('privileged') || hasRole('admin')) {
         <ion-buttons slot="end">
           <ion-button id="{{ popupId() }}">

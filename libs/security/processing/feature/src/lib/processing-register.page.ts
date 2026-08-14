@@ -12,7 +12,7 @@ import { ProcessingMap } from '@okr/security-processing-ui';
 import {
   PROCESSING_I18N_KEYS, type ProcessingI18n, buildRegisterDocument,
 } from '@okr/security-processing-util';
-import { DocGenerationService } from '@okr/pdf-template-data-access';
+import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';

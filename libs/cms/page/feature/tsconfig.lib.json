@@ -25,7 +25,7 @@
     { "path": "../../section/data-access/tsconfig.lib.json" },
     { "path": "../../section/feature/tsconfig.lib.json" },
     { "path": "../../section/util/tsconfig.lib.json" },
-    { "path": "../../../pdf-template/data-access/tsconfig.lib.json" },
+    { "path": "../../../content/pdf-template/data-access/tsconfig.lib.json" },
     { "path": "../../../shared/constants/tsconfig.lib.json" },
     { "path": "../../../shared/feature/tsconfig.lib.json" },
     { "path": "../../../shared/i18n/tsconfig.lib.json" },

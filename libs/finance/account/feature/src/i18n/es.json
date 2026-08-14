@@ -2,6 +2,7 @@
   "accounts": "Cuentas",
   "empty": "No se han encontrado cuentas.",
   "create": "Abrir una nueva cuenta",
+  "seed": "Crear el plan contable estándar para pymes",
   "delete": "Eliminar cuenta",
   "select": {
     "root": "Seleccionar plan contable",

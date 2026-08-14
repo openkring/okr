@@ -15,8 +15,8 @@ import { DateFormat, convertDateFormatToString, getFullName, getSystemQuery, get
 import { I18nService } from '@okr/shared-i18n';
 import { ImageDetailModal } from '@okr/shared-ui';
 
-import { DocumentService } from '@okr/document-data-access';
-import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@okr/document-util';
+import { DocumentService } from '@okr/content-document-data-access';
+import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@okr/content-document-util';
 import { MenuService } from '@okr/cms-menu-data-access';
 import { MenuModal } from '@okr/cms-menu-feature';
 import { PageService } from '@okr/cms-page-data-access';

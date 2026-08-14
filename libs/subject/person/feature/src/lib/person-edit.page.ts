@@ -15,7 +15,7 @@ import { WorkrelAccordion } from '@okr/relationship-workrel-feature';
 
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
-import { DocumentsAccordion } from '@okr/document-feature';
+import { DocumentsAccordion } from '@okr/content-document-feature';
 import { AvatarToolbar } from '@okr/avatar-feature';
 import { PersonForm } from '@okr/subject-person-ui';
 

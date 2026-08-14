@@ -21,7 +21,7 @@
     "@okr/avatar-util": "*",
     "@okr/avatar-data-access": "*",
     "@okr/avatar-ui": "*",
-    "@okr/document-util": "*",
+    "@okr/content-document-util": "*",
     "@okr/comment-feature": "*",
     "@okr/relationship-membership-feature": "*",
     "@okr/relationship-ownership-feature": "*",

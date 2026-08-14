@@ -29,9 +29,9 @@ export const NON_BLOCK_DOMAINS: Record<string, string> = {
   shared: 'cross-cutting infrastructure, not a feature',
   tenant: 'this domain — the catalogue itself',
   // Owner ruling 2026-08-04: merged into the `document` block, which now declares the `folders`
-  // collection this domain owns. `libs/folder/**` still exists (and `libs/folder/feature` is
+  // collection this domain owns. `libs/content/folder/**` still exists (and `libs/content/folder/feature` is
   // why this entry is required), but it ships no route and no menu doc of its own — every one
-  // of its consumers also uses `@okr/document-*`. Full argument on the `document` block.
+  // of its consumers also uses `@okr/content-document-*`. Full argument on the `document` block.
   folder: 'merged into the `document` block (2026-08-04); `document` declares its `folders` collection',
   // `libs/system/workflow/**` (spec 1.35). The rule ENGINE runs in a Cloud Function and fires
   // on every membership write regardless of any tenant setting, so a block toggle could not

@@ -11,8 +11,8 @@ import { ENV } from '@okr/shared-config';
 import { AvatarToolbar } from '@okr/avatar-feature';
 import { AvatarService } from '@okr/avatar-data-access';
 import { CommentsAccordion } from '@okr/comment-feature';
-import { getDocumentStoragePath } from '@okr/document-util';
-import { DocumentsAccordion } from '@okr/document-feature';
+import { getDocumentStoragePath } from '@okr/content-document-util';
+import { DocumentsAccordion } from '@okr/content-document-feature';
 
 import { BillAccordion } from '@okr/finance-bill-feature';
 

@@ -24,8 +24,8 @@
     "@okr/calevent-util": "*",
     "@okr/subject-group-util": "*",
     "@okr/avatar-data-access": "*",
-    "@okr/document-ui": "*",
-    "@okr/document-feature": "*",
+    "@okr/content-document-ui": "*",
+    "@okr/content-document-feature": "*",
     "@okr/activity-data-access": "*",
     "@okr/activity-feature": "*",
     "@okr/relationship-membership-data-access": "*",
@@ -37,9 +37,9 @@
     "@okr/chat-data-access": "*",
     "@capacitor/core": "*",
     "@capacitor/geolocation": "*",
-    "@okr/folder-data-access": "*",
+    "@okr/content-folder-data-access": "*",
     "@okr/shared-data-access": "*",
-    "@okr/document-data-access": "*",
-    "@okr/folder-ui": "*"
+    "@okr/content-document-data-access": "*",
+    "@okr/content-folder-ui": "*"
   }
 }

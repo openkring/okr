@@ -13,8 +13,8 @@ import { confirm, copyToClipboardWithConfirmation, downloadToBrowser, showToast 
 import { DateFormat, convertDateFormatToString, getFullName, getTodayStr } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
-import { DocumentService } from '@okr/document-data-access';
-import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@okr/document-util';
+import { DocumentService } from '@okr/content-document-data-access';
+import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFileName, getDocumentIndex } from '@okr/content-document-util';
 import { AOC_I18N_KEYS, fill } from '@okr/aoc-util';
 
 /** One object under `tenant/{tenantId}/`, as returned by the `listTenantStorageFiles` callable. */
