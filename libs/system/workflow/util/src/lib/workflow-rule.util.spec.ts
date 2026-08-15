@@ -5,7 +5,7 @@ import { WorkflowRuleModel } from '@okr/shared-models';
 import { buildExportTable } from '@okr/shared-util-core';
 
 import { WORKFLOW_I18N_KEYS, WorkflowI18n } from './workflow-i18n';
-import { getWorkflowRuleExportColumns, getWorkflowRuleIndex, getWorkflowRuleSummary, newWorkflowRuleModel } from './workflow-rule.util';
+import { getWorkflowRuleExportColumns, getWorkflowRuleIndex, getWorkflowRuleSummary, newWorkflowRuleModel, probeNeedsArg } from './workflow-rule.util';
 
 describe('newWorkflowRuleModel', () => {
   it('creates a rule for the given tenant and event', () => {
@@ -87,5 +87,26 @@ describe('getWorkflowRuleExportColumns', () => {
     expect(row[1]).toBe('membership.ended');
     expect(row[4]).toBe('Kassier');
     expect(row[6]).toBe('30');
+  });
+});
+
+describe('probeNeedsArg', () => {
+  it('is true only for a bare argument-taking probe', () => {
+    expect(probeNeedsArg('categoryIs')).toBe(true);
+    expect(probeNeedsArg('hasOwnershipOfType')).toBe(true);
+    expect(probeNeedsArg('hasActiveOwnerships')).toBe(false);
+    expect(probeNeedsArg('hasOpenInvoices')).toBe(false);
+    expect(probeNeedsArg('always')).toBe(false);
+    expect(probeNeedsArg('')).toBe(false);
+    expect(probeNeedsArg(undefined)).toBe(false);
+  });
+
+  it('ignores a probe that carries its own inline argument', () => {
+    expect(probeNeedsArg('categoryIs:passive')).toBe(false);
+    expect(probeNeedsArg('categoryIs:passive,hasActiveOwnerships')).toBe(false);
+  });
+
+  it('is true when any item of an AND-list still needs the argument', () => {
+    expect(probeNeedsArg('hasActiveOwnerships, categoryIs')).toBe(true);
   });
 });

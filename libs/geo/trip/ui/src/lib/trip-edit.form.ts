@@ -99,7 +99,7 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
                 <!-- offset 6: the distance lines up under the boat/location controls, not under their labels -->
                 <ion-col size="6" offset="6">
                   <okr-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onDistanceChange($event)"
-                    [readOnly]="false" [min]="1" [max]="maxDistance" [selectOnFocus]="true" />
+                    [readOnly]="false" [min]="1" [max]="maxDistance" />
                 </ion-col>
               </ion-row>
             }

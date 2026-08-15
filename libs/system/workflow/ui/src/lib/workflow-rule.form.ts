@@ -8,7 +8,7 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
-import { ResponsibilityOption, WorkflowI18n, workflowRuleValidations } from '@okr/system-workflow-util';
+import { ResponsibilityOption, WorkflowI18n, probeNeedsArg, workflowRuleValidations } from '@okr/system-workflow-util';
 
 /**
  * Edit one workflow rule (spec 1.35): on this event, if this probe holds, open a task
@@ -48,10 +48,12 @@ import { ResponsibilityOption, WorkflowI18n, workflowRuleValidations } from '@ok
                   <okr-cat-select [category]="probeCategory()" [selectedItemName]="probe()"
                     (selectedItemNameChange)="onFieldChange('probe', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
-                <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="probeArgI18n()" [value]="probeArg()" (valueChange)="onFieldChange('probeArg', $event)"
-                    [maxLength]="30" [readOnly]="isReadOnly()" />
-                </ion-col>
+                @if (needsProbeArg()) {
+                  <ion-col size="12" size-md="6">
+                    <okr-text-input [i18n]="probeArgI18n()" [value]="probeArg()" (valueChange)="onFieldChange('probeArg', $event)"
+                      [maxLength]="30" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                }
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
@@ -76,7 +78,8 @@ import { ResponsibilityOption, WorkflowI18n, workflowRuleValidations } from '@ok
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="dueInDaysI18n()" [value]="dueInDays()"
-                    (valueChange)="onNumberChange('dueInDays', $event)" [readOnly]="isReadOnly()" />
+                    (valueChange)="onNumberChange('dueInDays', $event)" [readOnly]="isReadOnly()"
+                    [min]="0" [max]="365" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -129,6 +132,8 @@ export class WorkflowRuleForm {
   protected readonly event = computed(() => this.formData()?.event ?? '');
   protected readonly probe = computed(() => this.formData()?.probe ?? '');
   protected readonly probeArg = computed(() => this.formData()?.probeArg ?? '');
+  // only the probes that consume it (and do not carry an inline ':arg') show the field
+  protected readonly needsProbeArg = computed(() => probeNeedsArg(this.probe()));
   protected readonly responsibilityKey = computed(() => this.formData()?.responsibilityKey ?? '');
   // a rule may point at a responsibility that was deleted or is not loaded yet: keep the stored
   // key selectable, otherwise opening the rule would silently blank it on the next save
@@ -185,7 +190,10 @@ export class WorkflowRuleForm {
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    // switching to a probe that takes no argument drops the old one: an argument the form no
+    // longer shows is data nobody can see, correct or explain.
+    const dropped = fieldName === 'probe' && !probeNeedsArg(fieldValue as string) ? { probeArg: '' } : {};
+    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue, ...dropped }));
   }
 
   protected onNumberChange(fieldName: string, fieldValue: number): void {

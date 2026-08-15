@@ -22,6 +22,27 @@ export interface ResponsibilityOption {
   name: string;
 }
 
+/*-------------------------- probes --------------------------------*/
+/**
+ * Probes that consume `probeArg`. Mirrors the PROBES registry in
+ * `apps/functions/src/workflow/engine.ts` — a lib cannot import the functions app, so a new
+ * argument-taking probe has to be added here too, next to its category item.
+ */
+const PROBES_WITH_ARG = ['hasOwnershipOfType', 'categoryIs'];
+
+/**
+ * Does this probe still need the rule's `probeArg`?
+ *
+ * `probe` may be a comma-separated AND-list whose items can carry their own inline `:arg`
+ * (e.g. 'categoryIs:passive,hasActiveOwnerships'). The engine prefers the inline argument, so
+ * an item that brings one does NOT need the field — only a bare argument-taking probe does.
+ * @param probe the rule's probe string
+ */
+export function probeNeedsArg(probe?: string): boolean {
+  return (probe ?? '').split(',').map((entry) => entry.trim()).filter((entry) => entry.length > 0)
+    .some((entry) => !entry.includes(':') && PROBES_WITH_ARG.includes(entry));
+}
+
 /*-------------------------- search index --------------------------------*/
 /**
  * Build the search index string for a WorkflowRuleModel.

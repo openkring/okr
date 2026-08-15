@@ -69,8 +69,12 @@ export class NumberInput {
   public clearInput = input(true);
   public min = input<number>();
   public max = input<number>();
-  /** true: focusing selects the current value, so typing replaces it instead of appending to it. */
-  public selectOnFocus = input(false);
+  /**
+   * true (default): focusing selects the current value, so typing replaces it instead of
+   * appending to it — a field showing 0 would otherwise turn into '03' when you type a 3.
+   * Pass false where a user is expected to extend the existing number rather than retype it.
+   */
+  public selectOnFocus = input(true);
 
   // view children
   private readonly inputRef = viewChild.required<IonInput>('input');
