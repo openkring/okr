@@ -174,7 +174,7 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
  */
 export async function runWorkflowWith(ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
   const rules = await deps.rules(ctx.tenantId, ctx.event);
-  for (const rule of [...rules].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))) {
+  for (const rule of rules) {
     try {
       if (!(await runProbe(rule, ctx, deps))) continue;
       await runAction(rule, ctx, deps);

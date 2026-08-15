@@ -31,10 +31,6 @@
     "label": "Vence en días",
     "helper": "0 = sin fecha de vencimiento"
   },
-  "order": {
-    "label": "Orden",
-    "helper": "Solo para la legibilidad"
-  },
   "notes": {
     "label": "Notas",
     "placeholder": "Introducir notas"

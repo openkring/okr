@@ -6,7 +6,9 @@ import { I18nService } from '@okr/shared-i18n';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
-import { WORKFLOW_I18N_KEYS, WorkflowI18n } from '@okr/system-workflow-util';
+import { DEFAULT_TAGS } from '@okr/shared-constants';
+
+import { ResponsibilityOption, WORKFLOW_I18N_KEYS, WorkflowI18n } from '@okr/system-workflow-util';
 
 import { WorkflowRuleForm } from './workflow-rule.form';
 
@@ -30,6 +32,8 @@ import { WorkflowRuleForm } from './workflow-rule.form';
           [currentUser]="currentUser()"
           [eventCategory]="eventCategory()"
           [probeCategory]="probeCategory()"
+          [responsibilities]="responsibilities()"
+          [allTags]="allTags()"
           [showForm]="showForm()"
           [readOnly]="isReadOnly()"
           [i18n]="i18n"
@@ -50,6 +54,8 @@ export class WorkflowRuleEditModal {
   // resolved by the store (AppStore.getCategory) — see the note in the form
   public readonly eventCategory = input.required<CategoryListModel>();
   public readonly probeCategory = input.required<CategoryListModel>();
+  public readonly responsibilities = input<ResponsibilityOption[]>([]);
+  public readonly allTags = input(DEFAULT_TAGS);
   public readonly readOnly = input(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 

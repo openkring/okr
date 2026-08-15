@@ -31,10 +31,6 @@
     "label": "Due in days",
     "helper": "0 = no due date"
   },
-  "order": {
-    "label": "Order",
-    "helper": "For readability only"
-  },
   "notes": {
     "label": "Notes",
     "placeholder": "Enter notes"

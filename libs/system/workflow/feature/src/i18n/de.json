@@ -13,6 +13,10 @@
     },
     "delete": {
       "confirm": "Soll die Regel wirklich gelöscht werden ?"
+    },
+    "export": {
+      "label": "Regeln exportieren",
+      "conf": "Die Workflow-Regeln wurden exportiert."
     }
   },
   "actionsheet": {

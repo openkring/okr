@@ -15,6 +15,8 @@ export const WORKFLOW_I18N_KEYS = {
   edit_label:                      FEAT + 'operation.edit.label',
   view_label:                      FEAT + 'operation.view.label',
   delete_confirm:                  FEAT + 'operation.delete.confirm',
+  export_label:                    FEAT + 'operation.export.label',
+  export_conf:                     FEAT + 'operation.export.conf',
   changeConfirmation_ok:           FEAT + 'changeConfirmation.ok',
   changeConfirmation_cancel:       FEAT + 'changeConfirmation.cancel',
   changeConfirmation_confirmation: FEAT + 'changeConfirmation.confirmation',
@@ -35,8 +37,6 @@ export const WORKFLOW_I18N_KEYS = {
   messageKey_helper:         UI + 'messageKey.helper',
   dueInDays_label:           UI + 'dueInDays.label',
   dueInDays_helper:          UI + 'dueInDays.helper',
-  order_label:               UI + 'order.label',
-  order_helper:              UI + 'order.helper',
   notes_label:               UI + 'notes.label',
   notes_placeholder:         UI + 'notes.placeholder',
 } satisfies Record<string, string>;

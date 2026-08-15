@@ -340,8 +340,14 @@ export function isValidForFields(result: { hasErrors: (fieldName?: string) => bo
   return !fieldNames.some(fieldName => result.hasErrors(fieldName));
 }
 
-export function tagValidations(fieldName: string, tags: unknown, givenTags: string) {
+export function tagValidations(fieldName: string, tags: unknown, givenTags?: string) {
   stringValidations(fieldName, tags, LONG_NAME_LENGTH);
+  // No configured list to compare against. The Signal Forms bridge (validateVestTree) calls a
+  // suite with the MODEL ONLY, so every `(model, tenants, tags, field)` suite reaches this with
+  // `givenTags === undefined` — which used to throw inside splitTags and take the whole modal
+  // down with it (blank modal, bare toolbar). Checking against an empty list is not the fallback
+  // either: that would invalidate every tagged model on a field most forms never render.
+  if (!givenTags) return;
   // Both sides are trimmed: the configured lists in the `tags` collection are authored with
   // ", " separators ("@tag.advertiser, @tag.bexio, …") while a model's own tags field is written
   // without them, and stringArrayValidations matches exactly. Splitting untrimmed left every

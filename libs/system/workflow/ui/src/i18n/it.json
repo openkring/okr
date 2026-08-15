@@ -31,10 +31,6 @@
     "label": "Scadenza in giorni",
     "helper": "0 = nessuna scadenza"
   },
-  "order": {
-    "label": "Ordine",
-    "helper": "Solo per la leggibilità"
-  },
   "notes": {
     "label": "Note",
     "placeholder": "Inserire note"

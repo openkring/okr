@@ -32,7 +32,6 @@ export class WorkflowRuleModel implements OkrModel, NamedModel, SearchableModel,
   public responsibilityKey = ''; // ResponsibilityModel.okey → who gets the task
   public messageKey = '';        // i18n key for the task name
   public dueInDays = 0;          // 0 = no due date
-  public order = 0;              // evaluation order, for readability only
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

@@ -30,7 +30,6 @@ export interface WorkflowRuleDoc {
   responsibilityKey?: string;
   messageKey?: string;
   dueInDays?: number;
-  order?: number;
   isArchived?: boolean;
 }
 

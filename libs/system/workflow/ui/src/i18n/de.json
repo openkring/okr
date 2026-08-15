@@ -31,10 +31,6 @@
     "label": "Fällig in Tagen",
     "helper": "0 = kein Fälligkeitsdatum"
   },
-  "order": {
-    "label": "Reihenfolge",
-    "helper": "Nur für die Lesbarkeit"
-  },
   "notes": {
     "label": "Notizen",
     "placeholder": "Notizen erfassen"

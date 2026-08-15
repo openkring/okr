@@ -214,15 +214,15 @@ describe('runWorkflowWith', () => {
     expect(deps.activities[0]['error']).toContain('sendEmail');
   });
 
-  it('evaluates rules in `order` and lets one failure not stop the rest', async () => {
-    const deps = fakeDeps({ rules: [rule({ okey: 'b', order: 2 }), rule({ okey: 'a', order: 1 })] });
+  it('lets one failing rule not stop the rest', async () => {
+    const deps = fakeDeps({ rules: [rule({ okey: 'b' }), rule({ okey: 'a' })] });
     deps.responsibility = async (key) => {
       if (key === 'boom') throw new Error('nope');
       return { responsibleAvatar: avatar('resp') };
     };
     deps.rules = async () => [
-      rule({ okey: 'b', order: 2, messageKey: '@second' }),
-      rule({ okey: 'boom', order: 1, responsibilityKey: 'boom' }),
+      rule({ okey: 'b', messageKey: '@second' }),
+      rule({ okey: 'boom', responsibilityKey: 'boom' }),
     ];
     await runWorkflowWith(ctx(), deps);
     expect(deps.tasks.map((t) => t.name)).toEqual(['@second|Anna Muster|A->P']);

@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 
 import { CategoryListModel, RoleName, UserModel, WorkflowRuleModel } from '@okr/shared-models';
 import { CategorySelect, Chips, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
@@ -8,7 +8,7 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
-import { WorkflowI18n, workflowRuleValidations } from '@okr/system-workflow-util';
+import { ResponsibilityOption, WorkflowI18n, workflowRuleValidations } from '@okr/system-workflow-util';
 
 /**
  * Edit one workflow rule (spec 1.35): on this event, if this probe holds, open a task
@@ -23,7 +23,7 @@ import { WorkflowI18n, workflowRuleValidations } from '@okr/system-workflow-util
   standalone: true,
   imports: [
     TextInput, NumberInput, NotesInput, Chips, CategorySelect,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonNote, IonSelect, IonSelectOption
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -55,8 +55,18 @@ import { WorkflowI18n, workflowRuleValidations } from '@okr/system-workflow-util
               </ion-row>
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="responsibilityKeyI18n()" [value]="responsibilityKey()"
-                    (valueChange)="onFieldChange('responsibilityKey', $event)" [maxLength]="30" [readOnly]="isReadOnly()" />
+                  <ion-item lines="none">
+                    <ion-select [label]="i18n().responsibilityKey_label()" labelPlacement="floating"
+                      interface="popover" [disabled]="isReadOnly()" [value]="responsibilityKey()"
+                      (ionChange)="onFieldChange('responsibilityKey', $event.detail.value)">
+                      @for (r of responsibilityOptions(); track r.key) {
+                        <ion-select-option [value]="r.key">{{ r.name }}</ion-select-option>
+                      }
+                    </ion-select>
+                  </ion-item>
+                  <ion-item lines="none">
+                    <ion-note>{{ i18n().responsibilityKey_helper() }}</ion-note>
+                  </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="messageKeyI18n()" [value]="messageKey()"
@@ -67,10 +77,6 @@ import { WorkflowI18n, workflowRuleValidations } from '@okr/system-workflow-util
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="dueInDaysI18n()" [value]="dueInDays()"
                     (valueChange)="onNumberChange('dueInDays', $event)" [readOnly]="isReadOnly()" />
-                </ion-col>
-                <ion-col size="12" size-md="6">
-                  <okr-number-input [i18n]="orderI18n()" [value]="order()"
-                    (valueChange)="onNumberChange('order', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -98,6 +104,8 @@ export class WorkflowRuleForm {
   public readonly probeCategory = input.required<CategoryListModel>();
   public formData = model.required<WorkflowRuleModel>();
   public readonly currentUser = input<UserModel | undefined>();
+  // {key: okey, name} of the tenant's responsibilities — resolved by the store, like the categories
+  public readonly responsibilities = input<ResponsibilityOption[]>([]);
   public readonly allTags = input(DEFAULT_TAGS);
   public readonly readOnly = input(true);
   public readonly showForm = input(true);
@@ -122,9 +130,15 @@ export class WorkflowRuleForm {
   protected readonly probe = computed(() => this.formData()?.probe ?? '');
   protected readonly probeArg = computed(() => this.formData()?.probeArg ?? '');
   protected readonly responsibilityKey = computed(() => this.formData()?.responsibilityKey ?? '');
+  // a rule may point at a responsibility that was deleted or is not loaded yet: keep the stored
+  // key selectable, otherwise opening the rule would silently blank it on the next save
+  protected readonly responsibilityOptions = computed(() => {
+    const options = this.responsibilities();
+    const key = this.responsibilityKey();
+    return !key || options.some(o => o.key === key) ? options : [{ key, name: key }, ...options];
+  });
   protected readonly messageKey = computed(() => this.formData()?.messageKey ?? '');
   protected readonly dueInDays = computed(() => this.formData()?.dueInDays ?? 0);
-  protected readonly order = computed(() => this.formData()?.order ?? 0);
   protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
 
@@ -161,13 +175,6 @@ export class WorkflowRuleForm {
     label: this.i18n().dueInDays_label(),
     placeholder: '',
     helper: this.i18n().dueInDays_helper()
-  } as NumberInputI18n));
-
-  protected orderI18n = computed(() => ({
-    name: 'order',
-    label: this.i18n().order_label(),
-    placeholder: '',
-    helper: this.i18n().order_helper()
   } as NumberInputI18n));
 
   protected notesI18n = computed(() => ({

@@ -58,7 +58,7 @@ export class WorkflowRuleService {
   }
 
   /*-------------------------- LIST / QUERY --------------------------------*/
-  public list(orderBy = 'order', sortOrder: 'asc' | 'desc' = 'asc'): Observable<WorkflowRuleModel[]> {
+  public list(orderBy = 'name', sortOrder: 'asc' | 'desc' = 'asc'): Observable<WorkflowRuleModel[]> {
     return this.firestoreService.searchData<WorkflowRuleModel>(WorkflowRuleCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
   }
 }

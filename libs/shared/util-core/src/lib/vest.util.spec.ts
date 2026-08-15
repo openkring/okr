@@ -39,6 +39,11 @@ describe('tagValidations', () => {
     expect(runTags('', CONFIGURED).isValid()).toBe(true);
   });
 
+  it('skips the membership check when no configured list is passed (Signal Forms bridge)', () => {
+    const suite = create(() => tagValidations('tags', '@tag.bexio', undefined));
+    expect(suite().isValid()).toBe(true);
+  });
+
   it('still rejects a tag that is not configured', () => {
     const result = runTags('@tag.bexio,@tag.doesnotexist', CONFIGURED);
     expect(result.getErrors()).toHaveProperty('tags[1]');

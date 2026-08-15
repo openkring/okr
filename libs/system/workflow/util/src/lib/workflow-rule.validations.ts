@@ -16,5 +16,4 @@ export const workflowRuleValidations = staticSuite((model: WorkflowRuleModel, te
   stringValidations('messageKey', model.messageKey, SHORT_NAME_LENGTH, 0, true);
   // a task due more than a year out is a data-entry slip, not a policy
   numberValidations('dueInDays', model.dueInDays, true, 0, 365);
-  numberValidations('order', model.order, true, 0, 999);
 });

@@ -31,10 +31,6 @@
     "label": "Échéance en jours",
     "helper": "0 = pas d'échéance"
   },
-  "order": {
-    "label": "Ordre",
-    "helper": "Pour la lisibilité uniquement"
-  },
   "notes": {
     "label": "Notes",
     "placeholder": "Saisir des notes"

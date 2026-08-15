@@ -13,6 +13,10 @@
     },
     "delete": {
       "confirm": "Do you really want to delete this rule ?"
+    },
+    "export": {
+      "label": "Export rules",
+      "conf": "The workflow rules have been exported."
     }
   },
   "actionsheet": {
