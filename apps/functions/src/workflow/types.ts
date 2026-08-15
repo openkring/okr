@@ -11,14 +11,18 @@ import { AvatarInfo } from '@okr/shared-models';
 /** What the engine is told about the event that fired. */
 export interface WorkflowContext {
   tenantId: string;
-  event: string;              // 'membership.created' | 'membership.ended' | 'membership.categoryChanged'
-  personKey: string;
+  event: string;              // see the event catalogue, e.g. 'membership.ended' | 'expense.created'
+  personKey: string;          // the SUBJECT of the event; '' when it has none (anonymous form submission)
   relatedKey: string;         // '<modelType>.<okey>', prefixed per the addresses parentKey convention
   subjectName: string;        // e.g. 'Anna Muster' — filled into the {name} placeholder of the message
-  subjectCategory: string;    // the membership category AFTER the event ('' for non-membership events)
-  categoryAbbr: string;       // its abbreviation from relLog, e.g. 'A1' — the {category} placeholder
-  previousAbbr: string;       // the abbreviation before the change, e.g. 'A' — the {fromCategory} placeholder
   today: string;              // StoreDate (yyyyMMdd); a parameter so the engine has no clock
+  /**
+   * Everything event-specific: message placeholders AND probe input. The membership
+   * emitter fills { category, categoryAbbr, fromCategory }; an expense fills
+   * { amount, currency, … }. Keeping it a bag is what stopped this seam from being
+   * membership-shaped (spec 2026-08-15-approval-workflow-spec.md §1.1).
+   */
+  params: Record<string, string>;
 }
 
 export interface WorkflowRuleDoc {
@@ -27,6 +31,8 @@ export interface WorkflowRuleDoc {
   probe?: string;
   probeArg?: string;
   action?: string;
+  actionArg?: string;         // email template | esign storage path | approval kind
+  writeBack?: string;         // 'collection.field' patched on an approval outcome, '' = none
   responsibilityKey?: string;
   messageKey?: string;
   dueInDays?: number;
@@ -64,6 +70,47 @@ export interface NewTask {
   relatedKey: string;
 }
 
+export interface OutgoingEmail {
+  tenantId: string;
+  ruleKey: string;
+  to: string;
+  subject: string;
+  body: string;
+  template: string;           // '' = plain HTML send
+}
+
+export interface OutgoingChatMessage {
+  tenantId: string;
+  ruleKey: string;
+  matrixUserId: string;       // '@localpart:server'
+  body: string;
+  txnId: string;
+}
+
+export interface EsignRequest {
+  tenantId: string;
+  ruleKey: string;
+  storagePath: string;
+  signee: AvatarInfo;
+  documentName: string;
+  relatedKey: string;
+}
+
+export interface NewApproval {
+  tenantId: string;
+  kind: string;
+  subjectModelType: string;
+  subjectKey: string;
+  subjectName: string;
+  requestedBy: AvatarInfo | undefined;
+  /** undefined = no second pair of eyes was found; the approval stalls unassigned */
+  approver: AvatarInfo | undefined;
+  ruleKey: string;
+  writeBack: string;
+  taskName: string;
+  dueInDays: number;
+}
+
 /**
  * Every I/O the engine needs. One interface, one Firestore implementation
  * (firestore-deps.ts), one fake in the spec — no emulator required.
@@ -80,6 +127,21 @@ export interface WorkflowDeps {
   /** a non-done, non-archived task with the same relatedKey and assignee already exists */
   hasOpenTask(relatedKey: string, assigneeKey: string, tenantId: string): Promise<boolean>;
   createTask(task: NewTask): Promise<void>;
+  /** the person's own avatar — the requester of an approval */
+  avatarFor(personKey: string, tenantId: string): Promise<AvatarInfo | undefined>;
+  /** favourite email address of the person, '' when there is none */
+  emailFor(personKey: string, tenantId: string): Promise<string>;
+  /** '@localpart:server' of the person's Matrix account, '' when not provisioned */
+  matrixIdFor(personKey: string): Promise<string>;
+  /** how many sends this rule already did today — the per-rule daily cap */
+  sendCount(tenantId: string, ruleKey: string, today: string): Promise<number>;
+  sendEmail(mail: OutgoingEmail): Promise<void>;
+  sendChatMessage(msg: OutgoingChatMessage): Promise<void>;
+  startEsign(req: EsignRequest): Promise<void>;
+  /** a non-archived approval for the same subject and kind is still pending */
+  hasPendingApproval(subjectKey: string, kind: string, tenantId: string): Promise<boolean>;
+  /** writes the approval AND its task in one batch, so neither can exist without the other */
+  createApproval(approval: NewApproval): Promise<void>;
   /** i18nTenantOverride → i18nDefault; `{placeholder}`s are filled from params */
   translate(tenantId: string, messageKey: string, params: Record<string, string>): Promise<string>;
   logActivity(tenantId: string, payload: Record<string, unknown>): Promise<void>;

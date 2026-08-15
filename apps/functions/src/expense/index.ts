@@ -4,6 +4,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
+import { emitEvent } from '../workflow/emit';
+
 const REGION = 'europe-west6';
 const CF_NAME = 'createExpense';
 const EXPENSE_COLLECTION = 'expenses';
@@ -60,6 +62,20 @@ export const createExpense = onCall(
       receiptCount,
     });
     logger.info(`createExpense: ${ref.id} for tenant ${d.tenantId} (receipts=${receiptCount})`);
+
+    // `expenses` is CF-write-only, so this callable is the complete emit point — no
+    // second trigger and no second definition of "created".
+    await emitEvent('expense.created', d.tenantId, `expense.${ref.id}`, {
+      personKey: (user['personKey'] as string) ?? '',
+      subjectName: `${user['firstName'] ?? ''} ${user['lastName'] ?? ''}`.trim(),
+      params: {
+        amount: String(d.amountTotal),
+        currency: d.currency || 'CHF',
+        category: d.category ?? '',
+        costCenterId: d.costCenterId ?? '',
+      },
+    });
+
     return { expenseKey: ref.id };
   },
 );

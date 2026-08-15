@@ -32,6 +32,9 @@ import * as Vcard from './vcard';
 import * as Person from './person';
 import * as Privacy from './privacy';
 import * as Tenant from './tenant';
+import * as WorkflowEmit from './workflow/emit';
+import * as WorkflowOutbox from './workflow/outbox';
+import * as Approval from './approval';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -118,6 +121,14 @@ export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoom
 export const onMembershipAccountSync = AccountSync.onMembershipAccountSync;
 export const sweepExpiredMemberships = AccountSync.sweepExpiredMemberships;
 export const syncPersonAccount = AccountSync.syncPersonAccount;
+
+// workflow trigger rules — event producers, the side-effect outbox and the approval step
+// (specs 2026-08-12-workflow-trigger-rules-design.md, 2026-08-15-approval-workflow-spec.md)
+export const onReservationCreated = WorkflowEmit.onReservationCreated;
+export const onApplicationCreated = WorkflowEmit.onApplicationCreated;
+export const onWorkflowOutbox = WorkflowOutbox.onWorkflowOutbox;
+export const decideApproval = Approval.decideApproval;
+export const onApprovalDecided = Approval.onApprovalDecided;
 
 // oidc-bridge removed (C-3): unused, insecure OIDC IdP. Matrix auth uses the
 // token-exchange approach (getMatrixCredentials in matrix-simple) instead.

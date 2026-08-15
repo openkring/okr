@@ -223,10 +223,15 @@ async function emitMembershipEvent(
     personKey: m.memberKey,
     relatedKey: `membership.${membershipId}`,
     subjectName: `${m.memberName1 ?? ''} ${m.memberName2 ?? ''}`.trim(),
-    subjectCategory: m.category ?? '',
-    categoryAbbr: abbrs.at(-1) ?? '',
-    previousAbbr: abbrs.length > 1 ? (abbrs.at(-2) ?? '') : '',
     today,
+    params: {
+      // {category}/{fromCategory} are the ABBREVIATIONS — that is what the live i18n rows
+      // of the seeded rules render, and renaming them would silently change task wording.
+      category: abbrs.at(-1) ?? '',
+      fromCategory: abbrs.length > 1 ? (abbrs.at(-2) ?? '') : '',
+      // the raw category, which is what `categoryIs` compares ('passive', 'active', …)
+      membershipCategory: m.category ?? '',
+    },
   });
 }
 

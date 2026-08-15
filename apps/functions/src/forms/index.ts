@@ -8,6 +8,7 @@ import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { getAppEmailConfig } from '../auth/email-templates';
 import { createProspect } from '../business/prospect';
+import { emitEvent } from '../workflow/emit';
 
 const REGION = 'europe-west6';
 const formsHmacSecret = defineSecret('FORMS_HMAC_SECRET');
@@ -589,6 +590,17 @@ export const submitForm = onCall(
         formDef, cleanValues, submissionId, payload.meta.submittedAt,
         CF_NAME,
       );
+    }
+
+    // ── 8. Workflow event ─────────────────────────
+    // A spam-flagged submission emits nothing: a rule must never be a way for an anonymous
+    // form to open tasks or mail the board. A submission has no personKey either (the
+    // submitter is not a person yet), so the person-scoped probes correctly find nothing.
+    if (!isSpam) {
+      await emitEvent('form.submitted', payload.tenantId, `formSubmission.${submissionId}`, {
+        subjectName: String(cleanValues['lastName'] ?? cleanValues['name'] ?? cleanValues['email'] ?? ''),
+        params: { formKey: payload.formKey, formName: formDef.name ?? '', collectionName: collectionName ?? '' },
+      });
     }
 
     logger.info(`${CF_NAME}: done submissionId=${submissionId} isSpam=${isSpam} durationMs=${durationMs}`);

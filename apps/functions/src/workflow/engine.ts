@@ -13,6 +13,8 @@
 // engine is unit-testable without an emulator. The Firestore implementation is in
 // firestore-deps.ts.
 
+import { AvatarInfo } from '@okr/shared-models';
+
 import { OwnershipDoc, ResponsibilityDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 /** Invoice states that count as open. `draft`, `paid` and `cancelled` do not. */
@@ -37,9 +39,14 @@ export const PROBES: Record<string, Probe> = {
     (await deps.ownerships(ctx.personKey, ctx.tenantId))
       .some((o) => isActiveOwnership(o) && o.resourceType === arg),
 
-  /** the event's subject is now in this category, e.g. 'passive' — the one probe that
-   *  reads the event rather than the database */
-  categoryIs: async (ctx, arg) => ctx.subjectCategory === arg,
+  /** the event's subject is now in this membership category, e.g. 'passive' — one of the
+   *  probes that read the event rather than the database.
+   *  NB `params.category` is the ABBREVIATION used in message text; the raw category the
+   *  probe compares lives in `params.membershipCategory`. */
+  categoryIs: async (ctx, arg) => (ctx.params['membershipCategory'] ?? '') === arg,
+
+  /** the decision an 'approval.decided' event carries: 'approved' | 'rejected' */
+  decisionIs: async (ctx, arg) => (ctx.params['decision'] ?? '') === arg,
 
   /** the person has at least one invoice in an open state (the state is authoritative,
    *  paymentDate is not consulted) */
@@ -127,15 +134,78 @@ export async function resolveAssignee(
   return deps.tenantAdmin(ctx.tenantId);
 }
 
+/** Every action the engine understands. An unknown one fails closed and is logged. */
+export const KNOWN_ACTIONS = ['openTask', 'sendEmail', 'sendMessage', 'esign', 'requestApproval'];
+
 /**
- * Execute a rule that has already passed its probe. v1 knows exactly one action.
+ * Four eyes: nobody approves their own request.
  *
- * Deduplication: an open task with the same relatedKey AND the same assignee means this
- * consequence is already pending — without it every re-trigger (a corrected exit date, a
- * sweep re-run, a name change re-writing the document) would produce another task.
+ * When the resolved responsible person IS the requester, escalate one step — group admin,
+ * then tenant admin. If that still lands on the same person the approval is created with
+ * NO approver and shows up in the admin's "unassigned" filter. It is never auto-approved:
+ * a request that cannot find a second pair of eyes must stall visibly, not pass silently.
+ */
+export async function escalateForFourEyes(
+  rule: WorkflowRuleDoc,
+  ctx: WorkflowContext,
+  deps: WorkflowDeps,
+  assignee: AvatarInfo,
+  requesterKey: string,
+): Promise<AvatarInfo | undefined> {
+  if (!requesterKey || assignee.key !== requesterKey) return assignee;
+
+  await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, fourEyes: 'requester is the approver', person: requesterKey });
+
+  const groupAdmin = rule.responsibilityKey ? await deps.groupAdmin(rule.responsibilityKey, ctx.tenantId) : undefined;
+  if (groupAdmin?.key && groupAdmin.key !== requesterKey) return groupAdmin;
+
+  const tenantAdmin = await deps.tenantAdmin(ctx.tenantId);
+  if (tenantAdmin?.key && tenantAdmin.key !== requesterKey) return tenantAdmin;
+
+  await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, fourEyes: 'unassigned — no second pair of eyes' });
+  return undefined;
+}
+
+/**
+ * A rule's message, with `{name}` and every event param filled in. Composing the text
+ * here rather than in the deps keeps the I/O layer free of i18n and makes every action's
+ * wording testable without Firestore.
+ */
+async function message(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: WorkflowDeps, suffix = ''): Promise<string> {
+  const key = rule.messageKey ?? '';
+  if (!key) return '';
+  return deps.translate(ctx.tenantId, key + suffix, { name: ctx.subjectName, ...ctx.params });
+}
+
+/**
+ * `sendEmail` / `sendMessage` fire once per event, and an import fires the event once per
+ * record. The cap is per (tenant, rule, day) and is counted from the activity log the
+ * actions themselves write.
+ */
+export const MAX_RULE_SENDS_PER_DAY = 200;
+
+async function overSendCap(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: WorkflowDeps): Promise<boolean> {
+  const sent = await deps.sendCount(ctx.tenantId, rule.okey, ctx.today);
+  if (sent < MAX_RULE_SENDS_PER_DAY) return false;
+  await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, skipped: 'daily send cap', sent });
+  return true;
+}
+
+/**
+ * Execute a rule that has already passed its probe.
+ *
+ * Every action addresses the SAME resolved responsible person — a rule can never name a
+ * free-text recipient, which is what keeps it from being a spam gun any tenant admin can
+ * point anywhere (spec 2026-08-15 §2.2).
+ *
+ * Deduplication of `openTask`: an open task with the same relatedKey AND the same
+ * assignee means this consequence is already pending — without it every re-trigger (a
+ * corrected exit date, a sweep re-run, a name change re-writing the document) would
+ * produce another task.
  */
 export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
-  if ((rule.action ?? 'openTask') !== 'openTask') {
+  const action = rule.action || 'openTask';
+  if (!KNOWN_ACTIONS.includes(action)) {
     await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: `unknown action '${rule.action}'` });
     return;
   }
@@ -146,24 +216,102 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
     return;
   }
 
-  if (await deps.hasOpenTask(ctx.relatedKey, assignee.key, ctx.tenantId)) {
-    await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, skipped: 'duplicate', relatedKey: ctx.relatedKey });
-    return;
-  }
+  switch (action) {
+    case 'openTask': {
+      if (await deps.hasOpenTask(ctx.relatedKey, assignee.key, ctx.tenantId)) {
+        await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, skipped: 'duplicate', relatedKey: ctx.relatedKey });
+        return;
+      }
+      await deps.createTask({
+        tenantId: ctx.tenantId,
+        name: await message(rule, ctx, deps),
+        assignee,
+        dueInDays: rule.dueInDays ?? 0,
+        relatedModelType: ctx.relatedKey.split('.')[0] ?? '',
+        relatedKey: ctx.relatedKey,
+      });
+      return;
+    }
 
-  const name = await deps.translate(ctx.tenantId, rule.messageKey ?? '', {
-    name: ctx.subjectName,
-    category: ctx.categoryAbbr,
-    fromCategory: ctx.previousAbbr,
-  });
-  await deps.createTask({
-    tenantId: ctx.tenantId,
-    name,
-    assignee,
-    dueInDays: rule.dueInDays ?? 0,
-    relatedModelType: ctx.relatedKey.split('.')[0] ?? '',
-    relatedKey: ctx.relatedKey,
-  });
+    case 'sendEmail': {
+      if (await overSendCap(rule, ctx, deps)) return;
+      const to = await deps.emailFor(assignee.key, ctx.tenantId);
+      if (!to) {
+        await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'no email address', person: assignee.key });
+        return;
+      }
+      await deps.sendEmail({
+        tenantId: ctx.tenantId,
+        ruleKey: rule.okey,
+        to,
+        subject: await message(rule, ctx, deps),
+        body: await message(rule, ctx, deps, '.body'),
+        template: rule.actionArg ?? '',
+      });
+      return;
+    }
+
+    case 'sendMessage': {
+      if (await overSendCap(rule, ctx, deps)) return;
+      const matrixUserId = await deps.matrixIdFor(assignee.key);
+      if (!matrixUserId) {
+        await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'no matrix account', person: assignee.key });
+        return;
+      }
+      await deps.sendChatMessage({
+        tenantId: ctx.tenantId,
+        ruleKey: rule.okey,
+        matrixUserId,
+        body: await message(rule, ctx, deps),
+        // deterministic: a retried invocation reuses the transaction id, so Synapse drops
+        // the second copy. A genuinely re-fired event days later is NOT covered — see the
+        // ponytail note in the spec.
+        txnId: `wf-${rule.okey}-${ctx.event}-${ctx.relatedKey}`.replaceAll(/[^\w-]/g, '_'),
+      });
+      return;
+    }
+
+    case 'esign': {
+      const storagePath = (rule.actionArg ?? '').replaceAll('{relatedKey}', ctx.relatedKey);
+      if (!storagePath) {
+        await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'esign needs a storage path in actionArg' });
+        return;
+      }
+      await deps.startEsign({
+        tenantId: ctx.tenantId,
+        ruleKey: rule.okey,
+        storagePath,
+        signee: assignee,
+        documentName: await message(rule, ctx, deps),
+        relatedKey: ctx.relatedKey,
+      });
+      return;
+    }
+
+    case 'requestApproval': {
+      const kind = rule.actionArg ?? '';
+      if (await deps.hasPendingApproval(ctx.relatedKey, kind, ctx.tenantId)) {
+        await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, skipped: 'approval pending', relatedKey: ctx.relatedKey });
+        return;
+      }
+      const requestedBy = await deps.avatarFor(ctx.personKey, ctx.tenantId);
+      const approver = await escalateForFourEyes(rule, ctx, deps, assignee, requestedBy?.key ?? '');
+      await deps.createApproval({
+        tenantId: ctx.tenantId,
+        kind,
+        subjectModelType: ctx.relatedKey.split('.')[0] ?? '',
+        subjectKey: ctx.relatedKey,
+        subjectName: ctx.subjectName,
+        requestedBy,
+        approver,
+        ruleKey: rule.okey,
+        writeBack: rule.writeBack ?? '',
+        taskName: await message(rule, ctx, deps),
+        dueInDays: rule.dueInDays ?? 0,
+      });
+      return;
+    }
+  }
 }
 
 /**

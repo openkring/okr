@@ -11,11 +11,13 @@
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
-import { AvatarInfo, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
+import { ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { getTaskIndex } from '@okr/task-util';
 
 import { shiftDaysBack } from '../auth/account-sync.decide';
+import { serverHostname } from '../matrix-simple/shared';
+import { OutboxDoc, WorkflowOutboxCollection } from './outbox';
 import { InvoiceDoc, NewTask, OwnershipDoc, ResponsibilityDoc, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const CF_NAME = 'workflow';
@@ -65,6 +67,29 @@ async function translate(tenantId: string, messageKey: string, params: Record<st
   // ever reaches the engine (see the i18n skill), so the placeholders are {name},
   // {category}, {fromCategory}. An unknown placeholder is left standing, not blanked.
   return text.replaceAll(/\{(\w+)\}/g, (match, key: string) => params[key] ?? match);
+}
+
+/**
+ * Queue a side effect for `onWorkflowOutbox`, which is the only function holding the mail
+ * / Matrix / DeepSign secrets. See outbox.ts for why the engine does not send directly.
+ */
+async function enqueue(
+  db: FirebaseFirestore.Firestore,
+  tenantId: string,
+  ruleKey: string,
+  kind: OutboxDoc['kind'],
+  payload: Record<string, string>,
+): Promise<void> {
+  const doc: OutboxDoc = {
+    tenants: [tenantId],
+    kind,
+    ruleKey,
+    day: getTodayStr(DateFormat.StoreDate),
+    state: 'pending',
+    payload,
+  };
+  await db.collection(WorkflowOutboxCollection).add(doc);
+  logger.info(`${CF_NAME}: queued ${kind} for rule ${ruleKey} (tenant ${tenantId})`);
 }
 
 /** AvatarInfo for a user document (the tenant-admin fallback). */
@@ -158,6 +183,128 @@ export function createFirestoreDeps(): WorkflowDeps {
       void okey;
       await db.collection('tasks').add(doc);
       logger.info(`${CF_NAME}: opened task "${task.name}" for ${t.assignee.key} (${t.relatedKey})`);
+    },
+
+    async avatarFor(personKey, tenantId): Promise<AvatarInfo | undefined> {
+      if (!personKey) return undefined;
+      const snap = await db.collection('persons').doc(personKey).get();
+      if (!snap.exists) return undefined;
+      const p = snap.data() as Record<string, unknown>;
+      if (!((p['tenants'] as string[]) ?? []).includes(tenantId)) return undefined;
+      return {
+        key: snap.id,
+        name1: (p['firstName'] as string) ?? '',
+        name2: (p['lastName'] as string) ?? '',
+        modelType: 'person',
+        type: '',
+        subType: '',
+        label: '',
+      };
+    },
+
+    async emailFor(personKey, tenantId): Promise<string> {
+      if (!personKey) return '';
+      // addresses.parentKey is the PREFIXED key — 'person.<okey>', not the raw okey.
+      const snap = await db.collection('addresses').where('parentKey', '==', `person.${personKey}`).get();
+      const emails = snap.docs
+        .map((d) => d.data() as Record<string, unknown>)
+        .filter((a) => !a['isArchived'] && a['addressChannel'] === 'email' && ((a['tenants'] as string[]) ?? []).includes(tenantId))
+        .filter((a) => ((a['email'] as string) ?? '').length > 0);
+      const favorite = emails.find((a) => a['isFavorite'] === true) ?? emails[0];
+      return (favorite?.['email'] as string) ?? '';
+    },
+
+    async matrixIdFor(personKey): Promise<string> {
+      // The localpart is the person okey, lowercased (matrix-simple/shared.ts). A person
+      // with no user account has no Matrix account either.
+      if (!personKey) return '';
+      const snap = await db.collection('users').where('personKey', '==', personKey).limit(1).get();
+      if (snap.empty) return '';
+      return `@${personKey.toLowerCase()}:${serverHostname()}`;
+    },
+
+    async sendCount(tenantId, ruleKey, today): Promise<number> {
+      // The outbox IS the counter — one row per intent, stamped with the day.
+      const snap = await db.collection(WorkflowOutboxCollection).where('ruleKey', '==', ruleKey).get();
+      return snap.docs
+        .map((d) => d.data() as { tenants?: string[]; day?: string })
+        .filter((o) => (o.tenants ?? []).includes(tenantId) && o.day === today)
+        .length;
+    },
+
+    async sendEmail(mail): Promise<void> {
+      await enqueue(db, mail.tenantId, mail.ruleKey, 'sendEmail', {
+        to: mail.to, subject: mail.subject, body: mail.body, template: mail.template,
+      });
+    },
+
+    async sendChatMessage(msg): Promise<void> {
+      await enqueue(db, msg.tenantId, msg.ruleKey, 'sendMessage', {
+        matrixUserId: msg.matrixUserId, body: msg.body, txnId: msg.txnId,
+      });
+    },
+
+    async startEsign(req): Promise<void> {
+      await enqueue(db, req.tenantId, req.ruleKey, 'esign', {
+        storagePath: req.storagePath,
+        documentName: req.documentName || req.relatedKey,
+        // DeepSign picks the signees out of the PDF's predefined fields, so the resolved
+        // responsible person is recorded as the initiator, not as a signee.
+        signeePersonKey: req.signee.key,
+        relatedKey: req.relatedKey,
+      });
+    },
+
+    async hasPendingApproval(subjectKey, kind, tenantId): Promise<boolean> {
+      const snap = await db.collection(ApprovalCollection).where('subjectKey', '==', subjectKey).get();
+      return snap.docs
+        .map((d) => d.data() as Record<string, unknown>)
+        .some((a) =>
+          !a['isArchived'] &&
+          a['state'] === 'pending' &&
+          (a['kind'] ?? '') === kind &&
+          ((a['tenants'] as string[]) ?? []).includes(tenantId));
+    },
+
+    async createApproval(a): Promise<void> {
+      const approval = new ApprovalModel(a.tenantId);
+      approval.kind = a.kind;
+      approval.subjectModelType = a.subjectModelType;
+      approval.subjectKey = a.subjectKey;
+      approval.subjectName = a.subjectName;
+      approval.requestedBy = a.requestedBy;
+      approval.approver = a.approver;
+      approval.ruleKey = a.ruleKey;
+      approval.writeBack = a.writeBack;
+      approval.index = `k:${a.kind} s:${a.subjectKey} n:${a.subjectName}`.toLowerCase();
+
+      const approvalRef = db.collection(ApprovalCollection).doc();
+      const batch = db.batch();
+
+      // No approver means no second pair of eyes was found: the approval is created so it
+      // is visible in the admin's unassigned filter, but there is nobody to task.
+      if (a.approver?.key) {
+        const task = new TaskModel(a.tenantId);
+        task.name = a.taskName;
+        task.author = SYSTEM_AUTHOR;
+        task.assignee = a.approver;
+        task.dueDate = a.dueInDays > 0 ? shiftDaysBack(getTodayStr(DateFormat.StoreDate), -a.dueInDays) : '';
+        task.relatedModelType = ApprovalModelName;
+        task.relatedKey = `${ApprovalModelName}.${approvalRef.id}`;
+        task.index = getTaskIndex(task);
+        const { okey: taskOkey, ...taskDoc } = task;
+        void taskOkey;
+        const taskRef = db.collection('tasks').doc();
+        batch.set(taskRef, taskDoc);
+        approval.taskKey = taskRef.id;
+      }
+
+      const { okey, ...doc } = approval;
+      void okey;
+      batch.set(approvalRef, doc);
+      // One batch, so an approval can never exist without its task or the other way round.
+      await batch.commit();
+      logger.info(`${CF_NAME}: approval ${approvalRef.id} (${a.kind}) for ${a.subjectKey} → ${a.approver?.key ?? 'unassigned'}`);
     },
 
     translate,

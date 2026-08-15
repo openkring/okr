@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo } from '@okr/shared-models';
 
-import { isDelegateActive, isResponsibilityValid, resolveAssignee, runProbe, runWorkflowWith } from './engine';
-import { InvoiceDoc, NewTask, OwnershipDoc, ResponsibilityDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
+import { MAX_RULE_SENDS_PER_DAY, isDelegateActive, isResponsibilityValid, resolveAssignee, runProbe, runWorkflowWith } from './engine';
+import { EsignRequest, InvoiceDoc, NewApproval, NewTask, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const TENANT = 'scs';
 const TODAY = '20260813';
@@ -15,10 +15,10 @@ function ctx(overrides: Partial<WorkflowContext> = {}): WorkflowContext {
     personKey: 'p1',
     relatedKey: 'membership.m1',
     subjectName: 'Anna Muster',
-    subjectCategory: 'a',
-    categoryAbbr: 'P',
-    previousAbbr: 'A',
     today: TODAY,
+    // {category}/{fromCategory} are the ABBREVIATIONS used in message text; the raw
+    // category the categoryIs probe compares is membershipCategory.
+    params: { category: 'P', fromCategory: 'A', membershipCategory: 'a' },
     ...overrides,
   };
 }
@@ -34,6 +34,10 @@ function rule(overrides: Partial<WorkflowRuleDoc> = {}): WorkflowRuleDoc {
 interface Fake extends WorkflowDeps {
   tasks: NewTask[];
   activities: Record<string, unknown>[];
+  emails: OutgoingEmail[];
+  messages: OutgoingChatMessage[];
+  esigns: EsignRequest[];
+  approvals: NewApproval[];
 }
 
 function fakeDeps(over: Partial<{
@@ -44,12 +48,34 @@ function fakeDeps(over: Partial<{
   groupAdmin?: AvatarInfo;
   tenantAdmin?: AvatarInfo;
   openTask: boolean;
+  requester?: AvatarInfo;
+  email?: string;
+  matrixId?: string;
+  sendCount?: number;
+  pendingApproval?: boolean;
 }> = {}): Fake {
   const tasks: NewTask[] = [];
   const activities: Record<string, unknown>[] = [];
+  const emails: OutgoingEmail[] = [];
+  const messages: OutgoingChatMessage[] = [];
+  const esigns: EsignRequest[] = [];
+  const approvals: NewApproval[] = [];
   return {
     tasks,
     activities,
+    emails,
+    messages,
+    esigns,
+    approvals,
+    avatarFor: async () => over.requester,
+    emailFor: async () => over.email ?? '',
+    matrixIdFor: async () => over.matrixId ?? '',
+    sendCount: async () => over.sendCount ?? 0,
+    sendEmail: async (m) => { emails.push(m); },
+    sendChatMessage: async (m) => { messages.push(m); },
+    startEsign: async (r) => { esigns.push(r); },
+    hasPendingApproval: async () => over.pendingApproval ?? false,
+    createApproval: async (a) => { approvals.push(a); },
     rules: async () => over.rules ?? [],
     ownerships: async () => over.ownerships ?? [],
     invoices: async () => over.invoices ?? [],
@@ -74,12 +100,26 @@ describe('probes', () => {
 
   it('categoryIs compares against the event, not the database', async () => {
     await expect(runProbe(rule({ probe: 'categoryIs', probeArg: 'passive' }), ctx(), fakeDeps())).resolves.toBe(false);
-    await expect(runProbe(rule({ probe: 'categoryIs', probeArg: 'passive' }), ctx({ subjectCategory: 'passive' }), fakeDeps())).resolves.toBe(true);
+    const passive = ctx({ params: { membershipCategory: 'passive' } });
+    await expect(runProbe(rule({ probe: 'categoryIs', probeArg: 'passive' }), passive, fakeDeps())).resolves.toBe(true);
+  });
+
+  it('categoryIs reads membershipCategory, NOT the {category} message placeholder', async () => {
+    // the abbreviation 'P' is what a task name renders; a probe matching on it would fire
+    // on the wrong members entirely
+    const c = ctx({ params: { category: 'passive', membershipCategory: 'a' } });
+    await expect(runProbe(rule({ probe: 'categoryIs', probeArg: 'passive' }), c, fakeDeps())).resolves.toBe(false);
+  });
+
+  it('decisionIs reads the approval outcome', async () => {
+    const approved = ctx({ event: 'approval.decided', params: { decision: 'approved' } });
+    await expect(runProbe(rule({ probe: 'decisionIs', probeArg: 'approved' }), approved, fakeDeps())).resolves.toBe(true);
+    await expect(runProbe(rule({ probe: 'decisionIs', probeArg: 'rejected' }), approved, fakeDeps())).resolves.toBe(false);
   });
 
   it('ANDs a comma-separated probe list and honours inline arguments', async () => {
     const owns = fakeDeps({ ownerships: [{ state: 'active' }] });
-    const passive = ctx({ subjectCategory: 'passive' });
+    const passive = ctx({ params: { membershipCategory: 'passive' } });
     await expect(runProbe(rule({ probe: 'categoryIs:passive,hasActiveOwnerships' }), passive, owns)).resolves.toBe(true);
     // same rule, member owns nothing → the second probe fails the whole list
     await expect(runProbe(rule({ probe: 'categoryIs:passive,hasActiveOwnerships' }), passive, fakeDeps())).resolves.toBe(false);
@@ -208,10 +248,10 @@ describe('runWorkflowWith', () => {
   });
 
   it('ignores an unknown action', async () => {
-    const deps = fakeDeps({ rules: [rule({ action: 'sendEmail' })], responsibility: { responsibleAvatar: avatar('resp') } });
+    const deps = fakeDeps({ rules: [rule({ action: 'sendCarrierPigeon' })], responsibility: { responsibleAvatar: avatar('resp') } });
     await runWorkflowWith(ctx(), deps);
     expect(deps.tasks).toHaveLength(0);
-    expect(deps.activities[0]['error']).toContain('sendEmail');
+    expect(deps.activities[0]['error']).toContain('sendCarrierPigeon');
   });
 
   it('lets one failing rule not stop the rest', async () => {
@@ -233,5 +273,123 @@ describe('runWorkflowWith', () => {
     const deps = fakeDeps({ rules: [] });
     await runWorkflowWith(ctx({ event: 'membership.created' }), deps);
     expect(deps.tasks).toHaveLength(0);
+  });
+});
+
+describe('sendEmail / sendMessage', () => {
+  const responsible = { responsibility: { responsibleAvatar: avatar('resp') } };
+
+  it('mails the resolved responsible person, subject and body from the message key', async () => {
+    const deps = fakeDeps({ ...responsible, rules: [rule({ action: 'sendEmail' })], email: 'r@example.org' });
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.emails).toHaveLength(1);
+    expect(deps.emails[0].to).toBe('r@example.org');
+    expect(deps.emails[0].subject).toBe('@x.y|Anna Muster|A->P');
+    expect(deps.emails[0].body).toBe('@x.y.body|Anna Muster|A->P');
+  });
+
+  it('does not mail a person without an address', async () => {
+    const deps = fakeDeps({ ...responsible, rules: [rule({ action: 'sendEmail' })], email: '' });
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.emails).toHaveLength(0);
+    expect(deps.activities[0]['error']).toBe('no email address');
+  });
+
+  it('stops at the daily cap', async () => {
+    const deps = fakeDeps({ ...responsible, rules: [rule({ action: 'sendEmail' })], email: 'r@example.org', sendCount: MAX_RULE_SENDS_PER_DAY });
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.emails).toHaveLength(0);
+    expect(deps.activities[0]['skipped']).toBe('daily send cap');
+  });
+
+  it('messages the responsible person with a deterministic transaction id', async () => {
+    const deps = fakeDeps({ ...responsible, rules: [rule({ action: 'sendMessage' })], matrixId: '@resp:s' });
+    await runWorkflowWith(ctx(), deps);
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.messages).toHaveLength(2);
+    // same rule + same event + same subject → same txnId, so Synapse drops the retry
+    expect(deps.messages[0].txnId).toBe(deps.messages[1].txnId);
+    expect(deps.messages[0].txnId).not.toContain('.');
+  });
+
+  it('does not message a person without a Matrix account', async () => {
+    const deps = fakeDeps({ ...responsible, rules: [rule({ action: 'sendMessage' })], matrixId: '' });
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.messages).toHaveLength(0);
+    expect(deps.activities[0]['error']).toBe('no matrix account');
+  });
+});
+
+describe('esign', () => {
+  it('substitutes {relatedKey} into the storage path', async () => {
+    const deps = fakeDeps({
+      responsibility: { responsibleAvatar: avatar('resp') },
+      rules: [rule({ action: 'esign', actionArg: 'docs/{relatedKey}.pdf' })],
+    });
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.esigns[0].storagePath).toBe('docs/membership.m1.pdf');
+  });
+
+  it('refuses to start without a storage path', async () => {
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('resp') }, rules: [rule({ action: 'esign' })] });
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.esigns).toHaveLength(0);
+    expect(deps.activities[0]['error']).toContain('storage path');
+  });
+});
+
+describe('requestApproval', () => {
+  const approvalRule = rule({ action: 'requestApproval', actionArg: 'skiffPlatz', writeBack: 'reservations.state' });
+
+  it('creates the approval for the resolved approver, carrying the rule write-back', async () => {
+    const deps = fakeDeps({
+      rules: [approvalRule],
+      responsibility: { responsibleAvatar: avatar('resp') },
+      requester: avatar('p1'),
+    });
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.approvals).toHaveLength(1);
+    expect(deps.approvals[0].approver?.key).toBe('resp');
+    expect(deps.approvals[0].requestedBy?.key).toBe('p1');
+    expect(deps.approvals[0].kind).toBe('skiffPlatz');
+    expect(deps.approvals[0].writeBack).toBe('reservations.state');
+    expect(deps.approvals[0].subjectModelType).toBe('membership');
+  });
+
+  it('escalates when the requester IS the responsible person (four eyes)', async () => {
+    const deps = fakeDeps({
+      rules: [approvalRule],
+      responsibility: { responsibleAvatar: avatar('same') },
+      requester: avatar('same'),
+      groupAdmin: avatar('ga'),
+    });
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.approvals[0].approver?.key).toBe('ga');
+    expect(deps.activities[0]['fourEyes']).toContain('requester is the approver');
+  });
+
+  it('stalls unassigned rather than letting anyone approve their own request', async () => {
+    const deps = fakeDeps({
+      rules: [approvalRule],
+      responsibility: { responsibleAvatar: avatar('same') },
+      requester: avatar('same'),
+      groupAdmin: avatar('same'),
+      tenantAdmin: avatar('same'),
+    });
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.approvals).toHaveLength(1);
+    expect(deps.approvals[0].approver).toBeUndefined();
+    expect(deps.activities.some((a) => String(a['fourEyes'] ?? '').includes('unassigned'))).toBe(true);
+  });
+
+  it('skips when an approval for the same subject and kind is already pending', async () => {
+    const deps = fakeDeps({
+      rules: [approvalRule],
+      responsibility: { responsibleAvatar: avatar('resp') },
+      pendingApproval: true,
+    });
+    await runWorkflowWith(ctx(), deps);
+    expect(deps.approvals).toHaveLength(0);
+    expect(deps.activities[0]['skipped']).toBe('approval pending');
   });
 });
