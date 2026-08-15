@@ -555,10 +555,12 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
       'memberBexioId', 'invoiceBexioId', 'memberBirthYear',
     ],
     retention: RETAIN_10Y,
-    blocksErasure: (docs) => blockOpenInvoice(
-      docs.filter((d) => !['paid', 'cancelled'].includes(String(d.get('state') ?? ''))).length,
-      'Dein Mitgliederbeitrag ist noch nicht beglichen. Sobald die Zahlung eingegangen ist, können wir deine Daten löschen.',
-    ),
+    // No blocksErasure: a memberfee row is the *preparation* record for the yearly
+    // invoice, not a debt. Its `state` only ever advances to 'uploaded' (the store
+    // write in scs-member-fees.store.ts) — nothing writes 'paid' back from Bexio, so
+    // gating on it blocked every member who was ever invoiced, forever. The debt is
+    // the invoice it produced, and the `invoices` entry above already gates on that
+    // (paymentDate, synced from Bexio).
   },
   {
     collection: 'bills',

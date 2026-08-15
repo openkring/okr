@@ -386,11 +386,13 @@ describe('SUBJECT_DATA_MAP — blocker predicates', () => {
     expect(b?.([snap({ documentStatus: 'in-progress' })])?.code).toBe('pendingSignature');
   });
 
-  it('scs-memberfees clears once the fee is paid or cancelled', () => {
+  // scs-memberfees.state is a preparation-workflow state that stops at 'uploaded';
+  // nothing writes 'paid' back from Bexio. Gating erasure on it blocked every member
+  // who was ever invoiced. The invoice it produced is the debt, and `invoices` gates
+  // on paymentDate.
+  it('scs-memberfees never blocks erasure on its stale workflow state', () => {
     const b = entry('scs-memberfees').blocksErasure;
-    expect(b?.([snap({ state: 'paid' })])).toBeUndefined();
-    expect(b?.([snap({ state: 'cancelled' })])).toBeUndefined();
-    expect(b?.([snap({ state: 'initial' })])?.code).toBe('openInvoice');
+    expect(b).toBeUndefined();
   });
 
   it('invoices clears once paid or cancelled', () => {
