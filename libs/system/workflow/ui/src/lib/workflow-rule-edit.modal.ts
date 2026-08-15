@@ -32,6 +32,7 @@ import { WorkflowRuleForm } from './workflow-rule.form';
           [currentUser]="currentUser()"
           [eventCategory]="eventCategory()"
           [probeCategory]="probeCategory()"
+          [actionCategory]="actionCategory()"
           [responsibilities]="responsibilities()"
           [allTags]="allTags()"
           [showForm]="showForm()"
@@ -54,6 +55,7 @@ export class WorkflowRuleEditModal {
   // resolved by the store (AppStore.getCategory) — see the note in the form
   public readonly eventCategory = input.required<CategoryListModel>();
   public readonly probeCategory = input.required<CategoryListModel>();
+  public readonly actionCategory = input.required<CategoryListModel>();
   public readonly responsibilities = input<ResponsibilityOption[]>([]);
   public readonly allTags = input(DEFAULT_TAGS);
   public readonly readOnly = input(true);

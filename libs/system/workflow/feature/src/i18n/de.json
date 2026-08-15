@@ -40,6 +40,31 @@
       "categoryChanged": {
         "label": "Mitgliederkategorie geändert"
       }
+    },
+    "expense": {
+      "created": {
+        "label": "Spesenbeleg erfasst"
+      }
+    },
+    "form": {
+      "submitted": {
+        "label": "Formular abgeschickt"
+      }
+    },
+    "application": {
+      "created": {
+        "label": "Aufnahmegesuch eingegangen"
+      }
+    },
+    "reservation": {
+      "created": {
+        "label": "Reservation erstellt"
+      }
+    },
+    "approval": {
+      "decided": {
+        "label": "Freigabe entschieden"
+      }
     }
   },
   "workflow_probe": {
@@ -61,6 +86,48 @@
     },
     "categoryIs:passive,hasActiveOwnerships": {
       "label": "Wechsel auf Passiv mit aktiven Zuteilungen"
+    },
+    "decisionIs": {
+      "label": "Entscheid ist …"
+    }
+  },
+  "approval": {
+    "plural": "Freigaben",
+    "empty": "Es sind keine Freigaben offen.",
+    "mine": "Meine",
+    "unassigned": "Ohne Zuweisung",
+    "all": "Alle",
+    "decide": {
+      "label": "Freigabe entscheiden"
+    },
+    "approve": "Genehmigen",
+    "reject": "Ablehnen",
+    "withdraw": "Zurückziehen",
+    "withdrawConfirm": "Soll die Anfrage wirklich zurückgezogen werden ?",
+    "decided": {
+      "conf": "Der Entscheid wurde gespeichert.",
+      "error": "Der Entscheid konnte nicht gespeichert werden."
+    },
+    "export": {
+      "conf": "Die Freigaben wurden exportiert."
+    }
+  },
+  "workflow_action": {
+    "name": "Aktion",
+    "openTask": {
+      "label": "Aufgabe eröffnen"
+    },
+    "sendEmail": {
+      "label": "E-Mail senden"
+    },
+    "sendMessage": {
+      "label": "Chat-Nachricht senden"
+    },
+    "esign": {
+      "label": "Signatur einholen"
+    },
+    "requestApproval": {
+      "label": "Freigabe anfordern"
     }
   }
 }

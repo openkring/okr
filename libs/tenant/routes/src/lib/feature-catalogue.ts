@@ -186,6 +186,14 @@ const aoc: BlockRoutes = {
     path: 'workflow/:listId/:contextMenuName',
     canActivate: [isAdminGuard()],
     loadComponent: () => import('@okr/system-workflow-feature').then(m => m.WorkflowRuleList),
+  },
+  // Approvals (spec 2026-08-15). Same fragment, but only `isAuthenticatedGuard`: any member
+  // can BE an approver, and the `decideApproval` callable — not the route — is the
+  // authorisation boundary. The route only decides who may look at the inbox.
+  {
+    path: 'approval/:listId',
+    canActivate: [isAuthenticatedGuard],
+    loadComponent: () => import('@okr/system-workflow-feature').then(m => m.ApprovalList),
   }],
 };
 

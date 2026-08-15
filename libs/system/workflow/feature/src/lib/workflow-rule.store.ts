@@ -105,6 +105,7 @@ export const WorkflowRuleStore = signalStore(
           currentUser: store.currentUser(),
           eventCategory: store.appStore.getCategory('workflow_event'),
           probeCategory: store.appStore.getCategory('workflow_probe'),
+          actionCategory: store.appStore.getCategory('workflow_action'),
           responsibilities: store.responsibilityOptions(),
           allTags: store.appStore.getTags(WorkflowRuleModelName),
           readOnly,

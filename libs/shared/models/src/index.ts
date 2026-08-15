@@ -6,6 +6,7 @@ export * from './lib/address.model';
 export * from './lib/address-directory.model';
 export * from './lib/application.model';
 export * from './lib/app-config.model';
+export * from './lib/approval.model';
 export * from './lib/auth-credentials.model';
 export * from './lib/avatar-info';
 export * from './lib/avatar.model';

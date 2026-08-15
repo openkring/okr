@@ -34,5 +34,43 @@
   "notes": {
     "label": "Notas",
     "placeholder": "Introducir notas"
+  },
+  "action": {
+    "label": "Aktion",
+    "helper": "Was geschieht, wenn die Regel zutrifft."
+  },
+  "actionArg": {
+    "label": "Argument der Aktion",
+    "placeholder": "z.B. skiffPlatz",
+    "helper": "E-Mail: Template · Signatur: Ablagepfad · Freigabe: Art der Freigabe"
+  },
+  "writeBack": {
+    "label": "Rückschreiben",
+    "helper": "Feld, das der Entscheid am Datensatz setzt. Nur freigegebene Kombinationen sind möglich."
+  },
+  "approval": {
+    "kind": {
+      "label": "Art"
+    },
+    "subject": {
+      "label": "Betrifft"
+    },
+    "state": {
+      "label": "Status"
+    },
+    "approver": {
+      "label": "Entscheidet"
+    },
+    "requester": {
+      "label": "Angefragt von"
+    },
+    "decisionDate": {
+      "label": "Entschieden am"
+    },
+    "note": {
+      "label": "Begründung",
+      "placeholder": "Begründung erfassen",
+      "helper": "Bei einer Ablehnung zwingend."
+    }
   }
 }

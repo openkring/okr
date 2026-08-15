@@ -28,7 +28,15 @@ export class WorkflowRuleModel implements OkrModel, NamedModel, SearchableModel,
   public event = '';             // category workflow_event, e.g. 'membership.ended'
   public probe = '';             // '' = always fires; else a name from the probe registry
   public probeArg = '';          // optional single argument, e.g. 'key' | 'locker'
-  public action = 'openTask';    // category workflow_action; v1 has exactly one value
+  public action = 'openTask';    // category workflow_action: openTask | sendEmail | sendMessage | esign | requestApproval
+  // The one variable piece of the chosen action: an email template name, the esign
+  // storage path (with {relatedKey}), or the approval kind. Deliberately ONE string —
+  // a JSON blob here would be an expression language by the back door.
+  public actionArg = '';
+  // 'collection.field' the approval outcome patches, '' = none. Only pairs listed in the
+  // WRITE_BACK table in code are accepted, so a rule can never become a write primitive
+  // over the whole database (spec 2026-08-15 §3.4).
+  public writeBack = '';
   public responsibilityKey = ''; // ResponsibilityModel.okey → who gets the task
   public messageKey = '';        // i18n key for the task name
   public dueInDays = 0;          // 0 = no due date

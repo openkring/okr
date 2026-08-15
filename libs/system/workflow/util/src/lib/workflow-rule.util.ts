@@ -43,6 +43,26 @@ export function probeNeedsArg(probe?: string): boolean {
     .some((entry) => !entry.includes(':') && PROBES_WITH_ARG.includes(entry));
 }
 
+/*-------------------------- actions --------------------------------*/
+/**
+ * Actions that consume `actionArg`. Mirrors the action dispatch in
+ * `apps/functions/src/workflow/engine.ts` — a lib cannot import the functions app.
+ *  - sendEmail: an optional provider template name
+ *  - esign:     the storage path of the document (may contain {relatedKey})
+ *  - requestApproval: the approval kind, e.g. 'skiffPlatz'
+ */
+const ACTIONS_WITH_ARG = ['sendEmail', 'esign', 'requestApproval'];
+
+/** Does this action still need the rule's `actionArg`? */
+export function actionNeedsArg(action?: string): boolean {
+  return ACTIONS_WITH_ARG.includes(action ?? '');
+}
+
+/** Only an approval has an outcome, so only it can patch a record with one. */
+export function isApprovalAction(action?: string): boolean {
+  return (action ?? '') === 'requestApproval';
+}
+
 /*-------------------------- search index --------------------------------*/
 /**
  * Build the search index string for a WorkflowRuleModel.
