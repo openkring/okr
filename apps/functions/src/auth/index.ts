@@ -453,8 +453,22 @@ export const sendEmail = functions.onCall(
       let link: string;
       try {
         link = await getAuth().generatePasswordResetLink(to[0], { url: config.continueUrl });
+        // Firebase Auth has ONE project-wide action-handler URL, so every tenant's link comes
+        // back on that host. Swap in the tenant's own domain — the oobCode is validated against
+        // the project, not the host, and /auth/confirm exists in every app.
+        const url = new URL(link);
+        url.host = config.appDomain;
+        link = url.toString();
       } catch (e: any) {
-        logger.info(`${CF_NAME}: password-reset requested for an address with no account — responding generically (${e?.errorInfo?.code ?? e?.code ?? 'error'})`);
+        // auth/user-not-found is expected (unregistered address); anything else is a real
+        // misconfiguration (e.g. auth/unauthorized-continue-uri = appDomain missing from the
+        // Auth authorized-domains list) that would otherwise be swallowed as a silent success.
+        const code = e?.errorInfo?.code ?? e?.code ?? 'error';
+        if (code === 'auth/user-not-found') {
+          logger.info(`${CF_NAME}: password-reset requested for an address with no account — responding generically`);
+        } else {
+          logger.error(`${CF_NAME}: password-reset link generation FAILED (appId=${appId}, ${code}) — no email sent`);
+        }
         return { success: true };
       }
       from = config.from;
