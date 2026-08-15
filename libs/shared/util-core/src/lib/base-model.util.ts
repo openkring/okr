@@ -10,6 +10,24 @@ export function sortModels(models: OkrModel[], sortCriteria: SortCriteria): OkrM
   }
 }
 
+/* ---------------------- Delete = archive or detach ----------------------*/
+/**
+ * Deleting a model in a tenant must not archive it for the other tenants that share it.
+ * A shared document (e.g. a catalogue `menuItems` doc with `tenants: ['scs', 'kring']`)
+ * is only detached from the current tenant; it stays live everywhere else. Archiving is
+ * correct only when the current tenant is the last one holding it.
+ *
+ * @param tenants the model's current `tenants` array
+ * @param tenantId the tenant performing the delete (`env.tenantId`)
+ * @returns the fields to write: `{ tenants }` when the doc stays alive elsewhere,
+ *          `{ isArchived: true }` when this was the last tenant (or the doc is not shared)
+ */
+export function getDeletePatch(tenants: string[] | undefined, tenantId: string): { tenants: string[] } | { isArchived: true } {
+  const rest = (tenants ?? []).filter(t => t !== tenantId);
+  // rest.length < tenants.length guards a doc that never carried this tenant: archive, as before.
+  return rest.length > 0 && rest.length < (tenants?.length ?? 0) ? { tenants: rest } : { isArchived: true };
+}
+
 /* ---------------------- Index operations -------------------------------*/
 export function addIndexElement(index: string, key: string, value: string | number | boolean): string {
   if (!key || key.length === 0) {

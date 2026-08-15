@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { FormDefinitionCollection, FormDefinitionModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { findByKey, getDeletePatch, getSystemQuery } from '@okr/shared-util-core';
 import { generateFormKey } from '@okr/forms-util';
 
 const PFX = '@forms/feature.';
@@ -76,6 +76,6 @@ export class FormDefinitionService {
   }
 
   public async archive(form: FormDefinitionModel, currentUser?: UserModel): Promise<void> {
-    await this.update({ ...form, isArchived: true }, currentUser);
+    await this.update({ ...form, ...getDeletePatch(form.tenants, this.env.tenantId) }, currentUser);
   }
 }

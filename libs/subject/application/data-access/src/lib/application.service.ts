@@ -11,7 +11,7 @@ import {
   PersonalRelModel, TaskModel, UserModel
 } from '@okr/shared-models';
 import {
-  addWorkDays, getAvatarInfo, getAvatarInfoForCurrentUser,
+  addWorkDays, getAvatarInfo, getAvatarInfoForCurrentUser, getDeletePatch,
   getSystemQuery, getTodayStr, isValidAt
 } from '@okr/shared-util-core';
 import { showToast } from '@okr/shared-util-angular';
@@ -114,7 +114,7 @@ export class ApplicationService {
   }
 
   public async delete(application: ApplicationModel, currentUser?: UserModel): Promise<void> {
-    application.isArchived = true;
+    Object.assign(application, getDeletePatch(application.tenants, this.env.tenantId));
     await this.firestoreService.updateModel<ApplicationModel>(
       ApplicationCollection, application, false, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser
     );

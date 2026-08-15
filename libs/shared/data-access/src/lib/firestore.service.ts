@@ -29,7 +29,7 @@ import { catchError, firstValueFrom, Observable, of, ReplaySubject, share, timer
 
 import { AUTH, ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
-import { debugData, debugMessage, generateRandomString, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
+import { debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 import { I18nService } from "@okr/shared-i18n";
 
@@ -456,6 +456,10 @@ export class FirestoreService {
    * Delete a model.
    * We don't delete models permanently. Instead we archive the models.
    * Admin can permanently delete archived models directly in the database.
+   *
+   * Tenant-aware: a document shared with other tenants (`tenants: ['scs', 'kring']`) is only
+   * detached from the current tenant — archiving it would kill it in the other apps too.
+   * `isArchived` is set only when the current tenant is the last one. See `getDeletePatch`.
    * @param collectionName the name of the Firestore collection to delete the model from
    * @param model the model document to delete
    * @return a promise of the key of the deleted model or undefined if the operation failed
@@ -468,7 +472,7 @@ export class FirestoreService {
     currentUser?: UserModel
   ): Promise<string | undefined> 
   {
-    model.isArchived = true;
+    Object.assign(model, getDeletePatch(model.tenants, this.env.tenantId));
     return await this.updateModel(collectionName, model, false, confirmMessage, errorMessage, currentUser);
   }
 

@@ -103,8 +103,30 @@ service cloud.firestore {
     function tenantCreate() {
       return userExists() && belongsToTenant(request.resource.data);
     }
+    // Deleting a SHARED document in one tenant detaches that tenant instead of archiving
+    // it (FirestoreService.deleteModel / getDeletePatch) — the doc stays live for the
+    // others. That write leaves a document the caller no longer belongs to, which
+    // belongsToTenant(request.resource.data) would deny. Allow exactly that shape:
+    // `tenants` is the ONLY changed field, the new value is the old minus the caller's own
+    // tenant (so nobody can evict a foreign tenant), and at least one tenant survives —
+    // a doc with tenants: [] would be readable by nobody and recoverable by no one, which
+    // is precisely why the last tenant sets isArchived instead.
+    function selfDetach() {
+      return userExists()
+             && belongsToTenant(resource.data)
+             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tenants'])
+             && request.resource.data.tenants == resource.data.tenants.removeAll(callerTenants())
+             && request.resource.data.tenants.size() > 0;
+    }
     function tenantUpdate() {
-      return userExists() && belongsToTenant(resource.data) && belongsToTenant(request.resource.data);
+      return userExists() && belongsToTenant(resource.data)
+             && (belongsToTenant(request.resource.data) || selfDetach());
+    }
+    // For the `allow create, update: if tenantCreateOrDetach()` one-liners: on a create,
+    // tenantCreate() decides and || short-circuits before selfDetach() dereferences the
+    // (null) resource; on an update it is tenantUpdate() minus the redundant recheck.
+    function tenantCreateOrDetach() {
+      return tenantCreate() || selfDetach();
     }
     function tenantDelete() {
       return userExists() && belongsToTenant(resource.data);
@@ -185,12 +207,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
     // CMS content rendered by the anonymous PWA landing — public read.
-    match /pages/{id}           { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
-    match /sections/{id}        { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
+    match /pages/{id}           { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && belongsToTenant(resource.data); }
+    match /sections/{id}        { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && belongsToTenant(resource.data); }
     // menuItems/categories: navigation + select metadata. menuItems is read by the
     // app shell's menu store (ungated); categories are CMS select-lists. Low
     // sensitivity, kept public-readable; writes are content-role gated.
-    match /categories/{id}      { allow read: if true; allow create, update: if isContentManager() && belongsToTenant(request.resource.data); allow delete: if isContentManager() && belongsToTenant(resource.data); }
+    match /categories/{id}      { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && belongsToTenant(resource.data); }
     // Fork-on-edit (feature-building-blocks D-BB-8): a tenant customising a SHARED,
     // catalogue-owned menu doc copies it and then detaches itself from the original. That
     // detach leaves a document the caller no longer belongs to, so the ordinary
@@ -215,7 +237,7 @@ service cloud.firestore {
     // tags/orgs/resources: NOT public. Read only by authenticated tenant members
     // (AppStore loads them post-login). The static websites get any org info via
     // the publicApi CF, never by reading these collections directly. (M-7)
-    match /tags/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /tags/{id}            { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     // orgs: resurrection guard (spec 1.19 Phase 4) — stripped favEmail/favPhone
     // must never reappear on the doc.
     match /orgs/{id} {
@@ -224,7 +246,7 @@ service cloud.firestore {
       allow update: if tenantUpdate() && !request.resource.data.keys().hasAny(['favEmail', 'favPhone']);
       allow delete: if tenantDelete();
     }
-    match /resources/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /resources/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
 
     // ============================================================================
     //  Users — own doc, with role/tenant/personKey escalation blocked. (C-1)
@@ -272,8 +294,8 @@ service cloud.firestore {
     //  Phase 2.
     // ============================================================================
 
-    match /accounting-configs/{id} { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /accounts/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /accounting-configs/{id} { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /accounts/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     // Activities are the audit log. Authenticated tenant members write normal activities.
     // Auth-scope events (login/logout) are logged by ActivityService.logAuth pre-auth or
     // during the post-signIn token-propagation race, i.e. with request.auth == null. Allow
@@ -319,9 +341,9 @@ service cloud.firestore {
     // A plain `userExists()` read is the same exposure the person case already accepted:
     // the doc carries only a storagePath and the bytes are served unsigned from imgix.
     match /avatars/{id}            { allow read: if userExists(); allow create, update: if (isPersonAvatar(id) ? userExists() : tenantCreate()) && canWriteAvatar(id); allow delete: if (isPersonAvatar(id) ? userExists() : tenantDelete()) && canWriteAvatar(id); }
-    match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /calevents/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /comments/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /calevents/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /comments/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     // docs + folders (spec 1.22 — event image folders):
     // members may create docs only into a membersMayUpload folder, as themselves;
     // authors manage their own docs; the folder owner may moderate (delete/update) docs in their folder.
@@ -366,14 +388,14 @@ service cloud.firestore {
         isContentManager()
         || (callerPersonKey() != '' && resource.data.get('ownerKey', '') == callerPersonKey()));
     }
-    match /groups/{id}             { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /i18nTenantOverride/{id} { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /icons/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /invitations/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /locations/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /memberships/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /ownerships/{id}         { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /personal-rels/{id}      { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /groups/{id}             { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /i18nTenantOverride/{id} { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /icons/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /invitations/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /locations/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /memberships/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /ownerships/{id}         { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /personal-rels/{id}      { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     // persons: resurrection guard (spec 1.19 Phase 4) — the stripped PII fields
     // (ssnId/dateOfBirth/dateOfDeath/favEmail/favPhone) must never reappear on the doc.
     // dateOfDeath moved to the 'dod' vault channel; persons keep only the isDeceased flag.
@@ -391,14 +413,14 @@ service cloud.firestore {
     // here: a rules-level group check costs a get() per document read. A tenant member with
     // API access can therefore read another group's minutes — recorded ceiling, not an
     // oversight. Tightening this is the upgrade path named in the spec.
-    match /meetings/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /reservations/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /scs-memberfees/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /tasks/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /transfers/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /trips/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /websiteContent/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
-    match /workrels/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreate(); allow delete: if tenantDelete(); }
+    match /meetings/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /reservations/{id}       { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /scs-memberfees/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /tasks/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /transfers/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /trips/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /websiteContent/{id}     { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    match /workrels/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
 
     // Kiosk device telemetry (battery + heartbeat), document id = the kiosk user's uid.
     // A device may only write its OWN doc; any member of the tenant may read it, admins
@@ -460,22 +482,29 @@ service cloud.firestore {
     // ============================================================================
 
     match /ocr-results/{id} { allow read: if tenantRead(); allow write: if false; }
-    match /ocr-rules/{id}   { allow read: if tenantRead(); allow create, update: if (hasRole('treasurer') || isAdmin()) && belongsToTenant(request.resource.data); allow delete: if (hasRole('treasurer') || isAdmin()) && belongsToTenant(resource.data); }
+    match /ocr-rules/{id}   { allow read: if tenantRead(); allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach(); allow delete: if (hasRole('treasurer') || isAdmin()) && belongsToTenant(resource.data); }
 
     // Reference data that may have an admin authoring UI — allow privileged writes.
-    match /assets/{id}             { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
-    match /asset-categories/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /assets/{id}             { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /asset-categories/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
     // competition-levels keep their full dateOfBirth (SRV admin data) — read is
     // privileged-only (D-P4-3): only the AOC admin console consumes them.
-    match /competition-levels/{id} { allow read: if isPrivileged() && tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
-    match /formDefinitions/{id}    { allow read: if tenantRead(); allow create, update: if isContentManager() && tenantCreate(); allow delete: if isContentManager() && tenantDelete(); }
-    match /periods/{id}            { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
-    match /responsibilities/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
-    match /vat-codes/{id}          { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreate(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /competition-levels/{id} { allow read: if isPrivileged() && tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /formDefinitions/{id}    { allow read: if tenantRead(); allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && tenantDelete(); }
+    match /periods/{id}            { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /responsibilities/{id}   { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
+    match /vat-codes/{id}          { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
     // workflow-rules decide who gets notified about a membership event (spec 1.35).
     // Admin-only writes: a mis-edited rule silently stops a notification. The engine
     // itself runs in a Cloud Function and bypasses these rules.
-    match /workflow-rules/{id}     { allow read: if tenantRead(); allow create, update: if isAdmin() && tenantCreate(); allow delete: if isAdmin() && tenantDelete(); }
+    match /workflow-rules/{id}     { allow read: if tenantRead(); allow create, update: if isAdmin() && tenantCreateOrDetach(); allow delete: if isAdmin() && tenantDelete(); }
+    // approvals carry a decision and who made it — an audit trail (spec 2026-08-15 §3.3).
+    // CF-write-only, like expenses and bookings: decisions go through decideApproval,
+    // which checks the snapshotted approver, or they do not happen.
+    match /approvals/{id}          { allow read: if tenantRead(); allow write: if false; }
+    // the workflow side-effect queue: written by the engine, performed by onWorkflowOutbox.
+    // Readable by admins only — the payload holds recipient addresses.
+    match /workflow-outbox/{id}    { allow read: if isAdmin() && tenantRead(); allow write: if false; }
 
     // ============================================================================
     //  Templates (PDF) — role-gated; converted from dead claim checks to get()-roles.

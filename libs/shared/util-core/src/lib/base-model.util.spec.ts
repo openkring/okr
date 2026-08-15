@@ -1,6 +1,6 @@
 import { OkrModel } from '@okr/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { addIndexElement, sortModels } from './base-model.util';
+import { addIndexElement, getDeletePatch, sortModels } from './base-model.util';
 import { SortCriteria, SortDirection, SortField, sortAscending, sortDescending } from './sort.util';
 
 // Mock the sort.util module
@@ -289,6 +289,22 @@ describe('base-model.util', () => {
 
       index = addIndexElement(index, 'count', 5);
       expect(index).toBe('name:test category:important count:5');
+    });
+  });
+
+  describe('getDeletePatch', () => {
+    it('detaches the tenant when the model is shared with others', () => {
+      expect(getDeletePatch(['scs', 'kring'], 'kring')).toEqual({ tenants: ['scs'] });
+    });
+
+    it('archives when the deleting tenant is the last one', () => {
+      expect(getDeletePatch(['kring'], 'kring')).toEqual({ isArchived: true });
+    });
+
+    it('archives when tenants is empty, missing or does not contain the tenant', () => {
+      expect(getDeletePatch([], 'kring')).toEqual({ isArchived: true });
+      expect(getDeletePatch(undefined, 'kring')).toEqual({ isArchived: true });
+      expect(getDeletePatch(['scs'], 'kring')).toEqual({ isArchived: true });
     });
   });
 });
