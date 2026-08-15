@@ -63,17 +63,18 @@ type AttendanceFilter = AttendanceState | 'all';
         font-weight: 500;
       }
       :host ::ng-deep .fc-button-primary {
-        background-color: #5b9bd5 !important;
-        border-color: #5b9bd5 !important;
-        color: #fff !important;
+        background-color: var(--ion-color-primary) !important;
+        border-color: var(--ion-color-primary) !important;
+        color: var(--ion-color-primary-contrast) !important;
       }
       :host ::ng-deep .fc-button-primary:hover {
-        background-color: #3a82c4 !important;
-        border-color: #3a82c4 !important;
+        background-color: var(--ion-color-primary-shade) !important;
+        border-color: var(--ion-color-primary-shade) !important;
       }
       :host ::ng-deep .fc-button-primary:not(:disabled).fc-button-active {
-        background-color: #1c65a8 !important;
-        border-color: #1c65a8 !important;
+        /* one step darker than :hover — Ionic has no var below -shade */
+        background-color: color-mix(in srgb, var(--ion-color-primary-shade) 85%, black) !important;
+        border-color: color-mix(in srgb, var(--ion-color-primary-shade) 85%, black) !important;
       }
 
       @media (max-width: 600px) {

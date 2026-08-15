@@ -42,21 +42,21 @@ import { PageStore } from './page.store';
   }
 
   .section-wrapper.state-draft {
-    border-color: #3880ff; /* blue */
+    border-color: var(--ion-color-primary);
   }
 
   .section-wrapper.state-inReview {
-    border-color: #ffc409; /* yellow */
+    border-color: var(--ion-color-warning);
   }
 
   .section-wrapper.state-published {
-    border-color: #2dd36f; /* green */
+    border-color: var(--ion-color-success);
   }
 
   .section-wrapper.state-cancelled,
   .section-wrapper.state-decommitted,
   .section-wrapper.state-archived {
-    border-color: #eb445a; /* red */
+    border-color: var(--ion-color-danger);
   }
 
   ion-item.edit-mode {

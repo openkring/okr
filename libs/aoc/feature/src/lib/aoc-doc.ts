@@ -76,7 +76,7 @@ import { AocDocStore, BULK_CREATE_THRESHOLD, StorageFileInfo } from './aoc-doc.s
                        extra cache: ion-icon already dedupes identical srcs process-wide. -->
                   <ion-thumbnail slot="start">
                     @if(isImageOrPdf(doc)) {
-                      <img src="{{ doc.fullPath | thumbnailUrl}}" loading="lazy" decoding="async" />
+                      <img src="{{ doc.fullPath | thumbnailUrl}}" alt="" loading="lazy" decoding="async" />
                     } @else {
                       <ion-icon style="width: 100%; height: 100%;" src="{{ doc.fullPath | fileLogo }}" lazy="true" />
                     }

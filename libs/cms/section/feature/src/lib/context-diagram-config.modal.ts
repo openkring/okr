@@ -1,4 +1,4 @@
-import { Component, computed, inject, Input } from '@angular/core';
+import { Component, computed, inject, input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ModalController, IonContent, IonItem, IonLabel, IonToggle, IonButton, IonFooter, IonToolbar } from '@ionic/angular/standalone';
 
@@ -75,10 +75,10 @@ import { ContextDiagramStore } from './context-diagram-section.store';
     </ion-footer>
   `,
 })
-export class ContextDiagramConfigModal {
+export class ContextDiagramConfigModal implements OnInit {
   protected readonly store = inject(ContextDiagramStore);
-  @Input() config!: ContextDiagramConfig;
-  @Input() currentUser: UserModel | undefined;
+  public readonly config = input.required<ContextDiagramConfig>();
+  public readonly currentUser = input<UserModel | undefined>(undefined);
 
   // mutable copy — edits stay local until confirmed
   protected cfg: ContextDiagramConfig = {
@@ -96,14 +96,12 @@ export class ContextDiagramConfigModal {
 
   protected saveChanges = false;
 
-  protected readonly isMemberAdmin = computed(() => hasRole('memberAdmin', this.currentUser));
+  protected readonly isMemberAdmin = computed(() => hasRole('memberAdmin', this.currentUser()));
 
   private readonly modalController = inject(ModalController);
 
   ngOnInit(): void {
-    if (this.config) {
-      this.cfg = { ...this.config };
-    }
+    this.cfg = { ...this.config() };
   }
 
   protected confirm(): Promise<boolean> {

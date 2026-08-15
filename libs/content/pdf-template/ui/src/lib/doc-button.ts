@@ -1,7 +1,7 @@
 // libs/content/pdf-template/ui/src/lib/doc-button.ts
 import {
-  ChangeDetectionStrategy, Component, computed, EventEmitter, inject,
-  input, Output, signal,
+  ChangeDetectionStrategy, Component, computed, inject,
+  input, output, signal,
 } from '@angular/core';
 import { IonButton, IonIcon, IonSpinner, ModalController, ToastController } from '@ionic/angular/standalone';
 import { firstValueFrom } from 'rxjs';
@@ -65,8 +65,8 @@ export class DocButton {
   public readonly recipientEmail = input<string | undefined>(undefined);
   public readonly recipientName = input<string | undefined>(undefined);
 
-  @Output() public readonly generated = new EventEmitter<GenerateDocumentResponse>();
-  @Output() public readonly errorOccurred = new EventEmitter<Error>();
+  public readonly generated = output<GenerateDocumentResponse>();
+  public readonly errorOccurred = output<Error>();
 
   protected readonly isLoading = signal(false);
   protected readonly labelText = computed(() => this.label() || this.i18n.generate());

@@ -72,6 +72,31 @@ module.exports = [
       //   'prettier/prettier': ['error', {}, { usePrettierrc: true }],
     },
   },
+  // Angular templates. Inline templates are extracted by the Angular processor above, so these
+  // rules cover both `templateUrl` files and the inline `template:` strings this repo uses. This
+  // block MUST stay after nx.configs['flat/javascript'] — that config ends with a fileless block
+  // whose parser would otherwise clobber the template parser and break every inline template.
+  // Only the a11y rules the codebase passes today are on — see UI audit finding 19.
+  ...nx.configs['flat/angular-template'],
+  {
+    files: ['**/*.html'],
+    rules: {
+      '@angular-eslint/template/alt-text': 'error',
+      '@angular-eslint/template/valid-aria': 'error',
+      '@angular-eslint/template/role-has-required-aria': 'error',
+      // Off until UI-audit finding 7 (icon-only buttons without an accessible name) is remediated.
+      // Turning these on today would fail the lint of most feature libs.
+      '@angular-eslint/template/click-events-have-key-events': 'off',
+      '@angular-eslint/template/interactive-supports-focus': 'off',
+      '@angular-eslint/template/elements-content': 'off',
+      '@angular-eslint/template/label-has-associated-control': 'off',
+      '@angular-eslint/template/mouse-events-have-key-events': 'off',
+      '@angular-eslint/template/no-autofocus': 'off',
+      '@angular-eslint/template/no-distracting-elements': 'off',
+      '@angular-eslint/template/table-scope': 'off',
+    },
+  },
+
   {
     ignores: ['node_modules/', 'dist/', 'coverage/', 'apps/*/node_modules/', 'libs/*/dist/', '.angular', '.github', '.idx', '.nx', '.vscode', 'tmp', '**/android', '**/ios', '**/web', '**/test-setup.ts', '**/vite.config.*.timestamp*', '**/vitest.config.*.timestamp*'],
   },

@@ -458,7 +458,7 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
                 @if (roomAvatarUrl(); as avatarUrl) {
                   <div class="details-row">
                     <span class="details-key">{{ store.i18n.chat_avatar() }}</span>
-                    <span class="details-value"><img [src]="avatarUrl" style="width:48px;height:48px;object-fit:cover" /></span>
+                    <span class="details-value"><img [src]="avatarUrl" alt="" style="width:48px;height:48px;object-fit:cover" /></span>
                   </div>
                 }
               </div>
@@ -474,7 +474,7 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
                 @if (memberAvatarUrl(); as avatarUrl) {
                   <div class="details-row">
                     <span class="details-key">{{ store.i18n.chat_avatar() }}</span>
-                    <span class="details-value"><img [src]="avatarUrl" style="width:48px;height:48px;object-fit:cover;border-radius:50%" /></span>
+                    <span class="details-value"><img [src]="avatarUrl" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:50%" /></span>
                   </div>
                 }
               </div>
