@@ -267,6 +267,55 @@ export async function commitChunked(db: Firestore, writes: PendingWrite[]): Prom
 // real concurrency protection, it should cover the shared-parent ops and this one
 // together, not this one alone.
 // ────────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Every menu key reachable from `rootKey` BELOW the root array — i.e. nested one or more
+ * levels deep inside a `sub`/`context` parent — walking `menuItems[]` through `existing`.
+ *
+ * WHY THIS EXISTS. `planRootMenuOp` used to dedupe `addKeys` against the root array ALONE,
+ * so a key the tenant had deliberately nested under a hand-made parent looked "missing" and
+ * was appended to the root on every run. Live example (`scs`, 2026-08): `event-menu-scs`
+ * already contained `calevent-all`/`task-all`/`task-my`/`invitation-all` and `sport-menu`
+ * contained `logbuch`; the first picker save appended all five to the root as well, so each
+ * rendered twice — once where the admin put it, once flat at the bottom. Trimming the root
+ * by hand did not stick: `addKeys` is the FULL desired set, so the next run re-appended them.
+ *
+ * Reachability is the right test because the ONLY thing the root attachment guarantees is
+ * that an enabled block is reachable from the tenant's navigation at all. A nested key
+ * already satisfies that, so appending it adds nothing but a duplicate.
+ *
+ * `existing` is already the tenant-resolved name→doc index (`indexMenuDocsByName`), so this
+ * is a pure in-memory walk — no extra read. `seen` terminates it on the cyclic menu data the
+ * renderer also guards against (`isMenuBlocked`, `libs/cms/menu/util/src/lib/
+ * menu-cycle.util.ts`); a visited set alone is sufficient for termination, so the renderer's
+ * additional depth cap is not duplicated here.
+ *
+ * KNOWN GAP (accepted, not a defect): a key nested under a parent owned by a DISABLED block
+ * counts as reachable here, while `MenuStore.isVisible` hides it at render time — the block
+ * would be enabled but invisible. Rare (it needs a cross-block nesting the admin built by
+ * hand), and «Struktur übernehmen» plus a root trim recovers it. Tighten this to "ancestor
+ * chain's blocks are enabled too" only if it is ever actually observed.
+ */
+export function nestedMenuKeys(rootKey: string, existing: Map<string, MenuItemModel>): Set<string> {
+  const nested = new Set<string>();
+  const seen = new Set<string>([rootKey]);
+
+  // Start BELOW the root: the root's own entries are `kept`/`current` in the caller and must
+  // stay dedupe-able there (a key listed at root is not "nested", it is already attached).
+  const queue = [...(existing.get(rootKey)?.menuItems ?? [])];
+
+  while (queue.length > 0) {
+    const name = queue.shift() as string;
+    if (seen.has(name)) continue;
+    seen.add(name);
+    for (const child of existing.get(name)?.menuItems ?? []) {
+      nested.add(child);
+      queue.push(child);
+    }
+  }
+  return nested;
+}
+
 export function planRootMenuOp(
   tenantId: string,
   existing: Map<string, MenuItemModel>,
@@ -307,7 +356,10 @@ export function planRootMenuOp(
   const removeSet = new Set(removeKeys.filter(k => !wantedAdds.includes(k)));
   const current = doc.menuItems ?? [];
   const kept = current.filter(k => !removeSet.has(k));
-  const missing = wantedAdds.filter(k => !kept.includes(k));
+  // Already reachable one level down under a hand-made parent → attaching it at the root
+  // too would only duplicate the row. See `nestedMenuKeys`.
+  const nested = nestedMenuKeys(key, existing);
+  const missing = wantedAdds.filter(k => !kept.includes(k) && !nested.has(k));
   const menuItems = [...kept, ...missing];
 
   const arrayChanged = menuItems.length !== current.length

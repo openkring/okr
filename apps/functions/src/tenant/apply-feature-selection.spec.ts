@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Firestore } from 'firebase-admin/firestore';
 import {
   applySelection, chunk, commitChunked, computeTransitions,
-  planMenuOpsForBlocks, planRootMenuOp, planSelection, rootNavKeys,
+  nestedMenuKeys, planMenuOpsForBlocks, planRootMenuOp, planSelection, rootNavKeys,
 } from './apply-feature-selection';
 import type { PendingWrite, SelectionPlan } from './apply-feature-selection';
 import type { FeatureBlock, FeatureRollout, MenuSpec } from '@okr/tenant-util';
@@ -313,6 +313,63 @@ describe('planRootMenuOp (root menu attachment — task-8 review round 2)', () =
     expect(planRootMenuOp('p13', existing, [], [])).toBeUndefined();
   });
 
+  it('does NOT append a key the tenant already nested under a hand-made sub-menu (the scs duplicate-row bug)', () => {
+    // Live shape, scs 2026-08: the admin curated `event-menu-scs` and put the calendar/task
+    // entries inside it. Before the dedupe fix, `addKeys` (full desired set) saw them missing
+    // from the ROOT array and appended them, so each rendered twice — and trimming the root
+    // by hand did not stick, because the next run re-appended them.
+    const existing = new Map<string, MenuItemModel>([
+      ['main_p13', rootDoc({ menuItems: ['home', 'event-menu-scs', 'version'] })],
+      ['event-menu-scs', {
+        okey: 'event-menu-scs', name: 'event-menu-scs', action: 'sub',
+        menuItems: ['calevent-all', 'task-all', 'task-my', 'invitation-all'],
+      } as MenuItemModel],
+    ]);
+
+    const op = planRootMenuOp('p13', existing, ['calevent-all', 'task-all'], []);
+
+    expect(op).toBeUndefined(); // nothing to attach — both are already reachable
+  });
+
+  it('still appends a genuinely new block key when a DIFFERENT key is nested', () => {
+    const existing = new Map<string, MenuItemModel>([
+      ['main_p13', rootDoc({ menuItems: ['home', 'event-menu-scs'] })],
+      ['event-menu-scs', {
+        okey: 'event-menu-scs', name: 'event-menu-scs', action: 'sub', menuItems: ['calevent-all'],
+      } as MenuItemModel],
+    ]);
+
+    const op = planRootMenuOp('p13', existing, ['calevent-all', 'aoc-menu'], []);
+
+    // `calevent-all` is nested and skipped; `aoc-menu` is reachable nowhere and is attached.
+    expect(op?.fields.menuItems).toEqual(['home', 'event-menu-scs', 'aoc-menu']);
+  });
+
+  it('dedupes against nesting at any depth, not just one level down', () => {
+    const existing = new Map<string, MenuItemModel>([
+      ['main_p13', rootDoc({ menuItems: ['outer'] })],
+      ['outer', { okey: 'outer', name: 'outer', action: 'sub', menuItems: ['inner'] } as MenuItemModel],
+      ['inner', { okey: 'inner', name: 'inner', action: 'sub', menuItems: ['task-my'] } as MenuItemModel],
+    ]);
+
+    expect(planRootMenuOp('p13', existing, ['task-my'], [])).toBeUndefined();
+  });
+
+  it('a key removed from its nesting parent is attached at the root again on the next run', () => {
+    // The nesting is what suppressed the append; take it away and the block must become
+    // reachable again rather than silently dropping out of the navigation.
+    const existing = new Map<string, MenuItemModel>([
+      ['main_p13', rootDoc({ menuItems: ['home', 'event-menu-scs'] })],
+      ['event-menu-scs', {
+        okey: 'event-menu-scs', name: 'event-menu-scs', action: 'sub', menuItems: [],
+      } as MenuItemModel],
+    ]);
+
+    const op = planRootMenuOp('p13', existing, ['calevent-all'], []);
+
+    expect(op?.fields.menuItems).toEqual(['home', 'event-menu-scs', 'calevent-all']);
+  });
+
   it('self-heals a root doc whose tenants[] ever drifted from exactly [tenantId], without touching menuItems', () => {
     const existing = new Map<string, MenuItemModel>([
       ['main_p13', rootDoc({ tenants: ['p13', 'stray-other-tenant'] })],
@@ -322,6 +379,42 @@ describe('planRootMenuOp (root menu attachment — task-8 review round 2)', () =
 
     expect(op?.fields.tenants).toEqual(['p13']);
     expect(op?.fields.menuItems).toBeUndefined(); // array itself is unchanged, not rewritten
+  });
+});
+
+describe('nestedMenuKeys', () => {
+  it('returns keys below the root only — the root array itself is not "nested"', () => {
+    const existing = new Map<string, MenuItemModel>([
+      ['main_p13', { okey: 'main_p13', name: 'main_p13', menuItems: ['home', 'sub-a'] } as MenuItemModel],
+      ['sub-a', { okey: 'sub-a', name: 'sub-a', menuItems: ['deep'] } as MenuItemModel],
+    ]);
+
+    const nested = nestedMenuKeys('main_p13', existing);
+
+    expect([...nested]).toEqual(['deep']);
+    expect(nested.has('home')).toBe(false);  // root-level, deduped by `kept` instead
+    expect(nested.has('sub-a')).toBe(false);
+  });
+
+  it('terminates on a circular menu reference instead of looping forever', () => {
+    // A → B → A is one bad save away in user-editable menu data; the renderer guards the
+    // same shape via `isMenuBlocked`.
+    const existing = new Map<string, MenuItemModel>([
+      ['main_p13', { okey: 'main_p13', name: 'main_p13', menuItems: ['a'] } as MenuItemModel],
+      ['a', { okey: 'a', name: 'a', menuItems: ['b'] } as MenuItemModel],
+      ['b', { okey: 'b', name: 'b', menuItems: ['a'] } as MenuItemModel],
+    ]);
+
+    expect([...nestedMenuKeys('main_p13', existing)].sort()).toEqual(['a', 'b']);
+  });
+
+  it('is empty for a tenant with no root doc, and for a root whose children are all leaves', () => {
+    expect(nestedMenuKeys('main_p13', new Map()).size).toBe(0);
+    const leavesOnly = new Map<string, MenuItemModel>([
+      ['main_p13', { okey: 'main_p13', name: 'main_p13', menuItems: ['home'] } as MenuItemModel],
+      ['home', { okey: 'home', name: 'home' } as MenuItemModel],  // no menuItems field at all
+    ]);
+    expect(nestedMenuKeys('main_p13', leavesOnly).size).toBe(0);
   });
 });
 
