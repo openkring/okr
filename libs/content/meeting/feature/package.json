@@ -21,6 +21,8 @@
     "@okr/relationship-membership-data-access": "*",
     "@okr/task-data-access": "*",
     "@okr/content-document-data-access": "*",
-    "@okr/content-pdf-template-data-access": "*"
+    "@okr/content-pdf-template-data-access": "*",
+    "@okr/content-pdf-template-feature": "*",
+    "@okr/shared-data-access": "*"
   }
 }

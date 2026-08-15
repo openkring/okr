@@ -19,7 +19,8 @@
     "edit": "Modifica",
     "minutes": "Verbale",
     "delete": "Elimina",
-    "pdf": "Verbale in PDF"
+    "pdf": "Verbale in PDF",
+    "send": "Invia il verbale"
   },
   "changeConfirmation": {
     "ok": "Salva",
@@ -93,5 +94,8 @@
   "pdf": {
     "title": "Verbale",
     "generated": "Creato il"
+  },
+  "send": {
+    "noPdf": "Non esiste ancora un PDF del verbale. Generalo prima."
   }
 }

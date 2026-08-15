@@ -4,16 +4,18 @@ import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, of } from 'rxjs';
 
+import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AgendaItem, DocumentModel, MeetingModel, MeetingModelName, MembershipModel, TaskModel } from '@okr/shared-models';
-import { AlertService } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, debugListLoaded, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
+import { AlertService, EmailEntry } from '@okr/shared-util-angular';
+import { DateFormat, convertDateFormatToString, debugListLoaded, fileName, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
 
 import { MeetingService } from '@okr/content-meeting-data-access';
 import { MEETING_I18N_KEYS, buildMinutesDocument, carryOverAgendaItems, getMeetingRelatedKey, newAttendees, newMeetingModel } from '@okr/content-meeting-util';
 import { DocumentService } from '@okr/content-document-data-access';
 import { DocGenerationService } from '@okr/content-pdf-template-data-access';
+import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { TaskService } from '@okr/task-data-access';
 
@@ -34,6 +36,7 @@ export const MeetingStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     modalController: inject(ModalController),
+    firestoreService: inject(FirestoreService),
     alertService: inject(AlertService),
     meetingService: inject(MeetingService),
     membershipService: inject(MembershipService),
@@ -255,6 +258,36 @@ export const MeetingStore = signalStore(
       } catch (error) {
         store.alertService.error(`MeetingStore.generateMinutesPdf: ${error}`);
       }
+    },
+
+    /**
+     * Hand the minutes PDF to the Serienmail Verteiler (4.65): the attendees become the
+     * bcc list, the org's own address the to. Requires the PDF to exist — generate it first.
+     * @param meeting the meeting whose minutes go out
+     */
+    async sendMinutes(meeting: MeetingModel): Promise<void> {
+      const doc = meeting.minutesDocumentKey
+        ? await firstValueFrom(store.documentService.read(meeting.minutesDocumentKey))
+        : undefined;
+      if (!doc) {
+        store.alertService.error(store.i18n.send_noPdf());
+        return;
+      }
+      const recipients: EmailEntry[] = (meeting.attendees ?? [])
+        .map(a => ({
+          email: store.appStore.getDirectoryEntry(`person.${a.person?.key}`)?.favEmail ?? '',
+          memberKey: a.person?.key ?? '',
+          memberName: `${a.person?.name1 ?? ''} ${a.person?.name2 ?? ''}`.trim(),
+          lastName: a.person?.name2 ?? '',
+        }))
+        .filter(e => !!e.email);
+
+      await openBulkEmailFlow({
+        modalController: store.modalController,
+        firestoreService: store.firestoreService,
+        appStore: store.appStore,
+        tenantId: store.tenantId(),
+      }, recipients, { storagePath: doc.fullPath, filename: fileName(doc.fullPath) });
     },
 
     async delete(meeting?: MeetingModel, readOnly = true): Promise<void> {

@@ -19,7 +19,8 @@
     "edit": "Modifier",
     "minutes": "Procès-verbal",
     "delete": "Supprimer",
-    "pdf": "Procès-verbal en PDF"
+    "pdf": "Procès-verbal en PDF",
+    "send": "Envoyer le procès-verbal"
   },
   "changeConfirmation": {
     "ok": "Enregistrer",
@@ -93,5 +94,8 @@
   "pdf": {
     "title": "Procès-verbal",
     "generated": "Établi le"
+  },
+  "send": {
+    "noPdf": "Aucun PDF du procès-verbal n'existe encore. Veuillez le générer d'abord."
   }
 }

@@ -19,7 +19,8 @@
     "edit": "Bearbeiten",
     "minutes": "Protokoll",
     "delete": "Löschen",
-    "pdf": "Protokoll als PDF"
+    "pdf": "Protokoll als PDF",
+    "send": "Protokoll versenden"
   },
   "changeConfirmation": {
     "ok": "Speichern",
@@ -93,5 +94,8 @@
   "pdf": {
     "title": "Protokoll",
     "generated": "Erstellt am"
+  },
+  "send": {
+    "noPdf": "Es existiert noch kein Protokoll-PDF. Bitte zuerst erzeugen."
   }
 }

@@ -19,7 +19,8 @@
     "edit": "Editar",
     "minutes": "Acta",
     "delete": "Eliminar",
-    "pdf": "Acta en PDF"
+    "pdf": "Acta en PDF",
+    "send": "Enviar el acta"
   },
   "changeConfirmation": {
     "ok": "Guardar",
@@ -93,5 +94,8 @@
   "pdf": {
     "title": "Acta",
     "generated": "Creada el"
+  },
+  "send": {
+    "noPdf": "Todavía no existe un PDF del acta. Genéralo primero."
   }
 }

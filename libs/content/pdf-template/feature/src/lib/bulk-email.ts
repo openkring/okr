@@ -23,8 +23,13 @@ export interface BulkEmailContext {
  *
  * `to` offers the default org's email addresses (favourite preselected), `bcc` the given
  * recipients. Does nothing if the user cancels either modal.
+ * @param attachment an already stored file (storage path + filename) to attach, e.g. a minutes PDF
  */
-export async function openBulkEmailFlow(ctx: BulkEmailContext, recipients: EmailEntry[]): Promise<void> {
+export async function openBulkEmailFlow(
+  ctx: BulkEmailContext,
+  recipients: EmailEntry[],
+  attachment?: { storagePath: string; filename: string },
+): Promise<void> {
   const { orgEmails, favOrgEmail } = await loadOrgEmails(ctx);
 
   const listModal = await ctx.modalController.create({
@@ -41,6 +46,8 @@ export async function openBulkEmailFlow(ctx: BulkEmailContext, recipients: Email
       to: data.to.join(', '),
       cc: data.cc.join(', '),
       bcc: data.bcc.join(', '),
+      storagePath: attachment?.storagePath ?? '',
+      filename: attachment?.filename ?? '',
     },
   });
   await composer.present();

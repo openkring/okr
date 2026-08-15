@@ -19,7 +19,8 @@
     "edit": "Edit",
     "minutes": "Minutes",
     "delete": "Delete",
-    "pdf": "Minutes as PDF"
+    "pdf": "Minutes as PDF",
+    "send": "Send minutes"
   },
   "changeConfirmation": {
     "ok": "Save",
@@ -93,5 +94,8 @@
   "pdf": {
     "title": "Minutes",
     "generated": "Created on"
+  },
+  "send": {
+    "noPdf": "No minutes PDF exists yet. Please generate it first."
   }
 }

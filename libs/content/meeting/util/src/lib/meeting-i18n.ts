@@ -16,6 +16,8 @@ export const MEETING_I18N_KEYS = {
   as_edit:                         PFX + 'actionsheet.edit',
   as_minutes:                      PFX + 'actionsheet.minutes',
   as_pdf:                          PFX + 'actionsheet.pdf',
+  as_send:                         PFX + 'actionsheet.send',
+  send_noPdf:                      PFX + 'send.noPdf',
   as_delete:                       PFX + 'actionsheet.delete',
 
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',

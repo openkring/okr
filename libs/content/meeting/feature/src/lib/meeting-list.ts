@@ -117,17 +117,20 @@ export class MeetingList {
   /*-------------------------- per-item actions --------------------------------*/
   protected async showActions(meeting: MeetingModel): Promise<void> {
     const options = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(options);
+    this.addActionSheetButtons(options, meeting);
     await this.executeActions(options, meeting);
   }
 
-  private addActionSheetButtons(options: ActionSheetOptions): void {
+  private addActionSheetButtons(options: ActionSheetOptions, meeting: MeetingModel): void {
     if (this.readOnly()) {
       options.buttons.push(createActionSheetButton('meeting.view', this.store.i18n.view_label(), this.imgixBaseUrl, 'eye-on'));
     } else {
       options.buttons.push(createActionSheetButton('meeting.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
       options.buttons.push(createActionSheetButton('meeting.minutes', this.store.i18n.as_minutes(), this.imgixBaseUrl, 'document'));
       options.buttons.push(createActionSheetButton('meeting.pdf', this.store.i18n.as_pdf(), this.imgixBaseUrl, 'print'));
+      if (meeting.minutesDocumentKey) {
+        options.buttons.push(createActionSheetButton('meeting.send', this.store.i18n.as_send(), this.imgixBaseUrl, 'email'));
+      }
       if (hasRole('admin', this.currentUser())) {
         options.buttons.push(createActionSheetButton('meeting.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
       }
@@ -148,6 +151,7 @@ export class MeetingList {
       case 'meeting.edit':    await this.store.edit(meeting, this.readOnly()); break;
       case 'meeting.minutes': await this.store.edit(meeting, this.readOnly(), true); break;
       case 'meeting.pdf':     await this.store.generateMinutesPdf(meeting); break;
+      case 'meeting.send':    await this.store.sendMinutes(meeting); break;
       case 'meeting.delete':  await this.store.delete(meeting, this.readOnly()); break;
     }
   }
