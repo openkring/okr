@@ -18,6 +18,9 @@
     "sla": "Échéance"
   },
   "status": {
+    "all": {
+      "label": "Tous"
+    },
     "submitted": {
       "label": "Reçue"
     },

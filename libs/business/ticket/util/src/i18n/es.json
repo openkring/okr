@@ -18,6 +18,9 @@
     "sla": "Plazo"
   },
   "status": {
+    "all": {
+      "label": "Todos"
+    },
     "submitted": {
       "label": "Recibido"
     },

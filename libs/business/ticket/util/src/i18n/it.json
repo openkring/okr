@@ -18,6 +18,9 @@
     "sla": "Scadenza"
   },
   "status": {
+    "all": {
+      "label": "Tutti"
+    },
     "submitted": {
       "label": "Ricevuta"
     },

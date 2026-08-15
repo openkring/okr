@@ -18,6 +18,9 @@
     "sla": "Frist"
   },
   "status": {
+    "all": {
+      "label": "Alle"
+    },
     "submitted": {
       "label": "Eingegangen"
     },

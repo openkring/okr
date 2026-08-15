@@ -18,6 +18,9 @@
     "sla": "Due"
   },
   "status": {
+    "all": {
+      "label": "All"
+    },
     "submitted": {
       "label": "Submitted"
     },
