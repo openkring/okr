@@ -7,7 +7,7 @@ import { ModalController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
 import { getImageDimensionsFromMetadata, showZoomedImage, updateImageDimensions } from '@okr/shared-ui';
-import { getModelAndKey } from '@okr/shared-util-core';
+import { getModelAndKey, warn } from '@okr/shared-util-core';
 import { CategoryItemModel, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 
 import { AvatarService, UploadService } from '@okr/avatar-data-access';
@@ -50,10 +50,11 @@ export const AvatarToolbarStore = signalStore(
     return {
       isLoading: computed(() => state.urlResource.isLoading()),
       imgixBaseUrl: computed(() => state.appStore.services.imgixBaseUrl()),
-      relStorageUrl: computed(() => {
-        const url = state.urlResource.value();
-        return (url && url.length > 0) ? url : getDefaultIcon(state.modelType());
-      }),
+      // The real storage path of the avatar, or '' when the subject has none. Never falls back
+      // to getDefaultIcon(): that returns an ICON NAME ('person'), not a storage path, and
+      // showZoomedImage() below hands this straight to getMetadata() — which then hits
+      // storage.rules on the bare path 'person' and throws storage/unauthorized (SCS-4D).
+      relStorageUrl: computed(() => state.urlResource.value() ?? ''),
       currentUser: computed(() => state.appStore.currentUser()),
     };
   }),
@@ -77,21 +78,25 @@ export const AvatarToolbarStore = signalStore(
       async showZoomedImage(title = 'Avatar'): Promise<void> {
         const path = store.relStorageUrl();
         if (path && path.length > 0) {
-          let dimensions = await getImageDimensionsFromMetadata(path);
+          try {
+            let dimensions = await getImageDimensionsFromMetadata(path);
 
-          // if we can not read the dimensions from the image meta data, calculate them from the image file and upload as metadata to firebase storage
-          if (!dimensions) {
-            dimensions = await updateImageDimensions(path, store.currentUser());
-          }
-          
-          // if we have valid dimensions, show the zoomed image in a modal
-          if (dimensions) {
-            const imageStyle = IMAGE_STYLE_SHAPE;
-            imageStyle.width = dimensions.width;
-            imageStyle.height = dimensions.height;
-            await showZoomedImage(store.modalController, path, title, imageStyle, title);
+            // if we can not read the dimensions from the image meta data, calculate them from the image file and upload as metadata to firebase storage
+            if (!dimensions) {
+              dimensions = await updateImageDimensions(path, store.currentUser());
+            }
 
-
+            // if we have valid dimensions, show the zoomed image in a modal
+            if (dimensions) {
+              const imageStyle = IMAGE_STYLE_SHAPE;
+              imageStyle.width = dimensions.width;
+              imageStyle.height = dimensions.height;
+              await showZoomedImage(store.modalController, path, title, imageStyle, title);
+            }
+          } catch (ex) {
+            // a missing/unreadable object must not surface as an unhandled rejection (the two
+            // call sites in avatar-toolbar.ts are fire-and-forget click handlers)
+            warn(`AvatarToolbarStore.showZoomedImage -> cannot zoom ${path}: ${ex}`);
           }
         }
       },
