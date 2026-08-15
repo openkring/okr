@@ -165,6 +165,28 @@ export class MatrixInitializationService {
           }
         });
 
+        // Close chat banners for rooms that are no longer unread. Nothing else ever closes a
+        // displayed notification (only notificationclick does), so a DM the user already read
+        // or answered — here or on another device — kept sitting in the OS notification centre.
+        // Synapse's clearing push is dropped server-side (matrixPushGateway), so this is the
+        // only signal. Video-call banners are left alone: they ring with requireInteraction.
+        const closeReadNotifications = async () => {
+          if (!('serviceWorker' in navigator)) return;
+          const reg = await navigator.serviceWorker.getRegistration().catch(() => null);
+          if (!reg) return;
+          const unread = new Set(this.matrixChatStore.unreadRooms().map(r => r.roomId));
+          for (const n of await reg.getNotifications()) {
+            const data = n.data as { type?: string; roomId?: string } | undefined;
+            if (data?.type === 'chat' && data.roomId && !unread.has(data.roomId)) n.close();
+          }
+        };
+        runInInjectionContext(this.injector, () =>
+          toObservable(this.matrixChatStore.unreadRooms).subscribe(() => closeReadNotifications())
+        );
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') closeReadNotifications();
+        });
+
         // Keep the PWA app icon badge in sync with the total notification count.
         // This covers the foreground case; the service worker handles the background case.
         //
