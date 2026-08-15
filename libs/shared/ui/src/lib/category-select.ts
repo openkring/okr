@@ -108,7 +108,10 @@ export class CategorySelect {
   });
 
   protected popoverId = `select-cat-${id++}`;
-  protected selectedItem = computed(() => this.items().find(item => item.name === this.selectedItemName()) ?? this.items()[0]);
+  // a missing/unloaded category yields an empty item list (AppStore.getCategory degrades to an
+  // empty CategoryListModel) — fall back to the stored name so the control renders instead of crashing
+  protected selectedItem = computed(() => this.items().find(item => item.name === this.selectedItemName())
+    ?? this.items()[0] ?? new CategoryItemModel(this.selectedItemName() ?? '', ''));
 
   /**
    * Compare two CategoryItemModels.
