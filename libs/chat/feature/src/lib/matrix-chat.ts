@@ -1,4 +1,4 @@
-import { Component, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
@@ -28,7 +28,11 @@ import { ChatHelpModal } from './chat-help.modal';
   styles: [`
     :host {
       display: block;
-      height: 100%;
+      /* iOS does not shrink the layout viewport when the soft keyboard opens, so a plain
+         height:100% leaves the composer's button row hidden behind it (a rotate happened to
+         fix it only because it forced a re-layout). --okr-keyboard-inset is kept in sync with
+         window.visualViewport — see trackKeyboardInset(). */
+      height: calc(100% - var(--okr-keyboard-inset, 0px));
       overflow: hidden;   /* stop browser scroll-into-view from escaping */
     }
 
@@ -513,6 +517,8 @@ import { ChatHelpModal } from './chat-help.modal';
 export class MatrixChat implements OnDestroy {
   protected readonly store = inject(MatrixChatStore);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly hostRef = inject(ElementRef<HTMLElement>);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly alertService = inject(AlertService);
   private actionSheetController = inject(ActionSheetController);
   private readonly modalController = inject(ModalController);
@@ -588,6 +594,8 @@ export class MatrixChat implements OnDestroy {
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
   constructor() {
+    this.trackKeyboardInset();
+
     // Reactively initialize Matrix when matrixUser becomes available.
     // This handles the case where currentUser() is not yet loaded from Firestore
     // when ngOnInit fires (common on iOS where Firestore subscriptions resolve slower).
@@ -759,6 +767,32 @@ export class MatrixChat implements OnDestroy {
     } finally {
       this.isInitializing = false;
     }
+  }
+
+  /**
+   * Keep `--okr-keyboard-inset` on the host equal to the part of the layout viewport that the
+   * on-screen keyboard covers, so the flex column (message list + composer) lays out inside the
+   * visible area instead of underneath the keyboard.
+   *
+   * `window.innerHeight - (visualViewport.height + visualViewport.offsetTop)` is 0 with no
+   * keyboard and equals the keyboard height while it is up. `scroll` matters as well as
+   * `resize`: iOS pans the visual viewport (changing offsetTop) without a resize event.
+   */
+  private trackKeyboardInset(): void {
+    if (!isBrowser(this.platformId) || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const host = this.hostRef.nativeElement;
+    const update = () => {
+      const inset = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+      host.style.setProperty('--okr-keyboard-inset', `${Math.round(inset)}px`);
+    };
+    update();
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    this.destroyRef.onDestroy(() => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    });
   }
 
   ngOnDestroy() {
