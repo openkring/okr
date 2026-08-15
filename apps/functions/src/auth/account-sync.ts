@@ -29,7 +29,7 @@ import { getUserIndex } from '@okr/user-util';
 
 import { runWorkflow } from '../workflow';
 
-import { decideAccountAction, MembershipDoc, shiftDaysBack } from './account-sync.decide';
+import { decideAccountAction, MembershipDoc, relLogAbbrs, shiftDaysBack } from './account-sync.decide';
 
 const CF_NAME = 'accountSync';
 
@@ -216,6 +216,7 @@ async function emitMembershipEvent(
   today: string,
 ): Promise<void> {
   if (!m?.memberKey) return;
+  const abbrs = relLogAbbrs(m);
   await runWorkflow({
     tenantId,
     event,
@@ -223,6 +224,8 @@ async function emitMembershipEvent(
     relatedKey: `membership.${membershipId}`,
     subjectName: `${m.memberName1 ?? ''} ${m.memberName2 ?? ''}`.trim(),
     subjectCategory: m.category ?? '',
+    categoryAbbr: abbrs.at(-1) ?? '',
+    previousAbbr: abbrs.length > 1 ? (abbrs.at(-2) ?? '') : '',
     today,
   });
 }
@@ -263,7 +266,16 @@ export const onMembershipAccountSync = onDocumentWritten(
       //    because this function has already computed before/after, the tenant and the
       //    active-state transition — one definition of "ended", not two.
       const membershipId = event.params.membershipId;
-      if (action === 'open') await emitMembershipEvent('membership.created', after ?? before, membershipId, tenantId, today);
+      if (action === 'open') {
+        // A successor membership (relLog with a history) is a category change, not an
+        // entry — the UI never edits `category` in place, it ends one document and
+        // creates the next, so this is the ONLY write a categoryChanged rule can see.
+        const isSuccessor = relLogAbbrs(after).length > 1;
+        await emitMembershipEvent(
+          isSuccessor ? 'membership.categoryChanged' : 'membership.created',
+          after ?? before, membershipId, tenantId, today,
+        );
+      }
       if (action === 'close') await emitMembershipEvent('membership.ended', after ?? before, membershipId, tenantId, today);
       if (action === 'none' && before && after && (before.category ?? '') !== (after.category ?? '')) {
         await emitMembershipEvent('membership.categoryChanged', after, membershipId, tenantId, today);
@@ -300,6 +312,7 @@ export const sweepExpiredMemberships = onSchedule(
       try {
         if (m.memberModelType !== 'person') continue;
         if (isActiveMembership(m, today)) continue; // not expired after all
+        if (m.relIsLast === false) continue;        // superseded by a category change, not an exit
         const tenantId = await resolveDefaultOrgTenant(m);
         if (!tenantId) continue;
         await closeAccount(m.memberKey, tenantId);

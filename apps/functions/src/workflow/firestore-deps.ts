@@ -47,7 +47,7 @@ export function splitMessageKey(messageKey: string): { module: string; key: stri
  * German only — a task name is written once, for one assignee, and every tenant today
  * runs on the default language.
  */
-async function translate(tenantId: string, messageKey: string, subjectName: string): Promise<string> {
+async function translate(tenantId: string, messageKey: string, params: Record<string, string>): Promise<string> {
   if (!messageKey) return '';
   const db = getFirestore();
   const { module, key } = splitMessageKey(messageKey);
@@ -62,8 +62,9 @@ async function translate(tenantId: string, messageKey: string, subjectName: stri
 
   const text = (await read('i18nTenantOverride', ['tenantId', tenantId])) || (await read('i18nDefault')) || messageKey;
   // single braces: translateAll()/Transloco would consume {{…}} params before this text
-  // ever reaches the engine (see the i18n skill), so the placeholder is {name}.
-  return text.replace(/\{name\}/g, subjectName);
+  // ever reaches the engine (see the i18n skill), so the placeholders are {name},
+  // {category}, {fromCategory}. An unknown placeholder is left standing, not blanked.
+  return text.replaceAll(/\{(\w+)\}/g, (match, key: string) => params[key] ?? match);
 }
 
 /** AvatarInfo for a user document (the tenant-admin fallback). */

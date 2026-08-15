@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decideAccountAction, MembershipDoc, shiftDaysBack } from './account-sync.decide';
+import { decideAccountAction, MembershipDoc, relLogAbbrs, shiftDaysBack } from './account-sync.decide';
 
 const TENANT = 'scs';
 const TODAY = '20260812';
@@ -61,9 +61,34 @@ describe('decideAccountAction', () => {
     expect(decideAccountAction(active(), active({ memberKey: 'p1' }), TENANT, TODAY)).toBe('none');
   });
 
+  it('is none when the membership is superseded by a category change', () => {
+    const superseded = active({ dateOfExit: '20260811', relIsLast: false });
+    expect(decideAccountAction(active(), superseded, TENANT, TODAY)).toBe('none');
+  });
+
+  it('still closes a real exit (relIsLast stays true)', () => {
+    const ended = active({ dateOfExit: '20260811', relIsLast: true });
+    expect(decideAccountAction(active(), ended, TENANT, TODAY)).toBe('close');
+  });
+
   it('is none when both sides are inactive', () => {
     const ended = active({ dateOfExit: '20250101' });
     expect(decideAccountAction(ended, ended, TENANT, TODAY)).toBe('none');
+  });
+});
+
+describe('relLogAbbrs', () => {
+  it('reads the whole history, oldest first', () => {
+    expect(relLogAbbrs({ ...active(), relLog: '20190101:A,20260814:P' })).toEqual(['A', 'P']);
+  });
+
+  it('a single entry means an entry, not a category change', () => {
+    expect(relLogAbbrs({ ...active(), relLog: '20260814:A1' })).toEqual(['A1']);
+  });
+
+  it('tolerates a missing or malformed relLog', () => {
+    expect(relLogAbbrs(active())).toEqual([]);
+    expect(relLogAbbrs({ ...active(), relLog: '20260814' })).toEqual([]);
   });
 });
 

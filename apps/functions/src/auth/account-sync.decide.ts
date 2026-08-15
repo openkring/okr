@@ -21,6 +21,22 @@ export interface MembershipDoc {
   category?: string;
   memberName1?: string;
   memberName2?: string;
+  // a category change ends the old membership with relIsLast = false and creates a
+  // successor carrying the whole relLog ('20190101:A,20260814:P')
+  relIsLast?: boolean;
+  relLog?: string;
+}
+
+/**
+ * The category abbreviations of a relLog, oldest first: '20190101:A,20260814:P' → ['A', 'P'].
+ * More than one entry means this membership succeeds an earlier one — i.e. it was created
+ * by a category change, not by someone joining.
+ */
+export function relLogAbbrs(m: MembershipDoc | undefined): string[] {
+  return (m?.relLog ?? '')
+    .split(',')
+    .map((entry) => entry.split(':')[1]?.trim() ?? '')
+    .filter((abbr) => abbr.length > 0);
 }
 
 export type AccountAction = 'open' | 'close' | 'none';
@@ -52,6 +68,12 @@ export function decideAccountAction(
 ): AccountAction {
   const had = qualifies(before, tenantId, today);
   const has = qualifies(after, tenantId, today);
+  // A category change ends the old membership and creates a successor
+  // (membership.service.ts:111-122). Closing here would delete the member's user
+  // document — and with it their Matrix group memberships — only for the successor's
+  // write to re-open the account seconds later under a new uid. relIsLast = false says
+  // "superseded", so this is not an exit.
+  if (had && !has && after?.relIsLast === false) return 'none';
   if (!had && has) return 'open';
   if (had && !has) return 'close';
   return 'none';

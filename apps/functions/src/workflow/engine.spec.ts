@@ -16,6 +16,8 @@ function ctx(overrides: Partial<WorkflowContext> = {}): WorkflowContext {
     relatedKey: 'membership.m1',
     subjectName: 'Anna Muster',
     subjectCategory: 'a',
+    categoryAbbr: 'P',
+    previousAbbr: 'A',
     today: TODAY,
     ...overrides,
   };
@@ -56,7 +58,7 @@ function fakeDeps(over: Partial<{
     tenantAdmin: async () => over.tenantAdmin,
     hasOpenTask: async () => over.openTask ?? false,
     createTask: async (t) => { tasks.push(t); },
-    translate: async (_t, key, name) => `${key}|${name}`,
+    translate: async (_t, key, params) => `${key}|${params['name']}|${params['fromCategory']}->${params['category']}`,
     logActivity: async (_t, payload) => { activities.push(payload); },
   };
 }
@@ -184,7 +186,7 @@ describe('runWorkflowWith', () => {
     const deps = fakeDeps({ rules: [rule()], responsibility: { responsibleAvatar: avatar('resp') } });
     await runWorkflowWith(ctx(), deps);
     expect(deps.tasks).toEqual([{
-      tenantId: TENANT, name: '@x.y|Anna Muster', assignee: avatar('resp'),
+      tenantId: TENANT, name: '@x.y|Anna Muster|A->P', assignee: avatar('resp'),
       dueInDays: 0, relatedModelType: 'membership', relatedKey: 'membership.m1',
     }]);
   });
@@ -223,7 +225,7 @@ describe('runWorkflowWith', () => {
       rule({ okey: 'boom', order: 1, responsibilityKey: 'boom' }),
     ];
     await runWorkflowWith(ctx(), deps);
-    expect(deps.tasks.map((t) => t.name)).toEqual(['@second|Anna Muster']);
+    expect(deps.tasks.map((t) => t.name)).toEqual(['@second|Anna Muster|A->P']);
     expect(deps.activities[0]['error']).toBe('nope');
   });
 

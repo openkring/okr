@@ -16,6 +16,8 @@ export interface WorkflowContext {
   relatedKey: string;         // '<modelType>.<okey>', prefixed per the addresses parentKey convention
   subjectName: string;        // e.g. 'Anna Muster' — filled into the {name} placeholder of the message
   subjectCategory: string;    // the membership category AFTER the event ('' for non-membership events)
+  categoryAbbr: string;       // its abbreviation from relLog, e.g. 'A1' — the {category} placeholder
+  previousAbbr: string;       // the abbreviation before the change, e.g. 'A' — the {fromCategory} placeholder
   today: string;              // StoreDate (yyyyMMdd); a parameter so the engine has no clock
 }
 
@@ -79,7 +81,7 @@ export interface WorkflowDeps {
   /** a non-done, non-archived task with the same relatedKey and assignee already exists */
   hasOpenTask(relatedKey: string, assigneeKey: string, tenantId: string): Promise<boolean>;
   createTask(task: NewTask): Promise<void>;
-  /** i18nTenantOverride → i18nDefault; `{name}` is replaced with subjectName */
-  translate(tenantId: string, messageKey: string, subjectName: string): Promise<string>;
+  /** i18nTenantOverride → i18nDefault; `{placeholder}`s are filled from params */
+  translate(tenantId: string, messageKey: string, params: Record<string, string>): Promise<string>;
   logActivity(tenantId: string, payload: Record<string, unknown>): Promise<void>;
 }

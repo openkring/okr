@@ -151,7 +151,11 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
     return;
   }
 
-  const name = await deps.translate(ctx.tenantId, rule.messageKey ?? '', ctx.subjectName);
+  const name = await deps.translate(ctx.tenantId, rule.messageKey ?? '', {
+    name: ctx.subjectName,
+    category: ctx.categoryAbbr,
+    fromCategory: ctx.previousAbbr,
+  });
   await deps.createTask({
     tenantId: ctx.tenantId,
     name,
