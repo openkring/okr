@@ -38,7 +38,9 @@ export const AccountingStore = signalStore(
   })),
   withComputed(store => ({
     config: computed(() => store.configResource.value()),
-    isExternallyManaged: computed(() => store.configResource.value()?.accountingBackend !== 'native'),
+    // Absent/loading config means "not known to be external" — default native, same coalesce as the
+    // OCR trigger. Without the ?? every page renders read-only until the config resolves.
+    isExternallyManaged: computed(() => (store.configResource.value()?.accountingBackend ?? 'native') !== 'native'),
     currentUser: computed(() => store.appStore.currentUser()),
     tenantId: computed(() => store.appStore.tenantId()),
   })),
