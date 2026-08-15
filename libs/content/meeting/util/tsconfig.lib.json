@@ -21,6 +21,7 @@
     "vite.config.ts"
   ],
   "references": [
+    { "path": "../../../security/processing/util/tsconfig.lib.json" },
     { "path": "../../../shared/constants/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },
     { "path": "../../../shared/util-core/tsconfig.lib.json" }

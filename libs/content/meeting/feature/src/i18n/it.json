@@ -18,7 +18,8 @@
   "actionsheet": {
     "edit": "Modifica",
     "minutes": "Verbale",
-    "delete": "Elimina"
+    "delete": "Elimina",
+    "pdf": "Verbale in PDF"
   },
   "changeConfirmation": {
     "ok": "Salva",
@@ -88,5 +89,9 @@
       "invited": "invitato"
     },
     "presentCount": "Presenti"
+  },
+  "pdf": {
+    "title": "Verbale",
+    "generated": "Creato il"
   }
 }

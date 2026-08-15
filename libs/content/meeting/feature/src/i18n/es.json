@@ -18,7 +18,8 @@
   "actionsheet": {
     "edit": "Editar",
     "minutes": "Acta",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "pdf": "Acta en PDF"
   },
   "changeConfirmation": {
     "ok": "Guardar",
@@ -88,5 +89,9 @@
       "invited": "invitado"
     },
     "presentCount": "Presentes"
+  },
+  "pdf": {
+    "title": "Acta",
+    "generated": "Creada el"
   }
 }

@@ -127,6 +127,7 @@ export class MeetingList {
     } else {
       options.buttons.push(createActionSheetButton('meeting.edit', this.store.i18n.as_edit(), this.imgixBaseUrl, 'edit'));
       options.buttons.push(createActionSheetButton('meeting.minutes', this.store.i18n.as_minutes(), this.imgixBaseUrl, 'document'));
+      options.buttons.push(createActionSheetButton('meeting.pdf', this.store.i18n.as_pdf(), this.imgixBaseUrl, 'print'));
       if (hasRole('admin', this.currentUser())) {
         options.buttons.push(createActionSheetButton('meeting.delete', this.store.i18n.as_delete(), this.imgixBaseUrl, 'trash'));
       }
@@ -146,6 +147,7 @@ export class MeetingList {
       case 'meeting.view':    await this.store.edit(meeting, true); break;
       case 'meeting.edit':    await this.store.edit(meeting, this.readOnly()); break;
       case 'meeting.minutes': await this.store.edit(meeting, this.readOnly(), true); break;
+      case 'meeting.pdf':     await this.store.generateMinutesPdf(meeting); break;
       case 'meeting.delete':  await this.store.delete(meeting, this.readOnly()); break;
     }
   }

@@ -15,6 +15,7 @@ export const MEETING_I18N_KEYS = {
 
   as_edit:                         PFX + 'actionsheet.edit',
   as_minutes:                      PFX + 'actionsheet.minutes',
+  as_pdf:                          PFX + 'actionsheet.pdf',
   as_delete:                       PFX + 'actionsheet.delete',
 
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
@@ -62,6 +63,10 @@ export const MEETING_I18N_KEYS = {
   attendees_absent:                PFX + 'attendees.state.absent',
   attendees_invited:               PFX + 'attendees.state.invited',
   attendees_presentCount:          PFX + 'attendees.presentCount',
+
+  // minutes PDF
+  pdf_title:                       PFX + 'pdf.title',
+  pdf_generated:                   PFX + 'pdf.generated',
 } satisfies Record<string, string>;
 
 export type MeetingI18n = { [K in keyof typeof MEETING_I18N_KEYS]: Signal<string> };

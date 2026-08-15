@@ -18,7 +18,8 @@
   "actionsheet": {
     "edit": "Modifier",
     "minutes": "Procès-verbal",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "pdf": "Procès-verbal en PDF"
   },
   "changeConfirmation": {
     "ok": "Enregistrer",
@@ -88,5 +89,9 @@
       "invited": "invité"
     },
     "presentCount": "Présents"
+  },
+  "pdf": {
+    "title": "Procès-verbal",
+    "generated": "Établi le"
   }
 }

@@ -18,7 +18,8 @@
   "actionsheet": {
     "edit": "Bearbeiten",
     "minutes": "Protokoll",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "pdf": "Protokoll als PDF"
   },
   "changeConfirmation": {
     "ok": "Speichern",
@@ -88,5 +89,9 @@
       "invited": "eingeladen"
     },
     "presentCount": "Anwesend"
+  },
+  "pdf": {
+    "title": "Protokoll",
+    "generated": "Erstellt am"
   }
 }

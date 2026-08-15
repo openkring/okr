@@ -18,7 +18,8 @@
   "actionsheet": {
     "edit": "Edit",
     "minutes": "Minutes",
-    "delete": "Delete"
+    "delete": "Delete",
+    "pdf": "Minutes as PDF"
   },
   "changeConfirmation": {
     "ok": "Save",
@@ -88,5 +89,9 @@
       "invited": "invited"
     },
     "presentCount": "Present"
+  },
+  "pdf": {
+    "title": "Minutes",
+    "generated": "Created on"
   }
 }

@@ -6,12 +6,14 @@ import { firstValueFrom, of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AgendaItem, MeetingModel, MeetingModelName, MembershipModel, TaskModel } from '@okr/shared-models';
+import { AgendaItem, DocumentModel, MeetingModel, MeetingModelName, MembershipModel, TaskModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
-import { debugListLoaded, hasRole, nameMatches } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, debugListLoaded, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
 
 import { MeetingService } from '@okr/content-meeting-data-access';
-import { MEETING_I18N_KEYS, carryOverAgendaItems, getMeetingRelatedKey, newAttendees, newMeetingModel } from '@okr/content-meeting-util';
+import { MEETING_I18N_KEYS, buildMinutesDocument, carryOverAgendaItems, getMeetingRelatedKey, newAttendees, newMeetingModel } from '@okr/content-meeting-util';
+import { DocumentService } from '@okr/content-document-data-access';
+import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { TaskService } from '@okr/task-data-access';
 
@@ -36,6 +38,8 @@ export const MeetingStore = signalStore(
     meetingService: inject(MeetingService),
     membershipService: inject(MembershipService),
     taskService: inject(TaskService),
+    documentService: inject(DocumentService),
+    docGenerationService: inject(DocGenerationService),
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
@@ -187,6 +191,70 @@ export const MeetingStore = signalStore(
       task.relatedModelType = MeetingModelName;
       task.relatedKey = getMeetingRelatedKey(meetingKey);
       await store.taskService.create(task, store.currentUser());
+    },
+
+    /**
+     * Render the minutes to PDF and file the result as a document.
+     *
+     * The HTML goes to the same `generateDocument` callable the privacy report uses; no
+     * TemplateModel is involved, so no tenant has to author one before the board can print
+     * its first minutes. The generated file is registered in `docs` and referenced by
+     * `minutesDocumentKey`, which is what a later Serienmail step (2.96) hands to the Verteiler.
+     * @param meeting the meeting to print
+     */
+    async generateMinutesPdf(meeting: MeetingModel): Promise<void> {
+      try {
+        const html = buildMinutesDocument(meeting, {
+          tenantName: store.appStore.appConfig().appName,
+          meetingDate: convertDateFormatToString(meeting.meetingDate, DateFormat.StoreDate, DateFormat.ViewDate, false),
+          generatedOn: convertDateFormatToString(getTodayStr(), DateFormat.StoreDate, DateFormat.ViewDate, false),
+          labels: {
+            title: store.i18n.pdf_title(),
+            date: store.i18n.meetingDate_label(),
+            location: store.i18n.locationKey_label(),
+            attendees: store.i18n.attendees_title(),
+            present: store.i18n.attendees_present(),
+            excused: store.i18n.attendees_excused(),
+            absent: store.i18n.attendees_absent(),
+            invited: store.i18n.attendees_invited(),
+            agenda: store.i18n.agenda_title(),
+            minutes: store.i18n.agenda_minutes_label(),
+            decision: store.i18n.agenda_decision_label(),
+            generated: store.i18n.pdf_generated(),
+          },
+        });
+
+        const generated = await store.docGenerationService.generate({
+          html,
+          options: {
+            storageMode: 'persist',
+            filename: `${store.i18n.pdf_title()}-${meeting.meetingDate}.pdf`,
+            metadata: { entityType: MeetingModelName, entityId: meeting.okey },
+          },
+        });
+
+        // File it, so the minutes live in the document list rather than only in the
+        // generation audit trail. The signed url of the response expires after an hour;
+        // the DocumentModel keeps the storage path, which does not.
+        const doc = new DocumentModel(store.tenantId());
+        doc.fullPath = generated.storagePath;
+        doc.description = `${store.i18n.pdf_title()} ${meeting.name}`;
+        doc.mimeType = 'application/pdf';
+        doc.size = generated.sizeBytes;
+        doc.url = generated.url;
+        doc.dateOfDocCreation = getTodayStr();
+        doc.dateOfDocLastUpdate = getTodayStr();
+        const docKey = await store.documentService.create(doc, store.currentUser());
+        if (docKey) {
+          meeting.minutesDocumentKey = docKey;
+          await this.save(meeting);
+          this.reload();
+        }
+
+        window.open(generated.url, '_blank');
+      } catch (error) {
+        store.alertService.error(`MeetingStore.generateMinutesPdf: ${error}`);
+      }
     },
 
     async delete(meeting?: MeetingModel, readOnly = true): Promise<void> {
