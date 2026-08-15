@@ -119,10 +119,10 @@ import { TaskMove, TaskStore } from './task.store';
           <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
-            @for(task of filteredTasks(); track $index) {
+            @for(task of filteredTasks(); track task.okey) {
               <ion-item>
                 <ion-icon src="{{ getIcon(task) | svgIcon }}"  (click)="toggleCompleted(task)" />
-                @if(task.assignee !== undefined) {
+                @if(task.assignee) {
                   <ion-avatar>
                     <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar of the assigned person" />
                   </ion-avatar>

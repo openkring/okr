@@ -76,7 +76,7 @@ import { TaskMove, TaskStore } from './task.store';
                        (click)="taskSelected.emit(task)">
                     <ion-label class="card-name">{{ task.name }}</ion-label>
                     <div class="card-meta">
-                      @if(task.assignee !== undefined) {
+                      @if(task.assignee) {
                         <ion-avatar>
                           <ion-img src="{{ task.assignee.modelType + '.' + task.assignee.key | avatar }}" alt="Avatar" />
                         </ion-avatar>
