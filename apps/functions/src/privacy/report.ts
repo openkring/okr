@@ -107,6 +107,10 @@ export const COLLECTION_LABELS: Record<string, string> = {
 
   // — authored content —
   tasks: 'Aufgaben',
+  meetings: 'Sitzungen', // libs/content/meeting/feature/src/i18n/de.json: plural
+  // The approval inbox's own list title (libs/system/workflow/feature/src/i18n/de.json);
+  // the export row is the decision asked of or caused by the member, not the rule.
+  approvals: 'Freigaben',
   comments: 'Kommentare',
   docs: 'Dokumente',
   documents: 'Dokumente',

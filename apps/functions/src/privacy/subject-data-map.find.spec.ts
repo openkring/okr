@@ -189,7 +189,7 @@ describe('find() query shapes', () => {
   it('bounds every scan row by the tenant or by the section type', () => {
     // N3: tenantScope is a POST-filter, so a scan row without a tenant leg in the query
     // reads every tenant's documents off the server before anything is discarded.
-    for (const c of ['groups', 'calevents', 'trips', 'transfers', 'applications', 'activities']) {
+    for (const c of ['groups', 'calevents', 'trips', 'transfers', 'applications', 'activities', 'meetings']) {
       const r = record(c);
       expect(valueOf(r, 'tenants'), `${c} scans cross-tenant`).toBe(CTX.tenantId);
       expect(r.predicates.find((p) => p.field === 'tenants')?.op).toBe('array-contains');
@@ -210,7 +210,7 @@ describe('find() query shapes', () => {
   });
 
   it('declares every scan row as inQuery so resolveDocs does not double-filter', () => {
-    for (const c of ['groups', 'calevents', 'trips', 'transfers', 'applications', 'activities']) {
+    for (const c of ['groups', 'calevents', 'trips', 'transfers', 'applications', 'activities', 'meetings']) {
       const e = SUBJECT_DATA_MAP.find((x) => x.collection === c);
       expect(e?.tenantScope, `${c} bounds by tenant in the query but claims otherwise`).toBe('inQuery');
     }

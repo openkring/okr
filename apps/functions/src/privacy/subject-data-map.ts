@@ -83,6 +83,20 @@ function avatarArrayHolds(doc: DocumentSnapshot, field: string, personKey: strin
 }
 
 /**
+ * The same question for an array of WRAPPERS around an `AvatarInfo` — `attendees[].person`,
+ * `agenda[].owner`. `avatarArrayHolds` cannot answer it: the element is not the avatar, it
+ * is a record that carries one alongside its own fields (an attendance state, an agenda item).
+ */
+function nestedAvatarArrayHolds(doc: DocumentSnapshot, field: string, prop: string, personKey: string): boolean {
+  if (!personKey) return false;
+  const list = doc.get(field) as Record<string, AvatarInfo | undefined>[] | undefined;
+  return Array.isArray(list) && list.some((el) => {
+    const avatar = el?.[prop];
+    return avatar?.key === personKey && (avatar?.modelType ?? 'person') === 'person';
+  });
+}
+
+/**
  * `blocksTiers: ['T1', 'T3']` — an unpaid record needs the debtor reachable (contract
  * tier) and the accounting record intact (retention tier). It says nothing about the
  * member's avatar or their voluntarily shared birthday, which stay erasable on demand.
@@ -620,6 +634,54 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     indexFields: { title: 'name', date: 'dueDate', route: '/task' },
     onErasure: 'anonymize',       // the task stays, the name does not
     anonymizeFields: ['author.key', 'author.name1', 'author.name2', 'assignee.key', 'assignee.name1', 'assignee.name2'],
+    retention: CLUB_RECORD,
+  },
+  {
+    collection: 'meetings',
+    dataClass: 'content',
+    tier: 'T4',            // Vereinsdokumentation — the minutes are the association's record
+    onTenantExit: 'retain',   // the protocol stays with the association, unchanged
+    // Every subject link is an embedded avatar and none of them is queryable:
+    // `attendees[].person` and `agenda[].owner` sit inside arrays, `chair`/`secretary`
+    // inside maps. Hence the tenant scan plus `matches`, as on `groups`.
+    find: (c: SubjectCtx) => db().collection('meetings').where('tenants', 'array-contains', c.tenantId),
+    tenantScope: 'inQuery',
+    matches: (doc, c) => nestedAvatarArrayHolds(doc, 'attendees', 'person', c.personKey)
+      || nestedAvatarArrayHolds(doc, 'agenda', 'owner', c.personKey)
+      || doc.get('chair.key') === c.personKey
+      || doc.get('secretary.key') === c.personKey,
+    onExport: 'index',
+    indexFields: { title: 'name', date: 'meetingDate', route: '/meeting' },
+    // A genuine 'retain', not a convenience one: minutes are the association's record of
+    // what a body decided and who was in the room when it did. Editing a past protocol —
+    // whether by dropping an attendee or by replacing their name with a pseudonym —
+    // changes the account of a meeting that already happened, and the quorum, the
+    // Ausstandsregeln and every decision rest on exactly that account. So the erasure
+    // leaves meetings untouched and the export tells the member so.
+    onErasure: 'retain',
+    retention: CLUB_RECORD,
+  },
+  {
+    collection: 'approvals',
+    dataClass: 'content',
+    tier: 'T4',            // the internal control trail of who decided what — legitimate interest
+    onTenantExit: 'anonymize',
+    // Both parties are flat embedded avatars, so the OR query is exact — same shape as `tasks`.
+    find: (c: SubjectCtx) => db().collection('approvals').where(Filter.or(
+      Filter.where('approver.key', '==', c.personKey),
+      Filter.where('requestedBy.key', '==', c.personKey),
+    )),
+    tenantScope: 'tenantsArray',
+    onExport: 'index',
+    indexFields: { title: 'subjectName', date: 'decisionDate', route: '/approval' },
+    onErasure: 'anonymize',   // the decision stays and stays attributable to *someone*
+    anonymizeFields: [
+      'approver.key', 'approver.name1', 'approver.name2',
+      'requestedBy.key', 'requestedBy.name1', 'requestedBy.name2',
+    ],
+    // Deliberately no blocker for a pending approval assigned to the subject. It stalls the
+    // workflow, but that is an operational problem with a documented remedy (withdraw and
+    // re-request, approval.model.ts), not a legal reason to refuse an erasure.
     retention: CLUB_RECORD,
   },
   {
