@@ -68,6 +68,9 @@ async function whoami(token: string): Promise<string> {
  *
  * `power_level_content_override` is what makes it one-way: the bot keeps 100, everyone
  * else defaults to 0, and sending needs 50.
+ *
+ * No `m.room.encryption` in `initial_state`, and that is deliberate — see
+ * `sendBotDirectMessage`. The 1.33 cutover pass must skip these rooms.
  */
 async function ensureDirectRoom(botUserId: string, matrixUserId: string, token: string): Promise<string> {
   const direct = await readDirectRooms(botUserId, token);
@@ -103,6 +106,13 @@ async function ensureDirectRoom(botUserId: string, matrixUserId: string, token: 
  *
  * `txnId` is deterministic per (rule, event, subject), so a retried invocation is deduped
  * by Synapse. A genuinely re-fired event days later is NOT covered.
+ *
+ * ⚠️ `body` MUST stay pointer-only — a hint plus the deep link, never the substance (no
+ * amounts, no reason text, no third-party names). Decided 2026-08-15: bot DMs are exempt
+ * from the 1.33 E2EE cutover (the bot has no crypto and `ensureDirectRoom` deliberately
+ * omits `m.room.encryption`), so this room is readable by the homeserver operator. The
+ * body comes from the rule's `actionArg`, so this is a rule-authoring rule, not something
+ * enforceable here — see the approval-workflow spec §2.3a.
  */
 export async function sendBotDirectMessage(matrixUserId: string, body: string, txnId: string): Promise<void> {
   const token = matrixBotToken.value();
