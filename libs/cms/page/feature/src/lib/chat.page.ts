@@ -23,6 +23,12 @@ import { MatrixChat } from '@okr/chat-feature';
       width: 100%;
     }
   okr-matrix-chat-overview { width: 100%; display: block; }
+  /* Ionic's input-shims scroll padding pushes --keyboard-offset (default 290px, a *guess* at the
+     keyboard height) onto ion-content on every focusin — on desktop too, where no keyboard exists.
+     That padding shrinks the chat's height:100% and makes the composer jump up. MatrixChat measures
+     the real keyboard via visualViewport (--okr-keyboard-inset), so this must stay 0 here.
+     !important beats the inline style Ionic writes. */
+  ion-content { --keyboard-offset: 0px !important; }
   `],
   template: `
     <!-- own toolbar suppressed in group view, where the chat title/menu/info are hoisted to the group toolbar -->
