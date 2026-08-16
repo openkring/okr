@@ -12,7 +12,6 @@
     "@okr/shared-i18n": "*",
     "@okr/shared-models": "*",
     "@okr/shared-util-core": "*",
-    "@okr/shared-util-angular": "*",
     "@okr/content-pdf-template-util": "*"
   }
 }

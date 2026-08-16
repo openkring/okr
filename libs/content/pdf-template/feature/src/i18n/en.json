@@ -105,7 +105,8 @@
     },
     "send": {
       "conf": "Document sent to {{ recipients }}",
-      "error": "Sending failed: {{ error }}"
+      "error": "Sending failed: {{ error }}",
+      "queue_error": "The send job could not be created."
     },
     "revert": {
       "label": "Discard"

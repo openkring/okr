@@ -105,7 +105,8 @@
     },
     "send": {
       "conf": "Documento inviato a {{ recipients }}",
-      "error": "Invio non riuscito: {{ error }}"
+      "error": "Invio non riuscito: {{ error }}",
+      "queue_error": "Impossibile creare il processo di invio."
     },
     "revert": {
       "label": "Annulla"

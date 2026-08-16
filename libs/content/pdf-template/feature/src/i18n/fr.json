@@ -105,7 +105,8 @@
     },
     "send": {
       "conf": "Document envoyé à {{ recipients }}",
-      "error": "Échec de l'envoi : {{ error }}"
+      "error": "Échec de l'envoi : {{ error }}",
+      "queue_error": "La tâche d'envoi n'a pas pu être créée."
     },
     "revert": {
       "label": "Annuler"

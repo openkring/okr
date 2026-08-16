@@ -1,7 +1,7 @@
 // libs/content/pdf-template/ui/src/lib/email-composer.modal.ts
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { firstValueFrom } from 'rxjs';
+import { filter, firstValueFrom, tap } from 'rxjs';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
   IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
@@ -322,7 +322,7 @@ export class EmailComposerModal {
       });
 
       const recipients = parseEmails(fd.to);
-      await this.docEmailService.sendDocumentByEmail({
+      const request = {
         to: recipients,
         cc: parseEmails(fd.cc),
         bcc: parseEmails(fd.bcc),
@@ -332,8 +332,14 @@ export class EmailComposerModal {
         storagePath: this.storagePath(),
         filename: this.filename(),
         extraAttachments: this.extraAttachments(),
-        onProgress: (block, blocks) => this.progress.set(blocks > 1 ? `${block}/${blocks}` : ''),
-      });
+      };
+      // A bulk send (bcc list) runs server-side: the job survives closing this modal. A single
+      // mail goes straight through the callable so the provider error surfaces immediately.
+      if (request.bcc.length > 0) {
+        await this.awaitJob(await this.docEmailService.queueBulkEmail(request));
+      } else {
+        await this.docEmailService.sendDocumentByEmail(request);
+      }
 
       await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_conf, { recipients: recipients.join(', ') });
       await this.modalController.dismiss({ sent: true }, 'confirm');
@@ -345,6 +351,19 @@ export class EmailComposerModal {
         { error: sent ? `${message} (${sent})` : message }, 'danger');
       this.isSending.set(false);
     }
+  }
+
+  /**
+   * Follow a queued bulk send until it is done, showing "<block>/<blocks>" in the title.
+   * Closing the modal only stops the watching — the job keeps running server-side.
+   */
+  private async awaitJob(key: string | undefined): Promise<void> {
+    if (!key) throw new Error(this.i18n.send_queue_error());
+    const job = await firstValueFrom(this.docEmailService.mailJob(key).pipe(
+      tap((j) => this.progress.set((j?.blocksTotal ?? 0) > 1 ? `${j?.blocksSent ?? 0}/${j?.blocksTotal}` : '')),
+      filter((j) => j?.state === 'sent' || j?.state === 'failed'),
+    ));
+    if (job?.state === 'failed') throw new Error(job.error ?? '');
   }
 
   /**

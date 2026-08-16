@@ -33,9 +33,6 @@
       "path": "../../../shared/util-core/tsconfig.lib.json"
     },
     {
-      "path": "../../../shared/util-angular/tsconfig.lib.json"
-    },
-    {
       "path": "../util/tsconfig.lib.json"
     }
   ]

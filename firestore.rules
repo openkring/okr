@@ -505,6 +505,14 @@ service cloud.firestore {
     // the workflow side-effect queue: written by the engine, performed by onWorkflowOutbox.
     // Readable by admins only — the payload holds recipient addresses.
     match /workflow-outbox/{id}    { allow read: if isAdmin() && tenantRead(); allow write: if false; }
+    // Serienmail job queue (spec 2.96 §7): the composer creates the job, onMailJob performs it and
+    // owns state/blocksSent/error — hence create-only. Same role as the Serienmail menu entries
+    // (memberAdmin); the payload holds recipient addresses, so reading is gated the same way.
+    match /mailJobs/{id}           {
+      allow read:   if (isPrivileged() || hasRole('memberAdmin')) && tenantRead();
+      allow create: if (isPrivileged() || hasRole('memberAdmin')) && tenantCreate();
+      allow update, delete: if false;
+    }
 
     // ============================================================================
     //  Templates (PDF) — role-gated; converted from dead claim checks to get()-roles.

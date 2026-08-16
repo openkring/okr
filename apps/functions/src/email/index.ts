@@ -1,3 +1,5 @@
+export * from './mail-job';
+
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { defineSecret } from 'firebase-functions/params';

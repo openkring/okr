@@ -139,6 +139,7 @@ export const getPublicCalEvents = Calendar.getPublicCalEvents;
 
 // email webhooks
 export const mailtrapWebhook = Email.mailtrapWebhook;
+export const onMailJob = Email.onMailJob;
 
 // bexio contact sync
 export const getBexioContacts = Bexio.getBexioContacts;

@@ -130,6 +130,8 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   attachment_add:   PFX + 'composer.attachment.add',
 
   send:             PFX + 'doc.send.label',
+  /** The bulk-send job document could not be written — nothing was sent. */
+  send_queue_error: PFX + 'composer.send.queue_error',
   revert:           PFX + 'composer.revert.label',
   copy_conf:        '@copy.conf',
 } satisfies Record<string, string>;

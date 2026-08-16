@@ -18,7 +18,7 @@ const MAX_INLINE_ATTACHMENT_BYTES = 8 * 1024 * 1024;
  * An attachment is either a reference to a generated document in Storage (server-fetched), or an
  * inline base64 payload (e.g. a file the user picked from their device in the email composer).
  */
-type AttachmentRef =
+export type AttachmentRef =
   | { storagePath: string; filename?: string }
   | { filename: string; contentBase64: string; contentType?: string };
 
@@ -38,7 +38,7 @@ function contentTypeFromPath(path: string): string {
  * downloading them from the default Storage bucket via the Admin SDK. Paths are validated against an
  * allow-list so the callable cannot be coerced into reading arbitrary Storage objects.
  */
-async function resolveAttachments(
+export async function resolveAttachments(
   refs: AttachmentRef[] | undefined,
   cfName: string,
 ): Promise<EmailAttachment[]> {

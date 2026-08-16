@@ -2,9 +2,10 @@
 import { inject, Injectable } from '@angular/core';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
+import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
-import { chunkRecipients } from '@okr/shared-util-angular';
+import { FirestoreService } from '@okr/shared-data-access';
 
 /** A user-picked file attached inline (base64) to the email. */
 export interface InlineAttachment {
@@ -13,12 +14,16 @@ export interface InlineAttachment {
   contentType: string;
 }
 
-/**
- * Mailgun accepts at most 1000 recipients per message; 500 leaves headroom and keeps a failed
- * block small. ~1.1 s between blocks stays under the per-second rate limit of every plan.
- */
-const BCC_BLOCK_SIZE = 500;
-const BLOCK_PAUSE_MS = 1100;
+/** Queue of server-side bulk sends, performed by the `onMailJob` Cloud Function (spec 2.96 §7). */
+export const MailJobCollection = 'mailJobs';
+
+/** The job document as this client cares about it — the send state written back by the function. */
+export interface MailJobStatus {
+  state?: 'pending' | 'sending' | 'sent' | 'failed';
+  blocksSent?: number;
+  blocksTotal?: number;
+  error?: string;
+}
 
 export interface SendDocumentByEmailRequest {
   to: string[];
@@ -34,8 +39,8 @@ export interface SendDocumentByEmailRequest {
   filename: string;
   /** Additional user-picked files attached inline. */
   extraAttachments?: InlineAttachment[];
-  /** Reports the send progress of a chunked bulk mail (1-based block index). */
-  onProgress?: (block: number, blocks: number) => void;
+  /** Tenant the job belongs to — required for a queued bulk send. */
+  tenantId?: string;
 }
 
 /**
@@ -45,6 +50,7 @@ export interface SendDocumentByEmailRequest {
 @Injectable({ providedIn: 'root' })
 export class DocEmailService {
   private readonly env = inject(ENV);
+  private readonly firestoreService = inject(FirestoreService);
 
   private get functions() {
     const fns = getFunctions(getApp(), 'europe-west6');
@@ -55,41 +61,54 @@ export class DocEmailService {
   }
 
   /**
-   * Sends the mail. A large bcc list is split into blocks that go out sequentially with a pause in
-   * between. `cc` rides along with the first block only; `to` is repeated on every block — a message
-   * without a `To:` header is treated as spam by most receivers, and the CF requires one. The
-   * consequence is that the `to` address (the org's own) receives one copy per block.
-   *
-   * A failing block aborts the loop and rethrows — the caller must report how many blocks were
-   * already sent rather than pretend the send succeeded.
-   *
-   * ponytail: client-side loop, so the tab has to stay open and there is no resume after a failure.
-   * Move to the Firestore job queue (idea 2.96) once lists exceed a few thousand recipients.
+   * Sends a single mail (no bcc list) straight through the `sendEmail` callable, so the caller
+   * gets the provider error synchronously. Bulk sends go through `queueBulkEmail` instead.
    */
   public async sendDocumentByEmail(req: SendDocumentByEmailRequest): Promise<void> {
     const callable = httpsCallable(this.functions, 'sendEmail');
-    const attachments = [
+    await callable({
+      to: req.to,
+      cc: req.cc ?? [],
+      bcc: req.bcc ?? [],
+      ...(req.from ? { from: req.from } : {}),
+      subject: req.subject,
+      html: req.html,
+      provider: 'mailtrap_api',
+      appId: this.env.appId,
+      attachments: this.attachmentRefs(req),
+    });
+  }
+
+  /**
+   * Queues a bulk send: one job document, performed block by block by the `onMailJob` trigger.
+   * The browser tab may be closed the moment this resolves — watch `mailJob(key)` for progress.
+   *
+   * @returns the job document key, or undefined when the write failed
+   */
+  public async queueBulkEmail(req: SendDocumentByEmailRequest): Promise<string | undefined> {
+    return this.firestoreService.createObject(MailJobCollection, '', {
+      tenants: [req.tenantId ?? this.env.tenantId],
+      to: req.to,
+      cc: req.cc ?? [],
+      bcc: req.bcc ?? [],
+      ...(req.from ? { from: req.from } : {}),
+      subject: req.subject,
+      html: req.html,
+      attachments: this.attachmentRefs(req),
+      state: 'pending',
+    });
+  }
+
+  /** Live state of a queued bulk send. */
+  public mailJob(key: string | undefined): Observable<MailJobStatus | undefined> {
+    return this.firestoreService.readObject<MailJobStatus>(MailJobCollection, key);
+  }
+
+  /** The generated document (if any) plus the user-picked files, in the CF's reference format. */
+  private attachmentRefs(req: SendDocumentByEmailRequest) {
+    return [
       ...(req.storagePath ? [{ storagePath: req.storagePath, filename: req.filename }] : []),
       ...(req.extraAttachments ?? []),
     ];
-    const blocks = chunkRecipients(req.bcc ?? [], BCC_BLOCK_SIZE);
-    // No bcc at all is still one message — to/cc must go out.
-    const count = Math.max(blocks.length, 1);
-
-    for (let i = 0; i < count; i++) {
-      if (i > 0) await new Promise(resolve => setTimeout(resolve, BLOCK_PAUSE_MS));
-      req.onProgress?.(i + 1, count);
-      await callable({
-        to: req.to,
-        cc: i === 0 ? req.cc : [],
-        bcc: blocks[i] ?? [],
-        ...(req.from ? { from: req.from } : {}),
-        subject: req.subject,
-        html: req.html,
-        provider: 'mailtrap_api',
-        appId: this.env.appId,
-        attachments,
-      });
-    }
   }
 }

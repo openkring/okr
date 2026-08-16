@@ -105,7 +105,8 @@
     },
     "send": {
       "conf": "Dokument gesendet an {{ recipients }}",
-      "error": "Senden fehlgeschlagen: {{ error }}"
+      "error": "Senden fehlgeschlagen: {{ error }}",
+      "queue_error": "Der Auftrag konnte nicht erstellt werden."
     },
     "revert": {
       "label": "Verwerfen"

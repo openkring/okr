@@ -105,7 +105,8 @@
     },
     "send": {
       "conf": "Documento enviado a {{ recipients }}",
-      "error": "Error al enviar: {{ error }}"
+      "error": "Error al enviar: {{ error }}",
+      "queue_error": "No se pudo crear la tarea de envío."
     },
     "revert": {
       "label": "Descartar"
