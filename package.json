@@ -103,7 +103,7 @@
     "leaflet": "1.9.4",
     "libphonenumber-js": "^1.12.36",
     "marked": "17.0.4",
-    "matrix-js-sdk": "40.3.0-rc.0",
+    "matrix-js-sdk": "42.1.0",
     "mime": "^4.1.0",
     "ngx-echarts": "^19.0.0",
     "ngx-editor": "^18.0.0",

@@ -58,14 +58,27 @@ service firebase.storage {
     function sizeOk() {
       return request.resource.size < 25 * 1024 * 1024;   // 25 MB cap
     }
-    // NOTE (Phase 2): a content-type allowlist is intentionally NOT enforced here.
-    // It risks blocking legitimate uploads whose browser-inferred MIME type is
-    // empty, and cannot be exercised in the Storage emulator (which does not
-    // populate request.resource.contentType for rule evaluation). The app already
-    // restricts document MIME types client-side (checkMimeType), images are served
-    // cross-origin via imgix, and downloads are explicit — so the residual XSS risk
-    // is low. Re-introduce a per-prefix allowlist once the exact MIME set is
-    // confirmed and verified against real SDK uploads in staging.
+    // Content type (H-1 / M-9, Phase 2). This is a DENYLIST of active HTML content,
+    // not the allowlist the security report originally proposed. The MIME set was
+    // confirmed 2026-08-16 against all 3'700 live objects in the bucket:
+    //   image/{jpeg,png,tiff,svg+xml,webp,heic}, application/pdf, MS Office + iWork,
+    //   video/{quicktime,mp4}, audio/mpegurl, application/octet-stream, and 147 objects
+    //   carrying `application/x-www-form-urlencoded;charset=UTF-8` — Firebase's default
+    //   when the SDK uploads without an explicit contentType (uploadToFirebaseStorage
+    //   passes none, so the browser-inferred File.type wins, and it is often empty).
+    // An allowlist would therefore have to admit both that default AND image/svg+xml
+    // (819 objects: tenant logos and icons) — i.e. admit the two riskiest values anyway
+    // while still breaking any file type not yet seen. Denying the handful of types that
+    // actually execute as a document buys the same protection at zero false-positive
+    // risk: not one live object is text/html or *xml.
+    // SVG stays allowed by necessity; it is mitigated by never being served from an app
+    // origin (imgix, or firebasestorage.googleapis.com download URLs).
+    // Not covered by the emulator harness — the Storage emulator does not populate
+    // request.resource.contentType for rule evaluation.
+    function contentTypeOk() {
+      return request.resource.contentType == null
+        || !request.resource.contentType.lower().matches('(text/html|application/xhtml[+]xml|(text|application)/xml)([;].*)?');
+    }
 
     // ---- tenant-scoped data (dominant prefix) ----
     // `sub != 'private'` carves the CF-only `private/` sub-prefix (see above) out of this
@@ -82,7 +95,7 @@ service firebase.storage {
     }
     match /tenant/{tenantId}/{sub}/{path=**} {
       allow read:           if inTenant(tenantId) && sub != 'private';
-      allow create, update: if inTenant(tenantId) && sub != 'private' && sizeOk();
+      allow create, update: if inTenant(tenantId) && sub != 'private' && sizeOk() && contentTypeOk();
       allow delete:         if inTenant(tenantId) && sub != 'private';
     }
 
@@ -101,7 +114,7 @@ service firebase.storage {
     // ---- esign (plural prefix) ----
     match /tenants/{tenantId}/{path=**} {
       allow read:           if inTenant(tenantId);
-      allow create, update: if inTenant(tenantId) && sizeOk();
+      allow create, update: if inTenant(tenantId) && sizeOk() && contentTypeOk();
       allow delete:         if inTenant(tenantId);
     }
 
@@ -110,7 +123,7 @@ service firebase.storage {
     // tenants/, forms/, logo/ or generated-docs/ prefixes.
     match /{tenantId}/{modelType}/{key}/documents/{path=**} {
       allow read:           if inTenant(tenantId);
-      allow create, update: if inTenant(tenantId) && sizeOk();
+      allow create, update: if inTenant(tenantId) && sizeOk() && contentTypeOk();
       allow delete:         if inTenant(tenantId);
     }
 
@@ -120,13 +133,16 @@ service firebase.storage {
     // Mutating existing form files / deletion is restricted to privileged users.
     match /forms/{formKey}/{path=**} {
       allow read:    if signedIn();
-      allow create:  if signedIn() && sizeOk();
+      allow create:  if signedIn() && sizeOk() && contentTypeOk();
       allow update, delete: if isPrivileged();
     }
 
     // ---- global shared brand assets / icons (public, non-sensitive) ----
     match /logo/{path=**} {
       allow read:  if true;
+      // `write` covers delete, where request.resource is null — calling contentTypeOk()
+      // here would raise "Null value error" and deny every logo deletion. Same reason
+      // sizeOk() is never used on a `write`/`delete` rule.
       allow write: if isPrivileged();
     }
 
