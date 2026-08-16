@@ -184,7 +184,7 @@ export const TripStore = signalStore(
       const { TripViewModal } = await import('./trip-view.modal');
       const modal = await store.modalController.create({
         component: TripViewModal,
-        cssClass: 'wide-modal',
+        // no fixed-size class: the read-only view shrinks to its content (see $fixed-size-modals)
         componentProps: { trip },
       });
       await modal.present();

@@ -85,7 +85,9 @@ import { MenuStore } from './menu.store';
                       <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
                     }
                   } @else {
-                    <okr-menu [menuName]="menuItemName" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
+                    <!-- forceVisible must reach the entries too: a caller that forces the menu open
+                         (group admin, personal calendar) otherwise gets an empty list -->
+                    <okr-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
                   }
                 }
               </ion-list>
@@ -112,7 +114,10 @@ export class Menu {
 
   // inputs
   public menuName = input.required<string>();
+  /** Shows this menu AND all its entries, ignoring their roleNeeded (group admins: they hold no tenant role). */
   public forceVisible = input(false);
+  /** Shows this menu only — entries keep their own roleNeeded gate (personal calendar: 'add' yes, 'schedule' no). */
+  public forceVisibleSelf = input(false);
   public excludeNames = input<string[]>([]);
   /** Nesting depth of this menu (0 at the root). */
   public inputDepth = input(0);
@@ -141,7 +146,7 @@ export class Menu {
   protected readonly isVisible = computed(() => {
     const name = this.menuItem()?.name;
     if (name && this.excludeNames().includes(name)) return false;
-    return this.forceVisible() || hasRole(this.roleNeeded(), this.currentUser());
+    return this.forceVisible() || this.forceVisibleSelf() || hasRole(this.roleNeeded(), this.currentUser());
   });
   protected readonly notificationCount = computed(() => this.menuStore.notificationCount());
 

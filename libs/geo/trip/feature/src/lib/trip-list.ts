@@ -242,10 +242,17 @@ export class TripList {
   }
 
   protected async showActions(trip: TripModel): Promise<void> {
-    const options = createActionSheetOptions(this.store.i18n.as_title());
     const canWrite = this.store.canWrite();
     const isOpen = trip.state === 'open' || trip.state === 'open.rev';
     const isDeleted = trip.state === 'deleted';
+
+    // a plain registered user has nothing to do on a finished trip — skip the sheet, show it
+    if (!isOpen && trip.state !== 'draft' && !this.hasRole('privileged')) {
+      await this.store.viewTrip(trip);
+      return;
+    }
+
+    const options = createActionSheetOptions(this.store.i18n.as_title());
 
     if (canWrite && isOpen) {
       // 'end' opens the same edit form, so offering edit/view next to it only confuses
