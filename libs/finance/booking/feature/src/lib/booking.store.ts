@@ -156,11 +156,8 @@ export const BookingStore = signalStore(
       if (store.isReadOnly()) return;
       const tenantId = store.tenantId();
       const accountingTenantId = store.accountingTenantId();
-      const year = new Date().getFullYear();
-      const seq = await store.bookingService.nextSequence(year, accountingTenantId);
-      const booking = new BookingModel(tenantId, accountingTenantId);
-      booking.bookingNo = seq;
-      await this.openEdit(booking, [], false);
+      // bookingNo is assigned by the writeBooking CF inside its transaction (never pre-computed here).
+      await this.openEdit(new BookingModel(tenantId, accountingTenantId), [], false);
     },
 
     async openEdit(booking: BookingModel, lines: BookingLineModel[], readOnly = true): Promise<void> {

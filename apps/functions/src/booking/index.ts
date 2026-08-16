@@ -7,6 +7,7 @@ import { convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-
 
 const REGION = 'europe-west6';
 const CF_NAME = 'reviewBooking';
+const WRITE_CF_NAME = 'writeBooking';
 const BOOKING_COLLECTION = 'bookings';
 const BOOKING_LINE_COLLECTION = 'booking-lines';
 const OCR_RESULT_COLLECTION = 'ocr-results';
@@ -162,6 +163,134 @@ export const reviewBooking = onCall(
 
     logger.info(`${CF_NAME}: booking ${bookingKey} → ${result.status} (no=${result.bookingNo}, tenant=${tenantId})`);
     return result;
+  },
+);
+
+/** One line of a manual journal entry (amounts in minor units). */
+interface WriteLine {
+  accountKey: string;
+  debitAmount?: { amount: number; currency: string } | null;
+  creditAmount?: { amount: number; currency: string } | null;
+  amountFx?: { amount: number; currency: string } | null;
+  exchangeRateKey?: string;
+  vatCodeKey?: string;
+}
+
+interface WriteBookingData {
+  mode: 'create' | 'update' | 'delete';
+  bookingKey?: string;                 // required for update/delete
+  accountingTenantId?: string;         // required for create
+  booking?: Record<string, unknown>;   // header fields, allowlisted below
+  lines?: WriteLine[];                 // required for create/update
+}
+
+/** Header fields the client may set. Everything else (tenants, status, bookingNo, …) is server-owned. */
+const WRITABLE_HEADER_FIELDS = ['title', 'date', 'notes', 'periodKey', 'documentKey', 'counterparty', 'tags', 'index'];
+
+/**
+ * Manual journal entry: create / update / delete a booking with its lines (spec 1.20 §8).
+ *
+ * Counterpart of {@link reviewBooking} for the journal's own actions — `bookings` /
+ * `booking-lines` are CF-write-only, so the client cannot batch-write them itself.
+ * `bookingNo` is assigned inside the transaction on create (same rule as approval), status and
+ * `tenants` are server-owned, and `forReview` bookings are refused here: those belong to
+ * `reviewBooking`, which also closes the OCR task and the expense.
+ */
+export const writeBooking = onCall(
+  { region: REGION, enforceAppCheck: true, cors: true },
+  async (request: CallableRequest<WriteBookingData>): Promise<{ bookingKey: string; bookingNo: number }> => {
+    checkAppCheckToken(request as never, WRITE_CF_NAME);
+    checkAuthentication(request as never, WRITE_CF_NAME);
+    await checkRoles(request as never, WRITE_CF_NAME, ['treasurer']);
+    const tenantId = await getCallerTenantId(request as never, WRITE_CF_NAME);
+
+    const d = request.data;
+    const mode = d?.mode;
+    if (mode !== 'create' && mode !== 'update' && mode !== 'delete') {
+      throw new HttpsError('invalid-argument', 'mode must be create, update or delete');
+    }
+    const db = getFirestore();
+
+    // ---- the booking being changed (update/delete) ----
+    let existing: Record<string, unknown> | undefined;
+    if (mode !== 'create') {
+      if (!d.bookingKey) throw new HttpsError('invalid-argument', 'bookingKey is required');
+      const snap = await db.collection(BOOKING_COLLECTION).doc(d.bookingKey).get();
+      existing = snap.data();
+      if (!existing) throw new HttpsError('not-found', `booking ${d.bookingKey} not found`);
+      if (!((existing['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
+        throw new HttpsError('permission-denied', 'booking belongs to another tenant');
+      }
+      if (existing['status'] === 'forReview') {
+        throw new HttpsError('failed-precondition', 'a forReview booking is changed through reviewBooking');
+      }
+    }
+
+    const bookingKey = mode === 'create' ? db.collection(BOOKING_COLLECTION).doc().id : d.bookingKey!;
+    const bookingRef = db.collection(BOOKING_COLLECTION).doc(bookingKey);
+    const oldLineRefs = (await db.collection(BOOKING_LINE_COLLECTION).where('bookingKey', '==', bookingKey).get())
+      .docs.map(s => s.ref);
+
+    if (mode === 'delete') {
+      const batch = db.batch();
+      for (const ref of oldLineRefs) batch.delete(ref);
+      batch.delete(bookingRef);
+      await batch.commit();
+      logger.info(`${WRITE_CF_NAME}: deleted booking ${bookingKey} (tenant=${tenantId})`);
+      return { bookingKey, bookingNo: 0 };
+    }
+
+    const lines = d.lines ?? [];
+    if (!isBalanced(lines)) throw new HttpsError('invalid-argument', 'the booking lines are not balanced');
+
+    const header: Record<string, unknown> = {};
+    for (const field of WRITABLE_HEADER_FIELDS) {
+      if (d.booking?.[field] !== undefined) header[field] = d.booking[field];
+    }
+    const date = (header['date'] as string) ?? (existing?.['date'] as string) ?? '';
+    const year = Number(date.substring(0, 4));
+    if (!Number.isInteger(year) || year < 1900) {
+      throw new HttpsError('invalid-argument', 'the booking needs a valid date (yyyymmdd)');
+    }
+    const accountingTenantId = mode === 'create'
+      ? (d.accountingTenantId ?? '')
+      : (existing!['accountingTenantId'] as string);
+    if (!accountingTenantId) throw new HttpsError('invalid-argument', 'accountingTenantId is required');
+
+    const bookingNo = await db.runTransaction(async (tx) => {
+      let no = (existing?.['bookingNo'] as number) ?? 0;
+      if (mode === 'create' || no === 0) {
+        const ledger = await tx.get(
+          db.collection(BOOKING_COLLECTION).where('accountingTenantId', '==', accountingTenantId),
+        );
+        no = nextBookingNo(ledger.docs.map(s => s.data() as { date?: string; bookingNo?: number }), year);
+      }
+      tx.set(bookingRef, {
+        ...header,
+        bookingNo: no,
+        status: 'posted',
+        accountingTenantId,
+        tenants: [tenantId],
+        isArchived: false,
+      }, { merge: true });
+
+      for (const ref of oldLineRefs) tx.delete(ref);
+      for (const line of lines) {
+        tx.set(db.collection(BOOKING_LINE_COLLECTION).doc(), {
+          tenants: [tenantId], isArchived: false,
+          bookingKey, accountKey: line.accountKey, accountingTenantId,
+          ...(line.debitAmount ? { debitAmount: { ...line.debitAmount, periodicity: 'one-time' } } : {}),
+          ...(line.creditAmount ? { creditAmount: { ...line.creditAmount, periodicity: 'one-time' } } : {}),
+          ...(line.amountFx ? { amountFx: { ...line.amountFx, periodicity: 'one-time' } } : {}),
+          ...(line.exchangeRateKey ? { exchangeRateKey: line.exchangeRateKey } : {}),
+          ...(line.vatCodeKey ? { vatCodeKey: line.vatCodeKey } : {}),
+        });
+      }
+      return no;
+    });
+
+    logger.info(`${WRITE_CF_NAME}: ${mode}d booking ${bookingKey} (no=${bookingNo}, tenant=${tenantId})`);
+    return { bookingKey, bookingNo };
   },
 );
 

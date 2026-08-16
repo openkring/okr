@@ -1,7 +1,6 @@
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { getApp } from 'firebase/app';
-import { doc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
@@ -10,8 +9,6 @@ import { AvatarInfo, BookingCollection, BookingLineModel, BookingModel, BookingS
 import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 
 import { validateBookingBalance } from '@okr/finance-booking-util';
-
-import { BookingLineService } from './booking-line.service';
 
 /** One corrected booking line sent to `reviewBooking` (amounts in minor units). */
 export interface ReviewBookingLine {
@@ -38,11 +35,45 @@ export interface ReviewBookingResult {
   status: BookingStatus;
 }
 
+/** Payload of the `writeBooking` callable (manual journal entries). */
+export interface WriteBookingPayload {
+  mode: 'create' | 'update' | 'delete';
+  bookingKey?: string;
+  accountingTenantId?: string;
+  booking?: Record<string, unknown>;
+  lines?: Record<string, unknown>[];
+}
+
+/** Header fields the CF accepts; the rest (status, bookingNo, tenants, …) is server-owned. */
+function toHeaderPayload(booking: BookingModel): Record<string, unknown> {
+  return {
+    title: booking.title,
+    date: booking.date,
+    notes: booking.notes,
+    periodKey: booking.periodKey,
+    documentKey: booking.documentKey,
+    counterparty: booking.counterparty ?? null,
+    tags: booking.tags,
+    index: booking.index,
+  };
+}
+
+/** A booking line stripped to what the CF stores (plain JSON — a class instance is not sendable). */
+function toWriteLine(line: BookingLineModel): Record<string, unknown> {
+  return {
+    accountKey: line.accountKey,
+    debitAmount: line.debitAmount ? { amount: line.debitAmount.amount, currency: line.debitAmount.currency } : null,
+    creditAmount: line.creditAmount ? { amount: line.creditAmount.amount, currency: line.creditAmount.currency } : null,
+    amountFx: line.amountFx ? { amount: line.amountFx.amount, currency: line.amountFx.currency } : null,
+    exchangeRateKey: line.exchangeRateKey,
+    vatCodeKey: line.vatCodeKey,
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
-  private readonly bookingLineService = inject(BookingLineService);
   private readonly tenantId = this.env.tenantId;
 
   public async create(
@@ -54,14 +85,13 @@ export class BookingService {
       console.error('BookingService.create: booking lines are not balanced');
       return undefined;
     }
-    const batch = this.firestoreService.getBatch();
-    const okey = booking.okey?.length > 0 ? booking.okey : crypto.randomUUID();
-    const { okey: _okey, ...headerData } = { ...booking, okey } as BookingModel & { okey: string };
-    const headerRef = doc(this.firestoreService.firestore, BookingCollection, okey);
-    batch.set(headerRef, headerData);
-    this.bookingLineService.addLinesToBatch(lines, batch);
-    await batch.commit();
-    return okey;
+    const result = await this.writeViaFunction({
+      mode: 'create',
+      accountingTenantId: booking.accountingTenantId,
+      booking: toHeaderPayload(booking),
+      lines: lines.map(toWriteLine),
+    });
+    return result.bookingKey;
   }
 
   public read(key: string, accountingTenantId: string): Observable<BookingModel | undefined> {
@@ -73,25 +103,16 @@ export class BookingService {
       console.error('BookingService.update: booking lines are not balanced');
       return;
     }
-    const okey = booking.okey;
-    const oldLines = await firstValueFrom(this.bookingLineService.listForBooking(okey, booking.accountingTenantId));
-    const batch = this.firestoreService.getBatch();
-    this.bookingLineService.deleteLinesToBatch(oldLines, batch);
-    const { okey: _okey, ...headerData } = { ...booking } as BookingModel & { okey: string };
-    const headerRef = doc(this.firestoreService.firestore, BookingCollection, okey);
-    batch.set(headerRef, headerData, { merge: false });
-    this.bookingLineService.addLinesToBatch(lines, batch);
-    await batch.commit();
+    await this.writeViaFunction({
+      mode: 'update',
+      bookingKey: booking.okey,
+      booking: toHeaderPayload(booking),
+      lines: lines.map(toWriteLine),
+    });
   }
 
   public async delete(booking: BookingModel, currentUser?: UserModel): Promise<void> {
-    const okey = booking.okey;
-    const lines = await firstValueFrom(this.bookingLineService.listForBooking(okey, booking.accountingTenantId));
-    const batch = this.firestoreService.getBatch();
-    this.bookingLineService.deleteLinesToBatch(lines, batch);
-    const headerRef = doc(this.firestoreService.firestore, BookingCollection, okey);
-    batch.delete(headerRef);
-    await batch.commit();
+    await this.writeViaFunction({ mode: 'delete', bookingKey: booking.okey });
   }
 
   public list(accountingTenantId: string, orderBy = 'date', sortOrder = 'desc'): Observable<BookingModel[]> {
@@ -123,6 +144,18 @@ export class BookingService {
     const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'reviewBooking');
     const result = await fn(payload);
     return result.data as ReviewBookingResult;
+  }
+
+  /**
+   * Manual journal entry (create/update/delete) via the `writeBooking` callable — `bookings` /
+   * `booking-lines` are CF-write-only, a client batch write fails permission-denied.
+   * The CF owns `bookingNo`, `status` and `tenants`; a `forReview` booking is rejected here and
+   * must go through {@link reviewViaFunction}.
+   */
+  public async writeViaFunction(payload: WriteBookingPayload): Promise<{ bookingKey: string; bookingNo: number }> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'writeBooking');
+    const result = await fn(payload);
+    return result.data as { bookingKey: string; bookingNo: number };
   }
 
   public async nextSequence(year: number, accountingTenantId: string): Promise<number> {

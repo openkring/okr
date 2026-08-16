@@ -1,6 +1,5 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { doc, WriteBatch } from 'firebase/firestore';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -19,29 +18,5 @@ export class BookingLineService {
       { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
     ];
     return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query, 'none');
-  }
-
-  public listForBooking(bookingKey: string, accountingTenantId: string): Observable<BookingLineModel[]> {
-    const query = [
-      ...getSystemQuery(this.tenantId),
-      { key: 'bookingKey', operator: '==' as const, value: bookingKey },
-      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
-    ];
-    return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query, 'none');
-  }
-
-  public addLinesToBatch(lines: BookingLineModel[], batch: WriteBatch): void {
-    for (const line of lines) {
-      const { okey, ...data } = line as BookingLineModel & { okey: string };
-      const ref = doc(this.firestoreService.firestore, BookingLineCollection, okey);
-      batch.set(ref, data, { merge: false });
-    }
-  }
-
-  public deleteLinesToBatch(lines: BookingLineModel[], batch: WriteBatch): void {
-    for (const line of lines) {
-      const ref = doc(this.firestoreService.firestore, BookingLineCollection, (line as BookingLineModel & { okey: string }).okey);
-      batch.delete(ref);
-    }
   }
 }
