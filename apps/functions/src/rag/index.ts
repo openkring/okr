@@ -10,6 +10,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { tmpdir } from 'os';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField, getCallerTenantId } from '@okr/shared-util-functions';
+import { checkWindowQuota, getMonthlyCount, incrementMonthlyCount } from '../_gateway/quota';
 import { AppConfigCollection, SectionCollection } from '@okr/shared-models';
 import {
     defaultSystemPrompt,
@@ -310,6 +311,21 @@ export interface RagResponse {
  * guessable) and read that tenant's indexed documents. Do not reintroduce a store or
  * tenant parameter here.
  */
+/**
+ * Quota layer (1.18, standalone). `rag` is NOT a `ProviderAdapter` retrofit: it goes through
+ * the `@google/genai` SDK, not the axios wrapper, and caching a generated answer under a
+ * hashed prompt buys nothing (queries are near-unique and non-deterministic). What the
+ * gateway does give us is the part that matters here — the failure mode of an LLM call is a
+ * BILL — so we reuse `_gateway/quota` directly: a per-caller sliding window plus a durable
+ * per-provider monthly cap in the same `_apiQuota` collection every other provider uses.
+ * No cache means no stale fallback: on a cap breach the only honest answer is to refuse.
+ */
+const RAG_PROVIDER_ID = 'rag-gemini';
+/** Tighter than the gateway's 60/min default — a RAG turn costs orders of magnitude more. */
+const RAG_WINDOW = { limit: 10, windowMs: 60_000 };
+/** Upstream generateContent calls per month, all tenants. Our key → our bill. */
+const RAG_MONTHLY_CAP = 5_000;
+
 export const queryRag = onCall(
     {
         region: 'europe-west6',
@@ -326,6 +342,16 @@ export const queryRag = onCall(
         const question = checkStringField(request as any, CF_NAME, 'question');
         const history: RagMessage[] = request.data.history ?? [];
         const config = await resolveConfig(tenantId, request.data.sectionKey);
+
+        // Quota: per-caller window first (cheap, throws resource-exhausted), then the
+        // monthly cap. Both before the SDK call — that is the one that costs money.
+        const nowMs = Date.now();
+        await checkWindowQuota(RAG_PROVIDER_ID, { tenantId, uid: request.auth?.uid ?? null, isAdmin: false }, RAG_WINDOW);
+        if (await getMonthlyCount(RAG_PROVIDER_ID, nowMs) >= RAG_MONTHLY_CAP) {
+            logger.warn(`${CF_NAME}: monthly cap reached`, { cap: RAG_MONTHLY_CAP });
+            throw new HttpsError('resource-exhausted',
+                'Das monatliche Kontingent für den Assistenten ist aufgebraucht. Bitte nächsten Monat wieder versuchen.');
+        }
 
         try {
             const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
@@ -356,6 +382,8 @@ export const queryRag = onCall(
                     ...(config.maxOutputTokens ? { maxOutputTokens: config.maxOutputTokens } : {}),
                 },
             });
+
+            await incrementMonthlyCount(RAG_PROVIDER_ID, nowMs);
 
             const answer = response.text ?? '';
             const sources: RagSource[] = (response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [])
