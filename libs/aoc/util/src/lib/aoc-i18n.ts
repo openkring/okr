@@ -373,6 +373,11 @@ export const AOC_I18N_KEYS = {
   roles_impersonate_content:                PFX + 'roles.impersonate.content',
   roles_impersonate_button:                 PFX + 'roles.impersonate.button',
 
+  roles_privileged_title:                   PFX + 'roles.privileged.title',
+  roles_privileged_content:                 PFX + 'roles.privileged.content',
+  roles_privileged_filter:                  PFX + 'roles.privileged.filter',
+  roles_privileged_all:                     PFX + 'roles.privileged.all',
+
   roles_password_label:                     PFX + 'roles.password.label',
   roles_password_placeholder:               PFX + 'roles.password.placeholder',
   roles_password_error:                     PFX + 'roles.password.placeholder',

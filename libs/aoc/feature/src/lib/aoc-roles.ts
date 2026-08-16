@@ -1,6 +1,6 @@
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonContent, IonGrid, IonIcon, IonInput, IonInputPasswordToggle, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 
 import { EMAIL_LENGTH, PASSWORD_MAX_LENGTH } from '@okr/shared-constants';
 
@@ -21,7 +21,7 @@ import { AocRolesStore } from './aoc-roles.store';
     SvgIconPipe,
     FormsModule, 
     Header, AvatarDisplay, ResultLog, Chips,
-    IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonLabel, IonButton, IonIcon, IonNote, IonInput, IonInputPasswordToggle, IonItem
+    IonContent, IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonGrid, IonRow, IonCol, IonLabel, IonButton, IonIcon, IonNote, IonInput, IonInputPasswordToggle, IonItem, IonSelect, IonSelectOption
   ],
   providers: [AocRolesStore],
   template: `
@@ -214,6 +214,46 @@ import { AocRolesStore } from './aoc-roles.store';
           </ion-grid>
         </ion-card-content>
       </ion-card>
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ aocRolesStore.i18n.roles_privileged_title() }} ({{ privilegedUsers().length }})</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col>{{ aocRolesStore.i18n.roles_privileged_content() }}</ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="6">
+                <ion-select
+                  [label]="aocRolesStore.i18n.roles_privileged_filter()"
+                  labelPlacement="floating"
+                  [value]="roleFilter()"
+                  (ionChange)="roleFilter.set($event.detail.value)"
+                >
+                  <ion-select-option value="">{{ aocRolesStore.i18n.roles_privileged_all() }}</ion-select-option>
+                  @for(role of privilegedRoleNames(); track role) {
+                  <ion-select-option [value]="role">{{ role }}</ion-select-option>
+                  }
+                </ion-select>
+              </ion-col>
+            </ion-row>
+            @for(entry of privilegedUsers(); track entry.user.okey) {
+            <ion-row>
+              <ion-col size="3">
+                <ion-label>{{ entry.user.firstName }} {{ entry.user.lastName }}</ion-label>
+              </ion-col>
+              <ion-col size="4">
+                <ion-label>{{ entry.user.loginEmail }}</ion-label>
+              </ion-col>
+              <ion-col size="5">
+                <ion-label>{{ entry.roles }}</ion-label>
+              </ion-col>
+            </ion-row>
+            }
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
       <okr-chips chipName="role" [storedChips]="roles()" (storedChipsChange)="onRoleChange($event)" [allChips]="allRoleNames()" [readOnly]="false" />
       <okr-result-log [title]="logTitle()"  [cardTitle]="aocRolesStore.i18n.roles_result()" [log]="logInfo()" />
     </ion-content>
@@ -234,6 +274,21 @@ export class AocRoles {
 
   protected pwdLength = PASSWORD_MAX_LENGTH;
   protected emailLength = EMAIL_LENGTH;
+
+  // users holding any role beyond the default 'registered'
+  protected roleFilter = signal<string>('');
+  private privileged = computed(() =>
+    (this.aocRolesStore.users() ?? [])
+      .map(user => ({ user, roleList: flattenRoles(user.roles ?? {}).split(',').filter(role => role && role !== 'registered') }))
+      .filter(entry => entry.roleList.length > 0)
+  );
+  protected privilegedRoleNames = computed(() => [...new Set(this.privileged().flatMap(entry => entry.roleList))].sort());
+  protected privilegedUsers = computed(() => {
+    const filter = this.roleFilter();
+    return this.privileged()
+      .filter(entry => !filter || entry.roleList.includes(filter))
+      .map(entry => ({ user: entry.user, roles: entry.roleList.join(', ') }));
+  });
 
   protected selectedPerson = computed(() => this.aocRolesStore.selectedPerson());
   protected selectedUser = computed(() => this.aocRolesStore.selectedUser());
