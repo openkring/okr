@@ -13,5 +13,12 @@ export default defineConfig({
     // the suite for a lib that legitimately has no spec files.
     passWithNoTests: true,
     reporters: ['default'],
+    server: {
+      deps: {
+        // matrix-js-sdk 42.x ships bare directory imports (lib/oauth -> lib/http-api), which
+        // Node's ESM resolver rejects. Let Vite resolve it instead of externalising it.
+        inline: [/matrix-js-sdk/],
+      },
+    },
   },
 });
