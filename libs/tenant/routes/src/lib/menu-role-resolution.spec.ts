@@ -201,8 +201,6 @@ const KNOWN_WEAKER_THAN_MENU: readonly string[] = [
   'calevent-all', 'invitation-all',
   // treasurer
   'expenses-all',
-  // tester
-  'logbuch',
 ];
 
 describe('menu roleNeeded vs. the route it navigates to', () => {

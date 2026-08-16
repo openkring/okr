@@ -591,9 +591,9 @@ const geo: FeatureBlock = {
     // NOT list it in `main_scs.menuItems` — verified this is legacy DRIFT (it was authored
     // directly onto the tenant-bespoke `sport-menu` custom grouping before this catalogue
     // existed), not evidence against the model. The next `applyFeatureSelection` for `scs`
-    // will add the one missing, correctly `tester`-gated root entry — a one-time,
+    // will add the one missing, `registered`-gated root entry — a one-time,
     // intentional convergence, not a duplication bug.
-    { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'tester', icon: 'track', label: '@item.logbuch' },
+    { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'registered', icon: 'track', label: '@item.logbuch' },
     { key: 'c-trips', name: 'c-trips', url: '', action: 'context', roleNeeded: 'kiosk', icon: 'help-circle', label: '', children: [
       { key: 'trip-add', name: 'trip-add', url: 'add', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: '@item.trip-add' },
       { key: 'trip-reportdamage', name: 'trip-reportdamage', url: 'reportDamage', action: 'call', roleNeeded: 'kiosk', icon: 'warning', label: '@item.trip-reportdamage' },
