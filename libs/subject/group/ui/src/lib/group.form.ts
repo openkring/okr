@@ -1,8 +1,8 @@
-import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { Component, computed, effect, input, linkedSignal, model, output, signal } from '@angular/core';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, IonToggle } from '@ionic/angular/standalone';
 
 import { AvatarInfo, GroupModel, RoleName, UserModel } from '@okr/shared-models';
-import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, Checkbox, CheckboxI18n, Chips, IconInput, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 
 import { Avatars } from '@okr/avatar-ui';
@@ -12,18 +12,21 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
   selector: 'okr-group-form',
   standalone: true,
   imports: [
-    TextInput, Chips, NotesInput, Checkbox, ButtonCopy, StringSelect, Avatars,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonLabel, IonItem
+    TextInput, Chips, NotesInput, Checkbox, ButtonCopy, StringSelect, Avatars, IconInput,
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonLabel, IonItem, IonToggle
   ],
    styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
-    .input-wrapper { min-height: 24px; }
-    .title { font-size: 1.25rem; font-weight: 500; margin-left: 0;}
-    ion-card-header { padding: 0; }
   `],
   template: `
   @if (showForm()) {
     <form novalidate>
+
+      <ion-item lines="none">
+        <ion-toggle [checked]="enhancedMode()" (ionChange)="enhancedMode.set($event.detail.checked)">
+          {{ i18n().enhanced_label() }}
+        </ion-toggle>
+      </ion-item>
 
       <ion-card>
         <ion-card-header>
@@ -32,7 +35,7 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
         <ion-card-content class="ion-no-padding">
           <ion-grid>
             <ion-row>
-              @if(hasRole('admin')) {
+              @if(enhancedMode() && hasRole('admin')) {
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="okeyI18n()"
                     [value]="okey()"
@@ -41,22 +44,24 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
                   />
                 </ion-col>
               }
-              <ion-col size="12" size-md="6">
-                @if(isNew()) {
-                  <!-- Group id is derived from the (normalized) name and shown read-only.
-                       The final, uniqueness-checked key is assigned on save. -->
-                  <okr-text-input [i18n]="groupIdI18n()"
-                    [value]="groupIdPreview()"
-                    [readOnly]="true"
-                    [showHelper]="true"
-                  />
-                } @else {
-                  <ion-item lines="none">
-                    <ion-label>{{ i18n().id_label() }}: {{ okey() }}</ion-label>
-                    <okr-button-copy [i18n]="buttonCopyI18n()" [value]="okey()" />
-                  </ion-item>
-                }                                     
-              </ion-col>
+              @if(enhancedMode()) {
+                <ion-col size="12" size-md="6">
+                  @if(isNew()) {
+                    <!-- Group id is derived from the (normalized) name and shown read-only.
+                         The final, uniqueness-checked key is assigned on save. -->
+                    <okr-text-input [i18n]="groupIdI18n()"
+                      [value]="groupIdPreview()"
+                      [readOnly]="true"
+                      [showHelper]="true"
+                    />
+                  } @else {
+                    <ion-item lines="none">
+                      <ion-label>{{ i18n().id_label() }}: {{ okey() }}</ion-label>
+                      <okr-button-copy [i18n]="buttonCopyI18n()" [value]="okey()" />
+                    </ion-item>
+                  }
+                </ion-col>
+              }
               <ion-col size="12" size-md="6">
                 <okr-text-input
                   [i18n]="nameI18n()"
@@ -65,14 +70,15 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
                   [showHelper]="true"
                 />
               </ion-col>
-              <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="iconI18n()"
-                  [value]="icon()" (valueChange)="onFieldChange('icon', $event)"
-                  [maxLength]=20
-                  [readOnly]="isReadOnly()"
-                  [showHelper]="true"
-                />
-              </ion-col>
+              @if(enhancedMode()) {
+                <ion-col size="12" size-md="6">
+                  <okr-icon-input [i18n]="iconI18n()"
+                    [icon]="icon()" (iconChange)="onFieldChange('icon', $event)"
+                    (selectClicked)="iconSelectClicked.emit()"
+                    [readOnly]="isReadOnly()"
+                  />
+                </ion-col>
+              }
             </ion-row>
           </ion-grid>
         </ion-card-content>
@@ -145,7 +151,7 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
 
       <!-- tbd: group hierarchy: select an org or group, fill in parentKey, parentName, parentModelType -->
 
-      @if(hasRole('privileged') || hasRole('memberAdmin')) {
+      @if(enhancedMode() && (hasRole('privileged') || hasRole('memberAdmin'))) {
         <ion-card>
           <ion-card-header>
             <ion-card-title>{{ i18n().access() }}</ion-card-title>
@@ -174,7 +180,7 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
         </ion-card>
       }
 
-      @if(hasRole('privileged') || hasRole('memberAdmin')) {
+      @if(enhancedMode() && (hasRole('privileged') || hasRole('memberAdmin'))) {
         <okr-chips chipName="tag"
           [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)"
           [allChips]="allTags()"
@@ -182,7 +188,7 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
         />
       }
 
-      @if(hasRole('admin')) { 
+      @if(enhancedMode() && hasRole('admin')) {
         <okr-notes-input [i18n]="notesI18n()"
           [value]="notes()" (valueChange)="onFieldChange('notes', $event)"
           [readOnly]="isReadOnly()"
@@ -220,9 +226,13 @@ export class GroupForm {
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
  // signals
+  /** Off by default: normal mode shows name, admins and the segment switches only. */
+  protected enhancedMode = signal(false);
+
   public dirty = output<boolean>();
   public valid = output<boolean>();
   public selectPerson = output<void>();
+  public iconSelectClicked = output<void>();
   public showPersonOutput = output<string>();
 
   constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }

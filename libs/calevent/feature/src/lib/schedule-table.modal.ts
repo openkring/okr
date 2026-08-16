@@ -14,7 +14,7 @@ import { CalEventStore } from './calevent.store';
     Header,
   ],
   template: `
-    <okr-header [i18n]="{ title: '@schedule.tableTitle' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.schedule_view() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <div class="schedule-table-wrapper">
         <table class="schedule-table">

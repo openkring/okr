@@ -35,7 +35,12 @@ import { GroupStore } from './group.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title class="ion-hide-sm-down">{{ selectedGroupsCount()}}/{{groupsCount()}} {{ store.i18n.groups() }}</ion-title>
         <ion-title class="ion-hide-sm-up">{{ selectedGroupsCount()}} {{ store.i18n.groups() }}</ion-title>
-        @if(hasRole('privileged') || hasRole('memberAdmin')) {
+        <ion-buttons slot="end">
+          <ion-button (click)="store.showInfo()">
+            <ion-icon slot="icon-only" src="{{'info-circle' | svgIcon }}" />
+          </ion-button>
+        </ion-buttons>
+        @if(canCreate()) {
           <ion-buttons slot="end">
             <ion-button id="{{ popupId() }}">
               <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
@@ -123,7 +128,7 @@ export class GroupList {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
-      case 'add': await this.store.add(this.readOnly()); break;
+      case 'add': await this.store.add(!this.canCreate()); break;
       case 'exportRaw': await this.store.export("raw"); break;
       default: this.alertService.error(`GroupList.call: unknown method ${selectedMethod}`);
     }
@@ -204,6 +209,9 @@ export class GroupList {
   private isGroupAdmin(group: GroupModel): boolean {
     return isAdminMember(group, this.currentUser()?.personKey);
   }
+
+  /** Creating a group is restricted to privileged users (explained in GroupInfoModal). */
+  protected canCreate = computed(() => hasRole('privileged', this.currentUser()));
 
   protected canChange(): boolean {
     if (hasRole('memberAdmin', this.currentUser())) return true;

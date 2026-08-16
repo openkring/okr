@@ -22,8 +22,47 @@
   "add": {
     "page": "Gruppen Page hinzufügen"
   },
+  "info": {
+    "title": "Über Gruppen",
+    "intro": "Eine Gruppe bündelt alles, was eine Handvoll Leute miteinander teilt: den Austausch, die gemeinsamen Termine und die Unterlagen dazu. Neue Gruppen starten schlank mit Chat, Kalender und Mitgliedern — die übrigen Bereiche schaltet die Gruppen-Administratorin bei Bedarf in der Gruppenkonfiguration dazu. Sichtbar ist eine Gruppe grundsätzlich nur für ihre Mitglieder.",
+    "members": {
+      "title": "Mitglieder",
+      "text": "Die Liste aller Personen, die zur Gruppe gehören. Nur sie sehen die Inhalte der Gruppe und erhalten Benachrichtigungen aus dem Gruppen-Chat."
+    },
+    "chat": {
+      "title": "Chat",
+      "text": "Der geschlossene Gruppen-Chat für alles Kurzlebige: Absprachen, Fragen, spontane Änderungen. Jede neue Nachricht wird den Mitgliedern als Push-Nachricht angezeigt."
+    },
+    "calendar": {
+      "title": "Kalender",
+      "text": "Die Termine der Gruppe — Trainings, Sitzungen, Anlässe. Sie erscheinen zusätzlich im persönlichen Kalender der Mitglieder und lassen sich in den eigenen Kalender exportieren."
+    },
+    "content": {
+      "title": "Inhalt",
+      "text": "Die Homepage der Gruppe für Informationen, die längere Zeit gültig bleiben: Konzepte, Anleitungen, Kontakte. Sie wird von den Gruppen-Administratoren gepflegt."
+    },
+    "tasks": {
+      "title": "Todos",
+      "text": "Pendenzen der Gruppe mit Verantwortlichkeit und Termin. Ohne zugewiesene Person landet ein Todo beim Hauptkontakt der Gruppe."
+    },
+    "files": {
+      "title": "Dateien",
+      "text": "Der gemeinsame Ordner der Gruppe für Dokumente, Fotos und PDFs — verfügbar für alle Mitglieder, egal auf welchem Gerät."
+    },
+    "admin": {
+      "title": "Gruppen-Administration",
+      "text": "Jede Gruppe hat einen oder mehrere Administratoren. Sie verwalten die Mitglieder, eröffnen Termine, pflegen den Inhalt und bestimmen, welche Bereiche die Gruppe überhaupt anbietet. Der zuerst genannte Administrator ist zugleich der Hauptkontakt."
+    },
+    "create": {
+      "title": "Neue Gruppe eröffnen"
+    },
+    "support": {
+      "link": "Zum Support Chat"
+    }
+  },
   "create": {
     "label": "Neue Gruppe erstellen",
+    "info": "Um die Erzeugung von neuen Gruppen etwas zu kontrollieren (z.B. vermeiden von gleichen oder ähnlichen Gruppen zum gleichen Zweck), wird dazu die Rolle 'privileged' benötigt. Diese Rolle haben im Wesentlichen die Vorstandsmitglieder. Wenn du eine eigene Gruppe eröffnen möchtest, sage dies bitte im Support Chat mit Name der Gruppe, Mitglieder, Zweck. Du wirst dann Administrator dieser Gruppe und kannst beispielsweise die Gruppenmitglieder verwalten, neue Termine eröffnen etc.",
     "conf": "Gruppe wurde erstellt.",
     "error": "Gruppe konnte nicht erstellt werden.",
     "duplicate": "Doppelte ID",
@@ -94,6 +133,9 @@
       "conf": "Der Kalender wurde hinzugefügt.",
       "error": "Der Kalender konnte nicht hinzugefügt werden."
     }
+  },
+  "enhanced": {
+    "label": "Erweiterter Modus"
   },
   "attributes": "Gruppen-Eigenschaften",
   "display": "Darstellung",

@@ -18,7 +18,7 @@ import { I18nDefaultStore } from './i18n-default.store';
   ],
   providers: [I18nDefaultStore],
   template: `
-    <okr-header [i18n]="{ title: '@i18n.default.edit.title' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.default_edit_title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item>
         <ion-label position="stacked">{{ store.i18n.module() }}</ion-label>

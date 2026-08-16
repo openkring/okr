@@ -29,6 +29,7 @@
     "@okr/subject-group-ui": "*",
     "@okr/subject-group-util": "*",
     "@okr/subject-group-data-access": "*",
+    "@okr/cms-icon-feature": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/cms-menu-ui": "*",
     "@okr/cms-page-feature": "*",

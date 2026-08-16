@@ -20,7 +20,7 @@ import { ICON_SETS, IconStore } from './icon.store';
     img.icon-grid { width: 70%; height: 70%; margin: 15%; object-fit: contain; }
   `],
   template: `
-    <okr-header [i18n]="{ title: '@icon.operation.select.label' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: store.i18n.select() }" [isModal]="true" />
 
     <okr-list-filter
       [compact]="true"

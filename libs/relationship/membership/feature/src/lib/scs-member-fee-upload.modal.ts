@@ -5,7 +5,7 @@ import { IonButton, IonButtons, IonCol, IonContent, IonFooter, IonGrid, IonItem,
 import { ScsMemberFeesModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
-import { getAccountDescription } from '@okr/relationship-membership-util';
+import { getAccountDescription, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 
 export interface BexioPosition {
   text: string;
@@ -34,7 +34,7 @@ const DEFAULT_FOOTER = '<span>Vielen Dank f&uuml;r die Bezahlung der Rechnung in
     ion-textarea { --padding-top: 6px; }
   `],
   template: `
-    <okr-header [i18n]="{ title: '@finance.scsMemberFee.operation.upload.label' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-grid>
         <ion-row>
@@ -104,7 +104,10 @@ const DEFAULT_FOOTER = '<span>Vielen Dank f&uuml;r die Bezahlung der Rechnung in
 })
 export class ScsMemberFeeUploadModal {
   private readonly modalController = inject(ModalController);
-  protected readonly i18n = inject(I18nService).translateAll({ cancel: '@cancel' });
+  protected readonly i18n = inject(I18nService).translateAll({
+    cancel: '@cancel',
+    title: MEMBERSHIP_I18N_KEYS.scsMemberFee_upload_label,
+  });
 
   public fee = input.required<ScsMemberFeesModel>();
   public positions = input.required<BexioPosition[]>();

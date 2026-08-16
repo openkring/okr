@@ -5,6 +5,7 @@ import { IonButton, IonButtons, IonContent, IonFooter, IonInput, IonItem, IonToo
 import { ScsMemberFeesModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
+import { MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 
 @Component({
   selector: 'okr-scs-member-fee-invoice-id-modal',
@@ -16,7 +17,7 @@ import { I18nService } from '@okr/shared-i18n';
     IonContent, IonFooter, IonToolbar, IonButtons, IonButton, IonItem, IonInput,
   ],
   template: `
-    <okr-header [i18n]="{ title: '@finance.scsMemberFee.operation.download.enterInvoiceId' }" [isModal]="true" />
+    <okr-header [i18n]="{ title: i18n.title() }" [isModal]="true" />
     <ion-content class="ion-padding">
       <ion-item lines="none">
         <ion-input
@@ -44,7 +45,10 @@ import { I18nService } from '@okr/shared-i18n';
 })
 export class ScsMemberFeeInvoiceIdModal {
   private readonly modalController = inject(ModalController);
-  protected readonly i18n = inject(I18nService).translateAll({ cancel: '@cancel' });
+  protected readonly i18n = inject(I18nService).translateAll({
+    cancel: '@cancel',
+    title: MEMBERSHIP_I18N_KEYS.scsMemberFee_download_enterInvoiceId,
+  });
 
   public fee = input.required<ScsMemberFeesModel>();
 

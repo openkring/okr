@@ -16,7 +16,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { filterRoomsOfTenant, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef } from '@okr/chat-util';
+import { filterRoomsOfTenant, findSupportRoom, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -641,18 +641,8 @@ export const _MatrixChatStore = signalStore(
       async reportMessage(message: MatrixMessage): Promise<void> {
         const comment = await store.alertService.okrPrompt(store.i18n.msg_report_header(), store.i18n.msg_report_placeholder());
         if (!comment?.trim()) return;
-        const rooms = store.matrixService.roomsCurrentValue;
-        // C-7: identify the support room by its immutable canonical alias
-        // (MatrixRoom.topic carries room.getCanonicalAlias() in this codebase), so a
-        // display-name change can't break reporting. Fall back to the name only for a
-        // room that has no alias at all (client-created rooms may lack one, see S2).
-        const supportAlias = (r: MatrixRoom): string | undefined =>
-          r.topic?.startsWith('#') ? r.topic.slice(1).split(':')[0] : undefined;
-        const supportRoom = rooms.find(r => {
-          const alias = supportAlias(r);
-          return alias ? (alias === 'support' || alias === 'group_support')
-                       : r.name?.toLowerCase() === 'support';
-        });
+        // C-7: identified by the immutable canonical alias, not the display name (see findSupportRoom).
+        const supportRoom = findSupportRoom(store.matrixService.roomsCurrentValue);
         if (!supportRoom) {
           await store.alertService.showToast(store.i18n.msg_report_noChannel());
           return;

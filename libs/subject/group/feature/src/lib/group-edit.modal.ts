@@ -36,6 +36,7 @@ import { GROUP_I18N_KEYS, GroupI18n } from '@okr/subject-group-util';
               [isNew]="isNew()"
               [readOnly]="isReadOnly()"
               (selectPerson)="selectPerson()"
+              (iconSelectClicked)="selectIcon()"
               (dirty)="formDirty.set($event)"
               (valid)="formValid.set($event)"
           />
@@ -83,6 +84,22 @@ export class GroupEditModal {
 
   protected onFormDataChange(formData: GroupModel): void {
     this.formData.set(formData);
+  }
+
+  /** Opens the icon repository browser and stores the picked icon name (same flow as MenuModal). */
+  protected async selectIcon(): Promise<void> {
+    const { IconSelectModal } = await import('@okr/cms-icon-feature');
+    const modal = await this.modalController.create({
+      component: IconSelectModal,
+      componentProps: { initialDir: 'icons' },
+      cssClass: 'list-modal'
+    });
+    modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm' && typeof data === 'string' && data.length > 0) {
+      this.formData.update((vm) => ({ ...vm, icon: data }) as GroupModel);
+      this.formDirty.set(true);
+    }
   }
 
   protected async selectPerson(): Promise<void> {

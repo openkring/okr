@@ -22,6 +22,9 @@ import { getUniqueGroupKey, getVisibleGroupKeys, GROUP_I18N_KEYS } from '@okr/su
 
 import { GroupEditModal } from './group-edit.modal';
 
+/** okey of the group whose Matrix room is the tenant's support chat. */
+const SUPPORT_GROUP_KEY = 'support';
+
 export type GroupState = {
   searchTerm: string;
   selectedTag: string;
@@ -174,6 +177,34 @@ export const GroupStore = signalStore(
       return store.appStore.getTags('group');
     },
 
+    /**
+     * Explains groups (segments, admins, who may create one) — the info icon in the list header.
+     */
+    async showInfo(): Promise<void> {
+      const { GroupInfoModal } = await import('./group-info.modal');
+      const modal = await store.modalController.create({ component: GroupInfoModal });
+      await modal.present();
+      const { role } = await modal.onDidDismiss();
+      if (role === 'supportChat') await this.openSupportChat();
+    },
+
+    /**
+     * Opens the tenant's support chat room. Falls back to the chat overview when the room
+     * cannot be resolved (not joined yet, or the client is still syncing) — the user then
+     * picks it from the room list rather than landing nowhere.
+     */
+    async openSupportChat(): Promise<void> {
+      // The support chat is the 'support' group's Matrix room, and its id is persisted on the
+      // group doc. Read it from there rather than from the Matrix client's room list: that list
+      // is filled by the first sync, so a user who has not opened the chat yet would find it
+      // empty and land on their last room instead. `!`-prefixed ids are applied directly by
+      // MatrixChat; the group key is its documented fallback (resolves + force-joins via
+      // requestGroupRoomAccess). Without a support group — other tenants — open the overview.
+      const supportGroup = store.appStore.getGroup(SUPPORT_GROUP_KEY);
+      const selectedRoom = supportGroup ? (supportGroup.matrixRoomId || SUPPORT_GROUP_KEY) : undefined;
+      await navigateByUrl(store.router, '/private/chat/c-contentpage', selectedRoom ? { selectedRoom } : {});
+    },
+
     /******************************* actions on the group *************************************** */
     /**
      * Adds a new group.
@@ -181,6 +212,11 @@ export const GroupStore = signalStore(
     async add(readOnly = true): Promise<void> {
       if (readOnly) return;
       const newGroup = new GroupModel(store.tenantId());
+      // a new group starts lean: chat, calendar and members only. The creator can
+      // switch content/tasks/files on in the edit form or later.
+      newGroup.hasContent = false;
+      newGroup.hasTasks = false;
+      newGroup.hasFiles = false;
       const currentUser = store.currentUser();
       if (currentUser) {
         const avatar = getAvatarInfoForCurrentUser(currentUser);
@@ -226,16 +262,20 @@ export const GroupStore = signalStore(
             await this.ensureAllAdminsAreMember(data);
 
             // create default calendar segment
-            await this.createGroupCalendar(data);
+            if (data.hasCalendar) await this.createGroupCalendar(data);
 
             // create default content page with initial article section
-            const articleId = await this.createArticleSection(data);
-            await this.createGroupPage(data, 'content', store.i18n.content(), articleId);
+            if (data.hasContent) {
+              const articleId = await this.createArticleSection(data);
+              await this.createGroupPage(data, 'content', store.i18n.content(), articleId);
+            }
 
             // create default chat section/page and chat room
-            const chatId = await this.createChatSection(data);
-            await this.createGroupPage(data, 'chat', store.i18n.chat_group_name(), chatId);
-            await store.chatService.createGroupRoom(data.okey, [], store.i18n.chat_group_name() + ': ' + data.name);
+            if (data.hasChat) {
+              const chatId = await this.createChatSection(data);
+              await this.createGroupPage(data, 'chat', store.i18n.chat_group_name(), chatId);
+              await store.chatService.createGroupRoom(data.okey, [], store.i18n.chat_group_name() + ': ' + data.name);
+            }
           } else {
             await store.groupService.update(data, store.currentUser());
             await this.ensureAllAdminsAreMember(data);

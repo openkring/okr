@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, isBridgeGhost, hashUserIdToColor, formatReceiptTime, resolveMatrixDisplayName } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, resolveMatrixDisplayName } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -112,5 +112,30 @@ describe('isBridgeGhost', () => {
     expect(isBridgeGhost('whatsapp_41791234567')).toBe(true);
     expect(isBridgeGhost('anna')).toBe(false);
     expect(isBridgeGhost('bk2-bot')).toBe(false);
+  });
+});
+
+describe('findSupportRoom', () => {
+  const room = (roomId: string, name?: string, topic?: string) => ({ roomId, name, topic });
+
+  it('matches the canonical alias, not the display name', () => {
+    const rooms = [room('!a', 'Support'), room('!b', 'Hilfe & Fragen', '#support:okr.ch')];
+    expect(findSupportRoom(rooms)?.roomId).toBe('!b');
+  });
+
+  it('accepts the group_support alias', () => {
+    expect(findSupportRoom([room('!a', 'x', '#group_support:okr.ch')])?.roomId).toBe('!a');
+  });
+
+  it('falls back to the name for a room without an alias', () => {
+    expect(findSupportRoom([room('!a', 'support')])?.roomId).toBe('!a');
+  });
+
+  it('ignores a room named support that carries a different alias', () => {
+    expect(findSupportRoom([room('!a', 'support', '#trainer:okr.ch')])).toBeUndefined();
+  });
+
+  it('returns undefined when there is no support room', () => {
+    expect(findSupportRoom([room('!a', 'Trainer')])).toBeUndefined();
   });
 });

@@ -150,3 +150,18 @@ export function filterRoomsOfTenant<T extends {
     return true;
   });
 }
+
+/**
+ * Find the tenant's support room among the user's rooms.
+ *
+ * Identified by its immutable canonical alias (`MatrixRoom.topic` carries
+ * `room.getCanonicalAlias()` in this codebase), so a display-name change cannot break it.
+ * Falls back to the display name for rooms that have no alias at all (client-created
+ * rooms may lack one).
+ */
+export function findSupportRoom<T extends { roomId: string; name?: string; topic?: string }>(rooms: T[]): T | undefined {
+  const alias = (r: T): string | undefined => r.topic?.startsWith('#') ? r.topic.slice(1).split(':')[0] : undefined;
+  // an alias match always wins: a room merely *named* "Support" must not shadow the real one
+  return rooms.find(r => { const a = alias(r); return a === 'support' || a === 'group_support'; })
+      ?? rooms.find(r => !alias(r) && r.name?.toLowerCase() === 'support');
+}
