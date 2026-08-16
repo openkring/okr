@@ -6,11 +6,11 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { ApplicationModel, ApplicationState, UserModel } from '@okr/shared-models';
+import { ApplicationModel, ApplicationState } from '@okr/shared-models';
 import { getAvatarInfoForCurrentUser } from '@okr/shared-util-core';
 import { AlertService } from '@okr/shared-util-angular';
 
-import { MemberNewModal } from '@okr/relationship-membership-feature';
+import { MembershipStore } from '@okr/relationship-membership-feature';
 
 import { ApplicationService } from '@okr/application-data-access';
 import { APPLICATION_I18N_KEYS, matchesStateFilter, stateColor } from '@okr/application-util';
@@ -26,6 +26,7 @@ export const ApplicationStore = signalStore(
 
   withProps(() => ({
     appStore:           inject(AppStore),
+    membershipStore:    inject(MembershipStore),
     applicationService: inject(ApplicationService),
     modalController:    inject(ModalController),
     alertService:       inject(AlertService),
@@ -127,28 +128,21 @@ export const ApplicationStore = signalStore(
       store.applicationsResource.reload();
     },
 
+    /**
+     * Promote an approved application to a membership (roadmap A3). `accept()` already created
+     * the person and its addresses, so this only adds the missing membership in the default org —
+     * `MemberNewModal` would have created a SECOND person. Saving the membership is what opens
+     * the Firebase account and emits `membership.created` (server-side, spec 1.35 / 4.60).
+     */
     async addMembership(app: ApplicationModel): Promise<void> {
       if (!app.personKey) {
         console.warn(store.i18n.list_no_person());
         return;
       }
-      const mcat = store.appStore.getCategory('membership_category');
-      const genders = store.appStore.getCategory('gender');
+      const person = store.appStore.allPersons().find(p => p.okey === app.personKey);
       const defaultOrg = store.appStore.defaultOrg();
-      if (!defaultOrg) return;
-      const modal = await store.modalController.create({
-        component: MemberNewModal,
-        componentProps: {
-          currentUser: store.currentUser(),
-          mcat,
-          tags: store.appStore.getTags('membership'),
-          tenantId: store.tenantId(),
-          genders,
-          org: defaultOrg,
-        }
-      });
-      await modal.present();
-      await modal.onWillDismiss();
+      if (!person || !defaultOrg) return;
+      await store.membershipStore.addExistingPersonToOrg(person, defaultOrg);
     },
 
     async addToGroup(_app: ApplicationModel): Promise<void> {

@@ -495,7 +495,25 @@ export const _MembershipStore = signalStore(
       },
 
       /**
-       * Show a modal to create a new person and add it as member to the current org. 
+       * Make an EXISTING person a member of a given org — the promotion step of an approved
+       * application (roadmap A3): `ApplicationService.accept()` has already created the person
+       * and its addresses, so only the membership document is missing. The category and the
+       * rebate stay a human decision, hence the prefilled edit modal instead of a silent write.
+       * Opening the user account and the follow-up rules are server-side (spec 1.35 / 4.60).
+       */
+      async addExistingPersonToOrg(person: PersonModel, org: OrgModel): Promise<void> {
+        const memberAvatar = getAvatarInfo(person, 'person');
+        const orgAvatar = getAvatarInfo(org, 'org');
+        if (memberAvatar && orgAvatar && await store.membershipService.isMemberOf(memberAvatar, orgAvatar)) {
+          await showToast(store.toastController, store.i18n.create_alreadyMember());
+          return;
+        }
+        const membership = convertMemberAndOrgToMembership(person, PersonModelName, org, OrgModelName, store.tenantId());
+        await this.edit(membership, false, true);
+      },
+
+      /**
+       * Show a modal to create a new person and add it as member to the current org.
        * The current org from the membership store is used as default org in the person creation modal.
        */
       async addNewMember(): Promise<void> {
