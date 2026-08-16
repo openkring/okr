@@ -21,6 +21,8 @@ interface BirthdayRow {
   person: PersonModel;
   /** the age the person reaches on that birthday */
   age: number;
+  /** a round birthday (20, 30, 40 …) — the reason such a list is kept at all */
+  isJubilee: boolean;
 }
 
 /** All birthdays falling on one calendar date, the unit the list renders. */
@@ -36,7 +38,8 @@ interface BirthdayGroup {
 
 /**
  * Rolling twelve-month birthday list (PENDING 2.84), starting today and crossing the year
- * boundary, grouped by date — `MO 05.09.` · Avatar · Vorname Nachname · Alter.
+ * boundary, grouped by date — `MO 05.09.` · Avatar · Vorname Nachname · Alter, round
+ * birthdays in bold.
  *
  * **Why this is not a column on the person list.** Spec 1.19 Phase 4 removed `dateOfBirth`
  * from `PersonModel`; day and month exist only in the addresses vault (`addressChannel: 'dob'`),
@@ -98,7 +101,9 @@ interface BirthdayGroup {
                 <ion-img src="{{ personModelName + '.' + row.person.okey | avatar:personModelName }}" alt="Avatar" />
               </ion-avatar>
               <ion-label>{{ row.person.firstName | fullName:row.person.lastName:nameDisplay() }}</ion-label>
-              <ion-label class="ion-hide-sm-down">{{ row.age }}</ion-label>
+              <ion-label class="ion-hide-sm-down">
+                @if (row.isJubilee) { <strong>{{ row.age }}</strong> } @else { {{ row.age }} }
+              </ion-label>
             </ion-item>
           }
         }
@@ -180,7 +185,9 @@ export class BirthdayList {
         };
         byDate.set(diff, group);
       }
-      group.rows.push({ person, age: getAge(address.dob, false, Number(getStoreDateYear(date))) });
+      const age = getAge(address.dob, false, Number(getStoreDateYear(date)));
+      // age 0 is a birth, not a birthday, so it is not a jubilee
+      group.rows.push({ person, age, isJubilee: age > 0 && age % 10 === 0 });
     }
 
     return [...byDate.values()].sort((a, b) => a.diff - b.diff);
