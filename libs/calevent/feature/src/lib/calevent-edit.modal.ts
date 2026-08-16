@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup } from '@ionic/angular/standalone';
 
-import { CalEventModel, CalEventModelName, CategoryListModel, UserModel } from '@okr/shared-models';
+import { CalEventModel, CalEventModelName, CategoryListModel, LocationModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { CalendarSelectModal } from '@okr/shared-feature';
@@ -43,6 +43,7 @@ import { AttendeesAccordion } from './attendees-accordion';
           [allTags]="tags()"
           [tenantId]="tenantId()"
           [locale]="locale()"
+          [locations]="locations()"
           [readOnly]="isReadOnly()"
           (calendarSelectClicked)="selectCalendar()"
           (dirty)="formDirty.set($event)"
@@ -86,6 +87,7 @@ export class CalEventEditModal {
   public tags = input.required<string>();
   public tenantId = input.required<string>();
   public locale = input.required<string>();
+  public locations = input<LocationModel[]>([]);
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   public initialDirty = input<boolean>(false);

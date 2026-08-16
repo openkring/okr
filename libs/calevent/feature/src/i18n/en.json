@@ -186,9 +186,9 @@
   "list": {
     "header": {
       "name": "Event",
-      "duration": "from-to",
+      "duration": "Date/time",
       "year": "Year",
-      "responsible": "Organizers",
+      "responsible": "Organization",
       "location": "Location",
       "description": "Topic"
     }
@@ -252,7 +252,14 @@
     "label": "Organizers",
     "add": "Add organizers",
     "persons": "Responsible",
-    "description": "People responsible for the event."
+    "description": "People responsible for the event.",
+    "organiser": {
+      "select": "Select organizer",
+      "view": "Show organizer",
+      "call": "Call organizer",
+      "chat": "Chat with organizer",
+      "email": "Email organizer"
+    }
   },
   "seriesId": {
     "label": "Series ID",

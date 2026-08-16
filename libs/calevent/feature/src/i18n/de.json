@@ -186,9 +186,9 @@
   "list": {
     "header": {
       "name": "Anlass",
-      "duration": "von-bis",
+      "duration": "Datum/Zeit",
       "year": "Jahr",
-      "responsible": "Organisierende",
+      "responsible": "Organisation",
       "location": "Ort",
       "description": "Thema"
     }
@@ -239,9 +239,9 @@
     "helper": "Dieses Ereignis wird als Tagesereignis im Kalender eingetragen - ohne bestimmte Zeit."
   },
   "locationKey": {
-    "label": "Ort-Schlüssel",
-    "placeholder": "sssssss",
-    "helper": "Eine Referenz auf den Ort (location.okey in der Datenbank)."
+    "label": "Ort",
+    "placeholder": "Ort suchen oder erfassen",
+    "helper": "Ort eingeben und aus der Liste wählen; wird kein Ort gefunden, bleibt der Text als freier Ort stehen."
   },
   "name": {
     "label": "Anlass",
@@ -252,7 +252,14 @@
     "label": "Organisierende",
     "add": "Organisierende hinzufügen",
     "persons": "Verantwortlich",
-    "description": "Personen, die für den Anlass verantwortlich sind."
+    "description": "Personen, die für den Anlass verantwortlich sind.",
+    "organiser": {
+      "select": "Organisierende Person wählen",
+      "view": "Organisierende Person anzeigen",
+      "call": "Organisierende Person anrufen",
+      "chat": "Organisierende Person chatten",
+      "email": "Organisierende Person – E-Mail senden"
+    }
   },
   "seriesId": {
     "label": "Serien-ID",

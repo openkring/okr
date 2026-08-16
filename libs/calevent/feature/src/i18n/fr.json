@@ -186,9 +186,9 @@
   "list": {
     "header": {
       "name": "Événement",
-      "duration": "de-à",
+      "duration": "Date/heure",
       "year": "Année",
-      "responsible": "Organisateurs",
+      "responsible": "Organisation",
       "location": "Lieu",
       "description": "Sujet"
     }
@@ -252,7 +252,14 @@
     "label": "Organisateurs",
     "add": "Ajouter des organisateurs",
     "persons": "Responsable",
-    "description": "Personnes responsables de l'événement."
+    "description": "Personnes responsables de l'événement.",
+    "organiser": {
+      "select": "Choisir l'organisateur",
+      "view": "Afficher l'organisateur",
+      "call": "Appeler l'organisateur",
+      "chat": "Discuter avec l'organisateur",
+      "email": "Envoyer un e-mail à l'organisateur"
+    }
   },
   "seriesId": {
     "label": "ID de série",

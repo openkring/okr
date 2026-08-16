@@ -19,6 +19,10 @@
     "@okr/calevent-ui": "*",
     "@okr/calevent-util": "*",
     "@okr/cms-menu-feature": "*",
-    "@okr/chat-data-access": "*"
+    "@okr/chat-data-access": "*",
+    "@okr/location-data-access": "*",
+    "@okr/subject-address-util": "*",
+    "@okr/avatar-ui": "*",
+    "@okr/subject-group-util": "*"
   }
 }

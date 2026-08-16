@@ -1,15 +1,17 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from '@angular/core';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
 
 import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, NAME_LENGTH } from '@okr/shared-constants';
-import { AvatarInfo, CalEventModel, CategoryListModel, RoleName, UserModel } from '@okr/shared-models';
+import { AvatarInfo, CalEventModel, CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, extractFirstPartOfOptionalTupel, hasRole } from '@okr/shared-util-core';
 import { ModelSelectService } from '@okr/shared-feature';
 
 import { Avatars } from '@okr/avatar-ui';
 import { CaleventI18n, calEventValidations, isPersonalCalevent } from '@okr/calevent-util';
+
+const MAX_LOCATION_SUGGESTIONS = 8;
 
 @Component({
   selector: 'okr-calevent-form',
@@ -17,7 +19,7 @@ import { CaleventI18n, calEventValidations, isPersonalCalevent } from '@okr/cale
   imports: [
     CategorySelect, Chips, NotesInput, DateInput, TimeInput, NumberInput,
     TextInput, ErrorNote, StringList, Avatars, Checkbox, UrlInput,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonList, IonItem, IonLabel
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -93,8 +95,18 @@ import { CaleventI18n, calEventValidations, isPersonalCalevent } from '@okr/cale
             @if(expertMode() && !isPersonal()) {
               <ion-row>
                 <ion-col size="12">
-                  <!-- tbd: locationKey is currently only a text field, should be [key]@[name], e.g.  qlöh1341hkqj@Stäfa -->
-                  <okr-text-input [i18n]="locationKeyI18n()" [value]="locationKey()" (valueChange)="onFieldChange('locationKey', $event)" [readOnly]="isReadOnly()" />
+                  <!-- typing filters the known locations; picking one stores 'name@okey',
+                       otherwise the typed text is kept as a free-text location -->
+                  <okr-text-input [i18n]="locationKeyI18n()" [value]="locationLabel()" (valueChange)="onLocationInput($event)" [readOnly]="isReadOnly()" [showHelper]="true" />
+                  @if(locationSuggestions().length > 0) {
+                    <ion-list lines="inset">
+                      @for(loc of locationSuggestions(); track loc.okey) {
+                        <ion-item button (click)="selectLocation(loc)">
+                          <ion-label>{{ loc.name }}</ion-label>
+                        </ion-item>
+                      }
+                    </ion-list>
+                  }
                 </ion-col>
               </ion-row>
             }
@@ -166,6 +178,8 @@ export class CalEventForm {
   public readonly types = input.required<CategoryListModel>();
   public readonly periodicities = input.required<CategoryListModel>();
   public readonly locale = input.required<string>();
+  /** known locations of the tenant, offered as suggestions for the location field */
+  public readonly locations = input<LocationModel[]>([]);
   public readonly readOnly = input(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -196,6 +210,15 @@ export class CalEventForm {
   protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
   protected urlLabel = linkedSignal(() => this.formData().urlLabel ?? DEFAULT_LABEL);
   protected locationKey = linkedSignal(() => this.formData().locationKey ?? DEFAULT_KEY);
+  // the field shows the readable part of 'name@okey' (or the free text if no location was picked)
+  protected locationLabel = linkedSignal(() => extractFirstPartOfOptionalTupel(this.formData().locationKey ?? '', '@'));
+  private locationSuggestOpen = signal(false);
+  protected locationSuggestions = computed(() => {
+    if (!this.locationSuggestOpen()) return [];
+    const term = this.locationLabel().trim().toLowerCase();
+    if (term.length === 0) return [];
+    return this.locations().filter(loc => loc.name.toLowerCase().includes(term)).slice(0, MAX_LOCATION_SUGGESTIONS);
+  });
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected description = linkedSignal(() => this.formData().description ?? DEFAULT_NOTES);
   protected calendars = linkedSignal(() => this.formData().calendars ?? DEFAULT_CALENDARS);
@@ -209,7 +232,9 @@ export class CalEventForm {
     name2: p.name2 ?? ''
   } as AvatarInfo));
 });
-  protected expertMode = computed(() => this.hasRole('admin'));
+  // same rule as CaleventList.canChange(): whoever may edit an event may also see its
+  // location, calendars and tags — gating these on 'admin' hid them from eventAdmin/privileged editors
+  protected expertMode = computed(() => this.hasRole('eventAdmin') || this.hasRole('privileged'));
   /** A personal event (no calendar) supports a reduced feature set — see isPersonalCalevent(). */
   protected isPersonal = computed(() => isPersonalCalevent(this.formData()));
 
@@ -330,6 +355,19 @@ export class CalEventForm {
       }));
     }
     this.dirty.emit(true);
+  }
+
+  /** free text: kept as-is, so an unknown location stays a plain label */
+  protected onLocationInput(value: string): void {
+    this.locationLabel.set(value);
+    this.locationSuggestOpen.set(true);
+    this.onFieldChange('locationKey', value);
+  }
+
+  protected selectLocation(location: LocationModel): void {
+    this.locationSuggestOpen.set(false);
+    this.locationLabel.set(location.name);
+    this.onFieldChange('locationKey', `${location.name}@${location.okey}`);
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean | AvatarInfo[]): void {

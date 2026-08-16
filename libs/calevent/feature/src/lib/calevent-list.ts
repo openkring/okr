@@ -1,6 +1,7 @@
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, viewChild } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
+import { Router } from '@angular/router';
 import { format } from 'date-fns';
 
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
@@ -12,18 +13,19 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
 
 import { DEFAULT_DATE } from '@okr/shared-constants';
-import { CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
+import { AvatarInfo, CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, QuickEntryService } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, navigateByUrl, QuickEntryService } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, formatScheduleCloseMessage, getCalEventCssClass, isPastCalevent, isPersonalCalevent } from '@okr/calevent-util';
+import { CalEventDurationPipe, formatScheduleCloseMessage, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent } from '@okr/calevent-util';
+import { browseUrl } from '@okr/subject-address-util';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
 
@@ -109,7 +111,7 @@ type AttendanceFilter = AttendanceState | 'all';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin() || isPersonalCalendar()" [toggleStates]="{ toggleFilter: showFilter() }"/>
+                      <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="isPersonalCalendar()" [toggleStates]="{ toggleFilter: showFilter() }"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -167,7 +169,7 @@ type AttendanceFilter = AttendanceState | 'all';
           <ion-grid>
             <ion-row>
               <ion-col size="6" size-md="3">
-                <ion-label><strong>{{ store.i18n.durationMinutes() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.list_header_duration() }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4">
                 <ion-label><strong>{{ store.i18n.topic() }}</strong></ion-label>
@@ -176,7 +178,7 @@ type AttendanceFilter = AttendanceState | 'all';
                 <ion-label><strong>{{ store.i18n.location() }}</strong></ion-label>
               </ion-col>
               <ion-col size="2" class="ion-hide-md-down">
-                <ion-label><strong>{{ store.i18n.responsible() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.list_header_responsible() }}</strong></ion-label>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -239,6 +241,7 @@ export class CalEventList implements OnInit {
   protected quickEntryText = signal('');
   private isSettingQuickEntryValue = false;
   private readonly matrixChatService = inject(MatrixChatService);
+  private readonly router = inject(Router);
   private readonly injector = inject(Injector);
   private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
 
@@ -284,8 +287,8 @@ export class CalEventList implements OnInit {
   protected readonly years = computed(() => getYearList(getYear() + 1, 30));
   public isListView = linkedSignal(() => this.view() === 'list');
   protected expertMode = computed(() => this.hasRole('admin'));
-  /** The 'personal' calendar: every registered user may create and manage their own events here. */
-  protected isPersonalCalendar = computed(() => this.store.calendarName() === 'personal');
+  /** The personal calendars ('personal', 'my'): every registered user may create and manage their own events here. */
+  protected isPersonalCalendar = computed(() => isPersonalCalendarName(this.store.calendarName()));
   private readonly firstFutureIndex = computed(() => {
     const today = format(new Date(), 'yyyyMMdd');
     return this.filteredCalEvents().findIndex(e => e.startDate >= today);
@@ -670,6 +673,20 @@ export class CalEventList implements OnInit {
         );
       }
     }
+    // organiser actions: view/chat/call/email the responsible person (a picker follows if there are several)
+    const organisers = calevent.responsiblePersons ?? [];
+    if (organisers.length > 0) {
+      actionSheetOptions.buttons.push(createActionSheetDivider());
+      actionSheetOptions.buttons.push(createActionSheetButton('organiser.view', this.store.i18n.organiser_view(), this.imgixBaseUrl, 'eye-on'));
+      actionSheetOptions.buttons.push(createActionSheetButton('organiser.chat', this.store.i18n.organiser_chat(), this.imgixBaseUrl, 'chatbubbles'));
+      if (organisers.some(o => this.organiserPhone(o.key))) {
+        actionSheetOptions.buttons.push(createActionSheetButton('organiser.call', this.store.i18n.organiser_call(), this.imgixBaseUrl, 'tel'));
+      }
+      if (organisers.some(o => this.organiserEmail(o.key))) {
+        actionSheetOptions.buttons.push(createActionSheetButton('organiser.email', this.store.i18n.organiser_email(), this.imgixBaseUrl, 'email'));
+      }
+    }
+
     actionSheetOptions.buttons.push(createActionSheetDivider());
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.store.i18n.download_ics(), this.imgixBaseUrl, 'calendar-number'));
 
@@ -753,7 +770,73 @@ export class CalEventList implements OnInit {
         case 'calevent.closeSchedule':
           await this.confirmCloseSchedule(calEvent);
           break;
+        case 'organiser.view':
+        case 'organiser.chat':
+        case 'organiser.call':
+        case 'organiser.email':
+          await this.organiserAction(data.action, calEvent);
+          break;
       }
+    }
+  }
+
+  /******************************* organiser actions *************************************** */
+
+  /** The registered-visible contact data of an organiser (address-directory projection). */
+  private organiserEmail(personKey: string): string {
+    return this.store.appStore.getDirectoryEntry(`person.${personKey}`)?.favEmail ?? '';
+  }
+
+  private organiserPhone(personKey: string): string {
+    return this.store.appStore.getDirectoryEntry(`person.${personKey}`)?.favPhone ?? '';
+  }
+
+  /** Runs an organiser action on the event's responsible person; asks which one if there are several. */
+  private async organiserAction(action: string, calevent: CalEventModel): Promise<void> {
+    const organiser = await this.pickOrganiser(calevent);
+    if (!organiser) return;
+    switch (action) {
+      case 'organiser.view': await this.showPerson(organiser.key); break;
+      case 'organiser.chat': await this.chatWith(organiser.key); break;
+      case 'organiser.call': {
+        const phone = this.organiserPhone(organiser.key);
+        if (phone) await browseUrl(`tel:${phone}`);
+        break;
+      }
+      case 'organiser.email': {
+        const email = this.organiserEmail(organiser.key);
+        if (email) await browseUrl(`mailto:${email}`);
+        break;
+      }
+    }
+  }
+
+  private async pickOrganiser(calevent: CalEventModel): Promise<AvatarInfo | undefined> {
+    const organisers = calevent.responsiblePersons ?? [];
+    if (organisers.length <= 1) return organisers[0];
+    const options = createActionSheetOptions(this.store.i18n.organiser_select());
+    options.buttons = organisers.map(o => createActionSheetButton(o.key, `${o.name1} ${o.name2}`, this.imgixBaseUrl, 'avatar-circle'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss();
+    return organisers.find(o => o.key === data?.action);
+  }
+
+  /** Opens the person page. Navigation, not the PersonEditModal: importing @okr/subject-person-feature
+   *  here would close a lib dependency cycle (person-feature -> … -> reservation-feature -> calevent-feature). */
+  private async showPerson(personKey: string): Promise<void> {
+    await navigateByUrl(this.router, `/person/${personKey}`);
+  }
+
+  /** Opens (or creates) the direct chat room with the given person — same flow as PersonStore.chat(). */
+  private async chatWith(personKey: string): Promise<void> {
+    try {
+      await this.matrixChatService.ensureInitialized();
+      const room = await this.matrixChatService.createDirectRoom(personKey);
+      await navigateByUrl(this.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
+    } catch (err) {
+      warn(`CalEventList.chatWith: could not open the direct chat with ${personKey}: ${err}`);
     }
   }
 

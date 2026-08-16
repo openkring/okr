@@ -189,6 +189,11 @@ export const CALEVENT_I18N_KEYS = {
 
   responsible:                    PFX + 'responsible.label',
   responsible_add:                PFX + 'responsible.add',
+  organiser_select:               PFX + 'responsible.organiser.select',
+  organiser_view:                 PFX + 'responsible.organiser.view',
+  organiser_call:                 PFX + 'responsible.organiser.call',
+  organiser_chat:                 PFX + 'responsible.organiser.chat',
+  organiser_email:                PFX + 'responsible.organiser.email',
   responsible_persons:            PFX + 'responsible.persons',
   responsible_description:        PFX + 'responsible.description',
 

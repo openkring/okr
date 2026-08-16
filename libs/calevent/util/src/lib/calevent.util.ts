@@ -37,6 +37,16 @@ export function isPersonalCalevent(calevent: CalEventModel): boolean {
   return (calevent.calendars?.length ?? 0) === 0;
 }
 
+/**
+ * The calendar names on which a plain registered user may create a personal event: the dedicated
+ * 'personal' calendar and 'my' (the menu entry every tenant actually ships — /calevent/my/c-calevents).
+ * Both list the user's own events, so a new event created there is a personal one.
+ * @param calendarName the CalEventStore's current calendar name
+ */
+export function isPersonalCalendarName(calendarName: string): boolean {
+  return calendarName === 'personal' || calendarName === 'my';
+}
+
 export function convertCalEventToFullCalendar(calevent: CalEventModel): EventInput {
   if (isFullDayEvent(calevent)) {
     return convertFullDayCalEventToFullCalendar(calevent);

@@ -1,7 +1,7 @@
 import { CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalevent, isSchedulePoll, planSeriesReconcile } from './calevent.util';
+import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, planSeriesReconcile } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -50,6 +50,19 @@ describe('CalEvent Utils', () => {
 
     it('treats a legacy doc without calendars as personal', () => {
       expect(isPersonalCalevent({ ...baseCalEvent, calendars: undefined } as unknown as CalEventModel)).toBe(true);
+    });
+  });
+
+  describe('isPersonalCalendarName', () => {
+    it('accepts the personal calendars', () => {
+      expect(isPersonalCalendarName('personal')).toBe(true);
+      expect(isPersonalCalendarName('my')).toBe(true);
+    });
+
+    it('rejects shared calendars', () => {
+      expect(isPersonalCalendarName('all')).toBe(false);
+      expect(isPersonalCalendarName('scs')).toBe(false);
+      expect(isPersonalCalendarName('')).toBe(false);
     });
   });
 

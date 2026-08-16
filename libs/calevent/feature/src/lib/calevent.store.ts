@@ -17,9 +17,10 @@ import { MAX_DATES_PER_SERIES } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
 import { MembershipService } from '@okr/relationship-membership-data-access';
+import { LocationService } from '@okr/location-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
-import { CALEVENT_I18N_KEYS, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalevent, planSeriesReconcile } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, planSeriesReconcile } from '@okr/calevent-util';
 import { RegressionSelectionModal } from '@okr/calevent-ui';
 
 const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';
@@ -68,6 +69,7 @@ export const CalEventStore = signalStore(
     alertController: inject(AlertController),
     router: inject(Router),
     membershipService: inject(MembershipService),
+    locationService: inject(LocationService),
     modelSelectService: inject(ModelSelectService),
     i18nService: inject(I18nService)
   })),
@@ -85,6 +87,12 @@ export const CalEventStore = signalStore(
         if (!personKey) return of([]);
         return store.membershipService.listOrgsOfMember(personKey, 'person');
       }
+    }),
+
+    // all locations of the tenant — used by the location typeahead in the edit modal
+    locationsResource: rxResource({
+      params: () => ({ currentUser: store.appStore.currentUser() }),
+      stream: ({ params }) => params.currentUser ? store.locationService.list() : of([]),
     }),
 
     invitationsForCurrentUserResource: rxResource({
@@ -144,6 +152,7 @@ export const CalEventStore = signalStore(
   withComputed((state) => {
     return {
       calendarsOfCurrentUser: computed(() => state.calendarsForCurrentUserResource.value() ?? []),
+      locations: computed(() => state.locationsResource.value() ?? []),
     }
   }),
 
@@ -363,7 +372,7 @@ export const CalEventStore = signalStore(
       /******************************* CRUD on single event  *************************************** */
       async add(readOnly = true, startDate?: string, startTime?: string, skipReload = false): Promise<CalEventModel | undefined> {
         const cal = store.calendarName();
-        const personal = cal === 'personal';
+        const personal = isPersonalCalendarName(cal);
         if (readOnly && !personal) return undefined;
         const newCalevent = new CalEventModel(store.tenantId());
         newCalevent.startDate = startDate ?? getTodayStr();
@@ -450,6 +459,7 @@ export const CalEventStore = signalStore(
             tags: this.getTags(),
             tenantId: store.tenantId(),
             locale: this.getLocale(),
+            locations: store.locations(),
             readOnly,
             initialDirty
           }
