@@ -1,5 +1,5 @@
 import type { Route } from '@angular/router';
-import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isPrivilegedGuard, isTreasurerGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isMemberAdminGuard, isPrivilegedGuard, isTreasurerGuard } from '@okr/auth-feature';
 
 /**
  * A feature block's Angular ROUTE fragment — `canActivate` guards + `loadComponent`. Split
@@ -444,6 +444,12 @@ const subject: BlockRoutes = {
       path: 'person',
       canActivate: [isAuthenticatedGuard],
       children: [
+        // birthday list (2.84) — reads the dob vault, which only privileged/memberAdmin may
+        // read; the guard makes that visible instead of serving an empty list to everyone else
+        { path: 'birthday/:listId', canActivate: [isMemberAdminGuard], loadComponent: () => import('@okr/subject-person-feature').then(m => m.BirthdayList) },
+        // privacy overview (2.83) — an aggregate of who shields what; persons are tenant-readable,
+        // so this guard is the only gate the page has
+        { path: 'privacy', canActivate: [isMemberAdminGuard], loadComponent: () => import('@okr/subject-person-feature').then(m => m.PrivacyList) },
         { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/subject-person-feature').then(m => m.PersonList) },
         { path: ':personKey', loadComponent: () => import('@okr/subject-person-feature').then(m => m.PersonEditPage) },
       ],

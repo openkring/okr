@@ -192,6 +192,24 @@ export class AddressService {
   }
 
   /**
+   * All active addresses of one channel across the tenant — a raw vault read.
+   *
+   * There is no projection for this: `address-directory` deliberately drops the sensitive
+   * scalar channels and `getAddressView` is per-parent. The `addresses` rule
+   * (owner ∨ privileged ∨ memberAdmin) is therefore the access control — a plain member's
+   * query simply returns []. Callers must gate the UI on the same roles rather than
+   * present an empty list as "nobody has a birthday".
+   *
+   * Unordered ('none'): sensitive channels carry no meaningful `name`, and ordering by it
+   * would need a composite index that the existing equality-prefix index already avoids.
+   */
+  public listByChannel(channel: string): Observable<AddressModel[]> {
+    const query = getSystemQuery(this.env.tenantId);
+    query.push({ key: 'addressChannel', operator: '==', value: channel });
+    return this.firestoreService.searchData<AddressModel>(AddressCollection, query, 'none');
+  }
+
+  /**
    * Returns the favourite postal address for a subject (person or org), or undefined.
    * @param parentKey the subject's okey (AddressModel.parentKey)
    */

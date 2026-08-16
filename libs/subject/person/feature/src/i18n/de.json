@@ -200,6 +200,38 @@
     "keepExisting": "Bestehend",
     "useNew": "Neu"
   },
+  "birthdays": {
+    "title": "Geburtstage",
+    "empty": "Keine Geburtstage in den nächsten zwölf Monaten.",
+    "date": "Datum",
+    "age": "Alter"
+  },
+  "privacy": {
+    "title": "Privatsphäre",
+    "empty": "Niemand hat diese Angabe eingeschränkt.",
+    "hint": "Der Filter zeigt die Personen, die die gewählte Angabe eingeschränkt haben.",
+    "filter": {
+      "all": "Alle Personen"
+    },
+    "field": {
+      "usageImages": "Fotos",
+      "usageName": "Name",
+      "usageEmail": "E-Mail",
+      "usagePhone": "Telefon",
+      "usagePostalAddress": "Adresse",
+      "usageDateOfBirth": "Geburtstag"
+    },
+    "tier": {
+      "public": "öffentlich",
+      "restricted": "nur Mitglieder",
+      "protected": "nur Vorstand"
+    },
+    "imageTier": {
+      "public": "Fotos frei",
+      "restricted": "nicht veröffentlichen",
+      "protected": "nicht fotografieren"
+    }
+  },
   "validation": {
     "lastNameRequired": "Die Eingabe eines Nachnamens ist obligatorisch.",
     "validSSN": "Bitte eine gültige AHV-Nummer eingeben."

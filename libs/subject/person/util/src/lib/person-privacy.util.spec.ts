@@ -1,7 +1,28 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PersonModel, PrivacyUsage } from '@okr/shared-models';
 
-import { mirrorPrivacyUsageToPerson } from './person-privacy.util';
+import { getPrivacyUsage, isPrivacyRestricted, mirrorPrivacyUsageToPerson, PRIVACY_USAGE_FIELDS } from './person-privacy.util';
+
+describe('privacy overview helpers (2.83)', () => {
+  it('covers every usage* field', () => {
+    expect(PRIVACY_USAGE_FIELDS).toHaveLength(6);
+  });
+
+  it('applies the per-field model default to a legacy doc (Firestore skips defaults)', () => {
+    expect(getPrivacyUsage({}, 'usageImages')).toBe(PrivacyUsage.Public);
+    expect(getPrivacyUsage({}, 'usageName')).toBe(PrivacyUsage.Restricted);
+    expect(getPrivacyUsage(undefined, 'usageEmail')).toBe(PrivacyUsage.Restricted);
+  });
+
+  // the direction of the comparison — inverting this is the incident, not a display bug
+  it('reports the people who restricted a datum, not the released ones', () => {
+    expect(isPrivacyRestricted({ usageImages: PrivacyUsage.Public }, 'usageImages')).toBe(false);
+    expect(isPrivacyRestricted({ usageImages: PrivacyUsage.Restricted }, 'usageImages')).toBe(true);
+    expect(isPrivacyRestricted({ usageImages: PrivacyUsage.Protected }, 'usageImages')).toBe(true);
+    expect(isPrivacyRestricted({}, 'usageImages')).toBe(false);   // never objected
+    expect(isPrivacyRestricted({}, 'usageName')).toBe(true);      // default is Restricted
+  });
+});
 
 describe('mirrorPrivacyUsageToPerson', () => {
   const tenantId = 'tenant-1';

@@ -38,6 +38,7 @@
     "@okr/category-data-access": "*",
     "@okr/vcard-util": "*",
     "@okr/vcard-feature": "*",
-    "@okr/content-pdf-template-feature": "*"
+    "@okr/content-pdf-template-feature": "*",
+    "@okr/relationship-membership-data-access": "*"
   }
 }

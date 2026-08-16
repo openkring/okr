@@ -729,6 +729,14 @@ const subject: FeatureBlock = {
       // correct not to invent it (mirror-verbatim rule), but the PII-vault list therefore
       // renders with an empty context menu (no add/export action) for every tenant today.
       { key: 'addresses', name: 'addresses', url: '/address/c-address', action: 'navigate', roleNeeded: 'privileged', icon: 'address', label: '@item.addresses' },
+      // Birthday list (2.84). NEW spec, not a mirror of a live doc: it is seeded by
+      // `applyFeatureSelection`. `memberAdmin` matches `isMemberAdminGuard` on the route,
+      // which in turn matches the `addresses` read rule the list depends on.
+      { key: 'person-birthdays', name: 'person-birthdays', url: '/person/birthday/all', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'gift', label: '@item.person-birthdays' },
+      // Privacy overview (2.83). Same shape as the birthday row: seeded, never mirrored, and
+      // `memberAdmin` matches `isMemberAdminGuard` on the route — which here is the only gate,
+      // since persons are tenant-readable.
+      { key: 'person-privacy', name: 'person-privacy', url: '/person/privacy', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'shield', label: '@item.person-privacy' },
       { key: 'group-all', name: 'group-all', url: '/group/all/c-groups', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'persons', label: '@item.group-all' },
     ]),
     // Live root-level sibling of `subjects-menu` in `main_scs`, NOT nested under it —

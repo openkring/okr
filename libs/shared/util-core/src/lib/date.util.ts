@@ -1,5 +1,5 @@
 import { END_FUTURE_DATE_STR, MAX_DATES_PER_SERIES } from '@okr/shared-constants';
-import { add, compareAsc, differenceInCalendarDays, differenceInHours, Duration, addBusinessDays, format, getISODay, isAfter, isFuture, isValid, parse } from 'date-fns';
+import { add, compareAsc, differenceInCalendarDays, differenceInHours, Duration, addBusinessDays, format, getISODay, isAfter, isFuture, isLeapYear, isValid, parse } from 'date-fns';
 import { die, warn } from './log.util';
 
 export enum DateFormat {
@@ -14,6 +14,8 @@ export enum DateFormat {
     IsoDateTime = "yyyy-MM-dd'T'HH:mm:ss",
     Time = 'HH:mm',
     DDMM = 'd.M',
+    /** zero-padded day and month with a trailing dot, e.g. '05.09.' — date headers without a year */
+    ViewDayMonth = 'dd.MM.',
     SrvDate = 'd/M/yy',
 }
 
@@ -546,14 +548,20 @@ export function addTime(time?: string, hours = 1, minutes = 0): string {
  * @returns the number of calendar days until the next birthday
  */
 export function getBirthdayDiff(storeDate: string): number {
-    const currentYear = getTodayStr(DateFormat.Year);
-    let nextBirthdateStr = currentYear + storeDate.substring(4);
-    if (nextBirthdateStr <= getTodayStr(DateFormat.StoreDate)) {
-        nextBirthdateStr = (Number(currentYear) + 1) + storeDate.substring(4);
-    }
-    const today = new Date();
-    const _nextBirthdate = parseDate(nextBirthdateStr, DateFormat.StoreDate);
-    return !_nextBirthdate ? -1 : differenceInCalendarDays(_nextBirthdate, today);
+    const monthDay = storeDate.substring(4);
+    // today's birthday is today's (0), not next year's (365) — a birthday list starts with it
+    let year = Number(getTodayStr(DateFormat.Year));
+    if (String(year) + monthDay < getTodayStr(DateFormat.StoreDate)) year++;
+    const _nextBirthdate = parseDate(String(year) + shiftLeapDay(monthDay, year), DateFormat.StoreDate);
+    return !_nextBirthdate ? -1 : differenceInCalendarDays(_nextBirthdate, new Date());
+}
+
+/**
+ * House convention: a 29 February birthday is observed on 28 February in a non-leap year.
+ * Without this the strict parse of e.g. '20260229' fails and the person drops off the list.
+ */
+function shiftLeapDay(monthDay: string, year: number): string {
+    return monthDay === '0229' && !isLeapYear(new Date(year, 0, 1)) ? '0228' : monthDay;
 }
 
 /**

@@ -12,6 +12,7 @@ import {
     formatPartialStoreDate,
     getAge,
     getAgeFromBirthYear,
+    getBirthdayDiff,
     getBirthYear,
     getStoreDateYear,
     getEndOfYear, getStartOfYear,
@@ -259,6 +260,29 @@ describe('date.util', () => {
             expect(getAgeFromBirthYear('', 2026)).toBe(-1);
             expect(getAgeFromBirthYear(undefined, 2026)).toBe(-1);
             expect(getAgeFromBirthYear('19851231', 2026)).toBe(-1);
+        });
+    });
+
+    describe('getBirthdayDiff', () => {
+        // relative to today, so the test stays true on every run
+        const today = getTodayStr(DateFormat.StoreDate);
+        const monthDay = (storeDate: string) => storeDate.substring(4);
+
+        it("counts today's birthday as today, not as a year away", () => {
+            expect(getBirthdayDiff('1985' + monthDay(today))).toBe(0);
+        });
+        it('never looks back: every birthday is 0..366 days ahead', () => {
+            for (const md of ['0101', '0630', '1231']) {
+                const diff = getBirthdayDiff('1985' + md);
+                expect(diff).toBeGreaterThanOrEqual(0);
+                expect(diff).toBeLessThanOrEqual(366);
+            }
+        });
+        it('observes 29 February in a non-leap year instead of dropping the person', () => {
+            expect(getBirthdayDiff('20040229')).toBeGreaterThanOrEqual(0);
+        });
+        it('returns -1 when day and month are unknown (year-only replica)', () => {
+            expect(getBirthdayDiff('19850000')).toBe(-1);
         });
     });
 

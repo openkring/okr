@@ -130,6 +130,30 @@ export const PERSON_I18N_KEYS = {
     gender_label:               PFX + 'gender.label',
     gender_helper:              PFX + 'gender.helper',
 
+    // birthday list (2.84)
+    birthdays:                  PFX + 'birthdays.title',
+    birthdays_empty:            PFX + 'birthdays.empty',
+    birthdays_date:             PFX + 'birthdays.date',
+    birthdays_age:              PFX + 'birthdays.age',
+
+    // privacy overview (2.83)
+    privacy:                    PFX + 'privacy.title',
+    privacy_empty:              PFX + 'privacy.empty',
+    privacy_hint:               PFX + 'privacy.hint',
+    privacy_filter_all:         PFX + 'privacy.filter.all',
+    privacy_f_usageImages:      PFX + 'privacy.field.usageImages',
+    privacy_f_usageName:        PFX + 'privacy.field.usageName',
+    privacy_f_usageEmail:       PFX + 'privacy.field.usageEmail',
+    privacy_f_usagePhone:       PFX + 'privacy.field.usagePhone',
+    privacy_f_usagePostalAddress: PFX + 'privacy.field.usagePostalAddress',
+    privacy_f_usageDateOfBirth: PFX + 'privacy.field.usageDateOfBirth',
+    privacy_t_public:           PFX + 'privacy.tier.public',
+    privacy_t_restricted:       PFX + 'privacy.tier.restricted',
+    privacy_t_protected:        PFX + 'privacy.tier.protected',
+    privacy_ti_public:          PFX + 'privacy.imageTier.public',
+    privacy_ti_restricted:      PFX + 'privacy.imageTier.restricted',
+    privacy_ti_protected:       PFX + 'privacy.imageTier.protected',
+
     validation_lastNameRequired: PFX + 'validation.lastNameRequired',
     validation_validSSN:        PFX + 'validation.validSSN',
 
