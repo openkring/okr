@@ -20,7 +20,8 @@
     "minutes": "Verbale",
     "delete": "Elimina",
     "pdf": "Verbale in PDF",
-    "send": "Invia il verbale"
+    "send": "Invia il verbale",
+    "approve": "Firma il verbale"
   },
   "changeConfirmation": {
     "ok": "Salva",
@@ -93,9 +94,14 @@
   },
   "pdf": {
     "title": "Verbale",
-    "generated": "Creato il"
+    "generated": "Creato il",
+    "signatures": "Firme"
   },
   "send": {
     "noPdf": "Non esiste ancora un PDF del verbale. Generalo prima."
+  },
+  "approve": {
+    "noSignees": "Nessun campo firma trovato nel PDF. Inserisci presidenza e verbalizzazione e rigenera il PDF.",
+    "started": "Il verbale è stato inviato per la firma."
   }
 }

@@ -20,7 +20,8 @@
     "minutes": "Minutes",
     "delete": "Delete",
     "pdf": "Minutes as PDF",
-    "send": "Send minutes"
+    "send": "Send minutes",
+    "approve": "Sign minutes"
   },
   "changeConfirmation": {
     "ok": "Save",
@@ -93,9 +94,14 @@
   },
   "pdf": {
     "title": "Minutes",
-    "generated": "Created on"
+    "generated": "Created on",
+    "signatures": "Signatures"
   },
   "send": {
     "noPdf": "No minutes PDF exists yet. Please generate it first."
+  },
+  "approve": {
+    "noSignees": "No signature fields found in the PDF. Please set chair and secretary and regenerate the PDF.",
+    "started": "The minutes have been sent for signature."
   }
 }

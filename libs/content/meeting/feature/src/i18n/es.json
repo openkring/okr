@@ -20,7 +20,8 @@
     "minutes": "Acta",
     "delete": "Eliminar",
     "pdf": "Acta en PDF",
-    "send": "Enviar el acta"
+    "send": "Enviar el acta",
+    "approve": "Firmar el acta"
   },
   "changeConfirmation": {
     "ok": "Guardar",
@@ -93,9 +94,14 @@
   },
   "pdf": {
     "title": "Acta",
-    "generated": "Creada el"
+    "generated": "Creada el",
+    "signatures": "Firmas"
   },
   "send": {
     "noPdf": "Todavía no existe un PDF del acta. Genéralo primero."
+  },
+  "approve": {
+    "noSignees": "No se encontraron campos de firma en el PDF. Introduce la presidencia y la secretaría y vuelve a generar el PDF.",
+    "started": "El acta se ha enviado para su firma."
   }
 }

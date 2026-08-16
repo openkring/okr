@@ -23,6 +23,13 @@ export interface MinutesDocumentLabels {
   readonly minutes: string;
   readonly decision: string;
   readonly generated: string;    // 'Erstellt am'
+  readonly signatures: string;   // 'Unterschriften'
+}
+
+/** One signee of the minutes — chair and secretary. */
+export interface MinutesSignature {
+  readonly name: string;
+  readonly email: string;
 }
 
 export interface MinutesDocumentOptions {
@@ -31,6 +38,8 @@ export interface MinutesDocumentOptions {
   readonly meetingDate: string;
   readonly generatedOn: string;
   readonly labels: MinutesDocumentLabels;
+  /** Empty/omitted ⇒ no signature block, i.e. the PDF cannot go to DeepSign. */
+  readonly signatures?: readonly MinutesSignature[];
 }
 
 function attendeeNames(attendees: MeetingAttendee[], state: MeetingAttendee['state']): string[] {
@@ -60,6 +69,22 @@ function agendaBlock(item: AgendaItem, position: number, labels: MinutesDocument
     ${minutes}
     ${decision}
   </section>`;
+}
+
+/**
+ * The signature block DeepSign scans on upload (`scanPredefined`).
+ *
+ * `#deepsign#<email>#` is DeepSign's Text Field Pattern (spec 2026-05-25 §3): the rendered
+ * text's bounding box becomes the signature widget and the token itself is removed from the
+ * processed PDF. No `signOrder` ⇒ chair and secretary sign in parallel.
+ */
+function signatureBlock(signatures: readonly MinutesSignature[], label: string): string {
+  if (signatures.length === 0) return '';
+  const cells = signatures.map(s => `<div class="sig">
+    <div class="pattern">#deepsign#${escapeHtml(s.email)}#</div>
+    <div class="sig-name">${escapeHtml(s.name)}</div>
+  </div>`).join('');
+  return `<h2>${escapeHtml(label)}</h2><div class="signatures">${cells}</div>`;
 }
 
 /**
@@ -103,6 +128,10 @@ export function buildMinutesDocument(meeting: MeetingModel, options: MinutesDocu
   .minutes { margin: 4px 0; white-space: pre-wrap; }
   .decision { margin: 4px 0; background: #eef4ff; padding: 4px 6px; }
   .footer { color: #666; font-size: 10px; margin-top: 16px; }
+  .signatures { display: flex; gap: 40px; page-break-inside: avoid; }
+  .sig { flex: 1; }
+  .pattern { height: 40px; }
+  .sig-name { border-top: 1px solid #1a1a1a; padding-top: 3px; }
 </style></head>
 <body>
   <h1>${escapeHtml(labels.title)} — ${escapeHtml(meeting.name ?? '')}</h1>
@@ -112,6 +141,7 @@ export function buildMinutesDocument(meeting: MeetingModel, options: MinutesDocu
   <div class="attendance">${attendance}</div>
   <h2>${escapeHtml(labels.agenda)}</h2>
   ${body}
+  ${signatureBlock(options.signatures ?? [], labels.signatures)}
   <div class="footer">${escapeHtml(labels.generated)} ${escapeHtml(options.generatedOn)}</div>
 </body></html>`;
 }

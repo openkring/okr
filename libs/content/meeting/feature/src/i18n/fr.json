@@ -20,7 +20,8 @@
     "minutes": "Procès-verbal",
     "delete": "Supprimer",
     "pdf": "Procès-verbal en PDF",
-    "send": "Envoyer le procès-verbal"
+    "send": "Envoyer le procès-verbal",
+    "approve": "Signer le procès-verbal"
   },
   "changeConfirmation": {
     "ok": "Enregistrer",
@@ -93,9 +94,14 @@
   },
   "pdf": {
     "title": "Procès-verbal",
-    "generated": "Établi le"
+    "generated": "Établi le",
+    "signatures": "Signatures"
   },
   "send": {
     "noPdf": "Aucun PDF du procès-verbal n'existe encore. Veuillez le générer d'abord."
+  },
+  "approve": {
+    "noSignees": "Aucun champ de signature trouvé dans le PDF. Veuillez saisir la présidence et le secrétariat, puis régénérer le PDF.",
+    "started": "Le procès-verbal a été envoyé pour signature."
   }
 }

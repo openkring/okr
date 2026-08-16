@@ -17,6 +17,7 @@ const options: MinutesDocumentOptions = {
     title: 'Protokoll', date: 'Datum', location: 'Ort', attendees: 'Teilnehmende',
     present: 'Anwesend', excused: 'Entschuldigt', absent: 'Abwesend', invited: 'Eingeladen',
     agenda: 'Traktanden', minutes: 'Protokoll', decision: 'Beschluss', generated: 'Erstellt am',
+    signatures: 'Unterschriften',
   },
 };
 
@@ -75,6 +76,19 @@ describe('buildMinutesDocument', () => {
     expect(html).not.toContain('<script>alert(1)</script>');
     expect(html).not.toContain('<img onerror=');
     expect(html).toContain('&lt;script&gt;');
+  });
+
+  it('renders a DeepSign text field pattern per signee', () => {
+    const html = buildMinutesDocument(meeting(), {
+      ...options,
+      signatures: [{ name: 'Anna Muster', email: 'anna@example.ch' }],
+    });
+    expect(html).toContain('#deepsign#anna@example.ch#');
+    expect(html).toContain('Unterschriften');
+  });
+
+  it('renders no signature block without signees — the PDF is then not signable', () => {
+    expect(buildMinutesDocument(meeting(), options)).not.toContain('#deepsign#');
   });
 
   it('survives an empty meeting', () => {

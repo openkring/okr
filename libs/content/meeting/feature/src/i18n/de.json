@@ -20,7 +20,8 @@
     "minutes": "Protokoll",
     "delete": "Löschen",
     "pdf": "Protokoll als PDF",
-    "send": "Protokoll versenden"
+    "send": "Protokoll versenden",
+    "approve": "Protokoll signieren"
   },
   "changeConfirmation": {
     "ok": "Speichern",
@@ -93,9 +94,14 @@
   },
   "pdf": {
     "title": "Protokoll",
-    "generated": "Erstellt am"
+    "generated": "Erstellt am",
+    "signatures": "Unterschriften"
   },
   "send": {
     "noPdf": "Es existiert noch kein Protokoll-PDF. Bitte zuerst erzeugen."
+  },
+  "approve": {
+    "noSignees": "Im PDF wurden keine Signaturfelder gefunden. Bitte Vorsitz und Protokoll erfassen und das PDF neu erzeugen.",
+    "started": "Das Protokoll wurde zur Signatur versandt."
   }
 }

@@ -16,6 +16,7 @@ import { MEETING_I18N_KEYS, buildMinutesDocument, carryOverAgendaItems, getMeeti
 import { DocumentService } from '@okr/content-document-data-access';
 import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
+import { EsignService } from '@okr/content-esign-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { TaskService } from '@okr/task-data-access';
 
@@ -43,6 +44,7 @@ export const MeetingStore = signalStore(
     taskService: inject(TaskService),
     documentService: inject(DocumentService),
     docGenerationService: inject(DocGenerationService),
+    esignService: inject(EsignService),
     i18nService: inject(I18nService),
   })),
   withProps((store) => ({
@@ -207,7 +209,17 @@ export const MeetingStore = signalStore(
      */
     async generateMinutesPdf(meeting: MeetingModel): Promise<void> {
       try {
+        // Chair and secretary become the DeepSign signature fields of the PDF — without an
+        // email there is no signee, and requestApproval() will refuse the document.
+        const signatures = [meeting.chair, meeting.secretary]
+          .map(p => ({
+            name: `${p?.name1 ?? ''} ${p?.name2 ?? ''}`.trim(),
+            email: store.appStore.getDirectoryEntry(`person.${p?.key}`)?.favEmail ?? '',
+          }))
+          .filter(s => s.email !== '');
+
         const html = buildMinutesDocument(meeting, {
+          signatures,
           tenantName: store.appStore.appConfig().appName,
           meetingDate: convertDateFormatToString(meeting.meetingDate, DateFormat.StoreDate, DateFormat.ViewDate, false),
           generatedOn: convertDateFormatToString(getTodayStr(), DateFormat.StoreDate, DateFormat.ViewDate, false),
@@ -224,6 +236,7 @@ export const MeetingStore = signalStore(
             minutes: store.i18n.agenda_minutes_label(),
             decision: store.i18n.agenda_decision_label(),
             generated: store.i18n.pdf_generated(),
+            signatures: store.i18n.pdf_signatures(),
           },
         });
 
@@ -288,6 +301,44 @@ export const MeetingStore = signalStore(
         appStore: store.appStore,
         tenantId: store.tenantId(),
       }, recipients, { storagePath: doc.fullPath, filename: fileName(doc.fullPath) });
+    },
+
+    /**
+     * Send the minutes PDF to DeepSign for signature by chair and secretary (3.20).
+     *
+     * The signees are not passed here: they are the `#deepsign#…#` patterns
+     * `generateMinutesPdf` rendered into the PDF. `esignScanPredefined` is the dry-run that
+     * catches a PDF generated before those patterns existed, before a run is started with
+     * zero signees. `sourceRef` is what the archive trigger uses to flip the meeting to
+     * 'approved' once every signature is in.
+     * @param meeting the meeting whose minutes go to signature
+     */
+    async requestApproval(meeting: MeetingModel): Promise<void> {
+      const doc = meeting.minutesDocumentKey
+        ? await firstValueFrom(store.documentService.read(meeting.minutesDocumentKey))
+        : undefined;
+      if (!doc) {
+        store.alertService.error(store.i18n.send_noPdf());
+        return;
+      }
+      try {
+        const scan = await store.esignService.scanPredefined(doc.fullPath);
+        if (scan.signatureFields.length === 0) {
+          store.alertService.error(store.i18n.approve_noSignees());
+          return;
+        }
+        await store.esignService.sendDocument({
+          storagePath: doc.fullPath,
+          documentName: fileName(doc.fullPath),
+          initiatorAliasName: store.appStore.appConfig().appName,
+          source: 'cf-generated',
+          sourceRef: getMeetingRelatedKey(meeting.okey),
+          sendMail: 'all',
+        });
+        await store.alertService.showToast(store.i18n.approve_started());
+      } catch (error) {
+        store.alertService.error(`MeetingStore.requestApproval: ${error}`);
+      }
     },
 
     async delete(meeting?: MeetingModel, readOnly = true): Promise<void> {

@@ -18,7 +18,10 @@ export const MEETING_I18N_KEYS = {
   as_pdf:                          PFX + 'actionsheet.pdf',
   as_send:                         PFX + 'actionsheet.send',
   send_noPdf:                      PFX + 'send.noPdf',
+  as_approve:                      PFX + 'actionsheet.approve',
   as_delete:                       PFX + 'actionsheet.delete',
+  approve_noSignees:               PFX + 'approve.noSignees',
+  approve_started:                 PFX + 'approve.started',
 
   changeConfirmation_ok:           PFX + 'changeConfirmation.ok',
   changeConfirmation_cancel:       PFX + 'changeConfirmation.cancel',
@@ -69,6 +72,7 @@ export const MEETING_I18N_KEYS = {
   // minutes PDF
   pdf_title:                       PFX + 'pdf.title',
   pdf_generated:                   PFX + 'pdf.generated',
+  pdf_signatures:                  PFX + 'pdf.signatures',
 } satisfies Record<string, string>;
 
 export type MeetingI18n = { [K in keyof typeof MEETING_I18N_KEYS]: Signal<string> };

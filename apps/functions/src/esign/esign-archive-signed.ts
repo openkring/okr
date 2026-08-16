@@ -8,7 +8,7 @@ import {
   ALL_ESIGN_SECRETS, REGION,
   getDeepSignAccessToken, getEsignApiBase,
 } from './shared';
-import { EsignCollection } from '@okr/shared-models';
+import { EsignCollection, MeetingCollection, MeetingModelName } from '@okr/shared-models';
 
 export const esignArchiveSigned = onDocumentUpdated(
   { document: `${EsignCollection}/{esignId}`, region: REGION, secrets: ALL_ESIGN_SECRETS },
@@ -19,14 +19,29 @@ export const esignArchiveSigned = onDocumentUpdated(
       deepsignDocumentId: string;
       tenantId: string;
       signedPdfPath?: string;
+      sourceRef?: string;
     } | undefined;
 
     // Only trigger on transition to 'signed'
     if (!after || after.documentStatus !== 'signed') return;
     if (before?.documentStatus === 'signed') return;
-    if (after.signedPdfPath) return; // already archived
 
     const { esignId } = event.params;
+
+    // A fully signed minutes PDF approves its meeting (3.20). Done before (and independently
+    // of) the archiving below: the state of the meeting must not depend on DeepSign still
+    // serving the signed file. `sourceRef` is 'meeting.<okey>', set by MeetingStore.
+    if (after.sourceRef?.startsWith(`${MeetingModelName}.`)) {
+      const meetingKey = after.sourceRef.slice(MeetingModelName.length + 1);
+      try {
+        await getFirestore().collection(MeetingCollection).doc(meetingKey).update({ state: 'approved' });
+        logger.info('esignArchiveSigned: meeting approved', { esignId, meetingKey });
+      } catch (err) {
+        logger.error('esignArchiveSigned: failed to approve meeting', { esignId, meetingKey, err });
+      }
+    }
+
+    if (after.signedPdfPath) return; // already archived
 
     try {
       const token = await getDeepSignAccessToken();
