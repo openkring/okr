@@ -57,10 +57,8 @@ import { GroupStore } from './group.store';
       </ion-toolbar>
 
     <!-- search and filters -->
-    <okr-list-filter 
-      (searchTermChanged)="onSearchtermChange($event)"
-      (tagChanged)="onTagSelected($event)" [tags]="tags()"
-    />
+    <!-- search only: groups are few and untagged in practice, the tag filter was dead weight -->
+    <okr-list-filter (searchTermChanged)="onSearchtermChange($event)" [mdSize]="6" />
   </ion-header>
 
   <!-- list data -->
@@ -99,7 +97,7 @@ export class GroupList {
   // derived signals
   protected filteredGroups = computed(() => {
     switch(this.listId()) {
-      case 'my': return this.store.myAccessibleGroups();
+      case 'my': return this.store.filteredMyGroups();
       case 'all': 
       default: return this.store.filteredGroups();
     }
@@ -107,7 +105,6 @@ export class GroupList {
   protected groupsCount = computed(() => this.filteredGroups()?.length ?? 0);
   protected selectedGroupsCount = computed(() => this.filteredGroups().length);
   protected isLoading = computed(() => this.store.isLoading());
-  protected tags = computed(() => this.store.getTags());
   private currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !this.canChange());
   protected popupId = computed(() => 'c_groups_' + generateRandomString(5));
@@ -117,10 +114,6 @@ export class GroupList {
   /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
-  }
-
-  protected onTagSelected(tag: string): void {
-    this.store.setSelectedTag(tag);
   }
 
   /******************************** actions ******************************************* */

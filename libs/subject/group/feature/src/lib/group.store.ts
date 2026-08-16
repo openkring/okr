@@ -148,6 +148,15 @@ export const GroupStore = signalStore(
       return result;
     }),
   })),
+  withComputed((state) => ({
+    /** myAccessibleGroups with the search/tag filter applied — the 'my' list uses this, not the raw list. */
+    filteredMyGroups: computed(() =>
+      state.myAccessibleGroups().filter((group: GroupModel) =>
+        nameMatches(group.index, state.searchTerm()) &&
+        chipMatches(group.tags, state.selectedTag())
+      )
+    ),
+  })),
   withMethods((store) => ({
     reset() {
       patchState(store, initialState);

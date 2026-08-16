@@ -39,7 +39,7 @@ import { StringSelect } from './string-select';
       <ion-grid class="ion-no-padding ion-align-items-center">
         <ion-row class="ion-align-items-center">
           @if(showSearch()) {
-            <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
+            <ion-col [size]="searchSize()" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
               <okr-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@search.label' | translate | async }}" />
             </ion-col>
           }
@@ -133,6 +133,9 @@ export class ListFilter {
   protected showState = computed(()    => this.states() !== undefined);
   protected yearList = computed(()     => this.years() ?? getYearList());   // default is last 8 years
   protected showStrings = computed(() => (this.strings() && this.strings()!.length > 0) ?? false);
+  /** A lone searchbar takes the full row on small screens; next to another filter it keeps its half. */
+  protected searchSize = computed(() =>
+    this.showTags() || this.showType() || this.showCategory() || this.showYear() || this.showState() || this.showStrings() ? '6' : '12');
 
   // outputs
   public searchTermChanged = output<string>();
