@@ -125,12 +125,12 @@ const MAX_LOCATION_SUGGESTIONS = 8;
     </ion-card>
 
     @if(currentUser(); as currentUser) {
-      <!-- personal event: the organiser is the creator and cannot be changed -->
+      <!-- the organiser is the creator; only eventAdmin/privileged (and never on a personal event) may change it -->
       <okr-avatars name="responsiblePersons"
         [avatars]="responsiblePersons()" (avatarsChange)="onFieldChange('responsiblePersons', $event)"
         (selectClicked)="selectPerson()"
         [currentUser]="currentUser"
-        [readOnly]="isReadOnly() || isPersonal()"
+        [readOnly]="isReadOnly() || isPersonal() || !expertMode()"
         [title]="i18n().responsible()"
         [description]="i18n().responsible_description()"
       />

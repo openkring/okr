@@ -10,8 +10,8 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, subDuration, warn } from '@okr/shared-util-core';
-import { error, navigateByUrl, confirm } from '@okr/shared-util-angular';
+import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getSystemQuery, getTodayStr, inviteeCandidates, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, subDuration, warn } from '@okr/shared-util-core';
+import { error, navigateByUrl, confirm, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { yearMatches } from '@okr/shared-categories';
 import { MAX_DATES_PER_SERIES } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
@@ -377,13 +377,14 @@ export const CalEventStore = signalStore(
         const newCalevent = new CalEventModel(store.tenantId());
         newCalevent.startDate = startDate ?? getTodayStr();
         newCalevent.startTime = startTime ?? '09:00';
+        // the creator is always the initial organiser (plain registered users cannot change it, see calevent.form)
+        const user = store.currentUser();
+        const avatar = user ? getAvatarInfoForCurrentUser(user) : undefined;
+        newCalevent.responsiblePersons = avatar ? [avatar] : [];
         if (personal) {
-          // personal event: no calendar, organiser is the creator and cannot be changed
+          // personal event: no calendar, organiser cannot be changed
           newCalevent.calendars = [];
           newCalevent.isOpen = false;
-          const user = store.currentUser();
-          const avatar = user ? getAvatarInfoForCurrentUser(user) : undefined;
-          newCalevent.responsiblePersons = avatar ? [avatar] : [];
         } else {
           newCalevent.calendars = cal === 'all' || cal.startsWith('my') || cal.length === 0 ? [store.tenantId()] : [cal];
           newCalevent.isOpen = store.calendar()?.defaultIsOpen ?? true;
@@ -728,6 +729,18 @@ export const CalEventStore = signalStore(
       },
 
       /******************************* invitations *************************************** */
+      /**
+       * Asks the organiser for the message that goes out with the invitation(s). The text is stored
+       * on every created invitation (`notes`) and is what the invitee reads in the invitations
+       * widget. Returns undefined when the organiser cancels — no invitation is then created.
+       * An empty text is a valid answer (invitation without a message).
+       */
+      async promptInvitationMessage(): Promise<string | undefined> {
+        const message = await okrPrompt(store.alertController, store.i18n.invite_message_title(),
+          store.i18n.invite_message_placeholder(), store.i18n.ok(), store.i18n.cancel());
+        return message?.trim();
+      },
+
       async inviteGroupMembers(calevent: CalEventModel, readOnly = true): Promise<void> {
         if (readOnly) return;
         if (!store.calendar()) {
@@ -760,15 +773,31 @@ export const CalEventStore = signalStore(
         // get the group members (query memberships by group id)
         const members = await firstValueFrom(store.membershipService.listMembersOfOrg(groupId, 'group'));
         console.log(`Found ${members.length} members in group ${groupId}`, members);
-        // create invitations for all group members
+
+        // Invite everybody except the organiser and everybody who already holds an invitation for
+        // this event: re-running the action after a new member joined must not duplicate the
+        // invitations of those already invited.
+        const allInvitations = await store.firestoreService.getDataOnce<InvitationModel>(InvitationCollection, getSystemQuery(store.tenantId()), 'none');
+        const existing = allInvitations.filter(inv => inv.caleventKey === calevent.okey && !inv.isArchived);
+        const candidateKeys = inviteeCandidates(members.map(m => m.memberKey), existing, store.currentUser()?.personKey ?? '');
+        const candidates = members.filter(m => candidateKeys.includes(m.memberKey));
+        if (candidates.length === 0) {
+          await showToast(store.toastController, store.i18n.invite_members_none());
+          return;
+        }
+
+        const message = await this.promptInvitationMessage();
+        if (message === undefined) return;   // organiser cancelled
+
         const batch = store.firestoreService.getBatch();
         const key = generateRandomString(18);
         let index = 0;
-        for (const member of members) {
+        for (const member of candidates) {
           const inv = new InvitationModel(store.tenantId());
           inv.inviteeKey = member.memberKey;
           inv.inviteeFirstName = member.memberName1;
           inv.inviteeLastName = member.memberName2;
+          inv.notes = message;
           inv.inviterKey = store.currentUser()?.personKey || '';
           inv.inviterFirstName = store.currentUser()?.firstName || '';
           inv.inviterLastName = store.currentUser()?.lastName || '';
@@ -788,10 +817,13 @@ export const CalEventStore = signalStore(
       async invitePerson(calevent: CalEventModel, readOnly = true): Promise<string | undefined> {
         const avatar = await store.modelSelectService.selectPersonAvatar('', '');
         if (avatar && !readOnly) {
+          const message = await this.promptInvitationMessage();
+          if (message === undefined) return undefined;   // organiser cancelled
           const inv = new InvitationModel(store.tenantId());
           inv.inviteeKey = extractSecondPartOfOptionalTupel(avatar.key);
           inv.inviteeFirstName = avatar.name1;
           inv.inviteeLastName = avatar.name2;
+          inv.notes = message;
           inv.inviterKey = store.currentUser()?.personKey || '';
           inv.inviterFirstName = store.currentUser()?.firstName || '';
           inv.inviterLastName = store.currentUser()?.lastName || '';
