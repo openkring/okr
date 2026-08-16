@@ -11,6 +11,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean, getCurrentTime } from '@okr/shared-util-core';
 
 import { TimeSelectModal } from './time-select.modal';
+import { SkipClearTab } from './skip-clear-tab.directive';
 
 export interface TimeInputI18n {
   name: string;
@@ -23,6 +24,7 @@ export interface TimeInputI18n {
   selector: 'okr-time-input',
   standalone: true,
   imports: [
+    SkipClearTab,
     SvgIconPipe,
     MaskitoDirective, FormsModule,
     IonItem, IonIcon, IonInput, IonNote

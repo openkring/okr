@@ -8,6 +8,7 @@ import { MaskitoElementPredicate, MaskitoOptions } from '@maskito/core';
 import { DATE_LENGTH, InputMode } from '@okr/shared-constants';
 import { coerceBoolean, DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { ChAnyDate } from '@okr/shared-config';
+import { SkipClearTab } from './skip-clear-tab.directive';
 
 export interface ViewDateInputI18n {
   name: string;
@@ -24,6 +25,7 @@ export interface ViewDateInputI18n {
   selector: 'okr-viewdate-input',
   standalone: true,
   imports: [
+    SkipClearTab,
     FormsModule, MaskitoDirective,
     IonInput
   ],

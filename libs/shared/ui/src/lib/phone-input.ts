@@ -10,6 +10,7 @@ import { coerceBoolean } from '@okr/shared-util-core';
 import { IntlPhoneMask } from '@okr/shared-config';
 
 import { ButtonCopy } from './button-copy';
+import { SkipClearTab } from './skip-clear-tab.directive';
 
 export interface PhoneInputI18n {
   name: string;
@@ -23,6 +24,7 @@ export interface PhoneInputI18n {
   selector: 'okr-phone',
   standalone: true,
   imports: [
+    SkipClearTab,
     FormsModule, MaskitoDirective,
     IonItem, IonInput, IonNote,
     ButtonCopy

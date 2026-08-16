@@ -6,6 +6,7 @@ import { AutoComplete, InputMode, INT_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
+import { SkipClearTab } from './skip-clear-tab.directive';
 
 export interface NumberInputI18n {
   name: string;
@@ -19,6 +20,7 @@ export interface NumberInputI18n {
   selector: 'okr-number-input',
   standalone: true,
   imports: [
+    SkipClearTab,
     FormsModule,
     IonItem, IonInput, IonNote,
     ButtonCopy

@@ -10,6 +10,7 @@ import { AutoComplete, InputMode, NAME_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
+import { SkipClearTab } from './skip-clear-tab.directive';
 
 export interface TextInputI18n {
   name: string;
@@ -23,6 +24,7 @@ export interface TextInputI18n {
   selector: 'okr-text-input',
   standalone: true,
   imports: [
+    SkipClearTab,
     ButtonCopy,
     FormsModule, MaskitoDirective,
     IonItem, IonNote, IonInput

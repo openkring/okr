@@ -1,5 +1,6 @@
 import { Component, computed, effect, signal, untracked } from "@angular/core";
 import { IonButton, IonCol, IonGrid, IonInput, IonItem, IonLabel, IonRow } from "@ionic/angular/standalone";
+import { SkipClearTab } from './skip-clear-tab.directive';
 
 const DEFAULT_COUNTER = {
   count: 0,
@@ -14,6 +15,7 @@ const DEFAULT_COUNTER = {
   selector: 'okr-counter',
   standalone: true,
   imports: [
+    SkipClearTab,
     IonGrid, IonRow, IonCol, IonButton, IonItem, IonLabel, IonInput
   ],
   styles: [`

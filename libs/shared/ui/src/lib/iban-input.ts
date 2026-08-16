@@ -10,6 +10,7 @@ import { IBAN_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
+import { SkipClearTab } from './skip-clear-tab.directive';
 
 export interface IbanInputI18n {
   name: string;
@@ -23,6 +24,7 @@ export interface IbanInputI18n {
   selector: 'okr-iban',
   standalone: true,
   imports: [
+    SkipClearTab,
     MaskitoDirective, FormsModule,
     IonItem, IonNote, IonInput,
     ButtonCopy

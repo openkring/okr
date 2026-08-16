@@ -10,6 +10,7 @@ import { InputMode, PASSWORD_MAX_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
+import { SkipClearTab } from './skip-clear-tab.directive';
 
 export interface PasswordInputI18n {
   name: string;
@@ -23,6 +24,7 @@ export interface PasswordInputI18n {
   selector: 'okr-password-input',
   standalone: true,
   imports: [
+    SkipClearTab,
     FormsModule,
     ButtonCopy,
     MaskitoDirective,

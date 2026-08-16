@@ -6,6 +6,7 @@ import { EMAIL_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ButtonCopy } from './button-copy';
+import { SkipClearTab } from './skip-clear-tab.directive';
 
 export interface EmailInputI18n {
   name: string;
@@ -19,6 +20,7 @@ export interface EmailInputI18n {
   selector: 'okr-email',
   standalone: true,
   imports: [
+    SkipClearTab,
     FormsModule,
     IonItem, IonNote, IonInput,
     ButtonCopy

@@ -6,6 +6,7 @@ import { URL_LENGTH } from '@okr/shared-constants';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
+import { SkipClearTab } from './skip-clear-tab.directive';
 
 export interface UrlInputI18n {
   name: string;
@@ -19,6 +20,7 @@ export interface UrlInputI18n {
   selector: 'okr-url',
   standalone: true,
   imports: [
+    SkipClearTab,
     FormsModule,
     IonItem, IonInput, IonNote,
     ButtonCopy
