@@ -173,7 +173,8 @@ export class MatrixInitializationService {
         const closeReadNotifications = async () => {
           if (!('serviceWorker' in navigator)) return;
           const reg = await navigator.serviceWorker.getRegistration().catch(() => null);
-          if (!reg) return;
+          // Safari on macOS only exposes getNotifications() in an installed PWA (SCS-4N).
+          if (!reg || typeof reg.getNotifications !== 'function') return;
           const unread = new Set(this.matrixChatStore.unreadRooms().map(r => r.roomId));
           for (const n of await reg.getNotifications()) {
             const data = n.data as { type?: string; roomId?: string } | undefined;
@@ -190,7 +191,7 @@ export class MatrixInitializationService {
         // Keep the PWA app icon badge in sync with the total notification count.
         // This covers the foreground case; the service worker handles the background case.
         //
-        // The total is chat unread + open assigned tasks, matching the main-menu badge
+        // The total is chat unread + open assigned tasks + unanswered invitations, matching the main-menu badge
         // (MenuStore.notificationCount) exactly. setAppBadge writes an ABSOLUTE value, so a
         // writer that knows only its own half silently destroys the other's: this used to
         // publish the chat count alone, which meant opening the PWA cleared a task-driven
@@ -209,7 +210,7 @@ export class MatrixInitializationService {
           };
 
           const badgeTotal = computed(() =>
-            this.matrixChatStore.totalUnreadCount() + this.appStore.openTaskCount());
+            this.matrixChatStore.totalUnreadCount() + this.appStore.openTaskCount() + this.appStore.openInvitationCount());
 
           runInInjectionContext(this.injector, () =>
             toObservable(badgeTotal).subscribe(applyBadge)
