@@ -11,10 +11,10 @@
 //    (reservations, applications) — a callable-side emit there would miss imports and
 //    admin edits, which is the same argument that put the engine server-side.
 
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 
-import { ApplicationCollection, ReservationCollection } from '@okr/shared-models';
+import { ApplicationCollection, AvatarInfo, ReservationCollection, TaskCollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { runWorkflow } from './index';
@@ -66,6 +66,51 @@ export const onReservationCreated = onDocumentCreated(
       });
     }
     logger.info(`onReservationCreated: emitted for ${event.params['id']}`);
+  },
+);
+
+/** The state a task reaches when it is done; the `task_state` category item of the same name. */
+const DONE = 'done';
+
+const avatarName = (a: AvatarInfo | undefined): string => `${a?.name1 ?? ''} ${a?.name2 ?? ''}`.trim();
+
+/**
+ * `tasks` is client-written (board drag, edit modal, meeting minutes), so the trigger is
+ * the only complete emit point.
+ *
+ * Fires on the TRANSITION into 'done' only — a later edit of an already-done task (a note,
+ * a tag, a rank) must not notify again. The `state === 'done' <=> completionDate is set`
+ * invariant (task spec §6.2) makes `state` the single thing to watch.
+ *
+ * The event's SUBJECT is the author, so a rule with `responsibilityKey: 'subject'` reaches
+ * them; `authorIsNotAssignee` is the probe that keeps people from being told about their
+ * own work.
+ */
+export const onTaskCompleted = onDocumentUpdated(
+  { document: `${TaskCollection}/{id}`, region: REGION },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+    if ((before['state'] as string) === DONE || (after['state'] as string) !== DONE) return;
+
+    const author = after['author'] as AvatarInfo | undefined;
+    const assignee = after['assignee'] as AvatarInfo | undefined;
+    for (const tenantId of (after['tenants'] as string[] | undefined) ?? []) {
+      await emitEvent('task.completed', tenantId, `task.${event.params['id']}`, {
+        personKey: author?.key ?? '',
+        subjectName: (after['name'] as string) ?? '',
+        params: {
+          taskName: (after['name'] as string) ?? '',
+          authorKey: author?.key ?? '',
+          authorName: avatarName(author),
+          assigneeKey: assignee?.key ?? '',
+          assigneeName: avatarName(assignee),
+          completionDate: (after['completionDate'] as string) ?? '',
+        },
+      });
+    }
+    logger.info(`onTaskCompleted: emitted for ${event.params['id']}`);
   },
 );
 

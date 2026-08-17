@@ -12,7 +12,7 @@ import { buildExportTable, debugListLoaded, getSystemQuery, nameMatches } from '
 import { AlertService, exportCsv, getExportFileName, showToast } from '@okr/shared-util-angular';
 
 import { WorkflowRuleService } from '@okr/system-workflow-data-access';
-import { WORKFLOW_I18N_KEYS, WorkflowI18n, getWorkflowRuleExportColumns, newWorkflowRuleModel } from '@okr/system-workflow-util';
+import { SUBJECT_RECIPIENT, WORKFLOW_I18N_KEYS, WorkflowI18n, getWorkflowRuleExportColumns, newWorkflowRuleModel } from '@okr/system-workflow-util';
 
 export type WorkflowRuleState = {
   searchTerm: string;
@@ -72,14 +72,20 @@ export const WorkflowRuleStore = signalStore(
     filteredRules: computed(() =>
       state.rules().filter(r => nameMatches(r.index, state.searchTerm()))
     ),
-    // okey → name; an unknown key falls back to the key itself (deleted responsibility)
+    // okey → name; an unknown key falls back to the key itself (deleted responsibility).
+    // 'subject' is not a responsibility but the reserved "person the event is about"
+    // recipient, so it needs a label here too — otherwise list and export show the raw key.
     responsibilityNames: computed(() =>
-      new Map((state.responsibilitiesResource.value() ?? []).map(r => [r.okey, r.name]))
+      new Map<string, string>([
+        [SUBJECT_RECIPIENT, state.i18n.responsibility_subject()],
+        ...(state.responsibilitiesResource.value() ?? []).map(r => [r.okey, r.name] as [string, string]),
+      ])
     ),
     // the rule form's responsibility picker
-    responsibilityOptions: computed(() =>
-      (state.responsibilitiesResource.value() ?? []).map(r => ({ key: r.okey, name: r.name }))
-    ),
+    responsibilityOptions: computed(() => [
+      { key: SUBJECT_RECIPIENT, name: state.i18n.responsibility_subject() },
+      ...(state.responsibilitiesResource.value() ?? []).map(r => ({ key: r.okey, name: r.name })),
+    ]),
   })),
 
   withMethods((store) => ({

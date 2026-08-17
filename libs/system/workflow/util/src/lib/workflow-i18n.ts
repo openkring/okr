@@ -32,6 +32,7 @@ export const WORKFLOW_I18N_KEYS = {
   responsibilityKey_label:       UI + 'responsibilityKey.label',
   responsibilityKey_placeholder: UI + 'responsibilityKey.placeholder',
   responsibilityKey_helper:      UI + 'responsibilityKey.helper',
+  responsibility_subject:        UI + 'responsibilityKey.subject',
   messageKey_label:          UI + 'messageKey.label',
   messageKey_placeholder:    UI + 'messageKey.placeholder',
   messageKey_helper:         UI + 'messageKey.helper',

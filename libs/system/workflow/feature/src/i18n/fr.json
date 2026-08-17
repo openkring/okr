@@ -30,6 +30,11 @@
   },
   "workflow_event": {
     "name": "Événement",
+    "task": {
+      "completed": {
+        "label": "Tâche terminée"
+      }
+    },
     "membership": {
       "created": {
         "label": "Adhésion commencée"
@@ -89,6 +94,9 @@
     },
     "decisionIs": {
       "label": "Entscheid ist …"
+    },
+    "authorIsNotAssignee": {
+      "label": "L'auteur n'est pas le responsable"
     }
   },
   "approval": {

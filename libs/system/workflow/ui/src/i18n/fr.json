@@ -5,7 +5,7 @@
     "helper": "Nom interne de l'étape du flux de travail."
   },
   "event": {
-    "label": "Événement",
+    "label": "Déclencheur",
     "helper": "Événement qui déclenche le flux de travail."
   },
   "probe": {
@@ -20,7 +20,8 @@
   "responsibilityKey": {
     "label": "Responsabilité",
     "placeholder": "p.ex. treasurer",
-    "helper": "Clé de la responsabilité qui reçoit la tâche"
+    "helper": "Clé de la responsabilité qui reçoit la tâche",
+    "subject": "Personne concernée (p.ex. l'auteur de la tâche)"
   },
   "messageKey": {
     "label": "Message (clé i18n)",
@@ -36,8 +37,8 @@
     "placeholder": "Saisir des notes"
   },
   "action": {
-    "label": "Aktion",
-    "helper": "Was geschieht, wenn die Regel zutrifft."
+    "label": "Action",
+    "helper": "Ce qui se passe lorsque la règle s’applique."
   },
   "actionArg": {
     "label": "Argument der Aktion",

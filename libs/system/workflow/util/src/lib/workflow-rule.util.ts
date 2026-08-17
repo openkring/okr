@@ -22,6 +22,13 @@ export interface ResponsibilityOption {
   name: string;
 }
 
+/**
+ * Reserved `responsibilityKey`: address the person the event is ABOUT rather than a role —
+ * e.g. the author of a task that somebody else completed. Mirrors SUBJECT_RECIPIENT in
+ * `apps/functions/src/workflow/engine.ts`; a lib cannot import the functions app.
+ */
+export const SUBJECT_RECIPIENT = 'subject';
+
 /*-------------------------- probes --------------------------------*/
 /**
  * Probes that consume `probeArg`. Mirrors the PROBES registry in

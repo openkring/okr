@@ -5,7 +5,7 @@
     "helper": "Internal name of the workflow step."
   },
   "event": {
-    "label": "Event",
+    "label": "Trigger",
     "helper": "Event that triggers the workflow."
   },
   "probe": {
@@ -20,7 +20,8 @@
   "responsibilityKey": {
     "label": "Responsibility",
     "placeholder": "e.g. treasurer",
-    "helper": "Key of the responsibility that receives the task"
+    "helper": "Key of the responsibility that receives the task",
+    "subject": "Person concerned (e.g. the task's author)"
   },
   "messageKey": {
     "label": "Message (i18n key)",
@@ -36,8 +37,8 @@
     "placeholder": "Enter notes"
   },
   "action": {
-    "label": "Aktion",
-    "helper": "Was geschieht, wenn die Regel zutrifft."
+    "label": "Action",
+    "helper": "What happens when the rule matches."
   },
   "actionArg": {
     "label": "Argument der Aktion",

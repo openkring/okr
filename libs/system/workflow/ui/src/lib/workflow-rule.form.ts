@@ -25,7 +25,17 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
     TextInput, NumberInput, NotesInput, Chips, CategorySelect,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonNote, IonSelect, IonSelectOption
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    /* okr-cat-select renders a bare ion-button, so it carries no label of its own —
+       this stands in for the floating label the ion-selects below it get for free. */
+    .cat-label {
+      display: block;
+      padding-inline-start: 16px;
+      font-size: 0.75rem;
+      color: var(--ion-color-medium);
+    }
+  `],
   template: `
     @if (showForm()) {
       <form novalidate>
@@ -34,42 +44,51 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
           <ion-card-content class="ion-no-padding">
             <ion-grid>
               <ion-row>
-                <ion-col size="12" size-md="6">
+                <ion-col size="12">
                   <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)"
                     [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
                 </ion-col>
-                <ion-col size="12" size-md="6">
+              </ion-row>
+              <ion-row>
+                <ion-col size="12">
+                  <div class="cat-label">{{ i18n().event_label() }}</div>
                   <okr-cat-select [category]="eventCategory()" [selectedItemName]="event()"
                     (selectedItemNameChange)="onFieldChange('event', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="12" size-md="6">
+                <ion-col size="12">
+                  <div class="cat-label">{{ i18n().probe_label() }}</div>
                   <okr-cat-select [category]="probeCategory()" [selectedItemName]="probe()"
                     (selectedItemNameChange)="onFieldChange('probe', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
-                @if (needsProbeArg()) {
-                  <ion-col size="12" size-md="6">
+              </ion-row>
+              @if (needsProbeArg()) {
+                <ion-row>
+                  <ion-col size="12">
                     <okr-text-input [i18n]="probeArgI18n()" [value]="probeArg()" (valueChange)="onFieldChange('probeArg', $event)"
                       [maxLength]="30" [readOnly]="isReadOnly()" />
                   </ion-col>
-                }
-              </ion-row>
+                </ion-row>
+              }
               <ion-row>
-                <ion-col size="12" size-md="6">
+                <ion-col size="12">
+                  <div class="cat-label">{{ i18n().action_label() }}</div>
                   <okr-cat-select [category]="actionCategory()" [selectedItemName]="action()"
                     (selectedItemNameChange)="onFieldChange('action', $event)" [readOnly]="isReadOnly()" />
                 </ion-col>
-                @if (needsActionArg()) {
-                  <ion-col size="12" size-md="6">
+              </ion-row>
+              @if (needsActionArg()) {
+                <ion-row>
+                  <ion-col size="12">
                     <okr-text-input [i18n]="actionArgI18n()" [value]="actionArg()" (valueChange)="onFieldChange('actionArg', $event)"
                       [maxLength]="120" [readOnly]="isReadOnly()" />
                   </ion-col>
-                }
-              </ion-row>
+                </ion-row>
+              }
               @if (isApproval()) {
                 <ion-row>
-                  <ion-col size="12" size-md="6">
+                  <ion-col size="12">
                     <ion-item lines="none">
                       <ion-select [label]="i18n().writeBack_label()" labelPlacement="floating"
                         interface="popover" [disabled]="isReadOnly()" [value]="writeBack()"
@@ -87,7 +106,7 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
                 </ion-row>
               }
               <ion-row>
-                <ion-col size="12" size-md="6">
+                <ion-col size="12">
                   <ion-item lines="none">
                     <ion-select [label]="i18n().responsibilityKey_label()" labelPlacement="floating"
                       interface="popover" [disabled]="isReadOnly()" [value]="responsibilityKey()"
@@ -101,13 +120,15 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
                     <ion-note>{{ i18n().responsibilityKey_helper() }}</ion-note>
                   </ion-item>
                 </ion-col>
-                <ion-col size="12" size-md="6">
+              </ion-row>
+              <ion-row>
+                <ion-col size="12">
                   <okr-text-input [i18n]="messageKeyI18n()" [value]="messageKey()"
                     (valueChange)="onFieldChange('messageKey', $event)" [maxLength]="80" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="12" size-md="6">
+                <ion-col size="12">
                   <okr-number-input [i18n]="dueInDaysI18n()" [value]="dueInDays()"
                     (valueChange)="onNumberChange('dueInDays', $event)" [readOnly]="isReadOnly()"
                     [min]="0" [max]="365" />

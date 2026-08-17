@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo } from '@okr/shared-models';
 
-import { MAX_RULE_SENDS_PER_DAY, isDelegateActive, isResponsibilityValid, resolveAssignee, runProbe, runWorkflowWith } from './engine';
+import { MAX_RULE_SENDS_PER_DAY, SUBJECT_RECIPIENT, isDelegateActive, isResponsibilityValid, resolveAssignee, runProbe, runWorkflowWith } from './engine';
 import { EsignRequest, InvoiceDoc, NewApproval, NewTask, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const TENANT = 'scs';
@@ -159,6 +159,15 @@ describe('probes', () => {
     const deps = fakeDeps({ invoices: [{ state: 'overdue', isArchived: true }] });
     await expect(runProbe(rule({ probe: 'hasOpenInvoices' }), ctx(), deps)).resolves.toBe(false);
   });
+
+  it('authorIsNotAssignee fires only when somebody else finished the task', async () => {
+    const probe = rule({ probe: 'authorIsNotAssignee' });
+    const run = (params: Record<string, string>) => runProbe(probe, ctx({ params }), fakeDeps());
+    await expect(run({ authorKey: 'a1', assigneeKey: 'a2' })).resolves.toBe(true);
+    await expect(run({ authorKey: 'a1', assigneeKey: 'a1' })).resolves.toBe(false);
+    // no author = nobody to notify: fails closed rather than messaging the assignee
+    await expect(run({ authorKey: '', assigneeKey: 'a2' })).resolves.toBe(false);
+  });
 });
 
 describe('isDelegateActive', () => {
@@ -218,6 +227,17 @@ describe('resolveAssignee', () => {
   it('ignores an archived responsibility', async () => {
     const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('resp'), isArchived: true }, tenantAdmin: avatar('admin') });
     expect((await resolveAssignee(rule(), ctx(), deps))?.key).toBe('admin');
+  });
+
+  it("resolves 'subject' to the person the event is about", async () => {
+    const deps = fakeDeps({ requester: avatar('author'), tenantAdmin: avatar('admin') });
+    expect((await resolveAssignee(rule({ responsibilityKey: SUBJECT_RECIPIENT }), ctx(), deps))?.key).toBe('author');
+  });
+
+  it("never falls back to an admin when 'subject' has no avatar", async () => {
+    const deps = fakeDeps({ requester: undefined, groupAdmin: avatar('ga'), tenantAdmin: avatar('admin') });
+    expect(await resolveAssignee(rule({ responsibilityKey: SUBJECT_RECIPIENT }), ctx(), deps)).toBeUndefined();
+    expect(deps.activities[0]['error']).toBe('no subject avatar');
   });
 });
 
@@ -317,6 +337,31 @@ describe('sendEmail / sendMessage', () => {
     await runWorkflowWith(ctx(), deps);
     expect(deps.messages).toHaveLength(0);
     expect(deps.activities[0]['error']).toBe('no matrix account');
+  });
+});
+
+describe('task.completed → message the author', () => {
+  // the rule an admin configures for "somebody else finished my task"
+  const taskRule = rule({
+    event: 'task.completed', probe: 'authorIsNotAssignee',
+    action: 'sendMessage', responsibilityKey: SUBJECT_RECIPIENT,
+  });
+  const taskCtx = (authorKey: string, assigneeKey: string) => ctx({
+    event: 'task.completed', personKey: authorKey, relatedKey: 'task.t1', subjectName: 'Boot putzen',
+    params: { taskName: 'Boot putzen', authorKey, authorName: 'Anna Muster', assigneeKey, assigneeName: 'Bert Meier' },
+  });
+
+  it('messages the author when somebody else completed the task', async () => {
+    const deps = fakeDeps({ rules: [taskRule], requester: avatar('author'), matrixId: '@author:s' });
+    await runWorkflowWith(taskCtx('author', 'assignee'), deps);
+    expect(deps.messages).toHaveLength(1);
+    expect(deps.messages[0].matrixUserId).toBe('@author:s');
+  });
+
+  it('stays silent when the author completed their own task', async () => {
+    const deps = fakeDeps({ rules: [taskRule], requester: avatar('author'), matrixId: '@author:s' });
+    await runWorkflowWith(taskCtx('author', 'author'), deps);
+    expect(deps.messages).toHaveLength(0);
   });
 });
 

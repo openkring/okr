@@ -53,7 +53,23 @@ export const PROBES: Record<string, Probe> = {
   hasOpenInvoices: async (ctx, _arg, deps) =>
     (await deps.invoices(ctx.personKey, ctx.tenantId))
       .some((i) => !i.isArchived && OPEN_INVOICE_STATES.includes(i.state ?? '')),
+
+  /** somebody else finished the task — don't notify the author about their own work.
+   *  An empty author fails closed: there is nobody to address. */
+  authorIsNotAssignee: async (ctx) => {
+    const author = ctx.params['authorKey'] ?? '';
+    return author !== '' && author !== (ctx.params['assigneeKey'] ?? '');
+  },
 };
+
+/**
+ * Reserved `responsibilityKey`: address the person the event is ABOUT rather than a role.
+ * Used by 'task.completed' to reach the task's author.
+ *
+ * This does not breach the no-free-text-recipient invariant below: the recipient is still
+ * derived from the event document, never typed into the rule by an admin.
+ */
+export const SUBJECT_RECIPIENT = 'subject';
 
 /**
  * Run one rule's probe. An empty probe always fires; an UNKNOWN probe fails closed —
@@ -115,6 +131,13 @@ export async function resolveAssignee(
   deps: WorkflowDeps,
 ): Promise<ResponsibilityDoc['responsibleAvatar'] | undefined> {
   const key = rule.responsibilityKey ?? '';
+  if (key === SUBJECT_RECIPIENT) {
+    const subject = await deps.avatarFor(ctx.personKey, ctx.tenantId);
+    if (subject?.key) return subject;
+    // No role to fall back on — a message meant for the subject must not land on an admin.
+    await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'no subject avatar', person: ctx.personKey });
+    return undefined;
+  }
   const responsibility = key ? await deps.responsibility(key, ctx.tenantId) : undefined;
 
   if (responsibility && !responsibility.isArchived && isResponsibilityValid(responsibility, ctx.today)) {

@@ -5,7 +5,7 @@
     "helper": "Interner Name des Workflow-Schritts."
   },
   "event": {
-    "label": "Ereignis",
+    "label": "Trigger",
     "helper": "Ereignis, das den Workflow auslöst."
   },
   "probe": {
@@ -20,7 +20,8 @@
   "responsibilityKey": {
     "label": "Verantwortlichkeit",
     "placeholder": "z.B. treasurer",
-    "helper": "Schlüssel der Verantwortlichkeit, die die Aufgabe erhält"
+    "helper": "Schlüssel der Verantwortlichkeit, die die Aufgabe erhält",
+    "subject": "Betroffene Person (z.B. Ersteller der Aufgabe)"
   },
   "messageKey": {
     "label": "Meldung (i18n-Schlüssel)",

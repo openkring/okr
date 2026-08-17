@@ -5,7 +5,7 @@
     "helper": "Nombre interno del paso del flujo de trabajo."
   },
   "event": {
-    "label": "Evento",
+    "label": "Disparador",
     "helper": "Evento que activa el flujo de trabajo."
   },
   "probe": {
@@ -20,7 +20,8 @@
   "responsibilityKey": {
     "label": "Responsabilidad",
     "placeholder": "p.ej. treasurer",
-    "helper": "Clave de la responsabilidad que recibe la tarea"
+    "helper": "Clave de la responsabilidad que recibe la tarea",
+    "subject": "Persona afectada (p.ej. el autor de la tarea)"
   },
   "messageKey": {
     "label": "Mensaje (clave i18n)",
@@ -36,8 +37,8 @@
     "placeholder": "Introducir notas"
   },
   "action": {
-    "label": "Aktion",
-    "helper": "Was geschieht, wenn die Regel zutrifft."
+    "label": "Acción",
+    "helper": "Qué ocurre cuando se cumple la regla."
   },
   "actionArg": {
     "label": "Argument der Aktion",

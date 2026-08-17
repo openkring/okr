@@ -5,7 +5,7 @@
     "helper": "Nome interno del passo del flusso di lavoro."
   },
   "event": {
-    "label": "Evento",
+    "label": "Attivatore",
     "helper": "Evento che attiva il flusso di lavoro."
   },
   "probe": {
@@ -20,7 +20,8 @@
   "responsibilityKey": {
     "label": "Responsabilità",
     "placeholder": "p.es. treasurer",
-    "helper": "Chiave della responsabilità che riceve il compito"
+    "helper": "Chiave della responsabilità che riceve il compito",
+    "subject": "Persona interessata (p.es. l'autore del compito)"
   },
   "messageKey": {
     "label": "Messaggio (chiave i18n)",
@@ -36,8 +37,8 @@
     "placeholder": "Inserire note"
   },
   "action": {
-    "label": "Aktion",
-    "helper": "Was geschieht, wenn die Regel zutrifft."
+    "label": "Azione",
+    "helper": "Cosa succede quando la regola si applica."
   },
   "actionArg": {
     "label": "Argument der Aktion",
