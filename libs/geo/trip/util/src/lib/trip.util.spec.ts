@@ -70,6 +70,17 @@ describe('getTripIndex', () => {
     expect(idx).toContain('Max Muster');
   });
 
+  it('indexes keyless participants as guest, with the name when present', () => {
+    const trip = makeTrip({
+      participants: [
+        { key: '', name1: 'Anna', name2: 'Müller', modelType: 'person', type: '', subType: '', label: '' },
+        { key: '', name1: '', name2: '', modelType: 'person', type: '', subType: '', label: '' },
+      ],
+    });
+    const idx = getTripIndex(trip);
+    expect(idx).toContain('p:guest Gast Anna Müller,guest Gast');
+  });
+
   it('returns index without participants when array is empty', () => {
     const trip = makeTrip({
       resource: { key: 'r1', name1: '', name2: 'Skiff', modelType: 'resource', type: 'rboat', subType: '', label: 'Skiff' },

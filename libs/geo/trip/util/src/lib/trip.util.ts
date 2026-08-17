@@ -59,7 +59,9 @@ export function getTripIndex(trip: TripModel): string {
   index = addIndexElement(index, 'r', trip.resource?.name2 ?? '');
   index = addIndexElement(index, 'd', trip.startDate);
   const participants = (trip.participants ?? [])
-    .map((p) => `${p.name1} ${p.name2}`.trim())
+    // a keyless participant is a guest: index the keyword in both languages so 'guest'
+    // and 'Gast' find the trip, plus the name if one was entered
+    .map((p) => [p.key ? '' : 'guest Gast', `${p.name1} ${p.name2}`.trim()].filter(Boolean).join(' '))
     .filter((name) => name.length > 0)
     .join(',');
   index = addIndexElement(index, 'p', participants);

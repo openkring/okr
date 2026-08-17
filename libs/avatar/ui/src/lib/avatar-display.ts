@@ -23,6 +23,11 @@ import { getDefaultIcon } from "@okr/avatar-util";
     .stacked-avatar:hover { transform: scale(1.2) translateY(-5px); }
     .single-avatar-name { margin-left: 12px; font-size: 16px; }
     ion-chip { background-color: var(--ion-color-light); color: var(--ion-color-light-contrast); }
+    .letter-avatar {
+      background: var(--ion-color-medium);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--ion-color-medium-contrast); font-size: 14px; font-weight: bold;
+    }
     `],
   template: `
     @if(avatars(); as avatars) {
@@ -45,7 +50,14 @@ import { getDefaultIcon } from "@okr/avatar-util";
               </ion-avatar>
             }
           } @else {
-            <ion-label><small>{{ avatars[0].name1 | fullName:avatars[0].name2 }}</small></ion-label>
+            @if(shouldShowName()) {
+              <ion-chip color="light">
+                <ion-avatar class="letter-avatar">G</ion-avatar>
+                <ion-label><small>{{ avatars[0].name1 | fullName:avatars[0].name2 }}</small></ion-label>
+              </ion-chip>
+            } @else {
+              <ion-avatar class="letter-avatar">G</ion-avatar>
+            }
           }
         }
         @default {
@@ -56,7 +68,9 @@ import { getDefaultIcon } from "@okr/avatar-util";
                   <ion-avatar [class.stacked-avatar]="true" [style.zIndex]="avatars.length - $index">
                     <ion-img src="{{ avatar.modelType + '.' + avatar.key | avatar:getDefaultIcon(avatar.modelType) }}" alt="Avatar of person or org" />
                   </ion-avatar>
-                } 
+                } @else {
+                  <ion-avatar class="letter-avatar stacked-avatar" [style.zIndex]="avatars.length - $index">G</ion-avatar>
+                }
               }
               @if(avatars.length > maxAvatarsToShow()) {
                 <ion-note>+{{ avatars.length - maxAvatarsToShow() }}</ion-note>
