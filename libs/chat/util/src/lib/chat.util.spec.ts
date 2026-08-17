@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, resolveMatrixDisplayName } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, linkifyText, resolveMatrixDisplayName } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -145,5 +145,20 @@ describe('findSupportRoom', () => {
 
   it('returns undefined when there is no support room', () => {
     expect(findSupportRoom([room('!a', 'Trainer')], 'scs')).toBeUndefined();
+  });
+});
+
+describe('linkifyText', () => {
+  it('wraps a url in an anchor', () => {
+    expect(linkifyText('see https://a.ch/x?y=1 now'))
+      .toBe('see <a href="https://a.ch/x?y=1" target="_blank" rel="noopener noreferrer">https://a.ch/x?y=1</a> now');
+  });
+
+  it('escapes markup and leaves plain text alone', () => {
+    expect(linkifyText('a <b> "c"')).toBe('a &lt;b&gt; &quot;c&quot;');
+  });
+
+  it('does not swallow trailing punctuation', () => {
+    expect(linkifyText('go to https://a.ch.')).toContain('>https://a.ch</a>.');
   });
 });

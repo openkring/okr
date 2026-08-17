@@ -6,7 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
+import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, linkifyText, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
 
 @Component({
   selector: 'okr-matrix-message-list',
@@ -407,7 +407,7 @@ import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessa
                             @if (item.content.formatted_body) {
                               <p class="message-text" [innerHTML]="item.content.formatted_body"></p>
                             } @else {
-                              <p class="message-text">{{ item.body }}</p>
+                              <p class="message-text" [innerHTML]="linkify(item.body)"></p>
                             }
                           }
                           @case ('m.file') {
@@ -608,6 +608,11 @@ export class MatrixMessageList {
    * message) is left untouched and falls through to the existing `messageClicked`
    * action-sheet trigger.
    */
+  /** Plain-text bodies carry no markup, so urls are made clickable here. */
+  protected linkify(body: string): string {
+    return linkifyText(body ?? '');
+  }
+
   protected onBubbleClick(event: MouseEvent, item: MatrixMessage): void {
     const anchor = (event.target as HTMLElement | null)?.closest?.('a');
     const href = anchor?.getAttribute('href');
@@ -617,6 +622,8 @@ export class MatrixMessageList {
       this.personSelected.emit({ localpart: personKey, message: item });
       return;
     }
+    // a tapped link opens the link — not the action sheet on top of it
+    if (href) return;
     this.messageClicked.emit(item);
   }
 

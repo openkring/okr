@@ -169,3 +169,15 @@ export function findSupportRoom<T extends { roomId: string; name?: string; topic
   return rooms.find(r => { const a = alias(r); return a === own || a === 'support' || a === 'group_support'; })
       ?? rooms.find(r => !alias(r) && r.name?.toLowerCase() === 'support');
 }
+
+/**
+ * Turn a plain-text message body into HTML with clickable http(s) links.
+ * Used for `m.text` messages that carry no `formatted_body` (anything sent as plain text,
+ * e.g. the schedule-poll invite) — Angular sanitises the result at the `[innerHTML]` site,
+ * but the body is escaped here anyway so `<` in a message can never become markup.
+ */
+export function linkifyText(text: string): string {
+  const escaped = text.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
+  return escaped.replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)"']/g,
+    url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+}
