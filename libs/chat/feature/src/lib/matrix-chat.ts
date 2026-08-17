@@ -527,6 +527,7 @@ export class MatrixChat implements OnDestroy {
   private isInitializing = false; // Guard flag to prevent multiple initializations
   private isRequestingRoomAccess = false;
   private readonly lastRoomAccessAttempt = new Map<string, number>(); // groupId → timestamp of last CF call
+  private resolvedRoomAlias?: string;                                 // deep-link alias already applied once
 
   // inputs
   public isGroupView = input<boolean>(false);
@@ -617,6 +618,10 @@ export class MatrixChat implements OnDestroy {
     effect(() => {
       const roomAlias = this.selectedRoom();
       if (!roomAlias) return;
+      // Resolve each alias exactly once. rooms() is a reactive dep and re-emits on every
+      // sync (unread counts, new messages) — without this guard every re-emission would
+      // re-apply the deep link and snap the user back off a room they just clicked.
+      if (this.resolvedRoomAlias === roomAlias) return;
       // rooms() is a reactive dep: when rooms load after sync, this re-runs and resolves the alias.
       // Also check the BehaviorSubject's current value synchronously — the rxResource may not have
       // processed the initial BehaviorSubject emission yet (it's async), which would cause a
@@ -626,6 +631,7 @@ export class MatrixChat implements OnDestroy {
       const match = syncRooms.find(r => r.roomId === roomAlias)
         ?? syncRooms.find(r => r.name?.toLowerCase() === roomAlias.toLowerCase());
       if (match) {
+        this.resolvedRoomAlias = roomAlias;
         this.store.setCurrentRoom(match.roomId);
         return;
       }
@@ -638,6 +644,7 @@ export class MatrixChat implements OnDestroy {
       // Set it directly — the SDK has it even before the next sync cycle emits it via rooms$.
       // Never send a Matrix room ID through requestGroupRoomAccess (it would create a spurious room).
       if (roomAlias.startsWith('!')) {
+        this.resolvedRoomAlias = roomAlias;
         this.store.setCurrentRoom(roomAlias);
         return;
       }
