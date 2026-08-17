@@ -1,15 +1,17 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches, openInvitationsOf } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
+import { CalEventService } from '@okr/calevent-data-access';
+import { CalEventViewModal } from '@okr/calevent-feature';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 
@@ -50,6 +52,7 @@ export const InvitationSectionStore = signalStore(
   withState(initialInvitationState),
   withProps(() => ({
     invitationService: inject(InvitationService),
+    calEventService: inject(CalEventService),
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
     modalController: inject(ModalController),
@@ -102,9 +105,15 @@ export const InvitationSectionStore = signalStore(
       ),
       myInvitations: computed(() => {
         if (!state.inviteeKey()) return [];
-        return state.allInvitations().filter((invitation: InvitationModel) => 
+        return state.allInvitations().filter((invitation: InvitationModel) =>
           invitation.inviteeKey === state.inviteeKey()) ?? [];
       }),
+      // Scope 'open': the invitations the user still owes an answer for. Derived from the raw
+      // resource rather than allInvitations() on purpose — isOpenInvitation carries its own
+      // (inclusive of today) date cut-off, and it is the same predicate the notification badge
+      // counts with, so widget and badge cannot drift apart.
+      openInvitations: computed(() =>
+        openInvitationsOf(state.invitationsResource.value() ?? [], state.inviteeKey())),
     }
   }),
 
@@ -150,6 +159,23 @@ export const InvitationSectionStore = signalStore(
       },
 
       /******************************** actions ******************************************* */
+      /** Opens the read-only view of the calevent the invitation belongs to. */
+      async openCalevent(invitation: InvitationModel): Promise<void> {
+        const calevent = await firstValueFrom(store.calEventService.read(invitation.caleventKey));
+        if (!calevent) return;
+        const modal = await store.modalController.create({
+          component: CalEventViewModal,
+          componentProps: {
+            calevent,
+            periodicities: store.appStore.getCategory('periodicity'),
+            locale: store.appStore.appConfig().locale
+          }
+        });
+        await modal.present();
+        await modal.onDidDismiss();
+        this.reload();   // the user may have answered the invitation inside the calevent view
+      },
+
       async changeState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
         invitation.state = newState;
         invitation.respondedAt = getTodayStr(DateFormat.StoreDate);

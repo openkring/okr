@@ -147,12 +147,12 @@ export const _MenuStore = signalStore(
       tenantId: computed(() => store.appStore.tenantId()),
       isMenuLoading: computed(() => store.menuResource.isLoading()),
       isLoading: computed(() => store.menuItemsResource.isLoading() || store.menuResource.isLoading()),
-      // Chat unread + open assigned tasks. The dashboard menu item is the only one that
-      // subscribes to chat, so every other instance contributes 0 there; gate the task half
-      // on the same name so a non-dashboard menu never shows a badge either.
+      // Chat unread + open assigned tasks + unanswered invitations. The dashboard menu item is
+      // the only one that subscribes to chat, so every other instance contributes 0 there; gate
+      // the other halves on the same name so a non-dashboard menu never shows a badge either.
       notificationCount: computed(() =>
         (store.chatUnreadResource.value() ?? 0) +
-        (store.name() === 'dashboard' ? store.appStore.openTaskCount() : 0)),
+        (store.name() === 'dashboard' ? store.appStore.openTaskCount() + store.appStore.openInvitationCount() : 0)),
     };
   }),
 

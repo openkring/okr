@@ -26,6 +26,12 @@ import { InvitationSectionStore } from './invitations-section.store';
       }
       ion-label { font-size: 1em; }
       ion-icon { font-size: 28px; width: 28px; height: 28px; }
+      .invitation-text {
+        display: block;
+        font-size: 0.85em;
+        color: var(--ion-color-medium);
+        white-space: normal;
+      }
     `,
   ],
   providers: [InvitationSectionStore], 
@@ -53,6 +59,9 @@ import { InvitationSectionStore } from './invitations-section.store';
                 </ion-col>
                 <ion-col>
                   <ion-label>{{inv.name}}</ion-label>
+                  @if(inv.notes) {
+                    <ion-label class="invitation-text">{{ inv.notes }}</ion-label>
+                  }
                 </ion-col>
               </ion-row>
             }
@@ -93,8 +102,10 @@ export class InvitationsSectionComponent implements OnInit {
   protected readonly showUpcomingItems = computed(() => this.config()?.showUpcomingItems ?? true);
   protected readonly invitations = computed(() => {
     switch (this.scope()) {
-        case 'my': 
+        case 'my':
             return this.store.myInvitations();
+        case 'open':
+            return this.store.openInvitations();
         case 'all':
             return this.store.filteredInvitations();
         default: // explicit calevent key given
@@ -112,7 +123,8 @@ export class InvitationsSectionComponent implements OnInit {
     effect(() => {
       this.store.setConfig(this.maxItems(), this.showPastItems(), this.showUpcomingItems());
       switch (this.scope()) {
-        case 'my': 
+        case 'my':
+        case 'open':
             this.store.setScope('', this.currentUser()?.personKey ?? '', true);
             break;
         case 'all':
@@ -157,12 +169,16 @@ export class InvitationsSectionComponent implements OnInit {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, inv: InvitationModel): void {
     if (hasRole('registered', this.currentUser())) {
-      if (inv.state !== 'accepted') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+      // only the invitee may answer; on the 'all' scope the rows of other people are read-only
+      if (inv.inviteeKey === this.currentUser()?.personKey) {
+        if (inv.state !== 'accepted') {
+          actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+        }
+        if (inv.state !== 'declined') {
+          actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
+        }
       }
-      if (inv.state !== 'declined') {
-        actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
-      }
+      actionSheetOptions.buttons.push(createActionSheetButton('invitation.openCalevent', this.store.i18n.invitation_open_calevent(), this.imgixBaseUrl, 'calendar-number'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       if (actionSheetOptions.buttons.length === 1) { // only cancel button
         actionSheetOptions.buttons = [];
@@ -187,6 +203,9 @@ export class InvitationsSectionComponent implements OnInit {
           break;
         case 'invitation.unsubscribe':
           await this.store.changeState(invitation, 'declined');
+          break;
+        case 'invitation.openCalevent':
+          await this.store.openCalevent(invitation);
           break;
       }
     }

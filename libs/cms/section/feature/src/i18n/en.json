@@ -546,7 +546,8 @@
     "showUpcomingItems": {
       "label": "Show upcoming events",
       "helper": "Choose whether future events are shown in the list or calendar."
-    }
+    },
+    "openCalevent": "Show event"
   },
   "map": {
     "label": "Map",
@@ -905,6 +906,9 @@
       "content": {
         "label": "Content type"
       }
+    },
+    "detail": {
+      "empty": "No trips in this year."
     }
   },
   "video": {

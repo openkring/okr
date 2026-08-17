@@ -546,7 +546,8 @@
     "showUpcomingItems": {
       "label": "Kommende Ereignisse anzeigen",
       "helper": "Wähle, ob zukünftige Ereignisse in der Liste oder im Kalender angezeigt werden sollen."
-    }
+    },
+    "openCalevent": "Termin anzeigen"
   },
   "map": {
     "label": "Karte",
@@ -905,6 +906,9 @@
       "content": {
         "label": "Inhaltsart"
       }
+    },
+    "detail": {
+      "empty": "Keine Fahrten in diesem Jahr."
     }
   },
   "video": {

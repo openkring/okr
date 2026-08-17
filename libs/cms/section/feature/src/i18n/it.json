@@ -546,7 +546,8 @@
     "showUpcomingItems": {
       "label": "Mostrare gli eventi futuri",
       "helper": "Scegliere se gli eventi futuri vengono visualizzati nell'elenco o nel calendario."
-    }
+    },
+    "openCalevent": "Mostra l'evento"
   },
   "map": {
     "label": "Mappa",
@@ -905,6 +906,9 @@
       "content": {
         "label": "Tipo di contenuto"
       }
+    },
+    "detail": {
+      "empty": "Nessuna uscita in questo anno."
     }
   },
   "video": {

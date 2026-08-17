@@ -12,6 +12,7 @@ export * from './lib/export.util';
 export * from './lib/file.util';
 export * from './lib/icon.util';
 export * from './lib/img.util';
+export * from './lib/invitation.util';
 export * from './lib/log.util';
 export * from './lib/membership.util';
 export * from './lib/photo-declaration.util';

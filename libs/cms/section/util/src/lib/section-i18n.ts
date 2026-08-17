@@ -335,6 +335,7 @@ export const SECTION_I18N_KEYS = {
   invitation_update_error:                  PFX + 'invitation.update.error',
   invitation_subscribe:                     PFX + 'invitation.subscribe',
   invitation_unsubscribe:                   PFX + 'invitation.unsubscribe',
+  invitation_open_calevent:                 PFX + 'invitation.openCalevent',
   invitation_more_label:                    PFX + 'invitation.more.label',
   invitation_more_placeholder:              PFX + 'invitation.more.placeholder',
   invitation_more_helper:                   PFX + 'invitation.more.helper',
@@ -607,6 +608,7 @@ export const SECTION_I18N_KEYS = {
   tripstats_col_km:                         PFX + 'tripstats.col.km',
   tripstats_col_trips:                      PFX + 'tripstats.col.trips',
   tripstats_col_type:                       PFX + 'tripstats.col.type',
+  tripstats_detail_empty:                   PFX + 'tripstats.detail.empty',
 
   // video
   video_edit:                               PFX + 'video.edit',

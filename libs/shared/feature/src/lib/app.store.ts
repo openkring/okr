@@ -8,8 +8,8 @@ import { App } from '@capacitor/app';
 
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
-import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { die, getSystemQuery, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
+import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
+import { die, getSystemQuery, openInvitationsOf, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
 import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -201,6 +201,22 @@ export const AppStore = signalStore(
         return store.firestoreService.searchData<TaskModel>(TaskCollection, taskQuery, 'dueDate', 'asc');
       }
     }),
+    // Open invitations addressed to the signed-in user — the invitation half of every
+    // notification badge, alongside openTasksResource. Same reason for living here: the two
+    // badge writers (cms/menu/feature and chat/feature) must count the same thing.
+    // Gated on personKey: the invitations collection requires an authenticated tenant user.
+    openInvitationsResource: rxResource({
+      params: () => ({
+        personKey: store.currentUserResource.value()?.personKey,
+        tenantId: store.tenantId()
+      }),
+      stream: ({params}) => {
+        if (!params.personKey || !params.tenantId) return of([]);
+        const invitationQuery = getSystemQuery(params.tenantId);
+        invitationQuery.push({ key: 'inviteeKey', operator: '==', value: params.personKey });
+        return store.firestoreService.searchData<InvitationModel>(InvitationCollection, invitationQuery, 'date', 'asc');
+      }
+    }),
     categoriesResource: rxResource({
       params: () => ({
         fbUser: store.fbUser(),
@@ -254,6 +270,12 @@ export const AppStore = signalStore(
         const personKey = state.currentUserResource.value()?.personKey;
         if (!personKey) return 0;
         return (state.openTasksResource.value() ?? []).filter((t: TaskModel) => t.assignee?.key === personKey).length;
+      }),
+      /** Number of unanswered invitations to future events — the invitation half of every badge. */
+      openInvitationCount: computed(() => {
+        const personKey = state.currentUserResource.value()?.personKey;
+        if (!personKey) return 0;
+        return openInvitationsOf(state.openInvitationsResource.value() ?? [], personKey).length;
       }),
       appConfig: computed(() => {
         const loaded = state.appConfigResource.value();
