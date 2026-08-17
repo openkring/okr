@@ -5,6 +5,8 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Router } from '@angular/router';
 import { addMonths, format } from 'date-fns';
 import { doc, WriteBatch } from 'firebase/firestore';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { from, firstValueFrom, map, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
@@ -18,9 +20,10 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { LocationService } from '@okr/location-data-access';
+import { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
-import { CALEVENT_I18N_KEYS, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, planSeriesReconcile } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, planSeriesReconcile, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { RegressionSelectionModal } from '@okr/calevent-ui';
 
 const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';
@@ -71,7 +74,8 @@ export const CalEventStore = signalStore(
     membershipService: inject(MembershipService),
     locationService: inject(LocationService),
     modelSelectService: inject(ModelSelectService),
-    i18nService: inject(I18nService)
+    i18nService: inject(I18nService),
+    matrixChatService: inject(MatrixChatService)
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(CALEVENT_I18N_KEYS),
@@ -313,6 +317,10 @@ export const CalEventStore = signalStore(
     }),
   })),
 
+  withComputed((state) => ({
+    groupMembers: computed(() => state.groupMembersResource.value() ?? []),
+  })),
+
   withMethods((store) => {
     return {
       reset() {
@@ -428,58 +436,152 @@ export const CalEventStore = signalStore(
         return await this.edit(newCalevent, true, false, false, skipReload);
       },
 
-      async schedule(): Promise<void> {
-        if (!store.isGroupCalendar()) return error(store.toastController, CALEVENT_I18N_KEYS.schedule_group_only);
-        const { ScheduleNewModal } = await import('./schedule-new.modal');
-        const modal = await store.modalController.create({
-          component: ScheduleNewModal,
-        });
-        await modal.present();
-        const { data, role } = await modal.onWillDismiss<{ name: string; description: string; dates: string[] }>();
-        if (role !== 'confirm' || !data) return;
+      /** Guard only — CalEventList opens the modal so it can pass its own injector. */
+      schedule(): boolean {
+        if (!store.isGroupCalendar()) {
+          error(store.toastController, CALEVENT_I18N_KEYS.schedule_group_only);
+          return false;
+        }
+        return true;
+      },
 
+      /**
+       * Best-effort post into the group's Matrix room. The chat client may not be initialised if
+       * the user never opened chat this session, so a failure only warns — it must never block a
+       * poll from being created or closed.
+       */
+      async notifyGroupRoom(message: string): Promise<void> {
+        const groupId = store.groupCalendarId();
+        if (!groupId) return;
+        try {
+          const functions = getFunctions(getApp(), 'europe-west6');
+          const fn = httpsCallable<{ groupId: string }, { roomId: string }>(functions, 'requestGroupRoomAccess');
+          const { data } = await fn({ groupId });
+          await store.matrixChatService.ensureInitialized();
+          await store.matrixChatService.sendMessage(data.roomId, message);
+        } catch (err) {
+          warn(`CalEventStore.notifyGroupRoom: ${err}`);
+          await showToast(store.toastController, store.i18n.schedule_no_room());
+        }
+      },
+
+      /**
+       * Writes the whole poll in one go: one proposed calevent per column plus one invitation per
+       * (member × column) — including the author, whose own answers come from the draft table.
+       * inviteGroupMembers is deliberately NOT reused: it skips the organiser (who needs a row here)
+       * and prompts for an invitation message once per event.
+       */
+      async createSchedulePoll(data: SchedulePollFormData, origin: string): Promise<void> {
+        const currentUser = store.currentUser();
+        const groupId = store.groupCalendarId();
+        if (!currentUser || !groupId) return;
+
+        const members = await firstValueFrom(store.membershipService.listMembersOfOrg(groupId, 'group'));
         const seriesId = generateRandomString(18);
-        let index = 0;
-        for (const isoDate of data.dates) {
-          const startDate = isoDate.replace(/-/g, '').substring(0, 8);
+        const batch = store.firestoreService.getBatch();
+        const myResponses = data.rows[0]?.responses ?? {};
+        let eventIndex = 0;
+
+        for (const column of data.columns) {
           const calevent = new CalEventModel(store.tenantId());
-          calevent.okey = seriesId + index.toString().padStart(2, '0');
+          calevent.okey = seriesId + pad(eventIndex, 2);
           calevent.seriesId = seriesId;
           calevent.name = data.name;
           calevent.description = data.description;
           calevent.state = 'proposed';
           calevent.isOpen = false;
-          calevent.startDate = startDate;
-          calevent.fullDay = true;
-          calevent.durationMinutes = 1440;
+          calevent.startDate = column.startDate;
+          calevent.startTime = column.startTime;
+          calevent.fullDay = column.startTime.length === 0;
+          calevent.durationMinutes = calevent.fullDay ? 1440 : 120;
           calevent.calendars = [store.calendarName()];
-          const user = store.currentUser();
-          calevent.responsiblePersons = user
-            ? [{ key: user.personKey, name1: user.firstName, name2: user.lastName, modelType: 'person', type: '', subType: '', label: '' }]
-            : [];
+          calevent.responsiblePersons = [{
+            key: currentUser.personKey, name1: currentUser.firstName, name2: currentUser.lastName,
+            modelType: 'person', type: '', subType: '', label: '',
+          }];
           calevent.index = getCaleventIndex(calevent);
-          await store.calEventService.create(calevent, store.currentUser());
-          await this.inviteGroupMembers(calevent, false);
-          index++;
+          const eventRef = doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`);
+          batch.set(eventRef, removeKeyFromOkrModel(structuredClone(calevent)));
+
+          let memberIndex = 0;
+          for (const member of members) {
+            const inv = new InvitationModel(store.tenantId());
+            inv.inviteeKey = member.memberKey;
+            inv.inviteeFirstName = member.memberName1;
+            inv.inviteeLastName = member.memberName2;
+            inv.inviterKey = currentUser.personKey;
+            inv.inviterFirstName = currentUser.firstName;
+            inv.inviterLastName = currentUser.lastName;
+            inv.caleventKey = calevent.okey;
+            inv.name = calevent.name;
+            inv.date = calevent.startDate;
+            inv.state = member.memberKey === currentUser.personKey
+              ? (myResponses[column.id] ?? 'pending')
+              : 'pending';
+            inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
+            const invRef = doc(store.firestoreService.firestore,
+              `${InvitationCollection}/${calevent.okey}${pad(memberIndex, 2)}`);
+            batch.set(invRef, removeKeyFromOkrModel(structuredClone(inv)));
+            memberIndex++;
+          }
+          eventIndex++;
         }
+        await batch.commit();
+
+        const link = buildSchedulePollLink(origin, store.calendarName(), seriesId);
+        await this.notifyGroupRoom(formatSchedulePollInviteMessage(data.name, link));
       },
 
-      async closeSchedule(selectedEvent: CalEventModel): Promise<void> {
+      /** Writes the current user's row in one batch — one update per changed cell. */
+      async saveSchedulePollResponses(rows: SchedulePollRow[]): Promise<void> {
+        const myRow = rows[0];
+        const currentUser = store.currentUser();
+        if (!myRow || !currentUser) return;
+        const today = getTodayStr(DateFormat.StoreDate);
+        const batch = store.firestoreService.getBatch();
+        let changed = 0;
+        for (const invitation of store.seriesInvitations()) {
+          if (invitation.inviteeKey !== currentUser.personKey) continue;
+          const newState = myRow.responses[invitation.caleventKey];
+          if (!newState || newState === invitation.state) continue;
+          const ref = doc(store.firestoreService.firestore, `${InvitationCollection}/${invitation.okey}`);
+          batch.update(ref, { state: newState, respondedAt: today });
+          changed++;
+        }
+        if (changed === 0) return;
+        await batch.commit();
+        await showToast(store.toastController, store.i18n.schedule_response_saved());
+      },
+
+      /**
+       * The winner becomes a standalone definitive event and keeps its invitations (they are the
+       * attendee list). The losing proposals never were real appointments: they are deleted
+       * together with their invitations so no orphaned invitation survives.
+       */
+      async closeSchedule(selectedEvent: CalEventModel, authorMessage?: string): Promise<void> {
         const seriesId = selectedEvent.seriesId;
         const batch = store.firestoreService.getBatch();
 
-        const selectedRef = doc(store.firestoreService.firestore, `calevents/${selectedEvent.okey}`);
-        batch.update(selectedRef, { state: 'definitive', seriesId: '' });
+        batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${selectedEvent.okey}`),
+          { state: 'definitive', seriesId: '' });
 
-        const others = store.calEvents().filter(
-          e => e.seriesId === seriesId && e.okey !== selectedEvent.okey && e.state === 'proposed'
-        );
-        for (const other of others) {
-          const ref = doc(store.firestoreService.firestore, `calevents/${other.okey}`);
-          batch.update(ref, { isArchived: true });
+        const losers = store.calEvents().filter(
+          e => e.seriesId === seriesId && e.okey !== selectedEvent.okey && e.state === 'proposed');
+        const loserKeys = losers.map(e => e.okey);
+        for (const loser of losers) {
+          batch.delete(doc(store.firestoreService.firestore, `${CalEventCollection}/${loser.okey}`));
         }
-
+        const allInvitations = await store.firestoreService.getDataOnce<InvitationModel>(
+          InvitationCollection, getSystemQuery(store.tenantId()), 'none');
+        // ponytail: one batch, capped at Firestore's 500 writes (a poll of ~10 columns x 30 members
+        // is comfortably under that). Chunk into 400-write commits if a poll ever grows past it.
+        for (const inv of allInvitations.filter(i => loserKeys.includes(i.caleventKey))) {
+          batch.delete(doc(store.firestoreService.firestore, `${InvitationCollection}/${inv.okey}`));
+        }
         await batch.commit();
+
+        await this.notifyGroupRoom(
+          formatScheduleCloseMessage(selectedEvent.name, selectedEvent.startDate, authorMessage));
       },
 
       async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false, skipReload = false): Promise<CalEventModel | undefined> {
