@@ -111,7 +111,7 @@ type AttendanceFilter = AttendanceState | 'all';
                 <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                   <ng-template>
                     <ion-content>
-                      <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="isPersonalCalendar()" [toggleStates]="{ toggleFilter: showFilter() }"/>
+                      <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="isPersonalCalendar()" [excludeNames]="excludedMenuNames()" [toggleStates]="{ toggleFilter: showFilter() }"/>
                     </ion-content>
                   </ng-template>
                 </ion-popover>
@@ -290,6 +290,8 @@ export class CalEventList implements OnInit {
   protected expertMode = computed(() => this.hasRole('admin'));
   /** The personal calendars ('personal', 'my'): every registered user may create and manage their own events here. */
   protected isPersonalCalendar = computed(() => isPersonalCalendarName(this.store.calendarName()));
+  /** Schedule polls only exist in group calendars — hide the entry everywhere else (e.g. /calevent/all). */
+  protected excludedMenuNames = computed(() => this.store.isGroupCalendar() ? [] : ['calevent-schedule']);
   private readonly firstFutureIndex = computed(() => {
     const today = format(new Date(), 'yyyyMMdd');
     return this.filteredCalEvents().findIndex(e => e.startDate >= today);
