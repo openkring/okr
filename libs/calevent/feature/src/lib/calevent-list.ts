@@ -198,7 +198,7 @@ type AttendanceFilter = AttendanceState | 'all';
             <ion-card-content>
               <div [style.display]="'block'">
                 <full-calendar #fullCalendar
-                  [options]="calendarOptions" 
+                  [options]="calendarOptions()"
                   [events]="calendarEvents()" 
                 />
               </div>
@@ -345,7 +345,8 @@ export class CalEventList implements OnInit {
     });
   });
 
-  protected calendarOptions = {
+  // computed: the i18n signals start out empty, so buttonText must re-evaluate once they resolve
+  protected calendarOptions = computed(() => ({
     plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
     initialView: 'timeGridWeek',
     headerToolbar: {
@@ -401,7 +402,7 @@ export class CalEventList implements OnInit {
       }
       return true;
     },
-  };
+  }));
 
   // the year the calendar was last navigated for; -1 = never
   private navigatedYear = -1;
