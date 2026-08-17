@@ -17,7 +17,7 @@ import { AvatarInfo, CalEventModel, LocationModel, PersonModel, RoleName } from 
 import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, navigateByUrl, QuickEntryService } from '@okr/shared-util-angular';
+import { AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, navigateByUrl, QuickEntryService } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -242,6 +242,7 @@ export class CalEventList implements OnInit {
   private isSettingQuickEntryValue = false;
   private readonly matrixChatService = inject(MatrixChatService);
   private readonly router = inject(Router);
+  private readonly appNavigationService = inject(AppNavigationService);
   private readonly injector = inject(Injector);
   private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
 
@@ -673,18 +674,10 @@ export class CalEventList implements OnInit {
         );
       }
     }
-    // organiser actions: view/chat/call/email the responsible person (a picker follows if there are several)
-    const organisers = calevent.responsiblePersons ?? [];
-    if (organisers.length > 0) {
+    // organiser actions: one entry; the how (view/call/email/chat) is picked in a follow-up sheet
+    if (this.otherOrganisers(calevent).length > 0) {
       actionSheetOptions.buttons.push(createActionSheetDivider());
-      actionSheetOptions.buttons.push(createActionSheetButton('organiser.view', this.store.i18n.organiser_view(), this.imgixBaseUrl, 'eye-on'));
-      actionSheetOptions.buttons.push(createActionSheetButton('organiser.chat', this.store.i18n.organiser_chat(), this.imgixBaseUrl, 'chatbubbles'));
-      if (organisers.some(o => this.organiserPhone(o.key))) {
-        actionSheetOptions.buttons.push(createActionSheetButton('organiser.call', this.store.i18n.organiser_call(), this.imgixBaseUrl, 'tel'));
-      }
-      if (organisers.some(o => this.organiserEmail(o.key))) {
-        actionSheetOptions.buttons.push(createActionSheetButton('organiser.email', this.store.i18n.organiser_email(), this.imgixBaseUrl, 'email'));
-      }
+      actionSheetOptions.buttons.push(createActionSheetButton('organiser.contact', this.store.i18n.organiser_contact(), this.imgixBaseUrl, 'avatar-circle'));
     }
 
     actionSheetOptions.buttons.push(createActionSheetDivider());
@@ -770,11 +763,8 @@ export class CalEventList implements OnInit {
         case 'calevent.closeSchedule':
           await this.confirmCloseSchedule(calEvent);
           break;
-        case 'organiser.view':
-        case 'organiser.chat':
-        case 'organiser.call':
-        case 'organiser.email':
-          await this.organiserAction(data.action, calEvent);
+        case 'organiser.contact':
+          await this.contactOrganiser(calEvent);
           break;
       }
     }
@@ -789,6 +779,34 @@ export class CalEventList implements OnInit {
 
   private organiserPhone(personKey: string): string {
     return this.store.appStore.getDirectoryEntry(`person.${personKey}`)?.favPhone ?? '';
+  }
+
+  /** The event's responsible persons, without the current user (contacting yourself makes no sense). */
+  private otherOrganisers(calevent: CalEventModel): AvatarInfo[] {
+    const own = this.currentUser()?.personKey ?? '';
+    return (calevent.responsiblePersons ?? []).filter(o => o.key !== own);
+  }
+
+  /** Asks how to contact the organiser (view/call/email/chat), then runs it. */
+  private async contactOrganiser(calevent: CalEventModel): Promise<void> {
+    const organisers = this.otherOrganisers(calevent);
+    const options = createActionSheetOptions(this.store.i18n.organiser_contact());
+    options.buttons = [
+      createActionSheetButton('organiser.view', this.store.i18n.organiser_view(), this.imgixBaseUrl, 'eye-on'),
+    ];
+    if (organisers.some(o => this.organiserPhone(o.key))) {
+      options.buttons.push(createActionSheetButton('organiser.call', this.store.i18n.organiser_call(), this.imgixBaseUrl, 'tel'));
+    }
+    if (organisers.some(o => this.organiserEmail(o.key))) {
+      options.buttons.push(createActionSheetButton('organiser.email', this.store.i18n.organiser_email(), this.imgixBaseUrl, 'email'));
+    }
+    options.buttons.push(createActionSheetButton('organiser.chat', this.store.i18n.organiser_chat(), this.imgixBaseUrl, 'chatbubbles'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss();
+    if (!data || data.action === 'cancel') return;
+    await this.organiserAction(data.action, calevent);
   }
 
   /** Runs an organiser action on the event's responsible person; asks which one if there are several. */
@@ -812,7 +830,7 @@ export class CalEventList implements OnInit {
   }
 
   private async pickOrganiser(calevent: CalEventModel): Promise<AvatarInfo | undefined> {
-    const organisers = calevent.responsiblePersons ?? [];
+    const organisers = this.otherOrganisers(calevent);
     if (organisers.length <= 1) return organisers[0];
     const options = createActionSheetOptions(this.store.i18n.organiser_select());
     options.buttons = organisers.map(o => createActionSheetButton(o.key, `${o.name1} ${o.name2}`, this.imgixBaseUrl, 'avatar-circle'));
@@ -826,6 +844,10 @@ export class CalEventList implements OnInit {
   /** Opens the person page. Navigation, not the PersonEditModal: importing @okr/subject-person-feature
    *  here would close a lib dependency cycle (person-feature -> … -> reservation-feature -> calevent-feature). */
   private async showPerson(personKey: string): Promise<void> {
+    // the person page's close button calls AppNavigationService.back(), which pops the top entry and
+    // navigates to the one below -> seed the history so that it returns to this calendar view.
+    this.appNavigationService.resetLinkHistory(this.router.url);
+    this.appNavigationService.pushLink(`/person/${personKey}`);
     await navigateByUrl(this.router, `/person/${personKey}`);
   }
 
