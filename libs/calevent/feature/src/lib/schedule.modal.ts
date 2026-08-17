@@ -1,8 +1,9 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { AlertController, IonContent, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, effect, inject, input, OnDestroy, signal, untracked } from '@angular/core';
+import { AlertController, IonContent, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { InvitationState } from '@okr/shared-models';
 import { ChangeConfirmation, Header } from '@okr/shared-ui';
+import { error } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, hasRole } from '@okr/shared-util-core';
 import { SchedulePollForm } from '@okr/calevent-ui';
 import { SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
@@ -21,20 +22,25 @@ import { CalEventStore } from './calevent.store';
         (saveClicked)="save()" (cancelClicked)="cancel()" />
     }
     <ion-content class="ion-no-padding">
-      @if (showForm()) {
+      @if (pollMissing()) {
+        <div class="empty">{{ store.i18n.schedule_not_found() }}</div>
+      } @else if (showForm()) {
         <okr-schedule-poll-form
           [formData]="formData()" (formDataChange)="onFormDataChange($event)"
           [i18n]="store.i18n" [canClose]="canClose()"
+          [readOnly]="readOnly()"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)"
           (columnSelected)="onColumnSelected($event)" />
       }
     </ion-content>
   `,
+  styles: [`.empty { padding: 20px; color: var(--ion-color-medium); }`],
 })
-export class ScheduleModal {
+export class ScheduleModal implements OnDestroy {
   private readonly modalController = inject(ModalController);
   private readonly alertController = inject(AlertController);
+  private readonly toastController = inject(ToastController);
   protected readonly store = inject(CalEventStore);
 
   public readonly seriesId = input('');
@@ -62,14 +68,37 @@ export class ScheduleModal {
     return author === user.personKey || hasRole('privileged', user);
   });
 
+  /**
+   * A live poll the user has no invitation for (the v1 flow skipped the organiser, and privileged
+   * users may open any poll). Their taps could never be saved — so nothing may look editable.
+   */
+  protected readonly readOnly = computed(() => {
+    if (this.isDraft()) return false;
+    const myKey = this.store.currentUser()?.personKey ?? '';
+    return !this.formData().rows.some(row => row.key === myKey);
+  });
+
+  /**
+   * A stale deep link: the series is gone (closed or deleted) — say so instead of showing a table.
+   * The `calEvents().length` guard keeps the message off the screen while the calendar is still
+   * loading; an empty calendar would otherwise be reported as a deleted poll.
+   */
+  protected readonly pollMissing = computed(() =>
+    !this.isDraft() && this.store.calEvents().length > 0 && this.proposedEvents().length === 0);
+
   protected readonly proposedEvents = computed(() =>
     this.store.calEvents()
       .filter(e => e.seriesId === this.seriesId() && e.state === 'proposed')
       .sort((a, b) => (a.startDate + a.startTime).localeCompare(b.startDate + b.startTime)));
 
   constructor() {
-    // tell the store which series to stream invitations for
-    effect(() => this.store.setScheduleSeriesId(this.seriesId()));
+    // tell the store which series to stream invitations for. `seriesId` is an input, so it is still
+    // '' while the field initialisers run — keep formData.isDraft in step with it once it arrives.
+    effect(() => {
+      const seriesId = this.seriesId();
+      this.store.setScheduleSeriesId(seriesId);
+      untracked(() => this.formData.update(data => ({ ...data, isDraft: seriesId.length === 0 })));
+    });
 
     // Seed the editable table ONCE. Re-seeding on every invitation-stream emission would wipe the
     // user's unsaved cell taps (same trap as linkedSignal over an rxResource).
@@ -87,7 +116,7 @@ export class ScheduleModal {
   private emptyDraft(): SchedulePollFormData {
     const user = this.store.currentUser();
     return {
-      name: '', description: '', columns: [], isDraft: true,
+      name: '', description: '', columns: [], isDraft: this.seriesId().length === 0,
       rows: [{
         key: user?.personKey ?? '', firstName: user?.firstName ?? '',
         lastName: user?.lastName ?? '', responses: {},
@@ -122,13 +151,28 @@ export class ScheduleModal {
     this.formData.set(data);
   }
 
+  /** Dismisses only when the write actually went through — a failure must never look like a save. */
   protected async save(): Promise<void> {
-    if (this.isDraft()) {
-      await this.store.createSchedulePoll(this.formData(), window.location.origin);
-    } else {
-      await this.store.saveSchedulePollResponses(this.formData().rows);
+    try {
+      if (this.isDraft()) {
+        await this.store.createSchedulePoll(this.formData(), window.location.origin);
+      } else {
+        await this.store.saveSchedulePollResponses(this.formData().rows);
+      }
+    } catch (err) {
+      console.warn('ScheduleModal.save:', err);
+      error(this.toastController, this.store.i18n.schedule_save_error());
+      return;
     }
     await this.modalController.dismiss(null, 'confirm');
+  }
+
+  /**
+   * The series subscription is page-lifetime state on the store; without this it keeps streaming
+   * invitations long after the modal is gone. Safe here: dismiss happens after save() awaited.
+   */
+  public ngOnDestroy(): void {
+    this.store.setScheduleSeriesId('');
   }
 
   protected cancel(): void {

@@ -54,11 +54,7 @@
       "message": "{date} se elige como fecha definitiva. Todas las demás propuestas se eliminarán."
     },
     "optionalMessage": "Mensaje opcional para el grupo...",
-    "date": {
-      "proposals": "Propuestas de fechas",
-      "add": "Añadir fecha",
-      "confirm": "Aplicar fechas"
-    },
+    "date": { "confirm": "Aplicar fechas" },
     "view": "Mostrar la encuesta",
     "groupOnly": "Una encuesta de fechas solo es posible en un calendario de grupo. Selecciona primero un calendario de grupo.",
     "start": "Iniciar encuesta",
@@ -66,9 +62,10 @@
     "description": { "label": "Descripción" },
     "column": { "add": "Añadir fecha", "remove": "Eliminar fecha" },
     "acceptances": "Aceptaciones",
-    "pickDate": "Elegir fecha",
-    "inviteMessage": "Por favor, completa esta encuesta de fechas",
+    "pickDate": "Elegir esta fecha",
+    "notFound": "Esta encuesta de fechas ya no existe. Ya se ha cerrado o eliminado.",
     "noRoom": "No se pudo publicar el mensaje en el chat del grupo.",
+    "saveError": "No se pudo guardar la encuesta de fechas.",
     "responseSaved": "Tus respuestas se han guardado."
   },
   "update": {
@@ -400,7 +397,8 @@
     "caleventEndDateMandatory": "La fecha de fin es obligatoria.",
     "caleventModelType": "El ModelType debe ser EventModel.",
     "schedulePollNameMandatory": "El tema es obligatorio.",
-    "schedulePollColumnsMandatory": "Se requiere al menos una propuesta de fecha."
+    "schedulePollColumnsMandatory": "Se requiere al menos una propuesta de fecha.",
+    "schedulePollColumnsMax": "Se permiten como máximo 10 propuestas de fecha."
   },
   "urlLabel": {
     "label": "Etiqueta del enlace",

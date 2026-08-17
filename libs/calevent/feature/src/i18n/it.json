@@ -54,11 +54,7 @@
       "message": "{date} viene scelta come data definitiva. Tutte le altre proposte verranno rimosse."
     },
     "optionalMessage": "Messaggio facoltativo al gruppo...",
-    "date": {
-      "proposals": "Proposte di date",
-      "add": "Aggiungi data",
-      "confirm": "Applica date"
-    },
+    "date": { "confirm": "Applica date" },
     "view": "Mostra il sondaggio",
     "groupOnly": "Un sondaggio date è possibile solo in un calendario di gruppo. Seleziona prima un calendario di gruppo.",
     "start": "Avvia sondaggio",
@@ -66,9 +62,10 @@
     "description": { "label": "Descrizione" },
     "column": { "add": "Aggiungi data", "remove": "Rimuovi data" },
     "acceptances": "Adesioni",
-    "pickDate": "Scegli data",
-    "inviteMessage": "Per favore compila questo sondaggio date",
+    "pickDate": "Scegli questa data",
+    "notFound": "Questo sondaggio date non esiste più. È già stato chiuso o eliminato.",
     "noRoom": "Non è stato possibile pubblicare il messaggio nella chat di gruppo.",
+    "saveError": "Non è stato possibile salvare il sondaggio date.",
     "responseSaved": "Le tue risposte sono state salvate."
   },
   "update": {
@@ -400,7 +397,8 @@
     "caleventEndDateMandatory": "La data di fine è obbligatoria.",
     "caleventModelType": "Il ModelType deve essere EventModel.",
     "schedulePollNameMandatory": "L'argomento è obbligatorio.",
-    "schedulePollColumnsMandatory": "È richiesta almeno una proposta di data."
+    "schedulePollColumnsMandatory": "È richiesta almeno una proposta di data.",
+    "schedulePollColumnsMax": "Sono ammesse al massimo 10 proposte di data."
   },
   "urlLabel": {
     "label": "Etichetta del link",

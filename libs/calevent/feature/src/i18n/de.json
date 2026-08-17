@@ -54,11 +54,7 @@
       "message": "{date} wird als definitiver Termin gewählt. Alle anderen Vorschläge werden gelöscht."
     },
     "optionalMessage": "Optionale Nachricht an die Gruppe...",
-    "date": {
-      "proposals": "Terminvorschläge",
-      "add": "Termin hinzufügen",
-      "confirm": "Termine übernehmen"
-    },
+    "date": { "confirm": "Termine übernehmen" },
     "view": "Abstimmung anzeigen",
     "groupOnly": "Eine Terminabstimmung ist nur in einem Gruppenkalender möglich. Bitte wähle zuerst einen Gruppenkalender aus.",
     "start": "Umfrage starten",
@@ -66,9 +62,10 @@
     "description": { "label": "Beschreibung" },
     "column": { "add": "Termin hinzufügen", "remove": "Termin entfernen" },
     "acceptances": "Zusagen",
-    "pickDate": "Datum wählen",
-    "inviteMessage": "Bitte diese Terminumfrage ausfüllen",
+    "pickDate": "Diesen Termin wählen",
+    "notFound": "Diese Terminabstimmung existiert nicht mehr. Sie wurde bereits abgeschlossen oder gelöscht.",
     "noRoom": "Die Nachricht konnte nicht in den Gruppenchat geschrieben werden.",
+    "saveError": "Die Terminabstimmung konnte nicht gespeichert werden.",
     "responseSaved": "Deine Antworten wurden gespeichert."
   },
   "update": {
@@ -401,7 +398,8 @@
     "caleventEndDateMandatory": "Das Enddatum ist obligatorisch.",
     "caleventModelType": "Der ModelType muss EventModel sein.",
     "schedulePollNameMandatory": "Das Thema ist obligatorisch.",
-    "schedulePollColumnsMandatory": "Mindestens ein Terminvorschlag ist erforderlich."
+    "schedulePollColumnsMandatory": "Mindestens ein Terminvorschlag ist erforderlich.",
+    "schedulePollColumnsMax": "Es sind höchstens 10 Terminvorschläge möglich."
   },
   "urlLabel": {
     "label": "Link-Bezeichnung",

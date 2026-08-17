@@ -8,8 +8,8 @@ import { InvitationState } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, getWeekdayI18nKey } from '@okr/shared-util-core';
-import { bestScheduleColumn, CaleventI18n, nextInvitationState, schedulePollValidations, SchedulePollColumn, SchedulePollFormData } from '@okr/calevent-util';
+import { convertDateFormatToString, DateFormat, getTodayStr, getWeekdayI18nKey } from '@okr/shared-util-core';
+import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvitationState, schedulePollValidations, SchedulePollColumn, SchedulePollFormData } from '@okr/calevent-util';
 
 @Component({
   selector: 'okr-schedule-poll-form',
@@ -76,15 +76,15 @@ import { bestScheduleColumn, CaleventI18n, nextInvitationState, schedulePollVali
                         }
                         @if (canClose()) {
                           <ion-button fill="clear" size="small" (click)="columnSelected.emit(column.id)">
-                            {{ i18n().schedule_close() }}
+                            {{ i18n().schedule_pick_date() }}
                           </ion-button>
                         }
                       </th>
                     }
-                    @if (formData().isDraft) {
+                    @if (showAddColumn()) {
                       <th>
                         <ion-button fill="clear" [attr.aria-label]="i18n().schedule_column_add()"
-                          (click)="pickerOpen.set(true)">
+                          (click)="openPicker()">
                           <ion-icon src="{{ 'add-circle' | svgIcon }}" />
                         </ion-button>
                       </th>
@@ -93,7 +93,7 @@ import { bestScheduleColumn, CaleventI18n, nextInvitationState, schedulePollVali
                 </thead>
                 <tbody>
                   @for (row of formData().rows; track row.key; let isFirst = $first) {
-                    <tr [class.mine]="isFirst">
+                    <tr [class.mine]="isFirst && !readOnly()">
                       <td class="member">{{ row.firstName }} {{ row.lastName }}</td>
                       @for (column of formData().columns; track column.id) {
                         <td class="cell"
@@ -104,7 +104,7 @@ import { bestScheduleColumn, CaleventI18n, nextInvitationState, schedulePollVali
                           {{ cellIcon(row.responses[column.id]) }}
                         </td>
                       }
-                      @if (formData().isDraft) { <td></td> }
+                      @if (showAddColumn()) { <td></td> }
                     </tr>
                   }
                   <tr class="counts">
@@ -114,7 +114,7 @@ import { bestScheduleColumn, CaleventI18n, nextInvitationState, schedulePollVali
                         {{ acceptances()[i] }}{{ i === bestColumn() ? ' ★' : '' }}
                       </td>
                     }
-                    @if (formData().isDraft) { <td></td> }
+                    @if (showAddColumn()) { <td></td> }
                   </tr>
                 </tbody>
               </table>
@@ -125,8 +125,8 @@ import { bestScheduleColumn, CaleventI18n, nextInvitationState, schedulePollVali
         <ion-modal [isOpen]="pickerOpen()" (ionModalDidDismiss)="pickerOpen.set(false)">
           <ng-template>
             <ion-datetime presentation="date-time" [preferWheel]="false"
-              (ionChange)="onPicked($any($event).detail.value)" />
-            <ion-button expand="block" (click)="pickerOpen.set(false)">
+              [value]="pickedValue()" (ionChange)="pickedValue.set($any($event).detail.value)" />
+            <ion-button expand="block" (click)="addColumn()">
               {{ i18n().schedule_date_confirm() }}
             </ion-button>
           </ng-template>
@@ -147,6 +147,8 @@ export class SchedulePollForm {
   public readonly columnSelected = output<string>();
 
   protected readonly pickerOpen = signal(false);
+  /** The date currently held in the picker — committed to a column only by addColumn(). */
+  protected readonly pickedValue = signal('');
 
   protected readonly pollForm = form(this.formData, (path) =>
     validateVestTree(path, schedulePollValidations as any));
@@ -176,6 +178,10 @@ export class SchedulePollForm {
 
   protected readonly bestColumn = computed(() => bestScheduleColumn(this.acceptances()));
 
+  /** The trailing `+` header (and its filler cells) — gone once the column cap is reached. */
+  protected readonly showAddColumn = computed(() =>
+    this.formData().isDraft && this.formData().columns.length < MAX_SCHEDULE_POLL_COLUMNS);
+
   /** Returns an i18n KEY ('@calevent/feature.weekday.abbreviation.friday') — the template pipes it. */
   protected weekdayKey(column: SchedulePollColumn): string {
     return getWeekdayI18nKey(column.startDate, true);
@@ -203,8 +209,23 @@ export class SchedulePollForm {
     this.dirty.emit(true);
   }
 
-  /** ion-datetime emits 'yyyy-MM-ddTHH:mm:ss'; a time of 00:00 counts as a full-day proposal. */
-  protected onPicked(isoDateTime: string | null): void {
+  /**
+   * Seeds the picker with today at 00:00 so a plain day tap keeps 00:00 and stays a FULL-DAY
+   * proposal (spec §1.1). A time is only set when the author explicitly opens the time wheel.
+   * Consequence: midnight cannot be picked as a time — it means "full day".
+   */
+  protected openPicker(): void {
+    this.pickedValue.set(`${getTodayStr(DateFormat.IsoDate)}T00:00:00`);
+    this.pickerOpen.set(true);
+  }
+
+  /**
+   * Appends the picked date as a new column — only from the confirm button, never on ionChange:
+   * adjusting the time after picking a day must edit the pick, not append a second column.
+   */
+  protected addColumn(): void {
+    const isoDateTime = this.pickedValue();
+    this.pickerOpen.set(false);
     if (!isoDateTime) return;
     const startDate = isoDateTime.substring(0, 10).replace(/-/g, '');
     const hhmm = isoDateTime.substring(11, 16);          // 'HH:mm', the repo's startTime format

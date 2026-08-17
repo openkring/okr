@@ -474,7 +474,8 @@ export const CalEventStore = signalStore(
       async createSchedulePoll(data: SchedulePollFormData, origin: string): Promise<void> {
         const currentUser = store.currentUser();
         const groupId = store.groupCalendarId();
-        if (!currentUser || !groupId) return;
+        // throw, don't return: the caller dismisses on success, so a silent no-op would look saved
+        if (!currentUser || !groupId) throw new Error('CalEventStore.createSchedulePoll: no current user or no group calendar');
 
         const members = await firstValueFrom(store.membershipService.listMembersOfOrg(groupId, 'group'));
         const seriesId = generateRandomString(18);
@@ -534,8 +535,9 @@ export const CalEventStore = signalStore(
 
       /** Writes the current user's row in one batch — one update per changed cell. */
       async saveSchedulePollResponses(rows: SchedulePollRow[]): Promise<void> {
-        const myRow = rows[0];
         const currentUser = store.currentUser();
+        // by personKey, not rows[0]: the current user is only sorted first when they have a row at all
+        const myRow = currentUser ? rows.find(row => row.key === currentUser.personKey) : undefined;
         if (!myRow || !currentUser) return;
         const today = getTodayStr(DateFormat.StoreDate);
         const batch = store.firestoreService.getBatch();
@@ -565,8 +567,11 @@ export const CalEventStore = signalStore(
         batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${selectedEvent.okey}`),
           { state: 'definitive', seriesId: '' });
 
-        const losers = store.calEvents().filter(
-          e => e.seriesId === seriesId && e.okey !== selectedEvent.okey && e.state === 'proposed');
+        // NOT calEvents(): that list is narrowed by calendar/maxEvents/showPastEvents, so a proposal
+        // older than ~30 days would survive as an orphan pointing at a series that no longer exists.
+        const series = await this.loadSeriesEvents(seriesId);
+        const losers = series.filter(
+          e => e.okey !== selectedEvent.okey && e.state === 'proposed');
         const loserKeys = losers.map(e => e.okey);
         for (const loser of losers) {
           batch.delete(doc(store.firestoreService.firestore, `${CalEventCollection}/${loser.okey}`));
