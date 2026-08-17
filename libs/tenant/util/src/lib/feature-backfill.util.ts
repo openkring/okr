@@ -53,9 +53,9 @@ import { blockOwnersOfMenuKey } from './feature-routes.util';
  *                  child exclusively. Verified against the catalogue: of the 30 blocks,
  *                  only `session`, `i18n`, `avatar`, `comment`, `consent` (all `core:
  *                  true`, hence unioned in below regardless), `games`/`social-feed` (both
- *                  `disabled`, hence gated out below regardless), `instruments` and
- *                  `vcard` have no exclusively-declared key — see the coverage note at the
- *                  bottom.
+ *                  `disabled`, hence gated out below regardless) and `instruments` have no
+ *                  exclusively-declared key — see the coverage note at the bottom. (`vcard`
+ *                  was in that list until it was made `core: true`.)
  *
  *   'corroborated' Attribute a co-declared document to owner O only if the tenant also
  *                  owns an exclusively-declared document of O. IMPLEMENTED, but note the
@@ -85,10 +85,11 @@ import { blockOwnersOfMenuKey } from './feature-routes.util';
  *    third block is set to `disabled` (or a `feature-rollout` doc denies a tenant), this
  *    derivation follows without an edit.
  *
- * COVERAGE GAP, stated rather than hidden: `vcard` and `instruments` are non-core,
- * non-disabled blocks with NO menu documents, so no menu-evidence derivation can ever
- * attribute them. `vcard` is harmless — it has an empty route fragment, an empty menu and
- * owns no collection, so there is no gated surface to lock. `instruments` DOES own routes
+ * COVERAGE GAP, stated rather than hidden: `instruments` is a non-core, non-disabled block
+ * with NO menu documents, so no menu-evidence derivation can ever attribute it. (`vcard` had
+ * the same problem and left scs/p13/bkg with the export unticked though the feature was live;
+ * it is now `core: true` — it owns no collection, no menu and no route, so enablement had no
+ * surface to gate anyway.) `instruments` DOES own routes
  * (`/whiteboard`, `/instruments`); leaving it out of every array locks them, which is
  * consistent with the data (its `instruments` and `whiteboards` collections are empty for
  * every tenant) but is a judgement the operator should confirm.

@@ -914,6 +914,13 @@ const vcard: FeatureBlock = {
   bundle: 'members',
   label: '@tenant/util.feature.vcard.label',
   icon: 'download',
+  // Core, though it lives in the `members` bundle for placement: the export action is
+  // role-gated only (`resolveVcardCapability` in person/org/membership lists), has no route,
+  // menu or collection of its own — so there was never a surface for enablement to gate, and
+  // the menu-evidence backfill could not attribute it, leaving it unticked for scs/p13/bkg.
+  // `core: true` makes it on for every tenant without a data migration; the rollout gate
+  // still applies, so it stays killable.
+  core: true,
   defaultAvailability: 'ga',
   dependsOn: ['subject', 'relationship'],
   // Owns no collection — reads AddressCollection (subject/address), AvatarCollection

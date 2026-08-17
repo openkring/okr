@@ -311,7 +311,9 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
       })
       .map(b => b.id);
 
-    // `vcard` and `instruments` declare no menu at all — the documented coverage gap.
-    expect(withoutExclusive).toEqual(['instruments', 'vcard']);
+    // `instruments` declares no menu at all — the documented coverage gap. `vcard` used to be
+    // listed here too; it is now `core: true` (unioned in regardless of menu evidence), which
+    // is exactly the fix for its half of the gap.
+    expect(withoutExclusive).toEqual(['instruments']);
   });
 });
