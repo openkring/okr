@@ -200,6 +200,39 @@
     "keepExisting": "Existing",
     "useNew": "New"
   },
+  "birthdays": {
+    "title": "Birthdays",
+    "empty": "No birthdays in the next twelve months.",
+    "date": "Date",
+    "age": "Age"
+  },
+  "privacy": {
+    "title": "Privacy",
+    "empty": "Nobody has restricted this detail.",
+    "hint": "The filter shows the people who have restricted the selected detail.",
+    "filter": {
+      "all": "All people",
+      "changed": "Changes"
+    },
+    "field": {
+      "usageImages": "Photos",
+      "usageName": "Name",
+      "usageEmail": "Email",
+      "usagePhone": "Phone",
+      "usagePostalAddress": "Address",
+      "usageDateOfBirth": "Birthday"
+    },
+    "tier": {
+      "public": "public",
+      "restricted": "members only",
+      "protected": "board only"
+    },
+    "imageTier": {
+      "public": "photos allowed",
+      "restricted": "do not publish",
+      "protected": "do not photograph"
+    }
+  },
   "validation": {
     "lastNameRequired": "Entering a last name is mandatory.",
     "validSSN": "Please enter a valid AHV number."

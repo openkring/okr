@@ -60,7 +60,17 @@
     "helper": "The invitation was answered on this date."
   },
   "role": {
-    "label": "Role"
+    "label": "Role",
+    "helper": "Defines how binding the participation is expected to be.",
+    "required": {
+      "label": "Required"
+    },
+    "optional": {
+      "label": "Optional"
+    },
+    "info": {
+      "label": "For information"
+    }
   },
   "invitation_state": {
     "label": "Status",

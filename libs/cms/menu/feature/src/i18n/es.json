@@ -164,7 +164,7 @@
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
     "profile": "Perfil",
-    "schedule": "Iniciar planificación",
+    "schedule": "Iniciar encuesta de fechas",
     "userSettings": "Ajustes",
     "title": "Menú principal",
     "version": "Versión"
@@ -372,6 +372,8 @@
     "calevent-exportics": "Exportar calendario (ICS)",
     "info-menu": "Información del club",
     "invitation-all": "Invitaciones",
+    "invitation-togglepast": "Mostrar invitaciones pasadas",
+    "invitation-togglepast_alt": "Ocultar invitaciones pasadas",
     "scsw_vorstand": "Junta directiva",
     "journal-add": "Registrar nuevo asiento",
     "location-show": "Mostrar en el mapa",

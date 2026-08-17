@@ -73,19 +73,15 @@ describe('invitation.util', () => {
     it('should generate correct index string', () => {
       const index = getInvitationIndex(mockInvitation);
 
-      // Expected format: d:<date> ir:<inviter name> ie:<invitee name>
-      expect(index).toContain('d:20251201');
-      expect(index).toContain('ir:John Smith');
-      expect(index).toContain('ie:Jane Doe');
-      // index has 3 prefixed segments (d / ir / ie); names contain spaces, so don't split on whitespace
-      expect(index).toBe('d:20251201 ir:John Smith ie:Jane Doe');
+      // Expected format: i:<invitee name> d:<date> n:<event name>
+      expect(index).toBe('i:Jane Doe d:20251201 n:Test Invitation');
     });
   });
 
   describe('getInvitationIndexInfo', () => {
     it('should return static info string', () => {
       expect(getInvitationIndexInfo()).toBe(
-        'd:<date> ir:<inviter name> ie:<invitee name>'
+        'i:<invitee name> d:<date> n:<event name>'
       );
     });
   });

@@ -60,7 +60,17 @@
     "helper": "Die Einladung wurde an diesem Datum beantwortet."
   },
   "role": {
-    "label": "Rolle"
+    "label": "Rolle",
+    "helper": "Legt fest, wie verbindlich die Teilnahme erwartet wird.",
+    "required": {
+      "label": "Erforderlich"
+    },
+    "optional": {
+      "label": "Optional"
+    },
+    "info": {
+      "label": "Zur Information"
+    }
   },
   "invitation_state": {
     "label": "Status",

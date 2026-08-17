@@ -109,6 +109,8 @@ export class InviteesAccordion {
    * @param invitation 
    */
   protected async showActions(invitation: InvitationModel): Promise<void> {
+    // a non-admin may only act on their own invitation, not on other people's rows
+    if (!this.isOwnInvitation(invitation) && !hasRole('admin', this.currentUser())) return;
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, invitation);
     await this.executeActions(actionSheetOptions, invitation);
@@ -121,7 +123,7 @@ export class InviteesAccordion {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, invitation: InvitationModel): void {
     actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     // users can change the invitation state of their own invitations
-    if (invitation.inviteeKey === this.currentUser()?.personKey) {
+    if (this.isOwnInvitation(invitation)) {
       if (invitation.state !== 'accepted') {
         actionSheetOptions.buttons.push(createActionSheetButton('invitation.accept', this.store.i18n.accept(), this.imgixBaseUrl, 'checkmark'));
       }
@@ -176,6 +178,10 @@ export class InviteesAccordion {
   }
 
   /******************************* helpers *************************************** */
+  private isOwnInvitation(invitation: InvitationModel): boolean {
+    return invitation.inviteeKey === this.currentUser()?.personKey;
+  }
+
   protected isOngoing(membership: MembershipModel): boolean {
     return isOngoing(membership.dateOfExit);
   }

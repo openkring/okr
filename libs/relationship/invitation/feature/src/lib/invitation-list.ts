@@ -33,7 +33,7 @@ import { InvitationStore } from './invitation.store';
     <!-- title and actions -->
     <ion-toolbar color="secondary">
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
-      <ion-title>{{ selectedInvitationsCount()}}/{{invitationsCount()}} {{ store.i18n.invitations() }}</ion-title>
+      <ion-title>{{ store.i18n.invitations() }}</ion-title>
       <ion-buttons slot="end">
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
@@ -43,7 +43,7 @@ import { InvitationStore } from './invitation.store';
             <ion-popover trigger="c-invitations" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <okr-menu [menuName]="contextMenuName()"/>
+                  <okr-menu [menuName]="contextMenuName()" [toggleStates]="{ togglePast: showPast() }"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -114,6 +114,9 @@ export class InvitationList {
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
   protected selectedState = linkedSignal(() => this.store.selectedState());
   
+  /** Whether past invitations are shown. Toggled via the context-menu 'togglePast' action. */
+  protected showPast = signal(false);
+
   // sort state (default: newest date first, oldest at the bottom)
   protected sortCol = signal<'date' | 'name' | 'invitee' | 'inviter' | 'state'>('date');
   protected sortDir = signal<'asc' | 'desc'>('desc');
@@ -128,7 +131,6 @@ export class InvitationList {
       return av < bv ? -dir : av > bv ? dir : 0;
     });
   });
-  protected invitationsCount = computed(() => this.store.invitationsCount());
   protected selectedInvitationsCount = computed(() => this.filteredInvitations().length);
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
@@ -141,12 +143,13 @@ export class InvitationList {
 
   constructor() {
     effect(() => {
+      const showOnlyCurrent = !this.showPast();
       if (this.listId() === 'my') {
-        this.store.setScope('', this.currentUser()?.personKey ?? '', true);
+        this.store.setScope('', this.currentUser()?.personKey ?? '', showOnlyCurrent);
       } else if (this.listId() === 'all') {
-        this.store.setScope('', '', false);
+        this.store.setScope('', '', showOnlyCurrent);
       } else { // explicit calevent key given
-        this.store.setScope(this.listId(), '', true);
+        this.store.setScope(this.listId(), '', showOnlyCurrent);
       }
     })
   }
@@ -189,6 +192,7 @@ export class InvitationList {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
+      case 'togglePast': this.showPast.update(v => !v); break;
       case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `InvitationList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
@@ -218,10 +222,12 @@ export class InvitationList {
    * @param invitation 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
-    if (!this.readOnly()) {
+    // edit and view open the same modal — offer the one the user's permissions allow, never both
+    if (this.readOnly()) {
+      actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
+    } else {
       actionSheetOptions.buttons.push(createActionSheetButton('invitation.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
     }
-    actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (hasRole('admin', this.store.appStore.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('invitation.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
@@ -241,7 +247,7 @@ export class InvitationList {
       if (!data) return;
       switch (data.action) {
         case 'invitation.delete':
-          await this.store.delete(invitation, this.readOnly());
+          await this.store.delete(invitation, !this.hasRole('admin'));
           break;
         case 'invitation.edit':
           await this.store.edit(invitation, this.readOnly());

@@ -164,7 +164,7 @@
     "login": "Anmelden",
     "logout": "Abmelden",
     "profile": "Profil",
-    "schedule": "Terminabstimmung starten",
+    "schedule": "Terminumfrage starten",
     "userSettings": "Einstellungen",
     "title": "Hauptmenü",
     "version": "Version"
@@ -372,6 +372,8 @@
     "calevent-exportics": "Kalender exportieren (ICS)",
     "info-menu": "Club Informationen",
     "invitation-all": "Einladungen",
+    "invitation-togglepast": "Vergangene Einladungen anzeigen",
+    "invitation-togglepast_alt": "Vergangene Einladungen ausblenden",
     "scsw_vorstand": "Vorstand",
     "journal-add": "Neue Buchung erfassen",
     "location-show": "Auf Karte anzeigen",

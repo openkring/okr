@@ -60,7 +60,17 @@
     "helper": "All'invito è stata data risposta in questa data."
   },
   "role": {
-    "label": "Ruolo"
+    "label": "Ruolo",
+    "helper": "Definisce quanto è vincolante la partecipazione attesa.",
+    "required": {
+      "label": "Obbligatorio"
+    },
+    "optional": {
+      "label": "Facoltativo"
+    },
+    "info": {
+      "label": "Per informazione"
+    }
   },
   "invitation_state": {
     "label": "Stato",

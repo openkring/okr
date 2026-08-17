@@ -867,11 +867,9 @@ const relationship: FeatureBlock = {
       { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportraw' },
       { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportaddresses' },
     ] },
-    // Live doc exists but currently has NO children (`menuItems: []` on the live doc) — no
-    // `invitation-add`/`invitation-export` action docs exist yet. Mirrored as found, not
-    // invented; `action: 'call'` entries can be added here later without touching this
-    // block's shape.
-    { key: 'c-invitation', name: 'c-invitation', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [] },
+    { key: 'c-invitation', name: 'c-invitation', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'invitation-togglepast', name: 'invitation-togglepast', url: 'togglePast', action: 'toggle', roleNeeded: 'admin', icon: 'eye-on', label: '@item.invitation-togglepast' },
+    ] },
     { key: 'c-ownership', name: 'c-ownership', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'ownership-add', name: 'ownership-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.ownership-add' },
       { key: 'ownership-exportraw', name: 'ownership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.ownership-exportraw' },

@@ -164,7 +164,7 @@
     "login": "Se connecter",
     "logout": "Se déconnecter",
     "profile": "Profil",
-    "schedule": "Lancer la planification",
+    "schedule": "Démarrer un sondage de dates",
     "userSettings": "Paramètres",
     "title": "Menu principal",
     "version": "Version"
@@ -372,6 +372,8 @@
     "calevent-exportics": "Exporter le calendrier (ICS)",
     "info-menu": "Informations du club",
     "invitation-all": "Invitations",
+    "invitation-togglepast": "Afficher les invitations passées",
+    "invitation-togglepast_alt": "Masquer les invitations passées",
     "scsw_vorstand": "Comité",
     "journal-add": "Saisir une nouvelle écriture",
     "location-show": "Afficher sur la carte",

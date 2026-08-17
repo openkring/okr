@@ -60,7 +60,17 @@
     "helper": "La invitación se respondió en esta fecha."
   },
   "role": {
-    "label": "Rol"
+    "label": "Rol",
+    "helper": "Define cuán vinculante se espera que sea la participación.",
+    "required": {
+      "label": "Obligatorio"
+    },
+    "optional": {
+      "label": "Opcional"
+    },
+    "info": {
+      "label": "Para información"
+    }
   },
   "invitation_state": {
     "label": "Estado",

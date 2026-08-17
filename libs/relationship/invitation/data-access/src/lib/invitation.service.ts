@@ -5,7 +5,7 @@ import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { InvitationCollection, InvitationModel, UserModel } from '@okr/shared-models';
-import { findByKey, getSystemQuery } from '@okr/shared-util-core';
+import { DateFormat, findByKey, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
 
 import { getInvitationIndex } from '@okr/relationship-invitation-util';
 
@@ -36,6 +36,7 @@ export class InvitationService {
    */
   public async create(invitation: InvitationModel, currentUser?: UserModel): Promise<string | undefined> {
     invitation.index = getInvitationIndex(invitation);
+    if (!invitation.sentAt) invitation.sentAt = getTodayStr(DateFormat.StoreDate);
     return await this.firestoreService.createModel<InvitationModel>(InvitationCollection, invitation, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
   
@@ -56,17 +57,20 @@ export class InvitationService {
    */
   public async update(invitation: InvitationModel, currentUser?: UserModel): Promise<string | undefined> {
     invitation.index = getInvitationIndex(invitation);
+    // sentAt/respondedAt are stamped here, not entered: the form shows them read-only
+    if (!invitation.sentAt) invitation.sentAt = getTodayStr(DateFormat.StoreDate);
+    if (invitation.state !== 'pending' && !invitation.respondedAt) invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
     return await this.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
   }
 
   /**
-   * Delete an existing invitation relationship.
+   * Hard-delete an existing invitation relationship (admin only, see InvitationList).
+   * An invitation is never shared across tenants, so there is nothing to detach or archive.
    * @param invitation the invitation to delete
-   * @param currentUser the user who is deleting the invitation
    * @returns a promise that resolves when the invitation is deleted
    */
-  public async delete(invitation: InvitationModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<InvitationModel>(InvitationCollection, invitation, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
+  public async delete(invitation: InvitationModel): Promise<void> {
+    await this.firestoreService.deleteObject(InvitationCollection, invitation.okey, this.i18n.delete_conf());
   }
 
   /*-------------------------- LIST  --------------------------------*/

@@ -11,7 +11,7 @@ import { confirm } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { InvitationService } from '@okr/relationship-invitation-data-access';
-import { isInvitation, INVITATION_I18N_KEYS, InvitationI18n } from '@okr/relationship-invitation-util';
+import { getInvitationIndex, isInvitation, INVITATION_I18N_KEYS, InvitationI18n } from '@okr/relationship-invitation-util';
 
 export type { InvitationI18n };
 
@@ -83,17 +83,14 @@ export const InvitationStore = signalStore(
 
   withComputed((state) => {
     return {
-      filteredInvitations: computed(() => 
-        state.allInvitations()?.filter((invitation: InvitationModel) => 
+      filteredInvitations: computed(() =>
+        state.allInvitations()?.filter((invitation: InvitationModel) =>
+          // 'my' scope: only invitations addressed to me (invitee), never the ones I sent
+          (!state.inviteeKey() || invitation.inviteeKey === state.inviteeKey()) &&
           nameMatches(invitation.index, state.searchTerm()) &&
           nameMatches(invitation.state, state.selectedState()) &&
           chipMatches(invitation.tags, state.selectedTag()))
       ),
-      myInvitations: computed(() => {
-        if (!state.inviteeKey()) return [];
-        return state.allInvitations().filter((invitation: InvitationModel) => 
-          invitation.inviteeKey === state.inviteeKey()) ?? [];
-      }),
     }
   }),
 
@@ -149,7 +146,8 @@ export const InvitationStore = signalStore(
           inv.caleventKey = calevent.okey;
           inv.name = calevent.name;
           inv.date = calevent.startDate;
-          inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
+          inv.sentAt = getTodayStr(DateFormat.StoreDate);
+          inv.index = getInvitationIndex(inv);
           return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, store.i18n.invite_conf(), store.i18n.invite_error(), store.currentUser());
         }
 
@@ -187,7 +185,7 @@ export const InvitationStore = signalStore(
         if (readOnly) return;
         const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
-          await store.invitationService.delete(invitation, store.currentUser());
+          await store.invitationService.delete(invitation);
           this.reload();
         }
       },

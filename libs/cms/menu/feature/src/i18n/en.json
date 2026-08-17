@@ -164,7 +164,7 @@
     "login": "Log in",
     "logout": "Log out",
     "profile": "Profile",
-    "schedule": "Start scheduling",
+    "schedule": "Start date poll",
     "userSettings": "Settings",
     "title": "Main menu",
     "version": "Version"
@@ -372,6 +372,8 @@
     "calevent-exportics": "Export calendar (ICS)",
     "info-menu": "Club information",
     "invitation-all": "Invitations",
+    "invitation-togglepast": "Show past invitations",
+    "invitation-togglepast_alt": "Hide past invitations",
     "scsw_vorstand": "Board",
     "journal-add": "Record new entry",
     "location-show": "Show on map",

@@ -119,7 +119,8 @@ function storeToView(d: string): string {
       @if(calevent().okey) {
         <ion-card>
           <ion-card-content class="ion-no-padding">
-            <ion-accordion-group value="documents">
+            <!-- the invitees/attendees accordion is the one the user came for; documents stay collapsed -->
+            <ion-accordion-group value="invitees">
               @if(calevent().isOpen) {
                 <okr-attendees-accordion [calevent]="calevent()" [readOnly]="true" />
               } @else {

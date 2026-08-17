@@ -60,7 +60,17 @@
     "helper": "L'invitation a reçu une réponse à cette date."
   },
   "role": {
-    "label": "Rôle"
+    "label": "Rôle",
+    "helper": "Définit le caractère contraignant de la participation attendue.",
+    "required": {
+      "label": "Obligatoire"
+    },
+    "optional": {
+      "label": "Facultatif"
+    },
+    "info": {
+      "label": "Pour information"
+    }
   },
   "invitation_state": {
     "label": "Statut",

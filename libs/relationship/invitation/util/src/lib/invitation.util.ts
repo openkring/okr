@@ -30,9 +30,9 @@ export function createPersonAvatar(key: string, name1: string, name2: string): A
    */
 export function getInvitationIndex(invitation: InvitationModel): string {
   let _index = '';
+  _index = addIndexElement(_index, 'i', `${invitation.inviteeFirstName} ${invitation.inviteeLastName}`.trim());
   _index = addIndexElement(_index, 'd', invitation.date);
-  _index = addIndexElement(_index, 'ir', invitation.inviterFirstName + ' ' + invitation.inviterLastName);
-  _index = addIndexElement(_index, 'ie', invitation.inviteeFirstName + ' ' + invitation.inviteeLastName);
+  _index = addIndexElement(_index, 'n', invitation.name);
   return _index;
 }
 
@@ -41,5 +41,5 @@ export function getInvitationIndex(invitation: InvitationModel): string {
  * This can be used in info boxes on the GUI.
  */
 export function getInvitationIndexInfo(): string {
-  return 'd:<date> ir:<inviter name> ie:<invitee name>';
+  return 'i:<invitee name> d:<date> n:<event name>';
 }

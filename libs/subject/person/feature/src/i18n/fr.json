@@ -200,6 +200,39 @@
     "keepExisting": "Existant",
     "useNew": "Nouveau"
   },
+  "birthdays": {
+    "title": "Anniversaires",
+    "empty": "Aucun anniversaire dans les douze prochains mois.",
+    "date": "Date",
+    "age": "Âge"
+  },
+  "privacy": {
+    "title": "Confidentialité",
+    "empty": "Personne n'a restreint cette information.",
+    "hint": "Le filtre affiche les personnes qui ont restreint l'information sélectionnée.",
+    "filter": {
+      "all": "Toutes les personnes",
+      "changed": "Modifications"
+    },
+    "field": {
+      "usageImages": "Photos",
+      "usageName": "Nom",
+      "usageEmail": "E-mail",
+      "usagePhone": "Téléphone",
+      "usagePostalAddress": "Adresse",
+      "usageDateOfBirth": "Date de naissance"
+    },
+    "tier": {
+      "public": "public",
+      "restricted": "membres uniquement",
+      "protected": "comité uniquement"
+    },
+    "imageTier": {
+      "public": "photos autorisées",
+      "restricted": "ne pas publier",
+      "protected": "ne pas photographier"
+    }
+  },
   "validation": {
     "lastNameRequired": "La saisie d'un nom est obligatoire.",
     "validSSN": "Veuillez saisir un numéro AVS valide."

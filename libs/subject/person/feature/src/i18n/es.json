@@ -200,6 +200,39 @@
     "keepExisting": "Existente",
     "useNew": "Nuevo"
   },
+  "birthdays": {
+    "title": "Cumpleaños",
+    "empty": "No hay cumpleaños en los próximos doce meses.",
+    "date": "Fecha",
+    "age": "Edad"
+  },
+  "privacy": {
+    "title": "Privacidad",
+    "empty": "Nadie ha restringido este dato.",
+    "hint": "El filtro muestra las personas que han restringido el dato seleccionado.",
+    "filter": {
+      "all": "Todas las personas",
+      "changed": "Cambios"
+    },
+    "field": {
+      "usageImages": "Fotos",
+      "usageName": "Nombre",
+      "usageEmail": "Correo electrónico",
+      "usagePhone": "Teléfono",
+      "usagePostalAddress": "Dirección",
+      "usageDateOfBirth": "Fecha de nacimiento"
+    },
+    "tier": {
+      "public": "público",
+      "restricted": "solo miembros",
+      "protected": "solo junta directiva"
+    },
+    "imageTier": {
+      "public": "fotos permitidas",
+      "restricted": "no publicar",
+      "protected": "no fotografiar"
+    }
+  },
   "validation": {
     "lastNameRequired": "La introducción de un apellido es obligatoria.",
     "validSSN": "Introduzca un número AVS válido."

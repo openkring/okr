@@ -164,7 +164,7 @@
     "login": "Accedi",
     "logout": "Esci",
     "profile": "Profilo",
-    "schedule": "Avvia pianificazione",
+    "schedule": "Avvia sondaggio date",
     "userSettings": "Impostazioni",
     "title": "Menu principale",
     "version": "Versione"
@@ -372,6 +372,8 @@
     "calevent-exportics": "Esporta calendario (ICS)",
     "info-menu": "Informazioni del club",
     "invitation-all": "Inviti",
+    "invitation-togglepast": "Mostra inviti passati",
+    "invitation-togglepast_alt": "Nascondi inviti passati",
     "scsw_vorstand": "Comitato direttivo",
     "journal-add": "Registra nuova scrittura",
     "location-show": "Mostra sulla mappa",

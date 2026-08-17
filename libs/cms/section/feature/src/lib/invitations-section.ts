@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { InvitationModel, InvitationsConfig, InvitationsSection, InvitationState } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { getAttendanceColor, getAttendanceIcon, hasRole, isPastDate } from '@okr/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { InvitationSectionStore } from './invitations-section.store';
 
@@ -178,6 +178,7 @@ export class InvitationsSectionComponent implements OnInit {
           actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
         }
       }
+      if (actionSheetOptions.buttons.length > 0) actionSheetOptions.buttons.push(createActionSheetDivider());
       actionSheetOptions.buttons.push(createActionSheetButton('invitation.openCalevent', this.store.i18n.invitation_open_calevent(), this.imgixBaseUrl, 'calendar-number'));
       actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
       if (actionSheetOptions.buttons.length === 1) { // only cancel button

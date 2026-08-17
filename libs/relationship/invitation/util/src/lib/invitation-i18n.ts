@@ -55,6 +55,10 @@ export const INVITATION_I18N_KEYS = {
   respondedAt_helper:               PFX + 'respondedAt.helper',
 
   role_label:                       PFX + 'role.label',
+  role_helper:                      PFX + 'role.helper',
+  role_required_label:              PFX + 'role.required.label',
+  role_optional_label:              PFX + 'role.optional.label',
+  role_info_label:                  PFX + 'role.info.label',
 
   // state: explicit
   state:                            PFX + 'invitation_state.label',

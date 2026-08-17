@@ -25,7 +25,7 @@ export interface StringSelectI18n {
         [value]="selectedString()"
         (ionChange)="selectedString.set($event.detail.value)">
         @for(stringValue of stringList(); track $index) {
-          <ion-select-option [value]="stringValue">{{ stringValue }}</ion-select-option>
+          <ion-select-option [value]="stringValue">{{ labels()[$index] ?? stringValue }}</ion-select-option>
         }
       </ion-select>
     </ion-item>
@@ -44,6 +44,8 @@ export class StringSelect {
   // if you have a string enum, you may convert it with:
   // Object.values(YourEnum)
   public stringList = input.required<string[]>(); // mandatory view model
+  /** optional translated labels, parallel to stringList; falls back to the raw value */
+  public labels = input<string[]>([]);
   public readOnly = input.required<boolean>();
 
   // coerced boolean inputs

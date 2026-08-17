@@ -76,20 +76,19 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
 
                   <!-- state -->
                   <ion-col size="12" size-md="6">
-                    <okr-string-select [i18n]="stateI18n()" [selectedString]="state()" (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="readOnly()" [stringList]="['pending', 'accepted', 'declined', 'maybe']" />
+                    <okr-string-select [i18n]="stateI18n()" [selectedString]="state()" (selectedStringChange)="onFieldChange('state', $event)" [readOnly]="readOnly()" [stringList]="stateList" [labels]="stateLabels()" />
                   </ion-col>
                   <ion-col size="12" size-md="6">
-                    <okr-string-select [i18n]="roleI18n()" [selectedString]="role()" (selectedStringChange)="onFieldChange('role', $event)" [readOnly]="readOnly()" [stringList]="['required', 'optional', 'info-circle']" />           
-                  </ion-col>
-
-                  <!-- sentAt -->
-                  <ion-col size="12" size-md="6">
-                    <okr-date-input [i18n]="sentAtI18n()" [storeDate]="sentAt()" (storeDateChange)="onFieldChange('sentAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                    <okr-string-select [i18n]="roleI18n()" [selectedString]="role()" (selectedStringChange)="onFieldChange('role', $event)" [readOnly]="readOnly()" [stringList]="roleList" [labels]="roleLabels()" />
                   </ion-col>
 
-                  <!-- respondedAt -->
+                  <!-- sentAt / respondedAt: stamped by the app (create / answer), never edited by hand -->
                   <ion-col size="12" size-md="6">
-                    <okr-date-input [i18n]="respondedAtI18n()" [storeDate]="respondedAt()" (storeDateChange)="onFieldChange('respondedAt', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                    <okr-date-input [i18n]="sentAtI18n()" [storeDate]="sentAt()" [locale]="locale()" [readOnly]="true" />
+                  </ion-col>
+
+                  <ion-col size="12" size-md="6">
+                    <okr-date-input [i18n]="respondedAtI18n()" [storeDate]="respondedAt()" [locale]="locale()" [readOnly]="true" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -115,7 +114,13 @@ export class InvitationForm {
   protected sentAtI18n = computed(() => ({ name: 'sentAt', label: this.i18n().sentAt_label(), placeholder: this.i18n().sentAt_placeholder(), helper: this.i18n().sentAt_helper() } as DateInputI18n));
   protected respondedAtI18n = computed(() => ({ name: 'respondedAt', label: this.i18n().respondedAt_label(), placeholder: this.i18n().respondedAt_placeholder(), helper: this.i18n().respondedAt_helper() } as DateInputI18n));
   protected stateI18n       = computed(() => ({ name: 'state', label: this.i18n().state() } as StringSelectI18n));
-  protected roleI18n        = computed(() => ({ name: 'role',  label: this.i18n().role_label()  } as StringSelectI18n));
+  protected roleI18n        = computed(() => ({ name: 'role',  label: this.i18n().role_label(), helper: this.i18n().role_helper() } as StringSelectI18n));
+
+  // option values (model types) and their translated labels, in the same order
+  protected readonly stateList = ['pending', 'accepted', 'declined', 'maybe'];
+  protected readonly roleList = ['required', 'optional', 'info'];
+  protected stateLabels = computed(() => [this.i18n().state_pending_label(), this.i18n().state_accepted_label(), this.i18n().state_declined_label(), this.i18n().state_maybe_label()]);
+  protected roleLabels = computed(() => [this.i18n().role_required_label(), this.i18n().role_optional_label(), this.i18n().role_info_label()]);
 
   // inputs
   public readonly formData = model.required<InvitationModel>();
