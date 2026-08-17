@@ -49,8 +49,8 @@ async function loadLookups() {
   };
   const out = {
     resources: await grab('resources', ['name', 'type', 'subType', 'isArchived']),
-    locations: await grab('locations', ['name', 'type', 'isArchived']),
-    persons: await grab('persons', ['firstName', 'lastName', 'isArchived']),
+    locations: await grab('locations', ['name', 'type', 'distance', 'isArchived']),
+    persons: await grab('persons', ['firstName', 'lastName', 'gender', 'isArchived']),
   };
   writeFileSync(CACHE, JSON.stringify(out, null, 1));
   return out;
@@ -193,7 +193,8 @@ function parseCsv(text) {
 }
 
 const asDate = (dt) => dt?.slice(0, 10).replace(/-/g, '') ?? '';
-const asTime = (dt) => dt?.slice(11, 16).replace(':', '') ?? '';
+/** 'HH:mm' — the shape the app writes today (DateFormat.Time), not the legacy 'HHmm'. */
+const asTime = (dt) => dt?.slice(11, 16) ?? '';
 
 // ---------------------------------------------------------------- main
 
@@ -225,24 +226,25 @@ for (const row of rows) {
   const key = [startDate, startTime, norm(row.boat), distance].join('|');
   let trip = trips.get(key);
   if (!trip) {
+    // field order and empty name1/label mirror what trip-edit.modal.ts writes
     trip = {
-      okey: `${startDate}${startTime}-${norm(row.boat)}-${distance}`,
+      okey: `${startDate}${startTime.replace(':', '')}-${norm(row.boat)}-${distance}`,
       tenants: [TENANT],
       isArchived: false,
-      name: `${startDate}${startTime}${boat?.name ?? row.boat}`,
+      name: `${startDate}${startTime}`,
       type: TRIP_TYPE,
       index: '',
-      tags: [],
+      tags: '',
       notes: '',
       startDate,
       startTime,
       endDate: asDate(row.end),
       endTime: asTime(row.end),
       resource: boat
-        ? { key: boat.okey, name1: boat.name, name2: boat.name, modelType: 'resource', type: boat.type ?? 'rboat', subType: boat.subType ?? '', label: boat.name }
+        ? { key: boat.okey, name1: '', name2: boat.name, label: '', modelType: 'resource', type: boat.type ?? 'rboat', subType: boat.subType ?? '' }
         : undefined,
       locations: loc
-        ? [{ key: loc.okey, name1: loc.name, name2: '', modelType: 'location', type: loc.type ?? '', subType: '', label: loc.name }]
+        ? [{ key: loc.okey, name1: `${loc.distance ?? 0}`, name2: loc.name, label: '', modelType: 'location', type: loc.type ?? '', subType: '' }]
         : [],
       // a real route name we have no location doc for is worth keeping; the generic
       // "andere Strecke [NN km]" placeholder is not
@@ -259,8 +261,7 @@ for (const row of rows) {
     if (!trip.participants.some((p) => p.key === person.okey)) {
       trip.participants.push({
         key: person.okey, name1: person.firstName ?? '', name2: person.lastName ?? '',
-        modelType: 'person', type: '', subType: '',
-        label: `${person.firstName ?? ''} ${person.lastName ?? ''}`.trim(),
+        label: '', modelType: 'person', type: person.gender ?? '', subType: '',
       });
     }
   } else if (row.person?.trim()) {
@@ -279,10 +280,14 @@ for (const trip of trips.values()) {
   delete trip.rawBoat;
 }
 
-// index, mirroring getTripIndex()
+// index, mirroring getTripIndex() + addIndexElement (space-separated `key:value`, empties dropped)
 for (const trip of trips.values()) {
   const crew = trip.participants.map((p) => `${p.name1} ${p.name2}`.trim()).join(',');
-  trip.index = `r:${trip.resource?.name2 ?? ''};d:${trip.startDate};p:${crew};`;
+  trip.index = [
+    ['r', trip.resource?.name2 ?? ''],
+    ['d', trip.startDate],
+    ['p', crew],
+  ].filter(([, v]) => v.length > 0).map(([k, v]) => `${k}:${v}`).join(' ');
 }
 
 const list = [...trips.values()].sort((a, b) => (a.startDate + a.startTime).localeCompare(b.startDate + b.startTime));
@@ -329,4 +334,25 @@ if (has('selftest')) {
   eq(who('Gast'), null);
   eq(who('Widmer Laura'), null);                   // absent, must not fall back to another Widmer
   console.log('selftest ok');
+}
+
+// ---------------------------------------------------------------- write
+// node scripts/import-trips.mjs <csv> --commit   (batched set() on the deterministic okey)
+if (has('commit')) {
+  const { default: admin } = await import('firebase-admin');
+  if (!admin.apps.length) admin.initializeApp({ credential: admin.credential.applicationDefault() });
+  // trips without a matched boat carry no `resource` at all
+  admin.firestore().settings({ ignoreUndefinedProperties: true });
+  const db = admin.firestore();
+  let written = 0;
+  for (let i = 0; i < list.length; i += 400) {
+    const batch = db.batch();
+    for (const { okey, ...doc } of list.slice(i, i + 400)) {
+      batch.set(db.collection('trips').doc(okey), doc); // okey is the doc id, never a field
+    }
+    await batch.commit();
+    written += Math.min(400, list.length - i);
+    process.stdout.write(`\rwritten ${written}/${list.length}`);
+  }
+  console.log(`\ncommitted ${written} trips to \`trips\``);
 }
