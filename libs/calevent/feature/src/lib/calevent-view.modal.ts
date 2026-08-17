@@ -93,7 +93,7 @@ function storeToView(d: string): string {
             <!-- Description / notes: internal data, not shown to plain registered users -->
             @if(calevent().description && expertMode()) {
                 <ion-item lines="none">
-                <ion-icon slot="start" src="{{'notes' | svgIcon}}" />
+                <ion-icon slot="start" src="{{'text' | svgIcon}}" />
                 <ion-label class="ion-text-wrap">
                     <p class="view-label">{{ i18n.description() }}</p>
                     <p class="view-value">{{ calevent().description }}</p>
