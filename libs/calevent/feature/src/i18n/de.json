@@ -399,7 +399,9 @@
     "caleventEndDateAfterStartDate": "Das Enddatum muss nach dem Startdatum liegen.",
     "caleventStartDateMandatory": "Das Startdatum ist obligatorisch.",
     "caleventEndDateMandatory": "Das Enddatum ist obligatorisch.",
-    "caleventModelType": "Der ModelType muss EventModel sein."
+    "caleventModelType": "Der ModelType muss EventModel sein.",
+    "schedulePollNameMandatory": "Das Thema ist obligatorisch.",
+    "schedulePollColumnsMandatory": "Mindestens ein Terminvorschlag ist erforderlich."
   },
   "urlLabel": {
     "label": "Link-Bezeichnung",

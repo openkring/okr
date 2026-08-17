@@ -398,7 +398,9 @@
     "caleventEndDateAfterStartDate": "La data di fine deve essere successiva alla data di inizio.",
     "caleventStartDateMandatory": "La data di inizio è obbligatoria.",
     "caleventEndDateMandatory": "La data di fine è obbligatoria.",
-    "caleventModelType": "Il ModelType deve essere EventModel."
+    "caleventModelType": "Il ModelType deve essere EventModel.",
+    "schedulePollNameMandatory": "L'argomento è obbligatorio.",
+    "schedulePollColumnsMandatory": "È richiesta almeno una proposta di data."
   },
   "urlLabel": {
     "label": "Etichetta del link",
