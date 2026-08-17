@@ -1,7 +1,7 @@
 import { Signal } from '@angular/core';
 
-const F = '@whiteboard/feature.';
-const U = '@whiteboard/ui.';
+const F = '@instruments/whiteboard/feature.';
+const U = '@instruments/whiteboard/ui.';
 
 /** Feature-level i18n keys for the whiteboard (list, editor page, item editor). */
 export const WHITEBOARD_I18N_KEYS = {

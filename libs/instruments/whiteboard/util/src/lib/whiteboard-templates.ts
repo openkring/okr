@@ -6,8 +6,8 @@ import { WhiteboardTemplate } from './whiteboard-template.model';
  */
 export const BLANK_WHITEBOARD: WhiteboardTemplate = {
   key: '',
-  labelKey: '@whiteboard/util.template.blank.label',
-  descriptionKey: '@whiteboard/util.template.blank.desc',
+  labelKey: '@instruments/whiteboard/util.template.blank.label',
+  descriptionKey: '@instruments/whiteboard/util.template.blank.desc',
   backgroundUrl: '',
   width: 1920,
   height: 1080,
@@ -21,16 +21,16 @@ export const BLANK_WHITEBOARD: WhiteboardTemplate = {
  */
 export const FOUR_QUADRANT_WHITEBOARD: WhiteboardTemplate = {
   key: 'four-quadrant',
-  labelKey: '@whiteboard/util.template.fourQuadrant.label',
-  descriptionKey: '@whiteboard/util.template.fourQuadrant.desc',
+  labelKey: '@instruments/whiteboard/util.template.fourQuadrant.label',
+  descriptionKey: '@instruments/whiteboard/util.template.fourQuadrant.desc',
   backgroundUrl: '',
   width: 1600,
   height: 1000,
   zones: [
-    { id: 'q1', labelKey: '@whiteboard/util.template.fourQuadrant.q1', hintKey: '', x: 0,   y: 0,   w: 800, h: 500, color: 'var(--ion-color-success)' },
-    { id: 'q2', labelKey: '@whiteboard/util.template.fourQuadrant.q2', hintKey: '', x: 800, y: 0,   w: 800, h: 500, color: 'var(--ion-color-warning)' },
-    { id: 'q3', labelKey: '@whiteboard/util.template.fourQuadrant.q3', hintKey: '', x: 0,   y: 500, w: 800, h: 500, color: 'var(--ion-color-tertiary)' },
-    { id: 'q4', labelKey: '@whiteboard/util.template.fourQuadrant.q4', hintKey: '', x: 800, y: 500, w: 800, h: 500, color: 'var(--ion-color-medium)' },
+    { id: 'q1', labelKey: '@instruments/whiteboard/util.template.fourQuadrant.q1', hintKey: '', x: 0,   y: 0,   w: 800, h: 500, color: 'var(--ion-color-success)' },
+    { id: 'q2', labelKey: '@instruments/whiteboard/util.template.fourQuadrant.q2', hintKey: '', x: 800, y: 0,   w: 800, h: 500, color: 'var(--ion-color-warning)' },
+    { id: 'q3', labelKey: '@instruments/whiteboard/util.template.fourQuadrant.q3', hintKey: '', x: 0,   y: 500, w: 800, h: 500, color: 'var(--ion-color-tertiary)' },
+    { id: 'q4', labelKey: '@instruments/whiteboard/util.template.fourQuadrant.q4', hintKey: '', x: 800, y: 500, w: 800, h: 500, color: 'var(--ion-color-medium)' },
   ],
   defaultItems: [],
 };

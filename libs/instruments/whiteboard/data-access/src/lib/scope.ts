@@ -1,1 +1,1 @@
-export const PFX = '@whiteboard/data-access.';
+export const PFX = '@instruments/whiteboard/data-access.';

@@ -7,10 +7,9 @@ import type { Signal } from '@angular/core';
  * (nothing in the build or test suite catches a wrong prefix). Verified against
  * `libs/security/audit/util/src/lib/privacy-audit-i18n.ts`'s `PFX = '@security/audit/util.'`,
  * a lib with the same `<domain>/<layer>` shape once its `security/audit` subdomain segment is
- * folded in — the sibling `libs/instruments/whiteboard/util` uses only `'@whiteboard/util.'`
- * (dropping its `instruments` domain segment) even though its asset output is
- * `assets/i18n/instruments/whiteboard/util/` — that mismatch is exactly this trap, already
- * live in the repo; do not copy it.
+ * folded in. `libs/instruments/whiteboard/*` used to drop its `instruments` domain segment
+ * (`'@whiteboard/util.'` against an `assets/i18n/instruments/whiteboard/util/` output) — that
+ * mismatch is exactly this trap; it 404'd every whiteboard key until it was corrected.
  */
 const PFX = '@tenant/util.';
 
