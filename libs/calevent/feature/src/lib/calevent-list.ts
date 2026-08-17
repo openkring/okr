@@ -1,4 +1,4 @@
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, viewChild } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, untracked, viewChild } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 import { Router } from '@angular/router';
@@ -9,9 +9,6 @@ import { EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { getApp } from 'firebase/app';
-
 import { DEFAULT_DATE } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
@@ -24,7 +21,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, formatDateTimeLabel, formatScheduleCloseMessage, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent } from '@okr/calevent-util';
+import { CalEventDurationPipe, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent } from '@okr/calevent-util';
 import { browseUrl } from '@okr/subject-address-util';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
@@ -262,7 +259,13 @@ export class CalEventList implements OnInit {
   public showMenuButton = input(true, { transform: keepDefaultTrue }); // false in group view
   public showViewToggle = input(true, { transform: keepDefaultTrue }); // false when the view toggle is hoisted to a parent toolbar (group view)
   public groupAdmin = input(false);
-  
+  /**
+   * Deep link from the group chat: `/calevent/<cal>/c-calevents?poll=<seriesId>` opens the poll.
+   * Typed as possibly-undefined on purpose — withComponentInputBinding writes `undefined` into an
+   * unbound route input and would clobber a plain `input('')` default.
+   */
+  public readonly poll = input<string | undefined>(undefined);
+
   // filters
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
@@ -403,6 +406,9 @@ export class CalEventList implements OnInit {
   // the year the calendar was last navigated for; -1 = never
   private navigatedYear = -1;
 
+  // whether the `poll` deep link has already opened its modal this session
+  private pollOpened = false;
+
   // double-click tracking
   private lastClickDateStr: string | null = null;
   private lastClickTime = 0;
@@ -450,6 +456,16 @@ export class CalEventList implements OnInit {
         const date = new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8));
         this.fullCalendar()?.getApi()?.gotoDate(date);
       }
+    });
+
+    // Deep link from the group chat: open the poll once, then strip the param so a back-navigation
+    // does not reopen it.
+    effect(() => {
+      const seriesId = this.poll();
+      if (!seriesId || this.pollOpened) return;
+      this.pollOpened = true;
+      untracked(() => this.openSchedulePoll(seriesId).then(() =>
+        this.router.navigate([], { queryParams: { poll: null }, queryParamsHandling: 'merge', replaceUrl: true })));
     });
   }
 
@@ -610,7 +626,7 @@ export class CalEventList implements OnInit {
         }
         break;
       case 'schedule':
-        this.store.schedule();
+        if (this.store.schedule()) await this.openSchedulePoll('');   // schedule() = the group-calendar guard
         break;
       case 'toggleFilter': this.showFilter.update(v => !v); break;
       default: error(undefined, `CalEventList.onPopoverDismiss: unknown method ${selectedMethod}`);
@@ -763,7 +779,7 @@ export class CalEventList implements OnInit {
           await this.store.invitePerson(calEvent, false);
           break;
         case 'calevent.viewSchedule':
-          await this.openScheduleTable(calEvent);
+          await this.openSchedulePoll(calEvent.seriesId);
           break;
         case 'calevent.closeSchedule':
           await this.confirmCloseSchedule(calEvent);
@@ -867,12 +883,12 @@ export class CalEventList implements OnInit {
     }
   }
 
-  private async openScheduleTable(calevent: CalEventModel): Promise<void> {
-    const { ScheduleTableModal } = await import('./schedule-table.modal');
+  private async openSchedulePoll(seriesId: string): Promise<void> {
+    const { ScheduleModal } = await import('./schedule.modal');
     const modal = await this.modalController.create({
-      component: ScheduleTableModal,
+      component: ScheduleModal,
       cssClass: 'wide-modal',
-      componentProps: { seriesId: calevent.seriesId },
+      componentProps: { seriesId },
       injector: this.injector,   // share CalEventList's CalEventStore instance with the root-injected modal
     });
     await modal.present();
@@ -883,35 +899,14 @@ export class CalEventList implements OnInit {
     const formattedDate = convertDateFormatToString(calevent.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
     const alert = await this.alertController.create({
       header: this.store.i18n.schedule_close(),
-      message: this.store.i18n.schedule_close_message().replace('{{date}}', formattedDate),
-      inputs: [
-        {
-          name: 'authorMessage',
-          type: 'textarea',
-          placeholder: this.store.i18n.schedule_optional_message(),
-        },
-      ],
+      message: this.store.i18n.schedule_close_message().replace('{date}', formattedDate),
+      inputs: [{ name: 'authorMessage', type: 'textarea', placeholder: this.store.i18n.schedule_optional_message() }],
       buttons: [
         { text: this.store.i18n.cancel(), role: 'cancel' },
         {
-          text: this.store.i18n.schedule_date_confirm(),
+          text: this.store.i18n.schedule_close(),
           handler: (data: { authorMessage?: string }) => {
-            this.store.closeSchedule(calevent)
-              .then(async () => {
-                try {
-                  const groupId = this.store.groupCalendarId();
-                  if (groupId) {
-                    const functions = getFunctions(getApp(), 'europe-west6');
-                    const fn = httpsCallable<{ groupId: string }, { roomId: string }>(functions, 'requestGroupRoomAccess');
-                    const result = await fn({ groupId });
-                    const { roomId } = result.data;
-                    const message = formatScheduleCloseMessage(calevent.name, calevent.startDate, data.authorMessage);
-                    await this.matrixChatService.sendMessage(roomId, message);
-                  }
-                } catch (err) {
-                  console.warn('confirmCloseSchedule: Matrix notification failed (non-critical):', err);
-                }
-              })
+            this.store.closeSchedule(calevent, data.authorMessage)
               .catch(err => console.warn('confirmCloseSchedule: closeSchedule failed:', err));
           },
         },
