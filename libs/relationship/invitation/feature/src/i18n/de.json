@@ -33,8 +33,8 @@
     "header": {
       "date": "Datum",
       "name": "Name",
-      "invitee": "Teilnehmer",
-      "inviter": "Organisator",
+      "invitee": "Teilnehmende",
+      "inviter": "Organisation",
       "state": "Status"
     }
   },
@@ -43,8 +43,8 @@
     "placeholder": "sssssss",
     "helper": "Eine eindeutige ID der Einladung in der Datenbank."
   },
-  "invitee": "Teilnehmer",
-  "inviter": "Organisator",
+  "invitee": "Teilnehmende",
+  "inviter": "Organisation",
   "notes": {
     "label": "Notizen",
     "placeholder": "Freie Notizen."
@@ -69,7 +69,7 @@
       "label": "Alle Stati"
     },
     "pending": {
-      "label": "Ausstehend",
+      "label": "Offen",
       "description": "Die Einladung wurde verschickt, aber noch nicht beantwortet."
     },
     "accepted": {

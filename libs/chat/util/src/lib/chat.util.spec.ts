@@ -120,22 +120,30 @@ describe('findSupportRoom', () => {
 
   it('matches the canonical alias, not the display name', () => {
     const rooms = [room('!a', 'Support'), room('!b', 'Hilfe & Fragen', '#support:okr.ch')];
-    expect(findSupportRoom(rooms)?.roomId).toBe('!b');
+    expect(findSupportRoom(rooms, 'scs')?.roomId).toBe('!b');
   });
 
   it('accepts the group_support alias', () => {
-    expect(findSupportRoom([room('!a', 'x', '#group_support:okr.ch')])?.roomId).toBe('!a');
+    expect(findSupportRoom([room('!a', 'x', '#group_support:okr.ch')], 'scs')?.roomId).toBe('!a');
+  });
+
+  it('matches the tenant-prefixed group alias', () => {
+    expect(findSupportRoom([room('!a', 'x', '#group_scs_support:okr.ch')], 'scs')?.roomId).toBe('!a');
+  });
+
+  it('ignores another tenant’s prefixed support room', () => {
+    expect(findSupportRoom([room('!a', 'x', '#group_p13_support:okr.ch')], 'scs')).toBeUndefined();
   });
 
   it('falls back to the name for a room without an alias', () => {
-    expect(findSupportRoom([room('!a', 'support')])?.roomId).toBe('!a');
+    expect(findSupportRoom([room('!a', 'support')], 'scs')?.roomId).toBe('!a');
   });
 
   it('ignores a room named support that carries a different alias', () => {
-    expect(findSupportRoom([room('!a', 'support', '#trainer:okr.ch')])).toBeUndefined();
+    expect(findSupportRoom([room('!a', 'support', '#trainer:okr.ch')], 'scs')).toBeUndefined();
   });
 
   it('returns undefined when there is no support room', () => {
-    expect(findSupportRoom([room('!a', 'Trainer')])).toBeUndefined();
+    expect(findSupportRoom([room('!a', 'Trainer')], 'scs')).toBeUndefined();
   });
 });

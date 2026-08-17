@@ -8,16 +8,25 @@ export const GROUP_KEY_MAX_LENGTH = 15;
 /**
  * Derive a stable, storage-safe group key from a group name:
  * de-accented, lower-cased, stripped to `[a-z0-9]` (no blanks, no special chars),
- * truncated to `maxLength`. Returns '' when the name has no usable characters
- * (the caller must guard against an empty key).
+ * truncated to `maxLength`, and prefixed with the tenant (`<tenantId>_<name>`).
+ * Returns '' when the name has no usable characters (the caller must guard against
+ * an empty key).
+ *
+ * The tenant prefix is what keeps the key globally unique: `groups` is a single
+ * top-level collection keyed by okey and `createModel` writes with `setDoc`, so an
+ * unprefixed "Notfall" in a second tenant would overwrite the first tenant's group
+ * document. The Matrix room alias is derived from the same key (`#group_<okey>`), so
+ * the prefix also stops two tenants from sharing one chat room.
  * @param name the group display name
- * @param maxLength maximum key length (default {@link GROUP_KEY_MAX_LENGTH})
+ * @param tenantId the tenant the group is created in
+ * @param maxLength maximum length of the name part (default {@link GROUP_KEY_MAX_LENGTH})
  */
-export function getGroupKeyFromName(name: string | undefined, maxLength = GROUP_KEY_MAX_LENGTH): string {
-  return deaccent(name ?? '')
+export function getGroupKeyFromName(name: string | undefined, tenantId: string, maxLength = GROUP_KEY_MAX_LENGTH): string {
+  const base = deaccent(name ?? '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '')
     .slice(0, maxLength);
+  return base ? `${tenantId}_${base}` : '';
 }
 
 /**
@@ -26,17 +35,17 @@ export function getGroupKeyFromName(name: string | undefined, maxLength = GROUP_
  * should include every existing group AND org key. On collision a numeric suffix is
  * appended (`base`, `base2`, `base3`, …) while keeping the result within `maxLength`.
  * @param name the group display name
+ * @param tenantId the tenant the group is created in (prefixes the key, see {@link getGroupKeyFromName})
  * @param takenKeys all keys already in use (groups + orgs)
- * @param maxLength maximum key length (default {@link GROUP_KEY_MAX_LENGTH})
+ * @param maxLength maximum length of the name part (default {@link GROUP_KEY_MAX_LENGTH})
  */
-export function getUniqueGroupKey(name: string | undefined, takenKeys: Iterable<string>, maxLength = GROUP_KEY_MAX_LENGTH): string {
+export function getUniqueGroupKey(name: string | undefined, tenantId: string, takenKeys: Iterable<string>, maxLength = GROUP_KEY_MAX_LENGTH): string {
   const taken = takenKeys instanceof Set ? takenKeys : new Set(takenKeys);
-  const base = getGroupKeyFromName(name, maxLength);
+  const base = getGroupKeyFromName(name, tenantId, maxLength);
   if (!base) return '';
   if (!taken.has(base)) return base;
   for (let i = 2; ; i++) {
-    const suffix = String(i);
-    const candidate = base.slice(0, maxLength - suffix.length) + suffix;
+    const candidate = base + String(i);
     if (!taken.has(candidate)) return candidate;
   }
 }

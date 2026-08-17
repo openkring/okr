@@ -32,53 +32,55 @@ describe('Group Utils', () => {
 // ─── key derivation ─────────────────────────────────────────────────────────────
 
 describe('getGroupKeyFromName', () => {
-  it('lower-cases and strips blanks and special chars', () => {
-    expect(getGroupKeyFromName('Vorstand 2026!')).toBe('vorstand2026');
+  it('lower-cases, strips blanks/special chars and prefixes the tenant', () => {
+    expect(getGroupKeyFromName('Vorstand 2026!', 'scs')).toBe('scs_vorstand2026');
   });
 
   it('de-accents umlauts and diacritics', () => {
-    expect(getGroupKeyFromName('Wädenswil Café')).toBe('wadenswilcafe');
+    expect(getGroupKeyFromName('Wädenswil Café', 'scs')).toBe('scs_wadenswilcafe');
   });
 
-  it('truncates to 15 chars by default', () => {
-    expect(getGroupKeyFromName('Ressort Kommunikation und Marketing')).toBe('ressortkommunik');
+  it('truncates the name part to 15 chars by default', () => {
+    expect(getGroupKeyFromName('Ressort Kommunikation und Marketing', 'scs')).toBe('scs_ressortkommunik');
   });
 
   it('respects a custom maxLength', () => {
-    expect(getGroupKeyFromName('Vorstand', 4)).toBe('vors');
+    expect(getGroupKeyFromName('Vorstand', 'scs', 4)).toBe('scs_vors');
+  });
+
+  it('keeps the same name apart across tenants', () => {
+    expect(getGroupKeyFromName('Notfall', 'scs')).not.toBe(getGroupKeyFromName('Notfall', 'p13'));
   });
 
   it('returns empty string when nothing usable remains', () => {
-    expect(getGroupKeyFromName('   ')).toBe('');
-    expect(getGroupKeyFromName('🚣')).toBe('');
-    expect(getGroupKeyFromName(undefined)).toBe('');
+    expect(getGroupKeyFromName('   ', 'scs')).toBe('');
+    expect(getGroupKeyFromName('🚣', 'scs')).toBe('');
+    expect(getGroupKeyFromName(undefined, 'scs')).toBe('');
   });
 });
 
 describe('getUniqueGroupKey', () => {
   it('returns the base key when it is free', () => {
-    expect(getUniqueGroupKey('Vorstand', new Set())).toBe('vorstand');
+    expect(getUniqueGroupKey('Vorstand', 'scs', new Set())).toBe('scs_vorstand');
   });
 
   it('appends a numeric suffix on collision', () => {
-    expect(getUniqueGroupKey('Vorstand', new Set(['vorstand']))).toBe('vorstand2');
-    expect(getUniqueGroupKey('Vorstand', new Set(['vorstand', 'vorstand2']))).toBe('vorstand3');
+    expect(getUniqueGroupKey('Vorstand', 'scs', new Set(['scs_vorstand']))).toBe('scs_vorstand2');
+    expect(getUniqueGroupKey('Vorstand', 'scs', new Set(['scs_vorstand', 'scs_vorstand2']))).toBe('scs_vorstand3');
   });
 
   it('treats groups and orgs as one shared key namespace', () => {
-    // 'vorstand' taken by an org → the new group must not reuse it
-    expect(getUniqueGroupKey('Vorstand', ['vorstand'])).toBe('vorstand2');
+    // 'scs_vorstand' taken by an org → the new group must not reuse it
+    expect(getUniqueGroupKey('Vorstand', 'scs', ['scs_vorstand'])).toBe('scs_vorstand2');
   });
 
-  it('keeps the suffixed key within maxLength by truncating the base', () => {
-    // base 'ressortkommunik' (15) is taken → candidate must still be <= 15
-    const key = getUniqueGroupKey('Ressort Kommunikation', new Set(['ressortkommunik']));
-    expect(key.length).toBeLessThanOrEqual(15);
-    expect(key).toBe('ressortkommuni2');
+  it('does not collide with the same group name in another tenant', () => {
+    // the other tenant's 'Notfall' key is taken, but it cannot shadow this tenant's
+    expect(getUniqueGroupKey('Notfall', 'p13', new Set(['scs_notfall']))).toBe('p13_notfall');
   });
 
   it('returns empty string when the name normalizes to nothing', () => {
-    expect(getUniqueGroupKey('🚣', new Set())).toBe('');
+    expect(getUniqueGroupKey('🚣', 'scs', new Set())).toBe('');
   });
 });
 

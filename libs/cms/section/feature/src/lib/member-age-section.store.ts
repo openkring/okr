@@ -73,9 +73,11 @@ export const MemberAgeSectionStore = signalStore(
       stream: ({ params }) => {
         if (!params.currentUser || !params.orgId) return of([]);
         // Member age stats are person-only (age is a person attribute); orgId is the
-        // containing org. The org/group key collision is not disambiguated here — only
-        // the legacy `scs` key can collide, and new groups use random keys.
-        return store.membershipService.listMembersOfOrg(params.orgId);
+        // containing ORG, never a group — hence the explicit 'org' filter. Orgs and groups
+        // share one key namespace (an org may have an implicit same-key group, e.g. org
+        // `scs` + group `scs` "Ganzer Verein"), so a bare key match would add the group's
+        // memberships on top and count those members twice.
+        return store.membershipService.listMembersOfOrg(params.orgId, 'org');
       },
     }),
   })),

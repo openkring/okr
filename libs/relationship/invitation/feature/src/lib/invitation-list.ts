@@ -1,10 +1,12 @@
-import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { RoleName, InvitationModel } from '@okr/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getYearList, hasRole } from '@okr/shared-util-core';
+import { getItemLabel, getYearList, hasRole } from '@okr/shared-util-core';
+import { TranslatePipe } from '@okr/shared-i18n';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -16,12 +18,16 @@ import { InvitationStore } from './invitation.store';
   selector: 'okr-invitation-list',
   standalone: true,
   imports: [
-    SvgIconPipe, PrettyDatePipe,
+    AsyncPipe, SvgIconPipe, PrettyDatePipe, TranslatePipe,
     EmptyList, ListFilter, AvatarDisplay, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonList, IonPopover
   ],
   providers: [InvitationStore],
+  styles: `
+    .sortable { cursor: pointer; user-select: none; }
+    .sortable ion-icon { vertical-align: middle; font-size: 0.8rem; }
+  `,
   template: `
   <ion-header>
     <!-- title and actions -->
@@ -55,11 +61,21 @@ import { InvitationStore } from './invitation.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{ store.i18n.date() }}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.name() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.invitee() }}</strong></ion-label>
-        <ion-label class="ion-hide-lg-down"><strong>{{ store.i18n.inviter() }}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.state() }}</strong></ion-label>
+        <ion-label class="sortable" (click)="sortBy('date')"><strong>{{ store.i18n.date() }}</strong>
+          @if (sortCol() === 'date') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
+        </ion-label>
+        <ion-label class="ion-hide-md-down sortable" (click)="sortBy('name')"><strong>{{ store.i18n.name() }}</strong>
+          @if (sortCol() === 'name') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
+        </ion-label>
+        <ion-label class="sortable" (click)="sortBy('invitee')"><strong>{{ store.i18n.invitee() }}</strong>
+          @if (sortCol() === 'invitee') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
+        </ion-label>
+        <ion-label class="ion-hide-lg-down sortable" (click)="sortBy('inviter')"><strong>{{ store.i18n.inviter() }}</strong>
+          @if (sortCol() === 'inviter') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
+        </ion-label>
+        <ion-label class="ion-hide-md-down sortable" (click)="sortBy('state')"><strong>{{ store.i18n.state() }}</strong>
+          @if (sortCol() === 'state') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
+        </ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -76,7 +92,7 @@ import { InvitationStore } from './invitation.store';
             <ion-label class="ion-hide-md-down">{{invitation.name}}</ion-label>
             <ion-label><okr-avatar-display [avatars]="[getAvatar(invitation.inviteeKey, invitation.inviteeFirstName, invitation.inviteeLastName)]" /></ion-label>
             <ion-label class="ion-hide-lg-down"><okr-avatar-display [avatars]="[getAvatar(invitation.inviterKey, invitation.inviterFirstName, invitation.inviterLastName)]" /></ion-label>
-            <ion-label class="ion-hide-md-down">{{invitation.state}}</ion-label>
+            <ion-label class="ion-hide-md-down">{{ stateLabel(invitation.state) | translate | async }}</ion-label>
           </ion-item>
         }
       </ion-list>
@@ -98,8 +114,20 @@ export class InvitationList {
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
   protected selectedState = linkedSignal(() => this.store.selectedState());
   
+  // sort state (default: newest date first, oldest at the bottom)
+  protected sortCol = signal<'date' | 'name' | 'invitee' | 'inviter' | 'state'>('date');
+  protected sortDir = signal<'asc' | 'desc'>('desc');
+
   // data
-  protected filteredInvitations = computed(() => this.store.filteredInvitations() ?? []);
+  protected filteredInvitations = computed(() => {
+    const col = this.sortCol();
+    const dir = this.sortDir() === 'asc' ? 1 : -1;
+    return [...(this.store.filteredInvitations() ?? [])].sort((a, b) => {
+      const av = this.sortValue(a, col);
+      const bv = this.sortValue(b, col);
+      return av < bv ? -dir : av > bv ? dir : 0;
+    });
+  });
   protected invitationsCount = computed(() => this.store.invitationsCount());
   protected selectedInvitationsCount = computed(() => this.filteredInvitations().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -116,11 +144,31 @@ export class InvitationList {
       if (this.listId() === 'my') {
         this.store.setScope('', this.currentUser()?.personKey ?? '', true);
       } else if (this.listId() === 'all') {
-        this.store.setScope('', '', true);
+        this.store.setScope('', '', false);
       } else { // explicit calevent key given
         this.store.setScope(this.listId(), '', true);
       }
     })
+  }
+
+  /******************************** sorting ******************************************* */
+  protected sortBy(col: 'date' | 'name' | 'invitee' | 'inviter' | 'state'): void {
+    if (this.sortCol() === col) {
+      this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
+    } else {
+      this.sortCol.set(col);
+      this.sortDir.set(col === 'date' ? 'desc' : 'asc');
+    }
+  }
+
+  private sortValue(inv: InvitationModel, col: string): string {
+    switch (col) {
+      case 'invitee': return `${inv.inviteeLastName} ${inv.inviteeFirstName}`.toLowerCase();
+      case 'inviter': return `${inv.inviterLastName} ${inv.inviterFirstName}`.toLowerCase();
+      case 'name': return (inv.name ?? '').toLowerCase();
+      case 'state': return (inv.state ?? '').toLowerCase();
+      default: return inv.date ?? '';  // StoreDate yyyymmdd sorts lexicographically
+    }
   }
 
   /******************************** setters (filter) ******************************************* */
@@ -155,6 +203,10 @@ export class InvitationList {
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions);
     await this.executeActions(actionSheetOptions, invitation);
+  }
+
+  protected stateLabel(state: string): string {
+    return getItemLabel(this.states(), state);
   }
 
   protected getAvatar(key: string, name1: string, name2: string) {

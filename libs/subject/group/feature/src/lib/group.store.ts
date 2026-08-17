@@ -254,17 +254,21 @@ export const GroupStore = signalStore(
       if (role === 'confirm' && data && !readOnly) {
         if (isGroup(data, store.tenantId())) {
           if (isNew) {
-            // Derive the group key from the (normalized) group name, made unique across all
+            // Derive the group key from the tenant + (normalized) group name, made unique across all
             // existing group AND org keys — membership FKs (orgKey/memberKey) point to an org
             // OR a group, so the two share a key namespace and must not collide. The key is
             // set once at creation and never changes on rename, keeping the derived
             // folder/page/section/room/calendar ids stable. Falls back to a random key only
             // if the name normalizes to nothing (e.g. all emoji).
+            // getTakenKeys() adds the ARCHIVED groups/orgs, which the store's lists filter out —
+            // reusing an archived key would overwrite its document and adopt its Matrix room.
+            // The store lists stay in the union so a failed read cannot hand out a used key.
             const takenKeys = new Set<string>([
               ...store.appStore.allGroups().map((g: GroupModel) => g.okey),
               ...store.appStore.allOrgs().map((o) => o.okey),
+              ...await store.groupService.getTakenKeys(),
             ]);
-            data.okey = getUniqueGroupKey(data.name, takenKeys) || generateRandomString(20);
+            data.okey = getUniqueGroupKey(data.name, store.tenantId(), takenKeys) || generateRandomString(20);
             data.filesFolder = data.hasFiles ? `f_${data.okey}` : '';
             await store.groupService.create(data, store.currentUser());
             this.setGroupKey(data.okey);

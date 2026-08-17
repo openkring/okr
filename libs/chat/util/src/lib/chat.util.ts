@@ -159,9 +159,13 @@ export function filterRoomsOfTenant<T extends {
  * Falls back to the display name for rooms that have no alias at all (client-created
  * rooms may lack one).
  */
-export function findSupportRoom<T extends { roomId: string; name?: string; topic?: string }>(rooms: T[]): T | undefined {
+export function findSupportRoom<T extends { roomId: string; name?: string; topic?: string }>(rooms: T[], tenantId: string): T | undefined {
   const alias = (r: T): string | undefined => r.topic?.startsWith('#') ? r.topic.slice(1).split(':')[0] : undefined;
+  // Group keys are tenant-prefixed since 2026-08 (see getGroupKeyFromName), so this tenant's
+  // support group yields `#group_<tenant>_support`. The two unprefixed aliases are the legacy
+  // shape and are only reached with an already tenant-filtered room list.
+  const own = `group_${tenantId}_support`;
   // an alias match always wins: a room merely *named* "Support" must not shadow the real one
-  return rooms.find(r => { const a = alias(r); return a === 'support' || a === 'group_support'; })
+  return rooms.find(r => { const a = alias(r); return a === own || a === 'support' || a === 'group_support'; })
       ?? rooms.find(r => !alias(r) && r.name?.toLowerCase() === 'support');
 }

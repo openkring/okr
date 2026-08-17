@@ -246,7 +246,7 @@ export class GroupForm {
   protected name = linkedSignal(() => this.formData().name ?? '');
   protected okey = linkedSignal(() => this.formData().okey ?? '');
   // Live read-only preview of the key that will be derived from the name on save.
-  protected groupIdPreview = computed(() => getGroupKeyFromName(this.name()));
+  protected groupIdPreview = computed(() => getGroupKeyFromName(this.name(), this.tenantId()));
   protected icon = linkedSignal(() => this.formData().icon ?? '');
 
   // admin

@@ -642,7 +642,9 @@ export const _MatrixChatStore = signalStore(
         const comment = await store.alertService.okrPrompt(store.i18n.msg_report_header(), store.i18n.msg_report_placeholder());
         if (!comment?.trim()) return;
         // C-7: identified by the immutable canonical alias, not the display name (see findSupportRoom).
-        const supportRoom = findSupportRoom(store.matrixService.roomsCurrentValue);
+        // store.rooms() (not the raw account-wide room list): a report must never land in
+        // another tenant's support room.
+        const supportRoom = findSupportRoom(store.rooms(), store.appStore.tenantId());
         if (!supportRoom) {
           await store.alertService.showToast(store.i18n.msg_report_noChannel());
           return;

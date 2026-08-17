@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
-import { GroupCollection, GroupModel, UserModel } from '@okr/shared-models';
+import { DbQuery, GroupCollection, GroupModel, OrgCollection, OrgModel, UserModel } from '@okr/shared-models';
 import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -89,5 +89,26 @@ export class GroupService  {
    */
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<GroupModel[]> {
     return this.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
+  }
+
+  /**
+   * Every document key already in use in the shared group/org key namespace of this tenant,
+   * **archived documents included**. A new group key must avoid all of them: the key is the
+   * Firestore document id (`createModel` writes with `setDoc`) AND the Matrix room alias
+   * (`#group_<okey>`), so reusing an archived group's key silently overwrites its document
+   * and hands the new group the archived group's chat room, with its message history and
+   * members. `AppStore.allGroups()/allOrgs()` cannot answer this — `getSystemQuery` filters
+   * `isArchived == false` out.
+   *
+   * Tenant-scoped is enough: keys are tenant-prefixed (see `getGroupKeyFromName`), so a key
+   * of another tenant can never collide.
+   */
+  public async getTakenKeys(): Promise<Set<string>> {
+    const dbQuery: DbQuery[] = [{ key: 'tenants', operator: 'array-contains', value: this.env.tenantId }];
+    const [groups, orgs] = await Promise.all([
+      this.firestoreService.getDataOnce<GroupModel>(GroupCollection, dbQuery, 'none'),
+      this.firestoreService.getDataOnce<OrgModel>(OrgCollection, dbQuery, 'none'),
+    ]);
+    return new Set([...groups, ...orgs].map(m => m.okey));
   }
 }
