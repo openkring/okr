@@ -51,7 +51,7 @@
     "find": "Find a date",
     "close": {
       "label": "Close poll",
-      "message": "{{date}} is chosen as the definitive date. All other proposals will be removed."
+      "message": "{date} is chosen as the definitive date. All other proposals will be removed."
     },
     "optionalMessage": "Optional message to the group...",
     "date": {
@@ -60,7 +60,16 @@
       "confirm": "Apply dates"
     },
     "view": "Show poll",
-    "groupOnly": "A date poll is only possible in a group calendar. Please select a group calendar first."
+    "groupOnly": "A date poll is only possible in a group calendar. Please select a group calendar first.",
+    "start": "Start poll",
+    "name": { "label": "Topic", "placeholder": "e.g. SCS Eight - July & August on Fridays" },
+    "description": { "label": "Description" },
+    "column": { "add": "Add date", "remove": "Remove date" },
+    "acceptances": "Acceptances",
+    "pickDate": "Pick date",
+    "inviteMessage": "Please fill out this date poll",
+    "noRoom": "The message could not be posted to the group chat.",
+    "responseSaved": "Your answers have been saved."
   },
   "update": {
     "label": "Edit event",

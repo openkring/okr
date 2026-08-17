@@ -51,7 +51,7 @@
     "find": "Trouver une date",
     "close": {
       "label": "Clôturer le sondage",
-      "message": "{{date}} est choisi comme date définitive. Toutes les autres propositions seront supprimées."
+      "message": "{date} est choisi comme date définitive. Toutes les autres propositions seront supprimées."
     },
     "optionalMessage": "Message facultatif au groupe...",
     "date": {
@@ -60,7 +60,16 @@
       "confirm": "Appliquer les dates"
     },
     "view": "Afficher le sondage",
-    "groupOnly": "Un sondage de dates n’est possible que dans un calendrier de groupe. Veuillez d’abord sélectionner un calendrier de groupe."
+    "groupOnly": "Un sondage de dates n’est possible que dans un calendrier de groupe. Veuillez d’abord sélectionner un calendrier de groupe.",
+    "start": "Démarrer le sondage",
+    "name": { "label": "Sujet", "placeholder": "p. ex. SCS Huit - juillet & août le vendredi" },
+    "description": { "label": "Description" },
+    "column": { "add": "Ajouter une date", "remove": "Supprimer la date" },
+    "acceptances": "Acceptations",
+    "pickDate": "Choisir une date",
+    "inviteMessage": "Merci de remplir ce sondage de dates",
+    "noRoom": "Le message n’a pas pu être publié dans le chat du groupe.",
+    "responseSaved": "Tes réponses ont été enregistrées."
   },
   "update": {
     "label": "Modifier l'événement",

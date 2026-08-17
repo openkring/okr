@@ -51,7 +51,7 @@
     "find": "Encontrar una fecha",
     "close": {
       "label": "Cerrar la encuesta",
-      "message": "{{date}} se elige como fecha definitiva. Todas las demás propuestas se eliminarán."
+      "message": "{date} se elige como fecha definitiva. Todas las demás propuestas se eliminarán."
     },
     "optionalMessage": "Mensaje opcional para el grupo...",
     "date": {
@@ -60,7 +60,16 @@
       "confirm": "Aplicar fechas"
     },
     "view": "Mostrar la encuesta",
-    "groupOnly": "Una encuesta de fechas solo es posible en un calendario de grupo. Selecciona primero un calendario de grupo."
+    "groupOnly": "Una encuesta de fechas solo es posible en un calendario de grupo. Selecciona primero un calendario de grupo.",
+    "start": "Iniciar encuesta",
+    "name": { "label": "Tema", "placeholder": "p.ej. SCS Ocho - julio y agosto los viernes" },
+    "description": { "label": "Descripción" },
+    "column": { "add": "Añadir fecha", "remove": "Eliminar fecha" },
+    "acceptances": "Aceptaciones",
+    "pickDate": "Elegir fecha",
+    "inviteMessage": "Por favor, completa esta encuesta de fechas",
+    "noRoom": "No se pudo publicar el mensaje en el chat del grupo.",
+    "responseSaved": "Tus respuestas se han guardado."
   },
   "update": {
     "label": "Modificar evento",

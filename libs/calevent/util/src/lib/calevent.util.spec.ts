@@ -1,7 +1,7 @@
 import { CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { convertCalEventToFullCalendar, formatScheduleCloseMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, planSeriesReconcile } from './calevent.util';
+import { bestScheduleColumn, buildSchedulePollLink, convertCalEventToFullCalendar, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, nextInvitationState, planSeriesReconcile } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -241,5 +241,50 @@ describe('series reconcile', () => {
     expect(fields).not.toHaveProperty('attendees');
     expect(fields).not.toHaveProperty('isArchived');
     expect(fields).not.toHaveProperty('tenants');
+  });
+});
+
+describe('nextInvitationState', () => {
+  it('cycles pending -> accepted -> declined -> pending', () => {
+    expect(nextInvitationState('pending')).toBe('accepted');
+    expect(nextInvitationState('accepted')).toBe('declined');
+    expect(nextInvitationState('declined')).toBe('pending');
+  });
+  it('treats maybe like pending', () => {
+    expect(nextInvitationState('maybe')).toBe('accepted');
+  });
+});
+
+describe('bestScheduleColumn', () => {
+  it('returns the index of the highest count', () => {
+    expect(bestScheduleColumn([2, 5, 3])).toBe(1);
+  });
+  it('returns the first index on a tie', () => {
+    expect(bestScheduleColumn([4, 4, 1])).toBe(0);
+  });
+  it('returns -1 when nobody accepted', () => {
+    expect(bestScheduleColumn([0, 0, 0])).toBe(-1);
+  });
+  it('returns -1 for an empty poll', () => {
+    expect(bestScheduleColumn([])).toBe(-1);
+  });
+});
+
+describe('buildSchedulePollLink', () => {
+  it('builds the deep link into the group calendar', () => {
+    expect(buildSchedulePollLink('https://scs.app', 'cal1', 'abc'))
+      .toBe('https://scs.app/calevent/cal1/c-calevents?poll=abc');
+  });
+  it('drops a trailing slash on the origin', () => {
+    expect(buildSchedulePollLink('https://scs.app/', 'cal1', 'abc'))
+      .toBe('https://scs.app/calevent/cal1/c-calevents?poll=abc');
+  });
+});
+
+describe('formatSchedulePollInviteMessage', () => {
+  it('names the poll and carries the link', () => {
+    const msg = formatSchedulePollInviteMessage('SCS Achter', 'https://scs.app/x');
+    expect(msg).toContain('SCS Achter');
+    expect(msg).toContain('https://scs.app/x');
   });
 });

@@ -1,6 +1,6 @@
 import { EventInput } from '@fullcalendar/core';
 
-import { CalEventModel } from '@okr/shared-models';
+import { CalEventModel, InvitationState } from '@okr/shared-models';
 import { addTime, convertDateFormatToString, DateFormat, getIsoDateTime, isPastDate, isType } from '@okr/shared-util-core';
 
 export function isCalEvent(calEvent: unknown, tenantId: string): calEvent is CalEventModel {
@@ -169,4 +169,33 @@ export function formatScheduleCloseMessage(
   const lines = [`✅ ${eventName}`, `Termin: ${date}`];
   if (authorMessage?.trim()) lines.push(authorMessage.trim());
   return lines.join('\n');
+}
+
+/** Cell cycle in the poll table: no answer -> yes -> no -> no answer. 'maybe' is unused here. */
+export function nextInvitationState(state: InvitationState): InvitationState {
+  if (state === 'accepted') return 'declined';
+  if (state === 'declined') return 'pending';
+  return 'accepted';
+}
+
+/** Index of the column with the most acceptances; -1 when nobody accepted anything. */
+export function bestScheduleColumn(counts: number[]): number {
+  let best = -1;
+  let max = 0;
+  counts.forEach((count, index) => {
+    if (count > max) {
+      max = count;
+      best = index;
+    }
+  });
+  return best;
+}
+
+/** Deep link that reopens the poll: the calevent list route plus a `poll` query param. */
+export function buildSchedulePollLink(origin: string, calendarKey: string, seriesId: string): string {
+  return `${origin.replace(/\/$/, '')}/calevent/${calendarKey}/c-calevents?poll=${seriesId}`;
+}
+
+export function formatSchedulePollInviteMessage(name: string, link: string): string {
+  return `📅 ${name}\nBitte diese Terminumfrage ausfüllen: ${link}`;
 }
