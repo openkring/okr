@@ -24,7 +24,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, formatScheduleCloseMessage, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent } from '@okr/calevent-util';
+import { CalEventDurationPipe, formatDateTimeLabel, formatScheduleCloseMessage, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent } from '@okr/calevent-util';
 import { browseUrl } from '@okr/subject-address-util';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
@@ -624,7 +624,8 @@ export class CalEventList implements OnInit {
    */
   protected async showActions(calEvent: CalEventModel): Promise<void> {
     if (!this.showMenu()) return;
-    const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
+    const label = formatDateTimeLabel(calEvent.startDate, calEvent.startTime, calEvent.durationMinutes);
+    const actionSheetOptions = createActionSheetOptions(`${label} · ${calEvent.name}`);
     this.addActionSheetButtons(actionSheetOptions, calEvent);
     await this.executeActions(actionSheetOptions, calEvent);
   }
