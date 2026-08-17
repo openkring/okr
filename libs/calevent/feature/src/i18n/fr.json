@@ -54,19 +54,34 @@
       "message": "{date} est choisi comme date définitive. Toutes les autres propositions seront supprimées."
     },
     "optionalMessage": "Message facultatif au groupe...",
-    "date": { "confirm": "Appliquer les dates" },
+    "date": {
+      "confirm": "Appliquer la date"
+    },
     "view": "Afficher le sondage",
     "groupOnly": "Un sondage de dates n’est possible que dans un calendrier de groupe. Veuillez d’abord sélectionner un calendrier de groupe.",
     "start": "Démarrer le sondage",
-    "name": { "label": "Sujet", "placeholder": "p. ex. SCS Huit - juillet & août le vendredi" },
-    "description": { "label": "Description" },
-    "column": { "add": "Ajouter une date", "remove": "Supprimer la date" },
+    "name": {
+      "label": "Sujet",
+      "placeholder": "p. ex. SCS Huit - juillet & août le vendredi"
+    },
+    "column": {
+      "add": "Ajouter une colonne",
+      "remove": "Supprimer la colonne"
+    },
     "acceptances": "Acceptations",
     "pickDate": "Choisir cette date",
     "notFound": "Ce sondage de dates n’existe plus. Il a déjà été clôturé ou supprimé.",
     "noRoom": "Le message n’a pas pu être publié dans le chat du groupe.",
     "saveError": "Le sondage de dates n’a pas pu être enregistré.",
-    "responseSaved": "Tes réponses ont été enregistrées."
+    "responseSaved": "Tes réponses ont été enregistrées.",
+    "text": {
+      "confirm": "Appliquer le texte",
+      "label": "Texte"
+    },
+    "mode": {
+      "date": "Date",
+      "text": "Texte"
+    }
   },
   "update": {
     "label": "Modifier l'événement",

@@ -1,12 +1,12 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCol, IonDatetime, IonGrid, IonIcon, IonModal, IonRow } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCol, IonDatetime, IonGrid, IonIcon, IonModal, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { InvitationState } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ErrorNote, NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, getTodayStr, getWeekdayI18nKey } from '@okr/shared-util-core';
 import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvitationState, schedulePollValidations, SchedulePollColumn, SchedulePollFormData } from '@okr/calevent-util';
@@ -15,22 +15,27 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
   selector: 'okr-schedule-poll-form',
   standalone: true,
   imports: [
-    TextInput, NotesInput, ErrorNote, SvgIconPipe, TranslatePipe, AsyncPipe,
+    TextInput, ErrorNote, SvgIconPipe, TranslatePipe, AsyncPipe,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonDatetime, IonModal,
+    IonSegment, IonSegmentButton,
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
     .table-wrapper { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { border: 1px solid var(--ion-color-light-shade); padding: 6px; text-align: center; }
+    th, td { border: 2px solid var(--ion-background-color, #fff); padding: 6px; text-align: center; }
+    th { background: var(--ion-color-light); }
     th.member, td.member { min-width: 140px; text-align: left; }
+    td.member { background: rgba(56, 128, 255, 0.12); }
     .date-sub { font-size: 10px; color: var(--ion-color-medium); }
-    tr.mine td { background: var(--ion-color-light); }
     td.cell.mine { cursor: pointer; user-select: none; }
-    td.yes { background: rgba(45, 211, 111, 0.25); }
-    td.no { background: rgba(235, 68, 90, 0.2); }
+    td.cell { font-size: 15px; font-weight: 700; color: var(--ion-color-medium); }
+    td.yes { background: rgba(45, 211, 111, 0.25); color: var(--ion-color-success-shade); }
+    td.no { background: rgba(235, 68, 90, 0.2); color: var(--ion-color-danger); }
     tr.counts td { background: var(--ion-color-light-shade); font-weight: 600; }
     tr.counts td.best { color: var(--ion-color-success); }
+    ion-modal.picker { --width: fit-content; --min-width: 300px; --height: fit-content; --border-radius: 8px; }
+    .picker-wrapper { display: flex; flex-direction: column; padding: 8px; gap: 8px; }
   `],
   template: `
     @if (showForm()) {
@@ -40,15 +45,11 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
             <ion-card-content class="ion-no-padding">
               <ion-grid>
                 <ion-row>
-                  <ion-col size="12" size-md="6">
+                  <ion-col size="12">
                     <okr-text-input [i18n]="nameI18n()" [value]="formData().name"
                       (valueChange)="onNameChange($event)" [autofocus]="true"
                       [maxLength]="50" [readOnly]="readOnly()" />
                     <okr-error-note [errors]="nameErrors()" />
-                  </ion-col>
-                  <ion-col size="12" size-md="6">
-                    <okr-notes-input [i18n]="descriptionI18n()" [value]="formData().description"
-                      (valueChange)="onDescriptionChange($event)" [readOnly]="readOnly()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -65,16 +66,20 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
                     <th class="member"></th>
                     @for (column of formData().columns; track column.id) {
                       <th>
-                        <div>{{ weekdayKey(column) | translate | async }}</div>
-                        <div class="date-sub">{{ dayLabel(column) }}</div>
-                        @if (column.startTime) { <div class="date-sub">{{ column.startTime }}</div> }
+                        @if (column.columnLabel) {
+                          <div>{{ column.columnLabel }}</div>
+                        } @else {
+                          <div>{{ weekdayKey(column) | translate | async }}</div>
+                          <div class="date-sub">{{ dayLabel(column) }}</div>
+                          @if (column.startTime) { <div class="date-sub">{{ column.startTime }}</div> }
+                        }
                         @if (formData().isDraft) {
                           <ion-button fill="clear" size="small" [attr.aria-label]="i18n().schedule_column_remove()"
                             (click)="removeColumn(column.id)">
                             <ion-icon src="{{ 'close-circle' | svgIcon }}" />
                           </ion-button>
                         }
-                        @if (canClose()) {
+                        @if (canClose() && !column.columnLabel) {
                           <ion-button fill="clear" size="small" (click)="columnSelected.emit(column.id)">
                             {{ i18n().schedule_pick_date() }}
                           </ion-button>
@@ -122,13 +127,24 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
           </ion-card-content>
         </ion-card>
 
-        <ion-modal [isOpen]="pickerOpen()" (ionModalDidDismiss)="pickerOpen.set(false)">
+        <ion-modal class="picker" [isOpen]="pickerOpen()" (ionModalDidDismiss)="pickerOpen.set(false)">
           <ng-template>
-            <ion-datetime presentation="date-time" [preferWheel]="false"
-              [value]="pickedValue()" (ionChange)="pickedValue.set($any($event).detail.value)" />
-            <ion-button expand="block" (click)="addColumn()">
-              {{ i18n().schedule_date_confirm() }}
-            </ion-button>
+            <div class="picker-wrapper">
+              <ion-segment [value]="pickerMode()" (ionChange)="pickerMode.set($any($event).detail.value)">
+                <ion-segment-button value="date">{{ i18n().schedule_mode_date() }}</ion-segment-button>
+                <ion-segment-button value="text">{{ i18n().schedule_mode_text() }}</ion-segment-button>
+              </ion-segment>
+              @if (pickerMode() === 'date') {
+                <ion-datetime presentation="date-time" [preferWheel]="false"
+                  [value]="pickedValue()" (ionChange)="pickedValue.set($any($event).detail.value)" />
+              } @else {
+                <okr-text-input [i18n]="textColumnI18n()" [value]="pickedText()"
+                  (valueChange)="pickedText.set($event)" [autofocus]="true" [maxLength]="20" [readOnly]="false" />
+              }
+              <ion-button expand="block" (click)="addColumn()">
+                {{ pickerMode() === 'date' ? i18n().schedule_date_confirm() : i18n().schedule_text_confirm() }}
+              </ion-button>
+            </div>
           </ng-template>
         </ion-modal>
       </form>
@@ -147,8 +163,11 @@ export class SchedulePollForm {
   public readonly columnSelected = output<string>();
 
   protected readonly pickerOpen = signal(false);
+  protected readonly pickerMode = signal<'date' | 'text'>('date');
   /** The date currently held in the picker — committed to a column only by addColumn(). */
   protected readonly pickedValue = signal('');
+  /** The header text of a text column — committed only by addColumn(). */
+  protected readonly pickedText = signal('');
 
   protected readonly pollForm = form(this.formData, (path) =>
     validateVestTree(path, schedulePollValidations as any));
@@ -164,11 +183,12 @@ export class SchedulePollForm {
     helper: '',
   } as TextInputI18n));
 
-  protected readonly descriptionI18n = computed(() => ({
-    name: 'description',
-    label: this.i18n().schedule_description_label(),
+  protected readonly textColumnI18n = computed(() => ({
+    name: 'columnLabel',
+    label: this.i18n().schedule_text_label(),
     placeholder: '',
-  } as NotesInputI18n));
+    helper: '',
+  } as TextInputI18n));
 
   protected readonly nameErrors = computed(() => this.pollForm.name().errors().map(error => error.message ?? ''));
 
@@ -216,25 +236,33 @@ export class SchedulePollForm {
    */
   protected openPicker(): void {
     this.pickedValue.set(`${getTodayStr(DateFormat.IsoDate)}T00:00:00`);
+    this.pickedText.set('');
     this.pickerOpen.set(true);
   }
 
   /**
-   * Appends the picked date as a new column — only from the confirm button, never on ionChange:
-   * adjusting the time after picking a day must edit the pick, not append a second column.
+   * Appends the picked date (or text) as a new column — only from the confirm button, never on
+   * ionChange: adjusting the time after picking a day must edit the pick, not append a second column.
+   * A text column is dated today purely so it can be stored as a calevent; it never shows in a calendar.
    */
   protected addColumn(): void {
+    const isText = this.pickerMode() === 'text';
+    const columnLabel = this.pickedText().trim();
     const isoDateTime = this.pickedValue();
     this.pickerOpen.set(false);
-    if (!isoDateTime) return;
-    const startDate = isoDateTime.substring(0, 10).replace(/-/g, '');
+    if (isText ? columnLabel.length === 0 : !isoDateTime) return;
+    const startDate = isText ? getTodayStr(DateFormat.StoreDate) : isoDateTime.substring(0, 10).replace(/-/g, '');
     const hhmm = isoDateTime.substring(11, 16);          // 'HH:mm', the repo's startTime format
-    const startTime = hhmm === '00:00' ? '' : hhmm;
+    const startTime = isText || hhmm === '00:00' ? '' : hhmm;
     this.formData.update(data => {
-      if (data.columns.some(c => c.startDate === startDate && c.startTime === startTime)) return data;
-      const id = `c${data.columns.length}${startDate}${startTime}`;
-      const columns = [...data.columns, { id, startDate, startTime }]
-        .sort((a, b) => (a.startDate + a.startTime).localeCompare(b.startDate + b.startTime));
+      if (isText
+        ? data.columns.some(c => c.columnLabel === columnLabel)
+        : data.columns.some(c => !c.columnLabel && c.startDate === startDate && c.startTime === startTime)) return data;
+      const id = `c${data.columns.length}${startDate}${startTime}${columnLabel}`;
+      // dates first and in order; text columns last (yyyyMMdd always sorts before the '9' prefix)
+      const columns = [...data.columns, { id, startDate, startTime, columnLabel: isText ? columnLabel : '' }]
+        .sort((a, b) => (a.columnLabel ? '9' + a.columnLabel : a.startDate + a.startTime)
+          .localeCompare(b.columnLabel ? '9' + b.columnLabel : b.startDate + b.startTime));
       const rows = data.rows.map((row, index) => index === 0
         ? { ...row, responses: { ...row.responses, [id]: 'accepted' as InvitationState } }
         : row);
@@ -258,11 +286,6 @@ export class SchedulePollForm {
 
   protected onNameChange(value: string): void {
     this.formData.update(data => ({ ...data, name: value }));
-    this.dirty.emit(true);
-  }
-
-  protected onDescriptionChange(value: string): void {
-    this.formData.update(data => ({ ...data, description: value }));
     this.dirty.emit(true);
   }
 }

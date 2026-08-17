@@ -54,19 +54,34 @@
       "message": "{date} wird als definitiver Termin gewählt. Alle anderen Vorschläge werden gelöscht."
     },
     "optionalMessage": "Optionale Nachricht an die Gruppe...",
-    "date": { "confirm": "Termine übernehmen" },
+    "date": {
+      "confirm": "Termin übernehmen"
+    },
     "view": "Abstimmung anzeigen",
     "groupOnly": "Eine Terminabstimmung ist nur in einem Gruppenkalender möglich. Bitte wähle zuerst einen Gruppenkalender aus.",
     "start": "Umfrage starten",
-    "name": { "label": "Thema", "placeholder": "z.B. SCS Achter - Juli & August freitags" },
-    "description": { "label": "Beschreibung" },
-    "column": { "add": "Termin hinzufügen", "remove": "Termin entfernen" },
+    "name": {
+      "label": "Thema",
+      "placeholder": "z.B. SCS Achter - Juli & August freitags"
+    },
+    "column": {
+      "add": "Spalte hinzufügen",
+      "remove": "Spalte entfernen"
+    },
     "acceptances": "Zusagen",
     "pickDate": "Diesen Termin wählen",
     "notFound": "Diese Terminabstimmung existiert nicht mehr. Sie wurde bereits abgeschlossen oder gelöscht.",
     "noRoom": "Die Nachricht konnte nicht in den Gruppenchat geschrieben werden.",
     "saveError": "Die Terminabstimmung konnte nicht gespeichert werden.",
-    "responseSaved": "Deine Antworten wurden gespeichert."
+    "responseSaved": "Deine Antworten wurden gespeichert.",
+    "text": {
+      "confirm": "Text übernehmen",
+      "label": "Text"
+    },
+    "mode": {
+      "date": "Datum",
+      "text": "Text"
+    }
   },
   "update": {
     "label": "Ereignis ändern",

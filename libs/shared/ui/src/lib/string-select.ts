@@ -25,7 +25,7 @@ export interface StringSelectI18n {
         [value]="selectedString()"
         (ionChange)="selectedString.set($event.detail.value)">
         @for(stringValue of stringList(); track $index) {
-          <ion-select-option [value]="stringValue">{{ labels()[$index] ?? stringValue }}</ion-select-option>
+          <ion-select-option [value]="stringValue">{{ labels()[$index] || stringValue }}</ion-select-option>
         }
       </ion-select>
     </ion-item>

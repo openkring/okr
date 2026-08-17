@@ -89,7 +89,9 @@ export class ScheduleModal implements OnDestroy {
   protected readonly proposedEvents = computed(() =>
     this.store.calEvents()
       .filter(e => e.seriesId === this.seriesId() && e.state === 'proposed')
-      .sort((a, b) => (a.startDate + a.startTime).localeCompare(b.startDate + b.startTime)));
+      // same order as the draft table: dates first, text columns last ('9' sorts after any yyyyMMdd)
+      .sort((a, b) => (a.columnLabel ? '9' + a.columnLabel : a.startDate + a.startTime)
+        .localeCompare(b.columnLabel ? '9' + b.columnLabel : b.startDate + b.startTime)));
 
   constructor() {
     // tell the store which series to stream invitations for. `seriesId` is an input, so it is still
@@ -141,7 +143,7 @@ export class ScheduleModal implements OnDestroy {
     return {
       name: events[0]?.name ?? '',
       description: events[0]?.description ?? '',
-      columns: events.map(e => ({ id: e.okey, startDate: e.startDate, startTime: e.startTime })),
+      columns: events.map(e => ({ id: e.okey, startDate: e.startDate, startTime: e.startTime, columnLabel: e.columnLabel ?? '' })),
       rows,
       isDraft: false,
     };

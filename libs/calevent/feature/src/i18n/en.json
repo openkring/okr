@@ -54,19 +54,34 @@
       "message": "{date} is chosen as the definitive date. All other proposals will be removed."
     },
     "optionalMessage": "Optional message to the group...",
-    "date": { "confirm": "Apply dates" },
+    "date": {
+      "confirm": "Apply date"
+    },
     "view": "Show poll",
     "groupOnly": "A date poll is only possible in a group calendar. Please select a group calendar first.",
     "start": "Start poll",
-    "name": { "label": "Topic", "placeholder": "e.g. SCS Eight - July & August on Fridays" },
-    "description": { "label": "Description" },
-    "column": { "add": "Add date", "remove": "Remove date" },
+    "name": {
+      "label": "Topic",
+      "placeholder": "e.g. SCS Eight - July & August on Fridays"
+    },
+    "column": {
+      "add": "Add column",
+      "remove": "Remove column"
+    },
     "acceptances": "Acceptances",
     "pickDate": "Choose this date",
     "notFound": "This date poll no longer exists. It has already been closed or deleted.",
     "noRoom": "The message could not be posted to the group chat.",
     "saveError": "The date poll could not be saved.",
-    "responseSaved": "Your answers have been saved."
+    "responseSaved": "Your answers have been saved.",
+    "text": {
+      "confirm": "Apply text",
+      "label": "Text"
+    },
+    "mode": {
+      "date": "Date",
+      "text": "Text"
+    }
   },
   "update": {
     "label": "Edit event",

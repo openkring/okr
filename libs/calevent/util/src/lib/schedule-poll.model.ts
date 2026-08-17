@@ -5,6 +5,8 @@ export interface SchedulePollColumn {
   id: string;
   startDate: string;   // StoreDate yyyyMMdd
   startTime: string;   // HH:mm, '' = full day (DEFAULT_TIME)
+  /** Text column: the header text shown instead of the date. Its calevent is dated today but hidden from every calendar. */
+  columnLabel?: string;
 }
 
 /** One member = one row. `responses` maps a column id to that member's answer. */

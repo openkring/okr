@@ -288,8 +288,10 @@ export const CalEventStore = signalStore(
         return '';
       }),
       filteredCalEvents: computed(() => 
-        state.calEvents()?.filter((calEvent: CalEventModel) => 
-          nameMatches(calEvent.index, state.searchTerm()) && 
+        state.calEvents()?.filter((calEvent: CalEventModel) =>
+          // text columns of a schedule poll are dated today only to be storable — never show them
+          !calEvent.columnLabel &&
+          nameMatches(calEvent.index, state.searchTerm()) &&
           nameMatches(calEvent.type, state.selectedCategory()) &&
           yearMatches(calEvent.startDate, state.selectedYear()) &&
           chipMatches(calEvent.tags, state.selectedTag()))
@@ -493,6 +495,7 @@ export const CalEventStore = signalStore(
           calevent.isOpen = false;
           calevent.startDate = column.startDate;
           calevent.startTime = column.startTime;
+          calevent.columnLabel = column.columnLabel ?? '';
           calevent.fullDay = column.startTime.length === 0;
           calevent.durationMinutes = calevent.fullDay ? 1440 : 120;
           calevent.calendars = [store.calendarName()];
