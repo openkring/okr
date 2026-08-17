@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { PersonModel, PrivacyUsage } from '@okr/shared-models';
 
-import { getPrivacyUsage, isPrivacyRestricted, mirrorPrivacyUsageToPerson, PRIVACY_USAGE_FIELDS } from './person-privacy.util';
+import { getPrivacyUsage, hasPrivacyChanges, isPrivacyRestricted, mirrorPrivacyUsageToPerson, PRIVACY_USAGE_FIELDS } from './person-privacy.util';
 
 describe('privacy overview helpers (2.83)', () => {
   it('covers every usage* field', () => {
@@ -21,6 +21,14 @@ describe('privacy overview helpers (2.83)', () => {
     expect(isPrivacyRestricted({ usageImages: PrivacyUsage.Protected }, 'usageImages')).toBe(true);
     expect(isPrivacyRestricted({}, 'usageImages')).toBe(false);   // never objected
     expect(isPrivacyRestricted({}, 'usageName')).toBe(true);      // default is Restricted
+  });
+
+  it('reports only persons who moved a setting off its default as changed', () => {
+    expect(hasPrivacyChanges({})).toBe(false);
+    expect(hasPrivacyChanges({ usageImages: PrivacyUsage.Public })).toBe(false);       // default value
+    expect(hasPrivacyChanges({ usageName: PrivacyUsage.Restricted })).toBe(false);     // default value
+    expect(hasPrivacyChanges({ usageImages: PrivacyUsage.Protected })).toBe(true);
+    expect(hasPrivacyChanges({ usageName: PrivacyUsage.Public })).toBe(true);
   });
 });
 

@@ -141,6 +141,7 @@ export const PERSON_I18N_KEYS = {
     privacy_empty:              PFX + 'privacy.empty',
     privacy_hint:               PFX + 'privacy.hint',
     privacy_filter_all:         PFX + 'privacy.filter.all',
+    privacy_filter_changed:     PFX + 'privacy.filter.changed',
     privacy_f_usageImages:      PFX + 'privacy.field.usageImages',
     privacy_f_usageName:        PFX + 'privacy.field.usageName',
     privacy_f_usageEmail:       PFX + 'privacy.field.usageEmail',

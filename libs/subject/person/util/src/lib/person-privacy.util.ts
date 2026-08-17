@@ -41,6 +41,14 @@ export function isPrivacyRestricted(person: Partial<PrivacyUsageFields> | undefi
 }
 
 /**
+ * True when the person changed at least one usage* setting away from its model default —
+ * the "Änderungen" work list: who expressed a preference at all.
+ */
+export function hasPrivacyChanges(person: Partial<PrivacyUsageFields> | undefined): boolean {
+  return PRIVACY_USAGE_FIELDS.some((field) => person?.[field] !== undefined && person[field] !== PRIVACY_USAGE_DEFAULTS[field]);
+}
+
+/**
  * Mirror the display-privacy preferences (usage*) from a source onto a person and return
  * a new person object. The source is typically the linked UserModel, which still owns the
  * editable usage* fields during the deprecate phase; the person is the read source for

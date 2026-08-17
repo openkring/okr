@@ -211,7 +211,8 @@
     "empty": "Niemand hat diese Angabe eingeschränkt.",
     "hint": "Der Filter zeigt die Personen, die die gewählte Angabe eingeschränkt haben.",
     "filter": {
-      "all": "Alle Personen"
+      "all": "Alle Personen",
+      "changed": "Änderungen"
     },
     "field": {
       "usageImages": "Fotos",

@@ -7,7 +7,7 @@ import { FullNamePipe } from '@okr/shared-pipes';
 import { EmptyList } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 
-import { getPrivacyUsage, isPrivacyRestricted, PERSON_I18N_KEYS, PersonI18n, PRIVACY_USAGE_FIELDS, PrivacyUsageFields } from '@okr/subject-person-util';
+import { getPrivacyUsage, hasPrivacyChanges, isPrivacyRestricted, PERSON_I18N_KEYS, PersonI18n, PRIVACY_USAGE_FIELDS, PrivacyUsageFields } from '@okr/subject-person-util';
 
 /**
  * Read-only overview of the `usage*` privacy preferences (PENDING 2.83) — one row per person,
@@ -55,9 +55,8 @@ import { getPrivacyUsage, isPrivacyRestricted, PERSON_I18N_KEYS, PersonI18n, PRI
         <ion-select [value]="filter()" (ionChange)="filter.set($event.detail.value)"
           [label]="i18n.privacy_hint()" labelPlacement="stacked" interface="popover">
           <ion-select-option [value]="''">{{ i18n.privacy_filter_all() }}</ion-select-option>
-          @for (field of fields; track field) {
-            <ion-select-option [value]="field">{{ label(field) }}</ion-select-option>
-          }
+          <ion-select-option value="usageImages">{{ label('usageImages') }}</ion-select-option>
+          <ion-select-option value="changed">{{ i18n.privacy_filter_changed() }}</ion-select-option>
         </ion-select>
       </ion-item>
     </ion-toolbar>
@@ -97,15 +96,15 @@ export class PrivacyList {
 
   protected readonly i18n = inject(I18nService).translateAll(PERSON_I18N_KEYS) as PersonI18n;
   protected readonly fields = PRIVACY_USAGE_FIELDS;
-  /** '' = no filter; otherwise the usage* field whose restrictions are listed. */
-  protected readonly filter = signal<'' | keyof PrivacyUsageFields>('');
+  /** '' = all persons · 'usageImages' = who restricted their picture · 'changed' = who set anything at all. */
+  protected readonly filter = signal<'' | 'usageImages' | 'changed'>('');
 
   protected readonly nameDisplay = computed(() => this.appStore.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);
 
   protected readonly rows = computed<PersonModel[]>(() => {
-    const field = this.filter();
+    const filter = this.filter();
     return this.appStore.allPersons()
-      .filter((person) => !field || isPrivacyRestricted(person, field))
+      .filter((person) => !filter || (filter === 'changed' ? hasPrivacyChanges(person) : isPrivacyRestricted(person, filter)))
       .sort((a, b) => (a.lastName ?? '').localeCompare(b.lastName ?? ''));
   });
 
