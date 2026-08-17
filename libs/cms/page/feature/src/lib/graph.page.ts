@@ -37,11 +37,18 @@ import { PageStore } from './page.store';
       font-family: var(--ion-font-family);
     }
     .expand-all {
+      display: flex;
+      align-items: center;
+      gap: 16px;
       padding: 8px 16px 0;
     }
-    .expand-all ion-checkbox {
-      --size: 16px;
+    .level-label {
       font-size: 0.8rem;
+    }
+    .expand-all ion-button {
+      --padding-start: 10px;
+      --padding-end: 10px;
+      min-width: 56px;
     }
     .legend {
       display: flex;
@@ -61,10 +68,15 @@ import { PageStore } from './page.store';
       border-radius: 50%;
       flex-shrink: 0;
     }
+    .legend-item ion-checkbox {
+      --size: 16px;
+      font-size: 0.8rem;
+    }
     .dot-menu     { background: var(--ion-color-primary); }
     .dot-navigate { background: var(--ion-color-secondary); }
     .dot-browse   { background: var(--ion-color-tertiary); }
     .dot-page     { background: var(--ion-color-success); }
+    .dot-context  { background: var(--ion-color-tertiary); }
     .dot-section  { background: var(--ion-color-warning); }
   `],
   template: `
@@ -105,20 +117,30 @@ import { PageStore } from './page.store';
         </ion-item>
       } @else {
 
-        <!-- Expand / collapse the whole sitemap -->
+        <!-- How many tree levels are expanded: click to step through all → 1 → 2 → 3 -->
         <div class="expand-all">
-          <ion-checkbox labelPlacement="end" [checked]="graphStore.allExpanded()" (ionChange)="onToggleExpandAll($event)">
-            Expand all
-          </ion-checkbox>
+          <span class="level-label">Level</span>
+          <ion-button size="small" fill="outline" (click)="graphStore.cycleLevel()">{{ graphStore.level() }}</ion-button>
         </div>
 
-        <!-- Legend -->
+        <!-- Legend: context and section are filters, the rest is always shown -->
         <div class="legend">
           <div class="legend-item"><div class="legend-dot dot-menu"></div> menu / sub</div>
           <div class="legend-item"><div class="legend-dot dot-navigate"></div> navigate</div>
           <div class="legend-item"><div class="legend-dot dot-browse"></div> browse</div>
           <div class="legend-item"><div class="legend-dot dot-page"></div> page</div>
-          <div class="legend-item"><div class="legend-dot dot-section"></div> section</div>
+          <div class="legend-item">
+            <div class="legend-dot dot-context"></div>
+            <ion-checkbox labelPlacement="end" [checked]="graphStore.showContext()" (ionChange)="graphStore.setShowContext($event.detail.checked)">
+              context
+            </ion-checkbox>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot dot-section"></div>
+            <ion-checkbox labelPlacement="end" [checked]="graphStore.showSection()" (ionChange)="graphStore.setShowSection($event.detail.checked)">
+              section
+            </ion-checkbox>
+          </div>
         </div>
 
         <!-- Dependency tree -->
@@ -147,7 +169,7 @@ export class GraphPage {
   // derived signals
   protected popupId = computed(() => 'c_graphpage_' + this.store.page()?.okey);
 
-  /** Expand the whole sitemap once, as soon as the tree has loaded. */
+  /** Expand the sitemap to the default level once, as soon as the tree has loaded. */
   private hasAutoExpanded = false;
 
   constructor() {
@@ -155,17 +177,12 @@ export class GraphPage {
       const expandableIds = this.graphStore.allExpandableIds();
       if (!this.hasAutoExpanded && expandableIds.length > 0) {
         this.hasAutoExpanded = true;
-        this.graphStore.setAllExpanded(true);
+        this.graphStore.setLevel(this.graphStore.level());
       }
     });
   }
 
   /******************************* actions *************************************** */
-  /** Expand or collapse every node of the sitemap. */
-  protected onToggleExpandAll(event: CustomEvent): void {
-    this.graphStore.setAllExpanded(event.detail.checked);
-  }
-
   /** Open the help modal explaining the menu types and how to use the sitemap. */
   protected async showHelp(): Promise<void> {
     const { GraphHelpModal } = await import('./graph-help.modal');
@@ -184,6 +201,7 @@ export class GraphPage {
     switch(selectedMethod) {
       case 'exportRaw': await this.store.export("raw"); break;
       case 'exportXml': await this.store.export("xml"); break;
+      case 'add': await this.menuStore.edit(undefined, false); break;
       default: error(undefined, `GraphPage.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }

@@ -76,6 +76,12 @@ function menuIcon(action: string): string {
   }
 }
 
+/** Which optional leaf node types are shown in the tree. */
+export interface GraphFilter {
+  context: boolean;
+  section: boolean;
+}
+
 function buildSectionNodes(
   page: PageModel,
   allSections: SectionModel[],
@@ -107,12 +113,13 @@ function buildPageNode(
   allMenuItems: MenuItemModel[],
   allSections: SectionModel[],
   visitedPages: Set<string>,
-  sectionTypes: CategoryListModel
+  sectionTypes: CategoryListModel,
+  filter: GraphFilter
 ): DependencyNode {
   const children: DependencyNode[] = [];
 
   // Context menu (shown as a child node of the page)
-  if (contextMenuName) {
+  if (contextMenuName && filter.context) {
     const ctxItem = allMenuItems.find(i => i.name === contextMenuName);
     if (ctxItem) {
       children.push({
@@ -132,7 +139,9 @@ function buildPageNode(
   }
 
   // Sections
-  children.push(...buildSectionNodes(page, allSections, visitedPages, sectionTypes));
+  if (filter.section) {
+    children.push(...buildSectionNodes(page, allSections, visitedPages, sectionTypes));
+  }
 
   return {
     id: `page-${page.okey}`,
@@ -156,7 +165,8 @@ function buildMenuNode(
   allSections: SectionModel[],
   visitedMenus: Set<string>,
   visitedPages: Set<string>,
-  sectionTypes: CategoryListModel
+  sectionTypes: CategoryListModel,
+  filter: GraphFilter
 ): DependencyNode {
   // Guard against circular references
   if (visitedMenus.has(item.okey)) {
@@ -183,7 +193,7 @@ function buildMenuNode(
     for (const childKey of item.menuItems) {
       const child = findMenuItem(childKey, allMenuItems);
       if (child) {
-        children.push(buildMenuNode(child, allMenuItems, allPages, allSections, new Set(visitedMenus), visitedPages, sectionTypes));
+        children.push(buildMenuNode(child, allMenuItems, allPages, allSections, new Set(visitedMenus), visitedPages, sectionTypes, filter));
       }
     }
   }
@@ -196,7 +206,7 @@ function buildMenuNode(
       const page = allPages.find(p => p.okey === pageId);
       if (page) {
         visitedPages.add(pageId);
-        children.push(buildPageNode(page, ctxName, allMenuItems, allSections, visitedPages, sectionTypes));
+        children.push(buildPageNode(page, ctxName, allMenuItems, allSections, visitedPages, sectionTypes, filter));
       }
     }
   }
@@ -236,6 +246,15 @@ function collectExpandableIds(node: DependencyNode, ids: string[]): void {
   }
 }
 
+/** Collect the ids of every expandable node down to `level` (root = level 1). */
+export function collectIdsUpToLevel(node: DependencyNode, level: number, ids: string[], depth = 1): void {
+  if (depth > level) return;
+  if (node.children.length > 0) ids.push(node.id);
+  for (const child of node.children) {
+    collectIdsUpToLevel(child, level, ids, depth + 1);
+  }
+}
+
 /** Walk the tree and collect all navigate menu items (they carry a page URL). */
 function collectNavigateUrls(node: DependencyNode, urls: string[]): void {
   if (node.nodeType === 'menu' && node.subType === 'navigate') {
@@ -262,12 +281,21 @@ function buildSitemap(tree: DependencyNode): string {
 // Store
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** How many tree levels are expanded (main menu = level 1); 'all' expands the whole tree. */
+export type GraphLevel = 'all' | 1 | 2 | 3;
+
+/** The order the level button cycles through on each click. */
+export const GRAPH_LEVELS: GraphLevel[] = ['all', 1, 2, 3];
+
 export type MenuGraphState = {
   expandedIds: string[];
+  level: GraphLevel;
+  showContext: boolean;
+  showSection: boolean;
 };
 
 export const MenuGraphStore = signalStore(
-  withState<MenuGraphState>({ expandedIds: [] }),
+  withState<MenuGraphState>({ expandedIds: [], level: 2, showContext: false, showSection: false }),
   withProps(() => ({
     appStore: inject(AppStore),
     menuService: inject(MenuService),
@@ -315,7 +343,8 @@ export const MenuGraphStore = signalStore(
       if (!mainItem) return null;
 
       const sectionTypes = state.appStore.getCategory('section_type');
-      return buildMenuNode(mainItem, items, pages, sections, new Set(), new Set(), sectionTypes);
+      const filter = { context: state.showContext(), section: state.showSection() };
+      return buildMenuNode(mainItem, items, pages, sections, new Set(), new Set(), sectionTypes, filter);
     }),
   })),
 
@@ -328,14 +357,14 @@ export const MenuGraphStore = signalStore(
       collectExpandableIds(tree, ids);
       return ids;
     }),
-  })),
 
-  withComputed(state => ({
-    /** True when every expandable node is currently expanded. */
-    allExpanded: computed(() => {
-      const all = state.allExpandableIds();
-      const expanded = state.expandedIds();
-      return all.length > 0 && all.every(id => expanded.includes(id));
+    /** Ids of every expandable node down to the currently selected level. */
+    levelIds: computed((): string[] => {
+      const tree = state.dependencyTree();
+      if (!tree) return [];
+      const ids: string[] = [];
+      collectIdsUpToLevel(tree, state.level() === 'all' ? Number.MAX_SAFE_INTEGER : state.level() as number, ids);
+      return ids;
     }),
   })),
 
@@ -352,9 +381,29 @@ export const MenuGraphStore = signalStore(
       return state.expandedIds().includes(nodeId);
     },
 
-    /** Expand all nodes, collapse all, or set explicitly. */
-    setAllExpanded(expand: boolean): void {
-      patchState(state, { expandedIds: expand ? [...state.allExpandableIds()] : [] });
+    /** Expand the tree down to `level` (main menu = level 1) and collapse everything below. */
+    setLevel(level: GraphLevel): void {
+      patchState(state, { level });
+      patchState(state, { expandedIds: [...state.levelIds()] });
+    },
+
+    /** Step to the next level: all → 1 → 2 → 3 → all. */
+    cycleLevel(): void {
+      const next = GRAPH_LEVELS[(GRAPH_LEVELS.indexOf(state.level()) + 1) % GRAPH_LEVELS.length];
+      patchState(state, { level: next });
+      patchState(state, { expandedIds: [...state.levelIds()] });
+    },
+
+    /** Show or hide context-menu nodes, keeping the current expansion state. */
+    setShowContext(show: boolean): void {
+      patchState(state, { showContext: show });
+      if (state.level() === 'all') patchState(state, { expandedIds: [...state.levelIds()] });
+    },
+
+    /** Show or hide section nodes, keeping the current expansion state. */
+    setShowSection(show: boolean): void {
+      patchState(state, { showSection: show });
+      if (state.level() === 'all') patchState(state, { expandedIds: [...state.levelIds()] });
     },
 
     async export(type: string): Promise<void> {
