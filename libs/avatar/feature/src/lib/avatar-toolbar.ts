@@ -62,7 +62,9 @@ export class AvatarToolbar {
   public color = input<ColorIonic>(ColorIonic.Light);
   public title = input<string | undefined>();
   public subTitle = input<string | undefined>(); // if subTitle starts with tel: or mailto: a href link is created
-  public modelType = input.required<'person' | 'org' | 'group'>();
+  public modelType = input.required<'person' | 'org' | 'group' | 'resource'>();
+  /** Icon name shown when the subject has no avatar; falls back to the modelType icon. */
+  public defaultIcon = input<string>('');
 
   // signals
   public imageSelected = output<Photo>();
@@ -78,6 +80,7 @@ export class AvatarToolbar {
     effect(() => {
       this.avatarToolbarStore.setKey(this.key());
       this.avatarToolbarStore.setModelType(this.modelType());
+      this.avatarToolbarStore.setDefaultIcon(this.defaultIcon());
     });
   }
 

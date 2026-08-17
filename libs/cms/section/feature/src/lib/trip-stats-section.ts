@@ -92,7 +92,7 @@ import { StatsRow, StatsSortField, TripStatsSectionStore } from './trip-stats-se
                     </ion-col>
                   </ion-row>
                   @for(row of store.listRows(); track row.key) {
-                    <ion-row class="item-row">
+                    <ion-row class="item-row clickable" (click)="store.showDetail(row, fallbackIcon(row) ?? '')">
                       <ion-col class="name">
                         <ion-avatar>
                           <ion-img src="{{ row.avatarKey | avatar:fallbackIcon(row) }}" alt="Avatar" />

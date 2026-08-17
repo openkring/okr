@@ -16,11 +16,13 @@ import { getDefaultIcon } from '@okr/avatar-util';
 export interface AvatarToolbarState {
   key: string; // = ModelType.ModelKey e.g. person.lasdfölj
   modelType: string;
+  defaultIcon: string; // overrides the modelType icon shown when the subject has no avatar
 }
 
 export const initialState: AvatarToolbarState = {
   key: '', // The key of the model for which the avatar is displayed
   modelType: '',
+  defaultIcon: '',
 };
 
 export const AvatarToolbarStore = signalStore(
@@ -61,7 +63,7 @@ export const AvatarToolbarStore = signalStore(
 
   withComputed(state => {
     return {
-      url: computed(() => state.avatarService.getAvatarUrl(state.key(), getDefaultIcon(state.modelType()))),
+      url: computed(() => state.avatarService.getAvatarUrl(state.key(), state.defaultIcon() || getDefaultIcon(state.modelType()))),
     };
   }),
 
@@ -73,6 +75,10 @@ export const AvatarToolbarStore = signalStore(
 
       setModelType(modelType: string) {
         patchState(store, { modelType });
+      },
+
+      setDefaultIcon(defaultIcon: string) {
+        patchState(store, { defaultIcon });
       },
 
       async showZoomedImage(title = 'Avatar'): Promise<void> {

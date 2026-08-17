@@ -1,5 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { combineLatest, map, of } from 'rxjs';
 import type { EChartsOption } from 'echarts';
@@ -51,6 +52,7 @@ export const TripStatsSectionStore = signalStore(
     appStore:         inject(AppStore),
     tripStatsService: inject(TripStatsService),
     i18nService:      inject(I18nService),
+    modalController:  inject(ModalController),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(SECTION_I18N_KEYS),
@@ -189,6 +191,18 @@ export const TripStatsSectionStore = signalStore(
         viewType:    config.viewType    ?? 'list',
         contentType: config.contentType ?? 'boat',
       });
+    },
+
+    /** Drill down into one row: all trips of that person/boat, per year. */
+    async showDetail(row: StatsRow, defaultIcon: string): Promise<void> {
+      const { TripStatsDetailModal } = await import('./trip-stats-detail.modal');
+      const modal = await store.modalController.create({
+        component: TripStatsDetailModal,
+        cssClass: 'wide-modal',
+        componentProps: { row, contentType: store.contentType(), defaultIcon },
+      });
+      await modal.present();
+      await modal.onDidDismiss();
     },
 
     setYear(selectedYear: number): void {

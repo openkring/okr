@@ -24,6 +24,8 @@
     "@okr/calevent-util": "*",
     "@okr/subject-group-util": "*",
     "@okr/avatar-data-access": "*",
+    "@okr/avatar-ui": "*",
+    "@okr/avatar-feature": "*",
     "@okr/content-document-ui": "*",
     "@okr/content-document-feature": "*",
     "@okr/activity-data-access": "*",
