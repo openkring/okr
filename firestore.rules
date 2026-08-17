@@ -568,6 +568,11 @@ service cloud.firestore {
       allow read:  if signedIn();
       allow write: if false;
     }
+    // '<boats|members>_<year>' — the whole ranking in one doc, written by Cloud Functions only.
+    match /stats_rollup/{rollupId} {
+      allow read:  if signedIn();
+      allow write: if false;
+    }
     match /esignList/{esignId} {
       // esign records carry a singular tenantId field (not a tenants[] array).
       allow read:  if userExists() && callerTenants().hasAny([resource.data.tenantId]);

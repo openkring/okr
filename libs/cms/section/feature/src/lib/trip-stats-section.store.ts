@@ -2,14 +2,14 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { combineLatest, map, of } from 'rxjs';
+import { of } from 'rxjs';
 import type { EChartsOption } from 'echarts';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { PersonModel, ResourceModel, TripStatsConfig } from '@okr/shared-models';
 
-import { TripStatsService, YearStats } from '@okr/trip-data-access';
+import { StatsRollup, TripStatsService } from '@okr/trip-data-access';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export interface StatsRow {
@@ -60,69 +60,42 @@ export const TripStatsSectionStore = signalStore(
   withComputed(store => ({
     /** Boat-type category, used by the list to label the rboat-type column. */
     rboatTypes: computed(() => store.appStore.tryGetCategory('rboat_type')),
-    entityKeys: computed(() => {
-      if (store.contentType() === 'boat') {
-        return store.appStore.allResources()
-          .filter((r: ResourceModel) => r.type === 'rboat')
-          .map((r: ResourceModel) => r.okey)
-          .filter((k): k is string => !!k);
-      }
-      return store.appStore.allPersons()
-        .map((p: PersonModel) => p.okey)
-        .filter((k): k is string => !!k);
-    }),
   })),
   withProps(store => ({
-    // Loads only the selected year — active when viewType === 'list'
+    // One document holds the whole ranking for the selected year — active when viewType === 'list'
     listResource: rxResource({
       params: () => ({
         viewType:     store.viewType(),
         entityType:   store.contentType() === 'boat' ? 'boats' as const : 'members' as const,
-        keys:         store.entityKeys(),
         selectedYear: store.selectedYear(),
       }),
-      stream: ({ params }) => {
-        if (params.viewType !== 'list' || !params.keys.length) return of([] as Array<{ key: string; stats: YearStats | undefined }>);
-        return combineLatest(
-          params.keys.map(key =>
-            store.tripStatsService.getStats(params.entityType, key, params.selectedYear).pipe(
-              map(stats => ({ key, stats }))
-            )
-          )
-        );
-      },
+      stream: ({ params }) => params.viewType !== 'list'
+        ? of(undefined)
+        : store.tripStatsService.getRollup(params.entityType, params.selectedYear),
     }),
-    // Loads full history — active when viewType === 'graph'
+    // One query over all years' rollups — active when viewType === 'graph'
     graphResource: rxResource({
       params: () => ({
         viewType:   store.viewType(),
         entityType: store.contentType() === 'boat' ? 'boats' as const : 'members' as const,
-        keys:       store.entityKeys(),
       }),
-      stream: ({ params }) => {
-        if (params.viewType !== 'graph' || !params.keys.length) return of([] as Array<{ key: string; history: YearStats[] }>);
-        return combineLatest(
-          params.keys.map(key =>
-            store.tripStatsService.getHistory(params.entityType, key).pipe(
-              map(history => ({ key, history }))
-            )
-          )
-        );
-      },
+      stream: ({ params }) => params.viewType !== 'graph'
+        ? of([] as StatsRollup[])
+        : store.tripStatsService.getRollupHistory(params.entityType),
     }),
   })),
   withComputed(store => ({
     isLoading: computed(() => store.listResource.isLoading() || store.graphResource.isLoading()),
 
     listRows: computed((): StatsRow[] => {
-      const raw         = store.listResource.value() ?? [];
+      const entries     = store.listResource.value()?.entries ?? {};
       const term        = store.searchTerm().toLowerCase();
       const contentType = store.contentType();
       const sortField   = store.sortField();
       const sortAsc     = store.sortAsc();
 
-      return raw
-        .map(({ key, stats }: { key: string; stats: YearStats | undefined }) => {
+      return Object.entries(entries)
+        .map(([key, stats]) => {
           let name: string;
           let subType = '';
           if (contentType === 'boat') {
@@ -139,8 +112,8 @@ export const TripStatsSectionStore = signalStore(
             name,
             subType,
             avatarKey: `${modelType}.${key}`,
-            km: stats?.totalKm ?? 0,
-            trips: stats?.tripCount ?? 0,
+            km: stats?.km ?? 0,
+            trips: stats?.count ?? 0,
           };
         })
         .filter(r => r.km > 0 && (!term || r.name.toLowerCase().includes(term)))
@@ -161,12 +134,13 @@ export const TripStatsSectionStore = signalStore(
       const raw = store.graphResource.value() ?? [];
       if (!raw.length) return null;
 
+      // Each rollup doc is one year ('<entityType>_<year>'); its entries sum to that year's club total.
       const yearMap = new Map<string, number>();
-      for (const { history } of raw as { key: string; history: YearStats[] }[]) {
-        for (const h of history) {
-          if (!h.okey) continue;
-          yearMap.set(h.okey, (yearMap.get(h.okey) ?? 0) + h.totalKm);
-        }
+      for (const rollup of raw) {
+        const year = rollup.okey?.split('_')[1];
+        if (!year) continue;
+        const total = Object.values(rollup.entries ?? {}).reduce((sum, e) => sum + (e.km ?? 0), 0);
+        yearMap.set(year, total);
       }
       const years = [...yearMap.keys()].sort();
       if (!years.length) return null;

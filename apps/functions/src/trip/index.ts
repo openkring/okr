@@ -71,6 +71,17 @@ export function computeDeltas(
   return [...map.values()];
 }
 
+/**
+ * A stat delta path is `stats_<type>/<key>/years/<year>`. The same delta also lands in one
+ * rollup doc per (type, year) — `stats_rollup/<type>_<year>` with an `entries` map keyed by
+ * entity — so the client reads the whole ranking in a single document instead of one
+ * listener per boat/person.
+ */
+export function rollupTarget(path: string): { doc: string; key: string } | undefined {
+  const m = /^stats_(boats|members)\/(.+)\/years\/(\d{4})$/.exec(path);
+  return m ? { doc: `stats_rollup/${m[1]}_${m[3]}`, key: m[2] } : undefined;
+}
+
 export const onTripWrite = onDocumentWritten(
   { document: 'trips/{tripId}', region: REGION },
   async (event) => {
@@ -91,6 +102,19 @@ export const onTripWrite = onDocumentWritten(
           tripCount: (cur['tripCount'] as number ?? 0) + deltas[i].count,
           updatedAt: FieldValue.serverTimestamp(),
         });
+      }
+
+      // Same deltas, aggregated into one doc per (type, year) — increments need no read.
+      const rollups = new Map<string, Record<string, unknown>>();
+      for (const d of deltas) {
+        const target = rollupTarget(d.path);
+        if (!target) continue;
+        const entries = rollups.get(target.doc) ?? {};
+        entries[target.key] = { km: FieldValue.increment(d.km), count: FieldValue.increment(d.count) };
+        rollups.set(target.doc, entries);
+      }
+      for (const [path, entries] of rollups) {
+        tx.set(db.doc(path), { entries, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
       }
     });
 
@@ -135,10 +159,19 @@ export const onTripStatsReconcile = onSchedule(
       }
     }
 
-    const allWrites: Array<{ ref: FirebaseFirestore.DocumentReference; data: { totalKm: number; tripCount: number } }> = [
+    const allWrites: Array<{ ref: FirebaseFirestore.DocumentReference; data: Record<string, unknown> }> = [
       ...[...boatTotals.entries()].map(([key, data]) => ({ ref: db.doc(`stats_boats/${key}/years/${yearStr}`), data })),
       ...[...memberTotals.entries()].map(([key, data]) => ({ ref: db.doc(`stats_members/${key}/years/${yearStr}`), data })),
     ];
+
+    // Rollups are rewritten wholesale (no merge): the nightly job is the authority, so any drift
+    // the incremental deltas accumulated during the day is corrected here.
+    const toEntries = (m: Map<string, { totalKm: number; tripCount: number }>) =>
+      Object.fromEntries([...m].map(([key, v]) => [key, { km: v.totalKm, count: v.tripCount }]));
+    allWrites.push(
+      { ref: db.doc(`stats_rollup/boats_${yearStr}`),   data: { entries: toEntries(boatTotals) } },
+      { ref: db.doc(`stats_rollup/members_${yearStr}`), data: { entries: toEntries(memberTotals) } },
+    );
 
     const CHUNK = 400;
     for (let i = 0; i < allWrites.length; i += CHUNK) {

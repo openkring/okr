@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeDeltas } from './index';
+import { computeDeltas, rollupTarget } from './index';
 
 const BOAT_KEY = 'B1';
 const MEMBER_1 = 'M1';
@@ -75,5 +75,19 @@ describe('computeDeltas', () => {
     const boatDelta = deltas.find(d => d.path === `stats_boats/${BOAT_KEY}/years/2026`);
     expect(boatDelta?.km).toBe(2); // -10 + 12
     expect(boatDelta?.count).toBe(0); // -1 + 1
+  });
+});
+
+describe('rollupTarget', () => {
+  it('maps a boat stat path to its rollup doc', () => {
+    expect(rollupTarget('stats_boats/abc123/years/2026')).toEqual({ doc: 'stats_rollup/boats_2026', key: 'abc123' });
+  });
+
+  it('maps a member stat path to its rollup doc', () => {
+    expect(rollupTarget('stats_members/p1/years/2019')).toEqual({ doc: 'stats_rollup/members_2019', key: 'p1' });
+  });
+
+  it('ignores an unrelated path', () => {
+    expect(rollupTarget('trips/abc123')).toBeUndefined();
   });
 });
