@@ -6,7 +6,7 @@ import {
   initializeFirestore,
   memoryLocalCache,
   persistentLocalCache,
-  persistentSingleTabManager,
+  persistentMultipleTabManager,
 } from "firebase/firestore";
 import { ENV } from "./env";
 import { getApp } from "firebase/app";
@@ -55,16 +55,22 @@ export function isIos(): boolean {
  * Safari/iOS and on Firefox under Enhanced Tracking Protection). Other browsers use auto-detection.
  *
  * Cache: Safari and Firefox use in-memory cache; all other browsers use persistentLocalCache
- * with persistentSingleTabManager. Both Safari (under ITP) and Firefox (under ETP/private mode)
+ * with persistentMultipleTabManager. Both Safari (under ITP) and Firefox (under ETP/private mode)
  * can hang on the async IndexedDB open — the open never settles, so the first snapshot never
  * arrives and list views spin forever (observed live: normal Safari with persistentLocalCache
  * hangs the side-menu; the same Safari in private mode falls back to memory cache and works).
  * The async hang escapes the try/catch below (which only catches a synchronous throw), so it
  * must be avoided up front, not caught. This re-establishes the "no IndexedDB on Safari" carve-out
  * (the v12 #9056 fix addressed a different, synchronous failure — not this ITP open-hang). Both
- * lose offline persistence, which is acceptable. Single-tab manager avoids the open multi-tab
- * leader-election edge cases (#6511, #8314, #6806). If persistent init still throws on the
+ * lose offline persistence, which is acceptable. If persistent init still throws on the
  * remaining browsers (e.g. open issue #8860), fall back to in-memory cache.
+ *
+ * Tab manager: multi-tab. Single-tab was used until 2026-08 to avoid the open multi-tab
+ * leader-election edge cases (#6511, #8314, #6806), but it takes an EXCLUSIVE IndexedDB lock:
+ * opening the app in a second tab failed the lock, permanently failed Firestore's AsyncQueue,
+ * and every later enqueue threw the unhandled b815 assertion — Firestore dead in that tab until
+ * reload (SCS-4P / SCS-4R, seen in production on the very first two-tab session). A guaranteed
+ * crash beats flaky leader election, so the trade was reversed.
  *
  * Eviction: navigator.storage.persist() is requested on first init — harmless in a tab,
  * materially helps an installed iOS Home Screen PWA stay durable across WebKit storage pressure.
@@ -115,7 +121,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
         firestore = initializeFirestore(app, {
           ...baseOptions,
           localCache: persistentLocalCache({
-            tabManager: persistentSingleTabManager({}),
+            tabManager: persistentMultipleTabManager(),
           }),
         });
         cacheMode = 'persistent-single-tab';
