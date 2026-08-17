@@ -54,10 +54,11 @@ import { AttendeesAccordion } from './attendees-accordion';
           <ion-card>
             <ion-card-content class="ion-no-padding">
               <ion-accordion-group value="invitees">
+                <!-- open event: attendance is self-service (attendees list).
+                     closed event: attendance comes from invitations only. -->
                 @if(calevent().isOpen) {
                   <okr-attendees-accordion [calevent]="formData" [currentUser]="currentUser()" [tenantId]="tenantId()" [readOnly]="isReadOnly()" />
-                } 
-                @else {
+                } @else {
                   <okr-invitees-accordion [calevent]="formData" [readOnly]="isReadOnly()" />
                 }
                 <!-- documents: organiser/admin only, and not supported on personal events;

@@ -89,7 +89,12 @@
     "members": {
       "label": "Gruppenmitglieder einladen",
       "conf": "Die Mitglieder der Gruppe wurden eingeladen.",
-      "error": "Die Mitglieder der Gruppe konnten nicht eingeladen werden."
+      "error": "Die Mitglieder der Gruppe konnten nicht eingeladen werden.",
+      "none": "Alle Gruppenmitglieder sind bereits eingeladen."
+    },
+    "message": {
+      "title": "Nachricht an die Eingeladenen",
+      "placeholder": "Optionaler Text, der mit der Einladung verschickt wird"
     }
   },
   "invitation": {
@@ -254,11 +259,12 @@
     "persons": "Verantwortlich",
     "description": "Personen, die für den Anlass verantwortlich sind.",
     "organiser": {
+      "contact": "Organisierende Person …",
       "select": "Organisierende Person wählen",
-      "view": "Organisierende Person anzeigen",
-      "call": "Organisierende Person anrufen",
-      "chat": "Organisierende Person chatten",
-      "email": "Organisierende Person – E-Mail senden"
+      "view": "Anzeigen",
+      "call": "Anrufen",
+      "chat": "Direkt Chat eröffnen",
+      "email": "Email senden"
     }
   },
   "seriesId": {

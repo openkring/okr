@@ -89,7 +89,12 @@
     "members": {
       "label": "Invitare i membri del gruppo",
       "conf": "I membri del gruppo sono stati invitati.",
-      "error": "Non è stato possibile invitare i membri del gruppo."
+      "error": "Non è stato possibile invitare i membri del gruppo.",
+      "none": "Tutti i membri del gruppo sono già stati invitati."
+    },
+    "message": {
+      "title": "Messaggio agli invitati",
+      "placeholder": "Testo facoltativo inviato con l'invito"
     }
   },
   "invitation": {

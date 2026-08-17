@@ -73,6 +73,9 @@ export const CALEVENT_I18N_KEYS = {
   invite_members:             PFX + 'invite.members.label',
   invite_members_conf:        PFX + 'invite.members.conf',
   invite_members_error:       PFX + 'invite.members.error',
+  invite_members_none:        PFX + 'invite.members.none',
+  invite_message_title:       PFX + 'invite.message.title',
+  invite_message_placeholder: PFX + 'invite.message.placeholder',
 
   invitation_pending:         PFX + 'invitation.pending',
   invitation_update:          PFX + 'invitation.update.label',
@@ -189,6 +192,7 @@ export const CALEVENT_I18N_KEYS = {
 
   responsible:                    PFX + 'responsible.label',
   responsible_add:                PFX + 'responsible.add',
+  organiser_contact:              PFX + 'responsible.organiser.contact',
   organiser_select:               PFX + 'responsible.organiser.select',
   organiser_view:                 PFX + 'responsible.organiser.view',
   organiser_call:                 PFX + 'responsible.organiser.call',

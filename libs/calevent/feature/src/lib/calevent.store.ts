@@ -293,6 +293,26 @@ export const CalEventStore = signalStore(
     };
   }),
 
+  withProps((store) => ({
+    // Every invitation of the tenant (not just the current user's) — needed to tell whether a whole
+    // group has already been invited. Same underlying query as invitationsForCurrentUserResource,
+    // so FirestoreService hands back the cached stream instead of opening a second listener.
+    allInvitationsResource: rxResource({
+      params: () => ({ personKey: store.appStore.currentUser()?.personKey }),
+      stream: ({ params }) => params.personKey
+        ? store.appStore.firestoreService.searchData<InvitationModel>(InvitationCollection, getSystemQuery(store.appStore.env.tenantId), 'inviteeKey', 'asc')
+        : of([]),
+    }),
+
+    // members of the group owning the currently selected calendar; empty in the 'all'/'my' views
+    groupMembersResource: rxResource({
+      params: () => ({ groupId: store.groupCalendarId() }),
+      stream: ({ params }) => params.groupId
+        ? store.membershipService.listMembersOfOrg(params.groupId, 'group')
+        : of([]),
+    }),
+  })),
+
   withMethods((store) => {
     return {
       reset() {
@@ -351,6 +371,20 @@ export const CalEventStore = signalStore(
         return (calEvent.calendars ?? []).some(calKey =>
           calendars.find(c => c.okey === calKey)?.owner?.startsWith('group.') === true
         );
+      },
+
+      /**
+       * Whether offering 'invite the group members' still makes sense: false once every member of the
+       * owning group holds an invitation for this event (re-inviting would only produce a toast).
+       * Falls back to true when the member list is unknown (e.g. the 'all'/'my' view, where no single
+       * group calendar is selected) — inviteGroupMembers then reports the outcome itself.
+       */
+      canInviteGroup(calevent: CalEventModel): boolean {
+        if (!this.isGroupCalevent(calevent)) return false;
+        const members = store.groupMembersResource.value() ?? [];
+        if (members.length === 0) return true;
+        const existing = (store.allInvitationsResource.value() ?? []).filter(inv => inv.caleventKey === calevent.okey && !inv.isArchived);
+        return inviteeCandidates(members.map(m => m.memberKey), existing, store.currentUser()?.personKey ?? '').length > 0;
       },
 
       getTags(): string {

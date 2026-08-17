@@ -658,10 +658,12 @@ export class CalEventList implements OnInit {
           actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
         }
       }
-      if (canChange && showAttendance && this.store.isGroupCalevent(calevent)) {
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.store.i18n.invite_members(), this.imgixBaseUrl, 'add'));
-      }
+      // inviting only exists on closed events — an open event is self-service (attendees list)
       if (canChange && showAttendance) {
+        actionSheetOptions.buttons.push(createActionSheetDivider());
+        if (this.store.canInviteGroup(calevent)) {
+          actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.store.i18n.invite_members(), this.imgixBaseUrl, 'add'));
+        }
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.store.i18n.invite_person(), this.imgixBaseUrl, 'person-add'));
       }
     }

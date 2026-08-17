@@ -89,7 +89,12 @@
     "members": {
       "label": "Invite group members",
       "conf": "The members of the group have been invited.",
-      "error": "The members of the group could not be invited."
+      "error": "The members of the group could not be invited.",
+      "none": "All group members have already been invited."
+    },
+    "message": {
+      "title": "Message to the invitees",
+      "placeholder": "Optional text sent along with the invitation"
     }
   },
   "invitation": {
