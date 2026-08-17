@@ -9,10 +9,12 @@ import { getFirestore } from 'firebase-admin/firestore';
 import {
   matrixAdminToken,
   MATRIX_HOMESERVER,
-  requireMatrixLocalpart,
+  requireUserPersonKey,
   requireRole,
   ensureMatrixUserExists,
   resolveGroupRoom,
+  resolveAskRoom,
+  activeGroupMemberKeys,
   ensureAdminInRoom,
   forceJoinUserToRoom,
   kickUserFromRoom,
@@ -98,7 +100,9 @@ export const requestGroupRoomAccess = onCall(
     // SEC-3: the localpart MUST come from the personKey — no UID fallback, or this
     // becomes a second avenue for duplicate `@<uid>` accounts (S1).
     checkRateLimit(firebaseUid, 'requestGroupRoomAccess', 30);
-    const localpart = await requireMatrixLocalpart(firebaseUid, 'requestGroupRoomAccess');
+    // Raw (case-sensitive) key for Firestore lookups, lowercased for the Matrix localpart.
+    const personKey = await requireUserPersonKey(firebaseUid, 'requestGroupRoomAccess');
+    const localpart = personKey.toLowerCase();
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
     const matrixUserId = `@${localpart}:${hostname}`;
@@ -109,9 +113,23 @@ export const requestGroupRoomAccess = onCall(
     // Ensure the Matrix account exists (first chat access provisions it)
     await ensureMatrixUserExists(matrixUserId, adminToken, { firebaseUid });
 
-    // Resolve (or create) the group's room — single source of truth, persisted on the
-    // group doc so every CF agrees on one room (fixes S5 duplicate rooms).
-    const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: true });
+    // Resolve (or create) the room to join. Normally the group's shared room — single
+    // source of truth, persisted on the group doc so every CF agrees on one room (fixes
+    // S5 duplicate rooms).
+    //
+    // Exception: a group with `chatMode: 'ask'` (Notfall, Support, Vorstand, …) must be
+    // writable by everyone without exposing every request to everyone. A caller WITHOUT an
+    // active membership therefore gets their own room with the whole group instead. Members
+    // are unaffected and always land in the shared room.
+    const groupData = (await getFirestore().collection('groups').doc(groupId).get()).data();
+    const isAskGroup = groupData?.['chatMode'] === 'ask';
+    const useAskRoom = isAskGroup && !(await activeGroupMemberKeys(groupId)).some(
+      (k) => k.toLowerCase() === localpart
+    );
+
+    const roomId = useAskRoom
+      ? await resolveAskRoom(groupId, personKey, hostname, adminToken, { create: true })
+      : await resolveGroupRoom(groupId, hostname, adminToken, { create: true });
     if (!roomId) throw new HttpsError('not-found', `No room for group ${groupId}`);
 
     // Step 3: Get admin user ID (the MATRIX_ADMIN_TOKEN may belong to a regular user, not a

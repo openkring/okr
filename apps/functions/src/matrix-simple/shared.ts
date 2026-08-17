@@ -8,7 +8,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { defineSecret } from 'firebase-functions/params';
 
-import { objectsToPhotos } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, isActiveMembership, objectsToPhotos } from '@okr/shared-util-core';
 
 export const matrixAdminToken = defineSecret('MATRIX_ADMIN_TOKEN');
 // Shared secret embedded in the Matrix push-gateway URL (SEC-2). Synapse stores the
@@ -351,6 +351,110 @@ export function checkRateLimit(uid: string, fnName: string, max: number, windowM
  */
 export function groupRoomAliasLocalpart(groupId: string): string {
   return `group_${groupId.toLowerCase().replace(/[^a-z0-9._~-]/g, '_')}`;
+}
+
+/**
+ * Alias localpart of an "ask room": the private room between ONE person and a whole
+ * group, used by groups with `chatMode: 'ask'` (Notfall, Support, Vorstand, …).
+ * One room per (group, person), reused for every later conversation — so the alias is
+ * the room's identity and nothing has to be persisted on the group doc.
+ * Same sanitising rule as `groupRoomAliasLocalpart` (Matrix alias localparts are
+ * limited to [a-z0-9._~-]).
+ */
+export function askRoomAliasLocalpart(groupId: string, personKey: string): string {
+  const clean = (s: string) => s.toLowerCase().replace(/[^a-z0-9._~-]/g, '_');
+  return `ask_${clean(groupId)}_${clean(personKey)}`;
+}
+
+/** personKeys with an active (not archived, not expired) membership in the given group. */
+export async function activeGroupMemberKeys(groupId: string): Promise<string[]> {
+  const snap = await getFirestore()
+    .collection('memberships')
+    .where('orgKey', '==', groupId)
+    .where('orgModelType', '==', 'group')
+    .where('memberModelType', '==', 'person')
+    .get();
+  const today = getTodayStr(DateFormat.StoreDate);
+  return snap.docs
+    .map((d) => d.data() as { memberKey: string; dateOfExit?: string; isArchived?: boolean })
+    .filter((m) => isActiveMembership(m, today))
+    .map((m) => m.memberKey);
+}
+
+/**
+ * Resolve (or create) the ask room between `personKey` and the group — the room a
+ * non-member gets instead of the shared group room when `group.chatMode === 'ask'`.
+ *
+ * Identified solely by its canonical alias (see `askRoomAliasLocalpart`); there is no
+ * per-person field on the group doc to persist a room id into. On creation the whole
+ * group is force-joined, so notification and read scope is exactly "the group + this
+ * one person" — Matrix does that for us, no push-side filtering needed.
+ *
+ * ponytail: members who join the group LATER are not back-joined into existing ask
+ * rooms — they see new requesters only. Add a reconcile pass over
+ * `_synapse/admin/v1/rooms?search_term=ask_<groupId>_` if that starts to bite.
+ */
+export async function resolveAskRoom(
+  groupId: string,
+  personKey: string,
+  hostname: string,
+  adminToken: string,
+  opts: { create?: boolean } = {},
+): Promise<string | undefined> {
+  const authHeader = { Authorization: `Bearer ${adminToken}` };
+  const localpart = askRoomAliasLocalpart(groupId, personKey);
+  const alias = `#${localpart}:${hostname}`;
+
+  try {
+    const aliasResp = await fetch(
+      `${MATRIX_HOMESERVER}/_matrix/client/v3/directory/room/${encodeURIComponent(alias)}`,
+      { headers: authHeader }
+    );
+    if (aliasResp.ok) return (await aliasResp.json() as { room_id: string }).room_id;
+  } catch { /* fall through to create */ }
+
+  if (!opts.create) return undefined;
+
+  const groupSnap = await getFirestore().collection('groups').doc(groupId).get();
+  if (!groupSnap.exists) throw new HttpsError('not-found', `Group ${groupId} not found`);
+  const groupName = (groupSnap.data()?.['name'] as string | undefined) || groupId;
+  const personName = (await resolvePersonDisplayName(personKey)) ?? personKey;
+
+  const createResp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/createRoom`,
+    {
+      method: 'POST',
+      headers: { ...authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: `${groupName} · ${personName}`,
+        room_alias_name: localpart,
+        preset: 'private_chat',
+        visibility: 'private',
+        creation_content: { 'm.federate': false },
+        initial_state: [
+          { type: OKR_TENANT_EVENT, state_key: '', content: { tenants: groupSnap.data()?.['tenants'] ?? [] } },
+        ],
+      }),
+    }
+  );
+  if (!createResp.ok) {
+    throw new HttpsError('internal', `Failed to create ask room for group ${groupId}: ${await createResp.text()}`);
+  }
+  const roomId = (await createResp.json() as { room_id: string }).room_id;
+
+  await ensureAdminInRoom(roomId, adminToken);
+  for (const memberKey of await activeGroupMemberKeys(groupId)) {
+    const memberId = `@${memberKey.toLowerCase()}:${hostname}`;
+    try {
+      await ensureMatrixUserExists(memberId, adminToken, { personKey: memberKey });
+      await forceJoinUserToRoom(roomId, memberId, adminToken);
+    } catch (error) {
+      // One unreachable member must not stop the requester from getting their room.
+      console.error(`resolveAskRoom: failed to join ${memberId} into ${roomId}:`, error);
+    }
+  }
+  console.log(`resolveAskRoom: created ${roomId} (${alias}) for group ${groupId}`);
+  return roomId;
 }
 
 /**

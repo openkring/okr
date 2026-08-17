@@ -34,7 +34,8 @@ Collection name: `groups`
 | `parentName` | string | Name of the parent org or group |
 | `parentModelType` | `'org'` \| `'group'` | Type of the parent |
 | `visibility` | string | Comma-separated `RoleName` list (e.g. `'registered,privileged'`). Users who have **any** of these roles can access the group's calendar and chat even without being a member. Empty string (default) means members-only access. |
-| `notifyType` | `'memberOnly'` \| `'membersAndMatchingVisibility'` | Controls who receives chat notifications. `'memberOnly'` (default): only registered group members. `'membersAndMatchingVisibility'`: members plus all users whose roles match `visibility`. |
+| `notifyType` | `'memberOnly'` \| `'membersAndMatchingVisibility'` | Controls who receives chat notifications. `'memberOnly'` (default): only registered group members. `'membersAndMatchingVisibility'`: members plus all users whose roles match `visibility`. Computed by `shouldNotifyUser` — currently unused, notification scope is Matrix room membership. |
+| `chatMode` | `'shared'` \| `'ask'` | What a NON-member gets when opening the group chat. `'shared'` (default): joined into the group room, reads everything. `'ask'`: their own room with the whole group (`#ask_<groupOkey>_<personKey>`) — for groups everyone must reach but whose requests are confidential (Notfall, Support, Vorstand). See the `matrix-chat` skill. |
 
 ## Related Collections Created on Group Creation
 

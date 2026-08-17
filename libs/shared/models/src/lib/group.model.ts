@@ -54,6 +54,20 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
    */
   public notifyType: 'memberOnly' | 'membersAndMatchingVisibility' = 'memberOnly';
 
+  /**
+   * How a non-member reaches this group's chat (members are unaffected and always
+   * land in the shared group room).
+   * - 'shared' (default): the non-member is force-joined into the group room itself.
+   *   Everyone in the room reads everything — right for open, topical rooms
+   *   (a training course, a project).
+   * - 'ask': the non-member gets their own room with the whole group — one room per
+   *   (person, group), reused across conversations. Right for a group that must be
+   *   reachable by everyone but whose traffic is confidential per requester:
+   *   Notfall, Support, Vorstand, Kommissionen. Notification scope follows room
+   *   membership, so only the group plus that one person are notified.
+   */
+  public chatMode: 'shared' | 'ask' = 'shared';
+
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;

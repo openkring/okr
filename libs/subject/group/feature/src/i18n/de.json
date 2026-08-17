@@ -173,6 +173,10 @@
     "label": "Benachrichtigungstyp",
     "helper": "memberOnly: nur Mitglieder erhalten Benachrichtigungen. membersAndMatchingVisibility: Mitglieder und Nutzer mit passender Sichtbarkeitsrolle."
   },
+  "chatMode": {
+    "label": "Chat-Modus für Nicht-Mitglieder",
+    "helper": "shared: Nicht-Mitglieder treten dem gemeinsamen Gruppenraum bei und lesen alles mit. ask: Jede/r Nicht-Mitglied erhält einen eigenen Raum mit der ganzen Gruppe – für Gruppen, die alle erreichen können sollen, deren Anfragen aber vertraulich sind (Notfall, Support, Vorstand, Kommissionen)."
+  },
   "hasContent": {
     "label": "Inhalt anzeigen",
     "helper": "Der GroupAdmin kann eigene Inhalte erstellen und verwalten."

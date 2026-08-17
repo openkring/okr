@@ -644,8 +644,18 @@ export const _MatrixChatStore = signalStore(
         // C-7: identified by the immutable canonical alias, not the display name (see findSupportRoom).
         // store.rooms() (not the raw account-wide room list): a report must never land in
         // another tenant's support room.
-        const supportRoom = findSupportRoom(store.rooms(), store.appStore.tenantId());
-        if (!supportRoom) {
+        const tenantId = store.appStore.tenantId();
+        // No support room among the joined rooms: either the user has never been in one, or the
+        // support group runs in `chatMode: 'ask'` and their own room does not carry the support
+        // alias. Both are fixed by asking the CF, which resolves the right room (shared or ask).
+        // A tenant without a support group still ends here with the noChannel toast.
+        let roomId = findSupportRoom(store.rooms(), tenantId)?.roomId;
+        if (!roomId) {
+          roomId = await this.requestGroupRoomAccess(`${tenantId}_support`)
+            .then(r => r.roomId)
+            .catch(() => undefined);
+        }
+        if (!roomId) {
           await store.alertService.showToast(store.i18n.msg_report_noChannel());
           return;
         }
@@ -668,7 +678,7 @@ export const _MatrixChatStore = signalStore(
           `${cmt}: ${comment.trim()}<br>` +
           `<a href="${matrixLink}">${showMessage}</a>`;
         try {
-          await store.matrixService.sendHtmlMessage(supportRoom.roomId, reportText, reportHtml);
+          await store.matrixService.sendHtmlMessage(roomId, reportText, reportHtml);
           await store.alertService.showToast(store.i18n.msg_report_conf());
         } catch (error) {
           console.error('MatrixChatStore.reportMessage: Failed:', error);
