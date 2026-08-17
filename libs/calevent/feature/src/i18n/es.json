@@ -74,6 +74,10 @@
     "noRoom": "No se pudo publicar el mensaje en el chat del grupo.",
     "saveError": "No se pudo guardar la encuesta de fechas.",
     "responseSaved": "Tus respuestas se han guardado.",
+    "comment": {
+      "label": "Comentario",
+      "placeholder": "Comentario opcional sobre tus respuestas"
+    },
     "text": {
       "confirm": "Aplicar texto",
       "label": "Texto"

@@ -74,6 +74,10 @@
     "noRoom": "Le message n’a pas pu être publié dans le chat du groupe.",
     "saveError": "Le sondage de dates n’a pas pu être enregistré.",
     "responseSaved": "Tes réponses ont été enregistrées.",
+    "comment": {
+      "label": "Commentaire",
+      "placeholder": "Commentaire facultatif sur tes réponses"
+    },
     "text": {
       "confirm": "Appliquer le texte",
       "label": "Texte"

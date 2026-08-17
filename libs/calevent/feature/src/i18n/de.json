@@ -47,7 +47,7 @@
     "placeholder": "Name[,Ort] [//Datum] [@Person]"
   },
   "schedule": {
-    "title": "Terminabstimmung",
+    "title": "Terminumfrage",
     "find": "Termin finden",
     "close": {
       "label": "Abstimmung schliessen",
@@ -57,7 +57,7 @@
     "date": {
       "confirm": "Termin übernehmen"
     },
-    "view": "Abstimmung anzeigen",
+    "view": "Terminumfrage anzeigen",
     "groupOnly": "Eine Terminabstimmung ist nur in einem Gruppenkalender möglich. Bitte wähle zuerst einen Gruppenkalender aus.",
     "start": "Umfrage starten",
     "name": {
@@ -74,6 +74,10 @@
     "noRoom": "Die Nachricht konnte nicht in den Gruppenchat geschrieben werden.",
     "saveError": "Die Terminabstimmung konnte nicht gespeichert werden.",
     "responseSaved": "Deine Antworten wurden gespeichert.",
+    "comment": {
+      "label": "Kommentar",
+      "placeholder": "Optionaler Kommentar zu deinen Antworten"
+    },
     "text": {
       "confirm": "Text übernehmen",
       "label": "Text"

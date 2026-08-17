@@ -74,6 +74,10 @@
     "noRoom": "Non è stato possibile pubblicare il messaggio nella chat di gruppo.",
     "saveError": "Non è stato possibile salvare il sondaggio date.",
     "responseSaved": "Le tue risposte sono state salvate.",
+    "comment": {
+      "label": "Commento",
+      "placeholder": "Commento facoltativo sulle tue risposte"
+    },
     "text": {
       "confirm": "Applica testo",
       "label": "Testo"

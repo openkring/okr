@@ -74,6 +74,10 @@
     "noRoom": "The message could not be posted to the group chat.",
     "saveError": "The date poll could not be saved.",
     "responseSaved": "Your answers have been saved.",
+    "comment": {
+      "label": "Comment",
+      "placeholder": "Optional comment on your answers"
+    },
     "text": {
       "confirm": "Apply text",
       "label": "Text"

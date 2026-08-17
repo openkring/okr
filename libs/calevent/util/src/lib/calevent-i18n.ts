@@ -65,6 +65,8 @@ export const CALEVENT_I18N_KEYS = {
   schedule_no_room:           PFX + 'schedule.noRoom',
   schedule_save_error:        PFX + 'schedule.saveError',
   schedule_response_saved:    PFX + 'schedule.responseSaved',
+  schedule_comment_label:     PFX + 'schedule.comment.label',
+  schedule_comment_placeholder: PFX + 'schedule.comment.placeholder',
 
   update:                     PFX + 'update.label',
   update_conf:                PFX + 'update.conf',

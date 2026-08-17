@@ -15,6 +15,8 @@ export interface SchedulePollRow {
   firstName: string;
   lastName: string;
   responses: Record<string, InvitationState>;
+  /** Free text the member added to their answers — stored on each of their invitations (`notes`). */
+  comment?: string;
 }
 
 /**

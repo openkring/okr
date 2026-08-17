@@ -121,7 +121,7 @@ export class ScheduleModal implements OnDestroy {
       name: '', description: '', columns: [], isDraft: this.seriesId().length === 0,
       rows: [{
         key: user?.personKey ?? '', firstName: user?.firstName ?? '',
-        lastName: user?.lastName ?? '', responses: {},
+        lastName: user?.lastName ?? '', responses: {}, comment: '',
       }],
     };
   }
@@ -133,9 +133,12 @@ export class ScheduleModal implements OnDestroy {
     const rowsByKey = new Map<string, SchedulePollRow>();
     for (const inv of this.store.seriesInvitations()) {
       const row = rowsByKey.get(inv.inviteeKey) ?? {
-        key: inv.inviteeKey, firstName: inv.inviteeFirstName, lastName: inv.inviteeLastName, responses: {},
+        key: inv.inviteeKey, firstName: inv.inviteeFirstName, lastName: inv.inviteeLastName,
+        responses: {}, comment: '',
       };
       row.responses[inv.caleventKey] = inv.state as InvitationState;
+      // the same comment is written to every invitation of the member; any one of them is the truth
+      if (inv.notes) row.comment = inv.notes;
       rowsByKey.set(inv.inviteeKey, row);
     }
     const rows = [...rowsByKey.values()].sort((a, b) =>

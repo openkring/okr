@@ -522,6 +522,7 @@ export const CalEventStore = signalStore(
             inv.state = member.memberKey === currentUser.personKey
               ? (myResponses[column.id] ?? 'pending')
               : 'pending';
+            if (member.memberKey === currentUser.personKey) inv.notes = data.rows[0]?.comment ?? '';
             inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
             const invRef = doc(store.firestoreService.firestore,
               `${InvitationCollection}/${calevent.okey}${pad(memberIndex, 2)}`);
@@ -545,12 +546,18 @@ export const CalEventStore = signalStore(
         const today = getTodayStr(DateFormat.StoreDate);
         const batch = store.firestoreService.getBatch();
         let changed = 0;
+        const comment = myRow.comment ?? '';
         for (const invitation of store.seriesInvitations()) {
           if (invitation.inviteeKey !== currentUser.personKey) continue;
           const newState = myRow.responses[invitation.caleventKey];
-          if (!newState || newState === invitation.state) continue;
+          const stateChanged = !!newState && newState !== invitation.state;
+          const commentChanged = comment !== (invitation.notes ?? '');
+          if (!stateChanged && !commentChanged) continue;
           const ref = doc(store.firestoreService.firestore, `${InvitationCollection}/${invitation.okey}`);
-          batch.update(ref, { state: newState, respondedAt: today });
+          // the comment is replicated to every invitation of the series so any one row read finds it
+          batch.update(ref, stateChanged
+            ? { state: newState, respondedAt: today, notes: comment }
+            : { notes: comment });
           changed++;
         }
         if (changed === 0) return;

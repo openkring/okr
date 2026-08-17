@@ -32,6 +32,9 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
     td.cell { font-size: 15px; font-weight: 700; color: var(--ion-color-medium); }
     td.yes { background: rgba(45, 211, 111, 0.25); color: var(--ion-color-success-shade); }
     td.no { background: rgba(235, 68, 90, 0.2); color: var(--ion-color-danger); }
+    .comment { font-size: 10px; font-style: italic; color: var(--ion-color-medium); }
+    /* inset shadow tints the row without overriding the yes/no cell colours */
+    tr.mine td { font-weight: 600; box-shadow: inset 0 0 0 9999px rgba(56, 128, 255, 0.1); }
     tr.counts td { background: var(--ion-color-light-shade); font-weight: 600; }
     tr.counts td.best { color: var(--ion-color-success); }
     ion-modal.picker { --width: fit-content; --min-width: 300px; --height: fit-content; --border-radius: 8px; }
@@ -99,7 +102,10 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
                 <tbody>
                   @for (row of formData().rows; track row.key; let isFirst = $first) {
                     <tr [class.mine]="isFirst && !readOnly()">
-                      <td class="member">{{ row.firstName }} {{ row.lastName }}</td>
+                      <td class="member">
+                        {{ row.firstName }} {{ row.lastName }}
+                        @if (row.comment) { <div class="comment">{{ row.comment }}</div> }
+                      </td>
                       @for (column of formData().columns; track column.id) {
                         <td class="cell"
                           [class.mine]="isFirst && !readOnly()"
@@ -126,6 +132,21 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
             </div>
           </ion-card-content>
         </ion-card>
+
+        @if (!readOnly()) {
+          <ion-card>
+            <ion-card-content class="ion-no-padding">
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="12">
+                    <okr-text-input [i18n]="commentI18n()" [value]="formData().rows[0].comment ?? ''"
+                      (valueChange)="onCommentChange($event)" [maxLength]="80" [readOnly]="false" />
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
+        }
 
         <ion-modal class="picker" [isOpen]="pickerOpen()" (ionModalDidDismiss)="pickerOpen.set(false)">
           <ng-template>
@@ -187,6 +208,13 @@ export class SchedulePollForm {
     name: 'columnLabel',
     label: this.i18n().schedule_text_label(),
     placeholder: '',
+    helper: '',
+  } as TextInputI18n));
+
+  protected readonly commentI18n = computed(() => ({
+    name: 'comment',
+    label: this.i18n().schedule_comment_label(),
+    placeholder: this.i18n().schedule_comment_placeholder(),
     helper: '',
   } as TextInputI18n));
 
@@ -280,6 +308,15 @@ export class SchedulePollForm {
         delete responses[columnId];
         return { ...row, responses };
       }),
+    }));
+    this.dirty.emit(true);
+  }
+
+  /** The comment always belongs to rows[0] — the only row the current user may write. */
+  protected onCommentChange(value: string): void {
+    this.formData.update(data => ({
+      ...data,
+      rows: data.rows.map((row, index) => index === 0 ? { ...row, comment: value } : row),
     }));
     this.dirty.emit(true);
   }
