@@ -21,6 +21,7 @@
     { "path": "../../../chat/data-access/tsconfig.lib.json" },
     { "path": "../../../cms/icon/feature/tsconfig.lib.json" },
     { "path": "../../../cms/menu/feature/tsconfig.lib.json" },
+    { "path": "../../../cms/menu/ui/tsconfig.lib.json" },
     { "path": "../../../cms/page/feature/tsconfig.lib.json" },
     { "path": "../../../content/document/feature/tsconfig.lib.json" },
     { "path": "../../../content/document/util/tsconfig.lib.json" },

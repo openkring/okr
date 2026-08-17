@@ -24,6 +24,8 @@ import { MenuStore } from './menu.store';
       ion-icon { color: var(--ion-color-white); }
     }
     ::ng-deep ion-accordion ion-icon[slot="start"] { margin-inline-end: 8px; }
+    ion-item-divider.separator { min-height: 2px; --padding-start: 0; --inner-padding-end: 0;
+      --background: var(--ion-color-step-150, #d7d8da); }
     `],
   providers: [MenuStore],
   template: `
@@ -60,9 +62,14 @@ import { MenuStore } from './menu.store';
               </ion-accordion-group>
             }
             @case('divider') {
-              <ion-item-divider color="light">
-                <ion-label>{{ menuStore.translatedMenuLabel() }}</ion-label>
-              </ion-item-divider>
+              @if(menuItem.label) {
+                <ion-item-divider color="light">
+                  <ion-label>{{ menuStore.translatedMenuLabel() }}</ion-label>
+                </ion-item-divider>
+              } @else {
+                <!-- no caption: a hairline separator, not a section header -->
+                <ion-item-divider class="separator" />
+              }
             }
             @case('main') {
               <ion-list>

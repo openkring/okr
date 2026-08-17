@@ -1,16 +1,17 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
-import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonPopover, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonPopover, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 
 import { GroupModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, DeferError } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { safeStructuredClone } from '@okr/shared-util-core';
+import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { isAdminMember } from '@okr/subject-group-util';
 import { canManageFolders } from '@okr/content-folder-util';
 import { DEFAULT_ID, DEFAULT_NAME } from '@okr/shared-constants';
 
 import { Menu } from '@okr/cms-menu-feature';
+import { MultiAvatar } from '@okr/cms-menu-ui';
 import { PageDispatcher, PageStore } from '@okr/cms-page-feature';
 import { getDocumentStoragePath } from '@okr/content-document-util';
 import { FolderService } from '@okr/content-folder-data-access';
@@ -26,11 +27,16 @@ import { GroupStore } from './group.store';
   standalone: true,
   imports: [
     ChangeConfirmation, DeferError, PageDispatcher, CalEventList, MembershipList, DocumentList, TaskList,
-    Menu, SvgIconPipe,
+    Menu, MultiAvatar, SvgIconPipe,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
-    IonHeader, IonButtons, IonTitle, IonMenuButton, IonButton, IonIcon, IonPopover, IonItem
+    IonHeader, IonButtons, IonTitle, IonMenuButton, IonButton, IonIcon, IonPopover, IonItem, IonItemDivider
 ],
   providers: [GroupStore],
+  styles: [`
+    /* separator between the group actions and the segment actions — a hairline, not a section header */
+    ion-item-divider.separator { min-height: 2px;--padding-start: 0; --inner-padding-end: 0;
+      --background: var(--ion-color-step-150, #d7d8da); }
+  `],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
@@ -49,15 +55,21 @@ import { GroupStore } from './group.store';
               <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
             </ion-button>
           }
-          <!-- context menu of the selected segment, hoisted from the segment toolbar -->
-          @if(showSegmentContextMenu()) {
+          <!-- context menu: group actions first, then the actions of the selected segment (hoisted from its toolbar) -->
+          @if(showSegmentContextMenu() || canEditGroup()) {
             <ion-button [id]="segmentPopupId">
               <ion-icon slot="icon-only" src="{{ 'ellipsis-vertical' | svgIcon }}" />
             </ion-button>
             <ion-popover [trigger]="segmentPopupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onSegmentPopoverDismiss($event)">
               <ng-template>
                 <ion-content>
-                  <okr-menu [menuName]="segmentContextMenuName()!" [forceVisible]="isGroupAdmin()" [toggleStates]="segmentToggleStates()" />
+                  @if(canEditGroup()) {
+                    <okr-multi-avatar icon="edit" [label]="store.i18n.update()" (click)="editGroup()" />
+                    <ion-item-divider class="separator" />
+                  }
+                  @if(showSegmentContextMenu()) {
+                    <okr-menu [menuName]="segmentContextMenuName()!" [forceVisible]="isGroupAdmin()" [toggleStates]="segmentToggleStates()" />
+                  }
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -202,6 +214,9 @@ export class GroupViewPage implements ViewWillEnter {
   protected readonly listId = computed(() => `f:${this.groupKey()}`);
   protected currentUser = computed(() => this.store.currentUser());
   protected isGroupAdmin = computed(() => isAdminMember(this.group(), this.currentUser()?.personKey));
+  // Same rule as the group list's ActionSheet: group admins, memberAdmins and privileged users may reconfigure a group.
+  protected canEditGroup = computed(() =>
+    this.isGroupAdmin() || hasRole('memberAdmin', this.currentUser()) || hasRole('privileged', this.currentUser()));
   // Effective segment: the user's explicit choice, else the first enabled segment by priority.
   protected selectedSegment = computed(() => this.store.segment() ?? this.defaultSegment());
   protected group = computed(() => this.store.group());
@@ -336,6 +351,11 @@ export class GroupViewPage implements ViewWillEnter {
       case 'content':
       case 'chat': await this.pageDispatcher()?.onHoistMenuDismiss($event); break;
     }
+  }
+
+  /** Opens the group's configuration modal (same modal the group list offers as 'Gruppenkonfiguration ändern'). */
+  protected async editGroup(): Promise<void> {
+    await this.store.edit(this.group(), false);
   }
 
   protected async openSegmentInfo(): Promise<void> {
