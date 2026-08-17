@@ -85,7 +85,7 @@ export class MatrixChatService {
     effect(() => {
       const fbUser = this.appStore.fbUser();
       if (!fbUser && this.client) {
-        this.disconnect();
+        this.disconnect(true); // logout: wipe the cache so accounts can't mix
       }
     });
   }
@@ -414,9 +414,15 @@ export class MatrixChatService {
   }
 
   /**
-   * Disconnect and cleanup the Matrix client
+   * Disconnect and cleanup the Matrix client.
+   *
+   * @param clearCache - only true on logout. clearStores() runs indexedDB.deleteDatabase('okr-matrix'),
+   *   which fires `onversionchange` in every OTHER tab holding that DB: their backend closes and nulls
+   *   its `db`, so the next `/sync` write throws "Cannot read properties of undefined (reading 'transaction')"
+   *   and matrix-js-sdk degrades that tab to a MemoryStore. On a same-user reconnect (token refresh) the
+   *   cache is still valid, so keep it.
    */
-  async disconnect(): Promise<void> {
+  async disconnect(clearCache = false): Promise<void> {
     this.roomsUpdateSub?.unsubscribe();
     this.roomsUpdateSub = null;
     document.removeEventListener('visibilitychange', this.kickSync);
@@ -429,7 +435,7 @@ export class MatrixChatService {
     this.pendingEdits.clear();
     if (this.client) {
       this.client.stopClient();
-      await this.client.clearStores();
+      if (clearCache) await this.client.clearStores();
       this.client = null;
       this.initPromise = null; // ARCH-1: allow a fresh ensureInitialized() after reconnect
       this.isInitialized$.next(false);
