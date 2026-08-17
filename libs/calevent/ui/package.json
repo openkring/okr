@@ -13,6 +13,9 @@
     "@okr/shared-categories": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
+    "@okr/shared-util-angular": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-i18n": "*",
     "@okr/calevent-util": "*"
   }
 }
