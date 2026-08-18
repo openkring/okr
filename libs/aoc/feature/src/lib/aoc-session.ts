@@ -170,7 +170,8 @@ export class AocSession {
 
   /* ---------------- context menu ---------------- */
   protected async dismissPopover(action: string): Promise<void> {
-    await this.popoverController.dismiss(action);
+    // same race as MenuStore.selectMenuItem: dismissOnSelect may have closed it already (SCS-5G)
+    await this.popoverController.dismiss(action).catch(() => undefined);
   }
 
   protected async onPopoverDismiss($event: CustomEvent): Promise<void> {

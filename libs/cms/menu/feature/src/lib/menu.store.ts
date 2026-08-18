@@ -307,7 +307,9 @@ export const _MenuStore = signalStore(
             break;
           case 'call':
           case 'toggle': // like 'call' — the hosting feature flips the state in its onPopoverDismiss handler
-            store.popoverController.dismiss(menuItem.url);
+            // ion-popover's own dismissOnSelect can win this race and close first; the controller then
+            // rejects with 'overlay does not exist'. Unawaited it escaped select()'s try/catch (SCS-5G).
+            await store.popoverController.dismiss(menuItem.url).catch(() => undefined);
             break;
           default:
             die('MenuStore.selectMenuItem: invalid MenuAction=' + menuItem.action);
