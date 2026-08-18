@@ -51,6 +51,7 @@ import { AlbumStore } from './album-section.store';
       cursor: pointer;
     }
     .folder-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .folder-tile img.folder-logo { object-fit: contain; padding: 12%; opacity: 0.6; }
     .folder-overlay {
       position: absolute;
       inset: 0;
@@ -107,7 +108,8 @@ import { AlbumStore } from './album-section.store';
                   <ion-col size="6" size-md="4" size-xl="3">
                     <div class="folder-tile" (click)="openFolder(folder.okey)">
                       @if(folder.coverUrl) {
-                        <img [src]="folder.coverUrl | thumbnailUrl" [alt]="folder.label" loading="lazy" />
+                        <img [src]="folder.coverUrl | thumbnailUrl" [alt]="folder.label" loading="lazy"
+                          [class.folder-logo]="folder.isLogo" />
                       }
                       <div class="folder-overlay">
                         <ion-icon src="{{ 'folder' | svgIcon }}" />

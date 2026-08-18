@@ -63,11 +63,13 @@ export const AlbumStore = signalStore(
       }
     }),
 
-    subFoldersResource: rxResource({
-      params: () => ({ folderKey: store.currentFolderKey(), currentUser: store.currentUser() }),
+    // All folders of the tenant: the folder tiles count their own subfolders, too.
+    // Same cached stream listByParent() uses, so this costs no extra read.
+    foldersResource: rxResource({
+      params: () => ({ currentUser: store.currentUser() }),
       stream: ({ params }) => {
-        if (!params.currentUser || !params.folderKey) return of<FolderModel[]>([]);
-        return store.folderService.listByParent(params.folderKey);
+        if (!params.currentUser) return of<FolderModel[]>([]);
+        return store.folderService.list();
       }
     }),
 
@@ -83,8 +85,8 @@ export const AlbumStore = signalStore(
   withComputed((state) => ({
     documents: computed(() => state.documentsResource.value() ?? []),
     currentFolder: computed(() => state.currentFolderResource.value()),
-    isLoading: computed(() => state.documentsResource.isLoading() || state.subFoldersResource.isLoading()),
-    error: computed(() => state.documentsResource.error() ?? state.subFoldersResource.error()),
+    isLoading: computed(() => state.documentsResource.isLoading() || state.foldersResource.isLoading()),
+    error: computed(() => state.documentsResource.error() ?? state.foldersResource.error()),
   })),
 
   withComputed((state) => ({
@@ -100,19 +102,26 @@ export const AlbumStore = signalStore(
         .map(toImageConfig);
     }),
 
-    // subfolders with their cover image (= first image document inside the folder, if any)
-    // and the number of files they hold
+    // subfolders with their cover image (= first image document inside the folder, falling back to
+    // the tenant logo) and the number of entries they hold (files + own subfolders)
     folders: computed(() => {
       const documents = state.documents();
-      return (state.subFoldersResource.value() ?? []).map((folder) => {
-        const files = documents.filter((doc) => (doc.folderKeys ?? []).includes(folder.okey));
-        return {
-          okey: folder.okey,
-          label: folder.title || folder.name,
-          fileCount: files.length,
-          coverUrl: files.find((doc) => doc.mimeType.startsWith('image/'))?.fullPath ?? ''
-        };
-      });
+      const allFolders = state.foldersResource.value() ?? [];
+      const logoUrl = state.appStore.appConfig().logoUrl;
+      return allFolders
+        .filter((folder) => folder.parents.includes(state.currentFolderKey()))
+        .map((folder) => {
+          const files = documents.filter((doc) => (doc.folderKeys ?? []).includes(folder.okey));
+          const subFolderCount = allFolders.filter((f) => f.parents.includes(folder.okey)).length;
+          const coverUrl = files.find((doc) => doc.mimeType.startsWith('image/'))?.fullPath ?? '';
+          return {
+            okey: folder.okey,
+            label: folder.title || folder.name,
+            fileCount: files.length + subFolderCount,
+            coverUrl: coverUrl || logoUrl,
+            isLogo: !coverUrl
+          };
+        });
     })
   })),
 
