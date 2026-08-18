@@ -1422,7 +1422,10 @@ const documentBlock: FeatureBlock = {
       // Same shared `editmode-toggle` doc `c-contentpage` declares. `DocumentList` opens read-only
       // (tap a folder → navigate, tap a file → viewer overlay); this flips it to the action sheets.
       { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
-      { key: 'document-add', name: 'document-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'upload', label: '@item.document-add' },
+      // multi-file upload, no edit modal — same shared `files-add` doc `c-folder` declares.
+      // Its label→input Safari workaround keys off the NAME `files-add` (menu.ts:137), so this
+      // must not be renamed. Replaced `document-add` (single doc via the edit modal), 2026-08-18.
+      { key: 'files-add', name: 'files-add', url: 'addFiles', action: 'call', roleNeeded: 'registered', icon: 'upload', label: '@item.files-add' },
       { key: 'document-export-raw', name: 'document-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.document-export-raw' },
       // Same ACTIVE (non-archived) `filter-toggle` doc the `calevent` block already
       // declares — field-identical here on purpose (two live docs share this name; the

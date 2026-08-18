@@ -19,6 +19,8 @@ import { DocumentStore } from './document.store';
 /** vtracer takes raster input only — mirrors the guard in the vectorizeDocument CF. */
 const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
 
+type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
+
 @Component({
   selector: 'okr-document-list',
   standalone: true,
@@ -29,6 +31,7 @@ const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
     IonTitle, IonMenuButton, IonContent, IonItem, IonPopover, IonThumbnail
   ],
   providers: [DocumentStore],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
   @if(canUpload()) {
     <!-- Input outside ALL Ionic web components so Safari's id lookup and
@@ -80,7 +83,7 @@ const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
             <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
               <ng-template>
                 <ion-content>
-                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [excludeNames]="['addFiles']" [toggleStates]="{ toggleFilter: showFilter(), toggleEditMode: editMode() }"/>
+                  <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [toggleStates]="{ toggleFilter: showFilter(), toggleEditMode: editMode() }"/>
                 </ion-content>
               </ng-template>
             </ion-popover>
@@ -102,14 +105,14 @@ const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
       <ion-toolbar color="light" class="ion-hide-sm-down">
         <ion-grid>
           <ion-row>
-            <ion-col size="8">
-              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+            <ion-col size="8" class="clickable" (click)="setSort('title')">
+              <ion-label><strong>{{ store.i18n.name() }}{{ sortIcon('title') }}</strong></ion-label>
             </ion-col>
-            <ion-col size="2">
-              <ion-label><strong>{{ store.i18n.size() }}</strong></ion-label>
+            <ion-col size="2" class="clickable" (click)="setSort('size')">
+              <ion-label><strong>{{ store.i18n.size() }}{{ sortIcon('size') }}</strong></ion-label>
             </ion-col>
-            <ion-col size="2">
-              <ion-label><strong>{{ store.i18n.lastUpdate() }}</strong></ion-label>
+            <ion-col size="2" class="clickable" (click)="setSort('dateOfDocLastUpdate')">
+              <ion-label><strong>{{ store.i18n.lastUpdate() }}{{ sortIcon('dateOfDocLastUpdate') }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -144,7 +147,7 @@ const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
             </ion-row>
           }
           <!-- don't use 'document' here as it leads to confusions with HTML document -->
-          @for(doc of filteredDocuments(); track doc.okey) {
+          @for(doc of sortedDocuments(); track doc.okey) {
             <ion-row (click)="showActions(doc)">
               <ion-col size="12" size-sm="8">
                 <ion-item lines="none">
@@ -161,14 +164,14 @@ const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
                   </ion-label>
                 </ion-item>
               </ion-col>
-              <ion-col size="2" class="ion-hide-sm-down">
+              <ion-col size="2" class="ion-hide-sm-down" style="font-size:0.8rem;">
                 <ion-item lines="none">
-                  <ion-label>{{ doc.size | fileSize}}</ion-label>
+                  <ion-label style="font-size:0.8rem;">{{ doc.size | fileSize}}</ion-label>
                 </ion-item>
               </ion-col>
-              <ion-col size="2" class="ion-hide-sm-down">
+              <ion-col size="2" class="ion-hide-sm-down" style="font-size:0.8rem;">
                 <ion-item lines="none">
-                  <ion-label>{{ doc.dateOfDocLastUpdate | prettyDate }}</ion-label>
+                  <ion-label style="font-size:0.8rem;">{{ doc.dateOfDocLastUpdate | prettyDate }}</ion-label>
                 </ion-item>
               </ion-col>
             </ion-row>
@@ -189,7 +192,7 @@ const VECTORIZABLE_MIME_TYPES = ['image/jpeg', 'image/png'];
               </ion-col>
             }
             <!-- documents -->
-            @for(doc of filteredDocuments(); track doc.okey) {
+            @for(doc of sortedDocuments(); track doc.okey) {
               <ion-col size="6" size-md="4" size-xl="3" (click)="showActions(doc)">
                 <div style="position: relative; width: 100%; padding-bottom: 80%; overflow: hidden; border-radius: 4px;">
                   <ion-thumbnail style="position: absolute; inset: 0; --size: 100%; width: 100%; height: 100%;">
@@ -234,6 +237,16 @@ export class DocumentList {
   protected documentsCount = computed(() => this.store.documentsCount());
   protected filteredDocuments = computed(() => this.store.filteredDocuments() ?? []);
   protected filteredDocumentsCount = computed(() => this.filteredDocuments().length);
+  // sorting (list view header); grid view follows the same order
+  protected readonly sortKey = signal<DocumentSortField>('title');
+  protected readonly sortAsc = signal(true);
+  protected readonly sortedDocuments = computed(() => {
+    const key = this.sortKey();
+    const dir = this.sortAsc() ? 1 : -1;
+    return [...this.filteredDocuments()].sort((a, b) => dir * (key === 'size'
+      ? (a.size ?? 0) - (b.size ?? 0)
+      : String(a[key] ?? '').localeCompare(String(b[key] ?? ''))));
+  });
   protected subFolders = computed(() => this.store.subFolders());
   protected folderDocumentCounts = computed(() => this.store.folderDocumentCounts());
   protected isLoading = computed(() => this.store.isLoading());
@@ -269,6 +282,16 @@ export class DocumentList {
 
   protected onSubfolderClick(key: string): void {
     this.store.setListId(`f:${key}`);
+  }
+
+  protected setSort(key: DocumentSortField): void {
+    this.sortAsc.set(this.sortKey() === key ? !this.sortAsc() : true);
+    this.sortKey.set(key);
+  }
+
+  protected sortIcon(key: DocumentSortField): string {
+    if (this.sortKey() !== key) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
   }
 
   protected onSearchtermChange(searchTerm: string): void {
@@ -340,7 +363,7 @@ export class DocumentList {
 
   /** Every image of the current (filtered) list, in display order — the viewer's prev/next range. */
   private galleryImages(): ImageConfig[] {
-    return this.filteredDocuments()
+    return this.sortedDocuments()
       .filter((doc) => doc.mimeType.startsWith('image/'))
       .map((doc) => ({ ...IMAGE_CONFIG_SHAPE, label: doc.title, url: doc.fullPath, altText: doc.altText, documentKey: doc.okey }));
   }
