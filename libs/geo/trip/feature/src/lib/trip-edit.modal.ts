@@ -131,7 +131,7 @@ export class TripEditModal {
   }
 
   protected async addBoat(): Promise<void> {
-    const boat = await this.store.selectResourceAvatar();
+    const boat = await this.store.selectResourceAvatar(this.trip().okey);
     if (!boat) return;
     this.onFieldChange('resource', boat);
   }

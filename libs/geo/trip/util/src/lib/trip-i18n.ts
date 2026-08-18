@@ -60,7 +60,8 @@ export const TRIP_I18N_KEYS = {
   rigging_title:            PFX + 'rigging.title',
   rigging_scull:            PFX + 'rigging.scull',
   rigging_sweep:            PFX + 'rigging.sweep', 
-  select_boat_add:          PFX + 'select.boat.add', 
+  select_boat_add:          PFX + 'select.boat.add',
+  select_boat_in_use:       PFX + 'select.boat.in_use',
   select_location_title:    PFX + 'select.location.title', 
   select_location_add:      PFX + 'select.location.add', 
 

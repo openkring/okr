@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, effect, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { switchMap } from 'rxjs/operators';
 import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonRefresher, IonRefresherContent, IonTitle, IonToolbar } from '@ionic/angular/standalone';
@@ -13,7 +13,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 
 import { formatTripTime, isTripDeletable, isTripEditable } from '@okr/trip-util';
 import { TripStore } from './trip.store';
-import { getCategoryIcon, getWeekdayI18nKey, getYear, getYearList, hasRole, isKioskOnly } from '@okr/shared-util-core';
+import { getCategoryIcon, getCurrentTime, getWeekdayI18nKey, getYear, getYearList, hasRole, isKioskOnly } from '@okr/shared-util-core';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -38,7 +38,11 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
           @if(isKiosk()) {
             <!-- the kiosk has no menu, so the connection dot takes the hamburger's place —
                  it is the one thing someone standing at the boathouse iPad needs to see -->
-            <ion-buttons slot="start"><okr-connection-status-button /></ion-buttons>
+            <ion-buttons slot="start">
+              <okr-connection-status-button />
+              <!-- the boathouse iPad has no status bar: the clock tells whoever logs a trip what time it is -->
+              <ion-label class="clock">{{ currentTime() }}</ion-label>
+            </ion-buttons>
           } @else if(showMenuButton() === true) {
             <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           }
@@ -136,6 +140,10 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
       margin-bottom: 8px;
       margin-inline-end: 24px;
     }
+    .clock {
+      font-variant-numeric: tabular-nums;
+      margin-inline-start: 8px;
+    }
     .kiosk-fab {
       --border-radius: 50%;
       width: 96px;
@@ -184,7 +192,13 @@ export class TripList {
   protected readonly stateOptions = STATE_OPTIONS;
   protected readonly formatTime = formatTripTime;
 
+  // wall clock shown next to the connection dot, ticked every 10s (hh:mm needs no finer resolution)
+  protected readonly currentTime = signal(getCurrentTime());
+
   constructor() {
+    const clockId = setInterval(() => this.currentTime.set(getCurrentTime()), 10_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(clockId));
+
     // the listId (a `trip_type` category value, e.g. 'logbuch') partitions the list by trip type
     effect(() => this.store.setType(this.listId()));
 

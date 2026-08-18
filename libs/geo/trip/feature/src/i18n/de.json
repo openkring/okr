@@ -49,7 +49,8 @@
     },
     "boat": {
       "title": "Boot wählen",
-      "add": "Boot wählen"
+      "add": "Boot wählen",
+      "in_use": "Das Boot {name} ist noch auf einer offenen Fahrt. Es kann erst wieder verwendet werden, wenn diese Fahrt abgeschlossen ist."
     },
     "location": {
       "title": "Zielort wählen",

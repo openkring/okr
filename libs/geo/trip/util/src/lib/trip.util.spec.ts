@@ -10,6 +10,7 @@ import {
   formatTripTime,
   isTripDeletable,
   isTripEditable,
+  findOpenTripForBoat,
   TRIP_EDIT_WINDOW_MS,
 } from './trip.util';
 
@@ -223,5 +224,21 @@ describe('groupTripsByDay', () => {
     const noon  = makeTrip({ startDate: '20240601', startTime: '1200', okey: 'noon' });  // legacy HHmm
     const groups = groupTripsByDay([early, late, noon]);
     expect(groups[0].trips.map(t => t.okey)).toEqual(['late', 'noon', 'early']);
+  });
+});
+
+describe('findOpenTripForBoat', () => {
+  const boat = { key: 'b1' } as TripModel['resource'];
+
+  it('finds an open trip using the same boat', () => {
+    const open = makeTrip({ okey: 't1', resource: boat });
+    expect(findOpenTripForBoat([open], 'b1')?.okey).toBe('t1');
+  });
+
+  it('ignores closed trips and the trip being edited', () => {
+    const closed = makeTrip({ okey: 't1', resource: boat, state: 'closed' });
+    const own = makeTrip({ okey: 't2', resource: boat });
+    expect(findOpenTripForBoat([closed], 'b1')).toBeUndefined();
+    expect(findOpenTripForBoat([closed, own], 'b1', 't2')).toBeUndefined();
   });
 });

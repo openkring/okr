@@ -89,6 +89,20 @@ function startTimeKey(trip: TripModel): string {
   return (trip.startTime ?? '').replace(/\D/g, '').padStart(4, '0');
 }
 
+/** A trip is open (boat is out on the water) while its state is 'open' or a variant of it ('open.rev'). */
+export function isTripOpen(trip: TripModel): boolean {
+  return (trip.state ?? '').startsWith('open');
+}
+
+/**
+ * The still-open trip that already uses this boat, if any — a boat can only be taken out again
+ * once the previous trip is closed. `excludeTripKey` skips the trip being edited itself.
+ */
+export function findOpenTripForBoat(trips: TripModel[], resourceKey: string, excludeTripKey = ''): TripModel | undefined {
+  if (!resourceKey) return undefined;
+  return trips.find(trip => isTripOpen(trip) && trip.resource?.key === resourceKey && trip.okey !== excludeTripKey);
+}
+
 export function matchesStateFilter(state: string, filter: string): boolean {
   if (filter === 'all') return true;
   if (filter === 'revised') return state.endsWith('.rev');

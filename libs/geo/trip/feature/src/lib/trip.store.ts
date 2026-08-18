@@ -15,7 +15,7 @@ import { ResponsibilityService } from '@okr/relationship-responsibility-data-acc
 import { LocationService } from '@okr/location-data-access';
 
 import { TripService } from '@okr/trip-data-access';
-import { groupTripsByDay, newTrip, TRIP_I18N_KEYS } from '@okr/trip-util';
+import { findOpenTripForBoat, groupTripsByDay, newTrip, TRIP_I18N_KEYS } from '@okr/trip-util';
 
 
 /** Name of the responsibility that owns the Logbuch — gets the bug reports and the support calls. */
@@ -115,12 +115,15 @@ export const TripStore = signalStore(
     filteredTrips: computed(() => {
       const searchTerm = normalizeTripSearchTerm(store.searchTerm());
       const type = store.type();
+      const selectedState = store.selectedState();
       return store.trips().filter((trip: TripModel) =>
         // legacy trips predate the `type` field — treat them as 'logbuch' (the original, sole type)
         (trip.type || 'logbuch') === type &&
+        // soft-deleted trips stay out of the list unless explicitly asked for (AOC uses its own query)
+        (trip.state !== 'deleted' || selectedState === 'deleted') &&
         nameMatches(trip.index, searchTerm) &&
         yearMatches(trip.startDate, store.selectedYear()) &&
-        nameMatches(trip.state, store.selectedState())
+        nameMatches(trip.state, selectedState)
       )
     }),
   })),
@@ -207,10 +210,15 @@ export const TripStore = signalStore(
       return await store.modelSelectService.selectPersonAvatar(undefined, undefined, true, true);
     },
 
-    async selectResourceAvatar(): Promise<AvatarInfo | undefined> {
+    async selectResourceAvatar(excludeTripKey = ''): Promise<AvatarInfo | undefined> {
       // selectedTag is a raw tag name matched against resource.tags — never an i18n key
       const boat = await store.modelSelectService.selectResourceAvatar('okBoat', undefined, store.i18n.select_boat_title());
       if (!boat) return undefined;
+      // a boat that is still out on an open trip cannot be taken out again
+      if (findOpenTripForBoat(store.trips(), boat.key, excludeTripKey)) {
+        await store.alertService.showToast(fill(store.i18n.select_boat_in_use(), { name: boat.name2 ?? boat.name1 }));
+        return undefined;
+      }
       const subType = await this.resolveRigging(boat.subType);
       return subType === boat.subType ? boat : { ...boat, subType };
     },
