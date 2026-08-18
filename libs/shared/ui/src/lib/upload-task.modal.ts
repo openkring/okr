@@ -148,18 +148,32 @@ export class UploadTaskModal implements OnInit {
             this.modalController.dismiss(downloadUrls, 'confirm');
           }
         },
-        async () => {
-          const url = await getDownloadURL(task.snapshot.ref);
-          downloadUrls[index] = url;
-          this.uploadStates.update(states => {
-            const updated = [...states];
-            updated[index] = { ...updated[index], state: 'success', downloadUrl: url };
-            return updated;
-          });
-          completedCount++;
-          if (completedCount === this.uploads().length) {
-            this.modalController.dismiss(downloadUrls, 'confirm');
-          }
+        () => {
+          // task.on() does not await this callback: an uncaught rejection here would surface as an
+          // unhandled rejection AND leave completedCount short, so the modal would never dismiss.
+          getDownloadURL(task.snapshot.ref)
+            .then((url) => {
+              downloadUrls[index] = url;
+              this.uploadStates.update(states => {
+                const updated = [...states];
+                updated[index] = { ...updated[index], state: 'success', downloadUrl: url };
+                return updated;
+              });
+            })
+            .catch((ex) => {
+              error(undefined, `UploadTask[${index}]: getDownloadURL ERROR: ${JSON.stringify(ex)}`);
+              this.uploadStates.update(states => {
+                const updated = [...states];
+                updated[index] = { ...updated[index], state: 'error' };
+                return updated;
+              });
+            })
+            .finally(() => {
+              completedCount++;
+              if (completedCount === this.uploads().length) {
+                this.modalController.dismiss(downloadUrls, 'confirm');
+              }
+            });
         }
       );
     });
