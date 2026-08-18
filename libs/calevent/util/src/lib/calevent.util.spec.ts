@@ -155,6 +155,10 @@ describe('getCalEventCssClass', () => {
   it('returns empty string for definitive', () => {
     expect(getCalEventCssClass('definitive')).toBe('');
   });
+
+  it('returns state-cancelled for cancelled', () => {
+    expect(getCalEventCssClass('cancelled')).toBe('state-cancelled');
+  });
 });
 
 describe('formatScheduleCloseMessage', () => {

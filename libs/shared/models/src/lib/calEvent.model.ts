@@ -36,7 +36,8 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
   // attendees are only used for open events, where there are no invitations sent
   public isOpen = false; // whether the event is open to all users or only to invited persons
   public attendees: Attendee[] = []; // list of attendees with their status
-  public state: 'proposed' | 'provisional' | 'definitive' = 'definitive'; // proposed, provisional, or definitive scheduling state
+  public state: 'proposed' | 'provisional' | 'definitive' | 'cancelled' = 'definitive'; // scheduling state; 'cancelled' = the event was called off
+  public cancelMessage = DEFAULT_NOTES; // why the event was cancelled; shown as a red banner, only set when state === 'cancelled'
   public columnLabel = DEFAULT_LABEL; // schedule-poll text column: the header text instead of a date; such events never show in a calendar
 
   constructor(tenantId: string) {

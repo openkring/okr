@@ -36,6 +36,11 @@ export const CALEVENT_I18N_KEYS = {
 
   download_ics:               PFX + 'download.ics',
 
+  cancel_event:               PFX + 'cancelEvent.label',
+  cancel_event_placeholder:   PFX + 'cancelEvent.placeholder',
+  cancel_event_banner:        PFX + 'cancelEvent.banner',
+  cancel_event_conf:          PFX + 'cancelEvent.conf',
+
   copy:                       PFX + 'copy.label',
   filter_all:                 PFX + 'filter.all',
 

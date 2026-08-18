@@ -114,6 +114,7 @@ export function getSeriesUpdateFields(edited: CalEventModel, startDate: string):
     responsiblePersons: target.responsiblePersons,
     isOpen: target.isOpen,
     state: target.state,
+    cancelMessage: target.cancelMessage ?? '',
     index: getCaleventIndex(target)
   };
 }
@@ -154,9 +155,10 @@ export function isSchedulePoll(events: CalEventModel[]): boolean {
   return events.some(e => e.state === 'proposed');
 }
 
-export function getCalEventCssClass(state: 'proposed' | 'provisional' | 'definitive'): string {
+export function getCalEventCssClass(state: CalEventModel['state']): string {
   if (state === 'proposed') return 'state-proposed';
   if (state === 'provisional') return 'state-provisional';
+  if (state === 'cancelled') return 'state-cancelled';
   return '';
 }
 

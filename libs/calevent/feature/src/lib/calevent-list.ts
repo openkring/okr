@@ -14,7 +14,7 @@ import { AvatarInfo, CalEventModel, LocationModel, PersonModel, RoleName } from 
 import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, navigateByUrl, QuickEntryService } from '@okr/shared-util-angular';
+import { AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -80,6 +80,56 @@ type AttendanceFilter = AttendanceState | 'all';
         :host ::ng-deep .fc-toolbar-title {
           display: none !important;
         }
+      }
+
+      /* State colours. FullCalendar builds its event DOM outside Angular, so these need ::ng-deep
+         and explicit colours — the --fc-* vars alone lose against FullCalendar's own rules. */
+      :host ::ng-deep .fc-event.state-proposed,
+      :host ::ng-deep .fc-event.state-proposed .fc-event-main {
+        background-color: #5b3fa8 !important;
+        border-color: #7d5fd0 !important;
+        color: #e6dcff !important;
+      }
+      :host ::ng-deep .fc-event.state-provisional,
+      :host ::ng-deep .fc-event.state-provisional .fc-event-main {
+        background-color: #8a6a10 !important;
+        border-color: #c89a30 !important;
+        color: #fff3d6 !important;
+      }
+      :host ::ng-deep .fc-event.state-cancelled,
+      :host ::ng-deep .fc-event.state-cancelled .fc-event-main {
+        background-color: #a02020 !important;
+        border-color: #d94545 !important;
+        color: #ffe3e3 !important;
+        text-decoration: line-through;
+      }
+
+      /* month view renders timed events as a dot + text instead of a filled block */
+      :host ::ng-deep .fc-daygrid-dot-event.state-proposed { color: #7d5fd0 !important; background: none !important; }
+      :host ::ng-deep .fc-daygrid-dot-event.state-provisional { color: #c89a30 !important; background: none !important; }
+      :host ::ng-deep .fc-daygrid-dot-event.state-cancelled { color: #d94545 !important; background: none !important; }
+      :host ::ng-deep .fc-daygrid-dot-event.state-proposed .fc-daygrid-event-dot { border-color: #7d5fd0 !important; }
+      :host ::ng-deep .fc-daygrid-dot-event.state-provisional .fc-daygrid-event-dot { border-color: #c89a30 !important; }
+      :host ::ng-deep .fc-daygrid-dot-event.state-cancelled .fc-daygrid-event-dot { border-color: #d94545 !important; }
+
+      /* Badge on proposed FullCalendar events */
+      :host ::ng-deep .fc-event .accept-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 4px;
+        padding: 0 4px;
+        font-size: 0.75em;
+        margin-left: 4px;
+        vertical-align: middle;
+      }
+
+      /* List view: left border + text colour per state */
+      ion-item.state-proposed { border-left: 3px solid #7d5fd0; }
+      ion-item.state-provisional { border-left: 3px solid #c89a30; }
+      ion-item.state-cancelled {
+        border-left: 3px solid #a02020;
+        --color: var(--ion-color-danger);
+        text-decoration: line-through;
       }
     `,
   ],
@@ -706,12 +756,12 @@ export class CalEventList implements OnInit {
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.store.i18n.download_ics(), this.imgixBaseUrl, 'calendar-number'));
 
     actionSheetOptions.buttons.push(createActionSheetDivider());
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     if (canChange) {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.cancelEvent', this.store.i18n.cancel_event(), this.imgixBaseUrl, 'cancel'));
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.copy', this.store.i18n.copy(), this.imgixBaseUrl, 'copy'));
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
-    } else {
-      actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
 
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
@@ -752,6 +802,9 @@ export class CalEventList implements OnInit {
         case 'calevent.view':
           await this.store.view(calEvent);
           break;
+        case 'calevent.cancelEvent':
+          await this.cancelEvent(calEvent);
+          break;
         case 'calevent.edit': {
           const isGrid = !this.isListView();
           const viewType = this.currentViewType();
@@ -790,6 +843,19 @@ export class CalEventList implements OnInit {
           break;
       }
     }
+  }
+
+  /**
+   * Organiser/eventAdmin sets the cancellation message. A non-empty message cancels the event
+   * (shown in red everywhere); clearing the text un-cancels it back to 'definitive'.
+   */
+  private async cancelEvent(calevent: CalEventModel): Promise<void> {
+    const message = await okrPrompt(this.alertController, this.store.i18n.cancel_event(),
+      this.store.i18n.cancel_event_placeholder(), this.store.i18n.ok(), this.store.i18n.cancel(), calevent.cancelMessage);
+    if (message === undefined) return;
+    const cancelMessage = message.trim();
+    const updated: CalEventModel = { ...calevent, cancelMessage, state: cancelMessage ? 'cancelled' : 'definitive' };
+    await this.store.update(updated, false);
   }
 
   /******************************* organiser actions *************************************** */

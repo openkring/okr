@@ -36,11 +36,22 @@ function storeToView(d: string): string {
     ion-item { --padding-start: 0; --inner-padding-end: 0; }
     .responsible-row { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 4px 0; }
     .responsible-name { font-size: 0.9rem; }
+    ion-card.cancel-banner { background: var(--ion-color-danger); color: var(--ion-color-danger-contrast); }
+    .cancel-title { font-weight: 600; margin: 0 0 4px; }
+    .cancel-message { margin: 0; white-space: pre-wrap; }
   `],
   template: `
     <okr-header [i18n]="{ title: calevent().name }" [isModal]="true" />
 
-    <ion-content class="ion-padding">    
+    <ion-content class="ion-padding">
+      @if(calevent().state === 'cancelled') {
+        <ion-card class="cancel-banner">
+          <ion-card-content>
+            <p class="cancel-title">{{ i18n.cancel_event_banner() }}</p>
+            <p class="cancel-message">{{ calevent().cancelMessage }}</p>
+          </ion-card-content>
+        </ion-card>
+      }
       <ion-card>
         <ion-card-content>
 

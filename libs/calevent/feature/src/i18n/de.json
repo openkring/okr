@@ -36,6 +36,12 @@
   "download": {
     "ics": "Termin herunterladen (ICS)"
   },
+  "cancelEvent": {
+    "label": "Absagemitteilung",
+    "placeholder": "Grund der Absage, z.B. \"Wegen Sturmwarnung abgesagt.\"",
+    "banner": "Abgesagt",
+    "conf": "Die Absagemitteilung wurde gespeichert."
+  },
   "copy": {
     "label": "Ereignis kopieren"
   },
