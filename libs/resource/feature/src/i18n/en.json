@@ -597,21 +597,25 @@
     }
   },
   "rboat_usage": {
-    "kandidierende": {
-      "label": "Candidates",
-      "description": "Boats for candidates (C-gigs & coastal)"
+    "ls1": {
+      "label": "Competitive sport 1",
+      "description": "Racers and squad athletes, priority for training and regattas"
+    },
+    "ls2": {
+      "label": "Competitive sport 2",
+      "description": "Very experienced active members, masters in coordination with the head coach"
     },
     "breitensport": {
       "label": "Recreational sport",
       "description": "All active members depending on their respective performance level"
     },
-    "routinierte": {
-      "label": "Experienced",
-      "description": "Very experienced active members, priority for training and regattas"
+    "cgig": {
+      "label": "C-gig",
+      "description": "Boats for candidates and beginners (C-gigs & coastal)"
     },
-    "leistungssport": {
-      "label": "Competitive sport",
-      "description": "Racers, masters in coordination with the head coach"
+    "classic": {
+      "label": "Classic",
+      "description": "Classic boats for tours and leisurely outings"
     },
     "private": {
       "label": "Private boat",
@@ -891,5 +895,12 @@
       "houseKey": "Select key",
       "rowingBoat": "Select rowing boat"
     }
+  },
+  "allocation": {
+    "title": "Boat allocation",
+    "empty": "No boats tagged 'bstrat' found.",
+    "year": "Year",
+    "target": "Target",
+    "conf": "The boat allocation was saved."
   }
 }

@@ -28,10 +28,8 @@
   "resources": "Resourcen",
   "desc": "Etwas, das man benützen, reservieren, besitzen kann (Boot, Auto, Immobilie, Schlüssel, Chäschtli etc.).",
   "all": "Alle Resourcen",
-
   "empty": "Keine Resourcen gefunden.",
   "other_attributes": "Sonstige Angaben",
-  
   "create": {
     "label": "Neue Resource erfassen",
     "conf": "Die neue Resource wurde gespeichert.",
@@ -54,7 +52,6 @@
   "select": {
     "label": "Resource wählen"
   },
-
   "okey": {
     "label": "okey",
     "placeholder": "okey",
@@ -139,7 +136,6 @@
     "error": "Der Name ist obligatorisch und muss aus alphanumerischen Zeichen bestehen.",
     "helper": "Ein Name kann aus mehreren Wörtern bestehen. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
   },
-
   "resource_type": {
     "label": "Resource Typ",
     "helper": "Der Type der Resource.",
@@ -181,7 +177,6 @@
       "description": "Der Resourcentyp ist nicht gesetzt oder unbekannt.",
       "formTitle": "Angaben zur Resource"
     },
-
     "boat": {
       "label": "Boot",
       "plural": "Boote",
@@ -216,7 +211,6 @@
       "formTitle": "Angaben zum Ausweis",
       "description": "Eine Bestätigung in Form eines offiziellen Dokumentes."
     },
-
     "rboat": {
       "label": "Ruderboot",
       "plural": "Ruderboote",
@@ -245,7 +239,6 @@
         "label": "Ruderboot anzeigen"
       }
     },
-
     "car": {
       "label": "Fahrzeug",
       "title": "Fahrzeuge",
@@ -271,7 +264,6 @@
         "label": "Fahrzeug anzeigen"
       }
     },
-
     "clubBoat": {
       "label": "Club-Boot",
       "title": "Club-Boote"
@@ -280,7 +272,6 @@
       "label": "Privat-Boot",
       "title": "Privat-Boote"
     },
-
     "other": {
       "label": "Andere Resource",
       "description": "Resource, welche keiner vordefinierten Art zugeordnet werden kann",
@@ -305,7 +296,6 @@
         "label": "Resource anzeigen"
       }
     },
-
     "motorBoat": {
       "label": "Motorboot",
       "title": "Motorboote",
@@ -468,7 +458,6 @@
       "description": "Die Resource ist archiviert, dh. die frühere Benutzung ist nicht mehr aktuell."
     }
   },
-
   "boat": {
     "singular": "Boot",
     "plural": "Boote",
@@ -524,7 +513,6 @@
       "description": "Sup oder Surfbrett"
     }
   },
-
   "rboat": {
     "singular": "Ruderboot",
     "plural": "Ruderboote",
@@ -609,21 +597,25 @@
     }
   },
   "rboat_usage": {
-    "kandidierende": {
-      "label": "Kandidierende",
-      "description": "Boote für Kandidierende (C-Gigs & Coastal)"
+    "ls1": {
+      "label": "Leistungssport 1",
+      "description": "Regattierende und Kaderathletinnen/-athleten, Vorrang für Trainings und Regatten"
+    },
+    "ls2": {
+      "label": "Leistungssport 2",
+      "description": "Sehr routinierte Aktivmitglieder, Masters in Abstimmung mit Head Coach"
     },
     "breitensport": {
       "label": "Breitensport",
       "description": "Alle Aktivmitglieder in Abhängigkeit des jeweiligen Leistungsniveaus"
     },
-    "routinierte": {
-      "label": "Routinierte",
-      "description": "Sehr routinierte Aktivmitglieder, Vorrang für Trainings und Regatten"
+    "cgig": {
+      "label": "C-Gig",
+      "description": "Boote für Kandidierende und Anfängerinnen/Anfänger (C-Gigs & Coastal)"
     },
-    "leistungssport": {
-      "label": "Leistungssport",
-      "description": "Regattierende, Masters in Abstimmung mit Head Coach"
+    "classic": {
+      "label": "Klassisch",
+      "description": "Klassische Boote für Touren und gemütliche Ausfahrten"
     },
     "private": {
       "label": "Privatboot",
@@ -903,5 +895,12 @@
       "houseKey": "Schlüssel wählen",
       "rowingBoat": "Ruderboot wählen"
     }
+  },
+  "allocation": {
+    "title": "Bootseinteilung",
+    "empty": "Keine Boote mit dem Tag 'bstrat' gefunden.",
+    "year": "Jahr",
+    "target": "Soll",
+    "conf": "Die Bootseinteilung wurde gespeichert."
   }
 }

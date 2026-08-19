@@ -597,21 +597,25 @@
     }
   },
   "rboat_usage": {
-    "kandidierende": {
-      "label": "Candidati",
-      "description": "Barche per candidati (C-gigs & coastal)"
+    "ls1": {
+      "label": "Sport agonistico 1",
+      "description": "Regatanti e atleti del quadro, priorità per allenamenti e regate"
+    },
+    "ls2": {
+      "label": "Sport agonistico 2",
+      "description": "Membri attivi molto esperti, master in accordo con l'head coach"
     },
     "breitensport": {
       "label": "Sport per tutti",
       "description": "Tutti i membri attivi in base al rispettivo livello di prestazione"
     },
-    "routinierte": {
-      "label": "Esperti",
-      "description": "Membri attivi molto esperti, priorità per allenamenti e regate"
+    "cgig": {
+      "label": "C-gig",
+      "description": "Barche per candidati e principianti (C-gigs & coastal)"
     },
-    "leistungssport": {
-      "label": "Sport agonistico",
-      "description": "Regatanti, master in accordo con l'head coach"
+    "classic": {
+      "label": "Classico",
+      "description": "Barche classiche per escursioni e uscite tranquille"
     },
     "private": {
       "label": "Barca privata",
@@ -891,5 +895,12 @@
       "houseKey": "Scegliere la chiave",
       "rowingBoat": "Scegliere la barca a remi"
     }
+  },
+  "allocation": {
+    "title": "Ripartizione delle barche",
+    "empty": "Nessuna barca con il tag 'bstrat'.",
+    "year": "Anno",
+    "target": "Obiettivo",
+    "conf": "La ripartizione delle barche è stata salvata."
   }
 }
