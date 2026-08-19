@@ -31,7 +31,11 @@ type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
     IonTitle, IonMenuButton, IonContent, IonItem, IonPopover, IonThumbnail
   ],
   providers: [DocumentStore],
-  styles: [`.clickable { cursor: pointer; user-select: none; }`],
+  styles: [`
+    .clickable { cursor: pointer; user-select: none; }
+    .droptarget { outline: 2px dashed var(--ion-color-primary); outline-offset: -2px; border-radius: 4px; }
+    .dropzone { background: var(--ion-color-primary-tint); }
+  `],
   template: `
   @if(canUpload()) {
     <!-- Input outside ALL Ionic web components so Safari's id lookup and
@@ -121,7 +125,8 @@ type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
   </ion-header>
 
 <!-- list data -->
-<ion-content #content>
+<ion-content #content [class.dropzone]="dropUpload()"
+  (dragover)="onContentDragOver($event)" (dragleave)="dropUpload.set(false)" (drop)="onContentDrop($event)">
   @if(isLoading()) {
     <okr-spinner />
   } @else {
@@ -132,7 +137,10 @@ type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
         <ion-grid>
           <!-- subfolders -->
           @for(folder of subFolders(); track folder.okey) {
-            <ion-row (click)="showFolderActions(folder)">
+            <ion-row (click)="showFolderActions(folder)"
+              [class.droptarget]="dropFolderKey() === folder.okey"
+              (dragover)="onFolderDragOver($event, folder)" (dragleave)="dropFolderKey.set(undefined)"
+              (drop)="onFolderDrop($event, folder)">
               <ion-col size="12">
                 <ion-item lines="none">
                   <ion-thumbnail slot="start">
@@ -148,12 +156,14 @@ type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
           }
           <!-- don't use 'document' here as it leads to confusions with HTML document -->
           @for(doc of sortedDocuments(); track doc.okey) {
-            <ion-row (click)="showActions(doc)">
+            <ion-row (click)="showActions(doc)" draggable="true"
+              (dragstart)="onDragStart($event, doc)" (dragend)="onDragEnd()">
               <ion-col size="12" size-sm="8">
                 <ion-item lines="none">
                   <ion-thumbnail slot="start">
                     @if(doc.mimeType.startsWith('image/') || doc.mimeType === 'application/pdf') {
-                      <img src="{{ doc.fullPath | thumbnailUrl}}" [alt]="doc.altText" />
+                      <!-- draggable=false: a native image drag would hijack the row's move drag -->
+                      <img src="{{ doc.fullPath | thumbnailUrl}}" [alt]="doc.altText" draggable="false" />
                     } @else {
                       <ion-icon style="width: 100%; height: 100%;" src="{{ doc.fullPath | fileLogo }}" />
                     }
@@ -182,7 +192,10 @@ type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
           <ion-row>
             <!-- subfolders -->
             @for(folder of subFolders(); track folder.okey) {
-              <ion-col size="6" size-md="4" size-xl="3" (click)="showFolderActions(folder)">
+              <ion-col size="6" size-md="4" size-xl="3" (click)="showFolderActions(folder)"
+                [class.droptarget]="dropFolderKey() === folder.okey"
+                (dragover)="onFolderDragOver($event, folder)" (dragleave)="dropFolderKey.set(undefined)"
+                (drop)="onFolderDrop($event, folder)">
                 <div style="position: relative; width: 100%; padding-bottom: 80%; overflow: hidden; border-radius: 4px; background: var(--ion-color-light);">
                   <ion-thumbnail style="position: absolute; inset: 0; --size: 100%; width: 100%; height: 100%;">
                     <ion-icon style="width: 60%; height: 60%; margin: 20%;" src="{{ 'folder' | svgIcon }}" />
@@ -193,11 +206,13 @@ type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
             }
             <!-- documents -->
             @for(doc of sortedDocuments(); track doc.okey) {
-              <ion-col size="6" size-md="4" size-xl="3" (click)="showActions(doc)">
+              <ion-col size="6" size-md="4" size-xl="3" (click)="showActions(doc)" draggable="true"
+                (dragstart)="onDragStart($event, doc)" (dragend)="onDragEnd()">
                 <div style="position: relative; width: 100%; padding-bottom: 80%; overflow: hidden; border-radius: 4px;">
                   <ion-thumbnail style="position: absolute; inset: 0; --size: 100%; width: 100%; height: 100%;">
                     @if(doc.mimeType.startsWith('image/') || doc.mimeType === 'application/pdf') {
-                      <img src="{{ doc.fullPath | thumbnailUrl}}" [alt]="doc.altText" />
+                      <!-- draggable=false: a native image drag would hijack the row's move drag -->
+                      <img src="{{ doc.fullPath | thumbnailUrl}}" [alt]="doc.altText" draggable="false" />
                     } @else {
                       <ion-icon style="width: 100%; height: 100%;" src="{{ doc.fullPath | fileLogo }}" />
                     }
@@ -313,6 +328,60 @@ export class DocumentList {
     const files = Array.from(input.files ?? []);
     input.value = '';
     this.store.addFiles(files);
+  }
+
+  /******************************* drag & drop *************************************** */
+  /** The document currently being dragged (in-app move), if any. */
+  protected readonly dragged = signal<DocumentModel | undefined>(undefined);
+  /** Folder currently hovered by a drag, for the drop highlight. */
+  protected readonly dropFolderKey = signal<string | undefined>(undefined);
+  /** External files hovering over the list, for the upload highlight. */
+  protected readonly dropUpload = signal(false);
+
+  protected onDragStart(event: DragEvent, doc: DocumentModel): void {
+    if (!canEditDocument(doc, this.currentFolder(), this.currentUser(), this.groupAdmin())) {
+      event.preventDefault();
+      return;
+    }
+    this.dragged.set(doc);
+    event.dataTransfer?.setData('text/plain', doc.okey);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+
+  protected onDragEnd(): void {
+    this.dragged.set(undefined);
+    this.dropFolderKey.set(undefined);
+  }
+
+  protected onFolderDragOver(event: DragEvent, folder: FolderModel): void {
+    if (!this.dragged()) return; // external file drops fall through to the content handler
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    this.dropFolderKey.set(folder.okey);
+  }
+
+  protected async onFolderDrop(event: DragEvent, folder: FolderModel): Promise<void> {
+    const doc = this.dragged();
+    if (!doc) return;
+    event.preventDefault();
+    event.stopPropagation(); // don't let the content handler treat this as an upload
+    this.onDragEnd();
+    await this.store.moveToFolder(doc, folder.okey);
+  }
+
+  protected onContentDragOver(event: DragEvent): void {
+    if (!this.canUpload() || !event.dataTransfer?.types.includes('Files')) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    this.dropUpload.set(true);
+  }
+
+  protected async onContentDrop(event: DragEvent): Promise<void> {
+    this.dropUpload.set(false);
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    if (!files.length || !this.canUpload()) return;
+    event.preventDefault();
+    await this.store.addFiles(files);
   }
 
   /******************************* actions *************************************** */

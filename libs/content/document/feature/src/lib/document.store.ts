@@ -302,6 +302,20 @@ export const DocumentStore = signalStore(
       },
 
       /**
+       * Move a document into a folder (drag & drop): drop the folder the list is currently
+       * filtered on and add the target. Documents outside a folder are simply added to it.
+       */
+      async moveToFolder(document: DocumentModel, folderKey: string): Promise<void> {
+        const keys = new Set(document.folderKeys ?? []);
+        if (keys.has(folderKey)) return;
+        const from = store.listId().startsWith('f:') ? store.listId().substring(2) : undefined;
+        if (from) keys.delete(from);
+        keys.add(folderKey);
+        await store.documentService.update({ ...document, folderKeys: [...keys] }, store.currentUser());
+        store.documentsResource.reload();
+      },
+
+      /**
        * Prompt for a name, create a new FolderModel nested under the current folder,
        * and navigate into it by updating the listId.
        */
