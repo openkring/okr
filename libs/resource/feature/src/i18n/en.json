@@ -898,9 +898,8 @@
   },
   "allocation": {
     "title": "Boat allocation",
-    "empty": "No boats tagged 'bstrat' found.",
+    "empty": "No boats with the tag «Boat Strategy» found.",
     "year": "Year",
-    "target": "Target",
-    "conf": "The boat allocation was saved."
+    "target": "Target"
   }
 }

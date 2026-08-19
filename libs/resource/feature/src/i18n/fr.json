@@ -898,9 +898,8 @@
   },
   "allocation": {
     "title": "Répartition des bateaux",
-    "empty": "Aucun bateau avec le tag 'bstrat'.",
+    "empty": "Aucun bateau avec le tag « Stratégie des bateaux ».",
     "year": "Année",
-    "target": "Objectif",
-    "conf": "La répartition des bateaux a été enregistrée."
+    "target": "Objectif"
   }
 }

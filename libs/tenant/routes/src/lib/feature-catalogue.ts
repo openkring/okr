@@ -588,6 +588,11 @@ const resource: BlockRoutes = {
       children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/resource-feature').then(m => m.RowingBoatList) }],
     },
     {
+      path: 'rboat-allocation',
+      canActivate: [isAuthenticatedGuard],
+      loadComponent: () => import('@okr/resource-feature').then(m => m.BoatAllocation),
+    },
+    {
       path: 'locker',
       canActivate: [isAuthenticatedGuard],
       children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/resource-feature').then(m => m.LockerList) }],

@@ -23,6 +23,7 @@ export * from './lib/asset-movement.model';
 export * from './lib/asset.model';
 export * from './lib/exchange-rate.model';
 export * from './lib/vat-code.model';
+export * from './lib/boat-target.model';
 export * from './lib/calendar.model';
 export * from './lib/calEvent.model';
 export * from './lib/category-list.model';

@@ -898,9 +898,8 @@
   },
   "allocation": {
     "title": "Distribución de barcos",
-    "empty": "No se encontraron barcos con la etiqueta 'bstrat'.",
+    "empty": "No se encontraron barcos con la etiqueta «Estrategia de barcos».",
     "year": "Año",
-    "target": "Objetivo",
-    "conf": "La distribución de barcos se ha guardado."
+    "target": "Objetivo"
   }
 }

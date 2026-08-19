@@ -91,6 +91,12 @@ export const RESOURCE_I18N_KEYS = {
   rboat_form_title:         PFX + 'type.rboat.formTitle',
   rboat_plural:             PFX + 'type.rboat.plural',
 
+  // Bootseinteilung (rboat_usage × rboat_type allocation grid)
+  alloc_title:              PFX + 'allocation.title',
+  alloc_empty:              PFX + 'allocation.empty',
+  alloc_year:               PFX + 'allocation.year',
+  alloc_target:             PFX + 'allocation.target',
+
   realEstate_form_title:    PFX + 'type.realestate.formTitle',
   other_form_title:         PFX + 'type.other.formTitle',
 

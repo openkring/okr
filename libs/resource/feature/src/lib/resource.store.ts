@@ -5,13 +5,13 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { CategoryListModel, ResourceCollection, ResourceModel, ResourceModelName } from '@okr/shared-models';
+import { BoatTargetCollection, BoatTargetModel, CategoryListModel, ResourceCollection, ResourceModel, ResourceModelName } from '@okr/shared-models';
 import { buildExportTable, chipMatches, debugItemLoaded, getSystemQuery, isResource, nameMatches } from '@okr/shared-util-core';
 import { exportCsv, getExportFileName, showToast } from '@okr/shared-util-angular';
 import { FirestoreService } from '@okr/shared-data-access';
 
 import { ResourceService } from '@okr/resource-data-access';
-import { getResourceExportColumns, getResourceExportFileName, RESOURCE_I18N_KEYS, ResourceExportList } from '@okr/resource-util';
+import { boatTargetKey, getResourceExportColumns, getResourceExportFileName, RESOURCE_I18N_KEYS, ResourceExportList, setUsageForYear } from '@okr/resource-util';
 
 export type ResourceState = {
   searchTerm: string;
@@ -58,7 +58,13 @@ export const ResourceStore = signalStore(
           debugItemLoaded('ResourceStore.resource', store.appStore.currentUser())
         );
       }
-    }),    
+    }),
+
+    /** Bootseinteilung target counts — one document per tenant, id = tenantId. */
+    targetResource: rxResource({
+      params: () => ({ tenantId: store.appStore.tenantId() }),
+      stream: ({params}) => store.firestoreService.readObject<BoatTargetModel>(BoatTargetCollection, params.tenantId),
+    }),
   })),
 
   withComputed((store) => {
@@ -79,6 +85,7 @@ export const ResourceStore = signalStore(
       realestate: computed(() => store.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'realestate') ?? []),
       pets: computed(() => store.resourceResource.value()?.filter((resource: ResourceModel) => resource.type === 'pet') ?? []),
       resource: computed(() => store.resResource.value()),
+      boatTargets: computed(() => store.targetResource.value()?.targets ?? {}),
       currentUser: computed(() => store.appStore.currentUser()),
       tenantId: computed(() => store.appStore.tenantId()),
       isLoading: computed(() => store.resourceResource.isLoading()),
@@ -211,6 +218,29 @@ export const ResourceStore = signalStore(
         if (readOnly) return;
         await store.resourceService.delete(resource, store.currentUser());
         store.resourceResource.reload();
+      },
+
+      /******************************** Bootseinteilung ******************************************* */
+      /**
+       * Move a rowing boat to another rboat_usage for one season only — every other year the
+       * boat is already allocated to stays untouched (see setUsageForYear).
+       */
+      async setBoatUsage(boat: ResourceModel, year: number, usage: string, readOnly = true): Promise<void> {
+        if (readOnly) return;
+        const changed = setUsageForYear(boat.usage, year, usage);
+        if (changed === boat.usage) return;
+        await store.resourceService.update({ ...boat, usage: changed }, store.currentUser());
+      },
+
+      /** Write one cell of the target-count grid. The doc is created on first write. */
+      async setBoatTarget(year: number, usage: string, type: string, count: number, readOnly = true): Promise<void> {
+        if (readOnly) return;
+        const tenantId = store.tenantId();
+        const doc = store.targetResource.value() ?? new BoatTargetModel(tenantId);
+        const targets = { ...doc.targets, [boatTargetKey(year, usage, type)]: count };
+        await store.firestoreService.updateObject<BoatTargetModel>(
+          BoatTargetCollection, tenantId, { ...doc, tenants: [tenantId], targets }, true);
+        store.targetResource.reload();
       },
 
       async save(resource?: ResourceModel): Promise<void> {

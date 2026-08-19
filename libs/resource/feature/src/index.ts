@@ -1,3 +1,4 @@
+export * from './lib/boat-allocation';
 export * from './lib/resource-edit.modal';
 export * from './lib/resource-list';
 export * from './lib/resource.store';

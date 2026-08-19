@@ -898,9 +898,8 @@
   },
   "allocation": {
     "title": "Ripartizione delle barche",
-    "empty": "Nessuna barca con il tag 'bstrat'.",
+    "empty": "Nessuna barca con il tag «Strategia delle barche».",
     "year": "Anno",
-    "target": "Obiettivo",
-    "conf": "La ripartizione delle barche è stata salvata."
+    "target": "Obiettivo"
   }
 }

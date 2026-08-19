@@ -898,9 +898,8 @@
   },
   "allocation": {
     "title": "Bootseinteilung",
-    "empty": "Keine Boote mit dem Tag 'bstrat' gefunden.",
+    "empty": "Keine Boote mit dem Tag «Bootsstrategie» gefunden.",
     "year": "Jahr",
-    "target": "Soll",
-    "conf": "Die Bootseinteilung wurde gespeichert."
+    "target": "Soll"
   }
 }
