@@ -26,8 +26,8 @@ export function flattenRoles(roles: Roles): string {
  * @returns Roles object, e.g. { 'admin': true, 'registered': true }
  */
 export function structureRoles(roles: string): Roles {
-  const structuredRoles = roles.split(',').reduce((acc, role) => {
-    acc[role as keyof Roles] = true;
+  const structuredRoles = roles.split(',').filter(Boolean).reduce((acc, role) => {
+    acc[role.trim() as keyof Roles] = true;
     return acc;
   }, {} as Roles);
   return structuredRoles;

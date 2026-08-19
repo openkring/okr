@@ -74,6 +74,10 @@ describe('User Utils', () => {
       const expectedRoles: Roles = { admin: true, registered: true };
       expect(structureRoles(rolesString)).toEqual(expectedRoles);
     });
+
+    it('structureRoles should return an empty Roles object for an empty string', () => {
+      expect(structureRoles('')).toEqual({});
+    });
   });
 
   describe('Form Conversion functions', () => {

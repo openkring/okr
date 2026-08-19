@@ -5,7 +5,7 @@ import { CategoryListModel, UserModel } from "@okr/shared-models";
 import { Checkbox, CheckboxI18n, Chips } from "@okr/shared-ui";
 import { coerceBoolean, getCategoryItemNames } from "@okr/shared-util-core";
 
-import { flattenRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } from "@okr/user-util";
+import { flattenRoles, structureRoles, UserAuthFormModel, userAuthFormValidations, UserI18n } from "@okr/user-util";
 
 @Component({
   selector: 'okr-user-auth-form',
@@ -77,6 +77,8 @@ export class UserAuthForm {
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {
     this.dirty.emit(true);
-    this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+    // the chips component emits a comma-separated string; roles are stored as a Roles object
+    const value = fieldName === 'roles' ? structureRoles(fieldValue as string) : fieldValue;
+    this.formData.update((vm) => ({ ...vm, [fieldName]: value }));
   }
 }
