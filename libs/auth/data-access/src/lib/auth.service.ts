@@ -100,11 +100,11 @@ export class AuthService {
       if (!loginEmail || loginEmail.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
       const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
       await fn({ to: [loginEmail], appId: this.env.appId, provider: 'mailtrap_api', template: 'scs_password_reset' });
-      void this.activityService.log('auth', 'pwdreset', undefined, `${loginEmail}: SUCCESS`);
+      void this.activityService.logAuth('pwdreset', `${loginEmail}: SUCCESS`);
       await this.alertService.showToast(this.i18n.pwdreset_conf() + loginEmail);
       await navigateByUrl(this.router, loginUrl);
     } catch (ex) {
-      void this.activityService.log('auth', 'pwdreset', undefined, `${loginEmail}: ERROR: ${ex}`);
+      void this.activityService.logAuth('pwdreset', `${loginEmail}: ERROR: ${ex}`);
       console.error('AuthService.resetPassword: error: ', ex);
       await this.alertService.showToast(this.i18n.pwdreset_error());
       await navigateByUrl(this.router, loginUrl);
@@ -119,13 +119,14 @@ export class AuthService {
    * @returns the email address on success, undefined on failure
    */
   public async confirmPasswordReset(oobCode: string, newPassword: string): Promise<string | undefined> {
+    let email = '';
     try {
-      const email = await verifyPasswordResetCode(this.auth, oobCode);
+      email = await verifyPasswordResetCode(this.auth, oobCode);
       await confirmPasswordReset(this.auth, oobCode, newPassword);
-      void this.activityService.log('auth', 'pwdresetConf', undefined, `${email}: SUCCESS`);
+      void this.activityService.logAuth('pwdresetConf', `${email}: SUCCESS`);
       return email;
     } catch (ex) {
-      void this.activityService.log('auth', 'pwdresetConf', undefined, `ERROR: ${ex}`);
+      void this.activityService.logAuth('pwdresetConf', `${email || 'unknown'}: ERROR: ${ex}`);
       console.error('AuthService.confirmPasswordReset: error: ', ex);
       return undefined;
     }

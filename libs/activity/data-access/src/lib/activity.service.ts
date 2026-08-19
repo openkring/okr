@@ -56,10 +56,11 @@ export class ActivityService {
   }
 
   /**
-   * Log an auth event (login/logout) where currentUser (UserModel) is not yet available.
+   * Log an auth event (login/logout/pwdreset/pwdresetConf) where currentUser (UserModel)
+   * is not available — the user is signed out during these flows.
    * Uses the email address as author identifier.
    */
-  public async logAuth(action: 'login' | 'logout', payload: string): Promise<void> {
+  public async logAuth(action: 'login' | 'logout' | 'pwdreset' | 'pwdresetConf', payload: string): Promise<void> {
     try {
       const activity = new ActivityModel(this.env.tenantId);
       activity.timestamp = getTodayStr(DateFormat.StoreDateTime);
