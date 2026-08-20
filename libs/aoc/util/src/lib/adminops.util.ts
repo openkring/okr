@@ -104,6 +104,9 @@ export async function getFirebaseUser(uid: string): Promise<FirebaseUserModel | 
     const getFirebaseUserFunction = httpsCallable(functions, 'getFirebaseUser');
     const result = await getFirebaseUserFunction({ uid });
     const fbUser = result.data as FirebaseUserModel;
+    // the admin SDK returns null for unset fields; the form validations reject null
+    if (!fbUser.email) fbUser.email = '';
+    if (!fbUser.displayName) fbUser.displayName = '';
     if (!fbUser.phone) fbUser.phone = '';
     if (!fbUser.photoUrl) fbUser.photoUrl = '';
     console.log(`adminops.util.getFirebaseUser: received firebase user`, fbUser);
@@ -169,7 +172,9 @@ export async function updateFirebaseUser(fbUser: FirebaseUserModel, useEmulator 
     await updateFirebaseUserFunction(fbUser);
     console.log(`adminops.util.updateFirebaseUser: user ${fbUser.uid} updated.`);
   } catch (error) {
-    console.error('adminops.util.updateFirebaseUser:  -> error: ' + JSON.stringify(error));
+    // the callable carries the real reason (e.g. email already in use) in message, not in the JSON
+    console.error('adminops.util.updateFirebaseUser:  -> error: ' + (error as Error).message);
+    throw error;
   }
 }
 

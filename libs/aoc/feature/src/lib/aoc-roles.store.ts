@@ -315,7 +315,7 @@ export const AocRolesStore = signalStore(
               this.reload();
             }
           } catch (ex) {
-            error(store.toastController, 'RolesStore.updateFbuser -> error: ' + JSON.stringify(ex));
+            error(store.toastController, 'RolesStore.updateFbuser -> error: ' + ((ex as Error).message ?? JSON.stringify(ex)));
           }
         }
       },
