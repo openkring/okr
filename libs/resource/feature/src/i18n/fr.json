@@ -605,7 +605,7 @@
       "label": "Sport de compétition 2",
       "description": "Membres actifs très expérimentés, masters en accord avec le head coach"
     },
-    "breitensport": {
+    "bs": {
       "label": "Sport pour tous",
       "description": "Tous les membres actifs selon leur niveau de performance respectif"
     },
@@ -613,8 +613,8 @@
       "label": "C-gig",
       "description": "Bateaux pour candidats et débutants (C-gigs & coastal)"
     },
-    "classic": {
-      "label": "Classique",
+    "cl": {
+      "label": "Classics",
       "description": "Bateaux classiques pour randonnées et sorties tranquilles"
     },
     "private": {
@@ -900,6 +900,77 @@
     "title": "Répartition des bateaux",
     "empty": "Aucun bateau avec le tag « Stratégie des bateaux ».",
     "year": "Année",
-    "target": "Objectif"
+    "target": "Objectif",
+    "legend": {
+      "title": "Légende",
+      "numbers": "Nombres",
+      "numbersText": "Nombre de bateaux visé par répartition et type de bateau ; autant de cases sont grisées en dessous.",
+      "l": "léger",
+      "s": "lourd",
+      "p": "bateau privé",
+      "success": "acquisition",
+      "danger": "vente/élimination"
+    },
+    "slot": {
+      "formTitle": "Nommer la case",
+      "text": {
+        "label": "Texte",
+        "placeholder": "p.ex. nouveau bateau",
+        "helper": "Laisser vide pour effacer la case."
+      },
+      "color": {
+        "label": "Couleur",
+        "helper": "« Aucune » laisse la case inchangée."
+      },
+      "strategy": {
+        "label": "Pertinent pour la stratégie des bateaux",
+        "helper": "Apparaît comme ligne du tableau de la stratégie des bateaux."
+      },
+      "type": {
+        "label": "Type",
+        "helper": "Achat ou vente de ce bateau."
+      },
+      "price": {
+        "label": "Prix",
+        "placeholder": "p.ex. 10000",
+        "helper": "Montant en CHF."
+      },
+      "swisslos": {
+        "label": "Swisslos %",
+        "placeholder": "p.ex. 20",
+        "helper": "Part du prix d'achat financée par Swisslos."
+      },
+      "donations": {
+        "label": "Dons (CHF)",
+        "placeholder": "p.ex. 5000",
+        "helper": "Dons promis pour cet achat."
+      }
+    },
+    "color": {
+      "none": "Aucune",
+      "primary": "Primaire",
+      "secondary": "Secondaire",
+      "tertiary": "Tertiaire",
+      "success": "Vert",
+      "warning": "Orange",
+      "danger": "Rouge",
+      "light": "Clair",
+      "medium": "Gris",
+      "dark": "Foncé"
+    },
+    "strategyType": {
+      "buy": "Achat",
+      "sell": "Vente"
+    },
+    "strategy": {
+      "title": "Stratégie des bateaux",
+      "buy": "Achat",
+      "sell": "Vente",
+      "budget": "Budget acquisition de bateaux",
+      "swisslos": "Swisslos",
+      "donations": "Dons",
+      "effective": "Coût effectif",
+      "empty": "Aucun bateau marqué pour la stratégie des bateaux."
+    }
   }
 }

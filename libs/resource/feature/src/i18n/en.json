@@ -605,7 +605,7 @@
       "label": "Competitive sport 2",
       "description": "Very experienced active members, masters in coordination with the head coach"
     },
-    "breitensport": {
+    "bs": {
       "label": "Recreational sport",
       "description": "All active members depending on their respective performance level"
     },
@@ -613,8 +613,8 @@
       "label": "C-gig",
       "description": "Boats for candidates and beginners (C-gigs & coastal)"
     },
-    "classic": {
-      "label": "Classic",
+    "cl": {
+      "label": "Classics",
       "description": "Classic boats for tours and leisurely outings"
     },
     "private": {
@@ -900,6 +900,77 @@
     "title": "Boat allocation",
     "empty": "No boats with the tag «Boat Strategy» found.",
     "year": "Year",
-    "target": "Target"
+    "target": "Target",
+    "legend": {
+      "title": "Legend",
+      "numbers": "Numbers",
+      "numbersText": "Target number of boats per allocation and boat type; the matching number of slots is shaded below it.",
+      "l": "light",
+      "s": "heavy",
+      "p": "private boat",
+      "success": "acquisition",
+      "danger": "sale/disposal"
+    },
+    "slot": {
+      "formTitle": "Label the slot",
+      "text": {
+        "label": "Text",
+        "placeholder": "e.g. new boat",
+        "helper": "Leave empty to clear the slot."
+      },
+      "color": {
+        "label": "Color",
+        "helper": "«None» leaves the slot unchanged."
+      },
+      "strategy": {
+        "label": "Relevant for the boat strategy",
+        "helper": "Shows up as a line of the boat-strategy table."
+      },
+      "type": {
+        "label": "Kind",
+        "helper": "Purchase or sale of this boat."
+      },
+      "price": {
+        "label": "Price",
+        "placeholder": "e.g. 10000",
+        "helper": "Amount in CHF."
+      },
+      "swisslos": {
+        "label": "Swisslos %",
+        "placeholder": "e.g. 20",
+        "helper": "Share of the purchase price funded by Swisslos."
+      },
+      "donations": {
+        "label": "Donations (CHF)",
+        "placeholder": "e.g. 5000",
+        "helper": "Donations pledged towards this purchase."
+      }
+    },
+    "color": {
+      "none": "None",
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "tertiary": "Tertiary",
+      "success": "Green",
+      "warning": "Orange",
+      "danger": "Red",
+      "light": "Light",
+      "medium": "Grey",
+      "dark": "Dark"
+    },
+    "strategyType": {
+      "buy": "Purchase",
+      "sell": "Sale"
+    },
+    "strategy": {
+      "title": "Boat strategy",
+      "buy": "Purchase",
+      "sell": "Sale",
+      "budget": "Boat acquisition budget",
+      "swisslos": "Swisslos",
+      "donations": "Donations",
+      "effective": "Effective cost",
+      "empty": "No boats flagged for the boat strategy."
+    }
   }
 }

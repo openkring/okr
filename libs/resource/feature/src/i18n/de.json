@@ -605,7 +605,7 @@
       "label": "Leistungssport 2",
       "description": "Sehr routinierte Aktivmitglieder, Masters in Abstimmung mit Head Coach"
     },
-    "breitensport": {
+    "bs": {
       "label": "Breitensport",
       "description": "Alle Aktivmitglieder in Abhängigkeit des jeweiligen Leistungsniveaus"
     },
@@ -613,9 +613,9 @@
       "label": "C-Gig",
       "description": "Boote für Kandidierende und Anfängerinnen/Anfänger (C-Gigs & Coastal)"
     },
-    "classic": {
-      "label": "Klassisch",
-      "description": "Klassische Boote für Touren und gemütliche Ausfahrten"
+    "cl": {
+      "label": "Classics",
+      "description": "Klassische (Holz-)Boote für Touren und gemütliche Ausfahrten"
     },
     "private": {
       "label": "Privatboot",
@@ -900,6 +900,77 @@
     "title": "Bootseinteilung",
     "empty": "Keine Boote mit dem Tag «Bootsstrategie» gefunden.",
     "year": "Jahr",
-    "target": "Soll"
+    "target": "Soll",
+    "legend": {
+      "title": "Legende",
+      "numbers": "Nummern",
+      "numbersText": "Soll-Anzahl Boote pro Einteilung und Bootstyp; darunter sind entsprechend viele Felder hinterlegt.",
+      "l": "leicht",
+      "s": "schwer",
+      "p": "Privatboot",
+      "success": "Beschaffung",
+      "danger": "Verkauf/Entsorgung"
+    },
+    "slot": {
+      "formTitle": "Feld beschriften",
+      "text": {
+        "label": "Text",
+        "placeholder": "z.B. neues Boot",
+        "helper": "Leer lassen, um das Feld zu löschen."
+      },
+      "color": {
+        "label": "Farbe",
+        "helper": "«Keine» zeigt das Feld unverändert."
+      },
+      "strategy": {
+        "label": "Relevant für Bootsstrategie",
+        "helper": "Erscheint als Zeile in der Bootsstrategie-Tabelle."
+      },
+      "type": {
+        "label": "Art",
+        "helper": "Kauf oder Verkauf dieses Bootes."
+      },
+      "price": {
+        "label": "Preis",
+        "placeholder": "z.B. 10000",
+        "helper": "Betrag in CHF."
+      },
+      "swisslos": {
+        "label": "Swisslos %",
+        "placeholder": "z.B. 20",
+        "helper": "Anteil des Kaufpreises, der über Swisslos finanziert wird."
+      },
+      "donations": {
+        "label": "Spenden (CHF)",
+        "placeholder": "z.B. 5000",
+        "helper": "Zugesicherte Spenden an diesen Kauf."
+      }
+    },
+    "color": {
+      "none": "Keine",
+      "primary": "Primär",
+      "secondary": "Sekundär",
+      "tertiary": "Tertiär",
+      "success": "Grün",
+      "warning": "Orange",
+      "danger": "Rot",
+      "light": "Hell",
+      "medium": "Grau",
+      "dark": "Dunkel"
+    },
+    "strategyType": {
+      "buy": "Kauf",
+      "sell": "Verkauf"
+    },
+    "strategy": {
+      "title": "Bootsstrategie",
+      "buy": "Kauf",
+      "sell": "Verkauf",
+      "budget": "Budget Bootsbeschaffung",
+      "swisslos": "Swisslos",
+      "donations": "Spenden",
+      "effective": "Eff. Kosten",
+      "empty": "Keine Boote für die Bootsstrategie markiert."
+    }
   }
 }
