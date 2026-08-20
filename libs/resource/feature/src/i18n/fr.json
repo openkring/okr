@@ -909,7 +909,10 @@
       "s": "lourd",
       "p": "bateau privé",
       "success": "acquisition",
-      "danger": "vente/élimination"
+      "danger": "vente/élimination",
+      "lText": "Poids maximal de 75 kg ou moins",
+      "sText": "Poids maximal supérieur à 80 kg",
+      "pText": "Mis à disposition du sport de compétition"
     },
     "slot": {
       "formTitle": "Nommer la case",
@@ -970,7 +973,8 @@
       "swisslos": "Swisslos",
       "donations": "Dons",
       "effective": "Coût effectif",
-      "empty": "Aucun bateau marqué pour la stratégie des bateaux."
+      "empty": "Aucun bateau marqué pour la stratégie des bateaux.",
+      "past": "Afficher les années passées"
     }
   }
 }

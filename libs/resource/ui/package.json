@@ -11,6 +11,8 @@
     "@okr/shared-categories": "*",
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
-    "@okr/resource-util": "*"
+    "@okr/resource-util": "*",
+    "@okr/shared-i18n": "*",
+    "@okr/shared-util-angular": "*"
   }
 }

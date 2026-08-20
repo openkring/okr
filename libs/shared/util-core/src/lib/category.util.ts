@@ -22,6 +22,15 @@ export function getItemLabel(category: CategoryListModel, itemName?: string): st
 }
 
 /**
+ * Return the i18n key of a category item's long description — the `.description` sibling of
+ * getItemLabel's `.label` key. Used for legends and help texts; '' if the item is untranslated.
+ */
+export function getItemDescription(category: CategoryListModel, itemName?: string): string {
+  const label = getItemLabel(category, itemName);
+  return label.startsWith('@') ? label.replace(/\.label$/, '.description') : '';
+}
+
+/**
  * extract the names of category list items as a comma-separated string.
  * This can be used to generate the allChips attribute in okr-chips
  * @param cat 

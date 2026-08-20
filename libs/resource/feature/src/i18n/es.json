@@ -909,7 +909,10 @@
       "s": "pesado",
       "p": "barco privado",
       "success": "adquisición",
-      "danger": "venta/eliminación"
+      "danger": "venta/eliminación",
+      "lText": "Peso máximo de 75 kg o menos",
+      "sText": "Peso máximo superior a 80 kg",
+      "pText": "Puesto a disposición del deporte de competición"
     },
     "slot": {
       "formTitle": "Nombrar la casilla",
@@ -970,7 +973,8 @@
       "swisslos": "Swisslos",
       "donations": "Donaciones",
       "effective": "Coste efectivo",
-      "empty": "Ningún barco marcado para la estrategia de barcos."
+      "empty": "Ningún barco marcado para la estrategia de barcos.",
+      "past": "Mostrar años anteriores"
     }
   }
 }

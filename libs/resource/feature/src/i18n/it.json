@@ -909,7 +909,10 @@
       "s": "pesante",
       "p": "barca privata",
       "success": "acquisto",
-      "danger": "vendita/smaltimento"
+      "danger": "vendita/smaltimento",
+      "lText": "Peso massimo di 75 kg o meno",
+      "sText": "Peso massimo superiore a 80 kg",
+      "pText": "Messa a disposizione dello sport agonistico"
     },
     "slot": {
       "formTitle": "Denominare la casella",
@@ -970,7 +973,8 @@
       "swisslos": "Swisslos",
       "donations": "Donazioni",
       "effective": "Costi effettivi",
-      "empty": "Nessuna barca contrassegnata per la strategia delle barche."
+      "empty": "Nessuna barca contrassegnata per la strategia delle barche.",
+      "past": "Mostra gli anni passati"
     }
   }
 }

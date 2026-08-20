@@ -909,7 +909,10 @@
       "s": "heavy",
       "p": "private boat",
       "success": "acquisition",
-      "danger": "sale/disposal"
+      "danger": "sale/disposal",
+      "lText": "Maximum crew weight of 75 kg or less",
+      "sText": "Maximum crew weight above 80 kg",
+      "pText": "Made available to competitive rowing"
     },
     "slot": {
       "formTitle": "Label the slot",
@@ -970,7 +973,8 @@
       "swisslos": "Swisslos",
       "donations": "Donations",
       "effective": "Effective cost",
-      "empty": "No boats flagged for the boat strategy."
+      "empty": "No boats flagged for the boat strategy.",
+      "past": "Show past years"
     }
   }
 }

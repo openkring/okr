@@ -1004,6 +1004,16 @@ const resource: FeatureBlock = {
       { key: 'resource-add', name: 'resource-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.resource-add' },
       { key: 'resource-exportraw', name: 'resource-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.resource-exportraw' },
     ] },
+    // Context menu of `BoatAllocation` (the Bootseinteilung grid). Its route carries no
+    // `:contextMenuName` param, so the component hardcodes this name — renaming the doc
+    // silently empties the popover. All three children are shared docs already declared by
+    // other blocks (`editmode-toggle`/`print` by cms, `rboat-exportraw` by `c-rboats` below),
+    // field-identical here on purpose — the shared-child pattern.
+    { key: 'c-rballoc', name: 'c-rballoc', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
+      { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
+      { key: 'rboat-exportraw', name: 'rboat-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.rboat-exportraw' },
+      { key: 'print', name: 'print', url: 'print', action: 'call', roleNeeded: 'registered', icon: 'print', label: '@item.print' },
+    ] },
     { key: 'c-rboats', name: 'c-rboats', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'rboat-add', name: 'rboat-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.rboat-add' },
       { key: 'rboat-exportraw', name: 'rboat-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.rboat-exportraw' },

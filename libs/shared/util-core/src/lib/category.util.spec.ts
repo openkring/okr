@@ -1,6 +1,6 @@
 import { CategoryListModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
-import { getItemLabel } from './category.util';
+import { getItemDescription, getItemLabel } from './category.util';
 
 describe('category.util', () => {
   // Helper function to create test category models
@@ -217,4 +217,18 @@ describe('category.util', () => {
       expect(result).toBe(itemName);
     });
   });
+
+  describe('getItemDescription', () => {
+    it('swaps the .label suffix for .description', () => {
+      const category = createCategoryModel('rboat_usage', '@resource/feature', true);
+
+      expect(getItemDescription(category, 'ls1')).toBe('@resource/feature.rboat_usage.ls1.description');
+    });
+
+    it('returns empty for an untranslated category or a missing item', () => {
+      expect(getItemDescription(createCategoryModel('rboat_usage', '', false), 'ls1')).toBe('');
+      expect(getItemDescription(createCategoryModel('rboat_usage', '@resource/feature', true), undefined)).toBe('');
+    });
+  });
+
 });

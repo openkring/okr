@@ -909,7 +909,10 @@
       "s": "schwer",
       "p": "Privatboot",
       "success": "Beschaffung",
-      "danger": "Verkauf/Entsorgung"
+      "danger": "Verkauf/Entsorgung",
+      "lText": "Maximalgewicht 75 kg oder weniger",
+      "sText": "Maximalgewicht über 80 kg",
+      "pText": "Dem Leistungssport zur Verfügung gestellt"
     },
     "slot": {
       "formTitle": "Feld beschriften",
@@ -970,7 +973,8 @@
       "swisslos": "Swisslos",
       "donations": "Spenden",
       "effective": "Eff. Kosten",
-      "empty": "Keine Boote für die Bootsstrategie markiert."
+      "empty": "Keine Boote für die Bootsstrategie markiert.",
+      "past": "Vergangene Jahre anzeigen"
     }
   }
 }

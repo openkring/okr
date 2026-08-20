@@ -3,10 +3,10 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { CategoryListModel, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, Color, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, getYear, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS } from '@okr/shared-constants';
 
-import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/resource-util';
+import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLockerNr, setUsageFromYear } from '@okr/resource-util';
 
 @Component({
   selector: 'okr-resource-form',
@@ -45,7 +45,8 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
                       <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12">
-                      <okr-cat-select [category]="usages()!" [selectedItemName]="usage()" (selectedItemNameChange)="onFieldChange('usage', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+                      <!-- shows THIS season's allocation, not the raw multi-year string — see onUsageChange -->
+                      <okr-cat-select [category]="usages()!" [selectedItemName]="usage()" (selectedItemNameChange)="onUsageChange($event)" [withAll]="false" [readOnly]="isReadOnly()" />
                     </ion-col>
                     <ion-col size="12" size-md="6">
                       <okr-text-input [i18n]="loadI18n()" [value]="load()" (valueChange)="onFieldChange('load', $event)" [maxLength]=20 [readOnly]="isReadOnly()" />
@@ -366,7 +367,12 @@ export class ResourceForm {
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected resourceType = linkedSignal(() => this.formData().type ?? '');
   protected subType = linkedSignal(() => this.formData().subType ?? this.getDefaultType(this.formData().type ?? ''));
-  protected usage = linkedSignal(() => this.formData().usage ?? DEFAULT_RBOAT_USAGE);
+  /**
+   * `ResourceModel.usage` carries one entry per season; the picker shows the current one.
+   * Changing it moves this season AND every later one, leaving earlier ones alone — a boat is
+   * re-classed from now on, its history stays what it was (setUsageFromYear).
+   */
+  protected usage = linkedSignal(() => getUsageForYear(this.formData().usage, getYear()) || DEFAULT_RBOAT_USAGE);
   protected load = linkedSignal(() => this.formData().load ?? '');
   protected currentValue = linkedSignal(() => this.formData().currentValue ?? DEFAULT_PRICE);
   protected hexColor = linkedSignal(() => this.formData().color ?? '');
@@ -441,6 +447,11 @@ export class ResourceForm {
       // tbd: define other defaults: boat, realestate, locker,
       default: return DEFAULT_NAME;
     }
+  }
+
+  protected onUsageChange(usage: string): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, usage: setUsageFromYear(vm.usage, getYear(), usage) }));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

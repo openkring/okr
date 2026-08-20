@@ -60,7 +60,7 @@ import { StringSelect } from './string-select';
           }
           @if(showYear()) {
             <ion-col size="6" [attr.size-md]="compact() ? null : (mdSize() ?? '2')" class="ion-no-padding">
-              <okr-year-select [selectedYear]="selectedYear()" (selectedYearChange)="yearChanged.emit($event)" [years]="yearList()" [label]="yearLabel()!" [readOnly]="false" [showAllYears]="true" />
+              <okr-year-select [selectedYear]="selectedYear()" (selectedYearChange)="yearChanged.emit($event)" [years]="yearList()" [label]="yearLabel()!" [readOnly]="false" [showAllYears]="showAllYears()" />
             </ion-col>
           }
           @if(showState()) {
@@ -109,6 +109,8 @@ export class ListFilter {
 
   public showIcons = input(true);
   public showSearch = input(true);
+  /** false drops the "all years" entry — for a filter that must always resolve to one year */
+  public showAllYears = input(true);
   public yearLabel = input<string>();
   public compact = input(false);
   /** Uniform size-md for every filter column, overriding the per-filter defaults (compact wins). */
