@@ -316,6 +316,9 @@ import { ResourceI18n, resourceValidations, getKeyNr, getLockerNr } from '@okr/r
 
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+          <!-- A tag that is not in the configured list invalidates the WHOLE form, which silently hides the
+               change-confirmation banner. Without this note there is nothing on screen to explain why. -->
+          <okr-error-note [errors]="tagErrors()" />
         }
 
         @if(hasRole('admin')) {
@@ -354,6 +357,10 @@ export class ResourceForm {
   protected keyNrErrors = computed(() => this.validationResult().getErrors('keyNr'));
   protected lockerNrErrors = computed(() => this.validationResult().getErrors('lockerNr'));
   protected errors = computed(() => this.validationResult().getErrors());
+  /** tagValidations reports per-item failures as `tags[0]`, so getErrors('tags') alone finds nothing. */
+  protected tagErrors = computed(() => Object.entries(this.validationResult().getErrors())
+    .filter(([field]) => field === 'tags' || field.startsWith('tags['))
+    .flatMap(([, messages]) => messages));
 
   // fields
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
