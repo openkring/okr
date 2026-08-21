@@ -104,3 +104,68 @@ export class ChunkLoadErrorHandler implements ErrorHandler {
     this.delegate.handleError(error);
   }
 }
+
+/** sessionStorage key recording when we last auto-reloaded to recover a failed app-shell boot. */
+export const BOOT_FAILURE_RELOAD_KEY = 'okr-boot-failure-reload-at';
+
+/**
+ * Recover from an app shell that never rendered — the `@error` branch of the root `@defer`
+ * in `okr-root` (SCS-7N).
+ *
+ * That branch is NOT reachable from `ChunkLoadErrorHandler` or `registerStaleChunkRecovery`:
+ * Angular catches the deferred import's rejection internally, renders `@error`, and neither
+ * rethrows into `ErrorHandler` nor leaves an unhandled rejection. So the user was left on a
+ * dead-end page telling them to "try again" with nothing to press, and no Sentry event was
+ * ever filed for the failure itself.
+ *
+ * Uses its own guard key rather than STALE_CHUNK_RELOAD_KEY so a boot failure still gets its
+ * one automatic retry even when a stale-chunk reload already happened in this session.
+ *
+ * Returns true when the reload was triggered — false on the server, without sessionStorage,
+ * or when the guard already fired (i.e. reloading did not help, so leave the retry to the user).
+ */
+export function recoverFromBootFailure(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    // The `typeof` guard must live INSIDE the try, and so must every access: Chrome throws a
+    // SecurityError on the mere `sessionStorage` property lookup when site data is blocked for
+    // the origin — which is exactly the environment that produces this failure mode (SCS-7N).
+    // Degrade to "no automatic retry" rather than throwing out of the error screen itself.
+    if (typeof sessionStorage === 'undefined') return false;
+    const lastReloadAt = Number(sessionStorage.getItem(BOOT_FAILURE_RELOAD_KEY) ?? 0);
+    if (Date.now() - lastReloadAt < RELOAD_MIN_INTERVAL_MS) return false;
+    sessionStorage.setItem(BOOT_FAILURE_RELOAD_KEY, String(Date.now()));
+  } catch { return false; }
+  window.location.reload();
+  return true;
+}
+
+/**
+ * User-initiated retry from the boot-error screen: tear down the caching layers that can pin a
+ * client to a broken build, then reload.
+ *
+ * Unlike `recoverFromBootFailure` this is NOT rate-limited — the user asked for it — and it goes
+ * further than a plain reload because the failure survives one by definition (the automatic retry
+ * already ran). Unregistering ngsw and dropping its caches is what the user would otherwise have
+ * to do by hand in the browser settings. Every step is best-effort: in a storage-denied context
+ * these APIs throw or are absent, and the reload must still happen.
+ */
+export async function forceBootRecovery(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(BOOT_FAILURE_RELOAD_KEY);
+  } catch { /* storage denied — see recoverFromBootFailure */ }
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+  } catch { /* denied or unsupported */ }
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+  } catch { /* denied or unsupported */ }
+  window.location.reload();
+}

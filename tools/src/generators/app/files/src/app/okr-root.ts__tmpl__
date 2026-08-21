@@ -6,7 +6,7 @@ import { IonApp, IonButtons, IonContent, IonHeader, IonItem, IonLabel, IonMenu, 
 
 import { AppStore } from '@okr/shared-feature';
 import { RoleName } from '@okr/shared-models';
-import { Spinner, ConnectionStatusButton, AvatarUser } from '@okr/shared-ui';
+import { BootError, Spinner, ConnectionStatusButton, AvatarUser } from '@okr/shared-ui';
 import { coerceBoolean, getImgixUrlWithAutoParams, hasRole } from '@okr/shared-util-core';
 
 import { AuthInfo } from '@okr/auth-ui';
@@ -17,7 +17,7 @@ import { ConsentService } from '@okr/consent-data-access';
 
 @Component({
   imports: [
-    Menu, AuthInfo, Spinner, ConnectionStatusButton, AvatarUser, CookieBanner,
+    Menu, AuthInfo, BootError, Spinner, ConnectionStatusButton, AvatarUser, CookieBanner,
     IonApp, IonSplitPane, IonMenu, IonHeader, IonContent, IonToolbar, IonRouterOutlet, IonButtons,
     IonLabel, IonItem
 ],
@@ -172,7 +172,13 @@ import { ConsentService } from '@okr/consent-data-access';
     } @loading(after 100ms; minimum 500ms) {
     <span>Bitte warten... die Applikation wird geladen.</span>
     } @error {
-    <span>Oops ! Die Applikation konnte nicht geladen werden. Bitte nochmals probieren.</span>
+    <!--
+      The @error branch is invisible to ChunkLoadErrorHandler and to the unhandledrejection
+      listener: Angular catches the deferred import's rejection itself to render this block. So
+      the failure used to produce no Sentry event and offered the user no way to retry (SCS-7N).
+      <okr-boot-error> reports it, retries once, and renders the retry button.
+    -->
+    <okr-boot-error />
     }
   `,
 })

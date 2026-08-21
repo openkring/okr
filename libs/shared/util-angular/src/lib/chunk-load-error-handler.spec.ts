@@ -1,6 +1,6 @@
 import { ErrorHandler } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ChunkLoadErrorHandler, STALE_CHUNK_RELOAD_KEY, isStaleChunkError, registerStaleChunkRecovery } from './chunk-load-error-handler';
+import { BOOT_FAILURE_RELOAD_KEY, ChunkLoadErrorHandler, STALE_CHUNK_RELOAD_KEY, forceBootRecovery, isStaleChunkError, recoverFromBootFailure, registerStaleChunkRecovery } from './chunk-load-error-handler';
 
 describe('isStaleChunkError', () => {
   it('matches the per-browser dynamic-import failure messages', () => {
@@ -104,5 +104,94 @@ describe('registerStaleChunkRecovery', () => {
     const event = rejectWith(new Error('boom'));
     expect(reload).not.toHaveBeenCalled();
     expect(event.defaultPrevented).toBe(false);
+  });
+});
+
+describe('recoverFromBootFailure', () => {
+  const reload = vi.fn();
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    reload.mockClear();
+    Object.defineProperty(window, 'location', { value: { reload }, writable: true, configurable: true });
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('reloads once and stamps its own guard key', () => {
+    expect(recoverFromBootFailure()).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(sessionStorage.getItem(BOOT_FAILURE_RELOAD_KEY)).not.toBeNull();
+  });
+
+  it('does not reload again within the guard window — the retry is the user\'s from there on', () => {
+    recoverFromBootFailure();
+    expect(recoverFromBootFailure()).toBe(false);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses a guard key separate from the stale-chunk one, so a boot failure still gets its retry', () => {
+    sessionStorage.setItem(STALE_CHUNK_RELOAD_KEY, String(Date.now()));
+    expect(recoverFromBootFailure()).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('degrades to no auto-retry when sessionStorage access throws (SCS-7N)', () => {
+    // Chrome throws SecurityError on the property access itself when site data is blocked —
+    // the very environment this recovery path exists for. It must not throw out of the screen.
+    const spy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Access is denied for this document.', 'SecurityError');
+    });
+    expect(recoverFromBootFailure()).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+});
+
+describe('forceBootRecovery', () => {
+  const reload = vi.fn();
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    reload.mockClear();
+    Object.defineProperty(window, 'location', { value: { reload }, writable: true, configurable: true });
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('clears the guard, unregisters service workers, drops caches and reloads', async () => {
+    sessionStorage.setItem(BOOT_FAILURE_RELOAD_KEY, String(Date.now()));
+    const unregister = vi.fn().mockResolvedValue(true);
+    Object.defineProperty(navigator, 'serviceWorker', {
+      value: { getRegistrations: vi.fn().mockResolvedValue([{ unregister }]) },
+      configurable: true,
+    });
+    const cacheDelete = vi.fn().mockResolvedValue(true);
+    Object.defineProperty(window, 'caches', {
+      value: { keys: vi.fn().mockResolvedValue(['ngsw:1']), delete: cacheDelete },
+      configurable: true,
+    });
+
+    await forceBootRecovery();
+
+    expect(sessionStorage.getItem(BOOT_FAILURE_RELOAD_KEY)).toBeNull();
+    expect(unregister).toHaveBeenCalledTimes(1);
+    expect(cacheDelete).toHaveBeenCalledWith('ngsw:1');
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('still reloads when the storage APIs are unavailable or denied', async () => {
+    Object.defineProperty(navigator, 'serviceWorker', {
+      value: { getRegistrations: vi.fn().mockRejectedValue(new DOMException('denied', 'SecurityError')) },
+      configurable: true,
+    });
+    Object.defineProperty(window, 'caches', {
+      value: { keys: vi.fn().mockRejectedValue(new Error('denied')), delete: vi.fn() },
+      configurable: true,
+    });
+
+    await forceBootRecovery();
+
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });

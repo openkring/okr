@@ -1,5 +1,5 @@
 import type { HttpInterceptorFn } from '@angular/common/http';
-import { addBreadcrumb, setTag, setUser } from '@sentry/angular';
+import { addBreadcrumb, captureMessage, flush, setTag, setUser } from '@sentry/angular';
 import type { BrowserOptions, ErrorEvent, EventHint } from '@sentry/angular';
 import { redactSensitive, stripPii } from '@okr/shared-util-core';
 import { catchError } from 'rxjs';
@@ -136,4 +136,29 @@ export function setSentryUser(id: string, tenant: string, roles: readonly string
 /** Clear all user context (call on logout). */
 export function clearSentryUser(): void {
   setUser(null);
+}
+
+/**
+ * Report that the app shell never rendered — the `@error` branch of the root `@defer` in
+ * `okr-root` (SCS-7N).
+ *
+ * Angular swallows the deferred import's rejection to render `@error`, so neither
+ * `ChunkLoadErrorHandler` nor the `unhandledrejection` listener ever sees it and the failure
+ * produced no telemetry at all: the user reported a blank "Applikation konnte nicht geladen
+ * werden" screen that had no matching Sentry issue. Report it explicitly instead.
+ *
+ * Lives here rather than in chunk-load-error-handler.ts because that module must not import
+ * this one — `beforeSend` already depends on it.
+ *
+ * Returns a promise that settles once the event has been flushed (or the timeout elapsed), so a
+ * caller that is about to reload the page can await it and not lose the report.
+ */
+export function reportBootFailure(context: Record<string, unknown> = {}): Promise<boolean> {
+  captureMessage('App shell failed to load (root @defer @error)', {
+    level: 'error',
+    tags: { bootFailure: 'true' },
+    extra: context,
+  });
+  // The recovery reload tears the page down; without a flush the event never leaves the client.
+  return flush(2000).catch(() => false);
 }

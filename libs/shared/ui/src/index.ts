@@ -1,4 +1,5 @@
 export * from './lib/autofocus.directive';
+export * from './lib/boot-error';
 export * from './lib/skip-clear-tab.directive';
 export * from './lib/avatar-user';
 export * from './lib/button-copy';
