@@ -3,6 +3,7 @@ import { IonContent, IonDatetime, ModalController } from '@ionic/angular/standal
 
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { Header } from './header';
 
@@ -74,10 +75,10 @@ export class DateSelectModal {
    */
   protected async onDateChange(event: any): Promise<void> {
     const selectedDate = event.detail.value || this.datetimePicker().value || this.isoDate();
-    await this.modalController.dismiss(selectedDate, 'confirm');
+    await dismissOverlay(this.modalController, selectedDate, 'confirm');
   }
 
   protected async cancel(): Promise<boolean> {
-    return await this.modalController.dismiss(null, 'cancel');
+    return await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

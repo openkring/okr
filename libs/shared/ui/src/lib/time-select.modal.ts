@@ -2,6 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { DatetimeChangeEventDetail, IonContent, IonDatetime, ModalController } from '@ionic/angular/standalone';
 
 import { I18nService } from '@okr/shared-i18n';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { Header } from './header';
 
@@ -54,10 +55,10 @@ export class TimeSelectModal {
    * @returns string | string[] | undefined | null
    */
   protected async onTimeSelected(detail: DatetimeChangeEventDetail): Promise<boolean> {
-    return await this.modalController.dismiss(detail.value, 'confirm');
+    return await dismissOverlay(this.modalController, detail.value, 'confirm');
   }
 
   protected async cancel(): Promise<boolean> {
-    return await this.modalController.dismiss(null, 'cancel');
+    return await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

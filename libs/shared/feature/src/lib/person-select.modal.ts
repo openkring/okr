@@ -6,6 +6,7 @@ import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 
 import { AvatarPipe } from '@okr/avatar-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { PersonSelectStore } from './person-select.store';
 
@@ -112,16 +113,10 @@ export class PersonSelectModal {
   }
 
   public select(person: PersonModel): Promise<boolean> {
-    return this.modalController.dismiss(
-      { kind: 'predefined', person } satisfies PersonSelectResult,
-      'confirm'
-    );
+    return dismissOverlay(this.modalController, { kind: 'predefined', person } satisfies PersonSelectResult, 'confirm');
   }
 
   public selectCustom(): Promise<boolean> {
-    return this.modalController.dismiss(
-      { kind: 'custom', label: this.store.customLabel() } satisfies PersonSelectResult,
-      'confirm'
-    );
+    return dismissOverlay(this.modalController, { kind: 'custom', label: this.store.customLabel() } satisfies PersonSelectResult, 'confirm');
   }
 }

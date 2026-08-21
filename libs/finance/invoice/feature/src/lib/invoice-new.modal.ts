@@ -5,7 +5,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { MembershipModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { showToast } from '@okr/shared-util-angular';
+import { dismissOverlay, showToast } from '@okr/shared-util-angular';
 
 import { BexioInvoiceFormModel, BexioInvoicePosition, newInvoiceFormModel } from '@okr/finance-invoice-util';
 import { BexioInvoiceNewForm } from '@okr/finance-invoice-ui';
@@ -85,7 +85,7 @@ export class InvoiceNewModal {
         positions: data.positions,
         template_slug: data.template_slug,
       });
-      await this.store.modalController.dismiss({ id: result.data.id }, 'confirm');
+      await dismissOverlay(this.store.modalController, { id: result.data.id }, 'confirm');
     } catch (error) {
       console.error('BexioInvoiceNewModal.save: createBexioInvoice failed', error);
       await showToast(this.store.toastController, this.store.i18n.create_error());
@@ -93,6 +93,6 @@ export class InvoiceNewModal {
   }
 
   protected async cancel(): Promise<void> {
-    await this.store.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.store.modalController, null, 'cancel');
   }
 }

@@ -3,7 +3,7 @@ import { AlertController, IonContent, ModalController, ToastController } from '@
 
 import { InvitationState } from '@okr/shared-models';
 import { ChangeConfirmation, Header } from '@okr/shared-ui';
-import { error } from '@okr/shared-util-angular';
+import { dismissOverlay, error } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, hasRole } from '@okr/shared-util-core';
 import { SchedulePollForm } from '@okr/calevent-ui';
 import { SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
@@ -169,7 +169,7 @@ export class ScheduleModal implements OnDestroy {
       error(this.toastController, this.store.i18n.schedule_save_error());
       return;
     }
-    await this.modalController.dismiss(null, 'confirm');
+    await dismissOverlay(this.modalController, null, 'confirm');
   }
 
   /**
@@ -202,7 +202,7 @@ export class ScheduleModal implements OnDestroy {
           text: this.store.i18n.schedule_close(),
           handler: (data: { authorMessage?: string }) => {
             this.store.closeSchedule(winner, data.authorMessage)
-              .then(() => this.modalController.dismiss(null, 'confirm'))
+              .then(() => dismissOverlay(this.modalController, null, 'confirm'))
               .catch(err => console.warn('ScheduleModal.onColumnSelected: closeSchedule failed:', err));
           },
         },

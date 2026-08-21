@@ -3,6 +3,7 @@ import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonRow, IonThumbnail, M
 
 import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Header, ListFilter, Spinner } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { ICON_SETS, IconStore } from './icon.store';
 
@@ -95,6 +96,6 @@ export class IconSelectModal implements OnInit {
   }
 
   public select(iconName: string): Promise<boolean> {
-    return this.modalController.dismiss(iconName, 'confirm');
+    return dismissOverlay(this.modalController, iconName, 'confirm');
   }
 }

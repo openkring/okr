@@ -11,6 +11,7 @@ import { EsignRecord } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { ESIGN_I18N_KEYS, EsignI18n } from '@okr/content-esign-util';
 import { EsignService } from '@okr/content-esign-data-access';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -134,7 +135,7 @@ export class EsignSendEmailModal implements OnInit {
         includeSignedPdf: this.includePdf(),
       });
       await this.presentToast(this.i18n.email_sent(), 'success');
-      await this.modalController.dismiss(null, 'confirm');
+      await dismissOverlay(this.modalController, null, 'confirm');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await this.presentToast(`${this.i18n.send_failed()}: ${message}`, 'danger');
@@ -143,7 +144,7 @@ export class EsignSendEmailModal implements OnInit {
   }
 
   protected close(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 
   private async presentToast(message: string, color: 'success' | 'danger'): Promise<void> {

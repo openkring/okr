@@ -9,6 +9,7 @@ import { coerceBoolean, getImgixUrlWithAutoParams, sanitizeFileName } from '@okr
 
 import { UploadService } from '@okr/avatar-data-access';
 import { getDocumentStoragePath, pickPhoto } from '@okr/content-document-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { DocumentStore } from './document.store';
 
@@ -67,7 +68,7 @@ export class ImageSelectModal {
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
     this.formDirty.set(false);
-    await this.modalController.dismiss(this.formData(), 'confirm');  
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');  
   }
 
   public async cancel(): Promise<void> {

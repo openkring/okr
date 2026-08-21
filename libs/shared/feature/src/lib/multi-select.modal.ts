@@ -12,6 +12,7 @@ import { GroupSelectStore } from './group-select.store';
 import { OrgSelectStore } from './org-select.store';
 import { PersonSelectStore } from './person-select.store';
 import { TranslatePipe } from '@okr/shared-i18n';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { AsyncPipe } from '@angular/common';
 
 export type MultiSelectSegment = 'org' | 'group' | 'person';
@@ -168,6 +169,6 @@ export class MultiSelectModal {
   }
 
   public select(modelType: MultiSelectSegment, okey: string): Promise<boolean> {
-    return this.modalController.dismiss(`${modelType}.${okey}`, 'confirm');
+    return dismissOverlay(this.modalController, `${modelType}.${okey}`, 'confirm');
   }
 }

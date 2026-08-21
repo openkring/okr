@@ -10,6 +10,7 @@ import { CommentsAccordion } from '@okr/comment-feature';
 import { OwnershipForm } from '@okr/relationship-ownership-ui';
 import { getOwnerName } from '@okr/relationship-ownership-util';
 import { RelationshipToolbar } from '@okr/avatar-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { OwnershipStore } from './ownership.store';
 
@@ -108,7 +109,7 @@ export class OwnershipEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');    
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');    
   }
 
   public async cancel(): Promise<void> {

@@ -7,6 +7,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { RESOURCE_I18N_KEYS, ResourceI18n } from '@okr/resource-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { BoatSlotForm } from './boat-slot.form';
 
@@ -63,7 +64,7 @@ export class BoatSlotEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

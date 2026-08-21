@@ -5,6 +5,7 @@ import { ActivityModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { ActivityStore } from './activity.store';
 
@@ -88,6 +89,6 @@ export class ActivityViewModal {
   }
 
   public async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

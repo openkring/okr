@@ -11,6 +11,7 @@ import { isCalEvent } from '@okr/calevent-util';
 import { ReservationApplyForm } from '@okr/relationship-reservation-ui';
 import { RelationshipToolbar } from '@okr/avatar-ui';
 import { convertApplyToReservation, getNewReservationApply } from '@okr/relationship-reservation-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { ReservationStore } from './reservation.store';
 
 @Component({
@@ -119,14 +120,14 @@ export class ReservationApplyModal {
   public async save(): Promise<void> {
     const res = convertApplyToReservation(this.formData(), this.tenantId());
     if (res) {
-        await this.modalController.dismiss(res, 'confirm');
+        await dismissOverlay(this.modalController, res, 'confirm');
     } else {
-        this.modalController?.dismiss(null, 'cancel');
+        dismissOverlay(this.modalController, null, 'cancel');
     }
   }
 
   public async cancel(): Promise<void> {
-    this.modalController?.dismiss(null, 'cancel');  // the modal is destroyed -> no need to reset the form
+    dismissOverlay(this.modalController, null, 'cancel');  // the modal is destroyed -> no need to reset the form
   }
 
   protected onFormDataChange(formData: ReservationApplyModel): void {

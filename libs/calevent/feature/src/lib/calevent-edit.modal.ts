@@ -12,6 +12,7 @@ import { InviteesAccordion } from '@okr/relationship-invitation-feature';
 import { DocumentsAccordion } from '@okr/content-document-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
 import { CALEVENT_I18N_KEYS, CaleventI18n, isPersonalCalevent } from '@okr/calevent-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { AttendeesAccordion } from './attendees-accordion';
 
@@ -113,7 +114,7 @@ export class CalEventEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

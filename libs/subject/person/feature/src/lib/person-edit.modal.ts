@@ -20,6 +20,7 @@ import { WorkrelAccordion } from '@okr/relationship-workrel-feature';
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { PersonForm } from '@okr/subject-person-ui';
 import { PersonFormModel } from '@okr/subject-person-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { PersonStore } from './person.store';
 
@@ -149,7 +150,7 @@ export class PersonEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

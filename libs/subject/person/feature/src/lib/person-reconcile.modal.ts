@@ -11,6 +11,7 @@ import {
   PersonNewFormModel,
   ReconcilableField,
 } from '@okr/subject-person-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 /** Maps each reconcilable field to its existing person-i18n label key. */
 const FIELD_LABEL: Record<ReconcilableField, keyof PersonI18n> = {
@@ -88,10 +89,10 @@ export class PersonReconcileModal {
     for (const d of this.diffs()) {
       if (this.choiceFor(d.field) === 'new') resolved[d.field] = d.newValue;
     }
-    this.modalController.dismiss(resolved, 'confirm');
+    dismissOverlay(this.modalController, resolved, 'confirm');
   }
 
   protected cancel(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 }

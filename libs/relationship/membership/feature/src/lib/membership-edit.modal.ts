@@ -13,6 +13,7 @@ import { DocumentsAccordion } from '@okr/content-document-feature';
 import { MembershipForm } from '@okr/relationship-membership-ui';
 import { RelationshipToolbar } from '@okr/avatar-ui';
 import { MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-membership-edit-modal',
@@ -118,7 +119,7 @@ export class MembershipEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<boolean> {
-    return this.modalController.dismiss(this.formData(), 'confirm');
+    return dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   protected onFormDataChange(formData: MembershipModel): void {

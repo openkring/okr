@@ -6,6 +6,7 @@ import { ModalController, IonButton, IonButtons, IonContent, IonHeader, IonInput
 import { AccountModel, OcrRuleModel, VatCodeModel } from '@okr/shared-models';
 import { normalizeParty, OCR_RULE_I18N_KEYS, OcrRuleI18n } from '@okr/finance-ocr-rule-util';
 import { I18nService } from '@okr/shared-i18n';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-ocr-rule-edit-modal',
@@ -104,12 +105,12 @@ export class OcrRuleEditModal implements OnInit {
   }
 
   protected async dismiss(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   protected async save(): Promise<void> {
     this.edit.aliases = this.aliasText.split(',').map(a => a.trim()).filter(a => a.length > 0);
     this.edit.rank = Number(this.edit.rank) || 0; // ngModel on type=number yields a string; keep it numeric
-    await this.modalController.dismiss(this.edit, 'confirm');
+    await dismissOverlay(this.modalController, this.edit, 'confirm');
   }
 }

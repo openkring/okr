@@ -6,6 +6,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
 
 import { ResponsibilityForm } from '@okr/relationship-responsibility-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { ResponsibilityStore } from './responsibility.store';
 
 @Component({
@@ -77,7 +78,7 @@ export class ResponsibilityEditModal {
   });
 
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

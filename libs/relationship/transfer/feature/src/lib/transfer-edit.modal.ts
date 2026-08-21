@@ -7,6 +7,7 @@ import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
 
 import { CommentsAccordion } from '@okr/comment-feature';
 import { TransferForm } from '@okr/relationship-transfer-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { TransferStore } from './transfer.store';
 
 
@@ -87,7 +88,7 @@ export class TransferEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm')
+    await dismissOverlay(this.modalController, this.formData(), 'confirm')
   }
 
   public async cancel(): Promise<void> {

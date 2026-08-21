@@ -5,6 +5,7 @@ import { UploadService } from '@okr/avatar-data-access';
 import { ImageConfig, ImageType } from '@okr/shared-models';
 import { StringSelect, StringSelectI18n, TextInput, TextInputI18n, Header } from '@okr/shared-ui';
 import { SectionI18n } from '@okr/cms-section-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
 
@@ -160,6 +161,6 @@ export class ImageEditModal {
   }
 
   protected save(): void {
-    this.modalController.dismiss(this.formData(), 'confirm');
+    dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 }

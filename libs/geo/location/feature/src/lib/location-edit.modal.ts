@@ -6,6 +6,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { LocationForm } from '@okr/location-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { LocationStore } from './location.store';
 
 
@@ -66,7 +67,7 @@ export class LocationEditModal {
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');  
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');  
   }
 
   public async cancel(): Promise<void> {

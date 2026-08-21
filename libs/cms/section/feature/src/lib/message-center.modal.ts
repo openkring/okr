@@ -13,6 +13,7 @@ import { SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
 import { OkrAvatar } from '@okr/avatar-ui';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { UserService } from '@okr/user-data-access';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtrap_test'] as const;
 
@@ -282,7 +283,7 @@ export class MessageCenterModal {
   }
 
   public async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   public async ok(): Promise<void> {
@@ -309,9 +310,10 @@ export class MessageCenterModal {
     }
 
     const template = this.template().trim() || undefined;
-    await this.modalController.dismiss(
+    await dismissOverlay(
+      this.modalController,
       { to, cc, bcc: finalBcc, subject: this.subject(), from, provider: this.provider(), template },
-      'confirm'
+      'confirm',
     );
   }
 }

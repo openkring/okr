@@ -6,6 +6,7 @@ import exifr from 'exifr';
 import { STORAGE } from '@okr/shared-config';
 import { fileSizeUnit } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 export interface ImageDetailRow { label: string; value: string; }
 
@@ -173,6 +174,6 @@ export class ImageDetailModal implements OnInit {
   }
 
   protected close(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 }

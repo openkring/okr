@@ -9,6 +9,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
 
 import { InvitationForm } from '@okr/relationship-invitation-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { InvitationStore } from './invitation.store';
 
 
@@ -84,7 +85,7 @@ export class InvitationEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm')
+    await dismissOverlay(this.modalController, this.formData(), 'confirm')
   }
 
   public async cancel(): Promise<void> {

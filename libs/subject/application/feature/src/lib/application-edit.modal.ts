@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal } from '@angular/core'
 import { AlertController, IonButton, IonButtons, IonContent, IonHeader, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { ApplicationModel, UserModel } from '@okr/shared-models';
-import { AlertService } from '@okr/shared-util-angular';
+import { AlertService, dismissOverlay } from '@okr/shared-util-angular';
 
 import { ApplicationService } from '@okr/application-data-access';
 import { ApplicationI18n } from '@okr/application-util';
@@ -54,25 +54,25 @@ export class ApplicationEditModal {
 
   protected async save(): Promise<void> {
     await this.applicationService.update(this.currentApp(), this.currentUser());
-    await this.modalController.dismiss({ saved: true }, 'confirm');
+    await dismissOverlay(this.modalController, { saved: true }, 'confirm');
   }
 
   protected async accept(): Promise<void> {
     const confirmed = await this.alertService.confirm(this.i18n().accept_confirm(), true);
     if (confirmed !== true) return;
     const personKey = await this.applicationService.accept(this.currentApp(), this.currentUser());
-    await this.modalController.dismiss({ accepted: true, personKey }, 'confirm');
+    await dismissOverlay(this.modalController, { accepted: true, personKey }, 'confirm');
   }
 
   protected async deny(): Promise<void> {
     const reason = await this.promptForReason();
     if (!reason) return;
     await this.applicationService.deny(this.currentApp(), reason, this.currentUser());
-    await this.modalController.dismiss({ denied: true }, 'confirm');
+    await dismissOverlay(this.modalController, { denied: true }, 'confirm');
   }
 
   protected dismiss(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 
   private async promptForReason(): Promise<string | undefined> {

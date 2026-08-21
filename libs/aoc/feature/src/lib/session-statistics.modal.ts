@@ -4,6 +4,7 @@ import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonItem,
 import { SessionModel } from '@okr/shared-models';
 import { getSessionStatus, SessionStatus } from '@okr/session-util';
 import { AocI18n } from '@okr/aoc-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 interface CountRow { key: string; count: number; }
 
@@ -98,6 +99,6 @@ export class SessionStatisticsModal {
   }
 
   protected close(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 }

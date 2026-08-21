@@ -4,6 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { Header, HeaderI18n } from '@okr/shared-ui';
 import { SectionModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { SectionDispatcher } from "./section-dispatcher";
 
@@ -33,6 +34,6 @@ export class SectionViewModal {
   protected readonly headerI18n = computed(() => ({ title: this.title() } as HeaderI18n));
 
   public close(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 }

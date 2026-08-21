@@ -7,6 +7,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { MEETING_I18N_KEYS, MeetingI18n } from '@okr/content-meeting-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { MeetingForm } from './meeting.form';
 
 /**
@@ -81,7 +82,7 @@ export class MeetingEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public cancel(): void {
@@ -93,7 +94,7 @@ export class MeetingEditModal {
 
   /** Hand the agenda item back to the store, together with the edits made so far. */
   protected async requestTask(item: AgendaItem): Promise<void> {
-    await this.modalController.dismiss({ meeting: this.formData(), agendaItem: item }, 'addTask');
+    await dismissOverlay(this.modalController, { meeting: this.formData(), agendaItem: item }, 'addTask');
   }
 
   protected onFormDataChange(formData: MeetingModel): void {

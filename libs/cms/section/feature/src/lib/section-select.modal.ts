@@ -2,6 +2,7 @@ import { Component, computed, inject, linkedSignal } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { Header, Spinner } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { SectionStore } from './section.store';
 
@@ -49,7 +50,7 @@ export class SectionSelectModal {
   protected isLoading = computed(() => this.store.isLoading());  
   
   protected select(sectionKey: string): Promise<boolean> {
-    return this.store.modalController.dismiss(sectionKey, 'confirm');
+    return dismissOverlay(this.store.modalController, sectionKey, 'confirm');
   }
 }
 

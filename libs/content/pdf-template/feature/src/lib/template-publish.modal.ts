@@ -10,6 +10,7 @@ import {
 import { I18nService } from '@okr/shared-i18n';
 import { TEMPLATE_I18N_KEYS, TemplateI18n } from '@okr/content-pdf-template-util';
 import { fill } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-template-publish-modal',
@@ -63,10 +64,10 @@ export class TemplatePublishModal {
   protected readonly changelog = signal('');
 
   protected async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   protected async confirm(): Promise<void> {
-    await this.modalController.dismiss({ changelog: this.changelog() }, 'confirm');
+    await dismissOverlay(this.modalController, { changelog: this.changelog() }, 'confirm');
   }
 }

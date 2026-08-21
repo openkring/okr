@@ -19,6 +19,9 @@
   "references": [
     {
       "path": "../../avatar/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/util-angular/tsconfig.lib.json"
     }
   ]
 }

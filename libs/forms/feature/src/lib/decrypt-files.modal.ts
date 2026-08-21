@@ -8,6 +8,7 @@ import { Header } from '@okr/shared-ui';
 
 import { I18nService } from '@okr/shared-i18n';
 import { EncryptedFileMetadata, decryptFile, FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-decrypt-files-modal',
@@ -98,7 +99,7 @@ export class DecryptFilesModal {
         anchor.click();
         URL.revokeObjectURL(url);
       }
-      await this.modalController.dismiss(null, 'confirm');
+      await dismissOverlay(this.modalController, null, 'confirm');
     } catch {
       this.errorMsg.set(this.i18n.decrypt_failed());
     } finally {
@@ -107,6 +108,6 @@ export class DecryptFilesModal {
   }
 
   protected dismiss(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 }

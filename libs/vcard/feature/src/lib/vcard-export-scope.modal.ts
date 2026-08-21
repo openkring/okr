@@ -3,6 +3,7 @@ import { ModalController, IonButton, IonButtons, IonContent, IonHeader, IonItem,
 
 import { I18nService } from '@okr/shared-i18n';
 import { ExportScope, ScopeAvailability, VcardChannelType, VcardI18n, VCARD_I18N_KEYS, VcardTargetKind } from '@okr/vcard-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 const CHANNEL_ORDER: VcardChannelType[] = ['phone', 'email', 'postal', 'web'];
 
@@ -120,10 +121,10 @@ export class VcardExportScopeModal {
       personalRels: isPerson && av.personalRels && this.personalRels(),
       orgLinks: false,
     };
-    await this.modalController.dismiss(scope, 'confirm');
+    await dismissOverlay(this.modalController, scope, 'confirm');
   }
 
   public async cancel(): Promise<void> {
-    await this.modalController.dismiss(undefined, 'cancel');
+    await dismissOverlay(this.modalController, undefined, 'cancel');
   }
 }

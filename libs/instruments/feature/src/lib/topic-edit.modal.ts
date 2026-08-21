@@ -9,6 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { INSTRUMENTS_I18N_KEYS } from '@okr/instruments-util';
 import { TopicForm } from '@okr/instruments-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 /**
  * The card editor (spec D4 — edit-then-save over one topic; the live board stream keeps updating
@@ -71,7 +72,7 @@ export class TopicEditModal {
   }
 
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {
@@ -82,6 +83,6 @@ export class TopicEditModal {
   }
 
   public async remove(): Promise<void> {
-    await this.modalController.dismiss(undefined, 'delete');
+    await dismissOverlay(this.modalController, undefined, 'delete');
   }
 }

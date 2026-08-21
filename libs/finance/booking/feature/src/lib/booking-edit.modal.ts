@@ -9,6 +9,7 @@ import { BOOKING_I18N_KEYS, BookingI18n, validateBookingBalance } from '@okr/fin
 import { I18nService } from '@okr/shared-i18n';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { AvatarSelect } from '@okr/avatar-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-booking-edit-modal',
@@ -156,7 +157,7 @@ export class BookingEditModal implements OnInit {
   }
 
   protected async dismiss(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   protected async save(): Promise<void> {
@@ -168,6 +169,6 @@ export class BookingEditModal implements OnInit {
       amountFx:     (l.amountFx?.amount     ?? 0) > 0 ? l.amountFx     : undefined,
     }));
     this.editBooking.counterparty = this.counterparty();
-    await this.modalController.dismiss({ booking: this.editBooking, lines: cleanLines }, 'confirm');
+    await dismissOverlay(this.modalController, { booking: this.editBooking, lines: cleanLines }, 'confirm');
   }
 }

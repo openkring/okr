@@ -3,6 +3,7 @@ import { IonButton, IonContent, IonHeader, IonItem, IonTitle, IonToolbar, ModalC
 import { COLOR_PICKER_CONFIG, ChromePickerComponent, ColorPickerControl, ColorType, IColorPickerConfig } from '@iplab/ngx-color-picker';
 
 import { I18nService } from '@okr/shared-i18n';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 
 const DEFAULT_COLOR = '#2196F3';
@@ -69,10 +70,10 @@ export class ColorSelectModal implements OnInit{
   }
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(this.colorControl.value.toHexString(), 'confirm');
+    return dismissOverlay(this.modalController, this.colorControl.value.toHexString(), 'confirm');
   }
 
   public cancel(): Promise<boolean> {
-    return this.modalController.dismiss(null, 'cancel');
+    return dismissOverlay(this.modalController, null, 'cancel');
   }
 }

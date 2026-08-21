@@ -15,6 +15,7 @@ import { AddressService } from '@okr/subject-address-data-access';
 
 import { ExpenseFormValue } from '@okr/finance-expense-util';
 import { ExpenseForm, ExpenseFormI18n } from '@okr/finance-expense-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { ExpenseStore } from './expense.store';
 import { PFX } from './scope';
 
@@ -181,7 +182,7 @@ export class ExpenseNewModal {
         color: 'success',
       });
       await toast.present();
-      await this.modalController.dismiss(null, 'confirm');
+      await dismissOverlay(this.modalController, null, 'confirm');
     } else if (this.store.submitStep() === 'error') {
       const toast = await this.toastController.create({
         message: this.i18n.toast_error(),
@@ -193,6 +194,6 @@ export class ExpenseNewModal {
   }
 
   protected async dismiss(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

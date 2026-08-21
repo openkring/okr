@@ -6,6 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header } from '@okr/shared-ui';
 
 import { GROUP_I18N_KEYS, GroupI18n } from '@okr/subject-group-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 /**
  * Explains groups to the user: what a group is, what each segment does, who administers it
@@ -210,6 +211,6 @@ export class GroupInfoModal {
    * under a presented modal leaves the Ionic overlay stack behind.
    */
   protected async openSupportChat(): Promise<void> {
-    await this.modalController.dismiss(undefined, 'supportChat');
+    await dismissOverlay(this.modalController, undefined, 'supportChat');
   }
 }

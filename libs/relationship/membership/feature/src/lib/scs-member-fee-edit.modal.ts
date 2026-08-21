@@ -8,6 +8,7 @@ import { getFullName, safeStructuredClone } from '@okr/shared-util-core';
 import { AvatarToolbar } from '@okr/avatar-feature';
 
 import { ScsMemberFeeEditForm } from '@okr/relationship-membership-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { ScsMemberFeesStore } from './scs-member-fees.store';
 
 
@@ -75,7 +76,7 @@ export class ScsMemberFeeEditModal {
   );
 
   public async save(): Promise<boolean> {
-    return this.modalController.dismiss(this.formData(), 'confirm');
+    return dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

@@ -6,6 +6,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { OWNERSHIP_I18N_KEYS, OwnershipI18n } from '@okr/relationship-ownership-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { OwnershipNewForm } from './ownership-new.form';
 
@@ -57,7 +58,7 @@ export class OwnershipNewModal {
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

@@ -3,6 +3,7 @@ import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/
 
 import { ResponsibilityModel, UserModel } from '@okr/shared-models';
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { ResponsibilitySelectStore } from './responsibility-select.store';
 
@@ -61,6 +62,6 @@ export class ResponsibilitySelectModal {
   }
 
   public select(responsibility: ResponsibilityModel): Promise<boolean> {
-    return this.modalController.dismiss(responsibility, 'confirm');
+    return dismissOverlay(this.modalController, responsibility, 'confirm');
   }
 }

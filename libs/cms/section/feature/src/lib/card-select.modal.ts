@@ -8,6 +8,7 @@ import { ENV } from '@okr/shared-config';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 import { Header } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { AsyncPipe } from '@angular/common';
@@ -97,6 +98,6 @@ export class CardSelectModal {
   }
 
   public async select(item: CategoryItemModel): Promise<boolean> {
-    return await this.modalController.dismiss(item, 'confirm');
+    return await dismissOverlay(this.modalController, item, 'confirm');
   }
 }

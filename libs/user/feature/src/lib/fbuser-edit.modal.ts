@@ -6,6 +6,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from "@okr/shared-
 import { hasRole, removeUndefinedFields } from "@okr/shared-util-core";
 
 import { FbuserForm } from "@okr/user-ui";
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { UserStore } from "./user.store";
 
 @Component({
@@ -55,7 +56,7 @@ export class FbuserEditModal {
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
     this.formDirty.set(false);
-    await this.modalController.dismiss(this.formData(), 'confirm');  
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');  
   }
 
   public async cancel(): Promise<void> {

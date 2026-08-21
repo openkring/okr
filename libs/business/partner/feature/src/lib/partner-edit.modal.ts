@@ -9,6 +9,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { PartnerForm } from '@okr/business-partner-ui';
 import { PARTNER_I18N_KEYS, PartnerI18n } from '@okr/business-partner-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-partner-edit-modal',
@@ -69,7 +70,7 @@ export class PartnerEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public cancel(): void {

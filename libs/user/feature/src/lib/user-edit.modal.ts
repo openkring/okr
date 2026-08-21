@@ -16,6 +16,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { UserAuthForm, UserDisplayForm, UserModelForm, UserNotificationForm, UserPrivacyForm } from '@okr/user-ui';
 import { convertFormsToUser, convertUserToAuthForm, convertUserToDisplayForm, convertUserToModelForm, convertUserToNotificationForm, convertUserToPrivacyForm, USER_I18N_KEYS, UserAuthFormModel, UserDisplayFormModel, UserI18n, UserModelFormModel, UserNotificationFormModel, UserPrivacyFormModel } from '@okr/user-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-user-edit-modal',
@@ -101,7 +102,7 @@ export class UserEditModal {
     // source). The user keeps a legacy copy via convertFormsToUser.
     const person = this.person();
     const updatedPerson = person ? mirrorPrivacyUsageToPerson(person, this.userPrivacyVm()) : undefined;
-    await this.modalController.dismiss({ user, person: updatedPerson }, 'confirm');
+    await dismissOverlay(this.modalController, { user, person: updatedPerson }, 'confirm');
   }
 
   public async cancel(): Promise<void> {

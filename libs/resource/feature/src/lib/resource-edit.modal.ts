@@ -11,6 +11,7 @@ import { ReservationsAccordion } from '@okr/relationship-reservation-feature';
 
 import { ResourceForm } from '@okr/resource-ui';
 import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@okr/resource-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { ResourceStore } from './resource.store';
 
 @Component({
@@ -114,7 +115,7 @@ export class ResourceEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');  
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');  
   }
 
   public async cancel(): Promise<void> {

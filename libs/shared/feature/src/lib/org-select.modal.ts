@@ -5,6 +5,7 @@ import { OrgModel, OrgModelName, UserModel } from '@okr/shared-models';
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 
 import { AvatarPipe } from '@okr/avatar-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { OrgSelectStore } from './org-select.store';
 
@@ -82,6 +83,6 @@ export class OrgSelectModal {
   }
 
   public select(selectedOrg: OrgModel): Promise<boolean> {
-    return this.modalController.dismiss(selectedOrg, 'confirm');
+    return dismissOverlay(this.modalController, selectedOrg, 'confirm');
   }
 }

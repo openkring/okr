@@ -6,6 +6,7 @@ import { ScsMemberFeesModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { getAccountDescription, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 export interface BexioPosition {
   text: string;
@@ -122,10 +123,10 @@ export class ScsMemberFeeUploadModal {
   protected footer = DEFAULT_FOOTER;
 
   public async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   public async confirm(): Promise<void> {
-    await this.modalController.dismiss({ header: this.header, footer: this.footer }, 'confirm');
+    await dismissOverlay(this.modalController, { header: this.header, footer: this.footer }, 'confirm');
   }
 }

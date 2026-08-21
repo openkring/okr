@@ -8,6 +8,7 @@ import {
 import { EsignRecord } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { ESIGN_I18N_KEYS, EsignI18n } from '@okr/content-esign-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 interface DeleteConfig {
   title: string;
@@ -76,10 +77,10 @@ export class EsignDeleteConfirmModal {
   });
 
   protected cancel(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 
   protected confirm(): void {
-    this.modalController.dismiss(null, 'confirm');
+    dismissOverlay(this.modalController, null, 'confirm');
   }
 }

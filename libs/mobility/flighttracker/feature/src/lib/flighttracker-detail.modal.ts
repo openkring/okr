@@ -6,6 +6,7 @@ import { Header } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 import { FlightInfoResponse } from '@okr/mobility-flighttracker-data-access';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { FlightTrackerStore } from './flighttracker.store';
 
@@ -118,7 +119,7 @@ export class FlightDetailModal {
   protected arrivalEstimated = computed(() => this.getPrettyDate(this.data().arrival.estimated));
 
   protected close(): void {
-    this.modalController.dismiss();
+    dismissOverlay(this.modalController);
   }
 
   getPrettyDate(isoDate?: string): string {

@@ -3,6 +3,7 @@ import { IonButton, IonButtons, IonCheckbox, IonContent, IonDatetime, IonInput, 
 
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { Header } from './header';
 
@@ -96,10 +97,10 @@ export class DateTimeSelectModal {
     const date = String(raw).substring(0, 10);
     // Append the separately-entered time only when the checkbox is on; else return a date-only token.
     const isoStr = this.withTime() ? `${date}T${this.time()}:00` : date;
-    await this.modalController.dismiss(isoStr, 'confirm');
+    await dismissOverlay(this.modalController, isoStr, 'confirm');
   }
 
   protected async cancel(): Promise<boolean> {
-    return await this.modalController.dismiss(null, 'cancel');
+    return await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

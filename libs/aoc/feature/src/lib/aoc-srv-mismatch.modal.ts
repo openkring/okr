@@ -5,6 +5,7 @@ import { SrvIndex } from '@okr/shared-models';
 import { getMismatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { AOC_I18N_KEYS, AocI18n } from '@okr/aoc-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 interface SrvDisplayRow {
   attr:      string;
@@ -91,6 +92,6 @@ export class AocSrvMismatchModal {
   });
 
   protected async close(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

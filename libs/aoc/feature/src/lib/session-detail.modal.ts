@@ -5,6 +5,7 @@ import { SessionModel } from '@okr/shared-models';
 import { getSessionStatus } from '@okr/session-util';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 import { AocI18n } from '@okr/aoc-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 interface DetailRow { label: string; value: string; }
 
@@ -72,6 +73,6 @@ export class SessionDetailModal {
   });
 
   protected close(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 }

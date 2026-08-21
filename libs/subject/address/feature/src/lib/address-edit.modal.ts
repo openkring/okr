@@ -8,6 +8,7 @@ import { I18nService } from "@okr/shared-i18n";
 
 import { AddressForm } from "@okr/subject-address-ui";
 import { ADDRESSES_I18N_KEYS, AddressesI18n } from "@okr/subject-address-util";
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-address-edit-modal',
@@ -70,7 +71,7 @@ export class AddressEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

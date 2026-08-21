@@ -8,6 +8,7 @@ import { generateEncryptionPassword, generateSalt, hashPasswordForVerification, 
 import { I18nService } from '@okr/shared-i18n';
 import { FormDefinitionService } from '@okr/forms-data-access';
 import { AppStore } from '@okr/shared-feature';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-section-encryption-setup-modal',
@@ -93,13 +94,13 @@ export class SectionEncryptionSetupModal {
         { ...this.form(), encryptionSalt: salt, encryptionKeyHash: keyHash },
         this.appStore.currentUser(),
       );
-      await this.modalController.dismiss({ encryptionSalt: salt }, 'confirm');
+      await dismissOverlay(this.modalController, { encryptionSalt: salt }, 'confirm');
     } finally {
       this.saving.set(false);
     }
   }
 
   protected cancel(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 }

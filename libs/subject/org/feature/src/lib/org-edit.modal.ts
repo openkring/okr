@@ -22,6 +22,7 @@ import { ReservationsAccordion } from '@okr/relationship-reservation-feature';
 
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { OrgForm } from '@okr/subject-org-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { OrgStore } from './org.store';
 
 @Component({
@@ -123,7 +124,7 @@ export class OrgEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

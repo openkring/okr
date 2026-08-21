@@ -5,6 +5,7 @@ import { ModalController, IonContent, IonItem, IonLabel, IonToggle, IonButton, I
 import { ContextDiagramConfig, UserModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { hasRole } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { ContextDiagramStore } from './context-diagram-section.store';
 
@@ -105,10 +106,10 @@ export class ContextDiagramConfigModal implements OnInit {
   }
 
   protected confirm(): Promise<boolean> {
-    return this.modalController.dismiss({ ...this.cfg, _saveChanges: this.saveChanges }, 'confirm');
+    return dismissOverlay(this.modalController, { ...this.cfg, _saveChanges: this.saveChanges }, 'confirm');
   }
 
   protected cancel(): Promise<boolean> {
-    return this.modalController.dismiss(null, 'cancel');
+    return dismissOverlay(this.modalController, null, 'cancel');
   }
 }

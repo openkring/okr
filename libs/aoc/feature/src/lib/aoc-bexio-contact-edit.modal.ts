@@ -8,6 +8,7 @@ import { AOC_I18N_KEYS } from "@okr/aoc-util";
 
 import { BexioIndex } from "..";
 import { getFullName } from "@okr/shared-util-core";
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 type SyncStatus = 'in-sync' | 'update' | 'create' | 'bexio-only' | 'both-empty';
 
@@ -216,6 +217,6 @@ export class AocBexioContactEditModal {
   /******************************* actions *************************************** */
 
   protected async dismiss(role: 'create' | 'update' | 'updateBk' | 'cancel' | 'download' | 'editPerson' | 'editOrg' | 'editMembership'): Promise<void> {
-    await this.modalController.dismiss(null, role);
+    await dismissOverlay(this.modalController, null, role);
   }
 }

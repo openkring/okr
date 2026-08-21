@@ -10,6 +10,7 @@ import { FormDefinitionService } from '@okr/forms-data-access';
 import { FORM_MAPPINGS, getPrefillFields, FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
 import { fill } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-form-definition-edit-modal',
@@ -195,6 +196,6 @@ export class FormDefinitionEditModal {
     } else {
       await this.formDefinitionService.update(fd, currentUser);
     }
-    await this.modalController.dismiss(null, 'confirm');
+    await dismissOverlay(this.modalController, null, 'confirm');
   }
 }

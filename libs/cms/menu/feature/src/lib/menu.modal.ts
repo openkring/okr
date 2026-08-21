@@ -9,6 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { MenuForm } from '@okr/cms-menu-ui';
 import { MENU_I18N_KEYS, MenuI18n } from '@okr/cms-menu-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { MenuStore } from './menu.store';
 
@@ -78,7 +79,7 @@ export class MenuModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

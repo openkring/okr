@@ -9,6 +9,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { CategoryListForm } from '@okr/category-ui';
 import { CATEGORY_I18N_KEYS, CategoryI18n } from '@okr/category-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-category-edit-modal',
@@ -72,7 +73,7 @@ export class CategoryEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

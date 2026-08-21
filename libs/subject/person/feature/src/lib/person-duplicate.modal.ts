@@ -3,6 +3,7 @@ import { IonButton, IonContent, IonFooter, IonItem, IonLabel, IonList, IonToolba
 
 import { Header } from '@okr/shared-ui';
 import { PersonDuplicateCandidate, PersonI18n } from '@okr/subject-person-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-person-duplicate-modal',
@@ -48,10 +49,10 @@ export class PersonDuplicateModal {
   public i18n = input.required<PersonI18n>();
 
   protected select(candidate: PersonDuplicateCandidate): void {
-    this.modalController.dismiss(candidate, 'select');
+    dismissOverlay(this.modalController, candidate, 'select');
   }
 
   protected createNew(): void {
-    this.modalController.dismiss(null, 'create');
+    dismissOverlay(this.modalController, null, 'create');
   }
 }

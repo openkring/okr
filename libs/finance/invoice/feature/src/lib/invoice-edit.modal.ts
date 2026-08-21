@@ -9,6 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { InvoiceEditForm } from '@okr/finance-invoice-ui';
 import { INVOICE_I18N_KEYS, InvoiceI18n } from '@okr/finance-invoice-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-invoice-edit-modal',
@@ -67,10 +68,10 @@ export class InvoiceEditModal {
   }
 
   protected async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   protected async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

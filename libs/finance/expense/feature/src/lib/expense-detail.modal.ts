@@ -11,6 +11,7 @@ import { ExpenseModel } from '@okr/shared-models';
 import { centsToCHF, EXPENSE_I18N_KEYS, ExpenseI18n } from '@okr/finance-expense-util';
 import { I18nService } from '@okr/shared-i18n';
 import { ExpenseReceipt, ExpenseService } from '@okr/finance-expense-data-access';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-expense-detail-modal',
@@ -104,6 +105,6 @@ export class ExpenseDetailModal {
   }
 
   protected async dismiss(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

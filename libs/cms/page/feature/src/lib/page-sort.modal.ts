@@ -4,6 +4,7 @@ import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetai
 import { SectionModel } from '@okr/shared-models';
 import { Header, Spinner } from '@okr/shared-ui';
 import { arrayMove } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { PageStore } from './page.store';
 
@@ -49,11 +50,11 @@ export class PageSortModal {
 
   /******************************** actions ******************************************* */
   public cancel(): Promise<boolean> {
-    return this.modalController.dismiss(null, 'cancel');
+    return dismissOverlay(this.modalController, null, 'cancel');
   }
 
   public save(): Promise<boolean> {
-    return this.modalController.dismiss(this.sections(), 'confirm');
+    return dismissOverlay(this.modalController, this.sections(), 'confirm');
   }
 
   reorder(ev: CustomEvent<ItemReorderEventDetail>) {

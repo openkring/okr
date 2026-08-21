@@ -9,6 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { createNewMemberFormModel, MemberNewFormModel, MEMBERSHIP_I18N_KEYS, MembershipI18n } from '@okr/relationship-membership-util';
 import { MemberNewForm } from '@okr/relationship-membership-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-member-new-modal',
@@ -72,7 +73,7 @@ export class MemberNewModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

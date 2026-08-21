@@ -11,6 +11,7 @@ import { safeStructuredClone } from '@okr/shared-util-core';
 import { AvatarToolbar } from '@okr/avatar-feature';
 import { AddressesAccordion } from '@okr/subject-address-feature';
 import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';
@@ -165,7 +166,7 @@ export class ProfileEditModal {
   public async save(): Promise<void> {
     this.formDirty.set(false);
     await this.store.save(this.personFormData(), this.userFormData());
-    await this.modalController.dismiss(this.personFormData(), 'confirm');
+    await dismissOverlay(this.modalController, this.personFormData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

@@ -14,6 +14,7 @@ import { CommentsAccordion } from '@okr/comment-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 
 import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { AttendeesAccordion } from './attendees-accordion';
 
@@ -219,10 +220,10 @@ export class CalEventViewModal {
   protected readonly until = computed(() => this.calevent().repeatUntilDate ? ` bis ${storeToView(this.calevent().repeatUntilDate)}` : '');
 
   public async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.calevent(), 'confirm');
+    await dismissOverlay(this.modalController, this.calevent(), 'confirm');
   }
 }

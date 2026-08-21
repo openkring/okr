@@ -8,6 +8,7 @@ import {
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 import { PDF_PREVIEW_I18N_KEYS, PdfPreviewI18n } from '@okr/content-pdf-template-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { EmailComposerModal } from './email-composer.modal';
 
 @Component({
@@ -115,7 +116,7 @@ export class PdfPreviewModal {
   }
 
   protected async close(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   protected download(): void {

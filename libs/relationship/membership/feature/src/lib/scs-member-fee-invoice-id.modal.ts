@@ -6,6 +6,7 @@ import { ScsMemberFeesModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
 import { MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-scs-member-fee-invoice-id-modal',
@@ -55,10 +56,10 @@ export class ScsMemberFeeInvoiceIdModal {
   protected invoiceId = '';
 
   public async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   public async confirm(): Promise<void> {
-    await this.modalController.dismiss({ invoiceId: this.invoiceId }, 'confirm');
+    await dismissOverlay(this.modalController, { invoiceId: this.invoiceId }, 'confirm');
   }
 }

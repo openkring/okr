@@ -3,6 +3,7 @@ import { IonCol, IonContent, IonGrid, IonItem, IonLabel, IonList, IonRow, ModalC
 
 import { CalendarModel, UserModel } from '@okr/shared-models';
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { CalendarSelectStore } from './calendar-select.store';
 
@@ -72,6 +73,6 @@ export class CalendarSelectModal {
   }
 
   public select(calendar: CalendarModel): Promise<boolean> {
-    return this.modalController.dismiss(calendar.okey, 'confirm');
+    return dismissOverlay(this.modalController, calendar.okey, 'confirm');
   }
 }

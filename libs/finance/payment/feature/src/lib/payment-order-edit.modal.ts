@@ -4,6 +4,7 @@ import { ModalController, IonButton, IonButtons, IonContent, IonHeader,
   IonInput, IonItem, IonLabel, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { PaymentOrderModel, UserModel } from '@okr/shared-models';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-payment-order-edit-modal',
@@ -53,6 +54,6 @@ export class PaymentOrderEditModal implements OnInit {
     return !!this.edit.debitAccountKey && !!this.edit.executionDate;
   }
 
-  protected async dismiss(): Promise<void> { await this.modalController.dismiss(null, 'cancel'); }
-  protected async save(): Promise<void> { await this.modalController.dismiss(this.edit, 'confirm'); }
+  protected async dismiss(): Promise<void> { await dismissOverlay(this.modalController, null, 'cancel'); }
+  protected async save(): Promise<void> { await dismissOverlay(this.modalController, this.edit, 'confirm'); }
 }

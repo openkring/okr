@@ -6,7 +6,7 @@ import {
 import { UploadTask, getDownloadURL } from 'firebase/storage';
 
 import { uploadToFirebaseStorage } from '@okr/shared-config';
-import { error } from '@okr/shared-util-angular';
+import { dismissOverlay, error } from '@okr/shared-util-angular';
 
 import { Header } from './header';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -145,7 +145,7 @@ export class UploadTaskModal implements OnInit {
           });
           completedCount++;
           if (completedCount === this.uploads().length) {
-            this.modalController.dismiss(downloadUrls, 'confirm');
+            dismissOverlay(this.modalController, downloadUrls, 'confirm');
           }
         },
         () => {
@@ -171,7 +171,7 @@ export class UploadTaskModal implements OnInit {
             .finally(() => {
               completedCount++;
               if (completedCount === this.uploads().length) {
-                this.modalController.dismiss(downloadUrls, 'confirm');
+                dismissOverlay(this.modalController, downloadUrls, 'confirm');
               }
             });
         }

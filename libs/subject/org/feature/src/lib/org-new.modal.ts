@@ -7,6 +7,7 @@ import { CategoryListModel, UserModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ORG_I18N_KEYS, ORG_NEW_FORM_SHAPE, OrgI18n, OrgNewFormModel } from '@okr/subject-org-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-org-new-modal',
@@ -57,7 +58,7 @@ export class OrgNewModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

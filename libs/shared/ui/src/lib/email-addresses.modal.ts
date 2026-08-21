@@ -4,7 +4,7 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCo
 import { signalStore, withProps } from '@ngrx/signals';
 
 import { ENV } from '@okr/shared-config';
-import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, EmailEntry } from '@okr/shared-util-angular';
+import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, dismissOverlay, EmailEntry } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { Header } from './header';
@@ -156,10 +156,10 @@ export class EmailAddressesModal {
 
     switch (data.action) {
       case 'person.edit':
-        await this.modalController.dismiss({ memberKey: entry.memberKey, readOnly: false }, 'navigate');
+        await dismissOverlay(this.modalController, { memberKey: entry.memberKey, readOnly: false }, 'navigate');
         break;
       case 'person.view':
-        await this.modalController.dismiss({ memberKey: entry.memberKey, readOnly: true }, 'navigate');
+        await dismissOverlay(this.modalController, { memberKey: entry.memberKey, readOnly: true }, 'navigate');
         break;
       case 'address.hide':
         this.hiddenEmails.update(hidden => new Set([...hidden, entry.email]));

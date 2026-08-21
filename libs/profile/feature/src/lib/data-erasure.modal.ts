@@ -8,6 +8,7 @@ import type { DataClass, ErasurePreview } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { PrivacyRightsService } from '@okr/profile-data-access';
 import { ProfileI18n } from '@okr/profile-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 /**
  * The erasure preflight report and its confirmation (plan task D3).
@@ -259,10 +260,10 @@ export class DataErasureModal {
       this.errorMessage.set(result.message);
       return;
     }
-    await this.modalController.dismiss({ erased: true, result: result.value }, 'confirm');
+    await dismissOverlay(this.modalController, { erased: true, result: result.value }, 'confirm');
   }
 
   protected close(): void {
-    void this.modalController.dismiss(undefined, 'cancel');
+    void dismissOverlay(this.modalController, undefined, 'cancel');
   }
 }

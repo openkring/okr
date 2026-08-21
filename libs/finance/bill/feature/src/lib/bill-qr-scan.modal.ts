@@ -10,6 +10,7 @@ import {
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { BILL_I18N_KEYS, BillI18n } from '@okr/finance-bill-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-bill-qr-scan-modal',
@@ -59,13 +60,13 @@ export class BillQrScanModal {
     try {
       const fn = httpsCallable<{ qrContent: string }, unknown>(this.functions, 'parseQrInvoice');
       const result = await fn({ qrContent: this.qrContent });
-      await this.modalController.dismiss(result.data, 'confirm');
+      await dismissOverlay(this.modalController, result.data, 'confirm');
     } catch (err) {
       this.error = (err as Error).message;
     }
   }
 
   protected async dismiss(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

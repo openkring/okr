@@ -4,6 +4,7 @@ import { IonContent, IonIcon, IonItem, IonLabel, IonList, ModalController } from
 import { ResourceModel, UserModel } from '@okr/shared-models';
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { ResourceSelectStore } from './resource-select.store';
 
@@ -78,7 +79,7 @@ export class ResourceSelectModal {
   }
 
   public select(selectedResource: ResourceModel): Promise<boolean> {
-    return this.modalController.dismiss(selectedResource, 'confirm');
+    return dismissOverlay(this.modalController, selectedResource, 'confirm');
   }
 
   protected getIcon(resource: ResourceModel): string {

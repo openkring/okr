@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonContent, IonHeader, IonInput, IonItem, IonLabel, IonSelect, IonSelectOption, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { AssetCategoryModel, AssetModel, UserModel } from '@okr/shared-models';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { AssetStore } from './asset.store';
 
 @Component({
@@ -61,6 +62,6 @@ export class AssetEditModal implements OnInit {
 
   public ngOnInit(): void { this.edit = { ...this.asset() }; }
 
-  protected async dismiss(): Promise<void> { await this.store.modalController.dismiss(null, 'cancel'); }
-  protected async save(): Promise<void> { await this.store.modalController.dismiss(this.edit, 'confirm'); }
+  protected async dismiss(): Promise<void> { await dismissOverlay(this.store.modalController, null, 'cancel'); }
+  protected async save(): Promise<void> { await dismissOverlay(this.store.modalController, this.edit, 'confirm'); }
 }

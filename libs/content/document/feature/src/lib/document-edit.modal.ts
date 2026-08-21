@@ -10,6 +10,7 @@ import { DocumentService } from '@okr/content-document-data-access';
 import { DOCUMENT_I18N_KEYS, DocumentI18n } from '@okr/content-document-util';
 
 import { DocumentForm } from '@okr/content-document-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-document-edit-modal',
@@ -77,7 +78,7 @@ export class DocumentEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

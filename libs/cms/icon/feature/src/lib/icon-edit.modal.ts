@@ -9,6 +9,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { IconEditForm } from '@okr/cms-icon-ui';
 import { ICON_I18N_KEYS, IconI18n } from '@okr/cms-icon-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-icon-edit-modal',
@@ -71,7 +72,7 @@ export class IconEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

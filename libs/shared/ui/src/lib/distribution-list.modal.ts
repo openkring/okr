@@ -6,7 +6,7 @@ import {
 } from '@ionic/angular/standalone';
 import { signalStore, withProps } from '@ngrx/signals';
 
-import { EmailEntry, mergeEmailList, parseEmailList } from '@okr/shared-util-angular';
+import { dismissOverlay, EmailEntry, mergeEmailList, parseEmailList } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { Header } from './header';
@@ -183,7 +183,7 @@ export class DistributionListModal {
     const picked = this.entries();
     const selected = (s: Segment) => picked[s].filter(e => e.selected).map(e => e.email);
     const list: DistributionList = { to: selected('to'), cc: selected('cc'), bcc: selected('bcc') };
-    await this.modalController.dismiss(list, 'confirm');
+    await dismissOverlay(this.modalController, list, 'confirm');
   }
 
   private async showInvalidToast(): Promise<void> {

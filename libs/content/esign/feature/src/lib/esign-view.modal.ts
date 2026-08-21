@@ -15,6 +15,7 @@ import { EsignService } from '@okr/content-esign-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ESIGN_I18N_KEYS, EsignI18n } from '@okr/content-esign-util';
 import { fill } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-esign-view-modal',
@@ -173,7 +174,7 @@ export class EsignViewModal {
   protected readonly loading        = signal(false);
 
   protected close(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 
   protected async refresh(): Promise<void> {
@@ -232,7 +233,7 @@ export class EsignViewModal {
     if (role === 'confirm') {
       try {
         await this.esignService.deleteEsign(this.esign().esignId);
-        this.modalController.dismiss(null, 'deleted');
+        dismissOverlay(this.modalController, null, 'deleted');
       } catch {
         const toast = await this.toastController.create({
           message: this.i18n.view_doc_delete_error(),

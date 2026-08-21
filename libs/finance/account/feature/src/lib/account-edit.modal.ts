@@ -6,6 +6,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { AccountForm } from '@okr/finance-account-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { AccountStore } from './account.store';
 
 @Component({
@@ -62,7 +63,7 @@ export class AccountEditModal {
   protected tenantId = computed(() => this.store.appStore.tenantId());
 
   public async save(): Promise<void> {
-    await this.store.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.store.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

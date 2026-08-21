@@ -5,6 +5,7 @@ import { IonButton, IonButtons, IonContent, IonItem, IonInput, IonLabel, IonTogg
 import { OkrEditor, ButtonCopyI18n, Header } from '@okr/shared-ui';
 import { WebsiteContentModel } from '@okr/shared-models';
 import { deepEqual, safeStructuredClone } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { AocWebsiteStore } from './aoc-website.store';
 
 @Component({
@@ -96,10 +97,10 @@ export class AocWebsiteEditModal {
 
   protected async save(): Promise<void> {
     const data: WebsiteContentModel = { ...this.formData(), de: this.deContent(), en: this.enContent() };
-    await this.modalController.dismiss(data, 'confirm');
+    await dismissOverlay(this.modalController, data, 'confirm');
   }
 
   protected cancel(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 }

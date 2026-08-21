@@ -9,6 +9,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { WhiteboardForm, WhiteboardTemplateOption } from '@okr/instruments-whiteboard-ui';
 import { WHITEBOARD_I18N_KEYS, WhiteboardI18n, WHITEBOARD_TEMPLATES } from '@okr/instruments-whiteboard-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 /**
  * Create / rename modal for a whiteboard's metadata (name, description, template, tags). The canvas
@@ -76,7 +77,7 @@ export class WhiteboardEditModal {
   } as ChangeConfirmationI18n));
 
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public cancel(): void {

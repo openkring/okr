@@ -5,6 +5,7 @@ import { ImageConfig } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { getImgixUrl } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 /**
  * Full-screen, edge-to-edge image slider overlay (ImageActionType.OpenSlider).
@@ -138,7 +139,7 @@ export class ImageSliderModal {
   }
 
   protected close(): void {
-    this.modalController.dismiss();
+    dismissOverlay(this.modalController);
   }
 
   @HostListener('document:keydown', ['$event'])

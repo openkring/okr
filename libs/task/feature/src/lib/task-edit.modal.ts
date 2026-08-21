@@ -9,6 +9,7 @@ import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@okr
 import { CommentsAccordion } from '@okr/comment-feature';
 import { TaskForm } from '@okr/task-ui';
 import { AvatarSelect } from '@okr/avatar-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { TaskStore } from './task.store';
 
@@ -116,7 +117,7 @@ export class TaskEditModal {
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');  
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');  
   }
 
   public async cancel(): Promise<void> {

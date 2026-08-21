@@ -6,6 +6,7 @@ import { patchState, signalStore, withMethods, withProps, withState } from '@ngr
 
 import { Header } from './header';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { AsyncPipe } from '@angular/common';
 
 const ChipSelectStore = signalStore(
@@ -58,6 +59,6 @@ export class ChipSelectModal {
   }
 
   public async select(chip: string): Promise<boolean> {
-    return await this.modalController.dismiss(chip, 'confirm');
+    return await dismissOverlay(this.modalController, chip, 'confirm');
   }
 }

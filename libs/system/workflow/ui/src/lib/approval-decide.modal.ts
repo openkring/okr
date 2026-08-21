@@ -7,6 +7,7 @@ import { Header, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { WORKFLOW_I18N_KEYS, WorkflowI18n, approvalStateColor } from '@okr/system-workflow-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 /**
  * Decide one approval (spec 2026-08-15-approval-workflow-spec.md §3.5).
@@ -139,7 +140,7 @@ export class ApprovalDecideModal {
 
   /******************************* actions *************************************** */
   protected async decide(decision: 'approve' | 'reject' | 'withdraw'): Promise<void> {
-    await this.modalController.dismiss({ decision, note: this.note().trim() }, 'confirm');
+    await dismissOverlay(this.modalController, { decision, note: this.note().trim() }, 'confirm');
   }
 }
 

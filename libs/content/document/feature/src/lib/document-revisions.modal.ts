@@ -4,6 +4,7 @@ import { IonContent, IonItem, IonLabel, IonList, ModalController } from '@ionic/
 import { DocumentModel } from '@okr/shared-models';
 import { FileNamePipe, PrettyDatePipe } from '@okr/shared-pipes';
 import { Header } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { DocumentStore } from './document.store';
 
@@ -39,6 +40,6 @@ export class DocumentRevisionsModal {
   public revisions = input.required<DocumentModel[]>();
 
   public async close(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

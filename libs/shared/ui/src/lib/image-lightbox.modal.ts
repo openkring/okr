@@ -3,7 +3,7 @@ import {
   IonButton, IonButtons, IonContent, IonHeader,
   IonIcon, IonTitle, IonToolbar, ModalController
 } from '@ionic/angular/standalone';
-import { downloadToBrowser } from '@okr/shared-util-angular';
+import { dismissOverlay, downloadToBrowser } from '@okr/shared-util-angular';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 export interface LightboxImage {
@@ -90,6 +90,6 @@ export class ImageLightboxModal {
   }
 
   protected async close(): Promise<void> {
-    await this.modalController.dismiss();
+    await dismissOverlay(this.modalController);
   }
 }

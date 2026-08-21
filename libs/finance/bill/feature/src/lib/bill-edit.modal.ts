@@ -9,6 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { BillEditForm } from '@okr/finance-bill-ui';
 import { BILL_I18N_KEYS, BillI18n } from '@okr/finance-bill-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-bill-edit-modal',
@@ -65,10 +66,10 @@ export class BillEditModal {
   }
 
   protected async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   protected async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

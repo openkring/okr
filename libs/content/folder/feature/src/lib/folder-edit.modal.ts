@@ -9,6 +9,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { FolderForm } from '@okr/content-folder-ui';
 import { FOLDER_I18N_KEYS, FolderI18n } from '@okr/content-folder-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-folder-edit-modal',
@@ -68,7 +69,7 @@ export class FolderEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

@@ -5,6 +5,7 @@ import { IonButton, IonButtons, IonContent, IonInput, IonItem, IonLabel, IonText
 import { Header } from '@okr/shared-ui';
 import { I18nDefaultModel } from '@okr/shared-models';
 import { deepEqual, safeStructuredClone } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { I18nDefaultStore } from './i18n-default.store';
 
 @Component({
@@ -83,10 +84,10 @@ export class I18nDefaultEditModal {
   }
 
   protected async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   protected cancel(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 }

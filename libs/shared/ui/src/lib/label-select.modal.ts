@@ -2,6 +2,7 @@ import { Component, inject, input } from '@angular/core';
 import { IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { Header } from './header';
 
@@ -36,7 +37,7 @@ export class LabelSelectModal {
   public title = input('@select.tag');
 
   public async select(index: number): Promise<boolean> {
-    return await this.modalController.dismiss(index, 'confirm');
+    return await dismissOverlay(this.modalController, index, 'confirm');
   }
 }
 

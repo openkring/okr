@@ -1,7 +1,7 @@
 /**
  * Guards against Ionic's controller-level `dismiss()` rejecting when the overlay is already gone.
  *
- * `ModalController`/`PopoverController`/`ActionSheetController.dismiss()` resolve against the
+ * `ModalController`/`PopoverController`/`ActionSheetController` `dismiss()` resolve against the
  * *topmost* overlay. When there is none — the overlay dismissed itself first (`dismissOnSelect`,
  * a backdrop tap, a second click on the close button, or a save that awaited a Firestore write
  * while the user closed the modal) — Ionic rejects with the bare **string** `'overlay does not

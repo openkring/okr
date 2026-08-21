@@ -5,6 +5,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { safeStructuredClone } from '@okr/shared-util-core';
 import { AOC_I18N_KEYS, AocI18n, KioskMessageFormData } from '@okr/aoc-util';
 import { I18nService } from '@okr/shared-i18n';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { KioskMessageForm } from './kiosk-message.form';
 
@@ -66,7 +67,7 @@ export class KioskMessageEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public cancel(): void {

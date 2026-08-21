@@ -5,6 +5,7 @@ import { GroupModel, GroupModelName, UserModel } from '@okr/shared-models';
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 
 import { MultiAvatar } from '@okr/cms-menu-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { GroupSelectStore } from './group-select.store';
 
@@ -76,6 +77,6 @@ export class GroupSelectModal {
   }
 
   public select(selectedGroup: GroupModel): Promise<boolean> {
-    return this.modalController.dismiss(selectedGroup, 'confirm');
+    return dismissOverlay(this.modalController, selectedGroup, 'confirm');
   }
 }

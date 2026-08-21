@@ -2,6 +2,7 @@ import { Component, inject, input, signal } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList, IonRadio, IonRadioGroup, ModalController } from '@ionic/angular/standalone';
 
 import { Header } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-regression-selection-modal',
@@ -53,6 +54,6 @@ export class RegressionSelectionModal {
   
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.selectedOption(), 'confirm');
+    await dismissOverlay(this.modalController, this.selectedOption(), 'confirm');
   }
 }

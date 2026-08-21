@@ -12,6 +12,7 @@ import { FormDefinitionService } from '@okr/forms-data-access';
 import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
 import { FIELD_TYPE_DEFS, FieldTypeDef, FieldTypeLibrary, FormRenderer } from '@okr/forms-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { FieldConfigModal } from './field-config.modal';
 
@@ -216,7 +217,7 @@ export class FormBuilderEditor {
   public async save(): Promise<void> {
     const fd = { ...this.formData(), fields: this.fields() };
     await this.formDefinitionService.update(fd, this.appStore.currentUser());
-    await this.modalController.dismiss(null, 'confirm');
+    await dismissOverlay(this.modalController, null, 'confirm');
   }
 
   /** Discard unsaved changes — revert to the originally loaded field set. */

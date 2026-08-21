@@ -9,6 +9,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { DEFAULT_TAGS } from '@okr/shared-constants';
 
 import { ResponsibilityOption, WORKFLOW_I18N_KEYS, WorkflowI18n } from '@okr/system-workflow-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { WorkflowRuleForm } from './workflow-rule.form';
 
@@ -80,7 +81,7 @@ export class WorkflowRuleEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public cancel(): void {

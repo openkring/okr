@@ -11,6 +11,7 @@ import { Field } from '@okr/shared-models';
 import { safeStructuredClone } from '@okr/shared-util-core';
 import { isDisplayField, FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
 import { I18nService } from '@okr/shared-i18n';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-field-config-modal',
@@ -92,6 +93,6 @@ export class FieldConfigModal {
   });
 
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.fieldData(), 'confirm');
+    await dismissOverlay(this.modalController, this.fieldData(), 'confirm');
   }
 }

@@ -4,7 +4,7 @@ import type * as L from 'leaflet';
 
 import { EmptyList, Header, Spinner } from '@okr/shared-ui';
 import { LocationModel, UserModel } from '@okr/shared-models';
-import { copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
+import { copyToClipboardWithConfirmation, dismissOverlay } from '@okr/shared-util-angular';
 
 import { SvgIconPipe, getSvgIconUrl } from '@okr/shared-pipes';
 
@@ -156,17 +156,11 @@ export class LocationSelectModal implements OnDestroy {
   }
 
   public select(location: LocationModel): Promise<boolean> {
-    return this.modalController.dismiss(
-      { kind: 'predefined', location } satisfies LocationSelectResult,
-      'confirm'
-    );
+    return dismissOverlay(this.modalController, { kind: 'predefined', location } satisfies LocationSelectResult, 'confirm');
   }
 
   public selectCustom(): Promise<boolean> {
-    return this.modalController.dismiss(
-      { kind: 'custom', label: this.store.customLabel() } satisfies LocationSelectResult,
-      'confirm'
-    );
+    return dismissOverlay(this.modalController, { kind: 'custom', label: this.store.customLabel() } satisfies LocationSelectResult, 'confirm');
   }
 
   // ─── Leaflet ───────────────────────────────────────────────────────────────

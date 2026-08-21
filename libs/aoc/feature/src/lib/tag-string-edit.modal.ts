@@ -4,6 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
 import { TagStringFormData } from '@okr/aoc-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { TagStringForm } from './tag-string.form';
 
@@ -60,7 +61,7 @@ export class TagStringEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public cancel(): void {

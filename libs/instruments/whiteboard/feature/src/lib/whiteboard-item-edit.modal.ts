@@ -9,6 +9,7 @@ import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
 import { WhiteboardItemForm } from '@okr/instruments-whiteboard-ui';
 import { WHITEBOARD_I18N_KEYS, WhiteboardI18n } from '@okr/instruments-whiteboard-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 /**
  * Per-item editor modal: edits a clone of one sticker/label (text + colour) and can delete it. Edits
@@ -66,7 +67,7 @@ export class WhiteboardItemEditModal {
   } as ChangeConfirmationI18n));
 
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.itemData(), 'confirm');
+    await dismissOverlay(this.modalController, this.itemData(), 'confirm');
   }
 
   public cancel(): void {
@@ -75,7 +76,7 @@ export class WhiteboardItemEditModal {
   }
 
   public async remove(): Promise<void> {
-    await this.modalController.dismiss(null, 'delete');
+    await dismissOverlay(this.modalController, null, 'delete');
   }
 
   protected onItemChange(item: WhiteboardItem): void {

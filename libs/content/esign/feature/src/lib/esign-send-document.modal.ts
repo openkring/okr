@@ -9,7 +9,7 @@ import {
 
 import { NotesInput, NotesInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { dismissOverlay, validateVestTree } from '@okr/shared-util-angular';
 import { ESIGN_I18N_KEYS, EsignI18n, EsignSendFormModel, esignSendValidations } from '@okr/content-esign-util';
 import { EsignScanPredefinedResponse, EsignService } from '@okr/content-esign-data-access';
 
@@ -244,7 +244,7 @@ export class EsignSendDocumentModal implements OnInit {
         source: 'user-upload',
       });
       await this.presentToast(this.i18n.send_ok(), 'success');
-      await this.modalController.dismiss(response, 'confirm');
+      await dismissOverlay(this.modalController, response, 'confirm');
     } catch (error) {
       await this.presentToast(`${this.i18n.send_failed()}: ${this.toMessage(error)}`, 'danger');
       this.status.set('ready');
@@ -252,7 +252,7 @@ export class EsignSendDocumentModal implements OnInit {
   }
 
   protected close(): void {
-    this.modalController.dismiss(null, 'cancel');
+    dismissOverlay(this.modalController, null, 'cancel');
   }
 
   private toMessage(error: unknown): string {

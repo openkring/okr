@@ -9,6 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { GroupForm } from '@okr/subject-group-ui';
 import { GROUP_I18N_KEYS, GroupI18n } from '@okr/subject-group-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-group-edit-modal',
@@ -71,7 +72,7 @@ export class GroupEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

@@ -5,6 +5,7 @@ import { CategoryListModel, SectionModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@okr/shared-ui';
 import { coerceBoolean, deepEqual, safeStructuredClone } from '@okr/shared-util-core';
 import { SectionForm } from '@okr/cms-section-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { SectionStore } from './section.store';
 
@@ -96,7 +97,7 @@ export class SectionEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');  
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');  
   }
 
   public async cancel(): Promise<void> {

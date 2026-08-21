@@ -8,6 +8,7 @@ import { coerceBoolean, getAvatarName, hasRole, safeStructuredClone } from '@okr
 import { CommentsAccordion } from '@okr/comment-feature';
 import { ReservationForm } from '@okr/relationship-reservation-ui';
 import { RelationshipToolbar } from '@okr/avatar-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { ReservationStore } from './reservation.store';
 
 @Component({
@@ -115,7 +116,7 @@ export class ReservationEditModal {
 
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {

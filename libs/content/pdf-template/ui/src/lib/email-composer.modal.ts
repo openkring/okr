@@ -15,7 +15,7 @@ import {
   EmailInput, EmailInputI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
 import { getImgixUrl } from '@okr/shared-util-core';
-import { validateVestTree } from '@okr/shared-util-angular';
+import { dismissOverlay, validateVestTree } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
   buildBrandedEmailHtml, parseEmails,
@@ -301,7 +301,7 @@ export class EmailComposerModal {
   }
 
   protected async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   protected async send(): Promise<void> {
@@ -342,7 +342,7 @@ export class EmailComposerModal {
       }
 
       await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_conf, { recipients: recipients.join(', ') });
-      await this.modalController.dismiss({ sent: true }, 'confirm');
+      await dismissOverlay(this.modalController, { sent: true }, 'confirm');
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       // A bulk send aborts on the first failing block — say how far it got, never claim success.

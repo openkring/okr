@@ -3,7 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, DateTimeSelectModal, Header } from '@okr/shared-ui';
 import { ModelSelectService } from '@okr/shared-feature';
-import { QuickEntryResolver } from '@okr/shared-util-angular';
+import { dismissOverlay, QuickEntryResolver } from '@okr/shared-util-angular';
 import { formatDateToken } from '@okr/shared-util-core';
 
 import { MatrixPollData } from '@okr/chat-data-access';
@@ -71,10 +71,10 @@ export class PollCreateModal {
   }
 
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

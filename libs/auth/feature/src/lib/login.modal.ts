@@ -6,6 +6,7 @@ import { Header } from '@okr/shared-ui';
 
 import { AuthService } from '@okr/auth-data-access';
 import { LoginForm } from '@okr/auth-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { AuthStore } from './auth.store';
 
@@ -43,11 +44,11 @@ export class LoginModal {
   });
 
   public async login(): Promise<void> {
-    await this.modalController.dismiss(this.currentCredentials, 'cancel');
+    await dismissOverlay(this.modalController, this.currentCredentials, 'cancel');
     this.authService.login(this.currentCredentials(), this.store.config().rootUrl, this.store.config().loginUrl);
   }
 
   public async cancel(): Promise<void> {
-    await this.modalController.dismiss(undefined, 'cancel');
+    await dismissOverlay(this.modalController, undefined, 'cancel');
   }
 }

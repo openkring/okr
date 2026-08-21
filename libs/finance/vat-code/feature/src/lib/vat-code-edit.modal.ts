@@ -8,6 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { VAT_CODE_I18N_KEYS, VatCodeI18n } from '@okr/finance-vat-code-util';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 @Component({
   selector: 'okr-vat-code-edit-modal',
@@ -83,10 +84,10 @@ export class VatCodeEditModal implements OnInit {
   }
 
   protected async dismiss(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 
   protected async save(): Promise<void> {
-    await this.modalController.dismiss(this.edit, 'confirm');
+    await dismissOverlay(this.modalController, this.edit, 'confirm');
   }
 }

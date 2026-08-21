@@ -3,6 +3,7 @@ import { IonContent, IonGrid, IonRow, IonCol, IonLabel, ModalController } from '
 
 import { ScsMemberFeesModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { ScsMemberFeesStore } from './scs-member-fees.store';
 
@@ -163,6 +164,6 @@ export class ScsMemberFeesTotalsModal {
   }
 
   public async close(): Promise<void> {
-    await this.modalController.dismiss(null, 'cancel');
+    await dismissOverlay(this.modalController, null, 'cancel');
   }
 }

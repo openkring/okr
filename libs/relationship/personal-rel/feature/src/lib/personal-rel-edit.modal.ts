@@ -10,6 +10,7 @@ import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { CommentsAccordion } from '@okr/comment-feature';
 import { DocumentsAccordion } from '@okr/content-document-feature';
 import { PersonalRelForm } from '@okr/relationship-personal-rel-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { PersonalRelStore } from './personal-rel.store';
 
 @Component({
@@ -88,7 +89,7 @@ export class PersonalRelEditModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public async cancel(): Promise<void> {
