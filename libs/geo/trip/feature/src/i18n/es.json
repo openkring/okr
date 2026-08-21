@@ -53,7 +53,8 @@
     },
     "boat": {
       "title": "Elegir embarcación",
-      "add": "Elegir embarcación"
+      "add": "Elegir embarcación",
+      "in_use": "El barco {name} sigue en una salida abierta. Solo podrá volver a usarse cuando esa salida se haya cerrado."
     },
     "location": {
       "title": "Elegir destino",

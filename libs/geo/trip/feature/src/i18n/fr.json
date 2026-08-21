@@ -53,7 +53,8 @@
     },
     "boat": {
       "title": "Choisir un bateau",
-      "add": "Choisir un bateau"
+      "add": "Choisir un bateau",
+      "in_use": "Le bateau {name} est encore sur une sortie ouverte. Il ne pourra être réutilisé qu’une fois cette sortie clôturée."
     },
     "location": {
       "title": "Choisir une destination",

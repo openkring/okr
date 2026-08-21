@@ -70,6 +70,14 @@
       "decided": {
         "label": "Freigabe entschieden"
       }
+    },
+    "trip": {
+      "damageReported": {
+        "label": "Damage reported"
+      },
+      "bugReported": {
+        "label": "Bug reported"
+      }
     }
   },
   "workflow_probe": {

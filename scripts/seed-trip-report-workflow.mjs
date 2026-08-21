@@ -40,8 +40,13 @@ const TRIGGERS = [
     ruleName: 'Schadenmeldung → Ressort Boote',
     responsibilityName: 'Ressort Boote',
     i18nKey: 'trip.damageReported',
-    de: 'Schadenmeldung {boatName} ({personName})',
-    en: 'Damage report {boatName} ({personName})',
+    text: {
+      de: 'Schadenmeldung {boatName} ({personName})',
+      en: 'Damage report {boatName} ({personName})',
+      fr: 'Signalement de dommage {boatName} ({personName})',
+      es: 'Aviso de daño {boatName} ({personName})',
+      it: 'Segnalazione di danno {boatName} ({personName})',
+    },
   },
   {
     event: 'trip.bugReported',
@@ -49,8 +54,13 @@ const TRIGGERS = [
     ruleName: 'Fehlermeldung → Logbuch',
     responsibilityName: 'Logbuch2',
     i18nKey: 'trip.bugReported',
-    de: 'Fehlermeldung Logbuch ({personName})',
-    en: 'Bug report logbook ({personName})',
+    text: {
+      de: 'Fehlermeldung Logbuch ({personName})',
+      en: 'Bug report logbook ({personName})',
+      fr: 'Signalement d’erreur carnet de bord ({personName})',
+      es: 'Aviso de error cuaderno de bitácora ({personName})',
+      it: 'Segnalazione di errore giornale di bordo ({personName})',
+    },
   },
 ];
 
@@ -70,12 +80,14 @@ async function findResponsibility(name) {
   return snap.docs.find((d) => !d.data().isArchived && (d.data().tenants ?? []).includes(TENANT));
 }
 
-async function upsertI18nDefault(key, de, en) {
+async function upsertI18nDefault(key, text) {
   const snap = await db.collection('i18nDefault')
     .where('module', '==', I18N_MODULE).where('key', '==', key).limit(5).get();
   const existing = snap.docs.find((d) => !d.data().isArchived);
-  const row = { module: I18N_MODULE, key, de, en, fr: de, es: de, it: de, isHtml: false, isArchived: false };
-  console.log(`  i18nDefault @${I18N_MODULE}.${key} = "${de}" ${existing ? '(update)' : '(create)'}`);
+  // all five supported languages, per the i18n skill — a missing one renders the raw key,
+  // Transloco does not fall back to `de`
+  const row = { module: I18N_MODULE, key, ...text, isHtml: false, isArchived: false };
+  console.log(`  i18nDefault @${I18N_MODULE}.${key} = "${text.de}" ${existing ? '(update)' : '(create)'}`);
   if (DRY) return;
   if (existing) await existing.ref.set(row, { merge: true });
   else await db.collection('i18nDefault').add(row);
@@ -123,7 +135,7 @@ async function main() {
   if (added > 0 && !DRY) await category.ref.update({ items });
 
   for (const t of TRIGGERS) {
-    await upsertI18nDefault(t.i18nKey, t.de, t.en);
+    await upsertI18nDefault(t.i18nKey, t.text);
     const responsibility = await findResponsibility(t.responsibilityName);
     if (!responsibility) {
       // fail loudly: a rule without a responsibilityKey resolves to the tenant admin at runtime,

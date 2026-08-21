@@ -53,7 +53,8 @@
     },
     "boat": {
       "title": "Select boat",
-      "add": "Choose boat"
+      "add": "Choose boat",
+      "in_use": "The boat {name} is still out on an open trip. It can only be used again once that trip has been closed."
     },
     "location": {
       "title": "Select destination",
