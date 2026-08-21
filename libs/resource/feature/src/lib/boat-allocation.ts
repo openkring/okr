@@ -49,6 +49,8 @@ type StrategyLine = { type: string; text: string; flags: string; price: number; 
     .head, .row-head { font-weight: 600; padding: 6px 8px; background: #A3C0E1; color: #000; position: sticky; }
     .head { top: 0; z-index: 2; }
     .row-head { left: 0; z-index: 1; display: flex; flex-direction: column; gap: 2px; }
+    /* the class label takes the space the unallocated-boats drop zone leaves and centers in it */
+    .type-label { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; }
     .cell { padding: 0; }
     .drop { min-height: 28px; }
     .target { --background: #CEDCEB; --color: #000; --padding-start: 4px; --padding-top: 0; --padding-bottom: 0;
@@ -117,7 +119,7 @@ type StrategyLine = { type: string; text: string; flags: string; price: number; 
 
         @for (type of types(); track type.name) {
           <div class="row-head">
-            {{ typeLabel(type.name) | translate | async }}
+            <span class="type-label">{{ typeLabel(type.name) | translate | async }}</span>
             <div class="drop" cdkDropList
               [id]="dropListId('', type.name)"
               [cdkDropListData]="{ usage: '', type: type.name }"
@@ -192,9 +194,9 @@ type StrategyLine = { type: string; text: string; flags: string; price: number; 
               <th>{{ store.i18n.strategy_budget() }}</th>
               @for (y of strategyYears(); track y) {
                 <td>
-                  <ion-input class="budget-input" type="number" inputmode="numeric" min="0" [readonly]="readOnly()"
+                  <ion-input class="budget-input" type="text" inputmode="numeric" [readonly]="budgetReadOnly(y)"
                     [attr.aria-label]="store.i18n.strategy_budget()" [title]="store.i18n.strategy_budget()"
-                    [value]="budget(y)"
+                    [value]="money(budget(y))"
                     (ionBlur)="onBudgetChange(y, $event)" />
                 </td>
               }
@@ -412,6 +414,14 @@ export class BoatAllocation {
     return this.saldo(year) - this.swisslos(year) - this.donations(year);
   }
 
+  /**
+   * A past season's budget is history — only the current one and the outlook are editable
+   * (and only in edit mode). The columns are still shown, greyed by the readonly input.
+   */
+  protected budgetReadOnly(year: number): boolean {
+    return this.readOnly() || year < new Date().getFullYear();
+  }
+
   /** The budget of the season — its own entry, else the nearest earlier one. */
   protected budget(year: number): number {
     return getBoatBudget(this.store.boatBudgets(), year);
@@ -600,10 +610,14 @@ export class BoatAllocation {
    * inherited value inherited rather than pinning a copy of it to every column on first blur.
    */
   protected async onBudgetChange(year: number, event: Event): Promise<void> {
-    const raw = (event.target as HTMLIonInputElement).value;
+    // the field is grouped like every other number ("45'000"), so strip the separators back out
+    const input = event.target as HTMLIonInputElement;
+    const raw = String(input.value ?? '').replace(/[^\d]/g, '');
     const amount = Math.max(0, Math.trunc(Number(raw)));
-    if (!Number.isFinite(amount) || amount === this.budget(year)) return;
-    await this.store.setBoatBudget(year, amount, this.readOnly());
+    // group what was typed, so the field reads like the rest of the table even when nothing is written
+    input.value = this.money(raw === '' ? this.budget(year) : amount);
+    if (raw === '' || !Number.isFinite(amount) || amount === this.budget(year)) return;
+    await this.store.setBoatBudget(year, amount, this.budgetReadOnly(year));
   }
 
   /******************************** export & print ******************************************* */
