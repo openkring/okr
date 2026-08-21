@@ -132,6 +132,7 @@
       "@okr/content-folder-feature": ["libs/content/folder/feature/src/index.ts"],
       "@okr/content-folder-ui": ["libs/content/folder/ui/src/index.ts"],
       "@okr/content-folder-util": ["libs/content/folder/util/src/index.ts"],
+      "@okr/content-diary-util": ["libs/content/diary/util/src/index.ts"],
       "@okr/content-meeting-data-access": ["libs/content/meeting/data-access/src/index.ts"],
       "@okr/content-meeting-feature": ["libs/content/meeting/feature/src/index.ts"],
       "@okr/content-meeting-ui": ["libs/content/meeting/ui/src/index.ts"],
