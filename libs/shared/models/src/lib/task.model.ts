@@ -36,6 +36,14 @@ export class TaskModel implements OkrModel, PersistedModel, NamedModel, Searchab
   public relatedModelType = '';  // 'membership' | 'person' | …
   public relatedKey = '';        // '<modelType>.<okey>', prefixed per the addresses parentKey convention
 
+  // Where the task LINKS to — the record a user wants to open from it. Separate from relatedKey
+  // on purpose: relatedKey is the engine's deduplication key and is deliberately unique per
+  // occurrence for some events (a damage report is 'report.<uuid>', so that two reports never
+  // collapse into one task), which makes it useless as a destination. linkKey carries the real
+  // subject ('trip.<okey>') for those. Empty = fall back to relatedKey.
+  public linkModelType = '';     // 'trip' | 'meeting' | …
+  public linkKey = '';           // '<modelType>.<okey>'
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }

@@ -66,7 +66,9 @@ async function translate(tenantId: string, messageKey: string, params: Record<st
   // single braces: translateAll()/Transloco would consume {{…}} params before this text
   // ever reaches the engine (see the i18n skill), so the placeholders are {name},
   // {category}, {fromCategory}. An unknown placeholder is left standing, not blanked.
-  return text.replaceAll(/\{(\w+)\}/g, (match, key: string) => params[key] ?? match);
+  // trimmed: a report started outside a trip leaves '{tripName}' empty, and a message must not
+  // end in the dangling space that would leave behind
+  return text.replaceAll(/\{(\w+)\}/g, (match, key: string) => params[key] ?? match).trim();
 }
 
 /**
@@ -178,6 +180,8 @@ export function createFirestoreDeps(): WorkflowDeps {
       task.dueDate = t.dueInDays > 0 ? shiftDaysBack(getTodayStr(DateFormat.StoreDate), -t.dueInDays) : '';
       task.relatedModelType = t.relatedModelType;
       task.relatedKey = t.relatedKey;
+      task.linkKey = t.linkKey ?? '';
+      task.linkModelType = task.linkKey.split('.')[0] ?? '';
       task.notes = t.notes ?? '';
       task.index = getTaskIndex(task);
       const { okey, ...doc } = task;   // okey is the document id, never a field

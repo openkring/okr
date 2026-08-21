@@ -33,6 +33,13 @@ export interface HeaderI18n {
         <ion-title>{{ i18n().title }}</ion-title>
         @if(isRootPage() === false) {
           <ion-buttons slot="end">
+            <!-- optional page/modal action, rendered LEFT of the close button; the task modal
+                 uses it as the 'advanced settings' toggle. -->
+            @if(actionIcon()) {
+              <ion-button (click)="actionClicked.emit()" title="{{ actionTitle() }}">
+                <ion-icon slot="icon-only" src="{{ actionIcon() | svgIcon }}" />
+              </ion-button>
+            }
             @if(shouldShowCloseButton()) {
               <ion-button (click)="back()">
                 <ion-icon slot="icon-only" src="{{'cancel' | svgIcon }}" />
@@ -70,6 +77,8 @@ export class Header {
   public isSearchable = input(false);
   public showOkButton = input(false);
   public showCloseButton = input(true);
+  public actionIcon = input('');        // '' hides the action button
+  public actionTitle = input('');       // tooltip of the action button
 
   // coerced boolean inputs
   protected isModalDialog = computed(() => coerceBoolean(this.isModal()));
@@ -80,6 +89,7 @@ export class Header {
 
   // outputs
   public okClicked = output();
+  public actionClicked = output();
 
   public back(): void {
     if (this.isModal()) {

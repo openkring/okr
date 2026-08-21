@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 
 import { TripModel } from '@okr/shared-models';
-import { addIndexElement, DateFormat, getCurrentTime, getTodayStr, parseDate } from '@okr/shared-util-core';
+import { addIndexElement, convertDateFormatToString, DateFormat, getCurrentTime, getTodayStr, parseDate } from '@okr/shared-util-core';
 
 /** Editing of an ended trip is allowed for this long after its endTime. */
 export const TRIP_EDIT_WINDOW_MS = 15 * 60 * 1000;
@@ -48,6 +48,20 @@ export function isTripEditable(trip: TripModel, isAdmin = false, now: number = D
  */
 export function isTripDeletable(trip: TripModel, isAdmin: boolean, now: number = Date.now()): boolean {
   return isAdmin || isWithinEndWindow(trip, TRIP_DELETE_WINDOW_MS, now);
+}
+
+/**
+ * The trip as a human reads it: 'dd.MM.yyyy HH:mm'. `newTripName` builds a SORTABLE key
+ * ('2026081907:24Gig'), which is what lands in trip.name — unreadable the moment it shows up in
+ * a task title or a notification, so anything user-facing formats the trip through here.
+ */
+export function getTripLabel(trip?: TripModel): string {
+  if (!trip) return '';
+  const date = convertDateFormatToString(trip.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+  // startTime is stored as 'HHmm' by the form and as 'HH:mm' by getCurrentTime — formatTripTime
+  // normalises the first and passes the second through unchanged.
+  const time = formatTripTime(trip.startTime);
+  return [date, time].filter(part => part.length > 0).join(' ');
 }
 
 export function newTripName(trip: TripModel): string {

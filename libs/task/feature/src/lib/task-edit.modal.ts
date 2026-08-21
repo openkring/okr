@@ -1,15 +1,16 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { IonAccordionGroup, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { LowercaseWordMask } from '@okr/shared-config';
-import { CategoryListModel, PersonModel, RoleName, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
+import { CategoryListModel, PersonModel, TaskModel, TaskModelName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, StringList } from '@okr/shared-ui';
-import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, newAvatarInfo, safeStructuredClone } from '@okr/shared-util-core';
 
 import { CommentsAccordion } from '@okr/comment-feature';
 import { TaskForm } from '@okr/task-ui';
 import { AvatarSelect } from '@okr/avatar-ui';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { dismissOverlay, navigateByUrl } from '@okr/shared-util-angular';
 
 import { TaskStore } from './task.store';
 
@@ -23,7 +24,10 @@ import { TaskStore } from './task.store';
   ],
   providers: [TaskStore],
   template: `
-    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <!-- the advanced-settings toggle lives in the toolbar, left of the close button -->
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true"
+      actionIcon="toggle" [actionTitle]="store.i18n.form_advanced_label()"
+      (actionClicked)="showAdvanced.set(!showAdvanced())" />
     @if(showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
@@ -41,48 +45,55 @@ import { TaskStore } from './task.store';
           [priorities]="priorities()"
           [importances]="importances()"
           [readOnly]="isReadOnly()"
+          [(showAdvanced)]="showAdvanced"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
+          (relatedClicked)="openRelated($event)"
         />
       }
 
-      <okr-avatar-select 
-        name="assignee"
-        [title]="store.i18n.assignee()"
-        [note]="store.i18n.assignee_description()"
-        [avatar]="assignee()"
-        [readOnly]="isReadOnly()"
-        (selectClicked)="selectPerson('assignee')" 
-      />
-      <okr-avatar-select
-        name="author"
-        [title]="store.i18n.author()"
-        [note]="store.i18n.author_description()"
-        [avatar]="author()"
-        [readOnly]="isReadOnly()"
-        (selectClicked)="selectPerson('author')"
+      @if(showAdvanced()) {
+        <okr-avatar-select
+          name="assignee"
+          [title]="store.i18n.assignee()"
+          [note]="store.i18n.assignee_description()"
+          [avatar]="assignee()"
+          [readOnly]="isReadOnly()"
+          (selectClicked)="selectPerson('assignee')"
         />
 
-      <okr-strings
-        [strings]="calendars()"
-        (stringsChange)="onFieldChange('calendars', $event)"
-        [mask]="calendarMask"
-        [maxLength]="20"
-        [readOnly]="readOnly()"
-        [title]="store.i18n.calendarName_label()"
-        [description]="store.i18n.calendarName_description()"
-        [add]="store.i18n.calendarName_addLabel()" />
+        <okr-avatar-select
+          name="author"
+          [title]="store.i18n.author()"
+          [note]="store.i18n.author_description()"
+          [avatar]="author()"
+          [readOnly]="isReadOnly()"
+          (selectClicked)="selectPerson('author')"
+          />
 
-      @if(hasRole('privileged') || hasRole('eventAdmin')) {
-        <ion-accordion-group value="comments">
-          <okr-comments-accordion [parentKey]="parentKey()" />
-        </ion-accordion-group>
+        <okr-strings
+          [strings]="calendars()"
+          (stringsChange)="onFieldChange('calendars', $event)"
+          [mask]="calendarMask"
+          [maxLength]="20"
+          [readOnly]="readOnly()"
+          [title]="store.i18n.calendarName_label()"
+          [description]="store.i18n.calendarName_description()"
+          [add]="store.i18n.calendarName_addLabel()" />
       }
+
+      <!-- Commenting is NOT part of editing the task: a viewer may always answer a
+           Schadenmeldung, so the accordion is open and its add button enabled even in
+           view mode ([readOnly]=false, independent of the form's own readOnly). -->
+      <ion-accordion-group value="comments">
+        <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="false" />
+      </ion-accordion-group>
     </ion-content>
   `
 })
 export class TaskEditModal {
   private readonly modalController = inject(ModalController);
+  private readonly router = inject(Router);
   protected readonly store = inject(TaskStore);
 
   // inputs
@@ -101,6 +112,7 @@ export class TaskEditModal {
   protected formValid = signal(false);
   public formData = linkedSignal(() => safeStructuredClone(this.task()));
   protected showForm = signal(true);
+  protected showAdvanced = signal(false);   // shared with the form; drives author + calendars here
 
   // derived
   protected defaultAvatar = computed(() => newAvatarInfo(this.currentUser()!.personKey, this.currentUser()!.firstName, this.currentUser()!.lastName, 'person', '', '', ''));
@@ -118,6 +130,13 @@ export class TaskEditModal {
  /******************************* actions *************************************** */
   public async save(): Promise<void> {
     await dismissOverlay(this.modalController, this.formData(), 'confirm');  
+  }
+
+  /** Leave the modal for the record this task was opened for (its `relatedKey` back-link). */
+  protected async openRelated(url: string): Promise<void> {
+    if (!url) return;
+    await dismissOverlay(this.modalController);
+    await navigateByUrl(this.router, url);
   }
 
   public async cancel(): Promise<void> {
@@ -149,9 +168,5 @@ export class TaskEditModal {
       return ({...vm, [type]: avatar });
     });      
     this.formDirty.set(true);
-  }
-
-  protected hasRole(role: RoleName | undefined): boolean {
-    return hasRole(role, this.currentUser());
   }
 }

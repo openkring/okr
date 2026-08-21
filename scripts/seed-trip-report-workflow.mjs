@@ -13,6 +13,12 @@
  *
  * Run with:  node scripts/seed-trip-report-workflow.mjs --dry          (inspect first)
  *            node scripts/seed-trip-report-workflow.mjs [--tenant scs]
+ *            node scripts/seed-trip-report-workflow.mjs --i18n-only     (task names only)
+ *
+ * `--i18n-only` writes step 2 and skips the rules. Use it to change the wording of the task
+ * names once the rules exist: an operator may have RENAMED a rule in the CMS (there is a live
+ * 'Fehlermeldung → Logbuch Dev'), and `upsertRule` matches by name + tenant — so a plain re-run
+ * would not update that rule, it would ADD a second one and every report would open two tasks.
  * Requires:  gcloud auth application-default login  (or GOOGLE_APPLICATION_CREDENTIALS)
  *
  * Idempotent: the category items are matched by `name`, the i18n rows by (module, key) and the
@@ -26,6 +32,7 @@ import { argv, exit } from 'node:process';
 
 const PROJECT_ID = 'bkaiser-org';
 const DRY = argv.includes('--dry');
+const I18N_ONLY = argv.includes('--i18n-only');
 const tenantArg = argv.indexOf('--tenant');
 const TENANT = tenantArg >= 0 ? argv[tenantArg + 1] : 'scs';
 
@@ -40,12 +47,14 @@ const TRIGGERS = [
     ruleName: 'Schadenmeldung → Ressort Boote',
     responsibilityName: 'Ressort Boote',
     i18nKey: 'trip.damageReported',
+    // The task NAME says which trip; the reporter and the boat are in the notes the callable
+    // composes (see apps/functions/src/trip/report.ts), so they are not repeated here.
     text: {
-      de: 'Schadenmeldung {boatName} ({personName})',
-      en: 'Damage report {boatName} ({personName})',
-      fr: 'Signalement de dommage {boatName} ({personName})',
-      es: 'Aviso de daño {boatName} ({personName})',
-      it: 'Segnalazione di danno {boatName} ({personName})',
+      de: 'Logbuch meldet Schaden auf Fahrt {tripName}',
+      en: 'Logbook reports damage on trip {tripName}',
+      fr: 'Le carnet de bord signale un dommage lors de la sortie {tripName}',
+      es: 'El cuaderno de bitácora informa de un daño en la salida {tripName}',
+      it: 'Il giornale di bordo segnala un danno durante l’uscita {tripName}',
     },
   },
   {
@@ -55,11 +64,11 @@ const TRIGGERS = [
     responsibilityName: 'Logbuch2',
     i18nKey: 'trip.bugReported',
     text: {
-      de: 'Fehlermeldung Logbuch ({personName})',
-      en: 'Bug report logbook ({personName})',
-      fr: 'Signalement d’erreur carnet de bord ({personName})',
-      es: 'Aviso de error cuaderno de bitácora ({personName})',
-      it: 'Segnalazione di errore giornale di bordo ({personName})',
+      de: 'Logbuch meldet Fehler auf Fahrt {tripName}',
+      en: 'Logbook reports a bug on trip {tripName}',
+      fr: 'Le carnet de bord signale une erreur lors de la sortie {tripName}',
+      es: 'El cuaderno de bitácora informa de un error en la salida {tripName}',
+      it: 'Il giornale di bordo segnala un errore durante l’uscita {tripName}',
     },
   },
 ];
@@ -116,14 +125,14 @@ async function upsertRule(trigger, responsibilityKey) {
 async function main() {
   console.log(`seed-trip-report-workflow: tenant '${TENANT}'${DRY ? ' (dry run)' : ''}`);
 
-  const category = await findCategory(EVENT_CATEGORY);
-  if (!category) {
+  const category = I18N_ONLY ? undefined : await findCategory(EVENT_CATEGORY);
+  if (!I18N_ONLY && !category) {
     console.error(`✗ category '${EVENT_CATEGORY}' not found — create it before seeding the rules`);
     exit(1);
   }
-  const items = category.data().items ?? [];
+  const items = category ? (category.data().items ?? []) : [];
   let added = 0;
-  for (const t of TRIGGERS) {
+  for (const t of I18N_ONLY ? [] : TRIGGERS) {
     if (items.some((i) => i.name === t.event)) {
       console.log(`  category item '${t.event}' already present`);
       continue;
@@ -136,6 +145,7 @@ async function main() {
 
   for (const t of TRIGGERS) {
     await upsertI18nDefault(t.i18nKey, t.text);
+    if (I18N_ONLY) continue;
     const responsibility = await findResponsibility(t.responsibilityName);
     if (!responsibility) {
       // fail loudly: a rule without a responsibilityKey resolves to the tenant admin at runtime,

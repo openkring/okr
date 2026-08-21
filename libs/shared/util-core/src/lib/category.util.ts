@@ -45,6 +45,18 @@ export function getCategoryIcon(cat?: CategoryListModel, itemName?: string): str
   return cat?.items.find(i => i.name === itemName)?.icon ?? '';
 }
 
+/**
+ * The name of the item AFTER `itemName`, wrapping around at the end — the click-through order
+ * for a category rendered as a single tappable icon (e.g. a task's state). Falls back to the
+ * first item when `itemName` is unknown (a legacy value), and to '' for an empty category.
+ */
+export function getNextCategoryName(cat?: CategoryListModel, itemName?: string): string {
+  const items = cat?.items ?? [];
+  if (items.length === 0) return '';
+  const index = items.findIndex(i => i.name === itemName);
+  return items[(index + 1) % items.length]?.name ?? '';
+}
+
 // we use the first item as the default item
 export function getDefaultCategoryName(cat?: CategoryListModel): string {
   return cat?.items[0]?.name ?? '';

@@ -1,6 +1,6 @@
 import { CategoryListModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
-import { getItemDescription, getItemLabel } from './category.util';
+import { getItemDescription, getItemLabel, getNextCategoryName } from './category.util';
 
 describe('category.util', () => {
   // Helper function to create test category models
@@ -228,6 +228,32 @@ describe('category.util', () => {
     it('returns empty for an untranslated category or a missing item', () => {
       expect(getItemDescription(createCategoryModel('rboat_usage', '', false), 'ls1')).toBe('');
       expect(getItemDescription(createCategoryModel('rboat_usage', '@resource/feature', true), undefined)).toBe('');
+    });
+  });
+
+  describe('getNextCategoryName', () => {
+    const states = createCategoryModel('task_state', '@task/feature', true, {
+      items: [
+        { name: 'initial', icon: 'bulb' },
+        { name: 'planned', icon: 'calendar' },
+        { name: 'done', icon: 'checkmark' },
+      ],
+    } as Partial<CategoryListModel>);
+
+    it('should return the next item, wrapping around at the end', () => {
+      expect(getNextCategoryName(states, 'initial')).toBe('planned');
+      expect(getNextCategoryName(states, 'planned')).toBe('done');
+      expect(getNextCategoryName(states, 'done')).toBe('initial');
+    });
+
+    it('should fall back to the first item for an unknown or missing item', () => {
+      expect(getNextCategoryName(states, 'legacy')).toBe('initial');
+      expect(getNextCategoryName(states, undefined)).toBe('initial');
+    });
+
+    it('should return an empty string for a missing or empty category', () => {
+      expect(getNextCategoryName(undefined, 'initial')).toBe('');
+      expect(getNextCategoryName(createCategoryModel('empty', '', false), 'initial')).toBe('');
     });
   });
 

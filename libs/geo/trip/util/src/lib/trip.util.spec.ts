@@ -3,6 +3,7 @@ import { TripModel } from '@okr/shared-models';
 import {
   newTrip,
   newTripName,
+  getTripLabel,
   getTripIndex,
   groupTripsByDay,
   matchesStateFilter,
@@ -40,6 +41,22 @@ describe('newTrip', () => {
 
   it('sets the type when provided (list partition, e.g. logbuch)', () => {
     expect(newTrip(TENANT, 'logbuch').type).toBe('logbuch');
+  });
+});
+
+describe('getTripLabel', () => {
+  it('formats date and time as dd.MM.yyyy HH:mm', () => {
+    expect(getTripLabel(makeTrip())).toBe('01.06.2024 08:30');
+  });
+
+  it('accepts a startTime that already carries a colon', () => {
+    expect(getTripLabel(makeTrip({ startTime: '07:24' }))).toBe('01.06.2024 07:24');
+  });
+
+  it('omits what is missing instead of printing a broken date', () => {
+    expect(getTripLabel(makeTrip({ startTime: '' }))).toBe('01.06.2024');
+    expect(getTripLabel(makeTrip({ startDate: '' }))).toBe('08:30');
+    expect(getTripLabel(undefined)).toBe('');
   });
 });
 

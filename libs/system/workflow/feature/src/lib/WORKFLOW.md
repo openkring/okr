@@ -47,8 +47,8 @@ live account. Rules only decide who gets told.
 | `reservation.created` | `onDocumentCreated('reservations/{id}')` | `reservation.<okey>` | `resourceKey`, `resourceType`, `startDate` |
 | `task.completed` | `onDocumentUpdated('tasks/{id}')` | `task.<okey>` | `taskName`, `authorName`, `assigneeName` |
 | `approval.decided` | the approval trigger | the **subject's** key | `decision`, `approvalKey`, `approverName` |
-| `trip.damageReported` (Schadenmeldung) | inside the `reportIncident` callable | `report.<uuid>` | `boatName`, `personName`, `tripName`, `message`, `notes` |
-| `trip.bugReported` (Fehlermeldung) | inside the `reportIncident` callable | `report.<uuid>` | `boatName`, `personName`, `tripName`, `message`, `notes` |
+| `trip.damageReported` (Schadenmeldung) | inside the `reportIncident` callable | `report.<uuid>` | `boatName`, `personName`, `tripName`, `message`, `notes`, `linkKey` |
+| `trip.bugReported` (Fehlermeldung) | inside the `reportIncident` callable | `report.<uuid>` | `boatName`, `personName`, `tripName`, `message`, `notes`, `linkKey` |
 
 The two `trip.*` events are the one case with **no document to trigger on** — a report is not
 persisted, it *is* the event. `reportIncident` therefore derives the event name from a closed
@@ -57,6 +57,11 @@ persisted, it *is* the event. `reportIncident` therefore derives the event name 
 Their `relatedKey` is unique per report on purpose: `openTask` deduplicates on
 (`relatedKey`, assignee) and `sendMessage` derives its Matrix txnId from it, so a stable key
 would make the second report of the day vanish silently. Distinct incidents, distinct keys.
+
+**`params.linkKey`** is the escape hatch that unique keys create: a `report.<uuid>` points at no
+document, so the task would have nothing to link back to. The emitter puts the real subject
+(`trip.<okey>`) there, `openTask` writes it to the task's `linkKey`/`linkModelType`, and the task
+UI links to it while `relatedKey` keeps doing dedup. Empty `linkKey` falls back to `relatedKey`.
 
 **`params.notes`** is the generic free-text channel into `openTask`: the rule's `messageKey`
 names every task of a rule identically, so anything the user actually typed (a damage

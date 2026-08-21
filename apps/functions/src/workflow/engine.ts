@@ -252,6 +252,7 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
         dueInDays: rule.dueInDays ?? 0,
         relatedModelType: ctx.relatedKey.split('.')[0] ?? '',
         relatedKey: ctx.relatedKey,
+        linkKey: ctx.params['linkKey'] ?? '',
         notes: ctx.params['notes'] ?? '',
       });
       return;

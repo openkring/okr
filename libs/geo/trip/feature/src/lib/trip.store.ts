@@ -15,7 +15,7 @@ import { ResponsibilityService } from '@okr/relationship-responsibility-data-acc
 import { LocationService } from '@okr/location-data-access';
 
 import { TripService } from '@okr/trip-data-access';
-import { findOpenTripForBoat, groupTripsByDay, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';
+import { findOpenTripForBoat, getTripLabel, groupTripsByDay, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';
 
 
 /** Name of the responsibility that owns the Logbuch — gets the bug reports and the support calls. */
@@ -349,7 +349,7 @@ export const TripStore = signalStore(
           boatKey: report.boat?.key ?? '',
           boatName: report.boat?.name2 || report.boat?.name1 || '',
           tripKey: trip?.okey ?? '',
-          tripName: trip?.name ?? '',
+          tripName: getTripLabel(trip),
         });
         await store.alertService.showToast(store.i18n.report_conf());
       } catch (error) {

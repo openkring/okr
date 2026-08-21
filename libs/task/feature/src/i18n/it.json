@@ -134,5 +134,19 @@
 
   "validations": {
     "taskModelType": "Il ModelType deve essere TaskModel."
+  },
+
+  "form": {
+    "advanced": {
+      "label": "Mostra impostazioni avanzate"
+    }
+  },
+  "related": {
+    "label": "Riferimento",
+    "person": "Persona",
+    "group": "Gruppo",
+    "user": "Utente",
+    "meeting": "Riunione",
+    "trip": "Uscita"
   }
 }

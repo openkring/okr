@@ -247,8 +247,16 @@ describe('runWorkflowWith', () => {
     await runWorkflowWith(ctx(), deps);
     expect(deps.tasks).toEqual([{
       tenantId: TENANT, name: '@x.y|Anna Muster|A->P', assignee: avatar('resp'),
-      dueInDays: 0, relatedModelType: 'membership', relatedKey: 'membership.m1', notes: '',
+      dueInDays: 0, relatedModelType: 'membership', relatedKey: 'membership.m1', linkKey: '', notes: '',
     }]);
+  });
+
+  it("carries the event's link target into the task", async () => {
+    // relatedKey is the dedup key and may be a per-occurrence uuid with nothing behind it
+    // ('report.<uuid>'); linkKey is what the task actually links to.
+    const deps = fakeDeps({ rules: [rule()], responsibility: { responsibleAvatar: avatar('resp') } });
+    await runWorkflowWith({ ...ctx(), params: { ...ctx().params, linkKey: 'trip.t1' } }, deps);
+    expect(deps.tasks[0].linkKey).toBe('trip.t1');
   });
 
   it("carries the event's free text into the task notes", async () => {

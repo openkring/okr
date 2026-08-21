@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AvatarInfo, TaskModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { isTask } from './task.util';
+import { getRelatedModelType, getRelatedRoute, isTask } from './task.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -48,6 +48,39 @@ describe('Task Utils', () => {
 
       mockIsType.mockReturnValue(false);
       expect(isTask({}, tenantId)).toBe(false);
+    });
+  });
+
+  describe('getRelatedModelType', () => {
+    it('should return the model type of a relatedKey', () => {
+      expect(getRelatedModelType('meeting.abc')).toBe('meeting');
+      expect(getRelatedModelType('report.7f1a-2b')).toBe('report');
+    });
+
+    it('should return an empty string for an unset relatedKey', () => {
+      expect(getRelatedModelType('')).toBe('');
+      expect(getRelatedModelType(undefined)).toBe('');
+    });
+  });
+
+  describe('getRelatedRoute', () => {
+    it('should return the detail route of a linkable model type', () => {
+      expect(getRelatedRoute('person.p1')).toBe('/person/p1');
+      expect(getRelatedRoute('group.g1')).toBe('/group/g1');
+      expect(getRelatedRoute('user.u1')).toBe('/user/u1');
+    });
+
+    it('should return the list route for meetings and trips', () => {
+      expect(getRelatedRoute('meeting.m1')).toBe('/meeting/all/meeting-context');
+      expect(getRelatedRoute('trip.t1')).toBe('/trips/logbuch/c-trips');
+    });
+
+    it('should return an empty string when there is nothing to navigate to', () => {
+      expect(getRelatedRoute('report.7f1a-2b')).toBe('');   // a Schadenmeldung has no document
+      expect(getRelatedRoute('membership.m1')).toBe('');
+      expect(getRelatedRoute('person')).toBe('');           // no okey
+      expect(getRelatedRoute('')).toBe('');
+      expect(getRelatedRoute(undefined)).toBe('');
     });
   });
 });

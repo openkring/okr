@@ -32,6 +32,16 @@ export const TASK_I18N_KEYS = {
 
   view:                           PFX + 'view.label',
 
+  form_advanced_label:            PFX + 'form.advanced.label',
+
+  // back-link to the record a workflow task was opened for (relatedKey)
+  related_label:                  PFX + 'related.label',
+  related_person:                 PFX + 'related.person',
+  related_group:                  PFX + 'related.group',
+  related_user:                   PFX + 'related.user',
+  related_meeting:                PFX + 'related.meeting',
+  related_trip:                   PFX + 'related.trip',
+
   done:                           PFX + 'done',
   as_title:                       '@actionsheet.title',
   cancel:                         '@cancel',

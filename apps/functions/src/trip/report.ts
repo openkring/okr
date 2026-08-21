@@ -92,10 +92,17 @@ export const reportIncident = onCall(
         personName,
         tripKey: d.tripKey ?? '',
         tripName: d.tripName ?? '',
+        // relatedKey stays unique per report (dedup); the TASK links to the trip via linkKey
+        linkKey: d.tripKey ? `trip.${d.tripKey}` : '',
         message,
-        // `notes` is the generic free-text an emitter may hand to openTask; the boat is
-        // prefixed because a task has no boat field of its own
-        notes: boatName ? `${boatName}: ${message}` : message,
+        // `notes` is the generic free-text an emitter may hand to openTask, and the only place
+        // the reporter and the boat survive — a task has no field for either. One line each,
+        // then the message; a missing line is dropped rather than left as an empty label.
+        notes: [
+          personName ? `Meldende Person: ${personName}` : '',
+          boatName ? `Boot: ${boatName}` : '',
+          message,
+        ].filter(Boolean).join('\n'),
         reportedBy: `${user['firstName'] ?? ''} ${user['lastName'] ?? ''}`.trim(),
       },
     });

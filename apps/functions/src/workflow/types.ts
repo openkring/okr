@@ -69,6 +69,12 @@ export interface NewTask {
   relatedModelType: string;
   relatedKey: string;
   /**
+   * Optional link target of the task ('<modelType>.<okey>'), from `ctx.params['linkKey']`.
+   * Needed wherever relatedKey is a per-occurrence dedup key with no document behind it —
+   * a damage report's 'report.<uuid>' points nowhere, its trip does.
+   */
+  linkKey?: string;
+  /**
    * Free text of the event, from `ctx.params['notes']`. The task NAME comes from the rule's
    * messageKey and is the same for every occurrence; anything the reporter actually typed
    * (a damage description) would otherwise have nowhere to go.
