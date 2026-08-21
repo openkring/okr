@@ -1,5 +1,10 @@
-/** The token that marks a markdown file in a day folder as a diary entry: `[yyyymmdd]diary[Title].md`. */
-export const DIARY_FILE_MARKER = 'diary';
+/**
+ * Matches the file name of a diary entry in a day folder. The archive convention is
+ * `[yyyymmdd]diary[Title].md` — the date prefix and the `diary` token are mandatory,
+ * the title is optional. Other markdown files live in the same day folders and must not
+ * be picked up by the import, the export or the corpus runner.
+ */
+export const DIARY_FILE_NAME = /^\d{8}diary.*\.md$/;
 
 /**
  * One frontmatter key with its value kept verbatim. `raw` is everything after the colon,

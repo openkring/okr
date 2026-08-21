@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { DIARY_FILE_NAME } from './diary-file';
 import { parseDiaryMarkdown } from './diary-parse';
 import { renderDiaryMarkdown } from './diary-render';
 
@@ -13,14 +14,13 @@ import { renderDiaryMarkdown } from './diary-render';
  * Without the variable — in CI, and for anyone but the archive's owner — it skips.
  */
 const archive = process.env['DIARY_ARCHIVE'];
-const DIARY_FILE = /^\d{8}diary.*\.md$/;
 
 function collectDiaryFiles(dir: string, found: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry);
     if (statSync(path).isDirectory()) {
       collectDiaryFiles(path, found);
-    } else if (DIARY_FILE.test(entry)) {
+    } else if (DIARY_FILE_NAME.test(entry)) {
       found.push(path);
     }
   }
