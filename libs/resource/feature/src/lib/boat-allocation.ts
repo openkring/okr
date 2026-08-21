@@ -13,7 +13,7 @@ import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { error, exportCsv, getExportFileName } from '@okr/shared-util-angular';
 import { chipMatches, DateFormat, getImgixUrlWithAutoParams, getItemLabel, getSystemQuery, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
 
-import { BoatLabelRef, boatLabelKey, boatTargetKey, getBoatSuffix, getUsageForYear, parseBoatLabelKey } from '@okr/resource-util';
+import { BoatLabelRef, boatLabelKey, boatTargetKey, getBoatSuffix, getPrivateBoatKeys, getUsageForYear, parseBoatLabelKey } from '@okr/resource-util';
 
 import { ResourceStore } from './resource.store';
 
@@ -273,13 +273,9 @@ export class BoatAllocation {
       OwnershipCollection, getSystemQuery(params.tenantId), 'validFrom', 'desc'),
   });
 
-  /** Boats owned by someone other than the club in `year`. */
+  /** Boats owned by someone other than the club in `year` — see getPrivateBoatKeys. */
   private privateKeysIn(year: number): Set<string> {
-    const tenantId = this.store.tenantId();
-    const [from, to] = [`${year}0101`, `${year}1231`];
-    return new Set((this.ownershipResource.value() ?? [])
-      .filter(ownership => ownership.ownerKey !== tenantId && ownership.validFrom <= to && ownership.validTo >= from)
-      .map(ownership => ownership.resourceKey));
+    return getPrivateBoatKeys(this.ownershipResource.value() ?? [], this.store.tenantId(), year);
   }
 
   private readonly privateBoatKeys = computed(() => this.privateKeysIn(this.year()));
@@ -563,11 +559,11 @@ export class BoatAllocation {
       await this.store.edit(boat, false, true);
       return;
     }
-    await this.onSlotClick(this.boatRef(boat));
+    await this.onSlotClick(this.boatRef(boat), boat.name);
   }
 
-  protected async onSlotClick(ref: BoatLabelRef): Promise<void> {
-    await this.store.editBoatLabel(ref, this.label(ref), this.readOnly());
+  protected async onSlotClick(ref: BoatLabelRef, boatName = ''): Promise<void> {
+    await this.store.editBoatLabel(ref, this.label(ref), this.readOnly(), boatName);
   }
 
   protected async onDrop(event: CdkDragDrop<Cell>): Promise<void> {

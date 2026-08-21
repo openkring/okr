@@ -253,11 +253,11 @@ export const ResourceStore = signalStore(
        * Edit the label of one free slot in a modal. An empty text clears the slot again;
        * Firestore has no field-delete here, so it is stored as an empty label.
        */
-      async editBoatLabel(ref: BoatLabelRef, label: BoatSlotLabel, readOnly = true): Promise<void> {
+      async editBoatLabel(ref: BoatLabelRef, label: BoatSlotLabel, readOnly = true, boatName = ''): Promise<void> {
         if (readOnly) return;
         const modal = await store.modalController.create({
           component: BoatSlotEditModal,
-          componentProps: { slot: label, readOnly }
+          componentProps: { slot: label, readOnly, boatName }
         });
         modal.present();
         const { data, role } = await modal.onDidDismiss();

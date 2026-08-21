@@ -1,3 +1,4 @@
+export * from './lib/boat-ownership.util';
 export * from './lib/boat-slot.validations';
 export * from './lib/boat-usage.util';
 export * from './lib/resource-i18n';

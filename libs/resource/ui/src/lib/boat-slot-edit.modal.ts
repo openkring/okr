@@ -29,6 +29,7 @@ import { BoatSlotForm } from './boat-slot.form';
           (formDataChange)="onFormDataChange($event)"
           [showForm]="showForm()"
           [readOnly]="isReadOnly()"
+          [boatName]="boatName()"
           [i18n]="i18n"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -44,6 +45,8 @@ export class BoatSlotEditModal {
   // inputs
   public readonly slot = input.required<BoatSlotLabel>();
   public readonly readOnly = input(true);
+  /** Name of the boat occupying the slot, '' for a free slot. */
+  public readonly boatName = input('');
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals

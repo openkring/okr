@@ -26,8 +26,13 @@ import { boatSlotValidations, ResourceI18n } from '@okr/resource-util';
             <ion-grid>
               <ion-row>
                 <ion-col size="12">
-                  <okr-text-input [i18n]="textI18n()" [value]="text()" (valueChange)="onFieldChange('text', $event)"
-                    [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
+                  <!-- an occupied slot carries the boat's name; only a free slot names its planned boat -->
+                  @if (boatName()) {
+                    <okr-text-input [i18n]="boatNameI18n()" [value]="boatName()" [readOnly]="true" />
+                  } @else {
+                    <okr-text-input [i18n]="textI18n()" [value]="text()" (valueChange)="onFieldChange('text', $event)"
+                      [autofocus]="true" [maxLength]="50" [readOnly]="isReadOnly()" />
+                  }
                 </ion-col>
               </ion-row>
               <ion-row>
@@ -87,6 +92,8 @@ export class BoatSlotForm {
   public formData = model.required<BoatSlotLabel>();
   public readonly readOnly = input(true);
   public readonly showForm = input(true);
+  /** Set when the slot is occupied by a boat: its name replaces the editable text field. */
+  public readonly boatName = input('');
 
   // outputs
   public readonly dirty = output<boolean>();
@@ -129,6 +136,11 @@ export class BoatSlotForm {
     label: this.i18n().alloc_slot_text_label(),
     placeholder: this.i18n().alloc_slot_text_ph(),
     helper: this.i18n().alloc_slot_text_helper()
+  } as TextInputI18n));
+
+  protected boatNameI18n = computed(() => ({
+    name: 'boatName',
+    label: this.i18n().name_label(),
   } as TextInputI18n));
 
   protected colorI18n = computed(() => ({
