@@ -1,5 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -9,6 +11,19 @@ import { findByKey, getSystemQuery } from '@okr/shared-util-core';
 
 import { getTripIndex, newTripName } from '@okr/trip-util';
 import { PFX } from './scope';
+
+/** Payload of the `reportIncident` callable — mirrors ReportIncidentData in apps/functions/src/trip/report.ts. */
+export interface ReportIncidentPayload {
+  tenantId: string;
+  kind: 'damage' | 'bug';
+  message: string;
+  personKey?: string;
+  personName?: string;
+  boatKey?: string;
+  boatName?: string;
+  tripKey?: string;
+  tripName?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class TripService {
@@ -21,6 +36,20 @@ export class TripService {
     update_conf:  PFX + 'update.conf',
     update_error: PFX + 'update.error',
   });
+
+  /**
+   * Report a damage ('Schadenmeldung') or a bug ('Fehlermeldung').
+   *
+   * The report is NOT written here: the `reportIncident` callable emits the workflow event
+   * ('trip.damageReported' / 'trip.bugReported') and the tenant's workflow rules decide what
+   * happens — a task for the responsible person, an email, a chat message. What used to be a
+   * hard-coded responsibility lookup by name in TripStore is now configuration.
+   */
+  public async reportIncidentViaFunction(payload: ReportIncidentPayload): Promise<string> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'reportIncident');
+    const result = await fn(payload);
+    return (result.data as { event: string }).event;
+  }
 
   public list(orderBy = 'startDate', sortOrder: 'asc' | 'desc' = 'desc'): Observable<TripModel[]> {
     return this.firestoreService.searchData<TripModel>(

@@ -29,14 +29,17 @@ export const TRIP_I18N_KEYS = {
   export_raw:               PFX + 'export.raw',
 
   report_damage:            PFX + 'report.damage.label',
-  report_damage_plain:      PFX + 'report.damage.plain',
-  report_damage_trip:       PFX + 'report.damage.trip',
   report_damage_prompt:     PFX + 'report.damage.prompt',
 
   report_bug:               PFX + 'report.bug.label',
-  report_bug_plain:         PFX + 'report.bug.plain',
-  report_bug_trip:          PFX + 'report.bug.trip',
   report_bug_prompt:        PFX + 'report.bug.prompt',
+
+  // the task name is no longer built here — it comes from the workflow rule's messageKey
+  report_conf:              PFX + 'report.conf',
+  report_error:             PFX + 'report.error',
+
+  report_message_label:     PFX + 'report.message.label',
+  report_person_required:   PFX + 'report.person.required',
 
   search:                   PFX + 'search.label',
 

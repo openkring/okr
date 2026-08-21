@@ -27,14 +27,41 @@ live account. Rules only decide who gets told.
 | Field | Semantics |
 |---|---|
 | `name` | admin-facing label, e.g. `Austritt → Kassier` |
-| `event` | category `workflow_event` — `membership.created` \| `membership.ended` \| `membership.categoryChanged` |
+| `event` | category `workflow_event` — see the event catalogue below |
 | `probe` | category `workflow_probe`. `''`/`always` = unconditional. A comma-separated list is **ANDed**, and an item may carry an inline `:arg` (`categoryIs:passive,hasActiveOwnerships`). An **unknown** probe fails closed |
 | `probeArg` | single argument for a one-probe rule, e.g. `key`, `locker`, `passive` |
-| `action` | `openTask` — the only v1 action. A task already produces a push (`onTaskWritten`) |
+| `action` | `openTask` \| `sendEmail` \| `sendMessage` \| `esign` \| `requestApproval`. A task already produces a push (`onTaskWritten`) |
 | `responsibilityKey` | `ResponsibilityModel.okey` → who gets the task |
 | `messageKey` | i18n key resolved **server-side** from `i18nTenantOverride` → `i18nDefault`; `{name}` is replaced with the member's name (single braces — `{{…}}` would be eaten by Transloco) |
 | `dueInDays` | `0` = no due date |
 | `order` | evaluation order, readability only |
+
+## Event catalogue
+
+| Event | Emitted from | `relatedKey` | notable params |
+|---|---|---|---|
+| `membership.created` · `.ended` · `.categoryChanged` | the `memberships/{id}` trigger (`auth/account-sync.ts`) | `membership.<okey>` | `category`, `categoryAbbr`, `fromCategory` |
+| `expense.created` | inside the `createExpense` callable | `expense.<okey>` | `amount`, `currency`, `category` |
+| `form.submitted` | inside the `submitForm` callable | `formSubmission.<okey>` | `formKey`, `formName` |
+| `application.created` | `onDocumentCreated('applications/{id}')` | `application.<okey>` | `state`, `kind` |
+| `reservation.created` | `onDocumentCreated('reservations/{id}')` | `reservation.<okey>` | `resourceKey`, `resourceType`, `startDate` |
+| `task.completed` | `onDocumentUpdated('tasks/{id}')` | `task.<okey>` | `taskName`, `authorName`, `assigneeName` |
+| `approval.decided` | the approval trigger | the **subject's** key | `decision`, `approvalKey`, `approverName` |
+| `trip.damageReported` (Schadenmeldung) | inside the `reportIncident` callable | `report.<uuid>` | `boatName`, `personName`, `tripName`, `message`, `notes` |
+| `trip.bugReported` (Fehlermeldung) | inside the `reportIncident` callable | `report.<uuid>` | `boatName`, `personName`, `tripName`, `message`, `notes` |
+
+The two `trip.*` events are the one case with **no document to trigger on** — a report is not
+persisted, it *is* the event. `reportIncident` therefore derives the event name from a closed
+`kind` map rather than accepting one, so a signed-in client cannot fire arbitrary events.
+
+Their `relatedKey` is unique per report on purpose: `openTask` deduplicates on
+(`relatedKey`, assignee) and `sendMessage` derives its Matrix txnId from it, so a stable key
+would make the second report of the day vanish silently. Distinct incidents, distinct keys.
+
+**`params.notes`** is the generic free-text channel into `openTask`: the rule's `messageKey`
+names every task of a rule identically, so anything the user actually typed (a damage
+description) only survives because the emitter puts it there. Seed the two SCS rules with
+`node scripts/seed-trip-report-workflow.mjs --dry` first.
 
 ## The engine (`apps/functions/src/workflow`)
 

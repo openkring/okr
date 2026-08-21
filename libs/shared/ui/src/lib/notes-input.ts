@@ -8,6 +8,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean, decrypt, encrypt } from '@okr/shared-util-core';
 
 import { ButtonCopy, ButtonCopyI18n } from './button-copy';
+import { ErrorNote } from './error-note';
 import { PFX } from './scope';
 
 export interface NotesInputI18n {
@@ -28,7 +29,7 @@ export interface NotesInputI18n {
     SvgIconPipe,
     FormsModule,
     IonIcon, IonTextarea, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonNote,
-    ButtonCopy
+    ButtonCopy, ErrorNote
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   styles: [`
@@ -63,6 +64,8 @@ export interface NotesInputI18n {
             [readonly]="isReadOnly()"
           />
         </ion-item>
+        <!-- inside the card: an error note placed after </ion-card> floats away from the field it belongs to -->
+        <okr-error-note [errors]="errors()" />
         <ion-item lines="none">
           @if (isClearable()) {
             <ion-icon src="{{'cancel' | svgIcon }}" (click)="clearValue()" tabindex="-1" />
@@ -99,6 +102,8 @@ export class NotesInput {
   protected copyable = input(true);
   protected encryptable = input(true);
   public autoGrow = input(true);
+  /** Vest errors of the bound field; rendered below the textarea, inside the card. */
+  public errors = input<string[]>([]);
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

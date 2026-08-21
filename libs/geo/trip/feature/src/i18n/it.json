@@ -28,16 +28,20 @@
   "report": {
     "damage": {
       "label": "Segnala danno",
-      "plain": "segnala un danno",
-      "trip": "segnala un danno durante un'uscita",
       "prompt": "Descrivi il danno"
     },
     "bug": {
       "label": "Segnala errore",
-      "plain": "segnala un errore",
-      "trip": "segnala un errore durante un'uscita",
       "prompt": "Descrivi l'errore"
-    }
+    },
+    "message": {
+      "label": "Segnalazione"
+    },
+    "person": {
+      "required": "Indica chi effettua la segnalazione."
+    },
+    "conf": "La tua segnalazione è stata inviata.",
+    "error": "Non è stato possibile inviare la segnalazione. Riprova."
   },
   "search": {
     "label": "Cerca luogo"

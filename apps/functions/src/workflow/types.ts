@@ -68,6 +68,12 @@ export interface NewTask {
   dueInDays: number;
   relatedModelType: string;
   relatedKey: string;
+  /**
+   * Free text of the event, from `ctx.params['notes']`. The task NAME comes from the rule's
+   * messageKey and is the same for every occurrence; anything the reporter actually typed
+   * (a damage description) would otherwise have nowhere to go.
+   */
+  notes: string;
 }
 
 export interface OutgoingEmail {

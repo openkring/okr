@@ -28,16 +28,20 @@
   "report": {
     "damage": {
       "label": "Notificar daño",
-      "plain": "notifica un daño",
-      "trip": "notifica un daño en una salida",
       "prompt": "Describa el daño"
     },
     "bug": {
       "label": "Notificar error",
-      "plain": "notifica un error",
-      "trip": "notifica un error en una salida",
       "prompt": "Describa el error"
-    }
+    },
+    "message": {
+      "label": "Aviso"
+    },
+    "person": {
+      "required": "Indica quién realiza el aviso."
+    },
+    "conf": "Tu aviso se ha enviado.",
+    "error": "No se ha podido enviar el aviso. Inténtalo de nuevo."
   },
   "search": {
     "label": "Buscar lugar"

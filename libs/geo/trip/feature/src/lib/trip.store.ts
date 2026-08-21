@@ -7,7 +7,7 @@ import { AppStore, KioskStatusService, LocationSelectResult, ModelSelectService 
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, PersonModel, TaskModel, TripModel, UserModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
-import { fill, getAvatarInfoForCurrentUser, getFullName, getYear, hasRole, nameMatches } from '@okr/shared-util-core';
+import { fill, getAvatarInfoForCurrentUser, getFullName, getYear, hasRole, isKioskOnly, nameMatches } from '@okr/shared-util-core';
 import { yearMatches } from '@okr/shared-categories';
 
 import { TaskService } from '@okr/task-data-access';
@@ -15,7 +15,7 @@ import { ResponsibilityService } from '@okr/relationship-responsibility-data-acc
 import { LocationService } from '@okr/location-data-access';
 
 import { TripService } from '@okr/trip-data-access';
-import { findOpenTripForBoat, groupTripsByDay, newTrip, TRIP_I18N_KEYS } from '@okr/trip-util';
+import { findOpenTripForBoat, groupTripsByDay, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';
 
 
 /** Name of the responsibility that owns the Logbuch — gets the bug reports and the support calls. */
@@ -224,6 +224,15 @@ export const TripStore = signalStore(
     },
 
     /**
+     * Boat picker for a damage / bug report: unlike selectResourceAvatar it neither rejects a boat
+     * that is still out on an open trip (a damage is usually reported on exactly such a boat) nor
+     * asks for the rigging — a report is about the boat, not about how it was rowed.
+     */
+    async selectBoatForReport(): Promise<AvatarInfo | undefined> {
+      return await store.modelSelectService.selectResourceAvatar('okBoat', undefined, store.i18n.select_boat_title());
+    },
+
+    /**
      * A convertible boat (rboat_type 'b<seats>mx') can be rowed either sculled or swept, and the
      * boat document cannot say which — only the crew that takes it out can. Ask, and store the
      * decided rigging on the trip ('b2mx' -> 'b2x' | 'b2m') so later statistics can group by it.
@@ -293,24 +302,61 @@ export const TripStore = signalStore(
     },
 
     /******************************* other actions *************************************** */
+
+    /**
+     * Ask for boat, reporter and description. The boat is prefilled from the trip the report was
+     * started on; the reporter is prefilled with the current user unless this is the kiosk, where
+     * the account is shared and only the person standing there knows who is reporting.
+     */
+    async openReportModal(reportType: 'damage' | 'bug', currentUser?: UserModel, trip?: TripModel): Promise<TripReport | undefined> {
+      const { TripReportModal } = await import('./trip-report.modal');
+      const modal = await store.modalController.create({
+        component: TripReportModal,
+        componentProps: {
+          reportType,
+          boat: trip?.resource,
+          person: currentUser && !isKioskOnly(currentUser) ? getAvatarInfoForCurrentUser(currentUser) : undefined,
+        },
+      });
+      await modal.present();
+      const { data, role } = await modal.onDidDismiss();
+      return role === 'confirm' ? data as TripReport : undefined;
+    },
+
     async reportDamage(currentUser?: UserModel, trip?: TripModel): Promise<void> {
-      const message = await store.alertService.okrPrompt(store.i18n.report_damage(), store.i18n.report_damage_prompt());
-      if (message === undefined) return;
-      const user = currentUser ? getFullName(currentUser.firstName, currentUser.lastName) : 'undefined';
-      const taskName = trip ?
-        `${user} ${store.i18n.report_damage_trip()} ${trip.name}` :
-        `${user} ${store.i18n.report_damage_plain()}`;
-      await this.notifyResponsibility('Ressort Boote', taskName, message, undefined, store.currentUser());
+      await this.report('damage', currentUser, trip);
     },
 
     async reportBug(currentUser?: UserModel, trip?: TripModel): Promise<void> {
-      const message = await store.alertService.okrPrompt(store.i18n.report_bug(), store.i18n.report_bug_prompt());
-      if (message === undefined) return;
-      const user = currentUser ? getFullName(currentUser.firstName, currentUser.lastName) : 'undefined';
-      const taskName = trip ?
-        `${user} ${store.i18n.report_bug_trip()} ${trip.name}` :
-        `${user} ${store.i18n.report_bug_plain()}`;
-      await this.notifyResponsibility(LOGBUCH_RESPONSIBILITY, taskName, message, undefined, store.currentUser());
+      await this.report('bug', currentUser, trip);
+    },
+
+    /**
+     * Collect the report and hand it to the `reportIncident` callable, which emits
+     * 'trip.damageReported' / 'trip.bugReported'. WHO gets told, and how, is a workflow rule
+     * — this store no longer looks up a responsibility by name and no longer writes the task.
+     */
+    async report(kind: 'damage' | 'bug', currentUser?: UserModel, trip?: TripModel): Promise<void> {
+      const report = await this.openReportModal(kind, currentUser, trip);
+      if (!report) return;
+      try {
+        await store.tripService.reportIncidentViaFunction({
+          tenantId: store.tenantId(),
+          kind,
+          message: report.message,
+          personKey: report.person?.key ?? '',
+          personName: getFullName(report.person?.name1, report.person?.name2),
+          boatKey: report.boat?.key ?? '',
+          boatName: report.boat?.name2 || report.boat?.name1 || '',
+          tripKey: trip?.okey ?? '',
+          tripName: trip?.name ?? '',
+        });
+        await store.alertService.showToast(store.i18n.report_conf());
+      } catch (error) {
+        // the report is gone if this throws — say so instead of pretending it was filed
+        await store.alertService.showToast(store.i18n.report_error());
+        console.error('TripStore.report: reportIncident failed', error);
+      }
     },
 
     async notifyResponsibility(

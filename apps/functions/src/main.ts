@@ -226,6 +226,8 @@ export const onTaskWritten = Task.onTaskWritten;
 export const onTripWrite             = Trip.onTripWrite;
 export const onTripStatsReconcile    = Trip.onTripStatsReconcile;
 export const onOpenTripCheck         = Trip.onOpenTripCheck;
+// Logbuch damage / bug reports — emitted as workflow events, consequences configured as rules
+export const reportIncident          = Trip.reportIncident;
 
 // test
 export const getEcho = Test.getEcho;

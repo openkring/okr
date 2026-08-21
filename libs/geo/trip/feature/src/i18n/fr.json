@@ -28,16 +28,20 @@
   "report": {
     "damage": {
       "label": "Signaler un dommage",
-      "plain": "signale un dommage",
-      "trip": "signale un dommage lors d'une sortie",
       "prompt": "Décrire le dommage"
     },
     "bug": {
       "label": "Signaler une erreur",
-      "plain": "signale une erreur",
-      "trip": "signale une erreur lors d'une sortie",
       "prompt": "Décrire l'erreur"
-    }
+    },
+    "message": {
+      "label": "Signalement"
+    },
+    "person": {
+      "required": "Merci d’indiquer qui fait le signalement."
+    },
+    "conf": "Ton signalement a été transmis.",
+    "error": "Le signalement n’a pas pu être transmis. Merci de réessayer."
   },
   "search": {
     "label": "Rechercher un lieu"

@@ -28,16 +28,20 @@
   "report": {
     "damage": {
       "label": "Report damage",
-      "plain": "reports damage",
-      "trip": "reports damage on trip",
       "prompt": "Describe the damage"
     },
     "bug": {
       "label": "Report bug",
-      "plain": "reports bug",
-      "trip": "reports bug on trip",
       "prompt": "Describe the bug"
-    }
+    },
+    "message": {
+      "label": "Report"
+    },
+    "person": {
+      "required": "Please state who is reporting."
+    },
+    "conf": "Your report has been submitted.",
+    "error": "The report could not be submitted. Please try again."
   },
   "search": {
     "label": "Search location"

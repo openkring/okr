@@ -178,6 +178,7 @@ export function createFirestoreDeps(): WorkflowDeps {
       task.dueDate = t.dueInDays > 0 ? shiftDaysBack(getTodayStr(DateFormat.StoreDate), -t.dueInDays) : '';
       task.relatedModelType = t.relatedModelType;
       task.relatedKey = t.relatedKey;
+      task.notes = t.notes ?? '';
       task.index = getTaskIndex(task);
       const { okey, ...doc } = task;   // okey is the document id, never a field
       void okey;

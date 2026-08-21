@@ -28,16 +28,20 @@
   "report": {
     "damage": {
       "label": "Schaden melden",
-      "plain": "meldet Schaden",
-      "trip": "meldet Schaden auf Fahrt",
       "prompt": "Beschreibe den Schaden"
     },
     "bug": {
       "label": "Fehler melden",
-      "plain": "meldet Fehler",
-      "trip": "meldet Fehler auf Fahrt",
       "prompt": "Beschreibe den Fehler"
-    }
+    },
+    "message": {
+      "label": "Meldung"
+    },
+    "person": {
+      "required": "Bitte gib an, wer die Meldung macht."
+    },
+    "conf": "Deine Meldung wurde übermittelt.",
+    "error": "Die Meldung konnte nicht übermittelt werden. Bitte versuche es nochmals."
   },
   "search": {
     "label": "Ort suchen"

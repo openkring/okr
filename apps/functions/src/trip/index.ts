@@ -291,3 +291,6 @@ export const onOpenTripCheck = onSchedule(
     logger.info(`onOpenTripCheck: ${overdue.length} overdue trip(s), ${created} task(s) created`);
   }
 );
+
+// Logbuch damage / bug reports (Schaden-/Fehlermeldung) — emitted as workflow events
+export { reportIncident } from './report';

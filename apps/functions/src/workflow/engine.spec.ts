@@ -247,8 +247,16 @@ describe('runWorkflowWith', () => {
     await runWorkflowWith(ctx(), deps);
     expect(deps.tasks).toEqual([{
       tenantId: TENANT, name: '@x.y|Anna Muster|A->P', assignee: avatar('resp'),
-      dueInDays: 0, relatedModelType: 'membership', relatedKey: 'membership.m1',
+      dueInDays: 0, relatedModelType: 'membership', relatedKey: 'membership.m1', notes: '',
     }]);
+  });
+
+  it("carries the event's free text into the task notes", async () => {
+    // the rule's messageKey names every task of a rule identically — what the reporter of a
+    // damage actually typed only survives because the emitter puts it into params.notes
+    const deps = fakeDeps({ rules: [rule()], responsibility: { responsibleAvatar: avatar('resp') } });
+    await runWorkflowWith({ ...ctx(), params: { ...ctx().params, notes: 'Möwe: Steuer defekt' } }, deps);
+    expect(deps.tasks[0].notes).toBe('Möwe: Steuer defekt');
   });
 
   it('skips a rule whose probe does not hold', async () => {
