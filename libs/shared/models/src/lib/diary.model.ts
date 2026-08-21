@@ -2,12 +2,18 @@ import { DEFAULT_DATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_TAGS, D
 import { AvatarInfo } from './avatar-info';
 import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 
-/** A diary entry is a draft until it is complete — which includes having real weather data. */
+/**
+ * A newly created diary entry is a draft until it is complete — which includes Open-Meteo
+ * having answered. An imported historical entry keeps the status of its source file.
+ */
 export type DiaryStatus = 'draft' | 'final';
 
 /**
  * Measured weather for the day, from Open-Meteo. Never derived from the text, never guessed.
- * `code` is the WMO weather code; -1 means "not fetched yet", which keeps the entry a draft.
+ * `code` is the WMO weather code; -1 means the code is not known — the weather display line
+ * cannot be recomputed until it is. An import of a historical entry leaves `code` at -1
+ * (the archived frontmatter carries only the rendered display line, and the emoji does not
+ * map back to a single WMO code), which says nothing about the entry's `status`.
  */
 export interface DiaryWeather {
   code: number;
