@@ -5,7 +5,7 @@ import { ActionSheetController, IonBadge, IonButton, IonButtons, IonCard, IonCar
 import { SessionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, dismissOverlay } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, generateRandomString } from '@okr/shared-util-core';
 import { getSessionStatus, getSessionStatusColor } from '@okr/session-util';
 
@@ -171,7 +171,7 @@ export class AocSession {
   /* ---------------- context menu ---------------- */
   protected async dismissPopover(action: string): Promise<void> {
     // same race as MenuStore.selectMenuItem: dismissOnSelect may have closed it already (SCS-5G)
-    await this.popoverController.dismiss(action).catch(() => undefined);
+    await dismissOverlay(this.popoverController, action);
   }
 
   protected async onPopoverDismiss($event: CustomEvent): Promise<void> {

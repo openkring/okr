@@ -9,7 +9,7 @@ import {
 import { IconModel, RoleName } from '@okr/shared-models';
 import { FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
+import { copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetOptions, dismissOverlay, error, keepDefaultTrue } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
 import { ICON_SETS, IconStore } from './icon.store';
@@ -198,7 +198,7 @@ export class IconList {
 
   /******************************* context menu *************************************** */
   protected async dismissPopover(action: string): Promise<void> {
-    await this.popoverController.dismiss(action);
+    await dismissOverlay(this.popoverController, action);
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {

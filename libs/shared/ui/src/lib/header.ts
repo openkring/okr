@@ -2,7 +2,7 @@ import { Component, computed, inject, input, model, output } from '@angular/core
 import { IonButton, IonButtons, IonHeader, IonIcon, IonMenuButton, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AppNavigationService } from '@okr/shared-util-angular';
+import { AppNavigationService, dismissOverlay } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
 import { Searchbar } from './searchbar';
@@ -83,7 +83,9 @@ export class Header {
 
   public back(): void {
     if (this.isModal()) {
-      this.modalController?.dismiss(null, 'cancel');
+      // The modal may already be closing (double tap, backdrop dismiss); dismissOverlay keeps
+      // Ionic's 'overlay does not exist' rejection from escaping unhandled (SCS-5G).
+      void dismissOverlay(this.modalController, null, 'cancel');
     } else {
       this.appNavigationService.back();
     }

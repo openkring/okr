@@ -4,6 +4,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 import { AvatarInfo } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { safeStructuredClone } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { TripReportForm } from '@okr/trip-ui';
 import { newTripReport, TripReport } from '@okr/trip-util';
@@ -72,7 +73,7 @@ export class TripReportModal {
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {
-    await this.modalController.dismiss(this.formData(), 'confirm');
+    await dismissOverlay(this.modalController, this.formData(), 'confirm');
   }
 
   public cancel(): void {

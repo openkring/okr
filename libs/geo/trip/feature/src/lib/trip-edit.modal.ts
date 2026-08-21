@@ -3,6 +3,7 @@ import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { DateFormat, debugFormModel, getCurrentTime, getTodayStr, safeStructuredClone } from '@okr/shared-util-core';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { AvatarInfo, ResourceModel, TripModel, UserModel } from '@okr/shared-models';
 
 import { TripEditForm } from '@okr/trip-ui';
@@ -118,7 +119,9 @@ export class TripEditModal {
       }
     }
 
-    await this.modalController.dismiss(null, 'confirm');
+    // save() awaits Firestore writes first, so the user may have closed the modal meanwhile —
+    // the controller would then reject with 'overlay does not exist' (SCS-5G).
+    await dismissOverlay(this.modalController, null, 'confirm');
   }
 
   protected async addPerson(): Promise<void> {

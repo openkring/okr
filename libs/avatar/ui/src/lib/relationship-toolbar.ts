@@ -6,7 +6,7 @@ import { ColorsIonic } from '@okr/shared-categories';
 
 import { AvatarInfo, CategoryListModel, ColorIonic, UserModel } from '@okr/shared-models';
 import { CategoryPlainNamePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
+import { AppNavigationService, dismissOverlay, navigateByUrl } from '@okr/shared-util-angular';
 
 import { OkrAvatar } from './avatar';
 
@@ -86,7 +86,7 @@ export class RelationshipToolbar {
 
   protected async goto(url: string): Promise<void> {
     if (this.readOnly() === false) {
-      this.modalController.dismiss(undefined, 'cancel');
+      void dismissOverlay(this.modalController, undefined, 'cancel');
       this.appNavigationService.pushLink(`/${this.relType()}/all`);
       await navigateByUrl(this.router, url);
     }

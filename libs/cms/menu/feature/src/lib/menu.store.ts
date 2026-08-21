@@ -11,7 +11,7 @@ import { ENV } from '@okr/shared-config';
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { CategoryListModel, MenuItemModel } from '@okr/shared-models';
 import { debugData, die, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
-import { AppNavigationService, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
+import { AppNavigationService, dismissOverlay, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { MENU_I18N_KEYS, resolveMenuLabelKey } from '@okr/cms-menu-util';
@@ -309,7 +309,7 @@ export const _MenuStore = signalStore(
           case 'toggle': // like 'call' — the hosting feature flips the state in its onPopoverDismiss handler
             // ion-popover's own dismissOnSelect can win this race and close first; the controller then
             // rejects with 'overlay does not exist'. Unawaited it escaped select()'s try/catch (SCS-5G).
-            await store.popoverController.dismiss(menuItem.url).catch(() => undefined);
+            await dismissOverlay(store.popoverController, menuItem.url);
             break;
           default:
             die('MenuStore.selectMenuItem: invalid MenuAction=' + menuItem.action);

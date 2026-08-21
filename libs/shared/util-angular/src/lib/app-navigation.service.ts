@@ -1,6 +1,8 @@
 import { Injectable, inject } from "@angular/core";
 import { Router } from "@angular/router";
 import { ModalController } from "@ionic/angular/standalone";
+
+import { dismissOverlay } from "./overlay.util";
  
 @Injectable({ 
   providedIn: "root" 
@@ -11,7 +13,7 @@ export class AppNavigationService {
   private history: string[] = [];
 
   public dismissModal(): void {
-    this.modalController.dismiss(null, 'cancel');
+    void dismissOverlay(this.modalController, null, 'cancel');
   }
  
   // only suited for pages.
