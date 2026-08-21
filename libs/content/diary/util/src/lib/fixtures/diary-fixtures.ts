@@ -1,10 +1,11 @@
 /**
  * Anonymised diary files covering every variant measured in the real archive.
- * The archive itself never enters this repository — see the corpus runner in tools/.
+ * The archive itself never enters this repository — see `diary-corpus.spec.ts`, which
+ * round-trips the real archive when DIARY_ARCHIVE points at it.
  */
 export const DIARY_FIXTURES: { name: string; text: string }[] = [
   {
-    name: 'full — every key present',
+    name: 'full — frontmatter, navigation, thoughts and a flat Erledigt list',
     text: `---
 tags:
   - diary
@@ -164,6 +165,31 @@ people: [anna]
 ## Persönliche Gedanken
 
 Der Folgetag existiert noch nicht.
+`,
+  },
+  {
+    name: 'PDF footer — the archive\'s most common body shape',
+    text: `---
+tags:
+  - diary
+date: 2019-11-08
+status: final
+location: Musterdorf ZH
+weather: "☁️ 4–10°C, 1 mm"
+weather_min: 4.2
+weather_max: 9.8
+weather_precip: 1.1
+sunrise: "07:26"
+sunset: "16:52"
+---
+
+## Persönliche Gedanken
+
+Ein Absatz aus dem gescannten Original.
+
+---
+
+*Original: [20191108diaryMusterdorf.pdf](20191108diaryMusterdorf.pdf)*
 `,
   },
 ];

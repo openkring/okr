@@ -1,6 +1,6 @@
 import { AvatarInfo, DEFAULT_DIARY_WEATHER, DiaryModel } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
-import { DiaryFile } from './diary-file';
+import { DiaryFile, DiarySection } from './diary-file';
 import { fmList, fmNumber, fmScalar } from './diary-frontmatter';
 
 /** Looks up the okr entities a diary entry refers to. Injected so the mapping stays pure. */
@@ -13,25 +13,37 @@ export interface DiaryResolver {
 
 const THOUGHTS_HEADING = '## Persönliche Gedanken';
 const DONE_HEADING = '## Erledigt';
-const DONE_ITEM = /^-\s*(?:\[[ xX]\]\s*)?(.+)$/;
+const DONE_ITEM = /^-\s+(?:\[[ xX]\]\s*)?(.+)$/;
 
-function sectionContent(file: DiaryFile, heading: string): string {
-  return file.sections.find(section => section.heading === heading)?.content ?? '';
-}
-
-function doneItems(file: DiaryFile): string[] {
-  // sub-headings such as '### Verein' start their own section, so collect every section
-  // from '## Erledigt' onwards until the next '## ' heading.
-  const start = file.sections.findIndex(section => section.heading === DONE_HEADING);
+/**
+ * Every section from `heading` up to (not including) the next `## `-level heading.
+ * A sub-heading the author writes inside a section (e.g. '### Verein') starts its own
+ * DiarySection, so a section's full content is the run of sections that follows it.
+ */
+function sectionsUnder(file: DiaryFile, heading: string): DiarySection[] {
+  const start = file.sections.findIndex(section => section.heading === heading);
   if (start < 0) {
     return [];
   }
+  let end = start + 1;
+  while (end < file.sections.length && !file.sections[end].heading.startsWith('## ')) {
+    end++;
+  }
+  return file.sections.slice(start, end);
+}
+
+/** Re-emits the thoughts sections as markdown, dropping only the '## Persönliche Gedanken' line. */
+function thoughtsText(file: DiaryFile): string {
+  return sectionsUnder(file, THOUGHTS_HEADING)
+    .map((section, index) => (index === 0 ? section.content : `${section.heading}${section.content}`))
+    .join('')
+    .trim();
+}
+
+function doneItems(file: DiaryFile): string[] {
   const items: string[] = [];
-  for (let i = start; i < file.sections.length; i++) {
-    if (i > start && file.sections[i].heading.startsWith('## ')) {
-      break;
-    }
-    for (const line of file.sections[i].content.split('\n')) {
+  for (const section of sectionsUnder(file, DONE_HEADING)) {
+    for (const line of section.content.split('\n')) {
       const match = DONE_ITEM.exec(line.trim());
       if (match) {
         items.push(match[1].trim());
@@ -53,7 +65,7 @@ export function toDiaryModel(
   // must leave the entry visibly dateless rather than throw and abort the whole run.
   model.date = convertDateFormatToString(fmScalar(file, 'date'), DateFormat.IsoDate, DateFormat.StoreDate, false);
   model.title = fmScalar(file, 'title');
-  model.text = sectionContent(file, THOUGHTS_HEADING).trim();
+  model.text = thoughtsText(file);
   model.done = doneItems(file);
   model.status = fmScalar(file, 'status') === 'final' ? 'final' : 'draft';
 

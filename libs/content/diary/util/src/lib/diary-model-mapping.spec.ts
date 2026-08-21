@@ -2,6 +2,15 @@ import { AvatarInfo } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 import { DiaryResolver, toDiaryModel } from './diary-model-mapping';
 import { parseDiaryMarkdown } from './diary-parse';
+import { DIARY_FIXTURES } from './fixtures/diary-fixtures';
+
+const fixture = (name: string): string => {
+  const found = DIARY_FIXTURES.find(f => f.name === name);
+  if (!found) {
+    throw new Error(`unknown fixture: ${name}`);
+  }
+  return found.text;
+};
 
 const avatar = (key: string, name1: string): AvatarInfo => ({
   key, name1, name2: '', modelType: 'person', type: '', subType: '', label: name1,
@@ -109,5 +118,34 @@ describe('toDiaryModel', () => {
   it('leaves the date empty instead of throwing when the value is unparseable', () => {
     const file = parseDiaryMarkdown('---\ndate: 16.08.2026\n---\n\n## Persönliche Gedanken\n\nx\n');
     expect(toDiaryModel(file, 'bka', 'uid1', RESOLVER).date).toBe('');
+  });
+
+  it('keeps a sub-heading inside the thoughts section, with the text that follows it', () => {
+    const file = parseDiaryMarkdown(
+      '---\ndate: 2026-08-16\n---\n\n## Persönliche Gedanken\n\nVorher.\n\n### Unterkapitel\n\nNachher.\n\n## Erledigt\n\n- [x] Aufgabe\n'
+    );
+    const model = toDiaryModel(file, 'bka', 'uid1', RESOLVER);
+    expect(model.text).toBe('Vorher.\n\n### Unterkapitel\n\nNachher.');
+    expect(model.done).toEqual(['Aufgabe']);
+  });
+
+  it('collects done items across the sub-headings of a nested Erledigt list', () => {
+    const file = parseDiaryMarkdown(fixture('nested Erledigt with sub-headings and plain bullets'));
+    const model = toDiaryModel(file, 'bka', 'uid1', RESOLVER);
+    expect(model.done).toEqual(['Auftrag Elektriker', 'Sitzung organisieren', 'Termin verschoben']);
+    expect(model.text).toBe('Text mit einem Bild davor.');
+    expect(model.status).toBe('draft');
+  });
+
+  it('ignores a horizontal rule under Erledigt', () => {
+    const file = parseDiaryMarkdown('---\ndate: 2026-08-16\n---\n\n## Erledigt\n\n- [x] Aufgabe\n\n---\n');
+    expect(toDiaryModel(file, 'bka', 'uid1', RESOLVER).done).toEqual(['Aufgabe']);
+  });
+
+  it('keeps the PDF footer of a scanned entry in the text', () => {
+    const file = parseDiaryMarkdown(fixture("PDF footer — the archive's most common body shape"));
+    const model = toDiaryModel(file, 'bka', 'uid1', RESOLVER);
+    expect(model.text).toContain('Ein Absatz aus dem gescannten Original.');
+    expect(model.done).toEqual([]);
   });
 });
