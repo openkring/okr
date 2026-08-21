@@ -33,8 +33,12 @@ export const calEventValidations = staticSuite((model: CalEventModel, tenants: s
     test('repeatUntilDate', 'caleventMaxDatesPerSeries', () => {
       enforce(calculateRecurringDates(model.startDate, model.repeatUntilDate, model.periodicity).length).lte(MAX_DATES_PER_SERIES);
     });
-    stringValidations('seriesId', model.seriesId, WORD_LENGTH, 6, true);
   })
+
+  // seriesId is assigned by the store at save time (createEventSeries / convertEventToSeries),
+  // never by the user -- the form shows it read-only. Requiring it here made every NEW recurring
+  // event invalid on an invisible, unfixable field: no change-confirmation bar, no way to save.
+  stringValidations('seriesId', model.seriesId ?? '', WORD_LENGTH);
 });
 
 // tbd: cross the locationKey to reference into locations
