@@ -23,8 +23,10 @@ interface Envelope<T> {
  * apart from the read — exported for unit testing.
  */
 export function readPersisted<T>(key: string, initialValue: T, ttlMs: number): T {
-  if (typeof localStorage === 'undefined') return initialValue;
   try {
+    // The `typeof` guard must live INSIDE the try: Chrome throws a SecurityError on the mere
+    // `localStorage` property access when site data is blocked for the origin (SCS-7N).
+    if (typeof localStorage === 'undefined') return initialValue;
     const raw = localStorage.getItem(key);
     if (!raw) return initialValue;
     const env = JSON.parse(raw) as Envelope<T>;
@@ -38,8 +40,9 @@ export function readPersisted<T>(key: string, initialValue: T, ttlMs: number): T
  * unavailable or the quota is exceeded. Exported for unit testing.
  */
 export function writePersisted<T>(key: string, value: T): void {
-  if (typeof localStorage === 'undefined') return;
   try {
+    // `typeof` inside the try — see readPersisted (SCS-7N).
+    if (typeof localStorage === 'undefined') return;
     localStorage.setItem(key, JSON.stringify({ v: value, t: Date.now() } satisfies Envelope<T>));
   } catch { /* quota exceeded — drop */ }
 }
@@ -56,8 +59,9 @@ export function writePersisted<T>(key: string, value: T): void {
  * - Writes are debounced (default 250 ms) and TTL-stamped (default 30 days).
  * - A `visibilitychange → hidden` listener flushes any pending write so iOS doesn't
  *   evict the page mid-debounce. This composes with other visibilitychange handlers.
- * - All storage access is guarded and try/catched: missing/corrupted/quota-exceeded
- *   entries degrade silently to the initialValue rather than throwing.
+ * - All storage access is guarded and try/catched: missing/corrupted/quota-exceeded entries,
+ *   and origins where the browser denies storage access outright, degrade silently to the
+ *   initialValue rather than throwing.
  */
 export function persistedSignal<T>(
   key: string,
@@ -71,7 +75,6 @@ export function persistedSignal<T>(
 
   effect(() => {
     const value = sig();
-    if (typeof localStorage === 'undefined') return;
     if (pending) clearTimeout(pending);
     pending = setTimeout(() => {
       writePersisted(key, value);

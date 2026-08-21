@@ -49,6 +49,38 @@ export function isIos(): boolean {
 }
 
 /**
+ * Probes whether window.localStorage can actually be READ.
+ *
+ * Chrome (desktop and Android) throws a SecurityError (DOMException code 18) on the mere
+ * property access when the user has blocked site data / third-party cookies for the origin,
+ * or when the page runs in an embedded context whose storage is partitioned away. Firestore's
+ * persistentMultipleTabManager calls WebStorageSharedClientState.isAvailable(window) — which
+ * dereferences window.localStorage without a guard — from inside its AsyncQueue, long after
+ * initializeFirestore() returned. The throw therefore surfaces as an UNHANDLED rejection that
+ * the try/catch around initializeFirestore() below cannot see (SCS-7N), and Firestore's queue
+ * is left permanently failed. So probe up front and take the memory cache instead.
+ *
+ * indexedDB is checked in the same guard: the persistent cache needs it, and the settings that
+ * revoke localStorage revoke it too.
+ */
+export function isWebStorageAvailable(): boolean {
+  try {
+    if (typeof window === 'undefined') return false;
+    if (!window.indexedDB) return false;
+    const storage = window.localStorage;
+    if (!storage) return false;
+    // Reading the property can succeed while access is still denied (Firefox "block cookies"),
+    // so exercise a real read/write round trip.
+    const probe = '__okr_storage_probe__';
+    storage.setItem(probe, '1');
+    storage.removeItem(probe);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Firestore initialization.
  *
  * Transport: Safari and Firefox force long polling (WebChannel/WebSocket reliability issue on
@@ -110,7 +142,10 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
     // hang under Safari ITP / Firefox ETP / private mode escapes the try/catch below (which only
     // catches a synchronous throw) and stalls the first snapshot forever (e.g. the side-menu
     // spinner never clears). Memory cache avoids that; offline persistence is dropped.
-    if (isFirefoxBrowser || isSafariBrowser || isIosDevice) {
+    // Chrome/Android with site data blocked: the multi-tab manager's localStorage read throws
+    // asynchronously and kills the AsyncQueue (SCS-7N) — see isWebStorageAvailable().
+    const webStorageAvailable = isWebStorageAvailable();
+    if (isFirefoxBrowser || isSafariBrowser || isIosDevice || !webStorageAvailable) {
       firestore = initializeFirestore(app, {
         ...baseOptions,
         localCache: memoryLocalCache(),
@@ -146,6 +181,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
       isSafari: isSafariBrowser,
       isFirefox: isFirefoxBrowser,
       isIos: isIosDevice,
+      webStorage: webStorageAvailable,
       longPolling: useLongPolling,
       cache: cacheMode,
       emulator: _env.useEmulators,
