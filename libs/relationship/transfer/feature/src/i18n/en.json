@@ -53,8 +53,16 @@
   "subject": "From",
   "object": "To",
   "date": "Date",
-  "resource": "Object",
-  "name": "Occasion",
+  "resource": {
+    "name": {
+      "label": "Resource"
+    }
+  },
+  "name": {
+    "label": "Occasion",
+    "placeholder": "e.g. purchase of a single scull",
+    "helper": "A short title for this transfer."
+  },
   "state": "Status",
   "type": "Transfer type",
   "transfer_type": {
@@ -123,5 +131,29 @@
     "resource": "Resource",
     "transfer": "Transfer",
     "fees": "Fees"
+  },
+  "label": {
+    "label": "Designation",
+    "placeholder": "Custom transfer type",
+    "helper": "Only for the transfer type “Other”: your own designation."
+  },
+  "currency": {
+    "label": "Currency",
+    "placeholder": "CHF",
+    "helper": "Currency of the amount."
+  },
+  "price": {
+    "label": "Amount",
+    "placeholder": "0.00",
+    "helper": "Price or fee for this transfer."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Further details about the transfer …"
+  },
+  "dateOfTransfer": {
+    "label": "Transfer date",
+    "placeholder": "DD.MM.YYYY",
+    "helper": "The date on which the transfer takes place."
   }
 }

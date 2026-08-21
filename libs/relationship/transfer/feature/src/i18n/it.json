@@ -53,8 +53,16 @@
   "subject": "Da",
   "object": "A",
   "date": "Data",
-  "resource": "Oggetto",
-  "name": "Occasione",
+  "resource": {
+    "name": {
+      "label": "Risorsa"
+    }
+  },
+  "name": {
+    "label": "Occasione",
+    "placeholder": "ad es. acquisto di un singolo",
+    "helper": "Un titolo breve per questo trasferimento."
+  },
   "state": "Stato",
   "type": "Tipo di trasferimento",
   "transfer_type": {
@@ -123,5 +131,29 @@
     "resource": "Risorsa",
     "transfer": "Trasferimento",
     "fees": "Tasse"
+  },
+  "label": {
+    "label": "Denominazione",
+    "placeholder": "Tipo di trasferimento personalizzato",
+    "helper": "Solo per il tipo di trasferimento «Altro»: denominazione propria."
+  },
+  "currency": {
+    "label": "Valuta",
+    "placeholder": "CHF",
+    "helper": "Valuta dell’importo."
+  },
+  "price": {
+    "label": "Importo",
+    "placeholder": "0.00",
+    "helper": "Prezzo o tassa per questo trasferimento."
+  },
+  "notes": {
+    "label": "Note",
+    "placeholder": "Ulteriori indicazioni sul trasferimento …"
+  },
+  "dateOfTransfer": {
+    "label": "Data del trasferimento",
+    "placeholder": "GG.MM.AAAA",
+    "helper": "Data in cui avviene il trasferimento."
   }
 }

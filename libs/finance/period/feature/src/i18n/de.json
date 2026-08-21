@@ -1,0 +1,15 @@
+{
+  "list": {
+    "title": "Rechnungsperioden"
+  },
+  "empty": "Keine Rechnungsperioden vorhanden.",
+  "locked": {
+    "label": "Gesperrt"
+  },
+  "lock": {
+    "action": "Periode sperren"
+  },
+  "unlock": {
+    "action": "Periode entsperren"
+  }
+}

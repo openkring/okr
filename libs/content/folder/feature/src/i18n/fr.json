@@ -1,11 +1,21 @@
 {
   "folder": {
-    "plural": "Dossiers"
+    "plural": "Dossiers",
+    "empty": "Aucun dossier disponible."
   },
   "operation": {
-    "create": { "label": "Créer un dossier" },
-    "edit": { "label": "Modifier le dossier" },
-    "view": { "label": "Afficher le dossier" }
+    "create": {
+      "label": "Créer un dossier"
+    },
+    "edit": {
+      "label": "Modifier le dossier"
+    },
+    "view": {
+      "label": "Afficher le dossier"
+    },
+    "delete": {
+      "confirm": "Voulez-vous vraiment supprimer ce dossier ?"
+    }
   },
   "actionsheet": {
     "label": {

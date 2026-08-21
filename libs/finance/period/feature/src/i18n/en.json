@@ -1,0 +1,15 @@
+{
+  "list": {
+    "title": "Accounting periods"
+  },
+  "empty": "No accounting periods available.",
+  "locked": {
+    "label": "Locked"
+  },
+  "lock": {
+    "action": "Lock period"
+  },
+  "unlock": {
+    "action": "Unlock period"
+  }
+}

@@ -53,8 +53,16 @@
   "subject": "De",
   "object": "A",
   "date": "Fecha",
-  "resource": "Objeto",
-  "name": "Ocasión",
+  "resource": {
+    "name": {
+      "label": "Recurso"
+    }
+  },
+  "name": {
+    "label": "Motivo",
+    "placeholder": "p. ej. compra de un skiff",
+    "helper": "Un título breve para este traspaso."
+  },
   "state": "Estado",
   "type": "Tipo de transferencia",
   "transfer_type": {
@@ -123,5 +131,29 @@
     "resource": "Recurso",
     "transfer": "Transferencia",
     "fees": "Tasas"
+  },
+  "label": {
+    "label": "Denominación",
+    "placeholder": "Tipo de traspaso propio",
+    "helper": "Solo para el tipo de traspaso «Otros»: denominación propia."
+  },
+  "currency": {
+    "label": "Moneda",
+    "placeholder": "CHF",
+    "helper": "Moneda del importe."
+  },
+  "price": {
+    "label": "Importe",
+    "placeholder": "0.00",
+    "helper": "Precio o tasa de este traspaso."
+  },
+  "notes": {
+    "label": "Notas",
+    "placeholder": "Más detalles sobre el traspaso …"
+  },
+  "dateOfTransfer": {
+    "label": "Fecha del traspaso",
+    "placeholder": "DD.MM.AAAA",
+    "helper": "Fecha en la que se realiza el traspaso."
   }
 }

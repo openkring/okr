@@ -510,7 +510,13 @@
     },
     "person": "Persona:",
     "user": "Utente:",
-    "result": "Risultato"
+    "result": "Risultato",
+    "privileged": {
+      "title": "Utenti con ruoli estesi",
+      "content": "Tutti gli utenti che hanno più del ruolo «registered».",
+      "filter": "Filtra ruolo",
+      "all": "Tutti i ruoli"
+    }
   },
   "session": {
     "title": "Sessioni",

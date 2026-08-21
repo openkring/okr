@@ -1,11 +1,21 @@
 {
   "folder": {
-    "plural": "Folders"
+    "plural": "Folders",
+    "empty": "No folders available."
   },
   "operation": {
-    "create": { "label": "Create folder" },
-    "edit": { "label": "Edit folder" },
-    "view": { "label": "Show folder" }
+    "create": {
+      "label": "Create folder"
+    },
+    "edit": {
+      "label": "Edit folder"
+    },
+    "view": {
+      "label": "Show folder"
+    },
+    "delete": {
+      "confirm": "Do you really want to delete this folder?"
+    }
   },
   "actionsheet": {
     "label": {

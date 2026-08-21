@@ -1,11 +1,21 @@
 {
   "folder": {
-    "plural": "Carpetas"
+    "plural": "Carpetas",
+    "empty": "No hay carpetas disponibles."
   },
   "operation": {
-    "create": { "label": "Crear carpeta" },
-    "edit": { "label": "Modificar carpeta" },
-    "view": { "label": "Mostrar carpeta" }
+    "create": {
+      "label": "Crear carpeta"
+    },
+    "edit": {
+      "label": "Modificar carpeta"
+    },
+    "view": {
+      "label": "Mostrar carpeta"
+    },
+    "delete": {
+      "confirm": "¿Seguro que quieres eliminar esta carpeta?"
+    }
   },
   "actionsheet": {
     "label": {

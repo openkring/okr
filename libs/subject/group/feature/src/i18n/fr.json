@@ -27,7 +27,8 @@
     "conf": "Le groupe a été créé.",
     "error": "Le groupe n'a pas pu être créé.",
     "duplicate": "ID en double",
-    "exists": "Un groupe avec cet ID existe déjà. Veuillez utiliser un autre ID."
+    "exists": "Un groupe avec cet ID existe déjà. Veuillez utiliser un autre ID.",
+    "info": "Afin de garder un peu de contrôle sur la création de nouveaux groupes (p. ex. éviter des groupes identiques ou similaires ayant le même but), le rôle « privileged » est nécessaire. Ce rôle est essentiellement détenu par les membres du comité. Si tu souhaites ouvrir ton propre groupe, indique-le dans la discussion d’assistance avec le nom du groupe, ses membres et son but. Tu deviendras alors administrateur de ce groupe et pourras par exemple gérer les membres, créer de nouveaux rendez-vous, etc."
   },
   "delete": {
     "label": "Supprimer le groupe",
@@ -158,5 +159,50 @@
   "hasMembers": {
     "label": "Afficher les membres",
     "helper": "Les membres du groupe sont affichés à tous les membres du groupe."
+  },
+  "info": {
+    "title": "À propos des groupes",
+    "intro": "Un groupe réunit tout ce qu’une poignée de personnes partagent : les échanges, les rendez-vous communs et les documents qui s’y rapportent. Les nouveaux groupes démarrent avec le strict nécessaire — discussion, calendrier et membres ; l’administratrice du groupe active les autres domaines au besoin dans la configuration du groupe. En principe, un groupe n’est visible que par ses membres.",
+    "members": {
+      "title": "Membres",
+      "text": "La liste de toutes les personnes qui font partie du groupe. Elles seules voient les contenus du groupe et reçoivent les notifications de la discussion de groupe."
+    },
+    "chat": {
+      "title": "Discussion",
+      "text": "La discussion de groupe fermée pour tout ce qui est éphémère : arrangements, questions, changements spontanés. Chaque nouveau message est envoyé aux membres en notification push."
+    },
+    "calendar": {
+      "title": "Calendrier",
+      "text": "Les rendez-vous du groupe — entraînements, séances, événements. Ils apparaissent en plus dans le calendrier personnel des membres et peuvent être exportés vers leur propre calendrier."
+    },
+    "content": {
+      "title": "Contenu",
+      "text": "La page d’accueil du groupe pour les informations qui restent valables plus longtemps : concepts, modes d’emploi, contacts. Elle est tenue à jour par les administrateurs du groupe."
+    },
+    "tasks": {
+      "title": "Tâches",
+      "text": "Les tâches en suspens du groupe, avec une personne responsable et une échéance. Sans personne assignée, une tâche revient au contact principal du groupe."
+    },
+    "files": {
+      "title": "Fichiers",
+      "text": "Le dossier commun du groupe pour les documents, photos et PDF — disponible pour tous les membres, quel que soit l’appareil."
+    },
+    "admin": {
+      "title": "Administration du groupe",
+      "text": "Chaque groupe a un ou plusieurs administrateurs. Ils gèrent les membres, créent les rendez-vous, tiennent le contenu à jour et déterminent quels domaines le groupe propose. L’administrateur cité en premier est aussi le contact principal."
+    },
+    "create": {
+      "title": "Créer un nouveau groupe"
+    },
+    "support": {
+      "link": "Vers la discussion d’assistance"
+    }
+  },
+  "enhanced": {
+    "label": "Mode avancé"
+  },
+  "chatMode": {
+    "label": "Mode de discussion pour les non-membres",
+    "helper": "shared : les non-membres rejoignent la salle de groupe commune et lisent tout. ask : chaque non-membre obtient sa propre salle avec tout le groupe — pour les groupes qui doivent être joignables par tous mais dont les demandes sont confidentielles (urgence, assistance, comité, commissions)."
   }
 }

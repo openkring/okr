@@ -1,0 +1,15 @@
+{
+  "list": {
+    "title": "Periodi contabili"
+  },
+  "empty": "Nessun periodo contabile disponibile.",
+  "locked": {
+    "label": "Bloccato"
+  },
+  "lock": {
+    "action": "Blocca periodo"
+  },
+  "unlock": {
+    "action": "Sblocca periodo"
+  }
+}

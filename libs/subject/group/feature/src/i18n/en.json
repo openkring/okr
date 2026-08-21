@@ -27,7 +27,8 @@
     "conf": "Group has been created.",
     "error": "Group could not be created.",
     "duplicate": "Duplicate ID",
-    "exists": "A group with this ID already exists. Please use a different ID."
+    "exists": "A group with this ID already exists. Please use a different ID.",
+    "info": "To keep the creation of new groups under some control (e.g. to avoid identical or similar groups for the same purpose), the role 'privileged' is required. That role is essentially held by the board members. If you would like to open your own group, please say so in the support chat, with the name of the group, its members and its purpose. You then become the administrator of that group and can, for example, manage the group members, create new events and so on."
   },
   "delete": {
     "label": "Delete group",
@@ -158,5 +159,50 @@
   "hasMembers": {
     "label": "Show members",
     "helper": "The members of the group are shown to all group members."
+  },
+  "info": {
+    "title": "About groups",
+    "intro": "A group bundles everything a handful of people share: the conversation, the shared dates and the related documents. New groups start lean with chat, calendar and members — the group administrator enables the remaining areas in the group configuration when they are needed. As a rule, a group is visible only to its members.",
+    "members": {
+      "title": "Members",
+      "text": "The list of all people who belong to the group. Only they see the group content and receive notifications from the group chat."
+    },
+    "chat": {
+      "title": "Chat",
+      "text": "The closed group chat for everything short-lived: arrangements, questions, spontaneous changes. Every new message is pushed to the members."
+    },
+    "calendar": {
+      "title": "Calendar",
+      "text": "The group’s events — training sessions, meetings, occasions. They additionally appear in the members’ personal calendar and can be exported to their own calendar."
+    },
+    "content": {
+      "title": "Content",
+      "text": "The group’s home page for information that stays valid for a longer time: concepts, instructions, contacts. It is maintained by the group administrators."
+    },
+    "tasks": {
+      "title": "Todos",
+      "text": "The group’s open items with an owner and a due date. Without an assigned person a todo goes to the group’s main contact."
+    },
+    "files": {
+      "title": "Files",
+      "text": "The group’s shared folder for documents, photos and PDFs — available to all members, on any device."
+    },
+    "admin": {
+      "title": "Group administration",
+      "text": "Every group has one or more administrators. They manage the members, create events, maintain the content and decide which areas the group offers at all. The administrator listed first is also the main contact."
+    },
+    "create": {
+      "title": "Create a new group"
+    },
+    "support": {
+      "link": "To the support chat"
+    }
+  },
+  "enhanced": {
+    "label": "Advanced mode"
+  },
+  "chatMode": {
+    "label": "Chat mode for non-members",
+    "helper": "shared: non-members join the common group room and read everything. ask: every non-member gets their own room with the whole group — for groups that should be reachable by everyone but whose requests are confidential (emergency, support, board, committees)."
   }
 }

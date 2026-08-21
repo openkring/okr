@@ -2,9 +2,9 @@ import { Signal } from '@angular/core';
 
 export const FOLDER_I18N_KEYS = {
   as_title:                        '@actionsheet.title',
-  delete_confirm:                  '@folder.operation.delete.confirm',
-  plural:                          '@folder.plural',
-  empty:                           '@folder.empty',
+  delete_confirm:                  '@content/folder/feature.operation.delete.confirm',
+  plural:                          '@content/folder/feature.folder.plural',
+  empty:                           '@content/folder/feature.folder.empty',
   changeConfirmation_ok:           '@content/folder/feature.changeConfirmation.ok',
   changeConfirmation_cancel:       '@content/folder/feature.changeConfirmation.cancel',
   changeConfirmation_confirmation: '@content/folder/feature.changeConfirmation.confirmation',

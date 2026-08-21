@@ -288,7 +288,8 @@
       "view": "Afficher l'organisateur",
       "call": "Appeler l'organisateur",
       "chat": "Discuter avec l'organisateur",
-      "email": "Envoyer un e-mail à l'organisateur"
+      "email": "Envoyer un e-mail à l'organisateur",
+      "contact": "Personne organisatrice …"
     }
   },
   "seriesId": {
@@ -423,5 +424,11 @@
     "label": "Libellé du lien",
     "placeholder": "p. ex. Avis de course",
     "helper": "Texte affiché à la place de l’URL. Laisser vide pour afficher l’URL elle-même."
+  },
+  "cancelEvent": {
+    "label": "Avis d’annulation",
+    "placeholder": "Motif de l’annulation, par ex. « Annulé en raison de l’alerte tempête. »",
+    "banner": "Annulé",
+    "conf": "L’avis d’annulation a été enregistré."
   }
 }

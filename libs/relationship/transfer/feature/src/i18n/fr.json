@@ -53,8 +53,16 @@
   "subject": "De",
   "object": "À",
   "date": "Date",
-  "resource": "Objet",
-  "name": "Occasion",
+  "resource": {
+    "name": {
+      "label": "Ressource"
+    }
+  },
+  "name": {
+    "label": "Occasion",
+    "placeholder": "p. ex. achat d’un skiff",
+    "helper": "Un titre court pour ce transfert."
+  },
   "state": "Statut",
   "type": "Type de transfert",
   "transfer_type": {
@@ -123,5 +131,29 @@
     "resource": "Ressource",
     "transfer": "Transfert",
     "fees": "Frais"
+  },
+  "label": {
+    "label": "Désignation",
+    "placeholder": "Type de transfert personnalisé",
+    "helper": "Uniquement pour le type de transfert « Autre » : votre propre désignation."
+  },
+  "currency": {
+    "label": "Monnaie",
+    "placeholder": "CHF",
+    "helper": "Monnaie du montant."
+  },
+  "price": {
+    "label": "Montant",
+    "placeholder": "0.00",
+    "helper": "Prix ou frais pour ce transfert."
+  },
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Autres indications sur le transfert …"
+  },
+  "dateOfTransfer": {
+    "label": "Date du transfert",
+    "placeholder": "JJ.MM.AAAA",
+    "helper": "Date à laquelle le transfert a lieu."
   }
 }

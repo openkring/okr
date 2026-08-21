@@ -12,8 +12,8 @@ export const ASSET_I18N_KEYS = {
   deduction_run:        PFX + 'deduction.run',
 
   name:                 PFX + 'name.label',
-  number:               PFX + 'name.number',
-  category:             PFX + 'name.category',
+  number:               PFX + 'number.label',
+  category:             PFX + 'category.label',
   acquisition_date:     PFX + 'date.acquisition.label',
   life:                 PFX + 'life.label',
   period_end:           PFX + 'date.end.label',

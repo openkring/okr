@@ -62,6 +62,9 @@
     },
     "cancelled": {
       "label": "Annulée"
+    },
+    "all": {
+      "label": "Tous"
     }
   },
   "counterparty": {

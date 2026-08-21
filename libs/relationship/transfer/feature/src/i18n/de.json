@@ -53,8 +53,16 @@
   "subject": "Von",
   "object": "An",
   "date": "Datum",
-  "resource": "Objekt",
-  "name": "Anlass",
+  "resource": {
+    "name": {
+      "label": "Resource"
+    }
+  },
+  "name": {
+    "label": "Anlass",
+    "placeholder": "z.B. Kauf Skiff",
+    "helper": "Kurzer Titel für diesen Transfer."
+  },
   "state": "Status",
   "type": "Transfer-Art",
   "transfer_type": {
@@ -123,5 +131,29 @@
     "resource": "Resource",
     "transfer": "Transfer",
     "fees": "Gebühren"
+  },
+  "label": {
+    "label": "Bezeichnung",
+    "placeholder": "Eigene Transfer-Art",
+    "helper": "Nur bei Transfer-Art «Sonstiges»: eigene Bezeichnung."
+  },
+  "currency": {
+    "label": "Währung",
+    "placeholder": "CHF",
+    "helper": "Währung des Betrags."
+  },
+  "price": {
+    "label": "Betrag",
+    "placeholder": "0.00",
+    "helper": "Preis oder Gebühr für diesen Transfer."
+  },
+  "notes": {
+    "label": "Notizen",
+    "placeholder": "Weitere Angaben zum Transfer …"
+  },
+  "dateOfTransfer": {
+    "label": "Transfer-Datum",
+    "placeholder": "TT.MM.JJJJ",
+    "helper": "Datum, an dem der Transfer stattfindet."
   }
 }

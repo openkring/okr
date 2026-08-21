@@ -1,11 +1,21 @@
 {
   "folder": {
-    "plural": "Cartelle"
+    "plural": "Cartelle",
+    "empty": "Nessuna cartella disponibile."
   },
   "operation": {
-    "create": { "label": "Creare cartella" },
-    "edit": { "label": "Modificare cartella" },
-    "view": { "label": "Mostrare cartella" }
+    "create": {
+      "label": "Creare cartella"
+    },
+    "edit": {
+      "label": "Modificare cartella"
+    },
+    "view": {
+      "label": "Mostrare cartella"
+    },
+    "delete": {
+      "confirm": "Vuoi davvero eliminare questa cartella?"
+    }
   },
   "actionsheet": {
     "label": {

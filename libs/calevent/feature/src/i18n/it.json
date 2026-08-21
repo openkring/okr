@@ -288,7 +288,8 @@
       "view": "Mostra l'organizzatore",
       "call": "Chiama l'organizzatore",
       "chat": "Chatta con l'organizzatore",
-      "email": "Invia un'e-mail all'organizzatore"
+      "email": "Invia un'e-mail all'organizzatore",
+      "contact": "Persona organizzatrice …"
     }
   },
   "seriesId": {
@@ -423,5 +424,11 @@
     "label": "Etichetta del link",
     "placeholder": "p. es. Bando di gara",
     "helper": "Testo mostrato al posto dell’URL. Lasciare vuoto per mostrare l’URL stesso."
+  },
+  "cancelEvent": {
+    "label": "Avviso di annullamento",
+    "placeholder": "Motivo dell’annullamento, ad es. «Annullato per allerta temporale.»",
+    "banner": "Annullato",
+    "conf": "L’avviso di annullamento è stato salvato."
   }
 }

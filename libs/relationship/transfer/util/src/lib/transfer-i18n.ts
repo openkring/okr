@@ -45,9 +45,9 @@ export const TRANSFER_I18N_KEYS = {
 
   subject:                         PFX + 'subject',
   object:                          PFX + 'object',
-  date:                            PFX + 'dateOfTransfer',
-  resource:                        PFX + 'resource',
-  name:                            PFX + 'name',
+  date:                            PFX + 'list.header.date',
+  resource:                        PFX + 'list.header.resource',
+  name:                            PFX + 'list.header.name',
   state:                           PFX + 'state',
   type:                             PFX + 'type',
 

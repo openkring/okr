@@ -288,7 +288,8 @@
       "view": "Show organizer",
       "call": "Call organizer",
       "chat": "Chat with organizer",
-      "email": "Email organizer"
+      "email": "Email organizer",
+      "contact": "Organizer …"
     }
   },
   "seriesId": {
@@ -423,5 +424,11 @@
     "label": "Link label",
     "placeholder": "e.g. Race announcement",
     "helper": "Text shown instead of the URL. Leave empty to show the URL itself."
+  },
+  "cancelEvent": {
+    "label": "Cancellation notice",
+    "placeholder": "Reason for the cancellation, e.g. \"Cancelled because of the storm warning.\"",
+    "banner": "Cancelled",
+    "conf": "The cancellation notice has been saved."
   }
 }

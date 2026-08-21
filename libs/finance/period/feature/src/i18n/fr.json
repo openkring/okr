@@ -1,0 +1,15 @@
+{
+  "list": {
+    "title": "Périodes comptables"
+  },
+  "empty": "Aucune période comptable disponible.",
+  "locked": {
+    "label": "Verrouillée"
+  },
+  "lock": {
+    "action": "Verrouiller la période"
+  },
+  "unlock": {
+    "action": "Déverrouiller la période"
+  }
+}

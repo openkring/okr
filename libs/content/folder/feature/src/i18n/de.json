@@ -1,11 +1,21 @@
 {
   "folder": {
-    "plural": "Ordner"
+    "plural": "Ordner",
+    "empty": "Keine Ordner vorhanden."
   },
   "operation": {
-    "create": { "label": "Ordner erstellen" },
-    "edit": { "label": "Ordner ändern" },
-    "view": { "label": "Ordner anzeigen" }
+    "create": {
+      "label": "Ordner erstellen"
+    },
+    "edit": {
+      "label": "Ordner ändern"
+    },
+    "view": {
+      "label": "Ordner anzeigen"
+    },
+    "delete": {
+      "confirm": "Soll dieser Ordner wirklich gelöscht werden?"
+    }
   },
   "actionsheet": {
     "label": {
