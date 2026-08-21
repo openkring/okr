@@ -13,7 +13,7 @@ import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { error, exportCsv, getExportFileName } from '@okr/shared-util-angular';
 import { chipMatches, DateFormat, getImgixUrlWithAutoParams, getItemLabel, getSystemQuery, getTodayStr, hasRole, nameMatches } from '@okr/shared-util-core';
 
-import { BoatLabelRef, boatLabelKey, boatTargetKey, getBoatSuffix, getPrivateBoatKeys, getUsageForYear, parseBoatLabelKey } from '@okr/resource-util';
+import { BoatLabelRef, boatLabelKey, boatTargetKey, getBoatBudget, getBoatSuffix, getPrivateBoatKeys, getUsageForYear, parseBoatLabelKey } from '@okr/resource-util';
 
 import { ResourceStore } from './resource.store';
 
@@ -31,9 +31,6 @@ const EXCLUDED_TYPES = ['b2p'];
 
 /** Years covered by the Bootsstrategie table, starting at the selected one. */
 const STRATEGY_YEARS = 5;
-
-/** Above this budget the Bootsbeschaffung row turns red. */
-const BUDGET_LIMIT = 30_000;
 
 type Cell = { usage: string; type: string };
 type StrategyLine = { type: string; text: string; flags: string; price: number; swisslos: number; donations: number };
@@ -71,6 +68,8 @@ type StrategyLine = { type: string; text: string; flags: string; price: number; 
     .strategy thead th, .strategy tbody th { background: #A3C0E1; color: #000; white-space: nowrap; }
     .strategy .line { display: flex; justify-content: space-between; gap: 12px; }
     .strategy ion-checkbox { --size: 16px; font-weight: 400; font-size: 0.9em; }
+    .strategy .budget-input { --background: transparent; --padding-start: 0; --padding-top: 0; --padding-bottom: 0;
+      min-height: 0; font-size: inherit; }
     .cdk-drag-preview { box-shadow: 0 4px 16px rgba(0,0,0,.2); opacity: .9; }
     .cdk-drag-placeholder { opacity: .3; }
     .cdk-drop-list-dragging .boat:not(.cdk-drag-placeholder) { transition: transform 250ms cubic-bezier(0,0,.2,1); }
@@ -188,6 +187,18 @@ type StrategyLine = { type: string; text: string; flags: string; price: number; 
             </tr>
           </thead>
           <tbody>
+            <!-- the season's budget; an untouched year shows the one it inherits (getBoatBudget) -->
+            <tr>
+              <th>{{ store.i18n.strategy_budget() }}</th>
+              @for (y of strategyYears(); track y) {
+                <td>
+                  <ion-input class="budget-input" type="number" inputmode="numeric" min="0" [readonly]="readOnly()"
+                    [attr.aria-label]="store.i18n.strategy_budget()" [title]="store.i18n.strategy_budget()"
+                    [value]="budget(y)"
+                    (ionBlur)="onBudgetChange(y, $event)" />
+                </td>
+              }
+            </tr>
             @for (row of buyRows(); track $index; let first = $first) {
               <tr>
                 <th>{{ first ? store.i18n.strategy_buy() : '' }}</th>
@@ -215,9 +226,9 @@ type StrategyLine = { type: string; text: string; flags: string; price: number; 
               </tr>
             }
             <tr>
-              <th>{{ store.i18n.strategy_budget() }}</th>
+              <th>{{ store.i18n.strategy_saldo() }}</th>
               @for (y of strategyYears(); track y) {
-                <td [style.background]="budgetBackground(y)" [style.color]="budgetForeground(y)">{{ money(budget(y)) }}</td>
+                <td [style.background]="saldoBackground(y)" [style.color]="saldoForeground(y)">{{ money(saldo(y)) }}</td>
               }
             </tr>
             <tr>
@@ -392,25 +403,31 @@ export class BoatAllocation {
     return this.sumOf(year, 'buy', 'donations');
   }
 
-  protected budget(year: number): number {
+  /** What the season's purchases cost net of its sales — measured against the budget row. */
+  protected saldo(year: number): number {
     return this.sumOf(year, 'buy') - this.sumOf(year, 'sell');
   }
 
   protected effectiveCost(year: number): number {
-    return this.budget(year) - this.swisslos(year) - this.donations(year);
+    return this.saldo(year) - this.swisslos(year) - this.donations(year);
   }
 
-  /** Over budget is red, within it green — see BUDGET_LIMIT. */
-  private budgetColor(year: number): string {
-    return this.budget(year) > BUDGET_LIMIT ? 'danger' : 'success';
+  /** The budget of the season — its own entry, else the nearest earlier one. */
+  protected budget(year: number): number {
+    return getBoatBudget(this.store.boatBudgets(), year);
   }
 
-  protected budgetBackground(year: number): string {
-    return `var(--ion-color-${this.budgetColor(year)})`;
+  /** Over the season's budget is red, within it green. */
+  private saldoColor(year: number): string {
+    return this.saldo(year) > this.budget(year) ? 'danger' : 'success';
   }
 
-  protected budgetForeground(year: number): string {
-    return `var(--ion-color-${this.budgetColor(year)}-contrast)`;
+  protected saldoBackground(year: number): string {
+    return `var(--ion-color-${this.saldoColor(year)})`;
+  }
+
+  protected saldoForeground(year: number): string {
+    return `var(--ion-color-${this.saldoColor(year)}-contrast)`;
   }
 
   protected money(amount: number): string {
@@ -576,6 +593,17 @@ export class BoatAllocation {
     const count = Math.max(0, Math.trunc(Number(raw)));
     if (!Number.isFinite(count) || count === (this.target(usage, type) ?? 0)) return;
     await this.store.setBoatTarget(this.year(), usage, type, count, this.readOnly());
+  }
+
+  /**
+   * Store the budget of one season. An unchanged field writes nothing — that is what keeps an
+   * inherited value inherited rather than pinning a copy of it to every column on first blur.
+   */
+  protected async onBudgetChange(year: number, event: Event): Promise<void> {
+    const raw = (event.target as HTMLIonInputElement).value;
+    const amount = Math.max(0, Math.trunc(Number(raw)));
+    if (!Number.isFinite(amount) || amount === this.budget(year)) return;
+    await this.store.setBoatBudget(year, amount, this.readOnly());
   }
 
   /******************************** export & print ******************************************* */

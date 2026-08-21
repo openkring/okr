@@ -144,3 +144,21 @@ export function getBoatSuffix(load: string | undefined, isPrivate: boolean): str
   const weight = max === undefined ? '' : max <= 75 ? 'l' : max > 80 ? 's' : '';
   return weight + (isPrivate ? 'p' : '');
 }
+
+/** Fallback budget of the Bootsstrategie: what a season inherits when no budget was ever entered. */
+export const DEFAULT_BOAT_BUDGET = 30_000;
+
+/**
+ * The Bootsbeschaffungs-Budget that applies in `year` (`BoatTargetModel.budgets`, key = year).
+ *
+ * The map is sparse on purpose: a budget is entered once and carries forward, so a season
+ * without its own entry inherits the nearest EARLIER one — never a later one, which would let
+ * a future decision rewrite the past. `DEFAULT_BOAT_BUDGET` when nothing earlier exists.
+ */
+export function getBoatBudget(budgets: Record<string, number> | undefined, year: number): number {
+  const earlier = Object.entries(budgets ?? {})
+    .map(([key, value]) => [Number(key), Number(value)] as const)
+    .filter(([entry, value]) => Number.isInteger(entry) && entry <= year && Number.isFinite(value))
+    .sort((a, b) => b[0] - a[0]);
+  return earlier.length ? earlier[0][1] : DEFAULT_BOAT_BUDGET;
+}

@@ -88,6 +88,7 @@ export const ResourceStore = signalStore(
       resource: computed(() => store.resResource.value()),
       boatTargets: computed(() => store.targetResource.value()?.targets ?? {}),
       boatLabels: computed(() => store.targetResource.value()?.labels ?? {}),
+      boatBudgets: computed(() => store.targetResource.value()?.budgets ?? {}),
       currentUser: computed(() => store.appStore.currentUser()),
       tenantId: computed(() => store.appStore.tenantId()),
       isLoading: computed(() => store.resourceResource.isLoading()),
@@ -241,6 +242,15 @@ export const ResourceStore = signalStore(
         await this.patchBoatTargetDoc({ targets: { [boatTargetKey(year, usage, type)]: count } });
       },
 
+      /**
+       * Write the Bootsbeschaffungs-Budget of one season. Only that season is stored — the
+       * later ones inherit it (getBoatBudget), so the entry stays where it was made.
+       */
+      async setBoatBudget(year: number, amount: number, readOnly = true): Promise<void> {
+        if (readOnly) return;
+        await this.patchBoatTargetDoc({ budgets: { [String(year)]: amount } });
+      },
+
       /** The Bootseinteilung legend as a sheet — dynamic import, the modal reads the AppStore. */
       async showBoatAllocationInfo(): Promise<void> {
         const { BoatAllocationInfoModal } = await import('./boat-allocation-info.modal');
@@ -291,7 +301,7 @@ export const ResourceStore = signalStore(
        * entry of `undefined` REMOVES that slot: the write is a full overwrite (set), so a key
        * dropped here is gone from Firestore too.
        */
-      async patchBoatTargetDoc(patch: { targets?: Record<string, number>; labels?: Record<string, BoatSlotLabel | undefined> }): Promise<void> {
+      async patchBoatTargetDoc(patch: { targets?: Record<string, number>; labels?: Record<string, BoatSlotLabel | undefined>; budgets?: Record<string, number> }): Promise<void> {
         const tenantId = store.tenantId();
         const doc = store.targetResource.value() ?? new BoatTargetModel(tenantId);
         await store.firestoreService.updateObject<BoatTargetModel>(BoatTargetCollection, tenantId, {
@@ -299,6 +309,7 @@ export const ResourceStore = signalStore(
           tenants: [tenantId],
           targets: { ...doc.targets, ...patch.targets },
           labels: dropEmptyLabels({ ...doc.labels, ...patch.labels }),
+          budgets: { ...doc.budgets, ...patch.budgets },
         }, true);
         store.targetResource.reload();
       },

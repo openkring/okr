@@ -136,6 +136,7 @@ export const RESOURCE_I18N_KEYS = {
   strategy_buy:             PFX + 'allocation.strategy.buy',
   strategy_sell:            PFX + 'allocation.strategy.sell',
   strategy_budget:          PFX + 'allocation.strategy.budget',
+  strategy_saldo:           PFX + 'allocation.strategy.saldo',
   strategy_swisslos:        PFX + 'allocation.strategy.swisslos',
   strategy_donations:       PFX + 'allocation.strategy.donations',
   strategy_effective:       PFX + 'allocation.strategy.effective',

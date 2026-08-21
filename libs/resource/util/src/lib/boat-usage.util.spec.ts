@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boatLabelKey, boatLabelRefIn, boatTargetKey, parseBoatLabelKey, getBoatSuffix, getMaxLoad, getUsageForYear, setUsageFromYear } from './boat-usage.util';
+import { boatLabelKey, boatLabelRefIn, boatTargetKey, parseBoatLabelKey, DEFAULT_BOAT_BUDGET, getBoatBudget, getBoatSuffix, getMaxLoad, getUsageForYear, setUsageFromYear } from './boat-usage.util';
 
 describe('getUsageForYear', () => {
   it('returns a legacy plain value for every year', () => {
@@ -131,5 +131,36 @@ describe('setUsageFromYear', () => {
 
   it('starts from nothing', () => {
     expect(setUsageFromYear('', 2026, 'bs')).toBe('2026:bs,2027:bs,2028:bs,2029:bs,2030:bs,2031:bs');
+  });
+});
+
+describe('getBoatBudget', () => {
+  it('falls back to the default when nothing is stored', () => {
+    expect(getBoatBudget(undefined, 2026)).toBe(DEFAULT_BOAT_BUDGET);
+    expect(getBoatBudget({}, 2026)).toBe(DEFAULT_BOAT_BUDGET);
+  });
+
+  it('returns the season\'s own entry', () => {
+    expect(getBoatBudget({ '2026': 45000 }, 2026)).toBe(45000);
+  });
+
+  it('inherits the nearest earlier season', () => {
+    const budgets = { '2024': 20000, '2027': 50000 };
+
+    expect(getBoatBudget(budgets, 2025)).toBe(20000);
+    expect(getBoatBudget(budgets, 2026)).toBe(20000);
+    expect(getBoatBudget(budgets, 2028)).toBe(50000);
+  });
+
+  it('never reaches forward — a season before the first entry keeps the default', () => {
+    expect(getBoatBudget({ '2027': 50000 }, 2026)).toBe(DEFAULT_BOAT_BUDGET);
+  });
+
+  it('keeps an explicit zero rather than inheriting', () => {
+    expect(getBoatBudget({ '2024': 20000, '2026': 0 }, 2026)).toBe(0);
+  });
+
+  it('ignores keys that are not a year', () => {
+    expect(getBoatBudget({ 'x': 1000, '2026': 45000 }, 2026)).toBe(45000);
   });
 });

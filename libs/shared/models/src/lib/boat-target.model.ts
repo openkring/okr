@@ -14,6 +14,12 @@ export class BoatTargetModel {
   public targets: Record<string, number> = {};
   /** Label of a single empty slot; the key is `${year}|${usage}|${type}|${slotIndex}` (boatLabelKey). */
   public labels: Record<string, BoatSlotLabel> = {};
+  /**
+   * Bootsbeschaffungs-Budget per season, key = `${year}`. Sparse: a season without an entry
+   * inherits the nearest earlier one (see getBoatBudget in @okr/resource-util), so a budget is
+   * entered once and carries forward until it is changed.
+   */
+  public budgets: Record<string, number> = {};
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];
