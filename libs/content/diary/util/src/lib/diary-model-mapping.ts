@@ -49,7 +49,9 @@ export function toDiaryModel(
 ): DiaryModel {
   const model = new DiaryModel(tenantId);
   model.authorKey = authorKey;
-  model.date = convertDateFormatToString(fmScalar(file, 'date'), DateFormat.IsoDate, DateFormat.StoreDate);
+  // isStrict = false: the import never aborts, it reports — a missing or unparseable date
+  // must leave the entry visibly dateless rather than throw and abort the whole run.
+  model.date = convertDateFormatToString(fmScalar(file, 'date'), DateFormat.IsoDate, DateFormat.StoreDate, false);
   model.title = fmScalar(file, 'title');
   model.text = sectionContent(file, THOUGHTS_HEADING).trim();
   model.done = doneItems(file);

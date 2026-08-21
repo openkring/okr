@@ -100,4 +100,14 @@ describe('toDiaryModel', () => {
     expect(model.tenants).toEqual(['bka']);
     expect(model.authorKey).toBe('uid1');
   });
+
+  it('leaves the date empty instead of throwing when the key is missing', () => {
+    const file = parseDiaryMarkdown('---\nstatus: final\n---\n\n## Persönliche Gedanken\n\nx\n');
+    expect(toDiaryModel(file, 'bka', 'uid1', RESOLVER).date).toBe('');
+  });
+
+  it('leaves the date empty instead of throwing when the value is unparseable', () => {
+    const file = parseDiaryMarkdown('---\ndate: 16.08.2026\n---\n\n## Persönliche Gedanken\n\nx\n');
+    expect(toDiaryModel(file, 'bka', 'uid1', RESOLVER).date).toBe('');
+  });
 });
