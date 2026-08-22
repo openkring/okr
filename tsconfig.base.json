@@ -242,6 +242,7 @@
       "@okr/subject-person-ui": ["libs/subject/person/ui/src/index.ts"],
       "@okr/subject-person-util": ["libs/subject/person/util/src/index.ts"],
       "@okr/subject-swisscities-ui": ["libs/subject/swisscities/ui/src/index.ts"],
+      "@okr/system-alias-util": ["libs/system/alias/util/src/index.ts"],
       "@okr/system-workflow-data-access": ["libs/system/workflow/data-access/src/index.ts"],
       "@okr/system-workflow-feature": ["libs/system/workflow/feature/src/index.ts"],
       "@okr/system-workflow-ui": ["libs/system/workflow/ui/src/index.ts"],
