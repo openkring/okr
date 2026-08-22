@@ -118,6 +118,9 @@
     },
     "meeting": {
       "label": "Sitzungen & Protokolle"
+    },
+    "alias": {
+      "label": "Kurzlinks & QR-Codes"
     }
   },
   "picker": {

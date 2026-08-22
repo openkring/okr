@@ -2167,6 +2167,39 @@ const meeting: FeatureBlock = {
   ],
 };
 
+/**
+ * `libs/system/alias/*` — der generische Alias-Resolver (Spec 2026-08-22, TOC 3.21).
+ *
+ * Der Kern ist `(space, alias) → target`; der URL-Shortener ist nur sein erster Konsument.
+ * Deshalb sitzt der Block im `special`-Bundle und nicht bei `cms` — er ist Infrastruktur, die
+ * andere Features benutzen, kein Inhaltstyp.
+ *
+ * `defaultAvailability: 'ga'`: das Feature ist tenant-unabhängig und ohne Einrichtung nutzbar,
+ * sobald ein Admin einen Space angelegt hat. Es gibt nichts daran, was nur für bkaiser Sinn
+ * ergäbe — anders als `business`.
+ *
+ * `collections` listet alle vier, auch die beiden, die erst Teilprojekt 4 schreibt. Genau das
+ * ist der Punkt: eine nicht eingetragene Collection entkommt still dem Retention- und
+ * Audit-Durchgang, und `aliasEvents` trägt gehashte IP und uid.
+ *
+ * `dependsOn: []` ist bewusst leer. Ein Alias zeigt auf eine URL oder auf einen `targetKey`,
+ * und beides ist ein String — der Resolver kennt die Zielmodelle nicht und lädt keine ihrer
+ * Libs. Ein `dependsOn: ['subject']` wäre eine erfundene Abhängigkeit.
+ */
+const alias: FeatureBlock = {
+  id: 'alias',
+  bundle: 'special',
+  label: '@tenant/util.feature.alias.label',
+  icon: 'link',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: ['aliases', 'aliasSpaces', 'aliasStats', 'aliasEvents'],
+  menu: [
+    { key: 'alias-all', name: 'alias-all', url: '/alias/all/alias-context', action: 'navigate', roleNeeded: 'privileged', icon: 'link', label: '@system/alias/util.alias.plural' },
+    { key: 'alias-spaces', name: 'alias-spaces', url: '/alias/spaces', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@system/alias/util.space.plural' },
+  ],
+};
+
 export const FEATURE_BLOCKS: FeatureBlock[] = [
   calevent, aoc, activity, task, instruments, games,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
@@ -2175,5 +2208,5 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   finance, esign, pdfTemplate,
   documentBlock, meeting,
   chat, socialFeed, forms,
-  business,
+  business, alias,
 ];

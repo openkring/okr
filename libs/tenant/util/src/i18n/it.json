@@ -118,6 +118,9 @@
     },
     "meeting": {
       "label": "Riunioni e verbali"
+    },
+    "alias": {
+      "label": "Link brevi e codici QR"
     }
   },
   "picker": {

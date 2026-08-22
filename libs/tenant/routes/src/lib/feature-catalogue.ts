@@ -1081,6 +1081,30 @@ const meeting: BlockRoutes = {
   }],
 };
 
+/**
+ * `alias` — der Alias-Resolver (Spec 2026-08-22, TOC 3.21).
+ *
+ * Die Reihenfolge der Kinder ist LOAD-BEARING: 'spaces' steht vor ':aliasKey', sonst schluckt
+ * der Parameter-Pfad das Wort und /alias/spaces landet auf der Detailseite eines Alias namens
+ * "spaces". Dasselbe gilt fuer ':listId/:contextMenuName', das zwei Segmente braucht und
+ * deshalb nicht mit den einsegmentigen Pfaden kollidiert.
+ *
+ * Der HTTP-Resolver /s/:space/:code ist KEINE Angular-Route: er wird von einem
+ * Hosting-Rewrite an publicApi geleitet und antwortet mit einem 302, bevor die App laedt.
+ */
+const alias: BlockRoutes = {
+  id: 'alias',
+  routes: (): Route[] => [{
+    path: 'alias',
+    canActivate: [isAuthenticatedGuard],
+    children: [
+      { path: 'spaces', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/system-alias-feature').then(m => m.AliasSpaceList) },
+      { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/system-alias-feature').then(m => m.AliasList), data: { color: 'secondary' } },
+      { path: ':aliasKey', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/system-alias-feature').then(m => m.AliasPage) },
+    ],
+  }],
+};
+
 export const FEATURE_ROUTES: BlockRoutes[] = [
   calevent, aoc, activity, task, instruments, games,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
@@ -1089,5 +1113,5 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   finance, esign, pdfTemplate,
   documentBlock, meeting,
   chat, socialFeed, forms,
-  business,
+  business, alias,
 ];

@@ -118,6 +118,9 @@
     },
     "meeting": {
       "label": "Reuniones y actas"
+    },
+    "alias": {
+      "label": "Enlaces cortos y códigos QR"
     }
   },
   "picker": {

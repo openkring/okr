@@ -118,6 +118,9 @@
     },
     "meeting": {
       "label": "Meetings & minutes"
+    },
+    "alias": {
+      "label": "Short links & QR codes"
     }
   },
   "picker": {

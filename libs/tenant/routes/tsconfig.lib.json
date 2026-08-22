@@ -68,6 +68,7 @@
     { "path": "../../subject/group/feature/tsconfig.lib.json" },
     { "path": "../../subject/org/feature/tsconfig.lib.json" },
     { "path": "../../subject/person/feature/tsconfig.lib.json" },
+    { "path": "../../system/alias/feature/tsconfig.lib.json" },
     { "path": "../../system/workflow/feature/tsconfig.lib.json" },
     { "path": "../../task/feature/tsconfig.lib.json" },
     { "path": "../feature/tsconfig.lib.json" },
