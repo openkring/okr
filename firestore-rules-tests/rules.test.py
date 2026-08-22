@@ -214,6 +214,29 @@ seed("tickets/tk1", {"tenants": ["t1"], "isArchived": False, "partnerKey": "p1",
 seed("app-config/t1", {"tenantId": "t1", "gitOrg": "openkring",
                        "enabledFeatures": ["calevent", "task"]})
 
+# alias (spec 2026-08-22): `aliases` ist CF-write-only, und der Grund ist NICHT die Rolle.
+# Die Document-ID ist deterministisch (<tenant>__<space>__<alias>), also wuerde ein
+# Client-setDoc einen bestehenden — womoeglich GEDRUCKTEN — Alias still ueberschreiben
+# statt zu kollidieren. Nur .create() des Admin SDK wirft. Deshalb pruefen die Faelle
+# unten ausdruecklich auch den ADMIN, nicht nur das einfache Mitglied.
+# aliasSpaces ist Konfiguration (admin, nie loeschbar), aliasEvents traegt Klickdaten.
+seed("aliasSpaces/as1", {"tenants": ["t1"], "isArchived": False, "name": "qr",
+                         "kind": "redirect", "isEnabled": True, "roleNeeded": "privileged"})
+seed("aliasSpaces/as2", {"tenants": ["t2"], "isArchived": False, "name": "qr",
+                         "kind": "redirect", "isEnabled": True, "roleNeeded": "privileged"})
+seed("aliases/t1__qr__ab3x4y", {"tenants": ["t1"], "isArchived": False, "space": "qr",
+                                "alias": "Ab3x4y", "targetType": "url",
+                                "targetUrl": "https://seeclub.org", "createdBy": "person.pA",
+                                "isEnabled": True, "useCount": 0})
+seed("aliases/t2__qr__zz9k1m", {"tenants": ["t2"], "isArchived": False, "space": "qr",
+                                "alias": "Zz9k1m", "targetType": "url",
+                                "targetUrl": "https://example.org", "createdBy": "person.pB",
+                                "isEnabled": True, "useCount": 0})
+seed("aliasStats/t1__qr__ab3x4y__2026-08-22", {"tenants": ["t1"], "isArchived": False,
+                                               "aliasKey": "t1__qr__ab3x4y", "count": 3})
+seed("aliasEvents/ev1", {"tenants": ["t1"], "isArchived": False,
+                         "aliasKey": "t1__qr__ab3x4y", "ipHash": "deadbeef", "uid": "uidA"})
+
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
 GET, PATCH, POST, DELETE = "GET", "PATCH", "POST", "DELETE"
@@ -495,6 +518,48 @@ single_cases = [
      body({"storagePath": "tenant/t1/person/pE/avatar/b.jpg"}), ["storagePath"]),
     ("userA DELETE foreign person avatar -> DENY", False, DELETE, "avatars/t1.person.pE", A, None, None),
     ("userA DELETE own avatar -> ALLOW", True, DELETE, "avatars/t1.person.pA", A, None, None),
+
+    # ── alias (spec 2026-08-22) ────────────────────────────────────────────────────
+    # Lesen darf jeder Tenant-Nutzer: ein lookup-Space loest clientseitig auf (Diary).
+    ("userA GET aliases/t1__qr__ab3x4y -> ALLOW", True, GET, "aliases/t1__qr__ab3x4y", A, None, None),
+    ("anon GET aliases/t1__qr__ab3x4y -> DENY", False, GET, "aliases/t1__qr__ab3x4y", None, None, None),
+    ("userA GET t2's alias -> DENY (cross-tenant)", False, GET, "aliases/t2__qr__zz9k1m", A, None, None),
+    # Schreiben darf NIEMAND — auch der Admin nicht. Die Rolle ist nicht der Grund.
+    ("userA(plain) CREATE alias -> DENY", False, POST, "aliases?documentId=t1__qr__neu01", A,
+     body({"tenants": ["t1"], "isArchived": False, "space": "qr", "alias": "Neu01",
+           "targetType": "url", "targetUrl": "https://seeclub.org", "createdBy": "person.pA",
+           "isEnabled": True, "useCount": 0}), None),
+    ("userD(admin t1) CREATE alias -> DENY (CF-write-only, not a role gate)", False,
+     POST, "aliases?documentId=t1__qr__neu02", D,
+     body({"tenants": ["t1"], "isArchived": False, "space": "qr", "alias": "Neu02",
+           "targetType": "url", "targetUrl": "https://seeclub.org", "createdBy": "person.pD",
+           "isEnabled": True, "useCount": 0}), None),
+    # DER eigentliche Befund: ein Update wuerde einen gedruckten Alias umbiegen.
+    ("userD(admin t1) PATCH existing alias targetUrl -> DENY (printed code hijack)", False,
+     PATCH, "aliases/t1__qr__ab3x4y", D, body({"targetUrl": "https://evil.example"}), ["targetUrl"]),
+    ("userD(admin t1) DELETE alias -> DENY", False, DELETE, "aliases/t1__qr__ab3x4y", D, None, None),
+    # aliasSpaces: Konfiguration. Admin legt an, niemand loescht — ein geloeschter Space
+    # macht JEDEN seiner Aliase unaufloesbar, auch die bereits gedruckten.
+    ("userD(admin t1) CREATE aliasSpace -> ALLOW", True, POST, "aliasSpaces?documentId=asNew", D,
+     body({"tenants": ["t1"], "isArchived": False, "name": "mail", "kind": "redirect",
+           "isEnabled": True, "roleNeeded": "privileged"}), None),
+    ("userA(plain) CREATE aliasSpace -> DENY", False, POST, "aliasSpaces?documentId=asNope", A,
+     body({"tenants": ["t1"], "isArchived": False, "name": "nope", "kind": "redirect",
+           "isEnabled": True, "roleNeeded": "privileged"}), None),
+    ("userD(admin t1) PATCH aliasSpace label -> ALLOW", True, PATCH, "aliasSpaces/as1", D,
+     body({"label": "QR-Codes"}), ["label"]),
+    ("userD(admin t1) DELETE aliasSpace -> DENY (orphans printed codes)", False,
+     DELETE, "aliasSpaces/as1", D, None, None),
+    ("userB(admin t2) PATCH t1's aliasSpace -> DENY (cross-tenant)", False,
+     PATCH, "aliasSpaces/as1", B, body({"label": "hijack"}), ["label"]),
+    # aliasStats ist ein Aggregat (tenant-lesbar), aliasEvents traegt uid + gehashte IP
+    # und ist deshalb privilegiert — der Unterschied ist der ganze Punkt von 'counter'.
+    ("userA GET aliasStats -> ALLOW", True, GET, "aliasStats/t1__qr__ab3x4y__2026-08-22", A, None, None),
+    ("userA(plain) GET aliasEvents -> DENY (privileged only)", False,
+     GET, "aliasEvents/ev1", A, None, None),
+    ("userP(privileged t1) GET aliasEvents -> ALLOW", True, GET, "aliasEvents/ev1", P, None, None),
+    ("userP(privileged) PATCH aliasStats -> DENY (CF-written)", False,
+     PATCH, "aliasStats/t1__qr__ab3x4y__2026-08-22", P, body({"count": 999}), ["count"]),
 ]
 
 # (label, expect_allow, collection, tenant, token)
@@ -525,6 +590,13 @@ list_cases = [
     ("userD(admin t1) LIST tickets array-contains t1 -> ALLOW", True, "tickets", "t1", D),
     ("userA(no role) LIST tickets array-contains t1 -> DENY", False, "tickets", "t1", A),
     ("userB(admin t2) LIST tickets array-contains t1 -> DENY (cross-tenant)", False, "tickets", "t1", B),
+    # alias: the alias list (/alias/all) and the space overview are ordinary tenant streams.
+    ("userA LIST aliases array-contains t1 -> ALLOW", True, "aliases", "t1", A),
+    ("userA LIST aliases array-contains t2 -> DENY (cross-tenant)", False, "aliases", "t2", A),
+    ("anon LIST aliases t1 -> DENY", False, "aliases", "t1", None),
+    ("userA LIST aliasSpaces array-contains t1 -> ALLOW", True, "aliasSpaces", "t1", A),
+    ("userA(plain) LIST aliasEvents t1 -> DENY (privileged only)", False, "aliasEvents", "t1", A),
+    ("userP(privileged) LIST aliasEvents t1 -> ALLOW", True, "aliasEvents", "t1", P),
 ]
 
 # the AvatarService stream: tenants array-contains-any [tenant, 'system'] (own + shared defaults)
