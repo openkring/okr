@@ -37,3 +37,6 @@
 [submodule "apps/elab-app"]
 	path = apps/elab-app
 	url = git@github.com:bkaiser-org/elab-app.git
+[submodule "apps/elab-website"]
+	path = apps/elab-website
+	url = git@github.com:bkaiser-org/elab-website.git

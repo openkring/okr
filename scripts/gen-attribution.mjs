@@ -81,6 +81,11 @@ const TARGETS = {
     selfHostedFonts: 'apps/bkg-website/assets/fonts',
     out: 'dist/apps/bkg-website/licenses.html',
   },
+  'elab-website': {
+    label: 'GLP EnergyLab',
+    selfHostedFonts: 'apps/elab-website/assets/fonts',
+    out: 'dist/apps/elab-website/licenses.html',
+  },
   'p13-website': {
     label: 'P13',
     // self-hosted since 2026-08-08 (spec C6, defect W6) — the OFL text must travel with the files
