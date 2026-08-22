@@ -514,7 +514,12 @@ service cloud.firestore {
     // Lesen darf jeder Tenant-Nutzer: ein lookup-Space (Diary) löst clientseitig auf.
     match /aliases/{id}      { allow read: if tenantRead(); allow write: if false; }
 
-    // NICHT jetzt ausführen — erst wenn aliasStats/aliasEvents geschrieben werden (Teilprojekt 4):
+    // TTL-Policies sind AKTIV (2026-08-22, Teilprojekt 4) — geprüft mit
+    // `gcloud firestore fields ttls list`. Sie sind der einzige Aufräummechanismus; es gibt
+    // bewusst KEINE Aufräum-Function. Damit sie greifen, MUSS `expiresAt` ein echter
+    // Firestore-Timestamp sein und nicht die sonst übliche StoreDate-Zeichenkette — eine
+    // Zeichenkette liefe nie ab, und bei aliasEvents wäre das eine unbefristete Sammlung
+    // von Personendaten. Gesetzt wurden sie mit:
     // gcloud firestore fields ttls update expiresAt --collection-group=aliasStats  --enable-ttl
     // gcloud firestore fields ttls update expiresAt --collection-group=aliasEvents --enable-ttl
     // Zugriffsstatistik: vom Resolver geschrieben, von der Detailseite gelesen.
