@@ -27,6 +27,7 @@ import * as Task from './task';
 import * as Trip from './trip';
 import * as Pdf from './pdf';
 import * as Esign from './esign';
+import * as Alias from './alias';
 import * as Forms from './forms';
 import * as Vcard from './vcard';
 import * as Person from './person';
@@ -318,6 +319,13 @@ export const eraseMyData = Privacy.eraseMyData;
 // Firestore data, its Bearbeitungsverzeichnis and its policy state. Reads only; every
 // finding links to the screen where a human fixes it.
 export const runPrivacyAudit = Privacy.runPrivacyAudit;
+
+// alias (spec 2026-08-22): der EINZIGE Schreibpfad auf `aliases`. Die Collection ist
+// `allow write: if false`, weil die Document-ID deterministisch ist und ein Client-setDoc
+// einen bereits gedruckten Alias still ueberschreiben wuerde; nur `.create()` des Admin SDK
+// wirft bei Kollision. createAlias praegt IMMER neu (Messpunkt), resolveAlias ist idempotent
+// (Identitaet des Ziels) — Spec, Entscheid 4.
+export const createAlias = Alias.createAlias;
 
 // feature building blocks — admin-only, single server-side write path for a tenant's
 // feature selection (D-BB-9). Wired with the Angular-free metadata half of the catalogue
