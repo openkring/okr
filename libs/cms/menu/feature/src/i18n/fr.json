@@ -541,5 +541,11 @@
     "person-send-email": "Envoyer un e-mail",
     "aoc-kiosk": "Kiosque",
     "trip-callsupport": "Appeler le support"
+  },
+  "ownership": {
+    "fork_confirm": "« {name} » appartient au catalogue de fonctionnalités ({blocks}).\n\nL'enregistrement crée une copie propre au locataire « {forkKey} » et détache ce locataire de l'original partagé. Les corrections futures du catalogue (URL, action, rôle) n'atteindront plus cette entrée.\n\nEnregistrer quand même ?",
+    "catalogue": "Catalogue",
+    "forked": "Détaché",
+    "tenant": "Entrée propre"
   }
 }

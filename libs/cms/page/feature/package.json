@@ -25,6 +25,7 @@
     "@okr/cms-section-data-access": "*",
     "@okr/cms-section-util": "*",
     "@okr/content-pdf-template-data-access": "*",
-    "@okr/shared-constants": "*"
+    "@okr/shared-constants": "*",
+    "@okr/tenant-util": "*"
   }
 }

@@ -10,8 +10,8 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { ENV } from '@okr/shared-config';
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { CategoryListModel, MenuItemModel } from '@okr/shared-models';
-import { debugData, die, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
-import { AppNavigationService, dismissOverlay, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
+import { debugData, die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
+import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { MENU_I18N_KEYS, resolveMenuLabelKey } from '@okr/cms-menu-util';
@@ -24,7 +24,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 import { getTarget, isMenuItem } from '@okr/cms-menu-util';
 
 import { FeatureStore } from '@okr/tenant-feature';
-import { blockOwnersOfMenuKey, FEATURE_BLOCKS } from '@okr/tenant-util';
+import { blockOwnersOfMenuKey, classifyMenuOwnership, FEATURE_BLOCKS } from '@okr/tenant-util';
 
 
 export type MenuState = {
@@ -59,6 +59,7 @@ export const _MenuStore = signalStore(
     matrixChatService: inject(MatrixChatService),
     i18nService: inject(I18nService),
     versionService: inject(VersionCheckService),
+    alertService: inject(AlertService),
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(MENU_I18N_KEYS),
@@ -240,18 +241,49 @@ export const _MenuStore = signalStore(
         });
         modal.present();
         const { data, role } = await modal.onWillDismiss();
-        if (role === 'confirm' && data && !readOnly) {
-          if (isMenuItem(data, store.env.tenantId)) {
-            store.clearError();
-            try {
-              await ((!menuItem) ? store.menuService.create(data, store.currentUser()) : store.menuService.update(data));
-              store.menuItemsResource.reload();
-            } catch (error) {
-              store.setError(store.i18n.error_save());
-              throw error;
-            }
-          }
+        if (role !== 'confirm' || !data || readOnly) return;
+        if (!isMenuItem(data, store.env.tenantId)) return;
+
+        const isUpdate = menuItem !== undefined;
+        if (isUpdate && !await this.confirmFork(data)) return;
+
+        store.clearError();
+        try {
+          await (isUpdate ? store.menuService.update(data) : store.menuService.create(data, store.currentUser()));
+          store.menuItemsResource.reload();
+        } catch (error) {
+          store.setError(store.i18n.error_save());
+          throw error;
         }
+      },
+
+      /**
+       * GUARD — `MenuService.update()` copy-on-writes a menu document shared with other tenants
+       * and detaches this tenant from the shared original (D-BB-8).
+       *
+       * Forking is a legitimate operation: it is how a tenant customises a catalogue-owned row.
+       * But it used to happen SILENTLY, and its cost is invisible from the edit form — catalogue
+       * structural fixes (`url`/`action`/`roleNeeded`) never reach the copy again, so the row
+       * quietly stops tracking the catalogue and nothing says so until «Struktur übernehmen»
+       * reports drift months later. Name the cost and the resulting doc id, then let the admin
+       * decide; this deliberately does NOT block the edit.
+       *
+       * `classifyMenuOwnership` mirrors `update()`'s own fork condition rather than restating it,
+       * so this can never warn about a fork that will not happen — or stay silent about one that
+       * will.
+       *
+       * @returns true when the save may proceed (no fork, or the admin accepted it).
+       */
+      async confirmFork(data: MenuItemModel): Promise<boolean> {
+        const ownership = classifyMenuOwnership(data, store.env.tenantId, FEATURE_BLOCKS);
+        if (!ownership.willFork) return true;
+
+        const message = fill(store.i18n.fork_confirm(), {
+          name: data.name,
+          forkKey: ownership.forkTargetKey ?? '',
+          blocks: ownership.owners.join(', '),
+        });
+        return await store.alertService.confirm(message, true);
       },
 
       async select(menuItem: MenuItemModel): Promise<void> {

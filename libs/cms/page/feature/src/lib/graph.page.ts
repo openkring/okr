@@ -6,6 +6,8 @@ import { hasRole } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { error } from '@okr/shared-util-angular';
 
+import { I18nService } from '@okr/shared-i18n';
+import { MENU_I18N_KEYS } from '@okr/cms-menu-util';
 import { Menu, MenuStore } from '@okr/cms-menu-feature';
 import { SectionStore } from '@okr/cms-section-feature';
 
@@ -71,6 +73,9 @@ import { PageStore } from './page.store';
     .legend-item ion-checkbox {
       --size: 16px;
       font-size: 0.8rem;
+    }
+    .legend-own {
+      font-size: 14px;
     }
     .dot-menu     { background: var(--ion-color-primary); }
     .dot-navigate { background: var(--ion-color-secondary); }
@@ -141,6 +146,15 @@ import { PageStore } from './page.store';
               section
             </ion-checkbox>
           </div>
+          <!-- Ownership markers — who WRITES a menu row (see MenuGraphNode.ownership). -->
+          <div class="legend-item">
+            <ion-icon class="legend-own" color="medium" src="{{ 'lock-closed' | svgIcon }}" />
+            {{ i18nOwn.owner_catalogue() }}
+          </div>
+          <div class="legend-item">
+            <ion-icon class="legend-own" color="warning" src="{{ 'copy' | svgIcon }}" />
+            {{ i18nOwn.owner_forked() }}
+          </div>
         </div>
 
         <!-- Dependency tree -->
@@ -160,6 +174,13 @@ export class GraphPage {
   private menuStore    = inject(MenuStore);
   private sectionStore = inject(SectionStore);
   private readonly modalController = inject(ModalController);
+  private readonly i18nService = inject(I18nService);
+
+  /** Legend labels for the ownership markers rendered by `MenuGraphNode`. */
+  protected readonly i18nOwn = this.i18nService.translateAll({
+    owner_catalogue: MENU_I18N_KEYS.owner_catalogue,
+    owner_forked: MENU_I18N_KEYS.owner_forked,
+  });
 
   // inputs
   public contextMenuName = input<string>();

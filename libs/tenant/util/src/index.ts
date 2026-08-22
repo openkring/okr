@@ -5,5 +5,7 @@ export * from './lib/feature-deps.util';
 export * from './lib/feature-picker-i18n';
 export * from './lib/feature-rollout.util';
 export * from './lib/feature-routes.util';
+export * from './lib/menu-ownership.util';
 export * from './lib/menu-seed.util';
+export * from './lib/root-menu.util';
 export * from './lib/tenant-scope.util';

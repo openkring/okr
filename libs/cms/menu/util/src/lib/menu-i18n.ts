@@ -54,6 +54,14 @@ export const MENU_I18N_KEYS = {
   error_load:                     PFX + 'error.load',
   error_delete:                   PFX + 'error.delete',
 
+  // Ownership guard (see `classifyMenuOwnership`). `fork_confirm` gates a copy-on-write, so
+  // its string uses SINGLE braces — `fill()`, not Transloco interpolation: `translateAll()`
+  // resolves keys without params, and `{{name}}` would be substituted with an empty string.
+  fork_confirm:                   PFX + 'ownership.fork_confirm',
+  owner_catalogue:                PFX + 'ownership.catalogue',
+  owner_forked:                   PFX + 'ownership.forked',
+  owner_tenant:                   PFX + 'ownership.tenant',
+
   as_title:                       '@actionsheet.title',
   name_label:                     '@name.label',
   name_placeholder:               '@name.placeholder',

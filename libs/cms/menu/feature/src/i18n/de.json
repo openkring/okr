@@ -541,5 +541,11 @@
     "person-send-email": "Email senden",
     "aoc-kiosk": "Kiosk",
     "trip-callsupport": "Support anrufen"
+  },
+  "ownership": {
+    "fork_confirm": "«{name}» gehört zum Feature-Katalog ({blocks}).\n\nBeim Speichern wird eine eigene Kopie «{forkKey}» für diesen Mandanten angelegt und der Mandant vom gemeinsamen Original abgehängt. Künftige Katalog-Korrekturen (URL, Aktion, Berechtigung) erreichen diesen Eintrag dann nicht mehr.\n\nTrotzdem speichern?",
+    "catalogue": "Katalog",
+    "forked": "Abgekoppelt",
+    "tenant": "Eigener Eintrag"
   }
 }

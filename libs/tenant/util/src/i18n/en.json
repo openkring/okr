@@ -135,6 +135,10 @@
     "drift_note": "Menu entries adapted for this tenant no longer follow the catalogue structure (target, action or required role). Label, icon and order stay untouched.",
     "drift_apply": "Adopt structure",
     "drift_forked": "own copy",
-    "drift_edited": "edited directly"
+    "drift_edited": "edited directly",
+    "drift_confirm": "The following menu entries will be overwritten with the catalogue's values:\n\n{{entries}}\n\nLabel, icon and order are preserved. Continue?",
+    "menu_impact_confirm": "This save changes the main menu:\n\n{{changes}}\n\nContinue?",
+    "menu_impact_removed": "These rows disappear: {{keys}}",
+    "menu_impact_readded": "These rows are appended at the end of the list: {{keys}}"
   }
 }

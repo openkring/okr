@@ -6,8 +6,10 @@ import { IonBadge, IonButton, IonIcon } from '@ionic/angular/standalone';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { MenuItemModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
+import { ENV } from '@okr/shared-config';
 import { VersionCheckService } from '@okr/shared-util-angular';
-import { resolveMenuLabelKey } from '@okr/cms-menu-util';
+import { MENU_I18N_KEYS, resolveMenuLabelKey } from '@okr/cms-menu-util';
+import { classifyMenuOwnership, FEATURE_BLOCKS, type MenuOwnership } from '@okr/tenant-util';
 import { DependencyNode, MenuGraphStore } from './menu-graph.store';
 
 /**
@@ -43,6 +45,10 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
     ion-badge {
       font-size: 0.65rem;
       padding: 2px 5px;
+      flex-shrink: 0;
+    }
+    .own-icon {
+      font-size: 14px;
       flex-shrink: 0;
     }
     .node-labels {
@@ -118,6 +124,23 @@ import { DependencyNode, MenuGraphStore } from './menu-graph.store';
         <!-- Type badge -->
         <ion-badge [color]="node().color">{{ node().subType }}</ion-badge>
 
+        <!--
+          Ownership marker: who WRITES this row. A locked row belongs to the feature catalogue,
+          so a picker save or «Struktur übernehmen» can rewrite it; a copy-marked row is this
+          tenant's own fork and no longer receives catalogue fixes. An unmarked row is
+          hand-written and nothing the catalogue does can touch it. Same classifier the fork
+          confirmation uses, so badge and dialog cannot disagree.
+        -->
+        @if (ownership(); as own) {
+          @if (own.kind === 'catalogue-shared') {
+            <ion-icon class="own-icon" color="medium" [title]="ownershipTitle()"
+                      src="{{ 'lock-closed' | svgIcon }}" />
+          } @else if (own.kind === 'catalogue-forked') {
+            <ion-icon class="own-icon" color="warning" [title]="ownershipTitle()"
+                      src="{{ 'copy' | svgIcon }}" />
+          }
+        }
+
         <!-- Node label: translated menu label on top, raw name above it in a smaller font -->
         <div class="node-labels">
           @if (translatedLabel(); as label) {
@@ -153,6 +176,7 @@ export class MenuGraphNode {
   protected store = inject(MenuGraphStore);
   private readonly i18nService = inject(I18nService);
   private readonly versionService = inject(VersionCheckService);
+  private readonly env = inject(ENV);
 
   public node = input.required<DependencyNode>();
   public nodeEdit = output<DependencyNode>();
@@ -170,4 +194,31 @@ export class MenuGraphNode {
     toObservable(this.labelKey).pipe(switchMap(key => this.i18nService.translate(key))),
     { initialValue: '' }
   );
+
+  private readonly i18n = this.i18nService.translateAll({
+    owner_catalogue: MENU_I18N_KEYS.owner_catalogue,
+    owner_forked: MENU_I18N_KEYS.owner_forked,
+    owner_tenant: MENU_I18N_KEYS.owner_tenant,
+  });
+
+  /**
+   * Who owns this row — `undefined` for every non-menu node (a page or section has no catalogue
+   * ownership to report). This is the read-only half of the same guard the fork confirmation
+   * enforces on write: seeing the lock BEFORE opening the edit modal is what stops the edit from
+   * being a surprise in the first place.
+   */
+  protected readonly ownership = computed<MenuOwnership | undefined>(() => {
+    const node = this.node();
+    if (node.nodeType !== 'menu') return undefined;
+    return classifyMenuOwnership(node.model as MenuItemModel, this.env.tenantId, FEATURE_BLOCKS);
+  });
+
+  /** Hover text naming the owning blocks, so the lock is self-explanatory without a legend. */
+  protected readonly ownershipTitle = computed<string>(() => {
+    const own = this.ownership();
+    if (!own) return '';
+    if (own.kind === 'catalogue-forked') return this.i18n.owner_forked();
+    if (own.kind === 'catalogue-shared') return `${this.i18n.owner_catalogue()}: ${own.owners.join(', ')}`;
+    return this.i18n.owner_tenant();
+  });
 }

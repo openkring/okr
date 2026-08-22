@@ -135,6 +135,10 @@
     "drift_note": "Las entradas de menú adaptadas para este cliente ya no siguen la estructura del catálogo (destino, acción o rol necesario). La etiqueta, el icono y el orden no cambian.",
     "drift_apply": "Adoptar la estructura",
     "drift_forked": "copia propia",
-    "drift_edited": "editado directamente"
+    "drift_edited": "editado directamente",
+    "drift_confirm": "Las siguientes entradas de menú se sobrescribirán con los valores del catálogo:\n\n{{entries}}\n\nSe conservan la etiqueta, el icono y el orden. ¿Continuar?",
+    "menu_impact_confirm": "Este guardado modifica el menú principal:\n\n{{changes}}\n\n¿Continuar?",
+    "menu_impact_removed": "Estas filas desaparecen: {{keys}}",
+    "menu_impact_readded": "Estas filas se añaden al final de la lista: {{keys}}"
   }
 }

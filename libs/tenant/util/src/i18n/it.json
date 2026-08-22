@@ -135,6 +135,10 @@
     "drift_note": "Le voci di menu adattate per questo cliente non seguono più la struttura del catalogo (destinazione, azione o ruolo richiesto). Etichetta, icona e ordine restano invariati.",
     "drift_apply": "Adotta la struttura",
     "drift_forked": "copia propria",
-    "drift_edited": "modificato direttamente"
+    "drift_edited": "modificato direttamente",
+    "drift_confirm": "Le seguenti voci di menu verranno sovrascritte con i valori del catalogo:\n\n{{entries}}\n\nEtichetta, icona e ordine vengono mantenuti. Continuare?",
+    "menu_impact_confirm": "Questo salvataggio modifica il menu principale:\n\n{{changes}}\n\nContinuare?",
+    "menu_impact_removed": "Queste righe scompaiono: {{keys}}",
+    "menu_impact_readded": "Queste righe vengono aggiunte alla fine dell'elenco: {{keys}}"
   }
 }

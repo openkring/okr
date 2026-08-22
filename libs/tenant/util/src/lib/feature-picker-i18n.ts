@@ -33,6 +33,13 @@ export const FEATURE_PICKER_I18N_KEYS = {
   drift_apply: PFX + 'picker.drift_apply',
   drift_forked: PFX + 'picker.drift_forked',
   drift_edited: PFX + 'picker.drift_edited',
+  // Guards that name what a write will actually change. Resolved through
+  // `translateOnce(key, params)`, so these use Transloco's own `{{...}}` interpolation —
+  // unlike the store-driven keys, which must use single braces and `fill()`.
+  drift_confirm: PFX + 'picker.drift_confirm',
+  menu_impact_confirm: PFX + 'picker.menu_impact_confirm',
+  menu_impact_removed: PFX + 'picker.menu_impact_removed',
+  menu_impact_readded: PFX + 'picker.menu_impact_readded',
 } satisfies Record<string, string>;
 
 export type FeaturePickerI18n = { [K in keyof typeof FEATURE_PICKER_I18N_KEYS]: Signal<string> };

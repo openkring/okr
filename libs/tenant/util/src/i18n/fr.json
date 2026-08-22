@@ -135,6 +135,10 @@
     "drift_note": "Les entrées de menu adaptées pour ce client ne suivent plus la structure du catalogue (cible, action ou rôle requis). Le libellé, l'icône et l'ordre restent inchangés.",
     "drift_apply": "Adopter la structure",
     "drift_forked": "copie propre",
-    "drift_edited": "modifié directement"
+    "drift_edited": "modifié directement",
+    "drift_confirm": "Les entrées de menu suivantes seront écrasées par les valeurs du catalogue :\n\n{{entries}}\n\nLe libellé, l'icône et l'ordre sont conservés. Continuer ?",
+    "menu_impact_confirm": "Cet enregistrement modifie le menu principal :\n\n{{changes}}\n\nContinuer ?",
+    "menu_impact_removed": "Ces lignes disparaissent : {{keys}}",
+    "menu_impact_readded": "Ces lignes sont ajoutées à la fin de la liste : {{keys}}"
   }
 }

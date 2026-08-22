@@ -135,6 +135,10 @@
     "drift_note": "Für diesen Mandanten angepasste Menüeinträge folgen der Katalogstruktur nicht mehr (Ziel, Aktion oder benötigte Rolle). Bezeichnung, Symbol und Reihenfolge bleiben unverändert.",
     "drift_apply": "Struktur übernehmen",
     "drift_forked": "eigene Kopie",
-    "drift_edited": "direkt bearbeitet"
+    "drift_edited": "direkt bearbeitet",
+    "drift_confirm": "Folgende Menüeinträge werden mit den Werten aus dem Katalog überschrieben:\n\n{{entries}}\n\nBezeichnung, Symbol und Reihenfolge bleiben erhalten. Fortfahren?",
+    "menu_impact_confirm": "Dieser Speichervorgang verändert das Hauptmenü:\n\n{{changes}}\n\nFortfahren?",
+    "menu_impact_removed": "Diese Zeilen verschwinden: {{keys}}",
+    "menu_impact_readded": "Diese Zeilen kommen am Ende der Liste dazu: {{keys}}"
   }
 }

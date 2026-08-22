@@ -541,5 +541,11 @@
     "person-send-email": "Send email",
     "aoc-kiosk": "Kiosk",
     "trip-callsupport": "Call support"
+  },
+  "ownership": {
+    "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",
+    "catalogue": "Catalogue",
+    "forked": "Detached",
+    "tenant": "Own entry"
   }
 }

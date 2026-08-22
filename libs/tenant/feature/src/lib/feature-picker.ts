@@ -13,7 +13,8 @@ import { AlertService } from '@okr/shared-util-angular';
 import type { FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, effectiveFeatures,
-  findStructuralDrift, indexMenuDocsByName, resolveAvailability, resolveWithDeps,
+  findStructuralDrift, indexMenuDocsByName, planRootMenuOp, resolveAvailability, resolveWithDeps,
+  rootNavKeys,
 } from '@okr/tenant-util';
 import type { AvailabilityVerdict, FeatureBlock, MenuStructureDrift } from '@okr/tenant-util';
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
@@ -293,6 +294,13 @@ export class FeaturePicker {
       if (!await this.alertService.confirm(message, true)) return;
     }
 
+    // The BLOCK-level gate above says which features go away; this one says what actually
+    // happens to the tenant's hand-curated root menu, which is what an admin is really afraid
+    // of losing. It reports the rows that disappear AND the rows that come back appended at
+    // the tail (`planRootMenuOp` never reorders, so a re-enabled block loses its old position).
+    // Computed from the SAME planner the callable runs — see `root-menu.util.ts`.
+    if (!await this.confirmRootMenuImpact(nextEnabled)) return;
+
     this.isSaving.set(true);
     try {
       const response = await this.featureSelectionService.apply(tenantId, nextEnabled);
@@ -326,6 +334,17 @@ export class FeaturePicker {
    * the screen — a menu-stripping save behind a button that promises only to fix structure.
    */
   protected async onApplyStructure(): Promise<void> {
+    // The button's own label promises only "fix structure", and the drift list above it names
+    // the affected entries — but not WHICH fields get overwritten, and the write used to fire
+    // with no confirmation at all. `drift()` already carries the exact catalogue values
+    // `planMenuOps` would write (`MenuStructureDrift.fields`), so spell them out.
+    const entries = this.drift()
+      .map(entry => `• ${entry.name} — ${Object.keys(entry.fields).join(', ')}`)
+      .join('\n');
+    const confirmText = await this.translateOrFallback(
+      FEATURE_PICKER_I18N_KEYS.drift_confirm, { entries }, entries);
+    if (!await this.alertService.confirm(confirmText, true)) return;
+
     this.isSaving.set(true);
     try {
       await this.featureSelectionService.apply(this.tenantId(), [...this.liveBlocks()]);
@@ -336,6 +355,62 @@ export class FeaturePicker {
     } finally {
       this.isSaving.set(false);
     }
+  }
+
+  /**
+   * What a save does to `main_<tenantId>.menuItems`, named row by row before it happens.
+   *
+   * WHY THIS EXISTS ALONGSIDE the block-level `removal_confirm` gate: that one lists BLOCKS, and
+   * the two failure modes admins actually hit are row-shaped. (1) Saving with a block
+   * accidentally unticked strips its rows — visible as blocks, but only if you recognise the
+   * block name behind the row. (2) A block that is re-ticked comes back APPENDED AT THE TAIL,
+   * because `planRootMenuOp` never reorders — so a hand-curated menu order silently degrades
+   * every time a block round-trips, and nothing warns about that at block level at all.
+   *
+   * It runs the REAL planner (`planRootMenuOp`, shared with the Cloud Function via
+   * `@okr/tenant-util`) against the live menu snapshot rather than predicting its behaviour, so
+   * the preview cannot disagree with the write. Returns true when there is nothing to warn
+   * about — an unchanged root array produces no dialog.
+   */
+  private async confirmRootMenuImpact(nextEnabled: string[]): Promise<boolean> {
+    const tenantId = this.tenantId();
+    const enabledIds = new Set(nextEnabled);
+    const enabledBlocks = this.catalogue.filter(block => enabledIds.has(block.id));
+
+    // Mirrors `applySelection`: `addKeys` is filtered to navigate/sub top-level specs,
+    // `removeKeys` is deliberately unfiltered over every non-selected block.
+    const addKeys = rootNavKeys(enabledBlocks);
+    const removeKeys = this.catalogue
+      .filter(block => !enabledIds.has(block.id))
+      .flatMap(block => block.menu.map(spec => spec.key));
+
+    const { byName } = indexMenuDocsByName(
+      this.menuDocs().map(doc => ({ id: doc.okey, data: doc })), tenantId);
+    const op = planRootMenuOp(tenantId, byName, addKeys, removeKeys);
+
+    const next = op?.fields?.menuItems;
+    if (!next) return true; // no root-menu write at all (or a create — nothing to lose yet)
+
+    const current = byName.get(`main_${tenantId}`)?.menuItems ?? [];
+    const removedRows = current.filter(key => !next.includes(key));
+    const addedRows = next.filter(key => !current.includes(key));
+    if (removedRows.length === 0 && addedRows.length === 0) return true; // reorder-free no-op
+
+    const parts: string[] = [];
+    if (removedRows.length > 0) {
+      parts.push(await this.translateOrFallback(
+        FEATURE_PICKER_I18N_KEYS.menu_impact_removed,
+        { keys: removedRows.join(', ') }, removedRows.join(', ')));
+    }
+    if (addedRows.length > 0) {
+      parts.push(await this.translateOrFallback(
+        FEATURE_PICKER_I18N_KEYS.menu_impact_readded,
+        { keys: addedRows.join(', ') }, addedRows.join(', ')));
+    }
+    const changes = parts.join('\n\n');
+    const message = await this.translateOrFallback(
+      FEATURE_PICKER_I18N_KEYS.menu_impact_confirm, { changes }, changes);
+    return await this.alertService.confirm(message, true);
   }
 
   /**

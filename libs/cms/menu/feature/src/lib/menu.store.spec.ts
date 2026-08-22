@@ -9,7 +9,7 @@ import { ENV } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { mockCollection, mockError } from '@okr/shared-feature/testing';
 import { I18nService } from '@okr/shared-i18n';
-import { AppNavigationService, VersionCheckService } from '@okr/shared-util-angular';
+import { AlertService, AppNavigationService, VersionCheckService } from '@okr/shared-util-angular';
 import { AuthService } from '@okr/auth-data-access';
 import { ActivityService } from '@okr/activity-data-access';
 import { MatrixChatService } from '@okr/chat-data-access';
@@ -52,7 +52,11 @@ function featureStoreMock(effectiveIds: string[] = []) {
   return { effective: signal(new Set(effectiveIds)) };
 }
 
-function makeStore(menuService = menuServiceMock(), featureStore = featureStoreMock()): MenuStore {
+function makeStore(
+  menuService = menuServiceMock(),
+  featureStore = featureStoreMock(),
+  alertService: { confirm: () => Promise<boolean> } = { confirm: () => Promise.resolve(true) },
+): MenuStore {
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     providers: [
@@ -70,7 +74,11 @@ function makeStore(menuService = menuServiceMock(), featureStore = featureStoreM
       { provide: ActivityService, useValue: {} },
       { provide: MatrixChatService, useValue: { rooms: of([]) } },
       { provide: VersionCheckService, useValue: { getCurrentVersion: () => '1.0.0' } },
-      { provide: I18nService, useValue: { translateAll: () => i18nProxy, translate: () => of('') } }
+      { provide: I18nService, useValue: { translateAll: () => i18nProxy, translate: () => of('') } },
+      // The store injects AlertService for the fork-ownership guard (`confirmFork`). The real
+      // one pulls in TranslocoService, which this TestBed does not configure — stub it.
+      // `confirm` defaults to true so the non-fork paths under test behave as before.
+      { provide: AlertService, useValue: alertService }
     ]
   });
   return TestBed.inject(MenuStore);
@@ -172,6 +180,63 @@ describe('MenuStore', () => {
       // 'aoc-admin' (owned only by the now-off 'aoc') is dropped; the three entries owned
       // by 'user'/'security' (both still effective) survive.
       expect(store.menu()?.menuItems).toEqual(['user-all', 'priv-register', 'priv-audit']);
+    });
+  });
+  /**
+   * The fork guard (`confirmFork`). `MenuService.update()` copy-on-writes a menu doc shared with
+   * other tenants and detaches this one from the shared original — legitimate, but it used to be
+   * silent, and afterwards catalogue structural fixes never reach the copy. These pin the WIRING:
+   * that the confirmation is asked only when a fork will really happen, and that declining it
+   * actually stops the write. The decision logic itself is covered by `menu-ownership.util.spec`.
+   */
+  describe('fork guard on save', () => {
+    // 'aoc-menu' is catalogue-owned AND shared with another tenant → update() would fork it.
+    const sharedCatalogueDoc = { okey: 'aoc-menu', name: 'aoc-menu', tenants: [tenantId, 'scs'] };
+    // A hand-written row no block declares, owned by this tenant alone → never forks.
+    const ownDoc = { okey: 'my-own-row', name: 'my-own-row', tenants: [tenantId] };
+
+    function editWith(doc: object, confirmed: boolean) {
+      const menuService = menuServiceMock();
+      const confirm = vi.fn().mockResolvedValue(confirmed);
+      const store = makeStore(menuService, featureStoreMock(), { confirm });
+      // `edit()` opens a modal; drive the store's guard directly instead — it is the unit that
+      // decides, and stubbing ModalController's full lifecycle would test Ionic, not this.
+      return { store, menuService, confirm, doc };
+    }
+
+    it('asks before forking a shared catalogue document', async () => {
+      const { store, confirm } = editWith(sharedCatalogueDoc, true);
+      const mayProceed = await store.confirmFork(sharedCatalogueDoc as never);
+
+      expect(confirm).toHaveBeenCalledTimes(1);
+      expect(mayProceed).toBe(true);
+    });
+
+    it('stops the save when the admin declines the fork', async () => {
+      const { store, confirm } = editWith(sharedCatalogueDoc, false);
+      const mayProceed = await store.confirmFork(sharedCatalogueDoc as never);
+
+      expect(confirm).toHaveBeenCalledTimes(1);
+      expect(mayProceed).toBe(false);
+    });
+
+    it('never interrupts an edit that will not fork', async () => {
+      const { store, confirm } = editWith(ownDoc, true);
+      const mayProceed = await store.confirmFork(ownDoc as never);
+
+      expect(confirm).not.toHaveBeenCalled();
+      expect(mayProceed).toBe(true);
+    });
+
+    // A catalogue-owned doc this tenant already owns ALONE is not shared, so there is nothing to
+    // detach — `MenuService.update()` writes it in place and the guard must stay quiet.
+    it('never interrupts an edit of a catalogue doc this tenant owns alone', async () => {
+      const soleOwner = { okey: 'aoc-menu_p13', name: 'aoc-menu', tenants: [tenantId] };
+      const { store, confirm } = editWith(soleOwner, true);
+      const mayProceed = await store.confirmFork(soleOwner as never);
+
+      expect(confirm).not.toHaveBeenCalled();
+      expect(mayProceed).toBe(true);
     });
   });
 });
