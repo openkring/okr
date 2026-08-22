@@ -279,9 +279,6 @@ export { listPoolProspects, claimPoolProspect, releasePoolProspect } from './bus
 export { submitTicket, listTickets, commentTicket, classifyTicket, triageTicket } from './business';
 export { submitSupportTicket, listSupportTickets, commentSupportTicket } from './business';
 
-// one-off: give a personal tenant read access to the directory (design 2026-08-22, V1)
-export { addTenantToDirectory } from './tenant/add-tenant-to-directory';
-
 // diary import (design 2026-08-22): proves Drive access before the import is built
 export { checkDriveAccess } from './diary/check-drive-access';
 
