@@ -326,6 +326,7 @@ export const runPrivacyAudit = Privacy.runPrivacyAudit;
 // wirft bei Kollision. createAlias praegt IMMER neu (Messpunkt), resolveAlias ist idempotent
 // (Identitaet des Ziels) — Spec, Entscheid 4.
 export const createAlias = Alias.createAlias;
+export const resolveAlias = Alias.resolveAlias;
 
 // feature building blocks — admin-only, single server-side write path for a tenant's
 // feature selection (D-BB-9). Wired with the Angular-free metadata half of the catalogue
