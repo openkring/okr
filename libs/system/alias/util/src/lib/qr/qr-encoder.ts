@@ -697,6 +697,11 @@ export type QrEcc = 'L' | 'M' | 'Q' | 'H';
  * seiner exports-Map, und seine öffentliche API kodiert ausschliesslich validierte Swiss Payment
  * Codes — keinen Freitext.
  *
+ * Die angeforderte Stufe ist ein MINIMUM: passt bei derselben Version eine stärkere
+ * Fehlerkorrektur in dieselbe Symbolgrösse, wird sie automatisch verwendet (`encodeQr(t, 'M')`
+ * kann also ein Q- oder H-Symbol liefern). Das ist normkonform und nie ein Nachteil — die Stufe
+ * kann dadurch nur steigen, nie sinken, und die Version bleibt gleich.
+ *
  * @returns size = Kantenlänge in Modulen, modules[y][x] = true für ein dunkles Modul.
  */
 export function encodeQr(text: string, ecc: QrEcc = 'M'): { size: number; modules: boolean[][] } {
