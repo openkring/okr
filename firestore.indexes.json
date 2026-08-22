@@ -3211,6 +3211,37 @@
         }
       ],
       "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "aliases",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenants", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "isArchived", "order": "ASCENDING" },
+        { "fieldPath": "space", "order": "ASCENDING" },
+        { "fieldPath": "alias", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "aliases",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenants", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "isArchived", "order": "ASCENDING" },
+        { "fieldPath": "space", "order": "ASCENDING" },
+        { "fieldPath": "original", "order": "ASCENDING" },
+        { "fieldPath": "alias", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "aliases",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenants", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "isArchived", "order": "ASCENDING" },
+        { "fieldPath": "targetKey", "order": "ASCENDING" },
+        { "fieldPath": "alias", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

@@ -500,6 +500,28 @@ service cloud.firestore {
     // Admin-only writes: a mis-edited rule silently stops a notification. The engine
     // itself runs in a Cloud Function and bypasses these rules.
     match /workflow-rules/{id}     { allow read: if tenantRead(); allow create, update: if isAdmin() && tenantCreateOrDetach(); allow delete: if isAdmin() && tenantDelete(); }
+
+    // Alias-Spaces sind Konfiguration: nur Admins legen sie an und ändern sie
+    // (spec 2026-08-22-alias-service-spec.md). Gelöscht wird nicht — ein gelöschter Space
+    // macht jeden seiner Aliase unauflösbar, auch die gedruckten; die UI archiviert.
+    match /aliasSpaces/{id}  { allow read: if tenantRead(); allow create, update: if isAdmin() && tenantCreateOrDetach(); allow delete: if false; }
+
+    // Aliase sind CF-write-only. Grund ist NICHT nur die Rolle: die Document-ID ist
+    // deterministisch (<tenant>__<space>__<alias>), und ein Client-setDoc würde einen
+    // bestehenden Alias still überschreiben statt zu kollidieren. Geprägt wird über die
+    // Callables createAlias/resolveAlias, die .create() des Admin SDK benutzen.
+    // Lesen darf jeder Tenant-Nutzer: ein lookup-Space (Diary) löst clientseitig auf.
+    match /aliases/{id}      { allow read: if tenantRead(); allow write: if false; }
+
+    // NICHT jetzt ausführen — erst wenn aliasStats/aliasEvents geschrieben werden (Teilprojekt 4):
+    // gcloud firestore fields ttls update expiresAt --collection-group=aliasStats  --enable-ttl
+    // gcloud firestore fields ttls update expiresAt --collection-group=aliasEvents --enable-ttl
+    // Zugriffsstatistik: vom Resolver geschrieben, von der Detailseite gelesen.
+    // aliasEvents trägt personenbezogene Daten (gehashte IP, uid) und ist deshalb
+    // privilegiert — anders als das Aggregat.
+    match /aliasStats/{id}   { allow read: if tenantRead(); allow write: if false; }
+    match /aliasEvents/{id}  { allow read: if isPrivileged() && tenantRead(); allow write: if false; }
+
     // approvals carry a decision and who made it — an audit trail (spec 2026-08-15 §3.3).
     // CF-write-only, like expenses and bookings: decisions go through decideApproval,
     // which checks the snapshotted approver, or they do not happen.
