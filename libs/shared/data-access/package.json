@@ -11,6 +11,7 @@
     "@okr/shared-config": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-i18n": "*",
-    "@okr/comment-util": "*"
+    "@okr/comment-util": "*",
+    "@sentry/angular": "*"
   }
 }

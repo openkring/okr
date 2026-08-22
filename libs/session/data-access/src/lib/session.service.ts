@@ -1,6 +1,6 @@
 // libs/session/data-access/src/lib/session.service.ts
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { ENV } from '@okr/shared-config';
+import { ensureAppCheckToken, ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { OsName, SessionCollection, SessionModel, UserModel } from '@okr/shared-models';
 import { getBrowser, isBrowser, isIOS, isAndroid, isMacOS, isSafari } from '@okr/shared-util-angular';
@@ -36,7 +36,13 @@ export class SessionService {
       session.os = this.detectOs();
 
       session.index = getSessionIndex(session);
-      const key = await this.firestoreService.createModel<SessionModel>(SessionCollection, session, undefined, undefined);
+      // App Check is ENFORCED on Firestore and its token is refreshed by a timer that a
+      // backgrounded tab does not get — Safari suspends timers in hidden tabs. startSession() is
+      // the FIRST write fired on tab resume, so without this pre-flight it went out with an
+      // expired token and the backend answered PERMISSION_DENIED, which Firestore does not retry.
+      await ensureAppCheckToken();
+      const key = await this.firestoreService.createModel<SessionModel>(
+        SessionCollection, session, undefined, undefined, undefined, true);
       if (key) {
         session.okey = key;
         this.session = session;
@@ -53,7 +59,9 @@ export class SessionService {
     this.session.userKey = user.okey;
     this.session.userEmail = user.loginEmail;
     this.session.index = getSessionIndex(this.session);
-    await this.firestoreService.updateModel<SessionModel>(SessionCollection, this.session, undefined);
+    await ensureAppCheckToken();
+    await this.firestoreService.updateModel<SessionModel>(
+      SessionCollection, this.session, false, undefined, undefined, undefined, true);
   }
 
   public async endSession(): Promise<void> {
@@ -71,13 +79,17 @@ export class SessionService {
     if (isSafari() || isIOS()) {
       this.sendBeacon(session);
     }
-    await this.firestoreService.updateModel<SessionModel>(SessionCollection, session, undefined);
+    await ensureAppCheckToken();
+    await this.firestoreService.updateModel<SessionModel>(
+      SessionCollection, session, false, undefined, undefined, undefined, true);
   }
 
   private async heartbeat(): Promise<void> {
     if (!this.session) return;
     this.session.lastSeenAt = getTodayStr(DateFormat.StoreDateTime);
-    await this.firestoreService.updateModel<SessionModel>(SessionCollection, this.session, undefined);
+    await ensureAppCheckToken();
+    await this.firestoreService.updateModel<SessionModel>(
+      SessionCollection, this.session, false, undefined, undefined, undefined, true);
   }
 
   private startHeartbeat(): void {

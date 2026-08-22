@@ -23,6 +23,7 @@
  */
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
+import { captureMessage } from '@sentry/angular';
 import { arrayRemove, collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
 import { catchError, firstValueFrom, Observable, of, ReplaySubject, share, timer } from 'rxjs';
@@ -74,6 +75,29 @@ export class FirestoreService {
       return;
     }
     console.error(`FirestoreService.${context} stream error:`, err);
+  }
+
+  /**
+   * Report a write that failed WITHOUT a user-facing toast.
+   *
+   * A suppressed write is invisible by definition: the user is never told and the console line
+   * dies with the tab. Sentry is therefore the ONLY place such a failure can still be observed,
+   * and the Firestore error code is the whole diagnosis — `permission-denied` on a rule-satisfying
+   * write means App Check (ENFORCED on Firestore here) rejected the request, typically because a
+   * backgrounded tab woke with an expired token; `unavailable` means transport.
+   *
+   * Writes that DO toast are deliberately not reported: the user sees them and can report them,
+   * and mirroring every one into Sentry would drown the silent ones this exists for.
+   * @param context the call site, e.g. `createModel(sessions/abc)`
+   * @param ex the rejection from the Firestore SDK
+   */
+  private reportSilentWriteFailure(context: string, ex: unknown): void {
+    const code = (ex as { code?: string } | null)?.code ?? 'unknown';
+    captureMessage(`FirestoreService.${context} failed silently: ${code}`, {
+      level: 'warning',
+      tags: { firestoreCode: code },
+      extra: { context, detail: (ex as Error | null)?.message },
+    });
   }
 
   private okrError(toastController: ToastController | undefined, message: string, isDebugMode = false): undefined {
@@ -142,6 +166,7 @@ export class FirestoreService {
     }
     catch (ex) {
       console.error(`FirestoreService.createModel(${collectionName}/${ref.id}) -> ERROR:`, ex);
+      if (suppressErrorToast) this.reportSilentWriteFailure(`createModel(${collectionName}/${ref.id})`, ex);
       const message = errorMessage ? errorMessage : `Could not create model ${collectionName}/${ref.id} in the database.`;
       return this.okrError(suppressErrorToast ? undefined : this.toastController, message);
     }
@@ -333,6 +358,9 @@ export class FirestoreService {
    * @param collectionName the name of the Firestore collection to update the model in
    * @param model the changed OkrModel document to save
    * @param forceOverwrite whether to force overwrite the document if it exists; this can be used for createOrUpdate
+   * @param suppressErrorToast when true, a failed write does NOT pop a user-facing toast; it is
+   *        logged and reported to Sentry instead. Use for best-effort background writes (session
+   *        heartbeat, telemetry) whose failure must never surface to the user.
    * @return a Promise of the key of the updated model or undefined if the operation failed
    */
   public async updateModel<T extends OkrModel>(
@@ -341,7 +369,8 @@ export class FirestoreService {
     forceOverwrite = false,
     confirmMessage?: string,
     errorMessage?: string,
-    currentUser?: UserModel
+    currentUser?: UserModel,
+    suppressErrorToast = false
   ): Promise<string | undefined> 
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
@@ -385,8 +414,9 @@ export class FirestoreService {
     }
     catch (ex) {
       console.error(`FirestoreService.updateModel(${collectionName}/${key}) -> ERROR: `, ex);
+      if (suppressErrorToast) this.reportSilentWriteFailure(`updateModel(${collectionName}/${key})`, ex);
       const message = errorMessage ? errorMessage : `Could not update model ${collectionName}/${key} in the database.`;      
-      return this.okrError(this.toastController, message);
+      return this.okrError(suppressErrorToast ? undefined : this.toastController, message);
     }
   }
 
