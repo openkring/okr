@@ -866,6 +866,34 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     anonymizeFields: ['responsiblePersonKey'],
     retention: RETAIN_10Y,        // part of the accounting records (Anlagebuchhaltung)
   },
+  {
+    collection: 'aliases',
+    dataClass: 'content',
+    tier: 'T4',   // Vereinsdokumentation — the short link belongs to the club, not the subject
+    // The tenancy ends, the printed poster does not. Strip the identity, keep the alias.
+    onTenantExit: 'anonymize',
+    // TWO subject links, and BOTH carry the PREFIXED `person.<okey>` form — so this row uses
+    // ctx.parentKey, not ctx.personKey. Getting that wrong is the trap documented on SubjectCtx:
+    //   createdBy  — who minted the alias
+    //   targetKey  — an alias pointing AT the subject (the diary case, 'Barbara' → person.<okey>)
+    find: (c: SubjectCtx) => db().collection('aliases').where(Filter.or(
+      Filter.where('createdBy', '==', c.parentKey),
+      Filter.where('targetKey', '==', c.parentKey),
+    )),
+    tenantScope: 'tenantsArray',
+    onExport: 'index',
+    indexFields: { title: 'alias', date: 'createdAt', route: '/alias' },
+    // NEVER 'delete'. The alias may be printed on a poster, a boat marker or a membership
+    // card; deleting the document turns a physical object into a dead link, and the club's
+    // record of which code was issued disappears with it. Anonymizing empties the identity
+    // instead: `createdBy` and `original` (which can hold the subject's name in a lookup
+    // space) go, and `targetKey` goes too — an alias that resolved to this person must stop
+    // resolving to them. buildTargetUrl then returns '' and the resolver answers 404, which
+    // is the honest outcome for a target that no longer exists.
+    onErasure: 'anonymize',
+    anonymizeFields: ['createdBy', 'targetKey', 'original'],
+    retention: CLUB_RECORD,
+  },
 
   // ────────────────────────────────────── logs ──────────────────────────────────────
   {
@@ -1149,6 +1177,17 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   directly, never through `eraseMyData`. Turning it into a row would require SubjectCtx to
 //   carry an identity that does not exist in this system. Retention and the direct-request path
 //   are C3 §9's open item.
+// not personal data: aliasSpaces — alias namespace CONFIGURATION (charset, length, tracking
+//   default, roleNeeded). No person field, no createdBy; the aliases minted inside it are the
+//   personal-data side and have their own row.
+// not personal data: aliasStats — per-alias DAILY AGGREGATES (count, referrer host, device
+//   class, country). Deliberately no IP and no uid: that is precisely why `counter` is the
+//   recommended default tracking level. If a person were identifiable here, the default
+//   would be the wrong one. Written by the resolver from Teilprojekt 4.
+// NOTE (Teilprojekt 4): `aliasEvents` — one row per click WITH a hashed IP and the uid — is
+//   personal data and will need a real row here, not a line in this block. It has no model
+//   constant yet, so the completeness test does not demand it today. Do not let it ship
+//   unregistered: `uid` is in SUBJECT_LINK_FIELDS, so audit check 11 fires on its first write.
 // not personal data: accounts — chart of accounts (account numbers, names, hierarchy)
 // not personal data: accounting-configs — per-tenant accounting settings
 // not personal data: app-config — tenant configuration; opEmail/dpoEmail are operator

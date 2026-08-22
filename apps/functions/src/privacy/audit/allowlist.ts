@@ -11,6 +11,8 @@
 export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'accounting-configs',
   'accounts',
+  'aliasSpaces',
+  'aliasStats',
   'app-config',
   'asset-categories',
   'asset-movements',

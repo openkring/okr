@@ -101,14 +101,18 @@ describe('find() query shapes', () => {
     expect(valueOf(record('avatars'), '__name__')).toEqual([CTX.parentKey, `${CTX.tenantId}.${CTX.parentKey}`]);
   });
 
-  it('uses the PREFIXED parentKey for the vault and its projection, and nowhere else', () => {
+  it('uses the PREFIXED parentKey for the vault, its projection and the alias links', () => {
     expect(valueOf(record('addresses'), 'parentKey')).toBe(CTX.parentKey);
     expect(valueOf(record('address-directory'), 'parentKey')).toBe(CTX.parentKey);
     const prefixUsers = SUBJECT_DATA_MAP
       .filter((e) => record(e.collection).predicates.some((p) => p.value === CTX.parentKey
         || (Array.isArray(p.value) && p.value.includes(CTX.parentKey))))
       .map((e) => e.collection);
-    expect(prefixUsers.sort()).toEqual(['address-directory', 'addresses', 'avatars']);
+    // `aliases` joined this list in 2026-08-22 (Alias TP2): BOTH of its subject links store
+    // the prefixed form — `createdBy` ('person.<okey>', who minted it) and `targetKey`
+    // ('person.<okey>', an alias pointing AT the subject). It is the first row outside the
+    // address vault to do so, which is exactly why this assertion is spelled out by name.
+    expect(prefixUsers.sort()).toEqual(['address-directory', 'addresses', 'aliases', 'avatars']);
   });
 
   it('uses the RAW personKey for memberships and the other relation collections', () => {

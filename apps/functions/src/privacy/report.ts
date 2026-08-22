@@ -126,6 +126,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   instruments: 'Instrumente', // libs/instruments/feature/src/i18n/de.json: plural
   esignList: 'Unterschriebene Dokumente',
   esignAudit: 'Unterschriften-Protokoll',
+  aliases: 'Kurzlinks', // libs/system/alias — der Code auf Plakat, Bootsmarke oder Ausweis
 
   // — logs —
   sessions: 'Anmeldesitzungen',
