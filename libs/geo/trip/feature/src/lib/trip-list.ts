@@ -5,13 +5,13 @@ import { ActionSheetController, IonBackdrop, IonButton, IonButtons, IonContent, 
 
 import { ConnectionStatusButton, EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
 import { RoleName, TripModel } from '@okr/shared-models';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { MenuService } from '@okr/cms-menu-data-access';
 
-import { formatTripTime, isTripDeletable, isTripEditable } from '@okr/trip-util';
+import { formatTripTime, isTripEditable } from '@okr/trip-util';
 import { TripStore } from './trip.store';
 import { getCategoryIcon, getCurrentTime, getWeekdayI18nKey, getYear, getYearList, hasRole, isKioskOnly } from '@okr/shared-util-core';
 import { TranslatePipe } from '@okr/shared-i18n';
@@ -113,8 +113,12 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
           }
         </ion-list>
       }
-      @if (isKiosk() && store.locked()) {
-        <!-- remotely locked from the AOC kiosk screen: readable, but no new entries -->
+      @if (store.locked()) {
+        <!-- Remotely locked by an admin: the list stays readable, nothing can be written. The
+             banner is pointer-events:none so it does not swallow scrolling or taps underneath. -->
+        <div class="locked-banner" aria-hidden="true">
+          <span>{{ store.i18n.lock_banner() }}</span>
+        </div>
         <ion-item color="warning" lines="none">
           <ion-icon slot="start" src="{{ 'lock-closed' | svgIcon }}" />
           <ion-label class="ion-text-wrap">{{ store.i18n.locked() }}</ion-label>
@@ -151,6 +155,29 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
     }
     .kiosk-fab ion-icon {
       font-size: 48px;
+    }
+    /* remote read-only mode, visible from across the boathouse. Fixed (not absolute) so it does
+       not scroll away, pointer-events:none so the list underneath stays scrollable and tappable,
+       and low-opacity so the trips remain readable through it. */
+    .locked-banner {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .locked-banner span {
+      transform: rotate(-35deg);
+      font-size: 20vw;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      color: var(--ion-color-danger, #eb445a);
+      opacity: 0.18;
     }
   `],
 })
@@ -235,6 +262,7 @@ export class TripList {
       case 'showBoatStatistics': await this.store.showBoatStatistics(); break;
       case 'showPersonStatistics': await this.store.showPersonStatistics(); break;
       case 'exportRaw': await this.store.export('raw'); break;
+      case 'toggleLock': await this.store.toggleLogbuchLock(); break;
       // console.error, not error(): that helper stays silent unless isDebugMode is passed, which
       // turned a menu item whose url does not match any case here into a dead, unreported click.
       default: console.error(`TripList.onPopoverDismiss: no handler for menu url '${selectedMethod}'`);
@@ -255,35 +283,44 @@ export class TripList {
     return 'medium';
   }
 
+  /**
+   * Two rules, in order (documented in full in the `trips` skill):
+   *
+   * Rule 0 — the pre-empt gate. The read-only view opens directly, with no ActionSheet at all,
+   * when the Logbuch is locked, when the user is not a writer (kiosk or admin), or when a kiosk
+   * is more than 15 minutes past the end of the trip. `canWrite` already folds in the lock.
+   *
+   * Rule 1 — the sheet. Kiosk and admin see the same buttons, in a fixed order; the only
+   * difference between them is Rule 0, which never times an admin out.
+   */
   protected async showActions(trip: TripModel): Promise<void> {
-    const canWrite = this.store.canWrite();
-    const isOpen = trip.state === 'open' || trip.state === 'open.rev';
-    const isDeleted = trip.state === 'deleted';
-
-    // a plain registered user has nothing to do on a finished trip — skip the sheet, show it
-    if (!isOpen && trip.state !== 'draft' && !this.hasRole('privileged')) {
+    const isAdmin = this.hasRole('admin');
+    if (!this.store.canWrite() || !isTripEditable(trip, isAdmin)) {
       await this.store.viewTrip(trip);
       return;
     }
 
+    const isOpen = trip.state === 'open' || trip.state === 'open.rev';
+    // a soft-deleted trip is shown (the state filter can ask for it) but must not be edited again
+    const isDeleted = trip.state === 'deleted';
+    const url = this.store.imgixBaseUrl();
     const options = createActionSheetOptions(this.store.i18n.as_title());
 
-    if (canWrite && isOpen) {
-      // 'end' opens the same edit form, so offering edit/view next to it only confuses
-      options.buttons.push(createActionSheetButton('end', this.store.i18n.end(), this.store.imgixBaseUrl(), 'stop-circle'));
-    } else if (canWrite && !isDeleted && isTripEditable(trip, this.hasRole('admin'))) {
-      options.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), this.store.imgixBaseUrl(), 'edit'));
-    } else {
-      // no write access, or more than 15 min after the trip ended: read-only view instead of edit
-      options.buttons.push(createActionSheetButton('view', this.store.i18n.view(), this.store.imgixBaseUrl(), 'eye-on'));
+    options.buttons.push(createActionSheetButton('view', this.store.i18n.view(), url, 'eye-on'));
+    if (!isDeleted) {
+      options.buttons.push(createActionSheetButton('edit', this.store.i18n.update(), url, 'edit'));
     }
-    // deleting is limited to 30 min after the trip was closed; admins may delete anytime
-    if (canWrite && !isDeleted && isTripDeletable(trip, this.hasRole('admin'))) {
-      options.buttons.push(createActionSheetButton('delete', this.store.i18n.delete(), this.store.imgixBaseUrl(), 'trash'));
+    // 'end' opens the same edit form in its closing mode — only meaningful while the boat is out
+    if (isOpen) {
+      options.buttons.push(createActionSheetButton('end', this.store.i18n.end(), url, 'stop-circle'));
     }
-    options.buttons.push(createActionSheetButton('report_damage', this.store.i18n.report_damage(), this.store.imgixBaseUrl(), 'warning'));
-    options.buttons.push(createActionSheetButton('report_bug', this.store.i18n.report_bug(), this.store.imgixBaseUrl(), 'bug'));
-    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.store.imgixBaseUrl(), 'cancel'));
+    if (!isDeleted) {
+      options.buttons.push(createActionSheetButton('delete', this.store.i18n.delete(), url, 'trash'));
+    }
+    options.buttons.push(createActionSheetDivider());
+    options.buttons.push(createActionSheetButton('report_damage', this.store.i18n.report_damage(), url, 'warning'));
+    options.buttons.push(createActionSheetButton('report_bug', this.store.i18n.report_bug(), url, 'bug'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), url, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
     await sheet.present();

@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ActionSheetController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { AppStore, KioskStatusService, LocationSelectResult, ModelSelectService } from '@okr/shared-feature';
+import { AppStore, KioskStatus, KioskStatusService, LocationSelectResult, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, PersonModel, TaskModel, TripModel, UserModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
@@ -86,6 +86,14 @@ export const TripStore = signalStore(
       }),
       stream: () => store.tripService.list(),
     }),
+    // Admin-only: the tenant's kiosk devices, so the context menu can lock/unlock them. `params`
+    // returns undefined for everyone else, which keeps the resource idle — no query, no read.
+    kiosksResource: rxResource({
+      params: () => hasRole('admin', store.appStore.currentUser())
+        ? { tenantId: store.appStore.tenantId() }
+        : undefined,
+      stream: ({ params }) => store.kioskStatusService.listKiosks(params.tenantId),
+    }),
     locationsResource: rxResource({
       params: () => ({
         currentUser: store.appStore.currentUser(),
@@ -108,8 +116,15 @@ export const TripStore = signalStore(
       (hasRole('kiosk', store.appStore.currentUser()) || hasRole('admin', store.appStore.currentUser()))
     ),
     locked: computed(() => store.kioskStatusService.locked()),
+    kiosks: computed<KioskStatus[]>(() => store.kiosksResource.value() ?? []),
     locations: computed(() => store.locationsResource.value() ?? []),
     trips: computed(() => store.tripsResource.value() ?? [])
+  })),
+  withComputed(store => ({
+    // Drives the label of the admin's toggle. "Locked" means EVERY device is locked — with one
+    // still open the Logbuch is not actually closed, so the next press must lock, not unlock.
+    logbuchLocked: computed(() =>
+      store.kiosks().length > 0 && store.kiosks().every(kiosk => kiosk.locked === true)),
   })),
   withComputed(store => ({
     filteredTrips: computed(() => {
@@ -426,6 +441,33 @@ export const TripStore = signalStore(
       });
       await modal.present();
       await modal.onDidDismiss();
+    },
+
+    /**
+     * The admin's remote read-only switch for the whole Logbuch, reachable from the trips context
+     * menu. It writes `locked` to EVERY kiosk-status document of the tenant — the lock lives per
+     * device, so "lock the Logbuch" means "lock every device that can write to it".
+     *
+     * The admin's own app is not affected: KioskStatusService only listens for kiosk-only users,
+     * so `locked()` stays false here and an admin keeps full access while the boathouse is closed.
+     */
+    async toggleLogbuchLock(): Promise<void> {
+      const kiosks = store.kiosks();
+      if (kiosks.length === 0) {
+        await store.alertService.showToast(store.i18n.lock_none());
+        return;
+      }
+      const locked = !store.logbuchLocked();
+      const confirmed = await store.alertService.confirm(
+        locked ? store.i18n.lock_confirm() : store.i18n.unlock_confirm(), true
+      );
+      if (!confirmed) return;
+
+      const ok = await store.kioskStatusService.setLock(kiosks, locked);
+      await store.alertService.showToast(
+        !ok ? store.i18n.lock_error() : locked ? store.i18n.lock_conf() : store.i18n.unlock_conf()
+      );
+      store.kiosksResource.reload();
     },
 
     async showInfo(): Promise<void> {

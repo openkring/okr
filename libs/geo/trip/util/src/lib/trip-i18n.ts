@@ -13,6 +13,17 @@ export const TRIP_I18N_KEYS = {
   empty:                    PFX + 'empty',
   locked:                   PFX + 'locked',
 
+  // remote read-only mode: the banner shown ON the kiosk, and the admin's toggle in the context menu
+  lock_banner:              PFX + 'lock.banner',
+  lock_label:               PFX + 'lock.label',
+  lock_confirm:             PFX + 'lock.confirm',
+  lock_conf:                PFX + 'lock.conf',
+  unlock_label:             PFX + 'lock.unlock_label',
+  unlock_confirm:           PFX + 'lock.unlock_confirm',
+  unlock_conf:              PFX + 'lock.unlock_conf',
+  lock_none:                PFX + 'lock.none',
+  lock_error:               PFX + 'lock.error',
+
   create:                   PFX + 'create.label',
   create_conf:              PFX + 'create.conf',
   create_error:             PFX + 'create.error',

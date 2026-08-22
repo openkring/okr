@@ -506,6 +506,7 @@
     "trip-add": "Enregistrer une nouvelle sortie",
     "trip-boatstats": "Afficher les statistiques des bateaux",
     "trip-exportraw": "Exporter les données brutes",
+    "trip-togglelock": "Verrouiller / déverrouiller le carnet de bord",
     "trip-personstats": "Afficher les statistiques des personnes",
     "trip-reportbug": "Signaler une erreur",
     "trip-reportdamage": "Signaler un dommage",

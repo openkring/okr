@@ -199,5 +199,16 @@
   "notify": {
     "deleted": "Trip deleted: {name}",
     "suspicious": "Suspicious activity: {name} ({reasons})"
+  },
+  "lock": {
+    "banner": "Locked",
+    "label": "Lock logbook",
+    "confirm": "Lock the logbook on all kiosk devices? Trips can then no longer be created or changed.",
+    "conf": "The logbook has been locked.",
+    "unlock_label": "Unlock logbook",
+    "unlock_confirm": "Unlock the logbook on all kiosk devices again?",
+    "unlock_conf": "The logbook has been unlocked.",
+    "none": "No kiosk device is registered for this club.",
+    "error": "The logbook could not be locked or unlocked."
   }
 }

@@ -2,6 +2,7 @@ import { DestroyRef, effect, inject, Injectable, PLATFORM_ID, signal } from '@an
 import { Device } from '@capacitor/device';
 import { AlertController } from '@ionic/angular/standalone';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { Observable } from 'rxjs';
 
 import packageJson from '../../../../../package.json';
 
@@ -198,6 +199,40 @@ export class KioskStatusService {
       alert.message = `${message}\n\n(schliesst in ${remaining} s)`;
     }, 1000);
     void alert.onDidDismiss().then(() => clearInterval(timer));
+  }
+
+  /**
+   * Every kiosk device of a tenant. An admin's own session never reports (the effect above bails
+   * on non-kiosk users), so this is the only way for an admin screen to see the devices at all.
+   *
+   * NOT getSystemQuery(): telemetry documents carry no `isArchived` field, so it would match
+   * nothing. orderBy 'none' keeps this off a composite index — a tenant has one or two kiosks.
+   */
+  public listKiosks(tenantId: string): Observable<KioskStatus[]> {
+    return this.firestoreService.searchData<KioskStatus>(
+      KioskStatusCollection,
+      [{ key: 'tenants', operator: 'array-contains', value: tenantId }],
+      'none',
+    );
+  }
+
+  /**
+   * Flip the remote read-only lock on the given devices. Each device holds an open snapshot on its
+   * own document (listenForCommands) and applies the new value within a second — no push channel,
+   * and a kiosk that is currently off picks it up the next time it starts.
+   *
+   * A partial write (`update`, not `set`) so the heartbeat fields are left alone; the device
+   * carries the lock forward through toKioskStatus on its next full report.
+   *
+   * Returns false when at least one device could not be written — updateObject swallows the
+   * failure into a toast and resolves to undefined rather than throwing, so a caller that only
+   * awaited it would report success for a lock that never reached the boathouse.
+   */
+  public async setLock(kiosks: KioskStatus[], locked: boolean): Promise<boolean> {
+    const results = await Promise.all(kiosks.map(kiosk =>
+      this.firestoreService.updateObject(KioskStatusCollection, kiosk.uid, { locked }, false)
+    ));
+    return results.every(result => result !== undefined);
   }
 
   private async report(): Promise<void> {

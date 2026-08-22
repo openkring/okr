@@ -506,6 +506,7 @@
     "trip-add": "Registrar nueva salida",
     "trip-boatstats": "Mostrar estadísticas de barcos",
     "trip-exportraw": "Exportar datos sin procesar",
+    "trip-togglelock": "Bloquear / desbloquear el cuaderno de bitácora",
     "trip-personstats": "Mostrar estadísticas de personas",
     "trip-reportbug": "Notificar un error",
     "trip-reportdamage": "Notificar un daño",

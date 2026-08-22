@@ -602,6 +602,8 @@ const geo: FeatureBlock = {
       { key: 'trip-boatstats', name: 'trip-boatstats', url: 'showBoatStatistics', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: '@item.trip-boatstats' },
       { key: 'trip-personstats', name: 'trip-personstats', url: 'showPersonStatistics', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: '@item.trip-personstats' },
       { key: 'trip-exportraw', name: 'trip-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: '@item.trip-exportraw' },
+      // remote read-only switch: writes `locked` to every kiosk-status doc of the tenant (see the `trips` skill)
+      { key: 'trip-togglelock', name: 'trip-togglelock', url: 'toggleLock', action: 'call', roleNeeded: 'admin', icon: 'lock-closed', label: '@item.trip-togglelock' },
     ] },
   ],
 };

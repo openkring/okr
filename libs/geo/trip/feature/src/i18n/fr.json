@@ -199,5 +199,16 @@
   "notify": {
     "deleted": "Sortie supprimée : {name}",
     "suspicious": "Activité suspecte : {name} ({reasons})"
+  },
+  "lock": {
+    "banner": "Verrouillé",
+    "label": "Verrouiller le carnet de bord",
+    "confirm": "Verrouiller le carnet de bord sur tous les appareils kiosque ? Aucune sortie ne pourra plus être saisie ou modifiée.",
+    "conf": "Le carnet de bord a été verrouillé.",
+    "unlock_label": "Déverrouiller le carnet de bord",
+    "unlock_confirm": "Déverrouiller à nouveau le carnet de bord sur tous les appareils kiosque ?",
+    "unlock_conf": "Le carnet de bord a été déverrouillé.",
+    "none": "Aucun appareil kiosque n'est enregistré pour ce club.",
+    "error": "Le carnet de bord n'a pas pu être verrouillé ou déverrouillé."
   }
 }

@@ -5,8 +5,6 @@ import { addIndexElement, convertDateFormatToString, DateFormat, getCurrentTime,
 
 /** Editing of an ended trip is allowed for this long after its endTime. */
 export const TRIP_EDIT_WINDOW_MS = 15 * 60 * 1000;
-/** Deleting an ended trip is allowed for this long after its endTime (admins: unlimited). */
-export const TRIP_DELETE_WINDOW_MS = 30 * 60 * 1000;
 /** Default distance (km) of a new trip. */
 export const DEFAULT_TRIP_DISTANCE_KM = 1;
 /** Highest distance (km) accepted for a trip. */
@@ -35,19 +33,14 @@ function isWithinEndWindow(trip: TripModel, windowMs: number, now: number): bool
 }
 
 /**
- * A trip may be edited while it is not yet ended, or within TRIP_EDIT_WINDOW_MS (15 min) after
- * its endTime. Afterwards it should only be opened read-only. Admins may edit at any time.
+ * The single time gate of the Logbuch: a trip stays actionable while it is not yet ended, and for
+ * TRIP_EDIT_WINDOW_MS (15 min) after its endTime. Afterwards the kiosk only gets the read-only
+ * view — there is no per-action window any more, edit and delete share this one. Admins are exempt.
+ *
+ * Called once, before the ActionSheet is built (see the `trips` skill, Rule 0).
  */
 export function isTripEditable(trip: TripModel, isAdmin = false, now: number = Date.now()): boolean {
   return isAdmin || isWithinEndWindow(trip, TRIP_EDIT_WINDOW_MS, now);
-}
-
-/**
- * A trip may be deleted while it is not yet ended, or within TRIP_DELETE_WINDOW_MS (30 min) after
- * its endTime. Admins may delete at any time.
- */
-export function isTripDeletable(trip: TripModel, isAdmin: boolean, now: number = Date.now()): boolean {
-  return isAdmin || isWithinEndWindow(trip, TRIP_DELETE_WINDOW_MS, now);
 }
 
 /**

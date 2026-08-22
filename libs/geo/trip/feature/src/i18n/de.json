@@ -199,5 +199,16 @@
   "notify": {
     "deleted": "Trip gelöscht: {name}",
     "suspicious": "Verdächtige Aktivität: {name} ({reasons})"
+  },
+  "lock": {
+    "banner": "Gesperrt",
+    "label": "Logbuch sperren",
+    "confirm": "Soll das Logbuch auf allen Kiosk-Geräten gesperrt werden? Es können dann keine Fahrten mehr erfasst oder geändert werden.",
+    "conf": "Das Logbuch wurde gesperrt.",
+    "unlock_label": "Logbuch entsperren",
+    "unlock_confirm": "Soll das Logbuch auf allen Kiosk-Geräten wieder entsperrt werden?",
+    "unlock_conf": "Das Logbuch wurde entsperrt.",
+    "none": "Für diesen Verein ist kein Kiosk-Gerät registriert.",
+    "error": "Das Logbuch konnte nicht gesperrt bzw. entsperrt werden."
   }
 }

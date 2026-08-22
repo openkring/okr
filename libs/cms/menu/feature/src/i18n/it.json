@@ -506,6 +506,7 @@
     "trip-add": "Registra nuova uscita",
     "trip-boatstats": "Mostra statistiche imbarcazioni",
     "trip-exportraw": "Esporta dati grezzi",
+    "trip-togglelock": "Blocca / sblocca il libro di bordo",
     "trip-personstats": "Mostra statistiche delle persone",
     "trip-reportbug": "Segnala un errore",
     "trip-reportdamage": "Segnala un danno",

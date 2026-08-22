@@ -199,5 +199,16 @@
   "notify": {
     "deleted": "Salida eliminada: {name}",
     "suspicious": "Actividad sospechosa: {name} ({reasons})"
+  },
+  "lock": {
+    "banner": "Bloqueado",
+    "label": "Bloquear el cuaderno de bitácora",
+    "confirm": "¿Bloquear el cuaderno de bitácora en todos los dispositivos kiosco? Ya no se podrán registrar ni modificar salidas.",
+    "conf": "El cuaderno de bitácora se ha bloqueado.",
+    "unlock_label": "Desbloquear el cuaderno de bitácora",
+    "unlock_confirm": "¿Desbloquear de nuevo el cuaderno de bitácora en todos los dispositivos kiosco?",
+    "unlock_conf": "El cuaderno de bitácora se ha desbloqueado.",
+    "none": "No hay ningún dispositivo kiosco registrado para este club.",
+    "error": "No se ha podido bloquear o desbloquear el cuaderno de bitácora."
   }
 }

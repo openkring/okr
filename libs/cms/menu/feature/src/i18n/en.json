@@ -506,6 +506,7 @@
     "trip-add": "Record new trip",
     "trip-boatstats": "Show boat statistics",
     "trip-exportraw": "Export raw data",
+    "trip-togglelock": "Lock / unlock logbook",
     "trip-personstats": "Show person statistics",
     "trip-reportbug": "Report a bug",
     "trip-reportdamage": "Report damage",

@@ -199,5 +199,16 @@
   "notify": {
     "deleted": "Uscita eliminata: {name}",
     "suspicious": "Attività sospetta: {name} ({reasons})"
+  },
+  "lock": {
+    "banner": "Bloccato",
+    "label": "Blocca il libro di bordo",
+    "confirm": "Bloccare il libro di bordo su tutti i dispositivi kiosk? Non sarà più possibile registrare o modificare uscite.",
+    "conf": "Il libro di bordo è stato bloccato.",
+    "unlock_label": "Sblocca il libro di bordo",
+    "unlock_confirm": "Sbloccare di nuovo il libro di bordo su tutti i dispositivi kiosk?",
+    "unlock_conf": "Il libro di bordo è stato sbloccato.",
+    "none": "Nessun dispositivo kiosk è registrato per questo club.",
+    "error": "Non è stato possibile bloccare o sbloccare il libro di bordo."
   }
 }
