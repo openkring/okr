@@ -12,6 +12,7 @@
     "@okr/shared-data-access": "*",
     "@okr/shared-util-core": "*",
     "@okr/chat-util": "*",
-    "@okr/avatar-data-access": "*"
+    "@okr/avatar-data-access": "*",
+    "@sentry/angular": "*"
   }
 }

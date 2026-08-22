@@ -2,6 +2,7 @@ import { Component, DestroyRef, ElementRef, PLATFORM_ID, computed, effect, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
+import { captureMessage } from '@sentry/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
@@ -832,6 +833,7 @@ export class MatrixChat implements OnDestroy {
       await this.store.sendReply(draft.text, draft.mentions, draft.mentionRoom);
     } catch (error) {
       console.error('Failed to send message:', error);
+      this.reportSilentFailure('onMessageSent', error);
     }
   }
 
@@ -840,6 +842,7 @@ export class MatrixChat implements OnDestroy {
       await this.store.sendFile(file);
     } catch (error) {
       console.error('Failed to send file:', error);
+      this.reportSilentFailure('onFileSent', error);
     }
   }
 
@@ -981,6 +984,7 @@ export class MatrixChat implements OnDestroy {
       await this.store.sendFile(file, threadId);
     } catch (error) {
       console.error('Failed to send thread image:', error);
+      this.reportSilentFailure('onThreadFileQueued', error);
     }
   }
 
@@ -989,6 +993,7 @@ export class MatrixChat implements OnDestroy {
       await this.store.sendReaction(event.messageId, event.emoji);
     } catch (error) {
       console.error('Failed to react to message:', error);
+      this.reportSilentFailure('onReactionClicked', error);
     }
   }
 
@@ -1054,6 +1059,7 @@ export class MatrixChat implements OnDestroy {
       await this.store.sendMessage(draft.text, threadId, draft.mentions, draft.mentionRoom);
     } catch (error) {
       console.error('Failed to send thread message:', error);
+      this.reportSilentFailure('onThreadMessageSent', error);
     }
   }
 
@@ -1064,6 +1070,7 @@ export class MatrixChat implements OnDestroy {
       await this.store.sendFile(file, threadId);
     } catch (error) {
       console.error('Failed to send thread file:', error);
+      this.reportSilentFailure('onThreadFileSent', error);
     }
   }
 
@@ -1312,5 +1319,25 @@ export class MatrixChat implements OnDestroy {
 
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.store.currentUser());
+  }
+
+  /**
+   * Report a chat action that failed WITHOUT a user-facing toast.
+   *
+   * Mirrors FirestoreService.reportSilentWriteFailure: only the silent failures are
+   * reported. The handlers that DO toast (onFilesSent, onDrop, onThreadDrop, the
+   * attachment share/download) are deliberately left out — the user already sees those
+   * and can report them, and mirroring every one into Sentry would drown the invisible
+   * ones this exists for.
+   *
+   * Necessary because no app installs captureConsoleIntegration: a bare console.error
+   * here reaches nobody once the tab closes.
+   */
+  private reportSilentFailure(context: string, ex: unknown): void {
+    captureMessage(`MatrixChat.${context} failed silently`, {
+      level: 'warning',
+      tags: { chatAction: context },
+      extra: { detail: (ex as Error | null)?.message },
+    });
   }
 }

@@ -24,6 +24,7 @@
     "@okr/cms-menu-feature": "*",
     "@okr/chat-data-access": "*",
     "@okr/chat-util": "*",
-    "@okr/chat-ui": "*"
+    "@okr/chat-ui": "*",
+    "@sentry/angular": "*"
   }
 }

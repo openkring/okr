@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, PersonModelName, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, initMatrixLogLevel, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName } from '@okr/chat-util';
+import { convertHeicToJpeg, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 
@@ -414,6 +414,17 @@ export class MatrixChatService {
   }
 
   /**
+   * The MIME hint to pass to resolveMediaUrl for a message's attachment: the event's own
+   * `info.mimetype`, or — when the sending device left it empty — the type implied by the
+   * filename. Without the fallback the blob keeps whatever the homeserver served (often
+   * `application/octet-stream`); `<img>` sniffs raster formats anyway, but an SVG would
+   * silently refuse to render.
+   */
+  private mediaMimeHint(msg: MatrixMessage): string | undefined {
+    return (msg.content?.info?.mimetype as string | undefined) || imageMimeTypeForName(msg.body ?? '');
+  }
+
+  /**
    * Disconnect and cleanup the Matrix client.
    *
    * @param clearCache - only true on logout. clearStores() runs indexedDB.deleteDatabase('okr-matrix'),
@@ -585,7 +596,7 @@ export class MatrixChatService {
       // Async-resolve media URL for the confirmed event (local echo has no mediaUrl yet)
       const mxcUrl = newMsg.content?.url ?? newMsg.content?.file?.url;
       if ((newMsg.type === 'm.image' || newMsg.type === 'm.file' || newMsg.type === 'm.audio') && mxcUrl) {
-        this.resolveMediaUrl(mxcUrl, newMsg.content?.info?.mimetype).then(url => {
+        this.resolveMediaUrl(mxcUrl, this.mediaMimeHint(newMsg)).then(url => {
           if (!url) return;
           const current = subject.value ?? [];
           const idx = current.findIndex(m => m.eventId === newMsg.eventId);
@@ -912,7 +923,7 @@ export class MatrixChatService {
           }
 
           if ((msg.type === 'm.image' || msg.type === 'm.file' || msg.type === 'm.audio') && mxcUrl) {
-            return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.resolveMediaUrl(mxcUrl, msg.content.info?.mimetype) };
+            return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.resolveMediaUrl(mxcUrl, this.mediaMimeHint(msg)) };
           }
           return { ...msg, senderAvatar: senderAvatar || undefined };
         })
@@ -952,7 +963,7 @@ export class MatrixChatService {
       // Async-resolve media URL and patch the message once fetched
       const mxcUrl = message.content.url ?? message.content.file?.url;
       if ((message.type === 'm.image' || message.type === 'm.file' || message.type === 'm.audio') && mxcUrl) {
-        this.resolveMediaUrl(mxcUrl).then(url => {
+        this.resolveMediaUrl(mxcUrl, this.mediaMimeHint(message)).then(url => {
           if (!url) return;
           const msgs = subject.value ?? [];
           const idx = msgs.findIndex(m => m.eventId === message.eventId);
@@ -1577,13 +1588,19 @@ private async buildAndEmitRoomsList(): Promise<void> {
     const upload = await this.client.uploadContent(file);
     const url = upload.content_uri;
 
+    // Never branch on `file.type` directly: it is empty for anything picked through the
+    // iOS Files app / iCloud Drive, shared into the PWA, or dragged from some Windows
+    // sources, which used to ship a perfectly good PNG as `m.file` with `mimetype: ''`
+    // and render it as a document card. resolveFileMimeType falls back to the extension.
+    const mimetype = resolveFileMimeType(file);
+
     const content: IContent = {
-      msgtype: file.type.startsWith('image/') ? MsgType.Image : MsgType.File,
+      msgtype: mimetype.startsWith('image/') ? MsgType.Image : MsgType.File,
       body: file.name,
       url: url,
       info: {
         size: file.size,
-        mimetype: file.type,
+        mimetype,
       },
     };
 

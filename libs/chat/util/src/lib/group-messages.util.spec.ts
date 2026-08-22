@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { groupMessages, ImageBatchGroup } from './group-messages.util';
+import { groupMessages, isImageMessage, ImageBatchGroup } from './group-messages.util';
 import { MatrixMessage } from '@okr/shared-models';
 
 let idSeq = 0;
@@ -73,5 +73,56 @@ describe('groupMessages', () => {
   it('updates batch timestamp to the last image in the group', () => {
     const result = groupMessages([msg({ timestamp: 1000 }), msg({ timestamp: 3000 })]);
     expect((result[0] as ImageBatchGroup).timestamp).toBe(3000);
+  });
+});
+
+describe('isImageMessage', () => {
+  it('treats an m.image as an image', () => {
+    expect(isImageMessage(msg())).toBe(true);
+  });
+
+  it('treats an m.file with an image mimetype as an image', () => {
+    expect(isImageMessage(msg({
+      type: 'm.file',
+      body: 'photo.png',
+      content: { msgtype: 'm.file', url: 'mxc://x/y', info: { mimetype: 'image/png' } },
+    }))).toBe(true);
+  });
+
+  // Regression: devices that report an empty File.type (iOS Files/iCloud picker, some
+  // Windows drag-and-drop) produced m.file with mimetype:'' — these already sit in rooms
+  // and rendered as a document card. Reclassifying by filename repairs them on read.
+  it('reclassifies an m.file with NO mimetype by its filename', () => {
+    expect(isImageMessage(msg({
+      type: 'm.file',
+      body: 'IMG_6840.png',
+      content: { msgtype: 'm.file', url: 'mxc://x/y', info: { mimetype: '' } },
+    }))).toBe(true);
+    expect(isImageMessage(msg({
+      type: 'm.file',
+      body: 'IMG_6840.png',
+      content: { msgtype: 'm.file', url: 'mxc://x/y' },
+    }))).toBe(true);
+  });
+
+  it('keeps a genuine document a document', () => {
+    expect(isImageMessage(msg({
+      type: 'm.file',
+      body: 'report.pdf',
+      content: { msgtype: 'm.file', url: 'mxc://x/y', info: { mimetype: 'application/pdf' } },
+    }))).toBe(false);
+  });
+
+  // An explicit mimetype stays authoritative — the filename fallback must not override it.
+  it('does not reclassify a PDF that happens to be named .png', () => {
+    expect(isImageMessage(msg({
+      type: 'm.file',
+      body: 'invoice.png',
+      content: { msgtype: 'm.file', url: 'mxc://x/y', info: { mimetype: 'application/pdf' } },
+    }))).toBe(false);
+  });
+
+  it('leaves text messages alone', () => {
+    expect(isImageMessage(msg({ type: 'm.text', body: 'look at cat.png', content: { msgtype: 'm.text' } }))).toBe(false);
   });
 });
