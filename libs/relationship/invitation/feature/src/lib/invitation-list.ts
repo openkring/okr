@@ -1,15 +1,18 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { RoleName, InvitationModel } from '@okr/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { getItemLabel, getYearList, hasRole } from '@okr/shared-util-core';
-import { TranslatePipe } from '@okr/shared-i18n';
+import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
+
+import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
+import { showCalEventInfo } from '@okr/calevent-ui';
 
 import { createPersonAvatar } from '@okr/relationship-invitation-util';
 import { InvitationStore } from './invitation.store';
@@ -35,6 +38,9 @@ import { InvitationStore } from './invitation.store';
       <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
       <ion-title>{{ store.i18n.invitations() }}</ion-title>
       <ion-buttons slot="end">
+        <ion-button (click)="showInfo()" [title]="caleventI18n.info_open()">
+          <ion-icon slot="icon-only" src="{{'info-circle' | svgIcon }}" />
+        </ion-button>
         @if(hasRole('privileged') || hasRole('resourceAdmin')) {
           <ion-buttons slot="end">
             <ion-button id="c-invitations">
@@ -103,6 +109,10 @@ import { InvitationStore } from './invitation.store';
 export class InvitationList {
   protected readonly store = inject(InvitationStore);
   private actionSheetController = inject(ActionSheetController);
+  private modalController = inject(ModalController);
+
+  /** Only the label of the info button — the explainer itself lives in the calevent domain. */
+  protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open });
 
   // inputs
   public listId = input.required<string>(); // my, all, or calevent key
@@ -188,6 +198,11 @@ export class InvitationList {
   }
 
   /******************************* actions *************************************** */
+  /** Opens the shared 'Kalender & Einladungen' explainer. */
+  protected async showInfo(): Promise<void> {
+    await showCalEventInfo(this.modalController, this.store.appStore.appConfig().appName);
+  }
+
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error

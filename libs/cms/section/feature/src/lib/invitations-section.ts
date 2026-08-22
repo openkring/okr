@@ -1,6 +1,6 @@
 
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 
 import { InvitationModel, InvitationsConfig, InvitationsSection, InvitationState } from '@okr/shared-models';
@@ -8,6 +8,9 @@ import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { getAttendanceColor, getAttendanceIcon, hasRole, isPastDate } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { I18nService } from '@okr/shared-i18n';
+import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
+import { showCalEventInfo } from '@okr/calevent-ui';
 import { InvitationSectionStore } from './invitations-section.store';
 
 @Component({
@@ -46,7 +49,8 @@ import { InvitationSectionStore } from './invitations-section.store';
     <okr-spinner />
     } @else {        
     <ion-card>
-      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()"
+        [showInfoButton]="true" [infoLabel]="caleventI18n.info_open()" (infoClicked)="showInfo()" />
       <ion-card-content>
           <ion-grid>
             @for(inv of invitations(); track inv.okey) {
@@ -118,6 +122,15 @@ export class InvitationsSectionComponent implements OnInit {
 
   // passing constants to the template
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
+  private modalController = inject(ModalController);
+
+  /** Only the label of the info button — the explainer itself lives in the calevent domain. */
+  protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open });
+
+  /** Opens the shared 'Kalender & Einladungen' explainer. */
+  protected async showInfo(): Promise<void> {
+    await showCalEventInfo(this.modalController, this.store.appStore.appConfig().appName);
+  }
 
    constructor() {
     effect(() => {

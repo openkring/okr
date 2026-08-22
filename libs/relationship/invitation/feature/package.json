@@ -20,6 +20,8 @@
     "@okr/comment-feature": "*",
     "@okr/relationship-invitation-util": "*",
     "@okr/relationship-invitation-data-access": "*",
-    "@okr/cms-menu-feature": "*"
+    "@okr/cms-menu-feature": "*",
+    "@okr/calevent-util": "*",
+    "@okr/calevent-ui": "*"
   }
 }

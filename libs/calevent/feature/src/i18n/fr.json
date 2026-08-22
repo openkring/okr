@@ -438,5 +438,93 @@
     "placeholder": "Motif de l’annulation, par ex. « Annulé en raison de l’alerte tempête. »",
     "banner": "Annulé",
     "conf": "L’avis d’annulation a été enregistré."
+  },
+  "info": {
+    "title": "Calendriers et invitations",
+    "intro": "Les événements apparaissent à plusieurs endroits dans l'application — sur le tableau de bord, dans votre vue calendrier personnelle et dans le calendrier d'un groupe. Toutes les vues utilisent les mêmes données et n'en montrent qu'un extrait différent.",
+    "views": {
+      "title": "Vues du calendrier",
+      "text": "Où voir quels événements :",
+      "col": {
+        "view": "Vue",
+        "shows": "Ce que vous voyez"
+      },
+      "dashboard": {
+        "label": "Tableau de bord · Prochains événements",
+        "text": "Les 5 prochains événements qui vous concernent. « Plus » vous mène à votre vue calendrier personnelle."
+      },
+      "invitations": {
+        "label": "Tableau de bord · Mes invitations",
+        "text": "Les invitations qui vous sont adressées, avec votre réponse (acceptée, refusée ou encore ouverte). « Plus » vous mène à la liste complète des invitations."
+      },
+      "personal": {
+        "label": "Événements / Calendrier",
+        "text": "Votre vue calendrier personnelle : tous les événements que vous avez le droit de voir — tous ceux du calendrier de l'organisation ainsi que ceux de chaque calendrier de groupe dont vous êtes membre. Commutable entre vue liste et vue calendrier."
+      },
+      "group": {
+        "label": "Groupes / Calendrier",
+        "text": "Le calendrier d'un seul groupe — uniquement ses événements. C'est ici que vous saisissez les dates qui ne concernent que ce groupe."
+      }
+    },
+    "types": {
+      "title": "Types de calendriers",
+      "text": "Chaque événement appartient à aucun, un ou plusieurs calendriers. Le calendrier détermine qui voit l'événement et quelles fonctions sont disponibles.",
+      "col": {
+        "calendar": "Calendrier",
+        "visibility": "Visible par",
+        "create": "Création",
+        "features": "Fonctions"
+      },
+      "personal": {
+        "label": "Calendrier personnel",
+        "visibility": "Vous et toutes les personnes que vous invitez. L'entrée apparaît dans le calendrier de chaque personne invitée.",
+        "create": "Toute personne connectée, directement depuis « Événements / Calendrier ».",
+        "features": "Invitations uniquement. Aucun groupe n'est créé, donc chat, dépôt de documents, séries d'événements et sondages de dates ne sont pas possibles."
+      },
+      "group": {
+        "label": "Calendrier de groupe",
+        "visibility": "Tous les membres du groupe.",
+        "create": "Créé depuis la vue « Groupes / Calendrier ». Seuls les utilisateurs privilégiés (le comité) peuvent créer un groupe — contactez un membre du comité ou le support.",
+        "features": "Toutes : séries d'événements, sondages de dates, dépôt de documents et chat."
+      },
+      "org": {
+        "label": "Calendrier de l'organisation",
+        "visibility": "Tous les membres de l'organisation.",
+        "create": "Existe dès le départ. Un événement en fait partie dès que le calendrier portant l'identifiant du tenant lui est ajouté (autorisation : privilégié ou admin des événements).",
+        "features": "Toutes. Pour les dates que tous les membres doivent voir."
+      },
+      "public": {
+        "label": "Calendrier public",
+        "visibility": "Tout le monde — y compris les personnes sans compte.",
+        "create": "Ajouté à un événement sous la forme du calendrier « public » (autorisation : privilégié ou admin des événements).",
+        "features": "L'événement apparaît automatiquement sur le site web public, où des agrégateurs d'actualités externes (p. ex. LokalNews) peuvent le reprendre et le diffuser plus largement."
+      }
+    },
+    "invitations": {
+      "title": "Invitations et participation",
+      "text": "La participation à un événement est gérée de deux manières :",
+      "open": {
+        "label": "Événements ouverts",
+        "text": "Toute personne qui voit l'événement peut s'inscrire ou se désinscrire. La liste des participants grandit avec chaque acceptation."
+      },
+      "closed": {
+        "label": "Événements fermés",
+        "text": "Typique des calendriers de groupe et personnels : des personnes précises sont invitées. Seules celles qui ont reçu une invitation peuvent accepter ou refuser."
+      },
+      "respond": "En cliquant sur un événement dans le calendrier, vous l'ouvrez et pouvez confirmer ou refuser votre participation. Tout en bas, sous « Participants », vous voyez qui participe et qui a décliné.",
+      "series": "Pour les séries, « Afficher la série » ouvre un tableau de toutes les dates de la série, où vous pouvez vous inscrire ou vous désinscrire pour chaque date séparément."
+    },
+    "symbols": {
+      "title": "Signification des symboles",
+      "col": {
+        "symbol": "Symbole",
+        "meaning": "Signification"
+      },
+      "accepted": "Accepté — votre participation est confirmée.",
+      "declined": "Refusé — vous ne participez pas.",
+      "open": "Ouvert — vous n'avez pas encore répondu. L'invitation attend votre réponse."
+    },
+    "note": "Il vous manque un calendrier ou vous avez besoin d'un nouveau groupe ? Seuls les utilisateurs privilégiés (le comité) peuvent créer des groupes — contactez un membre du comité ou le support.",
+    "open": "Afficher l'explication"
   }
 }

@@ -16,6 +16,8 @@
   "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
   "references": [
     { "path": "../../../avatar/ui/tsconfig.lib.json" },
+    { "path": "../../../calevent/ui/tsconfig.lib.json" },
+    { "path": "../../../calevent/util/tsconfig.lib.json" },
     { "path": "../../../cms/menu/feature/tsconfig.lib.json" },
     { "path": "../../../comment/feature/tsconfig.lib.json" },
     { "path": "../data-access/tsconfig.lib.json" },

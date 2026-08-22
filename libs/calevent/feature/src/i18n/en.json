@@ -438,5 +438,93 @@
     "placeholder": "Reason for the cancellation, e.g. \"Cancelled because of the storm warning.\"",
     "banner": "Cancelled",
     "conf": "The cancellation notice has been saved."
+  },
+  "info": {
+    "title": "Calendars & invitations",
+    "intro": "Events show up in several places in the app — on the dashboard, in your personal calendar view and in a group's calendar. All views read the same data and simply show a different slice of it.",
+    "views": {
+      "title": "Calendar views",
+      "text": "Where you see which events:",
+      "col": {
+        "view": "View",
+        "shows": "What you see"
+      },
+      "dashboard": {
+        "label": "Dashboard · Next events",
+        "text": "The next 5 events that concern you. 'More' takes you to your personal calendar view."
+      },
+      "invitations": {
+        "label": "Dashboard · My invitations",
+        "text": "The invitations addressed to you, together with your answer (accepted, declined or still open). 'More' takes you to the full invitation list."
+      },
+      "personal": {
+        "label": "Events / Calendar",
+        "text": "Your personal calendar view: every event you are allowed to see — all events of the organisation calendar plus all events from every group calendar you are a member of. Switchable between list and calendar view."
+      },
+      "group": {
+        "label": "Groups / Calendar",
+        "text": "The calendar of a single group — its events only. This is where you enter dates that concern that group alone."
+      }
+    },
+    "types": {
+      "title": "Calendar types",
+      "text": "Every event belongs to none, one or several calendars. The calendar determines who sees the event and which features are available.",
+      "col": {
+        "calendar": "Calendar",
+        "visibility": "Visible to",
+        "create": "Creating",
+        "features": "Features"
+      },
+      "personal": {
+        "label": "Personal calendar",
+        "visibility": "You and everyone you invite. The entry appears in the calendar of every invited person.",
+        "create": "Any signed-in person, straight from 'Events / Calendar'.",
+        "features": "Invitations only. No group is formed, so chat, document storage, recurring events and scheduling polls are not available."
+      },
+      "group": {
+        "label": "Group calendar",
+        "visibility": "All members of the group.",
+        "create": "Created from the 'Groups / Calendar' view. Only privileged users (the board) can create a group — contact a board member or support.",
+        "features": "All of them: recurring events, scheduling polls, document storage and chat."
+      },
+      "org": {
+        "label": "Organisation calendar",
+        "visibility": "All members of the organisation.",
+        "create": "Exists from the outset. An event becomes part of it as soon as the calendar named after the tenant id is added to it (permission: privileged or event admin).",
+        "features": "All of them. For dates that every member should see."
+      },
+      "public": {
+        "label": "Public calendar",
+        "visibility": "Everyone — including people without a login.",
+        "create": "Added to an event as the calendar 'public' (permission: privileged or event admin).",
+        "features": "The event automatically appears on the public website, where external news crawlers (e.g. LokalNews) can pick it up and spread it to a wider audience."
+      }
+    },
+    "invitations": {
+      "title": "Invitations and attendance",
+      "text": "There are two ways attendance at an event is handled:",
+      "open": {
+        "label": "Open events",
+        "text": "Anyone who can see the event may sign up or withdraw. The attendee list grows with every acceptance."
+      },
+      "closed": {
+        "label": "Closed events",
+        "text": "Typical for group and personal calendars: specific people are invited. Only those who received an invitation can accept or decline."
+      },
+      "respond": "Clicking an event in the calendar opens it, and you can confirm or decline your attendance. At the very bottom, under 'Attendees', you see who is coming and who has declined.",
+      "series": "For recurring events, 'Show event series' opens a table of all dates in the series, where you can sign up for or withdraw from each single date."
+    },
+    "symbols": {
+      "title": "What the symbols mean",
+      "col": {
+        "symbol": "Symbol",
+        "meaning": "Meaning"
+      },
+      "accepted": "Accepted — your attendance is confirmed.",
+      "declined": "Declined — you are not attending.",
+      "open": "Open — you have not answered yet. The invitation is waiting for your reply."
+    },
+    "note": "Missing a calendar, or do you need a new group? Only privileged users (the board) can create groups — contact a board member or support.",
+    "open": "Show explanation"
   }
 }

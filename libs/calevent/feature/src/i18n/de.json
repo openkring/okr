@@ -438,5 +438,93 @@
     "label": "Link-Bezeichnung",
     "placeholder": "z.B. Ausschreibung",
     "helper": "Text, der anstelle der URL angezeigt wird. Leer lassen, um die URL selbst anzuzeigen."
+  },
+  "info": {
+    "title": "Kalender & Einladungen",
+    "intro": "Anlässe erscheinen an mehreren Orten in der App — auf dem Dashboard, in deiner persönlichen Kalendersicht und im Kalender einer Gruppe. Alle Sichten greifen auf dieselben Daten zu und zeigen nur unterschiedliche Ausschnitte.",
+    "views": {
+      "title": "Kalendersichten",
+      "text": "Wo du welche Anlässe siehst:",
+      "col": {
+        "view": "Sicht",
+        "shows": "Was du siehst"
+      },
+      "dashboard": {
+        "label": "Dashboard · Nächste Termine",
+        "text": "Die nächsten 5 Anlässe, die dich betreffen. Mit «Mehr» gelangst du in die persönliche Kalendersicht."
+      },
+      "invitations": {
+        "label": "Dashboard · Meine Einladungen",
+        "text": "Die Einladungen, die an dich gerichtet sind, mit deiner Antwort (zugesagt, abgesagt oder noch offen). Mit «Mehr» gelangst du zur vollständigen Einladungsliste."
+      },
+      "personal": {
+        "label": "Anlässe / Kalender",
+        "text": "Deine persönliche Kalendersicht: sämtliche Anlässe, die du sehen darfst — alle Anlässe des Organisationskalenders sowie alle Anlässe aus jedem Gruppenkalender, in dem du Mitglied bist. Umschaltbar zwischen Listen- und Kalenderansicht."
+      },
+      "group": {
+        "label": "Gruppen / Kalender",
+        "text": "Der Kalender einer einzelnen Gruppe — nur deren Anlässe. Hier erfasst du Termine, die nur diese Gruppe betreffen."
+      }
+    },
+    "types": {
+      "title": "Kalenderarten",
+      "text": "Jeder Anlass gehört zu keinem, einem oder mehreren Kalendern. Der Kalender bestimmt, wer den Anlass sieht und welche Funktionen zur Verfügung stehen.",
+      "col": {
+        "calendar": "Kalender",
+        "visibility": "Sichtbar für",
+        "create": "Eröffnen",
+        "features": "Funktionen"
+      },
+      "personal": {
+        "label": "Persönlicher Kalender",
+        "visibility": "Du und alle Personen, die du einlädst. Der Eintrag erscheint im Kalender jeder eingeladenen Person.",
+        "create": "Jede angemeldete Person, direkt aus «Anlässe / Kalender».",
+        "features": "Nur Einladungen. Es wird keine Gruppe gebildet, deshalb sind Chat, Dokumentenablage, Serientermine und Terminumfragen nicht möglich."
+      },
+      "group": {
+        "label": "Gruppenkalender",
+        "visibility": "Alle Mitglieder der Gruppe.",
+        "create": "Wird aus der Sicht «Gruppen / Kalender» eröffnet. Eine Gruppe anlegen können nur privilegierte Benutzer (Vorstand) — wende dich an ein Vorstandsmitglied oder an den Support.",
+        "features": "Alle: Serientermine, Terminumfragen, Dokumentenablage und Chat."
+      },
+      "org": {
+        "label": "Organisationskalender",
+        "visibility": "Alle Mitglieder der Organisation.",
+        "create": "Besteht von Anfang an. Ein Anlass wird Teil davon, sobald ihm der Kalender mit der Tenant-ID hinzugefügt wird (Berechtigung: privilegiert oder Anlass-Admin).",
+        "features": "Alle. Für Termine, die alle Mitglieder sehen sollen."
+      },
+      "public": {
+        "label": "Öffentlicher Kalender",
+        "visibility": "Alle — auch Personen ohne Login.",
+        "create": "Wird einem Anlass als Kalender «public» hinzugefügt (Berechtigung: privilegiert oder Anlass-Admin).",
+        "features": "Der Anlass erscheint automatisch auf der öffentlichen Website und kann dort von externen News-Crawlern (z. B. LokalNews) aufgegriffen und einem grösseren Kreis bekannt gemacht werden."
+      }
+    },
+    "invitations": {
+      "title": "Einladungen und Teilnahme",
+      "text": "Es gibt zwei Arten, wie die Teilnahme an einem Anlass geregelt ist:",
+      "open": {
+        "label": "Offene Anlässe",
+        "text": "Jede Person, die den Anlass sieht, kann sich selbst an- und abmelden. Die Teilnehmerliste wächst mit den Zusagen."
+      },
+      "closed": {
+        "label": "Geschlossene Anlässe",
+        "text": "Typisch für Gruppen- und persönliche Kalender: es werden gezielt Personen eingeladen. Nur wer eine Einladung erhalten hat, kann zu- oder absagen."
+      },
+      "respond": "Mit einem Klick auf einen Termin im Kalender öffnest du den Anlass und kannst deine Teilnahme bestätigen oder ablehnen. Ganz unten unter «Teilnehmende» siehst du, wer teilnimmt und wer abgesagt hat.",
+      "series": "Bei Serienterminen zeigt «Terminserie anzeigen» eine tabellarische Übersicht aller Termine der Serie. Dort kannst du dich für jeden einzelnen Termin separat an- oder abmelden."
+    },
+    "symbols": {
+      "title": "Bedeutung der Symbole",
+      "col": {
+        "symbol": "Symbol",
+        "meaning": "Bedeutung"
+      },
+      "accepted": "Zugesagt — deine Teilnahme ist bestätigt.",
+      "declined": "Abgesagt — du nimmst nicht teil.",
+      "open": "Offen — du hast noch nicht geantwortet. Die Einladung wartet auf deine Rückmeldung."
+    },
+    "note": "Fehlt dir ein Kalender oder brauchst du eine neue Gruppe? Gruppen können nur privilegierte Benutzer (Vorstand) anlegen — wende dich an ein Vorstandsmitglied oder an den Support.",
+    "open": "Erklärung anzeigen"
   }
 }

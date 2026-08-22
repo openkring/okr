@@ -1,6 +1,6 @@
 import { AsyncPipe } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input, untracked } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonLabel, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 
 import { CalEventModel, EventsConfig, EventsSection } from '@okr/shared-models';
@@ -8,8 +8,10 @@ import { MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe, WeekdayPipe } from '@okr/shared-pipes';
-import { TranslatePipe } from '@okr/shared-i18n';
+import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
+import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
+import { showCalEventInfo } from '@okr/calevent-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 import { CalendarStore } from './calendar-section.store';
 
@@ -45,7 +47,8 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
     <okr-spinner />
     } @else {        
     <ion-card>
-      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()"
+        [showInfoButton]="true" [infoLabel]="caleventI18n.info_open()" (infoClicked)="showInfo()" />
       <ion-card-content>
         @if(numberOfEvents() === 0) {
           <okr-empty-list [message]="store.i18n.events_empty()" />
@@ -91,6 +94,15 @@ export class EventsSectionComponent implements OnInit {
   protected readonly showEventLocation = computed(() => this.config()?.showEventLocation ?? false);
   protected readonly calevents = computed(() => this.store.calevents());
   private currentUser = computed(() => this.store.appStore.currentUser());
+  private modalController = inject(ModalController);
+
+  /** Only the label of the info button — the explainer itself lives in the calevent domain. */
+  protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open });
+
+  /** Opens the shared 'Kalender & Einladungen' explainer. */
+  protected async showInfo(): Promise<void> {
+    await showCalEventInfo(this.modalController, this.store.appStore.appConfig().appName);
+  }
 
   protected isLoading = computed(() => false);
   //protected filteredEvents = computed(() => this.eventsStore.filteredEvents());

@@ -24,7 +24,7 @@ import { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { CALEVENT_I18N_KEYS, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, planSeriesReconcile, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
-import { RegressionSelectionModal } from '@okr/calevent-ui';
+import { RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 
 const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';
 
@@ -1098,6 +1098,11 @@ export const CalEventStore = signalStore(
       },
 
       /******************************* other *************************************** */
+      /** Opens the 'Kalender & Einladungen' explainer (info icon in the list header). */
+      async showInfo(): Promise<void> {
+        await showCalEventInfo(store.modalController, store.appStore.appConfig().appName);
+      },
+
       async export(type: string): Promise<void> {
         console.log(`CalEventStore.export(${type}) is not yet implemented.`);
       },

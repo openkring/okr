@@ -146,6 +146,9 @@ type AttendanceFilter = AttendanceState | 'all';
             }
             <ion-title>{{ filteredCalEventsCount()}}/{{calEventsCount()}} {{ store.i18n.calevents() }}</ion-title>
             <ion-buttons slot="end">
+              <ion-button (click)="store.showInfo()" [title]="store.i18n.info_open()">
+                <ion-icon slot="icon-only" src="{{'info-circle' | svgIcon }}" />
+              </ion-button>
               @if(showViewToggle()) {
                 <ion-button (click)="toggleView()">
                   <ion-icon slot="icon-only" src="{{ (isListView() ? 'calendar' : 'list') | svgIcon }}" />

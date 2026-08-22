@@ -438,5 +438,93 @@
     "placeholder": "Motivo de la cancelación, p. ej. «Cancelado por aviso de tormenta.»",
     "banner": "Cancelado",
     "conf": "El aviso de cancelación se ha guardado."
+  },
+  "info": {
+    "title": "Calendarios e invitaciones",
+    "intro": "Los eventos aparecen en varios lugares de la aplicación: en el panel, en tu vista de calendario personal y en el calendario de un grupo. Todas las vistas usan los mismos datos y solo muestran un fragmento distinto.",
+    "views": {
+      "title": "Vistas del calendario",
+      "text": "Dónde ves qué eventos:",
+      "col": {
+        "view": "Vista",
+        "shows": "Lo que ves"
+      },
+      "dashboard": {
+        "label": "Panel · Próximas citas",
+        "text": "Los próximos 5 eventos que te conciernen. Con «Más» accedes a tu vista de calendario personal."
+      },
+      "invitations": {
+        "label": "Panel · Mis invitaciones",
+        "text": "Las invitaciones dirigidas a ti, con tu respuesta (aceptada, rechazada o aún abierta). Con «Más» accedes a la lista completa de invitaciones."
+      },
+      "personal": {
+        "label": "Eventos / Calendario",
+        "text": "Tu vista de calendario personal: todos los eventos que puedes ver, es decir, todos los del calendario de la organización y todos los de cada calendario de grupo del que eres miembro. Conmutable entre vista de lista y de calendario."
+      },
+      "group": {
+        "label": "Grupos / Calendario",
+        "text": "El calendario de un solo grupo, únicamente con sus eventos. Aquí registras las citas que solo conciernen a ese grupo."
+      }
+    },
+    "types": {
+      "title": "Tipos de calendario",
+      "text": "Cada evento pertenece a ninguno, uno o varios calendarios. El calendario determina quién ve el evento y qué funciones están disponibles.",
+      "col": {
+        "calendar": "Calendario",
+        "visibility": "Visible para",
+        "create": "Creación",
+        "features": "Funciones"
+      },
+      "personal": {
+        "label": "Calendario personal",
+        "visibility": "Tú y todas las personas a las que invitas. La entrada aparece en el calendario de cada persona invitada.",
+        "create": "Cualquier persona con sesión iniciada, directamente desde «Eventos / Calendario».",
+        "features": "Solo invitaciones. No se forma ningún grupo, por lo que no son posibles el chat, el archivo de documentos, las series de citas ni las encuestas de fechas."
+      },
+      "group": {
+        "label": "Calendario de grupo",
+        "visibility": "Todos los miembros del grupo.",
+        "create": "Se crea desde la vista «Grupos / Calendario». Solo los usuarios privilegiados (la junta) pueden crear un grupo; contacta con un miembro de la junta o con el soporte.",
+        "features": "Todas: series de citas, encuestas de fechas, archivo de documentos y chat."
+      },
+      "org": {
+        "label": "Calendario de la organización",
+        "visibility": "Todos los miembros de la organización.",
+        "create": "Existe desde el principio. Un evento forma parte de él en cuanto se le añade el calendario con el identificador del tenant (permiso: privilegiado o administrador de eventos).",
+        "features": "Todas. Para citas que deben ver todos los miembros."
+      },
+      "public": {
+        "label": "Calendario público",
+        "visibility": "Todo el mundo, incluidas las personas sin cuenta.",
+        "create": "Se añade a un evento como calendario «public» (permiso: privilegiado o administrador de eventos).",
+        "features": "El evento aparece automáticamente en el sitio web público, donde rastreadores de noticias externos (p. ej. LokalNews) pueden recogerlo y difundirlo a un público más amplio."
+      }
+    },
+    "invitations": {
+      "title": "Invitaciones y participación",
+      "text": "Hay dos formas de gestionar la participación en un evento:",
+      "open": {
+        "label": "Eventos abiertos",
+        "text": "Cualquier persona que vea el evento puede apuntarse o darse de baja. La lista de participantes crece con cada confirmación."
+      },
+      "closed": {
+        "label": "Eventos cerrados",
+        "text": "Típico de los calendarios de grupo y personales: se invita a personas concretas. Solo quien ha recibido una invitación puede aceptar o rechazar."
+      },
+      "respond": "Al hacer clic en una cita del calendario se abre el evento y puedes confirmar o rechazar tu participación. Abajo del todo, en «Participantes», ves quién asiste y quién ha rechazado.",
+      "series": "En las series, «Mostrar serie de citas» abre una tabla con todas las fechas de la serie, donde puedes apuntarte o darte de baja en cada fecha por separado."
+    },
+    "symbols": {
+      "title": "Significado de los símbolos",
+      "col": {
+        "symbol": "Símbolo",
+        "meaning": "Significado"
+      },
+      "accepted": "Aceptado: tu participación está confirmada.",
+      "declined": "Rechazado: no participas.",
+      "open": "Abierto: todavía no has respondido. La invitación espera tu respuesta."
+    },
+    "note": "¿Te falta un calendario o necesitas un grupo nuevo? Solo los usuarios privilegiados (la junta) pueden crear grupos; contacta con un miembro de la junta o con el soporte.",
+    "open": "Mostrar explicación"
   }
 }
