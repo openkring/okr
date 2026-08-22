@@ -1,69 +1,41 @@
 import { Route } from '@angular/router';
-import { isAppReadyGuard, isAuthenticatedGuard, isPrivilegedGuard } from '@okr/auth-feature';
+import { isAppReadyGuard } from '@okr/auth-feature';
+import { composeGatedFeatureRoutes, UNGATED_ROUTES } from '@okr/tenant-routes';
 
-// CMS-minimal feature routes. Navigation is activation-gated by isAppReadyGuard on the
-// wrapping parent below; the <ion-router-outlet> is never removed from the DOM (gating it
-// via @if crashed Ionic's StackController). Domain features are added later as building blocks.
+// The route table is composed from the feature catalogue by composeGatedFeatureRoutes
+// (@okr/tenant-routes), which prepends isFeatureEnabledGuard(<block id>) to every top-level
+// fragment — so what is reachable is decided by app-config/<%= tenantId %>.enabledFeatures and
+// the feature-rollout docs, not by this array. Admin-only screens stay admin-only: each
+// fragment keeps its own role guards, which run after the feature gate. Do NOT swap this for
+// composeFeatureRoutes (@okr/tenant-util) — that one is ungated; see its doc comment.
+//
+// WHY THIS IS THE SCAFFOLD'S DEFAULT rather than the hand-written CMS-minimal table it used to
+// emit. The old table listed ~7 routes and, critically, did NOT include UNGATED_ROUTES — so
+// `/tenant/features` 404'd in every freshly generated app. That is the ONLY caller of
+// applyFeatureSelection, which creates menuItems/main_<%= tenantId %> and every enabled block's
+// menu doc, so a new tenant could never seed a menu and its sidebar stayed permanently empty.
+// A green `nx build` does not catch it; see the provision-tenant skill, step 10.
+//
+// A NEW TENANT IS STILL MINIMAL — dynamically, not statically. The blocks that make an app
+// usable at all (auth, cms, user, profile, session, security, i18n, avatar, …) are `core: true`
+// in FEATURE_BLOCKS and bypass ENABLEMENT, so they resolve even while enabledFeatures is empty.
+// Every product block stays gated until the admin ticks it in the picker. Nothing is exposed
+// that the tenant has not asked for.
+//
+// Navigation is activation-gated by isAppReadyGuard on the wrapping parent below; the
+// <ion-router-outlet> is never removed from the DOM (gating it via @if crashed Ionic's
+// StackController).
 const featureRoutes: Route[] = [
-  {
-    path: 'public',
-    children: [
-      { path: ':id/:contextMenuName', loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
-      { path: ':id', loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
-    ],
-  },
-  {
-    path: 'private',
-    canActivate: [isAuthenticatedGuard],
-    children: [
-      { path: ':id/:contextMenuName', loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
-      { path: ':id', loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher), data: { color: 'secondary' } },
-    ],
-  },
-  {
-    path: 'auth',
-    children: [
-      { path: '', redirectTo: 'login', pathMatch: 'full' },
-      { path: 'login', loadComponent: () => import('@okr/auth-feature').then(m => m.LoginPage) },
-      { path: 'pwdreset', loadComponent: () => import('@okr/auth-feature').then(m => m.PasswordResetPage) },
-      { path: 'confirm', loadComponent: () => import('@okr/auth-feature').then(m => m.ConfirmPasswordResetPage) },
-    ],
-  },
-  {
-    path: 'person',
-    canActivate: [isAuthenticatedGuard],
-    children: [
-      { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/subject-person-feature').then(m => m.PersonList) },
-      { path: 'profile', loadComponent: () => import('@okr/profile-feature').then(m => m.ProfileEditPage), data: { preload: true } },
-      { path: ':personKey', loadComponent: () => import('@okr/subject-person-feature').then(m => m.PersonEditPage) },
-    ],
-  },
-  {
-    path: 'page',
-    canActivate: [isAuthenticatedGuard],
-    children: [
-      { path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageList) },
-    ],
-  },
-  {
-    path: 'section',
-    canActivate: [isAuthenticatedGuard],
-    children: [
-      { path: 'all', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-section-feature').then(m => m.SectionAllList) },
-    ],
-  },
-  {
-    path: 'menu',
-    canActivate: [isAuthenticatedGuard],
-    children: [
-      { path: 'all', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/cms-menu-feature').then(m => m.MenuList) },
-    ],
-  },
+  ...composeGatedFeatureRoutes(),
+  // The picker and any other control-plane screen a menu row points at. Defined in
+  // @okr/tenant-routes so the catalogue specs can resolve those urls too — see UNGATED_ROUTES.
+  ...UNGATED_ROUTES,
   { path: '**', loadComponent: () => import('@okr/cms-page-feature').then(m => m.ErrorPage), data: { errorName: 'pageNotFound' } },
 ];
 
 export const appRoutes: Route[] = [
   { path: '', pathMatch: 'full', redirectTo: 'public/welcome_<%= tenantId %>' },
+  { path: 'welcome', pathMatch: 'full', redirectTo: 'public/welcome_<%= tenantId %>' },
   {
     // Componentless parent: applies the app-ready gate to every feature route without
     // ever removing the router outlet from the DOM.
