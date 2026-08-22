@@ -111,7 +111,19 @@
     "revert": {
       "label": "Verwerfen"
     },
-    "title_plain": "Email senden"
+    "title_plain": "Email senden",
+    "segment": {
+      "editor": "Editor",
+      "preview": "Vorschau",
+      "list": "Verteiler"
+    },
+    "preview": {
+      "empty": "Noch kein Inhalt zum Anzeigen.",
+      "frame": "Email-Vorschau"
+    },
+    "list": {
+      "empty": "Keine Empfänger erfasst."
+    }
   },
   "category": {
     "label": "Kategorie"

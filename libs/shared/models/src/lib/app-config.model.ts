@@ -84,6 +84,20 @@ export class AppConfig {
   public appTitle = DEFAULT_TITLE; // title of the application on Welcome Screen
   public appSubtitle = DEFAULT_TITLE; // subtitle of the application on Welcome Screen
   public appDomain = ''; // domain of the application, e.g. example.com
+
+  /**
+   * Domain the mail provider has verified as a sender, e.g. `seeclub.org` while the app itself is
+   * served from `app.seeclub.org`. Empty ⇒ fall back to `appDomain`. Read server-side by
+   * `getAppEmailConfig` (apps/functions/src/auth/email-templates.ts) — declared here so the field
+   * is visible to the client too (the email composer warns when a sender leaves this domain).
+   */
+  public emailDomain = '';
+
+  /**
+   * Default sender/recipient the email composer prefills, e.g. `kommunikation@seeclub.org`.
+   * Empty ⇒ the composer falls back to `app@<emailDomain || appDomain>`.
+   */
+  public mailFrom = '';
   public rootUrl = '/public/welcome';
   public logoUrl = DEFAULT_URL;
   public welcomeBannerUrl = DEFAULT_URL;

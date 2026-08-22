@@ -129,6 +129,13 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
 
   attachment_add:   PFX + 'composer.attachment.add',
 
+  segment_editor:   PFX + 'composer.segment.editor',
+  segment_preview:  PFX + 'composer.segment.preview',
+  segment_list:     PFX + 'composer.segment.list',
+  preview_empty:    PFX + 'composer.preview.empty',
+  preview_frame:    PFX + 'composer.preview.frame',
+  list_empty:       PFX + 'composer.list.empty',
+
   send:             PFX + 'doc.send.label',
   /** The bulk-send job document could not be written — nothing was sent. */
   send_queue_error: PFX + 'composer.send.queue_error',

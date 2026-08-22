@@ -88,3 +88,25 @@ export function buildBrandedEmailHtml(bodyHtml: string, opts: BrandedEmailOption
 </body>
 </html>`;
 }
+
+/** Domain part of an email address, lower-cased. Empty when there is none. */
+export function emailDomainOf(email: string): string {
+  return email.trim().toLowerCase().split('@')[1] ?? '';
+}
+
+/**
+ * Is `email` an acceptable sender for an app whose verified sending domain is `senderDomain`?
+ *
+ * The app is hosted on `app.seeclub.org` but mail is sent from the apex `seeclub.org`, and the
+ * provider verifies the apex — so a strict equality check flagged the perfectly valid
+ * `kommunikation@seeclub.org` as wrong. Accept the configured domain plus anything on either side
+ * of the subdomain relation (`app.seeclub.org` ↔ `seeclub.org`); a foreign domain still fails.
+ */
+export function isSenderDomainAllowed(email: string, senderDomain: string): boolean {
+  const domain = emailDomainOf(email);
+  const expected = senderDomain.trim().toLowerCase();
+  if (domain.length === 0 || expected.length === 0) return false;
+  return domain === expected
+    || domain.endsWith(`.${expected}`)      // mail from a subdomain of the verified domain
+    || expected.endsWith(`.${domain}`);     // app hosted on a subdomain, mail from the apex
+}

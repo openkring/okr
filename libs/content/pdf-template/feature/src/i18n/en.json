@@ -111,7 +111,19 @@
     "revert": {
       "label": "Discard"
     },
-    "title_plain": "Send email"
+    "title_plain": "Send email",
+    "segment": {
+      "editor": "Editor",
+      "preview": "Preview",
+      "list": "Recipients"
+    },
+    "preview": {
+      "empty": "Nothing to preview yet.",
+      "frame": "Email preview"
+    },
+    "list": {
+      "empty": "No recipients entered."
+    }
   },
   "category": {
     "label": "Category"

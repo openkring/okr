@@ -49,6 +49,7 @@ export async function openBulkEmailFlow(
       storagePath: attachment?.storagePath ?? '',
       filename: attachment?.filename ?? '',
     },
+    cssClass: 'wide-modal',
   });
   await composer.present();
   await composer.onWillDismiss();

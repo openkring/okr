@@ -111,7 +111,19 @@
     "revert": {
       "label": "Annuler"
     },
-    "title_plain": "Envoyer un e-mail"
+    "title_plain": "Envoyer un e-mail",
+    "segment": {
+      "editor": "Éditeur",
+      "preview": "Aperçu",
+      "list": "Destinataires"
+    },
+    "preview": {
+      "empty": "Rien à afficher pour le moment.",
+      "frame": "Aperçu de l’email"
+    },
+    "list": {
+      "empty": "Aucun destinataire saisi."
+    }
   },
   "category": {
     "label": "Catégorie"

@@ -111,7 +111,19 @@
     "revert": {
       "label": "Descartar"
     },
-    "title_plain": "Enviar correo"
+    "title_plain": "Enviar correo",
+    "segment": {
+      "editor": "Editor",
+      "preview": "Vista previa",
+      "list": "Destinatarios"
+    },
+    "preview": {
+      "empty": "Todavía no hay nada que mostrar.",
+      "frame": "Vista previa del correo"
+    },
+    "list": {
+      "empty": "No hay destinatarios."
+    }
   },
   "category": {
     "label": "Categoría"

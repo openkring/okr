@@ -111,7 +111,19 @@
     "revert": {
       "label": "Annulla"
     },
-    "title_plain": "Inviare e-mail"
+    "title_plain": "Inviare e-mail",
+    "segment": {
+      "editor": "Editor",
+      "preview": "Anteprima",
+      "list": "Destinatari"
+    },
+    "preview": {
+      "empty": "Non c’è ancora nulla da mostrare.",
+      "frame": "Anteprima email"
+    },
+    "list": {
+      "empty": "Nessun destinatario inserito."
+    }
   },
   "category": {
     "label": "Categoria"

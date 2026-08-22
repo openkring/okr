@@ -111,6 +111,7 @@ export class PdfPreviewModal {
         filename: this.filename(),
         outputFormat: this.outputFormat(),
       },
+      cssClass: 'wide-modal',
     });
     await modal.present();
   }
