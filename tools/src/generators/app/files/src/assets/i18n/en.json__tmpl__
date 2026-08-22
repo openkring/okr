@@ -561,5 +561,17 @@
     "unpaid": "Unbezahlt",
     "valid": "Gültig",
     "tourboat": "Tourboot"
+  },
+  "appUpdate": {
+    "header": "Update available",
+    "message": "A new version of the app is available. You are currently using version {current}. Please update the app to use the latest features and improvements.",
+    "messageWithVersion": "A new version ({latest}) of the app is available. You are currently using version {current}. Please update the app to use the latest features and improvements.",
+    "now": "Update now",
+    "later": "Later"
+  },
+  "boot": {
+    "degraded1": "Your profile could not be fully loaded because of a slow network connection.",
+    "degraded2": "Please check your internet connection and try again.",
+    "retry": "Try again"
   }
 }

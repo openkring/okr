@@ -7,5 +7,17 @@
     "fr": "Francés",
     "es": "Español",
     "it": "Italiano"
+  },
+  "appUpdate": {
+    "header": "Actualización disponible",
+    "message": "Hay una nueva versión de la aplicación. Actualmente utiliza la versión {current}. Actualice la aplicación para disfrutar de las últimas funciones y mejoras.",
+    "messageWithVersion": "Hay una nueva versión ({latest}) de la aplicación. Actualmente utiliza la versión {current}. Actualice la aplicación para disfrutar de las últimas funciones y mejoras.",
+    "now": "Actualizar ahora",
+    "later": "Más tarde"
+  },
+  "boot": {
+    "degraded1": "No se pudo cargar por completo su perfil debido a una conexión de red lenta.",
+    "degraded2": "Compruebe su conexión a internet e inténtelo de nuevo.",
+    "retry": "Volver a intentarlo"
   }
 }

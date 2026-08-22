@@ -7,5 +7,17 @@
     "fr": "Francese",
     "es": "Spagnolo",
     "it": "Italiano"
+  },
+  "appUpdate": {
+    "header": "Aggiornamento disponibile",
+    "message": "È disponibile una nuova versione dell’app. Attualmente si utilizza la versione {current}. Aggiornare l’app per usufruire delle ultime funzioni e migliorie.",
+    "messageWithVersion": "È disponibile una nuova versione ({latest}) dell’app. Attualmente si utilizza la versione {current}. Aggiornare l’app per usufruire delle ultime funzioni e migliorie.",
+    "now": "Aggiorna ora",
+    "later": "Più tardi"
+  },
+  "boot": {
+    "degraded1": "Non è stato possibile caricare completamente il suo profilo a causa di una connessione di rete lenta.",
+    "degraded2": "Verificare la connessione a internet e riprovare.",
+    "retry": "Riprovare"
   }
 }

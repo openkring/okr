@@ -1,6 +1,8 @@
 {
   "vcard": {
-    "action": { "label": "Als vCard exportieren" },
+    "action": {
+      "label": "Als vCard exportieren"
+    },
     "modal": {
       "title": "vCard-Export",
       "intro": "Wähle, welche Daten exportiert werden."
@@ -152,7 +154,6 @@
   "workrel": "Beschäftigung",
   "year": "Jahr",
   "allYears": "Alle Jahre",
-
   "altText": {
     "label": "Alt Text",
     "placeholder": "Text",
@@ -174,12 +175,9 @@
     "placeholder": "https://...",
     "helper": "Uniform Resource Locator, ein HTML Link"
   },
-
   "empty": {
     "org": "Keine Organisationen gefunden."
-
   },
-
   "select": {
     "label": "Auswählen",
     "tag": "Tag auswählen",
@@ -218,7 +216,6 @@
   "actionsheet": {
     "title": "Wähle eine Aktion"
   },
-
   "chip": {
     "tag": {
       "label": "Tag"
@@ -302,8 +299,6 @@
     "valid": "Gültig",
     "vs": "VS"
   },
-  
-
   "validation": {
     "addressValueMandatoryForNonPostal": "Der Adress-Wert ist für nicht-postalische Adressen obligatorisch.",
     "addressModelType": "Der ModelType muss AddressModel sein.",
@@ -436,5 +431,17 @@
     "amountMax": "Betrag ist zu gross.",
     "currencyRequired": "Währung ist erforderlich.",
     "currencyInvalid": "Ungültige Währung."
+  },
+  "appUpdate": {
+    "header": "Update verfügbar",
+    "message": "Eine neue Version der App ist verfügbar. Du verwendest aktuell Version {current}. Bitte aktualisiere die App, um die neuesten Funktionen und Verbesserungen zu nutzen.",
+    "messageWithVersion": "Eine neue Version ({latest}) der App ist verfügbar. Du verwendest aktuell Version {current}. Bitte aktualisiere die App, um die neuesten Funktionen und Verbesserungen zu nutzen.",
+    "now": "Jetzt aktualisieren",
+    "later": "Später"
+  },
+  "boot": {
+    "degraded1": "Ihr Profil konnte wegen langsamer Netzwerkverbindung nicht vollständig geladen werden.",
+    "degraded2": "Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+    "retry": "Erneut versuchen"
   }
 }
