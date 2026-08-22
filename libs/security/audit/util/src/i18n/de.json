@@ -19,5 +19,11 @@
     "done": "Verzeichnis neu aufgebaut: {{persons}} Personen, {{orgs}} Organisationen.",
     "cross": "{{addresses}} mandantenfremde Adressen aus {{parents}} Profilen bleiben ausgeschlossen."
   },
+  "drive": {
+    "action": "Drive-Zugang prüfen",
+    "running": "Drive-Zugang wird geprüft …",
+    "ok": "Drive-Zugang steht.",
+    "failed": "Der Drive-Zugang ist fehlgeschlagen:"
+  },
   "severity": { "error": "Fehler", "warning": "Warnungen", "info": "Hinweise" }
 }

@@ -6,7 +6,7 @@ import {
 } from '@ionic/angular/standalone';
 
 import { PrivacyAuditService } from '@okr/security-audit-data-access';
-import type { RebuildDirectoryResult } from '@okr/security-audit-data-access';
+import type { DriveAccessResult, RebuildDirectoryResult } from '@okr/security-audit-data-access';
 import {
   PRIVACY_AUDIT_I18N_KEYS, type PrivacyAuditI18n, buildAuditDocument,
 } from '@okr/security-audit-util';
@@ -87,9 +87,36 @@ import type { FindingSeverity, PrivacyAuditResult } from '@okr/shared-models';
                 {{ i18n.rebuild_action() }}
               }
             </ion-button>
+            <!-- Diary import prerequisite V2 (spec 1.34): proves the deployed function still
+                 holds a working Drive refresh token. Reads only, writes nothing, returns no
+                 file content. Belongs on a diary admin screen once one exists. -->
+            <ion-button fill="outline" (click)="checkDrive()"
+                        [disabled]="isRunning() || isRebuilding() || isCheckingDrive()">
+              @if (isCheckingDrive()) {
+                <ion-spinner name="dots" slot="start" /> {{ i18n.drive_running() }}
+              } @else {
+                {{ i18n.drive_action() }}
+              }
+            </ion-button>
           </div>
         </ion-card-content>
       </ion-card>
+
+      <!-- Same reasoning as the rebuild card: the raw line is deliberately untranslated, so it
+           still says something when the i18n scope fails to load — which is exactly the kind of
+           day on which someone is checking whether Drive access works. -->
+      @if (driveResult(); as drive) {
+        <ion-card>
+          <ion-card-content>
+            <p>{{ i18n.drive_ok() }}</p>
+            <ion-note class="samples">
+              account {{ drive.account }} · firstPageFiles {{ drive.firstPageFiles }} ·
+              hasMorePages {{ drive.hasMorePages }} ·
+              quota {{ drive.quotaUsage }}/{{ drive.quotaLimit }}
+            </ion-note>
+          </ion-card-content>
+        </ion-card>
+      }
 
       <!-- The rebuild's outcome, kept on screen. A toast is the wrong instrument for an
            operation that runs for a minute: it fires 3s after the admin has stopped
@@ -162,6 +189,8 @@ export class PrivacyAuditPage {
   protected readonly isRebuilding = signal(false);
   protected readonly rebuildSummary = signal<RebuildDirectoryResult | undefined>(undefined);
   protected readonly rebuildMessage = signal<string | undefined>(undefined);
+  protected readonly isCheckingDrive = signal(false);
+  protected readonly driveResult = signal<DriveAccessResult | undefined>(undefined);
   protected readonly error = signal<string | undefined>(undefined);
 
   protected readonly ranOn = computed(() =>
@@ -223,6 +252,25 @@ export class PrivacyAuditPage {
       this.alertService.error(`PrivacyAuditPage.rebuildDirectory: ${error}`);
     } finally {
       this.isRebuilding.set(false);
+    }
+  }
+
+  /**
+   * Calls the diary Drive health check and puts the numbers on screen.
+   *
+   * The failure is surfaced verbatim rather than summarised: `invalid_grant` from Google, a
+   * `permission-denied` from the function and a wrong-query `0 files` all look alike once
+   * flattened into "Drive access failed", and they need three different fixes.
+   */
+  protected async checkDrive(): Promise<void> {
+    this.isCheckingDrive.set(true);
+    this.driveResult.set(undefined);
+    try {
+      this.driveResult.set(await this.service.checkDriveAccess());
+    } catch (error) {
+      this.alertService.error(`${this.i18n.drive_failed()} ${error}`);
+    } finally {
+      this.isCheckingDrive.set(false);
     }
   }
 

@@ -26,6 +26,18 @@ export interface RebuildDirectoryResult {
 }
 
 /**
+ * What `checkDriveAccess` reports back — a read-only proof that the deployed function can reach
+ * the diary archive in Drive. No file content crosses the wire: the archive is personal data.
+ */
+export interface DriveAccessResult {
+  account: string;
+  quotaLimit: string;
+  quotaUsage: string;
+  firstPageFiles: number;
+  hasMorePages: boolean;
+}
+
+/**
  * Thin wrapper around the admin-only `runPrivacyAudit` callable (spec 1.19 Phase 5D).
  *
  * The result is **ephemeral** — nothing is persisted in this slice, so there is no cache
@@ -64,6 +76,20 @@ export class PrivacyAuditService {
   public async rebuildAddressDirectory(): Promise<RebuildDirectoryResult> {
     const callable = httpsCallable<Record<string, never>, RebuildDirectoryResult>(
       this.functions, 'rebuildAddressDirectory');
+    const result = await callable({});
+    return result.data;
+  }
+
+  /**
+   * Health check for the diary import's Drive credentials (spec 1.34, prerequisite V2).
+   *
+   * It sits on the audit screen because that is the only admin-only diagnostics surface the app
+   * has today — the diary domain has a `util` lib and no page yet. Move it to the diary admin
+   * screen once one exists; nothing else calls it.
+   */
+  public async checkDriveAccess(): Promise<DriveAccessResult> {
+    const callable = httpsCallable<Record<string, never>, DriveAccessResult>(
+      this.functions, 'checkDriveAccess');
     const result = await callable({});
     return result.data;
   }

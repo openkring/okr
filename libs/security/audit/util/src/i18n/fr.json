@@ -19,5 +19,11 @@
     "done": "Annuaire reconstruit : {{persons}} personnes, {{orgs}} organisations.",
     "cross": "{{addresses}} adresses d'autres mandants dans {{parents}} profils restent exclues."
   },
+  "drive": {
+    "action": "Vérifier l'accès à Drive",
+    "running": "Vérification de l'accès à Drive …",
+    "ok": "L'accès à Drive fonctionne.",
+    "failed": "L'accès à Drive a échoué :"
+  },
   "severity": { "error": "erreurs", "warning": "avertissements", "info": "remarques" }
 }

@@ -19,5 +19,11 @@
     "done": "Elenco ricostruito: {{persons}} persone, {{orgs}} organizzazioni.",
     "cross": "{{addresses}} indirizzi di altri clienti in {{parents}} profili restano esclusi."
   },
+  "drive": {
+    "action": "Verificare l'accesso a Drive",
+    "running": "Verifica dell'accesso a Drive …",
+    "ok": "L'accesso a Drive funziona.",
+    "failed": "L'accesso a Drive non è riuscito:"
+  },
   "severity": { "error": "errori", "warning": "avvisi", "info": "note" }
 }

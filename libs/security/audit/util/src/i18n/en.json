@@ -19,5 +19,11 @@
     "done": "Directory rebuilt: {{persons}} persons, {{orgs}} organisations.",
     "cross": "{{addresses}} addresses of other tenants in {{parents}} profiles stay excluded."
   },
+  "drive": {
+    "action": "Check Drive access",
+    "running": "Checking Drive access …",
+    "ok": "Drive access works.",
+    "failed": "Drive access failed:"
+  },
   "severity": { "error": "errors", "warning": "warnings", "info": "notices" }
 }
