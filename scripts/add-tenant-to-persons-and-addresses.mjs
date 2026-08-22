@@ -97,7 +97,7 @@
 
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
-import { createJiti } from 'jiti';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -160,9 +160,22 @@ if (!TENANT_ID) {
 if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
 const db = getFirestore();
 
-const jiti = createJiti(import.meta.url, { interopDefault: true });
-const { PersonCollection } = await jiti.import(path.join(MODELS_DIR, 'person.model.ts'));
-const { AddressCollection } = await jiti.import(path.join(MODELS_DIR, 'address.model.ts'));
+// Collection names are inlined rather than imported. `person.model.ts` and `address.model.ts`
+// both import `@okr/shared-constants`, an alias jiti cannot resolve from a plain node script —
+// importing them fails at runtime with MODULE_NOT_FOUND. The two values are stable strings that
+// also appear verbatim in every Firestore path; the source of truth stays
+// `libs/shared/models/src/lib/{person,address}.model.ts`, which the check below verifies.
+const PersonCollection = 'persons';
+const AddressCollection = 'addresses';
+
+// Guard against silent drift: if either constant is ever renamed in the model, fail loudly here
+// rather than walking an empty collection and reporting a reassuring "0 changed".
+for (const [file, expected] of [['person.model.ts', PersonCollection], ['address.model.ts', AddressCollection]]) {
+  const source = readFileSync(path.join(MODELS_DIR, file), 'utf8');
+  if (!source.includes(`Collection = '${expected}'`)) {
+    refuse(`${file} no longer declares the collection name '${expected}' — update this script.`);
+  }
+}
 
 // ───────────────────────────────────────────────────────────────────────────────────────
 // the migration itself
