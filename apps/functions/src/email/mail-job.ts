@@ -17,7 +17,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { getAppEmailConfig } from '../auth/email-templates';
-import { sendEmailViaProvider } from '../auth/email-transport';
+import { DEFAULT_EMAIL_PROVIDER, sendEmailViaProvider } from '../auth/email-transport';
 import { AttachmentRef, resolveAttachments } from '../auth';
 
 const REGION = 'europe-west6';
@@ -51,7 +51,7 @@ export interface MailJobDoc {
 /** The tenant's configured provider, same lookup the workflow outbox uses. */
 async function providerFor(tenantId: string): Promise<string> {
   const snap = await getFirestore().collection('app-config').doc(tenantId).get();
-  return String(snap.data()?.['emailProvider'] ?? 'mailtrap_api');
+  return String(snap.data()?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
 }
 
 /** `"Name" <a@b.ch>` → `a@b.ch`; a bare address passes through. */

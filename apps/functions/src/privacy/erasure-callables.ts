@@ -9,7 +9,7 @@ import { outOfReachRows } from '@okr/security-processing-util';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { DateFormat, convertDateFormatToString } from '@okr/shared-util-core';
 
-import { isValidProvider, sendEmailViaProvider } from '../auth/email-transport';
+import { DEFAULT_EMAIL_PROVIDER, isValidProvider, sendEmailViaProvider } from '../auth/email-transport';
 import { getAppEmailConfig } from '../auth/email-templates';
 import { buildSubjectCtx } from './export-my-data';
 import { SUBJECT_DATA_MAP } from './subject-data-map';
@@ -138,7 +138,7 @@ async function notifyTenantAdmin(tenantId: string, executedAt: string): Promise<
       logger.warn(`eraseMyData: tenant ${tenantId} has no dpoEmail/opEmail — no admin notification sent.`);
       return;
     }
-    const provider = String(config?.['emailProvider'] ?? 'mailgun_smtp');
+    const provider = String(config?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
     if (!isValidProvider(provider)) {
       logger.warn(`eraseMyData: tenant ${tenantId} declares an unknown email provider — no notification sent.`);
       return;

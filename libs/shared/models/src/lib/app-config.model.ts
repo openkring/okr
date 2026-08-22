@@ -98,6 +98,15 @@ export class AppConfig {
    * Empty ⇒ the composer falls back to `app@<emailDomain || appDomain>`.
    */
   public mailFrom = '';
+
+  /**
+   * Mail provider this tenant sends through: one of `mailgun_smtp`, `mailtrap_api`,
+   * `netzone_smtp`, `mailtrap_test` (`VALID_PROVIDERS` in
+   * apps/functions/src/auth/email-transport.ts is the authority). Empty ⇒ every sending function
+   * falls back to `DEFAULT_EMAIL_PROVIDER` from that same file — never to a literal at the call
+   * site, which is how the erasure notification once ended up on another provider than the rest.
+   */
+  public emailProvider = '';
   public rootUrl = '/public/welcome';
   public logoUrl = DEFAULT_URL;
   public welcomeBannerUrl = DEFAULT_URL;

@@ -4,6 +4,16 @@ export type EmailProvider = 'mailgun_smtp' | 'mailtrap_api' | 'netzone_smtp' | '
 
 export const VALID_PROVIDERS: EmailProvider[] = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtrap_test'];
 
+/**
+ * Provider used when a tenant's `app-config` carries no `emailProvider` field.
+ *
+ * The single source of truth for every caller — the erasure notification used to fall back to
+ * `mailgun_smtp` while the mail job and the workflow outbox fell back to `mailtrap_api`, so a
+ * tenant without the field silently sent one of its mails through a different provider (other
+ * credentials, other verified sender domain). Change it here, not at a call site.
+ */
+export const DEFAULT_EMAIL_PROVIDER: EmailProvider = 'mailtrap_api';
+
 export function isValidProvider(p: string): p is EmailProvider {
   return VALID_PROVIDERS.includes(p as EmailProvider);
 }

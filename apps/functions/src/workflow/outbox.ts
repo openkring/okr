@@ -18,7 +18,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 import { getAppEmailConfig } from '../auth/email-templates';
-import { sendEmailViaProvider } from '../auth/email-transport';
+import { DEFAULT_EMAIL_PROVIDER, sendEmailViaProvider } from '../auth/email-transport';
 import { matrixBotToken, sendBotDirectMessage } from './matrix-bot';
 import { ALL_ESIGN_SECRETS } from '../esign/shared';
 import { startSignatureRun } from '../esign/esign-send-document';
@@ -43,7 +43,7 @@ const EMAIL_SECRETS = ['MAILGUN_SMTP_PASSWORD', 'MAILTRAP_APIKEY', 'NETZONE_SMTP
 /** The tenant's configured provider, same lookup the privacy erasure mails use. */
 async function providerFor(tenantId: string): Promise<string> {
   const snap = await getFirestore().collection('app-config').doc(tenantId).get();
-  return String(snap.data()?.['emailProvider'] ?? 'mailtrap_api');
+  return String(snap.data()?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
 }
 
 async function dispatch(doc: OutboxDoc): Promise<void> {
