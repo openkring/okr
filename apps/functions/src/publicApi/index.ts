@@ -14,6 +14,7 @@ import { calendarRouter } from './routes/calendar';
 import { contactRouter } from './routes/contact';
 import { coursesRouter, resultsRouter } from './routes/stubs';
 import { pageRouter } from './routes/page';
+import { aliasRouter } from './routes/alias';
 
 // ---------------------------------------------------------------------------
 // CORS allowlist. The public website calls this API from the browser, so we
@@ -87,6 +88,11 @@ app.get(`${BASE}/courses`,       coursesRouter);
 app.get(`${BASE}/results`,       resultsRouter);
 app.get(`${BASE}/pages/:pageKey`, pageRouter);
 app.post(`${BASE}/contact`,      contactRouter);
+
+// Der Alias-Resolver liegt BEWUSST ausserhalb von BASE: der Pfad ist Teil der Kurz-URL
+// (app.<domain>/s/<space>/<code>) und muss kurz bleiben. Er leitet den Tenant aus dem Host ab,
+// nicht aus ?tenantId=, weshalb die Tenant-Allowlist-Middleware oben ihn korrekt durchlaesst.
+app.get('/s/:space/:code', aliasRouter);
 
 // JSON 404 for anything else (avoids leaking the default Express HTML page).
 app.use((req, res) => {
