@@ -1,6 +1,7 @@
 import { getFirestore } from 'firebase-admin/firestore';
 
-import { AppConfigCollection } from '@okr/shared-models';
+import { AliasSpaceCollection, AppConfigCollection } from '@okr/shared-models';
+import type { AliasSpaceModel } from '@okr/shared-models';
 
 /**
  * Host ↔ Tenant, abgeleitet aus `AppConfig.appDomain`.
@@ -82,4 +83,43 @@ export async function appBaseUrl(tenantId: string): Promise<string> {
 /** Die Kurz-URL eines Alias. NICHT die Ziel-URL — die baut `buildTargetUrl`. */
 export function shortUrl(baseUrl: string, space: string, alias: string): string {
   return `${baseUrl}/s/${space}/${alias}`;
+}
+
+/**
+ * Space-Cache für den Resolver.
+ *
+ * Der Resolver löst mit EINEM getDoc auf — das ist der Grund, warum ein Redirect billig genug
+ * ist, um vor einem QR-Code zu stehen. Für `trackingLevel: 'inherit'` braucht er aber den
+ * Space, und den pro Aufruf zu lesen würde diesen Vorteil halbieren. Spaces sind langlebige
+ * Konfiguration (3–5 pro Tenant), also werden sie pro Function-Instanz gehalten.
+ *
+ * Preis: eine Tracking-Änderung am Space greift erst, wenn die Instanz recycelt wird. Das ist
+ * für eine Zählstufe vertretbar — für eine Zugriffsentscheidung wäre es das nicht, und deshalb
+ * wird `isEnabled`/`validUntil` weiterhin vom ALIAS gelesen, nie aus diesem Cache.
+ */
+const spaceCache = new Map<string, AliasSpaceModel | undefined>();
+
+/** Nur für Tests. */
+export function resetSpaceCache(): void {
+  spaceCache.clear();
+}
+
+export async function spaceByName(
+  tenantId: string,
+  name: string,
+): Promise<AliasSpaceModel | undefined> {
+  const cacheKey = `${tenantId}__${name}`;
+  if (spaceCache.has(cacheKey)) return spaceCache.get(cacheKey);
+
+  const snap = await getFirestore().collection(AliasSpaceCollection)
+    .where('tenants', 'array-contains', tenantId)
+    .where('isArchived', '==', false)
+    .where('name', '==', name)
+    .limit(1)
+    .get();
+  const space = snap.empty
+    ? undefined
+    : ({ okey: snap.docs[0].id, ...snap.docs[0].data() } as AliasSpaceModel);
+  spaceCache.set(cacheKey, space);
+  return space;
 }

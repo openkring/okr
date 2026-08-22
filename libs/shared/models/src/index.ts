@@ -6,6 +6,8 @@ export * from './lib/address.model';
 export * from './lib/address-directory.model';
 export * from './lib/alias.model';
 export * from './lib/alias-space.model';
+export * from './lib/alias-stats.model';
+export * from './lib/alias-event.model';
 export * from './lib/application.model';
 export * from './lib/app-config.model';
 export * from './lib/approval.model';

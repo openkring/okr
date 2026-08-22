@@ -127,6 +127,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   esignList: 'Unterschriebene Dokumente',
   esignAudit: 'Unterschriften-Protokoll',
   aliases: 'Kurzlinks', // libs/system/alias — der Code auf Plakat, Bootsmarke oder Ausweis
+  aliasEvents: 'Kurzlink-Zugriffe', // nur bei trackingLevel 'detailed'; das Aggregat traegt keinen Personenbezug
 
   // — logs —
   sessions: 'Anmeldesitzungen',

@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import type { Request, Response } from 'express';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
@@ -8,7 +9,8 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { buildAliasDocId, buildTargetUrl, getAliasUsability } from '@okr/system-alias-util';
 import type { AliasUsability } from '@okr/system-alias-util';
 
-import { appBaseUrl, tenantByHost } from '../../alias/tenant-domains';
+import { appBaseUrl, spaceByName, tenantByHost } from '../../alias/tenant-domains';
+import { recordUse } from '../../alias/tracking';
 import { checkRateLimit, clientIp } from '../rateLimit';
 
 /**
@@ -103,13 +105,44 @@ export async function aliasRouter(req: Request, res: Response): Promise<void> {
   res.set('Cache-Control', 'private, no-store').redirect(302, target);
 
   // NACH der Antwort: ein Zaehlfehler ist billiger als ein haengender Scan vor einem Plakat.
-  // Tagesaggregat (aliasStats) und Einzelereignis (aliasEvents) sind Teilprojekt 4.
   try {
-    await ref.update({
-      useCount: FieldValue.increment(1),
-      lastUsedAt: getTodayStr(DateFormat.StoreDateTime),
-    });
+    const space = await spaceByName(tenantId, alias.space);
+    if (!space) {
+      // Kein Space mehr (archiviert oder von Hand entfernt): der Redirect ist trotzdem
+      // gelaufen, aber das effektive Tracking-Level ist nicht bestimmbar. Dann NUR der
+      // Betriebszaehler — im Zweifel weniger aufzeichnen, nicht mehr.
+      await ref.update({
+        useCount: FieldValue.increment(1),
+        lastUsedAt: getTodayStr(DateFormat.StoreDateTime),
+      });
+      return;
+    }
+    await recordUse(getFirestore(), docId, alias, space, {
+      ip: clientIp(req),
+      userAgent: String(req.headers['user-agent'] ?? ''),
+      referrer: String(req.headers['referer'] ?? req.headers['referrer'] ?? ''),
+      // Von der Google-Front-End gesetzt; fehlt lokal und im Emulator.
+      country: String(req.headers['x-appengine-country'] ?? ''),
+      uid: '',
+      nowMs: Date.now(),
+    }, ipHashSecret());
   } catch (err) {
     logger.error(`alias: counting ${docId} failed`, err);
   }
+}
+
+/**
+ * Salt fuer den IP-Hash der `detailed`-Ereignisse.
+ *
+ * Aus der Umgebung, nicht hart im Code: ein im Repo stehendes Salt waere oeffentlich, und ein
+ * oeffentlicher Hash ueber einen so kleinen Wertebereich wie eine IPv4-Adresse ist in Minuten
+ * rueckrechenbar. Fehlt die Variable, faellt der Hash auf einen Instanz-Zufallswert zurueck —
+ * dann ist die Verkettung sogar auf die Instanz begrenzt, was strenger ist, nicht laxer.
+ */
+let fallbackSecret = '';
+function ipHashSecret(): string {
+  const configured = process.env['ALIAS_IP_HASH_SECRET'];
+  if (configured) return configured;
+  fallbackSecret ||= randomBytes(32).toString('hex');
+  return fallbackSecret;
 }

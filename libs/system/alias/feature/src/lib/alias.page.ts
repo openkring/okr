@@ -11,7 +11,7 @@ import { AliasModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 import { DateFormat, convertDateFormatToString, getTodayStr } from '@okr/shared-util-core';
-import { AliasService } from '@okr/system-alias-data-access';
+import { AliasService, AliasStatsService } from '@okr/system-alias-data-access';
 import { AliasQr } from '@okr/system-alias-ui';
 import { ALIAS_I18N_KEYS, AliasI18n, buildTargetUrl, getAliasUsability } from '@okr/system-alias-util';
 
@@ -37,6 +37,15 @@ import { ALIAS_I18N_KEYS, AliasI18n, buildTargetUrl, getAliasUsability } from '@
   ],
   styles: [`
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+    /* 30 Balken ohne Chart-Bibliothek: eine Abhaengigkeit fuer ein Balkendiagramm mit einer
+       Reihe waere ein schlechter Tausch, und Farben kommen aus den Ionic-Variablen, damit
+       der Dark Mode nicht extra behandelt werden muss. */
+    .chart { display: flex; align-items: flex-end; gap: 2px; height: 96px; margin-bottom: .75rem; }
+    .bar-slot { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+    .bar {
+      width: 100%; min-height: 2px; border-radius: 2px 2px 0 0;
+      background: var(--ion-color-secondary);
+    }
   `],
   template: `
     <ion-header>
@@ -88,9 +97,17 @@ import { ALIAS_I18N_KEYS, AliasI18n, buildTargetUrl, getAliasUsability } from '@
         <ion-card>
           <ion-card-header><ion-card-title>{{ i18n.detail_stats_title() }}</ion-card-title></ion-card-header>
           <ion-card-content>
-            @if (alias.useCount === 0) {
+            @if (statsTotal() === 0) {
               <ion-note>{{ i18n.detail_stats_empty() }}</ion-note>
             } @else {
+              <div class="chart" role="img"
+                [attr.aria-label]="statsTotal() + ' ' + i18n.detail_stats_usecount()">
+                @for (point of series(); track point.date) {
+                  <div class="bar-slot" [title]="point.date + ': ' + point.count">
+                    <div class="bar" [style.height]="barHeight(point.count)"></div>
+                  </div>
+                }
+              </div>
               <ion-list lines="none">
                 <ion-item>
                   <ion-label>{{ i18n.detail_stats_usecount() }}</ion-label>
@@ -112,6 +129,7 @@ import { ALIAS_I18N_KEYS, AliasI18n, buildTargetUrl, getAliasUsability } from '@
 })
 export class AliasPage {
   private readonly aliasService = inject(AliasService);
+  private readonly statsService = inject(AliasStatsService);
   protected readonly i18n = inject(I18nService).translateAll(ALIAS_I18N_KEYS) as AliasI18n;
 
   /** Route-Parameter: die Document-ID `<tenant>__<space>__<alias>`. */
@@ -130,6 +148,41 @@ export class AliasPage {
     stream: ({ params }) => this.aliasService.read(params.key),
   });
   protected readonly alias = computed<AliasModel | undefined>(() => this.aliasResource.value());
+
+  /** Die letzten 30 Kalendertage — dieselbe Fensterbreite, die die Spec nennt. */
+  private readonly fromDate = new Date(Date.now() - 29 * 24 * 3600_000).toISOString().slice(0, 10);
+
+  private readonly statsResource = rxResource({
+    params: () => ({ key: this.aliasKey() }),
+    stream: ({ params }) => this.statsService.listForAlias(params.key, this.fromDate),
+  });
+
+  protected readonly stats = computed(() => this.statsResource.value() ?? []);
+
+  /**
+   * Die 30 Tage als Balken, LUECKENLOS: Tage ohne Zugriff haben kein Dokument, und eine
+   * Reihe, die nur die vorhandenen Tage zeigt, staucht die Zeitachse und laesst eine Pause
+   * wie eine Serie aussehen. Deshalb wird das Fenster aufgefuellt.
+   */
+  protected readonly series = computed(() => {
+    const byDate = new Map(this.stats().map((row) => [row.date, row.count ?? 0]));
+    const out: { date: string; count: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(Date.now() - i * 24 * 3600_000).toISOString().slice(0, 10);
+      out.push({ date, count: byDate.get(date) ?? 0 });
+    }
+    return out;
+  });
+
+  protected readonly maxCount = computed(() =>
+    Math.max(1, ...this.series().map((point) => point.count)));
+
+  protected readonly statsTotal = computed(() =>
+    this.series().reduce((sum, point) => sum + point.count, 0));
+
+  protected barHeight(count: number): string {
+    return `${Math.round((count / this.maxCount()) * 100)}%`;
+  }
 
   /** Origin der laufenden App — dieselbe Domain, auf der auch der Resolver antwortet. */
   private readonly origin = typeof window !== 'undefined' ? window.location.origin : '';

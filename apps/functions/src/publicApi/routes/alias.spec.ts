@@ -17,10 +17,14 @@ vi.mock('../rateLimit', () => ({
 vi.mock('../../alias/tenant-domains', () => ({
   tenantByHost: vi.fn(async (host: string) => (host.includes('seeclub.org') ? 'scs' : undefined)),
   appBaseUrl: vi.fn(async () => 'https://app.seeclub.org'),
+  spaceByName: vi.fn(async () => ({ name: 'qr', trackingLevel: 'counter', retentionDays: 365 })),
 }));
+vi.mock('../../alias/tracking', () => ({ recordUse: vi.fn(async () => undefined) }));
 
 import { aliasRouter } from './alias';
 import { checkRateLimit } from '../rateLimit';
+import { recordUse } from '../../alias/tracking';
+import { spaceByName } from '../../alias/tenant-domains';
 
 const TODAY_SAFE = { validFrom: '', validUntil: '' };
 
@@ -58,6 +62,9 @@ describe('GET /s/:space/:code', () => {
   beforeEach(() => {
     docGet.mockReset();
     docUpdate.mockReset().mockResolvedValue(undefined);
+    vi.mocked(recordUse).mockReset().mockResolvedValue(undefined);
+    vi.mocked(spaceByName).mockReset()
+      .mockResolvedValue({ name: 'qr', trackingLevel: 'counter', retentionDays: 365 } as never);
     docFn.mockClear();
     vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, remaining: 99, retryAfterMs: 0 });
   });
@@ -73,18 +80,26 @@ describe('GET /s/:space/:code', () => {
     expect(res.headers['Cache-Control']).toBe('private, no-store');
   });
 
-  it('counts the use after answering', async () => {
+  it('hands the use to the tracking module after answering', async () => {
     docGet.mockResolvedValue(aliasDoc());
     await aliasRouter(reqFor(), fakeRes() as never);
-    expect(docUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      useCount: { __increment: 1 },
-    }));
+    expect(vi.mocked(recordUse)).toHaveBeenCalledTimes(1);
+  });
+
+  // Ohne Space ist das effektive Tracking-Level nicht bestimmbar. Dann NUR der
+  // Betriebszaehler: im Zweifel weniger aufzeichnen, nicht mehr.
+  it('falls back to the bare counter when the space is gone', async () => {
+    docGet.mockResolvedValue(aliasDoc());
+    vi.mocked(spaceByName).mockResolvedValueOnce(undefined as never);
+    await aliasRouter(reqFor(), fakeRes() as never);
+    expect(vi.mocked(recordUse)).not.toHaveBeenCalled();
+    expect(docUpdate).toHaveBeenCalledWith(expect.objectContaining({ useCount: { __increment: 1 } }));
   });
 
   // Ein Zaehlfehler darf den Scan vor dem Plakat nicht kaputtmachen.
   it('still redirects when the counter write fails', async () => {
     docGet.mockResolvedValue(aliasDoc());
-    docUpdate.mockRejectedValue(new Error('firestore down'));
+    vi.mocked(recordUse).mockRejectedValueOnce(new Error('firestore down'));
     const res = fakeRes();
 
     await aliasRouter(reqFor(), res as never);
@@ -150,7 +165,7 @@ describe('GET /s/:space/:code', () => {
     const res = fakeRes();
     await aliasRouter(reqFor(), res as never);
     expect(res.statusCode).toBe(410);
-    expect(docUpdate).not.toHaveBeenCalled();
+    expect(vi.mocked(recordUse)).not.toHaveBeenCalled();
   });
 
   it('429s past the rate limit without reading the document', async () => {

@@ -909,6 +909,26 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: LOG_12M,
   },
   {
+    collection: 'aliasEvents',
+    dataClass: 'log',
+    tier: 'T4',   // Betriebs-/Wirkungsmessung eines Kurzlinks — berechtigtes Interesse
+    onTenantExit: 'delete',
+    // `uid` ist die Firebase-Auth-uid, also ctx.uid und NICHT der personKey. Der zweite
+    // Personenbezug des Dokuments, `ipHash`, ist per Konstruktion nicht rückrechenbar und
+    // deshalb kein Suchschlüssel — ein Ereignis eines nicht angemeldeten Aufrufs ist über
+    // keinen Weg einer Person zuzuordnen und bleibt hier zu Recht unerreichbar.
+    find: (c: SubjectCtx) => db().collection('aliasEvents').where('uid', '==', c.uid),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    // Löschen, nicht anonymisieren: anders als beim Alias selbst steckt in einer Klickzeile
+    // kein Vereinswert, den es zu erhalten gälte. Die Zeile IST der Personenbezug.
+    onErasure: 'delete',
+    // Die eigentliche Frist steht auf dem Space (`retentionDays`) und wird von einer nativen
+    // Firestore-TTL-Policy auf `expiresAt` durchgesetzt; hier steht die Obergrenze, die das
+    // Verzeichnis nennt. `detailed` ist ohne Frist gar nicht konfigurierbar.
+    retention: LOG_12M,
+  },
+  {
     collection: 'activities',
     dataClass: 'log',
     tier: 'T4',
