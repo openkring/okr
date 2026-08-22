@@ -1,7 +1,7 @@
 // apps/functions/src/tenant/add-tenant-to-directory.ts
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { getFirestore, Query, DocumentData } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue, Query, DocumentData } from 'firebase-admin/firestore';
 
 import { AddressCollection, PersonCollection } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, checkAdminRole } from '@okr/shared-util-functions';
@@ -12,6 +12,8 @@ const BATCH = 400;
 interface CollectionResult {
   seen: number;
   changed: number;
+  /** documents with no `tenants` array at all — a data defect this migration deliberately leaves alone */
+  skipped: number;
 }
 
 /** Iterate a collection in id-ordered pages; runs `fn` per doc. Returns docs seen. */
@@ -42,14 +44,20 @@ async function addTenant(
   dryRun: boolean,
 ): Promise<CollectionResult> {
   const db = getFirestore();
-  const result: CollectionResult = { seen: 0, changed: 0 };
+  const result: CollectionResult = { seen: 0, changed: 0, skipped: 0 };
   result.seen = await forEachDoc(db.collection(collection), async (id, data) => {
     const tenants: unknown = data['tenants'];
     // a document with no tenants array at all is a data defect, not our business to repair
-    if (!Array.isArray(tenants) || tenants.includes(tenantId)) return;
+    if (!Array.isArray(tenants)) {
+      result.skipped++;
+      return;
+    }
+    // kept only to keep `changed` honest for the dry-run report; arrayUnion below is a no-op
+    // regardless, so a concurrent writer racing us here cannot cause a double-add
+    if (tenants.includes(tenantId)) return;
     result.changed++;
     if (!dryRun) {
-      await db.collection(collection).doc(id).update({ tenants: [...tenants, tenantId] });
+      await db.collection(collection).doc(id).update({ tenants: FieldValue.arrayUnion(tenantId) });
     }
   });
   return result;
