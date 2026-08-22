@@ -36,6 +36,55 @@ export interface NotesInputI18n {
     ion-item.helper { --min-height: 0; }
     ion-card-content { padding: 0; }
     @media (width <= 600px) { ion-card { margin: 5px;} }
+
+    /* single footer row: actions | validation message | character counter */
+    .notes-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 28px;
+      padding: 0 16px 6px 12px;
+    }
+    .notes-footer .actions {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .notes-footer .actions ion-icon,
+    .notes-footer .actions ::ng-deep ion-icon {
+      font-size: 20px;
+      padding: 6px;                       /* 32px touch target */
+      color: var(--ion-color-medium);
+      cursor: pointer;
+      transition: color 120ms ease-in-out;
+    }
+    .notes-footer .actions ion-icon:hover,
+    .notes-footer .actions ion-icon:focus-visible,
+    .notes-footer .actions ::ng-deep ion-icon:hover,
+    .notes-footer .actions ::ng-deep ion-icon:focus-visible {
+      color: var(--ion-color-primary);
+    }
+    .notes-footer .message {
+      flex: 1 1 auto;
+      min-width: 0;                       /* lets the ellipsis kick in */
+    }
+    .notes-footer .message ::ng-deep ion-note {
+      display: block;
+      font-size: 12px;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .notes-footer .counter {
+      flex: 0 0 auto;
+      font-size: 12px;
+      color: var(--ion-color-medium);
+      font-variant-numeric: tabular-nums; /* no width jitter while typing */
+    }
+    .notes-footer .counter.warn { color: var(--ion-color-warning); }
+    .notes-footer .counter.over { color: var(--ion-color-danger); font-weight: 600; }
   `],
   template: `
   <ion-card>
@@ -56,7 +105,6 @@ export interface NotesInputI18n {
             placeholder="{{ i18n().placeholder }}"
             aria-label="{{ i18n().label }}"
             inputMode="text"
-            [counter]="!isReadOnly()"
             fill="outline"
             [autoGrow]="isAutoGrow()"
             [maxlength]="maxLength()"
@@ -64,19 +112,27 @@ export interface NotesInputI18n {
             [readonly]="isReadOnly()"
           />
         </ion-item>
-        <!-- inside the card: an error note placed after </ion-card> floats away from the field it belongs to -->
-        <okr-error-note [errors]="errors()" />
-        <ion-item lines="none">
-          @if (isClearable()) {
-            <ion-icon src="{{'cancel' | svgIcon }}" (click)="clearValue()" tabindex="-1" />
-          }
-          @if (isCopyable()) {
-            <okr-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
-          }
-          @if (isEncryptable()) {
-            <ion-icon src="{{ 'key' | svgIcon }}" (click)="dencrypt()" tabindex="-1" />
-          }
-        </ion-item>
+        <!-- one footer row inside the card: actions, validation message and counter share a line.
+             Ionic's built-in [counter] is off so the count can live here instead of its own row. -->
+        <div class="notes-footer">
+          <div class="actions">
+            @if (isClearable()) {
+              <ion-icon src="{{'cancel' | svgIcon }}" (click)="clearValue()" tabindex="-1" />
+            }
+            @if (isCopyable()) {
+              <okr-button-copy [i18n]="buttonCopyI18n()" [value]="value()" tabindex="-1" />
+            }
+            @if (isEncryptable()) {
+              <ion-icon src="{{ 'key' | svgIcon }}" (click)="dencrypt()" tabindex="-1" />
+            }
+          </div>
+          <div class="message">
+            <okr-error-note [errors]="errors()" [inline]="true" />
+          </div>
+          <div class="counter" [class.warn]="isNearLimit()" [class.over]="isAtLimit()">
+            {{ charCount() }}/{{ maxLength() }}
+          </div>
+        </div>
       } @else {
         <ion-item lines="none">
           <ion-note>{{value()}}</ion-note>
@@ -112,6 +168,11 @@ export class NotesInput {
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected isEncryptable = computed(() => coerceBoolean(this.encryptable()));
   protected isAutoGrow = computed(() => coerceBoolean(this.autoGrow()));
+
+  // character counter (replaces ion-textarea's built-in [counter] so it can share the footer row)
+  protected charCount = computed(() => this.value()?.length ?? 0);
+  protected isNearLimit = computed(() => this.charCount() >= this.maxLength() * 0.9);
+  protected isAtLimit = computed(() => this.charCount() >= this.maxLength());
 
   // i18n for dencrypt alert
   private readonly alertI18n = this.i18nService.translateAll({
