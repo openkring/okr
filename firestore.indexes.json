@@ -944,6 +944,33 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "comments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "parentKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "creationDateTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "docs",
       "queryScope": "COLLECTION",
       "fields": [
@@ -1383,6 +1410,33 @@
         },
         {
           "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "invitations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "inviteeKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
           "order": "ASCENDING"
         },
         {
@@ -3216,50 +3270,199 @@
       "collectionGroup": "aliases",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "tenants", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "isArchived", "order": "ASCENDING" },
-        { "fieldPath": "space", "order": "ASCENDING" },
-        { "fieldPath": "alias", "order": "ASCENDING" }
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "space",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "alias",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "aliases",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "tenants", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "isArchived", "order": "ASCENDING" },
-        { "fieldPath": "space", "order": "ASCENDING" },
-        { "fieldPath": "original", "order": "ASCENDING" },
-        { "fieldPath": "alias", "order": "ASCENDING" }
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "space",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "original",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "alias",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "aliases",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "tenants", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "isArchived", "order": "ASCENDING" },
-        { "fieldPath": "targetKey", "order": "ASCENDING" },
-        { "fieldPath": "alias", "order": "ASCENDING" }
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "targetKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "alias",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "aliasSpaces",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "tenants", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "isArchived", "order": "ASCENDING" },
-        { "fieldPath": "name", "order": "ASCENDING" }
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "aliases",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "tenants", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "isArchived", "order": "ASCENDING" },
-        { "fieldPath": "alias", "order": "ASCENDING" }
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "alias",
+          "order": "ASCENDING"
+        }
       ]
+    },
+    {
+      "collectionGroup": "approvals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "index",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "meetings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "meetingDate",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "workflow-rules",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "workflow-rules",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "order",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
     }
   ],
   "fieldOverrides": [
@@ -3279,7 +3482,8 @@
           "order": "ASCENDING",
           "queryScope": "COLLECTION_GROUP"
         }
-      ]
+      ],
+      "ttl": false
     },
     {
       "collectionGroup": "emailEvents",
