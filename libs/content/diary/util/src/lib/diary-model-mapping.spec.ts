@@ -142,7 +142,7 @@ describe('toDiaryModel', () => {
     expect(toDiaryModel(file, 'bka', 'uid1', RESOLVER).done).toEqual(['Aufgabe']);
   });
 
-  it('keeps the PDF footer of a scanned entry in the text', () => {
+  it('keeps the body of a scanned entry as text and finds no done items', () => {
     const file = parseDiaryMarkdown(fixture("PDF footer — the archive's most common body shape"));
     const model = toDiaryModel(file, 'bka', 'uid1', RESOLVER);
     expect(model.text).toContain('Ein Absatz aus dem gescannten Original.');
