@@ -199,7 +199,7 @@ export class EventsSectionComponent implements OnInit {
       if (!data) return;
       switch (data.action) {
         case 'calevent.edit': {
-          await this.store.edit(calEvent, false, this.canChange(calEvent), false);
+          await this.store.edit(calEvent, false, !this.canChange(calEvent), false);
           break;
         }
         case 'calevent.view':

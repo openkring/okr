@@ -13,8 +13,24 @@ export interface DatePickerModalI18n {
   selector: 'okr-date-picker-modal',
   standalone: true,
   imports: [IonModal, IonContent, IonDatetime],
+  styles: [`
+    /* The picker sits on top of an already-open edit modal. Without its own frame the
+       two layers blend into one surface, so give it a card shape, a visible border and
+       a lifted shadow. */
+    ion-modal.date-picker {
+      --width: min(92vw, 360px);
+      --height: auto;
+      --border-radius: 12px;
+      --border-width: 1px;
+      --border-style: solid;
+      --border-color: var(--ion-color-step-250, #c8c7cc);
+      --box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      --backdrop-opacity: 0.4;
+    }
+  `],
   template: `
     <ion-modal
+      class="date-picker"
       [keepContentsMounted]="true"
       [isOpen]="isOpen()"
       (ionModalDidDismiss)="onDismiss($event)"
