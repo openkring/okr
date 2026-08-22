@@ -93,9 +93,24 @@ describe('buildTargetUrl', () => {
     const alias = newAlias();
     alias.targetType = 'model';
     alias.targetUrl = '';
-    alias.targetKey = 'calevent.abc123';
+    alias.targetKey = 'person.abc123';
     expect(buildTargetUrl(alias, 'https://app.seeclub.org'))
-      .toBe('https://app.seeclub.org/calevent/abc123');
+      .toBe('https://app.seeclub.org/person/abc123');
+  });
+
+  // Dieser Fall stand hier bis 2026-08-22 mit der UMGEKEHRTEN Erwartung
+  // ('.../calevent/abc123') und hat damit den Fehler festgeschrieben: calevent hat keine
+  // /{modelType}/{okey}-Route, der okey haette an :listId gebunden und eine leere Liste
+  // gerendert. Ein leerer String wird im Resolver zum 404 — der ehrliche Ausgang.
+  it('builds no url for a model target the app cannot route to (calevent, trip)', () => {
+    const alias = newAlias();
+    alias.targetType = 'model';
+    alias.targetUrl = '';
+    alias.targetKey = 'calevent.abc123';
+    expect(buildTargetUrl(alias, 'https://app.seeclub.org')).toBe('');
+
+    alias.targetKey = 'trip.abc123';
+    expect(buildTargetUrl(alias, 'https://app.seeclub.org')).toBe('');
   });
 
   it('returns an empty string for a pure identifier — there is nothing to redirect to', () => {
