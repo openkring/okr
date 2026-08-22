@@ -87,6 +87,14 @@
       "text": "Text"
     }
   },
+  "series": {
+    "view": "Show event series",
+    "title": "Event series",
+    "subscribeAll": "Sign up for all dates",
+    "unsubscribeAll": "Sign off from all dates",
+    "notFound": "This event series has no upcoming dates left.",
+    "saveError": "Your responses could not be saved."
+  },
   "update": {
     "label": "Edit event",
     "conf": "The event has been changed.",

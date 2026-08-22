@@ -87,6 +87,14 @@
       "text": "Texte"
     }
   },
+  "series": {
+    "view": "Afficher la série",
+    "title": "Série de rendez-vous",
+    "subscribeAll": "S’inscrire à toutes les dates",
+    "unsubscribeAll": "Se désinscrire de toutes les dates",
+    "notFound": "Cette série n’a plus de dates à venir.",
+    "saveError": "Tes réponses n’ont pas pu être enregistrées."
+  },
   "update": {
     "label": "Modifier l'événement",
     "conf": "L'événement a été modifié.",

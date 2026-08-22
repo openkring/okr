@@ -87,6 +87,14 @@
       "text": "Testo"
     }
   },
+  "series": {
+    "view": "Mostra la serie",
+    "title": "Serie di appuntamenti",
+    "subscribeAll": "Iscriviti a tutte le date",
+    "unsubscribeAll": "Disiscriviti da tutte le date",
+    "notFound": "Questa serie non ha più date future.",
+    "saveError": "Le tue risposte non sono state salvate."
+  },
   "update": {
     "label": "Modificare l'evento",
     "conf": "L'evento è stato modificato.",

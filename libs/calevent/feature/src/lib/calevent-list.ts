@@ -21,7 +21,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent } from '@okr/calevent-util';
+import { CalEventDurationPipe, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, upcomingOccurrences } from '@okr/calevent-util';
 import { browseUrl } from '@okr/subject-address-util';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
@@ -746,6 +746,13 @@ export class CalEventList implements OnInit {
         );
       }
     }
+    // a live series: the tabular view answers every upcoming occurrence at once
+    if (calevent.seriesId.length > 0 && calevent.state !== 'proposed' && showAttendance) {
+      actionSheetOptions.buttons.push(
+        createActionSheetButton('calevent.viewSeries', this.store.i18n.series_view(), this.imgixBaseUrl, 'list')
+      );
+    }
+
     // organiser actions: one entry; the how (view/call/email/chat) is picked in a follow-up sheet
     if (this.otherOrganisers(calevent).length > 0) {
       actionSheetOptions.buttons.push(createActionSheetDivider());
@@ -834,6 +841,9 @@ export class CalEventList implements OnInit {
           break;
         case 'calevent.viewSchedule':
           await this.openSchedulePoll(calEvent.seriesId);
+          break;
+        case 'calevent.viewSeries':
+          await this.openSeriesAttendance(calEvent);
           break;
         case 'calevent.closeSchedule':
           await this.confirmCloseSchedule(calEvent);
@@ -960,6 +970,28 @@ export class CalEventList implements OnInit {
     });
     await modal.present();
     await modal.onDidDismiss();
+  }
+
+  /**
+   * Opens the tabular attendance view of a series. On close the list always returns to the calendar
+   * on the week of the series' first upcoming occurrence — that is where the user's answers now sit.
+   * The series is re-read afterwards so the target date reflects any answer just saved.
+   */
+  private async openSeriesAttendance(calevent: CalEventModel): Promise<void> {
+    const { SeriesAttendanceModal } = await import('./series-attendance.modal');
+    const modal = await this.modalController.create({
+      component: SeriesAttendanceModal,
+      cssClass: 'wide-modal',
+      componentProps: { seriesId: calevent.seriesId },
+      injector: this.injector,   // share CalEventList's CalEventStore instance with the root-injected modal
+    });
+    await modal.present();
+    await modal.onDidDismiss();
+
+    const series = await this.store.loadSeriesEvents(calevent.seriesId);
+    const first = upcomingOccurrences(series)[0];
+    this.onViewChange(false);
+    this.navigateCalendarTo(first?.startDate ?? calevent.startDate, 'timeGridWeek');
   }
 
   private async confirmCloseSchedule(calevent: CalEventModel): Promise<void> {

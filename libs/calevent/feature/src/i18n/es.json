@@ -87,6 +87,14 @@
       "text": "Texto"
     }
   },
+  "series": {
+    "view": "Mostrar la serie",
+    "title": "Serie de citas",
+    "subscribeAll": "Apuntarse a todas las fechas",
+    "unsubscribeAll": "Darse de baja de todas las fechas",
+    "notFound": "Esta serie ya no tiene fechas próximas.",
+    "saveError": "No se han podido guardar tus respuestas."
+  },
   "update": {
     "label": "Modificar evento",
     "conf": "El evento se ha modificado.",

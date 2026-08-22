@@ -29,6 +29,8 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
     td.member { background: rgba(56, 128, 255, 0.12); }
     .date-sub { font-size: 10px; color: var(--ion-color-medium); }
     td.cell.mine { cursor: pointer; user-select: none; }
+    /* an occurrence the user may not answer (closed event, no invitation) — shown, never clickable */
+    td.cell.locked { opacity: 0.45; }
     td.cell { font-size: 15px; font-weight: 700; color: var(--ion-color-medium); }
     td.yes { background: rgba(45, 211, 111, 0.25); color: var(--ion-color-success-shade); }
     td.no { background: rgba(235, 68, 90, 0.2); color: var(--ion-color-danger); }
@@ -105,13 +107,21 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
                       <td class="member">
                         {{ row.firstName }} {{ row.lastName }}
                         @if (row.comment) { <div class="comment">{{ row.comment }}</div> }
+                        @if (isFirst && showBulkToggle()) {
+                          <div>
+                            <ion-button fill="clear" size="small" (click)="toggleAllCells()">
+                              {{ bulkLabel() }}
+                            </ion-button>
+                          </div>
+                        }
                       </td>
                       @for (column of formData().columns; track column.id) {
                         <td class="cell"
-                          [class.mine]="isFirst && !readOnly()"
+                          [class.mine]="isFirst && !readOnly() && !column.locked"
+                          [class.locked]="!!column.locked"
                           [class.yes]="row.responses[column.id] === 'accepted'"
                           [class.no]="row.responses[column.id] === 'declined'"
-                          (click)="isFirst ? toggleCell(column.id) : null">
+                          (click)="isFirst && !column.locked ? toggleCell(column.id) : null">
                           {{ cellIcon(row.responses[column.id]) }}
                         </td>
                       }
@@ -121,8 +131,8 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
                   <tr class="counts">
                     <td class="member">{{ i18n().schedule_acceptances() }}</td>
                     @for (column of formData().columns; track column.id; let i = $index) {
-                      <td [class.best]="i === bestColumn()">
-                        {{ acceptances()[i] }}{{ i === bestColumn() ? ' ★' : '' }}
+                      <td [class.best]="showBest() && i === bestColumn()">
+                        {{ acceptances()[i] }}{{ showBest() && i === bestColumn() ? ' ★' : '' }}
                       </td>
                     }
                     @if (showAddColumn()) { <td></td> }
@@ -133,7 +143,7 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
           </ion-card-content>
         </ion-card>
 
-        @if (!readOnly()) {
+        @if (!readOnly() && !seriesMode()) {
           <ion-card>
             <ion-card-content class="ion-no-padding">
               <ion-grid>
@@ -178,6 +188,11 @@ export class SchedulePollForm {
   public readonly canClose = input(false);
   public readonly readOnly = input(false);
   public readonly showForm = input(true);
+  /**
+   * Series-attendance mode: the same table, but answering a whole live series instead of a poll.
+   * Drops the poll-only extras (winner star, response comment) and offers the bulk toggle.
+   */
+  public readonly seriesMode = input(false);
 
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
@@ -225,6 +240,37 @@ export class SchedulePollForm {
       this.formData().rows.filter(row => row.responses[column.id] === 'accepted').length));
 
   protected readonly bestColumn = computed(() => bestScheduleColumn(this.acceptances()));
+
+  /** Picking a winner is a poll concept — a live series has no "best" date. */
+  protected readonly showBest = computed(() => !this.seriesMode());
+
+  /** The columns the current user may actually answer; everything else stays untouched. */
+  protected readonly openColumns = computed(() => this.formData().columns.filter(column => !column.locked));
+
+  protected readonly showBulkToggle = computed(() =>
+    this.seriesMode() && !this.readOnly() && this.openColumns().length > 0);
+
+  /** Already in for every date -> the button signs off, otherwise it signs up. */
+  protected readonly bulkTarget = computed<InvitationState>(() =>
+    this.openColumns().every(column => this.formData().rows[0]?.responses[column.id] === 'accepted')
+      ? 'declined' : 'accepted');
+
+  protected readonly bulkLabel = computed(() => this.bulkTarget() === 'accepted'
+    ? this.i18n().series_subscribe_all() : this.i18n().series_unsubscribe_all());
+
+  /** One tap answers the whole series — the point of the series view. Locked columns are skipped. */
+  protected toggleAllCells(): void {
+    if (this.readOnly()) return;
+    const state = this.bulkTarget();
+    const openIds = this.openColumns().map(column => column.id);
+    this.formData.update(data => {
+      const rows = data.rows.map((row, index) => index === 0
+        ? { ...row, responses: { ...row.responses, ...Object.fromEntries(openIds.map(id => [id, state])) } }
+        : row);
+      return { ...data, rows };
+    });
+    this.dirty.emit(true);
+  }
 
   /** The trailing `+` header (and its filler cells) — gone once the column cap is reached. */
   protected readonly showAddColumn = computed(() =>

@@ -73,6 +73,14 @@ export const CALEVENT_I18N_KEYS = {
   schedule_comment_label:     PFX + 'schedule.comment.label',
   schedule_comment_placeholder: PFX + 'schedule.comment.placeholder',
 
+  // tabular attendance view of a whole calevent series (subscribe/unsubscribe per occurrence)
+  series_view:                PFX + 'series.view',
+  series_title:               PFX + 'series.title',
+  series_subscribe_all:       PFX + 'series.subscribeAll',
+  series_unsubscribe_all:     PFX + 'series.unsubscribeAll',
+  series_not_found:           PFX + 'series.notFound',
+  series_save_error:          PFX + 'series.saveError',
+
   update:                     PFX + 'update.label',
   update_conf:                PFX + 'update.conf',
   update_error:               PFX + 'update.error',

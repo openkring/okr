@@ -93,6 +93,14 @@
       "text": "Text"
     }
   },
+  "series": {
+    "view": "Terminserie anzeigen",
+    "title": "Terminserie",
+    "subscribeAll": "Für alle Termine anmelden",
+    "unsubscribeAll": "Von allen Terminen abmelden",
+    "notFound": "Diese Terminserie hat keine kommenden Termine mehr.",
+    "saveError": "Deine An-/Abmeldungen konnten nicht gespeichert werden."
+  },
   "update": {
     "label": "Ereignis ändern",
     "conf": "Das Ereignis wurde geändert.",

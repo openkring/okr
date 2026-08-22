@@ -565,6 +565,67 @@ export const CalEventStore = signalStore(
         await showToast(store.toastController, store.i18n.schedule_response_saved());
       },
 
+      /******************************* series attendance *************************************** */
+      /**
+       * Every live invitation pointing at one of the given occurrences — the closed half of a
+       * series attendance table. `store.invitations()` holds only the current user's, which is not
+       * enough to render the other members' rows.
+       */
+      async loadInvitationsFor(eventKeys: string[]): Promise<InvitationModel[]> {
+        if (eventKeys.length === 0) return [];
+        const all = await store.firestoreService.getDataOnce<InvitationModel>(
+          InvitationCollection, getSystemQuery(store.tenantId()), 'none');
+        return all.filter(inv => !inv.isArchived && eventKeys.includes(inv.caleventKey));
+      },
+
+      /**
+       * Writes the current user's answers for a whole series in one batch. Each occurrence decides
+       * where its answer lives: an open event keeps it in its own `attendees` array, a closed one in
+       * the invitation. Cells that did not change (and occurrences the user may not answer) are
+       * skipped, so a single tap does not rewrite the whole series.
+       *
+       * `seriesEvents` is what the caller loaded by seriesId — never calEvents(), which is narrowed
+       * by calendar, maxEvents and the past/upcoming filters.
+       */
+      async saveSeriesAttendance(seriesEvents: CalEventModel[], seriesInvitations: InvitationModel[], row: SchedulePollRow): Promise<void> {
+        const currentUser = store.currentUser();
+        const personKey = currentUser?.personKey ?? '';
+        if (!currentUser || !personKey || row.key !== personKey) return;
+        const today = getTodayStr(DateFormat.StoreDate);
+        const batch = store.firestoreService.getBatch();
+        let changed = 0;
+
+        for (const calevent of seriesEvents) {
+          const newState = row.responses[calevent.okey];
+          if (!newState || newState === 'pending') continue;
+          if (calevent.isOpen) {
+            const state: Attendee['state'] = newState === 'accepted' ? 'accepted' : 'declined';
+            const attendees = [...(calevent.attendees ?? [])];
+            const index = attendees.findIndex(a => a.person.key === personKey);
+            if (index >= 0) {
+              if (attendees[index].state === state) continue;
+              attendees[index] = { ...attendees[index], state };
+            } else {
+              const avatar = getAvatarInfoForCurrentUser(currentUser);
+              if (!avatar) continue;
+              attendees.push({ person: avatar, state });
+            }
+            // only the attendees field: a full model spread would carry okey into the document
+            batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`), { attendees });
+          } else {
+            const invitation = seriesInvitations.find(
+              inv => inv.caleventKey === calevent.okey && inv.inviteeKey === personKey);
+            if (!invitation || invitation.state === newState) continue;
+            batch.update(doc(store.firestoreService.firestore, `${InvitationCollection}/${invitation.okey}`),
+              { state: newState, respondedAt: today });
+          }
+          changed++;
+        }
+        if (changed === 0) return;
+        await batch.commit();
+        await showToast(store.toastController, store.i18n.schedule_response_saved());
+      },
+
       /**
        * The winner becomes a standalone definitive event and keeps its invitations (they are the
        * attendee list). The losing proposals never were real appointments: they are deleted
