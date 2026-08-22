@@ -2,13 +2,13 @@
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "../../../../dist/libs/system/alias/util",
+    "outDir": "../../../../dist/libs/system/alias/ui",
     "declaration": true,
     "composite": true,
     "module": "preserve",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../../dist/out-tsc/system-alias-util.tsbuildinfo",
+    "tsBuildInfoFile": "../../../../dist/out-tsc/system-alias-ui.tsbuildinfo",
     "moduleResolution": "bundler",
     "lib": [
       "dom",
@@ -26,7 +26,12 @@
   ],
   "references": [
     { "path": "../../../shared/constants/tsconfig.lib.json" },
+    { "path": "../../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },
-    { "path": "../../../shared/util-core/tsconfig.lib.json" }
+    { "path": "../../../shared/pipes/tsconfig.lib.json" },
+    { "path": "../../../shared/ui/tsconfig.lib.json" },
+    { "path": "../../../shared/util-angular/tsconfig.lib.json" },
+    { "path": "../../../shared/util-core/tsconfig.lib.json" },
+    { "path": "../util/tsconfig.lib.json" }
   ]
 }

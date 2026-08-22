@@ -1,0 +1,33 @@
+{
+  "name": "system-alias-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/system/alias/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:feature",
+    "scope:alias",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/system/alias/feature",
+        "main": "libs/system/alias/feature/src/index.ts",
+        "tsConfig": "libs/system/alias/feature/tsconfig.lib.json",
+        "assets": [
+          "libs/system/alias/feature/*.md"
+        ],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

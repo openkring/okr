@@ -1,0 +1,203 @@
+{
+  "list": {
+    "title": "Enlaces cortos",
+    "empty": "Todavía no hay enlaces cortos.",
+    "search": "Buscar alias, destino o nota",
+    "filter": {
+      "space": "Espacio",
+      "all": "Todos los espacios"
+    },
+    "count": "Enlaces cortos"
+  },
+  "context": {
+    "add": "Crear alias",
+    "spaces": "Espacios de alias",
+    "exportraw": "Exportar datos sin procesar",
+    "qrdownload": "Descargar código QR"
+  },
+  "alias": {
+    "singular": "Enlace corto",
+    "plural": "Enlaces cortos"
+  },
+  "field": {
+    "space": {
+      "label": "Espacio",
+      "helper": "Define la longitud, el juego de caracteres y quién puede crear."
+    },
+    "alias": {
+      "label": "Alias",
+      "placeholder": "se genera automáticamente",
+      "helper": "Rellenar solo si el espacio permite identificadores propios."
+    },
+    "targetType": {
+      "label": "Tipo de destino"
+    },
+    "targetUrl": {
+      "label": "Dirección de destino",
+      "placeholder": "https://…",
+      "helper": "Solo https. La dirección a la que redirige el enlace."
+    },
+    "targetKey": {
+      "label": "Registro de destino",
+      "helper": "Solo se pueden enlazar registros con página de detalle propia."
+    },
+    "notes": {
+      "label": "Nota",
+      "helper": "Para qué sirve este código — «Cartel del hangar», «Boletín de marzo»."
+    },
+    "isEnabled": {
+      "label": "Activo",
+      "helper": "Desactivar en lugar de borrar: un código impreso nunca desaparece."
+    },
+    "validUntil": {
+      "label": "Válido hasta",
+      "helper": "Dejar vacío para ilimitado."
+    },
+    "maxUses": {
+      "label": "Usos máximos",
+      "helper": "0 significa ilimitado."
+    },
+    "trackingLevel": {
+      "label": "Recuento de accesos",
+      "helper": "«Contador» cuenta sin IP ni identificador de usuario."
+    }
+  },
+  "space": {
+    "singular": "Espacio de alias",
+    "plural": "Espacios de alias",
+    "list": {
+      "title": "Espacios de alias",
+      "empty": "Todavía no hay espacios."
+    },
+    "field": {
+      "name": {
+        "label": "Nombre",
+        "helper": "Aparece en la dirección: /s/<nombre>/<código>.",
+        "locked": "Ya no editable — el nombre forma parte de direcciones ya emitidas."
+      },
+      "label": {
+        "label": "Etiqueta"
+      },
+      "kind": {
+        "label": "Tipo",
+        "helper": "«Redirección» resuelve por HTTP, «búsqueda» solo dentro de la app."
+      },
+      "length": {
+        "label": "Longitud del código"
+      },
+      "charset": {
+        "label": "Juego de caracteres"
+      },
+      "allowCustom": {
+        "label": "Permitir identificadores propios"
+      },
+      "caseSensitive": {
+        "label": "Distingue mayúsculas"
+      },
+      "roleNeeded": {
+        "label": "Rol necesario"
+      },
+      "tracking": {
+        "label": "Recuento de accesos"
+      },
+      "retention": {
+        "label": "Conservación (días)",
+        "helper": "El recuento detallado exige un plazo de conservación."
+      }
+    },
+    "aliasCount": "Alias",
+    "useCount": "Accesos"
+  },
+  "detail": {
+    "title": "Enlace corto",
+    "shortUrl": "Enlace corto",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "qr": {
+      "title": "Código QR",
+      "download": "Descargar SVG"
+    },
+    "target": "Destino",
+    "stats": {
+      "title": "Accesos",
+      "empty": "Todavía no hay accesos.",
+      "useCount": "Accesos",
+      "lastUsed": "Último",
+      "never": "nunca"
+    }
+  },
+  "state": {
+    "disabled": "Desactivado",
+    "archived": "Archivado",
+    "notYetValid": "Aún no válido",
+    "expired": "Caducado",
+    "exhausted": "Agotado"
+  },
+  "mint": {
+    "failed": "No se pudo crear el alias.",
+    "created": "Alias creado"
+  },
+  "targetType": {
+    "url": {
+      "label": "Dirección"
+    },
+    "model": {
+      "label": "Registro"
+    },
+    "none": {
+      "label": "Solo identificador"
+    }
+  },
+  "trackingSetting": {
+    "inherit": {
+      "label": "Heredar del espacio"
+    },
+    "off": {
+      "label": "Desactivado"
+    },
+    "counter": {
+      "label": "Contador"
+    },
+    "detailed": {
+      "label": "Detallado"
+    }
+  },
+  "trackingLevel": {
+    "off": {
+      "label": "Desactivado"
+    },
+    "counter": {
+      "label": "Contador"
+    },
+    "detailed": {
+      "label": "Detallado"
+    }
+  },
+  "charset": {
+    "base32-safe": {
+      "label": "Base32 (sin 0/O/1/l/I)"
+    },
+    "base62": {
+      "label": "Base62"
+    },
+    "lower-numeric": {
+      "label": "Minúsculas + dígitos"
+    }
+  },
+  "kind": {
+    "redirect": {
+      "label": "Redirección"
+    },
+    "lookup": {
+      "label": "Búsqueda"
+    }
+  },
+  "action": {
+    "view": "Ver",
+    "create": "Crear",
+    "update": "Editar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar"
+  }
+}

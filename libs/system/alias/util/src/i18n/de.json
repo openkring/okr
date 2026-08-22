@@ -1,0 +1,203 @@
+{
+  "list": {
+    "title": "Kurzlinks",
+    "empty": "Noch keine Kurzlinks angelegt.",
+    "search": "Alias, Ziel oder Notiz suchen",
+    "filter": {
+      "space": "Space",
+      "all": "Alle Spaces"
+    },
+    "count": "Kurzlinks"
+  },
+  "context": {
+    "add": "Alias erstellen",
+    "spaces": "Alias Spaces",
+    "exportraw": "Rohdaten exportieren",
+    "qrdownload": "QR-Code herunterladen"
+  },
+  "alias": {
+    "singular": "Kurzlink",
+    "plural": "Kurzlinks"
+  },
+  "field": {
+    "space": {
+      "label": "Space",
+      "helper": "Bestimmt Länge, Zeichensatz und wer prägen darf."
+    },
+    "alias": {
+      "label": "Alias",
+      "placeholder": "wird automatisch erzeugt",
+      "helper": "Nur ausfüllen, wenn der Space eigene Handles erlaubt."
+    },
+    "targetType": {
+      "label": "Zielart"
+    },
+    "targetUrl": {
+      "label": "Ziel-Adresse",
+      "placeholder": "https://…",
+      "helper": "Nur https. Die Adresse, auf die der Kurzlink weiterleitet."
+    },
+    "targetKey": {
+      "label": "Ziel-Datensatz",
+      "helper": "Nur Datensätze mit eigener Detailseite können verlinkt werden."
+    },
+    "notes": {
+      "label": "Notiz",
+      "helper": "Wofür dieser Code gedacht ist — «Plakat Bootshaus», «Newsletter März»."
+    },
+    "isEnabled": {
+      "label": "Aktiv",
+      "helper": "Deaktivieren statt löschen: ein gedruckter Code verschwindet nie aus der Welt."
+    },
+    "validUntil": {
+      "label": "Gültig bis",
+      "helper": "Leer lassen für unbegrenzt."
+    },
+    "maxUses": {
+      "label": "Maximale Aufrufe",
+      "helper": "0 bedeutet unbegrenzt."
+    },
+    "trackingLevel": {
+      "label": "Zugriffszählung",
+      "helper": "«Zähler» zählt Aufrufe ohne IP und ohne Benutzerkennung."
+    }
+  },
+  "space": {
+    "singular": "Alias Space",
+    "plural": "Alias Spaces",
+    "list": {
+      "title": "Alias Spaces",
+      "empty": "Noch keine Spaces angelegt."
+    },
+    "field": {
+      "name": {
+        "label": "Name",
+        "helper": "Steht in der Adresse: /s/<name>/<code>.",
+        "locked": "Nicht mehr änderbar — der Name steht in bereits vergebenen Adressen."
+      },
+      "label": {
+        "label": "Bezeichnung"
+      },
+      "kind": {
+        "label": "Art",
+        "helper": "«Weiterleitung» löst über HTTP auf, «Nachschlag» nur in der App."
+      },
+      "length": {
+        "label": "Code-Länge"
+      },
+      "charset": {
+        "label": "Zeichensatz"
+      },
+      "allowCustom": {
+        "label": "Eigene Handles erlauben"
+      },
+      "caseSensitive": {
+        "label": "Gross-/Kleinschreibung beachten"
+      },
+      "roleNeeded": {
+        "label": "Benötigte Rolle"
+      },
+      "tracking": {
+        "label": "Zugriffszählung"
+      },
+      "retention": {
+        "label": "Aufbewahrung (Tage)",
+        "helper": "Detaillierte Zählung braucht zwingend eine Frist."
+      }
+    },
+    "aliasCount": "Aliase",
+    "useCount": "Aufrufe"
+  },
+  "detail": {
+    "title": "Kurzlink",
+    "shortUrl": "Kurzlink",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "qr": {
+      "title": "QR-Code",
+      "download": "SVG herunterladen"
+    },
+    "target": "Ziel",
+    "stats": {
+      "title": "Zugriffe",
+      "empty": "Noch keine Zugriffe.",
+      "useCount": "Aufrufe",
+      "lastUsed": "Zuletzt",
+      "never": "nie"
+    }
+  },
+  "state": {
+    "disabled": "Deaktiviert",
+    "archived": "Archiviert",
+    "notYetValid": "Noch nicht gültig",
+    "expired": "Abgelaufen",
+    "exhausted": "Aufgebraucht"
+  },
+  "mint": {
+    "failed": "Der Alias konnte nicht erstellt werden.",
+    "created": "Alias erstellt"
+  },
+  "targetType": {
+    "url": {
+      "label": "Adresse"
+    },
+    "model": {
+      "label": "Datensatz"
+    },
+    "none": {
+      "label": "Nur Kennung"
+    }
+  },
+  "trackingSetting": {
+    "inherit": {
+      "label": "Vom Space übernehmen"
+    },
+    "off": {
+      "label": "Aus"
+    },
+    "counter": {
+      "label": "Zähler"
+    },
+    "detailed": {
+      "label": "Detailliert"
+    }
+  },
+  "trackingLevel": {
+    "off": {
+      "label": "Aus"
+    },
+    "counter": {
+      "label": "Zähler"
+    },
+    "detailed": {
+      "label": "Detailliert"
+    }
+  },
+  "charset": {
+    "base32-safe": {
+      "label": "Base32 (ohne 0/O/1/l/I)"
+    },
+    "base62": {
+      "label": "Base62"
+    },
+    "lower-numeric": {
+      "label": "Kleinbuchstaben + Ziffern"
+    }
+  },
+  "kind": {
+    "redirect": {
+      "label": "Weiterleitung"
+    },
+    "lookup": {
+      "label": "Nachschlag"
+    }
+  },
+  "action": {
+    "view": "Ansehen",
+    "create": "Erstellen",
+    "update": "Bearbeiten",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen"
+  }
+}

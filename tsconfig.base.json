@@ -244,6 +244,8 @@
       "@okr/subject-swisscities-ui": ["libs/subject/swisscities/ui/src/index.ts"],
       "@okr/system-alias-data-access": ["libs/system/alias/data-access/src/index.ts"],
       "@okr/system-alias-util": ["libs/system/alias/util/src/index.ts"],
+      "@okr/system-alias-ui": ["libs/system/alias/ui/src/index.ts"],
+      "@okr/system-alias-feature": ["libs/system/alias/feature/src/index.ts"],
       "@okr/system-workflow-data-access": ["libs/system/workflow/data-access/src/index.ts"],
       "@okr/system-workflow-feature": ["libs/system/workflow/feature/src/index.ts"],
       "@okr/system-workflow-ui": ["libs/system/workflow/ui/src/index.ts"],

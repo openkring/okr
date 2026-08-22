@@ -1,0 +1,33 @@
+{
+  "name": "system-alias-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/system/alias/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": [
+    "type:ui",
+    "scope:alias",
+    "platform:mobile",
+    "platform:web"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/libs/system/alias/ui",
+        "main": "libs/system/alias/ui/src/index.ts",
+        "tsConfig": "libs/system/alias/ui/tsconfig.lib.json",
+        "assets": [
+          "libs/system/alias/ui/*.md"
+        ],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

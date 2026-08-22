@@ -1,0 +1,203 @@
+{
+  "list": {
+    "title": "Liens courts",
+    "empty": "Aucun lien court pour l’instant.",
+    "search": "Rechercher un alias, une cible ou une note",
+    "filter": {
+      "space": "Espace",
+      "all": "Tous les espaces"
+    },
+    "count": "Liens courts"
+  },
+  "context": {
+    "add": "Créer un alias",
+    "spaces": "Espaces d’alias",
+    "exportraw": "Exporter les données brutes",
+    "qrdownload": "Télécharger le code QR"
+  },
+  "alias": {
+    "singular": "Lien court",
+    "plural": "Liens courts"
+  },
+  "field": {
+    "space": {
+      "label": "Espace",
+      "helper": "Définit la longueur, le jeu de caractères et qui peut créer."
+    },
+    "alias": {
+      "label": "Alias",
+      "placeholder": "généré automatiquement",
+      "helper": "À remplir seulement si l’espace autorise les identifiants personnalisés."
+    },
+    "targetType": {
+      "label": "Type de cible"
+    },
+    "targetUrl": {
+      "label": "Adresse cible",
+      "placeholder": "https://…",
+      "helper": "https uniquement. L’adresse vers laquelle le lien redirige."
+    },
+    "targetKey": {
+      "label": "Enregistrement cible",
+      "helper": "Seuls les enregistrements ayant une page de détail peuvent être liés."
+    },
+    "notes": {
+      "label": "Note",
+      "helper": "À quoi sert ce code — « Affiche du hangar », « Newsletter de mars »."
+    },
+    "isEnabled": {
+      "label": "Actif",
+      "helper": "Désactiver plutôt que supprimer : un code imprimé ne disparaît jamais."
+    },
+    "validUntil": {
+      "label": "Valable jusqu’au",
+      "helper": "Laisser vide pour illimité."
+    },
+    "maxUses": {
+      "label": "Utilisations maximales",
+      "helper": "0 signifie illimité."
+    },
+    "trackingLevel": {
+      "label": "Comptage des accès",
+      "helper": "« Compteur » compte sans IP ni identifiant d’utilisateur."
+    }
+  },
+  "space": {
+    "singular": "Espace d’alias",
+    "plural": "Espaces d’alias",
+    "list": {
+      "title": "Espaces d’alias",
+      "empty": "Aucun espace pour l’instant."
+    },
+    "field": {
+      "name": {
+        "label": "Nom",
+        "helper": "Apparaît dans l’adresse : /s/<nom>/<code>.",
+        "locked": "Non modifiable — le nom fait partie d’adresses déjà émises."
+      },
+      "label": {
+        "label": "Libellé"
+      },
+      "kind": {
+        "label": "Type",
+        "helper": "« Redirection » résout via HTTP, « recherche » seulement dans l’app."
+      },
+      "length": {
+        "label": "Longueur du code"
+      },
+      "charset": {
+        "label": "Jeu de caractères"
+      },
+      "allowCustom": {
+        "label": "Autoriser les identifiants personnalisés"
+      },
+      "caseSensitive": {
+        "label": "Sensible à la casse"
+      },
+      "roleNeeded": {
+        "label": "Rôle requis"
+      },
+      "tracking": {
+        "label": "Comptage des accès"
+      },
+      "retention": {
+        "label": "Conservation (jours)",
+        "helper": "Le comptage détaillé exige une durée de conservation."
+      }
+    },
+    "aliasCount": "Alias",
+    "useCount": "Accès"
+  },
+  "detail": {
+    "title": "Lien court",
+    "shortUrl": "Lien court",
+    "copy": "Copier",
+    "copied": "Copié",
+    "qr": {
+      "title": "Code QR",
+      "download": "Télécharger le SVG"
+    },
+    "target": "Cible",
+    "stats": {
+      "title": "Accès",
+      "empty": "Aucun accès pour l’instant.",
+      "useCount": "Accès",
+      "lastUsed": "Dernier",
+      "never": "jamais"
+    }
+  },
+  "state": {
+    "disabled": "Désactivé",
+    "archived": "Archivé",
+    "notYetValid": "Pas encore valable",
+    "expired": "Expiré",
+    "exhausted": "Épuisé"
+  },
+  "mint": {
+    "failed": "L’alias n’a pas pu être créé.",
+    "created": "Alias créé"
+  },
+  "targetType": {
+    "url": {
+      "label": "Adresse"
+    },
+    "model": {
+      "label": "Enregistrement"
+    },
+    "none": {
+      "label": "Identifiant seul"
+    }
+  },
+  "trackingSetting": {
+    "inherit": {
+      "label": "Hériter de l’espace"
+    },
+    "off": {
+      "label": "Désactivé"
+    },
+    "counter": {
+      "label": "Compteur"
+    },
+    "detailed": {
+      "label": "Détaillé"
+    }
+  },
+  "trackingLevel": {
+    "off": {
+      "label": "Désactivé"
+    },
+    "counter": {
+      "label": "Compteur"
+    },
+    "detailed": {
+      "label": "Détaillé"
+    }
+  },
+  "charset": {
+    "base32-safe": {
+      "label": "Base32 (sans 0/O/1/l/I)"
+    },
+    "base62": {
+      "label": "Base62"
+    },
+    "lower-numeric": {
+      "label": "Minuscules + chiffres"
+    }
+  },
+  "kind": {
+    "redirect": {
+      "label": "Redirection"
+    },
+    "lookup": {
+      "label": "Recherche"
+    }
+  },
+  "action": {
+    "view": "Consulter",
+    "create": "Créer",
+    "update": "Modifier",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer"
+  }
+}

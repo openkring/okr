@@ -2,13 +2,13 @@
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": false,
-    "outDir": "../../../../dist/libs/system/alias/util",
+    "outDir": "../../../../dist/libs/system/alias/feature",
     "declaration": true,
     "composite": true,
     "module": "preserve",
     "target": "es2020",
     "types": [],
-    "tsBuildInfoFile": "../../../../dist/out-tsc/system-alias-util.tsbuildinfo",
+    "tsBuildInfoFile": "../../../../dist/out-tsc/system-alias-feature.tsbuildinfo",
     "moduleResolution": "bundler",
     "lib": [
       "dom",
@@ -23,10 +23,5 @@
     "**/*.spec2.ts",
     "**/test-setup.ts",
     "vite.config.ts"
-  ],
-  "references": [
-    { "path": "../../../shared/constants/tsconfig.lib.json" },
-    { "path": "../../../shared/models/tsconfig.lib.json" },
-    { "path": "../../../shared/util-core/tsconfig.lib.json" }
   ]
 }

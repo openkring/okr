@@ -1,0 +1,203 @@
+{
+  "list": {
+    "title": "Short links",
+    "empty": "No short links yet.",
+    "search": "Search alias, target or note",
+    "filter": {
+      "space": "Space",
+      "all": "All spaces"
+    },
+    "count": "Short links"
+  },
+  "context": {
+    "add": "Create alias",
+    "spaces": "Alias spaces",
+    "exportraw": "Export raw data",
+    "qrdownload": "Download QR code"
+  },
+  "alias": {
+    "singular": "Short link",
+    "plural": "Short links"
+  },
+  "field": {
+    "space": {
+      "label": "Space",
+      "helper": "Sets length, character set and who may mint."
+    },
+    "alias": {
+      "label": "Alias",
+      "placeholder": "generated automatically",
+      "helper": "Only fill in if the space allows custom handles."
+    },
+    "targetType": {
+      "label": "Target type"
+    },
+    "targetUrl": {
+      "label": "Target address",
+      "placeholder": "https://…",
+      "helper": "https only. The address the short link redirects to."
+    },
+    "targetKey": {
+      "label": "Target record",
+      "helper": "Only records with their own detail page can be linked."
+    },
+    "notes": {
+      "label": "Note",
+      "helper": "What this code is for — “Boathouse poster”, “March newsletter”."
+    },
+    "isEnabled": {
+      "label": "Active",
+      "helper": "Disable rather than delete: a printed code never leaves the world."
+    },
+    "validUntil": {
+      "label": "Valid until",
+      "helper": "Leave empty for no expiry."
+    },
+    "maxUses": {
+      "label": "Maximum uses",
+      "helper": "0 means unlimited."
+    },
+    "trackingLevel": {
+      "label": "Access counting",
+      "helper": "“Counter” counts hits without IP and without a user id."
+    }
+  },
+  "space": {
+    "singular": "Alias space",
+    "plural": "Alias spaces",
+    "list": {
+      "title": "Alias spaces",
+      "empty": "No spaces yet."
+    },
+    "field": {
+      "name": {
+        "label": "Name",
+        "helper": "Appears in the address: /s/<name>/<code>.",
+        "locked": "No longer editable — the name is part of addresses already issued."
+      },
+      "label": {
+        "label": "Label"
+      },
+      "kind": {
+        "label": "Kind",
+        "helper": "“Redirect” resolves over HTTP, “lookup” only inside the app."
+      },
+      "length": {
+        "label": "Code length"
+      },
+      "charset": {
+        "label": "Character set"
+      },
+      "allowCustom": {
+        "label": "Allow custom handles"
+      },
+      "caseSensitive": {
+        "label": "Case sensitive"
+      },
+      "roleNeeded": {
+        "label": "Required role"
+      },
+      "tracking": {
+        "label": "Access counting"
+      },
+      "retention": {
+        "label": "Retention (days)",
+        "helper": "Detailed counting requires a retention period."
+      }
+    },
+    "aliasCount": "Aliases",
+    "useCount": "Hits"
+  },
+  "detail": {
+    "title": "Short link",
+    "shortUrl": "Short link",
+    "copy": "Copy",
+    "copied": "Copied",
+    "qr": {
+      "title": "QR code",
+      "download": "Download SVG"
+    },
+    "target": "Target",
+    "stats": {
+      "title": "Access",
+      "empty": "No hits yet.",
+      "useCount": "Hits",
+      "lastUsed": "Last",
+      "never": "never"
+    }
+  },
+  "state": {
+    "disabled": "Disabled",
+    "archived": "Archived",
+    "notYetValid": "Not yet valid",
+    "expired": "Expired",
+    "exhausted": "Exhausted"
+  },
+  "mint": {
+    "failed": "The alias could not be created.",
+    "created": "Alias created"
+  },
+  "targetType": {
+    "url": {
+      "label": "Address"
+    },
+    "model": {
+      "label": "Record"
+    },
+    "none": {
+      "label": "Identifier only"
+    }
+  },
+  "trackingSetting": {
+    "inherit": {
+      "label": "Inherit from space"
+    },
+    "off": {
+      "label": "Off"
+    },
+    "counter": {
+      "label": "Counter"
+    },
+    "detailed": {
+      "label": "Detailed"
+    }
+  },
+  "trackingLevel": {
+    "off": {
+      "label": "Off"
+    },
+    "counter": {
+      "label": "Counter"
+    },
+    "detailed": {
+      "label": "Detailed"
+    }
+  },
+  "charset": {
+    "base32-safe": {
+      "label": "Base32 (no 0/O/1/l/I)"
+    },
+    "base62": {
+      "label": "Base62"
+    },
+    "lower-numeric": {
+      "label": "Lowercase + digits"
+    }
+  },
+  "kind": {
+    "redirect": {
+      "label": "Redirect"
+    },
+    "lookup": {
+      "label": "Lookup"
+    }
+  },
+  "action": {
+    "view": "View",
+    "create": "Create",
+    "update": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  }
+}

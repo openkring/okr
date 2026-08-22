@@ -1,0 +1,203 @@
+{
+  "list": {
+    "title": "Link brevi",
+    "empty": "Nessun link breve finora.",
+    "search": "Cerca alias, destinazione o nota",
+    "filter": {
+      "space": "Spazio",
+      "all": "Tutti gli spazi"
+    },
+    "count": "Link brevi"
+  },
+  "context": {
+    "add": "Crea alias",
+    "spaces": "Spazi alias",
+    "exportraw": "Esporta dati grezzi",
+    "qrdownload": "Scarica codice QR"
+  },
+  "alias": {
+    "singular": "Link breve",
+    "plural": "Link brevi"
+  },
+  "field": {
+    "space": {
+      "label": "Spazio",
+      "helper": "Definisce lunghezza, set di caratteri e chi può creare."
+    },
+    "alias": {
+      "label": "Alias",
+      "placeholder": "generato automaticamente",
+      "helper": "Da compilare solo se lo spazio consente identificatori propri."
+    },
+    "targetType": {
+      "label": "Tipo di destinazione"
+    },
+    "targetUrl": {
+      "label": "Indirizzo di destinazione",
+      "placeholder": "https://…",
+      "helper": "Solo https. L’indirizzo a cui il link reindirizza."
+    },
+    "targetKey": {
+      "label": "Record di destinazione",
+      "helper": "Solo i record con una propria pagina di dettaglio possono essere collegati."
+    },
+    "notes": {
+      "label": "Nota",
+      "helper": "A cosa serve questo codice — «Manifesto rimessa», «Newsletter di marzo»."
+    },
+    "isEnabled": {
+      "label": "Attivo",
+      "helper": "Disattivare invece di eliminare: un codice stampato non sparisce mai."
+    },
+    "validUntil": {
+      "label": "Valido fino al",
+      "helper": "Lasciare vuoto per illimitato."
+    },
+    "maxUses": {
+      "label": "Utilizzi massimi",
+      "helper": "0 significa illimitato."
+    },
+    "trackingLevel": {
+      "label": "Conteggio accessi",
+      "helper": "«Contatore» conta senza IP e senza identificativo utente."
+    }
+  },
+  "space": {
+    "singular": "Spazio alias",
+    "plural": "Spazi alias",
+    "list": {
+      "title": "Spazi alias",
+      "empty": "Nessuno spazio finora."
+    },
+    "field": {
+      "name": {
+        "label": "Nome",
+        "helper": "Compare nell’indirizzo: /s/<nome>/<codice>.",
+        "locked": "Non più modificabile — il nome fa parte di indirizzi già emessi."
+      },
+      "label": {
+        "label": "Etichetta"
+      },
+      "kind": {
+        "label": "Tipo",
+        "helper": "«Reindirizzamento» risolve via HTTP, «ricerca» solo nell’app."
+      },
+      "length": {
+        "label": "Lunghezza del codice"
+      },
+      "charset": {
+        "label": "Set di caratteri"
+      },
+      "allowCustom": {
+        "label": "Consenti identificatori propri"
+      },
+      "caseSensitive": {
+        "label": "Distingue maiuscole"
+      },
+      "roleNeeded": {
+        "label": "Ruolo necessario"
+      },
+      "tracking": {
+        "label": "Conteggio accessi"
+      },
+      "retention": {
+        "label": "Conservazione (giorni)",
+        "helper": "Il conteggio dettagliato richiede un periodo di conservazione."
+      }
+    },
+    "aliasCount": "Alias",
+    "useCount": "Accessi"
+  },
+  "detail": {
+    "title": "Link breve",
+    "shortUrl": "Link breve",
+    "copy": "Copia",
+    "copied": "Copiato",
+    "qr": {
+      "title": "Codice QR",
+      "download": "Scarica SVG"
+    },
+    "target": "Destinazione",
+    "stats": {
+      "title": "Accessi",
+      "empty": "Nessun accesso finora.",
+      "useCount": "Accessi",
+      "lastUsed": "Ultimo",
+      "never": "mai"
+    }
+  },
+  "state": {
+    "disabled": "Disattivato",
+    "archived": "Archiviato",
+    "notYetValid": "Non ancora valido",
+    "expired": "Scaduto",
+    "exhausted": "Esaurito"
+  },
+  "mint": {
+    "failed": "Impossibile creare l’alias.",
+    "created": "Alias creato"
+  },
+  "targetType": {
+    "url": {
+      "label": "Indirizzo"
+    },
+    "model": {
+      "label": "Record"
+    },
+    "none": {
+      "label": "Solo identificativo"
+    }
+  },
+  "trackingSetting": {
+    "inherit": {
+      "label": "Eredita dallo spazio"
+    },
+    "off": {
+      "label": "Disattivato"
+    },
+    "counter": {
+      "label": "Contatore"
+    },
+    "detailed": {
+      "label": "Dettagliato"
+    }
+  },
+  "trackingLevel": {
+    "off": {
+      "label": "Disattivato"
+    },
+    "counter": {
+      "label": "Contatore"
+    },
+    "detailed": {
+      "label": "Dettagliato"
+    }
+  },
+  "charset": {
+    "base32-safe": {
+      "label": "Base32 (senza 0/O/1/l/I)"
+    },
+    "base62": {
+      "label": "Base62"
+    },
+    "lower-numeric": {
+      "label": "Minuscole + cifre"
+    }
+  },
+  "kind": {
+    "redirect": {
+      "label": "Reindirizzamento"
+    },
+    "lookup": {
+      "label": "Ricerca"
+    }
+  },
+  "action": {
+    "view": "Vedi",
+    "create": "Crea",
+    "update": "Modifica",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina"
+  }
+}
