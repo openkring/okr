@@ -72,6 +72,13 @@ export class DiaryModel implements OkrModel, TaggedModel, SearchableModel {
   /** file names of the media in the day folder */
   public media: string[] = [];
 
+  /**
+   * File name of the document this entry was transcribed from, e.g. '20220306diaryAperos.pdf'.
+   * Rendered back as the trailing '*Original: [x](x)*' footer on export. Empty for entries
+   * that were authored in the app rather than converted from a document.
+   */
+  public sourceDocument = '';
+
   public index = DEFAULT_INDEX;
   public tags = DEFAULT_TAGS;
 

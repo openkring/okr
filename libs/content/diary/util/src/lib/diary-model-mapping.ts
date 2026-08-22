@@ -16,6 +16,22 @@ const DONE_HEADING = '## Erledigt';
 const DONE_ITEM = /^-\s+(?:\[[ xX]\]\s*)?(.+)$/;
 
 /**
+ * The provenance footer that files converted from a PDF carry at the very end. Measured across the
+ * whole archive on 2026-08-22: 2259 of 2405 files have it, all in exactly this shape, and
+ * '*Original:' occurs nowhere else. Link text and href are always the same file name.
+ */
+const ORIGIN_FOOTER = /\n-{3}\n\*Original: \[([^\]]+)\]\([^)]*\)\*\n?$/;
+
+/** The file name from the trailing origin footer, or '' when the entry has none. */
+export function extractSourceDocument(file: DiaryFile): string {
+  const last = file.sections[file.sections.length - 1];
+  if (!last) {
+    return '';
+  }
+  return ORIGIN_FOOTER.exec(last.content)?.[1] ?? '';
+}
+
+/**
  * Every section from `heading` up to (not including) the next `## `-level heading.
  * A sub-heading the author writes inside a section (e.g. '### Verein') starts its own
  * DiarySection, so a section's full content is the run of sections that follows it.
@@ -34,10 +50,10 @@ function sectionsUnder(file: DiaryFile, heading: string): DiarySection[] {
 
 /** Re-emits the thoughts sections as markdown, dropping only the '## Persönliche Gedanken' line. */
 function thoughtsText(file: DiaryFile): string {
-  return sectionsUnder(file, THOUGHTS_HEADING)
+  const joined = sectionsUnder(file, THOUGHTS_HEADING)
     .map((section, index) => (index === 0 ? section.content : `${section.heading}${section.content}`))
-    .join('')
-    .trim();
+    .join('');
+  return joined.replace(ORIGIN_FOOTER, '').trim();
 }
 
 function doneItems(file: DiaryFile): string[] {
@@ -67,6 +83,7 @@ export function toDiaryModel(
   model.title = fmScalar(file, 'title');
   model.text = thoughtsText(file);
   model.done = doneItems(file);
+  model.sourceDocument = extractSourceDocument(file);
   model.status = fmScalar(file, 'status') === 'final' ? 'final' : 'draft';
 
   const locationLabel = fmScalar(file, 'location');

@@ -148,4 +148,35 @@ describe('toDiaryModel', () => {
     expect(model.text).toContain('Ein Absatz aus dem gescannten Original.');
     expect(model.done).toEqual([]);
   });
+
+  it('moves the origin footer into sourceDocument and out of the text', () => {
+    const file = parseDiaryMarkdown(fixture("PDF footer — the archive's most common body shape"));
+    const model = toDiaryModel(file, 'bka', 'uid1', RESOLVER);
+    expect(model.sourceDocument).toBe('20191108diaryMusterdorf.pdf');
+    expect(model.text).toBe('Ein Absatz aus dem gescannten Original.');
+  });
+
+  it('leaves sourceDocument empty when there is no footer', () => {
+    const file = parseDiaryMarkdown('---\ndate: 2026-08-16\n---\n\n## Persönliche Gedanken\n\nOhne Footer.\n');
+    const model = toDiaryModel(file, 'bka', 'uid1', RESOLVER);
+    expect(model.sourceDocument).toBe('');
+    expect(model.text).toBe('Ohne Footer.');
+  });
+
+  it('does not mistake a horizontal rule inside the text for a footer', () => {
+    const file = parseDiaryMarkdown('---\ndate: 2026-08-16\n---\n\n## Persönliche Gedanken\n\nVorher.\n\n---\n\nNachher.\n');
+    const model = toDiaryModel(file, 'bka', 'uid1', RESOLVER);
+    expect(model.sourceDocument).toBe('');
+    expect(model.text).toBe('Vorher.\n\n---\n\nNachher.');
+  });
+
+  it('finds the footer even when it sits after the Erledigt section', () => {
+    const file = parseDiaryMarkdown(
+      '---\ndate: 2026-08-16\n---\n\n## Persönliche Gedanken\n\nText.\n\n## Erledigt\n\n- [x] Etwas\n\n---\n*Original: [x.pdf](x.pdf)*\n'
+    );
+    const model = toDiaryModel(file, 'bka', 'uid1', RESOLVER);
+    expect(model.sourceDocument).toBe('x.pdf');
+    expect(model.text).toBe('Text.');
+    expect(model.done).toEqual(['Etwas']);
+  });
 });

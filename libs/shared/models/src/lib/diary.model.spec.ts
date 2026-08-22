@@ -27,4 +27,9 @@ describe('DiaryModel', () => {
     expect(DiaryCollection).toBe('diaries');
     expect(DiaryModelName).toBe('diary');
   });
+
+  it('starts with an empty source document', () => {
+    const model = new DiaryModel('bka');
+    expect(model.sourceDocument).toBe('');
+  });
 });

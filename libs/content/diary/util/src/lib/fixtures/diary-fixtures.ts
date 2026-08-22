@@ -188,7 +188,6 @@ sunset: "16:52"
 Ein Absatz aus dem gescannten Original.
 
 ---
-
 *Original: [20191108diaryMusterdorf.pdf](20191108diaryMusterdorf.pdf)*
 `,
   },
