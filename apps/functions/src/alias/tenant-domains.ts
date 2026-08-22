@@ -42,12 +42,20 @@ async function loadDomainMap(): Promise<DomainMap> {
     const appDomain = normalizeHost(String(doc.data()['appDomain'] ?? ''));
     if (!appDomain) continue;
 
+    // ACHTUNG: `appDomain` ist über die Tenants hinweg NICHT einheitlich gepflegt — live
+    // stehen dort sowohl Apex-Formen ('seeclub.org', 'bkaiser.com') als auch bereits
+    // präfixierte ('app.kring.ch', 'app.p13.ch', 'app.openkring.org'). Ein blindes
+    // `app.${appDomain}` ergäbe für die zweite Hälfte 'app.app.kring.ch'. Deshalb wird das
+    // Präfix zuerst abgeschnitten und dann genau einmal gesetzt.
+    const apex = appDomain.startsWith('app.') ? appDomain.slice(4) : appDomain;
+
     // Die App liegt auf `app.<domain>`, die Website auf der Apex (siehe dns-Skill). Beide
     // Formen dürfen einen Kurzlink tragen — ein QR-Code auf Papier nennt oft die kürzere.
+    byHost.set(apex, tenantId);
+    byHost.set(`app.${apex}`, tenantId);
+    byHost.set(`www.${apex}`, tenantId);
     byHost.set(appDomain, tenantId);
-    byHost.set(`app.${appDomain}`, tenantId);
-    byHost.set(`www.${appDomain}`, tenantId);
-    baseUrlByTenant.set(tenantId, `https://app.${appDomain}`);
+    baseUrlByTenant.set(tenantId, `https://app.${apex}`);
   }
   return { byHost, baseUrlByTenant };
 }

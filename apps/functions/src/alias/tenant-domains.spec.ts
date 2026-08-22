@@ -36,6 +36,19 @@ describe('tenantByHost', () => {
     expect(await tenantByHost('evil.example')).toBeUndefined();
   });
 
+  // Live steht in appDomain BEIDES: 'seeclub.org'/'bkaiser.com' (Apex) und
+  // 'app.kring.ch'/'app.p13.ch'/'app.openkring.org' (schon praefixiert). Ein blindes
+  // `app.${appDomain}` ergibt fuer die zweite Haelfte 'app.app.kring.ch'.
+  it('handles an appDomain that already carries the app. prefix', async () => {
+    resetDomainMapCache();
+    getMock.mockResolvedValue(snapshot([['kring', 'app.kring.ch']]));
+    expect(await tenantByHost('app.kring.ch')).toBe('kring');
+    expect(await tenantByHost('kring.ch')).toBe('kring');
+    expect(await tenantByHost('www.kring.ch')).toBe('kring');
+    expect(await tenantByHost('app.app.kring.ch')).toBeUndefined();
+    expect(await appBaseUrl('kring')).toBe('https://app.kring.ch');
+  });
+
   it('skips a tenant whose app-config carries no appDomain', async () => {
     resetDomainMapCache();
     getMock.mockResolvedValue(snapshot([['scs', 'seeclub.org'], ['ghost', '']]));
