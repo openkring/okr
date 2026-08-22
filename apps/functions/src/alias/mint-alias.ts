@@ -7,6 +7,7 @@ import {
   AliasSpaceCollection,
 } from '@okr/shared-models';
 import type { AliasSpaceModel, AliasTargetType } from '@okr/shared-models';
+import { removeKeyFromOkrModel } from '@okr/shared-util-core';
 import {
   buildAliasDocId,
   generateAliasCode,
@@ -91,7 +92,7 @@ export function assertTargetAcceptable(
 }
 
 /** Das Dokument aus den Parametern bauen; die Space-Defaults greifen, wo nichts gesetzt ist. */
-function buildAlias(params: MintParams, code: string): Record<string, unknown> {
+function buildAlias(params: MintParams, code: string): AliasModel {
   const { space } = params;
   const alias = new AliasModel(params.tenantId);
   alias.space = space.name;
@@ -107,9 +108,9 @@ function buildAlias(params: MintParams, code: string): Record<string, unknown> {
   alias.createdBy = params.createdBy;
   alias.createdAt = params.now;
 
-  // okey wird vor dem Schreiben abgestreift und beim Lesen wieder angehängt (Repo-Konvention).
-  const { okey: _okey, ...data } = alias;
-  return data;
+  // okey wird vor dem Schreiben abgestreift und beim Lesen wieder angehängt (Repo-Konvention);
+  // `removeKeyFromOkrModel` ist derselbe Helfer, den FirestoreService.createModel benutzt.
+  return removeKeyFromOkrModel(alias);
 }
 
 /**
