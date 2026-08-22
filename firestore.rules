@@ -507,7 +507,8 @@ service cloud.firestore {
     match /aliasSpaces/{id}  { allow read: if tenantRead(); allow create, update: if isAdmin() && tenantCreateOrDetach(); allow delete: if false; }
 
     // Aliase sind CF-write-only. Grund ist NICHT nur die Rolle: die Document-ID ist
-    // deterministisch (<tenant>__<space>__<alias>), und ein Client-setDoc würde einen
+    // deterministisch (<tenant>__<space>__<alias>, wobei das Alias-Segment gemäss
+    // space.caseSensitive normalisiert wird), und ein Client-setDoc würde einen
     // bestehenden Alias still überschreiben statt zu kollidieren. Geprägt wird über die
     // Callables createAlias/resolveAlias, die .create() des Admin SDK benutzen.
     // Lesen darf jeder Tenant-Nutzer: ein lookup-Space (Diary) löst clientseitig auf.

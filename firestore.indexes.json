@@ -3242,6 +3242,24 @@
         { "fieldPath": "targetKey", "order": "ASCENDING" },
         { "fieldPath": "alias", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "aliasSpaces",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenants", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "isArchived", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "aliases",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tenants", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "isArchived", "order": "ASCENDING" },
+        { "fieldPath": "alias", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

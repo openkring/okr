@@ -37,6 +37,15 @@ export function isSafeTargetUrl(url: string): boolean {
 /**
  * Die Ziel-URL — für Model-Ziele ERST JETZT gebaut, nicht beim Anlegen. Genau das lässt ein
  * gedrucktes Plakat eine Routenumbenennung überleben.
+ *
+ * ACHTUNG (Teilprojekt 2): diese Funktion nimmt eine `/{modelType}/{okey}`-Detailroute an, die es
+ * so NICHT für jeden modelType gibt. Geprüft gegen `libs/tenant/routes/src/lib/feature-catalogue.ts`:
+ * `person.<okey>` → `/person/<okey>` funktioniert (der Diary-Fall). `calevent.<okey>` funktioniert
+ * NICHT — die calevent-Route ist `:listId/:contextMenuName`, der okey würde als `listId` binden.
+ * `trip.<okey>` funktioniert ebenfalls NICHT — es gibt keine Trip-Detailroute, nur
+ * `/trips/:listId/:contextMenuName`. Bevor dies an einen 302 im HTTP-Resolver angeschlossen wird,
+ * muss Teilprojekt 2 `targetKey`s modelType gegen die Routen-Katalog-Definitionen validieren, statt
+ * hier blind eine Routenkonvention zu erfinden.
  * @param appBaseUrl Origin der Tenant-App, ohne Slash am Ende.
  */
 export function buildTargetUrl(alias: AliasModel, appBaseUrl: string): string {

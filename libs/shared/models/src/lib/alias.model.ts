@@ -14,9 +14,10 @@ export type AliasTrackingSetting = AliasTrackingLevel | 'inherit';
  * Ein Alias: ein kurzer Schlüssel, der auf ein Ziel auflöst
  * (planning/specs/2026-08-22-alias-service-spec.md).
  *
- * Die Document-ID ist NICHT zufällig, sondern `<tenant>__<space>__<aliasLower>` — dadurch ist
- * Auflösung ein einziges getDoc ohne Query und ohne Index. Gebildet wird sie von
- * `buildAliasDocId()` in `@okr/system-alias-util`.
+ * Die Document-ID ist NICHT zufällig, sondern `<tenant>__<space>__<alias>` — dadurch ist
+ * Auflösung ein einziges getDoc ohne Query und ohne Index. Das Alias-Segment wird dabei gemäss
+ * `space.caseSensitive` normalisiert (kleingeschrieben nur bei case-insensitiven Spaces). Gebildet
+ * wird die ID von `buildAliasDocId()` in `@okr/system-alias-util`.
  *
  * ACHTUNG: Erzeugt werden Aliase ausschliesslich serverseitig (Callables `createAlias` /
  * `resolveAlias`). `FirestoreService.createModel()` benutzt setDoc() und würde einen bestehenden
