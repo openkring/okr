@@ -56,6 +56,20 @@ function escapeText(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
 }
 
+/**
+ * Escape a value for use in an ICS parameter (RFC 5545 §3.2).
+ * Per the RFC, param-values can be either bare `paramtext` (which excludes `;`, `:`, `,`)
+ * or a `quoted-string`. Backslash escaping does not work in parameter values.
+ * If the value contains reserved chars or embedded quotes, quote it and strip any embedded double quotes.
+ */
+function escapeParamValue(s: string): string {
+  const hasReserved = /[;:,]/.test(s);
+  const hasQuotes = /"/.test(s);
+  if (!hasReserved && !hasQuotes) return s;
+  // Strip embedded double quotes and wrap in quotes
+  return `"${s.replace(/"/g, '')}"`;
+}
+
 // ponytail: hardcoded Swiss timezone; make it a tenant/app-config setting if a
 // non-CH tenant ever appears. StoreDate/StoreTime are local wall-clock values.
 const TZID = 'Europe/Zurich';
@@ -234,7 +248,7 @@ export function buildICS(calendarName: string, events: CalEventDoc[], opts: IcsO
     const partstat = opts.partstatFor?.(e);
     if (opts.attendee && partstat) {
       lines.push(foldLine(
-        `ATTENDEE;CN=${escapeText(opts.attendee.cn)};PARTSTAT=${partstat}:mailto:${opts.attendee.email}`
+        `ATTENDEE;CN=${escapeParamValue(opts.attendee.cn)};PARTSTAT=${partstat}:mailto:${opts.attendee.email}`
       ));
     }
 

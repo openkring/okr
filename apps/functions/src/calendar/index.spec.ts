@@ -98,4 +98,25 @@ describe('buildICS', () => {
     expect(ics).not.toContain('ATTENDEE');
     expect(ics).toContain('DTSTART;TZID=Europe/Zurich:20260813T180000');
   });
+
+  it('quotes the ATTENDEE CN parameter when it contains a comma', () => {
+    const ics = buildICS('Test', [event] as never, {
+      attendee: { cn: 'Kaiser, Bruno', email: 'bruno@example.org' },
+      partstatFor: () => 'ACCEPTED',
+    });
+    expect(ics).toContain('ATTENDEE;CN="Kaiser, Bruno";PARTSTAT=ACCEPTED:mailto:bruno@example.org');
+    // Ensure it's not using the wrong escaping mechanism
+    expect(ics).not.toContain('CN=Kaiser\\, Bruno');
+  });
+
+  it('removes embedded double quotes from ATTENDEE CN before quoting', () => {
+    const ics = buildICS('Test', [event] as never, {
+      attendee: { cn: 'Bruno "Speedy" Kaiser', email: 'bruno@example.org' },
+      partstatFor: () => 'ACCEPTED',
+    });
+    // The CN value should be quoted and stripped of embedded quotes
+    expect(ics).toContain('CN="Bruno Speedy Kaiser"');
+    // Ensure the removed quotes don't appear in the output
+    expect(ics).not.toContain('"Speedy"');
+  });
 });
