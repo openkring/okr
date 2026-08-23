@@ -17,7 +17,7 @@
  */
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -201,8 +201,68 @@ async function loadTargets() {
   };
 }
 
-function writeDecisions(labels, targets) {
+/**
+ * Tolerant parser for a decisions file that may have been hand-edited in an editor that turns
+ * some TABS into SPACES on the touched rows, shifting later columns left and losing the column
+ * boundary. Used by --refresh below and by the future --write path — both need the operator's
+ * decisions back, and both must never guess one.
+ *
+ * Rules (validated by the controller against a real damaged file: 105 decisions recovered
+ * directly, 3 more where the slug cell had absorbed the decision, 0 unrecoverable):
+ *   - split each data line on runs of TAB or SPACE
+ *   - token[0] = space ('person' | 'location'), token[1] = slug
+ *   - token[2]: if it is ALL DIGITS, the decision cell is EMPTY — that digit string is `uses`,
+ *     shifted left because the decision cell was blank; otherwise token[2] IS the decision
+ *   - every further token (`uses`, `candidates`, `original`) is ignored: those columns are
+ *     regenerated from source on every run, never read back
+ *   - a decision token that is not a known person/location okey for THIS tenant is never
+ *     guessed. It is collected and returned so the caller can fail loudly before writing
+ *     anything, rather than silently dropping or misfiling a human decision.
+ *
+ * @param {string} content raw file content
+ * @param {{ person: Set<string>, location: Set<string> }} validOkeys known okeys per space
+ * @returns {{ decisions: Map<string, string>, unknown: Array<{ line: number, space: string }> }}
+ *   `decisions` keys are `${space}\t${slug}`; values are okeys, or '' for an explicit blank.
+ *   `unknown` never contains slugs or decisions — line numbers only, so this stays safe to log.
+ */
+function parseDecisionsTolerant(content, validOkeys) {
+  const decisions = new Map();
+  const unknown = [];
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (!trimmed) continue;
+    const tokens = trimmed.split(/[\t ]+/);
+    const space = tokens[0];
+    if (space !== 'person' && space !== 'location') continue; // header row or stray line
+    const slug = tokens[1];
+    if (!slug) continue;
+    const third = tokens[2];
+    const decision = third !== undefined && !/^\d+$/.test(third) ? third : '';
+    if (decision && !validOkeys[space]?.has(decision)) {
+      unknown.push({ line: i + 1, space });
+      continue;
+    }
+    decisions.set(`${space}\t${slug}`, decision);
+  }
+  return { decisions, unknown };
+}
+
+/**
+ * Builds the decisions rows fresh from source (labels + Firestore targets), optionally keeping
+ * decisions already made for a slug. `oldDecisions` is an empty Map for a brand-new file, so the
+ * "prefill only what's blank" rule degenerates to the original exact-match-prefill behaviour.
+ *
+ * Padding/alignment is deliberately never applied to any column: alignment is what invites an
+ * editor to "fix" whitespace, which is exactly the corruption this task exists to recover from.
+ * Fields stay separated by exactly one tab.
+ */
+function buildRows(labels, targets, oldDecisions) {
   const rows = [];
+  let carried = 0;
+  let prefilled = 0;
+  let ambiguous = 0;
+  let unmatched = 0;
   const push = (space, map, candidates) => {
     // Group by SLUG, not by label: 6 person slugs have two spellings each (umlaut vs.
     // transcription, or a capitalisation difference), and both must land on ONE row. Two rows
@@ -218,10 +278,20 @@ function writeDecisions(labels, targets) {
     }
     for (const [slug, entry] of [...bySlug.entries()].sort((a, b) => b[1].uses - a[1].uses)) {
       const hits = candidates.filter((c) => c.slugs.includes(slug));
+      const old = oldDecisions.get(`${space}\t${slug}`);
+      let decision;
+      if (old) {
+        decision = old; // never overwrite an existing decision
+        carried++;
+      } else if (hits.length === 1) {
+        decision = hits[0].okey; // still blank, exactly one candidate: pre-fill
+        prefilled++;
+      } else {
+        decision = ''; // never blank one, and never guess among several / none
+        if (hits.length > 1) ambiguous++; else unmatched++;
+      }
       rows.push([
-        space, slug,
-        hits.length === 1 ? hits[0].okey : '',              // exact match pre-filled
-        String(entry.uses),
+        space, slug, decision, String(entry.uses),
         hits.length === 0 ? '(no match)' : hits.map((h) => `${h.okey}=${h.display}`).join(' | '),
         entry.originals.join(' | '),                        // every spelling behind this slug
       ].join('\t'));
@@ -229,9 +299,53 @@ function writeDecisions(labels, targets) {
   };
   push('person', labels.people, targets.persons);
   push('location', labels.locations, targets.locations);
-  const header = ['space', 'slug', 'decision', 'uses', 'candidates', 'original'].join('\t');
-  writeFileSync(resolvedDecisions, [header, ...rows].join('\n') + '\n', 'utf8');
+  return { rows, carried, prefilled, ambiguous, unmatched };
+}
+
+function timestamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+
+const HEADER = ['space', 'slug', 'decision', 'uses', 'candidates', 'original'].join('\t');
+
+/** Fresh generation: the file must not already exist (checked by the caller). */
+function writeDecisionsFresh(labels, targets) {
+  const { rows } = buildRows(labels, targets, new Map());
+  writeFileSync(resolvedDecisions, [HEADER, ...rows].join('\n') + '\n', 'utf8');
   return rows.length;
+}
+
+/**
+ * --refresh: parse the existing file tolerantly, keep every decision it holds, recompute
+ * `uses`/`candidates` from current source + Firestore, pre-fill only rows that are still blank
+ * and now unambiguous, back up the old file, then write the new one.
+ */
+function refreshDecisions(labels, targets) {
+  const validOkeys = {
+    person: new Set(targets.persons.map((p) => p.okey)),
+    location: new Set(targets.locations.map((l) => l.okey)),
+  };
+  const oldContent = readFileSync(resolvedDecisions, 'utf8');
+  const { decisions: oldDecisions, unknown } = parseDecisionsTolerant(oldContent, validOkeys);
+  if (unknown.length > 0) {
+    console.error(`✖ ${unknown.length} decision(s) in ${resolvedDecisions} do not match a known `
+      + `person/location okey for tenant '${tenantId}'. Refusing to write anything.`);
+    for (const u of unknown) console.error(`  line ${u.line} (${u.space})`);
+    process.exit(1);
+  }
+
+  const backupPath = `${resolvedDecisions}.bak-${timestamp()}`;
+  writeFileSync(backupPath, oldContent, 'utf8');
+
+  const { rows, carried, prefilled, ambiguous, unmatched } = buildRows(labels, targets, oldDecisions);
+  writeFileSync(resolvedDecisions, [HEADER, ...rows].join('\n') + '\n', 'utf8');
+
+  console.log(`\nbackup written to ${backupPath}`);
+  console.log(`${carried} decisions carried over, ${prefilled} newly pre-filled, `
+    + `${ambiguous} still ambiguous, ${unmatched} still unmatched`);
+  console.log(`${rows.length} total rows written to ${resolvedDecisions}`);
 }
 
 await ensureSpaces();
@@ -239,10 +353,19 @@ const labels = collectLabels();
 const targets = await loadTargets();
 
 if (!isWrite) {
-  const written = writeDecisions(labels, targets);
-  console.log(`\n${labels.people.size} person labels, ${labels.locations.size} location labels`);
-  console.log(`${written} rows written to ${resolvedDecisions}`);
-  console.log('Edit the `decision` column (a person/location okey, or blank to keep it free text),');
-  console.log('then re-run with --write.');
+  const refresh = has('refresh');
+  if (existsSync(resolvedDecisions) && !refresh) {
+    fail(`${resolvedDecisions} exists — pass --refresh to regenerate it while keeping your `
+      + 'decisions, or choose another path.');
+  }
+  if (refresh && existsSync(resolvedDecisions)) {
+    refreshDecisions(labels, targets);
+  } else {
+    const written = writeDecisionsFresh(labels, targets);
+    console.log(`\n${labels.people.size} person labels, ${labels.locations.size} location labels`);
+    console.log(`${written} rows written to ${resolvedDecisions}`);
+    console.log('Edit the `decision` column (a person/location okey, or blank to keep it free text),');
+    console.log('then re-run with --write.');
+  }
   process.exit(0);
 }
