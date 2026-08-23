@@ -34,7 +34,15 @@ const REGION = 'europe-west6';
 // One Cloud Run (2nd gen) invocation may take this long: enough for the ~2'405-file archive to
 // be listed, downloaded (concurrency 10) and weather-enriched (~50 Open-Meteo calls) in one pass.
 const TIMEOUT_SECONDS = 540;
+// Must stay comfortably under Firestore's 500-writes-per-batch limit: `processRun` puts one
+// `batch.set` per window entry into a single `batch.commit()` (see below) — raise this only
+// together with switching to multiple batches.
 const WINDOW_SIZE = 200;
+// A generous ceiling for report fields that accumulate across a commit run's many windows (see
+// "Report merging" on `processRun`), well above the ~2'405-file archive this was built for. Not a
+// tuning knob — it exists so a Firestore document cannot grow without bound if the archive is
+// ever far larger than expected.
+const MAX_REPORT_ENTRIES = 5000;
 
 const DIARY_DRIVE_CLIENT_ID = defineSecret('DIARY_DRIVE_CLIENT_ID');
 const DIARY_DRIVE_CLIENT_SECRET = defineSecret('DIARY_DRIVE_CLIENT_SECRET');
@@ -57,14 +65,31 @@ export function diaryDocId(tenantId: string, authorKey: string, date: string): s
 }
 
 /**
- * The next window of (already name-sorted) archive file names strictly after `cursor`. Empty
- * cursor starts at the beginning; a cursor naming a file that no longer exists (deleted between
- * two invocations) still resolves correctly, because this looks for the first name that sorts
- * AFTER the cursor value rather than searching for an exact match — a deleted file simply never
- * matches and is skipped over the same way a matched one would be.
+ * Plain UTF-16 code-unit order — the ONE comparator both `listSortedArchive`'s sort and
+ * `nextWindow`'s cursor advance must use. `String.prototype.localeCompare` disagrees with it on
+ * mixed-case names (locale order puts 'a' before 'Z'; code-unit order puts 'Z' before 'a', since
+ * U+005A < U+0061). `nextWindow` walks a sorted array crossing a cursor with this same ordering,
+ * so the array MUST already be sorted with it too, or a file's true successor can land on the
+ * wrong side of the cursor and be silently skipped forever. Do not swap this for `localeCompare`
+ * in one place without the other.
+ */
+export function compareFileName(a: string, b: string): number {
+  if (a < b) {
+    return -1;
+  }
+  return a > b ? 1 : 0;
+}
+
+/**
+ * The next window of (already name-sorted, `compareFileName` order — see above) archive file
+ * names strictly after `cursor`. Empty cursor starts at the beginning; a cursor naming a file
+ * that no longer exists (deleted between two invocations) still resolves correctly, because this
+ * looks for the first name that sorts AFTER the cursor value rather than searching for an exact
+ * match — a deleted file simply never matches and is skipped over the same way a matched one
+ * would be.
  */
 export function nextWindow(names: string[], cursor: string, windowSize: number): string[] {
-  const start = names.findIndex((name) => name > cursor);
+  const start = names.findIndex((name) => compareFileName(name, cursor) > 0);
   if (start < 0) {
     return [];
   }
@@ -81,6 +106,65 @@ interface ParsedEntry {
 
 function bump(counts: Record<string, number>, key: string): void {
   counts[key] = (counts[key] ?? 0) + 1;
+}
+
+/**
+ * Report-merging helpers for a continued commit run (see "Report merging" on `processRun`).
+ * `processRun` builds a fresh `DiaryImportModel` per invocation, computes THIS WINDOW's report
+ * fields into it via `runPipeline`, then merges the PREVIOUS windows' fields (loaded from the
+ * existing run document) on top before writing — otherwise `.set()` would silently discard
+ * windows 1..N-1's errors/collisions/etc. and only the last window's report would survive.
+ * `unresolvedPeople`/`unresolvedLocations` are summed, not capped: they are keyed by the
+ * archive's distinct person/location slug vocabulary (measured at ~600), which cannot grow with
+ * the number of windows. The others accumulate one entry per file, so they ARE capped at
+ * `MAX_REPORT_ENTRIES` — comfortably above the archive size, but not unbounded — with a synthetic
+ * final entry recording how many were dropped, so a truncation is visible rather than silent.
+ */
+function mergeCappedStrings(previous: string[], next: string[]): string[] {
+  const merged = [...previous, ...next];
+  if (merged.length <= MAX_REPORT_ENTRIES) {
+    return merged;
+  }
+  const dropped = merged.length - (MAX_REPORT_ENTRIES - 1);
+  return [...merged.slice(0, MAX_REPORT_ENTRIES - 1), `…and ${dropped} more entries dropped (report cap ${MAX_REPORT_ENTRIES})`];
+}
+
+function mergeCappedErrors(
+  previous: Array<{ name: string; reason: string }>,
+  next: Array<{ name: string; reason: string }>,
+): Array<{ name: string; reason: string }> {
+  const merged = [...previous, ...next];
+  if (merged.length <= MAX_REPORT_ENTRIES) {
+    return merged;
+  }
+  const dropped = merged.length - (MAX_REPORT_ENTRIES - 1);
+  return [
+    ...merged.slice(0, MAX_REPORT_ENTRIES - 1),
+    { name: '', reason: `…and ${dropped} more errors dropped (report cap ${MAX_REPORT_ENTRIES})` },
+  ];
+}
+
+function mergeCounts(previous: Record<string, number>, next: Record<string, number>): Record<string, number> {
+  const merged: Record<string, number> = { ...previous };
+  for (const [key, count] of Object.entries(next)) {
+    merged[key] = (merged[key] ?? 0) + count;
+  }
+  return merged;
+}
+
+function mergeCappedDeviations(previous: Record<string, string>, next: Record<string, string>): Record<string, string> {
+  const merged = { ...previous, ...next };
+  const keys = Object.keys(merged);
+  if (keys.length <= MAX_REPORT_ENTRIES) {
+    return merged;
+  }
+  const dropped = keys.length - (MAX_REPORT_ENTRIES - 1);
+  const capped: Record<string, string> = {};
+  for (const key of keys.slice(0, MAX_REPORT_ENTRIES - 1)) {
+    capped[key] = merged[key];
+  }
+  capped['(truncated)'] = `…and ${dropped} more entries dropped (report cap ${MAX_REPORT_ENTRIES})`;
+  return capped;
 }
 
 /**
@@ -101,13 +185,18 @@ function weatherFromFile(file: DiaryFile): Partial<DiaryWeather> {
   };
 }
 
-/** One compact 'field:file/api' note per field where both sides had a value and disagreed. */
+/**
+ * One compact 'field:file/api' note per field where both sides had a value and disagreed.
+ * `fetchWeatherRange` (weather.ts `toLocalTime`) returns `''` for sunrise/sunset when Open-Meteo
+ * did not supply one, not `undefined` — treated here as "the API had no value", the same as
+ * `undefined`, so a file-only sunrise/sunset never gets reported as a spurious 'x/' deviation.
+ */
 function describeWeatherDeviations(fromFile: Partial<DiaryWeather>, fromApi: Partial<DiaryWeather>): string {
   const fields: Array<keyof DiaryWeather> = ['min', 'max', 'precip', 'sunrise', 'sunset'];
   const parts: string[] = [];
   for (const field of fields) {
     const fileValue = fromFile[field];
-    const apiValue = fromApi[field];
+    const apiValue = fromApi[field] === '' ? undefined : fromApi[field];
     if (fileValue !== undefined && apiValue !== undefined && fileValue !== apiValue) {
       parts.push(`${field}:${fileValue}/${apiValue}`);
     }
@@ -235,7 +324,8 @@ async function runPipeline(
 async function listSortedArchive(token: string): Promise<Array<{ id: string; name: string; driveFolderId: string }>> {
   try {
     const listed = await listArchiveFiles(token);
-    return [...listed].sort((a, b) => a.name.localeCompare(b.name));
+    // compareFileName, not localeCompare — must match nextWindow's ordering exactly (see there).
+    return [...listed].sort((a, b) => compareFileName(a.name, b.name));
   } catch (err) {
     throw new HttpsError(
       'failed-precondition',
@@ -254,10 +344,19 @@ async function listSortedArchive(token: string): Promise<Array<{ id: string; nam
  * survive a timeout, network error or quota brake at one window's cost rather than the whole
  * run's: an invocation that only ever touches ~200 files cannot get slower as the run progresses,
  * unlike a design that rescans the full archive every time and merely limits the WRITE to a
- * window. `startedAt`, `lastName`, `processed` and `written` are the only fields carried forward
- * from an existing run; every other report field reflects this call's fresh scan (of the whole
- * archive for a dry run, of the window only for a commit — see the collision-detection caveat on
- * `runPipeline`).
+ * window.
+ *
+ * **Report merging.** `startedAt`, `lastName`, `processed` and `written` are carried forward from
+ * an existing run as before, but so now is every OTHER report field on a commit continuation:
+ * `runPipeline` computes fresh counts for THIS window only, and those are merged on top of the
+ * previous windows' counts (loaded from the existing run doc) before the merged result is
+ * written — see the `mergeCapped*`/`mergeCounts` helpers above. Earlier this callable simply
+ * overwrote the whole document every call, which meant only the LAST window's errors, unresolved
+ * slugs, date collisions etc. ever survived — a file that failed to download in window 3 of 13
+ * became invisible the moment window 4 was written. That directly contradicted "the import never
+ * aborts, it reports" for the one path (commit) where the report is the only way a failure ever
+ * surfaces. A dry run has no such merge to do: it is always a single, full-archive pass, so its
+ * fresh scan already IS the whole report.
  */
 async function processRun(
   request: CallableRequest<DiaryImportRequest>,
@@ -279,13 +378,14 @@ async function processRun(
   let cursor = '';
   let processed = 0;
   let written = 0;
+  let existing: DiaryImportModel | undefined;
 
   if (runId) {
     const snap = await db.collection(DiaryImportCollection).doc(runId).get();
     if (!snap.exists) {
       throw new HttpsError('not-found', `diaryImports/${runId} does not exist.`);
     }
-    const existing = snap.data() as DiaryImportModel;
+    existing = snap.data() as DiaryImportModel;
     tenantId = existing.tenants[0];
     startedAt = existing.startedAt || startedAt;
     cursor = existing.lastName;
@@ -305,7 +405,6 @@ async function processRun(
   run.processed = processed;
   run.written = written;
   run.lastName = cursor;
-  run.phase = 'reading';
 
   // `run.total` is always the SIZE OF THE WHOLE ARCHIVE, not of whatever this call processes —
   // it is the denominator the caller uses to know when to stop, so it must not shrink to the
@@ -315,13 +414,20 @@ async function processRun(
   run.total = listed.length;
 
   const window = isDryRun ? [] : nextWindow(sortedNames, cursor, WINDOW_SIZE);
-  const toProcess = isDryRun
-    ? listed
-    : listed.filter((e) => window.includes(e.name));
+  const windowNames = new Set(window);
+  const toProcess = isDryRun ? listed : listed.filter((e) => windowNames.has(e.name));
 
-  run.phase = 'reading';
   const entries = await runPipeline(db, tenantId, authorKey, token, run, toProcess);
-  run.phase = 'weather';
+
+  if (!isDryRun && existing) {
+    run.parsed += existing.parsed;
+    run.errors = mergeCappedErrors(existing.errors, run.errors);
+    run.withoutDate = mergeCappedStrings(existing.withoutDate, run.withoutDate);
+    run.dateCollisions = mergeCappedStrings(existing.dateCollisions, run.dateCollisions);
+    run.unresolvedPeople = mergeCounts(existing.unresolvedPeople, run.unresolvedPeople);
+    run.unresolvedLocations = mergeCounts(existing.unresolvedLocations, run.unresolvedLocations);
+    run.weatherDeviations = mergeCappedDeviations(existing.weatherDeviations, run.weatherDeviations);
+  }
 
   if (isDryRun) {
     run.phase = 'done';
