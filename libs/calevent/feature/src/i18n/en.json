@@ -10,12 +10,18 @@
     "exists": "This person is already registered as an attendee.",
     "empty": "No attendees found.",
     "subscribe": "This person attends",
-    "unsubscribe": "This person does not attend"
+    "unsubscribe": "This person does not attend",
+    "not_possible": "Registration is not possible for this event"
   },
   "create": {
     "label": "Create a new event",
     "conf": "The event has been saved.",
-    "error": "The event could not be saved."
+    "error": "The event could not be saved.",
+    "no_permission": "You are in a group calendar and do not have the permissions needed to create an event here. You can create events in your personal calendar, or in groups where you are registered as a group administrator. See (i) for more information.",
+    "personal": {
+      "label": "Create a personal event",
+      "hint": "You are creating a personal event that only you can see. You can invite other participants later, but if you need further features such as recurring events, chat and so on, you should create a group event instead. See (i) for more information."
+    }
   },
   "delete": {
     "label": "Delete event",
@@ -297,7 +303,8 @@
       "call": "Call organizer",
       "chat": "Chat with organizer",
       "email": "Email organizer",
-      "contact": "Organizer …"
+      "contact": "Organizer …",
+      "title": "Organiser"
     }
   },
   "seriesId": {
@@ -418,7 +425,7 @@
   },
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "The repeat-until date is mandatory with this periodicity",
-    "caleventRepeatUntilDateAfterStartDate": "The repeat-until date must be after the start date",
+    "caleventRepeatUntilDateNotBeforeStartDate": "The repeat-until date must not be before the start date",
     "caleventMaxDatesPerSeries": "The series would have too many occurrences (100 at most). Please shorten the repeat-until date.",
     "caleventEndDateAfterStartDate": "The end date must be after the start date.",
     "caleventStartDateMandatory": "The start date is mandatory.",
@@ -484,7 +491,7 @@
       "group": {
         "label": "Group calendar",
         "visibility": "All members of the group.",
-        "create": "Created from the 'Groups / Calendar' view. Only privileged users (the board) can create a group — contact a board member or support.",
+        "create": "Created from the 'Groups / Calendar' view. Only privileged users (the board) can create a group — contact a board member or support. Group events are managed by the group administrators.",
         "features": "All of them: recurring events, scheduling polls, document storage and chat."
       },
       "org": {

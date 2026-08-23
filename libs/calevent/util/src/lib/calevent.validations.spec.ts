@@ -21,12 +21,20 @@ describe('calEventValidations', () => {
     expect(result.getErrors('seriesId')).toEqual([]);
   });
 
-  it('still demands a repeatUntilDate after the start date on a recurring event', () => {
+  it('still demands a repeatUntilDate that is not before the start date on a recurring event', () => {
     const missing = calEventValidations(makeEvent({ periodicity: 'weekly', repeatUntilDate: '' }), 'scs', '');
     expect(missing.getErrors('repeatUntilDate').length).toBeGreaterThan(0);
 
     const beforeStart = calEventValidations(makeEvent({ periodicity: 'weekly', repeatUntilDate: '20260801' }), 'scs', '');
-    expect(beforeStart.getErrors('repeatUntilDate').length).toBeGreaterThan(0);
+    expect(beforeStart.getErrors('repeatUntilDate')).toContain('caleventRepeatUntilDateNotBeforeStartDate');
+  });
+
+  it('accepts repeatUntilDate === startDate — the last occurrence of a materialised series', () => {
+    // every occurrence carries the series' repeatUntilDate, so on the last one the two are equal.
+    // Demanding 'strictly after' made those events permanently unsavable.
+    const lastOccurrence = calEventValidations(makeEvent({ periodicity: 'weekly', repeatUntilDate: '20260901' }), 'scs', '');
+    expect(lastOccurrence.getErrors('repeatUntilDate')).toEqual([]);
+    expect(lastOccurrence.isValid()).toBe(true);
   });
 
   it('rejects an oversized series', () => {

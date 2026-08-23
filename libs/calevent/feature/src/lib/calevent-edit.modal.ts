@@ -1,8 +1,9 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
-import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup } from '@ionic/angular/standalone';
+import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup, IonIcon } from '@ionic/angular/standalone';
 
 import { CalEventModel, CalEventModelName, CategoryListModel, LocationModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 import { CalendarSelectModal } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -20,18 +21,42 @@ import { AttendeesAccordion } from './attendees-accordion';
   selector: 'okr-calevent-edit-modal',
   standalone: true,
   imports: [
-    Header, ChangeConfirmation,
+    Header, ChangeConfirmation, SvgIconPipe,
     CalEventForm, InviteesAccordion, DocumentsAccordion,
     CommentsAccordion, AttendeesAccordion,
-    IonContent, IonCard, IonCardContent, IonAccordionGroup
+    IonContent, IonCard, IonCardContent, IonAccordionGroup, IonIcon
 ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    ion-card.personal-hint {
+      --background: var(--ion-color-warning-tint, #ffd534);
+      --color: var(--ion-color-warning-contrast, #000);
+    }
+    ion-card.personal-hint ion-card-content {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    ion-card.personal-hint ion-icon { font-size: 20px; flex: 0 0 auto; margin-top: 1px; }
+  `],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
     @if(showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
+      @if(isNewPersonal()) {
+        <!-- a personal event is invisible to everyone but its organiser and invitees; say so up
+             front, before the user fills in a form expecting series/chat/documents -->
+        <ion-card class="personal-hint">
+          <ion-card-content>
+            <ion-icon src="{{ 'info-circle' | svgIcon }}" />
+            <span>{{ i18n.create_personal_hint() }}</span>
+          </ion-card-content>
+        </ion-card>
+      }
       @if(formData(); as formData) {
         <okr-calevent-form
           [formData]="formData"
@@ -106,8 +131,11 @@ export class CalEventEditModal {
   protected headerTitle = computed(() => {
     if (this.isReadOnly()) return this.i18n.view();
     const key = this.calevent().okey;
-    return (key && key.length > 0) ? this.i18n.update() : this.i18n.create();
+    if (key && key.length > 0) return this.i18n.update();
+    return this.isPersonal() ? this.i18n.create_personal() : this.i18n.create();
   });
+  /** A brand-new personal event — the only case that gets the explanatory banner. */
+  protected isNewPersonal = computed(() => this.isNew() && this.isPersonal() && !this.isReadOnly());
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().okey}`);
   protected isNew = computed(() => !this.formData()?.okey);
   protected isPersonal = computed(() => isPersonalCalevent(this.calevent()));

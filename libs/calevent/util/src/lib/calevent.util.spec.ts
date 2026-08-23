@@ -1,7 +1,7 @@
 import { CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { bestScheduleColumn, buildSchedulePollLink, convertCalEventToFullCalendar, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, nextInvitationState, planSeriesReconcile } from './calevent.util';
+import { bestScheduleColumn, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, nextInvitationState, planSeriesReconcile } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -197,6 +197,28 @@ describe('isPastCalevent', () => {
 
   it('is not past without a date', () => {
     expect(isPastCalevent(event(''))).toBe(false);
+  });
+});
+
+describe('canAttendCalevent', () => {
+  const event = (over: Partial<CalEventModel>): CalEventModel =>
+    ({ ...new CalEventModel('t1'), startDate: '20990101', calendars: ['scs'], isOpen: false, ...over });
+
+  it('is never possible on a past event', () => {
+    expect(canAttendCalevent(event({ startDate: '20200101', isOpen: true }), true)).toBe(false);
+  });
+
+  it('is possible for everybody on an open future event', () => {
+    expect(canAttendCalevent(event({ isOpen: true }), false)).toBe(true);
+  });
+
+  it('is possible on a closed event only with an invitation', () => {
+    expect(canAttendCalevent(event({}), true)).toBe(true);
+    expect(canAttendCalevent(event({}), false)).toBe(false);
+  });
+
+  it('is possible on a personal event without an invitation (the organiser has none)', () => {
+    expect(canAttendCalevent(event({ calendars: [] }), false)).toBe(true);
   });
 });
 

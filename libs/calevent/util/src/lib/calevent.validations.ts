@@ -2,7 +2,7 @@ import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import { MAX_DATES_PER_SERIES, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { CalEventModel } from '@okr/shared-models';
-import { baseValidations, calculateRecurringDates, dateValidations, isAfterDate, numberValidations, stringValidations } from '@okr/shared-util-core';
+import { baseValidations, calculateRecurringDates, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
 export const calEventValidations = staticSuite((model: CalEventModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
@@ -26,8 +26,12 @@ export const calEventValidations = staticSuite((model: CalEventModel, tenants: s
     test('repeatUntilDate', 'caleventRepeatUntilDateMandatoryWithGivenPeriodicity', () => {
       enforce(model.repeatUntilDate).isNotEmpty();
     });
-    test('repeatUntilDate', 'caleventRepeatUntilDateAfterStartDate', () => {
-      enforce(isAfterDate(model.repeatUntilDate, model.startDate)).isTruthy();
+    // same-day is allowed on purpose: every occurrence of a materialised series carries the
+    // series' repeatUntilDate, so on the LAST occurrence startDate === repeatUntilDate. Demanding
+    // 'strictly after' made those events permanently unsavable — the field is rendered without an
+    // error note, so the change-confirmation bar just never appeared (10 live scs events).
+    test('repeatUntilDate', 'caleventRepeatUntilDateNotBeforeStartDate', () => {
+      enforce(isAfterOrEqualDate(model.repeatUntilDate, model.startDate)).isTruthy();
     });
     // block an oversized series in the form: the store can only refuse it with an error toast
     test('repeatUntilDate', 'caleventMaxDatesPerSeries', () => {

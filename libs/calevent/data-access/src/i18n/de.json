@@ -1,22 +1,22 @@
 {
   "create": {
-    "label": "Ereignis hinzufügen",
-    "conf": "Das Ereignis wurde hinzugefügt.",
-    "error": "Das Ereignis konnte nicht hinzugefügt werden."
+    "label": "Termin hinzufügen",
+    "conf": "Der Termin wurde hinzugefügt.",
+    "error": "Der Termin konnte nicht hinzugefügt werden."
   },
   "update": {
-    "label": "Ereignis ändern",
-    "conf": "Das Ereignis wurde geändert.",
-    "error": "Das Ereignis konnte nicht geändert werden."
+    "label": "Termin ändern",
+    "conf": "Der Termin wurde geändert.",
+    "error": "Der Termin konnte nicht geändert werden."
   },
   "delete": {
-    "label": "Ereignis löschen",
-    "confirm": "Soll das Ereignis wirklich gelöscht werden ?",
-    "conf": "Das Ereignis wurde gelöscht.",
-    "error": "Das Ereignis konnte nicht gelöscht werden.",
-    "intro": "Dieses Ereignis ist Teil einer Serie von wiederkehrenden Ereignissen. Möchtest du nur dieses eine Ereignis löschen, oder alle zukünftigen Ereignisse der Serie?",
-    "current": "Nur dieses Ereignis löschen (das Ereignis wird von der Serie abgekoppelt)",
-    "future": "Alle zukünftigen Ereignisse löschen",
-    "all": "Alle Ereignisse der Serie löschen"
+    "label": "Termin löschen",
+    "confirm": "Soll der Termin wirklich gelöscht werden ?",
+    "conf": "Der Termin wurde gelöscht.",
+    "error": "Der Termin konnte nicht gelöscht werden.",
+    "intro": "Dieser Termin ist Teil einer Serie von wiederkehrenden Terminen. Möchtest du nur diesen einen Termin löschen, oder alle zukünftigen Termine der Serie?",
+    "current": "Nur diesen Termin löschen (der Termin wird von der Serie abgekoppelt)",
+    "future": "Alle zukünftigen Termine löschen",
+    "all": "Alle Termine der Serie löschen"
   }
 }

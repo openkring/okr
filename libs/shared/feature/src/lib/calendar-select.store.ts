@@ -4,7 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { CalendarCollection, CalendarModel, UserModel } from '@okr/shared-models';
-import { debugListLoaded, getSystemQuery, nameMatches } from '@okr/shared-util-core';
+import { canWriteCalendar, debugListLoaded, getSystemQuery, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { AppStore } from './app.store';
@@ -40,9 +40,11 @@ export const CalendarSelectStore = signalStore(
   })),
   withComputed((store) => ({
     calendars: computed(() => store.calendarsResource.value() ?? []),
+    // org-owned calendars ('public', the tenant calendar, …) are editorial content: only a
+    // contentAdmin may assign a calevent to them, so they are not even offered to anybody else.
     filteredCalendars: computed(() =>
       (store.calendarsResource.value() ?? []).filter((c: CalendarModel) =>
-        nameMatches(c.index, store.searchTerm())
+        nameMatches(c.index, store.searchTerm()) && canWriteCalendar(c, store.currentUser())
       )
     ),
     isLoading: computed(() => store.calendarsResource.isLoading()),

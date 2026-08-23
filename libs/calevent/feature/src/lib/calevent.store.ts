@@ -417,7 +417,13 @@ export const CalEventStore = signalStore(
       async add(readOnly = true, startDate?: string, startTime?: string, skipReload = false): Promise<CalEventModel | undefined> {
         const cal = store.calendarName();
         const personal = isPersonalCalendarName(cal);
-        if (readOnly && !personal) return undefined;
+        // 'Termin erfassen' is offered to every registered user, because on a personal calendar
+        // (or as a group admin) they may create one. On a shared calendar they may not — explain
+        // why and where they can, instead of the silent no-op this used to be.
+        if (readOnly && !personal) {
+          await confirm(store.alertController, store.i18n.create_no_permission(), store.i18n.ok(), '');
+          return undefined;
+        }
         const newCalevent = new CalEventModel(store.tenantId());
         newCalevent.startDate = startDate ?? getTodayStr();
         newCalevent.startTime = startTime ?? '09:00';

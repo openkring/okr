@@ -1,36 +1,42 @@
 {
-  "calevent": "Ereignis",
-  "calevents": "Ereignisse",
-  "empty": "Es sind noch keine Ereignisse erstellt worden. Erstelle eines mit Klicken des + Buttons.",
+  "calevent": "Termin",
+  "calevents": "Termine",
+  "empty": "Es sind noch keine Termine erstellt worden. Erstelle einen mit Klicken des + Buttons.",
   "attendance": {
     "accepted": "Teilnahmen",
     "attendees": "Teilnehmende",
-    "helper": "Personen, die am Anlass teilnehmen.",
+    "helper": "Personen, die am Termin teilnehmen.",
     "add": "Teilnehmende hinzufügen",
     "exists": "Diese Person ist bereits als Teilnehmende erfasst.",
     "empty": "Keine Teilnehmenden gefunden.",
     "subscribe": "Diese Person nimmt teil",
-    "unsubscribe": "Diese Person nimmt nicht teil"
+    "unsubscribe": "Diese Person nimmt nicht teil",
+    "not_possible": "An-/Abmeldung ist für diesen Termin nicht möglich"
   },
   "create": {
-    "label": "Neues Ereignis erstellen",
-    "conf": "Das Ereignis wurde gespeichert.",
-    "error": "Das Ereignis konnte nicht gespeichert werden."
+    "label": "Neuen Termin erstellen",
+    "conf": "Der Termin wurde gespeichert.",
+    "error": "Der Termin konnte nicht gespeichert werden.",
+    "no_permission": "Du bist in einem Gruppen-Kalender und verfügst nicht über die notwendigen Berechtigungen, um hier einen Termin zu erstellen. Du kannst Termine in deinem persönlichen Kalender oder in Gruppen eröffnen, wo du als Gruppen-Administrator eingetragen bist. Siehe (i) für mehr Informationen.",
+    "personal": {
+      "label": "Persönlichen Termin erstellen",
+      "hint": "Du erstellst einen persönlichen Termin, den nur du sehen kannst. Du kannst zwar später weitere Teilnehmer dazu einladen, aber wenn du weitere Funktionen wie Serientermine, Chat etc. wünschst, solltest du einen Gruppentermin erstellen. Siehe (i) für mehr Informationen."
+    }
   },
   "delete": {
-    "label": "Ereignis löschen",
-    "confirm": "Soll das Ereignis wirklich gelöscht werden ?",
-    "conf": "Das Ereignis wurde gelöscht.",
-    "error": "Das Ereignis konnte nicht gelöscht werden.",
+    "label": "Termin löschen",
+    "confirm": "Soll der Termin wirklich gelöscht werden ?",
+    "conf": "Der Termin wurde gelöscht.",
+    "error": "Der Termin konnte nicht gelöscht werden.",
     "series": {
-      "label": "Ereignis-Serie löschen",
-      "confirm": "Soll die Ereignis-Serie wirklich gelöscht werden ?",
-      "conf": "Die Ereignis-Serie wurde gelöscht.",
-      "error": "Die Ereignis-Serie konnte nicht gelöscht werden.",
-      "intro": "Dieses Ereignis ist Teil einer Serie von wiederkehrenden Ereignissen. Möchtest du nur dieses eine Ereignis löschen, oder alle zukünftigen Ereignisse der Serie?",
-      "current": "Nur dieses Ereignis löschen (das Ereignis wird von der Serie abgekoppelt)",
-      "future": "Alle zukünftigen Ereignisse löschen",
-      "all": "Alle Ereignisse der Serie löschen"
+      "label": "Terminserie löschen",
+      "confirm": "Soll die Terminserie wirklich gelöscht werden ?",
+      "conf": "Die Terminserie wurde gelöscht.",
+      "error": "Die Terminserie konnte nicht gelöscht werden.",
+      "intro": "Dieser Termin ist Teil einer Serie von wiederkehrenden Terminen. Möchtest du nur diesen einen Termin löschen, oder alle zukünftigen Termine der Serie?",
+      "current": "Nur diesen Termin löschen (der Termin wird von der Serie abgekoppelt)",
+      "future": "Alle zukünftigen Termine löschen",
+      "all": "Alle Termine der Serie löschen"
     }
   },
   "download": {
@@ -43,7 +49,7 @@
     "conf": "Die Absagemitteilung wurde gespeichert."
   },
   "copy": {
-    "label": "Ereignis kopieren"
+    "label": "Termin kopieren"
   },
   "filter": {
     "all": "Alle"
@@ -102,21 +108,21 @@
     "saveError": "Deine An-/Abmeldungen konnten nicht gespeichert werden."
   },
   "update": {
-    "label": "Ereignis ändern",
-    "conf": "Das Ereignis wurde geändert.",
-    "error": "Das Ereignis konnte nicht geändert werden.",
+    "label": "Termin ändern",
+    "conf": "Der Termin wurde geändert.",
+    "error": "Der Termin konnte nicht geändert werden.",
     "series": {
-      "label": "Ereignis-Serie ändern",
-      "conf": "Die Ereignis-Serie wurde geändert.",
-      "error": "Die Ereignis-Serie konnte nicht geändert werden.",
-      "intro": "Dieses Ereignis ist Teil einer Serie von wiederkehrenden Ereignissen. Möchtest du nur dieses eine Ereignis ändern, oder alle zukünftigen Ereignisse der Serie?",
-      "current": "Nur dieses Ereignis ändern (das Ereignis wird von der Serie abgekoppelt)",
-      "future": "Alle zukünftigen Ereignisse ändern",
-      "all": "Alle Ereignisse der Serie ändern"
+      "label": "Terminserie ändern",
+      "conf": "Die Terminserie wurde geändert.",
+      "error": "Die Terminserie konnte nicht geändert werden.",
+      "intro": "Dieser Termin ist Teil einer Serie von wiederkehrenden Terminen. Möchtest du nur diesen einen Termin ändern, oder alle zukünftigen Termine der Serie?",
+      "current": "Nur diesen Termin ändern (der Termin wird von der Serie abgekoppelt)",
+      "future": "Alle zukünftigen Termine ändern",
+      "all": "Alle Termine der Serie ändern"
     }
   },
   "view": {
-    "label": "Details des Ereignisses anzeigen",
+    "label": "Details des Termins anzeigen",
     "album": "Album ansehen"
   },
   "invite": {
@@ -184,39 +190,39 @@
     "name": "Periodizität",
     "once": {
       "label": "Einmalig",
-      "description": "Das Ereignis findet genau ein einziges Mal statt."
+      "description": "Der Termin findet genau ein einziges Mal statt."
     },
     "hourly": {
       "label": "Stündlich",
-      "description": "Das Ereignis findet jede Stunde statt."
+      "description": "Der Termin findet jede Stunde statt."
     },
     "daily": {
       "label": "Täglich",
-      "description": "Das Ereignis findet jeden Tag (auch am Wochenende) statt."
+      "description": "Der Termin findet jeden Tag (auch am Wochenende) statt."
     },
     "workdays": {
       "label": "Arbeitstage",
-      "description": "Das Ereignis findet täglich an jedem Arbeitstag (MO-FR) statt."
+      "description": "Der Termin findet täglich an jedem Arbeitstag (MO-FR) statt."
     },
     "weekly": {
       "label": "Wöchentlich",
-      "description": "Das Ereignis findet jede Woche statt."
+      "description": "Der Termin findet jede Woche statt."
     },
     "biweekly": {
       "label": "Zweiwöchentlich",
-      "description": "Das Ereignis findet jede zweite Woche statt."
+      "description": "Der Termin findet jede zweite Woche statt."
     },
     "monthly": {
       "label": "Monatlich",
-      "description": "Das Ereignis wird monatlich wiederholt."
+      "description": "Der Termin wird monatlich wiederholt."
     },
     "quarterly": {
       "label": "Quartalsweise",
-      "description": "Das Ereignis findet alle drei Monate statt."
+      "description": "Der Termin findet alle drei Monate statt."
     },
     "yearly": {
       "label": "Jährlich",
-      "description": "Das Ereignis findet jedes Jahr einmal statt."
+      "description": "Der Termin findet jedes Jahr einmal statt."
     },
     "other": {
       "label": "Andere",
@@ -224,12 +230,12 @@
     },
     "never": {
       "label": "Nie",
-      "description": "Das Ereignis findet nie statt, hat keine Periodizität."
+      "description": "Der Termin findet nie statt, hat keine Periodizität."
     }
   },
   "list": {
     "header": {
-      "name": "Anlass",
+      "name": "Termin",
       "duration": "Datum/Zeit",
       "year": "Jahr",
       "responsible": "Organisation",
@@ -255,32 +261,32 @@
     "start": {
       "label": "Startdatum",
       "placeholder": "TT.MM.JJJJ",
-      "helper": "An diesem Tag startet das Ereignis."
+      "helper": "An diesem Tag startet der Termin."
     },
     "end": {
       "label": "Enddatum",
       "placeholder": "TT.MM.JJJJ",
-      "helper": "An diesem Tag endet das Ereignis."
+      "helper": "An diesem Tag endet der Termin."
     },
     "repeatUntil": {
       "label": "Wiederholen bis",
       "placeholder": "TT.MM.JJJJ",
-      "helper": "Bis zu diesem Datum werden wiederkehrende Ereignisse im Kalender eingetragen."
+      "helper": "Bis zu diesem Datum werden wiederkehrende Termine im Kalender eingetragen."
     }
   },
   "description": {
     "label": "Weitere Informationen",
-    "placeholder": "Eine Beschreibung zum Ereignis. Hier kannst du alles sonstige zum Ereignis festhalten",
-    "helper": "Ein Anlass erfolgt zu einer bestimmten Zeit und kann in einem Kalender dargestellt werden."
+    "placeholder": "Eine Beschreibung zum Termin. Hier kannst du alles sonstige zum Termin festhalten",
+    "helper": "Ein Termin erfolgt zu einer bestimmten Zeit und kann in einem Kalender dargestellt werden."
   },
   "durationMinutes": {
     "label": "Dauer (Minuten)",
     "placeholder": "nn",
-    "helper": "Die Dauer eines Ereignisses in Minuten."
+    "helper": "Die Dauer eines Termins in Minuten."
   },
   "fullDay": {
     "label": "Ganztägig",
-    "helper": "Dieses Ereignis wird als Tagesereignis im Kalender eingetragen - ohne bestimmte Zeit."
+    "helper": "Dieser Termin wird als Tagestermin im Kalender eingetragen - ohne bestimmte Zeit."
   },
   "locationKey": {
     "label": "Ort",
@@ -288,17 +294,18 @@
     "helper": "Ort eingeben und aus der Liste wählen; wird kein Ort gefunden, bleibt der Text als freier Ort stehen."
   },
   "name": {
-    "label": "Anlass",
+    "label": "Termin",
     "placeholder": "Name",
-    "helper": "Der Name eines Anlasses."
+    "helper": "Der Name eines Termins."
   },
   "responsible": {
     "label": "Organisierende",
     "add": "Organisierende hinzufügen",
     "persons": "Verantwortlich",
-    "description": "Personen, die für den Anlass verantwortlich sind.",
+    "description": "Personen, die für den Termin verantwortlich sind.",
     "organiser": {
       "contact": "Organisierende Person …",
+      "title": "Organisierende Person",
       "select": "Organisierende Person wählen",
       "view": "Anzeigen",
       "call": "Anrufen",
@@ -314,14 +321,14 @@
   "startTime": {
     "label": "Startzeit",
     "placeholder": "HH:MM",
-    "helper": "Zu dieser Zeit startet das Ereignis."
+    "helper": "Zu dieser Zeit startet der Termin."
   },
   "calevent_type": {
-    "name": "Art des Anlasses",
-    "label": "Art des Anlasses",
-    "helper": "Art des Anlasses",
+    "name": "Terminart",
+    "label": "Terminart",
+    "helper": "Terminart",
     "all": {
-      "label": "Alle Ereignisarten"
+      "label": "Alle Terminarten"
     },
     "ga": {
       "label": "Vollversammlung",
@@ -419,12 +426,12 @@
     },
     "other": {
       "label": "Andere",
-      "description": "Der Anlass kann keiner der anderen Arten zugeordnet werden."
+      "description": "Der Termin kann keiner der anderen Arten zugeordnet werden."
     }
   },
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "Das Wiederholen-bis Datum ist mit dieser Periodizität obligatorisch",
-    "caleventRepeatUntilDateAfterStartDate": "Das Wiederholen-bis Datum muss nach dem Startdatum liegen",
+    "caleventRepeatUntilDateNotBeforeStartDate": "Das Wiederholen-bis Datum darf nicht vor dem Startdatum liegen",
     "caleventMaxDatesPerSeries": "Die Serie hätte zu viele Termine (maximal 100). Bitte das Wiederholen-bis Datum verkürzen.",
     "caleventEndDateAfterStartDate": "Das Enddatum muss nach dem Startdatum liegen.",
     "caleventStartDateMandatory": "Das Startdatum ist obligatorisch.",
@@ -441,17 +448,17 @@
   },
   "info": {
     "title": "Kalender & Einladungen",
-    "intro": "Anlässe erscheinen an mehreren Orten in der App — auf dem Dashboard, in deiner persönlichen Kalendersicht und im Kalender einer Gruppe. Alle Sichten greifen auf dieselben Daten zu und zeigen nur unterschiedliche Ausschnitte.",
+    "intro": "Termine erscheinen an mehreren Orten in der App — auf dem Dashboard, in deiner persönlichen Kalendersicht und im Kalender einer Gruppe. Alle Sichten greifen auf dieselben Daten zu und zeigen nur unterschiedliche Ausschnitte.",
     "views": {
       "title": "Kalendersichten",
-      "text": "Wo du welche Anlässe siehst:",
+      "text": "Wo du welche Termine siehst:",
       "col": {
         "view": "Sicht",
         "shows": "Was du siehst"
       },
       "dashboard": {
         "label": "Dashboard · Nächste Termine",
-        "text": "Die nächsten 5 Anlässe, die dich betreffen. Mit «Mehr» gelangst du in die persönliche Kalendersicht."
+        "text": "Die nächsten 5 Termine, die dich betreffen. Mit «Mehr» gelangst du in die persönliche Kalendersicht."
       },
       "invitations": {
         "label": "Dashboard · Meine Einladungen",
@@ -459,16 +466,16 @@
       },
       "personal": {
         "label": "Anlässe / Kalender",
-        "text": "Deine persönliche Kalendersicht: sämtliche Anlässe, die du sehen darfst — alle Anlässe des Organisationskalenders sowie alle Anlässe aus jedem Gruppenkalender, in dem du Mitglied bist. Umschaltbar zwischen Listen- und Kalenderansicht."
+        "text": "Deine persönliche Kalendersicht: sämtliche Termine, die du sehen darfst — alle Termine des Organisationskalenders sowie alle Termine aus jedem Gruppenkalender, in dem du Mitglied bist. Umschaltbar zwischen Listen- und Kalenderansicht."
       },
       "group": {
         "label": "Gruppen / Kalender",
-        "text": "Der Kalender einer einzelnen Gruppe — nur deren Anlässe. Hier erfasst du Termine, die nur diese Gruppe betreffen."
+        "text": "Der Kalender einer einzelnen Gruppe — nur deren Termine. Hier erfasst du Termine, die nur diese Gruppe betreffen."
       }
     },
     "types": {
       "title": "Kalenderarten",
-      "text": "Jeder Anlass gehört zu keinem, einem oder mehreren Kalendern. Der Kalender bestimmt, wer den Anlass sieht und welche Funktionen zur Verfügung stehen.",
+      "text": "Jeder Termin gehört zu keinem, einem oder mehreren Kalendern. Der Kalender bestimmt, wer den Termin sieht und welche Funktionen zur Verfügung stehen.",
       "col": {
         "calendar": "Kalender",
         "visibility": "Sichtbar für",
@@ -484,34 +491,34 @@
       "group": {
         "label": "Gruppenkalender",
         "visibility": "Alle Mitglieder der Gruppe.",
-        "create": "Wird aus der Sicht «Gruppen / Kalender» eröffnet. Eine Gruppe anlegen können nur privilegierte Benutzer (Vorstand) — wende dich an ein Vorstandsmitglied oder an den Support.",
+        "create": "Wird aus der Sicht «Gruppen / Kalender» eröffnet. Eine Gruppe anlegen können nur privilegierte Benutzer (Vorstand) — wende dich an ein Vorstandsmitglied oder an den Support. Die Gruppentermine werden durch die Gruppen-Administratoren verwaltet.",
         "features": "Alle: Serientermine, Terminumfragen, Dokumentenablage und Chat."
       },
       "org": {
         "label": "Organisationskalender",
         "visibility": "Alle Mitglieder der Organisation.",
-        "create": "Besteht von Anfang an. Ein Anlass wird Teil davon, sobald ihm der Kalender mit der Tenant-ID hinzugefügt wird (Berechtigung: privilegiert oder Anlass-Admin).",
+        "create": "Besteht von Anfang an. Ein Termin wird Teil davon, sobald ihm der Kalender mit der Tenant-ID hinzugefügt wird (Berechtigung: privilegiert oder Termin-Admin).",
         "features": "Alle. Für Termine, die alle Mitglieder sehen sollen."
       },
       "public": {
         "label": "Öffentlicher Kalender",
         "visibility": "Alle — auch Personen ohne Login.",
-        "create": "Wird einem Anlass als Kalender «public» hinzugefügt (Berechtigung: privilegiert oder Anlass-Admin).",
-        "features": "Der Anlass erscheint automatisch auf der öffentlichen Website und kann dort von externen News-Crawlern (z. B. LokalNews) aufgegriffen und einem grösseren Kreis bekannt gemacht werden."
+        "create": "Wird einem Termin als Kalender «public» hinzugefügt (Berechtigung: privilegiert oder Termin-Admin).",
+        "features": "Der Termin erscheint automatisch auf der öffentlichen Website und kann dort von externen News-Crawlern (z. B. LokalNews) aufgegriffen und einem grösseren Kreis bekannt gemacht werden."
       }
     },
     "invitations": {
       "title": "Einladungen und Teilnahme",
-      "text": "Es gibt zwei Arten, wie die Teilnahme an einem Anlass geregelt ist:",
+      "text": "Es gibt zwei Arten, wie die Teilnahme an einem Termin geregelt ist:",
       "open": {
-        "label": "Offene Anlässe",
-        "text": "Jede Person, die den Anlass sieht, kann sich selbst an- und abmelden. Die Teilnehmerliste wächst mit den Zusagen."
+        "label": "Offene Termine",
+        "text": "Jede Person, die den Termin sieht, kann sich selbst an- und abmelden. Die Teilnehmerliste wächst mit den Zusagen."
       },
       "closed": {
-        "label": "Geschlossene Anlässe",
+        "label": "Geschlossene Termine",
         "text": "Typisch für Gruppen- und persönliche Kalender: es werden gezielt Personen eingeladen. Nur wer eine Einladung erhalten hat, kann zu- oder absagen."
       },
-      "respond": "Mit einem Klick auf einen Termin im Kalender öffnest du den Anlass und kannst deine Teilnahme bestätigen oder ablehnen. Ganz unten unter «Teilnehmende» siehst du, wer teilnimmt und wer abgesagt hat.",
+      "respond": "Mit einem Klick auf einen Termin im Kalender öffnest du ihn und kannst deine Teilnahme bestätigen oder ablehnen. Ganz unten unter «Teilnehmende» siehst du, wer teilnimmt und wer abgesagt hat.",
       "series": "Bei Serienterminen zeigt «Terminserie anzeigen» eine tabellarische Übersicht aller Termine der Serie. Dort kannst du dich für jeden einzelnen Termin separat an- oder abmelden."
     },
     "symbols": {

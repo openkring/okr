@@ -13,6 +13,8 @@ export const CALEVENT_I18N_KEYS = {
   attendance_add:             PFX + 'attendance.add',
   attendance_exists:          PFX + 'attendance.exists',
   attendance_empty:           PFX + 'attendance.empty',
+  // tooltip on the 'remove' icon: An-/Abmeldung is not offered for this event
+  attendance_not_possible:    PFX + 'attendance.not_possible',
   // the organiser changes someone else's attendance (invitation_* is the first-person variant)
   attendance_subscribe:       PFX + 'attendance.subscribe',
   attendance_unsubscribe:     PFX + 'attendance.unsubscribe',
@@ -20,6 +22,11 @@ export const CALEVENT_I18N_KEYS = {
   create:                     PFX + 'create.label',
   create_conf:                PFX + 'create.conf',
   create_error:               PFX + 'create.error',
+  // shown when a user opens 'Termin erfassen' on a calendar they may not write to
+  create_no_permission:       PFX + 'create.no_permission',
+  // the personal-event banner + title on '/calevent/my'
+  create_personal:            PFX + 'create.personal.label',
+  create_personal_hint:       PFX + 'create.personal.hint',
 
   delete:                     PFX + 'delete.label',
   delete_confirm:             PFX + 'delete.confirm',
@@ -281,6 +288,8 @@ export const CALEVENT_I18N_KEYS = {
   responsible:                    PFX + 'responsible.label',
   responsible_add:                PFX + 'responsible.add',
   organiser_contact:              PFX + 'responsible.organiser.contact',
+  // header of the contact modal; on narrow screens only the avatar + name are shown
+  organiser_title:                PFX + 'responsible.organiser.title',
   organiser_select:               PFX + 'responsible.organiser.select',
   organiser_view:                 PFX + 'responsible.organiser.view',
   organiser_call:                 PFX + 'responsible.organiser.call',

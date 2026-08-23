@@ -21,7 +21,8 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, upcomingOccurrences } from '@okr/calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, upcomingOccurrences } from '@okr/calevent-util';
+import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calevent-ui';
 import { browseUrl } from '@okr/subject-address-util';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
@@ -154,18 +155,19 @@ type AttendanceFilter = AttendanceState | 'all';
                   <ion-icon slot="icon-only" src="{{ (isListView() ? 'calendar' : 'list') | svgIcon }}" />
                 </ion-button>
               }
-              @if(canChange()) {
-                <ion-button id="{{ popupId() }}">
-                  <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
-                </ion-button>
-                <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
-                  <ng-template>
-                    <ion-content>
-                      <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="isPersonalCalendar()" [excludeNames]="excludedMenuNames()" [toggleStates]="{ toggleFilter: showFilter() }"/>
-                    </ion-content>
-                  </ng-template>
-                </ion-popover>
-              }
+              <!-- no canChange() gate here: okr-menu already role-gates every entry (registered users
+                   get 'Filter'/'Termin erfassen', privileged ones the export/schedule actions). Gating the
+                   trigger as well hid the whole menu from registered users on shared calendars. -->
+              <ion-button id="{{ popupId() }}">
+                <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
+              </ion-button>
+              <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
+                <ng-template>
+                  <ion-content>
+                    <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="isPersonalCalendar()" [excludeNames]="excludedMenuNames()" [toggleStates]="{ toggleFilter: showFilter() }"/>
+                  </ion-content>
+                </ng-template>
+              </ion-popover>
             </ion-buttons>
           </ion-toolbar>
         }
@@ -261,8 +263,13 @@ type AttendanceFilter = AttendanceState | 'all';
           <ion-list lines="inset">
             @for(event of filteredCalEvents(); track event.okey; let i = $index) {
               <ion-item [id]="'calevent-' + i" (click)="showActions(event)" [class]="getCalEventCssClass(event.state)">
+                <!-- always an icon in slot=start, otherwise rows without an attendance state
+                     lose their leading column and the whole list misaligns. 'remove' (grey) means
+                     An-/Abmeldung is not possible on this event. -->
                 @if(attendanceState(event); as state) {
                   <ion-icon slot="start" src="{{ getAttendanceIcon(state) | svgIcon }}" color="{{ getAttendanceColor(state) }}" />
+                } @else {
+                  <ion-icon slot="start" src="{{ 'remove' | svgIcon }}" color="medium" [title]="store.i18n.attendance_not_possible()" />
                 }
                 <ion-label>{{ event | calEventDuration }}</ion-label>
                 <ion-label>{{event.name}}</ion-label>
@@ -888,58 +895,51 @@ export class CalEventList implements OnInit {
     return (calevent.responsiblePersons ?? []).filter(o => o.key !== own);
   }
 
-  /** Asks how to contact the organiser (view/call/email/chat), then runs it. */
+  /**
+   * Opens the organiser-contact modal: who (dropdown, first one preselected) and how
+   * (view/call/email/chat) in one step, then runs the chosen action on the chosen person.
+   */
   private async contactOrganiser(calevent: CalEventModel): Promise<void> {
     const organisers = this.otherOrganisers(calevent);
-    const options = createActionSheetOptions(this.store.i18n.organiser_contact());
-    options.buttons = [
-      createActionSheetButton('organiser.view', this.store.i18n.organiser_view(), this.imgixBaseUrl, 'eye-on'),
-    ];
-    if (organisers.some(o => this.organiserPhone(o.key))) {
-      options.buttons.push(createActionSheetButton('organiser.call', this.store.i18n.organiser_call(), this.imgixBaseUrl, 'tel'));
+    if (organisers.length === 0) return;
+    // resolved here, not in the modal: the directory lookup lives in the store, and call/email
+    // must be offered per SELECTED organiser rather than 'anyone on the event has a number'
+    const phones: Record<string, string> = {};
+    const emails: Record<string, string> = {};
+    for (const o of organisers) {
+      phones[o.key] = this.organiserPhone(o.key);
+      emails[o.key] = this.organiserEmail(o.key);
     }
-    if (organisers.some(o => this.organiserEmail(o.key))) {
-      options.buttons.push(createActionSheetButton('organiser.email', this.store.i18n.organiser_email(), this.imgixBaseUrl, 'email'));
-    }
-    options.buttons.push(createActionSheetButton('organiser.chat', this.store.i18n.organiser_chat(), this.imgixBaseUrl, 'chatbubbles'));
-    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-    const sheet = await this.actionSheetController.create(options);
-    await sheet.present();
-    const { data } = await sheet.onDidDismiss();
-    if (!data || data.action === 'cancel') return;
-    await this.organiserAction(data.action, calevent);
+    const { OrganiserContactModal } = await import('@okr/calevent-ui');
+    const modal = await this.modalController.create({
+      component: OrganiserContactModal,
+      // shrink-to-content: the body is one optional dropdown plus 2-4 action rows, and
+      // 'list-modal-wide' is on the fixed-size opt-out list (66% tall, mostly empty)
+      cssClass: 'auto-height-modal',
+      componentProps: { organisers, i18n: this.store.i18n, phones, emails },
+    });
+    await modal.present();
+    const { data, role } = await modal.onDidDismiss<OrganiserContactResult>();
+    if (role !== 'confirm' || !data) return;
+    await this.organiserAction(data.action, data.organiser);
   }
 
-  /** Runs an organiser action on the event's responsible person; asks which one if there are several. */
-  private async organiserAction(action: string, calevent: CalEventModel): Promise<void> {
-    const organiser = await this.pickOrganiser(calevent);
-    if (!organiser) return;
+  /** Runs an organiser action on the person picked in the contact modal. */
+  private async organiserAction(action: OrganiserContactAction, organiser: AvatarInfo): Promise<void> {
     switch (action) {
-      case 'organiser.view': await this.showPerson(organiser.key); break;
-      case 'organiser.chat': await this.chatWith(organiser.key); break;
-      case 'organiser.call': {
+      case 'view': await this.showPerson(organiser.key); break;
+      case 'chat': await this.chatWith(organiser.key); break;
+      case 'call': {
         const phone = this.organiserPhone(organiser.key);
         if (phone) await browseUrl(`tel:${phone}`);
         break;
       }
-      case 'organiser.email': {
+      case 'email': {
         const email = this.organiserEmail(organiser.key);
         if (email) await browseUrl(`mailto:${email}`);
         break;
       }
     }
-  }
-
-  private async pickOrganiser(calevent: CalEventModel): Promise<AvatarInfo | undefined> {
-    const organisers = this.otherOrganisers(calevent);
-    if (organisers.length <= 1) return organisers[0];
-    const options = createActionSheetOptions(this.store.i18n.organiser_select());
-    options.buttons = organisers.map(o => createActionSheetButton(o.key, `${o.name1} ${o.name2}`, this.imgixBaseUrl, 'avatar-circle'));
-    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
-    const sheet = await this.actionSheetController.create(options);
-    await sheet.present();
-    const { data } = await sheet.onDidDismiss();
-    return organisers.find(o => o.key === data?.action);
   }
 
   /** Opens the person page. Navigation, not the PersonEditModal: importing @okr/subject-person-feature
@@ -1140,15 +1140,18 @@ export class CalEventList implements OnInit {
 
   /**
    * Attendance state of the current user for the given event: open events read it from the attendees list,
-   * closed ones from the invitation. Returns undefined if the user is neither attendee nor invitee (-> no icon).
+   * closed ones from the invitation. Falls back to 'invited' (the '?' icon) while the user has not
+   * answered yet but still could, and to undefined when An-/Abmeldung is not possible at all
+   * (past event, or a closed event the user was not invited to) — the list then shows the 'remove' icon.
    */
   protected attendanceState(event: CalEventModel): AttendanceState | undefined {
+    const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === event.okey);
     const state = event.isOpen
       ? getAttendanceState(event, this.currentUser()?.personKey ?? '')
       // no invitation (e.g. the organiser of a personal event) -> fall back to the attendees list
       : this.store.invitations().find(inv => inv.caleventKey === event.okey)?.state
         ?? getAttendanceState(event, this.currentUser()?.personKey ?? '');
-    if (!state) return undefined;
+    if (!state) return canAttendCalevent(event, hasInvitation) ? 'invited' : undefined;
     return state === 'accepted' || state === 'declined' ? state : 'invited';
   }
 

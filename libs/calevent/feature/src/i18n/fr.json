@@ -10,12 +10,18 @@
     "exists": "Cette personne est déjà enregistrée comme participante.",
     "empty": "Aucun participant trouvé.",
     "subscribe": "Cette personne participe",
-    "unsubscribe": "Cette personne ne participe pas"
+    "unsubscribe": "Cette personne ne participe pas",
+    "not_possible": "L'inscription n'est pas possible pour cet événement"
   },
   "create": {
     "label": "Créer un nouvel événement",
     "conf": "L'événement a été enregistré.",
-    "error": "L'événement n'a pas pu être enregistré."
+    "error": "L'événement n'a pas pu être enregistré.",
+    "no_permission": "Vous êtes dans un calendrier de groupe et vous n'avez pas les autorisations nécessaires pour y créer un rendez-vous. Vous pouvez créer des rendez-vous dans votre calendrier personnel ou dans les groupes où vous êtes inscrit comme administrateur de groupe. Voir (i) pour plus d'informations.",
+    "personal": {
+      "label": "Créer un rendez-vous personnel",
+      "hint": "Vous créez un rendez-vous personnel que vous seul pouvez voir. Vous pourrez inviter d'autres participants plus tard, mais si vous souhaitez d'autres fonctions comme les séries de rendez-vous, le chat, etc., créez plutôt un rendez-vous de groupe. Voir (i) pour plus d'informations."
+    }
   },
   "delete": {
     "label": "Supprimer l'événement",
@@ -297,7 +303,8 @@
       "call": "Appeler l'organisateur",
       "chat": "Discuter avec l'organisateur",
       "email": "Envoyer un e-mail à l'organisateur",
-      "contact": "Personne organisatrice …"
+      "contact": "Personne organisatrice …",
+      "title": "Personne organisatrice"
     }
   },
   "seriesId": {
@@ -418,7 +425,7 @@
   },
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "La date de répétition jusqu'au est obligatoire avec cette périodicité",
-    "caleventRepeatUntilDateAfterStartDate": "La date de répétition jusqu'au doit être postérieure à la date de début",
+    "caleventRepeatUntilDateNotBeforeStartDate": "La date de fin de répétition ne doit pas précéder la date de début",
     "caleventMaxDatesPerSeries": "La série aurait trop d’occurrences (100 au maximum). Veuillez raccourcir la date de répétition-jusqu’à.",
     "caleventEndDateAfterStartDate": "La date de fin doit être postérieure à la date de début.",
     "caleventStartDateMandatory": "La date de début est obligatoire.",
@@ -484,7 +491,7 @@
       "group": {
         "label": "Calendrier de groupe",
         "visibility": "Tous les membres du groupe.",
-        "create": "Créé depuis la vue « Groupes / Calendrier ». Seuls les utilisateurs privilégiés (le comité) peuvent créer un groupe — contactez un membre du comité ou le support.",
+        "create": "Créé depuis la vue « Groupes / Calendrier ». Seuls les utilisateurs privilégiés (le comité) peuvent créer un groupe — contactez un membre du comité ou le support. Les rendez-vous du groupe sont gérés par les administrateurs du groupe.",
         "features": "Toutes : séries d'événements, sondages de dates, dépôt de documents et chat."
       },
       "org": {

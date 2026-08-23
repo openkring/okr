@@ -10,12 +10,18 @@
     "exists": "Esta persona ya está registrada como asistente.",
     "empty": "No se han encontrado asistentes.",
     "subscribe": "Esta persona asiste",
-    "unsubscribe": "Esta persona no asiste"
+    "unsubscribe": "Esta persona no asiste",
+    "not_possible": "La inscripción no es posible para este evento"
   },
   "create": {
     "label": "Crear un nuevo evento",
     "conf": "El evento se ha guardado.",
-    "error": "No se ha podido guardar el evento."
+    "error": "No se ha podido guardar el evento.",
+    "no_permission": "Estás en un calendario de grupo y no tienes los permisos necesarios para crear una cita aquí. Puedes crear citas en tu calendario personal o en los grupos en los que estés registrado como administrador del grupo. Consulta (i) para más información.",
+    "personal": {
+      "label": "Crear una cita personal",
+      "hint": "Estás creando una cita personal que solo tú puedes ver. Más adelante podrás invitar a otros participantes, pero si necesitas más funciones como citas periódicas, chat, etc., deberías crear una cita de grupo. Consulta (i) para más información."
+    }
   },
   "delete": {
     "label": "Eliminar evento",
@@ -297,7 +303,8 @@
       "call": "Llamar al organizador",
       "chat": "Chatear con el organizador",
       "email": "Enviar correo al organizador",
-      "contact": "Persona organizadora …"
+      "contact": "Persona organizadora …",
+      "title": "Persona organizadora"
     }
   },
   "seriesId": {
@@ -418,7 +425,7 @@
   },
   "validations": {
     "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "La fecha de repetir hasta es obligatoria con esta periodicidad",
-    "caleventRepeatUntilDateAfterStartDate": "La fecha de repetir hasta debe ser posterior a la fecha de inicio",
+    "caleventRepeatUntilDateNotBeforeStartDate": "La fecha de repetición hasta no puede ser anterior a la fecha de inicio",
     "caleventMaxDatesPerSeries": "La serie tendría demasiadas fechas (100 como máximo). Acorte la fecha de repetición-hasta.",
     "caleventEndDateAfterStartDate": "La fecha de fin debe ser posterior a la fecha de inicio.",
     "caleventStartDateMandatory": "La fecha de inicio es obligatoria.",
@@ -484,7 +491,7 @@
       "group": {
         "label": "Calendario de grupo",
         "visibility": "Todos los miembros del grupo.",
-        "create": "Se crea desde la vista «Grupos / Calendario». Solo los usuarios privilegiados (la junta) pueden crear un grupo; contacta con un miembro de la junta o con el soporte.",
+        "create": "Se crea desde la vista «Grupos / Calendario». Solo los usuarios privilegiados (la junta) pueden crear un grupo; contacta con un miembro de la junta o con el soporte. Las citas del grupo son gestionadas por los administradores del grupo.",
         "features": "Todas: series de citas, encuestas de fechas, archivo de documentos y chat."
       },
       "org": {

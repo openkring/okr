@@ -88,6 +88,7 @@ const MAX_LOCATION_SUGGESTIONS = 8;
                 @if(isRecurring()) {
                   <ion-col size="12" size-md="6">
                     <okr-date-input [i18n]="repeatUntilDateI18n()" [storeDate]="repeatUntilDate()" (storeDateChange)="onFieldChange('repeatUntilDate', $event)" [locale]="locale()" [mask]="chFutureDate" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="repeatUntilDateErrors()" />
                   </ion-col>
                 }
               </ion-row>
@@ -98,6 +99,7 @@ const MAX_LOCATION_SUGGESTIONS = 8;
                   <!-- typing filters the known locations; picking one stores 'name@okey',
                        otherwise the typed text is kept as a free-text location -->
                   <okr-text-input [i18n]="locationKeyI18n()" [value]="locationLabel()" (valueChange)="onLocationInput($event)" [readOnly]="isReadOnly()" [showHelper]="true" />
+                  <okr-error-note [errors]="locationKeyErrors()" />
                   @if(locationSuggestions().length > 0) {
                     <ion-list lines="inset">
                       @for(loc of locationSuggestions(); track loc.okey) {
@@ -156,11 +158,17 @@ const MAX_LOCATION_SUGGESTIONS = 8;
     --------------------------------------------------->
     @if(expertMode() && !isPersonal()) {
       <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+      <okr-error-note [errors]="tagsErrors()" />
     }
 
     @if(hasRole('admin') && !isPersonal()) {
       <okr-notes-input [i18n]="descriptionI18n()" [value]="description()" (valueChange)="onFieldChange('description', $event)" [readOnly]="isReadOnly()" />
     }
+
+    <!-- Catch-all. A field this form does not render (or that a plain registered user cannot see)
+         can still fail validation, and the only symptom is the missing change-confirmation bar.
+         Surfacing it here turns a silent dead end into a readable message. -->
+    <okr-error-note [errors]="unrenderedErrors()" />
   </form>
   }
 `
@@ -193,6 +201,40 @@ export class CalEventForm {
   // validation and errors
   private readonly validationResult = computed(() => calEventValidations(this.formData(), this.tenantId(), this.allTags()));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+  protected repeatUntilDateErrors = computed(() => this.validationResult().getErrors('repeatUntilDate'));
+  protected locationKeyErrors = computed(() => this.validationResult().getErrors('locationKey'));
+  // stringArrayValidations files a bad tag under 'tags[0]', not 'tags' — collect both
+  protected tagsErrors = computed(() => this.errorsFor('tags'));
+  /**
+   * The fields that currently show their own okr-error-note. Computed, not a constant: whether
+   * location/tags are on screen depends on expertMode, so a registered user's hidden tag error
+   * must still reach the catch-all note.
+   */
+  private readonly fieldsWithOwnErrorNote = computed(() => {
+    const fields = ['name'];
+    if (!this.isPersonal() && this.isRecurring()) fields.push('repeatUntilDate');
+    if (this.expertMode() && !this.isPersonal()) fields.push('locationKey', 'tags');
+    return fields;
+  });
+  protected unrenderedErrors = computed(() => {
+    const shown = this.fieldsWithOwnErrorNote();
+    const all = this.validationResult().getErrors() as Record<string, string[]>;
+    return Object.entries(all)
+      .filter(([field]) => !shown.some(f => this.matchesField(field, f)))
+      .flatMap(([, errors]) => errors);
+  });
+
+  /** Vest indexes array-item failures as 'tags[0]'; treat those as belonging to 'tags'. */
+  private matchesField(errorField: string, field: string): boolean {
+    return errorField === field || errorField.startsWith(`${field}[`);
+  }
+
+  private errorsFor(field: string): string[] {
+    const all = this.validationResult().getErrors() as Record<string, string[]>;
+    return Object.entries(all)
+      .filter(([errorField]) => this.matchesField(errorField, field))
+      .flatMap(([, errors]) => errors);
+  }
 
   // fields
   protected okey = linkedSignal(() => this.formData().okey ?? '');

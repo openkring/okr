@@ -38,6 +38,21 @@ export function isPersonalCalevent(calevent: CalEventModel): boolean {
 }
 
 /**
+ * Whether the current user may subscribe/unsubscribe (An-/Abmeldung) to this event. Mirrors the
+ * conditions under which CalEventList's ActionSheet offers the attendance buttons:
+ * - never for a past event,
+ * - an open event is self-service, so everybody may attend,
+ * - a closed event only for an invitee, or for the organiser of a personal event (who has no invitation).
+ * @param calevent
+ * @param hasInvitation true if an invitation for the current user exists on this event
+ */
+export function canAttendCalevent(calevent: CalEventModel, hasInvitation: boolean): boolean {
+  if (isPastCalevent(calevent)) return false;
+  if (calevent.isOpen) return true;
+  return hasInvitation || isPersonalCalevent(calevent);
+}
+
+/**
  * The calendar names on which a plain registered user may create a personal event: the dedicated
  * 'personal' calendar and 'my' (the menu entry every tenant actually ships — /calevent/my/c-calevents).
  * Both list the user's own events, so a new event created there is a personal one.
