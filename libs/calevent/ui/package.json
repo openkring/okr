@@ -16,6 +16,7 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-pipes": "*",
     "@okr/shared-i18n": "*",
-    "@okr/calevent-util": "*"
+    "@okr/calevent-util": "*",
+    "@okr/calevent-data-access": "*"
   }
 }
