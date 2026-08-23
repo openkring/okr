@@ -85,6 +85,13 @@ describe('assertTargetAcceptable', () => {
     expect(() => assertTargetAcceptable(spaceQr({ kind: 'lookup' }), 'model', '', 'location.abc')).not.toThrow();
   });
 
+  it('still enforces the space targetTypes allowlist in a lookup space', () => {
+    // Narrowing the routability gate to redirect spaces must not disable the other guards.
+    const lookup = spaceQr({ kind: 'lookup' });
+    lookup.targetTypes = ['model'];
+    expect(() => assertTargetAcceptable(lookup, 'url', 'https://example.com', '')).toThrow();
+  });
+
   it('accepts a person target and an https url', () => {
     expect(() => assertTargetAcceptable(spaceQr(), 'model', '', 'person.abc')).not.toThrow();
     expect(() => assertTargetAcceptable(spaceQr(), 'url', 'https://example.org', '')).not.toThrow();
