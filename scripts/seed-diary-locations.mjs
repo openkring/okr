@@ -255,40 +255,137 @@ function mostFrequentRaw(rawCounts) {
 // Step 3: geocode with Open-Meteo — same provider as the weather step, free, no API key.
 // A suggestion, not the truth: the decision file is the review surface, and --refresh never
 // overwrites a row whose source is 'manual', nor a row that already carries coordinates.
+//
+// The raw diary label is frequently NOT a query Open-Meteo's free-text search can parse
+// ('Stäfa ZH' with a trailing canton code, 'Dieni/Sedrun GR' a compound of two places): a query
+// ladder tries the raw label, then a human (non-slug) form with the trailing canton code and/or
+// country segment stripped, then each '/'- or ','-separated segment of that stripped form,
+// LONGEST first — first hit wins. A short single-word fallback segment can still land a
+// confidently wrong result in another country ('Dieni' -> a village in Mali, not the Sedrun
+// valley) with a name that superficially matches, so every hit is made auditable rather than
+// trusted: `matched_name`/`country_code` are recorded next to the coordinates, and any hit whose
+// name differs materially from the query, or whose country contradicts a canton code or country
+// name the diary label itself named, is tagged `open-meteo-review` instead of `open-meteo` so
+// the operator's eye goes straight there. This is NOT a Swiss-only filter — the archive holds
+// real foreign trips (Malta, Tanzania, Zambia, Brittany, Tuscany, Sarajevo) and those are meant
+// to geocode to their real country; the check only fires when the LABEL ITSELF names a canton or
+// country that the result then contradicts.
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
-async function geocode(label) {
+/** Maps the country names already in COUNTRIES (see normaliseLocationLabel above) to their
+ * ISO country_code, for the cross-check below. Script-local — not a copy of library code. */
+const COUNTRY_CODE = {
+  switzerland: 'CH', schweiz: 'CH', suisse: 'CH',
+  italy: 'IT', italia: 'IT', italien: 'IT',
+  france: 'FR', frankreich: 'FR',
+  germany: 'DE', deutschland: 'DE',
+  austria: 'AT', oesterreich: 'AT',
+  spain: 'ES', spanien: 'ES', espana: 'ES',
+};
+
+function fold(value) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+/**
+ * The country the RAW label itself implies, if any — a trailing Swiss canton code ('Stäfa ZH')
+ * or a trailing comma country segment ('Barcelona, Spain'). Undefined when the label names
+ * neither, which is the common case and carries no audit signal either way.
+ */
+function expectedCountryFromLabel(label) {
+  const cantonMatch = /^(.*\S)\s+([A-Za-z]{2})$/.exec(label);
+  if (cantonMatch && CANTONS.has(cantonMatch[2].toLowerCase())) return 'CH';
+  const segments = label.split(',').map((s) => s.trim()).filter(Boolean);
+  if (segments.length > 1) {
+    const code = COUNTRY_CODE[fold(segments[segments.length - 1])];
+    if (code) return code;
+  }
+  return undefined;
+}
+
+/**
+ * Query forms to try, first hit wins: the raw label; the label with a trailing canton code
+ * and/or trailing country segment stripped (a HUMAN form, not the slug normaliseLocationLabel
+ * produces — 'staefa' is not a query Open-Meteo should be asked); then each '/'- or ','-separated
+ * segment of that stripped form, longest first (a longer segment is less likely to collide with
+ * an unrelated same-named place elsewhere in the world).
+ */
+function queryForms(label) {
+  const forms = [label];
+
+  const cantonMatch = /^(.*\S)\s+([A-Za-z]{2})$/.exec(label);
+  let stripped = cantonMatch && CANTONS.has(cantonMatch[2].toLowerCase()) ? cantonMatch[1] : label;
+
+  const segments = stripped.split(',').map((s) => s.trim()).filter(Boolean);
+  if (segments.length > 1 && COUNTRIES.has(fold(segments[segments.length - 1]))) segments.pop();
+  stripped = segments.join(', ');
+  if (!forms.includes(stripped)) forms.push(stripped);
+
+  const parts = [...new Set(stripped.split(/[/,]/).map((s) => s.trim()).filter(Boolean))]
+    .sort((a, b) => b.length - a.length);
+  for (const part of parts) {
+    if (!forms.includes(part)) forms.push(part);
+  }
+  return forms;
+}
+
+async function geocodeRaw(query) {
   const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
-  url.searchParams.set('name', label);
-  url.searchParams.set('count', '1');
+  url.searchParams.set('name', query);
+  url.searchParams.set('count', '5'); // reviewer sees the runner-up candidates' context, not just one
   url.searchParams.set('language', 'de');
   url.searchParams.set('format', 'json');
   const res = await fetch(url);
-  if (!res.ok) return null;
-  const hit = (await res.json())?.results?.[0];
-  return hit ? { latitude: hit.latitude, longitude: hit.longitude, source: 'open-meteo' } : null;
+  if (!res.ok) return [];
+  return (await res.json())?.results ?? [];
+}
+
+/** Tries the query ladder for `label`, first hit wins. Returns null when every form draws a blank. */
+async function geocodeLadder(label) {
+  const expectedCountry = expectedCountryFromLabel(label);
+  for (const query of queryForms(label)) {
+    const results = await geocodeRaw(query);
+    await sleep(300); // a few requests per second
+    if (results.length === 0) continue;
+    const top = results[0];
+    const countryCode = (top.country_code ?? '').toUpperCase();
+    const nameFolded = fold(top.name ?? '');
+    const queryFolded = fold(query);
+    const nameDiffers = nameFolded !== queryFolded
+      && !nameFolded.includes(queryFolded) && !queryFolded.includes(nameFolded);
+    const countryMismatch = expectedCountry !== undefined && countryCode !== expectedCountry;
+    return {
+      latitude: top.latitude, longitude: top.longitude,
+      matchedName: top.name ?? '', countryCode,
+      review: nameDiffers || countryMismatch,
+    };
+  }
+  return null;
 }
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** A few requests per second: 300ms between calls, skipping rows that already have coordinates. */
+/** Skips rows that already have coordinates and every 'manual' row — never touches either. */
 async function geocodeMissing(rows) {
   let geocoded = 0;
+  let review = 0;
   for (const row of rows) {
     if (row.source === 'manual') continue;      // never touch a hand-verified row
     if (row.latitude !== '' && row.longitude !== '') continue; // already has coordinates
-    const hit = await geocode(row.label);
+    const hit = await geocodeLadder(row.label);
     if (hit) {
       row.latitude = String(hit.latitude);
       row.longitude = String(hit.longitude);
-      row.source = hit.source;
+      row.matchedName = hit.matchedName;
+      row.countryCode = hit.countryCode;
+      row.source = hit.review ? 'open-meteo-review' : 'open-meteo';
       geocoded++;
+      if (hit.review) review++;
     }
-    await sleep(300);
   }
-  return geocoded;
+  return { geocoded, review };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════
@@ -333,13 +430,15 @@ function buildLocationAlias(tenant, row, okey) {
 
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // Decision file (TSV): one row per normalised key. `key`, `label`, `count` and `originals` are
-// always regenerated from source. `include`, `latitude`, `longitude`, `source` are the operator's
-// decisions and are carried over on --refresh. Fields are separated by exactly one tab —
-// deliberately no column alignment, since alignment is what invites an editor to "fix"
-// whitespace and corrupt a cell.
+// always regenerated from source. `include`, `latitude`, `longitude`, `source`, `matched_name`
+// and `country_code` are the geocode decision and are carried over on --refresh — the last two
+// are the audit trail (what Open-Meteo actually matched, and in which country) that lets the
+// operator judge an `open-meteo-review` row without re-running the query by hand. Fields are
+// separated by exactly one tab — deliberately no column alignment, since alignment is what
+// invites an editor to "fix" whitespace and corrupt a cell.
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
-const HEADER = ['key', 'label', 'count', 'include', 'latitude', 'longitude', 'source'].join('\t');
+const HEADER = ['key', 'label', 'count', 'include', 'latitude', 'longitude', 'source', 'matched_name', 'country_code'].join('\t');
 
 function buildFreshRows(byKey) {
   return [...byKey.entries()]
@@ -353,24 +452,27 @@ function buildFreshRows(byKey) {
 }
 
 function toLine(row) {
-  return [row.key, row.label, String(row.count), row.include, row.latitude, row.longitude, row.source].join('\t');
+  return [row.key, row.label, String(row.count), row.include, row.latitude, row.longitude,
+    row.source, row.matchedName, row.countryCode].join('\t');
 }
 
 /** Parses the decision file. Strict tab-split: `label` can contain spaces, so no whitespace
  * collapsing (unlike seed-diary-aliases.mjs, whose columns never contain spaces). */
 function parseDecisionFile(content) {
-  const decisions = new Map(); // key -> { include, latitude, longitude, source }
+  const decisions = new Map(); // key -> { include, latitude, longitude, source, matchedName, countryCode }
   for (const line of content.split('\n')) {
     if (!line.trim()) continue;
     const cols = line.split('\t');
     if (cols[0] === 'key') continue; // header row
-    const [key, , , include, latitude, longitude, source] = cols;
+    const [key, , , include, latitude, longitude, source, matchedName, countryCode] = cols;
     if (!key) continue;
     decisions.set(key, {
       include: include === 'false' ? 'false' : 'true',
       latitude: latitude ?? '',
       longitude: longitude ?? '',
       source: source ?? '',
+      matchedName: matchedName ?? '',
+      countryCode: countryCode ?? '',
     });
   }
   return decisions;
@@ -382,11 +484,13 @@ function timestamp() {
   return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
 }
 
+const FRESH_DECISION = { include: 'true', latitude: '', longitude: '', source: '', matchedName: '', countryCode: '' };
+
 async function writeFreshDecisionFile(byKey) {
-  const rows = buildFreshRows(byKey).map((r) => ({ ...r, include: 'true', latitude: '', longitude: '', source: '' }));
-  const geocoded = await geocodeMissing(rows);
+  const rows = buildFreshRows(byKey).map((r) => ({ ...r, ...FRESH_DECISION }));
+  const { geocoded, review } = await geocodeMissing(rows);
   writeFileSync(resolvedOut, [HEADER, ...rows.map(toLine)].join('\n') + '\n', 'utf8');
-  console.log(`\n${byKey.size} distinct location keys, ${geocoded} geocoded`);
+  console.log(`\n${byKey.size} distinct location keys, ${geocoded} geocoded (${review} flagged open-meteo-review)`);
   console.log(`${rows.length} rows written to ${resolvedOut}`);
   console.log('Edit `include`/`latitude`/`longitude` as needed (set `source` to `manual` on any');
   console.log('row you hand-correct, so --refresh never overwrites it), then re-run with --write.');
@@ -406,13 +510,13 @@ async function refreshDecisionFile(byKey) {
       carried++;
       return { ...r, ...old };
     }
-    return { ...r, include: 'true', latitude: '', longitude: '', source: '' };
+    return { ...r, ...FRESH_DECISION };
   });
-  const geocoded = await geocodeMissing(rows);
+  const { geocoded, review } = await geocodeMissing(rows);
   writeFileSync(resolvedOut, [HEADER, ...rows.map(toLine)].join('\n') + '\n', 'utf8');
 
   console.log(`\nbackup written to ${backupPath}`);
-  console.log(`${carried} decisions carried over, ${geocoded} newly geocoded`);
+  console.log(`${carried} decisions carried over, ${geocoded} newly geocoded (${review} flagged open-meteo-review)`);
   console.log(`${rows.length} total rows written to ${resolvedOut}`);
 }
 
