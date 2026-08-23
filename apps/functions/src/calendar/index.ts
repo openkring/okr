@@ -3,7 +3,7 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 
 export { getPublicCalEvents } from './public-calevents';
-export { ensureCalendarFeedToken } from './feed';
+export { ensureCalendarFeedToken, calendarFeed } from './feed';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types (inlined to avoid monorepo cross-bundle imports)
