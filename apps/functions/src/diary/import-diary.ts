@@ -120,12 +120,24 @@ function coordKeyOf(coords: { latitude: number; longitude: number }): string {
 }
 
 /**
- * Lists, downloads, parses and resolves every diary file in the archive, and fills in weather —
- * the "reads, parses, resolves and plans the weather" pass both callables share verbatim. Never
- * writes a diary; that is the caller's job (and only `commitDiaryImport` does it, one window at a
- * time). Mutates `run` with every report-only count as it goes; a per-file failure is recorded in
- * `run.errors`/`run.withoutDate`/`run.dateCollisions` and the loop continues — the import never
- * aborts on a single bad file, it reports.
+ * Downloads, parses and resolves the given archive entries, and fills in weather — the
+ * "reads, parses, resolves and plans the weather" pass both callables share verbatim, but NOT
+ * necessarily over the whole archive: `dryRunDiaryImport` passes every listed entry, while
+ * `commitDiaryImport` passes only the current window (see `processRun`), so its downloads,
+ * Open-Meteo calls and CPU work shrink with the window instead of redoing the full archive on
+ * every invocation. Never writes a diary; that is `processRun`'s job. Mutates `run` with every
+ * report-only count as it goes; a per-file failure is recorded in `run.errors`/`run.withoutDate`/
+ * `run.dateCollisions` and the loop continues — the import never aborts on a single bad file, it
+ * reports.
+ *
+ * `run.dateCollisions` only catches collisions among the entries actually PASSED IN here. For the
+ * dry run (whole archive) that is a real, whole-archive check. For a commit window it can only
+ * ever see collisions among that window's ~200 files — two files landing on the same document id
+ * from DIFFERENT windows would upsert one after the other without either invocation ever noticing
+ * (the second write simply overwrites the first, silently). That gap is acceptable here because
+ * `dryRunDiaryImport` is the authoritative full-archive check and is expected to run before any
+ * commit; this function does not widen or narrow that guarantee, it just makes explicit that the
+ * commit path inherits a strictly weaker version of it.
  */
 async function runPipeline(
   db: Firestore,
@@ -133,23 +145,9 @@ async function runPipeline(
   authorKey: string,
   token: string,
   run: DiaryImportModel,
-): Promise<{ sortedNames: string[]; entries: ParsedEntry[] }> {
-  let listed: Array<{ id: string; name: string; driveFolderId: string }>;
-  try {
-    listed = await listArchiveFiles(token);
-  } catch (err) {
-    // One of only two conditions that abort the whole run rather than being reported per file:
-    // the archive could not be listed at all (missing/invalid Drive token, or Drive itself
-    // unreachable) — a configuration error, not a data error.
-    throw new HttpsError(
-      'failed-precondition',
-      `diary import: drive list failed: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
-  const sortedNames = listed.map((e) => e.name).sort();
-  run.total = listed.length;
-
-  const { files, errors: downloadErrors } = await downloadArchiveFiles(token, listed);
+  toProcess: Array<{ id: string; name: string; driveFolderId: string }>,
+): Promise<ParsedEntry[]> {
+  const { files, errors: downloadErrors } = await downloadArchiveFiles(token, toProcess);
   run.errors.push(...downloadErrors);
 
   const resolver = await createDiaryResolver(db, tenantId);
@@ -225,17 +223,41 @@ async function runPipeline(
     }
   }
 
-  return { sortedNames, entries: parsedEntries };
+  return parsedEntries;
+}
+
+/**
+ * Lists the whole archive (cheap: ~3 Drive calls) and returns it sorted by name. Failing to list
+ * at all is one of only two conditions that abort the whole run rather than being reported per
+ * file: the archive could not be listed (missing/invalid Drive token, or Drive itself
+ * unreachable) — a configuration error, not a data error.
+ */
+async function listSortedArchive(token: string): Promise<Array<{ id: string; name: string; driveFolderId: string }>> {
+  try {
+    const listed = await listArchiveFiles(token);
+    return [...listed].sort((a, b) => a.name.localeCompare(b.name));
+  } catch (err) {
+    throw new HttpsError(
+      'failed-precondition',
+      `diary import: drive list failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 }
 
 /**
  * Runs the shared pipeline, then either writes only the report (dry run) or upserts the next
- * window of up to `WINDOW_SIZE` diaries and advances the cursor (commit). Re-reading and
- * re-resolving the whole archive on every commit window looks wasteful, but correctness never
- * depends on it: document ids are deterministic (diaryDocId), so a repeated write is a no-op
- * upsert, and re-listing means a file deleted or added between windows is picked up rather than
- * silently missed. `startedAt`, `lastName`, `processed` and `written` are the only fields carried
- * forward from an existing run; every other report field reflects this call's fresh scan.
+ * window of up to `WINDOW_SIZE` diaries and advances the cursor (commit). The window is chosen
+ * from the listing BEFORE anything is downloaded: `dryRunDiaryImport` needs to see the whole
+ * archive (its output — totals, unresolved-slug frequencies, collision detection — is only
+ * meaningful across everything), but `commitDiaryImport` downloads, parses, resolves and
+ * weather-enriches ONLY the entries in the current window. That is what makes the cursor actually
+ * survive a timeout, network error or quota brake at one window's cost rather than the whole
+ * run's: an invocation that only ever touches ~200 files cannot get slower as the run progresses,
+ * unlike a design that rescans the full archive every time and merely limits the WRITE to a
+ * window. `startedAt`, `lastName`, `processed` and `written` are the only fields carried forward
+ * from an existing run; every other report field reflects this call's fresh scan (of the whole
+ * archive for a dry run, of the window only for a commit — see the collision-detection caveat on
+ * `runPipeline`).
  */
 async function processRun(
   request: CallableRequest<DiaryImportRequest>,
@@ -285,41 +307,51 @@ async function processRun(
   run.lastName = cursor;
   run.phase = 'reading';
 
-  const { sortedNames, entries } = await runPipeline(db, tenantId, authorKey, token, run);
+  // `run.total` is always the SIZE OF THE WHOLE ARCHIVE, not of whatever this call processes —
+  // it is the denominator the caller uses to know when to stop, so it must not shrink to the
+  // window's size on a commit call.
+  const listed = await listSortedArchive(token);
+  const sortedNames = listed.map((e) => e.name);
+  run.total = listed.length;
+
+  const window = isDryRun ? [] : nextWindow(sortedNames, cursor, WINDOW_SIZE);
+  const toProcess = isDryRun
+    ? listed
+    : listed.filter((e) => window.includes(e.name));
+
+  run.phase = 'reading';
+  const entries = await runPipeline(db, tenantId, authorKey, token, run, toProcess);
   run.phase = 'weather';
 
   if (isDryRun) {
     run.phase = 'done';
+  } else if (window.length === 0) {
+    run.phase = 'done';
   } else {
-    const window = nextWindow(sortedNames, cursor, WINDOW_SIZE);
-    if (window.length === 0) {
-      run.phase = 'done';
-    } else {
-      const byName = new Map(entries.map((e) => [e.name, e] as const));
-      const batch = db.batch();
-      let writtenThisWindow = 0;
-      for (const name of window) {
-        const entry = byName.get(name);
-        if (!entry || entry.model.date === '') {
-          // A download/parse failure or a missing date — already recorded in run.errors /
-          // run.withoutDate. The cursor still advances past it so the run cannot get stuck.
-          continue;
-        }
-        const docId = diaryDocId(tenantId, authorKey, entry.model.date);
-        // JSON round-trip: strips 'okey' (via removeKeyFromOkrModel) and, crucially, drops any
-        // key `toDiaryModel` set to an explicit `undefined` (e.g. an unresolved `location`) —
-        // Firestore's admin SDK rejects undefined field values outright.
-        const doc = JSON.parse(JSON.stringify(removeKeyFromOkrModel(entry.model)));
-        batch.set(db.collection(DiaryCollection).doc(docId), doc);
-        writtenThisWindow++;
+    const byName = new Map(entries.map((e) => [e.name, e] as const));
+    const batch = db.batch();
+    let writtenThisWindow = 0;
+    for (const name of window) {
+      const entry = byName.get(name);
+      if (!entry || entry.model.date === '') {
+        // A download/parse failure or a missing date — already recorded in run.errors /
+        // run.withoutDate. The cursor still advances past it so the run cannot get stuck.
+        continue;
       }
-      await batch.commit();
-
-      run.processed = processed + window.length;
-      run.written = written + writtenThisWindow;
-      run.lastName = window[window.length - 1];
-      run.phase = run.lastName === sortedNames[sortedNames.length - 1] ? 'done' : 'importing';
+      const docId = diaryDocId(tenantId, authorKey, entry.model.date);
+      // JSON round-trip: strips 'okey' (via removeKeyFromOkrModel) and, crucially, drops any
+      // key `toDiaryModel` set to an explicit `undefined` (e.g. an unresolved `location`) —
+      // Firestore's admin SDK rejects undefined field values outright.
+      const doc = JSON.parse(JSON.stringify(removeKeyFromOkrModel(entry.model)));
+      batch.set(db.collection(DiaryCollection).doc(docId), doc);
+      writtenThisWindow++;
     }
+    await batch.commit();
+
+    run.processed = processed + window.length;
+    run.written = written + writtenThisWindow;
+    run.lastName = window[window.length - 1];
+    run.phase = run.lastName === sortedNames[sortedNames.length - 1] ? 'done' : 'importing';
   }
 
   await db.collection(DiaryImportCollection).doc(runId).set(removeKeyFromOkrModel(run));
