@@ -21,6 +21,7 @@ import { contactRouter } from './routes/contact';
 import { coursesRouter, resultsRouter } from './routes/stubs';
 import { pageRouter } from './routes/page';
 import { aliasRouter } from './routes/alias';
+import { galleryRouter } from './routes/gallery';
 
 // ---------------------------------------------------------------------------
 // CORS allowlist. The public website calls this API from the browser, so we
@@ -40,6 +41,9 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://bkaiser.com',
   'https://bkaiser.org',
   'https://p13.ch',
+  // Persoenliche Fotoseite (bka). Nur .ch — .com und .org zeigen nicht mehr hierhin.
+  'https://brunokaiser.ch',
+  'https://www.brunokaiser.ch',
   'https://kwa.ch',
   'https://silcrest7.ch',
 ];
@@ -93,6 +97,7 @@ app.get(`${BASE}/calendar`,      calendarRouter);
 app.get(`${BASE}/courses`,       coursesRouter);
 app.get(`${BASE}/results`,       resultsRouter);
 app.get(`${BASE}/pages/:pageKey`, pageRouter);
+app.get(`${BASE}/gallery`,       galleryRouter);
 app.post(`${BASE}/contact`,      contactRouter);
 
 // Der Alias-Resolver liegt BEWUSST ausserhalb von BASE: der Pfad ist Teil der Kurz-URL

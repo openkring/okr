@@ -43,3 +43,6 @@
 [submodule "apps/bka-app"]
 	path = apps/bka-app
 	url = git@github.com:bkaiser-org/bka-app.git
+[submodule "apps/bka-website"]
+	path = apps/bka-website
+	url = git@github.com:bkaiser-org/bka-website.git

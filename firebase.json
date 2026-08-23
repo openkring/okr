@@ -557,6 +557,101 @@
           ]
         }
       ]
+    },
+    {
+      "site": "bka-website-54aef",
+      "public": "dist/apps/bka-website",
+      "cleanUrls": true,
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "/thema/**",
+          "destination": "/thema.html"
+        },
+        {
+          "source": "/galerie/**",
+          "destination": "/galerie.html"
+        }
+      ],
+      "headers": [
+        {
+          "comment": "cleanUrls serves the entry points as \"/\", \"/impressum\" and \"/datenschutz\", and the two rewrites as \"/thema/*\" and \"/galerie/*\". None of those match the \"**/*.html\" glob (that matches the FILE name), so each needs its own no-cache source — otherwise they fall through to Firebase's 1h default and serve the previous release after a deploy.",
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/impressum",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/datenschutz",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/thema/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/galerie/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(js|css|woff2|jpg|png|svg)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://bkaiser.imgix.net; connect-src 'self' https://europe-west6-bkaiser-org.cloudfunctions.net; frame-ancestors 'none'; base-uri 'self'; form-action 'none'"
+            }
+          ]
+        }
+      ]
     }
   ],
   "firestore": {
