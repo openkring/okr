@@ -13,7 +13,7 @@ describe('normaliseLocationLabel', () => {
 
   it('drops a trailing two-letter Swiss canton code', () => {
     expect(normaliseLocationLabel('Zürich ZH')).toBe('zuerich');
-    expect(normaliseLocationLabel('Stäfa ZH')).toBe('staefa');
+    expect(normaliseLocationLabel('Bergwil SG')).toBe('bergwil');
   });
 
   it('drops a trailing country suffix after a comma', () => {
@@ -27,11 +27,11 @@ describe('normaliseLocationLabel', () => {
   });
 
   it('keeps an interior comma segment that is not a country', () => {
-    expect(normaliseLocationLabel('Dieni, Sedrun')).toBe('dieni-sedrun');
+    expect(normaliseLocationLabel('Alvenga, Cascada')).toBe('alvenga-cascada');
   });
 
   it('collapses whitespace, slashes and repeated separators', () => {
-    expect(normaliseLocationLabel('  Dieni / Sedrun  ')).toBe('dieni-sedrun');
+    expect(normaliseLocationLabel('  Alvenga / Cascada  ')).toBe('alvenga-cascada');
   });
 
   it('returns an empty string for an empty or punctuation-only label', () => {
@@ -41,8 +41,8 @@ describe('normaliseLocationLabel', () => {
 
   it('is idempotent — re-normalising an already-normalised key changes nothing', () => {
     const inputs = [
-      'Zürich', 'Zürich ZH', 'Stäfa ZH', 'Zürich, Switzerland', 'Firenze, Italy',
-      'Rio GO', 'Dieni, Sedrun', '  Dieni / Sedrun  ', '', '  ,  ',
+      'Zürich', 'Zürich ZH', 'Bergwil SG', 'Zürich, Switzerland', 'Firenze, Italy',
+      'Rio GO', 'Alvenga, Cascada', '  Alvenga / Cascada  ', '', '  ,  ',
       // Two consecutive canton-like trailing tokens: a single pop used to leave one behind,
       // so f(x) !== f(f(x)). The strip must loop until no trailing token is a canton code.
       'Foo AG SG',

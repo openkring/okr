@@ -10,7 +10,7 @@ const CANTONS = new Set([
 
 /**
  * Country suffixes the corpus uses after a comma. Deliberately a closed list: a comma segment
- * that is NOT a country is part of the name ('Dieni, Sedrun') and must survive.
+ * that is NOT a country is part of the name ('Alvenga, Cascada') and must survive.
  */
 const COUNTRIES = new Set([
   'switzerland', 'schweiz', 'suisse', 'italy', 'italia', 'italien', 'france', 'frankreich',
@@ -44,7 +44,7 @@ export function normaliseLocationLabel(raw: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-  // Strip trailing canton codes, after slugging so 'Stäfa ZH' and 'Staefa-zh' behave alike.
+  // Strip trailing canton codes, after slugging so 'Bergwil SG' and 'Bergwil-sg' behave alike.
   // A loop (not a single pop) so repeated trailing canton-like tokens are all removed and the
   // result is stable under re-application — normaliseLocationLabel must be idempotent, since
   // it is the single lookup key both the seeding and the resolver side rely on.

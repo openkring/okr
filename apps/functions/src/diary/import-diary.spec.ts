@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareFileName, diaryDocId, nextWindow } from './import-diary';
+import { compareFileName, diaryDocId, isArchiveOwner, isCallerTenant, nextWindow } from './import-diary';
 
 describe('diaryDocId', () => {
   it('is deterministic, so every write is an upsert', () => {
@@ -59,5 +59,46 @@ describe('compareFileName', () => {
     expect(compareFileName('20200101diaryZoo.md', '20200101diaryabend.md')).toBeLessThan(0);
     expect(compareFileName('20200101diaryabend.md', '20200101diaryZoo.md')).toBeGreaterThan(0);
     expect(compareFileName('same.md', 'same.md')).toBe(0);
+  });
+});
+
+// Both callables read the private diary archive with THIS DEPLOYMENT's own Drive credentials —
+// never the caller's — and write under `authorKey = request.auth.uid`. `checkAdminRole` resolves
+// `roles.admin` globally, so without a second, non-role-based check any tenant's admin could
+// point the import at their own tenant and have the whole archive written under their own uid.
+// `isArchiveOwner`/`isCallerTenant` are the pure predicates behind that check — see their doc
+// comments in import-diary.ts for the full argument (and the design doc it cites).
+describe('isArchiveOwner', () => {
+  it('is true only for the exact configured owner uid', () => {
+    expect(isArchiveOwner('owner-uid', 'owner-uid')).toBe(true);
+  });
+
+  it('is false for any other authenticated caller — e.g. another tenant\'s admin', () => {
+    expect(isArchiveOwner('some-other-admin-uid', 'owner-uid')).toBe(false);
+  });
+
+  it('is false for an unauthenticated or empty caller uid', () => {
+    expect(isArchiveOwner(undefined, 'owner-uid')).toBe(false);
+    expect(isArchiveOwner('', 'owner-uid')).toBe(false);
+  });
+
+  it('is false when the owner secret itself is unset (empty string)', () => {
+    // Guards against a misconfigured deployment (missing DIARY_OWNER_UID) accidentally matching
+    // an equally-empty caller uid.
+    expect(isArchiveOwner('', '')).toBe(false);
+  });
+});
+
+describe('isCallerTenant', () => {
+  it('is true when the tenant is one the caller actually belongs to', () => {
+    expect(isCallerTenant(['bka'], 'bka')).toBe(true);
+  });
+
+  it('is false for a tenant the caller does not belong to — the payload spoofing case', () => {
+    expect(isCallerTenant(['bka'], 'scs')).toBe(false);
+  });
+
+  it('is false when the caller has no tenants on record', () => {
+    expect(isCallerTenant([], 'bka')).toBe(false);
   });
 });

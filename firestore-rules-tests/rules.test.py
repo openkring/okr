@@ -236,6 +236,10 @@ seed("aliasStats/t1__qr__ab3x4y__2026-08-22", {"tenants": ["t1"], "isArchived": 
                                                "aliasKey": "t1__qr__ab3x4y", "count": 3})
 seed("aliasEvents/ev1", {"tenants": ["t1"], "isArchived": False,
                          "aliasKey": "t1__qr__ab3x4y", "ipHash": "deadbeef", "uid": "uidA"})
+# diary-import feature (2026-08): authorKey is the AUTH UID (not personKey, unlike docs.authorKey)
+# — a private diary/import run is readable and writable only by its own author, admin included.
+seed("diaries/diA", {"tenants": ["t1"], "authorKey": "uidA", "date": "20260101"})
+seed("diaryImports/impA", {"tenants": ["t1"], "authorKey": "uidA", "phase": "done"})
 
 A, B, C, D = jwt("uidA"), jwt("uidB"), jwt("uidC"), jwt("uidD")
 E, M, P = jwt("uidE"), jwt("uidM"), jwt("uidP")
@@ -450,6 +454,23 @@ single_cases = [
     # D-P4-3: competition-levels (full dateOfBirth) — privileged-only read
     ("userA(plain) GET competition-levels -> DENY (D-P4-3)", False, GET, "competition-levels/clA", A, None, None),
     ("userD(admin t1) GET competition-levels -> ALLOW", True, GET, "competition-levels/clA", D, None, None),
+    # diary-import feature (2026-08): a private diary/import run is readable/writable only by
+    # its own author — matches the authorization the "diaries"/"diaryImports" rows in
+    # subject-data-map.ts assume (authorKey == request.auth.uid).
+    ("userA(owner) GET own diary -> ALLOW", True, GET, "diaries/diA", A, None, None),
+    ("userD(admin t1, not owner) GET foreign diary -> DENY (owner-only, no moderator role)", False,
+     GET, "diaries/diA", D, None, None),
+    ("anon GET diary -> DENY", False, GET, "diaries/diA", None, None, None),
+    ("userA(owner) create own diary -> ALLOW", True, POST, "diaries?documentId=diNew", A,
+     body({"tenants": ["t1"], "authorKey": "uidA", "date": "20260102"}), None),
+    ("userA create diary with forged authorKey -> DENY", False, POST, "diaries?documentId=diForge", A,
+     body({"tenants": ["t1"], "authorKey": "uidD", "date": "20260103"}), None),
+    ("userA(owner) GET own diaryImports -> ALLOW", True, GET, "diaryImports/impA", A, None, None),
+    ("userD(admin t1, not owner) GET foreign diaryImports -> DENY", False,
+     GET, "diaryImports/impA", D, None, None),
+    ("anon GET diaryImports -> DENY", False, GET, "diaryImports/impA", None, None, None),
+    ("userA(owner) write diaryImports -> DENY (CF-only, no client write path)", False,
+     POST, "diaryImports?documentId=impNew", A, body({"tenants": ["t1"], "authorKey": "uidA"}), None),
     # default deny for unknown collection
     ("userA read unknown coll -> DENY", False, GET, "totallyUnknownColl/x", A, None, None),
     # spec 1.22: docs — member upload into flagged folders only, author-scoped writes

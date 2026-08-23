@@ -47,6 +47,9 @@ const MAX_REPORT_ENTRIES = 5000;
 const DIARY_DRIVE_CLIENT_ID = defineSecret('DIARY_DRIVE_CLIENT_ID');
 const DIARY_DRIVE_CLIENT_SECRET = defineSecret('DIARY_DRIVE_CLIENT_SECRET');
 const DIARY_DRIVE_REFRESH_TOKEN = defineSecret('DIARY_DRIVE_REFRESH_TOKEN');
+// The Firebase Auth uid of the ONE person whose Drive refresh token this function holds. Both
+// callables below may only ever import that one person's own archive — see `assertArchiveOwner`.
+const DIARY_OWNER_UID = defineSecret('DIARY_OWNER_UID');
 
 export interface DiaryImportRequest {
   /** Continues an existing run. Omit to start a new one (then `tenantId` is required). */
@@ -78,6 +81,50 @@ export function compareFileName(a: string, b: string): number {
     return -1;
   }
   return a > b ? 1 : 0;
+}
+
+/**
+ * True when `callerUid` is the ONE person this deployment's Drive secrets belong to.
+ *
+ * This is the primary guard against cross-tenant exfiltration. `checkAdminRole`
+ * (`@okr/shared-util-functions`) resolves `users/{uid}.roles.admin` GLOBALLY — with no tenant
+ * scoping — so on its own it authorizes ANY tenant's admin, not just this archive's owner. Both
+ * callables below read the archive with OUR OWN Drive credentials (not the caller's) and write
+ * under `authorKey = request.auth.uid`, i.e. the CALLER's uid. Without this extra check, an
+ * admin of `scs`/`kring`/`p13`/`elab`/`bkg` could call `commitDiaryImport({ tenantId: '<their
+ * own tenant>' })`, have ~2405 private diary entries written under their own uid, and then read
+ * them back in full via `exportMyData` (`subject-data-map.ts`'s `diaries` row: `onExport:
+ * 'full'`). The project already made exactly this argument against itself when it rejected a
+ * callable for the (much less sensitive) tenant-migration script — see
+ * `planning/specs/2026-08-22-diary-import-design.md`, "V1 — `bka` auf alle Personen und
+ * Adressen": "Eine Callable hätte `checkAdminRole` gebraucht, und das prüft `roles.admin`
+ * **global** — jeder Admin irgendeines Tenants hätte sie auf seinen eigenen Tenant richten und
+ * das gesamte Verzeichnis ... übernehmen können." Do not widen this to "any admin" again without
+ * re-reading that rejection.
+ */
+export function isArchiveOwner(callerUid: string | undefined, ownerUid: string): boolean {
+  return callerUid !== undefined && callerUid !== '' && callerUid === ownerUid;
+}
+
+/**
+ * True when `tenantId` is one of the tenants the caller's own `users/{uid}` document lists. A
+ * caller-supplied `tenantId` payload field must never be trusted on its own — see
+ * `isArchiveOwner` above for why — this is the second half of the defence: even the archive
+ * owner may only start a run for a tenant they actually belong to.
+ */
+export function isCallerTenant(callerTenants: string[], tenantId: string): boolean {
+  return callerTenants.includes(tenantId);
+}
+
+/**
+ * Throws unless `callerUid` is the archive owner. The thrown message deliberately does not name
+ * the expected uid — it must not leak who the owner is to a caller that fails this check.
+ */
+function assertArchiveOwner(callerUid: string | undefined, ownerUid: string, nameOfCallingFunction: string): void {
+  if (!isArchiveOwner(callerUid, ownerUid)) {
+    logger.error(`${nameOfCallingFunction}: caller ${callerUid ?? '(unauthenticated)'} is not the diary archive owner`);
+    throw new HttpsError('permission-denied', 'This operation is not available to this account.');
+  }
 }
 
 /**
@@ -395,6 +442,16 @@ async function processRun(
     if (!tenantId) {
       throw new HttpsError('invalid-argument', 'tenantId is required to start a new import run.');
     }
+    // Never trust the payload's `tenantId` on its own — see `isCallerTenant` above. A run may
+    // only be started for a tenant the caller's own `users/{uid}` document actually lists, even
+    // though `assertArchiveOwner` (called before `processRun`) already narrows the caller down
+    // to one specific person: defence in depth, not redundancy — a future change to the owner
+    // check must not silently reopen the tenant-spoofing path this closes.
+    const callerSnap = await db.collection('users').doc(authorKey).get();
+    const callerTenants = (callerSnap.data()?.['tenants'] as string[] | undefined) ?? [];
+    if (!isCallerTenant(callerTenants, tenantId)) {
+      throw new HttpsError('permission-denied', 'tenantId does not belong to the caller.');
+    }
     runId = db.collection(DiaryImportCollection).doc().id;
   }
 
@@ -501,12 +558,13 @@ export const dryRunDiaryImport = onCall<DiaryImportRequest, Promise<DiaryImportM
     region: REGION,
     enforceAppCheck: true,
     timeoutSeconds: TIMEOUT_SECONDS,
-    secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN],
+    secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN, DIARY_OWNER_UID],
   },
   async (request) => {
     checkAppCheckToken(request, 'dryRunDiaryImport');
     checkAuthentication(request, 'dryRunDiaryImport');
     await checkAdminRole(request, 'dryRunDiaryImport');
+    assertArchiveOwner(request.auth?.uid, DIARY_OWNER_UID.value(), 'dryRunDiaryImport');
     const token = await driveToken();
     return processRun(request, getFirestore(), token, true);
   },
@@ -522,12 +580,13 @@ export const commitDiaryImport = onCall<DiaryImportRequest, Promise<DiaryImportM
     region: REGION,
     enforceAppCheck: true,
     timeoutSeconds: TIMEOUT_SECONDS,
-    secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN],
+    secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN, DIARY_OWNER_UID],
   },
   async (request) => {
     checkAppCheckToken(request, 'commitDiaryImport');
     checkAuthentication(request, 'commitDiaryImport');
     await checkAdminRole(request, 'commitDiaryImport');
+    assertArchiveOwner(request.auth?.uid, DIARY_OWNER_UID.value(), 'commitDiaryImport');
     const token = await driveToken();
     return processRun(request, getFirestore(), token, false);
   },

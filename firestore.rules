@@ -346,6 +346,31 @@ service cloud.firestore {
     match /calendars/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /calevents/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /comments/{id}           { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    // diaries + diaryImports (diary-import feature, 2026-08): a diary entry/run is authored by
+    // exactly ONE person, identified by their Firebase Auth uid on `authorKey` — NOT their
+    // personKey, unlike `docs.authorKey` above. `apps/functions/src/privacy/subject-data-map.ts`
+    // (the "diaries"/"diaryImports" rows) resolves the export/erasure subject the same way —
+    // `authorKey == request.auth.uid`, for read and for write alike — and its comment there
+    // states that is "what the collection's rule compares against". These two match blocks are
+    // what makes that premise true; keep both in sync if either side changes. Nobody but the
+    // author may ever read or write their own diary, admin included — a private diary has no
+    // "moderator" role the way CMS content or docs do.
+    function isDiaryOwner(data) {
+      return userExists() && data.authorKey == request.auth.uid;
+    }
+    match /diaries/{id} {
+      allow read: if userExists() && (resource == null || (isDiaryOwner(resource.data) && belongsToTenant(resource.data)));
+      allow create: if userExists() && isDiaryOwner(request.resource.data) && belongsToTenant(request.resource.data);
+      allow update: if userExists() && isDiaryOwner(resource.data) && isDiaryOwner(request.resource.data)
+                      && belongsToTenant(resource.data) && belongsToTenant(request.resource.data);
+      allow delete: if userExists() && isDiaryOwner(resource.data) && belongsToTenant(resource.data);
+    }
+    match /diaryImports/{id} {
+      allow read: if userExists() && (resource == null || (isDiaryOwner(resource.data) && belongsToTenant(resource.data)));
+      // Written only by dryRunDiaryImport/commitDiaryImport via the Admin SDK, which bypasses
+      // these rules entirely — no client write path exists.
+      allow write: if false;
+    }
     // docs + folders (spec 1.22 — event image folders):
     // members may create docs only into a membersMayUpload folder, as themselves;
     // authors manage their own docs; the folder owner may moderate (delete/update) docs in their folder.

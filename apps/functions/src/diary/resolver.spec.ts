@@ -39,7 +39,6 @@ describe('buildResolver', () => {
 const LOCATIONS = new Map([
   ['bergdorf', { okey: 'l1', name: 'Bergdorf', latitude: 46.5, longitude: 9.5 }],
 ]);
-const LOC_ALIASES = new Map([['bka__location__bergdorf', 'location.l1']]);
 
 describe('buildResolver — locations', () => {
   const r = buildResolver('bka', ALIASES, PERSONS, TRIPS, LOCATIONS);

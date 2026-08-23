@@ -6,7 +6,7 @@ tags:
   - diary
 date: 2026-08-16
 status: final
-location: Stäfa ZH
+location: Bergwil SG
 weather: "☁️ 22–32°C, 0 mm"
 weather_min: 21.8
 people: [barbara, saskia]
