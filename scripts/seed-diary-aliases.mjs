@@ -237,13 +237,21 @@ async function loadTargets() {
  *
  * @param {string} content raw file content
  * @param {{ person: Set<string>, location: Set<string> }} validOkeys known okeys per space
- * @returns {{ decisions: Map<string, string>, unknown: Array<{ line: number, space: string }> }}
+ * @returns {{ decisions: Map<string, string>, unknown: Array<{ line: number, space: string }>,
+ *   conflicts: Array<{ line: number, priorLine: number, space: string, slug: string }> }}
  *   `decisions` keys are `${space}\t${slug}`; values are okeys, or '' for an explicit blank.
  *   `unknown` never contains slugs or decisions — line numbers only, so this stays safe to log.
+ *   `conflicts` lists a second line for a space+slug already seen with a DIFFERENT decision —
+ *   two identical repeats of the same decision are harmless and never reported. The Map can only
+ *   ever hold one value per key, so without this check a stale copy-pasted row further down the
+ *   file would silently overwrite the first decision with no warning — last one wins, wrong
+ *   person written, and the later duplicate-id guard in the write path would never even see it
+ *   because the Map already discarded the losing row before that guard runs.
  */
 function parseDecisionsTolerant(content, validOkeys) {
-  const decisions = new Map();
+  const decisions = new Map();     // key -> { decision, line }
   const unknown = [];
+  const conflicts = [];
   const lines = content.split('\n');
   for (let i = 0; i < lines.length; i++) {
     const trimmed = lines[i].trim();
@@ -259,9 +267,18 @@ function parseDecisionsTolerant(content, validOkeys) {
       unknown.push({ line: i + 1, space });
       continue;
     }
-    decisions.set(`${space}\t${slug}`, decision);
+    const key = `${space}\t${slug}`;
+    const existing = decisions.get(key);
+    if (existing !== undefined) {
+      if (existing.decision !== decision) {
+        conflicts.push({ line: i + 1, priorLine: existing.line, space, slug });
+      }
+      continue; // first occurrence wins for the returned Map; the conflict fails the run anyway
+    }
+    decisions.set(key, { decision, line: i + 1 });
   }
-  return { decisions, unknown };
+  const plain = new Map([...decisions.entries()].map(([key, v]) => [key, v.decision]));
+  return { decisions: plain, unknown, conflicts };
 }
 
 /**
@@ -355,11 +372,17 @@ function refreshDecisions(labels, targets) {
     location: new Set(targets.locations.map((l) => l.okey)),
   };
   const oldContent = readFileSync(resolvedDecisions, 'utf8');
-  const { decisions: oldDecisions, unknown } = parseDecisionsTolerant(oldContent, validOkeys);
+  const { decisions: oldDecisions, unknown, conflicts } = parseDecisionsTolerant(oldContent, validOkeys);
   if (unknown.length > 0) {
     console.error(`✖ ${unknown.length} decision(s) in ${resolvedDecisions} do not match a known `
       + `person/location okey for tenant '${tenantId}'. Refusing to write anything.`);
     for (const u of unknown) console.error(`  line ${u.line} (${u.space})`);
+    process.exit(1);
+  }
+  if (conflicts.length > 0) {
+    console.error(`✖ ${conflicts.length} conflicting duplicate decision(s) in ${resolvedDecisions} `
+      + '— same space+slug decided differently on two lines. Fix these rows, then re-run:');
+    for (const c of conflicts) console.error(`  line ${c.line} conflicts with line ${c.priorLine} (${c.space}/${c.slug})`);
     process.exit(1);
   }
 
@@ -451,29 +474,42 @@ function buildAliasDoc(row) {
   };
 }
 
+// gRPC status code for ALREADY_EXISTS (google.rpc.Code.ALREADY_EXISTS = 6). Firestore Admin SDK
+// errors carry it in `.code`; matching on it instead of the error message means a real failure
+// (e.g. PERMISSION_DENIED, DEADLINE_EXCEEDED) can never be miscounted as "already existed".
+const GRPC_ALREADY_EXISTS = 6;
+
 async function writeAliases(rows) {
   let created = 0, existed = 0;
-  for (const row of rows) {
-    const docId = `${tenantId}__${row.space}__${row.slug}`;   // buildAliasDocId, caseSensitive=false
-    const doc = buildAliasDoc(row);
-    try {
-      await db.collection(AliasCollection).doc(docId).create(doc);
-      created++;
-    } catch (error) {
-      // .create() throws ALREADY_EXISTS. That is the point: a re-run must not overwrite an alias
-      // someone has since changed in the app.
-      if (String(error).includes('ALREADY_EXISTS')) { existed++; continue; }
-      throw error;
+  try {
+    for (const row of rows) {
+      const docId = `${tenantId}__${row.space}__${row.slug}`;   // buildAliasDocId, caseSensitive=false
+      const doc = buildAliasDoc(row);
+      try {
+        await db.collection(AliasCollection).doc(docId).create(doc);
+        created++;
+      } catch (error) {
+        // .create() throws ALREADY_EXISTS. That is the point: a re-run must not overwrite an
+        // alias someone has since changed in the app.
+        if (error?.code === GRPC_ALREADY_EXISTS) { existed++; continue; }
+        throw error;
+      }
     }
+  } finally {
+    // Printed even on a mid-loop throw, so an interrupted run still reports what landed before
+    // it stopped, rather than leaving the operator with no idea what state Firestore is in.
+    console.log(`\n${created} created · ${existed} already existed`);
   }
-  console.log(`\n${created} created · ${existed} already existed`);
 }
 
-await ensureSpaces();
 const labels = collectLabels();
 const targets = await loadTargets();
 
 if (isWrite || isDryWrite) {
+  // ensureSpaces() is deliberately NOT called yet: it must run only after the decisions file is
+  // fully parsed and validated. Calling it up front meant a real --write with a bad file created
+  // aliasSpaces/<tenant>-person and -location and then aborted — state written after the script
+  // had already said it would not write anything.
   if (!existsSync(resolvedDecisions)) {
     fail(`${resolvedDecisions} does not exist — run without --write/--dry-write first to generate it.`);
   }
@@ -482,11 +518,17 @@ if (isWrite || isDryWrite) {
     location: new Set(targets.locations.map((l) => l.okey)),
   };
   const content = readFileSync(resolvedDecisions, 'utf8');
-  const { decisions: parsedMap, unknown } = parseDecisionsTolerant(content, validOkeys);
+  const { decisions: parsedMap, unknown, conflicts } = parseDecisionsTolerant(content, validOkeys);
   if (unknown.length > 0) {
     console.error(`✖ ${unknown.length} decision(s) in ${resolvedDecisions} do not match a known `
       + `person/location okey for tenant '${tenantId}'. Refusing to write anything.`);
     for (const u of unknown) console.error(`  line ${u.line} (${u.space})`);
+    process.exit(1);
+  }
+  if (conflicts.length > 0) {
+    console.error(`✖ ${conflicts.length} conflicting duplicate decision(s) in ${resolvedDecisions} `
+      + '— same space+slug decided differently on two lines. Fix these rows, then re-run:');
+    for (const c of conflicts) console.error(`  line ${c.line} conflicts with line ${c.priorLine} (${c.space}/${c.slug})`);
     process.exit(1);
   }
   const decisionRows = [...parsedMap.entries()].map(([key, decision]) => {
@@ -497,6 +539,10 @@ if (isWrite || isDryWrite) {
   const rows = decidedRows(decisionRows, freshRows);
   // Validate the WHOLE set before writing anything — never validate-as-you-go.
   assertDecisionsValid(rows, targets);
+
+  // Only now, with the file fully validated, is it safe to create the alias spaces (--write) or
+  // report that it would (--dry-write / --write's own internal dry branch for existing spaces).
+  await ensureSpaces();
 
   if (isDryWrite) {
     const ids = rows.map((r) => `${tenantId}__${r.space}__${r.slug}`);
@@ -514,6 +560,7 @@ if (isWrite || isDryWrite) {
   process.exit(0);
 }
 
+await ensureSpaces();
 const refresh = has('refresh');
 if (existsSync(resolvedDecisions) && !refresh) {
   fail(`${resolvedDecisions} exists — pass --refresh to regenerate it while keeping your `
