@@ -248,7 +248,16 @@ export const calendarFeed = onRequest(
     } catch (err) {
       // Nur ein Präfix ins Log — das Token selbst ist der Ausweis. Echte Fehler sind 500;
       // jede Autorisierungsablehnung oben bleibt ein bares 404 (return vor diesem catch).
-      logger.error('calendarFeed: failed', { tokenPrefix: token.slice(0, 6), err });
+      // `err` wird redigiert: die erste Firestore-Operation im try-Block liest das Token-Dokument
+      // per Pfad (`calendarFeeds/<token>`), und Firestore-Fehlermeldungen betten den vollen
+      // Dokumentpfad häufig ein — ein rohes `err` würde das Bearer-Token also doch ins Log
+      // durchreichen, trotz `tokenPrefix`.
+      const safe = err instanceof Error ? err.message.split(token).join('<redacted>') : String(err).split(token).join('<redacted>');
+      logger.error('calendarFeed: failed', { tokenPrefix: token.slice(0, 6), err: safe });
+      // Falls der Fehler erst beim Senden der Antwort auftrat (z. B. Client-Disconnect nach
+      // res.send/res.status(304).end()), sind Header bereits raus — ein zweiter res.status(...)
+      // würde ERR_HTTP_HEADERS_SENT werfen. Der Fehler ist oben bereits geloggt.
+      if (res.headersSent) return;
       res.status(500).send('Internal error');
     }
   }
