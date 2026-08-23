@@ -24,6 +24,14 @@ describe('toAliasSlug', () => {
     expect(toAliasSlug('Grüezi Bär')).toBe('grueezi-baer');
   });
 
+  it('transcribes Latin letters that NFD cannot decompose', () => {
+    // No combining-mark decomposition exists for these, so NFD leaves them intact and the
+    // [^a-z0-9] sweep would delete them: 'Sørensen' -> 's-rensen'.
+    expect(toAliasSlug('Sørensen')).toBe('soerensen');
+    expect(toAliasSlug('Æbleskive')).toBe('aebleskive');
+    expect(toAliasSlug('Łódź')).toBe('lodz');
+  });
+
   it('strips accents that are not umlauts', () => {
     expect(toAliasSlug('Zürich Café')).toBe('zuerich-cafe');
     expect(toAliasSlug('Genève')).toBe('geneve');
