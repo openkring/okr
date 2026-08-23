@@ -1,6 +1,7 @@
 export * from './lib/alias-categories.util';
 export * from './lib/alias-i18n';
 export * from './lib/alias-key.util';
+export * from './lib/alias-slug.util';
 export * from './lib/alias-space.validations';
 export * from './lib/alias-target-routes';
 export * from './lib/alias.util';
