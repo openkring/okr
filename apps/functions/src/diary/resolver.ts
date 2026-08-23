@@ -2,7 +2,7 @@
 import type { Firestore } from 'firebase-admin/firestore';
 
 import { AliasCollection, PersonCollection, TripCollection } from '@okr/shared-models';
-import type { AliasModel, AvatarInfo, PersonModel } from '@okr/shared-models';
+import type { AliasModel, AvatarInfo, PersonModel, TripModel } from '@okr/shared-models';
 import { toAliasSlug } from '@okr/system-alias-util';
 import type { DiaryResolver } from '@okr/content-diary-util';
 
@@ -104,17 +104,23 @@ export async function createDiaryResolver(db: Firestore, tenantId: string): Prom
     }
   }
 
+  // The 'type' filter is deliberately NOT in this query. tenants+isArchived+type would need a
+  // composite index that does not exist (firestore.indexes.json only has tenants+isArchived+
+  // startDate for `trips`, and that file is known-stale, so deploying an addition risks
+  // dropping live indexes). tenants+isArchived alone is served by the equality-prefix rule off
+  // the existing composite index, so filter 'type' in memory instead — free at 39 trips/tenant.
+  // Do not "optimise" this back into a .where('type', ...) clause.
   const tripSnap = await db
     .collection(TripCollection)
     .where('tenants', 'array-contains', tenantId)
     .where('isArchived', '==', false)
-    .where('type', '==', TRAVEL_TRIP_TYPE)
     .get();
 
   const tripPrefix = `${tenantId}__${TRAVEL_TRIP_TYPE}__`;
   const trips = new Map<string, string>();
   for (const doc of tripSnap.docs) {
-    if (doc.id.startsWith(tripPrefix)) {
+    const data = doc.data() as TripModel;
+    if (data.type === TRAVEL_TRIP_TYPE && doc.id.startsWith(tripPrefix)) {
       trips.set(doc.id.slice(tripPrefix.length), doc.id);
     }
   }
