@@ -57,4 +57,45 @@ describe('buildICS', () => {
     }] as never);
     expect(ics).not.toContain('UNTIL=20261231T235959Z');
   });
+
+  it('appends an app deep link to the description, with the requested listId', () => {
+    const ics = buildICS('Test', [event] as never, {
+      appOrigin: 'https://app.seeclub.org',
+      listIdFor: () => 'scs',
+    });
+    expect(ics).toContain('https://app.seeclub.org/calevent/scs/c-calevents?event=e1');
+  });
+
+  it('uses the deep link as URL only when the event has none of its own', () => {
+    const withOwn = buildICS('Test', [{ ...event, url: 'https://regatta.example' }] as never,
+      { appOrigin: 'https://app.seeclub.org', listIdFor: () => 'my' });
+    expect(withOwn).toContain('URL:https://regatta.example');
+    expect(withOwn).not.toContain('URL:https://app.seeclub.org');
+
+    const without = buildICS('Test', [event] as never,
+      { appOrigin: 'https://app.seeclub.org', listIdFor: () => 'my' });
+    expect(without).toContain('URL:https://app.seeclub.org/calevent/my/c-calevents?event=e1');
+  });
+
+  it('emits the subscriber attendance as ATTENDEE/PARTSTAT', () => {
+    const ics = buildICS('Test', [event] as never, {
+      attendee: { cn: 'Bruno Kaiser', email: 'bruno@example.org' },
+      partstatFor: () => 'ACCEPTED',
+    });
+    expect(ics).toContain('ATTENDEE;CN=Bruno Kaiser;PARTSTAT=ACCEPTED:mailto:bruno@example.org');
+  });
+
+  it('omits ATTENDEE when the subscriber has no invitation for that event', () => {
+    const ics = buildICS('Test', [event] as never, {
+      attendee: { cn: 'Bruno Kaiser', email: 'bruno@example.org' },
+      partstatFor: () => undefined,
+    });
+    expect(ics).not.toContain('ATTENDEE');
+  });
+
+  it('stays byte-compatible for callers that pass no options', () => {
+    const ics = buildICS('Test', [event] as never);
+    expect(ics).not.toContain('ATTENDEE');
+    expect(ics).toContain('DTSTART;TZID=Europe/Zurich:20260813T180000');
+  });
 });

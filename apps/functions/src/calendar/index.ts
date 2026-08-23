@@ -170,8 +170,21 @@ function locationName(locationKey: string): string {
   return atIdx > 0 ? locationKey.substring(0, atIdx) : locationKey;
 }
 
+export interface IcsOptions {
+  appOrigin?: string;
+  listIdFor?: (e: CalEventDoc) => string;
+  attendee?: { cn: string; email: string };
+  partstatFor?: (e: CalEventDoc) => string | undefined;
+}
+
+/** Deep-Link auf die bestehende Listenroute; `listId` ist NICHT konstant (siehe Spec). */
+function appDeepLink(opts: IcsOptions, e: CalEventDoc): string {
+  if (!opts.appOrigin || !opts.listIdFor) return '';
+  return `${opts.appOrigin}/calevent/${opts.listIdFor(e)}/c-calevents?event=${e.okey}`;
+}
+
 /** Build the full ICS text for a list of CalEventDoc objects. */
-export function buildICS(calendarName: string, events: CalEventDoc[]): string {
+export function buildICS(calendarName: string, events: CalEventDoc[], opts: IcsOptions = {}): string {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
   const dtstamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
@@ -206,9 +219,25 @@ export function buildICS(calendarName: string, events: CalEventDoc[]): string {
     lines.push(dtstart);
     lines.push(dtend);
     lines.push(foldLine(`SUMMARY:${escapeText(e.name || '')}`));
-    if (e.description) lines.push(foldLine(`DESCRIPTION:${escapeText(e.description)}`));
-    if (loc)           lines.push(foldLine(`LOCATION:${escapeText(loc)}`));
-    if (e.url)         lines.push(foldLine(`URL:${e.url}`));
+
+    const deepLink = appDeepLink(opts, e);
+    const description = deepLink
+      ? (e.description ? `${e.description}\n\nIm App öffnen: ${deepLink}` : `Im App öffnen: ${deepLink}`)
+      : e.description;
+    if (description) lines.push(foldLine(`DESCRIPTION:${escapeText(description)}`));
+    if (loc)         lines.push(foldLine(`LOCATION:${escapeText(loc)}`));
+
+    // Das benutzererfasste `url` hat Vorrang; der Deep-Link springt nur ein, wenn keins da ist.
+    const urlValue = e.url || deepLink;
+    if (urlValue) lines.push(foldLine(`URL:${urlValue}`));
+
+    const partstat = opts.partstatFor?.(e);
+    if (opts.attendee && partstat) {
+      lines.push(foldLine(
+        `ATTENDEE;CN=${escapeText(opts.attendee.cn)};PARTSTAT=${partstat}:mailto:${opts.attendee.email}`
+      ));
+    }
+
     if (rrule)         lines.push(foldLine(`RRULE:${rrule}`));
     lines.push('END:VEVENT');
   }
