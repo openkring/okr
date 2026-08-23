@@ -1248,6 +1248,9 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 // not personal data: booking-lines — debit/credit lines, reference accounts and amounts
 // not personal data: calendars — calendar definitions (name, colour, visibility)
 // not personal data: categories — enum/value lists used by dropdowns
+// not personal data: diaryImports — the diary-import run's cursor and report (D-P5-3): counts,
+//   phase, file names and unresolved-slug frequency maps only. Never a person's name and never a
+//   diary title — see DiaryImportModel's class doc for the fields that must stay that way.
 // not personal data: erasure-log — CF-written evidence that an erasure ran: counts per
 //   collection and a salted, per-tenant pseudonym. Never a name, e-mail, personKey or
 //   uid, and never a statement about whether the person record survived (D-P5-2).

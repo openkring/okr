@@ -21,6 +21,7 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'calendars',
   'categories',
   'commissionEntries',
+  'diaryImports',
   'erasure-log',
   'exchange-rates',
   'formDefinitions',
