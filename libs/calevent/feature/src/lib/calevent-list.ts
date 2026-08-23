@@ -22,6 +22,7 @@ import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
 import { CalEventDurationPipe, canAttendCalevent, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, upcomingOccurrences } from '@okr/calevent-util';
+import { showCalendarSync } from '@okr/calevent-ui';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calevent-ui';
 import { browseUrl } from '@okr/subject-address-util';
 import { MatrixChatService } from '@okr/chat-data-access';
@@ -358,6 +359,18 @@ export class CalEventList implements OnInit {
   protected expertMode = computed(() => this.hasRole('admin'));
   /** The personal calendars ('personal', 'my'): every registered user may create and manage their own events here. */
   protected isPersonalCalendar = computed(() => isPersonalCalendarName(this.store.calendarName()));
+
+  /**
+   * Die Kalender, die der Benutzer abonnieren darf: die aus seinen Mitgliedschaften plus die
+   * offenen des Tenants. Spiegelt die Zugangsprüfung in `calendarFeed` — beide Seiten müssen
+   * dieselbe Menge ergeben.
+   */
+  protected readonly subscribableCalendars = computed(() => {
+    const mine = this.store.calendarsOfCurrentUser();
+    return (this.store.calendarsResource.value() ?? [])
+      .filter(c => mine.includes(c.okey) || c.defaultIsOpen === true)
+      .map(c => ({ key: c.okey, title: c.title || c.name }));
+  });
   /** Schedule polls only exist in group calendars — hide the entry everywhere else (e.g. /calevent/all). */
   protected excludedMenuNames = computed(() => this.store.isGroupCalendar() ? [] : ['calevent-schedule']);
   private readonly firstFutureIndex = computed(() => {
@@ -703,6 +716,13 @@ export class CalEventList implements OnInit {
           Browser.open({ url: url, windowName: '_blank' });
         }
         break;
+      case 'sync': {
+        await showCalendarSync(this.modalController, {
+          calendars: this.subscribableCalendars(),
+          selected: this.store.calendar()?.okey ?? 'my',
+        });
+        break;
+      }
       case 'schedule':
         if (this.store.schedule()) await this.openSchedulePoll('');   // schedule() = the group-calendar guard
         break;

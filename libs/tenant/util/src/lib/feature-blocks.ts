@@ -161,6 +161,7 @@ const calevent: FeatureBlock = {
       { key: 'calevent-add', name: 'calevent-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.calevent-add' },
       { key: 'calevent-export-raw', name: 'calevent-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.calevent-export-raw' },
       { key: 'calevent-exportics', name: 'calevent-exportics', url: 'exportIcs', action: 'call', roleNeeded: 'registered', icon: 'calendar', label: '@item.calevent-exportics' },
+      { key: 'calevent-sync', name: 'calevent-sync', url: 'sync', action: 'call', roleNeeded: 'registered', icon: 'calendar-number', label: '@item.calevent-sync' },
       { key: 'calevent-schedule', name: 'calevent-schedule', url: 'schedule', action: 'call', roleNeeded: 'privileged', icon: 'calendar-number', label: '@main.schedule' },
       // Live-data quirk: TWO `menuItems` docs share `name: 'filter-toggle'` — an
       // `isArchived: true` one (`action: call`, `url: toggleFilter`, `roleNeeded:
