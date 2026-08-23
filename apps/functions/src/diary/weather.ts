@@ -62,7 +62,9 @@ export function planWeatherRanges(entries: DatedCoord[], today: string): Weather
 
   for (const group of groupByCoordinate(entries).values()) {
     const { latitude, longitude } = group[0];
-    const dates = group.map((e) => e.date).sort();
+    // Fixed-width yyyyMMdd strings sort correctly under plain lexicographic comparison; the
+    // explicit comparator only spells that out for the linter.
+    const dates = group.map((e) => e.date).sort((a, b) => a.localeCompare(b));
     const minDate = dates[0];
     const maxDate = dates[dates.length - 1];
 
@@ -70,14 +72,16 @@ export function planWeatherRanges(entries: DatedCoord[], today: string): Weather
     const forecastDates = dates.filter((d) => d >= boundary);
 
     if (archiveDates.length > 0 && forecastDates.length > 0) {
-      ranges.push({
-        latitude, longitude, api: 'archive',
-        startDate: toIsoDate(minDate), endDate: toIsoDate(archiveDates[archiveDates.length - 1]),
-      });
-      ranges.push({
-        latitude, longitude, api: 'forecast',
-        startDate: toIsoDate(forecastDates[0]), endDate: toIsoDate(maxDate),
-      });
+      ranges.push(
+        {
+          latitude, longitude, api: 'archive',
+          startDate: toIsoDate(minDate), endDate: toIsoDate(archiveDates[archiveDates.length - 1]),
+        },
+        {
+          latitude, longitude, api: 'forecast',
+          startDate: toIsoDate(forecastDates[0]), endDate: toIsoDate(maxDate),
+        },
+      );
     } else {
       ranges.push({
         latitude, longitude,
@@ -93,18 +97,25 @@ export function planWeatherRanges(entries: DatedCoord[], today: string): Weather
 /**
  * The file is the historical record: `code` always comes from the API (the archive only ever
  * carried a rendered emoji line, which does not map back to a single WMO code — so a file can
- * never supply it), and every other field is taken from the API only where the file has none.
- * Where file and API disagree, the file stands; that disagreement is a run-report concern, not
- * something this function resolves.
+ * never supply it), and every other field is taken from the file whenever the file actually
+ * carried it — including a genuine `0` (0°C, 0mm rain) — and from the API only when the file
+ * did not. A field neither side has falls back to DEFAULT_DIARY_WEATHER.
+ *
+ * `fromFile` MUST be a `Partial<DiaryWeather>` built from the raw frontmatter (e.g.
+ * `fmNumber(file, 'weather_min')`), not a `DiaryWeather` that has already been defaulted —
+ * `DiaryWeather` itself cannot distinguish "the file said 0" from "the file said nothing",
+ * so that distinction has to survive as `undefined` all the way to this function's input.
+ * Where file and API disagree on a field the file DOES carry, the file stands; that
+ * disagreement is a run-report concern, not something this function resolves.
  */
-export function mergeWeather(fromFile: DiaryWeather, fromApi: Partial<DiaryWeather>): DiaryWeather {
+export function mergeWeather(fromFile: Partial<DiaryWeather>, fromApi: Partial<DiaryWeather>): DiaryWeather {
   return {
-    code: fromApi.code ?? -1,
-    min: fromFile.min !== DEFAULT_DIARY_WEATHER.min ? fromFile.min : (fromApi.min ?? fromFile.min),
-    max: fromFile.max !== DEFAULT_DIARY_WEATHER.max ? fromFile.max : (fromApi.max ?? fromFile.max),
-    precip: fromFile.precip !== DEFAULT_DIARY_WEATHER.precip ? fromFile.precip : (fromApi.precip ?? fromFile.precip),
-    sunrise: fromFile.sunrise !== DEFAULT_DIARY_WEATHER.sunrise ? fromFile.sunrise : (fromApi.sunrise ?? fromFile.sunrise),
-    sunset: fromFile.sunset !== DEFAULT_DIARY_WEATHER.sunset ? fromFile.sunset : (fromApi.sunset ?? fromFile.sunset),
+    code: fromApi.code ?? DEFAULT_DIARY_WEATHER.code,
+    min: fromFile.min ?? fromApi.min ?? DEFAULT_DIARY_WEATHER.min,
+    max: fromFile.max ?? fromApi.max ?? DEFAULT_DIARY_WEATHER.max,
+    precip: fromFile.precip ?? fromApi.precip ?? DEFAULT_DIARY_WEATHER.precip,
+    sunrise: fromFile.sunrise ?? fromApi.sunrise ?? DEFAULT_DIARY_WEATHER.sunrise,
+    sunset: fromFile.sunset ?? fromApi.sunset ?? DEFAULT_DIARY_WEATHER.sunset,
   };
 }
 

@@ -33,17 +33,38 @@ describe('mergeWeather', () => {
   const API = { code: 3, min: 2, max: 9, precip: 1.5, sunrise: '07:40', sunset: '17:12' };
 
   it('takes code from the api — the file never has it', () => {
-    expect(mergeWeather({ code: -1, min: 0, max: 0, precip: 0, sunrise: '', sunset: '' }, API).code).toBe(3);
+    expect(mergeWeather({ min: 0, max: 0, precip: 0, sunrise: '', sunset: '' }, API).code).toBe(3);
   });
 
   it('keeps every value the file already had — the file is the historical record', () => {
-    const file = { code: -1, min: 1, max: 8, precip: 0, sunrise: '07:00', sunset: '17:00' };
+    const file = { min: 1, max: 8, precip: 0, sunrise: '07:00', sunset: '17:00' };
     const merged = mergeWeather(file, API);
     expect(merged).toMatchObject({ code: 3, min: 1, max: 8, sunrise: '07:00', sunset: '17:00' });
   });
 
   it('leaves code at -1 when the api answered nothing — never guessed, never from the emoji', () => {
-    const file = { code: -1, min: 0, max: 0, precip: 0, sunrise: '', sunset: '' };
-    expect(mergeWeather(file, {}).code).toBe(-1);
+    expect(mergeWeather({}, {}).code).toBe(-1);
+  });
+
+  // A genuine 0 (0mm rain, 0°C) is a real measurement, not "absent" — the file's presence of a
+  // key, not the value itself, is what decides. `fromFile` is a Partial<DiaryWeather> built from
+  // the raw frontmatter (e.g. fmNumber), so "the key was there" and "the key held 0" both survive
+  // as an own field, while "the key was missing" survives as `undefined`. These four would all
+  // pass under naive `value !== 0` / `value || fallback` comparisons only by accident (or fail
+  // outright) — they pin the actual contract.
+  it('keeps a genuine zero precip from the file over a nonzero api value', () => {
+    expect(mergeWeather({ precip: 0 }, { precip: 1.5 }).precip).toBe(0);
+  });
+
+  it('keeps a genuine zero min-temperature from the file over a nonzero api value', () => {
+    expect(mergeWeather({ min: 0 }, { min: 2 }).min).toBe(0);
+  });
+
+  it('takes precip from the api when the file omits the key entirely', () => {
+    expect(mergeWeather({}, { precip: 1.5 }).precip).toBe(1.5);
+  });
+
+  it('falls back to the model default when neither file nor api has the field', () => {
+    expect(mergeWeather({}, {}).precip).toBe(0);
   });
 });
