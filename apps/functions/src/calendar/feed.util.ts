@@ -20,8 +20,10 @@ export function computeWindow(today: string, monthsBack = 3, monthsForward = 12)
   const m = parseInt(today.substring(4, 6), 10);
   const d = parseInt(today.substring(6, 8), 10);
   const shift = (months: number): string => {
-    const dt = new Date(y, m - 1 + months, d);
-    return `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}`;
+    const target = new Date(y, m - 1 + months, 1);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    target.setDate(Math.min(d, lastDay));
+    return `${target.getFullYear()}${pad(target.getMonth() + 1)}${pad(target.getDate())}`;
   };
   return { from: shift(-monthsBack), to: shift(monthsForward) };
 }

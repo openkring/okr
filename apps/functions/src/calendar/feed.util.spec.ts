@@ -9,6 +9,18 @@ describe('computeWindow', () => {
   it('handles a year boundary', () => {
     expect(computeWindow('20260115')).toEqual({ from: '20251015', to: '20270115' });
   });
+
+  it('clamps to the last day of February when going back from day 31 (non-leap year)', () => {
+    expect(computeWindow('20260531')).toEqual({ from: '20260228', to: '20270531' });
+  });
+
+  it('clamps to the last day of February in a leap year when going back from day 31', () => {
+    expect(computeWindow('20240531')).toEqual({ from: '20240229', to: '20250531' });
+  });
+
+  it('clamps to the last day of April when going forward from day 31 to April', () => {
+    expect(computeWindow('20260131')).toEqual({ from: '20251031', to: '20270131' });
+  });
 });
 
 describe('isPersonalEvent', () => {
