@@ -30,26 +30,31 @@ export const ensureCalendarFeedToken = onCall(
     const user = userSnap.data() as { personKey?: string; tenants?: string[]; isArchived?: boolean };
     if (user.isArchived) throw new HttpsError('permission-denied', 'User is archived');
 
-    const existing = await db.collection(FEEDS).where('uid', '==', uid).get();
     const regenerate = (request.data as { regenerate?: boolean } | undefined)?.regenerate === true;
 
-    if (!regenerate && !existing.empty) {
-      return { token: existing.docs[0].id };
-    }
+    // Read-then-write must be atomic, or two concurrent `regenerate:true` calls can each read
+    // the same `existing` snapshot before either commits and both mint a fresh token — leaving
+    // two live tokens for one uid. A transaction closes that race (all reads before all writes).
+    const token = await db.runTransaction(async tx => {
+      const existing = await tx.get(db.collection(FEEDS).where('uid', '==', uid));
 
-    const batch = db.batch();
-    for (const doc of existing.docs) batch.delete(doc.ref);
-    const token = mintToken();
-    const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const doc: FeedDoc = {
-      uid,
-      personKey: user.personKey ?? '',
-      tenantId: user.tenants?.[0] ?? '',
-      createdAt: `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`,
-    };
-    batch.set(db.collection(FEEDS).doc(token), doc);
-    await batch.commit();
+      if (!regenerate && !existing.empty) {
+        return existing.docs[0].id;
+      }
+
+      for (const doc of existing.docs) tx.delete(doc.ref);
+      const fresh = mintToken();
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const doc: FeedDoc = {
+        uid,
+        personKey: user.personKey ?? '',
+        tenantId: user.tenants?.[0] ?? '',
+        createdAt: `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`,
+      };
+      tx.set(db.collection(FEEDS).doc(fresh), doc);
+      return fresh;
+    });
 
     // Nur ein Präfix ins Log — das Token selbst ist der Ausweis.
     logger.info('ensureCalendarFeedToken: issued', { uid, regenerate, tokenPrefix: token.slice(0, 6) });
