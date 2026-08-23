@@ -31,6 +31,7 @@ interface CalEventDoc {
 interface CalendarDoc {
   name: string;
   title: string;
+  defaultIsOpen: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -295,22 +296,36 @@ export const generateCalendarICS = onRequest(
 
     // Fetch calendar names for all calendar keys in parallel (best-effort — fall back to key)
     const nameMap = new Map<string, string>();
+    const openByKey = new Map<string, boolean>();
     await Promise.all(calKeys.map(async key => {
       try {
         const calDoc = await db.collection('calendars').doc(key).get();
         if (calDoc.exists) {
           const cal = calDoc.data() as CalendarDoc;
           nameMap.set(key, cal.title || cal.name || key);
+          openByKey.set(key, cal.defaultIsOpen === true);
         } else {
           nameMap.set(key, key);
+          openByKey.set(key, false);
         }
       } catch (err) {
         logger.warn('generateCalendarICS: could not fetch calendar doc', { key, err });
         nameMap.set(key, key);
+        openByKey.set(key, false);
       }
     }));
 
-    const calendarName = calKeys.map(k => nameMap.get(k) ?? k).join(', ') || 'Events';
+    // Ohne Token liefert dieser Endpunkt nur noch OFFENE Kalender. Vorher gab er zu jedem
+    // geratenen Schlüssel die Anlässe heraus, auch aus geschlossenen Gruppen. Für alles
+    // andere gibt es `calendarFeed` mit Token.
+    const openCalKeys = calKeys.filter(k => openByKey.get(k) === true);
+    if (openCalKeys.length !== calKeys.length) {
+      logger.warn('generateCalendarICS: closed calendar requested without token', {
+        requested: calKeys.length, served: openCalKeys.length,
+      });
+    }
+
+    const calendarName = openCalKeys.map(k => nameMap.get(k) ?? k).join(', ') || 'Events';
 
     // Fetch events — collect from calendar queries and direct event lookups
     let events: CalEventDoc[] = [];
@@ -318,18 +333,18 @@ export const generateCalendarICS = onRequest(
 
     try {
       // Calendar-based queries
-      if (calKeys.length === 1) {
+      if (openCalKeys.length === 1) {
         const snap = await db.collection('calevents')
-          .where('calendars', 'array-contains', calKeys[0])
+          .where('calendars', 'array-contains', openCalKeys[0])
           .where('isArchived', '==', false)
           .get();
         for (const doc of snap.docs) {
           if (!seen.has(doc.id)) { seen.add(doc.id); events.push({ okey: doc.id, ...doc.data() } as CalEventDoc); }
         }
-      } else if (calKeys.length > 1) {
+      } else if (openCalKeys.length > 1) {
         // array-contains-any supports up to 30 values; chunk if needed
         const chunks: string[][] = [];
-        for (let i = 0; i < calKeys.length; i += 30) chunks.push(calKeys.slice(i, i + 30));
+        for (let i = 0; i < openCalKeys.length; i += 30) chunks.push(openCalKeys.slice(i, i + 30));
         const snapshots = await Promise.all(
           chunks.map(chunk =>
             db.collection('calevents')
