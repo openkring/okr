@@ -63,6 +63,19 @@ export function resolveListId(e: FeedEvent, mode: 'my' | 'calendar', requestedKe
   return hit ?? requestedKeys[0] ?? 'all';
 }
 
+/**
+ * Zugangsprüfung für einen einzeln angefragten Kalender im `calendar`-Feed — die einzige
+ * Autorisierungsschranke eines unauthentifizierten Endpunkts. Erlaubt, wenn der Kalender
+ * existiert UND (Mitgliedschaft ODER offener Kalender). Ein unbekannter Schlüssel (kein
+ * `cal`) ist immer verboten.
+ */
+export function isCalendarSubscribable(
+  cal: { okey: string; defaultIsOpen?: boolean } | undefined,
+  allowedCalendarKeys: string[],
+): boolean {
+  return !!cal && (allowedCalendarKeys.includes(cal.okey) || cal.defaultIsOpen === true);
+}
+
 /** InvitationState → RFC-5545-PARTSTAT. Ohne Einladung: undefined ⇒ kein ATTENDEE. */
 export function toPartstat(state: string | undefined): string | undefined {
   switch (state) {

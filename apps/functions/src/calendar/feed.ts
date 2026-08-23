@@ -3,7 +3,7 @@ import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { buildICS } from './index';
-import { computeWindow, filterMyFeed, resolveListId, toPartstat } from './feed.util';
+import { computeWindow, filterMyFeed, isCalendarSubscribable, resolveListId, toPartstat } from './feed.util';
 
 const FEEDS = 'calendarFeeds';
 
@@ -79,135 +79,177 @@ export const calendarFeed = onRequest(
       return;
     }
 
-    const db = getFirestore();
-    const feedSnap = await db.collection(FEEDS).doc(token).get();
-    if (!feedSnap.exists) { res.status(404).send('Not found'); return; }
-    const feed = feedSnap.data() as FeedDoc;
+    try {
+      const db = getFirestore();
+      const feedSnap = await db.collection(FEEDS).doc(token).get();
+      if (!feedSnap.exists) { res.status(404).send('Not found'); return; }
+      const feed = feedSnap.data() as FeedDoc;
 
-    const userSnap = await db.collection('users').doc(feed.uid).get();
-    const user = userSnap.data() as { firstName?: string; lastName?: string; loginEmail?: string; isArchived?: boolean } | undefined;
-    if (!userSnap.exists || user?.isArchived) { res.status(404).send('Not found'); return; }
+      const userSnap = await db.collection('users').doc(feed.uid).get();
+      const user = userSnap.data() as { firstName?: string; lastName?: string; loginEmail?: string; isArchived?: boolean; tenants?: string[] } | undefined;
+      if (!userSnap.exists || user?.isArchived) { res.status(404).send('Not found'); return; }
+      // Tenant-Zugehörigkeit wird bei JEDEM Abruf neu geprüft (nicht nur beim Minten des Tokens):
+      // ein Tenant-Entzug muss das Abo sofort beenden, auch wenn der Benutzer selbst nicht
+      // archiviert wurde.
+      if (!user?.tenants?.includes(feed.tenantId)) { res.status(404).send('Not found'); return; }
 
-    // Mitgliedschaften → erlaubte Kalender. Wird bei JEDEM Abruf neu aufgelöst, damit ein
-    // Mitgliedschaftsentzug ohne Zutun wirkt (es gibt keinen zwischengespeicherten Satz).
-    const memberships = await db.collection('memberships')
-      .where('memberKey', '==', feed.personKey)
-      .where('memberModelType', '==', 'person')
-      .where('isArchived', '==', false)
-      .get();
-    const orgKeys = memberships.docs.map(d => {
-      const m = d.data() as { orgKey: string; orgModelType: string };
-      return `${m.orgModelType}.${m.orgKey}`;
-    });
+      // Mitgliedschaften → erlaubte Kalender. Wird bei JEDEM Abruf neu aufgelöst, damit ein
+      // Mitgliedschaftsentzug ohne Zutun wirkt (es gibt keinen zwischengespeicherten Satz).
+      // Personen sind tenant-übergreifend geteilt — Nachfilterung auf `tenants`, denn Firestore
+      // erlaubt kein zweites array-contains in derselben Query (vgl. public-calevents.ts).
+      const memberships = await db.collection('memberships')
+        .where('memberKey', '==', feed.personKey)
+        .where('memberModelType', '==', 'person')
+        .where('isArchived', '==', false)
+        .get();
+      const orgKeys = memberships.docs
+        .filter(d => {
+          const t = d.data()['tenants'];
+          return Array.isArray(t) && t.includes(feed.tenantId);
+        })
+        .map(d => {
+          const m = d.data() as { orgKey: string; orgModelType: string };
+          return `${m.orgModelType}.${m.orgKey}`;
+        });
 
-    const calendarsSnap = await db.collection('calendars')
-      .where('isArchived', '==', false)
-      .where('tenants', 'array-contains', feed.tenantId)
-      .get();
-    const calendars = calendarsSnap.docs
-      .map(d => ({ okey: d.id, ...(d.data() as { owner?: string; title?: string; name?: string; defaultIsOpen?: boolean }) }));
-    const allowedCalendarKeys = calendars.filter(c => orgKeys.includes(c.owner ?? '')).map(c => c.okey);
+      const calendarsSnap = await db.collection('calendars')
+        .where('isArchived', '==', false)
+        .where('tenants', 'array-contains', feed.tenantId)
+        .get();
+      const calendars = calendarsSnap.docs
+        .map(d => ({ okey: d.id, ...(d.data() as { owner?: string; title?: string; name?: string; defaultIsOpen?: boolean }) }));
+      const allowedCalendarKeys = calendars.filter(c => orgKeys.includes(c.owner ?? '')).map(c => c.okey);
 
-    const mode: 'my' | 'calendar' = rawCalendar === 'my' ? 'my' : 'calendar';
-    const requestedKeys = mode === 'my'
-      ? []
-      : [...new Set(rawCalendar.split(',').map(k => k.trim()).filter(Boolean))];
+      const mode: 'my' | 'calendar' = rawCalendar === 'my' ? 'my' : 'calendar';
+      const requestedKeys = mode === 'my'
+        ? []
+        : [...new Set(rawCalendar.split(',').map(k => k.trim()).filter(Boolean))];
 
-    // Zugangsprüfung für den Kalender-Feed: Mitgliedschaft ODER offener Kalender.
-    if (mode === 'calendar') {
-      const ok = requestedKeys.length > 0 && requestedKeys.every(k => {
-        const cal = calendars.find(c => c.okey === k);
-        return !!cal && (allowedCalendarKeys.includes(k) || cal.defaultIsOpen === true);
-      });
-      if (!ok) { res.status(404).send('Not found'); return; }
-    }
-
-    const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const today = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
-    const { from, to } = computeWindow(today);
-
-    // Einladungen des Abonnenten — in beiden Feed-Arten, damit PARTSTAT sich gleich verhält.
-    const invitationsSnap = await db.collection('invitations')
-      .where('inviteeKey', '==', feed.personKey)
-      .where('isArchived', '==', false)
-      .get();
-    const stateByEvent = new Map<string, string>();
-    for (const d of invitationsSnap.docs) {
-      const inv = d.data() as { caleventKey: string; state: string };
-      stateByEvent.set(inv.caleventKey, inv.state);
-    }
-
-    const collected = new Map<string, Record<string, unknown>>();
-    const add = (id: string, data: Record<string, unknown>) => { if (!collected.has(id)) collected.set(id, { okey: id, ...data }); };
-
-    const base = db.collection('calevents')
-      .where('isArchived', '==', false)
-      .where('startDate', '>=', from)
-      .where('startDate', '<=', to);
-
-    if (mode === 'calendar') {
-      const chunks: string[][] = [];
-      for (let i = 0; i < requestedKeys.length; i += 30) chunks.push(requestedKeys.slice(i, i + 30));
-      for (const chunk of chunks) {
-        const snap = await base.where('calendars', 'array-contains-any', chunk).get();
-        for (const d of snap.docs) add(d.id, d.data());
+      // Zugangsprüfung für den Kalender-Feed: Mitgliedschaft ODER offener Kalender.
+      if (mode === 'calendar') {
+        const ok = requestedKeys.length > 0 && requestedKeys.every(k =>
+          isCalendarSubscribable(calendars.find(c => c.okey === k), allowedCalendarKeys)
+        );
+        if (!ok) { res.status(404).send('Not found'); return; }
       }
-    } else {
-      if (allowedCalendarKeys.length > 0) {
+
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const today = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+      const { from, to } = computeWindow(today);
+
+      // Einladungen des Abonnenten — in beiden Feed-Arten, damit PARTSTAT sich gleich verhält.
+      // Auch hier: Personen sind tenant-übergreifend geteilt, also Nachfilterung auf `tenants`.
+      const invitationsSnap = await db.collection('invitations')
+        .where('inviteeKey', '==', feed.personKey)
+        .where('isArchived', '==', false)
+        .get();
+      const stateByEvent = new Map<string, string>();
+      for (const d of invitationsSnap.docs) {
+        const data = d.data();
+        const t = data['tenants'];
+        if (!Array.isArray(t) || !t.includes(feed.tenantId)) continue;
+        const inv = data as { caleventKey: string; state: string };
+        stateByEvent.set(inv.caleventKey, inv.state);
+      }
+
+      const collected = new Map<string, Record<string, unknown>>();
+      // Tenant-Nachfilterung: `array-contains-any` auf `calendars` lässt sich nicht mit einem
+      // zweiten array-contains auf `tenants` kombinieren (Firestore-Limit), und derselbe
+      // Kalender-Key kann von mehreren Tenants geteilt werden. Ohne diesen Filter liest ein
+      // Kalender-Feed fremde Tenant-Events mit (vgl. getPublicCalEvents, derselbe Trick).
+      const add = (id: string, data: Record<string, unknown>) => {
+        const t = data['tenants'];
+        if (!Array.isArray(t) || !t.includes(feed.tenantId)) return;
+        if (!collected.has(id)) collected.set(id, { okey: id, ...data });
+      };
+
+      const base = db.collection('calevents')
+        .where('isArchived', '==', false)
+        .where('startDate', '>=', from)
+        .where('startDate', '<=', to);
+
+      if (mode === 'calendar') {
         const chunks: string[][] = [];
-        for (let i = 0; i < allowedCalendarKeys.length; i += 30) chunks.push(allowedCalendarKeys.slice(i, i + 30));
+        for (let i = 0; i < requestedKeys.length; i += 30) chunks.push(requestedKeys.slice(i, i + 30));
         for (const chunk of chunks) {
           const snap = await base.where('calendars', 'array-contains-any', chunk).get();
           for (const d of snap.docs) add(d.id, d.data());
         }
+      } else {
+        if (allowedCalendarKeys.length > 0) {
+          const chunks: string[][] = [];
+          for (let i = 0; i < allowedCalendarKeys.length; i += 30) chunks.push(allowedCalendarKeys.slice(i, i + 30));
+          for (const chunk of chunks) {
+            const snap = await base.where('calendars', 'array-contains-any', chunk).get();
+            for (const d of snap.docs) add(d.id, d.data());
+          }
+        }
+        // Persönliche Anlässe sind per Definition die ohne Kalender. `responsiblePersons` ist ein
+        // Array von Objekten (AvatarInfo[]) — `array-contains` kann nicht auf `.key` matchen. Also
+        // Gleichheitsabfrage auf das leere Array, tenant-gescoped; die Organisator-/Eingeladen-Prüfung
+        // erledigt `filterMyFeed` danach im Speicher.
+        const personalSnap = await base
+          .where('calendars', '==', [])
+          .where('tenants', 'array-contains', feed.tenantId)
+          .get();
+        for (const d of personalSnap.docs) add(d.id, d.data());
       }
-      // Persönliche Anlässe sind per Definition die ohne Kalender. `responsiblePersons` ist ein
-      // Array von Objekten (AvatarInfo[]) — `array-contains` kann nicht auf `.key` matchen. Also
-      // Gleichheitsabfrage auf das leere Array, tenant-gescoped; die Organisator-/Eingeladen-Prüfung
-      // erledigt `filterMyFeed` danach im Speicher.
-      const personalSnap = await base
-        .where('calendars', '==', [])
-        .where('tenants', 'array-contains', feed.tenantId)
-        .get();
-      for (const d of personalSnap.docs) add(d.id, d.data());
+
+      let events = [...collected.values()] as never[];
+      if (mode === 'my') {
+        events = filterMyFeed(events as never, {
+          allowedCalendarKeys,
+          personKey: feed.personKey,
+          invitedEventKeys: [...stateByEvent.keys()],
+        }) as never[];
+      }
+
+      const calendarName = mode === 'my'
+        ? 'Mein Kalender'
+        : requestedKeys.map(k => { const c = calendars.find(x => x.okey === k); return c?.title || c?.name || k; }).join(', ');
+
+      const configSnap = await db.collection('app-config').doc(feed.tenantId).get();
+      const appDomain = (configSnap.data() as { appDomain?: string } | undefined)?.appDomain ?? '';
+
+      const ics = buildICS(calendarName, events, {
+        appOrigin: appDomain ? `https://${appDomain}` : undefined,
+        listIdFor: (e) => resolveListId(e as never, mode, requestedKeys),
+        attendee: user?.loginEmail
+          ? { cn: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(), email: user.loginEmail }
+          : undefined,
+        partstatFor: (e) => toPartstat(stateByEvent.get((e as { okey: string }).okey)),
+      });
+
+      // DTSTAMP trägt die Sekunde des Requests in JEDEM VEVENT (siehe buildICS) — über den
+      // Rohtext gehasht würde sich der ETag bei jedem Poll ändern und der 304-Pfad nie greifen.
+      // Für den ETag daher eine DTSTAMP-freie Projektion hashen; der ausgelieferte Body behält
+      // DTSTAMP unverändert (RFC 5545 verlangt es).
+      const cacheableIcs = ics.replace(/^DTSTAMP:.*$/gm, '');
+      const etag = `"${createHash('sha1').update(cacheableIcs).digest('hex')}"`;
+      res.set('ETag', etag);
+      // Vor dem 304-Pfad setzen: eine 304-Antwort muss dieselben Caching-Header tragen wie ihr
+      // 200-Gegenstück (RFC 7232 §4.1).
+      res.set('Cache-Control', 'private, max-age=900');
+
+      const ifNoneMatch = req.headers['if-none-match'];
+      if (typeof ifNoneMatch === 'string') {
+        // Mehrere kommagetrennte Werte und ein optionales `W/`-Präfix (weak validator) sind laut
+        // RFC 7232 §3.2 gültig — ein strikter `===`-Vergleich würde beides verpassen.
+        const candidates = ifNoneMatch.split(',').map(v => v.trim().replace(/^W\//, ''));
+        if (candidates.includes(etag)) { res.status(304).end(); return; }
+      }
+
+      logger.info('calendarFeed: served', { mode, count: events.length, tokenPrefix: token.slice(0, 6) });
+      res.set('Content-Type', 'text/calendar; charset=utf-8');
+      // `inline`, nicht `attachment` — genau das macht aus dem Download ein Abo.
+      res.set('Content-Disposition', 'inline; filename="calendar.ics"');
+      res.send(ics);
+    } catch (err) {
+      // Nur ein Präfix ins Log — das Token selbst ist der Ausweis. Echte Fehler sind 500;
+      // jede Autorisierungsablehnung oben bleibt ein bares 404 (return vor diesem catch).
+      logger.error('calendarFeed: failed', { tokenPrefix: token.slice(0, 6), err });
+      res.status(500).send('Internal error');
     }
-
-    let events = [...collected.values()] as never[];
-    if (mode === 'my') {
-      events = filterMyFeed(events as never, {
-        allowedCalendarKeys,
-        personKey: feed.personKey,
-        invitedEventKeys: [...stateByEvent.keys()],
-      }) as never[];
-    }
-
-    const calendarName = mode === 'my'
-      ? 'Mein Kalender'
-      : requestedKeys.map(k => { const c = calendars.find(x => x.okey === k); return c?.title || c?.name || k; }).join(', ');
-
-    const configSnap = await db.collection('app-config').doc(feed.tenantId).get();
-    const appDomain = (configSnap.data() as { appDomain?: string } | undefined)?.appDomain ?? '';
-
-    const ics = buildICS(calendarName, events, {
-      appOrigin: appDomain ? `https://${appDomain}` : undefined,
-      listIdFor: (e) => resolveListId(e as never, mode, requestedKeys),
-      attendee: user?.loginEmail
-        ? { cn: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(), email: user.loginEmail }
-        : undefined,
-      partstatFor: (e) => toPartstat(stateByEvent.get((e as { okey: string }).okey)),
-    });
-
-    const etag = `"${createHash('sha1').update(ics).digest('hex')}"`;
-    res.set('ETag', etag);
-    if (req.headers['if-none-match'] === etag) { res.status(304).end(); return; }
-
-    logger.info('calendarFeed: served', { mode, count: events.length, tokenPrefix: token.slice(0, 6) });
-    res.set('Content-Type', 'text/calendar; charset=utf-8');
-    // `inline`, nicht `attachment` — genau das macht aus dem Download ein Abo.
-    res.set('Content-Disposition', 'inline; filename="calendar.ics"');
-    // `private`: der Feed ist benutzerspezifisch (PARTSTAT) und darf nie in einem CDN landen.
-    res.set('Cache-Control', 'private, max-age=900');
-    res.send(ics);
   }
 );

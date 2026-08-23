@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeWindow, filterMyFeed, isPersonalEvent, resolveListId, toPartstat } from './feed.util';
+import { computeWindow, filterMyFeed, isCalendarSubscribable, isPersonalEvent, resolveListId, toPartstat } from './feed.util';
 
 describe('computeWindow', () => {
   it('spans 3 months back and 12 months forward', () => {
@@ -68,6 +68,26 @@ describe('resolveListId', () => {
 
   it('picks the event own calendar when several were requested', () => {
     expect(resolveListId({ okey: 'e1', calendars: ['srv'] }, 'calendar', ['scs', 'srv'])).toBe('srv');
+  });
+});
+
+describe('isCalendarSubscribable', () => {
+  const allowed = ['scs', 'g1'];
+
+  it('allows a closed calendar the subscriber is a member of', () => {
+    expect(isCalendarSubscribable({ okey: 'scs', defaultIsOpen: false }, allowed)).toBe(true);
+  });
+
+  it('denies a closed calendar the subscriber is not a member of', () => {
+    expect(isCalendarSubscribable({ okey: 'vorstand', defaultIsOpen: false }, allowed)).toBe(false);
+  });
+
+  it('allows an open calendar even without membership', () => {
+    expect(isCalendarSubscribable({ okey: 'vorstand', defaultIsOpen: true }, allowed)).toBe(true);
+  });
+
+  it('denies an unknown calendar key', () => {
+    expect(isCalendarSubscribable(undefined, allowed)).toBe(false);
   });
 });
 
