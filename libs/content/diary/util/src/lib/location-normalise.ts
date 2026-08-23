@@ -44,8 +44,11 @@ export function normaliseLocationLabel(raw: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-  // Strip a trailing canton code, after slugging so 'Stäfa ZH' and 'Staefa-zh' behave alike.
+  // Strip trailing canton codes, after slugging so 'Stäfa ZH' and 'Staefa-zh' behave alike.
+  // A loop (not a single pop) so repeated trailing canton-like tokens are all removed and the
+  // result is stable under re-application — normaliseLocationLabel must be idempotent, since
+  // it is the single lookup key both the seeding and the resolver side rely on.
   const parts = slug.split('-');
-  if (parts.length > 1 && CANTONS.has(parts[parts.length - 1])) parts.pop();
+  while (parts.length > 1 && CANTONS.has(parts[parts.length - 1])) parts.pop();
   return parts.join('-');
 }

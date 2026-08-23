@@ -38,6 +38,20 @@ describe('normaliseLocationLabel', () => {
     expect(normaliseLocationLabel('')).toBe('');
     expect(normaliseLocationLabel('  ,  ')).toBe('');
   });
+
+  it('is idempotent — re-normalising an already-normalised key changes nothing', () => {
+    const inputs = [
+      'Zürich', 'Zürich ZH', 'Stäfa ZH', 'Zürich, Switzerland', 'Firenze, Italy',
+      'Rio GO', 'Dieni, Sedrun', '  Dieni / Sedrun  ', '', '  ,  ',
+      // Two consecutive canton-like trailing tokens: a single pop used to leave one behind,
+      // so f(x) !== f(f(x)). The strip must loop until no trailing token is a canton code.
+      'Foo AG SG',
+    ];
+    for (const input of inputs) {
+      const once = normaliseLocationLabel(input);
+      expect(normaliseLocationLabel(once)).toBe(once);
+    }
+  });
 });
 
 /**
@@ -70,5 +84,20 @@ describe.skipIf(!archive)('normaliseLocationLabel against the real corpus', () =
     expect(raw.size).toBeGreaterThan(100);          // guard against a wrong path passing silently
     expect(keys.size).toBeLessThan(raw.size);        // normalisation must actually merge something
     expect([...keys].every((k) => k.length > 0)).toBe(true);
+  });
+
+  it('is idempotent for every raw value in the archive', () => {
+    const raw = new Set<string>();
+    for (const path of collect(archive as string)) {
+      const value = fmScalar(parseDiaryMarkdown(readFileSync(path, 'utf8')), 'location');
+      if (value) raw.add(value);
+    }
+    let unstableCount = 0;
+    for (const value of raw) {
+      const once = normaliseLocationLabel(value);
+      if (normaliseLocationLabel(once) !== once) unstableCount++;
+    }
+    // Never print the offending value(s) — count only.
+    expect(unstableCount).toBe(0);
   });
 });
