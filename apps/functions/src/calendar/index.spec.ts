@@ -17,6 +17,7 @@ const event = {
   isArchived: false,
   calendars: [],
   tenants: [],
+  seriesId: '',
 };
 
 describe('buildICS', () => {
@@ -31,5 +32,29 @@ describe('buildICS', () => {
   it('rolls the end time over midnight', () => {
     const ics = buildICS('Test', [{ ...event, startTime: '23:30', durationMinutes: 60 }] as never);
     expect(ics).toContain('DTEND;TZID=Europe/Zurich:20260814T003000');
+  });
+
+  it('emits no RRULE for a materialised series occurrence', () => {
+    // Eine Serie ist in der DB expandiert: ein Dokument pro Vorkommen, und periodicity/
+    // repeatUntilDate sind auf JEDES Vorkommen kopiert. Ein RRULE würde die Serie ein
+    // zweites Mal expandieren — im Abo aus 10 Terminen ~100.
+    const ics = buildICS('Test', [{
+      ...event, seriesId: 'abc123def456ghi78', periodicity: 'weekly', repeatUntilDate: '20261231',
+    }] as never);
+    expect(ics).not.toContain('RRULE:FREQ=WEEKLY;UNTIL=20261231T235959');
+  });
+
+  it('still emits RRULE for a recurring event that is not materialised', () => {
+    const ics = buildICS('Test', [{
+      ...event, seriesId: '', periodicity: 'weekly', repeatUntilDate: '20261231',
+    }] as never);
+    expect(ics).toContain('RRULE:FREQ=WEEKLY;UNTIL=20261231T235959');
+  });
+
+  it('never marks UNTIL as UTC while DTSTART is zoned', () => {
+    const ics = buildICS('Test', [{
+      ...event, seriesId: '', periodicity: 'weekly', repeatUntilDate: '20261231',
+    }] as never);
+    expect(ics).not.toContain('UNTIL=20261231T235959Z');
   });
 });

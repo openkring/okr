@@ -24,6 +24,7 @@ interface CalEventDoc {
   isArchived: boolean;
   calendars: string[];
   tenants: string[];
+  seriesId: string;    // gesetzt ⇒ dieses Dokument IST ein materialisiertes Vorkommen
 }
 
 interface CalendarDoc {
@@ -155,7 +156,9 @@ function toRRule(periodicity: string, repeatUntilDate: string): string {
   if (interval) rule += `;INTERVAL=${interval}`;
   if (byDay) rule += `;BYDAY=${byDay}`;
   if (repeatUntilDate && repeatUntilDate.length === 8) {
-    rule += `;UNTIL=${repeatUntilDate}T235959Z`;
+    // Kein `Z`: DTSTART ist zonenbehaftet, ein UTC-UNTIL verschiebt das letzte Vorkommen
+    // um 1–2 h und lässt es im Abo flackern.
+    rule += `;UNTIL=${repeatUntilDate}T235959`;
   }
   return rule;
 }
@@ -191,7 +194,10 @@ export function buildICS(calendarName: string, events: CalEventDoc[]): string {
     const dtend = e.fullDay
       ? `DTEND;VALUE=DATE:${toIcsDate(e.endDate && e.endDate.length === 8 ? nextDay(e.endDate) : nextDay(e.startDate))}`
       : `DTEND;TZID=${TZID}:${addMinutes(e.startDate, e.startTime, e.durationMinutes || 60)}`;
-    const rrule = toRRule(e.periodicity, e.repeatUntilDate);
+    // Serien sind in der DB expandiert (ein Dokument pro Vorkommen) und tragen die
+    // Serienfelder als Beschreibung der SERIE, nicht dieses Termins. Ein RRULE würde
+    // sie ein zweites Mal expandieren.
+    const rrule = e.seriesId ? '' : toRRule(e.periodicity, e.repeatUntilDate);
     const loc = locationName(e.locationKey);
 
     lines.push('BEGIN:VEVENT');
