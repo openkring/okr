@@ -778,6 +778,26 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: { months: 'indefinite', legalBasis: 'Persönliche Aufzeichnung — bleibt, bis der Autor sie löscht' },
   },
   {
+    collection: 'diaryImports',
+    dataClass: 'log',
+    tier: 'T2',               // voluntary, like the `diaries` row it mirrors — nothing may block its erasure
+    onTenantExit: 'delete',   // an operational run record, not a club artifact — leaves with its author
+    // Same subject shape as `diaries`: the AUTHOR who started the run, via the Firebase Auth uid.
+    find: (c: SubjectCtx) => db().collection('diaryImports').where('authorKey', '==', c.uid),
+    tenantScope: 'tenantsArray',
+    // NO `matches` on `unresolvedPeople` / `unresolvedLocations`, for the same two reasons as the
+    // `diaries` row above, and they have to hold together the same way:
+    //  - DSG Art. 2 Abs. 2 lit. a: a mention inside the author's own private diary, surfaced here
+    //    only as a frequency-keyed slug for the author's own alias maintenance, is data processed
+    //    exclusively for personal use — not a subject link to the person the slug names.
+    //  - Matching would BREAK privacy rather than serve it: it would hand a third party (whoever
+    //    the slug happens to resolve to) visibility into the run's aggregate, and `eraseMyData`
+    //    would rewrite another person's diary-derived alias list out from under the diary's author.
+    onExport: 'none',   // operational artifact; the substance already exported via the `diaries` row
+    onErasure: 'delete',
+    retention: { months: 'indefinite', legalBasis: 'Persönliche Aufzeichnung — bleibt, bis der Autor sie löscht' },
+  },
+  {
     collection: 'stats_members',
     dataClass: 'content',
     tier: 'T4',
@@ -1248,9 +1268,6 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 // not personal data: booking-lines — debit/credit lines, reference accounts and amounts
 // not personal data: calendars — calendar definitions (name, colour, visibility)
 // not personal data: categories — enum/value lists used by dropdowns
-// not personal data: diaryImports — the diary-import run's cursor and report (D-P5-3): counts,
-//   phase, file names and unresolved-slug frequency maps only. Never a person's name and never a
-//   diary title — see DiaryImportModel's class doc for the fields that must stay that way.
 // not personal data: erasure-log — CF-written evidence that an erasure ran: counts per
 //   collection and a salted, per-tenant pseudonym. Never a name, e-mail, personKey or
 //   uid, and never a statement about whether the person record survived (D-P5-2).

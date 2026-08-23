@@ -1,4 +1,5 @@
 import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
+import { OkrModel } from './base.model';
 
 /** Which stage of one import run is currently in progress. */
 export type DiaryImportPhase = 'reading' | 'importing' | 'weather' | 'done';
@@ -9,14 +10,20 @@ export type DiaryImportPhase = 'reading' | 'importing' | 'weather' | 'done';
  * rather than the run. It survives the invocation, renders in the app, and a second run can be
  * diffed against the first — which a log line cannot do.
  *
- * NOT personal data, and it must stay that way: counts, file names and unresolved SLUGS only.
- * Never a person's name, never a diary title. It is classified on that basis in
- * `apps/functions/src/privacy/subject-data-map.ts`.
+ * IS personal data of the run's AUTHOR — `authorKey` is the subject link, and it is classified
+ * as the author's own T2 row (voluntary, like `diaries`) in
+ * `apps/functions/src/privacy/subject-data-map.ts`. `unresolvedPeople`/`unresolvedLocations` are
+ * keyed by name-derived SLUGS, not anonymous counters — a slug is trivially reversible, which is
+ * exactly why it is not exported to or matched against anyone but the run's own author. The field
+ * still must never carry a person's FULL name or a diary TITLE: only the normalised slug.
  */
-export class DiaryImportModel {
+export class DiaryImportModel implements OkrModel {
   public okey = DEFAULT_KEY;
   public tenants = DEFAULT_TENANTS;
   public isArchived = false;
+
+  /** Firebase uid of whoever started the run — the subject link for the privacy map. */
+  public authorKey = DEFAULT_KEY;
 
   public startedAt = '';
   public phase: DiaryImportPhase = 'reading';

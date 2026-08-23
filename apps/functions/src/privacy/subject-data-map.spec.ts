@@ -244,7 +244,9 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // record. No contract obliges it, no accounting duty touches it, and it is not a club
     // record — the entries are locked to `authorKey == request.auth.uid` and leave with
     // their author. So nothing may lawfully block their erasure, which is what T2 encodes.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'diaries']);
+    // `diaryImports` joined the same day: the import run's cursor/report is the same
+    // author-locked, voluntary shape as `diaries` — it mirrors that row on purpose.
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'diaries', 'diaryImports']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite
