@@ -287,6 +287,13 @@ service cloud.firestore {
       }
     }
 
+    // Geheime ICS-Abo-Tokens. Bewusst NICHT auf dem users-Dokument: dieses darf jeder
+    // isPrivileged()-Benutzer lesen (siehe oben), und ein lesbares Bearer-Token ist kein
+    // Token. Ausschliesslich über das Admin SDK erreichbar.
+    match /calendarFeeds/{token} {
+      allow read, write: if false;
+    }
+
     // ============================================================================
     //  Tenant-scoped, client-writable collections.
     //  Phase 1: any authenticated member of the document's tenant. Per-collection

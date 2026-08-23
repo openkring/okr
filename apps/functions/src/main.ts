@@ -138,6 +138,7 @@ export const onApprovalDecided = Approval.onApprovalDecided;
 // calendar
 export const generateCalendarICS = Calendar.generateCalendarICS;
 export const getPublicCalEvents = Calendar.getPublicCalEvents;
+export const ensureCalendarFeedToken = Calendar.ensureCalendarFeedToken;
 
 // email webhooks
 export const mailtrapWebhook = Email.mailtrapWebhook;
