@@ -18,6 +18,7 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,7 +54,6 @@ const db = getFirestore();
 // Collection names are inlined rather than imported: the models import '@okr/shared-constants',
 // an alias jiti cannot resolve from a plain node script. Source of truth stays
 // libs/shared/models/src/lib/{alias,alias-space,person,location}.model.ts — Step 4 guards drift.
-const AliasCollection = 'aliases';
 const AliasSpaceCollection = 'aliasSpaces';
 const PersonCollection = 'persons';
 const LocationCollection = 'locations';
@@ -118,14 +118,22 @@ function toAliasSlug(label) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-// Fail loudly if the library version has moved on. A silently diverged slug would write aliases
-// the import can never find — the failure would surface as "no person matched", far from here.
-const librarySource = readFileSync(
-  path.join(ROOT, 'libs/system/alias/util/src/lib/alias-slug.util.ts'), 'utf8');
-for (const fragment of ["replace(/[^a-z0-9]+/g, '-')", "ø: 'oe'", "ü: 'ue'"]) {
-  if (!librarySource.includes(fragment)) {
-    fail(`toAliasSlug drifted: '${fragment}' is no longer in alias-slug.util.ts. Re-copy the function.`);
-  }
+/**
+ * The copied toAliasSlug must stay behaviourally identical to the library's. Comments and
+ * formatting are stripped before hashing, so documentation edits do not trip the guard while
+ * any change to the FOLD map or the transform chain does.
+ */
+const LIB_SLUG = path.join(ROOT, 'libs/system/alias/util/src/lib/alias-slug.util.ts');
+const LIB_SLUG_FINGERPRINT = 'dd9ffb84093ccc9b';
+const libBehaviour = readFileSync(LIB_SLUG, 'utf8')
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/\/\/.*$/gm, '')
+  .replace(/\s+/g, '');
+const actual = createHash('sha256').update(libBehaviour).digest('hex').slice(0, 16);
+if (actual !== LIB_SLUG_FINGERPRINT) {
+  fail(`toAliasSlug drifted: ${LIB_SLUG} no longer matches the copy in this script `
+     + `(fingerprint ${actual}, expected ${LIB_SLUG_FINGERPRINT}). Re-copy the function and the `
+     + `FOLD map, then update LIB_SLUG_FINGERPRINT.`);
 }
 
 function markdownFiles(dir) {
