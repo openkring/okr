@@ -4,7 +4,6 @@ import { NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { AliasModel } from '@okr/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-import { isRoutableTargetKey } from './alias-target-routes';
 import { isSafeTargetUrl } from './alias.util';
 
 /**
@@ -38,13 +37,10 @@ export const aliasValidations = staticSuite(
       });
     });
 
-    // Der TP1-Review-Befund, hier am frühesten Punkt: ein Modellziel ohne Detailroute
-    // (calevent, trip) darf gar nicht erst entstehen — sonst steht der Code am Ende
-    // gedruckt auf einem Plakat und kann nur noch 404 sein.
-    omitWhen(model.targetType !== 'model', () => {
-      test('targetKey', 'Für diesen Modelltyp gibt es keine Detailseite, die ein Link öffnen könnte.', () => {
-        enforce(isRoutableTargetKey(model.targetKey)).isTruthy();
-      });
-    });
+    // The routability rule moved to the server alone (`assertTargetAcceptable`). It depends on
+    // the SPACE's kind — a lookup space needs no detail route — and `validateVestTree` calls
+    // this suite with the model only, so the space is not reachable from here. The suite was
+    // always convenience rather than a security boundary; the server still refuses the write
+    // and the modal surfaces its error.
   },
 );

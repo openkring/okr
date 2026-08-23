@@ -84,7 +84,12 @@ export function assertTargetAcceptable(
     throw new HttpsError('invalid-argument',
       'targetUrl must be an https: url — open-redirect protection.');
   }
-  if (targetType === 'model' && !isRoutableTargetKey(targetKey)) {
+  // Only a REDIRECT space needs a detail route: it answers with a 302 and has nowhere else to
+  // point. A lookup space hands targetKey to the app, which renders the record itself — the
+  // 'diary person' case, where 'location' legitimately has no detail page. Widening
+  // ALIAS_TARGET_ROUTES instead would let a redirect space mint a code that 302s into an
+  // empty list, which is the defect that map exists to prevent.
+  if (targetType === 'model' && space.kind === 'redirect' && !isRoutableTargetKey(targetKey)) {
     throw new HttpsError('invalid-argument',
       `targetKey '${targetKey}' has no detail route in this app (see ALIAS_TARGET_ROUTES) — `
       + 'a printed code for it could never resolve.');
