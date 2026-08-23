@@ -181,3 +181,21 @@ export function linkifyText(text: string): string {
   return escaped.replace(/https?:\/\/[^\s<]+[^\s<.,;:!?)"']/g,
     url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
 }
+
+/**
+ * Whether a timeline event is rendered as a message bubble by `matrix-message-list`.
+ *
+ * Mirrors the filter in `MatrixChatService.emitMessagesFromTimeline`, and exists as its own
+ * predicate because "have we loaded enough history?" must count RENDERABLE events, never raw
+ * timeline events: group rooms are dominated by `m.room.member` (the scs Vorstand room holds
+ * 59 member events against 23 messages), so a 20-event window can carry a single bubble.
+ *
+ * @param type the event type (`event.getType()`)
+ * @param relatesTo the event content's `m.relates_to`, used to drop edit events — the edit is
+ *   applied to the original bubble instead of rendering as one of its own.
+ */
+export function isRenderableChatEvent(type: string, relatesTo?: { rel_type?: string; event_id?: string }): boolean {
+  if (type === 'org.matrix.msc3381.poll.start') return true;
+  if (type !== 'm.room.message') return false;
+  return !(relatesTo?.rel_type === 'm.replace' && !!relatesTo.event_id);
+}

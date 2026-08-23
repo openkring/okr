@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, PersonModelName, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName } from '@okr/chat-util';
+import { convertHeicToJpeg, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, buildMentionContent, escapeHtml, isRenderableChatEvent, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 
@@ -813,6 +813,16 @@ export class MatrixChatService {
     subject.next(result);
   }
 
+  /** How many rendered messages an opened room should carry before back-filling stops. */
+  private static readonly MIN_VISIBLE_MESSAGES = 20;
+  /** Round cap, so a room made almost entirely of state events cannot spin on /messages. */
+  private static readonly MAX_INITIAL_PAGINATIONS = 5;
+
+  /** Number of timeline events that actually render as a message bubble. */
+  private countRenderableEvents(events: MatrixEvent[]): number {
+    return events.filter(e => isRenderableChatEvent(e.getType(), e.getContent()?.['m.relates_to'])).length;
+  }
+
   /**
    * Load messages for a room from the timeline
    */
@@ -835,15 +845,27 @@ export class MatrixChatService {
 
       debugMessage(`MatrixChatService: Loading messages for room ${roomId}, found ${events.length} events in timeline`, this.appStore.currentUser());
 
-      // If we have few or no events, try to paginate back to load more
-      if (events.length < 20) {
-        debugMessage('MatrixChatService: Timeline has few events, attempting to paginate back', this.appStore.currentUser());
+      // Back-fill until the room shows a usable amount of history. Two things are load-bearing
+      // here and both used to be wrong:
+      //  * count RENDERABLE events, not raw timeline events — group rooms are dominated by
+      //    m.room.member (scs Vorstand: 59 member events vs 23 messages), so the old
+      //    `events.length < 20` check happily stopped with two visible bubbles;
+      //  * loop — one paginate() of 50 is not enough when the window is mostly state events.
+      // This runs on room open AND on RoomEvent.TimelineReset (a limited /sync after the app
+      // resumes discards the live timeline), which is where the "I only see yesterday" reports
+      // come from. Scroll-up pagination stays the path for going further back.
+      for (let round = 0; round < MatrixChatService.MAX_INITIAL_PAGINATIONS; round++) {
+        const visible = this.countRenderableEvents(timeline.getEvents());
+        if (visible >= MatrixChatService.MIN_VISIBLE_MESSAGES) break;
+        if (!timeline.getPaginationToken(EventTimeline.BACKWARDS)) break; // start of room reached
+        debugMessage(`MatrixChatService: Only ${visible} renderable events, paginating back (round ${round + 1})`, this.appStore.currentUser());
         try {
-          // Paginate backwards to load more messages
-          await this.client.paginateEventTimeline(timeline, { backwards: true, limit: 50 });
+          const hasMore = await this.client.paginateEventTimeline(timeline, { backwards: true, limit: 50 });
           debugMessage(`MatrixChatService: After pagination, timeline has ${timeline.getEvents().length} events`, this.appStore.currentUser());
+          if (!hasMore) break;
         } catch (paginateError) {
           console.warn('MatrixChatService: Failed to paginate timeline:', paginateError);
+          break;
         }
       }
 
@@ -895,16 +917,7 @@ export class MatrixChatService {
     const allEvents = timeline.getEvents();
     const messages = await Promise.all(
       allEvents
-        .filter(e => {
-          // Include regular room messages (excluding edit events)
-          if (e.getType() === EventType.RoomMessage) {
-            const rel = e.getContent()?.['m.relates_to'];
-            return !(rel?.rel_type === RelationType.Replace && rel?.event_id);
-          }
-          // Include poll start events
-          if (e.getType() === 'org.matrix.msc3381.poll.start') return true;
-          return false;
-        })
+        .filter(e => isRenderableChatEvent(e.getType(), e.getContent()?.['m.relates_to']))
         .map(async e => {
           const msg = this.mapEventToMessage(e, room);
           const mxcUrl = msg.content.url ?? msg.content.file?.url;

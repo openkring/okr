@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, linkifyText, resolveMatrixDisplayName } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -160,5 +160,29 @@ describe('linkifyText', () => {
 
   it('does not swallow trailing punctuation', () => {
     expect(linkifyText('go to https://a.ch.')).toContain('>https://a.ch</a>.');
+  });
+});
+
+describe('isRenderableChatEvent', () => {
+  it('renders a plain message', () => {
+    expect(isRenderableChatEvent('m.room.message')).toBe(true);
+  });
+
+  it('renders a poll start', () => {
+    expect(isRenderableChatEvent('org.matrix.msc3381.poll.start')).toBe(true);
+  });
+
+  it('drops an edit event (applied to the original bubble instead)', () => {
+    expect(isRenderableChatEvent('m.room.message', { rel_type: 'm.replace', event_id: '$a' })).toBe(false);
+  });
+
+  it('keeps a reply, which relates but is its own bubble', () => {
+    expect(isRenderableChatEvent('m.room.message', { rel_type: 'm.thread', event_id: '$a' })).toBe(true);
+  });
+
+  it('drops the state events that dominate a group room', () => {
+    for (const t of ['m.room.member', 'm.room.power_levels', 'm.reaction', 'm.room.redaction', 'org.okr.tenant']) {
+      expect(isRenderableChatEvent(t)).toBe(false);
+    }
   });
 });
