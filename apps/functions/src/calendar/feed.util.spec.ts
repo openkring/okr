@@ -18,8 +18,8 @@ describe('computeWindow', () => {
     expect(computeWindow('20240531')).toEqual({ from: '20240229', to: '20250531' });
   });
 
-  it('clamps to the last day of April when going forward from day 31 to April', () => {
-    expect(computeWindow('20260131')).toEqual({ from: '20251031', to: '20270131' });
+  it('clamps to the last day of April when going forward 3 months from day 31 of January', () => {
+    expect(computeWindow('20260131', 3, 3)).toEqual({ from: '20251031', to: '20260430' });
   });
 });
 

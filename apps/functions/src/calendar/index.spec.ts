@@ -119,4 +119,19 @@ describe('buildICS', () => {
     // Ensure the removed quotes don't appear in the output
     expect(ics).not.toContain('"Speedy"');
   });
+
+  it('emits STATUS:CANCELLED for a cancelled event, so it does not linger as a live appointment', () => {
+    const ics = buildICS('Test', [{ ...event, state: 'cancelled' }] as never);
+    expect(ics).toContain('STATUS:CANCELLED');
+  });
+
+  it('emits STATUS:TENTATIVE for a proposed event', () => {
+    const ics = buildICS('Test', [{ ...event, state: 'proposed' }] as never);
+    expect(ics).toContain('STATUS:TENTATIVE');
+  });
+
+  it('emits no STATUS line for a definitive event', () => {
+    const ics = buildICS('Test', [{ ...event, state: 'definitive' }] as never);
+    expect(ics).not.toContain('STATUS:');
+  });
 });

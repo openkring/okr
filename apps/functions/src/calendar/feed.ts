@@ -4,12 +4,13 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { buildICS } from './index';
 import { computeWindow, filterMyFeed, isCalendarSubscribable, resolveListId, toPartstat } from './feed.util';
+import { appBaseUrl } from '../alias/tenant-domains';
 
 const FEEDS = 'calendarFeeds';
 
 interface FeedDoc { uid: string; personKey: string; tenantId: string; createdAt: string }
 
-/** 32 Zeichen Base62 aus 24 Zufallsbytes — serverseitig, damit die Entropie nie am Client hängt. */
+/** 32 Zeichen Base62 aus 32 Zufallsbytes — serverseitig, damit die Entropie nie am Client hängt. */
 function mintToken(): string {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   return Array.from(randomBytes(32), b => alphabet[b % alphabet.length]).join('');
@@ -161,6 +162,11 @@ export const calendarFeed = onRequest(
       const add = (id: string, data: Record<string, unknown>) => {
         const t = data['tenants'];
         if (!Array.isArray(t) || !t.includes(feed.tenantId)) return;
+        // Schedule-poll column-header pseudo-events (`columnLabel` set) carry a real `calendars`
+        // array and date but are never meant to show in a calendar (see CalEventModel.columnLabel;
+        // the client filters them the same way in calevent.store.ts). Applies to BOTH feed modes —
+        // the `calendar=<key>` path has no other content filter at all.
+        if (typeof data['columnLabel'] === 'string' && data['columnLabel'].length > 0) return;
         if (!collected.has(id)) collected.set(id, { okey: id, ...data });
       };
 
@@ -209,11 +215,13 @@ export const calendarFeed = onRequest(
         ? 'Mein Kalender'
         : requestedKeys.map(k => { const c = calendars.find(x => x.okey === k); return c?.title || c?.name || k; }).join(', ');
 
-      const configSnap = await db.collection('app-config').doc(feed.tenantId).get();
-      const appDomain = (configSnap.data() as { appDomain?: string } | undefined)?.appDomain ?? '';
+      // `appDomain` is not uniformly maintained across tenants (apex vs. app-prefixed forms) —
+      // `appBaseUrl` normalises that (see tenant-domains.ts). It throws when a tenant has no
+      // `appDomain` at all; degrade to "no deep link" rather than failing the whole feed.
+      const appOrigin = await appBaseUrl(feed.tenantId).catch(() => undefined);
 
       const ics = buildICS(calendarName, events, {
-        appOrigin: appDomain ? `https://${appDomain}` : undefined,
+        appOrigin,
         listIdFor: (e) => resolveListId(e as never, mode, requestedKeys),
         attendee: user?.loginEmail
           ? { cn: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(), email: user.loginEmail }

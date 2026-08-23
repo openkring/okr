@@ -26,6 +26,8 @@ interface CalEventDoc {
   calendars: string[];
   tenants: string[];
   seriesId: string;    // gesetzt ⇒ dieses Dokument IST ein materialisiertes Vorkommen
+  state: string;       // 'proposed' | 'provisional' | 'definitive' | 'cancelled' (see CalEventModel.state)
+  columnLabel: string; // non-empty ⇒ schedule-poll column-header pseudo-event; never shown in a calendar
 }
 
 interface CalendarDoc {
@@ -235,6 +237,15 @@ export function buildICS(calendarName: string, events: CalEventDoc[], opts: IcsO
     lines.push(dtstart);
     lines.push(dtend);
     lines.push(foldLine(`SUMMARY:${escapeText(e.name || '')}`));
+
+    // RFC 5545 §3.8.1.11: STATUS tells the subscribed calendar app to grey out/strike a
+    // cancelled event instead of leaving it as a normal appointment forever, and to mark a
+    // proposed one as unconfirmed.
+    if (e.state === 'cancelled') {
+      lines.push('STATUS:CANCELLED');
+    } else if (e.state === 'proposed') {
+      lines.push('STATUS:TENTATIVE');
+    }
 
     const deepLink = appDeepLink(opts, e);
     const description = deepLink
