@@ -281,6 +281,8 @@ export { submitSupportTicket, listSupportTickets, commentSupportTicket } from '.
 
 // diary import (design 2026-08-22): proves Drive access before the import is built
 export { checkDriveAccess } from './diary/check-drive-access';
+// diary import (design 2026-08-22): the dry-run report and the windowed, cursor-driven commit
+export { dryRunDiaryImport, commitDiaryImport } from './diary/import-diary';
 
 // privacy 1.19 Phase 3: one-time backfill of the ssn/dob vault + memberBirthYear
 export { migrateSensitiveData } from './person/migrate-sensitive-data';
