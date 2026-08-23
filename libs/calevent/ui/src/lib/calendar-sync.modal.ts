@@ -1,12 +1,12 @@
 import { Component, computed, inject, input, linkedSignal, OnInit, signal } from '@angular/core';
 import {
-  AlertController, IonContent, IonInput, IonItem, IonLabel, IonNote,
-  IonSelect, IonSelectOption, IonSpinner, IonText, ModalController,
+  AlertController, IonButton, IonContent, IonInput, IonItem, IonLabel,
+  IonSelect, IonSelectOption, IonSpinner, ModalController, ToastController,
 } from '@ionic/angular/standalone';
 
 import { I18nService } from '@okr/shared-i18n';
 import { ButtonCopy, Header } from '@okr/shared-ui';
-import { confirm } from '@okr/shared-util-angular';
+import { confirm, error } from '@okr/shared-util-angular';
 
 import { CALEVENT_I18N_KEYS, CaleventI18n } from '@okr/calevent-util';
 import { CalendarFeedService } from '@okr/calevent-data-access';
@@ -33,7 +33,7 @@ export interface CalendarSyncOption {
   standalone: true,
   imports: [
     Header, ButtonCopy,
-    IonContent, IonItem, IonLabel, IonSelect, IonSelectOption, IonInput, IonNote, IonSpinner, IonText,
+    IonContent, IonItem, IonLabel, IonSelect, IonSelectOption, IonInput, IonSpinner, IonButton,
   ],
   styles: [`
     .sheet {
@@ -52,7 +52,6 @@ export interface CalendarSyncOption {
       color: var(--ion-color-medium-shade);
     }
     .reset-row { margin-top: 20px; text-align: end; }
-    .error { color: var(--ion-color-danger); font-size: 14px; }
   `],
   template: `
     <okr-header [i18n]="{ title: i18n.sync_title() }" [isModal]="true" />
@@ -80,14 +79,10 @@ export interface CalendarSyncOption {
           }
         </ion-item>
 
-        @if (loadError()) {
-          <ion-note class="error">{{ loadError() }}</ion-note>
-        }
-
         <p class="hint">{{ i18n.sync_hint_readonly() }}</p>
 
         <div class="reset-row">
-          <ion-text (click)="resetLink()" color="danger" style="cursor: pointer;">{{ i18n.sync_reset() }}</ion-text>
+          <ion-button fill="clear" color="danger" (click)="resetLink()">{{ i18n.sync_reset() }}</ion-button>
         </div>
       </div>
     </ion-content>
@@ -97,6 +92,7 @@ export class CalendarSyncModal implements OnInit {
   protected readonly i18n = inject(I18nService).translateAll(CALEVENT_I18N_KEYS) as CaleventI18n;
   private readonly calendarFeedService = inject(CalendarFeedService);
   private readonly alertController = inject(AlertController);
+  private readonly toastController = inject(ToastController);
 
   /** Calendars offered besides the always-present "Mein Kalender" — passed in by the opener. */
   public readonly calendars = input<CalendarSyncOption[]>([]);
@@ -106,8 +102,8 @@ export class CalendarSyncModal implements OnInit {
   protected readonly selected = linkedSignal(() => this.initialSelection());
 
   private readonly token = signal<string | undefined>(undefined);
-  protected readonly isLoading = computed(() => this.token() === undefined && !this.loadError());
-  protected readonly loadError = signal<string | undefined>(undefined);
+  private readonly hasError = signal(false);
+  protected readonly isLoading = computed(() => this.token() === undefined && !this.hasError());
 
   protected readonly url = computed(() => {
     const token = this.token();
@@ -119,18 +115,23 @@ export class CalendarSyncModal implements OnInit {
   }
 
   private async loadToken(regenerate = false): Promise<void> {
-    this.loadError.set(undefined);
+    this.hasError.set(false);
     if (regenerate) {
       this.token.set(undefined);
     }
     try {
       this.token.set(await this.calendarFeedService.ensureToken(regenerate));
     } catch (ex) {
-      // Offline, AppCheck rejection or unauthenticated: never leave the field silently blank —
-      // show an inline message instead. There is no dedicated i18n key for this edge case
-      // (Task 7 did not define one), so the raw error is shown for now; a follow-up can add
-      // a translated message once this failure mode has field data on which case is common.
-      this.loadError.set(`${ex}`);
+      // Offline, AppCheck rejection or unauthenticated: never leave the field silently blank,
+      // but never show the raw exception either — this surface is credential-adjacent, and the
+      // exception text is untranslated and meaningless to a member. Follow the error()/toast
+      // pattern already used throughout the codebase (e.g. CalEventStore.schedule()): the raw
+      // detail goes to the console via alert.util's own console.error (isDebugMode, no
+      // toastController → no toast), the member only ever sees the generic, translated `@error`
+      // message as a toast.
+      error(undefined, `${ex}`, true);
+      error(this.toastController, '@error');
+      this.hasError.set(true);
     }
   }
 

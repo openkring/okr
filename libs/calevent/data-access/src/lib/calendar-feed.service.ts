@@ -39,6 +39,6 @@ export class CalendarFeedService {
    * Calendar) accept.
    */
   public feedUrl(token: string, calendarKey: string): string {
-    return `${FEED_URL.replace(/^https:\/\//, 'webcal://')}?token=${token}&calendar=${encodeURIComponent(calendarKey)}`;
+    return `${FEED_URL.replace(/^https:\/\//, 'webcal://')}?token=${encodeURIComponent(token)}&calendar=${encodeURIComponent(calendarKey)}`;
   }
 }
