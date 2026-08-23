@@ -156,7 +156,7 @@ function markdownFiles(dir) {
  * so a second run is an upsert of the same document rather than a duplicate trip.
  */
 function tripDocId(tenantId, slug) {
-  return `${tenantId}__travel__${slug}`;
+  return `${tenantId}__${TRIP_TYPE}__${slug}`;
 }
 
 /** People slugs → AvatarInfo, through the SAME aliases the diary import will read. */

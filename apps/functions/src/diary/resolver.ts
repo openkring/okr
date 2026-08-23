@@ -100,7 +100,7 @@ export async function createDiaryResolver(db: Firestore, tenantId: string): Prom
         continue;
       }
       const data = snap.data() as PersonModel;
-      persons.set(snap.id, { firstName: data.firstName, lastName: data.lastName });
+      persons.set(snap.id, { firstName: data.firstName ?? '', lastName: data.lastName ?? '' });
     }
   }
 

@@ -54,7 +54,6 @@ const db = getFirestore();
 // an alias jiti cannot resolve from a plain node script. Source of truth stays
 // libs/shared/models/src/lib/{trip,person,alias}.model.ts.
 const TripCollection = 'trips';
-const PersonCollection = 'persons';
 const AliasCollection = 'aliases';
 const APP_CONFIG = 'app-config';
 
@@ -196,18 +195,30 @@ function walk(dir, filter, found = []) {
   return found;
 }
 
+/**
+ * Recursive .md enumeration, copied from scripts/seed-diary-trips.mjs (markdownFiles) so the
+ * verifier can never check a smaller set of trip-collection files than the seeder wrote. Keep
+ * the two identical.
+ */
+function markdownFiles(dir) {
+  return readdirSync(dir).flatMap((entry) => {
+    const full = path.join(dir, entry);
+    return statSync(full).isDirectory() ? markdownFiles(full) : (full.endsWith('.md') ? [full] : []);
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════════════
 // 1. trips documents for the tenant, and how many match the `<tenant>__travel__*` id pattern.
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
 const tripSnap = await db.collection(TripCollection).where('tenants', 'array-contains', tenantId).get();
-const tripIdPattern = new RegExp(`^${tenantId}__travel__.+$`);
+const tripIdPattern = new RegExp(`^${tenantId}__${TRIP_TYPE}__.+$`);
 const travelTripIds = new Set(tripSnap.docs.map((d) => d.id).filter((id) => tripIdPattern.test(id)));
 
 console.log(`\n1) trips for tenant '${tenantId}': ${tripSnap.size} total, `
-  + `${travelTripIds.size} matching '${tenantId}__travel__*'`);
+  + `${travelTripIds.size} matching '${tenantId}__${TRIP_TYPE}__*'`);
 if (travelTripIds.size !== 39) {
-  reportFailure(`expected 39 '${tenantId}__travel__*' trip documents, found ${travelTripIds.size}.`);
+  reportFailure(`expected 39 '${tenantId}__${TRIP_TYPE}__*' trip documents, found ${travelTripIds.size}.`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════════
@@ -227,7 +238,12 @@ for (const f of diaryFiles) {
   referencedSlugs.add(slug);
 }
 
-const missing = [...referencedSlugs].filter((slug) => !travelTripIds.has(`${tenantId}__travel__${slug}`));
+if (diaryFiles.length === 0 || referencedSlugs.size === 0) {
+  reportFailure(`archive scan under '${archive}' found no diary files (or no 'trip:' references) — `
+    + 'this check would otherwise pass vacuously because it checked nothing.');
+}
+
+const missing = [...referencedSlugs].filter((slug) => !travelTripIds.has(`${tenantId}__${TRIP_TYPE}__${slug}`));
 
 console.log(`2) diary files scanned: ${diaryFiles.length}, 'trip:' references: ${referenceCount}, `
   + `distinct slugs: ${referencedSlugs.size}, unresolvable: ${missing.length}`);
@@ -243,8 +259,13 @@ if (missing.length > 0) {
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
 const tripsDir = path.resolve(archive, '..', 'collections', 'trips');
-const tripFiles = readdirSync(tripsDir).filter((f) => f.endsWith('.md'));
-const tripCollectionFiles = tripFiles.map((f) => parseTripCollection(f, readFileSync(path.join(tripsDir, f), 'utf8')));
+const tripCollectionFiles = markdownFiles(tripsDir)
+  .map((full) => parseTripCollection(path.basename(full), readFileSync(full, 'utf8')));
+
+if (referencedSlugs.size !== tripCollectionFiles.length) {
+  reportFailure(`distinct diary 'trip:' slugs (${referencedSlugs.size}) do not match the number of `
+    + `trip-collection files parsed (${tripCollectionFiles.length}) — these must agree.`);
+}
 
 const aliasSnap = await db.collection(AliasCollection)
   .where('tenants', 'array-contains', tenantId)
