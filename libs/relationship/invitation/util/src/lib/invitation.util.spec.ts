@@ -1,5 +1,8 @@
 import { AvatarInfo } from '@okr/shared-models';
-import { createPersonAvatar, getInvitationIndex, getInvitationIndexInfo, isInvitation } from './invitation.util';
+import {
+  createPersonAvatar, getInvitationIndex, getInvitationIndexInfo, getLockCommentKey, getResponseComment,
+  hasResponded, isInvitation, normaliseInvitation, sortInvitees, toStoreDateTime
+} from './invitation.util';
 import { InvitationModel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
@@ -26,6 +29,7 @@ describe('invitation.util', () => {
     role: 'required',
     sentAt: '20241101',
     respondedAt: '',
+    isLocked: false,
   };
 
   describe('isInvitation', () => {
@@ -83,6 +87,97 @@ describe('invitation.util', () => {
       expect(getInvitationIndexInfo()).toBe(
         'i:<invitee name> d:<date> n:<event name>'
       );
+    });
+  });
+
+  /*-------------------------- responses --------------------------------*/
+  const inv = (over: Partial<InvitationModel>): InvitationModel => ({ ...mockInvitation, ...over });
+
+  describe('getResponseComment', () => {
+    it('returns the bare i18n key when no note was typed', () => {
+      expect(getResponseComment('accepted')).toBe('@relationship/invitation/feature.comment.accepted');
+    });
+
+    it('appends the invitee note after the key', () => {
+      expect(getResponseComment('declined', 'bin im Urlaub'))
+        .toBe('@relationship/invitation/feature.comment.declined bin im Urlaub');
+    });
+
+    it('ignores a note that is only whitespace', () => {
+      expect(getResponseComment('maybe', '   ')).toBe('@relationship/invitation/feature.comment.maybe');
+    });
+  });
+
+  describe('getLockCommentKey', () => {
+    it('distinguishes lock from release', () => {
+      expect(getLockCommentKey(true)).toBe('@relationship/invitation/feature.comment.locked');
+      expect(getLockCommentKey(false)).toBe('@relationship/invitation/feature.comment.unlocked');
+    });
+  });
+
+  describe('hasResponded', () => {
+    it('needs both a non-pending state and a timestamp', () => {
+      expect(hasResponded(inv({ state: 'accepted', respondedAt: '20260101120000' }))).toBe(true);
+      expect(hasResponded(inv({ state: 'pending', respondedAt: '20260101120000' }))).toBe(false);
+      expect(hasResponded(inv({ state: 'accepted', respondedAt: '' }))).toBe(false);
+    });
+  });
+
+  describe('sortInvitees', () => {
+    it('puts answered invitations first, oldest response first', () => {
+      const late = inv({ okey: 'late', state: 'accepted', respondedAt: '20260301090000' });
+      const early = inv({ okey: 'early', state: 'declined', respondedAt: '20260101080000' });
+      const middle = inv({ okey: 'middle', state: 'maybe', respondedAt: '20260201100000' });
+      expect(sortInvitees([late, early, middle]).map(i => i.okey)).toEqual(['early', 'middle', 'late']);
+    });
+
+    it('appends unanswered invitations, sorted by invitee name', () => {
+      const answered = inv({ okey: 'a', state: 'accepted', respondedAt: '20260101080000' });
+      const zora = inv({ okey: 'z', state: 'pending', respondedAt: '', inviteeLastName: 'Zora' });
+      const abt = inv({ okey: 'b', state: 'pending', respondedAt: '', inviteeLastName: 'Abt' });
+      expect(sortInvitees([zora, answered, abt]).map(i => i.okey)).toEqual(['a', 'b', 'z']);
+    });
+
+    it('sorts a legacy StoreDate response before a same-day StoreDateTime one', () => {
+      const legacy = inv({ okey: 'legacy', state: 'accepted', respondedAt: '20260101' });
+      const modern = inv({ okey: 'modern', state: 'accepted', respondedAt: '20260101093000' });
+      expect(sortInvitees([modern, legacy]).map(i => i.okey)).toEqual(['legacy', 'modern']);
+    });
+
+    it('does not mutate the input array', () => {
+      const list = [
+        inv({ okey: 'b', state: 'accepted', respondedAt: '20260201' }),
+        inv({ okey: 'a', state: 'accepted', respondedAt: '20260101' })
+      ];
+      sortInvitees(list);
+      expect(list.map(i => i.okey)).toEqual(['b', 'a']);
+    });
+  });
+
+  describe('toStoreDateTime', () => {
+    it('pads a legacy StoreDate with midnight', () => {
+      expect(toStoreDateTime('20241101')).toBe('20241101000000');
+    });
+
+    it('leaves a StoreDateTime and an empty value alone', () => {
+      expect(toStoreDateTime('20241101143000')).toBe('20241101143000');
+      expect(toStoreDateTime('')).toBe('');
+      expect(toStoreDateTime(undefined)).toBe('');
+    });
+  });
+
+  describe('normaliseInvitation', () => {
+    it('upgrades legacy timestamps and defaults a missing isLocked', () => {
+      // Firestore reads bypass the model defaults: isLocked really is absent on legacy documents
+      const legacy = { ...mockInvitation, sentAt: '20241101', respondedAt: '20241105', isLocked: undefined } as unknown as InvitationModel;
+      const result = normaliseInvitation(legacy);
+      expect(result?.sentAt).toBe('20241101000000');
+      expect(result?.respondedAt).toBe('20241105000000');
+      expect(result?.isLocked).toBe(false);
+    });
+
+    it('passes undefined through', () => {
+      expect(normaliseInvitation(undefined)).toBeUndefined();
     });
   });
 });

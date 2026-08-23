@@ -164,6 +164,24 @@ export function prettyFormatDate(storeDate: string | undefined, showYear = true,
   }
 
 /**
+ * Render a StoreDateTime (yyyyMMddHHmmss) as '5.9.2026 14:30'.
+ *
+ * Tolerates the legacy 8-char StoreDate that predates a field's migration to a datetime — such a
+ * value has no time to show, so it degrades to the plain pretty date rather than to an empty
+ * string. Anything shorter than 8 characters, or a partial/filler date, yields ''.
+ *
+ * @param storeDateTime the stored value, either 14 (StoreDateTime) or 8 (StoreDate) characters
+ * @param showYear if false, the year is dropped from the date part
+ */
+export function prettyFormatDateTime(storeDateTime: string | undefined, showYear = true): string {
+  if (!storeDateTime || storeDateTime.length < 8) return '';
+  const datePart = prettyFormatDate(storeDateTime, showYear);
+  if (!datePart || storeDateTime.length < 14) return datePart;
+  const time = convertDateFormatToString(storeDateTime, DateFormat.StoreDateTime, DateFormat.Time, false);
+  return time ? `${datePart} ${time}` : datePart;
+}
+
+/**
  * Parses either a Date or a stringified date in a given DateFormat and returns.
  * END_FUTURE_DATE is returned as null.
  * - the Date representation

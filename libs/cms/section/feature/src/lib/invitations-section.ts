@@ -182,8 +182,9 @@ export class InvitationsSectionComponent implements OnInit {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, inv: InvitationModel): void {
     if (hasRole('registered', this.currentUser())) {
-      // only the invitee may answer; on the 'all' scope the rows of other people are read-only
-      if (inv.inviteeKey === this.currentUser()?.personKey) {
+      // only the invitee may answer; on the 'all' scope the rows of other people are read-only,
+      // and a locked invitation is nobody's to answer any more
+      if (inv.inviteeKey === this.currentUser()?.personKey && !inv.isLocked) {
         if (inv.state !== 'accepted') {
           actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
         }

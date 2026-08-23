@@ -27,6 +27,17 @@ export const INVITATION_I18N_KEYS = {
   decline:                          PFX + 'decline',
   maybe:                            PFX + 'maybe',
   resend:                           PFX + 'resend',
+
+  lock:                             PFX + 'lock.label',
+  lock_confirm:                     PFX + 'lock.confirm',
+  lock_conf:                        PFX + 'lock.conf',
+  lock_error:                       PFX + 'lock.error',
+  unlock:                           PFX + 'unlock.label',
+  unlock_confirm:                   PFX + 'unlock.confirm',
+  unlock_conf:                      PFX + 'unlock.conf',
+  locked_hint:                      PFX + 'locked.hint',
+  locked_title:                     PFX + 'locked.title',
+
   subscribe:                        PFX + 'subscribe',
   unsubscribe:                      PFX + 'unsubscribe',
 

@@ -744,6 +744,13 @@ export class CalEventList implements OnInit {
         }
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.store.i18n.invite_person(), this.imgixBaseUrl, 'person-add'));
       }
+      // freezing the responses stays available after the event too — the organiser usually locks
+      // once the headcount is final, which is often on the day itself
+      if (canChange && this.store.invitationsOf(calevent).length > 0) {
+        actionSheetOptions.buttons.push(this.store.areInvitationsLocked(calevent)
+          ? createActionSheetButton('calevent.unlockInvitations', this.store.i18n.invitation_unlock(), this.imgixBaseUrl, 'lock-open')
+          : createActionSheetButton('calevent.lockInvitations', this.store.i18n.invitation_lock(), this.imgixBaseUrl, 'lock-closed'));
+      }
     }
     // Show schedule-poll buttons for proposed events
     if (calevent.state === 'proposed') {
@@ -845,6 +852,12 @@ export class CalEventList implements OnInit {
         }
         case 'calevent.inviteGroup':
           await this.store.inviteGroupMembers(calEvent, false);
+          break;
+        case 'calevent.lockInvitations':
+          await this.store.lockInvitations(calEvent, true);
+          break;
+        case 'calevent.unlockInvitations':
+          await this.store.lockInvitations(calEvent, false);
           break;
         case 'calevent.invitePerson':
           await this.store.invitePerson(calEvent, false);

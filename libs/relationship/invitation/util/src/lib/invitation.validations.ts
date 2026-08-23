@@ -2,7 +2,7 @@ import { only, staticSuite } from 'vest';
 
 import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { InvitationModel } from '@okr/shared-models';
-import { booleanValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
+import { booleanValidations, dateTimeValidations, dateValidations, stringValidations } from '@okr/shared-util-core';
 
 export const invitationValidations = staticSuite((model: InvitationModel, field?: string) => {
   if (field) only(field);
@@ -32,8 +32,11 @@ export const invitationValidations = staticSuite((model: InvitationModel, field?
   stringValidations('state', model.state, WORD_LENGTH); // tbd: invitation state validation: pending, accepted, declined, maybe
   stringValidations('role', model.role, WORD_LENGTH); // tbd: invitation role validation: required, optional, info
 
-  dateValidations('sentAt', model.sentAt);
-  dateValidations('respondedAt', model.respondedAt);
+  // sentAt/respondedAt are StoreDateTime (yyyyMMddHHmmss), not StoreDate — see InvitationModel
+  dateTimeValidations('sentAt', model.sentAt);
+  dateTimeValidations('respondedAt', model.respondedAt);
+
+  booleanValidations('isLocked', model.isLocked);
 });
 
 

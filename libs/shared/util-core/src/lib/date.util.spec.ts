@@ -27,7 +27,8 @@ import {
     parseDate,
     parsePartialViewDate,
     parseFullViewDate,
-    prettyFormatDate
+    prettyFormatDate,
+    prettyFormatDateTime
 } from './date.util';
 describe('date.util', () => {
 
@@ -569,6 +570,27 @@ describe('date.util', () => {
 
         it('returns empty instead of throwing for an all-filler date', () => {
             expect(prettyFormatDate('00000000')).toBe('');
+        });
+    });
+
+    describe('prettyFormatDateTime', () => {
+        it('renders a StoreDateTime as date and time', () => {
+            expect(prettyFormatDateTime('20260415143000')).toBe('15.04.2026 14:30');
+        });
+
+        it('drops the year when asked', () => {
+            expect(prettyFormatDateTime('20260415143000', false)).toBe('15.4 14:30');
+        });
+
+        it('degrades a legacy 8-char StoreDate to the plain date rather than to empty', () => {
+            expect(prettyFormatDateTime('20260415')).toBe('15.04.2026');
+        });
+
+        it('returns empty for an unusable value', () => {
+            expect(prettyFormatDateTime(undefined)).toBe('');
+            expect(prettyFormatDateTime('')).toBe('');
+            expect(prettyFormatDateTime('2026')).toBe('');
+            expect(prettyFormatDateTime('00000000')).toBe('');
         });
     });
 

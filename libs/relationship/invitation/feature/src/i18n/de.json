@@ -111,5 +111,28 @@
       "label": "Zur Information",
       "description": "Die Person wird nur informiert und nimmt nicht teil."
     }
+  },
+  "lock": {
+    "label": "Antworten sperren",
+    "confirm": "Sollen die Antworten auf die Einladungen wirklich gesperrt werden? Die Eingeladenen können ihre Zusage danach nicht mehr ändern.",
+    "conf": "Die Antworten auf die Einladungen sind gesperrt.",
+    "error": "Die Einladungen konnten nicht gesperrt werden."
+  },
+  "unlock": {
+    "label": "Antworten freigeben",
+    "confirm": "Sollen die Antworten auf die Einladungen wieder freigegeben werden?",
+    "conf": "Die Antworten auf die Einladungen sind wieder freigegeben."
+  },
+  "locked": {
+    "title": "Einladung gesperrt",
+    "hint": "Die Organisation hat die Antworten auf diese Einladung gesperrt. Deine Antwort kann nicht mehr geändert werden."
+  },
+  "comment": {
+    "pending": "Einladung zurückgesetzt auf offen.",
+    "accepted": "Einladung angenommen.",
+    "declined": "Einladung abgelehnt.",
+    "maybe": "Einladung mit 'Vielleicht' beantwortet.",
+    "locked": "Die Antworten auf die Einladung wurden gesperrt.",
+    "unlocked": "Die Antworten auf die Einladung wurden freigegeben."
   }
 }

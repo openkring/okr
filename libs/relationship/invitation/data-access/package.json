@@ -11,6 +11,8 @@
     "@okr/shared-config": "*",
     "@okr/shared-data-access": "*",
     "@okr/shared-util-core": "*",
-    "@okr/relationship-invitation-util": "*"
+    "@okr/relationship-invitation-util": "*",
+    "@okr/comment-util": "*",
+    "@okr/shared-i18n": "*"
   }
 }

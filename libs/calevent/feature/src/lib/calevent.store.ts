@@ -13,7 +13,8 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getSystemQuery, getTodayStr, inviteeCandidates, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, subDuration, warn } from '@okr/shared-util-core';
-import { error, navigateByUrl, confirm, okrPrompt, showToast } from '@okr/shared-util-angular';
+import { error, navigateByUrl, confirm, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
+import { InvitationService } from '@okr/relationship-invitation-data-access';
 import { yearMatches } from '@okr/shared-categories';
 import { MAX_DATES_PER_SERIES } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
@@ -75,7 +76,8 @@ export const CalEventStore = signalStore(
     locationService: inject(LocationService),
     modelSelectService: inject(ModelSelectService),
     i18nService: inject(I18nService),
-    matrixChatService: inject(MatrixChatService)
+    matrixChatService: inject(MatrixChatService),
+    invitationService: inject(InvitationService)
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(CALEVENT_I18N_KEYS),
@@ -321,6 +323,7 @@ export const CalEventStore = signalStore(
 
   withComputed((state) => ({
     groupMembers: computed(() => state.groupMembersResource.value() ?? []),
+    allInvitations: computed(() => state.allInvitationsResource.value() ?? []),
   })),
 
   withMethods((store) => {
@@ -549,12 +552,13 @@ export const CalEventStore = signalStore(
         // by personKey, not rows[0]: the current user is only sorted first when they have a row at all
         const myRow = currentUser ? rows.find(row => row.key === currentUser.personKey) : undefined;
         if (!myRow || !currentUser) return;
-        const today = getTodayStr(DateFormat.StoreDate);
+        const today = getTodayStr(DateFormat.StoreDateTime);
         const batch = store.firestoreService.getBatch();
         let changed = 0;
         const comment = myRow.comment ?? '';
         for (const invitation of store.seriesInvitations()) {
           if (invitation.inviteeKey !== currentUser.personKey) continue;
+          if (invitation.isLocked) continue;   // responses frozen by the organiser
           const newState = myRow.responses[invitation.caleventKey];
           const stateChanged = !!newState && newState !== invitation.state;
           const commentChanged = comment !== (invitation.notes ?? '');
@@ -597,7 +601,7 @@ export const CalEventStore = signalStore(
         const currentUser = store.currentUser();
         const personKey = currentUser?.personKey ?? '';
         if (!currentUser || !personKey || row.key !== personKey) return;
-        const today = getTodayStr(DateFormat.StoreDate);
+        const today = getTodayStr(DateFormat.StoreDateTime);
         const batch = store.firestoreService.getBatch();
         let changed = 0;
 
@@ -621,7 +625,7 @@ export const CalEventStore = signalStore(
           } else {
             const invitation = seriesInvitations.find(
               inv => inv.caleventKey === calevent.okey && inv.inviteeKey === personKey);
-            if (!invitation || invitation.state === newState) continue;
+            if (!invitation || invitation.state === newState || invitation.isLocked) continue;
             batch.update(doc(store.firestoreService.firestore, `${InvitationCollection}/${invitation.okey}`),
               { state: newState, respondedAt: today });
           }
@@ -1094,13 +1098,51 @@ export const CalEventStore = signalStore(
         await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, store.i18n.update_conf(), store.i18n.update_error(), currentUser);
       },
 
+      /**
+       * Answer an invitation from the calevent action sheet. Routed through InvitationService so the
+       * answer is stamped and commented exactly as it is everywhere else; a locked invitation is
+       * refused and the user told why rather than silently ignored.
+       */
       async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
         const currentUser = store.currentUser();
         if (!currentUser) return;
-        invitation.state = newState;
-        invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
-        await store.appStore.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, store.i18n.invitation_update_conf(), store.i18n.invitation_update_error(), currentUser);
-        // this.reload();
+        if (invitation.isLocked) {
+          await notify(store.alertController, store.i18n.invitation_locked_title(), store.i18n.invitation_locked_hint(), store.i18n.ok());
+          return;
+        }
+        await store.invitationService.respond(invitation, newState, currentUser);
+      },
+
+      /*------------------------- invitation lock ---------------------------------*/
+      /** Every live invitation of one calevent — the set the lock action operates on. */
+      invitationsOf(calevent: CalEventModel): InvitationModel[] {
+        return store.allInvitations().filter(inv => inv.caleventKey === calevent.okey && !inv.isArchived);
+      },
+
+      /**
+       * True when the event's responses are frozen. An event without invitations counts as
+       * unlocked, so the action sheet offers 'lock' rather than a pointless 'unlock'.
+       */
+      areInvitationsLocked(calevent: CalEventModel): boolean {
+        const invitations = this.invitationsOf(calevent);
+        return invitations.length > 0 && invitations.every(inv => inv.isLocked === true);
+      },
+
+      /**
+       * Freeze or release the responses to every invitation of an event (organiser action). The
+       * organiser confirms first: locking takes the answer away from everyone invited.
+       */
+      async lockInvitations(calevent: CalEventModel, isLocked: boolean): Promise<void> {
+        const invitations = this.invitationsOf(calevent);
+        if (invitations.length === 0) return;
+        const confirmed = await confirm(store.alertController,
+          isLocked ? store.i18n.invitation_lock_confirm() : store.i18n.invitation_unlock_confirm(),
+          store.i18n.ok(), store.i18n.cancel(), true);
+        if (!confirmed) return;
+        const changed = await store.invitationService.setLocked(invitations, isLocked, store.currentUser());
+        if (changed > 0) {
+          await showToast(store.toastController, isLocked ? store.i18n.invitation_lock_conf() : store.i18n.invitation_unlock_conf());
+        }
       },
 
       /******************************* other *************************************** */

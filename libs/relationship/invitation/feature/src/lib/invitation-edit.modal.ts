@@ -9,6 +9,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
 
 import { InvitationForm } from '@okr/relationship-invitation-ui';
+import { normaliseInvitation } from '@okr/relationship-invitation-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { InvitationStore } from './invitation.store';
 
@@ -73,7 +74,9 @@ export class InvitationEditModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  protected formData = linkedSignal(() => safeStructuredClone(this.invitation()));
+  // normalise on the way in: a document written before sentAt/respondedAt became StoreDateTime
+  // would fail dateTimeValidations and leave the form permanently unsaveable
+  protected formData = linkedSignal(() => normaliseInvitation(safeStructuredClone(this.invitation())));
   protected showForm = signal(true);
 
   // derived signals
@@ -90,7 +93,7 @@ export class InvitationEditModal {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(safeStructuredClone(this.invitation()));  // reset the form
+    this.formData.set(normaliseInvitation(safeStructuredClone(this.invitation())));  // reset the form
       // This destroys and recreates the <form scVestForm> → Vest fully resets
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);

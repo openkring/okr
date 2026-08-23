@@ -70,6 +70,22 @@ export async function confirm(
   return role === 'confirm';
 }
 
+/**
+ * A one-button alert that only informs — no choice to make, nothing to cancel. Use it where an
+ * action is refused and the user deserves the reason (e.g. answering a locked invitation), rather
+ * than a toast that scrolls away or a silent no-op.
+ */
+export async function notify(
+  alertController: AlertController,
+  header: string,
+  message: string,
+  okLabel: string
+): Promise<void> {
+  const alert = await alertController.create({ header, message, buttons: [okLabel] });
+  await alert.present();
+  await alert.onWillDismiss();
+}
+
 export type PromptInputType = 'text' | 'number' | 'password';
 
 export async function okrPrompt(

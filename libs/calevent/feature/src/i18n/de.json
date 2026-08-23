@@ -150,7 +150,21 @@
       "error": "Die Einladung konnte nicht geändert werden."
     },
     "subscribe": "Ich nehme teil",
-    "unsubscribe": "Ich kann nicht teilnehmen"
+    "unsubscribe": "Ich kann nicht teilnehmen",
+    "lock": {
+      "label": "Antworten sperren",
+      "confirm": "Sollen die Antworten auf die Einladungen wirklich gesperrt werden? Die Eingeladenen können ihre Zusage danach nicht mehr ändern.",
+      "conf": "Die Antworten auf die Einladungen sind gesperrt."
+    },
+    "unlock": {
+      "label": "Antworten freigeben",
+      "confirm": "Sollen die Antworten auf die Einladungen wieder freigegeben werden?",
+      "conf": "Die Antworten auf die Einladungen sind wieder freigegeben."
+    },
+    "locked": {
+      "title": "Einladung gesperrt",
+      "hint": "Die Organisation hat die Antworten auf diese Einladung gesperrt. Deine Antwort kann nicht mehr geändert werden."
+    }
   },
   "weekday": {
     "abbreviation": {

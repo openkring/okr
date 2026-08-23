@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, AlertController, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, IonThumbnail } from '@ionic/angular/standalone';
 
 import { CalEventModel, InvitationModel, InvitationState, MembershipModel } from '@okr/shared-models';
-import { FullNamePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
+import { FullNamePipe, PrettyDateTimePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, isOngoing } from '@okr/shared-util-core';
-import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, notify } from '@okr/shared-util-angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 
@@ -20,13 +20,14 @@ import { InvitationStore } from './invitation.store';
   selector: 'okr-invitees-accordion',
   standalone: true,
   imports: [
-    SvgIconPipe, AvatarPipe, PrettyDatePipe, FullNamePipe,
+    SvgIconPipe, AvatarPipe, PrettyDateTimePipe, FullNamePipe,
     EmptyList,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonImg, IonAvatar
   ],
   providers: [InvitationStore],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
+    .responded { font-size: 0.75em; color: var(--ion-color-medium); }
   `],
   template: `
   <ion-accordion toggle-icon-slot="start" value="invitees">
@@ -48,9 +49,16 @@ import { InvitationStore } from './invitation.store';
               <ion-avatar slot="start">
                 <ion-img src="{{ 'person.' + invitee.inviteeKey | avatar:'person' }}" alt="invitation avatar" />
               </ion-avatar>
-              <ion-label>{{ invitee.inviteeFirstName | fullName: invitee.inviteeLastName }}</ion-label>
+              <ion-label>
+                {{ invitee.inviteeFirstName | fullName: invitee.inviteeLastName }}
+                <!-- the response timestamp is the list's sort key: it belongs next to the name it
+                     orders, small enough not to compete with it -->
+                <div class="responded">{{ invitee.respondedAt | prettyDateTime }}</div>
+              </ion-label>
               <ion-label>{{ getStateLabel(invitee.state) }}</ion-label>
-              <ion-label>{{ invitee.respondedAt | prettyDate }} </ion-label>
+              @if(invitee.isLocked) {
+                <ion-icon slot="end" color="medium" src="{{'lock-closed' | svgIcon }}" />
+              }
             </ion-item>
           }
         </ion-list>
@@ -65,6 +73,7 @@ import { InvitationStore } from './invitation.store';
 export class InviteesAccordion {
   protected readonly store = inject(InvitationStore);
   private actionSheetController = inject(ActionSheetController);
+  private alertController = inject(AlertController);
 
   // inputs
   public calevent = input.required<CalEventModel>();
@@ -111,6 +120,12 @@ export class InviteesAccordion {
   protected async showActions(invitation: InvitationModel): Promise<void> {
     // a non-admin may only act on their own invitation, not on other people's rows
     if (!this.isOwnInvitation(invitation) && !hasRole('admin', this.currentUser())) return;
+    // an invitee tapping their own locked row gets told why, instead of a sheet with every answer
+    // silently missing from it. Organisers/admins keep the full sheet — the lock is theirs to lift.
+    if (invitation.isLocked && this.isReadOnly() && !hasRole('admin', this.currentUser())) {
+      await notify(this.alertController, this.store.i18n.locked_title(), this.store.i18n.locked_hint(), this.store.i18n.ok());
+      return;
+    }
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, invitation);
     await this.executeActions(actionSheetOptions, invitation);
@@ -122,8 +137,9 @@ export class InviteesAccordion {
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, invitation: InvitationModel): void {
     actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
-    // users can change the invitation state of their own invitations
-    if (this.isOwnInvitation(invitation)) {
+    // users can change the invitation state of their own invitations — unless the organiser
+    // locked the responses, in which case only the read actions remain
+    if (this.isOwnInvitation(invitation) && !invitation.isLocked) {
       if (invitation.state !== 'accepted') {
         actionSheetOptions.buttons.push(createActionSheetButton('invitation.accept', this.store.i18n.accept(), this.imgixBaseUrl, 'checkmark'));
       }

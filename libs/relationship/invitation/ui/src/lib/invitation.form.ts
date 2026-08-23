@@ -1,11 +1,11 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
-import { DEFAULT_DATE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_DATETIME, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, RoleName, InvitationModel, UserModel, DEFAULT_INVITATION_STATE, DEFAULT_INVITATION_ROLE } from '@okr/shared-models';
-import { Chips, DateInput, DateInputI18n, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
-import { PrettyDatePipe } from '@okr/shared-pipes';
+import { Chips, NotesInput, NotesInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, DateFormat, getTodayStr, hasRole } from '@okr/shared-util-core';
+import { PrettyDatePipe, PrettyDateTimePipe } from '@okr/shared-pipes';
 import { AvatarDisplay, AvatarInput } from '@okr/avatar-ui';
 import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/relationship-invitation-util';
 
@@ -13,8 +13,8 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
   selector: 'okr-invitation-form',
   standalone: true,
   imports: [
-    PrettyDatePipe,
-    Chips, AvatarDisplay, AvatarInput, NotesInput, StringSelect, DateInput, TextInput,
+    PrettyDatePipe, PrettyDateTimePipe,
+    Chips, AvatarDisplay, AvatarInput, NotesInput, StringSelect, TextInput,
     IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -82,13 +82,15 @@ import { invitationValidations, createPersonAvatar, InvitationI18n } from '@okr/
                     <okr-string-select [i18n]="roleI18n()" [selectedString]="role()" (selectedStringChange)="onFieldChange('role', $event)" [readOnly]="readOnly()" [stringList]="roleList" [labels]="roleLabels()" />
                   </ion-col>
 
-                  <!-- sentAt / respondedAt: stamped by the app (create / answer), never edited by hand -->
+                  <!-- sentAt / respondedAt: StoreDateTime stamped by the app (create / answer),
+                       never edited by hand. Shown as read-only text rather than through
+                       okr-date-input, which parses a StoreDate and cannot render the time. -->
                   <ion-col size="12" size-md="6">
-                    <okr-date-input [i18n]="sentAtI18n()" [storeDate]="sentAt()" [locale]="locale()" [readOnly]="true" />
+                    <okr-text-input [i18n]="sentAtI18n()" [value]="sentAt() | prettyDateTime" [readOnly]="true" />
                   </ion-col>
 
                   <ion-col size="12" size-md="6">
-                    <okr-date-input [i18n]="respondedAtI18n()" [storeDate]="respondedAt()" [locale]="locale()" [readOnly]="true" />
+                    <okr-text-input [i18n]="respondedAtI18n()" [value]="respondedAt() | prettyDateTime" [readOnly]="true" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -111,8 +113,8 @@ export class InvitationForm {
   public readonly i18n = input.required<InvitationI18n>();
   protected okeyI18n = computed(() => ({ name: 'okey', label: this.i18n().okey_label(), placeholder: this.i18n().okey_placeholder(), helper: this.i18n().okey_helper() } as TextInputI18n));
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
-  protected sentAtI18n = computed(() => ({ name: 'sentAt', label: this.i18n().sentAt_label(), placeholder: this.i18n().sentAt_placeholder(), helper: this.i18n().sentAt_helper() } as DateInputI18n));
-  protected respondedAtI18n = computed(() => ({ name: 'respondedAt', label: this.i18n().respondedAt_label(), placeholder: this.i18n().respondedAt_placeholder(), helper: this.i18n().respondedAt_helper() } as DateInputI18n));
+  protected sentAtI18n = computed(() => ({ name: 'sentAt', label: this.i18n().sentAt_label(), placeholder: this.i18n().sentAt_placeholder(), helper: this.i18n().sentAt_helper() } as TextInputI18n));
+  protected respondedAtI18n = computed(() => ({ name: 'respondedAt', label: this.i18n().respondedAt_label(), placeholder: this.i18n().respondedAt_placeholder(), helper: this.i18n().respondedAt_helper() } as TextInputI18n));
   protected stateI18n       = computed(() => ({ name: 'state', label: this.i18n().state() } as StringSelectI18n));
   protected roleI18n        = computed(() => ({ name: 'role',  label: this.i18n().role_label(), helper: this.i18n().role_helper() } as StringSelectI18n));
 
@@ -149,8 +151,8 @@ export class InvitationForm {
   protected date = linkedSignal(() => this.formData().date ?? getTodayStr());
   protected state = linkedSignal(() => this.formData().state ?? DEFAULT_INVITATION_STATE);
   protected role = linkedSignal(() => this.formData().role ?? DEFAULT_INVITATION_ROLE);
-  protected sentAt = linkedSignal(() => this.formData().sentAt ?? getTodayStr());
-  protected respondedAt = linkedSignal(() => this.formData().respondedAt ?? DEFAULT_DATE);
+  protected sentAt = linkedSignal(() => this.formData().sentAt ?? getTodayStr(DateFormat.StoreDateTime));
+  protected respondedAt = linkedSignal(() => this.formData().respondedAt ?? DEFAULT_DATETIME);
   protected tags = linkedSignal(() => this.formData().tags ?? DEFAULT_TAGS);
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected okey = computed(() => this.formData().okey ?? '');

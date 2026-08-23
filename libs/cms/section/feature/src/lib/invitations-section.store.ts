@@ -8,6 +8,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches, openInvitationsOf } from '@okr/shared-util-core';
+import { notify } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { CalEventService } from '@okr/calevent-data-access';
@@ -176,10 +177,16 @@ export const InvitationSectionStore = signalStore(
         this.reload();   // the user may have answered the invitation inside the calevent view
       },
 
+      /**
+       * Answer an invitation from the invitations widget. `respond` stamps respondedAt and writes
+       * the answer comment; a locked invitation is refused and the user is told why.
+       */
       async changeState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
-        invitation.state = newState;
-        invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
-        await store.invitationService.update(invitation, store.currentUser());
+        if (invitation.isLocked) {
+          await notify(store.alertController, store.i18n.invitation_locked_title(), store.i18n.invitation_locked_hint(), store.i18n.ok());
+          return;
+        }
+        await store.invitationService.respond(invitation, newState, store.currentUser());
         this.reload();
       },
     }

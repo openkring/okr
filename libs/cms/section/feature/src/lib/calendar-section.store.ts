@@ -1,18 +1,20 @@
 import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController } from '@ionic/angular/standalone';
+import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map, of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { DateFormat, getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@okr/shared-util-core';
+import { getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@okr/shared-util-core';
+import { notify } from '@okr/shared-util-angular';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { CalEventEditModal, CalEventViewModal } from '@okr/calevent-feature';
 import { getVisibleGroupKeys } from '@okr/subject-group-util';
 
+import { InvitationService } from '@okr/relationship-invitation-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
@@ -37,6 +39,8 @@ export const CalendarStore = signalStore(
     membershipService: inject(MembershipService),
     modalController: inject(ModalController),
     calEventService: inject(CalEventService),
+    invitationService: inject(InvitationService),
+    alertController: inject(AlertController),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
   })),
   withProps((store) => ({
@@ -311,13 +315,18 @@ export const CalendarStore = signalStore(
         await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, store.i18n.calevent_update_conf(), store.i18n.calevent_update_error(), currentUser);
       },
 
+      /**
+       * Answer an invitation from the calendar section. Routed through InvitationService so the
+       * answer is stamped and commented like everywhere else; a locked invitation is refused.
+       */
       async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
         const currentUser = store.currentUser();
         if (!currentUser) return;
-        invitation.state = newState;
-        invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
-        await store.appStore.firestoreService.updateModel<InvitationModel>(InvitationCollection, invitation, false, store.i18n.invitation_update_conf(), store.i18n.invitation_update_error(), currentUser);
-        // this.reload();
+        if (invitation.isLocked) {
+          await notify(store.alertController, store.i18n.invitation_locked_title(), store.i18n.invitation_locked_hint(), store.i18n.ok());
+          return;
+        }
+        await store.invitationService.respond(invitation, newState, currentUser);
       },
     }
   })

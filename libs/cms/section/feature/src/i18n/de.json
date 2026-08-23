@@ -547,7 +547,11 @@
       "label": "Kommende Ereignisse anzeigen",
       "helper": "Wähle, ob zukünftige Ereignisse in der Liste oder im Kalender angezeigt werden sollen."
     },
-    "openCalevent": "Termin anzeigen"
+    "openCalevent": "Termin anzeigen",
+    "locked": {
+      "title": "Einladung gesperrt",
+      "hint": "Die Organisation hat die Antworten auf diese Einladung gesperrt. Deine Antwort kann nicht mehr geändert werden."
+    }
   },
   "map": {
     "label": "Karte",

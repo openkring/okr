@@ -7,11 +7,11 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { AvatarInfo, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { chipMatches, DateFormat, extractSecondPartOfOptionalTupel, getSystemQuery, getTodayStr, isAfterDate, nameMatches } from '@okr/shared-util-core';
-import { confirm } from '@okr/shared-util-angular';
+import { confirm, notify } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { InvitationService } from '@okr/relationship-invitation-data-access';
-import { getInvitationIndex, isInvitation, INVITATION_I18N_KEYS, InvitationI18n } from '@okr/relationship-invitation-util';
+import { getInvitationIndex, isInvitation, sortInvitees, INVITATION_I18N_KEYS, InvitationI18n } from '@okr/relationship-invitation-util';
 
 export type { InvitationI18n };
 
@@ -66,11 +66,11 @@ export const InvitationStore = signalStore(
         state.invitationsResource.value() ?? []),
       invitationsCount: computed(() => state.invitationsResource.value()?.length ?? 0), 
 
-      // for accordion: all invitees of a calevent
+      // for accordion: all invitees of a calevent, answered first (oldest response first)
       invitees: computed(() => {
         if (!state.caleventKey()) return [];
-        return state.invitationsResource.value()?.filter((invitation: InvitationModel) => 
-          invitation.caleventKey === state.caleventKey()) ?? [];
+        return sortInvitees(state.invitationsResource.value()?.filter((invitation: InvitationModel) =>
+          invitation.caleventKey === state.caleventKey()) ?? []);
       }),
 
       currentUser: computed(() => state.appStore.currentUser()),
@@ -146,7 +146,7 @@ export const InvitationStore = signalStore(
           inv.caleventKey = calevent.okey;
           inv.name = calevent.name;
           inv.date = calevent.startDate;
-          inv.sentAt = getTodayStr(DateFormat.StoreDate);
+          inv.sentAt = getTodayStr(DateFormat.StoreDateTime);
           inv.index = getInvitationIndex(inv);
           return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, store.i18n.invite_conf(), store.i18n.invite_error(), store.currentUser());
         }
@@ -190,10 +190,16 @@ export const InvitationStore = signalStore(
         }
       },
 
+      /**
+       * Answer an invitation. `respond` stamps respondedAt and appends the answer as a comment;
+       * a locked invitation is refused and the user is told why instead of silently doing nothing.
+       */
       async changeState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
-        invitation.state = newState;
-        invitation.respondedAt = getTodayStr(DateFormat.StoreDate);
-        await store.invitationService.update(invitation, store.currentUser());
+        if (invitation.isLocked) {
+          await notify(store.alertController, store.i18n.locked_title(), store.i18n.locked_hint(), store.i18n.ok());
+          return;
+        }
+        await store.invitationService.respond(invitation, newState, store.currentUser());
         this.reload();
       },
 

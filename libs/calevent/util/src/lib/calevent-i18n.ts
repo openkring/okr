@@ -179,6 +179,15 @@ export const CALEVENT_I18N_KEYS = {
   invitation_subscribe:       PFX + 'invitation.subscribe',
   invitation_unsubscribe:     PFX + 'invitation.unsubscribe',
 
+  invitation_lock:                     PFX + 'invitation.lock.label',
+  invitation_lock_confirm:             PFX + 'invitation.lock.confirm',
+  invitation_lock_conf:                PFX + 'invitation.lock.conf',
+  invitation_unlock:                   PFX + 'invitation.unlock.label',
+  invitation_unlock_confirm:           PFX + 'invitation.unlock.confirm',
+  invitation_unlock_conf:              PFX + 'invitation.unlock.conf',
+  invitation_locked_title:             PFX + 'invitation.locked.title',
+  invitation_locked_hint:              PFX + 'invitation.locked.hint',
+
   wda_monday:                 PFX + 'weekday.abbreviation.monday',
   wda_tuesday:                PFX + 'weekday.abbreviation.tuesday',
   wda_wednesday:              PFX + 'weekday.abbreviation.wednesday',
