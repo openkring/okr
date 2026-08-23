@@ -11,7 +11,7 @@
 //   pnpm session:remove <name>   remove the worktree (branch kept unless --force)
 
 import { execFileSync, execSync } from 'node:child_process';
-import { existsSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
 const repoRoot = execSync('git rev-parse --show-toplevel').toString().trim();
@@ -62,8 +62,29 @@ switch (cmd) {
     console.log(`\n→ Creating worktree ${path} on ${branch} (from ${base})`);
     git(['worktree', 'add', '-b', branch, path, base]);
 
+    // A worktree checkout leaves every submodule UNINITIALISED. In this repo that means the
+    // new session starts with no `.claude/skills`, no `planning/` and no `apps/*` — i.e. with
+    // none of the project's skills loaded, which is not obvious from an otherwise healthy-looking
+    // tree. Measured 2026-08-23: all 13 submodules came up empty.
+    console.log('\n→ Initialising submodules…');
+    execSync('git submodule update --init --recursive', { stdio: 'inherit', cwd: path });
+
     console.log('\n→ Installing dependencies (pnpm install)…');
     execSync('pnpm install', { stdio: 'inherit', cwd: path });
+
+    // `set-env.js` and every `apps/*/.env` are git-ignored, so a fresh checkout never has them
+    // and `nx build`/`nx serve` fail on a missing environment.ts. They are per-worktree by
+    // design; copying them is the whole of the "per-worktree setup" the skill describes.
+    console.log('\n→ Copying git-ignored env files from the main checkout…');
+    let copied = 0;
+    const setEnv = join(repoRoot, 'set-env.js');
+    if (existsSync(setEnv)) { copyFileSync(setEnv, join(path, 'set-env.js')); copied++; }
+    for (const app of readdirSync(join(repoRoot, 'apps'))) {
+      const from = join(repoRoot, 'apps', app, '.env');
+      const to = join(path, 'apps', app, '.env');
+      if (existsSync(from) && existsSync(join(path, 'apps', app))) { copyFileSync(from, to); copied++; }
+    }
+    console.log(`  ${copied} file(s) copied${copied === 0 ? ' — none found; the main checkout has none either' : ''}`);
 
     const noOpen = process.argv.includes('--no-open');
     if (!noOpen) {
