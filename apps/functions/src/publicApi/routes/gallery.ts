@@ -138,14 +138,17 @@ export async function galleryRouter(req: Request, res: Response): Promise<void> 
     const folder = folderDoc.data() as FolderDoc;
 
     const db = getFirestore();
+    // Firestore laesst nur EIN array-contains pro Query zu. folderKeys ist das
+    // selektivere Feld, also filtert es die Query und tenants filtert im Code —
+    // der Ordner selbst wurde oben bereits gegen den Tenant geprueft.
     const snap = await db.collection('docs')
-      .where('tenants', 'array-contains', tenantId)
       .where('folderKeys', 'array-contains', folderDoc.id)
       .where('isArchived', '==', false)
       .get();
 
     const images = snap.docs
       .map((doc) => doc.data() as DocumentDoc)
+      .filter((d) => (d.tenants ?? []).includes(tenantId))
       .filter((d) => isImage(d.mimeType ?? '', d.fullPath ?? ''))
       .filter((d) => !!d.fullPath)
       .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
@@ -182,8 +185,10 @@ async function respondWithIndex(tenantId: string, res: Response): Promise<void> 
 
   const folders = await Promise.all(publicFolders.map(async (doc) => {
     const f = doc.data() as FolderDoc;
+    // Wie oben: nur ein array-contains erlaubt. Der Ordner ist bereits
+    // tenant-gefiltert, ein fremder Tenant kann hier also nicht mitgezaehlt
+    // werden, solange ein Dokument nur in Ordner desselben Tenants zeigt.
     const agg = await db.collection('docs')
-      .where('tenants', 'array-contains', tenantId)
       .where('folderKeys', 'array-contains', doc.id)
       .where('isArchived', '==', false)
       .count()
