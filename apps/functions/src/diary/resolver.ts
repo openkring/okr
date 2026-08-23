@@ -1,21 +1,39 @@
 // apps/functions/src/diary/resolver.ts
 import type { Firestore } from 'firebase-admin/firestore';
 
-import { AliasCollection, PersonCollection, TripCollection } from '@okr/shared-models';
-import type { AliasModel, AvatarInfo, PersonModel, TripModel } from '@okr/shared-models';
+import { AliasCollection, LocationCollection, PersonCollection, TripCollection } from '@okr/shared-models';
+import type { AliasModel, AvatarInfo, LocationModel, PersonModel, TripModel } from '@okr/shared-models';
 import { toAliasSlug } from '@okr/system-alias-util';
+import { normaliseLocationLabel } from '@okr/content-diary-util';
 import type { DiaryResolver } from '@okr/content-diary-util';
 
-/** Alias space names, matching AliasModel.space for the two entity kinds the diary references. */
+/** Alias space names, matching AliasModel.space for the entity kinds the diary references. */
 const PERSON_SPACE = 'person';
+const LOCATION_SPACE = 'location';
 
 /** trips.type value for the travel trips seeded by scripts/seed-diary-trips.mjs (Task 3). */
 const TRAVEL_TRIP_TYPE = 'travel';
 
 type PersonName = Pick<PersonModel, 'firstName' | 'lastName'>;
 
+/** The fields `resolveLocation`/`resolveLocationCoords` need, keyed by `normaliseLocationLabel`. */
+interface LocationEntry {
+  okey: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
 /**
- * The pure resolver, built from three prefilled Maps — no Firestore access happens here, which
+ * `DiaryResolver` plus the coordinate lookup the weather step (Task 5) needs. Not folded into
+ * `DiaryResolver` itself: `toDiaryModel` only ever needs the `AvatarInfo`, not raw coordinates.
+ */
+export interface DiaryResolverWithLocationCoords extends DiaryResolver {
+  resolveLocationCoords(label: string): { latitude: number; longitude: number } | undefined;
+}
+
+/**
+ * The pure resolver, built from four prefilled Maps — no Firestore access happens here, which
  * is what lets `DiaryResolver`'s methods stay synchronous (see diary-model-mapping.ts). This is
  * what the test exercises directly, without a Firestore mock.
  *
@@ -24,13 +42,16 @@ type PersonName = Pick<PersonModel, 'firstName' | 'lastName'>;
  * @param persons person `okey` -> the two name fields `toDiaryModel` needs for an `AvatarInfo`
  * @param trips trip file slug (e.g. '20200100beispiel') -> the trips document id
  *   (`<tenant>__travel__<slug>`), as written by scripts/seed-diary-trips.mjs
+ * @param locations `normaliseLocationLabel(label)` -> the location's `okey`, name and
+ *   coordinates, as seeded by scripts/seed-diary-locations.mjs
  */
 export function buildResolver(
   tenantId: string,
   aliases: Map<string, string>,
   persons: Map<string, PersonName>,
   trips: Map<string, string>,
-): DiaryResolver {
+  locations: Map<string, LocationEntry>,
+): DiaryResolverWithLocationCoords {
   return {
     resolvePerson(slug: string): AvatarInfo | undefined {
       const aliasId = `${tenantId}__${PERSON_SPACE}__${toAliasSlug(slug)}`;
@@ -51,13 +72,25 @@ export function buildResolver(
       };
     },
 
-    // Always undefined for now: no tenant has seeded location aliases yet (bka has zero
-    // location records), so createDiaryResolver below never prefetches a locations Map. The
-    // label stays free text (DiaryModel.customLocationLabel) — see toDiaryModel. Extend this
-    // the same way resolvePerson works, with a prefetched locations Map, once a tenant seeds
-    // location aliases.
-    resolveLocation(_label: string): AvatarInfo | undefined {
-      return undefined;
+    resolveLocation(label: string): AvatarInfo | undefined {
+      const location = locations.get(normaliseLocationLabel(label));
+      if (!location) {
+        return undefined;
+      }
+      return {
+        key: location.okey,
+        name1: location.name,
+        name2: '',
+        modelType: 'location',
+        type: '',
+        subType: '',
+        label: location.name,
+      };
+    },
+
+    resolveLocationCoords(label: string): { latitude: number; longitude: number } | undefined {
+      const location = locations.get(normaliseLocationLabel(label));
+      return location ? { latitude: location.latitude, longitude: location.longitude } : undefined;
     },
 
     resolveTrip(slug: string): string {
@@ -72,7 +105,10 @@ export function buildResolver(
  * rather than resolved per-call — `DiaryResolver`'s methods are synchronous by contract, so a
  * `getDoc` per person/location/trip mention cannot happen inside them.
  */
-export async function createDiaryResolver(db: Firestore, tenantId: string): Promise<DiaryResolver> {
+export async function createDiaryResolver(
+  db: Firestore,
+  tenantId: string,
+): Promise<DiaryResolverWithLocationCoords> {
   const aliasSnap = await db
     .collection(AliasCollection)
     .where('tenants', 'array-contains', tenantId)
@@ -125,5 +161,45 @@ export async function createDiaryResolver(db: Firestore, tenantId: string): Prom
     }
   }
 
-  return buildResolver(tenantId, aliases, persons, trips);
+  const locationAliasSnap = await db
+    .collection(AliasCollection)
+    .where('tenants', 'array-contains', tenantId)
+    .where('isArchived', '==', false)
+    .where('space', '==', LOCATION_SPACE)
+    .get();
+
+  // okey -> normalised label key, so the location doc (fetched below) can be filed into the
+  // `locations` Map under the same key `resolveLocation`/`resolveLocationCoords` look it up by.
+  const locationOkeyToKey = new Map<string, string>();
+  for (const doc of locationAliasSnap.docs) {
+    const data = doc.data() as AliasModel;
+    const okey = data.targetKey.split('.')[1];
+    if (okey) {
+      locationOkeyToKey.set(okey, data.alias);
+    }
+  }
+
+  const locations = new Map<string, LocationEntry>();
+  if (locationOkeyToKey.size > 0) {
+    const refs = [...locationOkeyToKey.keys()].map((okey) => db.collection(LocationCollection).doc(okey));
+    const snaps = await db.getAll(...refs);
+    for (const snap of snaps) {
+      if (!snap.exists) {
+        continue;
+      }
+      const key = locationOkeyToKey.get(snap.id);
+      if (!key) {
+        continue;
+      }
+      const data = snap.data() as LocationModel;
+      locations.set(key, {
+        okey: snap.id,
+        name: data.name ?? '',
+        latitude: data.latitude ?? 0,
+        longitude: data.longitude ?? 0,
+      });
+    }
+  }
+
+  return buildResolver(tenantId, aliases, persons, trips, locations);
 }
