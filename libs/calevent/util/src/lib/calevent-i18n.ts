@@ -328,6 +328,19 @@ export const CALEVENT_I18N_KEYS = {
   cal_month:                  PFX + 'calendar.month',
   cal_week:                   PFX + 'calendar.week',
   cal_day:                    PFX + 'calendar.day',
+
+  // ICS subscription ("Kalender synchronisieren" modal)
+  sync_title:                 PFX + 'sync.title',
+  sync_intro:                 PFX + 'sync.intro',
+  sync_calendar_label:        PFX + 'sync.calendar.label',
+  sync_url_label:             PFX + 'sync.url.label',
+  sync_copy:                  PFX + 'sync.copy.label',
+  sync_copied:                PFX + 'sync.copied',
+  sync_my_calendar:           PFX + 'sync.myCalendar',
+  sync_hint_readonly:         PFX + 'sync.hint.readonly',
+  sync_reset:                 PFX + 'sync.reset.label',
+  sync_reset_confirm:         PFX + 'sync.reset.confirm',
+  sync_event_not_found:       PFX + 'sync.eventNotFound',
 } satisfies Record<string, string>;
 
 export type CaleventI18n = { [K in keyof typeof CALEVENT_I18N_KEYS]: Signal<string> };

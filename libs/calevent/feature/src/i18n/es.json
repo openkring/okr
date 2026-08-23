@@ -533,5 +533,28 @@
     },
     "note": "¿Te falta un calendario o necesitas un grupo nuevo? Solo los usuarios privilegiados (la junta) pueden crear grupos; contacta con un miembro de la junta o con el soporte.",
     "open": "Mostrar explicación"
+  },
+  "sync": {
+    "title": "Sincronizar calendario",
+    "intro": "Utilice este enlace para suscribirse al calendario en Apple Calendario, Outlook o Google. Los eventos nuevos y modificados aparecen automáticamente.",
+    "calendar": {
+      "label": "Calendario"
+    },
+    "url": {
+      "label": "Enlace de suscripción"
+    },
+    "copy": {
+      "label": "Copiar enlace"
+    },
+    "copied": "Enlace copiado",
+    "myCalendar": "Mi calendario",
+    "hint": {
+      "readonly": "El calendario suscrito es de solo lectura y se actualiza aproximadamente cada 15 minutos. Las confirmaciones y cancelaciones permanecen en la aplicación."
+    },
+    "reset": {
+      "label": "Restablecer enlace",
+      "confirm": "El enlace anterior dejará de ser válido. Todos los dispositivos que se suscribieron a este calendario deberán configurarse de nuevo. ¿Continuar?"
+    },
+    "eventNotFound": "Este evento ya no está disponible."
   }
 }

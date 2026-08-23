@@ -552,5 +552,28 @@
     },
     "note": "Fehlt dir ein Kalender oder brauchst du eine neue Gruppe? Gruppen können nur privilegierte Benutzer (Vorstand) anlegen — wende dich an ein Vorstandsmitglied oder an den Support.",
     "open": "Erklärung anzeigen"
+  },
+  "sync": {
+    "title": "Kalender synchronisieren",
+    "intro": "Mit diesem Link abonnieren Sie den Kalender in Apple Kalender, Outlook oder Google. Neue und geänderte Termine erscheinen automatisch.",
+    "calendar": {
+      "label": "Kalender"
+    },
+    "url": {
+      "label": "Abo-Link"
+    },
+    "copy": {
+      "label": "Link kopieren"
+    },
+    "copied": "Link kopiert",
+    "myCalendar": "Mein Kalender",
+    "hint": {
+      "readonly": "Der abonnierte Kalender ist nur lesbar und wird etwa alle 15 Minuten aktualisiert. Zu- und Absagen bleiben in der App."
+    },
+    "reset": {
+      "label": "Link zurücksetzen",
+      "confirm": "Der bisherige Link wird ungültig. Alle Geräte, die diesen Kalender abonniert haben, müssen neu eingerichtet werden. Fortfahren?"
+    },
+    "eventNotFound": "Der Termin ist nicht mehr verfügbar."
   }
 }

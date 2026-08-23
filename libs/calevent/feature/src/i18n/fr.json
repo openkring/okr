@@ -533,5 +533,28 @@
     },
     "note": "Il vous manque un calendrier ou vous avez besoin d'un nouveau groupe ? Seuls les utilisateurs privilégiés (le comité) peuvent créer des groupes — contactez un membre du comité ou le support.",
     "open": "Afficher l'explication"
+  },
+  "sync": {
+    "title": "Synchroniser le calendrier",
+    "intro": "Utilisez ce lien pour vous abonner au calendrier dans Apple Calendrier, Outlook ou Google. Les événements nouveaux ou modifiés apparaissent automatiquement.",
+    "calendar": {
+      "label": "Calendrier"
+    },
+    "url": {
+      "label": "Lien d'abonnement"
+    },
+    "copy": {
+      "label": "Copier le lien"
+    },
+    "copied": "Lien copié",
+    "myCalendar": "Mon calendrier",
+    "hint": {
+      "readonly": "Le calendrier abonné est en lecture seule et se met à jour environ toutes les 15 minutes. Les acceptations et refus restent dans l'application."
+    },
+    "reset": {
+      "label": "Réinitialiser le lien",
+      "confirm": "L'ancien lien deviendra invalide. Tous les appareils abonnés à ce calendrier devront être reconfigurés. Continuer ?"
+    },
+    "eventNotFound": "Cet événement n'est plus disponible."
   }
 }

@@ -533,5 +533,28 @@
     },
     "note": "Ti manca un calendario o hai bisogno di un nuovo gruppo? Solo gli utenti privilegiati (il comitato) possono creare gruppi: rivolgiti a un membro del comitato o al supporto.",
     "open": "Mostra la spiegazione"
+  },
+  "sync": {
+    "title": "Sincronizza calendario",
+    "intro": "Usa questo link per abbonarti al calendario in Apple Calendario, Outlook o Google. I nuovi eventi e le modifiche appaiono automaticamente.",
+    "calendar": {
+      "label": "Calendario"
+    },
+    "url": {
+      "label": "Link di abbonamento"
+    },
+    "copy": {
+      "label": "Copia link"
+    },
+    "copied": "Link copiato",
+    "myCalendar": "Il mio calendario",
+    "hint": {
+      "readonly": "Il calendario abbonato è di sola lettura e si aggiorna circa ogni 15 minuti. Le adesioni e le disdette restano nell'app."
+    },
+    "reset": {
+      "label": "Reimposta link",
+      "confirm": "Il link precedente diventerà non valido. Tutti i dispositivi abbonati a questo calendario dovranno essere configurati di nuovo. Continuare?"
+    },
+    "eventNotFound": "Questo evento non è più disponibile."
   }
 }

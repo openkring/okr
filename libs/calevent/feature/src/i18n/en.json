@@ -533,5 +533,28 @@
     },
     "note": "Missing a calendar, or do you need a new group? Only privileged users (the board) can create groups — contact a board member or support.",
     "open": "Show explanation"
+  },
+  "sync": {
+    "title": "Sync calendar",
+    "intro": "Use this link to subscribe to the calendar in Apple Calendar, Outlook, or Google. New and changed events appear automatically.",
+    "calendar": {
+      "label": "Calendar"
+    },
+    "url": {
+      "label": "Subscription link"
+    },
+    "copy": {
+      "label": "Copy link"
+    },
+    "copied": "Link copied",
+    "myCalendar": "My calendar",
+    "hint": {
+      "readonly": "The subscribed calendar is read-only and refreshes about every 15 minutes. Accept/decline responses remain in the app."
+    },
+    "reset": {
+      "label": "Reset link",
+      "confirm": "The previous link will become invalid. Any device that subscribed to this calendar will need to be set up again. Continue?"
+    },
+    "eventNotFound": "This event is no longer available."
   }
 }
