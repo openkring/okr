@@ -332,7 +332,7 @@ function queryForms(label) {
 async function geocodeRaw(query) {
   const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
   url.searchParams.set('name', query);
-  url.searchParams.set('count', '5'); // reviewer sees the runner-up candidates' context, not just one
+  url.searchParams.set('count', '1'); // only the top hit is ever read — see geocodeLadder below
   url.searchParams.set('language', 'de');
   url.searchParams.set('format', 'json');
   const res = await fetch(url);
@@ -396,13 +396,33 @@ async function geocodeMissing(rows) {
 function locationDocId(tenant, key) { return `${tenant}__${key}`; }
 function locationAliasDocId(tenant, key) { return `${tenant}__location__${key}`; }
 
+/**
+ * Validates a decision-file coordinate pair rather than trusting `Number(...)`: a hand-edited
+ * European-style decimal comma ('47,3769') would otherwise become NaN and reach Firestore, and an
+ * empty pair would otherwise be coerced to (0, 0) — a real point in the Atlantic off West Africa,
+ * not "no coordinates". Both must be caught before a write, not silently written.
+ */
+function parseCoordinatePair(latitude, longitude) {
+  if (latitude === '' || longitude === '') return { valid: false, reason: 'missing coordinates' };
+  const lat = Number(latitude);
+  if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+    return { valid: false, reason: `invalid latitude '${latitude}'` };
+  }
+  const lon = Number(longitude);
+  if (!Number.isFinite(lon) || lon < -180 || lon > 180) {
+    return { valid: false, reason: `invalid longitude '${longitude}'` };
+  }
+  return { valid: true, lat, lon };
+}
+
+/** `latitude`/`longitude` must already be validated numbers — see parseCoordinatePair. */
 function buildLocation(tenant, row) {
   return {
     tenants: [tenant], isArchived: false,
     index: '', name: row.label, address: '', tags: '',
     type: LOCATION_TYPE,
-    latitude: row.latitude === '' ? 0 : Number(row.latitude),
-    longitude: row.longitude === '' ? 0 : Number(row.longitude),
+    latitude: row.latitude,
+    longitude: row.longitude,
     placeId: '', what3words: '', seaLevel: 0, speed: 0, direction: 0, distance: 0,
     notes: '',
   };
@@ -534,6 +554,24 @@ async function seed(byKey) {
   const decisions = parseDecisionFile(content);
   const fresh = new Map(buildFreshRows(byKey).map((r) => [r.key, r]));
 
+  // Validate the WHOLE set before writing anything. An included row with missing or unusable
+  // coordinates must never reach Firestore: a silent (0, 0) fallback is a real point in the
+  // Atlantic off West Africa, and a silently skipped row is a place whose diary entries lose
+  // their weather with no explanation. The operator is already reviewing this file right before
+  // --write, so an explicit abort here — naming every offending row — is the right place to stop.
+  if (isWrite) {
+    const invalid = [];
+    for (const [key, decision] of decisions) {
+      if (!fresh.has(key) || decision.include !== 'true') continue;
+      const parsed = parseCoordinatePair(decision.latitude, decision.longitude);
+      if (!parsed.valid) invalid.push(`  ${key}: ${parsed.reason}`);
+    }
+    if (invalid.length > 0) {
+      fail(`${invalid.length} included row(s) in ${resolvedOut} have no usable coordinates. Fill in `
+        + `latitude/longitude, or set include=false, before --write:\n${invalid.join('\n')}`);
+    }
+  }
+
   let included = 0, excluded = 0, missingCoords = 0;
   let locationsExisting = 0, aliasesExisting = 0;
   let locationsCreated = 0, aliasesCreated = 0;
@@ -542,14 +580,17 @@ async function seed(byKey) {
   for (const [key, decision] of decisions) {
     const info = fresh.get(key);
     if (!info) continue; // a decided key no longer present in the archive; nothing to do
-    if (decision.include !== 'true') { excluded++; continue; }
+
+    if (decision.include !== 'true') {
+      excluded++;
+      if (!isWrite) console.log(`- ${key} count=${info.count} include=false`);
+      continue;
+    }
     included++;
     const hasCoords = decision.latitude !== '' && decision.longitude !== '';
     if (!hasCoords) missingCoords++;
 
     const okey = locationDocId(tenantId, key);
-    const locationDoc = buildLocation(tenantId, { label: info.label, latitude: decision.latitude, longitude: decision.longitude });
-    const aliasDoc = buildLocationAlias(tenantId, { key, originals: info.originals }, okey);
     const locationRef = db.collection(LocationCollection).doc(okey);
     const aliasRef = db.collection(AliasCollection).doc(locationAliasDocId(tenantId, key));
 
@@ -557,11 +598,16 @@ async function seed(byKey) {
       const [locSnap, aliasSnap] = await Promise.all([locationRef.get(), aliasRef.get()]);
       if (locSnap.exists) locationsExisting++;
       if (aliasSnap.exists) aliasesExisting++;
-      console.log(`${locSnap.exists ? '=' : '+'} ${key} count=${info.count} `
+      console.log(`${locSnap.exists ? '=' : '+'} ${key} count=${info.count} include=true `
         + `coords=${hasCoords ? 'yes' : 'no'}${locSnap.exists ? ' (location exists)' : ''}`
         + `${aliasSnap.exists ? ' (alias exists)' : ''}`);
       continue;
     }
+
+    // Reached only when isWrite: the validation pass above already guarantees this parses.
+    const parsed = parseCoordinatePair(decision.latitude, decision.longitude);
+    const locationDoc = buildLocation(tenantId, { label: info.label, latitude: parsed.lat, longitude: parsed.lon });
+    const aliasDoc = buildLocationAlias(tenantId, { key, originals: info.originals }, okey);
 
     try {
       await locationRef.create(locationDoc);
