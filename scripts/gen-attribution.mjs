@@ -64,6 +64,12 @@ const TARGETS = {
     serverDeps: true,
     out: 'dist/apps/p13-app/browser/licenses.html',
   },
+  'bka-app': {
+    label: 'Bruno Kaiser',
+    bundle: 'dist/apps/bka-app/3rdpartylicenses.txt',
+    serverDeps: true,
+    out: 'dist/apps/bka-app/browser/licenses.html',
+  },
   'kring-website': {
     label: 'Kring',
     // self-hosted since 2026-08-04 (spec C6, defect W6) — the OFL text must travel with the files
