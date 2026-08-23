@@ -146,6 +146,7 @@
       "label": "Privée",
       "description": "Une sortie privée."
     },
+    "travel": { "label": "Voyage", "description": "Un voyage de plusieurs jours regroupant plusieurs notes quotidiennes." },
     "tracker": {
       "label": "Tracker",
       "description": "Une sortie enregistrée avec le tracker."
