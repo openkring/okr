@@ -44,6 +44,9 @@ const DEFAULT_ALLOWED_ORIGINS = [
   // Persoenliche Fotoseite (bka). Nur .ch — .com und .org zeigen nicht mehr hierhin.
   'https://brunokaiser.ch',
   'https://www.brunokaiser.ch',
+  // Die Firebase-Default-URL derselben Site, damit sich die Galerien testen lassen,
+  // bevor die Domain gemappt ist (wie bei scs-app-54aef.web.app oben).
+  'https://bka-website-54aef.web.app',
   'https://kwa.ch',
   'https://silcrest7.ch',
 ];
