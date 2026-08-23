@@ -116,6 +116,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   documents: 'Dokumente',
   calevents: 'Kalendereinträge',
   trips: 'Fahrten', // libs/geo/trip/feature/src/i18n/de.json: trips (not "Ausfahrten")
+  diaries: 'Tagesnotizen', // libs/content/diary — the spec's own word, not "Tagebuch"
   // stats_members has no list view either — it's the per-member half of the trip
   // logbook's statistics view, already labelled "Personen-Statistik" there
   // (libs/geo/trip/feature/src/i18n/de.json: stats.member_title).

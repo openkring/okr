@@ -240,7 +240,11 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // no contract, no accounting duty, no club record — which is exactly what C5 §7 means by
     // "a revocation beats an active claim, immediately". The claim a partner holds is a
     // promise bkaiser made to the partner, never a ground to keep processing the person.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects']);
+    // `diaries` joined 2026-08-23 (1.34): a personal diary is the author's own voluntary
+    // record. No contract obliges it, no accounting duty touches it, and it is not a club
+    // record — the entries are locked to `authorKey == request.auth.uid` and leave with
+    // their author. So nothing may lawfully block their erasure, which is what T2 encodes.
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'prospects', 'diaries']);
   });
 
   // Regression guard on the strictest-tier rule. `addresses` holds both the favorite

@@ -751,6 +751,33 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     retention: CLUB_RECORD,
   },
   {
+    collection: 'diaries',
+    dataClass: 'content',
+    tier: 'T2',              // a private diary is voluntary — and nothing may block a T2 erasure
+    onTenantExit: 'delete',  // not a club record: the entries leave with their author
+    // The subject is the AUTHOR, and only the author. `authorKey` holds the Firebase Auth
+    // uid — NOT the personKey the header describes for the other `authorKey` rows (see
+    // `DiaryModel.authorKey`) — because it is what the collection's rule compares against:
+    // `authorKey == request.auth.uid`, for read and for write alike.
+    find: (c: SubjectCtx) => db().collection('diaries').where('authorKey', '==', c.uid),
+    tenantScope: 'tenantsArray',
+    // NO `matches` on `people[]`, deliberately — the one judgement call in this row.
+    // An entry names other people (`people[]` carries their personKey, `customPeopleLabels`
+    // and the prose carry names), so on the `trips` pattern above a mentioned person would
+    // be a subject here too. They are not, for two reasons that have to hold together:
+    //  - DSG Art. 2 Abs. 2 lit. a (and GDPR Art. 2(2)(c)): data a natural person processes
+    //    exclusively for personal use falls outside the law's scope. A diary that nobody
+    //    but its author can read is that case.
+    //  - Matching them would BREAK privacy rather than serve it: `exportMyData` would hand
+    //    a third party the author's private prose about them, and `eraseMyData` would
+    //    rewrite someone else's diary.
+    // If diary entries ever become shareable, the personal-use exemption lapses and this
+    // decision must be revisited — the sharing feature is what would end it.
+    onExport: 'full',        // the substance IS the text; an index would not answer Art. 25 DSG
+    onErasure: 'delete',
+    retention: { months: 'indefinite', legalBasis: 'Persönliche Aufzeichnung — bleibt, bis der Autor sie löscht' },
+  },
+  {
     collection: 'stats_members',
     dataClass: 'content',
     tier: 'T4',
@@ -1214,6 +1241,10 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   role addresses published on purpose, never a data subject's contact details
 // not personal data: asset-categories — depreciation categories
 // not personal data: asset-movements — asset postings, reference assets and accounts only
+// not personal data: boat-targets — one document per tenant (id = tenantId) holding the
+//   Bootseinteilung grid: target counts per year/usage/type, per-season budgets, and slot
+//   labels. No person field and no createdBy. `labels[].text` is free text, but it is a
+//   planning note about a boat slot ("Ersatz für Gig-Doppel"), not about a person.
 // not personal data: booking-lines — debit/credit lines, reference accounts and amounts
 // not personal data: calendars — calendar definitions (name, colour, visibility)
 // not personal data: categories — enum/value lists used by dropdowns

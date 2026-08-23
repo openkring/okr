@@ -16,6 +16,7 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'app-config',
   'asset-categories',
   'asset-movements',
+  'boat-targets',
   'booking-lines',
   'calendars',
   'categories',
