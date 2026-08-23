@@ -178,26 +178,40 @@ function collectLabels() {
   return { people, locations };
 }
 
+/**
+ * `fullSlug` is the FIRST+LAST name slug, kept apart from the other two partial slugs
+ * (`slugs` still holds all three, for the candidates column). It is the only slug the
+ * pre-fill decision may ever match against -- see buildRows.
+ */
 async function loadTargets() {
   const persons = await db.collection(PersonCollection)
     .where('tenants', 'array-contains', tenantId).get();
   const locations = await db.collection(LocationCollection)
     .where('tenants', 'array-contains', tenantId).get();
   return {
-    persons: persons.docs.map((d) => ({
-      okey: d.id,
-      slugs: [
-        toAliasSlug(`${d.data().firstName ?? ''}`),
-        toAliasSlug(`${d.data().lastName ?? ''}`),
-        toAliasSlug(`${d.data().firstName ?? ''} ${d.data().lastName ?? ''}`),
-      ].filter(Boolean),
-      display: `${d.data().firstName ?? ''} ${d.data().lastName ?? ''}`.trim(),
-    })),
-    locations: locations.docs.map((d) => ({
-      okey: d.id,
-      slugs: [toAliasSlug(d.data().name ?? '')].filter(Boolean),
-      display: d.data().name ?? '',
-    })),
+    persons: persons.docs.map((d) => {
+      const fullSlug = toAliasSlug(`${d.data().firstName ?? ''} ${d.data().lastName ?? ''}`);
+      return {
+        okey: d.id,
+        slugs: [
+          toAliasSlug(`${d.data().firstName ?? ''}`),
+          toAliasSlug(`${d.data().lastName ?? ''}`),
+          fullSlug,
+        ].filter(Boolean),
+        fullSlug,
+        display: `${d.data().firstName ?? ''} ${d.data().lastName ?? ''}`.trim(),
+      };
+    }),
+    locations: locations.docs.map((d) => {
+      // A location has only one name -- its single slug doubles as its full-name slug.
+      const fullSlug = toAliasSlug(d.data().name ?? '');
+      return {
+        okey: d.id,
+        slugs: [fullSlug].filter(Boolean),
+        fullSlug,
+        display: d.data().name ?? '',
+      };
+    }),
   };
 }
 
@@ -260,7 +274,8 @@ function parseDecisionsTolerant(content, validOkeys) {
 function buildRows(labels, targets, oldDecisions) {
   const rows = [];
   let carried = 0;
-  let prefilled = 0;
+  let prefilled = 0;    // blank, unique FULL-NAME match -- the only case ever pre-filled
+  let partialOnly = 0;  // blank, no full-name match, but exactly one partial match -- guidance
   let ambiguous = 0;
   let unmatched = 0;
   const push = (space, map, candidates) => {
@@ -277,18 +292,28 @@ function buildRows(labels, targets, oldDecisions) {
       bySlug.set(slug, entry);
     }
     for (const [slug, entry] of [...bySlug.entries()].sort((a, b) => b[1].uses - a[1].uses)) {
+      // `hits` (first/last/full partial match) still drives the candidates column -- the
+      // operator wants to see every plausible person, including first-name-only hints.
       const hits = candidates.filter((c) => c.slugs.includes(slug));
+      // `fullHits` (first+last together) is the ONLY thing the pre-fill decision may act on.
+      // A first- or last-name-only match is usually wrong here: many diary people are
+      // deliberately absent from the database, and a blank decision usually means "decided:
+      // not this person", not "undecided". 2026-08-23: 27 rows were wrongly pre-filled on a
+      // partial match (two of them on a surname-only match) and had to be reverted by hand.
+      const fullHits = candidates.filter((c) => c.fullSlug === slug);
       const old = oldDecisions.get(`${space}\t${slug}`);
       let decision;
       if (old) {
         decision = old; // never overwrite an existing decision
         carried++;
-      } else if (hits.length === 1) {
-        decision = hits[0].okey; // still blank, exactly one candidate: pre-fill
+      } else if (fullHits.length === 1) {
+        decision = fullHits[0].okey; // still blank, exactly one FULL-NAME match: pre-fill
         prefilled++;
       } else {
-        decision = ''; // never blank one, and never guess among several / none
-        if (hits.length > 1) ambiguous++; else unmatched++;
+        decision = ''; // never blank one, and never guess on a partial match
+        if (hits.length === 1) partialOnly++;
+        else if (hits.length > 1) ambiguous++;
+        else unmatched++;
       }
       rows.push([
         space, slug, decision, String(entry.uses),
@@ -299,7 +324,7 @@ function buildRows(labels, targets, oldDecisions) {
   };
   push('person', labels.people, targets.persons);
   push('location', labels.locations, targets.locations);
-  return { rows, carried, prefilled, ambiguous, unmatched };
+  return { rows, carried, prefilled, partialOnly, ambiguous, unmatched };
 }
 
 function timestamp() {
@@ -339,11 +364,13 @@ function refreshDecisions(labels, targets) {
   const backupPath = `${resolvedDecisions}.bak-${timestamp()}`;
   writeFileSync(backupPath, oldContent, 'utf8');
 
-  const { rows, carried, prefilled, ambiguous, unmatched } = buildRows(labels, targets, oldDecisions);
+  const { rows, carried, prefilled, partialOnly, ambiguous, unmatched } =
+    buildRows(labels, targets, oldDecisions);
   writeFileSync(resolvedDecisions, [HEADER, ...rows].join('\n') + '\n', 'utf8');
 
   console.log(`\nbackup written to ${backupPath}`);
-  console.log(`${carried} decisions carried over, ${prefilled} newly pre-filled, `
+  console.log(`${carried} decisions carried over, ${prefilled} pre-filled (full-name match), `
+    + `${partialOnly} single partial candidate (left blank for you), `
     + `${ambiguous} still ambiguous, ${unmatched} still unmatched`);
   console.log(`${rows.length} total rows written to ${resolvedDecisions}`);
 }
