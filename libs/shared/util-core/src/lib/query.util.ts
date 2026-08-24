@@ -27,3 +27,24 @@ export function addSystemQueries(dbQuery: DbQuery[], tenant: string): DbQuery[] 
   }
   return dbQuery;
 }
+
+/**
+ * Whether a document read **by document id** belongs to the given tenant.
+ *
+ * Queries are tenant-scoped by `getSystemQuery` (`tenants array-contains`), but a read by
+ * id bypasses that filter entirely — and `pages`/`sections` are world-readable in
+ * `firestore.rules` (the anonymous PWA landing needs them), so nothing else stops a
+ * cross-tenant read. Any code path that resolves a document from a key must call this.
+ *
+ * Deliberately checks ONLY `tenants`: whether archived documents are wanted is a separate,
+ * per-call-site decision (the AOC editors show them, the rendered page does not).
+ *
+ * @param doc the document (or undefined, e.g. a missing doc)
+ * @param tenantId the tenant the reader belongs to
+ */
+export function belongsToTenant(
+  doc: { tenants?: string[] } | undefined | null,
+  tenantId: string
+): boolean {
+  return !!doc && Array.isArray(doc.tenants) && doc.tenants.includes(tenantId);
+}

@@ -8,6 +8,7 @@ import { ModalController } from '@ionic/angular/standalone';
 import { AppStore } from '@okr/shared-feature';
 import { ArticleSection, PageCollection, PageModel, SectionCollection, SectionModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
+import { belongsToTenant, replaceSubstring } from '@okr/shared-util-core';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 export type NewsState = {
@@ -35,25 +36,34 @@ export const NewsStore = signalStore(
         tenantId: store.appStore.env.tenantId,
       }),
       stream: ({ params }) => {
-        const { blogPageKey, maxItems } = params;
+        const { blogPageKey, maxItems, tenantId } = params;
         if (!blogPageKey) return of([] as ArticleSection[]);
 
-        // 1. Load the blog page to get its ordered sections list
-        return store.appStore.firestoreService.readObject<PageModel>(PageCollection, blogPageKey).pipe(
+        // 1. Load the blog page to get its ordered sections list. The key may carry the
+        //    @TID@ placeholder (`news_@TID@`) — the dashboard's `d-news` section doc is
+        //    SHARED across tenants, so an unresolved literal key would hand every tenant
+        //    the same (foreign) blog page.
+        const pageKey = replaceSubstring(blogPageKey, '@TID@', tenantId);
+        return store.appStore.firestoreService.readObject<PageModel>(PageCollection, pageKey).pipe(
           switchMap(page => {
-            if (!page?.sections?.length) return of([] as ArticleSection[]);
+            // A read by document id bypasses the `tenants array-contains` filter, and
+            // `pages` is world-readable in firestore.rules — so the tenant check has to
+            // happen here or a foreign tenant's blog leaks into this app.
+            if (!belongsToTenant(page, tenantId)) return of([] as (SectionModel | undefined)[]);
+            if (!page?.sections?.length) return of([] as (SectionModel | undefined)[]);
 
             // 2. Load each section document in parallel
-            const { tenantId } = params;
             const sectionObs = page.sections.map(sectionKey =>
-              store.appStore.firestoreService.readModel<SectionModel>(SectionCollection, sectionKey.replace('@TID@', tenantId))
+              store.appStore.firestoreService.readModel<SectionModel>(SectionCollection, replaceSubstring(sectionKey, '@TID@', tenantId))
             );
             return combineLatest(sectionObs);
           }),
           map(sections => {
-            // 3. Keep only published article sections
+            // 3. Keep only this tenant's published article sections. Same reason as above:
+            //    the sections are resolved by key, so `tenants` is not filtered for us.
             const articles = sections.filter(
-              (s): s is ArticleSection => !!s && s.type === 'article' && !s.isArchived && s.state === 'published'
+              (s): s is ArticleSection =>
+                !!s && s.type === 'article' && !s.isArchived && s.state === 'published' && belongsToTenant(s, tenantId)
             );
             return maxItems !== undefined ? articles.slice(0, maxItems) : articles;
           })

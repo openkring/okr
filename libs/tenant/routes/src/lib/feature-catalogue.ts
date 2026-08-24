@@ -220,9 +220,13 @@ const cms: BlockRoutes = {
       path: 'public',
       children: [
         {
+          // `news_@TID@`, not `news`: page document ids are GLOBAL (one Firestore
+          // collection for every tenant), so a literal id here served scs's blog page to
+          // every tenant. PageDispatcher resolves the @TID@ placeholder, same as it does
+          // for section keys.
           path: 'news',
           loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher),
-          data: { id: 'news', showMenu: false },
+          data: { id: 'news_@TID@', showMenu: false },
         },
         {
           path: ':id/:contextMenuName',
@@ -419,6 +423,17 @@ const geo: BlockRoutes = {
       // see the `page` fragment in the `cms` block for the full rationale.
       children: [{ path: ':listId/:contextMenuName', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/location-feature').then(m => m.LocationList) }],
     },
+  ],
+};
+
+/**
+ * Logbuch / Fahrtenbuch. Split out of `geo` on 2026-08-24 together with its metadata block
+ * (see `trip` in `feature-blocks.ts` for the why): `geo` is `core: true`, so as long as this
+ * route and its menu rows lived there, every tenant got a Logbuch they could not switch off.
+ */
+const trip: BlockRoutes = {
+  id: 'trip',
+  routes: (): Route[] => [
     {
       path: 'trips',
       canActivate: [isAuthenticatedGuard],
@@ -1107,7 +1122,7 @@ const alias: BlockRoutes = {
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
   calevent, aoc, activity, task, instruments, games,
-  auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
+  auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,
   finance, esign, pdfTemplate,

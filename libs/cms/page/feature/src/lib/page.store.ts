@@ -8,7 +8,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@okr/shared-models';
-import { chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData, getTodayStr, DateFormat } from '@okr/shared-util-core';
+import { belongsToTenant, chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData, getTodayStr, DateFormat } from '@okr/shared-util-core';
 import { okrPrompt, confirm, downloadTextFile, error, exportCsv, getExportFileName, navigateByUrl } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -95,6 +95,18 @@ export const _PageStore = signalStore(
         }
         return store.pageService.read(params.pageId).pipe(
           debugItemLoaded<PageModel>(`PageStore.pageResource (page only)`, params.currentUser),
+          map(page => {
+            // A page is read BY DOCUMENT ID, which bypasses the `tenants array-contains`
+            // filter, and `pages` is world-readable in firestore.rules (the anonymous
+            // landing needs it). Without this check a shared/foreign page id — e.g. the
+            // catalogue route `news_@TID@` falling back to another tenant's doc — renders
+            // another tenant's content. Treat "not mine" as "not found".
+            if (page && !belongsToTenant(page, store.tenantId())) {
+              debugData('PageStore.pageResource: page belongs to another tenant', { page: page.okey, tenants: page.tenants }, params.currentUser);
+              return undefined;
+            }
+            return page;
+          }),
           switchMap(page => {
             if (!page || !page.sections || page.sections.length === 0) {
               debugData('PageStore.pageResource: No sections to load', { page: page?.okey, sectionCount: page?.sections?.length }, params.currentUser);
@@ -107,7 +119,11 @@ export const _PageStore = signalStore(
             );
             return combineLatest(sectionObservables).pipe(
               map(sections => {
-                const filteredSections = sections.filter(s => s !== undefined) as SectionModel[];
+                // Same reason as the page check above: sections are resolved by key, so
+                // `tenants` is never filtered for us. Drop anything this tenant does not own.
+                const filteredSections = sections.filter(
+                  (s): s is SectionModel => belongsToTenant(s, store.tenantId())
+                );
                 debugData('PageStore.pageResource: Sections loaded', { 
                   page: page.okey, 
                   requestedCount: page.sections.length,

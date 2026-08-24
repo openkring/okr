@@ -175,7 +175,11 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
     const sectionRefs = sectionKeys.map(k => db.collection('sections').doc(k));
     const sectionDocs = await db.getAll(...sectionRefs);
     const liveSections = sectionDocs
-      .filter(d => d.exists && d.data()?.['isArchived'] !== true)
+      // The `tenants` check is not redundant with the page check above: a page shared
+      // across tenants can list section keys that resolve to another tenant's documents,
+      // and a read by key never passes through the array-contains filter.
+      .filter(d => d.exists && d.data()?.['isArchived'] !== true
+        && ((d.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId))
       .map(d => d.data() as SectionDoc);
 
     const nestedKeys = new Set<string>();
@@ -193,7 +197,9 @@ export async function pageRouter(req: Request, res: Response): Promise<void> {
       const nestedRefs = Array.from(nestedKeys).map(k => db.collection('sections').doc(k));
       const nestedDocs = await db.getAll(...nestedRefs);
       for (const d of nestedDocs) {
-        if (d.exists) nestedSections.set(d.id, d.data() as SectionDoc);
+        if (d.exists && ((d.data()?.['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
+          nestedSections.set(d.id, d.data() as SectionDoc);
+        }
       }
     }
 

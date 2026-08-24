@@ -2,6 +2,7 @@ import { DbQuery } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 import {
   addSystemQueries,
+  belongsToTenant,
   getRangeQuery,
   getSystemQuery
 } from './query.util';
@@ -346,4 +347,29 @@ describe('query.util', () => {
       expect(finalQuery.filter(q => q.key === 'isArchived')).toHaveLength(2); // One from range, one from system
     });
   });
+
+  describe('belongsToTenant', () => {
+    it('accepts a document listing the tenant', () => {
+      expect(belongsToTenant({ tenants: ['scs', 'elab'] }, 'elab')).toBe(true);
+    });
+
+    it('rejects a document of another tenant', () => {
+      expect(belongsToTenant({ tenants: ['scs'] }, 'elab')).toBe(false);
+    });
+
+    it('rejects a missing document', () => {
+      expect(belongsToTenant(undefined, 'elab')).toBe(false);
+      expect(belongsToTenant(null, 'elab')).toBe(false);
+    });
+
+    it('rejects a document without a tenants array', () => {
+      expect(belongsToTenant({}, 'elab')).toBe(false);
+      expect(belongsToTenant({ tenants: [] }, 'elab')).toBe(false);
+    });
+
+    it('ignores isArchived — that is a separate, per-call-site decision', () => {
+      expect(belongsToTenant({ tenants: ['elab'], isArchived: true } as { tenants: string[] }, 'elab')).toBe(true);
+    });
+  });
+
 });
