@@ -222,6 +222,7 @@ import { PersonLookup } from './person-lookup';
       </ion-card>
 
       <!-------------------------------------- MEMBERSHIP (optional) ------------------------------------->
+      @if(membershipEnabled()) {
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ i18n().add_membership_label() }}</ion-card-title>
@@ -261,7 +262,8 @@ import { PersonLookup } from './person-lookup';
           </ion-grid>
         </ion-card-content>
       </ion-card>
-    
+      }
+
       <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       @if(hasRole('admin')) {
         <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
@@ -309,6 +311,8 @@ export class PersonNewForm {
   }));
 
   public membershipCategories = input.required<CategoryListModel>();
+  // false when the tenant has no membership category configured -> the optional membership card is hidden
+  public membershipEnabled = input(true);
   // signals
   public dirty = output<boolean>();
   public valid = output<boolean>();

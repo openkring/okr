@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { OrgModel } from '@okr/shared-models';
+import { CategoryListModel, OrgModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { OrgSelectModal } from '@okr/shared-feature';
 import { isOrg } from '@okr/shared-util-core';
@@ -26,24 +26,23 @@ import { PersonStore } from './person.store';
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
-      @if(mcat(); as mcat) {
-        @if(formData(); as formData) {
-          <okr-person-new-form
-            [i18n]="store.i18n"
-            [formData]="formData"
-            (formDataChange)="onFormDataChange($event)"
-            [currentUser]="currentUser()"
-            [genders]="genders()"
-            [allTags]="tags()"
-            [tenantId]="tenantId()"
-            [readOnly]="false"
-            [personLookupEnabled]="personLookupEnabled()"
-            [membershipCategories]="mcat"
-            (selectClicked)="selectOrg()"
-            (dirty)="formDirty.set($event)"
-            (valid)="formValid.set($event)"
-          />
-        }
+      @if(formData(); as formData) {
+        <okr-person-new-form
+          [i18n]="store.i18n"
+          [formData]="formData"
+          (formDataChange)="onFormDataChange($event)"
+          [currentUser]="currentUser()"
+          [genders]="genders()"
+          [allTags]="tags()"
+          [tenantId]="tenantId()"
+          [readOnly]="false"
+          [personLookupEnabled]="personLookupEnabled()"
+          [membershipCategories]="mcat()"
+          [membershipEnabled]="membershipEnabled()"
+          (selectClicked)="selectOrg()"
+          (dirty)="formDirty.set($event)"
+          (valid)="formValid.set($event)"
+        />
       }
     </ion-content>
   `
@@ -62,7 +61,10 @@ export class PersonNewModal {
 
   // derived 
   protected currentUser = computed(() => this.store.currentUser());
-  protected mcat = computed(() => this.store.membershipCategory());
+  // A tenant without a membership category (no 'mcat' doc for this tenant) must still be able
+  // to create persons: fall back to an empty category and hide the optional membership card.
+  protected mcat = computed(() => this.store.membershipCategory() ?? new CategoryListModel(this.tenantId()));
+  protected membershipEnabled = computed(() => (this.store.membershipCategory()?.items.length ?? 0) > 0);
   protected tags = computed(() => this.store.getTags());
   protected tenantId = computed(() => this.store.tenantId());
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
