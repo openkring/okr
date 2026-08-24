@@ -6,7 +6,8 @@ import { provideServiceWorker } from '@angular/service-worker';
 
 import * as Sentry from '@sentry/angular';
 import { ENV } from '@okr/shared-config';
-import { isBrowser, httpBreadcrumbInterceptor, VersionCheckService } from '@okr/shared-util-angular';
+import { AvailableLanguages, DefaultLanguageCode } from '@okr/shared-models';
+import { ChunkLoadErrorHandler, isBrowser, httpBreadcrumbInterceptor, VersionCheckService } from '@okr/shared-util-angular';
 import { AppStore, SentryContextService } from '@okr/shared-feature';
 import { GroupEditModal } from '@okr/subject-group-feature';
 import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
@@ -22,8 +23,8 @@ import { initializeApp } from 'firebase/app';
 
 // i18n with transloco
 import { APP_STORE_MIN, I18nOverrideService } from '@okr/shared-data-access';
-import { I18nService, TranslocoHttpLoader } from '@okr/shared-i18n';
-import { provideTransloco } from '@jsverse/transloco';
+import { I18nService, SentryMissingHandler, TranslocoHttpLoader } from '@okr/shared-i18n';
+import { provideTransloco, provideTranslocoMissingHandler } from '@jsverse/transloco';
 import { TranslateModule } from '@ngx-translate/core';
 
 // Initialize Firebase. This is safe to run on the server.
@@ -71,21 +72,27 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(TranslateModule.forRoot()),
     provideHttpClient(withInterceptors([httpBreadcrumbInterceptor])),
 
-    // Sentry: route uncaught Angular errors through Sentry's ErrorHandler.
-    { provide: ErrorHandler, useValue: Sentry.createErrorHandler({ showDialog: false }) },
+    // Sentry: route uncaught Angular errors through Sentry's ErrorHandler, wrapped so a
+    // stale lazy-chunk failure (old client after a deploy) reloads once instead of
+    // surfacing as a dead-end error. See ChunkLoadErrorHandler (SCS-19).
+    { provide: ErrorHandler, useValue: new ChunkLoadErrorHandler(Sentry.createErrorHandler({ showDialog: false })) },
     // Sentry: record router navigations as spans.
     { provide: Sentry.TraceService, deps: [Router] },
     provideAppInitializer(() => { inject(Sentry.TraceService); }),
 
     provideTransloco({
       config: {
-        availableLangs: ['en', 'de', 'fr', 'es', 'it'],
-        defaultLang: 'de',
+        availableLangs: AvailableLanguages,
+        defaultLang: DefaultLanguageCode,
         reRenderOnLangChange: true,
+        // Retry a failed scope/lang fetch before giving up (helps transient network blips).
+        failedRetries: 3,
         prodMode: !isDevMode(),
       },
       loader: TranslocoHttpLoader,
     }),
+    // Forward missing translation keys to Sentry (deduped, staging/prod only).
+    provideTranslocoMissingHandler(SentryMissingHandler),
     I18nService,
     { provide: APP_STORE_MIN, useExisting: AppStore },
 
