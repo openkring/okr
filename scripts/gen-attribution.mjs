@@ -70,6 +70,23 @@ const TARGETS = {
     serverDeps: true,
     out: 'dist/apps/bka-app/browser/licenses.html',
   },
+  // Added 2026-08-24. Both were scaffolded after this file was written and were never
+  // registered, so `pnpm release <app>` aborted at step 3b ("Unknown target") AFTER a clean
+  // production build — the release could not complete for either app. Same shape as
+  // `p13-app`/`bka-app`: neither embeds its website at `./web` (that is scs-app only), so
+  // there is no `selfHostedFonts` here and their `*-website` targets stand alone below.
+  'kring-app': {
+    label: 'Kring',
+    bundle: 'dist/apps/kring-app/3rdpartylicenses.txt',
+    serverDeps: true,
+    out: 'dist/apps/kring-app/browser/licenses.html',
+  },
+  'elab-app': {
+    label: 'GLP EnergyLab',
+    bundle: 'dist/apps/elab-app/3rdpartylicenses.txt',
+    serverDeps: true,
+    out: 'dist/apps/elab-app/browser/licenses.html',
+  },
   'kring-website': {
     label: 'Kring',
     // self-hosted since 2026-08-04 (spec C6, defect W6) — the OFL text must travel with the files
