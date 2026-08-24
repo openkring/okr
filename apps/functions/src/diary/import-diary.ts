@@ -1,7 +1,7 @@
 // apps/functions/src/diary/import-diary.ts
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
-import { defineSecret, defineString } from 'firebase-functions/params';
+import { defineSecret } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { CallableRequest } from 'firebase-functions/v2/https';
 import type { Firestore } from 'firebase-admin/firestore';
@@ -51,14 +51,18 @@ const DIARY_DRIVE_REFRESH_TOKEN = defineSecret('DIARY_DRIVE_REFRESH_TOKEN');
  * The Firebase Auth uid of the ONE person whose Drive refresh token this function holds. Both
  * callables below may only ever import that one person's own archive — see `assertArchiveOwner`.
  *
- * A plain config param, NOT a secret: a uid is an identifier, not a credential. Knowing it does
- * not let anyone authenticate as that user, and it is already visible in every `users/{uid}`
- * document id, in every diary's `authorKey`, and in the rules as `request.auth.uid`. Declaring it
- * as a secret would buy nothing and cost the Secret Manager version-pinning dance on every
- * rotation. Unset it resolves to '', which `isArchiveOwner` rejects — so a misconfigured deploy
- * denies everyone rather than letting everyone through.
+ * Declared as a secret for DELIVERY, not because a uid is sensitive. It is not: knowing it does
+ * not let anyone authenticate as that user, and it already appears in every `users/{uid}` document
+ * id, in every diary's `authorKey`, and in the rules as `request.auth.uid`. But Secret Manager is
+ * the only wired-up config channel here — every .env file is git-ignored and `dist/apps/functions` is
+ * rebuilt on every deploy, so a `defineString` param would have nowhere to persist and the CLI
+ * would prompt for it on every functions deploy, including deploys that have nothing to do with
+ * the diary. If per-tenant config ever moves into `app-config/<tenantId>`, this belongs there.
+ *
+ * Unset it resolves to '', which `isArchiveOwner` rejects — a misconfigured deploy denies
+ * everyone rather than letting everyone through.
  */
-const DIARY_OWNER_UID = defineString('DIARY_OWNER_UID');
+const DIARY_OWNER_UID = defineSecret('DIARY_OWNER_UID');
 
 export interface DiaryImportRequest {
   /** Continues an existing run. Omit to start a new one (then `tenantId` is required). */
@@ -567,7 +571,7 @@ export const dryRunDiaryImport = onCall<DiaryImportRequest, Promise<DiaryImportM
     region: REGION,
     enforceAppCheck: true,
     timeoutSeconds: TIMEOUT_SECONDS,
-    secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN],
+    secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN, DIARY_OWNER_UID],
   },
   async (request) => {
     checkAppCheckToken(request, 'dryRunDiaryImport');
@@ -589,7 +593,7 @@ export const commitDiaryImport = onCall<DiaryImportRequest, Promise<DiaryImportM
     region: REGION,
     enforceAppCheck: true,
     timeoutSeconds: TIMEOUT_SECONDS,
-    secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN],
+    secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN, DIARY_OWNER_UID],
   },
   async (request) => {
     checkAppCheckToken(request, 'commitDiaryImport');
