@@ -23,7 +23,8 @@ import { TenantSwitcherGrid } from './tenant-switcher-grid';
   standalone: true,
   imports: [IonButton, IonContent, IonIcon, IonPopover, SvgIconPipe, TenantSwitcherGrid],
   styles: [`
-    .switcher-title { padding: 12px 12px 0; font-size: 13px; font-weight: 600; color: var(--ion-color-medium); }
+    ion-popover { --width: 320px; --max-width: 92vw; }
+    .switcher-title { padding: 12px 14px 0; font-size: 17px; font-weight: 600; color: var(--ion-color-medium); }
   `],
   template: `
     @if (isVisible()) {
