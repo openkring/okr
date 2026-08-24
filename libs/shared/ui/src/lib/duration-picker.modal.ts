@@ -157,7 +157,7 @@ export class DurationPickerModal {
       if (iso) return iso;
     }
     const today = getTodayStr(DateFormat.StoreDate);
-    const day = isEnd ? today : subDuration(today, { days: -7 }, DateFormat.StoreDate);
+    const day = isEnd ? today : subDuration(today, { days: 7 }, DateFormat.StoreDate);
     return convertDateFromAnyFormatToString(day, isoFormat) ?? '';
   }
 

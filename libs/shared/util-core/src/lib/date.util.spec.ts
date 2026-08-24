@@ -4,6 +4,7 @@ import {
     checkYearRange,
     classifyStoreDate,
     compareDate,
+    addDuration,
     convertDateFormat, convertDateFormatToString, copyDate,
     DateFormat,
     DatePart,
@@ -28,7 +29,8 @@ import {
     parsePartialViewDate,
     parseFullViewDate,
     prettyFormatDate,
-    prettyFormatDateTime
+    prettyFormatDateTime,
+    subDuration
 } from './date.util';
 describe('date.util', () => {
 
@@ -646,5 +648,46 @@ describe('date.util', () => {
         it('still accepts 29 Feb on an actual leap year', () => {
             expect(parseFullViewDate('29.2.1984')).toBe('19840229');
         });
+    });
+});
+
+describe('addDuration / subDuration', () => {
+
+    // Regression guard. `subDuration` was a copy-paste of `addDuration` and called date-fns
+    // `add()`, so it ADDED the duration for as long as it existed — silently, because nothing
+    // tested it. Its worst victim was `cleanupOrphanSessions`, which computed a threshold 30
+    // minutes into the FUTURE and therefore closed every active session on every run.
+    it('subDuration subtracts a positive duration', () => {
+        expect(subDuration('20260824', { days: 7 })).toEqual('20260817');
+    });
+
+    it('subDuration crosses a month boundary backwards', () => {
+        expect(subDuration('20260301', { days: 1 })).toEqual('20260228');
+    });
+
+    it('subDuration subtracts minutes on a StoreDateTime', () => {
+        expect(subDuration('20260824120000', { minutes: 30 }, DateFormat.StoreDateTime)).toEqual('20260824113000');
+    });
+
+    it('addDuration adds a positive duration', () => {
+        expect(addDuration('20260817', { days: 7 })).toEqual('20260824');
+    });
+
+    it('the two are inverses of each other', () => {
+        const start = '20260824';
+        expect(subDuration(addDuration(start, { days: 30 }), { days: 30 })).toEqual(start);
+    });
+
+    // The sign is honoured rather than absolute-valued: three call sites used to pass a negative
+    // duration deliberately, to compensate for the bug. Pinning this keeps a future "fix" from
+    // quietly making subDuration(x, {days: -7}) mean the same as subDuration(x, {days: 7}).
+    it('a negative duration reverses the direction of each', () => {
+        expect(subDuration('20260817', { days: -7 })).toEqual('20260824');
+        expect(addDuration('20260824', { days: -7 })).toEqual('20260817');
+    });
+
+    it('a zero duration is a no-op for both', () => {
+        expect(subDuration('20260824', { days: 0 })).toEqual('20260824');
+        expect(addDuration('20260824', { days: 0 })).toEqual('20260824');
     });
 });

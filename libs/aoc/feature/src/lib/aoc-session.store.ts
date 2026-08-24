@@ -29,11 +29,9 @@ export type AocSessionState = {
   hiddenAnonymous: boolean;   // hide all sessions without a userKey
 };
 
-// NOTE: subDuration in shared-util-core has a bug — it uses date-fns `add()` instead of `sub()`.
-// Passing { days: -7 } correctly subtracts 7 days via date-fns add() with a negative value.
 function lastWeekFrom(): string {
   const now = getTodayStr(DateFormat.StoreDateTime);
-  return subDuration(now, { days: -7 }, DateFormat.StoreDateTime);
+  return subDuration(now, { days: 7 }, DateFormat.StoreDateTime);
 }
 
 const initialState: AocSessionState = {

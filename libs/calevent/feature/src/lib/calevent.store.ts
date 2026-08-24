@@ -12,7 +12,7 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getSystemQuery, getTodayStr, inviteeCandidates, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, subDuration, warn } from '@okr/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getSystemQuery, getTodayStr, inviteeCandidates, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
 import { copyToClipboardWithConfirmation, error, navigateByUrl, confirm, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import { yearMatches } from '@okr/shared-categories';
@@ -126,15 +126,10 @@ export const CalEventStore = signalStore(
 
   withComputed((state) => {
     return {
-      startDate: computed(() => {
-        if (state.startDaysOffset() < 0) {
-          return subDuration(getTodayStr(), { days: state.startDaysOffset()});
-        }
-        if (state.startDaysOffset() > 0) {
-          return addDuration(getTodayStr(), { days: state.startDaysOffset() })
-        }
-        return getTodayStr();
-      })
+      // `startDaysOffset` is signed: negative reaches into the past, positive into the future,
+      // and 0 is today. `addDuration` expresses all three directly — the previous three-branch
+      // form only existed to route the negative case through `subDuration`, which used to add.
+      startDate: computed(() => addDuration(getTodayStr(), { days: state.startDaysOffset() }))
     }
   }),
   

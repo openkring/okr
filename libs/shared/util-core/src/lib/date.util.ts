@@ -1,5 +1,5 @@
 import { END_FUTURE_DATE_STR, MAX_DATES_PER_SERIES } from '@okr/shared-constants';
-import { add, compareAsc, differenceInCalendarDays, differenceInHours, Duration, addBusinessDays, format, getISODay, isAfter, isFuture, isLeapYear, isValid, parse } from 'date-fns';
+import { add, sub, compareAsc, differenceInCalendarDays, differenceInHours, Duration, addBusinessDays, format, getISODay, isAfter, isFuture, isLeapYear, isValid, parse } from 'date-fns';
 import { die, warn } from './log.util';
 
 export enum DateFormat {
@@ -512,8 +512,8 @@ export function addDuration(storeDate: string, duration: Duration, dateFormat = 
  * example: to calculate a date that always starts 30 days before today: subDuration(getTodayStr(), { days: 30})
  */
 export function subDuration(storeDate: string, duration: Duration, dateFormat = DateFormat.StoreDate): string {
-  const date = parseDate(storeDate, dateFormat, false) ?? die('date.util/addDays: invalid date ' + storeDate);
-  const dateAfterDuration = add(date, duration);
+  const date = parseDate(storeDate, dateFormat, false) ?? die('date.util/subDuration: invalid date ' + storeDate);
+  const dateAfterDuration = sub(date, duration);
   return format(dateAfterDuration, dateFormat);
 }
 
