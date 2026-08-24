@@ -25,6 +25,7 @@ import { AuthStore } from './auth.store';
   .title { text-align: center; font-size: 2rem; padding: 20px; }
   .logo { max-width: 150px; text-align: center; display: block; margin-left: auto; margin-right: auto; width: 50%; z-index: 10; padding: 20px; }
   .button-container { margin: 20px; }
+  .reset-button { --color: var(--ion-color-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
   @media (width <= 600px) {
      .login-form { width: 100%; text-align: center; z-index: 5; }
      .login-container {  display: flex; height: 100%; padding: 10px; }
@@ -55,7 +56,7 @@ import { AuthStore } from './auth.store';
               </ion-row>
               <ion-row>
                 <ion-col>
-                  <ion-button fill="outline" (click)="resetPassword()" size="small">{{ store.i18n.pwdreset_title() }}</ion-button>
+                  <ion-button class="reset-button" fill="clear" color="primary" (click)="resetPassword()">{{ store.i18n.pwdreset_title() }}</ion-button>
                 </ion-col>
               </ion-row>
             </ion-grid>
