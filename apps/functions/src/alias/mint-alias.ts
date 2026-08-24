@@ -6,8 +6,8 @@ import {
   AliasModel,
   AliasSpaceCollection,
 } from '@okr/shared-models';
-import type { AliasSpaceModel, AliasTargetType } from '@okr/shared-models';
-import { removeKeyFromOkrModel } from '@okr/shared-util-core';
+import type { AliasSpaceModel, AliasTargetType, UserModel } from '@okr/shared-models';
+import { hasRole, removeKeyFromOkrModel } from '@okr/shared-util-core';
 import {
   buildAliasDocId,
   generateAliasCode,
@@ -52,14 +52,19 @@ export async function loadSpace(
   return space;
 }
 
-/** Der Space bestimmt per `roleNeeded`, wer darin prägen darf (Spec, Entscheid 9). */
+/**
+ * Der Space bestimmt per `roleNeeded`, wer darin prägen darf (Spec, Entscheid 9).
+ *
+ * Die Prüfung geht über `hasRole` und NICHT über ein flaches `roles[roleNeeded] === true`.
+ * Die Rollen der App sind gestuft: ein `eventAdmin` ist auch `registered`, ohne das Flag
+ * zwingend gesetzt zu haben. Ein flacher Vergleich hätte einen Space mit
+ * `roleNeeded: 'registered'` ausgerechnet denen verwehrt, die MEHR dürfen als der Space
+ * verlangt — sichtbar geworden am `link`-Space der Termin-Kurzlinks.
+ */
 export function assertMayMint(space: AliasSpaceModel, roles: Record<string, boolean>): void {
-  // admin ist überall einschlussfähig, sonst müsste jeder Space ihn einzeln nennen.
-  if (roles['admin'] === true) return;
-  if (roles[space.roleNeeded] !== true) {
-    throw new HttpsError('permission-denied',
-      `Minting in space '${space.name}' requires the '${space.roleNeeded}' role.`);
-  }
+  if (hasRole(space.roleNeeded, { roles } as UserModel)) return;
+  throw new HttpsError('permission-denied',
+    `Minting in space '${space.name}' requires the '${space.roleNeeded}' role.`);
 }
 
 /**

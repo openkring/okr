@@ -49,6 +49,12 @@ export const CALEVENT_I18N_KEYS = {
   cancel_event_conf:          PFX + 'cancelEvent.conf',
 
   copy:                       PFX + 'copy.label',
+
+  // 'Link zum Termin kopieren' — Kurzlink über den Alias-Service
+  copy_link:                  PFX + 'copyLink.label',
+  copy_link_conf:             PFX + 'copyLink.conf',
+  copy_link_error:            PFX + 'copyLink.error',
+
   filter_all:                 PFX + 'filter.all',
 
   // "Kalender & Einladungen" explainer (CalEventInfoModal)

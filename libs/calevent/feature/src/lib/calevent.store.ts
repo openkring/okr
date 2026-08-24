@@ -11,9 +11,9 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
-import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
+import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getSystemQuery, getTodayStr, inviteeCandidates, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, subDuration, warn } from '@okr/shared-util-core';
-import { error, navigateByUrl, confirm, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
+import { copyToClipboardWithConfirmation, error, navigateByUrl, confirm, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import { yearMatches } from '@okr/shared-categories';
 import { MAX_DATES_PER_SERIES } from '@okr/shared-constants';
@@ -24,8 +24,16 @@ import { LocationService } from '@okr/location-data-access';
 import { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
-import { CALEVENT_I18N_KEYS, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, planSeriesReconcile, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { AliasMintService } from '@okr/system-alias-data-access';
+import { CALEVENT_I18N_KEYS, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, planSeriesReconcile, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
+
+/**
+ * Der Alias-Space der Termin-Kurzlinks: ein `redirect`-Space mit `targetTypes: ['url']`
+ * und `roleNeeded: 'registered'`. Der Name steht in der URL (/s/link/<code>) und ist deshalb
+ * nach dem ersten Alias unveränderlich.
+ */
+const CALEVENT_ALIAS_SPACE = 'link';
 
 const PUBLIC_CALEVENTS_CF_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/getPublicCalEvents';
 
@@ -77,7 +85,8 @@ export const CalEventStore = signalStore(
     modelSelectService: inject(ModelSelectService),
     i18nService: inject(I18nService),
     matrixChatService: inject(MatrixChatService),
-    invitationService: inject(InvitationService)
+    invitationService: inject(InvitationService),
+    aliasMintService: inject(AliasMintService)
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(CALEVENT_I18N_KEYS),
@@ -716,6 +725,49 @@ export const CalEventStore = signalStore(
           }
         }
         return undefined;
+      },
+
+      /**
+       * Öffnet den Termin mit diesem okey — der Einstieg des `?event=`-Deep-Links.
+       *
+       * Liest direkt aus Firestore statt aus der geladenen Liste: der Empfänger eines Kurzlinks
+       * hat den Kalender des Termins in der Regel nicht gefiltert, und ein Termin ausserhalb des
+       * geladenen Zeitfensters würde sonst einfach nichts öffnen.
+       */
+      async viewByKey(okey: string): Promise<void> {
+        const calevent = await firstValueFrom(store.calEventService.read(okey));
+        if (!calevent) {
+          showToast(store.toastController, store.i18n.copy_link_error());
+          return;
+        }
+        await this.view(calevent);
+      },
+
+      /**
+       * Kopiert einen kurzen, stabilen Link auf den Termin in die Zwischenablage.
+       *
+       * Über `resolveAlias` und nicht `createAlias`: der Alias ist die IDENTITÄT des Termins,
+       * kein Messpunkt. Der Reverse-Lookup läuft über `original: 'calevent.<okey>'` — der erste
+       * Aufruf prägt, jeder weitere bekommt denselben Code zurück. Deshalb wächst die
+       * Alias-Liste mit der Zahl der Termine und nicht mit der Zahl der Klicks, und deshalb
+       * darf die Aktion allen registrierten Nutzern offenstehen.
+       */
+      async copyLink(calevent: CalEventModel, origin: string): Promise<void> {
+        const result = await store.aliasMintService.resolveAlias({
+          space: CALEVENT_ALIAS_SPACE,
+          original: `${CalEventModelName}.${calevent.okey}`,
+          targetType: 'url',
+          targetUrl: buildCalEventLink(origin, calevent.okey),
+          notes: calevent.name,
+        });
+        if (!result.ok) {
+          // Dem Nutzer der übersetzte Satz, der Konsole die Servermeldung: sie ist genauer (sie
+          // steht neben der Regel, die sie ausgelöst hat), aber englisch und für Admins gedacht.
+          warn(`CalEventStore.copyLink -> ${result.code}: ${result.message}`);
+          error(store.toastController, store.i18n.copy_link_error());
+          return;
+        }
+        await copyToClipboardWithConfirmation(store.toastController, result.url, store.i18n.copy_link_conf());
       },
 
       async view(calevent: CalEventModel): Promise<void> {

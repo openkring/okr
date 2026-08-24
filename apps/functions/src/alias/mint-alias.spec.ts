@@ -53,6 +53,17 @@ describe('assertMayMint', () => {
   it('always admits an admin, so a space need not name the role twice', () => {
     expect(() => assertMayMint(spaceQr(), { admin: true })).not.toThrow();
   });
+
+  // Die Rollen der App sind gestuft, nicht flach. Ein 'registered'-Space (der link-Space der
+  // Termin-Kurzlinks) muss deshalb auch den zulassen, der MEHR darf als er verlangt — ein
+  // flacher roles['registered']-Vergleich haette ausgerechnet die Organisatoren ausgesperrt.
+  it('honours the role hierarchy: every higher role satisfies a registered space', () => {
+    const link = spaceQr({ name: 'link', roleNeeded: 'registered' });
+    expect(() => assertMayMint(link, { registered: true })).not.toThrow();
+    expect(() => assertMayMint(link, { privileged: true })).not.toThrow();
+    expect(() => assertMayMint(link, { eventAdmin: true })).not.toThrow();
+    expect(() => assertMayMint(link, {})).toThrow(/registered/);
+  });
 });
 
 describe('assertTargetAcceptable', () => {

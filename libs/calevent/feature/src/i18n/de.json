@@ -51,6 +51,11 @@
   "copy": {
     "label": "Termin kopieren"
   },
+  "copyLink": {
+    "label": "Link zum Termin kopieren",
+    "conf": "Der Link zum Termin wurde kopiert.",
+    "error": "Der Link zum Termin konnte nicht erstellt werden."
+  },
   "filter": {
     "all": "Alle"
   },
