@@ -216,3 +216,17 @@ export function buildSchedulePollLink(origin: string, calendarKey: string, serie
 export function formatSchedulePollInviteMessage(name: string, link: string): string {
   return `📅 ${name}\nBitte diese Terminumfrage ausfüllen: ${link}`;
 }
+
+/**
+ * Deep link auf einen einzelnen Termin: die Listenroute plus ein `event`-Query-Param.
+ *
+ * Warum kein `/calevent/<okey>`: die Route ist `:listId/:contextMenuName` — ein okey würde als
+ * `listId` binden und eine LEERE Liste rendern statt des Termins. Deshalb dasselbe Muster wie
+ * `buildSchedulePollLink`: die Liste lädt normal und öffnet den Termin danach selbst.
+ *
+ * `listId` ist bewusst 'all' und nicht der Kalender des Termins — der Empfänger des Links muss
+ * den Kalender nicht abonniert haben, um den Termin zu sehen.
+ */
+export function buildCalEventLink(origin: string, okey: string): string {
+  return `${origin.replace(/\/$/, '')}/calevent/all/c-calevents?event=${okey}`;
+}

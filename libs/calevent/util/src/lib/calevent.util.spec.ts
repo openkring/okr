@@ -1,7 +1,7 @@
 import { CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { bestScheduleColumn, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, nextInvitationState, planSeriesReconcile } from './calevent.util';
+import { bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, nextInvitationState, planSeriesReconcile } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -304,6 +304,22 @@ describe('buildSchedulePollLink', () => {
   it('drops a trailing slash on the origin', () => {
     expect(buildSchedulePollLink('https://scs.app/', 'cal1', 'abc'))
       .toBe('https://scs.app/calevent/cal1/c-calevents?poll=abc');
+  });
+});
+
+describe('buildCalEventLink', () => {
+  it('deep-links through the list route, not through a /calevent/<okey> detail route', () => {
+    // An okey would bind as :listId and render an EMPTY list — the reason the alias target
+    // is a url and not a model target.
+    expect(buildCalEventLink('https://scs.app', 'abc'))
+      .toBe('https://scs.app/calevent/all/c-calevents?event=abc');
+  });
+  it('drops a trailing slash on the origin', () => {
+    expect(buildCalEventLink('https://scs.app/', 'abc'))
+      .toBe('https://scs.app/calevent/all/c-calevents?event=abc');
+  });
+  it('uses `all`, so the recipient need not have the event\'s calendar selected', () => {
+    expect(buildCalEventLink('https://scs.app', 'abc')).toContain('/calevent/all/');
   });
 });
 

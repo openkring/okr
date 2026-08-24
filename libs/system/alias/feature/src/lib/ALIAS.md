@@ -78,6 +78,28 @@ schluckt der Parameter-Pfad das Wort.
 Die Detailseite ist bewusst **read-only** und zeigt heute nur `useCount`/`lastUsedAt` mit einem
 ehrlichen Leerzustand — die Tagesaggregate schreibt erst Teilprojekt 4.
 
+## Konsumenten
+
+| Space | Kind | `roleNeeded` | Wer prägt, wofür |
+|---|---|---|---|
+| `link` | redirect | `registered` | «Link zum Termin kopieren» im calevent-ActionSheet |
+| `person`, `location` (bka) | lookup | `admin` | Diary-Auflösung `'Barbara' → person.<okey>` |
+
+Der `link`-Space steht **allen registrierten Nutzern** offen, und das ist kein Aufweichen der
+Regel, sondern eine Folge der Operation: die Termin-Aktion ruft `resolveAlias` mit
+`original: 'calevent.<okey>'`. Der erste Aufruf prägt, jeder weitere bekommt denselben Code
+zurück — die Alias-Liste wächst mit der Zahl der Termine, nicht mit der Zahl der Klicks. Mit
+`createAlias` wäre dieselbe Freigabe ein Leck.
+
+Weil die Rollen der App **gestuft** sind, prüft `assertMayMint` über `hasRole` und nicht über
+ein flaches `roles[roleNeeded] === true`: ein `eventAdmin` ist auch `registered`, ohne das Flag
+gesetzt haben zu müssen. Ein flacher Vergleich hätte den `link`-Space ausgerechnet den
+Organisatoren verwehrt.
+
+Ein neuer Space wird mit `scripts/seed-link-space.mjs --tenant=<id> [--write]` angelegt
+(`--dry-run` ist der Default). Er braucht pro Tenant das `/s/**`-Rewrite in `firebase.json` —
+heute haben das `scs`, `p13` und `kring`.
+
 ## Der HTTP-Resolver ist keine Angular-Route
 
 `GET /s/:space/:code` läuft in `apps/functions/src/publicApi/routes/alias.ts` und antwortet mit

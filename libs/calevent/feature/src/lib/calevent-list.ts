@@ -325,6 +325,11 @@ export class CalEventList implements OnInit {
    * unbound route input and would clobber a plain `input('')` default.
    */
   public readonly poll = input<string | undefined>(undefined);
+  /**
+   * Deep link of a shared short link: `/calevent/all/c-calevents?event=<okey>` opens the event.
+   * Same undefined-default reasoning as `poll` above.
+   */
+  public readonly event = input<string | undefined>(undefined);
 
   // filters
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
@@ -469,6 +474,7 @@ export class CalEventList implements OnInit {
 
   // whether the `poll` deep link has already opened its modal this session
   private pollOpened = false;
+  private eventOpened = false;
 
   // double-click tracking
   private lastClickDateStr: string | null = null;
@@ -527,6 +533,17 @@ export class CalEventList implements OnInit {
       this.pollOpened = true;
       untracked(() => this.openSchedulePoll(seriesId).then(() =>
         this.router.navigate([], { queryParams: { poll: null }, queryParamsHandling: 'merge', replaceUrl: true })));
+    });
+
+    // Deep link of a shared short link: open the event once, then strip the param. The store
+    // reads the event by key rather than picking it out of the loaded list — the recipient's
+    // filters and time window are not the sender's.
+    effect(() => {
+      const okey = this.event();
+      if (!okey || this.eventOpened) return;
+      this.eventOpened = true;
+      untracked(() => this.store.viewByKey(okey).then(() =>
+        this.router.navigate([], { queryParams: { event: null }, queryParamsHandling: 'merge', replaceUrl: true })));
     });
   }
 
@@ -778,6 +795,9 @@ export class CalEventList implements OnInit {
 
     actionSheetOptions.buttons.push(createActionSheetDivider());
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.downloadIcs', this.store.i18n.download_ics(), this.imgixBaseUrl, 'calendar-number'));
+    // No role gate: resolveAlias mints once per event and hands every later caller the same
+    // code, so opening this to all registered users cannot grow the alias list per click.
+    actionSheetOptions.buttons.push(createActionSheetButton('calevent.copyLink', this.store.i18n.copy_link(), this.imgixBaseUrl, 'link'));
 
     actionSheetOptions.buttons.push(createActionSheetDivider());
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
@@ -815,6 +835,9 @@ export class CalEventList implements OnInit {
         case 'calevent.downloadIcs':
           await this.download(calEvent.okey);
         break;
+        case 'calevent.copyLink':
+          await this.store.copyLink(calEvent, window.location.origin);
+          break;
         case 'calevent.delete': {
           const isGrid = !this.isListView();
           const viewType = this.currentViewType();
