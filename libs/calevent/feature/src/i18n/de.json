@@ -68,7 +68,8 @@
     "find": "Termin finden",
     "close": {
       "label": "Abstimmung schliessen",
-      "message": "{date} wird als definitiver Termin gewählt. Alle anderen Vorschläge werden gelöscht."
+      "message": "{date} wird als definitiver Termin gewählt. Alle anderen Vorschläge werden gelöscht.",
+      "multiMessage": "{dates} werden als definitive Termine gewählt. Alle anderen Vorschläge werden gelöscht."
     },
     "optionalMessage": "Optionale Nachricht an die Gruppe...",
     "date": {
@@ -101,7 +102,14 @@
     },
     "mode": {
       "date": "Datum",
-      "text": "Text"
+      "text": "Text",
+      "single": "Ein Termin suchen",
+      "multiple": "Mehrere Termine festlegen"
+    },
+    "pickDates": "Termine wählen",
+    "withTime": "Zeit angeben",
+    "time": {
+      "label": "Zeit"
     }
   },
   "series": {
@@ -458,7 +466,8 @@
     "caleventModelType": "Der ModelType muss EventModel sein.",
     "schedulePollNameMandatory": "Das Thema ist obligatorisch.",
     "schedulePollColumnsMandatory": "Mindestens ein Terminvorschlag ist erforderlich.",
-    "schedulePollColumnsMax": "Es sind höchstens 10 Terminvorschläge möglich."
+    "schedulePollColumnsMax": "Es sind höchstens 10 Terminvorschläge möglich.",
+    "caleventPollSeriesPeriodicityLocked": "Die Periodizität einer Terminumfrage-Serie kann nicht geändert werden."
   },
   "urlLabel": {
     "label": "Link-Bezeichnung",
@@ -574,5 +583,8 @@
       "label": "Link zurücksetzen",
       "confirm": "Der bisherige Link wird ungültig. Alle Geräte, die diesen Kalender abonniert haben, müssen neu eingerichtet werden. Fortfahren?"
     }
+  },
+  "pollSeries": {
+    "helper": "Die Termine stammen aus einer Terminumfrage und sind unregelmässig. Die Periodizität kann deshalb nicht geändert werden."
   }
 }

@@ -794,7 +794,9 @@ export class CalEventList implements OnInit {
       actionSheetOptions.buttons.push(
         createActionSheetButton('calevent.viewSchedule', this.store.i18n.schedule_view(), this.imgixBaseUrl, 'list')
       );
-      if (canChange) {
+      // the shortcut closes the poll on THIS date alone, which cannot express 'Mehrere Termine
+      // festlegen' — such a poll is closed from the table, where several dates can be ticked
+      if (canChange && !calevent.pollMultiSelect) {
         actionSheetOptions.buttons.push(
           createActionSheetButton('calevent.closeSchedule', this.store.i18n.schedule_close(), this.imgixBaseUrl, 'lock-closed')
         );
@@ -1064,7 +1066,7 @@ export class CalEventList implements OnInit {
         {
           text: this.store.i18n.schedule_close(),
           handler: (data: { authorMessage?: string }) => {
-            this.store.closeSchedule(calevent, data.authorMessage)
+            this.store.closeSchedule([calevent], data.authorMessage)
               .catch(err => console.warn('confirmCloseSchedule: closeSchedule failed:', err));
           },
         },

@@ -163,19 +163,42 @@ describe('getCalEventCssClass', () => {
 
 describe('formatScheduleCloseMessage', () => {
   it('formats message with event name and date', () => {
-    const msg = formatScheduleCloseMessage('Vereins-Ausflug', '20250622');
+    const msg = formatScheduleCloseMessage('Vereins-Ausflug', ['20250622']);
     expect(msg).toContain('✅ Vereins-Ausflug');
     expect(msg).toContain('Termin:');
   });
 
   it('appends author message when provided', () => {
-    const msg = formatScheduleCloseMessage('Ausflug', '20250622', 'Freue mich!');
+    const msg = formatScheduleCloseMessage('Ausflug', ['20250622'], 'Freue mich!');
     expect(msg).toContain('Freue mich!');
   });
 
   it('omits blank author message', () => {
-    const msg = formatScheduleCloseMessage('Ausflug', '20250622', '  ');
+    const msg = formatScheduleCloseMessage('Ausflug', ['20250622'], '  ');
     expect(msg.split('\n')).toHaveLength(2);
+  });
+
+  // multi-date close: every confirmed date is listed, one per line, chronologically
+  it('lists every date on its own line and pluralises the label', () => {
+    const msg = formatScheduleCloseMessage('Training', ['20250916', '20250912']);
+    const lines = msg.split('\n');
+    expect(lines[0]).toBe('✅ Training');
+    expect(lines[1]).toContain('Termine:');
+    expect(lines).toHaveLength(4);
+  });
+
+  it('sorts the dates chronologically regardless of pick order', () => {
+    const msg = formatScheduleCloseMessage('Training', ['20250916', '20250912']);
+    expect(msg.indexOf('12.09.2025')).toBeLessThan(msg.indexOf('16.09.2025'));
+  });
+
+  it('keeps the author message last when several dates are confirmed', () => {
+    const msg = formatScheduleCloseMessage('Training', ['20250912', '20250916'], 'Bis dann!');
+    expect(msg.split('\n').at(-1)).toBe('Bis dann!');
+  });
+
+  it('returns just the name when no date was confirmed', () => {
+    expect(formatScheduleCloseMessage('Training', [])).toBe('✅ Training');
   });
 });
 

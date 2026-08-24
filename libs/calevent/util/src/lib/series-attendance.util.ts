@@ -89,5 +89,7 @@ export function buildSeriesAttendanceTable(
     columns,
     rows,
     isDraft: false,
+    // series-attendance reuses the poll table but never closes a poll — the mode is irrelevant here
+    multiSelect: false,
   };
 }

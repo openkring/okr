@@ -177,13 +177,21 @@ export function getCalEventCssClass(state: CalEventModel['state']): string {
   return '';
 }
 
+/**
+ * Group-chat notification when the organizer closes a poll. `startDates` holds EVERY confirmed
+ * date: one in single-select mode, several in 'Mehrere Termine festlegen'. Sorted here rather than
+ * by the caller — StoreDate is yyyyMMdd, so a plain string sort is chronological.
+ */
 export function formatScheduleCloseMessage(
   eventName: string,
-  startDate: string,
+  startDates: string[],
   authorMessage?: string
 ): string {
-  const date = convertDateFormatToString(startDate, DateFormat.StoreDate, DateFormat.ViewDate);
-  const lines = [`✅ ${eventName}`, `Termin: ${date}`];
+  const dates = [...startDates].sort()
+    .map(startDate => convertDateFormatToString(startDate, DateFormat.StoreDate, DateFormat.ViewDate));
+  const lines = [`✅ ${eventName}`];
+  if (dates.length === 1) lines.push(`Termin: ${dates[0]}`);
+  else if (dates.length > 1) lines.push('Termine:', ...dates);
   if (authorMessage?.trim()) lines.push(authorMessage.trim());
   return lines.join('\n');
 }

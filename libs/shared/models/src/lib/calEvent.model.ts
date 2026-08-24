@@ -39,6 +39,14 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
   public state: 'proposed' | 'provisional' | 'definitive' | 'cancelled' = 'definitive'; // scheduling state; 'cancelled' = the event was called off
   public cancelMessage = DEFAULT_NOTES; // why the event was cancelled; shown as a red banner, only set when state === 'cancelled'
   public columnLabel = DEFAULT_LABEL; // schedule-poll text column: the header text instead of a date; such events never show in a calendar
+  /**
+   * Schedule poll, two roles over the poll's lifetime:
+   * - while `state === 'proposed'`: the organizer may confirm SEVERAL columns, not just one.
+   * - once `state === 'definitive'`: marks a poll-born series. Its dates are irregular, so no
+   *   periodicity describes them — `periodicity` is locked to 'once' and the series must never be
+   *   re-expanded by planSeriesReconcile.
+   */
+  public pollMultiSelect = false;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

@@ -42,8 +42,19 @@
   "download": {
     "ics": "Télécharger le rendez-vous (ICS)"
   },
+  "cancelEvent": {
+    "label": "Avis d’annulation",
+    "placeholder": "Motif de l’annulation, par ex. « Annulé en raison de l’alerte tempête. »",
+    "banner": "Annulé",
+    "conf": "L’avis d’annulation a été enregistré."
+  },
   "copy": {
     "label": "Copier l'événement"
+  },
+  "copyLink": {
+    "label": "Copier le lien vers l’événement",
+    "conf": "Le lien vers l’événement a été copié.",
+    "error": "Le lien vers l’événement n’a pas pu être créé."
   },
   "filter": {
     "all": "Tous"
@@ -57,7 +68,8 @@
     "find": "Trouver une date",
     "close": {
       "label": "Clôturer le sondage",
-      "message": "{date} est choisi comme date définitive. Toutes les autres propositions seront supprimées."
+      "message": "{date} est choisi comme date définitive. Toutes les autres propositions seront supprimées.",
+      "multiMessage": "{dates} sont choisies comme dates définitives. Toutes les autres propositions seront supprimées."
     },
     "optionalMessage": "Message facultatif au groupe...",
     "date": {
@@ -90,7 +102,14 @@
     },
     "mode": {
       "date": "Date",
-      "text": "Texte"
+      "text": "Texte",
+      "single": "Chercher une date",
+      "multiple": "Fixer plusieurs dates"
+    },
+    "pickDates": "Choisir les dates",
+    "withTime": "Indiquer une heure",
+    "time": {
+      "label": "Heure"
     }
   },
   "series": {
@@ -144,7 +163,21 @@
       "error": "L'invitation n'a pas pu être modifiée."
     },
     "subscribe": "Je participe",
-    "unsubscribe": "Je ne peux pas participer"
+    "unsubscribe": "Je ne peux pas participer",
+    "lock": {
+      "label": "Verrouiller les réponses",
+      "confirm": "Voulez-vous vraiment verrouiller les réponses aux invitations ? Les invités ne pourront plus modifier leur réponse.",
+      "conf": "Les réponses aux invitations sont verrouillées."
+    },
+    "unlock": {
+      "label": "Déverrouiller les réponses",
+      "confirm": "Voulez-vous déverrouiller à nouveau les réponses aux invitations ?",
+      "conf": "Les réponses aux invitations sont de nouveau déverrouillées."
+    },
+    "locked": {
+      "title": "Invitation verrouillée",
+      "hint": "L’organisation a verrouillé les réponses à cette invitation. Votre réponse ne peut plus être modifiée."
+    }
   },
   "weekday": {
     "abbreviation": {
@@ -433,18 +466,13 @@
     "caleventModelType": "Le ModelType doit être EventModel.",
     "schedulePollNameMandatory": "Le sujet est obligatoire.",
     "schedulePollColumnsMandatory": "Au moins une proposition de date est requise.",
-    "schedulePollColumnsMax": "10 propositions de dates au maximum sont autorisées."
+    "schedulePollColumnsMax": "10 propositions de dates au maximum sont autorisées.",
+    "caleventPollSeriesPeriodicityLocked": "La périodicité d’une série issue d’un sondage de dates ne peut pas être modifiée."
   },
   "urlLabel": {
     "label": "Libellé du lien",
     "placeholder": "p. ex. Avis de course",
     "helper": "Texte affiché à la place de l’URL. Laisser vide pour afficher l’URL elle-même."
-  },
-  "cancelEvent": {
-    "label": "Avis d’annulation",
-    "placeholder": "Motif de l’annulation, par ex. « Annulé en raison de l’alerte tempête. »",
-    "banner": "Annulé",
-    "conf": "L’avis d’annulation a été enregistré."
   },
   "info": {
     "title": "Calendriers et invitations",
@@ -555,5 +583,8 @@
       "label": "Réinitialiser le lien",
       "confirm": "L'ancien lien deviendra invalide. Tous les appareils abonnés à ce calendrier devront être reconfigurés. Continuer ?"
     }
+  },
+  "pollSeries": {
+    "helper": "Ces dates proviennent d’un sondage de dates et sont irrégulières; la périodicité ne peut donc pas être modifiée."
   }
 }

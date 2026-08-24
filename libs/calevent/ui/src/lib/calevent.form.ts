@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonList, IonRow } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
 import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, NAME_LENGTH } from '@okr/shared-constants';
@@ -19,9 +19,12 @@ const MAX_LOCATION_SUGGESTIONS = 8;
   imports: [
     CategorySelect, Chips, NotesInput, DateInput, TimeInput, NumberInput,
     TextInput, ErrorNote, StringList, Avatars, Checkbox, UrlInput,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonList, IonItem, IonLabel
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonList, IonItem, IonLabel, IonNote
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`
+    @media (width <= 600px) { ion-card { margin: 5px;} }
+    ion-note.poll-series { display: block; padding: 0 16px 8px; font-size: 12px; }
+  `],
   template: `
   @if (showForm()) {
   <form novalidate>
@@ -83,7 +86,8 @@ const MAX_LOCATION_SUGGESTIONS = 8;
             @if(!isPersonal()) {
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [readOnly]="isReadOnly()" [withAll]="false" />
+                  <okr-cat-select [category]="periodicities()!" [selectedItemName]="periodicity()" (selectedItemNameChange)="onFieldChange('periodicity', $event)" [readOnly]="isReadOnly() || isPollSeries()" [withAll]="false" />
+                  @if (isPollSeries()) { <ion-note class="poll-series">{{ i18n().poll_series_helper() }}</ion-note> }
                 </ion-col>
                 @if(isRecurring()) {
                   <ion-col size="12" size-md="6">
@@ -248,6 +252,13 @@ export class CalEventForm {
   protected durationMinutes = linkedSignal(() => this.formData().durationMinutes);
   protected periodicity = linkedSignal(() => this.formData().periodicity ?? DEFAULT_PERIODICITY);
   protected isRecurring = computed(() => this.periodicity() && this.periodicity() !== 'once');
+  /**
+   * A poll-born series: the organizer confirmed several dates of a Terminumfrage. Those dates are
+   * irregular, so no periodicity describes them — turning it into a rule-based series would let
+   * planSeriesReconcile archive every sibling date as surplus. The field is locked here; the Vest
+   * suite (caleventPollSeriesPeriodicityLocked) and the store are the backstops.
+   */
+  protected isPollSeries = computed(() => this.formData().pollMultiSelect === true);
   protected repeatUntilDate = linkedSignal(() => this.formData().repeatUntilDate ?? DEFAULT_DATE);
   protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
   protected urlLabel = linkedSignal(() => this.formData().urlLabel ?? DEFAULT_LABEL);

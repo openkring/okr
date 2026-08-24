@@ -42,3 +42,33 @@ describe('calEventValidations', () => {
     expect(result.getErrors('repeatUntilDate')).toContain('caleventMaxDatesPerSeries');
   });
 });
+
+describe('calEventValidations — poll-born series', () => {
+  it('rejects a periodicity other than "once" on a poll-born series', () => {
+    // the dates of a poll-born series are irregular; re-expanding them from a rule would archive
+    // every sibling date as "surplus" (planSeriesReconcile). The periodicity must stay locked.
+    const result = calEventValidations(
+      makeEvent({ pollMultiSelect: true, seriesId: 'p123456789012345678', periodicity: 'weekly', repeatUntilDate: '20261001' }), 'scs', '');
+    expect(result.getErrors('periodicity')).toContain('caleventPollSeriesPeriodicityLocked');
+    expect(result.isValid()).toBe(false);
+  });
+
+  it('accepts a poll-born series that keeps periodicity "once"', () => {
+    const result = calEventValidations(
+      makeEvent({ pollMultiSelect: true, seriesId: 'p123456789012345678', periodicity: 'once' }), 'scs', '');
+    expect(result.getErrors('periodicity')).toEqual([]);
+    expect(result.isValid()).toBe(true);
+  });
+
+  it('leaves an ordinary recurring event alone', () => {
+    const result = calEventValidations(
+      makeEvent({ periodicity: 'weekly', repeatUntilDate: '20261001' }), 'scs', '');
+    expect(result.getErrors('periodicity')).toEqual([]);
+  });
+
+  it('treats a legacy event without the pollMultiSelect field as an ordinary event', () => {
+    const result = calEventValidations(
+      makeEvent({ pollMultiSelect: undefined as unknown as boolean, periodicity: 'weekly', repeatUntilDate: '20261001' }), 'scs', '');
+    expect(result.getErrors('periodicity')).toEqual([]);
+  });
+});

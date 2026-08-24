@@ -42,8 +42,19 @@
   "download": {
     "ics": "Download appointment (ICS)"
   },
+  "cancelEvent": {
+    "label": "Cancellation notice",
+    "placeholder": "Reason for the cancellation, e.g. \"Cancelled because of the storm warning.\"",
+    "banner": "Cancelled",
+    "conf": "The cancellation notice has been saved."
+  },
   "copy": {
     "label": "Copy event"
+  },
+  "copyLink": {
+    "label": "Copy link to the event",
+    "conf": "The link to the event was copied.",
+    "error": "The link to the event could not be created."
   },
   "filter": {
     "all": "All"
@@ -57,7 +68,8 @@
     "find": "Find a date",
     "close": {
       "label": "Close poll",
-      "message": "{date} is chosen as the definitive date. All other proposals will be removed."
+      "message": "{date} is chosen as the definitive date. All other proposals will be removed.",
+      "multiMessage": "{dates} are chosen as the definitive dates. All other proposals will be removed."
     },
     "optionalMessage": "Optional message to the group...",
     "date": {
@@ -90,7 +102,14 @@
     },
     "mode": {
       "date": "Date",
-      "text": "Text"
+      "text": "Text",
+      "single": "Find one date",
+      "multiple": "Confirm several dates"
+    },
+    "pickDates": "Pick dates",
+    "withTime": "Set a time",
+    "time": {
+      "label": "Time"
     }
   },
   "series": {
@@ -144,7 +163,21 @@
       "error": "The invitation could not be changed."
     },
     "subscribe": "I will attend",
-    "unsubscribe": "I cannot attend"
+    "unsubscribe": "I cannot attend",
+    "lock": {
+      "label": "Lock responses",
+      "confirm": "Do you really want to lock the responses to the invitations? Invitees will no longer be able to change their answer.",
+      "conf": "The responses to the invitations are locked."
+    },
+    "unlock": {
+      "label": "Unlock responses",
+      "confirm": "Do you want to unlock the responses to the invitations again?",
+      "conf": "The responses to the invitations are unlocked again."
+    },
+    "locked": {
+      "title": "Invitation locked",
+      "hint": "The organiser has locked the responses to this invitation. Your answer can no longer be changed."
+    }
   },
   "weekday": {
     "abbreviation": {
@@ -433,18 +466,13 @@
     "caleventModelType": "The ModelType must be EventModel.",
     "schedulePollNameMandatory": "The topic is mandatory.",
     "schedulePollColumnsMandatory": "At least one date proposal is required.",
-    "schedulePollColumnsMax": "At most 10 date proposals are allowed."
+    "schedulePollColumnsMax": "At most 10 date proposals are allowed.",
+    "caleventPollSeriesPeriodicityLocked": "The periodicity of a schedule-poll series cannot be changed."
   },
   "urlLabel": {
     "label": "Link label",
     "placeholder": "e.g. Race announcement",
     "helper": "Text shown instead of the URL. Leave empty to show the URL itself."
-  },
-  "cancelEvent": {
-    "label": "Cancellation notice",
-    "placeholder": "Reason for the cancellation, e.g. \"Cancelled because of the storm warning.\"",
-    "banner": "Cancelled",
-    "conf": "The cancellation notice has been saved."
   },
   "info": {
     "title": "Calendars & invitations",
@@ -555,5 +583,8 @@
       "label": "Reset link",
       "confirm": "The previous link will become invalid. Any device that subscribed to this calendar will need to be set up again. Continue?"
     }
+  },
+  "pollSeries": {
+    "helper": "These dates come from a schedule poll and are irregular, so the periodicity cannot be changed."
   }
 }

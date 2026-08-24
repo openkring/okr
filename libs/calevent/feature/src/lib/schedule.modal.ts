@@ -30,8 +30,10 @@ import { CalEventStore } from './calevent.store';
           [i18n]="store.i18n" [canClose]="canClose()"
           [readOnly]="readOnly()"
           [showForm]="showForm()"
+          [locale]="store.getLocale()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)"
-          (columnSelected)="onColumnSelected($event)" />
+          (columnSelected)="onColumnSelected([$event])"
+          (columnsSelected)="onColumnSelected($event)" />
       }
     </ion-content>
   `,
@@ -119,6 +121,8 @@ export class ScheduleModal implements OnDestroy {
     const user = this.store.currentUser();
     return {
       name: '', description: '', columns: [], isDraft: this.seriesId().length === 0,
+      // 'Ein Termin suchen' is the default; the organizer switches to 'Mehrere Termine festlegen'
+      multiSelect: false,
       rows: [{
         key: user?.personKey ?? '', firstName: user?.firstName ?? '',
         lastName: user?.lastName ?? '', responses: {}, comment: '',
@@ -149,6 +153,8 @@ export class ScheduleModal implements OnDestroy {
       columns: events.map(e => ({ id: e.okey, startDate: e.startDate, startTime: e.startTime, columnLabel: e.columnLabel ?? '' })),
       rows,
       isDraft: false,
+      // legacy polls predate the field — coalesce to false = the v1 single-winner close
+      multiSelect: events[0]?.pollMultiSelect === true,
     };
   }
 
@@ -187,21 +193,29 @@ export class ScheduleModal implements OnDestroy {
     setTimeout(() => this.showForm.set(true), 0);
   }
 
-  /** The author picked a winning column: confirm, close the poll, dismiss. */
-  protected async onColumnSelected(columnId: string): Promise<void> {
-    const winner = this.proposedEvents().find(e => e.okey === columnId);
-    if (!winner) return;
-    const formattedDate = convertDateFormatToString(winner.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+  /**
+   * The author picked the winning column(s): confirm, close the poll, dismiss. One id arrives from
+   * the per-column button ('Ein Termin suchen'), several from the header checkboxes ('Mehrere
+   * Termine festlegen') — the confirmation names every date either way.
+   */
+  protected async onColumnSelected(columnIds: string[]): Promise<void> {
+    const winners = this.proposedEvents().filter(e => columnIds.includes(e.okey));
+    if (winners.length === 0) return;
+    const formattedDates = winners
+      .map(w => convertDateFormatToString(w.startDate, DateFormat.StoreDate, DateFormat.ViewDate, false));
+    const message = winners.length === 1
+      ? this.store.i18n.schedule_close_message().replace('{date}', formattedDates[0])
+      : this.store.i18n.schedule_close_multi_message().replace('{dates}', formattedDates.join(', '));
     const alert = await this.alertController.create({
       header: this.store.i18n.schedule_close(),
-      message: this.store.i18n.schedule_close_message().replace('{date}', formattedDate),
+      message,
       inputs: [{ name: 'authorMessage', type: 'textarea', placeholder: this.store.i18n.schedule_optional_message() }],
       buttons: [
         { text: this.store.i18n.cancel(), role: 'cancel' },
         {
           text: this.store.i18n.schedule_close(),
           handler: (data: { authorMessage?: string }) => {
-            this.store.closeSchedule(winner, data.authorMessage)
+            this.store.closeSchedule(winners, data.authorMessage)
               .then(() => dismissOverlay(this.modalController, null, 'confirm'))
               .catch(err => console.warn('ScheduleModal.onColumnSelected: closeSchedule failed:', err));
           },

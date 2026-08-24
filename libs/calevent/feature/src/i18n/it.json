@@ -42,8 +42,19 @@
   "download": {
     "ics": "Scarica appuntamento (ICS)"
   },
+  "cancelEvent": {
+    "label": "Avviso di annullamento",
+    "placeholder": "Motivo dell’annullamento, ad es. «Annullato per allerta temporale.»",
+    "banner": "Annullato",
+    "conf": "L’avviso di annullamento è stato salvato."
+  },
   "copy": {
     "label": "Copia evento"
+  },
+  "copyLink": {
+    "label": "Copiare il link all’evento",
+    "conf": "Il link all’evento è stato copiato.",
+    "error": "Non è stato possibile creare il link all’evento."
   },
   "filter": {
     "all": "Tutti"
@@ -57,7 +68,8 @@
     "find": "Trovare una data",
     "close": {
       "label": "Chiudere il sondaggio",
-      "message": "{date} viene scelta come data definitiva. Tutte le altre proposte verranno rimosse."
+      "message": "{date} viene scelta come data definitiva. Tutte le altre proposte verranno rimosse.",
+      "multiMessage": "{dates} vengono scelte come date definitive. Tutte le altre proposte verranno rimosse."
     },
     "optionalMessage": "Messaggio facoltativo al gruppo...",
     "date": {
@@ -90,7 +102,14 @@
     },
     "mode": {
       "date": "Data",
-      "text": "Testo"
+      "text": "Testo",
+      "single": "Cercare una data",
+      "multiple": "Fissare più date"
+    },
+    "pickDates": "Scegliere le date",
+    "withTime": "Indicare un orario",
+    "time": {
+      "label": "Orario"
     }
   },
   "series": {
@@ -144,7 +163,21 @@
       "error": "Non è stato possibile modificare l'invito."
     },
     "subscribe": "Partecipo",
-    "unsubscribe": "Non posso partecipare"
+    "unsubscribe": "Non posso partecipare",
+    "lock": {
+      "label": "Bloccare le risposte",
+      "confirm": "Bloccare davvero le risposte agli inviti? Gli invitati non potranno più modificare la loro risposta.",
+      "conf": "Le risposte agli inviti sono bloccate."
+    },
+    "unlock": {
+      "label": "Sbloccare le risposte",
+      "confirm": "Sbloccare nuovamente le risposte agli inviti?",
+      "conf": "Le risposte agli inviti sono di nuovo sbloccate."
+    },
+    "locked": {
+      "title": "Invito bloccato",
+      "hint": "L’organizzazione ha bloccato le risposte a questo invito. La tua risposta non può più essere modificata."
+    }
   },
   "weekday": {
     "abbreviation": {
@@ -433,18 +466,13 @@
     "caleventModelType": "Il ModelType deve essere EventModel.",
     "schedulePollNameMandatory": "L'argomento è obbligatorio.",
     "schedulePollColumnsMandatory": "È richiesta almeno una proposta di data.",
-    "schedulePollColumnsMax": "Sono ammesse al massimo 10 proposte di data."
+    "schedulePollColumnsMax": "Sono ammesse al massimo 10 proposte di data.",
+    "caleventPollSeriesPeriodicityLocked": "La periodicità di una serie nata da un sondaggio non può essere modificata."
   },
   "urlLabel": {
     "label": "Etichetta del link",
     "placeholder": "p. es. Bando di gara",
     "helper": "Testo mostrato al posto dell’URL. Lasciare vuoto per mostrare l’URL stesso."
-  },
-  "cancelEvent": {
-    "label": "Avviso di annullamento",
-    "placeholder": "Motivo dell’annullamento, ad es. «Annullato per allerta temporale.»",
-    "banner": "Annullato",
-    "conf": "L’avviso di annullamento è stato salvato."
   },
   "info": {
     "title": "Calendari e inviti",
@@ -555,5 +583,8 @@
       "label": "Reimposta link",
       "confirm": "Il link precedente diventerà non valido. Tutti i dispositivi abbonati a questo calendario dovranno essere configurati di nuovo. Continuare?"
     }
+  },
+  "pollSeries": {
+    "helper": "Queste date provengono da un sondaggio e sono irregolari, quindi la periodicità non può essere modificata."
   }
 }

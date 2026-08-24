@@ -1,22 +1,22 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCol, IonDatetime, IonGrid, IonIcon, IonModal, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
+import { IonButton, IonCard, IonCardContent, IonCheckbox, IonCol, IonDatetime, IonGrid, IonIcon, IonModal, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
 
 import { TranslatePipe } from '@okr/shared-i18n';
 import { InvitationState } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, getTodayStr, getWeekdayI18nKey } from '@okr/shared-util-core';
-import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvitationState, schedulePollValidations, SchedulePollColumn, SchedulePollFormData } from '@okr/calevent-util';
+import { bestScheduleColumn, CaleventI18n, DEFAULT_POLL_TIME, MAX_SCHEDULE_POLL_COLUMNS, nextInvitationState, schedulePollValidations, SchedulePollColumn, SchedulePollFormData } from '@okr/calevent-util';
 
 @Component({
   selector: 'okr-schedule-poll-form',
   standalone: true,
   imports: [
-    TextInput, ErrorNote, SvgIconPipe, TranslatePipe, AsyncPipe,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonButton, IonIcon, IonDatetime, IonModal,
+    TextInput, TimeInput, Checkbox, ErrorNote, SvgIconPipe, TranslatePipe, AsyncPipe,
+    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonButton, IonCheckbox, IonIcon, IonDatetime, IonModal,
     IonSegment, IonSegmentButton,
   ],
   styles: [`
@@ -41,6 +41,11 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
     tr.counts td.best { color: var(--ion-color-success); }
     ion-modal.picker { --width: fit-content; --min-width: 300px; --height: fit-content; --border-radius: 8px; }
     .picker-wrapper { display: flex; flex-direction: column; padding: 8px; gap: 8px; }
+    /* 'Zeit angeben' left, the time field right — one line, as in the spec */
+    .time-row { display: flex; align-items: center; gap: 8px; }
+    .time-row okr-checkbox { flex: 1 1 auto; }
+    .time-row okr-time-input { flex: 0 0 130px; }
+    .close-bar { display: flex; justify-content: flex-end; padding: 8px; }
   `],
   template: `
     @if (showForm()) {
@@ -55,6 +60,15 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
                       (valueChange)="onNameChange($event)" [autofocus]="true"
                       [maxLength]="50" [readOnly]="readOnly()" />
                     <okr-error-note [errors]="nameErrors()" />
+                  </ion-col>
+                </ion-row>
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <ion-segment [value]="formData().multiSelect ? 'multiple' : 'single'"
+                      (ionChange)="onModeChange($any($event).detail.value)">
+                      <ion-segment-button value="single">{{ i18n().schedule_mode_single() }}</ion-segment-button>
+                      <ion-segment-button value="multiple">{{ i18n().schedule_mode_multiple() }}</ion-segment-button>
+                    </ion-segment>
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -85,9 +99,16 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
                           </ion-button>
                         }
                         @if (canClose() && !column.columnLabel) {
-                          <ion-button fill="clear" size="small" (click)="columnSelected.emit(column.id)">
-                            {{ i18n().schedule_pick_date() }}
-                          </ion-button>
+                          @if (multiClose()) {
+                            <!-- bare ion-checkbox, not okr-checkbox: this is a table header cell, and
+                                 okr-checkbox wraps itself in an ion-item that blows the column up -->
+                            <ion-checkbox [checked]="isPicked(column.id)" [attr.aria-label]="i18n().schedule_pick_dates()"
+                              (ionChange)="togglePicked(column.id)" />
+                          } @else {
+                            <ion-button fill="clear" size="small" (click)="columnSelected.emit(column.id)">
+                              {{ i18n().schedule_pick_date() }}
+                            </ion-button>
+                          }
                         }
                       </th>
                     }
@@ -140,6 +161,14 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
                 </tbody>
               </table>
             </div>
+            @if (multiClose()) {
+              <div class="close-bar">
+                <ion-button size="small" [disabled]="pickedColumns().length === 0"
+                  (click)="columnsSelected.emit(pickedColumns())">
+                  {{ i18n().schedule_close() }}
+                </ion-button>
+              </div>
+            }
           </ion-card-content>
         </ion-card>
 
@@ -166,8 +195,16 @@ import { bestScheduleColumn, CaleventI18n, MAX_SCHEDULE_POLL_COLUMNS, nextInvita
                 <ion-segment-button value="text">{{ i18n().schedule_mode_text() }}</ion-segment-button>
               </ion-segment>
               @if (pickerMode() === 'date') {
-                <ion-datetime presentation="date-time" [preferWheel]="false"
+                <ion-datetime presentation="date" [preferWheel]="false"
                   [value]="pickedValue()" (ionChange)="pickedValue.set($any($event).detail.value)" />
+                <div class="time-row">
+                  <okr-checkbox [i18n]="withTimeI18n()" [checked]="pickedWithTime()"
+                    (checkedChange)="pickedWithTime.set($event)" [readOnly]="false" />
+                  @if (pickedWithTime()) {
+                    <okr-time-input [value]="pickedTime()" (valueChange)="pickedTime.set($event)"
+                      [i18n]="timeI18n()" [readOnly]="false" [locale]="locale()" [clearInput]="false" />
+                  }
+                </div>
               } @else {
                 <okr-text-input [i18n]="textColumnI18n()" [value]="pickedText()"
                   (valueChange)="pickedText.set($event)" [autofocus]="true" [maxLength]="20" [readOnly]="false" />
@@ -193,10 +230,15 @@ export class SchedulePollForm {
    * Drops the poll-only extras (winner star, response comment) and offers the bulk toggle.
    */
   public readonly seriesMode = input(false);
+  /** Required by okr-time-input in the date picker. */
+  public readonly locale = input.required<string>();
 
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
+  /** Single-select close: the one winning column. */
   public readonly columnSelected = output<string>();
+  /** Multi-select close: every column the organizer confirmed. */
+  public readonly columnsSelected = output<string[]>();
 
   protected readonly pickerOpen = signal(false);
   protected readonly pickerMode = signal<'date' | 'text'>('date');
@@ -204,6 +246,19 @@ export class SchedulePollForm {
   protected readonly pickedValue = signal('');
   /** The header text of a text column — committed only by addColumn(). */
   protected readonly pickedText = signal('');
+  /** 'Zeit angeben': off = full-day proposal. Seeded from the previous entry by openPicker(). */
+  protected readonly pickedWithTime = signal(false);
+  /** The time held in the picker while `pickedWithTime` is on. */
+  protected readonly pickedTime = signal(DEFAULT_POLL_TIME);
+  /** The columns ticked for a multi-select close; never persisted, only emitted. */
+  protected readonly pickedColumns = signal<string[]>([]);
+
+  /**
+   * Sticky defaults: the first entry sets the default for the next one, so proposing five Friday
+   * evenings costs one time entry instead of five. Reset per form instance, not persisted.
+   */
+  private lastWithTime = false;
+  private lastTime = DEFAULT_POLL_TIME;
 
   protected readonly pollForm = form(this.formData, (path) =>
     validateVestTree(path, schedulePollValidations as any));
@@ -232,6 +287,22 @@ export class SchedulePollForm {
     placeholder: this.i18n().schedule_comment_placeholder(),
     helper: '',
   } as TextInputI18n));
+
+  protected readonly withTimeI18n = computed(() => ({
+    name: 'withTime',
+    label: this.i18n().schedule_with_time(),
+    helper: '',
+  } as CheckboxI18n));
+
+  /** No label by design — the field sits on the same line right of the 'Zeit angeben' checkbox. */
+  protected readonly timeI18n = computed(() => ({
+    name: 'startTime',
+    label: '',
+    placeholder: this.i18n().schedule_time_label(),
+  } as TimeInputI18n));
+
+  /** The organizer may confirm several columns — only on a live poll created in that mode. */
+  protected readonly multiClose = computed(() => this.canClose() && this.formData().multiSelect);
 
   protected readonly nameErrors = computed(() => this.pollForm.name().errors().map(error => error.message ?? ''));
 
@@ -304,13 +375,15 @@ export class SchedulePollForm {
   }
 
   /**
-   * Seeds the picker with today at 00:00 so a plain day tap keeps 00:00 and stays a FULL-DAY
-   * proposal (spec §1.1). A time is only set when the author explicitly opens the time wheel.
-   * Consequence: midnight cannot be picked as a time — it means "full day".
+   * Seeds the picker with today and the sticky defaults from the previous entry ('Zeit angeben' off
+   * and 07:00 for the very first one). Full-day is now an EXPLICIT flag, not 00:00 inferred from an
+   * untouched time wheel — so midnight is a pickable time again.
    */
   protected openPicker(): void {
     this.pickedValue.set(`${getTodayStr(DateFormat.IsoDate)}T00:00:00`);
     this.pickedText.set('');
+    this.pickedWithTime.set(this.lastWithTime);
+    this.pickedTime.set(this.lastTime);
     this.pickerOpen.set(true);
   }
 
@@ -323,11 +396,18 @@ export class SchedulePollForm {
     const isText = this.pickerMode() === 'text';
     const columnLabel = this.pickedText().trim();
     const isoDateTime = this.pickedValue();
+    const withTime = !isText && this.pickedWithTime();
     this.pickerOpen.set(false);
     if (isText ? columnLabel.length === 0 : !isoDateTime) return;
+    // an incomplete time ('07:') would be stored as-is and break every consumer — treat it as full day
+    const hhmm = this.pickedTime();
+    if (withTime && !/^\d{2}:\d{2}$/.test(hhmm)) return;
     const startDate = isText ? getTodayStr(DateFormat.StoreDate) : isoDateTime.substring(0, 10).replace(/-/g, '');
-    const hhmm = isoDateTime.substring(11, 16);          // 'HH:mm', the repo's startTime format
-    const startTime = isText || hhmm === '00:00' ? '' : hhmm;
+    const startTime = withTime ? hhmm : '';   // '' = full day, the column's own encoding
+    if (!isText) {
+      this.lastWithTime = withTime;
+      if (withTime) this.lastTime = hhmm;
+    }
     this.formData.update(data => {
       if (isText
         ? data.columns.some(c => c.columnLabel === columnLabel)
@@ -345,7 +425,18 @@ export class SchedulePollForm {
     this.dirty.emit(true);
   }
 
+  protected isPicked(columnId: string): boolean {
+    return this.pickedColumns().includes(columnId);
+  }
+
+  protected togglePicked(columnId: string): void {
+    this.pickedColumns.update(picked => picked.includes(columnId)
+      ? picked.filter(id => id !== columnId)
+      : [...picked, columnId]);
+  }
+
   protected removeColumn(columnId: string): void {
+    this.pickedColumns.update(picked => picked.filter(id => id !== columnId));
     this.formData.update(data => ({
       ...data,
       columns: data.columns.filter(c => c.id !== columnId),
@@ -364,6 +455,12 @@ export class SchedulePollForm {
       ...data,
       rows: data.rows.map((row, index) => index === 0 ? { ...row, comment: value } : row),
     }));
+    this.dirty.emit(true);
+  }
+
+  /** Draft only: 'Ein Termin suchen' vs 'Mehrere Termine festlegen'. Frozen at poll creation. */
+  protected onModeChange(mode: string): void {
+    this.formData.update(data => ({ ...data, multiSelect: mode === 'multiple' }));
     this.dirty.emit(true);
   }
 

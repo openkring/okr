@@ -22,6 +22,14 @@ export const calEventValidations = staticSuite((model: CalEventModel, tenants: s
     enforce(model.startDate).isNotEmpty();
   });
 
+  // A poll-born series (state 'definitive', seriesId set, pollMultiSelect true) holds the irregular
+  // dates the organizer confirmed. No periodicity describes them, so turning it into a rule-based
+  // series would let planSeriesReconcile archive every sibling date as surplus. The form renders the
+  // periodicity read-only; this is the layer that makes the change unsavable if it slips through.
+  test('periodicity', 'caleventPollSeriesPeriodicityLocked', () => {
+    enforce(!(model.pollMultiSelect && model.periodicity !== 'once')).isTruthy();
+  });
+
   omitWhen(model.periodicity === 'once', () => {
     test('repeatUntilDate', 'caleventRepeatUntilDateMandatoryWithGivenPeriodicity', () => {
       enforce(model.repeatUntilDate).isNotEmpty();

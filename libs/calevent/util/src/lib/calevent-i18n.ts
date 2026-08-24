@@ -146,6 +146,18 @@ export const CALEVENT_I18N_KEYS = {
   schedule_comment_label:     PFX + 'schedule.comment.label',
   schedule_comment_placeholder: PFX + 'schedule.comment.placeholder',
 
+  // 'Ein Termin suchen' vs 'Mehrere Termine festlegen' — chosen in the draft, drives the close flow
+  schedule_mode_single:       PFX + 'schedule.mode.single',
+  schedule_mode_multiple:     PFX + 'schedule.mode.multiple',
+  // multi-select close: a checkbox per date header instead of the per-column 'pick this date' button
+  schedule_pick_dates:        PFX + 'schedule.pickDates',
+  schedule_close_multi_message: PFX + 'schedule.close.multiMessage',
+  // the date picker: full-day by default, an explicit time only when 'Zeit angeben' is ticked
+  schedule_with_time:         PFX + 'schedule.withTime',
+  schedule_time_label:        PFX + 'schedule.time.label',
+  // the periodicity of a poll-born series is locked — its dates are irregular
+  poll_series_helper:         PFX + 'pollSeries.helper',
+
   // tabular attendance view of a whole calevent series (subscribe/unsubscribe per occurrence)
   series_view:                PFX + 'series.view',
   series_title:               PFX + 'series.title',

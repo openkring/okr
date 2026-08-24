@@ -38,6 +38,7 @@ import { CalEventStore } from './calevent.store';
           [i18n]="store.i18n" [seriesMode]="true"
           [readOnly]="readOnly()"
           [showForm]="showForm()"
+          [locale]="store.getLocale()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
       }
     </ion-content>
@@ -98,7 +99,7 @@ export class SeriesAttendanceModal {
   }
 
   private emptyTable(): SchedulePollFormData {
-    return { name: '', description: '', columns: [], rows: [], isDraft: false };
+    return { name: '', description: '', columns: [], rows: [], isDraft: false, multiSelect: false };
   }
 
   protected onFormDataChange(data: SchedulePollFormData): void {

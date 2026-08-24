@@ -42,8 +42,19 @@
   "download": {
     "ics": "Descargar cita (ICS)"
   },
+  "cancelEvent": {
+    "label": "Aviso de cancelación",
+    "placeholder": "Motivo de la cancelación, p. ej. «Cancelado por aviso de tormenta.»",
+    "banner": "Cancelado",
+    "conf": "El aviso de cancelación se ha guardado."
+  },
   "copy": {
     "label": "Copiar evento"
+  },
+  "copyLink": {
+    "label": "Copiar el enlace al evento",
+    "conf": "El enlace al evento se ha copiado.",
+    "error": "No se ha podido crear el enlace al evento."
   },
   "filter": {
     "all": "Todos"
@@ -57,7 +68,8 @@
     "find": "Encontrar una fecha",
     "close": {
       "label": "Cerrar la encuesta",
-      "message": "{date} se elige como fecha definitiva. Todas las demás propuestas se eliminarán."
+      "message": "{date} se elige como fecha definitiva. Todas las demás propuestas se eliminarán.",
+      "multiMessage": "{dates} se eligen como fechas definitivas. Todas las demás propuestas se eliminarán."
     },
     "optionalMessage": "Mensaje opcional para el grupo...",
     "date": {
@@ -90,7 +102,14 @@
     },
     "mode": {
       "date": "Fecha",
-      "text": "Texto"
+      "text": "Texto",
+      "single": "Buscar una fecha",
+      "multiple": "Fijar varias fechas"
+    },
+    "pickDates": "Elegir las fechas",
+    "withTime": "Indicar una hora",
+    "time": {
+      "label": "Hora"
     }
   },
   "series": {
@@ -144,7 +163,21 @@
       "error": "No se ha podido modificar la invitación."
     },
     "subscribe": "Asistiré",
-    "unsubscribe": "No puedo asistir"
+    "unsubscribe": "No puedo asistir",
+    "lock": {
+      "label": "Bloquear las respuestas",
+      "confirm": "¿Realmente quieres bloquear las respuestas a las invitaciones? Los invitados ya no podrán cambiar su respuesta.",
+      "conf": "Las respuestas a las invitaciones están bloqueadas."
+    },
+    "unlock": {
+      "label": "Desbloquear las respuestas",
+      "confirm": "¿Quieres desbloquear de nuevo las respuestas a las invitaciones?",
+      "conf": "Las respuestas a las invitaciones están desbloqueadas de nuevo."
+    },
+    "locked": {
+      "title": "Invitación bloqueada",
+      "hint": "La organización ha bloqueado las respuestas a esta invitación. Tu respuesta ya no se puede cambiar."
+    }
   },
   "weekday": {
     "abbreviation": {
@@ -433,18 +466,13 @@
     "caleventModelType": "El ModelType debe ser EventModel.",
     "schedulePollNameMandatory": "El tema es obligatorio.",
     "schedulePollColumnsMandatory": "Se requiere al menos una propuesta de fecha.",
-    "schedulePollColumnsMax": "Se permiten como máximo 10 propuestas de fecha."
+    "schedulePollColumnsMax": "Se permiten como máximo 10 propuestas de fecha.",
+    "caleventPollSeriesPeriodicityLocked": "La periodicidad de una serie surgida de una encuesta de fechas no se puede cambiar."
   },
   "urlLabel": {
     "label": "Etiqueta del enlace",
     "placeholder": "p. ej. Convocatoria",
     "helper": "Texto que se muestra en lugar de la URL. Déjelo vacío para mostrar la propia URL."
-  },
-  "cancelEvent": {
-    "label": "Aviso de cancelación",
-    "placeholder": "Motivo de la cancelación, p. ej. «Cancelado por aviso de tormenta.»",
-    "banner": "Cancelado",
-    "conf": "El aviso de cancelación se ha guardado."
   },
   "info": {
     "title": "Calendarios e invitaciones",
@@ -555,5 +583,8 @@
       "label": "Restablecer enlace",
       "confirm": "El enlace anterior dejará de ser válido. Todos los dispositivos que se suscribieron a este calendario deberán configurarse de nuevo. ¿Continuar?"
     }
+  },
+  "pollSeries": {
+    "helper": "Estas fechas provienen de una encuesta de fechas y son irregulares, por lo que la periodicidad no se puede cambiar."
   }
 }

@@ -31,4 +31,11 @@ export interface SchedulePollFormData {
   columns: SchedulePollColumn[];
   rows: SchedulePollRow[];
   isDraft: boolean;
+  /**
+   * 'Mehrere Termine festlegen': the organizer may confirm SEVERAL columns when closing the poll,
+   * and the winners stay linked as one (rule-less) series. false = 'Ein Termin suchen', the v1
+   * behaviour: exactly one winner, every other proposal deleted. Chosen in the draft, then frozen
+   * onto every proposed calevent as `pollMultiSelect`.
+   */
+  multiSelect: boolean;
 }

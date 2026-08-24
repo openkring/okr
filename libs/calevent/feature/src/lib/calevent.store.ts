@@ -509,6 +509,9 @@ export const CalEventStore = signalStore(
           calevent.startDate = column.startDate;
           calevent.startTime = column.startTime;
           calevent.columnLabel = column.columnLabel ?? '';
+          // frozen at creation: it decides how the poll is closed, and afterwards marks the
+          // winners as a poll-born (rule-less) series
+          calevent.pollMultiSelect = data.multiSelect;
           calevent.fullDay = column.startTime.length === 0;
           calevent.durationMinutes = calevent.fullDay ? 1440 : 120;
           calevent.calendars = [store.calendarName()];
@@ -641,22 +644,37 @@ export const CalEventStore = signalStore(
       },
 
       /**
-       * The winner becomes a standalone definitive event and keeps its invitations (they are the
-       * attendee list). The losing proposals never were real appointments: they are deleted
-       * together with their invitations so no orphaned invitation survives.
+       * The winners become definitive and keep their invitations (they are the attendee list). The
+       * losing proposals never were real appointments: they are deleted together with their
+       * invitations so no orphaned invitation survives.
+       *
+       * Two shapes, decided by the mode the poll was created in:
+       * - 'Ein Termin suchen' (one winner): the winner is DEcoupled — `seriesId: ''` — and stands
+       *   alone, exactly as in v1.
+       * - 'Mehrere Termine festlegen': every winner KEEPS the poll's `seriesId`, so the confirmed
+       *   dates stay one series (their okeys are already `seriesId + index`). `periodicity` stays
+       *   'once': the dates are irregular and no rule describes them, which is why
+       *   `pollMultiSelect` stays true — it locks the periodicity against planSeriesReconcile.
        */
-      async closeSchedule(selectedEvent: CalEventModel, authorMessage?: string): Promise<void> {
-        const seriesId = selectedEvent.seriesId;
+      async closeSchedule(selectedEvents: CalEventModel[], authorMessage?: string): Promise<void> {
+        if (selectedEvents.length === 0) return;
+        const seriesId = selectedEvents[0].seriesId;
+        const keepSeries = selectedEvents.length > 1;
         const batch = store.firestoreService.getBatch();
+        const winnerKeys = selectedEvents.map(e => e.okey);
 
-        batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${selectedEvent.okey}`),
-          { state: 'definitive', seriesId: '' });
+        for (const winner of selectedEvents) {
+          batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${winner.okey}`),
+            keepSeries
+              ? { state: 'definitive', periodicity: 'once' }
+              : { state: 'definitive', seriesId: '', pollMultiSelect: false });
+        }
 
         // NOT calEvents(): that list is narrowed by calendar/maxEvents/showPastEvents, so a proposal
         // older than ~30 days would survive as an orphan pointing at a series that no longer exists.
         const series = await this.loadSeriesEvents(seriesId);
         const losers = series.filter(
-          e => e.okey !== selectedEvent.okey && e.state === 'proposed');
+          e => !winnerKeys.includes(e.okey) && e.state === 'proposed');
         const loserKeys = losers.map(e => e.okey);
         for (const loser of losers) {
           batch.delete(doc(store.firestoreService.firestore, `${CalEventCollection}/${loser.okey}`));
@@ -670,8 +688,8 @@ export const CalEventStore = signalStore(
         }
         await batch.commit();
 
-        await this.notifyGroupRoom(
-          formatScheduleCloseMessage(selectedEvent.name, selectedEvent.startDate, authorMessage));
+        await this.notifyGroupRoom(formatScheduleCloseMessage(
+          selectedEvents[0].name, selectedEvents.map(e => e.startDate), authorMessage));
       },
 
       async edit(calevent: CalEventModel, isNew: boolean, readOnly = true, initialDirty = false, skipReload = false): Promise<CalEventModel | undefined> {
@@ -701,6 +719,14 @@ export const CalEventStore = signalStore(
                 ? store.calEventService.create(data, store.currentUser())
                 : store.calEventService.update(data, store.currentUser()));
             } else { // recurring event
+              // Backstop for the periodicity lock on a poll-born series (the form renders the field
+              // read-only, the Vest suite refuses the save). Its dates are irregular, so
+              // planSeriesReconcile would re-expand from this one startDate and archive every
+              // sibling date as surplus. Refuse rather than silently destroy the other dates.
+              if (data.pollMultiSelect) {
+                error(store.toastController, store.i18n.poll_series_helper());
+                return undefined;
+              }
               if (isNew) {
                 await this.createNewEventSeries(data);
               } else if (!data.seriesId) { // a single event turned into a series

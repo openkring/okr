@@ -10,6 +10,12 @@ import { SchedulePollFormData } from './schedule-poll.model';
 export const MAX_SCHEDULE_POLL_COLUMNS = 10;
 
 /**
+ * The time a date proposal starts with once 'Zeit angeben' is ticked. Only the FIRST entry uses it —
+ * every later one inherits the time of the previous entry (see SchedulePollForm.openPicker).
+ */
+export const DEFAULT_POLL_TIME = '07:00';
+
+/**
  * Only the draft phase validates anything: once the poll is live the columns are frozen and the
  * member is merely toggling cells, which can never be invalid.
  */
