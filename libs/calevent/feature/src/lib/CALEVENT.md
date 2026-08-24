@@ -55,6 +55,42 @@ Collection name: `calevents`
 
 When `isOpen = false`, invitations are stored as `InvitationModel` documents in the `invitations` collection. Group-member invitations can be sent in bulk via `inviteGroupMembers()` which reads the group's memberships and creates one invitation per member in a Firestore batch.
 
+## Schedule poll (Terminumfrage) — no invitations
+
+**A poll never writes to `invitations`.** Its answers live in each proposed calevent's `attendees`,
+the same place open events have always kept them.
+
+It used to mint one invitation per (member × column). That put `members × columns` *pending*
+invitations on the dashboard invitations widget — which counts exactly `inviteeKey === me &&
+state === 'pending' && !isPast` — for what is only a preference, and the widget had no way to tell a
+proposal apart from a real appointment. Answers in `attendees` cannot reach the widget at all.
+
+Consequences that are load-bearing:
+
+- **Proposals are created `isOpen: true`.** Not cosmetic: `canAttendCalevent` lets a member answer a
+  *closed* event only if they hold an invitation, so a poll-born event that stayed closed would be
+  unanswerable by anyone who ignored the poll — including after it was won.
+- **Open on a group calendar means open to the group.** `mayJoinOpenCalevent` narrows the open
+  sign-up to members of the owning group; without it, anyone browsing `/calevent/all` could join a
+  group's training. Non-group calendars are unaffected.
+- **Rows come from the group, not from the answers.** `buildSchedulePollTable` seeds one row per
+  member and overlays the attendees, so the table shows who is still missing. Deriving rows from
+  answers would leave a fresh poll empty.
+- **`saveSchedulePollResponses` uses a transaction, not a batch.** `attendees` is one array shared by
+  the whole group; a batch writes the array the client last saw, so two people answering a
+  chat-blasted poll in the same second would erase each other. The transaction replays
+  `mergeAttendee`, which only ever touches the current user's entry.
+- **A cell reset to `pending` REMOVES the attendee** rather than storing `'invited'`. Absence is the
+  unanswered state — that is what keeps the event free of rows nobody wrote.
+- **`closeSchedule` copies nothing.** The winners keep their `attendees` (the poll answers *are* the
+  attendee list) and stay open so latecomers can still answer; the losers are deleted. Its only
+  invitation writes are legacy cleanup for polls created under the old model.
+
+After the poll is written, `publishSchedulePoll` offers to announce it in the group's Matrix room.
+The link is a short alias over `buildSchedulePollLink`, minted with `resolveAlias` (the alias is the
+poll's identity, so re-announcing reuses the code); a tenant with no seeded `link` space falls back
+to the long URL rather than losing the announcement.
+
 ## CalEventStore
 
 NgRx Signal Store. Key state:

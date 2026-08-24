@@ -90,6 +90,11 @@
     "pickDate": "Elegir esta fecha",
     "notFound": "Esta encuesta de fechas ya no existe. Ya se ha cerrado o eliminado.",
     "noRoom": "No se pudo publicar el mensaje en el chat del grupo.",
+    "publish": {
+      "title": "Publicar la encuesta de fechas",
+      "hint": "Este mensaje se publicará en el chat del grupo. Sin él nadie encontrará la encuesta.",
+      "send": "Enviar"
+    },
     "saveError": "No se pudo guardar la encuesta de fechas.",
     "responseSaved": "Tus respuestas se han guardado.",
     "comment": {

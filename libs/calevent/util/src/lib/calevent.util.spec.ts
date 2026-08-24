@@ -1,7 +1,7 @@
-import { CalEventModel } from '@okr/shared-models';
+import { Attendee, AvatarInfo, CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, nextInvitationState, planSeriesReconcile } from './calevent.util';
+import { bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, toAttendeeState, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -242,6 +242,92 @@ describe('canAttendCalevent', () => {
 
   it('is possible on a personal event without an invitation (the organiser has none)', () => {
     expect(canAttendCalevent(event({ calendars: [] }), false)).toBe(true);
+  });
+
+  it('refuses an open event the caller is not let into', () => {
+    expect(canAttendCalevent(event({ isOpen: true }), false, false)).toBe(false);
+  });
+
+  it('ignores the open gate on a closed event — the invitation still decides', () => {
+    expect(canAttendCalevent(event({}), true, false)).toBe(true);
+  });
+});
+
+describe('mayJoinOpenCalevent', () => {
+  const groupCalendars = ['g1', 'g2'];
+
+  it('lets everybody into an event outside any group calendar', () => {
+    expect(mayJoinOpenCalevent(['club'], groupCalendars, [])).toBe(true);
+  });
+
+  it('lets a member into their own group calendar', () => {
+    expect(mayJoinOpenCalevent(['g1'], groupCalendars, ['g1'])).toBe(true);
+  });
+
+  it('keeps a non-member out of a group calendar', () => {
+    expect(mayJoinOpenCalevent(['g1'], groupCalendars, ['g2'])).toBe(false);
+  });
+
+  it('lets everybody into an event with no calendar at all', () => {
+    expect(mayJoinOpenCalevent(undefined, groupCalendars, [])).toBe(true);
+  });
+});
+
+describe('attendee state mapping', () => {
+  it('narrows an invitation state to the attendee vocabulary', () => {
+    expect(toAttendeeState('accepted')).toBe('accepted');
+    expect(toAttendeeState('declined')).toBe('declined');
+    expect(toAttendeeState('pending')).toBe('invited');
+    expect(toAttendeeState('maybe')).toBe('invited');
+  });
+
+  it('widens it back, with invited reading as pending', () => {
+    expect(toInvitationState('invited')).toBe('pending');
+    expect(toInvitationState('accepted')).toBe('accepted');
+    expect(toInvitationState('declined')).toBe('declined');
+  });
+});
+
+describe('mergeAttendee', () => {
+  const avatar = (key: string): AvatarInfo =>
+    ({ key, name1: 'A', name2: 'B', modelType: 'person', type: '', subType: '', label: '' });
+  const attendee = (key: string, state: Attendee['state']): Attendee => ({ person: avatar(key), state });
+
+  it('adds an answer nobody wrote yet', () => {
+    expect(mergeAttendee([], avatar('me'), 'accepted'))
+      .toEqual([{ person: avatar('me'), state: 'accepted' }]);
+  });
+
+  it('replaces only my own entry', () => {
+    const result = mergeAttendee([attendee('you', 'accepted'), attendee('me', 'accepted')], avatar('me'), 'declined');
+    expect(result).toHaveLength(2);
+    expect(result.find(a => a.person.key === 'you')?.state).toBe('accepted');
+    expect(result.find(a => a.person.key === 'me')?.state).toBe('declined');
+  });
+
+  it('removes my entry when I reset the cell to pending', () => {
+    const result = mergeAttendee([attendee('you', 'accepted'), attendee('me', 'accepted')], avatar('me'), 'pending');
+    expect(result).toEqual([attendee('you', 'accepted')]);
+  });
+
+  it('stays a no-op on pending when I never answered', () => {
+    expect(mergeAttendee([attendee('you', 'accepted')], avatar('me'), 'pending'))
+      .toEqual([attendee('you', 'accepted')]);
+  });
+
+  it('keeps a comment but omits an empty one', () => {
+    expect(mergeAttendee([], avatar('me'), 'accepted', 'erst ab 19:00')[0].comment).toBe('erst ab 19:00');
+    expect(mergeAttendee([], avatar('me'), 'accepted', '')[0].comment).toBeUndefined();
+  });
+
+  it('never mutates the input — a transaction may replay it', () => {
+    const input = [attendee('me', 'accepted')];
+    mergeAttendee(input, avatar('me'), 'declined');
+    expect(input).toEqual([attendee('me', 'accepted')]);
+  });
+
+  it('tolerates a document whose attendees field was never written', () => {
+    expect(mergeAttendee(undefined, avatar('me'), 'accepted')).toHaveLength(1);
   });
 });
 

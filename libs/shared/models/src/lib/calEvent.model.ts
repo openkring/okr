@@ -5,6 +5,12 @@ import { OkrModel, NamedModel, SearchableModel, TaggedModel } from './base.model
 export type Attendee = {
   person: AvatarInfo;
   state: 'invited' | 'accepted' | 'declined';
+  /**
+   * Free text the attendee added to their answer ('komme erst um 19:00'). Written by the schedule
+   * poll, which stores its answers here rather than in `invitations` — see CALEVENT.md.
+   * Optional: every attendee written before the poll moved to this model lacks it.
+   */
+  comment?: string;
 }
 
 export class CalEventModel implements OkrModel, NamedModel, SearchableModel, TaggedModel {

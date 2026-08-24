@@ -90,6 +90,11 @@
     "pickDate": "Diesen Termin wählen",
     "notFound": "Diese Terminabstimmung existiert nicht mehr. Sie wurde bereits abgeschlossen oder gelöscht.",
     "noRoom": "Die Nachricht konnte nicht in den Gruppenchat geschrieben werden.",
+    "publish": {
+      "title": "Terminumfrage veröffentlichen",
+      "hint": "Diese Nachricht wird in den Gruppenchat geschrieben. Ohne sie findet niemand die Umfrage.",
+      "send": "Senden"
+    },
     "saveError": "Die Terminabstimmung konnte nicht gespeichert werden.",
     "responseSaved": "Deine Antworten wurden gespeichert.",
     "comment": {

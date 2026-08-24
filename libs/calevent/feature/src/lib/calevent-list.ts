@@ -21,7 +21,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, upcomingOccurrences } from '@okr/calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, upcomingOccurrences } from '@okr/calevent-util';
 import { showCalendarSync } from '@okr/calevent-ui';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calevent-ui';
 import { browseUrl } from '@okr/subject-address-util';
@@ -382,12 +382,9 @@ export class CalEventList implements OnInit {
     return this.filteredCalEvents().map(event => {
       const cssClass = getCalEventCssClass(event.state);
       const isProposed = event.state === 'proposed';
-      const acceptanceCount = isProposed
-        ? this.store.seriesInvitations().filter(inv => inv.caleventKey === event.okey && inv.state === 'accepted').length
-        : 0;
-      const invitedCount = isProposed
-        ? this.store.seriesInvitations().filter(inv => inv.caleventKey === event.okey).length
-        : 0;
+      // a poll stores its answers in the event's own attendees, so both counts read from there
+      const acceptanceCount = isProposed ? countPollAcceptances(event) : 0;
+      const invitedCount = isProposed ? countPollResponses(event) : 0;
 
       const commonProps: Partial<EventInput> = {
         title: event.name,
@@ -1209,8 +1206,16 @@ export class CalEventList implements OnInit {
       // no invitation (e.g. the organiser of a personal event) -> fall back to the attendees list
       : this.store.invitations().find(inv => inv.caleventKey === event.okey)?.state
         ?? getAttendanceState(event, this.currentUser()?.personKey ?? '');
-    if (!state) return canAttendCalevent(event, hasInvitation) ? 'invited' : undefined;
+    if (!state) return canAttendCalevent(event, hasInvitation, this.mayJoinOpen(event)) ? 'invited' : undefined;
     return state === 'accepted' || state === 'declined' ? state : 'invited';
+  }
+
+  /**
+   * Whether the current user is let into this event's open sign-up. Only a group calendar narrows
+   * it, and then to that group's members — see `mayJoinOpenCalevent`.
+   */
+  protected mayJoinOpen(event: CalEventModel): boolean {
+    return mayJoinOpenCalevent(event.calendars, this.store.groupCalendarKeys(), this.store.calendarsOfCurrentUser());
   }
 
   protected cycleAttendanceFilter(): void {

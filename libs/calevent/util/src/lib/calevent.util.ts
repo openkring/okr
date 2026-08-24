@@ -1,6 +1,6 @@
 import { EventInput } from '@fullcalendar/core';
 
-import { CalEventModel, InvitationState } from '@okr/shared-models';
+import { Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import { addTime, convertDateFormatToString, DateFormat, getIsoDateTime, isPastDate, isType } from '@okr/shared-util-core';
 
 export function isCalEvent(calEvent: unknown, tenantId: string): calEvent is CalEventModel {
@@ -41,15 +41,79 @@ export function isPersonalCalevent(calevent: CalEventModel): boolean {
  * Whether the current user may subscribe/unsubscribe (An-/Abmeldung) to this event. Mirrors the
  * conditions under which CalEventList's ActionSheet offers the attendance buttons:
  * - never for a past event,
- * - an open event is self-service, so everybody may attend,
+ * - an open event is self-service — but only for those `canJoinOpen` lets in,
  * - a closed event only for an invitee, or for the organiser of a personal event (who has no invitation).
  * @param calevent
  * @param hasInvitation true if an invitation for the current user exists on this event
+ * @param canJoinOpen   false only for an open event on a group calendar the user does not belong
+ *                      to; derive it with {@link mayJoinOpenCalevent}. Defaults to true so every
+ *                      caller that has nothing to do with group calendars keeps the old behaviour.
  */
-export function canAttendCalevent(calevent: CalEventModel, hasInvitation: boolean): boolean {
+export function canAttendCalevent(calevent: CalEventModel, hasInvitation: boolean, canJoinOpen = true): boolean {
   if (isPastCalevent(calevent)) return false;
-  if (calevent.isOpen) return true;
+  if (calevent.isOpen) return canJoinOpen;
   return hasInvitation || isPersonalCalevent(calevent);
+}
+
+/**
+ * Open sign-up on a GROUP calendar is for that group's members, not for the whole tenant.
+ *
+ * The distinction exists because of the schedule poll: its events are open so that a member who
+ * ignored the poll can still answer after it closed — not so that anyone browsing /calevent/all
+ * can join a group's training. Events outside a group calendar are unaffected: an open club event
+ * stays open to everybody.
+ *
+ * @param eventCalendars    `calevent.calendars`
+ * @param groupCalendarKeys okeys of every calendar owned by a group (`owner` starts with 'group.')
+ * @param myCalendarKeys    okeys of the calendars owned by an org the current user belongs to
+ */
+export function mayJoinOpenCalevent(
+  eventCalendars: string[] | undefined,
+  groupCalendarKeys: string[],
+  myCalendarKeys: string[],
+): boolean {
+  const calendars = eventCalendars ?? [];
+  const onGroupCalendar = calendars.some(key => groupCalendarKeys.includes(key));
+  if (!onGroupCalendar) return true;
+  return calendars.some(key => myCalendarKeys.includes(key));
+}
+
+/**
+ * An invitation state expressed in the narrower attendee vocabulary. The schedule poll only ever
+ * cycles pending -> accepted -> declined (see {@link nextInvitationState}), so 'maybe' is
+ * unreachable from there; it is folded into 'invited' rather than silently dropped.
+ */
+export function toAttendeeState(state: InvitationState): Attendee['state'] {
+  if (state === 'accepted') return 'accepted';
+  if (state === 'declined') return 'declined';
+  return 'invited';
+}
+
+/** The attendee vocabulary widened back: 'invited' is the invitation's 'pending'. */
+export function toInvitationState(state: Attendee['state']): InvitationState {
+  return state === 'invited' ? 'pending' : state;
+}
+
+/**
+ * The attendee list with one person's answer set — or their entry removed when they reset it to
+ * 'pending'. A missing answer is an ABSENT attendee, never an 'invited' one: that is what keeps a
+ * schedule poll from filling the calevent with rows nobody wrote.
+ *
+ * Pure and total, and deliberately so: `saveSchedulePollResponses` runs it inside a Firestore
+ * transaction, which may replay the callback against a fresher snapshot. Everyone else's entries
+ * are carried over untouched, so a replay can never drop a concurrent answer.
+ */
+export function mergeAttendee(
+  attendees: Attendee[] | undefined,
+  person: AvatarInfo,
+  state: InvitationState,
+  comment = '',
+): Attendee[] {
+  const others = (attendees ?? []).filter(attendee => attendee.person.key !== person.key);
+  if (state === 'pending') return others;
+  const merged: Attendee = { person, state: toAttendeeState(state) };
+  if (comment.length > 0) merged.comment = comment;
+  return [...others, merged];
 }
 
 /**

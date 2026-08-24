@@ -90,6 +90,11 @@
     "pickDate": "Choose this date",
     "notFound": "This date poll no longer exists. It has already been closed or deleted.",
     "noRoom": "The message could not be posted to the group chat.",
+    "publish": {
+      "title": "Publish schedule poll",
+      "hint": "This message is posted to the group chat. Without it nobody will find the poll.",
+      "send": "Send"
+    },
     "saveError": "The date poll could not be saved.",
     "responseSaved": "Your answers have been saved.",
     "comment": {

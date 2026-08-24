@@ -4,7 +4,7 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { addMonths, format } from 'date-fns';
-import { doc, WriteBatch } from 'firebase/firestore';
+import { doc, runTransaction, WriteBatch } from 'firebase/firestore';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { from, firstValueFrom, map, of } from 'rxjs';
@@ -25,7 +25,7 @@ import { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
-import { CALEVENT_I18N_KEYS, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, planSeriesReconcile, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 
 /**
@@ -247,29 +247,19 @@ export const CalEventStore = signalStore(
     }),
   })),
 
-  withProps((store) => ({
-    seriesInvitationsResource: rxResource({
-      params: () => ({
-        seriesId: store.scheduleSeriesId(),
-        proposedEventKeys: (store.caleventsResource.value() ?? [])
-          .filter((e: CalEventModel) => e.seriesId === store.scheduleSeriesId() && e.state === 'proposed')
-          .map((e: CalEventModel) => e.okey),
-        tenantId: store.appStore.env.tenantId,
-      }),
-      stream: ({ params }) => {
-        if (!params.seriesId || params.proposedEventKeys.length === 0) return of([]);
-        return store.appStore.firestoreService
-          .searchData<InvitationModel>(InvitationCollection, getSystemQuery(params.tenantId), 'inviteeKey', 'asc')
-          .pipe(map((invs: InvitationModel[]) => invs.filter(inv => params.proposedEventKeys.includes(inv.caleventKey))));
-      },
-    }),
-  })),
-
   withComputed((state) => {
     return {
       calEvents: computed(() => state.caleventsResource.value() ?? []),
       invitations: computed(() => state.invitationsForCurrentUserResource.value() ?? []),
-      seriesInvitations: computed(() => state.seriesInvitationsResource.value() ?? []),
+
+      /**
+       * okeys of every calendar owned by a group. Open sign-up on those is members-only
+       * (`mayJoinOpenCalevent`) — a poll-born event is open so its group can still answer it, not
+       * so the whole tenant can join a group's training.
+       */
+      groupCalendarKeys: computed(() => (state.calendarsResource.value() ?? [])
+        .filter((cal: CalendarModel) => cal.owner?.startsWith('group.') === true)
+        .map((cal: CalendarModel) => cal.okey)),
 
       calendar: computed(() => {
         const calName = state.calendarName();
@@ -292,6 +282,27 @@ export const CalEventStore = signalStore(
           return owner.substring(6);
         }
         return '';
+      }),
+
+      /**
+       * The group a schedule poll belongs to, read from the POLL rather than from the calendar the
+       * user happens to be looking at. `calevent.viewSchedule` opens a poll straight out of the
+       * 'all' list, where `groupCalendarId` is empty — deriving the members from the selected
+       * calendar would render that poll as an empty, read-only table.
+       *
+       * Falls back to the selected calendar so a draft (which has no events yet) still resolves.
+       */
+      scheduleGroupId: computed(() => {
+        const toGroupId = (owner: string | undefined): string =>
+          owner?.startsWith('group.') === true ? owner.substring(6) : '';
+        const seriesId = state.scheduleSeriesId();
+        if (!seriesId) return toGroupId(state.calendar()?.owner);
+        const proposed = (state.calEvents() as CalEventModel[])
+          .find(event => event.seriesId === seriesId && event.state === 'proposed');
+        const calendarKey = proposed?.calendars?.[0];
+        return toGroupId(calendarKey
+          ? (state.calendarsResource.value() ?? []).find((cal: CalendarModel) => cal.okey === calendarKey)?.owner
+          : undefined);
       }),
       filteredCalEvents: computed(() => 
         state.calEvents()?.filter((calEvent: CalEventModel) =>
@@ -323,10 +334,20 @@ export const CalEventStore = signalStore(
         ? store.membershipService.listMembersOfOrg(params.groupId, 'group')
         : of([]),
     }),
+
+    // members of the group owning the OPEN POLL — the rows of the poll table. Keyed on
+    // scheduleGroupId, so it resolves no matter which calendar the poll was opened from.
+    scheduleMembersResource: rxResource({
+      params: () => ({ groupId: store.scheduleGroupId() }),
+      stream: ({ params }) => params.groupId
+        ? store.membershipService.listMembersOfOrg(params.groupId, 'group')
+        : of([]),
+    }),
   })),
 
   withComputed((state) => ({
     groupMembers: computed(() => state.groupMembersResource.value() ?? []),
+    scheduleMembers: computed(() => state.scheduleMembersResource.value() ?? []),
     allInvitations: computed(() => state.allInvitationsResource.value() ?? []),
   })),
 
@@ -481,10 +502,18 @@ export const CalEventStore = signalStore(
       },
 
       /**
-       * Writes the whole poll in one go: one proposed calevent per column plus one invitation per
-       * (member × column) — including the author, whose own answers come from the draft table.
-       * inviteGroupMembers is deliberately NOT reused: it skips the organiser (who needs a row here)
-       * and prompts for an invitation message once per event.
+       * Writes the whole poll in one go — and writes NOTHING to `invitations`.
+       *
+       * A poll used to mint one invitation per (member × column). That flooded every member's
+       * dashboard widget with `members × columns` pending rows for what is only a preference, and
+       * the widget could not tell a proposal apart from a real appointment. The answers now live in
+       * each proposed calevent's `attendees`, which is where the series-attendance table already
+       * read them from for open events.
+       *
+       * The proposals are created OPEN for the same reason: once the poll closes, a member who
+       * never answered must still be able to answer on the winning date, and a closed event without
+       * an invitation can never be answered (`canAttendCalevent`). Open on a group calendar means
+       * open to that group — see `mayJoinOpenCalevent`.
        */
       async createSchedulePoll(data: SchedulePollFormData, origin: string): Promise<void> {
         const currentUser = store.currentUser();
@@ -492,10 +521,11 @@ export const CalEventStore = signalStore(
         // throw, don't return: the caller dismisses on success, so a silent no-op would look saved
         if (!currentUser || !groupId) throw new Error('CalEventStore.createSchedulePoll: no current user or no group calendar');
 
-        const members = await firstValueFrom(store.membershipService.listMembersOfOrg(groupId, 'group'));
         const seriesId = generateRandomString(18);
         const batch = store.firestoreService.getBatch();
         const myResponses = data.rows[0]?.responses ?? {};
+        const myComment = data.rows[0]?.comment ?? '';
+        const myAvatar = getAvatarInfoForCurrentUser(currentUser);
         let eventIndex = 0;
 
         for (const column of data.columns) {
@@ -505,7 +535,7 @@ export const CalEventStore = signalStore(
           calevent.name = data.name;
           calevent.description = data.description;
           calevent.state = 'proposed';
-          calevent.isOpen = false;
+          calevent.isOpen = true;
           calevent.startDate = column.startDate;
           calevent.startTime = column.startTime;
           calevent.columnLabel = column.columnLabel ?? '';
@@ -520,65 +550,81 @@ export const CalEventStore = signalStore(
             modelType: 'person', type: '', subType: '', label: '',
           }];
           calevent.index = getCaleventIndex(calevent);
+          // the author's own draft answers — the only ones that exist at creation time. No
+          // transaction needed: the document is brand new and nobody else can be writing it yet.
+          calevent.attendees = myAvatar
+            ? mergeAttendee([], myAvatar, myResponses[column.id] ?? 'pending', myComment)
+            : [];
           const eventRef = doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`);
           batch.set(eventRef, removeKeyFromOkrModel(structuredClone(calevent)));
-
-          let memberIndex = 0;
-          for (const member of members) {
-            const inv = new InvitationModel(store.tenantId());
-            inv.inviteeKey = member.memberKey;
-            inv.inviteeFirstName = member.memberName1;
-            inv.inviteeLastName = member.memberName2;
-            inv.inviterKey = currentUser.personKey;
-            inv.inviterFirstName = currentUser.firstName;
-            inv.inviterLastName = currentUser.lastName;
-            inv.caleventKey = calevent.okey;
-            inv.name = calevent.name;
-            inv.date = calevent.startDate;
-            inv.state = member.memberKey === currentUser.personKey
-              ? (myResponses[column.id] ?? 'pending')
-              : 'pending';
-            if (member.memberKey === currentUser.personKey) inv.notes = data.rows[0]?.comment ?? '';
-            inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
-            const invRef = doc(store.firestoreService.firestore,
-              `${InvitationCollection}/${calevent.okey}${pad(memberIndex, 2)}`);
-            batch.set(invRef, removeKeyFromOkrModel(structuredClone(inv)));
-            memberIndex++;
-          }
           eventIndex++;
         }
         await batch.commit();
 
-        const link = buildSchedulePollLink(origin, store.calendarName(), seriesId);
-        await this.notifyGroupRoom(formatSchedulePollInviteMessage(data.name, link));
+        await this.publishSchedulePoll(data.name, seriesId, origin);
       },
 
-      /** Writes the current user's row in one batch — one update per changed cell. */
-      async saveSchedulePollResponses(rows: SchedulePollRow[]): Promise<void> {
+      /**
+       * Offers to announce the finished poll in the group chat. Asking rather than sending is the
+       * point: the poll exists either way, and the author may well want to word the call to action
+       * themselves — the message is the only thing that makes members open the link at all.
+       *
+       * The link is a short alias over `buildSchedulePollLink`, minted with `resolveAlias` and not
+       * `createAlias`: the alias is the poll's IDENTITY, so re-announcing the same poll reuses the
+       * same code instead of minting a second one. A tenant without a seeded `link` space simply
+       * gets the long URL — a missing short link must never cost the announcement.
+       */
+      async publishSchedulePoll(name: string, seriesId: string, origin: string): Promise<void> {
+        const longLink = buildSchedulePollLink(origin, store.calendarName(), seriesId);
+        const result = await store.aliasMintService.resolveAlias({
+          space: CALEVENT_ALIAS_SPACE,
+          original: `schedulePoll.${seriesId}`,
+          targetType: 'url',
+          targetUrl: longLink,
+          notes: name,
+        });
+        if (!result.ok) warn(`CalEventStore.publishSchedulePoll -> ${result.code}: ${result.message}`);
+        const link = result.ok ? result.url : longLink;
+
+        const message = await okrPrompt(store.alertController, store.i18n.schedule_publish_title(),
+          store.i18n.schedule_publish_hint(), store.i18n.schedule_publish_send(), store.i18n.cancel(),
+          formatSchedulePollInviteMessage(name, link));
+        if (!message) return;   // 'Abbrechen' — the poll stays created, it is just not announced
+        await this.notifyGroupRoom(message);
+      },
+
+      /**
+       * Writes the current user's row into the proposed events' `attendees`.
+       *
+       * A transaction, not a batch, and the difference matters here: `attendees` is ONE array field
+       * shared by every member of the group. A batch writes the array the client last saw, so two
+       * people answering a chat-blasted poll within the same second would silently erase each
+       * other's answer. The transaction re-reads each document and replays `mergeAttendee`, which
+       * only ever touches the current user's own entry.
+       *
+       * `proposedEvents` comes from the caller (the modal already has the sorted column list) so the
+       * transaction reads exactly the documents it writes.
+       */
+      async saveSchedulePollResponses(proposedEvents: CalEventModel[], rows: SchedulePollRow[]): Promise<void> {
         const currentUser = store.currentUser();
         // by personKey, not rows[0]: the current user is only sorted first when they have a row at all
         const myRow = currentUser ? rows.find(row => row.key === currentUser.personKey) : undefined;
-        if (!myRow || !currentUser) return;
-        const today = getTodayStr(DateFormat.StoreDateTime);
-        const batch = store.firestoreService.getBatch();
-        let changed = 0;
+        const avatar = currentUser ? getAvatarInfoForCurrentUser(currentUser) : undefined;
+        if (!myRow || !currentUser || !avatar || proposedEvents.length === 0) return;
         const comment = myRow.comment ?? '';
-        for (const invitation of store.seriesInvitations()) {
-          if (invitation.inviteeKey !== currentUser.personKey) continue;
-          if (invitation.isLocked) continue;   // responses frozen by the organiser
-          const newState = myRow.responses[invitation.caleventKey];
-          const stateChanged = !!newState && newState !== invitation.state;
-          const commentChanged = comment !== (invitation.notes ?? '');
-          if (!stateChanged && !commentChanged) continue;
-          const ref = doc(store.firestoreService.firestore, `${InvitationCollection}/${invitation.okey}`);
-          // the comment is replicated to every invitation of the series so any one row read finds it
-          batch.update(ref, stateChanged
-            ? { state: newState, respondedAt: today, notes: comment }
-            : { notes: comment });
-          changed++;
-        }
-        if (changed === 0) return;
-        await batch.commit();
+
+        await runTransaction(store.firestoreService.firestore, async (transaction) => {
+          const refs = proposedEvents.map(event =>
+            doc(store.firestoreService.firestore, `${CalEventCollection}/${event.okey}`));
+          // every read must happen before the first write — a Firestore transaction rule, not a style choice
+          const snapshots = await Promise.all(refs.map(ref => transaction.get(ref)));
+          snapshots.forEach((snapshot, index) => {
+            if (!snapshot.exists()) return;   // the organiser deleted the column while we were answering
+            const attendees = (snapshot.data() as CalEventModel).attendees ?? [];
+            const newState = myRow.responses[proposedEvents[index].okey] ?? 'pending';
+            transaction.update(refs[index], { attendees: mergeAttendee(attendees, avatar, newState, comment) });
+          });
+        });
         await showToast(store.toastController, store.i18n.schedule_response_saved());
       },
 
@@ -644,9 +690,16 @@ export const CalEventStore = signalStore(
       },
 
       /**
-       * The winners become definitive and keep their invitations (they are the attendee list). The
-       * losing proposals never were real appointments: they are deleted together with their
-       * invitations so no orphaned invitation survives.
+       * The winners become definitive and keep their `attendees` — the poll answers ARE the
+       * attendee list, so nothing has to be copied anywhere. They also stay `isOpen`, which is what
+       * lets a member who ignored the poll still answer afterwards: a closed event can only be
+       * answered by someone holding an invitation, and a poll no longer mints any.
+       *
+       * The losing proposals never were real appointments and are simply deleted. Legacy polls
+       * (created when answers still lived in `invitations`) additionally have their invitations
+       * cleaned up: the losers' entirely, the winners' only where nobody ever answered — an
+       * unanswered invitation on an open event is dashboard noise, and the member can now answer
+       * the event directly.
        *
        * Two shapes, decided by the mode the poll was created in:
        * - 'Ein Termin suchen' (one winner): the winner is DEcoupled — `seriesId: ''` — and stands
@@ -679,11 +732,14 @@ export const CalEventStore = signalStore(
         for (const loser of losers) {
           batch.delete(doc(store.firestoreService.firestore, `${CalEventCollection}/${loser.okey}`));
         }
+        // Legacy only — a poll created under the current model has no invitations at all. One batch,
+        // capped at Firestore's 500 writes; chunk into 400-write commits if a poll ever grows past it.
         const allInvitations = await store.firestoreService.getDataOnce<InvitationModel>(
           InvitationCollection, getSystemQuery(store.tenantId()), 'none');
-        // ponytail: one batch, capped at Firestore's 500 writes (a poll of ~10 columns x 30 members
-        // is comfortably under that). Chunk into 400-write commits if a poll ever grows past it.
-        for (const inv of allInvitations.filter(i => loserKeys.includes(i.caleventKey))) {
+        const obsolete = allInvitations.filter(inv =>
+          loserKeys.includes(inv.caleventKey) ||
+          (winnerKeys.includes(inv.caleventKey) && inv.state === 'pending'));
+        for (const inv of obsolete) {
           batch.delete(doc(store.firestoreService.firestore, `${InvitationCollection}/${inv.okey}`));
         }
         await batch.commit();

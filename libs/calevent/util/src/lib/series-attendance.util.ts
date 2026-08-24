@@ -1,6 +1,6 @@
-import { Attendee, CalEventModel, InvitationModel, InvitationState } from '@okr/shared-models';
+import { CalEventModel, InvitationModel } from '@okr/shared-models';
 
-import { isPastCalevent } from './calevent.util';
+import { isPastCalevent, toInvitationState } from './calevent.util';
 import { SchedulePollColumn, SchedulePollFormData, SchedulePollRow } from './schedule-poll.model';
 
 /** The current user, as far as the attendance table needs them. */
@@ -17,11 +17,6 @@ export interface SeriesAttendanceMember {
 export function canRespondToCalevent(calevent: CalEventModel, invitations: InvitationModel[], personKey: string): boolean {
   if (calevent.isOpen) return true;
   return invitations.some(inv => inv.caleventKey === calevent.okey && inv.inviteeKey === personKey);
-}
-
-/** An attendee state is the narrower of the two vocabularies — 'invited' is the invitation 'pending'. */
-function toInvitationState(state: Attendee['state']): InvitationState {
-  return state === 'invited' ? 'pending' : state;
 }
 
 /**

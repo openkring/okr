@@ -1,12 +1,11 @@
 import { Component, computed, effect, inject, input, OnDestroy, signal, untracked } from '@angular/core';
 import { AlertController, IonContent, ModalController, ToastController } from '@ionic/angular/standalone';
 
-import { InvitationState } from '@okr/shared-models';
 import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { dismissOverlay, error } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, hasRole } from '@okr/shared-util-core';
 import { SchedulePollForm } from '@okr/calevent-ui';
-import { SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { buildSchedulePollTable, SchedulePollFormData } from '@okr/calevent-util';
 
 import { CalEventStore } from './calevent.store';
 
@@ -71,13 +70,16 @@ export class ScheduleModal implements OnDestroy {
   });
 
   /**
-   * A live poll the user has no invitation for (the v1 flow skipped the organiser, and privileged
-   * users may open any poll). Their taps could never be saved — so nothing may look editable.
+   * A live poll the user is not a member of (privileged users may open any poll via its link).
+   * Their taps would be written to a group they do not belong to — so nothing may look editable.
+   *
+   * Membership, not "has a row": rows now come from the group list, so everybody in the table has
+   * one from the start and the old check would have made every poll editable by anyone.
    */
   protected readonly readOnly = computed(() => {
     if (this.isDraft()) return false;
     const myKey = this.store.currentUser()?.personKey ?? '';
-    return !this.formData().rows.some(row => row.key === myKey);
+    return !this.store.scheduleMembers().some(member => member.memberKey === myKey);
   });
 
   /**
@@ -104,12 +106,15 @@ export class ScheduleModal implements OnDestroy {
       untracked(() => this.formData.update(data => ({ ...data, isDraft: seriesId.length === 0 })));
     });
 
-    // Seed the editable table ONCE. Re-seeding on every invitation-stream emission would wipe the
+    // Seed the editable table ONCE. Re-seeding on every calevent-stream emission would wipe the
     // user's unsaved cell taps (same trap as linkedSignal over an rxResource).
+    //
+    // Guarded on the MEMBER list, not on the answers: an invitation-less poll starts with no
+    // answers at all, so waiting for one would leave the table empty until somebody responded.
     effect(() => {
       const events = this.proposedEvents();
-      const invitations = this.store.seriesInvitations();
-      if (this.seeded || this.isDraft() || events.length === 0 || invitations.length === 0) return;
+      const members = this.store.scheduleMembers();
+      if (this.seeded || this.isDraft() || events.length === 0 || members.length === 0) return;
       untracked(() => {
         this.formData.set(this.buildLiveTable());
         this.seeded = true;
@@ -130,32 +135,15 @@ export class ScheduleModal implements OnDestroy {
     };
   }
 
-  /** Column id == calevent okey, so the store can map a cell straight onto its invitation. */
+  /** Column id == calevent okey, so the store can map a cell straight onto that event's attendees. */
   private buildLiveTable(): SchedulePollFormData {
-    const events = this.proposedEvents();
-    const myKey = this.store.currentUser()?.personKey ?? '';
-    const rowsByKey = new Map<string, SchedulePollRow>();
-    for (const inv of this.store.seriesInvitations()) {
-      const row = rowsByKey.get(inv.inviteeKey) ?? {
-        key: inv.inviteeKey, firstName: inv.inviteeFirstName, lastName: inv.inviteeLastName,
-        responses: {}, comment: '',
-      };
-      row.responses[inv.caleventKey] = inv.state as InvitationState;
-      // the same comment is written to every invitation of the member; any one of them is the truth
-      if (inv.notes) row.comment = inv.notes;
-      rowsByKey.set(inv.inviteeKey, row);
-    }
-    const rows = [...rowsByKey.values()].sort((a, b) =>
-      a.key === myKey ? -1 : b.key === myKey ? 1 : a.lastName.localeCompare(b.lastName));
-    return {
-      name: events[0]?.name ?? '',
-      description: events[0]?.description ?? '',
-      columns: events.map(e => ({ id: e.okey, startDate: e.startDate, startTime: e.startTime, columnLabel: e.columnLabel ?? '' })),
-      rows,
-      isDraft: false,
-      // legacy polls predate the field — coalesce to false = the v1 single-winner close
-      multiSelect: events[0]?.pollMultiSelect === true,
-    };
+    return buildSchedulePollTable(
+      this.proposedEvents(),
+      this.store.scheduleMembers().map(member => ({
+        key: member.memberKey, firstName: member.memberName1, lastName: member.memberName2,
+      })),
+      this.store.currentUser()?.personKey ?? '',
+    );
   }
 
   protected onFormDataChange(data: SchedulePollFormData): void {
@@ -168,7 +156,7 @@ export class ScheduleModal implements OnDestroy {
       if (this.isDraft()) {
         await this.store.createSchedulePoll(this.formData(), window.location.origin);
       } else {
-        await this.store.saveSchedulePollResponses(this.formData().rows);
+        await this.store.saveSchedulePollResponses(this.proposedEvents(), this.formData().rows);
       }
     } catch (err) {
       console.warn('ScheduleModal.save:', err);

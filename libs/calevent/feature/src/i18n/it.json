@@ -90,6 +90,11 @@
     "pickDate": "Scegli questa data",
     "notFound": "Questo sondaggio date non esiste più. È già stato chiuso o eliminato.",
     "noRoom": "Non è stato possibile pubblicare il messaggio nella chat di gruppo.",
+    "publish": {
+      "title": "Pubblica il sondaggio sulle date",
+      "hint": "Questo messaggio verrà pubblicato nella chat di gruppo. Senza di esso nessuno troverà il sondaggio.",
+      "send": "Invia"
+    },
     "saveError": "Non è stato possibile salvare il sondaggio date.",
     "responseSaved": "Le tue risposte sono state salvate.",
     "comment": {
