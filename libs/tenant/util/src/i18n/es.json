@@ -60,7 +60,10 @@
       "label": "Comentarios"
     },
     "geo": {
-      "label": "Ubicaciones y salidas"
+      "label": "Ubicaciones"
+    },
+    "trip": {
+      "label": "Cuaderno de salidas"
     },
     "consent": {
       "label": "Consentimiento"

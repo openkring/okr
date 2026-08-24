@@ -60,7 +60,10 @@
       "label": "Commentaires"
     },
     "geo": {
-      "label": "Lieux et sorties"
+      "label": "Lieux"
+    },
+    "trip": {
+      "label": "Carnet de sorties"
     },
     "consent": {
       "label": "Consentement"

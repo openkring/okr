@@ -60,7 +60,10 @@
       "label": "Kommentare"
     },
     "geo": {
-      "label": "Standorte & Fahrten"
+      "label": "Standorte"
+    },
+    "trip": {
+      "label": "Logbuch (Fahrtenbuch)"
     },
     "consent": {
       "label": "Einwilligung"

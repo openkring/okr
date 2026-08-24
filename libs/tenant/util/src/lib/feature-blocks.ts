@@ -75,12 +75,19 @@ function subjectsMenuParent(children: MenuSpec[]): MenuSpec {
 }
 
 /**
- * `resource-menu` is a fourth live shared parent (verified against Firestore, task 13,
- * re-verified task 14). Its live children span TWO domains: `ownerships-all`,
- * `reservation-all`, `transfer-all` belong to `relationship` (declared here); `resource-all`,
- * `rboat-all`, `lockers-all`, `keys-all`, `boats-club`, `boats-private` belong to `resource`
- * (task 14, below) — both declare this SAME parent node (field-identical, only `children`
- * differs), the shared-parent pattern.
+ * `resource-menu` WAS a fourth shared parent (tasks 13/14): its live children span two
+ * domains — `resource-all`, `rboat-all`, `lockers-all`, `keys-all`, `boats-club`,
+ * `boats-private` (`resource`) plus `ownerships-all`, `reservation-all`, `transfer-all`
+ * (routes owned by `relationship`). As of 2026-08-24 all nine are declared by `resource`
+ * ALONE, so this helper now has exactly ONE caller and the key has exactly ONE owner.
+ *
+ * That change is the fix for a real bug: `MenuStore.isVisible` resolves visibility to "ANY
+ * owning block effective", so while `relationship` co-declared this parent, a tenant with
+ * `resource` switched OFF and `relationship` ON still rendered the entire Ressourcen
+ * accordion (observed on `elab`). The shared-parent pattern is correct for a parent whose
+ * children genuinely belong to independently-switchable blocks (`cms-menu`, `aoc-menu`,
+ * `subjects-menu`); it is wrong for a parent that IS the block. Kept as a function for
+ * symmetry with its three siblings and so a second owner can be re-introduced deliberately.
  *
  * Task 13 fix round 1 TODO (now acted on, task 14): `resource` needs `dependsOn:
  * ['relationship']`, not just this shared parent — verified live, `boats-club`
@@ -573,8 +580,13 @@ const geo: FeatureBlock = {
   core: true,
   defaultAvailability: 'ga',
   dependsOn: [],
-  // Container domain: libs/geo/{location,trip}, each owning its own Firestore collection.
-  collections: ['locations', 'trips'],
+  // Container domain libs/geo/{location,trip} — but ONLY the `location` half is catalogued
+  // here. `trip` is its own block (see `trip` below): `geo` is `core: true`, so anything it
+  // declares is unconditionally on for every tenant, and the Logbuch is a sport-club feature
+  // no other tenant wants. Splitting one subdomain out of a container block is a deliberate
+  // exception to the 2026-08-02 granularity ruling, taken because the alternative (making
+  // `geo` non-core) would also make the generic `location` admin screen optional.
+  collections: ['locations'],
   menu: [
     cmsMenuParent([
       { key: 'location-all', name: 'location-all', url: '/location/all/c-locations', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'location', label: '@item.location-all' },
@@ -584,16 +596,47 @@ const geo: FeatureBlock = {
       { key: 'location-show', name: 'location-show', url: 'showOnMap', action: 'call', roleNeeded: 'registered', icon: 'map', label: '@item.location-show' },
       { key: 'location-exportraw', name: 'location-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'eventAdmin', icon: 'download', label: '@item.location-exportraw' },
     ] },
-    // RULED (task 12 review round 3): 'logbuch' stays a top-level `navigate` entry — that
-    // IS the intended model, same as any other block-owned top-level nav item (`login`,
-    // `category-all`, ...). A fresh tenant enabling `geo` for the first time gets `logbuch`
-    // created AND attached to their root nav by `rootNavKeys()`/`planRootMenuOp`, exactly
-    // as designed. `scs` currently has the live `logbuch` doc (`tenants: ['scs']`) but does
-    // NOT list it in `main_scs.menuItems` — verified this is legacy DRIFT (it was authored
-    // directly onto the tenant-bespoke `sport-menu` custom grouping before this catalogue
-    // existed), not evidence against the model. The next `applyFeatureSelection` for `scs`
-    // will add the one missing, `registered`-gated root entry — a one-time,
-    // intentional convergence, not a duplication bug.
+  ],
+};
+
+/**
+ * Logbuch / Fahrtenbuch — the `libs/geo/trip` subdomain, split out of the `core: true` `geo` block
+ * (2026-08-24). It was catalogued under `geo` originally on the container-domain rule, but
+ * that made it unswitchable: `geo` is core, `rootNavKeys()` appends every top-level spec of
+ * an effective block to `menuItems/main_<tenantId>`, so EVERY tenant — `elab`, `p13`, `kring`
+ * — got a Logbuch row in their sidebar with no way to untick it. The rowing logbook is a
+ * sport-club feature; it needs its own switch. Splitting the block, rather than moving the
+ * rows onto a hand-authored menu, keeps them catalogue-owned (label/icon/role stay
+ * self-healing via «Struktur übernehmen») while making them optional.
+ *
+ * `id: 'trip'` matches `libs/geo/trip`, the subdomain it covers — NOT a top-level `libs/`
+ * directory, which is fine: `feature-catalogue.completeness.spec.ts` asserts every
+ * top-level domain with a feature lib IS a block or a listed non-block, not the converse;
+ * `geo` still covers the `libs/geo` top-level entry.
+ *
+ * `dependsOn` by import evidence (`libs/geo/trip/{feature,data-access,ui,util}`):
+ * `@okr/location-data-access` (`geo` — every trip starts and ends at a location),
+ * `@okr/relationship-responsibility-data-access` (`relationship` — who is on duty / may
+ * unlock), `@okr/task-data-access` (`task` — a damage report opens a task). Nothing depends
+ * on `trip`, so this edge set cannot close a cycle. Note `aoc`'s `AocTrip` screen ALSO loads
+ * `@okr/trip-feature` — see the block comment on `aoc` in `feature-catalogue.ts`; that stays
+ * an intentional inverse-gating exception and is not an edge.
+ */
+const trip: FeatureBlock = {
+  id: 'trip',
+  bundle: 'special',
+  label: '@tenant/util.feature.trip.label',
+  icon: 'track',
+  defaultAvailability: 'ga',
+  dependsOn: ['geo', 'relationship', 'task'],
+  collections: ['trips'],
+  menu: [
+    // Top-level `navigate` entry, same as any other block-owned root nav item (`login`,
+    // `category-all`, ...): a tenant ticking this block gets `logbuch` created AND attached
+    // to their root nav by `rootNavKeys()`/`planRootMenuOp`. `scs` has the live `logbuch` doc
+    // (`tenants: ['scs']`) but does NOT list it in `main_scs.menuItems` — legacy drift (it was
+    // authored onto the tenant-bespoke `sport-menu` grouping before this catalogue existed);
+    // the next `applyFeatureSelection` for `scs` converges that, one time, intentionally.
     { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'registered', icon: 'track', label: '@item.logbuch' },
     { key: 'c-trips', name: 'c-trips', url: '', action: 'context', roleNeeded: 'kiosk', icon: 'help-circle', label: '', children: [
       { key: 'trip-add', name: 'trip-add', url: 'add', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: '@item.trip-add' },
@@ -833,14 +876,14 @@ const relationship: FeatureBlock = {
       { key: 'workrel-all', name: 'workrel-all', url: '/workrel/all/c-wrel', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'work', label: '@item.workrel-all' },
       { key: 'responsibility-all', name: 'responsibility-all', url: '/responsibility/all/c-responsibility', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'target', label: '@item.responsibility-all' },
     ]),
-    resourceMenuParent([
-      { key: 'ownerships-all', name: 'ownerships-all', url: '/ownership/all/c-ownership', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'own', label: '@item.ownerships-all' },
-      { key: 'reservation-all', name: 'reservation-all', url: '/reservation/all/c-reservations', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'reservation', label: '@item.reservation-all' },
-      // Copied verbatim, including the missing leading slash — `urlResolves` matches by
-      // path segment, not string prefix, so this still resolves; not "fixed" per the
-      // mirror-verbatim rule.
-      { key: 'transfer-all', name: 'transfer-all', url: 'transfer/all/c-transfers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'arrow-forward', label: '@item.transfer-all' },
-    ]),
+    // NOTE (2026-08-24): `ownerships-all` / `reservation-all` / `transfer-all` used to be
+    // declared HERE, under a co-declared `resourceMenuParent()`. They were moved to the
+    // `resource` block so that `resource-menu` has exactly ONE owner. Reason: `isVisible`
+    // in `MenuStore` is "ANY owning block effective", so a tenant with `relationship` ON and
+    // `resource` OFF still rendered the whole Ressourcen accordion (verified on `elab`).
+    // The routes those three point at (`/ownership`, `/reservation`, `/transfer`) still
+    // belong to THIS block's route fragment — `resource` already carries
+    // `dependsOn: ['relationship']`, which is what makes that legal.
     // Live child of the tenant-bespoke `event-menu-scs` grouping (own name literally embeds
     // "scs", same class as `sport-menu`), NOT of any generic shared parent — but the entry
     // itself is generic (no tenant/org key in its own url), same shape as `logbuch` on the
@@ -1002,6 +1045,16 @@ const resource: FeatureBlock = {
       { key: 'lockers-all', name: 'lockers-all', url: '/ownership/lockers/c-lockers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'lock-closed', label: '@item.lockers-all' },
       { key: 'keys-all', name: 'keys-all', url: '/ownership/keys/c-keys', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'key', label: '@item.keys-all' },
       { key: 'boats-private', name: 'boats-private', url: '/ownership/privateBoats/c-ownership', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'b1x', label: '@item.boats-private' },
+      // Moved here from `relationship` (2026-08-24) so `resource-menu` has a single owner —
+      // see the note at that block's `menu[]`. Same class as `boats-club`/`lockers-all`/
+      // `keys-all` above: the doc lives under `resource-menu`, the route it navigates to is
+      // `relationship`'s, and `dependsOn: ['relationship']` is what makes that safe.
+      { key: 'ownerships-all', name: 'ownerships-all', url: '/ownership/all/c-ownership', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'own', label: '@item.ownerships-all' },
+      { key: 'reservation-all', name: 'reservation-all', url: '/reservation/all/c-reservations', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'reservation', label: '@item.reservation-all' },
+      // Copied verbatim, including the missing leading slash — `urlResolves` matches by
+      // path segment, not string prefix, so this still resolves; not "fixed" per the
+      // mirror-verbatim rule.
+      { key: 'transfer-all', name: 'transfer-all', url: 'transfer/all/c-transfers', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'arrow-forward', label: '@item.transfer-all' },
     ]),
     { key: 'c-resources', name: 'c-resources', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
       { key: 'resource-add', name: 'resource-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.resource-add' },
@@ -2203,7 +2256,7 @@ const alias: FeatureBlock = {
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
   calevent, aoc, activity, task, instruments, games,
-  auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, consent,
+  auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
   subject, relationship, vcard,
   resource, mobility,
   finance, esign, pdfTemplate,

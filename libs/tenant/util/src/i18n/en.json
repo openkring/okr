@@ -60,7 +60,10 @@
       "label": "Comments"
     },
     "geo": {
-      "label": "Locations & Trips"
+      "label": "Locations"
+    },
+    "trip": {
+      "label": "Logbook"
     },
     "consent": {
       "label": "Consent"
