@@ -274,6 +274,36 @@ export function buildICS(calendarName: string, events: CalEventDoc[], opts: IcsO
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Authorization
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Whether an event may leave through the UNAUTHENTICATED ICS endpoint.
+ *
+ * The calendar-key path already refuses closed calendars ("Ohne Token liefert dieser
+ * Endpunkt nur noch OFFENE Kalender"), but the `e:<okey>` single-event path bypassed that
+ * entirely: it looked the document up by id, so any guessed okey — of any tenant, in any
+ * closed group calendar — came back in full. This applies the same rule to both paths.
+ *
+ * An event is exportable when it is live AND sits in at least one calendar whose
+ * `defaultIsOpen` is true. An event in no calendar at all is NOT exportable: there is no
+ * open calendar vouching for it, and the tenant-scoped equivalent (`calendars == []`) is
+ * served by the token-authenticated `calendarFeed` instead.
+ *
+ * Pure so the decision is unit-testable without Firestore.
+ *
+ * @param event      the calevent document
+ * @param openByKey  calendar key → `defaultIsOpen`; a key absent from the map counts as closed
+ */
+export function isPubliclyExportable(
+  event: Pick<CalEventDoc, 'isArchived' | 'calendars'>,
+  openByKey: Map<string, boolean>
+): boolean {
+  if (event.isArchived === true) return false;
+  return (event.calendars ?? []).some(key => openByKey.get(key) === true);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Cloud Function
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -281,8 +311,12 @@ export function buildICS(calendarName: string, events: CalEventDoc[], opts: IcsO
  * Public HTTP function that returns an ICS file for one or more calendars.
  * URL: GET /generateCalendarICS?calendar=<key>           (single calendar)
  *      GET /generateCalendarICS?calendar=<k1>,<k2>,<kn>  (merged, deduplicated)
+ *      GET /generateCalendarICS?calendar=e:<eventOkey>   (single event)
  *
- * No authentication required — calendar data is considered public.
+ * No authentication required, so it serves OPEN calendars only (`defaultIsOpen`) — and, as
+ * of 2026-08-24, that rule covers the `e:<okey>` path too. Anything private goes through
+ * the token-authenticated `calendarFeed` instead. See isPubliclyExportable.
+ *
  * CORS is handled by the Express middleware in main.ts.
  */
 export const generateCalendarICS = onRequest(
@@ -305,26 +339,31 @@ export const generateCalendarICS = onRequest(
     const eventOkeys = calendarKeys.filter(k => k.startsWith('e:')).map(k => k.slice(2));
     const calKeys    = calendarKeys.filter(k => !k.startsWith('e:'));
 
-    // Fetch calendar names for all calendar keys in parallel (best-effort — fall back to key)
+    // Fetch calendar names + open flags in parallel (best-effort — fall back to key/closed).
+    // A calendar that cannot be read counts as CLOSED: an error must never open a calendar.
     const nameMap = new Map<string, string>();
     const openByKey = new Map<string, boolean>();
-    await Promise.all(calKeys.map(async key => {
-      try {
-        const calDoc = await db.collection('calendars').doc(key).get();
-        if (calDoc.exists) {
-          const cal = calDoc.data() as CalendarDoc;
-          nameMap.set(key, cal.title || cal.name || key);
-          openByKey.set(key, cal.defaultIsOpen === true);
-        } else {
+    const loadCalendars = async (keys: string[]): Promise<void> => {
+      await Promise.all(keys.map(async key => {
+        if (openByKey.has(key)) return;
+        try {
+          const calDoc = await db.collection('calendars').doc(key).get();
+          if (calDoc.exists) {
+            const cal = calDoc.data() as CalendarDoc;
+            nameMap.set(key, cal.title || cal.name || key);
+            openByKey.set(key, cal.defaultIsOpen === true);
+          } else {
+            nameMap.set(key, key);
+            openByKey.set(key, false);
+          }
+        } catch (err) {
+          logger.warn('generateCalendarICS: could not fetch calendar doc', { key, err });
           nameMap.set(key, key);
           openByKey.set(key, false);
         }
-      } catch (err) {
-        logger.warn('generateCalendarICS: could not fetch calendar doc', { key, err });
-        nameMap.set(key, key);
-        openByKey.set(key, false);
-      }
-    }));
+      }));
+    };
+    await loadCalendars(calKeys);
 
     // Ohne Token liefert dieser Endpunkt nur noch OFFENE Kalender. Vorher gab er zu jedem
     // geratenen Schlüssel die Anlässe heraus, auch aus geschlossenen Gruppen. Für alles
@@ -339,8 +378,9 @@ export const generateCalendarICS = onRequest(
     const calendarName = openCalKeys.map(k => nameMap.get(k) ?? k).join(', ') || 'Events';
 
     // Fetch events — collect from calendar queries and direct event lookups
-    let events: CalEventDoc[] = [];
+    const events: CalEventDoc[] = [];
     const seen = new Set<string>();
+    let refusedEvents = 0;
 
     try {
       // Calendar-based queries
@@ -371,15 +411,29 @@ export const generateCalendarICS = onRequest(
         }
       }
 
-      // Direct single-event lookups (e:<okey>)
+      // Direct single-event lookups (e:<okey>). A read by document id never passes through
+      // the calendar/tenant filters the query above applies, so each event has to earn its
+      // way out via isPubliclyExportable — the same open-calendar rule, applied per event.
       if (eventOkeys.length > 0) {
         const eventDocs = await Promise.all(
           eventOkeys.map(okey => db.collection('calevents').doc(okey).get())
         );
-        for (const doc of eventDocs) {
-          if (doc.exists && !seen.has(doc.id)) {
-            seen.add(doc.id);
-            events.push({ okey: doc.id, ...doc.data() } as CalEventDoc);
+        const candidates = eventDocs
+          .filter(doc => doc.exists)
+          .map(doc => ({ okey: doc.id, ...doc.data() } as CalEventDoc));
+
+        // The requested events may live in calendars nobody named in the query — load those
+        // before judging them, or every direct lookup would fail closed.
+        await loadCalendars([...new Set(candidates.flatMap(e => e.calendars ?? []))]);
+
+        for (const event of candidates) {
+          if (!isPubliclyExportable(event, openByKey)) {
+            refusedEvents++;
+            continue;
+          }
+          if (!seen.has(event.okey)) {
+            seen.add(event.okey);
+            events.push(event);
           }
         }
       }
@@ -389,7 +443,26 @@ export const generateCalendarICS = onRequest(
       return;
     }
 
-    logger.info('generateCalendarICS: found events', { calendarKeys, count: events.length });
+    // Nothing the caller asked for was servable. Answer 404 rather than an empty-but-valid
+    // ICS, which reads as "this calendar has no events" and hides the outcome from the user
+    // and from the logs. Two independent cases, both 404:
+    //   - every named CALENDAR was closed or unknown (openCalKeys empty while calKeys is not);
+    //   - every named EVENT was refused OR does not exist.
+    // The second deliberately does not distinguish refused from missing: a 404 either way is
+    // what stops the endpoint confirming that a private event id exists.
+    // An OPEN calendar that genuinely holds no events still gets its empty file — it is not
+    // this branch, because at least one calendar was served.
+    if (events.length === 0 && openCalKeys.length === 0 && (calKeys.length > 0 || eventOkeys.length > 0)) {
+      logger.warn('generateCalendarICS: nothing exportable', {
+        requestedCalendars: calKeys.length, requestedEvents: eventOkeys.length, refusedEvents,
+      });
+      res.status(404).send('No public calendar or event found for the requested key(s).');
+      return;
+    }
+
+    logger.info('generateCalendarICS: found events', {
+      calendarKeys, count: events.length, refusedEvents,
+    });
 
     const ics = buildICS(calendarName, events);
     const filename = calendarKeys.join('_').replace(/[^a-zA-Z0-9_-]/g, '_') + '.ics';

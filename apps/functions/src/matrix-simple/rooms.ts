@@ -21,6 +21,10 @@ import {
   requireParam,
   checkRateLimit,
   serverHostname,
+  requireRoomInTenant,
+  getRoomTenantsBatch,
+  getUserTenants,
+  roomAdmitsTenant,
 } from './shared';
 
 /**
@@ -54,7 +58,8 @@ export const getRoomByName = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string }> => {
-    if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Not authenticated');
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Not authenticated');
     const { name } = request.data as { name: string };
     requireParam(name, 'name');
 
@@ -67,8 +72,23 @@ export const getRoomByName = onCall(
       throw new HttpsError('internal', `Room search failed: ${await searchResp.text()}`);
     }
     const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
-    const exact = data.rooms?.find(r => r.name === name);
+
+    // The name search is homeserver-global and this callable needs no role at all, so an
+    // exact-name match alone handed any authenticated user another tenant's room id. Room
+    // names are NOT unique across tenants — `getRoomByName('Notfall')` is a real call site
+    // (section.store) and every tenant has a Notfall room. Keep only matches this tenant
+    // may see, then take the exact one.
+    const exactMatches = (data.rooms ?? []).filter(r => r.name === name);
+    if (exactMatches.length === 0) {
+      throw new HttpsError('not-found', `No room found with name "${name}"`);
+    }
+    const [markers, callerTenants] = await Promise.all([
+      getRoomTenantsBatch(exactMatches.map(r => r.room_id), adminToken),
+      getUserTenants(uid),
+    ]);
+    const exact = exactMatches.find(r => roomAdmitsTenant(markers.get(r.room_id) ?? [], callerTenants));
     if (!exact) {
+      console.error(`getRoomByName: uid ${uid} (${callerTenants.join(',')}) matched ${exactMatches.length} room(s) named "${name}", none of this tenant`);
       throw new HttpsError('not-found', `No room found with name "${name}"`);
     }
     return { roomId: exact.room_id };
@@ -298,7 +318,7 @@ export const renameMatrixRoom = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string; name: string }> => {
-    await requireRole(request, 'renameMatrixRoom', ['admin']);
+    const uid = await requireRole(request, 'renameMatrixRoom', ['admin']);
 
     // Accepts EITHER a roomId (AOC's room list, which knows no group) or a groupId. The AOC
     // room actions always send roomId; requiring groupId is what made every rename from that
@@ -313,6 +333,10 @@ export const renameMatrixRoom = onCall(
     // Step 1: Resolve the room — given directly, or via the group (do not create)
     const roomId = roomIdArg ?? await resolveGroupRoom(groupId!, hostname, adminToken, { create: false });
     if (!roomId) throw new HttpsError('not-found', `No room found for group "${groupId}"`);
+
+    // The AOC room list sends a raw roomId, so the group document never constrains which room
+    // this reaches — gate on the room's own marker, which covers both entry shapes.
+    await requireRoomInTenant(roomId, uid, 'renameMatrixRoom', adminToken);
 
     // Step 2: Ensure the admin is in the room (needed to send state events; ARCH-5 helper)
     await ensureAdminInRoom(roomId, adminToken);
@@ -364,10 +388,32 @@ export const listMatrixRooms = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ rooms: AdminRoom[]; total: number }> => {
-    await requireRole(request, 'listMatrixRooms', ['admin']);
+    const uid = await requireRole(request, 'listMatrixRooms', ['admin']);
 
     const { personKey } = request.data as { personKey?: string };
     const adminToken = matrixAdminToken.value();
+    const callerTenants = await getUserTenants(uid);
+
+    /**
+     * Reduce a homeserver-global listing to what this tenant may see.
+     *
+     * `/_synapse/admin/v1/rooms` returns EVERY room on the homeserver, so an elab admin was
+     * handed scs's full room inventory — names, aliases, member counts, creators — and the
+     * room ids that every other callable in this file then accepts. Filtering here is what
+     * makes those per-room gates meaningful rather than merely correct.
+     *
+     * Unmarked rooms are kept and flagged (see roomAdmitsTenant): they are already visible in
+     * every tenant, and this listing is where an admin finds them to run the backfill.
+     */
+    const scopeToTenant = async (rooms: AdminRoom[]): Promise<AdminRoom[]> => {
+      const markers = await getRoomTenantsBatch(rooms.map(r => r.roomId), adminToken);
+      const kept = rooms.filter(r => roomAdmitsTenant(markers.get(r.roomId) ?? [], callerTenants));
+      const unmarked = kept.filter(r => (markers.get(r.roomId) ?? []).length === 0).length;
+      if (kept.length !== rooms.length || unmarked > 0) {
+        console.warn(`listMatrixRooms: ${rooms.length} rooms on the homeserver, ${kept.length} for ${callerTenants.join(',')}, ${unmarked} unmarked`);
+      }
+      return kept;
+    };
 
     // Helper: fetch all rooms from the admin API (paginated, max 1000)
     async function fetchAllRooms(): Promise<AdminRoom[]> {
@@ -414,12 +460,12 @@ export const listMatrixRooms = onCall(
       // Fetch details for each joined room via the per-room admin endpoint
       const joinedSet = new Set(joinedRoomIds);
       const allRooms = await fetchAllRooms();
-      const filtered = allRooms.filter(r => joinedSet.has(r.roomId));
+      const filtered = await scopeToTenant(allRooms.filter(r => joinedSet.has(r.roomId)));
       await addDerivedNames(filtered, adminToken);
       return { rooms: filtered, total: filtered.length };
     }
 
-    const rooms = await fetchAllRooms();
+    const rooms = await scopeToTenant(await fetchAllRooms());
     await addDerivedNames(rooms, adminToken);
     return { rooms, total: rooms.length };
   }
@@ -535,11 +581,12 @@ export const getRoomDetails = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<RoomDetails> => {
-    await requireRole(request, 'getRoomDetails', ['admin']);
+    const uid = await requireRole(request, 'getRoomDetails', ['admin']);
     const { roomId } = request.data as { roomId: string };
     requireParam(roomId, 'roomId');
 
     const adminToken = matrixAdminToken.value();
+    await requireRoomInTenant(roomId, uid, 'getRoomDetails', adminToken);
 
     // Basic room info
     const infoResp = await fetch(
@@ -601,11 +648,12 @@ export const getAllMembersFromRoom = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ members: RoomMemberInfo[]; total: number }> => {
-    await requireRole(request, 'getAllMembersFromRoom', ['admin']);
+    const uid = await requireRole(request, 'getAllMembersFromRoom', ['admin']);
     const { roomId } = request.data as { roomId: string };
     requireParam(roomId, 'roomId');
 
     const adminToken = matrixAdminToken.value();
+    await requireRoomInTenant(roomId, uid, 'getAllMembersFromRoom', adminToken);
     const stateResp = await fetch(
       `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
       { headers: { Authorization: `Bearer ${adminToken}` } }
@@ -647,11 +695,15 @@ export const getMemberDetails = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<MemberDetails> => {
-    await requireRole(request, 'getMemberDetails', ['admin']);
+    const uid = await requireRole(request, 'getMemberDetails', ['admin']);
     const { userId, roomId } = request.data as { userId: string; roomId?: string };
     requireParam(userId, 'userId');
 
     const adminToken = matrixAdminToken.value();
+    // Only the room-scoped half needs a gate: the profile itself is a person's display name
+    // and avatar, and persons are deliberately shared across tenants. The power level and
+    // membership below, however, are room state.
+    if (roomId) await requireRoomInTenant(roomId, uid, 'getMemberDetails', adminToken);
 
     // User profile from admin API
     const userResp = await fetch(
@@ -708,12 +760,16 @@ export const deleteMatrixRoom = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ deleteId: string }> => {
-    await requireRole(request, 'deleteMatrixRoom', ['admin']);
+    const uid = await requireRole(request, 'deleteMatrixRoom', ['admin']);
 
     const { roomId } = request.data as { roomId: string };
     requireParam(roomId, 'roomId');
 
     const adminToken = matrixAdminToken.value();
+    // The most destructive callable in this file: DELETE + purge is irreversible, and the
+    // Synapse admin API is homeserver-global. Without this, an admin of one tenant could
+    // destroy another tenant's chat history.
+    await requireRoomInTenant(roomId, uid, 'deleteMatrixRoom', adminToken);
 
     console.log(`deleteMatrixRoom: deleting room ${roomId}`);
 
@@ -755,11 +811,13 @@ export const addMatrixRoomAlias = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ alias: string }> => {
-    await requireRole(request, 'addMatrixRoomAlias', ['admin']);
+    const uid = await requireRole(request, 'addMatrixRoomAlias', ['admin']);
 
     const { roomId, aliasName } = request.data as { roomId: string; aliasName: string };
     requireParam(roomId, 'roomId');
     requireParam(aliasName, 'aliasName');
+
+    await requireRoomInTenant(roomId, uid, 'addMatrixRoomAlias', matrixAdminToken.value());
 
     const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
     // Sanitise: lowercase, replace spaces with hyphens, strip disallowed chars
@@ -807,7 +865,7 @@ export const setKioskCallRoomPolicy = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ roomId: string; adminUserIds: string[] }> => {
-    await requireRole(request, 'setKioskCallRoomPolicy', ['admin']);
+    const uid = await requireRole(request, 'setKioskCallRoomPolicy', ['admin']);
 
     const { roomId, adminPersonKeys, kioskPersonKey } = request.data as {
       roomId: string;
@@ -822,6 +880,8 @@ export const setKioskCallRoomPolicy = onCall(
 
     const hostname = serverHostname();
     const adminToken = matrixAdminToken.value();
+    await requireRoomInTenant(roomId, uid, 'setKioskCallRoomPolicy', adminToken);
+
     const mxid = (personKey: string) => `@${personKey.toLowerCase()}:${hostname}`;
     const adminUserIds = adminPersonKeys.map(key => mxid(requireParam(key, 'adminPersonKey')));
 

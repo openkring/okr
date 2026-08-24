@@ -2,10 +2,13 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { logger } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { PaymentCollection, PaymentOrderCollection } from '@okr/shared-models';
+import { checkAppCheckToken, checkAuthentication, checkRoles, getCallerTenantId } from '@okr/shared-util-functions';
+
+const CF = 'generatePain001';
 
 interface GeneratePain001Data {
   paymentOrderKey: string;
-  accountingTenantId: string;
 }
 
 function escapeXml(s: string): string {
@@ -48,21 +51,55 @@ function buildPain001Xml(order: Record<string, unknown>, payments: Record<string
 </Document>`;
 }
 
+/**
+ * Build the pain.001 payment file for an approved payment order and mark it transmitted.
+ *
+ * AUTHORIZATION (added 2026-08-24). This callable reads a payment order by key and both
+ * RETURNS its full XML — creditor IBANs, amounts, references, the debtor account — and
+ * FLIPS its status to `transmitted`. It previously required nothing but authentication,
+ * and it trusted a client-supplied `accountingTenantId`, so any authenticated user of any
+ * tenant could exfiltrate and consume another tenant's payment run. Three gates now:
+ *
+ *   1. `treasurer` (admin passes) — payment orders are finance data, not member data.
+ *   2. the tenant comes from `users/{uid}.tenants[0]`, never from `request.data`.
+ *   3. the order document must list that tenant.
+ *
+ * `accountingTenantId` is likewise taken from the ORDER, not the caller: it is a
+ * second-level scope within the tenant, and reading it from the payload let a caller
+ * widen or narrow which payments were pulled into someone else's file.
+ */
 export const generatePain001 = onCall(
   { region: 'europe-west6', enforceAppCheck: true, memory: '256MiB' },
   async (request: CallableRequest<GeneratePain001Data>) => {
-    if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
-    const { paymentOrderKey, accountingTenantId } = request.data;
-    if (!paymentOrderKey || !accountingTenantId) throw new HttpsError('invalid-argument', 'paymentOrderKey and accountingTenantId required');
+    checkAppCheckToken(request, CF);
+    checkAuthentication(request, CF);
+    await checkRoles(request, CF, ['treasurer']);
+    const tenantId = await getCallerTenantId(request, CF);
+
+    const { paymentOrderKey } = request.data;
+    if (!paymentOrderKey) throw new HttpsError('invalid-argument', 'paymentOrderKey required');
 
     const db = admin.firestore();
-    const orderSnap = await db.collection('payment-orders').doc(paymentOrderKey).get();
+    const orderSnap = await db.collection(PaymentOrderCollection).doc(paymentOrderKey).get();
     if (!orderSnap.exists) throw new HttpsError('not-found', `Payment order ${paymentOrderKey} not found`);
     const order = orderSnap.data()!;
 
+    // A read by document id never passes through the `tenants array-contains` filter that
+    // guards every query — so the check has to happen here. 'not-found', not
+    // 'permission-denied': whether the key exists in another tenant is itself a disclosure.
+    if (!((order['tenants'] as string[] | undefined) ?? []).includes(tenantId)) {
+      logger.error(`${CF}: order ${paymentOrderKey} does not belong to tenant ${tenantId}`);
+      throw new HttpsError('not-found', `Payment order ${paymentOrderKey} not found`);
+    }
+
     if (order['status'] !== 'approved') throw new HttpsError('failed-precondition', 'Payment order must be approved before generating pain.001');
 
-    const paymentsSnap = await db.collection('payments')
+    const accountingTenantId = (order['accountingTenantId'] as string | undefined) ?? '';
+    if (!accountingTenantId) {
+      throw new HttpsError('failed-precondition', `Payment order ${paymentOrderKey} has no accountingTenantId`);
+    }
+
+    const paymentsSnap = await db.collection(PaymentCollection)
       .where('paymentOrderKey', '==', paymentOrderKey)
       .where('accountingTenantId', '==', accountingTenantId)
       .get();
@@ -70,8 +107,8 @@ export const generatePain001 = onCall(
 
     const xml = buildPain001Xml(order, payments, order['messageId'] as string, order['executionDate'] as string);
 
-    await db.collection('payment-orders').doc(paymentOrderKey).update({ pain001Xml: xml, status: 'transmitted' });
-    logger.info(`generatePain001: generated XML for order ${paymentOrderKey}, ${payments.length} payments`);
+    await db.collection(PaymentOrderCollection).doc(paymentOrderKey).update({ pain001Xml: xml, status: 'transmitted' });
+    logger.info(`${CF}: generated XML for order ${paymentOrderKey}, ${payments.length} payments (tenant=${tenantId})`);
 
     return { xml };
   }

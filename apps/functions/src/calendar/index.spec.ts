@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildICS } from './index';
+import { buildICS, isPubliclyExportable } from './index';
 
 const event = {
   okey: 'e1',
@@ -133,5 +133,40 @@ describe('buildICS', () => {
   it('emits no STATUS line for a definitive event', () => {
     const ics = buildICS('Test', [{ ...event, state: 'definitive' }] as never);
     expect(ics).not.toContain('STATUS:');
+  });
+});
+
+describe('isPubliclyExportable', () => {
+  const open = new Map([['cal-open', true], ['cal-closed', false]]);
+  const ev = (over: Record<string, unknown> = {}) =>
+    ({ isArchived: false, calendars: ['cal-open'], ...over }) as never;
+
+  it('exports an event that sits in an open calendar', () => {
+    expect(isPubliclyExportable(ev(), open)).toBe(true);
+  });
+
+  it('refuses an event whose only calendar is closed', () => {
+    // The hole this closed: `?calendar=e:<okey>` returned any guessed event in full,
+    // including private group events of another tenant.
+    expect(isPubliclyExportable(ev({ calendars: ['cal-closed'] }), open)).toBe(false);
+  });
+
+  it('exports when at least one of several calendars is open', () => {
+    expect(isPubliclyExportable(ev({ calendars: ['cal-closed', 'cal-open'] }), open)).toBe(true);
+  });
+
+  it('refuses an event in no calendar at all — nothing vouches for it', () => {
+    expect(isPubliclyExportable(ev({ calendars: [] }), open)).toBe(false);
+    expect(isPubliclyExportable(ev({ calendars: undefined }), open)).toBe(false);
+  });
+
+  it('treats an unknown calendar key as closed, so a failed lookup never opens a calendar', () => {
+    expect(isPubliclyExportable(ev({ calendars: ['cal-missing'] }), open)).toBe(false);
+    expect(isPubliclyExportable(ev(), new Map())).toBe(false);
+  });
+
+  it('refuses an archived event even in an open calendar', () => {
+    // The calendar-key query filters isArchived; the direct lookup did not.
+    expect(isPubliclyExportable(ev({ isArchived: true }), open)).toBe(false);
   });
 });

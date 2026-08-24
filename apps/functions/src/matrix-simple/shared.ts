@@ -659,6 +659,80 @@ export async function getRoomTenants(roomId: string, adminToken: string): Promis
   return content.tenants ?? [];
 }
 
+/**
+ * Whether a room's `org.okr.tenant` marker admits a caller holding `callerTenants`.
+ *
+ * Pure, so the policy is unit-testable. Two rules:
+ *
+ *  - a MARKED room admits only the tenants on its marker;
+ *  - an UNMARKED room admits everyone — deliberately.
+ *
+ * The second rule looks like a hole and is not. `filterRoomsOfTenant` already shows unmarked
+ * rooms in EVERY tenant (rule "else keep"), so refusing them here would remove the admin's
+ * ability to inspect and repair a room without removing anyone's exposure to it — and it
+ * would break the documented runbook (delete a stale room, stamp a marker, claim an alias),
+ * which is the only way an unmarked room ever becomes marked. The fix for an unmarked room
+ * is `backfillMatrixRoomTenants`, not a denial here. Callers log a warning so the gap is
+ * visible rather than silent.
+ */
+export function roomAdmitsTenant(roomTenants: string[], callerTenants: string[]): boolean {
+  if (roomTenants.length === 0) return true;
+  return roomTenants.some((t) => callerTenants.includes(t));
+}
+
+/**
+ * Throw unless the caller's tenant may act on `roomId`.
+ *
+ * Synapse knows nothing about tenants: its admin API is homeserver-global, and every
+ * admin callable here holds the ONE `@bk2-bot` token. So an `admin` of tenant elab could
+ * list, inspect, rename and DELETE tenant scs's rooms — `admin` is a per-tenant role on a
+ * single-tenant user, but the API it reached was not. This is the check that closes that,
+ * using the same `org.okr.tenant` marker the client filter reads.
+ *
+ * Returns the room's marker so the caller can log it.
+ */
+export async function requireRoomInTenant(
+  roomId: string,
+  uid: string,
+  fnName: string,
+  adminToken: string,
+): Promise<string[]> {
+  const [roomTenants, callerTenants] = await Promise.all([
+    getRoomTenants(roomId, adminToken),
+    getUserTenants(uid),
+  ]);
+  if (!roomAdmitsTenant(roomTenants, callerTenants)) {
+    console.error(`${fnName}: uid ${uid} (${callerTenants.join(',')}) may not act on room ${roomId} (${roomTenants.join(',')})`);
+    // 'not-found', not 'permission-denied': confirming that a room id exists in another
+    // tenant is itself a disclosure.
+    throw new HttpsError('not-found', 'Room not found.');
+  }
+  if (roomTenants.length === 0) {
+    console.warn(`${fnName}: room ${roomId} carries no ${OKR_TENANT_EVENT} marker — visible to every tenant. Run backfillMatrixRoomTenants.`);
+  }
+  return roomTenants;
+}
+
+/**
+ * Read the tenant marker of many rooms at once, bounded so a large homeserver cannot turn
+ * one admin listing into a thousand serial round-trips.
+ */
+export async function getRoomTenantsBatch(
+  roomIds: string[],
+  adminToken: string,
+  concurrency = 16,
+): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>();
+  const queue = [...roomIds];
+  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+    for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
+      result.set(next, await getRoomTenants(next, adminToken).catch(() => []));
+    }
+  });
+  await Promise.all(workers);
+  return result;
+}
+
 /** Hostname used as the Matrix server_name (homeserver host without the `matrix.` prefix). */
 export function serverHostname(): string {
   return new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
