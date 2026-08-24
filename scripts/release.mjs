@@ -24,6 +24,7 @@ const SITES = {
   'p13-app': 'p13-app-54aef',
   'kring-app': 'kring-app-54aef',
   'bka-app': 'bka-app-54aef',
+  'elab-app': 'elab-app-54aef',
   'okr-website': 'okr-website-54aef',
   'kring-website': 'kring-website-54aef',
   'p13-website': 'p13-website-54aef',
