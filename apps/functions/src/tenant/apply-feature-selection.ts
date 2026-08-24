@@ -325,8 +325,9 @@ export async function applySelection(
   // override pattern, and both are active. The guard's premise was too coarse rather than
   // wrong — `MenuService.read` is TENANT-SCOPED, so name uniqueness is only ever required
   // WITHIN one tenant. `indexMenuDocsByName` therefore resolves each name for THIS tenant
-  // (archived docs out, then the doc the tenant already inherits, then the generic
-  // `id === name` doc) and reports only what it genuinely could not decide.
+  // (archived docs out, then the doc the tenant already inherits, then another tenant's
+  // fork out, then the generic `id === name` doc) and reports only what it genuinely
+  // could not decide.
   //
   // The refusal is then scoped to the names THIS run writes: every menu spec name of every
   // enabled block, children included, plus the tenant's own root doc. An ambiguity anywhere

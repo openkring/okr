@@ -61,7 +61,7 @@ export function menuSpecNames(specs: MenuSpec[]): string[] {
  * `tenantId` should write to. Returns 0 (nothing live to extend → create path), 1
  * (resolved), or ≥2 (genuinely ambiguous for this tenant) candidates.
  *
- * The ladder, in order, and why each rung exists — all three rungs are load-bearing against
+ * The ladder, in order, and why each rung exists — every rung is load-bearing against
  * documents that exist in production today (verified directly against Firestore 2026-08-04,
  * 358 `menuItems` docs, exactly three colliding names):
  *
@@ -83,6 +83,23 @@ export function menuSpecNames(specs: MenuSpec[]): string[] {
  *     'resource-menu'` is carried by `menuItems/resource-menu` (`tenants: ['test']`, 9
  *     children) AND `menuItems/resource-menu-scs` (`tenants: ['scs']`, a 6-child bespoke
  *     reshaping). `scs` must extend the bespoke one; `test` must extend the generic one.
+ *  3b. A FORK IS NOT A CANDIDATE FOR A TENANT THAT DOES NOT INHERIT IT. The fork-on-edit
+ *     rule (see the `menu` skill) writes a tenant's bespoke copy as `<name>_<tenantId>`
+ *     with `forkedFrom` pointing at the original and the SAME `name`. Rung 4 was written
+ *     assuming the original is always the generic `id === name` doc — but eleven live docs
+ *     carry legacy autoids, so forking one of THOSE leaves a pair where neither side
+ *     satisfies `id === name` and the ladder stalls. Live case (2026-08-24): `name:
+ *     'calevent-exportics'` is carried by `menuItems/ht5rxxw8d7ekvwset8kw` (the original,
+ *     `tenants: ['p13','kring']`) and `menuItems/calevent-exportics_scs`
+ *     (`forkedFrom: 'ht5rxxw8d7ekvwset8kw'`); same shape for `filter-toggle`
+ *     (`zjbhk84hfrfc32yb6td5` + `filter-toggle_scs`, the `id === name` doc being an
+ *     ARCHIVED third twin that rung 1 already dropped). Every tenant inheriting neither
+ *     side — i.e. every NEWLY provisioned tenant — was refused by `applySelection`'s
+ *     ambiguity guard, which is exactly how `elab` failed. `forkedFrom` is a positive
+ *     statement that a doc belongs to somebody else; rung 3 has already established that
+ *     "somebody else" is not this tenant, so drop it. Only applied when it leaves at least
+ *     one candidate: a name whose live docs are ALL forks stays undecided rather than
+ *     silently emptying the group.
  *  4. PREFER THE GENERIC DOC (`id === name`). The tie-break for a tenant that inherits
  *     neither — and for twins nobody has claimed. A tenant-bespoke variant's id carries a
  *     tenant suffix (`resource-menu-scs`) and a stale twin gets an unrelated id
@@ -104,7 +121,12 @@ function resolveCandidates(
   if (active.length <= 1) return active;                        // 2
 
   const scoped = active.filter(d => (d.data.tenants ?? []).includes(tenantId)); // 3
-  const narrowed = scoped.length > 0 ? scoped : active;
+  let narrowed = scoped.length > 0 ? scoped : active;
+  if (narrowed.length === 1) return narrowed;
+
+  // 3b — A FORK IS NEVER A CANDIDATE FOR A TENANT THAT DOES NOT INHERIT IT.
+  const unforked = narrowed.filter(d => (d.data.forkedFrom ?? '').length === 0);
+  if (unforked.length > 0) narrowed = unforked;
   if (narrowed.length === 1) return narrowed;
 
   const generic = narrowed.filter(d => d.id === name); // 4 — doc ids are unique, so ≤ 1
@@ -133,8 +155,8 @@ function resolveCandidates(
  * A NAME COLLISION (two live docs sharing one `name`) is a data-integrity problem this
  * function must not paper over by blindly picking one. It is resolved instead, per TENANT,
  * by the ladder in `resolveCandidates` above — archived docs out, then the doc this tenant
- * already inherits, then the generic (`id === name`) doc. `MenuService.read` is itself
- * tenant-scoped, so name uniqueness is only ever required WITHIN a tenant; a global
+ * already inherits, then another tenant's fork out, then the generic (`id === name`)
+ * doc. `MenuService.read` is itself tenant-scoped, so name uniqueness is only ever required WITHIN a tenant; a global
  * uniqueness demand (the pre-fix behaviour) refuses to seed anybody because of a collision
  * that no single tenant can even observe. Whatever the ladder cannot decide is reported in
  * `ambiguous` and the caller refuses — but only for the names its own run writes; see

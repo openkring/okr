@@ -212,6 +212,38 @@ describe('indexMenuDocsByName — per-tenant collision resolution (task B-1)', (
     { id: 'event-menu', data: { name: 'event-menu', action: 'sub', tenants: ['test'], isArchived: false } },
   ];
 
+  /**
+   * The live pair that broke `elab`'s first `applyFeatureSelection` run (400
+   * failed-precondition, 2026-08-24): the ORIGINAL carries a legacy autoid, so the
+   * fork-on-edit copy `<name>_scs` leaves NEITHER side satisfying `id === name`. Every
+   * tenant inheriting neither — i.e. every newly provisioned one — hit rung 4's dead end.
+   */
+  const forkedLegacyAutoidDocs: LiveDoc[] = [
+    { id: 'ht5rxxw8d7ekvwset8kw', data: { name: 'calevent-exportics', action: 'call', url: 'exportIcs', tenants: ['p13', 'kring'], isArchived: false } },
+    { id: 'calevent-exportics_scs', data: { name: 'calevent-exportics', action: 'call', url: 'exportIcs', tenants: ['scs'], isArchived: false, forkedFrom: 'ht5rxxw8d7ekvwset8kw' } },
+  ];
+
+  it('fork of a legacy-autoid original: a third tenant resolves to the ORIGINAL, not ambiguous', () => {
+    const { byName, ambiguous } = indexMenuDocsByName(forkedLegacyAutoidDocs, 'elab');
+    expect(ambiguous).toEqual([]);
+    expect(byName.get('calevent-exportics')?.okey).toBe('ht5rxxw8d7ekvwset8kw');
+  });
+
+  it('fork of a legacy-autoid original: the forking tenant still gets its OWN fork', () => {
+    const { byName, ambiguous } = indexMenuDocsByName(forkedLegacyAutoidDocs, 'scs');
+    expect(ambiguous).toEqual([]);
+    expect(byName.get('calevent-exportics')?.okey).toBe('calevent-exportics_scs');
+  });
+
+  it('all live twins are forks: stays ambiguous rather than emptying the candidate set', () => {
+    const allForks: LiveDoc[] = [
+      { id: 'x_a', data: { name: 'x', action: 'call', tenants: ['a'], isArchived: false, forkedFrom: 'gone' } },
+      { id: 'x_b', data: { name: 'x', action: 'call', tenants: ['b'], isArchived: false, forkedFrom: 'gone' } },
+    ];
+    const { ambiguous } = indexMenuDocsByName(allForks, 'elab');
+    expect(ambiguous).toEqual([{ name: 'x', ids: ['x_a', 'x_b'] }]);
+  });
+
   it('archived + active twin: resolves to the ACTIVE doc, for the tenant both name', () => {
     const { byName, ambiguous } = indexMenuDocsByName(filterToggleDocs, 'scs');
     expect(byName.get('filter-toggle')?.okey).toBe('zjbhk84hfrfc32yb6td5');
