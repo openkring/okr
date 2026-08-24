@@ -638,13 +638,16 @@ const trip: FeatureBlock = {
     // authored onto the tenant-bespoke `sport-menu` grouping before this catalogue existed);
     // the next `applyFeatureSelection` for `scs` converges that, one time, intentionally.
     { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'registered', icon: 'track', label: '@item.logbuch' },
-    { key: 'c-trips', name: 'c-trips', url: '', action: 'context', roleNeeded: 'kiosk', icon: 'help-circle', label: '', children: [
+    // 'registered', not 'kiosk': every member may open the sheet to reach the two read-only
+    // statistics. The write actions below keep their own 'kiosk'/'admin' gate, so a member sees
+    // a context menu holding nothing but boat + person statistics.
+    { key: 'c-trips', name: 'c-trips', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'trip-add', name: 'trip-add', url: 'add', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: '@item.trip-add' },
       { key: 'trip-reportdamage', name: 'trip-reportdamage', url: 'reportDamage', action: 'call', roleNeeded: 'kiosk', icon: 'warning', label: '@item.trip-reportdamage' },
       { key: 'trip-reportbug', name: 'trip-reportbug', url: 'reportBug', action: 'call', roleNeeded: 'kiosk', icon: 'bug', label: '@item.trip-reportbug' },
       { key: 'trip-callsupport', name: 'trip-callsupport', url: 'callSupport', action: 'call', roleNeeded: 'kiosk', icon: 'video', label: '@item.trip-callsupport' },
-      { key: 'trip-boatstats', name: 'trip-boatstats', url: 'showBoatStatistics', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: '@item.trip-boatstats' },
-      { key: 'trip-personstats', name: 'trip-personstats', url: 'showPersonStatistics', action: 'call', roleNeeded: 'kiosk', icon: 'chart', label: '@item.trip-personstats' },
+      { key: 'trip-boatstats', name: 'trip-boatstats', url: 'showBoatStatistics', action: 'call', roleNeeded: 'registered', icon: 'chart', label: '@item.trip-boatstats' },
+      { key: 'trip-personstats', name: 'trip-personstats', url: 'showPersonStatistics', action: 'call', roleNeeded: 'registered', icon: 'chart', label: '@item.trip-personstats' },
       { key: 'trip-exportraw', name: 'trip-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'admin', icon: 'download', label: '@item.trip-exportraw' },
       // remote read-only switch: writes `locked` to every kiosk-status doc of the tenant (see the `trips` skill)
       { key: 'trip-togglelock', name: 'trip-togglelock', url: 'toggleLock', action: 'call', roleNeeded: 'admin', icon: 'lock-closed', label: '@item.trip-togglelock' },
