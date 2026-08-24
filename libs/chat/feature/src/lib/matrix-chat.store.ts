@@ -270,9 +270,23 @@ export const _MatrixChatStore = signalStore(
     return {
       /******************************* Setters *************************** */
 
-      /** Synchronous snapshot of the rooms list — bypasses the rxResource async lag. */
+      /**
+       * Synchronous snapshot of the rooms list — bypasses the rxResource async lag.
+       *
+       * TENANT-FILTERED, exactly like the `rooms` computed above, and it must stay that way:
+       * `matrixService.roomsCurrentValue` is the RAW joined-room list, which spans every tenant
+       * (one Matrix account per person, shared across tenants). Callers use this as a fallback
+       * when `rooms()` is still empty, so an unfiltered snapshot would surface another tenant's
+       * rooms precisely in the case where this tenant has none — e.g. auto-selecting an scs room
+       * in the elab app while the room list itself correctly shows "no rooms found".
+       */
       getRoomsSync(): MatrixRoom[] {
-        return store.matrixService.roomsCurrentValue;
+        return filterRoomsOfTenant(
+          store.matrixService.roomsCurrentValue,
+          store.appStore.allGroups(),
+          new Set(store.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase())),
+          store.appStore.tenantId(),
+        );
       },
 
       setCurrentRoom(roomId: string | undefined): void {
