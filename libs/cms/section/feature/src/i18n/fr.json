@@ -858,7 +858,8 @@
     "empty": "Félicitations ! - vous n'avez aucune tâche ouverte.",
     "complete": "Marquer comme terminée",
     "view": "Afficher la tâche",
-    "edit": "Modifier la tâche"
+    "edit": "Modifier la tâche",
+      "delete": "Supprimer la tâche"
   },
   "tracker": {
     "label": "Tracker",

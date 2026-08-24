@@ -862,7 +862,8 @@
     "empty": "Gratulation ! - du hast keine offenen Aufgaben.",
     "complete": "Als erledigt markieren",
     "view": "Aufgabe anzeigen",
-    "edit": "Aufgabe bearbeiten"
+    "edit": "Aufgabe bearbeiten",
+      "delete": "Aufgabe löschen"
   },
   "tracker": {
     "label": "Tracker",

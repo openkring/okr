@@ -858,7 +858,8 @@
     "empty": "Congratulations! - you have no open tasks.",
     "complete": "Mark as done",
     "view": "Show task",
-    "edit": "Edit task"
+    "edit": "Edit task",
+      "delete": "Delete task"
   },
   "tracker": {
     "label": "Tracker",

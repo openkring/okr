@@ -150,6 +150,9 @@ export class TasksSectionComponent implements OnInit {
     if (hasRole('eventAdmin', this.currentUser()) || hasRole('privileged', this.currentUser())) {
         actionSheetOptions.buttons.push(createActionSheetButton('task.edit', this.store.i18n.task_edit(), this.imgixBaseUrl, 'edit'));
     }
+    if (hasRole('admin', this.currentUser())) {
+        actionSheetOptions.buttons.push(createActionSheetButton('task.delete', this.store.i18n.task_delete(), this.imgixBaseUrl, 'trash'));
+    }
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     if (actionSheetOptions.buttons.length === 1) { // only cancel button
       actionSheetOptions.buttons = [];
@@ -176,6 +179,9 @@ export class TasksSectionComponent implements OnInit {
             break;
         case 'task.edit':
             await this.store.edit(task, false);
+            break;
+        case 'task.delete':
+            await this.store.delete(task);
             break;
       }
     }

@@ -858,7 +858,8 @@
     "empty": "Congratulazioni! - non hai attività aperte.",
     "complete": "Contrassegnare come completata",
     "view": "Mostrare l'attività",
-    "edit": "Modificare l'attività"
+    "edit": "Modificare l'attività",
+      "delete": "Eliminare l'attività"
   },
   "tracker": {
     "label": "Tracker",

@@ -858,7 +858,8 @@
     "empty": "¡Enhorabuena! - no tiene ninguna tarea pendiente.",
     "complete": "Marcar como realizada",
     "view": "Mostrar tarea",
-    "edit": "Editar tarea"
+    "edit": "Editar tarea",
+      "delete": "Eliminar tarea"
   },
   "tracker": {
     "label": "Tracker",

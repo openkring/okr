@@ -103,6 +103,14 @@ export const TasksStore = signalStore(
       }
     },
 
+    /**
+     * Archive a task (soft delete, sets isArchived). Admin-only; the caller gates the action.
+     */
+    async delete(task: TaskModel): Promise<void> {
+      await store.taskService.delete(task, store.currentUser());
+      this.reload();
+    },
+
     async setCompleted(task: TaskModel, readOnly = true): Promise<void> {
       if (!readOnly) {
         if (task.completionDate) {

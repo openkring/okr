@@ -586,6 +586,7 @@ export const SECTION_I18N_KEYS = {
   task_complete:                           PFX + 'task.complete',
   task_view:                               PFX + 'task.view',
   task_edit:                               PFX + 'task.edit',
+  task_delete:                             PFX + 'task.delete',
 
   // tracker
   tracker_title:                            PFX + 'tracker.title',
