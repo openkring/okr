@@ -554,7 +554,6 @@
     "reset": {
       "label": "Reimposta link",
       "confirm": "Il link precedente diventerà non valido. Tutti i dispositivi abbonati a questo calendario dovranno essere configurati di nuovo. Continuare?"
-    },
-    "eventNotFound": "Questo evento non è più disponibile."
+    }
   }
 }

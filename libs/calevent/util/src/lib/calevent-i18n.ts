@@ -340,7 +340,6 @@ export const CALEVENT_I18N_KEYS = {
   sync_hint_readonly:         PFX + 'sync.hint.readonly',
   sync_reset:                 PFX + 'sync.reset.label',
   sync_reset_confirm:         PFX + 'sync.reset.confirm',
-  sync_event_not_found:       PFX + 'sync.eventNotFound',
 } satisfies Record<string, string>;
 
 export type CaleventI18n = { [K in keyof typeof CALEVENT_I18N_KEYS]: Signal<string> };

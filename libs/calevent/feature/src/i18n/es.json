@@ -554,7 +554,6 @@
     "reset": {
       "label": "Restablecer enlace",
       "confirm": "El enlace anterior dejará de ser válido. Todos los dispositivos que se suscribieron a este calendario deberán configurarse de nuevo. ¿Continuar?"
-    },
-    "eventNotFound": "Este evento ya no está disponible."
+    }
   }
 }

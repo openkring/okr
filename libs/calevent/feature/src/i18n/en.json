@@ -554,7 +554,6 @@
     "reset": {
       "label": "Reset link",
       "confirm": "The previous link will become invalid. Any device that subscribed to this calendar will need to be set up again. Continue?"
-    },
-    "eventNotFound": "This event is no longer available."
+    }
   }
 }

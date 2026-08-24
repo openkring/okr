@@ -377,10 +377,6 @@ export const CalEventStore = signalStore(
         patchState(store, { selectedYear });
       },
 
-      setShowPastEvents(showPastEvents: boolean) {
-        patchState(store, { showPastEvents });
-      },
-
       setStartDaysOffset(startDaysOffset: number) {
         patchState(store, { startDaysOffset });
       },

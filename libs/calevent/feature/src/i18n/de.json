@@ -573,7 +573,6 @@
     "reset": {
       "label": "Link zurücksetzen",
       "confirm": "Der bisherige Link wird ungültig. Alle Geräte, die diesen Kalender abonniert haben, müssen neu eingerichtet werden. Fortfahren?"
-    },
-    "eventNotFound": "Der Termin ist nicht mehr verfügbar."
+    }
   }
 }

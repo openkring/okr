@@ -554,7 +554,6 @@
     "reset": {
       "label": "Réinitialiser le lien",
       "confirm": "L'ancien lien deviendra invalide. Tous les appareils abonnés à ce calendrier devront être reconfigurés. Continuer ?"
-    },
-    "eventNotFound": "Cet événement n'est plus disponible."
+    }
   }
 }
