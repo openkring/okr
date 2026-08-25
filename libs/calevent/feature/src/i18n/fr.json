@@ -123,7 +123,8 @@
     "subscribeAll": "S’inscrire à toutes les dates",
     "unsubscribeAll": "Se désinscrire de toutes les dates",
     "notFound": "Cette série n’a plus de dates à venir.",
-    "saveError": "Tes réponses n’ont pas pu être enregistrées."
+    "saveError": "Tes réponses n’ont pas pu être enregistrées.",
+    "preview": "Génère {count} événements, le dernier le {date}."
   },
   "update": {
     "label": "Modifier l'événement",
@@ -591,5 +592,28 @@
   },
   "pollSeries": {
     "helper": "Ces dates proviennent d’un sondage de dates et sont irrégulières; la périodicité ne peut donc pas être modifiée."
+  },
+  "form": {
+    "advanced": {
+      "label": "Afficher les réglages avancés"
+    },
+    "section": {
+      "what": "Quoi",
+      "when": "Quand",
+      "where": "Où",
+      "who": "Qui",
+      "organisation": "Organisation"
+    },
+    "link": {
+      "add": "Ajouter un lien",
+      "remove": "Supprimer le lien"
+    },
+    "person": {
+      "add": "Personne"
+    }
+  },
+  "recurring": {
+    "label": "Se répète",
+    "helper": "L'événement se répète régulièrement. La périodicité et la date de fin apparaissent ci-dessous."
   }
 }

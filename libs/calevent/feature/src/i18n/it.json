@@ -123,7 +123,8 @@
     "subscribeAll": "Iscriviti a tutte le date",
     "unsubscribeAll": "Disiscriviti da tutte le date",
     "notFound": "Questa serie non ha più date future.",
-    "saveError": "Le tue risposte non sono state salvate."
+    "saveError": "Le tue risposte non sono state salvate.",
+    "preview": "Genera {count} eventi, l’ultimo il {date}."
   },
   "update": {
     "label": "Modificare l'evento",
@@ -591,5 +592,28 @@
   },
   "pollSeries": {
     "helper": "Queste date provengono da un sondaggio e sono irregolari, quindi la periodicità non può essere modificata."
+  },
+  "form": {
+    "advanced": {
+      "label": "Mostra le impostazioni avanzate"
+    },
+    "section": {
+      "what": "Che cosa",
+      "when": "Quando",
+      "where": "Dove",
+      "who": "Chi",
+      "organisation": "Organizzazione"
+    },
+    "link": {
+      "add": "Aggiungi un link",
+      "remove": "Rimuovi il link"
+    },
+    "person": {
+      "add": "Persona"
+    }
+  },
+  "recurring": {
+    "label": "Si ripete",
+    "helper": "L'evento si ripete regolarmente. Periodicità e data finale appaiono qui sotto."
   }
 }

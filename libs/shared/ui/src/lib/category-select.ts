@@ -34,9 +34,27 @@ let id = 0;
   styles: [`
     .helper { --color: var(--ion-color-medium);}
     .popover.active { opacity: 1;}
+    /* fieldStyle: the select reads like the neighbouring inputs — small label above the value,
+       chevron at the far right — instead of a bare clear button. */
+    .field-row { --min-height: 48px; cursor: pointer; }
+    .field-row .field-label { display: block; font-size: 12px; color: var(--ion-color-medium); }
+    .field-row .field-value { display: block; font-size: 16px; }
   `],
   template: `
-  @if(!isReadOnly()) {
+  @if(!isReadOnly() && isFieldStyle()) {
+    <ion-item class="field-row" lines="none" button="true" [detail]="false" id="{{popoverId}}">
+      @if(showIcons() && selectedItem().icon.length > 0) {
+        <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
+      }
+      <ion-label>
+        @if(label().length > 0) {
+          <span class="field-label">{{ label() }}</span>
+        }
+        <span class="field-value">{{ itemLabel(selectedItem()) | translate | async }}</span>
+      </ion-label>
+      <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
+    </ion-item>
+  } @else if(!isReadOnly()) {
     <ion-button fill="clear" id="{{popoverId}}">
       @if(showIcons() && selectedItem().icon.length > 0) {
         <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
@@ -93,6 +111,14 @@ export class CategorySelect {
   public showHelper = input(false);
   protected shouldShowHelper = computed(() => coerceBoolean(this.showHelper()));
   public showIcons = input(true);
+  /**
+   * true: render the select as a form field row (label above the value, chevron right) so it
+   * lines up with the text/date inputs around it. Opt-in — the default stays the clear button.
+   */
+  public fieldStyle = input(false);
+  protected isFieldStyle = computed(() => coerceBoolean(this.fieldStyle()));
+  /** the field label shown above the value (fieldStyle only); empty renders the value alone. */
+  public label = input('');
   protected shouldShowIcons = computed(() => coerceBoolean(this.showIcons()));
 
   protected name = computed(() => this.category().name);

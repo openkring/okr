@@ -302,3 +302,20 @@ export function formatSchedulePollInviteMessage(name: string, link: string): str
 export function buildCalEventLink(origin: string, okey: string): string {
   return `${origin.replace(/\/$/, '')}/calevent/all/c-calevents?event=${okey}`;
 }
+
+/**
+ * Formats a duration given in minutes as a readable label ('90' -> '1 h 30 min').
+ * Shown as the helper of the duration field: the value stays durationMinutes, only the
+ * hint below it spells the number out.
+ * @param durationMinutes the duration in minutes
+ * @returns '' for an empty/invalid/zero duration, else '1 h 30 min' / '2 h' / '45 min'
+ */
+export function formatDurationLabel(durationMinutes?: number | null): string {
+  const total = Number(durationMinutes);
+  if (!Number.isFinite(total) || total <= 0) return '';
+  const hours = Math.floor(total / 60);
+  const minutes = Math.round(total % 60);
+  if (hours === 0) return `${minutes} min`;
+  if (minutes === 0) return `${hours} h`;
+  return `${hours} h ${minutes} min`;
+}

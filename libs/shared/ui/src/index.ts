@@ -1,6 +1,7 @@
 export * from './lib/autofocus.directive';
 export * from './lib/boot-error';
 export * from './lib/skip-clear-tab.directive';
+export * from './lib/add-chip';
 export * from './lib/avatar-user';
 export * from './lib/button-copy';
 export * from './lib/count-pill';

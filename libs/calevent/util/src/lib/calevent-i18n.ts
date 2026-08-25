@@ -57,6 +57,28 @@ export const CALEVENT_I18N_KEYS = {
 
   filter_all:                 PFX + 'filter.all',
 
+  // the form's structure: the toolbar toggle for the advanced fields and the section headings
+  form_advanced_label:        PFX + 'form.advanced.label',
+  form_section_what:          PFX + 'form.section.what',
+  form_section_when:          PFX + 'form.section.when',
+  form_section_where:         PFX + 'form.section.where',
+  form_section_who:           PFX + 'form.section.who',
+  form_section_organisation:  PFX + 'form.section.organisation',
+  // the chips that reveal / clear the url/urlLabel pair
+  form_link_add:              PFX + 'form.link.add',
+  form_link_remove:           PFX + 'form.link.remove',
+  // the labelled '+ Person' button of the organiser card
+  form_person_add:            PFX + 'form.person.add',
+  // the field labels of the two selects (the categories carry them, the select needs them explicitly)
+  type_label:                 PFX + 'calevent_type.label',
+  periodicity_label:          PFX + 'periodicity.name',
+
+  // the switch that reveals the series configuration (periodicity + repeatUntilDate)
+  recurring_label:            PFX + 'recurring.label',
+  recurring_helper:           PFX + 'recurring.helper',
+  // the plain-text result of the current series settings ('Ergibt 11 Termine, ...')
+  series_preview:             PFX + 'series.preview',
+
   // "Kalender & Einladungen" explainer (CalEventInfoModal)
   info_title:                     PFX + 'info.title',
   info_intro:                     PFX + 'info.intro',

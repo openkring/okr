@@ -4,7 +4,7 @@ import { IonContent, ModalController, IonCardContent, IonCard, IonAccordionGroup
 import { CalEventModel, CalEventModelName, CategoryListModel, LocationModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { CalendarSelectModal } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -42,7 +42,10 @@ import { AttendeesAccordion } from './attendees-accordion';
     ion-card.personal-hint ion-icon { font-size: 20px; flex: 0 0 auto; margin-top: 1px; }
   `],
   template: `
-    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true" />
+    <!-- the advanced-settings toggle lives in the toolbar, left of the close button -->
+    <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true"
+      [actionIcon]="canExpert() ? 'toggle' : ''" [actionTitle]="i18n.form_advanced_label()"
+      (actionClicked)="showAdvanced.set(!showAdvanced())" />
     @if(showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
@@ -64,6 +67,7 @@ import { AttendeesAccordion } from './attendees-accordion';
           [i18n]="i18n"
           [currentUser]="currentUser()"
           [showForm]="showForm()"
+          [(showAdvanced)]="showAdvanced"
           [types]="types()"
           [periodicities]="periodicities()"
           [allTags]="tags()"
@@ -79,7 +83,10 @@ import { AttendeesAccordion } from './attendees-accordion';
         @if(!isNew()) {
           <ion-card>
             <ion-card-content class="ion-no-padding">
-              <ion-accordion-group value="invitees">
+              <!-- attendance and comments open with the modal: who is coming and what was said
+                   about the event are the two things a reader opens a calevent for. Documents
+                   stay collapsed. -->
+              <ion-accordion-group [multiple]="true" [value]="['invitees', 'comments']">
                 <!-- open event: attendance is self-service (attendees list).
                      closed event: attendance comes from invitations only. -->
                 @if(calevent().isOpen) {
@@ -126,6 +133,8 @@ export class CalEventEditModal {
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
   protected formData = linkedSignal(() => safeStructuredClone(this.calevent()));
   protected showForm = signal(true);
+  /** the toolbar toggle: off by default, so a modal always opens on the essential fields */
+  protected showAdvanced = signal(false);
 
   // derived signals
   protected headerTitle = computed(() => {
@@ -139,6 +148,8 @@ export class CalEventEditModal {
   protected readonly parentKey = computed(() => `${CalEventModelName}.${this.calevent().okey}`);
   protected isNew = computed(() => !this.formData()?.okey);
   protected isPersonal = computed(() => isPersonalCalevent(this.calevent()));
+  /** only the roles that may edit calendars/tags are offered the advanced toggle at all */
+  protected canExpert = computed(() => hasRole('eventAdmin', this.currentUser()) || hasRole('privileged', this.currentUser()));
 
   /******************************* actions *************************************** */
   public async save(): Promise<void> {

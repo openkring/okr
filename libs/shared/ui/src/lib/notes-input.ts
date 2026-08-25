@@ -1,5 +1,6 @@
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonNote, IonTextarea } from '@ionic/angular/standalone';
 
 import { DESCRIPTION_LENGTH } from '@okr/shared-constants';
@@ -26,7 +27,7 @@ export interface NotesInputI18n {
   selector: 'okr-notes-input',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, NgTemplateOutlet,
     FormsModule,
     IonIcon, IonTextarea, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonNote,
     ButtonCopy, ErrorNote
@@ -87,12 +88,22 @@ export interface NotesInputI18n {
     .notes-footer .counter.over { color: var(--ion-color-danger); font-weight: 600; }
   `],
   template: `
-  <ion-card>
-    @if(doShowTitle()) {
-      <ion-card-header>
-        <ion-card-title>{{ title() }}</ion-card-title>
-      </ion-card-header>
-    }
+  <!-- embedded: the notes render bare, so a parent card can host them next to its own fields.
+       Default: the component brings its own card, exactly as before. -->
+  @if(isEmbedded()) {
+    <ng-container [ngTemplateOutlet]="notesBody" />
+  } @else {
+    <ion-card>
+      @if(doShowTitle()) {
+        <ion-card-header>
+          <ion-card-title>{{ title() }}</ion-card-title>
+        </ion-card-header>
+      }
+      <ng-container [ngTemplateOutlet]="notesBody" />
+    </ion-card>
+  }
+
+  <ng-template #notesBody>
     <ion-card-content>
 
       @if(!isReadOnly()) {
@@ -104,8 +115,10 @@ export interface NotesInputI18n {
             (ngModelChange)="value.set($event)"
             placeholder="{{ i18n().placeholder }}"
             aria-label="{{ i18n().label }}"
+            [label]="isFieldStyle() ? i18n().label : undefined"
+            [labelPlacement]="isFieldStyle() ? 'floating' : undefined"
             inputMode="text"
-            fill="outline"
+            [fill]="isFieldStyle() ? undefined : 'outline'"
             [autoGrow]="isAutoGrow()"
             [maxlength]="maxLength()"
             [rows]="rows()"
@@ -139,7 +152,7 @@ export interface NotesInputI18n {
        </ion-item>
       }
     </ion-card-content>
-  </ion-card>
+  </ng-template>
   `
 })
 export class NotesInput {
@@ -158,6 +171,13 @@ export class NotesInput {
   protected copyable = input(true);
   protected encryptable = input(true);
   public autoGrow = input(true);
+  /** true: render without the surrounding ion-card, for use inside a parent card. */
+  public embedded = input(false);
+  /**
+   * true: the textarea reads like the text inputs around it — floating label, no outline box —
+   * instead of the standalone notes card. Opt-in; every existing call site keeps the outline.
+   */
+  public fieldStyle = input(false);
   /** Vest errors of the bound field; rendered below the textarea, inside the card. */
   public errors = input<string[]>([]);
 
@@ -168,6 +188,8 @@ export class NotesInput {
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected isEncryptable = computed(() => coerceBoolean(this.encryptable()));
   protected isAutoGrow = computed(() => coerceBoolean(this.autoGrow()));
+  protected isEmbedded = computed(() => coerceBoolean(this.embedded()));
+  protected isFieldStyle = computed(() => coerceBoolean(this.fieldStyle()));
 
   // character counter (replaces ion-textarea's built-in [counter] so it can share the footer row)
   protected charCount = computed(() => this.value()?.length ?? 0);

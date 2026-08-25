@@ -1,7 +1,7 @@
 import { Attendee, AvatarInfo, CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, toAttendeeState, toInvitationState } from './calevent.util';
+import { bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, toAttendeeState, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -437,5 +437,26 @@ describe('formatSchedulePollInviteMessage', () => {
     const msg = formatSchedulePollInviteMessage('SCS Achter', 'https://scs.app/x');
     expect(msg).toContain('SCS Achter');
     expect(msg).toContain('https://scs.app/x');
+  });
+});
+
+describe('formatDurationLabel', () => {
+  it('formats hours and minutes', () => {
+    expect(formatDurationLabel(90)).toBe('1 h 30 min');
+  });
+
+  it('omits the minutes on a full hour', () => {
+    expect(formatDurationLabel(120)).toBe('2 h');
+  });
+
+  it('omits the hours below one hour', () => {
+    expect(formatDurationLabel(45)).toBe('45 min');
+  });
+
+  it('returns an empty label for a missing, zero or negative duration', () => {
+    expect(formatDurationLabel(undefined)).toBe('');
+    expect(formatDurationLabel(null)).toBe('');
+    expect(formatDurationLabel(0)).toBe('');
+    expect(formatDurationLabel(-30)).toBe('');
   });
 });

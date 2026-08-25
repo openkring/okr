@@ -123,7 +123,8 @@
     "subscribeAll": "Sign up for all dates",
     "unsubscribeAll": "Sign off from all dates",
     "notFound": "This event series has no upcoming dates left.",
-    "saveError": "Your responses could not be saved."
+    "saveError": "Your responses could not be saved.",
+    "preview": "Creates {count} events, the last one on {date}."
   },
   "update": {
     "label": "Edit event",
@@ -591,5 +592,28 @@
   },
   "pollSeries": {
     "helper": "These dates come from a schedule poll and are irregular, so the periodicity cannot be changed."
+  },
+  "form": {
+    "advanced": {
+      "label": "Show advanced settings"
+    },
+    "section": {
+      "what": "What",
+      "when": "When",
+      "where": "Where",
+      "who": "Who",
+      "organisation": "Organisation"
+    },
+    "link": {
+      "add": "Add link",
+      "remove": "Remove link"
+    },
+    "person": {
+      "add": "Person"
+    }
+  },
+  "recurring": {
+    "label": "Repeats",
+    "helper": "The event repeats regularly. Periodicity and end date appear below."
   }
 }

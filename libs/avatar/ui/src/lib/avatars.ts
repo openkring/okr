@@ -32,6 +32,17 @@ import { AvatarPipe } from './avatar.pipe';
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
     .title { font-size: 1.25rem; font-weight: 500; margin-left: 0;}
+    /* sectionStyle: the card heading reads like a form section ('WER'), not like a card title */
+    .section-title { display: flex; align-items: center; gap: 8px; }
+    .section-title .text {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--ion-color-medium, #6d7683);
+    }
+    .section-title ion-icon { font-size: 16px; color: var(--ion-color-medium, #6d7683); }
+    .add-label { --padding-start: 8px; --padding-end: 8px; font-size: 13px; }
     ion-card-header { padding: 0; }
     ion-avatar { width: 30px; height: 30px; }
     .add-icon { font-size: 32px; }
@@ -63,11 +74,28 @@ import { AvatarPipe } from './avatar.pipe';
             </ion-grid>
           } @else {
             <ion-item lines="none" no-padding>
-              <div class="title">{{ cardTitle() }}</div>
+              @if(isSectionStyle()) {
+                <div class="section-title">
+                  @if(titleIcon().length > 0) {
+                    <ion-icon src="{{ titleIcon() | svgIcon }}" />
+                  }
+                  <span class="text">{{ cardTitle() }}</span>
+                </div>
+              } @else {
+                <div class="title">{{ cardTitle() }}</div>
+              }
               @if(!isReadOnly()) {
-                <ion-button slot="end" fill="clear" (click)="selectClicked.emit()" size="large">
-                  <ion-icon class="add-icon" color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
-                </ion-button>
+                @if(addLabel().length > 0) {
+                  <!-- same slot as the round '+', but labelled ('+ Person') -->
+                  <ion-button class="add-label" slot="end" fill="clear" color="secondary" size="small" (click)="selectClicked.emit()">
+                    <ion-icon slot="start" src="{{'add' | svgIcon }}" />
+                    {{ addLabel() }}
+                  </ion-button>
+                } @else {
+                  <ion-button slot="end" fill="clear" (click)="selectClicked.emit()" size="large">
+                    <ion-icon class="add-icon" color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+                  </ion-button>
+                }
               }
             </ion-item>
           }
@@ -137,12 +165,19 @@ export class Avatars {
   public label = input('');
   /** Icon of that select button. */
   public selectIcon = input('person');
+  /** true: render the card heading as a small uppercase section label instead of a card title. */
+  public sectionStyle = input(false);
+  /** Icon shown left of that section label (sectionStyle only). */
+  public titleIcon = input('');
+  /** non-empty: the round '+' becomes a labelled button in the same place (e.g. '+ Person'). */
+  public addLabel = input('');
 
   // coerced boolean inputs
   protected isCopyable = computed(() => coerceBoolean(this.copyable()));
   protected isEditable = computed(() => coerceBoolean(this.editable()));
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected showsButton = computed(() => coerceBoolean(this.showButton()));
+  protected isSectionStyle = computed(() => coerceBoolean(this.sectionStyle()));
 
   // view children
   public stringInput = viewChild<IonInput>('stringInput');

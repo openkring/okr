@@ -123,7 +123,8 @@
     "subscribeAll": "Für alle Termine anmelden",
     "unsubscribeAll": "Von allen Terminen abmelden",
     "notFound": "Diese Terminserie hat keine kommenden Termine mehr.",
-    "saveError": "Deine An-/Abmeldungen konnten nicht gespeichert werden."
+    "saveError": "Deine An-/Abmeldungen konnten nicht gespeichert werden.",
+    "preview": "Ergibt {count} Termine, der letzte am {date}."
   },
   "update": {
     "label": "Termin ändern",
@@ -591,5 +592,28 @@
   },
   "pollSeries": {
     "helper": "Die Termine stammen aus einer Terminumfrage und sind unregelmässig. Die Periodizität kann deshalb nicht geändert werden."
+  },
+  "form": {
+    "advanced": {
+      "label": "Erweiterte Einstellungen anzeigen"
+    },
+    "section": {
+      "what": "Was",
+      "when": "Wann",
+      "where": "Wo",
+      "who": "Wer",
+      "organisation": "Organisation"
+    },
+    "link": {
+      "add": "Link hinzufügen",
+      "remove": "Link entfernen"
+    },
+    "person": {
+      "add": "Person"
+    }
+  },
+  "recurring": {
+    "label": "Wiederholt sich",
+    "helper": "Der Termin wiederholt sich regelmässig. Periodizität und Enddatum erscheinen darunter."
   }
 }

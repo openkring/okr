@@ -123,7 +123,8 @@
     "subscribeAll": "Apuntarse a todas las fechas",
     "unsubscribeAll": "Darse de baja de todas las fechas",
     "notFound": "Esta serie ya no tiene fechas próximas.",
-    "saveError": "No se han podido guardar tus respuestas."
+    "saveError": "No se han podido guardar tus respuestas.",
+    "preview": "Genera {count} eventos, el último el {date}."
   },
   "update": {
     "label": "Modificar evento",
@@ -591,5 +592,28 @@
   },
   "pollSeries": {
     "helper": "Estas fechas provienen de una encuesta de fechas y son irregulares, por lo que la periodicidad no se puede cambiar."
+  },
+  "form": {
+    "advanced": {
+      "label": "Mostrar los ajustes avanzados"
+    },
+    "section": {
+      "what": "Qué",
+      "when": "Cuándo",
+      "where": "Dónde",
+      "who": "Quién",
+      "organisation": "Organización"
+    },
+    "link": {
+      "add": "Añadir un enlace",
+      "remove": "Quitar el enlace"
+    },
+    "person": {
+      "add": "Persona"
+    }
+  },
+  "recurring": {
+    "label": "Se repite",
+    "helper": "El evento se repite con regularidad. La periodicidad y la fecha final aparecen debajo."
   }
 }
