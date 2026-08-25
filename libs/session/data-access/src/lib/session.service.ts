@@ -17,6 +17,9 @@ export class SessionService {
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private startInFlight = false;
   private readonly HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000; // must stay < 30-min orphan cleanup threshold
+  // Backoff between attestation attempts on session start. Attestation is slowest exactly when it
+  // matters here — a cold load on a domain with no cached App Check token.
+  private readonly START_RETRY_DELAYS_MS = [2000, 10000];
 
   public get hasActiveSession(): boolean {
     return this.session !== null && !!this.session.okey;
@@ -29,24 +32,35 @@ export class SessionService {
 
     try {
       const session = new SessionModel(this.env.tenantId);
-      session.startedAt = getTodayStr(DateFormat.StoreDateTime);
-      session.lastSeenAt = session.startedAt;
       session.isActive = true;
       session.browser = getBrowser();
       session.os = this.detectOs();
 
-      session.index = getSessionIndex(session);
       // App Check is ENFORCED on Firestore and its token is refreshed by a timer that a
       // backgrounded tab does not get — Safari suspends timers in hidden tabs. startSession() is
-      // the FIRST write fired on tab resume, so without this pre-flight it went out with an
-      // expired token and the backend answered PERMISSION_DENIED, which Firestore does not retry.
-      await ensureAppCheckToken();
-      const key = await this.firestoreService.createModel<SessionModel>(
-        SessionCollection, session, undefined, undefined, undefined, true);
-      if (key) {
-        session.okey = key;
-        this.session = session;
-        this.startHeartbeat();
+      // also the FIRST Firestore request of a cold load, i.e. the one most likely to run before
+      // attestation has finished. Without a valid token the SDK sends a placeholder one and the
+      // backend answers PERMISSION_DENIED, which Firestore does not retry — a doomed write that
+      // only produced Sentry noise (SCS-8M). So we never write without a token: we wait for
+      // attestation, and if it is blocked or slow we back off and try again instead.
+      for (let attempt = 0; attempt <= this.START_RETRY_DELAYS_MS.length; attempt++) {
+        if (attempt > 0) await this.delay(this.START_RETRY_DELAYS_MS[attempt - 1]);
+        if (!await ensureAppCheckToken()) continue;
+
+        // stamped here, not before the loop, so the session starts when it is actually recorded
+        session.startedAt = getTodayStr(DateFormat.StoreDateTime);
+        session.lastSeenAt = session.startedAt;
+        session.index = getSessionIndex(session);
+        const key = await this.firestoreService.createModel<SessionModel>(
+          SessionCollection, session, undefined, undefined, undefined, true);
+        // With a valid token a rejection is a real failure (already reported to Sentry by
+        // FirestoreService) — retrying it would only report it again.
+        if (key) {
+          session.okey = key;
+          this.session = session;
+          this.startHeartbeat();
+        }
+        return;
       }
     } finally {
       this.startInFlight = false;
@@ -102,6 +116,10 @@ export class SessionService {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
     }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   private detectOs(): OsName {
