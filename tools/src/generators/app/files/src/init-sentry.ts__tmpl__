@@ -1,11 +1,15 @@
 import * as Sentry from '@sentry/angular';
-import { buildSentryOptions } from '@okr/shared-util-angular';
+import { buildSentryOptions, registerStaleChunkRecovery } from '@okr/shared-util-angular';
 import { environment } from './environments/environment';
 
+// Recover from lazy-chunk failures that never reach Angular's ErrorHandler (SCS-1N).
+// Registered before Sentry.init so this listener runs before Sentry's own
+// onunhandledrejection handler, and unconditionally — recovery is not monitoring.
+registerStaleChunkRecovery();
+
 // Initialize Sentry before anything else. No-op when no sentry config / DSN is present
-// (e.g. local dev), so the app always boots even without monitoring.
+// (e.g. local dev), so the app always boots even without monitoring. Each tenant reports
+// into its OWN Sentry project — the DSN in apps/<tenant>-app/.env decides which one.
 if (environment.sentry?.dsn) {
-  Sentry.init(
-    buildSentryOptions(environment.sentry, [Sentry.browserTracingIntegration()]),
-  );
+  Sentry.init(buildSentryOptions(environment.sentry, [Sentry.browserTracingIntegration()]));
 }
