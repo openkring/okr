@@ -129,3 +129,51 @@ export async function sendBotDirectMessage(matrixUserId: string, body: string, t
   );
   if (!resp.ok) throw new Error(`matrix bot send failed: ${await resp.text()}`);
 }
+
+/**
+ * Get the bot into a room it did not create.
+ *
+ * Ask rooms are created with the ADMIN token and hold the group plus the requester; the bot is
+ * a separate account and would get a 403 on send. The Synapse admin join is the same move
+ * `requestGroupRoomAccess` makes for the requester (matrix-simple/rooms.ts, step 6).
+ * Already-joined is a no-op on Synapse's side, so this is safe to call before every post.
+ */
+export async function joinBotToRoom(roomId: string, botUserId: string, adminToken: string): Promise<void> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/join/${encodeURIComponent(roomId)}`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: botUserId }),
+    },
+  );
+  if (!resp.ok) throw new Error(`matrix bot join failed: ${await resp.text()}`);
+}
+
+/**
+ * Post the opening message of a group conversation.
+ *
+ * Unlike `sendBotDirectMessage` this room is TWO-WAY: the requester answers as themselves and
+ * the group answers there, so no `power_level_content_override` and `m.text` rather than
+ * `m.notice` — clients render a notice as a system line, which is not what a conversation
+ * opener is.
+ */
+export async function postGroupChatMessage(
+  roomId: string,
+  body: string,
+  txnId: string,
+  adminToken: string,
+): Promise<void> {
+  const token = matrixBotToken.value();
+  if (!token || token === PLACEHOLDER) {
+    throw new Error('MATRIX_BOT_TOKEN is not configured — provision the bot account and set the secret before enabling an openChat rule');
+  }
+  const botUserId = await whoami(token);
+  await joinBotToRoom(roomId, botUserId, adminToken);
+
+  const resp = await matrixFetch(
+    `/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/send/m.room.message/${encodeURIComponent(txnId)}`,
+    { method: 'PUT', token, body: JSON.stringify({ msgtype: 'm.text', body }) },
+  );
+  if (!resp.ok) throw new Error(`matrix bot room send failed: ${await resp.text()}`);
+}
