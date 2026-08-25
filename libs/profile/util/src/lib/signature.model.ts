@@ -33,7 +33,8 @@ export interface SignatureModel {
     name: string;            // "Seeclub Stäfa"
     addressLine: string;     // "8712 Stäfa, SWITZERLAND" (pre-composed)
     websiteUrl?: string;     // logo link target
-    logoUrl: string;         // absolute imgix URL (spec §5)
+    logoUrl?: string;        // absolute imgix URL (spec §5); omitted when the tenant has no
+                             // usable logo — see buildSignatureLogoUrl
   };
 }
 

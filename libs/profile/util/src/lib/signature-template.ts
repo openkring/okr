@@ -77,19 +77,17 @@ export function renderSignature(model: SignatureModel): SignatureRender {
   // vertical gap
   rows.push(`  <tr><td style="height:16px;line-height:16px;font-size:0;">&nbsp;</td></tr>`);
 
-  // logo + org name/address
-  const logoImg =
-    `<img src="${escapeSignatureHtml(org.logoUrl)}" width="50" height="50" alt="${escapeSignatureHtml(org.name)}" ` +
-    `style="display:block;border:0;outline:none;width:50px;height:50px;" />`;
-  const logoCell = org.websiteUrl?.trim()
-    ? `<a href="${escapeSignatureHtml(org.websiteUrl.trim())}" style="text-decoration:none;">${logoImg}</a>`
-    : logoImg;
+  // logo + org name/address. The logo is optional: a tenant with neither an org avatar nor a
+  // raster logoUrl gets no <img> at all, rather than a broken-image icon in every mail it sends.
+  const logoCellHtml = org.logoUrl?.trim()
+    ? `          <td valign="middle" style="padding:0 16px 0 0;">${renderLogoCell(org.logoUrl.trim(), org.name, org.websiteUrl)}</td>\n`
+    : '';
   rows.push(
     `  <tr>\n` +
       `    <td style="padding:0;">\n` +
       `      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">\n` +
       `        <tr>\n` +
-      `          <td valign="middle" style="padding:0 16px 0 0;">${logoCell}</td>\n` +
+      logoCellHtml +
       `          <td valign="middle" style="font-size:14px;line-height:1.45;color:#333333;">\n` +
       `            <span style="font-size:15px;font-weight:bold;color:#000000;">${escapeSignatureHtml(org.name)}</span><br>\n` +
       `            ${escapeSignatureHtml(org.addressLine)}\n` +
@@ -107,6 +105,19 @@ export function renderSignature(model: SignatureModel): SignatureRender {
     `\n</table>`;
 
   return { html, text: renderText(model) };
+}
+
+/**
+ * The logo image, wrapped in a link to the org website when there is one. Fixed pixel
+ * dimensions on the tag itself (not only in CSS) — Outlook ignores CSS sizing on images.
+ */
+function renderLogoCell(logoUrl: string, orgName: string, websiteUrl?: string): string {
+  const logoImg =
+    `<img src="${escapeSignatureHtml(logoUrl)}" width="50" height="50" alt="${escapeSignatureHtml(orgName)}" ` +
+    `style="display:block;border:0;outline:none;width:50px;height:50px;" />`;
+  return websiteUrl?.trim()
+    ? `<a href="${escapeSignatureHtml(websiteUrl.trim())}" style="text-decoration:none;">${logoImg}</a>`
+    : logoImg;
 }
 
 /** Plain-text fallback (spec §4), prefixed with the RFC 3676 `-- ` delimiter. */

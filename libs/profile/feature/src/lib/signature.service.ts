@@ -7,8 +7,10 @@ import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
 import { AddressCollection, AddressModel, DirectoryEntry, OrgModelName, PersonModelName } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
+import { AvatarService } from '@okr/avatar-data-access';
 import {
   adaptForClient,
+  buildSignatureLogoUrl,
   ClientPlan,
   composeOrgAddressLine,
   CopyFormat,
@@ -19,8 +21,6 @@ import {
   renderSignature,
   SignatureModel,
 } from '@okr/profile-util';
-
-const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
 /**
  * Client-side assembly + render pipeline + clipboard for the email signature (spec §6.4/§7).
@@ -35,6 +35,7 @@ export class SignatureService {
   private readonly appStore = inject(AppStore);
   private readonly firestoreService = inject(FirestoreService);
   private readonly alertService = inject(AlertService);
+  private readonly avatarService = inject(AvatarService);
   private readonly i18n = inject(I18nService).translateAll(PROFILE_I18N_KEYS) as ProfileI18n;
 
   // ephemeral form state (spec §3.2) — nothing is persisted
@@ -51,6 +52,24 @@ export class SignatureService {
   // otherwise repeatedly reset the address resources (and flicker the resolved phone/address).
   private readonly orgKey = computed(() => this.defaultOrg()?.okey ?? '');
   private readonly personKey = computed(() => this.currentPerson()?.okey ?? '');
+
+  /**
+   * The signature logo — the default org's **avatar** first, so an admin can change it by
+   * uploading a picture in the org edit modal instead of asking for a deploy or an imgix upload.
+   * Falls back to the tenant's configured `logoUrl` (raster only) and finally to no logo at all;
+   * `buildSignatureLogoUrl` documents why an SVG `logoUrl` cannot be used.
+   *
+   * `getCachedStoragePath` reads the AvatarService's cache signal, which is fed by a Firestore
+   * stream the service already holds open — so this stays reactive (an upload updates the preview)
+   * without opening a second subscription.
+   */
+  private readonly logoUrl = computed<string | undefined>(() =>
+    buildSignatureLogoUrl(
+      this.appStore.env.services.imgixBaseUrl,
+      this.avatarService.getCachedStoragePath(`${OrgModelName}.${this.orgKey()}`),
+      this.appStore.appConfig().logoUrl,
+    ),
+  );
 
   /**
    * The default org's addresses, used to compose the postal address line + logo website link.
@@ -112,7 +131,7 @@ export class SignatureService {
         name: org.name,
         addressLine,
         websiteUrl: web?.url || undefined,
-        logoUrl: `${IMGIX_BASE}/tenant/${this.tenantId()}/logo/google-touch-icon.png?w=50&h=50&fit=clip&dpr=2`,
+        logoUrl: this.logoUrl(),
       },
     };
   });

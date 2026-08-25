@@ -77,6 +77,16 @@ describe('renderSignature', () => {
     expect(noWeb.html).toContain('<img src=');
     expect(noWeb.html).not.toContain('seeclub-staefa.ch');
   });
+  it('omits the logo image entirely when no logo url is available', () => {
+    const noLogo = renderSignature({ ...MODEL, org: { ...MODEL.org, logoUrl: undefined } });
+    expect(noLogo.html).not.toContain('<img');
+    // the org block itself must survive — only the picture is dropped
+    expect(noLogo.html).toContain('Seeclub Stäfa');
+    expect(noLogo.html).toContain('8712 Stäfa, SWITZERLAND');
+  });
+  it('omits the logo image for a blank logo url', () => {
+    expect(renderSignature({ ...MODEL, org: { ...MODEL.org, logoUrl: '   ' } }).html).not.toContain('<img');
+  });
   it('escapes interpolated values', () => {
     const html = renderSignature({ ...MODEL, person: { ...MODEL.person, displayName: 'A & B' } }).html;
     expect(html).toContain('A &amp; B');
