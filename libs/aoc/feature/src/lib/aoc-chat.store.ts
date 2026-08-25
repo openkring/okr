@@ -143,6 +143,9 @@ export type AocChatState = {
   tenantRepairApplying: boolean;
   memberRepairApplying: boolean;
   memberRepairJoined: number;
+  // group-room write-permission sync
+  postPolicySyncApplying: boolean;
+  postPolicySyncChanged: number;
   // group-room drift — room members without a membership
   guestPreview: GroupRoomDrift[] | undefined; // undefined = not yet scanned
   guestScanning: boolean;
@@ -169,6 +172,8 @@ const initialState: AocChatState = {
   tenantRepairApplying: false,
   memberRepairApplying: false,
   memberRepairJoined: 0,
+  postPolicySyncApplying: false,
+  postPolicySyncChanged: 0,
   guestPreview: undefined,
   guestScanning: false,
   guestPruningGroup: undefined,
@@ -739,6 +744,56 @@ export const AocChatStore = signalStore(
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       } finally {
         patchState(store, { memberRepairApplying: false });
+      }
+    },
+
+    // ─── group-room write-permission sync ──────────────────────────────────────
+
+    /**
+     * Re-apply each group's write-permission setting to its Matrix chat room.
+     *
+     * Losing a privileged role does not immediately revoke the ability to post in a
+     * group's announcement-style room — a nightly job removes it. This lets an admin
+     * trigger the same reconciliation on demand, for all groups of this tenant.
+     */
+    async applyPostPolicySync(): Promise<void> {
+      const groups = store.appStore.allGroups();
+      const message = await firstValueFrom(
+        store.i18nService.translate('@aoc/feature.chat.repair.postpolicy.confirm', { count: groups.length })
+      );
+      const alert = await store.alertController.create({
+        header: store.i18n.chat_repair_postpolicy(),
+        message,
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.chat_repair_postpolicy_action(), role: 'confirm' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm') return;
+
+      patchState(store, { postPolicySyncApplying: true, postPolicySyncChanged: 0 });
+      try {
+        const fn = httpsCallable<{ groupId: string }, { result: 'unchanged' | 'applied' | 'no-room' }>(
+          getFn(), 'syncRoomPostPolicy'
+        );
+        let changed = 0;
+        for (const group of groups) {
+          try {
+            const result = await fn({ groupId: group.okey });
+            if (result.data.result === 'applied') changed++;
+          } catch (e) {
+            // A group without a chat room throws; that is expected, not a failure of the run.
+            console.warn(`syncRoomPostPolicy: skipped group ${group.okey}: ${(e as Error).message}`);
+          }
+        }
+        patchState(store, { postPolicySyncChanged: changed });
+        await showToast(store.toastController, `${store.i18n.chat_repair_postpolicy()}: ${changed}`);
+      } catch (e) {
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { postPolicySyncApplying: false });
       }
     },
 

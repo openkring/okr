@@ -312,6 +312,12 @@
         "action": "Abgleichen",
         "confirm": "Mitglieder aller {count} Gruppen jetzt abgleichen?"
       },
+      "postpolicy": {
+        "label": "Schreibrechte abgleichen",
+        "description": "Trägt für jede Gruppe die aktuellen Schreibrechte in ihren Chat-Raum ein. Das passiert sonst automatisch über Nacht – hier kannst du es sofort auslösen, wenn es nicht bis morgen warten soll, zum Beispiel weil jemand gerade sein Amt und damit seine Schreibrechte verloren hat.",
+        "action": "Abgleichen",
+        "confirm": "Schreibrechte aller {count} Gruppen jetzt abgleichen?"
+      },
       "guests": {
         "label": "Nicht-Mitglieder in Gruppen-Chats",
         "description": "Wer den Chat einer Gruppe öffnet, wird dauerhaft in den Raum aufgenommen – auch ohne Mitgliedschaft. Das ist so gewollt (z.B. für Kursteilnehmende), wird aber nie rückgängig gemacht. Diese Prüfung zeigt pro Gruppe, wie viele Leute im Chat-Raum sitzen, die in der Mitgliederliste nicht vorkommen, und entfernt sie auf Wunsch.",

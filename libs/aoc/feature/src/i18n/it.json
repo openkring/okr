@@ -312,6 +312,12 @@
         "action": "Riconciliare",
         "confirm": "Riconciliare ora i membri di tutti i {count} gruppi?"
       },
+      "postpolicy": {
+        "label": "Riconciliare i diritti di scrittura",
+        "description": "Applica a ogni stanza chat di gruppo i diritti di scrittura attuali del gruppo. Normalmente questo avviene automaticamente ogni notte — usalo quando non può aspettare fino a domani, per esempio perché qualcuno ha appena perso il ruolo che gli permetteva di scrivere.",
+        "action": "Riconciliare",
+        "confirm": "Riconciliare ora i diritti di scrittura di tutti i {count} gruppi?"
+      },
       "guests": {
         "label": "Non membri nelle chat di gruppo",
         "description": "Chi apre la chat di un gruppo viene aggiunto in modo permanente alla sua stanza, anche senza appartenenza. È voluto (ad es. per i partecipanti a un corso), ma non viene mai annullato. Questo controllo mostra, per ogni gruppo, quante persone sono nella stanza pur non comparendo nell'elenco dei membri, e le rimuove su richiesta.",

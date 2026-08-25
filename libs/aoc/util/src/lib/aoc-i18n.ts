@@ -210,6 +210,11 @@ export const AOC_I18N_KEYS = {
   chat_repair_members_action:               PFX + 'chat.repair.members.action',
   chat_repair_members_confirm:              PFX + 'chat.repair.members.confirm',
 
+  chat_repair_postpolicy:                   PFX + 'chat.repair.postpolicy.label',
+  chat_repair_postpolicy_description:       PFX + 'chat.repair.postpolicy.description',
+  chat_repair_postpolicy_action:            PFX + 'chat.repair.postpolicy.action',
+  chat_repair_postpolicy_confirm:           PFX + 'chat.repair.postpolicy.confirm',
+
   chat_repair_guests:                       PFX + 'chat.repair.guests.label',
   chat_repair_guests_description:           PFX + 'chat.repair.guests.description',
   chat_repair_guests_scan:                  PFX + 'chat.repair.guests.scan',

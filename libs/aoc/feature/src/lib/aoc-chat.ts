@@ -359,6 +359,29 @@ import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo } from './aoc-c
         </ion-card-content>
       </ion-card>
 
+      <!-- Group-room write-permission sync — additive/idempotent, so no preview step -->
+      <ion-card class="repair-card">
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.chat_repair_postpolicy() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="repair-desc">{{ store.i18n.chat_repair_postpolicy_description() }}</p>
+          <div class="repair-actions">
+            <ion-button size="small" color="primary" (click)="onApplyPostPolicySync()" [disabled]="postPolicySyncApplying()">
+              @if (postPolicySyncApplying()) {
+                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+              } @else {
+                <ion-icon slot="start" src="{{'reload' | svgIcon}}" />
+              }
+              {{ store.i18n.chat_repair_postpolicy_action() }}
+            </ion-button>
+          </div>
+          @if (postPolicySyncChanged() > 0) {
+            <ion-note color="medium" class="repair-skipped">{{ postPolicySyncChanged() }}</ion-note>
+          }
+        </ion-card-content>
+      </ion-card>
+
       <!-- Group-room drift — people sitting in a group chat without a membership -->
       <ion-card class="repair-card">
         <ion-card-header>
@@ -618,6 +641,8 @@ export class AocChat {
   protected readonly tenantRepairApplying = computed(() => this.store.tenantRepairApplying());
   protected readonly memberRepairApplying = computed(() => this.store.memberRepairApplying());
   protected readonly memberRepairJoined = computed(() => this.store.memberRepairJoined());
+  protected readonly postPolicySyncApplying = computed(() => this.store.postPolicySyncApplying());
+  protected readonly postPolicySyncChanged = computed(() => this.store.postPolicySyncChanged());
 
   // group-room drift (non-members sitting in a group chat)
   protected readonly guestPreview = computed(() => this.store.guestPreview());
@@ -679,6 +704,10 @@ export class AocChat {
 
   protected onApplyMemberRepair(): void {
     this.store.applyMemberRepair();
+  }
+
+  protected onApplyPostPolicySync(): void {
+    this.store.applyPostPolicySync();
   }
 
   protected onPreviewGuests(): void {

@@ -312,6 +312,12 @@
         "action": "Conciliar",
         "confirm": "¿Conciliar ahora los miembros de los {count} grupos?"
       },
+      "postpolicy": {
+        "label": "Conciliar los permisos de escritura",
+        "description": "Aplica a la sala de chat de cada grupo sus permisos de escritura actuales. Normalmente esto ocurre automáticamente cada noche — usa esto cuando no pueda esperar hasta mañana, por ejemplo porque alguien acaba de perder el rol que le permitía escribir.",
+        "action": "Conciliar",
+        "confirm": "¿Conciliar ahora los permisos de escritura de los {count} grupos?"
+      },
       "guests": {
         "label": "No miembros en los chats de grupo",
         "description": "Quien abre el chat de un grupo entra de forma permanente en su sala, incluso sin ser miembro. Es intencionado (p. ej. para participantes de un curso), pero nunca se deshace. Esta comprobación muestra, por grupo, cuántas personas están en la sala sin figurar en la lista de miembros, y las elimina si lo deseas.",

@@ -312,6 +312,12 @@
         "action": "Reconcile",
         "confirm": "Reconcile the members of all {count} groups now?"
       },
+      "postpolicy": {
+        "label": "Reconcile write permissions",
+        "description": "Applies each group's current write permissions to its chat room. This normally happens automatically overnight — use this when it can't wait until tomorrow, for example because someone just lost the role that let them post.",
+        "action": "Reconcile",
+        "confirm": "Reconcile write permissions for all {count} groups now?"
+      },
       "guests": {
         "label": "Non-members in group chats",
         "description": "Anyone who opens a group's chat is permanently added to its room, even without a membership. That is intended (e.g. for course participants) but is never undone. This check shows, per group, how many people sit in the chat room who are not on the member list, and removes them on request.",

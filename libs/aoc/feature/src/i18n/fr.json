@@ -312,6 +312,12 @@
         "action": "Réconcilier",
         "confirm": "Réconcilier maintenant les membres des {count} groupes ?"
       },
+      "postpolicy": {
+        "label": "Réconcilier les droits d'écriture",
+        "description": "Applique à chaque salon de discussion de groupe les droits d'écriture actuels de son groupe. Cela se fait normalement automatiquement chaque nuit — utilise ceci quand cela ne peut pas attendre demain, par exemple parce que quelqu'un vient de perdre le rôle qui lui permettait d'écrire.",
+        "action": "Réconcilier",
+        "confirm": "Réconcilier maintenant les droits d'écriture des {count} groupes ?"
+      },
       "guests": {
         "label": "Non-membres dans les chats de groupe",
         "description": "Toute personne qui ouvre le chat d'un groupe est ajoutée durablement à son salon, même sans adhésion. C'est voulu (p. ex. pour les participants à un cours), mais ce n'est jamais annulé. Cette vérification montre, par groupe, combien de personnes se trouvent dans le salon sans figurer dans la liste des membres, et les retire sur demande.",
