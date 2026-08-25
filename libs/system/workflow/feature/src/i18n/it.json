@@ -144,6 +144,9 @@
     },
     "requestApproval": {
       "label": "Freigabe anfordern"
+    },
+    "openChat": {
+      "label": "Aprire la chat"
     }
   }
 }
