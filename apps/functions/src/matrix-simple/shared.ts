@@ -602,6 +602,47 @@ export async function resolveGroupRoom(
 }
 
 /**
+ * Which room does this person get in this group?
+ *
+ * Members always share the group room — an 'ask' group is open to everyone, not private to
+ * everyone. Only a NON-member of an ask group gets their own room with the whole group.
+ * Pure on purpose: the decision is the part worth testing, the fetching is not.
+ */
+export function useAskRoom(chatMode: string | undefined, memberKeys: string[], personKey: string): boolean {
+  if (chatMode !== 'ask') return false;
+  const localpart = personKey.toLowerCase();
+  return !memberKeys.some((k) => k.toLowerCase() === localpart);
+}
+
+/**
+ * The room a person reaches a group through — the single source of this decision.
+ *
+ * Both callers (the `requestGroupRoomAccess` callable and the workflow outbox) MUST go through
+ * here: two copies of this branch drifting apart is what produced duplicate rooms once (S5).
+ *
+ * A group admin without a formal membership counts as a member here too — otherwise an admin
+ * who opens their own 'ask' group's chat would get pulled into a personal ask-room instead of
+ * landing where every other admin/member does.
+ */
+export async function resolveChatRoomForPerson(
+  groupId: string,
+  personKey: string,
+  hostname: string,
+  adminToken: string,
+  opts: { create?: boolean } = {},
+): Promise<string | undefined> {
+  const groupData = (await getFirestore().collection('groups').doc(groupId).get()).data();
+  const memberKeys = await activeGroupMemberKeys(groupId);
+  const adminKeys = ((groupData?.['admins'] ?? []) as Array<{ key?: string }>)
+    .map((a) => a.key)
+    .filter((k): k is string => !!k);
+  const ask = useAskRoom(groupData?.['chatMode'] as string | undefined, [...memberKeys, ...adminKeys], personKey);
+  return ask
+    ? resolveAskRoom(groupId, personKey, hostname, adminToken, opts)
+    : resolveGroupRoom(groupId, hostname, adminToken, opts);
+}
+
+/**
  * Custom room state event carrying the okr tenants a room belongs to: `{ tenants: string[] }`.
  * One Matrix account serves a person in EVERY tenant, so without this marker the joined-room
  * list of the scs app and the p13 app are identical. Kept in sync with `OKR_TENANT_EVENT` in

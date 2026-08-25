@@ -13,7 +13,7 @@ import {
   requireRole,
   ensureMatrixUserExists,
   resolveGroupRoom,
-  resolveAskRoom,
+  resolveChatRoomForPerson,
   activeGroupMemberKeys,
   ensureAdminInRoom,
   forceJoinUserToRoom,
@@ -133,10 +133,6 @@ export const requestGroupRoomAccess = onCall(
     // Ensure the Matrix account exists (first chat access provisions it)
     await ensureMatrixUserExists(matrixUserId, adminToken, { firebaseUid });
 
-    // Resolve (or create) the room to join. Normally the group's shared room — single
-    // source of truth, persisted on the group doc so every CF agrees on one room (fixes
-    // S5 duplicate rooms).
-    //
     // `chatMode` decides what a NON-member gets (members always land in the shared room):
     //  - 'shared'  (default): force-joined into the group room — open, topical rooms.
     //  - 'ask':    their own room with the whole group — reachable by all, confidential
@@ -146,29 +142,26 @@ export const requestGroupRoomAccess = onCall(
     // 'shared' and 'ask' admit non-members PERMANENTLY — nothing here or elsewhere ever
     // removes them again, which is why a group room drifts from its member list. That is
     // deliberate for course participants; 'members' is the opt-out for groups where it is not.
+    //
+    // 'members' groups are closed and need the explicit permission check below — the room
+    // resolution further down (`resolveChatRoomForPerson`) never denies access, it only
+    // picks which room a member/admin lands in.
     const groupData = (await getFirestore().collection('groups').doc(groupId).get()).data();
     const chatMode = (groupData?.['chatMode'] as string) ?? 'shared';
-
-    // Only 'ask' and 'members' need to know — skip the membership read for plain 'shared'.
-    let isMember = true;
-    if (chatMode === 'ask' || chatMode === 'members') {
+    if (chatMode === 'members') {
       const memberKeys = await activeGroupMemberKeys(groupId);
       // A group admin without a membership must not be locked out of their own group's chat.
       const admins = (groupData?.['admins'] ?? []) as Array<{ key?: string }>;
-      isMember =
+      const isMember =
         memberKeys.some((k) => k.toLowerCase() === localpart) ||
         admins.some((a) => a.key?.toLowerCase() === localpart);
+      if (!isMember) {
+        console.warn(`requestGroupRoomAccess: ${matrixUserId} has no membership in closed group ${groupId}`);
+        throw new HttpsError('permission-denied', `Group ${groupId} is members-only.`);
+      }
     }
 
-    if (chatMode === 'members' && !isMember) {
-      console.warn(`requestGroupRoomAccess: ${matrixUserId} has no membership in closed group ${groupId}`);
-      throw new HttpsError('permission-denied', `Group ${groupId} is members-only.`);
-    }
-    const useAskRoom = chatMode === 'ask' && !isMember;
-
-    const roomId = useAskRoom
-      ? await resolveAskRoom(groupId, personKey, hostname, adminToken, { create: true })
-      : await resolveGroupRoom(groupId, hostname, adminToken, { create: true });
+    const roomId = await resolveChatRoomForPerson(groupId, personKey, hostname, adminToken, { create: true });
     if (!roomId) throw new HttpsError('not-found', `No room for group ${groupId}`);
 
     // Step 3: Get admin user ID (the MATRIX_ADMIN_TOKEN may belong to a regular user, not a
