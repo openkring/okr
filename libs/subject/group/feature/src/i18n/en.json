@@ -204,5 +204,9 @@
   "chatMode": {
     "label": "Chat mode for non-members",
     "helper": "shared: non-members join the common group room and read everything. ask: every non-member gets their own room with the whole group — for groups that should be reachable by everyone but whose requests are confidential (emergency, support, board, committees). members: only members (and the group's admins) may enter — for a closed circle whose chat should mirror the member list exactly (e.g. a boat crew). Note: shared and ask admit non-members permanently; whoever is in, stays in."
+  },
+  "postPolicy": {
+    "label": "Who may post",
+    "helper": "Everyone: anyone in the room can post – the ordinary group chat. Board only: the room becomes an announcement channel where only the board and the administration post; everyone else reads along, can react, and finds a button in the room to ask a question. Useful for large groups where an important announcement would otherwise be lost in the conversation."
   }
 }

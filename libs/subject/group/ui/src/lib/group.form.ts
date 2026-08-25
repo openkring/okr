@@ -181,6 +181,13 @@ import { getGroupKeyFromName, groupValidations, GroupI18n } from '@okr/subject-g
                     [readOnly]="isReadOnly()"
                   />
                 </ion-col>
+                <ion-col size="12">
+                  <okr-string-select [i18n]="postPolicyI18n()"
+                    [selectedString]="postPolicy()" (selectedStringChange)="onFieldChange('postPolicy', $event)"
+                    [stringList]="postPolicyOptions"
+                    [readOnly]="isReadOnly()"
+                  />
+                </ion-col>
               </ion-row>
             </ion-grid>
           </ion-card-content>
@@ -215,6 +222,7 @@ export class GroupForm {
   protected notesI18n      = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
   protected notifyTypeI18n  = computed(() => ({ name: 'notifyType',   label: this.i18n().notifyType_label()  } as StringSelectI18n));
   protected chatModeI18n    = computed(() => ({ name: 'chatMode',     label: this.i18n().chatMode_label(),     helper: this.i18n().chatMode_helper()     } as StringSelectI18n));
+  protected postPolicyI18n  = computed(() => ({ name: 'postPolicy',   label: this.i18n().postPolicy_label(),   helper: this.i18n().postPolicy_helper()   } as StringSelectI18n));
   protected hasContentI18n  = computed(() => ({ name: 'hasContent',   label: this.i18n().hasContent_label(),   helper: this.i18n().hasContent_helper()   } as CheckboxI18n));
   protected hasChatI18n     = computed(() => ({ name: 'hasChat',      label: this.i18n().hasChat_label(),      helper: this.i18n().hasChat_helper()      } as CheckboxI18n));
   protected hasCalendarI18n = computed(() => ({ name: 'hasCalendar',  label: this.i18n().hasCalendar_label(),  helper: this.i18n().hasCalendar_helper()  } as CheckboxI18n));
@@ -267,6 +275,8 @@ export class GroupForm {
   protected readonly notifyTypeOptions = ['memberOnly', 'membersAndMatchingVisibility'];
   protected chatMode = linkedSignal(() => this.formData().chatMode ?? 'shared');
   protected readonly chatModeOptions = ['shared', 'ask', 'members'];
+  protected postPolicy = linkedSignal(() => this.formData().postPolicy ?? 'all');
+  protected readonly postPolicyOptions = ['all', 'privileged'];
   protected hasContent = linkedSignal(() => this.formData().hasContent ?? true);
   protected hasChat = linkedSignal(() => this.formData().hasChat ?? true);
   protected hasCalendar = linkedSignal(() => this.formData().hasCalendar ?? true);

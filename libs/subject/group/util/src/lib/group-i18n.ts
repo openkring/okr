@@ -101,6 +101,8 @@ export const GROUP_I18N_KEYS = {
   notifyType_label:                PFX + 'notifyType.label',
   chatMode_label:                  PFX + 'chatMode.label',
   chatMode_helper:                 PFX + 'chatMode.helper',
+  postPolicy_label:                PFX + 'postPolicy.label',
+  postPolicy_helper:               PFX + 'postPolicy.helper',
   hasContent_label:                PFX + 'hasContent.label',
   hasContent_helper:               PFX + 'hasContent.helper',
   hasChat_label:                   PFX + 'hasChat.label',
