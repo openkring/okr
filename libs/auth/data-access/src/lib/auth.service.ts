@@ -193,7 +193,8 @@ export class AuthService {
     }
     [
       'matrix_access_token', 'matrix_user_id', 'matrix_device_id', 'matrix_homeserver',
-      'matrix_avatar_firebase_url', 'matrix_avatar_mxc_url', 'matrix_login_token',
+      'matrix_token_expires_at', 'matrix_avatar_firebase_url', 'matrix_avatar_mxc_url',
+      'matrix_login_token',
     ].forEach(key => localStorage.removeItem(key));
   }
 

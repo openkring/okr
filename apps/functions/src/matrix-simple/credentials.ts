@@ -30,7 +30,16 @@ export interface MatrixAuthResponse {
   userId: string;
   deviceId: string;
   homeserverUrl: string;
+  /**
+   * Epoch ms at which the access token stops working (SCS-92). The client persists this
+   * next to the token and re-calls this function BEFORE it lapses; without it the cached
+   * token was reused until Synapse answered 401 and chat media silently went blank.
+   */
+  expiresAt: number;
 }
+
+/** Lifetime of a minted Matrix access token. Mirrored to the client via `expiresAt`. */
+const TOKEN_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * Simple Firebase -> Matrix Token Exchange
@@ -143,6 +152,7 @@ export const getMatrixCredentials = onCall(
 
       // Generate Matrix access token for the user
       // Note: This requires Synapse admin API to generate tokens
+      const expiresAt = Date.now() + TOKEN_LIFETIME_MS;
       const loginResponse = await fetch(
         `${MATRIX_HOMESERVER}/_synapse/admin/v1/users/${encodeURIComponent(matrixUserId)}/login`,
         {
@@ -152,7 +162,7 @@ export const getMatrixCredentials = onCall(
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            valid_until_ms: Date.now() + (7 * 24 * 60 * 60 * 1000), // 7 days (refreshed on each app init; H-6)
+            valid_until_ms: expiresAt, // 7 days; the client refreshes ahead of this (SCS-92)
           }),
         }
       );
@@ -201,6 +211,7 @@ export const getMatrixCredentials = onCall(
         userId: matrixUserId,
         deviceId: `firebase_${firebaseUid}`,
         homeserverUrl: MATRIX_HOMESERVER,
+        expiresAt,
       };
     } catch (error) {
       console.error('Error getting Matrix credentials:', error);

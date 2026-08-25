@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { captureMessage } from '@sentry/angular';
 import type { MatrixClient } from 'matrix-js-sdk';
+import { Observable, Subject } from 'rxjs';
 
 /** P-1: upper bound for the mxc→blob-URL cache (LRU eviction). */
 const MEDIA_CACHE_MAX = 200;
@@ -18,10 +19,25 @@ export class MatrixMediaService {
   private readonly cache = new Map<string, string>(); // mxc → blob URL (insertion order = LRU order)
   /** Reasons already reported this session — see reportSilentFailure. */
   private readonly reportedFailures = new Set<string>();
+  private readonly authFailed$ = new Subject<void>();
+  /** SCS-92: emitted at most once per attached client — see the 401 branch below. */
+  private authFailureSignalled = false;
+
+  /**
+   * Emits when the homeserver rejects the access token on a media download (HTTP 401).
+   * Media is fetched with a raw `fetch()` outside the SDK, so it hits an expired token
+   * while rendering the cached timeline — well before the sync loop reports
+   * `M_UNKNOWN_TOKEN`. MatrixChatService listens and starts re-authentication here
+   * instead of leaving avatars and images blank until sync catches up (SCS-92).
+   */
+  public get authFailed(): Observable<void> {
+    return this.authFailed$.asObservable();
+  }
 
   /** Attach/detach the Matrix client. Detaching (null) revokes and clears the cache. */
   public setClient(client: MatrixClient | null): void {
     this.client = client;
+    this.authFailureSignalled = false;
     if (!client) this.clear();
   }
 
@@ -51,6 +67,12 @@ export class MatrixMediaService {
       });
       if (!resp.ok) {
         this.reportSilentFailure(`media download failed: HTTP ${resp.status}`);
+        // 401 is never about this one file — the token is gone. Signal once per client
+        // so the facade can re-authenticate; further 401s belong to the same dead token.
+        if (resp.status === 401 && !this.authFailureSignalled) {
+          this.authFailureSignalled = true;
+          this.authFailed$.next();
+        }
         return '';
       }
       const raw = await resp.blob();

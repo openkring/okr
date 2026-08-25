@@ -18,6 +18,16 @@ import { isServiceAccount as isServiceAccountHelper } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
 import { MatrixCallService } from './matrix-call.service';
 
+/**
+ * SCS-92: refresh a Matrix access token this long before it lapses, so a session that
+ * starts just under the wire doesn't die mid-use. The token lives 7 days (see the
+ * `getMatrixCredentials` Cloud Function), so one day of slack is cheap.
+ */
+const TOKEN_REFRESH_MARGIN_MS = 24 * 60 * 60 * 1000;
+
+/** Minimum gap between two media-401-driven re-authentications (SCS-92). */
+const MEDIA_AUTH_RECOVERY_COOLDOWN_MS = 5 * 60 * 1000;
+
 export interface MatrixPollData {
   question: string;
   answers: string[];   // min 2, max 20
@@ -78,6 +88,8 @@ export class MatrixChatService {
   // ARCH-2 delegates (design review #4): media resolution and WebRTC call state
   // live in their own services; this facade wires the client and forwards calls.
   private readonly media = inject(MatrixMediaService);
+  /** Epoch ms of the last media-401-driven re-auth — see the constructor's cooldown. */
+  private lastMediaAuthRecovery = 0;
   private readonly calls = inject(MatrixCallService);
 
   constructor() {
@@ -87,6 +99,22 @@ export class MatrixChatService {
       if (!fbUser && this.client) {
         this.disconnect(true); // logout: wipe the cache so accounts can't mix
       }
+    });
+
+    // SCS-92: an authenticated media download that comes back 401 means the access token
+    // is dead. Media is fetched outside the SDK, so this fires while the cached timeline
+    // renders — before the sync loop reaches ERROR/STOPPED with M_UNKNOWN_TOKEN. Route it
+    // into the same recovery: drop the credentials and let the chat component re-auth.
+    this.media.authFailed.subscribe(() => {
+      if (!this.client) return;
+      // Cooldown: if the freshly minted token is rejected too (homeserver trouble rather
+      // than expiry), don't spin re-auth → 401 → re-auth against the CF's rate limit.
+      const now = Date.now();
+      if (now - this.lastMediaAuthRecovery < MEDIA_AUTH_RECOVERY_COOLDOWN_MS) return;
+      this.lastMediaAuthRecovery = now;
+      console.warn('MatrixChatService: media download rejected (401) — clearing credentials');
+      this.clearStoredCredentials();
+      this.tokenExpired$.next();
     });
   }
 
@@ -154,7 +182,14 @@ export class MatrixChatService {
     if (!accessToken || !userId) return null;
     let homeserverUrl = localStorage.getItem('matrix_homeserver') || '';
     if (homeserverUrl && !homeserverUrl.startsWith('https://')) homeserverUrl = 'https://' + homeserverUrl;
-    return { accessToken, userId, deviceId: localStorage.getItem('matrix_device_id') || '', homeserverUrl };
+    const expiresAt = Number(localStorage.getItem('matrix_token_expires_at'));
+    return {
+      accessToken,
+      userId,
+      deviceId: localStorage.getItem('matrix_device_id') || '',
+      homeserverUrl,
+      ...(Number.isFinite(expiresAt) && expiresAt > 0 ? { expiresAt } : {}),
+    };
   }
 
   storeCredentials(credentials: MatrixConfig): void {
@@ -162,6 +197,19 @@ export class MatrixChatService {
     if (credentials.userId) localStorage.setItem('matrix_user_id', credentials.userId);
     if (credentials.deviceId) localStorage.setItem('matrix_device_id', credentials.deviceId);
     if (credentials.homeserverUrl) localStorage.setItem('matrix_homeserver', credentials.homeserverUrl);
+    if (credentials.expiresAt) localStorage.setItem('matrix_token_expires_at', String(credentials.expiresAt));
+    else localStorage.removeItem('matrix_token_expires_at');
+  }
+
+  /**
+   * SCS-92: a stored token is only reusable while it is comfortably inside its lifetime.
+   * The Cloud Function mints tokens with a hard `valid_until_ms`; once that passes,
+   * Synapse answers 401 on every request and the app has no way to notice until
+   * something fails. Credentials without an `expiresAt` predate that field and are
+   * treated as expired, so the fleet heals on the next chat open.
+   */
+  private isTokenUsable(credentials: MatrixConfig): boolean {
+    return !!credentials.expiresAt && credentials.expiresAt - TOKEN_REFRESH_MARGIN_MS > Date.now();
   }
 
   clearStoredCredentials(): void {
@@ -170,7 +218,8 @@ export class MatrixChatService {
     // defensively to purge stale values from older browser sessions.
     [
       'matrix_access_token', 'matrix_user_id', 'matrix_device_id', 'matrix_homeserver',
-      'matrix_avatar_firebase_url', 'matrix_avatar_mxc_url', 'matrix_login_token',
+      'matrix_token_expires_at', 'matrix_avatar_firebase_url', 'matrix_avatar_mxc_url',
+      'matrix_login_token',
     ].forEach(key => localStorage.removeItem(key));
   }
 
@@ -200,14 +249,14 @@ export class MatrixChatService {
       const stored = this.getStoredCredentials();
       if (stored) {
         const expectedUserId = `@${user.personKey.toLowerCase()}:${serverName}`;
-        if (stored.userId === expectedUserId) {
+        if (stored.userId === expectedUserId && this.isTokenUsable(stored)) {
           return {
             ...stored,
             homeserverUrl: stored.homeserverUrl || 'https://' + serverName,
             deviceId: stored.deviceId || `device_${user.personKey.toLowerCase()}`,
           };
         }
-        // Stale (e.g. old UID-based id) — discard and re-fetch.
+        // Stale (old UID-based id) or expiring (SCS-92) — discard and mint a fresh token.
         this.clearStoredCredentials();
       }
 

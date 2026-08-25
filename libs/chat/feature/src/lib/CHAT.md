@@ -10,9 +10,28 @@ No Firestore collection is used by the chat feature itself — Matrix state is h
 
 1. On first login, `MatrixInitializationService.startEarlyInitialization()` watches `AppStore.currentUser`.
 2. Once a user is authenticated, it calls the `getMatrixCredentials` Cloud Function (via `httpsCallable`).
-3. The function returns a `MatrixAuthToken` (`accessToken`, `userId`, `deviceId`, `homeserverUrl`).
+3. The function returns a `MatrixAuthToken` (`accessToken`, `userId`, `deviceId`, `homeserverUrl`, `expiresAt`).
 4. `MatrixChatService.initialize(token)` creates and starts a `matrix-js-sdk` client.
 5. The `isMatrixInitialized` flag propagates through `_MatrixChatStore` so dependent resources re-fire automatically.
+
+### Token lifetime (SCS-92)
+
+The Cloud Function mints the access token with a hard 7-day `valid_until_ms` and reports the
+matching `expiresAt` (epoch ms). `MatrixChatService` persists it as `matrix_token_expires_at`
+and **only reuses a cached token while more than 24 h of its lifetime remain** — otherwise it
+re-calls the function. Credentials stored before this field existed count as expired, so they
+refresh once. Without that, the cached token was reused past its expiry and Synapse answered
+`401` on everything; chat media went blank with no user-visible error.
+
+Two independent recovery paths handle a token that dies anyway:
+
+- the SDK sync loop reports `M_UNKNOWN_TOKEN` (`ERROR`/`STOPPED`), and
+- `MatrixMediaService` sees a `401` on a media download and emits `authFailed`.
+
+Both clear the stored credentials and fire `tokenExpired$`, which the chat component turns
+into a cleanup + re-initialize. The media path matters because media is fetched with a raw
+`fetch()` outside the SDK, so it hits the dead token while the cached timeline renders —
+before sync notices.
 
 For detailed auth strategy options see `FIREBASE_MATRIX_AUTH_APPROACHES.md`.
 For OIDC bridge configuration see `OIDC_BRIDGE_SETUP.md`.
@@ -26,7 +45,7 @@ For OIDC bridge configuration see `OIDC_BRIDGE_SETUP.md`.
 | `MatrixMember` | userId, displayName, avatarUrl, membership |
 | `MatrixUser` | id (Matrix @user:homeserver), name, imageUrl |
 | `MatrixAuthToken` | accessToken, userId, deviceId, homeserverUrl |
-| `MatrixConfig` | homeserverUrl, userId?, accessToken?, deviceId? |
+| `MatrixConfig` | homeserverUrl, userId?, accessToken?, deviceId?, expiresAt? |
 
 ## MatrixChatStore (`_MatrixChatStore`)
 

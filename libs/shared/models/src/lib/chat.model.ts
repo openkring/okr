@@ -4,6 +4,12 @@ export interface MatrixConfig {
   userId?: string;
   accessToken?: string;
   deviceId?: string;
+  /**
+   * Epoch ms at which `accessToken` stops working, as reported by the
+   * `getMatrixCredentials` Cloud Function (SCS-92). Optional: credentials cached
+   * before this field existed have none, and are treated as expired so they refresh.
+   */
+  expiresAt?: number;
 }
 
 export interface MatrixMessage {
