@@ -9,6 +9,8 @@
 
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 
 import {
   MATRIX_HOMESERVER,
@@ -16,6 +18,7 @@ import {
   resolveGroupRoom,
   ensureAdminInRoom,
   serverHostname,
+  requireRole,
 } from './shared';
 import {
   buildPowerLevels,
@@ -175,5 +178,69 @@ export const onGroupPostPolicyWritten = onDocumentWritten(
     } catch (error) {
       console.error(`onGroupPostPolicyWritten: failed for group ${event.params.groupId}:`, error);
     }
+  },
+);
+
+/**
+ * Ausloeser 2 von 3: der taegliche Lauf.
+ *
+ * DAS ist der Weg, auf dem ein Rollenentzug ankommt — Power sinkt in Matrix nicht von
+ * selbst, wenn jemand `privileged` in Firestore verliert. Der Preis ist ausgeschrieben:
+ * bis zu 24 h. Vertretbar, weil der Kreis klein und namentlich bekannt ist, jede Nachricht
+ * mit Absender sichtbar und nachtraeglich loeschbar bleibt und `syncRoomPostPolicy` den
+ * sofortigen Handgriff bietet (§3.2 des Entwurfs).
+ *
+ * Gruppen mit 'all' werden nicht abgefragt und nicht angefasst.
+ */
+export const sweepRoomPostPolicies = onSchedule(
+  {
+    schedule: '15 3 * * *',
+    timeZone: 'Europe/Zurich',
+    region: 'europe-west6',
+    secrets: [matrixAdminToken],
+  },
+  async () => {
+    const adminToken = matrixAdminToken.value();
+    const hostname = serverHostname();
+
+    const snap = await getFirestore()
+      .collection(GROUP_COLLECTION)
+      .where('postPolicy', '==', 'privileged')
+      .get();
+
+    let applied = 0;
+    for (const doc of snap.docs) {
+      try {
+        if ((await applyRoomPostPolicy(doc.id, adminToken, hostname)) === 'applied') applied++;
+      } catch (error) {
+        console.error(`sweepRoomPostPolicies: failed for group ${doc.id}:`, error);
+      }
+    }
+    console.log(`sweepRoomPostPolicies: groups=${snap.size} applied=${applied}`);
+  },
+);
+
+/**
+ * Ausloeser 3 von 3: die AOC-Aktion «Schreibrechte abgleichen».
+ *
+ * Der Handgriff, wenn ein Entzug nicht bis zum naechsten Sweep warten darf, und der
+ * Reparaturweg fuer jede Drift — dieselbe Rolle, die reconcileGroupRoomMembers fuer die
+ * Mitgliedschaften spielt, und derselbe Rollenkreis.
+ */
+export const syncRoomPostPolicy = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ result: 'unchanged' | 'applied' | 'no-room' }> => {
+    await requireRole(request, 'syncRoomPostPolicy', ['admin', 'memberAdmin', 'groupAdmin']);
+
+    const { groupId } = request.data as { groupId: string };
+    if (!groupId) throw new HttpsError('invalid-argument', 'groupId is required');
+
+    const result = await applyRoomPostPolicy(groupId, matrixAdminToken.value(), serverHostname());
+    return { result };
   },
 );

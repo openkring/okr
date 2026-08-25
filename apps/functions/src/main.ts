@@ -119,6 +119,8 @@ export const backfillMatrixRoomTenants = MatrixSimple.backfillMatrixRoomTenants;
 export const onMembershipWritten = MatrixMembershipSync.onMembershipWritten;
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;
 export const onGroupPostPolicyWritten = MatrixPostPolicy.onGroupPostPolicyWritten;
+export const sweepRoomPostPolicies = MatrixPostPolicy.sweepRoomPostPolicies;
+export const syncRoomPostPolicy = MatrixPostPolicy.syncRoomPostPolicy;
 // group-room drift: report room members without a membership, and prune them on demand
 export const auditGroupRoomMembers = MatrixMembershipSync.auditGroupRoomMembers;
 export const pruneGroupRoomExtras = MatrixMembershipSync.pruneGroupRoomExtras;
