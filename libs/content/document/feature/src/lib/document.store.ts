@@ -13,9 +13,9 @@ import { confirm, AppNavigationService, downloadFile } from '@okr/shared-util-an
 import { I18nService } from '@okr/shared-i18n';
 
 import { DocumentService } from '@okr/content-document-data-access';
-import { DOCUMENT_I18N_KEYS } from '@okr/content-document-util';
+import { canDeleteDocumentDirectly, DOCUMENT_I18N_KEYS } from '@okr/content-document-util';
 import { FolderService } from '@okr/content-folder-data-access';
-import { newFolderModel } from '@okr/content-folder-util';
+import { canWriteFolderDirectly, newFolderModel } from '@okr/content-folder-util';
 import { UploadService } from '@okr/avatar-data-access';
 
 import { DocumentEditModal } from './document-edit.modal';
@@ -23,6 +23,12 @@ import { DocumentEditModal } from './document-edit.modal';
 export type DocumentState = {
   documentKey: string;
   listId: string;
+  /**
+   * The group whose files segment this list renders, '' outside a GroupView. Group admins
+   * delete through the `deleteGroupContent` Cloud Function, which needs the group key to
+   * verify admin-ship — firestore.rules cannot check it (see `canWriteFolderDirectly`).
+   */
+  groupKey: string;
 
   // filters
   searchTerm: string;
@@ -34,6 +40,7 @@ export type DocumentState = {
 export const initialState: DocumentState = {
   documentKey: '',
   listId: '',
+  groupKey: '',
   searchTerm: '',
   selectedTag: '',
   selectedType: 'all',
@@ -189,6 +196,10 @@ export const DocumentStore = signalStore(
 
       setListId(listId: string) {
         patchState(store, { listId });
+      },
+
+      setGroupKey(groupKey: string) {
+        patchState(store, { groupKey });
       },
 
       setSearchTerm(searchTerm: string) {
@@ -356,7 +367,14 @@ export const DocumentStore = signalStore(
         await modal.present();
         const { data, role } = await modal.onDidDismiss<FolderModel>();
         if (role === 'confirm' && data) {
-          await store.folderService.update(data, store.currentUser());
+          const currentUser = store.currentUser();
+          // Same server-side detour as deleteFolder — firestore.rules' allow-update branch
+          // on folders is the same content-manager-or-owner check as its allow-delete one.
+          if (canWriteFolderDirectly(data, currentUser) || store.groupKey() === '') {
+            await store.folderService.update(data, currentUser);
+          } else {
+            await store.folderService.updateAsGroupAdmin(data, store.groupKey(), currentUser);
+          }
           store.subfoldersResource.reload();
           store.currentFolderResource.reload();
         }
@@ -374,7 +392,15 @@ export const DocumentStore = signalStore(
         }
         const result = await confirm(store.alertController, store.i18n.folder_delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
-          await store.folderService.delete(folder, store.currentUser());
+          const currentUser = store.currentUser();
+          // A group admin who neither manages content nor owns the folder is rejected by
+          // firestore.rules (it cannot see group admin-ship) — route them through the
+          // server instead of letting the write fail with permission-denied.
+          if (canWriteFolderDirectly(folder, currentUser) || store.groupKey() === '') {
+            await store.folderService.delete(folder, currentUser);
+          } else {
+            await store.folderService.deleteAsGroupAdmin(folder, store.groupKey(), currentUser);
+          }
           store.subfoldersResource.reload();
         }
       },
@@ -436,7 +462,14 @@ export const DocumentStore = signalStore(
         if (!document || readOnly) return;
         const result = await confirm(store.alertController, store.i18n.delete_confirm(), store.i18n.ok(), store.i18n.cancel(), true);
         if (result === true) {
-          await store.documentService.delete(document, store.currentUser());
+          const currentUser = store.currentUser();
+          // Same server-side detour as deleteFolder: a group admin who is neither admin,
+          // author, nor owner of the document's folder cannot delete it from the client.
+          if (canDeleteDocumentDirectly(document, store.currentFolder(), currentUser) || store.groupKey() === '') {
+            await store.documentService.delete(document, currentUser);
+          } else {
+            await store.documentService.deleteAsGroupAdmin(document, store.groupKey());
+          }
           // Reload only the documents (the realtime stream drops the deleted doc). Do NOT
           // reset() — that wiped listId/filters, which then showed ALL documents (folder
           // navigation lost) instead of the current folder's remaining documents.

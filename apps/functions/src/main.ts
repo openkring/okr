@@ -36,6 +36,7 @@ import * as Tenant from './tenant';
 import * as WorkflowEmit from './workflow/emit';
 import * as WorkflowOutbox from './workflow/outbox';
 import * as Approval from './approval';
+import * as Content from './content';
 
 // firebase app hosting requires a webserver. It does not automatically discover exported functions.
 //      the webserver is started in apphosting.yaml
@@ -344,6 +345,13 @@ export const applyFeatureSelection = Tenant.applyFeatureSelection;
 // A client-side listAll() cannot work: storage.rules authorises via the cross-service
 // firestore.get(), which does not resolve on a `list` request — see ./tenant/list-storage-files.ts.
 export const listTenantStorageFiles = Tenant.listTenantStorageFiles;
+
+// group-admin deletion of files/folders inside a group's files segment. firestore.rules
+// cannot express "caller is an admin of this group" (GroupModel.admins is a list of maps),
+// so this is the only write path a group admin who is neither content manager, folder
+// owner nor document author has. See ./content/delete-group-content.ts.
+export const deleteGroupContent = Content.deleteGroupContent;
+export const updateGroupFolder = Content.updateGroupFolder;
 
 // public, unauthenticated health check for external uptime monitoring (BetterStack).
 // Verifies the backend is up and can reach Firestore. See ./health.

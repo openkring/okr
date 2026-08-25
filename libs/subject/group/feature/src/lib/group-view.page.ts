@@ -161,7 +161,7 @@ import { GroupStore } from './group.store';
               </ion-item>
             } @else {
               @defer (on immediate) {
-                <okr-document-list [listId]="listId()" contextMenuName="disable" color="light" view="grid" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" />
+                <okr-document-list [listId]="listId()" contextMenuName="disable" color="light" view="grid" [showMenuButton]="false" [groupAdmin]="isGroupAdmin()" [groupKey]="groupKey()" />
               } @placeholder {
                 <div class="placeholder-center"><ion-spinner /></div>
               } @error {

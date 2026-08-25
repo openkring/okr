@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DocumentModel, FolderModel, UserModel } from '@okr/shared-models';
-import { canDeleteDocument, canEditDocument, canUploadToFolder, isDocumentAuthor } from './document-permissions.util';
+import { canDeleteDocument, canDeleteDocumentDirectly, canEditDocument, canUploadToFolder, isDocumentAuthor } from './document-permissions.util';
 
 function user(roles: Record<string, boolean>, personKey = 'p1'): UserModel {
   return { roles, personKey } as unknown as UserModel;
@@ -57,5 +57,30 @@ describe('canDeleteDocument', () => {
   it('allows the author on own uploads in an upload-enabled folder', () => {
     expect(canDeleteDocument(ownDoc, openFolder, member())).toBe(true);
     expect(canDeleteDocument(ownDoc, closedFolder, member())).toBe(false);
+  });
+});
+
+describe('canDeleteDocumentDirectly', () => {
+  const groupFolder = { okey: 'f1', ownerKey: 'p2' } as FolderModel;
+  const docInGroupFolder = { authorKey: 'p2', folderKeys: ['f1'] } as DocumentModel;
+
+  it('allows admin, the author, and the owner of the primary folder', () => {
+    expect(canDeleteDocumentDirectly(docInGroupFolder, groupFolder, user({ admin: true }))).toBe(true);
+    expect(canDeleteDocumentDirectly({ authorKey: 'p1', folderKeys: ['f1'] } as DocumentModel, groupFolder, user({}))).toBe(true);
+    expect(canDeleteDocumentDirectly(docInGroupFolder, { okey: 'f1', ownerKey: 'p1' } as FolderModel, user({}))).toBe(true);
+  });
+  it('denies a group admin — firestore.rules cannot see group admin-ship', () => {
+    // canDeleteDocument(..., isGroupAdmin=true) says yes for the same input; the gap is
+    // exactly what routes the delete through the deleteGroupContent Cloud Function.
+    expect(canDeleteDocument(docInGroupFolder, groupFolder, user({}), true)).toBe(true);
+    expect(canDeleteDocumentDirectly(docInGroupFolder, groupFolder, user({}))).toBe(false);
+  });
+  it('only honours the FIRST folder key — the rules read folderKeys[0]', () => {
+    const multi = { authorKey: 'p2', folderKeys: ['f0', 'f1'] } as DocumentModel;
+    expect(canDeleteDocumentDirectly(multi, { okey: 'f1', ownerKey: 'p1' } as FolderModel, user({}))).toBe(false);
+  });
+  it('denies legacy documents and folders without keys', () => {
+    expect(canDeleteDocumentDirectly({} as DocumentModel, {} as FolderModel, user({}))).toBe(false);
+    expect(canDeleteDocumentDirectly(undefined, undefined, member())).toBe(false);
   });
 });

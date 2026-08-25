@@ -13,6 +13,7 @@ import { DateFormat, convertDateFormatToString, fileSizeUnit, getSystemQuery, ge
 
 import { getDocumentIndex, getDocumentStoragePath } from '@okr/content-document-util';
 import { DEFAULT_DOCUMENT_SOURCE, DEFAULT_DOCUMENT_TYPE, DEFAULT_KEY, DEFAULT_NOTES } from '@okr/shared-constants';
+import { GroupContentService } from '@okr/subject-group-data-access';
 import { PFX } from './scope';
 
 @Injectable({
@@ -21,6 +22,7 @@ import { PFX } from './scope';
 export class DocumentService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly groupContentService = inject(GroupContentService);
   private readonly storage = inject(STORAGE);
   private readonly i18nService = inject(I18nService);
   private readonly i18n = this.i18nService.translateAll({
@@ -82,6 +84,22 @@ export class DocumentService {
    */
   public async delete(document: DocumentModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<DocumentModel>(DocumentCollection, document, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
+  }
+
+  /**
+   * Delete a document of a group's files segment as a GROUP ADMIN, through the
+   * `deleteGroupContent` Cloud Function.
+   *
+   * firestore.rules only lets an admin, the author, or the owner of the document's first
+   * folder delete it — it cannot check group admin-ship (`GroupModel.admins` is a list of
+   * maps). Use this whenever `canDeleteDocumentDirectly` is false but `canDeleteDocument`
+   * (with isGroupAdmin) is true. Like `delete`, the Storage file is left in place.
+   * @param document the document to delete
+   * @param groupKey the group whose files segment the document belongs to
+   */
+  public async deleteAsGroupAdmin(document: DocumentModel, groupKey: string): Promise<void> {
+    await this.groupContentService.deleteAsGroupAdmin(
+      'document', groupKey, document.okey, this.i18n.delete_conf(), this.i18n.delete_error());
   }
 
   /**

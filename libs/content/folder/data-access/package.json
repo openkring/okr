@@ -12,6 +12,7 @@
     "@okr/shared-data-access": "*",
     "@okr/shared-models": "*",
     "@okr/shared-util-core": "*",
-    "@okr/content-folder-util": "*"
+    "@okr/content-folder-util": "*",
+    "@okr/subject-group-data-access": "*"
   }
 }

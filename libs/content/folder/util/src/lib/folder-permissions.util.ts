@@ -19,3 +19,19 @@ export function isFolderOwner(folder?: FolderModel, currentUser?: UserModel): bo
 export function canEditFolder(folder?: FolderModel, currentUser?: UserModel, isGroupAdmin = false): boolean {
   return canManageFolders(currentUser, isGroupAdmin) || isFolderOwner(folder, currentUser);
 }
+
+/**
+ * May the user create/rename/delete this folder with a PLAIN CLIENT WRITE?
+ *
+ * Deliberately narrower than {@link canEditFolder}: it mirrors the `allow update` and
+ * `allow delete` branches of `match /folders/{id}` in `firestore.rules`, which are
+ * identical — contentAdmin/privileged, or the folder's owner. Group admin-ship is NOT
+ * among them: rules cannot check it, because `GroupModel.admins` is a list of maps. A
+ * group admin who fails this check may still rename and delete, but only through the
+ * `updateGroupFolder` / `deleteGroupContent` Cloud Functions.
+ *
+ * Keep in sync with firestore.rules.
+ */
+export function canWriteFolderDirectly(folder?: FolderModel, currentUser?: UserModel): boolean {
+  return hasRole('contentAdmin', currentUser) || hasRole('privileged', currentUser) || isFolderOwner(folder, currentUser);
+}

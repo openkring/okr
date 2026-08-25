@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FolderModel, UserModel } from '@okr/shared-models';
-import { canEditFolder, canManageFolders, isFolderOwner } from './folder-permissions.util';
+import { canWriteFolderDirectly, canEditFolder, canManageFolders, isFolderOwner } from './folder-permissions.util';
 
 function user(roles: Record<string, boolean>, personKey = 'p1'): UserModel {
   return { roles, personKey } as unknown as UserModel;
@@ -45,5 +45,23 @@ describe('canEditFolder', () => {
   });
   it('denies a non-owner member', () => {
     expect(canEditFolder(folder('px'), user({ registered: true }))).toBe(false);
+  });
+});
+
+describe('canWriteFolderDirectly', () => {
+  it('allows contentAdmin, privileged and the folder owner', () => {
+    expect(canWriteFolderDirectly(folder('other'), user({ contentAdmin: true }))).toBe(true);
+    expect(canWriteFolderDirectly(folder('other'), user({ privileged: true }))).toBe(true);
+    expect(canWriteFolderDirectly(folder('p1'), user({}))).toBe(true);
+  });
+  it('denies a group admin — firestore.rules cannot see group admin-ship', () => {
+    // canEditFolder(folder, user, true) is true for the same input; the difference is
+    // exactly what forces the updateGroupFolder / deleteGroupContent detour.
+    expect(canEditFolder(folder('other'), user({}), true)).toBe(true);
+    expect(canWriteFolderDirectly(folder('other'), user({}))).toBe(false);
+  });
+  it('denies plain members and anonymous', () => {
+    expect(canWriteFolderDirectly(folder('other'), user({ registered: true }))).toBe(false);
+    expect(canWriteFolderDirectly(undefined, undefined)).toBe(false);
   });
 });

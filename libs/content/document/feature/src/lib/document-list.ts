@@ -242,6 +242,12 @@ export class DocumentList {
   // keepDefaultTrue: withComponentInputBinding() would otherwise set this to undefined on standalone
   public showMenuButton = input(true, { transform: keepDefaultTrue });
   public groupAdmin = input(false);
+  /**
+   * The group whose files segment this list renders ('' outside a GroupView). Needed so a
+   * group admin's delete can be routed through the `deleteGroupContent` Cloud Function —
+   * firestore.rules cannot grant deletion on group admin-ship alone.
+   */
+  public groupKey = input('');
 
   // filters
   protected readonly searchTerm = linkedSignal(() => this.store.searchTerm());
@@ -288,6 +294,7 @@ export class DocumentList {
 
   constructor() {
     effect(() => this.store.setListId(this.listId()));
+    effect(() => this.store.setGroupKey(this.groupKey()));
   }
 
   /******************************** setters (filter) ******************************************* */

@@ -13,6 +13,7 @@
     "@okr/shared-models": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
-    "@okr/content-document-util": "*"
+    "@okr/content-document-util": "*",
+    "@okr/subject-group-data-access": "*"
   }
 }

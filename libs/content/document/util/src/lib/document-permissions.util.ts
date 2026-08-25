@@ -33,3 +33,23 @@ export function canDeleteDocument(doc?: DocumentModel, folder?: FolderModel, cur
   if (hasRole('admin', currentUser) || isGroupAdmin) return true;
   return folder?.membersMayUpload === true && isDocumentAuthor(doc, currentUser);
 }
+
+/**
+ * May the user delete this document with a PLAIN CLIENT WRITE?
+ *
+ * Mirrors the `allow delete` branch of `match /docs/{id}` in `firestore.rules`: admin, the
+ * author, or the owner of the document's FIRST folder (`folderKeys[0]` — the rules read
+ * exactly that entry). Group admin-ship is not among them and cannot be, because rules
+ * cannot scan `GroupModel.admins` (a list of maps); a group admin who fails this check
+ * deletes through the `deleteGroupContent` Cloud Function instead.
+ *
+ * Keep in sync with firestore.rules.
+ */
+export function canDeleteDocumentDirectly(doc?: DocumentModel, folder?: FolderModel, currentUser?: UserModel): boolean {
+  if (hasRole('admin', currentUser)) return true;
+  if (isDocumentAuthor(doc, currentUser)) return true;
+  const primaryFolderKey = doc?.folderKeys?.[0] ?? '';
+  const ownerKey = folder?.ownerKey ?? '';
+  return primaryFolderKey !== '' && primaryFolderKey === folder?.okey
+    && ownerKey !== '' && ownerKey === currentUser?.personKey;
+}
