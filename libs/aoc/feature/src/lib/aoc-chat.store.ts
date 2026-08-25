@@ -757,7 +757,10 @@ export const AocChatStore = signalStore(
      * trigger the same reconciliation on demand, for all groups of this tenant.
      */
     async applyPostPolicySync(): Promise<void> {
-      const groups = store.appStore.allGroups();
+      // Nur Gruppen mit 'privileged' koennen ueberhaupt etwas zu tun haben — 'all'-Gruppen
+      // werden von applyRoomPostPolicy ohne allowReset gar nicht mehr angefasst (Finding 1),
+      // also braeuchte ein Lauf ueber alle 36 Gruppen nur unnoetig Zeit und Raum-Beitritte.
+      const groups = store.appStore.allGroups().filter(g => g.postPolicy === 'privileged');
       const message = await firstValueFrom(
         store.i18nService.translate('@aoc/feature.chat.repair.postpolicy.confirm', { count: groups.length })
       );

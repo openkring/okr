@@ -19,6 +19,8 @@ import {
   ensureAdminInRoom,
   serverHostname,
   requireRole,
+  requireParam,
+  getUserTenants,
 } from './shared';
 import {
   buildPowerLevels,
@@ -46,16 +48,33 @@ function toMatrixId(personKey: string, hostname: string): string {
  * Schreibt nur bei Unterschied. Der Aufrufer entscheidet, ob er die Rueckwaerts-Richtung
  * ('privileged' → 'all') zulaesst: `buildPowerLevels` liefert dafuer nur dann einen Patch,
  * wenn der Raum aktuell tatsaechlich stumm ist.
+ *
+ * `opts.allowReset` ist eine SICHERHEITSGRENZE, keine Optimierung: nur wer Vor- und
+ * Nachzustand kennt — also `onGroupPostPolicyWritten` — darf den Rueckweg 'privileged' →
+ * 'all' ausloesen (§3.1 des Entwurfs). Sweep und Callable reichen den Parameter NICHT
+ * durch, damit dieser Pfad nicht ueber zwei weitere Aufrufer erreichbar bleibt. Ohne
+ * `allowReset` bricht die Funktion bei einer 'all'-Gruppe sofort ab, BEVOR
+ * `resolveGroupRoom`/`ensureAdminInRoom` laufen — das erspart 'all'-Gruppen (der
+ * ueberwiegenden Mehrheit) den teuren und riskanten Raum-Beitritt samt
+ * Admin-Eskalation fuer einen Abgleich, der ohnehin nichts schreiben wuerde.
  */
 export async function applyRoomPostPolicy(
   groupId: string,
   adminToken: string,
   hostname: string,
+  opts: { allowReset?: boolean } = {},
 ): Promise<'unchanged' | 'applied' | 'no-room'> {
   const db = getFirestore();
   const groupSnap = await db.collection(GROUP_COLLECTION).doc(groupId).get();
   if (!groupSnap.exists) return 'no-room';
   const group = groupSnap.data() as GroupDoc;
+
+  const effectivePolicy = group.postPolicy ?? 'all';
+  if (effectivePolicy === 'all' && !opts.allowReset) {
+    // Nichts zu tun, und der Rueckweg ist dieser Aufrufer-Kette nicht erlaubt — raus,
+    // bevor der Raum ueberhaupt aufgeloest oder der Bot in ihn eskaliert wird.
+    return 'unchanged';
+  }
 
   const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: false });
   if (!roomId) {
@@ -169,10 +188,13 @@ export const onGroupPostPolicyWritten = onDocumentWritten(
     if (had === has) return; // kein schreibrechts-relevanter Unterschied
 
     try {
+      // Einziger Aufrufer mit `allowReset: true` — er kennt Vor- und Nachzustand und
+      // traegt deshalb als Einziger den Rueckweg 'privileged' → 'all' (§3.1).
       const result = await applyRoomPostPolicy(
         event.params.groupId,
         matrixAdminToken.value(),
         serverHostname(),
+        { allowReset: true },
       );
       console.log(`onGroupPostPolicyWritten: ${event.params.groupId} ${had} → ${has} (${result})`);
     } catch (error) {
@@ -235,10 +257,19 @@ export const syncRoomPostPolicy = onCall(
     secrets: [matrixAdminToken],
   },
   async (request): Promise<{ result: 'unchanged' | 'applied' | 'no-room' }> => {
-    await requireRole(request, 'syncRoomPostPolicy', ['admin', 'memberAdmin', 'groupAdmin']);
+    const uid = await requireRole(request, 'syncRoomPostPolicy', ['admin', 'memberAdmin', 'groupAdmin']);
 
-    const { groupId } = request.data as { groupId: string };
-    if (!groupId) throw new HttpsError('invalid-argument', 'groupId is required');
+    const groupId = requireParam((request.data as { groupId?: unknown })?.groupId, 'groupId');
+
+    // Tenant-Grenze wie in pruneGroupRoomExtras (membership-sync.ts): sonst kann eine
+    // groupAdmin-Rolle in Mandant A einen Abgleich auf eine Gruppe in Mandant B ausloesen.
+    const groupSnap = await getFirestore().collection(GROUP_COLLECTION).doc(groupId).get();
+    if (!groupSnap.exists) throw new HttpsError('not-found', `Group ${groupId} not found`);
+    const groupTenants = (groupSnap.data()?.['tenants'] ?? []) as string[];
+    const callerTenants = await getUserTenants(uid);
+    if (!groupTenants.some((t) => callerTenants.includes(t))) {
+      throw new HttpsError('permission-denied', `Group ${groupId} is not in one of your tenants.`);
+    }
 
     const result = await applyRoomPostPolicy(groupId, matrixAdminToken.value(), serverHostname());
     return { result };
