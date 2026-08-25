@@ -185,6 +185,7 @@
     "title": "Admin Chat (Matrix)",
     "rooms": "Salons",
     "no_rooms": "Aucun salon",
+    "search_placeholder": "Rechercher un salon...",
     "no_members": "Aucun membre",
     "choose_room": "Choisir le salon",
     "details": "Détails",

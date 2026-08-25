@@ -133,6 +133,7 @@ export const AOC_I18N_KEYS = {
   chat_title:                               PFX + 'chat.title',
   chat_rooms:                               PFX + 'chat.rooms',
   chat_no_rooms:                            PFX + 'chat.no_rooms',
+  chat_search_placeholder:                  PFX + 'chat.search_placeholder',
   chat_no_members:                          PFX + 'chat.no_members',
   chat_choose_room:                         PFX + 'chat.choose_room',
   chat_details:                             PFX + 'chat.details',

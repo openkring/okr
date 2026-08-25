@@ -185,6 +185,7 @@
     "title": "Admin de Chat (Matrix)",
     "rooms": "Salas",
     "no_rooms": "Sin salas",
+    "search_placeholder": "Buscar sala...",
     "no_members": "Sin miembros",
     "choose_room": "Seleccionar sala",
     "details": "Detalles",

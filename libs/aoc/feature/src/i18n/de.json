@@ -185,6 +185,7 @@
     "title": "Chat Admin (Matrix)",
     "rooms": "Räume",
     "no_rooms": "Keine Räume",
+    "search_placeholder": "Raum suchen...",
     "no_members": "Keine Mitglieder",
     "choose_room": "Raum auswählen",
     "details": "Details",

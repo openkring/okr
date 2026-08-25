@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonIcon, IonItem, IonLabel, IonList, IonNote, IonSearchbar, IonSelect, IonSelectOption, IonSpinner, IonThumbnail } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
@@ -10,6 +10,7 @@ import { AvatarInfo } from '@okr/shared-models';
 import { AvatarSelect } from '@okr/avatar-ui';
 
 import { formatMatrixTimestamp, isMatrixPhotoUrl, MATRIX_LOG_LEVELS, MatrixLogLevel } from '@okr/chat-util';
+import { filterAdminRoomsByName } from '@okr/aoc-util';
 import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
 
 @Component({
@@ -19,7 +20,7 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
     FormsModule, 
     SvgIconPipe,
     Header, AvatarSelect,
-    IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner, IonSelect, IonSelectOption, IonButton,
+    IonContent, IonIcon, IonList, IonItem, IonLabel, IonNote, IonBadge, IonThumbnail, IonSpinner, IonSearchbar, IonSelect, IonSelectOption, IonButton,
     IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
   providers: [AocChatStore],
@@ -91,6 +92,11 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
     .column-scroll {
       flex: 1;
       overflow-y: auto;
+    }
+
+    .room-search {
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--ion-border-color, #dedede);
     }
 
     .room-item.selected { --background: var(--ion-color-primary-tint); }
@@ -361,15 +367,22 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
         <!-- Column 1: Rooms -->
         <div class="column">
           <div class="column-header">
-            <span>{{ store.i18n.chat_rooms() }} ({{ rooms().length }})</span>
+            <span>{{ store.i18n.chat_rooms() }} ({{ filteredRooms().length }})</span>
             @if (isLoadingRooms()) { <ion-spinner name="dots" style="width:16px;height:16px" /> }
           </div>
+          <ion-searchbar
+            class="room-search"
+            [placeholder]="store.i18n.chat_search_placeholder()"
+            [debounce]="150"
+            [value]="roomFilter()"
+            (ionInput)="onRoomFilterChange($event)"
+          />
           <div class="column-scroll">
-            @if (rooms().length === 0 && !isLoadingRooms()) {
+            @if (filteredRooms().length === 0 && !isLoadingRooms()) {
               <div class="empty-state">{{ store.i18n.chat_no_rooms() }}</div>
             }
             <ion-list lines="inset">
-              @for (room of rooms(); track room.roomId) {
+              @for (room of filteredRooms(); track room.roomId) {
                 <ion-item
                   button
                   class="room-item"
@@ -499,6 +512,8 @@ export class AocChat {
 
   // exposed signals from store
   protected readonly rooms = computed(() => this.store.rooms());
+  protected readonly roomFilter = signal('');
+  protected readonly filteredRooms = computed(() => filterAdminRoomsByName(this.rooms(), this.roomFilter()));
   protected readonly members = computed(() => this.store.members());
   // Members with mxc:// avatars resolved to blob URLs (photo in the list, not an icon).
   protected readonly resolvedMembers = computed(() => this.store.resolvedMembers());
@@ -595,6 +610,10 @@ export class AocChat {
   }
 
   // ─── room click → action sheet ──────────────────────────────────────────────
+
+  protected onRoomFilterChange(event: CustomEvent): void {
+    this.roomFilter.set((event.detail as { value?: string }).value ?? '');
+  }
 
   protected async onRoomClick(room: AdminRoom): Promise<void> {
     const opts = createActionSheetOptions(this.store.i18n.as_title());
