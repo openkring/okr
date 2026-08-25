@@ -66,8 +66,21 @@ async function whoami(token: string): Promise<string> {
 /**
  * The bot's DM with this person, created on first use.
  *
- * `power_level_content_override` is what makes it one-way: the bot keeps 100, everyone
- * else defaults to 0, and sending needs 50.
+ * ONE-WAY, and the two settings below cooperate to make it so — changing either alone breaks it:
+ *  - `preset: 'private_chat'` leaves the invitee at `users_default` (0). NOT
+ *    `trusted_private_chat`, which grants every invitee power 100 and would let them post.
+ *  - `events_default: 50` puts sending above the invitee and at/below the bot.
+ *
+ * ⚠️ Do NOT add the bot back into `power_level_content_override.users`. Synapse merges this
+ * object onto the power levels it computes, so omitting `users` keeps the creator's own entry
+ * (older room versions) or the creator's implicit power (room v12+, where creators are
+ * privileged by the room itself). Naming the creator explicitly is REJECTED from v12 on:
+ *
+ *     M_UNKNOWN: Creator user @okrbot:… must not appear in content.users
+ *
+ * That was a live outage — every bot DM ever attempted failed on it (6/6 rows in
+ * `workflow-outbox`, none ever sent, 2026-08-18 → 2026-08-25), silently, because the outbox
+ * records the failure on the row instead of throwing. Fixed 2026-08-25.
  *
  * No `m.room.encryption` in `initial_state`, and that is deliberate — see
  * `sendBotDirectMessage`. The 1.33 cutover pass must skip these rooms.
@@ -81,11 +94,10 @@ async function ensureDirectRoom(botUserId: string, matrixUserId: string, token: 
     method: 'POST',
     token,
     body: JSON.stringify({
-      preset: 'trusted_private_chat',
+      preset: 'private_chat',
       is_direct: true,
       invite: [matrixUserId],
       power_level_content_override: {
-        users: { [botUserId]: 100 },
         events_default: BOT_ONLY_EVENTS_DEFAULT,
       },
     }),
