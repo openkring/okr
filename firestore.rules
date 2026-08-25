@@ -87,8 +87,22 @@ service cloud.firestore {
     }
     // A document belongs to the caller's tenant when their tenant is listed on the
     // document, or when the document is shared via the 'system' tenant.
+    //
+    // READ ONLY. The 'system' sentinel makes a document readable fleet-wide; it must never
+    // make one WRITABLE fleet-wide. Those are different questions and, until 2026-08-25, this
+    // one predicate answered both — so every `tenantCreate()`/`tenantUpdate()`/`tenantDelete()`
+    // would have let ANY signed-in user of ANY tenant rewrite or archive a shared document that
+    // the whole fleet reads. That never fired only because no document actually carried
+    // 'system' (verified across all 72 collections); the icons migration is the first, which is
+    // why the split lands with it. Writes go through canWriteTenant() below.
     function belongsToTenant(data) {
       return data.tenants.hasAny(callerTenants()) || data.tenants.hasAny(['system']);
+    }
+    // WRITE. Strictly the caller's own tenant — 'system' is deliberately NOT accepted, so
+    // fleet-shared reference data can only be curated centrally (Admin SDK / scripts), never
+    // from a tenant app. Mirrored client-side by canWriteTenant() in `query.util.ts`.
+    function canWriteTenant(data) {
+      return data.tenants.hasAny(callerTenants());
     }
     // A get() on a NON-EXISTENT document evaluates rules with resource == null.
     // Dereferencing resource.data.tenants there raises an error → the client sees
@@ -101,7 +115,7 @@ service cloud.firestore {
       return userExists() && (resource == null || belongsToTenant(resource.data));
     }
     function tenantCreate() {
-      return userExists() && belongsToTenant(request.resource.data);
+      return userExists() && canWriteTenant(request.resource.data);
     }
     // Deleting a SHARED document in one tenant detaches that tenant instead of archiving
     // it (FirestoreService.deleteModel / getDeletePatch) — the doc stays live for the
@@ -113,14 +127,14 @@ service cloud.firestore {
     // is precisely why the last tenant sets isArchived instead.
     function selfDetach() {
       return userExists()
-             && belongsToTenant(resource.data)
+             && canWriteTenant(resource.data)
              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tenants'])
              && request.resource.data.tenants == resource.data.tenants.removeAll(callerTenants())
              && request.resource.data.tenants.size() > 0;
     }
     function tenantUpdate() {
-      return userExists() && belongsToTenant(resource.data)
-             && (belongsToTenant(request.resource.data) || selfDetach());
+      return userExists() && canWriteTenant(resource.data)
+             && (canWriteTenant(request.resource.data) || selfDetach());
     }
     // For the `allow create, update: if tenantCreateOrDetach()` one-liners: on a create,
     // tenantCreate() decides and || short-circuits before selfDetach() dereferences the
@@ -129,7 +143,7 @@ service cloud.firestore {
       return tenantCreate() || selfDetach();
     }
     function tenantDelete() {
-      return userExists() && belongsToTenant(resource.data);
+      return userExists() && canWriteTenant(resource.data);
     }
     // The `index` search string is a plain field on a tenant-readable document, so a
     // sensitive value embedded there (`dob:19850101`) leaks past the field-level
@@ -207,12 +221,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
     // CMS content rendered by the anonymous PWA landing — public read.
-    match /pages/{id}           { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && belongsToTenant(resource.data); }
-    match /sections/{id}        { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && belongsToTenant(resource.data); }
+    match /pages/{id}           { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && canWriteTenant(resource.data); }
+    match /sections/{id}        { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && canWriteTenant(resource.data); }
     // menuItems/categories: navigation + select metadata. menuItems is read by the
     // app shell's menu store (ungated); categories are CMS select-lists. Low
     // sensitivity, kept public-readable; writes are content-role gated.
-    match /categories/{id}      { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && belongsToTenant(resource.data); }
+    match /categories/{id}      { allow read: if true; allow create, update: if isContentManager() && tenantCreateOrDetach(); allow delete: if isContentManager() && canWriteTenant(resource.data); }
     // Fork-on-edit (feature-building-blocks D-BB-8): a tenant customising a SHARED,
     // catalogue-owned menu doc copies it and then detaches itself from the original. That
     // detach leaves a document the caller no longer belongs to, so the ordinary
@@ -222,7 +236,7 @@ service cloud.firestore {
     // else, and cannot smuggle any other edit through the same write.
     function isSelfDetach() {
       return isContentManager()
-             && belongsToTenant(resource.data)
+             && canWriteTenant(resource.data)
              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tenants'])
              && request.resource.data.tenants == resource.data.tenants.removeAll(callerTenants());
     }
@@ -233,7 +247,7 @@ service cloud.firestore {
     function keepsForeignTenants() {
       return request.resource.data.tenants.hasAll(resource.data.tenants.removeAll(callerTenants()));
     }
-    match /menuItems/{id}       { allow read: if true; allow create: if isContentManager() && belongsToTenant(request.resource.data); allow update: if keepsForeignTenants() && ((isContentManager() && belongsToTenant(request.resource.data)) || isSelfDetach()); allow delete: if isContentManager() && belongsToTenant(resource.data); }
+    match /menuItems/{id}       { allow read: if true; allow create: if isContentManager() && canWriteTenant(request.resource.data); allow update: if keepsForeignTenants() && ((isContentManager() && canWriteTenant(request.resource.data)) || isSelfDetach()); allow delete: if isContentManager() && canWriteTenant(resource.data); }
     // tags/orgs/resources: NOT public. Read only by authenticated tenant members
     // (AppStore loads them post-login). The static websites get any org info via
     // the publicApi CF, never by reading these collections directly. (M-7)
@@ -264,7 +278,7 @@ service cloud.firestore {
                        (request.auth.uid == userId
                           && !request.resource.data.roles.get('admin', false)
                           && !request.resource.data.roles.get('privileged', false))
-                       || (isAdmin() && belongsToTenant(request.resource.data))
+                       || (isAdmin() && canWriteTenant(request.resource.data))
                     );
 
       // Update your own doc but NOT roles / tenants / personKey; admins may update
@@ -274,11 +288,11 @@ service cloud.firestore {
                        (request.auth.uid == userId
                           && !request.resource.data.diff(resource.data).affectedKeys()
                                 .hasAny(['roles', 'tenants', 'personKey']))
-                       || (isAdmin() && belongsToTenant(resource.data)
-                                     && belongsToTenant(request.resource.data))
+                       || (isAdmin() && canWriteTenant(resource.data)
+                                     && canWriteTenant(request.resource.data))
                     );
 
-      allow delete: if isAdmin() && belongsToTenant(resource.data);
+      allow delete: if isAdmin() && canWriteTenant(resource.data);
 
       // FCM push tokens are owned by the user. (C-1 — previously any authed user
       // could read/write anyone's tokens via the catch-all.)
@@ -367,10 +381,10 @@ service cloud.firestore {
     }
     match /diaries/{id} {
       allow read: if userExists() && (resource == null || (isDiaryOwner(resource.data) && belongsToTenant(resource.data)));
-      allow create: if userExists() && isDiaryOwner(request.resource.data) && belongsToTenant(request.resource.data);
+      allow create: if userExists() && isDiaryOwner(request.resource.data) && canWriteTenant(request.resource.data);
       allow update: if userExists() && isDiaryOwner(resource.data) && isDiaryOwner(request.resource.data)
                       && belongsToTenant(resource.data) && belongsToTenant(request.resource.data);
-      allow delete: if userExists() && isDiaryOwner(resource.data) && belongsToTenant(resource.data);
+      allow delete: if userExists() && isDiaryOwner(resource.data) && canWriteTenant(resource.data);
     }
     match /diaryImports/{id} {
       allow read: if userExists() && (resource == null || (isDiaryOwner(resource.data) && belongsToTenant(resource.data)));
@@ -466,7 +480,7 @@ service cloud.firestore {
       allow create, update: if signedIn()
                             && (isAdmin() || (request.auth.uid == uid && request.resource.data.uid == uid))
                             && belongsToTenant(request.resource.data);
-      allow delete: if isAdmin() && belongsToTenant(resource.data);
+      allow delete: if isAdmin() && canWriteTenant(resource.data);
     }
 
     // ============================================================================
@@ -516,7 +530,7 @@ service cloud.firestore {
     // ============================================================================
 
     match /ocr-results/{id} { allow read: if tenantRead(); allow write: if false; }
-    match /ocr-rules/{id}   { allow read: if tenantRead(); allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach(); allow delete: if (hasRole('treasurer') || isAdmin()) && belongsToTenant(resource.data); }
+    match /ocr-rules/{id}   { allow read: if tenantRead(); allow create, update: if (hasRole('treasurer') || isAdmin()) && tenantCreateOrDetach(); allow delete: if (hasRole('treasurer') || isAdmin()) && canWriteTenant(resource.data); }
 
     // Reference data that may have an admin authoring UI — allow privileged writes.
     match /assets/{id}             { allow read: if tenantRead(); allow create, update: if isPrivileged() && tenantCreateOrDetach(); allow delete: if isPrivileged() && tenantDelete(); }
@@ -676,7 +690,7 @@ service cloud.firestore {
                      && request.resource.data.taskKey == ''
                      && request.resource.data.personKey == ''
                      && request.resource.data.tenants.size() == 1;
-      allow update: if isPrivileged() && belongsToTenant(resource.data);
+      allow update: if isPrivileged() && canWriteTenant(resource.data);
       allow delete: if false;
     }
 
@@ -713,11 +727,11 @@ service cloud.firestore {
 
     match /partners/{partnerId} {
       allow read:   if isAdmin() && (resource == null || belongsToTenant(resource.data));
-      allow create: if isAdmin() && belongsToTenant(request.resource.data);
+      allow create: if isAdmin() && canWriteTenant(request.resource.data);
       // `lastHeartbeatAt` and `reportedVersion` are the ingest function's to write.
       // An admin who could set them could fake the very heartbeat C2 §13.3's
       // termination right is read from.
-      allow update: if isAdmin() && belongsToTenant(resource.data)
+      allow update: if isAdmin() && canWriteTenant(resource.data)
                      && request.resource.data.lastHeartbeatAt == resource.data.lastHeartbeatAt
                      && request.resource.data.reportedVersion == resource.data.reportedVersion;
       allow delete: if false;   // the UI archives (isArchived); history stays readable

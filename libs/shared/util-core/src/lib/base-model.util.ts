@@ -1,5 +1,6 @@
 import { Attendee, OkrModel, CalEventModel, CategoryListModel, InvitationModel } from '@okr/shared-models';
 import { sortAscending, SortCriteria, sortDescending, SortDirection } from './sort.util';
+import { SYSTEM_TENANT } from './query.util';
 
 /*-------------------------SORT --------------------------------------------*/
 export function sortModels(models: OkrModel[], sortCriteria: SortCriteria): OkrModel[] {
@@ -17,12 +18,25 @@ export function sortModels(models: OkrModel[], sortCriteria: SortCriteria): OkrM
  * is only detached from the current tenant; it stays live everywhere else. Archiving is
  * correct only when the current tenant is the last one holding it.
  *
+ * A `SYSTEM_TENANT` document is the one case with NO valid tenant-level delete: it is read by
+ * every tenant and owned by none, so detaching is meaningless (the caller's id is not in
+ * `tenants`) and archiving would remove it for the entire fleet. The naive arithmetic below
+ * lands on exactly that worst case — `['system']` minus `'elab'` is still `['system']`, so
+ * `rest.length < tenants.length` is false and the doc would be archived for everyone. Return an
+ * empty patch instead, so the update is a no-op; `firestore.rules` denies the write regardless
+ * (`canWriteTenant()`), this just keeps the client from asking.
+ *
  * @param tenants the model's current `tenants` array
  * @param tenantId the tenant performing the delete (`env.tenantId`)
  * @returns the fields to write: `{ tenants }` when the doc stays alive elsewhere,
- *          `{ isArchived: true }` when this was the last tenant (or the doc is not shared)
+ *          `{ isArchived: true }` when this was the last tenant (or the doc is not shared),
+ *          `{}` when the doc is fleet-shared and must not be touched by a tenant
  */
-export function getDeletePatch(tenants: string[] | undefined, tenantId: string): { tenants: string[] } | { isArchived: true } {
+export function getDeletePatch(
+  tenants: string[] | undefined,
+  tenantId: string
+): { tenants: string[] } | { isArchived: true } | Record<string, never> {
+  if ((tenants ?? []).includes(SYSTEM_TENANT)) return {};
   const rest = (tenants ?? []).filter(t => t !== tenantId);
   // rest.length < tenants.length guards a doc that never carried this tenant: archive, as before.
   return rest.length > 0 && rest.length < (tenants?.length ?? 0) ? { tenants: rest } : { isArchived: true };

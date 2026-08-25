@@ -1,6 +1,7 @@
 import { OkrModel } from '@okr/shared-models';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { addIndexElement, getDeletePatch, sortModels } from './base-model.util';
+import { SYSTEM_TENANT } from './query.util';
 import { SortCriteria, SortDirection, SortField, sortAscending, sortDescending } from './sort.util';
 
 // Mock the sort.util module
@@ -305,6 +306,15 @@ describe('base-model.util', () => {
       expect(getDeletePatch([], 'kring')).toEqual({ isArchived: true });
       expect(getDeletePatch(undefined, 'kring')).toEqual({ isArchived: true });
       expect(getDeletePatch(['scs'], 'kring')).toEqual({ isArchived: true });
+    });
+
+    // The sentinel is the ONE case where the "does not contain the tenant" branch above would
+    // do real damage: ['system'] minus 'kring' is still ['system'], so the arithmetic falls
+    // through to isArchived and would retire a document the WHOLE fleet reads. Empty patch.
+    it('never archives or detaches a fleet-shared system document', () => {
+      expect(getDeletePatch([SYSTEM_TENANT], 'kring')).toEqual({});
+      expect(getDeletePatch([SYSTEM_TENANT], 'scs')).toEqual({});
+      expect(getDeletePatch([SYSTEM_TENANT, 'scs'], 'scs')).toEqual({});
     });
   });
 });

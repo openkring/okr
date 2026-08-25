@@ -81,11 +81,15 @@ describe('I18nOverrideService', () => {
   // unconstrained. The firestore rule gates this collection on resource.data.tenants,
   // and Firestore rejects a list query it cannot prove is rule-safe — so every login
   // logged "Missing or insufficient permissions".
+  //
+  // `array-contains-any [tenant, 'system']` since 2026-08-25 (getSystemQuery), which is still
+  // exactly what the rule proves: belongsToTenant() accepts the caller's own tenant OR the
+  // 'system' sentinel, so both members of the disjunction are rule-safe.
   it('should scope the query by the tenants array the firestore rule reads', () => {
     const { svc, firestoreService } = makeService();
     svc.applyOverrides('de');
     const [, dbQuery] = firestoreService.searchData.mock.calls[0];
-    expect(dbQuery).toContainEqual({ key: 'tenants', operator: 'array-contains', value: 'scs' });
+    expect(dbQuery).toContainEqual({ key: 'tenants', operator: 'array-contains-any', value: ['scs', 'system'] });
     expect(dbQuery.some((q: { key: string }) => q.key === 'tenantId')).toBe(false);
   });
 

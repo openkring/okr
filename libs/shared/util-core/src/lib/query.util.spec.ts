@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   addSystemQueries,
   belongsToTenant,
+  canWriteTenant,
   getRangeQuery,
-  getSystemQuery
+  getSystemQuery,
+  SYSTEM_TENANT
 } from './query.util';
 
 describe('query.util', () => {
@@ -119,7 +121,7 @@ describe('query.util', () => {
 
       expect(result).toEqual([
         { key: 'isArchived', operator: '==', value: false },
-        { key: 'tenants', operator: 'array-contains', value: 'company-123' }
+        { key: 'tenants', operator: 'array-contains-any', value: ['company-123', 'system'] }
       ]);
     });
 
@@ -128,7 +130,7 @@ describe('query.util', () => {
 
       expect(result).toEqual([
         { key: 'isArchived', operator: '==', value: false },
-        { key: 'tenants', operator: 'array-contains', value: '' }
+        { key: 'tenants', operator: 'array-contains-any', value: ['', 'system'] }
       ]);
     });
 
@@ -138,7 +140,7 @@ describe('query.util', () => {
 
       expect(result).toEqual([
         { key: 'isArchived', operator: '==', value: false },
-        { key: 'tenants', operator: 'array-contains', value: tenant }
+        { key: 'tenants', operator: 'array-contains-any', value: [tenant, 'system'] }
       ]);
     });
 
@@ -148,7 +150,7 @@ describe('query.util', () => {
 
       expect(result).toEqual([
         { key: 'isArchived', operator: '==', value: false },
-        { key: 'tenants', operator: 'array-contains', value: '12345' }
+        { key: 'tenants', operator: 'array-contains-any', value: ['12345', 'system'] }
       ]);
     });
 
@@ -158,7 +160,7 @@ describe('query.util', () => {
 
       expect(result).toEqual([
         { key: 'isArchived', operator: '==', value: false },
-        { key: 'tenants', operator: 'array-contains', value: tenant }
+        { key: 'tenants', operator: 'array-contains-any', value: [tenant, 'system'] }
       ]);
     });
 
@@ -175,11 +177,23 @@ describe('query.util', () => {
       });
     });
 
-    it('should always use array-contains operator for tenants', () => {
+    // array-contains-any, NOT array-contains: that is what makes a SYSTEM_TENANT document
+    // visible to every tenant's list query. An `arrayConfig: CONTAINS` composite index serves
+    // both operators, so no index in firestore.indexes.json had to change.
+    it('should always use array-contains-any for tenants, including the system sentinel', () => {
       const result = getSystemQuery('any-tenant');
       const tenantQuery = result.find(q => q.key === 'tenants');
 
-      expect(tenantQuery?.operator).toBe('array-contains');
+      expect(tenantQuery?.operator).toBe('array-contains-any');
+      expect(tenantQuery?.value).toEqual(['any-tenant', SYSTEM_TENANT]);
+    });
+
+    // Firestore permits exactly ONE array clause per query. array-contains-any is still one,
+    // so call sites that already worked around that limit (folder `parents`, meeting
+    // `relatedKey`, rag sections) are unaffected by the switch.
+    it('contributes exactly one array clause', () => {
+      const arrayOps = getSystemQuery('t').filter(q => q.operator.startsWith('array-contains'));
+      expect(arrayOps).toHaveLength(1);
     });
 
     it('should always set isArchived to false', () => {
@@ -205,7 +219,7 @@ describe('query.util', () => {
         { key: 'status', operator: '==', value: 'active' },
         { key: 'type', operator: '==', value: 'user' },
         { key: 'isArchived', operator: '==', value: false },
-        { key: 'tenants', operator: 'array-contains', value: 'test-tenant' }
+        { key: 'tenants', operator: 'array-contains-any', value: ['test-tenant', 'system'] }
       ]);
     });
 
@@ -217,7 +231,7 @@ describe('query.util', () => {
 
       expect(result).toEqual([
         { key: 'isArchived', operator: '==', value: false },
-        { key: 'tenants', operator: 'array-contains', value: 'empty-test' }
+        { key: 'tenants', operator: 'array-contains-any', value: ['empty-test', 'system'] }
       ]);
     });
 
@@ -234,13 +248,13 @@ describe('query.util', () => {
       // Original array should be modified
       expect(existingQueries).toHaveLength(3);
       expect(existingQueries[1]).toEqual({ key: 'isArchived', operator: '==', value: false });
-      expect(existingQueries[2]).toEqual({ key: 'tenants', operator: 'array-contains', value: 'modify-test' });
+      expect(existingQueries[2]).toEqual({ key: 'tenants', operator: 'array-contains-any', value: ['modify-test', SYSTEM_TENANT] });
     });
 
     it('should handle duplicate system queries gracefully', () => {
       const existingQueries: DbQuery[] = [
         { key: 'isArchived', operator: '==', value: true },
-        { key: 'tenants', operator: 'array-contains', value: 'old-tenant' }
+        { key: 'tenants', operator: 'array-contains-any', value: ['old-tenant', SYSTEM_TENANT] }
       ];
       const tenant = 'new-tenant';
 
@@ -249,7 +263,7 @@ describe('query.util', () => {
       expect(result).toHaveLength(4);
       // Should append new system queries even if similar ones exist
       expect(result[2]).toEqual({ key: 'isArchived', operator: '==', value: false });
-      expect(result[3]).toEqual({ key: 'tenants', operator: 'array-contains', value: 'new-tenant' });
+      expect(result[3]).toEqual({ key: 'tenants', operator: 'array-contains-any', value: ['new-tenant', SYSTEM_TENANT] });
     });
 
     it('should handle complex existing queries', () => {
@@ -269,7 +283,7 @@ describe('query.util', () => {
       expect(result.slice(0, 4)).toEqual(existingQueries.slice(0, 4));
       // Should append system queries
       expect(result[4]).toEqual({ key: 'isArchived', operator: '==', value: false });
-      expect(result[5]).toEqual({ key: 'tenants', operator: 'array-contains', value: 'complex-tenant' });
+      expect(result[5]).toEqual({ key: 'tenants', operator: 'array-contains-any', value: ['complex-tenant', SYSTEM_TENANT] });
     });
 
     it('should handle special tenant characters', () => {
@@ -282,9 +296,41 @@ describe('query.util', () => {
 
       expect(result[2]).toEqual({ 
         key: 'tenants', 
-        operator: 'array-contains', 
-        value: 'tenant@domain.com' 
+        operator: 'array-contains-any', 
+        value: ['tenant@domain.com', SYSTEM_TENANT] 
       });
+    });
+  });
+
+  // The whole point of the sentinel: shared READ, never shared WRITE. If these two ever agree
+  // on a SYSTEM_TENANT document, any signed-in user of any tenant can rewrite data the entire
+  // fleet reads. `firestore.rules` enforces the same split (belongsToTenant vs canWriteTenant).
+  describe('SYSTEM_TENANT — read is shared, write is not', () => {
+    const shared = { tenants: [SYSTEM_TENANT] };
+    const owned = { tenants: ['scs', 'kring'] };
+
+    it('every tenant may READ a system document', () => {
+      expect(belongsToTenant(shared, 'elab')).toBe(true);
+      expect(belongsToTenant(shared, 'scs')).toBe(true);
+    });
+
+    it('NO tenant may WRITE a system document', () => {
+      expect(canWriteTenant(shared, 'elab')).toBe(false);
+      expect(canWriteTenant(shared, 'scs')).toBe(false);
+    });
+
+    it('an ordinary shared document is unaffected — read and write still agree', () => {
+      expect(belongsToTenant(owned, 'scs')).toBe(true);
+      expect(canWriteTenant(owned, 'scs')).toBe(true);
+      expect(belongsToTenant(owned, 'elab')).toBe(false);
+      expect(canWriteTenant(owned, 'elab')).toBe(false);
+    });
+
+    it('handles a missing or malformed document the same way for both', () => {
+      expect(belongsToTenant(undefined, 'scs')).toBe(false);
+      expect(canWriteTenant(undefined, 'scs')).toBe(false);
+      expect(belongsToTenant({}, 'scs')).toBe(false);
+      expect(canWriteTenant({}, 'scs')).toBe(false);
     });
   });
 
@@ -300,7 +346,7 @@ describe('query.util', () => {
         { key: 'timestamp', operator: '>=', value: 1000 },
         { key: 'timestamp', operator: '<=', value: 2000 },
         { key: 'isArchived', operator: '==', value: false }, // Duplicate from system query
-        { key: 'tenants', operator: 'array-contains', value: 'integration-test' }
+        { key: 'tenants', operator: 'array-contains-any', value: ['integration-test', 'system'] }
       ]);
     });
 
@@ -343,7 +389,7 @@ describe('query.util', () => {
       // Use toContainEqual for deep object comparison instead of toContain
       expect(finalQuery).toContainEqual({ key: 'createdAt', operator: '>=', value: '2024-01-01' });
       expect(finalQuery).toContainEqual({ key: 'createdAt', operator: '<=', value: '2024-12-31' });
-      expect(finalQuery).toContainEqual({ key: 'tenants', operator: 'array-contains', value: 'company-xyz' });
+      expect(finalQuery).toContainEqual({ key: 'tenants', operator: 'array-contains-any', value: ['company-xyz', SYSTEM_TENANT] });
       expect(finalQuery.filter(q => q.key === 'isArchived')).toHaveLength(2); // One from range, one from system
     });
   });
