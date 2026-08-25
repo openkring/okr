@@ -140,6 +140,33 @@ import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessa
       cursor: pointer;
     }
 
+    /* An attachment whose bytes never arrived: the media download failed, or the upload
+       stored an empty object. Without this the tile simply rendered nothing, so a broken
+       image was indistinguishable from a message that carried no image at all. */
+    .image-batch-thumb.image-broken {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 4px;
+      box-sizing: border-box;
+      cursor: default;
+      text-align: center;
+      color: var(--ion-color-medium);
+      background: var(--ion-color-light);
+      border: 1px dashed var(--ion-color-medium);
+    }
+
+    .image-batch-thumb.image-broken ion-icon {
+      font-size: 20px;
+    }
+
+    .image-batch-thumb.image-broken span {
+      font-size: 9px;
+      line-height: 1.1;
+    }
+
     .message-file {
       display: flex;
       align-items: center;
@@ -353,13 +380,19 @@ import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessa
                   <div class="message-bubble">
                     <div class="image-batch-grid">
                       @for (msg of item.messages; track msg.eventId) {
-                        @if (msg.mediaUrl) {
+                        @if (msg.mediaUrl && !brokenImages().has(msg.eventId)) {
                           <img
                             [src]="msg.mediaUrl"
                             [alt]="msg.body"
                             class="image-batch-thumb"
+                            (error)="onImageError(msg.eventId)"
                             (click)="imageClicked.emit({ message: msg, group: item.messages }); $event.stopPropagation()"
                           />
+                        } @else {
+                          <div class="image-batch-thumb image-broken" [title]="msg.body" [attr.aria-label]="i18n().image_unavailable()">
+                            <ion-icon src="{{ 'alert-circle' | svgIcon }}" />
+                            <span>{{ i18n().image_unavailable() }}</span>
+                          </div>
                         }
                       }
                     </div>
@@ -527,6 +560,14 @@ export class MatrixMessageList {
 
   /** True while a scroll-up history load is in flight (shows the top spinner). */
   protected readonly loadingOlder = signal(false);
+  /**
+   * Event ids of attachments the browser could not decode, so the tile can fall back to a
+   * placeholder. A `mediaUrl` is no guarantee of a usable image: MatrixMediaService returns
+   * '' for a failed download but happily wraps an EMPTY 200 response in a blob URL, and a
+   * 0-byte object is exactly what a stale upload leaves behind (see materializeFile). Both
+   * used to render as a silent gap in the room, indistinguishable from no attachment at all.
+   */
+  protected readonly brokenImages = signal<ReadonlySet<string>>(new Set());
   /** Scroll height captured when loadOlder fired, to restore the viewport after prepend. */
   private prevScrollHeight = 0;
 
@@ -646,6 +687,11 @@ export class MatrixMessageList {
   protected shouldShowSenderForItem(item: MessageOrBatch, index: number, items: MessageOrBatch[]): boolean {
     if (index === 0) return true;
     return items[index - 1].sender !== item.sender;
+  }
+
+  /** Mark an attachment as undecodable — the tile re-renders as the placeholder. */
+  protected onImageError(eventId: string): void {
+    this.brokenImages.update(prev => (prev.has(eventId) ? prev : new Set(prev).add(eventId)));
   }
 
   formatDate(timestamp: number): string {

@@ -10,7 +10,7 @@ import { ButtonCopy } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { PersonModel } from '@okr/shared-models';
 
-import { isSupportedImageFile, MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
+import { isSupportedImageFile, materializeFile, MatrixChatI18n, MessageDraft, MentionRef, findMentionQuery, filterActiveMentions } from '@okr/chat-util';
 import { MentionAutocomplete, MentionPick, MENTION_ROOM, mentionListboxId, mentionOptionId } from './mention-autocomplete';
 import 'emoji-picker-element';
 
@@ -991,15 +991,21 @@ export class MatrixMessageInput {
     }
   }
 
-  onFileSelected(event: Event): void {
+  async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file) {
-      if (isSupportedImageFile(file)) {
-        this.fileQueued.emit(file);
-      } else {
-        this.fileSent.emit(file);
-      }
+    if (!file) return;
+    if (isSupportedImageFile(file)) {
+      // Queued images are not uploaded until the user presses send, which can be many seconds
+      // later. Read the bytes now, while the picker's file handle is still backed by storage —
+      // on iOS the handle goes stale (and reads empty, silently) once the input is cleared.
+      // See materializeFile. Non-image attachments are sent immediately, so they keep streaming
+      // straight off disk rather than being buffered in memory.
+      const materialized = await materializeFile(file);
+      input.value = '';
+      this.fileQueued.emit(materialized);
+    } else {
+      this.fileSent.emit(file);
       input.value = '';
     }
   }

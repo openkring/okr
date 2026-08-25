@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, PersonModelName, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, buildMentionContent, escapeHtml, isRenderableChatEvent, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, buildMentionContent, escapeHtml, isRenderableChatEvent, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 
@@ -1597,15 +1597,29 @@ private async buildAndEmitRoomsList(): Promise<void> {
 
     file = await convertHeicToJpeg(file);
 
-    // Upload the file
-    const upload = await this.client.uploadContent(file);
-    const url = upload.content_uri;
-
     // Never branch on `file.type` directly: it is empty for anything picked through the
     // iOS Files app / iCloud Drive, shared into the PWA, or dragged from some Windows
     // sources, which used to ship a perfectly good PNG as `m.file` with `mimetype: ''`
     // and render it as a document card. resolveFileMimeType falls back to the extension.
     const mimetype = resolveFileMimeType(file);
+
+    // Images are read into memory before upload, and the read is verified. A File handle
+    // whose backing storage the browser has already released reads as zero bytes WITHOUT
+    // throwing, while `file.size` still reports the original length — so `uploadContent`
+    // happily PUTs an empty body, Synapse answers 200, and the event that follows points at
+    // a 0-byte object that renders as nothing. Uploading the buffer instead of the handle
+    // closes that window, and `size` on the buffered File is the real byte count, so an
+    // empty read finally fails loudly here (the callers' allSettled toast) instead of
+    // landing in the room as a permanently blank image. Non-images stream off disk as
+    // before — a video must not be buffered in memory just to be sent.
+    if (mimetype.startsWith('image/')) {
+      file = await materializeFile(file);
+      if (file.size === 0) throw new Error(`sendFile: refusing to upload empty image ${file.name}`);
+    }
+
+    // Upload the file
+    const upload = await this.client.uploadContent(file);
+    const url = upload.content_uri;
 
     const content: IContent = {
       msgtype: mimetype.startsWith('image/') ? MsgType.Image : MsgType.File,

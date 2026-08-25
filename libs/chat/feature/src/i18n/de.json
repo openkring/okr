@@ -213,6 +213,7 @@
   "dropFiles": "Dateien hierher ziehen",
   "file": {
     "unavailable": "Datei nicht verfügbar",
+    "imageUnavailable": "Bild nicht verfügbar",
     "shareError": "Datei konnte nicht geteilt werden",
     "downloadError": "Datei konnte nicht heruntergeladen werden",
     "sendError": "Datei(en) konnten nicht gesendet werden",

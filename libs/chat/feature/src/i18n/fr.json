@@ -213,6 +213,7 @@
   "dropFiles": "Glissez les fichiers ici",
   "file": {
     "unavailable": "Fichier non disponible",
+    "imageUnavailable": "Image indisponible",
     "shareError": "Le fichier n'a pas pu être partagé",
     "downloadError": "Le fichier n'a pas pu être téléchargé",
     "sendError": "Le(s) fichier(s) n'ont pas pu être envoyés",

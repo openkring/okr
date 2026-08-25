@@ -213,6 +213,7 @@
   "dropFiles": "Arrastra los archivos aquí",
   "file": {
     "unavailable": "Archivo no disponible",
+    "imageUnavailable": "Imagen no disponible",
     "shareError": "No se ha podido compartir el archivo",
     "downloadError": "No se ha podido descargar el archivo",
     "sendError": "No se han podido enviar el/los archivo(s)",

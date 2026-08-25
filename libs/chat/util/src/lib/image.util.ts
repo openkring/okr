@@ -129,3 +129,26 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
     return file;
   }
 }
+
+/**
+ * Read a picked File fully into memory and return an equivalent, self-contained File.
+ *
+ * A `File` from `<input type="file">` (or a share sheet) is only a *handle* onto storage the
+ * browser owns. On iOS/WebKit that storage is released once the input is cleared or the picker
+ * session ends, and a later read of the handle yields **zero bytes without throwing** — while
+ * `file.size` keeps reporting the original length from cached metadata. The composer queues
+ * images in `pendingImages` and only uploads them when the user presses send, so a stale handle
+ * is uploaded whenever someone picks a photo, types a line of text, and then sends: Synapse
+ * stores a 0-byte object, answers 200, and the message renders as nothing at all.
+ *
+ * Reading the bytes while the handle is still valid removes that whole class of failure — the
+ * returned File is backed by an ArrayBuffer and cannot go stale. `size` on the result is the
+ * true byte length, so a caller can finally detect an empty read instead of trusting metadata.
+ *
+ * The type is normalised through resolveFileMimeType, so a file the browser reported with an
+ * empty type also comes back correctly typed.
+ */
+export async function materializeFile(file: File): Promise<File> {
+  const bytes = await file.arrayBuffer();
+  return new File([bytes], file.name, { type: resolveFileMimeType(file), lastModified: file.lastModified });
+}

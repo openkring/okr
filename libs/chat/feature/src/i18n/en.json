@@ -213,6 +213,7 @@
   "dropFiles": "Drag files here",
   "file": {
     "unavailable": "File not available",
+    "imageUnavailable": "Image unavailable",
     "shareError": "File could not be shared",
     "downloadError": "File could not be downloaded",
     "sendError": "File(s) could not be sent",

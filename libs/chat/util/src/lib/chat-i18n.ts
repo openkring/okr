@@ -166,6 +166,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   thread_replies_many:       PFX + 'thread.replies.many',
   drop_files:                PFX + 'dropFiles',
   file_unavailable:          PFX + 'file.unavailable',
+  image_unavailable:         PFX + 'file.imageUnavailable',
   file_share_error:          PFX + 'file.shareError',
   file_download_error:       PFX + 'file.downloadError',
   files_send_error:          PFX + 'file.sendError',
