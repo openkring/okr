@@ -46,20 +46,19 @@ function parseJson(filePath) {
 
 const ANGULAR_EXECUTORS = ['@angular/build:application', '@angular-devkit/build-angular:browser'];
 
-function updateApp(appName, i18nEntries) {
-  const projectJsonPath = join(ROOT, 'apps', appName, 'project.json');
+function updateProjectJson(label, projectJsonPath, i18nEntries) {
   if (!existsSync(projectJsonPath)) return;
 
   const config = parseJson(projectJsonPath);
   const executor = config?.targets?.build?.executor ?? '';
   if (!ANGULAR_EXECUTORS.some(e => executor.startsWith(e.split(':')[0]))) {
-    console.log(`  ${appName}: not an Angular app (${executor}) — skipping`);
+    console.log(`  ${label}: not an Angular app (${executor}) — skipping`);
     return;
   }
 
   const assets = config?.targets?.build?.options?.assets;
   if (!Array.isArray(assets)) {
-    console.log(`  ${appName}: no assets array — skipping`);
+    console.log(`  ${label}: no assets array — skipping`);
     return;
   }
 
@@ -74,7 +73,7 @@ function updateApp(appName, i18nEntries) {
 
   config.targets.build.options.assets = newAssets;
   writeFileSync(projectJsonPath, JSON.stringify(config, null, 2) + '\n');
-  console.log(`  ${appName}: ${i18nEntries.length} i18n entries written`);
+  console.log(`  ${label}: ${i18nEntries.length} i18n entries written`);
 }
 
 const libs = findI18nLibs();
@@ -86,5 +85,16 @@ const apps = readdirSync(join(ROOT, 'apps')).filter(
   a => existsSync(join(ROOT, 'apps', a, 'project.json'))
 );
 console.log(`Updating apps: ${apps.join(', ')}`);
-apps.forEach(app => updateApp(app, i18nEntries));
+apps.forEach(app => updateProjectJson(app, join(ROOT, 'apps', app, 'project.json'), i18nEntries));
+
+// The app generator's template is a tokenized copy of an app's project.json and carries its own
+// i18n asset block. It is not under apps/, so without this it silently rots and every newly
+// scaffolded tenant ships a stale asset list — the scopes added since then 404 at runtime and the
+// libs that moved point at directories that no longer exist. Its EJS tokens live inside JSON
+// strings, so it round-trips through parse/stringify unharmed.
+updateProjectJson(
+  'app generator template',
+  join(ROOT, 'tools', 'src', 'generators', 'app', 'files', 'project.json__tmpl__'),
+  i18nEntries,
+);
 console.log('Done.');
