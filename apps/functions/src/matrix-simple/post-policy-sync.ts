@@ -66,7 +66,19 @@ export async function applyRoomPostPolicy(
     `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/${POWER_LEVELS_EVENT}/`;
 
   const currentResp = await fetch(stateUrl, { headers: authHeader });
-  const current: CurrentPowerLevels = currentResp.ok ? await currentResp.json() : {};
+  if (!currentResp.ok) {
+    // JEDER Matrix-Raum hat ein `m.room.power_levels`-Event — ein fehlgeschlagenes GET heisst
+    // nie «der Raum hat keins», sondern «wir kennen den Ist-Zustand nicht». Ein `{}`-Fallback
+    // wuerde beim anschliessenden PUT (Zustandsevents sind Ersetzung, keine Zusammenfuehrung!)
+    // `ban`/`kick`/`redact`/`invite`/`state_default`/`users_default`/`notifications` still auf
+    // die Matrix-Spec-Defaults zuruecksetzen. Also lieber nichts tun; der taegliche Sweep
+    // (Task 4) versucht es am naechsten Tag erneut.
+    console.warn(
+      `applyRoomPostPolicy: could not read power levels for ${groupId}/${roomId} → ${currentResp.status}`,
+    );
+    return 'unchanged';
+  }
+  const current: CurrentPowerLevels = await currentResp.json();
 
   // Die Schreibberechtigten des Mandanten der Gruppe. Eine Gruppe traegt genau einen
   // Tenant; faellt der weg, gibt es niemanden zu berechtigen und wir fassen nichts an.
