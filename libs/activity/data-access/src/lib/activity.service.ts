@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@okr/shared-config';
+import { ensureAppCheckToken, ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { ActivityCollection, ActivityModel, AVATAR_INFO_SHAPE, UserModel } from '@okr/shared-models';
@@ -21,6 +21,10 @@ export class ActivityService {
     delete_conf:  PFX + 'delete.conf',
     delete_error: PFX + 'delete.error',
   });
+
+  // Backoff between attestation attempts when logging an auth event. Attestation is slowest
+  // exactly when it matters here — a cold load on a domain with no cached App Check token.
+  private readonly AUTH_RETRY_DELAYS_MS = [2000, 10000];
 
   /*-------------------------- CRUD operations --------------------------------*/
 
@@ -70,9 +74,27 @@ export class ActivityService {
       activity.author = { ...AVATAR_INFO_SHAPE, key: '', name1: '', name2: '', modelType: 'user' };
       activity.roleNeeded = 'admin';
       activity.index = getActivityIndex(activity);
-      // Pre-auth / post-signIn race: this write may run without a settled auth token.
-      // It is best-effort — a failed write must never surface a toast to the user.
-      await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined, undefined, true);
+
+      // App Check is ENFORCED on Firestore, and an auth event is written on the login page, i.e.
+      // on the coldest possible load: attestation is often still running. Without a token the SDK
+      // sends a placeholder one and the backend answers PERMISSION_DENIED before the rules are
+      // even evaluated — a write Firestore does not retry and that only produced Sentry noise
+      // (SCS-8N, same cause as SCS-8M on sessions). Unlike a session heartbeat this entry is never
+      // repeated, so a skipped write is a hole in the audit trail: wait for attestation, and back
+      // off and try again when it is slow or blocked. `timestamp` above is already stamped, so a
+      // retried entry still carries the time the auth event happened.
+      // Logout is the exception: the app is warm (a token is cached, so the first attempt hits) and
+      // the caller AWAITS this before signing out — backing off there would stall the sign-out.
+      const delays = action === 'logout' ? [] : this.AUTH_RETRY_DELAYS_MS;
+      for (let attempt = 0; attempt <= delays.length; attempt++) {
+        if (attempt > 0) await this.delay(delays[attempt - 1]);
+        if (!await ensureAppCheckToken()) continue;
+        // Best-effort: a failed write must never surface a toast to the user. With a valid token a
+        // rejection is a real failure (already reported to Sentry by FirestoreService) — retrying
+        // it would only report it again.
+        await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined, undefined, true);
+        return;
+      }
     } catch (ex) {
       console.warn('ActivityService.logAuth: failed to log auth event (check Firestore rules for activities collection):', ex);
     }
@@ -92,6 +114,10 @@ export class ActivityService {
     await this.firestoreService.deleteModel<ActivityModel>(
       ActivityCollection, activity, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser
     );
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /*-------------------------- LIST / QUERY --------------------------------*/
