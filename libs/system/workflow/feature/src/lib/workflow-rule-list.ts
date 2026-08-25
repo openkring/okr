@@ -1,14 +1,16 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { AsyncPipe } from '@angular/common';
+import { ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
+import { TranslatePipe } from '@okr/shared-i18n';
 import { RoleName, WorkflowRuleModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { getItemLabel, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
-import { getWorkflowRuleSummary } from '@okr/system-workflow-util';
+import { getWorkflowRuleActions, getWorkflowRuleCondition, isWorkflowRuleComplete } from '@okr/system-workflow-util';
 
 import { WorkflowRuleStore } from './workflow-rule.store';
 
@@ -16,12 +18,29 @@ import { WorkflowRuleStore } from './workflow-rule.store';
   selector: 'okr-workflow-rule-list',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    AsyncPipe, TranslatePipe, SvgIconPipe,
     Spinner, ListFilter, EmptyList, Menu,
     IonToolbar, IonHeader, IonButtons, IonTitle, IonMenuButton, IonButton, IonIcon,
-    IonContent, IonList, IonItem, IonLabel, IonPopover
+    IonContent, IonList, IonItem, IonItemDivider, IonLabel, IonPopover
   ],
   providers: [WorkflowRuleStore],
+  styles: [`
+    /* one pill per action step, in execution order — what the rule DOES, next to what triggers it */
+    .actions { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 4px; }
+    .action {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--ion-color-light-shade);
+      color: var(--ion-color-dark);
+      font-size: 0.75rem;
+    }
+    .action-no { font-weight: 600; color: var(--ion-color-secondary); }
+    ion-item-divider { --background: var(--ion-color-light); font-size: 0.8rem; }
+    .event-key { padding-inline-start: 8px; color: var(--ion-color-medium); font-weight: 400; }
+  `],
   template: `
     <ion-header>
       @if(contextMenuName() !== 'disable') {
@@ -57,14 +76,31 @@ import { WorkflowRuleStore } from './workflow-rule.store';
           <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list>
-            @for(rule of filteredRules(); track rule.okey) {
-              <ion-item (click)="showActions(rule)">
-                <ion-icon slot="start" src="{{ 'settings' | svgIcon }}" />
+            @for(group of groupedRules(); track group.event) {
+              <ion-item-divider sticky="true">
                 <ion-label>
-                  <h3>{{ rule.name }}</h3>
-                  <p>{{ summary(rule) }}</p>
+                  {{ group.label | translate | async }}<span class="event-key">{{ group.event }}</span>
                 </ion-label>
-              </ion-item>
+              </ion-item-divider>
+              @for(row of group.rules; track row.rule.okey) {
+                <ion-item (click)="showActions(row.rule)">
+                  <ion-icon slot="start" src="{{ 'settings' | svgIcon }}" />
+                  <ion-label>
+                    <h3>{{ row.rule.name }}</h3>
+                    <p>{{ row.condition }}</p>
+                    <div class="actions">
+                      @for(action of row.actions; track $index) {
+                        <span class="action">
+                          <span class="action-no">{{ $index + 1 }}</span>{{ action | translate | async }}
+                        </span>
+                      }
+                    </div>
+                  </ion-label>
+                  @if(!row.isComplete) {
+                    <ion-icon slot="end" color="danger" [title]="store.i18n.steps_incomplete()" src="{{ 'alert-circle' | svgIcon }}" />
+                  }
+                </ion-item>
+              }
             }
           </ion-list>
         }
@@ -86,6 +122,29 @@ export class WorkflowRuleList {
 
   // data
   protected readonly filteredRules = computed(() => this.store.filteredRules());
+  // Grouped by event: a rule's one-line summary used to BE its event, which stopped
+  // describing it once a rule could carry several actions. The event moves up into the
+  // group header, and the row gets the room to show what the rule actually does.
+  protected readonly groupedRules = computed(() => {
+    const eventCategory = this.store.appStore.getCategory('workflow_event');
+    const actionCategory = this.store.appStore.getCategory('workflow_action');
+    const groups = new Map<string, WorkflowRuleModel[]>();
+    for (const rule of this.filteredRules()) {
+      const rules = groups.get(rule.event) ?? [];
+      rules.push(rule);
+      groups.set(rule.event, rules);
+    }
+    return [...groups.entries()].map(([event, rules]) => ({
+      event,
+      label: getItemLabel(eventCategory, event),
+      rules: rules.map((rule) => ({
+        rule,
+        condition: getWorkflowRuleCondition(rule, (key) => this.store.responsibilityName(key)),
+        actions: getWorkflowRuleActions(rule).map((action) => getItemLabel(actionCategory, action)),
+        isComplete: isWorkflowRuleComplete(rule),
+      })),
+    }));
+  });
   protected readonly rulesCount = computed(() => this.store.rules().length);
   protected readonly filteredRulesCount = computed(() => this.filteredRules().length);
   protected readonly isLoading = computed(() => this.store.isLoading());
@@ -131,10 +190,6 @@ export class WorkflowRuleList {
   }
 
   /******************************* helpers *************************************** */
-  protected summary(rule: WorkflowRuleModel): string {
-    return getWorkflowRuleSummary(rule, (key) => this.store.responsibilityName(key));
-  }
-
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
   }

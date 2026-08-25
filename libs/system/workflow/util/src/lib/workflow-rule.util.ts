@@ -1,4 +1,4 @@
-import { newWorkflowActionStep, WorkflowRuleModel } from '@okr/shared-models';
+import { newWorkflowActionStep, WorkflowActionStep, WorkflowRuleModel } from '@okr/shared-models';
 import { addIndexElement, ExportColumn } from '@okr/shared-util-core';
 
 import { WorkflowI18n } from './workflow-i18n';
@@ -75,6 +75,110 @@ export function isApprovalAction(action?: string): boolean {
   return (action ?? '') === 'requestApproval';
 }
 
+/*-------------------------- steps --------------------------------*/
+/**
+ * The steps of a rule, never empty: a legacy document written before the model grew
+ * `steps[]` has none, and the editor must not open on an empty list.
+ * @param steps the rule's steps, possibly undefined
+ */
+export function getWorkflowSteps(steps?: WorkflowActionStep[]): WorkflowActionStep[] {
+  return steps?.length ? steps : [newWorkflowActionStep()];
+}
+
+/**
+ * Patch one step of a rule and return a new array — the steps array is never mutated in
+ * place, otherwise the signal holding the rule would not see the change.
+ * @param steps the rule's steps
+ * @param index the step to patch
+ * @param patch the fields to change
+ */
+export function patchWorkflowStep(
+  steps: WorkflowActionStep[] | undefined, index: number, patch: Partial<WorkflowActionStep>): WorkflowActionStep[] {
+  const next = [...getWorkflowSteps(steps)];
+  if (index < 0 || index >= next.length) return next;
+  next[index] = { ...next[index], ...patch };
+  return next;
+}
+
+/**
+ * Switch a step's action and drop the arguments the form no longer shows: data nobody can
+ * see, correct or explain — and a stale `writeBack` would patch a record on an action that
+ * never asks anyone.
+ * @param steps the rule's steps
+ * @param index the step to change
+ * @param action the new action, a `workflow_action` category item
+ */
+export function setWorkflowStepAction(
+  steps: WorkflowActionStep[] | undefined, index: number, action: string): WorkflowActionStep[] {
+  return patchWorkflowStep(steps, index, {
+    action,
+    ...(actionNeedsArg(action) ? {} : { actionArg: '' }),
+    ...(isApprovalAction(action) ? {} : { writeBack: '' }),
+  });
+}
+
+/**
+ * Append a fresh step. `openTask` is the default action, as it was for the whole rule
+ * before a rule could have several.
+ * @param steps the rule's steps
+ */
+export function addWorkflowStep(steps: WorkflowActionStep[] | undefined): WorkflowActionStep[] {
+  return [...getWorkflowSteps(steps), newWorkflowActionStep()];
+}
+
+/**
+ * Remove one step. The LAST step is never removed: a rule without a consequence does
+ * nothing, the engine skips it, and the validation suite rejects it — so the editor keeps
+ * one step and lets the admin delete the whole rule instead.
+ * @param steps the rule's steps
+ * @param index the step to remove
+ */
+export function removeWorkflowStep(steps: WorkflowActionStep[] | undefined, index: number): WorkflowActionStep[] {
+  const current = getWorkflowSteps(steps);
+  if (current.length <= 1 || index < 0 || index >= current.length) return current;
+  return current.filter((_, i) => i !== index);
+}
+
+/**
+ * Is this step fully configured? Mirrors the mandatory rules of the validation suite, so the
+ * editor can mark the offending step in a collapsed list instead of only refusing to save.
+ * @param step the step to check
+ */
+export function isWorkflowStepComplete(step: WorkflowActionStep): boolean {
+  if (!step.action) return false;
+  if (actionNeedsArg(step.action) && !step.actionArg) return false;
+  return step.messageKey.length > 0;
+}
+
+/**
+ * The collapsed one-line description of a step: its argument and its message key, i.e. the
+ * two fields that distinguish two steps with the same action. Pure data — the action's own
+ * label is translated from the `workflow_action` category by the caller.
+ * @param step the step to describe
+ */
+export function getWorkflowStepSummary(step: WorkflowActionStep): string {
+  return [step.actionArg, step.messageKey].filter((part) => part?.length > 0).join(' · ');
+}
+
+/**
+ * The actions of a rule, in execution order — what the list shows instead of only the
+ * trigger. Empty for a legacy document with no steps.
+ * @param rule the rule to describe
+ */
+export function getWorkflowRuleActions(rule: WorkflowRuleModel): string[] {
+  return (rule.steps ?? []).map((step) => step.action).filter((action) => action?.length > 0);
+}
+
+/**
+ * Is every step of this rule fully configured? A rule that is missing a mandatory field
+ * cannot be saved from the editor, but an import or a hand-written document can carry one.
+ * @param rule the rule to check
+ */
+export function isWorkflowRuleComplete(rule: WorkflowRuleModel): boolean {
+  const steps = rule.steps ?? [];
+  return steps.length > 0 && steps.every((step) => isWorkflowStepComplete(step));
+}
+
 /*-------------------------- search index --------------------------------*/
 /**
  * Build the search index string for a WorkflowRuleModel.
@@ -97,21 +201,18 @@ export function getWorkflowRuleIndexInfo(): string {
 
 /*-------------------------- display --------------------------------*/
 /**
- * One-line summary of what a rule does, shown as the list subtitle:
- * 'membership.ended · hasActiveOwnerships:key → Materialwart'.
+ * The condition half of a rule, for a list that already shows the event as its group header:
+ * 'hasActiveOwnerships:key → Materialwart'. Empty for an unconditional rule with no
+ * responsibility, which is exactly what there is to say about it.
  * @param rule the rule to describe
- * @param resolveResponsibility maps `responsibilityKey` to the responsibility's name;
- *        defaults to the raw key — a key is more useful than an empty arrow while the
- *        responsibilities are still loading or the referenced one was deleted.
+ * @param resolveResponsibility maps `responsibilityKey` to the responsibility's name
  */
-export function getWorkflowRuleSummary(
+export function getWorkflowRuleCondition(
   rule: WorkflowRuleModel,
   resolveResponsibility: (key: string) => string = (key) => key): string {
   const probe = rule.probe ? (rule.probeArg ? `${rule.probe}:${rule.probeArg}` : rule.probe) : '';
   const responsibility = rule.responsibilityKey ? `→ ${resolveResponsibility(rule.responsibilityKey)}` : '';
-  return [rule.event, probe, responsibility]
-    .filter((part) => part.length > 0)
-    .join(' · ');
+  return [probe, responsibility].filter((part) => part.length > 0).join(' ');
 }
 
 /*-------------------------- export --------------------------------*/

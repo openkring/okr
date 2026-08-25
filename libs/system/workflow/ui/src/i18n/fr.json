@@ -49,6 +49,13 @@
     "label": "Rückschreiben",
     "helper": "Feld, das der Entscheid am Datensatz setzt. Nur freigegebene Kombinationen sind möglich."
   },
+  "steps": {
+    "label": "Actions",
+    "helper": "Les actions sont exécutées l'une après l'autre.",
+    "add": "Ajouter une action",
+    "remove": "Supprimer l'action",
+    "incomplete": "incomplète"
+  },
   "approval": {
     "kind": {
       "label": "Art"

@@ -46,6 +46,11 @@ export const WORKFLOW_I18N_KEYS = {
   actionArg_helper:          UI + 'actionArg.helper',
   writeBack_label:           UI + 'writeBack.label',
   writeBack_helper:          UI + 'writeBack.helper',
+  steps_label:               UI + 'steps.label',
+  steps_helper:              UI + 'steps.helper',
+  steps_add:                 UI + 'steps.add',
+  steps_remove:              UI + 'steps.remove',
+  steps_incomplete:          UI + 'steps.incomplete',
 
   // the approval step (spec 2026-08-15) — same domain, same bundle
   approval_plural:            FEAT + 'approval.plural',

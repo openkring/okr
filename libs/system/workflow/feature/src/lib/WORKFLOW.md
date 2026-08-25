@@ -30,10 +30,13 @@ live account. Rules only decide who gets told.
 | `event` | category `workflow_event` — see the event catalogue below |
 | `probe` | category `workflow_probe`. `''`/`always` = unconditional. A comma-separated list is **ANDed**, and an item may carry an inline `:arg` (`categoryIs:passive,hasActiveOwnerships`). An **unknown** probe fails closed |
 | `probeArg` | single argument for a one-probe rule, e.g. `key`, `locker`, `passive` |
-| `action` | `openTask` \| `sendEmail` \| `sendMessage` \| `esign` \| `requestApproval`. A task already produces a push (`onTaskWritten`) |
-| `responsibilityKey` | `ResponsibilityModel.okey` → who gets the task |
-| `messageKey` | i18n key resolved **server-side** from `i18nTenantOverride` → `i18nDefault`; `{name}` is replaced with the member's name (single braces — `{{…}}` would be eaten by Transloco) |
-| `dueInDays` | `0` = no due date |
+| `responsibilityKey` | `ResponsibilityModel.okey` → who gets the task. One per rule: it applies to every step |
+| `steps[]` | the consequences, **in execution order**. Never empty — the editor keeps the last step and offers deleting the rule instead |
+| `steps[].action` | `openTask` \| `sendEmail` \| `sendMessage` \| `esign` \| `requestApproval` \| `openChat`. A task already produces a push (`onTaskWritten`) |
+| `steps[].actionArg` | the ONE variable string per action: email template · esign storage path · approval kind · chat group key |
+| `steps[].messageKey` | i18n key resolved **server-side** from `i18nTenantOverride` → `i18nDefault`; `{name}` is replaced with the member's name (single braces — `{{…}}` would be eaten by Transloco) |
+| `steps[].dueInDays` | `openTask` only; `0` = no due date |
+| `steps[].writeBack` | `requestApproval` only; `'collection.field'`, `''` = none |
 | `order` | evaluation order, readability only |
 
 ## Event catalogue
@@ -99,7 +102,16 @@ re-run or a name change would each produce another task.
 - `WorkflowRuleList` — the admin screen, route `/workflow/:listId/:contextMenuName`
   (`isAdminGuard`), contributed by the `aoc` block; menu row `workflow-all` under the AOC submenu.
 - `WorkflowRuleEditModal` + `WorkflowRuleForm` — in the `ui` lib, standard header +
-  change-confirmation + one Signal Forms form.
+  change-confirmation + one Signal Forms form. The form is in two parts: the **trigger** card
+  (name, event, probe, responsibility — one per rule) and the **action steps** below it, one
+  collapsible card each, reorderable by drag (`ion-reorder-group`; array order IS execution
+  order). A step whose mandatory fields are missing carries a red marker while collapsed, so a
+  three-step rule does not just go quietly invalid. The pure step operations
+  (`addWorkflowStep`, `removeWorkflowStep`, `setWorkflowStepAction`, `patchWorkflowStep`,
+  `isWorkflowStepComplete`) live in the `util` lib and are unit-tested there.
+- The list is grouped by **event**, because a rule's old one-line summary was its trigger — which
+  stopped describing it once a rule could carry several actions. Each row shows its actions as
+  numbered pills in execution order, plus the same red marker for an incomplete rule.
 
 ## Library path
 

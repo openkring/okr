@@ -5,7 +5,7 @@ import { WorkflowRuleModel } from '@okr/shared-models';
 import { buildExportTable } from '@okr/shared-util-core';
 
 import { WORKFLOW_I18N_KEYS, WorkflowI18n } from './workflow-i18n';
-import { getWorkflowRuleExportColumns, getWorkflowRuleIndex, getWorkflowRuleSummary, newWorkflowRuleModel, probeNeedsArg } from './workflow-rule.util';
+import { addWorkflowStep, getWorkflowRuleCondition, getWorkflowRuleActions, getWorkflowRuleExportColumns, getWorkflowRuleIndex, getWorkflowStepSummary, getWorkflowSteps, isWorkflowRuleComplete, isWorkflowStepComplete, newWorkflowRuleModel, patchWorkflowStep, probeNeedsArg, removeWorkflowStep, setWorkflowStepAction } from './workflow-rule.util';
 
 describe('newWorkflowRuleModel', () => {
   it('creates a rule for the given tenant and event', () => {
@@ -31,39 +31,6 @@ describe('getWorkflowRuleIndex', () => {
     expect(index).toContain('n:Austritt');
     expect(index).toContain('e:membership.ended');
     expect(index).toContain('r:treasurer');
-  });
-});
-
-describe('getWorkflowRuleSummary', () => {
-  it('joins event, probe with its argument, and the responsibility', () => {
-    const rule = newWorkflowRuleModel('scs', 'membership.ended');
-    rule.probe = 'hasOwnershipOfType';
-    rule.probeArg = 'key';
-    rule.responsibilityKey = 'resourceAdmin';
-    expect(getWorkflowRuleSummary(rule)).toBe('membership.ended · hasOwnershipOfType:key · → resourceAdmin');
-  });
-
-  it('omits the probe when the rule always fires', () => {
-    const rule = newWorkflowRuleModel('scs', 'membership.created');
-    rule.responsibilityKey = 'treasurer';
-    expect(getWorkflowRuleSummary(rule)).toBe('membership.created · → treasurer');
-  });
-
-  it('omits the argument when the probe takes none', () => {
-    const rule = newWorkflowRuleModel('scs', 'membership.ended');
-    rule.probe = 'hasOpenInvoices';
-    expect(getWorkflowRuleSummary(rule)).toBe('membership.ended · hasOpenInvoices');
-  });
-
-  it('shows the responsibility name, falling back to the key when unknown', () => {
-    const rule = newWorkflowRuleModel('scs', 'membership.ended');
-    rule.responsibilityKey = 'scs-treasurer';
-    const names = new Map([['scs-treasurer', 'Kassier']]);
-    const resolve = (key: string) => names.get(key) ?? key;
-    expect(getWorkflowRuleSummary(rule, resolve)).toBe('membership.ended · → Kassier');
-
-    rule.responsibilityKey = 'deleted';
-    expect(getWorkflowRuleSummary(rule, resolve)).toBe('membership.ended · → deleted');
   });
 });
 
@@ -108,5 +75,129 @@ describe('probeNeedsArg', () => {
 
   it('is true when any item of an AND-list still needs the argument', () => {
     expect(probeNeedsArg('hasActiveOwnerships, categoryIs')).toBe(true);
+  });
+});
+
+describe('getWorkflowSteps', () => {
+  it('gives a legacy document without steps one to edit', () => {
+    expect(getWorkflowSteps(undefined)).toHaveLength(1);
+    expect(getWorkflowSteps([])[0].action).toBe('openTask');
+  });
+
+  it('passes an existing list through unchanged', () => {
+    const steps = newWorkflowRuleModel('scs').steps;
+    expect(getWorkflowSteps(steps)).toBe(steps);
+  });
+});
+
+describe('patchWorkflowStep', () => {
+  it('patches the addressed step and leaves the others alone', () => {
+    const steps = addWorkflowStep(newWorkflowRuleModel('scs').steps);
+    const patched = patchWorkflowStep(steps, 1, { messageKey: '@a.b' });
+
+    expect(patched[1].messageKey).toBe('@a.b');
+    expect(patched[0].messageKey).toBe('');
+    expect(patched).not.toBe(steps);
+    expect(steps[1].messageKey).toBe('');
+  });
+
+  it('ignores an index outside the list', () => {
+    const steps = newWorkflowRuleModel('scs').steps;
+    expect(patchWorkflowStep(steps, 7, { messageKey: '@a.b' })[0].messageKey).toBe('');
+  });
+});
+
+describe('setWorkflowStepAction', () => {
+  it('drops the argument when the new action does not consume one', () => {
+    let steps = setWorkflowStepAction(undefined, 0, 'sendEmail');
+    steps = patchWorkflowStep(steps, 0, { actionArg: 'welcome' });
+    expect(setWorkflowStepAction(steps, 0, 'openTask')[0].actionArg).toBe('');
+  });
+
+  it('keeps the argument when the new action still consumes one', () => {
+    let steps = patchWorkflowStep(undefined, 0, { actionArg: 'welcome' });
+    steps = setWorkflowStepAction(steps, 0, 'sendEmail');
+    expect(steps[0].actionArg).toBe('welcome');
+  });
+
+  it('drops the write-back on anything but an approval', () => {
+    let steps = setWorkflowStepAction(undefined, 0, 'requestApproval');
+    steps = patchWorkflowStep(steps, 0, { writeBack: 'persons.isSkiffPlatzApproved' });
+    expect(setWorkflowStepAction(steps, 0, 'openTask')[0].writeBack).toBe('');
+  });
+});
+
+describe('addWorkflowStep / removeWorkflowStep', () => {
+  it('appends a fresh openTask step', () => {
+    const steps = addWorkflowStep(newWorkflowRuleModel('scs').steps);
+    expect(steps).toHaveLength(2);
+    expect(steps[1].action).toBe('openTask');
+  });
+
+  it('removes the addressed step', () => {
+    const steps = patchWorkflowStep(addWorkflowStep(undefined), 1, { messageKey: '@second' });
+    expect(removeWorkflowStep(steps, 0)).toHaveLength(1);
+    expect(removeWorkflowStep(steps, 0)[0].messageKey).toBe('@second');
+  });
+
+  it('never removes the last step — a rule without a consequence does nothing', () => {
+    const steps = newWorkflowRuleModel('scs').steps;
+    expect(removeWorkflowStep(steps, 0)).toHaveLength(1);
+  });
+});
+
+describe('isWorkflowStepComplete', () => {
+  it('needs a message key', () => {
+    const [step] = getWorkflowSteps(undefined);
+    expect(isWorkflowStepComplete(step)).toBe(false);
+    expect(isWorkflowStepComplete({ ...step, messageKey: '@a.b' })).toBe(true);
+  });
+
+  it('needs the argument of an action that consumes one', () => {
+    const step = { action: 'sendEmail', actionArg: '', messageKey: '@a.b', dueInDays: 0, writeBack: '' };
+    expect(isWorkflowStepComplete(step)).toBe(false);
+    expect(isWorkflowStepComplete({ ...step, actionArg: 'welcome' })).toBe(true);
+  });
+});
+
+describe('getWorkflowStepSummary', () => {
+  it('joins the fields that distinguish two steps of the same action', () => {
+    expect(getWorkflowStepSummary({ action: 'sendEmail', actionArg: 'welcome', messageKey: '@a.b', dueInDays: 0, writeBack: '' }))
+      .toBe('welcome · @a.b');
+    expect(getWorkflowStepSummary({ action: 'openTask', actionArg: '', messageKey: '@a.b', dueInDays: 0, writeBack: '' }))
+      .toBe('@a.b');
+  });
+});
+
+describe('getWorkflowRuleActions / isWorkflowRuleComplete', () => {
+  it('lists the actions in execution order', () => {
+    const rule = newWorkflowRuleModel('scs', 'membership.ended');
+    rule.steps = setWorkflowStepAction(addWorkflowStep(rule.steps), 1, 'sendEmail');
+    expect(getWorkflowRuleActions(rule)).toEqual(['openTask', 'sendEmail']);
+  });
+
+  it('reports a rule with a half-configured step as incomplete', () => {
+    const rule = newWorkflowRuleModel('scs', 'membership.ended');
+    rule.steps = patchWorkflowStep(rule.steps, 0, { messageKey: '@a.b' });
+    expect(isWorkflowRuleComplete(rule)).toBe(true);
+
+    rule.steps = setWorkflowStepAction(addWorkflowStep(rule.steps), 1, 'sendEmail');
+    expect(isWorkflowRuleComplete(rule)).toBe(false);
+  });
+});
+
+describe('getWorkflowRuleCondition', () => {
+  it('leaves out the event — the grouped list already shows it', () => {
+    const rule = newWorkflowRuleModel('scs', 'membership.ended');
+    rule.probe = 'hasOwnershipOfType';
+    rule.probeArg = 'key';
+    rule.responsibilityKey = 'scs-keys';
+
+    expect(getWorkflowRuleCondition(rule, () => 'Schlüsselverwaltung'))
+      .toBe('hasOwnershipOfType:key → Schlüsselverwaltung');
+  });
+
+  it('is empty for an unconditional rule without a responsibility', () => {
+    expect(getWorkflowRuleCondition(newWorkflowRuleModel('scs', 'membership.ended'))).toBe('');
   });
 });
