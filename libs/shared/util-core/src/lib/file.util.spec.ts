@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation, sanitizeFileName } from './file.util';
+import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation, resolveMimeType, sanitizeFileName } from './file.util';
 
 describe('file.util', () => {
 
@@ -168,5 +168,28 @@ describe('sanitizeFileName', () => {
 
   it('should never return an empty name', () => {
     expect(sanitizeFileName('***')).toBe('file');
+  });
+});
+
+describe('resolveMimeType', () => {
+  it('should keep the mime type the browser reported', () => {
+    expect(resolveMimeType('IMG_0001.HEIC', 'image/heic')).toBe('image/heic');
+    expect(resolveMimeType('scan.pdf', 'application/pdf')).toBe('application/pdf');
+  });
+
+  it('should derive the mime type from the extension when the browser reports none', () => {
+    // Chrome/Firefox cannot decode HEIC and hand over a File with an empty type
+    expect(resolveMimeType('IMG_0001.heic', '')).toBe('image/heic');
+    expect(resolveMimeType('IMG_0001.HEIC', undefined)).toBe('image/heic');
+    expect(resolveMimeType('photo.webp', '')).toBe('image/webp');
+    expect(resolveMimeType('photo.jpg', '')).toBe('image/jpeg');
+  });
+
+  it('should work on a full storage path, not just a bare file name', () => {
+    expect(resolveMimeType('tenant/scs/section/1/album/photo.heif', '')).toBe('image/heif');
+  });
+
+  it('should return an empty string for an unknown extension', () => {
+    expect(resolveMimeType('mystery.qqq', '')).toBe('');
   });
 });

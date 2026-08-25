@@ -157,6 +157,21 @@ export function getMimeType(pathOrExtension: string): string {
   return mime.getType(pathOrExtension) ?? '';
 }
 
+/**
+ * The mime type of a picked file, falling back to the file name's extension.
+ *
+ * `File.type` is whatever the browser knows: Safari reports 'image/heic' for an iPhone photo,
+ * Chrome/Firefox report '' because they cannot decode HEIC. An empty mime type would classify
+ * the file as a generic document (album visibility, icons, imgix params), so we resolve it from
+ * the extension instead — the very same lookup imgix does on the file itself.
+ * @param fileName the file name (or full path) including the extension
+ * @param declaredMimeType the mime type the browser reported, if any
+ * @returns the declared mime type, or the one derived from the extension, or ''
+ */
+export function resolveMimeType(fileName: string, declaredMimeType: string | undefined): string {
+  return declaredMimeType && declaredMimeType.length > 0 ? declaredMimeType : getMimeType(fileName);
+}
+
 export function getExtensionFromMimeType(mimeType: string): string {
   return mime.getExtension(mimeType) ?? '';
 }

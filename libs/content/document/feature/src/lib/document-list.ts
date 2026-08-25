@@ -3,7 +3,7 @@ import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCo
 
 
 import { DocumentModel, FolderModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, RoleName } from '@okr/shared-models';
-import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
+import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
 import { FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe, FileLogoPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner, showZoomedImage } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
@@ -328,7 +328,7 @@ export class DocumentList {
     this.store.setSelectedType(type);
   }
 
-  protected readonly acceptMimeTypes = DEFAULT_MIMETYPES.join(',');
+  protected readonly acceptMimeTypes = DEFAULT_ACCEPT_ATTRIBUTE;
 
   protected onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;

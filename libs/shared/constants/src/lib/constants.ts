@@ -140,6 +140,10 @@ export const IMAGE_MIMETYPES = [
 export const DEFAULT_MIMETYPES = [
     'image/png', 
     'image/jpg', 
+    'image/jpeg',   // the real JPEG mime type; 'image/jpg' alone greys out .jpg files in the file dialog
+    'image/webp',
+    'image/heic',
+    'image/heif',
     'application/pdf', 
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/msword',
@@ -158,6 +162,16 @@ export const DEFAULT_MIMETYPES = [
     'application/zip',
     'public.data'
     ];
+
+/**
+ * The value for an <input type="file" accept="..."> attribute.
+ *
+ * Same list as DEFAULT_MIMETYPES plus bare extensions: a browser that cannot decode HEIC reports
+ * an empty type for the file and therefore never matches 'image/heic', which greys the file out
+ * in the dialog. Extensions are accepted by the accept attribute only — the native FilePicker
+ * (Capacitor) expects mime types, so it keeps using DEFAULT_MIMETYPES.
+ */
+export const DEFAULT_ACCEPT_ATTRIBUTE = [...DEFAULT_MIMETYPES, '.heic', '.heif', '.webp'].join(',');
 export const DEFAULT_BANNER_URL = 'tenant/default/app/banner.jpg';
 
 /**-------------------------------------------------------------------------

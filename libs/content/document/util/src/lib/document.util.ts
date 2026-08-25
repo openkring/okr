@@ -2,7 +2,7 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
 import { DOCUMENT_DIR, DocumentModel, UserModel } from '@okr/shared-models';
-import { addIndexElement, checkUrlType, getFileHash, getFullName, getTodayStr, isPhotoCancellation, warn } from '@okr/shared-util-core';
+import { addIndexElement, checkUrlType, getFileHash, getFullName, getTodayStr, isPhotoCancellation, resolveMimeType, warn } from '@okr/shared-util-core';
 
 import { readAsFile } from '@okr/avatar-util';
 
@@ -103,7 +103,7 @@ export async function buildDocumentModel(
   doc.title = file.name;
   doc.altText = file.name;
   doc.fullPath = storagePath;
-  doc.mimeType = file.type;
+  doc.mimeType = resolveMimeType(file.name, file.type);
   doc.size = file.size;
   doc.source = 'storage';
   doc.url = downloadUrl;

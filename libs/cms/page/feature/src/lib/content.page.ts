@@ -4,7 +4,7 @@ import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { AccordionSection, ArticleSection, ButtonSection, RoleName, SectionModel } from '@okr/shared-models';
-import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
+import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, error, getColSizes } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
@@ -346,7 +346,7 @@ export class ContentPage {
     }
   }
 
-  protected readonly acceptMimeTypes = DEFAULT_MIMETYPES.join(',');
+  protected readonly acceptMimeTypes = DEFAULT_ACCEPT_ATTRIBUTE;
 
   /**
    * Upload the picked files into the album section of this page. The album owns the folder the

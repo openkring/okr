@@ -7,7 +7,7 @@ import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { DocumentModel, RagConfig, SectionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { hasRole } from '@okr/shared-util-core';
-import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
+import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
 
 import { RagStore } from './rag-section.store';
 
@@ -204,7 +204,7 @@ export class RagSectionComponent {
     protected readonly reversedChatEntries = computed(() => [...this.store.chatEntries()].reverse());
 
     // constants
-    protected readonly acceptMimeTypes = DEFAULT_MIMETYPES.join(',');
+    protected readonly acceptMimeTypes = DEFAULT_ACCEPT_ATTRIBUTE;
 
     // constructor
     constructor() {

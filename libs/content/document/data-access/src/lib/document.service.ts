@@ -9,7 +9,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { DocumentCollection, DocumentModel, DocumentRendering, UserModel } from '@okr/shared-models';
 import { error } from '@okr/shared-util-angular';
-import { DateFormat, convertDateFormatToString, fileSizeUnit, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, convertDateFormatToString, fileSizeUnit, getSystemQuery, getTodayStr, resolveMimeType } from '@okr/shared-util-core';
 
 import { getDocumentIndex, getDocumentStoragePath } from '@okr/content-document-util';
 import { DEFAULT_DOCUMENT_SOURCE, DEFAULT_DOCUMENT_TYPE, DEFAULT_KEY, DEFAULT_NOTES } from '@okr/shared-constants';
@@ -211,7 +211,7 @@ export class DocumentService {
     doc.url = await getDownloadURL(ref(this.storage, fullPath));
     doc.dateOfDocCreation = getTodayStr();
     doc.dateOfDocLastUpdate = getTodayStr();
-    doc.mimeType = file.type;
+    doc.mimeType = resolveMimeType(file.name, file.type);
     doc.size = file.size;
     doc.priorVersionKey = DEFAULT_KEY;
     doc.version = '1.0.0';
