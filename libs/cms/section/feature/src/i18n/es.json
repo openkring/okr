@@ -265,7 +265,8 @@
       }
     },
     "sent": "Tu aviso de emergencia ha llegado al grupo de emergencia.",
-    "error": "No se ha podido enviar el aviso de emergencia. Inténtalo de nuevo o llama directamente."
+    "error": "No se ha podido enviar el aviso de emergencia. Inténtalo de nuevo o llama directamente.",
+    "phone": "Teléfono: {phone}"
   },
   "event": {
     "title": "Configuración de la lista de eventos",

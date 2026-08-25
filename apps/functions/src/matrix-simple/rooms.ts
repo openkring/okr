@@ -46,56 +46,6 @@ const KIOSK_ADMIN_POWER_LEVEL = 100;
  * Call this from the client whenever the user opens a group chat tab and the
  * room is not yet in their joined-rooms list.
  */
-/**
- * Look up the Matrix room ID for a room with the given name.
- * Uses the Synapse admin room-search API.
- * Returns the roomId if exactly one match is found, throws otherwise.
- */
-export const getRoomByName = onCall(
-  {
-    cors: true,
-    region: 'europe-west6',
-    enforceAppCheck: true,
-    secrets: [matrixAdminToken],
-  },
-  async (request): Promise<{ roomId: string }> => {
-    const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', 'Not authenticated');
-    const { name } = request.data as { name: string };
-    requireParam(name, 'name');
-
-    const adminToken = matrixAdminToken.value();
-    const searchResp = await fetch(
-      `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms?search_term=${encodeURIComponent(name)}&limit=20`,
-      { headers: { Authorization: `Bearer ${adminToken}` } }
-    );
-    if (!searchResp.ok) {
-      throw new HttpsError('internal', `Room search failed: ${await searchResp.text()}`);
-    }
-    const data = await searchResp.json() as { rooms: Array<{ room_id: string; name: string }> };
-
-    // The name search is homeserver-global and this callable needs no role at all, so an
-    // exact-name match alone handed any authenticated user another tenant's room id. Room
-    // names are NOT unique across tenants — `getRoomByName('Notfall')` is a real call site
-    // (section.store) and every tenant has a Notfall room. Keep only matches this tenant
-    // may see, then take the exact one.
-    const exactMatches = (data.rooms ?? []).filter(r => r.name === name);
-    if (exactMatches.length === 0) {
-      throw new HttpsError('not-found', `No room found with name "${name}"`);
-    }
-    const [markers, callerTenants] = await Promise.all([
-      getRoomTenantsBatch(exactMatches.map(r => r.room_id), adminToken),
-      getUserTenants(uid),
-    ]);
-    const exact = exactMatches.find(r => roomAdmitsTenant(markers.get(r.room_id) ?? [], callerTenants));
-    if (!exact) {
-      console.error(`getRoomByName: uid ${uid} (${callerTenants.join(',')}) matched ${exactMatches.length} room(s) named "${name}", none of this tenant`);
-      throw new HttpsError('not-found', `No room found with name "${name}"`);
-    }
-    return { roomId: exact.room_id };
-  }
-);
-
 export const requestGroupRoomAccess = onCall(
   {
     cors: true,

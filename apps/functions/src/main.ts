@@ -97,7 +97,6 @@ export const getMatrixCredentials = MatrixSimple.getMatrixCredentials;
 export const syncFirebaseProfileToMatrix = MatrixSimple.syncFirebaseProfileToMatrix;
 export const requestGroupRoomAccess = MatrixSimple.requestGroupRoomAccess;
 export const provisionMatrixUser = MatrixSimple.provisionMatrixUser;
-export const getRoomByName = MatrixSimple.getRoomByName;
 export const renameMatrixRoom = MatrixSimple.renameMatrixRoom;
 export const invitePersonToGroupRoom = MatrixSimple.invitePersonToGroupRoom;
 export const kickPersonFromGroupRoom = MatrixSimple.kickPersonFromGroupRoom;
@@ -144,6 +143,9 @@ export const generateCalendarICS = Calendar.generateCalendarICS;
 export const getPublicCalEvents = Calendar.getPublicCalEvents;
 export const ensureCalendarFeedToken = Calendar.ensureCalendarFeedToken;
 export const calendarFeed = Calendar.calendarFeed;
+export const notifyCalEventParticipants = Calendar.notifyCalEventParticipants;
+export const onCalEventCommentCreated = Calendar.onCalEventCommentCreated;
+export const onCalEventDocumentCreated = Calendar.onCalEventDocumentCreated;
 
 // email webhooks
 export const mailtrapWebhook = Email.mailtrapWebhook;

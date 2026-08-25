@@ -459,17 +459,6 @@ export class MatrixChatService {
   }
 
   /**
-   * Retrieve a room id by its name.
-   *
-   */
-  public async getRoomByName(name: string): Promise<string> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'getRoomByName');
-    const result = await fn({ name });
-    const { roomId } = result.data as { roomId: string };
-    return roomId;
-  }
-
-  /**
    * Fetch a Matrix media URL with auth and return a blob URL (delegates to
    * MatrixMediaService, which caches and LRU-bounds the blob URLs — P-1).
    * @param mimeTypeHint - expected MIME type; used to fix generic content-types returned by some homeservers

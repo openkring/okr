@@ -11,7 +11,7 @@ import { catchError, of } from 'rxjs';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@okr/shared-models';
-import { chipMatches, debugData, debugItemLoaded, debugMessage, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
+import { chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, showToast } from '@okr/shared-util-angular';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -449,13 +449,19 @@ export const _SectionStore = signalStore(
           await store.chatService.ensureInitialized();
           const { roomId } = await store.chatService.requestGroupRoomAccess(NOTFALL_GROUP_KEY);
           const name = currentUser.firstName + ' ' + currentUser.lastName + ' ';
+          // Own number, read from the address-directory projection rather than the `addresses`
+          // vault: the projection is already streamed and is the registered-visible path, so
+          // this needs no vault read at all. Sending it is the caller's own disclosure —
+          // pressing the button is the consent, and the section text announces it.
+          const phone = store.appStore.getDirectoryEntry(`person.${currentUser.personKey}`)?.favPhone ?? '';
+          const phoneLine = phone ? '\n' + fill(store.i18n.emergency_phone(), { phone }) : '';
           // Asked for after the room is settled: the OS location prompt can sit there for a
           // while, and a denied or slow fix must still produce an alarm.
           const position = await this.getCurrentPosition();
           if (position) {
-            await store.chatService.sendLocation(roomId, name + store.i18n.emergency_needs_help(), position.latitude, position.longitude);
+            await store.chatService.sendLocation(roomId, name + store.i18n.emergency_needs_help() + phoneLine, position.latitude, position.longitude);
           } else {
-            await store.chatService.sendMessage(roomId, name + store.i18n.emergency_needs_help_unknown_location());
+            await store.chatService.sendMessage(roomId, name + store.i18n.emergency_needs_help_unknown_location() + phoneLine);
           }
           await showToast(store.toastController, store.i18n.emergency_sent());
         } catch (error) {

@@ -182,6 +182,9 @@ export const SECTION_I18N_KEYS = {
   // emergency
   emergency_needs_help:                     PFX + 'emergency.needs.help.atLocation',
   emergency_needs_help_unknown_location:    PFX + 'emergency.needs.help.unknownLocation',
+  // single braces + fill(): translateAll() resolves store keys through Transloco, which
+  // would substitute a {{param}} with an empty string before the caller ever sees it
+  emergency_phone:                          PFX + 'emergency.phone',
   emergency_sent:                           PFX + 'emergency.sent',
   emergency_error:                          PFX + 'emergency.error',
   

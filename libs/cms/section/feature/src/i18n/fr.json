@@ -265,7 +265,8 @@
       }
     },
     "sent": "Ton message d'urgence est bien arrivé auprès du groupe d'urgence.",
-    "error": "Le message d'urgence n'a pas pu être envoyé. Réessaie ou appelle directement."
+    "error": "Le message d'urgence n'a pas pu être envoyé. Réessaie ou appelle directement.",
+    "phone": "Téléphone : {phone}"
   },
   "event": {
     "title": "Configuration de la liste des événements",
