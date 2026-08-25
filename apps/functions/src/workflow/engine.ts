@@ -15,7 +15,7 @@
 
 import { AvatarInfo } from '@okr/shared-models';
 
-import { OwnershipDoc, ResponsibilityDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
+import { OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 /** Invoice states that count as open. `draft`, `paid` and `cancelled` do not. */
 export const OPEN_INVOICE_STATES = ['pending', 'overdue'];
@@ -194,8 +194,8 @@ export async function escalateForFourEyes(
  * here rather than in the deps keeps the I/O layer free of i18n and makes every action's
  * wording testable without Firestore.
  */
-async function message(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: WorkflowDeps, suffix = ''): Promise<string> {
-  const key = rule.messageKey ?? '';
+async function message(step: WorkflowActionStepDoc, ctx: WorkflowContext, deps: WorkflowDeps, suffix = ''): Promise<string> {
+  const key = step.messageKey ?? '';
   if (!key) return '';
   return deps.translate(ctx.tenantId, key + suffix, { name: ctx.subjectName, ...ctx.params });
 }
@@ -215,25 +215,61 @@ async function overSendCap(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: Wo
 }
 
 /**
- * Execute a rule that has already passed its probe.
+ * Execute every step of a rule that has already passed its probe.
  *
- * Every action addresses the SAME resolved responsible person — a rule can never name a
- * free-text recipient, which is what keeps it from being a spam gun any tenant admin can
- * point anywhere (spec 2026-08-15 §2.2).
- *
- * Deduplication of `openTask`: an open task with the same relatedKey AND the same
- * assignee means this consequence is already pending — without it every re-trigger (a
- * corrected exit date, a sweep re-run, a name change re-writing the document) would
- * produce another task.
+ * Steps run in order and independently: a failing one is logged and the next still runs, the
+ * same contract `runWorkflowWith` gives whole rules. The assignee is resolved at most once and
+ * only when a step actually needs one — `openChat` addresses a group, not a person.
  */
 export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
-  const action = rule.action || 'openTask';
-  if (!KNOWN_ACTIONS.includes(action)) {
-    await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: `unknown action '${rule.action}'` });
+  const steps = rule.steps ?? [];
+  if (!steps.length) {
+    await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'rule has no steps' });
     return;
   }
 
-  const assignee = await resolveAssignee(rule, ctx, deps);
+  let resolved: AvatarInfo | undefined;
+  let didResolve = false;
+  const assigneeOnce = async (): Promise<AvatarInfo | undefined> => {
+    if (!didResolve) { resolved = await resolveAssignee(rule, ctx, deps); didResolve = true; }
+    return resolved;
+  };
+
+  for (const step of steps) {
+    try {
+      await runStep(rule, step, ctx, deps, assigneeOnce);
+    } catch (error) {
+      await deps.logActivity(ctx.tenantId, {
+        rule: rule.okey, event: ctx.event, action: step.action,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+}
+
+/**
+ * Execute a single step. Every action addresses the SAME resolved responsible person — a rule
+ * can never name a free-text recipient, which is what keeps it from being a spam gun any
+ * tenant admin can point anywhere (spec 2026-08-15 §2.2).
+ *
+ * Deduplication of `openTask`: an open task with the same relatedKey AND the same assignee
+ * means this consequence is already pending — without it every re-trigger (a corrected exit
+ * date, a sweep re-run, a name change re-writing the document) would produce another task.
+ */
+export async function runStep(
+  rule: WorkflowRuleDoc,
+  step: WorkflowActionStepDoc,
+  ctx: WorkflowContext,
+  deps: WorkflowDeps,
+  assigneeOnce: () => Promise<AvatarInfo | undefined>,
+): Promise<void> {
+  const action = step.action || 'openTask';
+  if (!KNOWN_ACTIONS.includes(action)) {
+    await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: `unknown action '${action}'` });
+    return;
+  }
+
+  const assignee = await assigneeOnce();
   if (!assignee?.key) {
     await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'no assignee resolved' });
     return;
@@ -247,9 +283,9 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
       }
       await deps.createTask({
         tenantId: ctx.tenantId,
-        name: await message(rule, ctx, deps),
+        name: await message(step, ctx, deps),
         assignee,
-        dueInDays: rule.dueInDays ?? 0,
+        dueInDays: step.dueInDays ?? 0,
         relatedModelType: ctx.relatedKey.split('.')[0] ?? '',
         relatedKey: ctx.relatedKey,
         linkKey: ctx.params['linkKey'] ?? '',
@@ -269,9 +305,9 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
         tenantId: ctx.tenantId,
         ruleKey: rule.okey,
         to,
-        subject: await message(rule, ctx, deps),
-        body: await message(rule, ctx, deps, '.body'),
-        template: rule.actionArg ?? '',
+        subject: await message(step, ctx, deps),
+        body: await message(step, ctx, deps, '.body'),
+        template: step.actionArg ?? '',
       });
       return;
     }
@@ -287,7 +323,7 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
         tenantId: ctx.tenantId,
         ruleKey: rule.okey,
         matrixUserId,
-        body: await message(rule, ctx, deps),
+        body: await message(step, ctx, deps),
         // deterministic: a retried invocation reuses the transaction id, so Synapse drops
         // the second copy. A genuinely re-fired event days later is NOT covered — see the
         // ponytail note in the spec.
@@ -297,7 +333,7 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
     }
 
     case 'esign': {
-      const storagePath = (rule.actionArg ?? '').replaceAll('{relatedKey}', ctx.relatedKey);
+      const storagePath = (step.actionArg ?? '').replaceAll('{relatedKey}', ctx.relatedKey);
       if (!storagePath) {
         await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'esign needs a storage path in actionArg' });
         return;
@@ -307,14 +343,14 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
         ruleKey: rule.okey,
         storagePath,
         signee: assignee,
-        documentName: await message(rule, ctx, deps),
+        documentName: await message(step, ctx, deps),
         relatedKey: ctx.relatedKey,
       });
       return;
     }
 
     case 'requestApproval': {
-      const kind = rule.actionArg ?? '';
+      const kind = step.actionArg ?? '';
       if (await deps.hasPendingApproval(ctx.relatedKey, kind, ctx.tenantId)) {
         await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, skipped: 'approval pending', relatedKey: ctx.relatedKey });
         return;
@@ -330,9 +366,9 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
         requestedBy,
         approver,
         ruleKey: rule.okey,
-        writeBack: rule.writeBack ?? '',
-        taskName: await message(rule, ctx, deps),
-        dueInDays: rule.dueInDays ?? 0,
+        writeBack: step.writeBack ?? '',
+        taskName: await message(step, ctx, deps),
+        dueInDays: step.dueInDays ?? 0,
       });
       return;
     }

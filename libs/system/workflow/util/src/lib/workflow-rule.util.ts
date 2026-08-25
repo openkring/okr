@@ -1,4 +1,4 @@
-import { WorkflowRuleModel } from '@okr/shared-models';
+import { newWorkflowActionStep, WorkflowRuleModel } from '@okr/shared-models';
 import { addIndexElement, ExportColumn } from '@okr/shared-util-core';
 
 import { WorkflowI18n } from './workflow-i18n';
@@ -13,6 +13,9 @@ import { WorkflowI18n } from './workflow-i18n';
 export function newWorkflowRuleModel(tenantId: string, event = ''): WorkflowRuleModel {
   const rule = new WorkflowRuleModel(tenantId);
   rule.event = event;
+  // without this the class default array is shared: every rule created without going
+  // through this factory would mutate the same steps[0]
+  rule.steps = [newWorkflowActionStep()];
   return rule;
 }
 
@@ -124,8 +127,10 @@ export function getWorkflowRuleExportColumns(
     { header: i18n.probe_label(),             value: (r) => r.probe ?? '' },
     { header: i18n.probeArg_label(),          value: (r) => r.probeArg ?? '' },
     { header: i18n.responsibilityKey_label(), value: (r) => resolveResponsibility(r.responsibilityKey ?? '') },
-    { header: i18n.messageKey_label(),        value: (r) => r.messageKey ?? '' },
-    { header: i18n.dueInDays_label(),         value: (r) => String(r.dueInDays ?? 0) },
+    // a CSV row is one line per rule; a multi-step rule's export shows its first step only —
+    // the full sequence is what the detail view is for
+    { header: i18n.messageKey_label(),        value: (r) => r.steps?.[0]?.messageKey ?? '' },
+    { header: i18n.dueInDays_label(),         value: (r) => String(r.steps?.[0]?.dueInDays ?? 0) },
     { header: i18n.notes_label(),             value: (r) => r.notes ?? '' },
   ];
 }

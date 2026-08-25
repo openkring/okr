@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo } from '@okr/shared-models';
 
-import { MAX_RULE_SENDS_PER_DAY, SUBJECT_RECIPIENT, isDelegateActive, isResponsibilityValid, resolveAssignee, runProbe, runWorkflowWith } from './engine';
-import { EsignRequest, InvoiceDoc, NewApproval, NewTask, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
+import { MAX_RULE_SENDS_PER_DAY, SUBJECT_RECIPIENT, isDelegateActive, isResponsibilityValid, resolveAssignee, runAction, runProbe, runWorkflowWith } from './engine';
+import { EsignRequest, InvoiceDoc, NewApproval, NewTask, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const TENANT = 'scs';
 const TODAY = '20260813';
@@ -27,8 +27,12 @@ function avatar(key: string): AvatarInfo {
   return { key, name1: '', name2: '', modelType: 'person', type: '', subType: '', label: '' };
 }
 
+function step(over: Partial<WorkflowActionStepDoc> = {}): WorkflowActionStepDoc {
+  return { action: 'openTask', actionArg: '', messageKey: '@x.y', dueInDays: 0, writeBack: '', ...over };
+}
+
 function rule(overrides: Partial<WorkflowRuleDoc> = {}): WorkflowRuleDoc {
-  return { okey: 'r1', event: 'membership.ended', responsibilityKey: 'treasurer', messageKey: '@x.y', ...overrides };
+  return { okey: 'r1', event: 'membership.ended', responsibilityKey: 'treasurer', steps: [step()], ...overrides };
 }
 
 interface Fake extends WorkflowDeps {
@@ -284,7 +288,7 @@ describe('runWorkflowWith', () => {
   });
 
   it('ignores an unknown action', async () => {
-    const deps = fakeDeps({ rules: [rule({ action: 'sendCarrierPigeon' })], responsibility: { responsibleAvatar: avatar('resp') } });
+    const deps = fakeDeps({ rules: [rule({ steps: [step({ action: 'sendCarrierPigeon' })] })], responsibility: { responsibleAvatar: avatar('resp') } });
     await runWorkflowWith(ctx(), deps);
     expect(deps.tasks).toHaveLength(0);
     expect(deps.activities[0]['error']).toContain('sendCarrierPigeon');
@@ -297,7 +301,7 @@ describe('runWorkflowWith', () => {
       return { responsibleAvatar: avatar('resp') };
     };
     deps.rules = async () => [
-      rule({ okey: 'b', messageKey: '@second' }),
+      rule({ okey: 'b', steps: [step({ messageKey: '@second' })] }),
       rule({ okey: 'boom', responsibilityKey: 'boom' }),
     ];
     await runWorkflowWith(ctx(), deps);
@@ -316,7 +320,7 @@ describe('sendEmail / sendMessage', () => {
   const responsible = { responsibility: { responsibleAvatar: avatar('resp') } };
 
   it('mails the resolved responsible person, subject and body from the message key', async () => {
-    const deps = fakeDeps({ ...responsible, rules: [rule({ action: 'sendEmail' })], email: 'r@example.org' });
+    const deps = fakeDeps({ ...responsible, rules: [rule({ steps: [step({ action: 'sendEmail' })] })], email: 'r@example.org' });
     await runWorkflowWith(ctx(), deps);
     expect(deps.emails).toHaveLength(1);
     expect(deps.emails[0].to).toBe('r@example.org');
@@ -325,21 +329,21 @@ describe('sendEmail / sendMessage', () => {
   });
 
   it('does not mail a person without an address', async () => {
-    const deps = fakeDeps({ ...responsible, rules: [rule({ action: 'sendEmail' })], email: '' });
+    const deps = fakeDeps({ ...responsible, rules: [rule({ steps: [step({ action: 'sendEmail' })] })], email: '' });
     await runWorkflowWith(ctx(), deps);
     expect(deps.emails).toHaveLength(0);
     expect(deps.activities[0]['error']).toBe('no email address');
   });
 
   it('stops at the daily cap', async () => {
-    const deps = fakeDeps({ ...responsible, rules: [rule({ action: 'sendEmail' })], email: 'r@example.org', sendCount: MAX_RULE_SENDS_PER_DAY });
+    const deps = fakeDeps({ ...responsible, rules: [rule({ steps: [step({ action: 'sendEmail' })] })], email: 'r@example.org', sendCount: MAX_RULE_SENDS_PER_DAY });
     await runWorkflowWith(ctx(), deps);
     expect(deps.emails).toHaveLength(0);
     expect(deps.activities[0]['skipped']).toBe('daily send cap');
   });
 
   it('messages the responsible person with a deterministic transaction id', async () => {
-    const deps = fakeDeps({ ...responsible, rules: [rule({ action: 'sendMessage' })], matrixId: '@resp:s' });
+    const deps = fakeDeps({ ...responsible, rules: [rule({ steps: [step({ action: 'sendMessage' })] })], matrixId: '@resp:s' });
     await runWorkflowWith(ctx(), deps);
     await runWorkflowWith(ctx(), deps);
     expect(deps.messages).toHaveLength(2);
@@ -349,7 +353,7 @@ describe('sendEmail / sendMessage', () => {
   });
 
   it('does not message a person without a Matrix account', async () => {
-    const deps = fakeDeps({ ...responsible, rules: [rule({ action: 'sendMessage' })], matrixId: '' });
+    const deps = fakeDeps({ ...responsible, rules: [rule({ steps: [step({ action: 'sendMessage' })] })], matrixId: '' });
     await runWorkflowWith(ctx(), deps);
     expect(deps.messages).toHaveLength(0);
     expect(deps.activities[0]['error']).toBe('no matrix account');
@@ -360,7 +364,7 @@ describe('task.completed → message the author', () => {
   // the rule an admin configures for "somebody else finished my task"
   const taskRule = rule({
     event: 'task.completed', probe: 'authorIsNotAssignee',
-    action: 'sendMessage', responsibilityKey: SUBJECT_RECIPIENT,
+    steps: [step({ action: 'sendMessage' })], responsibilityKey: SUBJECT_RECIPIENT,
   });
   const taskCtx = (authorKey: string, assigneeKey: string) => ctx({
     event: 'task.completed', personKey: authorKey, relatedKey: 'task.t1', subjectName: 'Boot putzen',
@@ -385,14 +389,14 @@ describe('esign', () => {
   it('substitutes {relatedKey} into the storage path', async () => {
     const deps = fakeDeps({
       responsibility: { responsibleAvatar: avatar('resp') },
-      rules: [rule({ action: 'esign', actionArg: 'docs/{relatedKey}.pdf' })],
+      rules: [rule({ steps: [step({ action: 'esign', actionArg: 'docs/{relatedKey}.pdf' })] })],
     });
     await runWorkflowWith(ctx(), deps);
     expect(deps.esigns[0].storagePath).toBe('docs/membership.m1.pdf');
   });
 
   it('refuses to start without a storage path', async () => {
-    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('resp') }, rules: [rule({ action: 'esign' })] });
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('resp') }, rules: [rule({ steps: [step({ action: 'esign' })] })] });
     await runWorkflowWith(ctx(), deps);
     expect(deps.esigns).toHaveLength(0);
     expect(deps.activities[0]['error']).toContain('storage path');
@@ -400,7 +404,7 @@ describe('esign', () => {
 });
 
 describe('requestApproval', () => {
-  const approvalRule = rule({ action: 'requestApproval', actionArg: 'skiffPlatz', writeBack: 'reservations.state' });
+  const approvalRule = rule({ steps: [step({ action: 'requestApproval', actionArg: 'skiffPlatz', writeBack: 'reservations.state' })] });
 
   it('creates the approval for the resolved approver, carrying the rule write-back', async () => {
     const deps = fakeDeps({
@@ -452,5 +456,36 @@ describe('requestApproval', () => {
     await runWorkflowWith(ctx(), deps);
     expect(deps.approvals).toHaveLength(0);
     expect(deps.activities[0]['skipped']).toBe('approval pending');
+  });
+});
+
+describe('runAction — steps', () => {
+  it('runs every step of a rule, in order', async () => {
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('t1') }, matrixId: '@t1:x', email: 'a@b.c' });
+    await runAction(rule({ steps: [step(), step({ action: 'sendEmail' })] }), ctx(), deps);
+    expect(deps.tasks).toHaveLength(1);
+    expect(deps.emails).toHaveLength(1);
+  });
+
+  it('a failing step does not stop the following ones', async () => {
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('t1') } });
+    deps.createTask = async () => { throw new Error('boom'); };
+    await runAction(rule({ steps: [step(), step({ action: 'sendMessage' })] }), ctx(), { ...deps, matrixIdFor: async () => '@t1:x' });
+    expect(deps.activities.some((a) => String(a['error']).includes('boom'))).toBe(true);
+    expect(deps.messages).toHaveLength(1);
+  });
+
+  it('logs and does nothing when a rule has no steps', async () => {
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('t1') } });
+    await runAction(rule({ steps: [] }), ctx(), deps);
+    expect(deps.tasks).toHaveLength(0);
+    expect(deps.activities.some((a) => String(a['error']).includes('no steps'))).toBe(true);
+  });
+
+  it('logs an unknown action per step instead of failing the rule', async () => {
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('t1') } });
+    await runAction(rule({ steps: [step({ action: 'nope' }), step()] }), ctx(), deps);
+    expect(deps.tasks).toHaveLength(1);
+    expect(deps.activities.some((a) => String(a['error']).includes("unknown action 'nope'"))).toBe(true);
   });
 });

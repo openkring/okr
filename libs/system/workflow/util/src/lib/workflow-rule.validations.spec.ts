@@ -19,7 +19,7 @@ const VALID = {
   event: 'membership.categoryChanged',
   probe: 'categoryIs:passive,hasActiveOwnerships',
   responsibilityKey: 'quts1rewzl1ubx71tqu0',
-  messageKey: '@system/workflow/messages.passiveResourceAdmin',
+  steps: [{ action: 'openTask', actionArg: '', messageKey: '@system/workflow/messages.passiveResourceAdmin', dueInDays: 0, writeBack: '' }],
 };
 
 describe('workflowRuleValidations', () => {
@@ -28,9 +28,11 @@ describe('workflowRuleValidations', () => {
   });
 
   it('requires name, event, responsibility and message key', () => {
-    for (const field of ['name', 'event', 'responsibilityKey', 'messageKey'] as const) {
+    for (const field of ['name', 'event', 'responsibilityKey'] as const) {
       expect(run({ ...VALID, [field]: '' }).hasErrors(field)).toBe(true);
     }
+    // the message key lives on the step now, so its field name carries the path
+    expect(run({ ...VALID, steps: [{ ...VALID.steps[0], messageKey: '' }] }).hasErrors('steps[0].messageKey')).toBe(true);
   });
 
   it('requires the probe argument only when the probe consumes one', () => {
@@ -42,6 +44,6 @@ describe('workflowRuleValidations', () => {
   });
 
   it('rejects a due date beyond a year', () => {
-    expect(run({ ...VALID, dueInDays: 400 }).hasErrors('dueInDays')).toBe(true);
+    expect(run({ ...VALID, steps: [{ ...VALID.steps[0], dueInDays: 400 }] }).hasErrors('steps[0].dueInDays')).toBe(true);
   });
 });

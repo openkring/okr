@@ -1,10 +1,10 @@
-import { only, staticSuite } from 'vest';
+import { enforce, only, staticSuite, test } from 'vest';
 
 import { LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { WorkflowRuleModel } from '@okr/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-import { probeNeedsArg } from './workflow-rule.util';
+import { actionNeedsArg, probeNeedsArg } from './workflow-rule.util';
 
 export const workflowRuleValidations = staticSuite((model: WorkflowRuleModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
@@ -22,7 +22,16 @@ export const workflowRuleValidations = staticSuite((model: WorkflowRuleModel, te
   // category matches nothing, so the rule silently never fires).
   stringValidations('probeArg', model.probeArg, SHORT_NAME_LENGTH, 0, probeNeedsArg(model.probe));
   stringValidations('responsibilityKey', model.responsibilityKey, SHORT_NAME_LENGTH, 0, true);
-  stringValidations('messageKey', model.messageKey, LONG_NAME_LENGTH, 0, true);
-  // a task due more than a year out is a data-entry slip, not a policy
-  numberValidations('dueInDays', model.dueInDays, true, 0, 365);
+
+  const steps = model.steps ?? [];
+  // a rule with no consequence is a rule that does nothing — the engine logs and skips it
+  test('steps', 'mandatory', () => { enforce(steps.length).greaterThan(0); });
+  steps.forEach((s, i) => {
+    stringValidations(`steps[${i}].action`, s.action, SHORT_NAME_LENGTH, 0, true);
+    // mandatory exactly when the form shows the field, same rule as probeArg
+    stringValidations(`steps[${i}].actionArg`, s.actionArg, LONG_NAME_LENGTH, 0, actionNeedsArg(s.action));
+    stringValidations(`steps[${i}].messageKey`, s.messageKey, LONG_NAME_LENGTH, 0, true);
+    // a task due more than a year out is a data-entry slip, not a policy
+    numberValidations(`steps[${i}].dueInDays`, s.dueInDays, true, 0, 365);
+  });
 });

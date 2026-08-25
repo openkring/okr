@@ -17,7 +17,7 @@ describe('newWorkflowRuleModel', () => {
 
   it('defaults to the only v1 action and to "always fires"', () => {
     const rule = newWorkflowRuleModel('scs');
-    expect(rule.action).toBe('openTask');
+    expect(rule.steps[0].action).toBe('openTask');
     expect(rule.probe).toBe('');
   });
 });
@@ -77,7 +77,7 @@ describe('getWorkflowRuleExportColumns', () => {
     const rule = newWorkflowRuleModel('scs', 'membership.ended');
     rule.name = 'Austritt → Kassier';
     rule.responsibilityKey = 'scs-treasurer';
-    rule.dueInDays = 30;
+    rule.steps[0].dueInDays = 30;
 
     const columns = getWorkflowRuleExportColumns(i18n, () => 'Kassier');
     const [header, row] = buildExportTable([rule], columns);

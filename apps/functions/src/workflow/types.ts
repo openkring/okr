@@ -25,17 +25,22 @@ export interface WorkflowContext {
   params: Record<string, string>;
 }
 
+export interface WorkflowActionStepDoc {
+  action?: string;
+  actionArg?: string;         // email template | esign storage path | approval kind
+  messageKey?: string;
+  dueInDays?: number;
+  writeBack?: string;         // 'collection.field' patched on an approval outcome, '' = none
+}
+
 export interface WorkflowRuleDoc {
   okey: string;
   event?: string;
   probe?: string;
   probeArg?: string;
-  action?: string;
-  actionArg?: string;         // email template | esign storage path | approval kind
-  writeBack?: string;         // 'collection.field' patched on an approval outcome, '' = none
   responsibilityKey?: string;
-  messageKey?: string;
-  dueInDays?: number;
+  /** the consequences, in order — mirrors WorkflowRuleModel.steps */
+  steps?: WorkflowActionStepDoc[];
   isArchived?: boolean;
 }
 
