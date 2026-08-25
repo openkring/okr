@@ -46,4 +46,13 @@ describe('workflowRuleValidations', () => {
   it('rejects a due date beyond a year', () => {
     expect(run({ ...VALID, steps: [{ ...VALID.steps[0], dueInDays: 400 }] }).hasErrors('steps[0].dueInDays')).toBe(true);
   });
+
+  it('reports a missing step message key under the exact bracketed key the vest-bridge resolves onto the form tree', () => {
+    // vest-bridge.ts (@okr/shared-util-angular) turns 'steps[0].messageKey' into ['steps','0','messageKey']
+    // and walks the FieldTree with it — any mismatch between this key and the model path means the
+    // error is silently dropped (a `console.warn`, not a thrown error) and the field looks valid forever.
+    const result = run({ ...VALID, steps: [{ ...VALID.steps[0], messageKey: '' }] });
+    expect(result.hasErrors('steps[0].messageKey')).toBe(true);
+    expect(Object.keys(result.getErrors())).toContain('steps[0].messageKey');
+  });
 });

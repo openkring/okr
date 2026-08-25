@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
 
-import { CategoryListModel, RoleName, UserModel, WorkflowRuleModel } from '@okr/shared-models';
+import { CategoryListModel, RoleName, UserModel, WorkflowActionStep, WorkflowRuleModel, newWorkflowActionStep } from '@okr/shared-models';
 import { CategorySelect, Chips, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
@@ -187,13 +187,16 @@ export class WorkflowRuleForm {
   protected readonly probeArg = computed(() => this.formData()?.probeArg ?? '');
   // only the probes that consume it (and do not carry an inline ':arg') show the field
   protected readonly needsProbeArg = computed(() => probeNeedsArg(this.probe()));
-  protected readonly action = computed(() => this.formData()?.action ?? 'openTask');
-  protected readonly actionArg = computed(() => this.formData()?.actionArg ?? '');
+  // The editor edits the FIRST step only — the multi-step UI is a separate piece of work
+  // (spec 2026-08-25 §2). A legacy-shaped document without steps must not crash the form.
+  protected readonly step = computed<WorkflowActionStep>(() => this.formData()?.steps?.[0] ?? newWorkflowActionStep());
+  protected readonly action = computed(() => this.step().action || 'openTask');
+  protected readonly actionArg = computed(() => this.step().actionArg ?? '');
   // only the actions that consume it show the field — openTask has nothing to configure
   protected readonly needsActionArg = computed(() => actionNeedsArg(this.action()));
   // the outcome patch only means anything for an approval
   protected readonly isApproval = computed(() => isApprovalAction(this.action()));
-  protected readonly writeBack = computed(() => this.formData()?.writeBack ?? '');
+  protected readonly writeBack = computed(() => this.step().writeBack ?? '');
   protected readonly writeBackOptions = WRITE_BACK_OPTIONS;
   protected readonly responsibilityKey = computed(() => this.formData()?.responsibilityKey ?? '');
   // a rule may point at a responsibility that was deleted or is not loaded yet: keep the stored
@@ -203,8 +206,8 @@ export class WorkflowRuleForm {
     const key = this.responsibilityKey();
     return !key || options.some(o => o.key === key) ? options : [{ key, name: key }, ...options];
   });
-  protected readonly messageKey = computed(() => this.formData()?.messageKey ?? '');
-  protected readonly dueInDays = computed(() => this.formData()?.dueInDays ?? 0);
+  protected readonly messageKey = computed(() => this.step().messageKey ?? '');
+  protected readonly dueInDays = computed(() => this.step().dueInDays ?? 0);
   protected readonly notes = computed(() => this.formData()?.notes ?? DEFAULT_NOTES);
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
 
@@ -256,26 +259,47 @@ export class WorkflowRuleForm {
     placeholder: this.i18n().notes_placeholder()
   } as NotesInputI18n));
 
+  /** Fields that live on the first action step rather than on the rule itself. */
+  private static readonly STEP_FIELDS = ['action', 'actionArg', 'messageKey', 'dueInDays', 'writeBack'];
+
+  private patchStep(patch: Partial<WorkflowActionStep>): void {
+    this.formData.update((vm) => {
+      const steps = vm.steps?.length ? [...vm.steps] : [newWorkflowActionStep()];
+      steps[0] = { ...steps[0], ...patch };
+      return { ...vm, steps };
+    });
+  }
+
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);
-    // switching to a probe that takes no argument drops the old one: an argument the form no
-    // longer shows is data nobody can see, correct or explain.
-    let dropped: Partial<WorkflowRuleModel> = {};
-    if (fieldName === 'probe' && !probeNeedsArg(fieldValue as string)) dropped = { probeArg: '' };
-    // same rule for the action: an argument the form no longer shows is data nobody can
-    // see, correct or explain — and a stale writeBack would patch a record on an action
-    // that never asks anyone.
     if (fieldName === 'action') {
-      dropped = {
+      // switching action drops arguments the form no longer shows: data nobody can see,
+      // correct or explain — and a stale writeBack would patch a record on an action that
+      // never asks anyone.
+      this.patchStep({
+        action: fieldValue as string,
         ...(actionNeedsArg(fieldValue as string) ? {} : { actionArg: '' }),
         ...(isApprovalAction(fieldValue as string) ? {} : { writeBack: '' }),
-      };
+      });
+      return;
     }
+    if (WorkflowRuleForm.STEP_FIELDS.includes(fieldName)) {
+      this.patchStep({ [fieldName]: fieldValue } as Partial<WorkflowActionStep>);
+      return;
+    }
+    // switching to a probe that takes no argument drops the old one: an argument the form no
+    // longer shows is data nobody can see, correct or explain.
+    const dropped: Partial<WorkflowRuleModel> =
+      fieldName === 'probe' && !probeNeedsArg(fieldValue as string) ? { probeArg: '' } : {};
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue, ...dropped }));
   }
 
   protected onNumberChange(fieldName: string, fieldValue: number): void {
     this.dirty.emit(true);
+    if (WorkflowRuleForm.STEP_FIELDS.includes(fieldName)) {
+      this.patchStep({ [fieldName]: fieldValue } as Partial<WorkflowActionStep>);
+      return;
+    }
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
   }
 
