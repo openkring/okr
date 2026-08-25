@@ -198,19 +198,18 @@ export const GroupStore = signalStore(
     },
 
     /**
-     * Opens the tenant's support chat room. Falls back to the chat overview when the room
-     * cannot be resolved (not joined yet, or the client is still syncing) — the user then
-     * picks it from the room list rather than landing nowhere.
+     * Opens a group's chat — the tenant's support room by default.
+     *
+     * The persisted `matrixRoomId` is a shortcut past `requestGroupRoomAccess` (a '!'-prefixed
+     * id is applied directly by MatrixChat). For a group with `chatMode: 'ask'` that shortcut is
+     * WRONG: the id is the SHARED group room, so a non-member would be sent into a room they do
+     * not belong to instead of their own ask room. For those groups always hand over the group
+     * KEY and let the Cloud Function decide. Without the group at all — other tenants — open the
+     * chat overview rather than landing nowhere.
      */
-    async openSupportChat(): Promise<void> {
-      // The support chat is the 'support' group's Matrix room, and its id is persisted on the
-      // group doc. Read it from there rather than from the Matrix client's room list: that list
-      // is filled by the first sync, so a user who has not opened the chat yet would find it
-      // empty and land on their last room instead. `!`-prefixed ids are applied directly by
-      // MatrixChat; the group key is its documented fallback (resolves + force-joins via
-      // requestGroupRoomAccess). Without a support group — other tenants — open the overview.
-      const supportGroup = store.appStore.getGroup(SUPPORT_GROUP_KEY);
-      const selectedRoom = supportGroup ? (supportGroup.matrixRoomId || SUPPORT_GROUP_KEY) : undefined;
+    async openSupportChat(groupKey = SUPPORT_GROUP_KEY): Promise<void> {
+      const group = store.appStore.getGroup(groupKey);
+      const selectedRoom = group ? (group.chatMode === 'ask' ? groupKey : (group.matrixRoomId || groupKey)) : undefined;
       await navigateByUrl(store.router, '/private/chat/c-contentpage', selectedRoom ? { selectedRoom } : {});
     },
 
