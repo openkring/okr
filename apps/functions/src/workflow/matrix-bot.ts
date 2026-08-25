@@ -119,12 +119,17 @@ async function ensureDirectRoom(botUserId: string, matrixUserId: string, token: 
  * `txnId` is deterministic per (rule, event, subject), so a retried invocation is deduped
  * by Synapse. A genuinely re-fired event days later is NOT covered.
  *
- * ⚠️ `body` MUST stay pointer-only — a hint plus the deep link, never the substance (no
- * amounts, no reason text, no third-party names). Decided 2026-08-15: bot DMs are exempt
- * from the 1.33 E2EE cutover (the bot has no crypto and `ensureDirectRoom` deliberately
- * omits `m.room.encryption`), so this room is readable by the homeserver operator. The
- * body comes from the rule's `actionArg`, so this is a rule-authoring rule, not something
- * enforceable here — see the approval-workflow spec §2.3a.
+ * ⚠️ For RULE ACTIONS, `body` MUST stay pointer-only — a hint plus the deep link, never the
+ * substance (no amounts, no reason text, no third-party names). Decided 2026-08-15: bot DMs
+ * are exempt from the 1.33 E2EE cutover (the bot has no crypto and `ensureDirectRoom`
+ * deliberately omits `m.room.encryption`), so this room is readable by the homeserver
+ * operator. The body comes from the rule's `actionArg`, so this is a rule-authoring rule,
+ * not something enforceable here — see the approval-workflow spec §2.3a.
+ *
+ * The **Termin-Rundruf** (§1.3 of the participant-messaging spec, decided 2026-08-25) is the
+ * one deliberate exception: there a human types the message for a known set of participants,
+ * so plain text is allowed. The form warns «nicht für vertrauliche Angaben» — the same
+ * homeserver-readability caveat applies, it is just the sender's own call there.
  */
 export async function sendBotDirectMessage(matrixUserId: string, body: string, txnId: string): Promise<void> {
   const token = matrixBotToken.value();
