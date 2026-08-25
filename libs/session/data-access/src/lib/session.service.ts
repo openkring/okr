@@ -73,9 +73,9 @@ export class SessionService {
     this.session.userKey = user.okey;
     this.session.userEmail = user.loginEmail;
     this.session.index = getSessionIndex(this.session);
-    await ensureAppCheckToken();
-    await this.firestoreService.updateModel<SessionModel>(
-      SessionCollection, this.session, false, undefined, undefined, undefined, true);
+    // No backoff needed here: the fields are already on the in-memory session, so the next
+    // heartbeat (≤ 5 min) writes them anyway if this attempt is skipped for a missing token.
+    await this.writeSession(this.session);
   }
 
   public async endSession(): Promise<void> {
@@ -90,20 +90,25 @@ export class SessionService {
     session.durationSeconds = this.calcDurationSeconds(session.startedAt, endedAt);
     session.index = getSessionIndex(session);
 
+    let beaconSent = false;
     if (isSafari() || isIOS()) {
       this.sendBeacon(session);
+      beaconSent = true;
     }
-    await ensureAppCheckToken();
-    await this.firestoreService.updateModel<SessionModel>(
-      SessionCollection, session, false, undefined, undefined, undefined, true);
+    // The page is going away, so there is no time to back off and retry. If attestation is not
+    // ready, hand the close-out to the endSession function instead of firing a write that the
+    // backend will reject — and if even that is not possible, the 30-min orphan cleanup closes
+    // the session server-side.
+    if (!await this.writeSession(session) && !beaconSent) {
+      this.sendBeacon(session);
+    }
   }
 
   private async heartbeat(): Promise<void> {
     if (!this.session) return;
     this.session.lastSeenAt = getTodayStr(DateFormat.StoreDateTime);
-    await ensureAppCheckToken();
-    await this.firestoreService.updateModel<SessionModel>(
-      SessionCollection, this.session, false, undefined, undefined, undefined, true);
+    // A skipped beat is retried by the next one, well inside the 30-min orphan threshold.
+    await this.writeSession(this.session);
   }
 
   private startHeartbeat(): void {
@@ -116,6 +121,20 @@ export class SessionService {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
     }
+  }
+
+  /**
+   * Update the session document, but only when App Check really has a token. Without one the
+   * request goes out with a placeholder token and the backend answers PERMISSION_DENIED — the
+   * same doomed write that startSession() avoids (SCS-8M). Every caller here writes state that
+   * is either repeated by the next write or recoverable server-side, so skipping is safe.
+   * @return true when the update was written
+   */
+  private async writeSession(session: SessionModel): Promise<boolean> {
+    if (!await ensureAppCheckToken()) return false;
+    const key = await this.firestoreService.updateModel<SessionModel>(
+      SessionCollection, session, false, undefined, undefined, undefined, true);
+    return key !== undefined;
   }
 
   private delay(ms: number): Promise<void> {

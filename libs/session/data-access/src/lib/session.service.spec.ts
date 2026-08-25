@@ -25,6 +25,7 @@ vi.mock('@okr/shared-util-angular', () => ({
 import { SessionService } from './session.service';
 
 const createModelMock = vi.fn<() => Promise<string | undefined>>();
+const updateModelMock = vi.fn<() => Promise<string | undefined>>();
 
 function makeService(): SessionService {
   TestBed.configureTestingModule({
@@ -32,7 +33,10 @@ function makeService(): SessionService {
       SessionService,
       { provide: PLATFORM_ID, useValue: 'browser' },
       { provide: ENV, useValue: { tenantId: 'elab', firebase: { projectId: 'bkaiser-org' } } },
-      { provide: FirestoreService, useValue: { createModel: () => createModelMock() } },
+      {
+        provide: FirestoreService,
+        useValue: { createModel: () => createModelMock(), updateModel: () => updateModelMock() },
+      },
     ],
   });
   return TestBed.inject(SessionService);
@@ -44,6 +48,7 @@ describe('SessionService.startSession', () => {
     TestBed.resetTestingModule();
     vi.useFakeTimers();
     createModelMock.mockResolvedValue('s1');
+    updateModelMock.mockResolvedValue('s1');
   });
 
   afterEach(() => {
@@ -102,5 +107,84 @@ describe('SessionService.startSession', () => {
 
     expect(createModelMock).toHaveBeenCalledTimes(1);
     expect(svc.hasActiveSession).toBe(false);
+  });
+});
+
+describe('SessionService update writes', () => {
+  const fetchMock = vi.fn(() => Promise.resolve({} as Response));
+
+  /** A started session, so the update paths have something to write. */
+  async function startedService(): Promise<SessionService> {
+    ensureAppCheckTokenMock.mockResolvedValue(true);
+    const svc = makeService();
+    await svc.startSession();
+    ensureAppCheckTokenMock.mockReset();
+    return svc;
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+    vi.useFakeTimers();
+    createModelMock.mockResolvedValue('s1');
+    updateModelMock.mockResolvedValue('s1');
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('writes the login upgrade when attestation succeeds', async () => {
+    const svc = await startedService();
+    ensureAppCheckTokenMock.mockResolvedValue(true);
+
+    await svc.upgradeSession({ okey: 'u1', loginEmail: 'a@b.ch' } as never);
+
+    expect(updateModelMock).toHaveBeenCalledTimes(1);
+  });
+
+  // Skipping is safe: userKey/userEmail are on the in-memory session and the next heartbeat
+  // carries them — unlike a write without a token, which is rejected and lost.
+  it('skips the login upgrade without a token', async () => {
+    const svc = await startedService();
+    ensureAppCheckTokenMock.mockResolvedValue(false);
+
+    await svc.upgradeSession({ okey: 'u1', loginEmail: 'a@b.ch' } as never);
+
+    expect(updateModelMock).not.toHaveBeenCalled();
+  });
+
+  it('skips a heartbeat without a token and writes the next one', async () => {
+    await startedService();
+    ensureAppCheckTokenMock.mockResolvedValueOnce(false).mockResolvedValue(true);
+
+    await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+    expect(updateModelMock).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+    expect(updateModelMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes the session end when attestation succeeds', async () => {
+    const svc = await startedService();
+    ensureAppCheckTokenMock.mockResolvedValue(true);
+
+    await svc.endSession();
+
+    expect(updateModelMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // On unload there is no time to back off, so the close-out goes to the endSession function.
+  it('falls back to the beacon when the session end has no token', async () => {
+    const svc = await startedService();
+    ensureAppCheckTokenMock.mockResolvedValue(false);
+
+    await svc.endSession();
+
+    expect(updateModelMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
