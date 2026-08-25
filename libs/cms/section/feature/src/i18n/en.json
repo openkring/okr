@@ -263,7 +263,9 @@
         "atLocation": "needs help at this location: ",
         "unknownLocation": "needs help (location unknown)"
       }
-    }
+    },
+    "sent": "Your emergency message reached the emergency team.",
+    "error": "The emergency message could not be sent. Try again, or call directly."
   },
   "event": {
     "title": "Event list configuration",

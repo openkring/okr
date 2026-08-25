@@ -263,7 +263,9 @@
         "atLocation": "ha bisogno di aiuto in questo luogo: ",
         "unknownLocation": "ha bisogno di aiuto (luogo sconosciuto)"
       }
-    }
+    },
+    "sent": "Il tuo messaggio di emergenza è arrivato al gruppo di emergenza.",
+    "error": "Non è stato possibile inviare il messaggio di emergenza. Riprova o chiama direttamente."
   },
   "event": {
     "title": "Configurazione dell'elenco degli eventi",

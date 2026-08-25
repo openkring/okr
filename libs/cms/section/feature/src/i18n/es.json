@@ -263,7 +263,9 @@
         "atLocation": "necesita ayuda en este lugar: ",
         "unknownLocation": "necesita ayuda (lugar desconocido)"
       }
-    }
+    },
+    "sent": "Tu aviso de emergencia ha llegado al grupo de emergencia.",
+    "error": "No se ha podido enviar el aviso de emergencia. Inténtalo de nuevo o llama directamente."
   },
   "event": {
     "title": "Configuración de la lista de eventos",

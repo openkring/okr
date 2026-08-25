@@ -356,10 +356,10 @@ export const _MatrixChatStore = signalStore(
        * updates immediately without waiting for the next sync cycle.
        */
       async requestGroupRoomAccess(groupId: string): Promise<{ roomId: string; joined: boolean }> {
-        const functions = getFunctions(getApp(), 'europe-west6');
-        const fn = httpsCallable(functions, 'requestGroupRoomAccess');
-        const result = await fn({ groupId });
-        const { roomId, joined } = result.data as { roomId: string; joined: boolean };
+        // The callable itself lives in MatrixChatService, so the emergency button and this
+        // store cannot drift apart on how a group room is resolved. What stays here is the
+        // room-list bookkeeping, which only the chat UI cares about.
+        const { roomId, joined } = await store.matrixService.requestGroupRoomAccess(groupId);
         // The CF uses the Synapse admin API (private rooms → client join returns 403).
         // Register as pending so updateRoomsList() injects a stub immediately and the
         //   PFX renders the room without waiting for the next sync cycle.

@@ -182,6 +182,8 @@ export const SECTION_I18N_KEYS = {
   // emergency
   emergency_needs_help:                     PFX + 'emergency.needs.help.atLocation',
   emergency_needs_help_unknown_location:    PFX + 'emergency.needs.help.unknownLocation',
+  emergency_sent:                           PFX + 'emergency.sent',
+  emergency_error:                          PFX + 'emergency.error',
   
   // event
   event_title:                              PFX + 'event.title',

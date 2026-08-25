@@ -25,6 +25,13 @@ import { MessageCenterModal } from './message-center.modal';
 import { CardSelectModal } from './card-select.modal';
 import { MatrixChatService } from '@okr/chat-data-access';
 
+/**
+ * `groups/<okey>` of the group that answers the emergency button — the document id, not the
+ * display name. The name is what the old lookup used, and names are neither unique across
+ * tenants nor stable when an admin renames the group.
+ */
+const NOTFALL_GROUP_KEY = 'notfall';
+
 export type Coordinates = {
   latitude: number;
   longitude: number;
@@ -421,25 +428,39 @@ export const _SectionStore = signalStore(
         }
       },
 
+      /**
+       * Alarm the Notfall group, with the caller's coordinates when they can be had.
+       *
+       * Resolved through `requestGroupRoomAccess`, never by room name: the Notfall group runs
+       * in `chatMode: 'ask'`, so a name lookup returns the SHARED group room — which a
+       * non-member has not joined and cannot post into. Since a non-member is exactly who
+       * presses this button, the name lookup made the alarm fail for its whole audience.
+       * The callable hands back that person's own room with the group and joins them into it.
+       *
+       * Every exit reports: an emergency button that fails silently is worse than one that
+       * is not there, because the caller walks away believing help is coming.
+       */
       async sendEmergencyMessage(): Promise<void> {
-        if (!store.chatService.isInitialized) {
-          console.warn('SectionStore.sendEmergencyMessage: Matrix client not initialized');
-          return;
-        }
         const currentUser = store.currentUser();
-        const position = await this.getCurrentPosition();
-        if (currentUser) {
+        if (!currentUser) return;
+        try {
+          // Initialise on demand rather than bailing out — the button is reachable from a
+          // content page the user may have opened without ever touching the chat.
+          await store.chatService.ensureInitialized();
+          const { roomId } = await store.chatService.requestGroupRoomAccess(NOTFALL_GROUP_KEY);
           const name = currentUser.firstName + ' ' + currentUser.lastName + ' ';
-          const roomId = await store.chatService.getRoomByName('Notfall');
-          try {
-            if (position) {
-              await store.chatService.sendLocation(roomId, name + store.i18n.emergency_needs_help(), position.latitude, position.longitude);
-            } else {
-              await store.chatService.sendMessage(roomId, name + store.i18n.emergency_needs_help_unknown_location());
-            }
-          } catch (error) {
-            console.error('SectionStore.sendEmergencyMessage: Failed to send:', error);
+          // Asked for after the room is settled: the OS location prompt can sit there for a
+          // while, and a denied or slow fix must still produce an alarm.
+          const position = await this.getCurrentPosition();
+          if (position) {
+            await store.chatService.sendLocation(roomId, name + store.i18n.emergency_needs_help(), position.latitude, position.longitude);
+          } else {
+            await store.chatService.sendMessage(roomId, name + store.i18n.emergency_needs_help_unknown_location());
           }
+          await showToast(store.toastController, store.i18n.emergency_sent());
+        } catch (error) {
+          console.error('SectionStore.sendEmergencyMessage: Failed to send:', error);
+          await showToast(store.toastController, store.i18n.emergency_error());
         }
       },
 

@@ -263,7 +263,9 @@
         "atLocation": "a besoin d'aide à cet endroit : ",
         "unknownLocation": "a besoin d'aide (lieu inconnu)"
       }
-    }
+    },
+    "sent": "Ton message d'urgence est bien arrivé auprès du groupe d'urgence.",
+    "error": "Le message d'urgence n'a pas pu être envoyé. Réessaie ou appelle directement."
   },
   "event": {
     "title": "Configuration de la liste des événements",

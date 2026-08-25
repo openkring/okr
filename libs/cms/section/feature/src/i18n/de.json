@@ -263,7 +263,9 @@
         "atLocation": "braucht Hilfe an diesem Ort: ",
         "unknownLocation": "braucht Hilfe (Ort unbekannt)"
       }
-    }
+    },
+    "sent": "Deine Notfallmeldung ist bei der Notfallgruppe angekommen.",
+    "error": "Die Notfallmeldung konnte nicht gesendet werden. Versuch es nochmals oder ruf direkt an."
   },
   "event": {
     "title": "Konfiguration der Eventliste",
@@ -863,7 +865,7 @@
     "complete": "Als erledigt markieren",
     "view": "Aufgabe anzeigen",
     "edit": "Aufgabe bearbeiten",
-      "delete": "Aufgabe löschen"
+    "delete": "Aufgabe löschen"
   },
   "tracker": {
     "label": "Tracker",

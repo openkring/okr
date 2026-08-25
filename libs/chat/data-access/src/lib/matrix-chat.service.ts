@@ -443,6 +443,22 @@ export class MatrixChatService {
   }
 
   /**
+   * The room that connects the current user with a group, created on first use.
+   *
+   * The Cloud Function decides WHICH room that is: the shared group room for a member, an
+   * own room with the whole group for a non-member of a `chatMode: 'ask'` group (Notfall,
+   * Support). It also force-joins the caller through the Synapse admin API, because a
+   * client-side join on a private room is refused with 403 — so resolving a room any other
+   * way (by name, or from a group's persisted `matrixRoomId`) yields a room the caller
+   * cannot post into.
+   */
+  public async requestGroupRoomAccess(groupId: string): Promise<{ roomId: string; joined: boolean }> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'requestGroupRoomAccess');
+    const result = await fn({ groupId });
+    return result.data as { roomId: string; joined: boolean };
+  }
+
+  /**
    * Retrieve a room id by its name.
    *
    */
