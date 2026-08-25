@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { Meta, Title } from '@angular/platform-browser';
+import { Meta } from '@angular/platform-browser';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ArticleSection, ButtonSection, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -310,7 +310,6 @@ export class DashboardPage {
   protected readonly store = inject(PageStore);
   private readonly sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);
-  private readonly title = inject(Title);
   private readonly actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -332,12 +331,6 @@ export class DashboardPage {
       const meta = this.store.meta();
       if (meta) {
         this.meta.addTags(meta);
-      }
-    });
-    effect(() => {
-      const title = this.store.page()?.title;
-      if (title && title.length > 0) {
-        this.title.setTitle(title);
       }
     });
   }

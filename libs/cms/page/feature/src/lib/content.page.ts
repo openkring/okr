@@ -1,6 +1,6 @@
 import { Component, computed, effect, ElementRef, inject, input, signal, viewChild, viewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Meta, Title } from '@angular/platform-browser';
+import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { AccordionSection, ArticleSection, ButtonSection, RoleName, SectionModel } from '@okr/shared-models';
@@ -215,7 +215,6 @@ export class ContentPage {
   protected store = inject(PageStore);
   private sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);
-  private readonly title = inject(Title);
   private actionSheetController = inject(ActionSheetController);
   private route = inject(ActivatedRoute);
   private ionContent = viewChild(IonContent);
@@ -304,12 +303,6 @@ export class ContentPage {
       const meta = this.store.meta();
       if (meta) {
         this.meta.addTags(meta);
-      }
-    });
-    effect(() => {
-      const title = this.store.page()?.title;
-      if (title && title.length > 0) {
-        this.title.setTitle(title);
       }
     });
     effect(() => {

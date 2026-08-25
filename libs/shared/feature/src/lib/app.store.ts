@@ -1,5 +1,6 @@
 import { computed, effect, inject, PLATFORM_ID } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import { Title } from '@angular/platform-browser';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { captureMessage } from '@sentry/angular';
 import { authState } from 'rxfire/auth';
@@ -88,7 +89,8 @@ export const AppStore = signalStore(
     appNavigationService: inject(AppNavigationService),
     platformId: inject(PLATFORM_ID),
     sessionService: inject(SessionService),
-    i18nService: inject(I18nService)
+    i18nService: inject(I18nService),
+    title: inject(Title)
   })),
   
   withProps((store) => ({
@@ -568,6 +570,16 @@ export const AppStore = signalStore(
           markStartup('app-ready');
           reportStartupTiming(store.isDataReady() ? 'data-ready' : 'watchdog');
         }
+      });
+
+      // Document title: ALWAYS the organisation name, never the current page. It is what the
+      // browser tab and the installed PWA window show, so a page title there ("Aktivitäts-
+      // Übersicht") tells the user nothing about which tenant app they are looking at. The CMS
+      // page components used to overwrite it per page; they no longer do. appName is '' until
+      // the config resource resolves, so the index.html title stands until then.
+      effect(() => {
+        const appName = store.appConfig().appName;
+        if (appName.length > 0) store.title.setTitle(appName);
       });
 
       // Active UI language. Applies the signed-in user's saved preference (userLanguage),

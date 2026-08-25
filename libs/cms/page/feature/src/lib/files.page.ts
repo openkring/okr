@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { Meta, Title } from '@angular/platform-browser';
+import { Meta } from '@angular/platform-browser';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ArticleSection, ButtonSection, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -182,7 +182,6 @@ export class FilesPage {
   protected store = inject(PageStore);
   private sectionStore = inject(SectionStore);
   private readonly meta = inject(Meta);
-  private readonly title = inject(Title);
   private actionSheetController = inject(ActionSheetController);
 
   // inputs
@@ -205,12 +204,6 @@ export class FilesPage {
       const meta = this.store.meta();
       if (meta) {
         this.meta.addTags(meta);
-      }
-    });
-    effect(() => {
-      const title = this.store.page()?.title;
-      if (title && title.length > 0) {
-        this.title.setTitle(title);
       }
     });
   }
