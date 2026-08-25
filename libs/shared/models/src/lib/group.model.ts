@@ -80,6 +80,21 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
    */
   public chatMode: 'shared' | 'ask' | 'members' = 'shared';
 
+  /**
+   * Wer im gemeinsamen Raum dieser Gruppe schreiben darf. Dritte Achse neben `chatMode`
+   * (Zutritt) und `notifyType` (Reichweite der Benachrichtigung); alle drei sind unabhängig
+   * und kombinierbar.
+   * - 'all' (Vorgabe): jede Person im Raum schreibt — der normale Gruppenchat.
+   * - 'privileged': nur `admin`/`privileged` des Tenants schreiben; alle anderen lesen und
+   *   reagieren. Der Kanal «alle Mitglieder erreichen». AUSDRÜCKLICH NICHT die Admins der
+   *   Gruppe (`admins[]`) — siehe 2026-08-25-participant-messaging-spec.md §3.2b.
+   *
+   * ACHTUNG beim Lesen: Firestore liefert rohe Dokumente, dieser Initialisierer läuft dabei
+   * NICHT. Jede bestehende Gruppe trägt `undefined`. Immer als `postPolicy ?? 'all'` lesen —
+   * ein `?? 'privileged'` würde den ganzen Bestand lautlos stummschalten.
+   */
+  public postPolicy: 'all' | 'privileged' = 'all';
+
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;
   public index = DEFAULT_INDEX;
