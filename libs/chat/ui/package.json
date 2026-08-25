@@ -13,6 +13,7 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-core": "*",
     "@okr/chat-util": "*",
+    "@okr/avatar-data-access": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-pipes": "*",
     "@okr/shared-feature": "*"

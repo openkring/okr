@@ -1,12 +1,16 @@
-import { Component, computed, effect, input, output, signal, viewChild, ElementRef, Signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, viewChild, ElementRef, Signal } from '@angular/core';
 
 import { IonIcon, IonChip, IonAvatar, IonSpinner } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { MatrixMessage, MatrixReadReceipt } from '@okr/shared-models';
+import { MatrixMessage, MatrixReadReceipt, PersonModelName } from '@okr/shared-models';
+import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, linkifyText, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
+import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, linkifyText, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
+
+/** imgix thumbnail size for a mention pill's avatar — 2x the 18px CSS box, for retina. */
+const MENTION_AVATAR_SIZE = 36;
 
 @Component({
   selector: 'okr-matrix-message-list',
@@ -117,6 +121,25 @@ import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessa
     .message-text {
       white-space: pre-wrap;
       margin: 0;
+    }
+
+    /* Mention pills live inside [innerHTML], so they carry no _ngcontent attribute and
+       emulated encapsulation cannot reach them — hence ::ng-deep under .message-text. */
+    .message-text ::ng-deep .okr-mention-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      vertical-align: baseline;
+      text-decoration: none;
+      font-weight: 600;
+      color: var(--ion-color-primary);
+    }
+    .message-text ::ng-deep .okr-mention-avatar {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--ion-color-light);
     }
 
     .message-image {
@@ -438,7 +461,7 @@ import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessa
                         @switch (item.type) {
                           @case ('m.text') {
                             @if (item.content.formatted_body) {
-                              <p class="message-text" [innerHTML]="item.content.formatted_body"></p>
+                              <p class="message-text" [innerHTML]="renderFormattedBody(item)"></p>
                             } @else {
                               <p class="message-text" [innerHTML]="linkify(item.body)"></p>
                             }
@@ -528,6 +551,8 @@ import { extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessa
   `
 })
 export class MatrixMessageList {
+  private readonly avatarService = inject(AvatarService);
+
   // inputs
   messages = input.required<MatrixMessage[]>();
   currentUserId = input<string>();
@@ -557,6 +582,9 @@ export class MatrixMessageList {
   loadOlder = output<void>();
 
   messagesContainer = viewChild<ElementRef>('messagesContainer');
+
+  /** eventId → decorated formatted_body, keyed by its source html (see renderFormattedBody). */
+  private readonly decoratedBodies = new Map<string, { source: string; html: string }>();
 
   /** True while a scroll-up history load is in flight (shows the top spinner). */
   protected readonly loadingOlder = signal(false);
@@ -652,6 +680,36 @@ export class MatrixMessageList {
   /** Plain-text bodies carry no markup, so urls are made clickable here. */
   protected linkify(body: string): string {
     return linkifyText(body ?? '');
+  }
+
+  /**
+   * Decorated `formatted_body`: mention anchors become avatar + first-name pills.
+   *
+   * Memoised per event because the template re-evaluates this on every change-detection pass
+   * and a fresh string would make Angular re-write `innerHTML` (and re-decode the avatar image)
+   * each time. The cached entry is keyed by the source html, so an edited message re-renders.
+   * A mention whose avatar is not yet in `AvatarService`'s cache renders as a text-only pill and
+   * keeps that shape for the session — acceptable, the cache is populated at app start.
+   */
+  protected renderFormattedBody(item: MatrixMessage): string {
+    const source = (item.content?.['formatted_body'] as string) ?? '';
+    const cached = this.decoratedBodies.get(item.eventId);
+    if (cached && cached.source === source) return cached.html;
+    const html = decorateMentionPills(source, (localpart) => this.mentionAvatarUrl(localpart));
+    this.decoratedBodies.set(item.eventId, { source, html });
+    return html;
+  }
+
+  /**
+   * Avatar thumbnail for a mentioned person. The Matrix localpart IS the `PersonModel.okey`
+   * (same derivation as `MatrixChatService.personAvatarUrl`), and an uncached avatar returns
+   * undefined so the pill stays text-only instead of showing a generic person icon.
+   */
+  private mentionAvatarUrl(localpart: string): string | undefined {
+    const key = `${PersonModelName}.${localpart}`;
+    return this.avatarService.getCachedStoragePath(key)
+      ? this.avatarService.getAvatarUrl(key, PersonModelName, MENTION_AVATAR_SIZE)
+      : undefined;
   }
 
   protected onBubbleClick(event: MouseEvent, item: MatrixMessage): void {

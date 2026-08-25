@@ -620,6 +620,17 @@ export class MatrixChatService {
     this.client.on(RoomEvent.LocalEchoUpdated, (event: MatrixEvent, room: Room, oldEventId?: string) => {
       const et = event.getType();
       if (et !== EventType.RoomMessage && et !== 'org.matrix.msc3381.poll.start') return;
+
+      // An m.replace edit is not a message of its own — it patches the original in place.
+      // Without this branch the local echo of an edit has no temp entry to replace and is
+      // appended as a second bubble carrying the `* <text>` fallback body, so an edited
+      // message appears twice until the room is reloaded.
+      const echoRelatesTo = event.getContent()?.['m.relates_to'];
+      if (echoRelatesTo?.rel_type === RelationType.Replace && echoRelatesTo?.event_id) {
+        this.applyMessageEdit(echoRelatesTo.event_id as string, event, room);
+        return;
+      }
+
       const subject = this.messages$.get(room.roomId);
       if (!subject) return;
       const msgs = subject.value ?? [];

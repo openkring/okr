@@ -1,8 +1,9 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { IonIcon } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { PersonModel } from '@okr/shared-models';
+import { PersonModel, PersonModelName } from '@okr/shared-models';
+import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatI18n } from '@okr/chat-util';
 
 /** The canonical text inserted for a room-wide mention. */
@@ -27,6 +28,9 @@ export function mentionOptionId(instanceId: number, index: number): string {
 
 /** Aliases that also surface the @room entry, without ever being inserted verbatim. */
 const ROOM_ALIASES = ['room', 'all', 'team', 'alle'];
+
+/** imgix thumbnail size for a suggestion row's avatar — 2x the 24px CSS box, for retina. */
+const AVATAR_SIZE = 48;
 
 /** Maximum number of person suggestions shown at once. */
 const MAX_SUGGESTIONS = 8;
@@ -91,6 +95,14 @@ export type MentionPick =
       font-size: 0.9375rem;
     }
     .option.active { background: var(--ion-color-light); }
+    .option .avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex: 0 0 auto;
+      background: var(--ion-color-light);
+    }
     .option:hover { background: var(--ion-color-light); }
     .room-option { font-weight: 600; color: var(--ion-color-primary); }
   `],
@@ -114,7 +126,7 @@ export type MentionPick =
         <div class="option" role="option" [id]="optionId($index)"
              [attr.aria-selected]="$index === effectiveIndex()"
              [class.active]="$index === effectiveIndex()" (click)="picked.emit(option)">
-          <ion-icon src="{{ 'person' | svgIcon }}" />
+          <img class="avatar" [src]="avatarUrl(option.person)" alt="" />
           <span>{{ option.person.firstName }} {{ option.person.lastName }}</span>
         </div>
       }
@@ -122,6 +134,8 @@ export type MentionPick =
   `,
 })
 export class MentionAutocomplete {
+  private readonly avatarService = inject(AvatarService);
+
   // inputs
   public query = input.required<string>();
   public candidates = input.required<PersonModel[]>();
@@ -137,6 +151,14 @@ export class MentionAutocomplete {
 
   /** Deterministic per-row id, matched by the composer's `aria-activedescendant`. */
   protected optionId = (index: number): string => mentionOptionId(this.instanceId(), index);
+
+  /**
+   * Thumbnail URL for a suggested person. `getAvatarUrl` is synchronous and falls back to the
+   * generic person icon when the storage path is not (yet) cached, so a row never renders a
+   * broken image.
+   */
+  protected avatarUrl = (person: PersonModel): string =>
+    this.avatarService.getAvatarUrl(`${PersonModelName}.${person.okey}`, PersonModelName, AVATAR_SIZE);
 
   // outputs
   public picked = output<MentionPick>();
