@@ -1055,7 +1055,9 @@ export class CalEventList implements OnInit {
     const { ScheduleModal } = await import('./schedule.modal');
     const modal = await this.modalController.create({
       component: ScheduleModal,
-      cssClass: 'wide-modal',
+      // wide (the table needs the room) but shrink-to-content in height: a poll with three
+      // members would otherwise sit in a box that is 80% of the viewport tall and mostly empty
+      cssClass: 'wide-modal auto-height-modal',
       componentProps: { seriesId },
       injector: this.injector,   // share CalEventList's CalEventStore instance with the root-injected modal
     });
