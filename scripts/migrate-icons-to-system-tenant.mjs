@@ -13,18 +13,37 @@
  * (a tag definition's labels, a category list's entries) and both already use the
  * copy-on-write fork model, which the sentinel does not support.
  *
+ * ROLLOUT IS TWO-PHASE, because of the staggered-app-deploy rule (`version` skill). The
+ * deployed bundles still issue `tenants array-contains <tenantId>`; a document carrying ONLY
+ * 'system' is invisible to them. Migrating straight to `['system']` therefore EMPTIES the icon
+ * list for scs — the one tenant that had icons — until every app ships the new query. So:
+ *
+ *   phase 1 (this script, default):  tenants = ['system', 'scs']   <- both queries work
+ *   ... release every app on the new getSystemQuery ...
+ *   phase 2 (`--drop-scs`):          tenants = ['system']          <- final state
+ *
+ * Phase 2 is cosmetic; leaving 'scs' on forever is harmless, it just keeps a redundant entry.
+ * Do NOT run phase 2 before every app in `app-version.deployed` is on the new bundle.
+ *
  * Dry-run by default; `--apply` writes.
  */
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 const SYSTEM_TENANT = 'system';
+/** Kept during phase 1 so bundles still on the old `array-contains` query keep seeing icons. */
+const LEGACY_TENANT = 'scs';
 const APPLY = process.argv.includes('--apply');
+const DROP_LEGACY = process.argv.includes('--drop-scs');
 if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
 const db = getFirestore();
 
 const snap = await db.collection('icons').get();
-const todo = snap.docs.filter(d => !(d.data().tenants ?? []).includes(SYSTEM_TENANT));
+const target = DROP_LEGACY ? [SYSTEM_TENANT] : [SYSTEM_TENANT, LEGACY_TENANT];
+const todo = snap.docs.filter(d => {
+  const t = (d.data().tenants ?? []).slice().sort();
+  return JSON.stringify(t) !== JSON.stringify(target.slice().sort());
+});
 
 // Guard: once every tenant sees every document, an icon's identity must still be unique or the
 // picker lists the same entry twice. Identity is (name, TYPE) — NOT name alone: `type` is the
@@ -49,14 +68,15 @@ if (dupes.length) {
   process.exit(1);
 }
 
+console.log(`phase: ${DROP_LEGACY ? '2 (final)' : '1 (compatible with the deployed bundles)'}`);
 if (!APPLY) {
-  console.log(`\n>>> DRY RUN. Would set tenants: ['${SYSTEM_TENANT}'] on ${todo.length} docs.`);
+  console.log(`\n>>> DRY RUN. Would set tenants: ${JSON.stringify(target)} on ${todo.length} docs.`);
   process.exit(0);
 }
 let n = 0;
 for (let i = 0; i < todo.length; i += 400) {
   const batch = db.batch();
-  for (const d of todo.slice(i, i + 400)) { batch.update(d.ref, { tenants: [SYSTEM_TENANT] }); n++; }
+  for (const d of todo.slice(i, i + 400)) { batch.update(d.ref, { tenants: target }); n++; }
   await batch.commit();
 }
-console.log(`\n>>> APPLIED — ${n} icon documents now carry tenants: ['${SYSTEM_TENANT}'].`);
+console.log(`\n>>> APPLIED — ${n} icon documents now carry tenants: ${JSON.stringify(target)}.`);
