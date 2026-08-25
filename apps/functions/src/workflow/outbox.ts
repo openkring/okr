@@ -19,7 +19,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 import { getAppEmailConfig } from '../auth/email-templates';
 import { DEFAULT_EMAIL_PROVIDER, sendEmailViaProvider } from '../auth/email-transport';
-import { matrixBotToken, sendBotDirectMessage } from './matrix-bot';
+import { MATRIX_HOMESERVER, matrixAdminToken, resolveChatRoomForPerson } from '../matrix-simple/shared';
+import { matrixBotToken, postGroupChatMessage, sendBotDirectMessage } from './matrix-bot';
 import { ALL_ESIGN_SECRETS } from '../esign/shared';
 import { startSignatureRun } from '../esign/esign-send-document';
 
@@ -30,7 +31,7 @@ export const WorkflowOutboxCollection = 'workflow-outbox';
 
 export interface OutboxDoc {
   tenants: string[];
-  kind: 'sendEmail' | 'sendMessage' | 'esign';
+  kind: 'sendEmail' | 'sendMessage' | 'esign' | 'openChat';
   ruleKey: string;
   day: string;                       // StoreDate — the per-rule daily cap counts on this
   state?: 'pending' | 'sent' | 'failed';
@@ -80,6 +81,18 @@ async function dispatch(doc: OutboxDoc): Promise<void> {
       logger.info(`${CF_NAME}: rule ${doc.ruleKey} started an esign run for ${p['relatedKey']}`);
       return;
     }
+    case 'openChat': {
+      // Both tokens live here and nowhere else: a Gen-2 secret binds to the function that uses
+      // it, and binding MATRIX_ADMIN_TOKEN onto every event producer is exactly what the
+      // outbox exists to avoid.
+      const adminToken = matrixAdminToken.value();
+      const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+      const roomId = await resolveChatRoomForPerson(p['groupId'], p['personKey'], hostname, adminToken, { create: true });
+      if (!roomId) throw new Error(`openChat: no room for group '${p['groupId']}'`);
+      await postGroupChatMessage(roomId, p['body'], p['txnId'], adminToken);
+      logger.info(`${CF_NAME}: rule ${doc.ruleKey} opened a chat with group ${p['groupId']} (tenant ${tenantId})`);
+      return;
+    }
   }
 }
 
@@ -94,7 +107,7 @@ export const onWorkflowOutbox = onDocumentCreated(
   {
     document: `${WorkflowOutboxCollection}/{id}`,
     region: REGION,
-    secrets: [...EMAIL_SECRETS, matrixBotToken, ...ALL_ESIGN_SECRETS],
+    secrets: [...EMAIL_SECRETS, matrixBotToken, matrixAdminToken, ...ALL_ESIGN_SECRETS],
   },
   async (event) => {
     const snap = event.data;

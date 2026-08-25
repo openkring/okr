@@ -61,8 +61,9 @@ export function probeNeedsArg(probe?: string): boolean {
  *  - sendEmail: an optional provider template name
  *  - esign:     the storage path of the document (may contain {relatedKey})
  *  - requestApproval: the approval kind, e.g. 'skiffPlatz'
+ *  - openChat:  the okey of the group that answers, e.g. 'support'
  */
-const ACTIONS_WITH_ARG = ['sendEmail', 'esign', 'requestApproval'];
+const ACTIONS_WITH_ARG = ['sendEmail', 'esign', 'requestApproval', 'openChat'];
 
 /** Does this action still need the rule's `actionArg`? */
 export function actionNeedsArg(action?: string): boolean {

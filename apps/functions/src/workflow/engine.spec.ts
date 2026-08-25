@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { AvatarInfo } from '@okr/shared-models';
 
 import { MAX_RULE_SENDS_PER_DAY, SUBJECT_RECIPIENT, isDelegateActive, isResponsibilityValid, resolveAssignee, runAction, runProbe, runWorkflowWith } from './engine';
-import { EsignRequest, InvoiceDoc, NewApproval, NewTask, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
+import { EsignRequest, InvoiceDoc, NewApproval, NewTask, OpenChatRoomRequest, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const TENANT = 'scs';
 const TODAY = '20260813';
@@ -42,6 +42,7 @@ interface Fake extends WorkflowDeps {
   messages: OutgoingChatMessage[];
   esigns: EsignRequest[];
   approvals: NewApproval[];
+  chats: OpenChatRoomRequest[];
 }
 
 function fakeDeps(over: Partial<{
@@ -64,6 +65,7 @@ function fakeDeps(over: Partial<{
   const messages: OutgoingChatMessage[] = [];
   const esigns: EsignRequest[] = [];
   const approvals: NewApproval[] = [];
+  const chats: OpenChatRoomRequest[] = [];
   return {
     tasks,
     activities,
@@ -71,12 +73,14 @@ function fakeDeps(over: Partial<{
     messages,
     esigns,
     approvals,
+    chats,
     avatarFor: async () => over.requester,
     emailFor: async () => over.email ?? '',
     matrixIdFor: async () => over.matrixId ?? '',
     sendCount: async () => over.sendCount ?? 0,
     sendEmail: async (m) => { emails.push(m); },
     sendChatMessage: async (m) => { messages.push(m); },
+    openChatRoom: async (r) => { chats.push(r); },
     startEsign: async (r) => { esigns.push(r); },
     hasPendingApproval: async () => over.pendingApproval ?? false,
     createApproval: async (a) => { approvals.push(a); },
@@ -456,6 +460,57 @@ describe('requestApproval', () => {
     await runWorkflowWith(ctx(), deps);
     expect(deps.approvals).toHaveLength(0);
     expect(deps.activities[0]['skipped']).toBe('approval pending');
+  });
+});
+
+describe('openChat', () => {
+  const chatStep = step({ action: 'openChat', actionArg: 'Ausschuss Boote', messageKey: '' });
+
+  it('queues one room message for the group and the subject person', async () => {
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('t1') } });
+    await runAction(rule({ steps: [chatStep] }), ctx({ params: { notes: 'Steuer gebrochen' } }), deps);
+    expect(deps.chats).toHaveLength(1);
+    expect(deps.chats[0].groupId).toBe('Ausschuss Boote');
+    expect(deps.chats[0].personKey).toBe('p1');
+    // no messageKey → the reporter's own text is the opening message
+    expect(deps.chats[0].body).toBe('Steuer gebrochen');
+  });
+
+  it('prefers the rule message over the raw notes', async () => {
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('t1') } });
+    await runAction(rule({ steps: [step({ action: 'openChat', actionArg: 'support', messageKey: '@x.y' })] }),
+      ctx({ params: { notes: 'raw' } }), deps);
+    // fakeDeps.translate returns `<key>|<name>|<from>-><to>`, so any non-empty result proves
+    // the rule's wording won over params.notes
+    expect(deps.chats[0].body.startsWith('@x.y|')).toBe(true);
+  });
+
+  it('logs and queues nothing without a group key', async () => {
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('t1') } });
+    await runAction(rule({ steps: [step({ action: 'openChat', actionArg: '' })] }), ctx(), deps);
+    expect(deps.chats).toHaveLength(0);
+    expect(deps.activities.some((a) => String(a['error']).includes('group key'))).toBe(true);
+  });
+
+  it('logs and queues nothing when the event has no subject person', async () => {
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('t1') } });
+    await runAction(rule({ steps: [chatStep] }), ctx({ personKey: '' }), deps);
+    expect(deps.chats).toHaveLength(0);
+    expect(deps.activities.some((a) => String(a['error']).includes('subject person'))).toBe(true);
+  });
+
+  it('runs even when no assignee can be resolved — it addresses a group', async () => {
+    const deps = fakeDeps({});    // no responsibility, no group admin, no tenant admin
+    await runAction(rule({ steps: [chatStep] }), ctx({ params: { notes: 'x' } }), deps);
+    expect(deps.chats).toHaveLength(1);
+    // and no assignee-resolution activity was logged either — proof it never resolved one
+    expect(deps.activities.some((a) => a['error'] === 'no assignee resolved')).toBe(false);
+  });
+
+  it('is subject to the daily send cap', async () => {
+    const deps = fakeDeps({ sendCount: MAX_RULE_SENDS_PER_DAY, responsibility: { responsibleAvatar: avatar('t1') } });
+    await runAction(rule({ steps: [chatStep] }), ctx({ params: { notes: 'x' } }), deps);
+    expect(deps.chats).toHaveLength(0);
   });
 });
 

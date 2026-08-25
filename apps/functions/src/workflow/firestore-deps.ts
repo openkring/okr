@@ -249,6 +249,12 @@ export function createFirestoreDeps(): WorkflowDeps {
       });
     },
 
+    async openChatRoom(req): Promise<void> {
+      await enqueue(db, req.tenantId, req.ruleKey, 'openChat', {
+        groupId: req.groupId, personKey: req.personKey, body: req.body, txnId: req.txnId,
+      });
+    },
+
     async startEsign(req): Promise<void> {
       await enqueue(db, req.tenantId, req.ruleKey, 'esign', {
         storagePath: req.storagePath,

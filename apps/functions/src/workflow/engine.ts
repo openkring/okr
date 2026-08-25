@@ -158,7 +158,7 @@ export async function resolveAssignee(
 }
 
 /** Every action the engine understands. An unknown one fails closed and is logged. */
-export const KNOWN_ACTIONS = ['openTask', 'sendEmail', 'sendMessage', 'esign', 'requestApproval'];
+export const KNOWN_ACTIONS = ['openTask', 'sendEmail', 'sendMessage', 'esign', 'requestApproval', 'openChat'];
 
 /**
  * Four eyes: nobody approves their own request.
@@ -220,9 +220,9 @@ async function overSendCap(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: Wo
  * Steps run in order and independently: a failing one is logged and the next still runs, the
  * same contract `runWorkflowWith` gives whole rules. `assigneeOnce` memoises `resolveAssignee`
  * across the steps of one rule, so a rule with several steps resolves the responsible person
- * (and logs its fallback chain) exactly once — every action known today needs that assignee.
- * (Task 5's `openChat` will address a group rather than a person; moving this call so such a
- * step is not blocked by an unresolvable responsibility is that task's job, not this one's.)
+ * (and logs its fallback chain) exactly once — every PERSON-addressed action needs that
+ * assignee. `openChat` addresses a GROUP instead and resolves it before this call, so a rule
+ * whose responsibility is unfilled or misconfigured can still open the conversation.
  */
 export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
   const steps = rule.steps ?? [];
@@ -256,9 +256,11 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
 }
 
 /**
- * Execute a single step. Every action addresses the SAME resolved responsible person — a rule
+ * Execute a single step. Most actions address the SAME resolved responsible person — a rule
  * can never name a free-text recipient, which is what keeps it from being a spam gun any
- * tenant admin can point anywhere (spec 2026-08-15 §2.2).
+ * tenant admin can point anywhere (spec 2026-08-15 §2.2). `openChat` is the one exception: it
+ * addresses a GROUP and is dispatched before the assignee is resolved, so it still runs when
+ * the responsibility is vacant or misconfigured.
  *
  * Deduplication of `openTask`: an open task with the same relatedKey AND the same assignee
  * means this consequence is already pending — without it every re-trigger (a corrected exit
@@ -279,6 +281,40 @@ export async function runStep(
   const action = step.action || 'openTask';
   if (!KNOWN_ACTIONS.includes(action)) {
     await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: `unknown action '${action}'` });
+    return;
+  }
+
+  // openChat addresses a GROUP, so it neither needs nor waits for a resolved assignee — a rule
+  // whose responsibility is unfilled must still be able to open the conversation.
+  if (action === 'openChat') {
+    if (await overSendCap(rule, ctx, deps)) return;
+    const groupId = (step.actionArg ?? '').trim();
+    if (!groupId) {
+      await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'openChat needs a group key in actionArg' });
+      return;
+    }
+    if (!ctx.personKey) {
+      await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'openChat has no subject person' });
+      return;
+    }
+    // the rule's own wording wins; without one the reporter's text IS the opening message
+    const body = (await message(step, ctx, deps)) || ctx.params['notes'] || '';
+    if (!body) {
+      await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'openChat has no message' });
+      return;
+    }
+    await deps.openChatRoom({
+      tenantId: ctx.tenantId,
+      ruleKey: rule.okey,
+      groupId,
+      personKey: ctx.personKey,
+      body,
+      // deterministic per (rule, step, event, subject): a retried invocation reuses the
+      // transaction id, so Synapse drops the copy. The step index keeps two openChat steps
+      // of the same rule from colliding with EACH OTHER, the same reason sendMessage carries
+      // it (see the txnId comment below).
+      txnId: `wf-${rule.okey}-${stepIndex}-${ctx.event}-${ctx.relatedKey}`.replaceAll(/[^\w-]/g, '_'),
+    });
     return;
   }
 

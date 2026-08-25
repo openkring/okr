@@ -104,6 +104,17 @@ export interface OutgoingChatMessage {
   txnId: string;
 }
 
+export interface OpenChatRoomRequest {
+  tenantId: string;
+  ruleKey: string;
+  /** groups/<okey> — the group that answers */
+  groupId: string;
+  /** the person the room is with: the subject of the event */
+  personKey: string;
+  body: string;
+  txnId: string;
+}
+
 export interface EsignRequest {
   tenantId: string;
   ruleKey: string;
@@ -154,6 +165,8 @@ export interface WorkflowDeps {
   sendCount(tenantId: string, ruleKey: string, today: string): Promise<number>;
   sendEmail(mail: OutgoingEmail): Promise<void>;
   sendChatMessage(msg: OutgoingChatMessage): Promise<void>;
+  /** open (or reuse) the room between the person and the group and post the opening message */
+  openChatRoom(req: OpenChatRoomRequest): Promise<void>;
   startEsign(req: EsignRequest): Promise<void>;
   /** a non-archived approval for the same subject and kind is still pending */
   hasPendingApproval(subjectKey: string, kind: string, tenantId: string): Promise<boolean>;
