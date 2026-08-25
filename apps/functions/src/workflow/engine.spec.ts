@@ -488,4 +488,11 @@ describe('runAction — steps', () => {
     expect(deps.tasks).toHaveLength(1);
     expect(deps.activities.some((a) => String(a['error']).includes("unknown action 'nope'"))).toBe(true);
   });
+
+  it('gives two sendMessage steps of the same rule different txnIds, so neither is dropped as a duplicate', async () => {
+    const deps = fakeDeps({ responsibility: { responsibleAvatar: avatar('t1') }, matrixId: '@t1:x' });
+    await runAction(rule({ steps: [step({ action: 'sendMessage' }), step({ action: 'sendMessage' })] }), ctx(), deps);
+    expect(deps.messages).toHaveLength(2);
+    expect(deps.messages[0].txnId).not.toBe(deps.messages[1].txnId);
+  });
 });

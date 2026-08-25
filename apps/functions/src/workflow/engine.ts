@@ -218,8 +218,11 @@ async function overSendCap(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: Wo
  * Execute every step of a rule that has already passed its probe.
  *
  * Steps run in order and independently: a failing one is logged and the next still runs, the
- * same contract `runWorkflowWith` gives whole rules. The assignee is resolved at most once and
- * only when a step actually needs one — `openChat` addresses a group, not a person.
+ * same contract `runWorkflowWith` gives whole rules. `assigneeOnce` memoises `resolveAssignee`
+ * across the steps of one rule, so a rule with several steps resolves the responsible person
+ * (and logs its fallback chain) exactly once — every action known today needs that assignee.
+ * (Task 5's `openChat` will address a group rather than a person; moving this call so such a
+ * step is not blocked by an unresolvable responsibility is that task's job, not this one's.)
  */
 export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
   const steps = rule.steps ?? [];
@@ -231,13 +234,18 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
   let resolved: AvatarInfo | undefined;
   let didResolve = false;
   const assigneeOnce = async (): Promise<AvatarInfo | undefined> => {
-    if (!didResolve) { resolved = await resolveAssignee(rule, ctx, deps); didResolve = true; }
+    // flip the flag before the await: a throwing resolveAssignee must still count as "tried",
+    // so it is not retried (and re-logged) for every remaining step — the same one-shot
+    // behaviour the old per-rule resolution had.
+    if (didResolve) return resolved;
+    didResolve = true;
+    resolved = await resolveAssignee(rule, ctx, deps);
     return resolved;
   };
 
-  for (const step of steps) {
+  for (const [index, step] of steps.entries()) {
     try {
-      await runStep(rule, step, ctx, deps, assigneeOnce);
+      await runStep(rule, step, index, ctx, deps, assigneeOnce);
     } catch (error) {
       await deps.logActivity(ctx.tenantId, {
         rule: rule.okey, event: ctx.event, action: step.action,
@@ -255,10 +263,15 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
  * Deduplication of `openTask`: an open task with the same relatedKey AND the same assignee
  * means this consequence is already pending — without it every re-trigger (a corrected exit
  * date, a sweep re-run, a name change re-writing the document) would produce another task.
+ * This key does NOT include the step index (it is stored on the task document and read by
+ * other code paths, so it cannot grow one now): two `openTask` steps of the same rule
+ * addressing the same assignee dedup against EACH OTHER, not just against re-triggers. A rule
+ * that genuinely needs two tasks for the same event has to be configured as two rules.
  */
 export async function runStep(
   rule: WorkflowRuleDoc,
   step: WorkflowActionStepDoc,
+  stepIndex: number,
   ctx: WorkflowContext,
   deps: WorkflowDeps,
   assigneeOnce: () => Promise<AvatarInfo | undefined>,
@@ -325,9 +338,11 @@ export async function runStep(
         matrixUserId,
         body: await message(step, ctx, deps),
         // deterministic: a retried invocation reuses the transaction id, so Synapse drops
-        // the second copy. A genuinely re-fired event days later is NOT covered — see the
-        // ponytail note in the spec.
-        txnId: `wf-${rule.okey}-${ctx.event}-${ctx.relatedKey}`.replaceAll(/[^\w-]/g, '_'),
+        // the second copy. The step index keeps two sendMessage steps of the same rule from
+        // colliding with EACH OTHER (they would otherwise share one txnId and Synapse would
+        // silently drop the second). A genuinely re-fired event days later is NOT covered —
+        // see the ponytail note in the spec.
+        txnId: `wf-${rule.okey}-${stepIndex}-${ctx.event}-${ctx.relatedKey}`.replaceAll(/[^\w-]/g, '_'),
       });
       return;
     }

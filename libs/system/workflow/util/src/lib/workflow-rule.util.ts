@@ -13,8 +13,9 @@ import { WorkflowI18n } from './workflow-i18n';
 export function newWorkflowRuleModel(tenantId: string, event = ''): WorkflowRuleModel {
   const rule = new WorkflowRuleModel(tenantId);
   rule.event = event;
-  // without this the class default array is shared: every rule created without going
-  // through this factory would mutate the same steps[0]
+  // redundant with the class field initializer (each `new WorkflowRuleModel` already gets its
+  // own steps array) — kept explicit here so the factory's output is self-evident without
+  // having to go read the class
   rule.steps = [newWorkflowActionStep()];
   return rule;
 }
