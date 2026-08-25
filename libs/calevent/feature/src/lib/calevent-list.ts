@@ -15,7 +15,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, fill, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -806,6 +806,13 @@ export class CalEventList implements OnInit {
       );
     }
 
+    // notify the participants — organiser megaphone, hidden once the event is past or called off
+    // (a cancelled event says it with its own banner, and §1.5 already offered the broadcast there)
+    if (showAttendance && calevent.state !== 'cancelled' && this.canNotify(calevent)) {
+      actionSheetOptions.buttons.push(createActionSheetDivider());
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.notify', this.store.i18n.notify_label(), this.imgixBaseUrl, 'mail'));
+    }
+
     // organiser actions: one entry; the how (view/call/email/chat) is picked in a follow-up sheet
     if (this.otherOrganisers(calevent).length > 0) {
       actionSheetOptions.buttons.push(createActionSheetDivider());
@@ -871,6 +878,9 @@ export class CalEventList implements OnInit {
         case 'calevent.cancelEvent':
           await this.cancelEvent(calEvent);
           break;
+        case 'calevent.notify':
+          await this.store.notifyParticipants(calEvent);
+          break;
         case 'calevent.edit': {
           const isGrid = !this.isListView();
           const viewType = this.currentViewType();
@@ -924,6 +934,20 @@ export class CalEventList implements OnInit {
    * Organiser/eventAdmin sets the cancellation message. A non-empty message cancels the event
    * (shown in red everywhere); clearing the text un-cancels it back to 'definitive'.
    */
+  /**
+   * May this user address the participants?
+   *
+   * Deliberately NARROWER than `canChange`: it mirrors `mayBroadcast` in
+   * `apps/functions/src/calendar/notify.ts` exactly (organiser, eventAdmin, privileged, admin).
+   * Offering a button the Cloud Function then refuses is worse than not offering it — the user
+   * would type a notice, hit send and get a permission error for their trouble.
+   */
+  private canNotify(calevent: CalEventModel): boolean {
+    const personKey = this.currentUser()?.personKey;
+    if (personKey && calevent.responsiblePersons?.some(p => p.key === personKey)) return true;
+    return this.hasRole('eventAdmin') || this.hasRole('privileged') || this.hasRole('admin');
+  }
+
   private async cancelEvent(calevent: CalEventModel): Promise<void> {
     const message = await okrPrompt(this.alertController, this.store.i18n.cancel_event(),
       this.store.i18n.cancel_event_placeholder(), this.store.i18n.ok(), this.store.i18n.cancel(), calevent.cancelMessage);
@@ -931,6 +955,15 @@ export class CalEventList implements OnInit {
     const cancelMessage = message.trim();
     const updated: CalEventModel = { ...calevent, cancelMessage, state: cancelMessage ? 'cancelled' : 'definitive' };
     await this.store.update(updated, false);
+
+    // §1.5 — a cancellation is exactly the message the participants need, so offer to send it
+    // with the reason prefilled. Never automatic: `cancelMessage` can be set quietly today, and
+    // a silent mass delivery on a field edit would be a nasty surprise.
+    if (cancelMessage && this.canNotify(updated)) {
+      const label = formatDateTimeLabel(calevent.startDate, calevent.startTime, calevent.durationMinutes);
+      const intro = fill(this.store.i18n.notify_cancel_intro(), { name: calevent.name, date: label, reason: cancelMessage });
+      await this.store.notifyParticipants(updated, intro);
+    }
   }
 
   /******************************* organiser actions *************************************** */

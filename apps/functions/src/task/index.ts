@@ -2,8 +2,9 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getMessaging } from 'firebase-admin/messaging';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+
+import { pushToPersons } from '../srv/push';
 
 const REGION = 'europe-west6';
 const TASK_COLLECTION = 'tasks';
@@ -58,20 +59,6 @@ export const onTaskWritten = onDocumentWritten(
 
     const db = getFirestore();
 
-    // Resolve assignee's Firebase uid from their personKey
-    const usersSnap = await db.collection('users').where('personKey', '==', assigneeKey).limit(1).get();
-    if (usersSnap.empty) return;
-    const uid = usersSnap.docs[0].id;
-
-    // Collect all registered FCM tokens for this user
-    const tokensSnap = await db.collection('users').doc(uid).collection('fcmTokens').get();
-    const tokenEntries: { token: string; docId: string }[] = [];
-    for (const doc of tokensSnap.docs) {
-      const token = doc.data()['token'] as string | undefined;
-      if (token) tokenEntries.push({ token, docId: doc.id });
-    }
-    if (tokenEntries.length === 0) return;
-
     // Count open tasks for the assignee — mirrors tasks-section.store.ts exactly
     const openSnap = await db.collection(TASK_COLLECTION)
       .where('isArchived', '==', false)
@@ -85,40 +72,17 @@ export const onTaskWritten = onDocumentWritten(
       ? `Fällig: ${convertDateFormatToString(after.dueDate, DateFormat.StoreDate, DateFormat.ViewDate, false)}`
       : 'Neue Aufgabe zugewiesen';
 
-    // Data-only message: ensures the service worker's onBackgroundMessage handler is always
-    // called on web. When the notification field is present, some browsers auto-display it
-    // and skip the SW handler, preventing the badge from being updated.
-    const response = await getMessaging().sendEachForMulticast({
-      tokens: tokenEntries.map(e => e.token),
-      data: {
-        type: 'task',
-        title,
-        body,
-        url: '/task/my/all',
-        badgeCount: String(badgeCount),
-      },
-      android: { priority: 'normal' },
-      apns: {
-        headers: { 'apns-priority': '5', 'apns-push-type': 'background' },
-        payload: { aps: { badge: badgeCount, 'content-available': 1 } },
-      },
-    });
-
-    // Remove tokens that are no longer registered to avoid future failures
-    const deletions: Promise<unknown>[] = [];
-    response.responses.forEach((r, i) => {
-      if (!r.success && r.error?.code === 'messaging/registration-token-not-registered') {
-        deletions.push(
-          db.collection('users').doc(uid).collection('fcmTokens').doc(tokenEntries[i].docId).delete()
-            .catch(err => logger.warn('onTaskWritten: Failed to delete stale token:', err))
-        );
-      }
-    });
-    await Promise.all(deletions);
+    // The task is the one sender that legitimately writes the badge: it knows the user's TOTAL
+    // open count. Every calendar sender omits it — see the head of `srv/push.ts`.
+    const result = await pushToPersons(
+      [assigneeKey],
+      { type: 'task', title, body, url: '/task/my/all', badgeCount },
+      'onTaskWritten',
+    );
 
     logger.info(
-      `onTaskWritten: badgeCount=${badgeCount} sent=${response.successCount} ` +
-      `failed=${response.failureCount} task=${event.params['taskId']}`
+      `onTaskWritten: badgeCount=${badgeCount} sent=${result.sent} ` +
+      `failed=${result.failed} task=${event.params['taskId']}`
     );
   }
 );

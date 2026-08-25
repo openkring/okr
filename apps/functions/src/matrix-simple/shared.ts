@@ -261,7 +261,7 @@ export async function resolvePersonAvatarMxc(personKey: string, token: string, t
  * (the same model the client and Firestore rules use) — NOT from Firebase Auth
  * custom claims, which are never minted anywhere in this codebase.
  */
-async function getCallerRoles(uid: string): Promise<Record<string, boolean>> {
+export async function getCallerRoles(uid: string): Promise<Record<string, boolean>> {
   try {
     const doc = await getFirestore().collection('users').doc(uid).get();
     return (doc.data()?.roles ?? {}) as Record<string, boolean>;

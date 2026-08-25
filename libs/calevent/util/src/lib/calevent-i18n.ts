@@ -43,6 +43,23 @@ export const CALEVENT_I18N_KEYS = {
 
   download_ics:               PFX + 'download.ics',
 
+  // «Teilnehmende benachrichtigen» — the short-notice broadcast to the participants of an event
+  notify_label:               PFX + 'notify.label',
+  notify_message_label:       PFX + 'notify.message.label',
+  notify_message_placeholder: PFX + 'notify.message.placeholder',
+  notify_message_helper:      PFX + 'notify.message.helper',
+  notify_scope_label:         PFX + 'notify.scope.label',
+  notify_scope_event:         PFX + 'notify.scope.event',
+  notify_scope_series:        PFX + 'notify.scope.series',
+  notify_recipients_label:    PFX + 'notify.recipients.label',
+  // carries a {count} placeholder — SINGLE braces, resolved with fill(); translateAll strips {{…}}
+  notify_recipients_count:    PFX + 'notify.recipients.count',
+  notify_recipients_empty:    PFX + 'notify.recipients.empty',
+  notify_conf:                PFX + 'notify.conf',
+  notify_error:               PFX + 'notify.error',
+  // §1.5 — prefilled text when a cancellation offers to tell the participants
+  notify_cancel_intro:        PFX + 'notify.cancelIntro',
+
   cancel_event:               PFX + 'cancelEvent.label',
   cancel_event_placeholder:   PFX + 'cancelEvent.placeholder',
   cancel_event_banner:        PFX + 'cancelEvent.banner',

@@ -4,6 +4,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 export { getPublicCalEvents } from './public-calevents';
 export { ensureCalendarFeedToken, calendarFeed } from './feed';
+export { notifyCalEventParticipants } from './notify';
+export { onCalEventCommentCreated, onCalEventDocumentCreated } from './activity';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types (inlined to avoid monorepo cross-bundle imports)

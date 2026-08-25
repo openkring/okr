@@ -48,6 +48,27 @@
     "banner": "Annulé",
     "conf": "L’avis d’annulation a été enregistré."
   },
+  "notify": {
+    "label": "Informer les participants",
+    "message": {
+      "label": "Message",
+      "placeholder": "Message court, p. ex. « L'entraînement est annulé, on se retrouve la semaine prochaine. »",
+      "helper": "Un court message à toutes les personnes inscrites. Pas pour des informations confidentielles."
+    },
+    "scope": {
+      "label": "S'applique à",
+      "event": "Cette date",
+      "series": "Cette date et toutes les dates à venir de la série"
+    },
+    "recipients": {
+      "label": "Destinataires",
+      "count": "{count} personnes inscrites recevront ton message",
+      "empty": "Personne ne s'est inscrit — il n'y a personne à informer pour le moment."
+    },
+    "conf": "Ton message est parti.",
+    "error": "Le message n'a pas pu être envoyé.",
+    "cancelIntro": "L'événement {name} du {date} est annulé : {reason}"
+  },
   "copy": {
     "label": "Copier l'événement"
   },

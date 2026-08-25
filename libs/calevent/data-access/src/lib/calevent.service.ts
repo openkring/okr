@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { EventInput } from '@fullcalendar/core';
+import { getApp } from 'firebase/app';
 import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
@@ -8,7 +9,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { CalEventCollection, CalEventModel, UserModel } from '@okr/shared-models';
 import { addTime, die, findByKey, getSystemQuery } from '@okr/shared-util-core';
 
-import { getCaleventIndex } from '@okr/calevent-util';
+import { getCaleventIndex, NotifyScope } from '@okr/calevent-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { PFX } from './scope';
 
@@ -121,5 +122,28 @@ export class CalEventService {
 
   private getIsoDateTime(dateStr: string, timeStr: string): string {
     return this.getIsoDate(dateStr) + 'T' + this.getIsoTime(timeStr);
+  }
+
+  /*-------------------------- participant broadcast --------------------------------*/
+  /**
+   * Send a short notice to the participants of an event
+   * (spec `2026-08-25-participant-messaging-spec.md` §1).
+   *
+   * Only the event key, the text and the scope travel — never a recipient list. The Cloud
+   * Function derives who is addressed from the event's own attendees/invitations, checks that
+   * the caller is an organiser, and delivers on two channels (push + the system bot's existing
+   * direct message per person, so no chat room is created).
+   *
+   * @param caleventKey the event to notify about
+   * @param message     the notice, max 500 characters
+   * @param scope       'event' for this occurrence, 'series' for this and all future ones
+   * @returns how many people were reached
+   */
+  public async notifyParticipants(caleventKey: string, message: string, scope: NotifyScope): Promise<number> {
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const fn = httpsCallable<{ caleventKey: string; message: string; scope: NotifyScope }, { recipients: number }>(
+      getFunctions(getApp(), 'europe-west6'), 'notifyCalEventParticipants');
+    const result = await fn({ caleventKey, message, scope });
+    return result.data.recipients;
   }
 }

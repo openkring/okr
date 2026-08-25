@@ -48,6 +48,27 @@
     "banner": "Cancelado",
     "conf": "El aviso de cancelación se ha guardado."
   },
+  "notify": {
+    "label": "Avisar a los participantes",
+    "message": {
+      "label": "Mensaje",
+      "placeholder": "Mensaje breve, p. ej. «El entrenamiento se cancela, nos vemos la semana que viene.»",
+      "helper": "Un mensaje breve para todas las personas inscritas. No para datos confidenciales."
+    },
+    "scope": {
+      "label": "Se aplica a",
+      "event": "Esta fecha",
+      "series": "Esta y todas las fechas futuras de la serie"
+    },
+    "recipients": {
+      "label": "Destinatarios",
+      "count": "{count} personas inscritas recibirán tu mensaje",
+      "empty": "No hay nadie inscrito: por ahora no hay a quien avisar."
+    },
+    "conf": "Tu mensaje va en camino.",
+    "error": "No se ha podido enviar el mensaje.",
+    "cancelIntro": "El evento {name} del {date} se cancela: {reason}"
+  },
   "copy": {
     "label": "Copiar evento"
   },

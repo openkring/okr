@@ -12,7 +12,7 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getSystemQuery, getTodayStr, inviteeCandidates, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getFullName, getSystemQuery, getTodayStr, inviteeCandidates, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
 import { copyToClipboardWithConfirmation, error, navigateByUrl, confirm, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import { yearMatches } from '@okr/shared-categories';
@@ -25,8 +25,8 @@ import { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
-import { CALEVENT_I18N_KEYS, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
-import { RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
+import { CALEVENT_I18N_KEYS, CalEventNotifyFormData, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { CalEventNotifyModal, RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 
 /**
  * Der Alias-Space der Termin-Kurzlinks: ein `redirect`-Space mit `targetTypes: ['url']`
@@ -1271,6 +1271,65 @@ export const CalEventStore = signalStore(
         const changed = await store.invitationService.setLocked(invitations, isLocked, store.currentUser());
         if (changed > 0) {
           await showToast(store.toastController, isLocked ? store.i18n.invitation_lock_conf() : store.i18n.invitation_unlock_conf());
+        }
+      },
+
+      /******************************* participant broadcast *********************************** */
+      /**
+       * Names of the people a broadcast would reach — the preview shown in the modal
+       * (spec `2026-08-25-participant-messaging-spec.md` §1.1).
+       *
+       * ⚠️ DISPLAY ONLY. The real recipient set is derived server-side from the event itself;
+       * nothing here is sent along. The two can differ slightly (a person without a user
+       * account is listed here but has no channel), and that is fine — the preview answers
+       * "did I pick the right event", not "who exactly gets a push".
+       */
+      notifyRecipientNames(calevent: CalEventModel): string[] {
+        const names = calevent.isOpen
+          ? calevent.attendees.filter(a => a.state === 'accepted').map(a => getFullName(a.person.name1, a.person.name2))
+          : this.invitationsOf(calevent)
+              .filter(inv => inv.state !== 'declined')
+              .map(inv => `${inv.inviteeFirstName} ${inv.inviteeLastName}`.trim());
+        const declined = new Set(calevent.attendees.filter(a => a.state === 'declined').map(a => a.person.key));
+        const organisers = calevent.responsiblePersons.filter(p => !declined.has(p.key)).map(p => getFullName(p.name1, p.name2));
+        return [...new Set([...names, ...organisers])].filter(name => name.length > 0).sort();
+      },
+
+      /**
+       * Send a short notice to everyone signed up for `calevent`.
+       *
+       * No group, no chat room: the system bot already owns one direct room per person, so a
+       * broadcast to twenty participants opens none. See the spec's §3.5 for why temporary
+       * per-event rooms were rejected.
+       *
+       * @param calevent the event to notify about
+       * @param message  optional prefilled text — the cancellation path (§1.5) seeds it
+       */
+      async notifyParticipants(calevent: CalEventModel, message = ''): Promise<void> {
+        // Statically imported, unlike the modals a store opens elsewhere: this one injects
+        // I18nService directly and never reaches back into CalEventStore, so it cannot form the
+        // circular import that breaks Ionic overlay creation (SCS-12).
+        const notifyData = newCalEventNotifyFormData(
+          this.notifyRecipientNames(calevent), calevent.seriesId.length > 0, message);
+        const modal = await store.modalController.create({
+          component: CalEventNotifyModal,
+          componentProps: { notifyData, caleventName: calevent.name },
+        });
+        modal.present();
+        const { data, role } = await modal.onWillDismiss();
+        if (role !== 'confirm' || !data) return;
+
+        const form = data as CalEventNotifyFormData;
+        try {
+          const recipients = await store.calEventService.notifyParticipants(
+            calevent.okey, form.message.trim(), form.scope);
+          await showToast(store.toastController,
+            recipients > 0 ? store.i18n.notify_conf() : store.i18n.notify_recipients_empty());
+        } catch (ex) {
+          // The server sentence is precise but English and meant for admins; the user gets the
+          // translated one. Same split as copyLink.
+          warn(`CalEventStore.notifyParticipants -> ${ex}`);
+          error(store.toastController, store.i18n.notify_error());
         }
       },
 
