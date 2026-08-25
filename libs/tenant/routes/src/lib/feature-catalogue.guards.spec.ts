@@ -12,6 +12,10 @@ import { FEATURE_ROUTES } from './feature-catalogue';
  * whose menu docs say `contentAdmin`) and R-6 (the same swap on the seven where the route said
  * `privileged`, a deliberate ACCESS REDUCTION).
  *
+ * ELEVEN, NOT TWELVE, SINCE R-7 (2026-08-25): `document`'s `:listId/:contextMenuName` child was
+ * one of R-6's seven and no longer carries a role guard at all. See `documentBlock` in
+ * `feature-catalogue.ts` for why, and `DEGRADED_R7` below for what is still pinned about it.
+ *
  * Three properties are pinned here, each of which can be lost silently:
  *
  * 1. A contentAdmin reaches all twelve. A revert to `isPrivilegedGuard` looks harmless and
@@ -58,6 +62,20 @@ const REDUCED_R6: RuledRoute[] = [
   { menuDoc: 'category-all', blockId: 'category', path: 'category', child: ':listId/:contextMenuName' },
   { menuDoc: 'location-all', blockId: 'geo', path: 'location', child: ':listId/:contextMenuName' },
   { menuDoc: 'esign', blockId: 'esign', path: 'esign' },
+];
+
+/**
+ * R-7 (2026-08-25) REVERSES R-6 FOR ONE ROUTE. `document/:listId/:contextMenuName` is not one
+ * screen — `:listId` is `all` or `f:<folderKey>` — and several menu docs point at it with
+ * different `roleNeeded`s (`stuerbord` and elab's `document-all` both say `registered`). A
+ * single guard cannot express a per-`listId` role, so the child now has NO role guard and each
+ * menu doc's `roleNeeded` decides who sees the row.
+ *
+ * It stays pinned rather than deleted, in the opposite direction: what must not drift back is
+ * a role guard reappearing here and re-creating the dead end for `registered` members. The
+ * parent's `isAuthenticatedGuard` is still asserted, so this is not "unguarded".
+ */
+const DEGRADED_R7: RuledRoute[] = [
   { menuDoc: 'document-all', blockId: 'document', path: 'document', child: ':listId/:contextMenuName' },
 ];
 
@@ -166,42 +184,59 @@ const blockedFor = (injector: Injector, routes: RuledRoute[]): string[] =>
 const reachableFor = (injector: Injector, routes: RuledRoute[]): string[] =>
   routes.filter(entry => activates(injector, ...chainOf(entry))).map(entry => entry.menuDoc);
 
-describe('the twelve routes ruled to match their menu documents', () => {
-  it('covers every route the two rulings name', () => {
+describe('the eleven routes ruled to match their menu documents', () => {
+  it('covers every route the rulings name', () => {
     expect(RULED_R5).toHaveLength(5);
-    expect(REDUCED_R6).toHaveLength(7);
+    expect(REDUCED_R6).toHaveLength(6);
+    expect(DEGRADED_R7).toHaveLength(1);
   });
 
   /**
    * THE RULINGS THEMSELVES, and the assertion that fails on a revert to `isPrivilegedGuard` —
    * `hasRole('privileged')` → `['privileged', 'admin']` never admitted `contentAdmin`, the very
-   * role all twelve menu documents name.
+   * role all eleven menu documents name.
    */
-  it('a contentAdmin reaches all twelve', () => {
+  it('a contentAdmin reaches all eleven', () => {
     expect(blockedFor(CONTENT_ADMIN, ALL_RULED),
       'menu row visible, navigation still cancelled — a ruling is not in effect').toEqual([]);
   });
 
-  it('an admin reaches all twelve too (softening never locks admins out)', () => {
+  it('an admin reaches all eleven too (softening never locks admins out)', () => {
     expect(blockedFor(ADMIN, ALL_RULED)).toEqual([]);
   });
 
   /**
-   * THE R-6 REDUCTION, pinned. These seven were reachable by a privileged-only user before
+   * THE R-6 REDUCTION, pinned. These six were reachable by a privileged-only user before
    * 2026-08-05 and deliberately are not any more. If this list stops being empty, someone has
    * reversed a ruling — the owner declined the union guard that would have kept both roles.
    */
-  it('a privileged-only user is BLOCKED from the seven R-6 routes (the deliberate reduction)', () => {
+  it('a privileged-only user is BLOCKED from the six R-6 routes (the deliberate reduction)', () => {
     expect(reachableFor(PRIVILEGED, REDUCED_R6),
       'privileged access came back — R-6 chose the straight swap over a union guard').toEqual([]);
   });
 
-  it('a privileged-only user reaches none of the twelve', () => {
+  it('a privileged-only user reaches none of the eleven', () => {
     expect(reachableFor(PRIVILEGED, ALL_RULED)).toEqual([]);
   });
 
-  it('a merely-registered member reaches none of the twelve', () => {
+  it('a merely-registered member reaches none of the eleven', () => {
     expect(reachableFor(REGISTERED, ALL_RULED)).toEqual([]);
+  });
+
+  /**
+   * R-7, both halves. The first is the fix: a `registered` member must be able to OPEN the
+   * document list, because menu docs pointing at it (`stuerbord`, elab's `document-all`) say
+   * `registered` and were dead-ending. The second is the bound on it — the parent still
+   * requires authentication, so this is not a route a signed-out visitor can reach.
+   */
+  it('a merely-registered member reaches the R-7 document route', () => {
+    expect(blockedFor(REGISTERED, DEGRADED_R7),
+      'a role guard is back on document/:listId — registered members dead-end again (R-7)').toEqual([]);
+  });
+
+  it('the R-7 document route still sits behind isAuthenticatedGuard', () => {
+    const parent = fragmentOf('document', 'document');
+    expect(parent.canActivate).toContain(isAuthenticatedGuard);
   });
 });
 

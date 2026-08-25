@@ -190,6 +190,13 @@ const KNOWN_DEAD_ENDS: readonly string[] = ['addresses'];
 const KNOWN_WEAKER_THAN_MENU: readonly string[] = [
   // contentAdmin — the four that surfaced alongside the R-5/R-6 work
   'icon-all', 'ownerships-all', 'responsibility-all', 'flighttracker',
+  // contentAdmin, and the one entry here that IS covered by a ruling: R-7 (2026-08-25) took
+  // the role guard off `document/:listId/:contextMenuName` on purpose. `:listId` is `all` or
+  // `f:<folderKey>`, so one guard cannot serve menu docs that legitimately differ — `stuerbord`
+  // (scs) and elab's `document-all` both say `registered` and were dead-ending on the
+  // contentAdmin guard. `docs`/`folders` are `allow read: if tenantRead()` in firestore.rules,
+  // so a member typing `/document/all/c-documents` reads nothing they could not already read.
+  'document-all',
   // privileged
   'person-contacts', 'org-all', 'task-all',
   // memberAdmin

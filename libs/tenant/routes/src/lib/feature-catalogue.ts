@@ -824,7 +824,9 @@ const pdfTemplate: BlockRoutes = {
  * The child's guard was the FIRST instance of the menu-vs-route mismatch to be written down —
  * `isPrivilegedGuard` where the live `document-all` menu doc says `roleNeeded: contentAdmin` —
  * and was reported rather than changed at the time, because weakening a guard inside a
- * cataloguing task was out of bounds. Ruling R-6 (2026-08-05) closed it; see the guard itself.
+ * cataloguing task was out of bounds. Ruling R-6 (2026-08-05) closed it by putting
+ * `isContentAdminGuard()` on the child; ruling R-7 (2026-08-25) took it back off again — see
+ * the child.
  */
 const documentBlock: BlockRoutes = {
   id: 'document',
@@ -832,13 +834,25 @@ const documentBlock: BlockRoutes = {
     path: 'document',
     canActivate: [isAuthenticatedGuard],
     children: [
-      // ACCESS REDUCED by owner ruling R-6, 2026-08-05: the route now matches the
-      // `document-all` menu doc's `roleNeeded: contentAdmin`, and a `privileged`-only user
-      // LOSES access to the document list — `privileged` and `contentAdmin` are disjoint apart
-      // from `admin`. The owner chose this swap over a union guard deliberately; see the `page`
-      // fragment in the `cms` block for the full rationale.
+      // NO ROLE GUARD, by owner ruling R-7 (2026-08-25), which reverses R-6's
+      // `isContentAdminGuard()` here.
+      //
+      // R-6 matched this route to ONE menu doc — `document-all`, `roleNeeded: contentAdmin`.
+      // But `:listId` is not a single screen: it is `all` OR `f:<folderKey>`, and several
+      // menu docs point at it with DIFFERENT roles. `stuerbord` (scs, `roleNeeded: registered`,
+      // url `document/f:scs_stuerbord/c-documents`) and `document-all` as forked for `elab`
+      // (`roleNeeded: registered`) both rendered their row and then had the navigation
+      // silently cancelled — the exact dead-end class the rulings exist to close. One guard
+      // cannot express a per-`listId` role, so the role question goes back where the design
+      // puts it: each menu doc's own `roleNeeded` decides who sees the row.
+      //
+      // This is not a data-access widening. `firestore.rules` gives `docs` and `folders`
+      // `allow read: if tenantRead()` — any authenticated member of the tenant may already
+      // read them — so the boundary that matters is unchanged, and the parent's
+      // `isAuthenticatedGuard` still keeps the screen off-limits to visitors. What it does
+      // change: a plain member who TYPES `/document/all/c-documents` now reaches the full
+      // list, which is why this needed a ruling rather than a bug fix.
       { path: ':listId/:contextMenuName',
-        canActivate: [isContentAdminGuard()],
         loadComponent: () => import('@okr/content-document-feature').then(m => m.DocumentList),
         data: { color: 'secondary', view: 'list', showMenu: true },
       },
