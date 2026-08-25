@@ -1,7 +1,7 @@
 import { CommentModel } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { describe, expect, it, vi } from 'vitest';
-import { createComment, getCommentIndex } from './comment.util';
+import { createComment, getCommentIndex, isImageFile, isImageMimeType } from './comment.util';
 
 vi.mock('@okr/shared-util-core', () => ({
   getTodayStr: vi.fn(() => '20240117'),
@@ -61,5 +61,31 @@ describe('comment.util', () => {
       const index = getCommentIndex(comment);
       expect(index).toBe('ak:, d:, pk:');
     });
+  });
+});
+describe('isImageMimeType', () => {
+  it('accepts an image MIME type', () => {
+    expect(isImageMimeType('image/png', 'photo.png')).toBe(true);
+    expect(isImageMimeType('IMAGE/JPEG')).toBe(true);
+  });
+
+  it('falls back to the extension when the MIME type is missing', () => {
+    // files picked on iOS frequently arrive with an empty type
+    expect(isImageMimeType('', 'IMG_1224.HEIC')).toBe(true);
+    expect(isImageMimeType(undefined, 'tenant/scs/document/boat.webp')).toBe(true);
+  });
+
+  it('rejects non-images', () => {
+    expect(isImageMimeType('application/pdf', 'Startplan_2026.pdf')).toBe(false);
+    expect(isImageMimeType('', 'notes.txt')).toBe(false);
+    expect(isImageMimeType('', 'no-extension')).toBe(false);
+    expect(isImageMimeType()).toBe(false);
+  });
+});
+
+describe('isImageFile', () => {
+  it('reads type and name off the File', () => {
+    expect(isImageFile(new File([], 'a.png', { type: 'image/png' }))).toBe(true);
+    expect(isImageFile(new File([], 'a.pdf', { type: 'application/pdf' }))).toBe(false);
   });
 });

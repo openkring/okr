@@ -3,7 +3,7 @@ import { ActionSheetController, ActionSheetOptions, AlertController, IonAccordio
 
 import { CalEventModel, InvitationModel, InvitationState, MembershipModel } from '@okr/shared-models';
 import { FullNamePipe, PrettyDateTimePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList } from '@okr/shared-ui';
+import { CountPill, EmptyList } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, isOngoing } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, notify } from '@okr/shared-util-angular';
 
@@ -21,18 +21,32 @@ import { InvitationStore } from './invitation.store';
   standalone: true,
   imports: [
     SvgIconPipe, AvatarPipe, PrettyDateTimePipe, FullNamePipe,
-    EmptyList,
+    EmptyList, CountPill,
     IonAccordion, IonItem, IonLabel, IonButton, IonIcon, IonList, IonImg, IonAvatar
   ],
   providers: [InvitationStore],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
     .responded { font-size: 0.75em; color: var(--ion-color-medium); }
+    .header-icon {
+      font-size: 20px;
+      color: var(--ion-color-medium);
+      margin-inline-end: 10px;
+    }
+    /* Ionic sets .accordion-expanded on the host while the accordion is open. */
+    ion-accordion.accordion-expanded .header-icon { color: var(--ion-color-primary); }
+    ion-accordion.accordion-expanded ion-label { color: var(--ion-color-primary-shade); font-weight: 600; }
+    ion-accordion.accordion-expanded okr-count-pill {
+      --okr-pill-background: var(--ion-color-primary-tint);
+      --okr-pill-color: var(--ion-color-primary-shade);
+    }
   `],
   template: `
   <ion-accordion toggle-icon-slot="start" value="invitees">
     <ion-item slot="header" [color]="color()">
+      <ion-icon class="header-icon" src="{{ 'people' | svgIcon }}" />
       <ion-label>{{ accordionTitle() }}</ion-label>
+      <okr-count-pill slot="end" [count]="invitees().length" />
       @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />

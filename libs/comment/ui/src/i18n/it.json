@@ -1,15 +1,11 @@
 {
-  "input": {
-    "comment": {
-      "date": "Data",
-      "authorName": "Autore",
-      "label": "Commento",
-      "placeholder": "Inserisci un commento..."
-    }
-  },
-  "general": {
-    "noData": {
-      "comments": "Non ci sono ancora commenti"
-    }
+  "composer": {
+    "placeholder": "Scrivi un commento …",
+    "send": "Invia",
+    "attach": "Allega un file",
+    "emoji": "Inserisci emoji",
+    "clear": "Cancella il testo",
+    "removeAttachment": "Rimuovi l'allegato",
+    "uploading": "Caricamento …"
   }
 }

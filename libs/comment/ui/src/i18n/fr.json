@@ -1,15 +1,11 @@
 {
-  "input": {
-    "comment": {
-      "date": "Date",
-      "authorName": "Auteur",
-      "label": "Commentaire",
-      "placeholder": "Saisir un commentaire..."
-    }
-  },
-  "general": {
-    "noData": {
-      "comments": "Il n'y a pas encore de commentaires"
-    }
+  "composer": {
+    "placeholder": "Écris un commentaire …",
+    "send": "Envoyer",
+    "attach": "Joindre un fichier",
+    "emoji": "Insérer un émoji",
+    "clear": "Effacer le texte",
+    "removeAttachment": "Retirer la pièce jointe",
+    "uploading": "Téléversement …"
   }
 }

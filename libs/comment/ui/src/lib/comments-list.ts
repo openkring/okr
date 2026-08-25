@@ -1,44 +1,62 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, input } from '@angular/core';
-import { IonCol, IonRow } from '@ionic/angular/standalone';
+import { Component, input, output } from '@angular/core';
 
-import { CommentModel } from '@okr/shared-models';
-import { PrettyDateTimePipe } from '@okr/shared-pipes';
+import { CommentModel, DocumentModel } from '@okr/shared-models';
+import { EmptyList } from '@okr/shared-ui';
 
-import { CommentTextPipe } from './comment-text.pipe';
+import { CommentBubble } from './comment-bubble';
 
+/**
+ * The comment thread: a stack of bubbles, oldest at the top.
+ *
+ * Replaces the former 4/8-column grid of `<small>` text, which needed a separate narrow-screen
+ * variant to stay readable and still dropped the author on small screens.
+ */
 @Component({
   selector: 'okr-comments-list',
   standalone: true,
   imports: [
-    AsyncPipe, CommentTextPipe, PrettyDateTimePipe,
-    IonRow, IonCol,
+    EmptyList, CommentBubble
   ],
   styles: [`
-    .author { font-size: 0.8em; color: var(--ion-color-medium); }
+    .thread {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
   `],
   template: `
-    @if(comments().length === 0) {
-      <ion-row>
-        <ion-col size="12"><small>{{ empty() }}</small></ion-col>
-      </ion-row>
+    @if (comments().length === 0) {
+      <okr-empty-list [message]="empty()" />
     } @else {
-      @for (comment of comments(); track comment.okey) {
-        <ion-row>
-          <!-- small screens have no room for 'date/author' on one line: the author goes on a
-               second, smaller line rather than being dropped as it was before. -->
-          <ion-col size="4" class="ion-hide-md-up">
-            <small>{{ comment.creationDateTime | prettyDateTime }}</small>
-            <div><small class="author">{{ comment.authorName }}</small></div>
-          </ion-col>
-          <ion-col size="4" class="ion-hide-md-down"><small>{{ comment.creationDateTime | prettyDateTime }}/{{ comment.authorName }}</small></ion-col>
-          <ion-col size="8"><small>{{ comment.description | commentText | async }}</small></ion-col>  
-        </ion-row>
-      }
+      <div class="thread">
+        @for (comment of comments(); track comment.okey) {
+          <okr-comment-bubble
+            [comment]="comment"
+            [attachments]="attachmentsOf(comment)"
+            [currentPersonKey]="currentPersonKey()"
+            (attachmentOpened)="attachmentOpened.emit($event)" />
+        }
+      </div>
     }
-`
+  `
 })
 export class CommentsList {
   public comments = input.required<CommentModel[]>();
   public empty = input.required<string>();
+  /** okey -> document, for every attachment referenced by any of the comments */
+  public attachments = input<Map<string, DocumentModel>>(new Map());
+  public currentPersonKey = input<string>('');
+
+  public attachmentOpened = output<DocumentModel>();
+
+  /**
+   * Comments written before `attachmentKeys` existed read back without the field — Firestore
+   * returns the stored document, not an instance of the model class, so its defaults never run.
+   */
+  protected attachmentsOf(comment: CommentModel): DocumentModel[] {
+    const keys = comment.attachmentKeys ?? [];
+    if (keys.length === 0) return [];
+    const resolved = this.attachments();
+    return keys.map(key => resolved.get(key)).filter((doc): doc is DocumentModel => !!doc);
+  }
 }

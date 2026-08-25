@@ -12,6 +12,12 @@
     "@okr/shared-util-core": "*",
     "@okr/shared-i18n": "*",
     "@okr/comment-ui": "*",
-    "@okr/comment-data-access": "*"
+    "@okr/comment-data-access": "*",
+    "@okr/shared-constants": "*",
+    "@okr/shared-pipes": "*",
+    "@okr/shared-ui": "*",
+    "@okr/comment-util": "*",
+    "@okr/avatar-data-access": "*",
+    "@okr/content-document-data-access": "*"
   }
 }

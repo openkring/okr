@@ -1,16 +1,20 @@
 import { Signal } from '@angular/core';
 
+const PFX_FEATURE = '@comment/feature.';
+const PFX_UI = '@comment/ui.';
+
 export const COMMENT_LIST_I18N_KEYS = {
-  comments:             '@comment/feature.comments',
-  empty:                '@comment/feature.empty',
-  add_title:            '@comment/feature.add.title',
-  add_placeholder:      '@comment/feature.add.placeholder',
-  // comment-input / comment-header labels (own @comment/ui scope, replacing the legacy global @input.comment.*)
-  input_label:          '@comment/ui.input.comment.label',
-  input_placeholder:    '@comment/ui.input.comment.placeholder',
-  header_date:          '@comment/ui.input.comment.date',
-  header_author:        '@comment/ui.input.comment.authorName',
-  header_label:         '@comment/ui.input.comment.label',
+  comments:             PFX_FEATURE + 'comments',
+  empty:                PFX_FEATURE + 'empty',
+  read_only:            PFX_FEATURE + 'readOnly',
+  // composer (own @comment/ui scope)
+  input_placeholder:    PFX_UI + 'composer.placeholder',
+  send:                 PFX_UI + 'composer.send',
+  attach:               PFX_UI + 'composer.attach',
+  emoji:                PFX_UI + 'composer.emoji',
+  clear:                PFX_UI + 'composer.clear',
+  remove_attachment:    PFX_UI + 'composer.removeAttachment',
+  uploading:            PFX_UI + 'composer.uploading',
 } satisfies Record<string, string>;
 
 export type CommentListI18n = { [K in keyof typeof COMMENT_LIST_I18N_KEYS]: Signal<string> };

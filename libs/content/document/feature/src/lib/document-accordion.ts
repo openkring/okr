@@ -3,7 +3,7 @@ import { ActionSheetController, ActionSheetOptions, IonAccordion, IonButton, Ion
 
 import { DocumentModel } from '@okr/shared-models';
 import { FileLogoPipe, FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, Spinner } from '@okr/shared-ui';
+import { CountPill, EmptyList, Spinner } from '@okr/shared-ui';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
 
@@ -14,18 +14,32 @@ import { DocumentStore } from './document.store';
   standalone: true,
   imports: [
     FileLogoPipe, PrettyDatePipe, FileSizePipe, SvgIconPipe, FileNamePipe,
-    Spinner, EmptyList,
+    Spinner, EmptyList, CountPill,
     IonItem, IonLabel, IonButton, IonIcon, IonList, IonAccordion
   ],
   providers: [DocumentStore],
   styles: [`
     .info { font-size: 0.6rem; }
     .fileName { font-size: 0.9rem; }
+    .header-icon {
+      font-size: 20px;
+      color: var(--ion-color-medium);
+      margin-inline-end: 10px;
+    }
+    /* Ionic sets .accordion-expanded on the host while the accordion is open. */
+    ion-accordion.accordion-expanded .header-icon { color: var(--ion-color-primary); }
+    ion-accordion.accordion-expanded ion-label { color: var(--ion-color-primary-shade); font-weight: 600; }
+    ion-accordion.accordion-expanded okr-count-pill {
+      --okr-pill-background: var(--ion-color-primary-tint);
+      --okr-pill-color: var(--ion-color-primary-shade);
+    }
     `],
   template: `
   <ion-accordion toggle-icon-slot="start" value="documents">
     <ion-item slot="header" [color]="color()">
+      <ion-icon class="header-icon" src="{{ 'document' | svgIcon }}" />
       <ion-label>{{ accordionTitle() }}</ion-label>
+      <okr-count-pill slot="end" [count]="documents().length" />
       @if(!isReadOnly()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />

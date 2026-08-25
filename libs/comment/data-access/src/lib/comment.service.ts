@@ -32,13 +32,14 @@ export class CommentService {
    * @param parentKey the key of the parent object (format: modelType.key)
    * @param message the new comment to save
    * @param currentUser the current user (used as the author of the initial comment)
+   * @param attachmentKeys okeys of the documents that were uploaded together with this comment
    * @returns the document id of the newly created comment or undefined if the operation failed
    */
-  public async create(parentKey: string, message: string, currentUser?: UserModel): Promise<string | undefined> {
+  public async create(parentKey: string, message: string, currentUser?: UserModel, attachmentKeys: string[] = []): Promise<string | undefined> {
     if (!currentUser) {
       return error(undefined, 'CommentService.create: inconsistent app state: there is no current user.');
     }
-    const comment = createComment(currentUser.personKey, getFullName(currentUser.firstName, currentUser.lastName), message, parentKey, this.tenantId);
+    const comment = createComment(currentUser.personKey, getFullName(currentUser.firstName, currentUser.lastName), message, parentKey, this.tenantId, attachmentKeys);
     // Save the comment to the database, but do neither set the confirmMessage nor the currentUser to avoid adding a comment to the comment.
     return await this.firestoreService.createModel<CommentModel>(`${CommentCollection}`, comment);
   }

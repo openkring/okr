@@ -1,8 +1,5 @@
 {
   "comments": "Commentaires",
-  "empty": "Aucun commentaire disponible.",
-  "add": {
-    "title": "Écrire votre commentaire ici",
-    "placeholder": "Texte"
-  }
+  "empty": "Pas encore de commentaires",
+  "readOnly": "Les commentaires sont fermés pour cette entrée."
 }
