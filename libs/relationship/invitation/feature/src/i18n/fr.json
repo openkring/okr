@@ -111,5 +111,28 @@
       "label": "Pour information",
       "description": "La personne est seulement informée et ne participe pas."
     }
+  },
+  "lock": {
+    "label": "Verrouiller les réponses",
+    "confirm": "Veux-tu vraiment verrouiller les réponses aux invitations ? Les invités ne pourront plus modifier leur réponse.",
+    "conf": "Les réponses aux invitations sont verrouillées.",
+    "error": "Les invitations n'ont pas pu être verrouillées."
+  },
+  "unlock": {
+    "label": "Déverrouiller les réponses",
+    "confirm": "Veux-tu déverrouiller à nouveau les réponses aux invitations ?",
+    "conf": "Les réponses aux invitations sont à nouveau déverrouillées."
+  },
+  "locked": {
+    "title": "Invitation verrouillée",
+    "hint": "L'organisation a verrouillé les réponses à cette invitation. Ta réponse ne peut plus être modifiée."
+  },
+  "comment": {
+    "pending": "Invitation remise à l'état ouvert.",
+    "accepted": "Invitation acceptée.",
+    "declined": "Invitation refusée.",
+    "maybe": "Invitation répondue par « Peut-être ».",
+    "locked": "Les réponses à l'invitation ont été verrouillées.",
+    "unlocked": "Les réponses à l'invitation ont été déverrouillées."
   }
 }

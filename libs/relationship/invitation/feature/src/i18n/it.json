@@ -111,5 +111,28 @@
       "label": "Per informazione",
       "description": "La persona è solo informata e non partecipa."
     }
+  },
+  "lock": {
+    "label": "Blocca le risposte",
+    "confirm": "Vuoi davvero bloccare le risposte agli inviti? Gli invitati non potranno più modificare la loro risposta.",
+    "conf": "Le risposte agli inviti sono bloccate.",
+    "error": "Non è stato possibile bloccare gli inviti."
+  },
+  "unlock": {
+    "label": "Sblocca le risposte",
+    "confirm": "Vuoi sbloccare di nuovo le risposte agli inviti?",
+    "conf": "Le risposte agli inviti sono di nuovo sbloccate."
+  },
+  "locked": {
+    "title": "Invito bloccato",
+    "hint": "L'organizzazione ha bloccato le risposte a questo invito. La tua risposta non può più essere modificata."
+  },
+  "comment": {
+    "pending": "Invito reimpostato su in sospeso.",
+    "accepted": "Invito accettato.",
+    "declined": "Invito rifiutato.",
+    "maybe": "Invito con risposta «Forse».",
+    "locked": "Le risposte all'invito sono state bloccate.",
+    "unlocked": "Le risposte all'invito sono state sbloccate."
   }
 }

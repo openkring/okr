@@ -547,7 +547,11 @@
       "label": "Afficher les événements à venir",
       "helper": "Choisir si les événements futurs sont affichés dans la liste ou le calendrier."
     },
-    "openCalevent": "Afficher l'événement"
+    "openCalevent": "Afficher l'événement",
+    "locked": {
+      "title": "Invitation verrouillée",
+      "hint": "L'organisation a verrouillé les réponses à cette invitation. Ta réponse ne peut plus être modifiée."
+    }
   },
   "map": {
     "label": "Carte",
@@ -859,7 +863,7 @@
     "complete": "Marquer comme terminée",
     "view": "Afficher la tâche",
     "edit": "Modifier la tâche",
-      "delete": "Supprimer la tâche"
+    "delete": "Supprimer la tâche"
   },
   "tracker": {
     "label": "Tracker",

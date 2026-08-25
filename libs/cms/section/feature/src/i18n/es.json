@@ -547,7 +547,11 @@
       "label": "Mostrar eventos próximos",
       "helper": "Elegir si los eventos futuros se muestran en la lista o el calendario."
     },
-    "openCalevent": "Mostrar el evento"
+    "openCalevent": "Mostrar el evento",
+    "locked": {
+      "title": "Invitación bloqueada",
+      "hint": "La organización ha bloqueado las respuestas a esta invitación. Tu respuesta ya no se puede cambiar."
+    }
   },
   "map": {
     "label": "Mapa",
@@ -859,7 +863,7 @@
     "complete": "Marcar como realizada",
     "view": "Mostrar tarea",
     "edit": "Editar tarea",
-      "delete": "Eliminar tarea"
+    "delete": "Eliminar tarea"
   },
   "tracker": {
     "label": "Tracker",

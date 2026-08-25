@@ -111,5 +111,28 @@
       "label": "For information",
       "description": "The person is only informed and does not attend."
     }
+  },
+  "lock": {
+    "label": "Lock responses",
+    "confirm": "Do you really want to lock the responses to the invitations? Invitees will no longer be able to change their answer.",
+    "conf": "The responses to the invitations are locked.",
+    "error": "The invitations could not be locked."
+  },
+  "unlock": {
+    "label": "Unlock responses",
+    "confirm": "Do you want to unlock the responses to the invitations again?",
+    "conf": "The responses to the invitations are unlocked again."
+  },
+  "locked": {
+    "title": "Invitation locked",
+    "hint": "The organisation has locked the responses to this invitation. Your answer can no longer be changed."
+  },
+  "comment": {
+    "pending": "Invitation reset to open.",
+    "accepted": "Invitation accepted.",
+    "declined": "Invitation declined.",
+    "maybe": "Invitation answered with 'Maybe'.",
+    "locked": "The responses to the invitation have been locked.",
+    "unlocked": "The responses to the invitation have been unlocked."
   }
 }

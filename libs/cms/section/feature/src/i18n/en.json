@@ -547,7 +547,11 @@
       "label": "Show upcoming events",
       "helper": "Choose whether future events are shown in the list or calendar."
     },
-    "openCalevent": "Show event"
+    "openCalevent": "Show event",
+    "locked": {
+      "title": "Invitation locked",
+      "hint": "The organisation has locked the responses to this invitation. Your answer can no longer be changed."
+    }
   },
   "map": {
     "label": "Map",
@@ -859,7 +863,7 @@
     "complete": "Mark as done",
     "view": "Show task",
     "edit": "Edit task",
-      "delete": "Delete task"
+    "delete": "Delete task"
   },
   "tracker": {
     "label": "Tracker",

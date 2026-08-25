@@ -1,566 +1,461 @@
 {
-  "menu": {
-    "main": {
-      "title": "Main Menu",
-      "home": "Home",
-      "profile": "Profile",
-      "userSettings": "Settings",
-      "login": "Login",
-      "logout": "Logout",
-      "news": {
-        "title": "News",
-        "clubRegatta": "Club Regatta",
-        "stuerbord": "Stüürbord Archive",
-        "srvWebsite": "Website SRV",
-        "srvTwitter": "Twitter @swissrowing",
-        "srvMagazin": "SRV Magazine",
-        "srvNews": "SRV Newsletter"
-      },
-      "gallery": {
-        "personal": "Personal Album",
-        "club": "Club Album"
-      },
-      "info": {
-        "title": "Information",
-        "club": "Clubinformation",
-        "boathouse": "Boathouse Project",
-        "album": "Album",
-        "directives": "Statutes and regulations",
-        "meetings": "General Assembly",
-        "weather": "Weather",
-        "map": "Map",
-        "marketing": "Logos & Templates",
-        "training": "Training Material"
-      },
-      "board": {
-        "title": "Board",
-        "meetings": "Board Meetings",
-        "igsport": "IG Sport Stäfa (Files)",
-        "docs": "Documents",
-        "projects": "Projects",
-        "orgs": "Organisations"
-      },
-      "members": {
-        "title": "Members",
-        "info": "Member Statistics",
-        "active": "Aktive Members",
-        "persons": "Persons",
-        "contacts": "Contacts",
-        "competitionLevels": "Competition-Levels",
-        "applications": "Applications",
-        "birthdays": "Birthdays",
-        "passive": "Passive Members",
-        "deceased": "Deceased Members",
-        "srvall": "SRV Members",
-        "alumni": "Alumni",
-        "men": "Men",
-        "women": "Women",
-        "entries": "Entires",
-        "exits": "Exits",
-        "oldJuniors": "Juniors > 18"
-      },
-      "boat": {
-        "title": "Boats",
-        "club": "Club Boats",
-        "archived": "Archived Boats",
-        "private": "Private Skiffs",
-        "info": "Boat Statistics",
-        "all": "All Boats",
-        "test": "Test Boats"
-      },
-      "finance": {
-        "title": "Finance",
-        "fees": "Fees",
-        "srvFees": "SRV Fees",
-        "docs": "Financial Material"
-      },
-      "resources": {
-        "title": "Resources",
-        "resources": "Ressources",
-        "maleLockers": "Men Lockers",
-        "femaleLockers": "Women Lockers",
-        "keys": "Keys",
-        "motorboats": "Motorboats",
-        "vehicle": "Vehicles",
-        "other": "Other Resources",
-        "archivedResources": "Archived Resources"
-      },
-      "misc": {
-        "title": "Miscellaneous",
-        "impressum": "Impressum",
-        "terms": "Legal",
-        "privacy": "Privacy",
-        "help": "Help"
-      },
-      "aoc": {
-        "title": "AOC - Operation Centre",
-        "icon": "Icon Tests",
-        "translation": "Translation Tests",
-        "storage": "Storage Tests",
-        "consistencyChecks": "Tests of Data Consistency",
-        "bk3migration": "Admin Operations",
-        "documents": "Documents",
-        "regex": "Regex (Regular Expressions)",
-        "comps": "Form Components",
-        "users": "Users",
-        "roles": "Roles",
-        "test": "Tests",
-        "testcms": "CMS Tests",
-        "iterableSubjects": "Subjects",
-        "geotracker": "GeoTracker"
-      },
-      "version": {
-        "title": "Version"
-      }
+  "vcard": {
+    "action": {
+      "label": "Export as vCard"
+    },
+    "modal": {
+      "title": "vCard Export",
+      "intro": "Choose which data to export."
+    },
+    "scope": {
+      "addresses": "Addresses",
+      "phone": "Phone",
+      "email": "E-Mail",
+      "postal": "Postal address",
+      "web": "Web/Links",
+      "birthday": "Date of birth",
+      "photo": "Photo",
+      "workRels": "Activities / Contacts",
+      "personalRels": "Relationships",
+      "orgLinks": "Linked organisations"
+    },
+    "export": {
+      "conf": "vCard was exported.",
+      "error": "Export failed.",
+      "notAllowed": "No permission to export."
     }
   },
-  "general": {
-    "category": {
-      "singular": "Category",
-      "plural": "Categories",
-      "all": {
-        "label": "All",
-        "description": "All elements of a category"
-      },
-      "undefined": {
-        "label": "Undefined",
-        "description": "The category was not assigned or is unknown."
-      },
-      "archived": {
-        "label": "Archived",
-        "description": "Archived (deleted) category."
-      },
-      "countries": {
-        "CH": "Switzerland",
-        "DE": "Germany",
-        "US": "USA",
-        "FR": "France",
-        "IT": "Italy",
-        "LI": "Liechtenstein",
-        "HU": "Hungary"
-      },
-      "states": {
-        "CH": {
-          "AG": "Aargau",
-          "AI": "Appenzell Innerrhoden",
-          "AR": "Appenzell Ausserrhoden",
-          "BE": "Berne",
-          "BL": "Basel Land",
-          "BS": "Basel Stadt",
-          "DE": "Germany",
-          "FR": "Fribourg",
-          "GE": "Genf",
-          "GL": "Glarus",
-          "GR": "Graubuenden",
-          "IT": "Italien",
-          "JU": "Jura",
-          "LU": "Luzern",
-          "NE": "Neuenburg",
-          "NW": "Nidwalden",
-          "OW": "Obwalden",
-          "SG": "St. Gallen",
-          "SH": "Schaffhausen",
-          "SO": "Solothurn",
-          "SZ": "Schwyz",
-          "TG": "Thurgau",
-          "TI": "Tessin",
-          "UR": "Uri",
-          "VD": "Waadt",
-          "VS": "Wallis",
-          "ZG": "Zug",
-          "ZH": "Zurich"
-        }
-      }
+  "account": "Account",
+  "activity": "Activity",
+  "address": "Address",
+  "application": {
+    "list": {
+      "title": "Applications",
+      "empty": "No applications found."
     },
-    "operation": {
-      "copy": {
-        "conf": "The value was copied."
-      },
-      "change": {
-        "confirm": "Save the changes ?",
-        "ok": "OK",
-        "cancel": "Cancel"
-      },
-      "search": {
-        "placeholder": "Search...",
-        "byTag": "Tag-Search"
-      },
-      "select": {
-        "tag": "Select a tag"
-      },
-      "insert": {
-        "password": "Insert password"
-      },
-      "nyi": "This function is not yet implemented.",
-      "inspect": "Inspect"
+    "edit": {
+      "title": "Edit application",
+      "save": "Save",
+      "accept": "Accept",
+      "deny": "Deny",
+      "save_conf": "Application updated.",
+      "save_error": "Update failed.",
+      "accept_confirm": "Accept the application? A person will be created.",
+      "accept_conf": "Application approved — person was created.",
+      "accept_error": "Approval failed.",
+      "deny_conf": "Application denied.",
+      "deny_error": "Denial failed.",
+      "deny_reason": "Reason for denial"
     },
-    "validate": {
-      "email": "Please insert a valid email address.",
-      "zip": "Zip code must be a number with {{max}} digits.",
-      "url": "Please insert a valid URL, e.g. https://www.google.ch"
+    "delete": {
+      "confirm": "Do you really want to delete this application?",
+      "conf": "Application deleted.",
+      "error": "Deletion failed."
     },
-    "error": {
-      "notAuthorised": "Sorry, you don't have the needed permission for this."
+    "actions": {
+      "add_membership": "Add membership",
+      "add_to_group": "Invite to group",
+      "membership_added": "Membership added.",
+      "group_invited": "Person invited to group.",
+      "no_person": "Person not yet created — accept the application first."
     },
-    "debug": {
-      "model": {
-        "label": "Analyze the object",
-        "title": "Content of the object"
-      }
+    "mail": {
+      "confirmation_sent": "Confirmation sent to the applicant.",
+      "decision_sent": "Decision sent to the applicant.",
+      "send_failed": "The e-mail could not be sent."
     },
-    "util": {
-      "since": "since",
-      "note": "note",
-      "twitter": "Twitter",
-      "email": "email",
-      "search": "search",
-      "id": "ID",
-      "type": "type",
-      "url": "URL",
-      "name": "name",
-      "tags": "tags",
-      "description": "description",
-      "allYears": "All years"
-    }
+    "field": {
+      "first_name": "First name",
+      "last_name": "Last name",
+      "gender": "Gender",
+      "date_of_birth": "Date of birth",
+      "ssn": "Social security number",
+      "email": "E-Mail",
+      "phone": "Phone",
+      "street_name": "Street",
+      "street_number": "No.",
+      "zip_code": "Postal code",
+      "city": "City",
+      "country_code": "Country",
+      "parent_first_name": "Parent's first name",
+      "parent_last_name": "Parent's last name",
+      "parent_email": "Parent's e-mail",
+      "parent_phone": "Parent's phone",
+      "application_as": "Application as",
+      "state": "Status",
+      "submitted_at": "Received",
+      "reviewed_at": "In progress since",
+      "reviewer": "Reviewer",
+      "close_reason": "Remark"
+    },
+    "validation": {
+      "email_required_either": "E-mail is required (either applicant or parent).",
+      "phone_required_either": "Phone is required (either applicant or parent)."
+    },
+    "section": {
+      "person": "Person",
+      "contact": "Contact",
+      "address": "Address",
+      "parent": "Parents (mandatory for youths)",
+      "application": "Application"
+    },
+    "kind_youth": "Youth",
+    "kind_adult": "Adult",
+    "kind_transfer": "Transfer",
+    "state_applied": "Received",
+    "state_reviewing": "In progress",
+    "state_closed_approved": "Accepted",
+    "state_closed_denied": "Denied",
+    "state_closed_cancelled": "Withdrawn",
+    "cancel": "Cancel"
   },
-  "input": {
-    "abbreviation": {
-      "label": "Abbreviation",
-      "placeholder": "Abbreviation of a name, e.g. for lists, minutes."
-    },
-    "addressChannel": {
-      "label": "Address Channel",
-      "placeholder": "Address type, e.g. phone, email"
-    },
-    "addressUsage": {
-      "label": "Address Usage",
-      "placeholder": "Usage of the address",
-      "helper": "A description about the purpose of the address, e.g. private, business"
-    },
-    "addressValue": {
-      "label": "Address value",
-      "placeholder": "e.g. 079 123 45 67"
-    },
-    "addressValue2": {
-      "label": "Address extension",
-      "placeholder": "e.g. c/o, level, etc."
-    },
-    "bexioId": {
-      "label": "Bexio ID",
-      "placeholder": "ID of the matching data within Bexio"
-    },
-    "boatName": {
-      "label": "Boat name",
-      "placeholder": "Name of a boat",
-      "error": "A boat name is mandatory and must consist of letters and digits, but no special characters."
-    },
-    "boatType": {
-      "label": "Boat type"
-    },
-    "city": {
-      "label": "City",
-      "placeholder": "Name of a city or village",
-      "error": "Only letters are allowed, not digits nor special characters."
-    },
-    "color": {
-      "label": "Color"
-    },
-    "addressChannelLabel": {
-      "label": "Label of the channel",
-      "placeholder": "e.g. Handy"
-    },
-    "comment": {
-      "label": "Comment",
-      "placeholder": "Insert your comment here and finish with a carriage return.",
-      "authorId": "Author ID",
-      "authorName": "Author",
-      "date": "Date"
-    },
-    "count": {
-      "label": "Count",
-      "placeholder": "Count",
-      "error": "This must be an integer consisting of just digits."
-    },
-    "country": {
-      "label": "Country",
-      "placeholder": "CH",
-      "error": "Country Code must consist of two letters, e.g. CH for Switzerland."
-    },
-    "currentValue": {
-      "label": "Current Value",
-      "placeholder": "Current value in CHF",
-      "error": "This must be an integer consisting of just digits."
-    },
-    "dateOfBirth": {
-      "label": "Date of birth",
-      "placeholder": "tt.mm.jjjj",
-      "helper": "We need your correct birthdate, e.g. for statistics or for the registration with the SRV association. You may turn off the visibility of your birthdate for other members.",
-      "error": "The format of the date is not correct."
-    },
-    "dateOfDeath": {
-      "label": "Date of death",
-      "placeholder": "tt.mm.jjjj",
-      "error": "The format of the date is not correct."
-    },
-    "dateOfEntry": {
-      "label": "Date of entry",
-      "placeholder": "tt.mm.jjjj",
-      "error": "The format of the date is not correct."
-    },
-    "dateOfExit": {
-      "label": "Date of exit",
-      "placeholder": "tt.mm.jjjj",
-      "error": "The format of the date is not correct."
-    },
-    "dateOfFoundation": {
-      "label": "Date of foundation",
-      "placeholder": "tt.mm.jjjj",
-      "error": "The format of the date is not correct."
-    },
-    "dateOfLiquidation": {
-      "label": "Date of termination",
-      "placeholder": "tt.mm.jjjj",
-      "error": "The format of the date is not correct."
-    },
-    "email": {
-      "label": "E-Mail",
-      "placeholder": "ssss@ssssssss.sss",
-      "error": "Please insert a valid email address."
-    },
-    "firstName": {
-      "label": "Firstname",
-      "placeholder": "The given name(s)",
-      "error": "Only letters are allowed, no digits nor special characters."
-    },
-    "gender": {
-      "label": "Gender"
-    },
-    "iban": {
-      "label": "IBAN-Number",
-      "placeholder": "CHnn nnnn nnnn nnnn nnnn n",
-      "helper": "The bank account number facilitates reimbursements.",
-      "error": "The IBAN-number must be given in the following format: CHnn nnnn nnnn nnnn nnnn n."
-    },
-    "keyNr": {
-      "label": "Key Nr.",
-      "placeholder": "nnnnn",
-      "error": "This must be an integer number consisting of just digits."
-    },
-    "lastName": {
-      "label": "Lastname",
-      "placeholder": "The family name(s)",
-      "error": "The lastname is mandatory and must consist of just letters, but no digits nor special characters."
-    },
-    "load": {
-      "label": "Load",
-      "placeholder": "Load in kg [min-max]",
-      "error": "Die Eingabe besteht aus einem optionalen Mindestgewicht (2-stellige Nummer) - Maximalgewicht (2-3 stellige Nummer)"
-    },
-    "lockerNr": {
-      "label": "Garderobe Nr.",
-      "placeholder": "n[nn]",
-      "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
-    },
-    "lockerOwnership": {
-      "label": "Mitglied/Club"
-    },
-    "loginEmail": {
-      "label": "E-Mail",
-      "placeholder": "ssss@ssssssss.sss",
-      "error": "Bitte eine gültige Email Adresse eingeben."
-    },
-    "loginPassword": {
-      "label": "Passwort",
-      "placeholder": "Passwort",
-      "error": "Das Passwort muss mindestens 6 Zeichen lang sein."
-    },
-    "memberCategory": {
-      "label": "Mitgliederkategorie"
-    },
-    "memberId": {
-      "label": "Mitglied ID",
-      "placeholder": "nnnnn",
-      "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
-    },
-    "name": {
-      "label": "Name",
-      "placeholder": "Name"
-    },
-    "nickName": {
-      "label": "Übername",
-      "placeholder": "Übername (Spitzname)"
-    },
-    "notes": {
-      "label": "Notizen",
-      "placeholder": "Notizen"
-    },
-    "number": {
-      "label": "Nummer"
-    },
-    "orgFunction": {
-      "label": "Funktion",
-      "placeholder": "Funktion in der Organisation"
-    },
-    "orgName": {
-      "label": "Organisationsname",
-      "company": "Firmenname",
-      "association": "Vereinsname",
-      "group": "Gruppenname",
-      "placeholder": "Organisationsname",
-      "error": "Die Eingabe des Organisationsnamens ist obligatorisch. Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
-    },
-    "orgType": {
-      "label": "Organisations-Typ"
-    },
-    "owner": {
-      "label": "Besitzer"
-    },
-    "phone": {
-      "label": "Telefon",
-      "placeholder": "+41 (nn) nnn-nnnn",
-      "error": "Die Telefonnummer muss in folgendem Format angegeben werden: +41 (nn) nnn-nnnn."
-    },
-    "price": {
-      "label": "Preis",
-      "placeholder": "Preis in CHF",
-      "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
-    },
-    "content": {
-      "label": "HTML-Inhalt",
-      "placeholder": "Text des Artikels in HTML Format."
-    },
-    "resourceType": {
-      "label": "Resourcenart"
-    },
-    "ssn": {
-      "label": "AHV-Nummer",
-      "placeholder": "756.xxxx.xxxx.xc",
-      "helper": "Die AHV-Nummer ist eine optionale Eingabe. Sie wird z.B. bei Reinigungspersonal für AHV-Meldungen oder Versicherungen verwendet.",
-      "error": "Die AHV-Nummber besteht aus 13 Nummern in folgendem Format 756.xxxx.xxxx.xc."
-    },
-    "state": {
-      "label": "Status"
-    },
-    "street": {
-      "label": "Strasse",
-      "placeholder": "Strassenname mit Hausnummer",
-      "error": "Es sind nur Buchstaben (inkl. -) und Zahlen erlaubt, keine Sonderzeichen."
-    },
-    "subtitle": {
-      "label": "Untertitel",
-      "placeholder": "Untertitel der Sektion (oftmals das Datum)"
-    },
-    "taxId": {
-      "label": "MwSt-Nummer",
-      "placeholder": "CHE-123.456.789",
-      "helper": "Mehrwertsteuer ID (oder Unternehmens-ID UID)",
-      "error": "Die MwSt-Nummber besteht aus CHE gefolgt von 9 Ziffern."
-    },
-    "title": {
-      "label": "Titel",
-      "placeholder": "Titel der Sektion"
-    },
-    "usage": {
-      "label": "Verwendung"
-    },
-    "addressUsageLabel": {
-      "label": "Verwendungsname",
-      "placeholder": "Bezeichnung der eigenen Verwendung",
-      "helper": "Ein Name dafür, wie die Adresse verwendet wird, z.B. Oma, Mutter, Notfall."
-    },
-    "validFrom": {
-      "label": "Gültig ab",
-      "placeholder": "tt.mm.jjjj",
-      "helper": "Das Datum, ab dem die Angabe gültig ist.",
-      "error": "Das Datumsformat ist nicht korrekt."
-    },
-    "validTo": {
-      "label": "Gültig bis",
-      "placeholder": "tt.mm.jjjj",
-      "helper": "Das Datum, bis zu dem die Angabe gültig ist.",
-      "error": "Das Datumsformat ist nicht korrekt."
-    },
-    "value": {
-      "label": "Wert",
-      "placeholder": "Wert in CHF",
-      "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden"
-    },
-    "weight": {
-      "label": "Gewicht",
-      "placeholder": "Gewicht [kg]",
-      "error": "Es muss eine Ganzzahl aus lauter Ziffern eingegeben werden."
-    },
-    "zip": {
-      "label": "PLZ",
-      "placeholder": "nnnn",
-      "error": "Es muss eine vierstellige Postleitzahl eingegeben werden."
-    }
+  "avatar": "Avatar",
+  "boat": "Boat",
+  "cancel": "Cancel",
+  "chat": "Chat",
+  "comment": "Comment",
+  "confirm": "Confirm",
+  "date": "Date",
+  "description": "Description",
+  "document": "Document",
+  "email": "E-Mail",
+  "error": "Error",
+  "event": "Event",
+  "file": "File",
+  "group": "Group",
+  "key": "ID",
+  "location": "Location",
+  "loading": "Loading...",
+  "membership": "Membership",
+  "message": "Message",
+  "more": "more...",
+  "nyi": "This function is not yet implemented.",
+  "ok": "OK",
+  "org": "Organisation",
+  "ownership": "Usage",
+  "page": "Page",
+  "person": "Person",
+  "personalrel": "Relationship",
+  "phone": "Phone",
+  "reservation": "Reservation",
+  "responsibility": "Responsibility",
+  "resource": "Resource",
+  "section": "Section",
+  "subtitle": "Subtitle",
+  "task": "Todo",
+  "title": "Title",
+  "topic": "Topic",
+  "transfer": "Transfer",
+  "trip": "Trip",
+  "type": "Type",
+  "user": "User",
+  "value": "Value",
+  "website": "Website",
+  "workrel": "Employment",
+  "year": "Year",
+  "allYears": "All years",
+  "altText": {
+    "label": "Alt text",
+    "placeholder": "Text",
+    "helper": "A description that helps, for example, visually impaired users understand the content of the website."
   },
-  "checkbox": {
-    "isArchived": {
-      "label": "Archiviert"
-    },
-    "isFavorite": {
-      "label": "Hauptadresse"
-    },
-    "isCc": {
-      "label": "CC:-Addresse"
-    },
-    "isPublic": {
-      "label": "Öffentlich"
-    },
-    "showTestData": {
-      "label": "Testdaten anzeigen"
-    },
-    "useTouchId": {
-      "label": "Touch ID verwenden"
-    },
-    "useFaceId": {
-      "label": "Face ID verwenden"
-    }
+  "name": {
+    "label": "Name",
+    "placeholder": "Name",
+    "error": "The name is mandatory and must consist of alphanumeric characters.",
+    "helper": "A name may consist of several words. Only letters (incl. -) and numbers are allowed, no special characters.",
+    "lowercaseWord": "The name consists of a single word in lowercase letters."
   },
-  "language": {
-    "label": "Language",
-    "select": "Select language",
-    "de": "German",
-    "en": "English",
-    "fr": "French",
-    "es": "Spanish",
-    "it": "Italien"
+  "notes": {
+    "label": "Notes",
+    "placeholder": "Text"
+  },
+  "url": {
+    "label": "URL",
+    "placeholder": "https://...",
+    "helper": "Uniform Resource Locator, an HTML link"
+  },
+  "empty": {
+    "org": "No organisations found."
+  },
+  "select": {
+    "label": "Select",
+    "tag": "Select a tag",
+    "date": "Select a date",
+    "subject": "Select a subject",
+    "category": "Select a category",
+    "person": "Select a person",
+    "org": "Select an organisation",
+    "resource": "Select a resource",
+    "group": "Select a group",
+    "role": "Select role"
+  },
+  "copy": {
+    "label": "Copy",
+    "conf": "The value was copied.",
+    "error": "The value could not be copied."
+  },
+  "save": {
+    "label": "Save",
+    "conf": "The value was saved.",
+    "error": "The value could not be saved."
+  },
+  "delete": {
+    "label": "Delete",
+    "askconf": "Do you really want to delete the value?",
+    "conf": "The value was deleted.",
+    "error": "The value could not be deleted."
+  },
+  "search": {
+    "label": "Search...",
+    "placeholder": "Search...",
+    "tag": "Tag"
+  },
+  "filter": {
+    "all": "All"
+  },
+  "actionsheet": {
+    "title": "Choose an action"
+  },
+  "chip": {
+    "tag": {
+      "label": "Tag"
+    },
+    "role": {
+      "label": "Role"
+    }
   },
   "tag": {
-    "advertiser": "Inserent",
+    "address": "Address",
+    "advertiser": "Advertiser",
+    "album": "Album",
+    "app": "App",
+    "avatar": "Avatar",
     "bexio": "Bexio",
-    "billable": "Verrechenbar",
-    "business": "Geschäft",
-    "cancelled": "Abgesagt",
+    "bhproj": "Boathouse Project",
+    "billable": "Billable",
+    "blog": "Blog",
+    "boat": "Boat",
+    "bstrat": "Boat Strategy",
+    "business": "Business",
+    "cancelled": "Cancelled",
+    "carriage": "Carriage",
     "cgig": "CGIG",
-    "draft": "Entwurf",
-    "family": "Familie",
-    "friend": "Freund",
-    "important": "Wichtig",
-    "invalid": "Ungültig",
+    "comment": "Comment",
+    "culture": "Culture",
+    "document": "Document",
+    "draft": "Draft",
+    "edurebate": "Education discount",
+    "employer": "Employer",
+    "ezs": "EZS",
+    "family": "Family",
+    "familyrebate": "Family discount",
+    "finance": "Finance",
+    "fo": "Navigation rules",
+    "friend": "Friend",
+    "gv": "GV",
+    "history": "History",
+    "hv": "HV",
+    "important": "Important",
+    "industry": "Industry",
+    "internal": "Internal",
+    "invalid": "Invalid",
     "jole": "Jole",
+    "jstrainer": "J+S instructor",
+    "jubilee": "Jubilee",
     "lattenberg": "Lattenberg Cup",
+    "legal": "Legal",
     "liteboat": "Liteboat",
-    "lost": "Verloren",
-    "offering": "Angebot",
-    "pending": "Pendent",
-    "planned": "Geplant",
-    "private": "Privat",
-    "public": "Öffentlich",
-    "repairing": "In Reparatur",
-    "reserved": "Reserviert",
+    "logo": "Logo",
+    "lost": "Lost",
+    "marketing": "Marketing",
+    "military": "Military",
+    "museum": "Museum",
+    "nature": "Nature",
+    "new": "New",
+    "offering": "Offering",
+    "okBoat": "Approved for outings",
+    "old": "Old",
+    "org": "Org",
+    "paid": "Paid",
+    "pending": "Pending",
+    "person": "Person",
+    "planned": "Planned",
+    "private": "Private",
+    "project": "Project",
+    "public": "Public",
+    "regatta": "Regatta",
+    "religion": "Religion",
+    "repairing": "Under repair",
+    "reservation": "Reservation",
+    "reserved": "Reserved",
+    "resource": "Resource",
     "review": "Review",
-    "selectable": "Selektierbar",
+    "section": "Section",
+    "selectable": "Selectable",
+    "social": "Social",
     "sponsor": "Sponsor",
-    "tent20": "Zeltsponsor 2020",
+    "sport": "Sport",
+    "srv": "SRV",
+    "stuerbord": "Stüürbord",
+    "tent20": "Tent sponsor 2020",
+    "tenu": "Kit",
     "test": "Test",
+    "tour": "Guided tour",
+    "tourboat": "Tour boat",
     "training": "Training",
-    "unavailable": "Nicht verfügbar",
-    "unpaid": "Unbezahlt",
-    "valid": "Gültig",
-    "tourboat": "Tourboot"
+    "unavailable": "Unavailable",
+    "unpaid": "Unpaid",
+    "valid": "Valid",
+    "vs": "VS",
+    "tenant": "<%= tenantId %>"
+  },
+  "validation": {
+    "addressValueMandatoryForNonPostal": "The address value is mandatory for non-postal addresses.",
+    "addressModelType": "The ModelType must be AddressModel.",
+    "addressValueMandatory": "The address value is mandatory.",
+    "addressCustomChannelLabelMandatory": "A label is mandatory for a custom address channel.",
+    "addressCustomUsageLabelMandatory": "A label is mandatory for a custom address usage.",
+    "addressZipCodeMandatory": "For a postal address, the postal code is mandatory.",
+    "addressCityMandatory": "For a postal address, the city is mandatory.",
+    "addressCountryMandatory": "For a postal address, the country is mandatory.",
+    "addressCountryUppercase": "The country code must be uppercase.",
+    "addressCountryLength": "The country code must be exactly 2 characters long.",
+    "addressSwissZipCodeNumeric": "Swiss postal codes must be numeric.",
+    "addressSwissZipCodeLength": "Swiss postal codes must be exactly 4 characters long.",
+    "addressGermanZipCodeNumeric": "German postal codes must be numeric.",
+    "addressGermanZipCodeLength": "German postal codes must be exactly 5 characters long.",
+    "addressInvalidPhoneFormat": "Invalid phone number format.",
+    "avatarNotUndefined": "Avatar must not be undefined",
+    "commentModelType": "The ModelType must be CommentModel.",
+    "commentNotEmpty": "A comment must not be empty.",
+    "commentShouldMakeSense": "A comment should make sense; 'New comment was created' is meaningless.",
+    "competitionLevelModelType": "The ModelType must be CompetitionLevelModel.",
+    "docModelType": "The ModelType must be DocumentModel.",
+    "docCreationNotFuture": "The creation date must not be in the future.",
+    "docUpdateNotFuture": "The modification date must not be in the future.",
+    "docUpdateAfterCreation": "The modification date must be after the creation date.",
+    "emailMustContainAt": "The e-mail address must contain an @.",
+    "emailMustContainDot": "The e-mail address must contain a dot.",
+    "caleventRepeatUntilDateMandatoryWithGivenPeriodicity": "The repeat-until date is mandatory with this periodicity",
+    "caleventRepeatUntilDateNotBeforeStartDate": "The repeat-until date must not be before the start date",
+    "caleventMaxDatesPerSeries": "The series would have too many occurrences (100 at most). Please shorten the repeat-until date.",
+    "caleventEndDateAfterStartDate": "The end date must be after the start date.",
+    "caleventStartDateMandatory": "The start date is mandatory.",
+    "caleventEndDateMandatory": "The end date is mandatory.",
+    "caleventModelType": "The ModelType must be EventModel.",
+    "schedulePollNameMandatory": "The topic is mandatory.",
+    "schedulePollColumnsMandatory": "At least one date proposal is required.",
+    "schedulePollColumnsMax": "At most 10 date proposals are allowed.",
+    "iconNotUndefined": "The icon must be defined.",
+    "idRequired": "The ID is mandatory.",
+    "invoicePositionCurrency": "The currency must be CHF.",
+    "invoicePositionModelType": "The ModelType must be InvoicePositionModel.",
+    "labelNotUndefined": "The label must be defined.",
+    "lastNameRequired": "The last name is mandatory.",
+    "locationModelType": "The ModelType must be LocationModel.",
+    "emailRequired": "The e-mail address is mandatory.",
+    "passwordRequired": "The password is mandatory.",
+    "loginPasswordTypeString": "The password must be a string.",
+    "loginPasswordNotNull": "The password must not be null.",
+    "loginPasswordNotUndefined": "The password must not be undefined.",
+    "membershipExitAfterEntry": "The exit date must be after the entry date.",
+    "membershipDateOfBirthNotFuture": "The date of birth must not be in the future.",
+    "menuDataProperty": "The menu data must be of type BaseProperty[].",
+    "menuSubMenuItemsMissing": "The sub-menu entries are missing.",
+    "menuItemsType": "Menu items must be of type MenuItem[].",
+    "menuTypeString": "Menu items must be of type String[].",
+    "menuItemsEmptySubMenu": "Only sub-menus may contain menu items.",
+    "menuRoleNeededMandatory": "Specifying the required role is mandatory.",
+    "menuModelType": "The ModelType must be MenuModel.",
+    "nameNotUndefined": "The name must be defined.",
+    "nameRequired": "Specifying a name is mandatory.",
+    "orgModelType": "The ModelType must be OrgModel.",
+    "orgNameRequired": "The name of the organisation is mandatory.",
+    "orgLiguidationAfterFoundation": "The liquidation date must be after the foundation date.",
+    "orgZipRequiresCity": "A postal code requires a city.",
+    "orgZipRequiredCountry": "A postal code requires a country.",
+    "orgCityRequiresZip": "A city requires a postal code.",
+    "orgSwissZipNumeric": "Swiss postal codes must be numeric.",
+    "orgSwissZipLength": "Swiss postal codes must be exactly 4 characters long.",
+    "ownershipSubjectCategoryGroup": "The subject of a group ownership must be a group.",
+    "ownershipValidToAfterValidFrom": "The valid-to date must be after the valid-from date.",
+    "pageModelType": "The ModelType must be PageModel.",
+    "personModelType": "The ModelType must be PersonModel.",
+    "personDateOfBirthNotFuture": "The date of birth must not be in the future.",
+    "personDateOfDeathNotFuture": "The date of death must not be in the future.",
+    "personDateOfDeathAfterBirth": "The date of death must be after the date of birth.",
+    "personZipRequiresCity": "A postal code requires a city.",
+    "personZipRequiresCountry": "A postal code requires a country.",
+    "personCityRequiresZip": "A city requires a postal code.",
+    "personSwissZipNumeric": "Swiss postal codes must be numeric.",
+    "personSwissZipLength": "Swiss postal codes must be exactly 4 characters long.",
+    "phoneNotNull": "The phone number is mandatory.",
+    "validDirPathFormat": "The folder name must represent a valid path.",
+    "validEmailFormat": "The e-mail address must have a valid format.",
+    "validIban": "The IBAN must have a valid format.",
+    "validSSN": "Please enter a valid social security number.",
+    "validTenant": "The tenant must have a valid value.",
+    "required": "This field is mandatory.",
+    "tooLong": "The value is too long.",
+    "invalidValue": "The value is invalid.",
+    "notNumber": "Value must be a number.",
+    "invalidEnum": "The value must be one of the allowed values.",
+    "notArray": "The value must be a list (array).",
+    "missingRequiredValue": "A required value is missing.",
+    "notNull": "Value must not be null",
+    "notUndefined": "Value must not be undefined",
+    "notString": "Value must be a string",
+    "booleanMandatory": "Value must be a boolean",
+    "numberMandatory": "Value must be a number",
+    "integerMandatory": "Value must be an integer",
+    "streetNameNotNull": "Street name is mandatory",
+    "stringMandatory": "Value must be a string",
+    "enumValue": "The value must be one of the enum values",
+    "validDate": "The date must have a valid format",
+    "validDateTime": "The date and time must have a valid format",
+    "minWrong": "The value is too small",
+    "maxWrong": "The value is too large",
+    "valueMandatory": "The value is mandatory",
+    "valueTooLong": "The value is too long",
+    "valueTooShort": "The value is too short",
+    "tooShort": "The value is too short.",
+    "relModelType": "The ModelType must be RelationshipModel.",
+    "relCorrectSubjectType": "The type of the subject must be Person, Org or Group.",
+    "relSubjectCatGender": "The SubjectCategory of a person must be Gender.",
+    "relSubjectCatOrg": "The SubjectCategory of an organisation must be OrgType.",
+    "relSubjectCatGroup": "The SubjectCategory of a group must be GroupType.",
+    "relObjType": "The ObjectType must be Boat or Resource.",
+    "relObjCatBoat": "The ObjectCategory of a boat must be BoatType.",
+    "relObjCatResource": "The ObjectCategory of a resource must be ResourceType.",
+    "relSubTypeOwnership": "The SubType of an ownership must be undefined.",
+    "memberObjTypeOrgGroup": "The ObjectType of a member must be Org or Group.",
+    "memberObjCatOrgType": "The ObjectCategory of a member must be OrgType.",
+    "resSubjCatGroup": "The SubjectCategory of a reservation must be Group.",
+    "resourceModelType": "The ModelType must be Boat or Resource.",
+    "boatSubType": "The SubType of a boat must be BoatType.",
+    "resourceSubTypeUndefined": "The SubType of a resource must be undefined.",
+    "resourceUsageUndefined": "The usage of a resource must be undefined.",
+    "sectionModelType": "The ModelType must be SectionModel.",
+    "ssnIdNotUndefined": "The social security number must either be defined or an empty string (but not undefined).",
+    "subjectModelType": "The ModelType must be Person, Org or Group.",
+    "subjectCategoryGroup": "The SubjectCategory must be GroupType.",
+    "taskModelType": "The ModelType must be TaskModel.",
+    "tenantsType": "The tenants must consist of an array of strings.",
+    "tenantsLength": "At least one tenant must exist.",
+    "urlStart": "The URL must start with https:// or assets or tenant or /.",
+    "urlValid": "The URL must have a valid format.",
+    "urlValidProtocol": "The URL must have a valid protocol (https://).",
+    "urlHost": "The URL must have a valid host name.",
+    "urlNotUndefined": "The URL must be defined.",
+    "urlParts": "The URL must not contain _ or .",
+    "abstractRequired": "Subject is required.",
+    "abstractMin": "Subject must be at least 3 characters long.",
+    "abstractMax": "Subject may be at most 200 characters long.",
+    "amountRequired": "Amount must be greater than 0.",
+    "amountMax": "Amount is too large.",
+    "currencyRequired": "Currency is required.",
+    "currencyInvalid": "Invalid currency."
   },
   "appUpdate": {
     "header": "Update available",

@@ -111,5 +111,28 @@
       "label": "Para información",
       "description": "La persona solo es informada y no participa."
     }
+  },
+  "lock": {
+    "label": "Bloquear las respuestas",
+    "confirm": "¿Seguro que quieres bloquear las respuestas a las invitaciones? Los invitados ya no podrán cambiar su respuesta.",
+    "conf": "Las respuestas a las invitaciones están bloqueadas.",
+    "error": "No se han podido bloquear las invitaciones."
+  },
+  "unlock": {
+    "label": "Desbloquear las respuestas",
+    "confirm": "¿Quieres desbloquear de nuevo las respuestas a las invitaciones?",
+    "conf": "Las respuestas a las invitaciones vuelven a estar desbloqueadas."
+  },
+  "locked": {
+    "title": "Invitación bloqueada",
+    "hint": "La organización ha bloqueado las respuestas a esta invitación. Tu respuesta ya no se puede cambiar."
+  },
+  "comment": {
+    "pending": "Invitación restablecida a pendiente.",
+    "accepted": "Invitación aceptada.",
+    "declined": "Invitación rechazada.",
+    "maybe": "Invitación respondida con «Quizás».",
+    "locked": "Se han bloqueado las respuestas a la invitación.",
+    "unlocked": "Se han desbloqueado las respuestas a la invitación."
   }
 }
