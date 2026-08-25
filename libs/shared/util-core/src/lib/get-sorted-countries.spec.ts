@@ -23,9 +23,9 @@ describe('getSortedCountries', () => {
     expect(codes).toContain('DE');
   });
 
-  it('is sorted alphabetically by localized name', () => {
-    const names = getSortedCountries('en').map(c => c.name);
-    const sorted = [...names].sort((a, b) => a.localeCompare(b));
-    expect(names).toEqual(sorted);
+  it('is sorted alphabetically by country code', () => {
+    const codes = getSortedCountries('en').map(c => c.code);
+    const sorted = [...codes].sort((a, b) => a.localeCompare(b));
+    expect(codes).toEqual(sorted);
   });
 });

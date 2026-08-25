@@ -84,7 +84,8 @@ vi.mock('countries-list', () => ({
 vi.mock('i18n-iso-countries', () => ({
   getName: vi.fn(),
   alpha2ToAlpha3: vi.fn(),
-  alpha2ToNumeric: vi.fn()
+  alpha2ToNumeric: vi.fn(),
+  registerLocale: vi.fn()
 }));
 
 describe('country.util', () => {

@@ -62,6 +62,8 @@ export const PERSON_I18N_KEYS = {
     countryCode_label:          PFX + 'countryCode.label',
     countryCode_placeholder:    PFX + 'countryCode.placeholder',
     countryCode_helper:         PFX + 'countryCode.helper',
+    countryCode_search:         PFX + 'countryCode.search',
+    countryCode_empty:         PFX + 'countryCode.empty',
 
     zipCode_label:              PFX + 'zipCode.label',
     zipCode_placeholder:        PFX + 'zipCode.placeholder',

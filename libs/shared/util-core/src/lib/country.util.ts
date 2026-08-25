@@ -1,8 +1,23 @@
 import { CountryCode, PhoneNumber, parsePhoneNumberWithError } from 'libphonenumber-js';
 import * as countryDictionary from 'countries-list';
 import * as i18nIsoCountries from 'i18n-iso-countries';
+import deCountries from 'i18n-iso-countries/langs/de.json';
+import enCountries from 'i18n-iso-countries/langs/en.json';
+import frCountries from 'i18n-iso-countries/langs/fr.json';
+import esCountries from 'i18n-iso-countries/langs/es.json';
+import itCountries from 'i18n-iso-countries/langs/it.json';
 import { ICountry } from 'countries-list';
 import { die, warn } from './log.util';
+
+/*
+  i18n-iso-countries ships no locale data by default: in the browser build, getName()
+  returns undefined for every language until the locale is registered. Register the
+  five languages of AvailableLanguages (de, en, fr, es, it) once, at module load —
+  each langs/*.json is ~6 KB.
+*/
+for (const locale of [deCountries, enCountries, frCountries, esCountries, itCountries]) {
+  i18nIsoCountries.registerLocale(locale as unknown as i18nIsoCountries.LocaleData);
+}
  
 /*
     This library contains funtions needed to provide internationalization, e.g.
@@ -196,8 +211,9 @@ export interface CountryOption {
 
 /**
  * Returns all ISO 3166-1 alpha-2 countries with their localized names,
- * sorted alphabetically by name. Falls back to the native name when a
- * localized name is not available for the given language.
+ * sorted alphabetically by their country code (AD, AE, AF, ...). Falls back
+ * to the native name when a localized name is not available for the given
+ * language.
  */
 export function getSortedCountries(languageCode: string): CountryOption[] {
   return Object.keys(countryDictionary.countries)
@@ -206,6 +222,6 @@ export function getSortedCountries(languageCode: string): CountryOption[] {
       const localized = getCountryName(upper, languageCode);
       return { code: upper, name: localized || getNativeCountryName(upper) };
     })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.code.localeCompare(b.code));
 }
 

@@ -1,11 +1,10 @@
-import { Component, computed, effect, inject, input, linkedSignal, model, output } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonRow, IonSelect, IonSelectOption } from '@ionic/angular/standalone';
+import { Component, computed, effect, input, linkedSignal, model, output, untracked } from '@angular/core';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular/standalone';
 
 import { AddressModel, CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, getSortedCountries, hasRole } from '@okr/shared-util-core';
-import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
-import { I18nService } from '@okr/shared-i18n';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, EmailInput, EmailInputI18n, ErrorNote, IbanInput, IbanInputI18n, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_COUNTRY, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
 import { CitySearch } from '@okr/subject-swisscities-ui';
 import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
@@ -14,9 +13,9 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
   selector: 'okr-address-form',
   standalone: true,
   imports: [
-    CategorySelect, TextInput, CitySearch, NotesInput, Checkbox,
+    CategorySelect, TextInput, CitySearch, NotesInput, Checkbox, CountrySelect,
     EmailInput, PhoneInput, IbanInput, ErrorNote, Chips,
-    IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonSelect, IonSelectOption
+    IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -101,13 +100,8 @@ import { addressValidations, AddressesI18n } from '@okr/subject-address-util';
 
               <ion-row>
                 <ion-col size="12" size-md="3">
-                  <ion-select label="{{ countryCodeI18n().label }}" labelPlacement="stacked"
-                      interface="popover" [value]="countryCode()" [disabled]="isReadOnly()"
-                      (ionChange)="onFieldChange('countryCode', $event.detail.value)">
-                    @for (opt of countryOptions(); track opt.code) {
-                      <ion-select-option [value]="opt.code">{{ opt.code }} — {{ opt.name }}</ion-select-option>
-                    }
-                  </ion-select>
+                  <okr-country-select [i18n]="countryCodeI18n()" [value]="countryCode()"
+                      (valueChange)="onCountryChange($event)" [readOnly]="isReadOnly()" />
                 </ion-col>
 
                 <ion-col size="12" size-md="3">
@@ -183,7 +177,7 @@ export class AddressForm {
   protected streetNameI18n        = computed(() => ({ name: 'streetName',        label: this.i18n().streetName_label(),        placeholder: this.i18n().streetName_placeholder(),        helper: this.i18n().streetName_helper()        } as TextInputI18n));
   protected streetNumberI18n      = computed(() => ({ name: 'streetNumber',      label: this.i18n().streetNumber_label(),      placeholder: this.i18n().streetNumber_placeholder(),      helper: this.i18n().streetNumber_helper()      } as TextInputI18n));
   protected addressValue2I18n     = computed(() => ({ name: 'addressValue2',     label: this.i18n().addressValue2_label(),     placeholder: this.i18n().addressValue2_placeholder(),     helper: this.i18n().addressValue2_helper()     } as TextInputI18n));
-  protected countryCodeI18n       = computed(() => ({ name: 'countryCode',       label: this.i18n().countryCode_label(),       placeholder: this.i18n().countryCode_placeholder(),       helper: this.i18n().countryCode_helper()       } as TextInputI18n));
+  protected countryCodeI18n       = computed(() => ({ name: 'countryCode',       label: this.i18n().countryCode_label(),       search: this.i18n().countryCode_search(),                 helper: this.i18n().countryCode_helper(),      empty: this.i18n().countryCode_empty() } as CountrySelectI18n));
   protected zipCodeI18n           = computed(() => ({ name: 'zipCode',           label: this.i18n().zipCode_label(),           placeholder: this.i18n().zipCode_placeholder(),           helper: this.i18n().zipCode_helper()           } as TextInputI18n));
   protected cityI18n              = computed(() => ({ name: 'city',              label: this.i18n().city_label(),              placeholder: this.i18n().city_placeholder(),              helper: this.i18n().city_helper()              } as TextInputI18n));
   protected urlI18n               = computed(() => ({ name: 'url',               label: this.i18n().url_label(),               placeholder: this.i18n().url_placeholder(),               helper: this.i18n().url_helper()               } as TextInputI18n));
@@ -210,7 +204,15 @@ export class AddressForm {
   public dirty = output<boolean>();
   public valid = output<boolean>();
   
-  constructor() { effect(() => this.valid.emit(this.validationResult().isValid())); }
+  constructor() {
+    effect(() => this.valid.emit(this.validationResult().isValid()));
+    // a postal address without a country defaults to CH, so that the default is also stored
+    effect(() => {
+      const _data = this.formData();
+      if (_data?.addressChannel !== 'postal' || _data?.countryCode) return;
+      untracked(() => this.formData.update((vm) => ({ ...vm, countryCode: DEFAULT_COUNTRY })));
+    });
+  }
 
   // validation and errors
   private readonly validationResult = computed(() => addressValidations(this.formData(), this.tenantId(), this.allTags()));
@@ -233,7 +235,7 @@ export class AddressForm {
   protected streetName = linkedSignal(() => this.formData()?.streetName ?? '');
   protected streetNumber = linkedSignal(() => this.formData()?.streetNumber ?? '');
   protected addressValue2 = linkedSignal(() => this.formData()?.addressValue2 ?? '');
-  protected countryCode = linkedSignal(() => this.formData()?.countryCode ?? 'CH');
+  protected countryCode = linkedSignal(() => this.formData()?.countryCode || DEFAULT_COUNTRY);
   protected zipCode = linkedSignal(() => this.formData()?.zipCode ?? '');
   protected city = linkedSignal(() => this.formData()?.city ?? '');
   protected url = linkedSignal(() => this.formData()?.url ?? '');
@@ -245,9 +247,6 @@ export class AddressForm {
   protected tags = linkedSignal(() => this.formData()?.tags ?? DEFAULT_TAGS);
   protected okey = linkedSignal(() => this.formData()?.okey ?? '');
 
-  private readonly i18nService = inject(I18nService);
-  protected readonly countryOptions = computed(() => getSortedCountries(this.i18nService.getActiveLang()));
-
   /******************************* actions *************************************** */
   protected onCitySelected(city: City): void {
     this.dirty.emit(true);
@@ -257,6 +256,12 @@ export class AddressForm {
       countryCode: city.countryCode,
       zipCode: city.zipCode
     }));
+  }
+
+  /** a new country invalidates the zip code and the city that belong to the old one */
+  protected onCountryChange(countryCode: string): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, countryCode: countryCode, zipCode: '', city: '' }));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | number | boolean): void {

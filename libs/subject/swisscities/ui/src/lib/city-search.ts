@@ -1,6 +1,6 @@
-import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, OnInit, output, signal, viewChild } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonIcon, IonItem, IonLabel, IonList, IonPopover, IonRow, IonSearchbar, IonSpinner, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { City } from '@okr/shared-models';
+import { City, SUPPORTED_CITY_COUNTRIES, SupportedCityCountry } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 import { SWISSCITIES_I18N_KEYS, SwissCitiesI18n } from './swisscities-i18n';
@@ -50,7 +50,7 @@ import { CitySearchStore } from './city-search.store';
     }
   `,
 })
-export class CitySearch {
+export class CitySearch implements OnInit {
   protected store = inject(CitySearchStore);
   protected readonly i18n = inject(I18nService).translateAll(SWISSCITIES_I18N_KEYS) as SwissCitiesI18n;
 
@@ -58,15 +58,31 @@ export class CitySearch {
   /** empty → the translated default placeholder is used */
   public placeholder = input('');
   public debounce = input(500);
+  public setFocus = input(true);
 
   public citySelected = output<City>();
   protected isPopoverOpen = signal(false);
   protected readonly effectivePlaceholder = computed(() => this.placeholder() || this.i18n.search_placeholder());
-  protected hasDataset = computed(() => this.store.cities().length > 0 || this.store.loading());
+  /**
+   * The searchbar is only offered for countries that ship a city list
+   * (SUPPORTED_CITY_COUNTRIES) — asking it up front avoids showing a searchbar
+   * that would never return a hit while the dataset is still loading.
+   */
+  protected hasDataset = computed(() =>
+    SUPPORTED_CITY_COUNTRIES.includes(this.countryCode().toUpperCase() as SupportedCityCountry));
   protected okrSearchCity = viewChild<IonSearchbar>('okrSearchCity');
 
   constructor() {
     effect(() => { this.store.setCountry(this.countryCode()); });
+  }
+
+  /**
+   * sets focus into the search input field
+   * see https://stackoverflow.com/questions/45786205/how-to-focus-ion-searchbar-on-button-click#45786266
+   */
+  public ngOnInit(): void {
+    if (!this.setFocus()) return;
+    setTimeout(() => this.okrSearchCity()?.setFocus(), 500);
   }
 
   protected onSearchtermChange($event: Event): void {

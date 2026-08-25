@@ -72,7 +72,9 @@
   "countryCode": {
     "label": "Paese (ISO)",
     "placeholder": "CH",
-    "helper": "Codice paese secondo lo standard ISO"
+    "helper": "Codice paese secondo lo standard ISO",
+    "search": "Cerca un paese (p.es. CH o Svizzera)",
+    "empty": "Nessun paese trovato"
   },
   "zipCode": {
     "label": "CAP",

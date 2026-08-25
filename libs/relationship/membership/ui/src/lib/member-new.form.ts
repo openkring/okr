@@ -2,14 +2,14 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
-import { CategoryListModel, RoleName, SwissCity, UserModel } from '@okr/shared-models';
+import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@okr/shared-constants';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { SwissCitySearch } from '@okr/subject-swisscities-ui';
+import { CitySearch } from '@okr/subject-swisscities-ui';
 import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@okr/relationship-membership-util';
 
 @Component({
@@ -19,7 +19,7 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
     AvatarPipe,
     TextInput, DateInput, CategorySelect, Chips, NotesInput,
     ErrorNote, PhoneInput, EmailInput,
-    SwissCitySearch,
+    CitySearch,
     IonGrid, IonRow, IonCol, IonItem, IonAvatar, IonImg, IonButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
   styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
@@ -83,7 +83,7 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
                 </ion-col>
               </ion-row>
 
-              <okr-swisscity-search (citySelected)="onCitySelected($event)" [setFocus]="false" />
+              <okr-city-search [countryCode]="countryCode()" (citySelected)="onCitySelected($event)" [setFocus]="false" />
 
               <ion-row>
                 <ion-col size="12" size-md="3">
@@ -262,7 +262,7 @@ export class MemberNewForm {
     });
   }
 
-  protected onCitySelected(city: SwissCity): void {
+  protected onCitySelected(city: City): void {
     this.formData.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: city.zipCode }));
   }
 

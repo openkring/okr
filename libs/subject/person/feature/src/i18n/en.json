@@ -70,7 +70,9 @@
   "countryCode": {
     "label": "Country (ISO)",
     "placeholder": "CH",
-    "helper": "The ISO code of the country."
+    "helper": "The ISO code of the country.",
+    "search": "Search country (e.g. CH or Switzerland)",
+    "empty": "No country found"
   },
   "zipCode": {
     "label": "Postal code",

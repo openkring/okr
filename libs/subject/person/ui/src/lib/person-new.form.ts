@@ -2,14 +2,14 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonImg, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
-import { CategoryListModel, RoleName, SwissCity, UserModel } from '@okr/shared-models';
-import { CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
+import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, NotesInput, NotesInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
 import { DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL } from '@okr/shared-constants';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
-import { SwissCitySearch } from '@okr/subject-swisscities-ui';
+import { CitySearch } from '@okr/subject-swisscities-ui';
 
 import { PersonNewFormModel, personNewFormValidations, PersonI18n, PersonDirectoryResult, mergeDirectoryResultIntoForm } from '@okr/subject-person-util';
 
@@ -20,7 +20,7 @@ import { PersonLookup } from './person-lookup';
   standalone: true,
   imports: [
     AvatarPipe, TextInput, DateInput, CategorySelect,
-    Chips, NotesInput, ErrorNote, PhoneInput, EmailInput, CategorySelect, Checkbox, SwissCitySearch, PersonLookup,
+    Chips, NotesInput, ErrorNote, PhoneInput, EmailInput, CategorySelect, Checkbox, CitySearch, PersonLookup, CountrySelect,
     IonGrid, IonRow, IonCol, IonItem, IonAvatar, IonImg, IonButton, IonLabel, IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ],
   styles: [`ion-thumbnail { width: 30px; height: 30px; }`],
@@ -122,14 +122,13 @@ import { PersonLookup } from './person-lookup';
                 </ion-col>
               </ion-row>
 
-              <okr-swisscity-search (citySelected)="onCitySelected($event)" [setFocus]="false" />
+              <okr-city-search [countryCode]="countryCode()" (citySelected)="onCitySelected($event)" [setFocus]="false" />
 
               <ion-row>
                 <ion-col size="12" size-md="3">
-                  <okr-text-input
+                  <okr-country-select
                     [i18n]="countryCodeI18n()"
-                    [value]="countryCode()" (valueChange)="onFieldChange('countryCode', $event)"
-                    [clearInput]="false"
+                    [value]="countryCode()" (valueChange)="onCountryChange($event)"
                     [readOnly]="isReadOnly()"
                   />
                 </ion-col>
@@ -290,7 +289,7 @@ export class PersonNewForm {
   protected lastNameI18n     = computed(() => ({ name: 'lastName',     label: this.i18n().lastName_label(),     placeholder: this.i18n().lastName_placeholder(),     helper: this.i18n().lastName_helper()     } as TextInputI18n));
   protected streetNameI18n   = computed(() => ({ name: 'streetName',   label: this.i18n().streetName_label(),   placeholder: this.i18n().streetName_placeholder(),   helper: this.i18n().streetName_helper()   } as TextInputI18n));
   protected streetNumberI18n = computed(() => ({ name: 'streetNumber', label: this.i18n().streetNumber_label(), placeholder: this.i18n().streetNumber_placeholder(), helper: this.i18n().streetNumber_helper() } as TextInputI18n));
-  protected countryCodeI18n  = computed(() => ({ name: 'countryCode',  label: this.i18n().countryCode_label(),  placeholder: this.i18n().countryCode_placeholder(),  helper: this.i18n().countryCode_helper()  } as TextInputI18n));
+  protected countryCodeI18n  = computed(() => ({ name: 'countryCode',  label: this.i18n().countryCode_label(),  search: this.i18n().countryCode_search(),  helper: this.i18n().countryCode_helper(),  empty: this.i18n().countryCode_empty()  } as CountrySelectI18n));
   protected zipCodeI18n      = computed(() => ({ name: 'zipCode',      label: this.i18n().zipCode_label(),      placeholder: this.i18n().zipCode_placeholder(),      helper: this.i18n().zipCode_helper()      } as TextInputI18n));
   protected cityI18n         = computed(() => ({ name: 'city',         label: this.i18n().city_label(),         placeholder: this.i18n().city_placeholder(),         helper: this.i18n().city_helper()         } as TextInputI18n));
   protected webI18n          = computed(() => ({ name: 'web',          label: this.i18n().web_label(),          placeholder: this.i18n().web_placeholder(),          helper: this.i18n().web_helper()          } as TextInputI18n));
@@ -366,8 +365,14 @@ export class PersonNewForm {
     });
   }
 
-  protected onCitySelected(city: SwissCity): void {
+  protected onCitySelected(city: City): void {
     this.formData.update((vm) => ({ ...vm, city: city.name, countryCode: city.countryCode, zipCode: city.zipCode }));
+  }
+
+  /** a new country invalidates the zip code and the city that belong to the old one */
+  protected onCountryChange(countryCode: string): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, countryCode: countryCode, zipCode: '', city: '' }));
   }
 
   protected onPersonSelected(details: PersonDirectoryResult): void {

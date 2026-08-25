@@ -17,6 +17,7 @@ export * from './lib/color';
 export * from './lib/color-select.modal';
 export * from './lib/connection-status-button';
 export * from './lib/counter';
+export * from './lib/country-select';
 export * from './lib/date-input';
 export * from './lib/date-picker.modal';
 export * from './lib/date-select.modal';

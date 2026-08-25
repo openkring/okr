@@ -72,7 +72,9 @@
   "countryCode": {
     "label": "Pays (ISO)",
     "placeholder": "CH",
-    "helper": "Code de pays selon la norme ISO"
+    "helper": "Code de pays selon la norme ISO",
+    "search": "Rechercher un pays (p.ex. CH ou Suisse)",
+    "empty": "Aucun pays trouvé"
   },
   "zipCode": {
     "label": "NPA",

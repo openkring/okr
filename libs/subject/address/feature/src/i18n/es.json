@@ -290,7 +290,9 @@
   "countryCode": {
     "label": "País (ISO)",
     "placeholder": "CH",
-    "helper": "Código de país según el estándar ISO"
+    "helper": "Código de país según el estándar ISO",
+    "search": "Buscar país (p. ej. CH o Suiza)",
+    "empty": "No se ha encontrado ningún país"
   },
   "zipCode": {
     "label": "C.P.",

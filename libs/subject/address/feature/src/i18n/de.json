@@ -294,7 +294,9 @@
   "countryCode": {
     "label": "Land (ISO)",
     "placeholder": "CH",
-    "helper": "Länderkürzel nach ISO Standard"
+    "helper": "Länderkürzel nach ISO Standard",
+    "search": "Land suchen (z.B. CH oder Schweiz)",
+    "empty": "Kein Land gefunden"
   },
   "zipCode": {
     "label": "PLZ",
