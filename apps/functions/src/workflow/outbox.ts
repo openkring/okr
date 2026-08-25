@@ -19,7 +19,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 import { getAppEmailConfig } from '../auth/email-templates';
 import { DEFAULT_EMAIL_PROVIDER, sendEmailViaProvider } from '../auth/email-transport';
-import { MATRIX_HOMESERVER, matrixAdminToken, resolveChatRoomForPerson } from '../matrix-simple/shared';
+import { activeGroupMemberKeys, ensurePersonInRoom, MATRIX_HOMESERVER, matrixAdminToken, resolveChatRoomForPerson } from '../matrix-simple/shared';
+import { logWorkflowActivity } from './activity';
 import { matrixBotToken, postGroupChatMessage, sendBotDirectMessage } from './matrix-bot';
 import { ALL_ESIGN_SECRETS } from '../esign/shared';
 import { startSignatureRun } from '../esign/esign-send-document';
@@ -47,7 +48,40 @@ async function providerFor(tenantId: string): Promise<string> {
   return String(snap.data()?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
 }
 
-async function dispatch(doc: OutboxDoc): Promise<void> {
+/**
+ * Refuse rather than invent a room.
+ *
+ * An `openChat` step is fired by a domain event, not by a person opening a chat tab, and it
+ * resolves with `create: true` — so without this gate a report against a dissolved group would
+ * conjure a brand-new empty room nobody watches, and a report against an ordinary closed group
+ * would drag a stranger into it.
+ *
+ * The gate lives HERE and not in `resolveChatRoomForPerson`, whose other caller
+ * (`requestGroupRoomAccess`) deliberately serves non-members of ordinary shared groups —
+ * training-course participants and past members reach their group chat that way.
+ */
+async function assertOpenChatAllowed(groupId: string, personKey: string): Promise<void> {
+  const snap = await getFirestore().collection('groups').doc(groupId).get();
+  const group = snap.data();
+  if (!group) throw new Error(`openChat: group '${groupId}' does not exist`);
+  if (group['isArchived']) throw new Error(`openChat: group '${groupId}' is archived`);
+
+  // 'ask' groups are open by definition — Support and Notfall exist to be written to by
+  // people who are not on them.
+  const chatMode = (group['chatMode'] as string) ?? 'shared';
+  if (chatMode === 'ask') return;
+
+  const localpart = personKey.toLowerCase();
+  const memberKeys = await activeGroupMemberKeys(groupId);
+  // A group admin without a formal membership counts as a member, same as in resolveChatRoomForPerson.
+  const adminKeys = ((group['admins'] ?? []) as Array<{ key?: string }>).map((a) => a.key ?? '');
+  const isMember = [...memberKeys, ...adminKeys].some((k) => k.toLowerCase() === localpart);
+  if (!isMember) {
+    throw new Error(`openChat: ${personKey} is not a member of group '${groupId}' (chatMode '${chatMode}')`);
+  }
+}
+
+export async function dispatch(doc: OutboxDoc): Promise<void> {
   const tenantId = doc.tenants[0] ?? '';
   const p = doc.payload;
 
@@ -87,8 +121,13 @@ async function dispatch(doc: OutboxDoc): Promise<void> {
       // outbox exists to avoid.
       const adminToken = matrixAdminToken.value();
       const hostname = new URL(MATRIX_HOMESERVER).hostname.replace('matrix.', '');
+      await assertOpenChatAllowed(p['groupId'], p['personKey']);
       const roomId = await resolveChatRoomForPerson(p['groupId'], p['personKey'], hostname, adminToken, { create: true });
       if (!roomId) throw new Error(`openChat: no room for group '${p['groupId']}'`);
+      // The reporter must be IN the room before the report lands in it: resolveAskRoom joins the
+      // group's members and postGroupChatMessage joins the bot, so without this the one person the
+      // conversation is about never sees it — no room in their list, no push, no reply.
+      await ensurePersonInRoom(roomId, p['personKey'], hostname, adminToken);
       await postGroupChatMessage(roomId, p['body'], p['txnId'], adminToken);
       logger.info(`${CF_NAME}: rule ${doc.ruleKey} opened a chat with group ${p['groupId']} (tenant ${tenantId})`);
       return;
@@ -121,6 +160,11 @@ export const onWorkflowOutbox = onDocumentCreated(
       const message = error instanceof Error ? error.message : String(error);
       logger.error(`${CF_NAME}: ${doc.kind} failed for rule ${doc.ruleKey}: ${message}`);
       await snap.ref.update({ state: 'failed', error: message });
+      // Nothing in the app reads `workflow-outbox`, so the failed row alone is invisible. The
+      // engine's own rejections land in the activity log; the ones that depend on live Matrix
+      // or mail state fail HERE, and they are exactly the ones an admin has to hear about —
+      // the member has already been told their report went through.
+      await logWorkflowActivity(doc.tenants[0] ?? '', { rule: doc.ruleKey, kind: doc.kind, error: message });
     }
   },
 );

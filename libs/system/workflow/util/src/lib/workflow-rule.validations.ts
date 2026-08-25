@@ -30,7 +30,14 @@ export const workflowRuleValidations = staticSuite((model: WorkflowRuleModel, te
     stringValidations(`steps[${i}].action`, s.action, SHORT_NAME_LENGTH, 0, true);
     // mandatory exactly when the form shows the field, same rule as probeArg
     stringValidations(`steps[${i}].actionArg`, s.actionArg, LONG_NAME_LENGTH, 0, actionNeedsArg(s.action));
-    stringValidations(`steps[${i}].messageKey`, s.messageKey, LONG_NAME_LENGTH, 0, true);
+    // openChat is the one action whose message may be empty: an empty key is what makes the
+    // reporter's OWN text the opening message of the chat (engine.ts falls back to
+    // ctx.params['notes']). Requiring it here made both live production rules unsaveable —
+    // the form shows no error note, so the change-confirmation bar simply never appeared.
+    // The mirror lives here rather than beside `actionNeedsArg` in workflow-rule.util.ts on
+    // purpose: it is a validation rule about a field, not a fact the form asks about to
+    // decide what to render.
+    stringValidations(`steps[${i}].messageKey`, s.messageKey, LONG_NAME_LENGTH, 0, s.action !== 'openChat');
     // a task due more than a year out is a data-entry slip, not a policy
     numberValidations(`steps[${i}].dueInDays`, s.dueInDays, true, 0, 365);
   });

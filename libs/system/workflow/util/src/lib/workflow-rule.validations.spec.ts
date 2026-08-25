@@ -55,4 +55,14 @@ describe('workflowRuleValidations', () => {
     expect(result.hasErrors('steps[0].messageKey')).toBe(true);
     expect(Object.keys(result.getErrors())).toContain('steps[0].messageKey');
   });
+
+  it('lets an openChat step carry an empty message key, but no other action', () => {
+    // an empty messageKey on openChat is the configuration that makes the reporter's own text
+    // the opening message — both live production rules are written that way and used to be unsaveable
+    const openChat = { action: 'openChat', actionArg: 'ausschuss_boote', messageKey: '', dueInDays: 0, writeBack: '' };
+    expect(run({ ...VALID, steps: [VALID.steps[0], openChat] }).hasErrors('steps[1].messageKey')).toBe(false);
+    expect(run({ ...VALID, steps: [VALID.steps[0], openChat] }).isValid()).toBe(true);
+    // every other action still needs one
+    expect(run({ ...VALID, steps: [{ ...VALID.steps[0], messageKey: '' }] }).hasErrors('steps[0].messageKey')).toBe(true);
+  });
 });

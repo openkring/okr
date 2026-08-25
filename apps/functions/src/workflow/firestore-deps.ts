@@ -8,7 +8,7 @@
 // one person) and this keeps the feature from needing new composite indexes — the
 // firestore.indexes.json file is known to drift from the deployed set.
 
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
 import { ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
@@ -17,21 +17,13 @@ import { getTaskIndex } from '@okr/task-util';
 
 import { shiftDaysBack } from '../auth/account-sync.decide';
 import { serverHostname } from '../matrix-simple/shared';
+import { SYSTEM_AUTHOR, logWorkflowActivity } from './activity';
 import { OutboxDoc, WorkflowOutboxCollection } from './outbox';
 import { InvoiceDoc, NewTask, OwnershipDoc, ResponsibilityDoc, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const CF_NAME = 'workflow';
 
-/** Author stamped on tasks and activities created by the engine. */
-export const SYSTEM_AUTHOR: AvatarInfo = {
-  key: '',
-  name1: 'System',
-  name2: '',
-  modelType: 'user',
-  type: '',
-  subType: '',
-  label: 'System',
-};
+export { SYSTEM_AUTHOR };
 
 /** '@workflow/messages.exitTreasurer' → module 'workflow/messages', key 'exitTreasurer'. */
 export function splitMessageKey(messageKey: string): { module: string; key: string } {
@@ -321,23 +313,7 @@ export function createFirestoreDeps(): WorkflowDeps {
     translate,
 
     async logActivity(tenantId, payload): Promise<void> {
-      try {
-        const timestamp = getTodayStr(DateFormat.StoreDateTime);
-        await db.collection('activities').add({
-          tenants: [tenantId],
-          isArchived: false,
-          timestamp,
-          scope: 'workflow',
-          action: 'update',
-          roleNeeded: 'admin',
-          payload: JSON.stringify(payload),
-          author: SYSTEM_AUTHOR,
-          index: `t:${timestamp} c:workflow a:update p:System`,
-          createdAt: FieldValue.serverTimestamp(),
-        });
-      } catch (error) {
-        logger.error(`${CF_NAME}: could not write activity`, error);
-      }
+      await logWorkflowActivity(tenantId, payload);
     },
   };
 }

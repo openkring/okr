@@ -897,6 +897,31 @@ export async function forceJoinUserToRoom(roomId: string, matrixUserId: string, 
 }
 
 /**
+ * Admit a PERSON into a room: provision their Matrix account, get the admin into the room
+ * (invites are only permitted from a member in invite-only rooms, SEC-1), then invite and
+ * force-join the person.
+ *
+ * WHY SHARED. `resolveChatRoomForPerson` exists because two copies of the room-PICKING branch
+ * drifted apart and produced duplicate rooms (S5). Admitting the person is the second half of
+ * that same operation, and the price of a second copy was the workflow outbox posting a damage
+ * report into a room the reporter was never in.
+ *
+ * @returns the Matrix user id that was admitted.
+ */
+export async function ensurePersonInRoom(
+  roomId: string,
+  personKey: string,
+  hostname: string,
+  adminToken: string,
+): Promise<string> {
+  const matrixUserId = `@${personKey.toLowerCase()}:${hostname}`;
+  await ensureMatrixUserExists(matrixUserId, adminToken, { personKey });
+  await ensureAdminInRoom(roomId, adminToken);
+  await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
+  return matrixUserId;
+}
+
+/**
  * Kick a Matrix user from a room. Idempotent: M_NOT_IN_ROOM is tolerated.
  * @returns true if a kick actually happened.
  */
