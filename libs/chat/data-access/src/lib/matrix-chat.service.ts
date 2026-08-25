@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, PersonModelName, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, buildMentionContent, escapeHtml, isRenderableChatEvent, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, buildMentionContent, escapeHtml, isRenderableChatEvent, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 
@@ -1958,6 +1958,21 @@ private async buildAndEmitRoomsList(): Promise<void> {
       .getMembers()
       .filter((m) => m.membership === 'join')
       .map((m) => m.userId.slice(1).split(':')[0]);
+  }
+
+  /**
+   * Darf die angemeldete Person in diesem Raum schreiben? Liest allein das
+   * `m.room.power_levels`-Event, das der Client ohnehin synchronisiert — kein zusaetzlicher
+   * Aufruf, keine zweite Quelle. `true`, solange Client oder Raum noch nicht bereit sind.
+   */
+  public canPostInRoom(roomId: string): boolean {
+    const room = this.client?.getRoom(roomId);
+    const userId = this.client?.getUserId();
+    if (!room || !userId) return true;
+    const content = room.currentState
+      .getStateEvents('m.room.power_levels', '')
+      ?.getContent() as { events_default?: number } | undefined;
+    return canPostWithPower(room.getMember(userId)?.powerLevel, content?.events_default);
   }
 
   /**

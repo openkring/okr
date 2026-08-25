@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, PLATFORM_ID, computed, effect, inject, input, OnDestroy, signal, untracked, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { Router, RouterLink } from '@angular/router';
+import { IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText, ActionSheetOptions, ActionSheetController, ModalController } from '@ionic/angular/standalone';
 import { captureMessage } from '@sentry/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -9,6 +9,8 @@ import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
 import { debugMessage, hasRole } from '@okr/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
 import { MatrixMessage, PersonModelName, RoleName } from '@okr/shared-models';
+
+import { MenuService } from '@okr/cms-menu-data-access';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
@@ -22,9 +24,9 @@ import { ChatHelpModal } from './chat-help.modal';
   selector: 'okr-matrix-chat-overview',
   standalone: true,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, RouterLink,
     Spinner, MatrixRoomList, MatrixMessageList, MatrixMessageInput,
-    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar
+    IonCard, IonCardContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonBadge, IonSearchbar, IonText
   ],
   styles: [`
     :host {
@@ -95,6 +97,15 @@ import { ChatHelpModal } from './chat-help.modal';
 
     okr-matrix-message-input {
       flex-shrink: 0;
+    }
+
+    .read-only-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 16px;
     }
 
     .room-header {
@@ -387,25 +398,36 @@ import { ChatHelpModal } from './chat-help.modal';
                 }
 
                 <!-- Message Input -->
-                <okr-matrix-message-input
-                  [i18n]="store.i18n"
-                  [roomId]="currentRoomId()"
-                  [mentionCandidates]="store.mentionCandidates()"
-                  [isDirectRoom]="store.isCurrentRoomDirect()"
-                  [typingUsers]="typingUsers()"
-                  [replyToMessage]="replyToMessage()"
-                  [pendingImages]="pendingImages()"
-                  (messageSent)="onMessageSent($event)"
-                  (fileSent)="onFileSent($event)"
-                  (fileQueued)="onFileQueued($event)"
-                  (removeImage)="onRemoveImage($event)"
-                  (filesSent)="onFilesSent($event)"
-                  (locationSent)="onLocationSent()"
-                  (surveyRequested)="onSurveyRequested()"
-                  (videoCallStarted)="onVideoCallStarted()"
-                  (typing)="onTyping($event)"
-                  (cancelReplyClicked)="onCancelReply()"
-                />
+                @if (store.isCurrentRoomReadOnly()) {
+                  <div class="read-only-bar">
+                    <ion-text color="medium">{{ store.i18n.readOnly_hint() }}</ion-text>
+                    @if (askMenuItem(); as item) {
+                      <ion-button fill="clear" size="small" [routerLink]="item.url">
+                        {{ store.i18n.readOnly_ask() }}
+                      </ion-button>
+                    }
+                  </div>
+                } @else {
+                  <okr-matrix-message-input
+                    [i18n]="store.i18n"
+                    [roomId]="currentRoomId()"
+                    [mentionCandidates]="store.mentionCandidates()"
+                    [isDirectRoom]="store.isCurrentRoomDirect()"
+                    [typingUsers]="typingUsers()"
+                    [replyToMessage]="replyToMessage()"
+                    [pendingImages]="pendingImages()"
+                    (messageSent)="onMessageSent($event)"
+                    (fileSent)="onFileSent($event)"
+                    (fileQueued)="onFileQueued($event)"
+                    (removeImage)="onRemoveImage($event)"
+                    (filesSent)="onFilesSent($event)"
+                    (locationSent)="onLocationSent()"
+                    (surveyRequested)="onSurveyRequested()"
+                    (videoCallStarted)="onVideoCallStarted()"
+                    (typing)="onTyping($event)"
+                    (cancelReplyClicked)="onCancelReply()"
+                  />
+                }
               } @else {
                 @if (rooms().length === 0) {
                   <div class="empty-state">
@@ -524,6 +546,12 @@ export class MatrixChat implements OnDestroy {
   private actionSheetController = inject(ActionSheetController);
   private readonly modalController = inject(ModalController);
   private readonly router = inject(Router);
+  private readonly menuService = inject(MenuService);
+
+  // Read-only rooms (announcement channels) show a way to still reach someone instead of the
+  // composer. Resolves the 'chat-support' menu item; stays undefined if the tenant has none —
+  // the template then renders the hint without a button rather than a dead one.
+  protected readonly askMenuItem = toSignal(this.menuService.read('chat-support'), { initialValue: undefined });
 
   private isInitializing = false; // Guard flag to prevent multiple initializations
   private isRequestingRoomAccess = false;

@@ -22,6 +22,7 @@
     "@okr/avatar-data-access": "*",
     "@okr/comment-feature": "*",
     "@okr/cms-menu-feature": "*",
+    "@okr/cms-menu-data-access": "*",
     "@okr/chat-data-access": "*",
     "@okr/chat-util": "*",
     "@okr/chat-ui": "*",

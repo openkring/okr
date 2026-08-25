@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -184,5 +184,34 @@ describe('isRenderableChatEvent', () => {
     for (const t of ['m.room.member', 'm.room.power_levels', 'm.reaction', 'm.room.redaction', 'org.okr.tenant']) {
       expect(isRenderableChatEvent(t)).toBe(false);
     }
+  });
+});
+
+describe('canPostWithPower', () => {
+  it('allows posting in an ordinary room where nothing is required', () => {
+    expect(canPostWithPower(0, 0)).toBe(true);
+  });
+
+  it('blocks a member below the required level', () => {
+    expect(canPostWithPower(0, 50)).toBe(false);
+  });
+
+  it('allows a privileged member at exactly the required level', () => {
+    expect(canPostWithPower(50, 50)).toBe(true);
+  });
+
+  it('allows an admin above it', () => {
+    expect(canPostWithPower(100, 50)).toBe(true);
+  });
+
+  it('defaults to open while the room state has not arrived yet', () => {
+    // Waehrend der Erstsynchronisation ist beides undefined. Der Composer darf dann NICHT
+    // gesperrt wirken — Synapse weist eine unerlaubte Nachricht ohnehin ab, ein faelschlich
+    // gesperrtes Eingabefeld sieht dagegen wie ein Defekt aus.
+    expect(canPostWithPower(undefined, undefined)).toBe(true);
+  });
+
+  it('treats a missing own power as 0 once a requirement is known', () => {
+    expect(canPostWithPower(undefined, 50)).toBe(false);
   });
 });

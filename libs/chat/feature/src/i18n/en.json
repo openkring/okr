@@ -201,6 +201,10 @@
   "validation": {
     "nameRequired": "The name is required."
   },
+  "readOnly": {
+    "hint": "Announcement channel – only the board posts here.",
+    "ask": "Ask a question"
+  },
   "isTyping": "is typing...",
   "areTyping": "are typing...",
   "othersTyping": "others are typing...",

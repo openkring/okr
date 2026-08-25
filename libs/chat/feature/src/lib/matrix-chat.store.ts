@@ -217,6 +217,18 @@ export const _MatrixChatStore = signalStore(
         if (!roomId) return false;
         return state.roomsResource.value()?.find((r) => r.roomId === roomId)?.isDirect ?? false;
       }),
+
+      /**
+       * Ist der aktuelle Raum ein Mitteilungskanal, in dem ich nicht schreiben darf?
+       * Haengt an `roomStateVersionResource`, damit ein nachtraeglich eintreffendes oder
+       * geaendertes Power-Levels-Event den Composer sofort umschaltet.
+       */
+      isCurrentRoomReadOnly: computed(() => {
+        const roomId = state.currentRoomId();
+        if (!roomId || !state.isMatrixInitialized()) return false;
+        state.roomStateVersionResource.value(); // re-run on every room-state event
+        return !state.matrixService.canPostInRoom(roomId);
+      }),
     };
   }),
 

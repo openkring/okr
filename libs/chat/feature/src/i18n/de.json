@@ -201,6 +201,10 @@
   "validation": {
     "nameRequired": "Der Name ist obligatorisch."
   },
+  "readOnly": {
+    "hint": "Mitteilungskanal – hier schreibt nur der Vorstand.",
+    "ask": "Frage stellen"
+  },
   "isTyping": "tippt...",
   "areTyping": "tippen...",
   "othersTyping": "andere tippen...",

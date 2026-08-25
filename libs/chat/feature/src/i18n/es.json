@@ -201,6 +201,10 @@
   "validation": {
     "nameRequired": "El nombre es obligatorio."
   },
+  "readOnly": {
+    "hint": "Canal de avisos – aquí solo escribe la junta.",
+    "ask": "Hacer una pregunta"
+  },
   "isTyping": "está escribiendo...",
   "areTyping": "están escribiendo...",
   "othersTyping": "otros están escribiendo...",

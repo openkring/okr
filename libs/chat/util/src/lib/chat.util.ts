@@ -199,3 +199,16 @@ export function isRenderableChatEvent(type: string, relatesTo?: { rel_type?: str
   if (type !== 'm.room.message') return false;
   return !(relatesTo?.rel_type === 'm.replace' && !!relatesTo.event_id);
 }
+
+/**
+ * Darf die eigene Person in diesem Raum schreiben?
+ *
+ * Der Client trifft hier KEINE eigene Berechtigungsentscheidung — er bildet nur ab, was
+ * Synapse ohnehin durchsetzt (`m.room.power_levels.events_default`). Solange der Raumzustand
+ * noch nicht da ist, wird bejaht: ein faelschlich gesperrtes Eingabefeld sieht wie ein
+ * Defekt aus, waehrend eine unerlaubte Nachricht serverseitig sauber abgewiesen wuerde.
+ */
+export function canPostWithPower(ownPower: number | undefined, eventsDefault: number | undefined): boolean {
+  if (eventsDefault === undefined) return true;
+  return (ownPower ?? 0) >= eventsDefault;
+}

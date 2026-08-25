@@ -201,6 +201,10 @@
   "validation": {
     "nameRequired": "Il nome è obbligatorio."
   },
+  "readOnly": {
+    "hint": "Canale di comunicazioni – qui scrive solo il comitato.",
+    "ask": "Fai una domanda"
+  },
   "isTyping": "sta scrivendo...",
   "areTyping": "stanno scrivendo...",
   "othersTyping": "altri stanno scrivendo...",

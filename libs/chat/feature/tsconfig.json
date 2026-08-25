@@ -63,6 +63,9 @@
       "path": "../../cms/menu/feature/tsconfig.lib.json"
     },
     {
+      "path": "../../cms/menu/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../chat/data-access/tsconfig.lib.json"
     },
     {

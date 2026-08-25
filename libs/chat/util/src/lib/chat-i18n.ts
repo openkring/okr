@@ -180,6 +180,9 @@ export const MATRIX_CHAT_I18N_KEYS = {
   save:                      '@save.label',
 
   validation_name_required:  PFX + 'validation.nameRequired',
+
+  readOnly_hint:             PFX + 'readOnly.hint',
+  readOnly_ask:              PFX + 'readOnly.ask',
 } satisfies Record<string, string>;
 
 export type MatrixChatI18n = { [K in keyof typeof MATRIX_CHAT_I18N_KEYS]: Signal<string> };
