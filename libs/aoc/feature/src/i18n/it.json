@@ -311,6 +311,19 @@
         "description": "Aggiunge ogni persona con un’affiliazione attiva alla stanza chat del suo gruppo. Necessario per i membri rimossi troppo presto dalle loro stanze a causa di un errore precedente. Puramente additivo: si aggiunge soltanto, mai si rimuove — i membri della stanza senza affiliazione (p. es. partecipanti a un corso) restano invariati.",
         "action": "Riconciliare",
         "confirm": "Riconciliare ora i membri di tutti i {count} gruppi?"
+      },
+      "guests": {
+        "label": "Non membri nelle chat di gruppo",
+        "description": "Chi apre la chat di un gruppo viene aggiunto in modo permanente alla sua stanza, anche senza appartenenza. È voluto (ad es. per i partecipanti a un corso), ma non viene mai annullato. Questo controllo mostra, per ogni gruppo, quante persone sono nella stanza pur non comparendo nell'elenco dei membri, e le rimuove su richiesta.",
+        "scan": "Verifica",
+        "action": "Rimuovi",
+        "none": "In tutte le chat di gruppo ci sono solo membri — niente da fare.",
+        "preview": "Gruppi con scostamento",
+        "members": "membri",
+        "inroom": "nella stanza",
+        "missing": "membri mancanti nella stanza",
+        "confirm": "Rimuovere ora {{ count }} persone senza appartenenza da «{{ group }}»?",
+        "conf": "{{ count }} persone rimosse."
       }
     }
   },

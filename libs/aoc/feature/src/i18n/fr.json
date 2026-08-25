@@ -311,6 +311,19 @@
         "description": "Ajoute chaque personne ayant une adhésion active au salon de discussion de son groupe. Nécessaire pour les membres retirés trop tôt de leurs salons à cause d’une ancienne erreur. Purement additif : les membres sont uniquement ajoutés, jamais retirés — les membres du salon sans adhésion (p. ex. participants à un cours) ne sont pas touchés.",
         "action": "Réconcilier",
         "confirm": "Réconcilier maintenant les membres des {count} groupes ?"
+      },
+      "guests": {
+        "label": "Non-membres dans les chats de groupe",
+        "description": "Toute personne qui ouvre le chat d'un groupe est ajoutée durablement à son salon, même sans adhésion. C'est voulu (p. ex. pour les participants à un cours), mais ce n'est jamais annulé. Cette vérification montre, par groupe, combien de personnes se trouvent dans le salon sans figurer dans la liste des membres, et les retire sur demande.",
+        "scan": "Vérifier",
+        "action": "Retirer",
+        "none": "Tous les chats de groupe ne contiennent que des membres — rien à faire.",
+        "preview": "Groupes avec un écart",
+        "members": "membres",
+        "inroom": "dans le salon",
+        "missing": "membres absents du salon",
+        "confirm": "Retirer maintenant {{ count }} personnes sans adhésion de « {{ group }} » ?",
+        "conf": "{{ count }} personnes retirées."
       }
     }
   },

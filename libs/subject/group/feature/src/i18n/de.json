@@ -175,7 +175,7 @@
   },
   "chatMode": {
     "label": "Chat-Modus für Nicht-Mitglieder",
-    "helper": "shared: Nicht-Mitglieder treten dem gemeinsamen Gruppenraum bei und lesen alles mit. ask: Jede/r Nicht-Mitglied erhält einen eigenen Raum mit der ganzen Gruppe – für Gruppen, die alle erreichen können sollen, deren Anfragen aber vertraulich sind (Notfall, Support, Vorstand, Kommissionen)."
+    "helper": "shared: Nicht-Mitglieder treten dem gemeinsamen Gruppenraum bei und lesen alles mit. ask: Jede/r Nicht-Mitglied erhält einen eigenen Raum mit der ganzen Gruppe – für Gruppen, die alle erreichen können sollen, deren Anfragen aber vertraulich sind (Notfall, Support, Vorstand, Kommissionen). members: Nur Mitglieder (und die Gruppen-Admins) kommen in den Chat – für einen geschlossenen Kreis, dessen Chat genau der Mitgliederliste entsprechen soll (z.B. eine Bootsmannschaft). Achtung: shared und ask nehmen Nicht-Mitglieder dauerhaft auf; wer einmal drin ist, bleibt drin."
   },
   "hasContent": {
     "label": "Inhalt anzeigen",

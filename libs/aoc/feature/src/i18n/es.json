@@ -311,6 +311,19 @@
         "description": "Añade a cada persona con una afiliación activa a la sala de chat de su grupo. Necesario para los miembros que un error anterior eliminó demasiado pronto de sus salas. Puramente aditivo: solo se añade, nunca se elimina; los miembros de la sala sin afiliación (p. ej. participantes de un curso) no se ven afectados.",
         "action": "Conciliar",
         "confirm": "¿Conciliar ahora los miembros de los {count} grupos?"
+      },
+      "guests": {
+        "label": "No miembros en los chats de grupo",
+        "description": "Quien abre el chat de un grupo entra de forma permanente en su sala, incluso sin ser miembro. Es intencionado (p. ej. para participantes de un curso), pero nunca se deshace. Esta comprobación muestra, por grupo, cuántas personas están en la sala sin figurar en la lista de miembros, y las elimina si lo deseas.",
+        "scan": "Comprobar",
+        "action": "Eliminar",
+        "none": "En todos los chats de grupo solo hay miembros — nada que hacer.",
+        "preview": "Grupos con diferencias",
+        "members": "miembros",
+        "inroom": "en la sala",
+        "missing": "miembros que faltan en la sala",
+        "confirm": "¿Eliminar ahora {{ count }} personas sin membresía de «{{ group }}»?",
+        "conf": "{{ count }} personas eliminadas."
       }
     }
   },

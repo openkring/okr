@@ -203,6 +203,6 @@
   },
   "chatMode": {
     "label": "Modalità chat per i non membri",
-    "helper": "shared: i non membri entrano nella stanza comune del gruppo e leggono tutto. ask: ogni non membro riceve una propria stanza con l’intero gruppo — per i gruppi che devono essere raggiungibili da tutti ma le cui richieste sono riservate (emergenza, supporto, comitato, commissioni)."
+    "helper": "shared: i non membri entrano nella stanza comune del gruppo e leggono tutto. ask: ogni non membro riceve una propria stanza con l’intero gruppo — per i gruppi che devono essere raggiungibili da tutti ma le cui richieste sono riservate (emergenza, supporto, comitato, commissioni). members: solo i membri (e gli amministratori del gruppo) possono entrare — per una cerchia chiusa la cui chat deve rispecchiare esattamente l’elenco dei membri (ad es. un equipaggio). Attenzione: shared e ask ammettono i non membri in modo permanente; chi è dentro, resta dentro."
   }
 }

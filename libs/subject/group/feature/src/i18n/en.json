@@ -203,6 +203,6 @@
   },
   "chatMode": {
     "label": "Chat mode for non-members",
-    "helper": "shared: non-members join the common group room and read everything. ask: every non-member gets their own room with the whole group — for groups that should be reachable by everyone but whose requests are confidential (emergency, support, board, committees)."
+    "helper": "shared: non-members join the common group room and read everything. ask: every non-member gets their own room with the whole group — for groups that should be reachable by everyone but whose requests are confidential (emergency, support, board, committees). members: only members (and the group's admins) may enter — for a closed circle whose chat should mirror the member list exactly (e.g. a boat crew). Note: shared and ask admit non-members permanently; whoever is in, stays in."
   }
 }

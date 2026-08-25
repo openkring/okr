@@ -11,7 +11,7 @@ import { AvatarSelect } from '@okr/avatar-ui';
 
 import { formatMatrixTimestamp, isMatrixPhotoUrl, MATRIX_LOG_LEVELS, MatrixLogLevel } from '@okr/chat-util';
 import { filterAdminRoomsByName } from '@okr/aoc-util';
-import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
+import { AocChatStore, AdminRoom, GroupRoomDrift, RoomMemberInfo } from './aoc-chat.store';
 
 @Component({
   selector: 'okr-aoc-chat',
@@ -359,6 +359,70 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
         </ion-card-content>
       </ion-card>
 
+      <!-- Group-room drift — people sitting in a group chat without a membership -->
+      <ion-card class="repair-card">
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.chat_repair_guests() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="repair-desc">{{ store.i18n.chat_repair_guests_description() }}</p>
+          <div class="repair-actions">
+            <ion-button size="small" fill="outline" (click)="onPreviewGuests()" [disabled]="guestScanning()">
+              @if (guestScanning()) {
+                <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+              } @else {
+                <ion-icon slot="start" src="{{'search' | svgIcon}}" />
+              }
+              {{ store.i18n.chat_repair_guests_scan() }}
+            </ion-button>
+          </div>
+
+          @if (guestPreview(); as preview) {
+            @if (preview.length === 0) {
+              <ion-note color="medium">{{ store.i18n.chat_repair_guests_none() }}</ion-note>
+            } @else {
+              <div class="repair-preview-title">{{ store.i18n.chat_repair_guests_preview() }} ({{ preview.length }})</div>
+              <ion-list lines="inset" class="repair-list">
+                @for (drift of preview; track drift.groupKey) {
+                  <ion-item>
+                    <ion-label class="ion-text-wrap">
+                      <div>{{ drift.groupName }}</div>
+                      <ion-note color="medium" style="font-size:0.75rem">
+                        {{ drift.memberCount }} {{ store.i18n.chat_repair_guests_members() }} —
+                        {{ drift.roomMemberCount }} {{ store.i18n.chat_repair_guests_inroom() }}
+                        @if (drift.missing.length > 0) {
+                          · {{ drift.missing.length }} {{ store.i18n.chat_repair_guests_missing() }}
+                        }
+                      </ion-note>
+                      @if (drift.extras.length > 0) {
+                        <ion-note color="warning" style="font-size:0.75rem; display:block">
+                          {{ guestNames(drift) }}
+                        </ion-note>
+                      }
+                    </ion-label>
+                    @if (drift.extras.length > 0) {
+                      <ion-button
+                        slot="end"
+                        size="small"
+                        color="danger"
+                        fill="outline"
+                        (click)="onPruneGuests(drift)"
+                        [disabled]="guestPruningGroup() !== undefined"
+                      >
+                        @if (guestPruningGroup() === drift.groupKey) {
+                          <ion-spinner name="dots" slot="start" style="width:16px;height:16px" />
+                        }
+                        {{ store.i18n.chat_repair_guests_action() }} ({{ drift.extras.length }})
+                      </ion-button>
+                    }
+                  </ion-item>
+                }
+              </ion-list>
+            }
+          }
+        </ion-card-content>
+      </ion-card>
+
       </div>
 
       <!-- 3-column layout -->
@@ -400,6 +464,9 @@ import { AocChatStore, AdminRoom, RoomMemberInfo } from './aoc-chat.store';
                       {{ room.canonicalAlias ?? room.roomId }}
                     </ion-note>
                   </ion-label>
+                  @if (guestExtras(room); as extras) {
+                    <ion-badge slot="end" color="warning" [title]="store.i18n.chat_repair_guests()">+{{ extras }}</ion-badge>
+                  }
                   <ion-badge slot="end" color="medium">{{ room.joinedMembers }}</ion-badge>
                 </ion-item>
               }
@@ -552,6 +619,11 @@ export class AocChat {
   protected readonly memberRepairApplying = computed(() => this.store.memberRepairApplying());
   protected readonly memberRepairJoined = computed(() => this.store.memberRepairJoined());
 
+  // group-room drift (non-members sitting in a group chat)
+  protected readonly guestPreview = computed(() => this.store.guestPreview());
+  protected readonly guestScanning = computed(() => this.store.guestScanning());
+  protected readonly guestPruningGroup = computed(() => this.store.guestPruningGroup());
+
   // constants
   private imgixBaseUrl = this.store.imgixBaseUrl();
   protected isPhotoUrl = isMatrixPhotoUrl;
@@ -607,6 +679,28 @@ export class AocChat {
 
   protected onApplyMemberRepair(): void {
     this.store.applyMemberRepair();
+  }
+
+  protected onPreviewGuests(): void {
+    this.store.previewGuests();
+  }
+
+  protected onPruneGuests(drift: GroupRoomDrift): void {
+    this.store.pruneGuests(drift);
+  }
+
+  /** The people in a group's chat room who hold no membership — names, not Matrix ids. */
+  protected guestNames(drift: GroupRoomDrift): string {
+    return drift.extras.map(e => e.displayName || e.userId).join(', ');
+  }
+
+  /**
+   * Non-members in this room, from the last guest scan — `undefined` (no badge) when the
+   * scan has not run or the room is in sync. Used by the room list so the drift shows up
+   * next to the member count, not only inside the repair card.
+   */
+  protected guestExtras(room: AdminRoom): number | undefined {
+    return this.store.guestExtrasByRoom().get(room.roomId);
   }
 
   // ─── room click → action sheet ──────────────────────────────────────────────

@@ -101,6 +101,23 @@ export interface TenantBackfillResult {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * One group's Matrix room compared against its active memberships (auditGroupRoomMembers).
+ *
+ * `extras` are room members WITHOUT a membership. They are not an error: opening a group's
+ * chat tab force-joins any user via requestGroupRoomAccess, deliberately so, and nothing
+ * ever undoes it — which is why the group view and the chat room can disagree.
+ */
+export interface GroupRoomDrift {
+  groupKey: string;
+  groupName: string;
+  roomId: string;
+  memberCount: number;
+  roomMemberCount: number;
+  missing: string[];
+  extras: Array<{ userId: string; displayName: string }>;
+}
+
 export type DetailsTarget = 'room' | 'member';
 
 export type AocChatState = {
@@ -126,6 +143,10 @@ export type AocChatState = {
   tenantRepairApplying: boolean;
   memberRepairApplying: boolean;
   memberRepairJoined: number;
+  // group-room drift — room members without a membership
+  guestPreview: GroupRoomDrift[] | undefined; // undefined = not yet scanned
+  guestScanning: boolean;
+  guestPruningGroup: string | undefined;      // groupKey currently being pruned
 };
 
 const initialState: AocChatState = {
@@ -148,6 +169,9 @@ const initialState: AocChatState = {
   tenantRepairApplying: false,
   memberRepairApplying: false,
   memberRepairJoined: 0,
+  guestPreview: undefined,
+  guestScanning: false,
+  guestPruningGroup: undefined,
 };
 
 function getFn() {
@@ -241,6 +265,16 @@ export const AocChatStore = signalStore(
     members: computed(() => state.membersResource.value() ?? []),
     roomDetails: computed(() => state.roomDetailsResource.value()),
     memberDetails: computed(() => state.memberDetailsResource.value()),
+    /**
+     * roomId → number of room members without a membership, from the last guest scan.
+     * Empty until `previewGuests()` has run — the room list then flags the drifted rooms
+     * so the mismatch is visible where the member count is shown, not only in the card.
+     */
+    guestExtrasByRoom: computed(() => new Map(
+      (state.guestPreview() ?? [])
+        .filter(g => g.extras.length > 0)
+        .map(g => [g.roomId, g.extras.length] as const)
+    )),
   })),
 
   // ─── avatar resolution (mxc:// → authenticated blob URL) ─────────────────────
@@ -705,6 +739,89 @@ export const AocChatStore = signalStore(
         await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
       } finally {
         patchState(store, { memberRepairApplying: false });
+      }
+    },
+
+    // ─── group-room drift: non-members sitting in a group chat ─────────────────
+
+    /**
+     * Scan every group room of this tenant and report who is in it without holding an
+     * active membership. Read-only — nothing changes until `pruneGuests` is called for
+     * one specific group.
+     */
+    async previewGuests(): Promise<void> {
+      patchState(store, { guestScanning: true });
+      try {
+        const fn = httpsCallable<{ tenantId: string }, { groups: GroupRoomDrift[] }>(
+          getFn(), 'auditGroupRoomMembers'
+        );
+        const { data } = await fn({ tenantId: store.appStore.tenantId() });
+        // Only groups that actually disagree are worth showing; the rest are noise.
+        const drifted = data.groups
+          .filter(g => g.extras.length > 0 || g.missing.length > 0)
+          .sort((a, b) => b.extras.length - a.extras.length);
+        patchState(store, { guestPreview: drifted });
+      } catch (e) {
+        patchState(store, { guestPreview: undefined });
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { guestScanning: false });
+      }
+    },
+
+    /**
+     * Remove the non-members of ONE group from its chat room. Per group rather than
+     * "clean everything": a group may legitimately host non-members (course participants),
+     * so who gets removed stays a deliberate, per-group decision.
+     *
+     * The Cloud Function re-verifies every user id against the current memberships, so a
+     * preview that went stale between scan and apply can never remove a real member.
+     */
+    async pruneGuests(drift: GroupRoomDrift): Promise<void> {
+      if (drift.extras.length === 0) return;
+      const message = await firstValueFrom(
+        store.i18nService.translate('@aoc/feature.chat.repair.guests.confirm', {
+          count: drift.extras.length,
+          group: drift.groupName,
+        })
+      );
+      const alert = await store.alertController.create({
+        header: store.i18n.chat_repair_guests(),
+        message,
+        buttons: [
+          { text: store.i18n.cancel(), role: 'cancel' },
+          { text: store.i18n.chat_repair_guests_action(), role: 'confirm', cssClass: 'danger' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      if (role !== 'confirm') return;
+
+      patchState(store, { guestPruningGroup: drift.groupKey });
+      try {
+        const fn = httpsCallable<{ groupId: string; userIds: string[] }, { roomId: string; kicked: string[]; refused: string[] }>(
+          getFn(), 'pruneGroupRoomExtras'
+        );
+        const { data } = await fn({ groupId: drift.groupKey, userIds: drift.extras.map(e => e.userId) });
+        // Drop the removed people from the preview so the card reflects the new state
+        // without a second full scan; a group with nothing left over disappears.
+        const kicked = new Set(data.kicked);
+        const remaining = (store.guestPreview() ?? [])
+          .map(g => g.groupKey === drift.groupKey
+            ? { ...g, extras: g.extras.filter(e => !kicked.has(e.userId)), roomMemberCount: g.roomMemberCount - kicked.size }
+            : g)
+          .filter(g => g.extras.length > 0 || g.missing.length > 0);
+        patchState(store, { guestPreview: remaining });
+
+        const confirmation = await firstValueFrom(
+          store.i18nService.translate('@aoc/feature.chat.repair.guests.conf', { count: data.kicked.length })
+        );
+        await showToast(store.toastController, confirmation);
+        store.roomsResource.reload();
+      } catch (e) {
+        await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+      } finally {
+        patchState(store, { guestPruningGroup: undefined });
       }
     },
 

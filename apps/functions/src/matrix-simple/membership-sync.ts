@@ -26,9 +26,12 @@ import {
   ensureAdminInRoom,
   forceJoinUserToRoom,
   kickUserFromRoom,
+  getUserTenants,
+  activeGroupMemberKeys,
 } from './shared';
 
 const MEMBERSHIP_COLLECTION = 'memberships';
+const GROUP_COLLECTION = 'groups';
 
 /** Matrix accounts that legitimately live in every room and must never be reported/kicked. */
 const SERVICE_ACCOUNT_LOCALPARTS = new Set(['bk2-bot', 'bruno']);
@@ -200,5 +203,198 @@ export const reconcileGroupRoomMembers = onCall(
 
     console.log(`reconcileGroupRoomMembers: group=${groupId} room=${roomId} joined=${joined.length} alreadyIn=${alreadyIn.length} extras=${extras.length}`);
     return { roomId, joined, alreadyIn, extras };
+  }
+);
+
+// ─── group-room drift audit & prune ──────────────────────────────────────────
+//
+// `onMembershipWritten` keeps removals in sync, but arrivals need no membership at
+// all: `requestGroupRoomAccess` force-joins ANY provisioned user who opens a group's
+// chat tab (deliberately — course participants are legitimate). Nothing ever undoes
+// that, so a group room can silently accumulate people the group view never shows.
+// `reconcileGroupRoomMembers` reports them as `extras` but is additive-only.
+//
+// These two callables make that drift visible in the AOC chat page and let an admin
+// prune it. Pruning is deliberately a separate, explicit, per-group action — never a
+// side effect of the reconcile run.
+
+/** One group's room, compared against its active memberships. */
+export interface GroupRoomDrift {
+  groupKey: string;
+  groupName: string;
+  roomId: string;
+  /** personKeys with an active membership in the group. */
+  memberCount: number;
+  /** joined+invited room members, service accounts excluded. */
+  roomMemberCount: number;
+  /** members without a room seat — `reconcileGroupRoomMembers` fixes these. */
+  missing: string[];
+  /** room members without a membership — `pruneGroupRoomExtras` removes these. */
+  extras: Array<{ userId: string; displayName: string }>;
+}
+
+/**
+ * Read a room's `m.room.member` state as `localpart → displayname`, counting `join`
+ * and `invite` alike (an outstanding invite is a seat that will be taken).
+ */
+async function readRoomMemberState(roomId: string, adminToken: string): Promise<Map<string, string>> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_synapse/admin/v1/rooms/${encodeURIComponent(roomId)}/state`,
+    { headers: { Authorization: `Bearer ${adminToken}` } }
+  );
+  if (!resp.ok) throw new HttpsError('internal', `Failed to get room state: ${await resp.text()}`);
+  const data = await resp.json() as { state: Array<{ type: string; state_key: string; content: Record<string, unknown> }> };
+  const members = new Map<string, string>();
+  for (const e of data.state ?? []) {
+    if (e.type !== 'm.room.member') continue;
+    if (!['join', 'invite'].includes(e.content['membership'] as string)) continue;
+    const localpart = e.state_key.split(':')[0].substring(1).toLowerCase();
+    members.set(localpart, (e.content['displayname'] as string) ?? '');
+  }
+  return members;
+}
+
+/** Run `task` over `items` with at most `size` in flight — the homeserver is not a fan-out target. */
+async function inBatches<T, R>(items: T[], size: number, task: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += size) {
+    results.push(...await Promise.all(items.slice(i, i + size).map(task)));
+  }
+  return results;
+}
+
+/**
+ * Compare every group room of one tenant against its active memberships.
+ *
+ * Read-only: it changes nothing, and is what the AOC chat page calls to show the drift
+ * before an admin decides to act on it. Groups with no room, or whose room has vanished
+ * from the homeserver, are skipped silently — there is nothing to compare.
+ *
+ * @param tenantId optional; defaults to (and must be one of) the caller's own tenants.
+ */
+export const auditGroupRoomMembers = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ groups: GroupRoomDrift[] }> => {
+    const uid = await requireRole(request, 'auditGroupRoomMembers', ['admin', 'memberAdmin', 'groupAdmin']);
+
+    // Never audit a tenant the caller is not in: room member display names are personal data.
+    const callerTenants = await getUserTenants(uid);
+    const { tenantId } = (request.data ?? {}) as { tenantId?: string };
+    if (tenantId && !callerTenants.includes(tenantId)) {
+      throw new HttpsError('permission-denied', `Not a member of tenant ${tenantId}.`);
+    }
+    const tenants = tenantId ? [tenantId] : callerTenants;
+    if (tenants.length === 0) return { groups: [] };
+
+    const adminToken = matrixAdminToken.value();
+    const hostname = serverHostname();
+
+    const snap = await getFirestore()
+      .collection(GROUP_COLLECTION)
+      .where('tenants', 'array-contains-any', tenants)
+      .get();
+
+    const drifts = await inBatches(snap.docs, 8, async (doc): Promise<GroupRoomDrift | undefined> => {
+      const groupKey = doc.id;
+      try {
+        const roomId = await resolveGroupRoom(groupKey, hostname, adminToken, { create: false });
+        if (!roomId) return undefined;
+
+        const desired = new Set((await activeGroupMemberKeys(groupKey)).map((k) => k.toLowerCase()));
+        const actual = await readRoomMemberState(roomId, adminToken);
+
+        const missing = [...desired].filter((lp) => !actual.has(lp));
+        const extras = [...actual.entries()]
+          .filter(([lp]) => !desired.has(lp) && !SERVICE_ACCOUNT_LOCALPARTS.has(lp))
+          .map(([lp, displayName]) => ({ userId: `@${lp}:${hostname}`, displayName }));
+        const roomMemberCount = [...actual.keys()].filter((lp) => !SERVICE_ACCOUNT_LOCALPARTS.has(lp)).length;
+
+        return {
+          groupKey,
+          groupName: (doc.data()?.['name'] as string) || groupKey,
+          roomId,
+          memberCount: desired.size,
+          roomMemberCount,
+          missing,
+          extras,
+        };
+      } catch (error) {
+        // One unreachable room must not fail the whole audit.
+        console.warn(`auditGroupRoomMembers: skipped group ${groupKey}: ${(error as Error).message}`);
+        return undefined;
+      }
+    });
+
+    const groups = drifts.filter((d): d is GroupRoomDrift => d !== undefined);
+    console.log(`auditGroupRoomMembers: tenants=${tenants.join(',')} groups=${groups.length} drifted=${groups.filter(g => g.extras.length || g.missing.length).length}`);
+    return { groups };
+  }
+);
+
+/**
+ * Remove room members who hold no active membership in the group.
+ *
+ * The `userIds` from the client are a REQUEST, not an instruction: every one is
+ * re-checked against `activeGroupMemberKeys` here, so a stale preview (someone was added
+ * to the group between scan and apply) can never kick an actual member. Service accounts
+ * are refused outright — `@bk2-bot` must stay in every room for the admin escalation path.
+ */
+export const pruneGroupRoomExtras = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ roomId: string; kicked: string[]; refused: string[] }> => {
+    const uid = await requireRole(request, 'pruneGroupRoomExtras', ['admin', 'memberAdmin', 'groupAdmin']);
+
+    const { groupId, userIds } = request.data as { groupId: string; userIds: string[] };
+    if (!groupId) throw new HttpsError('invalid-argument', 'groupId is required');
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      throw new HttpsError('invalid-argument', 'userIds must be a non-empty array');
+    }
+
+    const groupSnap = await getFirestore().collection(GROUP_COLLECTION).doc(groupId).get();
+    if (!groupSnap.exists) throw new HttpsError('not-found', `Group ${groupId} not found`);
+    const groupTenants = (groupSnap.data()?.['tenants'] ?? []) as string[];
+    const callerTenants = await getUserTenants(uid);
+    if (!groupTenants.some((t) => callerTenants.includes(t))) {
+      throw new HttpsError('permission-denied', `Group ${groupId} is not in one of your tenants.`);
+    }
+
+    const adminToken = matrixAdminToken.value();
+    const hostname = serverHostname();
+    const roomId = await resolveGroupRoom(groupId, hostname, adminToken, { create: false });
+    if (!roomId) throw new HttpsError('not-found', `No room for group ${groupId}`);
+
+    const protectedKeys = new Set((await activeGroupMemberKeys(groupId)).map((k) => k.toLowerCase()));
+    await ensureAdminInRoom(roomId, adminToken);
+
+    const kicked: string[] = [];
+    const refused: string[] = [];
+    for (const userId of userIds) {
+      const localpart = userId.split(':')[0].replace(/^@/, '').toLowerCase();
+      if (protectedKeys.has(localpart) || SERVICE_ACCOUNT_LOCALPARTS.has(localpart)) {
+        refused.push(userId);
+        continue;
+      }
+      try {
+        if (await kickUserFromRoom(roomId, `@${localpart}:${hostname}`, adminToken, 'Keine Mitgliedschaft in dieser Gruppe')) {
+          kicked.push(userId);
+        }
+      } catch (error) {
+        console.error(`pruneGroupRoomExtras: failed to kick ${userId} from ${roomId}:`, error);
+        refused.push(userId);
+      }
+    }
+
+    console.log(`pruneGroupRoomExtras: group=${groupId} room=${roomId} kicked=${kicked.length} refused=${refused.length}`);
+    return { roomId, kicked, refused };
   }
 );

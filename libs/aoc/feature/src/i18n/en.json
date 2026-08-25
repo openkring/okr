@@ -311,6 +311,19 @@
         "description": "Adds every person with an active group membership to their group's chat room. Needed for members who were removed from their rooms too early by an earlier bug. Purely additive: members are only added, never removed — room members without a membership (e.g. course participants) are left untouched.",
         "action": "Reconcile",
         "confirm": "Reconcile the members of all {count} groups now?"
+      },
+      "guests": {
+        "label": "Non-members in group chats",
+        "description": "Anyone who opens a group's chat is permanently added to its room, even without a membership. That is intended (e.g. for course participants) but is never undone. This check shows, per group, how many people sit in the chat room who are not on the member list, and removes them on request.",
+        "scan": "Check",
+        "action": "Remove",
+        "none": "Every group chat holds members only — nothing to do.",
+        "preview": "Groups with a mismatch",
+        "members": "members",
+        "inroom": "in the chat room",
+        "missing": "members missing from the room",
+        "confirm": "Remove {{ count }} people without a membership from “{{ group }}” now?",
+        "conf": "{{ count }} people removed."
       }
     }
   },

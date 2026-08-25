@@ -203,6 +203,6 @@
   },
   "chatMode": {
     "label": "Modo de chat para no miembros",
-    "helper": "shared: los no miembros entran en la sala común del grupo y lo leen todo. ask: cada no miembro obtiene su propia sala con todo el grupo — para grupos que deben ser accesibles para todos pero cuyas consultas son confidenciales (emergencia, soporte, junta, comisiones)."
+    "helper": "shared: los no miembros entran en la sala común del grupo y lo leen todo. ask: cada no miembro obtiene su propia sala con todo el grupo — para grupos que deben ser accesibles para todos pero cuyas consultas son confidenciales (emergencia, soporte, junta, comisiones). members: solo los miembros (y los administradores del grupo) pueden entrar — para un círculo cerrado cuyo chat debe reflejar exactamente la lista de miembros (p. ej. una tripulación). Atención: shared y ask admiten a los no miembros de forma permanente; quien entra, se queda."
   }
 }

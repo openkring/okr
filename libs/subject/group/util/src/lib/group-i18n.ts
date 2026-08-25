@@ -100,6 +100,7 @@ export const GROUP_I18N_KEYS = {
   notes_placeholder:               PFX + 'notes.placeholder',
   notifyType_label:                PFX + 'notifyType.label',
   chatMode_label:                  PFX + 'chatMode.label',
+  chatMode_helper:                 PFX + 'chatMode.helper',
   hasContent_label:                PFX + 'hasContent.label',
   hasContent_helper:               PFX + 'hasContent.helper',
   hasChat_label:                   PFX + 'hasChat.label',

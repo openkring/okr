@@ -118,6 +118,9 @@ export const backfillMatrixRoomTenants = MatrixSimple.backfillMatrixRoomTenants;
 // membership → Matrix-room sync (server-side backstop; chat design review #3)
 export const onMembershipWritten = MatrixMembershipSync.onMembershipWritten;
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;
+// group-room drift: report room members without a membership, and prune them on demand
+export const auditGroupRoomMembers = MatrixMembershipSync.auditGroupRoomMembers;
+export const pruneGroupRoomExtras = MatrixMembershipSync.pruneGroupRoomExtras;
 
 // membership → user-account sync (spec 2026-08-12-membership-account-sync-design.md)
 export const onMembershipAccountSync = AccountSync.onMembershipAccountSync;

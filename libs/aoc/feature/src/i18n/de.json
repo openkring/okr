@@ -311,6 +311,19 @@
         "description": "Trägt jede Person mit aktiver Gruppen-Mitgliedschaft in den Chat-Raum ihrer Gruppe ein. Nötig für Mitglieder, die durch einen früheren Fehler zu früh aus ihren Räumen entfernt wurden. Rein additiv: es wird nur eingetragen, nie entfernt – Raum-Mitglieder ohne Mitgliedschaft (z.B. Kursteilnehmende) bleiben unberührt.",
         "action": "Abgleichen",
         "confirm": "Mitglieder aller {count} Gruppen jetzt abgleichen?"
+      },
+      "guests": {
+        "label": "Nicht-Mitglieder in Gruppen-Chats",
+        "description": "Wer den Chat einer Gruppe öffnet, wird dauerhaft in den Raum aufgenommen – auch ohne Mitgliedschaft. Das ist so gewollt (z.B. für Kursteilnehmende), wird aber nie rückgängig gemacht. Diese Prüfung zeigt pro Gruppe, wie viele Leute im Chat-Raum sitzen, die in der Mitgliederliste nicht vorkommen, und entfernt sie auf Wunsch.",
+        "scan": "Prüfen",
+        "action": "Entfernen",
+        "none": "In allen Gruppen-Chats sitzen nur Mitglieder – nichts zu tun.",
+        "preview": "Gruppen mit Abweichung",
+        "members": "Mitglieder",
+        "inroom": "im Chat-Raum",
+        "missing": "Mitglieder fehlen im Raum",
+        "confirm": "{{ count }} Personen ohne Mitgliedschaft jetzt aus „{{ group }}“ entfernen?",
+        "conf": "{{ count }} Personen entfernt."
       }
     }
   },

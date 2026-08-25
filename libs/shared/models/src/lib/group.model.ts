@@ -65,8 +65,20 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
    *   reachable by everyone but whose traffic is confidential per requester:
    *   Notfall, Support, Vorstand, Kommissionen. Notification scope follows room
    *   membership, so only the group plus that one person are notified.
+   * - 'members': only members (and the group's own admins) may enter at all — a
+   *   non-member's request is refused. Right for a closed circle whose chat should
+   *   mirror the member list exactly (a boat crew, a committee).
+   *
+   * Why 'members' is a chatMode value and not a separate boolean: the three are
+   * mutually exclusive answers to one question — what a NON-member gets — and a
+   * second flag would create combinations ('ask' + closed?) with no meaning.
+   *
+   * Note 'shared' and 'ask' both admit non-members permanently and nothing ever
+   * removes them, so a group room drifts from its member list over time. AOC ›
+   * Chat › "Nicht-Mitglieder in Gruppen-Chats" reports and prunes that drift
+   * (auditGroupRoomMembers / pruneGroupRoomExtras).
    */
-  public chatMode: 'shared' | 'ask' = 'shared';
+  public chatMode: 'shared' | 'ask' | 'members' = 'shared';
 
   public tenants: string[] = DEFAULT_TENANTS;
   public isArchived = false;

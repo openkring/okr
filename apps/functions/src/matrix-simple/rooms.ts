@@ -137,15 +137,34 @@ export const requestGroupRoomAccess = onCall(
     // source of truth, persisted on the group doc so every CF agrees on one room (fixes
     // S5 duplicate rooms).
     //
-    // Exception: a group with `chatMode: 'ask'` (Notfall, Support, Vorstand, …) must be
-    // writable by everyone without exposing every request to everyone. A caller WITHOUT an
-    // active membership therefore gets their own room with the whole group instead. Members
-    // are unaffected and always land in the shared room.
+    // `chatMode` decides what a NON-member gets (members always land in the shared room):
+    //  - 'shared'  (default): force-joined into the group room — open, topical rooms.
+    //  - 'ask':    their own room with the whole group — reachable by all, confidential
+    //              per requester (Notfall, Support, Vorstand, Kommissionen).
+    //  - 'members': refused. The room mirrors the member list exactly (a boat crew).
+    //
+    // 'shared' and 'ask' admit non-members PERMANENTLY — nothing here or elsewhere ever
+    // removes them again, which is why a group room drifts from its member list. That is
+    // deliberate for course participants; 'members' is the opt-out for groups where it is not.
     const groupData = (await getFirestore().collection('groups').doc(groupId).get()).data();
-    const isAskGroup = groupData?.['chatMode'] === 'ask';
-    const useAskRoom = isAskGroup && !(await activeGroupMemberKeys(groupId)).some(
-      (k) => k.toLowerCase() === localpart
-    );
+    const chatMode = (groupData?.['chatMode'] as string) ?? 'shared';
+
+    // Only 'ask' and 'members' need to know — skip the membership read for plain 'shared'.
+    let isMember = true;
+    if (chatMode === 'ask' || chatMode === 'members') {
+      const memberKeys = await activeGroupMemberKeys(groupId);
+      // A group admin without a membership must not be locked out of their own group's chat.
+      const admins = (groupData?.['admins'] ?? []) as Array<{ key?: string }>;
+      isMember =
+        memberKeys.some((k) => k.toLowerCase() === localpart) ||
+        admins.some((a) => a.key?.toLowerCase() === localpart);
+    }
+
+    if (chatMode === 'members' && !isMember) {
+      console.warn(`requestGroupRoomAccess: ${matrixUserId} has no membership in closed group ${groupId}`);
+      throw new HttpsError('permission-denied', `Group ${groupId} is members-only.`);
+    }
+    const useAskRoom = chatMode === 'ask' && !isMember;
 
     const roomId = useAskRoom
       ? await resolveAskRoom(groupId, personKey, hostname, adminToken, { create: true })

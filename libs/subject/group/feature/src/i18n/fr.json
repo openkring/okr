@@ -203,6 +203,6 @@
   },
   "chatMode": {
     "label": "Mode de discussion pour les non-membres",
-    "helper": "shared : les non-membres rejoignent la salle de groupe commune et lisent tout. ask : chaque non-membre obtient sa propre salle avec tout le groupe — pour les groupes qui doivent être joignables par tous mais dont les demandes sont confidentielles (urgence, assistance, comité, commissions)."
+    "helper": "shared : les non-membres rejoignent la salle de groupe commune et lisent tout. ask : chaque non-membre obtient sa propre salle avec tout le groupe — pour les groupes qui doivent être joignables par tous mais dont les demandes sont confidentielles (urgence, assistance, comité, commissions). members : seuls les membres (et les administrateurs du groupe) peuvent entrer — pour un cercle fermé dont la discussion doit correspondre exactement à la liste des membres (p. ex. un équipage). Attention : shared et ask admettent les non-membres de façon permanente ; qui est entré y reste."
   }
 }

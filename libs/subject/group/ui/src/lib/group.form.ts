@@ -214,7 +214,7 @@ export class GroupForm {
   protected visibilityI18n = computed(() => ({ name: 'visibility', label: this.i18n().visibility_label(), placeholder: this.i18n().visibility_placeholder(), helper: this.i18n().visibility_helper() } as TextInputI18n));
   protected notesI18n      = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));
   protected notifyTypeI18n  = computed(() => ({ name: 'notifyType',   label: this.i18n().notifyType_label()  } as StringSelectI18n));
-  protected chatModeI18n    = computed(() => ({ name: 'chatMode',     label: this.i18n().chatMode_label()    } as StringSelectI18n));
+  protected chatModeI18n    = computed(() => ({ name: 'chatMode',     label: this.i18n().chatMode_label(),     helper: this.i18n().chatMode_helper()     } as StringSelectI18n));
   protected hasContentI18n  = computed(() => ({ name: 'hasContent',   label: this.i18n().hasContent_label(),   helper: this.i18n().hasContent_helper()   } as CheckboxI18n));
   protected hasChatI18n     = computed(() => ({ name: 'hasChat',      label: this.i18n().hasChat_label(),      helper: this.i18n().hasChat_helper()      } as CheckboxI18n));
   protected hasCalendarI18n = computed(() => ({ name: 'hasCalendar',  label: this.i18n().hasCalendar_label(),  helper: this.i18n().hasCalendar_helper()  } as CheckboxI18n));
@@ -266,7 +266,7 @@ export class GroupForm {
   protected notifyType = linkedSignal(() => this.formData().notifyType ?? 'memberOnly');
   protected readonly notifyTypeOptions = ['memberOnly', 'membersAndMatchingVisibility'];
   protected chatMode = linkedSignal(() => this.formData().chatMode ?? 'shared');
-  protected readonly chatModeOptions = ['shared', 'ask'];
+  protected readonly chatModeOptions = ['shared', 'ask', 'members'];
   protected hasContent = linkedSignal(() => this.formData().hasContent ?? true);
   protected hasChat = linkedSignal(() => this.formData().hasChat ?? true);
   protected hasCalendar = linkedSignal(() => this.formData().hasCalendar ?? true);
