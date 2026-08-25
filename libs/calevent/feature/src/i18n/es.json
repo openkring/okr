@@ -569,7 +569,7 @@
   },
   "sync": {
     "title": "Sincronizar calendario",
-    "intro": "Utilice este enlace para suscribirse al calendario en Apple Calendario, Outlook o Google. Los eventos nuevos y modificados aparecen automáticamente.",
+    "intro": "Utiliza este enlace para suscribirte al calendario en Apple Calendario, Outlook o Google. Los eventos nuevos y modificados aparecen automáticamente.",
     "calendar": {
       "label": "Calendario"
     },

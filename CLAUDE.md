@@ -221,6 +221,21 @@ the hydration gap, is what would justify reopening the UI-framework question.
 
 All i18n work — translation keys, store wiring, passing labels to forms/ui, new-lib `de.json`, tenant overrides, build sync — is documented in the **`i18n` skill**. Core rule: i18n is **store-driven** (keys in `util`, resolved to `Signal<string>` via `I18nService.translateAll`, flowed down as `[i18n]` inputs); never use `TranslatePipe`/`AsyncPipe` for static keys (only for data-driven/runtime keys).
 
+#### Schreibstil von i18n-Labels
+
+Alle benutzersichtbaren Strings — Labels, Hinweise, Fehlermeldungen, Bestätigungen — folgen
+demselben Ton:
+
+- **freundlich und sachlich** — zugewandt, aber ohne Werbesprache und ohne Ausrufezeichen.
+- **per du**, und **`du`/`dir`/`dein` klein geschrieben** (also „Mit diesem Link abonnierst du…",
+  nicht „…abonnieren Sie…" und nicht „…abonnierst Du…").
+- **allgemein verständlich, nicht technisch** — der Leser ist ein Vereinsmitglied, keine
+  Entwicklerin. Kein Jargon (`Token`, `Endpoint`, `Query`), keine Feldnamen, keine Abkürzungen,
+  die nicht auf der Oberfläche vorkommen. Was etwas *bewirkt*, ist wichtiger als wie es heisst.
+
+Gilt für alle fünf Sprachen: Sprachen mit T/V-Unterscheidung nehmen die informelle Form
+(fr `tu`, es `tú`, it `tu`); Englisch kennt keine und bleibt unverändert.
+
 ### Naming conventions
 
 #### Component names
