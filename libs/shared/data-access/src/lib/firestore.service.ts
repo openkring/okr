@@ -26,9 +26,9 @@ import { ToastController } from '@ionic/angular/standalone';
 import { captureMessage } from '@sentry/angular';
 import { arrayRemove, collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
-import { catchError, firstValueFrom, Observable, of, ReplaySubject, share, timer } from 'rxjs';
+import { catchError, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, timer } from 'rxjs';
 
-import { AUTH, ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
+import { AUTH, ensureAppCheckToken, ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
 import { debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { TOAST_LENGTH } from '@okr/shared-constants';
@@ -69,6 +69,54 @@ export class FirestoreService {
    * @param context the call site, e.g. `searchData(persons)`
    * @param err the error emitted by the stream
    */
+  /**
+   * How often a denied listener is re-attempted after refreshing the App Check token.
+   * Two is enough to survive a resume; beyond that the denial is not about the token.
+   */
+  private static readonly DENIAL_RETRIES = 2;
+
+  /**
+   * Re-attach an open listener that the server killed with PERMISSION_DENIED **while a user is
+   * still signed in** — the App-Check-expiry-on-resume case.
+   *
+   * App Check is ENFORCED on Firestore here and its token is refreshed by a timer, which is
+   * exactly what a backgrounded tab does not get (Safari/WebKit suspend timers in hidden tabs,
+   * see `ensureAppCheckToken`). A tab that has been away for a while therefore wakes holding an
+   * expired token, and the backend terminates EVERY open listener at once. `ensureAppCheckToken`
+   * already protects resume-time WRITES; reads had no equivalent, so the whole app came back with
+   * dead listeners: `catchError` below turns each one into a completed empty stream, and since
+   * nothing re-subscribes, every list stays empty and every console fills with one
+   * permission-denied line per collection until the user reloads the page.
+   *
+   * So: refresh the token, then resubscribe. `resetOnSuccess` makes the budget per incident
+   * rather than per listener lifetime, so a long-lived stream survives many resumes.
+   *
+   * Deliberately NOT retried:
+   * - denied while signed OUT — that is sign-out teardown ({@link reportStreamError}); retrying
+   *   would re-open listeners the user just abandoned.
+   * - anything that is not `permission-denied` — transport errors are the SDK's to retry.
+   *
+   * A genuine rules/query defect is also `permission-denied` while signed in and therefore costs
+   * {@link DENIAL_RETRIES} extra round trips before it surfaces. That is the accepted price: the
+   * two cases are indistinguishable from the client, and a defect surfaces on the very next
+   * subscription anyway.
+   *
+   * @param context the call site, e.g. `searchData(persons)`
+   */
+  private recoverFromTokenDenial<T>(context: string): MonoTypeOperatorFunction<T> {
+    return retry<T>({
+      count: FirestoreService.DENIAL_RETRIES,
+      resetOnSuccess: true,
+      delay: (err, retryCount) => {
+        if ((err as { code?: string } | null)?.code !== 'permission-denied' || !this.auth.currentUser) {
+          throw err;   // not ours — hand it to catchError unchanged
+        }
+        console.debug(`FirestoreService.${context}: listener denied, refreshing the App Check token (attempt ${retryCount}).`);
+        return from(ensureAppCheckToken());
+      },
+    });
+  }
+
   private reportStreamError(context: string, err: unknown): void {
     if ((err as { code?: string } | null)?.code === 'permission-denied' && !this.auth.currentUser) {
       console.debug(`FirestoreService.${context}: listener closed by sign-out.`);
@@ -283,6 +331,8 @@ export class FirestoreService {
       ? docData(ref, { idField: 'okey' }) as Observable<T>
       : docData(ref) as Observable<T>
     ).pipe(
+      // Survive a resume-time App Check expiry before treating the denial as final.
+      this.recoverFromTokenDenial<T>(`sharedDoc(${path})`),
       catchError((err) => {
         this.reportStreamError(`sharedDoc(${path})`, err);
         this.docCache.delete(cacheKey);
@@ -584,6 +634,8 @@ export class FirestoreService {
       // poisoned cache entry so a later reload()/re-subscription rebuilds a fresh listener, and
       // fall back to an empty list.
       const data$ = (collectionData(queryRef, { idField: 'okey' }) as Observable<T[]>).pipe(
+        // Survive a resume-time App Check expiry before treating the denial as final.
+        this.recoverFromTokenDenial<T[]>(`searchData(${collectionName})`),
         catchError((err) => {
           this.reportStreamError(`searchData(${collectionName})`, err);
           this.queryCache.delete(cacheKey);

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { firstValueFrom, Observable, of, throwError } from 'rxjs';
+import { defer, firstValueFrom, Observable, of, throwError } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { DbQuery } from '@okr/shared-models';
@@ -32,10 +32,14 @@ vi.mock('firebase/firestore', () => ({
   writeBatch: vi.fn(),
 }));
 
+// App Check attestation is a network round trip; the service awaits it before re-attaching a
+// denied listener, so the tests drive it directly.
+const ensureAppCheckTokenMock = vi.hoisted(() => vi.fn(async () => true));
+
 // Keep the real ENV/FIRESTORE injection tokens; only force the init guard true.
 vi.mock('@okr/shared-config', async (orig) => {
   const actual = await (orig() as Promise<Record<string, unknown>>);
-  return { ...actual, isFirestoreInitializedCheck: () => true };
+  return { ...actual, isFirestoreInitializedCheck: () => true, ensureAppCheckToken: ensureAppCheckTokenMock };
 });
 
 import { FirestoreService } from './firestore.service';
@@ -60,6 +64,12 @@ function makeService(currentUser: unknown = { uid: 'u1' }): FirestoreService {
 /** A Firestore Listen rejection, as the SDK raises it. */
 function permissionDenied(): Error & { code: string } {
   return Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' });
+}
+
+/** A stream that fails the first `failures` subscriptions and then emits `value`. */
+function failsThenEmits<T>(failures: number, value: T): Observable<T> {
+  let attempt = 0;
+  return defer(() => (attempt++ < failures ? throwError(() => permissionDenied()) : of(value)));
 }
 
 describe('FirestoreService.searchData', () => {
@@ -137,6 +147,64 @@ describe('FirestoreService.searchData', () => {
     expect(error).toHaveBeenCalled();
     error.mockRestore();
   });
+
+  // A backgrounded tab wakes with an EXPIRED App Check token (Safari suspends the refresh timer),
+  // and the backend then kills every open listener at once with PERMISSION_DENIED — while the
+  // user is still perfectly signed in. Before the retry, each of those listeners completed as an
+  // empty stream and nothing ever re-subscribed: the whole app came back with empty lists and one
+  // permission-denied line per collection. Refresh the token and re-attach instead.
+  it('re-attaches a listener denied while signed in, after refreshing the App Check token', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    collectionDataMock.mockReturnValue(failsThenEmits(1, [{ okey: 's1' }]));
+    const svc = makeService({ uid: 'u1' });
+
+    const rows = await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
+
+    expect(rows).toHaveLength(1);
+    expect(ensureAppCheckTokenMock).toHaveBeenCalledTimes(1);
+    expect(error).not.toHaveBeenCalled();   // recovered, so nothing to report
+    error.mockRestore();
+  });
+
+  // The budget is bounded: a denial that outlives it is not about the token.
+  it('gives up after the retry budget and falls back to an empty list', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    collectionDataMock.mockReturnValue(failsThenEmits(99, [{ okey: 's1' }]));
+    const svc = makeService({ uid: 'u1' });
+
+    const rows = await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
+
+    expect(rows).toEqual([]);
+    expect(ensureAppCheckTokenMock).toHaveBeenCalledTimes(2);   // DENIAL_RETRIES
+    expect(error).toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  // Sign-out teardown must NOT be retried — the listeners belong to a session that ended, and
+  // re-attaching them would fire a second denied round trip per collection on every logout.
+  it('does not retry a denial raised after sign-out', async () => {
+    collectionDataMock.mockReturnValue(failsThenEmits(1, [{ okey: 's1' }]));
+    const svc = makeService(null);   // signed out
+
+    const rows = await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
+
+    expect(rows).toEqual([]);
+    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+  });
+
+  // Transport failures are the SDK's to retry; refreshing an App Check token does nothing for them.
+  it('does not retry a non-permission stream error', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    collectionDataMock.mockReturnValue(
+      throwError(() => Object.assign(new Error('backend unavailable'), { code: 'unavailable' })),
+    );
+    const svc = makeService({ uid: 'u1' });
+
+    await firstValueFrom(svc.searchData('sessions', QUERY, 'startedAt', 'desc'));
+
+    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
 });
 
 describe('FirestoreService.readModel', () => {
@@ -158,6 +226,20 @@ describe('FirestoreService.readModel', () => {
   // must NOT propagate — AppStore.currentUserResource consumes this stream, and an errored
   // resource re-throws ResourceValueError from .value() inside change detection, crashing the app.
   // Emitting undefined instead reads as "no current user" to every downstream guard.
+  // Same resume case as searchData, on the doc stream that backs AppStore.currentUserResource.
+  // This one matters most: without the retry, the signed-in user's own users/{uid} listener dies
+  // on resume, currentUser goes undefined, and every tenant-scoped resource gated on it collapses
+  // to an empty list — the app looks logged in and holds no data.
+  it('re-attaches a denied doc listener after refreshing the App Check token', async () => {
+    docDataMock.mockReturnValue(failsThenEmits(1, { okey: 'u1' }));
+    const svc = makeService({ uid: 'u1' });
+
+    const user = await firstValueFrom(svc.readModel('users', 'u1'));
+
+    expect(user).toEqual({ okey: 'u1' });
+    expect(ensureAppCheckTokenMock).toHaveBeenCalledTimes(1);
+  });
+
   it('recovers to undefined when the stream errors asynchronously', async () => {
     docDataMock.mockReturnValue(
       throwError(() => new Error('Missing or insufficient permissions.')),
