@@ -32,7 +32,7 @@ export interface EmailOptions {
   subject: string;
   html: string;
   attachments?: EmailAttachment[];
-  template?: string;                            // Mailtrap template name (mailtrap_api only)
+  template?: string;                            // Mailtrap template UUID (mailtrap_api only)
   templateVariables?: Record<string, string>;   // Variables passed to the Mailtrap template
 }
 
@@ -66,13 +66,20 @@ function mailtrapTestConfig() {
   };
 }
 
-// ─── Mailtrap template UUID registry ─────────────────────────────────────────
-// UUIDs come from Mailtrap Dashboard → Email Templates. They are provisioned as
-// function env/secrets (never committed); add a MAILTRAP_TEMPLATE_* var per template.
+// ─── Mailtrap template resolution ────────────────────────────────────────────
 
-const MAILTRAP_TEMPLATE_UUIDS: Record<string, string | undefined> = {
-  scs_password_reset: process.env['MAILTRAP_TEMPLATE_SCS_PASSWORD_RESET'],
-};
+const TEMPLATE_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Resolve `options.template` to a Mailtrap template UUID.
+ *
+ * Templates are identified by UUID only — callers read the tenant's own UUID from `app-config`
+ * (e.g. `mailtrapPasswordResetTemplate`), so adding a tenant is one Firestore field and no deploy.
+ * Anything that is not a UUID is ignored, and the send falls back to `subject` + `html`.
+ */
+function resolveTemplateUuid(template?: string): string | undefined {
+  return template && TEMPLATE_UUID_RE.test(template) ? template : undefined;
+}
 
 // ─── Senders ─────────────────────────────────────────────────────────────────
 
@@ -107,7 +114,7 @@ async function sendViaMailtrapApi(options: EmailOptions): Promise<void> {
   if (options.cc?.length)  body['cc']  = options.cc.map(e => ({ email: e }));
   if (options.bcc?.length) body['bcc'] = options.bcc.map(e => ({ email: e }));
 
-  const templateUuid = options.template ? MAILTRAP_TEMPLATE_UUIDS[options.template] : undefined;
+  const templateUuid = resolveTemplateUuid(options.template);
 
   if (templateUuid) {
     body['template_uuid']      = templateUuid;

@@ -99,7 +99,7 @@ export class AuthService {
     try {
       if (!loginEmail || loginEmail.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
       const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
-      await fn({ to: [loginEmail], appId: this.env.appId, provider: 'mailtrap_api', template: 'scs_password_reset' });
+      await fn({ to: [loginEmail], appId: this.env.appId, provider: 'mailtrap_api', template: 'password_reset' });
       void this.activityService.logAuth('pwdreset', `${loginEmail}: SUCCESS`);
       await this.alertService.showToast(this.i18n.pwdreset_conf() + loginEmail);
       await navigateByUrl(this.router, loginUrl);

@@ -401,9 +401,14 @@ export const deleteFirebaseAuthUser = functions.onCall(
   }
 );
 
+/** Tenant-neutral marker that asks `sendEmail` for the password-reset flow. */
+const PASSWORD_RESET_TEMPLATE = 'password_reset';
+/** Pre-2026-08 spelling of the same marker — still sent by app versions older than 7.19.2. */
+const LEGACY_PASSWORD_RESET_TEMPLATE = 'scs_password_reset';
+
 /**
  * Send an email via a configurable provider.
- * Also handles password reset emails when template === 'scs_password_reset':
+ * Also handles password reset emails when template === 'password_reset':
  * generates a Firebase password reset link and injects { url, email, app_name }
  * into templateVariables automatically. No authentication required for this case.
  * For all other templates/html sends, the caller must be authenticated.
@@ -415,7 +420,7 @@ export const deleteFirebaseAuthUser = functions.onCall(
  * @param from              sender address (derived from app config for password reset)
  * @param subject           email subject line (derived from app config for password reset)
  * @param provider          email provider: 'mailgun_smtp' | 'mailtrap_api' | 'netzone_smtp' | 'mailtrap_test'
- * @param template          optional template name (e.g. 'scs_password_reset')
+ * @param template          optional Mailtrap template UUID, or 'password_reset' for the reset flow
  * @param templateVariables optional variables passed to the template
  */
 export const sendEmail = functions.onCall(
@@ -430,8 +435,14 @@ export const sendEmail = functions.onCall(
 
     const { to, cc, bcc, appId, provider, template, attachments } = request.data;
     let { html, from, subject, templateVariables } = request.data;
+    // What is actually handed to the provider — the password-reset path replaces the caller's
+    // marker with the tenant's own Mailtrap template UUID from `app-config`.
+    let templateRef = template;
 
-    const isPasswordReset = template === 'scs_password_reset';
+    // `template` doubles as the discriminator for the reset branch (unauthenticated, link
+    // generated server-side). 'scs_password_reset' is the legacy spelling every tenant used to
+    // send; keep accepting it until all deployed apps have shipped the tenant-neutral name.
+    const isPasswordReset = template === PASSWORD_RESET_TEMPLATE || template === LEGACY_PASSWORD_RESET_TEMPLATE;
     if (!isPasswordReset) {
       checkAuthentication(request as any, CF_NAME);
     }
@@ -477,6 +488,10 @@ export const sendEmail = functions.onCall(
       // Only controlled variables — do not echo caller-supplied templateVariables
       // into the password-reset email.
       templateVariables = { url: link, email: to[0], app_name: config.appName };
+      // Per-tenant Mailtrap template (app-config.mailtrapPasswordResetTemplate). Without it the
+      // provider falls back to the inline plain-HTML body above.
+      if (config.passwordResetTemplate) templateRef = config.passwordResetTemplate;
+      else logger.warn(`${CF_NAME}: no mailtrapPasswordResetTemplate in app-config/${appId} — sending the plain fallback body`);
       logger.info(`${CF_NAME}: generated reset link (appId=${appId}, provider=${provider})`);
     }
 
@@ -487,13 +502,13 @@ export const sendEmail = functions.onCall(
     if (!subject) throw new functions.HttpsError('invalid-argument', 'subject is required.');
 
     // Log recipient COUNT, not addresses — PII (privacy inventory §7.2).
-    logger.info(`${CF_NAME}: sending via ${provider} to ${to.length} recipient(s) (appId=${appId}, template=${template ?? 'none'})`);
+    logger.info(`${CF_NAME}: sending via ${provider} to ${to.length} recipient(s) (appId=${appId}, template=${templateRef ?? 'none'})`);
 
     // Attachments are resolved server-side from Storage (never on the password-reset path).
     const resolvedAttachments = isPasswordReset ? [] : await resolveAttachments(attachments, CF_NAME);
 
     try {
-      await sendEmailViaProvider(provider, { from, to, cc, bcc, subject, html: html ?? '', template, templateVariables, attachments: resolvedAttachments });
+      await sendEmailViaProvider(provider, { from, to, cc, bcc, subject, html: html ?? '', template: templateRef, templateVariables, attachments: resolvedAttachments });
       logger.info(`${CF_NAME}: email sent to ${to.length} recipient(s)${resolvedAttachments.length ? ` with ${resolvedAttachments.length} attachment(s)` : ''}`);
       return { success: true };
     } catch (error: any) {

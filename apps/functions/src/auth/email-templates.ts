@@ -6,6 +6,8 @@ interface AppEmailConfig {
   from: string;
   replyTo: string;
   continueUrl: string;
+  /** Mailtrap template UUID for the password-reset mail ('' when the tenant has none). */
+  passwordResetTemplate: string;
 }
 
 // Ultimate fallback when the tenant's app-config document is missing/incomplete.
@@ -25,6 +27,7 @@ export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> 
   let appDomain = FALLBACK_DOMAIN;
   let loginPath = FALLBACK_LOGIN_PATH;
   let emailDomain = '';
+  let passwordResetTemplate = '';
 
   try {
     const snap = await getFirestore().collection('app-config').doc(appId).get();
@@ -34,6 +37,7 @@ export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> 
       appDomain = String(cfg['appDomain'] ?? appDomain) || FALLBACK_DOMAIN;
       loginPath = String(cfg['loginUrl'] ?? loginPath) || FALLBACK_LOGIN_PATH;
       emailDomain = String(cfg['emailDomain'] ?? '');
+      passwordResetTemplate = String(cfg['mailtrapPasswordResetTemplate'] ?? '');
     }
   } catch {
     // fall through to fallback values
@@ -49,5 +53,6 @@ export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> 
     from: `"${appName}" <app@${senderDomain}>`,
     replyTo: `app@${senderDomain}`,
     continueUrl: `https://${appDomain}${loginPath}`,
+    passwordResetTemplate,
   };
 }
