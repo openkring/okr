@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, PersonModelName, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, buildMentionContent, escapeHtml, isRenderableChatEvent, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, isRenderableChatEvent, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 
@@ -342,6 +342,10 @@ export class MatrixChatService {
     // so the console isn't flooded with the SDK's per-request debug lines. Admins can change the
     // level at runtime via the AOC chat console; the choice is persisted in localStorage.
     initMatrixLogLevel();
+
+    // Safari < 17.4 has no Promise.withResolvers, which matrix-js-sdk uses internally
+    // (send scheduler, http-api, sync). Install it before the client exists.
+    ensurePromiseWithResolvers();
 
     try {
       const url = config.homeserverUrl.startsWith('https://') ? config.homeserverUrl : 'https://' + config.homeserverUrl;
