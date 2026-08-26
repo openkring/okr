@@ -16,7 +16,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, getTodayStr } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import type { FindingSeverity, PrivacyAuditResult } from '@okr/shared-models';
+import type { DiaryImportModel, FindingSeverity, PrivacyAuditResult } from '@okr/shared-models';
 
 /**
  * The privacy audit screen (spec 1.19 Phase 5D) — `/security/privacy-audit`, `isAdminGuard`.
@@ -98,6 +98,18 @@ import type { FindingSeverity, PrivacyAuditResult } from '@okr/shared-models';
                 {{ i18n.drive_action() }}
               }
             </ion-button>
+
+            <!-- Same provisional home as the Drive check above: the import functions are
+                 deployed but nothing calls them, and the diary domain has no page yet. The
+                 dry run writes no diary — only its own report row — so it is safe to repeat. -->
+            <ion-button fill="outline" (click)="dryRunDiary()"
+                        [disabled]="isRunning() || isRebuilding() || isCheckingDrive() || isDryRunning()">
+              @if (isDryRunning()) {
+                <ion-spinner name="dots" slot="start" /> {{ i18n.diary_running() }}
+              } @else {
+                {{ i18n.diary_action() }}
+              }
+            </ion-button>
           </div>
         </ion-card-content>
       </ion-card>
@@ -113,6 +125,30 @@ import type { FindingSeverity, PrivacyAuditResult } from '@okr/shared-models';
               account {{ drive.account }} · firstPageFiles {{ drive.firstPageFiles }} ·
               hasMorePages {{ drive.hasMorePages }} ·
               quota {{ drive.quotaUsage }}/{{ drive.quotaLimit }}
+            </ion-note>
+          </ion-card-content>
+        </ion-card>
+      }
+
+      <!-- The dry run's report. Same reasoning as the cards above — the raw counter line stays
+           untranslated so it still says something when the i18n scope fails to load. The
+           unresolved slugs are the point of the exercise: every one of them is a person or a
+           place the import could not match, and each needs a decision before a commit run. -->
+      @if (diaryResult(); as run) {
+        <ion-card>
+          <ion-card-content>
+            <p>{{ i18n.diary_ok() }}</p>
+            <ion-note class="samples">
+              total {{ run.total }} · parsed {{ run.parsed }} · written {{ run.written }} ·
+              phase {{ run.phase }}<br>
+              unresolvedPeople {{ unresolvedPeopleCount() }} ·
+              unresolvedLocations {{ unresolvedLocationsCount() }} ·
+              dateCollisions {{ run.dateCollisions.length }} ·
+              withoutDate {{ run.withoutDate.length }} ·
+              weatherDeviations {{ weatherDeviationCount() }} ·
+              errors {{ run.errors.length }}
+              @if (topUnresolved(); as top) { <br>häufigste ungelöste Slugs: {{ top }} }
+              @if (run.errors.length) { <br>erster Fehler: {{ run.errors[0].name }} — {{ run.errors[0].reason }} }
             </ion-note>
           </ion-card-content>
         </ion-card>
@@ -191,6 +227,8 @@ export class PrivacyAuditPage {
   protected readonly rebuildMessage = signal<string | undefined>(undefined);
   protected readonly isCheckingDrive = signal(false);
   protected readonly driveResult = signal<DriveAccessResult | undefined>(undefined);
+  protected readonly isDryRunning = signal(false);
+  protected readonly diaryResult = signal<DiaryImportModel | undefined>(undefined);
   protected readonly error = signal<string | undefined>(undefined);
 
   protected readonly ranOn = computed(() =>
@@ -271,6 +309,49 @@ export class PrivacyAuditPage {
       this.alertService.error(`${this.i18n.drive_failed()} ${error}`);
     } finally {
       this.isCheckingDrive.set(false);
+    }
+  }
+
+  protected readonly unresolvedPeopleCount = computed(
+    () => Object.keys(this.diaryResult()?.unresolvedPeople ?? {}).length);
+  protected readonly unresolvedLocationsCount = computed(
+    () => Object.keys(this.diaryResult()?.unresolvedLocations ?? {}).length);
+  protected readonly weatherDeviationCount = computed(
+    () => Object.keys(this.diaryResult()?.weatherDeviations ?? {}).length);
+
+  /**
+   * The five slugs that most entries failed to resolve — the shortlist worth acting on before a
+   * commit run. The full maps can hold hundreds of one-off names; rendering them all would bury
+   * the ones that actually matter.
+   */
+  protected readonly topUnresolved = computed(() => {
+    const run = this.diaryResult();
+    if (!run) return '';
+    const all = { ...run.unresolvedPeople, ...run.unresolvedLocations };
+    return Object.entries(all)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([slug, n]) => `${slug} (${n})`)
+      .join(', ');
+  });
+
+  /**
+   * Runs the diary import dry run and keeps the report on screen.
+   *
+   * No toast: the call reads and parses the whole archive and can run for minutes, so the
+   * result has to survive the moment the admin looks away. The failure is surfaced verbatim
+   * for the same reason as the Drive check — a Drive `invalid_grant`, a `permission-denied`
+   * and a parse error need three different fixes.
+   */
+  protected async dryRunDiary(): Promise<void> {
+    this.isDryRunning.set(true);
+    this.diaryResult.set(undefined);
+    try {
+      this.diaryResult.set(await this.service.dryRunDiaryImport(this.appStore.tenantId()));
+    } catch (error) {
+      this.alertService.error(`${this.i18n.diary_failed()} ${error}`);
+    } finally {
+      this.isDryRunning.set(false);
     }
   }
 

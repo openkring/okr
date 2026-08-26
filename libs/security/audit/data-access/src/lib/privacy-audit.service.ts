@@ -3,7 +3,7 @@ import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ENV } from '@okr/shared-config';
-import type { PrivacyAuditResult } from '@okr/shared-models';
+import type { DiaryImportModel, PrivacyAuditResult } from '@okr/shared-models';
 
 export interface RunPrivacyAuditRequest {
   tenantId: string;
@@ -35,6 +35,17 @@ export interface DriveAccessResult {
   quotaUsage: string;
   firstPageFiles: number;
   hasMorePages: boolean;
+}
+
+/**
+ * What the diary import run reports back. The dry run does the full read/parse/resolve/weather
+ * pass and writes nothing — `written` stays 0 and `isDryRun` is true.
+ */
+export interface DiaryImportRequest {
+  /** Required when starting a new run; an existing run already carries its tenant. */
+  tenantId?: string;
+  /** Continues an existing run instead of starting one. */
+  runId?: string;
 }
 
 /**
@@ -91,6 +102,26 @@ export class PrivacyAuditService {
     const callable = httpsCallable<Record<string, never>, DriveAccessResult>(
       this.functions, 'checkDriveAccess');
     const result = await callable({});
+    return result.data;
+  }
+
+  /**
+   * Starts a diary import **dry run**: the deployed function reads the archive from Drive,
+   * parses every file, resolves people and locations and compares the archived weather line
+   * against the API — and writes no `diaries` document. Only the run's own report row is
+   * persisted, so the call is safe to repeat.
+   *
+   * Sits here for the same reason as `checkDriveAccess`: the audit screen is the only
+   * admin-only diagnostics surface the app has, and the diary domain still has no page.
+   * Move both once one exists.
+   *
+   * The call can run for minutes — the function's own ceiling is 540s. The caller must keep
+   * a spinner up rather than assume a fast reply.
+   */
+  public async dryRunDiaryImport(tenantId: string): Promise<DiaryImportModel> {
+    const callable = httpsCallable<DiaryImportRequest, DiaryImportModel>(
+      this.functions, 'dryRunDiaryImport');
+    const result = await callable({ tenantId });
     return result.data;
   }
 }

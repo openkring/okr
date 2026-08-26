@@ -25,5 +25,15 @@
     "ok": "L'accesso a Drive funziona.",
     "failed": "L'accesso a Drive non è riuscito:"
   },
-  "severity": { "error": "errori", "warning": "avvisi", "info": "note" }
+  "diary": {
+    "action": "Prova l'importazione del diario (a vuoto)",
+    "running": "Lettura e verifica dell'archivio …",
+    "ok": "La prova è conclusa. Non è stato scritto nulla.",
+    "failed": "La prova non è riuscita:"
+  },
+  "severity": {
+    "error": "errori",
+    "warning": "avvisi",
+    "info": "note"
+  }
 }

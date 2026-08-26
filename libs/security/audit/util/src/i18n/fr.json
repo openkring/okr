@@ -25,5 +25,15 @@
     "ok": "L'accès à Drive fonctionne.",
     "failed": "L'accès à Drive a échoué :"
   },
-  "severity": { "error": "erreurs", "warning": "avertissements", "info": "remarques" }
+  "diary": {
+    "action": "Tester l'import du journal (à blanc)",
+    "running": "Lecture et vérification de l'archive …",
+    "ok": "L'essai est terminé. Rien n'a été écrit.",
+    "failed": "L'essai a échoué :"
+  },
+  "severity": {
+    "error": "erreurs",
+    "warning": "avertissements",
+    "info": "remarques"
+  }
 }

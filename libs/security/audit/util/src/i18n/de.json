@@ -25,5 +25,15 @@
     "ok": "Drive-Zugang steht.",
     "failed": "Der Drive-Zugang ist fehlgeschlagen:"
   },
-  "severity": { "error": "Fehler", "warning": "Warnungen", "info": "Hinweise" }
+  "diary": {
+    "action": "Diary-Import testen (Trockenlauf)",
+    "running": "Archiv wird gelesen und geprüft …",
+    "ok": "Der Trockenlauf ist durch. Es wurde nichts geschrieben.",
+    "failed": "Der Trockenlauf ist fehlgeschlagen:"
+  },
+  "severity": {
+    "error": "Fehler",
+    "warning": "Warnungen",
+    "info": "Hinweise"
+  }
 }

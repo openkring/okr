@@ -71,6 +71,16 @@ export interface MatrixRoom {
    * actually share. Undefined for group rooms.
    */
   directUserId?: string;
+  /**
+   * Whether the room's state had actually arrived when this entry was built. The rooms list is
+   * emitted on every room/timeline event, i.e. DURING the initial sync and long before PREPARED
+   * (deliberately — waiting blocks the UI for up to 30 s). A room built mid-sync carries no
+   * `tenants`, no canonical alias and no `directUserId`, so the tenant filter cannot classify it
+   * and its "keep what I cannot classify" fallback would show it in EVERY tenant for the length
+   * of that window. `false` marks exactly that case, so the filter can hold the room back until
+   * the next rebuild classifies it properly. Undefined means "unknown" and is treated as loaded.
+   */
+  stateLoaded?: boolean;
 }
 
 export const ROOM_SHAPE: MatrixRoom = {
