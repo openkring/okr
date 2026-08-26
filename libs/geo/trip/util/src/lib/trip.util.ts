@@ -10,6 +10,17 @@ export const DEFAULT_TRIP_DISTANCE_KM = 1;
 /** Highest distance (km) accepted for a trip. */
 export const MAX_TRIP_DISTANCE_KM = 500;
 
+/**
+ * How many people fit into a boat, derived from its `rboat_type` subType ('b1x' -> 1, 'b4mx' -> 4).
+ * A '…p' type is coxed, so its crew is one larger than the rower count ('b8p' -> 9).
+ * Returns 0 for an unknown subType — callers treat that as "no limit known".
+ */
+export function getBoatSeats(subType?: string): number {
+  const match = /^b(\d+)(x|m|mx|p)$/.exec(subType ?? '');
+  if (!match) return 0;
+  return Number(match[1]) + (match[2] === 'p' ? 1 : 0);
+}
+
 export function newTrip(tenantId: string, type = ''): TripModel {
   const trip = new TripModel(tenantId);
   trip.type = type;

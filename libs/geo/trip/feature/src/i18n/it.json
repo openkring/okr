@@ -86,6 +86,7 @@
     "suspicious": "Rilevata attività sospetta. Si prega di confermare.",
     "distance_zero": "Inserire una distanza tra 1 e 500 km.",
     "seats_mismatch": "Il numero di partecipanti non corrisponde alla capacità dell'imbarcazione.",
+    "max_participants": "Su questa barca c’è posto per al massimo {count} persone.",
     "note": "Per evitare abusi, in background vengono eseguiti vari controlli. Qualora venga rilevato un abuso, l'amministratore viene avvisato."
   },
   "boat": "Imbarcazione",

@@ -99,7 +99,7 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
                 <!-- offset 6: the distance lines up under the boat/location controls, not under their labels -->
                 <ion-col size="6" offset="6">
                   <okr-number-input [i18n]="distanceI18n()" [value]="distance()" (valueChange)="onDistanceChange($event)"
-                    [readOnly]="false" [min]="1" [max]="maxDistance" />
+                    [readOnly]="false" [min]="1" [max]="maxDistance" [integer]="true" />
                 </ion-col>
               </ion-row>
             }
@@ -179,9 +179,12 @@ export class TripEditForm {
     debugFormModel<TripModel>('TripEditForm', this.formData(), this.currentUser());
   }
 
-  /** Caps the distance at MAX_TRIP_DISTANCE_KM silently — no validation warning, the value just stops growing. */
+  /**
+   * Caps the distance at MAX_TRIP_DISTANCE_KM silently — no validation warning, the value just
+   * stops growing. Kilometres are whole numbers here, so a fraction is truncated as well.
+   */
   protected onDistanceChange(distance: number): void {
-    this.onFieldChange('distance', distance == null ? distance : Math.min(distance, MAX_TRIP_DISTANCE_KM));
+    this.onFieldChange('distance', distance == null ? distance : Math.min(Math.trunc(distance), MAX_TRIP_DISTANCE_KM));
   }
 
   protected clearBoat(): void {

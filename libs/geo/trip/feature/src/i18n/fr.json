@@ -86,6 +86,7 @@
     "suspicious": "Activité suspecte détectée. Veuillez confirmer.",
     "distance_zero": "Veuillez saisir une distance entre 1 et 500 km.",
     "seats_mismatch": "Le nombre de participants ne correspond pas à la capacité du bateau.",
+    "max_participants": "Ce bateau accueille au maximum {count} personnes.",
     "note": "Afin d'éviter les abus, différents contrôles s'exécutent en arrière-plan. En cas d'abus constaté, l'administrateur est notifié."
   },
   "boat": "Bateau",

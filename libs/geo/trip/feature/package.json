@@ -23,6 +23,7 @@
     "@okr/cms-menu-feature": "*",
     "@okr/cms-section-feature": "*",
     "@okr/location-data-access": "*",
+    "@okr/subject-person-ui": "*",
     "@okr/trip-data-access": "*",
     "@okr/trip-ui": "*",
     "@okr/trip-util": "*"

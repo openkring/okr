@@ -2,13 +2,13 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { DateFormat, debugFormModel, getCurrentTime, getTodayStr, safeStructuredClone } from '@okr/shared-util-core';
-import { dismissOverlay } from '@okr/shared-util-angular';
+import { DateFormat, debugFormModel, fill, getCurrentTime, getTodayStr, safeStructuredClone } from '@okr/shared-util-core';
+import { AlertService, dismissOverlay } from '@okr/shared-util-angular';
 import { AvatarInfo, ResourceModel, TripModel, UserModel } from '@okr/shared-models';
 
 import { TripEditForm } from '@okr/trip-ui';
 import { TripStore } from './trip.store';
-import { DEFAULT_TRIP_DISTANCE_KM, getTripIndex, newTripName } from '@okr/trip-util';
+import { DEFAULT_TRIP_DISTANCE_KM, getBoatSeats, getTripIndex, newTripName } from '@okr/trip-util';
 import { TripService } from '@okr/trip-data-access';
 
 @Component({
@@ -47,6 +47,7 @@ import { TripService } from '@okr/trip-data-access';
 export class TripEditModal {
   private readonly modalController = inject(ModalController);
   private readonly tripService = inject(TripService);
+  private readonly alertService = inject(AlertService);
   protected readonly store = inject(TripStore);
 
   // inputs
@@ -69,6 +70,16 @@ export class TripEditModal {
     (this.store.appStore.allResources() ?? []).filter((r: ResourceModel) => r.type === 'rboat')
   );
   protected category = computed(() => this.store.appStore.getCategory('rboat_type'));
+  /**
+   * Crew size the selected boat allows — a 1x takes one person, a 4x four. Derived from the
+   * boat's rboat_type subType (the trip stores the resolved rigging), falling back to the
+   * resource's own `seats` field for a subType the pattern does not know. 0 = no boat / no limit.
+   */
+  protected maxParticipants = computed(() => {
+    const boat = this.formData()?.resource;
+    if (!boat?.key) return 0;
+    return getBoatSeats(boat.subType) || (this.boats().find(b => b.okey === boat.key)?.seats ?? 0);
+  });
   public formData = linkedSignal(() => safeStructuredClone(this.trip()));
 
   protected headerTitle = computed(() => {
@@ -125,10 +136,16 @@ export class TripEditModal {
   }
 
   protected async addPerson(): Promise<void> {
-    const person = await this.store.selectPersonAvatar();
-    if (!person) return;
     const participants = this.formData()?.participants;
     if (!participants) return;
+    // the boat sets the ceiling: never offer the picker for a seat that does not exist
+    const max = this.maxParticipants();
+    if (max > 0 && participants.length >= max) {
+      await this.alertService.showToast(fill(this.store.i18n.warning_max_participants(), { count: max }));
+      return;
+    }
+    const person = await this.store.selectPersonAvatar();
+    if (!person) return;
     participants.push(person);
     this.onFieldChange('participants', participants);
   }

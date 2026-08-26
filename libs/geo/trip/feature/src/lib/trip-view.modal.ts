@@ -1,8 +1,10 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
-import { IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { Component, computed, inject, input, Type } from '@angular/core';
+import { IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
-import { TripModel } from '@okr/shared-models';
+import { AvatarInfo, PersonModelName, TripModel } from '@okr/shared-models';
+import { AppStore } from '@okr/shared-feature';
+import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { getWeekdayI18nKey } from '@okr/shared-util-core';
@@ -26,6 +28,7 @@ import { formatTripTime, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
     .view-value { font-size: 1rem; margin-bottom: 8px; }
     ion-item { --padding-start: 0; --inner-padding-end: 0; }
     .participant-row { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 4px 0; }
+    .participant { cursor: pointer; }
   `],
   template: `
     <okr-header [i18n]="{ title: trip().name }" [isModal]="true" />
@@ -59,7 +62,10 @@ import { formatTripTime, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
                 <p class="view-label">{{ i18n.participants() }}</p>
                 <div class="participant-row">
                   @for(participant of participants(); track $index) {
-                    <okr-avatar-display [avatars]="participant" [showName]="true" />
+                    <!-- tapping a crew member opens their (read-only) person modal -->
+                    <div class="participant" (click)="openPerson(participant[0])">
+                      <okr-avatar-display [avatars]="participant" [showName]="true" />
+                    </div>
                   }
                 </div>
               </ion-label>
@@ -100,6 +106,9 @@ import { formatTripTime, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
   `
 })
 export class TripViewModal {
+  private readonly modalController = inject(ModalController);
+  private readonly appStore = inject(AppStore);
+  private readonly personEditModalClass = inject<Type<unknown> | null>(PERSON_EDIT_MODAL, { optional: true });
   protected readonly i18n = inject(I18nService).translateAll(TRIP_I18N_KEYS) as TripI18n;
 
   public trip = input.required<TripModel>();
@@ -111,6 +120,29 @@ export class TripViewModal {
     const t = this.trip();
     return t.locations.map(l => l.name2 || l.name1).filter(Boolean).join(' – ') || t.customLocationLabel;
   });
+  /**
+   * Opens the tapped crew member in the person modal, always read-only: this view is the one the
+   * whole club sees, and it must not become a back door into editing someone else's record.
+   */
+  protected async openPerson(participant?: AvatarInfo): Promise<void> {
+    if (participant?.modelType !== PersonModelName || !this.personEditModalClass) return;
+    const person = this.appStore.getPerson(participant.key);
+    if (!person) return;
+    const modal = await this.modalController.create({
+      component: this.personEditModalClass,
+      componentProps: {
+        person,
+        currentUser: this.appStore.currentUser(),
+        tags: this.appStore.getTags(PersonModelName),
+        tenantId: this.appStore.tenantId(),
+        genders: this.appStore.getCategory('gender'),
+        readOnly: true,
+      },
+    });
+    await modal.present();
+    await modal.onDidDismiss();
+  }
+
   protected readonly timeRange = computed(() => {
     const t = this.trip();
     const start = formatTripTime(t.startTime);

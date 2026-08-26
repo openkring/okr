@@ -66,6 +66,9 @@
       "path": "../../../geo/location/data-access/tsconfig.lib.json"
     },
     {
+      "path": "../../../subject/person/ui/tsconfig.lib.json"
+    },
+    {
       "path": "../data-access/tsconfig.lib.json"
     },
     {

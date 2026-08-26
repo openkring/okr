@@ -6,6 +6,7 @@ import {
   getTripLabel,
   getTripIndex,
   groupTripsByDay,
+  getBoatSeats,
   matchesStateFilter,
   compareTripDate,
   formatTripTime,
@@ -233,5 +234,26 @@ describe('findOpenTripForBoat', () => {
     const own = makeTrip({ okey: 't2', resource: boat });
     expect(findOpenTripForBoat([closed], 'b1')).toBeUndefined();
     expect(findOpenTripForBoat([closed, own], 'b1', 't2')).toBeUndefined();
+  });
+});
+
+describe('getBoatSeats', () => {
+  it('derives the crew size from the rower count', () => {
+    expect(getBoatSeats('b1x')).toBe(1);
+    expect(getBoatSeats('b2x')).toBe(2);
+    expect(getBoatSeats('b2m')).toBe(2);
+    expect(getBoatSeats('b4mx')).toBe(4);
+    expect(getBoatSeats('b8x')).toBe(8);
+  });
+
+  it('adds the cox for a coxed boat', () => {
+    expect(getBoatSeats('b2p')).toBe(3);
+    expect(getBoatSeats('b8p')).toBe(9);
+  });
+
+  it('returns 0 for an unknown or missing subType', () => {
+    expect(getBoatSeats('')).toBe(0);
+    expect(getBoatSeats(undefined)).toBe(0);
+    expect(getBoatSeats('kayak')).toBe(0);
   });
 });
