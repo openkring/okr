@@ -47,6 +47,7 @@ Invoke the matching skill **before** starting work in its area — each one carr
 | `github-security`        | checking/configuring/accessing GitHub security on `openkring/okr` — Dependabot alerts & security updates, CodeQL code scanning, secret scanning & push protection — or looking up a GitHub security-alert email. Covers what's enabled and the `gh` CLI commands per alert type.                                     |
 | `person-profile`         | looking up a person's professional profile by name (currently LinkedIn via the `mcp-server-linkedin` MCP server) — search by first/last name, disambiguate candidates (name + company + city), then return education, certifications, skills, projects, contact_info.                                                |
 | `parallel-sessions`      | running several Claude/dev sessions on this repo at once, or reasoning about the branching strategy — per-session git worktrees, short-lived `work/<name>` branches (`pnpm session:new/sync/list/remove`), ff-merge back to `main`, and "another session moved main / changed my files".                             |
+| `kring-knowledge`        | reasoning about the Kring brand family — the SaaS product Kring, the open-source project openkring, bkaiser GmbH, the five audience worlds (/club, /alumni, /steg, /coop, /kmu), pricing bands and add-ons, brand assets, trademark status, or any marketing/investor copy. The price itself stays normative in `planning/specs/2026-08-04-kring-pricing-spec.md`.                                                     |
 
 ### Documentation layout (`docs/`)
 
