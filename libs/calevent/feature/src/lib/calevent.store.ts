@@ -25,7 +25,7 @@ import { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
-import { CALEVENT_I18N_KEYS, CalEventNotifyFormData, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, CalEventNotifyFormData, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { CalEventNotifyModal, RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 
 /**
@@ -464,7 +464,7 @@ export const CalEventStore = signalStore(
           newCalevent.calendars = [];
           newCalevent.isOpen = false;
         } else {
-          newCalevent.calendars = cal === 'all' || cal.startsWith('my') || cal.length === 0 ? [store.tenantId()] : [cal];
+          newCalevent.calendars = resolveCalendars(cal, store.tenantId());
           newCalevent.isOpen = store.calendar()?.defaultIsOpen ?? true;
         }
         const untilDate = addMonths(new Date(), 3);

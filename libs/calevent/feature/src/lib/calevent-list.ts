@@ -21,7 +21,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, upcomingOccurrences } from '@okr/calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, resolveCalendars, upcomingOccurrences } from '@okr/calevent-util';
 import { showCalendarSync } from '@okr/calevent-ui';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calevent-ui';
 import { browseUrl } from '@okr/subject-address-util';
@@ -598,7 +598,9 @@ export class CalEventList implements OnInit {
       error(undefined, 'CalEventList.quickEntry: missing calendar name');
       return;
     }
-    calevent.calendars = [calname];
+    // The view name ('all', 'my') is NOT a calendar key — normalise it the same way newModel()
+    // does, or the event lands on a calendar nobody filters on. See resolveCalendars().
+    calevent.calendars = resolveCalendars(calname, this.store.tenantId());
     const parts = parseEventString(okrQuickEntry.value?.trim() ?? '');
     if (!parts.startDate || parts.startDate === '') {
       error(undefined, 'CalEventList.quickEntry: startDate is mandatory in quick entry');

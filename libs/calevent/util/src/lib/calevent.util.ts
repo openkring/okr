@@ -126,6 +126,29 @@ export function isPersonalCalendarName(calendarName: string): boolean {
   return calendarName === 'personal' || calendarName === 'my';
 }
 
+/**
+ * Resolves the `calendars` array a newly created event must be stored under, from the name of the
+ * VIEW it was created in.
+ *
+ * 'all', 'my' and '' are VIEW names, not calendars — no `calendars` document carries those okeys,
+ * so an event stored under one of them matches no calendar filter and silently disappears from
+ * every list except /calevent/all. Seen on elab: two events written with `calendars: ['all']` by
+ * the quick entry never showed up in the "Nächste Anlässe" dashboard section, which filters on
+ * 'my'. Such an event belongs to the tenant-wide calendar, whose okey is the tenant id.
+ *
+ * 'personal' resolves to no calendar at all — that is what makes an event personal
+ * ({@link isPersonalCalevent}).
+ *
+ * @param calendarName the CalEventStore's current calendar name (a view name or a calendar okey)
+ * @param tenantId     the current tenant — okey of the tenant-wide calendar
+ */
+export function resolveCalendars(calendarName: string | undefined, tenantId: string): string[] {
+  const name = calendarName ?? '';
+  if (name === 'personal') return [];
+  if (name.length === 0 || name === 'all' || name.startsWith('my')) return [tenantId];
+  return [name];
+}
+
 export function convertCalEventToFullCalendar(calevent: CalEventModel): EventInput {
   if (isFullDayEvent(calevent)) {
     return convertFullDayCalEventToFullCalendar(calevent);

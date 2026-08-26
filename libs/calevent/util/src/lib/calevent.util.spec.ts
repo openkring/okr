@@ -1,7 +1,7 @@
 import { Attendee, AvatarInfo, CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, toAttendeeState, toInvitationState } from './calevent.util';
+import { bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, toAttendeeState, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -63,6 +63,31 @@ describe('CalEvent Utils', () => {
       expect(isPersonalCalendarName('all')).toBe(false);
       expect(isPersonalCalendarName('scs')).toBe(false);
       expect(isPersonalCalendarName('')).toBe(false);
+    });
+  });
+
+  describe('resolveCalendars', () => {
+    it('maps the view names onto the tenant-wide calendar', () => {
+      expect(resolveCalendars('all', 'elab')).toEqual(['elab']);
+      expect(resolveCalendars('my', 'elab')).toEqual(['elab']);
+      expect(resolveCalendars('my/c-calevents', 'elab')).toEqual(['elab']);
+      expect(resolveCalendars('', 'elab')).toEqual(['elab']);
+      expect(resolveCalendars(undefined, 'elab')).toEqual(['elab']);
+    });
+
+    it('never stores a view name as a calendar key', () => {
+      expect(resolveCalendars('all', 'elab')).not.toContain('all');
+      expect(resolveCalendars('my', 'elab')).not.toContain('my');
+    });
+
+    it('keeps an explicit calendar key', () => {
+      expect(resolveCalendars('auditors', 'scs')).toEqual(['auditors']);
+      expect(resolveCalendars('Trainerteam', 'scs')).toEqual(['Trainerteam']);
+    });
+
+    it('resolves the personal view to no calendar at all', () => {
+      expect(resolveCalendars('personal', 'elab')).toEqual([]);
+      expect(isPersonalCalevent({ ...baseCalEvent, calendars: resolveCalendars('personal', 'elab') })).toBe(true);
     });
   });
 
