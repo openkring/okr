@@ -104,6 +104,26 @@ describe('filterRoomsOfTenant', () => {
     expect(filterRoomsOfTenant(rooms, [], personKeys, 'p13').map(r => r.roomId))
       .toEqual(['!d:hs', '!j:hs', '!f:hs', '!g:hs']);
   });
+
+  it('holds back a room whose state has not synced yet instead of showing it everywhere', () => {
+    // Mid-initial-sync entry: no marker, no alias, no directUserId — another tenant's group room
+    // is indistinguishable from an ad-hoc one, so it must not fall through to the "keep" rule.
+    const pending = [{ roomId: '!k:hs', stateLoaded: false }];
+    expect(filterRoomsOfTenant(pending, groups, personKeys, 'p13')).toEqual([]);
+    expect(filterRoomsOfTenant(pending, groups, personKeys, 'scs')).toEqual([]);
+  });
+
+  it('keeps a not-yet-synced room that already carries this tenant’s marker', () => {
+    // The pending-room stub: no alias and no state, but the app knows which tenant joined it.
+    const stub = [{ roomId: '!l:hs', tenants: ['p13'], stateLoaded: false }];
+    expect(filterRoomsOfTenant(stub, groups, personKeys, 'p13').map(r => r.roomId)).toEqual(['!l:hs']);
+    expect(filterRoomsOfTenant(stub, groups, personKeys, 'scs')).toEqual([]);
+  });
+
+  it('treats an absent stateLoaded flag as loaded, keeping the historic fallback', () => {
+    expect(filterRoomsOfTenant([{ roomId: '!m:hs' }], groups, personKeys, 'p13').map(r => r.roomId))
+      .toEqual(['!m:hs']);
+  });
 });
 
 describe('isBridgeGhost', () => {

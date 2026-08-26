@@ -1445,6 +1445,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
         typingUsers: this.typingByRoom.get(room.roomId) ?? [],
         tenants: this.getRoomTenants(room),
         directUserId,
+        stateLoaded: this.isRoomStateLoaded(room),
       };
     })
     .sort((a, b) => {
@@ -1464,11 +1465,17 @@ private async buildAndEmitRoomsList(): Promise<void> {
 
   // Inject stubs for rooms joined via CF that haven't appeared in a sync cycle yet.
   // Once the real room data is present, remove the stub and let the real entry take over.
+  //
+  // The stub carries the CURRENT tenant: it exists only because this tenant's app just joined
+  // the room via the Cloud Function, so there is no ambiguity. Without the marker the stub has
+  // no tenant, no alias and no directUserId, and the tenant filter would show it everywhere —
+  // for as long as the room stays pending, not just for a sync window.
+  const stubTenants = this.appStore.tenantId() ? [this.appStore.tenantId()] : undefined;
   for (const [roomId, name] of this.pendingRooms) {
     if (matrixRooms.find(r => r.roomId === roomId)) {
       this.pendingRooms.delete(roomId); // real data is now in the list
     } else {
-      matrixRooms.push({ roomId, name, isDirect: false, unreadCount: 0, members: [], typingUsers: [] });
+      matrixRooms.push({ roomId, name, isDirect: false, unreadCount: 0, members: [], typingUsers: [], tenants: stubTenants });
     }
   }
 
@@ -1519,6 +1526,22 @@ private async buildAndEmitRoomsList(): Promise<void> {
     const state = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
     const tenants = state?.getStateEvents(OKR_TENANT_EVENT, '')?.getContent()?.['tenants'] as string[] | undefined;
     return tenants?.length ? tenants : undefined;
+  }
+
+  /**
+   * Whether the room's state has actually been synced into the client yet.
+   *
+   * `m.room.create` is the first state event of every room and can never be absent from a
+   * fully-loaded room, so its absence is a precise "state has not arrived yet" signal — unlike
+   * the marker, the canonical alias or `m.room.name`, each of which a legitimate room may lack.
+   *
+   * This matters because updateRoomsList() runs on room/timeline events during the INITIAL sync,
+   * before PREPARED. A room built in that window has no tenant marker and no alias, so the tenant
+   * filter cannot place it and used to keep it — briefly showing another tenant's group room.
+   */
+  private isRoomStateLoaded(room: Room): boolean {
+    const state = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
+    return !!state?.getStateEvents('m.room.create', '');
   }
 
   private isDirectRoom(room: Room): boolean {

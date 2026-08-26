@@ -122,13 +122,18 @@ export function isBridgeGhost(localpart: string): boolean {
  *     A bridged counterpart (`@signal_…` and friends) is not an okr person and can never match,
  *     so it is kept rather than hidden everywhere; DMs with a service/bot account never reach
  *     this rule at all, because MatrixChatService leaves `directUserId` unset for them.
- *  4. anything else (ad-hoc room, unresolvable DM counterpart): kept. Hiding a room we cannot
+ *  4. `stateLoaded === false`: dropped. The room list is emitted during the initial sync, before
+ *     room state has arrived, so such an entry has no marker, no alias and no `directUserId` —
+ *     not "unclassifiable" but "not classifiable YET". Rule 5 would keep it in every tenant for
+ *     the length of that window (an elab group room briefly listed in the scs app). It comes
+ *     back a beat later, fully classified, on the next rebuild.
+ *  5. anything else (ad-hoc room, unresolvable DM counterpart): kept. Hiding a room we cannot
  *     classify would lose a conversation.
  *
  * `personKeys` are this tenant's person okeys, lowercased — a Matrix localpart IS the person okey.
  */
 export function filterRoomsOfTenant<T extends {
-  roomId: string; topic?: string; tenants?: string[]; directUserId?: string;
+  roomId: string; topic?: string; tenants?: string[]; directUserId?: string; stateLoaded?: boolean;
 }>(
   rooms: T[],
   groups: { okey: string; matrixRoomId?: string }[],
@@ -147,6 +152,9 @@ export function filterRoomsOfTenant<T extends {
       const localpart = r.directUserId.split(':')[0].replace(/^@/, '').toLowerCase();
       return isBridgeGhost(localpart) || personKeys.has(localpart);
     }
+    // Explicit `false` only: undefined means an entry from a code path that does not track
+    // state loading, which must keep the historic "keep" behaviour.
+    if (r.stateLoaded === false) return false;
     return true;
   });
 }
