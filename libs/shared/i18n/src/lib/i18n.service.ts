@@ -2,12 +2,20 @@ import { Injectable, Signal, isDevMode } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { HashMap, TranslocoService, getBrowserLang } from '@jsverse/transloco';
 import { Observable, firstValueFrom, of } from 'rxjs';
-import { catchError, defaultIfEmpty, switchMap, take } from 'rxjs/operators';
+import { catchError, defaultIfEmpty, retry, switchMap, take } from 'rxjs/operators';
 import { selectLanguage } from './i18n.util';
-import { reportI18nIssue } from './i18n-sentry';
+import { isPageUnloading, reportI18nIssue } from './i18n-sentry';
 
 import { AvailableLanguages, CategoryListModel, DefaultLanguageCode } from '@okr/shared-models';
 import { getItemLabel } from '@okr/shared-util-core';
+
+/**
+ * How often to re-attempt a failed scope load before treating the scope as broken, and how long
+ * to wait in between. The delay is what makes the retry meaningful: it outlives the abort burst
+ * of a reload and lets `isPageUnloading()` settle before we decide whether to report.
+ */
+const SCOPE_LOAD_RETRIES = 1;
+const SCOPE_LOAD_RETRY_DELAY_MS = 400;
 
 @Injectable({
   providedIn: 'root'
@@ -59,16 +67,19 @@ export class I18nService {
           ? this.translocoService.selectTranslate(scopeKey, argument, prefix)
           : this.translocoService.selectTranslate(scopeKey, {}, prefix)),
         // A scope's de.json fetch can fail transiently — most often because Safari aborts the
-        // in-flight request on reload/navigation. Without this, Transloco throws "Unable to load
-        // translation and all the fallback languages…" as an uncaught error that pollutes Sentry.
-        // Degrade gracefully to an empty string instead (the load usually succeeds on the real,
-        // non-aborted attempt); keep dev visibility via a warning.
+        // in-flight request on reload/navigation. Transloco's own retries are immediate and abort
+        // with it, so retry once after a short delay: a real asset resolves on the second attempt,
+        // a genuinely broken scope (typo, missing de.json, forgotten sync-i18n-assets) fails again.
+        retry({ count: SCOPE_LOAD_RETRIES, delay: SCOPE_LOAD_RETRY_DELAY_MS }),
+        // Without this, Transloco throws "Unable to load translation and all the fallback
+        // languages…" as an uncaught error that pollutes Sentry. Degrade gracefully to an empty
+        // string instead; keep dev visibility via a warning.
         catchError((err) => {
           if (isDevMode()) console.warn(`I18nService.translate: failed to load i18n scope '${prefix}'`, err);
-          // Report to Sentry (deduped per key). A genuinely broken scope (typo, missing
-          // de.json, forgotten sync-i18n-assets) surfaces as one persistent issue; the
-          // occasional benign navigation-abort at most one deduped event per scope.
-          reportI18nIssue(key, 'scope-load-failed');
+          // Report to Sentry (deduped per key) — but not while the document is being torn down:
+          // there the abort is the user leaving, not a broken scope, and the report would open a
+          // permanent issue per key that no fix can close.
+          if (!isPageUnloading()) reportI18nIssue(key, 'scope-load-failed');
           return of('');
         })
       );

@@ -1,5 +1,13 @@
-import { of } from 'rxjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { defer, of, throwError } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// The scope-load failure path is what opens the `i18n scope-load-failed` Sentry issues, so both
+// collaborators are spies rather than the real module (which would need a Sentry client).
+const sentry = vi.hoisted(() => ({
+  reportI18nIssue: vi.fn(),
+  isPageUnloading: vi.fn(() => false),
+}));
+vi.mock('./i18n-sentry', () => sentry);
 
 // Mock dependencies
 vi.mock('@jsverse/transloco', () => ({
@@ -105,5 +113,51 @@ describe('I18nService', () => {
     const loadSpy = vi.spyOn((service as any).translocoService, 'load');
     service.translate('@chat.fields.reconnecting').subscribe();
     expect(loadSpy).not.toHaveBeenCalled();
+  });
+
+  describe('scope load failure', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      sentry.reportI18nIssue.mockClear();
+      sentry.isPageUnloading.mockReturnValue(false);
+    });
+    afterEach(() => vi.useRealTimers());
+
+    /** Fails the first `failures` subscriptions, then succeeds — mimicking an aborted fetch. */
+    const flakyLoad = (failures: number) => {
+      let attempt = 0;
+      return vi.fn(() => defer(() => (attempt++ < failures ? throwError(() => new Error('abort')) : of({}))));
+    };
+
+    it('should retry once and translate when the first load attempt fails', async () => {
+      (service as any).translocoService.load = flakyLoad(1);
+      const results: string[] = [];
+      service.translate('@chat/feature.fields.reconnecting').subscribe(v => results.push(v));
+
+      await vi.advanceTimersByTimeAsync(400);
+      expect(results).toEqual(['translated:fields.reconnecting:{}']);
+      expect(sentry.reportI18nIssue).not.toHaveBeenCalled();
+    });
+
+    it('should report to Sentry and emit an empty string when every attempt fails', async () => {
+      (service as any).translocoService.load = flakyLoad(Infinity);
+      const results: string[] = [];
+      service.translate('@chat/feature.fields.reconnecting').subscribe(v => results.push(v));
+
+      await vi.advanceTimersByTimeAsync(400);
+      expect(results).toEqual(['']);
+      expect(sentry.reportI18nIssue).toHaveBeenCalledWith('@chat/feature.fields.reconnecting', 'scope-load-failed');
+    });
+
+    it('should stay silent while the page is being torn down', async () => {
+      sentry.isPageUnloading.mockReturnValue(true);
+      (service as any).translocoService.load = flakyLoad(Infinity);
+      const results: string[] = [];
+      service.translate('@chat/feature.fields.reconnecting').subscribe(v => results.push(v));
+
+      await vi.advanceTimersByTimeAsync(400);
+      expect(results).toEqual(['']);
+      expect(sentry.reportI18nIssue).not.toHaveBeenCalled();
+    });
   });
 });

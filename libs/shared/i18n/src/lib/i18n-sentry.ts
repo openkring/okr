@@ -57,3 +57,28 @@ export class SentryMissingHandler implements TranslocoMissingHandler {
     return key;
   }
 }
+
+/**
+ * Whether the document is currently being torn down (reload, navigation away, tab close).
+ *
+ * Mobile Safari aborts every in-flight request at that moment, so an i18n scope whose
+ * `<lang>.json` fetch fails in this window says nothing about the scope — the asset is
+ * fine, the user simply left. Reporting it anyway opens one permanent Sentry issue per
+ * key that no code change can close.
+ *
+ * Reset on `pageshow` so a bfcache restore does not silence a genuinely broken scope for
+ * the rest of the session.
+ */
+let pageUnloading = false;
+
+if (typeof window !== 'undefined') {
+  const enter = () => (pageUnloading = true);
+  window.addEventListener('pagehide', enter, { capture: true });
+  window.addEventListener('beforeunload', enter, { capture: true });
+  window.addEventListener('pageshow', () => (pageUnloading = false), { capture: true });
+}
+
+/** @see pageUnloading */
+export function isPageUnloading(): boolean {
+  return pageUnloading;
+}
