@@ -35,6 +35,19 @@ if (!MARKER || MARKER.startsWith('--')) {
 
 const DRY_RUN = process.argv.includes('--dry-run');
 
+// `--only <collection>` restricts the teardown to a single collection. Added for the
+// 2026-08-28 incident cleanup: the seeded `memberships` and `groups` fired
+// onMembershipWritten / onGroupPostPolicyWritten, which created accounts and rooms on the
+// live Matrix homeserver. Those two collections must be removed on their own — memberships
+// FIRST, so the sync can still resolve each room while its group document still exists —
+// while the rest of the seeded data stays in place for the performance measurement.
+const onlyIdx = process.argv.indexOf('--only');
+const ONLY = onlyIdx !== -1 ? process.argv[onlyIdx + 1] : undefined;
+if (onlyIdx !== -1 && (!ONLY || ONLY.startsWith('--'))) {
+  console.error('--only requires a collection name, e.g. --only memberships');
+  process.exit(1);
+}
+
 if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
 const db = getFirestore();
 
@@ -67,7 +80,12 @@ async function deleteByMarker(collectionName) {
 
 console.log(`${DRY_RUN ? '[dry-run] ' : ''}Tearing down tenant "okr" documents with seedBatch "${MARKER}"`);
 let grandTotal = 0;
-for (const collectionName of COLLECTIONS) {
+const targets = ONLY ? [ONLY] : COLLECTIONS;
+if (ONLY && !COLLECTIONS.includes(ONLY)) {
+  console.error(`--only "${ONLY}" is not one of the seeded collections: ${COLLECTIONS.join(', ')}`);
+  process.exit(1);
+}
+for (const collectionName of targets) {
   const count = await deleteByMarker(collectionName);
   console.log(`${DRY_RUN ? '[dry-run] would delete' : 'deleted'} ${collectionName}: ${count}`);
   grandTotal += count;
