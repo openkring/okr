@@ -37,6 +37,7 @@ import { I18nService } from "@okr/shared-i18n";
 import { createComment } from '@okr/comment-util';
 
 import { PFX } from "./scope";
+import { firestoreSubscriptionMonitor } from './firestore-subscription-monitor';
 
 @Injectable({
   providedIn: 'root'
@@ -336,6 +337,7 @@ export class FirestoreService {
       catchError((err) => {
         this.reportStreamError(`sharedDoc(${path})`, err);
         this.docCache.delete(cacheKey);
+        firestoreSubscriptionMonitor.closed(cacheKey);
         return of(undefined);
       }),
       share({
@@ -345,6 +347,7 @@ export class FirestoreService {
     );
 
     this.docCache.set(cacheKey, data$);
+    firestoreSubscriptionMonitor.opened('doc', path.split('/')[0], cacheKey);
     return data$;
   }
 
@@ -639,6 +642,7 @@ export class FirestoreService {
         catchError((err) => {
           this.reportStreamError(`searchData(${collectionName})`, err);
           this.queryCache.delete(cacheKey);
+          firestoreSubscriptionMonitor.closed(cacheKey);
           return of<T[]>([]);
         }),
         // Keep the listener AND the last snapshot alive for 30 s after the last unsubscribe.
@@ -656,6 +660,7 @@ export class FirestoreService {
       );
 
       this.queryCache.set(cacheKey, data$);
+      firestoreSubscriptionMonitor.opened('query', collectionName, cacheKey);
       return data$;
     } catch (err) {
       console.error('FirestoreService.searchData error:', err);
