@@ -120,23 +120,30 @@ export const AppStore = signalStore(
     // (e.g. the auth-restore window on the public /welcome landing) is denied with
     // "Missing or insufficient permissions". currentUser being set proves users/{uid}
     // exists and resolved, so the rule's userExists()/belongsToTenant can pass.
+    //
+    // Schlüssel ist die IDENTITÄT des Benutzers, nicht das Objekt: `currentUserResource.value()`
+    // stammt aus einem Firestore-Live-Stream und bekommt bei jeder Aktualisierung (Rollen,
+    // Profil, Auth) eine neue Referenz. Als Objekt im Schlüssel liefen ALLE Referenzdaten-
+    // Abfragen dieses Stores dabei komplett neu an — auf scs sind das u. a. 622 Personen und
+    // eine Projektion über 3,167 Adressen pro Durchlauf. Siehe Befund B5 der
+    // Dashboard-Performance-Spezifikation.
     personsResource: rxResource({
       params: () => ({
-        currentUser: store.currentUserResource.value(),
+        userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.currentUser || !params.tenantId) return of([]);
+        if (!params.userKey || !params.tenantId) return of([]);
         return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(params.tenantId), 'lastName', 'asc');
       }
     }),
     orgsResource: rxResource({
       params: () => ({
-        currentUser: store.currentUserResource.value(),
+        userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.currentUser || !params.tenantId) return of([]);
+        if (!params.userKey || !params.tenantId) return of([]);
         return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
@@ -147,41 +154,41 @@ export const AppStore = signalStore(
     // orderBy avoids a composite index on this collection.
     addressDirectoryResource: rxResource({
       params: () => ({
-        currentUser: store.currentUserResource.value(),
+        userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.currentUser || !params.tenantId) return of([]);
+        if (!params.userKey || !params.tenantId) return of([]);
         return store.firestoreService.searchData<AddressDirectoryModel>(AddressDirectoryCollection, getSystemQuery(params.tenantId), 'none');
       }
     }),
     groupsResource: rxResource({
       params: () => ({
-        currentUser: store.currentUserResource.value(),
+        userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.currentUser || !params.tenantId) return of([]);
+        if (!params.userKey || !params.tenantId) return of([]);
         return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     resourcesResource: rxResource({
       params: () => ({
-        currentUser: store.currentUserResource.value(),
+        userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.currentUser || !params.tenantId) return of([]);
+        if (!params.userKey || !params.tenantId) return of([]);
         return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     tagsResource: rxResource({
       params: () => ({
-        currentUser: store.currentUserResource.value(),
+        userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
       }),
       stream: ({params}) => {
-        if (!params.currentUser || !params.tenantId) return of([]);
+        if (!params.userKey || !params.tenantId) return of([]);
         return store.firestoreService.searchData<TagModel>(TagCollection, getSystemQuery(params.tenantId), 'tagModel', 'asc');
       }
     }),
