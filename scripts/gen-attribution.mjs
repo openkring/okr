@@ -81,6 +81,13 @@ const TARGETS = {
     serverDeps: true,
     out: 'dist/apps/kring-app/browser/licenses.html',
   },
+  'okr-app': {
+    label: 'openkring Demo',
+    bundle: 'dist/apps/okr-app/3rdpartylicenses.txt',
+    selfHostedFonts: 'apps/okr-website/assets/fonts',
+    serverDeps: true,
+    out: 'dist/apps/okr-app/browser/web/licenses.html',
+  },
   'elab-app': {
     label: 'GLP EnergyLab',
     bundle: 'dist/apps/elab-app/3rdpartylicenses.txt',
