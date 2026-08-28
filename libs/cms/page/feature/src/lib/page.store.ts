@@ -70,14 +70,17 @@ export const _PageStore = signalStore(
   })),
   withProps((store) => ({
     pagesResource: rxResource({
-      params: () => ({
-        currentUser: store.currentUser()
-      }),
-      stream: ({params}) => {
+      // Schlüssel ist die IDENTITÄT des Benutzers, nicht das Objekt: `currentUser` kommt aus
+      // einem Firestore-Live-Stream und bekommt bei jeder Aktualisierung (Rollen, Profil, Auth)
+      // eine neue Referenz. Als Objekt im Schlüssel liess das die Ressource jedes Mal komplett
+      // neu anlaufen — gemessen dreimal pro Seitenaufruf (Befund B5).
+      params: () => ({ userKey: store.currentUser()?.okey ?? '' }),
+      stream: () => {
+        const currentUser = store.currentUser();
         return store.pageService.list().pipe(
-          debugListLoaded<PageModel>('PageStore.pages', params.currentUser),
+          debugListLoaded<PageModel>('PageStore.pages', currentUser),
           catchError(error => {
-            debugData('PageStore.pagesResource: stream error', error, params.currentUser);
+            debugData('PageStore.pagesResource: stream error', error, currentUser);
             store.setError(store.i18n.error_load());
             return of([] as PageModel[]);
           })
@@ -87,14 +90,15 @@ export const _PageStore = signalStore(
     pageResource: rxResource({
       params: () => ({
         pageId: store.pageId(),
-        currentUser: store.currentUser()
+        userKey: store.currentUser()?.okey ?? ''
       }),
       stream: ({ params }) => {
+        const currentUser = store.currentUser();
         if (!params.pageId || params.pageId.length === 0) {
           return of({ page: undefined, sections: [] });
         }
         return store.pageService.read(params.pageId).pipe(
-          debugItemLoaded<PageModel>(`PageStore.pageResource (page only)`, params.currentUser),
+          debugItemLoaded<PageModel>(`PageStore.pageResource (page only)`, currentUser),
           map(page => {
             // A page is read BY DOCUMENT ID, which bypasses the `tenants array-contains`
             // filter, and `pages` is world-readable in firestore.rules (the anonymous
@@ -102,19 +106,19 @@ export const _PageStore = signalStore(
             // catalogue route `news_@TID@` falling back to another tenant's doc — renders
             // another tenant's content. Treat "not mine" as "not found".
             if (page && !belongsToTenant(page, store.tenantId())) {
-              debugData('PageStore.pageResource: page belongs to another tenant', { page: page.okey, tenants: page.tenants }, params.currentUser);
+              debugData('PageStore.pageResource: page belongs to another tenant', { page: page.okey, tenants: page.tenants }, currentUser);
               return undefined;
             }
             return page;
           }),
           switchMap(page => {
             if (!page || !page.sections || page.sections.length === 0) {
-              debugData('PageStore.pageResource: No sections to load', { page: page?.okey, sectionCount: page?.sections?.length }, params.currentUser);
+              debugData('PageStore.pageResource: No sections to load', { page: page?.okey, sectionCount: page?.sections?.length }, currentUser);
               return of({ page, sections: [] as SectionModel[] });
             }
-            debugData('PageStore.pageResource: Loading sections', { page: page.okey, sectionIds: page.sections }, params.currentUser);
+            debugData('PageStore.pageResource: Loading sections', { page: page.okey, sectionIds: page.sections }, currentUser);
             // Load all sections for this page - use combineLatest to get live updates
-            const sectionObservables = page.sections.map(sectionId => 
+            const sectionObservables = page.sections.map(sectionId =>
               store.sectionService.read(sectionId.replace('@TID@', store.tenantId()))
             );
             return combineLatest(sectionObservables).pipe(
@@ -124,12 +128,12 @@ export const _PageStore = signalStore(
                 const filteredSections = sections.filter(
                   (s): s is SectionModel => belongsToTenant(s, store.tenantId())
                 );
-                debugData('PageStore.pageResource: Sections loaded', { 
-                  page: page.okey, 
+                debugData('PageStore.pageResource: Sections loaded', {
+                  page: page.okey,
                   requestedCount: page.sections.length,
                   loadedCount: filteredSections.length,
                   sectionIds: filteredSections.map(s => s.okey)
-                }, params.currentUser);
+                }, currentUser);
                 return {
                   page,
                   sections: filteredSections
@@ -138,7 +142,7 @@ export const _PageStore = signalStore(
             );
           }),
           catchError(error => {
-            debugData('PageStore.pageResource: stream error', error, params.currentUser);
+            debugData('PageStore.pageResource: stream error', error, currentUser);
             store.setError(store.i18n.error_load());
             return of({ page: undefined, sections: [] as SectionModel[] });
           })
