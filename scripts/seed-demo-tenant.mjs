@@ -34,6 +34,35 @@ const SEED_BATCH = 'perf-demo-2026-08-28';
 if (!getApps().length) initializeApp({ projectId: 'bkaiser-org' });
 const db = getFirestore();
 
+// --avatars-only: targeted re-seed of just the `avatars` collection against persons that were
+// ALREADY seeded in an earlier full run (used once, 2026-08-28, to fix avatars that had been
+// written with auto-generated ids instead of the required `person.<personKey>` id — see
+// getAvatarKey in libs/shared/util-core/src/lib/icon.util.ts and the read path in
+// libs/shared/ui/src/lib/avatar-user.ts). Queries the real, already-committed person ids rather
+// than generating fresh ones, since a bare re-run of the full script would create a second,
+// disjoint batch of persons instead of reusing the ones already in Firestore.
+if (process.argv.includes('--avatars-only')) {
+  const existingPersons = await db.collection('persons')
+    .where('tenants', 'array-contains', 'okr')
+    .where('seedBatch', '==', SEED_BATCH)
+    .limit(100)
+    .get();
+  const entries = existingPersons.docs.map((doc, i) => ({
+    id: `person.${doc.id}`,
+    data: {
+      storagePath: `avatars/demo-${i}.jpg`,
+      isArchived: false,
+      tenants: ['okr'],
+      seedBatch: SEED_BATCH,
+    },
+  }));
+  const prepared = prepareWithIds('avatars', entries);
+  console.log(`${DRY_RUN ? '[dry-run] ' : ''}Re-seeding avatars only, for ${prepared.length} already-seeded persons`);
+  await writeAll('avatars', prepared);
+  console.log(`${DRY_RUN ? '[dry-run] ' : ''}Done. Total documents: ${prepared.length}`);
+  process.exit(0);
+}
+
 // ---------------------------------------------------------------------------
 // Invented name material (deterministic, index-based combination — no Math.random()).
 // ---------------------------------------------------------------------------
@@ -112,6 +141,14 @@ function prepare(collectionName, dataArray) {
   return dataArray.map((data) => ({ ref: db.collection(collectionName).doc(), data }));
 }
 
+// Like prepare(), but with an explicit doc id per entry instead of an auto-generated one.
+// Needed for avatars: the app reads an avatar by getAvatarKey(modelType, key) =
+// `${modelType}.${key}` (libs/shared/util-core/src/lib/icon.util.ts), e.g. `person.<personKey>`
+// — an auto-generated id would never be found by that read path.
+function prepareWithIds(collectionName, entries) {
+  return entries.map(({ id, data }) => ({ ref: db.collection(collectionName).doc(id), data }));
+}
+
 async function writeAll(collectionName, prepared) {
   if (DRY_RUN) {
     console.log(`[dry-run] ${collectionName}: would write ${prepared.length} documents`);
@@ -180,14 +217,20 @@ const addressesData = personsPrep.map((p, i) => ({
 }));
 const addressesPrep = prepare('addresses', addressesData);
 
-// avatars (100) — not every person has one
-const avatarsData = Array.from({ length: 100 }, (_, i) => ({
-  storagePath: `avatars/demo-${i}.jpg`,
-  isArchived: false,
-  tenants: ['okr'],
-  seedBatch: SEED_BATCH,
+// avatars (100) — not every person has one. Doc id MUST be `person.<personKey>`
+// (getAvatarKey(modelType, key) => `${modelType}.${key}`, libs/shared/util-core/src/lib/icon.util.ts;
+// read path: readModel<AvatarModel>(AvatarCollection, `${PersonModelName}.${personKey}`) in
+// libs/shared/ui/src/lib/avatar-user.ts) — an auto-generated id would never be found.
+const avatarsEntries = personsPrep.slice(0, 100).map((p, i) => ({
+  id: `person.${p.ref.id}`,
+  data: {
+    storagePath: `avatars/demo-${i}.jpg`,
+    isArchived: false,
+    tenants: ['okr'],
+    seedBatch: SEED_BATCH,
+  },
 }));
-const avatarsPrep = prepare('avatars', avatarsData);
+const avatarsPrep = prepareWithIds('avatars', avatarsEntries);
 
 // orgs (20)
 const orgsData = Array.from({ length: 20 }, (_, i) => ({
