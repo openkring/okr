@@ -25,6 +25,7 @@ export class PageModel implements OkrModel, NamedModel, SearchableModel, TaggedM
   public sections = DEFAULT_SECTIONS; // section.okey, section.name
   public isPrivate = true; // if true, page requires authentication and should not be accessible via /public/ routes
   public blogType: BlogLayoutType = DEFAULT_BLOG_LAYOUT_TYPE; // layout type for blog pages
+  public locationKey = ''; // FK -> locations; the page's location, inherited by weather sections
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

@@ -120,6 +120,11 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
                     <ion-note slot="end" class="ion-text-wrap">{{ reason }}</ion-note>
                   }
                 </ion-item>
+                @if (remarkOf(block); as remark) {
+                  <ion-item lines="none" class="remark">
+                    <ion-note class="ion-text-wrap">{{ remark }}</ion-note>
+                  </ion-item>
+                }
               }
             </ion-item-group>
           }
@@ -147,6 +152,14 @@ export class FeaturePicker {
   // not a `TranslatePipe`/data-driven case.
   protected readonly blockLabels = this.i18nService.translateAll(
     Object.fromEntries(this.catalogue.map(block => [block.id, block.label])));
+  /**
+   * Caveats shown under a block and repeated when it is switched on. Only blocks that declare
+   * `remarks` appear here, so the record is usually near-empty.
+   */
+  protected readonly blockRemarks = this.i18nService.translateAll(
+    Object.fromEntries(this.catalogue
+      .filter(block => block.remarks !== undefined)
+      .map(block => [block.id, block.remarks as string])));
   protected readonly bundleLabels = this.i18nService.translateAll(
     Object.fromEntries(this.bundles.map(bundle => [bundle.id, bundle.label])));
 
@@ -251,7 +264,17 @@ export class FeaturePicker {
     const checked = event.detail.checked;
 
     if (checked) {
-      this.selection.set(new Set(resolveWithDeps(this.catalogue, [...this.selection(), block.id])));
+      const before = this.selection();
+      this.selection.set(new Set(resolveWithDeps(this.catalogue, [...before, block.id])));
+
+      // A block with a caveat (a third-party licence, a cost) states it at the moment it is
+      // switched on. Applied first and rolled back on cancel, for the same reason the uncheck
+      // path below does: ion-checkbox has already flipped itself, and Angular only re-pushes
+      // `[checked]` when the bound value actually changes.
+      const remark = this.blockRemarks[block.id]?.();
+      if (remark && !(await this.alertService.confirm(remark, true))) {
+        this.selection.set(before);
+      }
       return;
     }
 
@@ -423,6 +446,11 @@ export class FeaturePicker {
    * raw (untranslated) content, so the worst case is a dialog that lists block ids instead of
    * translated labels, not a content-free prompt.
    */
+  /** The block's caveat, or '' when it declares none. */
+  protected remarkOf(block: FeatureBlock): string {
+    return this.blockRemarks[block.id]?.() ?? '';
+  }
+
   private async translateOrFallback(
     key: string, params: Record<string, string | number>, fallback: string,
   ): Promise<string> {

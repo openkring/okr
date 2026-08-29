@@ -1214,5 +1214,28 @@
   },
   "buttonAction": {
     "intro": "<ul><li><strong>Download :</strong> le bouton télécharge le fichier référencé par l’URL. L’URL doit pointer vers un fichier dans Firebase Storage.</li><li><strong>Naviguer :</strong> le bouton navigue vers l’URL indiquée. L’URL doit être une route interne (voir la configuration MenuItem).</li><li><strong>Browse :</strong> le bouton renvoie vers une URL externe (https://domain.com/path).</li><li><strong>Zoom :</strong> le fichier référencé par l’URL s’affiche dans une visionneuse zoom (typiquement une image). L’URL doit pointer vers un fichier dans Firebase Storage.</li><li><strong>Aucune :</strong> aucune action n’est exécutée. L’URL est ignorée. C’est le réglage par défaut.</li></ul>"
+  },
+  "weather": {
+    "title": "Météo",
+    "label": "Météo",
+    "edit": "Modifier la configuration météo",
+    "description": "Widgets météo : résumé du jour, prévision, carte ou radar de pluie",
+    "variant": {
+      "label": "Widget"
+    },
+    "location": {
+      "label": "Lieu",
+      "helper": "Laisser vide pour reprendre le lieu de la page"
+    },
+    "locations": {
+      "label": "Lieux",
+      "helper": "Choisir de 2 à 10 lieux pour la carte"
+    },
+    "orientation": {
+      "label": "Orientation"
+    },
+    "days": {
+      "label": "Nombre de jours"
+    }
   }
 }

@@ -235,7 +235,7 @@ describe('deriveEnabledFeatures — owner override (R-8)', () => {
       override: override(FEATURE_BLOCKS.map(b => b.id)),
     });
     expect(out.enabled).toEqual(expected);
-    expect(out.enabled).toHaveLength(31);   // +1: `meeting` (spec 2.7) 2026-08-14, +1: `alias` (spec 3.21) 2026-08-22, +1: `trip` split out of core `geo` 2026-08-24
+    expect(out.enabled).toHaveLength(32);   // +1: `meeting` (spec 2.7) 2026-08-14, +1: `alias` (spec 3.21) 2026-08-22, +1: `trip` split out of core `geo` 2026-08-24, +1: `weather` (spec 1.45) 2026-08-29
     FEATURE_BLOCKS.filter(b => b.defaultAvailability === 'disabled')
       .forEach(b => expect(out.enabled).not.toContain(b.id));
   });
@@ -314,6 +314,12 @@ describe('deriveEnabledFeatures — against the real catalogue', () => {
     // `instruments` declares no menu at all — the documented coverage gap. `vcard` used to be
     // listed here too; it is now `core: true` (unioned in regardless of menu evidence), which
     // is exactly the fix for its half of the gap.
-    expect(withoutExclusive).toEqual(['instruments']);
+    //
+    // `weather` (2026-08-29) is here BY DESIGN, not as a gap. Its widgets are CMS section
+    // variants, not menu entries, so there is no menu key to own — and being un-inferable is
+    // the point: the block carries a third-party licence caveat (Open-Meteo excludes
+    // commercial use), so a tenant must tick it deliberately rather than have
+    // `deriveEnabledFeatures` switch it on from menu evidence.
+    expect(withoutExclusive).toEqual(['instruments', 'weather']);
   });
 });

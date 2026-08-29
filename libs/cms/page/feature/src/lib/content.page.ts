@@ -182,10 +182,10 @@ import { PageStore } from './page.store';
                   >
                     @if(editMode()) {
                       <div class="section-wrapper editable state-{{ section.state }}">
-                        <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                        <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
                       </div>  
                     } @else {
-                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
                     }
                   </ion-col>
                 }
@@ -202,7 +202,7 @@ import { PageStore } from './page.store';
           <div class="print-content" #printContent>
             @for(section of visibleSections(); track section.okey) {
               <div [id]="section.okey">
-                <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
               </div>
             }
           </div>

@@ -313,6 +313,7 @@ export { getAddressView } from './address/get-address-view';
 
 // exchange rates
 export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';
+export { scheduledWeatherFetch } from './weather/fetch-weather';
 export { setManualRate } from './exchange-rate/set-manual-rate';
 
 // payment

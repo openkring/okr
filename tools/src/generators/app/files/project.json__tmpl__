@@ -385,6 +385,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/geo/weather/ui/src/i18n",
+            "output": "./assets/i18n/geo/weather/ui"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/i18n/feature/src/i18n",
             "output": "./assets/i18n/i18n/feature"
           },
@@ -736,7 +741,7 @@
       "defaultConfiguration": "development",
       "options": {
         "headers": {
-          "Content-Security-Policy": "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.gstatic.com https://www.google.com https://apis.google.com https://static.imgix.net https://maps.googleapis.com https://cdn.tailwindcss.com https://www.googletagmanager.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; connect-src 'self' blob: https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://*.imgix.net https://matrix.bkchat.etke.host https://europe-west6-bkaiser-org.cloudfunctions.net https://cdn.jsdelivr.net https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://*.ingest.de.sentry.io;"
+          "Content-Security-Policy": "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.gstatic.com https://www.google.com https://apis.google.com https://static.imgix.net https://maps.googleapis.com https://cdn.tailwindcss.com https://www.googletagmanager.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; connect-src 'self' blob: https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://*.imgix.net https://matrix.bkchat.etke.host https://europe-west6-bkaiser-org.cloudfunctions.net https://cdn.jsdelivr.net https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://*.ingest.de.sentry.io https://tile.openstreetmap.org https://api.rainviewer.com;"
         }
       }
     },

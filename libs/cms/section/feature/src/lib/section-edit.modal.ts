@@ -1,10 +1,12 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryListModel, SectionModel, UserModel } from '@okr/shared-models';
+import { CategoryListModel, LocationModel, SectionModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@okr/shared-ui';
 import { coerceBoolean, deepEqual, safeStructuredClone } from '@okr/shared-util-core';
 import { SectionForm } from '@okr/cms-section-ui';
+import { LocationService } from '@okr/location-data-access';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import { SectionStore } from './section.store';
@@ -41,6 +43,7 @@ import { SectionStore } from './section.store';
             [roles]="roles()"
             [states]="states()"
             [albumStyles]="albumStyles()"
+            [weatherLocations]="weatherLocations()"
             [allTags]="tags()"
             [tenantId]="tenantId()"
             [readOnly]="isReadOnly()"
@@ -63,6 +66,16 @@ export class SectionEditModal {
   public readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected albumStyles = computed(() => this.store.appStore.getCategory('album_style'));
+
+  /**
+   * Locations offered by the weather configuration. Subscribed unconditionally rather than
+   * only for weather sections: `FirestoreService` shares the query, so a second subscriber
+   * costs nothing, and gating it on the section type would need the type before the form
+   * exists.
+   */
+  private locations = toSignal(inject(LocationService).list(), { initialValue: [] as LocationModel[] });
+  protected weatherLocations = computed(() =>
+    this.locations().map((l) => ({ okey: l.okey, name: l.name })));
 
   // signals
   protected initialData = signal<SectionModel | undefined>(undefined);

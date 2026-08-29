@@ -85,6 +85,7 @@ export * from './lib/responsibility.model';
 export * from './lib/resource.model';
 export * from './lib/roles';
 export * from './lib/section.model';
+export * from './lib/weather.model';
 export * from './lib/section.shapes';
 export * from './lib/session.model';
 export * from './lib/social-post.model';

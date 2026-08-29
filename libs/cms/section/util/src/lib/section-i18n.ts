@@ -244,6 +244,16 @@ export const SECTION_I18N_KEYS = {
   iframe_url_placeholder:                   PFX + 'iframe.url.placeholder',
   iframe_url_helper:                        PFX + 'iframe.url.helper',
 
+  // weather
+  weather_title:                            PFX + 'weather.title',
+  weather_variant_label:                    PFX + 'weather.variant.label',
+  weather_location_label:                   PFX + 'weather.location.label',
+  weather_location_helper:                  PFX + 'weather.location.helper',
+  weather_locations_label:                  PFX + 'weather.locations.label',
+  weather_locations_helper:                 PFX + 'weather.locations.helper',
+  weather_orientation_label:                PFX + 'weather.orientation.label',
+  weather_days_label:                       PFX + 'weather.days.label',
+
   // image upload / advanced toggle
   form_advanced_label:                      PFX + 'form.advanced.label',
   image_upload_action:                      PFX + 'image.upload.action',

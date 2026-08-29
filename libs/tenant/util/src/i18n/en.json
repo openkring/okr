@@ -124,6 +124,10 @@
     },
     "alias": {
       "label": "Short links & QR codes"
+    },
+    "weather": {
+      "label": "Weather",
+      "remarks": "The weather data comes from Open-Meteo. It is free for clubs and other non-commercial use. If you use it commercially, you need your own licence directly from Open-Meteo."
     }
   },
   "picker": {

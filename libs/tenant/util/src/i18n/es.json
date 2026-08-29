@@ -124,6 +124,10 @@
     },
     "alias": {
       "label": "Enlaces cortos y códigos QR"
+    },
+    "weather": {
+      "label": "Tiempo",
+      "remarks": "Los datos del tiempo vienen de Open-Meteo. Son gratuitos para asociaciones y cualquier uso no comercial. Si los usas con fines comerciales, necesitas tu propia licencia directamente de Open-Meteo."
     }
   },
   "picker": {

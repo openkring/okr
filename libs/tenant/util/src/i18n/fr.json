@@ -124,6 +124,10 @@
     },
     "alias": {
       "label": "Liens courts & codes QR"
+    },
+    "weather": {
+      "label": "Météo",
+      "remarks": "Les données météo viennent d'Open-Meteo. Elles sont gratuites pour les associations et tout usage non commercial. Si tu les utilises à des fins commerciales, il te faut ta propre licence directement auprès d'Open-Meteo."
     }
   },
   "picker": {

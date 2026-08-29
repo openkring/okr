@@ -1,0 +1,35 @@
+{
+  "today": "Heute",
+  "empty": "Für diesen Ort liegen noch keine Wetterdaten vor.",
+  "stale": "Die Daten sind älter als üblich — die letzte Abfrage hat nicht geklappt.",
+  "source": "Datenquelle: Open-Meteo · Modell MeteoSchweiz",
+  "uncertainty": "Unsicherheit",
+  "localForecast": "Lokalprognose",
+  "elevation": "m ü. M.",
+  "wind": {
+    "andGusts": "Wind und Böen",
+    "from": "Wind aus"
+  },
+  "precipitation": {
+    "label": "Niederschlag",
+    "probability": "Niederschlagswahrscheinlichkeit"
+  },
+  "radar": {
+    "measured": "Messung",
+    "forecast": "Prognose",
+    "play": "Animation starten",
+    "pause": "Animation anhalten"
+  },
+  "direction": {
+    "n": "Norden",
+    "ne": "Nordosten",
+    "e": "Osten",
+    "se": "Südosten",
+    "s": "Süden",
+    "sw": "Südwesten",
+    "w": "Westen",
+    "nw": "Nordwesten"
+  },
+  "sunshine": "Sonnenschein",
+  "sunshine.duration": "Sonnenscheindauer"
+}

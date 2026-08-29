@@ -23,3 +23,4 @@ export * from './lib/spider-configuration';
 export * from './lib/toc-configuration';
 export * from './lib/testimonial-configuration';
 export * from './lib/timeline-configuration';
+export * from './lib/weather-configuration';

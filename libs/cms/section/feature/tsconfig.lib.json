@@ -10,10 +10,20 @@
     "types": [],
     "tsBuildInfoFile": "../../../../dist/out-tsc/cms-section-feature.tsbuildinfo",
     "moduleResolution": "bundler",
-    "lib": ["dom", "es2022"]
+    "lib": [
+      "dom",
+      "es2022"
+    ]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.spec2.ts", "**/test-setup.ts", "vite.config.ts"],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.spec2.ts",
+    "**/test-setup.ts",
+    "vite.config.ts"
+  ],
   "references": [
     { "path": "../../../activity/data-access/tsconfig.lib.json" },
     { "path": "../../../activity/feature/tsconfig.lib.json" },
@@ -35,7 +45,9 @@
     { "path": "../../../content/folder/ui/tsconfig.lib.json" },
     { "path": "../../../forms/ui/tsconfig.lib.json" },
     { "path": "../../../forms/util/tsconfig.lib.json" },
+    { "path": "../../../geo/location/data-access/tsconfig.lib.json" },
     { "path": "../../../geo/trip/data-access/tsconfig.lib.json" },
+    { "path": "../../../geo/weather/feature/tsconfig.lib.json" },
     { "path": "../../../relationship/invitation/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/membership/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/personal-rel/data-access/tsconfig.lib.json" },

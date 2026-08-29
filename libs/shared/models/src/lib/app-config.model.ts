@@ -141,6 +141,13 @@ export class AppConfig {
    */
   public enabledFeatures?: string[];
 
+  /**
+   * Hours between two weather fetches per location (default 4). The scheduled function runs
+   * hourly and skips any location whose `fetchedAt` is younger than this, so the interval is
+   * changeable without a functions deploy — a cron expression would not be.
+   */
+  public weatherIntervalHours = 4;
+
   // git repository information
   public gitRepo = DEFAULT_NAME; //  git repository name
   public gitOrg = DEFAULT_NAME; // git organization name

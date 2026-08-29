@@ -76,6 +76,13 @@ export interface FeatureBlock {
   seed?: SeedSpec[];
   /** Collections this block owns — feeds retention + audit. */
   collections: string[];
+  /**
+   * i18n key of a caveat the tenant must see. Set it when enabling the block carries an
+   * obligation we do NOT take on for them — a third-party licence, a cost, a legal
+   * precondition. `/tenant/features` shows it under the block and repeats it in a
+   * confirmation when the block is switched ON. Switching off never asks.
+   */
+  remarks?: string;
 }
 
 /** Per-block rollout document, `feature-rollout/{blockId}`. */

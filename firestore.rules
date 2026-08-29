@@ -441,6 +441,10 @@ service cloud.firestore {
     match /icons/{id}              { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /invitations/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /locations/{id}          { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
+    // weather: written ONLY by the scheduled Cloud Function, which uses the Admin SDK and
+    // bypasses these rules. No client may write — a forged forecast is not worth the attack
+    // surface, and nothing in the app has a reason to.
+    match /weather/{id}            { allow read: if tenantRead(); allow write: if false; }
     match /memberships/{id}        { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /ownerships/{id}         { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }
     match /personal-rels/{id}      { allow read: if tenantRead(); allow create, update: if tenantCreateOrDetach(); allow delete: if tenantDelete(); }

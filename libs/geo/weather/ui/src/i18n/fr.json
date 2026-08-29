@@ -1,0 +1,35 @@
+{
+  "today": "Aujourd'hui",
+  "empty": "Il n'y a pas encore de données météo pour ce lieu.",
+  "stale": "Les données sont plus anciennes que d'habitude — la dernière requête n'a pas abouti.",
+  "source": "Source des données : Open-Meteo · modèle MétéoSuisse",
+  "uncertainty": "Incertitude",
+  "localForecast": "Prévision locale",
+  "elevation": "m d'altitude",
+  "wind": {
+    "andGusts": "Vent et rafales",
+    "from": "Vent de"
+  },
+  "precipitation": {
+    "label": "Précipitations",
+    "probability": "Probabilité de précipitations"
+  },
+  "radar": {
+    "measured": "Mesure",
+    "forecast": "Prévision",
+    "play": "Lancer l'animation",
+    "pause": "Mettre en pause"
+  },
+  "direction": {
+    "n": "nord",
+    "ne": "nord-est",
+    "e": "est",
+    "se": "sud-est",
+    "s": "sud",
+    "sw": "sud-ouest",
+    "w": "ouest",
+    "nw": "nord-ouest"
+  },
+  "sunshine": "Ensoleillement",
+  "sunshine.duration": "Durée d'ensoleillement"
+}

@@ -1214,5 +1214,28 @@
   },
   "buttonAction": {
     "intro": "<ul><li><strong>Download:</strong> Der Button startet einen Download der mittels URL referenzierten Datei. Die URL muss auf eine Datei im Firebase Storage zeigen.</li><li><strong>Navigieren:</strong> Der Button navigiert zur angegebenen URL. Die URL muss eine interne Route sein (siehe dazu die MenuItem Konfiguration).</li><li><strong>Browse:</strong> Der Button linkt auf eine externe URL (https://domain.com/path).</li><li><strong>Zoom:</strong> Die in der URL referenzierte Datei wird in einem Zoom-Viewer angezeigt (typischerweise ein Bild). Die URL muss auf eine Datei im Firebase Storage zeigen.</li><li><strong>Keine:</strong> Keine Aktion wird ausgeführt. Die URL wird ignoriert. Dies ist die Default-Einstellung.</li></ul>"
+  },
+  "weather": {
+    "title": "Wetter",
+    "label": "Wetter",
+    "edit": "Wetter-Konfiguration ändern",
+    "description": "Wetter-Widgets: Tagesübersicht, Prognose, Karte oder Regenradar",
+    "variant": {
+      "label": "Widget"
+    },
+    "location": {
+      "label": "Ort",
+      "helper": "Leer lassen, um den Ort der Seite zu übernehmen"
+    },
+    "locations": {
+      "label": "Orte",
+      "helper": "2 bis 10 Orte für die Karte wählen"
+    },
+    "orientation": {
+      "label": "Ausrichtung"
+    },
+    "days": {
+      "label": "Anzahl Tage"
+    }
   }
 }

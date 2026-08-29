@@ -17,14 +17,14 @@ export const SectionModelName = 'section';
 export type SectionType =
     'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' |
     'people' | 'responsibility' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
-    'news' | 'activities' | 'messages' | 'rag' | 'orgchart' | 'context' | 'member-age' | 'member-cat' | 'trip-stats' | 'form' | 'sankey' | 'spider' | 'toc' | 'testimonial' | 'timeline';
+    'news' | 'activities' | 'messages' | 'rag' | 'orgchart' | 'context' | 'member-age' | 'member-cat' | 'trip-stats' | 'form' | 'sankey' | 'spider' | 'toc' | 'testimonial' | 'timeline' | 'weather';
 
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
     HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
-    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection;
+    NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection;
 
 // --------------------------------------- ABSTRACT BASE SECTION MODELS ----------------------------------------
 // --------------------------------------- ORGCHART ----------------------------------------
@@ -213,7 +213,7 @@ export interface BaseSection {
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
   IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
-  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig;
+  TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig;
   notes: string;
   tags: string;
   tenants: string[]; // list of tenant ids
@@ -677,4 +677,32 @@ export interface FormSectionConfig {
   showCaptcha: boolean;
   encryptFileUpload: boolean;
   rateLimit: { limit: number; periodMinutes: number };
+}
+
+// --------------------------------------- WEATHER ----------------------------------------
+/**
+ * One section type for all eight weather widgets. The widget is chosen by `variant`
+ * rather than by its own `SectionType`: they share the data source, the location and
+ * the configuration, so eight types would mean eight dispatcher branches, vest suites
+ * and configuration forms for no gain.
+ */
+export type WeatherVariant =
+  'day-horizontal' | 'day-vertical' | 'forecast_overview' | 'forecast_detail' |
+  'forecast_table' | 'hourly_detail' | 'map' | 'rain_radar';
+
+export interface WeatherSection extends BaseSection {
+  type: 'weather';
+  properties: WeatherConfig;
+}
+
+export interface WeatherConfig {
+  variant: WeatherVariant;
+  /** Empty ⇒ inherit the page's `locationKey`. */
+  locationKey: string;
+  /** Only `variant: 'map'` — 4 to 10 locations shown as pins. */
+  locationKeys?: string[];
+  /** Only `variant: 'forecast_overview'`. Default 'horizontal'. */
+  orientation?: 'horizontal' | 'vertical';
+  /** forecast_overview / forecast_table — number of days, default 6. */
+  days?: number;
 }

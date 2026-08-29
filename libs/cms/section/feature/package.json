@@ -43,6 +43,8 @@
     "@okr/shared-data-access": "*",
     "@okr/content-document-data-access": "*",
     "@okr/content-folder-ui": "*",
-    "@okr/calevent-ui": "*"
+    "@okr/calevent-ui": "*",
+    "@okr/weather-feature": "*",
+    "@okr/location-data-access": "*"
   }
 }

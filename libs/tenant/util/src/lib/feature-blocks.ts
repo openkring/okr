@@ -2257,6 +2257,32 @@ const alias: FeatureBlock = {
   ],
 };
 
+
+/**
+ * Weather widgets (`libs/geo/weather/*`) plus the scheduled fetch.
+ *
+ * Its own block rather than part of `geo`: `geo` is `core: true` and therefore on for every
+ * tenant unconditionally, which would make the licence remark below unreachable — you cannot
+ * warn someone at the moment they enable something that was never switchable.
+ *
+ * `dependsOn: ['geo']` because a weather location IS a `LocationModel`; there is no separate
+ * place model.
+ */
+const weather: FeatureBlock = {
+  id: 'weather',
+  bundle: 'special',
+  label: '@tenant/util.feature.weather.label',
+  icon: 'sunny',
+  defaultAvailability: 'ga',
+  dependsOn: ['geo'],
+  collections: ['weather'],
+  // Open-Meteo's free tier excludes commercial use. We deliberately do not hold a licence on
+  // the tenant's behalf — they take one out themselves — so the obligation has to be stated
+  // at the moment they turn the feature on.
+  remarks: '@tenant/util.feature.weather.remarks',
+  menu: [],
+};
+
 export const FEATURE_BLOCKS: FeatureBlock[] = [
   calevent, aoc, activity, task, instruments, games,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
@@ -2265,5 +2291,5 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   finance, esign, pdfTemplate,
   documentBlock, meeting,
   chat, socialFeed, forms,
-  business, alias,
+  business, alias, weather,
 ];

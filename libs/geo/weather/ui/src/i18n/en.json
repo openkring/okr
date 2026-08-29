@@ -1,0 +1,35 @@
+{
+  "today": "Today",
+  "empty": "There is no weather data for this location yet.",
+  "stale": "The data is older than usual — the last fetch did not go through.",
+  "source": "Data source: Open-Meteo · MeteoSwiss model",
+  "uncertainty": "Uncertainty",
+  "localForecast": "Local forecast",
+  "elevation": "m a.s.l.",
+  "wind": {
+    "andGusts": "Wind and gusts",
+    "from": "Wind from"
+  },
+  "precipitation": {
+    "label": "Precipitation",
+    "probability": "Chance of precipitation"
+  },
+  "radar": {
+    "measured": "Measured",
+    "forecast": "Forecast",
+    "play": "Start animation",
+    "pause": "Pause animation"
+  },
+  "direction": {
+    "n": "north",
+    "ne": "north-east",
+    "e": "east",
+    "se": "south-east",
+    "s": "south",
+    "sw": "south-west",
+    "w": "west",
+    "nw": "north-west"
+  },
+  "sunshine": "Sunshine",
+  "sunshine.duration": "Sunshine duration"
+}

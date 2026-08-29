@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from '@angular/core';
 
-import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection } from '@okr/shared-models';
+import { AlbumConfig, AlbumSection, ArticleSection, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, EventsConfig, EventsSection, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, ImageType, InvitationsConfig, InvitationsSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection } from '@okr/shared-models';
 import { Chips, ErrorNote, ImageConfigEdit, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS, IMAGE_MIMETYPES } from '@okr/shared-constants';
@@ -15,6 +15,7 @@ import { EditorConfiguration } from './editor-configuration';
 import { ImageStyleConfiguration } from './image-style-configuration';
 import { AlbumConfiguration } from './album-configuration';
 import { IframeConfiguration } from './iframe-configuration';
+import { WeatherConfiguration, WeatherLocationOption } from './weather-configuration';
 import { PeopleConfiguration } from './people-configuration';
 import { ResponsibilityConfiguration } from './responsibility-configuration';
 import { VideoConfiguration } from './video-configuration';
@@ -48,7 +49,7 @@ import { TimelineConfiguration } from './timeline-configuration';
     IonItem, IonToggle,
     Chips, ImageConfigEdit, NotesInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, AlbumConfiguration,
-    IframeConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
+    IframeConfiguration, WeatherConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
     ButtonStyleConfiguration, ButtonActionConfiguration, IconConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
@@ -229,6 +230,16 @@ import { TimelineConfiguration } from './timeline-configuration';
                 [showAdvanced]="showAdvanced()"
               />
             }
+          }
+        }
+        @case('weather') {
+          @if(weatherConfig(); as weatherConfig) {
+            <okr-weather-config
+              [formData]="weatherConfig" (formDataChange)="onWeatherConfigChange($event)"
+              [readOnly]="isReadOnly()"
+              [locations]="weatherLocations()"
+              [i18n]="i18n()"
+            />
           }
         }
         @case('iframe') {
@@ -498,6 +509,8 @@ export class SectionForm {
   public readonly albumStyles = input.required<CategoryListModel>();
   public readonly tenantId = input.required<string>();
   public readonly readOnly = input(true);
+  /** Locations offered by the weather configuration. Empty for every other section type. */
+  public readonly weatherLocations = input<WeatherLocationOption[]>([]);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // derived linked signals
@@ -526,6 +539,7 @@ export class SectionForm {
   protected logoConfig = linkedSignal(() => this.getLogoConfig());
   protected heroConfig = linkedSignal(() => this.getHeroConfig());
   protected iframeConfig = linkedSignal(() => this.getIframeConfig());
+  protected weatherConfig = linkedSignal(() => this.getWeatherConfig());
   protected mapConfig = linkedSignal(() => this.getMapConfig());
   protected peopleConfig = linkedSignal(() => this.getPeopleConfig());
   protected responsibilityConfig = linkedSignal(() => this.getResponsibilityConfig());
@@ -702,6 +716,12 @@ export class SectionForm {
   private getIframeConfig(): IframeConfig | undefined {
     if (this.formData().type === 'iframe') {
       return ((this.formData() as IframeSection).properties as IframeConfig);
+    }
+  }
+
+  private getWeatherConfig(): WeatherConfig | undefined {
+    if (this.formData().type === 'weather') {
+      return ((this.formData() as WeatherSection).properties as WeatherConfig);
     }
   }
 
@@ -1004,6 +1024,13 @@ export class SectionForm {
         ...section,
         properties: config
       } as InvitationsSection);
+    }
+  }
+
+  protected onWeatherConfigChange(config: WeatherConfig): void {
+    const section = this.formData();
+    if (section.type === 'weather') {
+      this.formData.set({ ...section, properties: config } as WeatherSection);
     }
   }
 

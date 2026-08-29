@@ -1134,6 +1134,18 @@ const alias: BlockRoutes = {
   }],
 };
 
+/**
+ * Weather owns NO routes. Its widgets are CMS section variants rendered inside ordinary
+ * pages, so there is nothing to gate at the router — the block gates the section type and
+ * the scheduled fetch instead. The entry exists because `feature-catalogue.sync.spec.ts`
+ * requires an id on both sides of the catalogue; an empty list is the honest shape, not an
+ * oversight.
+ */
+const weather: BlockRoutes = {
+  id: 'weather',
+  routes: (): Route[] => [],
+};
+
 export const FEATURE_ROUTES: BlockRoutes[] = [
   calevent, aoc, activity, task, instruments, games,
   auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
@@ -1142,5 +1154,5 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   finance, esign, pdfTemplate,
   documentBlock, meeting,
   chat, socialFeed, forms,
-  business, alias,
+  business, alias, weather,
 ];

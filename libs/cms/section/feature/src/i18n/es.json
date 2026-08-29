@@ -1214,5 +1214,28 @@
   },
   "buttonAction": {
     "intro": "<ul><li><strong>Download:</strong> el botón descarga el archivo referenciado por la URL. La URL debe apuntar a un archivo en Firebase Storage.</li><li><strong>Navegar:</strong> el botón navega a la URL indicada. La URL debe ser una ruta interna (véase la configuración de MenuItem).</li><li><strong>Browse:</strong> el botón enlaza a una URL externa (https://domain.com/path).</li><li><strong>Zoom:</strong> el archivo referenciado por la URL se muestra en un visor de zoom (normalmente una imagen). La URL debe apuntar a un archivo en Firebase Storage.</li><li><strong>Ninguna:</strong> no se ejecuta ninguna acción. La URL se ignora. Es la configuración predeterminada.</li></ul>"
+  },
+  "weather": {
+    "title": "Tiempo",
+    "label": "Tiempo",
+    "edit": "Cambiar la configuración del tiempo",
+    "description": "Widgets del tiempo: resumen del día, pronóstico, mapa o radar de lluvia",
+    "variant": {
+      "label": "Widget"
+    },
+    "location": {
+      "label": "Lugar",
+      "helper": "Déjalo vacío para usar el lugar de la página"
+    },
+    "locations": {
+      "label": "Lugares",
+      "helper": "Elige entre 2 y 10 lugares para el mapa"
+    },
+    "orientation": {
+      "label": "Orientación"
+    },
+    "days": {
+      "label": "Número de días"
+    }
   }
 }

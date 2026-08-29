@@ -1,0 +1,18 @@
+{
+  "name": "@okr/weather-data-access",
+  "version": "0.0.1",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "sideEffects": false,
+  "private": true,
+  "dependencies": {
+    "tslib": "^2.8.1",
+    "@okr/shared-models": "*",
+    "@okr/shared-constants": "*",
+    "@okr/shared-config": "*",
+    "@okr/shared-data-access": "*",
+    "@okr/shared-util-core": "*",
+    "@angular/core": "*",
+    "rxjs": "*"
+  }
+}

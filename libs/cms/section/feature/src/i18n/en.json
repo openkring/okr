@@ -1214,5 +1214,28 @@
   },
   "buttonAction": {
     "intro": "<ul><li><strong>Download:</strong> The button downloads the file referenced by the URL. The URL must point to a file in Firebase Storage.</li><li><strong>Navigate:</strong> The button navigates to the given URL. The URL must be an internal route (see the MenuItem configuration).</li><li><strong>Browse:</strong> The button links to an external URL (https://domain.com/path).</li><li><strong>Zoom:</strong> The file referenced by the URL is shown in a zoom viewer (typically an image). The URL must point to a file in Firebase Storage.</li><li><strong>None:</strong> No action is performed. The URL is ignored. This is the default setting.</li></ul>"
+  },
+  "weather": {
+    "title": "Weather",
+    "label": "Weather",
+    "edit": "Change weather configuration",
+    "description": "Weather widgets: day summary, forecast, map or rain radar",
+    "variant": {
+      "label": "Widget"
+    },
+    "location": {
+      "label": "Location",
+      "helper": "Leave empty to use the page's location"
+    },
+    "locations": {
+      "label": "Locations",
+      "helper": "Pick 2 to 10 locations for the map"
+    },
+    "orientation": {
+      "label": "Orientation"
+    },
+    "days": {
+      "label": "Number of days"
+    }
   }
 }

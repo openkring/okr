@@ -39,6 +39,7 @@ import { TestimonialSectionComponent } from './testimonial-section';
 import { TimelineSectionComponent } from './timeline-section';
 import { TripStatsSectionComponent } from './trip-stats-section';
 import { FormSectionComponent } from './form-section';
+import { WeatherSectionComponent } from '@okr/weather-feature';
 import { SectionStore } from './section.store';
 
 /**
@@ -61,6 +62,7 @@ import { SectionStore } from './section.store';
     CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
     TripStatsSectionComponent,
     FormSectionComponent,
+    WeatherSectionComponent,
   ],
   template: `
     @if (section(); as section) {
@@ -166,6 +168,9 @@ import { SectionStore } from './section.store';
           @case('video') {
             <okr-video-section [section]="section" />
           }
+          @case('weather') {
+            <okr-weather-section [section]="section" [pageLocationKey]="pageLocationKey()" />
+          }
           @case('member-age') {
             @defer (on viewport) {
               <okr-member-age-section [section]="section" [editMode]="editMode()" />
@@ -242,6 +247,12 @@ export class SectionDispatcher {
   public section = input.required<SectionModel>();
   public currentUser = input.required<UserModel | undefined>();
   public editMode = input.required<boolean>();
+  /**
+   * The hosting page's `locationKey`. Weather sections inherit it when they do not name a
+   * location of their own; every other section type ignores it. Optional, so the page types
+   * that cannot host a weather section need not pass anything.
+   */
+  public pageLocationKey = input('');
 
   /**
    * The rendered album section, if this dispatcher renders one. Exposed so the hosting page can

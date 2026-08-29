@@ -270,7 +270,7 @@ import { PageStore } from './page.store';
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
                     <div class="section-wrapper state-{{ section.state }}" [class.editable]="editMode()">
-                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
                     </div>
                   </ion-col>
                 }
@@ -294,7 +294,7 @@ import { PageStore } from './page.store';
                     [attr.size-md]="colSizes.sizeMd" [attr.size-lg]="colSizes.sizeLg"
                   >
                     <div class="section-wrapper">
-                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
                     </div>
                   </ion-col>
                 }
