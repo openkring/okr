@@ -66,9 +66,11 @@ export class FirestoreSubscriptionMonitor {
 
   public opened(kind: SubscriptionKind, collection: string, key: string): void {
     registerConsoleAccess();
-    if (!this.stats.has(key)) {
-      this.stats.set(key, { kind, collection, subscribes: 0, sourceEmissions: 0, delivered: 0 });
-    }
+    // Über ensure(), damit ein bereits durch einen Zähler angelegter Eintrag seine Werte behält;
+    // Art und Collection sind hier aber sicher bekannt und überschreiben die Ableitung.
+    const entry = this.ensure(key);
+    entry.kind = kind;
+    entry.collection = collection;
     if (this.active.has(key)) return;
     this.active.set(key, { kind, collection });
   }
@@ -79,20 +81,17 @@ export class FirestoreSubscriptionMonitor {
 
   /** Ein Konsument hat den geteilten Stream abonniert (aus dem `defer(...)`-Wrapper). */
   public subscribed(key: string): void {
-    const entry = this.stats.get(key);
-    if (entry) entry.subscribes++;
+    this.ensure(key).subscribes++;
   }
 
   /** Ein echter Firestore-Snapshot ist eingetroffen (Messpunkt VOR `share`). */
   public sourceEmitted(key: string): void {
-    const entry = this.stats.get(key);
-    if (entry) entry.sourceEmissions++;
+    this.ensure(key).sourceEmissions++;
   }
 
   /** Ein Wert wurde an einen Konsumenten geliefert, Replay eingeschlossen (Messpunkt NACH `share`). */
   public deliveredValue(key: string): void {
-    const entry = this.stats.get(key);
-    if (entry) entry.delivered++;
+    this.ensure(key).delivered++;
   }
 
   public activeCount(): number {
@@ -133,10 +132,65 @@ export class FirestoreSubscriptionMonitor {
       .sort((a, b) => b.delivered - a.delivered || a.collection.localeCompare(b.collection));
   }
 
+  /**
+   * Beginnt ein neues Messfenster: setzt die Zähler auf null, BEHÄLT aber die Einträge und den
+   * Bestand der offenen Listener.
+   *
+   * Die erste Fassung leerte beide Maps — und machte das Instrument damit stumm. `opened()` läuft
+   * nur, wenn der FirestoreService einen NEUEN Cache-Eintrag anlegt; ein bereits zwischen-
+   * gespeicherter Stream meldet sich nie wieder an. Nach einem `reset()` ohne vollständigen
+   * Neuladen zählte deshalb nichts mehr, und `__okrFirestoreStreams()` druckte eine leere Tabelle.
+   * Ein geleerter `active`-Bestand wäre ebenso falsch: die Listener sind ja weiter offen.
+   */
   public reset(): void {
-    this.active.clear();
-    this.stats.clear();
+    for (const entry of this.stats.values()) {
+      entry.subscribes = 0;
+      entry.sourceEmissions = 0;
+      entry.delivered = 0;
+    }
   }
+
+  /**
+   * Holt den Zählereintrag zum Schlüssel und legt ihn bei Bedarf an.
+   *
+   * Art und Collection werden aus dem Schlüssel abgeleitet, damit auch ein Stream gezählt wird,
+   * dessen `opened()` verpasst wurde: Dokument-Schlüssel des FirestoreService haben die Form
+   * `model:<collection>/<id>` bzw. `object:<collection>/<id>`, Query-Schlüssel sind das
+   * serialisierte Abfrageobjekt mit dem Feld `collectionName`.
+   */
+  private ensure(key: string): StatsEntry {
+    const existing = this.stats.get(key);
+    if (existing) return existing;
+
+    const entry: StatsEntry = {
+      ...describeKey(key),
+      subscribes: 0,
+      sourceEmissions: 0,
+      delivered: 0,
+    };
+    this.stats.set(key, entry);
+    return entry;
+  }
+}
+
+/**
+ * Leitet Art und Collection aus einem Cache-Schlüssel des FirestoreService ab. Reine Funktion,
+ * damit sie testbar ist; bei einem unbekannten Format bleibt die Collection `'?'`, statt zu raten.
+ */
+export function describeKey(key: string): { kind: SubscriptionKind; collection: string } {
+  const docPrefix = key.startsWith('model:') ? 6 : key.startsWith('object:') ? 7 : -1;
+  if (docPrefix > 0) {
+    return { kind: 'doc', collection: key.slice(docPrefix).split('/')[0] || '?' };
+  }
+  try {
+    const parsed = JSON.parse(key) as { collectionName?: unknown };
+    if (typeof parsed?.collectionName === 'string') {
+      return { kind: 'query', collection: parsed.collectionName };
+    }
+  } catch {
+    // kein JSON — fällt unten durch
+  }
+  return { kind: 'query', collection: '?' };
 }
 
 /** Prozessweite Instanz — der FirestoreService meldet hier an und ab. */

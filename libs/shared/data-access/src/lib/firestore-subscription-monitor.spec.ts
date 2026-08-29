@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FirestoreSubscriptionMonitor } from './firestore-subscription-monitor';
+import { describeKey, FirestoreSubscriptionMonitor } from './firestore-subscription-monitor';
 
 describe('FirestoreSubscriptionMonitor', () => {
   it('counts one entry per distinct key', () => {
@@ -72,13 +72,14 @@ describe('FirestoreSubscriptionMonitor', () => {
     ]);
   });
 
-  it('ignores counter calls for a key that was never opened', () => {
+  it('records counter calls for a key that was never opened, instead of dropping them', () => {
+    // Frühere Fassung verwarf sie — genau das machte das Instrument nach einem reset() stumm.
     const monitor = new FirestoreSubscriptionMonitor();
     monitor.subscribed('unknown');
     monitor.sourceEmitted('unknown');
     monitor.deliveredValue('unknown');
 
-    expect(monitor.stream()).toEqual([]);
+    expect(monitor.stream()[0]).toMatchObject({ subscribes: 1, sourceEmissions: 1, delivered: 1, open: false });
   });
 
   it('carries the counters across a reopen of the same key', () => {
@@ -101,14 +102,54 @@ describe('FirestoreSubscriptionMonitor', () => {
     expect(monitor.stream()[0].key.endsWith('...')).toBe(true);
   });
 
-  it('clears the counters on reset', () => {
+  it('zeroes the counters on reset but keeps the entries and the open listeners', () => {
     const monitor = new FirestoreSubscriptionMonitor();
     monitor.opened('query', 'pages', 'pages|tenant=okr');
     monitor.deliveredValue('pages|tenant=okr');
     monitor.reset();
 
-    expect(monitor.stream()).toEqual([]);
-    expect(monitor.activeCount()).toBe(0);
+    // Entries and census survive: the listeners are still open, and a cached stream never
+    // calls opened() again — clearing them silenced the instrument entirely.
+    expect(monitor.activeCount()).toBe(1);
+    expect(monitor.stream()[0]).toMatchObject({ delivered: 0, subscribes: 0, sourceEmissions: 0, open: true });
+  });
+
+  it('still counts a stream whose opened() was missed, deriving kind and collection from the key', () => {
+    const monitor = new FirestoreSubscriptionMonitor();
+    const queryKey = JSON.stringify({ collectionName: 'pages', dbQuery: [], orderByParam: 'name' });
+
+    monitor.deliveredValue(queryKey);
+    monitor.deliveredValue('model:persons/abc');
+
+    expect(monitor.stream()).toEqual([
+      { kind: 'query', collection: 'pages', key: queryKey, subscribes: 0, sourceEmissions: 0, delivered: 1, open: false },
+      { kind: 'doc', collection: 'persons', key: 'model:persons/abc', subscribes: 0, sourceEmissions: 0, delivered: 1, open: false },
+    ]);
+  });
+
+  it('keeps counters recorded before opened(), and lets opened() correct kind and collection', () => {
+    const monitor = new FirestoreSubscriptionMonitor();
+    monitor.deliveredValue('surprise-key');
+    monitor.opened('doc', 'persons', 'surprise-key');
+
+    expect(monitor.stream()[0]).toMatchObject({ kind: 'doc', collection: 'persons', delivered: 1 });
+  });
+});
+
+describe('describeKey', () => {
+  it('reads a document key of either prefix', () => {
+    expect(describeKey('model:persons/abc')).toEqual({ kind: 'doc', collection: 'persons' });
+    expect(describeKey('object:app-config/okr')).toEqual({ kind: 'doc', collection: 'app-config' });
+  });
+
+  it('reads the collection out of a serialised query key', () => {
+    const key = JSON.stringify({ collectionName: 'memberships', dbQuery: [], orderByParam: 'name', sortOrderParam: 'asc' });
+    expect(describeKey(key)).toEqual({ kind: 'query', collection: 'memberships' });
+  });
+
+  it('falls back to an unknown collection rather than guessing', () => {
+    expect(describeKey('nonsense')).toEqual({ kind: 'query', collection: '?' });
+    expect(describeKey('{"noCollectionName":1}')).toEqual({ kind: 'query', collection: '?' });
   });
 });
 
