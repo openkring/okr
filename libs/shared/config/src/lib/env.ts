@@ -21,6 +21,18 @@ export interface OkrEnvironment {
     nxCloudAccessToken: string;
     imgixBaseUrl: string;
     fcmVapidKey?: string; // Web Push VAPID key (Firebase Console → Project Settings → Cloud Messaging)
+    /**
+     * Fixed App Check debug token for local development, from FIREBASE_APPCHECK_DEBUG_TOKEN
+     * in the app's git-ignored .env. Without it the SDK mints a RANDOM token per browser
+     * profile and stores it in IndexedDB — clearing site data or switching profile silently
+     * invalidates it, and every Firestore listener starts failing with "Missing or
+     * insufficient permissions". Register the fixed token once under App Check → Manage
+     * debug tokens and it survives all of that.
+     *
+     * `set-env.js` writes this ONLY for development builds. A production bundle carrying a
+     * debug token would be an App Check bypass shipped to every user.
+     */
+    appcheckDebugToken?: string;
   },
   sentry?: {
     dsn: string;                                        // EU (DE) project DSN, e.g. https://...ingest.de.sentry.io/...
