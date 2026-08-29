@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
-import { defer, firstValueFrom, Observable, of, throwError } from 'rxjs';
+import { concat, defer, firstValueFrom, Observable, of, throwError } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { DbQuery } from '@okr/shared-models';
@@ -178,6 +178,35 @@ describe('FirestoreService.searchData', () => {
     expect(ensureAppCheckTokenMock).toHaveBeenCalledTimes(2);   // DENIAL_RETRIES
     expect(error).toHaveBeenCalled();
     error.mockRestore();
+  });
+
+  // The loop that filled the console in bka-app: a permanently denied listener still REPLAYS its
+  // cached snapshot on every resubscription, so the previous `resetOnSuccess: true` handed the
+  // retry a fresh budget after each emission — emit, deny, retry, emit, forever, one console line
+  // per collection per turn. The budget must therefore be time-scoped, not emission-scoped.
+  it('stops retrying a listener that emits from cache before every denial', async () => {
+    vi.useFakeTimers();
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    let subscriptions = 0;
+    collectionDataMock.mockReturnValue(
+      defer(() => {
+        subscriptions++;
+        return concat(of([{ okey: 's1' }]), throwError(() => permissionDenied()));
+      }),
+    );
+    const svc = makeService({ uid: 'u1' });
+
+    const sub = svc.searchData('sessions', QUERY, 'startedAt', 'desc').subscribe();
+    await vi.advanceTimersByTimeAsync(10_000);   // far beyond the backoff of both retries
+
+    expect(subscriptions).toBe(3);               // initial + DENIAL_RETRIES, then it gives up
+    expect(debug).toHaveBeenCalledTimes(2);
+    expect(error).toHaveBeenCalled();            // the denial finally surfaces instead of looping
+    sub.unsubscribe();
+    debug.mockRestore();
+    error.mockRestore();
+    vi.useRealTimers();
   });
 
   // Sign-out teardown must NOT be retried — the listeners belong to a session that ended, and

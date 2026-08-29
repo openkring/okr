@@ -26,7 +26,7 @@ import { ToastController } from '@ionic/angular/standalone';
 import { captureMessage } from '@sentry/angular';
 import { arrayRemove, collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
-import { catchError, defer, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, tap, timer } from 'rxjs';
+import { catchError, defer, delay, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, tap, timer } from 'rxjs';
 
 import { AUTH, ensureAppCheckToken, ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
@@ -77,6 +77,22 @@ export class FirestoreService {
   private static readonly DENIAL_RETRIES = 2;
 
   /**
+   * How long the budget above lasts. A resume incident burns its retries within a second or two,
+   * so a denial arriving later than this belongs to a NEW incident and gets a fresh budget. This
+   * replaces `resetOnSuccess`, which was unbounded: Firestore re-raises the cached snapshot on
+   * every resubscription, so a permanently denied listener emitted (reset), errored, retried and
+   * emitted again forever — one console line per collection per loop, at full speed.
+   */
+  private static readonly DENIAL_WINDOW_MS = 60_000;
+
+  /**
+   * Minimum spacing between two re-attempts. `ensureAppCheckToken()` returns immediately when the
+   * cached token is still valid or App Check is unregistered, so without this the retry is a hot
+   * loop rather than a recovery.
+   */
+  private static readonly DENIAL_BACKOFF_MS = 1_000;
+
+  /**
    * Re-attach an open listener that the server killed with PERMISSION_DENIED **while a user is
    * still signed in** — the App-Check-expiry-on-resume case.
    *
@@ -89,8 +105,9 @@ export class FirestoreService {
    * nothing re-subscribes, every list stays empty and every console fills with one
    * permission-denied line per collection until the user reloads the page.
    *
-   * So: refresh the token, then resubscribe. `resetOnSuccess` makes the budget per incident
-   * rather than per listener lifetime, so a long-lived stream survives many resumes.
+   * So: refresh the token, then resubscribe. The budget is per INCIDENT rather than per listener
+   * lifetime (see {@link DENIAL_WINDOW_MS}), so a long-lived stream survives many resumes without
+   * ever retrying without end.
    *
    * Deliberately NOT retried:
    * - denied while signed OUT — that is sign-out teardown ({@link reportStreamError}); retrying
@@ -105,16 +122,30 @@ export class FirestoreService {
    * @param context the call site, e.g. `searchData(persons)`
    */
   private recoverFromTokenDenial<T>(context: string): MonoTypeOperatorFunction<T> {
-    return retry<T>({
-      count: FirestoreService.DENIAL_RETRIES,
-      resetOnSuccess: true,
-      delay: (err, retryCount) => {
-        if ((err as { code?: string } | null)?.code !== 'permission-denied' || !this.auth.currentUser) {
-          throw err;   // not ours — hand it to catchError unchanged
-        }
-        console.debug(`FirestoreService.${context}: listener denied, refreshing the App Check token (attempt ${retryCount}).`);
-        return from(ensureAppCheckToken());
-      },
+    return (source: Observable<T>) => defer(() => {
+      // Per-subscription incident state. The budget is time-scoped rather than emission-scoped:
+      // an emission proves nothing here, because a denied listener still replays its cached
+      // snapshot on every resubscription.
+      let attempts = 0;
+      let lastDenialAt = 0;
+
+      return source.pipe(
+        retry<T>({
+          delay: (err) => {
+            if ((err as { code?: string } | null)?.code !== 'permission-denied' || !this.auth.currentUser) {
+              throw err;   // not ours — hand it to catchError unchanged
+            }
+            const now = Date.now();
+            if (now - lastDenialAt > FirestoreService.DENIAL_WINDOW_MS) attempts = 0;   // new incident
+            lastDenialAt = now;
+            if (++attempts > FirestoreService.DENIAL_RETRIES) {
+              throw err;   // budget spent — this denial is not about the token
+            }
+            console.debug(`FirestoreService.${context}: listener denied, refreshing the App Check token (attempt ${attempts}).`);
+            return from(ensureAppCheckToken()).pipe(delay(FirestoreService.DENIAL_BACKOFF_MS));
+          },
+        }),
+      );
     });
   }
 
