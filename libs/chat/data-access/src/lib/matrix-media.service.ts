@@ -7,6 +7,14 @@ import { Observable, Subject } from 'rxjs';
 const MEDIA_CACHE_MAX = 200;
 
 /**
+ * SCS-92: gateway statuses that come from the reverse proxy in front of the homeserver,
+ * never from the media itself. They are transient, so one retry is worth the wait.
+ */
+const RETRYABLE_STATUS = new Set([502, 503, 504]);
+/** Delay before the single retry of a gateway failure. */
+const RETRY_DELAY_MS = 500;
+
+/**
  * Authenticated Matrix media resolution with a bounded LRU blob-URL cache.
  * Extracted from MatrixChatService (design review #4 / ARCH-2); the facade sets
  * the client on initialize/disconnect and delegates all media lookups here.
@@ -62,9 +70,15 @@ export class MatrixMediaService {
     }
     try {
       const accessToken = this.client.getAccessToken();
-      const resp = await fetch(httpUrl, {
-        headers: accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {}
-      });
+      const headers: Record<string, string> = accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {};
+      let resp = await fetch(httpUrl, { headers });
+      // SCS-92: a 502/503/504 is the media proxy timing out, not a problem with this file.
+      // Every failure path here returns '' and leaves the avatar or attachment blank until
+      // something re-renders it, so retry once instead of giving up on a transient blip.
+      if (RETRYABLE_STATUS.has(resp.status)) {
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        resp = await fetch(httpUrl, { headers });
+      }
       if (!resp.ok) {
         this.reportSilentFailure(`media download failed: HTTP ${resp.status}`);
         // 401 is never about this one file — the token is gone. Signal once per client
