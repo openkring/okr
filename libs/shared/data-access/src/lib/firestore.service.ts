@@ -26,7 +26,7 @@ import { ToastController } from '@ionic/angular/standalone';
 import { captureMessage } from '@sentry/angular';
 import { arrayRemove, collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
-import { catchError, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, timer } from 'rxjs';
+import { catchError, defer, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, tap, timer } from 'rxjs';
 
 import { AUTH, ensureAppCheckToken, ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
@@ -328,7 +328,7 @@ export class FirestoreService {
     if (cached) return cached;
 
     const ref = doc(this.firestore, path);
-    const data$ = (withOkey
+    const shared$ = (withOkey
       ? docData(ref, { idField: 'okey' }) as Observable<T>
       : docData(ref) as Observable<T>
     ).pipe(
@@ -340,11 +340,19 @@ export class FirestoreService {
         firestoreSubscriptionMonitor.closed(cacheKey);
         return of(undefined);
       }),
+      // Messpunkt VOR share: echte Snapshots. Siehe FirestoreSubscriptionMonitor.
+      tap(() => firestoreSubscriptionMonitor.sourceEmitted(cacheKey)),
       share({
         connector: () => new ReplaySubject<T | undefined>(1),
         resetOnRefCountZero: () => timer(30_000),
       })
     );
+
+    // defer + tap NACH share: zählt Abonnements und ausgelieferte Werte (Replays eingeschlossen).
+    const data$ = defer(() => {
+      firestoreSubscriptionMonitor.subscribed(cacheKey);
+      return shared$;
+    }).pipe(tap(() => firestoreSubscriptionMonitor.deliveredValue(cacheKey)));
 
     this.docCache.set(cacheKey, data$);
     firestoreSubscriptionMonitor.opened('doc', path.split('/')[0], cacheKey);
@@ -636,7 +644,7 @@ export class FirestoreService {
       // .value() then re-throws inside change detection and crashes the app. We log, evict the
       // poisoned cache entry so a later reload()/re-subscription rebuilds a fresh listener, and
       // fall back to an empty list.
-      const data$ = (collectionData(queryRef, { idField: 'okey' }) as Observable<T[]>).pipe(
+      const shared$ = (collectionData(queryRef, { idField: 'okey' }) as Observable<T[]>).pipe(
         // Survive a resume-time App Check expiry before treating the denial as final.
         this.recoverFromTokenDenial<T[]>(`searchData(${collectionName})`),
         catchError((err) => {
@@ -653,11 +661,21 @@ export class FirestoreService {
         // firestore.ts), so there is no local copy to paint from, and the refill is a full round
         // trip over forced long polling. The grace window makes back-navigation instant while
         // still releasing genuinely idle queries.
+        // Messpunkt VOR share: echte Firestore-Snapshots. Siehe FirestoreSubscriptionMonitor.
+        tap(() => firestoreSubscriptionMonitor.sourceEmitted(cacheKey)),
         share({
           connector: () => new ReplaySubject<T[]>(1),
           resetOnRefCountZero: () => timer(30_000),
         })
       );
+
+      // defer + tap NACH share: zählt Abonnements und ausgelieferte Werte (Replays eingeschlossen).
+      // Die drei Zähler zusammen unterscheiden «Firestore emittiert mehrfach» von «mehrere
+      // Konsumenten bekommen denselben Wert erneut ausgespielt».
+      const data$ = defer(() => {
+        firestoreSubscriptionMonitor.subscribed(cacheKey);
+        return shared$;
+      }).pipe(tap(() => firestoreSubscriptionMonitor.deliveredValue(cacheKey)));
 
       this.queryCache.set(cacheKey, data$);
       firestoreSubscriptionMonitor.opened('query', collectionName, cacheKey);
