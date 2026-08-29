@@ -36,6 +36,16 @@ describe('buildSentryOptions', () => {
     expect(matches('JSON Parse error: Unexpected token "<"')).toBe(false);
   });
 
+  it('suppresses transient Firebase Auth token-refresh network timeouts (ELAB-1)', () => {
+    const patterns = (buildSentryOptions(cfg, []).ignoreErrors ?? []) as RegExp[];
+    const matches = (msg: string) => patterns.some((p) => p instanceof RegExp && p.test(msg));
+    expect(matches('FirebaseError: Firebase: Error (auth/network-request-failed).')).toBe(true);
+    // Must NOT swallow actionable auth failures that point at config or credentials.
+    expect(matches('FirebaseError: Firebase: Error (auth/invalid-api-key).')).toBe(false);
+    expect(matches('FirebaseError: Firebase: Error (auth/wrong-password).')).toBe(false);
+    expect(matches('FirebaseError: Firebase: Error (auth/unauthorized-domain).')).toBe(false);
+  });
+
   it('suppresses browser-extension runtime.sendMessage noise (SCS-2B)', () => {
     const patterns = (buildSentryOptions(cfg, []).ignoreErrors ?? []) as RegExp[];
     const matches = (msg: string) => patterns.some((p) => p instanceof RegExp && p.test(msg));

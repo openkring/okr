@@ -84,6 +84,18 @@ export function buildSentryOptions(
       // doesn't reply in time the injected JS rejects with this. It surfaces as an
       // onunhandledrejection with no stacktrace and nothing actionable on our side.
       /WKWebView API client did not respond to this postMessage/i,
+      // Transient connectivity, not a defect (ELAB-1): the Firebase Auth SDK refreshes the ID
+      // token on its own timer, and on a flaky mobile connection that request hits the SDK's
+      // internal NetworkTimeout, which rejects with auth/network-request-failed. The rejection
+      // escapes the SDK's own token machinery as an onunhandledrejection with no first-party
+      // frames — the observed event came from a Pixel 9 sitting on a list page, not from any
+      // call of ours. Nothing on our side is actionable: the SDK retries on the next tick and
+      // an offline device simply cannot reach identitytoolkit/securetoken.
+      // Safe to suppress as a whole class: every first-party auth call (login, loginWithToken,
+      // resetPassword, confirmPasswordReset, logout, getFirebaseUid in AuthService) already
+      // wraps its await in try/catch and reports to the user via toast without rethrowing, so
+      // a network failure the user actually waits on never reaches Sentry through this path.
+      /auth\/network-request-failed/i,
       // Browser-extension bridge, not our code (SCS-2B): a content script injected into the
       // page calls chrome/browser.runtime.sendMessage() and the extension's background page
       // is gone (tab closed, extension reloaded). Arrives as an onunhandledrejection with no
