@@ -33,9 +33,16 @@ function appStoreMock() {
   };
 }
 
+/**
+ * `menuDoc` is the document `store.menu()` should resolve to. It is appended to the list because
+ * the store now looks the node up in the SHARED menu list (see `MenuItemsStore`) instead of
+ * subscribing to `MenuService.read(name)` per node — `read` was itself
+ * `findByKey(this.list(), name, 'name')`, i.e. a second subscription to the same query. The doc
+ * therefore needs a `name` matching the `setMenuName(...)` of the test.
+ */
 function menuServiceMock(list: unknown[] = [], menuDoc?: unknown) {
   return {
-    list: vi.fn(() => mockCollection(list)),
+    list: vi.fn(() => mockCollection(menuDoc ? [...list, menuDoc] : list)),
     read: vi.fn(() => of(menuDoc)),
     create: vi.fn().mockResolvedValue('new-id'),
     update: vi.fn().mockResolvedValue('updated-id'),
@@ -124,13 +131,27 @@ describe('MenuStore', () => {
     expect(store.isError()).toBe(true);
   });
 
+  it('resolves the node from the shared list, without a per-node MenuService.read subscription', async () => {
+    // Regression guard for the 2026-08-29 measurement: MenuService.read(name) is
+    // findByKey(this.list(), ...), so a per-node resource over it re-subscribed the whole
+    // tenant-wide menu query once per <bk-menu>. 86 subscriptions were left after the list
+    // itself had been hoisted out. Resolving from the shared list removes them.
+    const menuService = menuServiceMock([], { okey: 'main', name: 'main', menuItems: [] });
+    store = makeStore(menuService);
+    store.setMenuName('main');
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(store.menu()?.name).toBe('main');
+    expect(menuService.read).not.toHaveBeenCalled();
+  });
+
   // `aoc-storage` is a real key from FEATURE_BLOCKS (@okr/tenant-util) — nested under the
   // `aoc` block's menu, owned by block id 'aoc'. `my-custom-link` is not declared by any
   // block, so it is a stand-in for a tenant-authored menu entry.
   describe('feature-block visibility filter (D-BB-8)', () => {
     it('renders a child menu item whose owning block is effective', async () => {
       store = makeStore(
-        menuServiceMock([], { menuItems: ['aoc-storage', 'my-custom-link'] }),
+        menuServiceMock([], { okey: 'aoc-menu', name: 'aoc-menu', menuItems: ['aoc-storage', 'my-custom-link'] }),
         featureStoreMock(['aoc'])
       );
       store.setMenuName('aoc-menu');
@@ -153,7 +174,7 @@ describe('MenuStore', () => {
 
     it('always renders a tenant-authored child that no block declares', async () => {
       store = makeStore(
-        menuServiceMock([], { menuItems: ['my-custom-link'] }),
+        menuServiceMock([], { okey: 'main_p13', name: 'main_p13', menuItems: ['my-custom-link'] }),
         featureStoreMock([]) // nothing effective
       );
       store.setMenuName('main_p13');
@@ -171,6 +192,7 @@ describe('MenuStore', () => {
     it('keeps a child owned by a DIFFERENT, still-effective co-declarer of a shared parent, even when the parent\'s first declarer is switched off', async () => {
       store = makeStore(
         menuServiceMock([], {
+          okey: 'aoc-menu', name: 'aoc-menu',
           menuItems: ['user-all', 'priv-register', 'priv-audit', 'aoc-admin'],
         }),
         featureStoreMock(['user', 'security']) // 'aoc' deliberately NOT effective

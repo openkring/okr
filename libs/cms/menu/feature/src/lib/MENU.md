@@ -57,7 +57,7 @@ tree creates as many stores as it has nodes. It holds:
 - `name` — the current menu item name being rendered
 - `toggleActive` — for `action: 'toggle'` items
 - `searchTerm` / `selectedCategory` — filters used in the admin list view
-- `menuResource` — live Firestore stream for a single item (keyed by `name`)
+- `menu` — the node's own document, looked up **in the shared list** by `name`
 
 `MenuItemsStore` (`menu-items.store.ts`, genuinely root-provided, one instance) holds the list
 that is identical for every node:
@@ -65,11 +65,19 @@ that is identical for every node:
 - `menuItems` — live Firestore stream of all menu items (admin list, and every node's lookups)
 - `isLoading` / `hasLoadError` / `reload()`
 
-**Do not move the list back into `MenuStore`.** While it lived there, every node re-subscribed to
+**Do not give a node its own subscription — neither the list nor a single item.**
+`MenuService.read(name)` is `findByKey(this.list(), name, 'name')`: it subscribes to the very
+same tenant-wide query and filters client-side, so an `rxResource` over it costs exactly as much
+as one over `list()`. That is why the first fix only halved the count (170 → 86) — the list had
+moved out, but every node still held a `menuResource`. `menu` is now a plain `computed` over
+`MenuItemsStore.menuItems()`.
+
+**Do not move the list back into `MenuStore` either.** While it lived there, every node re-subscribed to
 the same tenant-wide query: 170 subscriptions on one dashboard load, 340 deliveries across the two
 Firestore snapshots (cache, then server). Firestore does not charge for that — `FirestoreService`
 shares one listener per query, which is why no network-side measurement ever showed it — but the
-JavaScript cost is real. Measured with `__okrFirestoreStreams()` on 2026-08-29.
+JavaScript cost is real. Measured with `__okrFirestoreStreams()` on 2026-08-29: 170 → 86 after
+hoisting the list, → 1 expected after dropping `menuResource`.
 
 ## Key Components
 

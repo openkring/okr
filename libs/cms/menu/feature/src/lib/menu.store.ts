@@ -1,16 +1,16 @@
-import { computed, effect, inject, Injectable, Signal } from '@angular/core';
+import { computed, effect, inject, Injectable } from '@angular/core';
 import { rxResource, toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 import { Observable, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 
 import { ENV } from '@okr/shared-config';
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { CategoryListModel, MenuItemModel } from '@okr/shared-models';
-import { debugData, die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
+import { die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
 import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -82,20 +82,6 @@ export const _MenuStore = signalStore(
     },
   })),
   withProps((store) => ({
-    menuResource: rxResource({
-      params: () => ({
-        name: store.name()
-      }),
-      stream: ({ params }) => {
-        return store.menuService.read(params.name).pipe(
-          catchError(error => {
-            debugData('MenuStore.menuResource: stream error', error, store.appStore.currentUser());
-            store.setError(store.i18n.error_load());
-            return of(undefined);
-          })
-        );
-      }
-    }),
     // Chat half of the badge. The task half comes from AppStore.openTaskCount (see
     // notificationCount below) — the single source shared with the PWA app-icon badge,
     // so the two can no longer disagree about what counts as a notification.
@@ -132,7 +118,12 @@ export const _MenuStore = signalStore(
       // only drops entries from THIS node's `menuItems` (its children) — it never gates
       // resolution of the node itself, so the root lookup always still resolves.
       menu: computed(() => {
-        const item = store.menuResource.value() ?? undefined;
+        // Nachschlagen in der geteilten Liste statt eigener Ressource. `MenuService.read(name)`
+        // ist `findByKey(this.list(), name, 'name')`, abonniert also dieselbe mandantenweite
+        // Abfrage und filtert clientseitig — je Menüknoten ein weiteres Abonnement. Nach dem
+        // Herauslösen der Liste blieben davon am 2026-08-29 noch 86 übrig (von zuvor 170).
+        const name = store.name();
+        const item = name ? store.menuItemsStore.menuItems()?.find(i => i.name === name) : undefined;
         if (!item?.menuItems?.length) return item;
         const menuItems = item.menuItems.filter(store.isVisible);
         if (menuItems.length === item.menuItems.length) return item;
@@ -140,8 +131,8 @@ export const _MenuStore = signalStore(
       }),
       currentUser: computed(() => store.appStore.currentUser()),
       tenantId: computed(() => store.appStore.tenantId()),
-      isMenuLoading: computed(() => store.menuResource.isLoading()),
-      isLoading: computed(() => store.menuItemsStore.isLoading() || store.menuResource.isLoading()),
+      isMenuLoading: computed(() => store.menuItemsStore.isLoading()),
+      isLoading: computed(() => store.menuItemsStore.isLoading()),
       // Chat unread + open assigned tasks + unanswered invitations. The dashboard menu item is
       // the only one that subscribes to chat, so every other instance contributes 0 there; gate
       // the other halves on the same name so a non-dashboard menu never shows a badge either.
@@ -167,7 +158,7 @@ export const _MenuStore = signalStore(
   withMethods((store) => {
     return {
       reload() {
-        store.menuResource.reload();
+        store.menuItemsStore.reload();
       },
 
       /******************************** setters (filter) ******************************************* */
