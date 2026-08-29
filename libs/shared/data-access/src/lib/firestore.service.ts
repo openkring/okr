@@ -141,8 +141,26 @@ export class FirestoreService {
             if (++attempts > FirestoreService.DENIAL_RETRIES) {
               throw err;   // budget spent — this denial is not about the token
             }
-            console.debug(`FirestoreService.${context}: listener denied, refreshing the App Check token (attempt ${attempts}).`);
-            return from(ensureAppCheckToken()).pipe(delay(FirestoreService.DENIAL_BACKOFF_MS));
+            // forceRefresh, like the write path in `retryWriteOnDenial`: without it
+            // `ensureAppCheckToken()` returns the CACHED token — the very token the backend just
+            // rejected — and the retry goes out with it unchanged. The cache is valid by the
+            // client's own clock (or the SDK would have refreshed it), so only a forced
+            // attestation can actually change the outcome.
+            return from(ensureAppCheckToken(undefined, true)).pipe(
+              tap((refreshed) => {
+                if (refreshed) {
+                  console.debug(`FirestoreService.${context}: listener denied, App Check token refreshed, retrying (attempt ${attempts}).`);
+                } else {
+                  // NOT a refresh. Saying "refreshing the token" here sent a real investigation
+                  // down the wrong path: bka-app was missing `registerAppCheck()` in its main.ts,
+                  // so `ensureAppCheckToken()` returned false immediately and the recovery was a
+                  // no-op — while the log claimed a refresh. A denial that survives this is a
+                  // configuration fault, not a transient one.
+                  console.warn(`FirestoreService.${context}: listener denied and App Check could NOT attest — no token was obtained (attempt ${attempts}). App Check is unregistered (registerAppCheck() missing in main.ts), blocked by the browser, or the attestation timed out.`);
+                }
+              }),
+              delay(FirestoreService.DENIAL_BACKOFF_MS),
+            );
           },
         }),
       );
