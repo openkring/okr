@@ -2,11 +2,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { FormsModule } from '@angular/forms';
 import { ActionSheetController, IonCard, IonCardContent, IonLabel, IonSegment, IonSegmentButton } from '@ionic/angular/standalone';
 
-import { TreeChart } from 'echarts/charts';
-import * as echarts from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
-echarts.use([TreeChart, CanvasRenderer]);
 
 import type { EChartsOption } from 'echarts';
 
@@ -24,7 +20,20 @@ type ViewMode = 'accordion' | 'chart';
 @Component({
   selector: 'okr-orgchart-section',
   standalone: true,
-  providers: [provideEchartsCore({ echarts }), OrgchartStore],
+  providers: [
+    provideEchartsCore({
+      echarts: async () => {
+        const [core, charts, rend] = await Promise.all([
+          import('echarts/core'),
+          import('echarts/charts'),
+          import('echarts/renderers'),
+        ]);
+        core.use([charts.TreeChart, rend.CanvasRenderer]);
+        return core;
+      },
+    }),
+    OrgchartStore,
+  ],
   imports: [
     OrgchartNodeComponent, Spinner, OptionalCardHeader,
     NgxEchartsDirective, FormsModule,
