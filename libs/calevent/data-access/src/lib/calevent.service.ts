@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { EventInput } from '@fullcalendar/core';
+import type { EventInput } from '@fullcalendar/core';
 import { getApp } from 'firebase/app';
 import { Observable } from 'rxjs';
 

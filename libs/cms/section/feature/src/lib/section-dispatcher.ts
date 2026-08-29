@@ -167,19 +167,49 @@ import { SectionStore } from './section.store';
             <okr-video-section [section]="section" />
           }
           @case('member-age') {
-            <okr-member-age-section [section]="section" [editMode]="editMode()" />
+            @defer (on viewport) {
+              <okr-member-age-section [section]="section" [editMode]="editMode()" />
+            } @placeholder {
+              <okr-spinner />
+            } @error {
+              <okr-defer-error />
+            }
           }
           @case('member-cat') {
-            <okr-member-cat-section [section]="section" [editMode]="editMode()" />
+            @defer (on viewport) {
+              <okr-member-cat-section [section]="section" [editMode]="editMode()" />
+            } @placeholder {
+              <okr-spinner />
+            } @error {
+              <okr-defer-error />
+            }
           }
           @case('trip-stats') {
-            <okr-trip-stats-section [section]="section" [editMode]="editMode()" />
+            @defer (on viewport) {
+              <okr-trip-stats-section [section]="section" [editMode]="editMode()" />
+            } @placeholder {
+              <okr-spinner />
+            } @error {
+              <okr-defer-error />
+            }
           }
           @case('sankey') {
-            <okr-sankey-section [section]="section" />
+            @defer (on viewport) {
+              <okr-sankey-section [section]="section" />
+            } @placeholder {
+              <okr-spinner />
+            } @error {
+              <okr-defer-error />
+            }
           }
           @case('spider') {
-            <okr-spider-section [section]="section" />
+            @defer (on viewport) {
+              <okr-spider-section [section]="section" />
+            } @placeholder {
+              <okr-spinner />
+            } @error {
+              <okr-defer-error />
+            }
           }
           @case('testimonial') {
             <okr-testimonial-section [section]="section" />

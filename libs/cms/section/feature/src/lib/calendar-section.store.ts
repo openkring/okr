@@ -11,7 +11,6 @@ import { getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvit
 import { notify } from '@okr/shared-util-angular';
 
 import { CalEventService } from '@okr/calevent-data-access';
-import { CalEventEditModal, CalEventViewModal } from '@okr/calevent-feature';
 import { getVisibleGroupKeys } from '@okr/subject-group-util';
 
 import { InvitationService } from '@okr/relationship-invitation-data-access';
@@ -237,6 +236,8 @@ export const CalendarStore = signalStore(
       },
 
       async edit(calevent: CalEventModel, isNew = false, readOnly = true, initialDirty = false): Promise<boolean> {
+        // dynamic import: keeps @okr/calevent-feature (and FullCalendar) out of the eager graph
+        const { CalEventEditModal } = await import('@okr/calevent-feature');
         const modal = await store.modalController.create({
           component: CalEventEditModal,
           componentProps: {
@@ -264,6 +265,8 @@ export const CalendarStore = signalStore(
       },
 
       async view(calevent: CalEventModel): Promise<void> {
+        // dynamic import: keeps @okr/calevent-feature (and FullCalendar) out of the eager graph
+        const { CalEventViewModal } = await import('@okr/calevent-feature');
         const modal = await store.modalController.create({
           component: CalEventViewModal,
           componentProps: {

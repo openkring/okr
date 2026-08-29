@@ -1,4 +1,4 @@
-import { EventInput } from '@fullcalendar/core';
+import type { EventInput } from '@fullcalendar/core';
 
 import { Attendee, AvatarInfo, CalEventModel, InvitationState } from '@okr/shared-models';
 import { addTime, convertDateFormatToString, DateFormat, getIsoDateTime, isPastDate, isType } from '@okr/shared-util-core';
