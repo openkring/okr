@@ -119,8 +119,12 @@ export class PrivacyAuditService {
    * a spinner up rather than assume a fast reply.
    */
   public async dryRunDiaryImport(tenantId: string): Promise<DiaryImportModel> {
+    // The SDK's own default is 70s (`options.timeout || 70000` in @firebase/functions), and it
+    // aborts the CLIENT while the function keeps running — the caller sees a deadline-exceeded
+    // for a run that is fine. Match the function's own 540s ceiling instead, so a timeout here
+    // means the run really did not finish.
     const callable = httpsCallable<DiaryImportRequest, DiaryImportModel>(
-      this.functions, 'dryRunDiaryImport');
+      this.functions, 'dryRunDiaryImport', { timeout: 540_000 });
     const result = await callable({ tenantId });
     return result.data;
   }

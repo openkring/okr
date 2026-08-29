@@ -134,6 +134,15 @@ import type { DiaryImportModel, FindingSeverity, PrivacyAuditResult } from '@okr
            untranslated so it still says something when the i18n scope fails to load. The
            unresolved slugs are the point of the exercise: every one of them is a person or a
            place the import could not match, and each needs a decision before a commit run. -->
+      @if (diaryError(); as failure) {
+        <ion-card>
+          <ion-card-content>
+            <p>{{ i18n.diary_failed() }}</p>
+            <ion-note class="samples">{{ failure }}</ion-note>
+          </ion-card-content>
+        </ion-card>
+      }
+
       @if (diaryResult(); as run) {
         <ion-card>
           <ion-card-content>
@@ -229,6 +238,7 @@ export class PrivacyAuditPage {
   protected readonly driveResult = signal<DriveAccessResult | undefined>(undefined);
   protected readonly isDryRunning = signal(false);
   protected readonly diaryResult = signal<DiaryImportModel | undefined>(undefined);
+  protected readonly diaryError = signal<string | undefined>(undefined);
   protected readonly error = signal<string | undefined>(undefined);
 
   protected readonly ranOn = computed(() =>
@@ -346,9 +356,14 @@ export class PrivacyAuditPage {
   protected async dryRunDiary(): Promise<void> {
     this.isDryRunning.set(true);
     this.diaryResult.set(undefined);
+    this.diaryError.set(undefined);
     try {
       this.diaryResult.set(await this.service.dryRunDiaryImport(this.appStore.tenantId()));
     } catch (error) {
+      // On screen, not (only) in a toast: this call runs for minutes, and a toast fires three
+      // seconds after the admin has stopped watching. The message is the whole diagnosis —
+      // deadline-exceeded, permission-denied and a Drive failure need three different fixes.
+      this.diaryError.set(`${error}`);
       this.alertService.error(`${this.i18n.diary_failed()} ${error}`);
     } finally {
       this.isDryRunning.set(false);
