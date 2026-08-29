@@ -3,6 +3,8 @@ import { Observable, map, of } from 'rxjs';
 
 import { I18nService } from '@okr/shared-i18n';
 
+import { resolveLegacyCommentKey } from '@okr/comment-util';
+
 /**
  * Renders a comment description.
  *
@@ -25,7 +27,9 @@ export class CommentTextPipe implements PipeTransform {
     if (!description) return of('');
     if (!description.startsWith('@')) return of(description);
     const spaceIndex = description.indexOf(' ');
-    const key = spaceIndex === -1 ? description : description.substring(0, spaceIndex);
+    // keys written by older releases still sit in the database — map them onto their current
+    // equivalent before translating, otherwise every legacy row reports a missing key
+    const key = resolveLegacyCommentKey(spaceIndex === -1 ? description : description.substring(0, spaceIndex));
     const rest = spaceIndex === -1 ? '' : description.substring(spaceIndex + 1).trim();
     // an unresolvable key yields '' — fall back to the raw token so the row is never blank
     return this.i18nService.translate(key).pipe(

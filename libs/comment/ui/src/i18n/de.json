@@ -7,5 +7,10 @@
     "clear": "Text löschen",
     "removeAttachment": "Anhang entfernen",
     "uploading": "Wird hochgeladen …"
+  },
+  "legacy": {
+    "created": "erstellt",
+    "changed": "geändert",
+    "deleted": "gelöscht"
   }
 }

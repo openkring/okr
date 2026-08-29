@@ -7,5 +7,10 @@
     "clear": "Clear text",
     "removeAttachment": "Remove attachment",
     "uploading": "Uploading …"
+  },
+  "legacy": {
+    "created": "created",
+    "changed": "changed",
+    "deleted": "deleted"
   }
 }

@@ -7,5 +7,10 @@
     "clear": "Effacer le texte",
     "removeAttachment": "Retirer la pièce jointe",
     "uploading": "Téléversement …"
+  },
+  "legacy": {
+    "created": "créé",
+    "changed": "modifié",
+    "deleted": "supprimé"
   }
 }

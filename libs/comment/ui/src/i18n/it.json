@@ -7,5 +7,10 @@
     "clear": "Cancella il testo",
     "removeAttachment": "Rimuovi l'allegato",
     "uploading": "Caricamento …"
+  },
+  "legacy": {
+    "created": "creato",
+    "changed": "modificato",
+    "deleted": "eliminato"
   }
 }
