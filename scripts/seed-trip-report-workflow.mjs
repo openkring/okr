@@ -80,8 +80,12 @@ const db = getFirestore();
 async function findCategory(name) {
   const snap = await db.collection('categories').where('name', '==', name).get();
   const docs = snap.docs.filter((d) => !d.data().isArchived);
+  // The tenant's own fork wins; otherwise the fleet-shared catalogue on the 'system'
+  // sentinel (spec 2026-08-29-generic-workflow-triggers §5, decision O4). There is no
+  // 'default' tenant — the old fallback here matched nothing and only looked like it worked
+  // because scs owns a forked category.
   return docs.find((d) => (d.data().tenants ?? []).includes(TENANT))
-    ?? docs.find((d) => (d.data().tenants ?? []).includes('default'));
+    ?? docs.find((d) => (d.data().tenants ?? []).includes('system'));
 }
 
 async function findResponsibility(name) {
