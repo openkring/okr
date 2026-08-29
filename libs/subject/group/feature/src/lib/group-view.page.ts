@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
+import { Component, ComponentRef, DestroyRef, ViewContainerRef, computed, effect, inject, input, linkedSignal, signal, untracked, viewChild } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider, IonLabel, IonPopover, IonSpinner, IonMenuButton, IonSegment, IonSegmentButton, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 
@@ -18,7 +18,7 @@ import { FolderService } from '@okr/content-folder-data-access';
 import { MembershipList } from '@okr/relationship-membership-feature';
 import { TaskList } from '@okr/task-feature';
 import { DocumentList } from '@okr/content-document-feature';
-import { CalEventList } from '@okr/calevent-feature';
+import type { CalEventList } from '@okr/calevent-feature';
 
 import { GroupStore } from './group.store';
 
@@ -26,7 +26,7 @@ import { GroupStore } from './group.store';
   selector: 'okr-group-view-page',
   standalone: true,
   imports: [
-    ChangeConfirmation, DeferError, PageDispatcher, CalEventList, MembershipList, DocumentList, TaskList,
+    ChangeConfirmation, DeferError, PageDispatcher, MembershipList, DocumentList, TaskList,
     Menu, MultiAvatar, SvgIconPipe,
     IonContent, IonSegment, IonSegmentButton, IonLabel, IonToolbar, IonSpinner,
     IonHeader, IonButtons, IonTitle, IonMenuButton, IonButton, IonIcon, IonPopover, IonItem, IonItemDivider
@@ -137,13 +137,10 @@ import { GroupStore } from './group.store';
             }
           }
           @case ('calendar') {
-            @defer (on immediate) {
-              <okr-calevent-list [listId]="id" contextMenuName="disable" color="light" view="grid" [showMenuButton]="false" [showViewToggle]="false" [groupAdmin]="isGroupAdmin()" />
-            } @placeholder {
+            @if(!caleventRef()) {
               <div class="placeholder-center"><ion-spinner /></div>
-            } @error {
-              <okr-defer-error />
             }
+            <div #caleventHost></div>
           }
           @case ('tasks') {
             @defer (on immediate) {
@@ -251,7 +248,12 @@ export class GroupViewPage implements ViewWillEnter {
    * suppress that toolbar (via showContextMenu/showViewToggle/contextMenuName="disable") and render a
    * single context-menu + view-toggle in the group toolbar, delegating the action to the active segment
    * component queried below. content/chat go through PageDispatcher (menu lives inside the CMS page). */
-  private readonly caleventList = viewChild(CalEventList);
+  // CalEventList (@fullcalendar) is heavy — it must never be a static import (esbuild would
+  // co-locate it into the eagerly-reachable dashboard chunk regardless of @defer). Instead it is
+  // instantiated lazily via ViewContainerRef.createComponent, see the constructor below.
+  private caleventHost = viewChild('caleventHost', { read: ViewContainerRef });
+  protected caleventRef = signal<ComponentRef<CalEventList> | undefined>(undefined);
+  private readonly caleventList = computed(() => this.caleventRef()?.instance);
   private readonly taskList = viewChild(TaskList);
   private readonly documentList = viewChild(DocumentList);
   private readonly membershipList = viewChild(MembershipList);
@@ -371,6 +373,38 @@ export class GroupViewPage implements ViewWillEnter {
       // for the new group has run.
       this.folderConflict.set(false);
     });
+
+    // Lazily instantiate CalEventList (@fullcalendar) once the calendar segment's host
+    // container appears. Never a static import — see the comment above caleventHost.
+    effect(() => {
+      const host = this.caleventHost();
+      if (!host || untracked(() => this.caleventRef())) return;
+      void (async () => {
+        const { CalEventList } = await import('@okr/calevent-feature');
+        const ref = host.createComponent(CalEventList);
+        ref.setInput('listId', this.id());
+        ref.setInput('contextMenuName', 'disable');
+        ref.setInput('color', 'light');
+        ref.setInput('view', 'grid');
+        ref.setInput('showMenuButton', false);
+        ref.setInput('showViewToggle', false);
+        ref.setInput('groupAdmin', this.isGroupAdmin());
+        this.caleventRef.set(ref);
+      })();
+    });
+
+    // Keep groupAdmin (and the segment id) in sync after creation.
+    effect(() => {
+      const id = this.id();
+      const groupAdmin = this.isGroupAdmin();
+      const ref = this.caleventRef();
+      if (!ref) return;
+      ref.setInput('listId', id);
+      ref.setInput('groupAdmin', groupAdmin);
+    });
+
+    const destroyRef = inject(DestroyRef);
+    destroyRef.onDestroy(() => this.caleventRef()?.destroy());
   }
 
   // Fires when Ionic restores this view from its cache (back navigation).
