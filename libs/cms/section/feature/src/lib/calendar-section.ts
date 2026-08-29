@@ -1,12 +1,7 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, OnInit, PLATFORM_ID, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, PLATFORM_ID, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
-import { CalendarOptions, EventInput } from '@fullcalendar/core';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import listPlugin from '@fullcalendar/list';
-import timeGridPlugin from '@fullcalendar/timegrid';
+import type { CalendarOptions, EventInput } from '@fullcalendar/core';
 import { format } from 'date-fns';
 
 import { CalendarSection, CalEventModel } from '@okr/shared-models';
@@ -18,6 +13,7 @@ import { convertCalEventToFullCalendar } from '@okr/calevent-util';
 import { CalEventStore } from '@okr/calevent-feature';
 
 import { CalendarStore } from './calendar-section.store';
+import { CalendarView } from './calendar-view';
 
 @Component({
   selector: 'okr-calendar-section',
@@ -36,8 +32,8 @@ import { CalendarStore } from './calendar-section.store';
   `],
   providers: [CalendarStore, CalEventStore],
   imports: [
-    FullCalendarModule,
-    Spinner, 
+    CalendarView,
+    Spinner,
     IonCard, IonCardContent
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -50,32 +46,39 @@ import { CalendarStore } from './calendar-section.store';
       <ion-card-content>
         <div [style.display]="'block'">
           {{ filteredEvents().length }} {{ calendarStore.i18n.calevents() }}
-          <full-calendar #fullCalendar
-            [options]="calendarOptions()"
-            [events]="calendarEvents()"
-            (dateClick)="onDateClick($event)"
-            (eventDrop)="onEventDrop($event)"
-            (eventResize)="onEventResize($event)"
-          />
+          @defer (on viewport) {
+            <okr-calendar-view
+              [events]="calendarEvents()"
+              [props]="calendarProps()"
+              [isMobile]="isMobile()"
+              (dateClick)="onDateClick($event)"
+              (eventDrop)="onEventDrop($event)"
+              (eventResize)="onEventResize($event)"
+            />
+          } @loading {
+            <okr-spinner />
+          } @placeholder {
+            <div style="min-height: 400px"></div>
+          }
         </div>
       </ion-card-content>
     </ion-card>
     }
   `,
 })
-export class CalendarSectionComponent implements OnInit {
+export class CalendarSectionComponent {
   protected calendarStore = inject(CalendarStore);
   protected calEventStore = inject(CalEventStore);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
 
   /** Tracks whether the viewport is narrow (phones), so the calendar can switch to a mobile-friendly agenda/month list. */
-  private readonly isMobile = signal(false);
+  protected readonly isMobile = signal(false);
 
   // inputs
   public section = input<CalendarSection>();
   public editMode = input<boolean>(false);
-  private fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
+  private calendarView = viewChild(CalendarView);
 
   // derived values
   protected readonly title = computed(() => this.section()?.title);
@@ -94,29 +97,8 @@ export class CalendarSectionComponent implements OnInit {
 
   // The editable subset (initialView, slot times, weekNumbers, editable) comes from
   // the section's saved properties; plugins/toolbar/locale stay as code defaults.
-  protected calendarOptions = computed<CalendarOptions>(() => {
-    const props = (this.section()?.properties ?? {}) as CalendarOptions;
-    const mobile = this.isMobile();
-    return {
-      plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin],
-      // Mobile opens on the agenda ("what's coming up"); a month-grid overview and tap-a-day
-      // are still reachable via the toolbar. Time-grids stay desktop-only (too cramped on phones).
-      initialView: mobile ? 'listWeek' : (props.initialView ?? 'timeGridWeek'),
-      headerToolbar: mobile
-        ? { left: 'prev,next', center: 'title', right: 'listWeek,dayGridMonth' }
-        : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
-      // Tapping a day in the month grid drills into that day's agenda list.
-      navLinks: mobile,
-      navLinkDayClick: mobile ? 'listDay' : undefined,
-      locale: 'de',
-      firstDay: 1,
-      height: 'auto',
-      slotMinTime: props.slotMinTime ?? '05:00:00',
-      slotMaxTime: props.slotMaxTime ?? '22:00:00',
-      weekNumbers: props.weekNumbers ?? true,
-      editable: props.editable ?? true,
-    };
-  });
+  protected calendarProps = computed<CalendarOptions>(
+    () => (this.section()?.properties ?? {}) as CalendarOptions);
 
   constructor() {
     if (isBrowser(this.platformId)) {
@@ -137,30 +119,6 @@ export class CalendarSectionComponent implements OnInit {
     effect(() => {
       debugData<EventInput[]>('CalendarSection(): events: ', this.filteredEvents(), this.calendarStore.currentUser());
     });
-    const calendarApi = this.fullCalendar()?.getApi();
-    if (calendarApi) {
-      calendarApi.setOption('views', {
-        timeGridWeek: { titleFormat: 'W' },
-        dayGridMonth: { titleFormat: 'MMM YYYY' },
-        month: { titleFormat: 'MMM YYYY' },
-        week: { titleFormat: 'W' },
-        day: { titleFormat: 'D MM YYYY' }
-      });
-      calendarApi.render();
-    }
-  }
-
-  ngOnInit(): void {
-    if (isBrowser(this.platformId)) {
-      // angular component calls render() from ngAfterViewInit() which is too early for fullcalendar in Ionic (should be in ionViewDidLoad())
-      // the calendar renders correctly if render() is called after the page is loaded, e.g. by resizing the window.
-      // that's what this hack is doing: trigger resize window after 1ms
-      setTimeout( () => {
-        if (isBrowser(this.platformId)) {
-          window.dispatchEvent(new Event('resize'));
-        }
-      }, 1);
-    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -176,10 +134,8 @@ export class CalendarSectionComponent implements OnInit {
 
   /** Switch the calendar to the weekly view focused on the given store date (yyyyMMdd). */
   private gotoWeekOf(storeDate: string): void {
-    const api = this.fullCalendar()?.getApi();
     const date = parseDate(storeDate, DateFormat.StoreDate, false);
-    if (!api || !date) return;
-    api.changeView('timeGridWeek', date);
+    if (date) this.calendarView()?.gotoWeek(date);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
