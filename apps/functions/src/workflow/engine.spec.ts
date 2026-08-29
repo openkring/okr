@@ -125,6 +125,56 @@ describe('probes', () => {
     await expect(runProbe(rule({ probe: 'decisionIs', probeArg: 'rejected' }), approved, fakeDeps())).resolves.toBe(false);
   });
 
+  it('paramIs matches an event parameter by name', async () => {
+    const c = ctx({ params: { formKey: 'abc123' } });
+    await expect(runProbe(rule({ probe: 'paramIs:formKey=abc123' }), c, fakeDeps())).resolves.toBe(true);
+    await expect(runProbe(rule({ probe: 'paramIs:formKey=other' }), c, fakeDeps())).resolves.toBe(false);
+  });
+
+  it('paramIs treats a missing param as the empty string', async () => {
+    const empty = ctx({ params: {} });
+    await expect(runProbe(rule({ probe: 'paramIs:formKey=abc123' }), empty, fakeDeps())).resolves.toBe(false);
+    // …so 'name=' deliberately means "absent or empty"
+    await expect(runProbe(rule({ probe: 'paramIs:formKey=' }), empty, fakeDeps())).resolves.toBe(true);
+  });
+
+  it('paramIs fails closed on a malformed or missing argument', async () => {
+    const c = ctx({ params: { formKey: 'abc123' } });
+    // no '=' at all — like an unknown probe, a rule that cannot be understood must not fire
+    await expect(runProbe(rule({ probe: 'paramIs:formKey' }), c, fakeDeps())).resolves.toBe(false);
+    await expect(runProbe(rule({ probe: 'paramIs' }), c, fakeDeps())).resolves.toBe(false);
+  });
+
+  it('paramIs trims whitespace around name and value', async () => {
+    const c = ctx({ params: { state: 'accepted' } });
+    await expect(runProbe(rule({ probe: 'paramIs: state = accepted ' }), c, fakeDeps())).resolves.toBe(true);
+  });
+
+  it('paramIs reads rule.probeArg when there is no inline argument', async () => {
+    const c = ctx({ params: { kind: 'youth' } });
+    await expect(runProbe(rule({ probe: 'paramIs', probeArg: 'kind=youth' }), c, fakeDeps())).resolves.toBe(true);
+    await expect(runProbe(rule({ probe: 'paramIs', probeArg: 'kind=adult' }), c, fakeDeps())).resolves.toBe(false);
+  });
+
+  it('paramIs ANDs with a second probe — one generic event, many distinct rules', async () => {
+    const owing = fakeDeps({ invoices: [{ state: 'overdue' }] });
+    const c = ctx({ event: 'form.submitted', params: { formKey: 'austritt' } });
+    await expect(runProbe(rule({ probe: 'paramIs:formKey=austritt,hasOpenInvoices' }), c, owing)).resolves.toBe(true);
+    // same rule, a different form → the first probe fails the whole list
+    await expect(runProbe(rule({ probe: 'paramIs:formKey=schnupper,hasOpenInvoices' }), c, owing)).resolves.toBe(false);
+    // same rule, nothing owed → the second probe fails it
+    await expect(runProbe(rule({ probe: 'paramIs:formKey=austritt,hasOpenInvoices' }), c, fakeDeps())).resolves.toBe(false);
+  });
+
+  it('paramIs cannot carry a colon in an INLINE value — runProbe splits every entry on ":"', async () => {
+    // A documented limit of the comma/colon syntax, shared by every probe: the entry is split
+    // on ':' before the argument reaches the probe, so 'linkKey=page:x' arrives as 'linkKey=page'.
+    // A value that must contain a colon goes in probeArg, which is passed through untouched.
+    const c = ctx({ params: { linkKey: 'page:x' } });
+    await expect(runProbe(rule({ probe: 'paramIs:linkKey=page:x' }), c, fakeDeps())).resolves.toBe(false);
+    await expect(runProbe(rule({ probe: 'paramIs', probeArg: 'linkKey=page:x' }), c, fakeDeps())).resolves.toBe(true);
+  });
+
   it('ANDs a comma-separated probe list and honours inline arguments', async () => {
     const owns = fakeDeps({ ownerships: [{ state: 'active' }] });
     const passive = ctx({ params: { membershipCategory: 'passive' } });

@@ -48,6 +48,23 @@ export const PROBES: Record<string, Probe> = {
   /** the decision an 'approval.decided' event carries: 'approved' | 'rejected' */
   decisionIs: async (ctx, arg) => (ctx.params['decision'] ?? '') === arg,
 
+  /** compare ONE event parameter, written 'name=value' — the generic form of `categoryIs`
+   *  and `decisionIs`, and the piece that makes one shared event usable by many rules: the
+   *  event stays a picker, the discriminator goes in the argument
+   *  ('paramIs:formKey=abc123', 'paramIs:resourceType=boathouse', 'paramIs:state=accepted').
+   *
+   *  An unknown param compares as '', so 'name=' deliberately means "absent or empty". A
+   *  malformed argument with no '=' fails closed, exactly like an unknown probe — a rule
+   *  nobody can read must not fire on everybody.
+   *
+   *  NB `runProbe` splits every comma entry on ':', so an INLINE value cannot contain a
+   *  colon; put such a value in the rule's probeArg field, which is passed through untouched. */
+  paramIs: async (ctx, arg) => {
+    const i = arg.indexOf('=');
+    if (i < 0) return false;
+    return (ctx.params[arg.slice(0, i).trim()] ?? '') === arg.slice(i + 1).trim();
+  },
+
   /** the person has at least one invoice in an open state (the state is authoritative,
    *  paymentDate is not consulted) */
   hasOpenInvoices: async (ctx, _arg, deps) =>
