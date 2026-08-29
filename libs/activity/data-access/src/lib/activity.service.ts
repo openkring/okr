@@ -89,9 +89,10 @@ export class ActivityService {
       for (let attempt = 0; attempt <= delays.length; attempt++) {
         if (attempt > 0) await this.delay(delays[attempt - 1]);
         if (!await ensureAppCheckToken()) continue;
-        // Best-effort: a failed write must never surface a toast to the user. With a valid token a
-        // rejection is a real failure (already reported to Sentry by FirestoreService) — retrying
-        // it would only report it again.
+        // Best-effort: a failed write must never surface a toast to the user. No retry loop here for
+        // a rejection: FirestoreService.createModel already re-attests and retries a denied write
+        // once (SCS-8N), and a denial that survives a freshly minted token is a real failure it
+        // reports to Sentry — repeating it here would only report it again.
         await this.firestoreService.createModel<ActivityModel>(ActivityCollection, activity, undefined, undefined, undefined, true);
         return;
       }

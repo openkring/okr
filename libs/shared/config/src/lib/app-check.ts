@@ -37,14 +37,20 @@ export function registerAppCheck(instance: AppCheck): void {
  * pre-flight — if it fails, the write proceeds anyway and fails on its own terms rather than
  * leaving the caller waiting forever.
  *
+ * `forceRefresh` skips the cache and attests anew. Use it only AFTER the backend has rejected a
+ * request with PERMISSION_DENIED: the cached token is then valid by the client's own clock (or the
+ * SDK would have refreshed it on its own) yet demonstrably not accepted — the one situation where
+ * asking again is not wasted work.
+ *
  * @param timeoutMs how long to wait for attestation before giving up and letting the caller proceed
+ * @param forceRefresh attest anew instead of returning the cached token
  * @return true when a valid token is cached, false when App Check is unregistered, blocked or slow
  */
-export async function ensureAppCheckToken(timeoutMs = 5000): Promise<boolean> {
+export async function ensureAppCheckToken(timeoutMs = 5000, forceRefresh = false): Promise<boolean> {
   if (!appCheckInstance) return false;
   try {
     await Promise.race([
-      getToken(appCheckInstance),
+      getToken(appCheckInstance, forceRefresh),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('App Check getToken timed out')), timeoutMs)),
     ]);

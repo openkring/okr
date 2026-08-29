@@ -149,6 +149,34 @@ export class FirestoreService {
     });
   }
 
+  /**
+   * Retry a WRITE once that the backend rejected with PERMISSION_DENIED, after forcing a fresh
+   * App Check token.
+   *
+   * {@link recoverFromTokenDenial} gave READS this recovery; writes only had the pre-flight in
+   * `ensureAppCheckToken()`, which returns immediately when a token is cached. A cached token the
+   * backend no longer accepts (a mobile tab woken from suspension, clock skew) therefore passed the
+   * pre-flight and the write was denied outright — no retry, no toast, just a Sentry warning and a
+   * lost audit entry (SCS-8N: the `auth/login` activity written on the login page).
+   *
+   * Deliberately once, and deliberately without a backoff: the forced attestation round trip IS the
+   * spacing, and a second denial after a freshly minted token is not about the token.
+   *
+   * @param context the call site, e.g. `createModel(activities/abc)`
+   * @param write the write to run; it is re-run unchanged on the retry (writes here are idempotent
+   *        `setDoc`s on an id that is already fixed)
+   */
+  private async writeWithTokenDenialRetry(context: string, write: () => Promise<void>): Promise<void> {
+    try {
+      await write();
+    } catch (ex) {
+      if ((ex as { code?: string } | null)?.code !== 'permission-denied') throw ex;
+      console.debug(`FirestoreService.${context}: write denied, refreshing the App Check token and retrying once.`);
+      await ensureAppCheckToken(undefined, true);
+      await write();
+    }
+  }
+
   private reportStreamError(context: string, err: unknown): void {
     if ((err as { code?: string } | null)?.code === 'permission-denied' && !this.auth.currentUser) {
       console.debug(`FirestoreService.${context}: listener closed by sign-out.`);
@@ -233,7 +261,8 @@ export class FirestoreService {
 
     try {
       // we need to convert the custom object to a pure JavaScript object (e.g. arrays)
-      await setDoc(ref, structuredClone(persistedModel));
+      await this.writeWithTokenDenialRetry(`createModel(${collectionName}/${ref.id})`,
+        () => setDoc(ref, structuredClone(persistedModel)));
       if (confirmMessage) {
         await this.okrShowToast(this.toastController, confirmMessage);
       }

@@ -32,6 +32,10 @@ vi.mock('firebase/firestore', () => ({
   writeBatch: vi.fn(),
 }));
 
+// Writes must never reach the real Sentry client from a unit test.
+const captureMessageMock = vi.hoisted(() => vi.fn());
+vi.mock('@sentry/angular', () => ({ captureMessage: captureMessageMock }));
+
 // App Check attestation is a network round trip; the service awaits it before re-attaching a
 // denied listener, so the tests drive it directly.
 const ensureAppCheckTokenMock = vi.hoisted(() => vi.fn(async () => true));
@@ -42,7 +46,12 @@ vi.mock('@okr/shared-config', async (orig) => {
   return { ...actual, isFirestoreInitializedCheck: () => true, ensureAppCheckToken: ensureAppCheckTokenMock };
 });
 
+import { doc, setDoc } from 'firebase/firestore';
+
 import { FirestoreService } from './firestore.service';
+
+const setDocMock = vi.mocked(setDoc);
+const docMock = vi.mocked(doc);
 
 const QUERY: DbQuery[] = [{ key: 'tenants', operator: 'array-contains', value: 'scs' }];
 
@@ -276,5 +285,77 @@ describe('FirestoreService.readModel', () => {
     const svc = makeService();
     const user = await firstValueFrom(svc.readModel('users', 'u1'));
     expect(user).toBeUndefined();
+  });
+});
+
+describe('FirestoreService.createModel', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+    ensureAppCheckTokenMock.mockResolvedValue(true);
+    docMock.mockReturnValue({ id: 'a1' } as never);   // createModel returns ref.id
+  });
+
+  it('returns the document id on the happy path', async () => {
+    setDocMock.mockResolvedValue(undefined);
+    const svc = makeService();
+
+    const key = await svc.createModel('activities', { okey: 'a1', tenants: ['scs'] } as never,
+      undefined, undefined, undefined, true);
+
+    expect(key).toBeDefined();
+    expect(setDocMock).toHaveBeenCalledTimes(1);
+    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+  });
+
+  // Root cause of SCS-8N: App Check is ENFORCED on Firestore, and a cached token the backend no
+  // longer accepts passes the caller's `ensureAppCheckToken()` pre-flight untouched (it returns
+  // immediately while a token is cached). The write was then denied outright — the `auth/login`
+  // activity written on the login page was lost and only a Sentry warning remained. A forced
+  // attestation plus one retry recovers it, exactly as recoverFromTokenDenial does for reads.
+  it('retries a denied write once after forcing a fresh App Check token', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    setDocMock.mockRejectedValueOnce(permissionDenied()).mockResolvedValue(undefined);
+    const svc = makeService();
+
+    const key = await svc.createModel('activities', { okey: 'a1', tenants: ['scs'] } as never,
+      undefined, undefined, undefined, true);
+
+    expect(key).toBeDefined();
+    expect(setDocMock).toHaveBeenCalledTimes(2);
+    expect(ensureAppCheckTokenMock).toHaveBeenCalledWith(undefined, true);   // forced, not the cache
+    expect(captureMessageMock).not.toHaveBeenCalled();                       // recovered, so no ticket
+    debug.mockRestore();
+  });
+
+  // A denial that survives a freshly minted token is not about the token — report it once and stop.
+  it('reports to Sentry when the retry is denied as well', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    setDocMock.mockRejectedValue(permissionDenied());
+    const svc = makeService();
+
+    const key = await svc.createModel('activities', { okey: 'a1', tenants: ['scs'] } as never,
+      undefined, undefined, undefined, true);
+
+    expect(key).toBeUndefined();
+    expect(setDocMock).toHaveBeenCalledTimes(2);          // one retry, never a loop
+    expect(captureMessageMock).toHaveBeenCalledTimes(1);
+    debug.mockRestore();
+    error.mockRestore();
+  });
+
+  // Transport failures are the SDK's to retry; a fresh App Check token does nothing for them.
+  it('does not retry a non-permission write failure', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    setDocMock.mockRejectedValue(Object.assign(new Error('backend unavailable'), { code: 'unavailable' }));
+    const svc = makeService();
+
+    await svc.createModel('activities', { okey: 'a1', tenants: ['scs'] } as never,
+      undefined, undefined, undefined, true);
+
+    expect(setDocMock).toHaveBeenCalledTimes(1);
+    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+    error.mockRestore();
   });
 });

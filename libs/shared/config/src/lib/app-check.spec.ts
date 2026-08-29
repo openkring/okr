@@ -30,7 +30,7 @@ describe('ensureAppCheckToken', () => {
     registerAppCheck(INSTANCE);
     getTokenMock.mockResolvedValue({ token: 'abc' });
     await expect(ensureAppCheckToken()).resolves.toBe(true);
-    expect(getTokenMock).toHaveBeenCalledWith(INSTANCE);
+    expect(getTokenMock).toHaveBeenCalledWith(INSTANCE, false);   // cached token is fine
   });
 
   // A blocked reCAPTCHA script must not surface as a rejection: callers use this as a
@@ -50,5 +50,14 @@ describe('ensureAppCheckToken', () => {
     const pending = ensureAppCheckToken(5000);
     await vi.advanceTimersByTimeAsync(5000);
     await expect(pending).resolves.toBe(false);
+  });
+
+  // A cached token that the backend rejects (PERMISSION_DENIED on a rule-satisfying write, SCS-8N)
+  // is valid by the client's clock, so only a forced attestation replaces it.
+  it('attests anew when forceRefresh is set', async () => {
+    registerAppCheck(INSTANCE);
+    getTokenMock.mockResolvedValue({ token: 'abc' });
+    await expect(ensureAppCheckToken(undefined, true)).resolves.toBe(true);
+    expect(getTokenMock).toHaveBeenCalledWith(INSTANCE, true);
   });
 });
