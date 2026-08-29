@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, Component, DestroyRef, PLATFORM_ID, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, ComponentRef, DestroyRef, PLATFORM_ID, ViewContainerRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import type { CalendarOptions, EventInput } from '@fullcalendar/core';
@@ -13,7 +13,7 @@ import { convertCalEventToFullCalendar } from '@okr/calevent-util';
 import { CalEventStore } from '@okr/calevent-feature';
 
 import { CalendarStore } from './calendar-section.store';
-import { CalendarView } from './calendar-view';
+import type { CalendarView } from './calendar-view';
 
 @Component({
   selector: 'okr-calendar-section',
@@ -32,7 +32,6 @@ import { CalendarView } from './calendar-view';
   `],
   providers: [CalendarStore, CalEventStore],
   imports: [
-    CalendarView,
     Spinner,
     IonCard, IonCardContent
   ],
@@ -46,20 +45,10 @@ import { CalendarView } from './calendar-view';
       <ion-card-content>
         <div [style.display]="'block'">
           {{ filteredEvents().length }} {{ calendarStore.i18n.calevents() }}
-          @defer (on viewport) {
-            <okr-calendar-view
-              [events]="calendarEvents()"
-              [props]="calendarProps()"
-              [isMobile]="isMobile()"
-              (dateClick)="onDateClick($event)"
-              (eventDrop)="onEventDrop($event)"
-              (eventResize)="onEventResize($event)"
-            />
-          } @loading {
+          @if (!componentRef) {
             <okr-spinner />
-          } @placeholder {
-            <div style="min-height: 400px"></div>
           }
+          <div #calendarHost></div>
         </div>
       </ion-card-content>
     </ion-card>
@@ -78,7 +67,8 @@ export class CalendarSectionComponent {
   // inputs
   public section = input<CalendarSection>();
   public editMode = input<boolean>(false);
-  private calendarView = viewChild(CalendarView);
+  private calendarHost = viewChild('calendarHost', { read: ViewContainerRef });
+  protected componentRef?: ComponentRef<CalendarView>;
 
   // derived values
   protected readonly title = computed(() => this.section()?.title);
@@ -119,6 +109,27 @@ export class CalendarSectionComponent {
     effect(() => {
       debugData<EventInput[]>('CalendarSection(): events: ', this.filteredEvents(), this.calendarStore.currentUser());
     });
+    effect(async () => {
+      const host = this.calendarHost();
+      if (!host || this.componentRef || !isBrowser(this.platformId)) return;
+      const { CalendarView } = await import('./calendar-view');
+      const ref = host.createComponent(CalendarView);
+      this.componentRef = ref;
+      ref.instance.dateClick.subscribe((e: unknown) => this.onDateClick(e));
+      ref.instance.eventDrop.subscribe((e: unknown) => this.onEventDrop(e));
+      ref.instance.eventResize.subscribe((e: unknown) => this.onEventResize(e));
+    });
+    effect(() => {
+      const ref = this.componentRef;
+      const events = this.calendarEvents();
+      const props = this.calendarProps();
+      const mobile = this.isMobile();
+      if (!ref) return;
+      ref.setInput('events', events);
+      ref.setInput('props', props);
+      ref.setInput('isMobile', mobile);
+    });
+    this.destroyRef.onDestroy(() => this.componentRef?.destroy());
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -135,7 +146,7 @@ export class CalendarSectionComponent {
   /** Switch the calendar to the weekly view focused on the given store date (yyyyMMdd). */
   private gotoWeekOf(storeDate: string): void {
     const date = parseDate(storeDate, DateFormat.StoreDate, false);
-    if (date) this.calendarView()?.gotoWeek(date);
+    if (date) this.componentRef?.instance.gotoWeek(date);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
