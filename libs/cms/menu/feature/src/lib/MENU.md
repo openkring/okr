@@ -45,14 +45,31 @@ Collection name: `menuItems`
 
 The `roleNeeded` field is evaluated by `hasRole()` at render time. Items whose `roleNeeded` exceeds the current user's role are simply not rendered. Login/logout items are handled as special cases based on `url === '/auth/login'` or `'/auth/logout'`.
 
-## State (MenuStore)
+## State (MenuStore + MenuItemsStore)
 
-The `MenuStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
+State is split across two stores, because the two halves have different scopes.
+
+`MenuStore` is declared `providedIn: 'root'` but `Menu` (`menu.ts`) lists it under
+`providers: [MenuStore]`, so there is **one instance per `<bk-menu>` node**. That is deliberate —
+`name` is the state of that particular node — and `Menu` renders itself recursively, so a menu
+tree creates as many stores as it has nodes. It holds:
 
 - `name` — the current menu item name being rendered
+- `toggleActive` — for `action: 'toggle'` items
 - `searchTerm` / `selectedCategory` — filters used in the admin list view
 - `menuResource` — live Firestore stream for a single item (keyed by `name`)
-- `menuItemsResource` — live Firestore stream of all menu items (for admin list)
+
+`MenuItemsStore` (`menu-items.store.ts`, genuinely root-provided, one instance) holds the list
+that is identical for every node:
+
+- `menuItems` — live Firestore stream of all menu items (admin list, and every node's lookups)
+- `isLoading` / `hasLoadError` / `reload()`
+
+**Do not move the list back into `MenuStore`.** While it lived there, every node re-subscribed to
+the same tenant-wide query: 170 subscriptions on one dashboard load, 340 deliveries across the two
+Firestore snapshots (cache, then server). Firestore does not charge for that — `FirestoreService`
+shares one listener per query, which is why no network-side measurement ever showed it — but the
+JavaScript cost is real. Measured with `__okrFirestoreStreams()` on 2026-08-29.
 
 ## Key Components
 

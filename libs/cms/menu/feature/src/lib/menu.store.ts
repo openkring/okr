@@ -1,7 +1,7 @@
-import { computed, inject, Injectable, Signal } from '@angular/core';
+import { computed, effect, inject, Injectable, Signal } from '@angular/core';
 import { rxResource, toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
 import { Observable, of } from 'rxjs';
@@ -15,6 +15,8 @@ import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, navi
 import { I18nService } from '@okr/shared-i18n';
 
 import { MENU_I18N_KEYS, resolveMenuLabelKey } from '@okr/cms-menu-util';
+
+import { MenuItemsStore } from './menu-items.store';
 
 import { AuthService } from '@okr/auth-data-access';
 import { ActivityService } from '@okr/activity-data-access';
@@ -47,6 +49,9 @@ export const _MenuStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     menuService: inject(MenuService),
+    // Die Menüliste selbst ist mandantenweit identisch und liegt daher in EINEM root-Store,
+    // nicht in dieser je Menüknoten neu erzeugten Instanz. Siehe menu-items.store.ts.
+    menuItemsStore: inject(MenuItemsStore),
     featureStore: inject(FeatureStore),
     env: inject(ENV),
     modalController: inject(ModalController),
@@ -77,17 +82,6 @@ export const _MenuStore = signalStore(
     },
   })),
   withProps((store) => ({
-    menuItemsResource: rxResource({
-      stream: () => {
-        return store.menuService.list().pipe(
-          catchError(error => {
-            debugData('MenuStore.menuItemsResource: stream error', error, store.appStore.currentUser());
-            store.setError(store.i18n.error_load());
-            return of([] as MenuItemModel[]);
-          })
-        );
-      }
-    }),
     menuResource: rxResource({
       params: () => ({
         name: store.name()
@@ -125,10 +119,10 @@ export const _MenuStore = signalStore(
 
   withComputed((store) => {
     return {
-      menuItems: computed(() => store.menuItemsResource.value()),
-      menuItemsCount: computed(() => store.menuItemsResource.value()?.length ?? 0),
+      menuItems: computed(() => store.menuItemsStore.menuItems()),
+      menuItemsCount: computed(() => store.menuItemsStore.menuItems()?.length ?? 0),
       filteredMenuItems: computed(() => 
-        store.menuItemsResource.value()?.filter((menuItem: MenuItemModel) => 
+        store.menuItemsStore.menuItems()?.filter((menuItem: MenuItemModel) => 
           nameMatches(menuItem.index, store.searchTerm()) && 
           nameMatches(menuItem.action, store.selectedCategory())   
       )),
@@ -147,7 +141,7 @@ export const _MenuStore = signalStore(
       currentUser: computed(() => store.appStore.currentUser()),
       tenantId: computed(() => store.appStore.tenantId()),
       isMenuLoading: computed(() => store.menuResource.isLoading()),
-      isLoading: computed(() => store.menuItemsResource.isLoading() || store.menuResource.isLoading()),
+      isLoading: computed(() => store.menuItemsStore.isLoading() || store.menuResource.isLoading()),
       // Chat unread + open assigned tasks + unanswered invitations. The dashboard menu item is
       // the only one that subscribes to chat, so every other instance contributes 0 there; gate
       // the other halves on the same name so a non-dashboard menu never shows a badge either.
@@ -216,7 +210,7 @@ export const _MenuStore = signalStore(
           store.clearError();
           try {
             await store.menuService.delete(menuItem);
-            store.menuItemsResource.reload();
+            store.menuItemsStore.reload();
           } catch (error) {
             store.setError(store.i18n.error_delete());
             throw error;
@@ -250,7 +244,7 @@ export const _MenuStore = signalStore(
         store.clearError();
         try {
           await (isUpdate ? store.menuService.update(data) : store.menuService.create(data, store.currentUser()));
-          store.menuItemsResource.reload();
+          store.menuItemsStore.reload();
         } catch (error) {
           store.setError(store.i18n.error_save());
           throw error;
@@ -359,7 +353,18 @@ export const _MenuStore = signalStore(
         }
       },
     }
-  })
+  }),
+  // Ein Ladefehler der geteilten Menüliste wird hier in den Fehlerzustand dieses Knotens
+  // gespiegelt, damit die Oberfläche dieselbe Meldung zeigt wie vor der Aufteilung.
+  withHooks({
+    onInit(store) {
+      effect(() => {
+        if (store.menuItemsStore.hasLoadError()) {
+          store.setError(store.i18n.error_load());
+        }
+      });
+    },
+  }),
 );
 
 
