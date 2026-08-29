@@ -19,7 +19,7 @@ import { IconEditModal } from './icon-edit.modal';
 
 export type { IconI18n };
 
-export const ICON_SETS = ['filetypes', 'general', 'icons', 'models', 'section'];
+export const ICON_SETS = ['filetypes', 'general', 'icons', 'models', 'section', 'weather'];
 
 export type IconState = {
   selectedDir: string;
