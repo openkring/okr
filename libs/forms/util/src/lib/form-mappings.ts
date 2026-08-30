@@ -26,6 +26,19 @@ export const FORM_MAPPINGS: FormMapping[] = [
     collectionName: 'prospects',
     defaults: { source: 'kring.ch' },
   },
+  {
+    // §6b / O1 — the boathouse reservation, converted from ReservationApplyModal. Like
+    // `prospects.default` this is NOT written by the generic collection path: a reservation
+    // carries typed avatars (reserver, resource) and a built search index, so `submitForm`
+    // dispatches it to `createBoathouseReservation`, which also enforces the two cross-field
+    // rules the builder's per-field validators cannot express. Mirrored in the inlined
+    // whitelist in `apps/functions/src/forms/index.ts`.
+    mappingKey: 'reservations.boathouse',
+    label: 'Reservation Bootshaus',
+    modelType: 'ReservationModel',
+    collectionName: 'reservations',
+    defaults: { state: 'initial' },
+  },
 ];
 
 export function getFormMapping(mappingKey: string): FormMapping | undefined {

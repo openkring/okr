@@ -8,6 +8,7 @@ import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 import { sendEmailViaProvider } from '../auth/email-transport';
 import { getAppEmailConfig } from '../auth/email-templates';
 import { createProspect } from '../business/prospect';
+import { createBoathouseReservation } from './reservation-target';
 import { emitEvent } from '../workflow/emit';
 
 const REGION = 'europe-west6';
@@ -99,7 +100,9 @@ interface SubmitFormPayload {
 // FormMapping whitelist (mirrors FORM_MAPPINGS in forms-util)
 // ──────────────────────────────────────────
 
-const FORM_MAPPINGS: FormMapping[] = [
+/** Exported for the mirror-drift test only — a one-sided edit fails a submit at runtime with
+ *  'Unknown mapping', which no build or type-check catches. */
+export const FORM_MAPPINGS: FormMapping[] = [
   {
     mappingKey: 'applications.default',
     label: 'Applications',
@@ -123,6 +126,18 @@ const FORM_MAPPINGS: FormMapping[] = [
     modelType: 'ProspectModel',
     collectionName: 'prospects',
     defaults: { source: 'kring.ch' },
+  },
+  {
+    // §6b / O1 — the boathouse reservation. NOT written by the generic collection path below:
+    // a reservation carries typed avatars and a built index, so this mapping is dispatched to
+    // `createBoathouseReservation`, which also enforces the two cross-field rules (end-before-
+    // start, unticked confirmation) that per-field validators cannot express. Mirrors
+    // FORM_MAPPINGS in forms-util — edit BOTH copies or a submit fails with 'Unknown mapping'.
+    mappingKey: 'reservations.boathouse',
+    label: 'Reservation Bootshaus',
+    modelType: 'ReservationModel',
+    collectionName: 'reservations',
+    defaults: { state: 'initial' },
   },
 ];
 
@@ -514,7 +529,23 @@ export const submitForm = onCall(
 
       collectionName = target.collectionName;
 
-      if (mapping.collectionName === 'prospects') {
+      if (mapping.collectionName === 'reservations') {
+        // Like prospects: not the generic write. Creating the reservation SERVER-side is the
+        // point of the conversion — the old modal's `isReservation()` was a client-side check
+        // a client could bypass, and `reservations` is client-writable in the rules. A
+        // spam-flagged submission is not stored: unlike an application, which an admin reviews
+        // in the back office, a reservation would land straight in the resource calendar.
+        if (isSpam) {
+          submissionId = crypto.randomUUID();
+        } else {
+          submissionId = await createBoathouseReservation(db, {
+            tenantId: payload.tenantId,
+            uid: request.auth?.uid,
+            values: cleanValues,
+            defaults: mapping.defaults,
+          });
+        }
+      } else if (mapping.collectionName === 'prospects') {
         // C5 §5 — the one target that is not a single document. The record and its contact
         // details (an `addresses` doc under `parentKey = 'prospect.<okey>'`) are written together
         // by `createProspect`, which also refuses a submission without consent — a checkbox that
