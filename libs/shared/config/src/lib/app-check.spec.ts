@@ -60,4 +60,44 @@ describe('ensureAppCheckToken', () => {
     await expect(ensureAppCheckToken(undefined, true)).resolves.toBe(true);
     expect(getTokenMock).toHaveBeenCalledWith(INSTANCE, true);
   });
+
+  // A denial incident kills EVERY open listener at once and each one's recovery calls in here.
+  // Fanning that out into one reCAPTCHA round trip per listener is what reCAPTCHA throttles.
+  it('coalesces concurrent forced attestations into a single round trip', async () => {
+    registerAppCheck(INSTANCE);
+    let settle: (value: unknown) => void = () => undefined;
+    getTokenMock.mockReturnValue(new Promise((resolve) => { settle = resolve; }));
+
+    const both = Promise.all([
+      ensureAppCheckToken(undefined, true),
+      ensureAppCheckToken(undefined, true),
+    ]);
+    settle({ token: 'abc' });
+
+    await expect(both).resolves.toEqual([true, true]);
+    expect(getTokenMock).toHaveBeenCalledTimes(1);
+  });
+
+  // The denials of one incident trickle in over a second or two, so they never share an in-flight
+  // promise. A token minted moments ago is already the freshest answer available.
+  it('answers a forced call from the cooldown when one just succeeded', async () => {
+    registerAppCheck(INSTANCE);
+    getTokenMock.mockResolvedValue({ token: 'abc' });
+
+    await expect(ensureAppCheckToken(undefined, true)).resolves.toBe(true);
+    await expect(ensureAppCheckToken(undefined, true)).resolves.toBe(true);
+    expect(getTokenMock).toHaveBeenCalledTimes(1);
+  });
+
+  // A blocked or timed-out attestation must stay retryable — caching a failure would turn a
+  // transient reCAPTCHA hiccup into ten seconds of guaranteed denials.
+  it('does not enter the cooldown when the forced attestation failed', async () => {
+    registerAppCheck(INSTANCE);
+    getTokenMock.mockRejectedValueOnce(new Error('recaptcha blocked'));
+    getTokenMock.mockResolvedValue({ token: 'abc' });
+
+    await expect(ensureAppCheckToken(undefined, true)).resolves.toBe(false);
+    await expect(ensureAppCheckToken(undefined, true)).resolves.toBe(true);
+    expect(getTokenMock).toHaveBeenCalledTimes(2);
+  });
 });
