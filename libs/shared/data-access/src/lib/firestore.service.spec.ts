@@ -345,6 +345,45 @@ describe('FirestoreService.createModel', () => {
     error.mockRestore();
   });
 
+  // The Sentry report is the ONLY trace a suppressed write leaves, so it has to say WHICH of the
+  // two causes a permission-denied write had. SCS-8M sat unclassifiable for want of this tag: its
+  // rules were verified (emulator) to ALLOW the payload, so the denial was attestation — but
+  // nothing in the ticket could distinguish that from a rules defect.
+  it('tags a surviving denial as `refreshed` when attestation succeeded', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    setDocMock.mockRejectedValue(permissionDenied());
+    ensureAppCheckTokenMock.mockResolvedValue(true);
+    const svc = makeService();
+
+    await svc.createModel('activities', { okey: 'a1', tenants: ['scs'] } as never,
+      undefined, undefined, undefined, true);
+
+    expect(captureMessageMock.mock.calls[0][1].tags).toMatchObject({
+      firestoreCode: 'permission-denied', appCheck: 'refreshed',
+    });
+    debug.mockRestore();
+    error.mockRestore();
+  });
+
+  // The recovery is a no-op when App Check cannot attest at all (unregistered / blocked / timed
+  // out). Claiming a refresh here is what sent an earlier investigation down the wrong path.
+  it('tags a surviving denial as `unavailable` when attestation produced no token', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    setDocMock.mockRejectedValue(permissionDenied());
+    ensureAppCheckTokenMock.mockResolvedValue(false);
+    const svc = makeService();
+
+    await svc.createModel('activities', { okey: 'a1', tenants: ['scs'] } as never,
+      undefined, undefined, undefined, true);
+
+    expect(captureMessageMock.mock.calls[0][1].tags).toMatchObject({ appCheck: 'unavailable' });
+    expect(warn).toHaveBeenCalled();     // and the log says so, instead of claiming a refresh
+    warn.mockRestore();
+    error.mockRestore();
+  });
+
   // Transport failures are the SDK's to retry; a fresh App Check token does nothing for them.
   it('does not retry a non-permission write failure', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);

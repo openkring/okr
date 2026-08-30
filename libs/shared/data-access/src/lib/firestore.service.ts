@@ -189,9 +189,28 @@ export class FirestoreService {
       await write();
     } catch (ex) {
       if ((ex as { code?: string } | null)?.code !== 'permission-denied') throw ex;
-      console.debug(`FirestoreService.${context}: write denied, refreshing the App Check token and retrying once.`);
-      await ensureAppCheckToken(undefined, true);
-      await write();
+      // Evaluate the result instead of announcing a refresh that may never have happened. The read
+      // path learned this the hard way (bka-app was missing `registerAppCheck()`, so the recovery
+      // was a no-op while the log claimed a refresh); the write path claimed the same thing and its
+      // Sentry report — the ONLY trace a suppressed write leaves — did not record which case it was.
+      // SCS-8M sat unclassifiable for that reason: its rules were verified to ALLOW the payload, so
+      // the denial was attestation all along, but nothing in the ticket could say so.
+      const attested = await ensureAppCheckToken(undefined, true);
+      if (attested) {
+        console.debug(`FirestoreService.${context}: write denied, App Check token refreshed, retrying once.`);
+      } else {
+        console.warn(`FirestoreService.${context}: write denied and App Check could NOT attest — no token was obtained. App Check is unregistered (registerAppCheck() missing in main.ts), blocked by the browser, or the attestation timed out.`);
+      }
+      try {
+        await write();
+      } catch (retryEx) {
+        // Carry the attestation outcome to `reportSilentWriteFailure`, which is the only observer
+        // left once the toast is suppressed.
+        if (retryEx && typeof retryEx === 'object') {
+          (retryEx as { appCheckAttested?: boolean }).appCheckAttested = attested;
+        }
+        throw retryEx;
+      }
     }
   }
 
@@ -219,9 +238,17 @@ export class FirestoreService {
    */
   private reportSilentWriteFailure(context: string, ex: unknown): void {
     const code = (ex as { code?: string } | null)?.code ?? 'unknown';
+    // `appCheck` splits the two causes a permission-denied write can have, which are
+    // indistinguishable in the error itself: `unavailable` means the forced attestation in
+    // `writeWithTokenDenialRetry` produced no token at all (unregistered / blocked / timed out —
+    // a client or bootstrap fault), `refreshed` means the backend rejected a freshly minted token
+    // and the denial is therefore about the rules or the payload. `n/a` is a denial that never
+    // reached the retry, or a different error code entirely.
+    const attested = (ex as { appCheckAttested?: boolean } | null)?.appCheckAttested;
+    const appCheck = attested === undefined ? 'n/a' : attested ? 'refreshed' : 'unavailable';
     captureMessage(`FirestoreService.${context} failed silently: ${code}`, {
       level: 'warning',
-      tags: { firestoreCode: code },
+      tags: { firestoreCode: code, appCheck },
       extra: { context, detail: (ex as Error | null)?.message },
     });
   }
