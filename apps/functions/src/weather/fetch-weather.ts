@@ -3,12 +3,9 @@ import { logger } from 'firebase-functions/v2';
 import axios from 'axios';
 import * as admin from 'firebase-admin';
 
-import { LocationDoc, OpenMeteoResponse, buildWeatherDocs, hoursSince, toStoreDate } from './weather.util';
+import { LocationDoc, OpenMeteoResponse, WEATHER_TAG, buildWeatherDocs, hasWeatherTag, hoursSince, toStoreDate } from './weather.util';
 
 const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
-
-/** Locations carrying this tag are the ones we fetch weather for. */
-const WEATHER_TAG = 'weather';
 
 /** Fallback when a tenant's app-config does not set `weatherIntervalHours`. */
 const DEFAULT_INTERVAL_HOURS = 4;
@@ -59,11 +56,11 @@ export const scheduledWeatherFetch = onSchedule(
       .where('isArchived', '==', false).get();
     const locations = locationsSnap.docs
       .map((d) => ({ ...(d.data() as LocationDoc), okey: d.id }))
-      .filter((l) => (l.tags ?? '').split(',').map((t) => t.trim()).includes(WEATHER_TAG))
+      .filter((l) => hasWeatherTag(l.tags))
       .filter((l) => Number.isFinite(l.latitude) && Number.isFinite(l.longitude));
 
     if (!locations.length) {
-      logger.info('scheduledWeatherFetch: no locations tagged "weather"');
+      logger.info(`scheduledWeatherFetch: no locations tagged ${WEATHER_TAG}`);
       return;
     }
 

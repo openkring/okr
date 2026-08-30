@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildWeatherDocs, hoursSince, toStoreDate } from './weather.util';
+import { WEATHER_TAG, buildWeatherDocs, hasWeatherTag, hoursSince, toStoreDate, toStoreDateTime } from './weather.util';
 import fixture from './open-meteo.fixture.json';
 
 /**
@@ -91,21 +91,45 @@ describe('buildWeatherDocs — against a real provider response', () => {
   });
 });
 
-describe('toStoreDate', () => {
+describe('toStoreDate — pinned to Europe/Zurich, not the host clock', () => {
   it('zero-pads month and day', () => {
-    expect(toStoreDate(new Date(2026, 0, 5))).toBe('20260105');
+    expect(toStoreDate(new Date(Date.UTC(2026, 0, 5, 12, 0)))).toBe('20260105');
   });
 
-  it('uses local wall clock, so an evening date does not roll into the next UTC day', () => {
-    expect(toStoreDate(new Date(2026, 7, 30, 23, 30))).toBe('20260830');
+  it('uses Zurich, not UTC: 22:31 UTC in summer is already the next day', () => {
+    // The bug this pins: the deployed container runs in UTC, so Date's local getters gave the
+    // UTC date. `onSchedule({ timeZone })` only schedules the run, it does not set the zone.
+    expect(toStoreDate(new Date('2026-08-30T22:31:51Z'))).toBe('20260831');
+  });
+
+  it('handles the winter offset too (CET, +1)', () => {
+    expect(toStoreDate(new Date('2026-01-15T23:30:00Z'))).toBe('20260116');
+    expect(toStoreDate(new Date('2026-01-15T22:30:00Z'))).toBe('20260115');
+  });
+});
+
+describe('toStoreDateTime', () => {
+  it('stamps the Zurich wall clock, not UTC', () => {
+    expect(toStoreDateTime(new Date('2026-08-30T22:31:51Z'))).toBe('20260831003151');
+  });
+
+  it('zero-pads every component', () => {
+    expect(toStoreDateTime(new Date('2026-01-05T07:08:09Z'))).toBe('20260105080809');
   });
 });
 
 describe('hoursSince', () => {
-  const now = new Date(2026, 7, 30, 12, 0, 0);
+  // 12:00 UTC = 14:00 Zurich in summer
+  const now = new Date('2026-08-30T12:00:00Z');
 
-  it('measures the gap to a StoreDateTime', () => {
-    expect(hoursSince('20260830080000', now)).toBeCloseTo(4, 5);
+  it('measures the gap to a StoreDateTime in the same wall-clock frame', () => {
+    expect(hoursSince('20260830100000', now)).toBeCloseTo(4, 5);
+  });
+
+  it('is not thrown off by the host running in UTC', () => {
+    // The stamp is Zurich wall clock; so is `now` once formatted. A naive parse would have
+    // read the stamp as UTC and reported 2 hours too many.
+    expect(hoursSince('20260830140000', now)).toBeCloseTo(0, 5);
   });
 
   it('returns Infinity for a missing or truncated stamp — "fetch now", never "skip forever"', () => {
@@ -117,5 +141,33 @@ describe('hoursSince', () => {
   it('returns Infinity for an unparsable stamp rather than a NaN that compares false', () => {
     // NaN < interval is false, which would silently skip the location on every run.
     expect(hoursSince('xxxxxxxxxxxxxx', now)).toBe(Number.POSITIVE_INFINITY);
+  });
+});
+
+describe('hasWeatherTag', () => {
+  it('matches the i18n KEY, not the bare word', () => {
+    // The live tag definition for `location` is
+    // "@tag.important, @tag.review, @tag.selectable, @tag.test, @tag.weather".
+    // Matching 'weather' found nothing and the run logged "no locations" while exiting 0 —
+    // pinning the exact stored token is the whole point of this test.
+    expect(WEATHER_TAG).toBe('@tag.weather');
+    expect(hasWeatherTag('@tag.weather')).toBe(true);
+    expect(hasWeatherTag('weather')).toBe(false);
+  });
+
+  it('finds the tag among others, whatever the spacing', () => {
+    expect(hasWeatherTag('@tag.important,@tag.weather')).toBe(true);
+    expect(hasWeatherTag('@tag.important, @tag.weather, @tag.test')).toBe(true);
+    expect(hasWeatherTag('  @tag.weather  ')).toBe(true);
+  });
+
+  it('does not match a tag that merely contains the name', () => {
+    expect(hasWeatherTag('@tag.weathervane')).toBe(false);
+    expect(hasWeatherTag('@tag.notweather')).toBe(false);
+  });
+
+  it('handles an empty or missing tags field', () => {
+    expect(hasWeatherTag('')).toBe(false);
+    expect(hasWeatherTag(undefined)).toBe(false);
   });
 });

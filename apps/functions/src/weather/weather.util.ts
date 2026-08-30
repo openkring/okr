@@ -1,3 +1,18 @@
+/**
+ * The tag that marks a location as a weather location.
+ *
+ * Tag VALUES are stored as i18n keys in this repo, not as plain words — the `tags` definition
+ * for `location` reads `@tag.important, @tag.review, @tag.selectable, @tag.test, @tag.weather`,
+ * and a record carries that key verbatim. Matching on the bare word `weather` finds nothing and
+ * fails the way this kind of mistake always does: the run succeeds and logs "no locations".
+ */
+export const WEATHER_TAG = '@tag.weather';
+
+/** True when a record's comma-separated `tags` field carries the weather tag. */
+export function hasWeatherTag(tags: string | undefined): boolean {
+  return (tags ?? '').split(',').map((t) => t.trim()).includes(WEATHER_TAG);
+}
+
 /** Identifies which service produced a document — stored so a provider swap stays traceable. */
 export const PROVIDER = 'open-meteo';
 
@@ -23,19 +38,32 @@ export interface OpenMeteoResponse {
 }
 
 /**
- * A Date as a StoreDate (yyyyMMdd) in Europe/Zurich wall-clock time.
+ * The zone every stored date and time is expressed in.
  *
- * The function runs in that zone, so the local getters are already correct — but going
- * through UTC here would shift the day boundary by an hour and silently mis-file the first
- * hour of every day.
+ * `onSchedule({ timeZone })` only controls WHEN the job fires — the container itself runs in
+ * UTC, so `Date`'s local getters would produce UTC dates. Between 22:00 and midnight UTC that
+ * is already the previous day in Zurich, which silently mis-stamps `fetchedAt` (the widgets
+ * show "last updated" two hours out) and makes the interval gate read yesterday's document.
+ * So the formatting is pinned to the zone explicitly rather than inherited from the host.
  */
+export const TIME_ZONE = 'Europe/Zurich';
+
+// en-CA formats as yyyy-mm-dd, which is the StoreDate order without further rearranging.
+const DATE_FMT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
+});
+const TIME_FMT = new Intl.DateTimeFormat('en-GB', {
+  timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+});
+
+/** A Date as a StoreDate (yyyyMMdd) in Europe/Zurich wall-clock time. */
 export function toStoreDate(d: Date): string {
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  return DATE_FMT.format(d).replace(/-/g, '');
 }
 
+/** A Date as a StoreDateTime (yyyyMMddHHmmss) in Europe/Zurich wall-clock time. */
 export function toStoreDateTime(d: Date): string {
-  return toStoreDate(d) +
-    `${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}${String(d.getSeconds()).padStart(2, '0')}`;
+  return toStoreDate(d) + TIME_FMT.format(d).replace(/:/g, '');
 }
 
 /** `'2026-08-29T16:00'` (Open-Meteo's local ISO) → `{ date: '20260829', time: '16:00' }`. */
@@ -50,16 +78,22 @@ export function num(value: number | string | undefined): number {
 }
 
 /**
- * Hours since a StoreDateTime, or Infinity when the stamp is missing or unparsable —
- * an unreadable stamp must mean "fetch now", never "skip forever".
+ * Hours since a StoreDateTime, or Infinity when the stamp is missing or unparsable — an
+ * unreadable stamp must mean "fetch now", never "skip forever" (a NaN comparison would be
+ * false against any interval and skip the location on every run, forever).
+ *
+ * Both sides are read as Europe/Zurich wall clock, so the difference is real elapsed time —
+ * except across a DST switch, where it is off by an hour once a year. With a 4-hour interval
+ * that is not worth a date library.
  */
 export function hoursSince(storeDateTime: string | undefined, now: Date): number {
   if (!storeDateTime || storeDateTime.length < 14) return Number.POSITIVE_INFINITY;
-  const parsed = new Date(
-    Number(storeDateTime.slice(0, 4)), Number(storeDateTime.slice(4, 6)) - 1, Number(storeDateTime.slice(6, 8)),
-    Number(storeDateTime.slice(8, 10)), Number(storeDateTime.slice(10, 12)), Number(storeDateTime.slice(12, 14)));
-  if (Number.isNaN(parsed.getTime())) return Number.POSITIVE_INFINITY;
-  return (now.getTime() - parsed.getTime()) / 3_600_000;
+  const asEpoch = (stamp: string): number => Date.UTC(
+    Number(stamp.slice(0, 4)), Number(stamp.slice(4, 6)) - 1, Number(stamp.slice(6, 8)),
+    Number(stamp.slice(8, 10)), Number(stamp.slice(10, 12)), Number(stamp.slice(12, 14)));
+  const then = asEpoch(storeDateTime);
+  if (Number.isNaN(then)) return Number.POSITIVE_INFINITY;
+  return (asEpoch(toStoreDateTime(now)) - then) / 3_600_000;
 }
 
 /** Builds the per-day documents for one location out of a single provider response. */
