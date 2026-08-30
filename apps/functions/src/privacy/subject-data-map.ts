@@ -1255,6 +1255,11 @@ export async function resolveDocs(entry: SubjectDataEntry, ctx: SubjectCtx): Pro
 //   personal data and will need a real row here, not a line in this block. It has no model
 //   constant yet, so the completeness test does not demand it today. Do not let it ship
 //   unregistered: `uid` is in SUBJECT_LINK_FIELDS, so audit check 11 fires on its first write.
+// not personal data: weather — meteorological measurements and forecasts, one document per
+//   LOCATION and day. Keyed by locationKey, never by a person: no subject link field, no
+//   createdBy, and nothing a data subject could be identified from. That a member happens to
+//   have looked at a forecast leaves no trace here — the documents are written by the
+//   scheduler for the tenant's locations, whether anybody reads them or not.
 // not personal data: accounts — chart of accounts (account numbers, names, hierarchy)
 // not personal data: accounting-configs — per-tenant accounting settings
 // not personal data: app-config — tenant configuration; opEmail/dpoEmail are operator
