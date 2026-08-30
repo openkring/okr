@@ -59,6 +59,9 @@
     "application": {
       "created": {
         "label": "Aufnahmegesuch eingegangen"
+      },
+      "stateChanged": {
+        "label": "Stato della domanda modificato"
       }
     },
     "reservation": {

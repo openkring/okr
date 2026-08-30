@@ -138,6 +138,7 @@ export const syncPersonAccount = AccountSync.syncPersonAccount;
 // (specs 2026-08-12-workflow-trigger-rules-design.md, 2026-08-15-approval-workflow-spec.md)
 export const onReservationCreated = WorkflowEmit.onReservationCreated;
 export const onApplicationCreated = WorkflowEmit.onApplicationCreated;
+export const onApplicationStateChanged = WorkflowEmit.onApplicationStateChanged;
 export const onTaskCompleted = WorkflowEmit.onTaskCompleted;
 export const onWorkflowOutbox = WorkflowOutbox.onWorkflowOutbox;
 export const decideApproval = Approval.decideApproval;
