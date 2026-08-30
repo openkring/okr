@@ -1,97 +1,27 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { signalStore, withMethods, withProps } from '@ngrx/signals';
+import { signalStore, withProps } from '@ngrx/signals';
 import { AlertController, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonNote } from '@ionic/angular/standalone';
 import { from, of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { sanitizeFileName } from '@okr/shared-util-core';
 import { Spinner } from '@okr/shared-ui';
-import { FormDefinitionModel, FormSection } from '@okr/shared-models';
+import { FormSection } from '@okr/shared-models';
 
+import { FormSubmitService } from '@okr/forms-data-access';
 import { FormRenderer } from '@okr/forms-ui';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
 
+// The submit path itself is NOT here any more: it lives in FormSubmitService
+// (@okr/forms-data-access), shared with the FormModal a CMS button opens — spec
+// 2026-08-29-generic-workflow-triggers §6a, decision O5. Two copies of the honeypot,
+// timing and token handling would drift.
 const FormSectionStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
-  })),
-  withMethods(store => ({
-    // Public, anonymous gateway — reads the form definition server-side so it works
-    // on public pages where the formDefinitions collection is not client-readable.
-    async fetchDefinition(formKey: string): Promise<FormDefinitionModel | undefined> {
-      try {
-        const { getFunctions, httpsCallable } = await import('firebase/functions');
-        const { getApp } = await import('firebase/app');
-        const fn = httpsCallable<{ formKey: string; tenantId: string }, FormDefinitionModel>(
-          getFunctions(getApp(), 'europe-west6'),
-          'getFormDefinition',
-        );
-        const result = await fn({ formKey, tenantId: store.appStore.tenantId() });
-        return result.data;
-      } catch {
-        return undefined;   // not found / unavailable → section shows "form not found"
-      }
-    },
-
-    async fetchJsToken(formKey: string): Promise<string> {
-      try {
-        const { getFunctions, httpsCallable } = await import('firebase/functions');
-        const { getApp } = await import('firebase/app');
-        const fn = httpsCallable<{ formKey: string }, { token: string }>(
-          getFunctions(getApp(), 'europe-west6'),
-          'getFormToken',
-        );
-        const result = await fn({ formKey });
-        return result.data.token;
-      } catch {
-        return '';   // graceful degradation: server marks as missing_token
-      }
-    },
-
-    async submitForm(
-      formKey: string,
-      sectionConfigRef: string,
-      values: Record<string, unknown>,
-      pageLoadedAt: string,
-      honeypotKey: string,
-      showCaptcha: boolean,
-    ): Promise<{ submissionId: string }> {
-      const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const { getApp } = await import('firebase/app');
-      const fn = httpsCallable<unknown, { submissionId: string }>(
-        getFunctions(getApp(), 'europe-west6'),
-        'submitForm',
-      );
-      const ua = navigator.userAgent;
-      const fingerprint = btoa(ua).substring(0, 32);
-
-      // Extract spam-meta fields from values before sending to server
-      const clean = { ...values };
-      const honeypotWebsite = String(clean[honeypotKey] ?? '');
-      const jsToken = String(clean['_jsToken'] ?? '');
-      delete clean[honeypotKey];
-      delete clean['_jsToken'];
-
-      const result = await fn({
-        formKey,
-        sectionConfigRef,
-        tenantId: store.appStore.tenantId(),
-        values: clean,
-        meta: {
-          pageLoadedAt,
-          submittedAt: new Date().toISOString(),
-          honeypotWebsite,
-          jsToken,
-          userAgentFingerprint: fingerprint,
-          showCaptcha,
-        },
-      });
-      return result.data;
-    },
   }))
 );
 
@@ -136,6 +66,7 @@ const FormSectionStore = signalStore(
 export class FormSectionComponent {
   protected readonly store = inject(FormSectionStore);
   private readonly alertController = inject(AlertController);
+  private readonly formSubmitService = inject(FormSubmitService);
 
   public readonly section = input.required<FormSection>();
   public readonly editMode = input(false);
@@ -150,7 +81,9 @@ export class FormSectionComponent {
   protected readonly definitionResource = rxResource({
     params: () => ({ formKey: this.section().properties?.formKey }),
     stream: ({ params }: { params: { formKey: string } }) =>
-      params.formKey ? from(this.store.fetchDefinition(params.formKey)) : of(undefined),
+      params.formKey
+        ? from(this.formSubmitService.fetchDefinition(params.formKey, this.store.appStore.tenantId()))
+        : of(undefined),
   });
 
   protected readonly definition = computed(() => {
@@ -163,7 +96,7 @@ export class FormSectionComponent {
     effect(async () => {
       const def = this.definition();
       if (def?.formKey) {
-        const token = await this.store.fetchJsToken(def.formKey);
+        const token = await this.formSubmitService.fetchJsToken(def.formKey);
         this.jsToken.set(token);
       }
     });
@@ -175,15 +108,19 @@ export class FormSectionComponent {
     this.submitting.set(true);
     this.errorMsg.set('');
     try {
-      const processedValues = await this.uploadFiles(values, def);
-      await this.store.submitForm(
-        def.formKey,
-        this.section().okey ?? '',
-        processedValues,
-        this.pageLoadedAt,
-        def.honeypotKey || 'website',
-        this.section().properties?.showCaptcha ?? false,
-      );
+      const processedValues = await this.formSubmitService.uploadFiles(values, def, {
+        encryptFileUpload: this.section().properties?.encryptFileUpload ?? false,
+        askPassword: () => this.promptEncryptionPassword(),
+      });
+      await this.formSubmitService.submit({
+        formKey: def.formKey,
+        sectionConfigRef: this.section().okey ?? '',
+        tenantId: this.store.appStore.tenantId(),
+        values: processedValues,
+        pageLoadedAt: this.pageLoadedAt,
+        honeypotKey: def.honeypotKey || 'website',
+        showCaptcha: this.section().properties?.showCaptcha ?? false,
+      });
       this.submitted.set(true);
     } catch {
       this.errorMsg.set(this.store.i18n.form_submit_error());
@@ -204,58 +141,5 @@ export class FormSectionComponent {
         ],
       }).then(alert => alert.present());
     });
-  }
-
-  private async uploadFiles(
-    values: Record<string, unknown>,
-    def: import('@okr/shared-models').FormDefinitionModel,
-  ): Promise<Record<string, unknown>> {
-    const encryptFileUpload = this.section().properties?.encryptFileUpload ?? false;
-    const hasFiles = Object.values(values).some(v => v instanceof File);
-    if (!hasFiles) return values;
-
-    const { uploadToFirebaseStorage } = await import('@okr/shared-config');
-    const { getDownloadURL } = await import('firebase/storage');
-    const result = { ...values };
-
-    // Ask for password once before processing all files
-    let password = '';
-    if (encryptFileUpload && def.encryptionSalt) {
-      password = await this.promptEncryptionPassword();
-      if (!password) throw new Error('Encryption password not provided');
-    }
-
-    for (const [key, val] of Object.entries(result)) {
-      if (!(val instanceof File)) continue;
-      const path = `forms/${def.formKey}/${crypto.randomUUID()}-${sanitizeFileName(val.name)}`;
-
-      if (encryptFileUpload && def.encryptionSalt && password) {
-        const { encryptFile } = await import('@okr/forms-util');
-        const encrypted = await encryptFile(val, password, def.encryptionSalt);
-        const encBlob = new File([encrypted.ciphertext], val.name + '.enc', { type: 'application/octet-stream' });
-        const task = uploadToFirebaseStorage(path + '.enc', encBlob);
-        const snap = await new Promise<import('firebase/storage').UploadTaskSnapshot>(
-          (res, rej) => task.on('state_changed', undefined, rej, () => res(task.snapshot))
-        );
-        const url = await getDownloadURL(snap.ref);
-        const ivBase64 = btoa(String.fromCharCode(...encrypted.iv));
-        result[key] = {
-          encryptedName: btoa(val.name),
-          ivBase64,
-          saltBase64: def.encryptionSalt,
-          mimeType: val.type,
-          sizeBytes: val.size,
-          storageUrl: url,
-        };
-      } else {
-        const task = uploadToFirebaseStorage(path, val);
-        const snap = await new Promise<import('firebase/storage').UploadTaskSnapshot>(
-          (res, rej) => task.on('state_changed', undefined, rej, () => res(task.snapshot))
-        );
-        const url = await getDownloadURL(snap.ref);
-        result[key] = { name: val.name, mimeType: val.type, sizeBytes: val.size, storageUrl: url };
-      }
-    }
-    return result;
   }
 }
