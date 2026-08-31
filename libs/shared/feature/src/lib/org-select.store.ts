@@ -34,7 +34,7 @@ export const OrgSelectStore = signalStore(
   withComputed((store) => {
     return {
       orgs: computed(() => store.appStore.allOrgs()),
-      isLoading: computed(() => store.appStore.isLoading())
+      isLoading: computed(() => store.appStore.isReferenceDataLoading())
     }
   }),
 

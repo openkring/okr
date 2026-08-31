@@ -63,7 +63,7 @@ export const PersonSelectStore = signalStore(
     return {
       // A deceased person is never offered, on either level.
       persons: computed(() => store.appStore.allPersons().filter((p: PersonModel) => !p.isDeceased)),
-      isLoading: computed(() => store.appStore.isLoading()),
+      isLoading: computed(() => store.appStore.isReferenceDataLoading()),
       // state === 'active' is not enough: scs has memberships left at 'active' with a dateOfExit
       // years in the past (e.g. exited 2016-12-31), so the exit date decides who is current.
       memberKeys: computed(() => {

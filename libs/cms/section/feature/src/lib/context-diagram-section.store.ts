@@ -142,7 +142,7 @@ export const ContextDiagramStore = signalStore(
     }),
   })),
   withComputed((state) => ({
-    isLoading: computed(() => state.relationsResource.isLoading() || state.appStore.isLoading()),
+    isLoading: computed(() => state.relationsResource.isLoading() || state.appStore.isReferenceDataLoading()),
 
     graphData: computed((): { nodes: ContextDiagramNode[]; edges: ContextDiagramEdge[] } => {
       const config = state.config();

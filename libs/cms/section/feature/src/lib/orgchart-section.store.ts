@@ -84,7 +84,7 @@ export const OrgchartStore = signalStore(
   })),
   withComputed((state) => ({
     allGroups: computed(() => state.groupsResource.value() ?? []),
-    isLoading: computed(() => state.groupsResource.isLoading() || state.appStore.isLoading()),
+    isLoading: computed(() => state.groupsResource.isLoading() || state.appStore.isReferenceDataLoading()),
     rootNode: computed((): OrgchartTreeNode | undefined => {
       const { modelType, key } = parseTopElement(state.topElement());
       if (modelType === 'org') {

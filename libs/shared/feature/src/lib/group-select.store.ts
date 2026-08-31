@@ -35,7 +35,7 @@ export const GroupSelectStore = signalStore(
   withComputed((store) => {
     return {
       groups: computed(() => store.appStore.allGroups()),
-      isLoading: computed(() => store.appStore.isLoading())
+      isLoading: computed(() => store.appStore.isReferenceDataLoading())
     }
   }),
 

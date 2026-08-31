@@ -413,6 +413,12 @@ export const AppStore = signalStore(
     // Folge: getPerson() & Co. liefern kurzzeitig undefined im Sinne von "noch nicht geladen"
     // statt "nicht gefunden". Beide Fälle waren schon immer undefined, der Typ ändert sich nicht.
     isLoading: computed(() => state.currentUserResource.isLoading() || state.appConfigResource.isLoading()),
+    // Die Nachschlagedaten (persons, orgs, resources, tags) sind vollständig geladen. NICHT mit
+    // isLoading verwechseln: das ist der App-Ready-Gate (Rollen + App-Konfiguration) und wartet
+    // bewusst NICHT auf Nachschlagedaten. Wer eine Auswahlliste oder ein Diagramm erst zeigen will,
+    // wenn die Namen da sind, fragt diese Eigenschaft — sonst rendert er kurz eine leere Liste.
+    isReferenceDataLoading: computed(() => state.personsResource.isLoading() || state.orgsResource.isLoading() ||
+        state.resourcesResource.isLoading() || state.tagsResource.isLoading()),
   })),
 
   withComputed((store) => ({
