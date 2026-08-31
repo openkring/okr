@@ -10,7 +10,7 @@ import { App } from '@capacitor/app';
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { die, getSystemQuery, openInvitationsOf, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
+import { die, getSystemQuery, indexBy, openInvitationsOf, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
 import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -270,6 +270,10 @@ export const AppStore = signalStore(
       // parentKey ('person.<okey>' | 'org.<okey>') -> its directory projection doc
       addressDirectoryMap: computed(() => new Map(
         (state.addressDirectoryResource.value() ?? []).map((d: AddressDirectoryModel) => [d.parentKey, d]))),
+      personsMap: computed(() => indexBy(state.personsResource.value() ?? [], p => p.okey)),
+      orgsMap: computed(() => indexBy(state.orgsResource.value() ?? [], o => o.okey)),
+      groupsMap: computed(() => indexBy(state.groupsResource.value() ?? [], g => g.okey)),
+      resourcesMap: computed(() => indexBy(state.resourcesResource.value() ?? [], r => r.okey)),
       allGroups: computed(() => state.groupsResource.value() ?? []),
       allResources: computed(() => state.resourcesResource.value() ?? []),
       allTags: computed(() => state.tagsResource.value() ?? []),
@@ -411,7 +415,7 @@ export const AppStore = signalStore(
     return {
       getPerson(key: string): PersonModel | undefined {
         if (!key) return undefined;
-        return store.allPersons()?.find(p => p.okey === key);
+        return store.personsMap().get(key);
       },
 
       /**
@@ -454,7 +458,7 @@ export const AppStore = signalStore(
       },
       getOrg(key: string) {
         if (!key) return undefined;
-        return store.allOrgs()?.find(p => p.okey === key);
+        return store.orgsMap().get(key);
       },
 
       getOrgByAttribute(attributeName: string, attributeValue: string): OrgModel | undefined {
@@ -464,11 +468,11 @@ export const AppStore = signalStore(
 
       getGroup(key: string) {
         if (!key) return undefined;
-        return store.allGroups()?.find(p => p.okey === key);
+        return store.groupsMap().get(key);
       },
       getResource(key: string) {
         if (!key) return undefined;
-        return store.allResources()?.find(p => p.okey === key);
+        return store.resourcesMap().get(key);
       },
 
       replacePlaceholders(text: string): string {
