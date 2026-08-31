@@ -210,17 +210,19 @@ export const ResourceStore = signalStore(
         if (role === 'confirm' && data && !readOnly) {
           if (isResource(data, store.tenantId())) {
             resource.okey === '' ?
-              await store.resourceService.create(data, store.currentUser()) : 
+              await store.resourceService.create(data, store.currentUser()) :
               await store.resourceService.update(data, store.currentUser());
+            store.appStore.reloadResources();
           }
         }
-        this.reload();        
+        this.reload();
       },
 
       async delete(resource: ResourceModel, readOnly = true): Promise<void> {
         if (readOnly) return;
         await store.resourceService.delete(resource, store.currentUser());
         store.resourceResource.reload();
+        store.appStore.reloadResources();
       },
 
       /******************************** Bootseinteilung ******************************************* */
@@ -234,6 +236,7 @@ export const ResourceStore = signalStore(
         const changed = setUsageFromYear(boat.usage, year, usage);
         if (changed === boat.usage) return;
         await store.resourceService.update({ ...boat, usage: changed }, store.currentUser());
+        store.appStore.reloadResources();
       },
 
       /** Write one cell of the target-count grid. The doc is created on first write. */
@@ -316,9 +319,10 @@ export const ResourceStore = signalStore(
 
       async save(resource?: ResourceModel): Promise<void> {
         if (!resource) return;
-        await (!resource.okey ? 
-          store.resourceService.create(resource, store.currentUser()) : 
+        await (!resource.okey ?
+          store.resourceService.create(resource, store.currentUser()) :
           store.resourceService.update(resource, store.currentUser()));
+        store.appStore.reloadResources();
       },
 
       /**

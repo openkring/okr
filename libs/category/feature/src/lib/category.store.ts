@@ -108,8 +108,9 @@ export const CategoryStore = signalStore(
         if (role === 'confirm' && data && !readOnly) {
           if (isCategoryList(data, store.appStore.tenantId())) {
             category.okey === '' ?
-              await store.categoryService.create(data, store.currentUser()) : 
+              await store.categoryService.create(data, store.currentUser()) :
               await store.categoryService.update(data, store.currentUser());
+            store.appStore.reloadCategories();
           }
         }
         store.categoriesResource.reload();
@@ -119,6 +120,7 @@ export const CategoryStore = signalStore(
         if (readOnly) return;
         await store.categoryService.delete(cat, store.currentUser());
         this.reset();
+        store.appStore.reloadCategories();
       },
 
       async export(type: string): Promise<void> {
