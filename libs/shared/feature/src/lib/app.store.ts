@@ -387,8 +387,13 @@ export const AppStore = signalStore(
       return !state.currentUserResource.isLoading();
     }),
     showDebugInfo: computed(() => state.currentUser()?.showDebugInfo ?? state.appConfig().showDebugInfo ?? false),
-    isLoading: computed(() => state.currentUserResource.isLoading() || state.personsResource.isLoading() || state.orgsResource.isLoading() ||
-        state.resourcesResource.isLoading() || state.tagsResource.isLoading()),
+    // Nur Rollen (currentUser) und App-Konfiguration entscheiden über Routen und Sichtbarkeit —
+    // darauf muss der Ready-Gate warten. Nachschlagedaten (persons, orgs, resources, tags) nicht:
+    // die Seite rendert, die Namen erscheinen Sekundenbruchteile später. Siehe
+    // planning/specs/2026-08-31-appstore-reference-data-design.md, §3.2.
+    // Folge: getPerson() & Co. liefern kurzzeitig undefined im Sinne von "noch nicht geladen"
+    // statt "nicht gefunden". Beide Fälle waren schon immer undefined, der Typ ändert sich nicht.
+    isLoading: computed(() => state.currentUserResource.isLoading() || state.appConfigResource.isLoading()),
   })),
 
   withComputed((store) => ({
