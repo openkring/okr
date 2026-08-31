@@ -59,6 +59,19 @@ type AttendanceFilter = AttendanceState | 'all';
          otherwise the last hours of the time grid get clipped on narrow screens. */
       full-calendar { width: 100%; }
 
+      /* empty calendar: the message floats over the (still interactive) grid */
+      .calendar-host { position: relative; }
+      .calendar-empty-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        width: min(90%, 420px);
+        pointer-events: none;
+        opacity: 0.95;
+      }
+
       :host ::ng-deep .fc-toolbar-title {
         font-size: 0.9rem !important;
         font-weight: 500;
@@ -246,20 +259,27 @@ type AttendanceFilter = AttendanceState | 'all';
     @if(isLoading()) {
       <okr-spinner />
     } @else {
-      @if(filteredCalEventsCount() === 0) {
-        <okr-empty-list [message]="store.i18n.empty()" />
+      @if(isListView() === false) {
+        <!-- calendar view: the grid stays visible even without events; the empty message
+             is laid over it so the user keeps the toolbar and can still create an event. -->
+        <ion-card>
+          <ion-card-content>
+            <div class="calendar-host" [style.display]="'block'">
+              <full-calendar #fullCalendar
+                [options]="calendarOptions()"
+                [events]="calendarEvents()"
+              />
+              @if(filteredCalEventsCount() === 0) {
+                <div class="calendar-empty-overlay">
+                  <okr-empty-list [message]="store.i18n.empty()" />
+                </div>
+              }
+            </div>
+          </ion-card-content>
+        </ion-card>
       } @else {
-        @if(isListView() === false) {
-          <ion-card>
-            <ion-card-content>
-              <div [style.display]="'block'">
-                <full-calendar #fullCalendar
-                  [options]="calendarOptions()"
-                  [events]="calendarEvents()" 
-                />
-              </div>
-            </ion-card-content>
-          </ion-card>
+        @if(filteredCalEventsCount() === 0) {
+          <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
             @for(event of filteredCalEvents(); track event.okey; let i = $index) {
