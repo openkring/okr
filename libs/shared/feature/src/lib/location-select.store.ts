@@ -73,7 +73,7 @@ export const LocationSelectStore = signalStore(
   })),
 
   withComputed((store) => ({
-    isLoading: computed(() => store.appStore.isLoading()),
+    isLoading: computed(() => store.locationsResource.isLoading()),
     locations: computed(() => store.locationsResource.value() ?? [])
   })),
 

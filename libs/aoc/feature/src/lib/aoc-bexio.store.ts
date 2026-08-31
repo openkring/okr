@@ -274,6 +274,10 @@ export const AocBexioStore = signalStore(
           }
         }
       }
+      // 5b wrote persons/orgs one at a time inside the loop above (bexioId reconciliation) —
+      // reload the AppStore reference data ONCE here, after the whole reconcile pass, not per record.
+      store.appStore.reloadPersons();
+      store.appStore.reloadOrgs();
       // now we have a list of persons and orgs with bexioId that matches with the memberships
       console.log('now we have ' + index.length + ' persons and orgs with bexioId that matches with the memberships.');
 
@@ -456,6 +460,11 @@ export const AocBexioStore = signalStore(
           : i
         ),
       });
+      if (item.type === 'person') {
+        store.appStore.reloadPersons();
+      } else {
+        store.appStore.reloadOrgs();
+      }
     },
 
     getCategoryAbbreviation(mcat: string): string {
@@ -551,6 +560,12 @@ export const AocBexioStore = signalStore(
             : i
           ),
         });
+        if (item.type === 'person') {
+          store.appStore.reloadPersons();
+        } else {
+          store.appStore.reloadOrgs();
+        }
+        store.appStore.reloadAddressDirectory();
       }
     },
 
@@ -608,6 +623,7 @@ export const AocBexioStore = signalStore(
           : i
         ),
       });
+      store.appStore.reloadAddressDirectory();
     },
 
     async saveAddress(address: AddressModel, avatarKey: string): Promise<string | undefined> {

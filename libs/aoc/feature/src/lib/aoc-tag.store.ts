@@ -105,10 +105,14 @@ export const AocTagStore = signalStore(
     const saveTags = async (tag: TagItem, tags: string, confirmMessage: string, errorMessage: string): Promise<void> => {
       if (isOwnedBy(tag, store.appStore.env.tenantId)) {
         await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tags }, false, confirmMessage, errorMessage, store.appStore.currentUser());
+        store.appStore.reloadTags();
         return;
       }
       const forkedKey = await store.firestoreService.forkModel<TagItem>(TagCollection, tag, { tags }, errorMessage);
-      if (forkedKey) patchState(store, { selectedTagKey: forkedKey });
+      if (forkedKey) {
+        patchState(store, { selectedTagKey: forkedKey });
+        store.appStore.reloadTags();
+      }
     };
 
     /** The current tenant's override row for a (module, key) pair, if it has one. */
@@ -166,6 +170,7 @@ export const AocTagStore = signalStore(
       tag.tagModel = modelName.trim();
       tag.tags = '';
       await store.firestoreService.createModel<TagItem>(TagCollection, { ...tag, okey: '' }, store.i18n.tag_create_conf(), store.i18n.tag_create_error(), store.appStore.currentUser());
+      store.appStore.reloadTags();
     },
 
     async archiveTagDocument(tag: TagItem): Promise<void> {
@@ -178,9 +183,11 @@ export const AocTagStore = signalStore(
       if (!isOwnedBy(tag, store.appStore.env.tenantId)) {
         const tenants = (tag.tenants ?? []).filter(t => t !== store.appStore.env.tenantId);
         await store.firestoreService.updateModel<TagItem>(TagCollection, { ...tag, tenants }, false, store.i18n.tag_delete_conf(), store.i18n.tag_delete_error(), store.appStore.currentUser());
+        store.appStore.reloadTags();
         return;
       }
       await store.firestoreService.deleteModel<TagItem>(TagCollection, { ...tag }, store.i18n.tag_delete_conf(), store.i18n.tag_delete_error(), store.appStore.currentUser());
+      store.appStore.reloadTags();
     },
 
     async addTagString(tag: TagItem): Promise<void> {

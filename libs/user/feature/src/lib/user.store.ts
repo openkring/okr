@@ -129,6 +129,7 @@ export const UserStore = signalStore(
             // Persist the usage* privacy preferences directly onto the linked person.
             if (person) {
               await store.firestoreService.updateModel<PersonModel>(PersonCollection, person, false, undefined, undefined, store.currentUser());
+              store.appStore.reloadPersons();
             }
           }
         }

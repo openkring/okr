@@ -268,6 +268,8 @@ export const PersonStore = signalStore(
                 await this.saveMembership(p, candidate.okey);
             }
             this.reload();
+            store.appStore.reloadPersons();
+            store.appStore.reloadAddressDirectory();
         },
 
         /**

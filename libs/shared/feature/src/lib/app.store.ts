@@ -414,7 +414,7 @@ export const AppStore = signalStore(
     // statt "nicht gefunden". Beide Fälle waren schon immer undefined, der Typ ändert sich nicht.
     isLoading: computed(() => state.currentUserResource.isLoading() || state.appConfigResource.isLoading()),
     // Die Nachschlagedaten (persons, orgs, resources, tags) sind vollständig geladen. NICHT mit
-    // isLoading verwechseln: das ist der App-Ready-Gate (Rollen + App-Konfiguration) und wartet
+    // isLoading verwechseln: das ist der isDataReady-Gate (Rollen + App-Konfiguration) und wartet
     // bewusst NICHT auf Nachschlagedaten. Wer eine Auswahlliste oder ein Diagramm erst zeigen will,
     // wenn die Namen da sind, fragt diese Eigenschaft — sonst rendert er kurz eine leere Liste.
     isReferenceDataLoading: computed(() => state.personsResource.isLoading() || state.orgsResource.isLoading() ||
@@ -565,16 +565,6 @@ export const AppStore = signalStore(
       },
 
       /**
-       * This returns the name of the default icon for a given ModelType.
-       * For most ModelTypes, this is the icon defined in categories model_type.
-       * For most Resources, it is the icon defined in categories resource_type.
-       * For rowing boats (resource_type = 'rboat'), it is the icon defined in categories rboat_type and the subType.
-       * @param modelType
-       * @param type
-       * @param subType
-       * @returns the name of the default icon (without path and without file extension)
-       */
-       /**
        * Nachladen der einmalig geladenen Referenzdaten. Aufzurufen, nachdem die App SELBST in die
        * jeweilige Collection geschrieben hat — fremde Änderungen erscheinen erst beim nächsten
        * Laden der App. Siehe planning/specs/2026-08-31-appstore-reference-data-design.md, §3.3.
@@ -586,6 +576,16 @@ export const AppStore = signalStore(
       reloadCategories(): void { store.categoriesResource.reload(); },
       reloadAddressDirectory(): void { store.addressDirectoryResource.reload(); },
 
+      /**
+       * This returns the name of the default icon for a given ModelType.
+       * For most ModelTypes, this is the icon defined in categories model_type.
+       * For most Resources, it is the icon defined in categories resource_type.
+       * For rowing boats (resource_type = 'rboat'), it is the icon defined in categories rboat_type and the subType.
+       * @param modelType
+       * @param type
+       * @param subType
+       * @returns the name of the default icon (without path and without file extension)
+       */
       getDefaultIcon(modelType?: string, type?: string, subType?: string): string {
         if (!modelType) return 'other';
         if (modelType === ResourceModelName && type && type.length) {

@@ -221,6 +221,7 @@ export const OrgStore = signalStore(
       await (!org.okey ?
         store.orgService.create(org, store.currentUser()) :
         store.orgService.update(org, store.currentUser()));
+      store.appStore.reloadOrgs();
     },
 
     async saveAvatar(photo: Photo, okey: string): Promise<void> {
@@ -235,6 +236,7 @@ export const OrgStore = signalStore(
       if (result === true) {
         await store.orgService.delete(org, store.currentUser());
         this.reload();
+        store.appStore.reloadOrgs();
       }
     },
 

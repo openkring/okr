@@ -131,6 +131,7 @@ export const ProfileStore = signalStore(
           // accordion — the person is the tenant-readable source for getPersonPrivacySettings.
           await store.firestoreService.updateModel<PersonModel>(PersonCollection, newPerson, false, undefined, undefined, user);
           await store.personService.syncSensitiveChannels(newPerson.okey, sensitive, user);
+          store.appStore.reloadPersons();
         }
         if (user) {
           await store.firestoreService.updateModel<UserModel>(UserCollection, user, false, store.i18n.update_conf(), store.i18n.update_error(), user);
