@@ -40,6 +40,32 @@ Collection name: `calevents`
 | `responsiblePersons` | AvatarInfo[] | Persons responsible for the event |
 | `isOpen` | boolean | If true, attendees can self-register; if false, use invitations |
 | `attendees` | Attendee[] | List of `{ person: AvatarInfo, state: 'invited' \| 'accepted' \| 'declined' }` |
+| `maxAttendees` | number | Participant cap for an open event; `0` (the default) = unrestricted. Undefined on documents written before the field existed — always read it as `?? 0`. |
+
+## Participant cap and waiting list
+
+An open event may cap participation with `maxAttendees` (`0` = unrestricted, the default). The
+waiting list is **derived, never stored**: `splitAttendees` takes the attendees with state
+`'accepted'` in array order — which is sign-up order, since `changeAttendanceState` appends — and
+calls the first `maxAttendees` of them confirmed and the remainder waiting. `AttendeesAccordion`
+renders confirmed, a divider labelled *Warteliste*, the waiting block, and finally everyone who
+occupies no slot (declined / not yet answered).
+
+Two consequences are load-bearing:
+
+- **A sign-up past the cap is recorded, not refused.** The user is told
+  *„Die maximale Teilnehmerzahl ist erreicht, du kommst auf die Warteliste."* — the message
+  announces their position; the entry is written either way. Nothing else would give the waiting
+  list anyone to show.
+- **Moving INTO `'accepted'` appends; it never edits the entry in place.** Because rank is array
+  position, a member who declined and later changed their mind would otherwise reclaim their
+  original early slot and silently push a confirmed attendee onto the waiting list. Re-joining a
+  queue means joining at the back. Both `CalEventStore.changeAttendanceState` and
+  `AttendeesAccordion.changeState` apply this rule.
+
+Only `'accepted'` competes for a slot, so declining frees one immediately and the next person is
+promoted by the next render — no second write. The organiser's manual `+` in the accordion is
+deliberately unrestricted; anyone added past the cap simply appears below the line.
 
 ## Recurring Series Logic
 

@@ -25,7 +25,7 @@ import { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
-import { CALEVENT_I18N_KEYS, CalEventNotifyFormData, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, CalEventNotifyFormData, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { CalEventNotifyModal, RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 
 /**
@@ -1209,12 +1209,33 @@ export const CalEventStore = signalStore(
         }
       },
 
+      /**
+       * Records the current user's own attendance in the event's `attendees`.
+       *
+       * Two rules exist only because of the participant cap (`maxAttendees`), which is derived from
+       * ARRAY ORDER — the first `maxAttendees` accepted entries are confirmed, the rest wait
+       * (`splitAttendees`):
+       *
+       * - Someone accepting from a non-accepted state is moved to the END of the list. Editing their
+       *   old entry in place would let a member who declined and later changed their mind reclaim
+       *   their original early position and silently push a confirmed attendee onto the waiting
+       *   list. Re-joining a queue means joining at the back.
+       * - When the event was already full before this write, the user is told they landed on the
+       *   waiting list. Their sign-up is still recorded — the message announces the position, it
+       *   does not refuse the entry.
+       */
       async changeAttendanceState(calEvent: CalEventModel, newState: 'accepted' | 'declined' | 'invited'): Promise<void> {
         const currentUser = store.currentUser();
         if (!currentUser) return;
         const attendee = getAttendee(calEvent, currentUser.personKey ?? '');
+        // read the cap BEFORE the write: afterwards this user is part of the accepted count
+        const waitlisted = newState === 'accepted' && attendee?.state !== 'accepted' && isCaleventFull(calEvent);
         if (attendee) {
-          attendee.state = newState;
+          if (newState === 'accepted' && attendee.state !== 'accepted') {
+            calEvent.attendees = [...calEvent.attendees.filter(a => a !== attendee), { ...attendee, state: newState }];
+          } else {
+            attendee.state = newState;
+          }
         } else {
           const avatar = getAvatarInfoForCurrentUser(currentUser);
           if (!avatar) return;
@@ -1225,6 +1246,7 @@ export const CalEventStore = signalStore(
           calEvent.attendees.push(newAttendee);
         }
         await store.appStore.firestoreService.updateModel<CalEventModel>(CalEventCollection, calEvent, false, store.i18n.update_conf(), store.i18n.update_error(), currentUser);
+        if (waitlisted) await showToast(store.toastController, store.i18n.attendance_waitlist_hint());
       },
 
       /**

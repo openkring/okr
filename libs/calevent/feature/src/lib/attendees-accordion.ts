@@ -1,16 +1,17 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonImg, IonItem, IonLabel, IonList, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { Attendee, CalEventModel, MembershipModel, UserModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { CountPill, EmptyList } from '@okr/shared-ui';
-import { coerceBoolean, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@okr/shared-util-core';
+import { coerceBoolean, fill, getAttendanceColor, getAttendanceIcon, isOngoing, isPerson } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
 import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { CALEVENT_I18N_KEYS, CaleventI18n, isPastCalevent } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, CaleventI18n, isPastCalevent, splitAttendees } from '@okr/calevent-util';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 
@@ -23,6 +24,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
   selector: 'okr-attendees-accordion',
   standalone: true,
   imports: [
+    NgTemplateOutlet,
     AvatarPipe, FullNamePipe, SvgIconPipe,
     EmptyList, CountPill,
     IonAccordion, IonItem, IonLabel, IonList, IonImg, IonAvatar, IonIcon, IonButton
@@ -37,6 +39,25 @@ import { AvatarPipe } from '@okr/avatar-ui';
     /* Ionic sets .accordion-expanded on the host while the accordion is open. */
     ion-accordion.accordion-expanded .header-icon { color: var(--ion-color-primary); }
     ion-accordion.accordion-expanded ion-label { color: var(--ion-color-primary-shade); font-weight: 600; }
+    /* the line between the confirmed attendees and the waiting list */
+    .waitlist-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px 6px;
+      color: var(--ion-color-warning-shade);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .waitlist-divider::before,
+    .waitlist-divider::after {
+      content: '';
+      flex: 1;
+      border-top: 2px solid var(--ion-color-warning);
+    }
+    .waiting-count { color: var(--ion-color-warning-shade); }
     ion-accordion.accordion-expanded okr-count-pill {
       --okr-pill-background: var(--ion-color-primary-tint);
       --okr-pill-color: var(--ion-color-primary-shade);
@@ -59,25 +80,44 @@ import { AvatarPipe } from '@okr/avatar-ui';
         <okr-empty-list [message]="i18n.attendance_empty()" />
       } @else {
         <ion-list lines="inset">
-          @for(attendee of attendees(); track $index) {
-            <ion-item (click)="showActions(attendee)">
-              <ion-icon slot="start" src="{{getAttendanceIcon(attendee.state) | svgIcon }}" color="{{getAttendanceColor(attendee.state)}}" />
-              <ion-avatar slot="start">
-                <ion-img src="{{ 'person.' + attendee.person.key | avatar:'person' }}" alt="attendee avatar" />
-              </ion-avatar>
-              <ion-label>{{ attendee.person.name1| fullName: attendee.person.name2 }}</ion-label>
-              @if(!isReadOnly()) {
-                <ion-icon slot="end" color="danger" src="{{'cancel' | svgIcon }}" (click)="remove(attendee, $event)" />
-              }
-            </ion-item>
+          <!-- confirmed, then the waiting list below the divider, then everyone who occupies no
+               slot (declined / not yet answered). The order comes from splitAttendees. -->
+          @for(attendee of split().confirmed; track $index) {
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: attendee }" />
+          }
+          @if(split().waiting.length > 0) {
+            <div class="waitlist-divider"><span>{{ i18n.attendance_waitlist() }}</span></div>
+            @for(attendee of split().waiting; track $index) {
+              <ng-container *ngTemplateOutlet="row; context: { $implicit: attendee }" />
+            }
+          }
+          @for(attendee of split().others; track $index) {
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: attendee }" />
           }
         </ion-list>
         <ion-list lines="none">
-          <ion-label>{{ acceptedCount()}}/{{attendees().length }} {{ i18n.attendance_accepted() }}</ion-label>
+          <ion-label>
+            {{ countLabel() }}
+            @if(split().waiting.length > 0) { <span class="waiting-count"> · {{ waitingLabel() }}</span> }
+          </ion-label>
         </ion-list>
       }
     </div>
   </ion-accordion>
+
+  <!-- one row definition for all three blocks -->
+  <ng-template #row let-attendee>
+    <ion-item (click)="showActions(attendee)">
+      <ion-icon slot="start" src="{{getAttendanceIcon(attendee.state) | svgIcon }}" color="{{getAttendanceColor(attendee.state)}}" />
+      <ion-avatar slot="start">
+        <ion-img src="{{ 'person.' + attendee.person.key | avatar:'person' }}" alt="attendee avatar" />
+      </ion-avatar>
+      <ion-label>{{ attendee.person.name1 | fullName: attendee.person.name2 }}</ion-label>
+      @if(!isReadOnly()) {
+        <ion-icon slot="end" color="danger" src="{{'cancel' | svgIcon }}" (click)="remove(attendee, $event)" />
+      }
+    </ion-item>
+  </ng-template>
   `,
 })
 export class AttendeesAccordion {
@@ -105,6 +145,20 @@ export class AttendeesAccordion {
   protected attendees = linkedSignal(() => this.calevent().attendees || []);
   protected acceptedCount = computed(() =>
     this.attendees().filter(inv => inv.state === 'accepted').length
+  );
+  /**
+   * Confirmed / waiting / the rest. The waiting list is not stored: it is whatever exceeds
+   * `maxAttendees` in sign-up order — so an unsubscription promotes the next person by itself.
+   */
+  protected split = computed(() => splitAttendees(this.attendees(), this.calevent().maxAttendees));
+  /** '3/12 bestätigt' on a capped event, the plain '3/5 Teilnahmen' count on an uncapped one. */
+  protected countLabel = computed(() => {
+    const max = this.calevent().maxAttendees ?? 0;
+    if (max <= 0) return `${this.acceptedCount()}/${this.attendees().length} ${this.i18n.attendance_accepted()}`;
+    return fill(this.i18n.attendance_confirmed_count(), { confirmed: this.split().confirmed.length, max });
+  });
+  protected waitingLabel = computed(() =>
+    fill(this.i18n.attendance_waiting_count(), { count: this.split().waiting.length })
   );
 
   /******************************* actions *************************************** */
@@ -204,7 +258,17 @@ export class AttendeesAccordion {
     }
   }
 
+  /**
+   * Someone moving INTO 'accepted' is appended rather than edited in place: the waiting list is
+   * derived from array order, so keeping their old position would let a person who declined and
+   * changed their mind reclaim an early slot and push a confirmed attendee onto the waiting list.
+   * Same rule as CalEventStore.changeAttendanceState.
+   */
   private async changeState(attendee: Attendee, newState: 'accepted' | 'declined'): Promise<void> {
+    if (newState === 'accepted' && attendee.state !== 'accepted') {
+      await this.saveAttendees([...this.attendees().filter(a => a !== attendee), { ...attendee, state: newState }]);
+      return;
+    }
     await this.saveAttendees(this.attendees().map(a => a === attendee ? { ...a, state: newState } : a));
   }
 

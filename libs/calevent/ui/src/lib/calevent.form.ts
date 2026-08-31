@@ -243,6 +243,30 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
       />
     }
 
+    <!-- ANMELDUNG: only an open event has an attendees list to cap. A personal event has neither. -->
+    @if(!isPersonal()) {
+      <ion-card>
+        <ion-card-content class="ion-no-padding">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12">
+                <okr-checkbox [i18n]="isOpenI18n()" [checked]="isOpen()" (checkedChange)="onFieldChange('isOpen', $event)" [toggle]="true" iconName="people" labelPlacement="start" justify="space-between" [readOnly]="isReadOnly()" />
+              </ion-col>
+            </ion-row>
+            <!-- the cap governs self-sign-up, so it only earns a row once the event is open -->
+            @if(isOpen()) {
+              <ion-row class="revealed">
+                <ion-col size="12" size-md="6">
+                  <okr-number-input [i18n]="maxAttendeesI18n()" [value]="maxAttendees()" (valueChange)="onFieldChange('maxAttendees', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="maxAttendeesErrors()" />
+                </ion-col>
+              </ion-row>
+            }
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+    }
+
     <!---------------------------------------------------
       ORGANISATION: calendars and tags are internal organisation data — behind the toolbar toggle
       --------------------------------------------------->
@@ -325,6 +349,7 @@ export class CalEventForm {
   protected locationKeyErrors = computed(() => this.validationResult().getErrors('locationKey'));
   // stringArrayValidations files a bad tag under 'tags[0]', not 'tags' — collect both
   protected tagsErrors = computed(() => this.errorsFor('tags'));
+  protected maxAttendeesErrors = computed(() => this.validationResult().getErrors('maxAttendees'));
   /**
    * The fields that currently show their own okr-error-note. Computed, not a constant: whether
    * location/tags are on screen depends on expertMode, so a registered user's hidden tag error
@@ -335,6 +360,7 @@ export class CalEventForm {
     if (!this.isPersonal() && this.isRecurring()) fields.push('repeatUntilDate');
     if (this.canExpert() && !this.isPersonal()) fields.push('locationKey');
     if (this.expertMode() && !this.isPersonal()) fields.push('tags');
+    if (!this.isPersonal() && this.isOpen()) fields.push('maxAttendees');
     return fields;
   });
   protected unrenderedErrors = computed(() => {
@@ -363,6 +389,9 @@ export class CalEventForm {
   protected type = linkedSignal(() => this.formData().type ?? DEFAULT_CALEVENT_TYPE);
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected fullDay = linkedSignal(() => this.formData().fullDay ?? false);
+  protected isOpen = linkedSignal(() => this.formData().isOpen ?? false);
+  // ?? 0: every event written before maxAttendees existed reads back undefined
+  protected maxAttendees = linkedSignal(() => this.formData().maxAttendees ?? 0);
   protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
   protected startTime = linkedSignal(() => this.formData().startTime ?? DEFAULT_TIME);
   protected endDate = linkedSignal(() => this.formData().endDate ?? this.startDate());
@@ -526,6 +555,19 @@ export class CalEventForm {
     label: this.i18n().recurring_label(),
     helper: this.i18n().recurring_helper(),
   } as CheckboxI18n));
+
+  protected isOpenI18n = computed(() => ({
+    name: 'isOpen',
+    label: this.i18n().isOpen_label(),
+    helper: this.i18n().isOpen_helper(),
+  } as CheckboxI18n));
+
+  protected maxAttendeesI18n = computed(() => ({
+    name: 'maxAttendees',
+    label: this.i18n().maxAttendees(),
+    placeholder: this.i18n().maxAttendees_placeholder(),
+    helper: this.i18n().maxAttendees_helper(),
+  } as NumberInputI18n));
 
   /******************************* actions *************************************** */
   public async selectPerson(): Promise<void> {

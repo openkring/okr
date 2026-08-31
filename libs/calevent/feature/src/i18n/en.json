@@ -11,7 +11,11 @@
     "empty": "No attendees found.",
     "subscribe": "This person attends",
     "unsubscribe": "This person does not attend",
-    "not_possible": "Registration is not possible for this event"
+    "not_possible": "Registration is not possible for this event",
+    "waitlist": "Waiting list",
+    "waitlist_hint": "The event is full, so you have been put on the waiting list.",
+    "confirmed_count": "{confirmed}/{max} confirmed",
+    "waiting_count": "{count} on the waiting list"
   },
   "create": {
     "label": "Create a new event",
@@ -341,6 +345,15 @@
   "fullDay": {
     "label": "All day",
     "helper": "This event is entered in the calendar as an all-day event - without a specific time."
+  },
+  "isOpen": {
+    "label": "Open event",
+    "helper": "Anyone can sign up themselves. If the event is not open, you send invitations instead."
+  },
+  "maxAttendees": {
+    "label": "Limit participation to",
+    "placeholder": "nn",
+    "helper": "Maximum number of participants. 0 means unlimited. Anyone signing up after that goes on the waiting list."
   },
   "locationKey": {
     "label": "Location key",

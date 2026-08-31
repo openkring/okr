@@ -42,6 +42,18 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
   // attendees are only used for open events, where there are no invitations sent
   public isOpen = false; // whether the event is open to all users or only to invited persons
   public attendees: Attendee[] = []; // list of attendees with their status
+  /**
+   * Cap on how many people may take part; 0 = unrestricted (the default). Only meaningful while
+   * `isOpen` is true — a closed event is capped by who gets an invitation.
+   *
+   * Nothing is stored per attendee: the first `maxAttendees` entries with state 'accepted' are
+   * confirmed, everyone after them is on the waiting list (see `splitAttendees` in calevent-util).
+   * That keeps the list self-healing — when a confirmed person unsubscribes, the next one moves up
+   * with no extra write.
+   *
+   * Optional on read: every event written before this field existed lacks it — always `?? 0`.
+   */
+  public maxAttendees = 0;
   public state: 'proposed' | 'provisional' | 'definitive' | 'cancelled' = 'definitive'; // scheduling state; 'cancelled' = the event was called off
   public cancelMessage = DEFAULT_NOTES; // why the event was cancelled; shown as a red banner, only set when state === 'cancelled'
   public columnLabel = DEFAULT_LABEL; // schedule-poll text column: the header text instead of a date; such events never show in a calendar

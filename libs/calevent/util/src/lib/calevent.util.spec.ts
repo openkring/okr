@@ -1,7 +1,7 @@
 import { Attendee, AvatarInfo, CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, toAttendeeState, toInvitationState } from './calevent.util';
+import { bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toAttendeeState, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -483,5 +483,65 @@ describe('formatDurationLabel', () => {
     expect(formatDurationLabel(null)).toBe('');
     expect(formatDurationLabel(0)).toBe('');
     expect(formatDurationLabel(-30)).toBe('');
+  });
+});
+
+describe('splitAttendees / isCaleventFull', () => {
+  const person = (key: string): AvatarInfo =>
+    ({ key, name1: key, name2: '', modelType: 'person', type: '', subType: '', label: '' });
+  const att = (key: string, state: Attendee['state'] = 'accepted'): Attendee => ({ person: person(key), state });
+  const names = (attendees: Attendee[]): string[] => attendees.map(a => a.person.key);
+  const event = (attendees: Attendee[], maxAttendees: number): CalEventModel =>
+    ({ ...new CalEventModel('t1'), attendees, maxAttendees });
+
+  it('confirms everybody when the cap is 0 (unrestricted)', () => {
+    const split = splitAttendees([att('a'), att('b'), att('c')], 0);
+    expect(names(split.confirmed)).toEqual(['a', 'b', 'c']);
+    expect(split.waiting).toEqual([]);
+  });
+
+  it('puts the sign-ups past the cap on the waiting list, in sign-up order', () => {
+    const split = splitAttendees([att('a'), att('b'), att('c'), att('d')], 2);
+    expect(names(split.confirmed)).toEqual(['a', 'b']);
+    expect(names(split.waiting)).toEqual(['c', 'd']);
+  });
+
+  it('leaves the waiting list empty when the cap exceeds the list', () => {
+    const split = splitAttendees([att('a')], 5);
+    expect(names(split.confirmed)).toEqual(['a']);
+    expect(split.waiting).toEqual([]);
+  });
+
+  it('does not let a declined or merely invited person occupy a slot', () => {
+    const split = splitAttendees([att('a'), att('b', 'declined'), att('c'), att('d', 'invited')], 2);
+    expect(names(split.confirmed)).toEqual(['a', 'c']);
+    expect(split.waiting).toEqual([]);
+    expect(names(split.others)).toEqual(['b', 'd']);
+  });
+
+  it('promotes the next in line once a confirmed attendee unsubscribes', () => {
+    const before = [att('a'), att('b'), att('c')];
+    expect(names(splitAttendees(before, 2).waiting)).toEqual(['c']);
+    const after = [att('a'), att('b', 'declined'), att('c')];
+    expect(names(splitAttendees(after, 2).confirmed)).toEqual(['a', 'c']);
+    expect(splitAttendees(after, 2).waiting).toEqual([]);
+  });
+
+  it('treats a legacy document without attendees or maxAttendees as unrestricted and empty', () => {
+    expect(splitAttendees(undefined, undefined)).toEqual({ confirmed: [], waiting: [], others: [] });
+  });
+
+  it('is full exactly when the accepted count reaches the cap', () => {
+    expect(isCaleventFull(event([att('a')], 2))).toBe(false);
+    expect(isCaleventFull(event([att('a'), att('b')], 2))).toBe(true);
+    expect(isCaleventFull(event([att('a'), att('b'), att('c')], 2))).toBe(true);
+  });
+
+  it('is never full without a cap', () => {
+    expect(isCaleventFull(event([att('a'), att('b')], 0))).toBe(false);
+  });
+
+  it('is not full when a declined attendee freed the slot', () => {
+    expect(isCaleventFull(event([att('a'), att('b', 'declined')], 2))).toBe(false);
   });
 });

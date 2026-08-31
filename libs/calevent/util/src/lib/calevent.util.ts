@@ -342,3 +342,44 @@ export function formatDurationLabel(durationMinutes?: number | null): string {
   if (minutes === 0) return `${hours} h`;
   return `${hours} h ${minutes} min`;
 }
+
+/** An attendee list split into the three blocks the attendees accordion renders. */
+export type AttendeeSplit = {
+  confirmed: Attendee[]; // accepted, within the cap
+  waiting: Attendee[];   // accepted, but the cap was already full when they signed up
+  others: Attendee[];    // 'invited' / 'declined' — they occupy no slot
+};
+
+/**
+ * Splits the attendees into confirmed, waiting and the rest.
+ *
+ * The waiting list is DERIVED, never stored: among the entries with state 'accepted', the first
+ * `maxAttendees` (in array order, which is sign-up order — `changeAttendanceState` pushes) are
+ * confirmed and the remainder waits. That is what makes the list self-healing: a confirmed person
+ * who unsubscribes drops out of the accepted set, and the next one moves up without a second write.
+ *
+ * Only 'accepted' competes for a slot. A declined or merely invited person occupies none, so
+ * declining never blocks the queue.
+ *
+ * @param attendees   `calevent.attendees`; undefined on a legacy document
+ * @param maxAttendees `calevent.maxAttendees`; 0, negative or undefined all mean unrestricted
+ */
+export function splitAttendees(attendees: Attendee[] | undefined, maxAttendees: number | undefined): AttendeeSplit {
+  const all = attendees ?? [];
+  const accepted = all.filter(attendee => attendee.state === 'accepted');
+  const others = all.filter(attendee => attendee.state !== 'accepted');
+  const cap = maxAttendees ?? 0;
+  if (cap <= 0) return { confirmed: accepted, waiting: [], others };
+  return { confirmed: accepted.slice(0, cap), waiting: accepted.slice(cap), others };
+}
+
+/**
+ * Whether the event has reached its participant cap — the moment a further sign-up lands on the
+ * waiting list rather than in the event. An uncapped event is never full.
+ * @param calevent the event to check
+ */
+export function isCaleventFull(calevent: CalEventModel): boolean {
+  const cap = calevent.maxAttendees ?? 0;
+  if (cap <= 0) return false;
+  return (calevent.attendees ?? []).filter(attendee => attendee.state === 'accepted').length >= cap;
+}

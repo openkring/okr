@@ -11,7 +11,11 @@
     "empty": "No se han encontrado asistentes.",
     "subscribe": "Esta persona asiste",
     "unsubscribe": "Esta persona no asiste",
-    "not_possible": "La inscripción no es posible para este evento"
+    "not_possible": "La inscripción no es posible para este evento",
+    "waitlist": "Lista de espera",
+    "waitlist_hint": "Se ha alcanzado el número máximo de participantes, pasas a la lista de espera.",
+    "confirmed_count": "{confirmed}/{max} confirmados",
+    "waiting_count": "{count} en la lista de espera"
   },
   "create": {
     "label": "Crear un nuevo evento",
@@ -341,6 +345,15 @@
   "fullDay": {
     "label": "Todo el día",
     "helper": "Este evento se registra en el calendario como un evento de día completo - sin una hora determinada."
+  },
+  "isOpen": {
+    "label": "Evento abierto",
+    "helper": "Cualquiera puede apuntarse por sí mismo. Si el evento no es abierto, envías invitaciones."
+  },
+  "maxAttendees": {
+    "label": "Limitar la participación a",
+    "placeholder": "nn",
+    "helper": "Número máximo de participantes. 0 significa sin límite. Quien se apunte después pasa a la lista de espera."
   },
   "locationKey": {
     "label": "Clave del lugar",

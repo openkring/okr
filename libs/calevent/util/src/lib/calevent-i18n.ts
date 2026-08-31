@@ -18,6 +18,12 @@ export const CALEVENT_I18N_KEYS = {
   // the organiser changes someone else's attendance (invitation_* is the first-person variant)
   attendance_subscribe:       PFX + 'attendance.subscribe',
   attendance_unsubscribe:     PFX + 'attendance.unsubscribe',
+  // the participant cap: the divider above the waiting list, the footer counts, and the toast a
+  // user gets when their sign-up lands on the waiting list instead of in the event
+  attendance_waitlist:        PFX + 'attendance.waitlist',
+  attendance_waitlist_hint:   PFX + 'attendance.waitlist_hint',
+  attendance_confirmed_count: PFX + 'attendance.confirmed_count',
+  attendance_waiting_count:   PFX + 'attendance.waiting_count',
 
   create:                     PFX + 'create.label',
   create_conf:                PFX + 'create.conf',
@@ -345,6 +351,13 @@ export const CALEVENT_I18N_KEYS = {
 
   fullDay_label:                  PFX + 'fullDay.label',
   fullDay_helper:                 PFX + 'fullDay.helper',
+
+  isOpen_label:                   PFX + 'isOpen.label',
+  isOpen_helper:                  PFX + 'isOpen.helper',
+
+  maxAttendees:                   PFX + 'maxAttendees.label',
+  maxAttendees_placeholder:       PFX + 'maxAttendees.placeholder',
+  maxAttendees_helper:            PFX + 'maxAttendees.helper',
 
   locationKey_label:              PFX + 'locationKey.label',
   locationKey_placeholder:        PFX + 'locationKey.placeholder',

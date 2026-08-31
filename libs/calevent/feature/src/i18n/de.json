@@ -11,7 +11,11 @@
     "empty": "Keine Teilnehmenden gefunden.",
     "subscribe": "Diese Person nimmt teil",
     "unsubscribe": "Diese Person nimmt nicht teil",
-    "not_possible": "An-/Abmeldung ist für diesen Termin nicht möglich"
+    "not_possible": "An-/Abmeldung ist für diesen Termin nicht möglich",
+    "waitlist": "Warteliste",
+    "waitlist_hint": "Die maximale Teilnehmerzahl ist erreicht, du kommst auf die Warteliste.",
+    "confirmed_count": "{confirmed}/{max} bestätigt",
+    "waiting_count": "{count} auf der Warteliste"
   },
   "create": {
     "label": "Neuen Termin erstellen",
@@ -341,6 +345,15 @@
   "fullDay": {
     "label": "Ganztägig",
     "helper": "Dieser Termin wird als Tagestermin im Kalender eingetragen - ohne bestimmte Zeit."
+  },
+  "isOpen": {
+    "label": "Offener Anlass",
+    "helper": "Alle können sich selbst anmelden. Ist der Anlass nicht offen, verschickst du Einladungen."
+  },
+  "maxAttendees": {
+    "label": "Teilnahme beschränken auf",
+    "placeholder": "nn",
+    "helper": "Höchstzahl der Teilnehmenden. 0 heisst: unbeschränkt. Wer sich danach anmeldet, kommt auf die Warteliste."
   },
   "locationKey": {
     "label": "Ort",
