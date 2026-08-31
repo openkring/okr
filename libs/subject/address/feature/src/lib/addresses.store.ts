@@ -287,6 +287,9 @@ export const AddressStore = signalStore(
           const person = store.appStore.getPerson(key);
           console.log(person);
         }
+        // No-op today: editSubject only looks up and logs the org/person, it does not
+        // write. Kept here so the projection reload is already wired once this method
+        // grows an actual edit/write path — do not delete as dead code.
         store.appStore.reloadAddressDirectory();
       },
 
