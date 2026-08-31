@@ -4,7 +4,7 @@ import { Title } from '@angular/platform-browser';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { captureMessage } from '@sentry/angular';
 import { authState } from 'rxfire/auth';
-import { of } from 'rxjs';
+import { from, of } from 'rxjs';
 import { App } from '@capacitor/app';
 
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
@@ -134,7 +134,11 @@ export const AppStore = signalStore(
       }),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
-        return store.firestoreService.searchData<PersonModel>(PersonCollection, getSystemQuery(params.tenantId), 'lastName', 'asc');
+        // Einmal laden statt Echtzeit-Abo: Referenzdaten ändern sich selten, und ein offener
+        // Listener über 622 Dokumente kostet Deserialisierung und Listen-Round-Trips beim Start.
+        // Nach eigenen Schreibzugriffen holt reloadPersons() neu.
+        return from(store.firestoreService.getDataOnce<PersonModel>(
+          PersonCollection, getSystemQuery(params.tenantId), 'lastName', 'asc'));
       }
     }),
     orgsResource: rxResource({
@@ -144,7 +148,10 @@ export const AppStore = signalStore(
       }),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
-        return store.firestoreService.searchData<OrgModel>(OrgCollection, getSystemQuery(params.tenantId), 'name', 'asc');
+        // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
+        // Schreibzugriffen holt reloadOrgs() neu.
+        return from(store.firestoreService.getDataOnce<OrgModel>(
+          OrgCollection, getSystemQuery(params.tenantId), 'name', 'asc'));
       }
     }),
     // The address-directory projection (spec 1.19 Phase 4): the CF-materialized,
@@ -159,7 +166,10 @@ export const AppStore = signalStore(
       }),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
-        return store.firestoreService.searchData<AddressDirectoryModel>(AddressDirectoryCollection, getSystemQuery(params.tenantId), 'none');
+        // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
+        // Schreibzugriffen holt reloadAddressDirectory() neu.
+        return from(store.firestoreService.getDataOnce<AddressDirectoryModel>(
+          AddressDirectoryCollection, getSystemQuery(params.tenantId), 'none'));
       }
     }),
     groupsResource: rxResource({
@@ -179,7 +189,10 @@ export const AppStore = signalStore(
       }),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
-        return store.firestoreService.searchData<ResourceModel>(ResourceCollection, getSystemQuery(params.tenantId), 'name', 'asc');
+        // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
+        // Schreibzugriffen holt reloadResources() neu.
+        return from(store.firestoreService.getDataOnce<ResourceModel>(
+          ResourceCollection, getSystemQuery(params.tenantId), 'name', 'asc'));
       }
     }),
     tagsResource: rxResource({
@@ -189,7 +202,10 @@ export const AppStore = signalStore(
       }),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
-        return store.firestoreService.searchData<TagModel>(TagCollection, getSystemQuery(params.tenantId), 'tagModel', 'asc');
+        // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
+        // Schreibzugriffen holt reloadTags() neu.
+        return from(store.firestoreService.getDataOnce<TagModel>(
+          TagCollection, getSystemQuery(params.tenantId), 'tagModel', 'asc'));
       }
     }),
     // Open tasks assigned to the signed-in user — the single source of truth for the task half
@@ -233,7 +249,10 @@ export const AppStore = signalStore(
       }),
       stream: ({params}) => {
         if (!params.fbUser || !params.tenantId) return of([]);
-        return store.firestoreService.searchData<CategoryListModel>(CategoryCollection, getSystemQuery(params.tenantId), 'name', 'asc');
+        // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
+        // Schreibzugriffen holt reloadCategories() neu.
+        return from(store.firestoreService.getDataOnce<CategoryListModel>(
+          CategoryCollection, getSystemQuery(params.tenantId), 'name', 'asc'));
       }
     }),
     // Deliberately NOT gated on fbUser, unlike the tenantRead-protected collections above:
@@ -549,7 +568,19 @@ export const AppStore = signalStore(
        * @param subType
        * @returns the name of the default icon (without path and without file extension)
        */
-       getDefaultIcon(modelType?: string, type?: string, subType?: string): string {
+       /**
+       * Nachladen der einmalig geladenen Referenzdaten. Aufzurufen, nachdem die App SELBST in die
+       * jeweilige Collection geschrieben hat — fremde Änderungen erscheinen erst beim nächsten
+       * Laden der App. Siehe planning/specs/2026-08-31-appstore-reference-data-design.md, §3.3.
+       */
+      reloadPersons(): void { store.personsResource.reload(); },
+      reloadOrgs(): void { store.orgsResource.reload(); },
+      reloadResources(): void { store.resourcesResource.reload(); },
+      reloadTags(): void { store.tagsResource.reload(); },
+      reloadCategories(): void { store.categoriesResource.reload(); },
+      reloadAddressDirectory(): void { store.addressDirectoryResource.reload(); },
+
+      getDefaultIcon(modelType?: string, type?: string, subType?: string): string {
         if (!modelType) return 'other';
         if (modelType === ResourceModelName && type && type.length) {
             if (type === 'rboat' && subType && subType?.length) { 
