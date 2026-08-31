@@ -226,6 +226,7 @@ export const PersonStore = signalStore(
         /** Creates a brand-new person plus its address records and optional membership. */
         async createNewPerson(p: PersonNewFormModel): Promise<void> {
             const personKey = await store.personService.create(convertFormToNewPerson(p, store.tenantId()), store.currentUser());
+            store.appStore.reloadPersons();
             const avatarKey = `person.${personKey}`;
             if ((p.email ?? '').length > 0) this.saveAddress(convertNewPersonFormToEmailAddress(p, store.tenantId()), avatarKey);
             if ((p.phone ?? '').length > 0) this.saveAddress(convertNewPersonFormToPhoneAddress(p, store.tenantId()), avatarKey);
@@ -284,9 +285,10 @@ export const PersonStore = signalStore(
         },
 
         async save(person: PersonModel): Promise<void> {
-            await (!person.okey ? 
-            store.personService.create(person, store.currentUser()) : 
+            await (!person.okey ?
+            store.personService.create(person, store.currentUser()) :
             store.personService.update(person, store.currentUser()));
+            store.appStore.reloadPersons();
         },
 
         saveAddress(address: AddressModel, avatarKey: string): void {
@@ -304,6 +306,7 @@ export const PersonStore = signalStore(
           if (!okey) return;
           await store.avatarService.saveAvatarPhoto(photo, okey, store.appStore.env.tenantId, PersonModelName);
           store.personResource.reload();
+          store.appStore.reloadPersons();
         },
 
         async export(type: string): Promise<void> {
@@ -357,6 +360,7 @@ export const PersonStore = signalStore(
             if (result === true) {
                 await store.personService.delete(person, store.currentUser());
                 this.reset();
+                store.appStore.reloadPersons();
             }
         },
 

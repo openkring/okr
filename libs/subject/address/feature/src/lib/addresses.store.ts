@@ -240,6 +240,7 @@ export const AddressStore = signalStore(
               await store.addressService.update(data, store.currentUser());
             }
             this.reload();
+            store.appStore.reloadAddressDirectory();
             await this.offerLoginEmailChange(data);
         }
         }
@@ -286,6 +287,7 @@ export const AddressStore = signalStore(
           const person = store.appStore.getPerson(key);
           console.log(person);
         }
+        store.appStore.reloadAddressDirectory();
       },
 
       async export(type: string): Promise<void> {
@@ -298,6 +300,7 @@ export const AddressStore = signalStore(
         if (result === true) {
           await store.addressService.delete(address, store.currentUser());
           this.reload();
+          store.appStore.reloadAddressDirectory();
         }
       },
 
