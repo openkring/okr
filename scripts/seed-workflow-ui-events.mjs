@@ -14,8 +14,20 @@
  * renders through the app i18n bundle: `libs/system/workflow/feature/src/i18n/*.json` for the
  * events, the app bundle for the menu action. Both ship with the release.
  *
- * Run with:  node scripts/seed-workflow-ui-events.mjs           (dry run, prints what exists)
- *            node scripts/seed-workflow-ui-events.mjs --apply
+ * ⚠️ THE TWO HALVES HAVE DIFFERENT TIMING, which is why the second one is opt-in.
+ *
+ *   `workflow_event` items are safe at ANY time. An event nobody has written a rule for is an
+ *   unused dropdown entry, and the events themselves only fire once the functions are deployed.
+ *
+ *   `menu_action: workflow` is NOT safe before the app release that ships it. The action is
+ *   dispatched in `MenuStore.selectMenuItem` and rendered by an `@switch` in `Menu` that has
+ *   **no `@default`** — so on any bundle without that release, a menu row an admin creates with
+ *   this action renders as NOTHING and `die()`s when selected. Seed it only after every app in
+ *   `app-version.deployed` runs the release containing `@case('workflow')`.
+ *
+ * Run with:  node scripts/seed-workflow-ui-events.mjs                  (dry run, events only)
+ *            node scripts/seed-workflow-ui-events.mjs --apply          (events only)
+ *            node scripts/seed-workflow-ui-events.mjs --apply --with-menu-action
  * Requires:  gcloud auth application-default login  (or GOOGLE_APPLICATION_CREDENTIALS)
  *
  * Idempotent: items are matched by `name`, so a re-run reports "already present" and writes
@@ -26,6 +38,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 const PROJECT_ID = 'bkaiser-org';
 const APPLY = process.argv.includes('--apply');
+/** opt-in, because the menu action must not go live before the app release — see the header */
+const WITH_MENU_ACTION = process.argv.includes('--with-menu-action');
 const tenantArg = process.argv.indexOf('--tenant');
 const TENANT = tenantArg >= 0 ? process.argv[tenantArg + 1] : 'scs';
 
@@ -65,6 +79,12 @@ async function iconExists(name) {
 }
 
 console.log(`seed-workflow-ui-events: tenant '${TENANT}'${APPLY ? '' : ' (dry run)'}\n`);
+
+if (!WITH_MENU_ACTION) {
+  delete SEEDS.menu_action;
+  console.log("skipping menu_action: 'workflow' — pass --with-menu-action once the app release that");
+  console.log("renders it is deployed everywhere, or an admin can create a row that renders as nothing.\n");
+}
 
 for (const [categoryName, seeds] of Object.entries(SEEDS)) {
   const category = await findCategory(categoryName);
