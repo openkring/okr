@@ -31,6 +31,7 @@ import {
   forceJoinUserToRoom,
   requireParam,
   checkRateLimit,
+  activeGroupMemberKeys,
   serverHostname,
   getUserTenants,
 } from './shared';
@@ -213,47 +214,19 @@ export const createAdhocChat = onCall(
     if (!roomId) throw new HttpsError('internal', `No room for chat ${groupKey}`);
     await ensureAdminInRoom(roomId, adminToken);
     await setRoomName(roomId, chatName, adminToken);
+    // Wer spaeter dazukommt, liest ab dem Beitritt mit — nicht, was vorher geschrieben
+    // wurde. Die Matrix-Vorgabe des `private_chat`-Presets waere `shared`, also der ganze
+    // Verlauf; in einem privaten Chat, den Mitglieder selbst zusammenstellen, ist das die
+    // falsche Vorgabe (Spec §10.2). Gruppenraeume bleiben unberuehrt: das steht hier und
+    // nicht in resolveGroupRoom.
+    await setHistoryVisibility(roomId, 'joined', adminToken);
 
     // Schritt 3: Mitgliedschaften — sie tragen den Zwangsbeitritt (und spaeter das
     // Verlassen). Der Beitritt geschieht hier zusaetzlich direkt, damit der Chat sofort
     // benutzbar ist und nicht auf den Trigger wartet; beides ist idempotent.
-    const today = getTodayStr(DateFormat.StoreDate);
     const batch = db.batch();
     for (const person of persons) {
-      const ref = db.collection('memberships').doc();
-      batch.set(ref, {
-        tenants: [tenant],
-        isArchived: false,
-        index: `mn:${person.firstName} ${person.lastName} mk:${person.okey} ok:${groupKey} on:${chatName}`,
-        tags: '',
-        notes: '',
-        memberKey: person.okey,
-        memberName1: person.firstName,
-        memberName2: person.lastName,
-        memberModelType: 'person',
-        memberType: 'male',
-        memberNickName: '',
-        memberAbbreviation: '',
-        memberBirthYear: '',
-        memberIsDeceased: false,
-        memberDeathYear: '',
-        memberZipCode: '',
-        memberBexioId: '',
-        memberId: '',
-        orgKey: groupKey,
-        orgName: chatName,
-        orgModelType: 'group',
-        dateOfEntry: today,
-        dateOfExit: '99991231',
-        category: 'active',
-        state: 'active',
-        orgFunction: '',
-        order: 1,
-        relLog: '',
-        relIsLast: true,
-        rebate: 0,
-        rebateReason: 'none',
-      });
+      batch.set(db.collection('memberships').doc(), adhocMembershipDoc(person, groupKey, chatName, tenant));
     }
     await batch.commit();
 
@@ -267,6 +240,65 @@ export const createAdhocChat = onCall(
     return { groupKey, roomId, name: chatName };
   }
 );
+
+/**
+ * Ein Mitgliedschaftsdokument fuer einen Ad-hoc-Chat. Dieselbe Form wie eine
+ * Gruppenmitgliedschaft — das ist der Punkt: `onMembershipWritten` traegt daraufhin den
+ * Zwangsbeitritt (und beim Ende den Rauswurf), ohne irgendetwas ueber Chats zu wissen.
+ */
+function adhocMembershipDoc(person: PersonRow, groupKey: string, chatName: string, tenant: string): Record<string, unknown> {
+  return {
+    tenants: [tenant],
+    isArchived: false,
+    index: `mn:${person.firstName} ${person.lastName} mk:${person.okey} ok:${groupKey} on:${chatName}`,
+    tags: '',
+    notes: '',
+    memberKey: person.okey,
+    memberName1: person.firstName,
+    memberName2: person.lastName,
+    memberModelType: 'person',
+    memberType: 'male',
+    memberNickName: '',
+    memberAbbreviation: '',
+    memberBirthYear: '',
+    memberIsDeceased: false,
+    memberDeathYear: '',
+    memberZipCode: '',
+    memberBexioId: '',
+    memberId: '',
+    orgKey: groupKey,
+    orgName: chatName,
+    orgModelType: 'group',
+    dateOfEntry: getTodayStr(DateFormat.StoreDate),
+    dateOfExit: '99991231',
+    category: 'active',
+    state: 'active',
+    orgFunction: '',
+    order: 1,
+    relLog: '',
+    relIsLast: true,
+    rebate: 0,
+    rebateReason: 'none',
+  };
+}
+
+/**
+ * Setzt, wie viel des Verlaufs neue Mitglieder sehen (`m.room.history_visibility`).
+ * `joined` = erst ab dem eigenen Beitritt.
+ */
+async function setHistoryVisibility(roomId: string, visibility: 'joined' | 'invited' | 'shared', adminToken: string): Promise<void> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.history_visibility`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ history_visibility: visibility }),
+    }
+  );
+  if (!resp.ok) {
+    console.warn(`setHistoryVisibility: failed for ${roomId}: ${await resp.text()}`);
+  }
+}
 
 /** Setzt den Anzeigenamen eines Raums (m.room.name). Erfordert Power im Raum. */
 async function setRoomName(roomId: string, name: string, adminToken: string): Promise<void> {
@@ -282,6 +314,100 @@ async function setRoomName(roomId: string, name: string, adminToken: string): Pr
     console.warn(`setRoomName: failed for ${roomId}: ${await resp.text()}`);
   }
 }
+
+/**
+ * Personen zu einem bestehenden Ad-hoc-Chat hinzufuegen (Spec §10.2).
+ *
+ * Hinzufuegen darf, wer selbst im Chat ist — es gibt keine Chat-Admins, und eine
+ * Sonderrolle fuer die anlegende Person waere in einem Chat unter Gleichen willkuerlich.
+ * Die Grenze ist der Mandant: eingeladen werden koennen nur Personen desselben Vereins.
+ *
+ * Neue Mitglieder lesen ab dem Beitritt mit, nicht rueckwaerts — der Raum traegt seit
+ * seiner Anlage `history_visibility: 'joined'`.
+ */
+export const addAdhocChatMembers = onCall(
+  {
+    cors: true,
+    region: 'europe-west6',
+    enforceAppCheck: true,
+    secrets: [matrixAdminToken],
+  },
+  async (request): Promise<{ added: string[] }> => {
+    const uid = await requireProvisionedUser(request, 'addAdhocChatMembers');
+    checkRateLimit(uid, 'addAdhocChatMembers', 20);
+
+    const { groupKey, personKeys } = request.data as { groupKey?: string; personKeys?: string[] };
+    const chatKey = requireParam(groupKey, 'groupKey', 100);
+    if (!Array.isArray(personKeys) || personKeys.length === 0) {
+      throw new HttpsError('invalid-argument', 'personKeys is required');
+    }
+
+    const callerKey = await requireUserPersonKey(uid, 'addAdhocChatMembers');
+    const db = getFirestore();
+
+    const groupSnap = await db.collection('groups').doc(chatKey).get();
+    const group = groupSnap.data();
+    if (!groupSnap.exists || !group) throw new HttpsError('not-found', `Chat ${chatKey} not found`);
+    if ((group['kind'] ?? 'group') !== 'chat') {
+      throw new HttpsError('failed-precondition', `${chatKey} is not an ad-hoc chat.`);
+    }
+    const tenant = ((group['tenants'] ?? []) as string[])[0];
+    if (!tenant) throw new HttpsError('failed-precondition', `Chat ${chatKey} has no tenant.`);
+    const chatName = (group['name'] as string) ?? '';
+
+    // Wer nicht drin ist, fuegt auch niemanden hinzu — sonst koennte jede Person mit dem
+    // Schluessel eines fremden Chats sich selbst hineinschreiben.
+    const currentKeys = await activeGroupMemberKeys(chatKey);
+    if (!currentKeys.includes(callerKey)) {
+      throw new HttpsError('permission-denied', 'Only members of the chat may add people.');
+    }
+
+    const wanted = [...new Set(personKeys)].filter((k) => !currentKeys.includes(k));
+    if (wanted.length === 0) return { added: [] };
+    if (currentKeys.length + wanted.length > ADHOC_CHAT_MAX_MEMBERS) {
+      throw new HttpsError('invalid-argument', `A chat may have at most ${ADHOC_CHAT_MAX_MEMBERS} members.`);
+    }
+
+    const persons: PersonRow[] = [];
+    for (const key of wanted) {
+      const snap = await db.collection('persons').doc(key).get();
+      const data = snap.data();
+      if (!snap.exists || !data) throw new HttpsError('not-found', `Person ${key} not found`);
+      if (!((data['tenants'] ?? []) as string[]).includes(tenant)) {
+        throw new HttpsError('permission-denied', `Person ${key} does not belong to this tenant.`);
+      }
+      persons.push({
+        okey: key,
+        firstName: (data['firstName'] as string) ?? '',
+        lastName: (data['lastName'] as string) ?? '',
+      });
+    }
+
+    const batch = db.batch();
+    for (const person of persons) {
+      batch.set(db.collection('memberships').doc(), adhocMembershipDoc(person, chatKey, chatName, tenant));
+    }
+    await batch.commit();
+
+    // Der Trigger wuerde das auch tun; direkt beitreten heisst, dass die neue Person den
+    // Chat sofort sieht statt in zehn Sekunden. Beides ist idempotent.
+    const hostname = serverHostname();
+    const adminToken = matrixAdminToken.value();
+    const roomId = (group['matrixRoomId'] as string) ||
+      await resolveGroupRoom(chatKey, hostname, adminToken, { create: false });
+    if (roomId) {
+      await ensureAdminInRoom(roomId, adminToken);
+      for (const person of persons) {
+        const matrixUserId = `@${person.okey.toLowerCase()}:${hostname}`;
+        await ensureMatrixUserExists(matrixUserId, adminToken, { personKey: person.okey });
+        await forceJoinUserToRoom(roomId, matrixUserId, adminToken);
+      }
+    }
+
+    console.log(`addAdhocChatMembers: ${persons.length} added to ${chatKey} by ${callerKey}`);
+    return { added: persons.map((p) => p.okey) };
+  }
+);
 
 /**
  * Einen Ad-hoc-Chat verlassen: die eigene Mitgliedschaft beenden.

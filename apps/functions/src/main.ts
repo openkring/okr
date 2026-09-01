@@ -118,6 +118,7 @@ export const backfillMatrixRoomTenants = MatrixSimple.backfillMatrixRoomTenants;
 // Ad-hoc-Chats: ein Chat mit mehreren Personen ohne eigene Gruppe (spec 2026-09-01)
 export const createAdhocChat = MatrixSimple.createAdhocChat;
 export const leaveAdhocChat = MatrixSimple.leaveAdhocChat;
+export const addAdhocChatMembers = MatrixSimple.addAdhocChatMembers;
 // membership → Matrix-room sync (server-side backstop; chat design review #3)
 export const onMembershipWritten = MatrixMembershipSync.onMembershipWritten;
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;

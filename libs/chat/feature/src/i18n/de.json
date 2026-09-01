@@ -248,7 +248,9 @@
       "title": "Mitglieder",
       "add": "Mitglied hinzufügen",
       "you": "du",
-      "empty": "Noch niemand ausgewählt."
+      "empty": "Noch niemand ausgewählt.",
+      "addConf": "{name} ist jetzt im Chat.",
+      "addError": "Die Person konnte nicht hinzugefügt werden."
     },
     "hint": "Diesen Chat sehen nur seine Mitglieder. Er taucht in keiner Gruppenliste auf und hat weder Kalender noch Dateien.",
     "creating": "Der Chat wird eingerichtet. Das dauert einen Moment.",
@@ -265,6 +267,7 @@
       "conf": "Du hast den Chat verlassen.",
       "error": "Der Chat konnte nicht verlassen werden.",
       "hint": "Wenn du gehst, läuft der Chat für die anderen weiter. Du siehst ihn dann nicht mehr in deiner Liste."
-    }
+    },
+    "historyHint": "Wer neu dazukommt, liest ab dem Beitritt mit — nicht, was vorher geschrieben wurde."
   }
 }

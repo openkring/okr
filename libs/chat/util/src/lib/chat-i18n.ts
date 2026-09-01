@@ -200,6 +200,9 @@ export const MATRIX_CHAT_I18N_KEYS = {
   adhoc_leave_conf:          PFX + 'adhoc.leave.conf',
   adhoc_leave_error:         PFX + 'adhoc.leave.error',
   adhoc_leave_hint:          PFX + 'adhoc.leave.hint',
+  adhoc_member_add_conf:     PFX + 'adhoc.members.addConf',
+  adhoc_member_add_error:    PFX + 'adhoc.members.addError',
+  adhoc_history_hint:        PFX + 'adhoc.historyHint',
   validation_members_required: PFX + 'validation.membersRequired',
 
   validation_name_required:  PFX + 'validation.nameRequired',

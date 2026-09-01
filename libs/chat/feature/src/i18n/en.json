@@ -248,7 +248,9 @@
       "title": "Members",
       "add": "Add member",
       "you": "you",
-      "empty": "Nobody selected yet."
+      "empty": "Nobody selected yet.",
+      "addConf": "{name} is now in the chat.",
+      "addError": "The person could not be added."
     },
     "hint": "Only its members can see this chat. It does not appear in any group list and has neither calendar nor files.",
     "creating": "The chat is being set up. This takes a moment.",
@@ -265,6 +267,7 @@
       "conf": "You left the chat.",
       "error": "You could not leave the chat.",
       "hint": "If you leave, the chat continues for the others. You will no longer see it in your list."
-    }
+    },
+    "historyHint": "Whoever joins later reads along from their arrival — not what was written before."
   }
 }

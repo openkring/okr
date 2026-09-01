@@ -2253,6 +2253,18 @@ private async buildAndEmitRoomsList(): Promise<void> {
   }
 
   /**
+   * Personen zu einem bestehenden Ad-hoc-Chat hinzufuegen. Hinzufuegen darf, wer selbst
+   * im Chat ist; eingeladen werden koennen nur Personen desselben Mandanten. Neue
+   * Mitglieder lesen ab ihrem Beitritt mit, nicht rueckwaerts.
+   * @returns die personKeys, die tatsaechlich dazugekommen sind (schon Anwesende fallen weg)
+   */
+  public async addAdhocChatMembers(groupKey: string, personKeys: string[]): Promise<string[]> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'addAdhocChatMembers');
+    const result = await fn({ groupKey, personKeys });
+    return (result.data as { added: string[] }).added;
+  }
+
+  /**
    * Einen Ad-hoc-Chat verlassen: beendet die eigene Mitgliedschaft. Der Rauswurf aus dem
    * Matrix-Raum folgt serverseitig ueber `onMembershipWritten`, also mit ein paar
    * Sekunden Verzoegerung.

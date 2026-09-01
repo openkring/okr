@@ -492,7 +492,8 @@ export const _MatrixChatStore = signalStore(
           component: AdhocChatInfoModal,
           componentProps: {
             chatName: chat.name,
-            members,
+            groupKey: chat.okey,
+            initialMembers: members,
             currentPersonKey: store.appStore.currentUser()?.personKey ?? '',
           },
         });

@@ -248,7 +248,9 @@
       "title": "Membri",
       "add": "Aggiungi membro",
       "you": "tu",
-      "empty": "Non hai ancora scelto nessuno."
+      "empty": "Non hai ancora scelto nessuno.",
+      "addConf": "{name} ora è nella chat.",
+      "addError": "Non è stato possibile aggiungere la persona."
     },
     "hint": "Questa chat la vedono solo i suoi membri. Non compare in nessun elenco di gruppi e non ha né calendario né file.",
     "creating": "La chat viene creata. Ci vuole un attimo.",
@@ -265,6 +267,7 @@
       "conf": "Hai lasciato la chat.",
       "error": "Non è stato possibile uscire dalla chat.",
       "hint": "Se esci, la chat continua per gli altri. Non la vedrai più nel tuo elenco."
-    }
+    },
+    "historyHint": "Chi arriva dopo legge dal momento in cui entra, non quello che è stato scritto prima."
   }
 }

@@ -248,7 +248,9 @@
       "title": "Membres",
       "add": "Ajouter un membre",
       "you": "toi",
-      "empty": "Personne n'est encore sélectionné."
+      "empty": "Personne n'est encore sélectionné.",
+      "addConf": "{name} fait maintenant partie de la discussion.",
+      "addError": "La personne n'a pas pu être ajoutée."
     },
     "hint": "Seuls ses membres voient cette discussion. Elle n'apparaît dans aucune liste de groupes et n'a ni calendrier ni fichiers.",
     "creating": "La discussion est en cours de création. Cela prend un instant.",
@@ -265,6 +267,7 @@
       "conf": "Tu as quitté la discussion.",
       "error": "Impossible de quitter la discussion.",
       "hint": "Si tu pars, la discussion continue pour les autres. Tu ne la verras plus dans ta liste."
-    }
+    },
+    "historyHint": "Celui qui arrive plus tard lit à partir de son arrivée — pas ce qui a été écrit avant."
   }
 }

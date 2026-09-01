@@ -248,7 +248,9 @@
       "title": "Miembros",
       "add": "Añadir miembro",
       "you": "tú",
-      "empty": "Aún no has elegido a nadie."
+      "empty": "Aún no has elegido a nadie.",
+      "addConf": "{name} ya está en el chat.",
+      "addError": "No se pudo añadir a la persona."
     },
     "hint": "Solo sus miembros ven este chat. No aparece en ninguna lista de grupos y no tiene ni calendario ni archivos.",
     "creating": "El chat se está preparando. Tarda un momento.",
@@ -265,6 +267,7 @@
       "conf": "Has salido del chat.",
       "error": "No se pudo salir del chat.",
       "hint": "Si te vas, el chat sigue para los demás. Ya no lo verás en tu lista."
-    }
+    },
+    "historyHint": "Quien llega más tarde lee desde su entrada, no lo que se escribió antes."
   }
 }
