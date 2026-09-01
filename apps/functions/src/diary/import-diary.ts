@@ -34,6 +34,13 @@ const REGION = 'europe-west6';
 // One Cloud Run (2nd gen) invocation may take this long: enough for the ~2'405-file archive to
 // be listed, downloaded (concurrency 10) and weather-enriched (~50 Open-Meteo calls) in one pass.
 const TIMEOUT_SECONDS = 540;
+// The default 256 MiB is not enough. Both callables hold the WHOLE archive in memory for one
+// pass — the file list, every downloaded markdown body, and the accumulating run report — and the
+// archive has since grown from the ~2'405 files this was sized for to >7'400. At 256 MiB the
+// container was killed mid-run and the client saw a bare 500 with no HttpsError to explain it.
+// This scales with the archive, so it is a ceiling to revisit, not a solved problem: if the
+// archive doubles again, raise it or make the dry run windowed the way the commit run already is.
+const MEMORY = '1GiB' as const;
 // Must stay comfortably under Firestore's 500-writes-per-batch limit: `processRun` puts one
 // `batch.set` per window entry into a single `batch.commit()` (see below) — raise this only
 // together with switching to multiple batches.
@@ -571,6 +578,7 @@ export const dryRunDiaryImport = onCall<DiaryImportRequest, Promise<DiaryImportM
     region: REGION,
     enforceAppCheck: true,
     timeoutSeconds: TIMEOUT_SECONDS,
+    memory: MEMORY,
     secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN, DIARY_OWNER_UID],
   },
   async (request) => {
@@ -593,6 +601,7 @@ export const commitDiaryImport = onCall<DiaryImportRequest, Promise<DiaryImportM
     region: REGION,
     enforceAppCheck: true,
     timeoutSeconds: TIMEOUT_SECONDS,
+    memory: MEMORY,
     secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN, DIARY_OWNER_UID],
   },
   async (request) => {
