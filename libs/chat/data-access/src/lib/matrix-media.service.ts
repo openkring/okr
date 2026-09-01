@@ -11,7 +11,7 @@ const MEDIA_CACHE_MAX = 200;
  * never from the media itself. They are transient, so one retry is worth the wait.
  */
 const RETRYABLE_STATUS = new Set([502, 503, 504]);
-/** Delay before the single retry of a gateway failure. */
+/** Delay before the single retry of a gateway failure or a thrown fetch. */
 const RETRY_DELAY_MS = 500;
 
 /**
@@ -71,14 +71,7 @@ export class MatrixMediaService {
     try {
       const accessToken = this.client.getAccessToken();
       const headers: Record<string, string> = accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {};
-      let resp = await fetch(httpUrl, { headers });
-      // SCS-92: a 502/503/504 is the media proxy timing out, not a problem with this file.
-      // Every failure path here returns '' and leaves the avatar or attachment blank until
-      // something re-renders it, so retry once instead of giving up on a transient blip.
-      if (RETRYABLE_STATUS.has(resp.status)) {
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
-        resp = await fetch(httpUrl, { headers });
-      }
+      const resp = await this.fetchOnceRetrying(httpUrl, headers);
       if (!resp.ok) {
         this.reportSilentFailure(`media download failed: HTTP ${resp.status}`);
         // 401 is never about this one file — the token is gone. Signal once per client
@@ -109,9 +102,41 @@ export class MatrixMediaService {
       this.cache.set(mxcUrl, blobUrl);
       return blobUrl;
     } catch (ex) {
+      // SCS-9Q: a fetch that throws never reached the homeserver — on Safari that is the
+      // generic "Load failed" TypeError, raised when the device switches network, the tab is
+      // backgrounded mid-request or the connection simply drops. Nothing about it is
+      // actionable from here, and while the browser reports itself offline it is not even a
+      // homeserver problem, so don't file a ticket for it.
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) return '';
       this.reportSilentFailure(`media fetch threw: ${(ex as Error | null)?.message ?? 'unknown'}`);
       return '';
     }
+  }
+
+  /**
+   * Fetch once, retrying a single time when the attempt was transient.
+   *
+   * Two kinds of blip get the retry (SCS-92, SCS-9Q): a 502/503/504 from the media proxy in
+   * front of the homeserver, and a fetch that throws before any response arrives (dropped or
+   * switched connection). Neither says anything about the requested file, and every failure
+   * path in the caller returns '' and leaves the avatar or attachment blank until something
+   * re-renders it — so one retry is worth the wait. A second failure is passed on: a thrown
+   * fetch rethrows into the caller's catch, a bad status is returned for the !ok branch.
+   */
+  private async fetchOnceRetrying(httpUrl: string, headers: Record<string, string>): Promise<Response> {
+    try {
+      const resp = await fetch(httpUrl, { headers });
+      if (!RETRYABLE_STATUS.has(resp.status)) return resp;
+      await this.delay(RETRY_DELAY_MS);
+      return await fetch(httpUrl, { headers });
+    } catch {
+      await this.delay(RETRY_DELAY_MS);
+      return await fetch(httpUrl, { headers });
+    }
+  }
+
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
