@@ -314,6 +314,35 @@ export const _MenuStore = signalStore(
         if (loggedOut) await navigateByUrl(store.router, '/auth/login', store.menu()?.data);
       },
 
+      /**
+       * Fire `ui.menuCalled` for a menu item whose action is 'workflow'.
+       *
+       * `sourceName` is deliberately NOT sent: the callable reads the name from the menuItem
+       * document. Sending it would let any signed-in client fire any rule of its own tenant by
+       * inventing a name in the payload — the one security-relevant requirement of the spec.
+       *
+       * Errors are logged, never thrown: a failed trigger must not break navigation, and the
+       * cooldown path does not throw at all (it returns { skipped: 'cooldown' }).
+       */
+      async emitUiEvent(menuItem: MenuItemModel): Promise<void> {
+        if (!menuItem.okey) return;
+        try {
+          const { getFunctions, httpsCallable } = await import('firebase/functions');
+          const { getApp } = await import('firebase/app');
+          const fn = httpsCallable<{ tenantId: string; kind: string; sourceKey: string; linkKey: string }, unknown>(
+            getFunctions(getApp(), 'europe-west6'), 'emitUiEvent',
+          );
+          await fn({
+            tenantId: store.appStore.tenantId(),
+            kind: 'menu',
+            sourceKey: menuItem.okey,
+            linkKey: menuItem.url ?? '',
+          });
+        } catch (ex) {
+          warn('MenuStore.emitUiEvent: ' + ex);
+        }
+      },
+
       async selectMenuItem(router: Router, menuItem: MenuItemModel): Promise<void> {
         switch (menuItem.action) {
           case 'browse':
@@ -324,9 +353,15 @@ export const _MenuStore = signalStore(
             break;
           case 'call':
           case 'toggle': // like 'call' — the hosting feature flips the state in its onPopoverDismiss handler
+          case 'workflow': // like 'call' at the dispatch level; the event fires AFTER the dismissal
             // ion-popover's own dismissOnSelect can win this race and close first; the controller then
             // rejects with 'overlay does not exist'. Unawaited it escaped select()'s try/catch (SCS-5G).
             await dismissOverlay(store.popoverController, menuItem.url);
+            // Decision O3 (spec 2026-08-29 §3): a call item opts into a workflow trigger by BEING
+            // action 'workflow', not by carrying a marker. So every existing 'call' item is
+            // untouched by construction — enforced by the data model, not by a convention — and
+            // the intent is visible both in the menu editor and in this switch.
+            if (menuItem.action === 'workflow') await this.emitUiEvent(menuItem);
             break;
           default:
             die('MenuStore.selectMenuItem: invalid MenuAction=' + menuItem.action);

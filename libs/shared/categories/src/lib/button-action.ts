@@ -44,5 +44,13 @@ export const ButtonActions: ButtonActionCategory[] = [
     name: 'notify',
     i18nBase: '@shared/categories.buttonAction.notify',
     icon: 'info-circle'
+  },
+  {
+    id: ButtonAction.Workflow,
+    abbreviation: 'WFLW',
+    name: 'workflow',
+    i18nBase: '@shared/categories.buttonAction.workflow',
+    // 'process' — verified present in the icons catalogue; 'flash' and 'hand-left' are not
+    icon: 'process'
   }
 ]

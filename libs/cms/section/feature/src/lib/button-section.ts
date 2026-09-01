@@ -52,7 +52,7 @@ import { SectionStore } from './section.store';
               <ion-grid>
                 <ion-row>
                   <ion-col [size]="colSizeButton()">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" />
                   </ion-col>
                   <ion-col [size]="colSizeText()">
                     <div [innerHTML]="content()"></div>
@@ -67,7 +67,7 @@ import { SectionStore } from './section.store';
                     <div [innerHTML]="content()"></div>
                   </ion-col>
                   <ion-col [size]="colSizeButton()">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -76,7 +76,7 @@ import { SectionStore } from './section.store';
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
@@ -95,13 +95,13 @@ import { SectionStore } from './section.store';
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
+                    <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
             }
             @default {  <!-- VP.None -->
-              <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" />
+              <okr-button-widget [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" />
             }
           }
         }
@@ -148,6 +148,32 @@ export class ButtonSectionComponent {
       return;
     }
     await this.openDomainModal(target.registryKey);
+  }
+
+  /**
+   * ButtonAction.Workflow: the press IS the event (spec 2026-08-29 §2).
+   *
+   * This covers only the case where the intent writes no document — "Schlüssel bestellen",
+   * "Ich helfe am Fest mit" (§6d). Anything data-shaped goes through a `form:` button, whose
+   * submit fires from the WRITE instead.
+   *
+   * `sourceName` is deliberately NOT sent: the callable reads it from the section document.
+   * Sending it would let any signed-in client fire any rule of its tenant by inventing a name.
+   */
+  protected async onWorkflow(): Promise<void> {
+    const okey = this.section()?.okey ?? '';
+    if (!okey) return;
+    try {
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const { getApp } = await import('firebase/app');
+      const fn = httpsCallable<{ tenantId: string; kind: string; sourceKey: string; linkKey: string }, unknown>(
+        getFunctions(getApp(), 'europe-west6'), 'emitUiEvent',
+      );
+      await fn({ tenantId: this.store.tenantId(), kind: 'button', sourceKey: okey, linkKey: `section.${okey}` });
+    } catch (ex) {
+      // A failed trigger must never break the page. The cooldown path does not throw at all.
+      warn('ButtonSectionComponent.onWorkflow: ' + ex);
+    }
   }
 
   /** Any form-builder definition, behind any button, with no code per form. */

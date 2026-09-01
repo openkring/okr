@@ -39,6 +39,12 @@ const SEEDS = {
     { name: 'ui.buttonClicked', icon: 'button' },
     { name: 'ui.menuCalled', icon: 'menu' },
   ],
+  // §3 / decision O3 — a call menu item opts into a workflow trigger by BEING this action,
+  // not by carrying a marker: two rows that behave differently must not look identical in
+  // the editor. Its label lives in the app i18n bundle, like the other menu actions.
+  menu_action: [
+    { name: 'workflow', icon: 'process' },
+  ],
 };
 
 if (!getApps().length) initializeApp({ projectId: PROJECT_ID });

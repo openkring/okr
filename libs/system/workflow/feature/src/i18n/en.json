@@ -81,6 +81,14 @@
       "bugReported": {
         "label": "Bug reported"
       }
+    },
+    "ui": {
+      "buttonClicked": {
+        "label": "Button pressed"
+      },
+      "menuCalled": {
+        "label": "Menu entry selected"
+      }
     }
   },
   "workflow_probe": {

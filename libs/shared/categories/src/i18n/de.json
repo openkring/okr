@@ -72,6 +72,10 @@
     },
     "notify": {
       "label": "Reservieren"
+    },
+    "workflow": {
+      "label": "Workflow auslösen",
+      "description": "Ein Ereignis auslösen. Was danach passiert, legst du als Regel fest."
     }
   },
   "color": {

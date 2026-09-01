@@ -58,6 +58,9 @@ export class ButtonWidget {
   public readonly i18n = input.required<ButtonWidgetI18n>();
 
   public clicked = output<string>();
+  /** ButtonAction.Workflow: the press itself is the event. Deliberately NOT `clicked`, whose
+   *  payload is the modal-config string the section resolves through the modal registry. */
+  public workflow = output<void>();
 
   private readonly imgixBaseUrl = this.env.services.imgixBaseUrl;
 
@@ -114,6 +117,13 @@ export class ButtonWidget {
 
   protected async action(): Promise<void> {
     if (this.editMode()) return;
+    // Dispatched BEFORE the `if (url)` guard on purpose: a workflow button has no url, so
+    // handling it inside that guard would make every trigger silently do nothing. This is the
+    // single most likely implementation bug in spec 2026-08-29 §2, and it is called out there.
+    if (this.actionType() === ButtonAction.Workflow) {
+      this.workflow.emit();
+      return;
+    }
     const url = this.url();
     if (url) {
       switch (this.actionType()) {

@@ -35,6 +35,7 @@ import * as Person from './person';
 import * as Privacy from './privacy';
 import * as Tenant from './tenant';
 import * as WorkflowEmit from './workflow/emit';
+import * as WorkflowUiEvent from './workflow/ui-event';
 import * as WorkflowOutbox from './workflow/outbox';
 import * as Approval from './approval';
 import * as Content from './content';
@@ -139,6 +140,8 @@ export const syncPersonAccount = AccountSync.syncPersonAccount;
 export const onReservationCreated = WorkflowEmit.onReservationCreated;
 export const onApplicationCreated = WorkflowEmit.onApplicationCreated;
 export const onApplicationStateChanged = WorkflowEmit.onApplicationStateChanged;
+// UI-originated triggers: a CMS button press / a menu selection with no document behind it
+export const emitUiEvent = WorkflowUiEvent.emitUiEvent;
 export const onTaskCompleted = WorkflowEmit.onTaskCompleted;
 export const onWorkflowOutbox = WorkflowOutbox.onWorkflowOutbox;
 export const decideApproval = Approval.decideApproval;

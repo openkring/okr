@@ -148,6 +148,39 @@ describe('MenuStore', () => {
   // `aoc-storage` is a real key from FEATURE_BLOCKS (@okr/tenant-util) — nested under the
   // `aoc` block's menu, owned by block id 'aoc'. `my-custom-link` is not declared by any
   // block, so it is a stand-in for a tenant-authored menu entry.
+  describe("selectMenuItem: the 'workflow' action (spec 2026-08-29 §3, decision O3)", () => {
+    const item = (action: string) =>
+      ({ okey: 'm1', name: 'abo-kuendigen', action, url: '/private/abo', data: [] }) as unknown as MenuItemModel;
+
+    beforeEach(() => {
+      // PopoverController is provided as {} — dismissOverlay needs a dismiss() to call
+      TestBed.inject(PopoverController).dismiss = vi.fn().mockResolvedValue(true);
+    });
+
+    it("fires a ui event for action 'workflow'", async () => {
+      const spy = vi.spyOn(store, 'emitUiEvent').mockResolvedValue(undefined);
+      await store.selectMenuItem({ url: '/' } as never, item('workflow'));
+      expect(spy).toHaveBeenCalledOnce();
+    });
+
+    it("does NOT fire for a plain 'call' or 'toggle' item — every existing call menu is untouched", async () => {
+      // This is the whole reason O3 chose a new MenuAction over a marker on 'call': opting in
+      // is a property of the data model, not a convention someone has to remember.
+      const spy = vi.spyOn(store, 'emitUiEvent').mockResolvedValue(undefined);
+      await store.selectMenuItem({ url: '/' } as never, item('call'));
+      await store.selectMenuItem({ url: '/' } as never, item('toggle'));
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it("dismisses the popover for 'workflow' exactly as 'call' does, so a popover-hosted menu still closes", async () => {
+      vi.spyOn(store, 'emitUiEvent').mockResolvedValue(undefined);
+      const dismiss = vi.fn().mockResolvedValue(true);
+      TestBed.inject(PopoverController).dismiss = dismiss;
+      await store.selectMenuItem({ url: '/' } as never, item('workflow'));
+      expect(dismiss).toHaveBeenCalled();
+    });
+  });
+
   describe('feature-block visibility filter (D-BB-8)', () => {
     it('renders a child menu item whose owning block is effective', async () => {
       store = makeStore(

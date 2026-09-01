@@ -35,7 +35,7 @@ import { MenuI18n, menuItemValidations } from '@okr/cms-menu-util';
               </ion-col>
             </ion-row>
 
-            @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call' || menuAction() === 'toggle') {
+            @if(menuAction() === 'navigate' || menuAction() === 'browse' || menuAction() === 'call' || menuAction() === 'toggle' || menuAction() === 'workflow') {
               <ion-row>
                 <ion-col size="12" size-md="6">
                   <okr-icon-input [i18n]="iconI18n()" [icon]="icon()" (iconChange)="onFieldChange('icon', $event)" (selectClicked)="iconSelectClicked.emit('icon')" [readOnly]="isReadOnly()" />

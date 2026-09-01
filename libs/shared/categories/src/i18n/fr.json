@@ -72,6 +72,10 @@
     },
     "notify": {
       "label": "Réserver"
+    },
+    "workflow": {
+      "label": "Déclencher un workflow",
+      "description": "Déclencher un événement. Ce qui suit se configure comme une règle."
     }
   },
   "color": {
