@@ -8,7 +8,7 @@ import type {
   ChartSection, ChatConfig, ChatSection, ContextDiagramConfig, ContextDiagramSection, EditorConfig, EventsConfig, EventsSection,
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
-  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
+  IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
   PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TimelineConfig, TimelineSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection
 } from "./section.model";
@@ -287,6 +287,21 @@ export const MAP_SECTION_SHAPE = {
   type: 'map',
   properties: MAP_CONFIG_SHAPE
 } as MapSection;
+
+// --------------------------------------- WEATHER ----------------------------------------
+export const WEATHER_CONFIG_SHAPE = {
+    variant: 'day-horizontal',
+    locationKey: '',
+    locationKeys: [],
+    orientation: 'horizontal',
+    days: 6
+} as WeatherConfig;
+
+export const WEATHER_SECTION_SHAPE = {
+  ...BASE_SECTION_SHAPE,
+  type: 'weather',
+  properties: WEATHER_CONFIG_SHAPE
+} as WeatherSection;
 
 export const PEOPLE_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,

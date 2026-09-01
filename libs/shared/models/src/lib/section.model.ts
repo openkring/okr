@@ -14,10 +14,19 @@ import type { I18nString } from './i18n.model';
 export const SectionCollection = 'sections';
 export const SectionModelName = 'section';
 
-export type SectionType =
-    'album' | 'article' | 'button' | 'cal' | 'chart' | 'chat' | 'emergency' | 'hero' | 'iframe' | 'map' |
-    'people' | 'responsibility' | 'slider' | 'table' | 'tracker' | 'video' | 'accordion' | 'events' | 'invitations' | 'tasks' |
-    'news' | 'activities' | 'messages' | 'rag' | 'orgchart' | 'context' | 'member-age' | 'member-cat' | 'trip-stats' | 'form' | 'sankey' | 'spider' | 'toc' | 'testimonial' | 'timeline' | 'weather';
+/**
+ * Every section type, as runtime DATA. `SectionType` is derived from it rather than declared
+ * separately, so the list and the union cannot drift — and code that must iterate all types
+ * (the `createSection` completeness test) has something to iterate.
+ */
+export const SECTION_TYPES = [
+    'album', 'article', 'button', 'cal', 'chart', 'chat', 'emergency', 'hero', 'iframe', 'map',
+    'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
+    'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
+    'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather',
+] as const;
+
+export type SectionType = (typeof SECTION_TYPES)[number];
 
 // discriminated union of all section models
 export type SectionModel =

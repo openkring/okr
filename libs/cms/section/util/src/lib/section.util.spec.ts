@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ButtonAction, ButtonSection, ColorIonic } from '@okr/shared-models';
+import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection } from '@okr/shared-models';
 
 import { createSection, narrowSection } from './section.util';
 
@@ -50,5 +50,67 @@ describe('narrowSection', () => {
   it('returns undefined for the removed files/links types (§7 regression)', () => {
     expect(narrowSection({ type: 'files' })).toBeUndefined();
     expect(narrowSection({ type: 'links' })).toBeUndefined();
+  });
+});
+
+describe('createSection — completeness over every SectionType', () => {
+  // `weather` shipped with a dispatcher branch, a vest suite and a configuration form but NO
+  // factory case, so "Section hinzufügen" died with `unknown section type 'weather'` — every
+  // other wiring point looked done. This iterates the type list instead of naming types by
+  // hand, which is the only version of this test that can catch the next one.
+  //
+  // WITHOUT_FACTORY are the types that predate weather and still have no case. They are
+  // listed, not fixed: each needs its own shape and default, which is not this change's job.
+  // Removing one from the list is how you retire it.
+  const WITHOUT_FACTORY: SectionType[] = [
+    'emergency', 'accordion', 'tasks', 'news', 'activities', 'messages', 'orgchart', 'trip-stats',
+  ];
+
+  const creatable = SECTION_TYPES.filter((t) => !WITHOUT_FACTORY.includes(t));
+
+  it.each(creatable)('creates a %s section', (type) => {
+    const section = createSection(type, tenantId);
+    expect(section.type).toBe(type);
+    expect(section.tenants).toEqual([tenantId]);
+  });
+
+  it('keeps the gap list honest — a listed type really does still throw', () => {
+    // If one of these starts working, the entry is stale and belongs in `creatable`.
+    for (const type of WITHOUT_FACTORY) {
+      expect(() => createSection(type, tenantId), type).toThrow();
+    }
+  });
+
+  it('never shares a mutable property object between two sections', () => {
+    // The shapes are module-level constants: a bare spread hands every new section the SAME
+    // nested objects. `locationKeys` is an array, so this bites hardest on weather.
+    const a = createSection('weather', tenantId) as WeatherSection;
+    const b = createSection('weather', tenantId) as WeatherSection;
+    expect(a.properties).not.toBe(b.properties);
+    a.properties.locationKeys?.push('loc1');
+    expect(b.properties.locationKeys).toEqual([]);
+  });
+});
+
+describe('narrowSection — completeness over every SectionType', () => {
+  // A type missing here narrows to `undefined`, and section.store's save path skips silently
+  // on undefined: the editor saves, nothing happens, nothing is logged. So an omission here
+  // is worse than the createSection one, which at least threw.
+  //
+  // WITHOUT_NARROW documents the types that predate weather and still return undefined.
+  const WITHOUT_NARROW: SectionType[] = [
+    'emergency', 'accordion', 'tasks', 'news', 'activities', 'messages', 'orgchart', 'trip-stats',
+  ];
+
+  const narrowable = SECTION_TYPES.filter((t) => !WITHOUT_NARROW.includes(t));
+
+  it.each(narrowable)('narrows a %s section instead of dropping it', (type) => {
+    expect(narrowSection({ type, okey: 'k', name: 'n' })).toBeDefined();
+  });
+
+  it('keeps the gap list honest', () => {
+    for (const type of WITHOUT_NARROW) {
+      expect(narrowSection({ type, okey: 'k', name: 'n' }), type).toBeUndefined();
+    }
   });
 });

@@ -1,4 +1,4 @@
-import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_CONFIG_SHAPE, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, MEMBER_AGE_SECTION_SHAPE, MemberAgeSection, MEMBER_CAT_SECTION_SHAPE, MemberCatSection, PEOPLE_SECTION_SHAPE, PeopleSection, RAG_SECTION_SHAPE, RagSection, RESPONSIBILITY_SECTION_SHAPE, ResponsibilitySection, SANKEY_SECTION_SHAPE, SankeySection, SPIDER_SECTION_SHAPE, SpiderSection, TOC_SECTION_SHAPE, TocSection, TESTIMONIAL_SECTION_SHAPE, TestimonialSection, TIMELINE_SECTION_SHAPE, TimelineSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition, FORM_SECTION_CONFIG_SHAPE, FormSection, FORM_SECTION_SHAPE } from '@okr/shared-models';
+import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_CONFIG_SHAPE, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonAction, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, MEMBER_AGE_SECTION_SHAPE, MemberAgeSection, MEMBER_CAT_SECTION_SHAPE, MemberCatSection, PEOPLE_SECTION_SHAPE, PeopleSection, RAG_SECTION_SHAPE, RagSection, RESPONSIBILITY_SECTION_SHAPE, ResponsibilitySection, SANKEY_SECTION_SHAPE, SankeySection, SPIDER_SECTION_SHAPE, SpiderSection, TOC_SECTION_SHAPE, TocSection, TESTIMONIAL_SECTION_SHAPE, TestimonialSection, TIMELINE_SECTION_SHAPE, TimelineSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition, WEATHER_CONFIG_SHAPE, WEATHER_SECTION_SHAPE, WeatherSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FORM_SECTION_SHAPE } from '@okr/shared-models';
 import { buildSearchTokens, DateFormat, die, getTodayStr } from '@okr/shared-util-core';
 
 /**
@@ -59,6 +59,16 @@ export function createSection(type: SectionType, tenantId: string): SectionModel
     case 'testimonial': section = { ...TESTIMONIAL_SECTION_SHAPE } as TestimonialSection; break;
     case 'timeline': section = { ...TIMELINE_SECTION_SHAPE } as TimelineSection; break;
     case 'form': section = { ...FORM_SECTION_SHAPE } as FormSection; break;
+    case 'weather':
+      // `properties` is cloned for the same reason as 'article' above, and one reason more:
+      // WeatherConfig carries `locationKeys`, an ARRAY. A bare spread would hand every new
+      // weather section the SAME array instance, so picking locations for one map section
+      // would silently add them to every other one created in the session.
+      section = {
+        ...WEATHER_SECTION_SHAPE,
+        properties: { ...WEATHER_CONFIG_SHAPE, locationKeys: [] },
+      } as WeatherSection;
+      break;
     default:
       die(`section.util.createSection: unknown section type '${type}'`);
   }
@@ -98,6 +108,7 @@ export function narrowSection(section: any): SectionModel | undefined {
     case 'toc': return section as TocSection;
     case 'testimonial': return section as TestimonialSection;
     case 'timeline': return section as TimelineSection;
+    case 'weather': return section as WeatherSection;
     default: return undefined;
   }
 }
