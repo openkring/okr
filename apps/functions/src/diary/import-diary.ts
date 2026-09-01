@@ -34,6 +34,14 @@ const REGION = 'europe-west6';
 // One Cloud Run (2nd gen) invocation may take this long: enough for the ~2'405-file archive to
 // be listed, downloaded (concurrency 10) and weather-enriched (~50 Open-Meteo calls) in one pass.
 const TIMEOUT_SECONDS = 540;
+// The dry run gets the 2nd-gen maximum instead. It cannot be windowed the way the commit run is:
+// its whole point is the WHOLE-archive duplicate check, and `seenDocIds` in `runPipeline` lives
+// for one invocation (see the caveat on `runPipeline`). So it reads every file in one pass, and
+// that pass has outgrown 540s — 430s on 2026-08-30 at ~7'400 files, i.e. 20% headroom, which the
+// next batch of filled-in entries consumed. 3600s is the ceiling, not a comfortable margin: if
+// this run ever nears it, the fix is to carry the seen dates ACROSS windows in the run document
+// and window the dry run too, not another raise.
+const DRY_RUN_TIMEOUT_SECONDS = 3600;
 // The default 256 MiB is not enough. Both callables hold the WHOLE archive in memory for one
 // pass — the file list, every downloaded markdown body, and the accumulating run report — and the
 // archive has since grown from the ~2'405 files this was sized for to >7'400. At 256 MiB the
@@ -577,7 +585,7 @@ export const dryRunDiaryImport = onCall<DiaryImportRequest, Promise<DiaryImportM
   {
     region: REGION,
     enforceAppCheck: true,
-    timeoutSeconds: TIMEOUT_SECONDS,
+    timeoutSeconds: DRY_RUN_TIMEOUT_SECONDS,
     memory: MEMORY,
     secrets: [DIARY_DRIVE_CLIENT_ID, DIARY_DRIVE_CLIENT_SECRET, DIARY_DRIVE_REFRESH_TOKEN, DIARY_OWNER_UID],
   },

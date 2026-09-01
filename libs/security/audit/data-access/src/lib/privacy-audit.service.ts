@@ -115,16 +115,17 @@ export class PrivacyAuditService {
    * admin-only diagnostics surface the app has, and the diary domain still has no page.
    * Move both once one exists.
    *
-   * The call can run for minutes — the function's own ceiling is 540s. The caller must keep
-   * a spinner up rather than assume a fast reply.
+   * The call can run for many minutes — the function's own ceiling is 3600s, and a whole-archive
+   * pass over ~7'400 files already takes 7-8 of them. The caller must keep a spinner up rather
+   * than assume a fast reply.
    */
   public async dryRunDiaryImport(tenantId: string): Promise<DiaryImportModel> {
     // The SDK's own default is 70s (`options.timeout || 70000` in @firebase/functions), and it
     // aborts the CLIENT while the function keeps running — the caller sees a deadline-exceeded
-    // for a run that is fine. Match the function's own 540s ceiling instead, so a timeout here
-    // means the run really did not finish.
+    // for a run that is fine. Match the function's own ceiling instead, so a timeout here means
+    // the run really did not finish.
     const callable = httpsCallable<DiaryImportRequest, DiaryImportModel>(
-      this.functions, 'dryRunDiaryImport', { timeout: 540_000 });
+      this.functions, 'dryRunDiaryImport', { timeout: 3_600_000 });
     const result = await callable({ tenantId });
     return result.data;
   }
