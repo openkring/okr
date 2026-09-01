@@ -23,7 +23,7 @@ export const weatherSectionValidations = staticSuite((model: WeatherSection, fie
     enforce(VARIANTS.includes(model.properties?.variant)).isTruthy();
   });
 
-  test('locationKey', 'notEmpty', () => {
+  test('locationKey', 'weatherLocationRequired', () => {
     // `map` brings its own list; every other variant needs one location, either its own
     // or the page's. An empty key here is only valid when the page supplies one, which the
     // form pre-fills, so an empty value at this point really is unresolved.
