@@ -30,7 +30,9 @@
           "runtime": "node -p \"require('./package.json').version\""
         },
         "{workspaceRoot}/set-env.js",
-        "{projectRoot}/.env"
+        {
+          "runtime": "shasum apps/<%= tenantId %>-app/.env 2>/dev/null || echo no-env"
+        }
       ],
       "outputs": [
         "{workspaceRoot}/apps/<%= tenantId %>-app/src/environments/environment.ts",
@@ -729,6 +731,7 @@
       "defaultConfiguration": "production"
     },
     "serve": {
+      "dependsOn": ["config"],
       "executor": "@angular/build:dev-server",
       "configurations": {
         "production": {
