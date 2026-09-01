@@ -102,6 +102,13 @@ import { MenuStore } from './menu.store';
             @case('call') {
               <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" [safariWorkaround]="safariWorkaround()"/>
             }
+            @case('workflow') {
+              <!-- renders exactly like 'call'; selecting it also fires the ui.menuCalled workflow
+                   event (spec 2026-08-29 §3). NB this @switch has no @default: an action with no
+                   case here renders NOTHING, with no error anywhere — a fourth way for a row to
+                   go missing, on top of the three gates in the menu skill. -->
+              <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" [safariWorkaround]="safariWorkaround()"/>
+            }
             @case('toggle') {
               <!-- icon/label reflect the current toggle state (from toggleStates); selecting flips it via the host feature -->
               <okr-multi-avatar [icon]="effectiveIcon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" />
