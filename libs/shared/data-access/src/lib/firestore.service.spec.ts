@@ -46,11 +46,12 @@ vi.mock('@okr/shared-config', async (orig) => {
   return { ...actual, isFirestoreInitializedCheck: () => true, ensureAppCheckToken: ensureAppCheckTokenMock };
 });
 
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc } from 'firebase/firestore';
 
 import { FirestoreService } from './firestore.service';
 
 const setDocMock = vi.mocked(setDoc);
+const updateDocMock = vi.mocked(updateDoc);
 const docMock = vi.mocked(doc);
 
 const QUERY: DbQuery[] = [{ key: 'tenants', operator: 'array-contains', value: 'scs' }];
@@ -394,6 +395,95 @@ describe('FirestoreService.createModel', () => {
       undefined, undefined, undefined, true);
 
     expect(setDocMock).toHaveBeenCalledTimes(1);
+    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
+});
+
+// SCS-9W: `updateModel` was the half of the write path that never got the SCS-8N recovery. A Safari
+// tab suspended for ~22 h woke holding a cached App Check token the backend no longer accepted, and
+// the session heartbeat was denied outright — one silent Sentry warning and a session that stayed
+// open until the server-side orphan cleanup closed it.
+describe('FirestoreService.updateModel', () => {
+  const MODEL = { okey: 'a1', tenants: ['scs'] };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+    ensureAppCheckTokenMock.mockResolvedValue(true);
+    docMock.mockReturnValue({ id: 'a1' } as never);
+  });
+
+  it('returns the key on the happy path without touching App Check', async () => {
+    updateDocMock.mockResolvedValue(undefined);
+    const svc = makeService();
+
+    const key = await svc.updateModel('sessions', { ...MODEL } as never,
+      false, undefined, undefined, undefined, true);
+
+    expect(key).toBe('a1');
+    expect(updateDocMock).toHaveBeenCalledTimes(1);
+    expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
+  });
+
+  it('retries a denied update once after forcing a fresh App Check token', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    updateDocMock.mockRejectedValueOnce(permissionDenied()).mockResolvedValue(undefined);
+    const svc = makeService();
+
+    const key = await svc.updateModel('sessions', { ...MODEL } as never,
+      false, undefined, undefined, undefined, true);
+
+    expect(key).toBe('a1');
+    expect(updateDocMock).toHaveBeenCalledTimes(2);
+    expect(ensureAppCheckTokenMock).toHaveBeenCalledWith(undefined, true);   // forced, not the cache
+    expect(captureMessageMock).not.toHaveBeenCalled();                       // recovered, so no ticket
+    debug.mockRestore();
+  });
+
+  // forceOverwrite takes the setDoc branch; the retry has to re-run that same branch.
+  it('retries the overwrite branch too', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    setDocMock.mockRejectedValueOnce(permissionDenied()).mockResolvedValue(undefined);
+    const svc = makeService();
+
+    const key = await svc.updateModel('sessions', { ...MODEL } as never,
+      true, undefined, undefined, undefined, true);
+
+    expect(key).toBe('a1');
+    expect(setDocMock).toHaveBeenCalledTimes(2);
+    expect(updateDocMock).not.toHaveBeenCalled();
+    debug.mockRestore();
+  });
+
+  it('reports to Sentry when the retry is denied as well', async () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    updateDocMock.mockRejectedValue(permissionDenied());
+    const svc = makeService();
+
+    const key = await svc.updateModel('sessions', { ...MODEL } as never,
+      false, undefined, undefined, undefined, true);
+
+    expect(key).toBeUndefined();
+    expect(updateDocMock).toHaveBeenCalledTimes(2);          // one retry, never a loop
+    expect(captureMessageMock).toHaveBeenCalledTimes(1);
+    expect(captureMessageMock.mock.calls[0][1].tags).toMatchObject({
+      firestoreCode: 'permission-denied', appCheck: 'refreshed',
+    });
+    debug.mockRestore();
+    error.mockRestore();
+  });
+
+  it('does not retry a non-permission update failure', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    updateDocMock.mockRejectedValue(Object.assign(new Error('backend unavailable'), { code: 'unavailable' }));
+    const svc = makeService();
+
+    await svc.updateModel('sessions', { ...MODEL } as never,
+      false, undefined, undefined, undefined, true);
+
+    expect(updateDocMock).toHaveBeenCalledTimes(1);
     expect(ensureAppCheckTokenMock).not.toHaveBeenCalled();
     error.mockRestore();
   });

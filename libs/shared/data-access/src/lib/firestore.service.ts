@@ -182,7 +182,7 @@ export class FirestoreService {
    *
    * @param context the call site, e.g. `createModel(activities/abc)`
    * @param write the write to run; it is re-run unchanged on the retry (writes here are idempotent
-   *        `setDoc`s on an id that is already fixed)
+   *        `setDoc`/`updateDoc`s on an id that is already fixed)
    */
   private async writeWithTokenDenialRetry(context: string, write: () => Promise<void>): Promise<void> {
     try {
@@ -561,13 +561,19 @@ export class FirestoreService {
     const storedModel = removeKeyFromOkrModel(structuredClone(model));
     const updateModel = removeUndefinedFields(storedModel);
     try {
-      if (forceOverwrite) {
-        debugData(`FirestoreService.updateModel: overwriting ${collectionName}/${key} (set).`, updateModel, currentUser);
-        await setDoc(doc(this.firestore, `${collectionName}/${key}`), { ...updateModel });
-      } else {
+      // Same recovery as createModel: a tab woken from suspension holds a cached App Check token
+      // the backend no longer accepts, and the pre-flight in `ensureAppCheckToken()` waves it
+      // through. Both writes here are idempotent (fixed doc id, identical payload), so re-running
+      // them after a forced attestation is safe. SCS-9W: a Safari tab that had been away for ~22 h
+      // lost its session heartbeat this way.
+      await this.writeWithTokenDenialRetry(`updateModel(${collectionName}/${key})`, () => {
+        if (forceOverwrite) {
+          debugData(`FirestoreService.updateModel: overwriting ${collectionName}/${key} (set).`, updateModel, currentUser);
+          return setDoc(doc(this.firestore, `${collectionName}/${key}`), { ...updateModel });
+        }
         debugData(`FirestoreService.updateModel: updating ${collectionName}/${key} (update).`, updateModel, currentUser);
-        await updateDoc(doc(this.firestore, `${collectionName}/${key}`), { ...updateModel });
-      }
+        return updateDoc(doc(this.firestore, `${collectionName}/${key}`), { ...updateModel });
+      });
       if (confirmMessage) {
         await this.okrShowToast(this.toastController, confirmMessage);
       }
