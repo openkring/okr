@@ -526,7 +526,10 @@ async function processRun(
       const entry = byName.get(name);
       if (!entry || entry.model.date === '') {
         // A download/parse failure or a missing date — already recorded in run.errors /
-        // run.withoutDate. The cursor still advances past it so the run cannot get stuck.
+        // run.withoutDate. Note this is NOT how month/year aggregates are handled: they carry a
+        // zero-padded date ('20041000', '19900000') from their `scope`, so they pass here and are
+        // written like any other entry. An empty date now means the date is really absent or
+        // contradicts its own scope. The cursor still advances past it so the run cannot get stuck.
         continue;
       }
       const docId = diaryDocId(tenantId, authorKey, entry.model.date);

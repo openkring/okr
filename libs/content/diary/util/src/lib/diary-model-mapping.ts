@@ -1,4 +1,4 @@
-import { AvatarInfo, DEFAULT_DIARY_WEATHER, DiaryModel } from '@okr/shared-models';
+import { AvatarInfo, DEFAULT_DIARY_WEATHER, DiaryModel, DiaryScope } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 import { DiaryFile, DiarySection } from './diary-file';
 import { fmList, fmNumber, fmScalar } from './diary-frontmatter';
@@ -69,6 +69,36 @@ function doneItems(file: DiaryFile): string[] {
   return items;
 }
 
+/** Frontmatter `scope:` — anything unrecognised (including absent) is a normal dated day. */
+function diaryScope(raw: string): DiaryScope {
+  return raw === 'month' || raw === 'year' ? raw : 'day';
+}
+
+/**
+ * The entry's `date` as StoreDate ('yyyyMMdd'), with the components the scope does not resolve
+ * zeroed: '2004-10' + month -> '20041000', '1990' + year -> '19900000'.
+ *
+ * Why not just parse the ISO date: a coarser scope carries a PARTIAL ISO value ('1990',
+ * '2004-10') that no date parser accepts, so it used to convert to '' — and an entry with an
+ * empty date is skipped by the import without ever being written. That silently dropped all 345
+ * aggregates, i.e. everything the archive holds from before the first daily entry.
+ *
+ * isStrict = false on the day path: the import never aborts, it reports — a missing or
+ * unparseable date must leave the entry visibly dateless rather than throw and abort the run.
+ */
+function storeDateForScope(raw: string, scope: DiaryScope): string {
+  if (scope === 'day') {
+    return convertDateFormatToString(raw, DateFormat.IsoDate, DateFormat.StoreDate, false);
+  }
+  const match = scope === 'year' ? /^(\d{4})$/.exec(raw) : /^(\d{4})-(\d{2})$/.exec(raw);
+  if (!match) {
+    // The scope claims a precision the date does not have — report it as dateless rather than
+    // invent a value, so it shows up in the run's `withoutDate` instead of landing on a wrong id.
+    return '';
+  }
+  return scope === 'year' ? `${match[1]}0000` : `${match[1]}${match[2]}00`;
+}
+
 export function toDiaryModel(
   file: DiaryFile,
   tenantId: string,
@@ -77,9 +107,8 @@ export function toDiaryModel(
 ): DiaryModel {
   const model = new DiaryModel(tenantId);
   model.authorKey = authorKey;
-  // isStrict = false: the import never aborts, it reports — a missing or unparseable date
-  // must leave the entry visibly dateless rather than throw and abort the whole run.
-  model.date = convertDateFormatToString(fmScalar(file, 'date'), DateFormat.IsoDate, DateFormat.StoreDate, false);
+  model.scope = diaryScope(fmScalar(file, 'scope'));
+  model.date = storeDateForScope(fmScalar(file, 'date'), model.scope);
   model.title = fmScalar(file, 'title');
   model.text = thoughtsText(file);
   model.done = doneItems(file);

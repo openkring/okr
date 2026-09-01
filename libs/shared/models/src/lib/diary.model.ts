@@ -9,6 +9,22 @@ import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 export type DiaryStatus = 'draft' | 'final';
 
 /**
+ * How precisely the entry is dated. `day` is the normal case; the other two exist because the
+ * archive holds material from decades that have photos and documents but no diary naming a day —
+ * a scanned family album from 1950, a month in 1975. Those are real entries with real media, not
+ * defects, and dropping them would make everything before the first daily entry (1979-05-28)
+ * invisible.
+ *
+ * `date` stays `yyyyMMdd` for all three: a coarser scope zeroes the unknown components, exactly
+ * as the archive's own folder names already do (`19400000kaiserHoefer`, `20100400`). So a month
+ * aggregate is `20041000` and a year aggregate `19900000`. That keeps one date field, one
+ * document-id shape, and chronological sort order — an aggregate sorts before every day it
+ * contains. It also means `date` is NOT always a valid calendar date: never feed it to date
+ * arithmetic without checking `scope` first.
+ */
+export type DiaryScope = 'day' | 'month' | 'year';
+
+/**
  * Measured weather for the day, from Open-Meteo. Never derived from the text, never guessed.
  * `code` is the WMO weather code; -1 means the code is not known — the weather display line
  * cannot be recomputed until it is. An import of a historical entry leaves `code` at -1
@@ -42,8 +58,13 @@ export class DiaryModel implements OkrModel, TaggedModel, SearchableModel {
 
   /** Firebase uid of the author. The Firestore rule allows read and write to this uid only. */
   public authorKey = DEFAULT_KEY;
-  /** DateFormat.StoreDate ('yyyyMMdd'). Unique per (authorKey, tenant). */
+  /**
+   * DateFormat.StoreDate ('yyyyMMdd'). Unique per (authorKey, tenant). Unknown components are
+   * zeroed according to `scope` — see `DiaryScope`, and do not assume this parses as a date.
+   */
   public date = DEFAULT_DATE;
+  /** Dating precision; zeroes in `date` are only meaningful together with this. */
+  public scope: DiaryScope = 'day';
   public title = DEFAULT_NAME;
   /** the body of the entry — rendered as '## Persönliche Gedanken' */
   public text = '';

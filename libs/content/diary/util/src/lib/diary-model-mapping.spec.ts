@@ -180,3 +180,50 @@ describe('toDiaryModel', () => {
     expect(model.done).toEqual(['Etwas']);
   });
 });
+
+describe('toDiaryModel — Datierungsgenauigkeit (scope)', () => {
+  const withFrontmatter = (fm: string) =>
+    toDiaryModel(parseDiaryMarkdown(`---\n${fm}\n---\n\n## Persönliche Gedanken\n\nText.\n`),
+      't1', 'u1', RESOLVER);
+
+  it('behandelt einen Eintrag ohne scope als Tag', () => {
+    const model = withFrontmatter('date: 2026-08-16\ntitle: Tag');
+    expect(model.scope).toBe('day');
+    expect(model.date).toBe('20260816');
+  });
+
+  it('füllt das Monats-Aggregat auf yyyymm00 auf', () => {
+    const model = withFrontmatter('date: 2004-10\nscope: month\ntitle: Herbst');
+    expect(model.scope).toBe('month');
+    expect(model.date).toBe('20041000');
+  });
+
+  it('füllt das Jahres-Aggregat auf yyyy0000 auf', () => {
+    const model = withFrontmatter('date: 1990\nscope: year\ntitle: Paris');
+    expect(model.scope).toBe('year');
+    expect(model.date).toBe('19900000');
+  });
+
+  it('sortiert das Aggregat vor jeden Tag, den es enthält', () => {
+    const jahr = withFrontmatter('date: 2004\nscope: year\ntitle: J');
+    const monat = withFrontmatter('date: 2004-10\nscope: month\ntitle: M');
+    const tag = withFrontmatter('date: 2004-10-02\ntitle: T');
+    expect([tag.date, jahr.date, monat.date].sort()).toEqual([jahr.date, monat.date, tag.date]);
+  });
+
+  it('meldet den Eintrag als datumslos, wenn der scope mehr Genauigkeit behauptet als das Datum hergibt', () => {
+    // Nicht raten: ein falsches Datum landet auf einer fremden Dokument-ID und ueberschreibt sie.
+    expect(withFrontmatter('date: 2004\nscope: month\ntitle: X').date).toBe('');
+    expect(withFrontmatter('date: 2004-10\nscope: year\ntitle: X').date).toBe('');
+  });
+
+  it('faellt bei unbekanntem scope auf Tag zurueck', () => {
+    const model = withFrontmatter('date: 2026-08-16\nscope: quartal\ntitle: X');
+    expect(model.scope).toBe('day');
+    expect(model.date).toBe('20260816');
+  });
+
+  it('laesst ein unparsbares Tagesdatum leer, statt zu werfen', () => {
+    expect(withFrontmatter('date: irgendwann\ntitle: X').date).toBe('');
+  });
+});
