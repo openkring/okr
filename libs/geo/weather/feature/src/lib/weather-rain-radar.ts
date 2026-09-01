@@ -7,6 +7,9 @@ import * as L from 'leaflet';
 /** One radar frame as offered by RainViewer. */
 interface RadarFrame { time: number; path: string; }
 
+/** Opacity of the visible radar layer; every other frame's layer sits at 0. */
+const FRAME_OPACITY = 0.75;
+
 /**
  * `rain_radar` — animated precipitation over Switzerland.
  *
@@ -85,6 +88,10 @@ interface RadarFrame { time: number; path: string; }
     } @else if (failed()) {
       <div class="error">{{ errorLabel() }}</div>
     }
+
+    @if (tilesFailed()) {
+      <div class="error">{{ degradedLabel() }}</div>
+    }
   `
 })
 export class WeatherRainRadar implements AfterViewInit, OnDestroy {
@@ -97,6 +104,7 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
   public playLabel = input('');
   public pauseLabel = input('');
   public errorLabel = input('');
+  public degradedLabel = input('');
 
   private mapHost = viewChild.required<ElementRef<HTMLElement>>('mapHost');
 
@@ -104,11 +112,15 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
   protected index = signal(0);
   protected playing = signal(false);
   protected failed = signal(false);
+  /** At least one radar tile did not load (rate limit, gap in the archive). */
+  protected tilesFailed = signal(false);
   /** How many frames are measurements rather than nowcast — drives the legend split. */
   private pastCount = signal(0);
 
   private map?: L.Map;
-  private layer?: L.TileLayer;
+  /** One kept layer per frame path — see `showFrame`. Never removed while the map lives. */
+  private layers = new Map<string, L.TileLayer>();
+  private visible?: L.TileLayer;
   private timer?: ReturnType<typeof setInterval>;
   private host = '';
 
@@ -172,16 +184,36 @@ export class WeatherRainRadar implements AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * Shows the current frame by fading layers, never by creating them.
+   *
+   * A `L.TileLayer` fetches its tiles when it is added to the map, so building a fresh one on
+   * every 500 ms step re-requested every visible tile of every frame on every pass — roughly a
+   * dozen tiles times sixteen frames, which is what walked into RainViewer's rate limit and
+   * came back as HTTP 429. Each frame now gets ONE layer, created on first display and kept
+   * (this is what RainViewer's own demo does); stepping only moves opacity, so a tile is
+   * fetched once and never again.
+   *
+   * Keeping ~16 layers alive is the deliberate cost. It also removes the flicker the old
+   * `setTimeout(remove, 120)` was working around: nothing is ever detached mid-animation.
+   */
   private showFrame(): void {
     const frame = this.frames()[this.index()];
     if (!this.map || !frame) return;
-    const next = L.tileLayer(`${this.host}${frame.path}/256/{z}/{x}/{y}/4/1_1.png`, { opacity: 0.75 });
-    next.addTo(this.map);
-    // swap rather than clear first: removing the old layer before the new one paints
-    // makes the animation flicker through the bare base map on every step
-    const previous = this.layer;
-    this.layer = next;
-    if (previous) setTimeout(() => previous.remove(), 120);
+
+    let layer = this.layers.get(frame.path);
+    if (!layer) {
+      layer = L.tileLayer(`${this.host}${frame.path}/256/{z}/{x}/{y}/4/1_1.png`, { opacity: 0 });
+      // A tile 429/404 is otherwise completely silent: the animation keeps running over a
+      // half-drawn radar picture and nothing tells the viewer the image is incomplete.
+      layer.on('tileerror', () => this.tilesFailed.set(true));
+      layer.addTo(this.map);
+      this.layers.set(frame.path, layer);
+    }
+
+    this.visible?.setOpacity(0);
+    layer.setOpacity(FRAME_OPACITY);
+    this.visible = layer;
   }
 
   protected toggle(): void {

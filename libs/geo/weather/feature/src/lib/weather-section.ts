@@ -199,6 +199,7 @@ export class WeatherSectionComponent {
         ref.setInput('measuredLabel', untracked(() => this.i18n.radar_measured()));
         ref.setInput('forecastLabel', untracked(() => this.i18n.radar_forecast()));
         ref.setInput('playLabel', untracked(() => this.i18n.radar_play()));
+        ref.setInput('degradedLabel', untracked(() => this.i18n.radar_degraded()));
         this.radarRef.set(ref);
       })();
     });

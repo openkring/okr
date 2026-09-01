@@ -18,7 +18,8 @@
     "measured": "Medición",
     "forecast": "Pronóstico",
     "play": "Iniciar la animación",
-    "pause": "Pausar la animación"
+    "pause": "Pausar la animación",
+    "degraded": "Una parte de la imagen del radar no se ha podido cargar — ahora está incompleta."
   },
   "direction": {
     "n": "norte",

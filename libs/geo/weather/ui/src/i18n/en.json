@@ -18,7 +18,8 @@
     "measured": "Measured",
     "forecast": "Forecast",
     "play": "Start animation",
-    "pause": "Pause animation"
+    "pause": "Pause animation",
+    "degraded": "Part of the radar image could not be loaded — it is incomplete right now."
   },
   "direction": {
     "n": "north",

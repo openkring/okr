@@ -27,6 +27,7 @@ export const WEATHER_I18N_KEYS = {
   radar_forecast:           PFX + 'radar.forecast',
   radar_play:               PFX + 'radar.play',
   radar_pause:              PFX + 'radar.pause',
+  radar_degraded:           PFX + 'radar.degraded',
 
   dir_n:                    PFX + 'direction.n',
   dir_ne:                   PFX + 'direction.ne',

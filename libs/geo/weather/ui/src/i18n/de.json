@@ -18,7 +18,8 @@
     "measured": "Messung",
     "forecast": "Prognose",
     "play": "Animation starten",
-    "pause": "Animation anhalten"
+    "pause": "Animation anhalten",
+    "degraded": "Ein Teil des Radarbilds konnte nicht geladen werden — es ist gerade unvollständig."
   },
   "direction": {
     "n": "Norden",
