@@ -101,19 +101,26 @@ export const PersonSelectStore = signalStore(
       && !store.hasExactMatch()
     ),
     /**
-     * Default: every living person. Only with membersFirst (opt-in, currently the trip/logbuch
-     * lookup) does the two-level mode apply — members first, widening to everyone only when the
-     * term finds no member. Picking a guest or a former member then takes one extra keystroke.
+     * Members of the default org matching the term. Empty unless membersFirst (opt-in, currently
+     * the trip/logbuch lookup) — without it there is only one, undivided section.
      */
-    filteredPersons: computed(() =>
-      store.membersFirst() && store.memberMatches().length > 0
-        ? store.memberMatches()
+    memberSection: computed(() => store.membersFirst() ? store.memberMatches() : []),
+    /**
+     * Everyone else matching the term. With membersFirst this is the non-member remainder shown
+     * BELOW the members, never instead of them: a member hit must not hide a non-member of the
+     * same name (searching 'Pedersen' has to offer Jasmine next to the member Hans).
+     */
+    otherSection: computed(() =>
+      store.membersFirst()
+        ? store.personMatches().filter(p => !store.memberKeys().has(p.okey))
         : store.personMatches()
     ),
-    /** True while the widened level is on display, so the list can say so. */
-    isBeyondMembers: computed(() =>
-      store.membersFirst() && store.memberMatches().length === 0 && store.personMatches().length > 0
-    ),
+  })),
+
+  withComputed((store) => ({
+    matchCount: computed(() => store.memberSection().length + store.otherSection().length),
+    /** Label the non-member remainder, so the extra names are not read as members. */
+    showOtherDivider: computed(() => store.membersFirst() && store.otherSection().length > 0),
   })),
 
   withMethods((store) => {

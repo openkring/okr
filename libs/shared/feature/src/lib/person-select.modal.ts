@@ -54,13 +54,23 @@ export type PersonSelectResult =
         @if(selectedPersonsCount() === 0 && !store.showCustomEntry()) {
           <okr-empty-list [message]="store.i18n.person_empty()" />
         } @else {
-          @if(store.isBeyondMembers()) {
-            <!-- no member matched, so the list widened — say so, or the extra names look like members -->
+          @for(person of memberSection(); track person.okey) {
+            <ion-list lines="none">
+              <ion-item class="item" (click)="select(person)">
+                 <ion-avatar slot="start">
+                  <ion-img src="{{ 'person.' + person.okey | avatar:defaultIcon }}" alt="Avatar Logo" />
+                </ion-avatar>
+                <ion-label>{{person.firstName | fullName:person.lastName}}</ion-label>
+              </ion-item>
+            </ion-list>
+          }
+          @if(store.showOtherDivider()) {
+            <!-- the non-member remainder follows — say so, or these names look like members -->
             <ion-item-divider color="light">
               <ion-label>{{ store.i18n.person_beyond_members() }}</ion-label>
             </ion-item-divider>
           }
-          @for(person of filteredPersons(); track $index) {
+          @for(person of otherSection(); track person.okey) {
             <ion-list lines="none">
               <ion-item class="item" (click)="select(person)">
                  <ion-avatar slot="start">
@@ -87,8 +97,9 @@ export class PersonSelectModal {
   public membersFirst = input<boolean>(false);
 
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
-  protected filteredPersons = computed(() => this.store.filteredPersons() ?? []);
-  protected selectedPersonsCount = computed(() => this.filteredPersons().length);
+  protected memberSection = computed(() => this.store.memberSection() ?? []);
+  protected otherSection = computed(() => this.store.otherSection() ?? []);
+  protected selectedPersonsCount = computed(() => this.store.matchCount());
   protected isLoading = computed(() => this.store.isLoading());
 
   protected defaultIcon = this.store.appStore.getCategoryIcon('model_type', PersonModelName);

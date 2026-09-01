@@ -16,7 +16,7 @@
     "empty": "Nessuna persona trovata.",
     "custom_use": "usare come ospite",
     "label": "Persona",
-    "beyond_members": "Nessun socio trovato – tutte le persone:"
+    "beyond_members": "Altre persone – non soci"
   },
   "resource": {
     "select": "Scegliere la risorsa",

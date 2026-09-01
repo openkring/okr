@@ -16,7 +16,7 @@
     "empty": "Keine Personen gefunden.",
     "custom_use": "als Gast verwenden",
     "label": "Person",
-    "beyond_members": "Kein Mitglied gefunden – alle Personen:"
+    "beyond_members": "Weitere Personen – keine Mitglieder"
   },
   "resource": {
     "select": "Resource wählen",

@@ -143,7 +143,8 @@ export class MultiSelectModal {
   protected groupDefaultIcon = this.groupSelectStore.appStore.getCategoryIcon('model_type', GroupModelName);
 
   // person
-  protected filteredPersons = computed(() => this.personSelectStore.filteredPersons() ?? []);
+  // membersFirst stays off here, so otherSection is simply every matching person.
+  protected filteredPersons = computed(() => this.personSelectStore.otherSection() ?? []);
   protected personIsLoading = computed(() => this.personSelectStore.isLoading());
   protected personDefaultIcon = this.personSelectStore.appStore.getCategoryIcon('model_type', PersonModelName);
 

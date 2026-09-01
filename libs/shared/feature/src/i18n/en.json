@@ -16,7 +16,7 @@
     "empty": "No persons found.",
     "custom_use": "use as guest",
     "label": "Person",
-    "beyond_members": "No member found – all persons:"
+    "beyond_members": "More persons – not members"
   },
   "resource": {
     "select": "Select resource",
