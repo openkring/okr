@@ -927,7 +927,7 @@ const relationship: FeatureBlock = {
       { key: 'reservation-add', name: 'reservation-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.reservation-add' },
       { key: 'reservation-exportraw', name: 'reservation-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.reservation-exportraw' },
     ] },
-    { key: 'c-transfers', name: 'c-transfers', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+    { key: 'c-transfers', name: 'c-transfers', url: '', action: 'context', roleNeeded: 'resourceAdmin', icon: 'help-circle', label: '', children: [
       { key: 'transfer-add', name: 'transfer-add', url: 'add', action: 'call', roleNeeded: 'resourceAdmin', icon: 'add-circle', label: '@item.transfer-add' },
       { key: 'transfer-export-raw', name: 'transfer-export-raw', url: 'exportRaw', action: 'call', roleNeeded: 'resourceAdmin', icon: 'download', label: '@item.transfer-export-raw' },
     ] },
@@ -1052,7 +1052,7 @@ const resource: FeatureBlock = {
       // see the note at that block's `menu[]`. Same class as `boats-club`/`lockers-all`/
       // `keys-all` above: the doc lives under `resource-menu`, the route it navigates to is
       // `relationship`'s, and `dependsOn: ['relationship']` is what makes that safe.
-      { key: 'ownerships-all', name: 'ownerships-all', url: '/ownership/all/c-ownership', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'own', label: '@item.ownerships-all' },
+      { key: 'ownerships-all', name: 'ownerships-all', url: '/ownership/all/c-ownership', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'own', label: '@item.ownerships-all' },
       { key: 'reservation-all', name: 'reservation-all', url: '/reservation/all/c-reservations', action: 'navigate', roleNeeded: 'resourceAdmin', icon: 'reservation', label: '@item.reservation-all' },
       // Copied verbatim, including the missing leading slash — `urlResolves` matches by
       // path segment, not string prefix, so this still resolves; not "fixed" per the
