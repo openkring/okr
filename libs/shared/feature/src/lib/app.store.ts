@@ -293,7 +293,19 @@ export const AppStore = signalStore(
       orgsMap: computed(() => indexBy(state.orgsResource.value() ?? [], o => o.okey)),
       groupsMap: computed(() => indexBy(state.groupsResource.value() ?? [], g => g.okey)),
       resourcesMap: computed(() => indexBy(state.resourcesResource.value() ?? [], r => r.okey)),
-      allGroups: computed(() => state.groupsResource.value() ?? []),
+      /**
+       * Die gefuehrten Gruppen des Mandanten — ohne die Ad-hoc-Chats (`kind: 'chat'`),
+       * die zwar in derselben Collection liegen, aber nur in der Chatliste vorkommen.
+       * `kind ?? 'group'`, weil bestehende Dokumente das Feld nicht tragen.
+       */
+      allGroups: computed(() => (state.groupsResource.value() ?? [])
+        .filter((g: GroupModel) => (g.kind ?? 'group') === 'group')),
+      /**
+       * Gruppen UND Ad-hoc-Chats, also der rohe Bestand. Nur fuer den Chat: der
+       * Mandantenfilter (`filterRoomsOfTenant`) loest Raeume ueber Gruppenschluessel und
+       * Alias auf und braucht die Chats darin. Fuer jede Gruppenoberflaeche `allGroups()`.
+       */
+      allGroupsAndChats: computed(() => state.groupsResource.value() ?? []),
       allResources: computed(() => state.resourcesResource.value() ?? []),
       allTags: computed(() => state.tagsResource.value() ?? []),
       allCategories: computed(() => state.categoriesResource.value() ?? []),

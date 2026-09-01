@@ -199,7 +199,8 @@
   },
   "and": "e",
   "validation": {
-    "nameRequired": "Il nome è obbligatorio."
+    "nameRequired": "Il nome è obbligatorio.",
+    "membersRequired": "Scegli almeno una persona."
   },
   "readOnly": {
     "hint": "Canale di comunicazioni – qui scrive solo il comitato.",
@@ -233,5 +234,37 @@
     "answer": "Rispondi alla chiamata",
     "hangup": "Termina la chiamata"
   },
-  "messagesLabel": "Messaggi di chat"
+  "messagesLabel": "Messaggi di chat",
+  "adhoc": {
+    "newHeader": "Nuova chat",
+    "newAction": "Aprire una nuova chat",
+    "createAction": "Crea",
+    "name": {
+      "label": "Nome della chat",
+      "placeholder": "Inserisci un nome",
+      "helper": "Senza nome, la chat prende il nome dei suoi membri."
+    },
+    "members": {
+      "title": "Membri",
+      "add": "Aggiungi membro",
+      "you": "tu",
+      "empty": "Non hai ancora scelto nessuno."
+    },
+    "hint": "Questa chat la vedono solo i suoi membri. Non compare in nessun elenco di gruppi e non ha né calendario né file.",
+    "creating": "La chat viene creata. Ci vuole un attimo.",
+    "create": {
+      "conf": "La chat è aperta.",
+      "error": "Non è stato possibile creare la chat."
+    },
+    "info": {
+      "header": "Informazioni sulla chat"
+    },
+    "leave": {
+      "label": "Esci dalla chat",
+      "confirm": "Vuoi uscire da questa chat?",
+      "conf": "Hai lasciato la chat.",
+      "error": "Non è stato possibile uscire dalla chat.",
+      "hint": "Se esci, la chat continua per gli altri. Non la vedrai più nel tuo elenco."
+    }
+  }
 }

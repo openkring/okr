@@ -11,6 +11,19 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
   public okey = DEFAULT_KEY; // unique
   public name = DEFAULT_NAME;
 
+  /**
+   * Was dieses Dokument ist:
+   * - 'group' (Vorgabe): eine gefuehrte Vereinsgruppe — im Gruppenverzeichnis, im Orgchart,
+   *   in Auswahllisten, mit Inhalt/Kalender/Dateien.
+   * - 'chat': ein von einem Mitglied angelegter Ad-hoc-Chat. Traegt nur den Matrix-Raum,
+   *   erscheint ausschliesslich in der Chatliste und in keiner Gruppenoberflaeche.
+   *
+   * ACHTUNG beim Lesen: Firestore liefert rohe Dokumente, dieser Initialisierer laeuft dabei
+   * NICHT. Jede bestehende Gruppe traegt `undefined`. Immer als `kind ?? 'group'` lesen —
+   * ein `?? 'chat'` wuerde den ganzen Bestand aus dem Gruppenverzeichnis kippen.
+   */
+  public kind: GroupKind = 'group';
+
   public notes = DEFAULT_NOTES;
   public tags = DEFAULT_TAGS;
   public icon = 'group';
@@ -103,6 +116,8 @@ export class GroupModel implements OkrModel, NamedModel, SearchableModel, Tagged
     this.tenants = [tenantId];
   }
 }
+
+export type GroupKind = 'group' | 'chat';
 
 export const GroupCollection = 'groups';
 export const GroupModelName = 'group';

@@ -16,7 +16,7 @@
     "@okr/avatar-data-access": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-pipes": "*",
-    "@okr/shared-feature": "*"
+    "@okr/shared-feature": "*",
+    "@okr/avatar-ui": "*"
   }
 }
-

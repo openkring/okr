@@ -2,6 +2,7 @@ export * from './lib/matrix-message-input';
 export * from './lib/matrix-message-list';
 export * from './lib/matrix-room-list';
 export * from './lib/room-edit.form';
+export * from './lib/adhoc-chat.form';
 export * from './lib/poll-create.form';
 export * from './lib/poll-message';
 export * from './lib/poll-detail.modal';

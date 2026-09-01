@@ -199,7 +199,8 @@
   },
   "and": "and",
   "validation": {
-    "nameRequired": "The name is required."
+    "nameRequired": "The name is required.",
+    "membersRequired": "Select at least one person."
   },
   "readOnly": {
     "hint": "Announcement channel – only the board posts here.",
@@ -233,5 +234,37 @@
     "answer": "Answer call",
     "hangup": "End call"
   },
-  "messagesLabel": "Chat messages"
+  "messagesLabel": "Chat messages",
+  "adhoc": {
+    "newHeader": "New chat",
+    "newAction": "Start a new chat",
+    "createAction": "Create",
+    "name": {
+      "label": "Chat name",
+      "placeholder": "Enter a name",
+      "helper": "Without a name the chat is named after its members."
+    },
+    "members": {
+      "title": "Members",
+      "add": "Add member",
+      "you": "you",
+      "empty": "Nobody selected yet."
+    },
+    "hint": "Only its members can see this chat. It does not appear in any group list and has neither calendar nor files.",
+    "creating": "The chat is being set up. This takes a moment.",
+    "create": {
+      "conf": "The chat is open.",
+      "error": "The chat could not be created."
+    },
+    "info": {
+      "header": "Chat info"
+    },
+    "leave": {
+      "label": "Leave chat",
+      "confirm": "Do you want to leave this chat?",
+      "conf": "You left the chat.",
+      "error": "You could not leave the chat.",
+      "hint": "If you leave, the chat continues for the others. You will no longer see it in your list."
+    }
+  }
 }

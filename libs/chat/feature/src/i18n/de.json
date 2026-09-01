@@ -199,7 +199,8 @@
   },
   "and": "und",
   "validation": {
-    "nameRequired": "Der Name ist obligatorisch."
+    "nameRequired": "Der Name ist obligatorisch.",
+    "membersRequired": "Wähle mindestens eine Person aus."
   },
   "readOnly": {
     "hint": "Mitteilungskanal – hier schreibt nur der Vorstand.",
@@ -233,5 +234,37 @@
     "answer": "Anruf annehmen",
     "hangup": "Anruf beenden"
   },
-  "messagesLabel": "Chat-Nachrichten"
+  "messagesLabel": "Chat-Nachrichten",
+  "adhoc": {
+    "newHeader": "Neuer Chat",
+    "newAction": "Neuen Chat eröffnen",
+    "createAction": "Erstellen",
+    "name": {
+      "label": "Name des Chats",
+      "placeholder": "Name eingeben",
+      "helper": "Ohne Eingabe heisst der Chat nach den Mitgliedern."
+    },
+    "members": {
+      "title": "Mitglieder",
+      "add": "Mitglied hinzufügen",
+      "you": "du",
+      "empty": "Noch niemand ausgewählt."
+    },
+    "hint": "Diesen Chat sehen nur seine Mitglieder. Er taucht in keiner Gruppenliste auf und hat weder Kalender noch Dateien.",
+    "creating": "Der Chat wird eingerichtet. Das dauert einen Moment.",
+    "create": {
+      "conf": "Der Chat ist eröffnet.",
+      "error": "Der Chat konnte nicht eröffnet werden."
+    },
+    "info": {
+      "header": "Chat-Info"
+    },
+    "leave": {
+      "label": "Chat verlassen",
+      "confirm": "Möchtest du diesen Chat verlassen?",
+      "conf": "Du hast den Chat verlassen.",
+      "error": "Der Chat konnte nicht verlassen werden.",
+      "hint": "Wenn du gehst, läuft der Chat für die anderen weiter. Du siehst ihn dann nicht mehr in deiner Liste."
+    }
+  }
 }

@@ -199,7 +199,8 @@
   },
   "and": "et",
   "validation": {
-    "nameRequired": "Le nom est obligatoire."
+    "nameRequired": "Le nom est obligatoire.",
+    "membersRequired": "Sélectionne au moins une personne."
   },
   "readOnly": {
     "hint": "Canal d'annonces – seul le comité écrit ici.",
@@ -233,5 +234,37 @@
     "answer": "Répondre à l'appel",
     "hangup": "Terminer l'appel"
   },
-  "messagesLabel": "Messages de discussion"
+  "messagesLabel": "Messages de discussion",
+  "adhoc": {
+    "newHeader": "Nouvelle discussion",
+    "newAction": "Ouvrir une nouvelle discussion",
+    "createAction": "Créer",
+    "name": {
+      "label": "Nom de la discussion",
+      "placeholder": "Saisis un nom",
+      "helper": "Sans nom, la discussion porte le nom de ses membres."
+    },
+    "members": {
+      "title": "Membres",
+      "add": "Ajouter un membre",
+      "you": "toi",
+      "empty": "Personne n'est encore sélectionné."
+    },
+    "hint": "Seuls ses membres voient cette discussion. Elle n'apparaît dans aucune liste de groupes et n'a ni calendrier ni fichiers.",
+    "creating": "La discussion est en cours de création. Cela prend un instant.",
+    "create": {
+      "conf": "La discussion est ouverte.",
+      "error": "La discussion n'a pas pu être créée."
+    },
+    "info": {
+      "header": "Infos sur la discussion"
+    },
+    "leave": {
+      "label": "Quitter la discussion",
+      "confirm": "Veux-tu quitter cette discussion ?",
+      "conf": "Tu as quitté la discussion.",
+      "error": "Impossible de quitter la discussion.",
+      "hint": "Si tu pars, la discussion continue pour les autres. Tu ne la verras plus dans ta liste."
+    }
+  }
 }

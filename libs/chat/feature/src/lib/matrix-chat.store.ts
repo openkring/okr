@@ -8,15 +8,15 @@ import { Visibility, type MatrixCall } from 'matrix-js-sdk';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
-import { MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel, ROOM_SHAPE } from '@okr/shared-models';
-import { debugMessage } from '@okr/shared-util-core';
+import { AvatarInfo, GroupModel, MatrixMessage, MatrixReadReceipt, MatrixRoom, MatrixUser, PersonModel, ROOM_SHAPE } from '@okr/shared-models';
+import { debugMessage, getAvatarInfo } from '@okr/shared-util-core';
 import { AlertService, copyToClipboardWithConfirmation } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixChatService, MatrixPollData } from '@okr/chat-data-access';
-import { filterRoomsOfTenant, findSupportRoom, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef } from '@okr/chat-util';
+import { AdhocChatFormModel, filterRoomsOfTenant, findSupportRoom, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, MentionRef } from '@okr/chat-util';
 
 import { RoomEditModal } from './room-edit.modal';
 
@@ -127,7 +127,9 @@ export const _MatrixChatStore = signalStore(
       // Everything derived from `rooms` (unread badges included) inherits the filter.
       rooms: computed(() => filterRoomsOfTenant(
         state.roomsResource.value() || [],
-        state.appStore.allGroups(),
+        // Ad-hoc-Chats gehoeren dazu: sie sind Gruppendokumente mit `kind: 'chat'` und
+        // werden ueber Alias/matrixRoomId aufgeloest wie jeder andere Gruppenraum.
+        state.appStore.allGroupsAndChats(),
         new Set(state.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase())),
         state.appStore.tenantId(),
       )),
@@ -219,6 +221,21 @@ export const _MatrixChatStore = signalStore(
       }),
 
       /**
+       * Das Ad-hoc-Chat-Dokument des aktuellen Raums, sonst undefined
+       * (planning/specs/2026-09-01-adhoc-chats-spec.md).
+       *
+       * Ad-hoc-Chats sind Gruppendokumente mit `kind: 'chat'`; `matrixRoomId` wird von
+       * `createAdhocChat` geschrieben und ist damit die verlaessliche Verbindung vom Raum
+       * zum Dokument. `kind ?? 'group'`, weil bestehende Gruppen das Feld nicht tragen.
+       */
+      currentAdhocChat: computed((): GroupModel | undefined => {
+        const roomId = state.currentRoomId();
+        if (!roomId) return undefined;
+        return state.appStore.allGroupsAndChats().find((g: GroupModel) =>
+          (g.kind ?? 'group') === 'chat' && g.matrixRoomId === roomId);
+      }),
+
+      /**
        * Ist der aktuelle Raum ein Mitteilungskanal, in dem ich nicht schreiben darf?
        * Haengt an `roomStateVersionResource`, damit ein nachtraeglich eintreffendes oder
        * geaendertes Power-Levels-Event den Composer sofort umschaltet.
@@ -295,7 +312,7 @@ export const _MatrixChatStore = signalStore(
       getRoomsSync(): MatrixRoom[] {
         return filterRoomsOfTenant(
           store.matrixService.roomsCurrentValue,
-          store.appStore.allGroups(),
+          store.appStore.allGroupsAndChats(),
           new Set(store.appStore.allPersons().map((p: PersonModel) => p.okey.toLowerCase())),
           store.appStore.tenantId(),
         );
@@ -419,6 +436,87 @@ export const _MatrixChatStore = signalStore(
             console.error('MatrixChatStore.createRoom: Failed to create room:', error);
             await store.alertService.showToast(store.i18n.room_create_error());
           }
+        }
+      },
+
+      /**
+       * Einen Ad-hoc-Chat eroeffnen: ein Chat mit mehreren Personen ohne eigene Gruppe
+       * (planning/specs/2026-09-01-adhoc-chats-spec.md).
+       *
+       * Der Client schreibt nichts nach `groups` — die Cloud Function legt Dokument,
+       * Raum und Mitgliedschaften an und tritt alle bei. Das dauert ein paar Sekunden,
+       * deshalb der Hinweis vor dem Aufruf.
+       */
+      async createAdhocChat(): Promise<void> {
+        const tenantId = store.appStore.tenantId();
+        if (!tenantId) return;
+        const { AdhocChatNewModal } = await import('./adhoc-chat-new.modal');
+        const modal = await store.modalController.create({ component: AdhocChatNewModal });
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss<AdhocChatFormModel>();
+        if (role !== 'confirm' || !data || data.members.length === 0) return;
+
+        await store.alertService.showToast(store.i18n.adhoc_creating());
+        try {
+          const result = await store.matrixService.createAdhocChat(
+            tenantId,
+            data.members.map((m: AvatarInfo) => m.key),
+            data.name?.trim() || undefined,
+          );
+          patchState(store, { currentRoomId: result.roomId });
+          await store.alertService.showToast(store.i18n.adhoc_create_conf());
+        } catch (error) {
+          console.error('MatrixChatStore.createAdhocChat: failed:', error);
+          await store.alertService.showToast(store.i18n.adhoc_create_error());
+        }
+      },
+
+      /**
+       * Chat-Info eines Ad-hoc-Chats: die Mitglieder und der Austritt. Die Mitglieder
+       * kommen aus dem Matrix-Raum (nicht aus Firestore) — das ist der Stand, der zaehlt,
+       * und er ist ohne zusaetzliche Abfrage da.
+       */
+      async openAdhocChatInfo(): Promise<void> {
+        const chat = store.currentAdhocChat();
+        const roomId = store.currentRoomId();
+        if (!chat || !roomId) return;
+
+        const memberKeys = new Set(store.matrixService.getRoomMemberPersonKeys(roomId));
+        const members = store.appStore.allPersons()
+          .filter((p: PersonModel) => memberKeys.has(p.okey?.toLowerCase() ?? ''))
+          .map((p: PersonModel) => getAvatarInfo(p, 'person'))
+          .filter((a): a is AvatarInfo => !!a);
+
+        const { AdhocChatInfoModal } = await import('./adhoc-chat-info.modal');
+        const modal = await store.modalController.create({
+          component: AdhocChatInfoModal,
+          componentProps: {
+            chatName: chat.name,
+            members,
+            currentPersonKey: store.appStore.currentUser()?.personKey ?? '',
+          },
+        });
+        await modal.present();
+        const { role } = await modal.onDidDismiss();
+        if (role === 'leave') await this.leaveAdhocChat(chat);
+      },
+
+      /**
+       * Einen Ad-hoc-Chat verlassen. Die Cloud Function beendet die Mitgliedschaft;
+       * der Rauswurf aus dem Matrix-Raum folgt ueber `onMembershipWritten`, also mit
+       * ein paar Sekunden Verzoegerung. Der Raum wird sofort abgewaehlt, damit die
+       * Ansicht nicht auf einem Chat stehen bleibt, den man gerade verlassen hat.
+       */
+      async leaveAdhocChat(chat: GroupModel): Promise<void> {
+        const confirmed = await store.alertService.confirm(store.i18n.adhoc_leave_confirm(), true);
+        if (!confirmed) return;
+        try {
+          await store.matrixService.leaveAdhocChat(chat.okey);
+          patchState(store, { currentRoomId: undefined });
+          await store.alertService.showToast(store.i18n.adhoc_leave_conf());
+        } catch (error) {
+          console.error('MatrixChatStore.leaveAdhocChat: failed:', error);
+          await store.alertService.showToast(store.i18n.adhoc_leave_error());
         }
       },
 

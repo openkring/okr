@@ -2238,6 +2238,31 @@ private async buildAndEmitRoomsList(): Promise<void> {
   }
 
   /**
+   * Einen Ad-hoc-Chat anlegen: ein Chat mit mehreren Personen ohne eigene Gruppe
+   * (planning/specs/2026-09-01-adhoc-chats-spec.md).
+   *
+   * Die Cloud Function legt Gruppendokument (`kind: 'chat'`), Matrix-Raum und die
+   * Mitgliedschaften an und tritt alle Beteiligten bei — der Client schreibt selbst
+   * nichts nach `groups`. Der zurueckgegebene `roomId` ist sofort benutzbar, auch wenn
+   * der Raum erst mit dem naechsten Sync in der Raumliste erscheint.
+   */
+  public async createAdhocChat(tenantId: string, personKeys: string[], name?: string): Promise<{ groupKey: string; roomId: string; name: string }> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'createAdhocChat');
+    const result = await fn({ tenantId, personKeys, name });
+    return result.data as { groupKey: string; roomId: string; name: string };
+  }
+
+  /**
+   * Einen Ad-hoc-Chat verlassen: beendet die eigene Mitgliedschaft. Der Rauswurf aus dem
+   * Matrix-Raum folgt serverseitig ueber `onMembershipWritten`, also mit ein paar
+   * Sekunden Verzoegerung.
+   */
+  public async leaveAdhocChat(groupKey: string): Promise<void> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'leaveAdhocChat');
+    await fn({ groupKey });
+  }
+
+  /**
    * Remove a person (by personKey) from the Matrix chat room of a group.
    * Called when a group membership is ended.
    */

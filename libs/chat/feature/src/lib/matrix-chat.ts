@@ -317,6 +317,13 @@ import { ChatHelpModal } from './chat-help.modal';
                     </ion-button>
                   </ion-buttons>
                   <ion-title>{{ store.i18n.rooms() }}</ion-title>
+                  <!-- Ad-hoc-Chat eroeffnen: fuer jede angemeldete Person, nicht nur fuer Admins
+                       (planning/specs/2026-09-01-adhoc-chats-spec.md) -->
+                  <ion-buttons slot="end">
+                    <ion-button [attr.aria-label]="store.i18n.adhoc_new_action()" (click)="store.createAdhocChat()">
+                      <ion-icon slot="icon-only" src="{{ 'add-circle' | svgIcon }}"></ion-icon>
+                    </ion-button>
+                  </ion-buttons>
                 </ion-toolbar>
               </ion-header>
 
@@ -365,6 +372,11 @@ import { ChatHelpModal } from './chat-help.modal';
 
                       <ion-title>{{ currentRoom()?.name }}</ion-title>
                       <ion-buttons slot="end">
+                        @if (store.currentAdhocChat()) {
+                          <ion-button [attr.aria-label]="store.i18n.adhoc_info_header()" (click)="store.openAdhocChatInfo(); $event.stopPropagation()">
+                            <ion-icon src="{{'group' | svgIcon}}"></ion-icon>
+                          </ion-button>
+                        }
                         <ion-button [attr.aria-label]="store.i18n.help_title()" (click)="openChatHelp()">
                           <ion-icon src="{{'info-circle' | svgIcon}}"></ion-icon>
                         </ion-button>
