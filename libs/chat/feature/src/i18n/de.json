@@ -242,7 +242,8 @@
     "name": {
       "label": "Name des Chats",
       "placeholder": "Name eingeben",
-      "helper": "Ohne Eingabe heisst der Chat nach den Mitgliedern."
+      "helper": "Ab zwei weiteren Personen brauchst du einen Namen für den Chat.",
+      "helperDirect": "Bei einem Chat zu zweit brauchst du keinen Namen."
     },
     "members": {
       "title": "Mitglieder",
@@ -253,6 +254,7 @@
       "addError": "Die Person konnte nicht hinzugefügt werden."
     },
     "hint": "Diesen Chat sehen nur seine Mitglieder. Er taucht in keiner Gruppenliste auf und hat weder Kalender noch Dateien.",
+    "hintDirect": "Mit einer einzigen Person entsteht ein Chat zu zweit. Gibt es ihn schon, wird er wieder geöffnet.",
     "creating": "Der Chat wird eingerichtet. Das dauert einen Moment.",
     "create": {
       "conf": "Der Chat ist eröffnet.",

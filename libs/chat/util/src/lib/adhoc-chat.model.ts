@@ -8,7 +8,10 @@ import { AvatarInfo } from '@okr/shared-models';
  * Angaben ein.
  */
 export interface AdhocChatFormModel {
-  /** Frei waehlbar und optional — leer heisst «nach den Mitgliedern benennen». */
+  /**
+   * Pflicht, sobald mehr als eine Person gewaehlt ist — dann entsteht ein Ad-hoc-Chat.
+   * Bei genau einer Person entsteht eine Direktnachricht und der Wert wird verworfen.
+   */
   name: string;
   /** Die eingeladenen Personen OHNE die anlegende Person (die ist immer dabei). */
   members: AvatarInfo[];

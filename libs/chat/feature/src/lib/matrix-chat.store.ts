@@ -440,12 +440,20 @@ export const _MatrixChatStore = signalStore(
       },
 
       /**
-       * Einen Ad-hoc-Chat eroeffnen: ein Chat mit mehreren Personen ohne eigene Gruppe
-       * (planning/specs/2026-09-01-adhoc-chats-spec.md).
+       * Einen Chat eroeffnen. Die Anzahl der gewaehlten Personen entscheidet, WAS entsteht
+       * (planning/specs/2026-09-01-adhoc-chats-spec.md):
        *
-       * Der Client schreibt nichts nach `groups` — die Cloud Function legt Dokument,
-       * Raum und Mitgliedschaften an und tritt alle bei. Das dauert ein paar Sekunden,
-       * deshalb der Hinweis vor dem Aufruf.
+       * - **eine** Person → eine Direktnachricht. `createDirectRoom` ist find-or-create, es
+       *   entsteht also kein zweiter Raum, wenn es den DM schon gibt. Ein eingegebener Name
+       *   wird verworfen — ein DM traegt den Namen der Gegenperson.
+       * - **mehrere** Personen → ein Ad-hoc-Chat mit Pflichtnamen. Der Client schreibt nichts
+       *   nach `groups`; die Cloud Function legt Dokument, Raum und Mitgliedschaften an und
+       *   tritt alle bei. Das dauert ein paar Sekunden, deshalb der Hinweis vor dem Aufruf.
+       *
+       * Die Weiche greift NUR bei der Anlage. Ein bestehender Ad-hoc-Chat bleibt ein
+       * Ad-hoc-Chat, auch wenn er auf zwei Mitglieder schrumpft — er hat ein Gruppendokument,
+       * eine Historie und einen Alias, und daraus nachtraeglich einen DM zu machen hiesse,
+       * beides zu verlieren.
        */
       async createAdhocChat(): Promise<void> {
         const tenantId = store.appStore.tenantId();
@@ -455,6 +463,17 @@ export const _MatrixChatStore = signalStore(
         await modal.present();
         const { data, role } = await modal.onDidDismiss<AdhocChatFormModel>();
         if (role !== 'confirm' || !data || data.members.length === 0) return;
+
+        if (data.members.length === 1) {
+          try {
+            await this.createDirectRoom(data.members[0].key);
+            await store.alertService.showToast(store.i18n.room_create_conf());
+          } catch (error) {
+            console.error('MatrixChatStore.createAdhocChat: direct room failed:', error);
+            await store.alertService.showToast(store.i18n.room_create_error());
+          }
+          return;
+        }
 
         await store.alertService.showToast(store.i18n.adhoc_creating());
         try {

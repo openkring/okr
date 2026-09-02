@@ -12,8 +12,12 @@ import { AvatarPipe } from '@okr/avatar-ui';
 import { AdhocChatFormModel, adhocChatValidations, MatrixChatI18n } from '@okr/chat-util';
 
 /**
- * Formular fuer einen Ad-hoc-Chat (planning/specs/2026-09-01-adhoc-chats-spec.md):
- * ein frei waehlbarer, optionaler Name und die Liste der Mitglieder.
+ * Formular fuer einen neuen Chat (planning/specs/2026-09-01-adhoc-chats-spec.md):
+ * ein Name und die Liste der Mitglieder.
+ *
+ * Die Anzahl der Mitglieder entscheidet, was daraus wird — genau eine weitere Person ergibt
+ * eine Direktnachricht (Name irrelevant), mehrere einen Ad-hoc-Chat (Name Pflicht). Das
+ * Formular zeigt das nur an; die Weiche steht im `MatrixChatStore`.
  *
  * Die Personenauswahl selbst gehoert NICHT hierher — sie ist der bestehende
  * `PersonSelectModal`, den der Elternteil oeffnet (`addMemberClicked`). Das Formular
@@ -87,7 +91,7 @@ import { AdhocChatFormModel, adhocChatValidations, MatrixChatI18n } from '@okr/c
             @if (memberCount() < 2) {
               <ion-note class="hint" color="medium">{{ i18n().adhoc_members_empty() }}</ion-note>
             }
-            <ion-note class="hint" color="medium">{{ i18n().adhoc_hint() }}</ion-note>
+            <ion-note class="hint" color="medium">{{ isDirect() ? i18n().adhoc_hint_direct() : i18n().adhoc_hint() }}</ion-note>
           </ion-card-content>
         </ion-card>
 
@@ -132,11 +136,14 @@ export class AdhocChatForm {
     return user ? `${user.firstName} ${user.lastName}`.trim() : '';
   });
 
+  /** Genau eine weitere Person: daraus wird eine Direktnachricht, kein Ad-hoc-Chat. */
+  protected readonly isDirect = computed(() => this.members().length === 1);
+
   protected nameI18n = computed(() => ({
     name: 'name',
     label: this.i18n().adhoc_name_label(),
     placeholder: this.i18n().adhoc_name_placeholder(),
-    helper: this.i18n().adhoc_name_helper()
+    helper: this.isDirect() ? this.i18n().adhoc_name_helper_direct() : this.i18n().adhoc_name_helper()
   } as TextInputI18n));
 
   protected onNameChange(value: string): void {

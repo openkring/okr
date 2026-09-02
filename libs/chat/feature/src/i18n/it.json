@@ -242,7 +242,8 @@
     "name": {
       "label": "Nome della chat",
       "placeholder": "Inserisci un nome",
-      "helper": "Senza nome, la chat prende il nome dei suoi membri."
+      "helper": "Da due altre persone in su, la chat ha bisogno di un nome.",
+      "helperDirect": "Una chat a due non ha bisogno di un nome."
     },
     "members": {
       "title": "Membri",
@@ -253,6 +254,7 @@
       "addError": "Non è stato possibile aggiungere la persona."
     },
     "hint": "Questa chat la vedono solo i suoi membri. Non compare in nessun elenco di gruppi e non ha né calendario né file.",
+    "hintDirect": "Con una sola persona nasce una chat a due. Se esiste già, viene semplicemente riaperta.",
     "creating": "La chat viene creata. Ci vuole un attimo.",
     "create": {
       "conf": "La chat è aperta.",

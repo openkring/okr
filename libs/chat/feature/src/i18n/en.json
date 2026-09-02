@@ -242,7 +242,8 @@
     "name": {
       "label": "Chat name",
       "placeholder": "Enter a name",
-      "helper": "Without a name the chat is named after its members."
+      "helper": "From two additional people on, the chat needs a name.",
+      "helperDirect": "A chat with one person needs no name."
     },
     "members": {
       "title": "Members",
@@ -253,6 +254,7 @@
       "addError": "The person could not be added."
     },
     "hint": "Only its members can see this chat. It does not appear in any group list and has neither calendar nor files.",
+    "hintDirect": "With a single person you get a one-to-one chat. If it already exists, it is reopened.",
     "creating": "The chat is being set up. This takes a moment.",
     "create": {
       "conf": "The chat is open.",

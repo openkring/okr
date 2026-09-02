@@ -242,7 +242,8 @@
     "name": {
       "label": "Nom de la discussion",
       "placeholder": "Saisis un nom",
-      "helper": "Sans nom, la discussion porte le nom de ses membres."
+      "helper": "À partir de deux autres personnes, la discussion a besoin d'un nom.",
+      "helperDirect": "Une discussion à deux n'a pas besoin de nom."
     },
     "members": {
       "title": "Membres",
@@ -253,6 +254,7 @@
       "addError": "La personne n'a pas pu être ajoutée."
     },
     "hint": "Seuls ses membres voient cette discussion. Elle n'apparaît dans aucune liste de groupes et n'a ni calendrier ni fichiers.",
+    "hintDirect": "Avec une seule personne, tu obtiens une discussion à deux. Si elle existe déjà, elle est simplement rouverte.",
     "creating": "La discussion est en cours de création. Cela prend un instant.",
     "create": {
       "conf": "La discussion est ouverte.",

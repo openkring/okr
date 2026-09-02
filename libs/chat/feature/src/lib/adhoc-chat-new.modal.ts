@@ -12,8 +12,13 @@ import { AdhocChatForm } from '@okr/chat-ui';
 import { AdhocChatFormModel, ADHOC_CHAT_MAX_MEMBERS, MATRIX_CHAT_I18N_KEYS, MatrixChatI18n, newAdhocChatForm } from '@okr/chat-util';
 
 /**
- * «Neuer Chat» — Name und Mitglieder eines Ad-hoc-Chats
+ * «Neuer Chat» — Name und Mitglieder
  * (planning/specs/2026-09-01-adhoc-chats-spec.md §6).
+ *
+ * Der Modal kennt den Unterschied zwischen Direktnachricht und Ad-hoc-Chat nicht: er sammelt
+ * Personen ein und gibt das Formular zurueck. Ob daraus ein DM (genau eine Person) oder ein
+ * Ad-hoc-Chat (mehrere, Name Pflicht) wird, entscheidet der `MatrixChatStore`; erzwungen wird
+ * der Pflichtname von `adhocChatValidations` ueber `formValid`.
  *
  * Die Personenauswahl ist der bestehende `PersonSelectModal`: eine Person je Oeffnen,
  * mit Suchkopf und flacher Liste. Angelegt wird hier nichts — der Modal gibt das
