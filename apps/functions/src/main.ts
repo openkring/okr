@@ -319,6 +319,9 @@ export { rebuildAddressDirectory } from './address/rebuild-address-directory';
 // tiered on-demand vault read (privacy 1.19 Phase 4, D9/D-P4-1)
 export { getAddressView } from './address/get-address-view';
 
+// tenant allocation (spec 1.47): move a person between tenants, with an audit entry
+export { allocateTenant } from './tenant-allocation';
+
 // exchange rates
 export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';
 export { scheduledWeatherFetch } from './weather/fetch-weather';

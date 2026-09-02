@@ -1186,6 +1186,21 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onErasure: 'retain',
     retention: LOG_24M,   // §6.1 fixes this tier explicitly; attachments inherit it (see `attachmentPaths`)
   },
+  {
+    collection: 'tenant-allocation-log',
+    dataClass: 'log',
+    // T4: the evidence that a transfer happened is a legitimate-interest record — it is what
+    // makes the disclosure provable afterwards. It must not block an erasure (only T1 may),
+    // and it is deleted with the subject rather than kept, because the counts alone carry no
+    // further evidentiary value once the subject is gone.
+    tier: 'T4',
+    onTenantExit: 'delete',
+    find: (c: SubjectCtx) => db().collection('tenant-allocation-log').where('subjectKey', '==', c.personKey),
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'delete',
+    retention: LOG_24M,
+  },
 ];
 
 export function entriesFor(mode: 'full' | 'index'): readonly SubjectDataEntry[] {

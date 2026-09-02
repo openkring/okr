@@ -138,6 +138,8 @@ export const COLLECTION_LABELS: Record<string, string> = {
   // feature building blocks (task 8): audit trail of enable/disable transitions the
   // caller performed as a tenant admin via applyFeatureSelection.
   featureEvents: 'Feature-Änderungen',
+  // spec 1.47: audit trail of grant/revoke moves between tenants for this person.
+  'tenant-allocation-log': 'Mandanten-Zuteilungen',
 };
 
 function humanizeCollectionName(collection: string): string {
