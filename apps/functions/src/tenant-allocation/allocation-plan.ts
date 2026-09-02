@@ -110,7 +110,12 @@ export function buildAllocationPlan(req: AllocationRequest): AllocationPlan {
   if (req.includeSubject) push('persons', req.person);
 
   const byKey = new Map(req.addresses.map((a) => [a.okey, a]));
+  // Dedupe selectedAddressKeys to preserve audit-count integrity: a client that names
+  // the same key twice should not inflate the count. First occurrence wins, order preserved.
+  const seen = new Set<string>();
   for (const key of req.selectedAddressKeys) {
+    if (seen.has(key)) continue;
+    seen.add(key);
     const address = byKey.get(key);
     if (!address) {
       rejections.push({ okey: key, reason: 'notFound' });

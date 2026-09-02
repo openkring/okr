@@ -179,4 +179,17 @@ describe('buildAllocationPlan — guards that must never be bypassed', () => {
     });
     expect(plan.rejections).toEqual([{ okey: 'ghost', reason: 'notFound' }]);
   });
+
+  it('collapses a duplicated address key so the audit counts stay honest', () => {
+    const plan = buildAllocationPlan({
+      ...base, direction: 'grant',
+      person: doc('p1', [ACTOR], ''),
+      addresses: [doc('a1', [ACTOR])],
+      avatars: [],
+      selectedAddressKeys: ['a1', 'a1'],
+    });
+    expect(plan.writes.filter(w => w.collection === 'addresses')).toHaveLength(1);
+    expect(plan.counts.addresses).toBe(1);
+    expect(plan.rejections).toEqual([]);
+  });
 });
