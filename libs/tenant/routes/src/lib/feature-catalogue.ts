@@ -154,6 +154,9 @@ const aoc: BlockRoutes = {
       { path: 'storage',    canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocStorage) },
       { path: 'doc',        canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocDoc) },
       { path: 'kiosk',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocKiosk) },
+      // Tenant allocation (spec 1.47): grants and revokes another tenant's access to a
+      // person and their vault documents. admin-only — it is a cross-tenant PII transfer.
+      { path: 'allocation', canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocTenantAllocation) },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `tag-all` menu doc's
       // `roleNeeded: contentAdmin`. The fifth mismatch, found while applying the first four and
       // explicitly folded into the ruling.

@@ -26,3 +26,4 @@ export * from './lib/tenant-switcher-grid';
 export * from './lib/tenant-switcher';
 export * from './lib/tenant-allocation-confirm.modal';
 export * from './lib/aoc-tenant-allocation.store';
+export * from './lib/aoc-tenant-allocation';
