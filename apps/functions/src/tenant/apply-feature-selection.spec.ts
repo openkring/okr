@@ -1016,3 +1016,106 @@ describe('applySelection — live menuItems name collisions (task B-1)', () => {
       .rejects.toThrow(/cannot be resolved.*'main_p13'.*legacy-root-a.*legacy-root-b/s);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// Task 1 + 3 — an ordinary save must not revert a hand-tuned value, and a replay that
+// does overwrite one must leave an audit record of it.
+// ─────────────────────────────────────────────────────────────────────────────────────
+describe('applySelection replayStructure', () => {
+  const driftedBlock = catalogueBlock('calevent', [{
+    key: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
+    roleNeeded: 'registered', icon: 'calendar', label: '@main.calevent.all',
+  }]);
+
+  /** A live doc whose `roleNeeded` was tightened by hand after the catalogue was written. */
+  const seedDriftedDoc = (fdb: FakeFirestore) => {
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: ['calevent'] });
+    fdb.seed(MenuItemCollection, 'calevent-all', {
+      okey: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
+      roleNeeded: 'memberAdmin', icon: 'calendar', label: 'Termine',
+      isArchived: false, tenants: ['p13'], menuItems: [],
+    });
+  };
+
+  it('leaves a hand-tuned roleNeeded alone when the replay is off (the reverted-permission bug)', async () => {
+    const fdb = new FakeFirestore();
+    seedDriftedDoc(fdb);
+
+    await applySelection(fdb as unknown as Firestore, [driftedBlock],
+      { enabled: ['calevent'], withheld: [] }, 'p13', 'uid-1', { replayStructure: false });
+
+    expect(fdb.dump(MenuItemCollection)['calevent-all'].roleNeeded).toBe('memberAdmin');
+    expect(Object.values(fdb.dump(FeatureEventCollection))).toEqual([]); // nothing changed at all
+  });
+
+  it('still seeds a NEW tenant onto the same shared doc while the replay is off', async () => {
+    const fdb = new FakeFirestore();
+    seedDriftedDoc(fdb);
+
+    await applySelection(fdb as unknown as Firestore, [driftedBlock],
+      { enabled: ['calevent'], withheld: [] }, 'scs', 'uid-1', { replayStructure: false });
+
+    const doc = fdb.dump(MenuItemCollection)['calevent-all'];
+    expect(doc.tenants).toEqual(['p13', 'scs']);   // extended
+    expect(doc.roleNeeded).toBe('memberAdmin');    // not overwritten
+  });
+
+  it('overwrites it when the replay IS on, and records the old value in featureEvents', async () => {
+    const fdb = new FakeFirestore();
+    seedDriftedDoc(fdb);
+
+    await applySelection(fdb as unknown as Firestore, [driftedBlock],
+      { enabled: ['calevent'], withheld: [] }, 'p13', 'uid-1', { replayStructure: true });
+
+    expect(fdb.dump(MenuItemCollection)['calevent-all'].roleNeeded).toBe('registered');
+    expect(Object.values(fdb.dump(FeatureEventCollection))).toEqual([{
+      tenantId: 'p13', block: 'calevent', op: 'menu-structure', at: expect.any(String),
+      by: 'uid-1', docId: 'calevent-all', name: 'calevent-all',
+      field: 'roleNeeded', from: 'memberAdmin', to: 'registered',
+    }]);
+  });
+
+  it('defaults to the full-seed contract when no option is passed', async () => {
+    const fdb = new FakeFirestore();
+    seedDriftedDoc(fdb);
+
+    await applySelection(fdb as unknown as Firestore, [driftedBlock],
+      { enabled: ['calevent'], withheld: [] }, 'p13', 'uid-1');
+
+    expect(fdb.dump(MenuItemCollection)['calevent-all'].roleNeeded).toBe('registered');
+  });
+
+  it('a second replay emits no further audit entry — the drift is gone, so nothing is overwritten', async () => {
+    const fdb = new FakeFirestore();
+    seedDriftedDoc(fdb);
+    const plan: SelectionPlan = { enabled: ['calevent'], withheld: [] };
+
+    await applySelection(fdb as unknown as Firestore, [driftedBlock], plan, 'p13', 'uid-1', { replayStructure: true });
+    await applySelection(fdb as unknown as Firestore, [driftedBlock], plan, 'p13', 'uid-1', { replayStructure: true });
+
+    expect(Object.keys(fdb.dump(FeatureEventCollection))).toHaveLength(1);
+  });
+
+  it('attributes the audit entry to the block whose spec produced the write', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: ['aoc'] });
+    fdb.seed(MenuItemCollection, 'shared-child', {
+      okey: 'shared-child', name: 'shared-child', url: '/OLD', action: 'navigate',
+      roleNeeded: 'registered', icon: 'x', label: 'Alt',
+      isArchived: false, tenants: ['p13'], menuItems: [],
+    });
+    const child: MenuSpec = {
+      key: 'shared-child', name: 'shared-child', url: '/NEW', action: 'navigate',
+      roleNeeded: 'registered', icon: 'x', label: 'Alt',
+    };
+
+    await applySelection(fdb as unknown as Firestore,
+      [catalogueBlock('aoc', [child]), catalogueBlock('cms', [child])],
+      { enabled: ['aoc', 'cms'], withheld: [] }, 'p13', 'uid-1', { replayStructure: true });
+
+    const events = Object.values(fdb.dump(FeatureEventCollection))
+      .filter((e) => (e as { op: string }).op === 'menu-structure');
+    expect(events).toHaveLength(1);
+    expect((events[0] as { block: string }).block).toBe('aoc'); // first block to touch it
+  });
+});

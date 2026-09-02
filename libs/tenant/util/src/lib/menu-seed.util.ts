@@ -22,6 +22,10 @@ export interface MenuOp {
   docId: string;
   op: 'create' | 'add-tenant' | 'update-structure';
   fields: Partial<MenuItemModel>;
+  /** The block whose spec first produced this op — audit attribution only (see
+   * `menuStructureChanges`). Undefined when `planMenuOps` is called directly, which has no
+   * block in scope; `planMenuOpsForBlocks` fills it in. Never a write target. */
+  blockId?: string;
 }
 
 export interface MenuNameCollision {
@@ -281,11 +285,31 @@ export function findStructuralDrift(
  * comment. Looking a spec up by anything else (e.g. `spec.key` used to double as a doc-id
  * lookup key before task 12 review round 2) is blind to the eleven legacy-autoid docs and
  * creates a duplicate on every seed.
+ *
+ * `replayStructure` DECIDES WHETHER THIS IS A SEED OR A REWRITE. With `true` (the historical
+ * contract of this primitive: "plan a full seed") an EXISTING document's `url`/`action`/
+ * `roleNeeded` are rewritten from the catalogue whenever they differ. That is the behaviour
+ * that silently reverted hand-tuned permissions: a picker save replays every spec of every
+ * enabled block, not just the block the admin ticked, so an unrelated `roleNeeded` fix made
+ * in Firestore disappeared on the next unrelated save (live cases: `membership-copyemail`
+ * → commit 170fe4617, `logbuch` → ba74a8f5e, the `resourceAdmin` context menus →
+ * a6d07bd4c/487e1fea9, each of which had to be back-ported INTO the catalogue by hand).
+ *
+ * With `false` an existing document is only ever EXTENDED — `tenants[]` gains this tenant,
+ * a parent gains missing children — and never overwritten. Creates are unaffected either
+ * way: a document this run brings into existence has no prior value to lose.
+ *
+ * The write path (`applySelection` ← `applyFeatureSelection`) passes `false` for an
+ * ordinary save and `true` only for «Struktur übernehmen», so replaying the catalogue is a
+ * deliberate, separately-confirmed act rather than a side effect of ticking a checkbox.
+ * The default stays `true` here because this function's own contract — and
+ * `findStructuralDrift`, its read-only twin — is "what would a full seed do".
  */
 export function planMenuOps(
   specs: MenuSpec[],
   tenantId: string,
   existingByName: Map<string, MenuItemModel>,
+  replayStructure = true,
 ): MenuOp[] {
   const ops: MenuOp[] = [];
 
@@ -316,7 +340,7 @@ export function planMenuOps(
         },
       });
     } else {
-      const fields: Partial<MenuItemModel> = structuralDrift(doc, spec);
+      const fields: Partial<MenuItemModel> = replayStructure ? structuralDrift(doc, spec) : {};
 
       const missingChildren = (spec.children ?? [])
         .map(c => c.key)
@@ -341,4 +365,56 @@ export function planMenuOps(
 
   specs.forEach(visit);
   return ops;
+}
+
+/**
+ * One catalogue-owned field a planned op is about to overwrite on an EXISTING menu
+ * document — the audit record behind `featureEvents`' `op: 'menu-structure'` entries.
+ */
+export interface MenuStructureChange {
+  /** The block whose spec produced the op, `''` when the op carries no attribution. */
+  blockId: string;
+  /** The real Firestore doc id written to — for eleven legacy docs NOT the name. */
+  docId: string;
+  /** The `name` the app resolves this menu node by. */
+  name: string;
+  /** One of `STRUCTURAL_FIELDS`. */
+  field: string;
+  /** The value the live document carried before this run. `''` when the field was absent. */
+  from: string;
+  /** The catalogue value being written. */
+  to: string;
+}
+
+/**
+ * The audit trail of a replay: every catalogue-owned field an op set overwrites, with the
+ * value it replaces. Pure, so `applySelection` can turn it into `featureEvents` entries and
+ * a dry run could show it without writing anything.
+ *
+ * `create` ops are deliberately EXCLUDED. A document this run brings into existence has no
+ * prior value, so "changed from X to Y" would be a fiction; its existence is already
+ * implied by the block's `enable` event.
+ *
+ * `before` must be the name→document index as it stood BEFORE planning — `planMenuOpsForBlocks`
+ * folds each op back into its working copy of that map (so later specs plan against
+ * accumulated state), which would otherwise report every `from` as equal to its `to`.
+ */
+export function menuStructureChanges(
+  ops: MenuOp[],
+  before: Map<string, MenuItemModel>,
+): MenuStructureChange[] {
+  const changes: MenuStructureChange[] = [];
+  for (const op of ops) {
+    if (op.op === 'create') continue;
+    const doc = before.get(op.key);
+    if (!doc) continue; // planned as a create earlier in the same run
+    for (const field of STRUCTURAL_FIELDS) {
+      if (!(field in op.fields)) continue;
+      const to = String(op.fields[field] ?? '');
+      const from = String(doc[field] ?? '');
+      if (from === to) continue; // folded in from a sibling spec, not an actual overwrite
+      changes.push({ blockId: op.blockId ?? '', docId: op.docId, name: op.key, field, from, to });
+    }
+  }
+  return changes;
 }

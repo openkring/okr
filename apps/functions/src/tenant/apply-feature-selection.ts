@@ -9,7 +9,7 @@ import {
   MenuItemCollection, UserCollection, type MenuItemModel,
 } from '@okr/shared-models';
 import {
-  indexMenuDocsByName, menuSpecNames, planMenuOps, planRootMenuOp,
+  indexMenuDocsByName, menuSpecNames, menuStructureChanges, planMenuOps, planRootMenuOp,
   resolveAvailability, resolveWithDeps, rootNavKeys,
   type FeatureBlock, type FeatureRollout, type MenuOp,
 } from '@okr/tenant-util';
@@ -113,9 +113,14 @@ export function planMenuOpsForBlocks(
   blocks: FeatureBlock[],
   tenantId: string,
   existingByName: Map<string, MenuItemModel>,
+  replayStructure = true,
 ): MenuOp[] {
   const accumulatedFields = new Map<string, Partial<MenuItemModel>>();
   const opKind = new Map<string, MenuOp['op']>();
+  // Audit attribution only (`MenuOp.blockId`). First writer wins: a shared parent is
+  // co-declared by up to eight blocks, and the first block to touch it in this run is the
+  // one whose spec produced the values — later touches fold into the same accumulated op.
+  const blockByKey = new Map<string, string>();
   // Real Firestore doc id per key — same for every touch of a given key within one run
   // (derived from the same `existingByName` entry, or `spec.key` for a doc this run just
   // created), so simply overwriting on each touch is correct.
@@ -124,12 +129,13 @@ export function planMenuOpsForBlocks(
   for (const block of blocks) {
     for (const spec of block.menu) {
       // ONE top-level spec per `planMenuOps` call — see the comment above for why.
-      for (const op of planMenuOps([spec], tenantId, existingByName)) {
+      for (const op of planMenuOps([spec], tenantId, existingByName, replayStructure)) {
         const priorFull = existingByName.get(op.key) ?? ({ okey: op.docId } as MenuItemModel);
         existingByName.set(op.key, { ...priorFull, ...op.fields });
 
         accumulatedFields.set(op.key, { ...(accumulatedFields.get(op.key) ?? {}), ...op.fields });
         docIdByKey.set(op.key, op.docId);
+        if (!blockByKey.has(op.key)) blockByKey.set(op.key, block.id);
         // Sticky 'create': once a key has been recorded as 'create', a later touch in
         // this same run must not downgrade it, even though that later touch's OWN
         // `planMenuOps` result (computed against the now-updated `existing`, where the
@@ -144,6 +150,7 @@ export function planMenuOpsForBlocks(
     docId: docIdByKey.get(key) ?? key,
     op: opKind.get(key) ?? 'update-structure',
     fields,
+    blockId: blockByKey.get(key),
   }));
 }
 
@@ -292,6 +299,20 @@ export { nestedMenuKeys, planRootMenuOp, rootNavKeys } from '@okr/tenant-util';
 // CHILDREN must not also be (and never were — `addKeys`/`removeKeys` only ever look at a
 // block's TOP-LEVEL specs, never recursing into `children`).
 
+export interface ApplySelectionOptions {
+  /**
+   * Rewrite `url`/`action`/`roleNeeded` on EXISTING menu documents from the catalogue.
+   *
+   * Defaults to `true`, which is this primitive's historical contract ("apply the full
+   * catalogue"). The POLICY lives one level up, in `createApplyFeatureSelection`: the
+   * callable passes `false` unless the caller explicitly asks, so an ordinary picker save
+   * can only ever create and extend documents, and only «Struktur übernehmen» replays the
+   * catalogue over live values. See `planMenuOps`' doc comment for the failure this splits
+   * apart.
+   */
+  replayStructure?: boolean;
+}
+
 /**
  * The Firestore-touching half. Takes `catalogue`/`db` as explicit parameters rather than
  * importing them — see `createApplyFeatureSelection` below and the task-8 report for why.
@@ -302,7 +323,9 @@ export async function applySelection(
   plan: SelectionPlan,
   tenantId: string,
   uid: string,
+  options: ApplySelectionOptions = {},
 ): Promise<{ applied: string[] }> {
+  const replayStructure = options.replayStructure ?? true;
   const enabledBlocks = plan.enabled
     .map(id => catalogue.find(b => b.id === id))
     .filter((b): b is FeatureBlock => b !== undefined);
@@ -351,7 +374,12 @@ export async function applySelection(
       blocking.map(a => `'${a.name}' (candidates: ${a.ids.join(', ')})`).join('; '));
   }
 
-  const menuOps = planMenuOpsForBlocks(enabledBlocks, tenantId, existing);
+  // Snapshot BEFORE planning: `planMenuOpsForBlocks` folds each planned op back into
+  // `existing` so later specs plan against accumulated state, which would make every
+  // audit `from` equal its `to`. A shallow copy is enough — the fold replaces map
+  // entries with new objects rather than mutating the originals in place.
+  const beforeMenu = new Map(existing);
+  const menuOps = planMenuOpsForBlocks(enabledBlocks, tenantId, existing, replayStructure);
 
   // --- seed docs (create-if-absent; never rewritten once present) -------------------
   const seedWrites: PendingWrite[] = [];
@@ -421,12 +449,36 @@ export async function applySelection(
     .flatMap(b => b.menu.map(s => s.key));
   const rootOp = planRootMenuOp(tenantId, existing, addKeys, removeKeys);
 
+  // --- audit trail for menu rewrites (task 3) ---------------------------------------
+  // Every catalogue-owned field this run overwrites on an EXISTING document, with the
+  // value it replaces. Without this, the only record of a replay was one `logger.info`
+  // line with counts, and "who reset my permission, and when" was unanswerable from
+  // Firestore — the question that produced the drift report these events exist for.
+  //
+  // These belong in the IDEMPOTENT chunks (1..N) alongside the writes that cause them,
+  // NOT in chunk 0 with the enable/disable events. Chunk 0 is committed first and alone
+  // precisely because it is the one non-idempotent write; a menu event put there would be
+  // re-emitted on every retry, because the menu writes it describes land later and the
+  // drift is therefore still present when the retry re-plans. Emitted together with their
+  // own write instead, they converge exactly like it does: if the write landed, the next
+  // run finds no drift and emits nothing; if it did not, both are retried together.
+  const structureEvents = menuStructureChanges(menuOps, beforeMenu);
+
   // --- menu + seed writes (chunks 1..N — naturally idempotent, safe to re-run) -------
   const menuWrites: PendingWrite[] = [
     ...menuOps.map(op => ({
       ref: db.collection(MenuItemCollection).doc(op.docId),
       data: op.fields,
       merge: true,
+    })),
+    ...structureEvents.map((change): PendingWrite => ({
+      ref: db.collection(FeatureEventCollection).doc(),
+      data: {
+        tenantId, block: change.blockId, op: 'menu-structure', at, by: uid,
+        docId: change.docId, name: change.name,
+        field: change.field, from: change.from, to: change.to,
+      },
+      merge: false,
     })),
     ...(rootOp ? [{ ref: db.collection(MenuItemCollection).doc(rootOp.docId), data: rootOp.fields, merge: true }] : []),
   ];
@@ -469,6 +521,13 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
         throw new HttpsError('invalid-argument', 'applyFeatureSelection requires a tenantId.');
       }
       const blockIds: string[] = Array.isArray(request.data?.blockIds) ? request.data.blockIds : [];
+      // OPT-IN, and strictly `=== true` (task 1). An ordinary picker save must never rewrite
+      // `url`/`action`/`roleNeeded` on documents that already exist: a save replays every
+      // spec of every enabled block (225 documents for `okr`), so a hand-tuned permission on
+      // a menu row unrelated to the block just ticked used to vanish with no warning and no
+      // trace. Only «Struktur übernehmen» — which confirms the exact fields first — asks for
+      // the replay. A missing or non-boolean field therefore means "extend only".
+      const replayStructure = request.data?.replayStructure === true;
 
       const db = getFirestore();
       // `checkAuthentication` above throws if `request.auth` is missing, but that is an
@@ -509,9 +568,10 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
       const plan = planSelection(catalogue, rollouts, blockIds, tenantId);
 
       // --- apply -------------------------------------------------------------------
-      const { applied } = await applySelection(db, catalogue, plan, tenantId, uid);
+      const { applied } = await applySelection(db, catalogue, plan, tenantId, uid, { replayStructure });
 
-      logger.info(`${CF_NAME}: tenant=${tenantId} enabled=${plan.enabled.length} withheld=${plan.withheld.length}`);
+      logger.info(`${CF_NAME}: tenant=${tenantId} enabled=${plan.enabled.length} ` +
+        `withheld=${plan.withheld.length} replayStructure=${replayStructure}`);
       return { enabled: plan.enabled, withheld: plan.withheld, applied };
     },
   );

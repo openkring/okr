@@ -16,6 +16,7 @@
     "lint": "NODE_OPTIONS='--max-old-space-size=8192' nx lint",
     "attribution": "node scripts/gen-attribution.mjs",
     "attribution:check": "node scripts/gen-attribution.mjs --check",
+    "catalogue:check": "node scripts/check-feature-catalogue.mjs",
     "lib-refs": "node scripts/gen-lib-references.mjs",
     "lib-refs:write": "node scripts/gen-lib-references.mjs --write",
     "e2e": "nx e2e",

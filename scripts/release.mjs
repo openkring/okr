@@ -126,6 +126,28 @@ async function releaseApp(app) {
   try { run('pnpm', ['run', 'testlibs']); }
   catch { abort('Tests failed — release aborted (no version bump made).'); }
 
+  // 1b. catalogue drift gate — does `feature-blocks.ts` still agree with the live menu docs?
+  //     Placed here, before the bump, for the same reason the test gate is first: it is cheap
+  //     and a failure means nothing has been changed yet.
+  //
+  //     Drift is a DATA condition, not a broken build, and it can be legitimate on either
+  //     side — the catalogue may be the stale half. So this asks rather than aborts. A
+  //     credential or network failure is not a release blocker either: the check needs
+  //     application-default credentials, and an offline release must still be possible.
+  console.log('\n[1b/6] Feature-catalogue drift check…');
+  try {
+    run('node', ['scripts/check-feature-catalogue.mjs']);
+  } catch (err) {
+    // Exit code 1 is "drift found" and has already printed the table; anything else is the
+    // check itself failing (no credentials, no network), which must not stop a release.
+    if (err.status === 1) {
+      if (!(await confirm('Catalogue drift found (see table above). Continue the release anyway?', false)))
+        abort('Aborted: catalogue drift. Back-port the live value into feature-blocks.ts, or run «Struktur übernehmen».');
+    } else {
+      console.log('  (drift check could not run — skipped; needs `gcloud auth application-default login`)');
+    }
+  }
+
   // 2. version bump (confirm) — bump BEFORE build so the nx config cache busts
   const current = readVersion();
   // 'none' ships a SECOND app at the version the first app of this release just cut, so both

@@ -350,11 +350,16 @@ export class FeaturePicker {
    * Replay the catalogue's structural fields onto this tenant's menu documents — «Struktur
    * übernehmen» (design §5).
    *
-   * It re-applies the **live** block list, not `selection()`: `applyFeatureSelection` already
-   * emits `update-structure` ops for every enabled block on each run (`planMenuOpsForBlocks`),
-   * so replaying the current state is the whole fix and needs no second callable. Sending
-   * `selection()` instead would silently commit whatever the admin has ticked since opening
-   * the screen — a menu-stripping save behind a button that promises only to fix structure.
+   * It re-applies the **live** block list, not `selection()`: sending `selection()` instead
+   * would silently commit whatever the admin has ticked since opening the screen — a
+   * menu-stripping save behind a button that promises only to fix structure.
+   *
+   * THIS IS THE ONLY CALLER THAT PASSES `replayStructure: true`. `applyFeatureSelection` used
+   * to emit `update-structure` ops on every run, so a plain `onSave` — ticking one unrelated
+   * block — rewrote `url`/`action`/`roleNeeded` on every menu document of every enabled block
+   * (225 for `okr`) and reverted hand-tuned values with no warning and no trace. The replay
+   * now happens only here, behind the field-by-field confirmation below, and every field it
+   * overwrites is recorded as a `menu-structure` entry in `featureEvents`.
    */
   protected async onApplyStructure(): Promise<void> {
     // The button's own label promises only "fix structure", and the drift list above it names
@@ -370,7 +375,8 @@ export class FeaturePicker {
 
     this.isSaving.set(true);
     try {
-      await this.featureSelectionService.apply(this.tenantId(), [...this.liveBlocks()]);
+      await this.featureSelectionService.apply(
+        this.tenantId(), [...this.liveBlocks()], { replayStructure: true });
       // `drift()` recomputes itself from the live menu stream once the writes land.
       await this.alertService.showToast(this.i18n.drift_apply());
     } catch (error) {

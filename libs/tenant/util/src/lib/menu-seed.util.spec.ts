@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { MenuItemModel } from '@okr/shared-models';
 import {
-  findStructuralDrift, indexMenuDocsByName, menuSpecNames, planMenuOps, STRUCTURAL_FIELDS,
+  findStructuralDrift, indexMenuDocsByName, menuSpecNames, menuStructureChanges, planMenuOps,
+  STRUCTURAL_FIELDS,
 } from './menu-seed.util';
 import type { MenuSpec } from './feature-catalogue.types';
 
@@ -394,5 +395,79 @@ describe('findStructuralDrift', () => {
 
   it('does not report a document that does not exist yet — that is the create path', () => {
     expect(findStructuralDrift([spec], index())).toEqual([]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// replayStructure — the split that stops a picker save from reverting a hand-tuned value.
+// ─────────────────────────────────────────────────────────────────────────────────────
+describe('planMenuOps with replayStructure: false', () => {
+  it('leaves a drifted structural field alone instead of rewriting it', () => {
+    const existing = new Map([['calevent-all', existingDoc({ tenants: ['p13'], roleNeeded: 'admin' })]]);
+    expect(planMenuOps([spec], 'p13', existing, false)).toEqual([]);
+  });
+
+  it('still adds the tenant to a shared doc, and carries no structural field with it', () => {
+    const existing = new Map([['calevent-all', existingDoc({ url: '/OLD/url' })]]);
+    const ops = planMenuOps([spec], 'p13', existing, false);
+    expect(ops[0].op).toBe('add-tenant');
+    expect(ops[0].fields.tenants).toEqual(['scs', 'p13']);
+    expect(ops[0].fields.url).toBeUndefined();
+  });
+
+  it('still appends a missing child to an existing parent', () => {
+    const parentSpec: MenuSpec = {
+      key: 'main', name: 'main', url: '', action: 'sub', roleNeeded: 'none',
+      icon: 'menu', label: '@main', children: [spec],
+    };
+    const parent = Object.assign(new MenuItemModel('p13'), {
+      okey: 'main', name: 'main', url: '', action: 'sub', roleNeeded: 'none',
+      tenants: ['p13'], menuItems: ['home'],
+    });
+    const ops = planMenuOps([parentSpec], 'p13', new Map([['main', parent]]), false);
+    expect(ops[0].fields.menuItems).toEqual(['home', 'calevent-all']);
+  });
+
+  it('still CREATES a document that does not exist yet, with the full catalogue values', () => {
+    const ops = planMenuOps([spec], 'p13', new Map(), false);
+    expect(ops[0].op).toBe('create');
+    expect(ops[0].fields.url).toBe('/calevent/all/c-calevents');
+    expect(ops[0].fields.roleNeeded).toBe('registered');
+  });
+});
+
+describe('menuStructureChanges', () => {
+  it('records the overwritten value of every structural field of an update', () => {
+    const before = new Map([['calevent-all', existingDoc({ url: '/OLD/url', roleNeeded: 'admin' })]]);
+    const ops = planMenuOps([spec], 'p13', before, true)
+      .map(op => ({ ...op, blockId: 'calevent' }));
+
+    const changes = menuStructureChanges(ops, before);
+    expect(changes).toEqual(expect.arrayContaining([
+      { blockId: 'calevent', docId: 'calevent-all', name: 'calevent-all', field: 'url', from: '/OLD/url', to: '/calevent/all/c-calevents' },
+      { blockId: 'calevent', docId: 'calevent-all', name: 'calevent-all', field: 'roleNeeded', from: 'admin', to: 'registered' },
+    ]));
+    expect(changes).toHaveLength(2);
+  });
+
+  it('records nothing for a create — a new document overwrites no prior value', () => {
+    const ops = planMenuOps([spec], 'p13', new Map(), true);
+    expect(menuStructureChanges(ops, new Map())).toEqual([]);
+  });
+
+  it('records nothing when the replay is off, because no structural field is written', () => {
+    const before = new Map([['calevent-all', existingDoc({ tenants: ['p13'], url: '/OLD/url' })]]);
+    const ops = planMenuOps([spec], 'p13', before, false);
+    expect(menuStructureChanges(ops, before)).toEqual([]);
+  });
+
+  it('reports an empty `from` for a field the live document does not carry at all', () => {
+    const doc = existingDoc({ tenants: ['p13'] });
+    delete (doc as Partial<MenuItemModel>).url;
+    const before = new Map([['calevent-all', doc]]);
+    const ops = planMenuOps([spec], 'p13', before, true);
+    expect(menuStructureChanges(ops, before)).toEqual([
+      { blockId: '', docId: 'calevent-all', name: 'calevent-all', field: 'url', from: '', to: '/calevent/all/c-calevents' },
+    ]);
   });
 });
