@@ -10,7 +10,8 @@ import { lockedExpenseFields } from '@okr/shared-util-core';
 
 import { ExpenseService, UpdateExpensePayload } from '@okr/finance-expense-data-access';
 import {
-  EXPENSE_I18N_KEYS, ExpenseEditFormValue, ExpenseI18n, getExpenseEditStateCategory,
+  EXPENSE_I18N_KEYS, ExpenseEditFormValue, ExpenseI18n,
+  getExpenseEditStateCategory, getExpenseStateCategory,
 } from '@okr/finance-expense-util';
 import { ExpenseEditForm, ExpenseEditFormI18n } from '@okr/finance-expense-ui';
 
@@ -40,7 +41,7 @@ import { ExpenseEditForm, ExpenseEditFormI18n } from '@okr/finance-expense-ui';
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [i18n]="formI18n"
-          [lockedFields]="lockedFields()"
+          [lockedFields]="formLockedFields()"
           [statuses]="statuses()"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
@@ -70,7 +71,37 @@ export class ExpenseEditModal {
   public readonly formData = linkedSignal<ExpenseEditFormValue>(() => toFormValue(this.expense()));
 
   protected readonly lockedFields = computed(() => lockedExpenseFields(this.expense()));
-  protected readonly statuses = computed(() => getExpenseEditStateCategory(this.env.tenantId));
+
+  /**
+   * The stored status, coalesced EXACTLY as `toFormValue` coalesces it. Firestore reads skip
+   * model defaults, so a legacy document has no `status` field at all; if the two fallbacks
+   * disagreed, an untouched absent status would look "changed" and be sent — and the narrowed
+   * VALID_STATUS would reject it, making the document permanently unsavable.
+   */
+  private readonly storedStatus = computed(() => this.expense().status ?? 'draft');
+
+  /** Whether the stored status is one a treasurer may set by hand at all. */
+  private readonly statusEditable = computed(() =>
+    getExpenseEditStateCategory(this.env.tenantId).items.some(i => i.name === this.storedStatus()));
+
+  /**
+   * The editable three-value picker for a hand-settable status; otherwise the FULL six-value
+   * category, read-only. okr-cat-select falls back to `items()[0]` when the current value is not
+   * in its category (category-select.ts:139), so showing a `posted` expense the short list would
+   * render it as "In Bearbeitung" — a false status — and one confirming tap would send
+   * `processing` and silently demote a booked expense. `posted` belongs to reviewBooking.
+   */
+  protected readonly statuses = computed(() => this.statusEditable()
+    ? getExpenseEditStateCategory(this.env.tenantId)
+    : getExpenseStateCategory(this.env.tenantId));
+
+  /**
+   * What the FORM renders read-only. Separate from `lockedFields()`, which stays the pure
+   * `lockedExpenseFields` result that `save()` uses to decide which accounting fields to omit.
+   */
+  protected readonly formLockedFields = computed(() => this.statusEditable()
+    ? this.lockedFields()
+    : [...this.lockedFields(), 'status']);
 
   protected readonly changeConfirmationI18n = computed(() => ({
     cancel: this.i18n.cancel(),
@@ -113,7 +144,7 @@ export class ExpenseEditModal {
     // Only send the status when the treasurer actually moved it. The picker offers the three
     // hand-settable states only, so echoing back an untouched 'posted' / 'pending-export' /
     // 'draft' would be refused by the callable's VALID_STATUS and make the save impossible.
-    if (value.status !== (this.expense().status ?? '')) payload.status = value.status;
+    if (value.status !== this.storedStatus()) payload.status = value.status;
     if (!locked.includes('amountTotal')) payload.amountTotal = value.amountTotal;
     if (!locked.includes('currency'))    payload.currency   = value.currency;
     if (!locked.includes('transferTo'))  payload.transferTo = value.transferTo;
