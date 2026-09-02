@@ -627,6 +627,13 @@ service cloud.firestore {
       allow read:  if isAdmin() && (resource == null || belongsToTenant(resource.data));
       allow write: if false;
     }
+    // Tenant allocation audit (spec 1.47). Same shape as erasure-log — Cloud-Function-only
+    // writes, admin reads scoped to the acting tenant — but this one DOES carry a personKey
+    // (D-TA-5), so it is also a row in subject-data-map.ts.
+    match /tenant-allocation-log/{docId} {
+      allow read:  if isAdmin() && (resource == null || belongsToTenant(resource.data));
+      allow write: if false;
+    }
     match /_rateLimits/{docId} {
       allow read, write: if false;
     }

@@ -41,6 +41,7 @@ export * from './lib/diary.model';
 export * from './lib/diary-import.model';
 export * from './lib/document.model';
 export * from './lib/erasure-log.model';
+export * from './lib/tenant-allocation-log.model';
 export * from './lib/expense.model';
 export * from './lib/expense-document.model';
 export * from './lib/esign.model';

@@ -186,6 +186,10 @@ seed("folders/fT2", {"tenants": ["t2"], "isArchived": False, "name": "T2", "memb
 seed("erasure-log/elA", {"tenants": ["t1"], "isArchived": False, "tenantId": "t1",
                          "executedAt": "20260729120000", "pseudonym": "Gel\u00f6schtes Mitglied #abc12345",
                          "counts": {"sessions": 3}, "trigger": "self"})
+# spec 1.47: tenant-allocation-log \u2014 CF-written evidence, tenant-admin read only.
+seed("tenant-allocation-log/taA", {"tenants": ["t1"], "isArchived": False, "tenantId": "t1",
+                                   "targetTenantId": "t2", "direction": "grant",
+                                   "modelType": "person", "subjectKey": "p1"})
 # feature-building-blocks (2026-08-01): feature-rollout is GLOBAL, no tenants[] field \u2014
 # operator-owned, CF-only write. featureEvents is its append-only audit trail, same shape.
 seed("feature-rollout/blockX", {"availability": "beta", "allowTenants": ["t1"], "denyTenants": [],
@@ -369,6 +373,17 @@ single_cases = [
     ("userD(admin t1) create erasure-log -> DENY (CF-only)", False, POST, "erasure-log?documentId=elX", D,
      body({"tenants": ["t1"], "tenantId": "t1"}), None),
     ("userD(admin t1) DELETE erasure-log -> DENY (CF-only)", False, DELETE, "erasure-log/elA", D, None, None),
+    # spec 1.47: tenant-allocation-log — admin-of-this-tenant read, nobody writes
+    ("userD(admin t1) GET tenant-allocation-log -> ALLOW", True, GET, "tenant-allocation-log/taA", D, None, None),
+    ("userA(plain member t1) GET tenant-allocation-log -> DENY", False, GET, "tenant-allocation-log/taA", A, None, None),
+    ("userM(memberAdmin t1) GET tenant-allocation-log -> DENY (admin only)", False, GET, "tenant-allocation-log/taA", M, None, None),
+    ("userB(admin t2) GET tenant-allocation-log (t1) -> DENY (cross-tenant)", False, GET, "tenant-allocation-log/taA", B, None, None),
+    ("anon GET tenant-allocation-log -> DENY", False, GET, "tenant-allocation-log/taA", None, None, None),
+    ("userD(admin t1) PATCH tenant-allocation-log -> DENY (CF-only)", False, PATCH, "tenant-allocation-log/taA", D,
+     body({"direction": "revoke"}), ["direction"]),
+    ("userD(admin t1) create tenant-allocation-log -> DENY (CF-only)", False, POST, "tenant-allocation-log?documentId=taX", D,
+     body({"tenants": ["t1"], "tenantId": "t1"}), None),
+    ("userD(admin t1) DELETE tenant-allocation-log -> DENY (CF-only)", False, DELETE, "tenant-allocation-log/taA", D, None, None),
     # feature-building-blocks (2026-08-01): feature-rollout — global, any authenticated
     # user may read (the picker shows withheld blocks with their reason); no client,
     # including an admin, may write — applyFeatureSelection (Admin SDK) is the sole writer.
