@@ -48,6 +48,12 @@ export const canOpenTask      = (e: ExpenseModel, u?: UserModel): boolean => (is
 /** Open the linked booking: viewer with a booking link. */
 export const canOpenBooking   = (e: ExpenseModel, u?: UserModel): boolean => (isAuthor(e, u) || isTreasurer(u)) && !!e.bookingKey;
 
+/**
+ * Change an expense (including its status): treasurer or admin. NOT the author — a member may
+ * submit and delete their own expense, but moving it through the lifecycle is the treasurer's job.
+ */
+export const canEditExpense = (e: ExpenseModel, u?: UserModel): boolean => isTreasurer(u);
+
 // ---------------------------------------------------------------------------
 // List: filtering, sorting and the two dropdown filters
 // ---------------------------------------------------------------------------

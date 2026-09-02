@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenTask, canOpenBooking, canViewExpense, filterExpenses, sortExpenses, getExpenseStateCategory, getExpenseTransferCategory } from './expense.util';
+import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenTask, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, sortExpenses, getExpenseStateCategory, getExpenseTransferCategory } from './expense.util';
 import { ExpenseModel, UserModel } from '@okr/shared-models';
 
 describe('normalizeIban', () => {
@@ -84,6 +84,12 @@ describe('expense permission predicates', () => {
   it('undefined user → all false', () => {
     expect(canViewExpense(expense(), undefined)).toBe(false);
     expect(canRedoOcr(expense(), undefined)).toBe(false);
+  });
+  it('edit: treasurer or admin only — never the plain author', () => {
+    expect(canEditExpense(expense(), treasurer())).toBe(true);
+    expect(canEditExpense(expense(), author())).toBe(false);
+    expect(canEditExpense(expense(), stranger())).toBe(false);
+    expect(canEditExpense(expense(), undefined)).toBe(false);
   });
 });
 
