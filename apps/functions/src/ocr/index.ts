@@ -58,7 +58,9 @@ async function reportExpenseOcrFailure(
     params: {
       error: message.slice(0, 500),
       storagePath,
-      amount: String(expense['amountTotal'] ?? 0),
+      // cents → CHF at the emit site: the workflow engine's translate() only substitutes
+      // {k} and cannot format, so a raw cents value shows up verbatim in the task name.
+      amount: (Number(expense['amountTotal'] ?? 0) / 100).toFixed(2),
       currency: (expense['currency'] as string) ?? 'CHF',
       // the engine puts params.notes into the task notes (engine.ts runStep 'openTask')
       notes: `${message}\nOCR-Beleg: ${storagePath}`,
@@ -475,7 +477,8 @@ async function handleExpenseResult(
       subjectName: (expense['userName'] as string) ?? '',
       params: {
         vendor: after.vendor ?? '',
-        amount: String(amountCents),
+        // cents → CHF at the emit site (translate() cannot format)
+        amount: (amountCents / 100).toFixed(2),
         currency,
         bookingKey: correlationKey,
         notes: `OCR-Beleg: ${after.storagePath}`,
@@ -523,9 +526,12 @@ async function handleExpenseResult(
 
 /**
  * External accounting backend (e.g. Bexio owns the ledger): we do NOT create a local booking, but the
- * treasurer must still be told to book the receipt in the external system. For `expense` usage we create
- * exactly ONE review task per expense — deterministic task id = expenseKey, so redelivery of any receipt
- * (and every additional receipt of the same expense) collapses to the same task instead of spamming N.
+ * treasurer must still be told to book the receipt in the external system. For `expense` usage this
+ * creates no task itself — it emits `expense.pendingExport` and lets the workflow rules decide
+ * (spec 2026-09-02 §3.2). Redelivery of a receipt, and every additional receipt of the same expense,
+ * re-emits the event; the engine's `hasOpenTask(relatedKey, assignee)` dedup collapses them onto the
+ * one open task, which is what the old deterministic-task-id trick did by hand. The expense itself is
+ * left at 'processing' — 'pending-export' is an EVENT name here, never a status write.
  * Other usages (invoice/paper) just store the extraction. The full Bexio integration (document upload +
  * prepared payment) is a separate spec — see 2026-07-21-ocr-cloud-function-design.md §11.
  */
@@ -554,7 +560,8 @@ async function handleExternalBackendResult(
     subjectName: (expense?.['userName'] as string) ?? '',
     params: {
       vendor: after.vendor ?? '',
-      amount: String(amountCents),
+      // cents → CHF at the emit site (translate() cannot format)
+      amount: (Number(amountCents) / 100).toFixed(2),
       currency,
       notes: `Externe Buchhaltung — bitte manuell verbuchen.\nOCR-Beleg: ${after.storagePath}`,
     },

@@ -72,7 +72,9 @@ export const createExpense = onCall(
       personKey: (user['personKey'] as string) ?? '',
       subjectName: `${user['firstName'] ?? ''} ${user['lastName'] ?? ''}`.trim(),
       params: {
-        amount: String(d.amountTotal),
+        // Formatted HERE: the engine's translate() does plain {k} substitution and cannot
+        // format, so a raw cents value would land verbatim in the task name ("… über 12500 CHF").
+        amount: (d.amountTotal / 100).toFixed(2),
         currency: d.currency || 'CHF',
         category: d.category ?? '',
         costCenterId: d.costCenterId ?? '',
