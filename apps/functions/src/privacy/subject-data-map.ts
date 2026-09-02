@@ -601,18 +601,30 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'anonymize',
-    anonymizeFields: ['userId', 'iban'],   // the IBAN is the payout account, not a booking fact
+    // Three identities on this document, all re-identifying in a `tenantRead()` collection:
+    // the Auth uid, the `personKey` FK into `persons` (added 2026-09-02), and the stamped
+    // `userName`. `userName` ends in `name`-ish, so it takes the pseudonym (see
+    // isDisplayNameField); the two keys and the IBAN are cleared. The IBAN is the payout
+    // account, not a booking fact — GebüV needs the amount, not where it was paid.
+    anonymizeFields: ['userId', 'personKey', 'userName', 'iban'],
     retention: RETAIN_10Y,
     // Settled == the expense carries a bookingKey. That is what the CODE writes, not
-    // what ExpenseStatus declares. Expenses are CF-write-only (expense.service.ts:60)
-    // and the only status writes anywhere are 'processing' on create
-    // (expense/index.ts:57) and on redo (ocr/index.ts:586), and 'validated', set in the
-    // same transaction as the bookingKey (ocr/index.ts:416). 'posted' and
-    // 'pending-export' exist in the union but are NEVER written to an expense — the one
-    // `status: 'posted'` write in the repo is on a booking (bexio/journal.ts:110) — so
-    // treating them as terminal blocked every filer forever. bookingKey is also the
-    // field redoOcr itself guards on ("already booked", ocr/index.ts:577), which makes
-    // it the honest terminal signal. See expenseIsOpen for the exact rule.
+    // what ExpenseStatus declares. Expenses are CF-write-only (firestore.rules), so the
+    // complete set of status writes is enumerable — and every one of them either sets
+    // bookingKey in the same write or leaves the expense unsettled:
+    //   'processing'  createExpense; redoExpenseOcr (ocr/index.ts)
+    //   'error'       reportExpenseOcrFailure (ocr/index.ts); reviewBooking on REJECT
+    //   'validated'   handleExpenseResult, in the same transaction as bookingKey;
+    //                 onExpenseTaskWritten when the linked task completes (guards 'posted')
+    //   'posted'      reviewBooking on APPROVE only — and always `{ status: 'posted',
+    //                 bookingKey }` in one write, so it never appears without a booking
+    //   hand-set      updateExpense, restricted to processing | validated | error
+    // 'draft' and 'pending-export' are declared in ExpenseStatus but never written to an
+    // expense: the external-backend path emits `expense.pendingExport` and leaves the
+    // expense at 'processing'. So the STATUS alone is not a settlement signal — treating
+    // an unreachable value as terminal blocked every filer forever. bookingKey is also
+    // the field redoOcr itself guards on ("already booked"), which makes it the honest
+    // terminal signal. See expenseIsOpen for the exact rule.
     blocksErasure: (docs) => blockOpenInvoice(
       docs.filter((d) => expenseIsOpen(String(d.get('bookingKey') ?? ''), String(d.get('status') ?? ''))).length,
       'Du hast noch eine Spesenabrechnung offen. Sobald sie verbucht ist, können wir deine Daten löschen.',

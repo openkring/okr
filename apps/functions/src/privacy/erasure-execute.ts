@@ -75,7 +75,8 @@ export function pseudonymFor(tenantId: string, personKey: string, salt = configu
  */
 function isDisplayNameField(path: string): boolean {
   const last = path.split('.').pop()?.toLowerCase() ?? '';
-  return last === 'name' || last === 'name2' || last === 'lastname' || last === 'authorname';
+  return last === 'name' || last === 'name2' || last === 'lastname'
+    || last === 'authorname' || last === 'username';
 }
 
 /** Whether an array element — an `AvatarInfo` or a wrapper like `{ person: AvatarInfo }` —
