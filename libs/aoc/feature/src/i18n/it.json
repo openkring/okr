@@ -880,5 +880,35 @@
       "label": "Chiudere automaticamente il messaggio",
       "seconds": "Conto alla rovescia (secondi)"
     }
+  },
+  "allocation": {
+    "title": "Assegnazione dei tenant",
+    "personSelect": {
+      "title": "Seleziona una persona",
+      "content": "Scegli la persona di cui vuoi modificare i tenant.",
+      "button": "Cerca persona"
+    },
+    "card": { "person": "Persona" },
+    "column": {
+      "current": "Tenant attuali",
+      "available": "Altri tenant",
+      "empty": "Nessuna voce"
+    },
+    "grant": { "title": "Condividi dati" },
+    "revoke": { "title": "Ritira dati" },
+    "block": {
+      "always": "Sempre incluso",
+      "alwaysHint": "Il nome, le caratteristiche e i termini di ricerca della persona si trovano in un'unica scheda e vengono quindi sempre trasmessi.",
+      "contact": "Dati di contatto",
+      "sensitive": "Dati sensibili",
+      "avatar": "Immagine"
+    },
+    "favoriteMarker": "Indirizzo principale",
+    "legalNote": "Qui condividi dati personali con un'altra società. Assicurati di poterlo fare.",
+    "confirm": { "ok": "Condividi", "cancel": "Annulla" },
+    "result": "Risultato",
+    "conf": "L'assegnazione è stata salvata.",
+    "error": "L'assegnazione non è riuscita.",
+    "ownTenantHint": "Qui non puoi eliminare il tuo tenant."
   }
 }

@@ -880,5 +880,35 @@
       "label": "Close the message automatically",
       "seconds": "Countdown (seconds)"
     }
+  },
+  "allocation": {
+    "title": "Tenant allocation",
+    "personSelect": {
+      "title": "Select a person",
+      "content": "Choose the person whose tenants you want to change.",
+      "button": "Find person"
+    },
+    "card": { "person": "Person" },
+    "column": {
+      "current": "Current tenants",
+      "available": "Other tenants",
+      "empty": "Nothing here"
+    },
+    "grant": { "title": "Share data" },
+    "revoke": { "title": "Take data back" },
+    "block": {
+      "always": "Always included",
+      "alwaysHint": "The person's name, attributes and search terms live in a single record, so they always travel along.",
+      "contact": "Contact details",
+      "sensitive": "Sensitive data",
+      "avatar": "Picture"
+    },
+    "favoriteMarker": "Main address",
+    "legalNote": "You are sharing personal data with another club. Make sure you are allowed to.",
+    "confirm": { "ok": "Share", "cancel": "Cancel" },
+    "result": "Result",
+    "conf": "The allocation has been saved.",
+    "error": "The allocation did not work.",
+    "ownTenantHint": "You cannot remove your own tenant here."
   }
 }

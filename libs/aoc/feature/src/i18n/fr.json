@@ -880,5 +880,35 @@
       "label": "Fermer automatiquement le message",
       "seconds": "Compte à rebours (secondes)"
     }
+  },
+  "allocation": {
+    "title": "Attribution des locataires",
+    "personSelect": {
+      "title": "Sélectionner une personne",
+      "content": "Choisis la personne dont tu veux changer les locataires.",
+      "button": "Rechercher une personne"
+    },
+    "card": { "person": "Personne" },
+    "column": {
+      "current": "Locataires actuels",
+      "available": "Autres locataires",
+      "empty": "Aucune entrée"
+    },
+    "grant": { "title": "Partager des données" },
+    "revoke": { "title": "Reprendre des données" },
+    "block": {
+      "always": "Toujours inclus",
+      "alwaysHint": "Le nom, les caractéristiques et les termes de recherche de la personne se trouvent dans une seule fiche et sont donc toujours transmis.",
+      "contact": "Coordonnées",
+      "sensitive": "Données sensibles",
+      "avatar": "Photo"
+    },
+    "favoriteMarker": "Adresse principale",
+    "legalNote": "Tu transmets ici des données personnelles à un autre club. Assure-toi d'en avoir le droit.",
+    "confirm": { "ok": "Partager", "cancel": "Annuler" },
+    "result": "Résultat",
+    "conf": "L'attribution a été enregistrée.",
+    "error": "L'attribution n'a pas fonctionné.",
+    "ownTenantHint": "Tu ne peux pas supprimer ton propre locataire ici."
   }
 }

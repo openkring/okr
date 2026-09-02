@@ -880,5 +880,35 @@
       "label": "Cerrar el mensaje automáticamente",
       "seconds": "Cuenta atrás (segundos)"
     }
+  },
+  "allocation": {
+    "title": "Asignación de inquilinos",
+    "personSelect": {
+      "title": "Seleccionar una persona",
+      "content": "Elige la persona cuyos inquilinos quieres cambiar.",
+      "button": "Buscar persona"
+    },
+    "card": { "person": "Persona" },
+    "column": {
+      "current": "Inquilinos actuales",
+      "available": "Otros inquilinos",
+      "empty": "Sin entradas"
+    },
+    "grant": { "title": "Compartir datos" },
+    "revoke": { "title": "Retirar datos" },
+    "block": {
+      "always": "Siempre incluido",
+      "alwaysHint": "El nombre, las características y los términos de búsqueda de la persona están en un único registro, por lo que siempre se transmiten.",
+      "contact": "Datos de contacto",
+      "sensitive": "Datos sensibles",
+      "avatar": "Imagen"
+    },
+    "favoriteMarker": "Dirección principal",
+    "legalNote": "Aquí compartes datos personales con otro club. Asegúrate de tener permiso para hacerlo.",
+    "confirm": { "ok": "Compartir", "cancel": "Cancelar" },
+    "result": "Resultado",
+    "conf": "La asignación se ha guardado.",
+    "error": "La asignación no ha funcionado.",
+    "ownTenantHint": "Aquí no puedes eliminar tu propio inquilino."
   }
 }

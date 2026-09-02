@@ -650,6 +650,31 @@ export const AOC_I18N_KEYS = {
   cancel:                             '@cancel',
   error:                              '@error',
   search_placeholder:                 '@search.label',
+
+  // ─── AocTenantAllocation (spec 1.47) ───────────────────────────────────────
+  allocation_title:                       PFX + 'allocation.title',
+  allocation_person_select_title:         PFX + 'allocation.personSelect.title',
+  allocation_person_select_content:       PFX + 'allocation.personSelect.content',
+  allocation_person_select_button:        PFX + 'allocation.personSelect.button',
+  allocation_card_person:                 PFX + 'allocation.card.person',
+  allocation_column_current:              PFX + 'allocation.column.current',
+  allocation_column_available:            PFX + 'allocation.column.available',
+  allocation_column_empty:                PFX + 'allocation.column.empty',
+  allocation_grant_title:                 PFX + 'allocation.grant.title',
+  allocation_revoke_title:                PFX + 'allocation.revoke.title',
+  allocation_block_always:                PFX + 'allocation.block.always',
+  allocation_block_always_hint:           PFX + 'allocation.block.alwaysHint',
+  allocation_block_contact:               PFX + 'allocation.block.contact',
+  allocation_block_sensitive:             PFX + 'allocation.block.sensitive',
+  allocation_block_avatar:                PFX + 'allocation.block.avatar',
+  allocation_favorite_marker:             PFX + 'allocation.favoriteMarker',
+  allocation_legal_note:                  PFX + 'allocation.legalNote',
+  allocation_confirm_ok:                  PFX + 'allocation.confirm.ok',
+  allocation_confirm_cancel:              PFX + 'allocation.confirm.cancel',
+  allocation_result:                      PFX + 'allocation.result',
+  allocation_conf:                        PFX + 'allocation.conf',
+  allocation_error:                       PFX + 'allocation.error',
+  allocation_own_tenant_hint:             PFX + 'allocation.ownTenantHint',
 } satisfies Record<string, string>;
 
 // ─── Tenant App-Switcher ─────────────────────────────────────────────────────
