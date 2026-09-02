@@ -114,6 +114,9 @@
     "decisionIs": {
       "label": "Entscheid ist …"
     },
+    "paramIs": {
+      "label": "Donnée de l'événement est …"
+    },
     "authorIsNotAssignee": {
       "label": "L'auteur n'est pas le responsable"
     }

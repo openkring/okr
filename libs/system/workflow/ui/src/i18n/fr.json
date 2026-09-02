@@ -15,7 +15,7 @@
   "probeArg": {
     "label": "Argument de la condition",
     "placeholder": "p.ex. key",
-    "helper": "Uniquement pour les conditions avec argument, p.ex. hasOwnershipOfType"
+    "helper": "Uniquement pour les conditions avec argument. Pour « la donnée de l'événement est … », écris champ=valeur, p.ex. resourceType=boathouse"
   },
   "responsibilityKey": {
     "label": "Responsabilité",

@@ -9,7 +9,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { CategorySelect, Chips, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, getItemLabel, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
-import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
+import { DEFAULT_NOTES, DEFAULT_TAGS, NAME_LENGTH } from '@okr/shared-constants';
 
 import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg, addWorkflowStep, getWorkflowStepSummary, getWorkflowSteps, isApprovalAction, isWorkflowStepComplete, patchWorkflowStep, probeNeedsArg, removeWorkflowStep, setWorkflowStepAction, workflowRuleValidations } from '@okr/system-workflow-util';
 
@@ -104,7 +104,7 @@ import { ResponsibilityOption, WRITE_BACK_OPTIONS, WorkflowI18n, actionNeedsArg,
                 <ion-row>
                   <ion-col size="12">
                     <okr-text-input [i18n]="probeArgI18n()" [value]="probeArg()" (valueChange)="onFieldChange('probeArg', $event)"
-                      [maxLength]="30" [readOnly]="isReadOnly()" />
+                      [maxLength]="probeArgLength" [readOnly]="isReadOnly()" />
                   </ion-col>
                 </ion-row>
               }
@@ -369,6 +369,9 @@ export class WorkflowRuleForm {
     placeholder: this.i18n().name_placeholder(),
     helper: this.i18n().name_helper()
   } as TextInputI18n));
+
+  /** must equal the length workflowRuleValidations enforces for probeArg */
+  protected readonly probeArgLength = NAME_LENGTH;
 
   protected probeArgI18n = computed(() => ({
     name: 'probeArg',

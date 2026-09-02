@@ -15,7 +15,7 @@
   "probeArg": {
     "label": "Argument der Bedingung",
     "placeholder": "z.B. key",
-    "helper": "Nur für Bedingungen mit Argument, z.B. hasOwnershipOfType"
+    "helper": "Nur für Bedingungen mit Argument. Bei «Ereignis-Angabe ist …» schreibst du Feld=Wert, z.B. resourceType=boathouse"
   },
   "responsibilityKey": {
     "label": "Verantwortlichkeit",

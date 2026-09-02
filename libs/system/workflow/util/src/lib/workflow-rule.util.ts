@@ -38,8 +38,13 @@ export const SUBJECT_RECIPIENT = 'subject';
  * Probes that consume `probeArg`. Mirrors the PROBES registry in
  * `apps/functions/src/workflow/engine.ts` — a lib cannot import the functions app, so a new
  * argument-taking probe has to be added here too, next to its category item.
+ *
+ * Drift here is SILENT and disabling: a missing entry hides the probeArg field, so the admin
+ * cannot enter the discriminator and the probe is unusable through the UI even though the
+ * engine supports it. That is what happened to `decisionIs` (shipped with the approval spec)
+ * and to `paramIs` (spec 2026-08-29 §1).
  */
-const PROBES_WITH_ARG = ['hasOwnershipOfType', 'categoryIs'];
+const PROBES_WITH_ARG = ['hasOwnershipOfType', 'categoryIs', 'decisionIs', 'paramIs'];
 
 /**
  * Does this probe still need the rule's `probeArg`?

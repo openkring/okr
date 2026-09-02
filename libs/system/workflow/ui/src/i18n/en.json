@@ -15,7 +15,7 @@
   "probeArg": {
     "label": "Condition argument",
     "placeholder": "e.g. key",
-    "helper": "Only for conditions taking an argument, e.g. hasOwnershipOfType"
+    "helper": "Only for conditions taking an argument. For “event detail is …” write field=value, e.g. resourceType=boathouse"
   },
   "responsibilityKey": {
     "label": "Responsibility",

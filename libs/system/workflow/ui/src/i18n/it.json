@@ -15,7 +15,7 @@
   "probeArg": {
     "label": "Argomento della condizione",
     "placeholder": "p.es. key",
-    "helper": "Solo per condizioni con argomento, p.es. hasOwnershipOfType"
+    "helper": "Solo per condizioni con argomento. Per «il dato dell'evento è …» scrivi campo=valore, p.es. resourceType=boathouse"
   },
   "responsibilityKey": {
     "label": "Responsabilità",

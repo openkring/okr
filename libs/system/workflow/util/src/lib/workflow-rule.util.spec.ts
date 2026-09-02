@@ -5,6 +5,7 @@ import { WorkflowRuleModel } from '@okr/shared-models';
 import { buildExportTable } from '@okr/shared-util-core';
 
 import { WORKFLOW_I18N_KEYS, WorkflowI18n } from './workflow-i18n';
+import { workflowRuleValidations } from './workflow-rule.validations';
 import { addWorkflowStep, getWorkflowRuleCondition, getWorkflowRuleActions, getWorkflowRuleExportColumns, getWorkflowRuleIndex, getWorkflowStepSummary, getWorkflowSteps, isWorkflowRuleComplete, isWorkflowStepComplete, newWorkflowRuleModel, patchWorkflowStep, probeNeedsArg, removeWorkflowStep, setWorkflowStepAction } from './workflow-rule.util';
 
 describe('newWorkflowRuleModel', () => {
@@ -75,6 +76,33 @@ describe('probeNeedsArg', () => {
 
   it('is true when any item of an AND-list still needs the argument', () => {
     expect(probeNeedsArg('hasActiveOwnerships, categoryIs')).toBe(true);
+  });
+
+  it('covers every argument-taking probe in the engine registry', () => {
+    // PROBES_WITH_ARG is a hand-maintained mirror of apps/functions/src/workflow/engine.ts
+    // (a lib cannot import the functions app). When it drifts, the rule form silently HIDES
+    // the probeArg field and the admin cannot enter the discriminator at all — the probe is
+    // then unusable through the UI even though the engine supports it.
+    expect(probeNeedsArg('paramIs')).toBe(true);
+    expect(probeNeedsArg('decisionIs')).toBe(true);
+  });
+
+  it('accepts a paramIs argument long enough for a section or menu name', () => {
+    // 'sourceName=' + a 30-char name = 41 chars. The old SHORT_NAME_LENGTH cap of 30 made the
+    // main ui.buttonClicked / ui.menuCalled rule shape unenterable.
+    const rule = newWorkflowRuleModel('scs', 'ui.buttonClicked');
+    rule.probe = 'paramIs';
+    rule.probeArg = 'sourceName=' + 'x'.repeat(30);
+    expect(rule.probeArg.length).toBe(41);
+    const result = workflowRuleValidations(rule, '', '');
+    expect(result.getErrors('probeArg')).toEqual([]);
+  });
+
+  it('needs no argument field when paramIs carries its argument inline', () => {
+    // 'paramIs:resourceType=boathouse' is the shape a category item uses, exactly like the
+    // shipped 'categoryIs:passive,hasActiveOwnerships' item.
+    expect(probeNeedsArg('paramIs:resourceType=boathouse')).toBe(false);
+    expect(probeNeedsArg('paramIs:state=accepted,hasOpenInvoices')).toBe(false);
   });
 });
 

@@ -20,7 +20,12 @@ export const workflowRuleValidations = staticSuite((model: WorkflowRuleModel, te
   // mandatory exactly when the form shows the field: a probe that consumes an argument and
   // does not carry an inline one would otherwise be saved half-configured (categoryIs with no
   // category matches nothing, so the rule silently never fires).
-  stringValidations('probeArg', model.probeArg, SHORT_NAME_LENGTH, 0, probeNeedsArg(model.probe));
+  // NAME_LENGTH, not SHORT_NAME_LENGTH: a paramIs argument is a 'name=value' PAIR, not the
+  // single word ('key', 'passive') this field was built for. 'sourceName=' plus a section or
+  // menu name — both capped at SHORT_NAME_LENGTH — needs 41. Must stay in sync with the
+  // [maxLength] of the probeArg field in workflow-rule.form.ts, or the input accepts values
+  // the suite silently rejects.
+  stringValidations('probeArg', model.probeArg, NAME_LENGTH, 0, probeNeedsArg(model.probe));
   stringValidations('responsibilityKey', model.responsibilityKey, SHORT_NAME_LENGTH, 0, true);
 
   const steps = model.steps ?? [];

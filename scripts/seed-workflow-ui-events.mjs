@@ -7,7 +7,9 @@
  *
  *   1. the `workflow_event` category items — the event picker in the rule form is fed from
  *      the DB category, so without them an admin cannot select the new events;
- *   2. the `menu_action` category item 'workflow' — the action picker in the menu editor is
+ *   2. the `workflow_probe` category item 'paramIs' — the condition picker in the rule form is
+ *      fed the same way; without it the probe is unreachable from the UI (§1);
+ *   3. the `menu_action` category item 'workflow' — the action picker in the menu editor is
  *      fed the same way (§3, decision O3).
  *
  * The LABELS are not seeded here. The category carries `translateItems: true`, so every item
@@ -52,6 +54,15 @@ const SEEDS = {
     // it is not in the icons catalogue (verified 2026-08-30), 'button' is.
     { name: 'ui.buttonClicked', icon: 'button' },
     { name: 'ui.menuCalled', icon: 'menu' },
+  ],
+  // §1 — the generic discriminator probe. Without this item the probe is not selectable in
+  // the rule form at all, so the engine's paramIs support is unreachable from the UI.
+  // The engine also accepts INLINE arguments ('paramIs:resourceType=boathouse'), the shape the
+  // shipped 'categoryIs:passive,hasActiveOwnerships' item uses — seed such an item when a
+  // tenant wants one specific rule as a ready-made pick.
+  workflow_probe: [
+    // 'search' — verified present in the icons catalogue ('filter' is not)
+    { name: 'paramIs', icon: 'search' },
   ],
   // §3 / decision O3 — a call menu item opts into a workflow trigger by BEING this action,
   // not by carrying a marker: two rows that behave differently must not look identical in

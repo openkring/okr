@@ -114,6 +114,9 @@
     "decisionIs": {
       "label": "Entscheid ist …"
     },
+    "paramIs": {
+      "label": "Ereignis-Angabe ist …"
+    },
     "authorIsNotAssignee": {
       "label": "Ersteller ist nicht Bearbeiter"
     }

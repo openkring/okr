@@ -114,6 +114,9 @@
     "decisionIs": {
       "label": "Entscheid ist …"
     },
+    "paramIs": {
+      "label": "Dato dell'evento è …"
+    },
     "authorIsNotAssignee": {
       "label": "L'autore non è l'assegnatario"
     }
