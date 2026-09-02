@@ -106,6 +106,10 @@
     "confirm": "Eliminare davvero questa spesa?",
     "error": "Non è stato possibile eliminare la spesa."
   },
+  "update": {
+    "conf": "Modifiche salvate.",
+    "error": "Non è stato possibile salvare le modifiche — la spesa è invariata."
+  },
   "export": {
     "todo": "Esportazione disponibile a breve."
   },

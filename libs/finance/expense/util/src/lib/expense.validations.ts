@@ -103,6 +103,7 @@ export const expenseEditValidations = staticSuite((model: ExpenseEditFormValue, 
   });
 
   // `status` is not validated here: the form feeds it from okr-cat-select over the items of
-  // getExpenseStateCategory() (EXPENSE_STATES), and the updateExpense CF re-checks the value
-  // against its own VALID_STATUS. A third copy of the list would be the duplication, not the check.
+  // getExpenseEditStateCategory() (EXPENSE_EDIT_STATES — the hand-settable subset), and the
+  // updateExpense CF re-checks the value against its own VALID_STATUS. A third copy of the list
+  // would be the duplication, not the check.
 });

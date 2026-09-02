@@ -106,6 +106,10 @@
     "confirm": "Really delete this expense?",
     "error": "Expense could not be deleted."
   },
+  "update": {
+    "conf": "Changes saved.",
+    "error": "The changes could not be saved — the expense is unchanged."
+  },
   "export": {
     "todo": "Export coming soon."
   },

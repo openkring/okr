@@ -106,6 +106,10 @@
     "confirm": "Supprimer vraiment ces frais ?",
     "error": "Les frais n'ont pas pu être supprimés."
   },
+  "update": {
+    "conf": "Modifications enregistrées.",
+    "error": "Les modifications n'ont pas pu être enregistrées — les frais sont inchangés."
+  },
   "export": {
     "todo": "Export bientôt disponible."
   },

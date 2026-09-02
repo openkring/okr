@@ -76,6 +76,20 @@ export const EXPENSE_TRANSFER_CATEGORY_NAME = 'expense_transfer';
 const EXPENSE_I18N_SCOPE = '@finance/expense/feature';
 
 const EXPENSE_STATES: ExpenseStatus[] = ['draft', 'processing', 'validated', 'error', 'posted', 'pending-export'];
+
+/**
+ * The statuses a treasurer may set BY HAND in the edit modal — a strict subset of EXPENSE_STATES.
+ *
+ * `posted` and `pending-export` are owned by the booking function (`booking/index.ts`), which is
+ * the only code that knows a booking actually landed: hand-setting `posted` would claim a ledger
+ * entry and a booking number that do not exist, and `nextStatusForCompletedTask` would then refuse
+ * to move that expense ever again. `draft` is written only by `newExpenseModel` before the expense
+ * exists server-side. The FILTER keeps all six (EXPENSE_STATES) so a treasurer can still search for
+ * posted or pending-export expenses; only the picker is narrowed. `VALID_STATUS` in the
+ * `updateExpense` callable mirrors this list — the UI is not the security boundary.
+ */
+const EXPENSE_EDIT_STATES: ExpenseStatus[] = ['processing', 'validated', 'error'];
+
 const EXPENSE_TRANSFERS: ExpenseTransferTo[] = ['me', 'issuer'];
 
 /**
@@ -96,6 +110,11 @@ function buildExpenseCategory(tenantId: string, name: string, items: readonly st
 /** The status filter of the expense list ('all' is prepended by okr-cat-select). */
 export function getExpenseStateCategory(tenantId: string): CategoryListModel {
   return buildExpenseCategory(tenantId, EXPENSE_STATE_CATEGORY_NAME, EXPENSE_STATES);
+}
+
+/** The status picker of the treasurer edit modal — only the hand-settable subset. */
+export function getExpenseEditStateCategory(tenantId: string): CategoryListModel {
+  return buildExpenseCategory(tenantId, EXPENSE_STATE_CATEGORY_NAME, EXPENSE_EDIT_STATES);
 }
 
 /** The transferTo filter of the expense list ('all' is prepended by okr-cat-select). */

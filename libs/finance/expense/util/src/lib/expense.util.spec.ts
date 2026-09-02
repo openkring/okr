@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenTask, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, sortExpenses, getExpenseStateCategory, getExpenseTransferCategory } from './expense.util';
+import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenTask, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, sortExpenses, getExpenseStateCategory, getExpenseEditStateCategory, getExpenseTransferCategory } from './expense.util';
 import { ExpenseModel, UserModel } from '@okr/shared-models';
 
 describe('normalizeIban', () => {
@@ -152,6 +152,19 @@ describe('expense filter categories', () => {
     expect(category.i18n).toBe('@finance/expense/feature');
     expect(category.translateItems).toBe(true);
     expect(category.items.map(i => i.name)).toEqual(['draft', 'processing', 'validated', 'error', 'posted', 'pending-export']);
+  });
+  it('edit state category offers only the hand-settable statuses', () => {
+    const category = getExpenseEditStateCategory('scs');
+    expect(category.name).toBe('expense_state');
+    expect(category.i18n).toBe('@finance/expense/feature');
+    expect(category.translateItems).toBe(true);
+    expect(category.items.map(i => i.name)).toEqual(['processing', 'validated', 'error']);
+  });
+  it('edit state category never offers posted or pending-export', () => {
+    const names = getExpenseEditStateCategory('scs').items.map(i => i.name);
+    expect(names).not.toContain('posted');
+    expect(names).not.toContain('pending-export');
+    expect(names).not.toContain('draft');
   });
   it('transfer category carries the two transferTo values', () => {
     expect(getExpenseTransferCategory('scs').items.map(i => i.name)).toEqual(['me', 'issuer']);

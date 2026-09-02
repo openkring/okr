@@ -106,6 +106,10 @@
     "confirm": "Diese Spese wirklich löschen?",
     "error": "Spese konnte nicht gelöscht werden."
   },
+  "update": {
+    "conf": "Änderungen gespeichert.",
+    "error": "Die Änderungen konnten nicht gespeichert werden — die Auslage ist unverändert."
+  },
   "export": {
     "todo": "Export folgt in Kürze."
   },

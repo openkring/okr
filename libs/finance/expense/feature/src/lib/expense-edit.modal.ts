@@ -10,7 +10,7 @@ import { lockedExpenseFields } from '@okr/shared-util-core';
 
 import { ExpenseService, UpdateExpensePayload } from '@okr/finance-expense-data-access';
 import {
-  EXPENSE_I18N_KEYS, ExpenseEditFormValue, ExpenseI18n, getExpenseStateCategory,
+  EXPENSE_I18N_KEYS, ExpenseEditFormValue, ExpenseI18n, getExpenseEditStateCategory,
 } from '@okr/finance-expense-util';
 import { ExpenseEditForm, ExpenseEditFormI18n } from '@okr/finance-expense-ui';
 
@@ -70,7 +70,7 @@ export class ExpenseEditModal {
   public readonly formData = linkedSignal<ExpenseEditFormValue>(() => toFormValue(this.expense()));
 
   protected readonly lockedFields = computed(() => lockedExpenseFields(this.expense()));
-  protected readonly statuses = computed(() => getExpenseStateCategory(this.env.tenantId));
+  protected readonly statuses = computed(() => getExpenseEditStateCategory(this.env.tenantId));
 
   protected readonly changeConfirmationI18n = computed(() => ({
     cancel: this.i18n.cancel(),
@@ -109,8 +109,11 @@ export class ExpenseEditModal {
       category:     value.category,
       costCenterId: value.costCenterId,
       note:         value.note,
-      status:       value.status,
     };
+    // Only send the status when the treasurer actually moved it. The picker offers the three
+    // hand-settable states only, so echoing back an untouched 'posted' / 'pending-export' /
+    // 'draft' would be refused by the callable's VALID_STATUS and make the save impossible.
+    if (value.status !== (this.expense().status ?? '')) payload.status = value.status;
     if (!locked.includes('amountTotal')) payload.amountTotal = value.amountTotal;
     if (!locked.includes('currency'))    payload.currency   = value.currency;
     if (!locked.includes('transferTo'))  payload.transferTo = value.transferTo;
@@ -121,8 +124,11 @@ export class ExpenseEditModal {
       await this.expenseService.updateViaFunction(payload);
       await dismissOverlay(this.modalController, null, 'confirm');
     } catch (e) {
+      // NOT submit_error ("Vorgang wurde zurückgerollt"): nothing is rolled back on an update.
+      // This is also the toast a treasurer sees when the callable refuses a locked-field change,
+      // where "rolled back" would say the exact opposite of what happened.
       console.error('ExpenseEditModal.save failed', e);
-      await showToast(this.toastController, this.i18n.submit_error());
+      await showToast(this.toastController, this.i18n.update_error());
     }
   }
 

@@ -133,7 +133,15 @@ const EDITABLE_FIELDS = [
   'abstract', 'amountTotal', 'currency', 'transferTo', 'category', 'costCenterId', 'note', 'status',
 ] as const;
 
-const VALID_STATUS = ['draft', 'processing', 'validated', 'error', 'posted', 'pending-export'];
+/**
+ * The statuses a treasurer may set BY HAND — a strict subset of `ExpenseStatus`, mirroring
+ * EXPENSE_EDIT_STATES in `expense.util.ts`. `posted` and `pending-export` belong to the booking
+ * function, the only code that knows a booking actually landed; accepting them here would let a
+ * treasurer mark an unbooked expense as posted with an empty `bookingKey` and no ledger entry,
+ * after which `nextStatusForCompletedTask` would refuse to move it again. `draft` is written only
+ * by the client-side model factory, before the expense exists here.
+ */
+const VALID_STATUS = ['processing', 'validated', 'error'];
 
 /**
  * Treasurer edit. `expenses` is CF-write-only, so this is the only client-reachable update.
@@ -178,6 +186,15 @@ export const updateExpense = onCall(
       }
       patch[field] = value;
     }
+    // Moving the expense OFF 'error' clears the OCR failure with it. `ocrError` is deliberately
+    // not an EDITABLE_FIELD (nobody hand-types an error message), but leaving it set would keep
+    // the red banner on the detail page — and the stale text on the document — forever, since
+    // only `redoExpenseOcr` clears it and redo is refused once `bookingKey` is set.
+    if (d.status !== undefined && d.status !== 'error' && (expense['ocrError'] || expense['ocrErrorAt'])) {
+      patch['ocrError'] = '';
+      patch['ocrErrorAt'] = '';
+    }
+
     if (Object.keys(patch).length === 0) return { ok: true };
 
     await expSnap.ref.set(patch, { merge: true });

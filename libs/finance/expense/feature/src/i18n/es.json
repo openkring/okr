@@ -106,6 +106,10 @@
     "confirm": "¿Eliminar realmente este gasto?",
     "error": "No se pudo eliminar el gasto."
   },
+  "update": {
+    "conf": "Cambios guardados.",
+    "error": "No se pudieron guardar los cambios — el gasto no ha cambiado."
+  },
   "export": {
     "todo": "La exportación estará disponible próximamente."
   },
