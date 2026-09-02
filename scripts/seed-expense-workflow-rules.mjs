@@ -8,9 +8,14 @@
  *
  * Run with:  node scripts/seed-expense-workflow-rules.mjs --dry
  *            node scripts/seed-expense-workflow-rules.mjs --tenant scs
+ *            node scripts/seed-expense-workflow-rules.mjs --tenant <t> --responsibility "<name>"
  *
  * Idempotent: category items matched by `name`, i18n rows by (module, key), rules by `name` +
  * tenant. Re-running updates rather than duplicates.
+ *
+ * `--responsibility` overrides the default 'Ressort Finanzen': the responsibility that owns
+ * expenses is named per tenant (scs calls it 'Ressort Finanzen', not 'Kassier'), so another
+ * tenant seeds with its own name instead of editing the script.
  */
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -23,7 +28,8 @@ const TENANT = tenantArg >= 0 ? argv[tenantArg + 1] : 'scs';
 
 const EVENT_CATEGORY = 'workflow_event';
 const I18N_MODULE = 'workflow';
-const RESPONSIBILITY_NAME = 'Kassier';
+const respArg = argv.indexOf('--responsibility');
+const RESPONSIBILITY_NAME = respArg >= 0 ? argv[respArg + 1] : 'Ressort Finanzen';
 
 const TRIGGERS = [
   {
