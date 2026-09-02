@@ -32,8 +32,17 @@ export class ExpenseModel implements OkrModel, SearchableModel, TaggedModel {
   public taskKey = DEFAULT_KEY;   // FK → tasks; the OCR review task for this expense (set by the OCR pipeline)
   public userId = DEFAULT_KEY;
   public userName = '';           // submitter's display name, stamped by the createExpense CF (legacy docs: '')
+  // FK → persons. The expense used to carry only userId (a `users` doc id); `users` is not
+  // tenant-readable, so no client could resolve uid → person. Stamped by createExpense from
+  // users/{uid}.personKey; '' on legacy documents and when the user has no person link.
+  public personKey = DEFAULT_KEY;
   public accountingTenantId = '';
   public receiptCount = 0; // number of receipt files uploaded to the OCR pipeline; lets stage ② know when all receipts are in
+
+  // Latest OCR failure (spec 2026-09-02-expense-workflow-design §3.5). '' = no failure on record.
+  // Written together with status 'error'; cleared by redoExpenseOcr.
+  public ocrError = '';
+  public ocrErrorAt = '';         // StoreDateTime of that failure, so a retry supersedes it visibly
 
   // Stamped (StoreDateTime) when a data-subject erasure pseudonymized this record
   // (privacy 1.19, D-P5-6): the name fields and the person link are overwritten, the
