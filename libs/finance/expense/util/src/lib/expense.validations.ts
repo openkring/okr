@@ -70,11 +70,6 @@ export interface ExpenseEditFormValue {
   status: string;
 }
 
-/** The statuses an expense may be moved to — mirrors VALID_STATUS in the updateExpense CF. */
-export const EXPENSE_EDIT_STATUSES = [
-  'draft', 'processing', 'validated', 'error', 'posted', 'pending-export',
-] as const;
-
 /**
  * Treasurer edit validations. Deliberately NOT `expenseValidations`: the edit form holds the
  * amount in cents (`amountTotal`) and owns no IBAN, so the create suite's `amountCHF`/`iban`
@@ -107,6 +102,7 @@ export const expenseEditValidations = staticSuite((model: ExpenseEditFormValue, 
     enforce(model.currency).inside([...ALLOWED_CURRENCIES]);
   });
 
-  // `status` is not validated here: the form feeds it from okr-cat-select over the fixed
-  // EXPENSE_EDIT_STATUSES list, and the updateExpense CF rejects anything outside it.
+  // `status` is not validated here: the form feeds it from okr-cat-select over the items of
+  // getExpenseStateCategory() (EXPENSE_STATES), and the updateExpense CF re-checks the value
+  // against its own VALID_STATUS. A third copy of the list would be the duplication, not the check.
 });

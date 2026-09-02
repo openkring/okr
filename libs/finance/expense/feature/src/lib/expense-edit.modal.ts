@@ -8,7 +8,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { dismissOverlay, showToast } from '@okr/shared-util-angular';
 import { lockedExpenseFields } from '@okr/shared-util-core';
 
-import { ExpenseService } from '@okr/finance-expense-data-access';
+import { ExpenseService, UpdateExpensePayload } from '@okr/finance-expense-data-access';
 import {
   EXPENSE_I18N_KEYS, ExpenseEditFormValue, ExpenseI18n, getExpenseStateCategory,
 } from '@okr/finance-expense-util';
@@ -98,20 +98,27 @@ export class ExpenseEditModal {
 
   public async save(): Promise<void> {
     const value = this.formData();
+    const locked = this.lockedFields();
+    // Every field except the key is optional, and the callable only compares the ones it receives.
+    // Locked fields are OMITTED rather than echoed back: on a booked legacy document a missing
+    // `currency` reads as undefined server-side, so sending the coalesced 'CHF' would trip the
+    // failed-precondition guard and make every save fail with no way out from the UI.
+    const payload: UpdateExpensePayload = {
+      expenseKey:   this.expense().okey,
+      abstract:     value.abstract,
+      category:     value.category,
+      costCenterId: value.costCenterId,
+      note:         value.note,
+      status:       value.status,
+    };
+    if (!locked.includes('amountTotal')) payload.amountTotal = value.amountTotal;
+    if (!locked.includes('currency'))    payload.currency   = value.currency;
+    if (!locked.includes('transferTo'))  payload.transferTo = value.transferTo;
+
     try {
       // 'expenses' is CF-write-only; updateExpense re-checks the treasurer role and refuses a
       // changed locked field, so an out-of-date lock in the UI cannot corrupt a booked expense.
-      await this.expenseService.updateViaFunction({
-        expenseKey:   this.expense().okey,
-        abstract:     value.abstract,
-        amountTotal:  value.amountTotal,
-        currency:     value.currency,
-        transferTo:   value.transferTo,
-        category:     value.category,
-        costCenterId: value.costCenterId,
-        note:         value.note,
-        status:       value.status,
-      });
+      await this.expenseService.updateViaFunction(payload);
       await dismissOverlay(this.modalController, null, 'confirm');
     } catch (e) {
       console.error('ExpenseEditModal.save failed', e);

@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output, Signal } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output, signal, Signal, untracked } from '@angular/core';
 import {
   IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption,
 } from '@ionic/angular/standalone';
@@ -64,7 +64,7 @@ export interface ExpenseEditFormI18n {
 
               <ion-row>
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="amountI18n()" [value]="amountCHFStr()"
+                  <okr-text-input [i18n]="amountI18n()" [value]="amountInput()"
                     (valueChange)="onAmountChange($event)"
                     [maxLength]="10" [readOnly]="isLocked('amountTotal')" />
                   <okr-error-note [errors]="amountErrors()" />
@@ -140,6 +140,16 @@ export class ExpenseEditForm {
 
   constructor() {
     effect(() => this.valid.emit(this.validationResult().isValid()));
+    // Seed the amount field from the model ONCE per form instance (and again when the parent
+    // toggles showForm to reset it). It must NEVER be re-derived from `amountTotal` while the
+    // user types: cents -> string is not idempotent ('2' would snap to '2.00', and the next
+    // keystroke would produce a DOM value NgModel refuses to write back), so the field would
+    // silently drift from the stored amount. `untracked` keeps formData out of the dependency set.
+    effect(() => {
+      this.showForm();
+      const cents = untracked(() => this.formData().amountTotal ?? 0);
+      this.amountInput.set(cents > 0 ? String(centsToCHF(cents)) : '');
+    });
   }
 
   // validation and errors
@@ -150,7 +160,6 @@ export class ExpenseEditForm {
 
   // fields
   protected abstract     = linkedSignal(() => this.formData().abstract ?? '');
-  protected amountTotal  = linkedSignal(() => this.formData().amountTotal ?? 0);
   protected currency     = linkedSignal(() => this.formData().currency ?? 'CHF');
   protected transferTo   = linkedSignal(() => this.formData().transferTo ?? 'me');
   protected category     = linkedSignal(() => this.formData().category ?? '');
@@ -158,10 +167,11 @@ export class ExpenseEditForm {
   protected note         = linkedSignal(() => this.formData().note ?? '');
   protected status       = linkedSignal(() => this.formData().status ?? 'draft');
 
-  /** The amount is stored in cents but edited in CHF. '' for 0 so the field starts empty. */
-  protected readonly amountCHFStr = computed(() =>
-    this.amountTotal() > 0 ? centsToCHF(this.amountTotal()).toFixed(2) : ''
-  );
+  /**
+   * The raw text the treasurer typed. The single source of truth for what the amount field shows;
+   * cents are derived FROM it in onAmountChange, never the other way round while editing.
+   */
+  protected readonly amountInput = signal('');
 
   /** A booked expense locks the accounting fields — the status stays editable. */
   protected isLocked(field: string): boolean {
@@ -191,6 +201,7 @@ export class ExpenseEditForm {
 
   /******************************* actions *************************************** */
   protected onAmountChange(value: string): void {
+    this.amountInput.set(value);   // keep the typed text verbatim — see the seeding effect
     const parsed = parseFloat(value.replace(',', '.'));
     this.onFieldChange('amountTotal', isNaN(parsed) ? 0 : chfToCents(parsed));
   }
