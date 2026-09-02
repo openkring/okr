@@ -275,6 +275,10 @@ const aoc: FeatureBlock = {
       // NEW (not mirrored off a live doc, unlike its siblings above): the kiosk monitoring +
       // remote-operations screen, seeded with the block. See the `kiosk` skill.
       { key: 'aoc-kiosk',      name: 'aoc-kiosk',      url: '/aoc/kiosk',      action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.aoc-kiosk' },
+      // NEW with spec 1.47 (Mandanten-Zuteilung, TOC 1.47) — seeded with the block, same as
+      // aoc-kiosk above. `group` matches the "share a person with another tenant" action;
+      // must be a name from the icons the `svgIcon` pipe actually resolves.
+      { key: 'aoc-allocation', name: 'aoc-allocation', url: '/aoc/allocation', action: 'navigate', roleNeeded: 'admin', icon: 'group', label: '@item.aoc-allocation' },
       // NEW with spec 1.35, seeded live for `scs` in the same change. It hangs under the AOC
       // submenu but its ROUTE is not an `/aoc/*` child and not block-gated: the rule engine is
       // a Cloud Function that fires on every membership write, so gating the screen would hide

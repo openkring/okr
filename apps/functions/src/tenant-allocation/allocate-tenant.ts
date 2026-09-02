@@ -102,12 +102,17 @@ export const allocateTenant = onCall(
   const parentKey = `person.${data.okey}`;
   const addressSnap = await db.collection(AddressCollection).where('parentKey', '==', parentKey).get();
 
-  // A bare `'__name__' in [...]` filter compares against the FULL document path, not the bare
-  // id, so it silently matches nothing here — two point reads instead.
-  const avatarIds = [`person.${data.okey}`, `${actorTenantId}.person.${data.okey}`];
-  const avatarSnaps = data.includeAvatar
-    ? (await db.getAll(...avatarIds.map((id) => db.collection(AvatarCollection).doc(id)))).filter((s) => s.exists)
-    : [];
+  // Only the bare `person.<okey>` document can ever help the target tenant: `AvatarService`
+  // streams `tenants array-contains-any [currentTenant, 'system']` and resolves
+  // `avatarDocId(currentTenant, key) ?? key` (avatar.service.ts:54,172) — the TARGET reads
+  // either its OWN tenant-prefixed doc or the bare one, never the ACTOR's prefixed doc. So
+  // stamping `<actorTenantId>.person.<okey>` would tag a document the target can never read.
+  // This also removes a confusing rejection: when the bare doc is the shared default
+  // (`tenants: ['system']`), it fails the actor-carries-it check and needs no action anyway —
+  // `'system'` is already in every tenant's avatar stream.
+  const avatarId = `person.${data.okey}`;
+  const avatarSnap = data.includeAvatar ? await db.collection(AvatarCollection).doc(avatarId).get() : undefined;
+  const avatarSnaps = avatarSnap?.exists ? [avatarSnap] : [];
 
   const plan = buildAllocationPlan({
     direction: data.direction,

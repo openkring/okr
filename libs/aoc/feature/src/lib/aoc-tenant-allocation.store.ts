@@ -10,7 +10,7 @@ import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-fea
 import { I18nService } from '@okr/shared-i18n';
 import {
   AddressCollection, AddressModel, AllocationDirection, AppConfigCollection,
-  LogInfo, logMessage, PersonCollection, PersonModel,
+  AvatarCollection, AvatarModel, LogInfo, logMessage, PersonCollection, PersonModel,
 } from '@okr/shared-models';
 import { error } from '@okr/shared-util-angular';
 import { getSystemQuery, isPerson } from '@okr/shared-util-core';
@@ -25,6 +25,7 @@ import { AllocationConfirmResult, TenantAllocationConfirmModal } from './tenant-
 export type AocTenantAllocationState = {
   selectedPerson: PersonModel | undefined;
   addresses: AddressModel[];
+  hasAvatar: boolean;
   tenantConfigs: Record<string, TenantConfigMeta>;
   log: LogInfo[];
   logTitle: string;
@@ -33,6 +34,7 @@ export type AocTenantAllocationState = {
 const initialState: AocTenantAllocationState = {
   selectedPerson: undefined,
   addresses: [],
+  hasAvatar: false,
   tenantConfigs: {},
   log: [],
   logTitle: '',
@@ -64,7 +66,6 @@ export const AocTenantAllocationStore = signalStore(
       const configs = new Map(Object.entries(store.tenantConfigs()));
       return splitTenants(person?.tenants ?? [], [...configs.keys()], store.appStore.env.tenantId, configs);
     }),
-    consentGroups: computed(() => groupAddressesForConsent(store.addresses())),
   })),
   withMethods(store => ({
     /** Every tenant that exists — `app-config` is world-readable, so this is one plain read. */
@@ -104,6 +105,7 @@ export const AocTenantAllocationStore = signalStore(
       if (role === 'confirm' && data?.kind === 'predefined' && isPerson(data.person, store.appStore.env.tenantId)) {
         patchState(store, { selectedPerson: data.person });
         await this.loadAddresses(data.person.okey);
+        await this.loadAvatar(data.person.okey);
       }
     },
 
@@ -124,8 +126,21 @@ export const AocTenantAllocationStore = signalStore(
       patchState(store, { addresses: addresses.filter(a => !a.isArchived) });
     },
 
+    /**
+     * Whether the bare `avatars/person.<okey>` document exists — the only avatar doc the
+     * target tenant of an allocation can ever read (see `allocate-tenant.ts`). A direct
+     * point read by id, not a query, so the `getDataOnce` orderBy('name') pitfall does not
+     * apply here.
+     */
+    async loadAvatar(personKey: string): Promise<void> {
+      const avatar = await firstValueFrom(
+        store.firestoreService.readModel<AvatarModel>(AvatarCollection, `person.${personKey}`),
+      );
+      patchState(store, { hasAvatar: !!avatar });
+    },
+
     clearPerson(): void {
-      patchState(store, { selectedPerson: undefined, addresses: [], log: [], logTitle: '' });
+      patchState(store, { selectedPerson: undefined, addresses: [], hasAvatar: false, log: [], logTitle: '' });
     },
   })),
   withMethods(store => ({
@@ -136,6 +151,15 @@ export const AocTenantAllocationStore = signalStore(
     async move(tile: AllocationTile, direction: AllocationDirection): Promise<void> {
       const person = store.selectedPerson();
       if (!person || !isDropAllowed(tile, direction)) return;
+
+      // D-TA-3 / spec §2: on a revoke, list only what BOTH tenants carry — the target tenant
+      // must keep what it collected itself. A grant keeps the current behaviour (every active
+      // address of the acting tenant); only a revoke needs the extra filter, because only a
+      // revoke can be pointed at a document the target tenant does not carry.
+      const eligibleAddresses = direction === 'revoke'
+        ? store.addresses().filter(a => a.tenants.includes(tile.tenantId))
+        : store.addresses();
+      const groups = groupAddressesForConsent(eligibleAddresses);
 
       const modal = await store.modalController.create({
         component: TenantAllocationConfirmModal,
@@ -152,9 +176,9 @@ export const AocTenantAllocationStore = signalStore(
             ok: store.i18n.allocation_confirm_ok(),
             cancel: store.i18n.allocation_confirm_cancel(),
           },
-          groups: store.consentGroups(),
+          groups,
           personLabel: `${person.firstName} ${person.lastName}`,
-          hasAvatar: true,
+          hasAvatar: store.hasAvatar(),
           isRevoke: direction === 'revoke',
         },
       });
@@ -188,6 +212,11 @@ export const AocTenantAllocationStore = signalStore(
         // a `tenants[]` change) so the two columns redraw.
         const fresh = await firstValueFrom(store.firestoreService.readModel<PersonModel>(PersonCollection, person.okey));
         if (fresh) patchState(store, { selectedPerson: fresh });
+
+        // A revoke can drop address documents (D-TA-3) as well as the tenants[] entry — the
+        // stale `store.addresses()` list would otherwise carry rows into a second dialog in
+        // the same session that the server just rejected as no-longer-actor-visible.
+        await store.loadAddresses(person.okey);
       } catch (ex) {
         error(store.toastController, `${store.i18n.allocation_error()} ${JSON.stringify(ex)}`);
       }

@@ -904,11 +904,11 @@
       "avatar": "Photo"
     },
     "favoriteMarker": "Adresse principale",
-    "legalNote": "Tu transmets ici des données personnelles à un autre club. Assure-toi d'en avoir le droit.",
+    "legalNote": "Tu transmets ici des données personnelles à un autre club. Assure-toi d’en avoir le droit.",
     "confirm": { "ok": "Partager", "cancel": "Annuler" },
     "result": "Résultat",
-    "conf": "L'attribution a été enregistrée.",
-    "error": "L'attribution n'a pas fonctionné.",
+    "conf": "L’attribution a été enregistrée.",
+    "error": "L’attribution n’a pas fonctionné.",
     "ownTenantHint": "Tu ne peux pas supprimer ton propre locataire ici."
   }
 }
