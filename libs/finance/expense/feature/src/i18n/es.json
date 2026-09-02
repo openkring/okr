@@ -2,7 +2,18 @@
   "list": {
     "titleMy": "Mis gastos",
     "titleAll": "Todos los gastos",
-    "empty": "No se encontraron liquidaciones de gastos"
+    "empty": "No se encontraron liquidaciones de gastos",
+    "col": {
+      "date": "Fecha",
+      "name": "Nombre",
+      "abstract": "Asunto",
+      "amount": "Importe",
+      "status": "Estado"
+    },
+    "filter": {
+      "state": "Estado",
+      "transfer": "Transferencia"
+    }
   },
   "new": {
     "title": "Presentar gastos",
@@ -89,5 +100,39 @@
   },
   "export": {
     "todo": "La exportación estará disponible próximamente."
+  },
+  "expense_state": {
+    "all": {
+      "label": "Todos"
+    },
+    "draft": {
+      "label": "Borrador"
+    },
+    "processing": {
+      "label": "En proceso"
+    },
+    "validated": {
+      "label": "Validado"
+    },
+    "error": {
+      "label": "Error"
+    },
+    "posted": {
+      "label": "Contabilizado"
+    },
+    "pending-export": {
+      "label": "Listo para exportar"
+    }
+  },
+  "expense_transfer": {
+    "all": {
+      "label": "Todos"
+    },
+    "me": {
+      "label": "a mí"
+    },
+    "issuer": {
+      "label": "al emisor de la factura"
+    }
   }
 }

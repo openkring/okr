@@ -2,7 +2,18 @@
   "list": {
     "titleMy": "My expenses",
     "titleAll": "All expenses",
-    "empty": "No expense reports found"
+    "empty": "No expense reports found",
+    "col": {
+      "date": "Date",
+      "name": "Name",
+      "abstract": "Subject",
+      "amount": "Amount",
+      "status": "Status"
+    },
+    "filter": {
+      "state": "Status",
+      "transfer": "Transfer"
+    }
   },
   "new": {
     "title": "Submit expense",
@@ -89,5 +100,39 @@
   },
   "export": {
     "todo": "Export coming soon."
+  },
+  "expense_state": {
+    "all": {
+      "label": "All"
+    },
+    "draft": {
+      "label": "Draft"
+    },
+    "processing": {
+      "label": "In progress"
+    },
+    "validated": {
+      "label": "Validated"
+    },
+    "error": {
+      "label": "Error"
+    },
+    "posted": {
+      "label": "Posted"
+    },
+    "pending-export": {
+      "label": "Ready for export"
+    }
+  },
+  "expense_transfer": {
+    "all": {
+      "label": "All"
+    },
+    "me": {
+      "label": "to me"
+    },
+    "issuer": {
+      "label": "to invoice issuer"
+    }
   }
 }

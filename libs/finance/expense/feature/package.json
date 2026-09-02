@@ -20,6 +20,7 @@
     "@okr/task-feature": "*",
     "@okr/subject-address-data-access": "*",
     "@okr/avatar-data-access": "*",
+    "@okr/avatar-ui": "*",
     "@okr/content-document-data-access": "*",
     "@okr/finance-accounting-data-access": "*",
     "@okr/finance-booking-data-access": "*",

@@ -15,7 +15,10 @@ import { AddressService } from '@okr/subject-address-data-access';
 import { UploadService } from '@okr/avatar-data-access';
 
 import { ExpenseService } from '@okr/finance-expense-data-access';
-import { chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, normalizeIban } from '@okr/finance-expense-util';
+import {
+  chfToCents, EXPENSE_I18N_KEYS, ExpenseFormValue, ExpenseI18n, ExpenseSortField,
+  filterExpenses, getExpenseStateCategory, getExpenseTransferCategory, normalizeIban, sortExpenses,
+} from '@okr/finance-expense-util';
 
 export type SubmitStep = 'idle' | 'iban' | 'upload' | 'saving' | 'done' | 'error';
 
@@ -27,10 +30,21 @@ export interface ExpenseState {
   submitStep: SubmitStep;
   submitError: string;
   listId: ExpenseListId;
+  searchTerm: string;
+  /** 'all' or an ExpenseStatus */
+  selectedState: string;
+  /** 'all' or an ExpenseTransferTo */
+  selectedTransfer: string;
+  sortField: ExpenseSortField;
+  sortAsc: boolean;
 }
 
 export const ExpenseStore = signalStore(
-  withState<ExpenseState>({ submitStep: 'idle', submitError: '', listId: 'my' }),
+  withState<ExpenseState>({
+    submitStep: 'idle', submitError: '', listId: 'my',
+    // newest first — creationDateTime descending is what the Firestore query already returns
+    searchTerm: '', selectedState: 'all', selectedTransfer: 'all', sortField: 'date', sortAsc: false,
+  }),
   withProps(() => ({
     env:                     inject(ENV),
     appStore:                inject(AppStore),
@@ -44,19 +58,40 @@ export const ExpenseStore = signalStore(
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(EXPENSE_I18N_KEYS),
-    expensesResource: rxResource<ExpenseModel[], unknown>({
-      stream: () => {
-        const user = store.appStore.currentUser();
-        if (!user) return store.expenseService.listForUser('');
+    expensesResource: rxResource({
+      // Signals read inside `stream` are NOT tracked — the list must react to `listId`
+      // (set from the route input after construction) and to the user, so both belong here.
+      params: () => ({ user: store.appStore.currentUser(), listId: store.listId() }),
+      stream: ({ params }) => {
+        if (!params.user) return store.expenseService.listForUser('');
         // 'all' shows every expense (treasurer view); 'my' only the current user's.
-        return store.listId() === 'all'
+        return params.listId === 'all'
           ? store.expenseService.listAll()
-          : store.expenseService.listForUser(user.okey);
+          : store.expenseService.listForUser(params.user.okey);
       },
     }),
   })),
   withComputed(store => ({
     expenses:    computed(() => store.expensesResource.value() ?? []),
+    stateCategory:    computed(() => getExpenseStateCategory(store.env.tenantId)),
+    transferCategory: computed(() => getExpenseTransferCategory(store.env.tenantId)),
+    /**
+     * full name → person key, for the submitter avatar on the 'all' list. The expense only
+     * carries `userId` (the users/{uid} doc id) and the stamped `userName`; `users` is not
+     * tenant-readable, so the person is resolved by name from the AppStore's person cache.
+     * Names that are not unique are dropped — a wrong face is worse than the placeholder.
+     */
+    personKeyByName: computed(() => {
+      const byName = new Map<string, string>();
+      const ambiguous = new Set<string>();
+      for (const p of store.appStore.allPersons()) {
+        const name = `${p.firstName} ${p.lastName}`.trim().toLowerCase();
+        if (name.length === 0) continue;
+        if (byName.has(name)) ambiguous.add(name); else byName.set(name, p.okey);
+      }
+      for (const name of ambiguous) byName.delete(name);
+      return byName;
+    }),
     isLoading:   computed(() => store.expensesResource.isLoading()),
     currentUser: computed(() => store.appStore.currentUser()),
     tenantId:    computed(() => store.env.tenantId),
@@ -74,7 +109,43 @@ export const ExpenseStore = signalStore(
       }
     }),
   })),
+  withComputed(store => ({
+    filteredExpenses: computed(() => sortExpenses(
+      filterExpenses(store.expenses(), {
+        searchTerm: store.searchTerm(),
+        status:     store.selectedState(),
+        transferTo: store.selectedTransfer(),
+      }),
+      store.sortField(), store.sortAsc()
+    )),
+  })),
   withMethods(store => ({
+    /** The avatar key of an expense's submitter, '' when the person cannot be resolved. */
+    avatarKey(expense: ExpenseModel): string {
+      const key = store.personKeyByName().get((expense.userName ?? '').trim().toLowerCase());
+      return key ? `${PersonModelName}.${key}` : '';
+    },
+
+    setSearchTerm(searchTerm: string): void {
+      patchState(store, { searchTerm });
+    },
+
+    setSelectedState(selectedState: string): void {
+      patchState(store, { selectedState });
+    },
+
+    setSelectedTransfer(selectedTransfer: string): void {
+      patchState(store, { selectedTransfer });
+    },
+
+    /** Click on a sortable column header: same column toggles the direction, a new one starts descending. */
+    setSort(sortField: ExpenseSortField): void {
+      patchState(store, {
+        sortAsc: store.sortField() === sortField ? !store.sortAsc() : false,
+        sortField,
+      });
+    },
+
     async openDetail(expense: ExpenseModel): Promise<void> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { ExpenseDetailModal } = await import('./expense-detail.modal') as any;

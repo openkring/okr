@@ -2,7 +2,18 @@
   "list": {
     "titleMy": "Mes frais",
     "titleAll": "Tous les frais",
-    "empty": "Aucune note de frais trouvée"
+    "empty": "Aucune note de frais trouvée",
+    "col": {
+      "date": "Date",
+      "name": "Nom",
+      "abstract": "Objet",
+      "amount": "Montant",
+      "status": "Statut"
+    },
+    "filter": {
+      "state": "Statut",
+      "transfer": "Virement"
+    }
   },
   "new": {
     "title": "Soumettre des frais",
@@ -89,5 +100,39 @@
   },
   "export": {
     "todo": "Export bientôt disponible."
+  },
+  "expense_state": {
+    "all": {
+      "label": "Tous"
+    },
+    "draft": {
+      "label": "Brouillon"
+    },
+    "processing": {
+      "label": "En cours de traitement"
+    },
+    "validated": {
+      "label": "Validé"
+    },
+    "error": {
+      "label": "Erreur"
+    },
+    "posted": {
+      "label": "Comptabilisé"
+    },
+    "pending-export": {
+      "label": "Prêt pour l'export"
+    }
+  },
+  "expense_transfer": {
+    "all": {
+      "label": "Tous"
+    },
+    "me": {
+      "label": "à moi"
+    },
+    "issuer": {
+      "label": "à l'émetteur de la facture"
+    }
   }
 }

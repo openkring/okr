@@ -30,6 +30,7 @@
     { "path": "../../../task/feature/tsconfig.lib.json" },
     { "path": "../../../subject/address/data-access/tsconfig.lib.json" },
     { "path": "../../../avatar/data-access/tsconfig.lib.json" },
+    { "path": "../../../avatar/ui/tsconfig.lib.json" },
     { "path": "../../../content/document/data-access/tsconfig.lib.json" },
     { "path": "../../accounting/data-access/tsconfig.lib.json" },
     { "path": "../../booking/data-access/tsconfig.lib.json" },

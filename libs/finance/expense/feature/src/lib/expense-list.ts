@@ -1,18 +1,23 @@
+import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import {
   ActionSheetController, ModalController, ToastController,
-  IonButton, IonButtons, IonContent, IonFab, IonFabButton, IonHeader, IonIcon,
-  IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar,
+  IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonFab, IonFabButton, IonGrid, IonHeader, IonIcon,
+  IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
 } from '@ionic/angular/standalone';
 
 import { ExpenseModel, RoleName } from '@okr/shared-models';
+import { TranslatePipe } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { EmptyList, Spinner } from '@okr/shared-ui';
+import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, getItemLabel, hasRole } from '@okr/shared-util-core';
 
+import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
-import { canDeleteExpense, canOpenBooking, canOpenTask, canRedoOcr, canViewExpense, centsToCHF } from '@okr/finance-expense-util';
+import {
+  canDeleteExpense, canOpenBooking, canOpenTask, canRedoOcr, canViewExpense, centsToCHF, ExpenseSortField,
+} from '@okr/finance-expense-util';
 
 import { ExpenseNewModal } from './expense-new.modal';
 import { ExpenseListId, ExpenseStore } from './expense.store';
@@ -21,11 +26,30 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
   selector: 'okr-expense-list',
   standalone: true,
   imports: [
-    SvgIconPipe,
-    Spinner, EmptyList, Menu,
+    AsyncPipe, SvgIconPipe, TranslatePipe, AvatarPipe,
+    Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonIcon, IonMenuButton,
     IonContent, IonList, IonItem, IonLabel, IonPopover, IonFab, IonFabButton,
+    IonGrid, IonRow, IonCol, IonAvatar, IonImg,
   ],
+  styles: [`
+    ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
+    .header-row {
+      font-weight: 600;
+      border-bottom: 1px solid var(--ion-color-step-150, #d7d8da);
+      padding-inline: 16px;
+    }
+    .item-row {
+      min-height: 48px;
+      align-items: center;
+      padding-inline: 16px;
+      border-bottom: 1px solid var(--ion-color-step-100, #e5e5e5);
+    }
+    .item-row:last-of-type { border-bottom: 0; }
+    .clickable { cursor: pointer; }
+    .name { display: flex; align-items: center; gap: 12px; }
+    .num { text-align: right; }
+  `],
   providers: [ExpenseStore],
   template: `
     <ion-header>
@@ -50,22 +74,76 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
           </ion-buttons>
         }
       </ion-toolbar>
+      <okr-list-filter
+        (searchTermChanged)="store.setSearchTerm($event)"
+        [states]="store.stateCategory()" [selectedState]="store.selectedState()" (stateChanged)="store.setSelectedState($event)"
+        [types]="store.transferCategory()" [selectedType]="store.selectedTransfer()" (typeChanged)="store.setSelectedTransfer($event)"
+      />
+
+      <!-- sortable column headers: the full set from md up, the three sortable ones below -->
+      <ion-toolbar color="light">
+        <ion-grid class="ion-no-padding">
+          <ion-row class="header-row ion-hide-md-down">
+            <ion-col size="2" class="clickable" (click)="store.setSort('date')">{{ store.i18n.col_date() }}{{ sortIcon('date') }}</ion-col>
+            @if (showSubmitter()) {
+              <ion-col size="3" class="clickable" (click)="store.setSort('name')">{{ store.i18n.col_name() }}{{ sortIcon('name') }}</ion-col>
+            }
+            <ion-col>{{ store.i18n.col_abstract() }}</ion-col>
+            <ion-col size="2" class="num clickable" (click)="store.setSort('amount')">{{ store.i18n.col_amount() }}{{ sortIcon('amount') }}</ion-col>
+            <ion-col size="2">{{ store.i18n.col_status() }}</ion-col>
+          </ion-row>
+          <ion-row class="header-row ion-hide-md-up">
+            <ion-col size="4" class="clickable" (click)="store.setSort('date')">{{ store.i18n.col_date() }}{{ sortIcon('date') }}</ion-col>
+            @if (showSubmitter()) {
+              <ion-col size="4" class="clickable" (click)="store.setSort('name')">{{ store.i18n.col_name() }}{{ sortIcon('name') }}</ion-col>
+            }
+            <ion-col size="4" class="num clickable" (click)="store.setSort('amount')">{{ store.i18n.col_amount() }}{{ sortIcon('amount') }}</ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-toolbar>
     </ion-header>
     <ion-content>
       @if (store.isLoading()) {
         <okr-spinner />
-      } @else if (store.expenses().length === 0) {
+      } @else if (expenses().length === 0) {
         <okr-empty-list [message]="store.i18n.list_empty()" />
       } @else {
-        <ion-list>
-          @for (expense of store.expenses(); track expense.okey) {
-            <ion-item button (click)="openActions(expense)">
+        <!-- md and up: one row per expense, columns aligned with the header toolbar -->
+        <ion-grid class="ion-no-padding ion-hide-md-down">
+          @for (expense of expenses(); track expense.okey) {
+            <ion-row class="item-row clickable" (click)="openActions(expense)">
+              <ion-col size="2">{{ viewDate(expense) }}</ion-col>
+              @if (showSubmitter()) {
+                <ion-col size="3" class="name">
+                  <ion-avatar>
+                    <ion-img src="{{ store.avatarKey(expense) | avatar:'person' }}" alt="Avatar" />
+                  </ion-avatar>
+                  <span>{{ expense.userName }}</span>
+                </ion-col>
+              }
+              <ion-col>{{ expense.abstract }}</ion-col>
+              <ion-col size="2" class="num">{{ amount(expense) }} {{ expense.currency }}</ion-col>
+              <ion-col size="2">{{ statusLabel(expense) | translate | async }}</ion-col>
+            </ion-row>
+          }
+        </ion-grid>
+
+        <!-- below md: the compact single-item layout, date first -->
+        <ion-list class="ion-hide-md-up" lines="inset">
+          @for (expense of expenses(); track expense.okey) {
+            <ion-item button [detail]="false" (click)="openActions(expense)">
+              @if (showSubmitter()) {
+                <ion-avatar slot="start">
+                  <ion-img src="{{ store.avatarKey(expense) | avatar:'person' }}" alt="Avatar" />
+                </ion-avatar>
+              }
               <ion-label>
                 <h3>{{ expense.abstract }}</h3>
-                <p>{{ toCHF(expense.amountTotal) }} {{ expense.currency }} · {{ expense.status }}</p>
-                @if (listId() === 'all' && expense.userName) {
-                  <p>{{ expense.userName }}</p>
-                }
+                <p>{{ viewDate(expense) }} · {{ amount(expense) }} {{ expense.currency }}</p>
+                <p>
+                  {{ statusLabel(expense) | translate | async }}
+                  @if (showSubmitter() && expense.userName) { · {{ expense.userName }} }
+                </p>
               </ion-label>
             </ion-item>
           }
@@ -93,7 +171,9 @@ export class ExpenseList {
   public readonly listId = input<ExpenseListId>('my');
   public readonly contextMenuName = input('c-expense');
 
-  protected readonly toCHF = centsToCHF;
+  protected readonly expenses = computed(() => this.store.filteredExpenses());
+  /** The submitter column/avatar only makes sense on the 'all' list — on 'my' every row is the user. */
+  protected readonly showSubmitter = computed(() => this.listId() === 'all');
 
   protected readonly currentUser = computed(() => this.store.currentUser());
   protected readonly canAdd = computed(() => hasRole('registered', this.currentUser()));
@@ -104,6 +184,25 @@ export class ExpenseList {
 
   constructor() {
     effect(() => this.store.setListId(this.listId()));
+  }
+
+  /** creationDateTime is a StoreDateTime; non-strict conversion yields '' for legacy docs without one. */
+  protected viewDate(expense: ExpenseModel): string {
+    return convertDateFormatToString(expense.creationDateTime, DateFormat.StoreDateTime, DateFormat.ViewDate, false);
+  }
+
+  protected amount(expense: ExpenseModel): string {
+    return centsToCHF(expense.amountTotal).toFixed(2);
+  }
+
+  /** Data-driven i18n key of the status item — resolved with TranslatePipe, not the store. */
+  protected statusLabel(expense: ExpenseModel): string {
+    return getItemLabel(this.store.stateCategory(), expense.status);
+  }
+
+  protected sortIcon(field: ExpenseSortField): string {
+    if (this.store.sortField() !== field) return '';
+    return this.store.sortAsc() ? ' ↑' : ' ↓';
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {

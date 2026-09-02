@@ -2,7 +2,18 @@
   "list": {
     "titleMy": "Le mie spese",
     "titleAll": "Tutte le spese",
-    "empty": "Nessuna nota spese trovata"
+    "empty": "Nessuna nota spese trovata",
+    "col": {
+      "date": "Data",
+      "name": "Nome",
+      "abstract": "Oggetto",
+      "amount": "Importo",
+      "status": "Stato"
+    },
+    "filter": {
+      "state": "Stato",
+      "transfer": "Bonifico"
+    }
   },
   "new": {
     "title": "Presenta spesa",
@@ -89,5 +100,39 @@
   },
   "export": {
     "todo": "Esportazione disponibile a breve."
+  },
+  "expense_state": {
+    "all": {
+      "label": "Tutte"
+    },
+    "draft": {
+      "label": "Bozza"
+    },
+    "processing": {
+      "label": "In elaborazione"
+    },
+    "validated": {
+      "label": "Validato"
+    },
+    "error": {
+      "label": "Errore"
+    },
+    "posted": {
+      "label": "Contabilizzato"
+    },
+    "pending-export": {
+      "label": "Pronto per l'esportazione"
+    }
+  },
+  "expense_transfer": {
+    "all": {
+      "label": "Tutte"
+    },
+    "me": {
+      "label": "a me"
+    },
+    "issuer": {
+      "label": "all'emittente della fattura"
+    }
   }
 }

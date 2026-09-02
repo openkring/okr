@@ -2,7 +2,18 @@
   "list": {
     "titleMy": "Meine Spesen",
     "titleAll": "Alle Spesen",
-    "empty": "Keine Spesen-Abrechnungen gefunden"
+    "empty": "Keine Spesen-Abrechnungen gefunden",
+    "col": {
+      "date": "Datum",
+      "name": "Name",
+      "abstract": "Betreff",
+      "amount": "Betrag",
+      "status": "Status"
+    },
+    "filter": {
+      "state": "Status",
+      "transfer": "Überweisung"
+    }
   },
   "new": {
     "title": "Spesen einreichen",
@@ -89,5 +100,39 @@
   },
   "export": {
     "todo": "Export folgt in Kürze."
+  },
+  "expense_state": {
+    "all": {
+      "label": "Alle"
+    },
+    "draft": {
+      "label": "Entwurf"
+    },
+    "processing": {
+      "label": "In Bearbeitung"
+    },
+    "validated": {
+      "label": "Validiert"
+    },
+    "error": {
+      "label": "Fehler"
+    },
+    "posted": {
+      "label": "Verbucht"
+    },
+    "pending-export": {
+      "label": "Bereit für Export"
+    }
+  },
+  "expense_transfer": {
+    "all": {
+      "label": "Alle"
+    },
+    "me": {
+      "label": "an mich"
+    },
+    "issuer": {
+      "label": "an Rechnungssteller"
+    }
   }
 }
