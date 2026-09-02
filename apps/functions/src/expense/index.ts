@@ -1,7 +1,8 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
-import { checkAppCheckToken, checkAuthentication, lockedExpenseFields } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, lockedExpenseFields, nextStatusForCompletedTask } from '@okr/shared-util-functions';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 import { emitEvent } from '../workflow/emit';
@@ -182,5 +183,61 @@ export const updateExpense = onCall(
     await expSnap.ref.set(patch, { merge: true });
     logger.info(`updateExpense: ${d.expenseKey} patched [${Object.keys(patch).join(', ')}]`);
     return { ok: true };
+  },
+);
+
+const TASK_COLLECTION = 'tasks';
+
+/**
+ * The expense side of a task that belongs to one (spec 2026-09-02 §3.6). Two effects:
+ *
+ *  - on CREATE, latch `expense.taskKey`. The workflow engine creates the task now and knows
+ *    nothing about expenses (and must not learn — `createTask` is generic), so without this the
+ *    expense loses the link the OCR pipeline used to write, and `canOpenTask` goes false for
+ *    every new expense.
+ *  - on the transition into DONE, move the expense to 'validated'.
+ *
+ * Deliberately a dedicated trigger rather than a workflow action: no engine action patches an
+ * arbitrary field on an arbitrary collection, and adding one would be an expression language by
+ * the back door. `nextStatusForCompletedTask` holds the decision (and its 'posted' guard, which
+ * fires on every approved booking) so it is unit-tested without the emulator.
+ */
+export const onExpenseTaskWritten = onDocumentWritten(
+  { document: `${TASK_COLLECTION}/{taskId}`, region: REGION },
+  async (event) => {
+    const before = event.data?.before?.data();
+    const after = event.data?.after?.data();
+    if (!after) return;   // deletes are not our business
+
+    // `linkKey || relatedKey` mirrors task.form.ts:182 — the engine sets relatedKey and leaves
+    // linkKey empty (see the Task 6 deviation), so matching only linkKey would find nothing.
+    const linkKey = (after['linkKey'] as string) || (after['relatedKey'] as string) || '';
+    if (!linkKey.startsWith('expense.')) return;
+    const expenseKey = linkKey.slice('expense.'.length);
+    if (!expenseKey) return;
+
+    const db = getFirestore();
+    const expenseRef = db.collection(EXPENSE_COLLECTION).doc(expenseKey);
+    const snap = await expenseRef.get();
+    if (!snap.exists) return;
+    const expense = snap.data()!;
+
+    // (1) latch the task onto the expense, once — a later task must not steal the link
+    if (!before && !(expense['taskKey'] as string | undefined)) {
+      await expenseRef.set({ taskKey: event.params['taskId'] }, { merge: true });
+      logger.info(`onExpenseTaskWritten: latched task ${event.params['taskId']} onto ${expenseKey}`);
+    }
+
+    // (2) the transition INTO done, not every write to a task that is already done
+    if (!before || before['state'] === 'done' || after['state'] !== 'done') return;
+
+    const status = nextStatusForCompletedTask(linkKey, {
+      status: expense['status'] as string | undefined,
+      bookingKey: expense['bookingKey'] as string | undefined,
+    });
+    if (!status) return;
+
+    await expenseRef.set({ status }, { merge: true });
+    logger.info(`onExpenseTaskWritten: ${expenseKey} → ${status} (task ${event.params['taskId']})`);
   },
 );
