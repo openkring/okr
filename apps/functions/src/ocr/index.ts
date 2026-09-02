@@ -620,7 +620,9 @@ export const redoExpenseOcr = onCall(
     priorResults.docs.forEach(d => batch.delete(d.ref));
     await batch.commit();
 
-    await expRef.set({ status: 'processing' }, { merge: true });
+    // Clear the previous failure with the status — a stale message next to 'processing' reads
+    // as if the retry had already failed.
+    await expRef.set({ status: 'processing', ocrError: '', ocrErrorAt: '' }, { merge: true });
 
     // Re-extract every receipt in the expense's OCR folder.
     const bucket = admin.storage().bucket();
