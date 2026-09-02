@@ -13,6 +13,8 @@ import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functi
 import { parseOcrPath } from './ocr-path.util';
 import { toCents, ocrResultId, matchRule, resolveDebitAccount, type OcrRuleLite } from './ocr-extract.util';
 import { geminiExtract } from './gemini-extract';
+import { emitEvent } from '../workflow/emit';
+import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 const REGION = 'europe-west6';
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
@@ -28,6 +30,41 @@ const BOOKING_LINE_COLLECTION = 'booking-lines';
 const TASK_COLLECTION = 'tasks';
 const USERS_COLLECTION = 'users';
 const EXPENSE_COLLECTION = 'expenses';
+
+/**
+ * One OCR failure, recorded and announced.
+ *
+ * The status patch is a DIRECT write, not a workflow consequence: a tenant that archives the
+ * rule must still see the expense leave 'processing'. The emit is best-effort by construction —
+ * runWorkflow never throws — so it cannot fail the OCR pipeline that produced it.
+ */
+async function reportExpenseOcrFailure(
+  tenantId: string, expenseKey: string, message: string, storagePath: string,
+): Promise<void> {
+  if (!expenseKey) return;
+  const db = getFirestore();
+  const expenseRef = db.collection(EXPENSE_COLLECTION).doc(expenseKey);
+  const snap = await expenseRef.get();
+  if (!snap.exists) return;
+  const expense = snap.data()!;
+  await expenseRef.set({
+    status: 'error',
+    ocrError: message.slice(0, 500),
+    ocrErrorAt: getTodayStr(DateFormat.StoreDateTime),
+  }, { merge: true });
+  await emitEvent('expense.ocrFailed', tenantId, `expense.${expenseKey}`, {
+    personKey: (expense['personKey'] as string) ?? '',
+    subjectName: (expense['userName'] as string) ?? '',
+    params: {
+      error: message.slice(0, 500),
+      storagePath,
+      amount: String(expense['amountTotal'] ?? 0),
+      currency: (expense['currency'] as string) ?? 'CHF',
+      // the engine puts params.notes into the task notes (engine.ts runStep 'openTask')
+      notes: `${message}\nOCR-Beleg: ${storagePath}`,
+    },
+  });
+}
 
 /** Resolve an account NUMBER (id) to its account doc key for the tenant, or '' if not found. */
 async function accountKeyById(accountingTenantId: string, accountId: string): Promise<string> {
@@ -179,16 +216,12 @@ async function extractReceipt(opts: {
       status: 'failed', bookingKey: '',
       error: error instanceof Error ? error.message : String(error),
     }, { merge: true });
-    // Notify the treasurer (FCM via onTaskWritten) and, for expense usage, latch the task onto the expense.
-    if (ocrUsage === 'expense' || ocrUsage === 'invoice') {
-      try {
-        const taskKey = await createReviewTask(tenantId, '', 'OCR fehlgeschlagen — Beleg manuell erfassen', { storagePath: objectName });
-        if (taskKey && ocrUsage === 'expense' && correlationKey) {
-          await db.collection(EXPENSE_COLLECTION).doc(correlationKey).set({ taskKey }, { merge: true });
-        }
-      } catch (taskErr) {
-        logger.error(`extractReceipt: could not create failure review task for "${objectName}"`, taskErr);
-      }
+    if (ocrUsage === 'expense' && correlationKey) {
+      await reportExpenseOcrFailure(
+        tenantId, correlationKey,
+        error instanceof Error ? error.message : String(error),
+        objectName,
+      );
     }
   } finally {
     await fs.unlink(tempFilePath).catch(() => undefined);
@@ -396,11 +429,11 @@ async function handleExpenseResult(
       status: 'failed',
       error: 'Beleg konnte nicht automatisch verarbeitet werden — bitte manuell erfassen.',
     }, { merge: true });
-    const taskKey = await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '', 'Beleg manuell erfassen', after);
-    if (taskKey) {
-      await expenseRef.set({ taskKey }, { merge: true });
-      await resultRef.set({ taskKey }, { merge: true });
-    }
+    await reportExpenseOcrFailure(
+      tenantId, correlationKey,
+      'Beleg konnte nicht automatisch verarbeitet werden — bitte manuell erfassen.',
+      after.storagePath,
+    );
     return;
   }
 
