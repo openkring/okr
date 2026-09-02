@@ -84,6 +84,12 @@ export const AocTenantAllocationStore = signalStore(
           appDomain: doc['appDomain'] as string | undefined,
         };
       }
+      if (docs.length === 0) {
+        // an empty result is indistinguishable from a denied read (getDataOnce swallows every
+        // error into []) — log it so the empty right-hand column is never silently confident.
+        const message = 'Es wurden keine Mandanten gefunden. Das kann auch bedeuten, dass der Zugriff verweigert wurde.';
+        patchState(store, { logTitle: message, log: logMessage([...store.log()], message) });
+      }
       patchState(store, { tenantConfigs: configs });
     },
 
@@ -109,6 +115,12 @@ export const AocTenantAllocationStore = signalStore(
       const query = getSystemQuery(store.appStore.env.tenantId);
       query.push({ key: 'parentKey', operator: '==', value: `person.${personKey}` });
       const addresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, query, 'none');
+      if (addresses.length === 0) {
+        // same rationale as loadTenantConfigs: getDataOnce swallows a permission denial into [],
+        // so an empty address list must not read as a confident "this person has no addresses".
+        const message = 'Zu dieser Person wurden keine Adressen gefunden. Das kann auch bedeuten, dass der Zugriff verweigert wurde.';
+        patchState(store, { logTitle: message, log: logMessage([...store.log()], message) });
+      }
       patchState(store, { addresses: addresses.filter(a => !a.isArchived) });
     },
 
