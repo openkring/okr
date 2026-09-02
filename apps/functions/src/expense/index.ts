@@ -58,6 +58,8 @@ export const createExpense = onCall(
       category: d.category ?? '', costCenterId: d.costCenterId ?? '', note: d.note ?? '',
       status: 'processing', bookingKey: '',
       userId: uid, userName: `${user['firstName'] ?? ''} ${user['lastName'] ?? ''}`.trim(),
+      personKey: (user['personKey'] as string) ?? '',
+      ocrError: '', ocrErrorAt: '',
       accountingTenantId: d.tenantId,
       receiptCount,
     });
