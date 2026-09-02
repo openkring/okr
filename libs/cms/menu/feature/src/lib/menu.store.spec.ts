@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
+import { MenuItemModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { mockCollection, mockError } from '@okr/shared-feature/testing';
 import { I18nService } from '@okr/shared-i18n';
