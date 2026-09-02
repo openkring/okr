@@ -68,3 +68,32 @@ describe('mergeWeather', () => {
     expect(mergeWeather({}, {}).precip).toBe(0);
   });
 });
+
+describe('planWeatherRanges — Aggregate haben kein Wetter', () => {
+  const staefa = { latitude: 47.24254, longitude: 8.72342 };
+
+  it('ignoriert das genullte Datum eines Jahres-Aggregats', () => {
+    const ranges = planWeatherRanges(
+      [{ date: '19900000', ...staefa }, { date: '20200610', ...staefa }, { date: '20200612', ...staefa }],
+      '20260901',
+    );
+    expect(ranges).toHaveLength(1);
+    expect(ranges[0].startDate).toBe('2020-06-10');
+    expect(ranges[0].endDate).toBe('2020-06-12');
+  });
+
+  it('ignoriert das genullte Datum eines Monats-Aggregats', () => {
+    const ranges = planWeatherRanges([{ date: '20041000', ...staefa }, { date: '20041002', ...staefa }], '20260901');
+    expect(ranges[0].startDate).toBe('2004-10-02');
+  });
+
+  it('weist auch einen unmöglichen Kalendertag ab', () => {
+    // 31. Februar rollt in JS still auf den 3. Maerz weiter — genau das darf nicht passieren.
+    const ranges = planWeatherRanges([{ date: '20040231', ...staefa }, { date: '20040301', ...staefa }], '20260901');
+    expect(ranges[0].startDate).toBe('2004-03-01');
+  });
+
+  it('gibt gar keinen Bereich zurück, wenn nur Aggregate übrig bleiben', () => {
+    expect(planWeatherRanges([{ date: '19900000', ...staefa }], '20260901')).toEqual([]);
+  });
+});

@@ -42,6 +42,19 @@ function groupByCoordinate(entries: DatedCoord[]): Map<string, DatedCoord[]> {
   return groups;
 }
 
+/** True only for a real 'yyyyMMdd' day — rejects the zeroed dates of month/year aggregates. */
+function isCalendarDay(storeDate: string): boolean {
+  if (!/^\d{8}$/.test(storeDate)) {
+    return false;
+  }
+  const y = Number(storeDate.slice(0, 4));
+  const m = Number(storeDate.slice(4, 6));
+  const d = Number(storeDate.slice(6, 8));
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return m >= 1 && m <= 12 && d >= 1
+    && date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+}
+
 function toIsoDate(storeDate: string): string {
   return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.IsoDate);
 }
@@ -54,6 +67,13 @@ function toIsoDate(storeDate: string): string {
  * ~50 ranges instead of one call per diary entry.
  */
 export function planWeatherRanges(entries: DatedCoord[], today: string): WeatherRange[] {
+  // Drop anything that is not a real calendar day. A range spans a coordinate group's MIN to MAX
+  // date, so a single zeroed date ('19900000', how a month/year aggregate is stored — see
+  // DiaryScope) would push that group's range start to '1990-00-00', Open-Meteo would reject the
+  // call, and every day sharing those coordinates would silently lose its measured weather. The
+  // caller already filters by scope; this makes the failure impossible rather than merely absent.
+  entries = entries.filter((e) => isCalendarDay(e.date));
+
   // date-fns' add() accepts negative durations, so this correctly computes "one year ago" —
   // subDuration is not used here: its implementation calls add() instead of sub() and would
   // move the boundary the wrong direction.

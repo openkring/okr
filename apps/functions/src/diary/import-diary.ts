@@ -348,7 +348,12 @@ async function runPipeline(
 
       const locationLabel = fmScalar(diaryFile, 'location');
       const coords = locationLabel === '' ? undefined : resolver.resolveLocationCoords(locationLabel);
-      if (coords && model.date !== '') {
+      // Only a DAY has weather. A month or year aggregate carries a zeroed date ('19900000') that
+      // is not a calendar date, and `planWeatherRanges` takes the min/max over a whole coordinate
+      // group — so one aggregate would push that group's range start to '1990-00-00', Open-Meteo
+      // would reject the call, and EVERY day sharing those coordinates would silently lose its
+      // measured weather. Two aggregates with a location were enough to cost ~170 days theirs.
+      if (coords && model.date !== '' && model.scope === 'day') {
         weatherEntries.push({ date: model.date, latitude: coords.latitude, longitude: coords.longitude });
       }
 
@@ -375,6 +380,12 @@ async function runPipeline(
   );
 
   for (const entry of parsedEntries) {
+    // A month or year aggregate has no weather at all — not a measured one, and not one copied
+    // out of its frontmatter. "The weather in 1990" is not a fact, so the entry keeps
+    // DEFAULT_DIARY_WEATHER and is never reported as deviating.
+    if (entry.model.scope !== 'day') {
+      continue;
+    }
     const fromFile = weatherFromFile(entry.file);
     const fromApi = entry.coords
       ? (weatherByCoord.get(coordKeyOf(entry.coords))?.get(entry.model.date) ?? {})
