@@ -23,6 +23,7 @@
   },
   "detail": {
     "title": "Débours",
+    "pageTitle": "Débours",
     "close": "Fermer",
     "amount": "Montant",
     "iban": "IBAN",
@@ -30,12 +31,18 @@
     "booking": "Référence d'écriture",
     "note": "Note",
     "receipt": "Justificatif",
-    "booking_ref": "Référence d’écriture"
+    "booking_ref": "Référence d’écriture",
+    "ocrError": "Le justificatif n'a pas pu être lu automatiquement"
+  },
+  "edit": {
+    "title": "Modifier le débours",
+    "lockedHint": "Ce débours est déjà comptabilisé — le montant, la devise et le destinataire du virement ne peuvent plus être modifiés."
   },
   "field": {
     "abstract": "Objet",
     "amount": "Montant total",
     "currency": "Devise",
+    "status": "Statut",
     "transfer": {
       "label": "Virement",
       "me": "à moi",
@@ -88,7 +95,8 @@
     "redoOcr": "Relancer l'OCR",
     "openTask": "Ouvrir la tâche",
     "openBooking": "Ouvrir l'écriture",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "edit": "Modifier"
   },
   "redo": {
     "conf": "Analyse OCR relancée.",

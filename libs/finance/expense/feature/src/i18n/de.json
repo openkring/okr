@@ -23,6 +23,7 @@
   },
   "detail": {
     "title": "Auslage",
+    "pageTitle": "Auslage",
     "close": "Schliessen",
     "amount": "Betrag",
     "iban": "IBAN",
@@ -30,12 +31,18 @@
     "booking": "Buchungsreferenz",
     "note": "Notiz",
     "receipt": "Beleg",
-    "booking_ref": "Buchungsreferenz"
+    "booking_ref": "Buchungsreferenz",
+    "ocrError": "Der Beleg konnte nicht automatisch gelesen werden"
+  },
+  "edit": {
+    "title": "Auslage bearbeiten",
+    "lockedHint": "Diese Auslage ist bereits verbucht — Betrag, Währung und Überweisungsziel lassen sich nicht mehr ändern."
   },
   "field": {
     "abstract": "Betreff",
     "amount": "Gesamtbetrag",
     "currency": "Währung",
+    "status": "Status",
     "transfer": {
       "label": "Überweisung",
       "me": "an mich",
@@ -88,7 +95,8 @@
     "redoOcr": "OCR erneut ausführen",
     "openTask": "Aufgabe öffnen",
     "openBooking": "Buchung öffnen",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "edit": "Bearbeiten"
   },
   "redo": {
     "conf": "OCR-Scan neu gestartet.",

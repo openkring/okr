@@ -23,6 +23,7 @@
   },
   "detail": {
     "title": "Esborso",
+    "pageTitle": "Esborso",
     "close": "Chiudi",
     "amount": "Importo",
     "iban": "IBAN",
@@ -30,12 +31,18 @@
     "booking": "Riferimento di registrazione",
     "note": "Nota",
     "receipt": "Giustificativo",
-    "booking_ref": "Riferimento di registrazione"
+    "booking_ref": "Riferimento di registrazione",
+    "ocrError": "Il giustificativo non è stato letto automaticamente"
+  },
+  "edit": {
+    "title": "Modifica esborso",
+    "lockedHint": "Questo esborso è già stato contabilizzato — l'importo, la valuta e il destinatario del bonifico non possono più essere modificati."
   },
   "field": {
     "abstract": "Oggetto",
     "amount": "Importo totale",
     "currency": "Valuta",
+    "status": "Stato",
     "transfer": {
       "label": "Bonifico",
       "me": "a me",
@@ -88,7 +95,8 @@
     "redoOcr": "Esegui di nuovo l'OCR",
     "openTask": "Apri compito",
     "openBooking": "Apri registrazione",
-    "cancel": "Annulla"
+    "cancel": "Annulla",
+    "edit": "Modifica"
   },
   "redo": {
     "conf": "Scansione OCR riavviata.",

@@ -23,6 +23,7 @@
   },
   "detail": {
     "title": "Desembolso",
+    "pageTitle": "Desembolso",
     "close": "Cerrar",
     "amount": "Importe",
     "iban": "IBAN",
@@ -30,12 +31,18 @@
     "booking": "Referencia de asiento",
     "note": "Nota",
     "receipt": "Comprobante",
-    "booking_ref": "Referencia de asiento"
+    "booking_ref": "Referencia de asiento",
+    "ocrError": "El comprobante no se pudo leer automáticamente"
+  },
+  "edit": {
+    "title": "Editar desembolso",
+    "lockedHint": "Este desembolso ya está contabilizado — el importe, la moneda y el destinatario de la transferencia ya no se pueden cambiar."
   },
   "field": {
     "abstract": "Asunto",
     "amount": "Importe total",
     "currency": "Moneda",
+    "status": "Estado",
     "transfer": {
       "label": "Transferencia",
       "me": "a mí",
@@ -88,7 +95,8 @@
     "redoOcr": "Ejecutar OCR de nuevo",
     "openTask": "Abrir tarea",
     "openBooking": "Abrir asiento",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "edit": "Editar"
   },
   "redo": {
     "conf": "Escaneo OCR reiniciado.",

@@ -23,6 +23,7 @@
   },
   "detail": {
     "title": "Outlay",
+    "pageTitle": "Outlay",
     "close": "Close",
     "amount": "Amount",
     "iban": "IBAN",
@@ -30,12 +31,18 @@
     "booking": "Booking reference",
     "note": "Note",
     "receipt": "Receipt",
-    "booking_ref": "Booking reference"
+    "booking_ref": "Booking reference",
+    "ocrError": "The receipt could not be read automatically"
+  },
+  "edit": {
+    "title": "Edit outlay",
+    "lockedHint": "This outlay has already been posted — the amount, currency and transfer destination can no longer be changed."
   },
   "field": {
     "abstract": "Subject",
     "amount": "Total amount",
     "currency": "Currency",
+    "status": "Status",
     "transfer": {
       "label": "Transfer",
       "me": "to me",
@@ -88,7 +95,8 @@
     "redoOcr": "Run OCR again",
     "openTask": "Open task",
     "openBooking": "Open booking",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "edit": "Edit"
   },
   "redo": {
     "conf": "OCR scan restarted.",
