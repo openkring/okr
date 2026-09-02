@@ -186,6 +186,14 @@ const KNOWN_DEAD_ENDS: readonly string[] = ['addresses'];
  * its queries are allowed to return.
  *
  * Grouped by the role the menu doc declares.
+ *
+ * REMOVED 2026-09-02: `person-contacts`. It is the one entry so far to leave this list by the
+ * OTHER route — not by adding a guard, but by the menu doc dropping the claim it could not
+ * back. `elab` and `p13` had independently forked that row from `privileged` to `registered`,
+ * which is what surfaced it; the catalogue now says `registered` too, so menu and route agree
+ * and there is no discrepancy left to inventory. Worth noting as the shape of a real fix here:
+ * an entry leaves this list either because the route got stricter or because the menu stopped
+ * overclaiming, and the second is the cheaper one whenever the strictness was never intended.
  */
 const KNOWN_WEAKER_THAN_MENU: readonly string[] = [
   // contentAdmin — the four that surfaced alongside the R-5/R-6 work
@@ -198,7 +206,8 @@ const KNOWN_WEAKER_THAN_MENU: readonly string[] = [
   // so a member typing `/document/all/c-documents` reads nothing they could not already read.
   'document-all',
   // privileged
-  'person-contacts', 'org-all', 'task-all',
+  // (`person-contacts` was here until 2026-09-02 — see the note below.)
+  'org-all', 'task-all',
   // memberAdmin
   'group-all', 'personal-rel-all', 'workrel-all',
   // resourceAdmin

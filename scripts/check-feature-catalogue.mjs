@@ -25,6 +25,21 @@
  * call — the script's job is to make sure the decision is made deliberately rather than by
  * whoever saves the picker next.
  *
+ * ─────────────────────────────────────────────────────────────────────────────────────
+ * A FORK IS NOT AN ERROR
+ * ─────────────────────────────────────────────────────────────────────────────────────
+ * A document with `forkedFrom` set is a tenant's deliberate copy — the fork-on-edit rule
+ * (D-BB-8) creates it the moment an admin changes a shared menu item in the CMS editor, and
+ * differing from the catalogue is the entire point of its existence. Counting those as
+ * failures made the release gate ask the same unanswerable question forever: of the first
+ * run's 13 distinct decisions, 9 were forks that will never "resolve".
+ *
+ * So the two are separated. NON-FORKED divergence is real drift and sets the exit code —
+ * the catalogue and a shared document disagree and one of them is stale. FORKED divergence
+ * is REPORTED but never fatal. It is still reported, and deliberately so: §5 of the design
+ * exists because a fork silently misses later catalogue structural fixes, and a fork that
+ * quietly diverged on a field nobody meant to customise is exactly what this list surfaces.
+ *
  * It reuses the runtime's OWN functions (`effectiveFeatures`, `indexMenuDocsByName`,
  * `findStructuralDrift`) rather than reimplementing the comparison, so the report and the
  * write can never disagree — the same argument `findStructuralDrift` itself records.
@@ -179,17 +194,24 @@ for (const { tenantId, config } of tenants) {
     specs: specs.reduce((n, s) => n + menuSpecNames([s]).length, 0),
     effective: [...live].sort(),
     profile: nearest ? { id: nearest.profile.id, ...nearest.deviation } : undefined,
-    changes,
+    // Real drift: the catalogue and a SHARED document disagree, so one of them is stale.
+    changes: changes.filter((c) => !c.forked),
+    // A tenant's own copy diverging is what a fork is for — reported, never fatal.
+    forks: changes.filter((c) => c.forked),
     blocking,
   });
 }
 
 // ── output ──────────────────────────────────────────────────────────────────────────
 const totalDrift = report.reduce((n, r) => n + r.changes.length, 0);
+const totalForks = report.reduce((n, r) => n + r.forks.length, 0);
 const totalBlocking = report.reduce((n, r) => n + r.blocking.length, 0);
+// Only non-forked divergence and unresolvable names are failures — see "A FORK IS NOT AN
+// ERROR" above. A run whose only findings are forks exits 0 and stays quiet in the gate.
+const failed = totalDrift > 0 || totalBlocking > 0;
 
 if (JSON_OUT) {
-  console.log(JSON.stringify({ totalDrift, totalBlocking, tenants: report }, null, 2));
+  console.log(JSON.stringify({ totalDrift, totalForks, totalBlocking, tenants: report }, null, 2));
 } else {
   log('\nFEATURE CATALOGUE DRIFT CHECK');
   log('═'.repeat(96));
@@ -204,17 +226,27 @@ if (JSON_OUT) {
       log(`  Profil ${r.profile.id}${gaps ? ` — ${gaps}` : ' — exakt'}`);
     }
 
-    if (r.changes.length === 0 && r.blocking.length === 0) {
+    if (r.changes.length === 0 && r.forks.length === 0 && r.blocking.length === 0) {
       log('  ✓ keine Abweichung');
     }
 
-    if (r.changes.length > 0) {
-      log(`  ${pad('NAME', 30)}${pad('FELD', 12)}LIVE → KATALOG`);
-      for (const c of r.changes) {
-        log(`  ${pad(c.name + (c.forked ? ' (fork)' : ''), 30)}${pad(c.field, 12)}` +
-          `${c.from || '∅'} → ${c.to}`);
-        if (c.docId !== c.name) log(`  ${' '.repeat(30)}doc: ${c.docId}`);
+    const rows = (list) => {
+      for (const c of list) {
+        log(`    ${pad(c.name, 28)}${pad(c.field, 12)}${c.from || '∅'} → ${c.to}`);
+        if (c.docId !== c.name) log(`    ${' '.repeat(28)}doc: ${c.docId}`);
       }
+    };
+
+    if (r.changes.length > 0) {
+      log(`  ABWEICHUNG (geteilte Dokumente — eine Seite ist veraltet)`);
+      log(`    ${pad('NAME', 28)}${pad('FELD', 12)}LIVE → KATALOG`);
+      rows(r.changes);
+    }
+
+    if (r.forks.length > 0) {
+      log(`  EIGENE KOPIEN (bewusste Abweichung — nur zur Kenntnis)`);
+      log(`    ${pad('NAME', 28)}${pad('FELD', 12)}LIVE → KATALOG`);
+      rows(r.forks);
     }
 
     for (const a of r.blocking) {
@@ -323,21 +355,38 @@ function renderDoc() {
 
   // ── drift ──
   out.push('## Abweichung zwischen Katalog und Live-Daten', '');
-  const totalChanges = report.reduce((n, r) => n + r.changes.length, 0);
-  if (totalChanges === 0) {
-    out.push('Keine. Katalog und Live-Dokumente stimmen für alle geprüften Mandanten überein.', '');
-  } else {
-    out.push(`${totalChanges} Felder weichen ab. Welche Seite richtig ist, ist eine Entscheidung:`,
-      'den Live-Wert nach `feature-blocks.ts` zurückportieren, oder im Picker «Struktur',
-      'übernehmen» laufen lassen.', '');
+  const changeRows = report.reduce((n, r) => n + r.changes.length, 0);
+  const forkRows = report.reduce((n, r) => n + r.forks.length, 0);
+  const table = (list) => {
     out.push('| Mandant | Eintrag | Feld | live | Katalog |', '|---|---|---|---|---|');
-    for (const r of report) {
-      for (const c of r.changes) {
-        out.push(`| \`${r.tenantId}\` | \`${c.name}\`${c.forked ? ' (fork)' : ''} | ` +
-          `${c.field} | \`${c.from || '∅'}\` | \`${c.to}\` |`);
-      }
+    for (const [tenantId, c] of list) {
+      out.push(`| \`${tenantId}\` | \`${c.name}\` | ${c.field} | ` +
+        `\`${c.from || '∅'}\` | \`${c.to}\` |`);
     }
     out.push('');
+  };
+
+  out.push('### Geteilte Dokumente', '');
+  if (changeRows === 0) {
+    out.push('Keine. Katalog und geteilte Live-Dokumente stimmen für alle geprüften Mandanten',
+      'überein.', '');
+  } else {
+    out.push(`${changeRows} Felder weichen ab. Eine Seite ist veraltet, und welche, ist eine`,
+      'Entscheidung: den Live-Wert nach `feature-blocks.ts` zurückportieren, oder im Picker',
+      '«Struktur übernehmen» laufen lassen. Diese Abweichungen lassen `pnpm catalogue:check`',
+      'mit einem Fehlercode enden.', '');
+    table(report.flatMap((r) => r.changes.map((c) => [r.tenantId, c])));
+  }
+
+  out.push('### Eigene Kopien (Forks)', '');
+  if (forkRows === 0) {
+    out.push('Keine.', '');
+  } else {
+    out.push(`${forkRows} Felder in mandanteneigenen Kopien weichen vom Katalog ab. Das ist der`,
+      'Zweck einer Kopie — sie ist **kein Fehler** und beendet den Check nicht mit einem',
+      'Fehlercode. Sie steht hier, weil eine Kopie spätere Struktur-Fixes aus dem Katalog nicht',
+      'mitbekommt: eine Zeile, die unabsichtlich abweicht, fällt nur hier auf.', '');
+    table(report.flatMap((r) => r.forks.map((c) => [r.tenantId, c])));
   }
 
   return out.join('\n');
@@ -350,11 +399,13 @@ if (WRITE_DOC) {
 }
 
 if (!JSON_OUT) {
-  const verdict = totalDrift === 0 && totalBlocking === 0
-    ? `✓ Katalog und Live-Daten stimmen überein (${report.length} Mandanten geprüft)`
-    : `✖ ${totalDrift} abweichende Felder, ${totalBlocking} nicht auflösbare Namen ` +
+  const forkNote = totalForks > 0 ? ` · ${totalForks} eigene Kopien (kein Fehler)` : '';
+  const verdict = failed
+    ? `✖ ${totalDrift} abweichende Felder, ${totalBlocking} nicht auflösbare Namen` +
+      `${forkNote} (${report.length} Mandanten geprüft)`
+    : `✓ Katalog und geteilte Live-Dokumente stimmen überein${forkNote} ` +
       `(${report.length} Mandanten geprüft)`;
   console.log(verdict + '\n');
 }
 
-process.exit(totalDrift === 0 && totalBlocking === 0 ? 0 : 1);
+process.exit(failed ? 1 : 0);

@@ -775,7 +775,15 @@ const subject: FeatureBlock = {
   // the menu doc to `admin`; neither is a cataloguing decision.
   menu: [
     subjectsMenuParent([
-      { key: 'person-contacts', name: 'person-contacts', url: '/person/all/c-persons', action: 'navigate', roleNeeded: 'privileged', icon: 'id-card', label: '@main.members.person-contacts' },
+      // `registered`, not `privileged` (2026-09-02). Two tenants — `elab` and `p13` — forked
+      // this row independently to loosen exactly this field, which is the signal that the
+      // default was wrong. It was also never a gate: the route
+      // (`person/:listId/:contextMenuName`, `feature-catalogue.ts`) carries only
+      // `isAuthenticatedGuard`, so any signed-in user could reach `/person/all/c-persons` by
+      // typing it — `privileged` here hid the row while granting nothing. The real PII
+      // boundary is the addresses vault and the address-directory projection (see the
+      // `privacy-model` skill), not a menu item's `roleNeeded`.
+      { key: 'person-contacts', name: 'person-contacts', url: '/person/all/c-persons', action: 'navigate', roleNeeded: 'registered', icon: 'id-card', label: '@main.members.person-contacts' },
       { key: 'org-all', name: 'org-all', url: '/org/all/c-orgs', action: 'navigate', roleNeeded: 'privileged', icon: 'company', label: '@item.org-all' },
       // `addresses`' own url points at `/address/c-address`, but `c-address` has NO live
       // `menuItems` doc anywhere (confirmed by a name-equality query, task 13 fix round 1) —
