@@ -280,7 +280,15 @@ export const onOcrResultWritten = onDocumentWritten(
     const cfg = cfgSnap.data();
     if (!cfg) {
       await resultRef.set({ status: 'failed', error: 'no accounting-config' }, { merge: true });
-      await createReviewTask(tenantId, cfg?.['reviewAssigneePersonKey'] ?? '', 'OCR: keine Buchhaltungs-Konfiguration', after);
+      if (after.ocrUsage === 'expense' && after.correlationKey) {
+        await reportExpenseOcrFailure(
+          tenantId, after.correlationKey,
+          'Die Buchhaltung ist für diesen Mandanten noch nicht konfiguriert.',
+          after.storagePath,
+        );
+      } else {
+        await createReviewTask(tenantId, cfg?.['reviewAssigneePersonKey'] ?? '', 'OCR: keine Buchhaltungs-Konfiguration', after);
+      }
       return;
     }
     if ((cfg['accountingBackend'] ?? 'native') !== 'native') {
