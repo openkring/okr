@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AvatarInfo, TaskModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { getRelatedModelType, getRelatedRoute, isTask } from './task.util';
+import { getRelatedIcon, getRelatedModelType, getRelatedRoute, isTask } from './task.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -81,6 +81,18 @@ describe('Task Utils', () => {
       expect(getRelatedRoute('person')).toBe('');           // no okey
       expect(getRelatedRoute('')).toBe('');
       expect(getRelatedRoute(undefined)).toBe('');
+    });
+  });
+
+  describe('expense back-link', () => {
+    it('routes an expense relatedKey to its detail page', () => {
+      expect(getRelatedRoute('expense.abc123')).toBe('/expense/abc123');
+    });
+    it('has an icon for an expense', () => {
+      expect(getRelatedIcon('expense.abc123')).toBe('expense');
+    });
+    it('still returns nothing for a key with no document behind it', () => {
+      expect(getRelatedRoute('report.abc123')).toBe('');
     });
   });
 });

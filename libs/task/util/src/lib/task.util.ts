@@ -51,6 +51,7 @@ const RELATED_ROUTES: Record<string, (okey: string) => string> = {
   user:    (okey) => `/user/${okey}`,
   meeting: () => '/meeting/all/meeting-context',
   trip:    () => '/trips/logbuch/c-trips',
+  expense: (okey) => `/expense/${okey}`,
 };
 
 /** The model type of a `relatedKey` ('meeting.abc' -> 'meeting'), or '' when it is not set. */
@@ -82,6 +83,7 @@ const RELATED_ICONS: Record<string, string> = {
   user:    'people',
   meeting: 'meeting',
   trip:    'track',
+  expense: 'expense',
 };
 
 /** The icon name for a task's `relatedKey`, or '' when its model type has none. */
