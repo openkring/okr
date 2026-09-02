@@ -90,7 +90,7 @@ import { ExpenseStore } from './expense.store';
           </ion-item>
           <ion-item>
             <ion-label><h3>{{ store.i18n.detail_status() }}</h3></ion-label>
-            <ion-badge slot="end">{{ expense()!.status }}</ion-badge>
+            <ion-badge slot="end">{{ statusLabel() }}</ion-badge>
           </ion-item>
           @if (expense()!.note) {
             <ion-item>
@@ -162,6 +162,26 @@ export class ExpenseDetailPage {
 
   /** Legacy documents predate `ocrError`, so Firestore returns objects without it — coalesce. */
   protected readonly ocrError = computed(() => this.expense()?.ocrError ?? '');
+
+  /**
+   * The status badge, translated. The `status.*` keys exist in all five languages; the map is
+   * needed because the union value `pending-export` is hyphenated while its key is camelCase,
+   * and because a legacy document can carry a status the union does not list — that falls back
+   * to the raw value rather than rendering an empty badge.
+   */
+  protected readonly statusLabel = computed(() => {
+    const status = this.expense()?.status ?? '';
+    const i18n = this.store.i18n;
+    const labels: Record<string, () => string> = {
+      'draft':          i18n.status_draft,
+      'processing':     i18n.status_processing,
+      'validated':      i18n.status_validated,
+      'error':          i18n.status_error,
+      'posted':         i18n.status_posted,
+      'pending-export': i18n.status_pendingExport,
+    };
+    return labels[status]?.() ?? status;
+  });
 
   protected readonly canView = computed(() => {
     const expense = this.expense();

@@ -8,12 +8,9 @@ import { ENV, STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
   BookingCollection, BookingLineCollection, BookingLineModel, BookingModel,
-  ExpenseCollection, ExpenseModel, TaskCollection, TaskModel, UserModel,
+  ExpenseCollection, ExpenseModel, TaskCollection, TaskModel,
 } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
-import { I18nService } from '@okr/shared-i18n';
-
-import { PFX } from './scope';
 
 export interface CreateExpensePayload {
   tenantId: string;
@@ -53,20 +50,10 @@ export class ExpenseService {
   private readonly env = inject(ENV);
   private readonly storage = inject(STORAGE);
   private readonly firestoreService = inject(FirestoreService);
-  private readonly i18n = inject(I18nService).translateAll({
-    create_conf:  PFX + 'create.conf',
-    create_error: PFX + 'create.error',
-    update_conf:  PFX + 'update.conf',
-    update_error: PFX + 'update.error',
-    delete_conf:  PFX + 'delete.conf',
-    delete_error: PFX + 'delete.error',
-  });
 
-  public async create(expense: ExpenseModel, currentUser?: UserModel): Promise<string | undefined> {
-    return this.firestoreService.createModel<ExpenseModel>(
-      ExpenseCollection, expense, this.i18n.create_conf(), this.i18n.create_error(), currentUser
-    );
-  }
+  // No create/update/delete through FirestoreService here on purpose: 'expenses' is
+  // `allow write: if false` in firestore.rules, so a direct client write can only fail.
+  // The three *ViaFunction methods below are the complete set of write paths.
 
   // The 'expenses' collection is CF-write-only: creation goes through the 'createExpense'
   // callable, which derives accountingTenantId server-side (= tenantId) and owns the initial
@@ -75,18 +62,6 @@ export class ExpenseService {
     const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'createExpense');
     const result = await fn(payload);
     return (result.data as { expenseKey: string }).expenseKey;
-  }
-
-  public async update(expense: ExpenseModel, currentUser?: UserModel): Promise<string | undefined> {
-    return this.firestoreService.updateModel<ExpenseModel>(
-      ExpenseCollection, expense, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser
-    );
-  }
-
-  public async delete(expense: ExpenseModel, currentUser?: UserModel): Promise<void> {
-    await this.firestoreService.deleteModel<ExpenseModel>(
-      ExpenseCollection, expense, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser
-    );
   }
 
   public read(key: string): Observable<ExpenseModel | undefined> {

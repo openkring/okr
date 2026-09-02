@@ -148,7 +148,9 @@ export class ExpenseEditForm {
     effect(() => {
       this.showForm();
       const cents = untracked(() => this.formData().amountTotal ?? 0);
-      this.amountInput.set(cents > 0 ? String(centsToCHF(cents)) : '');
+      // `.toFixed(2)` is safe HERE and only here — this runs once per form instance, so
+      // CHF 42.50 loads as '42.50' instead of '42.5' without ever reformatting mid-typing.
+      this.amountInput.set(cents > 0 ? centsToCHF(cents).toFixed(2) : '');
     });
   }
 
