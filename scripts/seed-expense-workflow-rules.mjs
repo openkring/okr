@@ -34,7 +34,7 @@ const RESPONSIBILITY_NAME = respArg >= 0 ? argv[respArg + 1] : 'Ressort Finanzen
 const TRIGGERS = [
   {
     event: 'expense.created', icon: 'expense', dueInDays: 7,
-    ruleName: 'Spese eingereicht → Kassier', i18nKey: 'expense.created',
+    ruleName: 'Spese eingereicht → Ressort Finanzen', i18nKey: 'expense.created',
     text: {
       de: 'Neue Spese von {name} über {amount} {currency}',
       en: 'New expense from {name} for {amount} {currency}',
@@ -45,7 +45,7 @@ const TRIGGERS = [
   },
   {
     event: 'expense.ocrFailed', icon: 'warning', dueInDays: 3,
-    ruleName: 'Spese OCR fehlgeschlagen → Kassier', i18nKey: 'expense.ocrFailed',
+    ruleName: 'Spese OCR fehlgeschlagen → Ressort Finanzen', i18nKey: 'expense.ocrFailed',
     text: {
       de: 'Beleg von {name} konnte nicht gelesen werden — bitte manuell erfassen',
       en: 'Receipt from {name} could not be read — please capture it manually',
@@ -56,7 +56,7 @@ const TRIGGERS = [
   },
   {
     event: 'expense.validated', icon: 'checkbox', dueInDays: 7,
-    ruleName: 'Spese verbucht → Kassier prüft', i18nKey: 'expense.validated',
+    ruleName: 'Spese verbucht → Ressort Finanzen prüft', i18nKey: 'expense.validated',
     text: {
       de: 'Spese von {name} über {amount} {currency} prüfen',
       en: 'Review expense from {name} for {amount} {currency}',
@@ -67,7 +67,7 @@ const TRIGGERS = [
   },
   {
     event: 'expense.pendingExport', icon: 'download', dueInDays: 7,
-    ruleName: 'Spese für externe Buchhaltung → Kassier', i18nKey: 'expense.pendingExport',
+    ruleName: 'Spese für externe Buchhaltung → Ressort Finanzen', i18nKey: 'expense.pendingExport',
     text: {
       de: 'Spese von {name} über {amount} {currency} extern verbuchen',
       en: 'Post expense from {name} for {amount} {currency} in the external ledger',
