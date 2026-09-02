@@ -3,6 +3,7 @@ export * from './lib/statistics.util';
 export * from './lib/srv.util';
 export * from './lib/aoc-i18n';
 export * from './lib/tenant-switcher.util';
+export * from './lib/tenant-allocation.util';
 export * from './lib/tag-string.validations';
 export * from './lib/kiosk.util';
 export * from './lib/chat-room-filter.util';
