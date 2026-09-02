@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -233,5 +233,40 @@ describe('canPostWithPower', () => {
 
   it('treats a missing own power as 0 once a requirement is known', () => {
     expect(canPostWithPower(undefined, 50)).toBe(false);
+  });
+});
+
+describe('groupRoomAliasLocalpart', () => {
+  it('passes a normalised group key through unchanged', () => {
+    expect(groupRoomAliasLocalpart('scs_notfall')).toBe('group_scs_notfall');
+  });
+
+  it('lowercases a legacy mixed-case key', () => {
+    expect(groupRoomAliasLocalpart('Trainerteam')).toBe('group_trainerteam');
+  });
+
+  it('replaces every character an alias may not carry', () => {
+    // Der Grund, warum Anzeigename und Alias zwei verschiedene Strings sind.
+    expect(groupRoomAliasLocalpart('Kandidat:innen & Instrukt.')).toBe('group_kandidat_innen___instrukt.');
+  });
+});
+
+describe('groupKeyFromRoomAlias', () => {
+  it('extracts the group key from a canonical alias', () => {
+    expect(groupKeyFromRoomAlias('#group_scs_notfall:bkchat.etke.host')).toBe('scs_notfall');
+  });
+
+  it('lowercases a legacy mixed-case alias', () => {
+    expect(groupKeyFromRoomAlias('#group_Trainerteam:bkchat.etke.host')).toBe('trainerteam');
+  });
+
+  it('returns undefined for an ask room, a DM or no alias at all', () => {
+    expect(groupKeyFromRoomAlias('#ask_notfall_kaiser:bkchat.etke.host')).toBeUndefined();
+    expect(groupKeyFromRoomAlias(undefined)).toBeUndefined();
+  });
+
+  it('round-trips with groupRoomAliasLocalpart for normalised keys', () => {
+    expect(groupKeyFromRoomAlias(`#${groupRoomAliasLocalpart('scs_kandidatinnenin')}:bkchat.etke.host`))
+      .toBe('scs_kandidatinnenin');
   });
 });

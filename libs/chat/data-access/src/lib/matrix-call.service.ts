@@ -10,6 +10,8 @@ import { ActivityService } from '@okr/activity-data-access';
 
 import { isKioskOnly } from '@okr/shared-util-core';
 
+import { groupKeyFromRoomAlias, groupRoomAliasLocalpart } from '@okr/chat-util';
+
 import { isServiceAccount } from './matrix-helpers';
 
 /**
@@ -153,9 +155,19 @@ export class MatrixCallService {
       ? `${user.firstName} ${user.lastName}`.trim()
       : 'Unbekannt';
 
+    // The group okey behind this room — the CF builds the push deep link from it. Resolved
+    // from the group list by identity (matrixRoomId, else the canonical alias), NOT from the
+    // room name: a room carries its group's display name, which is free text and no id.
+    // undefined for a DM or an unmatched room; the CF then links to the generic chat page.
+    const alias = room.getCanonicalAlias() ?? undefined;
+    const aliasKey = groupKeyFromRoomAlias(alias);
+    const roomKey = this.appStore.allGroupsAndChats().find(g =>
+      g.matrixRoomId === roomId || (!!aliasKey && groupRoomAliasLocalpart(g.okey) === `group_${aliasKey}`)
+    )?.okey;
+
     const functions = getFunctions(getApp(), 'europe-west6');
     const fn = httpsCallable(functions, 'sendCallNotification');
-    await fn({ roomId, roomName: room.name || '', callerName, calleeMatrixUserIds: calleeIds });
+    await fn({ roomId, roomName: room.name || '', roomKey: roomKey ?? '', callerName, calleeMatrixUserIds: calleeIds });
   }
 
   private setupCallListeners(call: MatrixCall): void {

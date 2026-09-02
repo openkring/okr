@@ -14,7 +14,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { convertHeicToJpeg, isSupportedImageFile, filterRoomsByName, resolveInitialRoomId, MessageDraft } from '@okr/chat-util';
+import { convertHeicToJpeg, groupRoomAliasLocalpart, isSupportedImageFile, filterRoomsByName, resolveInitialRoomId, MessageDraft } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
@@ -669,8 +669,14 @@ export class MatrixChat implements OnDestroy {
       // transient "choose a chat room" flash for returning users even when rooms are available.
       const rooms = this.store.rooms();
       const syncRooms = rooms.length > 0 ? rooms : this.store.getRoomsSync();
+      // Match by identity, never by display name: `MatrixRoom.topic` carries the canonical
+      // alias, and a group room's alias is derived from the group okey — which is exactly what
+      // `selectedRoom` holds here. The old `r.name === roomAlias` fallback only ever worked
+      // because rooms used to be NAMED by their key; they now carry the group's display name
+      // ("Kandidat:innen & Instrukt."), which no deep link will ever match.
+      const wantedAlias = `#${groupRoomAliasLocalpart(roomAlias)}`;
       const match = syncRooms.find(r => r.roomId === roomAlias)
-        ?? syncRooms.find(r => r.name?.toLowerCase() === roomAlias.toLowerCase());
+        ?? syncRooms.find(r => r.topic?.split(':')[0]?.toLowerCase() === wantedAlias);
       if (match) {
         this.resolvedRoomAlias = roomAlias;
         this.store.setCurrentRoom(match.roomId);

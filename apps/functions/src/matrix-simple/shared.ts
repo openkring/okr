@@ -505,8 +505,18 @@ export async function ensureMatrixUserExists(
  * Resolve the Matrix room for a group, in order of trust:
  *   1. `groups/{groupId}.matrixRoomId` (verified to still exist on the homeserver)
  *   2. canonical alias `#group_<sanitised-id>`
- *   3. Synapse admin name-search for a room named exactly `groupId`
+ *   3. Synapse admin name-search for a room named exactly `groupId` — legacy only: rooms are
+ *      created with the group's DISPLAY name since 2026-09, so this step finds nothing for
+ *      anything created after that. It stays for the pre-2026-09 rooms that were named by key
+ *      and never got an alias; steps 1 and 2 carry every current room.
  *   4. create a new invite-only room (only when `opts.create` is true)
+ *
+ * The room's `m.room.name` is the group's display name ("Kandidat:innen & Instrukt."), NOT the
+ * okey — the okey is a normalised key (`scs_kandidatinnenin`) and reading it in the room list,
+ * the chat title and the push notification was plainly confusing. Free text is safe here:
+ * `m.room.name` has no charset rule, unlike the alias localpart (see
+ * `groupRoomAliasLocalpart`), and ask rooms have carried names with blanks since 2026-08.
+ * Nothing may DERIVE an id from this string — the alias and `matrixRoomId` are the identity.
  *
  * On any successful resolve/create the room ID is persisted back to the group doc, so
  * every CF converges on one room and subsequent lookups are O(1). This is the durable
@@ -571,7 +581,8 @@ export async function resolveGroupRoom(
         method: 'POST',
         headers: { ...authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: groupId,
+          // Display name, not the key — see the note on this function.
+          name: (groupSnap.data()?.['name'] as string | undefined)?.trim() || groupId,
           room_alias_name: groupRoomAliasLocalpart(groupId),
           // invite-only (SEC-1): admin force-join works without a public join_rule.
           preset: 'private_chat',
@@ -640,6 +651,29 @@ export async function resolveChatRoomForPerson(
   return ask
     ? resolveAskRoom(groupId, personKey, hostname, adminToken, opts)
     : resolveGroupRoom(groupId, hostname, adminToken, opts);
+}
+
+/**
+ * Set a room's display name (`m.room.name`). Best-effort: a failure only leaves the previous
+ * name in place. Requires power in the room — call `ensureAdminInRoom` first.
+ *
+ * Free text by design (blanks, umlauts, `&`, `:`): the Matrix name field has no charset rule.
+ * Never derive an id from a room name; use the canonical alias or `matrixRoomId`.
+ */
+export async function setRoomName(roomId: string, name: string, adminToken: string): Promise<boolean> {
+  const resp = await fetch(
+    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.name`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    }
+  );
+  if (!resp.ok) {
+    console.warn(`setRoomName: failed for ${roomId} → ${resp.status}: ${await resp.text()}`);
+    return false;
+  }
+  return true;
 }
 
 /**

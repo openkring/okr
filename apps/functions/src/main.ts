@@ -12,6 +12,7 @@ import * as AccountSync from './auth/account-sync';
 import * as MatrixSimple from './matrix-simple';
 import * as MatrixMembershipSync from './matrix-simple/membership-sync';
 import * as MatrixPostPolicy from './matrix-simple/post-policy-sync';
+import * as MatrixGroupNameSync from './matrix-simple/group-name-sync';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
 import * as Vectorize from './vectorize';
@@ -124,6 +125,8 @@ export const addAdhocChatMembers = MatrixSimple.addAdhocChatMembers;
 export const onMembershipWritten = MatrixMembershipSync.onMembershipWritten;
 export const reconcileGroupRoomMembers = MatrixMembershipSync.reconcileGroupRoomMembers;
 export const onGroupPostPolicyWritten = MatrixPostPolicy.onGroupPostPolicyWritten;
+// Gruppe umbenannt → Chatraum-Anzeigename nachziehen
+export const onGroupNameWritten = MatrixGroupNameSync.onGroupNameWritten;
 export const sweepRoomPostPolicies = MatrixPostPolicy.sweepRoomPostPolicies;
 export const syncRoomPostPolicy = MatrixPostPolicy.syncRoomPostPolicy;
 // group-room drift: report room members without a membership, and prune them on demand

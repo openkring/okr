@@ -106,6 +106,30 @@ export function isBridgeGhost(localpart: string): boolean {
 }
 
 /**
+ * Canonical-alias localpart of a group room: `group_<sanitised okey>`.
+ *
+ * Mirrors `groupRoomAliasLocalpart` in `apps/functions/src/matrix-simple/shared.ts` (libs
+ * cannot be imported into the functions build — keep the two in sync). Matrix alias localparts
+ * are limited to `[a-z0-9._~-]`, which is exactly why the room's DISPLAY name and its alias are
+ * two different strings: the name may read "Kandidat:innen & Instrukt.", the alias may not.
+ */
+export function groupRoomAliasLocalpart(groupOkey: string): string {
+  return `group_${groupOkey.toLowerCase().replace(/[^a-z0-9._~-]/g, '_')}`;
+}
+
+/**
+ * The group okey a room alias points at, or undefined for a non-group alias.
+ * `#group_scs_notfall:bkchat.etke.host` → `scs_notfall`.
+ *
+ * This — never the room name — is how a room is matched back to its group. Room names are
+ * free text and carry the group's display name; only the alias is an identifier.
+ */
+export function groupKeyFromRoomAlias(alias: string | undefined): string | undefined {
+  const localpart = alias?.split(':')[0]?.replace(/^#/, '').toLowerCase();
+  return localpart?.startsWith('group_') ? localpart.slice('group_'.length) : undefined;
+}
+
+/**
  * Matrix accounts are ONE per person across all tenants (shared homeserver), so the joined-room
  * list mixes every tenant's chats. This keeps only the rooms of the tenant whose app is running.
  *
@@ -141,7 +165,7 @@ export function filterRoomsOfTenant<T extends {
   tenantId: string
 ): T[] {
   const roomIds = new Set(groups.map(g => g.matrixRoomId).filter(Boolean));
-  const aliases = new Set(groups.map(g => `#group_${g.okey.toLowerCase().replace(/[^a-z0-9._~-]/g, '_')}`));
+  const aliases = new Set(groups.map(g => `#${groupRoomAliasLocalpart(g.okey)}`));
   return rooms.filter(r => {
     if (r.tenants?.length) return r.tenants.includes(tenantId);
     // Lowercased: rooms created by an older code path kept the okey's original case

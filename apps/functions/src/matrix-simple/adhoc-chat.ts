@@ -27,6 +27,7 @@ import {
   requireProvisionedUser,
   ensureMatrixUserExists,
   resolveGroupRoom,
+  setRoomName,
   ensureAdminInRoom,
   forceJoinUserToRoom,
   requireParam,
@@ -297,21 +298,6 @@ async function setHistoryVisibility(roomId: string, visibility: 'joined' | 'invi
   );
   if (!resp.ok) {
     console.warn(`setHistoryVisibility: failed for ${roomId}: ${await resp.text()}`);
-  }
-}
-
-/** Setzt den Anzeigenamen eines Raums (m.room.name). Erfordert Power im Raum. */
-async function setRoomName(roomId: string, name: string, adminToken: string): Promise<void> {
-  const resp = await fetch(
-    `${MATRIX_HOMESERVER}/_matrix/client/v3/rooms/${encodeURIComponent(roomId)}/state/m.room.name`,
-    {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${adminToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    }
-  );
-  if (!resp.ok) {
-    console.warn(`setRoomName: failed for ${roomId}: ${await resp.text()}`);
   }
 }
 

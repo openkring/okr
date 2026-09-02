@@ -22,7 +22,7 @@ import {
  * Send an FCM push notification to all room members when a video call is started.
  * Called by the caller's client right after placing the call.
  *
- * Input: { roomId, roomName, callerName, calleeMatrixUserIds: string[] }
+ * Input: { roomId, roomName, roomKey?, callerName, calleeMatrixUserIds: string[] }
  * Each Matrix user ID has the form @personKey:homeserver.
  * The CF extracts the personKey, looks up the Firebase UID in Firestore,
  * then sends a high-priority FCM message to every registered device.
@@ -35,9 +35,11 @@ export const sendCallNotification = onCall(
     }
     checkRateLimit(request.auth.uid, 'sendCallNotification', 30);
 
-    const { roomId, roomName, callerName, calleeMatrixUserIds } = request.data as {
+    const { roomId, roomName, roomKey, callerName, calleeMatrixUserIds } = request.data as {
       roomId: string;
       roomName: string;
+      /** Group okey, derived by the client from the room's canonical alias `#group_<okey>`. */
+      roomKey?: string;
       callerName: string;
       calleeMatrixUserIds: string[];
     };
@@ -68,10 +70,18 @@ export const sendCallNotification = onCall(
     if (tokenEntries.length === 0) return { sent: 0 };
 
     // Build the deep-link URL: navigate to the chat page for this room.
-    // Convention: room name "Notfall" → page id "notfall_chat" → /private/notfall_chat
-    // ?selectedRoom passes the Matrix room ID directly so the right room is pre-selected.
-    const chatPageId = (roomName ?? '').toLowerCase().replace(/\s+/g, '_') + '_chat';
-    const chatUrl = `/private/${chatPageId}?selectedRoom=${encodeURIComponent(roomId)}`;
+    // Convention: group okey "scs_notfall" → page id "scs_notfall_chat" (see GroupStore).
+    //
+    // The okey comes from the CLIENT, read off the room's canonical alias — it must NEVER be
+    // derived from the room name again. That coupling only ever worked because rooms used to
+    // be named by their key; since rooms carry the group's display name ("Freitags 8-er",
+    // "Kandidat:innen & Instrukt."), a name-derived id would be blanks-and-colons garbage.
+    // Without a key (older client, or a room that is not a group room) fall back to the
+    // tenant's generic chat page — ?selectedRoom carries the Matrix room ID either way, so
+    // the right room is pre-selected regardless of which page opens.
+    const chatUrl = roomKey
+      ? `/private/${roomKey}_chat?selectedRoom=${encodeURIComponent(roomId)}`
+      : `/private/chat?selectedRoom=${encodeURIComponent(roomId)}`;
 
     const tokens = tokenEntries.map(e => e.token);
     // Data-only message (no notification field): ensures the service worker's
