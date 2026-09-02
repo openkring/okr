@@ -22,7 +22,7 @@ Collection name: `menuItems`
 | `label` | string | i18n key displayed to the user in the menu (may contain `@VERSION@` placeholder) |
 | `icon` | string | Ion-icon name shown next to the label (default: `help-circle`) |
 | `action` | string | The action type (see Actions below) |
-| `url` | string | Target URL for `navigate` and `browse` actions, or route for `call` |
+| `url` | string | Target URL for `navigate` and `browse` actions, or route for `call` (a `browse` url may contain `@REPO_URL@`) |
 | `data` | BaseProperty[] | Optional URL / route parameters passed alongside the URL |
 | `menuItems` | string[] | Child menu item names for `sub`, `main`, and `context` action types |
 | `roleNeeded` | RoleName | Minimum role required to see this item (default: `contentAdmin`) |
@@ -99,17 +99,21 @@ hoisting the list, → 1 expected after dropping `menuResource`.
 
 `n:<name> a:<action> k:<okey>`
 
-## Dynamic Label Tokens
+## Dynamic Tokens
 
-A menu item's `label` may contain dynamic tokens that are expanded at render time by
-`expandMenuTokens(label, ctx)` (`@okr/cms-menu-util`, see `menu-tokens.ts`). The token registry
-is the single source of truth:
+A menu item's `label` — and, for a `browse` item, its `url` — may contain dynamic tokens that are
+expanded at render/select time by `expandMenuTokens(text, ctx)` (`@okr/cms-menu-util`, see
+`menu-tokens.ts`). The token registry is the single source of truth:
 
-| Token | Expands to | Context field |
-|---|---|---|
-| `@VERSION@` | `v` + current app version (e.g. `v4.2.0`) | `version` |
+| Token | Expands to | Context field | Used in |
+|---|---|---|---|
+| `@VERSION@` | `v` + current app version (e.g. `v4.2.0`) | `version` | `label` |
+| `@REPO_URL@` | `https://github.com/<gitOrg>/<gitRepo>` from `app-config`, no trailing slash | `repoUrl` | `url` |
 
-Expansion runs in `MenuStore.translatedMenuLabel` before the i18n-scope check, so a token-bearing
-label is never treated as a translation key. Adding a token is a one-file change in `menu-tokens.ts`
+Label expansion runs in `MenuStore.translatedMenuLabel` before the i18n-scope check, so a
+token-bearing label is never treated as a translation key. Url expansion runs in
+`MenuStore.selectMenuItem`'s `browse` branch via `resolveMenuUrl`, so the repository lives in
+`app-config` only — the shared `version` item (`Release @VERSION@` → `@REPO_URL@/commits/main/`)
+survives a repository rename without a data edit. Adding a token is a one-file change in `menu-tokens.ts`
 (add a `MenuTokenContext` field if the resolver needs new data, plus a `MENU_TOKENS` entry) and is
 covered by `menu-tokens.spec.ts`.

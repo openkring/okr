@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { expandMenuTokens, resolveMenuLabelKey } from './menu-tokens';
+import { expandMenuTokens, getRepoUrl, resolveMenuLabelKey, resolveMenuUrl } from './menu-tokens';
 
 const ctx = { version: '4.2.0' };
 
@@ -42,5 +42,35 @@ describe('resolveMenuLabelKey', () => {
 
   it('returns a plain label unchanged', () => {
     expect(resolveMenuLabelKey('Home', ctx)).toBe('Home');
+  });
+});
+
+describe('getRepoUrl', () => {
+  it('builds the github base url from org and repo', () => {
+    expect(getRepoUrl('openkring', 'okr')).toBe('https://github.com/openkring/okr');
+  });
+
+  it('returns an empty string when a coordinate is missing', () => {
+    // app-config defaults both to '' — a half-formed 'https://github.com//' must never be opened
+    expect(getRepoUrl('', 'okr')).toBe('');
+    expect(getRepoUrl('openkring', '')).toBe('');
+    expect(getRepoUrl(undefined, undefined)).toBe('');
+  });
+});
+
+describe('resolveMenuUrl', () => {
+  const urlCtx = { version: '4.2.0', repoUrl: 'https://github.com/openkring/okr' };
+
+  it('expands @REPO_URL@ into the commits url of the configured repository', () => {
+    expect(resolveMenuUrl('@REPO_URL@/commits/main/', urlCtx))
+      .toBe('https://github.com/openkring/okr/commits/main/');
+  });
+
+  it('leaves a token-free url unchanged', () => {
+    expect(resolveMenuUrl('https://example.com/x', urlCtx)).toBe('https://example.com/x');
+  });
+
+  it('expands @REPO_URL@ to an empty string when no repo is configured', () => {
+    expect(resolveMenuUrl('@REPO_URL@/commits/main/', { version: '4.2.0' })).toBe('/commits/main/');
   });
 });

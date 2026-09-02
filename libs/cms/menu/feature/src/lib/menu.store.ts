@@ -14,7 +14,7 @@ import { die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-u
 import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
-import { MENU_I18N_KEYS, resolveMenuLabelKey } from '@okr/cms-menu-util';
+import { getRepoUrl, MENU_I18N_KEYS, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
 
 import { MenuItemsStore } from './menu-items.store';
 
@@ -345,9 +345,17 @@ export const _MenuStore = signalStore(
 
       async selectMenuItem(router: Router, menuItem: MenuItemModel): Promise<void> {
         switch (menuItem.action) {
-          case 'browse':
-            await Browser.open({ url: menuItem.url, windowName: getTarget(menuItem) });
+          case 'browse': {
+            // The url may carry a dynamic token (e.g. '@REPO_URL@/commits/main/') so the menu
+            // document does not hardcode data that already lives in app-config.
+            const config = store.appStore.appConfig();
+            const url = resolveMenuUrl(menuItem.url, {
+              version: store.versionService.getCurrentVersion(),
+              repoUrl: getRepoUrl(config.gitOrg, config.gitRepo),
+            });
+            await Browser.open({ url, windowName: getTarget(menuItem) });
             break;
+          }
           case 'navigate':
             await navigateByUrl(router, menuItem.url, menuItem.data);
             break;
