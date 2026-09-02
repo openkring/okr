@@ -657,7 +657,13 @@ const finance: BlockRoutes = {
     {
       path: 'expense',
       canActivate: [isAuthenticatedGuard],
-      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/finance-expense-feature').then(m => m.ExpenseList) }],
+      children: [
+        { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/finance-expense-feature').then(m => m.ExpenseList) },
+        // The deep-link target of a workflow task (spec 2026-09-02 §3.4): a task for an expense
+        // carries `relatedKey: 'expense.<okey>'`, which RELATED_ROUTES maps to `/expense/<okey>`.
+        // Two segments above, one here — they cannot collide; listed after the list route anyway.
+        { path: ':expenseKey', loadComponent: () => import('@okr/finance-expense-feature').then(m => m.ExpenseDetailPage) },
+      ],
     },
     {
       // A member's OWN invoices. The whole `accounting/:accountingTenantId` subtree below is
