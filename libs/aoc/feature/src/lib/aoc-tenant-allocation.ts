@@ -4,7 +4,7 @@ import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header, ResultLog } from '@okr/shared-ui';
-import { AvatarInfo } from '@okr/shared-models';
+import { AllocationDirection, AvatarInfo } from '@okr/shared-models';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { AllocationTile } from '@okr/aoc-util';
 
@@ -69,7 +69,7 @@ import { AocTenantAllocationStore } from './aoc-tenant-allocation.store';
                 <ion-col size="12" size-md="6">
                   <ion-label>{{ store.i18n.allocation_column_current() }}</ion-label>
                   <div class="tenant-column" cdkDropList [cdkDropListData]="'current'"
-                       (cdkDropListDropped)="onDrop($event, 'revoke')">
+                       (cdkDropListDropped)="onDrop($event)">
                     @for (tile of store.lists().current; track tile.tenantId) {
                       <div class="tile" cdkDrag [cdkDragData]="tile" [cdkDragDisabled]="!tile.draggable">
                         <span>{{ tile.label }}</span>
@@ -91,7 +91,7 @@ import { AocTenantAllocationStore } from './aoc-tenant-allocation.store';
                 <ion-col size="12" size-md="6">
                   <ion-label>{{ store.i18n.allocation_column_available() }}</ion-label>
                   <div class="tenant-column" cdkDropList [cdkDropListData]="'available'"
-                       (cdkDropListDropped)="onDrop($event, 'grant')">
+                       (cdkDropListDropped)="onDrop($event)">
                     @for (tile of store.lists().available; track tile.tenantId) {
                       <div class="tile" cdkDrag [cdkDragData]="tile">
                         <ion-button fill="clear" size="small" [attr.aria-label]="store.i18n.allocation_grant_title() + ': ' + tile.label"
@@ -142,9 +142,16 @@ export class AocTenantAllocation {
     } as AvatarInfo;
   });
 
-  /** A drop into the OPPOSITE column is a move; a drop into its own column is a no-op. */
-  protected async onDrop(event: CdkDragDrop<string>, direction: 'grant' | 'revoke'): Promise<void> {
+  /**
+   * A drop into the OPPOSITE column is a move; a drop into its own column is a no-op.
+   *
+   * `cdkDropListDropped` fires on the DESTINATION list, not the source — so the direction must
+   * be derived from where the tile CAME FROM, never hard-coded per list. Out of the available
+   * column means granting; out of the current column means revoking.
+   */
+  protected async onDrop(event: CdkDragDrop<string>): Promise<void> {
     if (event.previousContainer === event.container) return;
+    const direction: AllocationDirection = event.previousContainer.data === 'available' ? 'grant' : 'revoke';
     const tile = event.item.data as AllocationTile;
     await this.store.move(tile, direction);
   }
