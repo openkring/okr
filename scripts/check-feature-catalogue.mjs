@@ -7,21 +7,21 @@
  * The catalogue's 245 menu specs were transcribed from live `menuItems` documents and are
  * kept in sync BY HAND. Nothing enforced that: no test, no build step, no release gate.
  * Every correction made in Firestore that was not back-ported into the catalogue sat there
- * as a pending revert, waiting for the next «Struktur übernehmen» to overwrite it — with no
+ * as a pending revert, waiting for the next «Katalog-Werte übernehmen» to overwrite it — with no
  * warning at the moment of the edit and no trace afterwards. Commit 170fe4617 ("sync
  * membership-copyemail's role with the live doc") is that back-port done manually; ba74a8f5e,
  * a6d07bd4c and 487e1fea9 are three more.
  *
  * This script closes the loop: it reports every live document whose catalogue-owned fields
- * (`url`, `action`, `roleNeeded`) differ from the spec, per tenant, and exits non-zero when
- * any exist.
+ * (`url`, `action`, `roleNeeded`) differ from the spec, per tenant, and exits non-zero for the
+ * ones that are genuinely a problem — see "A FORK IS NOT AN ERROR" below.
  *
  * ─────────────────────────────────────────────────────────────────────────────────────
  * WHAT IT DOES NOT DO
  * ─────────────────────────────────────────────────────────────────────────────────────
  * It never writes. Drift is not automatically an error in either direction: sometimes the
  * catalogue is stale (back-port the live value into `feature-blocks.ts`), sometimes the live
- * document is (run «Struktur übernehmen» in `/tenant/features`). Deciding which is a human
+ * document is (run «Katalog-Werte übernehmen» in `/tenant/features`). Deciding which is a human
  * call — the script's job is to make sure the decision is made deliberately rather than by
  * whoever saves the picker next.
  *
@@ -373,7 +373,7 @@ function renderDoc() {
   } else {
     out.push(`${changeRows} Felder weichen ab. Eine Seite ist veraltet, und welche, ist eine`,
       'Entscheidung: den Live-Wert nach `feature-blocks.ts` zurückportieren, oder im Picker',
-      '«Struktur übernehmen» laufen lassen. Diese Abweichungen lassen `pnpm catalogue:check`',
+      '«Katalog-Werte übernehmen» laufen lassen. Diese Abweichungen lassen `pnpm catalogue:check`',
       'mit einem Fehlercode enden.', '');
     table(report.flatMap((r) => r.changes.map((c) => [r.tenantId, c])));
   }

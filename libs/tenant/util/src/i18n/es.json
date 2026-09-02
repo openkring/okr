@@ -139,15 +139,15 @@
     "withheld_toast": "No aplicado: {{blocks}}",
     "applied_toast": "Guardado: {{count}} bloques activos.",
     "drift_title": "Difiere del catálogo",
-    "drift_note": "Estas entradas de menú difieren del catálogo: destino, acción o rol necesario. Tú decides qué lado tiene razón: «Adoptar la estructura» escribe el valor del catálogo, «Conservar el valor actual» copia una nota con la que se puede actualizar el catálogo. La etiqueta, el icono y el orden no cambian en ninguno de los dos casos.",
-    "drift_apply": "Adoptar la estructura",
+    "drift_note": "En estas entradas de menú el valor vigente hoy difiere del que prevé el catálogo. Los dos botones de arriba se aplican a todas las entradas de la lista: «Adoptar los valores del catálogo» escribe en todas partes el valor del catálogo. «Conservar los valores actuales» no cambia nada y copia una nota con la que se puede alinear el catálogo con los valores actuales. La etiqueta, el icono y el orden no cambian en ninguno de los dos casos.",
+    "drift_apply": "Adoptar los valores del catálogo",
     "drift_forked": "copia propia",
     "drift_edited": "editado directamente",
-    "drift_confirm": "Las siguientes entradas de menú se sobrescribirán con los valores del catálogo:\n\n{{entries}}\n\nSe conservan la etiqueta, el icono y el orden. ¿Continuar?",
+    "drift_confirm": "En estas entradas de menú el valor actual se sustituye por el del catálogo:\n\n{{entries}}\n\nLa etiqueta, el icono y el orden se mantienen. ¿Continuar?",
     "menu_impact_confirm": "Este guardado modifica el menú principal:\n\n{{changes}}\n\n¿Continuar?",
     "menu_impact_removed": "Estas filas desaparecen: {{keys}}",
     "menu_impact_readded": "Estas filas se añaden al final de la lista: {{keys}}",
-    "drift_keep_live": "Conservar el valor actual",
+    "drift_keep_live": "Conservar los valores actuales",
     "drift_keep_live_copied": "Nota copiada. Pásala para que se actualice el catálogo: aquí no ha cambiado nada.",
     "preview_confirm": "Este guardado va a:\n\n{{changes}}\n\n¿Continuar?",
     "preview_created": "Crear estas entradas de menú: {{keys}}",
@@ -155,7 +155,9 @@
     "preview_seeded": "Crear {{count}} documentos iniciales",
     "profiles_title": "Aplicar un perfil",
     "profile_confirm": "«{{profile}}» establece la selección en {{count}} bloques. Todavía no se guarda nada: puedes ajustarlo después y al final tienes que guardar. ¿Continuar?",
-    "profile_applied": "Selección establecida en «{{profile}}». Aún sin guardar."
+    "profile_applied": "Selección establecida en «{{profile}}». Aún sin guardar.",
+    "drift_col_live": "hoy",
+    "drift_col_catalogue": "catálogo"
   },
   "profile": {
     "minimal": {

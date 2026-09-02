@@ -139,15 +139,15 @@
     "withheld_toast": "Nicht übernommen: {{blocks}}",
     "applied_toast": "Gespeichert: {{count}} Bausteine aktiv.",
     "drift_title": "Abweichung vom Katalog",
-    "drift_note": "Diese Menüeinträge weichen vom Katalog ab — bei Ziel, Aktion oder benötigter Rolle. Welche Seite richtig ist, entscheidest du: «Struktur übernehmen» setzt den Katalogwert, «Live-Wert behalten» kopiert eine Notiz, mit der der Katalog nachgezogen werden kann. Bezeichnung, Symbol und Reihenfolge bleiben in beiden Fällen unverändert.",
-    "drift_apply": "Struktur übernehmen",
+    "drift_note": "Bei diesen Menüeinträgen unterscheidet sich der Wert, der heute gilt, von dem, den der Katalog vorsieht. Die beiden Schaltflächen oben gelten für alle Einträge dieser Liste: «Katalog-Werte übernehmen» schreibt überall den Katalog-Wert. «Live-Werte behalten» ändert nichts und kopiert eine Notiz, mit der der Katalog an die heutigen Werte angepasst werden kann. Bezeichnung, Symbol und Reihenfolge bleiben in beiden Fällen unverändert.",
+    "drift_apply": "Katalog-Werte übernehmen",
     "drift_forked": "eigene Kopie",
     "drift_edited": "direkt bearbeitet",
-    "drift_confirm": "Folgende Menüeinträge werden mit den Werten aus dem Katalog überschrieben:\n\n{{entries}}\n\nBezeichnung, Symbol und Reihenfolge bleiben erhalten. Fortfahren?",
+    "drift_confirm": "Bei folgenden Menüeinträgen wird der heutige Wert durch den Katalog-Wert ersetzt:\n\n{{entries}}\n\nBezeichnung, Symbol und Reihenfolge bleiben erhalten. Fortfahren?",
     "menu_impact_confirm": "Dieser Speichervorgang verändert das Hauptmenü:\n\n{{changes}}\n\nFortfahren?",
     "menu_impact_removed": "Diese Zeilen verschwinden: {{keys}}",
     "menu_impact_readded": "Diese Zeilen kommen am Ende der Liste dazu: {{keys}}",
-    "drift_keep_live": "Live-Wert behalten",
+    "drift_keep_live": "Live-Werte behalten",
     "drift_keep_live_copied": "Notiz kopiert. Gib sie weiter, damit der Katalog nachgezogen wird — hier ändert sich nichts.",
     "preview_confirm": "Dieser Speichervorgang bewirkt:\n\n{{changes}}\n\nFortfahren?",
     "preview_created": "Diese Menüeinträge werden neu angelegt: {{keys}}",
@@ -155,7 +155,9 @@
     "preview_seeded": "{{count}} Startdokumente werden angelegt",
     "profiles_title": "Profil anwenden",
     "profile_confirm": "«{{profile}}» setzt die Auswahl auf {{count}} Bausteine. Das wird noch nicht gespeichert — du kannst danach nachjustieren und musst am Schluss speichern. Fortfahren?",
-    "profile_applied": "Auswahl auf «{{profile}}» gesetzt. Noch nicht gespeichert."
+    "profile_applied": "Auswahl auf «{{profile}}» gesetzt. Noch nicht gespeichert.",
+    "drift_col_live": "heute",
+    "drift_col_catalogue": "Katalog"
   },
   "profile": {
     "minimal": {

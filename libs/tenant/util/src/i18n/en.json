@@ -139,15 +139,15 @@
     "withheld_toast": "Not applied: {{blocks}}",
     "applied_toast": "Saved: {{count}} blocks active.",
     "drift_title": "Differs from the catalogue",
-    "drift_note": "These menu entries differ from the catalogue — in target, action or required role. You decide which side is right: \"Adopt structure\" writes the catalogue value, \"Keep live value\" copies a note you can use to bring the catalogue up to date. Label, icon and order stay untouched either way.",
-    "drift_apply": "Adopt structure",
+    "drift_note": "For these menu entries the value in use today differs from the one the catalogue specifies. Both buttons above apply to every entry in this list: \"Adopt catalogue values\" writes the catalogue value everywhere. \"Keep live values\" changes nothing and copies a note you can use to bring the catalogue in line with today's values. Label, icon and order stay untouched either way.",
+    "drift_apply": "Adopt catalogue values",
     "drift_forked": "own copy",
     "drift_edited": "edited directly",
-    "drift_confirm": "The following menu entries will be overwritten with the catalogue's values:\n\n{{entries}}\n\nLabel, icon and order are preserved. Continue?",
+    "drift_confirm": "For these menu entries today's value is replaced by the catalogue value:\n\n{{entries}}\n\nLabel, icon and order are kept. Continue?",
     "menu_impact_confirm": "This save changes the main menu:\n\n{{changes}}\n\nContinue?",
     "menu_impact_removed": "These rows disappear: {{keys}}",
     "menu_impact_readded": "These rows are appended at the end of the list: {{keys}}",
-    "drift_keep_live": "Keep live value",
+    "drift_keep_live": "Keep live values",
     "drift_keep_live_copied": "Note copied. Pass it on so the catalogue gets updated — nothing changed here.",
     "preview_confirm": "This save will:\n\n{{changes}}\n\nContinue?",
     "preview_created": "Create these menu entries: {{keys}}",
@@ -155,7 +155,9 @@
     "preview_seeded": "Create {{count}} starter documents",
     "profiles_title": "Apply a profile",
     "profile_confirm": "\"{{profile}}\" sets the selection to {{count}} blocks. Nothing is saved yet — you can adjust afterwards and still have to save. Continue?",
-    "profile_applied": "Selection set to \"{{profile}}\". Not saved yet."
+    "profile_applied": "Selection set to \"{{profile}}\". Not saved yet.",
+    "drift_col_live": "today",
+    "drift_col_catalogue": "catalogue"
   },
   "profile": {
     "minimal": {

@@ -139,15 +139,15 @@
     "withheld_toast": "Non appliqué : {{blocks}}",
     "applied_toast": "Enregistré : {{count}} blocs actifs.",
     "drift_title": "Diffère du catalogue",
-    "drift_note": "Ces entrées de menu diffèrent du catalogue — cible, action ou rôle requis. C'est toi qui décides quel côté a raison : « Adopter la structure » écrit la valeur du catalogue, « Conserver la valeur actuelle » copie une note permettant de mettre le catalogue à jour. Le libellé, l'icône et l'ordre restent inchangés dans les deux cas.",
-    "drift_apply": "Adopter la structure",
+    "drift_note": "Pour ces entrées de menu, la valeur en vigueur aujourd'hui diffère de celle prévue par le catalogue. Les deux boutons ci-dessus s'appliquent à toutes les entrées de la liste : « Adopter les valeurs du catalogue » écrit partout la valeur du catalogue. « Conserver les valeurs actuelles » ne change rien et copie une note permettant d'aligner le catalogue sur les valeurs actuelles. Le libellé, l'icône et l'ordre restent inchangés dans les deux cas.",
+    "drift_apply": "Adopter les valeurs du catalogue",
     "drift_forked": "copie propre",
     "drift_edited": "modifié directement",
-    "drift_confirm": "Les entrées de menu suivantes seront écrasées par les valeurs du catalogue :\n\n{{entries}}\n\nLe libellé, l'icône et l'ordre sont conservés. Continuer ?",
+    "drift_confirm": "Pour ces entrées de menu, la valeur actuelle est remplacée par celle du catalogue :\n\n{{entries}}\n\nLe libellé, l'icône et l'ordre sont conservés. Continuer ?",
     "menu_impact_confirm": "Cet enregistrement modifie le menu principal :\n\n{{changes}}\n\nContinuer ?",
     "menu_impact_removed": "Ces lignes disparaissent : {{keys}}",
     "menu_impact_readded": "Ces lignes sont ajoutées à la fin de la liste : {{keys}}",
-    "drift_keep_live": "Conserver la valeur actuelle",
+    "drift_keep_live": "Conserver les valeurs actuelles",
     "drift_keep_live_copied": "Note copiée. Transmets-la pour que le catalogue soit mis à jour — rien n'a changé ici.",
     "preview_confirm": "Cet enregistrement va :\n\n{{changes}}\n\nContinuer ?",
     "preview_created": "Créer ces entrées de menu : {{keys}}",
@@ -155,7 +155,9 @@
     "preview_seeded": "Créer {{count}} documents de départ",
     "profiles_title": "Appliquer un profil",
     "profile_confirm": "« {{profile}} » définit la sélection sur {{count}} briques. Rien n'est encore enregistré — tu peux ajuster ensuite et devras enregistrer à la fin. Continuer ?",
-    "profile_applied": "Sélection définie sur « {{profile}} ». Pas encore enregistré."
+    "profile_applied": "Sélection définie sur « {{profile}} ». Pas encore enregistré.",
+    "drift_col_live": "aujourd'hui",
+    "drift_col_catalogue": "catalogue"
   },
   "profile": {
     "minimal": {

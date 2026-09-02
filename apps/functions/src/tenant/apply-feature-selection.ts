@@ -311,7 +311,7 @@ export interface ApplySelectionOptions {
    * Defaults to `true`, which is this primitive's historical contract ("apply the full
    * catalogue"). The POLICY lives one level up, in `createApplyFeatureSelection`: the
    * callable passes `false` unless the caller explicitly asks, so an ordinary picker save
-   * can only ever create and extend documents, and only «Struktur übernehmen» replays the
+   * can only ever create and extend documents, and only «Katalog-Werte übernehmen» replays the
    * catalogue over live values. See `planMenuOps`' doc comment for the failure this splits
    * apart.
    */
@@ -567,7 +567,7 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
       // `url`/`action`/`roleNeeded` on documents that already exist: a save replays every
       // spec of every enabled block (225 documents for `okr`), so a hand-tuned permission on
       // a menu row unrelated to the block just ticked used to vanish with no warning and no
-      // trace. Only «Struktur übernehmen» — which confirms the exact fields first — asks for
+      // trace. Only «Katalog-Werte übernehmen» — which confirms the exact fields first — asks for
       // the replay. A missing or non-boolean field therefore means "extend only".
       const replayStructure = request.data?.replayStructure === true;
       // Same strict-`true` rule, opposite purpose: `dryRun` plans everything and writes

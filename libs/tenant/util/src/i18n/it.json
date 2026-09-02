@@ -139,15 +139,15 @@
     "withheld_toast": "Non applicato: {{blocks}}",
     "applied_toast": "Salvato: {{count}} blocchi attivi.",
     "drift_title": "Diverge dal catalogo",
-    "drift_note": "Queste voci di menu divergono dal catalogo: destinazione, azione o ruolo richiesto. Sei tu a decidere quale lato ha ragione: «Adotta la struttura» scrive il valore del catalogo, «Mantieni il valore attuale» copia una nota con cui aggiornare il catalogo. Etichetta, icona e ordine restano invariati in entrambi i casi.",
-    "drift_apply": "Adotta la struttura",
+    "drift_note": "In queste voci di menu il valore in vigore oggi differisce da quello previsto dal catalogo. I due pulsanti in alto valgono per tutte le voci dell'elenco: «Adotta i valori del catalogo» scrive ovunque il valore del catalogo. «Mantieni i valori attuali» non cambia nulla e copia una nota con cui allineare il catalogo ai valori attuali. Etichetta, icona e ordine restano invariati in entrambi i casi.",
+    "drift_apply": "Adotta i valori del catalogo",
     "drift_forked": "copia propria",
     "drift_edited": "modificato direttamente",
-    "drift_confirm": "Le seguenti voci di menu verranno sovrascritte con i valori del catalogo:\n\n{{entries}}\n\nEtichetta, icona e ordine vengono mantenuti. Continuare?",
+    "drift_confirm": "In queste voci di menu il valore attuale viene sostituito da quello del catalogo:\n\n{{entries}}\n\nEtichetta, icona e ordine vengono mantenuti. Continuare?",
     "menu_impact_confirm": "Questo salvataggio modifica il menu principale:\n\n{{changes}}\n\nContinuare?",
     "menu_impact_removed": "Queste righe scompaiono: {{keys}}",
     "menu_impact_readded": "Queste righe vengono aggiunte alla fine dell'elenco: {{keys}}",
-    "drift_keep_live": "Mantieni il valore attuale",
+    "drift_keep_live": "Mantieni i valori attuali",
     "drift_keep_live_copied": "Nota copiata. Passala avanti così il catalogo viene aggiornato: qui non è cambiato nulla.",
     "preview_confirm": "Questo salvataggio comporta:\n\n{{changes}}\n\nContinuare?",
     "preview_created": "Creare queste voci di menu: {{keys}}",
@@ -155,7 +155,9 @@
     "preview_seeded": "Creare {{count}} documenti iniziali",
     "profiles_title": "Applica un profilo",
     "profile_confirm": "«{{profile}}» imposta la selezione su {{count}} blocchi. Non viene ancora salvato nulla: puoi correggere dopo e alla fine devi salvare. Continuare?",
-    "profile_applied": "Selezione impostata su «{{profile}}». Non ancora salvata."
+    "profile_applied": "Selezione impostata su «{{profile}}». Non ancora salvata.",
+    "drift_col_live": "oggi",
+    "drift_col_catalogue": "catalogo"
   },
   "profile": {
     "minimal": {

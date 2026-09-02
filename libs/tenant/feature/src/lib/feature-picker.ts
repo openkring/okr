@@ -99,7 +99,10 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
                 <ion-label class="ion-text-wrap">
                   {{ row.name }}
                   <p class="drift-direction">
-                    {{ row.field }}: {{ row.live || '—' }} &rarr; {{ row.catalogue }}
+                    {{ row.field }} —
+                    {{ i18n.drift_col_live() }}: <strong>{{ row.live || '—' }}</strong>
+                    &nbsp;·&nbsp;
+                    {{ i18n.drift_col_catalogue() }}: <strong>{{ row.catalogue }}</strong>
                   </p>
                 </ion-label>
                 <ion-note slot="end">
@@ -202,7 +205,7 @@ export class FeaturePicker {
    * The blocks that are LIVE for this tenant right now — not `selection()`, which may hold
    * unsaved ticks. Mirrors `FeatureStore.effective()` on the picker's own inputs rather than
    * injecting that store, so the drift warning describes the deployed state and the
-   * «Struktur übernehmen» button can never enable or disable anything as a side effect.
+   * «Katalog-Werte übernehmen» button can never enable or disable anything as a side effect.
    */
   private readonly liveBlocks = computed(() => effectiveFeatures({
     catalogue: this.catalogue,
@@ -434,12 +437,13 @@ export class FeaturePicker {
    * overwrites is recorded as a `menu-structure` entry in `featureEvents`.
    */
   protected async onApplyStructure(): Promise<void> {
-    // The button's own label promises only "fix structure", and the drift list above it names
-    // the affected entries — but not WHICH fields get overwritten, and the write used to fire
-    // with no confirmation at all. `drift()` already carries the exact catalogue values
-    // `planMenuOps` would write (`MenuStructureDrift.fields`), so spell them out.
-    const entries = this.drift()
-      .map(entry => `• ${entry.name} — ${Object.keys(entry.fields).join(', ')}`)
+    // Name both sides, in the same shape as the list above it. Listing only the affected
+    // FIELD names (the pre-2026-09 text) left the reader to guess which value replaces which —
+    // the same ambiguity the bare `→` in the list had.
+    const entries = this.driftRows()
+      .map(row => `• ${row.name} — ${row.field}: ` +
+        `${this.i18n.drift_col_live()} ${row.live || '—'} → ` +
+        `${this.i18n.drift_col_catalogue()} ${row.catalogue}`)
       .join('\n');
     const confirmText = await this.translateOrFallback(
       FEATURE_PICKER_I18N_KEYS.drift_confirm, { entries }, entries);
@@ -511,7 +515,7 @@ export class FeaturePicker {
         FEATURE_PICKER_I18N_KEYS.preview_seeded,
         { count: preview.seeded.length }, String(preview.seeded.length)));
     }
-    // Only reachable from «Struktur übernehmen»'s own path in practice — an ordinary save
+    // Only reachable from «Katalog-Werte übernehmen»'s own path in practice — an ordinary save
     // cannot overwrite anything (D-BB-7b) — but reported here too rather than assumed away.
     if (preview.overwritten.length > 0) {
       const entries = preview.overwritten
@@ -530,7 +534,7 @@ export class FeaturePicker {
   /**
    * The other exit from a drift entry — proposal 5.
    *
-   * «Struktur übernehmen» answers "the catalogue is right". This answers "the LIVE value is
+   * «Katalog-Werte übernehmen» answers "the catalogue is right". This answers "the LIVE value is
    * right", which is at least as common: commits 170fe4617, ba74a8f5e, a6d07bd4c and 487e1fea9
    * all back-ported a live value INTO `feature-blocks.ts`. Until now the screen offered no way
    * to say that, and the only button on it did the opposite.
@@ -549,7 +553,7 @@ export class FeaturePicker {
       '',
       ...rows.map(row =>
         `menuItems/${row.docId} (${row.name})\n` +
-        `  ${row.field}: Katalog '${row.catalogue}' -> Live '${row.live}'`),
+        `  ${row.field}: Katalog '${row.catalogue}' -> heute gilt '${row.live}'`),
     ].join('\n');
 
     await copyToClipboard(note);

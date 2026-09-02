@@ -314,7 +314,7 @@ export function findStructuralDrift(
  * way: a document this run brings into existence has no prior value to lose.
  *
  * The write path (`applySelection` ← `applyFeatureSelection`) passes `false` for an
- * ordinary save and `true` only for «Struktur übernehmen», so replaying the catalogue is a
+ * ordinary save and `true` only for «Katalog-Werte übernehmen», so replaying the catalogue is a
  * deliberate, separately-confirmed act rather than a side effect of ticking a checkbox.
  * The default stays `true` here because this function's own contract — and
  * `findStructuralDrift`, its read-only twin — is "what would a full seed do".

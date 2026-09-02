@@ -41,6 +41,10 @@ export const FEATURE_PICKER_I18N_KEYS = {
   drift_edited: PFX + 'picker.drift_edited',
   /** Proposal 5 — the other exit from a drift entry: the LIVE value is the right one. */
   drift_keep_live: PFX + 'picker.drift_keep_live',
+  /** Column captions on a drift row. Without them a bare `a → b` does not say which side is
+   *  which, nor which button writes which — the first thing a reader asked about. */
+  drift_col_live: PFX + 'picker.drift_col_live',
+  drift_col_catalogue: PFX + 'picker.drift_col_catalogue',
   drift_keep_live_copied: PFX + 'picker.drift_keep_live_copied',
   // Guards that name what a write will actually change. Resolved through
   // `translateOnce(key, params)`, so these use Transloco's own `{{...}}` interpolation —
