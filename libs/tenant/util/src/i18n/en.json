@@ -152,6 +152,23 @@
     "preview_confirm": "This save will:\n\n{{changes}}\n\nContinue?",
     "preview_created": "Create these menu entries: {{keys}}",
     "preview_extended": "Make {{count}} existing menu entries available to this tenant",
-    "preview_seeded": "Create {{count}} starter documents"
+    "preview_seeded": "Create {{count}} starter documents",
+    "profiles_title": "Apply a profile",
+    "profile_confirm": "\"{{profile}}\" sets the selection to {{count}} blocks. Nothing is saved yet — you can adjust afterwards and still have to save. Continue?",
+    "profile_applied": "Selection set to \"{{profile}}\". Not saved yet."
+  },
+  "profile": {
+    "minimal": {
+      "label": "Small",
+      "description": "People, events, documents, tasks, chat and administration."
+    },
+    "vereinsbetrieb": {
+      "label": "Club",
+      "description": "Plus memberships, resources, forms, meetings and activities."
+    },
+    "voll": {
+      "label": "Everything",
+      "description": "Plus finances, templates, signatures, logbook, mobility, instruments and short links."
+    }
   }
 }

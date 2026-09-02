@@ -152,6 +152,23 @@
     "preview_confirm": "Este guardado va a:\n\n{{changes}}\n\n¿Continuar?",
     "preview_created": "Crear estas entradas de menú: {{keys}}",
     "preview_extended": "Habilitar {{count}} entradas de menú existentes para este cliente",
-    "preview_seeded": "Crear {{count}} documentos iniciales"
+    "preview_seeded": "Crear {{count}} documentos iniciales",
+    "profiles_title": "Aplicar un perfil",
+    "profile_confirm": "«{{profile}}» establece la selección en {{count}} bloques. Todavía no se guarda nada: puedes ajustarlo después y al final tienes que guardar. ¿Continuar?",
+    "profile_applied": "Selección establecida en «{{profile}}». Aún sin guardar."
+  },
+  "profile": {
+    "minimal": {
+      "label": "Pequeño",
+      "description": "Personas, eventos, documentos, tareas, chat y administración."
+    },
+    "vereinsbetrieb": {
+      "label": "Asociación",
+      "description": "Además membresías, recursos, formularios, reuniones y actividades."
+    },
+    "voll": {
+      "label": "Todo",
+      "description": "Además finanzas, plantillas, firmas, cuaderno de bitácora, movilidad, instrumentos y enlaces cortos."
+    }
   }
 }

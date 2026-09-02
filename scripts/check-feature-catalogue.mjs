@@ -29,12 +29,26 @@
  * `findStructuralDrift`) rather than reimplementing the comparison, so the report and the
  * write can never disagree — the same argument `findStructuralDrift` itself records.
  *
+ * ─────────────────────────────────────────────────────────────────────────────────────
+ * IT ALSO GENERATES THE REFERENCE DOC (--write-doc)
+ * ─────────────────────────────────────────────────────────────────────────────────────
+ * 245 menu specs across 35 blocks is past the size where anyone reads the source to answer
+ * "what does this catalogue actually apply". `--write-doc` renders the whole thing —
+ * bundles, blocks, the dependency graph, the per-tenant matrix, the profiles and the current
+ * drift — into `planning/reference/feature-matrix.md`. Generated, never hand-edited, for the
+ * reason `DATA_MODEL.md` keeps proving: a hand-maintained snapshot of 245 rows is a snapshot
+ * of whatever was true the last time somebody remembered.
+ *
+ * Note what the two views are: the sitemap `graph` page shows the LIVE menu tree, this shows
+ * the catalogue's INTENDED structure, and the difference between them is the drift report.
+ *
  * Usage:
  *   node scripts/check-feature-catalogue.mjs                 # all tenants, exit 1 on drift
  *   node scripts/check-feature-catalogue.mjs --tenant=scs    # one tenant
  *   node scripts/check-feature-catalogue.mjs --json          # machine-readable
  *   node scripts/check-feature-catalogue.mjs --quiet         # summary line only
- *   pnpm catalogue:check
+ *   node scripts/check-feature-catalogue.mjs --write-doc     # + regenerate the reference doc
+ *   pnpm catalogue:check / pnpm catalogue:doc
  *
  * Requires: gcloud auth application-default login (or GOOGLE_APPLICATION_CREDENTIALS).
  */
@@ -42,6 +56,7 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { createJiti } from 'jiti';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,10 +68,12 @@ const ROOT = path.resolve(HERE, '..');
 // same way `backfill-enabled-features.mjs` does, so this check can never drift from a
 // hand-copied duplicate of the very logic it is checking.
 const jiti = createJiti(import.meta.url, { interopDefault: true });
-const { FEATURE_BLOCKS } = await jiti.import(path.join(ROOT, 'libs/tenant/util/src/lib/feature-blocks.ts'));
+const { FEATURE_BLOCKS, FEATURE_BUNDLES } = await jiti.import(path.join(ROOT, 'libs/tenant/util/src/lib/feature-blocks.ts'));
 const { effectiveFeatures } = await jiti.import(path.join(ROOT, 'libs/tenant/util/src/lib/feature-rollout.util.ts'));
 const { indexMenuDocsByName, findStructuralDrift, menuSpecNames } =
   await jiti.import(path.join(ROOT, 'libs/tenant/util/src/lib/menu-seed.util.ts'));
+const { FEATURE_PROFILES, closestProfile } =
+  await jiti.import(path.join(ROOT, 'libs/tenant/util/src/lib/feature-profiles.ts'));
 
 const ARGS = process.argv.slice(2);
 const has = (flag) => ARGS.includes(flag);
@@ -68,6 +85,8 @@ const valueOf = (name) => {
 const TENANT = valueOf('tenant');
 const JSON_OUT = has('--json');
 const QUIET = has('--quiet');
+const WRITE_DOC = has('--write-doc') || valueOf('write-doc') !== undefined;
+const DOC_PATH = path.join(ROOT, valueOf('write-doc') ?? 'planning/reference/feature-matrix.md');
 
 const APP_CONFIG = 'app-config';
 const MENU_ITEMS = 'menuItems';
@@ -152,10 +171,14 @@ for (const { tenantId, config } of tenants) {
     }
   }
 
+  const nearest = closestProfile(FEATURE_BLOCKS, FEATURE_PROFILES, live);
+
   report.push({
     tenantId,
     blocks: blocks.length,
     specs: specs.reduce((n, s) => n + menuSpecNames([s]).length, 0),
+    effective: [...live].sort(),
+    profile: nearest ? { id: nearest.profile.id, ...nearest.deviation } : undefined,
     changes,
     blocking,
   });
@@ -173,6 +196,13 @@ if (JSON_OUT) {
 
   for (const r of report) {
     log(`\n${r.tenantId}  —  ${r.blocks} aktive Blöcke, ${r.specs} Menü-Specs`);
+    if (r.profile) {
+      const gaps = [
+        r.profile.missing.length > 0 ? `fehlt: ${r.profile.missing.join(', ')}` : '',
+        r.profile.extra.length > 0 ? `zusätzlich: ${r.profile.extra.join(', ')}` : '',
+      ].filter(Boolean).join(' · ');
+      log(`  Profil ${r.profile.id}${gaps ? ` — ${gaps}` : ' — exakt'}`);
+    }
 
     if (r.changes.length === 0 && r.blocking.length === 0) {
       log('  ✓ keine Abweichung');
@@ -194,6 +224,129 @@ if (JSON_OUT) {
   }
 
   log('\n' + '═'.repeat(96));
+}
+
+// ── the reference doc (proposal 7) ──────────────────────────────────────────────────
+/**
+ * Renders the catalogue's INTENDED structure plus the live per-tenant picture. Regenerated,
+ * never hand-edited — the header says so, because a generated file that looks editable gets
+ * edited, and the edit is lost on the next run without anyone noticing.
+ */
+function renderDoc() {
+  const today = new Date().toISOString().slice(0, 10);
+  const byId = new Map(FEATURE_BLOCKS.map((b) => [b.id, b]));
+  const specCount = (b) => menuSpecNames(b.menu).length;
+  const total = FEATURE_BLOCKS.reduce((n, b) => n + specCount(b), 0);
+  const tenantIds = report.map((r) => r.tenantId);
+  const out = [];
+
+  out.push('# Feature-Katalog — Struktur, Abhängigkeiten und Mandanten-Matrix', '');
+  out.push('> **GENERIERT — nicht von Hand bearbeiten.**',
+    `> Erzeugt am ${today} mit \`pnpm catalogue:doc\` aus \`libs/tenant/util/src/lib/feature-blocks.ts\``,
+    '> und den Live-Daten in `app-config` / `feature-rollout` / `menuItems`.',
+    '> Jede Änderung hier wird beim nächsten Lauf überschrieben; ändere den Katalog.', '');
+  out.push(`${FEATURE_BLOCKS.length} Bausteine in ${FEATURE_BUNDLES.length} Bündeln, ` +
+    `${total} Menü-Specs, ${FEATURE_BLOCKS.filter((b) => b.core).length} davon core (immer aktiv). ` +
+    `${report.length} Mandanten mit Konfigurations-Dokument.`, '');
+  out.push('Der Sitemap-`graph` im Admin zeigt den **Live**-Menübaum; dieses Dokument zeigt die',
+    '**Soll**-Struktur des Katalogs. Die Differenz ist der Drift-Report am Ende.', '');
+
+  // ── profiles ──
+  out.push('## Profile', '');
+  out.push('Benannte Baustein-Auswahlen (`libs/tenant/util/src/lib/feature-profiles.ts`), streng',
+    'geschachtelt. Ein Profil ist ein Vorschlag, keine Vorgabe — der Picker setzt damit nur die',
+    'Häkchen, gespeichert wird weiterhin über die normalen Bestätigungen.', '');
+  out.push('| Profil | Bausteine | Inhalt |', '|---|---:|---|');
+  for (const p of FEATURE_PROFILES) {
+    out.push(`| \`${p.id}\` | ${p.blocks.length} | ${p.blocks.map((b) => `\`${b}\``).join(', ')} |`);
+  }
+  out.push('');
+  out.push('### Abstand der Mandanten vom nächstgelegenen Profil', '');
+  out.push('| Mandant | nächstes Profil | fehlt | zusätzlich |', '|---|---|---|---|');
+  for (const r of report) {
+    const p = r.profile;
+    out.push(`| \`${r.tenantId}\` | ${p ? `\`${p.id}\`` : '—'} | ` +
+      `${p && p.missing.length ? p.missing.map((b) => `\`${b}\``).join(', ') : '—'} | ` +
+      `${p && p.extra.length ? p.extra.map((b) => `\`${b}\``).join(', ') : '—'} |`);
+  }
+  out.push('');
+
+  // ── matrix ──
+  out.push('## Features je Mandant', '');
+  out.push('`x` = aktiviert, `C` = core (immer an, unabhängig von `enabledFeatures`), `·` = aus.',
+    'Abgeleitet mit `effectiveFeatures` — also Katalog ∩ Rollout ∩ `enabledFeatures`, nicht die',
+    'rohe Liste im Dokument.', '');
+  out.push(`| Baustein | Bündel | Verfügbarkeit | ${tenantIds.join(' | ')} |`,
+    `|---|---|---|${tenantIds.map(() => '---|').join('')}`);
+  for (const bundle of FEATURE_BUNDLES) {
+    for (const b of FEATURE_BLOCKS.filter((x) => x.bundle === bundle.id)) {
+      const cells = report.map((r) =>
+        b.core ? 'C' : (r.effective.includes(b.id) ? 'x' : '·'));
+      out.push(`| \`${b.id}\` | ${b.bundle} | ${b.defaultAvailability}` +
+        `${b.core ? ' · core' : ''} | ${cells.join(' | ')} |`);
+    }
+  }
+  out.push(`| **aktive Bausteine** | | | ${report.map((r) => `**${r.blocks}**`).join(' | ')} |`);
+  out.push(`| **Menü-Specs** | | | ${report.map((r) => `**${r.specs}**`).join(' | ')} |`, '');
+
+  // ── blocks ──
+  out.push('## Bausteine', '');
+  out.push('| Baustein | Bündel | hängt ab von | Menü-Specs | Collections |', '|---|---|---|---:|---|');
+  for (const bundle of FEATURE_BUNDLES) {
+    for (const b of FEATURE_BLOCKS.filter((x) => x.bundle === bundle.id)) {
+      out.push(`| \`${b.id}\` | ${b.bundle} | ` +
+        `${b.dependsOn.length ? b.dependsOn.map((d) => `\`${d}\``).join(', ') : '—'} | ` +
+        `${specCount(b)} | ${b.collections.length ? b.collections.join(', ') : '—'} |`);
+    }
+  }
+  out.push('');
+
+  // ── dependency graph ──
+  out.push('## Abhängigkeiten', '');
+  out.push('Ein Baustein zieht seine `dependsOn` mit — `resolveWithDeps` aktiviert sie beim',
+    'Speichern still mit. Bausteine ohne Kanten sind weggelassen.', '');
+  out.push('```mermaid', 'graph LR');
+  const linked = new Set();
+  const edges = [];
+  for (const b of FEATURE_BLOCKS) {
+    for (const dep of b.dependsOn) {
+      if (!byId.has(dep)) continue;
+      edges.push(`  ${b.id.replace(/-/g, '_')} --> ${dep.replace(/-/g, '_')}`);
+      linked.add(b.id); linked.add(dep);
+    }
+  }
+  for (const id of [...linked].sort()) {
+    out.push(`  ${id.replace(/-/g, '_')}["${id}"]`);
+  }
+  out.push(...edges);
+  out.push('```', '');
+
+  // ── drift ──
+  out.push('## Abweichung zwischen Katalog und Live-Daten', '');
+  const totalChanges = report.reduce((n, r) => n + r.changes.length, 0);
+  if (totalChanges === 0) {
+    out.push('Keine. Katalog und Live-Dokumente stimmen für alle geprüften Mandanten überein.', '');
+  } else {
+    out.push(`${totalChanges} Felder weichen ab. Welche Seite richtig ist, ist eine Entscheidung:`,
+      'den Live-Wert nach `feature-blocks.ts` zurückportieren, oder im Picker «Struktur',
+      'übernehmen» laufen lassen.', '');
+    out.push('| Mandant | Eintrag | Feld | live | Katalog |', '|---|---|---|---|---|');
+    for (const r of report) {
+      for (const c of r.changes) {
+        out.push(`| \`${r.tenantId}\` | \`${c.name}\`${c.forked ? ' (fork)' : ''} | ` +
+          `${c.field} | \`${c.from || '∅'}\` | \`${c.to}\` |`);
+      }
+    }
+    out.push('');
+  }
+
+  return out.join('\n');
+}
+
+if (WRITE_DOC) {
+  mkdirSync(path.dirname(DOC_PATH), { recursive: true });
+  writeFileSync(DOC_PATH, renderDoc());
+  if (!JSON_OUT) console.log(`\nGeschrieben: ${path.relative(ROOT, DOC_PATH)}`);
 }
 
 if (!JSON_OUT) {

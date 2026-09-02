@@ -4,6 +4,7 @@ export * from './lib/feature-backfill.util';
 export * from './lib/feature-blocks';
 export * from './lib/feature-deps.util';
 export * from './lib/feature-picker-i18n';
+export * from './lib/feature-profiles';
 export * from './lib/feature-rollout.util';
 export * from './lib/feature-routes.util';
 export * from './lib/menu-ownership.util';

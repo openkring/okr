@@ -152,6 +152,23 @@
     "preview_confirm": "Questo salvataggio comporta:\n\n{{changes}}\n\nContinuare?",
     "preview_created": "Creare queste voci di menu: {{keys}}",
     "preview_extended": "Rendere disponibili {{count}} voci di menu esistenti per questo cliente",
-    "preview_seeded": "Creare {{count}} documenti iniziali"
+    "preview_seeded": "Creare {{count}} documenti iniziali",
+    "profiles_title": "Applica un profilo",
+    "profile_confirm": "«{{profile}}» imposta la selezione su {{count}} blocchi. Non viene ancora salvato nulla: puoi correggere dopo e alla fine devi salvare. Continuare?",
+    "profile_applied": "Selezione impostata su «{{profile}}». Non ancora salvata."
+  },
+  "profile": {
+    "minimal": {
+      "label": "Piccolo",
+      "description": "Persone, appuntamenti, documenti, compiti, chat e amministrazione."
+    },
+    "vereinsbetrieb": {
+      "label": "Associazione",
+      "description": "In più tessere, risorse, moduli, riunioni e attività."
+    },
+    "voll": {
+      "label": "Tutto",
+      "description": "In più finanze, modelli, firme, diario di bordo, mobilità, strumenti e link brevi."
+    }
   }
 }

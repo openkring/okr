@@ -12,11 +12,13 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
 import type { FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
-  FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, effectiveFeatures,
+  FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
   findStructuralDrift, indexMenuDocsByName, isEmptyPlan, planRootMenuOp, resolveAvailability,
   resolveWithDeps, rootNavKeys,
 } from '@okr/tenant-util';
-import type { ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, MenuStructureDrift } from '@okr/tenant-util';
+import type {
+  ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, FeatureProfile, MenuStructureDrift,
+} from '@okr/tenant-util';
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
 
@@ -107,6 +109,21 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
             }
           </ion-item-group>
         }
+        <ion-item-group>
+          <ion-item-divider>
+            <ion-icon slot="start" src="{{ 'category' | svgIcon }}" />
+            <ion-label>{{ i18n.profiles_title() }}</ion-label>
+          </ion-item-divider>
+          @for (profile of profiles; track profile.id) {
+            <ion-item button [detail]="false" [disabled]="isSaving()" (click)="onApplyProfile(profile)">
+              <ion-icon slot="start" src="{{ profile.icon | svgIcon }}" />
+              <ion-label class="ion-text-wrap">
+                {{ profileLabels[profile.id]?.() || profile.id }}
+                <p>{{ profileDescriptions[profile.id]?.() || '' }}</p>
+              </ion-label>
+            </ion-item>
+          }
+        </ion-item-group>
         @for (group of bundleGroups; track group.bundle.id) {
           @if (group.blocks.length > 0) {
             <ion-item-group>
@@ -151,6 +168,7 @@ export class FeaturePicker {
 
   protected readonly catalogue: FeatureBlock[] = FEATURE_BLOCKS;
   protected readonly bundles = FEATURE_BUNDLES;
+  protected readonly profiles = FEATURE_PROFILES;
 
   protected readonly i18n = this.i18nService.translateAll(FEATURE_PICKER_I18N_KEYS);
 
@@ -170,6 +188,10 @@ export class FeaturePicker {
       .map(block => [block.id, block.remarks as string])));
   protected readonly bundleLabels = this.i18nService.translateAll(
     Object.fromEntries(this.bundles.map(bundle => [bundle.id, bundle.label])));
+  protected readonly profileLabels = this.i18nService.translateAll(
+    Object.fromEntries(this.profiles.map(profile => [profile.id, profile.label])));
+  protected readonly profileDescriptions = this.i18nService.translateAll(
+    Object.fromEntries(this.profiles.map(profile => [profile.id, profile.description])));
 
   private readonly rollouts = toSignal(this.rolloutService.list(), { initialValue: [] as FeatureRolloutModel[] });
   private readonly tenantId = computed(() => this.appStore.tenantId());
@@ -322,6 +344,33 @@ export class FeaturePicker {
     if (await this.alertService.confirm(message, true)) return; // uncheck stands
 
     this.selection.set(new Set([...this.selection(), ...toRemove]));
+  }
+
+  /**
+   * Tick the checkboxes a named profile asks for — proposal 6.
+   *
+   * It deliberately does NOT save. A profile is a starting point, and the admin still goes
+   * through every gate that protects a real save (`blocksRemovedBySave`, the dry-run preview).
+   * A one-click "apply and write" would be the most dangerous button on this screen: profiles
+   * are nested, so `minimal` on a tenant running `voll` would strip eleven blocks' menu rows —
+   * exactly the `enabledFeatures` failure this component was built to prevent.
+   *
+   * `resolveWithDeps` closes over dependencies, so what lands in `selection` is the same set a
+   * save would compute, not a subset that silently grows on submit. Core blocks need no special
+   * handling — `isChecked` reports them checked regardless.
+   */
+  protected async onApplyProfile(profile: FeatureProfile): Promise<void> {
+    const next = new Set(resolveWithDeps(this.catalogue, profile.blocks));
+    const name = this.profileLabels[profile.id]?.() || profile.id;
+
+    const message = await this.translateOrFallback(
+      FEATURE_PICKER_I18N_KEYS.profile_confirm,
+      { profile: name, count: next.size }, `${name} (${next.size})`);
+    if (!await this.alertService.confirm(message, true)) return;
+
+    this.selection.set(next);
+    await this.alertService.showToast(await this.translateOrFallback(
+      FEATURE_PICKER_I18N_KEYS.profile_applied, { profile: name }, name));
   }
 
   protected async onSave(): Promise<void> {

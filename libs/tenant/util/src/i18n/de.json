@@ -152,6 +152,23 @@
     "preview_confirm": "Dieser Speichervorgang bewirkt:\n\n{{changes}}\n\nFortfahren?",
     "preview_created": "Diese Menüeinträge werden neu angelegt: {{keys}}",
     "preview_extended": "{{count}} bestehende Menüeinträge werden für diesen Mandanten freigeschaltet",
-    "preview_seeded": "{{count}} Startdokumente werden angelegt"
+    "preview_seeded": "{{count}} Startdokumente werden angelegt",
+    "profiles_title": "Profil anwenden",
+    "profile_confirm": "«{{profile}}» setzt die Auswahl auf {{count}} Bausteine. Das wird noch nicht gespeichert — du kannst danach nachjustieren und musst am Schluss speichern. Fortfahren?",
+    "profile_applied": "Auswahl auf «{{profile}}» gesetzt. Noch nicht gespeichert."
+  },
+  "profile": {
+    "minimal": {
+      "label": "Klein",
+      "description": "Personen, Termine, Dokumente, Aufgaben, Chat und die Verwaltung."
+    },
+    "vereinsbetrieb": {
+      "label": "Vereinsbetrieb",
+      "description": "Dazu Mitgliedschaften, Ressourcen, Formulare, Sitzungen und Aktivitäten."
+    },
+    "voll": {
+      "label": "Alles",
+      "description": "Dazu Finanzen, Vorlagen, Unterschriften, Logbuch, Mobilität, Instrumente und Kurzlinks."
+    }
   }
 }

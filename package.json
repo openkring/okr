@@ -17,6 +17,7 @@
     "attribution": "node scripts/gen-attribution.mjs",
     "attribution:check": "node scripts/gen-attribution.mjs --check",
     "catalogue:check": "node scripts/check-feature-catalogue.mjs",
+    "catalogue:doc": "node scripts/check-feature-catalogue.mjs --write-doc",
     "lib-refs": "node scripts/gen-lib-references.mjs",
     "lib-refs:write": "node scripts/gen-lib-references.mjs --write",
     "e2e": "nx e2e",

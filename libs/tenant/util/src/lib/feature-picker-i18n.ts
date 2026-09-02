@@ -22,6 +22,12 @@ const PFX = '@tenant/util.';
  */
 export const FEATURE_PICKER_I18N_KEYS = {
   title: PFX + 'picker.title',
+  // Proposal 6 — named block selections. The per-profile `label`/`description` keys are NOT
+  // listed here: like block and bundle labels they are resolved dynamically per catalogue
+  // entry (see `FeaturePicker`), because the profile list is data, not a fixed key set.
+  profiles_title: PFX + 'picker.profiles_title',
+  profile_confirm: PFX + 'picker.profile_confirm',
+  profile_applied: PFX + 'picker.profile_applied',
   core_note: PFX + 'picker.core_note',
   unavailable_reason_fallback: PFX + 'picker.unavailable_reason_fallback',
   dependents_confirm: PFX + 'picker.dependents_confirm',

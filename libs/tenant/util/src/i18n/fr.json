@@ -152,6 +152,23 @@
     "preview_confirm": "Cet enregistrement va :\n\n{{changes}}\n\nContinuer ?",
     "preview_created": "Créer ces entrées de menu : {{keys}}",
     "preview_extended": "Rendre {{count}} entrées de menu existantes disponibles pour ce client",
-    "preview_seeded": "Créer {{count}} documents de départ"
+    "preview_seeded": "Créer {{count}} documents de départ",
+    "profiles_title": "Appliquer un profil",
+    "profile_confirm": "« {{profile}} » définit la sélection sur {{count}} briques. Rien n'est encore enregistré — tu peux ajuster ensuite et devras enregistrer à la fin. Continuer ?",
+    "profile_applied": "Sélection définie sur « {{profile}} ». Pas encore enregistré."
+  },
+  "profile": {
+    "minimal": {
+      "label": "Petit",
+      "description": "Personnes, événements, documents, tâches, chat et administration."
+    },
+    "vereinsbetrieb": {
+      "label": "Association",
+      "description": "Plus les adhésions, les ressources, les formulaires, les séances et les activités."
+    },
+    "voll": {
+      "label": "Tout",
+      "description": "Plus les finances, les modèles, les signatures, le carnet de bord, la mobilité, les instruments et les liens courts."
+    }
   }
 }
