@@ -3,6 +3,7 @@ export * from './lib/address-index.util';
 export * from './lib/address-projection.util';
 export * from './lib/address-replication.util';
 export * from './lib/booking-review.util';
+export * from './lib/expense-status.util';
 export * from './lib/general.util';
 export * from './lib/search.util';
 export * from './lib/membership.util';
