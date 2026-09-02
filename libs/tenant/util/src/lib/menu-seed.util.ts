@@ -237,6 +237,17 @@ export interface MenuStructureDrift {
   forked: boolean;
   /** The catalogue values that would be written — exactly `planMenuOps`' `update-structure` fields. */
   fields: Partial<MenuItemModel>;
+  /**
+   * What the LIVE document carries today, for exactly the keys of `fields`.
+   *
+   * Drift is a DIFFERENCE, not a verdict, and which half is stale is a human call: a catalogue
+   * fix that has not reached this tenant looks identical to a hand-tuned value the catalogue
+   * has not caught up with. Reporting only the catalogue side (the pre-2026-09 shape) forced
+   * every consumer to look the live value up again — and let the picker present "veraltet" as
+   * if the live document were always the wrong one. Both values travel together so a caller
+   * can show the direction and let the reader decide.
+   */
+  live: Partial<MenuItemModel>;
 }
 
 /**
@@ -265,6 +276,9 @@ export function findStructuralDrift(
           docId: doc.okey,
           forked: (doc.forkedFrom ?? '').length > 0,
           fields,
+          live: Object.fromEntries(
+            Object.keys(fields).map(field => [field, doc[field as keyof MenuItemModel] ?? '']),
+          ) as Partial<MenuItemModel>,
         });
       }
     }

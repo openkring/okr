@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 
+import type { ApplyPlanPreview } from '@okr/tenant-util';
+
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -8,6 +10,8 @@ export interface ApplyFeatureSelectionResponse {
   enabled: string[];
   withheld: { id: string; reason: string }[];
   applied: string[];
+  /** What the call did — or, with `dryRun`, what it would have done and did not. */
+  preview: ApplyPlanPreview;
 }
 
 /**
@@ -27,6 +31,12 @@ export class FeatureSelectionService {
    * is a critical, user-initiated write; the caller (feature layer) decides how to
    * surface a failure (mirrors `PersonService.mergeIntoTenant`, which does the same).
    *
+   * `dryRun` plans the whole run server-side and writes nothing, returning the same
+   * `preview` a real call returns. Use it to show an admin what a save will do before it
+   * happens: the server reads `menuItems` UNSCOPED, so it is the only place that can tell a
+   * document this tenant would newly inherit from one that must be created — a tenant-scoped
+   * client query cannot, and would predict the wrong operation.
+   *
    * `replayStructure` is OPT-IN and belongs to «Struktur übernehmen» alone. Leaving it out
    * — what an ordinary save does — means the callable may create and extend menu documents
    * but never overwrite the `url`/`action`/`roleNeeded` of one that already exists. Passing
@@ -36,13 +46,17 @@ export class FeatureSelectionService {
   public async apply(
     tenantId: string,
     blockIds: string[],
-    options: { replayStructure?: boolean } = {},
+    options: { replayStructure?: boolean; dryRun?: boolean } = {},
   ): Promise<ApplyFeatureSelectionResponse> {
     const fn = httpsCallable<
-      { tenantId: string; blockIds: string[]; replayStructure: boolean },
+      { tenantId: string; blockIds: string[]; replayStructure: boolean; dryRun: boolean },
       ApplyFeatureSelectionResponse
     >(this.functions, 'applyFeatureSelection');
-    const result = await fn({ tenantId, blockIds, replayStructure: options.replayStructure === true });
+    const result = await fn({
+      tenantId, blockIds,
+      replayStructure: options.replayStructure === true,
+      dryRun: options.dryRun === true,
+    });
     return result.data;
   }
 }

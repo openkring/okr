@@ -138,14 +138,20 @@
     "removal_confirm": "Il salvataggio rimuoverà le voci di menu dei seguenti blocchi: {{blocks}}. Continuare?",
     "withheld_toast": "Non applicato: {{blocks}}",
     "applied_toast": "Salvato: {{count}} blocchi attivi.",
-    "drift_title": "Struttura non aggiornata",
-    "drift_note": "Le voci di menu adattate per questo cliente non seguono più la struttura del catalogo (destinazione, azione o ruolo richiesto). Etichetta, icona e ordine restano invariati.",
+    "drift_title": "Diverge dal catalogo",
+    "drift_note": "Queste voci di menu divergono dal catalogo: destinazione, azione o ruolo richiesto. Sei tu a decidere quale lato ha ragione: «Adotta la struttura» scrive il valore del catalogo, «Mantieni il valore attuale» copia una nota con cui aggiornare il catalogo. Etichetta, icona e ordine restano invariati in entrambi i casi.",
     "drift_apply": "Adotta la struttura",
     "drift_forked": "copia propria",
     "drift_edited": "modificato direttamente",
     "drift_confirm": "Le seguenti voci di menu verranno sovrascritte con i valori del catalogo:\n\n{{entries}}\n\nEtichetta, icona e ordine vengono mantenuti. Continuare?",
     "menu_impact_confirm": "Questo salvataggio modifica il menu principale:\n\n{{changes}}\n\nContinuare?",
     "menu_impact_removed": "Queste righe scompaiono: {{keys}}",
-    "menu_impact_readded": "Queste righe vengono aggiunte alla fine dell'elenco: {{keys}}"
+    "menu_impact_readded": "Queste righe vengono aggiunte alla fine dell'elenco: {{keys}}",
+    "drift_keep_live": "Mantieni il valore attuale",
+    "drift_keep_live_copied": "Nota copiata. Passala avanti così il catalogo viene aggiornato: qui non è cambiato nulla.",
+    "preview_confirm": "Questo salvataggio comporta:\n\n{{changes}}\n\nContinuare?",
+    "preview_created": "Creare queste voci di menu: {{keys}}",
+    "preview_extended": "Rendere disponibili {{count}} voci di menu esistenti per questo cliente",
+    "preview_seeded": "Creare {{count}} documenti iniziali"
   }
 }

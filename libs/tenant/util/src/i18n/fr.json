@@ -138,14 +138,20 @@
     "removal_confirm": "L'enregistrement supprimera les entrées de menu des blocs suivants : {{blocks}}. Continuer ?",
     "withheld_toast": "Non appliqué : {{blocks}}",
     "applied_toast": "Enregistré : {{count}} blocs actifs.",
-    "drift_title": "Structure obsolète",
-    "drift_note": "Les entrées de menu adaptées pour ce client ne suivent plus la structure du catalogue (cible, action ou rôle requis). Le libellé, l'icône et l'ordre restent inchangés.",
+    "drift_title": "Diffère du catalogue",
+    "drift_note": "Ces entrées de menu diffèrent du catalogue — cible, action ou rôle requis. C'est toi qui décides quel côté a raison : « Adopter la structure » écrit la valeur du catalogue, « Conserver la valeur actuelle » copie une note permettant de mettre le catalogue à jour. Le libellé, l'icône et l'ordre restent inchangés dans les deux cas.",
     "drift_apply": "Adopter la structure",
     "drift_forked": "copie propre",
     "drift_edited": "modifié directement",
     "drift_confirm": "Les entrées de menu suivantes seront écrasées par les valeurs du catalogue :\n\n{{entries}}\n\nLe libellé, l'icône et l'ordre sont conservés. Continuer ?",
     "menu_impact_confirm": "Cet enregistrement modifie le menu principal :\n\n{{changes}}\n\nContinuer ?",
     "menu_impact_removed": "Ces lignes disparaissent : {{keys}}",
-    "menu_impact_readded": "Ces lignes sont ajoutées à la fin de la liste : {{keys}}"
+    "menu_impact_readded": "Ces lignes sont ajoutées à la fin de la liste : {{keys}}",
+    "drift_keep_live": "Conserver la valeur actuelle",
+    "drift_keep_live_copied": "Note copiée. Transmets-la pour que le catalogue soit mis à jour — rien n'a changé ici.",
+    "preview_confirm": "Cet enregistrement va :\n\n{{changes}}\n\nContinuer ?",
+    "preview_created": "Créer ces entrées de menu : {{keys}}",
+    "preview_extended": "Rendre {{count}} entrées de menu existantes disponibles pour ce client",
+    "preview_seeded": "Créer {{count}} documents de départ"
   }
 }

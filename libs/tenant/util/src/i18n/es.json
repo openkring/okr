@@ -138,14 +138,20 @@
     "removal_confirm": "Al guardar se eliminarán las entradas de menú de los siguientes bloques: {{blocks}}. ¿Continuar?",
     "withheld_toast": "No aplicado: {{blocks}}",
     "applied_toast": "Guardado: {{count}} bloques activos.",
-    "drift_title": "Estructura desactualizada",
-    "drift_note": "Las entradas de menú adaptadas para este cliente ya no siguen la estructura del catálogo (destino, acción o rol necesario). La etiqueta, el icono y el orden no cambian.",
+    "drift_title": "Difiere del catálogo",
+    "drift_note": "Estas entradas de menú difieren del catálogo: destino, acción o rol necesario. Tú decides qué lado tiene razón: «Adoptar la estructura» escribe el valor del catálogo, «Conservar el valor actual» copia una nota con la que se puede actualizar el catálogo. La etiqueta, el icono y el orden no cambian en ninguno de los dos casos.",
     "drift_apply": "Adoptar la estructura",
     "drift_forked": "copia propia",
     "drift_edited": "editado directamente",
     "drift_confirm": "Las siguientes entradas de menú se sobrescribirán con los valores del catálogo:\n\n{{entries}}\n\nSe conservan la etiqueta, el icono y el orden. ¿Continuar?",
     "menu_impact_confirm": "Este guardado modifica el menú principal:\n\n{{changes}}\n\n¿Continuar?",
     "menu_impact_removed": "Estas filas desaparecen: {{keys}}",
-    "menu_impact_readded": "Estas filas se añaden al final de la lista: {{keys}}"
+    "menu_impact_readded": "Estas filas se añaden al final de la lista: {{keys}}",
+    "drift_keep_live": "Conservar el valor actual",
+    "drift_keep_live_copied": "Nota copiada. Pásala para que se actualice el catálogo: aquí no ha cambiado nada.",
+    "preview_confirm": "Este guardado va a:\n\n{{changes}}\n\n¿Continuar?",
+    "preview_created": "Crear estas entradas de menú: {{keys}}",
+    "preview_extended": "Habilitar {{count}} entradas de menú existentes para este cliente",
+    "preview_seeded": "Crear {{count}} documentos iniciales"
   }
 }

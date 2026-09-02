@@ -9,14 +9,14 @@ import {
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AlertService } from '@okr/shared-util-angular';
+import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
 import type { FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, effectiveFeatures,
-  findStructuralDrift, indexMenuDocsByName, planRootMenuOp, resolveAvailability, resolveWithDeps,
-  rootNavKeys,
+  findStructuralDrift, indexMenuDocsByName, isEmptyPlan, planRootMenuOp, resolveAvailability,
+  resolveWithDeps, rootNavKeys,
 } from '@okr/tenant-util';
-import type { AvailabilityVerdict, FeatureBlock, MenuStructureDrift } from '@okr/tenant-util';
+import type { ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, MenuStructureDrift } from '@okr/tenant-util';
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
 
@@ -82,6 +82,9 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
             <ion-item-divider color="warning">
               <ion-icon slot="start" src="{{ 'alert-circle' | svgIcon }}" />
               <ion-label>{{ i18n.drift_title() }}</ion-label>
+              <ion-button slot="end" fill="clear" (click)="onKeepLive()" [disabled]="isSaving()">
+                {{ i18n.drift_keep_live() }}
+              </ion-button>
               <ion-button slot="end" fill="clear" (click)="onApplyStructure()" [disabled]="isSaving()">
                 {{ i18n.drift_apply() }}
               </ion-button>
@@ -89,11 +92,16 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
             <ion-item lines="none">
               <ion-note class="ion-text-wrap">{{ i18n.drift_note() }}</ion-note>
             </ion-item>
-            @for (entry of drift(); track entry.docId) {
+            @for (row of driftRows(); track row.docId + row.field) {
               <ion-item>
-                <ion-label>{{ entry.name }}</ion-label>
+                <ion-label class="ion-text-wrap">
+                  {{ row.name }}
+                  <p class="drift-direction">
+                    {{ row.field }}: {{ row.live || '—' }} &rarr; {{ row.catalogue }}
+                  </p>
+                </ion-label>
                 <ion-note slot="end">
-                  {{ entry.forked ? i18n.drift_forked() : i18n.drift_edited() }}
+                  {{ row.forked ? i18n.drift_forked() : i18n.drift_edited() }}
                 </ion-note>
               </ion-item>
             }
@@ -201,6 +209,24 @@ export class FeaturePicker {
       this.menuDocs().map(doc => ({ id: doc.okey, data: doc })), this.tenantId());
     return findStructuralDrift(specs, byName);
   });
+
+  /**
+   * `drift()` flattened to one row per FIELD, carrying BOTH values (design §5 / proposal 5).
+   *
+   * The list used to show only the entry's name plus "eigene Kopie"/"direkt bearbeitet", under
+   * a heading that calls the live document «Struktur veraltet» — a verdict the data does not
+   * support. Drift is symmetric: it means the catalogue and the document disagree, and the
+   * catalogue is the stale half at least as often (four commits back-ported a live value INTO
+   * `feature-blocks.ts` rather than the other way round). Showing `live → Katalog` per field
+   * lets the reader see which direction they are being offered before they take it.
+   */
+  protected readonly driftRows = computed(() =>
+    this.drift().flatMap(entry =>
+      Object.entries(entry.fields).map(([field, catalogue]) => ({
+        name: entry.name, docId: entry.docId, forked: entry.forked, field,
+        live: String(entry.live[field as keyof typeof entry.live] ?? ''),
+        catalogue: String(catalogue ?? ''),
+      }))));
 
   protected readonly availability = computed<Map<string, AvailabilityVerdict>>(() => {
     const rolloutById = new Map(this.rollouts().map(rollout => [rollout.okey, rollout]));
@@ -318,11 +344,8 @@ export class FeaturePicker {
     }
 
     // The BLOCK-level gate above says which features go away; this one says what actually
-    // happens to the tenant's hand-curated root menu, which is what an admin is really afraid
-    // of losing. It reports the rows that disappear AND the rows that come back appended at
-    // the tail (`planRootMenuOp` never reorders, so a re-enabled block loses its old position).
-    // Computed from the SAME planner the callable runs — see `root-menu.util.ts`.
-    if (!await this.confirmRootMenuImpact(nextEnabled)) return;
+    // happens to the documents, which is what an admin is really afraid of losing.
+    if (!await this.confirmApplyImpact(nextEnabled)) return;
 
     this.isSaving.set(true);
     try {
@@ -387,6 +410,104 @@ export class FeaturePicker {
   }
 
   /**
+   * Ask the server what this save would do, and name it — proposal 4.
+   *
+   * Runs the callable with `dryRun: true`, which plans the entire run (menu ops, root menu,
+   * seed docs, transitions) and writes nothing, then confirms against that plan. This is
+   * strictly better than predicting it here, and not only because there is one implementation
+   * instead of two: `MenuService.list()` is TENANT-SCOPED, so this component cannot see a
+   * shared menu document the tenant does not yet inherit. The client planner therefore reports
+   * a `create` where the server plans an `add-tenant` — a wrong noun in a dialog whose whole
+   * job is to be trusted.
+   *
+   * FALLS BACK to the client-side root-menu warning when the dry run cannot run (offline, a
+   * transport error, an old deployment that does not know `dryRun` and would return a preview
+   * of `undefined`). A guard that disappears when the network hiccups is worse than a coarser
+   * one that always shows up, and the fallback is the exact warning that shipped before this.
+   */
+  private async confirmApplyImpact(nextEnabled: string[]): Promise<boolean> {
+    let preview: ApplyPlanPreview | undefined;
+    try {
+      preview = (await this.featureSelectionService.apply(
+        this.tenantId(), nextEnabled, { dryRun: true })).preview;
+    } catch {
+      return await this.confirmRootMenuImpact(nextEnabled);
+    }
+    if (!preview) return await this.confirmRootMenuImpact(nextEnabled); // pre-dryRun deployment
+    if (isEmptyPlan(preview)) return true; // a save that changes nothing needs no dialog
+
+    const parts: string[] = [];
+    if (preview.rootRemoved.length > 0) {
+      parts.push(await this.translateOrFallback(
+        FEATURE_PICKER_I18N_KEYS.menu_impact_removed,
+        { keys: preview.rootRemoved.join(', ') }, preview.rootRemoved.join(', ')));
+    }
+    if (preview.rootAdded.length > 0) {
+      parts.push(await this.translateOrFallback(
+        FEATURE_PICKER_I18N_KEYS.menu_impact_readded,
+        { keys: preview.rootAdded.join(', ') }, preview.rootAdded.join(', ')));
+    }
+    if (preview.created.length > 0) {
+      parts.push(await this.translateOrFallback(
+        FEATURE_PICKER_I18N_KEYS.preview_created,
+        { keys: preview.created.join(', ') }, preview.created.join(', ')));
+    }
+    if (preview.extended.length > 0) {
+      parts.push(await this.translateOrFallback(
+        FEATURE_PICKER_I18N_KEYS.preview_extended,
+        { count: preview.extended.length }, String(preview.extended.length)));
+    }
+    if (preview.seeded.length > 0) {
+      parts.push(await this.translateOrFallback(
+        FEATURE_PICKER_I18N_KEYS.preview_seeded,
+        { count: preview.seeded.length }, String(preview.seeded.length)));
+    }
+    // Only reachable from «Struktur übernehmen»'s own path in practice — an ordinary save
+    // cannot overwrite anything (D-BB-7b) — but reported here too rather than assumed away.
+    if (preview.overwritten.length > 0) {
+      const entries = preview.overwritten
+        .map(change => `• ${change.name} — ${change.field}: ${change.from || '—'} → ${change.to}`)
+        .join('\n');
+      parts.push(entries);
+    }
+    if (parts.length === 0) return true;
+
+    const changes = parts.join('\n\n');
+    const message = await this.translateOrFallback(
+      FEATURE_PICKER_I18N_KEYS.preview_confirm, { changes }, changes);
+    return await this.alertService.confirm(message, true);
+  }
+
+  /**
+   * The other exit from a drift entry — proposal 5.
+   *
+   * «Struktur übernehmen» answers "the catalogue is right". This answers "the LIVE value is
+   * right", which is at least as common: commits 170fe4617, ba74a8f5e, a6d07bd4c and 487e1fea9
+   * all back-ported a live value INTO `feature-blocks.ts`. Until now the screen offered no way
+   * to say that, and the only button on it did the opposite.
+   *
+   * It deliberately writes nothing. The catalogue is code, shipped with the release (D-BB-2) —
+   * an admin cannot change it and should not be led to think they can. What they CAN do is hand
+   * a developer the exact patch, so this copies one to the clipboard.
+   */
+  protected async onKeepLive(): Promise<void> {
+    const rows = this.driftRows();
+    if (rows.length === 0) return;
+
+    const note = [
+      `# Katalog-Abgleich — Mandant ${this.tenantId()}`,
+      '# Der Live-Wert ist der richtige. feature-blocks.ts nachziehen:',
+      '',
+      ...rows.map(row =>
+        `menuItems/${row.docId} (${row.name})\n` +
+        `  ${row.field}: Katalog '${row.catalogue}' -> Live '${row.live}'`),
+    ].join('\n');
+
+    await copyToClipboard(note);
+    await this.alertService.showToast(this.i18n.drift_keep_live_copied());
+  }
+
+  /**
    * What a save does to `main_<tenantId>.menuItems`, named row by row before it happens.
    *
    * WHY THIS EXISTS ALONGSIDE the block-level `removal_confirm` gate: that one lists BLOCKS, and
@@ -400,6 +521,12 @@ export class FeaturePicker {
    * `@okr/tenant-util`) against the live menu snapshot rather than predicting its behaviour, so
    * the preview cannot disagree with the write. Returns true when there is nothing to warn
    * about — an unchanged root array produces no dialog.
+   *
+   * SINCE PROPOSAL 4 this is the FALLBACK, not the primary path: `confirmApplyImpact` asks the
+   * server for the real plan and only lands here when that call fails. Kept rather than deleted
+   * because it needs no network — the one case where a coarser warning beats none. It is also
+   * blind to menu documents this tenant does not yet inherit (`MenuService.list()` is
+   * tenant-scoped), which is precisely why it is no longer the primary path.
    */
   private async confirmRootMenuImpact(nextEnabled: string[]): Promise<boolean> {
     const tenantId = this.tenantId();

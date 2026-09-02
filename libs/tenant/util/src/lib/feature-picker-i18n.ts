@@ -33,10 +33,18 @@ export const FEATURE_PICKER_I18N_KEYS = {
   drift_apply: PFX + 'picker.drift_apply',
   drift_forked: PFX + 'picker.drift_forked',
   drift_edited: PFX + 'picker.drift_edited',
+  /** Proposal 5 — the other exit from a drift entry: the LIVE value is the right one. */
+  drift_keep_live: PFX + 'picker.drift_keep_live',
+  drift_keep_live_copied: PFX + 'picker.drift_keep_live_copied',
   // Guards that name what a write will actually change. Resolved through
   // `translateOnce(key, params)`, so these use Transloco's own `{{...}}` interpolation —
   // unlike the store-driven keys, which must use single braces and `fill()`.
   drift_confirm: PFX + 'picker.drift_confirm',
+  // Proposal 4 — the server-side dry run, named op by op before the save commits.
+  preview_confirm: PFX + 'picker.preview_confirm',
+  preview_created: PFX + 'picker.preview_created',
+  preview_extended: PFX + 'picker.preview_extended',
+  preview_seeded: PFX + 'picker.preview_seeded',
   menu_impact_confirm: PFX + 'picker.menu_impact_confirm',
   menu_impact_removed: PFX + 'picker.menu_impact_removed',
   menu_impact_readded: PFX + 'picker.menu_impact_readded',

@@ -138,14 +138,20 @@
     "removal_confirm": "Beim Speichern werden die Menüeinträge folgender Bausteine entfernt: {{blocks}}. Fortfahren?",
     "withheld_toast": "Nicht übernommen: {{blocks}}",
     "applied_toast": "Gespeichert: {{count}} Bausteine aktiv.",
-    "drift_title": "Struktur veraltet",
-    "drift_note": "Für diesen Mandanten angepasste Menüeinträge folgen der Katalogstruktur nicht mehr (Ziel, Aktion oder benötigte Rolle). Bezeichnung, Symbol und Reihenfolge bleiben unverändert.",
+    "drift_title": "Abweichung vom Katalog",
+    "drift_note": "Diese Menüeinträge weichen vom Katalog ab — bei Ziel, Aktion oder benötigter Rolle. Welche Seite richtig ist, entscheidest du: «Struktur übernehmen» setzt den Katalogwert, «Live-Wert behalten» kopiert eine Notiz, mit der der Katalog nachgezogen werden kann. Bezeichnung, Symbol und Reihenfolge bleiben in beiden Fällen unverändert.",
     "drift_apply": "Struktur übernehmen",
     "drift_forked": "eigene Kopie",
     "drift_edited": "direkt bearbeitet",
     "drift_confirm": "Folgende Menüeinträge werden mit den Werten aus dem Katalog überschrieben:\n\n{{entries}}\n\nBezeichnung, Symbol und Reihenfolge bleiben erhalten. Fortfahren?",
     "menu_impact_confirm": "Dieser Speichervorgang verändert das Hauptmenü:\n\n{{changes}}\n\nFortfahren?",
     "menu_impact_removed": "Diese Zeilen verschwinden: {{keys}}",
-    "menu_impact_readded": "Diese Zeilen kommen am Ende der Liste dazu: {{keys}}"
+    "menu_impact_readded": "Diese Zeilen kommen am Ende der Liste dazu: {{keys}}",
+    "drift_keep_live": "Live-Wert behalten",
+    "drift_keep_live_copied": "Notiz kopiert. Gib sie weiter, damit der Katalog nachgezogen wird — hier ändert sich nichts.",
+    "preview_confirm": "Dieser Speichervorgang bewirkt:\n\n{{changes}}\n\nFortfahren?",
+    "preview_created": "Diese Menüeinträge werden neu angelegt: {{keys}}",
+    "preview_extended": "{{count}} bestehende Menüeinträge werden für diesen Mandanten freigeschaltet",
+    "preview_seeded": "{{count}} Startdokumente werden angelegt"
   }
 }

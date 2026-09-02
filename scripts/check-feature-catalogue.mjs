@@ -129,9 +129,9 @@ for (const { tenantId, config } of tenants) {
   const touched = new Set([...specs.flatMap((s) => menuSpecNames([s])), `main_${tenantId}`]);
   const blocking = ambiguous.filter((a) => touched.has(a.name));
 
-  // `findStructuralDrift` reports the catalogue values it WOULD write, per SPEC. The value
-  // the live document still carries is the other half a reader needs in order to judge which
-  // side is stale, so pick it back out of the same resolved index the comparison ran against.
+  // `findStructuralDrift` reports both sides per SPEC — the catalogue value it WOULD write and
+  // the value the live document carries — because which half is stale is a human call and a
+  // report that shows only one of them cannot be judged.
   //
   // Flattened to one entry per (document, field, catalogue value): a name declared by two
   // blocks — the shared-parent pattern — is visited once per spec and would otherwise be
@@ -147,7 +147,7 @@ for (const { tenantId, config } of tenants) {
       seen.add(identity);
       changes.push({
         name: d.name, docId: d.docId, forked: d.forked, field,
-        from: String(byName.get(d.name)?.[field] ?? ''), to: String(to),
+        from: String(d.live[field] ?? ''), to: String(to),
       });
     }
   }

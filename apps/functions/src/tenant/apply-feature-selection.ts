@@ -11,7 +11,7 @@ import {
 import {
   indexMenuDocsByName, menuSpecNames, menuStructureChanges, planMenuOps, planRootMenuOp,
   resolveAvailability, resolveWithDeps, rootNavKeys,
-  type FeatureBlock, type FeatureRollout, type MenuOp,
+  type ApplyPlanPreview, type FeatureBlock, type FeatureRollout, type MenuOp,
 } from '@okr/tenant-util';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
@@ -44,6 +44,11 @@ export interface ApplyFeatureSelectionResult {
    * false and would have misled Task 11's picker UI.
    */
   applied: string[];
+  /**
+   * What the run did — or, with `dryRun`, what it WOULD do and did not. Returned on every
+   * call so a caller can report the outcome as precisely as it warned about it beforehand.
+   */
+  preview: ApplyPlanPreview;
 }
 
 // ────────────────────────────────────────────────────────────────────────────────────
@@ -311,6 +316,12 @@ export interface ApplySelectionOptions {
    * apart.
    */
   replayStructure?: boolean;
+  /**
+   * Plan everything and write NOTHING — the returned `preview` is what a real run with the
+   * same arguments would do. Every read, the name-ambiguity refusal and every planner still
+   * run, so a dry run fails exactly where the real call would.
+   */
+  dryRun?: boolean;
 }
 
 /**
@@ -324,7 +335,7 @@ export async function applySelection(
   tenantId: string,
   uid: string,
   options: ApplySelectionOptions = {},
-): Promise<{ applied: string[] }> {
+): Promise<{ applied: string[]; preview: ApplyPlanPreview }> {
   const replayStructure = options.replayStructure ?? true;
   const enabledBlocks = plan.enabled
     .map(id => catalogue.find(b => b.id === id))
@@ -417,7 +428,12 @@ export async function applySelection(
     })),
   ];
 
-  await commitChunked(db, configAndEventWrites);
+  // NOTE: chunk 0 is NOT committed here any more — it is committed below, after the root op
+  // and the preview have been computed. Nothing between this point and that commit writes
+  // anything or depends on `enabledFeatures` having been persisted (`removeKeys` is derived
+  // from full catalogue state precisely so it does not), so the ordering guarantee chunk 0
+  // exists for — committed FIRST and ALONE, before any menu write — is unchanged. Moving it
+  // is what lets `dryRun` return the complete plan without writing.
 
   // --- root menu attachment — see the long comment on planRootMenuOp above -----------
   // `removeKeys` MUST be derived from the FULL catalogue state (every block NOT in
@@ -464,6 +480,32 @@ export async function applySelection(
   // run finds no drift and emits nothing; if it did not, both are retried together.
   const structureEvents = menuStructureChanges(menuOps, beforeMenu);
 
+  // --- the plan, as something a human can be shown (task 4) -------------------------
+  // Built from the SAME ops that are about to be written, never predicted a second time —
+  // the argument `findStructuralDrift` records for the drift warning, applied to the whole
+  // run. `dryRun` returns it INSTEAD of writing, which is what the picker calls before it
+  // commits to a save.
+  const currentRoot = beforeMenu.get(`main_${tenantId}`)?.menuItems ?? [];
+  const nextRoot = (rootOp?.fields?.menuItems as string[] | undefined) ?? currentRoot;
+  const preview: ApplyPlanPreview = {
+    created: menuOps.filter(op => op.op === 'create').map(op => op.key),
+    extended: menuOps.filter(op => op.op === 'add-tenant').map(op => op.key),
+    overwritten: structureEvents,
+    rootRemoved: currentRoot.filter(key => !nextRoot.includes(key)),
+    rootAdded: nextRoot.filter(key => !currentRoot.includes(key)),
+    seeded: seedWrites.map(w => `${w.ref.parent.id}/${w.ref.id}`),
+    enabling: transitions.filter(t => t.op === 'enable').map(t => t.block),
+    disabling: transitions.filter(t => t.op === 'disable').map(t => t.block),
+  };
+
+  if (options.dryRun === true) {
+    logger.info(`${CF_NAME}: DRY RUN tenant=${tenantId} created=${preview.created.length} ` +
+      `extended=${preview.extended.length} overwritten=${preview.overwritten.length}`);
+    return { applied, preview };
+  }
+
+  await commitChunked(db, configAndEventWrites);
+
   // --- menu + seed writes (chunks 1..N — naturally idempotent, safe to re-run) -------
   const menuWrites: PendingWrite[] = [
     ...menuOps.map(op => ({
@@ -484,7 +526,7 @@ export async function applySelection(
   ];
   await commitChunked(db, [...menuWrites, ...seedWrites]);
 
-  return { applied };
+  return { applied, preview };
 }
 
 // ────────────────────────────────────────────────────────────────────────────────────
@@ -528,6 +570,11 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
       // trace. Only «Struktur übernehmen» — which confirms the exact fields first — asks for
       // the replay. A missing or non-boolean field therefore means "extend only".
       const replayStructure = request.data?.replayStructure === true;
+      // Same strict-`true` rule, opposite purpose: `dryRun` plans everything and writes
+      // nothing, so the picker can name the consequences of a save before committing to it.
+      // A typo'd or missing field must never turn a real save into a silent no-op, hence
+      // `=== true` rather than a truthiness check.
+      const dryRun = request.data?.dryRun === true;
 
       const db = getFirestore();
       // `checkAuthentication` above throws if `request.auth` is missing, but that is an
@@ -568,11 +615,12 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
       const plan = planSelection(catalogue, rollouts, blockIds, tenantId);
 
       // --- apply -------------------------------------------------------------------
-      const { applied } = await applySelection(db, catalogue, plan, tenantId, uid, { replayStructure });
+      const { applied, preview } = await applySelection(
+        db, catalogue, plan, tenantId, uid, { replayStructure, dryRun });
 
       logger.info(`${CF_NAME}: tenant=${tenantId} enabled=${plan.enabled.length} ` +
-        `withheld=${plan.withheld.length} replayStructure=${replayStructure}`);
-      return { enabled: plan.enabled, withheld: plan.withheld, applied };
+        `withheld=${plan.withheld.length} replayStructure=${replayStructure} dryRun=${dryRun}`);
+      return { enabled: plan.enabled, withheld: plan.withheld, applied, preview };
     },
   );
 }

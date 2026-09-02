@@ -371,6 +371,7 @@ describe('findStructuralDrift', () => {
       docId: 'calevent-all_p13',          // the FORK's id, not the spec key
       forked: true,
       fields: { url: '/calevent/all/c-calevents' },
+      live: { url: '/calevent/old' },
     }]);
   });
 
@@ -469,5 +470,24 @@ describe('menuStructureChanges', () => {
     expect(menuStructureChanges(ops, before)).toEqual([
       { blockId: '', docId: 'calevent-all', name: 'calevent-all', field: 'url', from: '', to: '/calevent/all/c-calevents' },
     ]);
+  });
+});
+
+describe('findStructuralDrift carries both sides (proposal 5)', () => {
+  it('reports the live value alongside the catalogue value for every drifted field', () => {
+    const existing = new Map([['calevent-all', existingDoc({
+      tenants: ['p13'], url: '/OLD/url', roleNeeded: 'admin',
+    })]]);
+    const drift = findStructuralDrift([spec], existing);
+    expect(drift).toHaveLength(1);
+    expect(drift[0].fields).toEqual({ url: '/calevent/all/c-calevents', roleNeeded: 'registered' });
+    expect(drift[0].live).toEqual({ url: '/OLD/url', roleNeeded: 'admin' });
+  });
+
+  it('reports an empty live value for a field the document does not carry', () => {
+    const doc = existingDoc({ tenants: ['p13'] });
+    delete (doc as Partial<MenuItemModel>).url;
+    const drift = findStructuralDrift([spec], new Map([['calevent-all', doc]]));
+    expect(drift[0].live).toEqual({ url: '' });
   });
 });

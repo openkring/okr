@@ -1119,3 +1119,116 @@ describe('applySelection replayStructure', () => {
     expect((events[0] as { block: string }).block).toBe('aoc'); // first block to touch it
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// Task 4 — dryRun: the complete plan, without a single write.
+// ─────────────────────────────────────────────────────────────────────────────────────
+describe('applySelection dryRun', () => {
+  const block = catalogueBlock('calevent', [{
+    key: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
+    roleNeeded: 'registered', icon: 'calendar', label: '@main.calevent.all',
+  }]);
+  const plan: SelectionPlan = { enabled: ['calevent'], withheld: [] };
+
+  it('writes nothing at all — not the config, not the events, not the menu', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+
+    await applySelection(fdb as unknown as Firestore, [block], plan, 'p13', 'uid-1', { dryRun: true });
+
+    expect(fdb.dump(AppConfigCollection)['p13']).toEqual({ enabledFeatures: [] }); // untouched
+    expect(fdb.dump(MenuItemCollection)).toEqual({});
+    expect(fdb.dump(FeatureEventCollection)).toEqual({});
+  });
+
+  it('reports the creates, the root additions and the block turning on', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+
+    const { preview } = await applySelection(
+      fdb as unknown as Firestore, [block], plan, 'p13', 'uid-1', { dryRun: true });
+
+    expect(preview.created).toEqual(['calevent-all']);
+    expect(preview.extended).toEqual([]);
+    expect(preview.overwritten).toEqual([]);
+    expect(preview.rootAdded).toEqual(['calevent-all']);
+    expect(preview.enabling).toEqual(['calevent']);
+  });
+
+  it('distinguishes an EXTEND from a CREATE — the thing a tenant-scoped client cannot see', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    // A shared doc `p13` does not inherit yet. A client query filtered on
+    // `tenants array-contains 'p13'` cannot see it and would predict a create.
+    fdb.seed(MenuItemCollection, 'calevent-all', {
+      okey: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
+      roleNeeded: 'registered', icon: 'calendar', label: 'Termine',
+      isArchived: false, tenants: ['scs'], menuItems: [],
+    });
+
+    const { preview } = await applySelection(
+      fdb as unknown as Firestore, [block], plan, 'p13', 'uid-1', { dryRun: true });
+
+    expect(preview.created).toEqual([]);
+    expect(preview.extended).toEqual(['calevent-all']);
+  });
+
+  it('reports the root rows a disable would remove, without removing them', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: ['calevent'] });
+    fdb.seed(MenuItemCollection, 'main_p13', {
+      okey: 'main_p13', name: 'main_p13', action: 'main', url: '', label: 'main', icon: '',
+      roleNeeded: 'none', tenants: ['p13'], isArchived: false,
+      menuItems: ['home', 'calevent-all', 'version'],
+    });
+
+    const { preview } = await applySelection(fdb as unknown as Firestore, [block],
+      { enabled: [], withheld: [] }, 'p13', 'uid-1', { dryRun: true });
+
+    expect(preview.rootRemoved).toEqual(['calevent-all']);
+    expect(preview.disabling).toEqual(['calevent']);
+    // and the document still has it
+    expect(fdb.dump(MenuItemCollection)['main_p13'].menuItems).toEqual(['home', 'calevent-all', 'version']);
+  });
+
+  it('reports what a replay would overwrite, without overwriting it', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: ['calevent'] });
+    fdb.seed(MenuItemCollection, 'calevent-all', {
+      okey: 'calevent-all', name: 'calevent-all', url: '/calevent/all', action: 'navigate',
+      roleNeeded: 'memberAdmin', icon: 'calendar', label: 'Termine',
+      isArchived: false, tenants: ['p13'], menuItems: [],
+    });
+
+    const { preview } = await applySelection(fdb as unknown as Firestore, [block], plan,
+      'p13', 'uid-1', { dryRun: true, replayStructure: true });
+
+    expect(preview.overwritten).toEqual([{
+      blockId: 'calevent', docId: 'calevent-all', name: 'calevent-all',
+      field: 'roleNeeded', from: 'memberAdmin', to: 'registered',
+    }]);
+    expect(fdb.dump(MenuItemCollection)['calevent-all'].roleNeeded).toBe('memberAdmin');
+  });
+
+  it('still refuses an unresolvable name — a dry run fails where the real call would', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    fdb.seed(MenuItemCollection, 'legacy-a', { okey: 'legacy-a', name: 'calevent-all', tenants: ['p13'], isArchived: false, menuItems: [] });
+    fdb.seed(MenuItemCollection, 'legacy-b', { okey: 'legacy-b', name: 'calevent-all', tenants: ['p13'], isArchived: false, menuItems: [] });
+
+    await expect(applySelection(fdb as unknown as Firestore, [block], plan, 'p13', 'uid-1', { dryRun: true }))
+      .rejects.toThrow(/cannot be resolved.*'calevent-all'/s);
+  });
+
+  it('a real run returns the same preview it would have returned as a dry run', async () => {
+    const fdb = new FakeFirestore();
+    fdb.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    const dry = await applySelection(fdb as unknown as Firestore, [block], plan, 'p13', 'uid-1', { dryRun: true });
+
+    const fdb2 = new FakeFirestore();
+    fdb2.seed(AppConfigCollection, 'p13', { enabledFeatures: [] });
+    const real = await applySelection(fdb2 as unknown as Firestore, [block], plan, 'p13', 'uid-1');
+
+    expect(real.preview).toEqual(dry.preview);
+  });
+});
