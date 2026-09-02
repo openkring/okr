@@ -28,6 +28,19 @@ export interface CreateExpensePayload {
   receiptCount: number;
 }
 
+/** The wire shape of the updateExpense callable. Every field except the key is optional. */
+export interface UpdateExpensePayload {
+  expenseKey: string;
+  abstract?: string;
+  amountTotal?: number;
+  currency?: string;
+  transferTo?: 'me' | 'issuer';
+  category?: string;
+  costCenterId?: string;
+  note?: string;
+  status?: string;
+}
+
 /** A receipt file uploaded for an expense, read straight from Firebase Storage. */
 export interface ExpenseReceipt {
   name: string;
@@ -84,6 +97,12 @@ export class ExpenseService {
   public async deleteViaFunction(expenseKey: string): Promise<void> {
     const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'deleteExpense');
     await fn({ expenseKey });
+  }
+
+  /** Treasurer edit. `expenses` is CF-write-only, so the callable is the only update path. */
+  public async updateViaFunction(payload: UpdateExpensePayload): Promise<void> {
+    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'updateExpense');
+    await fn(payload);
   }
 
   /** Treasurer-only: re-run OCR for a failed (unbooked) expense. Returns the number of receipts re-processed. */

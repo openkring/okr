@@ -53,3 +53,60 @@ export const expenseValidations = staticSuite((model: ExpenseFormValue, field?: 
     ibanValidations('iban', model.iban);
   });
 });
+
+/**
+ * The editable subset of an expense — exactly the fields the `updateExpense` callable accepts.
+ * Lives here (next to `ExpenseFormValue`) because its Vest suite must be able to name its fields.
+ */
+export interface ExpenseEditFormValue {
+  abstract: string;
+  /** cents, as stored on the model (the form renders/parses CHF) */
+  amountTotal: number;
+  currency: string;
+  transferTo: ExpenseTransferTo;
+  category: string;
+  costCenterId: string;
+  note: string;
+  status: string;
+}
+
+/** The statuses an expense may be moved to — mirrors VALID_STATUS in the updateExpense CF. */
+export const EXPENSE_EDIT_STATUSES = [
+  'draft', 'processing', 'validated', 'error', 'posted', 'pending-export',
+] as const;
+
+/**
+ * Treasurer edit validations. Deliberately NOT `expenseValidations`: the edit form holds the
+ * amount in cents (`amountTotal`) and owns no IBAN, so the create suite's `amountCHF`/`iban`
+ * tests do not apply. The message keys are shared with the create suite.
+ */
+export const expenseEditValidations = staticSuite((model: ExpenseEditFormValue, field?: string) => {
+  if (field) only(field);
+
+  test('abstract', '@finance/expense/feature.validation.abstractRequired', () => {
+    enforce(model.abstract).isNotEmpty();
+  });
+  test('abstract', '@finance/expense/feature.validation.abstractMin', () => {
+    enforce(model.abstract.length).greaterThanOrEquals(3);
+  });
+  test('abstract', '@finance/expense/feature.validation.abstractMax', () => {
+    enforce(model.abstract.length).lessThanOrEquals(200);
+  });
+
+  test('amountTotal', '@finance/expense/feature.validation.amountRequired', () => {
+    enforce(model.amountTotal).greaterThan(0);
+  });
+  test('amountTotal', '@finance/expense/feature.validation.amountMax', () => {
+    enforce(model.amountTotal).lessThanOrEquals(999999999);
+  });
+
+  test('currency', '@finance/expense/feature.validation.currencyRequired', () => {
+    enforce(model.currency).isNotEmpty();
+  });
+  test('currency', '@finance/expense/feature.validation.currencyInvalid', () => {
+    enforce(model.currency).inside([...ALLOWED_CURRENCIES]);
+  });
+
+  // `status` is not validated here: the form feeds it from okr-cat-select over the fixed
+  // EXPENSE_EDIT_STATUSES list, and the updateExpense CF rejects anything outside it.
+});

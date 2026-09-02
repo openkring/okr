@@ -156,6 +156,19 @@ export const ExpenseStore = signalStore(
       await modal.present();
     },
 
+    /** Treasurer edit. Dynamic import: the modal must not import this store back (circular). */
+    async editExpense(expense: ExpenseModel): Promise<void> {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { ExpenseEditModal } = await import('./expense-edit.modal') as any;
+      const modal = await store.modalController.create({
+        component: ExpenseEditModal,
+        componentProps: { expense },
+      });
+      await modal.present();
+      const { role } = await modal.onDidDismiss();
+      if (role === 'confirm') store.expensesResource.reload();
+    },
+
     async deleteExpense(expense: ExpenseModel): Promise<void> {
       const alert = await store.alertController.create({
         header: store.i18n.action_delete(),

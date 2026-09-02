@@ -6,7 +6,7 @@ import { describe, it, expect, vi } from 'vitest';
 // IBAN behaviour is still exercised below.
 vi.mock('@okr/subject-address-util', () => ({ ibanValidations: () => undefined }));
 
-import { expenseValidations, ExpenseFormValue } from './expense.validations';
+import { expenseEditValidations, ExpenseEditFormValue, expenseValidations, ExpenseFormValue } from './expense.validations';
 
 // A fully valid reimbursement (transfer to the employee, valid electronic IBAN).
 const validExpense = (): ExpenseFormValue => ({
@@ -64,5 +64,40 @@ describe('expenseValidations', () => {
     const res = expenseValidations({ ...validExpense(), transferTo: 'issuer', iban: '' });
     expect(res.getErrors('iban')).toEqual([]);
     expect(res.isValid()).toBe(true);
+  });
+});
+
+describe('expenseEditValidations', () => {
+  const valid: ExpenseEditFormValue = {
+    abstract: 'Materialkauf', amountTotal: 12500, currency: 'CHF', transferTo: 'me',
+    category: '', costCenterId: '', note: '', status: 'validated',
+  };
+
+  it('accepts a complete edit value', () => {
+    expect(expenseEditValidations(valid).isValid()).toBe(true);
+  });
+
+  it('rejects an empty abstract', () => {
+    const result = expenseEditValidations({ ...valid, abstract: '' });
+    expect(result.isValid()).toBe(false);
+    expect(result.getErrors('abstract').length).toBeGreaterThan(0);
+  });
+
+  it('rejects an abstract shorter than 3 characters', () => {
+    expect(expenseEditValidations({ ...valid, abstract: 'ab' }).isValid()).toBe(false);
+  });
+
+  it('rejects a zero or negative amount (cents)', () => {
+    expect(expenseEditValidations({ ...valid, amountTotal: 0 }).isValid()).toBe(false);
+    expect(expenseEditValidations({ ...valid, amountTotal: -1 }).isValid()).toBe(false);
+  });
+
+  it('rejects an unknown currency', () => {
+    expect(expenseEditValidations({ ...valid, currency: 'XYZ' }).isValid()).toBe(false);
+  });
+
+  it('does NOT require an IBAN even when the transfer goes to the employee', () => {
+    // the edit form owns no IBAN field — the create suite's iban test must not leak in
+    expect(expenseEditValidations({ ...valid, transferTo: 'me' }).isValid()).toBe(true);
   });
 });

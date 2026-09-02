@@ -9,6 +9,7 @@ export * from './lib/country.util';
 export * from './lib/date.util';
 export * from './lib/debug.util';
 export * from './lib/dencrypt.util';
+export * from './lib/expense-status.util';
 export * from './lib/export.util';
 export * from './lib/file.util';
 export * from './lib/icon.util';

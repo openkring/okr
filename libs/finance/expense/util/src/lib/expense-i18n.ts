@@ -48,6 +48,18 @@ export const EXPENSE_I18N_KEYS = {
   detail_page_title:  PFX + 'detail.pageTitle',
   detail_ocr_error:   PFX + 'detail.ocrError',
   field_status:       PFX + 'field.status',
+  abstract_label:     PFX + 'field.abstract',
+  amount_label:       PFX + 'field.amount',
+  currency_label:     PFX + 'field.currency',
+  transfer_label:     PFX + 'field.transfer.label',
+  transfer_me:        PFX + 'field.transfer.me',
+  transfer_issuer:    PFX + 'field.transfer.issuer',
+  category_label:     PFX + 'field.category',
+  costcenter_label:   PFX + 'field.costcenter',
+  note_label:         PFX + 'field.note',
+  // generic confirm-banner labels; reuse the create modal's strings (Abbrechen / Speichern)
+  cancel:             PFX + 'new.cancel',
+  save:               PFX + 'new.save',
   close:              '@shared/ui.close',
   export_todo:        PFX + 'export.todo',
 } satisfies Record<string, string>;

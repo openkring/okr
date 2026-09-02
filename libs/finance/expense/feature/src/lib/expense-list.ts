@@ -16,7 +16,8 @@ import { convertDateFormatToString, DateFormat, getItemLabel, hasRole } from '@o
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
 import {
-  canDeleteExpense, canOpenBooking, canOpenTask, canRedoOcr, canViewExpense, centsToCHF, ExpenseSortField,
+  canDeleteExpense, canEditExpense, canOpenBooking, canOpenTask, canRedoOcr, canViewExpense, centsToCHF,
+  ExpenseSortField,
 } from '@okr/finance-expense-util';
 
 import { ExpenseNewModal } from './expense-new.modal';
@@ -230,6 +231,7 @@ export class ExpenseList {
     const user = this.currentUser();
     const i = this.store.i18n;
     const options = createActionSheetOptions(i.as_title());
+    if (canEditExpense(expense, user))    options.buttons.push(createActionSheetButton('expense.edit', i.action_edit(), this.imgixBaseUrl, 'edit'));
     if (canViewExpense(expense, user))    options.buttons.push(createActionSheetButton('expense.view', i.action_view(), this.imgixBaseUrl, 'eye-on'));
     if (canOpenTask(expense, user))       options.buttons.push(createActionSheetButton('expense.openTask', i.action_openTask(), this.imgixBaseUrl, 'checkbox'));
     if (canOpenBooking(expense, user))    options.buttons.push(createActionSheetButton('expense.openBooking', i.action_openBooking(), this.imgixBaseUrl, 'booking'));
@@ -244,6 +246,7 @@ export class ExpenseList {
     await sheet.present();
     const { data } = await sheet.onDidDismiss();
     switch (data?.action) {
+      case 'expense.edit':        await this.store.editExpense(expense); break;
       case 'expense.view':        await this.store.openDetail(expense); break;
       case 'expense.openTask':    await this.store.openTask(expense); break;
       case 'expense.openBooking': await this.store.openBooking(expense); break;
