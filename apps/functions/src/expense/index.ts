@@ -1,7 +1,7 @@
 import { onCall, CallableRequest, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
-import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
+import { checkAppCheckToken, checkAuthentication, lockedExpenseFields } from '@okr/shared-util-functions';
 import { getTodayStr, DateFormat } from '@okr/shared-util-core';
 
 import { emitEvent } from '../workflow/emit';
@@ -111,6 +111,76 @@ export const deleteExpense = onCall(
     }
 
     await expSnap.ref.set({ isArchived: true }, { merge: true });
+    return { ok: true };
+  },
+);
+
+/** The fields a treasurer may change. Everything else on the document is owned by the pipeline. */
+interface UpdateExpenseData {
+  expenseKey: string;
+  abstract?: string;
+  amountTotal?: number;
+  currency?: string;
+  transferTo?: 'me' | 'issuer';
+  category?: string;
+  costCenterId?: string;
+  note?: string;
+  status?: string;
+}
+
+const EDITABLE_FIELDS = [
+  'abstract', 'amountTotal', 'currency', 'transferTo', 'category', 'costCenterId', 'note', 'status',
+] as const;
+
+const VALID_STATUS = ['draft', 'processing', 'validated', 'error', 'posted', 'pending-export'];
+
+/**
+ * Treasurer edit. `expenses` is CF-write-only, so this is the only client-reachable update.
+ *
+ * Once the expense is booked the accounting fields are refused rather than silently dropped —
+ * a treasurer who thinks they corrected an amount must find out that they did not.
+ */
+export const updateExpense = onCall(
+  { region: REGION, enforceAppCheck: true, cors: true },
+  async (request: CallableRequest<UpdateExpenseData>): Promise<{ ok: true }> => {
+    checkAppCheckToken(request as any, 'updateExpense');
+    checkAuthentication(request as any, 'updateExpense');
+    const uid = request.auth!.uid;
+    const d = request.data;
+    if (!d?.expenseKey) throw new HttpsError('invalid-argument', 'expenseKey is required');
+
+    const db = getFirestore();
+    const expSnap = await db.collection(EXPENSE_COLLECTION).doc(d.expenseKey).get();
+    if (!expSnap.exists) throw new HttpsError('not-found', 'expense not found');
+    const expense = expSnap.data()!;
+
+    const userSnap = await db.collection(USERS_COLLECTION).doc(uid).get();
+    const user = userSnap.data() ?? {};
+    const tenantId = (expense['tenants'] as string[] | undefined)?.[0] ?? '';
+    const isMember = (user['tenants'] as string[] | undefined)?.includes(tenantId) ?? false;
+    const isPrivileged = user['roles']?.['treasurer'] === true || user['roles']?.['admin'] === true;
+    if (!isMember || !isPrivileged) {
+      throw new HttpsError('permission-denied', 'not allowed to edit this expense');
+    }
+
+    if (d.status !== undefined && !VALID_STATUS.includes(d.status)) {
+      throw new HttpsError('invalid-argument', `unknown status '${d.status}'`);
+    }
+
+    const locked = lockedExpenseFields({ bookingKey: expense['bookingKey'] as string | undefined });
+    const patch: Record<string, unknown> = {};
+    for (const field of EDITABLE_FIELDS) {
+      const value = (d as Record<string, unknown>)[field];
+      if (value === undefined) continue;
+      if (locked.includes(field) && value !== expense[field]) {
+        throw new HttpsError('failed-precondition', `'${field}' cannot be changed once the expense is booked`);
+      }
+      patch[field] = value;
+    }
+    if (Object.keys(patch).length === 0) return { ok: true };
+
+    await expSnap.ref.set(patch, { merge: true });
+    logger.info(`updateExpense: ${d.expenseKey} patched [${Object.keys(patch).join(', ')}]`);
     return { ok: true };
   },
 );
