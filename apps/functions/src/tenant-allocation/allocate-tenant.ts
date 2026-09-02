@@ -7,13 +7,19 @@ import {
   PersonCollection, TenantAllocationLogCollection, TenantAllocationLogModel,
 } from '@okr/shared-models';
 import {
-  checkAdminRole, checkAppCheckToken, getCallerTenantId, rebuildDirectoryForTenant,
+  checkAdminRole, checkAppCheckToken, getCallerTenantId, writeAddressDirectory,
 } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 import { AllocationDoc, buildAllocationPlan } from './allocation-plan';
 
 const REGION = 'europe-west6';
+
+// Firestore batches cap at 500 writes; person + addresses + avatars + the log entry is
+// unbounded on the client's selection. Chunking (like erasure-execute.ts does) would cost
+// the log its atomicity with the mutations it is evidence for, so this refuses instead of
+// splitting.
+const MAX_BATCH_WRITES = 450;
 
 export interface AllocateTenantRequest {
   /** D-TA-7: the contract is wider than today's implementation on purpose. */
@@ -32,6 +38,12 @@ export interface AllocateTenantResponse {
   readonly logKey: string;
 }
 
+/** A document id: a non-empty string with no path separator — a `/` would resolve to a
+ * document in a subcollection under the intended collection instead of a sibling doc. */
+function isCleanKey(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && !value.includes('/');
+}
+
 /**
  * Move a person between tenants (spec 1.47).
  *
@@ -40,7 +52,10 @@ export interface AllocateTenantResponse {
  * never from the payload — a client can send any string, and trusting one would turn this
  * into a cross-tenant write primitive for anybody with an account.
  */
-export const allocateTenant = onCall({ region: REGION }, async (request): Promise<AllocateTenantResponse> => {
+export const allocateTenant = onCall(
+  { region: REGION, enforceAppCheck: true, timeoutSeconds: 540 },
+  async (request): Promise<AllocateTenantResponse> => {
+  // belt and braces, matching the other admin callables (rebuildAddressDirectory, erasure-callables)
   checkAppCheckToken(request, 'allocateTenant');
   await checkAdminRole(request, 'allocateTenant');
   const actorTenantId = await getCallerTenantId(request, 'allocateTenant');
@@ -50,11 +65,19 @@ export const allocateTenant = onCall({ region: REGION }, async (request): Promis
   if (data?.modelType !== 'person') {
     throw new HttpsError('invalid-argument', 'Nur Personen lassen sich zurzeit zuteilen.');
   }
-  if (!data.okey || !data.targetTenantId) {
+  if (!isCleanKey(data.okey) || !isCleanKey(data.targetTenantId)) {
     throw new HttpsError('invalid-argument', 'Person und Zielmandant müssen angegeben sein.');
   }
   if (data.direction !== 'grant' && data.direction !== 'revoke') {
     throw new HttpsError('invalid-argument', 'Unbekannte Richtung.');
+  }
+  const rawAddressKeys = data.addressKeys ?? [];
+  if (!Array.isArray(rawAddressKeys) || !rawAddressKeys.every(isCleanKey)) {
+    throw new HttpsError('invalid-argument', 'Ungültige Adress-Auswahl.');
+  }
+  // D-TA-4 / spec §3 step 2: a precondition, not a merely-empty result.
+  if (data.targetTenantId === actorTenantId) {
+    throw new HttpsError('invalid-argument', 'Der eigene Mandant kann nicht zugeteilt werden.');
   }
 
   const db = getFirestore();
@@ -96,8 +119,24 @@ export const allocateTenant = onCall({ region: REGION }, async (request): Promis
     person: toDoc(personSnap.id, personSnap.data()),
     addresses: addressSnap.docs.map((d) => toDoc(d.id, d.data())),
     avatars: avatarSnaps.map((d) => toDoc(d.id, d.data())),
-    selectedAddressKeys: Array.isArray(data.addressKeys) ? data.addressKeys : [],
+    selectedAddressKeys: rawAddressKeys,
   });
+
+  if (plan.writes.length + 1 > MAX_BATCH_WRITES) {
+    throw new HttpsError('invalid-argument', 'Zu viele Adressen für eine einzelne Zuteilung.');
+  }
+
+  // Nothing to change (e.g. everything is already allocated the way it should be) — this is
+  // idempotent, not an error. Skip the batch AND the log: a tenant-allocation-log entry
+  // claiming a transfer that never happened would land in a collection the data subject can
+  // export, and it is evidence for nothing.
+  if (plan.writes.length === 0) {
+    return {
+      changed: plan.counts,
+      rejected: plan.rejections.map((r) => ({ okey: r.okey, reason: r.reason })),
+      logKey: '',
+    };
+  }
 
   const batch = db.batch();
   const mutation = data.direction === 'grant'
@@ -126,14 +165,20 @@ export const allocateTenant = onCall({ region: REGION }, async (request): Promis
 
   await batch.commit();
 
-  // Without this the target tenant's address-directory stays as it was until the next write
-  // to one of its addresses — empty after a grant, still populated after a revoke (D-L1).
+  // Only this person's own projection changed — rebuilding the WHOLE target tenant
+  // (rebuildDirectoryForTenant) would re-project every person and org of that tenant,
+  // sequentially, on every single-person allocation, which can blow the callable's deadline
+  // on a mid-size tenant. The batch above has already committed by this point, so a failure
+  // here must not fail the call — the transfer happened; only the read-side projection is
+  // stale until the next write to one of this person's addresses.
   try {
-    await rebuildDirectoryForTenant(db, data.targetTenantId);
+    await writeAddressDirectory(db, `person.${data.okey}`);
   } catch (ex) {
-    logger.error(`allocateTenant: directory rebuild for ${data.targetTenantId} failed`, ex);
+    logger.error(`allocateTenant: directory rebuild for person.${data.okey} failed`, ex);
   }
 
-  logger.info(`allocateTenant: ${data.direction} ${data.okey} ${actorTenantId} -> ${data.targetTenantId}`, plan.counts);
+  // No personKey in Cloud Logging, matching the erasure callables — direction, both tenant
+  // ids and counts are enough to operate on.
+  logger.info(`allocateTenant: ${data.direction} ${actorTenantId} -> ${data.targetTenantId}`, plan.counts);
   return { changed: plan.counts, rejected: plan.rejections.map((r) => ({ okey: r.okey, reason: r.reason })), logKey: logRef.id };
 });
