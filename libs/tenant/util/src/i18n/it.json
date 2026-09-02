@@ -157,7 +157,10 @@
     "profile_confirm": "«{{profile}}» imposta la selezione su {{count}} blocchi. Non viene ancora salvato nulla: puoi correggere dopo e alla fine devi salvare. Continuare?",
     "profile_applied": "Selezione impostata su «{{profile}}». Non ancora salvata.",
     "drift_col_live": "oggi",
-    "drift_col_catalogue": "catalogo"
+    "drift_col_catalogue": "catalogo",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "cancel_confirm": "La selezione viene ripristinata allo stato salvato. Le tue modifiche andranno perse. Continuare?"
   },
   "profile": {
     "minimal": {

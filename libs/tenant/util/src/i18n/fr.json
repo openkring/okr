@@ -157,7 +157,10 @@
     "profile_confirm": "« {{profile}} » définit la sélection sur {{count}} briques. Rien n'est encore enregistré — tu peux ajuster ensuite et devras enregistrer à la fin. Continuer ?",
     "profile_applied": "Sélection définie sur « {{profile}} ». Pas encore enregistré.",
     "drift_col_live": "aujourd'hui",
-    "drift_col_catalogue": "catalogue"
+    "drift_col_catalogue": "catalogue",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "cancel_confirm": "La sélection est réinitialisée à l'état enregistré. Tes modifications seront perdues. Continuer ?"
   },
   "profile": {
     "minimal": {

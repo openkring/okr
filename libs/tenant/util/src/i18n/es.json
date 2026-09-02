@@ -157,7 +157,10 @@
     "profile_confirm": "«{{profile}}» establece la selección en {{count}} bloques. Todavía no se guarda nada: puedes ajustarlo después y al final tienes que guardar. ¿Continuar?",
     "profile_applied": "Selección establecida en «{{profile}}». Aún sin guardar.",
     "drift_col_live": "hoy",
-    "drift_col_catalogue": "catálogo"
+    "drift_col_catalogue": "catálogo",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "cancel_confirm": "La selección se restablece al estado guardado. Tus cambios se perderán. ¿Continuar?"
   },
   "profile": {
     "minimal": {

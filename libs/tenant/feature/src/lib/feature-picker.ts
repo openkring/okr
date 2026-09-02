@@ -66,11 +66,14 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ i18n.title() }}</ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="onSave()" [disabled]="isSaving()">
+          <ion-button fill="clear" (click)="onCancel()" [disabled]="isSaving()">
+            {{ i18n.cancel() }}
+          </ion-button>
+          <ion-button fill="solid" (click)="onSave()" [disabled]="isSaving()">
             @if (isSaving()) {
               <ion-spinner name="dots" />
             } @else {
-              <ion-icon slot="icon-only" src="{{ 'checkbox-circle' | svgIcon }}" />
+              {{ i18n.save() }}
             }
           </ion-button>
         </ion-buttons>
@@ -268,6 +271,35 @@ export class FeaturePicker {
   protected readonly isSaving = signal(false);
   private seeded = false;
 
+  /**
+   * The selection as it is PERSISTED right now — what the checkboxes were seeded from, and
+   * what «Abbrechen» restores. Read live rather than captured at seed time, so a change made
+   * in another tab is what a reset returns to.
+   *
+   * Same rule as the seed, deliberately: `undefined` means "every non-internal block"
+   * (D-BB-10), not "nothing". Coalescing it would make a legacy tenant's cancel wipe every
+   * checkbox and hand them a one-click menu-stripping save.
+   */
+  private readonly persisted = computed(() => new Set(resolveWithDeps(
+    this.catalogue,
+    this.appStore.appConfig()?.enabledFeatures
+      ?? this.catalogue.filter(block => block.defaultAvailability !== 'internal').map(block => block.id))));
+
+  /**
+   * Has the admin changed anything since the screen was opened?
+   *
+   * Used ONLY to decide whether «Abbrechen» needs to confirm — deliberately NOT to disable
+   * «Speichern». On a legacy tenant `enabledFeatures` is absent, so `persisted` equals the
+   * seeded selection and nothing ever looks dirty; disabling the save button on that basis
+   * would block the very first save, which is the one that persists an explicit list and is
+   * the whole point of the screen.
+   */
+  protected readonly isDirty = computed(() => {
+    const current = this.selection();
+    const saved = this.persisted();
+    return current.size !== saved.size || [...current].some(id => !saved.has(id));
+  });
+
   constructor() {
     // Seed the checkbox state ONCE — but only once `appConfigResource` has actually settled.
     // `appStore.appConfig()` is NEVER nullish (`app.store.ts`'s `appConfig` computed always
@@ -347,6 +379,23 @@ export class FeaturePicker {
     if (await this.alertService.confirm(message, true)) return; // uncheck stands
 
     this.selection.set(new Set([...this.selection(), ...toRemove]));
+  }
+
+  /**
+   * Throw away unsaved ticks and go back to what is actually stored.
+   *
+   * The screen had no way out other than navigating away: every control changed the selection
+   * and the only button committed it. Trying a profile to SEE what it selects — a reasonable
+   * thing to do, and what «Profil anwenden» invites — left the admin holding a modified
+   * selection with no undo. This is that undo.
+   *
+   * It restores `persisted`, it does not navigate: the admin is usually still deciding, and
+   * dropping them onto another page would answer a question they did not ask.
+   */
+  protected async onCancel(): Promise<void> {
+    if (!this.isDirty()) return;
+    if (!await this.alertService.confirm(this.i18n.cancel_confirm(), true)) return;
+    this.selection.set(new Set(this.persisted()));
   }
 
   /**

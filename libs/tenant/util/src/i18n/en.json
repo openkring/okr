@@ -157,7 +157,10 @@
     "profile_confirm": "\"{{profile}}\" sets the selection to {{count}} blocks. Nothing is saved yet — you can adjust afterwards and still have to save. Continue?",
     "profile_applied": "Selection set to \"{{profile}}\". Not saved yet.",
     "drift_col_live": "today",
-    "drift_col_catalogue": "catalogue"
+    "drift_col_catalogue": "catalogue",
+    "save": "Save",
+    "cancel": "Cancel",
+    "cancel_confirm": "The selection is reset to the saved state. Your changes are lost. Continue?"
   },
   "profile": {
     "minimal": {

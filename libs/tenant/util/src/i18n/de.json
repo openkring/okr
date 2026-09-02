@@ -157,7 +157,10 @@
     "profile_confirm": "«{{profile}}» setzt die Auswahl auf {{count}} Bausteine. Das wird noch nicht gespeichert — du kannst danach nachjustieren und musst am Schluss speichern. Fortfahren?",
     "profile_applied": "Auswahl auf «{{profile}}» gesetzt. Noch nicht gespeichert.",
     "drift_col_live": "heute",
-    "drift_col_catalogue": "Katalog"
+    "drift_col_catalogue": "Katalog",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "cancel_confirm": "Die Auswahl wird auf den gespeicherten Stand zurückgesetzt. Deine Änderungen gehen verloren. Fortfahren?"
   },
   "profile": {
     "minimal": {
