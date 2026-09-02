@@ -106,24 +106,6 @@ async function resolveTreasurer(tenantId: string, reviewAssigneePersonKey: strin
   return { key: u['personKey'] ?? '', name1: u['firstName'] ?? '', name2: u['lastName'] ?? '' };
 }
 
-/**
- * Review-task label for an expense: "Spesen von <Submitter>: <Vendor> <Amount> <Currency>".
- * The submitter name is stamped onto the expense by createExpense; legacy docs written before
- * that field existed fall back to one users lookup, and to the bare receipt label if even that
- * fails (deleted user).
- */
-async function expenseTaskName(
-  expense: FirebaseFirestore.DocumentData | undefined, vendor: string, amountCents: number, currency: string,
-): Promise<string> {
-  const receipt = `${vendor} ${(amountCents / 100).toFixed(2)} ${currency}`.trim();
-  let name = (expense?.['userName'] as string | undefined) ?? '';
-  if (!name && expense?.['userId']) {
-    const u = (await getFirestore().collection(USERS_COLLECTION).doc(expense['userId']).get()).data();
-    name = `${u?.['firstName'] ?? ''} ${u?.['lastName'] ?? ''}`.trim();
-  }
-  return name ? `Spesen von ${name}: ${receipt}` : `Beleg prüfen: ${receipt}`;
-}
-
 /** Build a compact "id name" chart-of-accounts list of leaf accounts for the LLM account hint. */
 async function loadLeafAccountList(accountingTenantId: string): Promise<string> {
   const db = getFirestore();
@@ -437,9 +419,6 @@ async function handleExpenseResult(
     return;
   }
 
-  // Resolve the treasurer NOW — resolveTreasurer runs queries, which a transaction cannot do.
-  const treasurer = await resolveTreasurer(tenantId, cfg['reviewAssigneePersonKey'] ?? '');
-
   // Deterministic ids (= expenseKey) make redelivery of any receipt idempotent: the transaction
   // below always targets the SAME booking/lines, so a second (or Nth) receipt for the same
   // expense just attaches its amount-mismatch check, never a second booking.
@@ -480,16 +459,22 @@ async function handleExpenseResult(
     return true;
   });
 
-  // Task creation is I/O outside the transaction, and only on first creation of the booking.
-  // The Nth receipt of the same expense reuses the task the first one opened (expense.taskKey).
-  let taskKey = '';
+  // The review task is a workflow consequence now (spec 2026-09-02 §3.2): the engine dedups on
+  // (relatedKey, assignee), which is what the `created` guard used to do by hand.
   if (created) {
-    taskKey = await createReviewTask(tenantId, cfg['reviewAssigneePersonKey'] ?? '',
-      await expenseTaskName(expense, after.vendor, amountCents, currency), after, treasurer);
-    if (taskKey) await expenseRef.set({ taskKey }, { merge: true });
-  } else {
-    taskKey = (expense['taskKey'] as string | undefined) ?? '';
+    await emitEvent('expense.validated', tenantId, `expense.${correlationKey}`, {
+      personKey: (expense['personKey'] as string) ?? '',
+      subjectName: (expense['userName'] as string) ?? '',
+      params: {
+        vendor: after.vendor ?? '',
+        amount: String(amountCents),
+        currency,
+        bookingKey: correlationKey,
+        notes: `OCR-Beleg: ${after.storagePath}`,
+      },
+    });
   }
+  const taskKey = (expense['taskKey'] as string | undefined) ?? '';
 
   // Latch: write resolution back + mark processed (idempotency — re-delivery sees bookingKey set).
   await resultRef.set({
@@ -556,36 +541,18 @@ async function handleExternalBackendResult(
   const amountCents = expense?.['amountTotal'] ?? after.grossAmount ?? 0;
   const currency = expense?.['currency'] || after.currency || 'CHF';
 
-  // Resolve the treasurer NOW — resolveTreasurer runs queries, which a transaction cannot do.
-  const treasurer = await resolveTreasurer(tenantId, cfg['reviewAssigneePersonKey'] ?? '');
-  const taskName = await expenseTaskName(expense, after.vendor, amountCents, currency);
-
-  // Deterministic task id = expenseKey → exactly one task per expense (idempotent, create-if-absent).
-  const taskRef = db.collection(TASK_COLLECTION).doc(correlationKey);
-  const created = treasurer?.key
-    ? await db.runTransaction(async (tx) => {
-        if ((await tx.get(taskRef)).exists) return false;
-        tx.set(taskRef, {
-          tenants: [tenantId], isArchived: false,
-          name: taskName.slice(0, 200),
-          index: '', tags: '',
-          notes: `Externe Buchhaltung — bitte manuell verbuchen. OCR-Beleg: ${after.storagePath}`,
-          author: null,
-          assignee: { key: treasurer.key, name1: treasurer.name1, name2: treasurer.name2, modelType: 'person', type: '', subType: '', label: `${treasurer.name1} ${treasurer.name2}`.trim() },
-          state: 'initial',
-          dueDate: '', completionDate: '',
-          priority: 'medium', importance: 'medium',
-          calendars: [], rank: '',
-        });
-        tx.set(expenseRef, { taskKey: correlationKey }, { merge: true });
-        return true;
-      })
-    : false;
-
-  if (!treasurer?.key) logger.warn(`handleExternalBackendResult: no treasurer for tenant ${tenantId} — task not created`);
-  // Task id == expenseKey here, so latching it is free — kept for symmetry with the other two paths.
-  await resultRef.set({ status: 'processed', taskKey: treasurer?.key ? correlationKey : '' }, { merge: true });
-  logger.info(`onOcrResultWritten: external-backend review task ${correlationKey} (created=${created})`);
+  await emitEvent('expense.pendingExport', tenantId, `expense.${correlationKey}`, {
+    personKey: (expense?.['personKey'] as string) ?? '',
+    subjectName: (expense?.['userName'] as string) ?? '',
+    params: {
+      vendor: after.vendor ?? '',
+      amount: String(amountCents),
+      currency,
+      notes: `Externe Buchhaltung — bitte manuell verbuchen.\nOCR-Beleg: ${after.storagePath}`,
+    },
+  });
+  await resultRef.set({ status: 'processed' }, { merge: true });
+  logger.info(`onOcrResultWritten: emitted expense.pendingExport for ${correlationKey}`);
 }
 
 /** Create a TaskModel assigned to the treasurer. Returns the new task's doc id, or '' if none created. */
