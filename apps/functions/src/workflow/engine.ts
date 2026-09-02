@@ -451,6 +451,12 @@ export async function runStep(
  */
 export async function runWorkflowWith(ctx: WorkflowContext, deps: WorkflowDeps): Promise<void> {
   const rules = await deps.rules(ctx.tenantId, ctx.event);
+  if (!rules.length) {
+    // Without this line, a tenant whose rule was archived is indistinguishable from a tenant
+    // whose emitter never fired — the failure mode the OCR migration introduces.
+    await deps.logActivity(ctx.tenantId, { event: ctx.event, relatedKey: ctx.relatedKey, skipped: 'no rule' });
+    return;
+  }
   for (const rule of rules) {
     try {
       if (!(await runProbe(rule, ctx, deps))) continue;

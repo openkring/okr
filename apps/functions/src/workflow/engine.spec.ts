@@ -370,6 +370,24 @@ describe('runWorkflowWith', () => {
   });
 });
 
+describe('runWorkflowWith — no rule matched', () => {
+  it('logs an activity entry when the tenant has no rule for the event', async () => {
+    const deps = fakeDeps({ rules: [] });
+    await runWorkflowWith(ctx({ event: 'expense.created' }), deps);
+    expect(deps.activities).toHaveLength(1);
+    expect(deps.activities[0]).toMatchObject({ event: 'expense.created', skipped: 'no rule' });
+  });
+
+  it('logs nothing extra when at least one rule matched', async () => {
+    const deps = fakeDeps({
+      rules: [rule({ event: 'expense.created' })],
+      responsibility: { responsibleAvatar: avatar('resp') },
+    });
+    await runWorkflowWith(ctx({ event: 'expense.created' }), deps);
+    expect(deps.activities.some((a) => a['skipped'] === 'no rule')).toBe(false);
+  });
+});
+
 describe('sendEmail / sendMessage', () => {
   const responsible = { responsibility: { responsibleAvatar: avatar('resp') } };
 
