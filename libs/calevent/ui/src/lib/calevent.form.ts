@@ -169,9 +169,10 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
       </ion-card-content>
     </ion-card>
 
-    <!-- WO: location stays gated on the editor roles (same rule as before), the link pair only
-         earns its rows once a url is set or the advanced toggle is on. -->
-    @if(!isPersonal() && canExpert()) {
+    <!-- WO: location stays gated on the editor roles and is unavailable on a personal event
+         (no calendar to place it in); the link pair is always offered, personal events included,
+         and only earns its rows once a url is set or the advanced toggle is on. -->
+    @if((!isPersonal() && canExpert()) || isPersonal()) {
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
@@ -183,7 +184,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
               </div>
             </ion-col>
             </ion-row>
-            @if(canExpert()) {
+            @if(canExpert() && !isPersonal()) {
               <ion-row>
                 <ion-col size="12">
                   <!-- typing filters the known locations; picking one stores 'name@okey',

@@ -29,8 +29,9 @@ export function isPastCalevent(calevent: CalEventModel): boolean {
 /**
  * A personal CalEvent belongs to no calendar: it is created by a plain registered user, shown only
  * to its organiser (responsiblePersons) and its invitees, and never appears in a shared calendar.
- * Personal events support a reduced feature set (no series, no fullDay, no location, no url,
- * no tags, no description, no documents) — see CalEventForm.
+ * Personal events support a reduced feature set (no series, no fullDay, no location,
+ * no tags, no description, no documents) — see CalEventForm. A link (url/urlLabel) is
+ * still offered, since it needs no calendar to be meaningful.
  * @param calevent
  */
 export function isPersonalCalevent(calevent: CalEventModel): boolean {
