@@ -11,11 +11,18 @@ import { DIARY_I18N_KEYS } from '@okr/content-diary-util';
  * Reads and writes the author's own diary entries.
  *
  * There is no tenant-wide list here and there never will be: `firestore.rules` allows read and
- * write on `diaries` only where `authorKey == request.auth.uid`, admin included. So the query
- * below filters by the caller's uid and NOTHING else server-side — a single equality filter,
- * which Firestore serves from its automatic single-field index. `isArchived` and the tenant are
- * applied in memory instead of as extra `where` clauses, because adding them would demand a
- * composite index for a collection that only ever holds one person's own entries.
+ * write on `diaries` only where `authorKey == request.auth.uid`, admin included.
+ *
+ * The query filters by uid AND tenant, and both are load-bearing. A LIST operation is not checked
+ * per returned document — Firestore has to prove the read rule from the query's constraints alone,
+ * and the rule is `isDiaryOwner(resource.data) && belongsToTenant(resource.data)`. Constraining
+ * only `authorKey` leaves the tenant half unprovable, and the whole listener is refused with
+ * "Missing or insufficient permissions" — including against an EMPTY collection, where no document
+ * could possibly have failed. That is the trap: the error looks like bad data and is really a
+ * query that does not mirror its rule. This costs one composite index (`authorKey` + `tenants`),
+ * which is the price of the rule, not an optimisation choice.
+ *
+ * `isArchived` stays an in-memory filter: the rule does not mention it, so it buys nothing here.
  */
 @Injectable({ providedIn: 'root' })
 export class DiaryService {
@@ -31,10 +38,13 @@ export class DiaryService {
    */
   public list(authorKey: string, tenantId: string): Observable<DiaryModel[]> {
     return this.firestoreService.searchData<DiaryModel>(
-      DiaryCollection, [{ key: 'authorKey', operator: '==', value: authorKey }], 'none'
+      DiaryCollection, [
+        { key: 'authorKey', operator: '==', value: authorKey },
+        { key: 'tenants', operator: 'array-contains', value: tenantId },
+      ], 'none'
     ).pipe(
       map(diaries => diaries
-        .filter(diary => !diary.isArchived && (diary.tenants ?? []).includes(tenantId))
+        .filter(diary => !diary.isArchived)
         .sort((a, b) => b.date.localeCompare(a.date))),
     );
   }
