@@ -1,14 +1,11 @@
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, untracked, viewChild } from '@angular/core';
+import { Component, ComponentRef, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, inject, Injector, input, linkedSignal, OnInit, PLATFORM_ID, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, AlertController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTextarea, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 import { Router } from '@angular/router';
 import { format } from 'date-fns';
 
-import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
-import { EventInput } from '@fullcalendar/core';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import timeGridPlugin from '@fullcalendar/timegrid';
+import type { EventInput } from '@fullcalendar/core';
+import type { CaleventFullcalendarView } from './calevent-fullcalendar-view';
 import { DEFAULT_DATE } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, LocationModel, PersonModel, RoleName } from '@okr/shared-models';
 import { ModelSelectService } from '@okr/shared-feature';
@@ -38,7 +35,7 @@ type AttendanceFilter = AttendanceState | 'all';
     standalone: true,
     imports: [
       CalEventDurationPipe, SvgIconPipe, PartPipe,
-      FullCalendarModule, Spinner, EmptyList, AvatarDisplay, Menu, ListFilter,
+      Spinner, EmptyList, AvatarDisplay, Menu, ListFilter,
       IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon, IonTextarea,
       IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
@@ -274,10 +271,7 @@ type AttendanceFilter = AttendanceState | 'all';
         <ion-card>
           <ion-card-content>
             <div class="calendar-host" [style.display]="'block'">
-              <full-calendar #fullCalendar
-                [options]="calendarOptions()"
-                [events]="calendarEvents()"
-              />
+              <div #calendarHost></div>
               @if(filteredCalEventsCount() === 0) {
                 <div class="calendar-empty-overlay">
                   <okr-empty-list [message]="store.i18n.empty()" />
@@ -334,7 +328,8 @@ export class CalEventList implements OnInit {
   private readonly router = inject(Router);
   private readonly appNavigationService = inject(AppNavigationService);
   private readonly injector = inject(Injector);
-  private readonly fullCalendar = viewChild<FullCalendarComponent>('fullCalendar');
+  private calendarHost = viewChild('calendarHost', { read: ViewContainerRef });
+  protected calendarRef = signal<ComponentRef<CaleventFullcalendarView> | undefined>(undefined);
 
   protected readonly getCalEventCssClass = getCalEventCssClass;
 
@@ -457,7 +452,7 @@ export class CalEventList implements OnInit {
 
   // computed: the i18n signals start out empty, so buttonText must re-evaluate once they resolve
   protected calendarOptions = computed(() => ({
-    plugins: [dayGridPlugin, interactionPlugin, timeGridPlugin],
+    events: this.calendarEvents(),
     initialView: 'timeGridWeek',
     headerToolbar: {
       left: 'prev,next today',
@@ -542,6 +537,25 @@ export class CalEventList implements OnInit {
     effect(() => this.store.setCalendarName(this.listId()));
     effect(() => this.store.setSelectedYear(this.year()));
 
+    // Calendar view: create the FullCalendar host component dynamically so its @fullcalendar/*
+    // value imports never join this component's static import graph (Pattern A, lazy-loading skill).
+    effect(() => {
+      const host = this.calendarHost();
+      if (!host || !isBrowser(this.platformId) || untracked(() => this.calendarRef())) return;
+      void (async () => {
+        const { CaleventFullcalendarView } = await import('./calevent-fullcalendar-view');
+        const ref = host.createComponent(CaleventFullcalendarView);
+        ref.setInput('options', untracked(() => this.calendarOptions()));
+        this.calendarRef.set(ref);
+      })();
+    });
+    effect(() => {
+      const ref = this.calendarRef();
+      const options = this.calendarOptions();
+      if (ref) ref.setInput('options', options);
+    });
+    inject(DestroyRef).onDestroy(() => this.calendarRef()?.destroy());
+
     // List view: scroll to the first event that is today or in the future.
     effect(() => {
       const idx = this.firstFutureIndex();
@@ -563,14 +577,14 @@ export class CalEventList implements OnInit {
       this.navigatedYear = year;
       const currentYear = new Date().getFullYear();
       if (year === currentYear || year === 99) {   // 99 = all years -> today, not the oldest event
-        this.fullCalendar()?.getApi()?.today();
+        this.calendarRef()?.instance.getApi()?.today();
       } else {
         const first = events[0];
         if (!first) return;
         const d = first.startDate;
         if (!d || d.length < 8) return;
         const date = new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8));
-        this.fullCalendar()?.getApi()?.gotoDate(date);
+        this.calendarRef()?.instance.getApi()?.gotoDate(date);
       }
     });
 
@@ -604,7 +618,7 @@ export class CalEventList implements OnInit {
 
   ionViewDidEnter(): void {
     if (!this.isListView()) {
-      setTimeout(() => this.fullCalendar()?.getApi()?.updateSize(), 50);
+      setTimeout(() => this.calendarRef()?.instance.getApi()?.updateSize(), 50);
     }
   }
 
@@ -1177,7 +1191,7 @@ export class CalEventList implements OnInit {
     if (showList === false) {
       // Need to update calendar size after it becomes visible
       setTimeout(() => {
-        const calendarApi = this.fullCalendar()?.getApi();
+        const calendarApi = this.calendarRef()?.instance.getApi();
         if (calendarApi) {
           calendarApi.updateSize();
         }
@@ -1189,7 +1203,7 @@ export class CalEventList implements OnInit {
   protected async onDateClick(arg: any): Promise<void> {
     const now = Date.now();
     const dateStr = arg.dateStr as string;
-    const calApi = this.fullCalendar()?.getApi();
+    const calApi = this.calendarRef()?.instance.getApi();
     const currentView = calApi?.view.type;
 
     if (this.lastClickDateStr === dateStr && now - this.lastClickTime < 300) {
@@ -1262,7 +1276,7 @@ export class CalEventList implements OnInit {
 
   /** The FullCalendar view the user is currently on ('timeGridWeek', 'dayGridMonth', …). */
   private currentViewType(): string | undefined {
-    return this.fullCalendar()?.getApi()?.view.type;
+    return this.calendarRef()?.instance.getApi()?.view.type;
   }
 
   /** Navigate the FullCalendar to the period containing the given storeDate (YYYYMMDD), restoring
@@ -1272,7 +1286,7 @@ export class CalEventList implements OnInit {
     if (!storeDate || storeDate.length < 8) return;
     const iso = `${storeDate.slice(0,4)}-${storeDate.slice(4,6)}-${storeDate.slice(6,8)}`;
     setTimeout(() => {
-      const api = this.fullCalendar()?.getApi();
+      const api = this.calendarRef()?.instance.getApi();
       if (!api) return;
       if (viewType && viewType !== api.view.type) api.changeView(viewType, iso);
       else api.gotoDate(iso);
