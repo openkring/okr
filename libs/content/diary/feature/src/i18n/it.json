@@ -68,5 +68,119 @@
     "conf": "La voce è stata aggiornata.",
     "error": "La voce non è stata aggiornata."
   },
-  "loading": "Caricamento …"
+  "loading": "Caricamento …",
+  "plural": "Diario",
+  "singular": "Voce",
+  "list": {
+    "empty": "Nessuna voce in questo anno.",
+    "allYearsHint": "Caricare tutti gli anni richiede un momento — ci sono oltre 7'000 voci."
+  },
+  "actions": {
+    "title": "Voce",
+    "add": "Nuova voce",
+    "view": "Leggi",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "deleteConfirm": "Vuoi davvero eliminare questa voce?",
+    "weatherRefresh": "Recupera il meteo",
+    "openDrive": "Apri le immagini in Drive"
+  },
+  "create": {
+    "conf": "La voce è stata salvata.",
+    "error": "La voce non è stata salvata.",
+    "exists": "Per questo giorno esiste già una voce — si aprirà per la modifica."
+  },
+  "delete": {
+    "conf": "La voce è stata eliminata.",
+    "error": "La voce non è stata eliminata."
+  },
+  "state": {
+    "all": "Tutte",
+    "final": "Completata",
+    "draft": "Bozza",
+    "placeholder": "Solo immagini"
+  },
+  "scope": {
+    "day": "Giorno",
+    "month": "Mese",
+    "year": "Anno"
+  },
+  "form": {
+    "title": {
+      "label": "Titolo",
+      "placeholder": "Di cosa parlava oggi?"
+    },
+    "scope": {
+      "label": "Periodo"
+    },
+    "date": {
+      "label": "Data"
+    },
+    "year": {
+      "label": "Anno"
+    },
+    "month": {
+      "label": "Mese"
+    },
+    "status": {
+      "label": "Stato",
+      "helper": "Una voce senza meteo resta una bozza."
+    },
+    "text": {
+      "label": "Pensieri personali",
+      "placeholder": "Inizia a scrivere …"
+    },
+    "done": {
+      "label": "Fatto",
+      "placeholder": "Una riga per punto"
+    },
+    "location": {
+      "label": "Luogo",
+      "select": "Scegli o digita un luogo"
+    },
+    "people": {
+      "label": "Persone",
+      "select": "Aggiungi una persona"
+    },
+    "customPeople": {
+      "label": "Altre persone",
+      "helper": "Nomi senza scheda — separati da virgola"
+    },
+    "places": {
+      "label": "Luoghi nel testo"
+    },
+    "events": {
+      "label": "Eventi"
+    },
+    "trip": {
+      "label": "Viaggio",
+      "select": "Scegli un viaggio",
+      "none": "nessuno"
+    }
+  },
+  "weather": {
+    "none": "Nessun meteo",
+    "draftHint": "Non è stato possibile recuperare il meteo. La voce resta una bozza — riprova più tardi con «Recupera il meteo».",
+    "noCoords": "Questo meteo richiede un luogo dalla lista dei luoghi.",
+    "conf": "Il meteo è stato aggiunto."
+  },
+  "view": {
+    "imagesInDrive": "Immagini — apri nella cartella Drive",
+    "doneTitle": "Fatto",
+    "untitled": "senza titolo"
+  },
+  "diaryState": {
+    "all": {
+      "label": "Tutte"
+    },
+    "final": {
+      "label": "Completata"
+    },
+    "draft": {
+      "label": "Bozza"
+    },
+    "placeholder": {
+      "label": "Solo immagini"
+    }
+  }
 }
