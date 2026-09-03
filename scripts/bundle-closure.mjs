@@ -8,7 +8,9 @@
 // and one dynamic form, `import("./x.js")`, which is NOT an edge. The previous version
 // followed only the first form and therefore reported echarts/FullCalendar as absent while
 // Lighthouse fetched them before LCP (spec 1.49, F2). Reports raw AND gzip bytes: gzip is
-// what the release budget (scripts/perf-budget.mjs) compares.
+// what the release budget (scripts/perf-budget.mjs) compares. Probe matching also checks pnpm's
+// `.pnpm/<name>@<version>/` content-addressed store layout — a package's sourcemap paths don't
+// always contain a literal `node_modules/<name>/` segment, so don't drop the `.pnpm` branch.
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -38,7 +40,13 @@ for (const lib of probes) {
   probeHits[lib] = list.filter(f => {
     const mp = path.join(dir, f + '.map'); if (!fs.existsSync(mp)) return false;
     const m = JSON.parse(fs.readFileSync(mp, 'utf8'));
-    return (m.sources || []).some(s => s.includes('node_modules/' + lib + '/') || s.includes('/libs/' + lib + '/'));
+    // pnpm nests package sources under node_modules/.pnpm/<name>@<version>/…, with a scoped
+    // name's slash encoded as '+': @fullcalendar/core -> .pnpm/@fullcalendar+core@6.1.0/…
+    const pnpmName = lib.replace('/', '+');
+    return (m.sources || []).some(s =>
+      s.includes('/node_modules/' + lib + '/') ||
+      s.includes('/.pnpm/' + pnpmName + '@') ||
+      s.includes('/libs/' + lib + '/'));
   });
 }
 
