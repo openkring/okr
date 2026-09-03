@@ -3,8 +3,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Browser } from '@capacitor/browser';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of, timeout } from 'rxjs';
 
+import type { DiaryLocationPick } from '@okr/content-diary-ui';
 import { DiaryService, DiaryWeatherService } from '@okr/content-diary-data-access';
 import {
   DIARY_I18N_KEYS, DiaryStateFilter, diaryStateMatches, diaryYearList, driveFolderUrl, getDiaryIndex,
@@ -79,10 +80,15 @@ export const DiaryStore = signalStore(
       && nameMatches(diary.index || getDiaryIndex(diary), store.searchTerm()))),
   })),
   withMethods(store => {
-    /** Coordinates of a resolved location, for the weather call; undefined for free text. */
+    /**
+     * Coordinates of a resolved location, for the weather call; undefined for free text.
+     * Bounded by a timeout: if the location stream never emits, the save must still proceed —
+     * worst case without weather, which `withWeather` already handles (no-coords toast, status
+     * kept unless the author chose 'final').
+     */
     const coordinatesOf = async (location: AvatarInfo | undefined): Promise<{ latitude: number; longitude: number } | undefined> => {
       if (!location?.key) return undefined;
-      const record = await firstValueFrom(store.locationService.read(location.key));
+      const record = await firstValueFrom(store.locationService.read(location.key).pipe(timeout(5000))).catch(() => undefined);
       return Number.isFinite(record?.latitude) && Number.isFinite(record?.longitude)
         ? { latitude: record!.latitude, longitude: record!.longitude }
         : undefined;
@@ -111,6 +117,17 @@ export const DiaryStore = signalStore(
       return { ...diary, weather };
     };
 
+    /** Adapts `ModelSelectService.selectLocation`'s result to the modal's own `DiaryLocationPick`. */
+    const pickLocation = async (): Promise<DiaryLocationPick | undefined> => {
+      const result = await store.modelSelectService.selectLocation('', false, true);
+      if (!result) return undefined;
+      if (result.kind === 'predefined') {
+        const l = result.location;
+        return { location: { key: l.okey, name1: l.name, name2: '', label: l.name, modelType: 'location', type: l.type ?? '', subType: '' } };
+      }
+      return { customLabel: result.label };
+    };
+
     const openEditor = async (diary: DiaryModel): Promise<DiaryModel | undefined> => {
       const { DiaryEditModal } = await import('@okr/content-diary-ui');
       const modal = await store.modalController.create({
@@ -119,33 +136,25 @@ export const DiaryStore = signalStore(
         componentProps: {
           diary, i18n: store.i18n, currentUser: store.currentUser(), tenantId: store.tenantId(),
           allTags: store.appStore.getTags('diary'), travelTrips: store.travelTrips(), readOnly: false,
+          // pickers are passed IN as callbacks — the modal must not inject ModelSelectService or
+          // the store back (see the dynamic import above; store-modal-dynamic-import memory).
+          selectLocation: pickLocation,
+          selectPerson: () => store.modelSelectService.selectPersonAvatar(undefined, undefined, false, false),
         },
-      });
-      // The pickers live here, not in the modal: the modal is a form container and must not
-      // inject this store back (see the dynamic import above). Ionic sets `componentInstance`
-      // on the modal element as soon as `create()` attaches the component to the DOM — before
-      // `present()` resolves — but the stencil-generated `HTMLIonModalElement` type does not
-      // declare it, hence the cast via `unknown`.
-      // `OutputRef.subscribe` returns an `OutputRefSubscription`; it is not unsubscribed
-      // because the modal (and its outputs) are destroyed on dismiss.
-      const instance = (modal as unknown as { componentInstance: InstanceType<typeof DiaryEditModal> }).componentInstance;
-      instance.locationSelectClicked.subscribe(async () => {
-        const result = await store.modelSelectService.selectLocation('', false, true);
-        if (!result) return;
-        if (result.kind === 'predefined') {
-          const l = result.location;
-          instance.applyLocation({ key: l.okey, name1: l.name, name2: '', label: l.name, modelType: 'location', type: l.type ?? '', subType: '' });
-        } else {
-          instance.applyLocation(undefined, result.label);
-        }
-      });
-      instance.personSelectClicked.subscribe(async () => {
-        const person = await store.modelSelectService.selectPersonAvatar(undefined, undefined, false, false);
-        if (person) instance.applyPerson(person);
       });
       await modal.present();
       const { data, role } = await modal.onWillDismiss<DiaryModel>();
       return role === 'confirm' && data ? data : undefined;
+    };
+
+    const editEntry = async (diary: DiaryModel): Promise<void> => {
+      const edited = await openEditor(diary);
+      if (!edited) return;
+      // the date is the id: changing it is a new document, which this UI does not offer
+      const kept = { ...edited, date: diary.date, okey: diary.okey };
+      const ready = await withWeather(kept);
+      await store.diaryService.update({ ...ready, index: getDiaryIndex(ready) }, store.currentUser());
+      store.diariesResource.reload();
     };
 
     return {
@@ -156,15 +165,18 @@ export const DiaryStore = signalStore(
       /**
        * A new entry for today. The id is deterministic per date, so "one entry per day" is
        * enforced by reading the id first: if today already has an entry, it is opened for
-       * editing instead of being overwritten.
+       * editing instead of being overwritten. An ARCHIVED (soft-deleted) entry at that id is
+       * treated as absent in both checks — `create` (`setDoc`) then overwrites it with the
+       * fresh, non-archived document, so a deleted day is not a dead end that can never be
+       * re-created.
        */
       async add(): Promise<void> {
         if (!store.canWrite()) return;
         const fresh = newDiary(store.tenantId(), store.authorKey());
         const existing = await store.diaryService.readOnce(fresh.okey);
-        if (existing) {
+        if (existing && !existing.isArchived) {
           store.alertService.showToast(store.i18n.create_exists());
-          await this.edit(existing);
+          await editEntry(existing);
           return;
         }
         const edited = await openEditor(fresh);
@@ -172,24 +184,19 @@ export const DiaryStore = signalStore(
         // the date may have been changed in the form: re-key, and re-check the target day
         const keyed = newDiary(store.tenantId(), store.authorKey(), edited.date);
         const target = { ...edited, okey: keyed.okey };
-        if (target.okey !== fresh.okey && await store.diaryService.readOnce(target.okey)) {
-          store.alertService.showToast(store.i18n.create_exists());
-          return;
+        if (target.okey !== fresh.okey) {
+          const targetExisting = await store.diaryService.readOnce(target.okey);
+          if (targetExisting && !targetExisting.isArchived) {
+            store.alertService.showToast(store.i18n.create_exists());
+            return;
+          }
         }
         const ready = await withWeather(target);
         await store.diaryService.create({ ...ready, index: getDiaryIndex(ready) }, store.currentUser());
         store.diariesResource.reload();
       },
 
-      async edit(diary: DiaryModel): Promise<void> {
-        const edited = await openEditor(diary);
-        if (!edited) return;
-        // the date is the id: changing it is a new document, which this UI does not offer
-        const kept = { ...edited, date: diary.date, okey: diary.okey };
-        const ready = await withWeather(kept);
-        await store.diaryService.update({ ...ready, index: getDiaryIndex(ready) }, store.currentUser());
-        store.diariesResource.reload();
-      },
+      edit: editEntry,
 
       async view(diary: DiaryModel): Promise<void> {
         const { DiaryViewModal } = await import('@okr/content-diary-ui');
@@ -200,7 +207,7 @@ export const DiaryStore = signalStore(
         });
         await modal.present();
         const { role } = await modal.onWillDismiss();
-        if (role === 'edit') await this.edit(diary);
+        if (role === 'edit') await editEntry(diary);
       },
 
       async delete(diary: DiaryModel): Promise<void> {

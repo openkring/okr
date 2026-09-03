@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, DiaryModel, TripModel, UserModel } from '@okr/shared-models';
@@ -9,6 +9,12 @@ import { DEFAULT_TAGS } from '@okr/shared-constants';
 
 import { DiaryI18n, formatDiaryDate } from '@okr/content-diary-util';
 import { DiaryForm } from './diary.form';
+
+/** What a location pick resolved to — a known place, free text, or nothing (cancelled). */
+export interface DiaryLocationPick {
+  location?: AvatarInfo;
+  customLabel?: string;
+}
 
 @Component({
   selector: 'okr-diary-edit-modal',
@@ -24,7 +30,7 @@ import { DiaryForm } from './diary.form';
         <okr-diary-form [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n()" [currentUser]="currentUser()" [tenantId]="tenantId()" [allTags]="allTags()"
           [travelTrips]="travelTrips()" [readOnly]="isReadOnly()" [showForm]="showForm()"
-          (locationSelectClicked)="locationSelectClicked.emit()" (personSelectClicked)="personSelectClicked.emit()"
+          (locationSelectClicked)="pickLocation()" (personSelectClicked)="pickPerson()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
       }
     </ion-content>
@@ -33,8 +39,10 @@ import { DiaryForm } from './diary.form';
 export class DiaryEditModal {
   private readonly modalController = inject(ModalController);
 
-  // inputs — no store/service injected here: the store opens this modal via `await import()`
-  // (memory: store-modal-dynamic-import) and hangs the two picker outputs off the instance.
+  // inputs — no store/service injected here: the store passes its two pickers in as callbacks
+  // (memory: store-modal-dynamic-import — the modal must not inject the store/ModelSelectService
+  // back). The ui lib must not depend on @okr/shared-feature, so the callback shape (DiaryLocationPick)
+  // is the modal's own type; the store adapts ModelSelectService's LocationSelectResult to it.
   public readonly diary = input.required<DiaryModel>();
   public readonly i18n = input.required<DiaryI18n>();
   public readonly currentUser = input<UserModel | undefined>();
@@ -42,10 +50,8 @@ export class DiaryEditModal {
   public readonly allTags = input(DEFAULT_TAGS);
   public readonly travelTrips = input<TripModel[]>([]);
   public readonly readOnly = input(false);
-
-  /** The store listens, opens its picker, and calls applyLocation/applyPerson on this instance. */
-  public readonly locationSelectClicked = output<void>();
-  public readonly personSelectClicked = output<void>();
+  public readonly selectLocation = input<() => Promise<DiaryLocationPick | undefined>>();
+  public readonly selectPerson = input<() => Promise<AvatarInfo | undefined>>();
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected formDirty = signal(false);
@@ -65,19 +71,32 @@ export class DiaryEditModal {
     cancel: this.i18n().cancel(), save: this.i18n().save(),
   } as ChangeConfirmationI18n));
 
-  /** Called by the store after its location picker returns. */
+  /** Applies a resolved location pick; also reachable directly for tests. */
   public applyLocation(location: AvatarInfo | undefined, customLabel = ''): void {
     this.formDirty.set(true);
     this.formData.update(vm => ({ ...vm, location, customLocationLabel: location ? '' : customLabel }));
   }
 
-  /** Called by the store after its person picker returns. */
+  /** Applies a resolved person pick; also reachable directly for tests. */
   public applyPerson(person: AvatarInfo): void {
     this.formDirty.set(true);
     this.formData.update(vm => ({
       ...vm,
       people: [...(vm.people ?? []).filter(p => p.key !== person.key), person],
     }));
+  }
+
+  /** The form asked for a location; run the store's picker callback and apply what it resolved. */
+  protected async pickLocation(): Promise<void> {
+    const pick = await this.selectLocation()?.();
+    if (!pick) return;
+    this.applyLocation(pick.location, pick.customLabel ?? '');
+  }
+
+  /** The form asked for a person; run the store's picker callback and apply what it resolved. */
+  protected async pickPerson(): Promise<void> {
+    const person = await this.selectPerson()?.();
+    if (person) this.applyPerson(person);
   }
 
   public async save(): Promise<void> {
