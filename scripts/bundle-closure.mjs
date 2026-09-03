@@ -47,13 +47,17 @@ for (const lib of probes) {
   // pnpm nests package sources under node_modules/.pnpm/<name>@<version>/…, with a scoped
   // name's slash encoded as '+': @fullcalendar/core -> .pnpm/@fullcalendar+core@6.1.0/…
   const pnpmName = lib.replace('/', '+');
+  // A repo lib's source-map paths don't always carry a leading slash (e.g. bare `libs/…`,
+  // not `/libs/…`), so match on a path boundary (start-of-string or '/') instead of requiring
+  // the slash literally.
+  const libRe = new RegExp('(^|/)libs/' + lib.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/');
   probeHits[lib] = list.filter(f => {
     const mp = path.join(dir, f + '.map'); if (!fs.existsSync(mp)) return false;
     const m = readSourceMap(mp); if (!m) return false;
     return (m.sources || []).some(s =>
       s.includes('/node_modules/' + lib + '/') ||
       s.includes('/.pnpm/' + pnpmName + '@') ||
-      s.includes('/libs/' + lib + '/'));
+      libRe.test(s));
   });
 }
 
