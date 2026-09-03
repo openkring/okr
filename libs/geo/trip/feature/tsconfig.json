@@ -48,6 +48,12 @@
       "path": "../../../task/data-access/tsconfig.lib.json"
     },
     {
+      "path": "../../../relationship/reservation/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../relationship/reservation/util/tsconfig.lib.json"
+    },
+    {
       "path": "../../../relationship/responsibility/data-access/tsconfig.lib.json"
     },
     {

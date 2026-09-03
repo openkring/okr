@@ -3,6 +3,7 @@ import { IonButton, IonCard, IonCardContent, IonContent, IonItem, IonLabel, IonN
 
 import { ReservationModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 
@@ -71,6 +72,6 @@ export class BoatReservedInfoModal {
   });
 
   protected async confirm(): Promise<void> {
-    await this.modalController.dismiss(undefined, 'confirm');
+    await dismissOverlay(this.modalController, undefined, 'confirm');
   }
 }
