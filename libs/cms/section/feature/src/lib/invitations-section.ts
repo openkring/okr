@@ -4,6 +4,7 @@ import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, Ion
 import { Router } from '@angular/router';
 
 import { InvitationModel, InvitationsConfig, InvitationsSection, InvitationState } from '@okr/shared-models';
+import { getReservedListHeightPx } from '@okr/cms-section-util';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { getAttendanceColor, getAttendanceIcon, hasRole, isPastDate } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
@@ -45,13 +46,13 @@ import { InvitationSectionStore } from './invitations-section.store';
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-    @if(isLoading()) {
-    <okr-spinner />
-    } @else {        
     <ion-card>
       <okr-optional-card-header [title]="title()" [subTitle]="subTitle()"
         [showInfoButton]="true" [infoLabel]="caleventI18n.info_open()" (infoClicked)="showInfo()" />
-      <ion-card-content>
+      <ion-card-content [style.min-height.px]="reservedHeight()">
+        @if(isLoading()) {
+          <okr-spinner />
+        } @else {
           <ion-grid>
             @for(inv of invitations(); track inv.okey) {
               <ion-row (click)="showActions(inv)">
@@ -79,9 +80,9 @@ import { InvitationSectionStore } from './invitations-section.store';
               </ion-row>
             }
           </ion-grid>
+        }
       </ion-card-content>
     </ion-card>
-    }
   `,
 })
 export class InvitationsSectionComponent implements OnInit {
@@ -118,7 +119,9 @@ export class InvitationsSectionComponent implements OnInit {
   });
   private currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
-  protected isLoading = computed(() => false);
+  // The store's loading state, not a constant — see tasks-section for why.
+  protected readonly isLoading = computed(() => this.store.isLoading());
+  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
 
   // passing constants to the template
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;

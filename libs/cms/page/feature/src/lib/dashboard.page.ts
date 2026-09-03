@@ -40,17 +40,8 @@ import { PageStore } from './page.store';
       margin: 0 auto;
     }
 
-    /* Reserve each section's box BEFORE its data arrives. Sections render empty and then grow
-       once Firestore delivers, which is where the dashboard's CLS comes from — one full-width
-       section accounted for 0.142 of a measured 0.143 (perf-baselines, 2026-08-30).
-       The auto keyword means the browser keeps the real height once it has measured it, so the placeholder
-       size only matters for the very first paint. As a side effect this also skips rendering
-       sections that are off-screen. Must be switched off for print — see the @media print block,
-       otherwise off-screen sections come out blank. */
     .section-item {
       padding: 8px;
-      content-visibility: auto;
-      contain-intrinsic-size: auto 420px;
     }
 
     .section-wrapper {
@@ -187,13 +178,6 @@ import { PageStore } from './page.store';
     @page {
         size: A4;
         margin: 15mm;
-    }
-
-    /* Undo the on-screen deferred rendering — a section that is off-screen when printing
-       would otherwise be laid out at its placeholder height and print blank. */
-    .section-item {
-        content-visibility: visible !important;
-        contain-intrinsic-size: none !important;
     }
 
     /* FORCE FULL HEIGHT */

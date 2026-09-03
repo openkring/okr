@@ -9,6 +9,8 @@ import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { TaskModel, TasksConfig, TasksSection } from '@okr/shared-models';
 
 import { AvatarPipe } from '@okr/avatar-ui';
+import { getReservedListHeightPx } from '@okr/cms-section-util';
+
 import { TasksStore } from './tasks-section.store';
 
 
@@ -38,13 +40,12 @@ import { TasksStore } from './tasks-section.store';
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-    @if(isLoading()) {
-    <okr-spinner />
-    } @else {        
         <ion-card>
             <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" [count]="numberOfTasks()" />
-            <ion-card-content>
-                @if(numberOfTasks() === 0) {
+            <ion-card-content [style.min-height.px]="reservedHeight()">
+                @if(isLoading()) {
+                    <okr-spinner />
+                } @else if(numberOfTasks() === 0) {
                     <okr-empty-list [message]="store.i18n.task_empty()" />
                 } @else {
                     <ion-list lines="inset">
@@ -78,7 +79,6 @@ import { TasksStore } from './tasks-section.store';
                 }
             </ion-card-content>
         </ion-card>
-    }
   `,
 })
 export class TasksSectionComponent implements OnInit {
@@ -100,7 +100,10 @@ export class TasksSectionComponent implements OnInit {
   protected readonly tasks = computed(() => this.store.tasks());
   protected readonly numberOfTasks = computed(() => this.store.totalTaskCount());
   protected currentUser = computed(() => this.store.currentUser());
-  protected isLoading = computed(() => false);
+  // The store's loading state, not a constant: while the query runs the section must show a
+  // spinner, not claim 'no open tasks' and then jump when the rows arrive (CLS 0.136).
+  protected readonly isLoading = computed(() => this.store.isLoading());
+  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

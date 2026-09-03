@@ -13,6 +13,8 @@ import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
 import { showCalEventInfo } from '@okr/calevent-ui';
 import { isAdminMember } from '@okr/subject-group-util';
+import { getReservedListHeightPx } from '@okr/cms-section-util';
+
 import { CalendarStore } from './calendar-section.store';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
@@ -43,14 +45,13 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
-    @if(isLoading()) {
-    <okr-spinner />
-    } @else {        
     <ion-card>
       <okr-optional-card-header [title]="title()" [subTitle]="subTitle()"
         [showInfoButton]="true" [infoLabel]="caleventI18n.info_open()" (infoClicked)="showInfo()" />
-      <ion-card-content>
-        @if(numberOfEvents() === 0) {
+      <ion-card-content [style.min-height.px]="reservedHeight()">
+        @if(isLoading()) {
+          <okr-spinner />
+        } @else if(numberOfEvents() === 0) {
           <okr-empty-list [message]="store.i18n.events_empty()" />
         } @else {
           <ion-list lines="inset">
@@ -67,7 +68,6 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
         }
       </ion-card-content>
     </ion-card>
-    }
   `,
 })
 export class EventsSectionComponent implements OnInit {
@@ -104,7 +104,9 @@ export class EventsSectionComponent implements OnInit {
     await showCalEventInfo(this.modalController, this.store.appStore.appConfig().appName);
   }
 
-  protected isLoading = computed(() => false);
+  // The store's loading state, not a constant — see tasks-section for why.
+  protected readonly isLoading = computed(() => this.store.isLoading());
+  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxEvents()));
   //protected filteredEvents = computed(() => this.eventsStore.filteredEvents());
 
   // passing constants to the template
