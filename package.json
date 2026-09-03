@@ -20,6 +20,7 @@
     "catalogue:doc": "node scripts/check-feature-catalogue.mjs --write-doc",
     "lib-refs": "node scripts/gen-lib-references.mjs",
     "lib-refs:write": "node scripts/gen-lib-references.mjs --write",
+    "perf:budget": "node scripts/perf-budget.mjs",
     "e2e": "nx e2e",
     "dev": "nx serve scs-app",
     "release": "node scripts/release.mjs",

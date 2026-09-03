@@ -179,6 +179,15 @@ async function releaseApp(app) {
     console.log(`\n[3/7] Building ${app} (production, --skip-nx-cache)…`);
     run('bash', ['-c', `rm -rf dist/apps/${app}; set -a; source ./apps/${app}/.env; set +a; pnpm nx build ${app} --configuration production --skip-nx-cache`]);
 
+    // 3a. Bundle budget — the dashboard's static JS closure (gzip) may not grow by more than 5 %
+    //     over perf-budget.json. This is what keeps spec 1.49's diet from eroding one feature at
+    //     a time; a failed gate aborts before anything is deployed. Websites have no dashboard.
+    if (app.endsWith('-app')) {
+      console.log(`\n[3a/7] Bundle budget for ${app}…`);
+      try { run('node', ['scripts/perf-budget.mjs', app]); }
+      catch { abort(`Bundle budget exceeded for ${app}. Run  node scripts/bundle-closure.mjs dist/apps/${app}/browser <lib>  to find the new static edge, or  node scripts/perf-budget.mjs ${app} --write  if the growth is intended.`); }
+    }
+
     // 3b. OSS attribution — must run AFTER the build, because it assembles the
     //     `3rdpartylicenses.txt` that build just emitted. Generating it here (rather than
     //     committing it) is what keeps the attribution from drifting from what actually ships.
