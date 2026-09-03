@@ -18,6 +18,13 @@
     "topUnresolved": "nomi aperti più frequenti:",
     "firstError": "primo errore:"
   },
+  "commit": {
+    "action": "Esegui l'importazione del diario",
+    "running": "Importazione in corso — {done} di {total} voci …",
+    "ok": "L'importazione è terminata: {written} voci salvate.",
+    "failed": "L'importazione è fallita. Puoi riavviare l'esecuzione.",
+    "hint": "Scrive le voci nel database. Esegui prima il test: deve concludersi senza date duplicate."
+  },
   "locations": {
     "title": "Luoghi",
     "hint": "Tutti i luoghi che compaiono nelle tue voci, assegnati e non.",

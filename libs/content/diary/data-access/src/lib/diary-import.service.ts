@@ -79,4 +79,24 @@ export class DiaryImportService {
     const result = await callable({ tenantId });
     return result.data;
   }
+
+  /**
+   * Upserts ONE window of up to 200 diaries and advances the run's cursor. The caller re-invokes
+   * with the returned `okey` as `runId` until `phase === 'done'` — that windowing is the whole
+   * point: a timeout or a transient failure costs one window, not the run.
+   *
+   * Pass `tenantId` to START a run, `runId` to CONTINUE one. Continuing is the common case, and a
+   * run carries its own tenant, so `tenantId` is neither needed nor honoured then.
+   *
+   * Unlike the dry run this WRITES `diaries`. Its collision check only ever sees the current
+   * window, so a dry run reporting `dateCollisions 0` over the whole archive is the precondition
+   * — without it two files sharing a date in different windows overwrite each other silently.
+   */
+  public async commitDiaryImport(request: DiaryImportRequest): Promise<DiaryImportModel> {
+    // One WINDOW, so the function's own 540s ceiling applies here, not the dry run's 3600s.
+    const callable = httpsCallable<DiaryImportRequest, DiaryImportModel>(
+      this.functions, 'commitDiaryImport', { timeout: 540_000 });
+    const result = await callable(request);
+    return result.data;
+  }
 }

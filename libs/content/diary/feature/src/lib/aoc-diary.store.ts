@@ -28,6 +28,9 @@ export type AocDiaryState = {
   isDryRunning: boolean;
   dryRunResult: DiaryImportModel | undefined;
   dryRunError: string | undefined;
+  isCommitting: boolean;
+  commitResult: DiaryImportModel | undefined;
+  commitError: string | undefined;
 };
 
 export const initialState: AocDiaryState = {
@@ -36,6 +39,9 @@ export const initialState: AocDiaryState = {
   isDryRunning: false,
   dryRunResult: undefined,
   dryRunError: undefined,
+  isCommitting: false,
+  commitResult: undefined,
+  commitError: undefined,
 };
 
 /**
@@ -300,6 +306,40 @@ export const AocDiaryStore = signalStore(
       },
 
       /** Full read/parse/resolve/weather pass that writes no diary — safe to repeat. */
+      /**
+       * Runs the import to completion, one window of 200 at a time.
+       *
+       * The loop lives here rather than in the callable because that is what makes a long import
+       * survivable: each invocation writes its window and advances the cursor in `diaryImports`,
+       * so a failure mid-run leaves a resumable run rather than a half-written archive. Progress
+       * is patched after every window, so the screen shows movement over the ~40 calls a full
+       * archive needs instead of one silent multi-minute wait.
+       *
+       * `phase` is the only termination signal — never the processed/total ratio. A file whose
+       * date is missing is counted as processed but never written, so `processed === total` can
+       * be reached while the function still has windows to hand out, and comparing counts would
+       * stop the run early.
+       */
+      async commit(): Promise<void> {
+        patchState(store, { isCommitting: true, commitResult: undefined, commitError: undefined });
+        try {
+          let run = await store.diaryImportService.commitDiaryImport(
+            { tenantId: store.appStore.tenantId() });
+          patchState(store, { commitResult: run });
+          while (run.phase !== 'done') {
+            run = await store.diaryImportService.commitDiaryImport({ runId: run.okey });
+            patchState(store, { commitResult: run });
+          }
+        } catch (error) {
+          // The run row survives in `diaryImports` with its cursor intact — pressing the button
+          // again starts a NEW run, which is safe: the document ids are derived from the date, so
+          // re-importing a window overwrites it with the same content rather than duplicating it.
+          patchState(store, { commitError: `${error}` });
+        } finally {
+          patchState(store, { isCommitting: false });
+        }
+      },
+
       async dryRun(): Promise<void> {
         patchState(store, { isDryRunning: true, dryRunResult: undefined, dryRunError: undefined });
         try {

@@ -18,6 +18,13 @@
     "topUnresolved": "most frequent open names:",
     "firstError": "first error:"
   },
+  "commit": {
+    "action": "Run diary import",
+    "running": "Import running — {done} of {total} entries …",
+    "ok": "The import finished: {written} entries saved.",
+    "failed": "The import failed. You can start the run again.",
+    "hint": "Writes the entries to the database. Run the test first — it has to finish without duplicate dates."
+  },
   "locations": {
     "title": "Places",
     "hint": "Every place your entries mention — matched and unmatched.",

@@ -18,6 +18,13 @@
     "topUnresolved": "noms ouverts les plus fréquents :",
     "firstError": "première erreur :"
   },
+  "commit": {
+    "action": "Lancer l'import du journal",
+    "running": "Import en cours — {done} sur {total} entrées …",
+    "ok": "L'import est terminé : {written} entrées enregistrées.",
+    "failed": "L'import a échoué. Tu peux relancer le traitement.",
+    "hint": "Écrit les entrées dans la base de données. Lance d'abord le test : il doit se terminer sans dates en double."
+  },
   "locations": {
     "title": "Lieux",
     "hint": "Tous les lieux mentionnés dans tes entrées — attribués ou non.",

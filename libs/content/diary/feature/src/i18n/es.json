@@ -18,6 +18,13 @@
     "topUnresolved": "nombres abiertos más frecuentes:",
     "firstError": "primer error:"
   },
+  "commit": {
+    "action": "Ejecutar la importación del diario",
+    "running": "Importación en curso — {done} de {total} entradas …",
+    "ok": "La importación ha terminado: {written} entradas guardadas.",
+    "failed": "La importación ha fallado. Puedes volver a iniciarla.",
+    "hint": "Escribe las entradas en la base de datos. Ejecuta primero la prueba: debe terminar sin fechas duplicadas."
+  },
   "locations": {
     "title": "Lugares",
     "hint": "Todos los lugares que aparecen en tus entradas, asignados y sin asignar.",

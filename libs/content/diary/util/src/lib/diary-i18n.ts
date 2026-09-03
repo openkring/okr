@@ -23,6 +23,11 @@ export const DIARY_I18N_KEYS = {
   dryrun_failed:          PFX + 'dryrun.failed',
   dryrun_top_unresolved:  PFX + 'dryrun.topUnresolved',
   dryrun_first_error:     PFX + 'dryrun.firstError',
+  commit_action:          PFX + 'commit.action',
+  commit_running:         PFX + 'commit.running',
+  commit_ok:              PFX + 'commit.ok',
+  commit_failed:          PFX + 'commit.failed',
+  commit_hint:            PFX + 'commit.hint',
 
   // ─── the two reference lists ─────────────────────────────────────────────────
   locations_title:        PFX + 'locations.title',

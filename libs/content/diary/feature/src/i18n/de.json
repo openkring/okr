@@ -18,6 +18,13 @@
     "topUnresolved": "häufigste offene Namen:",
     "firstError": "erster Fehler:"
   },
+  "commit": {
+    "action": "Diary-Import ausführen",
+    "running": "Import läuft — {done} von {total} Einträgen …",
+    "ok": "Der Import ist durchgelaufen: {written} Einträge gespeichert.",
+    "failed": "Der Import ist fehlgeschlagen. Der Lauf lässt sich erneut starten.",
+    "hint": "Schreibt die Einträge in die Datenbank. Führe zuerst den Testlauf aus — er muss ohne doppelte Daten durchlaufen."
+  },
   "locations": {
     "title": "Orte",
     "hint": "Alle Orte, die in deinen Einträgen vorkommen — mit und ohne Zuordnung.",

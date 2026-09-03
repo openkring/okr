@@ -55,14 +55,25 @@ import { AocDiaryStore } from './aoc-diary.store';
               }
             </ion-button>
             <ion-button fill="outline" (click)="store.dryRun()"
-                        [disabled]="store.isCheckingDrive() || store.isDryRunning()">
+                        [disabled]="store.isCheckingDrive() || store.isDryRunning() || store.isCommitting()">
               @if (store.isDryRunning()) {
                 <ion-spinner name="dots" slot="start" /> {{ store.i18n.dryrun_running() }}
               } @else {
                 {{ store.i18n.dryrun_action() }}
               }
             </ion-button>
+            <!-- The only button here that WRITES. Solid rather than outline so it does not read
+                 as one more harmless diagnostic, and its hint states the dry-run precondition. -->
+            <ion-button (click)="store.commit()"
+                        [disabled]="store.isCheckingDrive() || store.isDryRunning() || store.isCommitting()">
+              @if (store.isCommitting()) {
+                <ion-spinner name="dots" slot="start" /> {{ commitProgress() }}
+              } @else {
+                {{ store.i18n.commit_action() }}
+              }
+            </ion-button>
           </div>
+          <ion-note class="ion-margin-top">{{ store.i18n.commit_hint() }}</ion-note>
         </ion-card-content>
       </ion-card>
 
@@ -76,6 +87,27 @@ import { AocDiaryStore } from './aoc-diary.store';
               account {{ drive.account }} · firstPageFiles {{ drive.firstPageFiles }} ·
               hasMorePages {{ drive.hasMorePages }} ·
               quota {{ drive.quotaUsage }}/{{ drive.quotaLimit }}
+            </ion-note>
+          </ion-card-content>
+        </ion-card>
+      }
+
+      @if (store.commitError(); as failure) {
+        <ion-card>
+          <ion-card-content>
+            <p>{{ store.i18n.commit_failed() }}</p>
+            <ion-note class="samples">{{ failure }}</ion-note>
+          </ion-card-content>
+        </ion-card>
+      }
+
+      @if (finishedCommit(); as run) {
+        <ion-card>
+          <ion-card-content>
+            <p>{{ commitDone() }}</p>
+            <ion-note class="samples">
+              total {{ run.total }} · processed {{ run.processed }} · written {{ run.written }} ·
+              phase {{ run.phase }} · errors {{ run.errors.length }}
             </ion-note>
           </ion-card-content>
         </ion-card>
@@ -163,6 +195,32 @@ export class AocDiary {
     () => Object.keys(this.store.dryRunResult()?.unresolvedLocations ?? {}).length);
   protected readonly weatherDeviationCount = computed(
     () => Object.keys(this.store.dryRunResult()?.weatherDeviations ?? {}).length);
+
+  /**
+   * The commit run's result card, shown only once the run is FINISHED. `commitResult` is patched
+   * after every window, so without this guard the card would appear at window 1 and claim the
+   * import is done while ~40 windows are still to come.
+   */
+  protected readonly finishedCommit = computed(() => {
+    const run = this.store.commitResult();
+    return run && !this.store.isCommitting() && run.phase === 'done' ? run : undefined;
+  });
+
+  // `I18nService.translateAll` resolves each key to a plain Signal<string> and does NOT substitute
+  // parameters — Transloco's own {{…}} placeholders come back empty through that path. So the
+  // strings carry single-brace tokens and are filled here.
+  private fill(text: string, values: Record<string, string | number>): string {
+    return Object.entries(values).reduce((out, [k, v]) => out.split(`{${k}}`).join(`${v}`), text);
+  }
+
+  protected readonly commitProgress = computed(() => {
+    const run = this.store.commitResult();
+    return this.fill(this.store.i18n.commit_running(),
+      { done: run?.processed ?? 0, total: run?.total ?? 0 });
+  });
+
+  protected readonly commitDone = computed(() =>
+    this.fill(this.store.i18n.commit_ok(), { written: this.store.commitResult()?.written ?? 0 }));
 
   /**
    * The five most frequent unresolved slugs of the run, as one line. The full maps are
