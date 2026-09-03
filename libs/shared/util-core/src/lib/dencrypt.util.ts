@@ -1,5 +1,3 @@
-import * as CryptoJS from 'crypto-js';  
-
 /**
  * Encryption/Decryption utility using AES-256-GCM with CrypotJS
  */
@@ -15,7 +13,8 @@ import * as CryptoJS from 'crypto-js';
  */
 export async function encrypt(plainText: string, password: string): Promise<string> {
     if (!password || password.length === 0) return plainText;
-    return CryptoJS.AES.encrypt(plainText.trim(), password.trim()).toString(); 
+    const CryptoJS = (await import('crypto-js')).default;
+    return CryptoJS.AES.encrypt(plainText.trim(), password.trim()).toString();
 }
 
 /**
@@ -31,6 +30,8 @@ export async function encrypt(plainText: string, password: string): Promise<stri
 export async function decrypt(encryptedText: string, password: string): Promise<string> {
     // Check if the decryption password is empty or invalid
     if (!password || password.length === 0) return encryptedText;
+
+    const CryptoJS = (await import('crypto-js')).default;
 
     // Attempt to decrypt the encrypted text using AES-256-GCM decryption
     try {

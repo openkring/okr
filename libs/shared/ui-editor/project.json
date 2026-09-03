@@ -1,0 +1,24 @@
+{
+  "name": "shared-ui-editor",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/ui-editor/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:shared", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/shared/ui-editor",
+        "main": "libs/shared/ui-editor/src/index.ts",
+        "tsConfig": "libs/shared/ui-editor/tsconfig.lib.json",
+        "assets": ["libs/shared/ui-editor/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

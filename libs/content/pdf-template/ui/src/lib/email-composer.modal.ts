@@ -14,9 +14,10 @@ import {
 import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
-  OkrEditor, ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n,
+  ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n,
   EmailInput, EmailInputI18n, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
+import { OkrEditor } from '@okr/shared-ui-editor';
 import { getImgixUrl } from '@okr/shared-util-core';
 import { dismissOverlay, validateVestTree } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';

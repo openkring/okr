@@ -1,5 +1,5 @@
 {
-  "name": "@okr/cms-section-ui",
+  "name": "@okr/shared-ui-editor",
   "version": "0.0.1",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
@@ -7,18 +7,11 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
-    "@okr/avatar-data-access": "*",
     "@okr/shared-models": "*",
-    "@okr/shared-config": "*",
-    "@okr/shared-constants": "*",
-    "@okr/shared-categories": "*",
-    "@okr/shared-ui": "*",
-    "@okr/shared-ui-editor": "*",
     "@okr/shared-pipes": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/cms-section-util": "*"
+    "@okr/shared-ui": "*"
   }
 }
-

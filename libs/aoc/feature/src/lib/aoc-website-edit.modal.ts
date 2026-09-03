@@ -2,7 +2,8 @@ import { Component, computed, inject, input, linkedSignal } from '@angular/core'
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonButtons, IonContent, IonItem, IonInput, IonLabel, IonToggle, IonToolbar, ModalController, IonTextarea } from '@ionic/angular/standalone';
 
-import { OkrEditor, ButtonCopyI18n, Header } from '@okr/shared-ui';
+import { ButtonCopyI18n, Header } from '@okr/shared-ui';
+import { OkrEditor } from '@okr/shared-ui-editor';
 import { WebsiteContentModel } from '@okr/shared-models';
 import { deepEqual, safeStructuredClone } from '@okr/shared-util-core';
 import { dismissOverlay } from '@okr/shared-util-angular';

@@ -15,6 +15,7 @@
     "@okr/shared-data-access": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-ui": "*",
+    "@okr/shared-ui-editor": "*",
     "@okr/shared-categories": "*",
     "@okr/shared-pipes": "*",
     "@okr/auth-data-access": "*",

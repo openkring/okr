@@ -3,7 +3,8 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { ViewPositions } from '@okr/shared-categories';
 import { EditorConfig, ViewPosition } from '@okr/shared-models';
-import { OkrEditor, ButtonCopyI18n, CategoryOld, CategoryOldI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { ButtonCopyI18n, CategoryOld, CategoryOldI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { OkrEditor } from '@okr/shared-ui-editor';
 
 interface EditorConfigI18n {
   editor_title:               Signal<string>;

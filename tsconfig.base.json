@@ -225,6 +225,7 @@
       "@okr/shared-models": ["libs/shared/models/src/index.ts"],
       "@okr/shared-pipes": ["libs/shared/pipes/src/index.ts"],
       "@okr/shared-ui": ["libs/shared/ui/src/index.ts"],
+      "@okr/shared-ui-editor": ["libs/shared/ui-editor/src/index.ts"],
       "@okr/shared-util-angular": ["libs/shared/util-angular/src/index.ts"],
       "@okr/shared-util-core": ["libs/shared/util-core/src/index.ts"],
       "@okr/shared-util-functions": ["libs/shared/util-functions/src/index.ts"],

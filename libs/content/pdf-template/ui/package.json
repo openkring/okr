@@ -11,6 +11,7 @@
     "@okr/shared-models": "*",
     "@okr/shared-pipes": "*",
     "@okr/shared-ui": "*",
+    "@okr/shared-ui-editor": "*",
     "@okr/shared-feature": "*",
     "@okr/shared-util-core": "*",
     "@okr/shared-util-angular": "*",

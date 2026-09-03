@@ -8,7 +8,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { coerceBoolean } from '@okr/shared-util-core';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
-import { ButtonCopyI18n } from './button-copy';
+import { ButtonCopyI18n } from '@okr/shared-ui';
 import { EditorToolbar } from './editor-toolbar';
 import { copyToClipboard, showToast } from '@okr/shared-util-angular';
 
