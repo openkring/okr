@@ -2241,6 +2241,36 @@ const meeting: FeatureBlock = {
 };
 
 /**
+ * `libs/content/diary/{data-access,feature,ui,util}` — the author's private day notes (spec
+ * 1.34). Owns `diaries` and `diaryImports`; the AOC import screen stays in the `aoc` block
+ * (see `aoc-diary` there), this block is the READING and WRITING surface.
+ *
+ * `defaultAvailability: 'beta'` + a `feature-rollout/diary` doc with `allowTenants: ['bka']`:
+ * the spec calls it a product feature for every tenant, prototyped in `bka` — beta is the
+ * catalogue's word for exactly that. Widening it is one rollout-doc edit, no code.
+ *
+ * `dependsOn: ['geo', 'subject']` by import evidence: the location picker
+ * (`@okr/location-data-access`, `LocationSelectModal`) and the person picker. Deliberately NOT
+ * `trip`: the diary reads its travel trips through its own service so that enabling the diary
+ * does not switch the Logbuch on for a tenant that never asked for it (`bka` has it off).
+ */
+const diary: FeatureBlock = {
+  id: 'diary',
+  bundle: 'special',
+  label: '@tenant/util.feature.diary.label',
+  icon: 'document',
+  defaultAvailability: 'beta',
+  dependsOn: ['geo', 'subject'],
+  collections: ['diaries', 'diaryImports'],
+  menu: [
+    { key: 'diary', name: 'diary', url: '/diary/all/c-diary', action: 'navigate', roleNeeded: 'registered', icon: 'document', label: '@item.diary' },
+    { key: 'c-diary', name: 'c-diary', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
+      { key: 'diary-add', name: 'diary-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add', label: '@item.diary-add' },
+    ] },
+  ],
+};
+
+/**
  * `libs/system/alias/*` — der generische Alias-Resolver (Spec 2026-08-22, TOC 3.21).
  *
  * Der Kern ist `(space, alias) → target`; der URL-Shortener ist nur sein erster Konsument.
@@ -2305,7 +2335,7 @@ export const FEATURE_BLOCKS: FeatureBlock[] = [
   subject, relationship, vcard,
   resource, mobility,
   finance, esign, pdfTemplate,
-  documentBlock, meeting,
+  documentBlock, meeting, diary,
   chat, socialFeed, forms,
   business, alias, weather,
 ];

@@ -223,19 +223,20 @@ describe('deriveEnabledFeatures — owner override (R-8)', () => {
   it('the R-8 shape — every catalogue id in, every non-disabled block out', () => {
     // Exactly what the script asks for okr: hand it the whole catalogue and let the gate
     // subtract. Nothing names social-feed or games.
-    // `internal` is subtracted for the same reason `disabled` is: the gate runs
-    // `resolveAvailability`, which offers an internal block only to a tenant an allow-listing
-    // rollout doc names — and `rollouts: []` names nobody. The `business` block (partner
-    // channel) is the first internal one, which is what made this filter's omission visible.
+    // `internal` and `beta` are subtracted for the same reason `disabled` is: the gate runs
+    // `resolveAvailability`, which offers an internal or beta block only to a tenant an
+    // allow-listing rollout doc names — and `rollouts: []` names nobody. The `business` block
+    // (partner channel) is the first internal one, which is what made this filter's omission
+    // visible; `diary` (spec 1.34) is the first beta one.
     const expected = FEATURE_BLOCKS
-      .filter(b => b.defaultAvailability !== 'disabled' && b.defaultAvailability !== 'internal')
+      .filter(b => b.defaultAvailability !== 'disabled' && b.defaultAvailability !== 'internal' && b.defaultAvailability !== 'beta')
       .map(b => b.id).sort();
     const out = deriveEnabledFeatures({
       catalogue: FEATURE_BLOCKS, rollouts: [], menuDocs: [], tenantId: 'okr',
       override: override(FEATURE_BLOCKS.map(b => b.id)),
     });
     expect(out.enabled).toEqual(expected);
-    expect(out.enabled).toHaveLength(32);   // +1: `meeting` (spec 2.7) 2026-08-14, +1: `alias` (spec 3.21) 2026-08-22, +1: `trip` split out of core `geo` 2026-08-24, +1: `weather` (spec 1.45) 2026-08-29
+    expect(out.enabled).toHaveLength(32);   // +1: `meeting` (spec 2.7) 2026-08-14, +1: `alias` (spec 3.21) 2026-08-22, +1: `trip` split out of core `geo` 2026-08-24, +1: `weather` (spec 1.45) 2026-08-29; `diary` (beta) does not add to this count
     FEATURE_BLOCKS.filter(b => b.defaultAvailability === 'disabled')
       .forEach(b => expect(out.enabled).not.toContain(b.id));
   });

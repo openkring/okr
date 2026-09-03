@@ -547,6 +547,8 @@
     "aoc-kiosk": "Kiosk",
     "aoc-allocation": "Assegnazione dei tenant",
     "aoc-diary": "Diario",
+    "diary": "Diario",
+    "diary-add": "Nuova voce",
     "trip-callsupport": "Chiamare il supporto",
     "chat-support": "Chiedere supporto",
     "chat-notfall": "Segnalare un'emergenza"

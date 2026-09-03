@@ -122,6 +122,9 @@
     "meeting": {
       "label": "Séances & procès-verbaux"
     },
+    "diary": {
+      "label": "Journal"
+    },
     "alias": {
       "label": "Liens courts & codes QR"
     },

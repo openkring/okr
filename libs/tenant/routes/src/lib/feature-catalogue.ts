@@ -1126,6 +1126,18 @@ const meeting: BlockRoutes = {
   }],
 };
 
+/** The author's diary (spec 1.34) — one list route; view and edit are modals off the list. */
+const diary: BlockRoutes = {
+  id: 'diary',
+  routes: (): Route[] => [
+    {
+      path: 'diary',
+      canActivate: [isAuthenticatedGuard],
+      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/content-diary-feature').then(m => m.DiaryList) }],
+    },
+  ],
+};
+
 /**
  * `alias` — der Alias-Resolver (Spec 2026-08-22, TOC 3.21).
  *
@@ -1168,7 +1180,7 @@ export const FEATURE_ROUTES: BlockRoutes[] = [
   subject, relationship, vcard,
   resource, mobility,
   finance, esign, pdfTemplate,
-  documentBlock, meeting,
+  documentBlock, meeting, diary,
   chat, socialFeed, forms,
   business, alias, weather,
 ];
