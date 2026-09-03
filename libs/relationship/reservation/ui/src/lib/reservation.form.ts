@@ -169,7 +169,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
-      @if(hasRole('admin')) {
+      @if(hasRole('resourceAdmin')) {
         <okr-notes-input [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [readOnly]="isReadOnly()" />
       }
     </form>
