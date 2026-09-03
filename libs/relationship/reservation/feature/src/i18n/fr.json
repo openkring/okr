@@ -178,6 +178,9 @@
       "label": "Entretien / réparation",
       "description": "Réservation pour réparation ou entretien."
     },
+    "blocked": {
+      "label": "Bloqué"
+    },
     "course": {
       "label": "Cours",
       "description": "Réservé pour un cours"

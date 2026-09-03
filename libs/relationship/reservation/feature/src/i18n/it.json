@@ -178,6 +178,9 @@
       "label": "Manutenzione / riparazione",
       "description": "Prenotazione per riparazione o manutenzione."
     },
+    "blocked": {
+      "label": "Bloccato"
+    },
     "course": {
       "label": "Corso",
       "description": "Prenotato per un corso"

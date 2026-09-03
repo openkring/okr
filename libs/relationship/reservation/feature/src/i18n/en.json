@@ -178,6 +178,9 @@
       "label": "Maintenance / repair",
       "description": "Reservation for repair or maintenance."
     },
+    "blocked": {
+      "label": "Blocked"
+    },
     "course": {
       "label": "Course",
       "description": "Reserved for a course"
