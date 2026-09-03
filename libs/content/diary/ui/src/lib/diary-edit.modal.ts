@@ -29,7 +29,7 @@ export interface DiaryLocationPick {
       @if (formData(); as formData) {
         <okr-diary-form [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n()" [currentUser]="currentUser()" [tenantId]="tenantId()" [allTags]="allTags()"
-          [travelTrips]="travelTrips()" [readOnly]="isReadOnly()" [showForm]="showForm()"
+          [travelTrips]="travelTrips()" [readOnly]="isReadOnly()" [lockDate]="lockDate()" [showForm]="showForm()"
           (locationSelectClicked)="pickLocation()" (personSelectClicked)="pickPerson()"
           (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
       }
@@ -50,6 +50,8 @@ export class DiaryEditModal {
   public readonly allTags = input(DEFAULT_TAGS);
   public readonly travelTrips = input<TripModel[]>([]);
   public readonly readOnly = input(false);
+  /** Editing an existing entry: scope and date/year/month are locked (see DiaryForm). */
+  public readonly lockDate = input(false);
   public readonly selectLocation = input<() => Promise<DiaryLocationPick | undefined>>();
   public readonly selectPerson = input<() => Promise<AvatarInfo | undefined>>();
 

@@ -31,7 +31,10 @@ const initialState: DiaryStoreState = {
   selectedState: 'all',
 };
 
-/** okr-list-filter reports "all years" as a number below 1000 (see yearMatches in shared-categories). */
+/**
+ * The year-select sentinel for "all years" is 99 (see YearSelect in @okr/shared-ui); any value
+ * below this threshold is treated as "all years" so a plain <1000 comparison stays robust.
+ */
 const ALL_YEARS = 1000;
 
 export const DiaryStore = signalStore(
@@ -128,14 +131,14 @@ export const DiaryStore = signalStore(
       return { customLabel: result.label };
     };
 
-    const openEditor = async (diary: DiaryModel): Promise<DiaryModel | undefined> => {
+    const openEditor = async (diary: DiaryModel, lockDate: boolean): Promise<DiaryModel | undefined> => {
       const { DiaryEditModal } = await import('@okr/content-diary-ui');
       const modal = await store.modalController.create({
         component: DiaryEditModal,
         cssClass: 'wide-modal',
         componentProps: {
           diary, i18n: store.i18n, currentUser: store.currentUser(), tenantId: store.tenantId(),
-          allTags: store.appStore.getTags('diary'), travelTrips: store.travelTrips(), readOnly: false,
+          allTags: store.appStore.getTags('diary'), travelTrips: store.travelTrips(), readOnly: false, lockDate,
           // pickers are passed IN as callbacks — the modal must not inject ModelSelectService or
           // the store back (see the dynamic import above; store-modal-dynamic-import memory).
           selectLocation: pickLocation,
@@ -148,10 +151,12 @@ export const DiaryStore = signalStore(
     };
 
     const editEntry = async (diary: DiaryModel): Promise<void> => {
-      const edited = await openEditor(diary);
+      const edited = await openEditor(diary, true);
       if (!edited) return;
-      // the date is the id: changing it is a new document, which this UI does not offer
-      const kept = { ...edited, date: diary.date, okey: diary.okey };
+      // the date is the id: changing it is a new document, which this UI does not offer.
+      // scope is pinned along with date — the two must agree, and the form itself locks the
+      // scope/date controls in edit mode (DiaryForm `lockDate`), so this is a defensive mirror.
+      const kept = { ...edited, date: diary.date, scope: diary.scope, okey: diary.okey };
       const ready = await withWeather(kept);
       await store.diaryService.update({ ...ready, index: getDiaryIndex(ready) }, store.currentUser());
       store.diariesResource.reload();
@@ -179,7 +184,7 @@ export const DiaryStore = signalStore(
           await editEntry(existing);
           return;
         }
-        const edited = await openEditor(fresh);
+        const edited = await openEditor(fresh, false);
         if (!edited) return;
         // the date may have been changed in the form: re-key, and re-check the target day
         const keyed = newDiary(store.tenantId(), store.authorKey(), edited.date);
@@ -223,8 +228,8 @@ export const DiaryStore = signalStore(
         if (!coords) { store.alertService.showToast(store.i18n.weather_no_coords()); return; }
         const weather = await store.weatherService.fetch({ date: diary.date, ...coords }).catch(() => null);
         if (!weather) { store.alertService.showToast(store.i18n.weather_draft_hint()); return; }
+        // DiaryService.update already raises its own confirmation toast — no second one here.
         await store.diaryService.update({ ...diary, weather }, store.currentUser());
-        store.alertService.showToast(store.i18n.weather_conf());
         store.diariesResource.reload();
       },
 

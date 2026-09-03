@@ -6,11 +6,11 @@ import { DiaryModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AvatarDisplay } from '@okr/avatar-ui';
-import { weatherCodeToIcon } from '@okr/weather-util';
+import { weatherCodeToIcon, WEATHER_ICON_SET } from '@okr/weather-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 import {
-  DiaryI18n, diaryStateOf, diaryWeatherLine, driveFolderUrl, formatDiaryDate, hasDiaryWeather, renderDiaryHtml,
+  DiaryI18n, diaryWeatherLine, driveFolderUrl, formatDiaryDate, hasDiaryWeather, renderDiaryHtml,
 } from '@okr/content-diary-util';
 
 @Component({
@@ -19,7 +19,6 @@ import {
   imports: [Header, AvatarDisplay, SvgIconPipe, IonContent, IonItem, IonLabel, IonList, IonNote, IonChip, IonIcon, IonButton],
   styles: [`
     .body { padding: 16px; line-height: 1.5; }
-    .body img { display: none; }
     .meta ion-chip { margin-right: 4px; }
   `],
   template: `
@@ -32,7 +31,7 @@ import {
             <p>{{ diary().location?.label || diary().location?.name1 || diary().customLocationLabel }}</p>
           </ion-label>
           @if (diary().scope === 'day' && hasWeather()) {
-            <ion-icon slot="end" src="{{ weatherIcon() | svgIcon }}" />
+            <ion-icon slot="end" src="{{ weatherIcon() | svgIcon: weatherIconSet }}" />
             <ion-note slot="end">{{ weatherLine() }}</ion-note>
           }
         </ion-item>
@@ -88,7 +87,7 @@ export class DiaryViewModal {
   protected readonly hasWeather = computed(() => hasDiaryWeather(this.diary().weather));
   protected readonly weatherLine = computed(() => diaryWeatherLine(this.diary().weather));
   protected readonly weatherIcon = computed(() => weatherCodeToIcon(this.diary().weather.code));
-  protected readonly state = computed(() => diaryStateOf(this.diary()));
+  protected readonly weatherIconSet = WEATHER_ICON_SET;
 
   protected async openDrive(): Promise<void> {
     await Browser.open({ url: this.driveUrl() });

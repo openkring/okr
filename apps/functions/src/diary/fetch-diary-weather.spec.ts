@@ -6,6 +6,7 @@ vi.mock('./weather', async (importOriginal) => ({
 }));
 
 import { weatherForDay } from './fetch-diary-weather';
+import { fetchWeatherRange } from './weather';
 
 describe('weatherForDay', () => {
   it('returns the merged day', async () => {
@@ -18,5 +19,11 @@ describe('weatherForDay', () => {
   it('returns null when the API has no row for the day', async () => {
     const w = await weatherForDay({ date: '20260902', latitude: 47.24, longitude: 8.72 }, '20260903');
     expect(w).toBeNull();
+  });
+  it('returns null for a future date without calling the weather API', async () => {
+    const callsBefore = vi.mocked(fetchWeatherRange).mock.calls.length;
+    const w = await weatherForDay({ date: '20260904', latitude: 47.24, longitude: 8.72 }, '20260903');
+    expect(w).toBeNull();
+    expect(vi.mocked(fetchWeatherRange).mock.calls.length).toBe(callsBefore);
   });
 });

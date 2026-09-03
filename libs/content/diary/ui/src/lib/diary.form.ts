@@ -48,7 +48,7 @@ import {
                 <ion-col size="12" size-md="6">
                   <ion-item lines="none">
                     <ion-select [label]="i18n().form_scope_label()" [value]="scope()" interface="popover"
-                      [disabled]="isReadOnly()" (ionChange)="onScopeChange($event.detail.value)">
+                      [disabled]="isReadOnly() || lockDate()" (ionChange)="onScopeChange($event.detail.value)">
                       <ion-select-option value="day">{{ i18n().scope_day() }}</ion-select-option>
                       <ion-select-option value="month">{{ i18n().scope_month() }}</ion-select-option>
                       <ion-select-option value="year">{{ i18n().scope_year() }}</ion-select-option>
@@ -62,17 +62,17 @@ import {
                 @if (scope() === 'day') {
                   <ion-col size="12" size-md="6">
                     <okr-date-input [i18n]="dateI18n()" [storeDate]="date()" (storeDateChange)="onDayChange($event)"
-                      [readOnly]="isReadOnly()" [showDateSelect]="true" />
+                      [readOnly]="isReadOnly() || lockDate()" [showDateSelect]="true" />
                   </ion-col>
                 } @else {
                   <ion-col size="6" size-md="3">
                     <okr-number-input [i18n]="yearI18n()" [value]="year()" (valueChange)="onYearChange($event)"
-                      [readOnly]="isReadOnly()" [min]="1000" [max]="9999" [integer]="true" />
+                      [readOnly]="isReadOnly() || lockDate()" [min]="1000" [max]="9999" [integer]="true" />
                   </ion-col>
                   @if (scope() === 'month') {
                     <ion-col size="6" size-md="3">
                       <okr-number-input [i18n]="monthI18n()" [value]="month()" (valueChange)="onMonthChange($event)"
-                        [readOnly]="isReadOnly()" [min]="1" [max]="12" [integer]="true" />
+                        [readOnly]="isReadOnly() || lockDate()" [min]="1" [max]="12" [integer]="true" />
                     </ion-col>
                   }
                 }
@@ -178,6 +178,8 @@ export class DiaryForm {
   public readonly tenantId = input.required<string>();
   public readonly allTags = input(DEFAULT_TAGS);
   public readonly readOnly = input(true);
+  /** Edit mode: scope and date/year/month are locked — changing the date is delete + create, not an edit. */
+  public readonly lockDate = input(false);
   public readonly showForm = input(true);
   public readonly travelTrips = input<TripModel[]>([]);
 
