@@ -11,6 +11,7 @@ import { DateFormat, getTodayStr, removeKeyFromOkrModel } from '@okr/shared-util
 import { toAliasSlug } from '@okr/system-alias-util';
 import {
   DiaryFile,
+  diaryKey,
   normaliseLocationLabel,
   parseDiaryMarkdown,
   toDiaryModel,
@@ -92,7 +93,7 @@ export interface DiaryImportRequest {
  * "Deterministische Dokument-IDs" in the design doc.
  */
 export function diaryDocId(tenantId: string, authorKey: string, date: string): string {
-  return `${tenantId}__${authorKey}__${date}`;
+  return diaryKey(tenantId, authorKey, date);
 }
 
 /**
