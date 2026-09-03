@@ -5,13 +5,15 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { AppStore, KioskStatus, KioskStatusService, LocationSelectResult, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AvatarInfo, PersonModel, TaskModel, TripModel, UserModel } from '@okr/shared-models';
+import { AvatarInfo, PersonModel, ReservationModel, TaskModel, TripModel, UserModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
 import { fill, getAvatarInfoForCurrentUser, getFullName, getYear, hasRole, isKioskOnly, nameMatches } from '@okr/shared-util-core';
 import { yearMatches } from '@okr/shared-categories';
 
 import { TaskService } from '@okr/task-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
+import { ReservationService } from '@okr/relationship-reservation-data-access';
+import { findActiveReservationForResource } from '@okr/relationship-reservation-util';
 import { LocationService } from '@okr/location-data-access';
 
 import { TripService } from '@okr/trip-data-access';
@@ -75,6 +77,7 @@ export const TripStore = signalStore(
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
     injector: inject(Injector),
+    reservationService: inject(ReservationService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(TRIP_I18N_KEYS),
@@ -102,7 +105,13 @@ export const TripStore = signalStore(
       stream: ({params}) => {
         return store.locationService.list(params.type, 'distance', 'asc');
       }
-    })
+    }),
+    reservationsResource: rxResource({
+      params: () => ({
+        tenantId: store.appStore.tenantId()
+      }),
+      stream: () => store.reservationService.list(),
+    }),
   })),
   withComputed(store => ({
     currentUser: computed(() => store.appStore.currentUser()),
@@ -118,7 +127,8 @@ export const TripStore = signalStore(
     locked: computed(() => store.kioskStatusService.locked()),
     kiosks: computed<KioskStatus[]>(() => store.kiosksResource.value() ?? []),
     locations: computed(() => store.locationsResource.value() ?? []),
-    trips: computed(() => store.tripsResource.value() ?? [])
+    trips: computed(() => store.tripsResource.value() ?? []),
+    reservations: computed(() => store.reservationsResource.value() ?? []),
   })),
   withComputed(store => ({
     // Drives the label of the admin's toggle. "Locked" means EVERY device is locked — with one
@@ -227,16 +237,37 @@ export const TripStore = signalStore(
     },
 
     async selectResourceAvatar(excludeTripKey = ''): Promise<AvatarInfo | undefined> {
-      // selectedTag is a raw tag name matched against resource.tags — never an i18n key
-      const boat = await store.modelSelectService.selectResourceAvatar('okBoat', undefined, store.i18n.select_boat_title());
-      if (!boat) return undefined;
-      // a boat that is still out on an open trip cannot be taken out again
-      if (findOpenTripForBoat(store.trips(), boat.key, excludeTripKey)) {
-        await store.alertService.showToast(fill(store.i18n.select_boat_in_use(), { name: boat.name2 ?? boat.name1 }));
-        return undefined;
+      // Loops so a refused boat sends the user straight back to the picker: the booking
+      // continues with another boat instead of being aborted (see the boat-reservation spec §3).
+      for (;;) {
+        // selectedTag is a raw tag name matched against resource.tags — never an i18n key
+        const boat = await store.modelSelectService.selectResourceAvatar('okBoat', undefined, store.i18n.select_boat_title());
+        if (!boat) return undefined;
+        // a boat that is still out on an open trip cannot be taken out again
+        if (findOpenTripForBoat(store.trips(), boat.key, excludeTripKey)) {
+          await store.alertService.showToast(fill(store.i18n.select_boat_in_use(), { name: boat.name2 ?? boat.name1 }));
+          return undefined;
+        }
+        // a boat locked for repair or reserved for another purpose is explained, then re-asked
+        const reservation = findActiveReservationForResource(store.reservations(), boat.key);
+        if (reservation) {
+          await this.showBoatReserved(reservation);
+          continue;
+        }
+        const subType = await this.resolveRigging(boat.subType);
+        return subType === boat.subType ? boat : { ...boat, subType };
       }
-      const subType = await this.resolveRigging(boat.subType);
-      return subType === boat.subType ? boat : { ...boat, subType };
+    },
+
+    /** Explains an active reservation and waits — the caller then re-opens the boat picker. */
+    async showBoatReserved(reservation: ReservationModel): Promise<void> {
+      const { BoatReservedInfoModal } = await import('./boat-reserved-info.modal');
+      const modal = await store.modalController.create({
+        component: BoatReservedInfoModal,
+        componentProps: { reservation },
+      });
+      await modal.present();
+      await modal.onDidDismiss();
     },
 
     /**
