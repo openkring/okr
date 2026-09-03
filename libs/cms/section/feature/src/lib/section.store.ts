@@ -328,6 +328,11 @@ export const _SectionStore = signalStore(
         if (!downloadUrl) return;
 
         // 3) update the section with the new file URL
+        // legacy button sections were stored without an action object; Firestore reads do not
+        // apply the model defaults, so seed it before writing into it (see BUTTON_CONFIG_SHAPE).
+        if (!section.properties.action) {
+          section.properties.action = { type: ButtonAction.Download, url: '' };
+        }
         section.properties.action.url = downloadUrl;
         section.properties.action.altText = file.name;
         section.properties.action.type = ButtonAction.Download;

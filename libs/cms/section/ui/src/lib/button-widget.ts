@@ -83,8 +83,8 @@ export class ButtonWidget {
     const iconSize = explicitIconSize ?? Math.floor(buttonSize * 0.6);
     return {'font-size': iconSize + 'px' };
   });
-  protected actionType = computed(() => this.section().properties?.action.type ?? ButtonAction.None);
-  protected url = computed(() => this.section().properties?.action.url ?? '');
+  protected actionType = computed(() => this.section().properties?.action?.type ?? ButtonAction.None);
+  protected url = computed(() => this.section().properties?.action?.url ?? '');
   protected buttonStyle = computed(() => {
     return {
       '--button-width': this.width(),
