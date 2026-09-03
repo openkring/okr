@@ -1,10 +1,10 @@
-import { computed, inject } from '@angular/core';
+import { Injector, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { map } from 'rxjs';
+import { from, map, switchMap } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
-import { MatrixChatService } from '@okr/chat-data-access';
+import type { MatrixChatService } from '@okr/chat-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 
@@ -20,7 +20,13 @@ export const MessagesStore = signalStore(
   withState(initialState),
   withProps(() => ({
     appStore: inject(AppStore),
-    matrixService: inject(MatrixChatService),
+    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
+    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). The class identity is the
+    // same module instance, so injector.get() resolves the root-provided singleton.
+    matrixService: ((injector: Injector) => {
+      let p: Promise<MatrixChatService> | undefined;
+      return () => (p ??= import('@okr/chat-data-access').then(m => injector.get(m.MatrixChatService)));
+    })(inject(Injector)),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
   })),
   withProps((store) => ({
@@ -29,7 +35,8 @@ export const MessagesStore = signalStore(
         maxItems: store.maxItems(),
       }),
       stream: ({ params }) => {
-        return store.matrixService.rooms.pipe(
+        return from(store.matrixService()).pipe(
+          switchMap(svc => svc.rooms),
           map(rooms => {
             const unreadRooms = rooms
               .filter(r => r.unreadCount > 0)

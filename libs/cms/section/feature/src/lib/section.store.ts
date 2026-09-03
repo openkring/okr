@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, Signal } from '@angular/core';
+import { computed, inject, Injectable, Injector, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -23,7 +23,7 @@ import { createSection, narrowSection, SECTION_I18N_KEYS } from '@okr/cms-sectio
 
 import { MessageCenterModal } from './message-center.modal';
 import { CardSelectModal } from './card-select.modal';
-import { MatrixChatService } from '@okr/chat-data-access';
+import type { MatrixChatService } from '@okr/chat-data-access';
 
 /**
  * `groups/<okey>` of the group that answers the emergency button — the document id, not the
@@ -63,7 +63,13 @@ export const _SectionStore = signalStore(
   withProps(() => ({
     sectionService: inject(SectionService),
     uploadService: inject(UploadService),
-    chatService: inject(MatrixChatService),
+    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
+    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). The class identity is the
+    // same module instance, so injector.get() resolves the root-provided singleton.
+    chatService: ((injector: Injector) => {
+      let p: Promise<MatrixChatService> | undefined;
+      return () => (p ??= import('@okr/chat-data-access').then(m => injector.get(m.MatrixChatService)));
+    })(inject(Injector)),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
@@ -451,8 +457,9 @@ export const _SectionStore = signalStore(
         try {
           // Initialise on demand rather than bailing out — the button is reachable from a
           // content page the user may have opened without ever touching the chat.
-          await store.chatService.ensureInitialized();
-          const { roomId } = await store.chatService.requestGroupRoomAccess(NOTFALL_GROUP_KEY);
+          const chat = await store.chatService();
+          await chat.ensureInitialized();
+          const { roomId } = await chat.requestGroupRoomAccess(NOTFALL_GROUP_KEY);
           const name = currentUser.firstName + ' ' + currentUser.lastName + ' ';
           // Own number, read from the address-directory projection rather than the `addresses`
           // vault: the projection is already streamed and is the registered-visible path, so
@@ -464,9 +471,9 @@ export const _SectionStore = signalStore(
           // while, and a denied or slow fix must still produce an alarm.
           const position = await this.getCurrentPosition();
           if (position) {
-            await store.chatService.sendLocation(roomId, name + store.i18n.emergency_needs_help() + phoneLine, position.latitude, position.longitude);
+            await chat.sendLocation(roomId, name + store.i18n.emergency_needs_help() + phoneLine, position.latitude, position.longitude);
           } else {
-            await store.chatService.sendMessage(roomId, name + store.i18n.emergency_needs_help_unknown_location() + phoneLine);
+            await chat.sendMessage(roomId, name + store.i18n.emergency_needs_help_unknown_location() + phoneLine);
           }
           await showToast(store.toastController, store.i18n.emergency_sent());
         } catch (error) {
