@@ -54,6 +54,6 @@ export class CommentService {
     }
     const query = getSystemQuery(this.tenantId);
     query.push({ key: 'parentKey', operator: '==', value: parentKey });
-    return this.firestoreService.searchData<CommentModel>(`${CommentCollection}`, query, 'creationDateTime', 'desc');
+    return this.firestoreService.searchData<CommentModel>(`${CommentCollection}`, query, 'creationDateTime', 'asc');
   }
 }
