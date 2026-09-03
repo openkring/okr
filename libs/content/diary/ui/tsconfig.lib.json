@@ -17,6 +17,7 @@
   "references": [
     { "path": "../../../avatar/ui/tsconfig.lib.json" },
     { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../../geo/weather/util/tsconfig.lib.json" },
     { "path": "../../../shared/constants/tsconfig.lib.json" },
     { "path": "../../../shared/models/tsconfig.lib.json" },
     { "path": "../../../shared/pipes/tsconfig.lib.json" },
