@@ -22,7 +22,7 @@ import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPol
 import { showCalendarSync } from '@okr/calevent-ui';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calevent-ui';
 import { browseUrl } from '@okr/subject-address-util';
-import { MatrixChatService } from '@okr/chat-data-access';
+import type { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
@@ -324,10 +324,19 @@ export class CalEventList implements OnInit {
   private selectedQuickEntryLocation = signal<LocationModel | null>(null);
   protected quickEntryText = signal('');
   private isSettingQuickEntryValue = false;
-  private readonly matrixChatService = inject(MatrixChatService);
   private readonly router = inject(Router);
   private readonly appNavigationService = inject(AppNavigationService);
   private readonly injector = inject(Injector);
+  // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
+  // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
+  // section stores.
+  private readonly matrixChatService = ((injector: Injector) => {
+    let p: Promise<MatrixChatService> | undefined;
+    return () => (p ??= import('@okr/chat-data-access')
+      .then(m => injector.get(m.MatrixChatService))
+      // A failed chunk load must not poison the cache: drop it so the next call retries.
+      .catch(e => { p = undefined; throw e; }));
+  })(this.injector);
   private calendarHost = viewChild('calendarHost', { read: ViewContainerRef });
   protected calendarRef = signal<ComponentRef<CaleventFullcalendarView> | undefined>(undefined);
 
@@ -1112,8 +1121,9 @@ export class CalEventList implements OnInit {
   /** Opens (or creates) the direct chat room with the given person — same flow as PersonStore.chat(). */
   private async chatWith(personKey: string): Promise<void> {
     try {
-      await this.matrixChatService.ensureInitialized();
-      const room = await this.matrixChatService.createDirectRoom(personKey);
+      const matrix = await this.matrixChatService();
+      await matrix.ensureInitialized();
+      const room = await matrix.createDirectRoom(personKey);
       await navigateByUrl(this.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
     } catch (err) {
       warn(`CalEventList.chatWith: could not open the direct chat with ${personKey}: ${err}`);

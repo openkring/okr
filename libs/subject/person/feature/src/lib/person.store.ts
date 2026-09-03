@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
@@ -22,7 +22,7 @@ import { PersonService, SensitivePersonData } from '@okr/subject-person-data-acc
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@okr/subject-person-util';
 import { browseUrl, stringifyPostalAddress } from '@okr/subject-address-util';
 
-import { MatrixChatService } from '@okr/chat-data-access';
+import type { MatrixChatService } from '@okr/chat-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { VcardExportService } from '@okr/vcard-feature';
 import { ActivityService } from '@okr/activity-data-access';
@@ -63,7 +63,16 @@ export const PersonStore = signalStore(
     alertService: inject(AlertService),
     toastController: inject(ToastController),
     geocodeService: inject(GeocodingService),
-    matrixService: inject(MatrixChatService),
+    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
+    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
+    // section stores.
+    matrixService: ((injector: Injector) => {
+      let p: Promise<MatrixChatService> | undefined;
+      return () => (p ??= import('@okr/chat-data-access')
+        .then(m => injector.get(m.MatrixChatService))
+        // A failed chunk load must not poison the cache: drop it so the next call retries.
+        .catch(e => { p = undefined; throw e; }));
+    })(inject(Injector)),
     activityService: inject(ActivityService),
     vcardExportService: inject(VcardExportService),
     i18nService: inject(I18nService),
@@ -447,8 +456,9 @@ export const PersonStore = signalStore(
             // Matrix is initialized in the background after login (MatrixInitializationService).
             // Await the idempotent, promise-cached init so opening a direct chat works even
             // before the user has visited the chat overview (which otherwise primes the client).
-            await store.matrixService.ensureInitialized();
-            const room = await store.matrixService.createDirectRoom(person.okey);
+            const matrix = await store.matrixService();
+            await matrix.ensureInitialized();
+            const room = await matrix.createDirectRoom(person.okey);
             await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
           } catch (error) {
             const msg = error instanceof Error ? error.message : 'Could not start chat';

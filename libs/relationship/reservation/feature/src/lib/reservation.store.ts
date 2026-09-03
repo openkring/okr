@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -21,7 +21,7 @@ import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { CalEventEditModal } from '@okr/calevent-feature';
 import { isCalEvent } from '@okr/calevent-util';
 import { browseUrl } from '@okr/subject-address-util';
-import { MatrixChatService } from '@okr/chat-data-access';
+import type { MatrixChatService } from '@okr/chat-data-access';
 import { ActivityService } from '@okr/activity-data-access';
 import { Router } from '@angular/router';
 
@@ -66,7 +66,16 @@ export const ReservationStore = signalStore(
     alertController: inject(AlertController),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
-    matrixService: inject(MatrixChatService),
+    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
+    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
+    // section stores.
+    matrixService: ((injector: Injector) => {
+      let p: Promise<MatrixChatService> | undefined;
+      return () => (p ??= import('@okr/chat-data-access')
+        .then(m => injector.get(m.MatrixChatService))
+        // A failed chunk load must not poison the cache: drop it so the next call retries.
+        .catch(e => { p = undefined; throw e; }));
+    })(inject(Injector)),
     activityService: inject(ActivityService),
     personService: inject(PersonService),
     toastController: inject(ToastController),
@@ -424,8 +433,9 @@ export const ReservationStore = signalStore(
           // Matrix is initialized in the background after login (MatrixInitializationService).
           // Await the idempotent, promise-cached init so opening a direct chat works even
           // before the user has visited the chat overview (which otherwise primes the client).
-          await store.matrixService.ensureInitialized();
-          const room = await store.matrixService.createDirectRoom(key);
+          const matrix = await store.matrixService();
+          await matrix.ensureInitialized();
+          const room = await matrix.createDirectRoom(key);
           void store.activityService.log('chat', 'createdirect', store.currentUser(), `SUCCESS: ${key}`);
           await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
         } catch (error) {

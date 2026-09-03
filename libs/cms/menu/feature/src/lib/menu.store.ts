@@ -1,10 +1,10 @@
-import { computed, effect, inject, Injectable } from '@angular/core';
+import { computed, effect, inject, Injectable, Injector } from '@angular/core';
 import { rxResource, toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { MenuController, ModalController, PopoverController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { Browser } from '@capacitor/browser';
-import { Observable, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
 import { ENV } from '@okr/shared-config';
@@ -20,7 +20,7 @@ import { MenuItemsStore } from './menu-items.store';
 
 import { AuthService } from '@okr/auth-data-access';
 import { ActivityService } from '@okr/activity-data-access';
-import { MatrixChatService } from '@okr/chat-data-access';
+import type { MatrixChatService } from '@okr/chat-data-access';
 
 import { MenuService } from '@okr/cms-menu-data-access';
 import { getTarget, isMenuItem } from '@okr/cms-menu-util';
@@ -61,7 +61,16 @@ export const _MenuStore = signalStore(
     popoverController: inject(PopoverController),
     authService: inject(AuthService),
     activityService: inject(ActivityService),
-    matrixChatService: inject(MatrixChatService),
+    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
+    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
+    // section stores.
+    matrixChatService: ((injector: Injector) => {
+      let p: Promise<MatrixChatService> | undefined;
+      return () => (p ??= import('@okr/chat-data-access')
+        .then(m => injector.get(m.MatrixChatService))
+        // A failed chunk load must not poison the cache: drop it so the next call retries.
+        .catch(e => { p = undefined; throw e; }));
+    })(inject(Injector)),
     i18nService: inject(I18nService),
     versionService: inject(VersionCheckService),
     alertService: inject(AlertService),
@@ -96,7 +105,8 @@ export const _MenuStore = signalStore(
         // All other menu instances return 0 immediately — no Matrix connection.
         if (name !== 'dashboard' || !personKey) return of(0);
 
-        return store.matrixChatService.rooms.pipe(
+        return from(store.matrixChatService()).pipe(
+          switchMap(svc => svc.rooms),
           map(rooms => rooms.reduce((sum: number, r) => sum + r.unreadCount, 0))
         );
       }
@@ -285,7 +295,8 @@ export const _MenuStore = signalStore(
               const currentPath = store.router.url.split('?')[0];
               if (menuItem.url === currentPath && menuItem.url.includes('/chat/')) {
                 // Already on the chat page: toggle the room list instead of navigating
-                store.matrixChatService.toggleRoomList();
+                const matrix = await store.matrixChatService();
+                matrix.toggleRoomList();
               } else {
                 await this.selectMenuItem(store.router, menuItem);
               }

@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -25,7 +25,7 @@ import { AddressService } from '@okr/subject-address-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { browseUrl } from '@okr/subject-address-util';
-import { MatrixChatService } from '@okr/chat-data-access';
+import type { MatrixChatService } from '@okr/chat-data-access';
 import { InvoiceNewModal } from '@okr/finance-invoice-feature';
 import { VcardExportService, VcardExportTarget } from '@okr/vcard-feature';
 
@@ -87,7 +87,16 @@ export const _MembershipStore = signalStore(
     personService: inject(PersonService),
     addressService: inject(AddressService),
     ownershipService: inject(OwnershipService),
-    matrixService: inject(MatrixChatService),
+    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
+    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
+    // section stores.
+    matrixService: ((injector: Injector) => {
+      let p: Promise<MatrixChatService> | undefined;
+      return () => (p ??= import('@okr/chat-data-access')
+        .then(m => injector.get(m.MatrixChatService))
+        // A failed chunk load must not poison the cache: drop it so the next call retries.
+        .catch(e => { p = undefined; throw e; }));
+    })(inject(Injector)),
     activityService: inject(ActivityService),
     vcardExportService: inject(VcardExportService),
     personEditModalClass: inject(PERSON_EDIT_MODAL, { optional: true }),
@@ -628,7 +637,8 @@ export const _MembershipStore = signalStore(
               if (data.orgModelType === GroupModelName && data.memberModelType === PersonModelName) {
                 // invite the new member to the group's Matrix chat room
                 try {
-                  await store.matrixService.inviteToGroupRoom(data.orgKey, data.memberKey);
+                  const matrix = await store.matrixService();
+                  await matrix.inviteToGroupRoom(data.orgKey, data.memberKey);
                 } catch (err) {
                   console.warn('MembershipStore.edit: Could not invite to group chat:', err);
                 }
@@ -695,8 +705,9 @@ export const _MembershipStore = signalStore(
           // Matrix is initialized in the background after login (MatrixInitializationService).
           // Await the idempotent, promise-cached init so opening a direct chat works even
           // before the user has visited the chat overview (which otherwise primes the client).
-          await store.matrixService.ensureInitialized();
-          const room = await store.matrixService.createDirectRoom(membership.memberKey);
+          const matrix = await store.matrixService();
+          await matrix.ensureInitialized();
+          const room = await matrix.createDirectRoom(membership.memberKey);
           void store.activityService.log('chat', 'createdirect', store.currentUser(), `SUCCESS: ${membership.memberKey}`);
           await navigateByUrl(store.router, '/private/chat/c-contentpage', { selectedRoom: room.roomId });
         } catch (error) {

@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -21,7 +21,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { LocationService } from '@okr/location-data-access';
-import { MatrixChatService } from '@okr/chat-data-access';
+import type { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
@@ -84,7 +84,16 @@ export const CalEventStore = signalStore(
     locationService: inject(LocationService),
     modelSelectService: inject(ModelSelectService),
     i18nService: inject(I18nService),
-    matrixChatService: inject(MatrixChatService),
+    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
+    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
+    // section stores.
+    matrixChatService: ((injector: Injector) => {
+      let p: Promise<MatrixChatService> | undefined;
+      return () => (p ??= import('@okr/chat-data-access')
+        .then(m => injector.get(m.MatrixChatService))
+        // A failed chunk load must not poison the cache: drop it so the next call retries.
+        .catch(e => { p = undefined; throw e; }));
+    })(inject(Injector)),
     invitationService: inject(InvitationService),
     aliasMintService: inject(AliasMintService)
   })),
@@ -493,8 +502,9 @@ export const CalEventStore = signalStore(
           const functions = getFunctions(getApp(), 'europe-west6');
           const fn = httpsCallable<{ groupId: string }, { roomId: string }>(functions, 'requestGroupRoomAccess');
           const { data } = await fn({ groupId });
-          await store.matrixChatService.ensureInitialized();
-          await store.matrixChatService.sendMessage(data.roomId, message);
+          const matrix = await store.matrixChatService();
+          await matrix.ensureInitialized();
+          await matrix.sendMessage(data.roomId, message);
         } catch (err) {
           warn(`CalEventStore.notifyGroupRoom: ${err}`);
           await showToast(store.toastController, store.i18n.schedule_no_room());

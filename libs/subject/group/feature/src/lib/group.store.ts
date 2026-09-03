@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { firstValueFrom, of } from 'rxjs';
 import { Router } from '@angular/router';
@@ -17,7 +17,7 @@ import { GroupService } from '@okr/subject-group-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { createGroupMembership } from '@okr/relationship-membership-util';
-import { MatrixChatService } from '@okr/chat-data-access';
+import type { MatrixChatService } from '@okr/chat-data-access';
 import { getUniqueGroupKey, getVisibleGroupKeys, GROUP_I18N_KEYS } from '@okr/subject-group-util';
 
 import { GroupEditModal } from './group-edit.modal';
@@ -52,7 +52,16 @@ export const GroupStore = signalStore(
     modalController: inject(ModalController),
     alertService: inject(AlertService),
     toastController: inject(ToastController),
-    chatService: inject(MatrixChatService),
+    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
+    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
+    // section stores.
+    chatService: ((injector: Injector) => {
+      let p: Promise<MatrixChatService> | undefined;
+      return () => (p ??= import('@okr/chat-data-access')
+        .then(m => injector.get(m.MatrixChatService))
+        // A failed chunk load must not poison the cache: drop it so the next call retries.
+        .catch(e => { p = undefined; throw e; }));
+    })(inject(Injector)),
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({
@@ -286,7 +295,8 @@ export const GroupStore = signalStore(
             if (data.hasChat) {
               const chatId = await this.createChatSection(data);
               await this.createGroupPage(data, 'chat', store.i18n.chat_group_name(), chatId);
-              await store.chatService.createGroupRoom(data.okey, [], store.i18n.chat_group_name() + ': ' + data.name);
+              const matrix = await store.chatService();
+              await matrix.createGroupRoom(data.okey, [], store.i18n.chat_group_name() + ': ' + data.name);
             }
           } else {
             await store.groupService.update(data, store.currentUser());
