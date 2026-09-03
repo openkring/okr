@@ -40,8 +40,24 @@
     "person": {
       "required": "Please state who is reporting."
     },
+    "lockBoat": {
+      "label": "Lock the boat",
+      "helper": "The boat cannot be booked again until the damage is fixed and the lock is lifted.",
+      "name": "Locked: {name}",
+      "error": "The report was filed, but the boat could not be locked."
+    },
     "conf": "Your report has been submitted.",
     "error": "The report could not be submitted. Please try again."
+  },
+  "boatReserved": {
+    "title": "Boat unavailable",
+    "maintenance": "This boat is locked because of a damage.",
+    "blocked": "This boat is reserved for another purpose.",
+    "other": "This boat is currently unavailable.",
+    "note": "Reason",
+    "until": "Locked until {date}",
+    "openEnd": "Locked until further notice",
+    "confirm": "Choose another boat"
   },
   "search": {
     "label": "Search location"

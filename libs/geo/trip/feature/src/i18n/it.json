@@ -40,8 +40,24 @@
     "person": {
       "required": "Indica chi effettua la segnalazione."
     },
+    "lockBoat": {
+      "label": "Blocca la barca",
+      "helper": "La barca potrà essere prenotata di nuovo solo quando il danno sarà riparato e il blocco rimosso.",
+      "name": "Bloccata: {name}",
+      "error": "La segnalazione è stata registrata, ma non è stato possibile bloccare la barca."
+    },
     "conf": "La tua segnalazione è stata inviata.",
     "error": "Non è stato possibile inviare la segnalazione. Riprova."
+  },
+  "boatReserved": {
+    "title": "Barca non disponibile",
+    "maintenance": "Questa barca è bloccata a causa di un danno.",
+    "blocked": "Questa barca è riservata per un altro scopo.",
+    "other": "Questa barca al momento non è disponibile.",
+    "note": "Motivo",
+    "until": "Bloccata fino al {date}",
+    "openEnd": "Bloccata fino a nuovo avviso",
+    "confirm": "Scegli un'altra barca"
   },
   "search": {
     "label": "Cerca luogo"

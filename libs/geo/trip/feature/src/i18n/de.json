@@ -40,8 +40,24 @@
     "person": {
       "required": "Bitte gib an, wer die Meldung macht."
     },
+    "lockBoat": {
+      "label": "Boot sperren",
+      "helper": "Das Boot kann erst wieder gebucht werden, wenn der Schaden behoben und die Sperre aufgehoben ist.",
+      "name": "Gesperrt: {name}",
+      "error": "Die Meldung ist erfasst, aber das Boot konnte nicht gesperrt werden."
+    },
     "conf": "Deine Meldung wurde übermittelt.",
     "error": "Die Meldung konnte nicht übermittelt werden. Bitte versuche es nochmals."
+  },
+  "boatReserved": {
+    "title": "Boot nicht verfügbar",
+    "maintenance": "Dieses Boot ist wegen eines Schadens gesperrt.",
+    "blocked": "Dieses Boot ist für einen anderen Zweck reserviert.",
+    "other": "Dieses Boot ist zurzeit nicht verfügbar.",
+    "note": "Grund",
+    "until": "Gesperrt bis {date}",
+    "openEnd": "Gesperrt bis auf Weiteres",
+    "confirm": "Anderes Boot wählen"
   },
   "search": {
     "label": "Ort suchen"

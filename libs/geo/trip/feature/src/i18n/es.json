@@ -40,8 +40,24 @@
     "person": {
       "required": "Indica quién realiza el aviso."
     },
+    "lockBoat": {
+      "label": "Bloquear el barco",
+      "helper": "El barco no se podrá reservar de nuevo hasta que el daño esté reparado y se levante el bloqueo.",
+      "name": "Bloqueado: {name}",
+      "error": "El aviso se ha registrado, pero no se ha podido bloquear el barco."
+    },
     "conf": "Tu aviso se ha enviado.",
     "error": "No se ha podido enviar el aviso. Inténtalo de nuevo."
+  },
+  "boatReserved": {
+    "title": "Barco no disponible",
+    "maintenance": "Este barco está bloqueado por un daño.",
+    "blocked": "Este barco está reservado para otro uso.",
+    "other": "Este barco no está disponible en este momento.",
+    "note": "Motivo",
+    "until": "Bloqueado hasta el {date}",
+    "openEnd": "Bloqueado hasta nuevo aviso",
+    "confirm": "Elegir otro barco"
   },
   "search": {
     "label": "Buscar lugar"

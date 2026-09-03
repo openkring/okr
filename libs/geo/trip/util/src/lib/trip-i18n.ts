@@ -52,6 +52,19 @@ export const TRIP_I18N_KEYS = {
   report_message_label:     PFX + 'report.message.label',
   report_person_required:   PFX + 'report.person.required',
 
+  report_lock_boat_label:   PFX + 'report.lockBoat.label',
+  report_lock_boat_helper:  PFX + 'report.lockBoat.helper',
+  report_lock_name:         PFX + 'report.lockBoat.name',
+  report_lock_error:        PFX + 'report.lockBoat.error',
+  boat_reserved_title:      PFX + 'boatReserved.title',
+  boat_reserved_maintenance: PFX + 'boatReserved.maintenance',
+  boat_reserved_blocked:    PFX + 'boatReserved.blocked',
+  boat_reserved_other:      PFX + 'boatReserved.other',
+  boat_reserved_note:       PFX + 'boatReserved.note',
+  boat_reserved_until:      PFX + 'boatReserved.until',
+  boat_reserved_open_end:   PFX + 'boatReserved.openEnd',
+  boat_reserved_confirm:    PFX + 'boatReserved.confirm',
+
   search:                   PFX + 'search.label',
 
   info_intro:               PFX + 'info.intro',
