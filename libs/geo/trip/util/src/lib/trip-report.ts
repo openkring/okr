@@ -12,10 +12,12 @@ export interface TripReport {
   person?: AvatarInfo;
   /** the free-text description of the damage or the bug */
   message: string;
+  /** damage reports only: also lock the boat (an open-ended 'maintenance' reservation) */
+  lockBoat: boolean;
 }
 
 export function newTripReport(boat?: AvatarInfo, person?: AvatarInfo): TripReport {
-  return { boat, person, message: '' };
+  return { boat, person, message: '', lockBoat: false };
 }
 
 export const tripReportValidations = staticSuite((report: TripReport, field?: string) => {
