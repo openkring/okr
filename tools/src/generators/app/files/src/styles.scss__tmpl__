@@ -129,6 +129,104 @@ ion-modal ion-toolbar {
     0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
+/**
+ * Auto-height is the DEFAULT for modals: the box shrinks to the height of its content
+ * instead of Ionic's fixed 600px desktop default.
+ *
+ * Ionic gives both `.ion-page` (`contain: layout size style`) and `ion-content`
+ * (`height: 100%; contain: size style`) a zero intrinsic height by design — neither can
+ * grow with its children. So we relax the *size* containment on both and take
+ * ion-content's inner scroll part out of absolute positioning. --max-height caps the
+ * growth; beyond that the body scrolls exactly as before.
+ *
+ * A modal opts OUT by passing one of the fixed-size cssClasses in $fixed-size-modals —
+ * do that whenever the body has to fill the box (maps, image/PDF viewers, canvases).
+ * Keep that list in sync with the classes defined in this file. `.auto-height-modal`
+ * stays available for a modal that carries a fixed-size class but still wants to shrink.
+ */
+$fixed-size-modals: '.color-modal, .date-modal, .date-modal2, .duration-picker-modal, .full-modal, .full-screen-modal, .fullscreen-modal, .list-modal, .list-modal-wide, .login-modal, .map-modal, .small-modal, .chip-modal, .tag-modal, .time-modal, .upload-modal, .wide-modal, .zoom-modal';
+
+ion-modal:not(:is(#{$fixed-size-modals})),
+ion-modal.auto-height-modal {
+  --height: auto;
+  --max-height: 85vh;
+  --border-radius: 10px;
+  --box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  &::part(content) {
+    position: relative;
+    display: block;
+    contain: content;
+  }
+
+  .ion-page {
+    position: relative;
+    contain: content;
+    max-height: 85vh;
+    overflow: auto;
+  }
+
+  ion-content {
+    height: auto;
+    flex: 0 1 auto;
+    contain: none;
+
+    // The inner scroll part has to stop being a *scroll container* too, not just
+    // be taken out of absolute positioning. Ionic styles it
+    // `overflow-y: auto; overscroll-behavior-y: contain`; flowed out of `position:
+    // absolute` it grows with its content and has nothing left to scroll, but
+    // `overscroll-behavior: contain` still swallows the wheel/touch gesture instead
+    // of chaining it to the scrolling .ion-page above — so a modal taller than
+    // --max-height could not be scrolled at all from within its body.
+    // `overflow: visible` must set BOTH axes: a `hidden`/`visible` pair computes
+    // back to `auto` and the element would stay a scroll container.
+    &::part(scroll) {
+      position: relative;
+      overflow: visible;
+    }
+  }
+
+  // Once the content does exceed --max-height, the .ion-page scrolls — keep the
+  // header toolbar (and its close button) and the save/cancel bar in view.
+  //
+  // A sticky element can only move inside its own containing block, i.e. inside
+  // its PARENT box. `<ion-header>` sits inside the `<okr-header>` wrapper element,
+  // which is exactly as tall as the header itself — so sticking ion-header there
+  // does nothing. The wrapper components have to be the sticky elements instead;
+  // their parent is the modal component host, which spans the whole scrolled body.
+  //
+  // The change-confirmation bar stacks directly below the header, so its offset is
+  // the header height. A modal whose header carries more than one toolbar overrides
+  // --okr-sticky-header-height on its host.
+  --okr-sticky-header-height: 56px; // md toolbar min-height
+
+  html.ios & {
+    --okr-sticky-header-height: 44px; // ios toolbar min-height
+  }
+
+  ion-header,
+  okr-header,
+  okr-change-confirmation {
+    display: block;
+    position: sticky;
+    // ion-modal ion-toolbar is translucent — without an opaque backing the scrolled
+    // content would show through the pinned bars.
+    background: var(--ion-background-color, #fff);
+  }
+
+  ion-header,
+  okr-header {
+    top: 0;
+    z-index: 11;
+  }
+
+  okr-change-confirmation {
+    top: var(--okr-sticky-header-height);
+    z-index: 10;
+  }
+}
+
 .zoom-modal {
   --height: 600px;
   --width: 600px;

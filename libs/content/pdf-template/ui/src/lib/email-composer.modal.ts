@@ -46,6 +46,9 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
     IonSegment, IonSegmentButton, IonList, IonItem,
   ],
   styles: [`
+    /* two toolbars in the header (title + segment) — the sticky change-confirmation
+       bar stacks below both, not below a single 56px toolbar. */
+    :host { --okr-sticky-header-height: 112px; }
     @media (width <= 600px) { ion-card { margin: 5px; } }
     .editor-actions { display: flex; justify-content: flex-end; align-items: center; gap: 4px; padding: 4px 12px; }
     .attachment { padding: 0 12px; }
