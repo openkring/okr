@@ -127,6 +127,10 @@
     "title": "Invitation locked",
     "hint": "The organisation has locked the responses to this invitation. Your answer can no longer be changed."
   },
+  "eventLocked": {
+    "title": "Event locked",
+    "hint": "This event is locked. You can no longer change your response to the invitation."
+  },
   "comment": {
     "pending": "Invitation reset to open.",
     "accepted": "Invitation accepted.",

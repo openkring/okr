@@ -127,6 +127,10 @@
     "title": "Invito bloccato",
     "hint": "L'organizzazione ha bloccato le risposte a questo invito. La tua risposta non può più essere modificata."
   },
+  "eventLocked": {
+    "title": "Appuntamento bloccato",
+    "hint": "Questo appuntamento è bloccato. Non puoi più modificare la tua risposta all'invito."
+  },
   "comment": {
     "pending": "Invito reimpostato su in sospeso.",
     "accepted": "Invito accettato.",

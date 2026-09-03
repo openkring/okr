@@ -127,6 +127,10 @@
     "title": "Invitación bloqueada",
     "hint": "La organización ha bloqueado las respuestas a esta invitación. Tu respuesta ya no se puede cambiar."
   },
+  "eventLocked": {
+    "title": "Cita bloqueada",
+    "hint": "Esta cita está bloqueada. Ya no puedes cambiar tu respuesta a la invitación."
+  },
   "comment": {
     "pending": "Invitación restablecida a pendiente.",
     "accepted": "Invitación aceptada.",

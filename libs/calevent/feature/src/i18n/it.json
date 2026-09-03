@@ -46,6 +46,21 @@
   "download": {
     "ics": "Scarica appuntamento (ICS)"
   },
+  "lock": {
+    "label": "Blocca appuntamento",
+    "confirm": "Vuoi davvero bloccare questo appuntamento? In seguito non sarà più possibile modificare iscrizioni, disdette e risposte agli inviti.",
+    "conf": "L'appuntamento è bloccato."
+  },
+  "unlock": {
+    "label": "Sblocca appuntamento",
+    "confirm": "Vuoi sbloccare di nuovo questo appuntamento?",
+    "conf": "L'appuntamento è di nuovo sbloccato."
+  },
+  "locked": {
+    "title": "Appuntamento bloccato",
+    "hint": "Questo appuntamento è bloccato. Non puoi più modificare la tua partecipazione o la tua risposta all'invito.",
+    "banner": "L'appuntamento è bloccato"
+  },
   "cancelEvent": {
     "label": "Avviso di annullamento",
     "placeholder": "Motivo dell’annullamento, ad es. «Annullato per allerta temporale.»",

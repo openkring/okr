@@ -46,6 +46,21 @@
   "download": {
     "ics": "Termin herunterladen (ICS)"
   },
+  "lock": {
+    "label": "Termin sperren",
+    "confirm": "Soll der Termin wirklich gesperrt werden? Danach können An- und Abmeldungen sowie Antworten auf Einladungen nicht mehr geändert werden.",
+    "conf": "Der Termin ist gesperrt."
+  },
+  "unlock": {
+    "label": "Termin entsperren",
+    "confirm": "Soll der Termin wieder entsperrt werden?",
+    "conf": "Der Termin ist wieder entsperrt."
+  },
+  "locked": {
+    "title": "Termin gesperrt",
+    "hint": "Dieser Termin ist gesperrt. Du kannst deine Teilnahme oder deine Antwort auf die Einladung nicht mehr ändern.",
+    "banner": "Termin ist gesperrt"
+  },
   "cancelEvent": {
     "label": "Absagemitteilung",
     "placeholder": "Grund der Absage, z.B. \"Wegen Sturmwarnung abgesagt.\"",

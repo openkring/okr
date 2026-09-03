@@ -127,6 +127,10 @@
     "title": "Einladung gesperrt",
     "hint": "Die Organisation hat die Antworten auf diese Einladung gesperrt. Deine Antwort kann nicht mehr geändert werden."
   },
+  "eventLocked": {
+    "title": "Termin gesperrt",
+    "hint": "Dieser Termin ist gesperrt. Du kannst deine Antwort auf die Einladung nicht mehr ändern."
+  },
   "comment": {
     "pending": "Einladung zurückgesetzt auf offen.",
     "accepted": "Einladung angenommen.",

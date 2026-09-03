@@ -40,6 +40,9 @@ import { AttendeesAccordion } from './attendees-accordion';
       line-height: 1.45;
     }
     ion-card.personal-hint ion-icon { font-size: 20px; flex: 0 0 auto; margin-top: 1px; }
+    ion-card.lock-banner { background: var(--ion-color-warning); color: var(--ion-color-warning-contrast); margin: 5px; }
+    ion-card.lock-banner ion-card-content { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    ion-card.lock-banner ion-icon { font-size: 20px; flex: 0 0 auto; }
   `],
   template: `
     <!-- the advanced-settings toggle lives in the toolbar, left of the close button -->
@@ -50,6 +53,14 @@ import { AttendeesAccordion } from './attendees-accordion';
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
     <ion-content class="ion-no-padding">
+      @if(calevent().isLocked) {
+        <ion-card class="lock-banner">
+          <ion-card-content>
+            <ion-icon src="{{ 'lock-closed' | svgIcon }}" />
+            <span>{{ i18n.locked_banner() }}</span>
+          </ion-card-content>
+        </ion-card>
+      }
       @if(isNewPersonal()) {
         <!-- a personal event is invisible to everyone but its organiser and invitees; say so up
              front, before the user fills in a form expecting series/chat/documents -->

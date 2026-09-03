@@ -46,6 +46,21 @@
   "download": {
     "ics": "Download appointment (ICS)"
   },
+  "lock": {
+    "label": "Lock event",
+    "confirm": "Do you really want to lock this event? Afterwards, sign-ups, cancellations and invitation responses can no longer be changed.",
+    "conf": "The event is locked."
+  },
+  "unlock": {
+    "label": "Unlock event",
+    "confirm": "Do you want to unlock this event again?",
+    "conf": "The event is unlocked again."
+  },
+  "locked": {
+    "title": "Event locked",
+    "hint": "This event is locked. You can no longer change your attendance or your response to the invitation.",
+    "banner": "Event is locked"
+  },
   "cancelEvent": {
     "label": "Cancellation notice",
     "placeholder": "Reason for the cancellation, e.g. \"Cancelled because of the storm warning.\"",

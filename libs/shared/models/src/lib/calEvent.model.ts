@@ -56,6 +56,7 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
   public maxAttendees = 0;
   public state: 'proposed' | 'provisional' | 'definitive' | 'cancelled' = 'definitive'; // scheduling state; 'cancelled' = the event was called off
   public cancelMessage = DEFAULT_NOTES; // why the event was cancelled; shown as a red banner, only set when state === 'cancelled'
+  public isLocked = false; // frozen by an organiser/eventAdmin: no invitation response or attendance change is possible while true
   public columnLabel = DEFAULT_LABEL; // schedule-poll text column: the header text instead of a date; such events never show in a calendar
   /**
    * Schedule poll, two roles over the poll's lifetime:

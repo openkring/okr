@@ -1201,6 +1201,10 @@ export const CalEventStore = signalStore(
        * invitation) is recorded in the attendees list.
        */
       async changeOwnAttendance(calEvent: CalEventModel, newState: 'accepted' | 'declined'): Promise<void> {
+        if (calEvent.isLocked) {
+          await notify(store.alertController, store.i18n.locked_title(), store.i18n.locked_hint(), store.i18n.ok());
+          return;
+        }
         const inv = calEvent.isOpen ? undefined : store.invitations().find(inv => inv.caleventKey === calEvent.okey);
         if (inv) {
           await this.changeInvitationState(inv, newState);
@@ -1262,6 +1266,22 @@ export const CalEventStore = signalStore(
           return;
         }
         await store.invitationService.respond(invitation, newState, currentUser);
+      },
+
+      /*------------------------- calevent lock ---------------------------------*/
+      /**
+       * Freeze or release the whole event (organiser/eventAdmin action): while locked, neither
+       * attendance nor invitation responses can be changed by anyone. Distinct from
+       * {@link lockInvitations}, which only freezes invitation responses.
+       */
+      async toggleCaleventLock(calevent: CalEventModel, isLocked: boolean): Promise<void> {
+        const confirmed = await confirm(store.alertController,
+          isLocked ? store.i18n.lock_confirm() : store.i18n.unlock_confirm(),
+          store.i18n.ok(), store.i18n.cancel(), true);
+        if (!confirmed) return;
+        await store.appStore.firestoreService.updateModel<CalEventModel>(
+          CalEventCollection, { ...calevent, isLocked }, false,
+          isLocked ? store.i18n.lock_conf() : store.i18n.unlock_conf(), store.i18n.update_error(), store.currentUser());
       },
 
       /*------------------------- invitation lock ---------------------------------*/

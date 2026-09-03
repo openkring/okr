@@ -69,7 +69,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
       <ion-icon class="header-icon" src="{{ 'people' | svgIcon }}" />
       <ion-label>{{ i18n.attendance_attendees() }}</ion-label>
       <okr-count-pill slot="end" [count]="attendees().length" />
-      @if(!isReadOnly()) {
+      @if(canEdit()) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
@@ -113,7 +113,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
         <ion-img src="{{ 'person.' + attendee.person.key | avatar:'person' }}" alt="attendee avatar" />
       </ion-avatar>
       <ion-label>{{ attendee.person.name1 | fullName: attendee.person.name2 }}</ion-label>
-      @if(!isReadOnly()) {
+      @if(canEdit()) {
         <ion-icon slot="end" color="danger" src="{{'cancel' | svgIcon }}" (click)="remove(attendee, $event)" />
       }
     </ion-item>
@@ -137,6 +137,8 @@ export class AttendeesAccordion {
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  /** Neither read-only nor frozen by the event's own lock. */
+  protected canEdit = computed(() => !this.isReadOnly() && !this.calevent().isLocked);
 
   // derived field
   // linkedSignal, not computed: add()/changeState() must publish a NEW array through a signal.
@@ -168,8 +170,8 @@ export class AttendeesAccordion {
    * @param attendee 
    */
   protected async showActions(attendee: Attendee): Promise<void> {
-    // attendance can no longer be changed for past events
-    if (this.isReadOnly() || isPastCalevent(this.calevent())) return;
+    // attendance can no longer be changed for past or locked events
+    if (this.isReadOnly() || isPastCalevent(this.calevent()) || this.calevent().isLocked) return;
     const actionSheetOptions = createActionSheetOptions(this.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, attendee);
     await this.executeActions(actionSheetOptions, attendee);
@@ -224,6 +226,7 @@ export class AttendeesAccordion {
   }
 
   protected async add(): Promise<void> {
+   if (!this.canEdit()) return;
    const modal = await this.modalController.create({
       component: PersonSelectModal,
       cssClass: 'list-modal',
@@ -275,7 +278,7 @@ export class AttendeesAccordion {
   /** Removes the attendee from the calevent (organiser/admin only). */
   protected async remove(attendee: Attendee, event: Event): Promise<void> {
     event.stopPropagation();   // do not open the attendance ActionSheet of the row
-    if (this.isReadOnly()) return;
+    if (this.isReadOnly() || this.calevent().isLocked) return;
     await this.saveAttendees(this.attendees().filter(a => a !== attendee));
   }
 

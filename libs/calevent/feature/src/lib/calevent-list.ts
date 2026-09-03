@@ -138,6 +138,15 @@ type AttendanceFilter = AttendanceState | 'all';
         vertical-align: middle;
       }
 
+      /* Lock badge on a locked FullCalendar event */
+      :host ::ng-deep .fc-event .lock-badge {
+        display: inline-block;
+        font-size: 0.85em;
+        margin-right: 3px;
+        vertical-align: middle;
+      }
+      :host ::ng-deep .fc-event.is-locked { opacity: 0.85; }
+
       /* List view: left border + text colour per state */
       ion-item.state-proposed { border-left: 3px solid #7d5fd0; }
       ion-item.state-provisional { border-left: 3px solid #c89a30; }
@@ -298,6 +307,9 @@ type AttendanceFilter = AttendanceState | 'all';
                 @if(showMenu()) {
                 <ion-label class="ion-hide-md-down"><okr-avatar-display [avatars]="event.responsiblePersons" /></ion-label>
                 }
+                @if(event.isLocked) {
+                  <ion-icon slot="end" color="medium" src="{{ 'lock-closed' | svgIcon }}" [title]="store.i18n.locked_banner()" />
+                }
               </ion-item>
             }
           </ion-list>
@@ -405,15 +417,18 @@ export class CalEventList implements OnInit {
       // a poll stores its answers in the event's own attendees, so both counts read from there
       const acceptanceCount = isProposed ? countPollAcceptances(event) : 0;
       const invitedCount = isProposed ? countPollResponses(event) : 0;
+      const classNames = cssClass ? [cssClass] : [];
+      if (event.isLocked) classNames.push('is-locked');
 
       const commonProps: Partial<EventInput> = {
         title: event.name,
-        classNames: cssClass ? [cssClass] : [],
+        classNames,
         extendedProps: {
           eventKey: event.okey,
           state: event.state,
           acceptanceCount,
           invitedCount,
+          isLocked: event.isLocked,
         },
       };
 
@@ -485,17 +500,21 @@ export class CalEventList implements OnInit {
     eventDrop: (arg: any) => { this.onEventDrop(arg); },
     eventResize: (arg: any) => { this.onEventResize(arg); },
     eventContent: (arg: any) => {
-      if (arg.event.extendedProps?.['state'] === 'proposed') {
+      const isProposed = arg.event.extendedProps?.['state'] === 'proposed';
+      const isLocked = arg.event.extendedProps?.['isLocked'] === true;
+      if (!isProposed && !isLocked) return true;
+      const escapedTitle = (arg.event.title as string)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      const lockBadge = isLocked ? `<span class="lock-badge">🔒</span>` : '';
+      let acceptBadge = '';
+      if (isProposed) {
         const acc = arg.event.extendedProps?.['acceptanceCount'] ?? 0;
         const tot = arg.event.extendedProps?.['invitedCount'] ?? 0;
-        const title = arg.event.title;
-        const escapedTitle = title
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-        return { html: `<div class="fc-event-title-container"><div class="fc-event-title">${escapedTitle} <span class="accept-badge">${acc}/${tot}</span></div></div>` };
+        acceptBadge = ` <span class="accept-badge">${acc}/${tot}</span>`;
       }
-      return true;
+      return { html: `<div class="fc-event-title-container"><div class="fc-event-title">${lockBadge}${escapedTitle}${acceptBadge}</div></div>` };
     },
   }));
 
@@ -768,8 +787,9 @@ export class CalEventList implements OnInit {
    * @param calEvent 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
-    // attendance actions (subscribe/unsubscribe) make no sense for past events
-    const showAttendance = !isPastCalevent(calevent);
+    // attendance actions (subscribe/unsubscribe) make no sense for past events, nor while the
+    // event itself is locked
+    const showAttendance = !isPastCalevent(calevent) && !calevent.isLocked;
     const canChange = this.canChange(calevent);
     if (calevent.isOpen) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
@@ -854,6 +874,13 @@ export class CalEventList implements OnInit {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.edit', this.store.i18n.update(), this.imgixBaseUrl, 'edit'));
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.copy', this.store.i18n.copy(), this.imgixBaseUrl, 'copy'));
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.delete', this.store.i18n.delete(), this.imgixBaseUrl, 'trash'));
+    }
+    // freezing the whole event (attendance + invitation responses) — organisers/eventAdmin only,
+    // narrower than canChange (see canLockCalevent)
+    if (this.canLockCalevent(calevent)) {
+      actionSheetOptions.buttons.push(calevent.isLocked
+        ? createActionSheetButton('calevent.unlock', this.store.i18n.unlock_label(), this.imgixBaseUrl, 'lock-open')
+        : createActionSheetButton('calevent.lock', this.store.i18n.lock_label(), this.imgixBaseUrl, 'lock-closed'));
     }
 
     actionSheetOptions.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), this.imgixBaseUrl, 'cancel'));
@@ -947,6 +974,12 @@ export class CalEventList implements OnInit {
           break;
         case 'organiser.contact':
           await this.contactOrganiser(calEvent);
+          break;
+        case 'calevent.lock':
+          await this.store.toggleCaleventLock(calEvent, true);
+          break;
+        case 'calevent.unlock':
+          await this.store.toggleCaleventLock(calEvent, false);
           break;
       }
     }
@@ -1318,6 +1351,18 @@ export class CalEventList implements OnInit {
     if (calevent?.responsiblePersons?.some(p => p.key === personKey)) return true;
 
     return false;
+  }
+
+  /**
+   * Who may lock/unlock a calevent. Deliberately NARROWER than {@link canChange}: freezing
+   * attendance/invitations is reserved for the event's own organisers and eventAdmin — privileged
+   * and group-admin do not automatically get it.
+   */
+  private canLockCalevent(calevent: CalEventModel): boolean {
+    if (this.hasRole('eventAdmin')) return true;
+    const personKey = this.currentUser()?.personKey;
+    if (!personKey) return false;
+    return calevent.responsiblePersons?.some(p => p.key === personKey) ?? false;
   }
 
   protected async download(key: string): Promise<void> {

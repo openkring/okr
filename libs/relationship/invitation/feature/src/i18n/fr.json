@@ -127,6 +127,10 @@
     "title": "Invitation verrouillée",
     "hint": "L'organisation a verrouillé les réponses à cette invitation. Ta réponse ne peut plus être modifiée."
   },
+  "eventLocked": {
+    "title": "Rendez-vous verrouillé",
+    "hint": "Ce rendez-vous est verrouillé. Tu ne peux plus modifier ta réponse à l'invitation."
+  },
   "comment": {
     "pending": "Invitation remise à l'état ouvert.",
     "accepted": "Invitation acceptée.",

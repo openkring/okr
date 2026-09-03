@@ -46,6 +46,21 @@
   "download": {
     "ics": "Descargar cita (ICS)"
   },
+  "lock": {
+    "label": "Bloquear la cita",
+    "confirm": "¿Quieres bloquear realmente esta cita? Después ya no se podrán cambiar las inscripciones, las cancelaciones ni las respuestas a las invitaciones.",
+    "conf": "La cita está bloqueada."
+  },
+  "unlock": {
+    "label": "Desbloquear la cita",
+    "confirm": "¿Quieres desbloquear esta cita de nuevo?",
+    "conf": "La cita se ha desbloqueado de nuevo."
+  },
+  "locked": {
+    "title": "Cita bloqueada",
+    "hint": "Esta cita está bloqueada. Ya no puedes cambiar tu participación ni tu respuesta a la invitación.",
+    "banner": "La cita está bloqueada"
+  },
   "cancelEvent": {
     "label": "Aviso de cancelación",
     "placeholder": "Motivo de la cancelación, p. ej. «Cancelado por aviso de tormenta.»",

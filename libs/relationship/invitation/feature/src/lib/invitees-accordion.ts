@@ -47,7 +47,7 @@ import { InvitationStore } from './invitation.store';
       <ion-icon class="header-icon" src="{{ 'people' | svgIcon }}" />
       <ion-label>{{ accordionTitle() }}</ion-label>
       <okr-count-pill slot="end" [count]="invitees().length" />
-      @if(!isReadOnly()) {
+      @if(!isReadOnly() && !calevent().isLocked) {
         <ion-button fill="clear" (click)="add()" size="default">
           <ion-icon color="secondary" slot="icon-only" src="{{'add-circle' | svgIcon }}" />
         </ion-button>
@@ -114,6 +114,7 @@ export class InviteesAccordion {
 
   /******************************* actions *************************************** */
   protected async add(): Promise<void> {
+    if (this.calevent().isLocked) return;
     await this.store.invitePerson(this.calevent(), this.isReadOnly());
   }
 
@@ -140,6 +141,12 @@ export class InviteesAccordion {
       await notify(this.alertController, this.store.i18n.locked_title(), this.store.i18n.locked_hint(), this.store.i18n.ok());
       return;
     }
+    // the parent calevent itself is locked: nobody, organiser/admin included, may change a
+    // response while it is frozen
+    if (this.calevent().isLocked && this.isOwnInvitation(invitation)) {
+      await notify(this.alertController, this.store.i18n.event_locked_title(), this.store.i18n.event_locked_hint(), this.store.i18n.ok());
+      return;
+    }
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     this.addActionSheetButtons(actionSheetOptions, invitation);
     await this.executeActions(actionSheetOptions, invitation);
@@ -152,8 +159,8 @@ export class InviteesAccordion {
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, invitation: InvitationModel): void {
     actionSheetOptions.buttons.push(createActionSheetButton('invitation.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     // users can change the invitation state of their own invitations — unless the organiser
-    // locked the responses, in which case only the read actions remain
-    if (this.isOwnInvitation(invitation) && !invitation.isLocked) {
+    // locked the responses, or froze the whole event, in which case only the read actions remain
+    if (this.isOwnInvitation(invitation) && !invitation.isLocked && !this.calevent().isLocked) {
       if (invitation.state !== 'accepted') {
         actionSheetOptions.buttons.push(createActionSheetButton('invitation.accept', this.store.i18n.accept(), this.imgixBaseUrl, 'checkmark'));
       }

@@ -46,6 +46,21 @@
   "download": {
     "ics": "Télécharger le rendez-vous (ICS)"
   },
+  "lock": {
+    "label": "Verrouiller le rendez-vous",
+    "confirm": "Veux-tu vraiment verrouiller ce rendez-vous ? Les inscriptions, désinscriptions et réponses aux invitations ne pourront plus être modifiées.",
+    "conf": "Le rendez-vous est verrouillé."
+  },
+  "unlock": {
+    "label": "Déverrouiller le rendez-vous",
+    "confirm": "Veux-tu déverrouiller à nouveau ce rendez-vous ?",
+    "conf": "Le rendez-vous est à nouveau déverrouillé."
+  },
+  "locked": {
+    "title": "Rendez-vous verrouillé",
+    "hint": "Ce rendez-vous est verrouillé. Tu ne peux plus modifier ta participation ni ta réponse à l’invitation.",
+    "banner": "Rendez-vous verrouillé"
+  },
   "cancelEvent": {
     "label": "Avis d’annulation",
     "placeholder": "Motif de l’annulation, par ex. « Annulé en raison de l’alerte tempête. »",

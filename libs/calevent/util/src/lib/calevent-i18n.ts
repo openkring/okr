@@ -49,6 +49,17 @@ export const CALEVENT_I18N_KEYS = {
 
   download_ics:               PFX + 'download.ics',
 
+  // freezing the whole event (as opposed to invitation_lock, which only freezes invitation responses)
+  lock_label:                 PFX + 'lock.label',
+  lock_confirm:               PFX + 'lock.confirm',
+  lock_conf:                  PFX + 'lock.conf',
+  unlock_label:               PFX + 'unlock.label',
+  unlock_confirm:             PFX + 'unlock.confirm',
+  unlock_conf:                PFX + 'unlock.conf',
+  locked_title:                PFX + 'locked.title',
+  locked_hint:                 PFX + 'locked.hint',
+  locked_banner:               PFX + 'locked.banner',
+
   // «Teilnehmende benachrichtigen» — the short-notice broadcast to the participants of an event
   notify_label:               PFX + 'notify.label',
   notify_message_label:       PFX + 'notify.message.label',

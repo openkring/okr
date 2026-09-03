@@ -37,6 +37,9 @@ export const INVITATION_I18N_KEYS = {
   unlock_conf:                      PFX + 'unlock.conf',
   locked_hint:                      PFX + 'locked.hint',
   locked_title:                     PFX + 'locked.title',
+  // the parent calevent itself is locked (distinct from a single locked invitation above)
+  event_locked_hint:                PFX + 'eventLocked.hint',
+  event_locked_title:               PFX + 'eventLocked.title',
 
   subscribe:                        PFX + 'subscribe',
   unsubscribe:                      PFX + 'unsubscribe',
