@@ -11,6 +11,10 @@ describe('resolveLegacyCommentKey', () => {
     expect(resolveLegacyCommentKey('@comment.operation.update.conf')).toBe('@comment/ui.legacy.changed');
   });
 
+  it('should map the legacy membership-created key written by the 2022 import', () => {
+    expect(resolveLegacyCommentKey('@comment.message.membership.scsCreated')).toBe('@comment/ui.legacy.created');
+  });
+
   it('should map every legacy delete-comment key onto the same scoped key', () => {
     for (const model of ['membership', 'ownership', 'personalRel', 'reservation', 'workingRel']) {
       expect(resolveLegacyCommentKey(`@comment.message.${model}.deleted`)).toBe('@comment/ui.legacy.deleted');

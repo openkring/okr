@@ -15,6 +15,7 @@ const LEGACY_COMMENT_KEYS: Record<string, string> = {
   '@comment.operation.initial.conf': PFX_UI + 'legacy.created',
   '@comment.operation.update.conf': PFX_UI + 'legacy.changed',
   '@comment.message.membership.deleted': PFX_UI + 'legacy.deleted',
+  '@comment.message.membership.scsCreated': PFX_UI + 'legacy.created',
   '@comment.message.ownership.deleted': PFX_UI + 'legacy.deleted',
   '@comment.message.personalRel.deleted': PFX_UI + 'legacy.deleted',
   '@comment.message.reservation.deleted': PFX_UI + 'legacy.deleted',
