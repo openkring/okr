@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { InvoiceCollection, InvoiceModel } from '@okr/shared-models';
-import { confirm, exportCsv } from '@okr/shared-util-angular';
+import { confirm, exportCsv, showToast } from '@okr/shared-util-angular';
 import { debugListLoaded, getSystemQuery, getYear, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -216,18 +216,27 @@ export const InvoiceStore = signalStore(
     },
 
     async showPdf(invoice: InvoiceModel): Promise<void> {
-      const fn = httpsCallable<{ invoiceId: string }, { content: string }>(
-        store.functions, 'showInvoicePdf'
-      );
-      const result = await fn({ invoiceId: invoice.okey });
-      const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${invoice.invoiceId}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      try {
+        const fn = httpsCallable<{ invoiceId: string }, { content: string }>(
+          store.functions, 'showInvoicePdf'
+        );
+        const result = await fn({ invoiceId: invoice.okey });
+        const bytes = Uint8Array.from(atob(result.data.content), c => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${invoice.invoiceId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        // Without this the callable's rejection escapes as an unhandled promise
+        // rejection: the user sees nothing at all, the failure only lands in Sentry
+        // (SCS-A0). Bexio can be unreachable, and the callable still rejects for
+        // anyone who is neither the recipient nor treasurer/privileged.
+        console.error('InvoiceStore.showPdf: failed to fetch the PDF', e);
+        await showToast(store.toastController, store.i18n.show_pdf_error());
+      }
     },
   })),
 );

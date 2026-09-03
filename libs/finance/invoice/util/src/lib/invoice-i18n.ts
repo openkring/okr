@@ -106,6 +106,7 @@ export const INVOICE_I18N_KEYS = {
 
   view:                     PFX + 'view.label',
   show_pdf:                 PFX + 'view.pdf',
+  show_pdf_error:           PFX + 'view.pdf_error',
 
   read_only_banner:         PFX + 'readonly.banner',
 

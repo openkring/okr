@@ -203,7 +203,8 @@
   },
   "view": {
     "label": "Mostrar detalles de la factura",
-    "pdf": "Descargar factura como PDF"
+    "pdf": "Descargar factura como PDF",
+    "pdf_error": "No se pudo cargar la factura como PDF. Inténtalo de nuevo más tarde."
   },
   "readonly": {
     "banner": "Esta lista es de solo lectura. Los deudores se gestionan en Bexio."

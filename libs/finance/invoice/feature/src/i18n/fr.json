@@ -203,7 +203,8 @@
   },
   "view": {
     "label": "Afficher les détails de la facture",
-    "pdf": "Télécharger la facture au format PDF"
+    "pdf": "Télécharger la facture au format PDF",
+    "pdf_error": "La facture n’a pas pu être chargée au format PDF. Merci de réessayer plus tard."
   },
   "readonly": {
     "banner": "Cette liste est en lecture seule. Les débiteurs sont gérés dans Bexio."

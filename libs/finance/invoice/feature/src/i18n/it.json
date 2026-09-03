@@ -203,7 +203,8 @@
   },
   "view": {
     "label": "Mostrare i dettagli della fattura",
-    "pdf": "Scaricare la fattura in PDF"
+    "pdf": "Scaricare la fattura in PDF",
+    "pdf_error": "Non è stato possibile caricare la fattura in PDF. Riprova più tardi."
   },
   "readonly": {
     "banner": "Questo elenco è di sola lettura. I debitori sono gestiti in Bexio."

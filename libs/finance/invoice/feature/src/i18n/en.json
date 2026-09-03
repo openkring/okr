@@ -203,7 +203,8 @@
   },
   "view": {
     "label": "Show invoice details",
-    "pdf": "Download invoice as PDF"
+    "pdf": "Download invoice as PDF",
+    "pdf_error": "The invoice could not be loaded as a PDF. Please try again later."
   },
   "readonly": {
     "banner": "This list is read-only. The accounts receivable are managed in Bexio."

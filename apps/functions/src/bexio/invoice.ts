@@ -291,6 +291,35 @@ async function runInvoiceSync(fromDate: string, tenantId: string, label: string)
 }
 
 /**
+ * Who may download an invoice PDF. Mirrors the `invoices` read rule in
+ * firestore.rules: treasurer / privileged / admin reach every invoice of the tenant,
+ * a plain member only the invoices addressed to them (`receiver.key` == their own
+ * personKey) — which is exactly what the `/my-invoice` screen lists. Before this,
+ * the flat `checkRoles(['treasurer','privileged'])` rejected every member opening
+ * their own invoice from that screen (Sentry SCS-A0).
+ */
+async function checkInvoicePdfAccess(request: CallableRequest, nameOfCallingFunction: string, invoiceId: string): Promise<void> {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    logger.error(`${nameOfCallingFunction}: user is not authenticated`);
+    throw new HttpsError('unauthenticated', 'user must be authenticated.');
+  }
+  if (request.auth?.token?.['admin'] === true) return;   // legacy custom claim
+  const user = (await admin.firestore().collection('users').doc(uid).get()).data();
+  const roles = user?.['roles'] as Record<string, boolean> | undefined;
+  if (roles?.['admin'] === true || roles?.['treasurer'] === true || roles?.['privileged'] === true) return;
+
+  const personKey = (user?.['personKey'] as string | undefined) ?? '';
+  if (personKey) {
+    const invoice = (await admin.firestore().collection('invoices').doc(invoiceId).get()).data();
+    const receiverKey = (invoice?.['receiver'] as { key?: string } | undefined)?.key ?? '';
+    if (receiverKey === personKey) return;
+  }
+  logger.error(`${nameOfCallingFunction}: user ${uid} may not read the PDF of invoice ${invoiceId}`);
+  throw new HttpsError('permission-denied', 'This operation requires one of the roles: treasurer, privileged.');
+}
+
+/**
  * Fetch the PDF for a single invoice from Bexio.
  * Returns the PDF as a base64-encoded string in the `content` field.
  * Input: { invoiceId: string } — the Bexio invoice ID (= invoice.okey in Firestore)
@@ -305,10 +334,11 @@ export const showInvoicePdf = onCall(
     const CF_NAME = 'showInvoicePdf';
 
     if (!request.auth) throw new HttpsError('unauthenticated', 'Authentication required');
-    // Invoice PDFs carry recipient PII — treasurer flows + privileged/admin (privacy inventory §7.2).
-    await checkRoles(request, CF_NAME, ['treasurer', 'privileged']);
     const { invoiceId } = request.data;
     if (!invoiceId) throw new HttpsError('invalid-argument', 'invoiceId is required');
+    // Invoice PDFs carry recipient PII — treasurer flows + privileged/admin (privacy
+    // inventory §7.2), plus the recipient themselves for their own invoice.
+    await checkInvoicePdfAccess(request, CF_NAME, invoiceId);
 
     logger.info(`${CF_NAME}: fetching PDF for invoice ${invoiceId}`);
 

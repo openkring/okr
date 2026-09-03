@@ -203,7 +203,8 @@
   },
   "view": {
     "label": "Rechnungsdetails anzeigen",
-    "pdf": "Rechnung als PDF herunterladen"
+    "pdf": "Rechnung als PDF herunterladen",
+    "pdf_error": "Die Rechnung konnte nicht als PDF geladen werden. Bitte versuche es später noch einmal."
   },
   "readonly": {
     "banner": "Diese Liste ist readonly. Die Debitoren werden in Bexio bewirtschaftet."
