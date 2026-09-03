@@ -2,12 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input } from '@angular/core';
 import { IonAvatar, IonCard, IonCardContent, IonCol, IonGrid, IonImg, IonRow } from '@ionic/angular/standalone';
 
-import { LineChart } from 'echarts/charts';
-import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components';
-import * as echarts from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
-echarts.use([LineChart, GridComponent, CanvasRenderer, LegendComponent, TooltipComponent]);
 
 import { TripStatsSection } from '@okr/shared-models';
 import { EmptyList, ListFilter, OptionalCardHeader, Spinner } from '@okr/shared-ui';
@@ -28,7 +23,15 @@ import { StatsRow, StatsSortField, TripStatsSectionStore } from './trip-stats-se
   ],
   providers: [
     TripStatsSectionStore,
-    provideEchartsCore({ echarts }),
+    provideEchartsCore({
+      echarts: async () => {
+        const [core, charts, comps, rend] = await Promise.all([
+          import('echarts/core'), import('echarts/charts'), import('echarts/components'), import('echarts/renderers'),
+        ]);
+        core.use([charts.LineChart, comps.GridComponent, comps.LegendComponent, comps.TooltipComponent, rend.CanvasRenderer]);
+        return core;
+      },
+    }),
   ],
   styles: [`
     /* rows read like the ion-items of every other list modal: same height, same inset divider */

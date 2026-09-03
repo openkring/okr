@@ -2,12 +2,7 @@
 import { Component, computed, input } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
-import { BarChart, LineChart } from 'echarts/charts';
-import { GridComponent, LegendComponent, ToolboxComponent, TooltipComponent } from 'echarts/components';
-import * as echarts from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
-echarts.use([BarChart, GridComponent, CanvasRenderer, ToolboxComponent, LegendComponent, TooltipComponent, LineChart]);
 
 import { ChartSection } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
@@ -29,7 +24,17 @@ import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
     IonCardContent
 ],
   providers: [
-    provideEchartsCore({echarts})
+    // Lazy: a static `import * as echarts` here is the binding edge that put ~290 KB of
+    // echarts+zrender before the dashboard's LCP (spec 1.49, F1). ngx-echarts accepts a loader.
+    provideEchartsCore({
+      echarts: async () => {
+        const [core, charts, comps, rend] = await Promise.all([
+          import('echarts/core'), import('echarts/charts'), import('echarts/components'), import('echarts/renderers'),
+        ]);
+        core.use([charts.BarChart, charts.LineChart, comps.GridComponent, comps.LegendComponent, comps.ToolboxComponent, comps.TooltipComponent, rend.CanvasRenderer]);
+        return core;
+      },
+    }),
   ],
   styles: [`
   ion-card-content { padding: 0px; }

@@ -1,11 +1,7 @@
 import { Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { ActionSheetController, IonCard, IonCardContent, ModalController } from '@ionic/angular/standalone';
 
-import { GraphChart } from 'echarts/charts';
-import * as echarts from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
-echarts.use([GraphChart, CanvasRenderer]);
 
 import type { EChartsOption } from 'echarts';
 
@@ -21,7 +17,16 @@ import { ContextDiagramConfigModal } from './context-diagram-config.modal';
 @Component({
   selector: 'okr-context-diagram-section',
   standalone: true,
-  providers: [provideEchartsCore({ echarts }), ContextDiagramStore],
+  providers: [
+    provideEchartsCore({
+      echarts: async () => {
+        const [core, charts, rend] = await Promise.all([import('echarts/core'), import('echarts/charts'), import('echarts/renderers')]);
+        core.use([charts.GraphChart, rend.CanvasRenderer]);
+        return core;
+      },
+    }),
+    ContextDiagramStore,
+  ],
   imports: [
     Spinner, OptionalCardHeader,
     NgxEchartsDirective,
