@@ -1,10 +1,11 @@
-import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
+import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, linkedSignal, model, PLATFORM_ID, Signal, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { ViewPositions } from '@okr/shared-categories';
 import { EditorConfig, ViewPosition } from '@okr/shared-models';
 import { ButtonCopyI18n, CategoryOld, CategoryOldI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
-import { OkrEditor } from '@okr/shared-ui-editor';
+import { isBrowser } from '@okr/shared-util-angular';
+import type { OkrEditor } from '@okr/shared-ui-editor';
 
 interface EditorConfigI18n {
   editor_title:               Signal<string>;
@@ -20,7 +21,7 @@ interface EditorConfigI18n {
   standalone: true,
   imports: [
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote,
-    NumberInput, CategoryOld, OkrEditor
+    NumberInput, CategoryOld
   ],
   template: `
     <ion-card>
@@ -36,9 +37,7 @@ interface EditorConfigI18n {
         <ion-grid>
           <ion-row>
             <ion-col size="12">
-              @defer (on idle) {
-                <okr-editor [content]="htmlContent()" (contentChange)="onFieldChange('htmlContent', $event)" [readOnly]="readOnly()" [buttonCopyI18n]="buttonCopyI18n()" />
-              }
+              <div #editorHost></div>
             </ion-col>
             @if(showAdvanced()) {
               <ion-col size="12" size-md="6">
@@ -55,6 +54,9 @@ interface EditorConfigI18n {
   `
 })
 export class EditorConfiguration {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
+
   // inputs
   public formData = model.required<EditorConfig>();
   public intro = input<string>();
@@ -74,6 +76,35 @@ export class EditorConfiguration {
 
   // passing constants to template
   protected positions = ViewPositions;
+
+  // Lazy: a static import of @okr/shared-ui-editor drags ngx-editor/ProseMirror into every
+  // page that reaches this component (spec 1.49, F1) — the same shape as calendar-section.ts's
+  // dynamic FullCalendar creation.
+  private editorHost = viewChild('editorHost', { read: ViewContainerRef });
+  protected readonly ref = signal<ComponentRef<OkrEditor> | undefined>(undefined);
+
+  constructor() {
+    effect(async () => {
+      const host = this.editorHost();
+      if (!host || untracked(() => this.ref()) || !isBrowser(this.platformId)) return;
+      const { OkrEditor } = await import('@okr/shared-ui-editor');
+      const componentRef = host.createComponent(OkrEditor);
+      this.ref.set(componentRef);
+      // `content` is a model() — it doubles as the OkrEditor -> here change channel.
+      componentRef.instance.content.subscribe((value: string) => this.onFieldChange('htmlContent', value));
+    });
+    effect(() => {
+      const componentRef = this.ref();
+      const content = this.htmlContent();
+      const readOnly = this.readOnly();
+      const buttonCopyI18n = this.buttonCopyI18n();
+      if (!componentRef) return;
+      componentRef.setInput('content', content);
+      componentRef.setInput('readOnly', readOnly);
+      componentRef.setInput('buttonCopyI18n', buttonCopyI18n);
+    });
+    this.destroyRef.onDestroy(() => this.ref()?.destroy());
+  }
 
     /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, $event: string | number | ViewPosition): void {
