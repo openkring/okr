@@ -308,6 +308,8 @@ export { submitSupportTicket, listSupportTickets, commentSupportTicket } from '.
 export { checkDriveAccess } from './diary/check-drive-access';
 // diary import (design 2026-08-22): the dry-run report and the windowed, cursor-driven commit
 export { dryRunDiaryImport, commitDiaryImport } from './diary/import-diary';
+// diary UI (Teilprojekt 3): weather for an entry written in the app
+export { fetchDiaryWeather } from './diary/fetch-diary-weather';
 
 // privacy 1.19 Phase 3: one-time backfill of the ssn/dob vault + memberBirthYear
 export { migrateSensitiveData } from './person/migrate-sensitive-data';

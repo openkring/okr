@@ -1,24 +1,27 @@
 // apps/functions/src/diary/weather.ts
+import { isDiaryCalendarDay } from '@okr/content-diary-util';
 import { DEFAULT_DIARY_WEATHER, type DiaryWeather } from '@okr/shared-models';
 import { addDuration, convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
 
 /**
- * Open-Meteo splits its history across two hosts at roughly one year: older days are reanalysis
- * (`archive-api`), newer ones are the retained forecast (`historical-forecast-api`). The boundary
- * is relative to TODAY, so it moves — hardcoding the date it happened to have when this was
- * written would silently send this year's entries to the wrong host.
+ * Open-Meteo splits its history across three hosts: older days are reanalysis (`archive-api`),
+ * the last ~year is the retained forecast (`historical-forecast-api`), and the last few days —
+ * which the retained forecast trails by a day or two — need the LIVE forecast host. Both
+ * boundaries are relative to TODAY, so they move — hardcoding a date would silently send an
+ * entry to the wrong host once time passes.
  */
 const ARCHIVE_HOST = 'https://archive-api.open-meteo.com/v1/archive';
 const FORECAST_HOST = 'https://historical-forecast-api.open-meteo.com/v1/forecast';
+const CURRENT_HOST = 'https://api.open-meteo.com/v1/forecast';
 const DAILY = 'weather_code,temperature_2m_min,temperature_2m_max,precipitation_sum,sunrise,sunset';
 
-/** One Open-Meteo range request for a single coordinate, on one side of the archive/forecast split. */
+/** One Open-Meteo range request for a single coordinate, on one of the three archive/forecast/current hosts. */
 export interface WeatherRange {
   latitude: number;
   longitude: number;
   startDate: string;
   endDate: string;
-  api: 'archive' | 'forecast';
+  api: 'archive' | 'forecast' | 'current';
 }
 
 interface DatedCoord {
@@ -42,19 +45,6 @@ function groupByCoordinate(entries: DatedCoord[]): Map<string, DatedCoord[]> {
   return groups;
 }
 
-/** True only for a real 'yyyyMMdd' day — rejects the zeroed dates of month/year aggregates. */
-function isCalendarDay(storeDate: string): boolean {
-  if (!/^\d{8}$/.test(storeDate)) {
-    return false;
-  }
-  const y = Number(storeDate.slice(0, 4));
-  const m = Number(storeDate.slice(4, 6));
-  const d = Number(storeDate.slice(6, 8));
-  const date = new Date(Date.UTC(y, m - 1, d));
-  return m >= 1 && m <= 12 && d >= 1
-    && date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
-}
-
 function toIsoDate(storeDate: string): string {
   return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.IsoDate);
 }
@@ -72,7 +62,7 @@ export function planWeatherRanges(entries: DatedCoord[], today: string): Weather
   // DiaryScope) would push that group's range start to '1990-00-00', Open-Meteo would reject the
   // call, and every day sharing those coordinates would silently lose its measured weather. The
   // caller already filters by scope; this makes the failure impossible rather than merely absent.
-  entries = entries.filter((e) => isCalendarDay(e.date));
+  entries = entries.filter((e) => isDiaryCalendarDay(e.date));
 
   // date-fns' add() accepts negative durations, so this correctly computes "one year ago" —
   // subDuration is not used here: its implementation calls add() instead of sub() and would
@@ -139,6 +129,17 @@ export function mergeWeather(fromFile: Partial<DiaryWeather>, fromApi: Partial<D
   };
 }
 
+/**
+ * Which Open-Meteo host has the day. The import's `planWeatherRanges` only ever sees the past
+ * (archive vs. retained forecast); an entry written today needs the LIVE forecast host, whose
+ * daily series covers the current day — the historical-forecast host trails it by a day or two.
+ */
+export function chooseWeatherApi(date: string, today: string): WeatherRange['api'] {
+  if (date >= addDuration(today, { days: -7 }, DateFormat.StoreDate)) return 'current';
+  if (date >= addDuration(today, { years: -1 }, DateFormat.StoreDate)) return 'forecast';
+  return 'archive';
+}
+
 interface OpenMeteoDailyResponse {
   daily?: {
     time: string[];
@@ -168,7 +169,7 @@ function toLocalTime(isoDateTime: string | undefined): string {
  * yields an empty Map, leaving every date's weather at DEFAULT_DIARY_WEATHER.
  */
 export async function fetchWeatherRange(range: WeatherRange): Promise<Map<string, Partial<DiaryWeather>>> {
-  const host = range.api === 'archive' ? ARCHIVE_HOST : FORECAST_HOST;
+  const host = range.api === 'archive' ? ARCHIVE_HOST : range.api === 'current' ? CURRENT_HOST : FORECAST_HOST;
   const url = `${host}?latitude=${range.latitude}&longitude=${range.longitude}` +
     `&start_date=${range.startDate}&end_date=${range.endDate}&daily=${DAILY}&timezone=auto`;
 
