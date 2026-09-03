@@ -137,6 +137,11 @@ describe('matchesStateFilter', () => {
     expect(matchesStateFilter('open', 'corrected')).toBe(false);
   });
 
+  it('cancelled matches the deleted state', () => {
+    expect(matchesStateFilter('deleted', 'cancelled')).toBe(true);
+    expect(matchesStateFilter('open', 'cancelled')).toBe(false);
+  });
+
   it('exact state match otherwise', () => {
     expect(matchesStateFilter('open', 'open')).toBe(true);
     expect(matchesStateFilter('closed', 'open')).toBe(false);

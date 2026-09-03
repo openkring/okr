@@ -125,6 +125,9 @@ export function matchesStateFilter(state: string, filter: string): boolean {
   if (filter === 'all') return true;
   if (filter === 'revised') return state.endsWith('.rev');
   if (filter === 'corrected') return state.endsWith('.corr');
+  // the trip_state category item is named 'cancelled' (its label is "Gelöscht"); the model's
+  // actual state value stays 'deleted' — see the deleting-models skill for the naming split.
+  if (filter === 'cancelled') return state === 'deleted';
   return state === filter;
 }
 

@@ -15,7 +15,7 @@ import { ResponsibilityService } from '@okr/relationship-responsibility-data-acc
 import { LocationService } from '@okr/location-data-access';
 
 import { TripService } from '@okr/trip-data-access';
-import { findOpenTripForBoat, getTripLabel, groupTripsByDay, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';
+import { findOpenTripForBoat, getTripLabel, groupTripsByDay, matchesStateFilter, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';
 
 
 /** Name of the responsibility that owns the Logbuch — gets the bug reports and the support calls. */
@@ -134,11 +134,12 @@ export const TripStore = signalStore(
       return store.trips().filter((trip: TripModel) =>
         // legacy trips predate the `type` field — treat them as 'logbuch' (the original, sole type)
         (trip.type || 'logbuch') === type &&
-        // soft-deleted trips stay out of the list unless explicitly asked for (AOC uses its own query)
-        (trip.state !== 'deleted' || selectedState === 'deleted') &&
+        // soft-deleted trips stay out of the list unless explicitly asked for (AOC uses its own query);
+        // 'cancelled' is the trip_state category item name for the model's 'deleted' state.
+        (trip.state !== 'deleted' || selectedState === 'cancelled') &&
         nameMatches(trip.index, searchTerm) &&
         yearMatches(trip.startDate, store.selectedYear()) &&
-        nameMatches(trip.state, selectedState)
+        matchesStateFilter(trip.state, selectedState)
       )
     }),
   })),

@@ -251,7 +251,7 @@ export const onTaskWritten = Task.onTaskWritten;
 // trip statistics
 export const onTripWrite             = Trip.onTripWrite;
 export const onTripStatsReconcile    = Trip.onTripStatsReconcile;
-export const onOpenTripCheck         = Trip.onOpenTripCheck;
+export const onTripEndOfDayClose     = Trip.onTripEndOfDayClose;
 // Logbuch damage / bug reports — emitted as workflow events, consequences configured as rules
 export const reportIncident          = Trip.reportIncident;
 

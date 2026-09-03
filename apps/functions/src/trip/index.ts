@@ -186,109 +186,65 @@ export const onTripStatsReconcile = onSchedule(
   }
 );
 
-/*----------------------------- open-trip watchdog ---------------------------------*/
+/*----------------------------- end-of-day auto-close ---------------------------------*/
 
-/** A trip still open this long after it started gets a task raised for the Logbuch owner. */
-const OPEN_TRIP_LIMIT_MS = 4 * 60 * 60 * 1000;
-/** Responsibility that owns the Logbuch — the same one the client notifies for bug reports. */
-const LOGBUCH_RESPONSIBILITY = 'Logbuch2';
-/** Tasks raised by this watchdog carry it, so a second run recognises its own work. */
-const OPEN_TRIP_TASK_TAG = 'logbuch-open-trip';
+/** Chunk size for batched Firestore writes (Firestore caps a batch at 500 operations). */
+const AUTO_CLOSE_CHUNK = 400;
 
-interface AvatarInfoDoc {
-  key: string;
-  name1: string;
-  name2: string;
-  label: string;
-  modelType: string;
-  type: string;
-  subType: string;
+/**
+ * 'yyyyMMdd' (StoreDate) and 'HH:mm' (the format `getCurrentTime` emits) for `now`, read in the
+ * club's own timezone — never the Cloud Functions host's, which is UTC.
+ */
+export function zurichDateTimeParts(now: Date): { date: string; time: string } {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(now);
+  const get = (type: string) => parts.find(p => p.type === type)?.value ?? '';
+  return { date: `${get('year')}${get('month')}${get('day')}`, time: `${get('hour')}:${get('minute')}` };
 }
 
-/** Milliseconds since a trip's start. `startTime` is 'HH:mm' or legacy 'HHmm'. */
-function tripStartMs(startDate: string, startTime: string): number | undefined {
-  if (!/^\d{8}$/.test(startDate ?? '')) return undefined;
-  const hhmm = (startTime ?? '').replace(/\D/g, '').padStart(4, '0');
-  const iso = `${startDate.substring(0, 4)}-${startDate.substring(4, 6)}-${startDate.substring(6, 8)}`
-    + `T${hhmm.substring(0, 2)}:${hhmm.substring(2, 4)}:00`;
-  const ms = new Date(iso).getTime();
-  return Number.isFinite(ms) ? ms : undefined;
+function formatSwissDate(storeDate: string): string {
+  return `${storeDate.substring(6, 8)}.${storeDate.substring(4, 6)}.${storeDate.substring(0, 4)}`;
 }
 
 /**
- * Hourly watchdog: a trip that is still 'open' more than 4 h after it started is either a boat
- * that never came back or — far more often — a crew that forgot to close the entry. Either way
- * someone has to look at it, so raise a task for the Logbuch responsibility.
+ * End-of-day sweep: a trip still 'open' this late is either a boat that never came back or — far
+ * more often — a crew that forgot to close the entry. Rather than raise a task and wait for a
+ * human (the old `onOpenTripCheck` watchdog, 4 h after start), the Logbuch closes it itself: end
+ * date/time is stamped to now, the state becomes 'closed.rev' (the same '.rev' suffix an admin's
+ * manual correction leaves — see the `trips` skill), and a note is appended so the crew and any
+ * reviewer can see it was not a real close. `trip-list`'s state filter (privileged users only)
+ * surfaces these as 'revised'.
  *
- * Idempotent without touching the trip document: the task name embeds the trip id and the
- * watchdog checks for an existing task before writing, so re-running never duplicates.
+ * Runs once daily, shortly before midnight — by then every trip that started today should have
+ * ended today, so nothing here needs a per-tenant timezone or an age check.
  */
-export const onOpenTripCheck = onSchedule(
-  { schedule: '5 * * * *', timeZone: 'Europe/Zurich', region: REGION },
+export const onTripEndOfDayClose = onSchedule(
+  { schedule: '55 23 * * *', timeZone: 'Europe/Zurich', region: REGION },
   async () => {
     const db = getFirestore();
-    const now = Date.now();
-
     const snap = await db.collection('trips').where('state', 'in', ['open', 'open.rev']).get();
-    const overdue = snap.docs.filter(doc => {
-      const t = doc.data() as TripDoc & { startTime?: string };
-      const startMs = tripStartMs(t.startDate, t.startTime ?? '');
-      return startMs !== undefined && now - startMs > OPEN_TRIP_LIMIT_MS;
-    });
-    if (!overdue.length) return;
+    if (snap.empty) return;
 
-    // One responsibility lookup per tenant — the assignee differs per tenant.
-    const assignees = new Map<string, AvatarInfoDoc | undefined>();
-    async function assigneeFor(tenantId: string): Promise<AvatarInfoDoc | undefined> {
-      if (assignees.has(tenantId)) return assignees.get(tenantId);
-      const respSnap = await db.collection('responsibilities')
-        .where('name', '==', LOGBUCH_RESPONSIBILITY)
-        .where('tenants', 'array-contains', tenantId)
-        .limit(1)
-        .get();
-      const avatar = respSnap.docs[0]?.data()?.['responsibleAvatar'] as AvatarInfoDoc | undefined;
-      assignees.set(tenantId, avatar);
-      return avatar;
-    }
+    const { date, time } = zurichDateTimeParts(new Date());
+    const comment = `Automatisch abgeschlossen am ${formatSwissDate(date)} um ${time} Uhr — die Fahrt war am Tagesende noch offen und wurde vom System geschlossen. Bitte prüfen.`;
 
-    let created = 0;
-    for (const doc of overdue) {
-      const trip = doc.data() as TripDoc & { tenants?: string[]; name?: string };
-      const tenantId = trip.tenants?.[0];
-      if (!tenantId) continue;
-
-      const assignee = await assigneeFor(tenantId);
-      if (!assignee?.key) {
-        logger.warn(`onOpenTripCheck: no ${LOGBUCH_RESPONSIBILITY} responsible for tenant ${tenantId}`);
-        continue;
+    const docs = snap.docs;
+    for (let i = 0; i < docs.length; i += AUTO_CLOSE_CHUNK) {
+      const batch = db.batch();
+      for (const doc of docs.slice(i, i + AUTO_CLOSE_CHUNK)) {
+        const notes = (doc.data() as TripDoc & { notes?: string }).notes;
+        batch.update(doc.ref, {
+          endDate: date,
+          endTime: time,
+          state: 'closed.rev',
+          notes: notes ? `${notes}\n${comment}` : comment,
+        });
       }
-
-      const taskName = `Offene Fahrt prüfen: ${doc.id}`;
-      const existing = await db.collection('tasks').where('name', '==', taskName).limit(1).get();
-      if (!existing.empty) continue;
-
-      await db.collection('tasks').add({
-        tenants: [tenantId],
-        isArchived: false,
-        name: taskName,
-        index: `n:${taskName}|ask:${assignee.key}`,
-        tags: OPEN_TRIP_TASK_TAG,
-        notes: `Die Fahrt vom ${trip.startDate} ist seit über 4 Stunden offen und wurde nicht abgeschlossen.`,
-        author: null,
-        assignee,
-        state: 'initial',
-        dueDate: '',
-        completionDate: '',
-        priority: 'medium',
-        importance: 'medium',
-        calendars: [],
-        rank: '',
-        created: FieldValue.serverTimestamp(),
-      });
-      created++;
+      await batch.commit();
     }
 
-    logger.info(`onOpenTripCheck: ${overdue.length} overdue trip(s), ${created} task(s) created`);
+    logger.info(`onTripEndOfDayClose: closed ${docs.length} still-open trip(s) as 'closed.rev'`);
   }
 );
 

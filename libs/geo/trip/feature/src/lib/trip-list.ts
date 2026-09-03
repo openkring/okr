@@ -18,8 +18,6 @@ import { TranslatePipe } from '@okr/shared-i18n';
 import { AsyncPipe } from '@angular/common';
 import { AvatarDisplay } from '@okr/avatar-ui';
 
-const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'corrected', 'all'];
-
 @Component({
   selector: 'okr-trip-list',
   standalone: true,
@@ -71,10 +69,13 @@ const STATE_OPTIONS = ['open', 'draft', 'closed', 'deleted', 'revised', 'correct
       }
 
       <ion-toolbar>
-        <!-- search + year only, 6 cols each at every breakpoint -->
-        <okr-list-filter [mdSize]="6"
+        <!-- state filter only for privileged users/admins: it exists to find revised/cancelled
+             trips, not something the kiosk crew needs while logging a trip -->
+        <okr-list-filter
           (searchTermChanged)="store.setSearchTerm($event)"
           (yearChanged)="store.setSelectedYear($event)" [years]="years()"
+          [states]="isPrivileged() ? states() : undefined" [selectedState]="selectedState()"
+          (stateChanged)="store.setSelectedState($event)"
         />
       </ion-toolbar>
     </ion-header>
@@ -212,11 +213,11 @@ export class TripList {
   // kiosk-ONLY, not hasRole('kiosk'): that also matches admin and leaked the kiosk toolbar
   // (connection dot instead of hamburger, giant FAB) into the normal app list.
   protected readonly isKiosk = computed(() => isKioskOnly(this.currentUser()));
+  protected readonly isPrivileged = computed(() => hasRole('privileged', this.currentUser()));
   protected states = computed(() => this.store.appStore.tryGetCategory('trip_state'));
   protected readonly years = computed(() => getYearList(getYear(), 5));
 
   // constants
-  protected readonly stateOptions = STATE_OPTIONS;
   protected readonly formatTime = formatTripTime;
 
   // wall clock shown next to the connection dot, ticked every 10s (hh:mm needs no finer resolution)

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeDeltas, rollupTarget } from './index';
+import { computeDeltas, rollupTarget, zurichDateTimeParts } from './index';
 
 const BOAT_KEY = 'B1';
 const MEMBER_1 = 'M1';
@@ -89,5 +89,17 @@ describe('rollupTarget', () => {
 
   it('ignores an unrelated path', () => {
     expect(rollupTarget('trips/abc123')).toBeUndefined();
+  });
+});
+
+describe('zurichDateTimeParts', () => {
+  it('formats a winter (CET, UTC+1) instant in local wall-clock time', () => {
+    // 2026-01-15 22:55 UTC = 2026-01-15 23:55 CET
+    expect(zurichDateTimeParts(new Date('2026-01-15T22:55:00Z'))).toEqual({ date: '20260115', time: '23:55' });
+  });
+
+  it('formats a summer (CEST, UTC+2) instant, rolling over into the next calendar day', () => {
+    // 2026-06-15 22:55 UTC = 2026-06-16 00:55 CEST
+    expect(zurichDateTimeParts(new Date('2026-06-15T22:55:00Z'))).toEqual({ date: '20260616', time: '00:55' });
   });
 });

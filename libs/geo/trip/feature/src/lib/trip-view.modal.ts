@@ -29,6 +29,7 @@ import { formatTripTime, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
     ion-item { --padding-start: 0; --inner-padding-end: 0; }
     .participant-row { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 4px 0; }
     .participant { cursor: pointer; }
+    .participant ::ng-deep ion-chip ion-label small { font-size: 1rem; }
   `],
   template: `
     <okr-header [i18n]="{ title: trip().name }" [isModal]="true" />
