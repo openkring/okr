@@ -1,0 +1,65 @@
+{
+  "title": "Diario",
+  "subtitle": "Comprueba el acceso al archivo y mira qué encontraría una importación: ninguna de las dos acciones cambia tus entradas.",
+  "import": {
+    "title": "Preparar la importación"
+  },
+  "drive": {
+    "action": "Comprobar el acceso a Drive",
+    "running": "Comprobando el acceso …",
+    "ok": "El acceso al archivo funciona.",
+    "failed": "El acceso al archivo no funciona."
+  },
+  "dryrun": {
+    "action": "Probar la importación del diario",
+    "running": "Prueba en curso: puede tardar varios minutos …",
+    "ok": "La prueba ha terminado. No se ha guardado nada.",
+    "failed": "La prueba ha fallado.",
+    "topUnresolved": "nombres abiertos más frecuentes:",
+    "firstError": "primer error:"
+  },
+  "locations": {
+    "title": "Lugares",
+    "hint": "Todos los lugares que aparecen en tus entradas, asignados y sin asignar.",
+    "action": "Mostrar lugares"
+  },
+  "persons": {
+    "title": "Personas",
+    "hint": "Todas las personas que aparecen en tus entradas, asignadas y sin asignar.",
+    "action": "Mostrar personas"
+  },
+  "reference": {
+    "search": "Buscar",
+    "filter": {
+      "all": "Todos",
+      "resolved": "Asignados",
+      "unresolved": "Abiertos"
+    },
+    "empty": "No se ha encontrado nada.",
+    "unresolved": "todavía sin ficha asignada"
+  },
+  "usage": {
+    "title": "Aparece en estas entradas:",
+    "empty": "Ninguna entrada lo usa.",
+    "untitled": "sin título"
+  },
+  "location": {
+    "edit": "Editar lugar",
+    "add": "Crear un lugar nuevo",
+    "map": "Asignar a un lugar"
+  },
+  "person": {
+    "edit": "Editar persona",
+    "add": "Crear una persona nueva",
+    "map": "Asignar a una persona",
+    "duplicateHint": "Ya existe una persona con este nombre. Usa «Asignar a una persona» en lugar de crear una segunda."
+  },
+  "show": {
+    "diaries": "Mostrar entradas"
+  },
+  "update": {
+    "conf": "La entrada se ha actualizado.",
+    "error": "La entrada no se ha podido actualizar."
+  },
+  "loading": "Cargando …"
+}

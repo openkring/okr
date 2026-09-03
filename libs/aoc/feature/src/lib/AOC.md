@@ -16,6 +16,7 @@ The AOC (Admin Operations Console) is a restricted administrative dashboard for 
 - **Kiosk** — Monitor and remote-control the tenant's kiosk tablets: heartbeat/online state, battery, running app version, today's trips, and the remote operations (reload, message, lock, video call) written as fields on `kiosk-status/{uid}`. See the `kiosk` skill.
 - **Doc** — Document-level admin operations (separate store `aoc-doc.store.ts`).
 - **Email** — Email-related admin utilities (`aoc-email.ts`).
+- **Diary** — Prepare and repair the diary import: the Drive health check, the import dry run, and the places/people the import could not match. Lives in `@okr/content-diary-feature`, not here — same owner-vs-target split as `aoc/trip`. See [DIARY.md](../../../content/diary/feature/src/lib/DIARY.md).
 
 The AOC has no Firestore collection of its own — it operates on all other domain collections via `FirestoreService` and domain-specific services.
 

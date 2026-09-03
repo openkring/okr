@@ -19,18 +19,6 @@
     "done": "Directory rebuilt: {{persons}} persons, {{orgs}} organisations.",
     "cross": "{{addresses}} addresses of other tenants in {{parents}} profiles stay excluded."
   },
-  "drive": {
-    "action": "Check Drive access",
-    "running": "Checking Drive access …",
-    "ok": "Drive access works.",
-    "failed": "Drive access failed:"
-  },
-  "diary": {
-    "action": "Test diary import (dry run)",
-    "running": "Reading and checking the archive …",
-    "ok": "The dry run finished. Nothing was written.",
-    "failed": "The dry run failed:"
-  },
   "severity": {
     "error": "errors",
     "warning": "warnings",

@@ -279,6 +279,10 @@ const aoc: FeatureBlock = {
       // aoc-kiosk above. `group` matches the "share a person with another tenant" action;
       // must be a name from the icons the `svgIcon` pipe actually resolves.
       { key: 'aoc-allocation', name: 'aoc-allocation', url: '/aoc/allocation', action: 'navigate', roleNeeded: 'admin', icon: 'group', label: '@item.aoc-allocation' },
+      // NEW with the AOC diary screen: the Drive check + import dry run moved off
+      // `/security/privacy-audit`, plus the places/people the import could not match. Seeded
+      // with the block like `aoc-kiosk` and `aoc-allocation`, not mirrored off a live doc.
+      { key: 'aoc-diary',      name: 'aoc-diary',      url: '/aoc/diary',      action: 'navigate', roleNeeded: 'admin', icon: 'document', label: '@item.aoc-diary' },
       // NEW with spec 1.35, seeded live for `scs` in the same change. It hangs under the AOC
       // submenu but its ROUTE is not an `/aoc/*` child and not block-gated: the rule engine is
       // a Cloud Function that fires on every membership write, so gating the screen would hide

@@ -212,6 +212,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/content/diary/feature/src/i18n",
+            "output": "./assets/i18n/content/diary/feature"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/content/document/data-access/src/i18n",
             "output": "./assets/i18n/content/document/data-access"
           },
@@ -731,7 +736,9 @@
       "defaultConfiguration": "production"
     },
     "serve": {
-      "dependsOn": ["config"],
+      "dependsOn": [
+        "config"
+      ],
       "executor": "@angular/build:dev-server",
       "configurations": {
         "production": {

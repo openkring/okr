@@ -171,6 +171,13 @@ const aoc: BlockRoutes = {
       { path: 'sessions',   canActivate: [isAdminGuard()], loadComponent: () => import('@okr/aoc-feature').then(m => m.AocSession) },
       // See the block comment: `@okr/trip-feature` is `geo`'s lib, deliberately.
       { path: 'trip',       canActivate: [isAdminGuard()], loadComponent: () => import('@okr/trip-feature').then(m => m.AocTrip) },
+      // Diary admin (spec 1.34). Same owner-vs-target split as `aoc/trip` above, and safe for
+      // the same reason: `libs/content/diary/**` has no catalogue block of its own — `content`
+      // is a container directory whose subdomains are catalogued individually, and the diary is
+      // the owner's private import tooling rather than a sellable feature — so there is no
+      // enablement gate for this route to bypass. `isAdminGuard`, like every other diagnostics
+      // child: the screen calls the Drive check and the import dry run.
+      { path: 'diary',      canActivate: [isAdminGuard()], loadComponent: () => import('@okr/content-diary-feature').then(m => m.AocDiary) },
       // SOFTENED by owner ruling R-5, 2026-08-05, to match the live `aoc-website` menu doc's
       // `roleNeeded: contentAdmin`. This is the one place the live `app.routes.ts` guard is NOT
       // reproduced verbatim: it writes `isPrivilegedGuard`, which was inert under the old admin

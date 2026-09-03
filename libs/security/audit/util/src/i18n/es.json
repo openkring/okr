@@ -19,18 +19,6 @@
     "done": "Directorio reconstruido: {{persons}} personas, {{orgs}} organizaciones.",
     "cross": "{{addresses}} direcciones de otros clientes en {{parents}} perfiles quedan excluidas."
   },
-  "drive": {
-    "action": "Comprobar el acceso a Drive",
-    "running": "Comprobando el acceso a Drive …",
-    "ok": "El acceso a Drive funciona.",
-    "failed": "El acceso a Drive ha fallado:"
-  },
-  "diary": {
-    "action": "Probar la importación del diario (en seco)",
-    "running": "Leyendo y comprobando el archivo …",
-    "ok": "La prueba ha terminado. No se ha escrito nada.",
-    "failed": "La prueba ha fallado:"
-  },
   "severity": {
     "error": "errores",
     "warning": "advertencias",

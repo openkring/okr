@@ -1,0 +1,65 @@
+{
+  "title": "Diario",
+  "subtitle": "Controlla l'accesso all'archivio e guarda che cosa troverebbe un'importazione: nessuna delle due azioni modifica le tue voci.",
+  "import": {
+    "title": "Preparare l'importazione"
+  },
+  "drive": {
+    "action": "Verificare l'accesso a Drive",
+    "running": "Verifica dell'accesso …",
+    "ok": "L'accesso all'archivio funziona.",
+    "failed": "L'accesso all'archivio non funziona."
+  },
+  "dryrun": {
+    "action": "Provare l'importazione del diario",
+    "running": "Prova in corso: può richiedere alcuni minuti …",
+    "ok": "La prova è terminata. Non è stato salvato nulla.",
+    "failed": "La prova non è riuscita.",
+    "topUnresolved": "nomi aperti più frequenti:",
+    "firstError": "primo errore:"
+  },
+  "locations": {
+    "title": "Luoghi",
+    "hint": "Tutti i luoghi che compaiono nelle tue voci, assegnati e non.",
+    "action": "Mostra i luoghi"
+  },
+  "persons": {
+    "title": "Persone",
+    "hint": "Tutte le persone che compaiono nelle tue voci, assegnate e non.",
+    "action": "Mostra le persone"
+  },
+  "reference": {
+    "search": "Cerca",
+    "filter": {
+      "all": "Tutti",
+      "resolved": "Assegnati",
+      "unresolved": "Aperti"
+    },
+    "empty": "Nessun risultato.",
+    "unresolved": "non ancora collegato a una scheda"
+  },
+  "usage": {
+    "title": "Compare in queste voci:",
+    "empty": "Nessuna voce lo usa.",
+    "untitled": "senza titolo"
+  },
+  "location": {
+    "edit": "Modifica il luogo",
+    "add": "Crea un nuovo luogo",
+    "map": "Collega a un luogo"
+  },
+  "person": {
+    "edit": "Modifica la persona",
+    "add": "Crea una nuova persona",
+    "map": "Collega a una persona",
+    "duplicateHint": "Esiste già una persona con questo nome. Usa «Collega a una persona» invece di crearne una seconda."
+  },
+  "show": {
+    "diaries": "Mostra le voci"
+  },
+  "update": {
+    "conf": "La voce è stata aggiornata.",
+    "error": "La voce non è stata aggiornata."
+  },
+  "loading": "Caricamento …"
+}

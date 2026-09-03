@@ -1,0 +1,65 @@
+{
+  "title": "Diary",
+  "subtitle": "Check access to the archive and see what an import would find — neither action changes your entries.",
+  "import": {
+    "title": "Prepare the import"
+  },
+  "drive": {
+    "action": "Check Drive access",
+    "running": "Checking access …",
+    "ok": "Access to the archive works.",
+    "failed": "Access to the archive does not work."
+  },
+  "dryrun": {
+    "action": "Test the diary import",
+    "running": "Test run in progress — this can take several minutes …",
+    "ok": "The test run finished. Nothing was saved.",
+    "failed": "The test run failed.",
+    "topUnresolved": "most frequent open names:",
+    "firstError": "first error:"
+  },
+  "locations": {
+    "title": "Places",
+    "hint": "Every place your entries mention — matched and unmatched.",
+    "action": "Show places"
+  },
+  "persons": {
+    "title": "People",
+    "hint": "Every person your entries mention — matched and unmatched.",
+    "action": "Show people"
+  },
+  "reference": {
+    "search": "Search",
+    "filter": {
+      "all": "All",
+      "resolved": "Matched",
+      "unresolved": "Open"
+    },
+    "empty": "Nothing found.",
+    "unresolved": "not linked to a record yet"
+  },
+  "usage": {
+    "title": "Appears in these entries:",
+    "empty": "No entry uses this.",
+    "untitled": "no title"
+  },
+  "location": {
+    "edit": "Edit place",
+    "add": "Create a new place",
+    "map": "Link to a place"
+  },
+  "person": {
+    "edit": "Edit person",
+    "add": "Create a new person",
+    "map": "Link to a person",
+    "duplicateHint": "Someone with this name already exists. Use “Link to a person” instead of creating a second record."
+  },
+  "show": {
+    "diaries": "Show entries"
+  },
+  "update": {
+    "conf": "The entry was updated.",
+    "error": "The entry could not be updated."
+  },
+  "loading": "Loading …"
+}

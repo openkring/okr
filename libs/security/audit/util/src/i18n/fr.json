@@ -19,18 +19,6 @@
     "done": "Annuaire reconstruit : {{persons}} personnes, {{orgs}} organisations.",
     "cross": "{{addresses}} adresses d'autres mandants dans {{parents}} profils restent exclues."
   },
-  "drive": {
-    "action": "Vérifier l'accès à Drive",
-    "running": "Vérification de l'accès à Drive …",
-    "ok": "L'accès à Drive fonctionne.",
-    "failed": "L'accès à Drive a échoué :"
-  },
-  "diary": {
-    "action": "Tester l'import du journal (à blanc)",
-    "running": "Lecture et vérification de l'archive …",
-    "ok": "L'essai est terminé. Rien n'a été écrit.",
-    "failed": "L'essai a échoué :"
-  },
   "severity": {
     "error": "erreurs",
     "warning": "avertissements",

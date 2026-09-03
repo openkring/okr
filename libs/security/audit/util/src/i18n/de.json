@@ -19,18 +19,6 @@
     "done": "Verzeichnis neu aufgebaut: {{persons}} Personen, {{orgs}} Organisationen.",
     "cross": "{{addresses}} mandantenfremde Adressen aus {{parents}} Profilen bleiben ausgeschlossen."
   },
-  "drive": {
-    "action": "Drive-Zugang prüfen",
-    "running": "Drive-Zugang wird geprüft …",
-    "ok": "Drive-Zugang steht.",
-    "failed": "Der Drive-Zugang ist fehlgeschlagen:"
-  },
-  "diary": {
-    "action": "Diary-Import testen (Trockenlauf)",
-    "running": "Archiv wird gelesen und geprüft …",
-    "ok": "Der Trockenlauf ist durch. Es wurde nichts geschrieben.",
-    "failed": "Der Trockenlauf ist fehlgeschlagen:"
-  },
   "severity": {
     "error": "Fehler",
     "warning": "Warnungen",

@@ -1,0 +1,65 @@
+{
+  "title": "Journal",
+  "subtitle": "Vérifie l'accès aux archives et regarde ce qu'un import trouverait — aucune de ces actions ne modifie tes entrées.",
+  "import": {
+    "title": "Préparer l'import"
+  },
+  "drive": {
+    "action": "Vérifier l'accès à Drive",
+    "running": "Vérification de l'accès …",
+    "ok": "L'accès aux archives fonctionne.",
+    "failed": "L'accès aux archives ne fonctionne pas."
+  },
+  "dryrun": {
+    "action": "Tester l'import du journal",
+    "running": "Test en cours — cela peut prendre plusieurs minutes …",
+    "ok": "Le test s'est terminé. Rien n'a été enregistré.",
+    "failed": "Le test a échoué.",
+    "topUnresolved": "noms ouverts les plus fréquents :",
+    "firstError": "première erreur :"
+  },
+  "locations": {
+    "title": "Lieux",
+    "hint": "Tous les lieux mentionnés dans tes entrées — attribués ou non.",
+    "action": "Afficher les lieux"
+  },
+  "persons": {
+    "title": "Personnes",
+    "hint": "Toutes les personnes mentionnées dans tes entrées — attribuées ou non.",
+    "action": "Afficher les personnes"
+  },
+  "reference": {
+    "search": "Rechercher",
+    "filter": {
+      "all": "Tous",
+      "resolved": "Attribués",
+      "unresolved": "Ouverts"
+    },
+    "empty": "Rien trouvé.",
+    "unresolved": "pas encore rattaché à une fiche"
+  },
+  "usage": {
+    "title": "Apparaît dans ces entrées :",
+    "empty": "Aucune entrée ne l'utilise.",
+    "untitled": "sans titre"
+  },
+  "location": {
+    "edit": "Modifier le lieu",
+    "add": "Créer un nouveau lieu",
+    "map": "Rattacher à un lieu"
+  },
+  "person": {
+    "edit": "Modifier la personne",
+    "add": "Créer une nouvelle personne",
+    "map": "Rattacher à une personne",
+    "duplicateHint": "Une personne portant ce nom existe déjà. Utilise « Rattacher à une personne » plutôt que d'en créer une seconde."
+  },
+  "show": {
+    "diaries": "Afficher les entrées"
+  },
+  "update": {
+    "conf": "L'entrée a été mise à jour.",
+    "error": "L'entrée n'a pas pu être mise à jour."
+  },
+  "loading": "Chargement …"
+}

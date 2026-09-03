@@ -1,0 +1,37 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node", "vitest"],
+    "declaration": true,
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "lib": ["dom", "es2022"]
+  },
+  "angularCompilerOptions": {
+    "strictTemplates": true,
+    "strictInjectionParameters": true,
+    "disableTypeScriptVersionCheck": true,
+    "compileNonExportedClasses": true
+  },
+  "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
+  "exclude": ["dist/**/*"],
+  "references": [
+    { "path": "../data-access/tsconfig.lib.json" },
+    { "path": "../util/tsconfig.lib.json" },
+    { "path": "../../../geo/location/data-access/tsconfig.lib.json" },
+    { "path": "../../../geo/location/feature/tsconfig.lib.json" },
+    { "path": "../../../shared/config/tsconfig.lib.json" },
+    { "path": "../../../shared/data-access/tsconfig.lib.json" },
+    { "path": "../../../shared/feature/tsconfig.lib.json" },
+    { "path": "../../../shared/i18n/tsconfig.lib.json" },
+    { "path": "../../../shared/models/tsconfig.lib.json" },
+    { "path": "../../../shared/pipes/tsconfig.lib.json" },
+    { "path": "../../../shared/ui/tsconfig.lib.json" },
+    { "path": "../../../shared/util-angular/tsconfig.lib.json" },
+    { "path": "../../../shared/util-core/tsconfig.lib.json" },
+    { "path": "../../../subject/person/data-access/tsconfig.lib.json" },
+    { "path": "../../../subject/person/feature/tsconfig.lib.json" },
+    { "path": "../../../subject/person/util/tsconfig.lib.json" }
+  ]
+}

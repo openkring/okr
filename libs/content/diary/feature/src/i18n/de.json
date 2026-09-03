@@ -1,0 +1,65 @@
+{
+  "title": "Tagebuch",
+  "subtitle": "Prüfe den Zugang zum Archiv und schau dir an, was ein Import finden würde — beide Aktionen ändern nichts an deinen Einträgen.",
+  "import": {
+    "title": "Import vorbereiten"
+  },
+  "drive": {
+    "action": "Drive-Zugang prüfen",
+    "running": "Zugang wird geprüft …",
+    "ok": "Der Zugang zum Archiv funktioniert.",
+    "failed": "Der Zugang zum Archiv funktioniert nicht."
+  },
+  "dryrun": {
+    "action": "Diary-Import testen",
+    "running": "Testlauf läuft — das kann einige Minuten dauern …",
+    "ok": "Der Testlauf ist durchgelaufen. Es wurde nichts gespeichert.",
+    "failed": "Der Testlauf ist fehlgeschlagen.",
+    "topUnresolved": "häufigste offene Namen:",
+    "firstError": "erster Fehler:"
+  },
+  "locations": {
+    "title": "Orte",
+    "hint": "Alle Orte, die in deinen Einträgen vorkommen — mit und ohne Zuordnung.",
+    "action": "Orte anzeigen"
+  },
+  "persons": {
+    "title": "Personen",
+    "hint": "Alle Personen, die in deinen Einträgen vorkommen — mit und ohne Zuordnung.",
+    "action": "Personen anzeigen"
+  },
+  "reference": {
+    "search": "Suchen",
+    "filter": {
+      "all": "Alle",
+      "resolved": "Zugeordnet",
+      "unresolved": "Offen"
+    },
+    "empty": "Nichts gefunden.",
+    "unresolved": "noch keiner Karteikarte zugeordnet"
+  },
+  "usage": {
+    "title": "Kommt in diesen Einträgen vor:",
+    "empty": "Kein Eintrag verwendet das.",
+    "untitled": "ohne Titel"
+  },
+  "location": {
+    "edit": "Ort bearbeiten",
+    "add": "Ort neu anlegen",
+    "map": "Ort zuordnen"
+  },
+  "person": {
+    "edit": "Person bearbeiten",
+    "add": "Person neu anlegen",
+    "map": "Person zuordnen",
+    "duplicateHint": "Es gibt schon eine Person mit diesem Namen. Ordne den Eintrag mit «Person zuordnen» zu, statt eine zweite anzulegen."
+  },
+  "show": {
+    "diaries": "Einträge anzeigen"
+  },
+  "update": {
+    "conf": "Der Eintrag wurde aktualisiert.",
+    "error": "Der Eintrag konnte nicht aktualisiert werden."
+  },
+  "loading": "Wird geladen …"
+}
