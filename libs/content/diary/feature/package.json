@@ -17,6 +17,7 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
     "@okr/content-diary-data-access": "*",
+    "@okr/content-diary-ui": "*",
     "@okr/content-diary-util": "*",
     "@okr/location-data-access": "*",
     "@okr/location-feature": "*",
