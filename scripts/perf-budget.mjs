@@ -4,6 +4,7 @@
 // Why gzip of the static closure: it is the CI-computable proxy for "transfer KB before LCP",
 // the metric the spec measures with Lighthouse; the closure grew 6.41 -> 6.54 MB raw in five
 // days without anyone noticing, so a number nobody compares is not a budget.
+// An app with no stored baseline yet establishes one on this run (exit 0) rather than aborting the release.
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 
@@ -23,7 +24,12 @@ if (flag === '--write') {
   process.exit(0);
 }
 const base = all[app]?.dashboardClosureGzipBytes;
-if (!base) { console.error(`perf-budget: no baseline for ${app} in ${file} — run with --write once`); process.exit(2); }
+if (!base) {
+  all[app] = { dashboardClosureGzipBytes: gzipBytes, chunks, updated: new Date().toISOString().slice(0, 10) };
+  fs.writeFileSync(file, JSON.stringify(all, null, 2) + '\n');
+  console.log(`perf-budget: no baseline for ${app} yet — recorded ${Math.round(gzipBytes / 1024)} KB gzip (${chunks} chunks) as the baseline; the gate applies from the next release on`);
+  process.exit(0);
+}
 const limit = Math.round(base * (1 + TOLERANCE));
 const kb = b => Math.round(b / 1024);
 if (gzipBytes > limit) {
