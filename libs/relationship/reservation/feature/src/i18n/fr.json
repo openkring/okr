@@ -179,7 +179,8 @@
       "description": "Réservation pour réparation ou entretien."
     },
     "blocked": {
-      "label": "Bloqué"
+      "label": "Bloqué",
+      "description": "Réservation parce que le bateau est utilisé à une autre fin."
     },
     "course": {
       "label": "Cours",

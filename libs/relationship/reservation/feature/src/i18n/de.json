@@ -179,7 +179,8 @@
       "description": "Reservierung für Reparatur oder Wartung."
     },
     "blocked": {
-      "label": "Gesperrt"
+      "label": "Gesperrt",
+      "description": "Reservierung, weil das Boot für einen anderen Zweck gebraucht wird."
     },
     "course": {
       "label": "Kurs",

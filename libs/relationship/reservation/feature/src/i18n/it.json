@@ -179,7 +179,8 @@
       "description": "Prenotazione per riparazione o manutenzione."
     },
     "blocked": {
-      "label": "Bloccato"
+      "label": "Bloccato",
+      "description": "Prenotazione perché la barca serve per un altro scopo."
     },
     "course": {
       "label": "Corso",
