@@ -169,6 +169,7 @@
     "jiti": "2.4.2",
     "jsdom": "26.1.0",
     "jsonc-eslint-parser": "^2.4.2",
+    "lighthouse": "13.4.1",
     "mock-xmlhttprequest": "8.4.1",
     "nx": "21.4.1",
     "pnpm": "10.15.0",
