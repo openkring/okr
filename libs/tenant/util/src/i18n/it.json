@@ -122,6 +122,9 @@
     "meeting": {
       "label": "Riunioni e verbali"
     },
+    "diary": {
+      "label": "Diario"
+    },
     "alias": {
       "label": "Link brevi e codici QR"
     },
