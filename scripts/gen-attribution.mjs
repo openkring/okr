@@ -88,6 +88,15 @@ const TARGETS = {
     serverDeps: true,
     out: 'dist/apps/okr-app/browser/web/licenses.html',
   },
+  // Added 2026-09-03, same story as the two above: bkg-app existed as an Nx project but had
+  // never been released, so it was in no per-app registry. Registering it here and in
+  // release.mjs SITES is what makes `pnpm release bkg-app` able to finish at all.
+  'bkg-app': {
+    label: 'bkaiser GmbH',
+    bundle: 'dist/apps/bkg-app/3rdpartylicenses.txt',
+    serverDeps: true,
+    out: 'dist/apps/bkg-app/browser/licenses.html',
+  },
   'elab-app': {
     label: 'GLP EnergyLab',
     bundle: 'dist/apps/elab-app/3rdpartylicenses.txt',

@@ -518,6 +518,102 @@
       ]
     },
     {
+      "site": "bkg-app-54aef",
+      "public": "dist/apps/bkg-app/browser",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "**/*.map"
+      ],
+      "rewrites": [
+        {
+          "source": "/_matrix/push/v1/notify",
+          "function": "matrixPushGateway",
+          "region": "europe-west6"
+        },
+        {
+          "source": "/healthz",
+          "function": "healthz",
+          "region": "europe-west6"
+        },
+        {
+          "source": "/s/**",
+          "function": "publicApi",
+          "region": "europe-west6"
+        },
+        {
+          "source": "/**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.@(js|css)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/@(ngsw-worker.js|ngsw.json|safety-worker.js|firebase-messaging-sw.js|firebase-config.js|manifest.webmanifest)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/assets/i18n/**/*.json",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(jpg|jpeg|png|gif|svg|webp|avif|woff|woff2|ttf|otf|ico)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://apis.google.com https://static.imgix.net https://maps.googleapis.com https://www.googletagmanager.com 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https: blob:; media-src 'self' blob:; connect-src 'self' blob: https://*.firebaseio.com https://*.googleapis.com https://www.google.com https://www.gstatic.com https://maps.gstatic.com https://*.imgix.net https://matrix.bkchat.etke.host https://europe-west6-bkaiser-org.cloudfunctions.net https://cdn.jsdelivr.net https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://*.ingest.de.sentry.io https://wmts.geo.admin.ch https://tile.openstreetmap.org https://api.rainviewer.com; frame-src https://recaptcha.google.com https://www.google.com https://*.firebaseapp.com https://storage.googleapis.com https://firebasestorage.googleapis.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.openstreetmap.org; object-src 'none'; base-uri 'self'; frame-ancestors 'none';"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "site": "elab-app-54aef",
       "public": "dist/apps/elab-app/browser",
       "ignore": [

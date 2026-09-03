@@ -25,6 +25,7 @@ const SITES = {
   'kring-app': 'kring-app-54aef',
   'okr-app': 'okr-app-54aef',
   'bka-app': 'bka-app-54aef',
+  'bkg-app': 'bkg-app-54aef',
   'elab-app': 'elab-app-54aef',
   'okr-website': 'okr-website-54aef',
   'kring-website': 'kring-website-54aef',
