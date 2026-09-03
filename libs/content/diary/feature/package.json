@@ -16,6 +16,7 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
+    "@okr/cms-menu-feature": "*",
     "@okr/content-diary-data-access": "*",
     "@okr/content-diary-ui": "*",
     "@okr/content-diary-util": "*",
@@ -23,6 +24,7 @@
     "@okr/location-feature": "*",
     "@okr/subject-person-data-access": "*",
     "@okr/subject-person-feature": "*",
-    "@okr/subject-person-util": "*"
+    "@okr/subject-person-util": "*",
+    "@okr/weather-util": "*"
   }
 }

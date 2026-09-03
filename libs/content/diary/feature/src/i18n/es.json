@@ -68,5 +68,119 @@
     "conf": "La entrada se ha actualizado.",
     "error": "La entrada no se ha podido actualizar."
   },
-  "loading": "Cargando …"
+  "loading": "Cargando …",
+  "plural": "Diario",
+  "singular": "Entrada",
+  "list": {
+    "empty": "No hay ninguna entrada este año.",
+    "allYearsHint": "Cargar todos los años tarda un momento: hay más de 7000 entradas."
+  },
+  "actions": {
+    "title": "Entrada",
+    "add": "Nueva entrada",
+    "view": "Leer",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "deleteConfirm": "¿Quieres eliminar esta entrada?",
+    "weatherRefresh": "Recuperar el tiempo",
+    "openDrive": "Abrir las imágenes en Drive"
+  },
+  "create": {
+    "conf": "La entrada se ha guardado.",
+    "error": "La entrada no se ha podido guardar.",
+    "exists": "Ya hay una entrada para este día — se abrirá para editarla."
+  },
+  "delete": {
+    "conf": "La entrada se ha eliminado.",
+    "error": "La entrada no se ha podido eliminar."
+  },
+  "state": {
+    "all": "Todas",
+    "final": "Terminada",
+    "draft": "Borrador",
+    "placeholder": "Solo imágenes"
+  },
+  "scope": {
+    "day": "Día",
+    "month": "Mes",
+    "year": "Año"
+  },
+  "form": {
+    "title": {
+      "label": "Título",
+      "placeholder": "¿De qué trató el día de hoy?"
+    },
+    "scope": {
+      "label": "Periodo"
+    },
+    "date": {
+      "label": "Fecha"
+    },
+    "year": {
+      "label": "Año"
+    },
+    "month": {
+      "label": "Mes"
+    },
+    "status": {
+      "label": "Estado",
+      "helper": "Una entrada sin tiempo se queda como borrador."
+    },
+    "text": {
+      "label": "Pensamientos personales",
+      "placeholder": "Empieza a escribir …"
+    },
+    "done": {
+      "label": "Hecho",
+      "placeholder": "Una línea por punto"
+    },
+    "location": {
+      "label": "Lugar",
+      "select": "Elige o escribe un lugar"
+    },
+    "people": {
+      "label": "Personas",
+      "select": "Añadir una persona"
+    },
+    "customPeople": {
+      "label": "Otras personas",
+      "helper": "Nombres sin ficha — separados por comas"
+    },
+    "places": {
+      "label": "Lugares en el texto"
+    },
+    "events": {
+      "label": "Eventos"
+    },
+    "trip": {
+      "label": "Viaje",
+      "select": "Elige un viaje",
+      "none": "ninguno"
+    }
+  },
+  "weather": {
+    "none": "Sin tiempo",
+    "draftHint": "No se ha podido obtener el tiempo. La entrada se queda como borrador — inténtalo más tarde con «Recuperar el tiempo».",
+    "noCoords": "Este tiempo necesita un lugar de la lista de lugares.",
+    "conf": "Se ha añadido el tiempo."
+  },
+  "view": {
+    "imagesInDrive": "Imágenes — abrir en la carpeta de Drive",
+    "doneTitle": "Hecho",
+    "untitled": "sin título"
+  },
+  "diaryState": {
+    "all": {
+      "label": "Todas"
+    },
+    "final": {
+      "label": "Terminada"
+    },
+    "draft": {
+      "label": "Borrador"
+    },
+    "placeholder": {
+      "label": "Solo imágenes"
+    }
+  }
 }

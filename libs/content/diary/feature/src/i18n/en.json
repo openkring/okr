@@ -68,5 +68,119 @@
     "conf": "The entry was updated.",
     "error": "The entry could not be updated."
   },
-  "loading": "Loading …"
+  "loading": "Loading …",
+  "plural": "Diary",
+  "singular": "Entry",
+  "list": {
+    "empty": "No entry in this year.",
+    "allYearsHint": "Loading all years takes a moment — there are more than 7,000 entries."
+  },
+  "actions": {
+    "title": "Entry",
+    "add": "New entry",
+    "view": "Read",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Do you really want to delete this entry?",
+    "weatherRefresh": "Fetch weather",
+    "openDrive": "Open images in Drive"
+  },
+  "create": {
+    "conf": "The entry was saved.",
+    "error": "The entry could not be saved.",
+    "exists": "There is already an entry for this day — it will be opened for editing."
+  },
+  "delete": {
+    "conf": "The entry was deleted.",
+    "error": "The entry could not be deleted."
+  },
+  "state": {
+    "all": "All",
+    "final": "Done",
+    "draft": "Draft",
+    "placeholder": "Images only"
+  },
+  "scope": {
+    "day": "Day",
+    "month": "Month",
+    "year": "Year"
+  },
+  "form": {
+    "title": {
+      "label": "Title",
+      "placeholder": "What was today about?"
+    },
+    "scope": {
+      "label": "Period"
+    },
+    "date": {
+      "label": "Date"
+    },
+    "year": {
+      "label": "Year"
+    },
+    "month": {
+      "label": "Month"
+    },
+    "status": {
+      "label": "Status",
+      "helper": "An entry without weather stays a draft."
+    },
+    "text": {
+      "label": "Personal thoughts",
+      "placeholder": "Just start writing …"
+    },
+    "done": {
+      "label": "Done",
+      "placeholder": "One line per item"
+    },
+    "location": {
+      "label": "Place",
+      "select": "Choose or type a place"
+    },
+    "people": {
+      "label": "People",
+      "select": "Add a person"
+    },
+    "customPeople": {
+      "label": "Other people",
+      "helper": "Names without a record — comma-separated"
+    },
+    "places": {
+      "label": "Places in the text"
+    },
+    "events": {
+      "label": "Events"
+    },
+    "trip": {
+      "label": "Trip",
+      "select": "Choose a trip",
+      "none": "none"
+    }
+  },
+  "weather": {
+    "none": "No weather",
+    "draftHint": "The weather could not be fetched. The entry stays a draft — try «Fetch weather» again later.",
+    "noCoords": "This weather needs a place from the place list.",
+    "conf": "The weather was added."
+  },
+  "view": {
+    "imagesInDrive": "Images — open in the Drive folder",
+    "doneTitle": "Done",
+    "untitled": "untitled"
+  },
+  "diaryState": {
+    "all": {
+      "label": "All"
+    },
+    "final": {
+      "label": "Done"
+    },
+    "draft": {
+      "label": "Draft"
+    },
+    "placeholder": {
+      "label": "Images only"
+    }
+  }
 }

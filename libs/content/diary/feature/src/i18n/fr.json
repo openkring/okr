@@ -68,5 +68,119 @@
     "conf": "L'entrée a été mise à jour.",
     "error": "L'entrée n'a pas pu être mise à jour."
   },
-  "loading": "Chargement …"
+  "loading": "Chargement …",
+  "plural": "Journal",
+  "singular": "Entrée",
+  "list": {
+    "empty": "Aucune entrée pour cette année.",
+    "allYearsHint": "Charger toutes les années prend un moment — il y a plus de 7 000 entrées."
+  },
+  "actions": {
+    "title": "Entrée",
+    "add": "Nouvelle entrée",
+    "view": "Lire",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "deleteConfirm": "Veux-tu vraiment supprimer cette entrée ?",
+    "weatherRefresh": "Rattraper la météo",
+    "openDrive": "Ouvrir les images dans Drive"
+  },
+  "create": {
+    "conf": "L'entrée a été enregistrée.",
+    "error": "L'entrée n'a pas pu être enregistrée.",
+    "exists": "Il existe déjà une entrée pour ce jour — elle s'ouvre pour être modifiée."
+  },
+  "delete": {
+    "conf": "L'entrée a été supprimée.",
+    "error": "L'entrée n'a pas pu être supprimée."
+  },
+  "state": {
+    "all": "Toutes",
+    "final": "Terminée",
+    "draft": "Brouillon",
+    "placeholder": "Images seulement"
+  },
+  "scope": {
+    "day": "Jour",
+    "month": "Mois",
+    "year": "Année"
+  },
+  "form": {
+    "title": {
+      "label": "Titre",
+      "placeholder": "De quoi parlait cette journée ?"
+    },
+    "scope": {
+      "label": "Période"
+    },
+    "date": {
+      "label": "Date"
+    },
+    "year": {
+      "label": "Année"
+    },
+    "month": {
+      "label": "Mois"
+    },
+    "status": {
+      "label": "État",
+      "helper": "Une entrée sans météo reste un brouillon."
+    },
+    "text": {
+      "label": "Pensées personnelles",
+      "placeholder": "Écris simplement …"
+    },
+    "done": {
+      "label": "Fait",
+      "placeholder": "Une ligne par point"
+    },
+    "location": {
+      "label": "Lieu",
+      "select": "Choisis ou saisis un lieu"
+    },
+    "people": {
+      "label": "Personnes",
+      "select": "Ajouter une personne"
+    },
+    "customPeople": {
+      "label": "Autres personnes",
+      "helper": "Noms sans fiche — séparés par une virgule"
+    },
+    "places": {
+      "label": "Lieux dans le texte"
+    },
+    "events": {
+      "label": "Événements"
+    },
+    "trip": {
+      "label": "Voyage",
+      "select": "Choisir un voyage",
+      "none": "aucun"
+    }
+  },
+  "weather": {
+    "none": "Pas de météo",
+    "draftHint": "La météo n'a pas pu être récupérée. L'entrée reste un brouillon — réessaie plus tard avec « Rattraper la météo ».",
+    "noCoords": "Cette météo a besoin d'un lieu tiré de la liste des lieux.",
+    "conf": "La météo a été ajoutée."
+  },
+  "view": {
+    "imagesInDrive": "Images — ouvrir dans le dossier Drive",
+    "doneTitle": "Fait",
+    "untitled": "sans titre"
+  },
+  "diaryState": {
+    "all": {
+      "label": "Toutes"
+    },
+    "final": {
+      "label": "Terminée"
+    },
+    "draft": {
+      "label": "Brouillon"
+    },
+    "placeholder": {
+      "label": "Images seulement"
+    }
+  }
 }

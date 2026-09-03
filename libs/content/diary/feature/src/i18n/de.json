@@ -68,5 +68,119 @@
     "conf": "Der Eintrag wurde aktualisiert.",
     "error": "Der Eintrag konnte nicht aktualisiert werden."
   },
-  "loading": "Wird geladen …"
+  "loading": "Wird geladen …",
+  "plural": "Tagebuch",
+  "singular": "Eintrag",
+  "list": {
+    "empty": "Kein Eintrag in diesem Jahr.",
+    "allYearsHint": "Alle Jahre laden dauert einen Moment — es sind über 7'000 Einträge."
+  },
+  "actions": {
+    "title": "Eintrag",
+    "add": "Neuer Eintrag",
+    "view": "Lesen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "deleteConfirm": "Willst du diesen Eintrag wirklich löschen?",
+    "weatherRefresh": "Wetter nachholen",
+    "openDrive": "Bilder im Drive öffnen"
+  },
+  "create": {
+    "conf": "Der Eintrag wurde gespeichert.",
+    "error": "Der Eintrag konnte nicht gespeichert werden.",
+    "exists": "Für diesen Tag gibt es schon einen Eintrag — er wird zum Bearbeiten geöffnet."
+  },
+  "delete": {
+    "conf": "Der Eintrag wurde gelöscht.",
+    "error": "Der Eintrag konnte nicht gelöscht werden."
+  },
+  "state": {
+    "all": "Alle",
+    "final": "Fertig",
+    "draft": "Entwurf",
+    "placeholder": "Nur Bilder"
+  },
+  "scope": {
+    "day": "Tag",
+    "month": "Monat",
+    "year": "Jahr"
+  },
+  "form": {
+    "title": {
+      "label": "Titel",
+      "placeholder": "Worum ging es heute?"
+    },
+    "scope": {
+      "label": "Zeitraum"
+    },
+    "date": {
+      "label": "Datum"
+    },
+    "year": {
+      "label": "Jahr"
+    },
+    "month": {
+      "label": "Monat"
+    },
+    "status": {
+      "label": "Stand",
+      "helper": "Ein Eintrag ohne Wetter bleibt ein Entwurf."
+    },
+    "text": {
+      "label": "Persönliche Gedanken",
+      "placeholder": "Schreib einfach los …"
+    },
+    "done": {
+      "label": "Erledigt",
+      "placeholder": "Eine Zeile pro Punkt"
+    },
+    "location": {
+      "label": "Ort",
+      "select": "Ort wählen oder eintippen"
+    },
+    "people": {
+      "label": "Personen",
+      "select": "Person hinzufügen"
+    },
+    "customPeople": {
+      "label": "Weitere Personen",
+      "helper": "Namen, die keine Karteikarte haben — mit Komma getrennt"
+    },
+    "places": {
+      "label": "Orte im Text"
+    },
+    "events": {
+      "label": "Ereignisse"
+    },
+    "trip": {
+      "label": "Reise",
+      "select": "Reise wählen",
+      "none": "keine"
+    }
+  },
+  "weather": {
+    "none": "Kein Wetter",
+    "draftHint": "Das Wetter konnte nicht geholt werden. Der Eintrag bleibt ein Entwurf — versuch es später mit «Wetter nachholen».",
+    "noCoords": "Für dieses Wetter braucht der Eintrag einen Ort aus der Ortsliste.",
+    "conf": "Das Wetter wurde ergänzt."
+  },
+  "view": {
+    "imagesInDrive": "Bilder — im Drive-Ordner öffnen",
+    "doneTitle": "Erledigt",
+    "untitled": "ohne Titel"
+  },
+  "diaryState": {
+    "all": {
+      "label": "Alle"
+    },
+    "final": {
+      "label": "Fertig"
+    },
+    "draft": {
+      "label": "Entwurf"
+    },
+    "placeholder": {
+      "label": "Nur Bilder"
+    }
+  }
 }
