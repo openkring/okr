@@ -419,7 +419,9 @@ function parseCoordinatePair(latitude, longitude) {
 function buildLocation(tenant, row) {
   return {
     tenants: [tenant], isArchived: false,
-    index: '', name: row.label, address: '', tags: '',
+    // 'diary' marks these as harvested from the diary archive rather than entered by hand —
+    // the only way to tell them apart later, e.g. to re-run a geocode or to retire them.
+    index: '', name: row.label, address: '', tags: 'diary',
     type: LOCATION_TYPE,
     latitude: row.latitude,
     longitude: row.longitude,
@@ -431,7 +433,7 @@ function buildLocation(tenant, row) {
 /** Mirrors buildAliasDoc in scripts/seed-diary-aliases.mjs, so both spaces stay one shape. */
 function buildLocationAlias(tenant, row, okey) {
   return {
-    tenants: [tenant], isArchived: false, tags: '', notes: 'diary import (spec 1.34 V4)',
+    tenants: [tenant], isArchived: false, tags: 'diary', notes: 'diary import (spec 1.34 V4)',
     space: 'location', alias: row.key,
     targetType: 'model', targetUrl: '', targetKey: `location.${okey}`,
     original: row.originals,
