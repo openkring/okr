@@ -194,6 +194,7 @@ export const SECTION_I18N_KEYS = {
   event_more_label:                         PFX + 'event.more.label',
   event_more_placeholder:                   PFX + 'event.more.placeholder',
   event_more_helper:                        PFX + 'event.more.helper',
+  event_more_button:                        PFX + 'event.moreButton',
   event_max_label:                          PFX + 'event.max.label',
   event_max_placeholder:                    PFX + 'event.max.placeholder',
   event_max_helper:                         PFX + 'event.max.helper',
@@ -356,6 +357,7 @@ export const SECTION_I18N_KEYS = {
   invitation_more_label:                    PFX + 'invitation.more.label',
   invitation_more_placeholder:              PFX + 'invitation.more.placeholder',
   invitation_more_helper:                   PFX + 'invitation.more.helper',
+  invitation_more_button:                   PFX + 'invitation.moreButton',
   invitation_maxItems_label:                PFX + 'invitation.maxItems.label',
   invitation_maxItems_placeholder:          PFX + 'invitation.maxItems.placeholder',
   invitation_maxItems_helper:               PFX + 'invitation.maxItems.helper',
@@ -598,6 +600,8 @@ export const SECTION_I18N_KEYS = {
 
   // task
   task_empty:                              PFX + 'task.empty',
+  task_more_button:                        PFX + 'task.moreButton',
+  message_more_button:                     PFX + 'message.moreButton',
   task_complete:                           PFX + 'task.complete',
   task_view:                               PFX + 'task.view',
   task_edit:                               PFX + 'task.edit',

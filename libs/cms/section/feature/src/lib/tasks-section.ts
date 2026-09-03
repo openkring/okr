@@ -75,7 +75,7 @@ import { TasksStore } from './tasks-section.store';
                     </ion-list>
                 }
                 @if(showMoreButton() && !editMode()) {
-                  <okr-more-button [url]="moreUrl()" [label]="store.i18n.more()"/>
+                  <okr-more-button [url]="moreUrl()" [label]="store.i18n.task_more_button()"/>
                 }
             </ion-card-content>
         </ion-card>

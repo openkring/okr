@@ -10,10 +10,15 @@ import { navigateByUrl } from '@okr/shared-util-angular';
   imports: [
     IonGrid, IonRow, IonCol, IonButton
   ],
+  styles: [`
+    /* The column sizes to the label and the label never wraps: a fixed size="3" column wrapped
+       "Zu Meine Aufgaben" onto two lines on the dashboard cards. */
+    ion-button { white-space: nowrap; }
+  `],
   template: `
     <ion-grid>
         <ion-row>
-            <ion-col size="3">
+            <ion-col size="auto">
                 <ion-button expand="block" fill="clear" (click)="openMoreUrl()">
                     {{ label() }}
                 </ion-button>

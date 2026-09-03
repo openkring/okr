@@ -1,13 +1,12 @@
 
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow, ModalController } from '@ionic/angular/standalone';
-import { Router } from '@angular/router';
 
 import { InvitationModel, InvitationsConfig, InvitationsSection, InvitationState } from '@okr/shared-models';
 import { getReservedListHeightPx } from '@okr/cms-section-util';
-import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
+import { MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { getAttendanceColor, getAttendanceIcon, hasRole, isPastDate } from '@okr/shared-util-core';
-import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 import { CALEVENT_I18N_KEYS } from '@okr/calevent-util';
@@ -16,6 +15,7 @@ import { InvitationSectionStore } from './invitations-section.store';
 
 @Component({
   selector: 'okr-invitations-section',
+  host: { '[class.okr-section-hidden]': '!isVisible()' },
   standalone: true,
   styles: [
     `
@@ -41,11 +41,12 @@ import { InvitationSectionStore } from './invitations-section.store';
   providers: [InvitationSectionStore], 
   imports: [
     SvgIconPipe, PrettyDatePipe,
-    OptionalCardHeader, Spinner,
+    OptionalCardHeader, Spinner, MoreButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonLabel
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
+    @if(isVisible()) {
     <ion-card>
       <okr-optional-card-header [title]="title()" [subTitle]="subTitle()"
         [showInfoButton]="true" [infoLabel]="caleventI18n.info_open()" (infoClicked)="showInfo()" />
@@ -70,26 +71,20 @@ import { InvitationSectionStore } from './invitations-section.store';
                 </ion-col>
               </ion-row>
             }
-            @if(showMoreButton()) {
-              <ion-row>
-                <ion-col size="3">
-                  <ion-button expand="block" fill="clear" (click)="openMoreUrl()">
-                    {{ store.i18n.more() }}
-                  </ion-button>
-                </ion-col>
-              </ion-row>
-            }
           </ion-grid>
+          @if(showMoreButton() && !editMode()) {
+            <okr-more-button [url]="moreUrl()" [label]="store.i18n.invitation_more_button()" />
+          }
         }
       </ion-card-content>
     </ion-card>
+    }
   `,
 })
 export class InvitationsSectionComponent implements OnInit {
   protected store = inject(InvitationSectionStore);
   private readonly platformId = inject(PLATFORM_ID);
   private actionSheetController = inject(ActionSheetController);
-  private router = inject(Router);
 
   // inputs
   public section = input<InvitationsSection>();
@@ -121,6 +116,13 @@ export class InvitationsSectionComponent implements OnInit {
   protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
   // The store's loading state, not a constant — see tasks-section for why.
   protected readonly isLoading = computed(() => this.store.isLoading());
+  /**
+   * Invitations are rare, so the card only exists when there is something in it. Hidden while
+   * loading too — a spinner for a card that then vanishes would be worse than a late appearance.
+   * Edit mode always shows it, otherwise an admin could never find the section to configure it.
+   * The dashboard collapses the whole grid column via the okr-section-hidden host class.
+   */
+  protected readonly isVisible = computed(() => this.editMode() || (!this.isLoading() && this.invitations().length > 0));
   protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
 
   // passing constants to the template
@@ -237,7 +239,4 @@ export class InvitationsSectionComponent implements OnInit {
     return getAttendanceColor(state);
   }
 
-  protected openMoreUrl(): void {
-    navigateByUrl(this.router, this.moreUrl());
-  }
 }

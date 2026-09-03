@@ -299,7 +299,8 @@
         "label": "Afficher le lieu de l'événement",
         "helper": "Choisir si le lieu de l'événement est affiché."
       }
-    }
+    },
+    "moreButton": "Vers mon calendrier"
   },
   "events": {
     "label": "Événements",
@@ -554,7 +555,8 @@
     "locked": {
       "title": "Invitation verrouillée",
       "hint": "L'organisation a verrouillé les réponses à cette invitation. Ta réponse ne peut plus être modifiée."
-    }
+    },
+    "moreButton": "Mes invitations"
   },
   "map": {
     "label": "Carte",
@@ -866,7 +868,8 @@
     "complete": "Marquer comme terminée",
     "view": "Afficher la tâche",
     "edit": "Modifier la tâche",
-    "delete": "Supprimer la tâche"
+    "delete": "Supprimer la tâche",
+    "moreButton": "Vers mes tâches"
   },
   "tracker": {
     "label": "Tracker",
@@ -1237,5 +1240,8 @@
     "days": {
       "label": "Nombre de jours"
     }
+  },
+  "message": {
+    "moreButton": "Vers l'aperçu des chats"
   }
 }

@@ -44,7 +44,7 @@ import { MessagesStore } from './messages-section.store';
             </ion-list>
           }
           @if(showMoreButton() && !editMode()) {
-            <okr-more-button [url]="moreUrl()" [label]="store.i18n.more()" />
+            <okr-more-button [url]="moreUrl()" [label]="store.i18n.message_more_button()" />
           }
         </ion-card-content>
       </ion-card>

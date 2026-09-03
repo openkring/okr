@@ -44,6 +44,12 @@ import { PageStore } from './page.store';
       padding: 8px;
     }
 
+    /* A section that decided to render nothing (e.g. invitations without open invitations) must not
+       leave a 16px padding gap in the grid — collapse the whole column. */
+    .section-item:has(.okr-section-hidden) {
+      display: none;
+    }
+
     .section-wrapper {
       background: var(--ion-color-light-contrast);
       border-radius: 12px;
