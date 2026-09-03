@@ -35,14 +35,21 @@ const list = [...seen].filter(f => fs.existsSync(path.join(dir, f)));
 let raw = 0, gz = 0;
 for (const f of list) { const buf = fs.readFileSync(path.join(dir, f)); raw += buf.length; gz += zlib.gzipSync(buf, { level: 6 }).length; }
 
+// A corrupt or truncated .map must not take the whole tool down — the chunk is still counted
+// in the closure; only its probe attribution is lost, and stderr says so.
+function readSourceMap(mp) {
+  try { return JSON.parse(fs.readFileSync(mp, 'utf8')); }
+  catch (e) { console.error(`bundle-closure: skipping unreadable source map ${path.basename(mp)} (${e.message})`); return null; }
+}
+
 const probeHits = {};
 for (const lib of probes) {
+  // pnpm nests package sources under node_modules/.pnpm/<name>@<version>/…, with a scoped
+  // name's slash encoded as '+': @fullcalendar/core -> .pnpm/@fullcalendar+core@6.1.0/…
+  const pnpmName = lib.replace('/', '+');
   probeHits[lib] = list.filter(f => {
     const mp = path.join(dir, f + '.map'); if (!fs.existsSync(mp)) return false;
-    const m = JSON.parse(fs.readFileSync(mp, 'utf8'));
-    // pnpm nests package sources under node_modules/.pnpm/<name>@<version>/…, with a scoped
-    // name's slash encoded as '+': @fullcalendar/core -> .pnpm/@fullcalendar+core@6.1.0/…
-    const pnpmName = lib.replace('/', '+');
+    const m = readSourceMap(mp); if (!m) return false;
     return (m.sources || []).some(s =>
       s.includes('/node_modules/' + lib + '/') ||
       s.includes('/.pnpm/' + pnpmName + '@') ||
