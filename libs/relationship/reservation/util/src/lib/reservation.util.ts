@@ -1,5 +1,5 @@
 import { ReservationApplyModel, ReservationModel, ResourceModel, UserModel } from '@okr/shared-models';
-import { addIndexElement, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, isAfterOrEqualDate, isType } from '@okr/shared-util-core';
+import { addIndexElement, DateFormat, getAvatarInfo, getAvatarInfoForCurrentUser, getTodayStr, isAfterDate, isAfterOrEqualDate, isType } from '@okr/shared-util-core';
 
 export function isReservation(reservation: unknown, tenantId: string): reservation is ReservationModel {
   return isType(reservation, new ReservationModel(tenantId));
@@ -15,6 +15,33 @@ export const OPEN_RESERVATION_STATES = ['initial', 'applied', 'active'];
  */
 export function isReservationOpen(reservation: ReservationModel): boolean {
   return OPEN_RESERVATION_STATES.includes(reservation.state) && isAfterOrEqualDate(reservation.endDate, getTodayStr());
+}
+
+/**
+ * Whether a reservation blocks its resource *right now*: it is in a non-terminal state, has
+ * already started, and has not yet ended. `isReservationOpen` is not enough for this — it
+ * ignores startDate, so a reservation booked for next month would already count as open.
+ * `isAfterDate` returns false for an unparsable/empty startDate, so a reservation without a
+ * start date counts as already started.
+ */
+export function isReservationActiveNow(reservation: ReservationModel, today = getTodayStr()): boolean {
+  if (!OPEN_RESERVATION_STATES.includes(reservation.state)) return false;
+  if (!isAfterOrEqualDate(reservation.endDate, today)) return false;
+  return !isAfterDate(reservation.startDate, today);
+}
+
+/**
+ * The reservation that currently blocks this resource, if any — the reservation counterpart of
+ * `findOpenTripForBoat`. Pure and in-memory: callers pass the already-loaded reservation list.
+ */
+export function findActiveReservationForResource(
+  reservations: ReservationModel[],
+  resourceKey: string,
+  today = getTodayStr(),
+): ReservationModel | undefined {
+  if (!resourceKey) return undefined;
+  return reservations.find(reservation =>
+    reservation.resource?.key === resourceKey && isReservationActiveNow(reservation, today));
 }
 
 /*-------------------------- search index --------------------------------*/

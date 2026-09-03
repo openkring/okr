@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AvatarModelTypes, OrgModel, PersonModel, ReservationModel, ResourceModel, UserModel } from '@okr/shared-models';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import * as coreUtils from '@okr/shared-util-core';
 
-import { getReservationIndex, getReservationIndexInfo, isReservation, isReservationOpen } from './reservation.util';
+import { findActiveReservationForResource, getReservationIndex, getReservationIndexInfo, isReservation, isReservationActiveNow, isReservationOpen } from './reservation.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -132,5 +133,77 @@ describe('Reservation Utils', () => {
     it('getReservationIndexInfo should return the info string', () => {
       expect(getReservationIndexInfo()).toBe('rn:reserverName rk:reserverKey resn:resourceName resk:resourceKey ');
     });
+  });
+});
+
+describe('isReservationActiveNow', () => {
+  function make(partial: Partial<ReservationModel>): ReservationModel {
+    return { ...new ReservationModel('scs'), ...partial } as ReservationModel;
+  }
+
+  it('is active when it started in the past and ends in the future', () => {
+    const r = make({ state: 'active', startDate: '20200101', endDate: END_FUTURE_DATE_STR });
+    expect(isReservationActiveNow(r, '20260903')).toBe(true);
+  });
+
+  it('is active on its first and last day', () => {
+    const r = make({ state: 'active', startDate: '20260903', endDate: '20260903' });
+    expect(isReservationActiveNow(r, '20260903')).toBe(true);
+  });
+
+  it('is not active before it starts', () => {
+    const r = make({ state: 'active', startDate: '20261001', endDate: '20261005' });
+    expect(isReservationActiveNow(r, '20260903')).toBe(false);
+  });
+
+  it('is not active after it ended', () => {
+    const r = make({ state: 'active', startDate: '20260101', endDate: '20260201' });
+    expect(isReservationActiveNow(r, '20260903')).toBe(false);
+  });
+
+  it('is not active in a terminal state', () => {
+    const r = make({ state: 'cancelled', startDate: '20200101', endDate: END_FUTURE_DATE_STR });
+    expect(isReservationActiveNow(r, '20260903')).toBe(false);
+  });
+
+  it('treats an empty startDate as already started', () => {
+    const r = make({ state: 'active', startDate: '', endDate: END_FUTURE_DATE_STR });
+    expect(isReservationActiveNow(r, '20260903')).toBe(true);
+  });
+});
+
+describe('findActiveReservationForResource', () => {
+  function make(partial: Partial<ReservationModel>): ReservationModel {
+    return { ...new ReservationModel('scs'), ...partial } as ReservationModel;
+  }
+
+  const locked = make({
+    okey: 'res1', state: 'active', startDate: '20200101', endDate: END_FUTURE_DATE_STR,
+    reason: 'maintenance', notes: 'Riemen gebrochen',
+    resource: { key: 'boat1', name1: '', name2: 'Gig 4x', modelType: 'resource', type: 'rboat', subType: 'b4x', label: '' },
+  });
+  const expired = make({
+    okey: 'res2', state: 'active', startDate: '20260101', endDate: '20260201',
+    resource: { key: 'boat2', name1: '', name2: 'Skiff', modelType: 'resource', type: 'rboat', subType: 'b1x', label: '' },
+  });
+
+  it('finds the active reservation of the given resource', () => {
+    expect(findActiveReservationForResource([expired, locked], 'boat1', '20260903')?.okey).toBe('res1');
+  });
+
+  it('ignores reservations of other resources', () => {
+    expect(findActiveReservationForResource([locked], 'boat9', '20260903')).toBeUndefined();
+  });
+
+  it('ignores reservations that are no longer active', () => {
+    expect(findActiveReservationForResource([expired], 'boat2', '20260903')).toBeUndefined();
+  });
+
+  it('returns undefined without a resourceKey', () => {
+    expect(findActiveReservationForResource([locked], '', '20260903')).toBeUndefined();
+  });
+
+  it('returns undefined for an empty list', () => {
+    expect(findActiveReservationForResource([], 'boat1', '20260903')).toBeUndefined();
   });
 });
