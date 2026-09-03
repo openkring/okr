@@ -1,6 +1,6 @@
 // apps/functions/src/diary/weather.spec.ts
 import { describe, expect, it } from 'vitest';
-import { mergeWeather, planWeatherRanges } from './weather';
+import { chooseWeatherApi, mergeWeather, planWeatherRanges } from './weather';
 
 const AT = (date: string, latitude: number, longitude: number) => ({ date, latitude, longitude });
 
@@ -95,5 +95,18 @@ describe('planWeatherRanges — Aggregate haben kein Wetter', () => {
 
   it('gibt gar keinen Bereich zurück, wenn nur Aggregate übrig bleiben', () => {
     expect(planWeatherRanges([{ date: '19900000', ...staefa }], '20260901')).toEqual([]);
+  });
+});
+
+describe('chooseWeatherApi', () => {
+  it('uses the live forecast host for the last seven days', () => {
+    expect(chooseWeatherApi('20260903', '20260903')).toBe('current');
+    expect(chooseWeatherApi('20260828', '20260903')).toBe('current');
+  });
+  it('uses the historical-forecast host inside the last year', () => {
+    expect(chooseWeatherApi('20260801', '20260903')).toBe('forecast');
+  });
+  it('uses the archive host beyond a year', () => {
+    expect(chooseWeatherApi('20240903', '20260903')).toBe('archive');
   });
 });
