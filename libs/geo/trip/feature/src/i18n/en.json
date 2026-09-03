@@ -51,7 +51,7 @@
   },
   "boatReserved": {
     "title": "Boat unavailable",
-    "maintenance": "This boat is locked because of a damage.",
+    "maintenance": "This boat is locked because it is damaged.",
     "blocked": "This boat is reserved for another purpose.",
     "other": "This boat is currently unavailable.",
     "note": "Reason",
