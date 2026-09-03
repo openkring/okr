@@ -1,11 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 
-import { BarChart } from 'echarts/charts';
-import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components';
-import * as echarts from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
-echarts.use([BarChart, GridComponent, CanvasRenderer, LegendComponent, TooltipComponent]);
 
 export type MemberBarRow = { label: string; male: number; female: number; total: number };
 
@@ -17,7 +12,17 @@ export type MemberBarRow = { label: string; male: number; female: number; total:
   selector: 'okr-member-bar-chart',
   standalone: true,
   imports: [NgxEchartsDirective],
-  providers: [provideEchartsCore({ echarts })],
+  providers: [
+    provideEchartsCore({
+      echarts: async () => {
+        const [core, charts, comps, rend] = await Promise.all([
+          import('echarts/core'), import('echarts/charts'), import('echarts/components'), import('echarts/renderers'),
+        ]);
+        core.use([charts.BarChart, comps.GridComponent, comps.LegendComponent, comps.TooltipComponent, rend.CanvasRenderer]);
+        return core;
+      },
+    }),
+  ],
   styles: [`.chart { height: 400px; }`],
   template: `<div echarts [options]="options()" class="chart"></div>`
 })

@@ -2,12 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular/standalone';
 
 import type { EChartsOption } from 'echarts';
-import { SankeyChart } from 'echarts/charts';
-import { TooltipComponent } from 'echarts/components';
-import * as echarts from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
 import { NgxEchartsDirective, provideEchartsCore } from 'ngx-echarts';
-echarts.use([SankeyChart, TooltipComponent, CanvasRenderer]);
 
 import { SankeySection } from '@okr/shared-models';
 import { toSankeyOption } from '@okr/cms-section-util';
@@ -27,7 +22,15 @@ import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
     IonCard, IonCardContent
   ],
   providers: [
-    provideEchartsCore({ echarts })
+    provideEchartsCore({
+      echarts: async () => {
+        const [core, charts, comps, rend] = await Promise.all([
+          import('echarts/core'), import('echarts/charts'), import('echarts/components'), import('echarts/renderers'),
+        ]);
+        core.use([charts.SankeyChart, comps.TooltipComponent, rend.CanvasRenderer]);
+        return core;
+      },
+    }),
   ],
   styles: [`
     ion-card-content { padding: 0px; }
