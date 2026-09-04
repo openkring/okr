@@ -1,5 +1,5 @@
 // libs/content/pdf-template/ui/src/lib/email-composer.modal.ts
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ComponentRef, computed, DestroyRef, effect, inject, input, linkedSignal, PLATFORM_ID, signal, untracked, ViewContainerRef, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { form } from '@angular/forms/signals';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -15,11 +15,11 @@ import { AppStore } from '@okr/shared-feature';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import {
   ButtonCopy, ButtonCopyI18n, ChangeConfirmation, ChangeConfirmationI18n,
-  EmailInput, EmailInputI18n, TextInput, TextInputI18n,
+  EmailInput, EmailInputI18n, Spinner, TextInput, TextInputI18n,
 } from '@okr/shared-ui';
-import { OkrEditor } from '@okr/shared-ui-editor';
+import type { OkrEditor } from '@okr/shared-ui-editor';
 import { getImgixUrl } from '@okr/shared-util-core';
-import { dismissOverlay, validateVestTree } from '@okr/shared-util-angular';
+import { dismissOverlay, isBrowser, validateVestTree } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 import {
   buildBrandedEmailHtml, isSenderDomainAllowed, parseEmails,
@@ -41,7 +41,7 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
   imports: [
     FormsModule,
     SvgIconPipe,
-    OkrEditor, ButtonCopy, ChangeConfirmation, EmailInput, TextInput,
+    Spinner, ButtonCopy, ChangeConfirmation, EmailInput, TextInput,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonList, IonItem,
@@ -126,9 +126,10 @@ type ComposerSegment = 'editor' | 'preview' | 'list';
                   </ion-row>
                   <ion-row>
                     <ion-col size="12">
-                      <okr-editor [content]="body()" (contentChange)="onFieldChange('body', $event)"
-                        [readOnly]="false" [clearable]="false" [copyable]="false"
-                        [buttonCopyI18n]="buttonCopyI18n()" />
+                      @if (!editorRef()) {
+                        <okr-spinner />
+                      }
+                      <div #editorHost></div>
                       <div class="editor-actions">
                         <okr-button-copy [i18n]="buttonCopyI18n()" [value]="body()" />
                         <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="clearBody()" tabindex="-1" />
@@ -204,7 +205,14 @@ export class EmailComposerModal {
   private readonly toastController = inject(ToastController);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly i18nService = inject(I18nService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly i18n = this.i18nService.translateAll(EMAIL_COMPOSER_I18N_KEYS) as EmailComposerI18n;
+
+  // Lazy: a static import of @okr/shared-ui-editor drags ngx-editor/ProseMirror into every page
+  // that reaches this modal (spec 1.49, F1) — same shape as editor-configuration.ts.
+  private editorHost = viewChild('editorHost', { read: ViewContainerRef });
+  protected readonly editorRef = signal<ComponentRef<OkrEditor> | undefined>(undefined);
 
   // inputs
   public readonly to            = input<string>('');
@@ -317,6 +325,36 @@ export class EmailComposerModal {
         this.formData.update((vm) => ({ ...vm, subject: `${prefix} ${this.filename()}` }));
       });
     });
+    effect(async () => {
+      const host = this.editorHost();
+      // revert() briefly toggles showForm() off/on to clear stale Vest state, which tears down
+      // #editorHost (and, with it, the OkrEditor Angular already destroyed as part of that view) —
+      // drop the stale ref so the next mount recreates the component instead of staying empty.
+      if (!host) {
+        if (untracked(() => this.editorRef())) this.editorRef.set(undefined);
+        return;
+      }
+      if (untracked(() => this.editorRef()) || !isBrowser(this.platformId)) return;
+      const { OkrEditor } = await import('@okr/shared-ui-editor');
+      const ref = host.createComponent(OkrEditor);
+      ref.setInput('content', untracked(() => this.body()));
+      ref.setInput('readOnly', false);
+      ref.setInput('clearable', false);
+      ref.setInput('copyable', false);
+      ref.setInput('buttonCopyI18n', untracked(() => this.buttonCopyI18n()));
+      // `content` is a model() — it doubles as the OkrEditor -> here change channel.
+      ref.instance.content.subscribe((value: string) => this.onFieldChange('body', value));
+      this.editorRef.set(ref);
+    });
+    effect(() => {
+      const ref = this.editorRef();
+      const content = this.body();
+      const buttonCopyI18n = this.buttonCopyI18n();
+      if (!ref) return;
+      ref.setInput('content', content);
+      ref.setInput('buttonCopyI18n', buttonCopyI18n);
+    });
+    this.destroyRef.onDestroy(() => this.editorRef()?.destroy());
   }
 
   /**
