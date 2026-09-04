@@ -1,18 +1,20 @@
-import { Component, computed, inject, input, viewChild } from '@angular/core';
+import { Component, ComponentRef, computed, DestroyRef, effect, inject, input, PLATFORM_ID, signal, untracked, ViewContainerRef, viewChild } from '@angular/core';
 import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 import { PAGE_I18N_KEYS, PageI18n } from '@okr/cms-page-util';
 import { Menu } from '@okr/cms-menu-feature';
-import { MatrixChat } from '@okr/chat-feature';
+import { Spinner } from '@okr/shared-ui';
+import { isBrowser } from '@okr/shared-util-angular';
+import type { MatrixChat } from '@okr/chat-feature';
 
 
 @Component({
   selector: 'okr-chat-page',
   standalone: true,
   imports: [
-    MatrixChat, Menu, SvgIconPipe,
+    Menu, SvgIconPipe, Spinner,
     IonContent, IonHeader, IonToolbar, IonButtons, IonTitle, IonMenuButton, IonButton, IonIcon, IonPopover
   ],
   styles: [`
@@ -22,7 +24,7 @@ import { MatrixChat } from '@okr/chat-feature';
       height: 100%;
       width: 100%;
     }
-  okr-matrix-chat-overview { width: 100%; display: block; }
+  .chat-host { width: 100%; display: block; }
   /* Ionic's input-shims scroll padding pushes --keyboard-offset (default 290px, a *guess* at the
      keyboard height) onto ion-content on every focusin — on desktop too, where no keyboard exists.
      That padding shrinks the chat's height:100% and makes the composer jump up. MatrixChat measures
@@ -58,11 +60,16 @@ import { MatrixChat } from '@okr/chat-feature';
       </ion-header>
     }
     <ion-content>
-        <okr-matrix-chat-overview [isGroupView]="isGroupView()" [selectedRoom]="selectedRoom()" [contextMenuName]="contextMenuName()" />
+        @if (!chatRef()) {
+          <okr-spinner />
+        }
+        <div #chatHost class="chat-host"></div>
     </ion-content>
   `
 })
 export class ChatPage {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly i18n = inject(I18nService).translateAll(PAGE_I18N_KEYS) as PageI18n;
 
   // inputs
@@ -71,18 +78,44 @@ export class ChatPage {
   public selectedRoom = input<string | undefined>();
   public contextMenuName = input<string>('contextMenuChat');
 
-  // the rendered chat overview — used to delegate the hoisted context-menu action
-  protected readonly matrixChat = viewChild(MatrixChat);
+  // Lazy: a static import of @okr/chat-feature drags matrix-js-sdk into every page that reaches
+  // this component (spec 1.49, F1) — same shape as calendar-section.ts's dynamic FullCalendar.
+  private chatHost = viewChild('chatHost', { read: ViewContainerRef });
+  protected readonly chatRef = signal<ComponentRef<MatrixChat> | undefined>(undefined);
 
   // hoist facade — read/driven by the parent PageDispatcher when this page is embedded in the group view
-  public readonly canManageRooms = computed(() => this.matrixChat()?.canManageRooms() ?? false);
-  public readonly hasRoom = computed(() => this.matrixChat()?.hasCurrentRoom() ?? false);
+  public readonly canManageRooms = computed(() => this.chatRef()?.instance.canManageRooms() ?? false);
+  public readonly hasRoom = computed(() => this.chatRef()?.instance.hasCurrentRoom() ?? false);
+
+  constructor() {
+    effect(async () => {
+      const host = this.chatHost();
+      if (!host || untracked(() => this.chatRef()) || !isBrowser(this.platformId)) return;
+      const { MatrixChat } = await import('@okr/chat-feature');
+      const ref = host.createComponent(MatrixChat);
+      ref.setInput('isGroupView', untracked(() => this.isGroupView()));
+      ref.setInput('selectedRoom', untracked(() => this.selectedRoom()));
+      ref.setInput('contextMenuName', untracked(() => this.contextMenuName()));
+      this.chatRef.set(ref);
+    });
+    effect(() => {
+      const ref = this.chatRef();
+      const isGroupView = this.isGroupView();
+      const selectedRoom = this.selectedRoom();
+      const contextMenuName = this.contextMenuName();
+      if (!ref) return;
+      ref.setInput('isGroupView', isGroupView);
+      ref.setInput('selectedRoom', selectedRoom);
+      ref.setInput('contextMenuName', contextMenuName);
+    });
+    this.destroyRef.onDestroy(() => this.chatRef()?.destroy());
+  }
 
   public async openInfo(): Promise<void> {
-    await this.matrixChat()?.openChatHelp();
+    await this.chatRef()?.instance.openChatHelp();
   }
 
   public async onContextMenuDismiss($event: CustomEvent): Promise<void> {
-    await this.matrixChat()?.onPopoverDismiss($event);
+    await this.chatRef()?.instance.onPopoverDismiss($event);
   }
 }
