@@ -421,7 +421,11 @@ function buildLocation(tenant, row) {
     tenants: [tenant], isArchived: false,
     // 'diary' marks these as harvested from the diary archive rather than entered by hand —
     // the only way to tell them apart later, e.g. to re-run a geocode or to retire them.
-    index: '', name: row.label, address: '', tags: 'diary',
+    // The search index LocationService would write on create ('n:<name> w:<what3words>',
+    // getLocationIndex in libs/geo/location/util). Every location list filters on it — with
+    // an empty index the picker's search matched nothing (found in the TP 3 smoke test;
+    // scripts/backfill-location-index.mjs repaired the already-seeded rows).
+    index: `n:${row.label} w:`, name: row.label, address: '', tags: 'diary',
     type: LOCATION_TYPE,
     latitude: row.latitude,
     longitude: row.longitude,
