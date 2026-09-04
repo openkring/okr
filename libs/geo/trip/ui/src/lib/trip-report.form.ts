@@ -168,7 +168,9 @@ export class TripReportForm {
   }
 
   protected clearBoat(): void {
-    this.onFieldChange({ boat: undefined });
+    // dropping the boat hides the checkbox — reset lockBoat too, so a newly picked boat
+    // doesn't inherit a tick meant for the previous one
+    this.onFieldChange({ boat: undefined, lockBoat: false });
   }
 
   protected clearPerson(): void {

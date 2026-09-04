@@ -416,6 +416,12 @@ export const TripStore = signalStore(
      * as its note. Open-ended means endDate = END_FUTURE_DATE_STR — a resourceAdmin ends or deletes
      * it once the boat is repaired. Any user may do this (a narrow, fixed-shape path); freely
      * editing reservations stays resourceAdmin-only in the reservation list.
+     *
+     * `reservationService.create` swallows its own errors (FirestoreService shows its own toast)
+     * and resolves with `undefined` on failure rather than rethrowing — so the failure signal here
+     * is the returned key, not a thrown error. The try/catch stays as defence-in-depth for anything
+     * that throws before the write (e.g. index computation), but `report_lock_error` is driven by
+     * the `!key` branch.
      */
     async lockBoat(boat: AvatarInfo, reporter: AvatarInfo | undefined, message: string): Promise<void> {
       const reservation = new ReservationModel(store.tenantId());
@@ -431,7 +437,11 @@ export const TripStore = signalStore(
       reservation.startTime = '';
       reservation.endDate = END_FUTURE_DATE_STR;
       try {
-        await store.reservationService.create(reservation, store.currentUser());
+        const key = await store.reservationService.create(reservation, store.currentUser());
+        if (!key) {
+          await store.alertService.showToast(store.i18n.report_lock_error());
+          return;
+        }
         store.reservationsResource.reload();
       } catch (error) {
         // the report itself is already filed — say only the lock failed
