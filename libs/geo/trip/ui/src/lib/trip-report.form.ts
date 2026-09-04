@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output } from '@angular/core
 import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
-import { ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, NotesInput, NotesInputI18n } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { coerceBoolean, getFullName } from '@okr/shared-util-core';
@@ -18,7 +18,7 @@ import { TripI18n, TripReport, tripReportValidations } from '@okr/trip-util';
   selector: 'okr-trip-report-form',
   standalone: true,
   imports: [
-    SvgIconPipe, NotesInput, ErrorNote,
+    SvgIconPipe, NotesInput, ErrorNote, Checkbox,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent, IonItem, IonLabel, IonIcon, IonButton
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
@@ -91,6 +91,21 @@ import { TripI18n, TripReport, tripReportValidations } from '@okr/trip-util';
 
         <okr-notes-input [i18n]="messageI18n()" [value]="message()"
           (valueChange)="onMessageChange($event)" [readOnly]="isReadOnly()" [errors]="messageErrors()" />
+
+        @if (canLockBoat()) {
+          <ion-card>
+            <ion-card-content class="ion-no-padding">
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="12">
+                    <okr-checkbox [i18n]="lockBoatI18n()" [checked]="lockBoat()"
+                      (checkedChange)="onLockBoatChange($event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
+        }
       </form>
     }
   `
@@ -129,6 +144,15 @@ export class TripReportForm {
     placeholder: this.reportType() === 'damage' ? this.i18n().report_damage_prompt() : this.i18n().report_bug_prompt()
   } as NotesInputI18n));
 
+  /** only a damage report on a known boat can lock it — a bug report has nothing to lock */
+  protected readonly canLockBoat = computed(() => this.reportType() === 'damage' && !!this.formData()?.boat);
+  protected readonly lockBoat = computed(() => this.formData()?.lockBoat ?? false);
+  protected lockBoatI18n = computed(() => ({
+    name: 'lockBoat',
+    label: this.i18n().report_lock_boat_label(),
+    helper: this.i18n().report_lock_boat_helper(),
+  } as CheckboxI18n));
+
   // validation and errors
   private readonly validationResult = computed(() => tripReportValidations(this.formData()));
   protected personErrors = computed(() => this.validationResult().getErrors('person'));
@@ -137,6 +161,10 @@ export class TripReportForm {
   /******************************* actions *************************************** */
   protected onMessageChange(message: string): void {
     this.onFieldChange({ message });
+  }
+
+  protected onLockBoatChange(lockBoat: boolean): void {
+    this.onFieldChange({ lockBoat });
   }
 
   protected clearBoat(): void {
