@@ -7,8 +7,9 @@ import { AppStore, KioskStatus, KioskStatusService, LocationSelectResult, ModelS
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, PersonModel, ReservationModel, TaskModel, TripModel, UserModel } from '@okr/shared-models';
 import { AlertService } from '@okr/shared-util-angular';
-import { fill, getAvatarInfoForCurrentUser, getFullName, getYear, hasRole, isKioskOnly, nameMatches } from '@okr/shared-util-core';
+import { fill, getAvatarInfoForCurrentUser, getFullName, getTodayStr, getYear, hasRole, isKioskOnly, nameMatches } from '@okr/shared-util-core';
 import { yearMatches } from '@okr/shared-categories';
+import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 
 import { TaskService } from '@okr/task-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
@@ -403,6 +404,39 @@ export const TripStore = signalStore(
         // the report is gone if this throws — say so instead of pretending it was filed
         await store.alertService.showToast(store.i18n.report_error());
         console.error('TripStore.report: reportIncident failed', error);
+        return;
+      }
+      if (kind === 'damage' && report.lockBoat && report.boat) {
+        await this.lockBoat(report.boat, report.person, report.message);
+      }
+    },
+
+    /**
+     * Take a boat out of service: an open-ended 'maintenance' reservation carrying the damage text
+     * as its note. Open-ended means endDate = END_FUTURE_DATE_STR — a resourceAdmin ends or deletes
+     * it once the boat is repaired. Any user may do this (a narrow, fixed-shape path); freely
+     * editing reservations stays resourceAdmin-only in the reservation list.
+     */
+    async lockBoat(boat: AvatarInfo, reporter: AvatarInfo | undefined, message: string): Promise<void> {
+      const reservation = new ReservationModel(store.tenantId());
+      reservation.name = fill(store.i18n.report_lock_name(), { name: boat.name2 || boat.name1 });
+      reservation.reserver = reporter;
+      reservation.resource = boat;
+      reservation.reason = 'maintenance';
+      reservation.notes = message;
+      reservation.state = 'active';
+      reservation.fullDay = true;
+      reservation.durationMinutes = 1440;
+      reservation.startDate = getTodayStr();
+      reservation.startTime = '';
+      reservation.endDate = END_FUTURE_DATE_STR;
+      try {
+        await store.reservationService.create(reservation, store.currentUser());
+        store.reservationsResource.reload();
+      } catch (error) {
+        // the report itself is already filed — say only the lock failed
+        await store.alertService.showToast(store.i18n.report_lock_error());
+        console.error('TripStore.lockBoat: could not create the lock reservation', error);
       }
     },
 
