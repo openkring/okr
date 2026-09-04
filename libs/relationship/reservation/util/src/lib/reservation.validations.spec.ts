@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { ReservationModel } from '@okr/shared-models';
-import { reservationValidations, LOCK_REASONS } from './reservation.validations';
+import { reservationValidations } from './reservation.validations';
+import { LOCK_REASONS } from './reservation.util';
 
 function make(partial: Partial<ReservationModel>): ReservationModel {
   return {
@@ -14,26 +15,26 @@ function make(partial: Partial<ReservationModel>): ReservationModel {
   } as ReservationModel;
 }
 
-describe('reservationValidations — notes', () => {
-  it('requires notes when the reason is maintenance', () => {
-    const result = reservationValidations(make({ reason: 'maintenance', notes: '' }), 'scs', '');
-    expect(result.getErrors('notes').length).toBeGreaterThan(0);
+describe('reservationValidations — description', () => {
+  it('requires description when the reason is maintenance', () => {
+    const result = reservationValidations(make({ reason: 'maintenance', description: '' }), 'scs', '');
+    expect(result.getErrors('description').length).toBeGreaterThan(0);
   });
 
-  it('requires notes when the reason is blocked', () => {
-    const result = reservationValidations(make({ reason: 'blocked', notes: '' }), 'scs', '');
-    expect(result.getErrors('notes').length).toBeGreaterThan(0);
+  it('requires description when the reason is blocked', () => {
+    const result = reservationValidations(make({ reason: 'blocked', description: '' }), 'scs', '');
+    expect(result.getErrors('description').length).toBeGreaterThan(0);
   });
 
-  it('accepts a maintenance reservation that has notes', () => {
-    const result = reservationValidations(make({ reason: 'maintenance', notes: 'Riemen gebrochen' }), 'scs', '');
-    expect(result.getErrors('notes').length).toBe(0);
+  it('accepts a maintenance reservation that has a description', () => {
+    const result = reservationValidations(make({ reason: 'maintenance', description: 'Riemen gebrochen' }), 'scs', '');
+    expect(result.getErrors('description').length).toBe(0);
   });
 
-  it('does not require notes for any other reason', () => {
+  it('does not require a description for any other reason', () => {
     for (const reason of ['social', 'course', 'party']) {
-      const result = reservationValidations(make({ reason, notes: '' }), 'scs', '');
-      expect(result.getErrors('notes').length).toBe(0);
+      const result = reservationValidations(make({ reason, description: '' }), 'scs', '');
+      expect(result.getErrors('description').length).toBe(0);
     }
   });
 

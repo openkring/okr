@@ -5,12 +5,7 @@ import { DESCRIPTION_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-
 import { ReservationModel } from '@okr/shared-models';
 import { avatarValidations, baseValidations, dateValidations, moneyValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
-/**
- * Reasons that take a resource out of normal use: a defect ('maintenance') or an admin
- * reserving it for another purpose ('blocked'). Both must say WHY in the notes — that text is
- * what the member sees when the booking is refused, so an empty note makes the block unusable.
- */
-export const LOCK_REASONS = ['maintenance', 'blocked'];
+import { LOCK_REASONS } from './reservation.util';
 
 export const reservationValidations = staticSuite((model: ReservationModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
@@ -27,10 +22,16 @@ export const reservationValidations = staticSuite((model: ReservationModel, tena
   stringValidations('state', model.state, WORD_LENGTH);
   stringValidations('reason', model.reason, WORD_LENGTH);
   numberValidations('order', model.order, true, 0, 10);
-  stringValidations('description', model.description, DESCRIPTION_LENGTH);
 
+  // Reasons that take a resource out of normal use ('maintenance'/'blocked') must say WHY in
+  // `description` — that text is what the member sees when the booking is refused, so an empty
+  // description makes the block unusable. `description` is the public-facing field (see the
+  // form's own i18n hint); `notes` stays internal and unvalidated. Every other reason keeps the
+  // description optional, as before this feature.
   if (LOCK_REASONS.includes(model.reason)) {
-    stringValidations('notes', model.notes, DESCRIPTION_LENGTH, 0, true);
+    stringValidations('description', model.description, DESCRIPTION_LENGTH, 0, true);
+  } else {
+    stringValidations('description', model.description, DESCRIPTION_LENGTH);
   }
 
   moneyValidations('price', model.price);

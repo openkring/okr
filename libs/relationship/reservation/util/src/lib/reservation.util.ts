@@ -9,6 +9,25 @@ export function isReservation(reservation: unknown, tenantId: string): reservati
 export const OPEN_RESERVATION_STATES = ['initial', 'applied', 'active'];
 
 /**
+ * Reasons that take a resource out of normal use: a defect ('maintenance') or an admin
+ * reserving it for another purpose ('blocked'). Both must say WHY in `description` — that text
+ * is what the member sees when the booking is refused, so an empty description makes the block
+ * unusable. Lives here (not in reservation.validations.ts) so `findActiveReservationForResource`
+ * can use the same single definition without a circular import between the two files;
+ * reservation.validations.ts re-exports it for its own callers.
+ */
+export const LOCK_REASONS = ['maintenance', 'blocked'];
+
+/**
+ * State keys for reservations that currently BLOCK their resource. Deliberately narrower than
+ * `OPEN_RESERVATION_STATES`: it excludes 'applied' — an unapproved member's waiting-list
+ * application must not refuse the boat to everyone else — but keeps 'initial' because
+ * DEFAULT_RES_STATE (the reservation form's default state) is 'initial', so an admin-created
+ * lock reservation must count as blocking even before it is moved to 'active'.
+ */
+export const BLOCKING_RESERVATION_STATES = ['initial', 'active'];
+
+/**
  * A reservation is "open" when it is in a non-terminal state (initial/applied/active)
  * and has not yet ended (endDate is today or later, incl. the open-ended sentinel).
  * Only open reservations can still be cancelled by their reserver.
@@ -18,21 +37,28 @@ export function isReservationOpen(reservation: ReservationModel): boolean {
 }
 
 /**
- * Whether a reservation blocks its resource *right now*: it is in a non-terminal state, has
+ * Whether a reservation blocks its resource *right now*: it is in a blocking state, has
  * already started, and has not yet ended. `isReservationOpen` is not enough for this — it
- * ignores startDate, so a reservation booked for next month would already count as open.
- * `isAfterDate` returns false for an unparsable/empty startDate, so a reservation without a
- * start date counts as already started.
+ * ignores startDate, so a reservation booked for next month would already count as open, and it
+ * uses `OPEN_RESERVATION_STATES` (which includes 'applied', a waiting-list application that must
+ * not block anyone). `isAfterDate` returns false for an unparsable/empty startDate, so a
+ * reservation without a start date counts as already started. An empty/blank endDate means
+ * open-ended (the admin form defaults endDate to '' and offers no other open-ended affordance),
+ * so it must NOT be treated as already expired — only a real, non-empty endDate is checked
+ * against `today`; the '99991231' sentinel keeps working via `isAfterOrEqualDate`.
  */
 export function isReservationActiveNow(reservation: ReservationModel, today = getTodayStr()): boolean {
-  if (!OPEN_RESERVATION_STATES.includes(reservation.state)) return false;
-  if (!isAfterOrEqualDate(reservation.endDate, today)) return false;
+  if (!BLOCKING_RESERVATION_STATES.includes(reservation.state)) return false;
+  if (reservation.endDate && !isAfterOrEqualDate(reservation.endDate, today)) return false;
   return !isAfterDate(reservation.startDate, today);
 }
 
 /**
  * The reservation that currently blocks this resource, if any — the reservation counterpart of
- * `findOpenTripForBoat`. Pure and in-memory: callers pass the already-loaded reservation list.
+ * `findOpenTripForBoat`. Only LOCK_REASONS ('maintenance'/'blocked') can block a booking — a
+ * plain 'course'/'social'/'sport' reservation reserves the boat for an activity, not out of
+ * service, and must not refuse it to a trip booking. Pure and in-memory: callers pass the
+ * already-loaded reservation list.
  */
 export function findActiveReservationForResource(
   reservations: ReservationModel[],
@@ -41,7 +67,9 @@ export function findActiveReservationForResource(
 ): ReservationModel | undefined {
   if (!resourceKey) return undefined;
   return reservations.find(reservation =>
-    reservation.resource?.key === resourceKey && isReservationActiveNow(reservation, today));
+    reservation.resource?.key === resourceKey &&
+    LOCK_REASONS.includes(reservation.reason) &&
+    isReservationActiveNow(reservation, today));
 }
 
 /*-------------------------- search index --------------------------------*/

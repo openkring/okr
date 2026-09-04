@@ -170,6 +170,26 @@ describe('isReservationActiveNow', () => {
     const r = make({ state: 'active', startDate: '', endDate: END_FUTURE_DATE_STR });
     expect(isReservationActiveNow(r, '20260903')).toBe(true);
   });
+
+  it('treats an empty endDate as open-ended: active once started', () => {
+    const r = make({ state: 'active', startDate: '20260101', endDate: '' });
+    expect(isReservationActiveNow(r, '20260903')).toBe(true);
+  });
+
+  it('treats an empty endDate as open-ended: not active before it starts', () => {
+    const r = make({ state: 'active', startDate: '20261001', endDate: '' });
+    expect(isReservationActiveNow(r, '20260903')).toBe(false);
+  });
+
+  it('does not block while merely applied (waiting-list application)', () => {
+    const r = make({ state: 'applied', startDate: '20200101', endDate: END_FUTURE_DATE_STR });
+    expect(isReservationActiveNow(r, '20260903')).toBe(false);
+  });
+
+  it('blocks in the initial state (the reservation form default)', () => {
+    const r = make({ state: 'initial', startDate: '20200101', endDate: END_FUTURE_DATE_STR });
+    expect(isReservationActiveNow(r, '20260903')).toBe(true);
+  });
 });
 
 describe('findActiveReservationForResource', () => {
@@ -205,5 +225,23 @@ describe('findActiveReservationForResource', () => {
 
   it('returns undefined for an empty list', () => {
     expect(findActiveReservationForResource([], 'boat1', '20260903')).toBeUndefined();
+  });
+
+  it('blocks for reason "blocked", same as "maintenance"', () => {
+    const blocked = make({
+      okey: 'res3', state: 'active', startDate: '20200101', endDate: END_FUTURE_DATE_STR,
+      reason: 'blocked', description: 'reserviert für Regatta',
+      resource: { key: 'boat3', name1: '', name2: 'Vierer', modelType: 'resource', type: 'rboat', subType: 'b4x', label: '' },
+    });
+    expect(findActiveReservationForResource([blocked], 'boat3', '20260903')?.okey).toBe('res3');
+  });
+
+  it('does not block for a non-lock reason (e.g. "course"), even with identical dates', () => {
+    const course = make({
+      okey: 'res4', state: 'active', startDate: '20200101', endDate: END_FUTURE_DATE_STR,
+      reason: 'course',
+      resource: { key: 'boat4', name1: '', name2: 'Skiff 2', modelType: 'resource', type: 'rboat', subType: 'b1x', label: '' },
+    });
+    expect(findActiveReservationForResource([course], 'boat4', '20260903')).toBeUndefined();
   });
 });

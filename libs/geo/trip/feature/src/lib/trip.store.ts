@@ -413,7 +413,8 @@ export const TripStore = signalStore(
 
     /**
      * Take a boat out of service: an open-ended 'maintenance' reservation carrying the damage text
-     * as its note. Open-ended means endDate = END_FUTURE_DATE_STR — a resourceAdmin ends or deletes
+     * as its description (the public-facing field — see the boat-reservation-lock explanation).
+     * Open-ended means endDate = END_FUTURE_DATE_STR — a resourceAdmin ends or deletes
      * it once the boat is repaired. Any user may do this (a narrow, fixed-shape path); freely
      * editing reservations stays resourceAdmin-only in the reservation list.
      *
@@ -429,7 +430,7 @@ export const TripStore = signalStore(
       reservation.reserver = reporter;
       reservation.resource = boat;
       reservation.reason = 'maintenance';
-      reservation.notes = message;
+      reservation.description = message;
       reservation.state = 'active';
       reservation.fullDay = true;
       reservation.durationMinutes = 1440;

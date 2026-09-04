@@ -5,7 +5,6 @@ import { ReservationModel } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, fill } from '@okr/shared-util-core';
-import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 
 import { TripStore } from './trip.store';
 
@@ -30,11 +29,11 @@ import { TripStore } from './trip.store';
           <ion-item lines="none">
             <ion-label class="ion-text-wrap">{{ reasonText() }}</ion-label>
           </ion-item>
-          @if (reservation().notes) {
+          @if (reservation().description) {
             <ion-item lines="none">
               <ion-label class="ion-text-wrap">
                 <ion-note>{{ store.i18n.boat_reserved_note() }}</ion-note>
-                <p>{{ reservation().notes }}</p>
+                <p>{{ reservation().description }}</p>
               </ion-label>
             </ion-item>
           }
@@ -64,7 +63,7 @@ export class BoatReservedInfoModal {
 
   protected readonly untilText = computed(() => {
     const endDate = this.reservation().endDate;
-    if (!endDate || endDate === END_FUTURE_DATE_STR || endDate.startsWith('9999')) {
+    if (!endDate || endDate.startsWith('9999')) {
       return this.store.i18n.boat_reserved_open_end();
     }
     const date = convertDateFormatToString(endDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
