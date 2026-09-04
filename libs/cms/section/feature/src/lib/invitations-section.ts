@@ -123,7 +123,7 @@ export class InvitationsSectionComponent implements OnInit {
    * The dashboard collapses the whole grid column via the okr-section-hidden host class.
    */
   protected readonly isVisible = computed(() => this.editMode() || (!this.isLoading() && this.invitations().length > 0));
-  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
+  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems(), { hasMoreButton: this.showMoreButton() }));
 
   // passing constants to the template
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;

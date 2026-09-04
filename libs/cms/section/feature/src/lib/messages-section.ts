@@ -6,6 +6,7 @@ import { EmptyList, MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-
 import { debugMessage } from '@okr/shared-util-core';
 import { navigateByUrl } from '@okr/shared-util-angular';
 import { MatrixRoom, MessagesConfig, MessagesSection } from '@okr/shared-models';
+import { getReservedListHeightPx } from '@okr/cms-section-util';
 
 import { MessagesStore } from './messages-section.store';
 
@@ -23,32 +24,30 @@ import { MessagesStore } from './messages-section.store';
     IonCard, IonCardContent, IonList, IonItem, IonLabel, IonBadge,
   ],
   template: `
-    @if(isLoading()) {
-      <okr-spinner />
-    } @else {
-      <ion-card>
-        <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
-        <ion-card-content>
-          @if(rooms().length === 0) {
-            <okr-empty-list [message]="store.i18n.chat_empty()" />
-          } @else {
-            <ion-list lines="inset">
-              @for(room of rooms(); track room.roomId) {
-                <ion-item (click)="openRoom(room)" button detail="false">
-                  <ion-label>{{ room.name }}</ion-label>
-                  @if(room.unreadCount > 0) {
-                    <ion-badge slot="end" color="danger">{{ room.unreadCount }}</ion-badge>
-                  }
-                </ion-item>
-              }
-            </ion-list>
-          }
-          @if(showMoreButton() && !editMode()) {
-            <okr-more-button [url]="moreUrl()" [label]="store.i18n.message_more_button()" />
-          }
-        </ion-card-content>
-      </ion-card>
-    }
+    <ion-card>
+      <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
+      <ion-card-content [style.min-height.px]="reservedHeight()">
+        @if(isLoading()) {
+          <okr-spinner />
+        } @else if(rooms().length === 0) {
+          <okr-empty-list [message]="store.i18n.chat_empty()" />
+        } @else {
+          <ion-list lines="inset">
+            @for(room of rooms(); track room.roomId) {
+              <ion-item (click)="openRoom(room)" button detail="false">
+                <ion-label>{{ room.name }}</ion-label>
+                @if(room.unreadCount > 0) {
+                  <ion-badge slot="end" color="danger">{{ room.unreadCount }}</ion-badge>
+                }
+              </ion-item>
+            }
+          </ion-list>
+        }
+        @if(showMoreButton() && !editMode()) {
+          <okr-more-button [url]="moreUrl()" [label]="store.i18n.message_more_button()" />
+        }
+      </ion-card-content>
+    </ion-card>
   `,
 })
 export class MessagesSectionComponent {
@@ -68,6 +67,7 @@ export class MessagesSectionComponent {
   protected readonly maxItems = computed(() => this.config()?.maxItems ?? undefined);
   protected readonly rooms = computed(() => this.store.rooms());
   protected readonly isLoading = computed(() => this.store.isLoading());
+  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems(), { hasMoreButton: this.showMoreButton() }));
 
   constructor() {
     effect(() => {

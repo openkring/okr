@@ -106,7 +106,7 @@ export class EventsSectionComponent implements OnInit {
 
   // The store's loading state, not a constant — see tasks-section for why.
   protected readonly isLoading = computed(() => this.store.isLoading());
-  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxEvents()));
+  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxEvents(), { hasMoreButton: this.showMoreButton() }));
   //protected filteredEvents = computed(() => this.eventsStore.filteredEvents());
 
   // passing constants to the template
