@@ -99,7 +99,7 @@ export const _MembershipStore = signalStore(
     })(inject(Injector)),
     activityService: inject(ActivityService),
     vcardExportService: inject(VcardExportService),
-    personEditModalClass: inject(PERSON_EDIT_MODAL, { optional: true }),
+    personEditModal: inject(PERSON_EDIT_MODAL, { optional: true }),
     i18nService: inject(I18nService),
     // Tiered vault read (spec 1.19 Phase 4, D-P4-1): full dob for exports comes from the
     // getAddressView callable (memberAdmin tier), never from the person doc.
@@ -928,9 +928,10 @@ export const _MembershipStore = signalStore(
         const { data, role } = await modal.onWillDismiss<{ memberKey: string; readOnly: boolean }>();
         if (role === 'navigate' && data?.memberKey) {
           const person = store.appStore.getPerson(data.memberKey);
-          if (!person || !store.personEditModalClass) return;
+          if (!person || !store.personEditModal) return;
+          const PersonEditModal = await store.personEditModal();
           const personModal = await store.modalController.create({
-            component: store.personEditModalClass,
+            component: PersonEditModal,
             componentProps: {
               person,
               currentUser: store.currentUser(),
@@ -967,9 +968,10 @@ export const _MembershipStore = signalStore(
       async editPerson(membership?: MembershipModel, readOnly = true): Promise<void> {
         if (!membership) return;
         const person = store.appStore.getPerson(membership.memberKey);
-        if (!person || !store.personEditModalClass) return;
+        if (!person || !store.personEditModal) return;
+        const PersonEditModal = await store.personEditModal();
         const modal = await store.modalController.create({
-          component: store.personEditModalClass,
+          component: PersonEditModal,
           componentProps: {
             person,
             currentUser: store.currentUser(),

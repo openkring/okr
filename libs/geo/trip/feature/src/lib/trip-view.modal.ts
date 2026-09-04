@@ -1,10 +1,10 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, Type } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular/standalone';
 
 import { AvatarInfo, PersonModelName, TripModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
-import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
+import { PERSON_EDIT_MODAL, PersonEditModalLoader } from '@okr/subject-person-ui';
 import { Header } from '@okr/shared-ui';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { getWeekdayI18nKey } from '@okr/shared-util-core';
@@ -109,7 +109,7 @@ import { formatTripTime, TRIP_I18N_KEYS, TripI18n } from '@okr/trip-util';
 export class TripViewModal {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
-  private readonly personEditModalClass = inject<Type<unknown> | null>(PERSON_EDIT_MODAL, { optional: true });
+  private readonly personEditModal = inject<PersonEditModalLoader | null>(PERSON_EDIT_MODAL, { optional: true });
   protected readonly i18n = inject(I18nService).translateAll(TRIP_I18N_KEYS) as TripI18n;
 
   public trip = input.required<TripModel>();
@@ -126,11 +126,12 @@ export class TripViewModal {
    * whole club sees, and it must not become a back door into editing someone else's record.
    */
   protected async openPerson(participant?: AvatarInfo): Promise<void> {
-    if (participant?.modelType !== PersonModelName || !this.personEditModalClass) return;
+    if (participant?.modelType !== PersonModelName || !this.personEditModal) return;
     const person = this.appStore.getPerson(participant.key);
     if (!person) return;
+    const PersonEditModal = await this.personEditModal();
     const modal = await this.modalController.create({
-      component: this.personEditModalClass,
+      component: PersonEditModal,
       componentProps: {
         person,
         currentUser: this.appStore.currentUser(),

@@ -129,8 +129,9 @@ export const OrgchartStore = signalStore(
       newGroup.hasCalendar = false;
       newGroup.hasTasks = false;
       newGroup.hasFiles = false;
+      const GroupEditModal = await store.groupEditModal();
       const modal = await store.modalController.create({
-        component: store.groupEditModal,
+        component: GroupEditModal,
         cssClass: 'wide-modal',
         componentProps: {
           group: newGroup,
@@ -172,8 +173,9 @@ export const OrgchartStore = signalStore(
       if (node.modelType !== 'group') return;
       const group = store.allGroups().find(g => g.okey === node.okey);
       if (!group) return;
+      const GroupEditModal = await store.groupEditModal();
       const modal = await store.modalController.create({
-        component: store.groupEditModal,
+        component: GroupEditModal,
         cssClass: 'wide-modal',
         componentProps: {
           group,
@@ -213,8 +215,9 @@ export const OrgchartStore = signalStore(
       } else {
         const group = store.allGroups().find(g => g.okey === node.okey);
         if (!group) return;
+        const GroupEditModal = await store.groupEditModal();
         const modal = await store.modalController.create({
-          component: store.groupEditModal,
+          component: GroupEditModal,
           cssClass: 'wide-modal',
           componentProps: {
             group,

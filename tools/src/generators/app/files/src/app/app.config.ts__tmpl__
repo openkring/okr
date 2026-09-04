@@ -9,9 +9,7 @@ import { ENV } from '@okr/shared-config';
 import { AvailableLanguages, DefaultLanguageCode } from '@okr/shared-models';
 import { ChunkLoadErrorHandler, isBrowser, httpBreadcrumbInterceptor, VersionCheckService } from '@okr/shared-util-angular';
 import { AppStore, SentryContextService } from '@okr/shared-feature';
-import { GroupEditModal } from '@okr/subject-group-feature';
 import { GROUP_EDIT_MODAL } from '@okr/subject-group-ui';
-import { PersonEditModal } from '@okr/subject-person-feature';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { AnalyticsLoaderService } from '@okr/consent-data-access';
 import { environment } from '../environments/environment';
@@ -52,8 +50,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     { provide: ENV, useValue: environment },
-    { provide: GROUP_EDIT_MODAL, useValue: GroupEditModal },
-    { provide: PERSON_EDIT_MODAL, useValue: PersonEditModal },
+    // Loaders, not classes: the classes would bind the person/group feature trees into main
+    // (spec 1.49, Task 5d). The section stores that open these modals await the loader.
+    { provide: GROUP_EDIT_MODAL, useValue: () => import('@okr/subject-group-feature').then(m => m.GroupEditModal) },
+    { provide: PERSON_EDIT_MODAL, useValue: () => import('@okr/subject-person-feature').then(m => m.PersonEditModal) },
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
     provideIonicAngular({ useSetInputAPI: true, innerHTMLTemplatesEnabled: true }),
     // provideClientHydration disabled - Ionic doesn't fully support SSR hydration yet

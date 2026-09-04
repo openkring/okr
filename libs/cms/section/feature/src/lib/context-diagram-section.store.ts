@@ -193,8 +193,9 @@ export const ContextDiagramStore = signalStore(
       if (modelType === GroupModelName) {
         const group = store.appStore.getGroup(key);
         if (!group) return;
+        const GroupEditModal = await store.groupEditModal();
         const modal = await store.modalController.create({
-          component: store.groupEditModal,
+          component: GroupEditModal,
           cssClass: 'wide-modal',
           componentProps: {
             group,

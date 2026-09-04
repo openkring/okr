@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal, Type } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryListModel, PersonalRelModel, PersonalRelModelName, PersonModel, PersonModelName, RoleName, UserModel } from '@okr/shared-models';
@@ -6,7 +6,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { coerceBoolean, hasRole, isPerson, safeStructuredClone } from '@okr/shared-util-core';
 import { PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 
-import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
+import { PERSON_EDIT_MODAL, PersonEditModalLoader } from '@okr/subject-person-ui';
 import { CommentsAccordion } from '@okr/comment-feature';
 import { DocumentsAccordion } from '@okr/content-document-feature';
 import { PersonalRelForm } from '@okr/relationship-personal-rel-ui';
@@ -62,7 +62,7 @@ import { PersonalRelStore } from './personal-rel.store';
 export class PersonalRelEditModal {
   private readonly modalController = inject(ModalController);
   protected readonly store = inject(PersonalRelStore);
-  private readonly personEditModalClass = inject<Type<unknown> | null>(PERSON_EDIT_MODAL, { optional: true });
+  private readonly personEditModal = inject<PersonEditModalLoader | null>(PERSON_EDIT_MODAL, { optional: true });
 
   // inputs
   public personalRel = input.required<PersonalRelModel>();
@@ -165,9 +165,10 @@ export class PersonalRelEditModal {
 
   protected async onShowPerson(personKey: string): Promise<void> {
     const person = this.store.appStore.getPerson(personKey);
-    if (!person || !this.personEditModalClass) return;
+    if (!person || !this.personEditModal) return;
+    const PersonEditModal = await this.personEditModal();
     const modal = await this.modalController.create({
-      component: this.personEditModalClass,
+      component: PersonEditModal,
       componentProps: {
         person,
         currentUser: this.currentUser(),

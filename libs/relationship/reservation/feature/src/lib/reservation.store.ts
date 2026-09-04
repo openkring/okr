@@ -79,7 +79,7 @@ export const ReservationStore = signalStore(
     activityService: inject(ActivityService),
     personService: inject(PersonService),
     toastController: inject(ToastController),
-    personEditModalClass: inject(PERSON_EDIT_MODAL, { optional: true }),
+    personEditModal: inject(PERSON_EDIT_MODAL, { optional: true }),
     router: inject(Router)
   })),
   withProps((store) => ({
@@ -399,9 +399,10 @@ export const ReservationStore = signalStore(
       async editPerson(reservation?: ReservationModel, readOnly = true): Promise<void> {
         if (!reservation || !reservation.reserver?.key || readOnly) return;
         const person = store.appStore.getPerson(reservation.reserver.key);
-        if (!person || !store.personEditModalClass) return;
+        if (!person || !store.personEditModal) return;
+        const PersonEditModal = await store.personEditModal();
         const modal = await store.modalController.create({
-          component: store.personEditModalClass,
+          component: PersonEditModal,
           componentProps: {
             person,
             currentUser: store.currentUser(),
