@@ -1,6 +1,6 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { APP_BOOTSTRAP_LISTENER, ApplicationConfig, ErrorHandler, importProvidersFrom, inject, Injector, isDevMode, PLATFORM_ID, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
-import { provideRouter, Router, RouteReuseStrategy, withComponentInputBinding } from '@angular/router';
+import { APP_BOOTSTRAP_LISTENER, ApplicationConfig, ErrorHandler, importProvidersFrom, inject, Injector, isDevMode, PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
+import { provideRouter, RouteReuseStrategy, withComponentInputBinding } from '@angular/router';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 import { provideServiceWorker } from '@angular/service-worker';
 
@@ -76,9 +76,6 @@ export const appConfig: ApplicationConfig = {
     // stale lazy-chunk failure (old client after a deploy) reloads once instead of
     // surfacing as a dead-end error. See ChunkLoadErrorHandler (SCS-19).
     { provide: ErrorHandler, useValue: new ChunkLoadErrorHandler(Sentry.createErrorHandler({ showDialog: false })) },
-    // Sentry: record router navigations as spans.
-    { provide: Sentry.TraceService, deps: [Router] },
-    provideAppInitializer(() => { inject(Sentry.TraceService); }),
 
     provideTransloco({
       config: {

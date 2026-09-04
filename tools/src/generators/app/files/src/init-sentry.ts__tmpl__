@@ -11,5 +11,6 @@ registerStaleChunkRecovery();
 // (e.g. local dev), so the app always boots even without monitoring. Each tenant reports
 // into its OWN Sentry project — the DSN in apps/<tenant>-app/.env decides which one.
 if (environment.sentry?.dsn) {
-  Sentry.init(buildSentryOptions(environment.sentry, [Sentry.browserTracingIntegration()]));
+  // No browserTracingIntegration: tracing/metrics were half of the Sentry chunk loaded before the dashboard's LCP (spec 1.49, T1.8). Error monitoring is unchanged; startup-timing spans become no-ops, its breadcrumbs and measurements still report.
+  Sentry.init(buildSentryOptions(environment.sentry, []));
 }

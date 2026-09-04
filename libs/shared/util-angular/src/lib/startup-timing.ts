@@ -1,3 +1,4 @@
+// Spans are no-ops without browserTracingIntegration (removed 2026-09-04, spec 1.49 T1.8); the breadcrumbs and setMeasurement calls still report.
 import { addBreadcrumb, setMeasurement, startInactiveSpan, startNewTrace, withActiveSpan } from '@sentry/angular';
 
 /**
