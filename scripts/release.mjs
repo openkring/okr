@@ -185,7 +185,7 @@ async function releaseApp(app) {
     if (app.endsWith('-app')) {
       console.log(`\n[3a/7] Bundle budget for ${app}…`);
       try { run('node', ['scripts/perf-budget.mjs', app]); }
-      catch { abort(`Bundle budget exceeded for ${app}. Run  node scripts/bundle-closure.mjs dist/apps/${app}/browser <lib>  to find the new static edge, or  node scripts/perf-budget.mjs ${app} --write  if the growth is intended.`); }
+      catch { throw new Error(`Bundle budget exceeded for ${app}. Run  node scripts/bundle-closure.mjs dist/apps/${app}/browser <lib>  to find the new static edge, or  node scripts/perf-budget.mjs ${app} --write  if the growth is intended.`); }
     }
 
     // 3b. OSS attribution — must run AFTER the build, because it assembles the

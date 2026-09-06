@@ -22,6 +22,14 @@ const probes = args.slice(1).filter(a => a !== '--json');
 if (!dir || !fs.existsSync(dir)) { console.error('usage: node scripts/bundle-closure.mjs <dist/apps/<app>/browser> [--json] [probe …]'); process.exit(2); }
 
 const roots = fs.readdirSync(dir).filter(f => /^(main-|dashboard\.page-).*\.js$/.test(f));
+if (!roots.some(f => /^dashboard\.page-/.test(f))) {
+  console.error('bundle-closure: no dashboard.page-*.js root found in ' + dir + ' — the closure would silently shrink; refusing.');
+  process.exit(2);
+}
+if (!roots.some(f => /^main-/.test(f))) {
+  console.error('bundle-closure: no main-*.js root found in ' + dir + ' — the closure would silently shrink; refusing.');
+  process.exit(2);
+}
 // static edges only: `from"./x.js"`, `import"./x.js"`, `export*from"./x.js"` (single or double quotes)
 const RE = /(?:from|import|export\s*\*\s*from)\s*["'](\.\/[^"']+\.js)["']/g;
 const parent = new Map(), seen = new Set(roots), q = [...roots];

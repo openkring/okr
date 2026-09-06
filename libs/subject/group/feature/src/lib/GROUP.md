@@ -102,10 +102,10 @@ NgRx Signal Store (`@ngrx/signals`). Provided at the component level.
 
 `GroupEditModal` is also consumed by `cms-section-feature` (OrgchartSection, ContextDiagramSection) to let users edit groups directly from diagrams. To avoid a circular library dependency (`cms-section-feature` → `subject-group-feature` → `cms-page-feature` → `cms-section-feature`), the component is not imported directly there.
 
-Instead, an `InjectionToken<Type<unknown>>` called `GROUP_EDIT_MODAL` is defined in `@okr/subject-group-ui` (a lower-level lib that both sides can depend on). The consuming stores inject the token and pass it as the `component` to Ionic's `ModalController.create()`. The concrete `GroupEditModal` is provided once in `app.config.ts`:
+Instead, an `InjectionToken<GroupEditModalLoader>` called `GROUP_EDIT_MODAL` is defined in `@okr/subject-group-ui` (a lower-level lib that both sides can depend on). The consuming stores inject the token, `await` the loader, and pass the resolved component as `component` to Ionic's `ModalController.create()`. The provider is a lazy loader rather than the component itself (spec 1.49, Task 5d) so that `subject-group-feature` — and the modal's own dependency weight — stays out of every app's eager bundle:
 
 ```typescript
-{ provide: GROUP_EDIT_MODAL, useValue: GroupEditModal }
+{ provide: GROUP_EDIT_MODAL, useValue: () => import('@okr/subject-group-feature').then(m => m.GroupEditModal) }
 ```
 
 Any future feature lib that needs to open the group edit modal across a dependency boundary should follow the same pattern.
