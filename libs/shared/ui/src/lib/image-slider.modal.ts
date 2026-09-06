@@ -1,10 +1,10 @@
 import { Component, HostListener, computed, inject, input, linkedSignal } from '@angular/core';
 import { IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular/standalone';
 
-import { ImageConfig } from '@okr/shared-models';
+import { ImageConfig, ImageStyle } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { getImgixUrl } from '@okr/shared-util-core';
+import { buildOverlayText, getImgixUrl } from '@okr/shared-util-core';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
 /**
@@ -66,6 +66,19 @@ import { dismissOverlay } from '@okr/shared-util-angular';
     }
     .nav-button.prev { left: 0.5rem; }
     .nav-button.next { right: 0.5rem; }
+    .caption {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      z-index: 10;
+      padding: 10px 16px 2.75rem;
+      font-size: 0.8rem;
+      line-height: 1.25;
+      color: #fff;
+      white-space: pre-line;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
+      pointer-events: none;
+    }
     .counter {
       position: absolute;
       bottom: 0.75rem;
@@ -91,6 +104,9 @@ import { dismissOverlay } from '@okr/shared-util-angular';
             </ion-button>
           }
           <img [src]="imgixUrl()" [alt]="currentAltText()" />
+          @if (caption(); as caption) {
+            <div class="caption">{{ caption }}</div>
+          }
           @if (hasMultiple()) {
             <ion-button class="nav-button next" fill="solid" color="light" (click)="next()" aria-label="Next image">
               <ion-icon slot="icon-only" src="{{ 'chevron-forward' | svgIcon }}" />
@@ -108,6 +124,8 @@ export class ImageSliderModal {
   // inputs
   public images = input.required<ImageConfig[]>();
   public startIndex = input(0);
+  // drives the caption: showTitle/showSource decide whether label/credit are rendered
+  public style = input.required<ImageStyle>();
 
   // passing constants to the template
   protected imgixBaseUrl = this.env.services.imgixBaseUrl;
@@ -119,6 +137,11 @@ export class ImageSliderModal {
 
   protected current = computed(() => this.images()[this.currentIndex()] ?? this.images()[0]);
   protected currentAltText = computed(() => this.current()?.altText ?? '');
+  // title/credit caption of the current image, rendered as DOM over the letterboxed image
+  protected caption = computed(() => {
+    const image = this.current();
+    return image ? buildOverlayText(image, this.style()) : '';
+  });
 
   // Full-screen view: request the whole image (fit=max, no aspect-ratio crop) up to a large
   // width; `object-fit: contain` then letterboxes it. Prepend the imgix base URL only for

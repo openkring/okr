@@ -47,14 +47,16 @@ export async function showZoomedImage(modalController: ModalController, url: str
 }
 
 // Open the full-screen image slider overlay (edge-to-edge, dark) starting at `startIndex`.
+// `style` drives the caption (showTitle/showSource) rendered over the image.
 // Prev/next buttons and ArrowLeft/ArrowRight/Escape keys page through / close the gallery.
-export async function showImageSlider(modalController: ModalController, images: ImageConfig[], startIndex = 0): Promise<void> {
+export async function showImageSlider(modalController: ModalController, images: ImageConfig[], style: ImageStyle, startIndex = 0): Promise<void> {
   const modal = await modalController.create({
     component: ImageSliderModal,
     cssClass: 'full-modal',
     componentProps: {
       images,
-      startIndex
+      startIndex,
+      style
     }
   });
   modal.present();

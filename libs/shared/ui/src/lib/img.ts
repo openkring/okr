@@ -5,7 +5,7 @@ import { Browser } from '@capacitor/browser';
 
 import { ENV } from '@okr/shared-config';
 import { ImageActionType, ImageConfig, ImageStyle } from '@okr/shared-models';
-import { buildOverlayParams, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@okr/shared-util-core';
+import { buildOverlayText, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { showImageSlider, showZoomedImage } from './ui.util';
@@ -81,6 +81,20 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
       ion-thumbnail { margin: auto; height: 100px; width: 100px; padding: 10px; text-align: right; position: relative;}
       .image-container { position: relative; display: flex; justify-content: center; align-items: flex-start; width: 100%; height: auto; }
       .image-container img { object-fit: cover; }
+      /* the caption is rendered as DOM (not baked into the imgix url) so that it is never
+         cropped away by object-fit and stays legible at every srcset rendition. */
+      .image-caption {
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        line-height: 1.25;
+        color: #fff;
+        white-space: pre-line;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
+        pointer-events: none;
+      }
     `],
   template: `
       @if(image(); as image) {
@@ -125,6 +139,9 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
                 (click)="onImageClicked()"
               />
             }
+            @if(caption(); as caption) {
+              <div class="image-caption">{{ caption }}</div>
+            }
           </div>
         }
       }
@@ -160,6 +177,8 @@ export class Img {
   protected actionUrl = computed(() => this.image()?.actionUrl ?? '');
   protected isExternalImage = computed(() => this.url().startsWith('http'));
   protected srcset = computed(() => this.generateSrcset());
+  // title/credit caption, rendered as an overlay element on top of the image
+  protected caption = computed(() => buildOverlayText(this.image(), this.imageStyle()));
 
   protected generateSrcset(): string {
     // ngSrcset must be width descriptors only; IMAGE_LOADER appends &w= to imgixUrl() (the ngSrc).
@@ -222,9 +241,7 @@ export class Img {
   // that was the original idea: we do not use the baseImgixUrl here, because it is already provided by the provideImgixLoader for NgOptimizedImage
   // now we eplicitely add imgixBaseUrl
   protected imgixUrl = computed(() => {
-    const sizeParams = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
-    const overlayParams = buildOverlayParams(this.image(), this.imageStyle());
-    const params = overlayParams ? sizeParams + '&' + overlayParams : sizeParams;
+    const params = getSizedImgixParamsByExtension(this.url(), this.width(), this.height());
     const url = getImgixUrl(this.url(), params);
     return url.startsWith('tenant') ? this.env.services.imgixBaseUrl + '/' + url : url;
   });
@@ -246,7 +263,7 @@ export class Img {
         const gallery = this.gallery();
         const images = gallery.length > 0 ? gallery : [this.image()];
         const startIndex = Math.max(0, images.findIndex((img) => img.url === this.image().url));
-        await showImageSlider(this.modalController, images, startIndex);
+        await showImageSlider(this.modalController, images, this.imageStyle(), startIndex);
         break;
       }
       case ImageActionType.FollowLink:

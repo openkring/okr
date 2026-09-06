@@ -2,10 +2,10 @@ import { provideImgixLoader } from '@angular/common';
 import { Component, HostListener, computed, inject, input, linkedSignal } from '@angular/core';
 import { IonButton, IonContent, IonIcon, ModalController } from '@ionic/angular/standalone';
 
-import { ImageConfig, ImageStyle } from '@okr/shared-models';
+import { IMAGE_CONFIG_SHAPE, ImageConfig, ImageStyle } from '@okr/shared-models';
 import { ENV } from '@okr/shared-config';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { getImgixUrl } from '@okr/shared-util-core';
+import { buildOverlayText, getImgixUrl } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { Header } from './header';
@@ -66,6 +66,19 @@ import { ImageDetailModal } from './image-detail.modal';
     }
     .download-button { right: 0.5rem; }
     .info-button { left: 0.5rem; }
+    .caption {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      z-index: 10;
+      padding: 10px 16px 2.5rem;
+      font-size: 0.8rem;
+      line-height: 1.25;
+      color: #fff;
+      white-space: pre-line;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0));
+      pointer-events: none;
+    }
     .counter {
       position: absolute;
       bottom: 0.5rem;
@@ -89,6 +102,9 @@ import { ImageDetailModal } from './image-detail.modal';
               </ion-button>
             }
             <img [src]="imgixUrl()" [alt]="currentAltText()" />
+            @if (caption(); as caption) {
+              <div class="caption">{{ caption }}</div>
+            }
             @if (hasInfo()) {
               <ion-button class="info-button" fill="solid" color="light" (click)="showInfo()" aria-label="Info">
                 <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
@@ -126,10 +142,10 @@ export class ImageViewModal {
   protected imgixBaseUrl = this.env.services.imgixBaseUrl;
 
   // The effective list to page through: the gallery when provided, otherwise the single image.
-  protected gallery = computed<{ url: string; altText: string }[]>(() => {
+  protected gallery = computed<ImageConfig[]>(() => {
     const images = this.images();
-    if (images.length > 0) return images.map((img) => ({ url: img.url, altText: img.altText ?? '' }));
-    return [{ url: this.url(), altText: this.altText() }];
+    if (images.length > 0) return images;
+    return [{ ...IMAGE_CONFIG_SHAPE, url: this.url(), altText: this.altText(), label: this.title() }];
   });
   protected hasMultiple = computed(() => this.gallery().length > 1);
   protected hasInfo = computed(() => !this.currentUrl().startsWith('http'));
@@ -140,6 +156,8 @@ export class ImageViewModal {
   protected current = computed(() => this.gallery()[this.currentIndex()] ?? this.gallery()[0]);
   protected currentUrl = computed(() => this.current().url);
   protected currentAltText = computed(() => this.current().altText);
+  // title/credit caption of the current image, rendered as DOM over the letterboxed image
+  protected caption = computed(() => buildOverlayText(this.current(), this.style()));
 
   // computed
   // Full-screen view: request the whole image (fit=max, no aspect-ratio crop) up to a large

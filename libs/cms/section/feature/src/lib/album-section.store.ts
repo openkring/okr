@@ -190,7 +190,7 @@ export const AlbumStore = signalStore(
 
     async openGallery(images: ImageConfig[], initialSlide = 0): Promise<void> {
       const startIndex = Math.max(0, Math.min(initialSlide, images.length - 1));
-      await showImageSlider(store.modalController, images, startIndex);
+      await showImageSlider(store.modalController, images, store.imageStyle(), startIndex);
     }
   }))
 );

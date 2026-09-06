@@ -156,20 +156,39 @@ export function getSizedImgixParamsByExtension(pathOrExtension: string | undefin
  * @returns imgix `txt*` params (without a leading separator), or '' when empty
  */
 export function buildOverlayParams(image: ImageConfig, style: ImageStyle): string {
-  const manual = image.overlay?.trim() ?? '';
-  let text: string;
-  if (manual.length > 0) {
-    text = manual;
-  } else {
-    const lines: string[] = [];
-    if (style.showTitle && image.label?.trim()) lines.push(image.label.trim());
-    if (style.showSource && image.credit?.trim()) lines.push(image.credit.trim());
-    if (lines.length === 0) return '';
-    text = lines.join('\n');
-  }
+  const text = buildOverlayText(image, style);
+  if (text.length === 0) return '';
   // bottom-left aligned white text with a shadow for readability over any background.
   const encoded = encodeURIComponent(text);
   return `txt=${encoded}&txt-align=bottom,left&txt-color=ffffff&txt-size=14&txt-pad=15&txt-shad=6`;
+}
+
+/**
+ * Builds the caption text shown over an image (title and/or attribution).
+ *
+ * Composition rule:
+ * - if `image.overlay` (free-form) is set, it wins verbatim (manual override);
+ * - otherwise the caption is composed from the image's title (`label`) when
+ *   `style.showTitle` is true and its attribution (`credit`) when `style.showSource`
+ *   is true. Lines are joined with a newline; title first, source second.
+ *
+ * Returns an empty string when there is nothing to render, so callers can skip the
+ * caption element entirely. Renderers that draw the caption as DOM (okr-img, the
+ * slider/zoom modals) use this directly; renderers that cannot overlay DOM (the album's
+ * CSS `background-image`) bake the same text into the imgix url via
+ * {@link buildOverlayParams}.
+ *
+ * @param image the image configuration (label, credit, overlay)
+ * @param style the image style (showTitle, showSource toggles)
+ * @returns the caption text (possibly multi-line), or '' when there is nothing to show
+ */
+export function buildOverlayText(image: ImageConfig, style: ImageStyle): string {
+  const manual = image.overlay?.trim() ?? '';
+  if (manual.length > 0) return manual;
+  const lines: string[] = [];
+  if (style.showTitle && image.label?.trim()) lines.push(image.label.trim());
+  if (style.showSource && image.credit?.trim()) lines.push(image.credit.trim());
+  return lines.join('\n');
 }
 
 /**

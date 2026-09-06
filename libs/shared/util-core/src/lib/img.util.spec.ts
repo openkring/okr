@@ -17,6 +17,7 @@ import {
     getSizedImgixParamsByExtension,
     getThumbnailUrl,
     buildOverlayParams,
+    buildOverlayText,
     extractCredit,
     IMGIX_JPG_PARAMS,
     IMGIX_JSON_PARAMS,
@@ -547,6 +548,43 @@ describe('img.util', () => {
     it('skips a toggled line whose value is empty', () => {
       const result = buildOverlayParams(img({ label: 'Sunset', credit: '' }), style({ showTitle: true, showSource: true }));
       expect(result).toContain('txt=' + encodeURIComponent('Sunset'));
+    });
+  });
+
+  describe('buildOverlayText', () => {
+    const img = (over: Partial<ImageConfig> = {}): ImageConfig =>
+      ({ label: '', type: ImageType.Image, url: '', actionUrl: '', altText: '', overlay: '', credit: '', ...over });
+    const style = (over: Partial<ImageStyle> = {}): ImageStyle =>
+      ({ showTitle: false, showSource: false, ...over } as ImageStyle);
+
+    it('returns empty string when nothing is shown', () => {
+      expect(buildOverlayText(img({ label: 'Sunset', credit: 'J. Doe' }), style())).toBe('');
+    });
+
+    it('returns the title when showTitle is true', () => {
+      expect(buildOverlayText(img({ label: 'Sunset' }), style({ showTitle: true }))).toBe('Sunset');
+    });
+
+    it('returns the credit when showSource is true', () => {
+      expect(buildOverlayText(img({ credit: 'Photo: J. Doe' }), style({ showSource: true }))).toBe('Photo: J. Doe');
+    });
+
+    it('joins title and credit with a newline, title first', () => {
+      expect(buildOverlayText(img({ label: 'Sunset', credit: 'J. Doe' }), style({ showTitle: true, showSource: true })))
+        .toBe('Sunset\nJ. Doe');
+    });
+
+    it('lets the free-form overlay override the composed text', () => {
+      expect(buildOverlayText(img({ label: 'Sunset', credit: 'J. Doe', overlay: 'Custom caption' }), style({ showTitle: true, showSource: true })))
+        .toBe('Custom caption');
+    });
+
+    it('skips a toggled line whose value is empty', () => {
+      expect(buildOverlayText(img({ label: 'Sunset', credit: '' }), style({ showTitle: true, showSource: true }))).toBe('Sunset');
+    });
+
+    it('trims surrounding whitespace', () => {
+      expect(buildOverlayText(img({ label: '  Sunset  ' }), style({ showTitle: true }))).toBe('Sunset');
     });
   });
 
