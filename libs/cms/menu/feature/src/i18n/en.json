@@ -552,7 +552,8 @@
     "aoc-diary": "Diary",
     "trip-callsupport": "Call support",
     "chat-support": "Ask support",
-    "chat-notfall": "Report an emergency"
+    "chat-notfall": "Report an emergency",
+    "calevent-archived": "Show archived"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

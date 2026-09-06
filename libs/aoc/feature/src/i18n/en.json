@@ -888,14 +888,20 @@
       "content": "Choose the person whose tenants you want to change.",
       "button": "Find person"
     },
-    "card": { "person": "Person" },
+    "card": {
+      "person": "Person"
+    },
     "column": {
       "current": "Current tenants",
       "available": "Other tenants",
       "empty": "Nothing here"
     },
-    "grant": { "title": "Share data" },
-    "revoke": { "title": "Take data back" },
+    "grant": {
+      "title": "Share data"
+    },
+    "revoke": {
+      "title": "Take data back"
+    },
     "block": {
       "always": "Always included",
       "alwaysHint": "The person's name, attributes and search terms live in a single record, so they always travel along.",
@@ -905,10 +911,27 @@
     },
     "favoriteMarker": "Main address",
     "legalNote": "You are sharing personal data with another club. Make sure you are allowed to.",
-    "confirm": { "ok": "Share", "cancel": "Cancel" },
+    "confirm": {
+      "ok": "Share",
+      "cancel": "Cancel"
+    },
     "result": "Result",
     "conf": "The allocation has been saved.",
     "error": "The allocation did not work.",
     "ownTenantHint": "You cannot remove your own tenant here."
+  },
+  "hygiene": {
+    "events": {
+      "title": "Find duplicate events",
+      "content": "Looks for events that exist twice on the same day and time, and for series whose stored events no longer match their own recurrence rule. The report changes nothing — which of two events is the right one depends on where the sign-ups are.",
+      "button": "Check events",
+      "clean": "No duplicate events and no incomplete series found."
+    },
+    "groups": {
+      "title": "Check groups",
+      "content": "Looks for groups that exist twice and for group ids that cannot cleanly carry the folder, page and chat names derived from them. This report changes nothing either: a group id cannot be renamed safely.",
+      "button": "Check groups",
+      "clean": "No duplicate groups and no problematic group ids found."
+    }
   }
 }

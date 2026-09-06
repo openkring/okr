@@ -552,7 +552,8 @@
     "aoc-diary": "Diario",
     "trip-callsupport": "Chiamare il supporto",
     "chat-support": "Chiedere supporto",
-    "chat-notfall": "Segnalare un'emergenza"
+    "chat-notfall": "Segnalare un'emergenza",
+    "calevent-archived": "Mostra archiviati"
   },
   "ownership": {
     "fork_confirm": "«{name}» appartiene al catalogo delle funzionalità ({blocks}).\n\nIl salvataggio crea una copia propria del tenant «{forkKey}» e scollega questo tenant dall'originale condiviso. Le future correzioni del catalogo (URL, azione, ruolo) non raggiungeranno più questa voce.\n\nSalvare comunque?",

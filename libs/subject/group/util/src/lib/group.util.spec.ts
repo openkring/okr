@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { GroupModel, UserModel } from '@okr/shared-models';
-import { canAccessGroup, getGroupKeyFromName, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, shouldNotifyUser, userMatchesGroupVisibility } from './group.util';
+import { AVATAR_INFO_SHAPE, AvatarInfo, GroupModel, UserModel } from '@okr/shared-models';
+import { canAccessGroup, findConflictingGroups, findDuplicateGroups, findGroupKeyIssues, getGroupKeyFromName, getMainContact, getUniqueGroupKey, getVisibilityRoles, getVisibleGroupKeys, shouldNotifyUser, userMatchesGroupVisibility, withCreatorAsAdmin } from './group.util';
 
 describe('Group Utils', () => {
   const tenantId = 'tenant-1';
@@ -180,5 +180,102 @@ describe('shouldNotifyUser', () => {
 
   it('does not notify non-member when notifyType is membersAndMatchingVisibility but role does not match', () => {
     expect(shouldNotifyUser(makeGroup('privileged', 'membersAndMatchingVisibility'), false, makeUser({ registered: true, privileged: false }))).toBe(false);
+  });
+});
+
+describe('Group creator safety net', () => {
+  const tenantId = 'scs';
+  const creator: AvatarInfo = { ...AVATAR_INFO_SHAPE, key: 'kaiser', name1: 'Bruno', name2: 'Kaiser', modelType: 'person' };
+  const other: AvatarInfo = { ...AVATAR_INFO_SHAPE, key: 'reto', name1: 'Reto', name2: 'Ammann', modelType: 'person' };
+
+  it('appends the creator when a privileged user nominated somebody else', () => {
+    const admins = withCreatorAsAdmin([other], creator);
+    expect(admins.map(a => a.key)).toEqual(['reto', 'kaiser']);
+  });
+
+  it('keeps the nominated person as main contact (admins[0])', () => {
+    expect(getMainContact({ ...new GroupModel(tenantId), admins: withCreatorAsAdmin([other], creator) })?.key).toBe('reto');
+  });
+
+  it('does not duplicate a creator who is already an admin', () => {
+    expect(withCreatorAsAdmin([creator, other], creator).map(a => a.key)).toEqual(['kaiser', 'reto']);
+  });
+
+  it('leaves the list untouched without a creator', () => {
+    expect(withCreatorAsAdmin([other], undefined).map(a => a.key)).toEqual(['reto']);
+  });
+
+  it('makes the creator the only admin when the form left the list empty', () => {
+    expect(withCreatorAsAdmin([], creator).map(a => a.key)).toEqual(['kaiser']);
+  });
+});
+
+describe('Group duplicate detection', () => {
+  const tenantId = 'scs';
+
+  function makeG(okey: string, name: string, overrides: Partial<GroupModel> = {}): GroupModel {
+    return Object.assign(new GroupModel(tenantId), { okey, name }, overrides);
+  }
+
+  it('reports two live groups whose names collide once normalised', () => {
+    const found = findDuplicateGroups([makeG('scs_vierer', 'SCS Vierer'), makeG('scsvierer', 'scs-vierer')]);
+    expect(found).toHaveLength(1);
+    expect(found[0].groups.map(g => g.okey)).toEqual(['scs_vierer', 'scsvierer']);
+  });
+
+  it('ignores archived groups and ad-hoc chat documents', () => {
+    const groups = [
+      makeG('a', 'Vorstand'),
+      makeG('b', 'Vorstand', { isArchived: true }),
+      makeG('c', 'Vorstand', { kind: 'chat' }),
+    ];
+    expect(findDuplicateGroups(groups)).toEqual([]);
+  });
+
+  it('findConflictingGroups guards the create path', () => {
+    const existing = [makeG('Dienstags 4-er', '4X-Dienstag')];
+    expect(findConflictingGroups('4X Dienstag', existing).map(g => g.okey)).toEqual(['Dienstags 4-er']);
+    expect(findConflictingGroups('Freitags 8-er', existing)).toEqual([]);
+  });
+});
+
+describe('Group key hygiene', () => {
+  const tenantId = 'scs';
+
+  function makeG(okey: string, name: string, overrides: Partial<GroupModel> = {}): GroupModel {
+    return Object.assign(new GroupModel(tenantId), { okey, name }, overrides);
+  }
+
+  it('flags a legacy key with a blank in it', () => {
+    const issues = findGroupKeyIssues([makeG('Dienstags 4-er', '4X-Dienstag')], tenantId);
+    expect(issues.map(i => i.kind)).toEqual(['unsafeCharacters']);
+    expect(issues[0].aliasLocalpart).toBe('group_dienstags_4-er');
+  });
+
+  it('flags an umlaut key', () => {
+    expect(findGroupKeyIssues([makeG('Zürcher Sportfest 2026', 'Zürcher Sportfest 2026')], tenantId)
+      .some(i => i.kind === 'unsafeCharacters')).toBe(true);
+  });
+
+  it('accepts a key produced by getGroupKeyFromName', () => {
+    const okey = getGroupKeyFromName('Gipfelischiff', tenantId);
+    expect(findGroupKeyIssues([makeG(okey, 'Gipfelischiff')], tenantId)).toEqual([]);
+  });
+
+  it('exempts the seeded role groups and the tenant\'s own key from the prefix rule', () => {
+    expect(findGroupKeyIssues([makeG('treasurer', 'Finanzen')], tenantId)).toEqual([]);
+    expect(findGroupKeyIssues([makeG('scs', 'Ganzer Verein')], tenantId)).toEqual([]);
+  });
+
+  it('reports an unprefixed key that provisioning did not seed', () => {
+    expect(findGroupKeyIssues([makeG('Redaktion', 'Redaktion')], tenantId).map(i => i.kind)).toEqual(['missingTenantPrefix']);
+    expect(findGroupKeyIssues([makeG('Redaktion', 'Redaktion')], tenantId, ['Redaktion'])).toEqual([]);
+  });
+
+  it('detects two keys collapsing onto one Matrix alias', () => {
+    const issues = findGroupKeyIssues([makeG('Dienstags 4-er', 'A'), makeG('dienstags_4-er', 'B')], tenantId);
+    const collisions = issues.filter(i => i.kind === 'aliasCollision');
+    expect(collisions).toHaveLength(2);
+    expect(collisions[0].collidesWith).toEqual(['dienstags_4-er']);
   });
 });

@@ -55,6 +55,21 @@ export function getSystemQuery(tenant: string): DbQuery[] {
 }
 
 /**
+ * The same tenant scope as {@link getSystemQuery}, but WITHOUT the `isArchived == false` clause —
+ * archived documents are included.
+ *
+ * Only for an admin-facing 'show archived' view. Archiving is this app's delete, so archived
+ * documents are debris by definition: a series somebody gave up on, a group that was replaced.
+ * That debris is invisible everywhere else, which is exactly how three parallel '4X-Dienstag'
+ * series survived unnoticed for three months. Never use this for an ordinary list.
+ */
+export function getArchiveInclusiveQuery(tenant: string): DbQuery[] {
+  return [
+    { key: 'tenants', operator: 'array-contains-any', value: [tenant, SYSTEM_TENANT] }
+  ]
+}
+
+/**
  * Adds system queries to the existing query array for a specific tenant.
  * @param dbQuery The existing database query array. Beware: it will be modified.
  * @param tenant The tenant identifier.

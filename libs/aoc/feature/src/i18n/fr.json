@@ -888,14 +888,20 @@
       "content": "Choisis la personne dont tu veux changer les locataires.",
       "button": "Rechercher une personne"
     },
-    "card": { "person": "Personne" },
+    "card": {
+      "person": "Personne"
+    },
     "column": {
       "current": "Locataires actuels",
       "available": "Autres locataires",
       "empty": "Aucune entrée"
     },
-    "grant": { "title": "Partager des données" },
-    "revoke": { "title": "Reprendre des données" },
+    "grant": {
+      "title": "Partager des données"
+    },
+    "revoke": {
+      "title": "Reprendre des données"
+    },
     "block": {
       "always": "Toujours inclus",
       "alwaysHint": "Le nom, les caractéristiques et les termes de recherche de la personne se trouvent dans une seule fiche et sont donc toujours transmis.",
@@ -905,10 +911,27 @@
     },
     "favoriteMarker": "Adresse principale",
     "legalNote": "Tu transmets ici des données personnelles à un autre club. Assure-toi d’en avoir le droit.",
-    "confirm": { "ok": "Partager", "cancel": "Annuler" },
+    "confirm": {
+      "ok": "Partager",
+      "cancel": "Annuler"
+    },
     "result": "Résultat",
     "conf": "L’attribution a été enregistrée.",
     "error": "L’attribution n’a pas fonctionné.",
     "ownTenantHint": "Tu ne peux pas supprimer ton propre locataire ici."
+  },
+  "hygiene": {
+    "events": {
+      "title": "Trouver les rendez-vous en double",
+      "content": "Recherche les rendez-vous présents deux fois le même jour à la même heure, et les séries dont les rendez-vous enregistrés ne correspondent plus à leur propre règle de répétition. Le rapport ne modifie rien : lequel des deux est le bon dépend de l'endroit où se trouvent les inscriptions.",
+      "button": "Vérifier les rendez-vous",
+      "clean": "Aucun rendez-vous en double et aucune série incomplète."
+    },
+    "groups": {
+      "title": "Vérifier les groupes",
+      "content": "Recherche les groupes existant en double et les identifiants de groupe qui ne peuvent pas porter proprement les noms de dossier, de page et de discussion qui en dérivent. Ce rapport ne modifie rien non plus : un identifiant de groupe ne peut pas être renommé sans risque.",
+      "button": "Vérifier les groupes",
+      "clean": "Aucun groupe en double et aucun identifiant problématique."
+    }
   }
 }

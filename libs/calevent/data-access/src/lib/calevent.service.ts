@@ -80,6 +80,25 @@ export class CalEventService {
     void this.activityService.log('calevent', 'delete', currentUser, payload);
   }
 
+  /**
+   * Audit entry for a write that goes through a Firestore WriteBatch and therefore never passes
+   * `create`/`update`/`delete`. Every series operation is such a write: reconciling a rule,
+   * archiving a range and saving a whole column of poll answers all commit one batch, so before
+   * this existed the entire series half of the feature left no trace at all. Reconstructing the
+   * 2026-06-10 triple-series incident was only possible because the per-occurrence `create` entries
+   * happened to be logged — the edit that broke the series was not.
+   *
+   * One entry per OPERATION, not per document: a reconcile touching 29 occurrences is one decision
+   * a person made, and 29 rows would bury it.
+   *
+   * @param action 'series-create' | 'series-update' | 'series-delete' | 'series-attendance' | 'poll-close'
+   * @param payload a human-readable summary; keep the series id in it, it is the join key
+   * @param currentUser the user who triggered the operation
+   */
+  public logSeriesActivity(action: string, payload: string, currentUser?: UserModel): void {
+    void this.activityService.log('calevent', action, currentUser, payload);
+  }
+
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
   /**
    * Lists all calendar events in the database.

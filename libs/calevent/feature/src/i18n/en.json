@@ -25,7 +25,8 @@
     "personal": {
       "label": "Create a personal event",
       "hint": "You are creating a personal event that only you can see. You can invite other participants later, but if you need further features such as recurring events, chat and so on, you should create a group event instead. See (i) for more information."
-    }
+    },
+    "duplicate": "An event «{name}» already exists on {slots}. That may be the one you mean. Do you still want to create a new one?"
   },
   "delete": {
     "label": "Delete event",
@@ -97,7 +98,8 @@
     "error": "The link to the event could not be created."
   },
   "filter": {
-    "all": "All"
+    "all": "All",
+    "showArchived": "Show archived"
   },
   "quickEntry": {
     "label": "Quick entry",
@@ -164,7 +166,9 @@
     "unsubscribeAll": "Sign off from all dates",
     "notFound": "This event series has no upcoming dates left.",
     "saveError": "Your responses could not be saved.",
-    "preview": "Creates {count} events, the last one on {date}."
+    "preview": "Creates {count} events: {first} to {last}.",
+    "preview_empty": "There is not a single date in this range. Check the start and end date.",
+    "preview_max": "That would be {count} events — more than {max}. Choose an earlier end date."
   },
   "update": {
     "label": "Edit event",

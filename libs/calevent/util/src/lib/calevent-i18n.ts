@@ -27,6 +27,7 @@ export const CALEVENT_I18N_KEYS = {
 
   create:                     PFX + 'create.label',
   create_conf:                PFX + 'create.conf',
+  create_duplicate:           PFX + 'create.duplicate',
   create_error:               PFX + 'create.error',
   // shown when a user opens 'Termin erfassen' on a calendar they may not write to
   create_no_permission:       PFX + 'create.no_permission',
@@ -111,6 +112,15 @@ export const CALEVENT_I18N_KEYS = {
   recurring_label:            PFX + 'recurring.label',
   recurring_helper:           PFX + 'recurring.helper',
   // the plain-text result of the current series settings ('Ergibt 11 Termine, ...')
+  series_preview_empty:       PFX + 'series.preview_empty',
+  series_preview_max:         PFX + 'series.preview_max',
+  weekday_1:                  PFX + 'weekday.abbreviation.monday',
+  weekday_2:                  PFX + 'weekday.abbreviation.tuesday',
+  weekday_3:                  PFX + 'weekday.abbreviation.wednesday',
+  weekday_4:                  PFX + 'weekday.abbreviation.thursday',
+  weekday_5:                  PFX + 'weekday.abbreviation.friday',
+  weekday_6:                  PFX + 'weekday.abbreviation.saturday',
+  weekday_7:                  PFX + 'weekday.abbreviation.sunday',
   series_preview:             PFX + 'series.preview',
 
   // "Kalender & Einladungen" explainer (CalEventInfoModal)

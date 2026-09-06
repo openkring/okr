@@ -552,7 +552,8 @@
     "aoc-diary": "Journal",
     "trip-callsupport": "Appeler le support",
     "chat-support": "Demander de l'aide",
-    "chat-notfall": "Signaler une urgence"
+    "chat-notfall": "Signaler une urgence",
+    "calevent-archived": "Afficher les archivés"
   },
   "ownership": {
     "fork_confirm": "« {name} » appartient au catalogue de fonctionnalités ({blocks}).\n\nL'enregistrement crée une copie propre au locataire « {forkKey} » et détache ce locataire de l'original partagé. Les corrections futures du catalogue (URL, action, rôle) n'atteindront plus cette entrée.\n\nEnregistrer quand même ?",

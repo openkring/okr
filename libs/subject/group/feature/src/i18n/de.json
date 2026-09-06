@@ -66,7 +66,8 @@
     "conf": "Gruppe wurde erstellt.",
     "error": "Gruppe konnte nicht erstellt werden.",
     "duplicate": "Doppelte ID",
-    "exists": "Eine Gruppe mit dieser ID existiert bereits. Bitte benutze eine andere ID."
+    "exists": "Eine Gruppe mit dieser ID existiert bereits. Bitte benutze eine andere ID.",
+    "similar": "Es gibt bereits eine Gruppe mit einem sehr ähnlichen Namen: {names}. Vielleicht suchst du diese. Möchtest du trotzdem eine neue Gruppe erstellen?"
   },
   "delete": {
     "label": "Gruppe löschen",

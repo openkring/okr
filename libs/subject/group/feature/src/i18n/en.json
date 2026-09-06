@@ -28,7 +28,8 @@
     "error": "Group could not be created.",
     "duplicate": "Duplicate ID",
     "exists": "A group with this ID already exists. Please use a different ID.",
-    "info": "To keep the creation of new groups under some control (e.g. to avoid identical or similar groups for the same purpose), the role 'privileged' is required. That role is essentially held by the board members. If you would like to open your own group, please say so in the support chat, with the name of the group, its members and its purpose. You then become the administrator of that group and can, for example, manage the group members, create new events and so on."
+    "info": "To keep the creation of new groups under some control (e.g. to avoid identical or similar groups for the same purpose), the role 'privileged' is required. That role is essentially held by the board members. If you would like to open your own group, please say so in the support chat, with the name of the group, its members and its purpose. You then become the administrator of that group and can, for example, manage the group members, create new events and so on.",
+    "similar": "A group with a very similar name already exists: {names}. That may be the one you are looking for. Do you still want to create a new group?"
   },
   "delete": {
     "label": "Delete group",

@@ -32,6 +32,40 @@ import { AocDataStore, FavMismatch } from './aoc-data.store';
         </ion-card-content>
       </ion-card>
 
+      <!-- Data hygiene: two REPORTS. Neither writes anything — see the store methods for why
+           an automatic merge/rename would destroy the very answer the admin needs. -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.hygiene_events_title() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col>{{ store.i18n.hygiene_events_content() }}</ion-col>
+              <ion-col>
+                <okr-button label=" {{ store.i18n.hygiene_events_button() }}" iconName="calendar" (click)="findDuplicateEvents()" />
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>{{ store.i18n.hygiene_groups_title() }}</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col>{{ store.i18n.hygiene_groups_content() }}</ion-col>
+              <ion-col>
+                <okr-button label=" {{ store.i18n.hygiene_groups_button() }}" iconName="group" (click)="findGroupHygieneIssues()" />
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ store.i18n.data_fix_title() }}</ion-card-title>
@@ -155,6 +189,16 @@ export class AocData {
   protected readonly readOnly = computed(() => !hasRole('admin', this.store.currentUser()));
   protected readonly favMismatches = computed(() => this.store.favMismatches());
   protected favChecked = signal(false);
+
+  /** Reports duplicate events and unhealthy series. Read-only — writes nothing. */
+  public async findDuplicateEvents(): Promise<void> {
+    await this.store.findDuplicateEvents();
+  }
+
+  /** Reports duplicate groups and unsafe group keys. Read-only — writes nothing. */
+  public async findGroupHygieneIssues(): Promise<void> {
+    await this.store.findGroupHygieneIssues();
+  }
 
   /**
    * Fix models of a given type. THIS CHANGES MANY DATA IN THE DATABASE.

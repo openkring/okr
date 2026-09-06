@@ -888,14 +888,20 @@
       "content": "Scegli la persona di cui vuoi modificare i tenant.",
       "button": "Cerca persona"
     },
-    "card": { "person": "Persona" },
+    "card": {
+      "person": "Persona"
+    },
     "column": {
       "current": "Tenant attuali",
       "available": "Altri tenant",
       "empty": "Nessuna voce"
     },
-    "grant": { "title": "Condividi dati" },
-    "revoke": { "title": "Ritira dati" },
+    "grant": {
+      "title": "Condividi dati"
+    },
+    "revoke": {
+      "title": "Ritira dati"
+    },
     "block": {
       "always": "Sempre incluso",
       "alwaysHint": "Il nome, le caratteristiche e i termini di ricerca della persona si trovano in un'unica scheda e vengono quindi sempre trasmessi.",
@@ -905,10 +911,27 @@
     },
     "favoriteMarker": "Indirizzo principale",
     "legalNote": "Qui condividi dati personali con un'altra società. Assicurati di poterlo fare.",
-    "confirm": { "ok": "Condividi", "cancel": "Annulla" },
+    "confirm": {
+      "ok": "Condividi",
+      "cancel": "Annulla"
+    },
     "result": "Risultato",
     "conf": "L'assegnazione è stata salvata.",
     "error": "L'assegnazione non è riuscita.",
     "ownTenantHint": "Qui non puoi eliminare il tuo tenant."
+  },
+  "hygiene": {
+    "events": {
+      "title": "Trovare appuntamenti doppi",
+      "content": "Cerca appuntamenti presenti due volte nello stesso giorno e alla stessa ora e serie i cui appuntamenti memorizzati non corrispondono più alla propria regola di ripetizione. Il rapporto non modifica nulla: quale dei due sia quello giusto dipende da dove si trovano le iscrizioni.",
+      "button": "Controllare gli appuntamenti",
+      "clean": "Nessun appuntamento doppio e nessuna serie incompleta."
+    },
+    "groups": {
+      "title": "Controllare i gruppi",
+      "content": "Cerca gruppi presenti due volte e identificatori di gruppo che non possono portare correttamente i nomi di cartella, pagina e chat da essi derivati. Anche questo rapporto non modifica nulla: un identificatore di gruppo non può essere rinominato senza rischi.",
+      "button": "Controllare i gruppi",
+      "clean": "Nessun gruppo doppio e nessun identificatore problematico."
+    }
   }
 }

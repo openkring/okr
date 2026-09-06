@@ -25,7 +25,8 @@
     "personal": {
       "label": "Crear una cita personal",
       "hint": "Estás creando una cita personal que solo tú puedes ver. Más adelante podrás invitar a otros participantes, pero si necesitas más funciones como citas periódicas, chat, etc., deberías crear una cita de grupo. Consulta (i) para más información."
-    }
+    },
+    "duplicate": "Ya existe una cita «{name}» el {slots}. Puede que sea la que buscas. ¿Quieres crear igualmente una nueva?"
   },
   "delete": {
     "label": "Eliminar evento",
@@ -97,7 +98,8 @@
     "error": "No se ha podido crear el enlace al evento."
   },
   "filter": {
-    "all": "Todos"
+    "all": "Todos",
+    "showArchived": "Mostrar archivados"
   },
   "quickEntry": {
     "label": "Entrada rápida",
@@ -164,7 +166,9 @@
     "unsubscribeAll": "Darse de baja de todas las fechas",
     "notFound": "Esta serie ya no tiene fechas próximas.",
     "saveError": "No se han podido guardar tus respuestas.",
-    "preview": "Genera {count} eventos, el último el {date}."
+    "preview": "Resulta en {count} citas: del {first} al {last}.",
+    "preview_empty": "No hay ninguna fecha en este periodo. Revisa la fecha de inicio y de fin.",
+    "preview_max": "Serían {count} citas, más que {max}. Elige una fecha de fin anterior."
   },
   "update": {
     "label": "Modificar evento",

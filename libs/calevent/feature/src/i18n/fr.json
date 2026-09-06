@@ -25,7 +25,8 @@
     "personal": {
       "label": "Créer un rendez-vous personnel",
       "hint": "Vous créez un rendez-vous personnel que vous seul pouvez voir. Vous pourrez inviter d'autres participants plus tard, mais si vous souhaitez d'autres fonctions comme les séries de rendez-vous, le chat, etc., créez plutôt un rendez-vous de groupe. Voir (i) pour plus d'informations."
-    }
+    },
+    "duplicate": "Un rendez-vous « {name} » existe déjà le {slots}. C'est peut-être celui que tu vises. Veux-tu quand même en créer un nouveau ?"
   },
   "delete": {
     "label": "Supprimer l'événement",
@@ -97,7 +98,8 @@
     "error": "Le lien vers l’événement n’a pas pu être créé."
   },
   "filter": {
-    "all": "Tous"
+    "all": "Tous",
+    "showArchived": "Afficher les archivés"
   },
   "quickEntry": {
     "label": "Saisie rapide",
@@ -164,7 +166,9 @@
     "unsubscribeAll": "Se désinscrire de toutes les dates",
     "notFound": "Cette série n’a plus de dates à venir.",
     "saveError": "Tes réponses n’ont pas pu être enregistrées.",
-    "preview": "Génère {count} événements, le dernier le {date}."
+    "preview": "Donne {count} rendez-vous : du {first} au {last}.",
+    "preview_empty": "Aucune date ne tombe dans cette période. Vérifie la date de début et de fin.",
+    "preview_max": "Cela ferait {count} rendez-vous — plus que {max}. Choisis une date de fin plus proche."
   },
   "update": {
     "label": "Modifier l'événement",

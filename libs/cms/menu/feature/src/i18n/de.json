@@ -552,7 +552,8 @@
     "aoc-diary": "Tagebuch",
     "trip-callsupport": "Support anrufen",
     "chat-support": "Support fragen",
-    "chat-notfall": "Notfall melden"
+    "chat-notfall": "Notfall melden",
+    "calevent-archived": "Archivierte anzeigen"
   },
   "ownership": {
     "fork_confirm": "«{name}» gehört zum Feature-Katalog ({blocks}).\n\nBeim Speichern wird eine eigene Kopie «{forkKey}» für diesen Mandanten angelegt und der Mandant vom gemeinsamen Original abgehängt. Künftige Katalog-Korrekturen (URL, Aktion, Berechtigung) erreichen diesen Eintrag dann nicht mehr.\n\nTrotzdem speichern?",

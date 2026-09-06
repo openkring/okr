@@ -25,7 +25,8 @@
     "personal": {
       "label": "Creare un appuntamento personale",
       "hint": "Stai creando un appuntamento personale che solo tu puoi vedere. Potrai invitare altri partecipanti in seguito, ma se desideri ulteriori funzioni come le serie di appuntamenti, la chat ecc., dovresti creare un appuntamento di gruppo. Vedi (i) per maggiori informazioni."
-    }
+    },
+    "duplicate": "Esiste già un appuntamento «{name}» il {slots}. Forse è quello che intendi. Vuoi crearne comunque uno nuovo?"
   },
   "delete": {
     "label": "Eliminare l'evento",
@@ -97,7 +98,8 @@
     "error": "Non è stato possibile creare il link all’evento."
   },
   "filter": {
-    "all": "Tutti"
+    "all": "Tutti",
+    "showArchived": "Mostra archiviati"
   },
   "quickEntry": {
     "label": "Inserimento rapido",
@@ -164,7 +166,9 @@
     "unsubscribeAll": "Disiscriviti da tutte le date",
     "notFound": "Questa serie non ha più date future.",
     "saveError": "Le tue risposte non sono state salvate.",
-    "preview": "Genera {count} eventi, l’ultimo il {date}."
+    "preview": "Genera {count} appuntamenti: dal {first} al {last}.",
+    "preview_empty": "In questo periodo non cade nessuna data. Controlla la data di inizio e di fine.",
+    "preview_max": "Sarebbero {count} appuntamenti, più di {max}. Scegli una data di fine anteriore."
   },
   "update": {
     "label": "Modificare l'evento",

@@ -12,7 +12,7 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getFullName, getSystemQuery, getTodayStr, inviteeCandidates, isAfterDate, isAfterOrEqualDate, nameMatches, pad, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, inviteeCandidates, isAfterDate, isAfterOrEqualDate, nameMatches, pad, prettyFormatDate, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
 import { copyToClipboardWithConfirmation, error, navigateByUrl, confirm, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import { yearMatches } from '@okr/shared-categories';
@@ -25,7 +25,7 @@ import type { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
-import { CALEVENT_I18N_KEYS, CalEventNotifyFormData, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { CALEVENT_I18N_KEYS, CalEventNotifyFormData, findConflictingCalEvents, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { CalEventNotifyModal, RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 
 /**
@@ -42,6 +42,8 @@ export type CalEventState = {
   scheduleSeriesId: string;
   maxEvents: number | undefined; // max events to show, undefined means all
   showPastEvents: boolean; // whether to show past events
+  /** admin-only: include archived events in the list, to find debris left by a delete-and-recreate */
+  showArchived: boolean;
   showUpcomingEvents: boolean; // whether to show upcoming events
   // an offset to calculate the start date
   // example: -30 = always starting one month in the history
@@ -60,6 +62,7 @@ export const initialState: CalEventState = {
   scheduleSeriesId: '',
   maxEvents: undefined,
   showPastEvents: false,
+  showArchived: false,
   showUpcomingEvents: true,
   startDaysOffset: -30,
 
@@ -181,6 +184,7 @@ export const CalEventStore = signalStore(
         calendarName: store.calendarName(),
         calendarsOfCurrentUser: store.calendarsForCurrentUserResource.value() ?? [],
         selectedYear: store.selectedYear(),
+        showArchived: store.showArchived(),
         personKey: store.appStore.currentUser()?.personKey ?? '',
         invitedEventKeys: (store.invitationsForCurrentUserResource.value() ?? []).map(inv => inv.caleventKey)
       }),
@@ -192,7 +196,12 @@ export const CalEventStore = signalStore(
           const url = `${PUBLIC_CALEVENTS_CF_URL}?tenantId=${encodeURIComponent(store.appStore.tenantId())}`;
           return from(fetch(url).then(r => r.ok ? r.json() as Promise<CalEventModel[]> : []));
         }
-        const allEvents$ = store.appStore.firestoreService.searchData<CalEventModel>(CalEventCollection, getSystemQuery(store.appStore.env.tenantId), 'startDate', 'asc');
+        // 'Archivierte anzeigen' drops the isArchived filter from the QUERY, not from a
+        // client-side predicate: an archived event is never fetched otherwise.
+        const query = params.showArchived
+          ? getArchiveInclusiveQuery(store.appStore.env.tenantId)
+          : getSystemQuery(store.appStore.env.tenantId);
+        const allEvents$ = store.appStore.firestoreService.searchData<CalEventModel>(CalEventCollection, query, 'startDate', 'asc');
         const maxEvents = store.maxEvents();
         const yearFilterActive = params.selectedYear !== new Date().getFullYear();
         return allEvents$.pipe(
@@ -400,6 +409,15 @@ export const CalEventStore = signalStore(
 
       setSelectedYear(selectedYear: number) {
         patchState(store, { selectedYear });
+      },
+
+      /**
+       * Admin-only view switch: include archived events. Archived events are this app's deleted
+       * events, so they are debris — the toggle exists to FIND that debris (an abandoned series,
+       * a duplicate somebody gave up on), not to work with it.
+       */
+      toggleShowArchived(): void {
+        patchState(store, { showArchived: !store.showArchived() });
       },
 
       setStartDaysOffset(startDaysOffset: number) {
@@ -696,6 +714,11 @@ export const CalEventStore = signalStore(
         }
         if (changed === 0) return;
         await batch.commit();
+        // Who answered what, for a whole series, in one batch — the write that decides whether two
+        // members end up on the same occurrence. It had no audit entry at all until now.
+        store.calEventService.logSeriesActivity('series-attendance',
+          `${seriesEvents[0]?.seriesId ?? ''}: ${seriesEvents[0]?.name ?? ''}, ${changed} Antworten von ${row.firstName} ${row.lastName}`,
+          currentUser);
         await showToast(store.toastController, store.i18n.schedule_response_saved());
       },
 
@@ -753,6 +776,9 @@ export const CalEventStore = signalStore(
           batch.delete(doc(store.firestoreService.firestore, `${InvitationCollection}/${inv.okey}`));
         }
         await batch.commit();
+        store.calEventService.logSeriesActivity('poll-close',
+          `${seriesId}: ${selectedEvents[0].name}, ${selectedEvents.length} bestaetigt (${selectedEvents.map(e => e.startDate).join(', ')}), ${losers.length} verworfen`,
+          store.currentUser());
 
         await this.notifyGroupRoom(formatScheduleCloseMessage(
           selectedEvents[0].name, selectedEvents.map(e => e.startDate), authorMessage));
@@ -779,6 +805,7 @@ export const CalEventStore = signalStore(
         const { data, role } = await modal.onDidDismiss();
         if (role === 'confirm' && data && !readOnly) {
           if (isCalEvent(data, store.tenantId())) {
+            if (isNew && !await this.confirmNoDuplicate(data)) return undefined;
             if (data.periodicity === 'once') {
               // `await isNew ? a : b` awaits the boolean, not the write — reload() then raced the save
               await (isNew
@@ -913,6 +940,40 @@ export const CalEventStore = signalStore(
         await store.calEventService.create(calevent, store.currentUser());
       },
 
+      /**
+       * Warns before a second event is created on a slot that is already taken, and lets the user
+       * decide. This is the guard that would have stopped the 2026-06-10 '4X-Dienstag' incident:
+       * three series for the same training, created within one hour, because each attempt looked
+       * like it had failed.
+       *
+       * Reads the tenant's live events straight from Firestore rather than from `calEvents()` —
+       * that list is narrowed by the selected calendar, the past/upcoming filters and `maxEvents`,
+       * so the very duplicate we are hunting could be missing from it. The read costs one query and
+       * only happens when an event is actually created.
+       *
+       * A series is represented by its first occurrence: if that one collides, so does the series.
+       *
+       * @returns true when the caller may proceed (no conflict, or the user confirmed anyway)
+       */
+      async confirmNoDuplicate(candidate: CalEventModel): Promise<boolean> {
+        try {
+          const live = await store.firestoreService.getDataOnce<CalEventModel>(
+            CalEventCollection, getSystemQuery(store.tenantId()), 'none');
+          const conflicts = findConflictingCalEvents(candidate, live);
+          if (conflicts.length === 0) return true;
+          const slots = conflicts
+            .map(e => `${prettyFormatDate(e.startDate)} ${e.startTime} (${(e.calendars ?? []).join(', ') || '—'})`)
+            .join(', ');
+          return await confirm(store.alertController,
+            fill(store.i18n.create_duplicate(), { name: candidate.name, slots }),
+            store.i18n.ok(), store.i18n.cancel(), true);
+        } catch (ex) {
+          // A warning must never block a legitimate save: if the lookup fails, let the user through.
+          console.warn('CalEventStore.confirmNoDuplicate: duplicate check skipped:', ex);
+          return true;
+        }
+      },
+
       /******************************* CRUD on calevent series *************************************** */
       /**
        * Loads all live occurrences of a series straight from Firestore, sorted by date.
@@ -973,6 +1034,9 @@ export const CalEventStore = signalStore(
           await store.calEventService.create(inst, store.currentUser());
           index++;
         }
+        store.calEventService.logSeriesActivity('series-create',
+          `${calevent.seriesId}: ${calevent.name}, ${dates.length}x ${calevent.periodicity} ${dates[0]}..${dates[dates.length - 1]}`,
+          store.currentUser());
       },
 
       /**
@@ -991,6 +1055,9 @@ export const CalEventStore = signalStore(
           await store.calEventService.create({ ...structuredClone(calevent), startDate: date, okey, attendees: [] }, store.currentUser());
           index++;
         }
+        store.calEventService.logSeriesActivity('series-create',
+          `${calevent.seriesId}: ${calevent.name}, aus Einzeltermin ${calevent.okey}, ${dates.length}x ${calevent.periodicity} ${dates[0]}..${dates[dates.length - 1]}`,
+          store.currentUser());
       },
 
       async decoupleEventFromSeries(calevent: CalEventModel): Promise<void> {
@@ -1035,6 +1102,12 @@ export const CalEventStore = signalStore(
         }
         await this.archiveInvitationsOf(plan.archives.map(e => e.okey), batch);
         await batch.commit();
+
+        // The reconcile itself leaves no trace otherwise — every write above is a batch update.
+        // This is the entry that was missing when the '4X-Dienstag' series was silently rewritten.
+        store.calEventService.logSeriesActivity('series-update',
+          `${calevent.seriesId}: ${calevent.name}, scope=${scope}, ${plan.updates.length} geaendert, ${plan.archives.length} archiviert, ${plan.creates.length} neu, bis ${calevent.repeatUntilDate}`,
+          store.currentUser());
 
         // new occurrences are brand-new documents: no attendees and no invitations are inherited
         const taken = new Set(series.map(e => e.okey));
@@ -1087,6 +1160,9 @@ export const CalEventStore = signalStore(
         }
         await this.archiveInvitationsOf(doomed.map(e => e.okey), batch);
         await batch.commit();
+        store.calEventService.logSeriesActivity('series-delete',
+          `${calevent.seriesId}: ${calevent.name}, scope=${scope}, ${doomed.length} archiviert ab ${doomed[0].startDate}`,
+          store.currentUser());
       },
 
       /******************************* invitations *************************************** */

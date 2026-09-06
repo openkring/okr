@@ -41,6 +41,7 @@ export const GROUP_I18N_KEYS = {
   create_error:                     PFX + 'create.error',
   create_info:                      PFX + 'create.info',
   create_duplicate:                 PFX + 'create.duplicate',
+  create_similar:                   PFX + 'create.similar',
   create_exists:                    PFX + 'create.exists',
   delete:                           PFX + 'delete.label',
   delete_confirm:                   PFX + 'delete.confirm',

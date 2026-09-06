@@ -25,7 +25,8 @@
     "personal": {
       "label": "Persönlichen Termin erstellen",
       "hint": "Du erstellst einen persönlichen Termin, den nur du sehen kannst. Du kannst zwar später weitere Teilnehmer dazu einladen, aber wenn du weitere Funktionen wie Serientermine, Chat etc. wünschst, solltest du einen Gruppentermin erstellen. Siehe (i) für mehr Informationen."
-    }
+    },
+    "duplicate": "Es gibt bereits einen Termin «{name}» am {slots}. Vielleicht meinst du diesen. Möchtest du trotzdem einen neuen erstellen?"
   },
   "delete": {
     "label": "Termin löschen",
@@ -97,7 +98,8 @@
     "error": "Der Link zum Termin konnte nicht erstellt werden."
   },
   "filter": {
-    "all": "Alle"
+    "all": "Alle",
+    "showArchived": "Archivierte anzeigen"
   },
   "quickEntry": {
     "label": "Schnelleingabe",
@@ -164,7 +166,9 @@
     "unsubscribeAll": "Von allen Terminen abmelden",
     "notFound": "Diese Terminserie hat keine kommenden Termine mehr.",
     "saveError": "Deine An-/Abmeldungen konnten nicht gespeichert werden.",
-    "preview": "Ergibt {count} Termine, der letzte am {date}."
+    "preview": "Ergibt {count} Termine: {first} bis {last}.",
+    "preview_empty": "In diesem Zeitraum liegt kein einziger Termin. Prüfe Startdatum und Enddatum.",
+    "preview_max": "Das ergibt {count} Termine — mehr als {max}. Wähle ein früheres Enddatum."
   },
   "update": {
     "label": "Termin ändern",

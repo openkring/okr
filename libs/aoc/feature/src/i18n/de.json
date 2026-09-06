@@ -888,14 +888,20 @@
       "content": "Wähle die Person, deren Mandanten du ändern möchtest.",
       "button": "Person suchen"
     },
-    "card": { "person": "Person" },
+    "card": {
+      "person": "Person"
+    },
     "column": {
       "current": "Aktuelle Mandanten",
       "available": "Weitere Mandanten",
       "empty": "Keine Einträge"
     },
-    "grant": { "title": "Daten weitergeben" },
-    "revoke": { "title": "Daten zurücknehmen" },
+    "grant": {
+      "title": "Daten weitergeben"
+    },
+    "revoke": {
+      "title": "Daten zurücknehmen"
+    },
     "block": {
       "always": "Immer dabei",
       "alwaysHint": "Name, Merkmale und Suchbegriffe der Person stehen in einem einzigen Eintrag und gehen deshalb immer mit.",
@@ -905,10 +911,27 @@
     },
     "favoriteMarker": "Hauptadresse",
     "legalNote": "Du gibst hier persönliche Daten an einen anderen Verein weiter. Stell sicher, dass du das darfst.",
-    "confirm": { "ok": "Weitergeben", "cancel": "Abbrechen" },
+    "confirm": {
+      "ok": "Weitergeben",
+      "cancel": "Abbrechen"
+    },
     "result": "Ergebnis",
     "conf": "Die Zuteilung ist gespeichert.",
     "error": "Die Zuteilung hat nicht geklappt.",
     "ownTenantHint": "Deinen eigenen Mandanten kannst du hier nicht entfernen."
+  },
+  "hygiene": {
+    "events": {
+      "title": "Doppelte Termine finden",
+      "content": "Sucht Termine, die am selben Tag zur selben Zeit doppelt vorhanden sind, und Serien, deren gespeicherte Termine nicht mehr zu ihrer eigenen Wiederholungsregel passen. Der Bericht aendert nichts — welcher von zwei Terminen der richtige ist, haengt davon ab, wo die Anmeldungen liegen.",
+      "button": "Termine pruefen",
+      "clean": "Keine doppelten Termine und keine unvollstaendigen Serien gefunden."
+    },
+    "groups": {
+      "title": "Gruppen pruefen",
+      "content": "Sucht Gruppen, die es doppelt gibt, und Gruppen-IDs, die abgeleitete Ordner-, Seiten- und Chat-Namen nicht sauber tragen koennen. Auch dieser Bericht aendert nichts: eine Gruppen-ID laesst sich nicht gefahrlos umbenennen.",
+      "button": "Gruppen pruefen",
+      "clean": "Keine doppelten Gruppen und keine problematischen Gruppen-IDs gefunden."
+    }
   }
 }

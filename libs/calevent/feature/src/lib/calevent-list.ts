@@ -44,6 +44,8 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     styles: [`
       .clickable { cursor: pointer; user-select: none; }
+      /* only visible while 'Archivierte anzeigen' is on: debris must never look like a live event */
+      ion-item.archived { opacity: 0.55; font-style: italic; }
       ion-card-content { padding: 0px;}
       ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
       ion-textarea {
@@ -187,7 +189,7 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
               <ion-popover trigger="{{ popupId() }}" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true"  (ionPopoverDidDismiss)="onPopoverDismiss($event)" >
                 <ng-template>
                   <ion-content>
-                    <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="isPersonalCalendar()" [excludeNames]="excludedMenuNames()" [toggleStates]="{ toggleFilter: showFilter() }"/>
+                    <okr-menu [menuName]="contextMenuName()" [forceVisible]="groupAdmin()" [forceVisibleSelf]="isPersonalCalendar()" [excludeNames]="excludedMenuNames()" [toggleStates]="{ toggleFilter: showFilter(), toggleArchived: store.showArchived() }"/>
                   </ion-content>
                 </ng-template>
               </ion-popover>
@@ -289,7 +291,7 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
         } @else {
           <ion-list lines="inset">
             @for(event of sortedCalEvents(); track event.okey; let i = $index) {
-              <ion-item [id]="'calevent-' + i" (click)="showActions(event)" [class]="getCalEventCssClass(event.state)">
+              <ion-item [id]="'calevent-' + i" (click)="showActions(event)" [class]="getCalEventCssClass(event.state)" [class.archived]="event.isArchived">
                 <!-- always an icon in slot=start, otherwise rows without an attendance state
                      lose their leading column and the whole list misaligns. 'remove' (grey) means
                      An-/Abmeldung is not possible on this event. -->
@@ -839,6 +841,7 @@ export class CalEventList implements OnInit {
         if (this.store.schedule()) await this.openSchedulePoll('');   // schedule() = the group-calendar guard
         break;
       case 'toggleFilter': this.showFilter.update(v => !v); break;
+      case 'toggleArchived': this.store.toggleShowArchived(); break;
       default: error(undefined, `CalEventList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }

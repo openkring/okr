@@ -190,6 +190,11 @@ const calevent: FeatureBlock = {
       // Same class of generic reusable leaf as `divider_empty` (noted on the `aoc` block) —
       // kept here only because `c-calevents` itself references it.
       { key: 'filter-toggle', name: 'filter-toggle', url: 'toggleFilter', action: 'toggle', roleNeeded: 'contentAdmin', icon: 'eye-on', label: '@item.filter-toggle' },
+      // Admin-only view switch that pulls archived events into the list. Archiving is this app's
+      // delete, so an archived event is debris — three abandoned '4X-Dienstag' series sat
+      // invisible for three months because nothing could show them. `admin`, not `contentAdmin`:
+      // this is a forensic view, not an editing aid.
+      { key: 'calevent-archived', name: 'calevent-archived', url: 'toggleArchived', action: 'toggle', roleNeeded: 'admin', icon: 'history', label: '@item.calevent-archived' },
     ] },
     // Fix round 1 (review Critical 1) — the `/yearlyevents/:listId/:contextMenuName` route
     // added above resolves its context menu to this doc; catalogued even though no

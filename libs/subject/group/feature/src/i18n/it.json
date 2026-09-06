@@ -28,7 +28,8 @@
     "error": "Non è stato possibile creare il gruppo.",
     "duplicate": "ID duplicato",
     "exists": "Esiste già un gruppo con questo ID. Utilizzare un ID diverso.",
-    "info": "Per mantenere un certo controllo sulla creazione di nuovi gruppi (ad es. per evitare gruppi uguali o simili con lo stesso scopo), è necessario il ruolo «privileged». Questo ruolo è essenzialmente in mano ai membri del comitato. Se desideri aprire un tuo gruppo, segnalalo nella chat di supporto indicando nome del gruppo, membri e scopo. Diventerai così amministratore di quel gruppo e potrai ad esempio gestire i membri, creare nuovi appuntamenti ecc."
+    "info": "Per mantenere un certo controllo sulla creazione di nuovi gruppi (ad es. per evitare gruppi uguali o simili con lo stesso scopo), è necessario il ruolo «privileged». Questo ruolo è essenzialmente in mano ai membri del comitato. Se desideri aprire un tuo gruppo, segnalalo nella chat di supporto indicando nome del gruppo, membri e scopo. Diventerai così amministratore di quel gruppo e potrai ad esempio gestire i membri, creare nuovi appuntamenti ecc.",
+    "similar": "Esiste già un gruppo con un nome molto simile: {names}. Forse è quello che cerchi. Vuoi creare comunque un nuovo gruppo?"
   },
   "delete": {
     "label": "Eliminare il gruppo",

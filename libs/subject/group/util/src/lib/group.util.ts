@@ -141,3 +141,151 @@ export function shouldNotifyUser(group: GroupModel, isMember: boolean, user: Use
   }
   return false;
 }
+
+/*-------------------------- creator safety net --------------------------------*/
+
+/**
+ * Guarantees that whoever creates a group can still reach it afterwards.
+ *
+ * The trap this closes: a privileged user opens the group form for someone else, replaces the
+ * pre-filled admin with that person and saves. `ensureAllAdminsAreMember` then makes only the
+ * *new* admin a member — the creator is neither admin nor member, the group vanishes from their
+ * view, and the obvious reaction is to create it again. That is a duplicate-group generator.
+ *
+ * The creator is **appended**, never prepended: `getMainContact` returns `admins[0]`, so the
+ * person the creator nominated stays the group's main contact.
+ *
+ * @param admins the admin list as edited in the form
+ * @param creator the avatar of the user creating the group; undefined leaves the list untouched
+ * @returns the admin list including the creator (unchanged when they are already in it)
+ */
+export function withCreatorAsAdmin(admins: AvatarInfo[] | undefined, creator: AvatarInfo | undefined): AvatarInfo[] {
+  const list = admins ?? [];
+  if (!creator || creator.key.length === 0) return list;
+  if (list.some(a => a.key === creator.key)) return list;
+  return [...list, creator];
+}
+
+/*-------------------------- duplicate & key hygiene --------------------------------*/
+
+/** The normalised form two group names are compared by ('SCS Vierer' == 'scs-vierer'). */
+export function getGroupNameKey(name: string | undefined): string {
+  return deaccent(name ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/** Live groups whose names collide once normalised. */
+export type GroupDuplicate = {
+  /** the normalised name the group members share */
+  nameKey: string;
+  groups: GroupModel[];
+};
+
+/**
+ * Finds live groups that are the same group by name. Ad-hoc chat documents (`kind: 'chat'`) are
+ * excluded — they are named after the conversation and repeat legitimately.
+ * @param groups all groups of the tenant
+ */
+export function findDuplicateGroups(groups: GroupModel[]): GroupDuplicate[] {
+  const byName = new Map<string, GroupModel[]>();
+  for (const group of groups) {
+    if (group.isArchived) continue;
+    if ((group.kind ?? 'group') !== 'group') continue;
+    const nameKey = getGroupNameKey(group.name);
+    if (nameKey.length === 0) continue;
+    const bucket = byName.get(nameKey);
+    if (bucket) bucket.push(group); else byName.set(nameKey, [group]);
+  }
+  return [...byName.entries()]
+    .filter(([, bucket]) => bucket.length > 1)
+    .map(([nameKey, bucket]) => ({ nameKey, groups: [...bucket].sort((a, b) => a.okey.localeCompare(b.okey)) }));
+}
+
+/** The create-time guard: live groups already carrying this name. */
+export function findConflictingGroups(name: string | undefined, groups: GroupModel[]): GroupModel[] {
+  const nameKey = getGroupNameKey(name);
+  if (nameKey.length === 0) return [];
+  return groups.filter(g => !g.isArchived && (g.kind ?? 'group') === 'group' && getGroupNameKey(g.name) === nameKey);
+}
+
+/**
+ * Group keys that provisioning creates unprefixed on purpose, and that the prefix check must not
+ * report. Two families:
+ * - the ROLE groups, whose key IS the role name so `hasRole` and the group line up;
+ * - the ORG groups, whose key IS the tenant/org id (see the tenant-model skill: org and group
+ *   share one key namespace, and `org.scs` + `group.scs` colliding is intended).
+ *
+ * A tenant's own id is exempt implicitly (it is passed in as `tenantId`).
+ */
+export const SEEDED_GROUP_KEYS = [
+  'auditors', 'contentAdmin', 'memberAdmin', 'resourceAdmin', 'treasurer',
+  'support', 'notfall', 'vorstand',
+] as const;
+
+export type GroupKeyIssueKind =
+  /** the okey holds characters the derived ids cannot carry verbatim (blank, umlaut, emoji) */
+  | 'unsafeCharacters'
+  /** the okey lacks the `<tenantId>_` prefix that keeps it unique across tenants */
+  | 'missingTenantPrefix'
+  /** two okeys collapse to the same Matrix room alias localpart */
+  | 'aliasCollision';
+
+export type GroupKeyIssue = {
+  okey: string;
+  name: string;
+  kind: GroupKeyIssueKind;
+  /** the derived alias localpart — set for every kind, it is what a collision is measured on */
+  aliasLocalpart: string;
+  /** the other okeys sharing that localpart; only set for 'aliasCollision' */
+  collidesWith: string[];
+};
+
+/**
+ * Mirrors `groupRoomAliasLocalpart` in apps/functions/src/matrix-simple/shared.ts, which is the
+ * source of truth. Kept as a copy because a lib cannot import from the functions app; if the
+ * server-side normalisation ever changes, change it here too — the whole point of this check is
+ * to predict what the server will derive.
+ */
+export function getGroupAliasLocalpart(okey: string): string {
+  return `group_${okey.toLowerCase().replace(/[^a-z0-9._~-]/g, '_')}`;
+}
+
+/**
+ * Reports group keys that predate `getGroupKeyFromName` (introduced 2026-07-07) or that would
+ * derive an ambiguous Matrix alias.
+ *
+ * Renaming a key is deliberately NOT offered: the okey is referenced by `memberships.orgKey`, the
+ * group's calendar document id AND its `owner`, every `calevent.calendars[]` entry, the files and
+ * album folders, task `listId`s and page ids. This is a report, so a human can decide.
+ *
+ * @param groups all groups of the tenant
+ * @param tenantId the tenant the groups belong to
+ * @param seededKeys keys that are legitimately unprefixed (the role and org groups created by
+ *   provisioning); they are exempt from the `missingTenantPrefix` finding
+ */
+export function findGroupKeyIssues(groups: GroupModel[], tenantId: string, seededKeys: Iterable<string> = []): GroupKeyIssue[] {
+  const exempt = new Set<string>([...seededKeys, ...SEEDED_GROUP_KEYS, tenantId]);
+  const live = groups.filter(g => !g.isArchived && (g.kind ?? 'group') === 'group');
+
+  const byLocalpart = new Map<string, string[]>();
+  for (const group of live) {
+    const localpart = getGroupAliasLocalpart(group.okey);
+    const bucket = byLocalpart.get(localpart);
+    if (bucket) bucket.push(group.okey); else byLocalpart.set(localpart, [group.okey]);
+  }
+
+  const issues: GroupKeyIssue[] = [];
+  for (const group of live) {
+    const aliasLocalpart = getGroupAliasLocalpart(group.okey);
+    const sharing = (byLocalpart.get(aliasLocalpart) ?? []).filter(k => k !== group.okey);
+
+    if (sharing.length > 0) {
+      issues.push({ okey: group.okey, name: group.name, kind: 'aliasCollision', aliasLocalpart, collidesWith: sharing });
+    }
+    if (/[^A-Za-z0-9_-]/.test(group.okey)) {
+      issues.push({ okey: group.okey, name: group.name, kind: 'unsafeCharacters', aliasLocalpart, collidesWith: [] });
+    } else if (!exempt.has(group.okey) && !group.okey.startsWith(`${tenantId}_`)) {
+      issues.push({ okey: group.okey, name: group.name, kind: 'missingTenantPrefix', aliasLocalpart, collidesWith: [] });
+    }
+  }
+  return issues;
+}

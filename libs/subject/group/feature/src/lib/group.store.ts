@@ -10,7 +10,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@okr/shared-models';
 import { AlertService, AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
-import { chipMatches, debugData, debugItemLoaded, debugListLoaded, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@okr/shared-util-core';
+import { chipMatches, debugData, debugItemLoaded, debugListLoaded, fill, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
 import { GroupService } from '@okr/subject-group-data-access';
@@ -18,7 +18,7 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { createGroupMembership } from '@okr/relationship-membership-util';
 import type { MatrixChatService } from '@okr/chat-data-access';
-import { getUniqueGroupKey, getVisibleGroupKeys, GROUP_I18N_KEYS } from '@okr/subject-group-util';
+import { findConflictingGroups, getUniqueGroupKey, getVisibleGroupKeys, GROUP_I18N_KEYS, withCreatorAsAdmin } from '@okr/subject-group-util';
 
 import { GroupEditModal } from './group-edit.modal';
 
@@ -262,6 +262,25 @@ export const GroupStore = signalStore(
       if (role === 'confirm' && data && !readOnly) {
         if (isGroup(data, store.tenantId())) {
           if (isNew) {
+            // Duplicate guard. A group that "disappeared" (see withCreatorAsAdmin below) or one
+            // somebody else already opened is otherwise recreated silently, and the copy takes its
+            // own calendar, chat room and membership list with it — that is how two groups end up
+            // meaning the same thing. Names are compared normalised, so 'SCS Vierer' matches
+            // 'scs-vierer'. The user may still proceed; this is a warning, not a rule.
+            const conflicts = findConflictingGroups(data.name, store.appStore.allGroups());
+            if (conflicts.length > 0) {
+              const names = conflicts.map(g => `${g.name} (${g.okey})`).join(', ');
+              const proceed = await store.alertService.confirm(fill(store.i18n.create_similar(), { names }), true);
+              if (!proceed) return;
+            }
+
+            // The creator must survive the save. A privileged user who opens the form for somebody
+            // else and replaces the pre-filled admin would otherwise lose access to the group the
+            // moment it is created — and the natural reaction to a group that is not there is to
+            // create it again. Appended, never prepended: admins[0] stays the main contact.
+            const creator = store.currentUser();
+            data.admins = withCreatorAsAdmin(data.admins, creator ? getAvatarInfoForCurrentUser(creator) : undefined);
+
             // Derive the group key from the tenant + (normalized) group name, made unique across all
             // existing group AND org keys — membership FKs (orgKey/memberKey) point to an org
             // OR a group, so the two share a key namespace and must not collide. The key is

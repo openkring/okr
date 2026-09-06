@@ -28,7 +28,8 @@
     "error": "Le groupe n'a pas pu être créé.",
     "duplicate": "ID en double",
     "exists": "Un groupe avec cet ID existe déjà. Veuillez utiliser un autre ID.",
-    "info": "Afin de garder un peu de contrôle sur la création de nouveaux groupes (p. ex. éviter des groupes identiques ou similaires ayant le même but), le rôle « privileged » est nécessaire. Ce rôle est essentiellement détenu par les membres du comité. Si tu souhaites ouvrir ton propre groupe, indique-le dans la discussion d’assistance avec le nom du groupe, ses membres et son but. Tu deviendras alors administrateur de ce groupe et pourras par exemple gérer les membres, créer de nouveaux rendez-vous, etc."
+    "info": "Afin de garder un peu de contrôle sur la création de nouveaux groupes (p. ex. éviter des groupes identiques ou similaires ayant le même but), le rôle « privileged » est nécessaire. Ce rôle est essentiellement détenu par les membres du comité. Si tu souhaites ouvrir ton propre groupe, indique-le dans la discussion d’assistance avec le nom du groupe, ses membres et son but. Tu deviendras alors administrateur de ce groupe et pourras par exemple gérer les membres, créer de nouveaux rendez-vous, etc.",
+    "similar": "Un groupe portant un nom très similaire existe déjà : {names}. C'est peut-être celui que tu cherches. Veux-tu quand même créer un nouveau groupe ?"
   },
   "delete": {
     "label": "Supprimer le groupe",

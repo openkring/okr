@@ -2,15 +2,15 @@ import { Component, computed, effect, inject, input, linkedSignal, model, output
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote, IonRow } from '@ionic/angular/standalone';
 
 import { ChFutureDate, LowercaseWordMask } from '@okr/shared-config';
-import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, NAME_LENGTH } from '@okr/shared-constants';
+import { DEFAULT_CALENDARS, DEFAULT_CALEVENT_TYPE, DEFAULT_DATE, DEFAULT_KEY, DEFAULT_LABEL, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PERIODICITY, DEFAULT_TAGS, DEFAULT_TIME, DEFAULT_URL, MAX_DATES_PER_SERIES, NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo, CalEventModel, CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
 import { AddChip, CategorySelect, Checkbox, CheckboxI18n, Chips, DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, StringList, TextInput, TextInputI18n, TimeInput, TimeInputI18n, UrlInput, UrlInputI18n } from '@okr/shared-ui';
-import { calculateRecurringDates, coerceBoolean, convertDateFormatToString, DateFormat, extractFirstPartOfOptionalTupel, fill, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, convertDateFormatToString, DateFormat, extractFirstPartOfOptionalTupel, fill, hasRole } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ModelSelectService } from '@okr/shared-feature';
 
 import { Avatars } from '@okr/avatar-ui';
-import { CaleventI18n, calEventValidations, formatDurationLabel, isPersonalCalevent } from '@okr/calevent-util';
+import { CaleventI18n, calEventValidations, formatDurationLabel, getWeekdayIndex, isPersonalCalevent, previewSeries } from '@okr/calevent-util';
 
 const MAX_LOCATION_SUGGESTIONS = 8;
 /** the periodicity a freshly switched-on series starts with; the user picks another one right below */
@@ -28,6 +28,8 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
     ion-note.poll-series { display: block; padding: 0 16px 8px; font-size: 12px; }
+    /* the weekday of the chosen start date, right under the field */
+    ion-note.weekday { display: block; padding: 0 16px 8px; font-size: 12px; }
     /* the section heading of a card ('Was', 'Wann', ...) — a label, not a field */
     .section-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px 0; }
     .section-row ion-icon { font-size: 16px; color: var(--ion-color-medium, #6d7683); }
@@ -48,6 +50,11 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
       color: var(--ion-color-success-shade);
       font-size: 13px;
       line-height: 1.45;
+    }
+    /* an empty or oversized range is not a result to celebrate */
+    .series-preview.invalid {
+      background: rgba(var(--ion-color-warning-rgb), 0.18);
+      color: var(--ion-color-warning-shade);
     }
     ion-label.section {
       display: block;
@@ -116,6 +123,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
             <ion-row>
               <ion-col size="12" size-md="6" size-lg="4">
                 <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                @if (startWeekday()) { <ion-note class="weekday">{{ startWeekday() }}</ion-note> }
               </ion-col>
               <ion-col size="12" size-md="6" size-lg="4">
                 <okr-time-input [i18n]="startTimeI18n()" [value]="startTime()" (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
@@ -129,6 +137,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
             <ion-row>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()" (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
+                @if (startWeekday()) { <ion-note class="weekday">{{ startWeekday() }}</ion-note> }
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="endDateI18n()" [storeDate]="endDate()" (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="isReadOnly()" />
@@ -159,7 +168,7 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
                 </ion-col>
                 @if(seriesPreview().length > 0) {
                   <ion-col size="12">
-                    <span class="series-preview">{{ seriesPreview() }}</span>
+                    <span class="series-preview" [class.invalid]="seriesPreviewInvalid()">{{ seriesPreview() }}</span>
                   </ion-col>
                 }
               </ion-row>
@@ -414,11 +423,51 @@ export class CalEventForm {
     if (!this.isRecurring()) return '';
     const until = this.repeatUntilDate();
     if (this.startDate().length !== 8 || until.length !== 8) return '';
-    const dates = calculateRecurringDates(this.startDate(), until, this.periodicity());
-    if (dates.length === 0) return '';
-    const lastDate = convertDateFormatToString(dates[dates.length - 1], DateFormat.StoreDate, DateFormat.ViewDate, false);
-    return fill(this.i18n().series_preview(), { count: dates.length, date: lastDate });
+    const preview = previewSeries(this.startDate(), until, this.periodicity());
+    if (preview.isEmpty) return this.i18n().series_preview_empty();
+    if (preview.exceedsMax) return fill(this.i18n().series_preview_max(), { count: preview.count, max: MAX_DATES_PER_SERIES });
+    return fill(this.i18n().series_preview(), {
+      count: preview.count,
+      first: this.withWeekday(preview.firstDate),
+      last: this.withWeekday(preview.lastDate),
+    });
   });
+  /** The preview is a warning as soon as the range is unusable — green would read as 'fine'. */
+  protected seriesPreviewInvalid = computed(() => {
+    if (!this.isRecurring()) return false;
+    const until = this.repeatUntilDate();
+    if (this.startDate().length !== 8 || until.length !== 8) return false;
+    const preview = previewSeries(this.startDate(), until, this.periodicity());
+    return preview.isEmpty || preview.exceedsMax;
+  });
+
+  /**
+   * 'Di 16.06.2026'. The weekday is the point: a series named '4X-Dienstag' whose first occurrence
+   * fell on a Saturday was created on 2026-06-10 and nothing on screen contradicted it.
+   */
+  protected withWeekday(storeDate: string): string {
+    const date = convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+    const weekday = this.weekdayLabel(storeDate);
+    return weekday ? `${weekday} ${date}` : date;
+  }
+
+  /** The localised weekday abbreviation of a StoreDate, '' when the date is not usable yet. */
+  protected weekdayLabel(storeDate: string): string {
+    const i18n = this.i18n();
+    switch (getWeekdayIndex(storeDate)) {
+      case 1: return i18n.weekday_1();
+      case 2: return i18n.weekday_2();
+      case 3: return i18n.weekday_3();
+      case 4: return i18n.weekday_4();
+      case 5: return i18n.weekday_5();
+      case 6: return i18n.weekday_6();
+      case 7: return i18n.weekday_7();
+      default: return '';
+    }
+  }
+
+  /** Shown right under the start-date field, for single events as well as series. */
+  protected startWeekday = computed(() => this.weekdayLabel(this.startDate()));
   protected isPollSeries = computed(() => this.formData().pollMultiSelect === true);
   protected repeatUntilDate = linkedSignal(() => this.formData().repeatUntilDate ?? DEFAULT_DATE);
   protected url = linkedSignal(() => this.formData().url ?? DEFAULT_URL);
