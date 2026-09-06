@@ -27,9 +27,4 @@ describe('getReservedListHeightPx', () => {
     expect(getReservedListHeightPx(undefined, { rowHeightPx: 40, defaultRows: 4 })).toBe(160);
     expect(getReservedListHeightPx(3, { rowHeightPx: 40, defaultRows: 4 })).toBe(120);
   });
-
-  it('reserves one extra row for the more button', () => {
-    expect(getReservedListHeightPx(5, { hasMoreButton: true })).toBe(5 * 52 + 52);
-    expect(getReservedListHeightPx(undefined, { hasMoreButton: true })).toBe(3 * 52 + 52);
-  });
 });

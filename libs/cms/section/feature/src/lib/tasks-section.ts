@@ -42,7 +42,8 @@ import { TasksStore } from './tasks-section.store';
   template: `
         <ion-card>
             <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" [count]="numberOfTasks()" />
-            <ion-card-content [style.min-height.px]="reservedHeight()">
+            <ion-card-content>
+                <div class="list-area" [style.min-height.px]="reservedHeight()">
                 @if(isLoading()) {
                     <okr-spinner />
                 } @else if(numberOfTasks() === 0) {
@@ -74,6 +75,7 @@ import { TasksStore } from './tasks-section.store';
                         }
                     </ion-list>
                 }
+                </div>
                 @if(showMoreButton() && !editMode()) {
                   <okr-more-button [url]="moreUrl()" [label]="store.i18n.task_more_button()"/>
                 }
@@ -103,7 +105,7 @@ export class TasksSectionComponent implements OnInit {
   // The store's loading state, not a constant: while the query runs the section must show a
   // spinner, not claim 'no open tasks' and then jump when the rows arrive (CLS 0.136).
   protected readonly isLoading = computed(() => this.store.isLoading());
-  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems(), { hasMoreButton: this.showMoreButton() }));
+  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

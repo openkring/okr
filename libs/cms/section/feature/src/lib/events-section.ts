@@ -48,7 +48,8 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
     <ion-card>
       <okr-optional-card-header [title]="title()" [subTitle]="subTitle()"
         [showInfoButton]="true" [infoLabel]="caleventI18n.info_open()" (infoClicked)="showInfo()" />
-      <ion-card-content [style.min-height.px]="reservedHeight()">
+      <ion-card-content>
+        <div class="list-area" [style.min-height.px]="reservedHeight()">
         @if(isLoading()) {
           <okr-spinner />
         } @else if(numberOfEvents() === 0) {
@@ -63,6 +64,7 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
             }
           </ion-list>
         }
+        </div>
         @if(showMoreButton() && !editMode()) {
           <okr-more-button class="events-more" [url]="moreUrl()" [label]="store.i18n.event_more_button()" />
         }
@@ -106,7 +108,7 @@ export class EventsSectionComponent implements OnInit {
 
   // The store's loading state, not a constant — see tasks-section for why.
   protected readonly isLoading = computed(() => this.store.isLoading());
-  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxEvents(), { hasMoreButton: this.showMoreButton() }));
+  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxEvents()));
   //protected filteredEvents = computed(() => this.eventsStore.filteredEvents());
 
   // passing constants to the template

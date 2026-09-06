@@ -26,7 +26,8 @@ import { MessagesStore } from './messages-section.store';
   template: `
     <ion-card>
       <okr-optional-card-header [title]="title()" [subTitle]="subTitle()" />
-      <ion-card-content [style.min-height.px]="reservedHeight()">
+      <ion-card-content>
+        <div class="list-area" [style.min-height.px]="reservedHeight()">
         @if(isLoading()) {
           <okr-spinner />
         } @else if(rooms().length === 0) {
@@ -43,6 +44,7 @@ import { MessagesStore } from './messages-section.store';
             }
           </ion-list>
         }
+        </div>
         @if(showMoreButton() && !editMode()) {
           <okr-more-button [url]="moreUrl()" [label]="store.i18n.message_more_button()" />
         }
@@ -67,7 +69,7 @@ export class MessagesSectionComponent {
   protected readonly maxItems = computed(() => this.config()?.maxItems ?? undefined);
   protected readonly rooms = computed(() => this.store.rooms());
   protected readonly isLoading = computed(() => this.store.isLoading());
-  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems(), { hasMoreButton: this.showMoreButton() }));
+  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
 
   constructor() {
     effect(() => {

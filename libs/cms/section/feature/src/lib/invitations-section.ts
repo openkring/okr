@@ -50,7 +50,8 @@ import { InvitationSectionStore } from './invitations-section.store';
     <ion-card>
       <okr-optional-card-header [title]="title()" [subTitle]="subTitle()"
         [showInfoButton]="true" [infoLabel]="caleventI18n.info_open()" (infoClicked)="showInfo()" />
-      <ion-card-content [style.min-height.px]="reservedHeight()">
+      <ion-card-content>
+        <div class="list-area" [style.min-height.px]="reservedHeight()">
         @if(isLoading()) {
           <okr-spinner />
         } @else {
@@ -72,9 +73,10 @@ import { InvitationSectionStore } from './invitations-section.store';
               </ion-row>
             }
           </ion-grid>
-          @if(showMoreButton() && !editMode()) {
-            <okr-more-button [url]="moreUrl()" [label]="store.i18n.invitation_more_button()" />
-          }
+        }
+        </div>
+        @if(showMoreButton() && !editMode()) {
+          <okr-more-button [url]="moreUrl()" [label]="store.i18n.invitation_more_button()" />
         }
       </ion-card-content>
     </ion-card>
@@ -123,7 +125,7 @@ export class InvitationsSectionComponent implements OnInit {
    * The dashboard collapses the whole grid column via the okr-section-hidden host class.
    */
   protected readonly isVisible = computed(() => this.editMode() || (!this.isLoading() && this.invitations().length > 0));
-  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems(), { hasMoreButton: this.showMoreButton() }));
+  protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
 
   // passing constants to the template
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
