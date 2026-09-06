@@ -49,6 +49,15 @@
     "expense": {
       "created": {
         "label": "Spesenbeleg erfasst"
+      },
+      "validated": {
+        "label": "Justificante de gastos validado"
+      },
+      "pendingExport": {
+        "label": "Justificante de gastos listo para exportar"
+      },
+      "ocrFailed": {
+        "label": "Error al leer el justificante"
       }
     },
     "form": {

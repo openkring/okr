@@ -49,6 +49,15 @@
     "expense": {
       "created": {
         "label": "Spesenbeleg erfasst"
+      },
+      "validated": {
+        "label": "Expense receipt validated"
+      },
+      "pendingExport": {
+        "label": "Expense receipt ready for export"
+      },
+      "ocrFailed": {
+        "label": "Receipt scan failed"
       }
     },
     "form": {

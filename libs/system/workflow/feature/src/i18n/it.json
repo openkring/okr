@@ -49,6 +49,15 @@
     "expense": {
       "created": {
         "label": "Spesenbeleg erfasst"
+      },
+      "validated": {
+        "label": "Giustificativo di spesa validato"
+      },
+      "pendingExport": {
+        "label": "Giustificativo di spesa pronto per l'esportazione"
+      },
+      "ocrFailed": {
+        "label": "Lettura del giustificativo non riuscita"
       }
     },
     "form": {

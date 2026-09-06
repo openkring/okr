@@ -49,6 +49,15 @@
     "expense": {
       "created": {
         "label": "Spesenbeleg erfasst"
+      },
+      "validated": {
+        "label": "Spesenbeleg validiert"
+      },
+      "pendingExport": {
+        "label": "Spesenbeleg bereit für Export"
+      },
+      "ocrFailed": {
+        "label": "Beleg-Erkennung fehlgeschlagen"
       }
     },
     "form": {

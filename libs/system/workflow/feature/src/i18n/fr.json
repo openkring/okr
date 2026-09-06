@@ -49,6 +49,15 @@
     "expense": {
       "created": {
         "label": "Spesenbeleg erfasst"
+      },
+      "validated": {
+        "label": "Justificatif de frais validé"
+      },
+      "pendingExport": {
+        "label": "Justificatif de frais prêt pour l'export"
+      },
+      "ocrFailed": {
+        "label": "Échec de la lecture du justificatif"
       }
     },
     "form": {
