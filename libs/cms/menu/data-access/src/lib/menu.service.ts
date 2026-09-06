@@ -116,6 +116,18 @@ export class MenuService {
     return this.firestoreService.getDataOnce<MenuItemModel>(MenuItemCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
   }
 
+  /**
+   * Drop the shared, cached listener behind {@link list}.
+   *
+   * `FirestoreService.searchData` hands every caller the SAME `shareReplay`'d observable per
+   * query, and evicts it only when the stream ERRORS. A listener that simply never delivers its
+   * first snapshot is therefore sticky: every later subscriber joins the same silent listener.
+   * Call this before falling back, so the next `list()` builds a fresh one.
+   */
+  public clearListCache(orderBy = 'name', sortOrder = 'asc'): void {
+    this.firestoreService.clearCache(MenuItemCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
+  }
+
   /*-------------------------- OTHER --------------------------------*/
   /**
    * Remove the sub-menu-item itemId from the menu menuItem

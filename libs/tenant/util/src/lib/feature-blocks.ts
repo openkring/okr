@@ -159,6 +159,15 @@ const calevent: FeatureBlock = {
       // untranslated key as its menu label instead of live tenants' actual "Alle Termine".
       action: 'navigate', roleNeeded: 'eventAdmin', icon: 'calendar', label: '@item.calevent-all',
     },
+    // The top-level entry for `/yearlyevents`, which had no `navigate` doc at all — the route
+    // and its `c-yearlyevents` context wrapper both existed, so the screen was reachable only by
+    // typing the URL. `roleNeeded` mirrors the route's own `isPrivilegedGuard`; the list is the
+    // same `calevents` collection grouped by year. Wiring it into a tenant's main menu stays a
+    // per-tenant decision (the `main_<tenant>` doc), exactly as for `calevent-all`.
+    {
+      key: 'yearlyevent-all', name: 'yearlyevent-all', url: '/yearlyevents/all/c-yearlyevents',
+      action: 'navigate', roleNeeded: 'privileged', icon: 'calendar-number', label: '@item.yearlyevent-all',
+    },
     // Fix round 1 (review Critical 2) — was missing entirely, present since Task 5.
     // `calevent-all`'s own url ends in `/c-calevents`; verified live: `action: context`,
     // `roleNeeded: privileged`, children `[calevent-add, calevent-export-raw,
@@ -416,14 +425,29 @@ const cms: FeatureBlock = {
     // own top-level sibling, which would have both duplicated it out of this submenu AND
     // appended it to the tenant's root nav — same defect class as the cms-menu/aoc-menu
     // restructuring above).
-    { key: 'c-contentpage', name: 'c-contentpage', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+    // The wrapper is `registered`, NOT `contentAdmin`: a plain member must be able to reach
+    // `files-add` and upload into an album page's current folder. The authorization moved down
+    // onto the children instead — the three section operations and `page-edit`, all four
+    // cms-only documents, are `contentAdmin`, so lowering the wrapper hands a member the
+    // upload, the print and the export and nothing else.
+    //
+    // `editmode-toggle` is the exception and deliberately stays `registered`: it is ONE shared
+    // document, also declared by the `resource` and `document` blocks (see below), so raising
+    // it here would take the edit-mode toggle away from a `resourceAdmin` on the boat list and
+    // from a `contentAdmin`-less folder owner on the document list. It is hidden for
+    // non-editors in `content.page.ts` (`hiddenMenuItems`) instead, next to the same file's
+    // `canOpenContextMenu`, which only offers the button to a non-admin when the page really
+    // has an album to upload into.
+    { key: 'c-contentpage', name: 'c-contentpage', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
-      { key: 'cp-sort-sections', name: 'cp-sort-sections', url: 'sortSections', action: 'call', roleNeeded: 'registered', icon: 'sync-circle', label: '@item.cp-sort-sections' },
-      { key: 'cp-select-section', name: 'cp-select-section', url: 'selectSection', action: 'call', roleNeeded: 'registered', icon: 'reorder-four', label: '@item.cp-select-section' },
-      { key: 'cp-add-section', name: 'cp-add-section', url: 'addSection', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.cp-add-section' },
+      { key: 'cp-sort-sections', name: 'cp-sort-sections', url: 'sortSections', action: 'call', roleNeeded: 'contentAdmin', icon: 'sync-circle', label: '@item.cp-sort-sections' },
+      { key: 'cp-select-section', name: 'cp-select-section', url: 'selectSection', action: 'call', roleNeeded: 'contentAdmin', icon: 'reorder-four', label: '@item.cp-select-section' },
+      { key: 'cp-add-section', name: 'cp-add-section', url: 'addSection', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.cp-add-section' },
+      // Shared leaf, also referenced by `c-docs`/`c-folders` on the `document` block.
+      { key: 'files-add', name: 'files-add', url: 'addFiles', action: 'call', roleNeeded: 'registered', icon: 'upload', label: '@item.files-add' },
       { key: 'print', name: 'print', url: 'print', action: 'call', roleNeeded: 'registered', icon: 'print', label: '@item.print' },
       { key: 'cp-exportraw', name: 'cp-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.cp-exportraw' },
-      { key: 'page-edit', name: 'page-edit', url: 'editPage', action: 'call', roleNeeded: 'registered', icon: 'edit', label: '@item.page-edit' },
+      { key: 'page-edit', name: 'page-edit', url: 'editPage', action: 'call', roleNeeded: 'contentAdmin', icon: 'edit', label: '@item.page-edit' },
     ] },
     { key: 'c-sections', name: 'c-sections', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'section-add', name: 'section-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.section-add' },

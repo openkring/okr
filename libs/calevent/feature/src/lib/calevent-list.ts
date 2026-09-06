@@ -12,7 +12,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, addTime, debugData, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, fill, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, fill, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -29,6 +29,8 @@ const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/ge
 
 type AttendanceState = 'accepted' | 'declined' | 'invited';
 type AttendanceFilter = AttendanceState | 'all';
+/** The four sortable columns of the list view — same interaction as `RowingBoatList`. */
+type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
 
 @Component({
     selector: 'okr-calevent-list',
@@ -41,6 +43,7 @@ type AttendanceFilter = AttendanceState | 'all';
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     styles: [`
+      .clickable { cursor: pointer; user-select: none; }
       ion-card-content { padding: 0px;}
       ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
       ion-textarea {
@@ -241,16 +244,16 @@ type AttendanceFilter = AttendanceState | 'all';
           <ion-grid>
             <ion-row>
               <ion-col size="6" size-md="3">
-                <ion-label><strong>{{ store.i18n.list_header_duration() }}</strong></ion-label>
+                <ion-label class="clickable" (click)="setSort('date')"><strong>{{ store.i18n.list_header_duration() }}{{ sortIcon('date') }}</strong></ion-label>
               </ion-col>
               <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ store.i18n.topic() }}</strong></ion-label>
+                <ion-label class="clickable" (click)="setSort('topic')"><strong>{{ store.i18n.topic() }}{{ sortIcon('topic') }}</strong></ion-label>
               </ion-col>
               <ion-col size="3" class="ion-hide-md-down">
-                <ion-label><strong>{{ store.i18n.location() }}</strong></ion-label>
+                <ion-label class="clickable" (click)="setSort('location')"><strong>{{ store.i18n.location() }}{{ sortIcon('location') }}</strong></ion-label>
               </ion-col>
               <ion-col size="2" class="ion-hide-md-down">
-                <ion-label><strong>{{ store.i18n.list_header_responsible() }}</strong></ion-label>
+                <ion-label class="clickable" (click)="setSort('organiser')"><strong>{{ store.i18n.list_header_responsible() }}{{ sortIcon('organiser') }}</strong></ion-label>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -285,7 +288,7 @@ type AttendanceFilter = AttendanceState | 'all';
           <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-list lines="inset">
-            @for(event of filteredCalEvents(); track event.okey; let i = $index) {
+            @for(event of sortedCalEvents(); track event.okey; let i = $index) {
               <ion-item [id]="'calevent-' + i" (click)="showActions(event)" [class]="getCalEventCssClass(event.state)">
                 <!-- always an icon in slot=start, otherwise rows without an attendance state
                      lose their leading column and the whole list misaligns. 'remove' (grey) means
@@ -385,6 +388,54 @@ export class CalEventList implements OnInit {
     return events.filter(event => this.attendanceState(event) === filter);
   });
   protected filteredCalEventsCount = computed(() => this.filteredCalEvents().length);
+
+  /**
+   * Sort state of the list view. Local to the component (the store is shared with the calendar
+   * view, which has no columns to sort by), and deliberately NOT applied inside
+   * `filteredCalEvents`: FullCalendar and the year-navigation effect both rely on the store's
+   * chronological order, and only the list is re-ordered here.
+   */
+  private readonly sortField = signal<CalEventSortField>('date');
+  private readonly sortAsc = signal(true);
+
+  /**
+   * The list view's rows. `date` is the default and reproduces the store's own order, so the
+   * list looks unchanged until the user clicks a header. `location` sorts by the location NAME
+   * (the first part of the `name@key` tuple, i.e. what the column shows), `organiser` by the
+   * last name of the first responsible person.
+   */
+  protected sortedCalEvents = computed(() => {
+    const field = this.sortField();
+    const dir = this.sortAsc() ? 1 : -1;
+    return [...this.filteredCalEvents()].sort((a, b) => dir * (
+      field === 'topic'    ? a.name.localeCompare(b.name) :
+      field === 'location' ? this.locationName(a).localeCompare(this.locationName(b)) :
+      field === 'organiser'? this.organiserName(a).localeCompare(this.organiserName(b)) :
+                             (a.startDate + a.startTime).localeCompare(b.startDate + b.startTime)
+    ));
+  });
+
+  /** The location name shown in the column — `locationKey` is a `name@key` tuple. */
+  private locationName(event: CalEventModel): string {
+    return extractFirstPartOfOptionalTupel(event.locationKey ?? '');
+  }
+
+  /** The last name of the first responsible person, i.e. what the organiser column leads with. */
+  private organiserName(event: CalEventModel): string {
+    return event.responsiblePersons?.[0]?.name2 ?? '';
+  }
+
+  /** The sort marker appended to the active column header. Same glyphs as `RowingBoatList`. */
+  protected sortIcon(field: CalEventSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /** Click a header: sort by it ascending, click the active one again to reverse. */
+  protected setSort(field: CalEventSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
   protected popupId = computed(() => `c_calevent_${this.listId}`);
@@ -411,7 +462,7 @@ export class CalEventList implements OnInit {
   protected excludedMenuNames = computed(() => this.store.isGroupCalendar() ? [] : ['calevent-schedule']);
   private readonly firstFutureIndex = computed(() => {
     const today = format(new Date(), 'yyyyMMdd');
-    return this.filteredCalEvents().findIndex(e => e.startDate >= today);
+    return this.sortedCalEvents().findIndex(e => e.startDate >= today);
   });
 
   protected calendarEvents = computed<EventInput[]>(() => {

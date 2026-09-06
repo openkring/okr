@@ -6,7 +6,7 @@ import { CalEventModel, RoleName } from '@okr/shared-models';
 import { LabelPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getYear, getYearList, hasRole } from '@okr/shared-util-core';
+import { getYear, getYearFromDate, getYearList, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -86,7 +86,9 @@ import { CalEventStore } from './calevent.store';
         <ion-list lines="inset">
           @for(event of filteredCalEvents(); track event.okey) {
             <ion-item (click)="showActions(event)">
-              <ion-label>{{event.name}}</ion-label>
+              <!-- The column header is "Jahr": show the year the event falls in, not the event
+                   name, which repeats the tenant and the year in every row ("P13 Event 2024"). -->
+              <ion-label>{{ getYearFromDate(event.startDate) }}</ion-label>
               <ion-label class="ion-hide-md-down"><okr-avatar-display [avatars]="event.responsiblePersons" [showName]="true" /></ion-label>
               <ion-label class="ion-hide-md-up"><okr-avatar-display [avatars]="event.responsiblePersons" [showName]="false" /></ion-label>
               <ion-label>{{ event.locationKey | label }}</ion-label>
@@ -122,6 +124,8 @@ export class YearlyEvents {
   private currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
   protected readonly years = computed(() => getYearList(getYear(), 30));
+  /** Template access to the StoreDate -> yyyy helper. */
+  protected readonly getYearFromDate = getYearFromDate;
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 

@@ -139,7 +139,7 @@ import { PageStore } from './page.store';
         <ion-toolbar [color]="color()" id="bkheader">
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           <ion-title>{{ store.page()?.name }}</ion-title>
-          @if(isEditable()) {
+          @if(canOpenContextMenu()) {
             <ion-buttons slot="end">
               <ion-button id="{{ popupId() }}">
                 <ion-icon slot="icon-only" src="{{'ellipsis-vertical' | svgIcon }}" />
@@ -251,7 +251,24 @@ export class ContentPage {
   protected hiddenMenuItems = computed(() => [
     ...(this.editMode() ? [] : ContentPage.EDIT_MODE_ONLY_MENU_ITEMS),
     ...(this.albumSection() ? [] : ['files-add']),   // uploading needs an album to upload into
+    // `editmode-toggle` is ONE menuItems document shared with the resource and document lists,
+    // so its `roleNeeded` cannot be raised to `contentAdmin` without stripping edit mode there
+    // too. The page therefore hides it itself: a registered user reaches this menu only for the
+    // album upload and must not be able to switch the page into edit mode.
+    ...(this.isEditable() ? [] : ['editmode-toggle']),
   ]);
+
+  /**
+   * Who gets the toolbar's context-menu button.
+   *
+   * Content admins and group admins always do. A plain `registered` user does too, but ONLY on a
+   * page that actually has an album: the menu then offers them the file upload (`files-add`),
+   * print and the raw export, while every structural item — the edit-mode toggle itself,
+   * sort/select/add section and page-edit — is gated `contentAdmin` in the `menuItems`
+   * documents, so they cannot reach edit mode at all. On a page without an album the menu would
+   * hold nothing they may do, so the button stays hidden rather than opening an empty popover.
+   */
+  protected canOpenContextMenu = computed(() => this.isEditable() || !!this.albumSection());
 
   protected page = computed(() => this.store.page());
   protected sections = computed(() => this.store.pageSections());
