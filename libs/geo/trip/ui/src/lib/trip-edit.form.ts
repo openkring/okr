@@ -10,7 +10,7 @@ import { DEFAULT_NOTES } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { Avatars } from '@okr/avatar-ui';
-import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } from '@okr/trip-util';
+import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } from '@okr/trip-util';
 
 
 @Component({
@@ -118,6 +118,14 @@ import { formatTripTime, MAX_TRIP_DISTANCE_KM, TripI18n, tripValidationSuite } f
           [label]="i18n().person()"
           [showButton]="true"
         />
+        @if(showTrainingButton()) {
+          <ion-item lines="none">
+            <ion-button (click)="trainingSelectClicked.emit()">
+              <ion-icon slot="start" src="{{'people' | svgIcon }}" />
+              {{ i18n().select_training_add() }}
+            </ion-button>
+          </ion-item>
+        }
       }
 
     @if(hasRole('admin')) {
@@ -141,6 +149,7 @@ export class TripEditForm {
   public personSelectClicked = output<void>();
   public boatSelectClicked = output<void>();
   public locationSelectClicked = output<void>();
+  public trainingSelectClicked = output<void>();
 
   // signal form — wraps formData with Vest validation
   protected readonly tripForm = form(this.formData, (path) =>
@@ -155,6 +164,15 @@ export class TripEditForm {
   protected duration = computed(() =>
     getDurationLabel(this.formData().startDate, this.formData().startTime, this.formData().endTime)
   );
+  /**
+   * The crew of a big boat is normally a training group: from four seats on, offer to take the
+   * attendees of one of the day's trainings instead of picking every rower by hand.
+   */
+  protected showTrainingButton = computed(() => {
+    const boat = this.formData().resource;
+    if (!boat?.key) return false;
+    return isTrainingCrewBoat(boat.subType, this.boats().find(b => b.okey === boat.key)?.seats ?? 0);
+  });
   protected selectedLocationKey = computed(() => this.formData().locations?.[0] ?? '');
   protected notes = linkedSignal(() => this.formData().notes ?? DEFAULT_NOTES);
   protected notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as NotesInputI18n));

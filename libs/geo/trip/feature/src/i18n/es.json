@@ -72,6 +72,12 @@
       "add": "Elegir embarcación",
       "in_use": "El barco {name} sigue en una salida abierta. Solo podrá volver a usarse cuando esa salida se haya cerrado."
     },
+    "training": {
+      "add": "Tripulación del entrenamiento",
+      "title": "Elige un entrenamiento",
+      "option": "{time} {name} ({count} participantes)",
+      "none": "Ese día no hay ningún entrenamiento que encaje con este barco."
+    },
     "location": {
       "title": "Elegir destino",
       "add": "Elegir destino"
@@ -163,7 +169,10 @@
       "label": "Privada",
       "description": "Una salida privada."
     },
-    "travel": { "label": "Viaje", "description": "Un viaje de varios días que agrupa varias notas diarias." },
+    "travel": {
+      "label": "Viaje",
+      "description": "Un viaje de varios días que agrupa varias notas diarias."
+    },
     "tracker": {
       "label": "Tracker",
       "description": "Una salida registrada con el tracker."

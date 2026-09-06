@@ -72,6 +72,12 @@
       "add": "Boot wählen",
       "in_use": "Das Boot {name} ist noch auf einer offenen Fahrt. Es kann erst wieder verwendet werden, wenn diese Fahrt abgeschlossen ist."
     },
+    "training": {
+      "add": "Crew aus Training",
+      "title": "Training wählen",
+      "option": "{time} {name} ({count} Teilnehmende)",
+      "none": "An diesem Tag gibt es kein Training, das zu diesem Boot passt."
+    },
     "location": {
       "title": "Zielort wählen",
       "add": "Ziel wählen"
@@ -163,7 +169,10 @@
       "label": "Privat",
       "description": "Eine private Ausfahrt."
     },
-    "travel": { "label": "Reise", "description": "Eine mehrtägige Reise, die mehrere Tagesnotizen zusammenfasst." },
+    "travel": {
+      "label": "Reise",
+      "description": "Eine mehrtägige Reise, die mehrere Tagesnotizen zusammenfasst."
+    },
     "tracker": {
       "label": "Tracker",
       "description": "Eine mit dem Tracker aufgezeichnete Ausfahrt."

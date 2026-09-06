@@ -2,6 +2,7 @@ import { computed, inject, Injector } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ActionSheetController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { firstValueFrom } from 'rxjs';
 
 import { AppStore, KioskStatus, KioskStatusService, LocationSelectResult, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -16,9 +17,10 @@ import { ResponsibilityService } from '@okr/relationship-responsibility-data-acc
 import { ReservationService } from '@okr/relationship-reservation-data-access';
 import { findActiveReservationForResource } from '@okr/relationship-reservation-util';
 import { LocationService } from '@okr/location-data-access';
+import { CalEventService } from '@okr/calevent-data-access';
 
 import { TripService } from '@okr/trip-data-access';
-import { findOpenTripForBoat, getTripLabel, groupTripsByDay, matchesStateFilter, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';
+import { findOpenTripForBoat, findTrainingCrews, getTripLabel, groupTripsByDay, matchesStateFilter, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';
 
 
 /** Name of the responsibility that owns the Logbuch — gets the bug reports and the support calls. */
@@ -79,6 +81,7 @@ export const TripStore = signalStore(
     i18nService: inject(I18nService),
     injector: inject(Injector),
     reservationService: inject(ReservationService),
+    calEventService: inject(CalEventService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(TRIP_I18N_KEYS),
@@ -302,6 +305,37 @@ export const TripStore = signalStore(
       await sheet.present();
       const { data } = await sheet.onDidDismiss();
       return data?.rigging ? `b${seats}${data.rigging}` : subType;
+    },
+
+    /**
+     * Offers the trainings of `startDate` whose group fits a boat with `seats` seats and returns
+     * the crew of the chosen one. The calevents are read once, on demand: the Logbuch itself never
+     * needs them, and a kiosk should not keep a second listener open for a button nobody pressed.
+     */
+    async selectTrainingCrew(startDate: string, seats: number): Promise<AvatarInfo[] | undefined> {
+      const calEvents = await firstValueFrom(store.calEventService.list());
+      const trainings = findTrainingCrews(calEvents, startDate, seats);
+      if (trainings.length === 0) {
+        await store.alertService.showToast(store.i18n.select_training_none());
+        return undefined;
+      }
+      const sheet = await store.actionSheetController.create({
+        header: store.i18n.select_training_title(),
+        buttons: [
+          ...trainings.map(training => ({
+            text: fill(store.i18n.select_training_option(), {
+              time: training.startTime,
+              name: training.name,
+              count: training.attendeeCount,
+            }),
+            data: { crew: training.crew },
+          })),
+          { text: store.i18n.cancel(), role: 'cancel' },
+        ],
+      });
+      await sheet.present();
+      const { data } = await sheet.onDidDismiss();
+      return data?.crew;
     },
 
     async selectLocationForTrip(): Promise<LocationSelectResult | undefined> {

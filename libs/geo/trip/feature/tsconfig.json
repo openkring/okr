@@ -72,6 +72,9 @@
       "path": "../../../geo/location/data-access/tsconfig.lib.json"
     },
     {
+      "path": "../../../calevent/data-access/tsconfig.lib.json"
+    },
+    {
       "path": "../../../subject/person/ui/tsconfig.lib.json"
     },
     {

@@ -72,6 +72,12 @@
       "add": "Choose boat",
       "in_use": "The boat {name} is still out on an open trip. It can only be used again once that trip has been closed."
     },
+    "training": {
+      "add": "Crew from training",
+      "title": "Choose a training",
+      "option": "{time} {name} ({count} attendees)",
+      "none": "There is no training on this day that matches this boat."
+    },
     "location": {
       "title": "Select destination",
       "add": "Choose destination"
@@ -163,7 +169,10 @@
       "label": "Private",
       "description": "A private trip."
     },
-    "travel": { "label": "Travel", "description": "A multi-day journey that groups several diary entries." },
+    "travel": {
+      "label": "Travel",
+      "description": "A multi-day journey that groups several diary entries."
+    },
     "tracker": {
       "label": "Tracker",
       "description": "A trip recorded with the tracker."

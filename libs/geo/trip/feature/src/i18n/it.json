@@ -72,6 +72,12 @@
       "add": "Scegli imbarcazione",
       "in_use": "La barca {name} è ancora in un’uscita aperta. Potrà essere riutilizzata solo quando quell’uscita sarà chiusa."
     },
+    "training": {
+      "add": "Equipaggio dall'allenamento",
+      "title": "Scegli un allenamento",
+      "option": "{time} {name} ({count} partecipanti)",
+      "none": "In questo giorno non c'è nessun allenamento adatto a questa barca."
+    },
     "location": {
       "title": "Scegli destinazione",
       "add": "Scegli destinazione"
@@ -163,7 +169,10 @@
       "label": "Privata",
       "description": "Un'uscita privata."
     },
-    "travel": { "label": "Viaggio", "description": "Un viaggio di più giorni che raggruppa più note giornaliere." },
+    "travel": {
+      "label": "Viaggio",
+      "description": "Un viaggio di più giorni che raggruppa più note giornaliere."
+    },
     "tracker": {
       "label": "Tracker",
       "description": "Un'uscita registrata con il tracker."

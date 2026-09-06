@@ -72,6 +72,12 @@
       "add": "Choisir un bateau",
       "in_use": "Le bateau {name} est encore sur une sortie ouverte. Il ne pourra être réutilisé qu’une fois cette sortie clôturée."
     },
+    "training": {
+      "add": "Équipage depuis l'entraînement",
+      "title": "Choisir un entraînement",
+      "option": "{time} {name} ({count} participants)",
+      "none": "Il n'y a pas d'entraînement ce jour-là qui corresponde à ce bateau."
+    },
     "location": {
       "title": "Choisir une destination",
       "add": "Choisir une destination"
@@ -163,7 +169,10 @@
       "label": "Privée",
       "description": "Une sortie privée."
     },
-    "travel": { "label": "Voyage", "description": "Un voyage de plusieurs jours regroupant plusieurs notes quotidiennes." },
+    "travel": {
+      "label": "Voyage",
+      "description": "Un voyage de plusieurs jours regroupant plusieurs notes quotidiennes."
+    },
     "tracker": {
       "label": "Tracker",
       "description": "Une sortie enregistrée avec le tracker."

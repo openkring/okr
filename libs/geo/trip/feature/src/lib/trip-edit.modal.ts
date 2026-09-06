@@ -36,6 +36,7 @@ import { TripService } from '@okr/trip-data-access';
           [i18n]="store.i18n"
           (personSelectClicked)="addPerson()"
           (boatSelectClicked)="addBoat()"
+          (trainingSelectClicked)="addCrewFromTraining()"
           (locationSelectClicked)="addLocation()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -148,6 +149,19 @@ export class TripEditModal {
     if (!person) return;
     participants.push(person);
     this.onFieldChange('participants', participants);
+  }
+
+  /**
+   * Takes the crew of one of the day's trainings into the boat. It REPLACES the participants: the
+   * button is pressed to fill an empty boat, and a half-entered crew would otherwise silently
+   * push a training attendee out of the seat limit.
+   */
+  protected async addCrewFromTraining(): Promise<void> {
+    const trip = this.formData();
+    if (!trip) return;
+    const crew = await this.store.selectTrainingCrew(trip.startDate, this.maxParticipants());
+    if (!crew) return;
+    this.onFieldChange('participants', crew);
   }
 
   protected async addBoat(): Promise<void> {

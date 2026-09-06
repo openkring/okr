@@ -21,6 +21,7 @@
     "@okr/relationship-reservation-util": "*",
     "@okr/relationship-responsibility-data-access": "*",
     "@okr/avatar-data-access": "*",
+    "@okr/calevent-data-access": "*",
     "@okr/avatar-util": "*",
     "@okr/cms-menu-data-access": "*",
     "@okr/cms-menu-feature": "*",
