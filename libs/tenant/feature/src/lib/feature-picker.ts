@@ -1,3 +1,4 @@
+import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import type { CheckboxCustomEvent } from '@ionic/angular/standalone';
@@ -7,7 +8,7 @@ import {
 } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
-import { I18nService } from '@okr/shared-i18n';
+import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
 import type { FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
@@ -22,7 +23,11 @@ import type {
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
 
-import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.util';
+import type { CataloguePlanComparison, MenuOutlineRow } from './feature-picker.util';
+import {
+  blocksRemovedBySave, comparePlanToDrift, escapeHtml, menuOutlineOf, menuReferencesByName,
+  transitiveDependentsOf,
+} from './feature-picker.util';
 
 /**
  * The admin-facing feature-block picker — lets a tenant admin choose which catalogue blocks
@@ -56,7 +61,7 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    SvgIconPipe,
+    AsyncPipe, SvgIconPipe, TranslatePipe,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonButton, IonIcon, IonSpinner,
     IonContent, IonList, IonItemGroup, IonItemDivider, IonItem, IonLabel, IonCheckbox, IonNote,
   ],
@@ -95,7 +100,13 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
               </ion-button>
             </ion-item-divider>
             <ion-item lines="none">
-              <ion-note class="ion-text-wrap">{{ i18n.drift_note() }}</ion-note>
+              <ion-note class="ion-text-wrap">
+                {{ i18n.drift_note() }}
+                <br /><br />
+                <strong>{{ i18n.drift_forked() }}</strong> — {{ i18n.drift_legend_forked() }}
+                <br />
+                <strong>{{ i18n.drift_edited() }}</strong> — {{ i18n.drift_legend_edited() }}
+              </ion-note>
             </ion-item>
             @for (row of driftRows(); track row.docId + row.field) {
               <ion-item>
@@ -106,6 +117,15 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
                     {{ i18n.drift_col_live() }}: <strong>{{ row.live || '—' }}</strong>
                     &nbsp;·&nbsp;
                     {{ i18n.drift_col_catalogue() }}: <strong>{{ row.catalogue }}</strong>
+                  </p>
+                  <p class="drift-origin">
+                    @if (row.blocks) {
+                      {{ i18n.drift_owner() }}: <strong>{{ row.blocks }}</strong>&nbsp;·&nbsp;
+                    }
+                    @if (row.parents) {
+                      {{ i18n.drift_parent() }}: <strong>{{ row.parents }}</strong>&nbsp;·&nbsp;
+                    }
+                    {{ i18n.drift_doc() }}: <strong>{{ row.docId }}</strong>
                   </p>
                 </ion-label>
                 <ion-note slot="end">
@@ -150,7 +170,37 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
                   @if (reasonOf(block); as reason) {
                     <ion-note slot="end" class="ion-text-wrap">{{ reason }}</ion-note>
                   }
+                  <ion-button
+                    slot="end"
+                    fill="clear"
+                    [title]="i18n.details_title()"
+                    (click)="onToggleDetails(block)">
+                    <ion-icon
+                      slot="icon-only"
+                      src="{{ (isDetailsOpen(block) ? 'chevron-up' : 'chevron-down') | svgIcon }}" />
+                  </ion-button>
                 </ion-item>
+                @if (isDetailsOpen(block)) {
+                  <ion-item lines="none" class="details">
+                    <ion-label class="ion-text-wrap">
+                      <p class="details-head">
+                        {{ i18n.details_block_id() }}: <strong>{{ block.id }}</strong>
+                      </p>
+                      @if (outlineOf(block).length === 0) {
+                        <p>{{ i18n.details_no_menu() }}</p>
+                      } @else {
+                        <p class="details-head">{{ i18n.details_title() }}</p>
+                        @for (row of outlineOf(block); track $index) {
+                          <p class="menu-row" [style.padding-left.em]="row.depth">
+                            <span class="menu-label">{{ (row.labelKey | translate | async) || row.name }}</span>
+                            <span class="menu-url">{{ row.url || row.action }}</span>
+                            <span class="menu-meta">{{ row.name }} · {{ row.action }} · {{ row.roleNeeded }}</span>
+                          </p>
+                        }
+                      }
+                    </ion-label>
+                  </ion-item>
+                }
                 @if (remarkOf(block); as remark) {
                   <ion-item lines="none" class="remark">
                     <ion-note class="ion-text-wrap">{{ remark }}</ion-note>
@@ -163,6 +213,14 @@ import { blocksRemovedBySave, transitiveDependentsOf } from './feature-picker.ut
       </ion-list>
     </ion-content>
   `,
+  styles: [`
+    .details { --background: var(--ion-color-light); }
+    .drift-origin { opacity: 0.7; }
+    .menu-row { display: flex; flex-wrap: wrap; gap: 0 0.6em; align-items: baseline; }
+    .menu-label { font-weight: 500; }
+    .menu-url { font-family: monospace; }
+    .menu-meta { opacity: 0.6; font-size: 0.85em; }
+  `],
 })
 export class FeaturePicker {
   private readonly appStore = inject(AppStore);
@@ -248,13 +306,34 @@ export class FeaturePicker {
    * `feature-blocks.ts` rather than the other way round). Showing `live → Katalog` per field
    * lets the reader see which direction they are being offered before they take it.
    */
-  protected readonly driftRows = computed(() =>
-    this.drift().flatMap(entry =>
-      Object.entries(entry.fields).map(([field, catalogue]) => ({
-        name: entry.name, docId: entry.docId, forked: entry.forked, field,
-        live: String(entry.live[field as keyof typeof entry.live] ?? ''),
-        catalogue: String(catalogue ?? ''),
-      }))));
+  protected readonly driftRows = computed(() => {
+    const references = this.menuReferences;
+    const rows = this.drift().flatMap(entry =>
+      Object.entries(entry.fields).map(([field, catalogue]) => {
+        const reference = references.get(entry.name);
+        return {
+          name: entry.name, docId: entry.docId, forked: entry.forked, field,
+          live: String(entry.live[field as keyof typeof entry.live] ?? ''),
+          catalogue: String(catalogue ?? ''),
+          blocks: (reference?.blockIds ?? [])
+            .map(id => this.blockLabels[id]?.() || id).join(', '),
+          parents: (reference?.parents ?? []).join(', '),
+        };
+      }));
+    // One live DOCUMENT, reported once — not once per catalogue declaration. `filter-toggle`
+    // is declared verbatim by four blocks (calevent, document, finance, meeting) and
+    // `findStructuralDrift` walks specs, so the same doc/field surfaced four identical rows
+    // and read as four separate problems. Deduped on the values too, so a genuinely
+    // CONFLICTING re-declaration (two blocks wanting different catalogue values for one name)
+    // still shows up as two rows rather than being silently collapsed into one.
+    const seen = new Set<string>();
+    return rows.filter(row => {
+      const identity = [row.docId, row.field, row.live, row.catalogue].join('\u0000');
+      if (seen.has(identity)) return false;
+      seen.add(identity);
+      return true;
+    });
+  });
 
   protected readonly availability = computed<Map<string, AvailabilityVerdict>>(() => {
     const rolloutById = new Map(this.rollouts().map(rollout => [rollout.okey, rollout]));
@@ -266,6 +345,26 @@ export class FeaturePicker {
     bundle,
     blocks: this.catalogue.filter(block => block.bundle === bundle.id),
   }));
+
+  /**
+   * Which blocks have their menu outline unfolded. Purely presentational — it is deliberately
+   * NOT part of `selection`, so opening a block to see what it switches on can never make the
+   * save write anything.
+   */
+  private readonly detailsOpen = signal<ReadonlySet<string>>(new Set());
+
+  /**
+   * Flattened menu outline per block, computed ONCE from the static catalogue (nothing here
+   * depends on tenant data or on the checkbox state).
+   */
+  /**
+   * Menu name → which blocks declare it, under which parents. Static (catalogue-only), so it
+   * is built once; a drift row uses it to say WHICH toggle owns the entry it names.
+   */
+  private readonly menuReferences = menuReferencesByName(this.catalogue);
+
+  private readonly outlines = new Map<string, MenuOutlineRow[]>(
+    this.catalogue.map(block => [block.id, menuOutlineOf(block)]));
 
   protected readonly selection = signal<Set<string>>(new Set());
   protected readonly isSaving = signal(false);
@@ -325,6 +424,20 @@ export class FeaturePicker {
       this.seeded = true;
       untracked(() => this.selection.set(new Set(resolveWithDeps(this.catalogue, enabled))));
     });
+  }
+
+  protected outlineOf(block: FeatureBlock): MenuOutlineRow[] {
+    return this.outlines.get(block.id) ?? [];
+  }
+
+  protected isDetailsOpen(block: FeatureBlock): boolean {
+    return this.detailsOpen().has(block.id);
+  }
+
+  protected onToggleDetails(block: FeatureBlock): void {
+    const next = new Set(this.detailsOpen());
+    if (!next.delete(block.id)) next.add(block.id);
+    this.detailsOpen.set(next);
   }
 
   protected isChecked(block: FeatureBlock): boolean {
@@ -486,22 +599,73 @@ export class FeaturePicker {
    * overwrites is recorded as a `menu-structure` entry in `featureEvents`.
    */
   protected async onApplyStructure(): Promise<void> {
+    const tenantId = this.tenantId();
+    const blocks = [...this.liveBlocks()];
+
+    // ASK THE SERVER WHAT IT WOULD ACTUALLY WRITE, before showing a confirmation built on the
+    // assumption that it agrees with us.
+    //
+    // `FEATURE_BLOCKS` is compiled into two artefacts: this bundle, which produces the drift
+    // list, and `dist/apps/functions`, which produces the writes. They only agree while the
+    // functions have been deployed since the last `feature-blocks.ts` edit. On 2026-09-06 they
+    // did not: «Katalog-Werte übernehmen» wrote the DEPLOYED catalogue's values, reported
+    // success, and left `contextMenuChat` untouched (the deployed copy still said `admin`, so
+    // the server planned nothing) while flipping `c-contentpage`/`cp-sort-sections`/`page-edit`
+    // to values this app does not have. Nothing in the UI could say so, because the dialog was
+    // built from our own rows and the write was fired blind.
+    //
+    // The dry run costs one callable round-trip and turns both failure modes into a sentence.
+    let preview: ApplyPlanPreview | undefined;
+    try {
+      preview = (await this.featureSelectionService.apply(
+        tenantId, blocks, { replayStructure: true, dryRun: true })).preview;
+    } catch (error) {
+      this.alertService.error(`FeaturePicker.onApplyStructure(dryRun): ${error}`);
+      return;
+    }
+
+    const rows = this.driftRows();
+    // A deployment that predates `dryRun` returns no preview at all. Confirm against our own
+    // rows then — the pre-2026-09 behaviour — rather than refusing to work at all.
+    const comparison = preview
+      ? comparePlanToDrift(rows, preview.overwritten)
+      : { planned: [], unplanned: [], conflicting: [] };
+
+    if (preview && comparison.planned.length === 0) {
+      // Nothing to write, so nothing to confirm. Saying "done" here would be the exact lie
+      // this whole dry run exists to stop.
+      await this.alertService.confirm(await this.translateOrFallback(
+        FEATURE_PICKER_I18N_KEYS.drift_nothing_planned, { count: rows.length },
+        this.i18n.drift_nothing_planned()));
+      return;
+    }
+
     // Name both sides, in the same shape as the list above it. Listing only the affected
     // FIELD names (the pre-2026-09 text) left the reader to guess which value replaces which —
     // the same ambiguity the bare `→` in the list had.
-    const entries = this.driftRows()
-      .map(row => `• ${row.name} — ${row.field}: ` +
-        `${this.i18n.drift_col_live()} ${row.live || '—'} → ` +
-        `${this.i18n.drift_col_catalogue()} ${row.catalogue}`)
-      .join('\n');
+    //
+    // Built as HTML, not as bulleted plain text: `AlertOptions.message` is rendered as HTML
+    // (`innerHTMLTemplatesEnabled: true` in every app's `app.config.ts`), so the '\n's the
+    // previous version separated its bullets with collapsed into spaces and the whole list
+    // arrived as one unreadable paragraph. One `<p>` per entry — the entry NAME on the first
+    // line, what actually changes on the second.
+    //
+    // The values come from the SERVER's plan when there is one: what it is about to write is
+    // the truth of the matter, and quoting our own catalogue back at the reader is precisely
+    // how the skew stayed invisible.
+    const entries = preview
+      ? comparison.planned.map(change => this.driftEntryHtml(
+          change.name, change.field, change.from, change.to)).join('')
+      : rows.map(row => this.driftEntryHtml(row.name, row.field, row.live, row.catalogue)).join('');
+
+    const warning = await this.skewWarningHtml(comparison);
     const confirmText = await this.translateOrFallback(
-      FEATURE_PICKER_I18N_KEYS.drift_confirm, { entries }, entries);
+      FEATURE_PICKER_I18N_KEYS.drift_confirm, { entries: entries + warning }, entries + warning);
     if (!await this.alertService.confirm(confirmText, true)) return;
 
     this.isSaving.set(true);
     try {
-      await this.featureSelectionService.apply(
-        this.tenantId(), [...this.liveBlocks()], { replayStructure: true });
+      await this.featureSelectionService.apply(tenantId, blocks, { replayStructure: true });
       // `drift()` recomputes itself from the live menu stream once the writes land.
       await this.alertService.showToast(this.i18n.drift_apply());
     } catch (error) {
@@ -509,6 +673,34 @@ export class FeaturePicker {
     } finally {
       this.isSaving.set(false);
     }
+  }
+
+  /** One drift entry, two lines: the entry name, then the value change. */
+  private driftEntryHtml(name: string, field: string, from: string, to: string): string {
+    return `<p><strong>${escapeHtml(name)}</strong><br>` +
+      `${escapeHtml(field)}: ${this.i18n.drift_col_live()} <strong>${escapeHtml(from || '—')}</strong>` +
+      ` → ${this.i18n.drift_col_catalogue()} <strong>${escapeHtml(to)}</strong></p>`;
+  }
+
+  /**
+   * The paragraph that names a client/server catalogue mismatch, or '' when there is none.
+   *
+   * Deliberately part of the CONFIRMATION rather than a toast afterwards: by the time a toast
+   * appears the write has happened, and the one thing an admin needs here is the chance not to
+   * run it — an apply against a stale deployment writes real values to real documents.
+   */
+  private async skewWarningHtml(comparison: CataloguePlanComparison): Promise<string> {
+    const affected = [
+      ...comparison.unplanned.map(row => `${row.name} (${row.field})`),
+      ...comparison.conflicting.map(entry =>
+        `${entry.row.name} (${entry.row.field}: ${entry.serverValue})`),
+    ];
+    if (affected.length === 0) return '';
+
+    const list = affected.join(', ');
+    const text = await this.translateOrFallback(
+      FEATURE_PICKER_I18N_KEYS.drift_skew_warning, { count: affected.length, entries: list }, list);
+    return `<p><strong>${escapeHtml(text)}</strong></p>`;
   }
 
   /**

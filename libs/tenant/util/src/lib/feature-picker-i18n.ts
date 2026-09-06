@@ -32,6 +32,13 @@ export const FEATURE_PICKER_I18N_KEYS = {
   profile_confirm: PFX + 'picker.profile_confirm',
   profile_applied: PFX + 'picker.profile_applied',
   core_note: PFX + 'picker.core_note',
+  /**
+   * Per-block menu outline (name, route, action, role) — the answer to "which menu does this
+   * toggle switch on?", which the block label alone never gave.
+   */
+  details_title: PFX + 'picker.details_title',
+  details_block_id: PFX + 'picker.details_block_id',
+  details_no_menu: PFX + 'picker.details_no_menu',
   unavailable_reason_fallback: PFX + 'picker.unavailable_reason_fallback',
   dependents_confirm: PFX + 'picker.dependents_confirm',
   removal_confirm: PFX + 'picker.removal_confirm',
@@ -42,6 +49,16 @@ export const FEATURE_PICKER_I18N_KEYS = {
   drift_apply: PFX + 'picker.drift_apply',
   drift_forked: PFX + 'picker.drift_forked',
   drift_edited: PFX + 'picker.drift_edited',
+  /**
+   * What the two badges above actually MEAN, and what each implies for the next save. A
+   * reader who does not already know D-BB-8's fork rule cannot infer either from the badge.
+   */
+  drift_legend_forked: PFX + 'picker.drift_legend_forked',
+  drift_legend_edited: PFX + 'picker.drift_legend_edited',
+  /** Origin of a drifted entry — which block owns it, which menu holds it, which document. */
+  drift_owner: PFX + 'picker.drift_owner',
+  drift_parent: PFX + 'picker.drift_parent',
+  drift_doc: PFX + 'picker.drift_doc',
   /** Proposal 5 — the other exit from a drift entry: the LIVE value is the right one. */
   drift_keep_live: PFX + 'picker.drift_keep_live',
   /** Column captions on a drift row. Without them a bare `a → b` does not say which side is
@@ -53,6 +70,15 @@ export const FEATURE_PICKER_I18N_KEYS = {
   // `translateOnce(key, params)`, so these use Transloco's own `{{...}}` interpolation —
   // unlike the store-driven keys, which must use single braces and `fill()`.
   drift_confirm: PFX + 'picker.drift_confirm',
+  /**
+   * The app's catalogue and the DEPLOYED functions' catalogue disagree — the failure that
+   * made an apply report success while changing nothing (or changing it to a third value).
+   * Shown inside the confirmation, never as a toast afterwards: the only useful moment is
+   * before the write.
+   */
+  drift_skew_warning: PFX + 'picker.drift_skew_warning',
+  /** The server plans no write at all, so there is nothing to confirm. */
+  drift_nothing_planned: PFX + 'picker.drift_nothing_planned',
   // Proposal 4 — the server-side dry run, named op by op before the save commits.
   preview_confirm: PFX + 'picker.preview_confirm',
   preview_created: PFX + 'picker.preview_created',
