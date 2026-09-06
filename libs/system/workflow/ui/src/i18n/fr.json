@@ -41,13 +41,13 @@
     "helper": "Ce qui se passe lorsque la règle s’applique."
   },
   "actionArg": {
-    "label": "Argument der Aktion",
-    "placeholder": "z.B. skiffPlatz",
-    "helper": "E-Mail: Template · Signatur: Ablagepfad · Freigabe: Art der Freigabe"
+    "label": "Argument de l'action",
+    "placeholder": "p.ex. skiffPlatz",
+    "helper": "E-mail : modèle · Signature : chemin d'enregistrement · Approbation : type d'approbation"
   },
   "writeBack": {
-    "label": "Rückschreiben",
-    "helper": "Feld, das der Entscheid am Datensatz setzt. Nur freigegebene Kombinationen sind möglich."
+    "label": "Champ à mettre à jour",
+    "helper": "Le champ que la décision met à jour sur l'enregistrement. Seules les combinaisons autorisées sont possibles."
   },
   "steps": {
     "label": "Actions",
@@ -58,27 +58,27 @@
   },
   "approval": {
     "kind": {
-      "label": "Art"
+      "label": "Type"
     },
     "subject": {
-      "label": "Betrifft"
+      "label": "Concerne"
     },
     "state": {
-      "label": "Status"
+      "label": "Statut"
     },
     "approver": {
-      "label": "Entscheidet"
+      "label": "Décideur"
     },
     "requester": {
-      "label": "Angefragt von"
+      "label": "Demandé par"
     },
     "decisionDate": {
-      "label": "Entschieden am"
+      "label": "Décidé le"
     },
     "note": {
-      "label": "Begründung",
-      "placeholder": "Begründung erfassen",
-      "helper": "Bei einer Ablehnung zwingend."
+      "label": "Motif",
+      "placeholder": "Saisir le motif",
+      "helper": "Obligatoire en cas de refus."
     }
   }
 }

@@ -41,13 +41,13 @@
     "helper": "What happens when the rule matches."
   },
   "actionArg": {
-    "label": "Argument der Aktion",
-    "placeholder": "z.B. skiffPlatz",
-    "helper": "E-Mail: Template · Signatur: Ablagepfad · Freigabe: Art der Freigabe"
+    "label": "Action argument",
+    "placeholder": "e.g. skiffPlatz",
+    "helper": "Email: template · Signature: storage path · Approval: type of approval"
   },
   "writeBack": {
-    "label": "Rückschreiben",
-    "helper": "Feld, das der Entscheid am Datensatz setzt. Nur freigegebene Kombinationen sind möglich."
+    "label": "Update field",
+    "helper": "The field the decision sets on the record. Only approved combinations are possible."
   },
   "steps": {
     "label": "Actions",
@@ -58,27 +58,27 @@
   },
   "approval": {
     "kind": {
-      "label": "Art"
+      "label": "Type"
     },
     "subject": {
-      "label": "Betrifft"
+      "label": "Concerns"
     },
     "state": {
       "label": "Status"
     },
     "approver": {
-      "label": "Entscheidet"
+      "label": "Approver"
     },
     "requester": {
-      "label": "Angefragt von"
+      "label": "Requested by"
     },
     "decisionDate": {
-      "label": "Entschieden am"
+      "label": "Decided on"
     },
     "note": {
-      "label": "Begründung",
-      "placeholder": "Begründung erfassen",
-      "helper": "Bei einer Ablehnung zwingend."
+      "label": "Reason",
+      "placeholder": "Enter reason",
+      "helper": "Required when rejecting."
     }
   }
 }

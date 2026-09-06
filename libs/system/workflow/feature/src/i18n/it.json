@@ -48,7 +48,7 @@
     },
     "expense": {
       "created": {
-        "label": "Spesenbeleg erfasst"
+        "label": "Giustificativo di spesa registrato"
       },
       "validated": {
         "label": "Giustificativo di spesa validato"
@@ -62,12 +62,12 @@
     },
     "form": {
       "submitted": {
-        "label": "Formular abgeschickt"
+        "label": "Modulo inviato"
       }
     },
     "application": {
       "created": {
-        "label": "Aufnahmegesuch eingegangen"
+        "label": "Domanda di ammissione ricevuta"
       },
       "stateChanged": {
         "label": "Stato della domanda modificato"
@@ -75,12 +75,12 @@
     },
     "reservation": {
       "created": {
-        "label": "Reservation erstellt"
+        "label": "Prenotazione creata"
       }
     },
     "approval": {
       "decided": {
-        "label": "Freigabe entschieden"
+        "label": "Approvazione decisa"
       }
     },
     "trip": {
@@ -121,7 +121,7 @@
       "label": "Passaggio a passivo con assegnazioni attive"
     },
     "decisionIs": {
-      "label": "Entscheid ist …"
+      "label": "La decisione è …"
     },
     "paramIs": {
       "label": "Dato dell'evento è …"
@@ -131,42 +131,42 @@
     }
   },
   "approval": {
-    "plural": "Freigaben",
-    "empty": "Es sind keine Freigaben offen.",
-    "mine": "Meine",
-    "unassigned": "Ohne Zuweisung",
-    "all": "Alle",
+    "plural": "Approvazioni",
+    "empty": "Non ci sono approvazioni in sospeso.",
+    "mine": "Le mie",
+    "unassigned": "Senza assegnazione",
+    "all": "Tutte",
     "decide": {
-      "label": "Freigabe entscheiden"
+      "label": "Decidere l'approvazione"
     },
-    "approve": "Genehmigen",
-    "reject": "Ablehnen",
-    "withdraw": "Zurückziehen",
-    "withdrawConfirm": "Soll die Anfrage wirklich zurückgezogen werden ?",
+    "approve": "Approvare",
+    "reject": "Rifiutare",
+    "withdraw": "Ritirare",
+    "withdrawConfirm": "Vuoi davvero ritirare questa richiesta ?",
     "decided": {
-      "conf": "Der Entscheid wurde gespeichert.",
-      "error": "Der Entscheid konnte nicht gespeichert werden."
+      "conf": "La decisione è stata salvata.",
+      "error": "Non è stato possibile salvare la decisione."
     },
     "export": {
-      "conf": "Die Freigaben wurden exportiert."
+      "conf": "Le approvazioni sono state esportate."
     }
   },
   "workflow_action": {
-    "name": "Aktion",
+    "name": "Azione",
     "openTask": {
-      "label": "Aufgabe eröffnen"
+      "label": "Creare un compito"
     },
     "sendEmail": {
-      "label": "E-Mail senden"
+      "label": "Inviare un'e-mail"
     },
     "sendMessage": {
-      "label": "Chat-Nachricht senden"
+      "label": "Inviare un messaggio di chat"
     },
     "esign": {
-      "label": "Signatur einholen"
+      "label": "Richiedere una firma"
     },
     "requestApproval": {
-      "label": "Freigabe anfordern"
+      "label": "Richiedere un'approvazione"
     },
     "openChat": {
       "label": "Aprire la chat"

@@ -41,13 +41,13 @@
     "helper": "Cosa succede quando la regola si applica."
   },
   "actionArg": {
-    "label": "Argument der Aktion",
-    "placeholder": "z.B. skiffPlatz",
-    "helper": "E-Mail: Template · Signatur: Ablagepfad · Freigabe: Art der Freigabe"
+    "label": "Argomento dell'azione",
+    "placeholder": "p.es. skiffPlatz",
+    "helper": "E-mail: modello · Firma: percorso di archiviazione · Approvazione: tipo di approvazione"
   },
   "writeBack": {
-    "label": "Rückschreiben",
-    "helper": "Feld, das der Entscheid am Datensatz setzt. Nur freigegebene Kombinationen sind möglich."
+    "label": "Campo da aggiornare",
+    "helper": "Il campo che la decisione imposta nel record. Sono possibili solo le combinazioni consentite."
   },
   "steps": {
     "label": "Azioni",
@@ -58,27 +58,27 @@
   },
   "approval": {
     "kind": {
-      "label": "Art"
+      "label": "Tipo"
     },
     "subject": {
-      "label": "Betrifft"
+      "label": "Riguarda"
     },
     "state": {
-      "label": "Status"
+      "label": "Stato"
     },
     "approver": {
-      "label": "Entscheidet"
+      "label": "Chi decide"
     },
     "requester": {
-      "label": "Angefragt von"
+      "label": "Richiesto da"
     },
     "decisionDate": {
-      "label": "Entschieden am"
+      "label": "Deciso il"
     },
     "note": {
-      "label": "Begründung",
-      "placeholder": "Begründung erfassen",
-      "helper": "Bei einer Ablehnung zwingend."
+      "label": "Motivazione",
+      "placeholder": "Inserire la motivazione",
+      "helper": "Obbligatorio in caso di rifiuto."
     }
   }
 }

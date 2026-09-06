@@ -48,7 +48,7 @@
     },
     "expense": {
       "created": {
-        "label": "Spesenbeleg erfasst"
+        "label": "Justificatif de frais enregistré"
       },
       "validated": {
         "label": "Justificatif de frais validé"
@@ -62,12 +62,12 @@
     },
     "form": {
       "submitted": {
-        "label": "Formular abgeschickt"
+        "label": "Formulaire envoyé"
       }
     },
     "application": {
       "created": {
-        "label": "Aufnahmegesuch eingegangen"
+        "label": "Demande d'adhésion reçue"
       },
       "stateChanged": {
         "label": "Statut de la demande d'adhésion modifié"
@@ -75,12 +75,12 @@
     },
     "reservation": {
       "created": {
-        "label": "Reservation erstellt"
+        "label": "Réservation créée"
       }
     },
     "approval": {
       "decided": {
-        "label": "Freigabe entschieden"
+        "label": "Approbation décidée"
       }
     },
     "trip": {
@@ -121,7 +121,7 @@
       "label": "Passage en passif avec attributions actives"
     },
     "decisionIs": {
-      "label": "Entscheid ist …"
+      "label": "La décision est …"
     },
     "paramIs": {
       "label": "Donnée de l'événement est …"
@@ -131,42 +131,42 @@
     }
   },
   "approval": {
-    "plural": "Freigaben",
-    "empty": "Es sind keine Freigaben offen.",
-    "mine": "Meine",
-    "unassigned": "Ohne Zuweisung",
-    "all": "Alle",
+    "plural": "Approbations",
+    "empty": "Aucune approbation n'est en attente.",
+    "mine": "Les miennes",
+    "unassigned": "Sans attribution",
+    "all": "Toutes",
     "decide": {
-      "label": "Freigabe entscheiden"
+      "label": "Décider l'approbation"
     },
-    "approve": "Genehmigen",
-    "reject": "Ablehnen",
-    "withdraw": "Zurückziehen",
-    "withdrawConfirm": "Soll die Anfrage wirklich zurückgezogen werden ?",
+    "approve": "Approuver",
+    "reject": "Refuser",
+    "withdraw": "Retirer",
+    "withdrawConfirm": "Voulez-vous vraiment retirer cette demande ?",
     "decided": {
-      "conf": "Der Entscheid wurde gespeichert.",
-      "error": "Der Entscheid konnte nicht gespeichert werden."
+      "conf": "La décision a été enregistrée.",
+      "error": "La décision n'a pas pu être enregistrée."
     },
     "export": {
-      "conf": "Die Freigaben wurden exportiert."
+      "conf": "Les approbations ont été exportées."
     }
   },
   "workflow_action": {
-    "name": "Aktion",
+    "name": "Action",
     "openTask": {
-      "label": "Aufgabe eröffnen"
+      "label": "Créer une tâche"
     },
     "sendEmail": {
-      "label": "E-Mail senden"
+      "label": "Envoyer un e-mail"
     },
     "sendMessage": {
-      "label": "Chat-Nachricht senden"
+      "label": "Envoyer un message de chat"
     },
     "esign": {
-      "label": "Signatur einholen"
+      "label": "Demander une signature"
     },
     "requestApproval": {
-      "label": "Freigabe anfordern"
+      "label": "Demander une approbation"
     },
     "openChat": {
       "label": "Ouvrir le chat"
