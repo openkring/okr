@@ -15,6 +15,33 @@ const RETRYABLE_STATUS = new Set([502, 503, 504]);
 const RETRY_DELAY_MS = 500;
 
 /**
+ * SCS-A4: messages of a fetch that died in transport rather than at the homeserver.
+ *
+ * Every engine words this differently and none of the wordings carry information: Safari
+ * raises "Load failed", wraps it as "FetchEvent.respondWith received an error: …" when the
+ * request passed through the service worker, and reports "The network connection was lost"
+ * when the radio switches; Chrome says "Failed to fetch", Firefox "NetworkError …". They all
+ * mean the same thing — the request never produced a response — and they fire routinely when
+ * an iOS tab is backgrounded mid-download or the device changes network. `navigator.onLine`
+ * does NOT distinguish them (Safari keeps reporting `true` through exactly these aborts),
+ * which is why the SCS-9Q offline guard let SCS-A4 through.
+ *
+ * The trade-off is deliberate: a CORS or CSP regression on the media host surfaces with these
+ * same messages and is now silent here. That class of failure breaks the Matrix sync and API
+ * calls too, so it is reported by those paths — whereas a single backgrounded phone is only
+ * ever visible here, and only as noise. Everything that says something about the requested
+ * file (HTTP status, missing URL, unexpected error type) is still reported.
+ */
+function isTransportFailure(message: string): boolean {
+  const m = message.toLowerCase();
+  return m.includes('load failed')
+    || m.includes('failed to fetch')
+    || m.includes('networkerror')
+    || m.includes('network connection was lost')
+    || m.includes('fetchevent.respondwith');
+}
+
+/**
  * Authenticated Matrix media resolution with a bounded LRU blob-URL cache.
  * Extracted from MatrixChatService (design review #4 / ARCH-2); the facade sets
  * the client on initialize/disconnect and delegates all media lookups here.
@@ -105,10 +132,10 @@ export class MatrixMediaService {
       // SCS-9Q: a fetch that throws never reached the homeserver — on Safari that is the
       // generic "Load failed" TypeError, raised when the device switches network, the tab is
       // backgrounded mid-request or the connection simply drops. Nothing about it is
-      // actionable from here, and while the browser reports itself offline it is not even a
-      // homeserver problem, so don't file a ticket for it.
-      if (typeof navigator !== 'undefined' && navigator.onLine === false) return '';
-      this.reportSilentFailure(`media fetch threw: ${(ex as Error | null)?.message ?? 'unknown'}`);
+      // actionable from here, so don't file a ticket for it.
+      const message = (ex as Error | null)?.message ?? 'unknown';
+      if (isTransportFailure(message)) return '';
+      this.reportSilentFailure(`media fetch threw: ${message}`);
       return '';
     }
   }
