@@ -296,8 +296,16 @@ export class TripList {
    */
   protected async showActions(trip: TripModel): Promise<void> {
     const isAdmin = this.hasRole('admin');
-    if (!this.store.canWrite() || !isTripEditable(trip, isAdmin)) {
-      await this.store.viewTrip(trip);
+    // Rule 0: writers are kiosk/admin within the edit window. Everyone else gets no write actions
+    // — but a registered member standing at the boathouse must still be able to report a damage or
+    // a bug, so they get a reduced sheet instead of the read-only modal.
+    const canEdit = this.store.canWrite() && isTripEditable(trip, isAdmin);
+    if (!canEdit) {
+      if (this.store.locked() || !this.hasRole('registered')) {
+        await this.store.viewTrip(trip);
+        return;
+      }
+      await this.showReportActions(trip);
       return;
     }
 
@@ -333,6 +341,32 @@ export class TripList {
       case 'view':          await this.store.viewTrip(trip); break;
       case 'end':           await this.store.endTrip(trip); break;
       case 'delete':        await this.store.deleteTrip(trip); break;
+      case 'report_damage': await this.store.reportDamage(this.currentUser(), trip); break;
+      case 'report_bug':    await this.store.reportBug(this.currentUser(), trip); break;
+    }
+  }
+
+  /**
+   * Reduced sheet for a registered member: view the trip, or report a damage or a bug on it.
+   * No write action on the trip itself — that stays with kiosk and admin (see the trips skill).
+   */
+  private async showReportActions(trip: TripModel): Promise<void> {
+    const url = this.store.imgixBaseUrl();
+    const options = createActionSheetOptions(this.store.i18n.as_title());
+
+    options.buttons.push(createActionSheetButton('view', this.store.i18n.view(), url, 'eye-on'));
+    options.buttons.push(createActionSheetDivider());
+    options.buttons.push(createActionSheetButton('report_damage', this.store.i18n.report_damage(), url, 'warning'));
+    options.buttons.push(createActionSheetButton('report_bug', this.store.i18n.report_bug(), url, 'bug'));
+    options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), url, 'cancel'));
+
+    const sheet = await this.actionSheetController.create(options);
+    await sheet.present();
+    const { data } = await sheet.onDidDismiss();
+    if (!data) return;
+
+    switch (data.action) {
+      case 'view':          await this.store.viewTrip(trip); break;
       case 'report_damage': await this.store.reportDamage(this.currentUser(), trip); break;
       case 'report_bug':    await this.store.reportBug(this.currentUser(), trip); break;
     }
