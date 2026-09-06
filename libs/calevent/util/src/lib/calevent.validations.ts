@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { MAX_DATES_PER_SERIES, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { MAX_DATES_PER_SERIES, NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { CalEventModel } from '@okr/shared-models';
 import { baseValidations, calculateRecurringDates, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -8,6 +8,16 @@ export const calEventValidations = staticSuite((model: CalEventModel, tenants: s
   if (field) only(field);
 
   baseValidations(model, tenants, tags, field);
+  // The name is what a member recognises the appointment by, and what the duplicate check compares
+  // events on. It was optional until now: baseValidations calls stringValidations WITHOUT the
+  // isMandatory flag, and that same flag also gates the length cap — so `name` was checked for
+  // null/undefined/string and nothing else. A half-filled form therefore saved a nameless event,
+  // which is how the first of the three '4X-Dienstag' series was created on 2026-06-10
+  // ('20260620 07:30: ' in the audit log). A nameless event also collides with nothing, so no
+  // duplicate warning could ever fire for it.
+  // Repeating the call with isMandatory=true is the idiom used by meeting/room/topic and ~15 other
+  // suites; it adds 'required' (isNotBlank, so a name of blanks is rejected too) and 'tooLong'.
+  stringValidations('name', model.name, NAME_LENGTH, 1, true);
   stringValidations('type', model.type, WORD_LENGTH);
   dateValidations('startDate', model.startDate);
   numberValidations('durationMinutes', model.durationMinutes, true, 0, 1440);
