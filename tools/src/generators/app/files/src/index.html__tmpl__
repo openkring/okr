@@ -35,8 +35,8 @@
           font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
         }
         .okr-shell__logo {
-          width: 96px;
-          height: 96px;
+          width: 144px;
+          height: 144px;
         }
         .okr-shell__spinner {
           width: 36px;
@@ -53,6 +53,7 @@
           margin: 0;
         }
       </style>
+      <!-- The boot-shell logo is the LCP element on purpose (spec 1.49, Teil 2): inline as a data URI so it paints at parse time with no request — a CDN fetch made it lose the race to the app chunks. 144 px keeps it larger than the Angular splash logo (18,291 px²) and the dashboard's largest text block. Regenerate: base64 of https://bkaiser.imgix.net/tenant/<%= tenantId %>/logo/logo_round.svg. Provisioning step: replace src with the base64 data URI of the tenant's logo_round.svg (see spec 1.49). -->
       <div class="okr-shell">
         <img class="okr-shell__logo"
              src="https://bkaiser.imgix.net/tenant/<%= tenantId %>/logo/favicon.svg"
