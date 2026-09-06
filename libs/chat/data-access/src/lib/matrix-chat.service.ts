@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, PersonModelName, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, isRenderableChatEvent, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, isRenderableChatEvent, MentionRef, OKR_TENANT_EVENT, MATRIX_FAVOURITE_TAG, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 
@@ -148,6 +148,7 @@ export class MatrixChatService {
           room.avatar === o.avatar &&
           room.isDirect === o.isDirect &&
           room.unreadCount === o.unreadCount &&
+          room.isFavourite === o.isFavourite &&
           room.lastMessage?.eventId === o.lastMessage?.eventId &&
           room.lastMessage?.timestamp === o.lastMessage?.timestamp &&
           room.lastMessage?.body === o.lastMessage?.body &&
@@ -693,6 +694,12 @@ export class MatrixChatService {
     this.client.on(RoomStateEvent.Events, (_event: MatrixEvent) => {
       this.roomsUpdateTrigger$.next();
       this.roomStateVersion$.next(this.roomStateVersion$.value + 1);
+    });
+
+    // Room tags — `m.favourite` decides whether a room is pinned to the top of the room list.
+    // Tags live in account data, so this also fires when the user pins the room on another device.
+    this.client.on(RoomEvent.Tags, () => {
+      this.roomsUpdateTrigger$.next();
     });
 
     // Read receipts — update room list so unread counts reflect the new read position
@@ -1445,10 +1452,14 @@ private async buildAndEmitRoomsList(): Promise<void> {
         typingUsers: this.typingByRoom.get(room.roomId) ?? [],
         tenants: this.getRoomTenants(room),
         directUserId,
+        isFavourite: this.isFavouriteRoom(room),
         stateLoaded: this.isRoomStateLoaded(room),
       };
     })
     .sort((a, b) => {
+      // Pinned rooms first — a room the user pinned stays at the top no matter where the last
+      // message arrived. Within each group the ordering below is unchanged.
+      if (!!a.isFavourite !== !!b.isFavourite) return a.isFavourite ? -1 : 1;
       // Sort by last message timestamp (most recent first), fallback to room name
       const timeA = a.lastMessage?.timestamp || 0;
       const timeB = b.lastMessage?.timestamp || 0;
@@ -1526,6 +1537,28 @@ private async buildAndEmitRoomsList(): Promise<void> {
     const state = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
     const tenants = state?.getStateEvents(OKR_TENANT_EVENT, '')?.getContent()?.['tenants'] as string[] | undefined;
     return tenants?.length ? tenants : undefined;
+  }
+
+  /**
+   * Whether the user pinned this room (Matrix room tag `m.favourite`). Tags are account data,
+   * so this is the same answer on every device the person uses.
+   */
+  private isFavouriteRoom(room: Room): boolean {
+    return !!room.tags?.[MATRIX_FAVOURITE_TAG];
+  }
+
+  /**
+   * Pin or unpin a room for the current user by setting/removing its `m.favourite` tag. The
+   * room list is not patched here: the homeserver echoes the change back as RoomEvent.Tags,
+   * which rebuilds the list — the same path a pin made on another device takes.
+   */
+  public async setRoomFavourite(roomId: string, favourite: boolean): Promise<void> {
+    if (!this.client) throw new Error('MatrixChatService.setRoomFavourite: client not initialized');
+    if (favourite) {
+      await this.client.setRoomTag(roomId, MATRIX_FAVOURITE_TAG, {});
+    } else {
+      await this.client.deleteRoomTag(roomId, MATRIX_FAVOURITE_TAG);
+    }
   }
 
   /**

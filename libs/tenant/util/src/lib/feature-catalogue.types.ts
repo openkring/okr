@@ -31,6 +31,13 @@ export interface MenuSpec {
   /** Presentational defaults — used on create, never rewritten on an existing doc (D-BB-7). */
   icon: string;
   label: string;
+  /**
+   * `action: 'toggle'` only — the icon and label shown while the toggle is ACTIVE
+   * (`Menu.effectiveIcon` / `MenuStore.translatedMenuLabel`). Omitted elsewhere; a toggle
+   * without them silently renders its base icon/label in both states.
+   */
+  iconAlt?: string;
+  labelAlt?: string;
   children?: MenuSpec[];
 }
 

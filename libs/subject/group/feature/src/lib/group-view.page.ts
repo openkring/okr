@@ -309,6 +309,9 @@ export class GroupViewPage implements ViewWillEnter {
       case 'content':
         states['toggleEditMode'] = this.pageDispatcher()?.contentEditActive() ?? false;
         break;
+      case 'chat':
+        Object.assign(states, this.pageDispatcher()?.chatMenuToggleStates() ?? {});
+        break;
     }
     return states;
   });

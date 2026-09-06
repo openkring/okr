@@ -261,6 +261,16 @@ export const _MatrixChatStore = signalStore(
         };
       }),
 
+      /**
+       * Whether the open room is pinned to the top of the room list (Matrix tag `m.favourite`).
+       * Drives the label/icon of the `chat-room-pin` toggle in the chat context menu.
+       */
+      isCurrentRoomFavourite: computed(() => {
+        const roomId = state.currentRoomId();
+        if (!roomId) return false;
+        return !!state.rooms().find(r => r.roomId === roomId)?.isFavourite;
+      }),
+
       currentRoom: computed(() => {
         const roomId = state.currentRoomId();
         if (!roomId) return undefined;
@@ -566,6 +576,24 @@ export const _MatrixChatStore = signalStore(
         } catch (error) {
           console.error('MatrixChatStore.editRoom: Failed to update room:', error);
           await store.alertService.showToast(store.i18n.room_update_error());
+        }
+      },
+
+      /**
+       * Pin the open room to the top of the room list, or release it again — the `m.favourite`
+       * room tag. Personal to the signed-in user and shared across their devices, so no role is
+       * needed beyond being in the room.
+       */
+      async toggleCurrentRoomFavourite(): Promise<void> {
+        const room = store.currentRoom();
+        if (!room) return;
+        const pinned = !!room.isFavourite;
+        try {
+          await store.matrixService.setRoomFavourite(room.roomId, !pinned);
+          await store.alertService.showToast(pinned ? store.i18n.room_unpin_conf() : store.i18n.room_pin_conf());
+        } catch (error) {
+          console.error('MatrixChatStore.toggleCurrentRoomFavourite: Failed to change the room tag:', error);
+          await store.alertService.showToast(store.i18n.room_pin_error());
         }
       },
 

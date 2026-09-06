@@ -60,6 +60,15 @@
       "header": "Chat-Raum ändern",
       "conf": "Der Chat-Raum wurde geändert",
       "error": "Der Chat-Raum konnte nicht geändert werden."
+    },
+    "pinnedSection": "Angeheftet",
+    "allSection": "Alle Chats",
+    "pin": {
+      "conf": "Der Raum ist jetzt oben angeheftet.",
+      "error": "Das hat nicht geklappt. Versuche es bitte noch einmal."
+    },
+    "unpin": {
+      "conf": "Der Raum ist nicht mehr angeheftet."
     }
   },
   "help": {

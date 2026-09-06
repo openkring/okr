@@ -60,6 +60,15 @@
       "header": "Edit chat room",
       "conf": "The chat room was updated",
       "error": "The chat room could not be updated."
+    },
+    "pinnedSection": "Pinned",
+    "allSection": "All chats",
+    "pin": {
+      "conf": "The room is now pinned to the top.",
+      "error": "That did not work. Please try again."
+    },
+    "unpin": {
+      "conf": "The room is no longer pinned."
     }
   },
   "help": {

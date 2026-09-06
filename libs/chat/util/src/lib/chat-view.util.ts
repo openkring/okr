@@ -22,3 +22,17 @@ export function resolveInitialRoomId(
   if (persistedId && rooms.some(r => r.roomId === persistedId)) return persistedId;
   return rooms[0].roomId;
 }
+
+/**
+ * Splits a room list into the pinned rooms and the rest, each keeping the order it came in.
+ * The room list arrives sorted by last message; this only lifts the pinned ones out, so a pinned
+ * room stays put when traffic arrives elsewhere.
+ */
+export function splitFavouriteRooms(rooms: MatrixRoom[]): { favourites: MatrixRoom[]; others: MatrixRoom[] } {
+  const favourites: MatrixRoom[] = [];
+  const others: MatrixRoom[] = [];
+  for (const room of rooms) {
+    if (room.isFavourite) favourites.push(room); else others.push(room);
+  }
+  return { favourites, others };
+}

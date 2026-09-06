@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MatrixRoom } from '@okr/shared-models';
-import { filterRoomsByName, resolveInitialRoomId } from './chat-view.util';
+import { filterRoomsByName, resolveInitialRoomId, splitFavouriteRooms } from './chat-view.util';
 
 function room(roomId: string, name: string): MatrixRoom {
   return { roomId, name, isDirect: false, unreadCount: 0, members: [], typingUsers: [] } as MatrixRoom;
@@ -46,5 +46,32 @@ describe('resolveInitialRoomId', () => {
 
   it('falls back to the first room when nothing is persisted', () => {
     expect(resolveInitialRoomId(undefined, rooms)).toBe('!a');
+  });
+});
+
+describe('splitFavouriteRooms', () => {
+  function pinned(roomId: string, name: string): MatrixRoom {
+    return { ...room(roomId, name), isFavourite: true };
+  }
+
+  it('returns two empty lists for an empty room list', () => {
+    expect(splitFavouriteRooms([])).toEqual({ favourites: [], others: [] });
+  });
+
+  it('puts every room in others when none is pinned', () => {
+    const rooms = [room('!a', 'A'), room('!b', 'B')];
+    expect(splitFavouriteRooms(rooms)).toEqual({ favourites: [], others: rooms });
+  });
+
+  it('lifts the pinned rooms out, keeping the incoming order on both sides', () => {
+    const rooms = [room('!a', 'A'), pinned('!b', 'B'), room('!c', 'C'), pinned('!d', 'D')];
+    const { favourites, others } = splitFavouriteRooms(rooms);
+    expect(favourites.map(r => r.roomId)).toEqual(['!b', '!d']);
+    expect(others.map(r => r.roomId)).toEqual(['!a', '!c']);
+  });
+
+  it('treats a missing isFavourite as not pinned', () => {
+    const rooms = [{ ...room('!a', 'A'), isFavourite: undefined }];
+    expect(splitFavouriteRooms(rooms).others).toHaveLength(1);
   });
 });

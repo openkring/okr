@@ -40,7 +40,7 @@ import type { MatrixChat } from '@okr/chat-feature';
           <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
           <ion-title>{{ i18n.chat_type_label() }}</ion-title>
           <!-- room context menu, hoisted from the room-list toolbar; action delegated to MatrixChat -->
-          @if(canManageRooms()) {
+          @if(canOpenRoomMenu()) {
             <ion-buttons slot="end">
               <!-- present imperatively (not via [trigger]) so a late-rendered button / cached page
                    can't break Ionic's one-shot getElementById trigger wiring -->
@@ -50,7 +50,7 @@ import type { MatrixChat } from '@okr/chat-feature';
               <ion-popover #ctxPopover [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onContextMenuDismiss($event)">
                 <ng-template>
                   <ion-content>
-                    <okr-menu [menuName]="contextMenuName()" />
+                    <okr-menu [menuName]="contextMenuName()" [toggleStates]="roomMenuToggleStates()" />
                   </ion-content>
                 </ng-template>
               </ion-popover>
@@ -85,6 +85,10 @@ export class ChatPage {
 
   // hoist facade — read/driven by the parent PageDispatcher when this page is embedded in the group view
   public readonly canManageRooms = computed(() => this.chatRef()?.instance.canManageRooms() ?? false);
+  /** Whether to show the ⋮ at all — every signed-in member may pin a room, so this is not the admin gate. */
+  public readonly canOpenRoomMenu = computed(() => this.chatRef()?.instance.canOpenRoomMenu() ?? false);
+  /** Toggle state for the `chat-room-pin` row, forwarded to <okr-menu>. */
+  public readonly roomMenuToggleStates = computed<Record<string, boolean>>(() => this.chatRef()?.instance.roomMenuToggleStates() ?? {});
   public readonly hasRoom = computed(() => this.chatRef()?.instance.hasCurrentRoom() ?? false);
 
   constructor() {

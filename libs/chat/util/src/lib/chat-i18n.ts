@@ -56,6 +56,12 @@ export const MATRIX_CHAT_I18N_KEYS = {
 
   room_search_placeholder:   PFX + 'room.searchPlaceholder',
 
+  room_pinned_section:       PFX + 'room.pinnedSection',
+  room_all_section:          PFX + 'room.allSection',
+  room_pin_conf:             PFX + 'room.pin.conf',
+  room_unpin_conf:           PFX + 'room.unpin.conf',
+  room_pin_error:            PFX + 'room.pin.error',
+
   help_title:                      PFX + 'help.title',
   help_intro:                      PFX + 'help.intro',
   help_shortcuts_title:            PFX + 'help.shortcuts.title',

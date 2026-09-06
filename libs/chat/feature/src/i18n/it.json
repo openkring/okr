@@ -60,6 +60,15 @@
       "header": "Modifica stanza di chat",
       "conf": "La stanza di chat è stata modificata",
       "error": "Non è stato possibile modificare la stanza di chat."
+    },
+    "pinnedSection": "In evidenza",
+    "allSection": "Tutte le chat",
+    "pin": {
+      "conf": "La stanza è ora in cima.",
+      "error": "Non ha funzionato. Riprova."
+    },
+    "unpin": {
+      "conf": "La stanza non è più in cima."
     }
   },
   "help": {

@@ -91,6 +91,15 @@ export function resolveMatrixDisplayName(rawDisplayName: string | null | undefin
 export const OKR_TENANT_EVENT = 'org.okr.tenant';
 
 /**
+ * Matrix room tag marking a room the user pinned to the top of the room list. `m.favourite` is
+ * part of the Matrix spec, so it lives in the user's account data on the homeserver: the pin is
+ * personal, survives a reinstall and follows the person to every device — and, because one person
+ * has ONE Matrix account across tenants, to every tenant app as well. Nothing is written to
+ * Firestore for it.
+ */
+export const MATRIX_FAVOURITE_TAG = 'm.favourite';
+
+/**
  * Localpart prefixes used by the mautrix bridge family for their puppet ("ghost") users —
  * `@signal_<uuid>`, `@whatsapp_<number>`, … A ghost is the bridged contact themselves, not an
  * okr person and not a bot, so it must NOT go into SERVICE_ACCOUNT_LOCALPARTS (that set hides

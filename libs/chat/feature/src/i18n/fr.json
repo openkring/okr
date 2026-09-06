@@ -60,6 +60,15 @@
       "header": "Modifier le salon de discussion",
       "conf": "Le salon de discussion a été modifié",
       "error": "Le salon de discussion n'a pas pu être modifié."
+    },
+    "pinnedSection": "Épinglé",
+    "allSection": "Tous les chats",
+    "pin": {
+      "conf": "Le salon est maintenant épinglé en haut.",
+      "error": "Ça n'a pas fonctionné. Réessaie, s'il te plaît."
+    },
+    "unpin": {
+      "conf": "Le salon n'est plus épinglé."
     }
   },
   "help": {

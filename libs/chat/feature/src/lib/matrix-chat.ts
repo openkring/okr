@@ -582,6 +582,16 @@ export class MatrixChat implements OnDestroy {
   // Whether the current user may manage rooms (add/edit) — read by the parent ChatPage,
   // which hosts the hoisted context menu on the main toolbar and delegates to onPopoverDismiss().
   public readonly canManageRooms = computed(() => this.hasRole('admin'));
+  /**
+   * Who may OPEN the chat context menu — everyone signed in, not just admins: `chat-room-pin`
+   * is a `registered` row. The two room-management rows keep their own `admin` gate inside
+   * `<okr-menu>`, so a member opens the same popover and sees only the pin toggle.
+   */
+  public readonly canOpenRoomMenu = computed(() => this.hasRole('registered'));
+  /** Toggle state of the `chat-room-pin` row, keyed by the menu item's `url` (see Menu.toggleStates). */
+  public readonly roomMenuToggleStates = computed<Record<string, boolean>>(() => ({
+    togglePin: this.store.isCurrentRoomFavourite(),
+  }));
 
   // Whether a room is currently open — read by the parent ChatPage to gate the hoisted info icon.
   public readonly hasCurrentRoom = computed(() => !!this.store.currentRoom());
@@ -1227,6 +1237,9 @@ export class MatrixChat implements OnDestroy {
         if (room) await this.store.editRoom(room);
         break;
       }
+      case 'togglePin':
+        await this.store.toggleCurrentRoomFavourite();
+        break;
       // dismissed without a selection → no-op
     }
   }

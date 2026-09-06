@@ -60,6 +60,15 @@
       "header": "Editar sala de chat",
       "conf": "La sala de chat se ha modificado",
       "error": "No se ha podido modificar la sala de chat."
+    },
+    "pinnedSection": "Fijado",
+    "allSection": "Todos los chats",
+    "pin": {
+      "conf": "La sala está fijada arriba.",
+      "error": "No ha funcionado. Inténtalo de nuevo."
+    },
+    "unpin": {
+      "conf": "La sala ya no está fijada."
     }
   },
   "help": {

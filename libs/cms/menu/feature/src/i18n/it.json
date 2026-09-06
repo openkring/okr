@@ -494,6 +494,8 @@
     "strategie": "Visione e strategia",
     "subjects-menu": "Soggetti",
     "chat-room-edit": "Modifica stanza di chat",
+    "chat-room-pin": "Fissa la stanza",
+    "chat-room-unpin": "Rimuovi dalla cima",
     "account-delete": "Elimina piano dei conti",
     "aoc-chat": "Amministrazione chat",
     "journal-export": "Esporta giornale",

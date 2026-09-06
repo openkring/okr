@@ -494,6 +494,8 @@
     "strategie": "Vision et stratégie",
     "subjects-menu": "Sujets",
     "chat-room-edit": "Modifier le salon de chat",
+    "chat-room-pin": "Épingler le salon",
+    "chat-room-unpin": "Détacher le salon",
     "account-delete": "Supprimer le plan comptable",
     "aoc-chat": "Administration du chat",
     "journal-export": "Exporter le journal",

@@ -338,6 +338,9 @@ export function planMenuOps(
         fields: {
           okey: spec.key, name: spec.name, url: spec.url, action: spec.action,
           roleNeeded: spec.roleNeeded, icon: spec.icon, label: spec.label,
+          // Toggle rows only; spread so a non-toggle spec writes no empty keys.
+          ...(spec.iconAlt ? { iconAlt: spec.iconAlt } : {}),
+          ...(spec.labelAlt ? { labelAlt: spec.labelAlt } : {}),
           tenants: [tenantId],
           menuItems: (spec.children ?? []).map(c => c.key),
           // Both REQUIRED for the doc to actually render, not just for shape/search

@@ -66,6 +66,13 @@ export interface MatrixRoom {
    */
   tenants?: string[];
   /**
+   * Whether the user pinned this room to the top of the room list. Mirrors the Matrix room tag
+   * `m.favourite` (MATRIX_FAVOURITE_TAG in `@okr/chat-util`), which lives in the user's own
+   * account data on the homeserver — NOT a Firestore field, and per user rather than per room:
+   * pinning is personal and follows the person to every device and tenant app.
+   */
+  isFavourite?: boolean;
+  /**
    * For a DM: the other member's Matrix user id (`@<personKey>:<server>`). Lets the tenant
    * filter place a DM without any room state — a DM belongs to the tenants the two people
    * actually share. Undefined for group rooms.

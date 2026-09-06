@@ -494,6 +494,8 @@
     "strategie": "Vision and strategy",
     "subjects-menu": "Subjects",
     "chat-room-edit": "Edit chat room",
+    "chat-room-pin": "Pin room",
+    "chat-room-unpin": "Unpin room",
     "account-delete": "Delete chart of accounts",
     "aoc-chat": "Chat admin",
     "journal-export": "Export journal",

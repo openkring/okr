@@ -844,9 +844,13 @@ const subject: FeatureBlock = {
     // write, `blockOwnersOfMenuKey` resolves visibility to "any effective owner", and
     // `rootNavKeys` filters to `navigate`/`sub` so this `context` spec never reaches a root
     // nav. If you edit either copy, edit both.
-    { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
+    // `registered`, not `admin`: every member may pin a room (`chat-room-pin` below), so the
+    // popover itself must be reachable for them. The two room-management entries keep their own
+    // `admin` gate — gate 3 of the menu skill is per row, so a member sees only the pin toggle.
+    { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: '@item.chat-room-add' },
       { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: '@item.chat-room-edit' },
+      { key: 'chat-room-pin', name: 'chat-room-pin', url: 'togglePin', action: 'toggle', roleNeeded: 'registered', icon: 'star-outline', iconAlt: 'star', label: '@item.chat-room-pin', labelAlt: '@item.chat-room-unpin' },
     ] },
     { key: 'c-persons', name: 'c-persons', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'person-add', name: 'person-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.person-add' },
@@ -1689,9 +1693,13 @@ const chat: FeatureBlock = {
     // supported shared-declaration pattern, folded into one Firestore write by
     // `planMenuOpsForBlocks`. Keep the two copies field-identical; the cross-block identity
     // test in `feature-catalogue.completeness.spec.ts` enforces it.
-    { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'admin', icon: 'help-circle', label: '', children: [
+    // `registered`, not `admin`: every member may pin a room (`chat-room-pin` below), so the
+    // popover itself must be reachable for them. The two room-management entries keep their own
+    // `admin` gate — gate 3 of the menu skill is per row, so a member sees only the pin toggle.
+    { key: 'contextMenuChat', name: 'contextMenuChat', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'chat-room-add', name: 'chat-room-add', url: 'addRoom', action: 'call', roleNeeded: 'admin', icon: 'add-circle', label: '@item.chat-room-add' },
       { key: 'chat-room-edit', name: 'chat-room-edit', url: 'editRoom', action: 'call', roleNeeded: 'admin', icon: 'edit', label: '@item.chat-room-edit' },
+      { key: 'chat-room-pin', name: 'chat-room-pin', url: 'togglePin', action: 'toggle', roleNeeded: 'registered', icon: 'star-outline', iconAlt: 'star', label: '@item.chat-room-pin', labelAlt: '@item.chat-room-unpin' },
     ] },
   ],
 };

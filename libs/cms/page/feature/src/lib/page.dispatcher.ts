@@ -170,7 +170,9 @@ export class PageDispatcher implements ViewWillEnter {
       // the hoisted button until the content view has settled (so Ionic's one-shot popover-trigger
       // wiring binds to a stable DOM) and guarantees a delegate exists for onHoistMenuDismiss.
       case 'content': return this.contentPage() != null && this.groupAdmin();
-      case 'chat': return this.chatPage()?.canManageRooms() ?? false;
+      // every signed-in member may pin a room, so this is NOT the admin gate — the two
+      // room-management rows stay admin-only inside <okr-menu>
+      case 'chat': return this.chatPage()?.canOpenRoomMenu() ?? false;
       default: return false;
     }
   });
@@ -181,6 +183,9 @@ export class PageDispatcher implements ViewWillEnter {
 
   // toggle state for the hoisted content menu's 'toggleEditMode' item
   public readonly contentEditActive = computed(() => this.contentPage()?.isEditModeActive() ?? false);
+
+  // toggle state for the hoisted chat menu's 'chat-room-pin' item (keyed by its url, 'togglePin')
+  public readonly chatMenuToggleStates = computed<Record<string, boolean>>(() => this.chatPage()?.roomMenuToggleStates() ?? {});
 
   public async onHoistMenuDismiss($event: CustomEvent): Promise<void> {
     switch (this.page()?.type) {
