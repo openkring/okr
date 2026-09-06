@@ -1336,14 +1336,18 @@ export class CalEventList implements OnInit {
     const personKey = this.currentUser()?.personKey;
     if (!personKey) return false;
 
-    // 2) group calendar: check if currentUser is admin of the owning group
+    // 2) group calendar: check if currentUser is admin of one of the owning groups.
+    //    NEVER return the negative result from inside the loop: an event may sit on several
+    //    calendars, and its own organiser (step 3) must keep their rights on a group calendar
+    //    they do not administrate.
     if (calevent) {
       const allCalendars = this.store.calendarsResource.value() ?? [];
       for (const calKey of calevent.calendars) {
         const cal = allCalendars.find(c => c.okey === calKey);
         if (cal?.owner?.startsWith('group.')) {
           const group = this.store.appStore.getGroup(cal.owner.substring(6));
-          return isAdminMember(group, personKey);        }
+          if (isAdminMember(group, personKey)) return true;
+        }
       }
     }
 
