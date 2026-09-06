@@ -11,10 +11,13 @@ export const resourceValidations = staticSuite((model: ResourceModel, tenants: s
   baseValidations(model, tenants, tags, field);
 
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
-  // ponytail: this passes model.NAME but files its errors under 'index' — a copy/paste slip.
-  // Left as-is (fixing the field would start enforcing a 30-char cap on resource names);
-  // the cap is dropped because `index` is generated and overwritten at save time.
-  stringValidations('index', model.name);
+  // Mirrors baseValidations, like every sibling suite does. Uncapped: `index` is generated
+  // (getResourceIndex) and the service overwrites it at save time, after this suite has run.
+  // This line used to pass model.NAME while filing under 'index' — a copy/paste slip that made
+  // the wrong value carry the wrong field's cap. Harmless while caps were inert; with them
+  // enforced it would have judged resource indexes (up to 32 characters live) by the 30-char
+  // name cap, on a field nobody can edit.
+  stringValidations('index', model.index);
   //tagValidations('tags', model.tags);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
   stringValidations('type', model.type, WORD_LENGTH);
