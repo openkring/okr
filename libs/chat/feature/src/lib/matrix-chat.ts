@@ -785,6 +785,13 @@ export class MatrixChat implements OnDestroy {
       debugMessage(`MatrixChat: Requesting access to group room for ${groupId}`, this.store.currentUser());
       const result = await this.store.requestGroupRoomAccess(groupId);
       debugMessage(`MatrixChat: Got room access, roomId=${result.roomId}`, this.store.currentUser());
+      // The deep link is now spent — exactly as in the match branch above. Without this the
+      // alias stays unresolved forever and every later `rooms()` emission (a sent message is
+      // enough) re-applies it, yanking the user out of whatever room they have since selected.
+      // An 'ask' group is the permanent case: its room carries `#ask_<group>_<person>`, never
+      // the `#group_<key>` alias the deep link derives, so the match branch can never claim it.
+      // Only on success: a failed request must stay retryable after the cooldown.
+      this.resolvedRoomAlias = groupId;
       this.store.setCurrentRoom(result.roomId);
     } catch (error) {
       console.error('MatrixChat: Failed to request room access:', error);
