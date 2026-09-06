@@ -71,3 +71,19 @@ export function diaryYearList(): number[] {
   for (let y = thisYear; y >= DIARY_FIRST_YEAR; y--) years.push(y);
   return years;
 }
+
+/**
+ * Sort key that makes an aggregate the headline of the period it summarises.
+ *
+ * Under plain descending date a year aggregate loses: '19900000' is the SMALLEST key of 1990, so
+ * it lands below every day of that year, and '20041000' below every day of October 2004. Raising
+ * the zeroed components to '99' ('19909999', '20041099') puts each aggregate directly above the
+ * days it covers, without touching the order of the calendar days themselves.
+ */
+export function diaryHeadlineSortKey(date: string): string {
+  const parts = splitDiaryDate(date);
+  if (!parts) return date;
+  const month = parts.month === 0 ? '99' : String(parts.month).padStart(2, '0');
+  const day = parts.day === 0 ? '99' : String(parts.day).padStart(2, '0');
+  return `${String(parts.year).padStart(4, '0')}${month}${day}`;
+}
