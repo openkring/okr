@@ -22,7 +22,13 @@ export function baseValidations(model: OkrModel, givenTenants: string, givenTags
 
   omitWhen(!isSearchableModel(model), () => {
     const m = model as unknown as SearchableModel;
-    stringValidations('index', m.index, LONG_NAME_LENGTH);
+    // No length cap on `index`: it is GENERATED (getCaleventIndex, getGroupIndex, ...) and every
+    // service overwrites it at save time, AFTER this suite has run. Capping it could therefore only
+    // reject a value the user cannot see, cannot edit, and that is about to be replaced anyway —
+    // the form would simply never offer its save bar. It was inert while the cap rode on the
+    // isMandatory flag; with caps enforced it would have blocked real records (one live scs
+    // calevent's index is 113 characters against LONG_NAME_LENGTH = 100).
+    stringValidations('index', m.index);
   });
 
   omitWhen(!isAddressableModel(model), () => {
@@ -291,7 +297,11 @@ export function stringValidations(fieldName: string, value: unknown, maxLength?:
       enforce(value as string).isNotBlank();
     });
   });
-  omitWhen(maxLength === undefined || isMandatory === false, () => {
+  // A declared cap applies whether the field is mandatory or not — an optional field with a
+  // maxLength used to be silently unchecked, because this test was gated on isMandatory as well.
+  // Still skipped when there is no string to measure: `shorterThanOrEquals` on undefined/null
+  // throws, which Vest records as a failure, and every empty optional field would report 'tooLong'.
+  omitWhen(maxLength === undefined || typeof value !== 'string' || value.length === 0, () => {
     test(fieldName, 'tooLong', () => {
       enforce(value as string).shorterThanOrEquals(maxLength);
     });

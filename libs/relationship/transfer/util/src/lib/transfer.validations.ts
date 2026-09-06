@@ -9,7 +9,10 @@ export const transferValidations = staticSuite((model: TransferModel, tenants: s
 
   stringValidations('okey', model.okey, SHORT_NAME_LENGTH);
   booleanValidations('isArchived', model.isArchived);
-  stringValidations('index', model.index, SHORT_NAME_LENGTH);
+  // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER
+  // this suite runs — a cap here can only reject a value the user cannot see or edit, so the
+  // form would just never offer its save bar. Left uncapped on purpose; see vest.util.
+  stringValidations('index', model.index);
   //tagValidations('tags', model.tags);
   stringValidations('notes', model.notes, DESCRIPTION_LENGTH);
   stringValidations('name', model.name, SHORT_NAME_LENGTH);

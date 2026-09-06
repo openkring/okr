@@ -9,6 +9,9 @@ function draft(overrides: Partial<SchedulePollFormData> = {}): SchedulePollFormD
     columns: [{ id: 'c0', startDate: '20260703', startTime: '' }],
     rows: [{ key: 'p1', firstName: 'Bruno', lastName: 'Kaiser', responses: { c0: 'accepted' } }],
     isDraft: true,
+    // required on SchedulePollFormData: without it the literal is missing a property, and a
+    // Partial spread cannot supply one ('boolean | undefined' is not assignable to 'boolean')
+    multiSelect: false,
     ...overrides,
   };
 }

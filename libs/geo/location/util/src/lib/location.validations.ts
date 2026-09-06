@@ -1,7 +1,7 @@
 
 import { only, staticSuite } from 'vest';
 
-import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { LocationModel } from '@okr/shared-models';
 import { baseValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -9,8 +9,13 @@ export const locationValidations = staticSuite((model: LocationModel, tenants: s
   if (field) only(field);
 
   baseValidations(model, tenants, tags, field);  // okey, tenants, isArchived
-  stringValidations('index', model.index, SHORT_NAME_LENGTH);
-  stringValidations('name', model.name, SHORT_NAME_LENGTH);
+  // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER
+  // this suite runs — a cap here can only reject a value the user cannot see or edit, so the
+  // form would just never offer its save bar. Left uncapped on purpose; see vest.util.
+  stringValidations('index', model.index);
+  // NAME_LENGTH, not SHORT_NAME_LENGTH: live scs locations already carry 31-character names
+  // ('Rapperswil - Busskirch - Hurden'), which the 30-cap would have made unsavable.
+  stringValidations('name', model.name, NAME_LENGTH);
   stringValidations('address', model.address, LONG_NAME_LENGTH);
   //tagValidations('tags', model.tags);
   stringValidations('type', model.type, WORD_LENGTH);

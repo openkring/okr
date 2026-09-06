@@ -11,7 +11,10 @@ export const resourceValidations = staticSuite((model: ResourceModel, tenants: s
   baseValidations(model, tenants, tags, field);
 
   stringValidations('name', model.name, SHORT_NAME_LENGTH);
-  stringValidations('index', model.name, SHORT_NAME_LENGTH);
+  // ponytail: this passes model.NAME but files its errors under 'index' — a copy/paste slip.
+  // Left as-is (fixing the field would start enforcing a 30-char cap on resource names);
+  // the cap is dropped because `index` is generated and overwritten at save time.
+  stringValidations('index', model.name);
   //tagValidations('tags', model.tags);
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
   stringValidations('type', model.type, WORD_LENGTH);

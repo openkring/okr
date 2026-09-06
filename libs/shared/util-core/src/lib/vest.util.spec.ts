@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { create } from 'vest';
 
-import { partialDateValidations, tagValidations } from './vest.util';
+import { partialDateValidations, stringValidations, tagValidations } from './vest.util';
 
 /**
  * The configured tag lists in the `tags` collection are authored with ", " separators
@@ -83,5 +83,51 @@ describe('partialDateValidations', () => {
 
   it('rejects a wrong length', () => {
     expect(runPartialDate('1985').hasErrors('dateOfBirth')).toBe(true);
+  });
+});
+
+/**
+ * The length cap used to ride on the `isMandatory` flag: `stringValidations(f, v, 50)` declared a
+ * maximum and enforced nothing, in ~380 call sites including baseValidations' own `name` and
+ * `index`. These pin the cap to the cap, and the exemption to values there is nothing to measure.
+ */
+function runString(value: unknown, maxLength?: number, minLength = 0, isMandatory = false) {
+  return create(() => stringValidations('field', value, maxLength, minLength, isMandatory))();
+}
+
+describe('stringValidations — maxLength', () => {
+
+  it('enforces the cap on an OPTIONAL field', () => {
+    expect(runString('x'.repeat(51), 50).getErrors('field')).toContain('tooLong');
+  });
+
+  it('enforces the cap on a mandatory field', () => {
+    expect(runString('x'.repeat(51), 50, 1, true).getErrors('field')).toContain('tooLong');
+  });
+
+  it('accepts a value of exactly the cap', () => {
+    expect(runString('x'.repeat(50), 50).isValid()).toBe(true);
+  });
+
+  it('accepts an empty optional value — there is nothing to be too long', () => {
+    const result = runString('', 50);
+    expect(result.getErrors('field')).not.toContain('tooLong');
+    expect(result.isValid()).toBe(true);
+  });
+
+  it('does not report tooLong for an absent optional value', () => {
+    // shorterThanOrEquals(undefined) throws, and Vest records a throw as a failure — without the
+    // guard every empty optional field in the app would have reported 'tooLong'.
+    expect(runString(undefined, 50).getErrors('field')).not.toContain('tooLong');
+    expect(runString(null, 50).getErrors('field')).not.toContain('tooLong');
+  });
+
+  it('checks nothing when no cap is declared', () => {
+    expect(runString('x'.repeat(5000)).isValid()).toBe(true);
+  });
+
+  it('leaves minLength gated on isMandatory — an optional field may stay empty', () => {
+    expect(runString('', 50, 5).getErrors('field')).not.toContain('tooShort');
+    expect(runString('abc', 50, 5, true).getErrors('field')).toContain('tooShort');
   });
 });

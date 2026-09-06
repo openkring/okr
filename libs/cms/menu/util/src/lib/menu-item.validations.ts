@@ -19,7 +19,10 @@ export const menuItemValidations = staticSuite((model: MenuItemModel, tenants: s
   stringValidations('action', model.action, WORD_LENGTH, 3, true);
   // url needs to be validated as string, because it can contain a function name
   stringValidations('url', model.url, LONG_NAME_LENGTH);
-  stringValidations('index', model.index, LONG_NAME_LENGTH);
+  // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER
+  // this suite runs — a cap here can only reject a value the user cannot see or edit, so the
+  // form would just never offer its save bar. Left uncapped on purpose; see vest.util.
+  stringValidations('index', model.index);
   booleanValidations('isArchived', model.isArchived, false);
 
   //tagValidations(_tags, 'tags', model.tags);

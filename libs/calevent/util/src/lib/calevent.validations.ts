@@ -1,6 +1,6 @@
 import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
-import { MAX_DATES_PER_SERIES, NAME_LENGTH, SHORT_NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
+import { LONG_NAME_LENGTH, MAX_DATES_PER_SERIES, NAME_LENGTH, WORD_LENGTH } from '@okr/shared-constants';
 import { CalEventModel } from '@okr/shared-models';
 import { baseValidations, calculateRecurringDates, dateValidations, isAfterOrEqualDate, numberValidations, stringValidations } from '@okr/shared-util-core';
 
@@ -23,7 +23,10 @@ export const calEventValidations = staticSuite((model: CalEventModel, tenants: s
   numberValidations('durationMinutes', model.durationMinutes, true, 0, 1440);
   // 0 = unrestricted; the upper bound only keeps a typo (a pasted phone number) out of the field
   numberValidations('maxAttendees', model.maxAttendees ?? 0, true, 0, 100000);
-  stringValidations('locationKey', model.locationKey, SHORT_NAME_LENGTH);
+  // LONG_NAME_LENGTH: locationKey holds a 'name@okey' tuple (a 20-char autoid plus the place
+  // name) or free text. 63 live scs events already exceed the old 30-cap
+  // ('Bootshaus - Kafipause in OST Rapperswil'), and a tuple can pass 50 as well.
+  stringValidations('locationKey', model.locationKey, LONG_NAME_LENGTH);
   stringValidations('periodicity', model.periodicity, WORD_LENGTH);
   dateValidations('repeatUntilDate', model.repeatUntilDate);
   // tbd: responsiblePersons: AvatarInfo[] - not yet implemented

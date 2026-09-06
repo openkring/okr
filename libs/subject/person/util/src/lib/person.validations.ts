@@ -13,7 +13,10 @@ export const personValidations = staticSuite((model: PersonFormModel, tenants: s
   if (field) only(field);
 
   baseValidations(model, tenants, tags, field);
-  stringValidations('index', model.index, SHORT_NAME_LENGTH);
+  // `index` is generated (get<Model>Index) and the service overwrites it at save time, AFTER
+  // this suite runs — a cap here can only reject a value the user cannot see or edit, so the
+  // form would just never offer its save bar. Left uncapped on purpose; see vest.util.
+  stringValidations('index', model.index);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);
   stringValidations('gender', model.gender, WORD_LENGTH);

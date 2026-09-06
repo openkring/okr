@@ -210,7 +210,11 @@ export const PHONE_LENGTH = 30;
 export const IBAN_LENGTH = 26;
 export const BEXIO_ID_LENGTH = 6;
 export const TAX_ID_LENGTH = 12;
-export const SSN_LENGTH = 13;
+// 16, not 13: the AHV number is stored and displayed in its dotted notation
+// ('756.0803.5816.61'), so the string is 13 digits PLUS 3 separators — the same
+// formatted-length convention IBAN_LENGTH follows. The 13 was the digit count, and it went
+// unnoticed while stringValidations only applied a cap to mandatory fields.
+export const SSN_LENGTH = 16;
 export const DATE_LENGTH = 10;
 export const STORE_DATE_LENGTH = 8;
 export const STORE_DATETIME_LENGTH = 14;
