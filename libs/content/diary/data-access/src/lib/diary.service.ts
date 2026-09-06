@@ -6,7 +6,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { DbQuery, DiaryCollection, DiaryModel, TripCollection, TripModel, UserModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
 
-import { DIARY_I18N_KEYS, diaryYearBounds } from '@okr/content-diary-util';
+import { DIARY_I18N_KEYS, diaryHeadlineSortKey, diaryYearBounds } from '@okr/content-diary-util';
 
 /**
  * Reads and writes the author's own diary entries.
@@ -50,7 +50,7 @@ export class DiaryService {
     ).pipe(
       map(diaries => diaries
         .filter(diary => !diary.isArchived)
-        .sort((a, b) => b.date.localeCompare(a.date))),
+        .sort((a, b) => diaryHeadlineSortKey(b.date).localeCompare(diaryHeadlineSortKey(a.date)))),
     );
   }
 
@@ -82,7 +82,7 @@ export class DiaryService {
     return this.firestoreService.searchData<DiaryModel>(DiaryCollection, query, 'none').pipe(
       map(diaries => diaries
         .filter(diary => !diary.isArchived)
-        .sort((a, b) => b.date.localeCompare(a.date))),
+        .sort((a, b) => diaryHeadlineSortKey(b.date).localeCompare(diaryHeadlineSortKey(a.date)))),
     );
   }
 

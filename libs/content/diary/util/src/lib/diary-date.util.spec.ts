@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  composeDiaryDate, diaryDateMatchesScope, diaryYearBounds, diaryYearList, diaryYearOf,
+  composeDiaryDate, diaryDateMatchesScope, diaryHeadlineSortKey, diaryYearBounds, diaryYearList, diaryYearOf,
   isDiaryCalendarDay, splitDiaryDate, DIARY_FIRST_YEAR,
 } from './diary-date.util';
 
@@ -58,5 +58,16 @@ describe('diaryYearOf / diaryYearBounds / diaryYearList', () => {
     const years = diaryYearList();
     expect(years[years.length - 1]).toBe(DIARY_FIRST_YEAR);
     expect(years[0]).toBe(new Date().getFullYear());
+  });
+  it('raises an aggregate above the period it summarises', () => {
+    expect(diaryHeadlineSortKey('19900000')).toBe('19909999');
+    expect(diaryHeadlineSortKey('20041000')).toBe('20041099');
+    expect(diaryHeadlineSortKey('20041031')).toBe('20041031');
+    expect(diaryHeadlineSortKey('')).toBe('');
+  });
+  it('sorts a year over its months and a month over its days, newest first', () => {
+    const dates = ['19900101', '19900000', '19901000', '19901031'];
+    const sorted = [...dates].sort((a, b) => diaryHeadlineSortKey(b).localeCompare(diaryHeadlineSortKey(a)));
+    expect(sorted).toEqual(['19900000', '19901000', '19901031', '19900101']);
   });
 });
