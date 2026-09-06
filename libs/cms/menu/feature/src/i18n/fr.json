@@ -229,36 +229,36 @@
       "label": "Toutes les actions"
     },
     "navigate": {
-      "label": "Navigate",
+      "label": "Naviguer",
       "description": "Naviguer vers une autre page"
     },
     "browse": {
-      "label": "Browse",
+      "label": "Parcourir",
       "description": "Ouvrir la page dans un onglet externe du navigateur."
     },
     "logout": {
-      "label": "Logout",
+      "label": "Déconnexion",
       "description": "Terminer la session en cours et se déconnecter.",
       "confirm": "Êtes-vous sûr ? Vous devrez ensuite vous reconnecter avec votre mot de passe."
     },
     "sub": {
-      "label": "Submenu",
+      "label": "Sous-menu",
       "description": "Naviguer vers un sous-menu"
     },
     "context": {
-      "label": "Context Menu",
+      "label": "Menu contextuel",
       "description": "Menu contextuel, p. ex. Export, Add dans les listes"
     },
     "divider": {
-      "label": "Divider",
+      "label": "Séparateur",
       "description": "Ligne de séparation entre les éléments de menu"
     },
     "main": {
-      "label": "Main Menu",
+      "label": "Menu principal",
       "description": "Le menu de premier niveau"
     },
     "login": {
-      "label": "Login",
+      "label": "Connexion",
       "description": "Naviguer vers le formulaire de connexion"
     },
     "call": {
@@ -266,7 +266,7 @@
       "description": "Appelle une méthode du store (p. ex. add, export...)"
     },
     "toggle": {
-      "label": "Toggle",
+      "label": "Basculer",
       "description": "Bascule la valeur d'une variable binaire (p. ex. on/off)."
     },
     "workflow": {

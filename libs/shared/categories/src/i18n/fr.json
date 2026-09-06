@@ -9,7 +9,7 @@
   "albumStyle": {
     "name": "Style d'album",
     "grid": {
-      "label": "Grid",
+      "label": "Grille",
       "description": "Les images sont affichées dans une grille, les images sont définies comme background-image"
     },
     "pinterest": {
@@ -48,10 +48,10 @@
       "description": "N'afficher le Gravatar que si aucune photo d'avatar personnelle n'est disponible."
     }
   },
-    "buttonAction": {
+  "buttonAction": {
     "name": "Action du bouton",
     "download": {
-      "label": "Download",
+      "label": "Télécharger",
       "description": "Télécharger le fichier"
     },
     "navigate": {
@@ -59,7 +59,7 @@
       "description": "Naviguer vers une autre page"
     },
     "browse": {
-      "label": "Browse",
+      "label": "Parcourir",
       "description": "Ouvrir un lien externe dans une nouvelle fenêtre du navigateur"
     },
     "zoom": {
@@ -123,31 +123,31 @@
     }
   },
   "delivery": {
-      "name": "Mode de livraison",
-      "all": {
-        "label": "Tous"
-      },
-      "mail": {
-        "label": "Courrier",
-        "description": "La livraison se fait par courrier postal ordinaire sur papier."
-      },
-      "emailAttachment": {
-        "label": "E-mail avec pièce jointe",
-        "description": "Les informations sont envoyées en pièce jointe par e-mail. C'est le mode par défaut."
-      },
-      "smsNotification": {
-        "label": "Téléchargement avec notification par SMS",
-        "description": "Une notification est envoyée par SMS indiquant que les informations peuvent être téléchargées."
-      },
-      "emailNotification": {
-        "label": "Téléchargement avec notification par e-mail",
-        "description": "Une notification est envoyée par e-mail indiquant que les informations peuvent être téléchargées."
-      },
-      "inappNotification": {
-        "label": "Téléchargement avec notification dans l'application",
-        "description": "Une notification est envoyée dans l'application indiquant que les informations peuvent être téléchargées."
-      }
+    "name": "Mode de livraison",
+    "all": {
+      "label": "Tous"
     },
+    "mail": {
+      "label": "Courrier",
+      "description": "La livraison se fait par courrier postal ordinaire sur papier."
+    },
+    "emailAttachment": {
+      "label": "E-mail avec pièce jointe",
+      "description": "Les informations sont envoyées en pièce jointe par e-mail. C'est le mode par défaut."
+    },
+    "smsNotification": {
+      "label": "Téléchargement avec notification par SMS",
+      "description": "Une notification est envoyée par SMS indiquant que les informations peuvent être téléchargées."
+    },
+    "emailNotification": {
+      "label": "Téléchargement avec notification par e-mail",
+      "description": "Une notification est envoyée par e-mail indiquant que les informations peuvent être téléchargées."
+    },
+    "inappNotification": {
+      "label": "Téléchargement avec notification dans l'application",
+      "description": "Une notification est envoyée dans l'application indiquant que les informations peuvent être téléchargées."
+    }
+  },
   "export": {
     "json": {
       "label": "JSON",
@@ -265,7 +265,7 @@
   },
   "imageAction": {
     "download": {
-      "label": "Download",
+      "label": "Télécharger",
       "description": "Télécharger l'image"
     },
     "zoom": {
@@ -273,19 +273,19 @@
       "description": "Affichage agrandi de l'image"
     },
     "openslider": {
-      "label": "Open Slider",
+      "label": "Ouvrir la galerie",
       "description": "Afficher l'image dans une galerie"
     },
     "opendirectory": {
-      "label": "Open Directory",
+      "label": "Ouvrir le dossier",
       "description": "Ouvrir le dossier"
     },
     "followlink": {
-      "label": "Follow Link",
+      "label": "Suivre le lien",
       "description": "Suivre le lien"
     },
     "none": {
-      "label": "None",
+      "label": "Aucune",
       "description": "Aucune action"
     }
   },
@@ -299,7 +299,7 @@
       "description": "Une vidéo (mp4, mov)"
     },
     "streamingvideo": {
-      "label": "Streaming Video",
+      "label": "Vidéo en streaming",
       "description": "Une vidéo en streaming (YouTube, Vimeo)"
     },
     "audio": {
@@ -500,7 +500,6 @@
       "description": "ni true ni false"
     }
   },
-
   "view-position": {
     "none": {
       "label": "Aucune",

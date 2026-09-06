@@ -9,7 +9,7 @@
   "albumStyle": {
     "name": "Estilo de álbum",
     "grid": {
-      "label": "Grid",
+      "label": "Cuadrícula",
       "description": "Las imágenes se muestran en una cuadrícula, las imágenes se establecen como background-image"
     },
     "pinterest": {
@@ -48,10 +48,10 @@
       "description": "Mostrar el Gravatar solo si no hay disponible una foto de avatar propia."
     }
   },
-    "buttonAction": {
+  "buttonAction": {
     "name": "Acción del botón",
     "download": {
-      "label": "Download",
+      "label": "Descargar",
       "description": "Descargar archivo"
     },
     "navigate": {
@@ -59,7 +59,7 @@
       "description": "Navegar a otra página"
     },
     "browse": {
-      "label": "Browse",
+      "label": "Explorar",
       "description": "Abrir un enlace externo en una nueva ventana del navegador"
     },
     "zoom": {
@@ -123,31 +123,31 @@
     }
   },
   "delivery": {
-      "name": "Tipo de entrega",
-      "all": {
-        "label": "Todos"
-      },
-      "mail": {
-        "label": "Correo postal",
-        "description": "La entrega se realiza por correo postal normal en papel."
-      },
-      "emailAttachment": {
-        "label": "Correo electrónico con adjunto",
-        "description": "La información se envía como adjunto por correo electrónico. Este es el modo predeterminado."
-      },
-      "smsNotification": {
-        "label": "Descarga con notificación por SMS",
-        "description": "Se envía una notificación por SMS de que la información se puede descargar."
-      },
-      "emailNotification": {
-        "label": "Descarga con notificación por correo electrónico",
-        "description": "Se envía una notificación por correo electrónico de que la información se puede descargar."
-      },
-      "inappNotification": {
-        "label": "Descarga con notificación en la aplicación",
-        "description": "Se envía una notificación en la aplicación de que la información se puede descargar."
-      }
+    "name": "Tipo de entrega",
+    "all": {
+      "label": "Todos"
     },
+    "mail": {
+      "label": "Correo postal",
+      "description": "La entrega se realiza por correo postal normal en papel."
+    },
+    "emailAttachment": {
+      "label": "Correo electrónico con adjunto",
+      "description": "La información se envía como adjunto por correo electrónico. Este es el modo predeterminado."
+    },
+    "smsNotification": {
+      "label": "Descarga con notificación por SMS",
+      "description": "Se envía una notificación por SMS de que la información se puede descargar."
+    },
+    "emailNotification": {
+      "label": "Descarga con notificación por correo electrónico",
+      "description": "Se envía una notificación por correo electrónico de que la información se puede descargar."
+    },
+    "inappNotification": {
+      "label": "Descarga con notificación en la aplicación",
+      "description": "Se envía una notificación en la aplicación de que la información se puede descargar."
+    }
+  },
   "export": {
     "json": {
       "label": "JSON",
@@ -265,7 +265,7 @@
   },
   "imageAction": {
     "download": {
-      "label": "Download",
+      "label": "Descargar",
       "description": "Descargar imagen"
     },
     "zoom": {
@@ -273,19 +273,19 @@
       "description": "Presentación ampliada de la imagen"
     },
     "openslider": {
-      "label": "Open Slider",
+      "label": "Abrir la galería",
       "description": "Mostrar la imagen en una galería"
     },
     "opendirectory": {
-      "label": "Open Directory",
+      "label": "Abrir la carpeta",
       "description": "Abrir la carpeta"
     },
     "followlink": {
-      "label": "Follow Link",
+      "label": "Seguir el enlace",
       "description": "Seguir el enlace"
     },
     "none": {
-      "label": "None",
+      "label": "Ninguna",
       "description": "Ninguna acción"
     }
   },
@@ -299,7 +299,7 @@
       "description": "Un vídeo (mp4, mov)"
     },
     "streamingvideo": {
-      "label": "Streaming Video",
+      "label": "Vídeo en streaming",
       "description": "Un vídeo en streaming (YouTube, Vimeo)"
     },
     "audio": {
@@ -500,7 +500,6 @@
       "description": "ni true ni false"
     }
   },
-
   "view-position": {
     "none": {
       "label": "Ninguna",

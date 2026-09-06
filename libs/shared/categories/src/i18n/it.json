@@ -9,7 +9,7 @@
   "albumStyle": {
     "name": "Stile album",
     "grid": {
-      "label": "Grid",
+      "label": "Griglia",
       "description": "Le immagini vengono visualizzate in una griglia, le immagini vengono impostate come background-image"
     },
     "pinterest": {
@@ -48,10 +48,10 @@
       "description": "Mostrare il Gravatar solo se non è disponibile una foto avatar personale."
     }
   },
-    "buttonAction": {
+  "buttonAction": {
     "name": "Azione del pulsante",
     "download": {
-      "label": "Download",
+      "label": "Scaricare",
       "description": "Scaricare il file"
     },
     "navigate": {
@@ -59,7 +59,7 @@
       "description": "Navigare verso un'altra pagina"
     },
     "browse": {
-      "label": "Browse",
+      "label": "Sfoglia",
       "description": "Aprire un collegamento esterno in una nuova finestra del browser"
     },
     "zoom": {
@@ -123,31 +123,31 @@
     }
   },
   "delivery": {
-      "name": "Tipo di consegna",
-      "all": {
-        "label": "Tutti"
-      },
-      "mail": {
-        "label": "Posta",
-        "description": "La consegna avviene tramite posta ordinaria su carta."
-      },
-      "emailAttachment": {
-        "label": "E-mail con allegato",
-        "description": "Le informazioni vengono inviate come allegato via e-mail. Questa è l'impostazione predefinita."
-      },
-      "smsNotification": {
-        "label": "Download con notifica via SMS",
-        "description": "Viene inviata una notifica via SMS che le informazioni possono essere scaricate."
-      },
-      "emailNotification": {
-        "label": "Download con notifica via e-mail",
-        "description": "Viene inviata una notifica via e-mail che le informazioni possono essere scaricate."
-      },
-      "inappNotification": {
-        "label": "Download con notifica in-app",
-        "description": "Viene inviata una notifica nell'app che le informazioni possono essere scaricate."
-      }
+    "name": "Tipo di consegna",
+    "all": {
+      "label": "Tutti"
     },
+    "mail": {
+      "label": "Posta",
+      "description": "La consegna avviene tramite posta ordinaria su carta."
+    },
+    "emailAttachment": {
+      "label": "E-mail con allegato",
+      "description": "Le informazioni vengono inviate come allegato via e-mail. Questa è l'impostazione predefinita."
+    },
+    "smsNotification": {
+      "label": "Download con notifica via SMS",
+      "description": "Viene inviata una notifica via SMS che le informazioni possono essere scaricate."
+    },
+    "emailNotification": {
+      "label": "Download con notifica via e-mail",
+      "description": "Viene inviata una notifica via e-mail che le informazioni possono essere scaricate."
+    },
+    "inappNotification": {
+      "label": "Download con notifica in-app",
+      "description": "Viene inviata una notifica nell'app che le informazioni possono essere scaricate."
+    }
+  },
   "export": {
     "json": {
       "label": "JSON",
@@ -265,7 +265,7 @@
   },
   "imageAction": {
     "download": {
-      "label": "Download",
+      "label": "Scaricare",
       "description": "Scaricare l'immagine"
     },
     "zoom": {
@@ -273,19 +273,19 @@
       "description": "Visualizzazione ingrandita dell'immagine"
     },
     "openslider": {
-      "label": "Open Slider",
+      "label": "Aprire la galleria",
       "description": "Mostrare l'immagine in una galleria"
     },
     "opendirectory": {
-      "label": "Open Directory",
+      "label": "Aprire la cartella",
       "description": "Aprire la cartella"
     },
     "followlink": {
-      "label": "Follow Link",
+      "label": "Seguire il collegamento",
       "description": "Seguire il collegamento"
     },
     "none": {
-      "label": "None",
+      "label": "Nessuna",
       "description": "Nessuna azione"
     }
   },
@@ -299,7 +299,7 @@
       "description": "Un video (mp4, mov)"
     },
     "streamingvideo": {
-      "label": "Streaming Video",
+      "label": "Video in streaming",
       "description": "Un video in streaming (YouTube, Vimeo)"
     },
     "audio": {
@@ -500,7 +500,6 @@
       "description": "né true né false"
     }
   },
-
   "view-position": {
     "none": {
       "label": "Nessuna",

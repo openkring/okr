@@ -229,36 +229,36 @@
       "label": "Todas las acciones"
     },
     "navigate": {
-      "label": "Navigate",
+      "label": "Navegar",
       "description": "Navegar a otra página"
     },
     "browse": {
-      "label": "Browse",
+      "label": "Explorar",
       "description": "Abrir la página en una pestaña externa del navegador."
     },
     "logout": {
-      "label": "Logout",
+      "label": "Cerrar sesión",
       "description": "Finalizar la sesión actual y cerrar sesión.",
       "confirm": "¿Está seguro? Después deberá volver a iniciar sesión con su contraseña."
     },
     "sub": {
-      "label": "Submenu",
+      "label": "Submenú",
       "description": "Navegar a un submenú"
     },
     "context": {
-      "label": "Context Menu",
+      "label": "Menú contextual",
       "description": "Menú contextual, p. ej. Export, Add en las listas"
     },
     "divider": {
-      "label": "Divider",
+      "label": "Separador",
       "description": "Línea de separación entre elementos de menú"
     },
     "main": {
-      "label": "Main Menu",
+      "label": "Menú principal",
       "description": "El menú de nivel superior"
     },
     "login": {
-      "label": "Login",
+      "label": "Iniciar sesión",
       "description": "Navegar al formulario de inicio de sesión"
     },
     "call": {
@@ -266,7 +266,7 @@
       "description": "Llama a un método del store (p. ej. add, export...)"
     },
     "toggle": {
-      "label": "Toggle",
+      "label": "Alternar",
       "description": "Alterna el valor de una variable binaria (p. ej. on/off)."
     },
     "workflow": {

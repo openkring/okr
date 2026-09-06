@@ -999,7 +999,7 @@
       "description": "Muestra las relaciones de una persona, un grupo o una organización."
     },
     "events": {
-      "label": "Events",
+      "label": "Eventos",
       "title": "Configuración de la lista de eventos",
       "subtitle": "Ajustar aquí la configuración de la lista de eventos según las necesidades.",
       "edit": "Modificar la configuración de la lista de eventos",

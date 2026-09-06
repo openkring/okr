@@ -61,40 +61,40 @@
     "label": "Color",
     "ionic": {
       "primary": {
-        "label": "Primary",
-        "description": "Primary color for the app"
+        "label": "Primario",
+        "description": "Color primario de la aplicación"
       },
       "secondary": {
-        "label": "Secondary",
-        "description": "Secondary color for the app"
+        "label": "Secundario",
+        "description": "Color secundario de la aplicación"
       },
       "tertiary": {
-        "label": "Tertiary",
-        "description": "Tertiary color for the app"
+        "label": "Terciario",
+        "description": "Color terciario de la aplicación"
       },
       "success": {
-        "label": "Success",
-        "description": "Success color for the app"
+        "label": "Éxito",
+        "description": "Color de éxito de la aplicación"
       },
       "warning": {
-        "label": "Warning",
-        "description": "Warning color for the app"
+        "label": "Advertencia",
+        "description": "Color de advertencia de la aplicación"
       },
       "danger": {
-        "label": "Danger",
-        "description": "Danger color for the app"
+        "label": "Peligro",
+        "description": "Color de peligro de la aplicación"
       },
       "light": {
-        "label": "Light",
-        "description": "Light color for the app"
+        "label": "Claro",
+        "description": "Color claro de la aplicación"
       },
       "medium": {
-        "label": "Medium",
-        "description": "Medium color for the app"
+        "label": "Medio",
+        "description": "Color medio de la aplicación"
       },
       "dark": {
-        "label": "Dark",
-        "description": "Dark color for the app"
+        "label": "Oscuro",
+        "description": "Color oscuro de la aplicación"
       },
       "white": {
         "label": "Ninguno",
