@@ -21,6 +21,17 @@ export class PersonModel implements OkrModel, AddressableModel, SearchableModel,
   // '' exactly when isDeceased is false. onAddressChange is their only writer.
   public isDeceased = false;
   public deathYear = ''; // YYYY
+  /**
+   * Gespiegelte Tatsache aus `users`: diese Person hat einen App-Zugang. Geschrieben
+   * AUSSCHLIESSLICH von `onUserWritten` (apps/functions/src/person/account-mirror.ts), nie von der
+   * App.
+   *
+   * Existiert, weil `users` fuer gewoehnliche Benutzer nicht lesbar ist (firestore.rules), die
+   * Einladung zu einem Anlass aber auf registrierte Benutzer einschraenken muss — dieselbe
+   * Begruendung wie bei den `usage*`-Feldern unten.
+   * Optional beim Lesen: jedes vor diesem Feld geschriebene Dokument liefert `undefined`.
+   */
+  public hasAccount = false;
   public favZipCode = '';
   public bexioId = DEFAULT_ID;
 
