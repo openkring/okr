@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { MenuItemModel } from '@okr/shared-models';
 import type { FeatureBlock } from './feature-catalogue.types';
-import { classifyMenuOwnership, forkTargetKey, isCatalogueOwned } from './menu-ownership.util';
+import {
+  classifyMenuOwnership,
+  forkTargetKey,
+  isCatalogueOwned,
+  isFieldPinned,
+  pinnedFieldsOf,
+  withPin,
+  withoutPin,
+} from './menu-ownership.util';
 
 /**
  * A miniature catalogue. `aoc-menu` is deliberately declared by TWO blocks, mirroring the real
@@ -86,5 +94,33 @@ describe('isCatalogueOwned', () => {
 describe('forkTargetKey', () => {
   it('mirrors MenuService.fork: <name>_<tenantId>', () => {
     expect(forkTargetKey(doc({ name: 'aoc-menu' }), 'elab')).toBe('aoc-menu_elab');
+  });
+});
+
+describe('pin primitives', () => {
+  it('reports a pinned field', () => {
+    expect(isFieldPinned({ ownedFields: ['roleNeeded'] }, 'roleNeeded')).toBe(true);
+  });
+
+  it('reports an unpinned field, and an absent ownedFields, as not pinned', () => {
+    expect(isFieldPinned({ ownedFields: ['url'] }, 'roleNeeded')).toBe(false);
+    expect(isFieldPinned({}, 'roleNeeded')).toBe(false);
+  });
+
+  it('ignores values that are not structural fields', () => {
+    expect(pinnedFieldsOf({ ownedFields: ['roleNeeded', 'label', 'nonsense'] }))
+      .toEqual(['roleNeeded']);
+  });
+
+  it('adds a pin idempotently and keeps the order stable', () => {
+    expect(withPin(undefined, 'roleNeeded')).toEqual(['roleNeeded']);
+    expect(withPin(['url'], 'roleNeeded')).toEqual(['url', 'roleNeeded']);
+    expect(withPin(['url', 'roleNeeded'], 'roleNeeded')).toEqual(['url', 'roleNeeded']);
+  });
+
+  it('removes a pin idempotently', () => {
+    expect(withoutPin(['url', 'roleNeeded'], 'roleNeeded')).toEqual(['url']);
+    expect(withoutPin(['url'], 'roleNeeded')).toEqual(['url']);
+    expect(withoutPin(undefined, 'roleNeeded')).toEqual([]);
   });
 });

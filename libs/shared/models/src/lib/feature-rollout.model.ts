@@ -20,18 +20,17 @@ export const FeatureRolloutModelName = 'featureRollout';
  * Append-only audit trail — the usage trail billing needs, plus the record of what the
  * catalogue rewrote.
  *
- * Two event shapes share the collection, discriminated by `op`:
- *  - `enable` / `disable` — a block transition for `tenantId`. `block` is the block id.
- *  - `menu-structure` — ONE catalogue-owned field of ONE `menuItems` document overwritten
- *    by a `replayStructure` run («Struktur übernehmen»). `block` is the block whose spec
- *    produced the write; the five optional fields below carry the rest and are absent on
- *    the two transition shapes.
+ * Two event families share the collection, discriminated by `op`:
+ *  - `enable` / `disable` — a block transition for `tenantId`; `block` is the block id.
+ *  - `menu-add` / `menu-structure` / `pin` / `unpin` / `catalogue-apply` — ONE menu
+ *    document. `docId`/`name` say which; `field`/`from`/`to` carry the change where
+ *    there is one (`menu-add` has none — it records that a row was attached).
  */
 export interface FeatureEvent {
   okey: string;
   tenantId: string;
   block: string;
-  op: 'enable' | 'disable' | 'menu-structure';
+  op: 'enable' | 'disable' | 'menu-structure' | 'menu-add' | 'pin' | 'unpin' | 'catalogue-apply';
   at: string;
   by: string;
   /** `menu-structure` only — the real Firestore doc id written to. */

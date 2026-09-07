@@ -22,6 +22,18 @@ export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, Tag
    * fixes no longer reach it automatically (D-BB-8).
    */
   public forkedFrom?: string;
+  /**
+   * Structural fields (`url` | `action` | `roleNeeded`) this tenant owns DELIBERATELY —
+   * set through «Fixieren» in `/tenant/features` (D-BB-16). A field listed here is never
+   * written by the catalogue (`applyCatalogueValue` refuses until it is released again)
+   * and is reported as "eigener Wert" rather than as drift by `pnpm catalogue:check`.
+   *
+   * On a SHARED document the pin applies to every tenant of that document — which is
+   * correct, because the value on a shared document is the same for all of them. A tenant
+   * that needs a different value than the others forks the document in the menu editor
+   * (D-BB-8) and pins on the fork.
+   */
+  public ownedFields?: string[];
   public data?: BaseProperty[] = []; // URL parameters that should be passed to the url
   public menuItems?: string[] = []; // the keys of the sub menu items
   public roleNeeded?: RoleName = 'contentAdmin'; // the role that is needed to see the menu item

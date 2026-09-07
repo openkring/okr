@@ -1,12 +1,8 @@
 import type { MenuItemModel } from '@okr/shared-models';
 import type { MenuSpec } from './feature-catalogue.types';
+import { STRUCTURAL_FIELDS } from './menu-ownership.util';
 
-/**
- * Catalogue-owned fields. Rewritten on every seed so a shipped url or role fix reaches
- * existing tenants. Everything else (label, icon, index, description) belongs to the
- * tenant and is written only when the document is created (D-BB-7).
- */
-export const STRUCTURAL_FIELDS = ['url', 'action', 'roleNeeded'] as const;
+export { STRUCTURAL_FIELDS, type StructuralField } from './menu-ownership.util';
 
 export interface MenuOp {
   /** `spec.name` (== `spec.key` per the catalogue invariant) — identity used for

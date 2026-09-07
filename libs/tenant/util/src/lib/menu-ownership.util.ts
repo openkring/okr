@@ -81,3 +81,41 @@ export function classifyMenuOwnership(
     ...(forkedFrom ? { forkedFrom } : {}),
   };
 }
+
+/**
+ * Catalogue-owned fields — the three fields the catalogue owns by default. A tenant can
+ * take over one of them deliberately via `ownedFields` (`MenuItemModel.ownedFields`, set
+ * through «Fixieren» in `/tenant/features`, D-BB-16); everything else (label, icon, index,
+ * description) belongs to the tenant and is written only when the document is created
+ * (D-BB-7).
+ */
+export const STRUCTURAL_FIELDS = ['url', 'action', 'roleNeeded'] as const;
+
+/** The three catalogue-owned fields — the only ones a tenant can pin (D-BB-16). */
+export type StructuralField = (typeof STRUCTURAL_FIELDS)[number];
+
+type Pinnable = Pick<MenuItemModel, 'ownedFields'>;
+
+const isStructural = (field: string): field is StructuralField =>
+  (STRUCTURAL_FIELDS as readonly string[]).includes(field);
+
+/** Does this tenant deliberately own `field` on this document? */
+export function isFieldPinned(doc: Pinnable, field: string): boolean {
+  return (doc.ownedFields ?? []).includes(field);
+}
+
+/** The pinned fields of a document, filtered to the three that can legitimately be pinned. */
+export function pinnedFieldsOf(doc: Pinnable): StructuralField[] {
+  return (doc.ownedFields ?? []).filter(isStructural);
+}
+
+/** `ownedFields` with `field` added — idempotent, order-stable. */
+export function withPin(current: string[] | undefined, field: StructuralField): string[] {
+  const list = current ?? [];
+  return list.includes(field) ? [...list] : [...list, field];
+}
+
+/** `ownedFields` with `field` removed — idempotent. */
+export function withoutPin(current: string[] | undefined, field: StructuralField): string[] {
+  return (current ?? []).filter(f => f !== field);
+}
