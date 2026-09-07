@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { shortenText } from './text.util';
 
 describe('text.util', () => {

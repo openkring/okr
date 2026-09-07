@@ -11,8 +11,10 @@ import {
 } from './debug.util';
 
 describe('debug.util', () => {
-  // Mock console.log
-  const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+  // Re-created per test: the afterEach below calls vi.restoreAllMocks(), which used to detach this
+  // spy after the FIRST test — from then on console.log was the real one and the spy recorded
+  // nothing, so every `not.toHaveBeenCalled()` in this file passed vacuously.
+  let mockConsoleLog: ReturnType<typeof vi.spyOn>;
 
   // Helper function to create test user models
   const createUserModel = (showDebugInfo: boolean, additionalProps: Partial<UserModel> = {}): UserModel => ({
@@ -36,6 +38,7 @@ describe('debug.util', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -97,45 +100,56 @@ describe('debug.util', () => {
     });
   });
 
+  // debugListLoaded and debugItemLoaded are rxjs OPERATORS, not plain calls: each returns a `tap`
+  // that logs on emission. They have to be piped and subscribed, otherwise nothing runs at all —
+  // which is why these tests used to pass the stream as the second argument and assert nothing.
   describe('debugListLoaded', () => {
     it('should not log list data when user has debug info disabled', () => {
       const user = createUserModel(false);
-      const testData = ['item1', 'item2'];
-      const data$ = of(testData);
 
-      debugListLoaded('userList', data$, user);
+      of(['item1', 'item2']).pipe(debugListLoaded<string>('userList', user)).subscribe();
 
       expect(mockConsoleLog).not.toHaveBeenCalled();
     });
 
     it('should not log list data when user is undefined', () => {
-      const testData = ['item1'];
-      const data$ = of(testData);
-
-      debugListLoaded('userList', data$);
+      of(['item1']).pipe(debugListLoaded<string>('userList')).subscribe();
 
       expect(mockConsoleLog).not.toHaveBeenCalled();
+    });
+
+    it('should log the item count when the user has debug info enabled', () => {
+      const user = createUserModel(true);
+
+      of(['item1', 'item2']).pipe(debugListLoaded<string>('userList', user)).subscribe();
+
+      expect(mockConsoleLog).toHaveBeenCalledWith('userList: loaded 2 items.');
     });
   });
 
   describe('debugItemLoaded', () => {
+    const testItem = { id: 1, name: 'Test Item' };
+
     it('should not log item data when user has debug info disabled', () => {
       const user = createUserModel(false);
-      const testItem = { id: 1, name: 'Test Item' };
-      const data$ = of(testItem);
 
-      debugItemLoaded('userItem', data$, user);
+      of(testItem).pipe(debugItemLoaded<typeof testItem>('userItem', user)).subscribe();
 
       expect(mockConsoleLog).not.toHaveBeenCalled();
     });
 
     it('should not log item data when user is undefined', () => {
-      const testItem = { id: 1, name: 'Test Item' };
-      const data$ = of(testItem);
-
-      debugItemLoaded('userItem', data$);
+      of(testItem).pipe(debugItemLoaded<typeof testItem>('userItem')).subscribe();
 
       expect(mockConsoleLog).not.toHaveBeenCalled();
+    });
+
+    it('should log the item when the user has debug info enabled', () => {
+      const user = createUserModel(true);
+
+      of(testItem).pipe(debugItemLoaded<typeof testItem>('userItem', user)).subscribe();
+
+      expect(mockConsoleLog).toHaveBeenCalledWith('userItem loaded.', testItem);
     });
   });
 

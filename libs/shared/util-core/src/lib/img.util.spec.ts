@@ -366,15 +366,15 @@ describe('img.util', () => {
 
   describe('getSizedImgixParamsByExtension', () => {
     it('should return empty string for empty or undefined path', () => {
-      expect(getSizedImgixParamsByExtension(undefined, 100, 100)).toBe('');
-      expect(getSizedImgixParamsByExtension('', 100, 100)).toBe('');
+      expect(getSizedImgixParamsByExtension(undefined, '100', '100')).toBe('');
+      expect(getSizedImgixParamsByExtension('', '100', '100')).toBe('');
     });
 
     it('should return PDF params with aspect ratio for PDF files', () => {
       mockIsPdf.mockReturnValue(true);
       mockIsImage.mockReturnValue(false);
       
-      const result = getSizedImgixParamsByExtension('document.pdf', 200, 300);
+      const result = getSizedImgixParamsByExtension('document.pdf', '200', '300');
       
       expect(result).toBe('page=1&ar=200:300');
     });
@@ -383,7 +383,7 @@ describe('img.util', () => {
       mockIsPdf.mockReturnValue(false);
       mockIsImage.mockReturnValue(true);
       
-      const result = getSizedImgixParamsByExtension('photo.jpg', 400, 300);
+      const result = getSizedImgixParamsByExtension('photo.jpg', '400', '300');
       
       expect(result).toBe('ar=400:300&auto=format,compress,enhance&fit=crop');
     });
@@ -392,7 +392,7 @@ describe('img.util', () => {
       mockIsPdf.mockReturnValue(false);
       mockIsImage.mockReturnValue(false);
       
-      const result = getSizedImgixParamsByExtension('document.docx', 100, 100);
+      const result = getSizedImgixParamsByExtension('document.docx', '100', '100');
       
       expect(result).toBe('');
     });
@@ -403,7 +403,7 @@ describe('img.util', () => {
       mockIsImage.mockReturnValue(true);
       mockIsPdf.mockReturnValue(false);
       
-      const result = getThumbnailUrl('tenant/images/photo.jpg', 150, 150);
+      const result = getThumbnailUrl('tenant/images/photo.jpg', '150', '150');
       
       expect(result).toBe('tenant/images/photo.jpg?ar=150:150&auto=format,compress,enhance&fit=crop');
     });
@@ -414,7 +414,7 @@ describe('img.util', () => {
       mockFileExtension.mockReturnValue('docx');
       mockFileLogo.mockReturnValue('assets/icons/docx.png');
       
-      const result = getThumbnailUrl('document.docx', 150, 150);
+      const result = getThumbnailUrl('document.docx', '150', '150');
       
       expect(result).toBe('assets/icons/docx.png');
       expect(mockFileExtension).toHaveBeenCalledWith('document.docx');
