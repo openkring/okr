@@ -21,6 +21,15 @@ export const AUTH_I18N_KEYS = {
   savepwd:                  PFX + 'pwdreset.savepwd',
   pwdconfirm:               PFX + 'pwdconfirm',
 
+  // one message per PwdResetFailure — see pwd-reset-result.ts
+  error_expired:            PFX + 'pwdreset.error.expired',
+  error_used:               PFX + 'pwdreset.error.used',
+  error_noAccount:          PFX + 'pwdreset.error.noAccount',
+  error_weakPassword:       PFX + 'pwdreset.error.weakPassword',
+  error_network:            PFX + 'pwdreset.error.network',
+  request_new_link:         PFX + 'pwdreset.requestNewLink',
+  goto_login:               PFX + 'pwdreset.gotoLogin',
+
   roles_label:              PFX + 'roles.label',
   roles_helper:             PFX + 'roles.helper',
 

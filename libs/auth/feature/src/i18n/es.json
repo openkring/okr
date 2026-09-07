@@ -16,9 +16,18 @@
   "pwdreset": {
     "title": "Establecer contraseña",
     "newpwd": "Establecer una nueva contraseña",
-    "invalidLink": "Este enlace no es válido o ya ha caducado. Solicite un nuevo enlace de restablecimiento.",
+    "invalidLink": "Este enlace ya no es válido. Solicita uno nuevo abajo: te llega enseguida por correo.",
     "success": "Contraseña cambiada correctamente. Será redirigido a la página de inicio de sesión.",
-    "savepwd": "Guardar contraseña"
+    "savepwd": "Guardar contraseña",
+    "error": {
+      "expired": "Este enlace ha caducado. Un enlace para establecer tu contraseña solo vale poco tiempo. Solicita uno nuevo abajo: te llega enseguida por correo.",
+      "used": "Este enlace ya se ha usado. Si con él estableciste tu contraseña, puedes iniciar sesión directamente. Si no, solicita un enlace nuevo abajo.",
+      "noAccount": "No hay ninguna cuenta activa para esta dirección de correo. Ponte en contacto con la administración de tu club.",
+      "weakPassword": "Esta contraseña es demasiado sencilla. Elige una de al menos 6 caracteres.",
+      "network": "No hemos podido conectar con el servidor. Comprueba tu conexión a internet e inténtalo de nuevo."
+    },
+    "requestNewLink": "Solicitar un enlace nuevo",
+    "gotoLogin": "Ir al inicio de sesión"
   },
   "pwdconfirm": "Establecer contraseña",
   "roles": {

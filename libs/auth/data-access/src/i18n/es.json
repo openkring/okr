@@ -1,7 +1,12 @@
 {
   "login": {
     "conf": "¡Bienvenido al área de miembros !",
-    "error": "El inicio de sesión no se ha realizado correctamente. Compruebe la dirección de correo electrónico y la contraseña e inténtelo de nuevo."
+    "error": "El inicio de sesión no se ha realizado correctamente. Compruebe la dirección de correo electrónico y la contraseña e inténtelo de nuevo.",
+    "wrongCredentials": "La dirección de correo o la contraseña no son correctas. Inténtalo de nuevo o establece una nueva con «Restablecer contraseña».",
+    "invalidEmail": "Esta dirección de correo no parece correcta. Comprueba cómo está escrita.",
+    "disabled": "Esta cuenta está bloqueada. Ponte en contacto con la administración de tu club.",
+    "tooManyAttempts": "Demasiados intentos seguidos. Espera un momento antes de volver a intentarlo o establece mientras tanto una contraseña nueva.",
+    "network": "No hemos podido conectar con el servidor. Comprueba tu conexión a internet e inténtalo de nuevo."
   },
   "pwdreset": {
     "conf": "Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña a la siguiente dirección de correo electrónico: ",

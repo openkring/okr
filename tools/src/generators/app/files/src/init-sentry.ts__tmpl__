@@ -1,11 +1,16 @@
 import * as Sentry from '@sentry/angular';
-import { buildSentryOptions, registerStaleChunkRecovery } from '@okr/shared-util-angular';
+import { buildSentryOptions, installFailedRequestRecorder, registerStaleChunkRecovery } from '@okr/shared-util-angular';
 import { environment } from './environments/environment';
 
 // Recover from lazy-chunk failures that never reach Angular's ErrorHandler (SCS-1N).
 // Registered before Sentry.init so this listener runs before Sentry's own
 // onunhandledrejection handler, and unconditionally — recovery is not monitoring.
 registerStaleChunkRecovery();
+
+// Remember the last few failed requests so an error that arrives without a stacktrace
+// (an unowned promise rejection, e.g. the service worker's synthetic 504) can still say
+// which request preceded it. Must run before anything else fetches.
+installFailedRequestRecorder();
 
 // Initialize Sentry before anything else. No-op when no sentry config / DSN is present
 // (e.g. local dev), so the app always boots even without monitoring. Each tenant reports

@@ -21,5 +21,7 @@ export * from './lib/version-check.service';
 export * from './lib/vest-bridge';
 export * from './lib/sentry';
 export * from './lib/chunk-load-error-handler';
+export * from './lib/analytics-init-window';
+export * from './lib/failed-request-recorder';
 export * from './lib/startup-timing';
 

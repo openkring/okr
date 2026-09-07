@@ -7,6 +7,7 @@ import { getImgixUrlWithAutoParams } from '@okr/shared-util-core';
 import { AuthCredentials } from '@okr/shared-models';
 
 import { LoginForm } from '@okr/auth-ui';
+import { isRetryablePwdResetFailure, PwdResetFailure } from '@okr/auth-util';
 
 import { AuthStore } from './auth.store';
 
@@ -41,15 +42,38 @@ import { AuthStore } from './auth.store';
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="store.gotoHome()" />
           <ion-label class="title"><strong>{{ store.i18n.newpwd() }}</strong></ion-label>
 
-          @if (invalidCode()) {
+          @if (deadLink()) {
             <ion-text color="danger">
-              <p>{{ store.i18n.invalid_link() }}</p>
+              <p>{{ errorMessage() }}</p>
             </ion-text>
+            <div class="button-container">
+              <ion-grid>
+                <ion-row>
+                  <ion-col>
+                    <ion-button expand="block" (click)="store.gotoNewResetLink()">
+                      {{ store.i18n.request_new_link() }}
+                    </ion-button>
+                  </ion-col>
+                </ion-row>
+                <ion-row>
+                  <ion-col>
+                    <ion-button expand="block" fill="outline" (click)="store.gotoLogin()">
+                      {{ store.i18n.goto_login() }}
+                    </ion-button>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </div>
           } @else if (success()) {
             <ion-text color="success">
               <p>{{ store.i18n.success() }}</p>
             </ion-text>
           } @else {
+            @if (errorMessage()) {
+              <ion-text color="danger">
+                <p>{{ errorMessage() }}</p>
+              </ion-text>
+            }
             <okr-login-form context="password"
               [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
               [i18n]="store.i18n"
@@ -90,16 +114,37 @@ export class ConfirmPasswordResetPage {
     loginPassword: '',
   });
   protected success = signal(false);
-  protected invalidCode = signal(!this.oobCode);
+
+  /** Why the last attempt failed — undefined while nothing has gone wrong yet. */
+  protected failure = signal<PwdResetFailure | undefined>(this.oobCode ? undefined : 'unknown');
+
+  /**
+   * A dead link cannot be saved by retrying, so the form is replaced by the message plus the
+   * two ways out (new link / sign in). weakPassword and network keep the form: the message
+   * appears above it and the user simply tries again.
+   */
+  protected deadLink = computed(() => {
+    const reason = this.failure();
+    return reason !== undefined && !isRetryablePwdResetFailure(reason);
+  });
+
+  protected errorMessage = computed(() => {
+    switch (this.failure()) {
+      case 'expired':      return this.store.i18n.error_expired();
+      case 'used':         return this.store.i18n.error_used();
+      case 'noAccount':    return this.store.i18n.error_noAccount();
+      case 'weakPassword': return this.store.i18n.error_weakPassword();
+      case 'network':      return this.store.i18n.error_network();
+      case 'unknown':      return this.store.i18n.invalid_link();
+      default:             return '';
+    }
+  });
 
   // methods
   public async confirm(): Promise<void> {
-    const result = await this.store.confirmPasswordReset(this.oobCode, this.continueUrl, this.currentCredentials().loginPassword);
-    if (result === true) {
-      this.success.set(true);
-    } else {
-      this.invalidCode.set(true);
-    }
+    const reason = await this.store.confirmPasswordReset(this.oobCode, this.continueUrl, this.currentCredentials().loginPassword);
+    this.failure.set(reason);
+    if (!reason) this.success.set(true);
   }
 
   protected onValidChange(isValid: boolean): void {

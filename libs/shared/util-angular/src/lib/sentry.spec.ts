@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ErrorEvent } from '@sentry/angular';
 import { beforeSend, buildSentryOptions, SentryConfig } from './sentry';
+import { closeAnalyticsInitWindow, markAnalyticsInitStarted } from './analytics-init-window';
+import { clearRecentFailedRequests } from './failed-request-recorder';
 
 const cfg: SentryConfig = {
   dsn: 'https://abc@o1.ingest.de.sentry.io/2',
@@ -135,5 +137,58 @@ describe('beforeSend', () => {
     const out = beforeSend(event, {});
     expect(out?.exception?.values?.[0].value).toContain('[AHV]');
     expect(out?.breadcrumbs?.[0].message).toContain('[IBAN]');
+  });
+});
+
+describe('beforeSend and unowned object rejections (SCS-A8)', () => {
+  /** The event shape Sentry builds for `Promise.reject({ status, message, details })`. */
+  const objectRejection = (serialized: Record<string, unknown>): ErrorEvent =>
+    ({
+      environment: 'production',
+      extra: { __serialized__: serialized },
+      exception: {
+        values: [
+          {
+            type: 'UnhandledRejection',
+            value: 'Object captured as promise rejection with keys: details, message, status',
+            mechanism: { type: 'onunhandledrejection', handled: false },
+          },
+        ],
+      },
+    }) as unknown as ErrorEvent;
+
+  beforeEach(() => vi.stubGlobal('location', new URL('https://seeclub.org/')));
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    closeAnalyticsInitWindow();
+    clearRecentFailedRequests();
+  });
+
+  it('drops an anonymous rejection while an analytics init could still be in flight', () => {
+    markAnalyticsInitStarted();
+    expect(beforeSend(objectRejection({ status: 504, message: 'Gateway Timeout' }), {} as never)).toBeNull();
+  });
+
+  it('keeps the same rejection once the analytics window has closed', () => {
+    const sent = beforeSend(objectRejection({ status: 504, message: 'Gateway Timeout' }), {} as never);
+    expect(sent).not.toBeNull();
+  });
+
+  it('retitles the rejection with its status and message instead of its key names', () => {
+    const sent = beforeSend(objectRejection({ status: 504, message: 'Gateway Timeout' }), {} as never);
+    expect(sent?.exception?.values?.[0].value).toBe('Object captured as promise rejection: 504 Gateway Timeout');
+  });
+
+  it('leaves the title alone when the payload says nothing useful', () => {
+    const sent = beforeSend(objectRejection({ details: {} }), {} as never);
+    expect(sent?.exception?.values?.[0].value).toBe('Object captured as promise rejection with keys: details, message, status');
+  });
+
+  it('never drops an error that carries a stacktrace, analytics window or not', () => {
+    markAnalyticsInitStarted();
+    const event = objectRejection({ status: 504 });
+    event.exception!.values![0].stacktrace = { frames: [{ function: 'confirm' }] };
+    expect(beforeSend(event, {} as never)).not.toBeNull();
   });
 });

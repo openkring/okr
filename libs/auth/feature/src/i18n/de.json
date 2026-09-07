@@ -16,9 +16,18 @@
   "pwdreset": {
     "title": "Passwort setzen",
     "newpwd": "Neues Passwort festlegen",
-    "invalidLink": "Dieser Link ist ungültig oder bereits abgelaufen. Bitte fordere einen neuen Reset-Link an.",
+    "invalidLink": "Dieser Link ist nicht mehr gültig. Fordere unten einen neuen Link an — er kommt sofort per E-Mail.",
     "success": "Passwort erfolgreich geändert. Du wirst zur Anmeldeseite weitergeleitet.",
-    "savepwd": "Passwort speichern"
+    "savepwd": "Passwort speichern",
+    "error": {
+      "expired": "Dieser Link ist abgelaufen. Ein Link zum Passwort setzen ist nur kurze Zeit gültig. Fordere unten einen neuen an — er kommt sofort per E-Mail.",
+      "used": "Dieser Link wurde bereits verwendet. Hast du dein Passwort damit schon gesetzt, kannst du dich direkt anmelden. Sonst fordere unten einen neuen Link an.",
+      "noAccount": "Zu dieser E-Mail Adresse gibt es kein aktives Konto. Bitte wende dich an die Administration deines Vereins.",
+      "weakPassword": "Dieses Passwort ist zu einfach. Wähle bitte eines mit mindestens 6 Zeichen.",
+      "network": "Wir konnten den Server gerade nicht erreichen. Prüfe deine Internetverbindung und versuche es nochmals."
+    },
+    "requestNewLink": "Neuen Link anfordern",
+    "gotoLogin": "Zur Anmeldung"
   },
   "pwdconfirm": "Passwort setzen",
   "roles": {

@@ -16,9 +16,18 @@
   "pwdreset": {
     "title": "Imposta password",
     "newpwd": "Imposta una nuova password",
-    "invalidLink": "Questo link non è valido o è già scaduto. Richiedere un nuovo link di reimpostazione.",
+    "invalidLink": "Questo link non è più valido. Richiedine uno nuovo qui sotto: ti arriva subito per e-mail.",
     "success": "Password modificata con successo. Si verrà reindirizzati alla pagina di accesso.",
-    "savepwd": "Salva password"
+    "savepwd": "Salva password",
+    "error": {
+      "expired": "Questo link è scaduto. Un link per impostare la password vale solo per poco tempo. Richiedine uno nuovo qui sotto: ti arriva subito per e-mail.",
+      "used": "Questo link è già stato usato. Se hai impostato la password con questo link, puoi accedere direttamente. Altrimenti richiedine uno nuovo qui sotto.",
+      "noAccount": "Non esiste un account attivo per questo indirizzo e-mail. Rivolgiti all'amministrazione della tua società.",
+      "weakPassword": "Questa password è troppo semplice. Scegline una di almeno 6 caratteri.",
+      "network": "Non siamo riusciti a raggiungere il server. Controlla la connessione a internet e riprova."
+    },
+    "requestNewLink": "Richiedi un nuovo link",
+    "gotoLogin": "Vai all'accesso"
   },
   "pwdconfirm": "Imposta password",
   "roles": {

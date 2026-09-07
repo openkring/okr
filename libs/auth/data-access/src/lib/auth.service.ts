@@ -10,6 +10,7 @@ import { AlertService, navigateByUrl } from '@okr/shared-util-angular';
 import { die, warn } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
+import { LoginFailure, PwdResetResult, toLoginFailure, toPwdResetFailure } from '@okr/auth-util';
 
 import { PFX } from './scope';
 
@@ -39,6 +40,11 @@ export class AuthService {
   private readonly i18n = inject(I18nService).translateAll({
     login_conf:     PFX + 'login.conf',
     login_error:    PFX + 'login.error',
+    login_wrongCredentials: PFX + 'login.wrongCredentials',
+    login_invalidEmail:     PFX + 'login.invalidEmail',
+    login_disabled:         PFX + 'login.disabled',
+    login_tooManyAttempts:  PFX + 'login.tooManyAttempts',
+    login_network:          PFX + 'login.network',
     pwdreset_conf:  PFX + 'pwdreset.conf',
     pwdreset_error: PFX + 'pwdreset.error',
     logout_conf:    PFX + 'logout.conf',
@@ -69,10 +75,26 @@ export class AuthService {
       await this.alertService.showToast(this.i18n.login_conf());
       await navigateByUrl(this.router, rootUrl);
     } catch (ex) {
-      void this.activityService.logAuth('login', `${credentials.loginEmail}: ERROR: ${ex}`);
+      const reason = toLoginFailure(ex);
+      void this.activityService.logAuth('login', `${credentials.loginEmail}: ERROR (${reason}): ${ex}`);
       console.error('AuthService.login: error: ', ex);
-      await this.alertService.showToast(this.i18n.login_error());
+      await this.alertService.showToast(this.loginErrorMessage(reason));
       await navigateByUrl(this.router, loginUrl);
+    }
+  }
+
+  /**
+   * The message a failed sign-in shows. Each reason names what actually happened and what to
+   * do next; only an unrecognised failure falls back to the generic sentence.
+   */
+  private loginErrorMessage(reason: LoginFailure): string {
+    switch (reason) {
+      case 'wrongCredentials': return this.i18n.login_wrongCredentials();
+      case 'invalidEmail':     return this.i18n.login_invalidEmail();
+      case 'disabled':         return this.i18n.login_disabled();
+      case 'tooManyAttempts':  return this.i18n.login_tooManyAttempts();
+      case 'network':          return this.i18n.login_network();
+      default:                 return this.i18n.login_error();
     }
   }
 
@@ -83,9 +105,10 @@ export class AuthService {
       void this.activityService.logAuth('login', 'LoginWithToken: SUCCESS');
       await navigateByUrl(this.router, url);
     } catch (ex) {
-      void this.activityService.logAuth('login', `LoginWithToken: ERROR: ${ex}`);
+      const reason = toLoginFailure(ex);
+      void this.activityService.logAuth('login', `LoginWithToken: ERROR (${reason}): ${ex}`);
       console.error('AuthService.loginWithToken: error: ', ex);
-      await this.alertService.showToast(this.i18n.login_error());
+      await this.alertService.showToast(this.loginErrorMessage(reason));
       await navigateByUrl(this.router, url);
     }
   }
@@ -116,19 +139,22 @@ export class AuthService {
    * Called from the custom confirm-password-reset page at /auth/confirm.
    * @param oobCode the out-of-band code from the reset link URL query params
    * @param newPassword the new password chosen by the user
-   * @returns the email address on success, undefined on failure
+   * @returns the email address on success, or the reason the attempt failed. The reason is
+   * what lets the page say something actionable ("link already used" vs. "password too
+   * short") instead of one generic sentence for every failure (SCS-A8).
    */
-  public async confirmPasswordReset(oobCode: string, newPassword: string): Promise<string | undefined> {
+  public async confirmPasswordReset(oobCode: string, newPassword: string): Promise<PwdResetResult> {
     let email = '';
     try {
       email = await verifyPasswordResetCode(this.auth, oobCode);
       await confirmPasswordReset(this.auth, oobCode, newPassword);
       void this.activityService.logAuth('pwdresetConf', `${email}: SUCCESS`);
-      return email;
+      return { ok: true, email };
     } catch (ex) {
-      void this.activityService.logAuth('pwdresetConf', `${email || 'unknown'}: ERROR: ${ex}`);
+      const reason = toPwdResetFailure(ex);
+      void this.activityService.logAuth('pwdresetConf', `${email || 'unknown'}: ERROR (${reason}): ${ex}`);
       console.error('AuthService.confirmPasswordReset: error: ', ex);
-      return undefined;
+      return { ok: false, reason };
     }
   }
 

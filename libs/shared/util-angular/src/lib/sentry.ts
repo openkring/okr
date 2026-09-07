@@ -4,6 +4,8 @@ import type { BrowserOptions, ErrorEvent, EventHint } from '@sentry/angular';
 import { redactSensitive, stripPii } from '@okr/shared-util-core';
 import { catchError } from 'rxjs';
 import { isStaleChunkRecoveryInFlight } from './chunk-load-error-handler';
+import { isAnalyticsInitInFlight } from './analytics-init-window';
+import { getRecentFailedRequests } from './failed-request-recorder';
 
 /** Sentry configuration as emitted into environment.ts by set-env.js. */
 export interface SentryConfig {
@@ -45,11 +47,62 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
   );
   if (fromInjectedScanner) return null;
 
+  // Analytics is non-essential and initialises through a promise chain the Firebase SDK
+  // never hands back, so its failures arrive as anonymous object rejections (SCS-A8).
+  // Drop exactly that shape while an analytics init could still be in flight — a real
+  // error carries a stacktrace or is a proper Error, and still reports.
+  if (isUnownedObjectRejection(event) && isAnalyticsInitInFlight()) return null;
+
+  // An object rejection has no stacktrace and a title that names only its keys
+  // ("…with keys: details, message, status"). Say what it actually was, and list the
+  // requests that failed just before it — otherwise there is nothing to go on at all.
+  describeObjectRejection(event);
+  const failed = getRecentFailedRequests();
+  if (failed.length > 0) event.extra = { ...event.extra, recentFailedRequests: failed.map((r) => `${r.status} ${r.url}`) };
+
   if (event.message) event.message = redactSensitive(event.message);
   event.exception?.values?.forEach((v) => { v.value = redactSensitive(v.value); });
   event.breadcrumbs?.forEach((b) => { b.message = redactSensitive(b.message); });
 
   return event;
+}
+
+/** The `{ status, message, details }`-style payload Sentry serialises for object rejections. */
+type SerializedRejection = { status?: unknown; message?: unknown };
+
+function serializedRejection(event: ErrorEvent): SerializedRejection | undefined {
+  const serialized = (event.extra as { __serialized__?: unknown } | undefined)?.__serialized__;
+  return typeof serialized === 'object' && serialized !== null ? (serialized as SerializedRejection) : undefined;
+}
+
+/**
+ * True for an unhandled rejection of a plain object with no frames of ours — i.e. one no
+ * first-party `catch` could have caught, because the promise was never handed to us.
+ */
+function isUnownedObjectRejection(event: ErrorEvent): boolean {
+  const values = event.exception?.values;
+  if (!values || values.length !== 1) return false;
+  const value = values[0];
+  if (value.mechanism?.type !== 'onunhandledrejection') return false;
+  if ((value.stacktrace?.frames?.length ?? 0) > 0) return false;
+  return serializedRejection(event) !== undefined;
+}
+
+/**
+ * Retitle an object rejection from its key list to its content — "Object captured as
+ * promise rejection with keys: details, message, status" becomes "… : 504 Gateway
+ * Timeout". This also splits the group: two unrelated subsystems rejecting with the same
+ * key names no longer land in one issue.
+ */
+function describeObjectRejection(event: ErrorEvent): void {
+  const serialized = serializedRejection(event);
+  const value = event.exception?.values?.[0];
+  if (!serialized || !value?.value?.startsWith('Object captured as promise rejection')) return;
+
+  const status = typeof serialized.status === 'number' || typeof serialized.status === 'string' ? String(serialized.status) : '';
+  const message = typeof serialized.message === 'string' ? serialized.message : '';
+  const description = [status, message].filter(Boolean).join(' ');
+  if (description) value.value = `Object captured as promise rejection: ${description}`;
 }
 
 /** One options object shared by every app, guaranteeing identical behaviour. */

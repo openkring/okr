@@ -16,9 +16,18 @@
   "pwdreset": {
     "title": "Définir le mot de passe",
     "newpwd": "Définir un nouveau mot de passe",
-    "invalidLink": "Ce lien est invalide ou déjà expiré. Veuillez demander un nouveau lien de réinitialisation.",
+    "invalidLink": "Ce lien n'est plus valable. Demande-en un nouveau ci-dessous — tu le reçois aussitôt par e-mail.",
     "success": "Mot de passe modifié avec succès. Vous allez être redirigé vers la page de connexion.",
-    "savepwd": "Enregistrer le mot de passe"
+    "savepwd": "Enregistrer le mot de passe",
+    "error": {
+      "expired": "Ce lien a expiré. Un lien pour définir ton mot de passe n'est valable que peu de temps. Demande-en un nouveau ci-dessous — tu le reçois aussitôt par e-mail.",
+      "used": "Ce lien a déjà été utilisé. Si tu as défini ton mot de passe avec, tu peux te connecter directement. Sinon, demande un nouveau lien ci-dessous.",
+      "noAccount": "Il n'y a pas de compte actif pour cette adresse e-mail. Adresse-toi à l'administration de ton club.",
+      "weakPassword": "Ce mot de passe est trop simple. Choisis-en un d'au moins 6 caractères.",
+      "network": "Nous n'avons pas pu joindre le serveur. Vérifie ta connexion internet et réessaie."
+    },
+    "requestNewLink": "Demander un nouveau lien",
+    "gotoLogin": "Aller à la connexion"
   },
   "pwdconfirm": "Définir le mot de passe",
   "roles": {

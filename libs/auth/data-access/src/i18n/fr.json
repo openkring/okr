@@ -1,7 +1,12 @@
 {
   "login": {
     "conf": "Bienvenue dans l'espace membres !",
-    "error": "La connexion n'a pas réussi. Veuillez vérifier l'adresse e-mail et le mot de passe et réessayer."
+    "error": "La connexion n'a pas réussi. Veuillez vérifier l'adresse e-mail et le mot de passe et réessayer.",
+    "wrongCredentials": "L'adresse e-mail ou le mot de passe n'est pas correct. Réessaie — ou définis-en un nouveau avec « Réinitialiser le mot de passe ».",
+    "invalidEmail": "Cette adresse e-mail semble incorrecte. Vérifie l'orthographe.",
+    "disabled": "Ce compte est bloqué. Adresse-toi à l'administration de ton club.",
+    "tooManyAttempts": "Trop de tentatives d'affilée. Attends un moment avant de réessayer — ou définis un nouveau mot de passe entre-temps.",
+    "network": "Nous n'avons pas pu joindre le serveur. Vérifie ta connexion internet et réessaie."
   },
   "pwdreset": {
     "conf": "Un e-mail avec des instructions pour réinitialiser le mot de passe a été envoyé à l'adresse e-mail suivante : ",

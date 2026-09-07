@@ -1,7 +1,12 @@
 {
   "login": {
     "conf": "Benvenuto nell'area membri !",
-    "error": "L'accesso non è riuscito. Verificare l'indirizzo e-mail e la password e riprovare."
+    "error": "L'accesso non è riuscito. Verificare l'indirizzo e-mail e la password e riprovare.",
+    "wrongCredentials": "L'indirizzo e-mail o la password non sono corretti. Riprova oppure impostane una nuova con «Reimposta password».",
+    "invalidEmail": "Questo indirizzo e-mail non sembra corretto. Controlla come è scritto.",
+    "disabled": "Questo account è bloccato. Rivolgiti all'amministrazione della tua società.",
+    "tooManyAttempts": "Troppi tentativi di seguito. Aspetta un momento prima di riprovare oppure imposta intanto una nuova password.",
+    "network": "Non siamo riusciti a raggiungere il server. Controlla la connessione a internet e riprova."
   },
   "pwdreset": {
     "conf": "Un'e-mail con le istruzioni per reimpostare la password è stata inviata al seguente indirizzo e-mail: ",

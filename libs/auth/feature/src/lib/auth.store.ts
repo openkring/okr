@@ -7,7 +7,7 @@ import { AuthService } from '@okr/auth-data-access';
 import { AlertService, navigateByUrl } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import { Router } from '@angular/router';
-import { AUTH_I18N_KEYS, AuthI18n } from '@okr/auth-util';
+import { AUTH_I18N_KEYS, AuthI18n, PwdResetFailure } from '@okr/auth-util';
 
 export type { AuthI18n };
 
@@ -36,15 +36,20 @@ export const AuthStore = signalStore(
       async gotoHome(): Promise<void> {
         await navigateByUrl(store.router, store.config().rootUrl);
       },
-      async confirmPasswordReset(oobCode: string, continueUrl: string, loginPassword: string): Promise<boolean> {
-        const email = await store.authService.confirmPasswordReset(oobCode, loginPassword);
-        if (email) {
-          await store.alertService.showToast(fill(store.i18n.password_changed(), { email }));
-          navigateByUrl(store.router, continueUrl);
-          return true;
-        } else {
-          return false;
-        }
+      /** @returns undefined on success, otherwise why the attempt failed. */
+      async confirmPasswordReset(oobCode: string, continueUrl: string, loginPassword: string): Promise<PwdResetFailure | undefined> {
+        const result = await store.authService.confirmPasswordReset(oobCode, loginPassword);
+        if (!result.ok) return result.reason;
+
+        await store.alertService.showToast(fill(store.i18n.password_changed(), { email: result.email }));
+        navigateByUrl(store.router, continueUrl);
+        return undefined;
+      },
+      async gotoNewResetLink(): Promise<void> {
+        await navigateByUrl(store.router, '/auth/pwdreset');
+      },
+      async gotoLogin(): Promise<void> {
+        await navigateByUrl(store.router, store.config().loginUrl);
       }
     }
   })

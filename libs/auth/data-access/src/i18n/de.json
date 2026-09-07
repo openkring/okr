@@ -1,7 +1,12 @@
 {
   "login": {
     "conf": "Willkommen im Mitgliederbereich !",
-    "error": "Die Anmeldung war nicht erfolgreich. Bitte prüfe die E-Mail Adresse und das Passwort und versuche es nochmals."
+    "error": "Die Anmeldung war nicht erfolgreich. Bitte prüfe die E-Mail Adresse und das Passwort und versuche es nochmals.",
+    "wrongCredentials": "E-Mail Adresse oder Passwort stimmen nicht. Versuche es nochmals — oder setze mit 'Passwort zurücksetzen' ein neues.",
+    "invalidEmail": "Diese E-Mail Adresse sieht nicht richtig aus. Bitte prüfe die Schreibweise.",
+    "disabled": "Dieses Konto ist gesperrt. Bitte wende dich an die Administration deines Vereins.",
+    "tooManyAttempts": "Zu viele Versuche hintereinander. Warte einen Moment, bevor du es nochmals versuchst — oder setze in der Zwischenzeit dein Passwort neu.",
+    "network": "Wir konnten den Server gerade nicht erreichen. Prüfe deine Internetverbindung und versuche es nochmals."
   },
   "pwdreset": {
     "conf": "Ein E-Mail mit Instruktionen zum zurücksetzen des Passworts wurde an die folgende E-Mail Adresse verschickt: ",

@@ -1,7 +1,12 @@
 {
   "login": {
     "conf": "Welcome to the members' area !",
-    "error": "The sign-in was not successful. Please check the email address and the password and try again."
+    "error": "The sign-in was not successful. Please check the email address and the password and try again.",
+    "wrongCredentials": "That email address or password is not right. Try again — or set a new password with 'Reset password'.",
+    "invalidEmail": "That email address does not look right. Please check the spelling.",
+    "disabled": "This account is blocked. Please get in touch with your club's administration.",
+    "tooManyAttempts": "Too many attempts in a row. Wait a moment before trying again — or set a new password in the meantime.",
+    "network": "We could not reach the server just now. Check your internet connection and try again."
   },
   "pwdreset": {
     "conf": "An email with instructions to reset the password has been sent to the following email address: ",

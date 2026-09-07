@@ -16,9 +16,18 @@
   "pwdreset": {
     "title": "Set password",
     "newpwd": "Set a new password",
-    "invalidLink": "This link is invalid or has already expired. Please request a new reset link.",
+    "invalidLink": "This link is no longer valid. Request a new one below — it arrives by email right away.",
     "success": "Password changed successfully. You will be redirected to the sign-in page.",
-    "savepwd": "Save password"
+    "savepwd": "Save password",
+    "error": {
+      "expired": "This link has expired. A link for setting your password is only valid for a short while. Request a new one below — it arrives by email right away.",
+      "used": "This link has already been used. If you set your password with it, you can sign in directly. Otherwise request a new link below.",
+      "noAccount": "There is no active account for this email address. Please get in touch with your club's administration.",
+      "weakPassword": "This password is too simple. Please choose one with at least 6 characters.",
+      "network": "We could not reach the server just now. Check your internet connection and try again."
+    },
+    "requestNewLink": "Request a new link",
+    "gotoLogin": "Go to sign-in"
   },
   "pwdconfirm": "Set password",
   "roles": {
