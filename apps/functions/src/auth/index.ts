@@ -7,6 +7,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication, checkStringField } from '@okr/shared-util-functions';
 import { getAppEmailConfig } from './email-templates';
 import { EmailAttachment, isValidProvider, sendEmailViaProvider } from './email-transport';
+import { reportToSentry } from '../srv/sentry';
 
 /** Storage prefixes that `generateDocument` writes generated documents to. */
 const ALLOWED_ATTACHMENT_PREFIXES = ['generated-docs/', 'generated-docs-ephemeral/'];
@@ -427,7 +428,7 @@ export const sendEmail = functions.onCall(
   {
     region: 'europe-west6',
     enforceAppCheck: true,
-    secrets: ['MAILGUN_SMTP_PASSWORD', 'MAILTRAP_APIKEY', 'NETZONE_SMTP_PASSWORD', 'MAILTRAP_TEST_USER', 'MAILTRAP_TEST_PASS'],
+    secrets: ['MAILGUN_SMTP_PASSWORD', 'MAILTRAP_APIKEY', 'NETZONE_SMTP_PASSWORD', 'MAILTRAP_TEST_USER', 'MAILTRAP_TEST_PASS', 'SENTRY_FUNCTIONS_DSN'],
   },
   async (request: functions.CallableRequest<{ to: string[]; cc?: string[]; bcc?: string[]; appId: string; html?: string; from?: string; subject?: string; provider: string; template?: string; templateVariables?: Record<string, string>; attachments?: AttachmentRef[] }>) => {
     const CF_NAME = 'sendEmail';
@@ -478,7 +479,15 @@ export const sendEmail = functions.onCall(
         if (code === 'auth/user-not-found') {
           logger.info(`${CF_NAME}: password-reset requested for an address with no account — responding generically`);
         } else {
+          // The caller gets the same generic success either way, so this is the ONLY signal that
+          // the tenant is misconfigured (typically appDomain missing from the Auth authorized
+          // domains). Log AND report — a log line nobody reads is how this stayed hidden.
           logger.error(`${CF_NAME}: password-reset link generation FAILED (appId=${appId}, ${code}) — no email sent`);
+          await reportToSentry({
+            message: 'sendEmail: password-reset link generation failed',
+            tags: { appId, code, provider },
+            extra: { continueUrl: config.continueUrl, hint: 'is appDomain in Firebase Auth → authorized domains?' },
+          });
         }
         return { success: true };
       }
@@ -513,6 +522,11 @@ export const sendEmail = functions.onCall(
       return { success: true };
     } catch (error: any) {
       logger.error(`${CF_NAME}: failed to send email`, { error: error.message });
+      await reportToSentry({
+        message: 'sendEmail: provider rejected the send',
+        tags: { appId, provider, template: templateRef ?? 'none' },
+        extra: { error: error.message, hint: 'is the sender domain verified with the provider?' },
+      });
       throw new functions.HttpsError('internal', 'Failed to send email.');
     }
   }

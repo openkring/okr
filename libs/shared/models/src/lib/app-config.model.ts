@@ -107,6 +107,16 @@ export class AppConfig {
    * site, which is how the erasure notification once ended up on another provider than the rest.
    */
   public emailProvider = '';
+
+  /**
+   * UUID of this tenant's Mailtrap password-reset template (Mailtrap Dashboard → Email Templates).
+   * A template UUID identifies a template, it is not a credential — it is useless without
+   * `MAILTRAP_APIKEY` — so it lives here rather than in Secret Manager, which means a new tenant
+   * needs one Firestore field instead of a new secret plus a functions redeploy.
+   * Empty ⇒ `sendEmail` composes a plain tenant-branded HTML mail instead (see
+   * apps/functions/src/auth/index.ts). Only used when `emailProvider` is `mailtrap_api`.
+   */
+  public mailtrapPasswordResetTemplate = '';
   public rootUrl = '/public/welcome';
   public logoUrl = DEFAULT_URL;
   public welcomeBannerUrl = DEFAULT_URL;
