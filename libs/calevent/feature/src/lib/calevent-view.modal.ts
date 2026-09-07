@@ -8,7 +8,6 @@ import { addTime, convertDateFormatToString, DateFormat, getWeekdayI18nKey, hasR
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 
-import { InviteesAccordion } from '@okr/relationship-invitation-feature';
 import { DocumentsAccordion } from '@okr/content-document-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -27,7 +26,7 @@ function storeToView(d: string): string {
   standalone: true,
   imports: [
     PartPipe, SvgIconPipe,
-    Header, AvatarDisplay, InviteesAccordion, DocumentsAccordion, CommentsAccordion, AttendeesAccordion,
+    Header, AvatarDisplay, DocumentsAccordion, CommentsAccordion, AttendeesAccordion,
     IonContent, IonCard, IonCardContent, IonAccordionGroup, IonItem, IonLabel, IonIcon,
   ],
   styles: [`
@@ -143,13 +142,11 @@ function storeToView(d: string): string {
       @if(calevent().okey) {
         <ion-card>
           <ion-card-content class="ion-no-padding">
-            <!-- the invitees/attendees accordion is the one the user came for; documents stay collapsed -->
-            <ion-accordion-group value="invitees">
-              @if(calevent().isOpen) {
-                <okr-attendees-accordion [calevent]="calevent()" [readOnly]="true" />
-              } @else {
-                <okr-invitees-accordion [calevent]="calevent()" [readOnly]="true" />
-              }
+            <!-- the attendees accordion is the one the user came for; documents stay collapsed.
+                 Eine Liste fuer alle: Mitglieder wie Eingeladene stehen seit 2026-09 in
+                 calevent.attendees, Eingeladene mit dem Zustand 'invited'. -->
+            <ion-accordion-group value="attendees">
+              <okr-attendees-accordion [calevent]="calevent()" [readOnly]="true" />
               <!-- documents: only the organiser (edit modal) may add/delete; commenting is open to every registered user -->
               <okr-documents-accordion [parentKey]="parentKey()" [readOnly]="true" />
               <okr-comments-accordion [parentKey]="parentKey()" [readOnly]="false" />

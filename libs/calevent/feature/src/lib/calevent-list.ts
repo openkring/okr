@@ -868,42 +868,33 @@ export class CalEventList implements OnInit {
     // event itself is locked
     const showAttendance = !isPastCalevent(calevent) && !calevent.isLocked;
     const canChange = this.canChange(calevent);
-    if (calevent.isOpen) {
+
+    // Anwesenheit: eine Regel statt zweier Zweige. Wer antworten darf, entscheidet die Reichweite
+    // des Kalenders bzw. eine Einladung (canAttendCalevent) — nicht mehr, wo die Antwort liegt.
+    const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === calevent.okey);
+    if (showAttendance && canAttendCalevent(calevent, hasInvitation, this.mayJoinOpen(calevent))) {
       const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
-      if (showAttendance && state !== 'accepted') {
+      if (state !== 'accepted') {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
       }
-      if (showAttendance && state !== 'declined') {
+      if (state !== 'declined') {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
       }
-    } else {  // invitation
-      // get invitation for current user
-      const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.okey);
-      // the organiser of a personal event has no invitation but may still accept/decline (attendees list)
-      const ownState = inv ?? { state: getAttendanceState(calevent, this.currentUser()?.personKey ?? '') };
-      if ((inv || isPersonalCalevent(calevent)) && showAttendance) {
-        if (ownState.state !== 'accepted') {
-          actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
-        }
-        if (ownState.state !== 'declined') {
-          actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
-        }
-      }
-      // inviting only exists on closed events — an open event is self-service (attendees list)
-      if (canChange && showAttendance) {
-        actionSheetOptions.buttons.push(createActionSheetDivider());
-        if (this.store.canInviteGroup(calevent)) {
-          actionSheetOptions.buttons.push(createActionSheetButton('calevent.inviteGroup', this.store.i18n.invite_members(), this.imgixBaseUrl, 'add'));
-        }
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePerson', this.store.i18n.invite_person(), this.imgixBaseUrl, 'person-add'));
-      }
-      // freezing the responses stays available after the event too — the organiser usually locks
-      // once the headcount is final, which is often on the day itself
-      if (canChange && this.store.invitationsOf(calevent).length > 0) {
-        actionSheetOptions.buttons.push(this.store.areInvitationsLocked(calevent)
-          ? createActionSheetButton('calevent.unlockInvitations', this.store.i18n.invitation_unlock(), this.imgixBaseUrl, 'lock-open')
-          : createActionSheetButton('calevent.lockInvitations', this.store.i18n.invitation_lock(), this.imgixBaseUrl, 'lock-closed'));
-      }
+    }
+
+    // Einladen: eine Aktion. «Gruppenmitglieder einladen» ist entfallen — Mitglieder sehen den
+    // Anlass ohnehin und melden sich selbst an; die Einladung ist fuer die, die er nicht erreicht
+    // (Spec „Offene Anlaesse", Entscheidungen 7+10).
+    if (canChange && showAttendance) {
+      actionSheetOptions.buttons.push(createActionSheetDivider());
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.invitePersons', this.store.i18n.invite_persons(), this.imgixBaseUrl, 'person-add'));
+    }
+    // freezing the responses stays available after the event too — the organiser usually locks
+    // once the headcount is final, which is often on the day itself
+    if (canChange && this.store.invitationsOf(calevent).length > 0) {
+      actionSheetOptions.buttons.push(this.store.areInvitationsLocked(calevent)
+        ? createActionSheetButton('calevent.unlockInvitations', this.store.i18n.invitation_unlock(), this.imgixBaseUrl, 'lock-open')
+        : createActionSheetButton('calevent.lockInvitations', this.store.i18n.invitation_lock(), this.imgixBaseUrl, 'lock-closed'));
     }
     // Show schedule-poll buttons for proposed events
     if (calevent.state === 'proposed') {
@@ -1028,17 +1019,14 @@ export class CalEventList implements OnInit {
           if (isGrid && created) this.navigateCalendarTo(created.startDate, viewType);
           break;
         }
-        case 'calevent.inviteGroup':
-          await this.store.inviteGroupMembers(calEvent, false);
-          break;
         case 'calevent.lockInvitations':
           await this.store.lockInvitations(calEvent, true);
           break;
         case 'calevent.unlockInvitations':
           await this.store.lockInvitations(calEvent, false);
           break;
-        case 'calevent.invitePerson':
-          await this.store.invitePerson(calEvent, false);
+        case 'calevent.invitePersons':
+          await this.store.invitePersons(calEvent, false);
           break;
         case 'calevent.viewSchedule':
           await this.openSchedulePoll(calEvent.seriesId);

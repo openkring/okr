@@ -189,19 +189,7 @@
     "album": "View album"
   },
   "invite": {
-    "person": {
-      "label": "Invite person",
-      "conf": "The person has been invited",
-      "error": "The person could not be invited"
-    },
-    "members": {
-      "label": "Invite group members",
-      "conf": "The members of the group have been invited.",
-      "error": "The members of the group could not be invited.",
-      "none": "All group members have already been invited."
-    },
     "message": {
-      "title": "Message to the invitees",
       "placeholder": "Optional text sent along with the invitation",
       "label": "Your message",
       "helper": "Everybody invited gets the same text. Say briefly what it is about."

@@ -9,7 +9,6 @@ import { CalendarSelectModal } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 
 import { CalEventForm } from '@okr/calevent-ui';
-import { InviteesAccordion } from '@okr/relationship-invitation-feature';
 import { DocumentsAccordion } from '@okr/content-document-feature';
 import { CommentsAccordion } from '@okr/comment-feature';
 import { CALEVENT_I18N_KEYS, CaleventI18n, isPersonalCalevent } from '@okr/calevent-util';
@@ -22,7 +21,7 @@ import { AttendeesAccordion } from './attendees-accordion';
   standalone: true,
   imports: [
     Header, ChangeConfirmation, SvgIconPipe,
-    CalEventForm, InviteesAccordion, DocumentsAccordion,
+    CalEventForm, DocumentsAccordion,
     CommentsAccordion, AttendeesAccordion,
     IonContent, IonCard, IonCardContent, IonAccordionGroup, IonIcon
 ],
@@ -97,14 +96,10 @@ import { AttendeesAccordion } from './attendees-accordion';
               <!-- attendance and comments open with the modal: who is coming and what was said
                    about the event are the two things a reader opens a calevent for. Documents
                    stay collapsed. -->
-              <ion-accordion-group [multiple]="true" [value]="['invitees', 'comments']">
-                <!-- open event: attendance is self-service (attendees list).
-                     closed event: attendance comes from invitations only. -->
-                @if(calevent().isOpen) {
-                  <okr-attendees-accordion [calevent]="formData" [currentUser]="currentUser()" [tenantId]="tenantId()" [readOnly]="isReadOnly()" />
-                } @else {
-                  <okr-invitees-accordion [calevent]="formData" [readOnly]="isReadOnly()" />
-                }
+              <ion-accordion-group [multiple]="true" [value]="['attendees', 'comments']">
+                <!-- Eine Teilnehmerliste fuer alle: die Anmeldung ist Selbstbedienung, ein
+                     Eingeladener steht mit dem Zustand 'invited' in derselben Liste. -->
+                <okr-attendees-accordion [calevent]="formData" [currentUser]="currentUser()" [tenantId]="tenantId()" [readOnly]="isReadOnly()" />
                 <!-- documents: organiser/admin only, and not supported on personal events;
                      commenting is open to every registered user -->
                 @if(!isPersonal()) {

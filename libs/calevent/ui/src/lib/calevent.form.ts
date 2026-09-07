@@ -253,25 +253,19 @@ const DEFAULT_RECURRING_PERIODICITY = 'weekly';
       />
     }
 
-    <!-- ANMELDUNG: only an open event has an attendees list to cap. A personal event has neither. -->
+    <!-- ANMELDUNG: jeder Anlass hat eine Teilnehmerliste, die begrenzt werden kann. Der Schalter
+         offen/geschlossen ist 2026-09 entfallen — wer den Anlass sieht, entscheidet der Kalender.
+         Ein persoenlicher Anlass hat keine Anmeldung. -->
     @if(!isPersonal()) {
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
             <ion-row>
-              <ion-col size="12">
-                <okr-checkbox [i18n]="isOpenI18n()" [checked]="isOpen()" (checkedChange)="onFieldChange('isOpen', $event)" [toggle]="true" iconName="people" labelPlacement="start" justify="space-between" [readOnly]="isReadOnly()" />
+              <ion-col size="12" size-md="6">
+                <okr-number-input [i18n]="maxAttendeesI18n()" [value]="maxAttendees()" (valueChange)="onFieldChange('maxAttendees', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="maxAttendeesErrors()" />
               </ion-col>
             </ion-row>
-            <!-- the cap governs self-sign-up, so it only earns a row once the event is open -->
-            @if(isOpen()) {
-              <ion-row class="revealed">
-                <ion-col size="12" size-md="6">
-                  <okr-number-input [i18n]="maxAttendeesI18n()" [value]="maxAttendees()" (valueChange)="onFieldChange('maxAttendees', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="maxAttendeesErrors()" />
-                </ion-col>
-              </ion-row>
-            }
           </ion-grid>
         </ion-card-content>
       </ion-card>
@@ -370,7 +364,7 @@ export class CalEventForm {
     if (!this.isPersonal() && this.isRecurring()) fields.push('repeatUntilDate');
     if (this.canExpert() && !this.isPersonal()) fields.push('locationKey');
     if (this.expertMode() && !this.isPersonal()) fields.push('tags');
-    if (!this.isPersonal() && this.isOpen()) fields.push('maxAttendees');
+    if (!this.isPersonal()) fields.push('maxAttendees');
     return fields;
   });
   protected unrenderedErrors = computed(() => {
@@ -399,7 +393,6 @@ export class CalEventForm {
   protected type = linkedSignal(() => this.formData().type ?? DEFAULT_CALEVENT_TYPE);
   protected name = linkedSignal(() => this.formData().name ?? DEFAULT_NAME);
   protected fullDay = linkedSignal(() => this.formData().fullDay ?? false);
-  protected isOpen = linkedSignal(() => this.formData().isOpen ?? false);
   // ?? 0: every event written before maxAttendees existed reads back undefined
   protected maxAttendees = linkedSignal(() => this.formData().maxAttendees ?? 0);
   protected startDate = linkedSignal(() => this.formData().startDate ?? DEFAULT_DATE);
@@ -606,11 +599,6 @@ export class CalEventForm {
     helper: this.i18n().recurring_helper(),
   } as CheckboxI18n));
 
-  protected isOpenI18n = computed(() => ({
-    name: 'isOpen',
-    label: this.i18n().isOpen_label(),
-    helper: this.i18n().isOpen_helper(),
-  } as CheckboxI18n));
 
   protected maxAttendeesI18n = computed(() => ({
     name: 'maxAttendees',

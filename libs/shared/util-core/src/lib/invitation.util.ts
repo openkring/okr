@@ -24,18 +24,3 @@ export function isOpenInvitation(invitation: InvitationModel, personKey: string)
 export function openInvitationsOf(invitations: InvitationModel[], personKey: string): InvitationModel[] {
   return invitations.filter(inv => isOpenInvitation(inv, personKey));
 }
-
-/**
- * Whom to actually invite when the organiser invites a whole group: every member except the
- * organiser themselves and everyone who already holds an invitation for this event. Without the
- * second filter, re-running "invite group members" after a new member joined duplicated the
- * invitation of everyone already invited.
- *
- * @param memberKeys       person keys of all group members
- * @param existing         invitations that already exist for the event being invited to
- * @param currentPersonKey person key of the inviting user, excluded from the result
- */
-export function inviteeCandidates(memberKeys: string[], existing: InvitationModel[], currentPersonKey: string): string[] {
-  const invited = new Set(existing.map(inv => inv.inviteeKey));
-  return memberKeys.filter(key => !!key && key !== currentPersonKey && !invited.has(key));
-}

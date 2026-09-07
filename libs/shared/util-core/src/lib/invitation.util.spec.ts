@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { InvitationModel } from '@okr/shared-models';
 
-import { inviteeCandidates, isOpenInvitation, openInvitationsOf } from './invitation.util';
+import { isOpenInvitation, openInvitationsOf } from './invitation.util';
 import { DateFormat, getTodayStr } from './date.util';
 
 const ME = 'person-me';
@@ -68,27 +68,3 @@ describe('openInvitationsOf', () => {
   });
 });
 
-describe('inviteeCandidates', () => {
-  it('excludes the inviting user', () => {
-    expect(inviteeCandidates([ME, 'a', 'b'], [], ME)).toEqual(['a', 'b']);
-  });
-
-  it('excludes members who already hold an invitation', () => {
-    const existing = [invitation({ inviteeKey: 'a' })];
-    expect(inviteeCandidates([ME, 'a', 'b'], existing, ME)).toEqual(['b']);
-  });
-
-  it('ignores the state of an existing invitation — a declined member is not re-invited', () => {
-    const existing = [invitation({ inviteeKey: 'a', state: 'declined' })];
-    expect(inviteeCandidates(['a', 'b'], existing, ME)).toEqual(['b']);
-  });
-
-  it('drops empty member keys', () => {
-    expect(inviteeCandidates(['', 'a'], [], ME)).toEqual(['a']);
-  });
-
-  it('returns an empty list when everybody is already invited', () => {
-    const existing = [invitation({ inviteeKey: 'a' }), invitation({ inviteeKey: 'b' })];
-    expect(inviteeCandidates([ME, 'a', 'b'], existing, ME)).toEqual([]);
-  });
-});

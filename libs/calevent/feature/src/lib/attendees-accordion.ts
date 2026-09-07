@@ -64,7 +64,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
     }
   `],
   template: `
-  <ion-accordion toggle-icon-slot="start" value="invitees">
+  <ion-accordion toggle-icon-slot="start" value="attendees">
     <ion-item slot="header" [color]="color()">
       <ion-icon class="header-icon" src="{{ 'people' | svgIcon }}" />
       <ion-label>{{ i18n.attendance_attendees() }}</ion-label>

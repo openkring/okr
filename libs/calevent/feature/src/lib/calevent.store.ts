@@ -12,7 +12,7 @@ import { from, firstValueFrom, map, of } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, inviteeCandidates, isCalendarPublic, isAfterDate, isAfterOrEqualDate, nameMatches, pad, prettyFormatDate, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
+import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, nameMatches, pad, prettyFormatDate, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
 import { copyToClipboardWithConfirmation, error, navigateByUrl, confirm, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import type { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
@@ -437,20 +437,6 @@ export const CalEventStore = signalStore(
         return (calEvent.calendars ?? []).some(calKey =>
           calendars.find(c => c.okey === calKey)?.owner?.startsWith('group.') === true
         );
-      },
-
-      /**
-       * Whether offering 'invite the group members' still makes sense: false once every member of the
-       * owning group holds an invitation for this event (re-inviting would only produce a toast).
-       * Falls back to true when the member list is unknown (e.g. the 'all'/'my' view, where no single
-       * group calendar is selected) — inviteGroupMembers then reports the outcome itself.
-       */
-      canInviteGroup(calevent: CalEventModel): boolean {
-        if (!this.isGroupCalevent(calevent)) return false;
-        const members = store.groupMembersResource.value() ?? [];
-        if (members.length === 0) return true;
-        const existing = (store.allInvitationsResource.value() ?? []).filter(inv => inv.caleventKey === calevent.okey && !inv.isArchived);
-        return inviteeCandidates(members.map(m => m.memberKey), existing, store.currentUser()?.personKey ?? '').length > 0;
       },
 
       getTags(): string {
@@ -1167,90 +1153,6 @@ export const CalEventStore = signalStore(
       },
 
       /******************************* invitations *************************************** */
-      /**
-       * Asks the organiser for the message that goes out with the invitation(s). The text is stored
-       * on every created invitation (`notes`) and is what the invitee reads in the invitations
-       * widget. Returns undefined when the organiser cancels — no invitation is then created.
-       * An empty text is a valid answer (invitation without a message).
-       */
-      async promptInvitationMessage(): Promise<string | undefined> {
-        const message = await okrPrompt(store.alertController, store.i18n.invite_message_title(),
-          store.i18n.invite_message_placeholder(), store.i18n.ok(), store.i18n.cancel());
-        return message?.trim();
-      },
-
-      async inviteGroupMembers(calevent: CalEventModel, readOnly = true): Promise<void> {
-        if (readOnly) return;
-        if (!store.calendar()) {
-          console.log(`CalEventStore.inviteGroupMembers: calendar '${store.calendarName()}' not found in calendars list.`);
-          const calendars = store.calendarsResource.value() || [];
-          console.log('All calendars:', calendars);
-          console.log('Calendar names:', calendars.map(c => c.name));
-          console.log('Looking for calendarName:', store.calendarName());
-          console.log('Calevent calendars array:', calevent.calendars);
-
-          if (calevent.calendars.length === 0) {
-            warn(`CalEventStore.inviteGroupMembers: calevent ${calevent.okey} has no assigned calendars.`); 
-            return; 
-          }
-          if (calendars.length > 1) {
-            // tbd: CalEventStore.inviteGroupMembers: handle multiple calendars better, let user decide which one to use (or all ?)
-            warn(`CalEventStore.inviteGroupMembers: calevent ${calevent.okey} is assigned to multiple calendars, using the first one.`); 
-          }
-          const calName = calevent.calendars[0];
-          this.setCalendarName(calName);
-          console.log(`CalEventStore.inviteGroupMembers: looking for calendar ${calName}.`);
-        }
-        // check that we are in a group calendar and get the group id from the calendar owner
-        const groupId = store.groupCalendarId();
-        console.log(`Inviting members of group ${groupId} to calevent ${calevent.okey}`);
-        if (groupId.length === 0) {
-          warn(`CalEventStore.inviteGroupMembers: calendar ${store.calendarName()} is not a group calendar.`);
-          return;
-        }
-        // get the group members (query memberships by group id)
-        const members = await firstValueFrom(store.membershipService.listMembersOfOrg(groupId, 'group'));
-        console.log(`Found ${members.length} members in group ${groupId}`, members);
-
-        // Invite everybody except the organiser and everybody who already holds an invitation for
-        // this event: re-running the action after a new member joined must not duplicate the
-        // invitations of those already invited.
-        const allInvitations = await store.firestoreService.getDataOnce<InvitationModel>(InvitationCollection, getSystemQuery(store.tenantId()), 'none');
-        const existing = allInvitations.filter(inv => inv.caleventKey === calevent.okey && !inv.isArchived);
-        const candidateKeys = inviteeCandidates(members.map(m => m.memberKey), existing, store.currentUser()?.personKey ?? '');
-        const candidates = members.filter(m => candidateKeys.includes(m.memberKey));
-        if (candidates.length === 0) {
-          await showToast(store.toastController, store.i18n.invite_members_none());
-          return;
-        }
-
-        const message = await this.promptInvitationMessage();
-        if (message === undefined) return;   // organiser cancelled
-
-        const batch = store.firestoreService.getBatch();
-        const key = generateRandomString(18);
-        let index = 0;
-        for (const member of candidates) {
-          const inv = new InvitationModel(store.tenantId());
-          inv.inviteeKey = member.memberKey;
-          inv.inviteeFirstName = member.memberName1;
-          inv.inviteeLastName = member.memberName2;
-          inv.notes = message;
-          inv.inviterKey = store.currentUser()?.personKey || '';
-          inv.inviterFirstName = store.currentUser()?.firstName || '';
-          inv.inviterLastName = store.currentUser()?.lastName || '';
-          inv.caleventKey = calevent.okey;
-          inv.name = calevent.name;
-          inv.date = calevent.startDate;
-          inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
-          const inv2 = removeKeyFromOkrModel(structuredClone(inv));
-          console.log(`Creating invitation on ${InvitationCollection}/${key}${pad(index, 2)}`, inv2);
-          const ref = doc(store.firestoreService.firestore, `${InvitationCollection}/${key + pad(index, 2)}`);
-          batch.set(ref, inv2);
-          index++;
-        }
-        await batch.commit();
-      },
 
       /**
        * Personen zu genau DIESEM Vorkommen einladen — mehrere auf einmal, mit einer gemeinsamen
@@ -1314,47 +1216,6 @@ export const CalEventStore = signalStore(
           warn(`CalEventStore.invitePersons: ${(e as Error).message}`);
           await showToast(store.toastController, store.i18n.invite_persons_error());
         }
-      },
-
-      async invitePerson(calevent: CalEventModel, readOnly = true): Promise<string | undefined> {
-        const avatar = await store.modelSelectService.selectPersonAvatar('', '');
-        if (avatar && !readOnly) {
-          const message = await this.promptInvitationMessage();
-          if (message === undefined) return undefined;   // organiser cancelled
-          const inv = new InvitationModel(store.tenantId());
-          inv.inviteeKey = extractSecondPartOfOptionalTupel(avatar.key);
-          inv.inviteeFirstName = avatar.name1;
-          inv.inviteeLastName = avatar.name2;
-          inv.notes = message;
-          inv.inviterKey = store.currentUser()?.personKey || '';
-          inv.inviterFirstName = store.currentUser()?.firstName || '';
-          inv.inviterLastName = store.currentUser()?.lastName || '';
-          inv.caleventKey = calevent.okey;
-          inv.name = calevent.name;
-          inv.date = calevent.startDate;
-          inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
-          const okey = await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, store.i18n.invite_person_conf(), store.i18n.invite_person_error(), store.currentUser());
-          if (okey) await this.recordInvitedAttendee(calevent, { ...avatar, key: inv.inviteeKey });
-          return okey;
-        }
-      },
-
-      /**
-       * Zweiter Teil jeder Einladung: der Eingeladene erscheint in derselben Teilnehmerliste wie
-       * die Mitglieder, als `'invited'` — also unbeantwortet.
-       *
-       * Die Einladung traegt seit 2026-09 nur noch die Bitte, die Antwort liegt ausschliesslich in
-       * `calevent.attendees` (Spec „Offene Anlaesse", Entscheidungen 3+4). Ohne diesen Schritt
-       * waere ein Gast eingeladen, aber nirgends sichtbar — und die Serientabelle, die Teilnehmer-
-       * zahl und der Empfaengersatz der Benachrichtigung wuessten nichts von ihm.
-       *
-       * Nur das Feld `attendees` wird geschrieben; ein ganzes Modell wuerde `okey` mitschleppen.
-       */
-      async recordInvitedAttendee(calevent: CalEventModel, person: AvatarInfo): Promise<void> {
-        const attendees = addInvitedAttendee(calevent.attendees, person);
-        if (attendees === calevent.attendees) return;   // already in the list, nothing to write
-        calevent.attendees = attendees;
-        await updateDoc(doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`), { attendees });
       },
 
       /******************************* subscriptions *************************************** */

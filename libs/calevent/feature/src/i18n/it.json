@@ -189,19 +189,7 @@
     "album": "Visualizza album"
   },
   "invite": {
-    "person": {
-      "label": "Invitare una persona",
-      "conf": "La persona è stata invitata",
-      "error": "Non è stato possibile invitare la persona"
-    },
-    "members": {
-      "label": "Invitare i membri del gruppo",
-      "conf": "I membri del gruppo sono stati invitati.",
-      "error": "Non è stato possibile invitare i membri del gruppo.",
-      "none": "Tutti i membri del gruppo sono già stati invitati."
-    },
     "message": {
-      "title": "Messaggio agli invitati",
       "placeholder": "Testo facoltativo inviato con l'invito",
       "label": "Il tuo messaggio",
       "helper": "Tutti gli invitati ricevono lo stesso testo. Scrivi brevemente di cosa si tratta."
