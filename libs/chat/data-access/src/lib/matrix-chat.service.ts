@@ -1,5 +1,6 @@
 
 import { effect, inject, Injectable } from '@angular/core';
+import { captureMessage } from '@sentry/angular';
 import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, ReceiptType, type MatrixCall, type Store } from 'matrix-js-sdk';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -839,14 +840,34 @@ export class MatrixChatService {
     if (!existing) {
       this.messages$.set(roomId, new BehaviorSubject<MatrixMessage[] | null>(null));
       this.loadMessagesForRoom(roomId);
-    } else if (this.client && existing.value === null) {
-      // C-3: retry only when the room was NEVER successfully loaded (value === null,
-      // e.g. the subject was created before the client was ready, or a prior load
-      // errored). A genuinely empty room has value === [] and must NOT re-paginate on
-      // every subscription, which the old `!value?.length` check caused.
+    } else if (this.client && (existing.value === null || this.hasUnloadedHistory(roomId, existing.value))) {
+      // C-3: retry when the room was NEVER successfully loaded (value === null, e.g. the
+      // subject was created before the client was ready, or a prior load errored). A
+      // genuinely empty room has value === [] and must NOT re-paginate on every
+      // subscription, which the old `!value?.length` check caused.
+      //
+      // Blank-room guard: `[]` alone does NOT prove the room is empty. A room whose live timeline was
+      // discarded by a `limited` sync (iOS resume) carries state events only until the
+      // back-fill runs, and every way that back-fill can come up short — a paginate that
+      // throws, the round cap — used to cache `[]` for the rest of the app session: no
+      // spinner (that needs `null`), no retry, a permanently blank room the user cannot
+      // recover from without restarting the app. An empty list with a backwards pagination
+      // token left is one of those cases, so re-load it; a room that really is empty has
+      // paginated to its own creation event and has no token, so it still loads once.
       this.loadMessagesForRoom(roomId);
     }
     return this.messages$.get(roomId)!.asObservable();
+  }
+
+  /**
+   * True when a room's cached message list is empty although the timeline still has history
+   * behind it — i.e. the emptiness comes from a back-fill that never reached a message, not
+   * from the room being empty. Used to re-load instead of trusting the cached `[]`.
+   */
+  private hasUnloadedHistory(roomId: string, cached: MatrixMessage[] | null): boolean {
+    if (cached === null || cached.length > 0) return false;
+    const timeline = this.client?.getRoom(roomId)?.getLiveTimeline();
+    return !!timeline?.getPaginationToken(EventTimeline.BACKWARDS);
   }
 
   public getReadReceiptsForRoom(roomId: string): Observable<Map<string, MatrixReadReceipt[]>> {
@@ -889,6 +910,9 @@ export class MatrixChatService {
     subject.next(result);
   }
 
+  /** Back-pagination failures already reported this session — see reportPaginationFailure. */
+  private readonly reportedPaginationFailures = new Set<string>();
+
   /** How many rendered messages an opened room should carry before back-filling stops. */
   private static readonly MIN_VISIBLE_MESSAGES = 20;
   /** Round cap, so a room made almost entirely of state events cannot spin on /messages. */
@@ -915,6 +939,9 @@ export class MatrixChatService {
     }
 
     this.loadingRooms.add(roomId);
+    // Blank-room guard: a back-fill that died on a failed /messages request must not be emitted as an
+    // empty room — see emitMessagesFromTimeline's `keepNullWhenEmpty`.
+    let paginationFailed = false;
     try {
       const timeline = room.getLiveTimeline();
       const events = timeline.getEvents();
@@ -941,16 +968,43 @@ export class MatrixChatService {
           if (!hasMore) break;
         } catch (paginateError) {
           console.warn('MatrixChatService: Failed to paginate timeline:', paginateError);
+          paginationFailed = true;
+          this.reportPaginationFailure(paginateError);
           break;
         }
       }
 
-      await this.emitMessagesFromTimeline(room);
+      await this.emitMessagesFromTimeline(room, paginationFailed);
     } catch (error) {
       console.error('MatrixChatService: Error loading messages for room:', error);
     } finally {
       this.loadingRooms.delete(roomId);
     }
+  }
+
+  /**
+   * Report a back-pagination that failed while opening a room.
+   *
+   * This path has no user-facing signal of its own: the room simply shows no messages, and
+   * the `console.warn` next to the call dies with the tab (no app installs Sentry's
+   * captureConsoleIntegration). Sentry is therefore the only place such a failure can be
+   * observed — which is why the blank-DM-on-iOS report arrived with no ticket behind it.
+   *
+   * Reported once per distinct reason per session, like MatrixMediaService does: one flaky
+   * network on a resumed iOS tab hits every room the user opens, and a hundred identical
+   * issues would bury the one-off failures this exists to surface. No room id is attached —
+   * it identifies a specific private conversation.
+   */
+  private reportPaginationFailure(error: unknown): void {
+    const message = (error as Error | null)?.message ?? 'unknown';
+    const errcode = (error as MatrixError | null)?.errcode;
+    const reason = errcode ? `${errcode}: ${message}` : message;
+    if (this.reportedPaginationFailures.has(reason)) return;
+    this.reportedPaginationFailures.add(reason);
+    captureMessage(`MatrixChatService: timeline back-pagination failed: ${reason}`, {
+      level: 'warning',
+      tags: { chatTimeline: 'paginate-failed' },
+    });
   }
 
   /**
@@ -986,7 +1040,7 @@ export class MatrixChatService {
    * Rebuild the message list from the room's live timeline (resolving media and
    * avatars) and emit it on the room's messages subject.
    */
-  private async emitMessagesFromTimeline(room: Room): Promise<void> {
+  private async emitMessagesFromTimeline(room: Room, keepNullWhenEmpty = false): Promise<void> {
     const roomId = room.roomId;
     const timeline = room.getLiveTimeline();
     // Get all events from timeline and convert to messages, resolving media URLs
@@ -1019,6 +1073,17 @@ export class MatrixChatService {
     );
 
     debugMessage(`MatrixChatService: Loaded ${messages.length} messages for room ${roomId}`, this.appStore.currentUser());
+
+    // Blank-room guard: the back-fill failed AND produced nothing — that is a failed load, not an empty
+    // room. Emitting `[]` would cache the failure for the rest of the session (the retry in
+    // getMessagesForRoom and the spinner in MatrixChatStore both key off `null`), leaving a
+    // room with months of history permanently blank and without any sign that something went
+    // wrong. Leave the subject untouched instead: the spinner stays up and the next open of
+    // the room loads again.
+    if (keepNullWhenEmpty && messages.length === 0) {
+      debugMessage(`MatrixChatService: back-fill for room ${roomId} failed and yielded no messages — keeping the list unresolved for a retry`, this.appStore.currentUser());
+      return;
+    }
 
     this.messages$.get(roomId)?.next(messages);
   }
