@@ -6,12 +6,15 @@ import { CalEventModel, RoleName } from '@okr/shared-models';
 import { LabelPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getYear, getYearFromDate, getYearList, hasRole } from '@okr/shared-util-core';
+import { getYearFromDate, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 
 import { CalEventStore } from './calevent.store';
+
+/** Sentinel understood by yearMatches() as "do not filter by year". */
+const ALL_YEARS = 99;
 
 @Component({
     selector: 'okr-yearly-events',
@@ -51,7 +54,6 @@ import { CalEventStore } from './calevent.store';
       (searchTermChanged)="onSearchtermChange($event)"
       (tagChanged)="onTagSelected($event)" [tags]="tags()"
       (typeChanged)="onTypeSelected($event)" [types]="types()"
-      (yearChanged)="onYearSelected($event)" [years]="years()"
     />
 
     <!-- list header -->
@@ -123,7 +125,6 @@ export class YearlyEvents {
   protected types = computed(() => this.store.appStore.getCategory('calevent_type'));
   private currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('eventAdmin', this.currentUser()) && !hasRole('privileged', this.currentUser()));
-  protected readonly years = computed(() => getYearList(getYear(), 30));
   /** Template access to the StoreDate -> yyyy helper. */
   protected readonly getYearFromDate = getYearFromDate;
 
@@ -131,6 +132,10 @@ export class YearlyEvents {
 
   constructor() {
     effect(() => this.store.setCalendarName(this.listId()));
+    // A yearly-events list that shows one year is pointless: the whole screen is the history
+    // of the anniversary event across the years. Pin the store's year filter to the
+    // 'all years' sentinel (see yearMatches) and offer no year filter in the UI.
+    this.store.setSelectedYear(ALL_YEARS);
   }
 
   /******************************* actions *************************************** */
@@ -211,10 +216,6 @@ export class YearlyEvents {
 
   protected onTypeSelected(calEventType: string): void {
     this.store.setSelectedCategory(calEventType);
-  }
-
-  protected onYearSelected(year: number): void {
-    this.store.setSelectedYear(year);
   }
 
   /******************************* helpers *************************************** */
