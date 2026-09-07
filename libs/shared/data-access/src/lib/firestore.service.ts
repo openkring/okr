@@ -24,13 +24,13 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
 import { captureMessage } from '@sentry/angular';
-import { arrayRemove, collection, deleteDoc, doc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
+import { arrayRemove, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
 import { catchError, defer, delay, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, tap, timer } from 'rxjs';
 
 import { AUTH, ensureAppCheckToken, ENV, FIRESTORE, isFirestoreInitializedCheck } from '@okr/shared-config';
-import { OkrModel, CommentCollection, CommentModel, DbQuery, UserCollection, UserModel } from "@okr/shared-models";
-import { debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, getSystemQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
+import { OkrModel, CommentCollection, CommentModel, DbQuery, PersonCollection, PersonModel, UserModel } from "@okr/shared-models";
+import { debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 import { I18nService } from "@okr/shared-i18n";
 
@@ -909,18 +909,20 @@ export class FirestoreService {
   }
 
   /**
-   * Check that a given person is a current user of the application.
+   * Check that a given person is a current user of the application in THIS tenant.
    * This is important to avoid opening direct chats to non-users.
+   *
+   * Reads the person's `accountTenants` mirror, NOT the `users` collection: the users
+   * rule is `own doc ∨ privileged`, so a plain member's query was denied and the swallowed
+   * error made every person look like a non-user (no chat action ever offered). The mirror
+   * is written by the account-mirror Cloud Function and lives on the tenant-readable person
+   * document. `?? []` because persons written before the field existed read back undefined.
    */
   public async isPersonUser(personKey: string): Promise<boolean> {
     try {
-      const query = getSystemQuery(this.env.tenantId);
-      query.push({ key: 'personKey', operator: '==', value: personKey});
-      const user = await this.getDataOnce<UserModel>(UserCollection, query, 'none');
-      if (user.length === 1) {
-        return true;
-      }
-      return false;
+      const snapshot = await getDoc(doc(this.firestore, `${PersonCollection}/${personKey}`));
+      const person = snapshot.data() as PersonModel | undefined;
+      return (person?.accountTenants ?? []).includes(this.env.tenantId);
     }
     catch (ex) {
       console.error(`FirestoreService.isPersonUser(${personKey}) -> ERROR: `, ex);
