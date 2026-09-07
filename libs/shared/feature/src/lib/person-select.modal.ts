@@ -95,6 +95,10 @@ export class PersonSelectModal {
   public allowCustom = input<boolean>(false);
   /** Opt-in two-level lookup (members of the default org first). Off everywhere but trip/logbuch. */
   public membersFirst = input<boolean>(false);
+  /** Offer only persons with an app account — see PersonSelectStore.persons. */
+  public onlyWithAccount = input<boolean>(false);
+  /** okeys never offered, e.g. those already picked by the caller. */
+  public excludeKeys = input<string[]>([]);
 
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
   protected memberSection = computed(() => this.store.memberSection() ?? []);
@@ -116,6 +120,12 @@ export class PersonSelectModal {
     });
     effect(() => {
       this.store.setMembersFirst(this.membersFirst());
+    });
+    effect(() => {
+      this.store.setOnlyWithAccount(this.onlyWithAccount());
+    });
+    effect(() => {
+      this.store.setExcludeKeys(this.excludeKeys());
     });
   }
 

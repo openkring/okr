@@ -15,6 +15,7 @@ import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollec
 import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, inviteeCandidates, isCalendarPublic, isAfterDate, isAfterOrEqualDate, nameMatches, pad, prettyFormatDate, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
 import { copyToClipboardWithConfirmation, error, navigateByUrl, confirm, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
+import type { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
 import { yearMatches } from '@okr/shared-categories';
 import { MAX_DATES_PER_SERIES } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
@@ -1249,6 +1250,70 @@ export const CalEventStore = signalStore(
           index++;
         }
         await batch.commit();
+      },
+
+      /**
+       * Personen zu genau DIESEM Vorkommen einladen — mehrere auf einmal, mit einer gemeinsamen
+       * Nachricht (Spec „Offene Anlaesse", Entscheidungen 8+11).
+       *
+       * Pro Person entsteht ein eigenes Einladungsdokument (der Antwortzustand wird pro Person
+       * gefuehrt), aber nur EIN Schreibvorgang auf den Anlass: alle neuen `'invited'`-Eintraege
+       * werden gefaltet, sonst wuerde jede Person den Anlass einzeln ueberschreiben und die
+       * vorherigen Eintraege verlieren.
+       *
+       * Die Auswahl bietet nur registrierte Benutzer an, und niemanden, der schon auf dem Anlass
+       * steht — wer eingeladen ist oder zugesagt hat, ist bereits Teilnehmer.
+       */
+      async invitePersons(calevent: CalEventModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
+        const currentUser = store.currentUser();
+        if (!currentUser) return;
+        const excludeKeys = [
+          currentUser.personKey ?? '',
+          ...(calevent.attendees ?? []).map(attendee => attendee.person.key),
+        ].filter(key => key.length > 0);
+
+        const { InvitePersonsModal } = await import('@okr/relationship-invitation-ui');
+        // typed on purpose: componentProps is an untyped record, so a renamed or missing i18n key
+        // would otherwise only surface as 'is not a function' when the modal renders
+        const i18n: InvitePersonsI18n = store.i18n;
+        const modal = await store.modalController.create({
+          component: InvitePersonsModal,
+          componentProps: { i18n, currentUser, excludeKeys },
+        });
+        modal.present();
+        const { data, role } = await modal.onWillDismiss<InvitePersonsFormData>();
+        if (role !== 'confirm' || !data || data.invitees.length === 0) return;
+
+        try {
+          const batch = store.firestoreService.getBatch();
+          const key = generateRandomString(18);
+          let attendees = calevent.attendees ?? [];
+          data.invitees.forEach((avatar, index) => {
+            const inv = new InvitationModel(store.tenantId());
+            inv.inviteeKey = extractSecondPartOfOptionalTupel(avatar.key);
+            inv.inviteeFirstName = avatar.name1;
+            inv.inviteeLastName = avatar.name2;
+            inv.notes = data.message;
+            inv.inviterKey = currentUser.personKey || '';
+            inv.inviterFirstName = currentUser.firstName || '';
+            inv.inviterLastName = currentUser.lastName || '';
+            inv.caleventKey = calevent.okey;
+            inv.name = calevent.name;
+            inv.date = calevent.startDate;
+            inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
+            batch.set(doc(store.firestoreService.firestore, `${InvitationCollection}/${key + pad(index, 2)}`),
+              removeKeyFromOkrModel(structuredClone(inv)));
+            attendees = addInvitedAttendee(attendees, { ...avatar, key: inv.inviteeKey });
+          });
+          batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`), { attendees });
+          await batch.commit();
+          calevent.attendees = attendees;
+          await showToast(store.toastController, fill(store.i18n.invite_persons_conf(), { count: data.invitees.length }));
+        } catch (e) {
+          warn(`CalEventStore.invitePersons: ${(e as Error).message}`);
+          await showToast(store.toastController, store.i18n.invite_persons_error());
+        }
       },
 
       async invitePerson(calevent: CalEventModel, readOnly = true): Promise<string | undefined> {

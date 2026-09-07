@@ -202,7 +202,17 @@
     },
     "message": {
       "title": "Nachricht an die Eingeladenen",
-      "placeholder": "Optionaler Text, der mit der Einladung verschickt wird"
+      "placeholder": "Optionaler Text, der mit der Einladung verschickt wird",
+      "label": "Deine Nachricht",
+      "helper": "Alle Eingeladenen bekommen denselben Text. Schreib kurz, worum es geht."
+    },
+    "persons": {
+      "label": "Personen einladen",
+      "title": "Personen einladen",
+      "invitees": "Wen möchtest du einladen?",
+      "add": "Person hinzufügen",
+      "conf": "{count} Einladungen verschickt.",
+      "error": "Die Einladungen konnten nicht verschickt werden."
     }
   },
   "invitation": {

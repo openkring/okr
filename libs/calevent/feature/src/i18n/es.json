@@ -202,7 +202,17 @@
     },
     "message": {
       "title": "Mensaje para los invitados",
-      "placeholder": "Texto opcional que se envía con la invitación"
+      "placeholder": "Texto opcional que se envía con la invitación",
+      "label": "Tu mensaje",
+      "helper": "Todas las personas invitadas reciben el mismo texto. Escribe brevemente de qué se trata."
+    },
+    "persons": {
+      "label": "Invitar a personas",
+      "title": "Invitar a personas",
+      "invitees": "¿A quién quieres invitar?",
+      "add": "Añadir persona",
+      "conf": "{count} invitaciones enviadas.",
+      "error": "No se han podido enviar las invitaciones."
     }
   },
   "invitation": {

@@ -20,6 +20,10 @@ export type PersonSelectState = {
   selectedTag: string;
   allowCustom: boolean;
   membersFirst: boolean;
+  /** Offer only persons who hold an app account (`person.hasAccount`). */
+  onlyWithAccount: boolean;
+  /** okeys never offered — e.g. people who are already on the list the caller is filling. */
+  excludeKeys: string[];
 };
 
 export const personInitialState: PersonSelectState = {
@@ -28,6 +32,8 @@ export const personInitialState: PersonSelectState = {
   selectedTag: '',
   allowCustom: false,
   membersFirst: false,
+  onlyWithAccount: false,
+  excludeKeys: [],
 };
 
 export const PersonSelectStore = signalStore(
@@ -61,8 +67,21 @@ export const PersonSelectStore = signalStore(
 
   withComputed((store) => {
     return {
-      // A deceased person is never offered, on either level.
-      persons: computed(() => store.appStore.allPersons().filter((p: PersonModel) => !p.isDeceased)),
+      /**
+       * A deceased person is never offered, on either level.
+       *
+       * `onlyWithAccount` narrows it to people who can actually log in — an invitation may only
+       * reach a registered user (spec 2026-09-06 open events, decision 9), and offering somebody
+       * who could never answer is worse than not offering them. `?? false` because every person
+       * written before `hasAccount` existed reads back undefined.
+       */
+      persons: computed(() => {
+        const excluded = new Set(store.excludeKeys());
+        return store.appStore.allPersons().filter((p: PersonModel) =>
+          !p.isDeceased
+          && !excluded.has(p.okey)
+          && (!store.onlyWithAccount() || (p.hasAccount ?? false)));
+      }),
       isLoading: computed(() => store.appStore.isReferenceDataLoading()),
       // state === 'active' is not enough: scs has memberships left at 'active' with a dateOfExit
       // years in the past (e.g. exited 2016-12-31), so the exit date decides who is current.
@@ -144,6 +163,14 @@ export const PersonSelectStore = signalStore(
 
       setMembersFirst(membersFirst: boolean) {
         patchState(store, { membersFirst });
+      },
+
+      setOnlyWithAccount(onlyWithAccount: boolean) {
+        patchState(store, { onlyWithAccount });
+      },
+
+      setExcludeKeys(excludeKeys: string[]) {
+        patchState(store, { excludeKeys });
       }
     }
   }),

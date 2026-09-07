@@ -18,6 +18,12 @@
   "exclude": ["dist/**/*"],
   "references": [
     {
+      "path": "../../relationship/invitation/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../relationship/invitation/ui/tsconfig.lib.json"
+    },
+    {
       "path": "../../calevent/data-access/tsconfig.lib.json"
     },
     {

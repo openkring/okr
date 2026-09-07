@@ -24,6 +24,8 @@
     "@okr/subject-address-util": "*",
     "@okr/subject-group-util": "*",
     "@okr/system-alias-data-access": "*",
-    "tslib": "^2.8.1"
+    "tslib": "^2.8.1",
+    "@okr/relationship-invitation-ui": "*",
+    "@okr/relationship-invitation-util": "*"
   }
 }

@@ -202,7 +202,17 @@
     },
     "message": {
       "title": "Message to the invitees",
-      "placeholder": "Optional text sent along with the invitation"
+      "placeholder": "Optional text sent along with the invitation",
+      "label": "Your message",
+      "helper": "Everybody invited gets the same text. Say briefly what it is about."
+    },
+    "persons": {
+      "label": "Invite people",
+      "title": "Invite people",
+      "invitees": "Who would you like to invite?",
+      "add": "Add person",
+      "conf": "{count} invitations sent.",
+      "error": "The invitations could not be sent."
     }
   },
   "invitation": {

@@ -10,6 +10,16 @@ import { LocationSelectModal, LocationSelectResult } from "./location-select.mod
 import { PersonSelectResult } from "./person-select.modal";
 import { normalizeWhitespace } from "./location-select.store";
 
+/**
+ * Narrows who the person picker offers. Both are opt-in: without them the picker behaves as before.
+ */
+export type PersonSelectOptions = {
+  /** Only persons who hold an app account (`person.hasAccount`) — see the invite path. */
+  onlyWithAccount?: boolean;
+  /** okeys never offered, e.g. those the caller has already picked. */
+  excludeKeys?: string[];
+};
+
 @Injectable({
     providedIn: 'root'
 })
@@ -22,7 +32,7 @@ export class ModelSelectService {
    * Opens the person-select modal. When allowCustom is true and the user types a name that
    * matches no existing person, the modal offers a custom entry (returned as kind: 'custom').
    */
-  private async openPersonSelect(selectedTag = DEFAULT_TAGS, allowCustom = false, membersFirst = false): Promise<PersonSelectResult | undefined> {
+  private async openPersonSelect(selectedTag = DEFAULT_TAGS, allowCustom = false, membersFirst = false, options: PersonSelectOptions = {}): Promise<PersonSelectResult | undefined> {
     const modal = await this.modalController.create({
       component: PersonSelectModal,
       cssClass: 'list-modal',
@@ -31,6 +41,8 @@ export class ModelSelectService {
         currentUser: this.appStore.currentUser(),
         allowCustom,
         membersFirst,
+        onlyWithAccount: options.onlyWithAccount ?? false,
+        excludeKeys: options.excludeKeys ?? [],
       },
     });
     modal.present();
@@ -53,8 +65,8 @@ export class ModelSelectService {
    * Returns an AvatarInfo for the selected person. When allowCustom is true and the user enters
    * a name that matches no existing person, a custom avatar (key '') with that name is returned.
    */
-  public async selectPersonAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL, allowCustom = false, membersFirst = false): Promise<AvatarInfo | undefined> {
-    const result = await this.openPersonSelect(selectedTag, allowCustom, membersFirst);
+  public async selectPersonAvatar(selectedTag = DEFAULT_TAGS, label = DEFAULT_LABEL, allowCustom = false, membersFirst = false, options: PersonSelectOptions = {}): Promise<AvatarInfo | undefined> {
+    const result = await this.openPersonSelect(selectedTag, allowCustom, membersFirst, options);
     if (!result) return undefined;
     if (result.kind === 'custom') {
       const parts = normalizeWhitespace(result.label).split(' ');
