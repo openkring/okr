@@ -137,7 +137,9 @@
     "email": "Envoyer un e-mail"
   },
   "show": {
-    "postal": "Afficher l'adresse postale sur la carte"
+    "postal": "Afficher l'adresse postale sur la carte",
+    "noPostal": "Aucune adresse postale n'est visible pour cette personne.",
+    "noLocation": "Cette adresse n'a pas pu être trouvée sur la carte."
   },
   "view": {
     "label": "Afficher la personne"

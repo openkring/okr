@@ -66,6 +66,18 @@ export function loginEmailDivergence(address: AddressModel, personKey?: string, 
  * at model defaults. okey is the REAL address doc id, so actions (mailto/tel,
  * map) behave identically.
  */
+/**
+ * The one postal address of a parent that a member may see, taken from the
+ * `address-directory` projection: the flagged favorite, else the first non-CC postal
+ * entry. Used wherever a viewer without raw vault access (see {@link readsAddressVault})
+ * needs the postal address — e.g. "show on map".
+ */
+export function getDirectoryPostalAddress(entries: DirectoryEntry[] | undefined, tenantId: string, parentKey: string): AddressModel | undefined {
+  const postals = (entries ?? []).filter((entry) => entry.addressChannel === 'postal' && !entry.isCc);
+  const entry = postals.find((postal) => postal.isFavorite) ?? postals[0];
+  return entry ? directoryEntryToAddress(entry, tenantId, parentKey) : undefined;
+}
+
 export function directoryEntryToAddress(entry: DirectoryEntry, tenantId: string, parentKey: string): AddressModel {
   const address = new AddressModel(tenantId);
   address.okey = entry.addressOkey;

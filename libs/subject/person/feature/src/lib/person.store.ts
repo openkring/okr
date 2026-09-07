@@ -20,7 +20,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AddressService, GeocodingService } from '@okr/subject-address-data-access';
 import { PersonService, SensitivePersonData } from '@okr/subject-person-data-access';
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@okr/subject-person-util';
-import { browseUrl, stringifyPostalAddress } from '@okr/subject-address-util';
+import { browseUrl, getDirectoryPostalAddress, readsAddressVault, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import type { MatrixChatService } from '@okr/chat-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
@@ -504,19 +504,34 @@ export const PersonStore = signalStore(
         },
 
 
+        /**
+         * Show the person's main postal address on a map. The raw `addresses` vault is
+         * readable only by the owner, privileged and memberAdmin (spec 1.19 Phase 4); a plain
+         * member's query is denied and getDataOnce swallows it into an empty list, so the
+         * action silently did nothing. Everyone else therefore reads the sanitized
+         * `address-directory` projection, which carries exactly the member-visible postal data.
+         */
         async showOnMap(person?: PersonModel): Promise<void> {
             if (!person) return;
-            const postalAddresses = await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [
-              { key: 'parentKey', operator: '==', value: 'person.' + person.okey },
-              { key: 'addressChannel', operator: '==', value: 'postal' },
-              { key: 'isFavorite', operator: '==', value: true }
-            ], 'none');
-            const postalAddress = postalAddresses[0];
-            if (!postalAddress) return;
+            const parentKey = 'person.' + person.okey;
+            const postalAddress = readsAddressVault(store.currentUser(), parentKey)
+              ? (await store.firestoreService.getDataOnce<AddressModel>(AddressCollection, [
+                  { key: 'parentKey', operator: '==', value: parentKey },
+                  { key: 'addressChannel', operator: '==', value: 'postal' },
+                  { key: 'isFavorite', operator: '==', value: true }
+                ], 'none'))[0]
+              : getDirectoryPostalAddress(store.appStore.getDirectoryEntry(parentKey)?.entries, store.tenantId(), parentKey);
+            if (!postalAddress) {
+              await showToast(store.toastController, store.i18n.show_no_postal());
+              return;
+            }
             const addressStr = stringifyPostalAddress(postalAddress, Languages[DefaultLanguage].abbreviation ?? 'de');
 
             const coordinates = await store.geocodeService.geocodeAddress(addressStr);
-            if (!coordinates) return;
+            if (!coordinates) {
+              await showToast(store.toastController, store.i18n.show_no_location());
+              return;
+            }
             const modal = await store.modalController.create({
                 component: MapViewModal,
                 cssClass: 'map-modal',

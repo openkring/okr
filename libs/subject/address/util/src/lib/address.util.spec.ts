@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AddressModel, UserModel } from '@okr/shared-models';
+import { AddressModel, DirectoryEntry, UserModel } from '@okr/shared-models';
 import { getCountryName } from '@okr/shared-util-core';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
-import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, directoryEntryToAddress, getAddressIndex, getWebUrl, loginEmailDivergence, normalizeAddressValue, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyAddress, stringifyPostalAddress } from './address.util';
+import { browseUrl, createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoriteWebAddress, createPostalAddress, createFavoritePostalAddress, directoryEntryToAddress, getAddressIndex, getDirectoryPostalAddress, getWebUrl, loginEmailDivergence, normalizeAddressValue, openExternalUrl, readsAddressVault, shouldBecomeFavorite, stringifyAddress, stringifyPostalAddress } from './address.util';
 
 // Mock all external dependencies
 vi.mock('@capacitor/browser', () => ({ Browser: { open: vi.fn() } }));
@@ -293,6 +293,38 @@ describe('directoryEntryToAddress (spec 1.19 Phase 4)', () => {
     // never carries vault values — the entry has none by construction
     expect(address.ssn).toBe('');
     expect(address.iban).toBe('');
+  });
+});
+
+describe('getDirectoryPostalAddress', () => {
+  const entry = (over: Partial<DirectoryEntry>): DirectoryEntry => ({
+    addressOkey: 'a', addressChannel: 'postal', addressChannelLabel: '', addressUsage: '',
+    addressUsageLabel: '', isFavorite: false, isCc: false, email: '', phone: '',
+    streetName: 'Bahnhofstrasse', streetNumber: '1', addressValue2: '', zipCode: '8001', city: 'Zürich',
+    countryCode: 'CH', url: '', ...over,
+  });
+
+  it('returns undefined without entries', () => {
+    expect(getDirectoryPostalAddress(undefined, 't1', 'person.p1')).toBeUndefined();
+    expect(getDirectoryPostalAddress([], 't1', 'person.p1')).toBeUndefined();
+  });
+
+  it('returns undefined when no postal entry is projected', () => {
+    expect(getDirectoryPostalAddress([entry({ addressChannel: 'email' })], 't1', 'person.p1')).toBeUndefined();
+  });
+
+  it('prefers the flagged favorite over an earlier postal entry', () => {
+    const result = getDirectoryPostalAddress(
+      [entry({ addressOkey: 'a1' }), entry({ addressOkey: 'a2', isFavorite: true })], 't1', 'person.p1');
+    expect(result?.okey).toBe('a2');
+    expect(result?.parentKey).toBe('person.p1');
+    expect(result?.city).toBe('Zürich');
+  });
+
+  it('falls back to the first non-CC postal entry', () => {
+    const result = getDirectoryPostalAddress(
+      [entry({ addressOkey: 'cc', isCc: true }), entry({ addressOkey: 'a1' })], 't1', 'person.p1');
+    expect(result?.okey).toBe('a1');
   });
 });
 

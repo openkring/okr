@@ -114,6 +114,8 @@ export const PERSON_I18N_KEYS = {
     send_message:               PFX + 'send.message',
     send_email:                 PFX + 'send.email',
     show_postal:                PFX + 'show.postal',
+    show_no_postal:             PFX + 'show.noPostal',
+    show_no_location:           PFX + 'show.noLocation',
     view:                       PFX + 'view.label',
     delete:                     PFX + 'delete.label',
     delete_conf:                PFX + 'delete.conf',

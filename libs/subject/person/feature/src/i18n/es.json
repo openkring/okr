@@ -137,7 +137,9 @@
     "email": "Enviar correo electrónico"
   },
   "show": {
-    "postal": "Mostrar la dirección postal en el mapa"
+    "postal": "Mostrar la dirección postal en el mapa",
+    "noPostal": "No hay ninguna dirección postal visible para esta persona.",
+    "noLocation": "No se ha podido encontrar esta dirección en el mapa."
   },
   "view": {
     "label": "Mostrar persona"
