@@ -1279,7 +1279,7 @@ export const CalEventStore = signalStore(
         const i18n: InvitePersonsI18n = store.i18n;
         const modal = await store.modalController.create({
           component: InvitePersonsModal,
-          componentProps: { i18n, currentUser, excludeKeys },
+          componentProps: { i18n, currentUser, tenantId: store.tenantId(), excludeKeys },
         });
         modal.present();
         const { data, role } = await modal.onWillDismiss<InvitePersonsFormData>();

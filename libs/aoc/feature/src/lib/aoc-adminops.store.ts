@@ -72,35 +72,40 @@ export const AocAdminOpsStore = signalStore(
       },
 
       /**
-       * Einmalige Wartung: spiegelt „hat einen Zugang" von `users` auf `persons.hasAccount`.
+       * Einmalige Wartung: spiegelt aus `users`, in WELCHEN Mandanten eine Person einen Zugang
+       * hat, auf `persons.accountTenants`.
        *
        * Warum es das Merkmal ueberhaupt gibt: eingeladen werden duerfen nur registrierte Benutzer,
        * aber `users/{uid}` ist fuer gewoehnliche Benutzer nicht lesbar — und einladen darf auch ein
        * Gruppen-Admin ohne `privileged`. Laufend haelt der Trigger `onUserWritten` das Merkmal
        * aktuell; diese Aktion holt den Bestand nach.
        *
-       * Idempotent: eine Person, deren Merkmal bereits stimmt, wird nicht geschrieben. Deshalb ist
-       * ein mehrfacher Aufruf gefahrlos, und die Rueckmeldung zaehlt nur die echten Aenderungen.
+       * Laeuft ueber ALLE Mandanten, auch wenn sie aus einem einzelnen aufgerufen wird: das Feld
+       * listet die Mandanten mit Zugang, und aus nur einem berechnet wuerde es die uebrigen
+       * loeschen und die Person dort un-einladbar machen.
+       *
+       * Idempotent: eine Person, deren Wert bereits stimmt, wird nicht geschrieben. Deshalb ist ein
+       * mehrfacher Aufruf gefahrlos, und die Rueckmeldung zaehlt nur die echten Aenderungen.
        */
-      async backfillHasAccount(): Promise<void> {
+      async backfillAccountTenants(): Promise<void> {
         const confirmed = await confirm(store.alertController, store.i18n.adminops_hasaccount_confirm(),
           store.i18n.ok(), store.i18n.cancel(), true);
         if (!confirmed) return;
         try {
-          const fn = httpsCallable<Record<string, never>, { users: number; granted: number; cleared: number }>(
-            getFunctions(getApp(), 'europe-west6'), 'backfillHasAccount');
+          const fn = httpsCallable<Record<string, never>, { users: number; persons: number; written: number }>(
+            getFunctions(getApp(), 'europe-west6'), 'backfillAccountTenants');
           const result = await fn({});
-          const { users, granted, cleared } = result.data;
+          const { users, persons, written } = result.data;
           patchState(store, {
             logTitle: store.i18n.adminops_hasaccount_title(),
             log: [
               { id: 'users', name: 'users', message: `${users}` },
-              { id: 'granted', name: 'granted', message: `${granted}` },
-              { id: 'cleared', name: 'cleared', message: `${cleared}` },
+              { id: 'persons', name: 'persons', message: `${persons}` },
+              { id: 'written', name: 'written', message: `${written}` },
             ],
           });
           await showToast(store.toastController,
-            fill(store.i18n.adminops_hasaccount_conf(), { count: granted + cleared }));
+            fill(store.i18n.adminops_hasaccount_conf(), { count: written }));
         } catch (e) {
           await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
         }

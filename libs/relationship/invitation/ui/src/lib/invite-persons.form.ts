@@ -16,9 +16,11 @@ import { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invi
  * Beide Angaben gelten fuer ALLE Ausgewaehlten — pro Person entsteht ein eigenes
  * Einladungsdokument mit demselben Text, weil der Antwortzustand pro Person gefuehrt wird.
  *
- * Die Auswahl ist auf registrierte Benutzer eingeschraenkt (Spec „Offene Anlaesse",
- * Entscheidung 9): wer keinen Zugang hat, koennte die Einladung nie beantworten. Deshalb gibt es
- * hier auch bewusst kein „Person neu anlegen" — eine frisch angelegte Person haette keinen Zugang.
+ * Die Auswahl ist auf registrierte Benutzer DIESES Mandanten eingeschraenkt (Spec „Offene
+ * Anlaesse", Entscheidung 9): wer hier keinen Zugang hat, koennte die Einladung nie beantworten —
+ * ein Benutzerkonto gehoert zu genau einem Mandanten, auch wenn die Person in mehreren steht.
+ * Deshalb gibt es hier auch bewusst kein „Person neu anlegen" — eine frisch angelegte Person
+ * haette keinen Zugang.
  *
  * Kein Vest-Suite: das einzige Kriterium ist „mindestens eine Person", und das prueft `valid`
  * direkt. Eine Suite ohne Regel waere Zeremonie.
@@ -66,6 +68,8 @@ export class InvitePersonsForm {
   public readonly i18n = input.required<InvitePersonsI18n>();
   public formData = model.required<InvitePersonsFormData>();
   public readonly currentUser = input<UserModel | undefined>();
+  /** The tenant the invitation is written in — the picker offers only accounts of this tenant. */
+  public readonly tenantId = input.required<string>();
   /** okeys the picker must not offer: the organiser and everybody already on the event. */
   public readonly excludeKeys = input<string[]>([]);
   public readonly readOnly = input(false);
@@ -96,7 +100,7 @@ export class InvitePersonsForm {
   public async selectPerson(): Promise<void> {
     const picked = [...(this.formData()?.invitees ?? [])];
     const avatar = await this.modelSelectService.selectPersonAvatar('', '', false, false, {
-      onlyWithAccount: true,
+      accountTenant: this.tenantId(),
       excludeKeys: [...this.excludeKeys(), ...picked.map(person => person.key)],
     });
     if (!avatar) return;

@@ -320,8 +320,8 @@ export { migrateDateOfDeath } from './person/migrate-sensitive-data';
 // re-derive the dob/dod replicas from the live vault (run AFTER migrateDateOfDeath)
 export { resyncVaultReplicas } from './person/resync-vault-replicas';
 
-// mirror "has an app account" onto the person (spec 2026-09-06 open events, decision 9)
-export { onUserWritten, backfillHasAccount } from './person/account-mirror';
+// mirror the tenants a person holds an account in (spec 2026-09-06 open events, decision 9)
+export { onUserWritten, backfillAccountTenants } from './person/account-mirror';
 
 // address-directory projection rebuild/backfill (privacy 1.19 Phase 4)
 export { rebuildAddressDirectory } from './address/rebuild-address-directory';

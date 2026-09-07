@@ -14,8 +14,11 @@ import { normalizeWhitespace } from "./location-select.store";
  * Narrows who the person picker offers. Both are opt-in: without them the picker behaves as before.
  */
 export type PersonSelectOptions = {
-  /** Only persons who hold an app account (`person.hasAccount`) — see the invite path. */
-  onlyWithAccount?: boolean;
+  /**
+   * Tenant id: offer only persons holding an app account in THAT tenant — see the invite path.
+   * A tenant rather than a boolean because an account belongs to exactly one tenant.
+   */
+  accountTenant?: string;
   /** okeys never offered, e.g. those the caller has already picked. */
   excludeKeys?: string[];
 };
@@ -41,7 +44,7 @@ export class ModelSelectService {
         currentUser: this.appStore.currentUser(),
         allowCustom,
         membersFirst,
-        onlyWithAccount: options.onlyWithAccount ?? false,
+        accountTenant: options.accountTenant ?? '',
         excludeKeys: options.excludeKeys ?? [],
       },
     });

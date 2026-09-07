@@ -98,10 +98,10 @@
       "description": "Les membres listés ci-dessous sont enregistrés dans la base de données avec une entrée en tant que membre actif ; ils devraient initialement être réaffectés aux juniors."
     },
     "hasAccount": {
-      "title": "Reporter l'accès sur la personne",
-      "label": "Définit hasAccount pour chaque personne disposant d'un accès. Nécessaire pour que tu ne puisses inviter que des utilisateurs enregistrés à un événement.",
+      "title": "Reporter les accès sur les personnes",
+      "label": "Retient pour chaque personne dans quels mandants elle dispose d'un accès. Nécessaire pour que tu ne puisses inviter que des personnes capables de se connecter ici.",
       "button": "Exécuter",
-      "confirm": "L'indicateur est redéfini pour toutes les personnes ayant un accès. Aucune donnée existante n'est perdue. Continuer ?",
+      "confirm": "Le champ est recalculé pour toutes les personnes, sur tous les mandants. Aucune donnée existante n'est perdue. Continuer ?",
       "conf": "Terminé : {count} personnes mises à jour."
     }
   },

@@ -31,7 +31,7 @@ import { InvitePersonsForm } from './invite-persons.form';
     <ion-content class="ion-no-padding">
       @if (formData(); as formData) {
         <okr-invite-persons-form [formData]="formData" (formDataChange)="onFormDataChange($event)"
-          [i18n]="i18n()" [currentUser]="currentUser()" [excludeKeys]="excludeKeys()"
+          [i18n]="i18n()" [currentUser]="currentUser()" [tenantId]="tenantId()" [excludeKeys]="excludeKeys()"
           [showForm]="showForm()" (dirty)="formDirty.set($event)" (valid)="formValid.set($event)" />
       }
     </ion-content>
@@ -43,6 +43,8 @@ export class InvitePersonsModal {
   // inputs
   public readonly i18n = input.required<InvitePersonsI18n>();
   public readonly currentUser = input<UserModel | undefined>();
+  /** The tenant the invitation is written in — the picker offers only accounts of this tenant. */
+  public readonly tenantId = input.required<string>();
   /** okeys the picker must not offer — the organiser and everybody already on the event. */
   public readonly excludeKeys = input<string[]>([]);
 

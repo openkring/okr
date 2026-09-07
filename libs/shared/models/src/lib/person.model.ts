@@ -22,16 +22,24 @@ export class PersonModel implements OkrModel, AddressableModel, SearchableModel,
   public isDeceased = false;
   public deathYear = ''; // YYYY
   /**
-   * Gespiegelte Tatsache aus `users`: diese Person hat einen App-Zugang. Geschrieben
-   * AUSSCHLIESSLICH von `onUserWritten` (apps/functions/src/person/account-mirror.ts), nie von der
-   * App.
+   * Die Mandanten, in denen diese Person einen App-Zugang hat — gespiegelt aus `users`.
+   * Geschrieben AUSSCHLIESSLICH von `onUserWritten` (apps/functions/src/person/account-mirror.ts),
+   * nie von der App.
    *
    * Existiert, weil `users` fuer gewoehnliche Benutzer nicht lesbar ist (firestore.rules), die
-   * Einladung zu einem Anlass aber auf registrierte Benutzer einschraenken muss — dieselbe
+   * Einladung zu einem Anlass aber auf registrierte Benutzer eingeschraenkt werden muss — dieselbe
    * Begruendung wie bei den `usage*`-Feldern unten.
+   *
+   * Warum eine LISTE und kein Boolean: ein `users`-Dokument gehoert zu genau EINEM Mandanten
+   * (siehe UserModel.tenants), eine Person dagegen zu mehreren. `persons/kaiser` steht in sieben
+   * Mandanten und hat sieben Benutzerkonten mit sieben Login-Adressen. Ein globales
+   * „hat einen Zugang" wuerde jemanden im Mandanten B als einladbar anbieten, dessen Konto nur in
+   * A existiert — er koennte die Einladung nie beantworten. Gelesen wird deshalb immer gegen den
+   * aktuellen Mandanten.
+   *
    * Optional beim Lesen: jedes vor diesem Feld geschriebene Dokument liefert `undefined`.
    */
-  public hasAccount = false;
+  public accountTenants: string[] = [];
   public favZipCode = '';
   public bexioId = DEFAULT_ID;
 

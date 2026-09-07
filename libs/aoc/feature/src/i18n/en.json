@@ -98,10 +98,10 @@
       "description": "The members listed below are recorded in the database with entry as an active member; they should initially be reassigned to juniors."
     },
     "hasAccount": {
-      "title": "Mirror app access onto the person",
-      "label": "Sets hasAccount on every person who has an app account. Needed so you can only invite registered users to an event.",
+      "title": "Mirror app access onto the persons",
+      "label": "Records for every person which tenants they hold an account in. Needed so you can only invite people who are able to sign in here.",
       "button": "Run",
-      "confirm": "The flag is set again for everybody with an account. No existing data is lost. Continue?",
+      "confirm": "The field is recomputed for all persons, across all tenants. No existing data is lost. Continue?",
       "conf": "Done: {count} persons updated."
     }
   },

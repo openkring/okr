@@ -98,10 +98,10 @@
       "description": "Die unten aufgelisteten Mitglieder sind in der Datenbank mit Eintritt als Aktivmitglied geführt, sie sollten anfänglich auf Jugendliche umgeteilt werden."
     },
     "hasAccount": {
-      "title": "Zugang auf die Person spiegeln",
-      "label": "Setzt bei jeder Person, die einen Zugang hat, das Merkmal hasAccount. Nötig, damit du nur registrierte Benutzer zu einem Anlass einladen kannst.",
+      "title": "Zugänge auf die Personen spiegeln",
+      "label": "Hält bei jeder Person fest, in welchen Mandanten sie einen Zugang hat. Nötig, damit du zu einem Anlass nur Personen einladen kannst, die sich hier auch anmelden können.",
       "button": "Ausführen",
-      "confirm": "Das Merkmal wird für alle Personen mit Zugang neu gesetzt. Bestehende Daten gehen dabei nicht verloren. Fortfahren?",
+      "confirm": "Das Merkmal wird für alle Personen neu berechnet, über alle Mandanten hinweg. Bestehende Daten gehen dabei nicht verloren. Fortfahren?",
       "conf": "Fertig: {count} Personen angepasst."
     }
   },

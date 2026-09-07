@@ -20,8 +20,12 @@ export type PersonSelectState = {
   selectedTag: string;
   allowCustom: boolean;
   membersFirst: boolean;
-  /** Offer only persons who hold an app account (`person.hasAccount`). */
-  onlyWithAccount: boolean;
+  /**
+   * When set, offer only persons who hold an app account IN THIS TENANT. The tenant id itself,
+   * not a boolean: an account belongs to exactly one tenant, so "has an account" is only ever a
+   * question about one of them.
+   */
+  accountTenant: string;
   /** okeys never offered — e.g. people who are already on the list the caller is filling. */
   excludeKeys: string[];
 };
@@ -32,7 +36,7 @@ export const personInitialState: PersonSelectState = {
   selectedTag: '',
   allowCustom: false,
   membersFirst: false,
-  onlyWithAccount: false,
+  accountTenant: '',
   excludeKeys: [],
 };
 
@@ -70,17 +74,20 @@ export const PersonSelectStore = signalStore(
       /**
        * A deceased person is never offered, on either level.
        *
-       * `onlyWithAccount` narrows it to people who can actually log in — an invitation may only
+       * `accountTenant` narrows it to people who can actually log in HERE — an invitation may only
        * reach a registered user (spec 2026-09-06 open events, decision 9), and offering somebody
-       * who could never answer is worse than not offering them. `?? false` because every person
-       * written before `hasAccount` existed reads back undefined.
+       * who could never answer is worse than not offering them. It is checked against the tenant
+       * rather than as a boolean because a person may hold accounts in several tenants and none in
+       * this one. `?? []` because every person written before `accountTenants` existed reads back
+       * undefined.
        */
       persons: computed(() => {
         const excluded = new Set(store.excludeKeys());
+        const tenant = store.accountTenant();
         return store.appStore.allPersons().filter((p: PersonModel) =>
           !p.isDeceased
           && !excluded.has(p.okey)
-          && (!store.onlyWithAccount() || (p.hasAccount ?? false)));
+          && (!tenant || (p.accountTenants ?? []).includes(tenant)));
       }),
       isLoading: computed(() => store.appStore.isReferenceDataLoading()),
       // state === 'active' is not enough: scs has memberships left at 'active' with a dateOfExit
@@ -165,8 +172,8 @@ export const PersonSelectStore = signalStore(
         patchState(store, { membersFirst });
       },
 
-      setOnlyWithAccount(onlyWithAccount: boolean) {
-        patchState(store, { onlyWithAccount });
+      setAccountTenant(accountTenant: string) {
+        patchState(store, { accountTenant });
       },
 
       setExcludeKeys(excludeKeys: string[]) {

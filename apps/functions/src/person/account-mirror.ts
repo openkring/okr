@@ -1,16 +1,21 @@
 // apps/functions/src/person/account-mirror.ts
 //
-// Mirrors "this person has an app account" from `users` onto the person document
-// (planning/specs/2026-09-06-open-events-invitation-model-spec.md, decision 9).
+// Mirrors "in which tenants does this person hold an app account" from `users` onto the person
+// document (planning/specs/2026-09-06-open-events-invitation-model-spec.md, decision 9).
 //
-// Why the duplication: inviting someone to a calendar event may only ever reach a REGISTERED
-// user, but `users/{uid}` is readable only by its owner and by admin/privileged
-// (firestore.rules). The people who may invite include group admins and responsible persons
-// WITHOUT `privileged`, so the invite picker cannot ask `users` at all. Persons are
-// tenant-readable, so the fact travels there — the same reasoning that put the `usage*`
-// privacy flags on PersonModel.
+// Why the duplication: inviting someone to a calendar event may only ever reach a REGISTERED user,
+// but `users/{uid}` is readable only by its owner and by admin/privileged (firestore.rules). The
+// people who may invite include group admins and responsible persons WITHOUT `privileged`, so the
+// invite picker cannot ask `users` at all. Persons are tenant-readable, so the fact travels there —
+// the same reasoning that put the `usage*` privacy flags on PersonModel.
 //
-// This module is the ONLY writer of `persons/{id}.hasAccount`. The app never writes it.
+// Why a LIST and not a boolean: a user document belongs to exactly one tenant (UserModel.tenants),
+// a person to several. `persons/kaiser` holds seven accounts, one per tenant, each with its own
+// login address. A global "has an account" would offer somebody in tenant B whose account lives
+// only in A — they could never answer the invitation — and deleting one of seven accounts would
+// clear the flag entirely.
+//
+// This module is the ONLY writer of `persons/{id}.accountTenants`. The app never writes it.
 
 import { onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
@@ -20,66 +25,92 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { PersonCollection, UserCollection } from '@okr/shared-models';
 import { checkAdminRole, checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
-import { nextHasAccount, UserAccountDoc } from './account-mirror.decide';
+import { accountTenantsOf, affectedPersonKeys, sameTenants, UserAccountDoc } from './account-mirror.decide';
 
 const REGION = 'europe-west6';
 const BATCH = 400;
 
 /**
- * Keep `persons/{id}.hasAccount` in step with the `users` collection.
+ * Recompute one person's `accountTenants` from every `users` document pointing at them.
  *
- * `merge: true` and never a full write: the person document carries the whole PII-adjacent
- * profile, and this trigger knows exactly one field of it.
+ * Deliberately a fresh query rather than a diff of the trigger's before/after: a person may hold
+ * several accounts, so the truth is the union over all of them, and a diff would have to guess
+ * what the other documents say. The query is tiny (a handful of documents per person) and it makes
+ * the write idempotent — re-running it can only produce the same value.
+ *
+ * Returns true when the person document was actually written.
  */
+async function syncPerson(personKey: string): Promise<boolean> {
+  const db = getFirestore();
+  const [users, person] = await Promise.all([
+    db.collection(UserCollection).where('personKey', '==', personKey).get(),
+    db.collection(PersonCollection).doc(personKey).get(),
+  ]);
+  if (!person.exists) {
+    logger.warn(`syncPerson: person ${personKey} does not exist (orphaned user document)`);
+    return false;
+  }
+  const desired = accountTenantsOf(users.docs.map((doc) => doc.data() as UserAccountDoc));
+  const current = (person.data() as { accountTenants?: string[] }).accountTenants;
+  if (sameTenants(current, desired)) return false;
+
+  // merge: the person document carries the whole PII-adjacent profile, this knows one field of it
+  await person.ref.set({ accountTenants: desired }, { merge: true });
+  return true;
+}
+
+/** Keep `persons/{id}.accountTenants` in step with the `users` collection. */
 export const onUserWritten = onDocumentWritten(
   { document: `${UserCollection}/{uid}`, region: REGION },
   async (event) => {
     const before = event.data?.before.data() as UserAccountDoc | undefined;
     const after = event.data?.after.data() as UserAccountDoc | undefined;
-    const patches = nextHasAccount(before, after);
-    if (patches.length === 0) return;
+    const personKeys = affectedPersonKeys(before, after);
+    if (personKeys.length === 0) return;
 
-    const db = getFirestore();
-    await Promise.all(patches.map((patch) =>
-      db.collection(PersonCollection).doc(patch.personKey)
-        .set({ hasAccount: patch.hasAccount }, { merge: true })));
-    logger.info(`onUserWritten: ${patches.map((p) => `${p.personKey}=${p.hasAccount}`).join(', ')}`);
+    const written = await Promise.all(personKeys.map((personKey) => syncPerson(personKey)));
+    logger.info(`onUserWritten: checked ${personKeys.join(', ')}, wrote ${written.filter(Boolean).length}`);
   },
 );
 
 /**
- * One-off after rolling out `hasAccount`: set the flag on every person who already holds an
- * account, and clear it on everyone else.
+ * One-off after rolling out `accountTenants`: derive the field for every person from the whole
+ * `users` collection.
  *
- * Admin-only and idempotent. The clearing half matters as much as the setting half — without it
- * a person whose account was closed before the trigger existed would stay invitable forever.
+ * Admin-only and idempotent — a person whose value already matches is not written. Runs over ALL
+ * tenants on purpose: the field lists the tenants a person holds an account in, so computing it
+ * from only one tenant's users would drop the others and make that person un-invitable there.
  */
-export const backfillHasAccount = onCall(
-  { region: REGION, enforceAppCheck: true, timeoutSeconds: 540 },
-  async (request): Promise<{ users: number; granted: number; cleared: number }> => {
-    checkAppCheckToken(request, 'backfillHasAccount');
-    checkAuthentication(request, 'backfillHasAccount');
-    await checkAdminRole(request, 'backfillHasAccount');
+export const backfillAccountTenants = onCall(
+  { region: REGION, enforceAppCheck: true, timeoutSeconds: 540, memory: '512MiB' },
+  async (request): Promise<{ users: number; persons: number; written: number }> => {
+    checkAppCheckToken(request, 'backfillAccountTenants');
+    checkAuthentication(request, 'backfillAccountTenants');
+    await checkAdminRole(request, 'backfillAccountTenants');
 
     const db = getFirestore();
     const users = await db.collection(UserCollection).get();
-    const withAccount = new Set(users.docs
-      .map((doc) => (doc.data() as UserAccountDoc).personKey ?? '')
-      .filter((key) => key.length > 0));
+
+    // personKey -> the tenants of every account pointing at that person
+    const byPerson = new Map<string, UserAccountDoc[]>();
+    for (const doc of users.docs) {
+      const user = doc.data() as UserAccountDoc;
+      const key = user.personKey ?? '';
+      if (!key) continue;
+      byPerson.set(key, [...(byPerson.get(key) ?? []), user]);
+    }
 
     const persons = await db.collection(PersonCollection).get();
-    let granted = 0;
-    let cleared = 0;
+    let written = 0;
     let batch = db.batch();
     let pending = 0;
 
     for (const doc of persons.docs) {
-      const desired = withAccount.has(doc.id);
-      // `?? false`: every person written before this field exists reads back undefined
-      const current = (doc.data() as { hasAccount?: boolean }).hasAccount ?? false;
-      if (current === desired) continue;
-      batch.set(doc.ref, { hasAccount: desired }, { merge: true });
-      desired ? granted++ : cleared++;
+      const desired = accountTenantsOf(byPerson.get(doc.id) ?? []);
+      const current = (doc.data() as { accountTenants?: string[] }).accountTenants;
+      if (sameTenants(current, desired)) continue;
+      batch.set(doc.ref, { accountTenants: desired }, { merge: true });
+      written++;
       if (++pending >= BATCH) {
         await batch.commit();
         batch = db.batch();
@@ -88,7 +119,7 @@ export const backfillHasAccount = onCall(
     }
     if (pending > 0) await batch.commit();
 
-    logger.info(`backfillHasAccount: users=${users.size}, granted=${granted}, cleared=${cleared}`);
-    return { users: users.size, granted, cleared };
+    logger.info(`backfillAccountTenants: users=${users.size}, persons=${persons.size}, written=${written}`);
+    return { users: users.size, persons: persons.size, written };
   },
 );
