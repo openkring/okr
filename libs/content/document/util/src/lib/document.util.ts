@@ -2,7 +2,7 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
 import { DOCUMENT_DIR, DocumentModel, UserModel } from '@okr/shared-models';
-import { addIndexElement, checkUrlType, getFileHash, getFullName, getTodayStr, isPhotoCancellation, resolveMimeType, warn } from '@okr/shared-util-core';
+import { addIndexElement, getFileHash, getFullName, getTodayStr, isPhotoCancellation, resolveMimeType, warn } from '@okr/shared-util-core';
 
 import { readAsFile } from '@okr/avatar-util';
 
@@ -56,26 +56,6 @@ export function getDocumentStoragePath(tenant: string, modelType: string, key?: 
     return undefined;
   }
   return `${tenant}/${modelType}/${key}/${DOCUMENT_DIR}`;
-}
-
-/**
- * The given url is checked for its URL type and transformed into a path that can be used with imgix.
- * This path is of URLType storage, ie. a relative url to a file in the storage.
- * The file referenced by the url is mostly an image or a pdf, but it can be another file type.
- * The function either returns a relative storage path or undefined.
- * A URL of type 'key' is converted into a storage path (tenant/slug/key/DOCUMENT_DIR)
- * @param url the url as configured in the model
- * @param modelType the model type of the model
- * @param tenant the tenant of the model
- */
-export function getStoragePath(url: string | undefined, modelType: string, tenant: string): string | undefined {
-  if (!url || url.length === 0) return undefined;
-  const urlType = checkUrlType(url);
-  if (urlType === 'storage') return url;
-  if (urlType === 'key') {
-    return getDocumentStoragePath(tenant, modelType, url);
-  }
-  return undefined;
 }
 
 /*-------------------------- factory --------------------------------*/

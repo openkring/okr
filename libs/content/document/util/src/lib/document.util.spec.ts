@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Camera, CameraSource, Photo } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
-import { checkUrlType, warn } from '@okr/shared-util-core';
+import { warn } from '@okr/shared-util-core';
 import { readAsFile } from '@okr/avatar-util';
-import { pickPhoto, checkMimeType, getDocumentStoragePath, getStoragePath } from './document.util';
+import { pickPhoto, checkMimeType, getDocumentStoragePath } from './document.util';
 
 // Mock all external dependencies
 // Replace the simple mock with a factory to define the Camera object structure
@@ -28,7 +28,6 @@ describe('Document Utils', () => {
   const mockGetPhoto = vi.mocked(Camera.getPhoto);
   const mockReadAsFile = vi.mocked(readAsFile);
   const mockWarn = vi.mocked(warn);
-  const mockCheckUrlType = vi.mocked(checkUrlType);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -101,30 +100,4 @@ describe('Document Utils', () => {
     });
   });
 
-  describe('getStoragePath', () => {
-    it('should return undefined for a null or empty URL', () => {
-      expect(getStoragePath(undefined, 'person', 'tenant-1')).toBeUndefined();
-      expect(getStoragePath('', 'person', 'tenant-1')).toBeUndefined();
-    });
-
-    it('should return the URL directly if its type is "storage"', () => {
-      mockCheckUrlType.mockReturnValue('storage');
-      const url = 'path/to/storage/file.jpg';
-      expect(getStoragePath(url, 'person', 'tenant-1')).toBe(url);
-      expect(mockCheckUrlType).toHaveBeenCalledWith(url);
-    });
-
-    it('should generate a storage path if the URL type is "key"', () => {
-      mockCheckUrlType.mockReturnValue('key');
-      const key = 'person-123';
-      const path = getStoragePath(key, 'person', 'tenant-1');
-      expect(path).toBe('tenant-1/person/person-123/documents');
-    });
-
-    it('should return undefined for other URL types like "http"', () => {
-      mockCheckUrlType.mockReturnValue('http');
-      const url = 'http://example.com/image.jpg';
-      expect(getStoragePath(url, 'person', 'tenant-1')).toBeUndefined();
-    });
-  });
 });

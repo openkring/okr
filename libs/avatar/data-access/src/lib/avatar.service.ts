@@ -124,7 +124,8 @@ export class AvatarService {
   /**
    * Get the avatar URL synchronously using cached storagePath.
    * If the storagePath is not cached, returns the default icon URL.
-   * Use getStoragePath() first to ensure the cache is populated.
+   * The cache is filled by this service's own searchData subscription; until it has emitted,
+   * every key resolves to the default icon.
    * 
    * @param key the key of the avatar in the format ModelType.ModelKey e.g. person.1123123asdf
    * @param defaultIcon the default icon to use if there is no avatar
