@@ -11,8 +11,9 @@ import {
 } from '@okr/shared-models';
 import {
   blockOwnersOfMenuKey, indexMenuDocsByName, isFieldPinned, menuSpecNames, planMenuOps,
-  planRootMenuOp, resolveAvailability, resolveWithDeps, withoutPin, withPin,
-  type ApplyPlanPreview, type FeatureBlock, type FeatureRollout,
+  planRootMenuOp, resolveAvailability, resolveWithDeps, STRUCTURAL_FIELDS, withoutPin, withPin,
+  type ApplyFeatureResponse, type ApplyPlanPreview, type FeatureBlock, type FeatureIntent,
+  type FeatureRollout,
   type MenuNameCollision, type MenuOp, type MenuSpec, type PlanEntry, type StructuralField,
 } from '@okr/tenant-util';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -90,19 +91,6 @@ export function chunk<T>(items: readonly T[], size = BATCH_SIZE): T[][] {
   const out: T[][] = [];
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
   return out;
-}
-
-export interface FeatureTransition {
-  block: string;
-  op: 'enable' | 'disable';
-}
-
-/** Pure: which blocks flipped on/off relative to what was previously persisted. */
-export function computeTransitions(previous: string[], enabled: string[]): FeatureTransition[] {
-  return [
-    ...enabled.filter(id => !previous.includes(id)).map((id): FeatureTransition => ({ block: id, op: 'enable' })),
-    ...previous.filter(id => !enabled.includes(id)).map((id): FeatureTransition => ({ block: id, op: 'disable' })),
-  ];
 }
 
 export interface PendingWrite {
@@ -774,12 +762,16 @@ export async function planApplyCatalogueValue(
  * of one menu document (D-BB-16). Never touches the value itself, only `ownedFields`; a call
  * that would not change the pin state writes nothing (idempotent, no audit noise).
  *
- * Takes no `catalogue` parameter — pinning is a statement about who owns this ONE document
- * going forward, not a comparison against a catalogue value, so it needs nothing beyond the
- * live document itself.
+ * Takes `catalogue` — not to compare against a catalogue value (pinning is a statement about
+ * who owns this ONE document going forward), but to resolve `FeatureEvent.block` the same way
+ * every other verb does: a catalogue BLOCK id, never the raw `docId`. `blockOwnersOfMenuKey`
+ * (ANY owner, never the single-owner `blockOfMenuKey`) because a shared parent like `aoc-menu`
+ * is co-declared by several blocks; a row with no owner at all (a tenant-authored entry) falls
+ * back to `''`.
  */
 export async function planPinField(
-  db: Firestore, tenantId: string, uid: string, docId: string, field: StructuralField, pin: boolean,
+  db: Firestore, catalogue: FeatureBlock[], tenantId: string, uid: string,
+  docId: string, field: StructuralField, pin: boolean,
 ): Promise<VerbResult> {
   const ref = db.collection(MenuItemCollection).doc(docId);
   const snap = await ref.get();
@@ -795,11 +787,12 @@ export async function planPinField(
   const ownedFields = pin ? withPin(data.ownedFields, field) : withoutPin(data.ownedFields, field);
   const at = getTodayStr(DateFormat.StoreDateTime);
   const name = data.name ?? docId;
+  const block = blockOwnersOfMenuKey(catalogue, name)[0] ?? '';
   return {
     writes: [
       { ref, data: { ownedFields }, merge: true },
       ...eventWrites(db, tenantId, uid, at, [
-        { block: docId, op: (pin ? 'pin' : 'unpin') as const, docId, name, field },
+        { block, op: (pin ? 'pin' : 'unpin') as const, docId, name, field },
       ]),
     ],
     preview: {
@@ -833,13 +826,21 @@ export async function planPinField(
 // `createApplyFeatureSelection(FEATURE_BLOCKS)`. The Angular route table (`canActivate`
 // guards, `loadComponent`) lives in `@okr/tenant-routes`'s `FEATURE_ROUTES`, joined to
 // `FEATURE_BLOCKS` by block `id`; `feature-catalogue.sync.spec.ts` in that lib fails CI if
-// the two ever drift apart. `applySelection`/`planSelection` below never call `.routes()`,
-// so the metadata-only array is sufficient for everything this file does.
+// the two ever drift apart. The verb planners never call a block's `.routes()`, so the
+// metadata-only array is sufficient for everything this file does.
+//
+// ONE VERB PER CALL (spec §19, D-BB-7c). The callable used to take a desired STATE — the
+// full set of ticked blocks — and reconcile the world against it; a checkbox nobody touched
+// then read as "remove". It now takes one `FeatureIntent` and dispatches to the matching
+// planner, which returns `{ writes, preview }` without committing anything. A dry run and a
+// real run of the SAME intent therefore produce the identical `preview` — the confirmation
+// dialog and the outcome are one object — and only `dryRun` decides whether `commitChunked`
+// ever runs.
 // ────────────────────────────────────────────────────────────────────────────────────
 export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
   return onCall(
     { region: REGION, enforceAppCheck: true, cors: true },
-    async (request: CallableRequest): Promise<ApplyFeatureSelectionResult> => {
+    async (request: CallableRequest): Promise<ApplyFeatureResponse> => {
       checkAppCheckToken(request, CF_NAME);
       checkAuthentication(request, CF_NAME);
 
@@ -847,19 +848,6 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
       if (typeof tenantId !== 'string' || tenantId.trim() === '') {
         throw new HttpsError('invalid-argument', 'applyFeatureSelection requires a tenantId.');
       }
-      const blockIds: string[] = Array.isArray(request.data?.blockIds) ? request.data.blockIds : [];
-      // OPT-IN, and strictly `=== true` (task 1). An ordinary picker save must never rewrite
-      // `url`/`action`/`roleNeeded` on documents that already exist: a save replays every
-      // spec of every enabled block (225 documents for `okr`), so a hand-tuned permission on
-      // a menu row unrelated to the block just ticked used to vanish with no warning and no
-      // trace. Only «Katalog-Werte übernehmen» — which confirms the exact fields first — asks for
-      // the replay. A missing or non-boolean field therefore means "extend only".
-      const replayStructure = request.data?.replayStructure === true;
-      // Same strict-`true` rule, opposite purpose: `dryRun` plans everything and writes
-      // nothing, so the picker can name the consequences of a save before committing to it.
-      // A typo'd or missing field must never turn a real save into a silent no-op, hence
-      // `=== true` rather than a truthiness check.
-      const dryRun = request.data?.dryRun === true;
 
       const db = getFirestore();
       // `checkAuthentication` above throws if `request.auth` is missing, but that is an
@@ -894,18 +882,65 @@ export function createApplyFeatureSelection(catalogue: FeatureBlock[]) {
         throw new HttpsError('permission-denied', 'Caller does not belong to this tenant.');
       }
 
-      // --- plan ------------------------------------------------------------------
-      const rolloutSnap = await db.collection(FeatureRolloutCollection).get();
-      const rollouts = rolloutSnap.docs.map(d => ({ okey: d.id, ...d.data() }) as FeatureRollout);
-      const plan = planSelection(catalogue, rollouts, blockIds, tenantId);
+      // --- dispatch ------------------------------------------------------------------
+      const intent = request.data?.intent as FeatureIntent | undefined;
+      if (!intent || typeof intent.verb !== 'string') {
+        throw new HttpsError('invalid-argument', `${CF_NAME} requires an intent.`);
+      }
+      // Strictly `=== true`, same rule the old flag had: a typo'd `dryRun` must fail towards
+      // "really write" being an explicit act, never turn a real save into a silent no-op.
+      const dryRun = request.data?.dryRun === true;
 
-      // --- apply -------------------------------------------------------------------
-      const { applied, preview } = await applySelection(
-        db, catalogue, plan, tenantId, uid, { replayStructure, dryRun });
+      const rollouts = (await db.collection(FeatureRolloutCollection).get())
+        .docs.map(d => ({ okey: d.id, ...d.data() }) as FeatureRollout);
 
-      logger.info(`${CF_NAME}: tenant=${tenantId} enabled=${plan.enabled.length} ` +
-        `withheld=${plan.withheld.length} replayStructure=${replayStructure} dryRun=${dryRun}`);
-      return { enabled: plan.enabled, withheld: plan.withheld, applied, preview };
+      const requireField = (value: unknown): StructuralField => {
+        if (typeof value !== 'string' || !(STRUCTURAL_FIELDS as readonly string[]).includes(value)) {
+          throw new HttpsError('invalid-argument',
+            `${CF_NAME}: field must be one of ${STRUCTURAL_FIELDS.join(', ')}.`);
+        }
+        return value as StructuralField;
+      };
+
+      let result: VerbResult;
+      switch (intent.verb) {
+        case 'enableBlock':
+          result = await planEnableBlock(db, catalogue, rollouts, tenantId, uid,
+            intent.blockId, Array.isArray(intent.menuKeys) ? intent.menuKeys : []);
+          break;
+        case 'disableBlock':
+          result = await planDisableBlock(db, catalogue, tenantId, uid, intent.blockId);
+          break;
+        case 'addMenuRows':
+          result = await planAddMenuRows(db, catalogue, tenantId, uid,
+            Array.isArray(intent.keys) ? intent.keys : []);
+          break;
+        case 'applyCatalogueValue':
+          result = await planApplyCatalogueValue(db, catalogue, tenantId, uid,
+            intent.docId, requireField(intent.field));
+          break;
+        case 'pinField':
+          result = await planPinField(db, catalogue, tenantId, uid, intent.docId, requireField(intent.field), true);
+          break;
+        case 'unpinField':
+          result = await planPinField(db, catalogue, tenantId, uid, intent.docId, requireField(intent.field), false);
+          break;
+        default:
+          throw new HttpsError('invalid-argument', `${CF_NAME}: unknown verb.`);
+      }
+
+      if (dryRun) {
+        logger.info(`${CF_NAME}: DRY RUN tenant=${tenantId} verb=${intent.verb} ` +
+          `entries=${result.preview.entries.length}`);
+        return { preview: result.preview, applied: false };
+      }
+      // Chunked because a single `enableBlock` on a large block can exceed Firestore's
+      // 500-op batch limit. Every verb's writes are idempotent — menu ops are re-planned
+      // from live state on the next call and the config write converges — so a retry after
+      // a partial commit lands on the same end state.
+      await commitChunked(db, result.writes);
+      logger.info(`${CF_NAME}: tenant=${tenantId} verb=${intent.verb} writes=${result.writes.length}`);
+      return { preview: result.preview, applied: true };
     },
   );
 }

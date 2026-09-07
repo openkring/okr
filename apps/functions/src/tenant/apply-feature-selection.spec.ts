@@ -1,14 +1,22 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Firestore } from 'firebase-admin/firestore';
 import {
-  chunk, commitChunked, computeTransitions, nestedMenuKeys,
+  chunk, commitChunked, createApplyFeatureSelection, nestedMenuKeys,
   planAddMenuRows, planApplyCatalogueValue, planDisableBlock, planEnableBlock, planPinField,
   planRootMenuOp, planSelection, rootNavKeys,
 } from './apply-feature-selection';
 import type { PendingWrite, SelectionPlan } from './apply-feature-selection';
 import type { FeatureBlock, FeatureRollout, MenuSpec } from '@okr/tenant-util';
-import { AppConfigCollection, FeatureEventCollection, MenuItemCollection } from '@okr/shared-models';
+import { AppConfigCollection, FeatureEventCollection, MenuItemCollection, UserCollection } from '@okr/shared-models';
 import type { MenuItemModel } from '@okr/shared-models';
+
+// `createApplyFeatureSelection`'s handler calls `getFirestore()` directly (it is the real
+// Cloud Function entry point, not a plan-only helper), so the dispatch tests below mock the
+// module and point it at a `FakeFirestore` per test via `dbRef.current` — the same in-memory
+// stand-in every verb test above already uses, just reached through the callable instead of
+// being passed in directly.
+const dbRef = vi.hoisted(() => ({ current: undefined as unknown as Firestore }));
+vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => dbRef.current }));
 
 const block = (id: string, over: Partial<FeatureBlock> = {}): FeatureBlock => ({
   id, bundle: 'special', label: `@f.${id}`, icon: 'help-circle',
@@ -100,20 +108,6 @@ describe('rootNavKeys (task 12 review round 2 — only navigate/sub top-level sp
       ...wrappers,
     ]);
     expect(rootNavKeys([b])).toEqual(['login', 'logout']);
-  });
-});
-
-describe('computeTransitions', () => {
-  it('reports newly enabled and newly disabled blocks, and nothing for the unchanged rest', () => {
-    const transitions = computeTransitions(['a', 'b'], ['b', 'c']);
-    expect(transitions).toEqual([
-      { block: 'c', op: 'enable' },
-      { block: 'a', op: 'disable' },
-    ]);
-  });
-
-  it('reports nothing when the selection is unchanged (idempotent re-run)', () => {
-    expect(computeTransitions(['a', 'b'], ['a', 'b'])).toEqual([]);
   });
 });
 
@@ -918,11 +912,11 @@ describe('planPinField', () => {
                     action: 'navigate', roleNeeded: 'member', tenants: ['scs'], isArchived: false }],
       'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
     });
-    const pinned = await planPinField(run(db), 'scs', 'uid1', 'calevent-all', 'roleNeeded', true);
+    const pinned = await planPinField(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'calevent-all', 'roleNeeded', true);
     expect(pinned.writes.find(w => w.ref.id === 'calevent-all')?.data)
       .toEqual({ ownedFields: ['roleNeeded'] });
     const event = pinned.writes.find(w => w.ref.parent.id === 'featureEvents');
-    expect(event?.data).toMatchObject({ op: 'pin', docId: 'calevent-all', field: 'roleNeeded' });
+    expect(event?.data).toMatchObject({ op: 'pin', block: 'calevent', docId: 'calevent-all', field: 'roleNeeded' });
   });
 
   it('removes an existing pin without touching the value', async () => {
@@ -932,11 +926,11 @@ describe('planPinField', () => {
                     ownedFields: ['roleNeeded'] }],
       'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
     });
-    const released = await planPinField(run(db), 'scs', 'uid1', 'calevent-all', 'roleNeeded', false);
+    const released = await planPinField(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'calevent-all', 'roleNeeded', false);
     expect(released.writes.find(w => w.ref.id === 'calevent-all')?.data)
       .toEqual({ ownedFields: [] });
     const event = released.writes.find(w => w.ref.parent.id === 'featureEvents');
-    expect(event?.data).toMatchObject({ op: 'unpin', docId: 'calevent-all', field: 'roleNeeded' });
+    expect(event?.data).toMatchObject({ op: 'unpin', block: 'calevent', docId: 'calevent-all', field: 'roleNeeded' });
   });
 
   it('writes nothing when the field is already in the requested pin state', async () => {
@@ -945,7 +939,7 @@ describe('planPinField', () => {
                     action: 'navigate', roleNeeded: 'member', tenants: ['scs'], isArchived: false }],
       'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
     });
-    const { writes, preview } = await planPinField(run(db), 'scs', 'uid1', 'calevent-all', 'roleNeeded', false);
+    const { writes, preview } = await planPinField(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'calevent-all', 'roleNeeded', false);
     expect(writes).toEqual([]);
     expect(preview.entries).toEqual([]);
   });
@@ -957,8 +951,79 @@ describe('planPinField', () => {
                     ownedFields: ['roleNeeded'] }],
       'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
     });
-    const { writes, preview } = await planPinField(run(db), 'scs', 'uid1', 'calevent-all', 'roleNeeded', true);
+    const { writes, preview } = await planPinField(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'calevent-all', 'roleNeeded', true);
     expect(writes).toEqual([]);
     expect(preview.entries).toEqual([]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// The onCall handler: dispatch to the right verb, `dryRun`, and field validation. The
+// authorisation block itself (App Check / auth / admin-of-this-tenant) is exercised only far
+// enough to prove it is still wired — its own behaviour is unchanged from before this task.
+// ─────────────────────────────────────────────────────────────────────────────────────
+describe('applyFeatureSelection dispatch', () => {
+  const UID = 'admin-uid';
+
+  /** A tenant with an admin (`UID`) who belongs to `callerTenants` (defaults to `[tenantId]`). */
+  const seedFor = (tenantId: string, callerTenants: string[] = [tenantId]): FakeFirestore => fakeDb({
+    menuItems: [],
+    'app-config': [{ id: tenantId, enabledFeatures: [] }],
+    users: [{ id: UID, roles: { admin: true }, tenants: callerTenants }],
+  });
+
+  it('rejects an unknown verb', async () => {
+    const fdb = seedFor('scs');
+    dbRef.current = run(fdb);
+    const fn = createApplyFeatureSelection(TEST_CATALOGUE);
+    await expect(fn.run({ app: {}, auth: { uid: UID }, data: { tenantId: 'scs', intent: { verb: 'nope' } } } as never))
+      .rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('rejects a field that is not structural', async () => {
+    const fdb = seedFor('scs');
+    dbRef.current = run(fdb);
+    const fn = createApplyFeatureSelection(TEST_CATALOGUE);
+    await expect(fn.run({
+      app: {}, auth: { uid: UID },
+      data: { tenantId: 'scs', intent: { verb: 'pinField', docId: 'x', field: 'label' } },
+    } as never)).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('dry run returns the same preview and writes nothing', async () => {
+    const fdb = seedFor('scs');
+    dbRef.current = run(fdb);
+    const fn = createApplyFeatureSelection(TEST_CATALOGUE);
+
+    const dry = await fn.run({
+      app: {}, auth: { uid: UID },
+      data: {
+        tenantId: 'scs',
+        intent: { verb: 'enableBlock', blockId: 'calevent', menuKeys: ['calevent-all'] },
+        dryRun: true,
+      },
+    } as never);
+    expect(dry.applied).toBe(false);
+    expect(fdb.commitLog).toHaveLength(0);
+
+    const real = await fn.run({
+      app: {}, auth: { uid: UID },
+      data: {
+        tenantId: 'scs',
+        intent: { verb: 'enableBlock', blockId: 'calevent', menuKeys: ['calevent-all'] },
+      },
+    } as never);
+    expect(real.applied).toBe(true);
+    expect(real.preview).toEqual(dry.preview);
+  });
+
+  it('still refuses a caller who is not an admin of this tenant', async () => {
+    const fdb = seedFor('p13', ['scs']);
+    dbRef.current = run(fdb);
+    const fn = createApplyFeatureSelection(TEST_CATALOGUE);
+    await expect(fn.run({
+      app: {}, auth: { uid: UID },
+      data: { tenantId: 'p13', intent: { verb: 'disableBlock', blockId: 'calevent' } },
+    } as never)).rejects.toMatchObject({ code: 'permission-denied' });
   });
 });
