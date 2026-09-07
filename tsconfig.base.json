@@ -265,6 +265,7 @@
       "@okr/tenant-data-access": ["libs/tenant/data-access/src/index.ts"],
       "@okr/tenant-feature": ["libs/tenant/feature/src/index.ts"],
       "@okr/tenant-routes": ["libs/tenant/routes/src/index.ts"],
+      "@okr/tenant-ui": ["libs/tenant/ui/src/index.ts"],
       "@okr/business-metering-util": ["libs/business/metering/util/src/index.ts"],
       "@okr/business-metering-data-access": ["libs/business/metering/data-access/src/index.ts"],
       "@okr/business-metering-feature": ["libs/business/metering/feature/src/index.ts"],

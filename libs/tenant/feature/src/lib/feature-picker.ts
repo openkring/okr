@@ -14,18 +14,19 @@ import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
 import type { FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
-  findStructuralDrift, indexMenuDocsByName, isEmptyPlan, planRootMenuOp, resolveAvailability,
-  resolveWithDeps, rootNavKeys,
+  findStructuralDrift, indexMenuDocsByName, isEmptyPlan, menuOutlineOf, planRootMenuOp,
+  resolveAvailability, resolveWithDeps, rootNavKeys,
 } from '@okr/tenant-util';
 import type {
-  ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, FeatureProfile, MenuStructureDrift,
+  ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, FeatureProfile, MenuOutlineRow,
+  MenuStructureDrift,
 } from '@okr/tenant-util';
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
 
-import type { CataloguePlanComparison, MenuOutlineRow } from './feature-picker.util';
+import type { CataloguePlanComparison } from './feature-picker.util';
 import {
-  blocksRemovedBySave, comparePlanToDrift, escapeHtml, menuOutlineOf, menuReferencesByName,
+  blocksRemovedBySave, comparePlanToDrift, escapeHtml, menuReferencesByName,
   transitiveDependentsOf,
 } from './feature-picker.util';
 

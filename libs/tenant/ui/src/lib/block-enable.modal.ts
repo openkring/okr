@@ -1,0 +1,217 @@
+import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
+import type { CheckboxCustomEvent } from '@ionic/angular/standalone';
+import {
+  IonCheckbox, IonContent, IonItem, IonItemDivider, IonItemGroup, IonLabel, IonList, IonNote,
+  ModalController,
+} from '@ionic/angular/standalone';
+
+import { TranslatePipe } from '@okr/shared-i18n';
+import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
+import { dismissOverlay } from '@okr/shared-util-angular';
+import type {
+  ApplyPlanPreview, FeatureBlock, FeaturePickerI18n, MenuOutlineRow, PlanEntry, PlanEntryKind,
+} from '@okr/tenant-util';
+import { entriesOfKind, menuOutlineOf } from '@okr/tenant-util';
+
+/** `dismiss(…, 'confirm')` payload — the explicit whitelist of menu row keys to attach. */
+export interface BlockEnableResult {
+  menuKeys: string[];
+}
+
+/** `PlanEntry` kinds whose `subject` is a `MenuOutlineRow.key` — see `apply-feature-selection.ts`. */
+const MENU_ROW_KINDS: PlanEntryKind[] = ['menu-created', 'menu-extended', 'menu-reactivated', 'menu-attached'];
+
+/**
+ * The whitelist dialog for one block, opened from `FeaturePicker` (Task 10) when an admin
+ * ticks a block that is not yet enabled.
+ *
+ * Enabling a block used to attach EVERY menu row it declares — Tasks 1-7 replaced that with
+ * an explicit `menuKeys` whitelist sent to the `enableBlock` verb, so this screen is where the
+ * admin actually makes that choice: one checkbox per row of the block's own menu tree, seeded
+ * ticked (matching the old all-on behaviour) so unticking is the only action needed to opt a
+ * row out.
+ *
+ * WHAT IS AND ISN'T PART OF THE WHITELIST:
+ *  - A row already reachable in this tenant's menu (`alreadyPresent`) is shown ticked and
+ *    disabled — the admin cannot opt it out from here — and its key STAYS in the emitted
+ *    `menuKeys` regardless of what the checkbox tree does. `dryRun` computed `preview` against
+ *    the caller's current default selection (this block's full outline), so a row already
+ *    live is exactly the row the preview needed present to compute correctly; dropping it
+ *    from the payload here would silently ask the real run to plan against a selection the
+ *    preview never saw.
+ *  - `alsoBlocks` (dependency blocks the save will force on regardless of this dialog) are
+ *    shown for transparency ONLY — their own menu outline, read-only, ticked, disabled. They
+ *    are NOT part of `menuKeys`: `{ verb: 'enableBlock', blockId, menuKeys }` whitelists a
+ *    SINGLE block's rows, and a forced dependency has no admin choice to whitelist — it is
+ *    switched on with its full default menu, the same way `core` blocks always were.
+ *
+ * Unticking a parent row unticks its descendants with it (a child cannot be attached without
+ * its parent — `MenuOutlineRow.depth` encodes the tree via depth-first order, walked below);
+ * ticking a row re-ticks its ancestor chain for the same reason.
+ */
+@Component({
+  selector: 'okr-block-enable-modal',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    AsyncPipe, TranslatePipe,
+    IonCheckbox, IonContent, IonItem, IonItemDivider, IonItemGroup, IonLabel, IonList, IonNote,
+    ChangeConfirmation, Header,
+  ],
+  template: `
+    <okr-header [i18n]="{ title: (block().label | translate | async) ?? '' }" [isModal]="true" />
+    <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="confirm()" />
+    <ion-content>
+      @if (block().remarks; as remarks) {
+        <ion-note class="ion-text-wrap">{{ remarks | translate | async }}</ion-note>
+      }
+      <ion-list>
+        @if (outline().length === 0) {
+          <ion-item lines="none">
+            <ion-label class="ion-text-wrap">{{ i18n().details_no_menu() }}</ion-label>
+          </ion-item>
+        } @else {
+          @for (row of outline(); track row.key) {
+            <ion-item>
+              <ion-checkbox
+                [style.padding-inline-start.rem]="row.depth * 2"
+                [checked]="isChecked(row)"
+                [disabled]="isAlreadyPresent(row)"
+                (ionChange)="onRowToggle(row, $event)">
+                <ion-label class="ion-text-wrap">{{ (row.labelKey | translate | async) || row.name }}</ion-label>
+              </ion-checkbox>
+              <ion-note slot="end" class="ion-text-wrap">{{ noteFor(row) }}</ion-note>
+            </ion-item>
+          }
+        }
+        @for (also of alsoBlockOutlines(); track also.block.id) {
+          <ion-item-group>
+            <ion-item-divider>
+              <ion-label class="ion-text-wrap">{{ reasonFor(also.block) }}</ion-label>
+            </ion-item-divider>
+            @for (row of also.rows; track row.key) {
+              <ion-item>
+                <ion-checkbox
+                  [style.padding-inline-start.rem]="row.depth * 2"
+                  [checked]="true"
+                  [disabled]="true">
+                  <ion-label class="ion-text-wrap">{{ (row.labelKey | translate | async) || row.name }}</ion-label>
+                </ion-checkbox>
+                <ion-note slot="end" class="ion-text-wrap">{{ noteFor(row) }}</ion-note>
+              </ion-item>
+            }
+          </ion-item-group>
+        }
+      </ion-list>
+    </ion-content>
+  `,
+})
+export class BlockEnableModal {
+  private readonly modalController = inject(ModalController);
+
+  // inputs
+  public block = input.required<FeatureBlock>();
+  public alsoBlocks = input<FeatureBlock[]>([]);
+  public preview = input.required<ApplyPlanPreview>();
+  public alreadyPresent = input<string[]>([]);
+  public i18n = input.required<FeaturePickerI18n>();
+
+  // derived, read-only
+  protected readonly outline = computed(() => menuOutlineOf(this.block()));
+  protected readonly alreadyPresentSet = computed(() => new Set(this.alreadyPresent()));
+  protected readonly alsoBlockOutlines = computed(() =>
+    this.alsoBlocks().map(block => ({ block, rows: menuOutlineOf(block) })));
+
+  /** `PlanEntry`s of a menu-row kind, indexed by the `MenuOutlineRow.key` they describe. */
+  private readonly menuEntriesByKey = computed(() => {
+    const map = new Map<string, PlanEntry[]>();
+    for (const kind of MENU_ROW_KINDS) {
+      for (const entry of entriesOfKind(this.preview(), kind)) {
+        const list = map.get(entry.subject);
+        if (list) list.push(entry); else map.set(entry.subject, [entry]);
+      }
+    }
+    return map;
+  });
+
+  /** The `block-enabled` entry the dry run recorded FOR a dependency block, if any. */
+  private readonly dependencyReasons = computed(() => {
+    const map = new Map<string, PlanEntry>();
+    for (const entry of entriesOfKind(this.preview(), 'block-enabled')) {
+      if (entry.reason) map.set(entry.subject, entry);
+    }
+    return map;
+  });
+
+  protected readonly changeConfirmationI18n = computed<ChangeConfirmationI18n>(() => ({
+    cancel: this.i18n().cancel(), save: this.i18n().save(),
+  }));
+
+  // selection state — seeded ticked (mirrors the old all-on behaviour), mutated by `onRowToggle`.
+  protected readonly selected = linkedSignal<Set<string>>(() => new Set(this.outline().map(row => row.key)));
+
+  protected isAlreadyPresent(row: MenuOutlineRow): boolean {
+    return this.alreadyPresentSet().has(row.key);
+  }
+
+  protected isChecked(row: MenuOutlineRow): boolean {
+    return this.isAlreadyPresent(row) || this.selected().has(row.key);
+  }
+
+  /** `roleNeeded`, plus the dry run's own sentence for what happens to this menu row. */
+  protected noteFor(row: MenuOutlineRow): string {
+    if (this.isAlreadyPresent(row)) return `${row.roleNeeded} · ${this.i18n().enable_already_present()}`;
+    const consequence = this.menuEntriesByKey().get(row.key)?.map(entry => entry.consequence).join(' ');
+    return consequence ? `${row.roleNeeded} · ${consequence}` : row.roleNeeded;
+  }
+
+  protected reasonFor(block: FeatureBlock): string {
+    return this.dependencyReasons().get(block.id)?.consequence ?? this.i18n().enable_dependency_reason_fallback();
+  }
+
+  protected onRowToggle(row: MenuOutlineRow, event: CheckboxCustomEvent): void {
+    if (this.isAlreadyPresent(row)) return; // checkbox is disabled; defensive only
+    const rows = this.outline();
+    const index = rows.findIndex(candidate => candidate.key === row.key);
+    const next = new Set(this.selected());
+    if (event.detail.checked) {
+      next.add(row.key);
+      for (const ancestor of ancestorsOf(rows, index)) next.add(ancestor.key);
+    } else {
+      next.delete(row.key);
+      for (const descendant of descendantsOf(rows, index)) next.delete(descendant.key);
+    }
+    this.selected.set(next);
+  }
+
+  protected async confirm(): Promise<void> {
+    const result: BlockEnableResult = { menuKeys: [...this.selected()] };
+    await dismissOverlay(this.modalController, result, 'confirm');
+  }
+
+  protected async cancel(): Promise<void> {
+    await dismissOverlay(this.modalController, undefined, 'cancel');
+  }
+}
+
+/** Every row nested BELOW `rows[index]` (depth-first order makes this a contiguous run). */
+function descendantsOf(rows: MenuOutlineRow[], index: number): MenuOutlineRow[] {
+  const depth = rows[index].depth;
+  const out: MenuOutlineRow[] = [];
+  for (let i = index + 1; i < rows.length && rows[i].depth > depth; i++) out.push(rows[i]);
+  return out;
+}
+
+/** `rows[index]`'s parent chain, walking backward one depth level at a time. */
+function ancestorsOf(rows: MenuOutlineRow[], index: number): MenuOutlineRow[] {
+  const out: MenuOutlineRow[] = [];
+  let depth = rows[index].depth;
+  for (let i = index - 1; i >= 0 && depth > 0; i--) {
+    if (rows[i].depth === depth - 1) {
+      out.push(rows[i]);
+      depth--;
+    }
+  }
+  return out;
+}

@@ -87,6 +87,16 @@ export const FEATURE_PICKER_I18N_KEYS = {
   menu_impact_confirm: PFX + 'picker.menu_impact_confirm',
   menu_impact_removed: PFX + 'picker.menu_impact_removed',
   menu_impact_readded: PFX + 'picker.menu_impact_readded',
+  // Task 8 — the whitelist dialog (`BlockEnableModal` in `@okr/tenant-ui`): which of a
+  // block's own menu rows an admin actually wants attached, ticked one by one.
+  /** A row already reachable in this tenant's menu — shown ticked and disabled. */
+  enable_already_present: PFX + 'picker.enable_already_present',
+  /**
+   * Divider label over a mitaktiviert (dependency-forced) block's own read-only outline,
+   * used only when the dry-run preview carries no matching `block-enabled` entry for it
+   * (defensive fallback — the normal case shows that entry's own `consequence` sentence).
+   */
+  enable_dependency_reason_fallback: PFX + 'picker.enable_dependency_reason_fallback',
 } satisfies Record<string, string>;
 
 export type FeaturePickerI18n = { [K in keyof typeof FEATURE_PICKER_I18N_KEYS]: Signal<string> };
