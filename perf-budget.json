@@ -23,5 +23,10 @@
     "dashboardClosureGzipBytes": 1486739,
     "chunks": 220,
     "updated": "2026-09-07"
+  },
+  "bkg-app": {
+    "dashboardClosureGzipBytes": 1486737,
+    "chunks": 220,
+    "updated": "2026-09-07"
   }
 }
