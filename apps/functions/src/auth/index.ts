@@ -408,6 +408,25 @@ const PASSWORD_RESET_TEMPLATE = 'password_reset';
 const LEGACY_PASSWORD_RESET_TEMPLATE = 'scs_password_reset';
 
 /**
+ * Plain, tenant-neutral password-reset mail — the body used when a tenant has no Mailtrap template
+ * (`app-config.mailtrapPasswordResetTemplate`). Deliberately inline-styled and table-free: it has to
+ * survive Outlook and Gmail without a template engine.
+ */
+function buildPasswordResetHtml(link: string, appName: string): string {
+  const safeName = appName.replace(/[<>&]/g, '');
+  return `<!DOCTYPE html><html lang="de"><body style="margin:0;padding:24px;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
+  <div style="max-width:500px;margin:0 auto;background:#ffffff;border-radius:8px;padding:32px;">
+    <h1 style="margin:0 0 16px;font-size:20px;">Passwort zurücksetzen</h1>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">Hallo,</p>
+    <p style="margin:0 0 24px;font-size:15px;line-height:1.5;">für dein ${safeName}-Konto wurde ein neues Passwort angefordert. Klicke auf den Link, um es zu setzen:</p>
+    <p style="margin:0 0 24px;"><a href="${link}" style="display:inline-block;padding:12px 20px;background:#3880ff;color:#ffffff;text-decoration:none;border-radius:6px;font-size:15px;">Passwort neu setzen</a></p>
+    <p style="margin:0 0 24px;font-size:13px;line-height:1.5;color:#52525b;">Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br><a href="${link}" style="color:#3880ff;word-break:break-all;">${link}</a></p>
+    <p style="margin:0;font-size:13px;line-height:1.5;color:#52525b;">Hast du diese Zurücksetzung nicht selbst angefordert, kannst du diese E-Mail ignorieren.</p>
+  </div>
+</body></html>`;
+}
+
+/**
  * Send an email via a configurable provider.
  * Also handles password reset emails when template === 'password_reset':
  * generates a Firebase password reset link and injects { url, email, app_name }
@@ -493,7 +512,8 @@ export const sendEmail = functions.onCall(
       }
       from = config.from;
       subject = `Passwort zurücksetzen – ${config.appName}`;
-      html = `<p>Passwort zurücksetzen: <a href="${link}">${link}</a></p>`;
+      // Used verbatim when the tenant has no Mailtrap template, and never wasted otherwise.
+      html = buildPasswordResetHtml(link, config.appName);
       // Only controlled variables — do not echo caller-supplied templateVariables
       // into the password-reset email.
       templateVariables = { url: link, email: to[0], app_name: config.appName };
