@@ -49,6 +49,14 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://bka-website-54aef.web.app',
   'https://kwa.ch',
   'https://silcrest7.ch',
+  // Die APPS selbst. Der öffentliche Album-Screen (/public/album/<slug>) läuft im App-Bundle
+  // und ruft /gallery aus dem Browser auf — anders als die statischen Sites, die schon oben
+  // stehen. Ohne den passenden Origin schlägt genau dieser eine Screen mit einem
+  // CORS-Fehler fehl, während alles andere in der App weiter funktioniert.
+  'https://p13-app-54aef.web.app',
+  'https://p13-app-54aef.firebaseapp.com',
+  'https://app.p13.ch',
+  'https://app.seeclub.org',
 ];
 const EXTRA_ALLOWED_ORIGINS = (process.env['PUBLIC_API_ALLOWED_ORIGINS'] ?? '')
   .split(',')

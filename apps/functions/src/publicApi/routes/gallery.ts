@@ -13,12 +13,27 @@ import { locationName, parseTags, storeDateToIso } from '../utils';
 //
 // SECURITY: this endpoint is unauthenticated and `docs` also carries business,
 // HR and finance documents. A folder is therefore NOT public because someone
-// links to it — it is public only when it carries the `public` tag. Everything
-// else 404s. `fullPath` is the only file reference returned; the site appends
-// the imgix parameters itself, so changing the layout never touches this code.
+// links to it — it must pass TWO independent gates:
+//   1. its document id ends in `-public`, and
+//   2. it carries the `public` tag.
+// Everything else 404s. `fullPath` is the only file reference returned; the site
+// appends the imgix parameters itself, so changing the layout never touches this code.
+//
+// Why both, when either alone would gate the endpoint: they fail in opposite
+// places, and each is visible somewhere the other is not. The id is what every
+// member document carries in `folderKeys`, so "which of my files are published"
+// is answerable by looking at the file — no need to open the folder and read a
+// free-text tag field. The tag stays the deliberate publish action; a folder
+// merely NAMED `…-public` publishes nothing. Both are safe to get wrong: the
+// failure mode of each is "not published".
+//
+// The suffix deliberately constrains the KEY, never `name`. `name` is the slug
+// in the public URL (`/gallery?folder=paris`) — putting `-public` there would
+// leak the mechanism into every public link and rename every gallery.
 // ---------------------------------------------------------------------------
 
 const PUBLIC_TAG = 'public';
+const PUBLIC_KEY_SUFFIX = '-public';
 const MAX_IMAGES = 500;
 
 /** Galleries change rarely; a long shared cache keeps the Firestore reads low. */
@@ -67,6 +82,14 @@ function hasPublicTag(tags: string): boolean {
   return parseTags(tags).includes(PUBLIC_TAG);
 }
 
+/**
+ * Both gates. `folderKey` is the Firestore document id, NOT the `name` slug.
+ * Exported for the spec: this predicate is the whole security boundary of the endpoint.
+ */
+export function isPublicFolder(folderKey: string, tags: string): boolean {
+  return folderKey.endsWith(PUBLIC_KEY_SUFFIX) && hasPublicTag(tags);
+}
+
 /** Only real images — a folder may also hold a PDF or a text file. */
 function isImage(mimeType: string, fullPath: string): boolean {
   if (mimeType.startsWith('image/')) return true;
@@ -99,8 +122,24 @@ async function findPublicFolder(tenantId: string, slug: string) {
     .where('isArchived', '==', false)
     .get();
 
-  const candidates = snap.docs.filter((doc) => hasPublicTag((doc.data() as FolderDoc).tags ?? ''));
-  if (candidates.length === 0) return null;
+  const candidates = snap.docs.filter((doc) => isPublicFolder(doc.id, (doc.data() as FolderDoc).tags ?? ''));
+  if (candidates.length === 0) {
+    // Log WHICH gate a near-miss failed — the caller always gets a bare 404, so the reason
+    // has to be recoverable from the logs or a mis-set-up gallery is undebuggable.
+    const nearMisses = snap.docs.filter((doc) => hasPublicTag((doc.data() as FolderDoc).tags ?? '')
+      || doc.id.endsWith(PUBLIC_KEY_SUFFIX));
+    if (nearMisses.length > 0) {
+      logger.warn('publicApi /gallery folder failed a publication gate', {
+        tenantId, slug,
+        candidates: nearMisses.map((doc) => ({
+          key: doc.id,
+          hasSuffix: doc.id.endsWith(PUBLIC_KEY_SUFFIX),
+          hasTag: hasPublicTag((doc.data() as FolderDoc).tags ?? '')
+        }))
+      });
+    }
+    return null;
+  }
   if (candidates.length > 1) {
     logger.warn('publicApi /gallery ambiguous folder name', { tenantId, slug, count: candidates.length });
   }
@@ -181,7 +220,7 @@ async function respondWithIndex(tenantId: string, res: Response): Promise<void> 
     .where('isArchived', '==', false)
     .get();
 
-  const publicFolders = snap.docs.filter((doc) => hasPublicTag((doc.data() as FolderDoc).tags ?? ''));
+  const publicFolders = snap.docs.filter((doc) => isPublicFolder(doc.id, (doc.data() as FolderDoc).tags ?? ''));
 
   const folders = await Promise.all(publicFolders.map(async (doc) => {
     const f = doc.data() as FolderDoc;

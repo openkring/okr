@@ -16,3 +16,4 @@ export * from './lib/menu-graph.store';
 export * from './lib/menu-graph-node';
 export * from './lib/graph.page';
 export * from './lib/album.page';
+export * from './lib/public-album.page';

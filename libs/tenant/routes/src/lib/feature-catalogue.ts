@@ -239,6 +239,20 @@ const cms: BlockRoutes = {
           data: { id: 'news_@TID@', showMenu: false },
         },
         {
+          // A published gallery, for visitors who are not signed in. MUST stay above the
+          // ':id/:contextMenuName' entry below, which would otherwise swallow it as
+          // id='album' / contextMenuName='<slug>'.
+          //
+          // Unlike '/album/<folderKey>' (authenticated, reads Firestore) this addresses the
+          // folder by its public `name` slug and reads the publicApi function: `folders` and
+          // `docs` are `allow read: if tenantRead()`, so an anonymous visitor cannot read them
+          // directly at all. The function applies the publication gate (`-public` key suffix
+          // AND `public` tag), so no guard here can be the thing that protects the data.
+          path: 'album/:id',
+          loadComponent: () => import('@okr/cms-page-feature').then(m => m.PublicAlbumPage),
+          data: { color: 'secondary' },
+        },
+        {
           path: ':id/:contextMenuName',
           loadComponent: () => import('@okr/cms-page-feature').then(m => m.PageDispatcher),
           data: { color: 'secondary' },
