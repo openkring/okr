@@ -1,6 +1,7 @@
 import type { MenuItemModel } from '@okr/shared-models';
 import type { MenuSpec } from './feature-catalogue.types';
-import { STRUCTURAL_FIELDS } from './menu-ownership.util';
+import { pinnedFieldsOf, STRUCTURAL_FIELDS } from './menu-ownership.util';
+import type { StructuralField } from './menu-ownership.util';
 
 export { STRUCTURAL_FIELDS, type StructuralField } from './menu-ownership.util';
 
@@ -231,6 +232,12 @@ export interface MenuStructureDrift {
    * document directly instead — same fix, different cause, worth telling apart.
    */
   forked: boolean;
+  /**
+   * Structural fields this document pins (`ownedFields`). Reported, not filtered out: the
+   * picker shows a pinned row with its own value and a «Lösen»-action, and
+   * `pnpm catalogue:check` lists it under «fixiert» instead of counting it as a finding.
+   */
+  pinned: StructuralField[];
   /** The catalogue values that would be written — exactly `planMenuOps`' `update-structure` fields. */
   fields: Partial<MenuItemModel>;
   /**
@@ -271,6 +278,7 @@ export function findStructuralDrift(
           name: spec.name,
           docId: doc.okey,
           forked: (doc.forkedFrom ?? '').length > 0,
+          pinned: pinnedFieldsOf(doc),
           fields,
           live: Object.fromEntries(
             Object.keys(fields).map(field => [field, doc[field as keyof MenuItemModel] ?? '']),
@@ -296,30 +304,22 @@ export function findStructuralDrift(
  * lookup key before task 12 review round 2) is blind to the eleven legacy-autoid docs and
  * creates a duplicate on every seed.
  *
- * `replayStructure` DECIDES WHETHER THIS IS A SEED OR A REWRITE. With `true` (the historical
- * contract of this primitive: "plan a full seed") an EXISTING document's `url`/`action`/
- * `roleNeeded` are rewritten from the catalogue whenever they differ. That is the behaviour
- * that silently reverted hand-tuned permissions: a picker save replays every spec of every
- * enabled block, not just the block the admin ticked, so an unrelated `roleNeeded` fix made
- * in Firestore disappeared on the next unrelated save (live cases: `membership-copyemail`
- * → commit 170fe4617, `logbuch` → ba74a8f5e, the `resourceAdmin` context menus →
- * a6d07bd4c/487e1fea9, each of which had to be back-ported INTO the catalogue by hand).
- *
- * With `false` an existing document is only ever EXTENDED — `tenants[]` gains this tenant,
- * a parent gains missing children — and never overwritten. Creates are unaffected either
- * way: a document this run brings into existence has no prior value to lose.
- *
- * The write path (`applySelection` ← `applyFeatureSelection`) passes `false` for an
- * ordinary save and `true` only for «Katalog-Werte übernehmen», so replaying the catalogue is a
- * deliberate, separately-confirmed act rather than a side effect of ticking a checkbox.
- * The default stays `true` here because this function's own contract — and
- * `findStructuralDrift`, its read-only twin — is "what would a full seed do".
+ * ADDITIVE ONLY (D-BB-15). An existing document is extended, never rewritten: `tenants[]`
+ * gains this tenant, a parent gains missing children, an archived document is reactivated —
+ * but the values on a row the tenant already has belong to the tenant, full stop. This
+ * primitive used to take a `replayStructure` flag that, when `true`, rewrote an existing
+ * document's `url`/`action`/`roleNeeded` from the catalogue whenever they differed — that is
+ * the behaviour that silently reverted hand-tuned permissions (live cases: `membership-
+ * copyemail` → commit 170fe4617, `logbuch` → ba74a8f5e, the `resourceAdmin` context menus →
+ * a6d07bd4c/487e1fea9, each of which had to be back-ported INTO the catalogue by hand). The
+ * flag is gone rather than defaulted to `false`: a parameter that must never be `true` is a
+ * trap. `applyCatalogueValue` — one named document, one named field, separately confirmed —
+ * is the ONLY path left that overwrites, and it does not go through this planner.
  */
 export function planMenuOps(
   specs: MenuSpec[],
   tenantId: string,
   existingByName: Map<string, MenuItemModel>,
-  replayStructure = true,
 ): MenuOp[] {
   const ops: MenuOp[] = [];
 
@@ -353,7 +353,13 @@ export function planMenuOps(
         },
       });
     } else {
-      const fields: Partial<MenuItemModel> = replayStructure ? structuralDrift(doc, spec) : {};
+      // ADDITIVE ONLY (D-BB-15). An existing document is extended, never rewritten: the
+      // catalogue may hand this tenant a row it did not have, but the values on a row the
+      // tenant already has belong to the tenant. `applyCatalogueValue` — one named document,
+      // one named field, separately confirmed — is the ONLY path that overwrites, and it
+      // does not go through this planner. The old `replayStructure` parameter is gone rather
+      // than defaulted to `false`: a parameter that must never be `true` is a trap.
+      const fields: Partial<MenuItemModel> = {};
 
       const missingChildren = (spec.children ?? [])
         .map(c => c.key)
@@ -365,7 +371,13 @@ export function planMenuOps(
       const needsTenant = !(doc.tenants ?? []).includes(tenantId);
       if (needsTenant) fields.tenants = [...(doc.tenants ?? []), tenantId];
 
-      if (needsTenant || Object.keys(fields).length > 0) {
+      // An archived document is invisible to `getSystemQuery` (`isArchived == false`), so a
+      // row the admin just asked for would silently not render. Deleting in the menu editor
+      // archives (or detaches) rather than destroys, so re-adding a row the tenant removed
+      // earlier lands exactly here — reactivating is what makes that round trip work.
+      if (doc.isArchived === true) fields.isArchived = false;
+
+      if (Object.keys(fields).length > 0) {
         ops.push({
           key: spec.name, docId: doc.okey,
           op: needsTenant ? 'add-tenant' : 'update-structure', fields,

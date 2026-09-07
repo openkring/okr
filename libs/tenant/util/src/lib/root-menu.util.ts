@@ -68,7 +68,6 @@ export function planRootMenuOp(
   tenantId: string,
   existing: Map<string, MenuItemModel>,
   addKeys: string[],
-  removeKeys: string[],
 ): MenuOp | undefined {
   const key = `main_${tenantId}`;
   const doc = existing.get(key);
@@ -99,27 +98,23 @@ export function planRootMenuOp(
     };
   }
 
-  // Never remove a key that a still/newly-enabled block also wants — keeps its existing
-  // position instead of dropping and re-appending it at the end.
-  const removeSet = new Set(removeKeys.filter(k => !wantedAdds.includes(k)));
+  // NEVER REMOVES (D-BB-17/18). Switching a block off no longer touches this document at
+  // all — gate 2 (`MenuStore.isVisible`) already hides every row of a disabled block, so
+  // the old `removeKeys` rewrite was cosmetic, and it was what turned an accidentally
+  // unticked checkbox into a menu change.
   const current = doc.menuItems ?? [];
-  const kept = current.filter(k => !removeSet.has(k));
   // Already reachable one level down under a hand-made parent → attaching it at the root
   // too would only duplicate the row. See `nestedMenuKeys`.
   const nested = nestedMenuKeys(key, existing);
-  const missing = wantedAdds.filter(k => !kept.includes(k) && !nested.has(k));
-  const menuItems = [...kept, ...missing];
-
-  const arrayChanged = menuItems.length !== current.length
-    || menuItems.some((k, i) => k !== current[i]);
+  const missing = wantedAdds.filter(k => !current.includes(k) && !nested.has(k));
   // Per-tenant, never shared (see header comment) — self-heal if it ever drifted, but
   // this is a no-op for every correctly-provisioned root doc.
   const tenantsCorrect = doc.tenants?.length === 1 && doc.tenants[0] === tenantId;
 
-  if (!arrayChanged && tenantsCorrect) return undefined; // nothing to write
+  if (missing.length === 0 && tenantsCorrect) return undefined; // nothing to write
 
   const fields: Partial<MenuItemModel> = {};
-  if (arrayChanged) fields.menuItems = menuItems;
+  if (missing.length > 0) fields.menuItems = [...current, ...missing];
   if (!tenantsCorrect) fields.tenants = [tenantId];
   return { key, docId: key, op: 'update-structure', fields };
 }
