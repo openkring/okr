@@ -14,6 +14,8 @@ import type {
 } from '@okr/tenant-util';
 import { entriesOfKind, menuOutlineOf } from '@okr/tenant-util';
 
+import { applyRowToggle, menuKeysFor } from './block-enable-selection.util';
+
 /** `dismiss(…, 'confirm')` payload — the explicit whitelist of menu row keys to attach. */
 export interface BlockEnableResult {
   menuKeys: string[];
@@ -39,7 +41,11 @@ const MENU_ROW_KINDS: PlanEntryKind[] = ['menu-created', 'menu-extended', 'menu-
  *    the caller's current default selection (this block's full outline), so a row already
  *    live is exactly the row the preview needed present to compute correctly; dropping it
  *    from the payload here would silently ask the real run to plan against a selection the
- *    preview never saw.
+ *    preview never saw. This guarantee is enforced TWICE, deliberately (see
+ *    `block-enable-selection.util.ts`): `applyRowToggle` never lets an ancestor's uncheck
+ *    cascade delete an already-present descendant's key, and `menuKeysFor` unions
+ *    `alreadyPresent` back into the payload regardless, so neither guard depends on the other
+ *    ever being right.
  *  - `alsoBlocks` (dependency blocks the save will force on regardless of this dialog) are
  *    shown for transparency ONLY — their own menu outline, read-only, ticked, disabled. They
  *    are NOT part of `menuKeys`: `{ verb: 'enableBlock', blockId, menuKeys }` whitelists a
@@ -47,8 +53,10 @@ const MENU_ROW_KINDS: PlanEntryKind[] = ['menu-created', 'menu-extended', 'menu-
  *    switched on with its full default menu, the same way `core` blocks always were.
  *
  * Unticking a parent row unticks its descendants with it (a child cannot be attached without
- * its parent — `MenuOutlineRow.depth` encodes the tree via depth-first order, walked below);
- * ticking a row re-ticks its ancestor chain for the same reason.
+ * its parent — `MenuOutlineRow.depth` encodes the tree via depth-first order); ticking a row
+ * re-ticks its ancestor chain for the same reason. The tree-walking and the two guarantees
+ * above are pure functions in `block-enable-selection.util.ts`, unit-tested there (this lib
+ * has no component-test harness for a modal).
  */
 @Component({
   selector: 'okr-block-enable-modal',
@@ -172,46 +180,18 @@ export class BlockEnableModal {
 
   protected onRowToggle(row: MenuOutlineRow, event: CheckboxCustomEvent): void {
     if (this.isAlreadyPresent(row)) return; // checkbox is disabled; defensive only
-    const rows = this.outline();
-    const index = rows.findIndex(candidate => candidate.key === row.key);
-    const next = new Set(this.selected());
-    if (event.detail.checked) {
-      next.add(row.key);
-      for (const ancestor of ancestorsOf(rows, index)) next.add(ancestor.key);
-    } else {
-      next.delete(row.key);
-      for (const descendant of descendantsOf(rows, index)) next.delete(descendant.key);
-    }
+    const next = applyRowToggle(
+      this.outline(), this.selected(), this.alreadyPresentSet(), row.key, event.detail.checked,
+    );
     this.selected.set(next);
   }
 
   protected async confirm(): Promise<void> {
-    const result: BlockEnableResult = { menuKeys: [...this.selected()] };
+    const result: BlockEnableResult = { menuKeys: menuKeysFor(this.selected(), this.alreadyPresentSet()) };
     await dismissOverlay(this.modalController, result, 'confirm');
   }
 
   protected async cancel(): Promise<void> {
     await dismissOverlay(this.modalController, undefined, 'cancel');
   }
-}
-
-/** Every row nested BELOW `rows[index]` (depth-first order makes this a contiguous run). */
-function descendantsOf(rows: MenuOutlineRow[], index: number): MenuOutlineRow[] {
-  const depth = rows[index].depth;
-  const out: MenuOutlineRow[] = [];
-  for (let i = index + 1; i < rows.length && rows[i].depth > depth; i++) out.push(rows[i]);
-  return out;
-}
-
-/** `rows[index]`'s parent chain, walking backward one depth level at a time. */
-function ancestorsOf(rows: MenuOutlineRow[], index: number): MenuOutlineRow[] {
-  const out: MenuOutlineRow[] = [];
-  let depth = rows[index].depth;
-  for (let i = index - 1; i >= 0 && depth > 0; i--) {
-    if (rows[i].depth === depth - 1) {
-      out.push(rows[i]);
-      depth--;
-    }
-  }
-  return out;
 }
