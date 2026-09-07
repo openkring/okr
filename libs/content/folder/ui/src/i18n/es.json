@@ -16,5 +16,9 @@
   "membersMayUpload": {
     "label": "Los miembros pueden subir archivos",
     "helper": "Los miembros pueden subir sus propias imágenes y archivos a esta carpeta y editar o eliminar sus propias subidas."
+  },
+  "isPublic": {
+    "label": "Visible públicamente",
+    "helper": "Esta carpeta y sus imágenes son visibles sin iniciar sesión. Solo se puede elegir al crear la carpeta — no se puede activar después en una carpeta existente."
   }
 }

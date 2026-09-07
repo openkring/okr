@@ -16,5 +16,9 @@
   "membersMayUpload": {
     "label": "I membri possono caricare file",
     "helper": "I membri possono caricare immagini e file propri in questa cartella e modificare o eliminare i propri caricamenti."
+  },
+  "isPublic": {
+    "label": "Visibile pubblicamente",
+    "helper": "Questa cartella e le immagini che contiene sono visibili senza accedere. Si può scegliere solo alla creazione — non è attivabile in un secondo momento per una cartella esistente."
   }
 }

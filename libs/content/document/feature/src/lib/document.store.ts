@@ -15,7 +15,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { DocumentService } from '@okr/content-document-data-access';
 import { canDeleteDocumentDirectly, DOCUMENT_I18N_KEYS, MimeClass, mimeMatches } from '@okr/content-document-util';
 import { FolderService } from '@okr/content-folder-data-access';
-import { canWriteFolderDirectly, newFolderModel } from '@okr/content-folder-util';
+import { canWriteFolderDirectly, derivePublicFolderKey, FOLDER_I18N_KEYS, FolderI18n, hasPublicFolderTag, newFolderModel } from '@okr/content-folder-util';
 import { UploadService } from '@okr/avatar-data-access';
 
 import { DocumentEditModal } from './document-edit.modal';
@@ -65,6 +65,8 @@ export const DocumentStore = signalStore(
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(DOCUMENT_I18N_KEYS),
+    // the folder dialogs reuse the folder domain's own strings
+    folderI18n: store.i18nService.translateAll(FOLDER_I18N_KEYS) as FolderI18n,
 
     documentsResource: rxResource({
       params: () => ({
@@ -394,30 +396,47 @@ export const DocumentStore = signalStore(
       },
 
       /**
-       * Prompt for a name, create a new FolderModel nested under the current folder,
-       * and navigate into it by updating the listId.
+       * Create a folder below the current one, through the same FolderEditModal that edits one.
+       * It replaced a bare name-prompt alert because publication needs more than a name: an
+       * Ionic alert cannot mix a text input with a checkbox, and the folder form already exists.
+       *
+       * The KEY is the reason this is not a plain create. A published folder must end in
+       * `-public` (see isFolderPublished / the gallery Cloud Function) and Firestore keys are
+       * immutable, so the decision can only be made here, once. Unpublished folders keep the
+       * random key createModel() generates — deriving keys for all of them would make two
+       * same-named folders a silent overwrite, since createModel() writes with setDoc().
        */
       async addFolder(): Promise<void> {
         const currentUser = store.currentUser();
         if (!currentUser) return;
         const parentFolderKey = store.listId().startsWith('f:') ? store.listId().substring(2) : '';
 
-        const alert = await store.alertController.create({
-          header: 'New Folder',
-          inputs: [{ name: 'name', type: 'text', placeholder: 'Folder name' }],
-          buttons: [
-            { text: 'Cancel', role: 'cancel' },
-            { text: 'Create', role: 'confirm' }
-          ]
+        const folder = newFolderModel(store.tenantId(), '', parentFolderKey ? [parentFolderKey] : [], currentUser.personKey);
+        const { FolderEditModal } = await import('@okr/content-folder-feature');
+        const modal = await store.modalController.create({
+          component: FolderEditModal,
+          componentProps: { folder, currentUser, readOnly: false }
         });
-        await alert.present();
-        const { data, role } = await alert.onDidDismiss();
-        if (role !== 'confirm') return;
-        const name: string = data?.values?.name?.trim() ?? '';
-        if (!name) return;
+        await modal.present();
+        const { data, role } = await modal.onDidDismiss<FolderModel>();
+        if (role !== 'confirm' || !data) return;
 
-        const folder = newFolderModel(store.tenantId(), name, parentFolderKey ? [parentFolderKey] : [], currentUser.personKey);
-        const newKey = await store.folderService.create(folder, currentUser);
+        if (hasPublicFolderTag(data.tags ?? '')) {
+          data.okey = derivePublicFolderKey(store.tenantId(), data.name);
+          // createModel() writes with setDoc: a colliding key would overwrite the existing
+          // gallery instead of failing. Derived keys are guessable by construction, so check.
+          const existing = await firstValueFrom(store.folderService.read(data.okey));
+          if (existing) {
+            await store.alertController.create({
+              header: store.folderI18n.create_label(),
+              message: store.folderI18n.public_exists(),
+              buttons: [store.folderI18n.cancel()]
+            }).then((alert) => alert.present());
+            return;
+          }
+        }
+
+        const newKey = await store.folderService.create(data, currentUser);
         if (newKey) {
           patchState(store, { listId: `f:${newKey}` });
         }

@@ -16,5 +16,9 @@
   "membersMayUpload": {
     "label": "Les membres peuvent téléverser des fichiers",
     "helper": "Les membres peuvent téléverser leurs propres images et fichiers dans ce dossier et modifier ou supprimer leurs propres téléversements."
+  },
+  "isPublic": {
+    "label": "Visible publiquement",
+    "helper": "Ce dossier et les images qu'il contient sont visibles sans connexion. Ce choix n'est possible qu'à la création — il ne peut pas être activé après coup pour un dossier existant."
   }
 }

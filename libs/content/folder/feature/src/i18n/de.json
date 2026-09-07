@@ -28,5 +28,8 @@
     "ok": "OK",
     "cancel": "Abbrechen",
     "confirmation": "Speichern"
+  },
+  "public": {
+    "exists": "Es gibt bereits einen öffentlichen Ordner mit diesem Namen. Bitte wähle einen anderen Namen."
   }
 }

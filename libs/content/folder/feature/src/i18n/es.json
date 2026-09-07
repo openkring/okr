@@ -28,5 +28,8 @@
     "ok": "OK",
     "cancel": "Cancelar",
     "confirmation": "Guardar"
+  },
+  "public": {
+    "exists": "Ya existe una carpeta pública con este nombre. Elige otro nombre."
   }
 }

@@ -28,5 +28,8 @@
     "ok": "OK",
     "cancel": "Cancel",
     "confirmation": "Save"
+  },
+  "public": {
+    "exists": "A public folder with this name already exists. Please choose another name."
   }
 }

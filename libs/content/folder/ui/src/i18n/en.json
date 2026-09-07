@@ -16,5 +16,9 @@
   "membersMayUpload": {
     "label": "Members may upload files",
     "helper": "Members can upload their own images and files to this folder and edit or delete their own uploads."
+  },
+  "isPublic": {
+    "label": "Publicly visible",
+    "helper": "This folder and the images in it are visible without signing in. Can only be chosen when the folder is created — it cannot be switched on for an existing folder."
   }
 }

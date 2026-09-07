@@ -28,5 +28,8 @@
     "ok": "OK",
     "cancel": "Annuler",
     "confirmation": "Enregistrer"
+  },
+  "public": {
+    "exists": "Un dossier public portant ce nom existe déjà. Choisis un autre nom."
   }
 }

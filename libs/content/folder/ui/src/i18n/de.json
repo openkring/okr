@@ -16,5 +16,9 @@
   "membersMayUpload": {
     "label": "Mitglieder dürfen Dateien hochladen",
     "helper": "Mitglieder können eigene Bilder und Dateien in diesen Ordner laden und ihre eigenen Uploads bearbeiten oder löschen."
+  },
+  "isPublic": {
+    "label": "Öffentlich sichtbar",
+    "helper": "Dieser Ordner und die Bilder darin sind auch ohne Anmeldung sichtbar. Nur beim Anlegen wählbar — bei einem bestehenden Ordner lässt sich das nicht nachträglich einschalten."
   }
 }

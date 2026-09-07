@@ -8,7 +8,7 @@ import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 
-import { FolderI18n, folderValidations } from '@okr/content-folder-util';
+import { FolderI18n, folderValidations, hasPublicFolderTag, isPublicFolderKey, setFolderPublicTag } from '@okr/content-folder-util';
 
 @Component({
   selector: 'okr-folder-form',
@@ -42,6 +42,19 @@ import { FolderI18n, folderValidations } from '@okr/content-folder-util';
                     [showHelper]="true" [readOnly]="isReadOnly()" />
                 </ion-col>
               </ion-row>
+              <!-- Publication is decided at CREATION: it needs the '-public' key suffix, and keys
+                   are immutable. On an existing folder the box therefore only stays operable when
+                   the key already qualifies (untagging is how a gallery is withdrawn) — otherwise
+                   it is read-only, and the helper says why. -->
+              @if (hasRole('contentAdmin')) {
+                <ion-row>
+                  <ion-col size="12">
+                    <okr-checkbox [i18n]="isPublicI18n()" [checked]="isPublic()"
+                      (checkedChange)="onPublicChange($event)"
+                      [showHelper]="true" [readOnly]="isReadOnly() || !canChangePublic()" />
+                  </ion-col>
+                </ion-row>
+              }
             </ion-grid>
           </ion-card-content>
         </ion-card>
@@ -88,6 +101,18 @@ export class FolderForm {
   // legacy folders have no membersMayUpload field — coalesce to false
   protected readonly membersMayUpload = computed(() => this.formData()?.membersMayUpload === true);
 
+  /* ---- publication ----
+   * There is no `isPublic` FIELD on FolderModel and there deliberately is not one: publication is
+   * the pair (key suffix, `public` tag), and the Cloud Function reads exactly that pair. A third
+   * representation would be a fourth thing to keep in sync and the one the gate does not read.
+   */
+  protected readonly isPublic = computed(() => hasPublicFolderTag(this.formData()?.tags ?? ''));
+  /** A folder still being created has no key yet — the store derives a qualifying one on save. */
+  protected readonly canChangePublic = computed(() => {
+    const okey = this.formData()?.okey ?? '';
+    return okey.length === 0 || isPublicFolderKey(okey);
+  });
+
   protected nameI18n = computed(() => ({
     name: 'name',
     label: this.i18n().name_label(),
@@ -113,6 +138,18 @@ export class FolderForm {
     label: this.i18n().membersMayUpload_label(),
     helper: this.i18n().membersMayUpload_helper()
   } as CheckboxI18n));
+
+  protected isPublicI18n = computed(() => ({
+    name: 'isPublic',
+    label: this.i18n().isPublic_label(),
+    helper: this.i18n().isPublic_helper()
+  } as CheckboxI18n));
+
+  /** Writes through to `tags`, which is where publication actually lives. */
+  protected onPublicChange(isPublic: boolean): void {
+    this.dirty.emit(true);
+    this.formData.update((vm) => ({ ...vm, tags: setFolderPublicTag(vm.tags ?? '', isPublic) }));
+  }
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[]): void {
     this.dirty.emit(true);
