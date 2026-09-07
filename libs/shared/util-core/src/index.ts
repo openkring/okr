@@ -32,3 +32,4 @@ export * from './lib/url.util';
 export * from './lib/validate.util';
 export * from './lib/vest.util';
 
+export * from './lib/list-filter.util';

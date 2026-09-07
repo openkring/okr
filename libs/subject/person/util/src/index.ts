@@ -11,4 +11,3 @@ export * from './lib/person-i18n';
 export * from './lib/person-duplicate.model';
 export * from './lib/person-field-diff.util';
 export * from './lib/person-directory.model';
-export * from './lib/person-filter.util';

@@ -1,7 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@okr/shared-models';
@@ -15,7 +13,6 @@ import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { Menu } from '@okr/cms-menu-feature';
-import { parsePersonFilters, PersonFilterName } from '@okr/subject-person-util';
 import { resolveVcardCapability, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
 
 import { PersonStore } from './person.store';
@@ -61,15 +58,13 @@ import { PersonStore } from './person.store';
     <!-- search and filters -->
     <!-- the photo-declaration filter is a staff tool: it is what makes usageImages consultable
          at all (D-P4-10). Members do not get it — the declaration is not theirs to browse. -->
-    @if(showsAnyFilter()) {
-      <okr-list-filter
-        [showSearch]="showsFilter('search')"
-        (searchTermChanged)="onSearchtermChange($event)"
-        (tagChanged)="onTagSelected($event)" [tags]="showsFilter('tags') ? tags() : ''" [hideTagsOnMobile]="true"
-        (typeChanged)="onTypeSelected($event)" [types]="showsFilter('gender') ? types() : undefined"
-        (categoryChanged)="onPhotoUsageSelected($event)" [categories]="showsFilter('photo') ? photoUsageCategory() : undefined"
-      />
-    }
+    <!-- ?filters=search,tags narrows the toolbar; ?filters=none hides it (handled by okr-list-filter) -->
+    <okr-list-filter
+      (searchTermChanged)="onSearchtermChange($event)"
+      (tagChanged)="onTagSelected($event)" [tags]="tags()" [hideTagsOnMobile]="true"
+      (typeChanged)="onTypeSelected($event)" [types]="types()"
+      (categoryChanged)="onPhotoUsageSelected($event)" [categories]="photoUsageCategory()"
+    />
 
     <!-- list header -->
     <ion-toolbar color="light" class="ion-hide-sm-down">
@@ -122,27 +117,10 @@ export class PersonList {
   protected readonly store = inject(PersonStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly alertService = inject(AlertService);
-  private readonly route = inject(ActivatedRoute);
 
   // inputs
   public readonly listId = input.required<string>();
   public readonly contextMenuName = input.required<string>();
-
-  /* ---- query-param overrides ----
-   * Read explicitly, NOT through withComponentInputBinding(): the router merges the three sources
-   * as {...queryParams, ...params, ...data}, so a route's own `data` would silently win over the
-   * query parameter.
-   *   ?filters=search        show only the search field
-   *   ?filters=search,tags   show the listed filters (search, tags, gender, photo)
-   *   ?filters=none          hide the filter row entirely
-   * Leaving it off keeps the full toolbar (see parsePersonFilters).
-   */
-  private readonly queryParamMap = toSignal(this.route.queryParamMap);
-  private readonly visibleFilters = computed(() => parsePersonFilters(this.queryParamMap()?.get('filters')));
-  protected readonly showsAnyFilter = computed(() => this.visibleFilters().length > 0);
-  protected showsFilter(name: PersonFilterName): boolean {
-    return this.visibleFilters().includes(name);
-  }
 
   // derived signals
   protected personsCount = computed(() => this.store.personsCount());

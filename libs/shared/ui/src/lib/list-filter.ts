@@ -1,9 +1,11 @@
-import { Component, computed, input, output, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input, output, linkedSignal, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { IonButton, IonButtons, IonCol, IonGrid, IonIcon, IonRow, IonToolbar } from '@ionic/angular/standalone';
 import { AsyncPipe } from '@angular/common';
 
 import { CategoryListModel } from '@okr/shared-models';
-import { coerceBoolean, getYear, getYearList } from '@okr/shared-util-core';
+import { coerceBoolean, getYear, getYearList, ListFilterName, parseListFilters } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { TranslatePipe } from '@okr/shared-i18n';
 
@@ -25,6 +27,14 @@ import { StringSelect } from './string-select';
  * 5. year
  * 6. state tbd: move to db mstate_, ostate_, pstate_, rstate_, 
  * 7. strings (a string-select)
+ *
+ * The route's `?filters=` query parameter narrows what is shown, on every list alike:
+ *   ?filters=search        only the search field
+ *   ?filters=search,tags   the listed filters (search, tags, categories, types, years, states, strings, view)
+ *   ?filters=none          no filter row at all
+ * Leaving it off keeps whatever the host list feeds with data (see parseListFilters).
+ * It is read explicitly via ActivatedRoute, not through withComponentInputBinding(): the router
+ * merges {...queryParams, ...params, ...data}, so a route's own `data` would silently win.
  */
 @Component({
   selector: 'okr-list-filter',
@@ -35,10 +45,11 @@ import { StringSelect } from './string-select';
     IonToolbar, IonGrid, IonRow, IonCol, IonButtons, IonButton, IonIcon
   ],
   template: `
+    @if(showsAnyFilter()) {
     <ion-toolbar>
       <ion-grid class="ion-no-padding ion-align-items-center">
         <ion-row class="ion-align-items-center">
-          @if(showSearch()) {
+          @if(showSearchField()) {
             <ion-col [size]="searchSize()" [attr.size-md]="compact() ? null : (mdSize() ?? '3')" class="ion-no-padding">
               <okr-searchbar (ionInput)="onSearchTermChange($event)" placeholder="{{ '@search.label' | translate | async }}" />
             </ion-col>
@@ -75,7 +86,7 @@ import { StringSelect } from './string-select';
           }
         </ion-row>
       </ion-grid>
-      @if(initialView()) {
+      @if(initialView() && isVisible('view')) {
         <ion-buttons slot="end">
           <ion-button (click)="toggleView()">
             <ion-icon slot="icon-only" src="{{getViewIcon() | svgIcon }}" />
@@ -83,10 +94,18 @@ import { StringSelect } from './string-select';
         </ion-buttons>
       }
     </ion-toolbar>
-
+    }
   `
 })
 export class ListFilter {
+  // optional: okr-list-filter is also used inside modals and CMS sections, where no route may be active
+  private readonly route = inject(ActivatedRoute, { optional: true });
+  private readonly queryParamMap = this.route ? toSignal(this.route.queryParamMap) : signal(null);
+  private readonly visibleFilters = computed(() => parseListFilters(this.queryParamMap()?.get('filters')));
+  protected isVisible(name: ListFilterName): boolean {
+    return this.visibleFilters().includes(name);
+  }
+
   // inputs
   // data inputs per filter (optional, if undefined (= not used on the okr-list-filter), the filter is not shown)
   public tags = input<string>('');
@@ -127,14 +146,18 @@ export class ListFilter {
   protected typeName = computed(() => this.types()?.name);
   protected stateName = computed(() => this.states()?.name);
 
- // filter visibility
-  protected showTags = computed(()     => this.tags().length > 0);
-  protected showType = computed(()     => this.types() !== undefined);
-  protected showCategory = computed(() => this.categories() !== undefined);
-  protected showYear = computed(()     => this.years() !== undefined);
-  protected showState = computed(()    => this.states() !== undefined);
+ // filter visibility: the host must feed the filter with data AND the route's ?filters= must not exclude it
+  protected showSearchField = computed(() => this.showSearch() && this.isVisible('search'));
+  protected showTags = computed(()     => this.tags().length > 0 && this.isVisible('tags'));
+  protected showType = computed(()     => this.types() !== undefined && this.isVisible('types'));
+  protected showCategory = computed(() => this.categories() !== undefined && this.isVisible('categories'));
+  protected showYear = computed(()     => this.years() !== undefined && this.isVisible('years'));
+  protected showState = computed(()    => this.states() !== undefined && this.isVisible('states'));
   protected yearList = computed(()     => this.years() ?? getYearList());   // default is last 8 years
-  protected showStrings = computed(() => (this.strings() && this.strings()!.length > 0) ?? false);
+  protected showStrings = computed(() => ((this.strings() && this.strings()!.length > 0) ?? false) && this.isVisible('strings'));
+  protected showsAnyFilter = computed(() =>
+    this.showSearchField() || this.showTags() || this.showType() || this.showCategory() || this.showYear()
+    || this.showState() || this.showStrings() || (!!this.initialView() && this.isVisible('view')));
   /** A lone searchbar takes the full row on small screens; next to another filter it keeps its half. */
   protected searchSize = computed(() =>
     this.showTags() || this.showType() || this.showCategory() || this.showYear() || this.showState() || this.showStrings() ? '6' : '12');
