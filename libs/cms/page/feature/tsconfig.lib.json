@@ -25,6 +25,7 @@
     { "path": "../../section/data-access/tsconfig.lib.json" },
     { "path": "../../section/feature/tsconfig.lib.json" },
     { "path": "../../section/util/tsconfig.lib.json" },
+    { "path": "../../../content/folder/data-access/tsconfig.lib.json" },
     { "path": "../../../content/pdf-template/data-access/tsconfig.lib.json" },
     { "path": "../../../shared/config/tsconfig.lib.json" },
     { "path": "../../../shared/constants/tsconfig.lib.json" },

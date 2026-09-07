@@ -1,9 +1,9 @@
 import { NgStyle } from '@angular/common';
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, output, untracked } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { AlbumSection, BackgroundStyle, ImageConfig, ImageType } from '@okr/shared-models';
 import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
-import { browse, CategorySelect, Label, Spinner, showZoomedImage, Video } from '@okr/shared-ui';
+import { browse, CategorySelect, Label, openImageGallery, Spinner, Video } from '@okr/shared-ui';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { FolderBreadcrumb } from '@okr/content-folder-ui';
@@ -90,7 +90,7 @@ import { AlbumStore } from './album-section.store';
             </ion-col>
             <ion-col size="6" size-md="4">
               <!-- the category is empty until the reference data has loaded — okr-cat-select needs at least one item -->
-              @if(albumStyles().items.length > 0) {
+              @if(showStyleSelect() && albumStyles().items.length > 0) {
                 <okr-cat-select [category]="albumStyles()" [selectedItemName]="albumStyle()"
                   (selectedItemNameChange)="onAlbumStyleChange($event)" [withAll]="false" [readOnly]="false" />
               }
@@ -192,6 +192,17 @@ export class AlbumSectionComponent {
   // inputs
   public section = input<AlbumSection>();
   public editMode = input<boolean>(false);
+  /**
+   * Deep link into a subfolder of the album. Empty (the default) starts at the configured root.
+   * Kept in sync both ways: a change here browses there, and browsing emits folderChanged.
+   */
+  public folder = input<string>('');
+  /** The album-style picker is editor chrome — a host that hard-configures the style hides it. */
+  public showStyleSelect = input(true);
+
+  // outputs
+  /** The folder the user browsed to, so a host can reflect it in the URL. */
+  public folderChanged = output<string>();
 
   // derived
   protected imgixBaseUrl = computed(() => this.store.imgixBaseUrl());
@@ -211,7 +222,13 @@ export class AlbumSectionComponent {
   constructor() {
     effect(() => {
       const section = this.section();
-      this.store.setConfig(section?.properties, section?.name, section?.okey);
+      const folder = this.folder();
+      // untracked: both methods read store state, which would otherwise re-run this effect on
+      // every browse step — setConfig would then reset the position the user just navigated to.
+      untracked(() => {
+        this.store.setConfig(section?.properties, section?.name, section?.okey);
+        if (folder) this.store.setFolder(folder);
+      });
     });
   }
 
@@ -236,9 +253,7 @@ export class AlbumSectionComponent {
       return;
     }
     const gallery = this.images().filter((img) => img.type === ImageType.Image);
-    const startIndex = Math.max(0, gallery.findIndex((img) => img.documentKey === image.documentKey));
-    await showZoomedImage(this.modalController, image.url, image.label, this.imageStyle(),
-      image.altText, 'full-modal', gallery, startIndex);
+    await openImageGallery(this.modalController, gallery, image, this.imageStyle());
   }
 
   protected getBackgroundStyle(image: ImageConfig): BackgroundStyle {
@@ -252,10 +267,12 @@ export class AlbumSectionComponent {
   protected openFolder(folderKey: string): void {
     if (this.editMode()) return;
     this.store.setFolder(folderKey);
+    this.folderChanged.emit(this.currentFolderKey());
   }
 
   protected goUp(): void {
     if (this.editMode()) return;
     this.store.goUp();
+    this.folderChanged.emit(this.currentFolderKey());
   }
 }

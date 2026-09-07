@@ -13,7 +13,7 @@ import { confirm, AppNavigationService, downloadFile } from '@okr/shared-util-an
 import { I18nService } from '@okr/shared-i18n';
 
 import { DocumentService } from '@okr/content-document-data-access';
-import { canDeleteDocumentDirectly, DOCUMENT_I18N_KEYS } from '@okr/content-document-util';
+import { canDeleteDocumentDirectly, DOCUMENT_I18N_KEYS, MimeClass, mimeMatches } from '@okr/content-document-util';
 import { FolderService } from '@okr/content-folder-data-access';
 import { canWriteFolderDirectly, newFolderModel } from '@okr/content-folder-util';
 import { UploadService } from '@okr/avatar-data-access';
@@ -35,6 +35,8 @@ export type DocumentState = {
   selectedTag: string;
   selectedType: string;
   selectedSource: string;
+  /** coarse file-class filter (?mime=image,pdf); empty means "no filter" */
+  mimeFilter: MimeClass[];
 };
 
 export const initialState: DocumentState = {
@@ -45,6 +47,7 @@ export const initialState: DocumentState = {
   selectedTag: '',
   selectedType: 'all',
   selectedSource: 'all',
+  mimeFilter: [],
 };
 
 export const DocumentStore = signalStore(
@@ -164,6 +167,7 @@ export const DocumentStore = signalStore(
           nameMatches(document.index, state.searchTerm()) &&
           nameMatches(document.type, state.selectedType()) &&
           nameMatches(document.source, state.selectedSource()) &&
+          mimeMatches(document.mimeType, state.mimeFilter()) &&
           chipMatches(document.tags, state.selectedTag()))
       }),
 
@@ -216,6 +220,11 @@ export const DocumentStore = signalStore(
 
       setSelectedSource(selectedSource: string) {
         patchState(store, { selectedSource });
+      },
+
+      /** Restrict the list to the given file classes; an empty array clears the filter. */
+      setMimeFilter(mimeFilter: MimeClass[]) {
+        patchState(store, { mimeFilter });
       },
 
       /******************************** getters ******************************************* */

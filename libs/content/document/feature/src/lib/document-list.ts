@@ -1,17 +1,19 @@
 import { Component, computed, inject, input, linkedSignal, effect, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonThumbnail, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 
 
-import { DocumentModel, FolderModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, RoleName } from '@okr/shared-models';
+import { DocumentModel, FolderModel, IMAGE_STYLE_SHAPE, ImageConfig, RoleName } from '@okr/shared-models';
 import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
 import { FileNamePipe, FileSizePipe, PrettyDatePipe, SvgIconPipe, FileLogoPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
-import { EmptyList, ListFilter, Spinner, showZoomedImage } from '@okr/shared-ui';
+import { EmptyList, ListFilter, openImageGallery, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, keepDefaultTrue } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { FolderBreadcrumb } from '@okr/content-folder-ui';
-import { canDeleteDocument, canEditDocument, canUploadToFolder } from '@okr/content-document-util';
+import { canDeleteDocument, canEditDocument, canUploadToFolder, parseMimeFilter, toGalleryImage } from '@okr/content-document-util';
 import { canEditFolder } from '@okr/content-folder-util';
 
 import { DocumentStore } from './document.store';
@@ -233,6 +235,7 @@ export class DocumentList {
   protected readonly store = inject(DocumentStore);
   private readonly actionSheetController = inject(ActionSheetController);
   private readonly modalController = inject(ModalController);
+  private readonly route = inject(ActivatedRoute);
 
   // inputs
   public readonly listId = input.required<string>();  // preset filter, e.g. p:path (with wildcard), t:tag, k:parentKey
@@ -248,6 +251,20 @@ export class DocumentList {
    * firestore.rules cannot grant deletion on group admin-ship alone.
    */
   public groupKey = input('');
+
+  /* ---- query-param overrides ----
+   * Read explicitly, NOT through withComponentInputBinding(): the router merges the three sources
+   * as {...queryParams, ...params, ...data}, so a route's own `data` (this route sets view:'list')
+   * silently WINS over ?view=. A link that wants a different view has to be honoured here.
+   *   ?view=grid|list   initial view mode
+   *   ?mime=image,pdf   restrict to the given file classes (see parseMimeFilter)
+   */
+  private readonly queryParamMap = toSignal(this.route.queryParamMap);
+  private readonly viewParam = computed(() => {
+    const view = this.queryParamMap()?.get('view');
+    return view === 'grid' || view === 'list' ? view : undefined;
+  });
+  protected readonly mimeFilter = computed(() => parseMimeFilter(this.queryParamMap()?.get('mime') ?? undefined));
 
   // filters
   protected readonly searchTerm = linkedSignal(() => this.store.searchTerm());
@@ -276,7 +293,7 @@ export class DocumentList {
   protected types = computed(() => this.store.appStore.getCategory('document_type'));
   protected sources = computed(() => this.store.appStore.getCategory('document_source'));
   protected readonly currentUser = computed(() => this.store.appStore.currentUser());
-  public isListView = linkedSignal(() => this.view() === 'list');
+  public isListView = linkedSignal(() => (this.viewParam() ?? this.view()) === 'list');
   // filter row hidden by default; toggled via the context-menu 'toggleFilter' action
   protected readonly showFilter = signal(false);
   // read-only by default: tapping a folder navigates into it, tapping a file opens the viewer overlay.
@@ -295,6 +312,7 @@ export class DocumentList {
   constructor() {
     effect(() => this.store.setListId(this.listId()));
     effect(() => this.store.setGroupKey(this.groupKey()));
+    effect(() => this.store.setMimeFilter(this.mimeFilter()));
   }
 
   /******************************** setters (filter) ******************************************* */
@@ -431,17 +449,14 @@ export class DocumentList {
       await this.store.preview(document, false);
       return;
     }
-    const gallery = this.galleryImages();
-    const startIndex = Math.max(0, gallery.findIndex((img) => img.documentKey === document.okey));
-    await showZoomedImage(this.modalController, document.fullPath, document.title, IMAGE_STYLE_SHAPE,
-      document.altText, 'full-modal', gallery, startIndex);
+    await openImageGallery(this.modalController, this.galleryImages(), toGalleryImage(document), IMAGE_STYLE_SHAPE);
   }
 
   /** Every image of the current (filtered) list, in display order — the viewer's prev/next range. */
   private galleryImages(): ImageConfig[] {
     return this.sortedDocuments()
       .filter((doc) => doc.mimeType.startsWith('image/'))
-      .map((doc) => ({ ...IMAGE_CONFIG_SHAPE, label: doc.title, url: doc.fullPath, altText: doc.altText, documentKey: doc.okey }));
+      .map(toGalleryImage);
   }
 
   /** Folder tap: outside edit mode (or for plain members) navigate straight in; folder managers get an action sheet. */

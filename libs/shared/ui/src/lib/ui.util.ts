@@ -26,6 +26,31 @@ export interface ValidationInfoDictionary {
   terms: ValidationInfo[],
 }
 
+/**
+ * Index of `current` within `images` — the slide the full-screen viewer opens on.
+ * Matches on documentKey when `current` carries one (two renderings of the same document share a
+ * url), on url otherwise. Never negative: an image that is not in the gallery starts at slide 0.
+ */
+export function findImageIndex(images: ImageConfig[], current: ImageConfig): number {
+  const index = current.documentKey
+    ? images.findIndex((img) => img.documentKey === current.documentKey)
+    : images.findIndex((img) => img.url === current.url);
+  return Math.max(0, index);
+}
+
+/**
+ * Open the full-screen viewer on `current`, paging prev/next across `gallery`.
+ * The one place that pairs a gallery with its start index: every caller used to repeat the
+ * findIndex, and each repetition was free to match on a different field.
+ * `gallery` may be empty — the viewer then shows `current` alone.
+ */
+export async function openImageGallery(modalController: ModalController, gallery: ImageConfig[],
+    current: ImageConfig, style: ImageStyle, cssClass = 'full-modal'): Promise<void> {
+  const images = gallery.length > 0 ? gallery : [current];
+  await showZoomedImage(modalController, current.url, current.label, style, current.altText,
+    cssClass, images, findImageIndex(images, current));
+}
+
 // show a zoomed version of the image in a modal.
 // When `gallery` holds more than one image, the modal shows prev/next buttons (and ArrowLeft/ArrowRight
 // keyboard support) to page through the list, starting at `startIndex`.

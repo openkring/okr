@@ -267,6 +267,30 @@ const cms: BlockRoutes = {
       ],
     },
     {
+      // The album as a first-class screen, rooted at a storage folder — NOT at a page document.
+      // `AlbumPage` was written for exactly this (`id` = FolderModel okey) but had no route: it
+      // was reachable only through `PageDispatcher`'s `@case ('album')`, and no page document
+      // anywhere carries `type: 'album'`, so the component was unreachable. Without this route a
+      // deep link (an event's album, say) costs one page document per target folder.
+      // Guard: authenticated only, matching `document`'s ruling R-7 — `folders`/`docs` are
+      // `allow read: if tenantRead()`, so any member may already read what this renders, and the
+      // role question belongs to whichever menu doc or record links here.
+      path: 'album',
+      canActivate: [isAuthenticatedGuard],
+      children: [
+        {
+          path: ':id/:contextMenuName',
+          loadComponent: () => import('@okr/cms-page-feature').then(m => m.AlbumPage),
+          data: { color: 'secondary' },
+        },
+        {
+          path: ':id',
+          loadComponent: () => import('@okr/cms-page-feature').then(m => m.AlbumPage),
+          data: { color: 'secondary' },
+        },
+      ],
+    },
+    {
       path: 'page',
       canActivate: [isAuthenticatedGuard],
       children: [

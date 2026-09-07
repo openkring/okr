@@ -1,7 +1,7 @@
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular/standalone';
 
-import { DOCUMENT_DIR, DocumentModel, UserModel } from '@okr/shared-models';
+import { DOCUMENT_DIR, DocumentModel, IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@okr/shared-models';
 import { addIndexElement, getFileHash, getFullName, getTodayStr, isPhotoCancellation, resolveMimeType, warn } from '@okr/shared-util-core';
 
 import { readAsFile } from '@okr/avatar-util';
@@ -116,4 +116,59 @@ export function getDocumentIndex(document: DocumentModel): string {
  */
 export function getDocumentIndexInfo(): string {
   return 'n:filename h:ash m:imeType f:olderKeys';
+}
+
+/* ---------------------- Mime classes -------------------------*/
+/**
+ * The coarse file classes a caller can filter a document list by. Deliberately NOT the raw mime
+ * type: a link that wants "images and pdfs" must not have to enumerate image/jpeg, image/png,
+ * image/heic, … The album's AlbumConfig (showPdfs/showVideos/showDocs) draws the same lines.
+ */
+export type MimeClass = 'image' | 'pdf' | 'video' | 'audio' | 'doc';
+
+export const MIME_CLASSES: MimeClass[] = ['image', 'pdf', 'video', 'audio', 'doc'];
+
+/** Classify a mime type. Anything unrecognised is a 'doc' — the catch-all, as in the album. */
+export function getMimeClass(mimeType?: string): MimeClass {
+  const mime = (mimeType ?? '').toLowerCase();
+  if (mime.startsWith('image/')) return 'image';
+  if (mime.startsWith('video/')) return 'video';
+  if (mime.startsWith('audio/')) return 'audio';
+  if (mime === 'application/pdf') return 'pdf';
+  return 'doc';
+}
+
+/**
+ * Parse a `?mime=image,pdf` query parameter into the classes to keep.
+ * Unknown entries are dropped rather than failing the whole filter — a typo in a hand-written
+ * link degrades to "the classes I did understand", and an entirely unknown value to "no filter",
+ * which is the same as leaving the parameter off. Never returns a filter nothing can match.
+ */
+export function parseMimeFilter(raw?: string): MimeClass[] {
+  if (!raw) return [];
+  const classes = raw.split(',')
+    .map((entry) => entry.trim().toLowerCase())
+    .filter((entry): entry is MimeClass => (MIME_CLASSES as string[]).includes(entry));
+  return [...new Set(classes)];
+}
+
+/** Whether a document passes the mime filter. An empty filter means "no filter" — everything passes. */
+export function mimeMatches(mimeType: string | undefined, filter: MimeClass[]): boolean {
+  if (filter.length === 0) return true;
+  return filter.includes(getMimeClass(mimeType));
+}
+
+/**
+ * Map a document to the ImageConfig the full-screen viewer renders.
+ * `url` is the STORAGE PATH (fullPath), not the download url: the imgix pipes and overlay params
+ * the viewer applies are built from the path.
+ */
+export function toGalleryImage(document: DocumentModel): ImageConfig {
+  return {
+    ...IMAGE_CONFIG_SHAPE,
+    label: document.title,
+    url: document.fullPath,
+    altText: document.altText,
+    documentKey: document.okey
+  };
 }

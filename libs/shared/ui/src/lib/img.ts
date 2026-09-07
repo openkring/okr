@@ -8,7 +8,7 @@ import { ImageActionType, ImageConfig, ImageStyle } from '@okr/shared-models';
 import { buildOverlayText, getImgixUrl, getSizedImgixParamsByExtension, getThumbnailUrl } from '@okr/shared-util-core';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
-import { showImageSlider, showZoomedImage } from './ui.util';
+import { findImageIndex, showImageSlider, showZoomedImage } from './ui.util';
 
 /**
  * This image loading implementation is based on Angular's NgOptimizedImage together with Imgix CDN to provide optimized images.
@@ -254,16 +254,16 @@ export class Img {
     if (this.editMode()) return;
     switch(this.actionType()) {
       case ImageActionType.Zoom: {
+        // not openImageGallery(): this caller overrides the caption with its own zoomTitle input
         const gallery = this.gallery();
-        const startIndex = Math.max(0, gallery.findIndex((img) => img.url === this.image().url));
-        await showZoomedImage(this.modalController, this.url(), this.zoomTitle(), this.imageStyle(), this.altText(), 'full-modal', gallery, startIndex);
+        await showZoomedImage(this.modalController, this.url(), this.zoomTitle(), this.imageStyle(),
+          this.altText(), 'full-modal', gallery, findImageIndex(gallery, this.image()));
         break;
       }
       case ImageActionType.OpenSlider: {
         const gallery = this.gallery();
         const images = gallery.length > 0 ? gallery : [this.image()];
-        const startIndex = Math.max(0, images.findIndex((img) => img.url === this.image().url));
-        await showImageSlider(this.modalController, images, this.imageStyle(), startIndex);
+        await showImageSlider(this.modalController, images, this.imageStyle(), findImageIndex(images, this.image()));
         break;
       }
       case ImageActionType.FollowLink:
