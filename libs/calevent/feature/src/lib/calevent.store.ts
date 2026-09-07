@@ -1302,18 +1302,24 @@ export const CalEventStore = signalStore(
       },
 
       /**
-       * Sets the current user's attendance on the given event. Invited users answer their invitation,
-       * everybody else (open events, and the organiser of a personal event who never got an
-       * invitation) is recorded in the attendees list.
+       * Sets the current user's attendance on the given event.
+       *
+       * Seit 2026-09 gibt es dafuer genau einen Ort: `calevent.attendees` (Spec „Offene Anlaesse",
+       * Entscheidung 3). Ob jemand Mitglied ist oder eingeladen wurde, entscheidet darueber, ob er
+       * antworten DARF (`canAttendCalevent`) — nicht darueber, wo die Antwort liegt.
+       *
+       * Haelt der Benutzer eine Einladung, wird sie zusaetzlich beantwortet: sie traegt die
+       * Antwortspur (Zeitstempel und Kommentar) und speist das Abzeichen der offenen Einladungen.
+       * Die Anwesenheit selbst schreibt in beiden Faellen dieselbe Methode.
        */
       async changeOwnAttendance(calEvent: CalEventModel, newState: 'accepted' | 'declined'): Promise<void> {
         if (calEvent.isLocked) {
           await notify(store.alertController, store.i18n.locked_title(), store.i18n.locked_hint(), store.i18n.ok());
           return;
         }
-        const inv = calEvent.isOpen ? undefined : store.invitations().find(inv => inv.caleventKey === calEvent.okey);
+        const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
         if (inv) {
-          await this.changeInvitationState(inv, newState);
+          await this.changeInvitationState(inv, newState);   // stamps the invitation AND the attendee
         } else {
           await this.changeAttendanceState(calEvent, newState);
         }
@@ -1363,6 +1369,11 @@ export const CalEventStore = signalStore(
        * Answer an invitation from the calevent action sheet. Routed through InvitationService so the
        * answer is stamped and commented exactly as it is everywhere else; a locked invitation is
        * refused and the user told why rather than silently ignored.
+       *
+       * Die Einladung ist NICHT die Antwortquelle (Spec „Offene Anlaesse", Entscheidung 3): sie
+       * haelt die Bitte und die Antwortspur, gelesen wird die Anwesenheit ueberall aus
+       * `calevent.attendees`. Den Eintrag dorthin schreibt `InvitationService.respond` selbst —
+       * dort, wo jede Antwort ohnehin durchlaeuft, statt in jedem Store einzeln.
        */
       async changeInvitationState(invitation: InvitationModel, newState: 'pending' | 'accepted' | 'declined' | 'maybe'): Promise<void> {
         const currentUser = store.currentUser();

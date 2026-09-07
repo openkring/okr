@@ -1,13 +1,14 @@
 import { inject, Injectable } from '@angular/core';
-import { doc } from 'firebase/firestore';
+import { doc, runTransaction } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { CommentCollection, InvitationCollection, InvitationModel, InvitationModelName, InvitationState, UserModel } from '@okr/shared-models';
+import { AvatarInfo, CalEventCollection, CalEventModel, CommentCollection, InvitationCollection, InvitationModel, InvitationModelName, InvitationState, PersonModelName, UserModel } from '@okr/shared-models';
 import { DateFormat, findByKey, getFullName, getSystemQuery, getTodayStr, removeKeyFromOkrModel } from '@okr/shared-util-core';
 
+import { applyInvitationAnswer } from '@okr/calevent-util';
 import { createComment } from '@okr/comment-util';
 import { getInvitationIndex, getLockCommentKey, getResponseComment, normaliseInvitation } from '@okr/relationship-invitation-util';
 
@@ -91,7 +92,44 @@ export class InvitationService {
     // comment on top of the specific one below, and every answer would show up twice in the thread
     await this.update(invitation);
     await this.addResponseComment(invitation, getResponseComment(newState, note), currentUser);
+    await this.recordAnswerOnCalevent(invitation, newState);
     return true;
+  }
+
+  /**
+   * Mirror the answer into the event's attendee list — the second half of every response.
+   *
+   * Since 2026-09 the invitation holds the ask and the answer trail, while `calevent.attendees` is
+   * the ONLY place an answer is read from: the participant list, the series table, the participant
+   * count and the recipients of a cancellation all look there
+   * (planning/specs/2026-09-06-open-events-invitation-model-spec.md, decision 3). This lives in the
+   * service rather than in a store because both answer paths — the calevent action sheet and the
+   * invitation list/section — route through `respond`; a store-level write would silently miss one.
+   *
+   * A transaction, not a plain update: `attendees` is one array field that several people answer
+   * independently, and a read-modify-write outside a transaction would drop a concurrent answer.
+   *
+   * Best-effort by design: an event that no longer exists (deleted while an invitation survived)
+   * is skipped rather than failing the response the invitee just gave.
+   */
+  private async recordAnswerOnCalevent(invitation: InvitationModel, newState: InvitationState): Promise<void> {
+    if (!invitation.caleventKey || !invitation.inviteeKey) return;
+    const ref = doc(this.firestoreService.firestore, `${CalEventCollection}/${invitation.caleventKey}`);
+    const person: AvatarInfo = {
+      key: invitation.inviteeKey,
+      name1: invitation.inviteeFirstName,
+      name2: invitation.inviteeLastName,
+      modelType: PersonModelName,
+      type: '',
+      subType: '',
+      label: '',
+    };
+    await runTransaction(this.firestoreService.firestore, async (transaction) => {
+      const snapshot = await transaction.get(ref);
+      if (!snapshot.exists()) return;
+      const attendees = (snapshot.data() as CalEventModel).attendees ?? [];
+      transaction.update(ref, { attendees: applyInvitationAnswer(attendees, person, newState) });
+    });
   }
 
   /**

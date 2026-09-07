@@ -279,24 +279,25 @@ export const CalendarStore = signalStore(
       },
 
       async subscribe(calEvent: CalEventModel): Promise<void> {
-        if (calEvent.isOpen) {
-          await this.changeAttendanceState(calEvent, 'accepted');
-        } else {
-          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
-          if (inv) {
-            await this.changeInvitationState(inv, 'accepted');
-          }
-        }
+        await this.changeOwnAttendance(calEvent, 'accepted');
       },
 
       async unsubscribe(calEvent: CalEventModel): Promise<void> {
-        if (calEvent.isOpen) {
-          await this.changeAttendanceState(calEvent, 'declined');
+        await this.changeOwnAttendance(calEvent, 'declined');
+      },
+
+      /**
+       * Anwesenheit des aktuellen Benutzers, eine Quelle: `calevent.attendees` (Spec „Offene
+       * Anlaesse", Entscheidung 3). Haelt er eine Einladung, wird sie zusaetzlich beantwortet —
+       * sie traegt die Antwortspur und speist das Abzeichen; den Attendee-Eintrag schreibt
+       * `InvitationService.respond` dabei selbst.
+       */
+      async changeOwnAttendance(calEvent: CalEventModel, newState: 'accepted' | 'declined'): Promise<void> {
+        const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
+        if (inv) {
+          await this.changeInvitationState(inv, newState);
         } else {
-          const inv = store.invitations().find(inv => inv.caleventKey === calEvent.okey);
-          if (inv) {
-            await this.changeInvitationState(inv, 'declined');
-          }
+          await this.changeAttendanceState(calEvent, newState);
         }
       },
 

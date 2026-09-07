@@ -48,6 +48,9 @@
       "path": "../../../shared/i18n/tsconfig.lib.json"
     },
     {
+      "path": "../../../calevent/util/tsconfig.lib.json"
+    },
+    {
       "path": "../../../comment/util/tsconfig.lib.json"
     }
   ]

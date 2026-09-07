@@ -1362,18 +1362,17 @@ export class CalEventList implements OnInit {
   }
 
   /**
-   * Attendance state of the current user for the given event: open events read it from the attendees list,
-   * closed ones from the invitation. Falls back to 'invited' (the '?' icon) while the user has not
-   * answered yet but still could, and to undefined when An-/Abmeldung is not possible at all
-   * (past event, or a closed event the user was not invited to) — the list then shows the 'remove' icon.
+   * Attendance state of the current user for the given event — read from the attendees list, which
+   * since 2026-09 is the only place an answer lives, for members and invitees alike
+   * (Spec „Offene Anlaesse", Entscheidung 3).
+   *
+   * Falls back to 'invited' (the '?' icon) while the user has not answered yet but still could, and
+   * to undefined when An-/Abmeldung is not possible at all (past event, or one outside the reach of
+   * its calendar without an invitation) — the list then shows the 'remove' icon.
    */
   protected attendanceState(event: CalEventModel): AttendanceState | undefined {
     const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === event.okey);
-    const state = event.isOpen
-      ? getAttendanceState(event, this.currentUser()?.personKey ?? '')
-      // no invitation (e.g. the organiser of a personal event) -> fall back to the attendees list
-      : this.store.invitations().find(inv => inv.caleventKey === event.okey)?.state
-        ?? getAttendanceState(event, this.currentUser()?.personKey ?? '');
+    const state = getAttendanceState(event, this.currentUser()?.personKey ?? '');
     if (!state) return canAttendCalevent(event, hasInvitation, this.mayJoinOpen(event)) ? 'invited' : undefined;
     return state === 'accepted' || state === 'declined' ? state : 'invited';
   }

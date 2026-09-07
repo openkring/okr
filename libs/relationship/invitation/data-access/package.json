@@ -12,6 +12,7 @@
     "@okr/shared-data-access": "*",
     "@okr/shared-util-core": "*",
     "@okr/relationship-invitation-util": "*",
+    "@okr/calevent-util": "*",
     "@okr/comment-util": "*",
     "@okr/shared-i18n": "*"
   }
