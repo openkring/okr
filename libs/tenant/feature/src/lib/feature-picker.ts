@@ -1,33 +1,43 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
-  IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonItemDivider,
-  IonItemGroup, IonLabel, IonList, IonMenuButton, IonNote, IonSegment, IonSegmentButton,
+  IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonItemDivider,
+  IonItemGroup, IonLabel, IonList, IonMenuButton, IonNote, IonRow, IonSegment, IonSegmentButton,
   IonTitle, IonToolbar, ModalController,
 } from '@ionic/angular/standalone';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { AlertService } from '@okr/shared-util-angular';
+import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
 import type { FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
-  menuOutlineOf, resolveAvailability, resolveWithDeps,
+  findStructuralDrift, indexMenuDocsByName, isEmptyPlan, menuOutlineOf, pinnedFieldsOf,
+  resolveAvailability, resolveWithDeps,
 } from '@okr/tenant-util';
-import type { ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, FeatureProfile } from '@okr/tenant-util';
+import type {
+  ApplyFeatureResponse, ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, FeatureProfile,
+  MenuSpec, StructuralField,
+} from '@okr/tenant-util';
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
 import type { BlockEnableResult } from '@okr/tenant-ui';
-import { BlockEnableModal } from '@okr/tenant-ui';
+import { BlockEnableModal, MenuCompareModal, PickerHelpModal } from '@okr/tenant-ui';
+
+import { buildMenuTree } from './menu-tree.util';
+import type { MenuTreeRow } from './menu-tree.util';
+import { actionableFieldsOf, patchNoteFor } from './menu-row-actions.util';
 
 /** Which of the two `IonSegment` tabs is showing. */
 type PickerSegment = 'blocks' | 'rows';
 
 /**
  * The admin-facing feature picker — `/tenant/features` — split into two segments: which
- * catalogue BLOCKS are on (this component, segment `blocks`) and, per enabled block, which
- * menu ROWS are attached (segment `rows`, a placeholder here — Task 11 fills it in).
+ * catalogue BLOCKS are on (segment `blocks`) and, per enabled block, which menu ROWS are
+ * attached and how each one's drift from the catalogue is resolved (segment `rows`, Task 11:
+ * `buildMenuTree`'s row list, rendered as a three-column table with «Übernehmen»/«Fixieren»/
+ * «Katalog anpassen» — the idea in one sentence: the catalogue proposes, the tenant decides).
  *
  * Every write is its own confirmed act through `FeatureSelectionService` (D-BB-9/spec §19):
  * `enableBlock` and `disableBlock` are separate callable verbs, each with its own dry run and
@@ -52,13 +62,18 @@ type PickerSegment = 'blocks' | 'rows';
     SvgIconPipe,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonButton, IonIcon,
     IonContent, IonList, IonItemGroup, IonItemDivider, IonItem, IonLabel, IonNote,
-    IonSegment, IonSegmentButton,
+    IonSegment, IonSegmentButton, IonGrid, IonRow, IonCol,
   ],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ i18n.title() }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="onHelp()" title="{{ i18n.help_button() }}">
+            <ion-icon slot="icon-only" src="{{ 'information-circle' | svgIcon }}" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
       <ion-toolbar>
         <ion-segment [value]="segment()" (ionChange)="onSegmentChange($event)">
@@ -130,11 +145,80 @@ type PickerSegment = 'blocks' | 'rows';
           }
         </ion-list>
       } @else {
-        <ion-list>
-          <ion-item lines="none">
-            <ion-label class="ion-text-wrap">{{ i18n.segment_rows_placeholder() }}</ion-label>
-          </ion-item>
-        </ion-list>
+        @if (rows().length === 0) {
+          <ion-list>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">{{ i18n.segment_rows_placeholder() }}</ion-label>
+            </ion-item>
+          </ion-list>
+        } @else {
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12" size-md="6"><strong>{{ i18n.rows_col_menu() }}</strong></ion-col>
+              <ion-col size="12" size-md="3"><strong>{{ i18n.rows_col_role() }}</strong></ion-col>
+              <ion-col size="12" size-md="3"><strong>{{ i18n.rows_col_action() }}</strong></ion-col>
+            </ion-row>
+            @for (row of rows(); track row.name) {
+              <ion-row [style.opacity]="isDimmed(row) ? 0.6 : 1">
+                <ion-col size="12" size-md="6" [style.padding-inline-start.rem]="row.depth * 1.5">
+                  @if (row.state !== 'absent') {
+                    <ion-button fill="clear" size="small" (click)="onCompare(row)">
+                      <ion-icon slot="icon-only" src="{{ 'information-circle' | svgIcon }}" />
+                    </ion-button>
+                  }
+                  {{ row.name }}
+                </ion-col>
+                <ion-col size="12" size-md="3">
+                  @switch (row.state) {
+                    @case ('drifted') {
+                      {{ row.roleNeededLive }} → {{ row.roleNeededCatalogue }}
+                    }
+                    @case ('pinned') {
+                      {{ row.roleNeededLive }}
+                      <ion-icon src="{{ 'lock-closed' | svgIcon }}" title="{{ i18n.rows_pinned_note() }}" />
+                    }
+                    @case ('absent') {
+                      {{ i18n.rows_absent() }}
+                    }
+                    @default {
+                      {{ row.roleNeededLive }}
+                    }
+                  }
+                  @if (row.otherDrift.length > 0) {
+                    <ion-note class="ion-text-wrap" title="{{ i18n.rows_other_drift() }}">
+                      ≠ {{ row.otherDrift.join(', ') }}
+                    </ion-note>
+                  }
+                </ion-col>
+                <ion-col size="12" size-md="3">
+                  @switch (row.state) {
+                    @case ('drifted') {
+                      <ion-button size="small" fill="outline" (click)="onApply(row)">
+                        {{ i18n.rows_apply_button() }}
+                      </ion-button>
+                      <ion-button size="small" fill="outline" (click)="onPin(row)">
+                        {{ i18n.rows_pin_button() }}
+                      </ion-button>
+                      <ion-button size="small" fill="clear" (click)="onAdjustCatalogue(row)">
+                        {{ i18n.rows_adjust_catalogue_button() }}
+                      </ion-button>
+                    }
+                    @case ('pinned') {
+                      <ion-button size="small" fill="clear" (click)="onUnpin(row)">
+                        {{ i18n.rows_unpin_button() }}
+                      </ion-button>
+                    }
+                    @case ('absent') {
+                      <ion-button size="small" fill="outline" (click)="onAddToMenu(row)">
+                        {{ i18n.rows_add_button() }}
+                      </ion-button>
+                    }
+                  }
+                </ion-col>
+              </ion-row>
+            }
+          </ion-grid>
+        }
       }
     </ion-content>
   `,
@@ -209,6 +293,47 @@ export class FeaturePicker {
   }));
 
   protected readonly segment = signal<PickerSegment>('blocks');
+
+  // ── Segment 2 (Menüzeilen) ────────────────────────────────────────────────────────────
+  // The blocks currently enabled — segment 2's whole tree is scoped to these; a disabled
+  // block's menu is not something the tenant is "missing" (`buildMenuTree`'s own doc
+  // comment).
+  private readonly enabledBlockObjs = computed(() =>
+    this.catalogue.filter(block => this.liveBlocks().has(block.id)));
+
+  /** Every enabled block's own `MenuSpec` tree, flattened one level (children stay nested
+   *  under `.children` — both `findStructuralDrift` and the index below recurse). */
+  private readonly enabledSpecs = computed(() => this.enabledBlockObjs().flatMap(block => block.menu));
+
+  /** Live menu docs indexed by `name` (not doc id) — the shape both `findStructuralDrift`
+   *  and `buildMenuTree` require. `menuDocs` is already tenant-scoped. */
+  private readonly menuByName = computed(() => indexMenuDocsByName(
+    this.menuDocs().map(doc => ({ id: doc.okey, data: doc })), this.tenantId(),
+  ).byName);
+
+  private readonly menuDrift = computed(() => findStructuralDrift(this.enabledSpecs(), this.menuByName()));
+  private readonly driftByName = computed(() => new Map(this.menuDrift().map(entry => [entry.name, entry])));
+
+  /** First `MenuSpec` declaring each name — `MenuCompareModal`'s catalogue-side column. */
+  private readonly specByName = computed(() => {
+    const map = new Map<string, MenuSpec>();
+    const index = (specs: MenuSpec[]): void => {
+      for (const spec of specs) {
+        if (!map.has(spec.name)) map.set(spec.name, spec);
+        if (spec.children && spec.children.length > 0) index(spec.children);
+      }
+    };
+    for (const block of this.enabledBlockObjs()) index(block.menu);
+    return map;
+  });
+
+  /** The flat, depth-annotated row list the table renders directly (Task 9's `buildMenuTree`). */
+  protected readonly rows = computed<MenuTreeRow[]>(() => buildMenuTree({
+    rootKey: `main_${this.tenantId()}`,
+    existing: this.menuByName(),
+    drift: this.menuDrift(),
+    enabledBlocks: this.enabledBlockObjs(),
+  }));
 
   /**
    * Which blocks a profile would add — proposal 6, rebuilt for the additive model. It used to
@@ -345,6 +470,151 @@ export class FeaturePicker {
     } catch (error) {
       this.alertService.error(`FeaturePicker.onDisable: ${error}`);
     }
+  }
+
+  // ── Segment 2 (Menüzeilen) — actions ─────────────────────────────────────────────────
+  protected isDimmed(row: MenuTreeRow): boolean {
+    return row.state === 'absent' || row.state === 'tenant-authored';
+  }
+
+  /** «(i)» on a row — opens `MenuCompareModal`, which reads across every field of the live
+   *  document, not just the two shown in the table. Nothing to open for an `absent` row —
+   *  it has no document yet. `original` is left unset: the fork's shared original lives
+   *  outside this tenant's scope and `MenuService.list()` cannot resolve it client-side;
+   *  the modal shows a dash for it, exactly the graceful fallback the brief asks for. */
+  protected async onCompare(row: MenuTreeRow): Promise<void> {
+    const doc = this.menuByName().get(row.name);
+    if (!doc) return;
+    const modal = await this.modalController.create({
+      component: MenuCompareModal,
+      componentProps: { doc, spec: this.specByName().get(row.name), original: undefined, i18n: this.i18n },
+    });
+    await modal.present();
+  }
+
+  protected async onHelp(): Promise<void> {
+    const modal = await this.modalController.create({
+      component: PickerHelpModal,
+      componentProps: { i18n: this.i18n },
+    });
+    await modal.present();
+  }
+
+  /** «Übernehmen» — the catalogue's value is right; write it into every non-pinned field
+   *  this row is drifting on. */
+  protected async onApply(row: MenuTreeRow): Promise<void> {
+    const fields = actionableFieldsOf(this.driftByName().get(row.name));
+    await this.runFieldAction(
+      row, fields,
+      (field, options) => this.featureSelectionService.applyCatalogueValue(this.tenantId(), row.docId, field, options),
+      this.i18n.rows_apply_toast(),
+    );
+  }
+
+  /** «Fixieren» — my value is right, for me; pin every non-pinned drifting field so the
+   *  catalogue stops writing it and the drift report stops reporting it. */
+  protected async onPin(row: MenuTreeRow): Promise<void> {
+    const fields = actionableFieldsOf(this.driftByName().get(row.name));
+    await this.runFieldAction(
+      row, fields,
+      (field, options) => this.featureSelectionService.pinField(this.tenantId(), row.docId, field, options),
+      this.i18n.rows_pin_toast(),
+    );
+  }
+
+  /** «Lösen» on a `pinned` row — release every structural field this document owns back
+   *  to the catalogue. Reads `ownedFields` straight off the live document: a `pinned` row
+   *  only tells us EVERY differing field is pinned, not which ones, so the document itself
+   *  is the source of truth here. */
+  protected async onUnpin(row: MenuTreeRow): Promise<void> {
+    const doc = this.menuByName().get(row.name);
+    const fields = doc ? pinnedFieldsOf(doc) : [];
+    await this.runFieldAction(
+      row, fields,
+      (field, options) => this.featureSelectionService.unpinField(this.tenantId(), row.docId, field, options),
+      this.i18n.rows_unpin_toast(),
+    );
+  }
+
+  /** «Ins Menü» on an `absent` row — attach the catalogue's row (D-BB-14: offered once,
+   *  never re-asserted if the admin declines it now). */
+  protected async onAddToMenu(row: MenuTreeRow): Promise<void> {
+    const tenantId = this.tenantId();
+    let preview: ApplyPlanPreview;
+    try {
+      preview = (await this.featureSelectionService.addMenuRows(tenantId, [row.name], { dryRun: true })).preview;
+    } catch (error) {
+      this.alertService.error(`FeaturePicker.onAddToMenu(dryRun): ${error}`);
+      return;
+    }
+    if (isEmptyPlan(preview)) {
+      await this.alertService.showToast(this.i18n.rows_nothing_planned());
+      return;
+    }
+    const message = preview.entries.map(entry => entry.consequence).join(' ');
+    if (!await this.alertService.confirm(message, true)) return;
+
+    try {
+      await this.featureSelectionService.addMenuRows(tenantId, [row.name]);
+      await this.alertService.showToast(this.i18n.rows_add_toast());
+    } catch (error) {
+      this.alertService.error(`FeaturePicker.onAddToMenu: ${error}`);
+    }
+  }
+
+  /** «Katalog anpassen» — my value is right for everyone; writes NOTHING (an admin cannot
+   *  edit the catalogue, which is code) and needs no confirmation, only the toast that the
+   *  patch note was copied. */
+  protected async onAdjustCatalogue(row: MenuTreeRow): Promise<void> {
+    const drift = this.driftByName().get(row.name);
+    const fields = actionableFieldsOf(drift);
+    if (!drift || fields.length === 0) return;
+    await copyToClipboard(patchNoteFor(row, drift, fields));
+    await this.alertService.showToast(this.i18n.rows_adjust_catalogue_toast());
+  }
+
+  /**
+   * The shared dry-run → confirm → run → toast shape behind «Übernehmen», «Fixieren», and
+   * «Lösen» — each acts on a SET of structural fields at once (one click resolves the whole
+   * row, not one field at a time), so every field gets its own dry run first and only the
+   * fields whose dry run actually plans something are confirmed and, on confirmation,
+   * written. A field whose dry run comes back empty (e.g. it turned out already pinned, or
+   * already equal, by the time this ran) is silently dropped rather than offered — exactly
+   * the "the UI must not ask" rule for a pinned field, applied defensively even where the
+   * caller believes the field is safe.
+   */
+  private async runFieldAction(
+    row: MenuTreeRow,
+    fields: StructuralField[],
+    call: (field: StructuralField, options: { dryRun?: boolean }) => Promise<ApplyFeatureResponse>,
+    toastMessage: string,
+  ): Promise<void> {
+    const consequences: string[] = [];
+    const okFields: StructuralField[] = [];
+    for (const field of fields) {
+      try {
+        const { preview } = await call(field, { dryRun: true });
+        if (isEmptyPlan(preview)) continue;
+        consequences.push(...preview.entries.map(entry => entry.consequence));
+        okFields.push(field);
+      } catch (error) {
+        this.alertService.error(`FeaturePicker.rowAction(dryRun ${row.name}.${field}): ${error}`);
+      }
+    }
+    if (okFields.length === 0) {
+      await this.alertService.showToast(this.i18n.rows_nothing_planned());
+      return;
+    }
+    if (!await this.alertService.confirm(consequences.join(' '), true)) return;
+
+    for (const field of okFields) {
+      try {
+        await call(field, {});
+      } catch (error) {
+        this.alertService.error(`FeaturePicker.rowAction(${row.name}.${field}): ${error}`);
+      }
+    }
+    await this.alertService.showToast(toastMessage);
   }
 
   /**

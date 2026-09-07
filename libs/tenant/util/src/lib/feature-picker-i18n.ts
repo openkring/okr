@@ -116,6 +116,75 @@ export const FEATURE_PICKER_I18N_KEYS = {
    * (defensive fallback — the normal case shows that entry's own `consequence` sentence).
    */
   enable_dependency_reason_fallback: PFX + 'picker.enable_dependency_reason_fallback',
+
+  // Task 11 — Segment 2 (Menüzeilen): the table, its two modals, and the toolbar help icon
+  // reachable from both segments.
+  rows_col_menu: PFX + 'picker.rows_col_menu',
+  rows_col_role: PFX + 'picker.rows_col_role',
+  rows_col_action: PFX + 'picker.rows_col_action',
+  rows_absent: PFX + 'picker.rows_absent',
+  /** Tooltip text of the «≠» badge on `url`/`action` drift shown next to `roleNeeded`. */
+  rows_other_drift: PFX + 'picker.rows_other_drift',
+  rows_pinned_note: PFX + 'picker.rows_pinned_note',
+  // The three exits off a drifted row — «der Katalog schlägt vor, der Mandant entscheidet».
+  rows_apply_button: PFX + 'picker.rows_apply_button',
+  rows_pin_button: PFX + 'picker.rows_pin_button',
+  rows_adjust_catalogue_button: PFX + 'picker.rows_adjust_catalogue_button',
+  rows_unpin_button: PFX + 'picker.rows_unpin_button',
+  rows_add_button: PFX + 'picker.rows_add_button',
+  rows_apply_toast: PFX + 'picker.rows_apply_toast',
+  rows_pin_toast: PFX + 'picker.rows_pin_toast',
+  rows_unpin_toast: PFX + 'picker.rows_unpin_toast',
+  rows_add_toast: PFX + 'picker.rows_add_toast',
+  /** «Katalog anpassen» writes nothing and needs no confirmation — this is the toast alone. */
+  rows_adjust_catalogue_toast: PFX + 'picker.rows_adjust_catalogue_toast',
+  /** Shown when a dry run's own preview reports nothing to write (e.g. every differing
+   *  field on the row turned out to be pinned by the time the write actually ran). */
+  rows_nothing_planned: PFX + 'picker.rows_nothing_planned',
+  // `MenuCompareModal` (the (i) icon on each table row).
+  compare_title: PFX + 'picker.compare_title',
+  compare_col_field: PFX + 'picker.compare_col_field',
+  compare_col_database: PFX + 'picker.compare_col_database',
+  compare_col_catalogue: PFX + 'picker.compare_col_catalogue',
+  compare_col_original: PFX + 'picker.compare_col_original',
+  compare_col_owner: PFX + 'picker.compare_col_owner',
+  compare_owner_catalogue: PFX + 'picker.compare_owner_catalogue',
+  compare_owner_pinned: PFX + 'picker.compare_owner_pinned',
+  compare_owner_tenant: PFX + 'picker.compare_owner_tenant',
+  compare_close: PFX + 'picker.compare_close',
+  compare_no_original: PFX + 'picker.compare_no_original',
+  compare_bool_true: PFX + 'picker.compare_bool_true',
+  compare_bool_false: PFX + 'picker.compare_bool_false',
+  /** Field captions on the compare table — the model's own field names (`url`, `action`, …)
+   *  are not German and not something a tenant admin should have to decode. */
+  compare_field_url: PFX + 'picker.compare_field_url',
+  compare_field_action: PFX + 'picker.compare_field_action',
+  compare_field_role_needed: PFX + 'picker.compare_field_role_needed',
+  compare_field_label: PFX + 'picker.compare_field_label',
+  compare_field_icon: PFX + 'picker.compare_field_icon',
+  compare_field_icon_alt: PFX + 'picker.compare_field_icon_alt',
+  compare_field_label_alt: PFX + 'picker.compare_field_label_alt',
+  compare_field_index: PFX + 'picker.compare_field_index',
+  compare_field_description: PFX + 'picker.compare_field_description',
+  compare_field_tags: PFX + 'picker.compare_field_tags',
+  compare_field_tenants: PFX + 'picker.compare_field_tenants',
+  compare_field_menu_items: PFX + 'picker.compare_field_menu_items',
+  compare_field_is_archived: PFX + 'picker.compare_field_is_archived',
+  compare_field_forked_from: PFX + 'picker.compare_field_forked_from',
+  compare_field_owned_fields: PFX + 'picker.compare_field_owned_fields',
+  // `PickerHelpModal` (the (i) icon in the toolbar, both segments).
+  help_title: PFX + 'picker.help_title',
+  help_button: PFX + 'picker.help_button',
+  help_close: PFX + 'picker.help_close',
+  /** What a Baustein is, versus a Menüzeile. */
+  help_blocks_vs_rows: PFX + 'picker.help_blocks_vs_rows',
+  /** The three actions plus the test that tells «Fixieren» and «Katalog anpassen» apart:
+   *  "würdest du diesen Wert auch den anderen Mandanten wünschen?" */
+  help_actions: PFX + 'picker.help_actions',
+  /** What «fixiert» means going forward (the catalogue stops writing the field). */
+  help_pinned: PFX + 'picker.help_pinned',
+  /** The promise: this screen deletes nothing and changes no existing row without consent. */
+  help_promise: PFX + 'picker.help_promise',
 } satisfies Record<string, string>;
 
 export type FeaturePickerI18n = { [K in keyof typeof FEATURE_PICKER_I18N_KEYS]: Signal<string> };
