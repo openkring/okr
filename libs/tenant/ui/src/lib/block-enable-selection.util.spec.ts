@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { applyRowToggle, ancestorsOf, descendantsOf, menuKeysFor } from './block-enable-selection.util';
+import {
+  applyRowToggle, ancestorsOf, descendantsOf, forcedDependencyKeys, menuKeysFor,
+} from './block-enable-selection.util';
 import type { MenuOutlineRow } from '@okr/tenant-util';
 
 const row = (key: string, depth: number): MenuOutlineRow => ({
@@ -91,5 +93,40 @@ describe('menuKeysFor — dependency rows are written, not just drawn (Important
 
   it('does not duplicate a key that is both selected and a dependency key', () => {
     expect(menuKeysFor(new Set(['a']), new Set(), ['a'])).toEqual(['a']);
+  });
+});
+
+describe('forcedDependencyKeys — a shared key stays the admin\'s decision (Important 1 follow-up)', () => {
+  // `calevent` and its dependency `task` both declare `filter-toggle`; only `task` declares
+  // `task-all`. Five such pairs exist in the live catalogue.
+  const ownRows = [row('calevent-all', 0), row('filter-toggle', 0)];
+  const dependencyRows = [row('task-all', 0), row('filter-toggle', 0)];
+
+  it('forces only the keys that exist SOLELY in the dependency outline', () => {
+    expect(forcedDependencyKeys(ownRows, dependencyRows)).toEqual(['task-all']);
+  });
+
+  it('an unticked shared row is NOT re-added through the dependency outline', () => {
+    // The admin unticked `filter-toggle` on the requested block; `task-all` is locked.
+    const selected = new Set(['calevent-all']);
+    const keys = menuKeysFor(selected, new Set(), forcedDependencyKeys(ownRows, dependencyRows));
+
+    expect(keys).not.toContain('filter-toggle');
+    expect(keys).toEqual(expect.arrayContaining(['calevent-all', 'task-all']));
+  });
+
+  it('a ticked shared row still reaches the payload, once', () => {
+    const selected = new Set(['calevent-all', 'filter-toggle']);
+    const keys = menuKeysFor(selected, new Set(), forcedDependencyKeys(ownRows, dependencyRows));
+
+    expect(keys.filter(k => k === 'filter-toggle')).toHaveLength(1);
+  });
+
+  it('returns nothing when there is no dependency block at all', () => {
+    expect(forcedDependencyKeys(ownRows, [])).toEqual([]);
+  });
+
+  it('deduplicates a key declared by two different dependency blocks', () => {
+    expect(forcedDependencyKeys([], [row('shared', 0), row('shared', 0)])).toEqual(['shared']);
   });
 });

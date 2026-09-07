@@ -14,7 +14,7 @@ import type {
 } from '@okr/tenant-util';
 import { entriesOfKind, menuOutlineOf } from '@okr/tenant-util';
 
-import { applyRowToggle, menuKeysFor } from './block-enable-selection.util';
+import { applyRowToggle, forcedDependencyKeys, menuKeysFor } from './block-enable-selection.util';
 
 /** `dismiss(…, 'confirm')` payload — the explicit whitelist of menu row keys to attach. */
 export interface BlockEnableResult {
@@ -53,7 +53,9 @@ const MENU_ROW_KINDS: PlanEntryKind[] = ['menu-created', 'menu-extended', 'menu-
  *    plans EVERY block it grants against that one whitelist. Omitting them (the pre-fix
  *    behaviour) enabled `person` alongside `calevent` with not one menu document created,
  *    while this dialog showed those rows pre-ticked — the dialog and the write disagreed.
- *    Spec §19 lists them «vorangehakt», i.e. written.
+ *    Spec §19 lists them «vorangehakt», i.e. written. A key a dependency SHARES with this
+ *    block's own outline is excluded from that forcing: the admin has a real checkbox for it
+ *    here, so unticking it must keep it out (`forcedDependencyKeys`).
  *
  * Unticking a parent row unticks its descendants with it (a child cannot be attached without
  * its parent — `MenuOutlineRow.depth` encodes the tree via depth-first order); ticking a row
@@ -134,9 +136,13 @@ export class BlockEnableModal {
   protected readonly alreadyPresentSet = computed(() => new Set(this.alreadyPresent()));
   protected readonly alsoBlockOutlines = computed(() =>
     this.alsoBlocks().map(block => ({ block, rows: menuOutlineOf(block) })));
-  /** Every row of every dependency block — locked in the UI, but always sent (see class doc). */
-  private readonly dependencyKeys = computed(() =>
-    this.alsoBlockOutlines().flatMap(also => also.rows.map(row => row.key)));
+  /**
+   * The dependency rows that are locked in the UI and always sent — every `alsoBlocks` row
+   * MINUS the keys this block's own outline already offers as a real checkbox. A key the admin
+   * can see and untick stays the admin's decision (see `forcedDependencyKeys`).
+   */
+  private readonly dependencyKeys = computed(() => forcedDependencyKeys(
+    this.outline(), this.alsoBlockOutlines().flatMap(also => also.rows)));
 
   /** `PlanEntry`s of a menu-row kind, indexed by the `MenuOutlineRow.key` they describe. */
   private readonly menuEntriesByKey = computed(() => {

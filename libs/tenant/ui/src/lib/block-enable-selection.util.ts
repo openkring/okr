@@ -67,6 +67,27 @@ export function applyRowToggle(
 }
 
 /**
+ * The dependency-block rows that must be FORCE-INCLUDED in the payload — every row of every
+ * `alsoBlocks` outline MINUS every key the requested block's own outline already offers.
+ *
+ * The subtraction is the whole point. Five catalogue pairs share a menu key between a block and
+ * its dependency (`calevent`/`document` and `calevent`/`task` both share `filter-toggle`,
+ * `aoc`/`document` shares `cms-menu`, `relationship`/`subject` shares `subjects-menu`,
+ * `resource`/`document` shares `editmode-toggle`). For such a key the admin sees a real,
+ * enabled checkbox on the requested block — unticking it is a decision, and a union that pulled
+ * the same key back in through the dependency outline would quietly overrule it and create the
+ * row inside the requested block's tree as well. Only a key that exists SOLELY in a
+ * dependency's outline is drawn locked, and only those are forced.
+ */
+export function forcedDependencyKeys(
+  ownRows: readonly MenuOutlineRow[],
+  dependencyRows: readonly MenuOutlineRow[],
+): string[] {
+  const own = new Set(ownRows.map(row => row.key));
+  return [...new Set(dependencyRows.map(row => row.key).filter(key => !own.has(key)))];
+}
+
+/**
  * The keys actually sent as `BlockEnableResult.menuKeys` — `selected` UNIONED with
  * `alreadyPresent` AND with `dependencyKeys`, so a key the dialog drew checked-and-disabled can
  * NEVER be missing from the payload, regardless of how `selected` got built.
@@ -78,13 +99,14 @@ export function applyRowToggle(
  * here" — a payload that could still drop it would make that drawing a lie the very next task's
  * confirmation text would then repeat.
  *
- * `dependencyKeys` are the rows of the blocks the save switches on ALONGSIDE the requested one
- * (`alsoBlocks`). They are drawn ticked and locked for exactly the same reason, and they must
- * be in the payload for the same reason: `enableBlock` plans EVERY block it grants — the
- * requested one and each dependency — against the one `menuKeys` whitelist it is given, so a
- * dependency key that is not in it produces no menu document at all. Leaving them out is what
- * made enabling `calevent` pull `person` into `enabledFeatures` with zero rows created, forcing
- * the admin to hand-add each one afterwards. Spec §19 lists them «vorangehakt», i.e. written.
+ * `dependencyKeys` are the rows the save switches on ALONGSIDE the requested block, as computed
+ * by `forcedDependencyKeys` — never a raw `alsoBlocks` outline. They are drawn ticked and locked
+ * for the same reason `alreadyPresent` is, and they must be in the payload for the same reason:
+ * `enableBlock` plans EVERY block it grants — the requested one and each dependency — against
+ * the one `menuKeys` whitelist it is given, so a dependency key that is not in it produces no
+ * menu document at all. Leaving them out is what made enabling `calevent` pull `person` into
+ * `enabledFeatures` with zero rows created, forcing the admin to hand-add each row afterwards.
+ * Spec §19 lists them «vorangehakt», i.e. written.
  */
 export function menuKeysFor(
   selected: ReadonlySet<string>,
