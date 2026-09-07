@@ -57,6 +57,13 @@ export const FEATURE_PICKER_I18N_KEYS = {
   withheld_toast: PFX + 'picker.withheld_toast',
   // Task 8 — the whitelist dialog (`BlockEnableModal` in `@okr/tenant-ui`): which of a
   // block's own menu rows an admin actually wants attached, ticked one by one.
+  /**
+   * Intro line above the checkbox list — the reason this screen exists. Must say, on the spot,
+   * that unticking a row does not delete or lose anything: the row is simply never created,
+   * and can be added later from the Menüzeilen table (segment 2). Without this the dialog
+   * silently repeats the old checkbox model's implied "uncheck = remove" fear.
+   */
+  enable_dialog_intro: PFX + 'picker.enable_dialog_intro',
   /** A row already reachable in this tenant's menu — shown ticked and disabled. */
   enable_already_present: PFX + 'picker.enable_already_present',
   /**

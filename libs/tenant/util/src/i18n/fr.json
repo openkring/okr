@@ -203,7 +203,8 @@
     "help_blocks_vs_rows": "Un module est un groupe de lignes de menu qui forment ensemble une fonctionnalité — par exemple « Calendrier » ou « Chat ». Une ligne de menu est une entrée individuelle du menu de ton club, avec une adresse, un rôle requis et d'autres champs. L'onglet « Modules » active ou désactive des fonctionnalités entières, l'onglet « Lignes de menu » te montre chaque ligne et là où sa valeur diffère du catalogue.",
     "help_actions": "Reprendre écrit la valeur du catalogue dans ton menu. Fixer garde ta valeur et dit au catalogue de ne plus y toucher désormais. Adapter le catalogue n'écrit rien — cela envoie une note à l'équipe de développement parce que ta valeur conviendrait aussi aux autres clubs. La question qui t'aide à choisir entre les deux : cette valeur devrait-elle aussi s'appliquer aux autres clubs ? Oui → Adapter le catalogue. Non → Fixer.",
     "help_pinned": "Un champ fixé t'appartient. Le catalogue ne propose plus de valeur pour ce champ et ne l'écrira plus non plus lors de futures mises à jour. Tu peux annuler la fixation à tout moment avec « Libérer ».",
-    "help_promise": "Cette page ne supprime rien et ne modifie aucune ligne existante sans ton accord."
+    "help_promise": "Cette page ne supprime rien et ne modifie aucune ligne existante sans ton accord.",
+    "enable_dialog_intro": "Ici, tu choisis quelles lignes de menu sont créées. Ce que tu ne coches pas n'est simplement pas créé — rien n'est perdu, et tu peux l'ajouter plus tard à tout moment depuis la liste des lignes de menu."
   },
   "profile": {
     "minimal": {

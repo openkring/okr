@@ -203,7 +203,8 @@
     "help_blocks_vs_rows": "Un bloque es un grupo de filas de menú que juntas forman una función — por ejemplo «Calendario» o «Chat». Una fila de menú es una entrada individual del menú de tu club, con una dirección, un rol necesario y otros campos. La pestaña «Bloques» activa o desactiva funciones completas, la pestaña «Filas de menú» te muestra cada fila y en qué se diferencia su valor del catálogo.",
     "help_actions": "Aplicar escribe el valor del catálogo en tu menú. Fijar conserva tu valor y le dice al catálogo que a partir de ahora lo deje en paz. Adaptar el catálogo no escribe nada — envía una nota al equipo de desarrollo porque tu valor también sería correcto para los demás clubes. La pregunta que te ayuda a elegir entre los dos: ¿este valor también debería aplicarse a los demás clubes? Sí → Adaptar el catálogo. No → Fijar.",
     "help_pinned": "Un campo fijado es tuyo. El catálogo ya no propone ningún valor para este campo ni lo escribirá en futuras actualizaciones. Puedes deshacer la fijación en cualquier momento con «Liberar».",
-    "help_promise": "Esta página no elimina nada y no cambia ninguna fila existente sin tu consentimiento."
+    "help_promise": "Esta página no elimina nada y no cambia ninguna fila existente sin tu consentimiento.",
+    "enable_dialog_intro": "Aquí eliges qué filas de menú se crean. Lo que no marques simplemente no se crea — no se pierde nada, y puedes añadirlo más tarde en cualquier momento desde la lista de filas de menú."
   },
   "profile": {
     "minimal": {

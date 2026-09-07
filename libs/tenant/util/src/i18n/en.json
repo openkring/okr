@@ -203,7 +203,8 @@
     "help_blocks_vs_rows": "A block is a group of menu rows that together make up one feature — for example \"Calendar\" or \"Chat\". A menu row is a single entry in your club's menu, with an address, a role it needs, and a few other fields. The \"Blocks\" tab switches whole features on or off, the \"Menu rows\" tab shows you every single row and where its value differs from the catalogue.",
     "help_actions": "Apply writes the catalogue value into your menu. Pin keeps your value and tells the catalogue to leave it alone from now on. Adjust catalogue writes nothing — it sends a note to the development team because your value would also be right for the other clubs. The question that helps you choose between the two: should this value also apply to the other clubs? Yes → Adjust catalogue. No → Pin.",
     "help_pinned": "A pinned field is yours. The catalogue no longer suggests a value for it and will not write it in future updates either. You can undo the pin at any time with \"Unpin\".",
-    "help_promise": "This page deletes nothing and never changes an existing row without your consent."
+    "help_promise": "This page deletes nothing and never changes an existing row without your consent.",
+    "enable_dialog_intro": "Here you choose which menu rows are created. Anything you leave unticked is simply not created — nothing is lost, and you can add it later at any time from the menu rows list."
   },
   "profile": {
     "minimal": {

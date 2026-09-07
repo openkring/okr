@@ -203,7 +203,8 @@
     "help_blocks_vs_rows": "Ein Baustein ist eine Gruppe von Menüzeilen, die zusammen eine Funktion ausmachen — zum Beispiel «Kalender» oder «Chat». Eine Menüzeile ist ein einzelner Eintrag in deinem Vereinsmenü mit einer Adresse, einer benötigten Rolle und weiteren Feldern. Der Reiter «Bausteine» schaltet ganze Funktionen ein oder aus, der Reiter «Menüzeilen» zeigt dir jede einzelne Zeile und wo ihr Wert vom Katalog abweicht.",
     "help_actions": "Übernehmen schreibt den Wert aus dem Katalog in dein Menü. Fixieren behält deinen Wert und sagt dem Katalog, dass er ihn ab jetzt in Ruhe lässt. Katalog anpassen schreibt nichts, sondern schickt eine Notiz an die Entwicklung, weil dein Wert auch für die anderen Vereine richtig wäre. Die Frage, die dir bei der Wahl hilft: soll dieser Wert auch für die anderen gelten? Ja → Katalog anpassen. Nein → Fixieren.",
     "help_pinned": "Ein fixiertes Feld gehört dir. Der Katalog schlägt für dieses Feld nichts mehr vor und schreibt es auch bei künftigen Anpassungen nicht mehr. Du kannst die Fixierung jederzeit mit «Lösen» wieder aufheben.",
-    "help_promise": "Diese Seite löscht nichts und ändert keine bestehende Zeile ohne dein Einverständnis."
+    "help_promise": "Diese Seite löscht nichts und ändert keine bestehende Zeile ohne dein Einverständnis.",
+    "enable_dialog_intro": "Hier wählst du, welche Menüzeilen angelegt werden. Was du nicht ankreuzt, wird einfach nicht angelegt — es geht nichts verloren, und du kannst es später jederzeit aus der Liste der Menüzeilen ergänzen."
   },
   "profile": {
     "minimal": {

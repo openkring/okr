@@ -71,6 +71,7 @@ const MENU_ROW_KINDS: PlanEntryKind[] = ['menu-created', 'menu-extended', 'menu-
     <okr-header [i18n]="{ title: (block().label | translate | async) ?? '' }" [isModal]="true" />
     <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="confirm()" />
     <ion-content>
+      <ion-note class="ion-text-wrap">{{ i18n().enable_dialog_intro() }}</ion-note>
       @if (block().remarks; as remarks) {
         <ion-note class="ion-text-wrap">{{ remarks | translate | async }}</ion-note>
       }

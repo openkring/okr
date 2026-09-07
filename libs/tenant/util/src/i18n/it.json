@@ -203,7 +203,8 @@
     "help_blocks_vs_rows": "Un blocco è un gruppo di righe di menu che insieme formano una funzionalità — per esempio «Calendario» o «Chat». Una riga di menu è una singola voce nel menu della tua associazione, con un indirizzo, un ruolo richiesto e altri campi. La scheda «Blocchi» attiva o disattiva funzionalità intere, la scheda «Righe di menu» ti mostra ogni singola riga e dove il suo valore si discosta dal catalogo.",
     "help_actions": "Applica scrive il valore del catalogo nel tuo menu. Fissa mantiene il tuo valore e dice al catalogo di non toccarlo più da ora in poi. Adatta il catalogo non scrive nulla — invia una nota al team di sviluppo perché il tuo valore sarebbe corretto anche per le altre associazioni. La domanda che ti aiuta a scegliere tra i due: questo valore dovrebbe valere anche per le altre associazioni? Sì → Adatta il catalogo. No → Fissa.",
     "help_pinned": "Un campo fissato è tuo. Il catalogo non propone più alcun valore per questo campo e non lo scriverà nemmeno nei prossimi aggiornamenti. Puoi annullare il fissaggio in qualsiasi momento con «Sblocca».",
-    "help_promise": "Questa pagina non elimina nulla e non modifica nessuna riga esistente senza il tuo consenso."
+    "help_promise": "Questa pagina non elimina nulla e non modifica nessuna riga esistente senza il tuo consenso.",
+    "enable_dialog_intro": "Qui scegli quali righe di menu vengono create. Ciò che non selezioni semplicemente non viene creato — non si perde nulla, e puoi aggiungerlo in seguito in qualsiasi momento dall'elenco delle righe di menu."
   },
   "profile": {
     "minimal": {
