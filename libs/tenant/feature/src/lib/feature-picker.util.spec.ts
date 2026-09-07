@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  blocksRemovedBySave, comparePlanToDrift, dependentsOf, escapeHtml,
-  menuReferencesByName, transitiveDependentsOf,
+  dependentsOf, escapeHtml, menuReferencesByName, transitiveDependentsOf,
 } from './feature-picker.util';
-import type { FeatureBlock, FeatureRollout, MenuSpec } from '@okr/tenant-util';
+import type { FeatureBlock, MenuSpec } from '@okr/tenant-util';
 
 // `FeatureBlock` (feature-catalogue.types.ts) has no `routes` field — that lives in
 // `@okr/tenant-routes`'s `BlockRoutes` now (split out to break a circular dependency, see
@@ -57,54 +56,6 @@ describe('transitiveDependentsOf', () => {
   });
 });
 
-describe('blocksRemovedBySave', () => {
-  const tenantId = 'tenantX';
-  const noRollouts: FeatureRollout[] = [];
-
-  it('case 1 — legacy first save: undefined -> a subset names exactly what is dropped', () => {
-    const catalogue = [block('calevent'), block('aoc')];
-    expect(blocksRemovedBySave({
-      catalogue, rollouts: noRollouts, currentEnabled: undefined, nextEnabled: ['calevent'], tenantId,
-    })).toEqual(['aoc']);
-  });
-
-  it('case 2 — an unmodified first save (ticking everything already on) is a safe no-op', () => {
-    const catalogue = [block('calevent'), block('aoc')];
-    expect(blocksRemovedBySave({
-      catalogue, rollouts: noRollouts, currentEnabled: undefined, nextEnabled: ['calevent', 'aoc'], tenantId,
-    })).toEqual([]);
-  });
-
-  it('case 3 — dropping one of two independent blocks names only that one', () => {
-    const catalogue = [block('a'), block('b')];
-    expect(blocksRemovedBySave({
-      catalogue, rollouts: noRollouts, currentEnabled: ['a', 'b'], nextEnabled: ['a'], tenantId,
-    })).toEqual(['b']);
-  });
-
-  it('case 4 — cascade: dropping a dependency also lists its dependants', () => {
-    const catalogue = [block('finance'), block('esign', ['finance'])];
-    expect(blocksRemovedBySave({
-      catalogue, rollouts: noRollouts, currentEnabled: ['finance', 'esign'], nextEnabled: [], tenantId,
-    }).sort()).toEqual(['esign', 'finance']);
-  });
-
-  it('case 5 — REGRESSION GUARD: currentEnabled: undefined must NOT behave like []', () => {
-    const catalogue = [block('calevent'), block('finance'), block('esign', ['finance'])];
-    const input = { catalogue, rollouts: noRollouts, nextEnabled: [] as string[], tenantId };
-
-    // undefined (D-BB-10: no rollout doc yet) means "everything not-internal was on" — saving
-    // an empty selection removes all three.
-    expect(blocksRemovedBySave({ ...input, currentEnabled: undefined }).sort())
-      .toEqual(['calevent', 'esign', 'finance']);
-
-    // A literal [] means "explicitly nothing was on" — saving an empty selection removes
-    // nothing. If `effectiveFeatures` (or this function) ever collapsed `undefined` into `[]`,
-    // these two assertions would become identical and this test would stop catching it.
-    expect(blocksRemovedBySave({ ...input, currentEnabled: [] })).toEqual([]);
-  });
-});
-
 describe('menuReferencesByName', () => {
   const child = (key: string): MenuSpec => ({
     key, name: key, url: '/' + key, action: 'navigate',
@@ -143,47 +94,5 @@ describe('escapeHtml', () => {
 
   it('leaves an ordinary menu name untouched', () => {
     expect(escapeHtml('calevent-export-raw')).toBe('calevent-export-raw');
-  });
-});
-
-describe('comparePlanToDrift', () => {
-  const row = (name: string, docId: string, live: string, catalogue: string) =>
-    ({ name, docId, field: 'roleNeeded', live, catalogue });
-  const change = (name: string, docId: string, from: string, to: string) =>
-    ({ blockId: 'chat', docId, name, field: 'roleNeeded', from, to });
-
-  it('reports nothing when the server plans exactly what the screen shows', () => {
-    const rows = [row('c-persons', 'c-persons', 'admin', 'registered')];
-    const result = comparePlanToDrift(rows, [change('c-persons', 'c-persons', 'admin', 'registered')]);
-    expect(result.unplanned).toEqual([]);
-    expect(result.conflicting).toEqual([]);
-  });
-
-  // The live 2026-09-06 `contextMenuChat` case: the deployed catalogue still agreed with the
-  // live document, so the server planned no write and the row could never clear.
-  it('reports a row the server plans no write for', () => {
-    const rows = [row('contextMenuChat', 'x3uewsf630nqw3vyassg', 'admin', 'registered')];
-    expect(comparePlanToDrift(rows, []).unplanned.map(r => r.name)).toEqual(['contextMenuChat']);
-  });
-
-  // The live `c-contentpage` case: both catalogues drift, in opposite directions.
-  it('reports a row the server plans a different value for', () => {
-    const rows = [row('c-contentpage', 'c-contentpage', 'contentAdmin', 'registered')];
-    const result = comparePlanToDrift(rows,
-      [change('c-contentpage', 'c-contentpage', 'registered', 'contentAdmin')]);
-    expect(result.conflicting).toEqual([{ row: rows[0], serverValue: 'contentAdmin' }]);
-    expect(result.unplanned).toEqual([]);
-  });
-
-  it('matches on the document id, not the name — eleven live docs are named differently', () => {
-    const rows = [row('icon-sync', 'ogwzpl15fpuhcxon5e7b', 'admin', 'registered')];
-    const result = comparePlanToDrift(rows,
-      [change('icon-sync', 'icon-sync', 'admin', 'registered')]);
-    expect(result.unplanned.map(r => r.docId)).toEqual(['ogwzpl15fpuhcxon5e7b']);
-  });
-
-  it('passes the server plan through verbatim', () => {
-    const planned = [change('a', 'a', 'x', 'y')];
-    expect(comparePlanToDrift([], planned).planned).toBe(planned);
   });
 });

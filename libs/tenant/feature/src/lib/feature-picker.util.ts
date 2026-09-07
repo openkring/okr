@@ -1,7 +1,4 @@
-import type {
-  FeatureBlock, FeatureRollout, MenuSpec, MenuStructureChange,
-} from '@okr/tenant-util';
-import { effectiveFeatures } from '@okr/tenant-util';
+import type { FeatureBlock, MenuSpec } from '@okr/tenant-util';
 
 /**
  * Which blocks directly depend on `id`? Used to warn before an unpick, naming exactly what
@@ -43,36 +40,6 @@ export function transitiveDependentsOf(
     }
   }
   return [...out];
-}
-
-/**
- * Which blocks would lose their menu entries if `nextEnabled` were saved right now? The whole
- * point of the removal-confirmation dialog (spec Task 11) — computed with a SINGLE `rollouts`
- * snapshot for both sides on purpose: `before`/`after` used to be derived from two independent
- * `toSignal` subscriptions to the same Firestore stream (the component's own vs.
- * `FeatureStore`'s), which can legitimately disagree for one render tick if one has a fresher
- * emission than the other — a `beta` block that's allow-listed for this tenant could then be
- * reported as "about to be removed" when it would not be. One snapshot in, both sides computed
- * from it, makes that class of mismatch impossible by construction.
- *
- * `currentEnabled` MUST be passed verbatim — `undefined` (D-BB-10: no rollout doc yet, every
- * non-internal block is on) is NOT the same as `[]` (explicitly nothing on). Coalescing it
- * before calling this function silently defeats the legacy-tenant safety net; `effectiveFeatures`
- * (imported, not reimplemented here) is the single place that interprets `undefined` correctly,
- * and this function relies on it doing so for BOTH sides in the same way `FeatureStore` does.
- */
-export function blocksRemovedBySave(input: {
-  catalogue: FeatureBlock[];
-  rollouts: FeatureRollout[];
-  /** app-config's field verbatim — `undefined` = legacy doc, D-BB-10. Never coalesce. */
-  currentEnabled: string[] | undefined;
-  nextEnabled: string[];
-  tenantId: string;
-}): string[] {
-  const { catalogue, rollouts, currentEnabled, nextEnabled, tenantId } = input;
-  const before = effectiveFeatures({ catalogue, rollouts, enabled: currentEnabled, tenantId });
-  const after = effectiveFeatures({ catalogue, rollouts, enabled: nextEnabled, tenantId });
-  return [...before].filter(id => !after.has(id));
 }
 
 /** Where a menu name is declared in the catalogue — the context a drift row needs. */
@@ -127,56 +94,4 @@ export function escapeHtml(value: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
-}
-
-/** The fields of a picker drift row this comparison needs. */
-export interface DriftRowLike {
-  name: string;
-  docId: string;
-  field: string;
-  live: string;
-  /** What THIS app's catalogue says the value should be. */
-  catalogue: string;
-}
-
-/**
- * What the server actually plans to overwrite, checked against what this screen shows.
- *
- * The catalogue is compiled into TWO artefacts - the app bundle (which produces the drift
- * list) and `dist/apps/functions` (which produces the writes). They agree only while the
- * functions have been deployed since the last `feature-blocks.ts` edit. When they have not:
- *
- *  - a row whose live value the DEPLOYED catalogue already agrees with is planned as nothing
- *    at all (`unplanned`) - the apply reports success and the row never clears;
- *  - a row the two catalogues disagree on is written to the DEPLOYED value (`conflicting`),
- *    so the row survives pointing the other way, which reads like the write went backwards.
- *
- * Both were silent before: the confirmation was built from the client's own rows and the
- * write was fired blind. That is why the dialog now asks for a dry run first.
- *
- * Observed live on 2026-09-06 (tenant scs): `contextMenuChat` unplanned, `c-contentpage` /
- * `cp-sort-sections` / `page-edit` conflicting, all four because the deployed functions
- * predated the catalogue edits the running app already carried.
- */
-export interface CataloguePlanComparison {
-  /** The server's plan, verbatim. */
-  planned: MenuStructureChange[];
-  /** Rows the server plans no write for. */
-  unplanned: DriftRowLike[];
-  /** Rows the server plans to write a DIFFERENT value to than this app expects. */
-  conflicting: { row: DriftRowLike; serverValue: string }[];
-}
-
-export function comparePlanToDrift(
-  rows: DriftRowLike[], overwritten: MenuStructureChange[],
-): CataloguePlanComparison {
-  const byTarget = new Map(overwritten.map(change => [change.docId + ' ' + change.field, change]));
-  const unplanned: DriftRowLike[] = [];
-  const conflicting: { row: DriftRowLike; serverValue: string }[] = [];
-  for (const row of rows) {
-    const change = byTarget.get(row.docId + ' ' + row.field);
-    if (!change) unplanned.push(row);
-    else if (change.to !== row.catalogue) conflicting.push({ row, serverValue: change.to });
-  }
-  return { planned: overwritten, unplanned, conflicting };
 }

@@ -25,12 +25,31 @@ export const FEATURE_PICKER_I18N_KEYS = {
   save: PFX + 'picker.save',
   cancel: PFX + 'picker.cancel',
   cancel_confirm: PFX + 'picker.cancel_confirm',
+  // The two IonSegment tabs — "Bausteine" (this task) and "Menüzeilen" (Task 11, a
+  // placeholder here until then).
+  segment_blocks: PFX + 'picker.segment_blocks',
+  segment_rows: PFX + 'picker.segment_rows',
+  segment_rows_placeholder: PFX + 'picker.segment_rows_placeholder',
+  // Per-block actions — one confirmed act each, no global save (spec Task 10).
+  enable_button: PFX + 'picker.enable_button',
+  disable_button: PFX + 'picker.disable_button',
+  /** «Ausschalten» confirmation — must say plainly: rows stay and are only hidden, data
+   *  is untouched. Nothing is deleted, unlike the old checkbox model's implied removal. */
+  disable_confirm: PFX + 'picker.disable_confirm',
+  enabled_toast: PFX + 'picker.enabled_toast',
+  disabled_toast: PFX + 'picker.disabled_toast',
   // Proposal 6 — named block selections. The per-profile `label`/`description` keys are NOT
   // listed here: like block and bundle labels they are resolved dynamically per catalogue
   // entry (see `FeaturePicker`), because the profile list is data, not a fixed key set.
   profiles_title: PFX + 'picker.profiles_title',
   profile_confirm: PFX + 'picker.profile_confirm',
   profile_applied: PFX + 'picker.profile_applied',
+  /**
+   * «Profil anwenden» no longer writes anything — it only highlights the blocks the profile
+   * would add. Shown once something is highlighted, so the admin knows the highlight is not
+   * itself an action: every highlighted block still needs its own «Einschalten».
+   */
+  profile_highlight_note: PFX + 'picker.profile_highlight_note',
   core_note: PFX + 'picker.core_note',
   /**
    * Per-block menu outline (name, route, action, role) — the answer to "which menu does this

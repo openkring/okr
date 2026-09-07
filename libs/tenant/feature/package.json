@@ -16,6 +16,7 @@
     "@okr/shared-util-angular": "*",
     "@okr/tenant-util": "*",
     "@okr/tenant-data-access": "*",
+    "@okr/tenant-ui": "*",
     "@okr/cms-menu-data-access": "*",
     "@okr/cms-menu-util": "*"
   }

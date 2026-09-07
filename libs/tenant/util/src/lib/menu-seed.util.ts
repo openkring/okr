@@ -19,9 +19,9 @@ export interface MenuOp {
   docId: string;
   op: 'create' | 'add-tenant' | 'update-structure';
   fields: Partial<MenuItemModel>;
-  /** The block whose spec first produced this op — audit attribution only (see
-   * `MenuStructureChange`). Undefined when `planMenuOps` is called directly, which has no
-   * block in scope; the callable's `planRowsOfBlock` fills it in. Never a write target. */
+  /** The block whose spec first produced this op — audit attribution only. Undefined when
+   * `planMenuOps` is called directly, which has no block in scope; the callable's
+   * `planRowsOfBlock` fills it in. Never a write target. */
   blockId?: string;
 }
 
@@ -390,28 +390,4 @@ export function planMenuOps(
 
   specs.forEach(visit);
   return ops;
-}
-
-/**
- * One catalogue-owned field a write is about to overwrite on an EXISTING menu document —
- * the audit record behind `featureEvents`' `op: 'menu-structure'` entries.
- *
- * The bulk producer (`menuStructureChanges`, which turned a whole replay's ops into this
- * shape) is GONE together with the replay path: no planner overwrites any more (D-BB-15).
- * The single remaining writer of such an event is `applyCatalogueValue` — one named
- * document, one named field, separately confirmed — and the picker still reads this shape.
- */
-export interface MenuStructureChange {
-  /** The block whose spec produced the op, `''` when the op carries no attribution. */
-  blockId: string;
-  /** The real Firestore doc id written to — for eleven legacy docs NOT the name. */
-  docId: string;
-  /** The `name` the app resolves this menu node by. */
-  name: string;
-  /** One of `STRUCTURAL_FIELDS`. */
-  field: string;
-  /** The value the live document carried before this run. `''` when the field was absent. */
-  from: string;
-  /** The catalogue value being written. */
-  to: string;
 }
