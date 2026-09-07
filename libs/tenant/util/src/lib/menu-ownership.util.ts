@@ -8,13 +8,19 @@ import { blockOwnersOfMenuKey } from './feature-routes.util';
  * ownership badge in the menu UI.
  *
  * Navigation is data, and most of that data is written by the feature catalogue rather than by
- * the admin editing it. Three of the four write paths can therefore damage something the admin
- * cannot see from the row in front of them:
+ * the admin editing it. Two write paths can therefore damage something the admin cannot see
+ * from the row in front of them:
  *
  *   1. `MenuService.update()` copy-on-writes a SHARED doc (`<name>_<tenantId>`) and detaches this
  *      tenant from the original. Silent. Afterwards catalogue structural fixes no longer arrive.
- *   2. Saving the feature picker rewrites `main_<tenantId>.menuItems` from the catalogue.
- *   3. «Struktur übernehmen» replays catalogue `url`/`action`/`roleNeeded` over hand-tuning.
+ *   2. `applyCatalogueValue` («Katalog-Wert übernehmen») overwrites ONE structural field
+ *      (`url`/`action`/`roleNeeded`) of one document with the catalogue's value, replacing
+ *      hand-tuning the admin may have relied on.
+ *
+ * The feature picker itself is no longer on that list: it only ever appends to
+ * `main_<tenantId>.menuItems` (`planRootMenuOp`) and extends existing documents, and the
+ * wholesale «Struktur übernehmen» replay is gone — a structural field is now taken over one at
+ * a time, confirmed, and can be pinned against future takeovers (`ownedFields`).
  *
  * Every one of those needs the same question answered — is this row the catalogue's or mine? —
  * so it is answered in exactly ONE place. A badge that disagreed with the dialog that follows it

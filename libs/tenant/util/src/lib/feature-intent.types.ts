@@ -15,8 +15,6 @@ export type FeatureIntent =
   | { verb: 'pinField'; docId: string; field: StructuralField }
   | { verb: 'unpinField'; docId: string; field: StructuralField };
 
-export type FeatureVerb = FeatureIntent['verb'];
-
 export interface ApplyFeatureRequest {
   tenantId: string;
   intent: FeatureIntent;

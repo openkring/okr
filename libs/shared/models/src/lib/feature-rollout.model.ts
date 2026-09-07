@@ -33,15 +33,15 @@ export interface FeatureEvent {
   op: 'enable' | 'disable' | 'menu-structure' | 'menu-add' | 'pin' | 'unpin' | 'catalogue-apply';
   at: string;
   by: string;
-  /** `menu-structure` only — the real Firestore doc id written to. */
+  /** Every document-scoped op — the real Firestore doc id written to. */
   docId?: string;
-  /** `menu-structure` only — the `name` the app resolves that menu node by. */
+  /** Every document-scoped op — the `name` the app resolves that menu node by. */
   name?: string;
-  /** `menu-structure` only — one of `STRUCTURAL_FIELDS`: url | action | roleNeeded. */
+  /** `menu-structure` / `pin` / `unpin` / `catalogue-apply` — one of `STRUCTURAL_FIELDS`. */
   field?: string;
-  /** `menu-structure` only — the value the live document carried before the run. */
+  /** `menu-structure` / `catalogue-apply` — the value the live document carried before. */
   from?: string;
-  /** `menu-structure` only — the catalogue value written. */
+  /** `menu-structure` / `catalogue-apply` — the value written. */
   to?: string;
 }
 
