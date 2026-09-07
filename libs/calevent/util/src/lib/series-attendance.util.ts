@@ -11,12 +11,31 @@ export interface SeriesAttendanceMember {
 }
 
 /**
- * An occurrence the current user may answer: an open event is self-service, a closed one needs an
- * invitation addressed to them. A locked column is shown but never becomes clickable.
+ * An occurrence the current user may answer. A locked column is shown but never becomes clickable.
+ *
+ * Since 2026-09 every event is open and the reach of its calendar decides
+ * (planning/specs/2026-09-06-open-events-invitation-model-spec.md): a member of the owning group
+ * answers every occurrence, somebody from outside only the ones they were invited to. That is the
+ * whole point of an invitation being per occurrence — a guest rowing three of thirty trainings gets
+ * three unlocked columns, not the series.
+ *
+ * A withdrawn (archived) invitation unlocks nothing.
+ *
+ * @param calevent    the occurrence
+ * @param invitations invitations of the series
+ * @param personKey   the current user
+ * @param canJoinOpen whether the user is within the reach of the calendar; derive it with
+ *                    {@link mayJoinOpenCalevent}. Defaults to true for callers with no group context.
  */
-export function canRespondToCalevent(calevent: CalEventModel, invitations: InvitationModel[], personKey: string): boolean {
-  if (calevent.isOpen) return true;
-  return invitations.some(inv => inv.caleventKey === calevent.okey && inv.inviteeKey === personKey);
+export function canRespondToCalevent(
+  calevent: CalEventModel,
+  invitations: InvitationModel[],
+  personKey: string,
+  canJoinOpen = true,
+): boolean {
+  if (canJoinOpen) return true;
+  return invitations.some(inv =>
+    inv.caleventKey === calevent.okey && inv.inviteeKey === personKey && !inv.isArchived);
 }
 
 /**
@@ -34,14 +53,19 @@ export function upcomingOccurrences(events: CalEventModel[]): CalEventModel[] {
  * Builds the tabular series view: one column per upcoming occurrence, one row per person who is
  * either invited to or listed as attendee of any of them, plus the current user.
  *
- * Rows carry BOTH sources on purpose — a series may mix open occurrences (answers live in
- * `calevent.attendees`) with closed ones (answers live in the invitation). The column decides
- * where a cell is read from and, on save, written back to.
+ * ONE source: `calevent.attendees`. The invitations are still passed in, but only to decide which
+ * columns the current user may answer — never where a cell is read from.
+ *
+ * Until 2026-09 rows carried both sources, and the invitation loop ran after the attendee loop, so
+ * in a mixed series the invitation state won purely by loop order: somebody who signed up in the
+ * calendar after being invited still showed as pending. Merging the two stores removed the class of
+ * bug, not just the instance.
  */
 export function buildSeriesAttendanceTable(
   events: CalEventModel[],
   invitations: InvitationModel[],
   me: SeriesAttendanceMember,
+  canJoinOpen = true,
 ): SchedulePollFormData {
   const occurrences = upcomingOccurrences(events);
 
@@ -50,10 +74,9 @@ export function buildSeriesAttendanceTable(
     startDate: event.startDate,
     startTime: event.fullDay ? '' : event.startTime,
     columnLabel: '',
-    locked: !canRespondToCalevent(event, invitations, me.key),
+    locked: !canRespondToCalevent(event, invitations, me.key, canJoinOpen),
   }));
 
-  const columnIds = new Set(columns.map(column => column.id));
   const rowsByKey = new Map<string, SchedulePollRow>();
   const upsert = (key: string, firstName: string, lastName: string): SchedulePollRow => {
     const row = rowsByKey.get(key) ?? { key, firstName, lastName, responses: {}, comment: '' };
@@ -66,11 +89,6 @@ export function buildSeriesAttendanceTable(
       const row = upsert(attendee.person.key, attendee.person.name1, attendee.person.name2);
       row.responses[event.okey] = toInvitationState(attendee.state);
     }
-  }
-  for (const invitation of invitations) {
-    if (invitation.isArchived || !columnIds.has(invitation.caleventKey)) continue;
-    const row = upsert(invitation.inviteeKey, invitation.inviteeFirstName, invitation.inviteeLastName);
-    row.responses[invitation.caleventKey] = invitation.state;
   }
   // the current user always gets a row, even before their first answer
   if (me.key) upsert(me.key, me.firstName, me.lastName);

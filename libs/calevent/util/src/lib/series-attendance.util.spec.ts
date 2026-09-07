@@ -29,19 +29,23 @@ function invitation(okey: string, caleventKey: string, inviteeKey: string, overr
 const me = { key: 'p1', firstName: 'Bruno', lastName: 'Kaiser' };
 
 describe('canRespondToCalevent', () => {
-  it('lets anybody answer an open event', () => {
-    expect(canRespondToCalevent(event('e1', FUTURE, { isOpen: true }), [], 'p1')).toBe(true);
+  it('lets anybody within the reach of the calendar answer', () => {
+    expect(canRespondToCalevent(event('e1', FUTURE), [], 'p1', true)).toBe(true);
   });
 
-  it('needs an invitation on a closed event', () => {
-    const closed = event('e1', FUTURE, { isOpen: false });
-    expect(canRespondToCalevent(closed, [], 'p1')).toBe(false);
-    expect(canRespondToCalevent(closed, [invitation('i1', 'e1', 'p1')], 'p1')).toBe(true);
+  it('needs an invitation outside that reach', () => {
+    const out = event('e1', FUTURE);
+    expect(canRespondToCalevent(out, [], 'p1', false)).toBe(false);
+    expect(canRespondToCalevent(out, [invitation('i1', 'e1', 'p1')], 'p1', false)).toBe(true);
   });
 
   it('ignores an invitation addressed to somebody else', () => {
-    const closed = event('e1', FUTURE, { isOpen: false });
-    expect(canRespondToCalevent(closed, [invitation('i1', 'e1', 'p2')], 'p1')).toBe(false);
+    expect(canRespondToCalevent(event('e1', FUTURE), [invitation('i1', 'e1', 'p2')], 'p1', false)).toBe(false);
+  });
+
+  it('ignores a withdrawn (archived) invitation', () => {
+    const invitations = [invitation('i1', 'e1', 'p1', { isArchived: true })];
+    expect(canRespondToCalevent(event('e1', FUTURE), invitations, 'p1', false)).toBe(false);
   });
 });
 
@@ -69,9 +73,8 @@ describe('buildSeriesAttendanceTable', () => {
     expect(table.columns[0].startTime).toBe('');
   });
 
-  it('reads answers of an open event from the attendees list', () => {
+  it('reads every answer from the attendees list', () => {
     const events = [event('e1', FUTURE, {
-      isOpen: true,
       attendees: [
         { person: avatar('p1', 'Bruno', 'Kaiser'), state: 'accepted' },
         { person: avatar('p2', 'Anna', 'Muster'), state: 'invited' },
@@ -80,51 +83,51 @@ describe('buildSeriesAttendanceTable', () => {
     const table = buildSeriesAttendanceTable(events, [], me);
     expect(table.rows.map(r => r.key)).toEqual(['p1', 'p2']);
     expect(table.rows[0].responses['e1']).toBe('accepted');
-    expect(table.rows[1].responses['e1']).toBe('pending');   // 'invited' has no invitation equivalent
+    expect(table.rows[1].responses['e1']).toBe('pending');   // 'invited' = still unanswered
     expect(table.columns[0].locked).toBe(false);
   });
 
-  it('reads answers of a closed event from the invitations', () => {
-    const events = [event('e1', FUTURE, { isOpen: false })];
-    const invitations = [
-      invitation('i1', 'e1', 'p1', { inviteeFirstName: 'Bruno', inviteeLastName: 'Kaiser', state: 'declined' }),
-      invitation('i2', 'e1', 'p2', { state: 'accepted' }),
-    ];
+  it('lets the attendee entry win over a stale invitation state', () => {
+    // The regression this replaces: the invitation loop ran AFTER the attendee loop and overwrote
+    // it, so a sign-up made after the invitation was sent still showed as pending.
+    const events = [event('e1', FUTURE, {
+      attendees: [{ person: avatar('p1', 'Bruno', 'Kaiser'), state: 'accepted' }],
+    })];
+    const invitations = [invitation('i1', 'e1', 'p1', { state: 'pending' })];
     const table = buildSeriesAttendanceTable(events, invitations, me);
-    expect(table.rows[0].responses['e1']).toBe('declined');
-    expect(table.rows[1].responses['e1']).toBe('accepted');
+    expect(table.rows[0].responses['e1']).toBe('accepted');
   });
 
-  it('locks a closed occurrence the current user was not invited to', () => {
-    const events = [event('e1', FUTURE, { isOpen: false }), event('e2', '20990102', { isOpen: false })];
-    const table = buildSeriesAttendanceTable(events, [invitation('i1', 'e1', 'p1')], me);
+  it('locks an occurrence outside the reach that the user was not invited to', () => {
+    const events = [event('e1', FUTURE), event('e2', '20990102')];
+    const table = buildSeriesAttendanceTable(events, [invitation('i1', 'e1', 'p1')], me, false);
     expect(table.columns.find(c => c.id === 'e1')?.locked).toBe(false);
     expect(table.columns.find(c => c.id === 'e2')?.locked).toBe(true);
   });
 
-  it('merges open and closed occurrences of the same series into one row per person', () => {
+  it('keeps one row per person across the whole series', () => {
+    const anna = avatar('p2', 'Anna', 'Muster');
     const events = [
-      event('e1', '20990101', { isOpen: true, attendees: [{ person: avatar('p2', 'Anna', 'Muster'), state: 'accepted' }] }),
-      event('e2', '20990108', { isOpen: false }),
+      event('e1', '20990101', { attendees: [{ person: anna, state: 'accepted' }] }),
+      event('e2', '20990108', { attendees: [{ person: anna, state: 'declined' }] }),
     ];
-    const table = buildSeriesAttendanceTable(events, [invitation('i1', 'e2', 'p2', { state: 'declined' })], me);
-    const anna = table.rows.find(r => r.key === 'p2');
-    expect(anna?.responses).toEqual({ e1: 'accepted', e2: 'declined' });
+    const table = buildSeriesAttendanceTable(events, [], me);
+    expect(table.rows.find(r => r.key === 'p2')?.responses).toEqual({ e1: 'accepted', e2: 'declined' });
   });
 
   it('puts the current user first and keeps a row even without any answer', () => {
     const events = [event('e1', FUTURE, {
-      isOpen: true, attendees: [{ person: avatar('p2', 'Anna', 'Auer'), state: 'accepted' }],
+      attendees: [{ person: avatar('p2', 'Anna', 'Auer'), state: 'accepted' }],
     })];
     const table = buildSeriesAttendanceTable(events, [], me);
     expect(table.rows.map(r => r.key)).toEqual(['p1', 'p2']);
     expect(table.rows[0].responses).toEqual({});
   });
 
-  it('ignores an archived invitation and one pointing outside the shown columns', () => {
-    const events = [event('e1', FUTURE, { isOpen: false })];
+  it('creates no row from an invitation — only attendees and the current user get one', () => {
+    const events = [event('e1', FUTURE)];
     const invitations = [
-      invitation('i1', 'e1', 'p2', { isArchived: true }),
+      invitation('i1', 'e1', 'p2'),
       invitation('i2', 'gone', 'p3'),
     ];
     const table = buildSeriesAttendanceTable(events, invitations, me);

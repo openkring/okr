@@ -5,7 +5,7 @@ import { CalEventModel, InvitationModel } from '@okr/shared-models';
 import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { dismissOverlay, error } from '@okr/shared-util-angular';
 import { SchedulePollForm } from '@okr/calevent-ui';
-import { buildSeriesAttendanceTable, SchedulePollFormData } from '@okr/calevent-util';
+import { buildSeriesAttendanceTable, mayJoinOpenCalevent, SchedulePollFormData } from '@okr/calevent-util';
 
 import { CalEventStore } from './calevent.store';
 
@@ -94,8 +94,17 @@ export class SeriesAttendanceModal {
     this.seriesInvitations.set(invitations);
     this.formData.set(buildSeriesAttendanceTable(events, invitations, {
       key: user?.personKey ?? '', firstName: user?.firstName ?? '', lastName: user?.lastName ?? '',
-    }));
+    }, this.mayJoinOpen(events)));
     this.seeded.set(true);
+  }
+
+  /**
+   * Ob der Benutzer in der Reichweite des Kalenders liegt, dem diese Serie gehoert — alle
+   * Vorkommen teilen ihn, also genuegt eines. Ist er es nicht, bleiben genau die Spalten
+   * bedienbar, zu denen er eingeladen wurde.
+   */
+  private mayJoinOpen(events: CalEventModel[]): boolean {
+    return mayJoinOpenCalevent(events[0]?.calendars, this.store.groupCalendarKeys(), this.store.calendarsOfCurrentUser());
   }
 
   private emptyTable(): SchedulePollFormData {
@@ -126,7 +135,7 @@ export class SeriesAttendanceModal {
     const user = this.store.currentUser();
     this.formData.set(buildSeriesAttendanceTable(this.seriesEvents(), this.seriesInvitations(), {
       key: user?.personKey ?? '', firstName: user?.firstName ?? '', lastName: user?.lastName ?? '',
-    }));
+    }, this.mayJoinOpen(this.seriesEvents())));
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
   }
