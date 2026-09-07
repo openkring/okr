@@ -435,6 +435,12 @@ const fakeDb = (seed: Record<string, Record<string, unknown>[]>): FakeFirestore 
   return fdb;
 };
 
+/** Terse `MenuSpec` factory — every field the type demands, only the interesting ones named. */
+const menuSpec = (over: Partial<MenuSpec> & { key: string }): MenuSpec => ({
+  name: over.key, url: `/${over.key}`, action: 'navigate', roleNeeded: 'member',
+  icon: 'help-circle', label: `@main.${over.key}`, ...over,
+});
+
 const TEST_CATALOGUE: FeatureBlock[] = [
   block('person', {
     menu: [{
@@ -455,6 +461,43 @@ const TEST_CATALOGUE: FeatureBlock[] = [
       },
     ],
   }),
+  // A block whose menu is genuinely NESTED — the real catalogue's shape, and the only way
+  // the whitelist's recursion into `children` is under test at all.
+  //   aoc-menu (sub)
+  //    ├─ user-menu (sub)
+  //    │   ├─ user-all
+  //    │   └─ user-new
+  //    └─ priv-audit
+  block('aoc', {
+    menu: [menuSpec({
+      key: 'aoc-menu', url: '', action: 'sub',
+      children: [
+        menuSpec({
+          key: 'user-menu', url: '', action: 'sub',
+          children: [menuSpec({ key: 'user-all' }), menuSpec({ key: 'user-new' })],
+        }),
+        menuSpec({ key: 'priv-audit' }),
+      ],
+    })],
+  }),
+  // CO-DECLARES `aoc-menu` (a shared parent, exactly like the live `aoc`/`user`/`security`
+  // trio) with a child of its own.
+  block('security', {
+    menu: [menuSpec({
+      key: 'aoc-menu', url: '', action: 'sub',
+      children: [menuSpec({ key: 'priv-register' })],
+    })],
+  }),
+  // TWO top-level specs pointing at the SAME parent key — the shared-parent fold. Planning
+  // both against one stale snapshot keeps only the last child.
+  block('shared', {
+    menu: [
+      menuSpec({ key: 'shared-menu', url: '', action: 'sub', children: [menuSpec({ key: 'shared-a' })] }),
+      menuSpec({ key: 'shared-menu', url: '', action: 'sub', children: [menuSpec({ key: 'shared-b' })] }),
+    ],
+  }),
+  // Rollout fodder: an `internal` block nothing may switch on for an ordinary tenant.
+  block('labs', { defaultAvailability: 'internal', menu: [menuSpec({ key: 'labs-all' })] }),
 ];
 
 const run = (fdb: FakeFirestore): Firestore => fdb as unknown as Firestore;
@@ -610,5 +653,188 @@ describe('planAddMenuRows', () => {
     const { writes, preview } = await planAddMenuRows(run(db), TEST_CATALOGUE, 'scs', 'uid1', []);
     expect(writes).toEqual([]);
     expect(preview).toEqual({ entries: [], alsoEnabled: [], withheld: [] });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// Review round 1 — the four Important findings.
+// ─────────────────────────────────────────────────────────────────────────────────────
+
+describe('planEnableBlock — a withheld block is reported, never written (Important 1)', () => {
+  it('plans nothing at all for a block the rollout withholds', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
+    const { writes, preview } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, [], 'scs', 'uid1', 'labs', ['labs-all']);
+
+    expect(writes.filter(w => w.ref.parent.id === 'menuItems')).toHaveLength(0);
+    expect(writes.filter(w => w.ref.parent.id === 'featureEvents')).toHaveLength(0);
+    // `enabledFeatures` is rewritten, but with the block still absent — nothing changed.
+    const config = writes.find(w => w.ref.parent.id === 'app-config');
+    expect(config?.data['enabledFeatures']).not.toContain('labs');
+
+    expect(preview.entries.some(e => e.kind === 'block-withheld' && e.subject === 'labs')).toBe(true);
+    expect(preview.entries.some(e => e.kind === 'block-enabled' && e.subject === 'labs')).toBe(false);
+    expect(preview.withheld.map(w => w.id)).toContain('labs');
+  });
+
+  it('does not write a withheld block that only appears in the dependency closure', async () => {
+    const catalogue = [
+      ...TEST_CATALOGUE,
+      block('report', { dependsOn: ['labs'], menu: [menuSpec({ key: 'report-all' })] }),
+    ];
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
+    const { writes, preview } = await planEnableBlock(
+      run(db), catalogue, [], 'scs', 'uid1', 'report', ['report-all', 'labs-all']);
+
+    const menuDocs = writes.filter(w => w.ref.parent.id === 'menuItems').map(w => w.ref.id);
+    expect(menuDocs).toContain('report-all');
+    expect(menuDocs).not.toContain('labs-all');
+    expect(writes.filter(w => w.ref.parent.id === 'featureEvents').map(w => w.data['block']))
+      .toEqual(['report']);
+    expect(preview.alsoEnabled.map(a => a.id)).not.toContain('labs');
+  });
+});
+
+describe('planEnableBlock — the whitelist recurses (Important 4a)', () => {
+  it('writes a ticked grandchild and never its unticked sibling, at any depth', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
+    const { writes } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, [], 'scs', 'uid1', 'aoc',
+      ['aoc-menu', 'user-menu', 'user-all']);
+
+    const menuDocs = writes.filter(w => w.ref.parent.id === 'menuItems').map(w => w.ref.id);
+    expect(menuDocs).toContain('aoc-menu');
+    expect(menuDocs).toContain('user-menu');
+    expect(menuDocs).toContain('user-all');
+    expect(menuDocs).not.toContain('user-new');  // sibling of a ticked grandchild
+    expect(menuDocs).not.toContain('priv-audit'); // unticked child of a ticked parent
+
+    // …and the unticked ones are not smuggled in through a parent's `menuItems` either.
+    const userMenu = writes.find(w => w.ref.id === 'user-menu');
+    expect(userMenu?.data['menuItems']).toEqual(['user-all']);
+    const aocMenu = writes.find(w => w.ref.id === 'aoc-menu');
+    expect(aocMenu?.data['menuItems']).toEqual(['user-menu']);
+  });
+
+  it('writes nothing below a parent that was ticked alone', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
+    const { writes } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, [], 'scs', 'uid1', 'aoc', ['aoc-menu']);
+
+    const menuDocs = writes.filter(w => w.ref.parent.id === 'menuItems').map(w => w.ref.id);
+    expect(menuDocs).toEqual(['aoc-menu', 'main_scs']);
+    expect(writes.find(w => w.ref.id === 'aoc-menu')?.data['menuItems']).toEqual([]);
+  });
+});
+
+describe('planEnableBlock — shared parent fold (Important 4b)', () => {
+  it('keeps BOTH children when two top-level specs append to the same EXISTING parent', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'shared-menu', name: 'shared-menu', action: 'sub', url: '',
+                    roleNeeded: 'member', tenants: ['scs'], menuItems: [], isArchived: false }],
+      'app-config': [{ id: 'scs', enabledFeatures: [] }],
+    });
+    const { writes } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, [], 'scs', 'uid1', 'shared',
+      ['shared-menu', 'shared-a', 'shared-b']);
+
+    // The LAST write to the parent is what Firestore keeps (merge:true, same doc) — planning
+    // both specs against the same stale snapshot would leave only ['shared-b'].
+    const parentWrites = writes.filter(w => w.ref.id === 'shared-menu');
+    expect(parentWrites.at(-1)?.data['menuItems']).toEqual(['shared-a', 'shared-b']);
+  });
+
+  it('keeps both children when the parent is CREATED in the same call', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
+    const { writes } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, [], 'scs', 'uid1', 'shared',
+      ['shared-menu', 'shared-a', 'shared-b']);
+
+    const parentWrites = writes.filter(w => w.ref.id === 'shared-menu');
+    expect(parentWrites.at(-1)?.data['menuItems']).toEqual(['shared-a', 'shared-b']);
+  });
+});
+
+describe('planAddMenuRows — nested rows (Important 2)', () => {
+  /** A tenant that already has the `aoc-menu` subtree in its main menu. */
+  const withAocTree = (over: Record<string, unknown> = {}) => fakeDb({
+    menuItems: [
+      { id: 'main_scs', name: 'main_scs', tenants: ['scs'], menuItems: ['aoc-menu'], isArchived: false },
+      { id: 'aoc-menu', name: 'aoc-menu', action: 'sub', url: '', roleNeeded: 'member',
+        tenants: ['scs'], menuItems: ['priv-audit'], isArchived: false, ...over },
+      { id: 'priv-audit', name: 'priv-audit', action: 'navigate', url: '/priv-audit',
+        roleNeeded: 'member', tenants: ['scs'], menuItems: [], isArchived: false },
+    ],
+    'app-config': [{ id: 'scs', enabledFeatures: ['aoc'] }],
+  });
+
+  it('attaches a nested row to its catalogue parent, not to the root', async () => {
+    const db = withAocTree();
+    const { writes, preview } = await planAddMenuRows(
+      run(db), TEST_CATALOGUE, 'scs', 'uid1', ['user-menu']);
+
+    expect(writes.map(w => w.ref.id)).toContain('user-menu');       // the row itself
+    expect(writes.find(w => w.ref.id === 'aoc-menu')?.data['menuItems'])
+      .toEqual(['priv-audit', 'user-menu']);                        // appended to the parent
+    expect(writes.some(w => w.ref.id === 'main_scs')).toBe(false);  // NOT dumped at the root
+    expect(writes.some(w => w.ref.parent.id === 'featureEvents' && w.data['name'] === 'user-menu'))
+      .toBe(true);
+    expect(preview.entries.some(e => e.kind === 'menu-created' && e.subject === 'user-menu'))
+      .toBe(true);
+  });
+
+  it('takes the requested descendants of a nested row along, and only those', async () => {
+    const db = withAocTree();
+    const { writes } = await planAddMenuRows(
+      run(db), TEST_CATALOGUE, 'scs', 'uid1', ['user-menu', 'user-new']);
+
+    const menuDocs = writes.filter(w => w.ref.parent.id === 'menuItems').map(w => w.ref.id);
+    expect(menuDocs).toContain('user-new');
+    expect(menuDocs).not.toContain('user-all');
+    expect(writes.find(w => w.ref.id === 'user-menu')?.data['menuItems']).toEqual(['user-new']);
+  });
+
+  it('falls back to the root when this tenant does not have the catalogue parent', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'main_scs', name: 'main_scs', tenants: ['scs'],
+                    menuItems: ['help'], isArchived: false }],
+      'app-config': [{ id: 'scs', enabledFeatures: ['aoc'] }],
+    });
+    const { writes } = await planAddMenuRows(
+      run(db), TEST_CATALOGUE, 'scs', 'uid1', ['user-menu']);
+
+    expect(writes.find(w => w.ref.id === 'main_scs')?.data['menuItems'])
+      .toEqual(['help', 'user-menu']);
+  });
+
+  it('writes NO event when the row changed nothing at all', async () => {
+    const db = withAocTree();
+    const { writes, preview } = await planAddMenuRows(
+      run(db), TEST_CATALOGUE, 'scs', 'uid1', ['priv-audit']);
+
+    expect(writes).toEqual([]);
+    expect(preview.entries).toEqual([]);
+  });
+});
+
+describe('planAddMenuRows — ANY owner of a shared key may unlock it (Important 3)', () => {
+  it('accepts a key co-declared by two blocks when only the second one is enabled', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'main_scs', name: 'main_scs', tenants: ['scs'],
+                    menuItems: [], isArchived: false }],
+      // `aoc` is OFF, `security` is ON — both declare `aoc-menu`.
+      'app-config': [{ id: 'scs', enabledFeatures: ['security'] }],
+    });
+    const { writes } = await planAddMenuRows(
+      run(db), TEST_CATALOGUE, 'scs', 'uid1', ['aoc-menu']);
+
+    expect(writes.map(w => w.ref.id)).toContain('aoc-menu');
+    expect(writes.find(w => w.ref.id === 'main_scs')?.data['menuItems']).toEqual(['aoc-menu']);
+  });
+
+  it('still refuses when NO declaring block is enabled', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
+    await expect(planAddMenuRows(run(db), TEST_CATALOGUE, 'scs', 'uid1', ['aoc-menu']))
+      .rejects.toThrow(/nicht aktiviert/);
   });
 });

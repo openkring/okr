@@ -10,7 +10,7 @@ import {
   type FeatureEvent, type MenuItemModel,
 } from '@okr/shared-models';
 import {
-  blockOfMenuKey, indexMenuDocsByName, menuSpecNames, planMenuOps, planRootMenuOp,
+  blockOwnersOfMenuKey, indexMenuDocsByName, menuSpecNames, planMenuOps, planRootMenuOp,
   resolveAvailability, resolveWithDeps,
   type ApplyPlanPreview, type FeatureBlock, type FeatureRollout,
   type MenuNameCollision, type MenuOp, type MenuSpec, type PlanEntry,
@@ -422,11 +422,18 @@ export async function planEnableBlock(
   const previous = effectiveEnabled(configSnap.data(), catalogue);
 
   const plan = planSelection(catalogue, rollouts, [...previous, blockId], tenantId);
+  // A block the ROLLOUT withholds (internal / disabled / deny-listed) is reported, never
+  // written: it is absent from `plan.enabled`, so it must produce no event, no menu
+  // document, no root attachment and no seed either. Deriving `blocks` from `requested`
+  // alone used to plan the whole subtree of a block the tenant is not allowed to have, and
+  // the preview then carried `block-enabled` AND `block-withheld` for the same id.
+  const grantedIds = new Set(plan.enabled);
   const alsoEnabled = resolveWithDeps(catalogue, [blockId])
-    .filter(id => id !== blockId && !previous.includes(id))
+    .filter(id => id !== blockId && !previous.includes(id) && grantedIds.has(id))
     .map(id => ({ id, because: blockId }));
 
-  const blocks = [requested, ...alsoEnabled.map(a => catalogue.find(b => b.id === a.id))]
+  const granted = grantedIds.has(blockId);
+  const blocks = [...(granted ? [requested] : []), ...alsoEnabled.map(a => catalogue.find(b => b.id === a.id))]
     .filter((b): b is FeatureBlock => !!b);
 
   const { existing, ambiguous } = await readMenuSnapshot(db, tenantId);
@@ -450,7 +457,7 @@ export async function planEnableBlock(
   const writes: PendingWrite[] = [
     { ref: configRef, data: { enabledFeatures: plan.enabled }, merge: true },
     ...eventWrites(db, tenantId, uid, at, [
-      { block: blockId, op: 'enable' as const },
+      ...(granted ? [{ block: blockId, op: 'enable' as const }] : []),
       ...alsoEnabled.map(a => ({ block: a.id, op: 'enable' as const })),
     ]),
     ...ops.map(op => menuWrite(db, op)),
@@ -461,9 +468,109 @@ export async function planEnableBlock(
   return {
     writes,
     preview: buildPreview({
-      blockId, alsoEnabled, withheld: plan.withheld, ops, before, rootOp, seedWrites, at,
+      blockId: granted ? blockId : undefined,
+      alsoEnabled, withheld: plan.withheld, ops, before, rootOp, seedWrites, at,
     }),
   };
+}
+
+/** One catalogue spec, located anywhere in a block's tree, with its declaring parent. */
+interface SpecLocation {
+  spec: MenuSpec;
+  /** The spec that declares it as a child — `undefined` for a top-level spec. */
+  parent?: MenuSpec;
+  /** Every ancestor key above it, nearest first. */
+  ancestors: string[];
+}
+
+function locateSpec(specs: MenuSpec[], key: string): SpecLocation | undefined {
+  const visit = (
+    list: MenuSpec[], parent: MenuSpec | undefined, ancestors: string[],
+  ): SpecLocation | undefined => {
+    for (const spec of list) {
+      if (spec.key === key) return { spec, parent, ancestors };
+      const hit = visit(spec.children ?? [], spec, [spec.key, ...ancestors]);
+      if (hit) return hit;
+    }
+    return undefined;
+  };
+  return visit(specs, undefined, []);
+}
+
+/**
+ * Plan the requested rows of one block BY KEY — the `addMenuRows` half of `planRowsOfBlock`.
+ *
+ * `planRowsOfBlock` starts from a block's TOP-LEVEL specs, which is right when a block is
+ * switched on: the admin sees the whole subtree and ticks what they want of it. It is wrong
+ * for `addMenuRows`, where the admin adds ONE row that is almost always nested — pruning
+ * from the top drops the entire subtree because the row's PARENT was not ticked, and the
+ * verb then wrote an audit event and nothing else.
+ *
+ * So each requested key is located wherever it sits in the tree and planned as its own root:
+ * the row itself plus any of its OWN descendants that were requested too (the whitelist rule
+ * is unchanged — an unticked child is not written). A key whose ancestor was requested in the
+ * same call is skipped: the ancestor's own subtree already carries it.
+ *
+ * ATTACHMENT follows the catalogue: a nested row is appended to its catalogue PARENT
+ * document when this tenant actually has that parent, so the row appears where it belongs
+ * rather than as a stray entry at the bottom of the main menu. Only when the parent is
+ * missing for this tenant (or there is no catalogue parent at all) does it fall back to the
+ * root — and then only for `navigate`/`sub` rows, exactly like `planRowsOfBlock`.
+ *
+ * `planned` reports the requested keys that actually produced something, so the caller can
+ * skip the `menu-add` event for a key that changed nothing.
+ */
+function planRowsByKey(
+  block: FeatureBlock,
+  tenantId: string,
+  keys: string[],
+  wanted: Set<string>,
+  existing: Map<string, MenuItemModel>,
+): { ops: MenuOp[]; attached: string[]; planned: Set<string> } {
+  const ops: MenuOp[] = [];
+  const attached: string[] = [];
+  const planned = new Set<string>();
+
+  const prune = (spec: MenuSpec): MenuSpec => ({
+    ...spec,
+    children: (spec.children ?? []).filter(c => wanted.has(c.key)).map(prune),
+  });
+
+  for (const key of keys) {
+    const found = locateSpec(block.menu, key);
+    if (!found) continue;
+    // Covered by an ancestor requested in the same call — planning it again would only
+    // re-derive the same ops against an already-folded snapshot.
+    if (found.ancestors.some(a => wanted.has(a))) continue;
+
+    for (const op of planMenuOps([prune(found.spec)], tenantId, existing)) {
+      existing.set(op.key, {
+        ...(existing.get(op.key) ?? ({ okey: op.docId } as MenuItemModel)),
+        ...op.fields,
+      });
+      ops.push({ ...op, blockId: op.blockId ?? block.id });
+      if (wanted.has(op.key)) planned.add(op.key);
+    }
+
+    const parentDoc = found.parent ? existing.get(found.parent.name) : undefined;
+    const parentIsThisTenant = !!parentDoc && (parentDoc.tenants ?? []).includes(tenantId);
+    if (parentDoc && parentIsThisTenant) {
+      const children = parentDoc.menuItems ?? [];
+      if (!children.includes(key)) {
+        const op: MenuOp = {
+          key: parentDoc.name, docId: parentDoc.okey, op: 'update-structure',
+          fields: { menuItems: [...children, key] }, blockId: block.id,
+        };
+        existing.set(op.key, { ...parentDoc, ...op.fields });
+        ops.push(op);
+        planned.add(key);
+      }
+    } else if (found.spec.action === 'navigate' || found.spec.action === 'sub') {
+      attached.push(key);
+    }
+  }
+
+  return { ops, attached, planned };
 }
 
 /**
@@ -484,18 +591,23 @@ export async function planAddMenuRows(
   const configSnap = await db.collection(AppConfigCollection).doc(tenantId).get();
   const enabled = new Set(effectiveEnabled(configSnap.data(), catalogue));
 
-  // key → owning block, refusing anything this tenant may not have.
+  // key → owning block, refusing anything this tenant may not have. A shared parent is
+  // co-declared by SEVERAL blocks (`aoc-menu` by `aoc`, `user` and `security`; `cms-menu`
+  // by eight), so the gate is "ANY owner enabled" — the same rule the runtime menu filter
+  // applies. Asking only the first declaring block would refuse `aoc-menu` forever to a
+  // tenant that has `user` on and `aoc` off.
   const byBlock = new Map<string, { block: FeatureBlock; keys: string[] }>();
   for (const key of keys) {
-    const owner = blockOfMenuKey(catalogue, key);
-    if (!owner) {
+    const owners = blockOwnersOfMenuKey(catalogue, key);
+    if (owners.length === 0) {
       throw new HttpsError('invalid-argument',
         `${CF_NAME}: menu key '${key}' belongs to no catalogue block.`);
     }
-    if (!enabled.has(owner)) {
+    const owner = owners.find(id => enabled.has(id));
+    if (!owner) {
       throw new HttpsError('failed-precondition',
-        `${CF_NAME}: der Bereich '${owner}' ist für '${tenantId}' nicht aktiviert — ` +
-        `der Menüeintrag '${key}' kann darum nicht hinzugefügt werden.`);
+        `${CF_NAME}: der Bereich '${owners.join("' / '")}' ist für '${tenantId}' nicht ` +
+        `aktiviert — der Menüeintrag '${key}' kann darum nicht hinzugefügt werden.`);
     }
     const block = catalogue.find(b => b.id === owner) as FeatureBlock;
     const entry = byBlock.get(owner) ?? { block, keys: [] };
@@ -510,17 +622,26 @@ export async function planAddMenuRows(
   const wanted = new Set(keys);
   const ops: MenuOp[] = [];
   const attached: string[] = [];
-  for (const { block } of byBlock.values()) {
-    const result = planRowsOfBlock(block, tenantId, wanted, existing);
+  const planned = new Set<string>();
+  for (const entry of byBlock.values()) {
+    const result = planRowsByKey(entry.block, tenantId, entry.keys, wanted, existing);
     ops.push(...result.ops);
     attached.push(...result.attached);
+    for (const key of result.planned) planned.add(key);
   }
   const rootOp = planRootMenuOp(tenantId, existing, attached);
+  // A row the root op appends is a change too — but a key already present there produces no
+  // op at all, and must not leave an audit entry claiming it was added.
+  const rootBefore = before.get(`main_${tenantId}`)?.menuItems ?? [];
+  for (const key of (rootOp?.fields.menuItems as string[] | undefined) ?? []) {
+    if (!rootBefore.includes(key) && wanted.has(key)) planned.add(key);
+  }
 
   const at = getTodayStr(DateFormat.StoreDateTime);
   const writes: PendingWrite[] = [
     ...eventWrites(db, tenantId, uid, at, [...byBlock.entries()].flatMap(([block, entry]) =>
-      entry.keys.map(name => ({ block, op: 'menu-add' as const, name })))),
+      entry.keys.filter(key => planned.has(key))
+        .map(name => ({ block, op: 'menu-add' as const, name })))),
     ...ops.map(op => menuWrite(db, op)),
     ...(rootOp ? [menuWrite(db, rootOp)] : []),
   ];
