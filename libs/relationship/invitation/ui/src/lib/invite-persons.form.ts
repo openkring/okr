@@ -39,15 +39,17 @@ import { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invi
         <ion-card>
           <ion-card-content class="ion-no-padding">
             <ion-grid>
-              <ion-row>
-                <ion-col size="12">
-                  <okr-avatars name="invitees" [avatars]="invitees()" (avatarsChange)="setInvitees($event)"
-                    [currentUser]="currentUser()"
-                    [readOnly]="isReadOnly()" [editable]="true" [showButton]="true"
-                    [label]="i18n().invite_persons_label()" [addLabel]="i18n().invite_persons_add()"
-                    selectIcon="person" (selectClicked)="selectPerson()" />
-                </ion-col>
-              </ion-row>
+              @if (currentUser(); as currentUser) {
+                <ion-row>
+                  <ion-col size="12">
+                    <okr-avatars name="invitees" [avatars]="invitees()" (avatarsChange)="setInvitees($event)"
+                      [currentUser]="currentUser"
+                      [readOnly]="isReadOnly()" [editable]="true" [showButton]="true"
+                      [label]="i18n().invite_persons_label()" [addLabel]="i18n().invite_persons_add()"
+                      selectIcon="person" (selectClicked)="selectPerson()" />
+                  </ion-col>
+                </ion-row>
+              }
               <ion-row>
                 <ion-col size="12">
                   <okr-notes-input [i18n]="messageI18n()" [value]="message()"
