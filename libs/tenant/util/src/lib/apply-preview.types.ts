@@ -1,51 +1,58 @@
-import type { MenuStructureChange } from './menu-seed.util';
+import type { StructuralField } from './menu-ownership.util';
 
 /**
- * What an `applyFeatureSelection` run WOULD do, computed by the same planners that do it.
+ * What one `applyFeatureSelection` verb WOULD do, as sentences rather than operations.
  *
- * Returned on every call and, with `dryRun: true`, returned INSTEAD of writing — so the picker
- * can name the consequences of a save before committing to it. The alternative, predicting them
- * client-side, is what the root-menu warning used to do, and it is wrong in a way that is hard
- * to see: `MenuService.list()` is tenant-scoped, so the client cannot see a shared menu document
- * this tenant does not yet inherit and would report a `create` where the server plans an
- * `add-tenant`. The server reads the collection unscoped and is the only place the real answer
- * exists.
+ * The previous shape was six string arrays of internal op names (`created`, `extended`,
+ * `overwritten`, …) and every consumer had to turn them back into prose. A confirmation
+ * dialog is the only consumer there is, so the plan is built in the form it is read in:
+ * one entry per thing that happens, each carrying its own `consequence` and, where there
+ * is one, the `reason` it happens at all (dependency closure, rollout withholding).
  *
- * Deliberately flat strings rather than the internal `MenuOp[]`: this crosses the callable
- * boundary into a confirmation dialog, and every field here is something a tenant admin can be
- * shown verbatim.
+ * Still computed by the same planners that do the writing, never predicted a second time
+ * (D-BB-7c), and still returned by a real run as well as by `dryRun`.
  */
-export interface ApplyPlanPreview {
-  /** Menu documents that do not exist yet and would be created, by `name`. */
-  created: string[];
-  /** Existing shared menu documents this tenant would be added to (`tenants[]`), by `name`. */
-  extended: string[];
-  /**
-   * Catalogue-owned fields that would be overwritten on documents that already exist, with the
-   * value each replaces. EMPTY unless the run asked for `replayStructure` — an ordinary save
-   * cannot overwrite anything, which is the point of the split (D-BB-7b).
-   */
-  overwritten: MenuStructureChange[];
-  /** Root-menu rows that would disappear from `main_<tenantId>`. */
-  rootRemoved: string[];
-  /** Root-menu rows that would be appended at the tail (`planRootMenuOp` never reorders). */
-  rootAdded: string[];
-  /** Seed documents that would be created because they are absent, as `collection/okey`. */
-  seeded: string[];
-  /** Block ids turning ON relative to what `enabledFeatures` holds right now. */
-  enabling: string[];
-  /** Block ids turning OFF relative to what `enabledFeatures` holds right now. */
-  disabling: string[];
+export type PlanEntryKind =
+  | 'block-enabled'
+  | 'block-disabled'
+  | 'block-withheld'
+  | 'menu-created'
+  | 'menu-extended'
+  | 'menu-reactivated'
+  | 'menu-attached'
+  | 'field-overwritten'
+  | 'field-pinned'
+  | 'field-unpinned'
+  | 'seed-created';
+
+export interface PlanEntry {
+  kind: PlanEntryKind;
+  /** What the entry is about — a block id, a menu `name`, or `collection/okey`. */
+  subject: string;
+  /** Why it happens at all. Set for dependency closure and for withheld blocks. */
+  reason?: string;
+  /** One sentence-fragment naming the effect, already tenant-readable. */
+  consequence: string;
+  /** `field-*` entries only. */
+  field?: StructuralField;
+  from?: string;
+  to?: string;
 }
 
-/** True when a plan would change nothing at all — nothing worth a confirmation dialog. */
+export interface ApplyPlanPreview {
+  entries: PlanEntry[];
+  /** Blocks pulled in by `dependsOn`, each with the block that required it. */
+  alsoEnabled: { id: string; because: string }[];
+  /** Blocks the rollout withheld — reported, never thrown. */
+  withheld: { id: string; reason: string }[];
+}
+
 export function isEmptyPlan(preview: ApplyPlanPreview): boolean {
-  return preview.created.length === 0
-    && preview.extended.length === 0
-    && preview.overwritten.length === 0
-    && preview.rootRemoved.length === 0
-    && preview.rootAdded.length === 0
-    && preview.seeded.length === 0
-    && preview.enabling.length === 0
-    && preview.disabling.length === 0;
+  return preview.entries.length === 0
+    && preview.alsoEnabled.length === 0
+    && preview.withheld.length === 0;
+}
+
+export function entriesOfKind(preview: ApplyPlanPreview, kind: PlanEntryKind): PlanEntry[] {
+  return preview.entries.filter(e => e.kind === kind);
 }

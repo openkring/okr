@@ -1,5 +1,6 @@
 export * from './lib/feature-catalogue.types';
 export * from './lib/apply-preview.types';
+export * from './lib/feature-intent.types';
 export * from './lib/feature-backfill.util';
 export * from './lib/feature-blocks';
 export * from './lib/feature-deps.util';
