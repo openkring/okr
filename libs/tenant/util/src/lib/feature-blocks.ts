@@ -161,9 +161,12 @@ const calevent: FeatureBlock = {
     },
     // The top-level entry for `/yearlyevents`, which had no `navigate` doc at all — the route
     // and its `c-yearlyevents` context wrapper both existed, so the screen was reachable only by
-    // typing the URL. `roleNeeded` mirrors the route's own `isPrivilegedGuard`; the list is the
-    // same `calevents` collection grouped by year. Wiring it into a tenant's main menu stays a
-    // per-tenant decision (the `main_<tenant>` doc), exactly as for `calevent-all`.
+    // typing the URL. `roleNeeded: privileged` is the catalogue default for the ROW only: since
+    // R-8 (2026-09-07) the route carries no role guard (a p13 fork says `registered` and was
+    // dead-ending on `isPrivilegedGuard`), so a tenant may lower it freely — the screen gates
+    // its own actions. The list is the same `calevents` collection grouped by year. Wiring it
+    // into a tenant's main menu stays a per-tenant decision (the `main_<tenant>` doc), exactly
+    // as for `calevent-all`.
     {
       key: 'yearlyevent-all', name: 'yearlyevent-all', url: '/yearlyevents/all/c-yearlyevents',
       action: 'navigate', roleNeeded: 'privileged', icon: 'calendar-number', label: '@item.yearlyevent-all',

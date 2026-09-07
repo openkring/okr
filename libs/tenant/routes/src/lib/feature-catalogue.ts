@@ -60,7 +60,15 @@ const calevent: BlockRoutes = {
     {
       path: 'yearlyevents',
       canActivate: [isAuthenticatedGuard],
-      children: [{ path: ':listId/:contextMenuName', canActivate: [isPrivilegedGuard], loadComponent: () => import('@okr/calevent-feature').then(m => m.YearlyEvents) }],
+      // NO ROLE GUARD, by ruling R-8 (2026-09-07), same shape as `calevent` above and R-7 on
+      // `document`. The child carried `isPrivilegedGuard` since it was catalogued, but the menu
+      // row's role is a per-tenant decision — p13 forked `yearlyevent-all` to `registered`, so
+      // registered members saw the row and the click did nothing (`isPrivilegedGuard` returns
+      // plain `false`: no redirect, no message). `YearlyEvents` gates edit/delete and the context
+      // menu itself (`readOnly`, `addActionSheetButtons`), and the collection is the same
+      // `calevents` every member may already read via `CalEventList`. Each menu doc's
+      // `roleNeeded` decides who sees the row; the parent's `isAuthenticatedGuard` stays.
+      children: [{ path: ':listId/:contextMenuName', loadComponent: () => import('@okr/calevent-feature').then(m => m.YearlyEvents) }],
     },
   ],
 };

@@ -79,6 +79,20 @@ const DEGRADED_R7: RuledRoute[] = [
   { menuDoc: 'document-all', blockId: 'document', path: 'document', child: ':listId/:contextMenuName' },
 ];
 
+/**
+ * R-8 (2026-09-07), the same shape as R-7 for `yearlyevents/:listId/:contextMenuName`. The
+ * route carried `isPrivilegedGuard` from the day it was catalogued, but the menu row's role is
+ * a per-tenant decision: p13 forked `yearlyevent-all` to `roleNeeded: registered`, so registered
+ * members saw the row, clicked it, and NOTHING happened — the guard returns plain `false`, no
+ * redirect, no message. `YearlyEvents` already degrades itself for that audience (`readOnly`,
+ * the action sheet, the context-menu button are all role-gated in the component), and the
+ * sibling `calevent` route has been guard-free for exactly that reason. Pinned like R-7: what
+ * must not come back is a role guard re-creating the silent dead end.
+ */
+const DEGRADED_R8: RuledRoute[] = [
+  { menuDoc: 'yearlyevent-all', blockId: 'calevent', path: 'yearlyevents', child: ':listId/:contextMenuName' },
+];
+
 const ALL_RULED = [...RULED_R5, ...REDUCED_R6];
 
 /** Roles is a flag map (`{ admin: true }`), not an array — see `checkAuthorization`. */
@@ -189,6 +203,7 @@ describe('the eleven routes ruled to match their menu documents', () => {
     expect(RULED_R5).toHaveLength(5);
     expect(REDUCED_R6).toHaveLength(6);
     expect(DEGRADED_R7).toHaveLength(1);
+    expect(DEGRADED_R8).toHaveLength(1);
   });
 
   /**
@@ -236,6 +251,16 @@ describe('the eleven routes ruled to match their menu documents', () => {
 
   it('the R-7 document route still sits behind isAuthenticatedGuard', () => {
     const parent = fragmentOf('document', 'document');
+    expect(parent.canActivate).toContain(isAuthenticatedGuard);
+  });
+
+  it('a merely-registered member reaches the R-8 yearlyevents route', () => {
+    expect(blockedFor(REGISTERED, DEGRADED_R8),
+      'a role guard is back on yearlyevents/:listId — registered members dead-end again (R-8)').toEqual([]);
+  });
+
+  it('the R-8 yearlyevents route still sits behind isAuthenticatedGuard', () => {
+    const parent = fragmentOf('calevent', 'yearlyevents');
     expect(parent.canActivate).toContain(isAuthenticatedGuard);
   });
 });

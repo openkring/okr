@@ -207,7 +207,10 @@ const KNOWN_WEAKER_THAN_MENU: readonly string[] = [
   'document-all',
   // privileged
   // (`person-contacts` was here until 2026-09-02 — see the note below.)
-  'org-all', 'task-all',
+  // `yearlyevent-all`: R-8 (2026-09-07) took the role guard off `yearlyevents/:listId/
+  // :contextMenuName` — p13's fork says `registered` and dead-ended on `isPrivilegedGuard`.
+  // The screen gates its own actions; `calevents` is readable by every member anyway.
+  'org-all', 'task-all', 'yearlyevent-all',
   // memberAdmin
   'group-all', 'personal-rel-all', 'workrel-all',
   // resourceAdmin
