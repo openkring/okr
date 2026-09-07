@@ -249,32 +249,27 @@ describe('isPastCalevent', () => {
 });
 
 describe('canAttendCalevent', () => {
-  const event = (over: Partial<CalEventModel>): CalEventModel =>
-    ({ ...new CalEventModel('t1'), startDate: '20990101', calendars: ['scs'], isOpen: false, ...over });
+  const event = (over: Partial<CalEventModel> = {}): CalEventModel =>
+    ({ ...new CalEventModel('t1'), startDate: '20990101', calendars: ['scs'], ...over });
 
   it('is never possible on a past event', () => {
-    expect(canAttendCalevent(event({ startDate: '20200101', isOpen: true }), true)).toBe(false);
+    expect(canAttendCalevent(event({ startDate: '20200101' }), true)).toBe(false);
   });
 
-  it('is possible for everybody on an open future event', () => {
-    expect(canAttendCalevent(event({ isOpen: true }), false)).toBe(true);
+  it('is possible for everybody within the reach of the calendar', () => {
+    expect(canAttendCalevent(event(), false, true)).toBe(true);
   });
 
-  it('is possible on a closed event only with an invitation', () => {
-    expect(canAttendCalevent(event({}), true)).toBe(true);
-    expect(canAttendCalevent(event({}), false)).toBe(false);
+  it('is possible for an invited person outside that reach', () => {
+    expect(canAttendCalevent(event(), true, false)).toBe(true);
   });
 
-  it('is possible on a personal event without an invitation (the organiser has none)', () => {
-    expect(canAttendCalevent(event({ calendars: [] }), false)).toBe(true);
+  it('is refused for somebody neither in reach nor invited', () => {
+    expect(canAttendCalevent(event(), false, false)).toBe(false);
   });
 
-  it('refuses an open event the caller is not let into', () => {
-    expect(canAttendCalevent(event({ isOpen: true }), false, false)).toBe(false);
-  });
-
-  it('ignores the open gate on a closed event — the invitation still decides', () => {
-    expect(canAttendCalevent(event({}), true, false)).toBe(true);
+  it('is possible on a personal event (the organiser is neither in reach nor invited)', () => {
+    expect(canAttendCalevent(event({ calendars: [] }), false, false)).toBe(true);
   });
 });
 

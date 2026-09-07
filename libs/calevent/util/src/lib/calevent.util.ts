@@ -40,20 +40,28 @@ export function isPersonalCalevent(calevent: CalEventModel): boolean {
 
 /**
  * Whether the current user may subscribe/unsubscribe (An-/Abmeldung) to this event. Mirrors the
- * conditions under which CalEventList's ActionSheet offers the attendance buttons:
- * - never for a past event,
- * - an open event is self-service — but only for those `canJoinOpen` lets in,
- * - a closed event only for an invitee, or for the organiser of a personal event (who has no invitation).
+ * conditions under which CalEventList's ActionSheet offers the attendance buttons.
+ *
+ * Since 2026-09 every event is open; what used to be `isOpen` is now the REACH of the calendar it
+ * belongs to (planning/specs/2026-09-06-open-events-invitation-model-spec.md). Three ways in, and
+ * the order is how to read them, not a precedence:
+ * - `canJoinOpen`   — within the reach: a member of the owning group, or an event outside a group
+ *                     calendar altogether;
+ * - `hasInvitation` — invited to exactly this occurrence, which is what an invitation is FOR: it
+ *                     reaches someone the calendar does not;
+ * - a personal event — its organiser is neither of the two.
+ *
+ * Never for a past event.
+ *
  * @param calevent
  * @param hasInvitation true if an invitation for the current user exists on this event
- * @param canJoinOpen   false only for an open event on a group calendar the user does not belong
- *                      to; derive it with {@link mayJoinOpenCalevent}. Defaults to true so every
- *                      caller that has nothing to do with group calendars keeps the old behaviour.
+ * @param canJoinOpen   false only on a group calendar the user does not belong to; derive it with
+ *                      {@link mayJoinOpenCalevent}. Defaults to true so every caller that has
+ *                      nothing to do with group calendars keeps the old behaviour.
  */
 export function canAttendCalevent(calevent: CalEventModel, hasInvitation: boolean, canJoinOpen = true): boolean {
   if (isPastCalevent(calevent)) return false;
-  if (calevent.isOpen) return canJoinOpen;
-  return hasInvitation || isPersonalCalevent(calevent);
+  return canJoinOpen || hasInvitation || isPersonalCalevent(calevent);
 }
 
 /**
