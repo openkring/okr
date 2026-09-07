@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ActionSheetController } from '@ionic/angular';
 
@@ -6,7 +6,7 @@ import { CalEventModel, RoleName } from '@okr/shared-models';
 import { LabelPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getYearFromDate, hasRole } from '@okr/shared-util-core';
+import { extractSecondPartOfOptionalTupel, getYearFromDate, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -15,6 +15,9 @@ import { CalEventStore } from './calevent.store';
 
 /** Sentinel understood by yearMatches() as "do not filter by year". */
 const ALL_YEARS = 99;
+
+/** The four sortable columns of the list — same interaction as `CalEventList`. */
+type YearlyEventSortField = 'year' | 'responsible' | 'location' | 'description';
 
 @Component({
     selector: 'okr-yearly-events',
@@ -26,6 +29,9 @@ const ALL_YEARS = 99;
     IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
 ],
     providers: [CalEventStore],
+    styles: [`
+      .clickable { cursor: pointer; user-select: none; }
+    `],
     template: `
     <ion-header>
     <ion-toolbar color="secondary">
@@ -60,17 +66,17 @@ const ALL_YEARS = 99;
     <ion-toolbar color="light">
       <ion-grid>
         <ion-row>
-          <ion-col size="6" size-md="4" size-lg="3">
-            <ion-label><strong>{{ store.i18n.year() }}</strong></ion-label>
+          <ion-col size="6" size-md="4" size-lg="3" class="clickable" (click)="setSort('year')">
+            <ion-label><strong>{{ store.i18n.year() }}{{ sortIcon('year') }}</strong></ion-label>
           </ion-col>
-          <ion-col size-md="4" size-lg="3" class="ion-hide-md-down">
-            <ion-label><strong>{{ store.i18n.responsible() }}</strong></ion-label>
+          <ion-col size-md="4" size-lg="3" class="ion-hide-md-down clickable" (click)="setSort('responsible')">
+            <ion-label><strong>{{ store.i18n.responsible() }}{{ sortIcon('responsible') }}</strong></ion-label>
           </ion-col>
-          <ion-col size="6" size-md="4" size-lg="3">
-            <ion-label><strong>{{ store.i18n.location() }}</strong></ion-label>
+          <ion-col size="6" size-md="4" size-lg="3" class="clickable" (click)="setSort('location')">
+            <ion-label><strong>{{ store.i18n.location() }}{{ sortIcon('location') }}</strong></ion-label>
           </ion-col>
-          <ion-col size-lg="3" class="ion-hide-lg-down">
-            <ion-label><strong>{{ store.i18n.description() }}</strong></ion-label>
+          <ion-col size-lg="3" class="ion-hide-lg-down clickable" (click)="setSort('description')">
+            <ion-label><strong>{{ store.i18n.description() }}{{ sortIcon('description') }}</strong></ion-label>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -124,7 +130,25 @@ export class YearlyEvents {
 
   // data
   protected calEventsCount = computed(() => this.store.calEventsCount());
-  protected filteredCalEvents = computed(() => this.store.filteredCalEvents() ?? []);
+  // sort state — local to the component, like in CalEventList; 'year' reproduces the store's order.
+  private readonly sortField = signal<YearlyEventSortField>('year');
+  private readonly sortAsc = signal(true);
+
+  /**
+   * `location` sorts by what the column shows (the `label` pipe part of `locationKey`),
+   * `responsible` by the last name of the first responsible person.
+   */
+  protected filteredCalEvents = computed(() => {
+    const list = this.store.filteredCalEvents() ?? [];
+    const field = this.sortField();
+    const dir = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'responsible' ? this.responsibleName(a).localeCompare(this.responsibleName(b)) :
+      field === 'location'    ? this.locationLabel(a).localeCompare(this.locationLabel(b)) :
+      field === 'description' ? (a.description ?? '').localeCompare(b.description ?? '') :
+                                (a.startDate + a.startTime).localeCompare(b.startDate + b.startTime)
+    ));
+  });
   protected filteredCalEventsCount = computed(() => this.filteredCalEvents().length);
   protected isLoading = computed(() => this.store.isLoading());
   protected tags = computed(() => this.store.getTags());
@@ -222,6 +246,29 @@ export class YearlyEvents {
 
   protected onTypeSelected(calEventType: string): void {
     this.store.setSelectedCategory(calEventType);
+  }
+
+  /******************************* sorting *************************************** */
+  /** The sort marker appended to the active column header. */
+  protected sortIcon(field: YearlyEventSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /** Click a header: sort by it ascending, click the active one again to reverse. */
+  protected setSort(field: YearlyEventSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
+  /** The location text shown in the column — identical to the `label` pipe on `locationKey`. */
+  private locationLabel(event: CalEventModel): string {
+    return extractSecondPartOfOptionalTupel(event.locationKey ?? '', '@');
+  }
+
+  /** The last name of the first responsible person, i.e. what the column leads with. */
+  private responsibleName(event: CalEventModel): string {
+    return event.responsiblePersons?.[0]?.name2 ?? '';
   }
 
   /******************************* helpers *************************************** */
