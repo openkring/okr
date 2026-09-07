@@ -3,5 +3,10 @@
     "dashboardClosureGzipBytes": 1486406,
     "chunks": 219,
     "updated": "2026-09-06"
+  },
+  "p13-app": {
+    "dashboardClosureGzipBytes": 1486959,
+    "chunks": 220,
+    "updated": "2026-09-07"
   }
 }
