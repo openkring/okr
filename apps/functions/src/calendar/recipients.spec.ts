@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  acceptedAttendeeKeys,
+  reachableAttendeeKeys,
   caleventKeyFromFolders,
   caleventKeyFromParent,
   hasTag,
@@ -9,40 +9,34 @@ import {
   CalEventNotifyDoc,
   collectRecipients,
   declinedAttendeeKeys,
-  invitedPersonKeys,
-  InvitationNotifyDoc,
   isFutureOrToday,
   responsibleKeys,
 } from './recipients';
 
 const openEvent = (attendees: [string, string][], responsible: string[] = []): CalEventNotifyDoc => ({
   okey: 'e1',
-  isOpen: true,
   attendees: attendees.map(([key, state]) => ({ person: { key }, state })),
   responsiblePersons: responsible.map((key) => ({ key })),
 });
 
-const closedEvent = (okey = 'e1', responsible: string[] = []): CalEventNotifyDoc => ({
-  okey,
-  isOpen: false,
-  responsiblePersons: responsible.map((key) => ({ key })),
-});
-
-const invitation = (inviteeKey: string, state: string, caleventKey = 'e1'): InvitationNotifyDoc =>
-  ({ inviteeKey, state, caleventKey, isArchived: false });
-
-describe('acceptedAttendeeKeys', () => {
-  it('keeps only accepted attendees', () => {
+describe('reachableAttendeeKeys', () => {
+  it('reaches everybody who has not declined — accepted AND still-unanswered', () => {
     const event = openEvent([['a', 'accepted'], ['b', 'invited'], ['c', 'declined']]);
-    expect(acceptedAttendeeKeys(event)).toEqual(['a']);
+    expect(reachableAttendeeKeys(event).sort()).toEqual(['a', 'b']);
   });
 
-  it('drops attendees without a person key', () => {
-    expect(acceptedAttendeeKeys({ okey: 'e1', attendees: [{ state: 'accepted' }] })).toEqual([]);
+  it('keeps an invited guest who has not answered yet', () => {
+    // the regression this guards: with 'accepted only', the guest who never answered would miss
+    // the cancellation — exactly the person most likely to turn up unaware
+    expect(reachableAttendeeKeys(openEvent([['guest', 'invited']]))).toEqual(['guest']);
   });
 
-  it('returns empty for an event that has no attendees field at all', () => {
-    expect(acceptedAttendeeKeys({ okey: 'e1' })).toEqual([]);
+  it('skips an attendee without a person key', () => {
+    expect(reachableAttendeeKeys({ okey: 'e1', attendees: [{ state: 'accepted' }] })).toEqual([]);
+  });
+
+  it('copes with a legacy event that has no attendees', () => {
+    expect(reachableAttendeeKeys({ okey: 'e1' })).toEqual([]);
   });
 });
 
@@ -53,65 +47,36 @@ describe('declinedAttendeeKeys', () => {
   });
 });
 
-describe('invitedPersonKeys', () => {
-  it('keeps accepted, maybe and pending', () => {
-    const invitations = [invitation('a', 'accepted'), invitation('b', 'maybe'), invitation('c', 'pending')];
-    expect(invitedPersonKeys(invitations).sort()).toEqual(['a', 'b', 'c']);
-  });
-
-  it('drops declined and archived invitations', () => {
-    const invitations = [
-      invitation('a', 'declined'),
-      { ...invitation('b', 'accepted'), isArchived: true },
-    ];
-    expect(invitedPersonKeys(invitations)).toEqual([]);
-  });
-});
-
 describe('responsibleKeys', () => {
   it('reads the organisers', () => {
     expect(responsibleKeys(openEvent([], ['org1', 'org2']))).toEqual(['org1', 'org2']);
   });
 });
 
-describe('collectRecipients — open event', () => {
-  it('notifies the accepted attendees and the organisers', () => {
+describe('collectRecipients', () => {
+  it('notifies everybody on the event who has not declined, plus the organisers', () => {
     const event = openEvent([['a', 'accepted'], ['b', 'invited']], ['org1']);
-    expect(collectRecipients([event], []).sort()).toEqual(['a', 'org1']);
+    expect(collectRecipients([event]).sort()).toEqual(['a', 'b', 'org1']);
   });
 
   it('never notifies someone who declined, even when they are an organiser', () => {
     const event = openEvent([['org1', 'declined'], ['a', 'accepted']], ['org1']);
-    expect(collectRecipients([event], [])).toEqual(['a']);
+    expect(collectRecipients([event])).toEqual(['a']);
   });
 
   it('excludes the sender', () => {
     const event = openEvent([['a', 'accepted'], ['b', 'accepted']]);
-    expect(collectRecipients([event], [], ['a'])).toEqual(['b']);
+    expect(collectRecipients([event], ['a'])).toEqual(['b']);
   });
 
-  it('ignores invitations on an open event', () => {
-    const event = openEvent([['a', 'accepted']]);
-    expect(collectRecipients([event], [invitation('ghost', 'accepted')])).toEqual(['a']);
+  it('does not notify a member who never answered — they are not on the event', () => {
+    const event = openEvent([['a', 'accepted']], ['org1']);
+    expect(collectRecipients([event]).sort()).toEqual(['a', 'org1']);
   });
 
   it('skips an archived event entirely', () => {
     const event = { ...openEvent([['a', 'accepted']]), isArchived: true };
-    expect(collectRecipients([event], [])).toEqual([]);
-  });
-});
-
-describe('collectRecipients — closed event', () => {
-  it('notifies the live invitations and the organisers', () => {
-    const event = closedEvent('e1', ['org1']);
-    const invitations = [invitation('a', 'accepted'), invitation('b', 'declined')];
-    expect(collectRecipients([event], invitations).sort()).toEqual(['a', 'org1']);
-  });
-
-  it('matches invitations to their own event', () => {
-    const event = closedEvent('e1');
-    const invitations = [invitation('a', 'accepted', 'e1'), invitation('other', 'accepted', 'e2')];
-    expect(collectRecipients([event], invitations)).toEqual(['a']);
+    expect(collectRecipients([event])).toEqual([]);
   });
 });
 
@@ -119,13 +84,13 @@ describe('collectRecipients — series scope', () => {
   it('unions the occurrences without notifying anyone twice', () => {
     const first = { ...openEvent([['a', 'accepted'], ['b', 'accepted']]), okey: 'e1' };
     const second = { ...openEvent([['b', 'accepted'], ['c', 'accepted']]), okey: 'e2' };
-    expect(collectRecipients([first, second], []).sort()).toEqual(['a', 'b', 'c']);
+    expect(collectRecipients([first, second]).sort()).toEqual(['a', 'b', 'c']);
   });
 
   it('a decline on one occurrence removes the person from the whole broadcast', () => {
     const first = { ...openEvent([['a', 'accepted'], ['b', 'accepted']]), okey: 'e1' };
     const second = { ...openEvent([['b', 'declined']]), okey: 'e2' };
-    expect(collectRecipients([first, second], [])).toEqual(['a']);
+    expect(collectRecipients([first, second])).toEqual(['a']);
   });
 });
 

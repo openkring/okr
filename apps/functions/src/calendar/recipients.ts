@@ -5,7 +5,7 @@
 // `planning/specs/2026-08-25-participant-messaging-spec.md`.
 //
 // ⚠️ THE CLIENT NEVER SUPPLIES A RECIPIENT LIST. It sends the event key and nothing else; the
-// set is derived here from `attendees[]` / `invitations`. A hand-typed recipient list is
+// set is derived here from the event's `attendees[]`. A hand-typed recipient list is
 // exactly the abuse path the workflow engine already refuses ("eine Regel kann keinen frei
 // getippten Empfänger nennen"), and a broadcast action must not reopen it.
 //
@@ -16,9 +16,6 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
 /** Which occurrences a broadcast covers. */
 export type NotifyScope = 'event' | 'series';
-
-/** Invitation states that still count as a recipient — everything except an explicit 'declined'. */
-const REACHABLE_INVITATION_STATES = ['accepted', 'maybe', 'pending'];
 
 export interface AttendeeDoc {
   person?: { key?: string };
@@ -32,7 +29,6 @@ export interface CalEventNotifyDoc {
   startTime?: string;
   durationMinutes?: number;
   seriesId?: string;
-  isOpen?: boolean;
   isArchived?: boolean;
   state?: string;
   attendees?: AttendeeDoc[];
@@ -40,17 +36,21 @@ export interface CalEventNotifyDoc {
   tenants?: string[];
 }
 
-export interface InvitationNotifyDoc {
-  inviteeKey?: string;
-  caleventKey?: string;
-  state?: string;
-  isArchived?: boolean;
-}
-
-/** Person keys of everyone who said yes to an OPEN event. */
-export function acceptedAttendeeKeys(event: CalEventNotifyDoc): string[] {
+/**
+ * Person keys of everyone on the event who has NOT declined — the people a change concerns.
+ *
+ * Deliberately wider than 'accepted': an invited guest who has not answered yet must still hear
+ * that the event was cancelled or moved. They are the person most likely to turn up unaware, and
+ * before the two attendance stores were merged they DID get told — the closed-event branch read
+ * every live invitation regardless of state. Narrowing this to 'accepted' would have been a silent
+ * regression dressed up as a simplification.
+ *
+ * A member who never answered has no attendee entry at all and is not notified: they never
+ * signalled participation, and they see the change in the calendar.
+ */
+export function reachableAttendeeKeys(event: CalEventNotifyDoc): string[] {
   return (event.attendees ?? [])
-    .filter((attendee) => attendee.state === 'accepted')
+    .filter((attendee) => attendee.state !== 'declined')
     .map((attendee) => attendee.person?.key ?? '')
     .filter((key) => key.length > 0);
 }
@@ -60,15 +60,6 @@ export function declinedAttendeeKeys(event: CalEventNotifyDoc): string[] {
   return (event.attendees ?? [])
     .filter((attendee) => attendee.state === 'declined')
     .map((attendee) => attendee.person?.key ?? '')
-    .filter((key) => key.length > 0);
-}
-
-/** Person keys of everyone still on the invitation list of a CLOSED event. */
-export function invitedPersonKeys(invitations: InvitationNotifyDoc[]): string[] {
-  return invitations
-    .filter((invitation) => !invitation.isArchived)
-    .filter((invitation) => REACHABLE_INVITATION_STATES.includes(invitation.state ?? ''))
-    .map((invitation) => invitation.inviteeKey ?? '')
     .filter((key) => key.length > 0);
 }
 
@@ -83,19 +74,20 @@ export function responsibleKeys(event: CalEventNotifyDoc): string[] {
  * The recipient set of one or more occurrences.
  *
  * Rules, in order:
- *  1. per event: accepted attendees (open) or live invitations (closed), plus the organisers;
+ *  1. per event: everybody on the event who has not declined, plus the organisers;
  *  2. minus everyone who declined — **including an organiser who declined**. Declining is an
  *     explicit "not me, not this date"; honouring the organiser role over it would make the
  *     opt-out un-exercisable for exactly the people most likely to lead a different session;
  *  3. minus `exclude` — the sender, or the author of the comment/document that triggered this.
  *
- * @param events      the occurrences in scope (one, or the future ones of a series)
- * @param invitations invitations of those events; ignored for open events
- * @param exclude     person keys to drop (sender/author)
+ * Since 2026-09 `attendees[]` is the only attendance store, so one event document carries the
+ * whole answer — invitations take no part in resolving recipients any more.
+ *
+ * @param events  the occurrences in scope (one, or the future ones of a series)
+ * @param exclude person keys to drop (sender/author)
  */
 export function collectRecipients(
   events: CalEventNotifyDoc[],
-  invitations: InvitationNotifyDoc[],
   exclude: string[] = [],
 ): string[] {
   const recipients = new Set<string>();
@@ -103,10 +95,7 @@ export function collectRecipients(
 
   for (const event of events) {
     if (event.isArchived) continue;
-    const fromEvent = event.isOpen
-      ? acceptedAttendeeKeys(event)
-      : invitedPersonKeys(invitations.filter((invitation) => invitation.caleventKey === event.okey));
-    for (const key of [...fromEvent, ...responsibleKeys(event)]) recipients.add(key);
+    for (const key of [...reachableAttendeeKeys(event), ...responsibleKeys(event)]) recipients.add(key);
     for (const key of declinedAttendeeKeys(event)) declined.add(key);
   }
 
@@ -150,21 +139,6 @@ export async function loadCalEventsInScope(
   return occurrences.some((occurrence) => occurrence.okey === event.okey) ? occurrences : [event, ...occurrences];
 }
 
-/** Invitations of the given events (closed events only; an open event has none). */
-export async function loadInvitations(events: CalEventNotifyDoc[]): Promise<InvitationNotifyDoc[]> {
-  const closed = events.filter((event) => !event.isOpen).map((event) => event.okey);
-  if (closed.length === 0) return [];
-
-  const db = getFirestore();
-  // Firestore caps an `in` filter at 30 values — chunk rather than silently truncating.
-  const chunks: string[][] = [];
-  for (let i = 0; i < closed.length; i += 30) chunks.push(closed.slice(i, i + 30));
-
-  const results = await Promise.all(chunks.map((chunk) =>
-    db.collection('invitations').where('caleventKey', 'in', chunk).get()));
-  return results.flatMap((snap) => snap.docs.map((doc) => doc.data() as InvitationNotifyDoc));
-}
-
 /**
  * Everyone to notify about `caleventKey`, ready to hand to `pushToPersons`.
  *
@@ -181,8 +155,7 @@ export async function resolveCalEventRecipients(
 ): Promise<{ events: CalEventNotifyDoc[]; personKeys: string[] }> {
   const events = await loadCalEventsInScope(caleventKey, scope, today);
   if (events.length === 0) return { events: [], personKeys: [] };
-  const invitations = await loadInvitations(events);
-  return { events, personKeys: collectRecipients(events, invitations, exclude) };
+  return { events, personKeys: collectRecipients(events, exclude) };
 }
 
 /** Today as a StoreDate (yyyyMMdd) — the series cut-off. */
