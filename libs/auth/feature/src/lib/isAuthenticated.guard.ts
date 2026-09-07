@@ -5,7 +5,7 @@ import { map, take } from 'rxjs/operators';
 
 import { AUTH } from '@okr/shared-config';
 
-export const isAuthenticatedGuard: CanActivateFn = () => {
+export const isAuthenticatedGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AUTH);
   const router = inject(Router);
   
@@ -15,7 +15,11 @@ export const isAuthenticatedGuard: CanActivateFn = () => {
     map(user => {
       const isAuth = user !== null && user !== undefined;
       if (isAuth) return true;
-      return router.parseUrl('/auth/login');
+      // Carry the route the user actually asked for through the login round-trip.
+      // Without it, a deep link opened while signed out lands on the dashboard and
+      // the link has to be pasted a second time. LoginPage reads it back and
+      // validates it (getSafeReturnUrl) before navigating.
+      return router.createUrlTree(['/auth/login'], { queryParams: { returnUrl: state.url } });
     })
   );
 };

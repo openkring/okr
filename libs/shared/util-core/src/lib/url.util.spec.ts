@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getDeepLinkPath, getSafeEmbedUrl } from './url.util';
+import { getDeepLinkPath, getSafeEmbedUrl, getSafeReturnUrl } from './url.util';
 
 describe('url.util', () => {
   describe('getSafeEmbedUrl', () => {
@@ -81,6 +81,35 @@ describe('url.util', () => {
       expect(getDeepLinkPath('https://seeclub.org/web/news')).toBeNull();
       expect(getDeepLinkPath('https://seeclub.org/__/auth/action?mode=resetPassword')).toBeNull();
       expect(getDeepLinkPath('https://seeclub.org/.well-known/apple-app-site-association')).toBeNull();
+    });
+  });
+
+  describe('getSafeReturnUrl', () => {
+    it('accepts a relative in-app route', () => {
+      expect(getSafeReturnUrl('/album/xyz')).toBe('/album/xyz');
+      expect(getSafeReturnUrl('/album/xyz?page=2#top')).toBe('/album/xyz?page=2#top');
+    });
+
+    it('falls back (null) when there is no returnUrl', () => {
+      expect(getSafeReturnUrl(undefined)).toBeNull();
+      expect(getSafeReturnUrl(null)).toBeNull();
+      expect(getSafeReturnUrl('')).toBeNull();
+      expect(getSafeReturnUrl('/')).toBeNull();
+    });
+
+    // The value arrives through the address bar, so a crafted login link must not be
+    // able to bounce a freshly authenticated user off-origin.
+    it('rejects anything that would leave the app', () => {
+      expect(getSafeReturnUrl('https://evil.com/steal')).toBeNull();
+      expect(getSafeReturnUrl('//evil.com/steal')).toBeNull();
+      expect(getSafeReturnUrl('/\\evil.com/steal')).toBeNull();
+      expect(getSafeReturnUrl('javascript:alert(1)')).toBeNull();
+      expect(getSafeReturnUrl('album/xyz')).toBeNull();
+    });
+
+    it('rejects the non-Angular hosting prefixes', () => {
+      expect(getSafeReturnUrl('/web/news')).toBeNull();
+      expect(getSafeReturnUrl('/__/auth/action')).toBeNull();
     });
   });
 });

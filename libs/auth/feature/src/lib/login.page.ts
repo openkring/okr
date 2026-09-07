@@ -1,11 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { AuthCredentials } from '@okr/shared-models';
 import { Header } from '@okr/shared-ui';
 import { navigateByUrl } from '@okr/shared-util-angular';
-import { getImgixUrlWithAutoParams } from '@okr/shared-util-core';
+import { getImgixUrlWithAutoParams, getSafeReturnUrl } from '@okr/shared-util-core';
 
 import { AuthService } from '@okr/auth-data-access';
 import { LoginForm } from '@okr/auth-ui';
@@ -68,6 +68,7 @@ import { AuthStore } from './auth.store';
 })
 export class LoginPage {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   protected readonly authService = inject(AuthService);
   protected readonly store = inject(AuthStore);
 
@@ -97,8 +98,20 @@ export class LoginPage {
    * Login a returning user with already existing credentials.
    */
   public async login(): Promise<void> {
-    this.currentCredentials().loginEmail;
-    await this.authService.login(this.currentCredentials(), this.store.config().rootUrl, this.store.config().loginUrl);
+    const returnUrl = getSafeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+    // On success resume where the user was headed; on failure come back to a login
+    // page that still remembers it, so a mistyped password does not cost the deep link.
+    await this.authService.login(
+      this.currentCredentials(),
+      returnUrl ?? this.store.config().rootUrl,
+      this.retryUrl(returnUrl),
+    );
+  }
+
+  /** The login URL to return to after a failed attempt, carrying the returnUrl along. */
+  private retryUrl(returnUrl: string | null): string {
+    const loginUrl = this.store.config().loginUrl;
+    return returnUrl ? `${loginUrl}?returnUrl=${encodeURIComponent(returnUrl)}` : loginUrl;
   }
 
   public async gotoHome(): Promise<void> {

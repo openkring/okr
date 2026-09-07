@@ -83,11 +83,39 @@ export function getDeepLinkPath(rawUrl: string | undefined | null): string | nul
     path = rest ? `/${rest}` : '/';
   }
 
-  if (!path.startsWith('/')) return null;
-  // `//evil.com` is a protocol-relative URL, not an in-app route
-  if (path.startsWith('//')) return null;
-  if (path === '/') return null;
-  if (DEEP_LINK_EXCLUDED_PREFIXES.some((prefix) => path.startsWith(prefix))) return null;
+  return isNavigableInternalPath(path) ? path : null;
+}
 
-  return path;
+/**
+ * Whether `path` is a relative route this app may navigate to.
+ *
+ * Rejects anything that could leave the app: a path not rooted at `/`, a
+ * protocol-relative `//host` (which browsers resolve to a foreign origin), a
+ * backslash variant of the same trick (`/\\host` — browsers normalise `\\` to `/`),
+ * the bare root (no destination), and the non-Angular Hosting prefixes.
+ */
+function isNavigableInternalPath(path: string): boolean {
+  if (!path.startsWith('/')) return false;
+  if (path === '/') return false;
+  if (path.startsWith('//') || path.startsWith('/\\')) return false;
+  return !DEEP_LINK_EXCLUDED_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
+
+/**
+ * Validate a `returnUrl` carried through the login round-trip.
+ *
+ * `isAuthenticatedGuard` puts the route the user actually asked for into the
+ * login URL so that signing in resumes there instead of dumping them on the
+ * dashboard. That value comes back through the address bar, so it is
+ * attacker-controllable: an open `returnUrl` would let a crafted login link
+ * bounce a freshly authenticated user to a foreign origin. Only a relative
+ * in-app route survives.
+ *
+ * @param returnUrl the raw query-parameter value (already URL-decoded by Angular)
+ * @returns the path to resume at, or `null` when the caller should fall back to
+ *          the configured `rootUrl`
+ */
+export function getSafeReturnUrl(returnUrl: string | undefined | null): string | null {
+  if (!returnUrl) return null;
+  return isNavigableInternalPath(returnUrl) ? returnUrl : null;
 }
