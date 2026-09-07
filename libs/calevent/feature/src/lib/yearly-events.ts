@@ -95,6 +95,12 @@ const ALL_YEARS = 99;
               <ion-label class="ion-hide-md-up"><okr-avatar-display [avatars]="event.responsiblePersons" [showName]="false" /></ion-label>
               <ion-label>{{ event.locationKey | label }}</ion-label>
               <ion-label class="ion-hide-lg-down">{{ event.description }}</ion-label>
+              <!-- a configured link opens in the same tab; the click must not open the ActionSheet -->
+              @if(event.url) {
+                <a slot="end" [href]="event.url" [title]="event.urlLabel || event.url" rel="noopener noreferrer" (click)="$event.stopPropagation()">
+                  <ion-icon src="{{'link' | svgIcon }}" />
+                </a>
+              }
             </ion-item>
           }
         </ion-list>
