@@ -5,7 +5,7 @@
    Firebase storage is linked as a source to imgix CDN and the images can be served from there.
 */
 import { THUMBNAIL_SIZE } from "@okr/shared-constants";
-import { ImageConfig, ImageStyle, ImageType } from "@okr/shared-models";
+import { BackgroundStyle, ImageConfig, ImageStyle, ImageType } from "@okr/shared-models";
 import { fileExtension, fileLogo, isAudio, isDocument, isImage, isPdf, isStreamingVideo, isVideo } from './file.util';
 import { die, warn } from './log.util';
 
@@ -315,4 +315,24 @@ export function getImgixThumbnailUrl(url: string, imgixBaseUrl: string): string 
 export function getImgixJsonUrl(url: string, imgixBaseUrl: string): string {
   if (url.startsWith(imgixBaseUrl)) return `${url}?${IMGIX_THUMBNAIL_PARAMS}`;
   return `${imgixBaseUrl}/${url}?${IMGIX_JSON_PARAMS}`;
+}
+
+/**
+ * The CSS background declaration for one album/grid tile: the imgix url sized for the tile plus
+ * whatever overlay the ImageStyle asks for. Lives here rather than with the album so that both
+ * the CMS album section and the shared image grid build tiles the same way.
+ */
+export function getBackgroundStyle(imgixBaseUrl: string, imageStyle: ImageStyle, url: string, image?: ImageConfig): BackgroundStyle {
+  if (!imageStyle.width || !imageStyle.height) die('album.util.getBackgroundStyle: image width and height must be set');
+  const sizeParams = getSizedImgixParamsByExtension(url, imageStyle.width, imageStyle.height);
+  const overlayParams = image ? buildOverlayParams(image, imageStyle) : '';
+  const params = overlayParams ? sizeParams + '&' + overlayParams : sizeParams;
+  const fullUrl = `${imgixBaseUrl}/${url}?${params}`;
+  return {
+    'background-image': `url(${fullUrl})`,
+    'min-height': '200px',
+    'background-size': 'cover',
+    'background-position': 'center',
+    'border': '1px'
+  };
 }

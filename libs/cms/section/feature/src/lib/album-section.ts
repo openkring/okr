@@ -1,14 +1,12 @@
-import { NgStyle } from '@angular/common';
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, output, untracked } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonRow, IonThumbnail, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
-import { AlbumSection, BackgroundStyle, ImageConfig, ImageType } from '@okr/shared-models';
-import { JpgUrlPipe, PdfUrlPipe, SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
-import { browse, CategorySelect, Label, openImageGallery, Spinner, Video } from '@okr/shared-ui';
+import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { AlbumSection, ImageConfig, ImageType } from '@okr/shared-models';
+import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
+import { browse, CategorySelect, ImageGrid, Label, openImageGallery, Spinner } from '@okr/shared-ui';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { FolderBreadcrumb } from '@okr/content-folder-ui';
 
-import { getBackgroundStyle } from '@okr/cms-section-util';
 
 import { AlbumStore } from './album-section.store';
 
@@ -24,22 +22,15 @@ import { AlbumStore } from './album-section.store';
   selector: 'okr-album-section',
   standalone: true,
   imports: [
-    NgStyle,
-    SvgIconPipe, JpgUrlPipe, PdfUrlPipe, ThumbnailUrlPipe,
-    Spinner, Label, CategorySelect, Video, FolderBreadcrumb,
-    IonCard, IonCardContent, IonList, IonThumbnail,
-    IonGrid, IonRow, IonCol, IonItem, IonToolbar, IonTitle, IonIcon, IonLabel
+    SvgIconPipe, ThumbnailUrlPipe,
+    Spinner, Label, CategorySelect, ImageGrid, FolderBreadcrumb,
+    IonCard, IonCardContent,
+    IonGrid, IonRow, IonCol, IonItem, IonToolbar, IonTitle, IonIcon
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   styles: [`
-    ion-label { text-align: center; }
     ion-card-content { padding: 0px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
-
-    @media(min-width: 0px) { .pinterest-album { column-count: 2; } }
-    @media(min-width: 420px) { .pinterest-album { column-count: 3; } }
-    @media(min-width: 720px) { .pinterest-album { column-count: 4; } }
-    .pinterest-image { margin: 2px; text-align: center; }
 
     .folder-tile {
       position: relative;
@@ -123,60 +114,8 @@ import { AlbumStore } from './album-section.store';
           }
 
           @if(images().length > 0) {
-            @switch (albumStyle()) {
-              @case('pinterest') {
-                <!-- images are not strictly aligned and just take the space available -->
-                <div class="pinterest-album">
-                  @for(image of images(); track $index) {
-                    <div class="pinterest-image">
-                      @switch(image.type) {
-                        @case(IT.StreamingVideo) { <okr-video [url]="image.url" /> }
-                        @case(IT.Pdf) { <img [src]="image.url | pdfUrl" [alt]="image.altText" (click)="onImageClicked(image)" /> }
-                        @default { <img [src]="image.url | jpgUrl" [alt]="image.altText" (click)="onImageClicked(image)" /> }
-                      }
-                    </div>
-                  }
-                </div>
-              }
-              @case('list') {
-                <ion-list>
-                  @for(image of images(); track $index) {
-                    <ion-item button (click)="onImageClicked(image)">
-                      <ion-label>{{ image.label }}</ion-label>
-                    </ion-item>
-                  }
-                </ion-list>
-              }
-              @case('avatar') {
-                <ion-list>
-                  @for(image of images(); track $index) {
-                    <ion-item button (click)="onImageClicked(image)">
-                      <ion-thumbnail slot="start">
-                        <img [src]="image.url | thumbnailUrl" [alt]="image.altText" />
-                      </ion-thumbnail>
-                      <ion-label>{{ image.label }}</ion-label>
-                    </ion-item>
-                  }
-                </ion-list>
-              }
-              @default { <!-- grid (default) and imgix -->
-                <ion-grid>
-                  <ion-row>
-                    @for(image of images(); track $index) {
-                      <!-- 2 images on small screens, 3 on medium, 4 on large screens -->
-                      <ion-col size="6" size-xl="3" size-md="4">
-                        @switch(image.type) {
-                          @case(IT.StreamingVideo) { <okr-video [url]="image.url" /> }
-                          @default {
-                            <div class="image-container" [ngStyle]="getBackgroundStyle(image)" (click)="onImageClicked(image)"></div>
-                          }
-                        }
-                      </ion-col>
-                    }
-                  </ion-row>
-                </ion-grid>
-              }
-            }
+            <okr-image-grid [images]="images()" [imageStyle]="imageStyle()" [imgixBaseUrl]="imgixBaseUrl()"
+              [albumStyle]="albumStyle()" (imageClicked)="onImageClicked($event)" />
           } @else if(folders().length === 0) {
             <okr-label>{{ store.i18n.album_empty() }}</okr-label>
           }
@@ -216,9 +155,6 @@ export class AlbumSectionComponent {
   protected isTopFolder = computed(() => this.store.isTopFolder());
   protected currentFolderKey = computed(() => this.store.currentFolderKey());
 
-  // passing constants to template
-  protected IT = ImageType;
-
   constructor() {
     effect(() => {
       const section = this.section();
@@ -254,10 +190,6 @@ export class AlbumSectionComponent {
     }
     const gallery = this.images().filter((img) => img.type === ImageType.Image);
     await openImageGallery(this.modalController, gallery, image, this.imageStyle());
-  }
-
-  protected getBackgroundStyle(image: ImageConfig): BackgroundStyle {
-    return getBackgroundStyle(this.imgixBaseUrl(), this.imageStyle(), image.url, image);
   }
 
   protected onAlbumStyleChange(albumStyle: string): void {

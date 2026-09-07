@@ -1,5 +1,7 @@
-import { AlbumConfig, BackgroundStyle, DocumentModel, ImageConfig, ImageStyle, ImageType } from "@okr/shared-models";
-import { buildOverlayParams, die, getSizedImgixParamsByExtension } from "@okr/shared-util-core";
+import { AlbumConfig, DocumentModel, ImageConfig, ImageType } from "@okr/shared-models";
+// getBackgroundStyle moved to @okr/shared-util-core so shared-ui's image grid can use it too;
+// re-exported here because callers (and their imports) still name it as an album helper.
+export { getBackgroundStyle } from "@okr/shared-util-core";
 
 /**
  * Map a DocumentModel to the ImageConfig the album renders.
@@ -37,19 +39,4 @@ export function isVisibleInAlbum(doc: DocumentModel, config: AlbumConfig): boole
     case ImageType.Doc: return config.showDocs;
     default: return false;
   }
-}
-
-export function getBackgroundStyle(imgixBaseUrl: string, imageStyle: ImageStyle, url: string, image?: ImageConfig): BackgroundStyle {
-  if (!imageStyle.width || !imageStyle.height) die('album.util.getBackgroundStyle: image width and height must be set');
-  const sizeParams = getSizedImgixParamsByExtension(url, imageStyle.width, imageStyle.height);
-  const overlayParams = image ? buildOverlayParams(image, imageStyle) : '';
-  const params = overlayParams ? sizeParams + '&' + overlayParams : sizeParams;
-  const fullUrl = `${imgixBaseUrl}/${url}?${params}`;
-  return {
-    'background-image': `url(${fullUrl})`,
-    'min-height': '200px',
-    'background-size': 'cover',
-    'background-position': 'center',
-    'border': '1px'
-  };
 }
