@@ -152,7 +152,8 @@ export class Avatars {
   // inputs
   public avatars = model.required<AvatarInfo[]>(); // the keys of the menu items
   public title = input<string>();
-  public currentUser = input.required<UserModel>();
+  // optional: the only use is the display-name preference, which falls back on its own (see getAvatarName)
+  public currentUser = input<UserModel>();
   public name = input('avatar'); // the name of the menu
   public copyable = input(false);
   public editable = input(false);
