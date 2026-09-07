@@ -20,8 +20,8 @@ export interface MenuOp {
   op: 'create' | 'add-tenant' | 'update-structure';
   fields: Partial<MenuItemModel>;
   /** The block whose spec first produced this op — audit attribution only (see
-   * `menuStructureChanges`). Undefined when `planMenuOps` is called directly, which has no
-   * block in scope; `planMenuOpsForBlocks` fills it in. Never a write target. */
+   * `MenuStructureChange`). Undefined when `planMenuOps` is called directly, which has no
+   * block in scope; the callable's `planRowsOfBlock` fills it in. Never a write target. */
   blockId?: string;
 }
 
@@ -393,8 +393,13 @@ export function planMenuOps(
 }
 
 /**
- * One catalogue-owned field a planned op is about to overwrite on an EXISTING menu
- * document — the audit record behind `featureEvents`' `op: 'menu-structure'` entries.
+ * One catalogue-owned field a write is about to overwrite on an EXISTING menu document —
+ * the audit record behind `featureEvents`' `op: 'menu-structure'` entries.
+ *
+ * The bulk producer (`menuStructureChanges`, which turned a whole replay's ops into this
+ * shape) is GONE together with the replay path: no planner overwrites any more (D-BB-15).
+ * The single remaining writer of such an event is `applyCatalogueValue` — one named
+ * document, one named field, separately confirmed — and the picker still reads this shape.
  */
 export interface MenuStructureChange {
   /** The block whose spec produced the op, `''` when the op carries no attribution. */
@@ -409,37 +414,4 @@ export interface MenuStructureChange {
   from: string;
   /** The catalogue value being written. */
   to: string;
-}
-
-/**
- * The audit trail of a replay: every catalogue-owned field an op set overwrites, with the
- * value it replaces. Pure, so `applySelection` can turn it into `featureEvents` entries and
- * a dry run could show it without writing anything.
- *
- * `create` ops are deliberately EXCLUDED. A document this run brings into existence has no
- * prior value, so "changed from X to Y" would be a fiction; its existence is already
- * implied by the block's `enable` event.
- *
- * `before` must be the name→document index as it stood BEFORE planning — `planMenuOpsForBlocks`
- * folds each op back into its working copy of that map (so later specs plan against
- * accumulated state), which would otherwise report every `from` as equal to its `to`.
- */
-export function menuStructureChanges(
-  ops: MenuOp[],
-  before: Map<string, MenuItemModel>,
-): MenuStructureChange[] {
-  const changes: MenuStructureChange[] = [];
-  for (const op of ops) {
-    if (op.op === 'create') continue;
-    const doc = before.get(op.key);
-    if (!doc) continue; // planned as a create earlier in the same run
-    for (const field of STRUCTURAL_FIELDS) {
-      if (!(field in op.fields)) continue;
-      const to = String(op.fields[field] ?? '');
-      const from = String(doc[field] ?? '');
-      if (from === to) continue; // folded in from a sibling spec, not an actual overwrite
-      changes.push({ blockId: op.blockId ?? '', docId: op.docId, name: op.key, field, from, to });
-    }
-  }
-  return changes;
 }
