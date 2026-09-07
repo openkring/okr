@@ -71,6 +71,11 @@
         "assets": [
           "apps/<%= tenantId %>-app/src/assets",
           {
+            "glob": "apple-app-site-association",
+            "input": "apps/<%= tenantId %>-app/src/.well-known",
+            "output": "./.well-known"
+          },
+          {
             "glob": "*.json",
             "input": "libs/activity/data-access/src/i18n",
             "output": "./assets/i18n/activity/data-access"

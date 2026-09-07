@@ -22,6 +22,23 @@ describe('app generator', () => {
     expect(projectJson).toContain('"name": "acme-app"');
   });
 
+  // REGRESSION GUARD. The Universal-Links association file lives in a DOT directory
+  // (src/.well-known/) and has no file extension. Both are exactly the shapes a file-copy
+  // step tends to skip, and a missing association file fails silently: iOS just opens the
+  // link in Safari again, which is the bug this was added to fix.
+  it('emits the apple-app-site-association file for the tenant', async () => {
+    await appGenerator(tree, { tenantId: 'acme', appName: 'Acme' });
+
+    const aasaPath = 'apps/acme-app/src/.well-known/apple-app-site-association';
+    expect(tree.exists(aasaPath)).toBe(true);
+    const aasa = JSON.parse(tree.read(aasaPath, 'utf-8') ?? '{}');
+    expect(aasa.applinks.details[0].appIDs).toEqual(['7X4J6XQJV3.org.bkaiser.acme']);
+
+    // ...and the build must actually copy it into the deployed site.
+    const projectJson = tree.read('apps/acme-app/project.json', 'utf-8') ?? '';
+    expect(projectJson).toContain('apps/acme-app/src/.well-known');
+  });
+
   it('refuses to overwrite an existing app without force', async () => {
     tree.write('apps/acme-app/project.json', '{}');
     await expect(

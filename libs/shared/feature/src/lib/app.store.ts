@@ -706,6 +706,21 @@ export const AppStore = signalStore(
         }
       });
 
+      // Capacitor: a deep link (Universal Link on iOS, App Link on Android, or the
+      // custom scheme) delivered to the ALREADY RUNNING app. iOS/Android apps are
+      // singletons, so this foregrounds the existing instance instead of starting a
+      // second one — the Firebase session stays alive and no re-login is needed.
+      App.addListener('appUrlOpen', ({ url }) => {
+        void store.appNavigationService.navigateToDeepLink(url);
+      });
+
+      // Cold start: the launch URL is consumed before any listener could be attached,
+      // so it has to be read once at startup. Returns undefined for a normal launch.
+      void App.getLaunchUrl()
+        .then((launch) => store.appNavigationService.navigateToDeepLink(launch?.url))
+        // not available outside a native shell — a plain browser load carries no launch URL
+        .catch(() => undefined);
+
       // Capacitor: supplement visibilitychange on native iOS/Android
       App.addListener('appStateChange', ({ isActive }) => {
         if (!isActive) {

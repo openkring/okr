@@ -96,6 +96,19 @@
           ]
         },
         {
+          "source": "/.well-known/apple-app-site-association",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
+            }
+          ]
+        },
+        {
           "source": "/@(ngsw-worker.js|ngsw.json|safety-worker.js|firebase-messaging-sw.js|firebase-config.js|manifest.webmanifest)",
           "headers": [
             {
@@ -188,6 +201,19 @@
             {
               "key": "Cache-Control",
               "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/.well-known/apple-app-site-association",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
             }
           ]
         },
@@ -288,6 +314,19 @@
           ]
         },
         {
+          "source": "/.well-known/apple-app-site-association",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
+            }
+          ]
+        },
+        {
           "source": "/@(ngsw-worker.js|ngsw.json|safety-worker.js|firebase-messaging-sw.js|firebase-config.js|manifest.webmanifest)",
           "headers": [
             {
@@ -380,6 +419,19 @@
             {
               "key": "Cache-Control",
               "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/.well-known/apple-app-site-association",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
             }
           ]
         },
@@ -480,6 +532,19 @@
           ]
         },
         {
+          "source": "/.well-known/apple-app-site-association",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
+            }
+          ]
+        },
+        {
           "source": "/@(ngsw-worker.js|ngsw.json|safety-worker.js|firebase-messaging-sw.js|firebase-config.js|manifest.webmanifest)",
           "headers": [
             {
@@ -576,6 +641,19 @@
           ]
         },
         {
+          "source": "/.well-known/apple-app-site-association",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
+            }
+          ]
+        },
+        {
           "source": "/@(ngsw-worker.js|ngsw.json|safety-worker.js|firebase-messaging-sw.js|firebase-config.js|manifest.webmanifest)",
           "headers": [
             {
@@ -668,6 +746,19 @@
             {
               "key": "Cache-Control",
               "value": "public, max-age=0, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/.well-known/apple-app-site-association",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
             }
           ]
         },

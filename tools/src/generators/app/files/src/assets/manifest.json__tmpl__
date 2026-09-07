@@ -7,6 +7,7 @@
   "background_color": "#ffffff",
   "display_override": ["fullscreen", "minimal-ui"],
   "display": "standalone",
+  "launch_handler": { "client_mode": "navigate-existing" },
   "orientation": "any",
   "description": "<%= appName %>",
   "categories": ["productivity", "utilities", "photo"],

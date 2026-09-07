@@ -1,0 +1,32 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "7X4J6XQJV3.org.bkaiser.<%= tenantId %>"
+        ],
+        "components": [
+          {
+            "/": "/web/*",
+            "exclude": true,
+            "comment": "embedded static marketing site - stays in the browser"
+          },
+          {
+            "/": "/__/*",
+            "exclude": true,
+            "comment": "Firebase Auth action handlers (password reset, email verification)"
+          },
+          {
+            "/": "/.well-known/*",
+            "exclude": true,
+            "comment": "association files themselves"
+          },
+          {
+            "/": "*",
+            "comment": "every other path is an in-app route"
+          }
+        ]
+      }
+    ]
+  }
+}

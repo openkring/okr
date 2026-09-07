@@ -34,3 +34,60 @@ export function getSafeEmbedUrl(
   if (!allowedHosts.includes(parsed.hostname.toLowerCase())) return null;
   return parsed.toString();
 }
+
+/**
+ * Path prefixes that must never be turned into an in-app route by a deep link.
+ * `/web/*` is the embedded static marketing site and `/__/*` are the Firebase
+ * Auth action handlers (password reset, email verification) — both are plain
+ * documents served by Hosting, not Angular routes. They are also excluded in
+ * each app's `apple-app-site-association`, so iOS should not hand them over in
+ * the first place; this is the second line of defence.
+ */
+export const DEEP_LINK_EXCLUDED_PREFIXES: readonly string[] = ['/web/', '/__/', '/.well-known/'];
+
+/**
+ * Translate the URL delivered by a Universal Link / App Link (Capacitor's
+ * `appUrlOpen`, or `App.getLaunchUrl()` on a cold start) into the in-app route
+ * to navigate to.
+ *
+ * Only ever returns a **relative** path, so the result can never be used to
+ * navigate the app to a foreign origin: an attacker-supplied absolute URL is
+ * reduced to its path or rejected outright.
+ *
+ * @param rawUrl the URL as handed over by the OS, e.g.
+ *        `https://seeclub.org/album/xyz?p=2` or the custom scheme
+ *        `org.bkaiser.scs://album/xyz`
+ * @returns `pathname + search + hash` (always starting with `/`), or `null`
+ *          when the URL is unusable, empty, or points at an excluded prefix.
+ */
+export function getDeepLinkPath(rawUrl: string | undefined | null): string | null {
+  if (!rawUrl) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return null;
+  }
+
+  let path: string;
+  if (parsed.protocol === 'https:') {
+    path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } else if (parsed.protocol === 'http:') {
+    // never follow an unencrypted link into the app
+    return null;
+  } else {
+    // custom scheme: `org.bkaiser.scs://album/xyz` parses with host `album`,
+    // so reassemble the path from host + pathname instead of trusting pathname.
+    const rest = rawUrl.slice(rawUrl.indexOf(':') + 1).replace(/^\/+/, '');
+    path = rest ? `/${rest}` : '/';
+  }
+
+  if (!path.startsWith('/')) return null;
+  // `//evil.com` is a protocol-relative URL, not an in-app route
+  if (path.startsWith('//')) return null;
+  if (path === '/') return null;
+  if (DEEP_LINK_EXCLUDED_PREFIXES.some((prefix) => path.startsWith(prefix))) return null;
+
+  return path;
+}
