@@ -373,8 +373,6 @@ export const CALEVENT_I18N_KEYS = {
   fullDay_label:                  PFX + 'fullDay.label',
   fullDay_helper:                 PFX + 'fullDay.helper',
 
-  isOpen_label:                   PFX + 'isOpen.label',
-  isOpen_helper:                  PFX + 'isOpen.helper',
 
   maxAttendees:                   PFX + 'maxAttendees.label',
   maxAttendees_placeholder:       PFX + 'maxAttendees.placeholder',

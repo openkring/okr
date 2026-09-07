@@ -81,17 +81,18 @@ export function addIndexElement(index: string, key: string, value: string | numb
     return result;
   }
 
+  /**
+   * Der Anwesenheitszustand einer Person am Anlass, gelesen aus `attendees` — der einzigen
+   * Antwortquelle seit 2026-09. Ohne Eintrag gilt 'invited', also unbeantwortet.
+   */
   export function getAttendanceState(calevent: CalEventModel, personKey: string): string | undefined {
-    if (calevent.isOpen) {
-      if (personKey && calevent.attendees) {
-        const attendee = calevent.attendees.find((a: any) => a.person.key === personKey);
-        if (attendee && attendee.state) {
-          return attendee.state;
-        }
+    if (personKey && calevent.attendees) {
+      const attendee = calevent.attendees.find((a: any) => a.person.key === personKey);
+      if (attendee && attendee.state) {
+        return attendee.state;
       }
-      return 'invited'; // default state
     }
-    return undefined;
+    return 'invited'; // default state
   }
 
   export function getAttendee(calevent: CalEventModel, personKey: string): Attendee | undefined {

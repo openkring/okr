@@ -26,7 +26,7 @@ import type { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
-import { addInvitedAttendee, CALEVENT_I18N_KEYS, CalEventNotifyFormData, findConflictingCalEvents, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { addInvitedAttendee, applyInvitationAnswer, toAttendeeState, CALEVENT_I18N_KEYS, CalEventNotifyFormData, findConflictingCalEvents, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { CalEventNotifyModal, RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 
 /**
@@ -476,10 +476,8 @@ export const CalEventStore = signalStore(
         if (personal) {
           // personal event: no calendar, organiser cannot be changed
           newCalevent.calendars = [];
-          newCalevent.isOpen = false;
         } else {
           newCalevent.calendars = resolveCalendars(cal, store.tenantId());
-          newCalevent.isOpen = isCalendarPublic(store.calendar());
         }
         const untilDate = addMonths(new Date(), 3);
         newCalevent.repeatUntilDate = format(untilDate, DateFormat.StoreDate);
@@ -550,7 +548,6 @@ export const CalEventStore = signalStore(
           calevent.name = data.name;
           calevent.description = data.description;
           calevent.state = 'proposed';
-          calevent.isOpen = true;
           calevent.startDate = column.startDate;
           calevent.startTime = column.startTime;
           calevent.columnLabel = column.columnLabel ?? '';
@@ -676,24 +673,23 @@ export const CalEventStore = signalStore(
         for (const calevent of seriesEvents) {
           const newState = row.responses[calevent.okey];
           if (!newState || newState === 'pending') continue;
-          if (calevent.isOpen) {
-            const state: Attendee['state'] = newState === 'accepted' ? 'accepted' : 'declined';
-            const attendees = [...(calevent.attendees ?? [])];
-            const index = attendees.findIndex(a => a.person.key === personKey);
-            if (index >= 0) {
-              if (attendees[index].state === state) continue;
-              attendees[index] = { ...attendees[index], state };
-            } else {
-              const avatar = getAvatarInfoForCurrentUser(currentUser);
-              if (!avatar) continue;
-              attendees.push({ person: avatar, state });
-            }
+          // eine Antwortquelle: der Eintrag in attendees. Haelt der Benutzer zusaetzlich eine
+          // Einladung, wird ihr Zustand mitgestempelt — sie traegt die Antwortspur, nicht die Antwort.
+          const avatar = getAvatarInfoForCurrentUser(currentUser);
+          if (!avatar) continue;
+          const current = getAttendee(calevent, personKey)?.state;
+          const desired = toAttendeeState(newState);
+          const invitation = seriesInvitations.find(
+            inv => inv.caleventKey === calevent.okey && inv.inviteeKey === personKey);
+          const invitationStale = !!invitation && invitation.state !== newState && !invitation.isLocked;
+          if (current === desired && !invitationStale) continue;
+
+          if (current !== desired) {
             // only the attendees field: a full model spread would carry okey into the document
-            batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`), { attendees });
-          } else {
-            const invitation = seriesInvitations.find(
-              inv => inv.caleventKey === calevent.okey && inv.inviteeKey === personKey);
-            if (!invitation || invitation.state === newState || invitation.isLocked) continue;
+            batch.update(doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`),
+              { attendees: applyInvitationAnswer(calevent.attendees, avatar, newState) });
+          }
+          if (invitationStale) {
             batch.update(doc(store.firestoreService.firestore, `${InvitationCollection}/${invitation.okey}`),
               { state: newState, respondedAt: today });
           }
@@ -711,7 +707,7 @@ export const CalEventStore = signalStore(
 
       /**
        * The winners become definitive and keep their `attendees` — the poll answers ARE the
-       * attendee list, so nothing has to be copied anywhere. They also stay `isOpen`, which is what
+       * attendee list, so nothing has to be copied anywhere. They stay answerable, which is what
        * lets a member who ignored the poll still answer afterwards: a closed event can only be
        * answered by someone holding an invitation, and a poll no longer mints any.
        *
@@ -1370,11 +1366,10 @@ export const CalEventStore = signalStore(
        * "did I pick the right event", not "who exactly gets a push".
        */
       notifyRecipientNames(calevent: CalEventModel): string[] {
-        const names = calevent.isOpen
-          ? calevent.attendees.filter(a => a.state === 'accepted').map(a => getFullName(a.person.name1, a.person.name2))
-          : this.invitationsOf(calevent)
-              .filter(inv => inv.state !== 'declined')
-              .map(inv => `${inv.inviteeFirstName} ${inv.inviteeLastName}`.trim());
+        // dieselbe Regel wie im Empfaengersatz der Function: wer nicht abgesagt hat
+        const names = (calevent.attendees ?? [])
+          .filter(a => a.state !== 'declined')
+          .map(a => getFullName(a.person.name1, a.person.name2));
         const declined = new Set(calevent.attendees.filter(a => a.state === 'declined').map(a => a.person.key));
         const organisers = calevent.responsiblePersons.filter(p => !declined.has(p.key)).map(p => getFullName(p.name1, p.name2));
         return [...new Set([...names, ...organisers])].filter(name => name.length > 0).sort();

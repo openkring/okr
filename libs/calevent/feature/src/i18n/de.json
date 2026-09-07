@@ -363,10 +363,6 @@
     "label": "Ganztägig",
     "helper": "Dieser Termin wird als Tagestermin im Kalender eingetragen - ohne bestimmte Zeit."
   },
-  "isOpen": {
-    "label": "Offener Anlass",
-    "helper": "Alle können sich selbst anmelden. Ist der Anlass nicht offen, verschickst du Einladungen."
-  },
   "maxAttendees": {
     "label": "Teilnahme beschränken auf",
     "placeholder": "nn",

@@ -265,7 +265,6 @@ export function getSeriesUpdateFields(edited: CalEventModel, startDate: string):
     url: target.url,
     urlLabel: target.urlLabel,
     responsiblePersons: target.responsiblePersons,
-    isOpen: target.isOpen,
     state: target.state,
     cancelMessage: target.cancelMessage ?? '',
     index: getCaleventIndex(target)

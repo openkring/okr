@@ -153,13 +153,11 @@ export class EventsSectionComponent implements OnInit {
   }
 
   protected getIcon(event: CalEventModel): string {
-    const state = event.isOpen ? this.store.states()[event.okey] : this.store.invitationStates()[event.okey];
-    return getAttendanceIcon(state);
+    return getAttendanceIcon(this.store.states()[event.okey]);
   }
 
   protected getIconColor(event: CalEventModel): string {
-    const state = event.isOpen ? this.store.states()[event.okey] : this.store.invitationStates()[event.okey];
-    return getAttendanceColor(state);
+    return getAttendanceColor(this.store.states()[event.okey]);
   }
 
   /**
@@ -169,25 +167,14 @@ export class EventsSectionComponent implements OnInit {
    * @param calevent 
    */
   private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
-    if (calevent.isOpen) {
-      const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
-      if (state !== 'accepted') {
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.calevent_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
-      }
-      if (state !== 'declined') {
-        actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.calevent_unsubscribe(), this.imgixBaseUrl, 'cancel'));
-      }
-    } else {  // invitation
-      // get invitation for current user
-      const inv = this.store.invitations().find(inv => inv.caleventKey === calevent.okey);
-      if (inv) {
-        if (inv.state !== 'accepted') {
-          actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.calevent_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
-        }
-        if (inv.state !== 'declined') {
-          actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.calevent_unsubscribe(), this.imgixBaseUrl, 'cancel'));
-        }
-      }
+    // eine Regel statt zweier Zweige: der Zustand steht in attendees, fuer Mitglieder wie fuer
+    // Eingeladene. Das Dashboard-Widget bleibt bewusst schmal — die volle Bedienung ist in der Liste.
+    const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
+    if (state !== 'accepted') {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.calevent_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+    }
+    if (state !== 'declined') {
+      actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.calevent_unsubscribe(), this.imgixBaseUrl, 'cancel'));
     }
     actionSheetOptions.buttons.push(createActionSheetDivider());
     if (this.canChange(calevent)) {

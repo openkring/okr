@@ -39,12 +39,17 @@ export class CalEventModel implements OkrModel, NamedModel, SearchableModel, Tag
   public urlLabel = DEFAULT_LABEL; // the text shown for the url link; falls back to the url itself when empty
   public responsiblePersons: AvatarInfo[] = []; // list of persons responsible for the event
 
-  // attendees are only used for open events, where there are no invitations sent
-  public isOpen = false; // whether the event is open to all users or only to invited persons
+  /**
+   * Wer teilnimmt — fuer Mitglieder wie fuer Eingeladene dieselbe Liste, und seit 2026-09 die
+   * EINZIGE Antwortquelle (planning/specs/2026-09-06-open-events-invitation-model-spec.md).
+   * Ein Eingeladener steht mit dem Zustand 'invited' darin, also unbeantwortet.
+   *
+   * Das fruehere `isOpen` ist ersatzlos entfallen: jeder Anlass ist offen, und wer ihn sieht,
+   * entscheidet die Reichweite seines Kalenders.
+   */
   public attendees: Attendee[] = []; // list of attendees with their status
   /**
-   * Cap on how many people may take part; 0 = unrestricted (the default). Only meaningful while
-   * `isOpen` is true — a closed event is capped by who gets an invitation.
+   * Cap on how many people may take part; 0 = unrestricted (the default).
    *
    * Nothing is stored per attendee: the first `maxAttendees` entries with state 'accepted' are
    * confirmed, everyone after them is on the waiting list (see `splitAttendees` in calevent-util).

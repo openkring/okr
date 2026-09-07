@@ -38,7 +38,6 @@ Collection name: `calevents`
 | `calendars` | string[] | List of calendar `okey` values this event belongs to |
 | `url` | string | External link (album, website, document) |
 | `responsiblePersons` | AvatarInfo[] | Persons responsible for the event |
-| `isOpen` | boolean | If true, attendees can self-register; if false, use invitations |
 | `attendees` | Attendee[] | List of `{ person: AvatarInfo, state: 'invited' \| 'accepted' \| 'declined' }` |
 | `maxAttendees` | number | Participant cap for an open event; `0` (the default) = unrestricted. Undefined on documents written before the field existed — always read it as `?? 0`. |
 
@@ -79,7 +78,12 @@ deliberately unrestricted; anyone added past the cap simply appears below the li
 
 ## Invitation Flow
 
-When `isOpen = false`, invitations are stored as `InvitationModel` documents in the `invitations` collection. Group-member invitations can be sent in bulk via `inviteGroupMembers()` which reads the group's memberships and creates one invitation per member in a Firestore batch.
+Every event is open; who sees it follows from the reach of its calendar (see
+`planning/specs/2026-09-06-open-events-invitation-model-spec.md`). Attendance always lives in
+`calevent.attendees` — for members and invited guests alike. An `InvitationModel` in the
+`invitations` collection is the ASK addressed to somebody the calendar does not reach; creating one
+also writes an `Attendee { state: 'invited' }`, so the guest appears in the same list, unanswered.
+Invitations are per occurrence and never series-wide.
 
 ## Schedule poll (Terminumfrage) — no invitations
 

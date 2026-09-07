@@ -363,10 +363,6 @@
     "label": "Toute la journée",
     "helper": "Cet événement est inscrit dans le calendrier comme un événement d'une journée entière - sans heure précise."
   },
-  "isOpen": {
-    "label": "Événement ouvert",
-    "helper": "Tout le monde peut s'inscrire soi-même. Si l'événement n'est pas ouvert, tu envoies des invitations."
-  },
   "maxAttendees": {
     "label": "Limiter la participation à",
     "placeholder": "nn",
