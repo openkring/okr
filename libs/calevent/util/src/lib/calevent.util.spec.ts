@@ -1,7 +1,7 @@
 import { Attendee, AvatarInfo, CalEventModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toAttendeeState, toInvitationState } from './calevent.util';
+import { addInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getSeriesUpdateFields, isCalEvent, isFullDayEvent, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toAttendeeState, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -538,5 +538,39 @@ describe('splitAttendees / isCaleventFull', () => {
 
   it('is not full when a declined attendee freed the slot', () => {
     expect(isCaleventFull(event([att('a'), att('b', 'declined')], 2))).toBe(false);
+  });
+});
+
+describe('addInvitedAttendee', () => {
+  const person = (key: string): AvatarInfo =>
+    ({ key, name1: key, name2: '', modelType: 'person', type: '', subType: '', label: '' });
+
+  it('adds a newly invited person as unanswered', () => {
+    expect(addInvitedAttendee([], person('p1'))).toEqual([{ person: person('p1'), state: 'invited' }]);
+  });
+
+  it('never overwrites an answer that is already there', () => {
+    const existing: Attendee[] = [{ person: person('p1'), state: 'accepted' }];
+    expect(addInvitedAttendee(existing, person('p1'))).toEqual(existing);
+  });
+
+  it('keeps a declined answer too — re-inviting does not reset it', () => {
+    const existing: Attendee[] = [{ person: person('p1'), state: 'declined' }];
+    expect(addInvitedAttendee(existing, person('p1'))).toEqual(existing);
+  });
+
+  it('appends after the people already in the list', () => {
+    const existing: Attendee[] = [{ person: person('p1'), state: 'accepted' }];
+    expect(addInvitedAttendee(existing, person('p2')).map(a => a.person.key)).toEqual(['p1', 'p2']);
+  });
+
+  it('copes with a legacy document that has no attendees at all', () => {
+    expect(addInvitedAttendee(undefined, person('p1'))).toEqual([{ person: person('p1'), state: 'invited' }]);
+  });
+
+  it('does not mutate the array it was given', () => {
+    const existing: Attendee[] = [{ person: person('p1'), state: 'accepted' }];
+    addInvitedAttendee(existing, person('p2'));
+    expect(existing).toHaveLength(1);
   });
 });

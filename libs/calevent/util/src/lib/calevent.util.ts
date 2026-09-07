@@ -352,6 +352,32 @@ export function formatDurationLabel(durationMinutes?: number | null): string {
   return `${hours} h ${minutes} min`;
 }
 
+/**
+ * Put a newly invited person into the event's attendee list, as `'invited'` — i.e. unanswered.
+ *
+ * Since 2026-09 an invitation and a self-service sign-up share ONE store
+ * (planning/specs/2026-09-06-open-events-invitation-model-spec.md, decisions 3+4): the invitation
+ * document carries the ask, the attendee entry carries the answer. Writing the entry at invite time
+ * is what puts a guest into the same list as the members, visibly pending.
+ *
+ * `splitAttendees` already handles `'invited'` correctly — it occupies no seat and never blocks the
+ * waiting list, so inviting somebody can never push a confirmed attendee out.
+ *
+ * An answer that is already there is NEVER overwritten, in either direction: re-inviting somebody
+ * who accepted leaves them accepted, and somebody who declined stays declined rather than being
+ * silently asked again.
+ *
+ * Pure and non-mutating: the caller writes the returned array back to Firestore.
+ *
+ * @param attendees `calevent.attendees`; undefined on a legacy document
+ * @param person    the invitee
+ */
+export function addInvitedAttendee(attendees: Attendee[] | undefined, person: AvatarInfo): Attendee[] {
+  const all = attendees ?? [];
+  if (all.some(attendee => attendee.person.key === person.key)) return all;
+  return [...all, { person, state: 'invited' }];
+}
+
 /** An attendee list split into the three blocks the attendees accordion renders. */
 export type AttendeeSplit = {
   confirmed: Attendee[]; // accepted, within the cap

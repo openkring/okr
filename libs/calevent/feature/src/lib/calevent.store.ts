@@ -4,14 +4,14 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { addMonths, format } from 'date-fns';
-import { doc, runTransaction, WriteBatch } from 'firebase/firestore';
+import { doc, runTransaction, updateDoc, WriteBatch } from 'firebase/firestore';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { from, firstValueFrom, map, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
-import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
+import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, inviteeCandidates, isCalendarPublic, isAfterDate, isAfterOrEqualDate, nameMatches, pad, prettyFormatDate, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
 import { copyToClipboardWithConfirmation, error, navigateByUrl, confirm, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
@@ -25,7 +25,7 @@ import type { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
-import { CALEVENT_I18N_KEYS, CalEventNotifyFormData, findConflictingCalEvents, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
+import { addInvitedAttendee, CALEVENT_I18N_KEYS, CalEventNotifyFormData, findConflictingCalEvents, newCalEventNotifyFormData, buildCalEventLink, buildSchedulePollLink, formatSchedulePollInviteMessage, formatScheduleCloseMessage, getCaleventIndex, getSeriesUpdateFields, isCalEvent, isCaleventFull, isPersonalCalendarName, isPersonalCalevent, mergeAttendee, planSeriesReconcile, resolveCalendars, SchedulePollFormData, SchedulePollRow } from '@okr/calevent-util';
 import { CalEventNotifyModal, RegressionSelectionModal, showCalEventInfo } from '@okr/calevent-ui';
 
 /**
@@ -1268,8 +1268,28 @@ export const CalEventStore = signalStore(
           inv.name = calevent.name;
           inv.date = calevent.startDate;
           inv.index = `ik:${inv.inviteeKey}, ck:${inv.caleventKey}, n:${inv.inviteeLastName}, d:${inv.date}`;
-          return await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, store.i18n.invite_person_conf(), store.i18n.invite_person_error(), store.currentUser());
+          const okey = await store.firestoreService.createModel<InvitationModel>(InvitationCollection, inv, store.i18n.invite_person_conf(), store.i18n.invite_person_error(), store.currentUser());
+          if (okey) await this.recordInvitedAttendee(calevent, { ...avatar, key: inv.inviteeKey });
+          return okey;
         }
+      },
+
+      /**
+       * Zweiter Teil jeder Einladung: der Eingeladene erscheint in derselben Teilnehmerliste wie
+       * die Mitglieder, als `'invited'` — also unbeantwortet.
+       *
+       * Die Einladung traegt seit 2026-09 nur noch die Bitte, die Antwort liegt ausschliesslich in
+       * `calevent.attendees` (Spec „Offene Anlaesse", Entscheidungen 3+4). Ohne diesen Schritt
+       * waere ein Gast eingeladen, aber nirgends sichtbar — und die Serientabelle, die Teilnehmer-
+       * zahl und der Empfaengersatz der Benachrichtigung wuessten nichts von ihm.
+       *
+       * Nur das Feld `attendees` wird geschrieben; ein ganzes Modell wuerde `okey` mitschleppen.
+       */
+      async recordInvitedAttendee(calevent: CalEventModel, person: AvatarInfo): Promise<void> {
+        const attendees = addInvitedAttendee(calevent.attendees, person);
+        if (attendees === calevent.attendees) return;   // already in the list, nothing to write
+        calevent.attendees = attendees;
+        await updateDoc(doc(store.firestoreService.firestore, `${CalEventCollection}/${calevent.okey}`), { attendees });
       },
 
       /******************************* subscriptions *************************************** */
