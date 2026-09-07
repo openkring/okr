@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
@@ -6,7 +6,7 @@ import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@okr/shared
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions } from '@okr/shared-util-angular';
-import { getPhotoUsageName, hasPhotoRestriction, hasRole, objectsToPhotos } from '@okr/shared-util-core';
+import { getFullName, getPhotoUsageName, hasPhotoRestriction, hasRole, objectsToPhotos } from '@okr/shared-util-core';
 import { getPhotoUsageCategory } from '@okr/shared-categories';
 import { SIZE_MD } from '@okr/shared-constants';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
@@ -16,6 +16,8 @@ import { Menu } from '@okr/cms-menu-feature';
 import { resolveVcardCapability, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
 
 import { PersonStore } from './person.store';
+
+type PersonSortField = 'name' | 'phone' | 'email';
 
 @Component({
   selector: 'okr-person-list',
@@ -31,6 +33,7 @@ import { PersonStore } from './person.store';
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
     ion-icon.photo-flag { color: var(--ion-color-medium); font-size: 18px; }
+    .clickable { cursor: pointer; user-select: none; }
   `],
   template: `
   <ion-header>
@@ -69,9 +72,9 @@ import { PersonStore } from './person.store';
     <!-- list header -->
     <ion-toolbar color="light" class="ion-hide-sm-down">
       <ion-item lines="none">
-        <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.phone_label() }}</strong></ion-label>
-        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.email_label() }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('name')"><strong>{{ store.i18n.name() }}{{ sortIcon('name') }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('phone')"><strong>{{ store.i18n.phone_label() }}{{ sortIcon('phone') }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down clickable" (click)="setSort('email')"><strong>{{ store.i18n.email_label() }}{{ sortIcon('email') }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -124,7 +127,21 @@ export class PersonList {
 
   // derived signals
   protected personsCount = computed(() => this.store.personsCount());
-  protected filteredPersons = computed(() => this.store.filteredPersons() ?? []);
+  // sort state
+  private sortField = signal<PersonSortField>('name');
+  private sortAsc   = signal(true);
+
+  protected filteredPersons = computed(() => {
+    const list = this.store.filteredPersons() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    const nameDisplay = this.nameDisplay();
+    return [...list].sort((a, b) => dir * (
+      field === 'phone' ? this.favPhone(a).localeCompare(this.favPhone(b)) :
+      field === 'email' ? this.favEmail(a).localeCompare(this.favEmail(b)) :
+                          getFullName(a.firstName, a.lastName, nameDisplay).localeCompare(getFullName(b.firstName, b.lastName, nameDisplay))
+    ));
+  });
   protected filteredPersonsCount = computed(() => this.filteredPersons().length);
   protected isLoading = computed(() => this.store.isLoading());
   protected readonly tags = computed(() => this.store.getTags());
@@ -170,7 +187,17 @@ export class PersonList {
     return `@shared/categories.photoUsage.${getPhotoUsageName(person.usageImages)}.label`;
   }
 
-  /******************************** setters (filter) ******************************************* */
+  protected sortIcon(field: PersonSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: PersonSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }

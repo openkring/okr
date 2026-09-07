@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonNote, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -10,6 +10,8 @@ import { convertDateFormatToString, DateFormat, hasRole } from '@okr/shared-util
 
 import { MeetingStore } from './meeting.store';
 
+type MeetingSortField = 'date' | 'name' | 'status';
+
 @Component({
   selector: 'okr-meeting-list',
   standalone: true,
@@ -19,6 +21,7 @@ import { MeetingStore } from './meeting.store';
     IonContent, IonList, IonItem, IonLabel, IonNote, IonPopover, IonGrid, IonRow, IonCol,
   ],
   providers: [MeetingStore],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
@@ -48,9 +51,9 @@ import { MeetingStore } from './meeting.store';
       <ion-toolbar color="light" class="ion-hide-sm-down">
         <ion-grid>
           <ion-row>
-            <ion-col size="3"><ion-label><strong>{{ store.i18n.meetingDate_label() }}</strong></ion-label></ion-col>
-            <ion-col size="6"><ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label></ion-col>
-            <ion-col size="3" class="ion-hide-md-down"><ion-label><strong>{{ store.i18n.state_label() }}</strong></ion-label></ion-col>
+            <ion-col size="3" class="clickable" (click)="setSort('date')"><ion-label><strong>{{ store.i18n.meetingDate_label() }}{{ sortIcon('date') }}</strong></ion-label></ion-col>
+            <ion-col size="6" class="clickable" (click)="setSort('name')"><ion-label><strong>{{ store.i18n.name_label() }}{{ sortIcon('name') }}</strong></ion-label></ion-col>
+            <ion-col size="3" class="ion-hide-md-down clickable" (click)="setSort('status')"><ion-label><strong>{{ store.i18n.state_label() }}{{ sortIcon('status') }}</strong></ion-label></ion-col>
           </ion-row>
         </ion-grid>
       </ion-toolbar>
@@ -89,7 +92,20 @@ export class MeetingList {
 
   // derived
   protected readonly count = computed(() => this.store.meetingsCount());
-  protected readonly filtered = computed(() => this.store.filteredMeetings() ?? []);
+  // sort state (local: the store keeps its newest-first default)
+  private sortField = signal<MeetingSortField>('date');
+  private sortAsc   = signal(false);
+
+  protected readonly filtered = computed(() => {
+    const list = this.store.filteredMeetings() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'name'   ? (a.name ?? '').localeCompare(b.name ?? '') :
+      field === 'status' ? (a.state ?? '').localeCompare(b.state ?? '') :
+                           (a.meetingDate ?? '').localeCompare(b.meetingDate ?? '')
+    ));
+  });
   protected readonly filteredCount = computed(() => this.filtered().length);
   protected readonly isLoading = computed(() => this.store.isLoading());
   protected readonly currentUser = computed(() => this.store.currentUser());
@@ -103,6 +119,16 @@ export class MeetingList {
 
   protected viewDate(meeting: MeetingModel): string {
     return convertDateFormatToString(meeting.meetingDate, DateFormat.StoreDate, DateFormat.ViewDate, false);
+  }
+
+  protected sortIcon(field: MeetingSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  protected setSort(field: MeetingSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
   }
 
   /*-------------------------- list-level actions --------------------------------*/

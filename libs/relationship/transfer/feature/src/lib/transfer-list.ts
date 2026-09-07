@@ -1,15 +1,17 @@
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { RoleName, TransferModel } from '@okr/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getYearList, hasRole } from '@okr/shared-util-core';
+import { getAvatarName, getYearList, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 
 import { TransferStore } from './transfer.store';
+
+type TransferSortField = 'date' | 'from' | 'to' | 'resource' | 'status';
 
 @Component({
   selector: 'okr-transfer-list',
@@ -21,6 +23,7 @@ import { TransferStore } from './transfer.store';
     IonLabel, IonContent, IonItem, IonList, IonPopover
   ],
   providers: [TransferStore],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
   <ion-header>
     <!-- title and actions -->
@@ -56,12 +59,12 @@ import { TransferStore } from './transfer.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.date() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.subject() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.object() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.resource() }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down clickable" (click)="setSort('date')"><strong>{{ store.i18n.date() }}{{ sortIcon('date') }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('from')"><strong>{{ store.i18n.subject() }}{{ sortIcon('from') }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('to')"><strong>{{ store.i18n.object() }}{{ sortIcon('to') }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('resource')"><strong>{{ store.i18n.resource() }}{{ sortIcon('resource') }}</strong></ion-label>
         <ion-label class="ion-hide-lg-down"><strong>{{ store.i18n.name() }}</strong></ion-label>
-        <ion-label class="ion-hide-lg-down"><strong>{{ store.i18n.state() }}</strong></ion-label>
+        <ion-label class="ion-hide-lg-down clickable" (click)="setSort('status')"><strong>{{ store.i18n.state() }}{{ sortIcon('status') }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -102,8 +105,23 @@ export class TransferList {
   protected selectedState = linkedSignal(() => this.store.selectedState());
   protected selectedYear = linkedSignal(() => this.store.selectedYear());
   
+  // sort state
+  private sortField = signal<TransferSortField>('date');
+  private sortAsc   = signal(true);
+
   // data
-  protected filteredTransfers = computed(() => this.store.filteredTransfers() ?? []);
+  protected filteredTransfers = computed(() => {
+    const list = this.store.filteredTransfers() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'from'     ? getAvatarName(a.subjects?.[0]).localeCompare(getAvatarName(b.subjects?.[0])) :
+      field === 'to'       ? getAvatarName(a.objects?.[0]).localeCompare(getAvatarName(b.objects?.[0])) :
+      field === 'resource' ? (a.resource?.name1 ?? '').localeCompare(b.resource?.name1 ?? '') :
+      field === 'status'   ? (a.state ?? '').localeCompare(b.state ?? '') :
+                             (a.dateOfTransfer ?? '').localeCompare(b.dateOfTransfer ?? '')
+    ));
+  });
   protected transfersCount = computed(() => this.store.transfersCount());
   protected selectedTransfersCount = computed(() => this.filteredTransfers().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -116,7 +134,17 @@ export class TransferList {
   protected years = getYearList();
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
-  /******************************** setters (filter) ******************************************* */
+  protected sortIcon(field: TransferSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: TransferSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }

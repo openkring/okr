@@ -17,6 +17,8 @@ import { showCalEventInfo } from '@okr/calevent-ui';
 import { createPersonAvatar } from '@okr/relationship-invitation-util';
 import { InvitationStore } from './invitation.store';
 
+type InvitationSortField = 'date' | 'name' | 'invitee' | 'inviter' | 'state';
+
 @Component({
   selector: 'okr-invitation-list',
   standalone: true,
@@ -27,10 +29,7 @@ import { InvitationStore } from './invitation.store';
     IonLabel, IonContent, IonItem, IonList, IonPopover
   ],
   providers: [InvitationStore],
-  styles: `
-    .sortable { cursor: pointer; user-select: none; }
-    .sortable ion-icon { vertical-align: middle; font-size: 0.8rem; }
-  `,
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
   <ion-header>
     <!-- title and actions -->
@@ -67,21 +66,11 @@ import { InvitationStore } from './invitation.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label class="sortable" (click)="sortBy('date')"><strong>{{ store.i18n.date() }}</strong>
-          @if (sortCol() === 'date') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-        </ion-label>
-        <ion-label class="ion-hide-md-down sortable" (click)="sortBy('name')"><strong>{{ store.i18n.name() }}</strong>
-          @if (sortCol() === 'name') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-        </ion-label>
-        <ion-label class="sortable" (click)="sortBy('invitee')"><strong>{{ store.i18n.invitee() }}</strong>
-          @if (sortCol() === 'invitee') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-        </ion-label>
-        <ion-label class="ion-hide-lg-down sortable" (click)="sortBy('inviter')"><strong>{{ store.i18n.inviter() }}</strong>
-          @if (sortCol() === 'inviter') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-        </ion-label>
-        <ion-label class="ion-hide-md-down sortable" (click)="sortBy('state')"><strong>{{ store.i18n.state() }}</strong>
-          @if (sortCol() === 'state') { <ion-icon [src]="sortDir() === 'asc' ? ('chevron-up' | svgIcon) : ('chevron-down' | svgIcon)" /> }
-        </ion-label>
+        <ion-label class="clickable" (click)="setSort('date')"><strong>{{ store.i18n.date() }}{{ sortIcon('date') }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down clickable" (click)="setSort('name')"><strong>{{ store.i18n.name() }}{{ sortIcon('name') }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('invitee')"><strong>{{ store.i18n.invitee() }}{{ sortIcon('invitee') }}</strong></ion-label>
+        <ion-label class="ion-hide-lg-down clickable" (click)="setSort('inviter')"><strong>{{ store.i18n.inviter() }}{{ sortIcon('inviter') }}</strong></ion-label>
+        <ion-label class="ion-hide-md-down clickable" (click)="setSort('state')"><strong>{{ store.i18n.state() }}{{ sortIcon('state') }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -128,18 +117,23 @@ export class InvitationList {
   protected showPast = signal(false);
 
   // sort state (default: newest date first, oldest at the bottom)
-  protected sortCol = signal<'date' | 'name' | 'invitee' | 'inviter' | 'state'>('date');
-  protected sortDir = signal<'asc' | 'desc'>('desc');
+  private sortField = signal<InvitationSortField>('date');
+  private sortAsc   = signal(false);
 
   // data
   protected filteredInvitations = computed(() => {
-    const col = this.sortCol();
-    const dir = this.sortDir() === 'asc' ? 1 : -1;
-    return [...(this.store.filteredInvitations() ?? [])].sort((a, b) => {
-      const av = this.sortValue(a, col);
-      const bv = this.sortValue(b, col);
-      return av < bv ? -dir : av > bv ? dir : 0;
-    });
+    const list = this.store.filteredInvitations() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    const invitee = (i: InvitationModel) => `${i.inviteeLastName ?? ''} ${i.inviteeFirstName ?? ''}`;
+    const inviter = (i: InvitationModel) => `${i.inviterLastName ?? ''} ${i.inviterFirstName ?? ''}`;
+    return [...list].sort((a, b) => dir * (
+      field === 'name'    ? (a.name ?? '').localeCompare(b.name ?? '') :
+      field === 'invitee' ? invitee(a).localeCompare(invitee(b)) :
+      field === 'inviter' ? inviter(a).localeCompare(inviter(b)) :
+      field === 'state'   ? (a.state ?? '').localeCompare(b.state ?? '') :
+                            (a.date ?? '').localeCompare(b.date ?? '')
+    ));
   });
   protected selectedInvitationsCount = computed(() => this.filteredInvitations().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -164,27 +158,17 @@ export class InvitationList {
     })
   }
 
-  /******************************** sorting ******************************************* */
-  protected sortBy(col: 'date' | 'name' | 'invitee' | 'inviter' | 'state'): void {
-    if (this.sortCol() === col) {
-      this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
-    } else {
-      this.sortCol.set(col);
-      this.sortDir.set(col === 'date' ? 'desc' : 'asc');
-    }
+  protected sortIcon(field: InvitationSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
   }
 
-  private sortValue(inv: InvitationModel, col: string): string {
-    switch (col) {
-      case 'invitee': return `${inv.inviteeLastName} ${inv.inviteeFirstName}`.toLowerCase();
-      case 'inviter': return `${inv.inviterLastName} ${inv.inviterFirstName}`.toLowerCase();
-      case 'name': return (inv.name ?? '').toLowerCase();
-      case 'state': return (inv.state ?? '').toLowerCase();
-      default: return inv.date ?? '';  // StoreDate yyyymmdd sorts lexicographically
-    }
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: InvitationSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
   }
 
-  /******************************** setters (filter) ******************************************* */
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }

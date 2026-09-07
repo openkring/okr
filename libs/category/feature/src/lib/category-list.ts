@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { CategoryListModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -11,6 +11,8 @@ import { Menu } from '@okr/cms-menu-feature';
 
 import { CategoryStore } from './category.store';
 
+type CategorySortField = 'name' | 'i18nBase' | 'nrItems';
+
 @Component({
     selector: 'okr-category-list',
     standalone: true,
@@ -21,6 +23,7 @@ import { CategoryStore } from './category.store';
       IonGrid, IonRow, IonCol, IonLabel, IonContent, IonItem, IonList, IonPopover
     ],
     providers: [CategoryStore],
+    styles: [`.clickable { cursor: pointer; user-select: none; }`],
     template: `
     <ion-header>
       <!-- title and context menu -->
@@ -53,14 +56,14 @@ import { CategoryStore } from './category.store';
     <ion-toolbar color="primary">
       <ion-grid>
         <ion-row>
-          <ion-col size="6" size-md="4">
-            <ion-label><strong>Name</strong></ion-label>
+          <ion-col size="6" size-md="4" class="clickable" (click)="setSort('name')">
+            <ion-label><strong>Name{{ sortIcon('name') }}</strong></ion-label>
           </ion-col>
-          <ion-col size="4" class="ion-hide-lg-down">
-            <ion-label><strong>I18nBase</strong></ion-label>
+          <ion-col size="4" class="ion-hide-lg-down clickable" (click)="setSort('i18nBase')">
+            <ion-label><strong>I18nBase{{ sortIcon('i18nBase') }}</strong></ion-label>
           </ion-col>
-          <ion-col size="6" size-md="4">
-            <ion-label><strong>Items</strong></ion-label>
+          <ion-col size="6" size-md="4" class="clickable" (click)="setSort('nrItems')">
+            <ion-label><strong>Items{{ sortIcon('nrItems') }}</strong></ion-label>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -103,7 +106,20 @@ export class CategoryList {
   protected searchTerm = linkedSignal(() => this.store.searchTerm());
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
 
-  protected filteredCategories = computed(() => this.store.filteredCategories() ?? []);
+  // sort state
+  private sortField = signal<CategorySortField>('name');
+  private sortAsc   = signal(true);
+
+  protected filteredCategories = computed(() => {
+    const list = this.store.filteredCategories() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'i18nBase' ? (a.i18n ?? '').localeCompare(b.i18n ?? '') :
+      field === 'nrItems'  ? (a.items?.length ?? 0) - (b.items?.length ?? 0) :
+                             (a.name ?? '').localeCompare(b.name ?? '')
+    ));
+  });
   protected categoriesCount = computed(() => this.store.categoriesCount());
   protected selectedCategoriesCount = computed(() => this.filteredCategories().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -115,7 +131,17 @@ export class CategoryList {
   protected isYearly = false;
   private imgixBaseUrl = this.appStore.env.services.imgixBaseUrl;
 
-  /******************************** setters (filter) ******************************************* */
+  protected sortIcon(field: CategorySortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: CategorySortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }

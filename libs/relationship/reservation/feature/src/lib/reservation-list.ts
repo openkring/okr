@@ -14,6 +14,8 @@ import { THUMBNAIL_SIZE } from '@okr/shared-constants';
 
 import { ReservationStore } from './reservation.store';
 
+type ReservationSortField = 'reserver' | 'name' | 'startdate' | 'status';
+
 
 @Component({
   selector: 'okr-reservation-list',
@@ -72,46 +74,46 @@ import { ReservationStore } from './reservation.store';
                 <ion-label><strong>{{ store.i18n.resource_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3">
+            <ion-col size-md="3" class="clickable" (click)="setSort('name')">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name_label() }}{{ sortIcon('name') }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3">
+            <ion-col size-md="3" class="clickable" (click)="setSort('startdate')">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.startDate_label() }}{{ sortIcon('startdate') }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3">
+            <ion-col size-md="3" class="clickable" (click)="setSort('status')">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.state() }}{{ sortIcon('status') }}</strong></ion-label>
               </ion-item>
             </ion-col>
           } @else if(isReservationOfResource() || isReservationOfResourceType()) {
-            <ion-col size-md="3">
+            <ion-col size-md="3" class="clickable" (click)="setSort('reserver')">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.reserver_label() }}{{ sortIcon('reserver') }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3">
+            <ion-col size-md="3" class="clickable" (click)="setSort('name')">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name_label() }}{{ sortIcon('name') }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3">
+            <ion-col size-md="3" class="clickable" (click)="setSort('startdate')">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.startDate_label() }}{{ sortIcon('startdate') }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size-md="3">
+            <ion-col size-md="3" class="clickable" (click)="setSort('status')">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.state() }}{{ sortIcon('status') }}</strong></ion-label>
               </ion-item>
             </ion-col>
           } @else { <!-- all -->
-            <ion-col size-md="2">
+            <ion-col size-md="2" class="clickable" (click)="setSort('reserver')">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.reserver_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.reserver_label() }}{{ sortIcon('reserver') }}</strong></ion-label>
               </ion-item>
             </ion-col>
             <ion-col size-md="2">
@@ -119,19 +121,19 @@ import { ReservationStore } from './reservation.store';
                 <ion-label><strong>{{ store.i18n.resource_label() }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col>
+            <ion-col class="clickable" (click)="setSort('name')">
               <ion-item lines="none" color="primary" class="ion-text-wrap">
-                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.name_label() }}{{ sortIcon('name') }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col size="auto">
+            <ion-col size="auto" class="clickable" (click)="setSort('startdate')">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.startDate_label() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.startDate_label() }}{{ sortIcon('startdate') }}</strong></ion-label>
               </ion-item>
             </ion-col>
-            <ion-col>
+            <ion-col class="clickable" (click)="setSort('status')">
               <ion-item lines="none" color="primary">
-                <ion-label><strong>{{ store.i18n.state() }}</strong></ion-label>
+                <ion-label><strong>{{ store.i18n.state() }}{{ sortIcon('status') }}</strong></ion-label>
               </ion-item>
             </ion-col>
           }
@@ -273,6 +275,7 @@ import { ReservationStore } from './reservation.store';
   </ion-content>
     `,
   styles: [`
+    .clickable { cursor: pointer; user-select: none; }
     .list-avatar { width: 40px; height: 40px; }
     .avatar-cell { display: flex; justify-content: center; }
     .date-inline {
@@ -331,7 +334,21 @@ export class ReservationList {
   protected selectedState = linkedSignal(() => this.store.selectedState());
 
   // derived values
-  protected filteredReservations = computed(() => this.store.filteredReservations());
+  // sort state
+  private sortField = signal<ReservationSortField>('reserver');
+  private sortAsc   = signal(true);
+
+  protected filteredReservations = computed(() => {
+    const list = this.store.filteredReservations() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'name'      ? (a.name ?? '').localeCompare(b.name ?? '') :
+      field === 'startdate' ? (a.startDate ?? '').localeCompare(b.startDate ?? '') :
+      field === 'status'    ? (a.state ?? '').localeCompare(b.state ?? '') :
+                              this.getReserverName(a).localeCompare(this.getReserverName(b))
+    ));
+  });
   protected allReservations = computed(() => this.store.allReservations());
   protected reservationsCount = computed(() => this.store.allReservations()?.length ?? 0);
   protected selectedReservationsCount = computed(() => this.filteredReservations()?.length ?? 0);
@@ -489,6 +506,16 @@ export class ReservationList {
   protected canCancelOwn(reservation: ReservationModel): boolean {
     const personKey = this.currentUser()?.personKey;
     return !!personKey && reservation.reserver?.key === personKey && isReservationOpen(reservation);
+  }
+
+  protected sortIcon(field: ReservationSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  protected setSort(field: ReservationSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
   }
 
   protected getReserverName(reservation: ReservationModel): string {

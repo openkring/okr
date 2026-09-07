@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { RoleName, WorkrelModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -13,6 +13,8 @@ import { WorkrelNamePipe } from '@okr/relationship-workrel-util';
 
 import { WorkrelStore } from './workrel.store';
 
+type WorkrelSortField = 'person' | 'type' | 'org';
+
 @Component({
   selector: 'okr-workrel-list',
   standalone: true,
@@ -23,6 +25,7 @@ import { WorkrelStore } from './workrel.store';
     IonLabel, IonContent, IonItem, IonImg, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover
   ],
   providers: [WorkrelStore],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
     <ion-header>
       <!-- title and actions -->
@@ -63,9 +66,9 @@ import { WorkrelStore } from './workrel.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{ store.i18n.subject() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.type() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.object() }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('person')"><strong>{{ store.i18n.subject() }}{{ sortIcon('person') }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('type')"><strong>{{ store.i18n.type() }}{{ sortIcon('type') }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('org')"><strong>{{ store.i18n.object() }}{{ sortIcon('org') }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -126,8 +129,23 @@ export class WorkrelList {
   protected selectedType = linkedSignal(() => this.store.selectedType());
   protected selectedState = linkedSignal(() => this.store.selectedState());
 
+  // sort state
+  private sortField = signal<WorkrelSortField>('person');
+  private sortAsc   = signal(true);
+
   // data
-  protected filteredWorkRels = computed(() => this.store.filteredWorkrels());
+  protected filteredWorkRels = computed(() => {
+    const list = this.store.filteredWorkrels() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    const person = (w: WorkrelModel) => `${w.subjectName1 ?? ''} ${w.subjectName2 ?? ''}`;
+    const type   = (w: WorkrelModel) => w.type === 'custom' ? (w.label ?? '') : (w.type ?? '');
+    return [...list].sort((a, b) => dir * (
+      field === 'type' ? type(a).localeCompare(type(b)) :
+      field === 'org'  ? (a.objectName ?? '').localeCompare(b.objectName ?? '') :
+                         person(a).localeCompare(person(b))
+    ));
+  });
   protected allWorkRels = computed(() => this.store.allWorkrels());
   protected workRelsCount = computed(() => this.store.allWorkrels()?.length ?? 0);
   protected selectedWorkRelsCount = computed(() => this.filteredWorkRels()?.length ?? 0);
@@ -140,7 +158,17 @@ export class WorkrelList {
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
-  /******************************** setters (filter) ******************************************* */
+  protected sortIcon(field: WorkrelSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: WorkrelSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }

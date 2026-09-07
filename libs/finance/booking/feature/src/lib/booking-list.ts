@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { BookingLineModel, BookingModel, RoleName } from '@okr/shared-models';
@@ -13,6 +13,13 @@ import { ReadOnlyBanner } from '@okr/finance-accounting-feature';
 
 import { BookingAction, isForReview, JournalRow } from '@okr/finance-booking-util';
 import { BookingStore } from './booking.store';
+
+type JournalSortField = 'date' | 'haben' | 'soll' | 'text' | 'amount';
+
+/** JournalRow.amount is display-formatted (e.g. 1'234.50); strip grouping for a numeric sort. */
+function parseAmount(amount: string): number {
+  return Number((amount ?? '').replace(/[^\d.-]/g, '')) || 0;
+}
 
 @Component({
   selector: 'okr-booking-list',
@@ -62,11 +69,11 @@ import { BookingStore } from './booking.store';
     <ion-toolbar color="primary">
       <ion-grid>
         <ion-row>
-          <ion-col size="3" size-md="2"><ion-label><strong>{{ store.i18n.col_date() }}</strong></ion-label></ion-col>
-          <ion-col size-md="2" class="ion-hide-sm-down"><ion-label><strong>{{ store.i18n.col_credit() }}</strong></ion-label></ion-col>
-          <ion-col size-md="2" class="ion-hide-sm-down"><ion-label><strong>{{ store.i18n.col_debit() }}</strong></ion-label></ion-col>
-          <ion-col size="5" size-md="4"><ion-label><strong>{{ store.i18n.col_name() }}</strong></ion-label></ion-col>
-          <ion-col size="4" size-md="2" class="ion-text-end"><ion-label><strong>{{ store.i18n.col_amount() }}</strong></ion-label></ion-col>
+          <ion-col size="3" size-md="2" class="clickable" (click)="setSort('date')"><ion-label><strong>{{ store.i18n.col_date() }}{{ sortIcon('date') }}</strong></ion-label></ion-col>
+          <ion-col size-md="2" class="ion-hide-sm-down clickable" (click)="setSort('haben')"><ion-label><strong>{{ store.i18n.col_credit() }}{{ sortIcon('haben') }}</strong></ion-label></ion-col>
+          <ion-col size-md="2" class="ion-hide-sm-down clickable" (click)="setSort('soll')"><ion-label><strong>{{ store.i18n.col_debit() }}{{ sortIcon('soll') }}</strong></ion-label></ion-col>
+          <ion-col size="5" size-md="4" class="clickable" (click)="setSort('text')"><ion-label><strong>{{ store.i18n.col_name() }}{{ sortIcon('text') }}</strong></ion-label></ion-col>
+          <ion-col size="4" size-md="2" class="ion-text-end clickable" (click)="setSort('amount')"><ion-label><strong>{{ store.i18n.col_amount() }}{{ sortIcon('amount') }}</strong></ion-label></ion-col>
         </ion-row>
       </ion-grid>
     </ion-toolbar>
@@ -104,6 +111,7 @@ import { BookingStore } from './booking.store';
   </ion-content>
   `,
   styles: [`
+    .clickable { cursor: pointer; user-select: none; }
     .review-badge {
       margin-left: 0.5rem; padding: 0.1rem 0.45rem;
       border-radius: 0.75rem; font-size: 0.7rem; font-weight: 600;
@@ -123,7 +131,22 @@ export class BookingList {
 
   protected readonly popupId = computed(() => 'c_bookings');
   protected readonly isLoading = computed(() => this.store.isLoading());
-  protected readonly filtered = computed(() => this.store.filteredRows());
+  // sort state (default: newest first, as the store's journal order)
+  private sortField = signal<JournalSortField>('date');
+  private sortAsc   = signal(false);
+
+  protected readonly filtered = computed(() => {
+    const list = this.store.filteredRows();
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'haben'  ? (a.creditAccount ?? '').localeCompare(b.creditAccount ?? '') :
+      field === 'soll'   ? (a.debitAccount ?? '').localeCompare(b.debitAccount ?? '') :
+      field === 'text'   ? (a.accountName ?? '').localeCompare(b.accountName ?? '') :
+      field === 'amount' ? parseAmount(a.amount) - parseAmount(b.amount) :
+                           ((a.booking.date ?? '').localeCompare(b.booking.date ?? '') || (a.booking.bookingNo ?? 0) - (b.booking.bookingNo ?? 0))
+    ));
+  });
   protected readonly filteredCount = computed(() => this.filtered().length);
   protected readonly count = computed(() => this.store.bookings().length);
   protected readonly years = computed(() => this.store.years());
@@ -134,6 +157,16 @@ export class BookingList {
 
   protected isForReview(row: JournalRow): boolean {
     return isForReview(row.booking);
+  }
+
+  protected sortIcon(field: JournalSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  protected setSort(field: JournalSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
   }
 
   /*-------------------------- popover context menu --------------------------------*/

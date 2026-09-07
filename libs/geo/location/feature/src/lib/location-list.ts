@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonBackdrop, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { LocationModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -9,6 +9,8 @@ import { hasRole } from '@okr/shared-util-core';
 import { Menu } from '@okr/cms-menu-feature';
 
 import { LocationStore } from './location.store';
+
+type LocationSortField = 'name' | 'type';
 
 @Component({
   selector: 'okr-location-all-list',
@@ -21,6 +23,7 @@ import { LocationStore } from './location.store';
     IonGrid, IonRow, IonCol, IonList, IonPopover
   ],
   providers: [LocationStore],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
   <ion-header>
       <!-- title and context menu -->
@@ -62,11 +65,11 @@ import { LocationStore } from './location.store';
       <ion-item color="primary" lines="none">
         <ion-grid>
           <ion-row>
-            <ion-col size="8">
-              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>  
+            <ion-col size="8" class="clickable" (click)="setSort('name')">
+              <ion-label><strong>{{ store.i18n.name() }}{{ sortIcon('name') }}</strong></ion-label>
             </ion-col>
-            <ion-col size="4">
-                <ion-label><strong>{{ store.i18n.type() }}</strong></ion-label>
+            <ion-col size="4" class="clickable" (click)="setSort('type')">
+                <ion-label><strong>{{ store.i18n.type() }}{{ sortIcon('type') }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -110,8 +113,20 @@ export class LocationList {
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
   protected selectedType = linkedSignal(() => this.store.selectedType());
 
+  // sort state
+  private sortField = signal<LocationSortField>('name');
+  private sortAsc   = signal(true);
+
   // fields
-  protected filteredLocations = computed(() => this.store.filteredLocations() ?? []);
+  protected filteredLocations = computed(() => {
+    const list = this.store.filteredLocations() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'type' ? (a.type ?? '').localeCompare(b.type ?? '') :
+                         (a.name ?? '').localeCompare(b.name ?? '')
+    ));
+  });
   protected locationsCount = computed(() => this.store.locationsCount());
   protected selectedLocationsCount = computed(() => this.filteredLocations().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -123,7 +138,17 @@ export class LocationList {
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
-  /******************************** setters (filter) ******************************************* */
+  protected sortIcon(field: LocationSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: LocationSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }

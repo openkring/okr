@@ -9,6 +9,8 @@ import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-u
 
 import { MenuStore } from './menu.store';
 
+type MenuSortField = 'name' | 'url' | 'action';
+
 @Component({
   selector: 'okr-menu-list',
   standalone: true,
@@ -19,6 +21,7 @@ import { MenuStore } from './menu.store';
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList,
     IonInfiniteScroll, IonInfiniteScrollContent
   ],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
     <ion-header>
       <!-- page header -->
@@ -52,14 +55,14 @@ import { MenuStore } from './menu.store';
         <ion-item color="primary" lines="none">
           <ion-grid>
             <ion-row>
-              <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
+              <ion-col size="6" size-md="4" class="clickable" (click)="setSort('name')">
+                <ion-label><strong>{{ store.i18n.name_label() }}{{ sortIcon('name') }}</strong></ion-label>
               </ion-col>
-              <ion-col size="6" size-md="4" class="ion-hide-md-down">
-                  <ion-label><strong>{{ store.i18n.link() }}</strong></ion-label>
+              <ion-col size="6" size-md="4" class="ion-hide-md-down clickable" (click)="setSort('url')">
+                  <ion-label><strong>{{ store.i18n.link() }}{{ sortIcon('url') }}</strong></ion-label>
               </ion-col>
-              <ion-col size="6" size-md="4">
-                  <ion-label><strong>{{ store.i18n.action() }}</strong></ion-label>
+              <ion-col size="6" size-md="4" class="clickable" (click)="setSort('action')">
+                  <ion-label><strong>{{ store.i18n.action() }}{{ sortIcon('action') }}</strong></ion-label>
               </ion-col>
             </ion-row>
           </ion-grid>
@@ -113,8 +116,21 @@ export class MenuList {
   private readonly pageSize = 50;
   protected visibleCount = signal(this.pageSize);
 
+  // sort state
+  private sortField = signal<MenuSortField>('name');
+  private sortAsc   = signal(true);
+
   // computed
-  protected filteredMenuItems = computed(() => this.store.filteredMenuItems() ?? []);
+  protected filteredMenuItems = computed(() => {
+    const list = this.store.filteredMenuItems() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'url'    ? (a.url ?? '').localeCompare(b.url ?? '') :
+      field === 'action' ? (a.action ?? '').localeCompare(b.action ?? '') :
+                           (a.name ?? '').localeCompare(b.name ?? '')
+    ));
+  });
   protected visibleMenuItems = computed(() => this.filteredMenuItems().slice(0, this.visibleCount()));
   protected hasMore = computed(() => this.visibleCount() < this.filteredMenuItems().length);
   protected menuItemsCount = computed(() => this.store.menuItemsCount());
@@ -160,6 +176,16 @@ export class MenuList {
 
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.store.currentUser());
+  }
+
+  protected sortIcon(field: MenuSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  protected setSort(field: MenuSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
   }
 
   protected onSearchTermChange(searchTerm: string): void {

@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { PersonalRelModel, RoleName } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -12,6 +12,8 @@ import { Menu } from '@okr/cms-menu-feature';
 import { PersonalRelNamePipe } from '@okr/relationship-personal-rel-util';
 import { PersonalRelStore } from './personal-rel.store';
 
+type PersonalRelSortField = 'person1' | 'type' | 'person2';
+
 @Component({
   selector: 'okr-personal-rel-list',
   standalone: true,
@@ -23,6 +25,7 @@ import { PersonalRelStore } from './personal-rel.store';
     IonLabel, IonContent, IonItem, IonImg, IonList, IonGrid, IonRow, IonCol, IonAvatar, IonPopover
   ],
   providers: [PersonalRelStore],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
     <ion-header>
       <!-- title and actions -->
@@ -63,9 +66,9 @@ import { PersonalRelStore } from './personal-rel.store';
     <!-- list header -->
     <ion-toolbar color="primary">
       <ion-item lines="none" color="primary">
-        <ion-label><strong>{{ store.i18n.person1() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.type() }}</strong></ion-label>
-        <ion-label><strong>{{ store.i18n.person2() }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('person1')"><strong>{{ store.i18n.person1() }}{{ sortIcon('person1') }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('type')"><strong>{{ store.i18n.type() }}{{ sortIcon('type') }}</strong></ion-label>
+        <ion-label class="clickable" (click)="setSort('person2')"><strong>{{ store.i18n.person2() }}{{ sortIcon('person2') }}</strong></ion-label>
       </ion-item>
     </ion-toolbar>
   </ion-header>
@@ -125,8 +128,24 @@ export class PersonalRelList {
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
   protected selectedType = linkedSignal(() => this.store.selectedPersonalRelType());
 
+  // sort state
+  private sortField = signal<PersonalRelSortField>('person1');
+  private sortAsc   = signal(true);
+
   // derived values
-  protected filteredPersonalRels = computed(() => this.store.filteredPersonalRels());
+  protected filteredPersonalRels = computed(() => {
+    const list = this.store.filteredPersonalRels() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    const person1 = (p: PersonalRelModel) => `${p.subjectFirstName ?? ''} ${p.subjectLastName ?? ''}`;
+    const person2 = (p: PersonalRelModel) => `${p.objectFirstName ?? ''} ${p.objectLastName ?? ''}`;
+    const type    = (p: PersonalRelModel) => p.type === 'custom' ? (p.label ?? '') : (p.type ?? '');
+    return [...list].sort((a, b) => dir * (
+      field === 'type'    ? type(a).localeCompare(type(b)) :
+      field === 'person2' ? person2(a).localeCompare(person2(b)) :
+                            person1(a).localeCompare(person1(b))
+    ));
+  });
   protected allPersonalRels = computed(() => this.store.allPersonalRels());
   protected personalRelsCount = computed(() => this.store.allPersonalRels()?.length ?? 0);
   protected selectedPersonalRelsCount = computed(() => this.filteredPersonalRels()?.length ?? 0);
@@ -138,7 +157,17 @@ export class PersonalRelList {
 
   private imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
-  /******************************** setters (filter) ******************************************* */
+  protected sortIcon(field: PersonalRelSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: PersonalRelSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }

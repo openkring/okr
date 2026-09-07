@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { OrgModel, RoleName } from '@okr/shared-models';
@@ -14,6 +14,8 @@ import { resolveVcardCapability, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-u
 
 import { OrgStore } from './org.store';
 
+type OrgSortField = 'name' | 'phone' | 'email';
+
 
 @Component({
   selector: 'okr-org-list',
@@ -28,6 +30,7 @@ import { OrgStore } from './org.store';
   providers: [OrgStore],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
+    .clickable { cursor: pointer; user-select: none; }
   `],
   template: `
   <ion-header>
@@ -63,14 +66,14 @@ import { OrgStore } from './org.store';
     <ion-toolbar color="primary" class="ion-hide-sm-down">
       <ion-grid>
         <ion-row>
-          <ion-col size="5">
-            <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+          <ion-col size="5" class="clickable" (click)="setSort('name')">
+            <ion-label><strong>{{ store.i18n.name() }}{{ sortIcon('name') }}</strong></ion-label>
           </ion-col>
-          <ion-col size="3">
-              <ion-label><strong>{{ store.i18n.phone() }}</strong></ion-label>
+          <ion-col size="3" class="clickable" (click)="setSort('phone')">
+              <ion-label><strong>{{ store.i18n.phone() }}{{ sortIcon('phone') }}</strong></ion-label>
           </ion-col>
-          <ion-col size="4">
-            <ion-label><strong>{{ store.i18n.email() }}</strong></ion-label>
+          <ion-col size="4" class="clickable" (click)="setSort('email')">
+            <ion-label><strong>{{ store.i18n.email() }}{{ sortIcon('email') }}</strong></ion-label>
           </ion-col>
         </ion-row>
       </ion-grid>
@@ -132,7 +135,20 @@ export class OrgList {
   public contextMenuName = input.required<string>();
 
   // derived signals
-  protected filteredOrgs = computed(() => this.store.filteredOrgs() ?? []);
+  // sort state
+  private sortField = signal<OrgSortField>('name');
+  private sortAsc   = signal(true);
+
+  protected filteredOrgs = computed(() => {
+    const list = this.store.filteredOrgs() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'phone' ? this.favPhone(a).localeCompare(this.favPhone(b)) :
+      field === 'email' ? this.favEmail(a).localeCompare(this.favEmail(b)) :
+                          (a.name ?? '').localeCompare(b.name ?? '')
+    ));
+  });
   protected orgsCount = computed(() => this.store.orgsCount());
   protected selectedOrgsCount = computed(() => this.filteredOrgs().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -153,7 +169,17 @@ export class OrgList {
   }
   protected readonly vcardI18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
 
-  /******************************** setters (filter) ******************************************* */
+  protected sortIcon(field: OrgSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: OrgSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }

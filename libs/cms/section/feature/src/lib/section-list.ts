@@ -1,4 +1,4 @@
-import { Component, computed, inject, linkedSignal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { RoleName, SectionModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -10,6 +10,8 @@ import { sectionSupportsImages } from '@okr/cms-section-util';
 import { SectionStore } from './section.store';
 import { SectionImageService, SectionImageUploadLabels } from './section-image.service';
 
+type SectionSortField = 'id' | 'name' | 'type';
+
 @Component({
   selector: 'okr-section-all-list',
   standalone: true,
@@ -19,6 +21,7 @@ import { SectionImageService, SectionImageUploadLabels } from './section-image.s
     IonToolbar, IonButton, IonIcon, IonLabel, IonHeader, IonButtons,
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList
   ],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
   <ion-header>
     <!-- page header -->
@@ -54,14 +57,14 @@ import { SectionImageService, SectionImageUploadLabels } from './section-image.s
       <ion-item color="primary" lines="none">
         <ion-grid>
           <ion-row>
-            <ion-col size="4" class="ion-hide-md-down">
-              <ion-label><strong>{{ store.i18n.key() }}</strong></ion-label>
+            <ion-col size="4" class="ion-hide-md-down clickable" (click)="setSort('id')">
+              <ion-label><strong>{{ store.i18n.key() }}{{ sortIcon('id') }}</strong></ion-label>
             </ion-col>
-            <ion-col size="6" size-md="4">
-              <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
+            <ion-col size="6" size-md="4" class="clickable" (click)="setSort('name')">
+              <ion-label><strong>{{ store.i18n.name() }}{{ sortIcon('name') }}</strong></ion-label>
             </ion-col>
-            <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ store.i18n.type() }}</strong></ion-label>
+            <ion-col size="6" size-md="4" class="clickable" (click)="setSort('type')">
+                <ion-label><strong>{{ store.i18n.type() }}{{ sortIcon('type') }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -103,8 +106,21 @@ export class SectionAllList {
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
   protected selectedType = linkedSignal(() => this.store.selectedCategory());
 
+  // sort state
+  private sortField = signal<SectionSortField>('id');
+  private sortAsc   = signal(true);
+
   // fields
-  protected filteredSections = computed(() => this.store.filteredSections() ?? []);
+  protected filteredSections = computed(() => {
+    const list = this.store.filteredSections() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'name' ? (a.name ?? '').localeCompare(b.name ?? '') :
+      field === 'type' ? (a.type ?? '').localeCompare(b.type ?? '') :
+                         (a.okey ?? '').localeCompare(b.okey ?? '')
+    ));
+  });
   protected sectionsCount = computed(() => this.store.sections()?.length ?? 0);
   protected selectedSectionsCount = computed(() => this.filteredSections().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -114,7 +130,17 @@ export class SectionAllList {
   protected readOnly = computed(() => !hasRole('contentAdmin', this.currentUser()));
   protected states = computed(() => this.store.appStore.getCategory('content_state'));
 
-  /******************************** setters (filter) ******************************************* */
+  protected sortIcon(field: SectionSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: SectionSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }

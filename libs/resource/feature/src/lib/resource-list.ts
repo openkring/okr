@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ResourceModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -10,6 +10,7 @@ import { Menu } from '@okr/cms-menu-feature';
 
 import { ResourceStore } from './resource.store';
 
+type ResourceSortField = 'name' | 'value';
 
 @Component({
   selector: 'okr-resource-list',
@@ -21,6 +22,7 @@ import { ResourceStore } from './resource.store';
     IonIcon, IonItem, IonLabel, IonContent, IonPopover
   ],
   providers: [ResourceStore],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
   <ion-header>
     <!-- title and actions -->
@@ -57,8 +59,8 @@ import { ResourceStore } from './resource.store';
   <!-- list header -->
   <ion-toolbar color="primary" class="ion-hide-sm-down">
     <ion-item color="primary" lines="none">
-      <ion-label><strong>{{ store.i18n.name() }}</strong></ion-label>
-      <ion-label><strong>{{ store.i18n.value() }}</strong></ion-label>
+      <ion-label class="clickable" (click)="setSort('name')"><strong>{{ store.i18n.name() }}{{ sortIcon('name') }}</strong></ion-label>
+      <ion-label class="clickable" (click)="setSort('value')"><strong>{{ store.i18n.value() }}{{ sortIcon('value') }}</strong></ion-label>
       <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.description() }}</strong></ion-label>
     </ion-item>
   </ion-toolbar>
@@ -96,8 +98,20 @@ export class ResourceList {
   public filter = input.required<string>();
   public contextMenuName = input.required<string>();
 
+  // sort state
+  private sortField = signal<ResourceSortField>('name');
+  private sortAsc   = signal(true);
+
   // derived signals
-  protected filteredResources = computed(() => this.store.filteredResources() ?? []);
+  protected filteredResources = computed(() => {
+    const list = this.store.filteredResources() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'value' ? (a.currentValue ?? 0) - (b.currentValue ?? 0) :
+                          (a.name ?? '').localeCompare(b.name ?? '')
+    ));
+  });
   protected resourcesCount = computed(() => this.store.resourcesCount());
   protected selectedResourcesCount = computed(() => this.filteredResources().length);
   protected isLoading = computed(() => this.store.isLoading());
@@ -118,7 +132,17 @@ export class ResourceList {
     return iconName ?? '';
   }
 
-  /******************************** setters (filter) ******************************************* */
+  protected sortIcon(field: ResourceSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: ResourceSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
   }

@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { ActionSheetOptions, ActionSheetController, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar, IonNote } from '@ionic/angular/standalone';
 
 import { ResponsibilityModel, RoleName } from '@okr/shared-models';
@@ -12,6 +12,8 @@ import { AvatarDisplay } from '@okr/avatar-ui';
 
 import { ResponsibilityStore } from './responsibility.store';
 
+type ResponsibilitySortField = 'name' | 'responsible';
+
 @Component({
   selector: 'okr-responsibility-list',
   standalone: true,
@@ -24,6 +26,7 @@ import { ResponsibilityStore } from './responsibility.store';
   providers: [ResponsibilityStore],
   styles: [`
     ion-card-content { padding: 0px;}
+    .clickable { cursor: pointer; user-select: none; }
   `],
   template: `
     <ion-header>
@@ -50,11 +53,11 @@ import { ResponsibilityStore } from './responsibility.store';
       <ion-toolbar color="light" class="ion-hide-md-down">
         <ion-grid>
           <ion-row>
-            <ion-col size="8">
-              <ion-label>{{ store.i18n.responsibility() }}</ion-label>
+            <ion-col size="8" class="clickable" (click)="setSort('name')">
+              <ion-label>{{ store.i18n.responsibility() }}{{ sortIcon('name') }}</ion-label>
             </ion-col>
-            <ion-col size="2">
-              <ion-label>{{ store.i18n.responsible() }}</ion-label>
+            <ion-col size="2" class="clickable" (click)="setSort('responsible')">
+              <ion-label>{{ store.i18n.responsible() }}{{ sortIcon('responsible') }}</ion-label>
             </ion-col>
             <ion-col size="2">
               <ion-label>{{ store.i18n.delegate() }}</ion-label>
@@ -68,11 +71,11 @@ import { ResponsibilityStore } from './responsibility.store';
       @if(isLoading()) {
         <okr-spinner />
       } @else {
-        @if(store.filteredResponsibilities().length === 0) {
+        @if(filteredResponsibilities().length === 0) {
           <okr-empty-list [message]="store.i18n.empty()" />
         } @else {
           <ion-grid>
-            @for(r of store.filteredResponsibilities(); track r.okey) {
+            @for(r of filteredResponsibilities(); track r.okey) {
               <ion-row (click)="showActions(r)">
                 <ion-col size="8">
                     <ion-label>
@@ -112,7 +115,21 @@ export class ResponsibilityList {
 
   private readonly imgixBaseUrl = this.store.appStore.env.services.imgixBaseUrl;
 
-  protected count = computed(() => this.store.filteredResponsibilities().length);
+  // sort state
+  private sortField = signal<ResponsibilitySortField>('name');
+  private sortAsc   = signal(true);
+
+  protected filteredResponsibilities = computed(() => {
+    const list = this.store.filteredResponsibilities() ?? [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    const responsible = (r: ResponsibilityModel) => `${r.responsibleAvatar?.name1 ?? ''} ${r.responsibleAvatar?.name2 ?? ''}`;
+    return [...list].sort((a, b) => dir * (
+      field === 'responsible' ? responsible(a).localeCompare(responsible(b)) :
+                                (a.name ?? '').localeCompare(b.name ?? '')
+    ));
+  });
+  protected count = computed(() => this.filteredResponsibilities().length);
   protected popupId = computed(() => `responsibility-list-menu-${this.listId()}`);
   protected isLoading = computed(() => this.store.isLoading());
 
@@ -121,6 +138,16 @@ export class ResponsibilityList {
       const listId = this.listId();
       untracked(() => this.store.setListId(listId));
     });
+  }
+
+  protected sortIcon(field: ResponsibilitySortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  protected setSort(field: ResponsibilitySortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
   }
 
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {

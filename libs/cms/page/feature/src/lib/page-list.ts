@@ -11,6 +11,8 @@ import { Menu } from '@okr/cms-menu-feature';
 
 import { PageStore } from './page.store';
 
+type PageSortField = 'id' | 'name' | 'nrSections';
+
 @Component({
   selector: 'okr-page-all-list',
   standalone: true,
@@ -21,6 +23,7 @@ import { PageStore } from './page.store';
     IonTitle, IonMenuButton, IonContent, IonItem, IonGrid, IonRow, IonCol, IonList, IonPopover,
     IonInfiniteScroll, IonInfiniteScrollContent
   ],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`],
   template: `
   <ion-header>
     <ion-toolbar color="secondary">
@@ -62,14 +65,14 @@ import { PageStore } from './page.store';
       <ion-item color="primary" lines="none">
         <ion-grid>
           <ion-row>
-            <ion-col size="4" class="ion-hide-md-down">
-              <ion-label><strong>{{ store.i18n.key() }}</strong></ion-label>
+            <ion-col size="4" class="ion-hide-md-down clickable" (click)="setSort('id')">
+              <ion-label><strong>{{ store.i18n.key() }}{{ sortIcon('id') }}</strong></ion-label>
             </ion-col>
-            <ion-col size="6" size-md="4">
-              <ion-label><strong>{{ store.i18n.name_label() }}</strong></ion-label>
+            <ion-col size="6" size-md="4" class="clickable" (click)="setSort('name')">
+              <ion-label><strong>{{ store.i18n.name_label() }}{{ sortIcon('name') }}</strong></ion-label>
             </ion-col>
-            <ion-col size="6" size-md="4">
-                <ion-label><strong>{{ store.i18n.sections() }}</strong></ion-label>
+            <ion-col size="6" size-md="4" class="clickable" (click)="setSort('nrSections')">
+                <ion-label><strong>{{ store.i18n.sections() }}{{ sortIcon('nrSections') }}</strong></ion-label>
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -116,10 +119,23 @@ export class PageList {
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
   protected selectedType = linkedSignal(() => this.store.selectedType());
 
+  // sort state
+  private sortField = signal<PageSortField>('id');
+  private sortAsc   = signal(true);
+
   // incremental rendering (ion-infinite-scroll)
   private readonly pageSize = 50;
   protected visibleCount = signal(this.pageSize);
-  protected filteredPages = computed(() => this.store.filteredPages() || []);
+  protected filteredPages = computed(() => {
+    const list = this.store.filteredPages() || [];
+    const field = this.sortField();
+    const dir   = this.sortAsc() ? 1 : -1;
+    return [...list].sort((a, b) => dir * (
+      field === 'name'       ? (a.name ?? '').localeCompare(b.name ?? '') :
+      field === 'nrSections' ? (a.sections?.length ?? 0) - (b.sections?.length ?? 0) :
+                               (a.okey ?? '').localeCompare(b.okey ?? '')
+    ));
+  });
   protected visiblePages = computed(() => this.filteredPages().slice(0, this.visibleCount()));
   protected hasMore = computed(() => this.visibleCount() < this.filteredPages().length);
   protected pagesCount = computed(() => this.store.pagesCount());
@@ -144,7 +160,17 @@ export class PageList {
     this.visibleCount.set(this.pageSize);
   }
 
-  /******************************** setters (filter) ******************************************* */
+  protected sortIcon(field: PageSortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortAsc() ? ' ↑' : ' ↓';
+  }
+
+  /******************************** setters (filter/sort) ******************************************* */
+  protected setSort(field: PageSortField): void {
+    this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
+    this.sortField.set(field);
+  }
+
   protected onSearchtermChange(searchTerm: string): void {
     this.resetWindow();
     this.store.setSearchTerm(searchTerm);
