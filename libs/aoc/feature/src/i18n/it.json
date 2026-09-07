@@ -96,6 +96,13 @@
       "label": "Verificare le entrate dei giovani",
       "button": "Verificare",
       "description": "I soci elencati di seguito sono registrati nel database con entrata come socio attivo; inizialmente dovrebbero essere riassegnati ai giovani."
+    },
+    "hasAccount": {
+      "title": "Riporta l'accesso sulla persona",
+      "label": "Imposta hasAccount per ogni persona che ha un accesso. Serve perché tu possa invitare a un evento solo utenti registrati.",
+      "button": "Esegui",
+      "confirm": "L'indicatore viene reimpostato per tutte le persone con un accesso. Nessun dato esistente va perso. Continuare?",
+      "conf": "Fatto: {count} persone aggiornate."
     }
   },
   "bexio": {

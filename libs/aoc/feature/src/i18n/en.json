@@ -96,6 +96,13 @@
       "label": "Check junior entries",
       "button": "Check",
       "description": "The members listed below are recorded in the database with entry as an active member; they should initially be reassigned to juniors."
+    },
+    "hasAccount": {
+      "title": "Mirror app access onto the person",
+      "label": "Sets hasAccount on every person who has an app account. Needed so you can only invite registered users to an event.",
+      "button": "Run",
+      "confirm": "The flag is set again for everybody with an account. No existing data is lost. Continue?",
+      "conf": "Done: {count} persons updated."
     }
   },
   "bexio": {

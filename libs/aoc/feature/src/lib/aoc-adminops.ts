@@ -73,6 +73,16 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
                 <okr-button [label]="store.i18n.adminops_mcatchange_button()" iconName="checkbox-circle" (click)="showMembershipCategoryChanges()" />
               </ion-col>
             </ion-row>
+            <!-- hasAccount backfill: one-off maintenance, see AocAdminOpsStore.backfillHasAccount -->
+            <ion-row>
+              <ion-col><ion-label>{{ store.i18n.adminops_hasaccount_title() }}</ion-label></ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="6">{{ store.i18n.adminops_hasaccount_label() }}</ion-col>
+              <ion-col size="6">
+                <okr-button [label]="store.i18n.adminops_hasaccount_button()" iconName="checkbox-circle" (click)="backfillHasAccount()" />
+              </ion-col>
+            </ion-row>
             <!-- Find orphaned sections -->
           </ion-grid>
         </ion-card-content>
@@ -139,6 +149,10 @@ export class AocAdminOps {
   public showMembershipCategoryChanges(): void {
     this.store.setModelType('membership');
     this.store.showMembershipCategoryChanges(this.club(), parseInt(this.year(), 10));
+  }
+
+  public backfillHasAccount(): void {
+    void this.store.backfillHasAccount();
   }
 
   protected onFieldChange(fieldName: string, $event: string): void {

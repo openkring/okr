@@ -1,4 +1,7 @@
 import { computed, inject } from '@angular/core';
+import { AlertController, ToastController } from '@ionic/angular/standalone';
+import { getApp } from 'firebase/app';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { from, Observable, of } from 'rxjs';
@@ -7,7 +10,8 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AddressCollection, AddressModel, OkrModel, LogInfo, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
-import { compareDate, getAgeFromBirthYear, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@okr/shared-util-core';
+import { compareDate, fill, getAgeFromBirthYear, getEndOfYear, getFullName, getSystemQuery, getYear, isMembership } from '@okr/shared-util-core';
+import { confirm, showToast } from '@okr/shared-util-angular';
 import { getMembershipCategoryChanges } from '@okr/relationship-membership-util';
 import { AOC_I18N_KEYS } from '@okr/aoc-util';
 
@@ -28,6 +32,8 @@ export const AocAdminOpsStore = signalStore(
   withProps(() => ({
     appStore: inject(AppStore),
     firestoreService: inject(FirestoreService),
+    alertController: inject(AlertController),
+    toastController: inject(ToastController),
     i18n: inject(I18nService).translateAll(AOC_I18N_KEYS),
   })),
   withProps(store => ({
@@ -63,6 +69,41 @@ export const AocAdminOpsStore = signalStore(
       /******************************** setters (filter) ******************************************* */
       setModelType(modelType: string | undefined): void {
         patchState(store, { modelType, log: [], logTitle: '' });
+      },
+
+      /**
+       * Einmalige Wartung: spiegelt „hat einen Zugang" von `users` auf `persons.hasAccount`.
+       *
+       * Warum es das Merkmal ueberhaupt gibt: eingeladen werden duerfen nur registrierte Benutzer,
+       * aber `users/{uid}` ist fuer gewoehnliche Benutzer nicht lesbar — und einladen darf auch ein
+       * Gruppen-Admin ohne `privileged`. Laufend haelt der Trigger `onUserWritten` das Merkmal
+       * aktuell; diese Aktion holt den Bestand nach.
+       *
+       * Idempotent: eine Person, deren Merkmal bereits stimmt, wird nicht geschrieben. Deshalb ist
+       * ein mehrfacher Aufruf gefahrlos, und die Rueckmeldung zaehlt nur die echten Aenderungen.
+       */
+      async backfillHasAccount(): Promise<void> {
+        const confirmed = await confirm(store.alertController, store.i18n.adminops_hasaccount_confirm(),
+          store.i18n.ok(), store.i18n.cancel(), true);
+        if (!confirmed) return;
+        try {
+          const fn = httpsCallable<Record<string, never>, { users: number; granted: number; cleared: number }>(
+            getFunctions(getApp(), 'europe-west6'), 'backfillHasAccount');
+          const result = await fn({});
+          const { users, granted, cleared } = result.data;
+          patchState(store, {
+            logTitle: store.i18n.adminops_hasaccount_title(),
+            log: [
+              { id: 'users', name: 'users', message: `${users}` },
+              { id: 'granted', name: 'granted', message: `${granted}` },
+              { id: 'cleared', name: 'cleared', message: `${cleared}` },
+            ],
+          });
+          await showToast(store.toastController,
+            fill(store.i18n.adminops_hasaccount_conf(), { count: granted + cleared }));
+        } catch (e) {
+          await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+        }
       },
 
       async listIban(): Promise<void> {

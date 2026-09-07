@@ -96,6 +96,13 @@
       "label": "Comprobar entradas de juveniles",
       "button": "Comprobar",
       "description": "Los miembros listados a continuación están registrados en la base de datos con entrada como miembro activo; inicialmente deberían reasignarse a juveniles."
+    },
+    "hasAccount": {
+      "title": "Reflejar el acceso en la persona",
+      "label": "Establece hasAccount en cada persona que tiene acceso. Necesario para que solo puedas invitar a usuarios registrados a un evento.",
+      "button": "Ejecutar",
+      "confirm": "El indicador se vuelve a establecer para todas las personas con acceso. No se pierde ningún dato existente. ¿Continuar?",
+      "conf": "Listo: {count} personas actualizadas."
     }
   },
   "bexio": {

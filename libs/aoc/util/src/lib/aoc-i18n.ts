@@ -52,6 +52,12 @@ export const AOC_I18N_KEYS = {
   adminops_doubleMembers_label:           PFX + 'adminops.doubleMembers.label',
   adminops_doubleMembers_button:          PFX + 'adminops.doubleMembers.button',
 
+  adminops_hasaccount_title:              PFX + 'adminops.hasAccount.title',
+  adminops_hasaccount_label:              PFX + 'adminops.hasAccount.label',
+  adminops_hasaccount_button:             PFX + 'adminops.hasAccount.button',
+  adminops_hasaccount_confirm:            PFX + 'adminops.hasAccount.confirm',
+  adminops_hasaccount_conf:               PFX + 'adminops.hasAccount.conf',
+
   adminops_oldjuniors_title:              PFX + 'adminops.oldJuniors.title',
   adminops_oldJuniors_label:              PFX + 'adminops.oldJuniors.label',
   adminops_oldJuniors_button:             PFX + 'adminops.oldJuniors.button',

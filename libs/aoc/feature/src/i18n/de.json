@@ -96,6 +96,13 @@
       "label": "Junioren-Eintritte prüfen",
       "button": "Prüfen",
       "description": "Die unten aufgelisteten Mitglieder sind in der Datenbank mit Eintritt als Aktivmitglied geführt, sie sollten anfänglich auf Jugendliche umgeteilt werden."
+    },
+    "hasAccount": {
+      "title": "Zugang auf die Person spiegeln",
+      "label": "Setzt bei jeder Person, die einen Zugang hat, das Merkmal hasAccount. Nötig, damit du nur registrierte Benutzer zu einem Anlass einladen kannst.",
+      "button": "Ausführen",
+      "confirm": "Das Merkmal wird für alle Personen mit Zugang neu gesetzt. Bestehende Daten gehen dabei nicht verloren. Fortfahren?",
+      "conf": "Fertig: {count} Personen angepasst."
     }
   },
   "bexio": {
