@@ -12,7 +12,7 @@ import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, fill, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -457,7 +457,7 @@ export class CalEventList implements OnInit {
   protected readonly subscribableCalendars = computed(() => {
     const mine = this.store.calendarsOfCurrentUser();
     return (this.store.calendarsResource.value() ?? [])
-      .filter(c => mine.includes(c.okey) || c.defaultIsOpen === true)
+      .filter(c => mine.includes(c.okey) || isCalendarPublic(c))
       .map(c => ({ key: c.okey, title: c.title || c.name }));
   });
   /** Schedule polls only exist in group calendars — hide the entry everywhere else (e.g. /calevent/all). */

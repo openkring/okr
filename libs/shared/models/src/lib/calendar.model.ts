@@ -11,10 +11,17 @@ export class CalendarModel implements OkrModel, NamedModel, SearchableModel, Tag
   public description = DEFAULT_NOTES; // a detailed description of the calendar
   public owner = ''; // modelType.key of the owner of the calendar, e.g. group.test01
   public title = ''; // title of the calendar, shown in the calendar view
-  public defaultIsOpen = true; // whether the calendar is open to all users or only to invited persons
-  // this is the default for each calevent created in this calendar
-  // The parameter can be overwritten in each CalEventModel
-  // usually, group calendars are closed, org calendards are open
+  /**
+   * Public: visible and subscribable for every user of the tenant. `false` = only for the members
+   * of the group that owns it (`owner`).
+   *
+   * Was called `defaultIsOpen` until 2026-09 and doubled as the default for `calevent.isOpen`.
+   * That second role is gone with `isOpen` itself
+   * (planning/specs/2026-09-06-open-events-invitation-model-spec.md, decision 2); what is left is
+   * the reach. NEVER read this field directly — stored documents still carry the old name; use
+   * `isCalendarPublic` from `@okr/shared-util-core`.
+   */
+  public isPublic = true;
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

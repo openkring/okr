@@ -1,6 +1,7 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
+import { isCalendarPublic } from '@okr/shared-util-core';
 
 export { getPublicCalEvents } from './public-calevents';
 export { ensureCalendarFeedToken, calendarFeed } from './feed';
@@ -35,7 +36,9 @@ interface CalEventDoc {
 interface CalendarDoc {
   name: string;
   title: string;
-  defaultIsOpen: boolean;
+  /** Reach of the calendar; read via `isCalendarPublic` — stored documents may still carry the old name. */
+  isPublic?: boolean;
+  defaultIsOpen?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -288,14 +291,14 @@ export function buildICS(calendarName: string, events: CalEventDoc[], opts: IcsO
  * closed group calendar — came back in full. This applies the same rule to both paths.
  *
  * An event is exportable when it is live AND sits in at least one calendar whose
- * `defaultIsOpen` is true. An event in no calendar at all is NOT exportable: there is no
+ * `isPublic` is true. An event in no calendar at all is NOT exportable: there is no
  * open calendar vouching for it, and the tenant-scoped equivalent (`calendars == []`) is
  * served by the token-authenticated `calendarFeed` instead.
  *
  * Pure so the decision is unit-testable without Firestore.
  *
  * @param event      the calevent document
- * @param openByKey  calendar key → `defaultIsOpen`; a key absent from the map counts as closed
+ * @param openByKey  calendar key → public?; a key absent from the map counts as closed
  */
 export function isPubliclyExportable(
   event: Pick<CalEventDoc, 'isArchived' | 'calendars'>,
@@ -315,7 +318,7 @@ export function isPubliclyExportable(
  *      GET /generateCalendarICS?calendar=<k1>,<k2>,<kn>  (merged, deduplicated)
  *      GET /generateCalendarICS?calendar=e:<eventOkey>   (single event)
  *
- * No authentication required, so it serves OPEN calendars only (`defaultIsOpen`) — and, as
+ * No authentication required, so it serves PUBLIC calendars only (`isPublic`) — and, as
  * of 2026-08-24, that rule covers the `e:<okey>` path too. Anything private goes through
  * the token-authenticated `calendarFeed` instead. See isPubliclyExportable.
  *
@@ -353,7 +356,7 @@ export const generateCalendarICS = onRequest(
           if (calDoc.exists) {
             const cal = calDoc.data() as CalendarDoc;
             nameMap.set(key, cal.title || cal.name || key);
-            openByKey.set(key, cal.defaultIsOpen === true);
+            openByKey.set(key, isCalendarPublic(cal));
           } else {
             nameMap.set(key, key);
             openByKey.set(key, false);

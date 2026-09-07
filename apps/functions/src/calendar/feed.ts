@@ -118,7 +118,7 @@ export const calendarFeed = onRequest(
         .where('tenants', 'array-contains', feed.tenantId)
         .get();
       const calendars = calendarsSnap.docs
-        .map(d => ({ okey: d.id, ...(d.data() as { owner?: string; title?: string; name?: string; defaultIsOpen?: boolean }) }));
+        .map(d => ({ okey: d.id, ...(d.data() as { owner?: string; title?: string; name?: string; isPublic?: boolean; defaultIsOpen?: boolean }) }));
       const allowedCalendarKeys = calendars.filter(c => orgKeys.includes(c.owner ?? '')).map(c => c.okey);
 
       const mode: 'my' | 'calendar' = rawCalendar === 'my' ? 'my' : 'calendar';

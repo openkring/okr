@@ -75,15 +75,15 @@ describe('isCalendarSubscribable', () => {
   const allowed = ['scs', 'g1'];
 
   it('allows a closed calendar the subscriber is a member of', () => {
-    expect(isCalendarSubscribable({ okey: 'scs', defaultIsOpen: false }, allowed)).toBe(true);
+    expect(isCalendarSubscribable({ okey: 'scs', isPublic: false }, allowed)).toBe(true);
   });
 
   it('denies a closed calendar the subscriber is not a member of', () => {
-    expect(isCalendarSubscribable({ okey: 'vorstand', defaultIsOpen: false }, allowed)).toBe(false);
+    expect(isCalendarSubscribable({ okey: 'vorstand', isPublic: false }, allowed)).toBe(false);
   });
 
   it('allows an open calendar even without membership', () => {
-    expect(isCalendarSubscribable({ okey: 'vorstand', defaultIsOpen: true }, allowed)).toBe(true);
+    expect(isCalendarSubscribable({ okey: 'vorstand', isPublic: true }, allowed)).toBe(true);
   });
 
   it('denies an unknown calendar key', () => {

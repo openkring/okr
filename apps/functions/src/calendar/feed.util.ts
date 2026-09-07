@@ -3,6 +3,8 @@
  * alles hier ist ohne Emulator testbar. Die I/O-Kette liegt in `feed.ts`.
  */
 
+import { isCalendarPublic } from '@okr/shared-util-core';
+
 export interface FeedEvent {
   okey: string;
   calendars?: string[];
@@ -70,10 +72,10 @@ export function resolveListId(e: FeedEvent, mode: 'my' | 'calendar', requestedKe
  * `cal`) ist immer verboten.
  */
 export function isCalendarSubscribable(
-  cal: { okey: string; defaultIsOpen?: boolean } | undefined,
+  cal: { okey: string; isPublic?: boolean; defaultIsOpen?: boolean } | undefined,
   allowedCalendarKeys: string[],
 ): boolean {
-  return !!cal && (allowedCalendarKeys.includes(cal.okey) || cal.defaultIsOpen === true);
+  return !!cal && (allowedCalendarKeys.includes(cal.okey) || isCalendarPublic(cal));
 }
 
 /** InvitationState → RFC-5545-PARTSTAT. Ohne Einladung: undefined ⇒ kein ATTENDEE. */
