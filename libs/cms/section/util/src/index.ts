@@ -24,6 +24,7 @@ export * from './lib/tracker-section.validations';
 export * from './lib/video-section.validations';
 export * from './lib/section-i18n';
 export * from './lib/image-slots';
+export * from './lib/image.validations';
 export * from './lib/orgchart-cycle.util';
 export * from './lib/weather-section.validations';
 export * from './lib/modal-registry';

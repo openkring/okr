@@ -383,3 +383,23 @@ export function urlValidations(fieldName: string, url: unknown) {
     });
   });
 }
+
+/**
+ * Validates a url that will be RENDERED as an image (imgix), not navigated to.
+ * Stricter than urlValidations on purpose: `checkUrlType` only recognises https / assets/ /
+ * tenant… as renderable, and classifies everything else — including a leading '/' — as 'key'.
+ * urlValidations accepts a leading '/' because navigation targets need it; on an image field
+ * that same value passes the form and then silently renders as an empty image (getImgixUrl
+ * warns and returns ''). Note the required slash after 'assets': `checkUrlType` matches
+ * 'assets/', so a bare 'assets…' is a 'key' too.
+ */
+export function imageUrlValidations(fieldName: string, url: unknown) {
+  stringValidations(fieldName, url, URL_LENGTH);
+
+  omitWhen(url === '', () => {
+    test(fieldName, 'imageUrlStart', () => {
+      const _url = url as string;
+      enforce(_url.startsWith('https://') || _url.startsWith('assets/') || _url.startsWith('tenant')).isTruthy();
+    });
+  });
+}

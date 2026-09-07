@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { create } from 'vest';
 
-import { partialDateValidations, stringValidations, tagValidations } from './vest.util';
+import { imageUrlValidations, partialDateValidations, stringValidations, tagValidations, urlValidations } from './vest.util';
 
 /**
  * The configured tag lists in the `tags` collection are authored with ", " separators
@@ -129,5 +129,61 @@ describe('stringValidations — maxLength', () => {
   it('leaves minLength gated on isMandatory — an optional field may stay empty', () => {
     expect(runString('', 50, 5).getErrors('field')).not.toContain('tooShort');
     expect(runString('abc', 50, 5, true).getErrors('field')).toContain('tooShort');
+  });
+});
+
+/**
+ * An image url is rendered through imgix, and `checkUrlType` only recognises https / assets/ /
+ * tenant… as renderable. urlValidations additionally accepts a leading '/' (navigation targets
+ * need it) — on an image field that value passes the form and then renders as an empty image,
+ * which is what SCS-A2 reported.
+ */
+function runImageUrl(url: string) {
+  const suite = create(() => imageUrlValidations('url', url));
+  return suite();
+}
+
+function runUrl(url: string) {
+  const suite = create(() => urlValidations('url', url));
+  return suite();
+}
+
+describe('imageUrlValidations', () => {
+
+  it.each([
+    'https://bkaiser.imgix.net/tenant/p13/logo/logo_round.svg',
+    'https://example.com/photo.jpg',
+    'assets/img/logo_square.png',
+    'tenant/p13/logo/logo_round.svg',
+  ])('accepts a renderable url: %s', (url) => {
+    expect(runImageUrl(url).isValid()).toBe(true);
+  });
+
+  it('accepts an empty url (the field is optional)', () => {
+    expect(runImageUrl('').isValid()).toBe(true);
+  });
+
+  it.each([
+    '/private/album/c-contentpage',
+    '/tenant/p13/logo/logo_round.svg',
+  ])('rejects a leading slash, which checkUrlType reads as a key: %s', (url) => {
+    expect(runImageUrl(url).isValid()).toBe(false);
+  });
+
+  it('rejects a bare document key', () => {
+    expect(runImageUrl('logo/general/osi.svg').isValid()).toBe(false);
+  });
+
+  it('rejects "assets" without the separator, which checkUrlType reads as a key', () => {
+    expect(runImageUrl('assetsimg/logo.png').isValid()).toBe(false);
+  });
+
+  it('rejects an insecure http url', () => {
+    expect(runImageUrl('http://example.com/photo.jpg').isValid()).toBe(false);
+  });
+
+  it('is stricter than urlValidations, which still allows navigation targets', () => {
+    expect(runUrl('/private/album/c-contentpage').isValid()).toBe(true);
+    expect(runImageUrl('/private/album/c-contentpage').isValid()).toBe(false);
   });
 });

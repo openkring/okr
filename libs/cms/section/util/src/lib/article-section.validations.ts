@@ -1,9 +1,9 @@
 import { each, omitWhen, only, staticSuite } from 'vest';
 
-import { ArticleSection, ImageActionType, ImageType } from '@okr/shared-models';
+import { ArticleSection } from '@okr/shared-models';
 
 import { baseSectionValidations } from './base-section.validations';
-import { booleanValidations, categoryValidations, numberValidations, stringValidations, urlValidations } from '@okr/shared-util-core';
+import { imageConfigValidations, imageStyleValidations } from './image.validations';
 
 export const articleSectionValidations = staticSuite((model: ArticleSection, field?: string) => {
   if (field) only(field);
@@ -15,27 +15,13 @@ export const articleSectionValidations = staticSuite((model: ArticleSection, fie
   // iterated value must be null-safe — older stored sections may lack `images`.
   omitWhen(!model.properties?.images?.length, () => {
     each(model.properties?.images ?? [], (image, index) => {
-      stringValidations(`images[${index}].label`, image.label);
-      categoryValidations(`images[${index}].type`, image.type, ImageType);
-      urlValidations(`images[${index}].url`, image.url);
-      stringValidations(`images[${index}].altText`, image.altText);
+      imageConfigValidations(`images[${index}]`, image);
     });
   });
 
   // imageStyle: ImageStyle
   // note: omitWhen always runs its callback, so guard every access with `?.`.
   omitWhen(!model.properties?.imageStyle, () => {
-    stringValidations('imgIxParams', model.properties?.imageStyle?.imgIxParams);
-    stringValidations('width', model.properties?.imageStyle?.width);
-    stringValidations('height', model.properties?.imageStyle?.height);
-    stringValidations('sizes', model.properties?.imageStyle?.sizes);
-    stringValidations('border', model.properties?.imageStyle?.border);
-    stringValidations('borderRadius', model.properties?.imageStyle?.borderRadius);
-    booleanValidations('isThumbnail', model.properties?.imageStyle?.isThumbnail);
-    stringValidations('slot', model.properties?.imageStyle?.slot);   // tbd: validate against Slot enum
-    booleanValidations('fill', model.properties?.imageStyle?.fill);
-    booleanValidations('hasPriority', model.properties?.imageStyle?.hasPriority);
-    categoryValidations('action', model.properties?.imageStyle?.action, ImageActionType);
-    numberValidations('zoomFactor', model.properties?.imageStyle?.zoomFactor, true, 0, 10);
+    imageStyleValidations(model.properties?.imageStyle);
   });
 });
