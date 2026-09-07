@@ -180,7 +180,8 @@ for (const { tenantId, config } of tenants) {
       if (seen.has(identity)) continue;
       seen.add(identity);
       changes.push({
-        name: d.name, docId: d.docId, forked: d.forked, field,
+        name: d.name, docId: d.docId, forked: d.forked,
+        pinned: d.pinned.includes(field), field,
         from: String(d.live[field] ?? ''), to: String(to),
       });
     }
@@ -194,8 +195,12 @@ for (const { tenantId, config } of tenants) {
     specs: specs.reduce((n, s) => n + menuSpecNames([s]).length, 0),
     effective: [...live].sort(),
     profile: nearest ? { id: nearest.profile.id, ...nearest.deviation } : undefined,
-    // Real drift: the catalogue and a SHARED document disagree, so one of them is stale.
-    changes: changes.filter((c) => !c.forked),
+    // Real drift: neither a fork nor a tenant's own pin — the catalogue and a shared
+    // document disagree on a field nobody has claimed, so one side is genuinely stale.
+    changes: changes.filter((c) => !c.forked && !c.pinned),
+    // A tenant pinned this field (`ownedFields`) — "this value is my decision, the
+    // catalogue stops writing it". Reported for information only, never fatal.
+    pinned: changes.filter((c) => c.pinned),
     // A tenant's own copy diverging is what a fork is for — reported, never fatal.
     forks: changes.filter((c) => c.forked),
     blocking,
@@ -203,15 +208,22 @@ for (const { tenantId, config } of tenants) {
 }
 
 // ── output ──────────────────────────────────────────────────────────────────────────
+// NOTE on counting: a shared document is reported once PER TENANT that inherits it (each
+// tenant's `report` entry re-walks the same live doc against its own effective specs), so
+// these totals are much larger than the number of underlying decisions — e.g. one stale
+// catalogue field on a doc shared by five tenants counts as five `changes` here, not one.
 const totalDrift = report.reduce((n, r) => n + r.changes.length, 0);
+const totalPinned = report.reduce((n, r) => n + r.pinned.length, 0);
 const totalForks = report.reduce((n, r) => n + r.forks.length, 0);
 const totalBlocking = report.reduce((n, r) => n + r.blocking.length, 0);
-// Only non-forked divergence and unresolvable names are failures — see "A FORK IS NOT AN
-// ERROR" above. A run whose only findings are forks exits 0 and stays quiet in the gate.
+// Only non-forked, non-pinned divergence and unresolvable names are failures — see "A FORK
+// IS NOT AN ERROR" above. A run whose only findings are forks/pins exits 0 and stays quiet
+// in the gate.
 const failed = totalDrift > 0 || totalBlocking > 0;
 
 if (JSON_OUT) {
-  console.log(JSON.stringify({ totalDrift, totalForks, totalBlocking, tenants: report }, null, 2));
+  console.log(JSON.stringify(
+    { totalDrift, totalPinned, totalForks, totalBlocking, tenants: report }, null, 2));
 } else {
   log('\nFEATURE CATALOGUE DRIFT CHECK');
   log('═'.repeat(96));
@@ -226,7 +238,7 @@ if (JSON_OUT) {
       log(`  Profil ${r.profile.id}${gaps ? ` — ${gaps}` : ' — exakt'}`);
     }
 
-    if (r.changes.length === 0 && r.forks.length === 0 && r.blocking.length === 0) {
+    if (r.changes.length === 0 && r.pinned.length === 0 && r.forks.length === 0 && r.blocking.length === 0) {
       log('  ✓ keine Abweichung');
     }
 
@@ -241,6 +253,12 @@ if (JSON_OUT) {
       log(`  ABWEICHUNG (geteilte Dokumente — eine Seite ist veraltet)`);
       log(`    ${pad('NAME', 28)}${pad('FELD', 12)}LIVE → KATALOG`);
       rows(r.changes);
+    }
+
+    if (r.pinned.length > 0) {
+      log(`  fixiert (eigener Wert, kein Befund)`);
+      log(`    ${pad('NAME', 28)}${pad('FELD', 12)}LIVE → KATALOG`);
+      rows(r.pinned);
     }
 
     if (r.forks.length > 0) {
@@ -355,7 +373,12 @@ function renderDoc() {
 
   // ── drift ──
   out.push('## Abweichung zwischen Katalog und Live-Daten', '');
+  out.push('Zählung: ein geteiltes Dokument wird einmal PRO MANDANT gezählt, der es erbt — die',
+    'Zahl der Befunde ist also deutlich grösser als die Zahl der zugrundeliegenden',
+    'Entscheidungen (ein veraltetes Feld auf einem von fünf Mandanten geerbten Dokument zählt',
+    'hier fünfmal, nicht einmal).', '');
   const changeRows = report.reduce((n, r) => n + r.changes.length, 0);
+  const pinnedRows = report.reduce((n, r) => n + r.pinned.length, 0);
   const forkRows = report.reduce((n, r) => n + r.forks.length, 0);
   const table = (list) => {
     out.push('| Mandant | Eintrag | Feld | live | Katalog |', '|---|---|---|---|---|');
@@ -376,6 +399,16 @@ function renderDoc() {
       '«Katalog-Werte übernehmen» laufen lassen. Diese Abweichungen lassen `pnpm catalogue:check`',
       'mit einem Fehlercode enden.', '');
     table(report.flatMap((r) => r.changes.map((c) => [r.tenantId, c])));
+  }
+
+  out.push('### fixiert (eigener Wert, kein Befund)', '');
+  if (pinnedRows === 0) {
+    out.push('Keine.', '');
+  } else {
+    out.push(`${pinnedRows} Felder sind per \`ownedFields\` fixiert: der Mandant hat diesen Wert`,
+      'bewusst festgelegt, und der Katalog schreibt ihn nicht mehr. Das ist **kein Fehler** und',
+      'beendet den Check nicht mit einem Fehlercode — die Zeile steht hier nur zur Kenntnis.', '');
+    table(report.flatMap((r) => r.pinned.map((c) => [r.tenantId, c])));
   }
 
   out.push('### Eigene Kopien (Forks)', '');
@@ -400,10 +433,11 @@ if (WRITE_DOC) {
 
 if (!JSON_OUT) {
   const forkNote = totalForks > 0 ? ` · ${totalForks} eigene Kopien (kein Fehler)` : '';
+  const pinnedNote = totalPinned > 0 ? ` · ${totalPinned} fixiert (kein Befund)` : '';
   const verdict = failed
     ? `✖ ${totalDrift} abweichende Felder, ${totalBlocking} nicht auflösbare Namen` +
-      `${forkNote} (${report.length} Mandanten geprüft)`
-    : `✓ Katalog und geteilte Live-Dokumente stimmen überein${forkNote} ` +
+      `${pinnedNote}${forkNote} (${report.length} Mandanten geprüft)`
+    : `✓ Katalog und geteilte Live-Dokumente stimmen überein${pinnedNote}${forkNote} ` +
       `(${report.length} Mandanten geprüft)`;
   console.log(verdict + '\n');
 }
