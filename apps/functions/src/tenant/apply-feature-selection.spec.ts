@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { Firestore } from 'firebase-admin/firestore';
 import {
   chunk, commitChunked, computeTransitions, nestedMenuKeys,
-  planAddMenuRows, planEnableBlock, planRootMenuOp, planSelection, rootNavKeys,
+  planAddMenuRows, planApplyCatalogueValue, planDisableBlock, planEnableBlock, planPinField,
+  planRootMenuOp, planSelection, rootNavKeys,
 } from './apply-feature-selection';
 import type { PendingWrite, SelectionPlan } from './apply-feature-selection';
 import type { FeatureBlock, FeatureRollout, MenuSpec } from '@okr/tenant-util';
@@ -836,5 +837,128 @@ describe('planAddMenuRows — ANY owner of a shared key may unlock it (Important
     const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
     await expect(planAddMenuRows(run(db), TEST_CATALOGUE, 'scs', 'uid1', ['aoc-menu']))
       .rejects.toThrow(/nicht aktiviert/);
+  });
+});
+
+describe('planDisableBlock', () => {
+  it('changes enabledFeatures and touches no menu document', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'main_scs', name: 'main_scs', tenants: ['scs'],
+                    menuItems: ['calevent-all'], isArchived: false }],
+      'app-config': [{ id: 'scs', enabledFeatures: ['calevent', 'person'] }],
+    });
+    const { writes, preview } = await planDisableBlock(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'calevent');
+
+    expect(writes.filter(w => w.ref.parent.id === 'menuItems')).toHaveLength(0);
+    expect(writes.find(w => w.ref.parent.id === 'app-config')?.data['enabledFeatures'])
+      .toEqual(['person']);
+    expect(preview.entries.some(e => e.kind === 'block-disabled')).toBe(true);
+  });
+
+  it('writes nothing when the block is already disabled', async () => {
+    const db = fakeDb({
+      menuItems: [],
+      'app-config': [{ id: 'scs', enabledFeatures: ['person'] }],
+    });
+    const { writes, preview } = await planDisableBlock(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'calevent');
+    expect(writes).toEqual([]);
+    expect(preview.entries).toEqual([]);
+  });
+});
+
+describe('planApplyCatalogueValue', () => {
+  it('writes exactly one field of one document and records from/to', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'calevent-all', name: 'calevent-all', url: '/OLD', action: 'navigate',
+                    roleNeeded: 'admin', tenants: ['scs'], isArchived: false }],
+      'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
+    });
+    const { writes, preview } = await planApplyCatalogueValue(
+      run(db), TEST_CATALOGUE, 'scs', 'uid1', 'calevent-all', 'roleNeeded');
+
+    const doc = writes.find(w => w.ref.id === 'calevent-all');
+    expect(doc?.data).toEqual({ roleNeeded: 'member' });
+    const event = writes.find(w => w.ref.parent.id === 'featureEvents');
+    expect(event?.data).toMatchObject({ op: 'catalogue-apply', field: 'roleNeeded', from: 'admin', to: 'member' });
+    expect(preview.entries[0]).toMatchObject({ kind: 'field-overwritten', field: 'roleNeeded' });
+  });
+
+  it('refuses a pinned field', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'calevent-all', name: 'calevent-all', url: '/calevent/all',
+                    action: 'navigate', roleNeeded: 'admin', tenants: ['scs'],
+                    isArchived: false, ownedFields: ['roleNeeded'] }],
+      'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
+    });
+    await expect(planApplyCatalogueValue(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'calevent-all', 'roleNeeded'))
+      .rejects.toThrow(/fixiert/);
+  });
+
+  it('refuses when the live value already equals the catalogue value', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'calevent-all', name: 'calevent-all', url: '/calevent/all',
+                    action: 'navigate', roleNeeded: 'member', tenants: ['scs'], isArchived: false }],
+      'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
+    });
+    await expect(planApplyCatalogueValue(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'calevent-all', 'roleNeeded'))
+      .rejects.toThrow(/nichts zu übernehmen/);
+  });
+
+  it('throws not-found for an unknown document id', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
+    await expect(planApplyCatalogueValue(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'nope', 'roleNeeded'))
+      .rejects.toThrow(/nicht gefunden/);
+  });
+});
+
+describe('planPinField', () => {
+  it('adds a pin without touching the value', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'calevent-all', name: 'calevent-all', url: '/calevent/all',
+                    action: 'navigate', roleNeeded: 'member', tenants: ['scs'], isArchived: false }],
+      'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
+    });
+    const pinned = await planPinField(run(db), 'scs', 'uid1', 'calevent-all', 'roleNeeded', true);
+    expect(pinned.writes.find(w => w.ref.id === 'calevent-all')?.data)
+      .toEqual({ ownedFields: ['roleNeeded'] });
+    const event = pinned.writes.find(w => w.ref.parent.id === 'featureEvents');
+    expect(event?.data).toMatchObject({ op: 'pin', docId: 'calevent-all', field: 'roleNeeded' });
+  });
+
+  it('removes an existing pin without touching the value', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'calevent-all', name: 'calevent-all', url: '/calevent/all',
+                    action: 'navigate', roleNeeded: 'member', tenants: ['scs'], isArchived: false,
+                    ownedFields: ['roleNeeded'] }],
+      'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
+    });
+    const released = await planPinField(run(db), 'scs', 'uid1', 'calevent-all', 'roleNeeded', false);
+    expect(released.writes.find(w => w.ref.id === 'calevent-all')?.data)
+      .toEqual({ ownedFields: [] });
+    const event = released.writes.find(w => w.ref.parent.id === 'featureEvents');
+    expect(event?.data).toMatchObject({ op: 'unpin', docId: 'calevent-all', field: 'roleNeeded' });
+  });
+
+  it('writes nothing when the field is already in the requested pin state', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'calevent-all', name: 'calevent-all', url: '/calevent/all',
+                    action: 'navigate', roleNeeded: 'member', tenants: ['scs'], isArchived: false }],
+      'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
+    });
+    const { writes, preview } = await planPinField(run(db), 'scs', 'uid1', 'calevent-all', 'roleNeeded', false);
+    expect(writes).toEqual([]);
+    expect(preview.entries).toEqual([]);
+  });
+
+  it('writes nothing when the field is already pinned and pinning is requested again', async () => {
+    const db = fakeDb({
+      menuItems: [{ id: 'calevent-all', name: 'calevent-all', url: '/calevent/all',
+                    action: 'navigate', roleNeeded: 'member', tenants: ['scs'], isArchived: false,
+                    ownedFields: ['roleNeeded'] }],
+      'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }],
+    });
+    const { writes, preview } = await planPinField(run(db), 'scs', 'uid1', 'calevent-all', 'roleNeeded', true);
+    expect(writes).toEqual([]);
+    expect(preview.entries).toEqual([]);
   });
 });

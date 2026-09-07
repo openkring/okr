@@ -10,10 +10,10 @@ import {
   type FeatureEvent, type MenuItemModel,
 } from '@okr/shared-models';
 import {
-  blockOwnersOfMenuKey, indexMenuDocsByName, menuSpecNames, planMenuOps, planRootMenuOp,
-  resolveAvailability, resolveWithDeps,
+  blockOwnersOfMenuKey, indexMenuDocsByName, isFieldPinned, menuSpecNames, planMenuOps,
+  planRootMenuOp, resolveAvailability, resolveWithDeps, withoutPin, withPin,
   type ApplyPlanPreview, type FeatureBlock, type FeatureRollout,
-  type MenuNameCollision, type MenuOp, type MenuSpec, type PlanEntry,
+  type MenuNameCollision, type MenuOp, type MenuSpec, type PlanEntry, type StructuralField,
 } from '@okr/tenant-util';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
@@ -654,6 +654,165 @@ export async function planAddMenuRows(
   };
 }
 
+
+/**
+ * D-BB-17: switching a block off is a config change and an audit entry. It does NOT touch a
+ * single menu document — gate 2 (`MenuStore.isVisible`) already hides every row of a disabled
+ * block, so rewriting the root menu was cosmetic, and it was the reason an accidental untick
+ * could rearrange a hand-curated sidebar. Switching back on therefore restores every row in
+ * its original position rather than appending it at the tail. Data is untouched either way
+ * (D-BB-6).
+ */
+export async function planDisableBlock(
+  db: Firestore, catalogue: FeatureBlock[], tenantId: string, uid: string, blockId: string,
+): Promise<VerbResult> {
+  const configRef = db.collection(AppConfigCollection).doc(tenantId);
+  const configSnap = await configRef.get();
+  const previous = effectiveEnabled(configSnap.data(), catalogue);
+  if (!previous.includes(blockId)) {
+    return { writes: [], preview: emptyPreview() };
+  }
+  const enabled = previous.filter(id => id !== blockId);
+  const at = getTodayStr(DateFormat.StoreDateTime);
+  return {
+    writes: [
+      { ref: configRef, data: { enabledFeatures: enabled }, merge: true },
+      ...eventWrites(db, tenantId, uid, at, [{ block: blockId, op: 'disable' as const }]),
+    ],
+    preview: {
+      entries: [{
+        kind: 'block-disabled', subject: blockId,
+        consequence: 'wird ausgeschaltet — die Menüzeilen bleiben bestehen und werden nur ausgeblendet, die Daten bleiben unverändert',
+      }],
+      alsoEnabled: [], withheld: [],
+    },
+  };
+}
+
+/**
+ * Every menu spec in the catalogue whose `name` matches, at any nesting depth of any block —
+ * the same identity `readMenuSnapshot`/`indexMenuDocsByName` resolve live documents by.
+ * `locateSpec` (used by `addMenuRows`) searches ONE block's tree by `key`; this searches the
+ * WHOLE catalogue by `name`, because `applyCatalogueValue` starts from a live document (whose
+ * `name` field is the only thing tying it back to a spec), not from a key the caller ticked.
+ */
+function findSpecByName(catalogue: FeatureBlock[], name: string): MenuSpec | undefined {
+  const visit = (specs: MenuSpec[]): MenuSpec | undefined => {
+    for (const spec of specs) {
+      if (spec.name === name) return spec;
+      const hit = visit(spec.children ?? []);
+      if (hit) return hit;
+    }
+    return undefined;
+  };
+  for (const block of catalogue) {
+    const hit = visit(block.menu);
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
+/**
+ * VERB `applyCatalogueValue` — the deliberate, one-field-at-a-time override an admin reaches
+ * for from «Katalog-Werte übernehmen» (task 1). Unlike `enableBlock`/`addMenuRows`, which never
+ * overwrite an existing document (D-BB-15), this verb's entire purpose is to overwrite exactly
+ * the one field the admin confirmed — so it is the one place a `field-overwritten` entry is
+ * ever produced.
+ *
+ * Reads the live document BY DOC ID, not by name: the picker table hands over the real
+ * Firestore id, and eleven live documents carry legacy autoids that differ from their `name`.
+ * The catalogue spec is then located from the document's OWN `name` field.
+ */
+export async function planApplyCatalogueValue(
+  db: Firestore, catalogue: FeatureBlock[], tenantId: string, uid: string,
+  docId: string, field: StructuralField,
+): Promise<VerbResult> {
+  const ref = db.collection(MenuItemCollection).doc(docId);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    throw new HttpsError('not-found', 'Dieser Menüpunkt wurde nicht gefunden.');
+  }
+  const data = snap.data() as Partial<MenuItemModel>;
+  const name = data.name ?? docId;
+
+  const spec = findSpecByName(catalogue, name);
+  if (!spec) {
+    throw new HttpsError('not-found',
+      'Dieser Menüpunkt gehört zu keinem bekannten Bereich, darum gibt es keinen Katalog-Wert dafür.');
+  }
+  if (isFieldPinned(data as { ownedFields?: string[] }, field)) {
+    throw new HttpsError('failed-precondition',
+      'Dieses Feld ist fixiert — löse die Fixierung zuerst.');
+  }
+
+  const from = (data[field as keyof MenuItemModel] as string | undefined) ?? '';
+  const to = spec[field];
+  if (from === to) {
+    throw new HttpsError('failed-precondition',
+      'Der Katalog-Wert entspricht bereits dem aktuellen Wert — es gibt nichts zu übernehmen.');
+  }
+
+  const at = getTodayStr(DateFormat.StoreDateTime);
+  const block = blockOwnersOfMenuKey(catalogue, name)[0] ?? '';
+  return {
+    writes: [
+      { ref, data: { [field]: to }, merge: true },
+      ...eventWrites(db, tenantId, uid, at, [{ block, op: 'catalogue-apply' as const, docId, name, field, from, to }]),
+    ],
+    preview: {
+      entries: [{
+        kind: 'field-overwritten', subject: name, field, from, to,
+        consequence: 'Dieses Feld wird auf den Katalog-Wert zurückgesetzt.',
+      }],
+      alsoEnabled: [], withheld: [],
+    },
+  };
+}
+
+/**
+ * VERB `pinField`/`unpinField` — deliberately taking over (or releasing) one structural field
+ * of one menu document (D-BB-16). Never touches the value itself, only `ownedFields`; a call
+ * that would not change the pin state writes nothing (idempotent, no audit noise).
+ *
+ * Takes no `catalogue` parameter — pinning is a statement about who owns this ONE document
+ * going forward, not a comparison against a catalogue value, so it needs nothing beyond the
+ * live document itself.
+ */
+export async function planPinField(
+  db: Firestore, tenantId: string, uid: string, docId: string, field: StructuralField, pin: boolean,
+): Promise<VerbResult> {
+  const ref = db.collection(MenuItemCollection).doc(docId);
+  const snap = await ref.get();
+  if (!snap.exists) {
+    throw new HttpsError('not-found', 'Dieser Menüpunkt wurde nicht gefunden.');
+  }
+  const data = snap.data() as Partial<MenuItemModel>;
+  const alreadyPinned = isFieldPinned(data as { ownedFields?: string[] }, field);
+  if (pin === alreadyPinned) {
+    return { writes: [], preview: emptyPreview() };
+  }
+
+  const ownedFields = pin ? withPin(data.ownedFields, field) : withoutPin(data.ownedFields, field);
+  const at = getTodayStr(DateFormat.StoreDateTime);
+  const name = data.name ?? docId;
+  return {
+    writes: [
+      { ref, data: { ownedFields }, merge: true },
+      ...eventWrites(db, tenantId, uid, at, [
+        { block: docId, op: (pin ? 'pin' : 'unpin') as const, docId, name, field },
+      ]),
+    ],
+    preview: {
+      entries: [{
+        kind: pin ? 'field-pinned' : 'field-unpinned', subject: name, field,
+        consequence: pin
+          ? 'Dieses Feld wird ab jetzt von euch selbst gepflegt und nicht mehr vom Katalog überschrieben.'
+          : 'Dieses Feld wird wieder vom Katalog gepflegt.',
+      }],
+      alsoEnabled: [], withheld: [],
+    },
+  };
+}
 
 // ────────────────────────────────────────────────────────────────────────────────────
 // The single server-side write path for a tenant's feature selection (D-BB-9).
