@@ -3,7 +3,7 @@ import { ActionSheetController, IonButton, IonButtons, IonContent, IonHeader, Io
 import { FolderModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { AlertService, createActionSheetButton, createActionSheetOptions, keepDefaultTrue } from '@okr/shared-util-angular';
 import { hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -78,7 +78,10 @@ export class FolderList {
   // inputs
   public readonly contextMenuName = input.required<string>();
   public color = input('secondary');
-  public showMenuButton = input<boolean>(true);
+  // keepDefaultTrue: withComponentInputBinding() sets an unbound route input to undefined,
+  // which would silently drop the hamburger on the routed screen (the group view passes it
+  // explicitly, so this only surfaced once the list got a route of its own).
+  public showMenuButton = input(true, { transform: keepDefaultTrue });
 
   // data
   protected readonly filteredFolders = computed(() => this.store.filteredFolders());
@@ -101,7 +104,9 @@ export class FolderList {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch (selectedMethod) {
-      case 'add': await this.store.add(); break;
+      // 'addFolder', not 'add': this dispatches the SHARED `folder-add` menu document that
+      // DocumentList already uses, so one document serves both screens (see feature-blocks).
+      case 'addFolder': await this.store.add(); break;
       default: this.alertService.error(`FolderListComponent.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }

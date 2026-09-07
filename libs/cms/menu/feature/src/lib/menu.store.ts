@@ -14,7 +14,7 @@ import { die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-u
 import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
-import { getRepoUrl, MENU_I18N_KEYS, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
+import { getRepoUrl, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
 
 import { MenuItemsStore } from './menu-items.store';
 
@@ -354,21 +354,32 @@ export const _MenuStore = signalStore(
         }
       },
 
+      /**
+       * The token context for a url. A url may carry a dynamic token so the menu document does
+       * not hardcode data that already lives elsewhere — '@REPO_URL@' (app-config) for a
+       * `browse` item, '@TID@' (the running tenant) for a `navigate` item that points at a
+       * per-tenant record, e.g. '/album/@TID@-album/c-album'.
+       */
+      urlTokenContext(): MenuTokenContext {
+        const config = store.appStore.appConfig();
+        return {
+          version: store.versionService.getCurrentVersion(),
+          repoUrl: getRepoUrl(config.gitOrg, config.gitRepo),
+          tenantId: store.appStore.tenantId(),
+        };
+      },
+
       async selectMenuItem(router: Router, menuItem: MenuItemModel): Promise<void> {
         switch (menuItem.action) {
           case 'browse': {
-            // The url may carry a dynamic token (e.g. '@REPO_URL@/commits/main/') so the menu
-            // document does not hardcode data that already lives in app-config.
-            const config = store.appStore.appConfig();
-            const url = resolveMenuUrl(menuItem.url, {
-              version: store.versionService.getCurrentVersion(),
-              repoUrl: getRepoUrl(config.gitOrg, config.gitRepo),
-            });
+            const url = resolveMenuUrl(menuItem.url, this.urlTokenContext());
             await Browser.open({ url, windowName: getTarget(menuItem) });
             break;
           }
           case 'navigate':
-            await navigateByUrl(router, menuItem.url, menuItem.data);
+            // Expanded like a 'browse' url: before '@TID@' existed only 'browse' resolved
+            // tokens, so a token in a navigate url was routed to verbatim and 404ed.
+            await navigateByUrl(router, resolveMenuUrl(menuItem.url, this.urlTokenContext()), menuItem.data);
             break;
           case 'call':
           case 'toggle': // like 'call' — the hosting feature flips the state in its onPopoverDismiss handler

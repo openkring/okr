@@ -555,7 +555,17 @@
     "trip-callsupport": "Chiamare il supporto",
     "chat-support": "Chiedere supporto",
     "chat-notfall": "Segnalare un'emergenza",
-    "calevent-archived": "Mostra archiviati"
+    "calevent-archived": "Mostra archiviati",
+    "album-download-all": "Scarica tutti i file",
+    "album-slideshow": "Avvia presentazione",
+    "album-style": "Cambia vista",
+    "album-folders-toggle": "Mostra sottocartelle",
+    "album-copy-link": "Copia link",
+    "album-add-folder": "Nuova cartella",
+    "album-cover": "Scegli l’immagine di copertina",
+    "album-exportraw": "Esporta elenco dei file",
+    "album-folders-toggle_alt": "Nascondi sottocartelle",
+    "folder-all": "Cartelle"
   },
   "ownership": {
     "fork_confirm": "«{name}» appartiene al catalogo delle funzionalità ({blocks}).\n\nIl salvataggio crea una copia propria del tenant «{forkKey}» e scollega questo tenant dall'originale condiviso. Le future correzioni del catalogo (URL, azione, ruolo) non raggiungeranno più questa voce.\n\nSalvare comunque?",

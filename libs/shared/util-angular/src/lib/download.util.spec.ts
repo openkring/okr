@@ -1,6 +1,7 @@
 import { DomSanitizer } from '@angular/platform-browser';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+    downloadFilesAsZip,
     downloadTextFile,
     downloadToBrowser,
     exportCsv,
@@ -139,6 +140,98 @@ describe('download.util', () => {
       const { Browser } = await import('@capacitor/browser');
       await downloadToBrowser(undefined);
       expect(Browser.open).not.toHaveBeenCalled();
+    });
+  });
+
+
+  describe('downloadFilesAsZip', () => {
+    // A minimal JSZip stand-in: the assertions are about WHICH entries reach the archive and
+    // under which names, not about zip encoding.
+    const zipFile = vi.fn();
+    const generateAsync = vi.fn(async () => new Blob(['zip']));
+    vi.doMock('jszip', () => ({
+      default: class { file = zipFile; generateAsync = generateAsync; }
+    }));
+
+    const okResponse = (body = 'x') => ({ ok: true, status: 200, blob: async () => new Blob([body]) });
+
+    beforeEach(() => {
+      zipFile.mockClear();
+      generateAsync.mockClear();
+    });
+
+    it('returns without touching the archive when there is nothing to download', async () => {
+      const result = await downloadFilesAsZip([], 'album');
+      expect(result).toEqual({ zipped: 0, failed: [] });
+      expect(generateAsync).not.toHaveBeenCalled();
+    });
+
+    it('zips every fetched entry and saves one archive', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => okResponse()));
+      const { saveAs } = await import('file-saver');
+
+      const result = await downloadFilesAsZip(
+        [{ url: 'u1', fileName: 'a.jpg' }, { url: 'u2', fileName: 'b.jpg' }], 'album');
+
+      expect(result.zipped).toBe(2);
+      expect(result.failed).toEqual([]);
+      expect(zipFile).toHaveBeenCalledTimes(2);
+      expect(saveAs).toHaveBeenCalledTimes(1);
+    });
+
+    it('appends .zip only when the name does not already carry it', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => okResponse()));
+      const { saveAs } = await import('file-saver');
+
+      await downloadFilesAsZip([{ url: 'u', fileName: 'a.jpg' }], 'album');
+      expect(vi.mocked(saveAs).mock.calls[0][1]).toBe('album.zip');
+
+      vi.mocked(saveAs).mockClear();
+      await downloadFilesAsZip([{ url: 'u', fileName: 'a.jpg' }], 'album.zip');
+      expect(vi.mocked(saveAs).mock.calls[0][1]).toBe('album.zip');
+    });
+
+    it('suffixes duplicate file names instead of overwriting them inside the archive', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => okResponse()));
+
+      await downloadFilesAsZip(
+        [{ url: 'u1', fileName: 'a.jpg' }, { url: 'u2', fileName: 'a.jpg' }, { url: 'u3', fileName: 'a.jpg' }],
+        'album');
+
+      const names = zipFile.mock.calls.map((call) => call[0]);
+      expect(names).toEqual(['a.jpg', 'a (2).jpg', 'a (3).jpg']);
+    });
+
+    it('skips an entry that cannot be fetched and reports it, still saving the rest', async () => {
+      vi.stubGlobal('fetch', vi.fn(async (url: string) =>
+        url === 'bad' ? { ok: false, status: 404 } : okResponse()));
+      const { saveAs } = await import('file-saver');
+
+      const result = await downloadFilesAsZip(
+        [{ url: 'u1', fileName: 'a.jpg' }, { url: 'bad', fileName: 'gone.jpg' }], 'album');
+
+      expect(result).toEqual({ zipped: 1, failed: ['gone.jpg'] });
+      expect(saveAs).toHaveBeenCalledTimes(1);
+    });
+
+    it('saves nothing when every entry failed', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline'); }));
+      const { saveAs } = await import('file-saver');
+
+      const result = await downloadFilesAsZip([{ url: 'u', fileName: 'a.jpg' }], 'album');
+
+      expect(result).toEqual({ zipped: 0, failed: ['a.jpg'] });
+      expect(saveAs).not.toHaveBeenCalled();
+    });
+
+    it('honours the cap so a huge folder cannot blow up the tab', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => okResponse()));
+
+      const entries = Array.from({ length: 5 }, (_, i) => ({ url: `u${i}`, fileName: `f${i}.jpg` }));
+      const result = await downloadFilesAsZip(entries, 'album', 2);
+
+      expect(result.zipped).toBe(2);
+      expect(zipFile).toHaveBeenCalledTimes(2);
     });
   });
 

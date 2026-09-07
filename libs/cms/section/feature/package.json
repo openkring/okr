@@ -45,6 +45,7 @@
     "@okr/content-folder-ui": "*",
     "@okr/calevent-ui": "*",
     "@okr/weather-feature": "*",
-    "@okr/location-data-access": "*"
+    "@okr/location-data-access": "*",
+    "@okr/content-folder-util": "*"
   }
 }

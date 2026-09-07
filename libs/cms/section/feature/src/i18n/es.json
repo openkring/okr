@@ -49,7 +49,8 @@
       "helper": "La clave (okey) de la carpeta donde empieza el álbum. Vacío = nombre de la sección."
     },
     "style": {
-      "label": "Estilo del álbum"
+      "label": "Estilo del álbum",
+      "header": "Cambiar vista"
     },
     "effect": {
       "label": "Efecto"
@@ -71,6 +72,34 @@
         "label": "Mostrar PDF",
         "helper": "Muestra los PDF."
       }
+    },
+    "download": {
+      "header": "Descargar todos los archivos",
+      "confirm": "{count} archivos se agruparán en un archivo ZIP. Con muchas imágenes puede tardar un poco.",
+      "start": "Descargar",
+      "done": "{count} archivos descargados.",
+      "partial": "{count} archivos descargados, {failed} no se pudieron cargar.",
+      "empty": "En esta carpeta no hay nada que descargar."
+    },
+    "cover": {
+      "header": "Elegir imagen de portada",
+      "auto": "Automático (primera imagen)",
+      "apply": "Aplicar",
+      "empty": "En esta carpeta no hay ninguna imagen que pueda servir de portada."
+    },
+    "csv": {
+      "name": "Nombre de archivo",
+      "title": "Título",
+      "type": "Tipo",
+      "size": "Tamaño",
+      "author": "Autor",
+      "created": "Creado",
+      "updated": "Modificado",
+      "url": "Enlace"
+    },
+    "newFolder": {
+      "header": "Nueva carpeta",
+      "placeholder": "Nombre de la carpeta"
     }
   },
   "article": {

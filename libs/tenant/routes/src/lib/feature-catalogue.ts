@@ -911,6 +911,33 @@ const documentBlock: BlockRoutes = {
         data: { color: 'secondary', view: 'list', showMenu: true },
       },
     ],
+  },
+  // The FOLDER list, on this block because `folders` is one of its two collections since the
+  // 2026-08-04 merge — there is no `folder` block to hang it on, and re-adding one would break
+  // `feature-catalogue.sync.spec.ts` (an id may not exist on one side of the catalogue only).
+  //
+  // `FolderList` and `FolderEditModal` have existed and been exported since before that merge
+  // but had NO route and no importer, i.e. the folder edit form — and with it the only UI for
+  // `membersMayUpload`, the flag the `docs` create rule gates member uploads on — was
+  // unreachable. That is what this fragment fixes.
+  //
+  // Guard: `isContentAdminGuard()`, matching `folder-all`'s own `roleNeeded` exactly, so this
+  // adds NO entry to `KNOWN_WEAKER_THAN_MENU`. It deliberately does NOT copy the sibling
+  // `document` route's guard-free shape: R-7 lifted that guard because `:listId` is `all` OR
+  // `f:<folderKey>` and several menu docs point at it with different roles, which one guard
+  // cannot express. This route has no such parameter and exactly one menu doc, so the role
+  // fits on the guard and the screen is what it looks like — a folder ADMIN screen, whose
+  // every action (add, edit, delete) `firestore.rules` already restricts to
+  // contentAdmin/privileged or the folder's owner.
+  {
+    path: 'folder',
+    canActivate: [isContentAdminGuard()],
+    children: [
+      { path: ':contextMenuName',
+        loadComponent: () => import('@okr/content-folder-feature').then(m => m.FolderList),
+        data: { color: 'secondary', showMenu: true },
+      },
+    ],
   }],
 };
 

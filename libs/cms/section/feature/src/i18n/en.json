@@ -49,7 +49,8 @@
       "helper": "The key (okey) of the folder the album starts at. Empty = name of the section."
     },
     "style": {
-      "label": "Album style"
+      "label": "Album style",
+      "header": "Change view"
     },
     "effect": {
       "label": "Effect"
@@ -71,6 +72,34 @@
         "label": "Show PDFs",
         "helper": "Displays the PDFs."
       }
+    },
+    "download": {
+      "header": "Download all files",
+      "confirm": "{count} files will be packed into one ZIP file. With many images this can take a while.",
+      "start": "Download",
+      "done": "{count} files downloaded.",
+      "partial": "{count} files downloaded, {failed} could not be loaded.",
+      "empty": "There is nothing to download in this folder."
+    },
+    "cover": {
+      "header": "Choose cover image",
+      "auto": "Automatic (first image)",
+      "apply": "Apply",
+      "empty": "There is no image in this folder that could serve as a cover."
+    },
+    "csv": {
+      "name": "File name",
+      "title": "Title",
+      "type": "Type",
+      "size": "Size",
+      "author": "Author",
+      "created": "Created",
+      "updated": "Changed",
+      "url": "Link"
+    },
+    "newFolder": {
+      "header": "New folder",
+      "placeholder": "Folder name"
     }
   },
   "article": {

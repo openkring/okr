@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FolderModel, UserModel } from '@okr/shared-models';
-import { canWriteFolderDirectly, canEditFolder, canManageFolders, isFolderOwner } from './folder-permissions.util';
+import { canUploadIntoFolder, canWriteFolderDirectly, canEditFolder, canManageFolders, isFolderOwner } from './folder-permissions.util';
 
 function user(roles: Record<string, boolean>, personKey = 'p1'): UserModel {
   return { roles, personKey } as unknown as UserModel;
@@ -63,5 +63,40 @@ describe('canWriteFolderDirectly', () => {
   it('denies plain members and anonymous', () => {
     expect(canWriteFolderDirectly(folder('other'), user({ registered: true }))).toBe(false);
     expect(canWriteFolderDirectly(undefined, undefined)).toBe(false);
+  });
+});
+
+describe('canUploadIntoFolder', () => {
+  const openFolder = { ownerKey: '', membersMayUpload: true } as FolderModel;
+  const closedFolder = { ownerKey: '', membersMayUpload: false } as FolderModel;
+  /** Every folder written before the flag existed — the case that made the album upload fail. */
+  const legacyFolder = { ownerKey: '' } as FolderModel;
+
+  it('allows contentAdmin and privileged into any folder, flag or not', () => {
+    expect(canUploadIntoFolder(closedFolder, user({ contentAdmin: true }))).toBe(true);
+    expect(canUploadIntoFolder(legacyFolder, user({ privileged: true }))).toBe(true);
+  });
+
+  it('allows a plain member only into a folder that opted in', () => {
+    expect(canUploadIntoFolder(openFolder, user({ registered: true }))).toBe(true);
+    expect(canUploadIntoFolder(closedFolder, user({ registered: true }))).toBe(false);
+  });
+
+  it('treats a missing membersMayUpload as NO, matching the rule default', () => {
+    expect(canUploadIntoFolder(legacyFolder, user({ registered: true }))).toBe(false);
+  });
+
+  it('does NOT let folder ownership stand in for the flag — the rule grants no such branch', () => {
+    const owned = { ownerKey: 'p1' } as FolderModel;
+    expect(canUploadIntoFolder(owned, user({ registered: true }, 'p1'))).toBe(false);
+  });
+
+  it('denies a member without a personKey, which the rule requires for authorKey', () => {
+    expect(canUploadIntoFolder(openFolder, user({ registered: true }, ''))).toBe(false);
+  });
+
+  it('denies when there is no folder or no user', () => {
+    expect(canUploadIntoFolder(undefined, user({ registered: true }))).toBe(false);
+    expect(canUploadIntoFolder(openFolder, undefined)).toBe(false);
   });
 });

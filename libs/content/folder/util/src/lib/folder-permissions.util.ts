@@ -35,3 +35,26 @@ export function canEditFolder(folder?: FolderModel, currentUser?: UserModel, isG
 export function canWriteFolderDirectly(folder?: FolderModel, currentUser?: UserModel): boolean {
   return hasRole('contentAdmin', currentUser) || hasRole('privileged', currentUser) || isFolderOwner(folder, currentUser);
 }
+
+/**
+ * May the user upload a DOCUMENT into this folder with a plain client write?
+ *
+ * Mirrors the `allow create` branch of `match /docs/{id}` in `firestore.rules`:
+ * contentAdmin/privileged unconditionally, everyone else only into a folder that has opted
+ * in with `membersMayUpload`. Ownership of the folder is deliberately NOT enough — the rule
+ * does not grant it, so offering the upload to a folder owner would only produce a denied
+ * write.
+ *
+ * `membersMayUpload` is absent on every folder created before the flag existed, hence the
+ * strict `=== true`: the rule compares `get('membersMayUpload', false) == true`, so an
+ * undefined field means NO, and a client that treated it as "unknown, try anyway" would show
+ * an upload that always fails.
+ *
+ * Keep in sync with firestore.rules.
+ */
+export function canUploadIntoFolder(folder?: FolderModel, currentUser?: UserModel): boolean {
+  if (hasRole('contentAdmin', currentUser) || hasRole('privileged', currentUser)) return true;
+  // The rule also demands a non-empty personKey — a user without one can never satisfy
+  // `authorKey == callerPersonKey()`.
+  return folder?.membersMayUpload === true && (currentUser?.personKey ?? '').length > 0;
+}

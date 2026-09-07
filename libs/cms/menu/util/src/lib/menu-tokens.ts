@@ -13,6 +13,13 @@ export interface MenuTokenContext {
    * expansion has no use for it; url expansion always passes it.
    */
   repoUrl?: string;
+  /**
+   * The tenant the app is running as, e.g. 'p13'. Used by '@TID@' in a `navigate` url that
+   * points at a per-tenant record rather than a page — `/album/@TID@-album/c-album` is one
+   * shared menu document instead of seven forks. Optional for the same reason `repoUrl` is:
+   * label expansion never needs it.
+   */
+  tenantId?: string;
 }
 
 /** Registry of supported tokens → resolver. Keys are the literal tokens found in labels. */
@@ -22,7 +29,10 @@ export const MENU_TOKENS: Record<string, (ctx: MenuTokenContext) => string> = {
   // repository out of the menu document means a repo move is one app-config edit, not a hunt
   // through every tenant's menu docs (which is exactly how the bk2 → openkring/okr rename
   // left the shared `version` item pointing at a dead repo).
-  '@REPO_URL@': (ctx) => ctx.repoUrl ?? ''
+  '@REPO_URL@': (ctx) => ctx.repoUrl ?? '',
+  // Same '@TID@' spelling `pages.sections` and `feature-catalogue.ts`'s `id: 'news_@TID@'`
+  // already use, so one convention covers page ids, section keys and menu urls.
+  '@TID@': (ctx) => ctx.tenantId ?? ''
   // future: '@TENANT_NAME@', '@USER_NAME@', ...
 };
 

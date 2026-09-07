@@ -90,6 +90,75 @@ export async function downloadZipFile(data: string, filename: string): Promise<v
   saveAs(_zippedBlob, filename + '.zip');
 }
 
+/** One entry of a bulk download: a fetchable URL plus the name the file gets inside the archive. */
+export interface ZipEntry {
+  url: string;
+  fileName: string;
+}
+
+/**
+ * Fetch several already-fetchable files and save them as ONE zip.
+ *
+ * Used by the album's "alle Dateien herunterladen": a browser can only start one download per
+ * user gesture, so N single downloads is not an option — the files are collected client-side.
+ *
+ * Everything is held in memory (JSZip has no streaming build), so this is deliberately capped:
+ * a folder with hundreds of full-resolution photos would otherwise crash the tab, and on iOS
+ * Safari well before that. The caller is expected to have told the user what it is downloading.
+ *
+ * Failures are per entry, not fatal: a file whose fetch is rejected (deleted from storage, CORS,
+ * offline) is skipped and reported in the return value, so a single broken document does not cost
+ * the user the other 99. Returns how many entries made it into the archive and which names failed.
+ */
+export async function downloadFilesAsZip(
+  entries: ZipEntry[],
+  zipName: string,
+  maxEntries = 200,
+): Promise<{ zipped: number; failed: string[] }> {
+  const failed: string[] = [];
+  if (entries.length === 0) return { zipped: 0, failed };
+
+  const { default: JSZip } = await import('jszip');
+  const zip = new JSZip();
+  // Two files of the same name in one folder are legal in Firestore but not in a zip — the
+  // second would silently replace the first. Suffix duplicates instead of losing them.
+  const usedNames = new Set<string>();
+
+  for (const entry of entries.slice(0, maxEntries)) {
+    try {
+      const response = await fetch(entry.url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      zip.file(uniqueName(entry.fileName, usedNames), await response.blob(), { binary: true });
+    } catch {
+      failed.push(entry.fileName);
+    }
+  }
+
+  const zipped = entries.slice(0, maxEntries).length - failed.length;
+  if (zipped > 0) {
+    saveAs(await zip.generateAsync({ type: 'blob' }), zipName.endsWith('.zip') ? zipName : `${zipName}.zip`);
+  }
+  return { zipped, failed };
+}
+
+/** `photo.jpg` → `photo.jpg`, `photo (2).jpg`, `photo (3).jpg`, … within one archive. */
+function uniqueName(fileName: string, used: Set<string>): string {
+  if (!used.has(fileName)) {
+    used.add(fileName);
+    return fileName;
+  }
+  const dot = fileName.lastIndexOf('.');
+  const stem = dot > 0 ? fileName.slice(0, dot) : fileName;
+  const ext = dot > 0 ? fileName.slice(dot) : '';
+  for (let i = 2; ; i++) {
+    const candidate = `${stem} (${i})${ext}`;
+    if (!used.has(candidate)) {
+      used.add(candidate);
+      return candidate;
+    }
+  }
+}
+
     /*---------------------------------------- TEXT  -----------------------------------*/
 export async function downloadTextFile(data: string, filename: string): Promise<void> {
   const blob = new Blob([data], { type: 'text/plain;charset=utf-8' });

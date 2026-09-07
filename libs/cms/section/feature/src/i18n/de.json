@@ -49,7 +49,8 @@
       "helper": "Der Schlüssel (okey) des Ordners, mit dem das Album startet. Leer = Name der Sektion."
     },
     "style": {
-      "label": "Album-Stil"
+      "label": "Album-Stil",
+      "header": "Ansicht wechseln"
     },
     "effect": {
       "label": "Effekt"
@@ -71,6 +72,34 @@
         "label": "PDFs anzeigen",
         "helper": "Zeigt die PDFs an."
       }
+    },
+    "download": {
+      "header": "Alle Dateien herunterladen",
+      "confirm": "{count} Dateien werden zu einer ZIP-Datei zusammengepackt. Das kann bei vielen Bildern etwas dauern.",
+      "start": "Herunterladen",
+      "done": "{count} Dateien heruntergeladen.",
+      "partial": "{count} Dateien heruntergeladen, {failed} konnten nicht geladen werden.",
+      "empty": "In diesem Ordner gibt es nichts zum Herunterladen."
+    },
+    "cover": {
+      "header": "Titelbild wählen",
+      "auto": "Automatisch (erstes Bild)",
+      "apply": "Übernehmen",
+      "empty": "In diesem Ordner gibt es kein Bild, das als Titelbild dienen könnte."
+    },
+    "csv": {
+      "name": "Dateiname",
+      "title": "Titel",
+      "type": "Typ",
+      "size": "Grösse",
+      "author": "Autor",
+      "created": "Erstellt",
+      "updated": "Geändert",
+      "url": "Link"
+    },
+    "newFolder": {
+      "header": "Neuer Ordner",
+      "placeholder": "Name des Ordners"
     }
   },
   "article": {

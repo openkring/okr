@@ -555,7 +555,17 @@
     "trip-callsupport": "Support anrufen",
     "chat-support": "Support fragen",
     "chat-notfall": "Notfall melden",
-    "calevent-archived": "Archivierte anzeigen"
+    "calevent-archived": "Archivierte anzeigen",
+    "album-download-all": "Alle Dateien herunterladen",
+    "album-slideshow": "Diashow starten",
+    "album-style": "Ansicht wechseln",
+    "album-folders-toggle": "Unterordner einblenden",
+    "album-copy-link": "Link kopieren",
+    "album-add-folder": "Neuer Ordner",
+    "album-cover": "Titelbild wählen",
+    "album-exportraw": "Dateiliste exportieren",
+    "album-folders-toggle_alt": "Unterordner ausblenden",
+    "folder-all": "Ordner"
   },
   "ownership": {
     "fork_confirm": "«{name}» gehört zum Feature-Katalog ({blocks}).\n\nBeim Speichern wird eine eigene Kopie «{forkKey}» für diesen Mandanten angelegt und der Mandant vom gemeinsamen Original abgehängt. Künftige Katalog-Korrekturen (URL, Aktion, Berechtigung) erreichen diesen Eintrag dann nicht mehr.\n\nTrotzdem speichern?",

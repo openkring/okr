@@ -555,7 +555,17 @@
     "trip-callsupport": "Llamar al soporte",
     "chat-support": "Pedir ayuda",
     "chat-notfall": "Avisar de una emergencia",
-    "calevent-archived": "Mostrar archivados"
+    "calevent-archived": "Mostrar archivados",
+    "album-download-all": "Descargar todos los archivos",
+    "album-slideshow": "Iniciar presentación",
+    "album-style": "Cambiar vista",
+    "album-folders-toggle": "Mostrar subcarpetas",
+    "album-copy-link": "Copiar enlace",
+    "album-add-folder": "Nueva carpeta",
+    "album-cover": "Elegir imagen de portada",
+    "album-exportraw": "Exportar lista de archivos",
+    "album-folders-toggle_alt": "Ocultar subcarpetas",
+    "folder-all": "Carpetas"
   },
   "ownership": {
     "fork_confirm": "«{name}» pertenece al catálogo de funciones ({blocks}).\n\nAl guardar se crea una copia propia del inquilino «{forkKey}» y se desvincula este inquilino del original compartido. Las futuras correcciones del catálogo (URL, acción, rol) ya no llegarán a esta entrada.\n\n¿Guardar de todos modos?",

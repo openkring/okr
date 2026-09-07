@@ -454,6 +454,33 @@ const cms: FeatureBlock = {
       { key: 'cp-exportraw', name: 'cp-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.cp-exportraw' },
       { key: 'page-edit', name: 'page-edit', url: 'editPage', action: 'call', roleNeeded: 'contentAdmin', icon: 'edit', label: '@item.page-edit' },
     ] },
+    // Context menu of the ALBUM page (`/album/<folderKey>/c-album`), which renders a storage
+    // folder rather than a page document. Wrapper is `registered` for the same reason
+    // `c-contentpage` is: a member must reach the upload, the bulk download, the print, the
+    // slideshow, the view switch and the share link. The four rows that CHANGE something —
+    // the CSV export, the new subfolder and the cover picker — carry `contentAdmin` themselves.
+    //
+    // `files-add` and `print` are the SHARED documents `c-contentpage` already declares (same
+    // fields, on purpose). `files-add` in particular must keep that exact name: its Safari
+    // label→input workaround keys off the name in `menu.ts`.
+    { key: 'c-album', name: 'c-album', url: '', action: 'context', roleNeeded: 'registered', icon: 'albums', label: '', children: [
+      { key: 'files-add', name: 'files-add', url: 'addFiles', action: 'call', roleNeeded: 'registered', icon: 'upload', label: '@item.files-add' },
+      { key: 'album-download-all', name: 'album-download-all', url: 'downloadAll', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.album-download-all' },
+      { key: 'album-slideshow', name: 'album-slideshow', url: 'slideshow', action: 'call', roleNeeded: 'registered', icon: 'play', label: '@item.album-slideshow' },
+      { key: 'album-style', name: 'album-style', url: 'selectStyle', action: 'call', roleNeeded: 'registered', icon: 'grid', label: '@item.album-style' },
+      // A toggle without iconAlt/labelAlt renders identically in both states — spell the
+      // 'folders are hidden' side out so the row says what selecting it will do.
+      { key: 'album-folders-toggle', name: 'album-folders-toggle', url: 'toggleFolders', action: 'toggle', roleNeeded: 'registered', icon: 'eye-on', label: '@item.album-folders-toggle', iconAlt: 'eye-off', labelAlt: '@item.album-folders-toggle_alt' },
+      { key: 'album-copy-link', name: 'album-copy-link', url: 'copyLink', action: 'call', roleNeeded: 'registered', icon: 'copy', label: '@item.album-copy-link' },
+      { key: 'print', name: 'print', url: 'print', action: 'call', roleNeeded: 'registered', icon: 'print', label: '@item.print' },
+      { key: 'album-add-folder', name: 'album-add-folder', url: 'addFolder', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.album-add-folder' },
+      { key: 'album-cover', name: 'album-cover', url: 'selectCover', action: 'call', roleNeeded: 'contentAdmin', icon: 'image', label: '@item.album-cover' },
+      // url is 'exportAlbumCsv', NOT 'exportRaw': 'exportRaw' is the value every LIST and the
+      // content page already use for their own raw export. Naming this one distinctly means the
+      // row can be hung under another context menu later without silently exporting the host's
+      // data instead of the album's file list.
+      { key: 'album-exportraw', name: 'album-exportraw', url: 'exportAlbumCsv', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.album-exportraw' },
+    ] },
     { key: 'c-sections', name: 'c-sections', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'section-add', name: 'section-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.section-add' },
       { key: 'section-exportraw', name: 'section-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.section-exportraw' },
@@ -1527,7 +1554,25 @@ const documentBlock: FeatureBlock = {
     // (rule 2: mirror the live TREE SHAPE, not just the node).
     cmsMenuParent([
       { key: 'document-all', name: 'document-all', url: '/document/all/c-documents', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'documents', label: '@main.cms.documents' },
+      // The folder list. Sits next to `document-all` under the same `cms-menu` parent because
+      // `folders` is this block's second collection. It is the ONLY way to reach the folder
+      // edit form, and therefore the only way to set `membersMayUpload` — the flag the `docs`
+      // create rule gates member uploads on.
+      { key: 'folder-all', name: 'folder-all', url: '/folder/c-folders', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'folder', label: '@item.folder-all' },
     ]),
+    // The `:contextMenuName` wrapper `folder-all` points at. Named `c-folders` (plural) — NOT
+    // `c-folder`, which is a DIFFERENT live document: the group view's "Dateien" segment hoists
+    // that one from code (`group-view.page.ts`) onto a DocumentList, and its children are
+    // document actions, not folder actions. Reusing the name would put the wrong action sheet
+    // on both screens.
+    { key: 'c-folders', name: 'c-folders', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      // The SAME shared `folder-add` document `c-folder` declares below — field-identical on
+      // purpose. `FolderList.onPopoverDismiss` used to dispatch `'add'`, which would have
+      // needed a second doc under the same name with a different url; it was changed to
+      // `'addFolder'` instead, so one document serves both screens. Editing and deleting a
+      // folder are on the per-row ActionSheet, not here.
+      { key: 'folder-add', name: 'folder-add', url: 'addFolder', action: 'call', roleNeeded: 'registered', icon: 'folder', label: '@item.folder-add' },
+    ] },
     // The `:contextMenuName` wrapper `document-all`'s own url points at. Verified live,
     // all 16 tenants: `action: context`, `roleNeeded: contentAdmin`, children
     // `[document-add, document-export-raw, filter-toggle]`, all generic (no tenant literal
@@ -1571,8 +1616,9 @@ const documentBlock: FeatureBlock = {
     //    (there is nowhere else to put it), but kept because the dispatching evidence is what
     //    a reader needs. All three children are dispatched by `DocumentList.onPopoverDismiss`
     //    (`document-list.ts:293-299`: `addFolder` → `store.addFolder()`, `addFiles` → toolbar
-    //    label→input, `toggleFilter` → local signal). `FolderList.onPopoverDismiss` handles
-    //    only `'add'` and is not rendered anywhere in the app.
+    //    label→input, `toggleFilter` → local signal). `FolderList` dispatches the same
+    //    `addFolder` value from its own wrapper `c-folders` (added when the folder list
+    //    finally got a route); the two screens share this one child document.
     { key: 'c-folder', name: 'c-folder', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'editmode-toggle', name: 'editmode-toggle', url: 'toggleEditMode', action: 'toggle', roleNeeded: 'registered', icon: 'edit', label: '@item.editmode-toggle' },
       { key: 'folder-add', name: 'folder-add', url: 'addFolder', action: 'call', roleNeeded: 'registered', icon: 'folder', label: '@item.folder-add' },

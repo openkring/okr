@@ -1,11 +1,13 @@
-import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, output, untracked } from '@angular/core';
-import { IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { AlertController, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { AlbumSection, ImageConfig, ImageType } from '@okr/shared-models';
 import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { browse, CategorySelect, ImageGrid, Label, openImageGallery, Spinner } from '@okr/shared-ui';
+import { I18nService } from '@okr/shared-i18n';
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { FolderBreadcrumb } from '@okr/content-folder-ui';
+import { canUploadIntoFolder } from '@okr/content-folder-util';
 
 
 import { AlbumStore } from './album-section.store';
@@ -92,7 +94,7 @@ import { AlbumStore } from './album-section.store';
       <ion-card>
         <ion-card-content>
           <!-- subfolders: cover image (or light background) + folder icon and name overlay -->
-          @if(folders().length > 0) {
+          @if(folders().length > 0 && foldersVisible()) {
             <ion-grid>
               <ion-row>
                 @for(folder of folders(); track folder.okey) {
@@ -116,7 +118,7 @@ import { AlbumStore } from './album-section.store';
           @if(images().length > 0) {
             <okr-image-grid [images]="images()" [imageStyle]="imageStyle()" [imgixBaseUrl]="imgixBaseUrl()"
               [albumStyle]="albumStyle()" (imageClicked)="onImageClicked($event)" />
-          } @else if(folders().length === 0) {
+          } @else if(folders().length === 0 || !foldersVisible()) {
             <okr-label>{{ store.i18n.album_empty() }}</okr-label>
           }
         </ion-card-content>
@@ -126,6 +128,8 @@ import { AlbumStore } from './album-section.store';
 })
 export class AlbumSectionComponent {
   private readonly modalController = inject(ModalController);
+  private readonly alertController = inject(AlertController);
+  private readonly i18nService = inject(I18nService);
   protected store = inject(AlbumStore);
 
   // inputs
@@ -154,6 +158,11 @@ export class AlbumSectionComponent {
   protected title = computed(() => this.store.title());
   protected isTopFolder = computed(() => this.store.isTopFolder());
   protected currentFolderKey = computed(() => this.store.currentFolderKey());
+  /**
+   * Whether the subfolder tiles are shown. Purely a view preference of this visit — nothing is
+   * persisted, so a shared link always opens with the folders visible.
+   */
+  protected readonly foldersVisible = signal(true);
 
   constructor() {
     effect(() => {
@@ -206,5 +215,98 @@ export class AlbumSectionComponent {
     if (this.editMode()) return;
     this.store.goUp();
     this.folderChanged.emit(this.currentFolderKey());
+  }
+
+  /* ---------------- operations of the album context menu (c-album) ----------------
+     Public because the hosting page owns the menu: the album owns the folder currently
+     browsed, so every one of these has to be answered here rather than by the page. */
+
+  /** Pack every visible file of the current folder into one zip. */
+  public async downloadAll(): Promise<void> {
+    await this.store.downloadAll();
+  }
+
+  /** CSV listing of the files of the current folder. */
+  public async exportCsv(): Promise<void> {
+    await this.store.exportCsv();
+  }
+
+  /** Full-screen slideshow over the images of the current folder. */
+  public async startSlideshow(): Promise<void> {
+    await this.store.startSlideshow();
+  }
+
+  /** Create a subfolder below the folder currently browsed and step into it. */
+  public async addFolder(): Promise<void> {
+    await this.store.addFolder();
+    this.folderChanged.emit(this.currentFolderKey());
+  }
+
+  /** Choose which image represents this folder as a tile in its parent album. */
+  public async selectCover(): Promise<void> {
+    await this.store.selectCover();
+  }
+
+  /**
+   * Whether the current folder shows any FILE at all — a folder holding only subfolders (the
+   * root of an album, typically) shows none. Note this counts what the album actually renders,
+   * after the showPdfs/showDocs/showVideos filter: a folder of PDFs in an album configured to
+   * hide PDFs has no files by this measure, which is the right answer for a menu row that would
+   * act on them.
+   */
+  public readonly hasVisibleFiles = computed(() => this.images().length > 0);
+
+  /**
+   * Whether the current user may upload into the folder currently open. Mirrors the `docs`
+   * create rule, so the menu never offers an upload that Firestore will refuse — a plain member
+   * on a folder without `membersMayUpload` used to get the file dialog, pick photos, and then a
+   * "Missing or insufficient permissions" error per file.
+   */
+  public readonly canUpload = computed(() => canUploadIntoFolder(this.store.currentFolder(), this.store.currentUser()));
+
+  /**
+   * Whether any of those files is an IMAGE. Narrower than `hasVisibleFiles` on purpose: a
+   * slideshow and a cover picker need pictures, while a download or a CSV listing is happy with
+   * a folder of PDFs.
+   */
+  public readonly hasImages = computed(() => this.images().some((image) => image.type === ImageType.Image));
+
+  /** Show/hide the subfolder tiles; returns the new state so the caller can reflect it. */
+  public toggleFolders(): boolean {
+    this.foldersVisible.update((visible) => !visible);
+    return this.foldersVisible();
+  }
+
+  /**
+   * Switch the album layout (grid | pinterest | imgix | list | avatar) from the context menu.
+   * The style names are category items, so their labels are runtime keys — resolved through
+   * `createLabelResolver` rather than the store's static i18n map.
+   */
+  public async selectStyle(): Promise<void> {
+    const category = this.albumStyles();
+    const items = category?.items ?? [];
+    if (items.length === 0) return;
+
+    const label = await this.i18nService.createLabelResolver(category);
+    const current = this.albumStyle();
+    const alert = await this.alertController.create({
+      header: this.store.i18n.album_style_header(),
+      inputs: items.map((item) => ({
+        name: 'albumStyle',
+        type: 'radio' as const,
+        label: label(item.name),
+        value: item.name,
+        checked: item.name === current
+      })),
+      buttons: [
+        { text: this.store.i18n.cancel(), role: 'cancel' },
+        { text: this.store.i18n.album_cover_apply(), role: 'confirm' }
+      ]
+    });
+    await alert.present();
+    const { data, role } = await alert.onDidDismiss();
+    if (role !== 'confirm') return;
+    const albumStyle = (data as { values?: string } | undefined)?.values ?? '';
+    if (albumStyle) this.store.setAlbumStyle(albumStyle);
   }
 }

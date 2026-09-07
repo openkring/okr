@@ -30,6 +30,7 @@
     { "path": "../../content/diary/feature/tsconfig.lib.json" },
     { "path": "../../content/document/feature/tsconfig.lib.json" },
     { "path": "../../content/esign/feature/tsconfig.lib.json" },
+    { "path": "../../content/folder/feature/tsconfig.lib.json" },
     { "path": "../../content/meeting/feature/tsconfig.lib.json" },
     { "path": "../../content/pdf-template/feature/tsconfig.lib.json" },
     { "path": "../../finance/account/feature/tsconfig.lib.json" },

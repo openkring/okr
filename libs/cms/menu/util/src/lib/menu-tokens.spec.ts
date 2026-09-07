@@ -73,4 +73,23 @@ describe('resolveMenuUrl', () => {
   it('expands @REPO_URL@ to an empty string when no repo is configured', () => {
     expect(resolveMenuUrl('@REPO_URL@/commits/main/', { version: '4.2.0' })).toBe('/commits/main/');
   });
+
+  it('expands @TID@ so one shared document serves every tenant', () => {
+    expect(resolveMenuUrl('/album/@TID@-album/c-album', { ...urlCtx, tenantId: 'p13' }))
+      .toBe('/album/p13-album/c-album');
+    expect(resolveMenuUrl('/album/@TID@-album/c-album', { ...urlCtx, tenantId: 'scs' }))
+      .toBe('/album/scs-album/c-album');
+  });
+
+  it('expands @TID@ more than once in the same url', () => {
+    expect(resolveMenuUrl('/private/@TID@/x/@TID@', { ...urlCtx, tenantId: 'okr' }))
+      .toBe('/private/okr/x/okr');
+  });
+
+  it('expands @TID@ to an empty string when no tenant is known', () => {
+    // Same degradation @REPO_URL@ already has: an unresolved token leaves a broken path
+    // rather than routing to the literal '@TID@'.
+    expect(resolveMenuUrl('/album/@TID@-album/c-album', { version: '4.2.0' }))
+      .toBe('/album/-album/c-album');
+  });
 });
