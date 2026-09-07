@@ -1,12 +1,12 @@
-import { computed, effect, Inject, Injectable, Injector, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, Injector, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { map, Observable, of, switchMap, take } from 'rxjs';
 import { Platform } from '@ionic/angular/standalone';
 import { Photo } from '@capacitor/camera';
 
-import { OkrEnvironment, ENV } from '@okr/shared-config';
+import { ENV } from '@okr/shared-config';
 import { THUMBNAIL_SIZE } from '@okr/shared-constants';
-import { APP_STORE_MIN, AppStoreMin, FirestoreService } from '@okr/shared-data-access';
+import { APP_STORE_MIN, FirestoreService } from '@okr/shared-data-access';
 import { AvatarCollection, AvatarModel } from '@okr/shared-models';
 import { addImgixParams } from '@okr/shared-util-core';
 
@@ -29,16 +29,16 @@ export class AvatarService {
   // Using signal to ensure reactivity and real-time updates from Firestore
   private storagePathCache = signal(new Map<string, string | null>());
 
-  // classic DI to enable mocks for testing
-  // eslint-disable-next-line @angular-eslint/prefer-inject
-  constructor(
-    private readonly platform: Platform,
-    private readonly firestoreService: FirestoreService, 
-    private readonly uploadService: UploadService,
-    @Inject(ENV) private readonly env: OkrEnvironment,
-    @Inject(APP_STORE_MIN) private readonly appStore: AppStoreMin,
-    private readonly injector: Injector
-  ) {
+  private readonly platform = inject(Platform);
+  private readonly firestoreService = inject(FirestoreService);
+  private readonly uploadService = inject(UploadService);
+  private readonly env = inject(ENV);
+  private readonly appStore = inject(APP_STORE_MIN);
+  // Kept explicit: toSignal/toObservable below are called from the constructor and are handed
+  // this injector rather than relying on an ambient injection context.
+  private readonly injector = inject(Injector);
+
+  constructor() {
     // Convert avatar collection Observable to signal for reactive cache updates.
     // Gate the subscription on an authenticated user: the `avatars` collection is
     // protected (rule `allow read: if tenantRead()` → requires a signed-in user), so
