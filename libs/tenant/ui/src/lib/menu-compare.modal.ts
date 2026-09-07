@@ -23,7 +23,6 @@ interface CompareRow {
   labelKey: keyof FeaturePickerI18n;
   database: string;
   catalogue: string;
-  original: string;
   owner: Owner;
 }
 
@@ -50,11 +49,20 @@ const FIELD_LABEL_KEYS: Record<CompareField, keyof FeaturePickerI18n> = {
 };
 
 /**
- * «(i) auf jeder Zeile» — every field of one menu document, database vs. catalogue vs.
- * (when forked) the shared original, each tagged by who owns it: `Katalog` for the three
- * structural fields (`url`/`action`/`roleNeeded`), `fixiert` when the tenant pinned that
- * field (`ownedFields`), `Mandant` for everything else (label, icon, description, … —
- * D-BB-7 fields, written once on create and never rewritten by the catalogue).
+ * «(i) auf jeder Zeile» — every field of one menu document, database vs. catalogue, each
+ * tagged by who owns it: `Katalog` for the three structural fields (`url`/`action`/
+ * `roleNeeded`), `fixiert` when the tenant pinned that field (`ownedFields`), `Mandant`
+ * for everything else (label, icon, description, … — D-BB-7 fields, written once on
+ * create and never rewritten by the catalogue).
+ *
+ * NO shared-original column. A fork's original lives outside this tenant's
+ * `MenuService.list()` scope (`MenuService.fork` removes the tenant from the original's
+ * `tenants[]` on detach) — resolving it would need a new, unscoped server read that does
+ * not exist yet. A column that always renders a dash promises a comparison this screen
+ * can never make, which is worse than not offering it (task 11 review round 1) — so a
+ * forked document instead gets one plain-text note (`compare_fork_note`) pointing at
+ * `forkedFrom` as the identifier a developer would look the original up with, and stops
+ * there.
  *
  * Read-only — a diagnostic view, not an editor. The three writing actions live on the
  * table row that opened this modal, not here.
@@ -69,6 +77,11 @@ const FIELD_LABEL_KEYS: Record<CompareField, keyof FeaturePickerI18n> = {
     <okr-change-confirmation
       [i18n]="changeConfirmationI18n()" [showCancel]="false" (saveClicked)="close()" />
     <ion-content>
+      @if (doc().forkedFrom) {
+        <ion-item lines="full">
+          <ion-label class="ion-text-wrap">{{ i18n().compare_fork_note() }}</ion-label>
+        </ion-item>
+      }
       <ion-list>
         <ion-item lines="full">
           <ion-label class="ion-text-wrap"><strong>{{ i18n().compare_col_field() }}</strong></ion-label>
@@ -78,14 +91,11 @@ const FIELD_LABEL_KEYS: Record<CompareField, keyof FeaturePickerI18n> = {
           <ion-item lines="full">
             <ion-label class="ion-text-wrap">
               {{ i18n()[row.labelKey]() }}
-              <p>{{ ownerLabel(row.owner) }}</p>
+              <p>{{ i18n().compare_col_owner() }}: {{ ownerLabel(row.owner) }}</p>
             </ion-label>
             <ion-label class="ion-text-wrap" slot="end">
               {{ row.database }}
               <p>{{ i18n().compare_col_catalogue() }}: {{ row.catalogue }}</p>
-              @if (doc().forkedFrom) {
-                <p>{{ i18n().compare_col_original() }}: {{ row.original }}</p>
-              }
             </ion-label>
           </ion-item>
         }
@@ -99,7 +109,6 @@ export class MenuCompareModal {
   // inputs
   public doc = input.required<MenuItemModel>();
   public spec = input<MenuSpec | undefined>(undefined);
-  public original = input<MenuItemModel | undefined>(undefined);
   public i18n = input.required<FeaturePickerI18n>();
 
   protected readonly changeConfirmationI18n = computed<ChangeConfirmationI18n>(() => ({
@@ -109,16 +118,13 @@ export class MenuCompareModal {
   protected readonly rows = computed<CompareRow[]>(() => {
     const doc = this.doc();
     const spec = this.spec();
-    const original = this.original();
     const pinned = new Set(pinnedFieldsOf(doc));
-    const noOriginal = this.i18n().compare_no_original();
 
     return COMPARE_FIELDS.map(field => ({
       field,
       labelKey: FIELD_LABEL_KEYS[field],
       database: this.format(doc[field]),
       catalogue: SPEC_FIELDS.has(field) ? this.format(spec?.[field as keyof MenuSpec]) : this.format(undefined),
-      original: doc.forkedFrom ? (original ? this.format(original[field]) : noOriginal) : '',
       owner: this.ownerOf(field, pinned),
     }));
   });

@@ -479,15 +479,16 @@ export class FeaturePicker {
 
   /** «(i)» on a row — opens `MenuCompareModal`, which reads across every field of the live
    *  document, not just the two shown in the table. Nothing to open for an `absent` row —
-   *  it has no document yet. `original` is left unset: the fork's shared original lives
-   *  outside this tenant's scope and `MenuService.list()` cannot resolve it client-side;
-   *  the modal shows a dash for it, exactly the graceful fallback the brief asks for. */
+   *  it has no document yet. The modal has no shared-original input: the fork's original
+   *  lives outside this tenant's scope and `MenuService.list()` cannot resolve it
+   *  client-side, and a column that can never resolve is worse than no column (task 11
+   *  review round 1) — the modal shows a plain note on a forked document instead. */
   protected async onCompare(row: MenuTreeRow): Promise<void> {
     const doc = this.menuByName().get(row.name);
     if (!doc) return;
     const modal = await this.modalController.create({
       component: MenuCompareModal,
-      componentProps: { doc, spec: this.specByName().get(row.name), original: undefined, i18n: this.i18n },
+      componentProps: { doc, spec: this.specByName().get(row.name), i18n: this.i18n },
     });
     await modal.present();
   }

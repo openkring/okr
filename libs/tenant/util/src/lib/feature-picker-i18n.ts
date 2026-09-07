@@ -146,13 +146,23 @@ export const FEATURE_PICKER_I18N_KEYS = {
   compare_col_field: PFX + 'picker.compare_col_field',
   compare_col_database: PFX + 'picker.compare_col_database',
   compare_col_catalogue: PFX + 'picker.compare_col_catalogue',
-  compare_col_original: PFX + 'picker.compare_col_original',
+  /** Caption in front of the owner tag (`Katalog`/`fixiert`/`Mandant`) shown under each
+   *  field's name — without it that tag renders as an unlabelled second line. */
   compare_col_owner: PFX + 'picker.compare_col_owner',
   compare_owner_catalogue: PFX + 'picker.compare_owner_catalogue',
   compare_owner_pinned: PFX + 'picker.compare_owner_pinned',
   compare_owner_tenant: PFX + 'picker.compare_owner_tenant',
   compare_close: PFX + 'picker.compare_close',
-  compare_no_original: PFX + 'picker.compare_no_original',
+  /**
+   * Shown only on a forked document, in place of the shared-original column the modal
+   * deliberately does NOT have (task 11 review round 1: a column that can never resolve
+   * and always renders a dash is worse than no column — the tenant's `MenuService.list()`
+   * cannot see a document it just detached from). Names `forkedFrom` as the identifier a
+   * developer would use to find the original elsewhere. Intended German meaning: "Dies ist
+   * deine eigene Kopie. Das gemeinsame Original gehört anderen Mandanten und kann hier
+   * nicht angezeigt werden."
+   */
+  compare_fork_note: PFX + 'picker.compare_fork_note',
   compare_bool_true: PFX + 'picker.compare_bool_true',
   compare_bool_false: PFX + 'picker.compare_bool_false',
   /** Field captions on the compare table — the model's own field names (`url`, `action`, …)
