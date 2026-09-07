@@ -48,7 +48,14 @@
       "label": "Supprimer le dossier",
       "confirm": "Voulez-vous vraiment supprimer ce dossier ?"
     },
-    "notEmpty": "Le dossier n'est pas vide. Veuillez d'abord supprimer tous les fichiers et sous-dossiers."
+    "notEmpty": "Le dossier n'est pas vide. Veuillez d'abord supprimer tous les fichiers et sous-dossiers.",
+    "add": {
+      "label": "Ajouter à un dossier",
+      "title": "Quel dossier ?",
+      "confirm": "Ajouter",
+      "none": "Il n'y a aucun autre dossier auquel tu pourrais ajouter ce fichier.",
+      "done": "Le fichier se trouve maintenant aussi dans ce dossier."
+    }
   },
   "image": {
     "add": "Ajouter une image",

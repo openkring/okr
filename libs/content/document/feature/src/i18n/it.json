@@ -48,7 +48,14 @@
       "label": "Elimina cartella",
       "confirm": "Vuoi davvero eliminare questa cartella?"
     },
-    "notEmpty": "La cartella non è vuota. Rimuovi prima tutti i file e le sottocartelle."
+    "notEmpty": "La cartella non è vuota. Rimuovi prima tutti i file e le sottocartelle.",
+    "add": {
+      "label": "Aggiungi a una cartella",
+      "title": "In quale cartella?",
+      "confirm": "Aggiungi",
+      "none": "Non c'è nessun'altra cartella a cui tu possa aggiungere questo file.",
+      "done": "Il file ora si trova anche in questa cartella."
+    }
   },
   "image": {
     "add": "Aggiungi immagine",

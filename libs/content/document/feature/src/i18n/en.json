@@ -48,7 +48,14 @@
       "label": "Delete folder",
       "confirm": "Do you really want to delete this folder?"
     },
-    "notEmpty": "The folder is not empty. Please remove all files and subfolders first."
+    "notEmpty": "The folder is not empty. Please remove all files and subfolders first.",
+    "add": {
+      "label": "Add to folder",
+      "title": "Which folder?",
+      "confirm": "Add",
+      "none": "There is no other folder you could add this file to.",
+      "done": "The file is now in this folder too."
+    }
   },
   "image": {
     "add": "Add image",

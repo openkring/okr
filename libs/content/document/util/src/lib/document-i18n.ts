@@ -32,6 +32,11 @@ export const DOCUMENT_I18N_KEYS = {
   folder_delete:         '@content/document/feature.folder.delete.label',
   folder_delete_confirm: '@content/document/feature.folder.delete.confirm',
   folder_not_empty:      '@content/document/feature.folder.notEmpty',
+  folder_add:            '@content/document/feature.folder.add.label',
+  folder_add_title:      '@content/document/feature.folder.add.title',
+  folder_add_confirm:    '@content/document/feature.folder.add.confirm',
+  folder_add_none:       '@content/document/feature.folder.add.none',
+  folder_add_done:       '@content/document/feature.folder.add.done',
 
   vectorize:            '@content/document/feature.vectorize.label',
   vectorize_title:      '@content/document/feature.vectorize.title',

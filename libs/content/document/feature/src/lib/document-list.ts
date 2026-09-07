@@ -494,6 +494,8 @@ export class DocumentList {
       if (VECTORIZABLE_MIME_TYPES.includes(document.mimeType)) {
         actionSheetOptions.buttons.push(createActionSheetButton('document.vectorize', this.store.i18n.vectorize(), this.imgixBaseUrl, 'image'));
       }
+      // adds a folder key, leaving the current folder in place — the drag-and-drop path MOVES
+      actionSheetOptions.buttons.push(createActionSheetButton('document.addToFolder', this.store.i18n.folder_add(), this.imgixBaseUrl, 'folder'));
     } else {
       actionSheetOptions.buttons.push(createActionSheetButton('document.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
     }
@@ -526,6 +528,10 @@ export class DocumentList {
           break;
         case 'document.share':
           await this.store.share(document);
+          break;
+        case 'document.addToFolder':
+          await this.store.promptAddToFolder(document,
+            !canEditDocument(document, this.currentFolder(), this.currentUser(), this.groupAdmin()));
           break;
         case 'document.update':
           await this.store.update(document, !canEditDocument(document, this.currentFolder(), this.currentUser(), this.groupAdmin()));

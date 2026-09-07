@@ -48,7 +48,14 @@
       "label": "Ordner löschen",
       "confirm": "Willst du diesen Ordner wirklich löschen?"
     },
-    "notEmpty": "Der Ordner ist nicht leer. Bitte zuerst alle Dateien und Unterordner entfernen."
+    "notEmpty": "Der Ordner ist nicht leer. Bitte zuerst alle Dateien und Unterordner entfernen.",
+    "add": {
+      "label": "Zu Ordner hinzufügen",
+      "title": "Zu welchem Ordner?",
+      "confirm": "Hinzufügen",
+      "none": "Es gibt keinen weiteren Ordner, zu dem du diese Datei hinzufügen könntest.",
+      "done": "Die Datei ist jetzt auch in diesem Ordner."
+    }
   },
   "image": {
     "add": "Bild hinzufügen",

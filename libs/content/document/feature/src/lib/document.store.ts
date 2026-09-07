@@ -325,6 +325,64 @@ export const DocumentStore = signalStore(
        * Move a document into a folder (drag & drop): drop the folder the list is currently
        * filtered on and add the target. Documents outside a folder are simply added to it.
        */
+      /**
+       * Add the document to ANOTHER folder without taking it out of the current one.
+       * `folderKeys` is many-to-many by design, but moveToFolder() below is a move — it drops the
+       * source key — and drag-and-drop was the only way to change membership. That made the one
+       * thing the model is built for impossible from the UI: curating a published subset (a
+       * `*-public` folder the gallery endpoint serves) out of a larger internal folder, without
+       * duplicating the file or removing it from where it belongs.
+       */
+      async addToFolder(document: DocumentModel, folderKey: string, readOnly = true): Promise<void> {
+        if (readOnly || !folderKey) return;
+        const keys = new Set(document.folderKeys ?? []);
+        if (keys.has(folderKey)) return;
+        keys.add(folderKey);
+        await store.documentService.update({ ...document, folderKeys: [...keys] }, store.currentUser());
+        store.documentsResource.reload();
+      },
+
+      /**
+       * Ask which folder to add the document to, then add it. Every folder of the tenant is
+       * offered except the ones it is already in — including folders outside the current subtree,
+       * which is the point: the published folder normally lives in its own tree.
+       */
+      async promptAddToFolder(document: DocumentModel, readOnly = true): Promise<void> {
+        if (readOnly) return;
+        const current = new Set(document.folderKeys ?? []);
+        const folders = (await firstValueFrom(store.folderService.list()))
+          .filter((folder) => !current.has(folder.okey) && !folder.isArchived);
+
+        if (folders.length === 0) {
+          const info = await store.alertController.create({
+            header: store.i18n.folder_add_title(),
+            message: store.i18n.folder_add_none(),
+            buttons: [store.i18n.cancel()]
+          });
+          await info.present();
+          return;
+        }
+
+        const alert = await store.alertController.create({
+          header: store.i18n.folder_add_title(),
+          inputs: folders.map((folder) => ({
+            type: 'radio' as const,
+            label: folder.title || folder.name,
+            value: folder.okey
+          })),
+          buttons: [
+            { text: store.i18n.cancel(), role: 'cancel' },
+            { text: store.i18n.folder_add_confirm(), role: 'confirm' }
+          ]
+        });
+        await alert.present();
+        const { data, role } = await alert.onDidDismiss();
+        if (role !== 'confirm' || !data) return;
+        // a radio group hands back the value itself, not a {values} map
+        const folderKey: string = typeof data === 'string' ? data : (data.values ?? '');
+        await this.addToFolder(document, folderKey, readOnly);
+      },
+
       async moveToFolder(document: DocumentModel, folderKey: string): Promise<void> {
         const keys = new Set(document.folderKeys ?? []);
         if (keys.has(folderKey)) return;

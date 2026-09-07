@@ -48,7 +48,14 @@
       "label": "Eliminar carpeta",
       "confirm": "¿Realmente quieres eliminar esta carpeta?"
     },
-    "notEmpty": "La carpeta no está vacía. Elimina primero todos los archivos y subcarpetas."
+    "notEmpty": "La carpeta no está vacía. Elimina primero todos los archivos y subcarpetas.",
+    "add": {
+      "label": "Añadir a una carpeta",
+      "title": "¿A qué carpeta?",
+      "confirm": "Añadir",
+      "none": "No hay ninguna otra carpeta a la que puedas añadir este archivo.",
+      "done": "El archivo ahora también está en esta carpeta."
+    }
   },
   "image": {
     "add": "Añadir imagen",
