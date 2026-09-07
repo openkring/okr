@@ -74,18 +74,20 @@ export function planSelection(
 // selection can exceed that comfortably. Chunking necessarily breaks atomicity across the
 // WHOLE call — a crash between chunk N and N+1 leaves a partially-applied selection.
 //
-// This is deliberately safe to re-run to convergence:
-//  - the config+events chunk is committed FIRST and alone. It is the only write in the
-//    whole operation that is NOT naturally idempotent (menu ops recompute from live
-//    Firestore state every call; seed docs are only written if absent) — a straight
-//    diff-and-log would re-emit "enable"/"disable" featureEvents for transitions already
-//    recorded if `enabledFeatures` had not yet been persisted. Committing it first and
-//    alone means: once it lands, a retry recomputes `previous == plan.enabled` (zero new
-//    diff) and emits nothing more — no duplicate audit entries. If it does NOT land, nothing
-//    downstream depended on it, so a full retry redoes it correctly.
-//  - every later chunk (menu ops, seed docs) is naturally idempotent: re-running plans
-//    against whatever Firestore already has, so a retry after a partial failure converges
-//    on the same end state instead of duplicating or corrupting it.
+// WHAT IS ACTUALLY GUARANTEED. The writes are handed over as ONE flat list and sliced into
+// 400-op batches in order, so there is no "config chunk first, alone" ordering any more —
+// with a typical verb producing far fewer than 400 ops, the config write, the events and the
+// menu ops usually land in the SAME batch, and on a large enable the split falls wherever
+// the 400th op happens to be. The guarantee this relies on instead is convergence:
+//  - every verb's writes are idempotent. Menu ops are recomputed from live Firestore state
+//    on each call, seed docs are only written when absent, `enabledFeatures` converges
+//    (an enable adds, a disable removes one id), and pin/unpin write a value, not a delta.
+//    So re-running the same intent after a partial commit lands on the same end state
+//    instead of duplicating or corrupting it.
+//  - the audit trail is the accepted cost: `featureEvents` is append-only, so a retry after
+//    a partial commit can record a second `enable`/`menu-add` for a transition that already
+//    happened. A duplicate audit line is strictly better than a partially-applied selection,
+//    and the events carry `at`/`by` so the duplicate is recognisable.
 // ────────────────────────────────────────────────────────────────────────────────────
 export function chunk<T>(items: readonly T[], size = BATCH_SIZE): T[][] {
   const out: T[][] = [];
@@ -389,9 +391,18 @@ const menuWrite = (db: Firestore, op: MenuOp): PendingWrite => ({
 /**
  * VERB `enableBlock` — switch one block on and write exactly the rows the admin ticked.
  *
- * ADD, never replace: the new `enabledFeatures` is the old one plus this block and its
- * dependency closure. Nothing is derived from a block's absence any more — that is the
- * whole fix. Switching a block off is `disableBlock`'s job and touches no menu document.
+ * ADD, never replace: the persisted `enabledFeatures` is the PREVIOUS array plus whatever this
+ * call grants (the block and its dependency closure, minus anything rollout withholds).
+ * Nothing is derived from a block's absence any more — that is the whole fix. Switching a
+ * block off is `disableBlock`'s job and touches no menu document.
+ *
+ * A previously-enabled id is NEVER removed by an enable, whatever the rollout currently says
+ * about it. An earlier revision ran `[...previous, blockId]` through `planSelection` and
+ * persisted the FILTERED result, so every already-enabled id was silently re-tested: dropping
+ * a tenant from an `allowTenants` list, or renaming/removing a block in code, made an
+ * unrelated enable switch that id off — with no `disable` event, and while the preview
+ * claimed it "bleibt aus". Rollout still governs what may be ADDED: a withheld block is
+ * reported and produces no config entry, no event, no menu document and no seed.
  */
 export async function planEnableBlock(
   db: Firestore,
@@ -409,13 +420,22 @@ export async function planEnableBlock(
   const configSnap = await configRef.get();
   const previous = effectiveEnabled(configSnap.data(), catalogue);
 
-  const plan = planSelection(catalogue, rollouts, [...previous, blockId], tenantId);
+  // Planned over THIS request's closure only — never over `previous`. `planSelection` filters,
+  // and anything it filters out of its input would be dropped from the persisted array; the
+  // previous set is added back untouched below instead of being re-adjudicated.
+  const plan = planSelection(catalogue, rollouts, [blockId], tenantId);
   // A block the ROLLOUT withholds (internal / disabled / deny-listed) is reported, never
   // written: it is absent from `plan.enabled`, so it must produce no event, no menu
   // document, no root attachment and no seed either. Deriving `blocks` from `requested`
   // alone used to plan the whole subtree of a block the tenant is not allowed to have, and
   // the preview then carried `block-enabled` AND `block-withheld` for the same id.
   const grantedIds = new Set(plan.enabled);
+  // += the closure (spec §19). Order-preserving union: previous first, exactly as stored.
+  const nextEnabled = [...new Set([...previous, ...plan.enabled])];
+  // An id that is ALREADY on is not "withheld" — it stays on. Only a block this call would
+  // have had to add, and may not, is reported, so the preview never says "bleibt aus" about
+  // something that in fact keeps running.
+  const withheld = plan.withheld.filter(w => !previous.includes(w.id));
   const alsoEnabled = resolveWithDeps(catalogue, [blockId])
     .filter(id => id !== blockId && !previous.includes(id) && grantedIds.has(id))
     .map(id => ({ id, because: blockId }));
@@ -443,7 +463,7 @@ export async function planEnableBlock(
   const at = getTodayStr(DateFormat.StoreDateTime);
   const seedWrites = await planSeedWrites(db, blocks);
   const writes: PendingWrite[] = [
-    { ref: configRef, data: { enabledFeatures: plan.enabled }, merge: true },
+    { ref: configRef, data: { enabledFeatures: nextEnabled }, merge: true },
     ...eventWrites(db, tenantId, uid, at, [
       ...(granted ? [{ block: blockId, op: 'enable' as const }] : []),
       ...alsoEnabled.map(a => ({ block: a.id, op: 'enable' as const })),
@@ -457,7 +477,7 @@ export async function planEnableBlock(
     writes,
     preview: buildPreview({
       blockId: granted ? blockId : undefined,
-      alsoEnabled, withheld: plan.withheld, ops, before, rootOp, seedWrites, at,
+      alsoEnabled, withheld, ops, before, rootOp, seedWrites, at,
     }),
   };
 }

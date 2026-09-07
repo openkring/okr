@@ -68,14 +68,28 @@ export function applyRowToggle(
 
 /**
  * The keys actually sent as `BlockEnableResult.menuKeys` — `selected` UNIONED with
- * `alreadyPresent`, so a key already reachable in the tenant's menu can NEVER be missing from
- * the payload, regardless of how `selected` got built. This is deliberately independent of the
- * cascade guard in `applyRowToggle` (belt AND suspenders, not either/or): the checkbox tree's
- * whole point is showing the admin an accurate preview of what will be attached, and an
- * already-present row is drawn checked-and-disabled specifically so the admin reads it as "this
- * stays, no matter what you do here" — a payload that could still drop it would make that
- * drawing a lie the very next task's confirmation text would then repeat.
+ * `alreadyPresent` AND with `dependencyKeys`, so a key the dialog drew checked-and-disabled can
+ * NEVER be missing from the payload, regardless of how `selected` got built.
+ *
+ * `alreadyPresent` is deliberately independent of the cascade guard in `applyRowToggle` (belt
+ * AND suspenders, not either/or): the checkbox tree's whole point is showing the admin an
+ * accurate preview of what will be attached, and an already-present row is drawn
+ * checked-and-disabled specifically so the admin reads it as "this stays, no matter what you do
+ * here" — a payload that could still drop it would make that drawing a lie the very next task's
+ * confirmation text would then repeat.
+ *
+ * `dependencyKeys` are the rows of the blocks the save switches on ALONGSIDE the requested one
+ * (`alsoBlocks`). They are drawn ticked and locked for exactly the same reason, and they must
+ * be in the payload for the same reason: `enableBlock` plans EVERY block it grants — the
+ * requested one and each dependency — against the one `menuKeys` whitelist it is given, so a
+ * dependency key that is not in it produces no menu document at all. Leaving them out is what
+ * made enabling `calevent` pull `person` into `enabledFeatures` with zero rows created, forcing
+ * the admin to hand-add each one afterwards. Spec §19 lists them «vorangehakt», i.e. written.
  */
-export function menuKeysFor(selected: ReadonlySet<string>, alreadyPresent: ReadonlySet<string>): string[] {
-  return [...new Set([...selected, ...alreadyPresent])];
+export function menuKeysFor(
+  selected: ReadonlySet<string>,
+  alreadyPresent: ReadonlySet<string>,
+  dependencyKeys: Iterable<string> = [],
+): string[] {
+  return [...new Set([...selected, ...alreadyPresent, ...dependencyKeys])];
 }

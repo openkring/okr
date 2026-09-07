@@ -76,3 +76,20 @@ describe('menuKeysFor', () => {
     expect(menuKeysFor(new Set(['a']), new Set(['a']))).toEqual(['a']);
   });
 });
+
+describe('menuKeysFor — dependency rows are written, not just drawn (Important 1)', () => {
+  it('carries every `alsoBlocks` row key into the payload', () => {
+    // The dialog draws a dependency block's rows ticked and locked; `enableBlock` plans that
+    // block against the SAME whitelist, so a key missing here means the row is never created.
+    const keys = menuKeysFor(new Set(['calevent-all']), new Set(), ['person-all']);
+    expect(keys).toEqual(expect.arrayContaining(['calevent-all', 'person-all']));
+  });
+
+  it('keeps a dependency key even when the admin unticked everything of the own block', () => {
+    expect(menuKeysFor(new Set(), new Set(), ['person-all'])).toEqual(['person-all']);
+  });
+
+  it('does not duplicate a key that is both selected and a dependency key', () => {
+    expect(menuKeysFor(new Set(['a']), new Set(), ['a'])).toEqual(['a']);
+  });
+});

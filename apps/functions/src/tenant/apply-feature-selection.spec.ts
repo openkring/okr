@@ -236,15 +236,25 @@ describe('planRootMenuOp (root menu attachment — task-8 review round 2)', () =
     expect(op?.fields.menuItems).toEqual(['home', 'event-menu-scs', 'calevent-all']);
   });
 
-  it('self-heals a root doc whose tenants[] ever drifted from exactly [tenantId], without touching menuItems', () => {
+  // Important 3: the tenants[] self-heal is GONE. It was the one write in the whole picker
+  // that removed something, and it was never announced in the preview.
+  it('never rewrites a root doc whose tenants[] drifted — an enable extends, it does not repair', () => {
     const existing = new Map<string, MenuItemModel>([
       ['main_p13', rootDoc({ tenants: ['p13', 'stray-other-tenant'] })],
     ]);
 
-    const op = planRootMenuOp('p13', existing, []);
+    expect(planRootMenuOp('p13', existing, [])).toBeUndefined();
+  });
 
-    expect(op?.fields.tenants).toEqual(['p13']);
-    expect(op?.fields.menuItems).toBeUndefined(); // array itself is unchanged, not rewritten
+  it('appends a missing key without touching a drifted tenants[]', () => {
+    const existing = new Map<string, MenuItemModel>([
+      ['main_p13', rootDoc({ menuItems: ['home'], tenants: ['p13', 'stray-other-tenant'] })],
+    ]);
+
+    const op = planRootMenuOp('p13', existing, ['calevent-all']);
+
+    expect(op?.fields.menuItems).toEqual(['home', 'calevent-all']);
+    expect(op?.fields.tenants).toBeUndefined();
   });
 });
 
@@ -1025,5 +1035,88 @@ describe('applyFeatureSelection dispatch', () => {
       app: {}, auth: { uid: UID },
       data: { tenantId: 'p13', intent: { verb: 'disableBlock', blockId: 'calevent' } },
     } as never)).rejects.toMatchObject({ code: 'permission-denied' });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// Important 1 — a dependency block's ticked rows are actually created. The dialog draws
+// them ticked-and-locked and now sends their keys, so the whitelist covers them.
+// ─────────────────────────────────────────────────────────────────────────────────────
+describe('planEnableBlock — the dependency block\'s rows, when ticked, are written', () => {
+  it('creates the dependency\'s menu document when its key is in menuKeys', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
+    const { writes, preview } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, [], 'scs', 'uid1', 'calevent', ['calevent-all', 'person-all']);
+
+    const menuDocs = writes.filter(w => w.ref.parent.id === 'menuItems').map(w => w.ref.id);
+    expect(menuDocs).toContain('calevent-all');
+    expect(menuDocs).toContain('person-all'); // `person` is calevent's dependency
+    expect(preview.entries.some(e => e.kind === 'menu-created' && e.subject === 'person-all'))
+      .toBe(true);
+    expect(preview.alsoEnabled).toContainEqual({ id: 'person', because: 'calevent' });
+  });
+
+  it('attaches the dependency\'s top-level row to the tenant root too', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: [] }] });
+    const { writes } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, [], 'scs', 'uid1', 'calevent', ['calevent-all', 'person-all']);
+
+    const root = writes.find(w => w.ref.id === 'main_scs');
+    expect(root?.data['menuItems']).toEqual(expect.arrayContaining(['calevent-all', 'person-all']));
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────────────
+// Important 2 — `enabledFeatures` += the closure. An enable never removes a previously
+// enabled id, whatever rollout or the catalogue currently say about it.
+// ─────────────────────────────────────────────────────────────────────────────────────
+describe('planEnableBlock — enabledFeatures is only ever extended', () => {
+  const enabledFeaturesOf = (writes: PendingWrite[]): string[] =>
+    writes.find(w => w.ref.parent.id === 'app-config')?.data['enabledFeatures'] as string[];
+
+  it('keeps a previously enabled block that rollout no longer offers this tenant', async () => {
+    // `labs` was beta-allowlisted for scs and switched on; ops then dropped scs from
+    // `allowTenants`. Enabling an unrelated block must not switch `labs` off behind their back.
+    const rollouts: FeatureRollout[] = [{
+      okey: 'labs', availability: 'beta', allowTenants: [], denyTenants: [],
+      reason: 'noch nicht für alle', updatedAt: '', updatedBy: '',
+    }];
+    const db = fakeDb({
+      menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: ['calevent', 'labs'] }],
+    });
+
+    const { writes, preview } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, rollouts, 'scs', 'uid1', 'aoc', []);
+
+    expect(enabledFeaturesOf(writes)).toEqual(['calevent', 'labs', 'aoc']);
+    // …and it is not reported as withheld either: it is not being added, it is already on.
+    expect(preview.withheld.map(w => w.id)).not.toContain('labs');
+    expect(writes.filter(w => w.ref.parent.id === 'featureEvents').map(w => w.data['block']))
+      .toEqual(['aoc']);
+  });
+
+  it('keeps an id in `previous` that no catalogue block declares any more', async () => {
+    // A block renamed or removed in code: `planSelection` drops it (`if (!block) continue`),
+    // so re-testing `previous` used to erase it from the tenant's config silently.
+    const db = fakeDb({
+      menuItems: [],
+      'app-config': [{ id: 'scs', enabledFeatures: ['calevent', 'legacy-renamed-block'] }],
+    });
+
+    const { writes } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, [], 'scs', 'uid1', 'aoc', []);
+
+    expect(enabledFeaturesOf(writes)).toContain('legacy-renamed-block');
+  });
+
+  it('still refuses to ADD a block rollout withholds', async () => {
+    const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }] });
+
+    const { writes, preview } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, [], 'scs', 'uid1', 'labs', ['labs-all']);
+
+    expect(enabledFeaturesOf(writes)).toEqual(['calevent']);
+    expect(writes.filter(w => w.ref.parent.id === 'menuItems')).toHaveLength(0);
+    expect(preview.withheld.map(w => w.id)).toContain('labs');
   });
 });

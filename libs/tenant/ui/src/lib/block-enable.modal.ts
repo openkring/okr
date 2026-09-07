@@ -47,10 +47,13 @@ const MENU_ROW_KINDS: PlanEntryKind[] = ['menu-created', 'menu-extended', 'menu-
  *    `alreadyPresent` back into the payload regardless, so neither guard depends on the other
  *    ever being right.
  *  - `alsoBlocks` (dependency blocks the save will force on regardless of this dialog) are
- *    shown for transparency ONLY — their own menu outline, read-only, ticked, disabled. They
- *    are NOT part of `menuKeys`: `{ verb: 'enableBlock', blockId, menuKeys }` whitelists a
- *    SINGLE block's rows, and a forced dependency has no admin choice to whitelist — it is
- *    switched on with its full default menu, the same way `core` blocks always were.
+ *    shown read-only — their own menu outline, ticked, disabled — and their keys ARE part of
+ *    `menuKeys`. A forced dependency has no admin choice to whitelist, so its rows are not
+ *    individually opt-out-able; but they must still be in the payload, because `enableBlock`
+ *    plans EVERY block it grants against that one whitelist. Omitting them (the pre-fix
+ *    behaviour) enabled `person` alongside `calevent` with not one menu document created,
+ *    while this dialog showed those rows pre-ticked — the dialog and the write disagreed.
+ *    Spec §19 lists them «vorangehakt», i.e. written.
  *
  * Unticking a parent row unticks its descendants with it (a child cannot be attached without
  * its parent — `MenuOutlineRow.depth` encodes the tree via depth-first order); ticking a row
@@ -131,6 +134,9 @@ export class BlockEnableModal {
   protected readonly alreadyPresentSet = computed(() => new Set(this.alreadyPresent()));
   protected readonly alsoBlockOutlines = computed(() =>
     this.alsoBlocks().map(block => ({ block, rows: menuOutlineOf(block) })));
+  /** Every row of every dependency block — locked in the UI, but always sent (see class doc). */
+  private readonly dependencyKeys = computed(() =>
+    this.alsoBlockOutlines().flatMap(also => also.rows.map(row => row.key)));
 
   /** `PlanEntry`s of a menu-row kind, indexed by the `MenuOutlineRow.key` they describe. */
   private readonly menuEntriesByKey = computed(() => {
@@ -188,7 +194,9 @@ export class BlockEnableModal {
   }
 
   protected async confirm(): Promise<void> {
-    const result: BlockEnableResult = { menuKeys: menuKeysFor(this.selected(), this.alreadyPresentSet()) };
+    const result: BlockEnableResult = {
+      menuKeys: menuKeysFor(this.selected(), this.alreadyPresentSet(), this.dependencyKeys()),
+    };
     await dismissOverlay(this.modalController, result, 'confirm');
   }
 

@@ -7,10 +7,11 @@ import type { MenuOp } from './menu-seed.util';
  *
  * These three functions are pure and were the Cloud Function's private business until the menu
  * guard needed them: the picker now computes the SAME op client-side before saving, so the
- * confirmation can name the exact rows that will disappear and the exact rows that will come
- * back appended at the tail. Reimplementing that in the client would guarantee the warning and
- * the write drift apart — the same argument `findStructuralDrift` records for «Struktur
- * übernehmen». There is one implementation and both callers share it.
+ * confirmation can name the exact rows a save will APPEND at the tail. Nothing here removes a
+ * row any more, so there is nothing to warn about disappearing. Reimplementing the append in
+ * the client would guarantee the announcement and the write drift apart — the same argument
+ * `findStructuralDrift` records for «Struktur übernehmen». There is one implementation and both
+ * callers share it.
  *
  * `apps/functions/src/tenant/apply-feature-selection.ts` re-exports all three, so its own test
  * suite (and any existing importer) keeps working unchanged.
@@ -98,24 +99,28 @@ export function planRootMenuOp(
     };
   }
 
-  // NEVER REMOVES (D-BB-17/18). Switching a block off no longer touches this document at
-  // all — gate 2 (`MenuStore.isVisible`) already hides every row of a disabled block, so
-  // the old `removeKeys` rewrite was cosmetic, and it was what turned an accidentally
-  // unticked checkbox into a menu change.
+  // NEVER REMOVES, NEVER REPAIRS (D-BB-17/18). Switching a block off no longer touches this
+  // document at all — gate 2 (`MenuStore.isVisible`) already hides every row of a disabled
+  // block, so the old `removeKeys` rewrite was cosmetic, and it was what turned an
+  // accidentally unticked checkbox into a menu change.
+  //
+  // NO `tenants[]` SELF-HEAL EITHER. An earlier revision replaced a root doc's `tenants[]`
+  // with `[tenantId]` whenever it was not exactly that. It was the ONE write in the whole
+  // picker that removed something, and `buildPreview` never announced it (it reads only
+  // `fields.menuItems`), so an enable could silently detach another tenant from a document
+  // the admin was never shown. A root doc whose `tenants[]` has drifted is a data problem to
+  // look at, not something an enable gets to rewrite behind the admin's back — the picker
+  // extends, it does not repair. The `create` branch above is unaffected: a root doc this run
+  // brings into existence is correctly written with `tenants: [tenantId]`.
   const current = doc.menuItems ?? [];
   // Already reachable one level down under a hand-made parent → attaching it at the root
   // too would only duplicate the row. See `nestedMenuKeys`.
   const nested = nestedMenuKeys(key, existing);
   const missing = wantedAdds.filter(k => !current.includes(k) && !nested.has(k));
-  // Per-tenant, never shared (see header comment) — self-heal if it ever drifted, but
-  // this is a no-op for every correctly-provisioned root doc.
-  const tenantsCorrect = doc.tenants?.length === 1 && doc.tenants[0] === tenantId;
 
-  if (missing.length === 0 && tenantsCorrect) return undefined; // nothing to write
+  if (missing.length === 0) return undefined; // nothing to write
 
-  const fields: Partial<MenuItemModel> = {};
-  if (missing.length > 0) fields.menuItems = [...current, ...missing];
-  if (!tenantsCorrect) fields.tenants = [tenantId];
+  const fields: Partial<MenuItemModel> = { menuItems: [...current, ...missing] };
   return { key, docId: key, op: 'update-structure', fields };
 }
 
