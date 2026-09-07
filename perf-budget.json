@@ -18,5 +18,10 @@
     "dashboardClosureGzipBytes": 1486830,
     "chunks": 220,
     "updated": "2026-09-07"
+  },
+  "bka-app": {
+    "dashboardClosureGzipBytes": 1486739,
+    "chunks": 220,
+    "updated": "2026-09-07"
   }
 }
