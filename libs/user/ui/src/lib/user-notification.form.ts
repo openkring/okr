@@ -2,7 +2,7 @@ import { Component, computed, effect, input, linkedSignal, model, output } from 
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
 import { DeliveryChannel, UserModel } from "@okr/shared-models";
-import { DeliveryChannelsControl, DeliveryChannelsI18n } from "@okr/shared-ui";
+import { DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote } from "@okr/shared-ui";
 import { coerceBoolean, toDeliveryChannels } from "@okr/shared-util-core";
 
 import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, userNotificationFormValidations } from "@okr/user-util";
@@ -11,7 +11,7 @@ import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, user
   selector: 'okr-user-notification-form',
   standalone: true,
   imports: [
-    DeliveryChannelsControl,
+    DeliveryChannelsControl, ErrorNote,
     IonCard, IonCardHeader, IonCardContent, IonCardTitle, IonCardSubtitle,
     IonGrid, IonRow, IonCol
   ],
@@ -28,9 +28,11 @@ import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, user
             <ion-row>
             <ion-col size="12" size-md="6">
               <okr-delivery-channels [i18n]="newsDeliveryI18n()" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="newsDeliveryErrors()" />
             </ion-col>
             <ion-col size="12" size-md="6">
               <okr-delivery-channels [i18n]="invoiceDeliveryI18n()" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [readOnly]="readOnly()" />
+              <okr-error-note [errors]="invoiceDeliveryErrors()" />
             </ion-col>
             </ion-row>
           </ion-grid>
@@ -65,15 +67,23 @@ export class UserNotificationForm {
   // validation and errors
   protected readonly shape = USER_NOTIFICATION_FORM_SHAPE;
   private readonly validationResult = computed(() => userNotificationFormValidations(this.formData()));
+  protected newsDeliveryErrors = computed(() => this.validationResult().getErrors('newsDelivery'));
+  protected invoiceDeliveryErrors = computed(() => this.validationResult().getErrors('invoiceDelivery'));
 
   // computed fields
-  protected newsDelivery = linkedSignal(() => toDeliveryChannels(this.formData().newsDelivery));
-  protected invoiceDelivery = linkedSignal(() => toDeliveryChannels(this.formData().invoiceDelivery));
+  // An already migrated list passes through UNCHANGED — an empty one included, because that is
+  // the state the error notes above report; only a legacy value is converted.
+  protected newsDelivery = linkedSignal(() => this.asChannels(this.formData().newsDelivery));
+  protected invoiceDelivery = linkedSignal(() => this.asChannels(this.formData().invoiceDelivery));
 
   constructor() {
     effect(() => {
       this.valid.emit(this.validationResult().isValid());
     });
+  }
+
+  private asChannels(raw: unknown): DeliveryChannel[] {
+    return Array.isArray(raw) ? (raw as DeliveryChannel[]) : toDeliveryChannels(raw);
   }
 
   protected onFieldChange(fieldName: string, fieldValue: DeliveryChannel[]): void {

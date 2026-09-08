@@ -133,7 +133,7 @@
       },
       "email": {
         "label": "E-Mail",
-        "description": "du bekommst das Schreiben als PDF per E-Mail."
+        "description": "du bekommst das Schreiben per E-Mail."
       },
       "chat": {
         "label": "Chat",

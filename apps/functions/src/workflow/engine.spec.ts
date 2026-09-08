@@ -656,6 +656,19 @@ describe('deliverNotice / deliverInvoice', () => {
     expect(deps.tasks).toHaveLength(1); // the print-and-post task
   });
 
+  it('leaves the print task linkable to its subject and keeps the letter findable', async () => {
+    const deps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Post] });
+    await runAction(rule({ steps: [notice()] }), ctx({ relatedKey: 'membership.m1' }), deps);
+    expect(deps.tasks).toHaveLength(1);
+    // linkKey must stay '<modelType>.<okey>' or empty — a storage path there would kill
+    // task.form's fallback to relatedKey
+    expect(deps.tasks[0].linkKey).toBe('');
+    expect(deps.tasks[0].relatedKey).toBe('membership.m1');
+    // the storage path outlives the one-hour signed url
+    expect(deps.tasks[0].notes).toContain('documents/letter.pdf');
+    expect(deps.tasks[0].notes).toContain('https://example.test/letter.pdf');
+  });
+
   it('sends only what the recipient chose', async () => {
     const deps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Chat], email: 'a@b.ch', matrixId: '@p1:m.test' });
     await runAction(rule({ steps: [notice()] }), ctx(), deps);

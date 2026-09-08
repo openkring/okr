@@ -344,8 +344,13 @@ async function deliverOverChannels(
           dueInDays: step.dueInDays ?? 0,
           relatedModelType: ctx.relatedKey.split('.')[0] ?? '',
           relatedKey: ctx.relatedKey,
-          linkKey: letter.storagePath,
-          notes: letter.url,
+          // linkKey is contractually '<modelType>.<okey>' (TaskModel) and drives
+          // getRelatedRoute; a storage path there yields no route AND destroys task.form's
+          // `linkKey || relatedKey` fallback to the invoice/membership the task is about.
+          // The letter travels in the notes instead: the storage path stays valid for as
+          // long as the task does, while the signed url expires after an hour.
+          linkKey: '',
+          notes: [letter.storagePath, letter.url].filter(Boolean).join('\n'),
         });
       }
     }

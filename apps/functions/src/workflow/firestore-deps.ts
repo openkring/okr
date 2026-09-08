@@ -224,8 +224,12 @@ export function createFirestoreDeps(): WorkflowDeps {
     async deliveryChannelsFor(personKey, tenantId, kind): Promise<DeliveryChannel[]> {
       const field = kind === 'invoice' ? 'invoiceDelivery' : 'newsDelivery';
       if (personKey) {
-        const snap = await db.collection('users').where('personKey', '==', personKey).limit(1).get();
-        if (!snap.empty) return toDeliveryChannels(snap.docs[0].data()[field]);
+        // No .limit(1): a person can hold an account in several tenants, and this reads the
+        // document's CONTENT — the wrong tenant's preference would decide the delivery here.
+        // Narrowed in memory (see the file header) so no composite index is needed.
+        const snap = await db.collection('users').where('personKey', '==', personKey).get();
+        const doc = snap.docs.find((d) => ((d.data()['tenants'] as string[]) ?? []).includes(tenantId));
+        if (doc) return toDeliveryChannels(doc.data()[field]);
       }
       // no account: the tenant's default, which is itself possibly still a legacy number
       const config = await db.collection('app-config').doc(tenantId).get();
@@ -267,7 +271,8 @@ export function createFirestoreDeps(): WorkflowDeps {
       const posSnap = await db.collection('invoice-positions').where('invoiceKey', '==', okey).get();
       const positions = posSnap.docs
         .map((d) => d.data() as Record<string, unknown>)
-        .filter((p) => p['isArchived'] !== true);
+        .filter((p) => p['isArchived'] !== true)
+        .filter((p) => ((p['tenants'] as string[]) ?? []).includes(tenantId));
       return { invoice: { ...invoice, okey }, positions };
     },
 

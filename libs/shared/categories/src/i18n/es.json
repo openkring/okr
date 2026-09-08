@@ -133,7 +133,7 @@
     },
     "email": {
       "label": "Correo electrónico",
-      "description": "recibes el documento en PDF por correo electrónico."
+      "description": "recibes el documento por correo electrónico."
     },
     "chat": {
       "label": "Chat",

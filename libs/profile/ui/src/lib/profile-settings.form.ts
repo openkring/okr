@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, linkedSignal, model, output
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 
 import { AvatarUsages, LanguageCategory, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
-import { AvatarUsage, DefaultLanguage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
+import { AvatarUsage, DefaultLanguage, DeliveryChannel, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
 import { FcmService } from "@okr/shared-data-access";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
 import { coerceBoolean, hasRole, isValidForFields, toDeliveryChannels } from "@okr/shared-util-core";
@@ -87,9 +87,11 @@ const EDITED_FIELDS = [
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-delivery-channels [i18n]="newsDeliveryI18n()" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="newsDeliveryErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-delivery-channels [i18n]="invoiceDeliveryI18n()" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="invoiceDeliveryErrors()" />
               </ion-col>
             </ion-row>
             @if (fcmService.isSupported()) {
@@ -173,8 +175,19 @@ export class ProfileSettingsAccordion {
   public valid = output<boolean>();
 
   // validation and errors
-  private readonly validationResult = computed(() => userValidations(this.formData(), this.tenantId(), this.tags()));
+  // The streamed UserModel can still hold a legacy NUMBER in the two delivery fields (Firestore
+  // reads skip model defaults, and the migration runs after the release). Validating the raw
+  // value would fail `notArray` for every un-migrated user and hide the save bar with nothing
+  // on screen to explain it — so validate a normalised copy.
+  private readonly validatedData = computed<UserModel>(() => ({
+    ...this.formData(),
+    newsDelivery: this.asChannels(this.formData().newsDelivery),
+    invoiceDelivery: this.asChannels(this.formData().invoiceDelivery),
+  }));
+  private readonly validationResult = computed(() => userValidations(this.validatedData(), this.tenantId(), this.tags()));
   protected gravatarEmailErrors = computed(() => this.validationResult().getErrors('gravatarEmail'));
+  protected newsDeliveryErrors = computed(() => this.validationResult().getErrors('newsDelivery'));
+  protected invoiceDeliveryErrors = computed(() => this.validationResult().getErrors('invoiceDelivery'));
   protected showHelper = computed(() => this.currentUser()?.showHelpers ?? true);
 
   // fields
@@ -190,8 +203,8 @@ export class ProfileSettingsAccordion {
   // Lastname, to match UserModel's default and convertUserToForm() — showing Fullname here made the
   // picker disagree with the order the list actually used.
   protected personSortCriteria = linkedSignal(() => this.formData().personSortCriteria ?? PersonSortCriteria.Lastname);
-  protected newsDelivery = linkedSignal(() => toDeliveryChannels(this.formData().newsDelivery));
-  protected invoiceDelivery = linkedSignal(() => toDeliveryChannels(this.formData().invoiceDelivery));
+  protected newsDelivery = linkedSignal(() => this.asChannels(this.formData().newsDelivery));
+  protected invoiceDelivery = linkedSignal(() => this.asChannels(this.formData().invoiceDelivery));
 
   // passing constants to template
   protected avatarUsages = AvatarUsages;
@@ -217,12 +230,28 @@ export class ProfileSettingsAccordion {
   /******************************* actions *************************************** */
   protected onFieldChange(fieldName: string, value: string | string[] | number | boolean): void {
     this.dirty.emit(true);
-    this.formData.update(vm => ({ ...vm, [fieldName]: value }));
+    // A legacy number must never be written back unchanged: normalise both delivery fields on
+    // every edit, then let the edited field win.
+    this.formData.update(vm => ({
+      ...vm,
+      newsDelivery: this.asChannels(vm.newsDelivery),
+      invoiceDelivery: this.asChannels(vm.invoiceDelivery),
+      [fieldName]: value,
+    }));
     // Language is applied centrally: on save the user doc re-streams and AppStore's
     // language effect calls i18nService.setActiveLang() — no per-field call needed here.
   }
 
   /******************************* helpers *************************************** */
+  /**
+   * Legacy values are converted, an already migrated list is passed through UNCHANGED — an
+   * empty one included, because that is the state the validation error above is meant to
+   * report (toDeliveryChannels would silently replace it with the default).
+   */
+  private asChannels(raw: unknown): DeliveryChannel[] {
+    return Array.isArray(raw) ? (raw as DeliveryChannel[]) : toDeliveryChannels(raw);
+  }
+
   protected hasRole(role: RoleName): boolean {
     return hasRole(role, this.currentUser());
   }
