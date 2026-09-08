@@ -13,7 +13,7 @@
 // engine is unit-testable without an emulator. The Firestore implementation is in
 // firestore-deps.ts.
 
-import { AvatarInfo } from '@okr/shared-models';
+import { AvatarInfo, DeliveryChannel } from '@okr/shared-models';
 
 import { OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
@@ -175,7 +175,7 @@ export async function resolveAssignee(
 }
 
 /** Every action the engine understands. An unknown one fails closed and is logged. */
-export const KNOWN_ACTIONS = ['openTask', 'sendEmail', 'sendMessage', 'esign', 'requestApproval', 'openChat'];
+export const KNOWN_ACTIONS = ['openTask', 'sendEmail', 'sendMessage', 'esign', 'requestApproval', 'openChat', 'deliverNotice', 'deliverInvoice'];
 
 /**
  * Four eyes: nobody approves their own request.
@@ -273,6 +273,104 @@ export async function runAction(rule: WorkflowRuleDoc, ctx: WorkflowContext, dep
 }
 
 /**
+ * Deliver one rendered message over every channel the RECIPIENT chose.
+ *
+ * The recipient is `ctx.personKey` — the subject of the event, not the rule's responsible
+ * person: `sendEmail`/`sendMessage` address the assignee and stay that way. The assignee is
+ * needed here only to carry the print-and-post task, which is why this runs before the
+ * assignee gate: a rule with an unfilled responsibility must still deliver electronically.
+ *
+ * One channel failing never stops the others — somebody who picked post and chat and has no
+ * Matrix account still gets their letter.
+ */
+async function deliverOverChannels(
+  rule: WorkflowRuleDoc,
+  step: WorkflowActionStepDoc,
+  stepIndex: number,
+  ctx: WorkflowContext,
+  deps: WorkflowDeps,
+  assigneeOnce: () => Promise<AvatarInfo | undefined>,
+  kind: 'news' | 'invoice',
+  extraPayload: Record<string, unknown>,
+): Promise<void> {
+  const channels = await deps.deliveryChannelsFor(ctx.personKey, ctx.tenantId, kind);
+  if (channels.length === 0) {
+    await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, skipped: 'no delivery channel', person: ctx.personKey });
+    return;
+  }
+
+  const body = await message(step, ctx, deps);
+
+  if (channels.includes(DeliveryChannel.Post)) {
+    // generateLetterPdf does NOT validate its templateId — an empty one falls through to
+    // raw-HTML rendering and throws somewhere unhelpful. Refuse it here, before the call.
+    const templateId = (step.actionArg ?? '').trim();
+    if (!templateId) {
+      await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'post needs a template id in actionArg' });
+    } else {
+      const letter = await deps.generateLetterPdf({
+        tenantId: ctx.tenantId,
+        ruleKey: rule.okey,
+        templateId,
+        payload: { name: ctx.subjectName, body, ...ctx.params, ...extraPayload },
+        filename: `${kind}-${ctx.relatedKey.replaceAll(/[^\w-]/g, '_')}.pdf`,
+        entityId: ctx.relatedKey,
+      });
+      const assignee = await assigneeOnce();
+      if (!assignee?.key) {
+        // the PDF is written either way: a generated letter must never be lost because
+        // nobody was on duty to post it.
+        await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'letter has no assignee', storagePath: letter.storagePath });
+      } else {
+        await deps.createTask({
+          tenantId: ctx.tenantId,
+          name: `Brief an ${ctx.subjectName} drucken und versenden`,
+          assignee,
+          dueInDays: step.dueInDays ?? 0,
+          relatedModelType: ctx.relatedKey.split('.')[0] ?? '',
+          relatedKey: ctx.relatedKey,
+          linkKey: letter.storagePath,
+          notes: letter.url,
+        });
+      }
+    }
+  }
+
+  if (channels.includes(DeliveryChannel.Email)) {
+    const to = await deps.emailFor(ctx.personKey, ctx.tenantId);
+    if (!to) {
+      await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'no email address', person: ctx.personKey });
+    } else {
+      await deps.sendEmail({
+        tenantId: ctx.tenantId,
+        ruleKey: rule.okey,
+        to,
+        subject: body,
+        body: await message(step, ctx, deps, '.body'),
+        template: step.actionArg ?? '',
+      });
+    }
+  }
+
+  if (channels.includes(DeliveryChannel.Chat)) {
+    const matrixUserId = await deps.matrixIdFor(ctx.personKey);
+    if (!matrixUserId) {
+      await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'no matrix account', person: ctx.personKey });
+    } else {
+      await deps.sendChatMessage({
+        tenantId: ctx.tenantId,
+        ruleKey: rule.okey,
+        matrixUserId,
+        body,
+        // the channel is in the txnId so the three sibling deliveries of one step cannot
+        // collide, the same reason the step index is in there (see sendMessage below).
+        txnId: `wf-${rule.okey}-${stepIndex}-chat-${ctx.event}-${ctx.relatedKey}`.replaceAll(/[^\w-]/g, '_'),
+      });
+    }
+  }
+}
+
+/**
  * Execute a single step. Most actions address the SAME resolved responsible person — a rule
  * can never name a free-text recipient, which is what keeps it from being a spam gun any
  * tenant admin can point anywhere (spec 2026-08-15 §2.2). `openChat` is the one exception: it
@@ -332,6 +430,33 @@ export async function runStep(
       // it (see the txnId comment below).
       txnId: `wf-${rule.okey}-${stepIndex}-${ctx.event}-${ctx.relatedKey}`.replaceAll(/[^\w-]/g, '_'),
     });
+    return;
+  }
+
+  // Like openChat these address the SUBJECT, so they must not wait on a resolved assignee —
+  // a rule with an unfilled responsibility must still deliver the invoice.
+  if (action === 'deliverNotice' || action === 'deliverInvoice') {
+    if (await overSendCap(rule, ctx, deps)) return;
+    if (!ctx.personKey) {
+      await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: `${action} has no subject person` });
+      return;
+    }
+    let extraPayload: Record<string, unknown> = {};
+    if (action === 'deliverInvoice') {
+      const [modelType, okey] = ctx.relatedKey.split('.');
+      if (modelType !== 'invoice' || !okey) {
+        await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'deliverInvoice needs an invoice relatedKey', relatedKey: ctx.relatedKey });
+        return;
+      }
+      const loaded = await deps.loadInvoice(okey, ctx.tenantId);
+      if (!loaded) {
+        await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'invoice not found', relatedKey: ctx.relatedKey });
+        return;
+      }
+      extraPayload = { invoice: loaded.invoice, positions: loaded.positions };
+    }
+    await deliverOverChannels(rule, step, stepIndex, ctx, deps, assigneeOnce,
+      action === 'deliverInvoice' ? 'invoice' : 'news', extraPayload);
     return;
   }
 

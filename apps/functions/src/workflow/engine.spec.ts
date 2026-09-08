@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { AvatarInfo } from '@okr/shared-models';
+import { AvatarInfo, DeliveryChannel } from '@okr/shared-models';
 
 import { MAX_RULE_SENDS_PER_DAY, SUBJECT_RECIPIENT, isDelegateActive, isResponsibilityValid, resolveAssignee, runAction, runProbe, runWorkflowWith } from './engine';
-import { EsignRequest, InvoiceDoc, NewApproval, NewTask, OpenChatRoomRequest, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
+import { EsignRequest, InvoiceDoc, InvoiceWithPositions, LetterPdfRequest, LetterPdfResult, NewApproval, NewTask, OpenChatRoomRequest, OutgoingChatMessage, OutgoingEmail, OwnershipDoc, ResponsibilityDoc, WorkflowActionStepDoc, WorkflowContext, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const TENANT = 'scs';
 const TODAY = '20260813';
@@ -43,6 +43,7 @@ interface Fake extends WorkflowDeps {
   esigns: EsignRequest[];
   approvals: NewApproval[];
   chats: OpenChatRoomRequest[];
+  letters: LetterPdfRequest[];
 }
 
 function fakeDeps(over: Partial<{
@@ -58,6 +59,8 @@ function fakeDeps(over: Partial<{
   matrixId?: string;
   sendCount?: number;
   pendingApproval?: boolean;
+  channels?: DeliveryChannel[];
+  invoice?: InvoiceWithPositions;
 }> = {}): Fake {
   const tasks: NewTask[] = [];
   const activities: Record<string, unknown>[] = [];
@@ -66,6 +69,7 @@ function fakeDeps(over: Partial<{
   const esigns: EsignRequest[] = [];
   const approvals: NewApproval[] = [];
   const chats: OpenChatRoomRequest[] = [];
+  const letters: LetterPdfRequest[] = [];
   return {
     tasks,
     activities,
@@ -74,9 +78,16 @@ function fakeDeps(over: Partial<{
     esigns,
     approvals,
     chats,
+    letters,
     avatarFor: async () => over.requester,
     emailFor: async () => over.email ?? '',
     matrixIdFor: async () => over.matrixId ?? '',
+    deliveryChannelsFor: async (): Promise<DeliveryChannel[]> => over.channels ?? [DeliveryChannel.Email, DeliveryChannel.Chat],
+    generateLetterPdf: async (req): Promise<LetterPdfResult> => {
+      letters.push(req);
+      return { url: 'https://example.test/letter.pdf', storagePath: 'documents/letter.pdf' };
+    },
+    loadInvoice: async (): Promise<InvoiceWithPositions | undefined> => over.invoice,
     sendCount: async () => over.sendCount ?? 0,
     sendEmail: async (m) => { emails.push(m); },
     sendChatMessage: async (m) => { messages.push(m); },
@@ -617,5 +628,103 @@ describe('runAction — steps', () => {
     await runAction(rule({ steps: [step({ action: 'sendMessage' }), step({ action: 'sendMessage' })] }), ctx(), deps);
     expect(deps.messages).toHaveLength(2);
     expect(deps.messages[0].txnId).not.toBe(deps.messages[1].txnId);
+  });
+});
+
+describe('deliverNotice / deliverInvoice', () => {
+  // the engine is driven through runAction (as every other test here does), so the assignee
+  // comes from the rule's responsibility rather than from a passed-in resolver
+  const responsible = { responsibility: { responsibleAvatar: avatar('t1') } };
+  const notice = (over: Partial<WorkflowActionStepDoc> = {}) => step({ action: 'deliverNotice', actionArg: 'letter-template', ...over });
+
+  it('fans out over all three channels of the recipient', async () => {
+    const deps = fakeDeps({
+      ...responsible, channels: [DeliveryChannel.Post, DeliveryChannel.Email, DeliveryChannel.Chat],
+      email: 'a@b.ch', matrixId: '@p1:m.test',
+    });
+    await runAction(rule({ steps: [notice()] }), ctx(), deps);
+    expect(deps.letters).toHaveLength(1);
+    expect(deps.emails).toHaveLength(1);
+    expect(deps.messages).toHaveLength(1);
+    expect(deps.tasks).toHaveLength(1); // the print-and-post task
+  });
+
+  it('sends only what the recipient chose', async () => {
+    const deps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Chat], email: 'a@b.ch', matrixId: '@p1:m.test' });
+    await runAction(rule({ steps: [notice()] }), ctx(), deps);
+    expect(deps.messages).toHaveLength(1);
+    expect(deps.emails).toHaveLength(0);
+    expect(deps.letters).toHaveLength(0);
+  });
+
+  it('keeps delivering when one channel has no address', async () => {
+    const deps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Email, DeliveryChannel.Chat], email: '', matrixId: '@p1:m.test' });
+    await runAction(rule({ steps: [notice({ actionArg: 'x' })] }), ctx(), deps);
+    expect(deps.emails).toHaveLength(0);
+    expect(deps.messages).toHaveLength(1);
+    expect(deps.activities.some((a) => a['error'] === 'no email address')).toBe(true);
+  });
+
+  it('keeps the letter when no assignee can be resolved', async () => {
+    // no responsibility, no group admin, no tenant admin → resolveAssignee returns undefined
+    const deps = fakeDeps({ channels: [DeliveryChannel.Post] });
+    await runAction(rule({ steps: [notice({ actionArg: 'x' })] }), ctx(), deps);
+    expect(deps.letters).toHaveLength(1);
+    expect(deps.tasks).toHaveLength(0);
+    expect(deps.activities.some((a) => a['error'] === 'letter has no assignee')).toBe(true);
+  });
+
+  it('refuses the post channel without a template id, and still serves the others', async () => {
+    const deps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Post, DeliveryChannel.Chat], matrixId: '@p1:m.test' });
+    await runAction(rule({ steps: [notice({ actionArg: '  ' })] }), ctx(), deps);
+    expect(deps.letters).toHaveLength(0);
+    expect(deps.tasks).toHaveLength(0);
+    expect(deps.messages).toHaveLength(1);
+    expect(deps.activities.some((a) => String(a['error']).includes('template id'))).toBe(true);
+  });
+
+  it('gives the chat deliveries of two steps distinct transaction ids', async () => {
+    const deps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Chat], matrixId: '@p1:m.test' });
+    await runAction(rule({ steps: [notice({ actionArg: 'x' }), notice({ actionArg: 'x' })] }), ctx(), deps);
+    expect(deps.messages).toHaveLength(2);
+    expect(deps.messages[0].txnId).not.toBe(deps.messages[1].txnId);
+    // the channel is part of the id, so a chat delivery cannot collide with a plain sendMessage
+    expect(deps.messages[0].txnId).toContain('chat');
+  });
+
+  it('skips with no channels chosen', async () => {
+    const deps = fakeDeps({ ...responsible, channels: [] });
+    await runAction(rule({ steps: [notice({ actionArg: 'x' })] }), ctx(), deps);
+    expect(deps.emails).toHaveLength(0);
+    expect(deps.messages).toHaveLength(0);
+    expect(deps.activities.some((a) => a['skipped'] === 'no delivery channel')).toBe(true);
+  });
+
+  it('counts the daily send cap once per step, not once per channel', async () => {
+    const counted: number[] = [];
+    const deps = fakeDeps({
+      ...responsible, channels: [DeliveryChannel.Email, DeliveryChannel.Chat],
+      sendCount: MAX_RULE_SENDS_PER_DAY, email: 'a@b.ch', matrixId: '@p1:m.test',
+    });
+    deps.sendCount = async () => { counted.push(1); return MAX_RULE_SENDS_PER_DAY; };
+    await runAction(rule({ steps: [notice({ actionArg: 'x' })] }), ctx(), deps);
+    expect(deps.emails).toHaveLength(0);
+    expect(deps.messages).toHaveLength(0);
+    expect(counted).toHaveLength(1);
+  });
+
+  it('deliverInvoice refuses a relatedKey that is not an invoice', async () => {
+    const deps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Email], email: 'a@b.ch' });
+    await runAction(rule({ steps: [step({ action: 'deliverInvoice', actionArg: 'x' })] }), ctx({ relatedKey: 'membership.m1' }), deps);
+    expect(deps.emails).toHaveLength(0);
+    expect(deps.activities.some((a) => a['error'] === 'deliverInvoice needs an invoice relatedKey')).toBe(true);
+  });
+
+  it('deliverInvoice puts the invoice and its positions in the payload', async () => {
+    const invoice: InvoiceWithPositions = { invoice: { okey: 'i1', invoiceId: '2026-001' }, positions: [{ okey: 'p1' }] };
+    const deps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Post], invoice });
+    await runAction(rule({ steps: [step({ action: 'deliverInvoice', actionArg: 'invoice-template' })] }), ctx({ relatedKey: 'invoice.i1' }), deps);
+    expect(deps.letters[0].payload['invoice']).toEqual(invoice.invoice);
+    expect(deps.letters[0].payload['positions']).toEqual(invoice.positions);
   });
 });
