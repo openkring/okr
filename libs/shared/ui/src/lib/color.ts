@@ -4,7 +4,6 @@ import { IonChip, IonItem, IonLabel, ModalController } from '@ionic/angular/stan
 import { error } from '@okr/shared-util-angular';
 import { coerceBoolean } from '@okr/shared-util-core';
 
-import { ColorSelectModal } from './color-select.modal';
 
 /**
  * Color is in hex format e.g. #FF0000 for red.
@@ -45,6 +44,10 @@ export class Color {
   // actions
   public async selectColor(): Promise<void> {
     if (!this.isReadOnly()) {
+      // Lazy: @iplab/ngx-color-picker is a template dependency of ColorSelectModal, so the whole
+      // modal has to arrive dynamically — and it must stay out of the barrel, or the re-export
+      // binds it anyway. See perf-baselines.md, »Die bindende Kante ist das Barrel«.
+      const { ColorSelectModal } = await import('./color-select.modal');
       const modal = await this.modalController.create({
         component: ColorSelectModal,
         cssClass: 'color-modal',

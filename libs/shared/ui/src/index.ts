@@ -14,7 +14,10 @@ export * from './lib/checkbox';
 export * from './lib/chips';
 export * from './lib/chip-select.modal';
 export * from './lib/color';
-export * from './lib/color-select.modal';
+// NOT re-exported: `export *` is the binding edge, and a re-export here would pull
+// @iplab/ngx-color-picker into every consumer of this barrel (spec 1.49, F1). The modal is
+// internal to okr-color, which imports it dynamically. See perf-baselines.md, »Barrel-Kante«.
+// export * from './lib/color-select.modal';
 export * from './lib/connection-status-button';
 export * from './lib/counter';
 export * from './lib/country-select';
