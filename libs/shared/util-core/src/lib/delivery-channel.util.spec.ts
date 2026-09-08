@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DeliveryChannel } from '@okr/shared-models';
-import { toDeliveryChannels } from './delivery-channel.util';
+import { toDeliveryChannels, toEditableChannels } from './delivery-channel.util';
 
 describe('toDeliveryChannels', () => {
   it('maps the legacy numeric DeliveryType values', () => {
@@ -31,5 +31,27 @@ describe('toDeliveryChannels', () => {
 
   it('drops unknown entries but keeps the valid ones', () => {
     expect(toDeliveryChannels(['email', 'fax'])).toEqual([DeliveryChannel.Email]);
+  });
+});
+
+describe('toEditableChannels', () => {
+  it('converts a legacy numeric value', () => {
+    expect(toEditableChannels(0)).toEqual([DeliveryChannel.Post]);
+  });
+
+  it('falls back to the default for undefined', () => {
+    expect(toEditableChannels(undefined)).toEqual([DeliveryChannel.Email, DeliveryChannel.Chat]);
+  });
+
+  it('passes a valid array through unchanged', () => {
+    expect(toEditableChannels([DeliveryChannel.Post, DeliveryChannel.Chat])).toEqual([DeliveryChannel.Post, DeliveryChannel.Chat]);
+  });
+
+  it('passes an empty array through unchanged, unlike toDeliveryChannels', () => {
+    expect(toEditableChannels([])).toEqual([]);
+  });
+
+  it('passes an array with an unknown entry through unchanged', () => {
+    expect(toEditableChannels(['fax'])).toEqual(['fax']);
   });
 });

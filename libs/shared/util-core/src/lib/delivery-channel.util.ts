@@ -39,3 +39,17 @@ export function toDeliveryChannels(raw: unknown): DeliveryChannel[] {
   }
   return [...DEFAULT_DELIVERY_CHANNELS];
 }
+
+/**
+ * Normalises a `newsDelivery` / `invoiceDelivery` value for an editable form field.
+ *
+ * A legacy (non-array) value is converted via {@link toDeliveryChannels}, but an already
+ * migrated array is passed through UNCHANGED — including an empty one. This is the
+ * deliberate inverse of `toDeliveryChannels` for the empty-array case: that function
+ * replaces `[]` with the default (`[email, chat]`), which is right for reads of possibly
+ * unmigrated documents, but wrong here — it would silently resurrect a selection the user
+ * just cleared and make the `empty` validation error unreachable.
+ */
+export function toEditableChannels(raw: unknown): DeliveryChannel[] {
+  return Array.isArray(raw) ? (raw as DeliveryChannel[]) : toDeliveryChannels(raw);
+}

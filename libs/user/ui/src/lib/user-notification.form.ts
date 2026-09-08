@@ -3,7 +3,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, 
 
 import { DeliveryChannel, UserModel } from "@okr/shared-models";
 import { DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote } from "@okr/shared-ui";
-import { coerceBoolean, toDeliveryChannels } from "@okr/shared-util-core";
+import { coerceBoolean, toEditableChannels } from "@okr/shared-util-core";
 
 import { USER_NOTIFICATION_FORM_SHAPE, UserI18n, UserNotificationFormModel, userNotificationFormValidations } from "@okr/user-util";
 
@@ -73,17 +73,13 @@ export class UserNotificationForm {
   // computed fields
   // An already migrated list passes through UNCHANGED — an empty one included, because that is
   // the state the error notes above report; only a legacy value is converted.
-  protected newsDelivery = linkedSignal(() => this.asChannels(this.formData().newsDelivery));
-  protected invoiceDelivery = linkedSignal(() => this.asChannels(this.formData().invoiceDelivery));
+  protected newsDelivery = linkedSignal(() => toEditableChannels(this.formData().newsDelivery));
+  protected invoiceDelivery = linkedSignal(() => toEditableChannels(this.formData().invoiceDelivery));
 
   constructor() {
     effect(() => {
       this.valid.emit(this.validationResult().isValid());
     });
-  }
-
-  private asChannels(raw: unknown): DeliveryChannel[] {
-    return Array.isArray(raw) ? (raw as DeliveryChannel[]) : toDeliveryChannels(raw);
   }
 
   protected onFieldChange(fieldName: string, fieldValue: DeliveryChannel[]): void {
