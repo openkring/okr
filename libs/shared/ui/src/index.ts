@@ -24,6 +24,7 @@ export * from './lib/date-select.modal';
 export * from './lib/date-time-select.modal';
 export * from './lib/duration-picker.modal';
 export * from './lib/duration-picker.validations';
+export * from './lib/delivery-channels';
 export * from './lib/distribution-list.modal';
 export * from './lib/email-addresses.modal';
 export * from './lib/email-input';
