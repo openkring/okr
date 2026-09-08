@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonRow, IonSpinner, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { getDownloadURL, getMetadata, ref } from 'firebase/storage';
-import exifr from 'exifr';
 
 import { STORAGE } from '@okr/shared-config';
 import { fileSizeUnit } from '@okr/shared-util-core';
@@ -139,7 +138,11 @@ export class ImageDetailModal implements OnInit {
 
     // EXIF parsed from the original bytes (NOT the imgix-transformed image)
     try {
-      const exif = url ? await exifr.parse(url, true) : undefined;
+      // Lazy: exifr is a 74 KB parser needed only when this modal actually opens. A static
+      // import binds it into every consumer of the shared/ui barrel — which is how it ended
+      // up in the dashboard's eager closure (spec 1.49, F1). See the lazy-loading skill.
+      const exifr = url ? (await import('exifr')).default : undefined;
+      const exif = url && exifr ? await exifr.parse(url, true) : undefined;
       this.exifRows.set(exif ? this.toExifRows(exif as Record<string, unknown>) : []);
     } catch {
       this.exifHint.set(this.i18n.exifError());
