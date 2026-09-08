@@ -154,6 +154,13 @@ export function buildSentryOptions(
       // is gone (tab closed, extension reloaded). Arrives as an onunhandledrejection with no
       // stacktrace; nothing on our side is actionable.
       /Invalid call to runtime\.sendMessage\(\)/i,
+      // Browser-extension bridge, not our code (P13-1): an injected content script (the
+      // pattern is documented for Microsoft Office / Outlook and several form-filler
+      // extensions) rejects with "Object Not Found Matching Id:<n>, MethodName:<m>,
+      // ParamCount:<n>" when its native/host object is gone. Arrives as an
+      // onunhandledrejection with no stacktrace and no first-party frames; the message
+      // shape is unique to that bridge, so nothing of ours can be hidden by it.
+      /Object Not Found Matching Id:\d+, MethodName:/i,
     ],
 
     // Crashes inside third-party scripts we load but don't own. reCAPTCHA (pulled in by

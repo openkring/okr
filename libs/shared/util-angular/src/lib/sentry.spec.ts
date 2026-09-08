@@ -55,6 +55,16 @@ describe('buildSentryOptions', () => {
     expect(matches('Failed to send message to the server')).toBe(false);
   });
 
+  it('suppresses browser-extension host-bridge noise (P13-1)', () => {
+    const patterns = (buildSentryOptions(cfg, []).ignoreErrors ?? []) as RegExp[];
+    const matches = (msg: string) => patterns.some((p) => p instanceof RegExp && p.test(msg));
+    expect(matches('Non-Error promise rejection captured with value: Object Not Found Matching Id:1, MethodName:update, ParamCount:4')).toBe(true);
+    expect(matches('Object Not Found Matching Id:7, MethodName:simulateEvent, ParamCount:4')).toBe(true);
+    // Must NOT swallow our own not-found errors.
+    expect(matches('Object not found')).toBe(false);
+    expect(matches('FirebaseError: No document to update')).toBe(false);
+  });
+
   it('drops events originating inside the Google reCAPTCHA script (SCS-1Q)', () => {
     const patterns = (buildSentryOptions(cfg, []).denyUrls ?? []) as RegExp[];
     const matches = (url: string) => patterns.some((p) => p instanceof RegExp && p.test(url));
