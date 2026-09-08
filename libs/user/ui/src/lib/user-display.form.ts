@@ -1,8 +1,8 @@
 import { Component, computed, effect, input, linkedSignal, model, output } from "@angular/core";
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonCol, IonGrid, IonRow } from "@ionic/angular/standalone";
 
-import { AvatarUsages, DeliveryTypes, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
-import { AvatarUsage, DeliveryType, Language, NameDisplay, UserModel } from "@okr/shared-models";
+import { AvatarUsages, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
+import { AvatarUsage, Language, NameDisplay, UserModel } from "@okr/shared-models";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n } from "@okr/shared-ui";
 import { coerceBoolean } from "@okr/shared-util-core";
 
@@ -88,8 +88,6 @@ export class UserDisplayForm {
   protected showHelpers = linkedSignal(() => this.formData().showHelpers);
 
   // passing constants to template
-  protected readonly deliveryTypes = DeliveryTypes;
-  protected readonly DT = DeliveryType;
   protected readonly avatarUsages = AvatarUsages;
   protected readonly personSortCriterias = PersonSortCriterias;
   protected readonly languages = Languages;

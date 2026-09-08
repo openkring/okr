@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, input, linkedSignal, model, output, signal } from "@angular/core";
 import { IonAccordion, IonButton, IonCol, IonGrid, IonItem, IonLabel, IonRow, ModalController } from "@ionic/angular/standalone";
 
-import { AvatarUsages, DeliveryTypes, LanguageCategory, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
-import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
+import { AvatarUsages, LanguageCategory, Languages, NameDisplays, PersonSortCriterias } from "@okr/shared-categories";
+import { AvatarUsage, DefaultLanguage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
 import { FcmService } from "@okr/shared-data-access";
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { coerceBoolean, hasRole, isValidForFields } from "@okr/shared-util-core";
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
+import { coerceBoolean, hasRole, isValidForFields, toDeliveryChannels } from "@okr/shared-util-core";
 
 import { userValidations } from "@okr/user-util";
 import { ProfileI18n } from "@okr/profile-util";
@@ -21,7 +21,7 @@ const EDITED_FIELDS = [
   standalone: true,
   imports: [
     IonAccordion, IonButton, IonItem, IonLabel, IonGrid, IonRow, IonCol,
-    CategoryOld, Checkbox, TextInput, ErrorNote,
+    CategoryOld, Checkbox, TextInput, ErrorNote, DeliveryChannelsControl,
   ],
   styles: [`ion-icon { padding-right: 5px; }`],
   template: `
@@ -86,10 +86,10 @@ const EDITED_FIELDS = [
                 <okr-category-old [i18n]="personSortCriteriaI18n()" [value]="personSortCriteria()" (valueChange)="onFieldChange('personSortCriteria', $event)" [categories]="personSortCriterias" [readOnly]="isReadOnly()" />  
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-category-old [i18n]="newsDeliveryI18n()" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" />
+                <okr-delivery-channels [i18n]="newsDeliveryI18n()" [value]="newsDelivery()" (valueChange)="onFieldChange('newsDelivery', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-category-old [i18n]="invoiceDeliveryI18n()" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [categories]="deliveryTypes" [readOnly]="isReadOnly()" />
+                <okr-delivery-channels [i18n]="invoiceDeliveryI18n()" [value]="invoiceDelivery()" (valueChange)="onFieldChange('invoiceDelivery', $event)" [readOnly]="isReadOnly()" />
               </ion-col>
             </ion-row>
             @if (fcmService.isSupported()) {
@@ -135,8 +135,17 @@ export class ProfileSettingsAccordion {
   protected avatarUsageI18n       = computed(() => ({ name: 'avatarUsage',        label: this.i18n().avatar_usage()             } as CategoryOldI18n));
   protected nameDisplayI18n       = computed(() => ({ name: 'nameDisplay',        label: this.i18n().name_display_label()       } as CategoryOldI18n));
   protected personSortCriteriaI18n= computed(() => ({ name: 'personSortCriteria', label: this.i18n().sort_person_label()        } as CategoryOldI18n));
-  protected newsDeliveryI18n      = computed(() => ({ name: 'newsDelivery',       label: this.i18n().deliver_news_label()       } as CategoryOldI18n));
-  protected invoiceDeliveryI18n   = computed(() => ({ name: 'invoiceDelivery',    label: this.i18n().deliver_invoice_label()    } as CategoryOldI18n));
+  protected channelLabels = computed(() => ({
+    post:  this.i18n().deliveryChannel_post(),
+    email: this.i18n().deliveryChannel_email(),
+    chat:  this.i18n().deliveryChannel_chat(),
+  }));
+  protected newsDeliveryI18n = computed(() => ({
+    name: 'newsDelivery', label: this.i18n().deliver_news_label(), helper: this.i18n().deliver_news_helper(), channels: this.channelLabels(),
+  } as DeliveryChannelsI18n));
+  protected invoiceDeliveryI18n = computed(() => ({
+    name: 'invoiceDelivery', label: this.i18n().deliver_invoice_label(), helper: this.i18n().deliver_invoice_helper(), channels: this.channelLabels(),
+  } as DeliveryChannelsI18n));
   protected showDebugInfoI18n     = computed(() => ({ name: 'showDebugInfo',    label: this.i18n().show_debug_label(),    helper: this.i18n().show_debug_helper()    } as CheckboxI18n));
   protected showArchivedDataI18n  = computed(() => ({ name: 'showArchivedData', label: this.i18n().show_archived_label(), helper: this.i18n().show_archived_helper() } as CheckboxI18n));
   protected showHelpersI18n       = computed(() => ({ name: 'showHelpers',      label: this.i18n().show_helpers_label(),  helper: this.i18n().show_helpers_helper()  } as CheckboxI18n));
@@ -181,15 +190,14 @@ export class ProfileSettingsAccordion {
   // Lastname, to match UserModel's default and convertUserToForm() — showing Fullname here made the
   // picker disagree with the order the list actually used.
   protected personSortCriteria = linkedSignal(() => this.formData().personSortCriteria ?? PersonSortCriteria.Lastname);
-  protected newsDelivery = linkedSignal(() => this.formData().newsDelivery ?? DeliveryType.EmailAttachment);
-  protected invoiceDelivery = linkedSignal(() => this.formData().invoiceDelivery ?? DeliveryType.EmailAttachment);
+  protected newsDelivery = linkedSignal(() => toDeliveryChannels(this.formData().newsDelivery));
+  protected invoiceDelivery = linkedSignal(() => toDeliveryChannels(this.formData().invoiceDelivery));
 
   // passing constants to template
   protected avatarUsages = AvatarUsages;
   protected avatarUsageEnum = AvatarUsage;
   protected nameDisplays = NameDisplays;
   protected personSortCriterias = PersonSortCriterias;
-  protected deliveryTypes = DeliveryTypes;
 
   constructor() {
     // The user suite also validates fields this accordion never shows (index, loginEmail,

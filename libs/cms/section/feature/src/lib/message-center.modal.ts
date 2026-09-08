@@ -3,12 +3,13 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { IonButton, IonButtons, IonCheckbox, IonContent, IonHeader, IonInput, IonIcon, IonItem, IonList, IonSearchbar, IonSelect, IonSelectOption, IonTitle, IonToolbar, ModalController, IonLabel } from '@ionic/angular/standalone';
 import { of } from 'rxjs';
 
-import { DeliveryTypes } from '@okr/shared-categories';
+import { DeliveryChannels } from '@okr/shared-categories';
 import { AppStore } from '@okr/shared-feature';
-import { DeliveryType, UserModel } from '@okr/shared-models';
+import { DeliveryChannel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 import { SECTION_I18N_KEYS, SectionI18n } from '@okr/cms-section-util';
+import { toDeliveryChannels } from '@okr/shared-util-core';
 
 import { OkrAvatar } from '@okr/avatar-ui';
 import { MembershipService } from '@okr/relationship-membership-data-access';
@@ -140,7 +141,7 @@ const EMAIL_PROVIDERS = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtr
         @for(user of filteredUsers(); track user.okey) {
           <ion-item>
             <ion-checkbox slot="start"
-              [checked]="checkedKeys().has(user.okey) && (user.newsDelivery === DT.EmailAttachment || user.newsDelivery === DT.EmailNotification)"
+              [checked]="checkedKeys().has(user.okey) && toDeliveryChannels(user.newsDelivery).includes(DeliveryChannel.Email)"
               (ionChange)="toggle(user.okey, $any($event).detail.checked)" />
             @if(currentUser(); as cu) {
               <okr-avatar [avatarInfo]="toAvatarInfo(user)" [currentUser]="cu" layout="horizontal" />
@@ -206,7 +207,8 @@ export class MessageCenterModal {
     });
   }
 
-  protected DT = DeliveryType;
+  protected DeliveryChannel = DeliveryChannel;
+  protected toDeliveryChannels = toDeliveryChannels;
 
   protected filteredUsers = computed(() => {
     const users = (this.usersResource.value() ?? []).filter(u => !u.isArchived);
@@ -274,8 +276,9 @@ export class MessageCenterModal {
     };
   }
 
-  protected deliveryIcon(deliveryType: number): string {
-    return DeliveryTypes.find(d => d.id === deliveryType)?.icon ?? 'email';
+  protected deliveryIcon(deliveryType: unknown): string {
+    const channel = toDeliveryChannels(deliveryType)[0];
+    return DeliveryChannels.find(d => d.value === channel)?.icon ?? 'email';
   }
 
   private parseEmails(raw: string): string[] {
