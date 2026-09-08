@@ -83,6 +83,19 @@ import { AocAdminOpsStore } from './aoc-adminops.store';
                 <okr-button [label]="store.i18n.adminops_hasaccount_button()" iconName="checkbox-circle" (click)="backfillAccountTenants()" />
               </ion-col>
             </ion-row>
+            <!-- delivery channels: TEMPORARY one-off migration, remove this row once it has run -->
+            <ion-row>
+              <ion-col><ion-label>{{ store.i18n.adminops_delivery_title() }}</ion-label></ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="6">{{ store.i18n.adminops_delivery_label() }}</ion-col>
+              <ion-col size="3">
+                <okr-button [label]="store.i18n.adminops_delivery_dryrun()" iconName="checkbox-circle" (click)="migrateDeliveryChannels(true)" />
+              </ion-col>
+              <ion-col size="3">
+                <okr-button [label]="store.i18n.adminops_delivery_button()" iconName="checkbox-circle" (click)="migrateDeliveryChannels(false)" />
+              </ion-col>
+            </ion-row>
             <!-- Find orphaned sections -->
           </ion-grid>
         </ion-card-content>
@@ -153,6 +166,11 @@ export class AocAdminOps {
 
   public backfillAccountTenants(): void {
     void this.store.backfillAccountTenants();
+  }
+
+  /** TEMPORARY: one-off delivery-channel migration, remove once it has run */
+  public migrateDeliveryChannels(dryRun: boolean): void {
+    void this.store.migrateDeliveryChannels(dryRun);
   }
 
   protected onFieldChange(fieldName: string, $event: string): void {

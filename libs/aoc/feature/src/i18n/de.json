@@ -103,6 +103,14 @@
       "button": "Ausführen",
       "confirm": "Das Merkmal wird für alle Personen neu berechnet, über alle Mandanten hinweg. Bestehende Daten gehen dabei nicht verloren. Fortfahren?",
       "conf": "Fertig: {count} Personen angepasst."
+    },
+    "delivery": {
+      "title": "Zustellwege umstellen",
+      "label": "Schreibt bei allen Benutzern die Felder für Nachrichten- und Rechnungsversand von der alten Einfachauswahl auf die neue Mehrfachauswahl um. Über alle Mandanten hinweg. Einmalig nötig.",
+      "button": "Ausführen",
+      "dryrun": "Nur zählen",
+      "confirm": "Die Zustellwege werden bei allen Benutzern umgeschrieben, über alle Mandanten hinweg. Wer schon umgestellt ist, bleibt unverändert. Fortfahren?",
+      "conf": "Fertig: {count} Benutzer angepasst."
     }
   },
   "bexio": {

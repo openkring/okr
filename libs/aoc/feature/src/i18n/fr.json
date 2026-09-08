@@ -103,6 +103,14 @@
       "button": "Exécuter",
       "confirm": "Le champ est recalculé pour toutes les personnes, sur tous les mandants. Aucune donnée existante n'est perdue. Continuer ?",
       "conf": "Terminé : {count} personnes mises à jour."
+    },
+    "delivery": {
+      "title": "Convertir les modes d'envoi",
+      "label": "Réécrit, chez tous les utilisateurs, les champs d'envoi des messages et des factures de l'ancien choix unique vers le nouveau choix multiple. Sur tous les mandants. Nécessaire une seule fois.",
+      "button": "Exécuter",
+      "dryrun": "Compter seulement",
+      "confirm": "Les modes d'envoi seront réécrits chez tous les utilisateurs, sur tous les mandants. Ceux qui sont déjà convertis restent inchangés. Continuer ?",
+      "conf": "Terminé : {count} utilisateurs adaptés."
     }
   },
   "bexio": {

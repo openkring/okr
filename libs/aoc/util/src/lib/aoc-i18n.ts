@@ -58,6 +58,14 @@ export const AOC_I18N_KEYS = {
   adminops_hasaccount_confirm:            PFX + 'adminops.hasAccount.confirm',
   adminops_hasaccount_conf:               PFX + 'adminops.hasAccount.conf',
 
+  // delivery channels: one-off migration, remove together with the AOC button once run
+  adminops_delivery_title:                PFX + 'adminops.delivery.title',
+  adminops_delivery_label:                PFX + 'adminops.delivery.label',
+  adminops_delivery_button:               PFX + 'adminops.delivery.button',
+  adminops_delivery_dryrun:               PFX + 'adminops.delivery.dryrun',
+  adminops_delivery_confirm:              PFX + 'adminops.delivery.confirm',
+  adminops_delivery_conf:                 PFX + 'adminops.delivery.conf',
+
   adminops_oldjuniors_title:              PFX + 'adminops.oldJuniors.title',
   adminops_oldJuniors_label:              PFX + 'adminops.oldJuniors.label',
   adminops_oldJuniors_button:             PFX + 'adminops.oldJuniors.button',

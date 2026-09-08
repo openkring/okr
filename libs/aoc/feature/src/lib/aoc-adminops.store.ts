@@ -111,6 +111,45 @@ export const AocAdminOpsStore = signalStore(
         }
       },
 
+      /**
+       * Einmalige Umstellung: `users.newsDelivery` / `.invoiceDelivery` waren eine numerische
+       * Einfachauswahl und werden eine Liste von Zustellwegen ('post' | 'email' | 'chat')
+       * — siehe planning/specs/2026-09-07-delivery-channels-spec.md §1.4.
+       *
+       * Laeuft ueber ALLE Mandanten: die Umwandlung haengt nicht vom Mandanten ab, und nur der
+       * ungefilterte Durchgang erwischt auch ein Dokument, dessen `tenants` leer ist.
+       *
+       * Idempotent: wer bereits Listen stehen hat, wird uebersprungen und nicht geschrieben.
+       * Ein zweiter Aufruf meldet deshalb alles als uebersprungen. `dryRun` zaehlt nur.
+       *
+       * Voruebergehend: sobald die Umstellung einmal gelaufen ist, duerfen diese Methode, ihre
+       * Karte in `aoc-adminops.ts` und die `adminops.delivery.*`-Schluessel wieder weg —
+       * `toDeliveryChannels` faengt Altwerte beim Lesen ohnehin ab.
+       */
+      async migrateDeliveryChannels(dryRun: boolean): Promise<void> {
+        const confirmed = dryRun || await confirm(store.alertController, store.i18n.adminops_delivery_confirm(),
+          store.i18n.ok(), store.i18n.cancel(), true);
+        if (!confirmed) return;
+        try {
+          const fn = httpsCallable<{ dryRun: boolean }, { scanned: number; updated: number; skipped: number }>(
+            getFunctions(getApp(), 'europe-west6'), 'migrateDeliveryChannels');
+          const result = await fn({ dryRun });
+          const { scanned, updated, skipped } = result.data;
+          patchState(store, {
+            logTitle: store.i18n.adminops_delivery_title(),
+            log: [
+              { id: 'scanned', name: 'scanned', message: `${scanned}` },
+              { id: 'updated', name: dryRun ? 'to update' : 'updated', message: `${updated}` },
+              { id: 'skipped', name: 'skipped', message: `${skipped}` },
+            ],
+          });
+          await showToast(store.toastController,
+            fill(store.i18n.adminops_delivery_conf(), { count: updated }));
+        } catch (e) {
+          await showToast(store.toastController, `${store.i18n.error()}: ${(e as Error).message}`);
+        }
+      },
+
       async listIban(): Promise<void> {
         const query = getSystemQuery(store.appStore.env.tenantId);
         query.push({ key: 'addressChannel', operator: '==', value: 'bankaccount' });
