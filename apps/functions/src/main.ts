@@ -323,6 +323,10 @@ export { resyncVaultReplicas } from './person/resync-vault-replicas';
 // mirror the tenants a person holds an account in (spec 2026-09-06 open events, decision 9)
 export { onUserWritten, backfillAccountTenants } from './person/account-mirror';
 
+// delivery-channels 2026-09-07: one-time rewrite of users.newsDelivery/.invoiceDelivery
+// from the legacy numeric DeliveryType to DeliveryChannel[], run once per tenant after release
+export { migrateDeliveryChannels } from './user/migrate-delivery-channels';
+
 // address-directory projection rebuild/backfill (privacy 1.19 Phase 4)
 export { rebuildAddressDirectory } from './address/rebuild-address-directory';
 
