@@ -31,8 +31,8 @@ export class UserModel implements OkrModel, TaggedModel, SearchableModel {
   public gravatarEmail = DEFAULT_EMAIL;
   public nameDisplay = NameDisplay.FirstLast; // FirstLast
   public personSortCriteria = PersonSortCriteria.Lastname; // Lastname
-  public newsDelivery: DeliveryChannel[] = DEFAULT_DELIVERY_CHANNELS;
-  public invoiceDelivery: DeliveryChannel[] = DEFAULT_DELIVERY_CHANNELS;
+  public newsDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
+  public invoiceDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
   public showArchivedData = false;
   public showDebugInfo = false;
   public showHelpers = true;
