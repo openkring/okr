@@ -13,7 +13,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, nameMatches, pad, prettyFormatDate, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
-import { copyToClipboardWithConfirmation, error, navigateByUrl, confirm, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
+import { confirm, copyToClipboardWithConfirmation, error, lazyService, navigateByUrl, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import type { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
 import { yearMatches } from '@okr/shared-categories';
@@ -22,7 +22,6 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { LocationService } from '@okr/location-data-access';
-import type { MatrixChatService } from '@okr/chat-data-access';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { AliasMintService } from '@okr/system-alias-data-access';
@@ -88,16 +87,9 @@ export const CalEventStore = signalStore(
     locationService: inject(LocationService),
     modelSelectService: inject(ModelSelectService),
     i18nService: inject(I18nService),
-    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
-    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
-    // section stores.
-    matrixChatService: ((injector: Injector) => {
-      let p: Promise<MatrixChatService> | undefined;
-      return () => (p ??= import('@okr/chat-data-access')
-        .then(m => injector.get(m.MatrixChatService))
-        // A failed chunk load must not poison the cache: drop it so the next call retries.
-        .catch(e => { p = undefined; throw e; }));
-    })(inject(Injector)),
+    // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
+    matrixChatService: lazyService(inject(Injector), () =>
+      import('@okr/chat-data-access').then(m => m.MatrixChatService)),
     invitationService: inject(InvitationService),
     aliasMintService: inject(AliasMintService)
   })),

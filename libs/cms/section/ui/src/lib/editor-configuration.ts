@@ -82,16 +82,37 @@ export class EditorConfiguration {
   // dynamic FullCalendar creation.
   private editorHost = viewChild('editorHost', { read: ViewContainerRef });
   protected readonly ref = signal<ComponentRef<OkrEditor> | undefined>(undefined);
+  /** Guards against a second mount while the chunk is still in flight. */
+  private creatingEditor = false;
 
   constructor() {
-    effect(async () => {
+    // Pattern A (lazy-loading skill): the effect body stays synchronous and starts the async work
+    // itself. `effect(async …)` would hand Angular a promise it ignores, and every signal read
+    // after the first await lands outside the tracking context.
+    effect(() => {
       const host = this.editorHost();
-      if (!host || untracked(() => this.ref()) || !isBrowser(this.platformId)) return;
-      const { OkrEditor } = await import('@okr/shared-ui-editor');
-      const componentRef = host.createComponent(OkrEditor);
-      this.ref.set(componentRef);
-      // `content` is a model() — it doubles as the OkrEditor -> here change channel.
-      componentRef.instance.content.subscribe((value: string) => this.onFieldChange('htmlContent', value));
+      // The host view can be torn down and remounted (Angular destroys the OkrEditor with it) —
+      // drop the stale ref so the next mount recreates the component instead of staying empty.
+      // Same branch as email-composer.modal.ts, which needs it for revert().
+      if (!host) {
+        if (untracked(() => this.ref())) this.ref.set(undefined);
+        return;
+      }
+      // `creating` closes the window the ref guard alone leaves open: between starting the import
+      // and setting the ref, a second run would pass the guard and mount a second component.
+      if (untracked(() => this.ref()) || this.creatingEditor || !isBrowser(this.platformId)) return;
+      this.creatingEditor = true;
+      void (async () => {
+        try {
+          const { OkrEditor } = await import('@okr/shared-ui-editor');
+          const componentRef = host.createComponent(OkrEditor);
+          this.ref.set(componentRef);
+          // `content` is a model() — it doubles as the OkrEditor -> here change channel.
+          componentRef.instance.content.subscribe((value: string) => this.onFieldChange('htmlContent', value));
+        } finally {
+          this.creatingEditor = false;
+        }
+      })();
     });
     effect(() => {
       const componentRef = this.ref();

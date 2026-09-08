@@ -13,7 +13,7 @@ import { AppStore, withErrorState } from '@okr/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@okr/shared-models';
 import { chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
-import { confirm, downloadTextFile, exportCsv, getExportFileName, showToast } from '@okr/shared-util-angular';
+import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast } from '@okr/shared-util-angular';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -23,7 +23,6 @@ import { createSection, narrowSection, SECTION_I18N_KEYS } from '@okr/cms-sectio
 
 import { MessageCenterModal } from './message-center.modal';
 import { CardSelectModal } from './card-select.modal';
-import type { MatrixChatService } from '@okr/chat-data-access';
 
 /**
  * `groups/<okey>` of the group that answers the emergency button — the document id, not the
@@ -63,17 +62,9 @@ export const _SectionStore = signalStore(
   withProps(() => ({
     sectionService: inject(SectionService),
     uploadService: inject(UploadService),
-    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
-    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). The class identity is the
-    // same module instance, so injector.get() resolves the root-provided singleton.
-    chatService: ((injector: Injector) => {
-      let p: Promise<MatrixChatService> | undefined;
-      return () => (p ??= import('@okr/chat-data-access')
-        .then(m => injector.get(m.MatrixChatService))
-        // A failed chunk load must not poison the cache: drop it so the next call retries —
-        // the emergency button below must be able to recover from one bad fetch.
-        .catch(e => { p = undefined; throw e; }));
-    })(inject(Injector)),
+    // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
+    chatService: lazyService(inject(Injector), () =>
+      import('@okr/chat-data-access').then(m => m.MatrixChatService)),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     alertController: inject(AlertController),

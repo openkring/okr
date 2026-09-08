@@ -1,17 +1,22 @@
-// Spans are no-ops without browserTracingIntegration (removed 2026-09-04, spec 1.49 T1.8); the breadcrumbs and setMeasurement calls still report.
-import { addBreadcrumb, setMeasurement, startInactiveSpan, startNewTrace, withActiveSpan } from '@sentry/angular';
+// Tracing was removed with browserTracingIntegration (2026-09-04, spec 1.49 T1.8). The span APIs
+// were no-ops from that day on, but importing them kept the whole tracing half of @sentry/core
+// bound into the eager bundle, so they are gone. setMeasurement went with them: its body is
+// `const rootSpan = activeSpan && getRootSpan(activeSpan); if (rootSpan) {…}`, so without an
+// active span it never recorded anything either. The numbers it used to carry (total, first
+// script) now travel on the breadcrumb, which does report.
+import { addBreadcrumb } from '@sentry/angular';
 
 /**
- * Startup instrumentation feeding Sentry Performance (not the Issues stream).
+ * Startup instrumentation, reported to the console and as a Sentry breadcrumb.
  *
  * Records `performance.now()` timestamps at each boundary of the bootstrap critical path
  * (AppCheck → bootstrap → auth restore → user/categories reads → app-ready) so the gaps
  * between marks show WHERE the startup time goes — no console or Network tab needed on the
- * device, because `reportStartupTiming()` also ships the numbers to Sentry as a standalone
- * `app.startup` transaction (one child span per phase, plus `startup.*` attributes and
- * total/first-script measurements), retrievable from the Performance dashboard on
- * iPhone/PWA/desktop alike. It is emitted as a transaction rather than an `info` message so
- * it never shows up as an Issue and is sampled by `tracesSampleRate` (not on every boot).
+ * device, because `reportStartupTiming()` also attaches the numbers to Sentry as a breadcrumb
+ * (`category: 'startup'`), so they ride along on whatever error the session later reports.
+ * There is no transaction: this app runs without tracing, so nothing here reaches the
+ * Performance dashboard. Read the values off the breadcrumb of an Issue, or off the console
+ * line below.
  *
  * `performance.now()` is milliseconds since navigation start, so the FIRST mark's `atMs`
  * already includes bundle download + parse (e.g. a large `atMs` on `appcheck:start` means
@@ -89,59 +94,13 @@ export function reportStartupTiming(reason: string): void {
     // eslint-disable-next-line no-console
     console.log(`[startup-timing] mode=${displayMode} reason=${reason} total=${totalMs}ms firstScript=${firstScriptMs}ms sw=${swControlled} persisted=${storagePersisted}`, context);
 
+    // `data` carries the phase marks plus the two aggregates that used to be emitted as span
+    // measurements — without a span there is nowhere else for them to go.
     addBreadcrumb({
       category: 'startup',
       level: 'info',
       message: `startup-timing mode=${displayMode} reason=${reason} total=${totalMs}ms`,
-      data: marks,
-    });
-
-    // Emit a standalone `app.startup` transaction into Sentry Performance (NOT the Issues
-    // stream). `performance.timeOrigin` is the epoch ms of navigation start, so a mark's
-    // `performance.now()` value maps to an absolute time via `timeOrigin + atMs`. Using
-    // explicit start/end times lets us backfill the true boot waterfall even though this runs
-    // ~totalMs after navigation start (the browserTracing pageload transaction is long gone).
-    // A fresh trace isolates it from any lingering navigation span; sampling is governed by
-    // `tracesSampleRate`, so this no longer fires on every boot the way captureMessage did.
-    const timeOrigin = performance.timeOrigin;
-    const at = (ms: number) => new Date(timeOrigin + ms);
-
-    startNewTrace(() => {
-      const root = startInactiveSpan({
-        name: 'app.startup',
-        op: 'app.boot',
-        forceTransaction: true,
-        startTime: at(0),
-        attributes: {
-          'startup.mode': displayMode,
-          'startup.reason': reason,
-          'startup.net': net.effectiveType ?? 'unknown',
-          'startup.downlink_mbps': net.downlinkMbps,
-          'startup.rtt_ms': net.rttMs,
-          'startup.sw': swControlled,
-          'startup.persisted': storagePersisted ?? false,
-          'startup.total_ms': totalMs,
-          'startup.first_script_ms': firstScriptMs,
-        },
-      });
-
-      withActiveSpan(root, () => {
-        // Chartable numeric measurements on the transaction.
-        setMeasurement('startup.total', totalMs, 'millisecond');
-        setMeasurement('startup.first_script', firstScriptMs, 'millisecond');
-
-        // Bundle download + parse + SW (navigation start → first mark).
-        if (firstScriptMs > 0) {
-          startInactiveSpan({ name: 'script-load', op: 'app.boot.phase', startTime: at(0) }).end(at(firstScriptMs));
-        }
-        // One child span per phase, spanning the gap that leads up to each mark.
-        for (let i = 1; i < entries.length; i++) {
-          const [label, t] = entries[i];
-          startInactiveSpan({ name: label, op: 'app.boot.phase', startTime: at(entries[i - 1][1]) }).end(at(t));
-        }
-      });
-
-      root.end(at(totalMs));
+      data: { ...marks, 'startup.total_ms': totalMs, 'startup.first_script_ms': firstScriptMs },
     });
   });
 }

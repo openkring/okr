@@ -24,4 +24,4 @@ export * from './lib/chunk-load-error-handler';
 export * from './lib/analytics-init-window';
 export * from './lib/failed-request-recorder';
 export * from './lib/startup-timing';
-
+export * from './lib/lazy-service';

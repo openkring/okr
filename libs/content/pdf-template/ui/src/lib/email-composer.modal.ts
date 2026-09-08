@@ -213,6 +213,8 @@ export class EmailComposerModal {
   // that reaches this modal (spec 1.49, F1) — same shape as editor-configuration.ts.
   private editorHost = viewChild('editorHost', { read: ViewContainerRef });
   protected readonly editorRef = signal<ComponentRef<OkrEditor> | undefined>(undefined);
+  /** Guards against a second mount while the chunk is still in flight. */
+  private creatingEditor = false;
 
   // inputs
   public readonly to            = input<string>('');
@@ -325,7 +327,10 @@ export class EmailComposerModal {
         this.formData.update((vm) => ({ ...vm, subject: `${prefix} ${this.filename()}` }));
       });
     });
-    effect(async () => {
+    // Pattern A (lazy-loading skill): the effect body stays synchronous and starts the async work
+    // itself. `effect(async …)` would hand Angular a promise it ignores, and every signal read
+    // after the first await lands outside the tracking context.
+    effect(() => {
       const host = this.editorHost();
       // revert() briefly toggles showForm() off/on to clear stale Vest state, which tears down
       // #editorHost (and, with it, the OkrEditor Angular already destroyed as part of that view) —
@@ -334,17 +339,26 @@ export class EmailComposerModal {
         if (untracked(() => this.editorRef())) this.editorRef.set(undefined);
         return;
       }
-      if (untracked(() => this.editorRef()) || !isBrowser(this.platformId)) return;
-      const { OkrEditor } = await import('@okr/shared-ui-editor');
-      const ref = host.createComponent(OkrEditor);
-      ref.setInput('content', untracked(() => this.body()));
-      ref.setInput('readOnly', false);
-      ref.setInput('clearable', false);
-      ref.setInput('copyable', false);
-      ref.setInput('buttonCopyI18n', untracked(() => this.buttonCopyI18n()));
-      // `content` is a model() — it doubles as the OkrEditor -> here change channel.
-      ref.instance.content.subscribe((value: string) => this.onFieldChange('body', value));
-      this.editorRef.set(ref);
+      // `creating` closes the window the ref guard alone leaves open: between starting the import
+      // and setting the ref, a second run would pass the guard and mount a second component.
+      if (untracked(() => this.editorRef()) || this.creatingEditor || !isBrowser(this.platformId)) return;
+      this.creatingEditor = true;
+      void (async () => {
+        try {
+          const { OkrEditor } = await import('@okr/shared-ui-editor');
+          const ref = host.createComponent(OkrEditor);
+          ref.setInput('content', untracked(() => this.body()));
+          ref.setInput('readOnly', false);
+          ref.setInput('clearable', false);
+          ref.setInput('copyable', false);
+          ref.setInput('buttonCopyI18n', untracked(() => this.buttonCopyI18n()));
+          // `content` is a model() — it doubles as the OkrEditor -> here change channel.
+          ref.instance.content.subscribe((value: string) => this.onFieldChange('body', value));
+          this.editorRef.set(ref);
+        } finally {
+          this.creatingEditor = false;
+        }
+      })();
     });
     effect(() => {
       const ref = this.editorRef();

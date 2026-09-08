@@ -9,7 +9,7 @@ import { Photo } from '@capacitor/camera';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { ArticleSection, AvatarInfo, CalendarCollection, CalendarModel, ChatSection, ColorIonic, GroupCollection, GroupModel, GroupModelName, ImageActionType, MembershipModel, PageCollection, PageModel, PersonModel, SectionCollection, ViewPosition } from '@okr/shared-models';
-import { AlertService, AppNavigationService, navigateByUrl } from '@okr/shared-util-angular';
+import { AlertService, AppNavigationService, lazyService, navigateByUrl } from '@okr/shared-util-angular';
 import { chipMatches, debugData, debugItemLoaded, debugListLoaded, fill, generateRandomString, getAvatarInfo, getAvatarInfoForCurrentUser, getSystemQuery, isGroup, isPerson, nameMatches } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -17,7 +17,6 @@ import { GroupService } from '@okr/subject-group-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { createGroupMembership } from '@okr/relationship-membership-util';
-import type { MatrixChatService } from '@okr/chat-data-access';
 import { findConflictingGroups, getUniqueGroupKey, getVisibleGroupKeys, GROUP_I18N_KEYS, withCreatorAsAdmin } from '@okr/subject-group-util';
 
 import { GroupEditModal } from './group-edit.modal';
@@ -52,16 +51,9 @@ export const GroupStore = signalStore(
     modalController: inject(ModalController),
     alertService: inject(AlertService),
     toastController: inject(ToastController),
-    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
-    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
-    // section stores.
-    chatService: ((injector: Injector) => {
-      let p: Promise<MatrixChatService> | undefined;
-      return () => (p ??= import('@okr/chat-data-access')
-        .then(m => injector.get(m.MatrixChatService))
-        // A failed chunk load must not poison the cache: drop it so the next call retries.
-        .catch(e => { p = undefined; throw e; }));
-    })(inject(Injector)),
+    // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
+    chatService: lazyService(inject(Injector), () =>
+      import('@okr/chat-data-access').then(m => m.MatrixChatService)),
     i18nService: inject(I18nService)
   })),
   withProps((store) => ({

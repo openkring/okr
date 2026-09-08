@@ -10,7 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, DefaultLanguage, MembershipCollection, MembershipModel, OrgModel, PersonModel, PersonModelName, ResourceModel } from '@okr/shared-models';
-import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { AlertService, copyToClipboardWithConfirmation, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { chipMatches, debugItemLoaded, getSystemQuery, hasRole, isPerson, nameMatches, PHOTO_USAGE_ALL, photoUsageMatches } from '@okr/shared-util-core';
 import { EmailAddressesModal, MapViewModal } from '@okr/shared-ui';
 import { openBulkEmailFlow } from '@okr/content-pdf-template-feature';
@@ -22,7 +22,6 @@ import { PersonService, SensitivePersonData } from '@okr/subject-person-data-acc
 import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewPersonFormToMembership, convertNewPersonFormToPhoneAddress, convertNewPersonFormToPostalAddress, convertNewPersonFormToWebAddress, PersonNewFormModel, PERSON_I18N_KEYS, PersonI18n, PersonDuplicateCandidate, ReconcilableField } from '@okr/subject-person-util';
 import { browseUrl, getDirectoryPostalAddress, readsAddressVault, stringifyPostalAddress } from '@okr/subject-address-util';
 
-import type { MatrixChatService } from '@okr/chat-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 import { VcardExportService } from '@okr/vcard-feature';
 import { ActivityService } from '@okr/activity-data-access';
@@ -63,16 +62,9 @@ export const PersonStore = signalStore(
     alertService: inject(AlertService),
     toastController: inject(ToastController),
     geocodeService: inject(GeocodingService),
-    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
-    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
-    // section stores.
-    matrixService: ((injector: Injector) => {
-      let p: Promise<MatrixChatService> | undefined;
-      return () => (p ??= import('@okr/chat-data-access')
-        .then(m => injector.get(m.MatrixChatService))
-        // A failed chunk load must not poison the cache: drop it so the next call retries.
-        .catch(e => { p = undefined; throw e; }));
-    })(inject(Injector)),
+    // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
+    matrixService: lazyService(inject(Injector), () =>
+      import('@okr/chat-data-access').then(m => m.MatrixChatService)),
     activityService: inject(ActivityService),
     vcardExportService: inject(VcardExportService),
     i18nService: inject(I18nService),

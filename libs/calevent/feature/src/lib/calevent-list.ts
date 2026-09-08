@@ -11,7 +11,7 @@ import { AvatarInfo, CalEventModel, LocationModel, PersonModel, RoleName } from 
 import { ModelSelectService } from '@okr/shared-feature';
 import { PartPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
+import { AppNavigationService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, isBrowser, keepDefaultTrue, lazyService, navigateByUrl, okrPrompt, QuickEntryService } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, addTime, debugData, extractFirstPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getAvatarInfo, getIsoDateTime, isCalendarPublic, fill, getYear, getYearList, hasRole, parseEventString, warn } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -22,7 +22,6 @@ import { CalEventDurationPipe, canAttendCalevent, countPollAcceptances, countPol
 import { showCalendarSync } from '@okr/calevent-ui';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calevent-ui';
 import { browseUrl } from '@okr/subject-address-util';
-import type { MatrixChatService } from '@okr/chat-data-access';
 import { CalEventStore } from './calevent.store';
 
 const ICS_FUNCTION_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
@@ -57,10 +56,6 @@ type CalEventSortField = 'date' | 'topic' | 'location' | 'organiser';
         --padding-start: 12px;
         --padding-end: 12px;
       }
-      /* no fixed height: the calendar uses height:'auto' and must size to its content,
-         otherwise the last hours of the time grid get clipped on narrow screens. */
-      full-calendar { width: 100%; }
-
       /* empty calendar: the message floats over the (still interactive) grid */
       .calendar-host { position: relative; }
       .calendar-empty-overlay {
@@ -332,18 +327,13 @@ export class CalEventList implements OnInit {
   private readonly router = inject(Router);
   private readonly appNavigationService = inject(AppNavigationService);
   private readonly injector = inject(Injector);
-  // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
-  // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
-  // section stores.
-  private readonly matrixChatService = ((injector: Injector) => {
-    let p: Promise<MatrixChatService> | undefined;
-    return () => (p ??= import('@okr/chat-data-access')
-      .then(m => injector.get(m.MatrixChatService))
-      // A failed chunk load must not poison the cache: drop it so the next call retries.
-      .catch(e => { p = undefined; throw e; }));
-  })(this.injector);
+  // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
+  private readonly matrixChatService = lazyService(this.injector, () =>
+    import('@okr/chat-data-access').then(m => m.MatrixChatService));
   private calendarHost = viewChild('calendarHost', { read: ViewContainerRef });
   protected calendarRef = signal<ComponentRef<CaleventFullcalendarView> | undefined>(undefined);
+  /** Guards against a second mount while the chunk is still in flight. */
+  private creatingCalendar = false;
 
   protected readonly getCalEventCssClass = getCalEventCssClass;
 
@@ -603,12 +593,19 @@ export class CalEventList implements OnInit {
     // value imports never join this component's static import graph (Pattern A, lazy-loading skill).
     effect(() => {
       const host = this.calendarHost();
-      if (!host || !isBrowser(this.platformId) || untracked(() => this.calendarRef())) return;
+      // `creating` closes the window the ref guard alone leaves open: between starting the import
+      // and setting the ref, a second run would pass the guard and mount a second component.
+      if (!host || !isBrowser(this.platformId) || untracked(() => this.calendarRef()) || this.creatingCalendar) return;
+      this.creatingCalendar = true;
       void (async () => {
-        const { CaleventFullcalendarView } = await import('./calevent-fullcalendar-view');
-        const ref = host.createComponent(CaleventFullcalendarView);
-        ref.setInput('options', untracked(() => this.calendarOptions()));
-        this.calendarRef.set(ref);
+        try {
+          const { CaleventFullcalendarView } = await import('./calevent-fullcalendar-view');
+          const ref = host.createComponent(CaleventFullcalendarView);
+          ref.setInput('options', untracked(() => this.calendarOptions()));
+          this.calendarRef.set(ref);
+        } finally {
+          this.creatingCalendar = false;
+        }
       })();
     });
     effect(() => {

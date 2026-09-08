@@ -12,7 +12,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, CategoryListModel, ExportFormat, GroupModel, GroupModelName, MembershipCollection, MembershipModel, OrgModel, OrgModelName, OwnershipCollection, OwnershipModel, PersonModel, PersonModelName } from '@okr/shared-models';
 import { chipMatches, convertDateFormatToString, DateFormat, debugListLoaded, generateRandomString, getAvatarInfo, getBirthYear, getCatAbbreviation, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, isMembership, isOngoing, isPerson, nameMatches, warn } from '@okr/shared-util-core';
-import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { confirm, copyToClipboardWithConfirmation, exportCsv, getCcEmailAddresses, getMainEmailAddresses, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 import { EmailAddressesModal, selectDate } from '@okr/shared-ui';
@@ -25,7 +25,6 @@ import { AddressService } from '@okr/subject-address-data-access';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { browseUrl } from '@okr/subject-address-util';
-import type { MatrixChatService } from '@okr/chat-data-access';
 import { InvoiceNewModal } from '@okr/finance-invoice-feature';
 import { VcardExportService, VcardExportTarget } from '@okr/vcard-feature';
 
@@ -87,16 +86,9 @@ export const _MembershipStore = signalStore(
     personService: inject(PersonService),
     addressService: inject(AddressService),
     ownershipService: inject(OwnershipService),
-    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
-    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
-    // section stores.
-    matrixService: ((injector: Injector) => {
-      let p: Promise<MatrixChatService> | undefined;
-      return () => (p ??= import('@okr/chat-data-access')
-        .then(m => injector.get(m.MatrixChatService))
-        // A failed chunk load must not poison the cache: drop it so the next call retries.
-        .catch(e => { p = undefined; throw e; }));
-    })(inject(Injector)),
+    // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
+    matrixService: lazyService(inject(Injector), () =>
+      import('@okr/chat-data-access').then(m => m.MatrixChatService)),
     activityService: inject(ActivityService),
     vcardExportService: inject(VcardExportService),
     personEditModal: inject(PERSON_EDIT_MODAL, { optional: true }),

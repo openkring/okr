@@ -82,6 +82,8 @@ export class ChatPage {
   // this component (spec 1.49, F1) — same shape as calendar-section.ts's dynamic FullCalendar.
   private chatHost = viewChild('chatHost', { read: ViewContainerRef });
   protected readonly chatRef = signal<ComponentRef<MatrixChat> | undefined>(undefined);
+  /** Guards against a second mount while the chunk is still in flight. */
+  private creatingChat = false;
 
   // hoist facade — read/driven by the parent PageDispatcher when this page is embedded in the group view
   public readonly canManageRooms = computed(() => this.chatRef()?.instance.canManageRooms() ?? false);
@@ -92,15 +94,27 @@ export class ChatPage {
   public readonly hasRoom = computed(() => this.chatRef()?.instance.hasCurrentRoom() ?? false);
 
   constructor() {
-    effect(async () => {
+    // Pattern A (lazy-loading skill): the effect body stays synchronous and starts the async work
+    // itself. `effect(async …)` would hand Angular a promise it ignores, and every signal read
+    // after the first await lands outside the tracking context.
+    effect(() => {
       const host = this.chatHost();
-      if (!host || untracked(() => this.chatRef()) || !isBrowser(this.platformId)) return;
-      const { MatrixChat } = await import('@okr/chat-feature');
-      const ref = host.createComponent(MatrixChat);
-      ref.setInput('isGroupView', untracked(() => this.isGroupView()));
-      ref.setInput('selectedRoom', untracked(() => this.selectedRoom()));
-      ref.setInput('contextMenuName', untracked(() => this.contextMenuName()));
-      this.chatRef.set(ref);
+      // `creating` closes the window the ref guard alone leaves open: between starting the import
+      // and setting the ref, a second run would pass the guard and mount a second component.
+      if (!host || untracked(() => this.chatRef()) || this.creatingChat || !isBrowser(this.platformId)) return;
+      this.creatingChat = true;
+      void (async () => {
+        try {
+          const { MatrixChat } = await import('@okr/chat-feature');
+          const ref = host.createComponent(MatrixChat);
+          ref.setInput('isGroupView', untracked(() => this.isGroupView()));
+          ref.setInput('selectedRoom', untracked(() => this.selectedRoom()));
+          ref.setInput('contextMenuName', untracked(() => this.contextMenuName()));
+          this.chatRef.set(ref);
+        } finally {
+          this.creatingChat = false;
+        }
+      })();
     });
     effect(() => {
       const ref = this.chatRef();

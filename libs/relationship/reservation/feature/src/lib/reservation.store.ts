@@ -7,7 +7,7 @@ import { of, take } from 'rxjs';
 import { yearMatches } from '@okr/shared-categories';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, PersonSelectModal, PersonSelectResult, ResourceSelectModal } from '@okr/shared-feature';
-import { confirm, exportCsv, getExportFileName, navigateByUrl, showToast } from '@okr/shared-util-angular';
+import { confirm, exportCsv, getExportFileName, lazyService, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { CalEventCollection, CalEventModel, CategoryListModel, OrgModel, PersonModel, PersonModelName, ReservationModel, ResourceCollection, ResourceModel } from '@okr/shared-models';
 import { selectDate } from '@okr/shared-ui';
 import { buildExportTable, chipMatches, convertDateFormatToString, DateFormat, debugItemLoaded, debugListLoaded, findByKey, getAvatarInfo, getCategoryIcon, getSystemQuery, getYear, isPerson, isResource, isValidAt, nameMatches } from '@okr/shared-util-core';
@@ -21,7 +21,6 @@ import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 import { CalEventEditModal } from '@okr/calevent-feature';
 import { isCalEvent } from '@okr/calevent-util';
 import { browseUrl } from '@okr/subject-address-util';
-import type { MatrixChatService } from '@okr/chat-data-access';
 import { ActivityService } from '@okr/activity-data-access';
 import { Router } from '@angular/router';
 
@@ -66,16 +65,9 @@ export const ReservationStore = signalStore(
     alertController: inject(AlertController),
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
-    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
-    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
-    // section stores.
-    matrixService: ((injector: Injector) => {
-      let p: Promise<MatrixChatService> | undefined;
-      return () => (p ??= import('@okr/chat-data-access')
-        .then(m => injector.get(m.MatrixChatService))
-        // A failed chunk load must not poison the cache: drop it so the next call retries.
-        .catch(e => { p = undefined; throw e; }));
-    })(inject(Injector)),
+    // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
+    matrixService: lazyService(inject(Injector), () =>
+      import('@okr/chat-data-access').then(m => m.MatrixChatService)),
     activityService: inject(ActivityService),
     personService: inject(PersonService),
     toastController: inject(ToastController),

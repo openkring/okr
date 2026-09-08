@@ -11,7 +11,7 @@ import { ENV } from '@okr/shared-config';
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { CategoryListModel, MenuItemModel } from '@okr/shared-models';
 import { die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
-import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
+import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, lazyService, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { getRepoUrl, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
@@ -20,7 +20,6 @@ import { MenuItemsStore } from './menu-items.store';
 
 import { AuthService } from '@okr/auth-data-access';
 import { ActivityService } from '@okr/activity-data-access';
-import type { MatrixChatService } from '@okr/chat-data-access';
 
 import { MenuService } from '@okr/cms-menu-data-access';
 import { getTarget, isMenuItem } from '@okr/cms-menu-util';
@@ -61,16 +60,9 @@ export const _MenuStore = signalStore(
     popoverController: inject(PopoverController),
     authService: inject(AuthService),
     activityService: inject(ActivityService),
-    // Lazy: a static import of @okr/chat-data-access is the edge that dragged matrix-js-sdk
-    // (198 KB transfer) before the dashboard's LCP (spec 1.49, F1). Same accessor as the cms
-    // section stores.
-    matrixChatService: ((injector: Injector) => {
-      let p: Promise<MatrixChatService> | undefined;
-      return () => (p ??= import('@okr/chat-data-access')
-        .then(m => injector.get(m.MatrixChatService))
-        // A failed chunk load must not poison the cache: drop it so the next call retries.
-        .catch(e => { p = undefined; throw e; }));
-    })(inject(Injector)),
+    // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
+    matrixChatService: lazyService(inject(Injector), () =>
+      import('@okr/chat-data-access').then(m => m.MatrixChatService)),
     i18nService: inject(I18nService),
     versionService: inject(VersionCheckService),
     alertService: inject(AlertService),
