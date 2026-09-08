@@ -114,6 +114,53 @@ async function preflight() {
 }
 
 // ---- app release ---------------------------------------------------------
+/**
+ * The submodule half of an app release: commit the ngsw stamp, tag the app repo at exactly the
+ * commit that shipped, and bump the superproject pointer.
+ *
+ * Why the app repo gets its own tag: the superproject tag is created in step 7, BEFORE this
+ * commit exists, so `v<version>` there points at the pointer as it was *before* the stamp.
+ * Checking it out with --recurse-submodules therefore yields app code that never shipped. The
+ * tag written here is the only ref that pins what actually went live.
+ *
+ * Pushes with an explicit `HEAD:main` refspec: a submodule is routinely on a detached HEAD, and
+ * a bare `git push origin main` there silently pushes the stale local `main` branch instead of
+ * the commit just made.
+ */
+function releaseSubmodule(app, version, push) {
+  const sub = ['-C', `apps/${app}`];
+  console.log(`\n[8/8] ${app} submodule — ngsw commit, tag v${version}, pointer bump`);
+
+  if (capture('git', [...sub, 'status', '--porcelain', '--', 'ngsw-config.json'])) {
+    run('git', [...sub, 'add', 'ngsw-config.json']);
+    run('git', [...sub, 'commit', '-m', `chore(${app}): ngsw-Stempel v${version}`]);
+    console.log(`  committed the stamp in apps/${app}`);
+  }
+
+  // Idempotent: a re-run after a failed deploy must not die on an existing tag.
+  if (capture('git', [...sub, 'tag', '-l', `v${version}`])) {
+    console.log(`  tag v${version} already exists in apps/${app} — left as is.`);
+  } else {
+    run('git', [...sub, 'tag', '-a', `v${version}`, '-m', `release v${version}`]);
+    console.log(`  tagged apps/${app} v${version} -> ${capture('git', [...sub, 'rev-parse', '--short', 'HEAD'])}`);
+  }
+
+  if (push) {
+    run('git', [...sub, 'push', 'origin', 'HEAD:main']);
+    run('git', [...sub, 'push', 'origin', `v${version}`]);
+  }
+
+  // The pointer bump stays its own commit, never folded into the release commit.
+  if (capture('git', ['status', '--porcelain', '--', `apps/${app}`])) {
+    run('git', ['add', `apps/${app}`]);
+    run('git', ['commit', '-m', `chore(submodules): Pointer -- ${app} ngsw-Stempel v${version}`]);
+    if (push) run('git', ['push', 'origin', 'main']);
+  }
+
+  if (!push)
+    console.log(`  Not pushed. Later:  git -C apps/${app} push origin HEAD:main && git -C apps/${app} push origin v${version} && git push origin main`);
+}
+
 async function releaseApp(app) {
   const site = SITES[app];
   if (!site) abort(`Unknown app '${app}'. Known: ${Object.keys(SITES).join(', ')}`);
@@ -168,7 +215,8 @@ async function releaseApp(app) {
   // 2b. stamp the version into the service worker's manifest, so clients running the OLD build
   //     read the incoming version off ngsw.json instead of the hand-updated Firestore doc.
   //     Lives in the app submodule — reverted below if the build/deploy fails.
-  const stamped = app.endsWith('-app') && stampNgswVersion(app, next);
+  const isApp = app.endsWith('-app');
+  const stamped = isApp && stampNgswVersion(app, next);
 
   try {
     // 3. prod build (source .env so FIREBASE_WEBAPP_CONFIG is set for the prod config target)
@@ -262,22 +310,28 @@ async function releaseApp(app) {
   }
 
   // 7. commit + tag + push (confirm push — outward-facing)
-  console.log('\n[7/7] Commit + tag');
+  console.log('\n[7/8] Commit + tag');
+  // Whether the submodule half below may push too. For 'none' there is no superproject commit
+  // to gate on, so it asks in its own right.
+  let push = false;
   if (kind === 'none') {
     console.log(`  Skipped — v${next} was already committed and tagged by the app that cut it.`);
+    push = isApp ? await confirm(`Push the ${app} ngsw commit, its tag v${next}, and the pointer bump?`, true) : false;
   } else {
     run('git', ['add', 'package.json']);
     run('git', ['commit', '-m', `release: v${next}`]);
     run('git', ['tag', '-a', `v${next}`, '-m', `release v${next}`]);
-    if (await confirm(`Push commit + tag v${next} to origin/main?`, true))
+    if (await confirm(`Push commit + tag v${next} to origin/main?`, true)) {
       run('git', ['push', 'origin', 'main', '--follow-tags']);
-    else
+      push = true;
+    } else {
       console.log(`  Not pushed. Push later with:  git push origin main --follow-tags`);
+    }
   }
 
+  if (isApp) releaseSubmodule(app, next, push);
+
   console.log(`\n✔ ${app} released as v${next}.`);
-  if (stamped)
-    console.log(`  ⚠ apps/${app}/ngsw-config.json now carries appData.version ${next} — commit it in the submodule and bump the pointer.`);
   if (appVersionPending)
     console.log(`  ⚠ REMINDER: you still need to set app-version/app-version → deployed.${appKey} "${next}" in Firestore yourself (not done by this script).`);
 }
