@@ -127,25 +127,17 @@
       "all": {
         "label": "All"
       },
-      "mail": {
-        "label": "Mail",
-        "description": "Delivery is made by regular mail on paper."
+      "post": {
+        "label": "Post",
+        "description": "you receive the document printed, by post."
       },
-      "emailAttachment": {
-        "label": "E-mail with attachment",
-        "description": "The information is sent as an attachment by e-mail. This is the default."
+      "email": {
+        "label": "Email",
+        "description": "you receive the document as a PDF by email."
       },
-      "smsNotification": {
-        "label": "Download with SMS notification",
-        "description": "A notification is sent by SMS that the information can be downloaded."
-      },
-      "emailNotification": {
-        "label": "Download with e-mail notification",
-        "description": "A notification is sent by e-mail that the information can be downloaded."
-      },
-      "inappNotification": {
-        "label": "Download with in-app notification",
-        "description": "A notification is sent in the app that the information can be downloaded."
+      "chat": {
+        "label": "Chat",
+        "description": "you receive a message in the chat."
       }
     },
   "export": {

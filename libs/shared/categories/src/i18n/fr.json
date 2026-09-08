@@ -127,25 +127,17 @@
     "all": {
       "label": "Tous"
     },
-    "mail": {
+    "post": {
       "label": "Courrier",
-      "description": "La livraison se fait par courrier postal ordinaire sur papier."
+      "description": "tu reçois le document imprimé, par la poste."
     },
-    "emailAttachment": {
-      "label": "E-mail avec pièce jointe",
-      "description": "Les informations sont envoyées en pièce jointe par e-mail. C'est le mode par défaut."
+    "email": {
+      "label": "E-mail",
+      "description": "tu reçois le document en PDF par e-mail."
     },
-    "smsNotification": {
-      "label": "Téléchargement avec notification par SMS",
-      "description": "Une notification est envoyée par SMS indiquant que les informations peuvent être téléchargées."
-    },
-    "emailNotification": {
-      "label": "Téléchargement avec notification par e-mail",
-      "description": "Une notification est envoyée par e-mail indiquant que les informations peuvent être téléchargées."
-    },
-    "inappNotification": {
-      "label": "Téléchargement avec notification dans l'application",
-      "description": "Une notification est envoyée dans l'application indiquant que les informations peuvent être téléchargées."
+    "chat": {
+      "label": "Chat",
+      "description": "tu reçois un message dans le chat."
     }
   },
   "export": {

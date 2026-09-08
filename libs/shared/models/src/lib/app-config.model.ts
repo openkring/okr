@@ -5,6 +5,7 @@
 */
 
 import { DEFAULT_EMAIL, DEFAULT_NAME, DEFAULT_TITLE, DEFAULT_URL } from "@okr/shared-constants";
+import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel } from "./enums/delivery-type.enum";
 import { AvailableLanguages } from "./enums/language.enum";
 import type { ProcessorEntry } from "./processor-entry.model";
 
@@ -230,11 +231,11 @@ export class AppConfig {
 
   // settings defaults
   public avatarUsage = 3;
-  public invoiceDelivery = 1;
+  public invoiceDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
   public maxYear = 2050; // maximum year for date inputs
   public minYear = 1850; // minimum year for date inputs
   public nameDisplay = 0; // name display format, e.g. 0 for full name, 1 for first name only
-  public newsDelivery = 2; // news delivery preference, e.g. 0 for no news, 1 for email, 2 for in-app
+  public newsDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
   public personLookupEnabled = false; // enables the search.ch person address lookup in person-new (requires app-secrets/{tenantId}.searchChApiKey)
   public personSortCriteria = 1; // sorting criteria for persons, e.g. 0 for name, 1 for date of birth
   public showArchivedData = false; // whether to show archived data

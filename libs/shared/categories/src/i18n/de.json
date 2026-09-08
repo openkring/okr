@@ -127,25 +127,17 @@
       "all": {
         "label": "Alle"
       },
-      "mail": {
+      "post": {
         "label": "Post",
-        "description": "Die Lieferung erfolgt per normaler Post auf Papier."
+        "description": "du bekommst das Schreiben gedruckt per Post nach Hause."
       },
-      "emailAttachment": {
-        "label": "E-Mail mit Attachment",
-        "description": "Die Informationen werden als Anhang per E-Mail verschickt. Dies ist der Standard."
+      "email": {
+        "label": "E-Mail",
+        "description": "du bekommst das Schreiben als PDF per E-Mail."
       },
-      "smsNotification": {
-        "label": "Download mit SMS Notifizierung",
-        "description": "Es erfolgt eine Notifizierung per SMS, dass die Informationen herunter geladen werden können."
-      },
-      "emailNotification": {
-        "label": "Download mit E-Mail Notifizierung",
-        "description": "Es erfolgt eine Notifizierung per E-Mail, dass die Informationen herrunter geladen werden können."
-      },
-      "inappNotification": {
-        "label": "Download mit InApp Notifizierung",
-        "description": "Es erfolgt eine Notifizierung in der App, dass die Informationen herrunter geladen werden können."
+      "chat": {
+        "label": "Chat",
+        "description": "du bekommst eine Nachricht im Chat."
       }
     },
   "export": {
