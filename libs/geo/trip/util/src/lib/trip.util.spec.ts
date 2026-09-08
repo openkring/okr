@@ -3,6 +3,7 @@ import { TripModel } from '@okr/shared-models';
 import {
   newTrip,
   newTripName,
+  copyTrip,
   getTripLabel,
   getTripIndex,
   groupTripsByDay,
@@ -41,6 +42,60 @@ describe('newTrip', () => {
 
   it('sets the type when provided (list partition, e.g. logbuch)', () => {
     expect(newTrip(TENANT, 'logbuch').type).toBe('logbuch');
+  });
+});
+
+describe('copyTrip', () => {
+  const source = () => makeTrip({
+    okey: 'trip-1',
+    name: '202406010830Skiff',
+    index: 'r:Skiff',
+    notes: 'nur diese Fahrt',
+    endDate: '20240601',
+    endTime: '10:15',
+    state: 'closed',
+    distance: 12,
+    customLocationLabel: 'Rheinfall',
+    resource: { key: 'boat-1', name1: 'Skiff', name2: 'Nr. 3', label: '', modelType: 'resource', type: 'rboat', subType: 'b1x' },
+    participants: [{ key: 'p1', name1: 'Anna', name2: 'Muster', label: '', modelType: 'person', type: '', subType: '' }],
+    locations: [{ key: 'l1', name1: '12', name2: 'Rheinfall', label: '', modelType: 'location', type: '', subType: '' }],
+  });
+
+  it('carries over boat, participants, locations and distance', () => {
+    const copy = copyTrip(source(), TENANT);
+    expect(copy.resource?.key).toBe('boat-1');
+    expect(copy.participants.map((p) => p.key)).toEqual(['p1']);
+    expect(copy.locations.map((l) => l.key)).toEqual(['l1']);
+    expect(copy.customLocationLabel).toBe('Rheinfall');
+    expect(copy.distance).toBe(12);
+    expect(copy.type).toBe(source().type);
+  });
+
+  it('drops the identity and the end of the copied trip', () => {
+    const copy = copyTrip(source(), TENANT);
+    expect(copy.okey).toBe('');
+    expect(copy.name).toBe('');
+    expect(copy.index).toBe('');
+    expect(copy.notes).toBe('');
+    expect(copy.endDate).toBe('');
+    expect(copy.endTime).toBe('');
+    expect(copy.state).toBe('draft');
+    expect(copy.startDate).toMatch(/^\d{8}$/);
+  });
+
+  it('deep-copies the avatar lists so editing the copy leaves the original alone', () => {
+    const original = source();
+    const copy = copyTrip(original, TENANT);
+    copy.participants[0].name1 = 'Berta';
+    copy.locations.push({ key: 'l2', name1: '3', name2: 'Steg', label: '', modelType: 'location', type: '', subType: '' });
+    expect(original.participants[0].name1).toBe('Anna');
+    expect(original.locations).toHaveLength(1);
+  });
+
+  it('copies a trip without a boat', () => {
+    const copy = copyTrip(makeTrip(), TENANT);
+    expect(copy.resource).toBeUndefined();
+    expect(copy.participants).toEqual([]);
   });
 });
 

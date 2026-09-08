@@ -29,6 +29,8 @@ export const TRIP_I18N_KEYS = {
   create_error:             PFX + 'create.error',
   create_guest:             PFX + 'create.guest',
 
+  copy:                     PFX + 'copy.label',
+
   delete:                   PFX + 'delete.label',
   delete_confirm:           PFX + 'delete.confirm',
   delete_reason:            PFX + 'delete.reason',

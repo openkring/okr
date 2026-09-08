@@ -20,7 +20,7 @@ import { LocationService } from '@okr/location-data-access';
 import { CalEventService } from '@okr/calevent-data-access';
 
 import { TripService } from '@okr/trip-data-access';
-import { findOpenTripForBoat, findTrainingCrews, getTripLabel, groupTripsByDay, matchesStateFilter, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';
+import { copyTrip as buildTripCopy, findOpenTripForBoat, findTrainingCrews, getTripLabel, groupTripsByDay, matchesStateFilter, newTrip, TRIP_I18N_KEYS, TripReport } from '@okr/trip-util';
 
 
 /** Name of the responsibility that owns the Logbuch — gets the bug reports and the support calls. */
@@ -182,7 +182,7 @@ export const TripStore = signalStore(
 
     /******************************* CRUD on single trip  *************************************** */
 
-    async openTripModal(trip: TripModel, mode: 'add' | 'edit' | 'end'): Promise<void> {
+    async openTripModal(trip: TripModel, mode: 'add' | 'copy' | 'edit' | 'end'): Promise<void> {
       if (!store.canWrite()) return;
       const { TripEditModal } = await import('./trip-edit.modal');
       const modal = await store.modalController.create({
@@ -202,6 +202,33 @@ export const TripStore = signalStore(
       if (!store.canWrite()) return;
       const trip = newTrip(store.tenantId(), store.type());
       await this.openTripModal(trip, 'add');
+    },
+
+    /**
+     * Repeat an earlier trip: boat, crew and route are prefilled, the start is now. The form opens
+     * in 'copy' mode — already dirty, so the kiosk can save straight away without touching a field.
+     *
+     * The boat is the one thing that can be stale: it may meanwhile be out on another open trip or
+     * reserved for repair. In that case it is dropped from the copy (with the same toast / info
+     * modal the picker shows) and the user selects another boat in the form.
+     */
+    async copyTrip(trip: TripModel): Promise<void> {
+      if (!store.canWrite()) return;
+      const copy = buildTripCopy(trip, store.tenantId());
+      const boat = copy.resource;
+      if (boat?.key) {
+        if (findOpenTripForBoat(store.trips(), boat.key)) {
+          copy.resource = undefined;
+          await store.alertService.showToast(fill(store.i18n.select_boat_in_use(), { name: boat.name2 ?? boat.name1 }));
+        } else {
+          const reservation = findActiveReservationForResource(store.reservations(), boat.key);
+          if (reservation) {
+            copy.resource = undefined;
+            await this.showBoatReserved(reservation);
+          }
+        }
+      }
+      await this.openTripModal(copy, 'copy');
     },
 
     async editTrip(trip: TripModel): Promise<void> {

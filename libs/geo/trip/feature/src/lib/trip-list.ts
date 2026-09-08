@@ -326,6 +326,11 @@ export class TripList {
     if (!isDeleted) {
       options.buttons.push(createActionSheetButton('delete', this.store.i18n.delete(), url, 'trash'));
     }
+    // repeats the trip in a new form (boat, crew, route prefilled) — appended after the existing
+    // write actions so their trained positions stay where they are
+    if (!isDeleted) {
+      options.buttons.push(createActionSheetButton('copy', this.store.i18n.copy(), url, 'copy'));
+    }
     options.buttons.push(createActionSheetDivider());
     options.buttons.push(createActionSheetButton('report_damage', this.store.i18n.report_damage(), url, 'warning'));
     options.buttons.push(createActionSheetButton('report_bug', this.store.i18n.report_bug(), url, 'bug'));
@@ -341,6 +346,7 @@ export class TripList {
       case 'view':          await this.store.viewTrip(trip); break;
       case 'end':           await this.store.endTrip(trip); break;
       case 'delete':        await this.store.deleteTrip(trip); break;
+      case 'copy':          await this.store.copyTrip(trip); break;
       case 'report_damage': await this.store.reportDamage(this.currentUser(), trip); break;
       case 'report_bug':    await this.store.reportBug(this.currentUser(), trip); break;
     }

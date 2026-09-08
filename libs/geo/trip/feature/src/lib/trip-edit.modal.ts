@@ -53,11 +53,12 @@ export class TripEditModal {
 
   // inputs
   public readonly trip = input.required<TripModel>();
-  public readonly mode = input.required<'add' | 'edit' | 'end'>();
+  public readonly mode = input.required<'add' | 'copy' | 'edit' | 'end'>();
 
   // signals
-  // 'end' starts dirty so the change-confirmation toolbar shows immediately and the trip can be saved right away
-  protected formDirty = linkedSignal(() => this.mode() === 'end');
+  // 'end' and 'copy' start dirty so the change-confirmation toolbar shows immediately and the trip
+  // can be saved right away — a copy is already fully filled in, nothing needs to be touched
+  protected formDirty = linkedSignal(() => this.mode() === 'end' || this.mode() === 'copy');
   protected formValid = signal(false);
 
   // derived
@@ -86,6 +87,7 @@ export class TripEditModal {
   protected headerTitle = computed(() => {
     switch (this.mode()) {
       case 'add':  return this.store.i18n.create();
+      case 'copy': return this.store.i18n.copy();
       case 'edit': return this.store.i18n.update();
       case 'end':  return this.store.i18n.end();
     }
@@ -109,7 +111,9 @@ export class TripEditModal {
     trip.index = getTripIndex(trip);
 
     switch (this.mode()) {
+      // a copy is saved exactly like a new trip — it only differs in how the form was prefilled
       case 'add':
+      case 'copy':
         trip.state = 'open';
         await this.tripService.create(trip, this.store.currentUser());
         break;
@@ -124,7 +128,7 @@ export class TripEditModal {
         break;
     }
 
-    if (this.mode() === 'add' || this.mode() === 'edit') {
+    if (this.mode() === 'add' || this.mode() === 'copy' || this.mode() === 'edit') {
       const reasons = this.store.checkSuspiciousActivity(trip);
       if (reasons.length > 0) {
         await this.store.recordSuspiciousActivity(trip, reasons);

@@ -9,6 +9,9 @@
     "error": "Die Fahrt konnte nicht gespeichert werden.",
     "guest": "Gast erfassen"
   },
+  "copy": {
+    "label": "Ausfahrt kopieren"
+  },
   "delete": {
     "label": "Fahrt löschen",
     "confirm": "Soll diese Fahrt wirklich gelöscht werden?",

@@ -9,6 +9,9 @@
     "error": "The trip could not be saved.",
     "guest": "Add guest"
   },
+  "copy": {
+    "label": "Copy trip"
+  },
   "delete": {
     "label": "Delete trip",
     "confirm": "Do you really want to delete this trip?",

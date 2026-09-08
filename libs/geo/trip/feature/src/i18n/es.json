@@ -9,6 +9,9 @@
     "error": "No se ha podido guardar la salida.",
     "guest": "Añadir invitado"
   },
+  "copy": {
+    "label": "Copiar salida"
+  },
   "delete": {
     "label": "Eliminar salida",
     "confirm": "¿Desea realmente eliminar esta salida?",

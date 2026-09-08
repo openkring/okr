@@ -32,6 +32,24 @@ export function newTrip(tenantId: string, type = ''): TripModel {
   return trip;
 }
 
+/**
+ * A fresh trip that repeats an earlier one: same boat, crew and route, but starting now.
+ *
+ * Everything that identifies the earlier trip (okey, name, index, state, end time, notes, the
+ * soft-delete fields) is deliberately NOT carried over — the copy is a brand-new draft that the
+ * user still confirms in the edit form. The boat is copied as-is; the caller is responsible for
+ * dropping it when it is meanwhile out on another trip or reserved (see TripStore.copyTrip).
+ */
+export function copyTrip(trip: TripModel, tenantId: string): TripModel {
+  const copy = newTrip(tenantId, trip.type);
+  copy.resource = trip.resource ? { ...trip.resource } : undefined;
+  copy.participants = (trip.participants ?? []).map((p) => ({ ...p }));
+  copy.locations = (trip.locations ?? []).map((l) => ({ ...l }));
+  copy.customLocationLabel = trip.customLocationLabel;
+  copy.distance = trip.distance;
+  return copy;
+}
+
 /** Whether `now` still lies within `windowMs` after the trip's endTime (true while it is not ended). */
 function isWithinEndWindow(trip: TripModel, windowMs: number, now: number): boolean {
   if (!trip.endDate || !trip.endTime) return true;

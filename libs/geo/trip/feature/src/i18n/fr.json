@@ -9,6 +9,9 @@
     "error": "La sortie n'a pas pu être enregistrée.",
     "guest": "Ajouter un invité"
   },
+  "copy": {
+    "label": "Copier la sortie"
+  },
   "delete": {
     "label": "Supprimer la sortie",
     "confirm": "Voulez-vous vraiment supprimer cette sortie ?",

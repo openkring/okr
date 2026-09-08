@@ -9,6 +9,9 @@
     "error": "Non è stato possibile salvare l'uscita.",
     "guest": "Aggiungi ospite"
   },
+  "copy": {
+    "label": "Copia uscita"
+  },
   "delete": {
     "label": "Elimina uscita",
     "confirm": "Eliminare davvero questa uscita?",
