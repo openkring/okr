@@ -78,7 +78,8 @@
       "title": "Raccourcis clavier",
       "mention": {
         "token": "@",
-        "desc": "Dans les discussions de groupe, la liste des membres du salon s'ouvre pendant la saisie. ↑↓ sélectionnent une entrée, Entrée ou Tab l'insèrent, Échap referme la liste sans modifier le texte saisi. Dans les discussions directes, @ reste du texte simple."
+        "desc": "Dans les discussions de groupe, la liste des membres du salon s'ouvre pendant la saisie. ↑↓ sélectionnent une entrée, Entrée ou Tab l'insèrent, Échap referme la liste sans modifier le texte saisi. Dans les discussions directes, @ reste du texte simple.",
+        "descMobile": "Dans les discussions de groupe, la liste des membres du salon s'ouvre pendant la saisie. Touche une entrée pour l'insérer. Dans les discussions directes, @ reste du texte simple."
       },
       "mentionRoom": {
         "token": "@room",
@@ -100,9 +101,17 @@
         "token": "Entrée",
         "desc": "Envoie le message. Si la liste @ est encore ouverte, Entrée sélectionne à la place l'entrée en surbrillance."
       },
+      "sendMobile": {
+        "token": "Envoyer",
+        "desc": "Ton message n'est envoyé que lorsque tu touches le bouton d'envoi en bas à droite."
+      },
       "newline": {
         "token": "Maj+Entrée",
         "desc": "Insère une nouvelle ligne sans envoyer le message."
+      },
+      "newlineMobile": {
+        "token": "Entrée",
+        "desc": "Insère une nouvelle ligne. Sur téléphone et tablette, Entrée n'envoie pas le message."
       }
     },
     "chats": {

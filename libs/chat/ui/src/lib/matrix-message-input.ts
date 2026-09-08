@@ -1,7 +1,7 @@
 import { Component, DestroyRef, afterNextRender, computed, effect, inject, input, output, signal, viewChild, ElementRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions, ModalController } from '@ionic/angular/standalone';
+import {  IonTextarea, IonButton, IonIcon, ActionSheetController, ActionSheetOptions, ModalController, Platform } from '@ionic/angular/standalone';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { createActionSheetButton, createActionSheetOptions, QuickEntryService } from '@okr/shared-util-angular';
@@ -285,6 +285,7 @@ import 'emoji-picker-element';
             [rows]="1"
             [autoGrow]="true"
             (ionInput)="onInput()"
+            [enterkeyhint]="sendsOnEnter ? 'send' : 'enter'"
             (keydown.enter)="onEnterKey($event)"
             (keydown.tab)="onMentionNavigation($event, 'pick')"
             (keydown.escape)="onMentionNavigation($event, 'close')"
@@ -368,9 +369,17 @@ export class MatrixMessageInput {
   private appStore = inject(AppStore);
   private modalController = inject(ModalController);
   private quickEntryService = inject(QuickEntryService);
+  private platform = inject(Platform);
   private modelSelectService = inject(ModelSelectService);
   private isSettingQuickEntryValue = false;
   private mentions = signal<MentionRef[]>([]);
+
+  /**
+   * Enter only sends where a physical keyboard is the norm. On a touch device the Return key of
+   * the on-screen keyboard is the only way to type a line break, so it must stay a line break —
+   * the send button sends. Matches WhatsApp/Signal/Telegram/Slack on mobile.
+   */
+  protected readonly sendsOnEnter = this.platform.is('desktop');
 
   protected mentionQuery = signal<{ start: number; query: string } | null>(null);
   /** The token Escape dismissed, so a caret-move recompute doesn't immediately reopen it. */
@@ -640,6 +649,9 @@ export class MatrixMessageInput {
 
   onEnterKey(event: Event) {
     const keyboardEvent = event as KeyboardEvent;
+    // Touch devices: Enter is a plain line break — neither sending nor picking a mention
+    // (there, an entry is picked by tapping it).
+    if (!this.sendsOnEnter) return;
     // While the mention overlay is open, Enter picks the highlighted entry instead of sending.
     if (this.isMentionOpen() && (this.mentionOverlay()?.options().length ?? 0) > 0) {
       event.preventDefault();

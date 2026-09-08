@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonContent, IonItem, IonLabel, Platform } from '@ionic/angular/standalone';
 
 import { Header } from '@okr/shared-ui';
 
@@ -46,7 +46,7 @@ import { MatrixChatStore } from './matrix-chat.store';
         <ion-card-content>
           <ion-item lines="none">
             <span slot="start" class="shortcut-token">{{ store.i18n.help_shortcut_mention_token() }}</span>
-            <ion-label class="ion-text-wrap">{{ store.i18n.help_shortcut_mention_desc() }}</ion-label>
+            <ion-label class="ion-text-wrap">{{ sendsOnEnter ? store.i18n.help_shortcut_mention_desc() : store.i18n.help_shortcut_mention_descMobile() }}</ion-label>
           </ion-item>
           <ion-item lines="none">
             <span slot="start" class="shortcut-token">{{ store.i18n.help_shortcut_mentionRoom_token() }}</span>
@@ -64,14 +64,25 @@ import { MatrixChatStore } from './matrix-chat.store';
             <span slot="start" class="shortcut-token">{{ store.i18n.help_shortcut_location_token() }}</span>
             <ion-label class="ion-text-wrap">{{ store.i18n.help_shortcut_location_desc() }}</ion-label>
           </ion-item>
-          <ion-item lines="none">
-            <span slot="start" class="shortcut-token">{{ store.i18n.help_shortcut_send_token() }}</span>
-            <ion-label class="ion-text-wrap">{{ store.i18n.help_shortcut_send_desc() }}</ion-label>
-          </ion-item>
-          <ion-item lines="none">
-            <span slot="start" class="shortcut-token">{{ store.i18n.help_shortcut_newline_token() }}</span>
-            <ion-label class="ion-text-wrap">{{ store.i18n.help_shortcut_newline_desc() }}</ion-label>
-          </ion-item>
+          @if (sendsOnEnter) {
+            <ion-item lines="none">
+              <span slot="start" class="shortcut-token">{{ store.i18n.help_shortcut_send_token() }}</span>
+              <ion-label class="ion-text-wrap">{{ store.i18n.help_shortcut_send_desc() }}</ion-label>
+            </ion-item>
+            <ion-item lines="none">
+              <span slot="start" class="shortcut-token">{{ store.i18n.help_shortcut_newline_token() }}</span>
+              <ion-label class="ion-text-wrap">{{ store.i18n.help_shortcut_newline_desc() }}</ion-label>
+            </ion-item>
+          } @else {
+            <ion-item lines="none">
+              <span slot="start" class="shortcut-token">{{ store.i18n.help_shortcut_newlineMobile_token() }}</span>
+              <ion-label class="ion-text-wrap">{{ store.i18n.help_shortcut_newlineMobile_desc() }}</ion-label>
+            </ion-item>
+            <ion-item lines="none">
+              <span slot="start" class="shortcut-token">{{ store.i18n.help_shortcut_sendMobile_token() }}</span>
+              <ion-label class="ion-text-wrap">{{ store.i18n.help_shortcut_sendMobile_desc() }}</ion-label>
+            </ion-item>
+          }
         </ion-card-content>
       </ion-card>
 
@@ -89,4 +100,6 @@ import { MatrixChatStore } from './matrix-chat.store';
 })
 export class ChatHelpModal {
   protected readonly store = inject(MatrixChatStore);
+  /** Mirrors MatrixMessageInput.sendsOnEnter — the help must describe the device it is read on. */
+  protected readonly sendsOnEnter = inject(Platform).is('desktop');
 }

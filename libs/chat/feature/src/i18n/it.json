@@ -78,7 +78,8 @@
       "title": "Scorciatoie da tastiera",
       "mention": {
         "token": "@",
-        "desc": "Nelle chat di gruppo, durante la digitazione si apre l'elenco dei membri della stanza. ↑↓ selezionano una voce, Invio o Tab la inseriscono, Esc chiude di nuovo l'elenco senza modificare il testo inserito. Nelle chat dirette @ rimane testo semplice."
+        "desc": "Nelle chat di gruppo, durante la digitazione si apre l'elenco dei membri della stanza. ↑↓ selezionano una voce, Invio o Tab la inseriscono, Esc chiude di nuovo l'elenco senza modificare il testo inserito. Nelle chat dirette @ rimane testo semplice.",
+        "descMobile": "Nelle chat di gruppo, durante la digitazione si apre l'elenco dei membri della stanza. Tocca una voce per inserirla. Nelle chat dirette @ rimane testo semplice."
       },
       "mentionRoom": {
         "token": "@room",
@@ -100,9 +101,17 @@
         "token": "Invio",
         "desc": "Invia il messaggio. Se l'elenco @ è ancora aperto, Invio seleziona invece la voce evidenziata."
       },
+      "sendMobile": {
+        "token": "Invia",
+        "desc": "Il messaggio parte solo quando tocchi il pulsante di invio in basso a destra."
+      },
       "newline": {
         "token": "Maiusc+Invio",
         "desc": "Inserisce una nuova riga senza inviare il messaggio."
+      },
+      "newlineMobile": {
+        "token": "Invio",
+        "desc": "Inserisce una nuova riga. Su telefono e tablet Invio non invia il messaggio."
       }
     },
     "chats": {

@@ -78,7 +78,8 @@
       "title": "Keyboard shortcuts",
       "mention": {
         "token": "@",
-        "desc": "In group chats, the list of room members opens as you type. ↑↓ select an entry, Enter or Tab insert it, Escape closes the list again without changing the text you entered. In direct chats @ remains plain text."
+        "desc": "In group chats, the list of room members opens as you type. ↑↓ select an entry, Enter or Tab insert it, Escape closes the list again without changing the text you entered. In direct chats @ remains plain text.",
+        "descMobile": "In group chats, the list of room members opens as you type. Tap an entry to insert it. In direct chats @ remains plain text."
       },
       "mentionRoom": {
         "token": "@room",
@@ -100,9 +101,17 @@
         "token": "Enter",
         "desc": "Sends the message. If the @ list is still open, Enter selects the highlighted entry instead."
       },
+      "sendMobile": {
+        "token": "Send",
+        "desc": "Your message is only sent once you tap the send button at the bottom right."
+      },
       "newline": {
         "token": "Shift+Enter",
         "desc": "Inserts a new line without sending the message."
+      },
+      "newlineMobile": {
+        "token": "Enter",
+        "desc": "Inserts a new line. On phones and tablets Enter does not send the message."
       }
     },
     "chats": {

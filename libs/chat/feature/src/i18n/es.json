@@ -78,7 +78,8 @@
       "title": "Atajos de teclado",
       "mention": {
         "token": "@",
-        "desc": "En los chats de grupo, al escribir se abre la lista de miembros de la sala. ↑↓ seleccionan una entrada, Intro o Tab la insertan, Esc cierra de nuevo la lista sin modificar el texto introducido. En los chats directos, @ sigue siendo texto simple."
+        "desc": "En los chats de grupo, al escribir se abre la lista de miembros de la sala. ↑↓ seleccionan una entrada, Intro o Tab la insertan, Esc cierra de nuevo la lista sin modificar el texto introducido. En los chats directos, @ sigue siendo texto simple.",
+        "descMobile": "En los chats de grupo, al escribir se abre la lista de miembros de la sala. Toca una entrada para insertarla. En los chats directos, @ sigue siendo texto simple."
       },
       "mentionRoom": {
         "token": "@room",
@@ -100,9 +101,17 @@
         "token": "Intro",
         "desc": "Envía el mensaje. Si la lista @ sigue abierta, Intro selecciona en su lugar la entrada resaltada."
       },
+      "sendMobile": {
+        "token": "Enviar",
+        "desc": "Tu mensaje solo se envía cuando tocas el botón de enviar abajo a la derecha."
+      },
       "newline": {
         "token": "Mayús+Intro",
         "desc": "Inserta una nueva línea sin enviar el mensaje."
+      },
+      "newlineMobile": {
+        "token": "Intro",
+        "desc": "Inserta una nueva línea. En el móvil y en la tableta, Intro no envía el mensaje."
       }
     },
     "chats": {
