@@ -6,7 +6,7 @@
 // Read-side document shapes are inlined subsets (same pattern as account-sync.decide.ts
 // and task/index.ts); the write side builds a real TaskModel in firestore-deps.ts.
 
-import { AvatarInfo } from '@okr/shared-models';
+import { AvatarInfo, DeliveryChannel } from '@okr/shared-models';
 
 /** What the engine is told about the event that fired. */
 export interface WorkflowContext {
@@ -139,6 +139,27 @@ export interface NewApproval {
   dueInDays: number;
 }
 
+export interface LetterPdfRequest {
+  tenantId: string;
+  ruleKey: string;
+  /** a `templates` document id — the step's actionArg */
+  templateId: string;
+  payload: Record<string, unknown>;
+  filename: string;
+  /** '<modelType>.<okey>' of the record the letter is about, for the generation record */
+  entityId: string;
+}
+
+export interface LetterPdfResult {
+  url: string;
+  storagePath: string;
+}
+
+export interface InvoiceWithPositions {
+  invoice: Record<string, unknown>;
+  positions: Record<string, unknown>[];
+}
+
 /**
  * Every I/O the engine needs. One interface, one Firestore implementation
  * (firestore-deps.ts), one fake in the spec — no emulator required.
@@ -161,6 +182,12 @@ export interface WorkflowDeps {
   emailFor(personKey: string, tenantId: string): Promise<string>;
   /** '@localpart:server' of the person's Matrix account, '' when not provisioned */
   matrixIdFor(personKey: string): Promise<string>;
+  /** the recipient's chosen delivery channels; the tenant default when there is no user document */
+  deliveryChannelsFor(personKey: string, tenantId: string, kind: 'news' | 'invoice'): Promise<DeliveryChannel[]>;
+  /** render a template to a persisted PDF and return its signed URL */
+  generateLetterPdf(req: LetterPdfRequest): Promise<LetterPdfResult>;
+  /** the invoice and its positions, for the deliverInvoice payload */
+  loadInvoice(okey: string, tenantId: string): Promise<InvoiceWithPositions | undefined>;
   /** how many sends this rule already did today — the per-rule daily cap */
   sendCount(tenantId: string, ruleKey: string, today: string): Promise<number>;
   sendEmail(mail: OutgoingEmail): Promise<void>;

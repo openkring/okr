@@ -11,15 +11,16 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 
-import { ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
-import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { ApprovalCollection, ApprovalModel, ApprovalModelName, AvatarInfo, DeliveryChannel, TaskModel, WorkflowRuleCollection } from '@okr/shared-models';
+import { DateFormat, getTodayStr, toDeliveryChannels } from '@okr/shared-util-core';
 import { getTaskIndex } from '@okr/task-util';
 
 import { shiftDaysBack } from '../auth/account-sync.decide';
 import { serverHostname } from '../matrix-simple/shared';
+import { renderDocument } from '../pdf';
 import { SYSTEM_AUTHOR, logWorkflowActivity } from './activity';
 import { OutboxDoc, WorkflowOutboxCollection } from './outbox';
-import { InvoiceDoc, NewTask, OwnershipDoc, ResponsibilityDoc, WorkflowDeps, WorkflowRuleDoc } from './types';
+import { InvoiceDoc, InvoiceWithPositions, LetterPdfResult, NewTask, OwnershipDoc, ResponsibilityDoc, WorkflowDeps, WorkflowRuleDoc } from './types';
 
 const CF_NAME = 'workflow';
 
@@ -218,6 +219,56 @@ export function createFirestoreDeps(): WorkflowDeps {
       const snap = await db.collection('users').where('personKey', '==', personKey).limit(1).get();
       if (snap.empty) return '';
       return `@${personKey.toLowerCase()}:${serverHostname()}`;
+    },
+
+    async deliveryChannelsFor(personKey, tenantId, kind): Promise<DeliveryChannel[]> {
+      const field = kind === 'invoice' ? 'invoiceDelivery' : 'newsDelivery';
+      if (personKey) {
+        const snap = await db.collection('users').where('personKey', '==', personKey).limit(1).get();
+        if (!snap.empty) return toDeliveryChannels(snap.docs[0].data()[field]);
+      }
+      // no account: the tenant's default, which is itself possibly still a legacy number
+      const config = await db.collection('app-config').doc(tenantId).get();
+      return toDeliveryChannels(config.data()?.[field]);
+    },
+
+    async generateLetterPdf(req): Promise<LetterPdfResult> {
+      // uid is stamped into the storage path (generated-docs/<tenantId>/<uid>/...) and the
+      // DocGenerationModel audit record; SYSTEM_AUTHOR.key is '' which would leave a double
+      // slash in the storage path and an empty userId in the audit trail, so use a stable
+      // literal instead of the empty system-avatar key.
+      const result = await renderDocument(
+        {
+          templateId: req.templateId,
+          payload: req.payload,
+          options: {
+            outputFormat: 'pdf',
+            format: 'A4',
+            orientation: 'portrait',
+            filename: req.filename,
+            storageMode: 'persist',
+            metadata: { entityType: req.entityId.split('.')[0] ?? '', entityId: req.entityId },
+          },
+        },
+        'system',
+        req.tenantId,
+      );
+      return { url: result.url, storagePath: result.storagePath };
+    },
+
+    async loadInvoice(okey, tenantId): Promise<InvoiceWithPositions | undefined> {
+      if (!okey) return undefined;
+      const doc = await db.collection('invoices').doc(okey).get();
+      const invoice = doc.data() as Record<string, unknown> | undefined;
+      if (!invoice || invoice['isArchived'] === true) return undefined;
+      if (!((invoice['tenants'] as string[]) ?? []).includes(tenantId)) return undefined;
+      // InvoicePositionModel does not (yet) declare an invoiceKey field — this query is
+      // forward-compatible but returns an empty list on today's schema.
+      const posSnap = await db.collection('invoice-positions').where('invoiceKey', '==', okey).get();
+      const positions = posSnap.docs
+        .map((d) => d.data() as Record<string, unknown>)
+        .filter((p) => p['isArchived'] !== true);
+      return { invoice: { ...invoice, okey }, positions };
     },
 
     async sendCount(tenantId, ruleKey, today): Promise<number> {
