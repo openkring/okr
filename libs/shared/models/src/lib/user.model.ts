@@ -1,7 +1,7 @@
 import { DEFAULT_EMAIL, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { OkrModel, SearchableModel, TaggedModel } from './base.model';
 import { AvatarUsage } from './enums/avatar-usage.enum';
-import { DeliveryType } from './enums/delivery-type.enum';
+import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel } from './enums/delivery-type.enum';
 import { DefaultLanguage } from './enums/language.enum';
 import { NameDisplay } from './enums/name-display.enum';
 import { PersonSortCriteria } from './enums/person-sort-criteria.enum';
@@ -31,8 +31,8 @@ export class UserModel implements OkrModel, TaggedModel, SearchableModel {
   public gravatarEmail = DEFAULT_EMAIL;
   public nameDisplay = NameDisplay.FirstLast; // FirstLast
   public personSortCriteria = PersonSortCriteria.Lastname; // Lastname
-  public newsDelivery = DeliveryType.EmailAttachment; // EmailAttachment
-  public invoiceDelivery = DeliveryType.EmailAttachment; // EmailAttachment
+  public newsDelivery: DeliveryChannel[] = DEFAULT_DELIVERY_CHANNELS;
+  public invoiceDelivery: DeliveryChannel[] = DEFAULT_DELIVERY_CHANNELS;
   public showArchivedData = false;
   public showDebugInfo = false;
   public showHelpers = true;
