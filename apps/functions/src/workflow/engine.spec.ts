@@ -44,6 +44,8 @@ interface Fake extends WorkflowDeps {
   approvals: NewApproval[];
   chats: OpenChatRoomRequest[];
   letters: LetterPdfRequest[];
+  /** every deliveryChannelsFor call, so the `kind` the engine asked for is testable */
+  channelAsks: { personKey: string; tenantId: string; kind: string }[];
 }
 
 function fakeDeps(over: Partial<{
@@ -70,6 +72,7 @@ function fakeDeps(over: Partial<{
   const approvals: NewApproval[] = [];
   const chats: OpenChatRoomRequest[] = [];
   const letters: LetterPdfRequest[] = [];
+  const channelAsks: { personKey: string; tenantId: string; kind: string }[] = [];
   return {
     tasks,
     activities,
@@ -79,10 +82,14 @@ function fakeDeps(over: Partial<{
     approvals,
     chats,
     letters,
+    channelAsks,
     avatarFor: async () => over.requester,
     emailFor: async () => over.email ?? '',
     matrixIdFor: async () => over.matrixId ?? '',
-    deliveryChannelsFor: async (): Promise<DeliveryChannel[]> => over.channels ?? [DeliveryChannel.Email, DeliveryChannel.Chat],
+    deliveryChannelsFor: async (personKey, tenantId, kind): Promise<DeliveryChannel[]> => {
+      channelAsks.push({ personKey, tenantId, kind });
+      return over.channels ?? [DeliveryChannel.Email, DeliveryChannel.Chat];
+    },
     generateLetterPdf: async (req): Promise<LetterPdfResult> => {
       letters.push(req);
       return { url: 'https://example.test/letter.pdf', storagePath: 'documents/letter.pdf' };
@@ -701,16 +708,50 @@ describe('deliverNotice / deliverInvoice', () => {
   });
 
   it('counts the daily send cap once per step, not once per channel', async () => {
+    // deliberately BELOW the cap: every channel runs, so a regression that moved the check
+    // into deliverOverChannels would consult sendCount three times instead of once
     const counted: number[] = [];
     const deps = fakeDeps({
-      ...responsible, channels: [DeliveryChannel.Email, DeliveryChannel.Chat],
+      ...responsible, channels: [DeliveryChannel.Post, DeliveryChannel.Email, DeliveryChannel.Chat],
+      email: 'a@b.ch', matrixId: '@p1:m.test',
+    });
+    deps.sendCount = async () => { counted.push(1); return 1; };
+    await runAction(rule({ steps: [notice()] }), ctx(), deps);
+    expect(deps.letters).toHaveLength(1);
+    expect(deps.emails).toHaveLength(1);
+    expect(deps.messages).toHaveLength(1);
+    expect(counted).toHaveLength(1);
+  });
+
+  it('still stops every channel once the cap is reached', async () => {
+    const deps = fakeDeps({
+      ...responsible, channels: [DeliveryChannel.Post, DeliveryChannel.Email, DeliveryChannel.Chat],
       sendCount: MAX_RULE_SENDS_PER_DAY, email: 'a@b.ch', matrixId: '@p1:m.test',
     });
-    deps.sendCount = async () => { counted.push(1); return MAX_RULE_SENDS_PER_DAY; };
-    await runAction(rule({ steps: [notice({ actionArg: 'x' })] }), ctx(), deps);
+    await runAction(rule({ steps: [notice()] }), ctx(), deps);
+    expect(deps.letters).toHaveLength(0);
     expect(deps.emails).toHaveLength(0);
     expect(deps.messages).toHaveLength(0);
-    expect(counted).toHaveLength(1);
+    expect(deps.activities.some((a) => a['skipped'] === 'daily send cap')).toBe(true);
+  });
+
+  it('keeps delivering when a channel throws', async () => {
+    // the realistic failure: not a missing address but a Storage/SMTP/Synapse error
+    const deps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Post, DeliveryChannel.Chat], matrixId: '@p1:m.test' });
+    deps.generateLetterPdf = async () => { throw new Error('boom'); };
+    await runAction(rule({ steps: [notice()] }), ctx(), deps);
+    expect(deps.messages).toHaveLength(1);
+    expect(deps.activities.some((a) => a['channel'] === DeliveryChannel.Post && a['error'] === 'boom')).toBe(true);
+  });
+
+  it('asks for the recipient channels of the right kind', async () => {
+    const deps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Chat], matrixId: '@p1:m.test' });
+    await runAction(rule({ steps: [notice()] }), ctx(), deps);
+    expect(deps.channelAsks).toEqual([{ personKey: 'p1', tenantId: TENANT, kind: 'news' }]);
+
+    const invoiceDeps = fakeDeps({ ...responsible, channels: [DeliveryChannel.Chat], matrixId: '@p1:m.test', invoice: { invoice: {}, positions: [] } });
+    await runAction(rule({ steps: [step({ action: 'deliverInvoice', actionArg: 'x' })] }), ctx({ relatedKey: 'invoice.i1' }), invoiceDeps);
+    expect(invoiceDeps.channelAsks).toEqual([{ personKey: 'p1', tenantId: TENANT, kind: 'invoice' }]);
   });
 
   it('deliverInvoice refuses a relatedKey that is not an invoice', async () => {

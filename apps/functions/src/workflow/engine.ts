@@ -301,7 +301,22 @@ async function deliverOverChannels(
 
   const body = await message(step, ctx, deps);
 
-  if (channels.includes(DeliveryChannel.Post)) {
+  // An absent address is guarded inline in each branch below; a channel that THROWS needs this
+  // as well. Without it a Storage write failure, an SMTP 5xx or a Synapse outage propagates to
+  // runAction's per-step catch and every LATER channel of the step is silently never attempted
+  // — spec §3.3: «Fehler → protokollieren, nächster Kanal».
+  const attempt = async (channel: DeliveryChannel, deliver: () => Promise<void>): Promise<void> => {
+    try {
+      await deliver();
+    } catch (error) {
+      await deps.logActivity(ctx.tenantId, {
+        rule: rule.okey, event: ctx.event, channel, person: ctx.personKey,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  if (channels.includes(DeliveryChannel.Post)) await attempt(DeliveryChannel.Post, async () => {
     // generateLetterPdf does NOT validate its templateId — an empty one falls through to
     // raw-HTML rendering and throws somewhere unhelpful. Refuse it here, before the call.
     const templateId = (step.actionArg ?? '').trim();
@@ -334,9 +349,9 @@ async function deliverOverChannels(
         });
       }
     }
-  }
+  });
 
-  if (channels.includes(DeliveryChannel.Email)) {
+  if (channels.includes(DeliveryChannel.Email)) await attempt(DeliveryChannel.Email, async () => {
     const to = await deps.emailFor(ctx.personKey, ctx.tenantId);
     if (!to) {
       await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'no email address', person: ctx.personKey });
@@ -350,9 +365,9 @@ async function deliverOverChannels(
         template: step.actionArg ?? '',
       });
     }
-  }
+  });
 
-  if (channels.includes(DeliveryChannel.Chat)) {
+  if (channels.includes(DeliveryChannel.Chat)) await attempt(DeliveryChannel.Chat, async () => {
     const matrixUserId = await deps.matrixIdFor(ctx.personKey);
     if (!matrixUserId) {
       await deps.logActivity(ctx.tenantId, { rule: rule.okey, event: ctx.event, error: 'no matrix account', person: ctx.personKey });
@@ -367,7 +382,7 @@ async function deliverOverChannels(
         txnId: `wf-${rule.okey}-${stepIndex}-chat-${ctx.event}-${ctx.relatedKey}`.replaceAll(/[^\w-]/g, '_'),
       });
     }
-  }
+  });
 }
 
 /**
