@@ -5,9 +5,9 @@ import { ENV } from '@okr/shared-config';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
-import { AvatarInfo, CategoryListModel, MembershipCollection, MembershipModel, UserModel } from '@okr/shared-models';
+import { AvatarInfo, CategoryListModel, DbQuery, MembershipCollection, MembershipModel, UserModel } from '@okr/shared-models';
 import { error } from '@okr/shared-util-angular';
-import { addDuration, DateFormat, findByKey, getAvatarInfo, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, isAfterDate } from '@okr/shared-util-core';
+import { addDuration, addSystemQueries, DateFormat, findByKey, getAvatarInfo, getCategoryAttribute, getFullName, getSystemQuery, getTodayStr, isAfterDate } from '@okr/shared-util-core';
 
 import { createComment } from '@okr/comment-util';
 
@@ -169,30 +169,24 @@ export class MembershipService {
     if (!memberKey || memberKey.length === 0) return of([] as MembershipModel[]);
     if (modelType && (modelType !== 'person' && modelType !== 'org')) return of([] as MembershipModel[]);
     if (orgModelType && (orgModelType !== 'org' && orgModelType !== 'group')) return of([] as MembershipModel[]);
-    return this.list().pipe(
-      map((memberships: MembershipModel[]) => {
-        if (modelType && orgModelType) {
-          return memberships.filter((membership: MembershipModel) => 
-            membership.memberKey === memberKey && 
-            membership.memberModelType === modelType &&
-            membership.orgModelType === orgModelType
-          );
-        } else {
-          if (modelType) {
-            return memberships.filter((membership: MembershipModel) => 
-              membership.memberKey === memberKey && 
-              membership.memberModelType === modelType
-            );
-          }
-          if (orgModelType) {
-            return memberships.filter((membership: MembershipModel) => 
-              membership.memberKey === memberKey && 
-              membership.orgModelType === orgModelType
-            );
-          }
-        }
-        return [] as MembershipModel[];
-      }))
+    // Neither type given matched nothing before (the old client-side filter fell through to an
+    // empty array); keep that contract rather than widening it by accident.
+    if (!modelType && !orgModelType) return of([] as MembershipModel[]);
+
+    // Server-side query instead of streaming the whole collection and filtering in the client.
+    // The old implementation was `this.list().pipe(filter)`, so asking for ONE person's
+    // memberships pulled every membership of the tenant — 1,497 documents on scs, to find a
+    // handful (spec 1.53 follow-up).
+    //
+    // `orderBy 'orgKey'` is not cosmetic: it makes the query match the existing composite index
+    // `tenants + isArchived + memberKey + memberModelType + orgKey + …` whose equality prefix is
+    // exactly what is filtered here. Changing the order or the clauses may require a new index —
+    // check `firebase firestore:indexes` against firestore.indexes.json first, the file drifts.
+    const dbQuery: DbQuery[] = [{ key: 'memberKey', operator: '==', value: memberKey }];
+    if (modelType) dbQuery.push({ key: 'memberModelType', operator: '==', value: modelType });
+    if (orgModelType) dbQuery.push({ key: 'orgModelType', operator: '==', value: orgModelType });
+    return this.firestoreService.searchData<MembershipModel>(
+      MembershipCollection, addSystemQueries(dbQuery, this.env.tenantId), 'orgKey', 'asc');
   }
 
   /**

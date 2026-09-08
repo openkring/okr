@@ -1720,6 +1720,32 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "tenants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "memberKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "memberModelType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "orgKey",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "memberships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "memberKey",
           "order": "ASCENDING"
         },

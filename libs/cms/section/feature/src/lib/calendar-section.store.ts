@@ -117,8 +117,13 @@ export const CalendarStore = signalStore(
         const memberOrgKeys: string[] = params.orgKeys;
         const visibleGroupKeys: string[] = params.visibleGroupKeys;
         if (memberOrgKeys.length === 0 && visibleGroupKeys.length === 0) return of([]);
-        // Get all calendars and filter by owner matching any accessible org/group key
-        return store.appStore.firestoreService.searchData<CalendarModel>(CalendarCollection, getSystemQuery(store.appStore.env.tenantId), 'owner', 'asc').pipe(
+        // Same query as `calendarsResource` above — deliberately ordered by 'name', not 'owner'.
+        // The FirestoreService caches query streams by {collection, dbQuery, orderBy, sortOrder},
+        // so ordering this one differently opened a SECOND live stream over the identical
+        // documents. Ordering by owner is restored client-side below, which costs nothing and
+        // halves the calendar streams (spec 1.53 follow-up).
+        return store.appStore.firestoreService.searchData<CalendarModel>(CalendarCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc').pipe(
+          map((calendars: CalendarModel[]) => [...calendars].sort((a, b) => (a.owner ?? '').localeCompare(b.owner ?? ''))),
           map((calendars: CalendarModel[]) => {
             const calendarKeys: string[] = [];
             for (const cal of calendars) {
