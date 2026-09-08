@@ -19,7 +19,11 @@ import {
   Roles,
   WorkrelCollection,
 } from '@okr/shared-models';
-import { classifyStoreDate, convertDateFormatToString, DateFormat, getCountryData, getTodayStr } from '@okr/shared-util-core';
+import { classifyStoreDate, convertDateFormatToString, DateFormat, getTodayStr } from '@okr/shared-util-core';
+// countries-list lives here rather than in shared-util-core: the browser has no caller for it,
+// and a re-export from that barrel pulled its 45 KB into every app bundle (spec 1.49, F1).
+// A Cloud Function has no bundle-size budget, so the dependency is free at this end.
+import { countries } from 'countries-list';
 import { checkAppCheckToken, checkAuthentication, projectAddressesForViewer } from '@okr/shared-util-functions';
 import {
   buildVCardFile,
@@ -103,7 +107,7 @@ function mapAddressChannel(addressChannel: string | undefined): VcardChannelType
 /** Resolve a display country name (English, per spec example) from an ISO alpha-2 code. */
 function countryDisplayName(countryCode: string | undefined): string {
   if (!countryCode) return '';
-  const data = getCountryData(countryCode);
+  const data = countries[countryCode.toUpperCase() as keyof typeof countries];
   return data?.name || countryCode;
 }
 

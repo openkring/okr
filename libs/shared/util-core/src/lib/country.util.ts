@@ -1,12 +1,10 @@
 import { CountryCode, PhoneNumber, parsePhoneNumberWithError } from 'libphonenumber-js';
-import * as countryDictionary from 'countries-list';
 import * as i18nIsoCountries from 'i18n-iso-countries';
 import deCountries from 'i18n-iso-countries/langs/de.json';
 import enCountries from 'i18n-iso-countries/langs/en.json';
 import frCountries from 'i18n-iso-countries/langs/fr.json';
 import esCountries from 'i18n-iso-countries/langs/es.json';
 import itCountries from 'i18n-iso-countries/langs/it.json';
-import { ICountry } from 'countries-list';
 import { die, warn } from './log.util';
 
 /*
@@ -18,81 +16,18 @@ import { die, warn } from './log.util';
 for (const locale of [deCountries, enCountries, frCountries, esCountries, itCountries]) {
   i18nIsoCountries.registerLocale(locale as unknown as i18nIsoCountries.LocaleData);
 }
- 
+
 /*
-    This library contains funtions needed to provide internationalization, e.g.
-    - conversion of ISO 3166-1 alpha-2 country-code into country name (in different languages)
-    - conversion between ISO 3166-1 alpha-2 and alpha-3 country codes
-    - ISO 639-1 languages per country
-    - capital
-    - currency
-    - calling code
+    Country names and phone numbers.
 
-    all meta data provided by npm library countries-list
-    https://preview.npmjs.com/package/countries-list
-    is available for all countries. But it only returns country names in native and international (=english) language.
+    - ISO 3166-1 alpha-2 country code -> localized country name (i18n-iso-countries)
+    - parsing / validating phone numbers (libphonenumber-js)
 
+    The countries-list dependency is gone: its metadata half (capital, currency, languages,
+    continent, native name, calling code) had no caller left in the repo, and the one Cloud
+    Function that still needs the raw country record keeps its own import. That removed 13 KB
+    gzip from every browser bundle — see perf-baselines.md, »Die bindende Kante ist das Barrel«.
 */
-
-/*--------------------------------------------------------------------------
-https://preview.npmjs.com/package/countries-list--------------------------------------------------------------------------*/
-
-
-const getKeyValue = <T, K extends keyof T>(obj: T, key: K): T[K] => obj[key];
-
-/**
- * Return the name of a continent (in english)
- * @param continentCode the name of the continent in alpha-2 format (e.g. eu for Europe)
- * @returns 
- */
-export function getContinentName(continentCode: string): string {
-    return getKeyValue(countryDictionary.continents, continentCode as keyof typeof countryDictionary.continents);
-}
-
-/**
- * Returns the country flag as Emoji string.
- * @param countryCode in alpha-2 format (e.g. de)
- * @returns 
- */
-export function getEmojiFlag(countryCode: string): string {
-  return countryDictionary.getEmojiFlag(countryCode.toUpperCase() as countryDictionary.TCountryCode);
-}
-
-export function getCountryData(countryCode: string): ICountry {
-  return getKeyValue(countryDictionary.countries, countryCode.toUpperCase() as keyof typeof countryDictionary.countries);
-}
-
-export function getNativeCountryName(countryCode: string): string {
-    return getCountryData(countryCode).native;
-}
-
-export function getCallingCode(countryCode: string): string {
-    return getCountryData(countryCode).phone[0] + '';
-}
-
-export function getContinent(countryCode: string): string {
-    return getCountryData(countryCode).continent;
-}
-
-export function getCapital(countryCode: string): string {
-    return getCountryData(countryCode).capital;
-}
-
-export function getCurrency(countryCode: string): string {
-    return getCountryData(countryCode).currency[0];
-}
-
-export function getLanguages(countryCode: string): string[] {
-    return getCountryData(countryCode).languages;
-}
-
-/**
- * Returns country flag Emoji string.
- */
- export function getFlagEmojiString(countryCode: string): string {
-     return getEmojiFlag(countryCode);
- }
- 
 
 /*--------------------------------------------------------------------------
 i18n-iso-countries
@@ -112,37 +47,11 @@ export function getCountryName(countryCode: string, languageCode: string): strin
     return i18nIsoCountries.getName(countryCode, languageCode, {select: 'official'}) ?? '';
 }
 
-export function getAlpha3Code(alpha2code: string): string {
-    return i18nIsoCountries.alpha2ToAlpha3(alpha2code) ?? '';
-}
-
-export function getNumericCode(alpha2code: string): string {
-    return i18nIsoCountries.alpha2ToNumeric(alpha2code) ?? '';
-}
-
-export function getWikipediaUrl(countryCode: string, languageCode: string): string {
-    return `https://${languageCode}.wikipedia.org/wiki/${getCountryName(countryCode, languageCode)}`;
-}
-
 /*--------------------------------------------------------------------------
 Phone numbers can be parsed from strings with npm library libphonenumber-js.
 https://www.npmjs.com/package/libphonenumber-js
 --------------------------------------------------------------------------*/
 
-export enum PhoneNumberType {
-    Undefined = -1,
-    Mobile = 0,
-    FixedLine = 1,
-    FixedLineOrMobile = 2,
-    PremiumRate = 3,
-    TollFree = 4,
-    SharedCost = 5,
-    Voip = 6,
-    PersonalNumber = 7,
-    Pager = 8,
-    Uan = 9,
-    Voicemail = 10
-}
 
 /**
  * Parses a stringified representation of a phone number and returns the PhoneNumber structure.
@@ -153,43 +62,6 @@ export enum PhoneNumberType {
  */
 export function parsePhoneNumberFromString(stringifiedPhoneNumber: string, defaultCountry: string): PhoneNumber | null {
     return parsePhoneNumberWithError(stringifiedPhoneNumber, defaultCountry as CountryCode);
-}
-
-
-export function getInternationalPhoneNumber(stringifiedPhoneNumber: string, defaultCountry: string): string {
-    const _phoneNumber = parsePhoneNumberFromString(stringifiedPhoneNumber, defaultCountry);
-    return !_phoneNumber ? '' : _phoneNumber.formatInternational();
-}
-
-export function getNationalPhoneNumber(stringifiedPhoneNumber: string, defaultCountry: string): string {
-    const _phoneNumber = parsePhoneNumberFromString(stringifiedPhoneNumber, defaultCountry);
-    return !_phoneNumber ? '' : _phoneNumber.formatNational();
-}
-
-export function getPhoneNumberURI(stringifiedPhoneNumber: string, defaultCountry: string): string {
-    const _phoneNumber = parsePhoneNumberFromString(stringifiedPhoneNumber, defaultCountry);
-    return !_phoneNumber ? '' : _phoneNumber.getURI();
-}
-
-export function getPhoneNumberType(stringifiedPhoneNumber: string, defaultCountry: string): PhoneNumberType {
-    const _phoneNumber = parsePhoneNumberFromString(stringifiedPhoneNumber, defaultCountry);
-    if (!_phoneNumber) return PhoneNumberType.Undefined;
-    switch (_phoneNumber.getType()) {
-        case 'MOBILE': return PhoneNumberType.Mobile;
-        case 'FIXED_LINE': return PhoneNumberType.FixedLine;
-        case 'FIXED_LINE_OR_MOBILE': return PhoneNumberType.FixedLineOrMobile;
-        case 'PREMIUM_RATE': return PhoneNumberType.PremiumRate;
-        case 'TOLL_FREE': return PhoneNumberType.TollFree;
-        case 'SHARED_COST': return PhoneNumberType.SharedCost;
-        case 'VOIP': return PhoneNumberType.Voip;
-        case 'PERSONAL_NUMBER': return PhoneNumberType.PersonalNumber;
-        case 'PAGER': return PhoneNumberType.Pager;
-        case 'UAN': return PhoneNumberType.Uan;
-        case 'VOICEMAIL': return PhoneNumberType.Voicemail;
-        default: 
-            warn('internationalization.util/getType(' + stringifiedPhoneNumber + ', ' + defaultCountry + ') -> has invalid type: ' + _phoneNumber.getType());
-            return PhoneNumberType.Undefined;
-    }
 }
 
 export function isValidPhoneNumber(stringifiedPhoneNumber: string, defaultCountry: string): boolean {
@@ -216,12 +88,14 @@ export interface CountryOption {
  * language.
  */
 export function getSortedCountries(languageCode: string): CountryOption[] {
-  return Object.keys(countryDictionary.countries)
-    .map((code) => {
-      const upper = code.toUpperCase();
-      const localized = getCountryName(upper, languageCode);
-      return { code: upper, name: localized || getNativeCountryName(upper) };
-    })
+  // getNames() returns every ISO 3166-1 alpha-2 country for the requested language; English is
+  // the fallback for a language that lacks an entry. This used to read the countries-list
+  // dictionary and fall back to the native name — dropping that removed the last browser use of
+  // countries-list (13 KB gzip). See perf-baselines.md, »Die bindende Kante ist das Barrel«.
+  const localized = i18nIsoCountries.getNames(languageCode, { select: 'official' });
+  const english = i18nIsoCountries.getNames('en', { select: 'official' });
+  return Object.keys(english)
+    .map((code) => ({ code: code.toUpperCase(), name: localized[code] || english[code] }))
     .sort((a, b) => a.code.localeCompare(b.code));
 }
 
