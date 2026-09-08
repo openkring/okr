@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { create } from 'vest';
+import { create, staticSuite } from 'vest';
 
-import { imageUrlValidations, partialDateValidations, stringValidations, tagValidations, urlValidations } from './vest.util';
+import { DeliveryChannel } from '@okr/shared-models';
+
+import { deliveryChannelsValidations, imageUrlValidations, partialDateValidations, stringValidations, tagValidations, urlValidations } from './vest.util';
 
 /**
  * The configured tag lists in the `tags` collection are authored with ", " separators
@@ -185,5 +187,30 @@ describe('imageUrlValidations', () => {
   it('is stricter than urlValidations, which still allows navigation targets', () => {
     expect(runUrl('/private/album/c-contentpage').isValid()).toBe(true);
     expect(runImageUrl('/private/album/c-contentpage').isValid()).toBe(false);
+  });
+});
+
+describe('deliveryChannelsValidations', () => {
+  const suite = staticSuite((value: unknown) => {
+    deliveryChannelsValidations('newsDelivery', value);
+  });
+
+  it('accepts a non-empty list of known channels', () => {
+    expect(suite([DeliveryChannel.Email, DeliveryChannel.Chat]).isValid()).toBe(true);
+    expect(suite([DeliveryChannel.Post]).isValid()).toBe(true);
+  });
+
+  it('rejects an empty list — at least one way must stay selected', () => {
+    expect(suite([]).isValid()).toBe(false);
+  });
+
+  it('rejects a non-list, including a legacy number', () => {
+    expect(suite(1).isValid()).toBe(false);
+    expect(suite(undefined).isValid()).toBe(false);
+  });
+
+  it('rejects an unknown channel and a duplicate', () => {
+    expect(suite(['fax']).isValid()).toBe(false);
+    expect(suite([DeliveryChannel.Email, DeliveryChannel.Email]).isValid()).toBe(false);
   });
 });

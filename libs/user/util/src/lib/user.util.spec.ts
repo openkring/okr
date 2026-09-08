@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UserModel, NameDisplay, PersonSortCriteria, DeliveryType, AvatarUsage, PrivacyUsage, Roles, Language } from '@okr/shared-models';
+import { UserModel, NameDisplay, PersonSortCriteria, DeliveryChannel, AvatarUsage, PrivacyUsage, Roles, Language } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import {
   flattenRoles,
@@ -57,8 +57,8 @@ describe('User Utils', () => {
     user.nameDisplay = NameDisplay.LastFirst;
     user.useDisplayName = true;
     user.personSortCriteria = PersonSortCriteria.Firstname;
-    user.newsDelivery = DeliveryType.EmailAttachment;
-    user.invoiceDelivery = DeliveryType.EmailAttachment;
+    user.newsDelivery = [DeliveryChannel.Email];
+    user.invoiceDelivery = [DeliveryChannel.Email];
     user.usageImages = PrivacyUsage.Protected;
     user.usageDateOfBirth = PrivacyUsage.Restricted;
   });
@@ -101,7 +101,7 @@ describe('User Utils', () => {
 
     it('convertUserToNotificationForm should convert user to notification form model', () => {
       const form = convertUserToNotificationForm(user);
-      expect(form.newsDelivery).toBe(DeliveryType.EmailAttachment);
+      expect(form.newsDelivery).toEqual([DeliveryChannel.Email]);
     });
 
     it('convertUserToPrivacyForm should convert user to privacy form model', () => {
@@ -141,10 +141,10 @@ describe('User Utils', () => {
     });
 
     it('convertNotificationFormToUser should update user from notification form model', () => {
-      const form: UserNotificationFormModel = { newsDelivery: DeliveryType.SmsNotification, invoiceDelivery: DeliveryType.InAppNotification };
+      const form: UserNotificationFormModel = { newsDelivery: [DeliveryChannel.Post], invoiceDelivery: [DeliveryChannel.Chat] };
       const updatedUser = convertNotificationFormToUser(form, user);
-      expect(updatedUser.newsDelivery).toBe(DeliveryType.SmsNotification);
-      expect(updatedUser.invoiceDelivery).toBe(DeliveryType.InAppNotification);
+      expect(updatedUser.newsDelivery).toEqual([DeliveryChannel.Post]);
+      expect(updatedUser.invoiceDelivery).toEqual([DeliveryChannel.Chat]);
     });
 
     it('convertPrivacyFormToUser should update user from privacy form model', () => {
@@ -189,5 +189,14 @@ describe('User Utils', () => {
     it('getUserIndexInfo should return the info string', () => {
       expect(getUserIndexInfo()).toBe('n:ame l:oginEmail p:ersonKey u:id');
     });
+  });
+
+  it('converts a legacy numeric delivery value on read', () => {
+    const user = new UserModel('scs');
+    (user as unknown as Record<string, unknown>)['newsDelivery'] = 0;    // legacy DeliveryType.Mail
+    (user as unknown as Record<string, unknown>)['invoiceDelivery'] = 4; // legacy InAppNotification
+    const form = convertUserToNotificationForm(user);
+    expect(form.newsDelivery).toEqual([DeliveryChannel.Post]);
+    expect(form.invoiceDelivery).toEqual([DeliveryChannel.Chat]);
   });
 });

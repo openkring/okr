@@ -1,5 +1,5 @@
-import { AvatarUsage, DefaultLanguage, DeliveryType, NameDisplay, PersonSortCriteria, Roles, UserModel } from '@okr/shared-models';
-import { die, isType } from '@okr/shared-util-core';
+import { AvatarUsage, DefaultLanguage, NameDisplay, PersonSortCriteria, Roles, UserModel } from '@okr/shared-models';
+import { die, isType, toDeliveryChannels } from '@okr/shared-util-core';
 
 import { UserAuthFormModel } from './user-auth-form.model';
 import { UserDisplayFormModel } from './user-display-form.model';
@@ -69,8 +69,10 @@ export function convertUserToModelForm(user: UserModel, firstName = '', lastName
 
 export function convertUserToNotificationForm(user: UserModel): UserNotificationFormModel {
   return {
-    newsDelivery: user.newsDelivery ?? DeliveryType.EmailAttachment,
-    invoiceDelivery: user.invoiceDelivery ?? DeliveryType.EmailAttachment,
+    // toDeliveryChannels, not `?? default`: a document written before the migration holds a
+    // NUMBER here, which is not null and would sail past the coalesce into the form.
+    newsDelivery: toDeliveryChannels(user.newsDelivery),
+    invoiceDelivery: toDeliveryChannels(user.invoiceDelivery),
   };
 }
 export function convertUserToPrivacyForm(user: UserModel): UserPrivacyFormModel {
@@ -133,8 +135,8 @@ export function convertModelFormToUser(vm: UserModelFormModel, user?: UserModel)
 }
 export function convertNotificationFormToUser(vm: UserNotificationFormModel, user?: UserModel): UserModel {
   if (!user) die('user.util.convertNotificationFormToUser: User is mandatory.');
-  user.newsDelivery = vm.newsDelivery ?? user.newsDelivery;
-  user.invoiceDelivery = vm.invoiceDelivery ?? user.invoiceDelivery;
+  user.newsDelivery = toDeliveryChannels(vm.newsDelivery);
+  user.invoiceDelivery = toDeliveryChannels(vm.invoiceDelivery);
   return user;
 }
 export function convertPrivacyFormToUser(vm: UserPrivacyFormModel, user?: UserModel): UserModel {

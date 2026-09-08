@@ -1,11 +1,11 @@
-import { DeliveryType } from '@okr/shared-models';
+import { DEFAULT_DELIVERY_CHANNELS, DeliveryChannel } from '@okr/shared-models';
 
 export type UserNotificationFormModel = {
-  newsDelivery: DeliveryType;
-  invoiceDelivery: DeliveryType;
+  newsDelivery: DeliveryChannel[];
+  invoiceDelivery: DeliveryChannel[];
 };
 
 export const USER_NOTIFICATION_FORM_SHAPE: UserNotificationFormModel = {
-  newsDelivery: DeliveryType.EmailAttachment,
-  invoiceDelivery: DeliveryType.EmailAttachment,
+  newsDelivery: [...DEFAULT_DELIVERY_CHANNELS],
+  invoiceDelivery: [...DEFAULT_DELIVERY_CHANNELS],
 };

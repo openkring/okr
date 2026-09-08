@@ -1,8 +1,8 @@
 import { only, staticSuite } from 'vest';
 
 import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
-import { AvatarUsage, DeliveryType, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@okr/shared-models';
-import { baseValidations, booleanValidations, categoryValidations, stringValidations } from '@okr/shared-util-core';
+import { AvatarUsage, Language, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@okr/shared-models';
+import { baseValidations, booleanValidations, categoryValidations, deliveryChannelsValidations, stringValidations } from '@okr/shared-util-core';
 
 export const userValidations = staticSuite((model: UserModel, tenants: string, tags: string, field?: string) => {
   if (field) only(field);
@@ -19,8 +19,8 @@ export const userValidations = staticSuite((model: UserModel, tenants: string, t
   stringValidations('gravatarEmail', model.gravatarEmail, SHORT_NAME_LENGTH);
   categoryValidations('nameDisplay', model.nameDisplay, NameDisplay);
   categoryValidations('personSortCriteria', model.personSortCriteria, PersonSortCriteria);
-  categoryValidations('newsDelivery', model.newsDelivery, DeliveryType);
-  categoryValidations('invoiceDelivery', model.invoiceDelivery, DeliveryType);
+  deliveryChannelsValidations('newsDelivery', model.newsDelivery);
+  deliveryChannelsValidations('invoiceDelivery', model.invoiceDelivery);
   booleanValidations('showArchivedData', model.showArchivedData);
   booleanValidations('showDebugInfo', model.showDebugInfo);
   booleanValidations('showHelpers', model.showHelpers);

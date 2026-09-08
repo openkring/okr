@@ -2,7 +2,7 @@ import { END_FUTURE_DATE_STR, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, 
 import { enforce, omitWhen, test } from 'vest';
 import { checkDate, DateFormat, isValidPartialStoreDate } from './date.util';
 import { isArrayOfStrings, isAvatarInfo, isMoney } from './type.util';
-import { AddressableModel, AvatarInfo, OkrModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, MoneyModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from '@okr/shared-models';
+import { AddressableModel, AvatarInfo, DeliveryChannel, OkrModel, isAddressableModel, isBaseModel, isNamedModel, isPersistedModel, isSearchableModel, isTaggedModel, MoneyModel, NamedModel, PersistedModel, SearchableModel, TaggedModel } from '@okr/shared-models';
 
 export function baseValidations(model: OkrModel, givenTenants: string, givenTags: string, field?: string) {
 
@@ -107,6 +107,29 @@ export function categoryValidations(fieldName: string, category: unknown, catego
   });
   test(fieldName, 'invalidEnum', () => {
     enforce(category).inside(Object.values(categoryEnum));
+  });
+}
+
+/**
+ * A list of delivery channels: at least one, all known, none twice.
+ *
+ * Not `categoryValidations`: that one enforces `isNumber()` on a scalar, and a channel is
+ * a string in a list. Empty is invalid rather than blocked in the UI — the control must let
+ * you clear the last tick to swap it for another one; the form reports the error instead.
+ */
+export function deliveryChannelsValidations(fieldName: string, value: unknown) {
+  test(fieldName, 'notArray', () => {
+    enforce(Array.isArray(value)).isTruthy();
+  });
+  test(fieldName, 'empty', () => {
+    enforce(Array.isArray(value) && value.length > 0).isTruthy();
+  });
+  test(fieldName, 'invalidEnum', () => {
+    const known = Object.values(DeliveryChannel) as string[];
+    enforce(Array.isArray(value) && value.every((entry) => known.includes(entry as string))).isTruthy();
+  });
+  test(fieldName, 'duplicate', () => {
+    enforce(Array.isArray(value) && new Set(value).size === value.length).isTruthy();
   });
 }
 
