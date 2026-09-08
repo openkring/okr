@@ -6,7 +6,7 @@ import { buildExportTable } from '@okr/shared-util-core';
 
 import { WORKFLOW_I18N_KEYS, WorkflowI18n } from './workflow-i18n';
 import { workflowRuleValidations } from './workflow-rule.validations';
-import { addWorkflowStep, getWorkflowRuleCondition, getWorkflowRuleActions, getWorkflowRuleExportColumns, getWorkflowRuleIndex, getWorkflowStepSummary, getWorkflowSteps, isWorkflowRuleComplete, isWorkflowStepComplete, newWorkflowRuleModel, patchWorkflowStep, probeNeedsArg, removeWorkflowStep, setWorkflowStepAction } from './workflow-rule.util';
+import { actionNeedsArg, addWorkflowStep, getWorkflowRuleCondition, getWorkflowRuleActions, getWorkflowRuleExportColumns, getWorkflowRuleIndex, getWorkflowStepSummary, getWorkflowSteps, isWorkflowRuleComplete, isWorkflowStepComplete, newWorkflowRuleModel, patchWorkflowStep, probeNeedsArg, removeWorkflowStep, setWorkflowStepAction } from './workflow-rule.util';
 
 describe('newWorkflowRuleModel', () => {
   it('creates a rule for the given tenant and event', () => {
@@ -103,6 +103,13 @@ describe('probeNeedsArg', () => {
     // shipped 'categoryIs:passive,hasActiveOwnerships' item.
     expect(probeNeedsArg('paramIs:resourceType=boathouse')).toBe(false);
     expect(probeNeedsArg('paramIs:state=accepted,hasOpenInvoices')).toBe(false);
+  });
+});
+
+describe('actionNeedsArg', () => {
+  it('the two delivery actions need their template id', () => {
+    expect(actionNeedsArg('deliverNotice')).toBe(true);
+    expect(actionNeedsArg('deliverInvoice')).toBe(true);
   });
 });
 

@@ -67,8 +67,10 @@ export function probeNeedsArg(probe?: string): boolean {
  *  - esign:     the storage path of the document (may contain {relatedKey})
  *  - requestApproval: the approval kind, e.g. 'skiffPlatz'
  *  - openChat:  the okey of the group that answers, e.g. 'support'
+ *  - deliverNotice / deliverInvoice: ONE `templates` document id, rendered three ways
+ *    (print PDF, email template, chat text)
  */
-const ACTIONS_WITH_ARG = ['sendEmail', 'esign', 'requestApproval', 'openChat'];
+const ACTIONS_WITH_ARG = ['sendEmail', 'esign', 'requestApproval', 'openChat', 'deliverNotice', 'deliverInvoice'];
 
 /** Does this action still need the rule's `actionArg`? */
 export function actionNeedsArg(action?: string): boolean {

@@ -170,6 +170,12 @@
     },
     "openChat": {
       "label": "Aprire la chat"
+    },
+    "deliverNotice": {
+      "label": "Inviare un avviso"
+    },
+    "deliverInvoice": {
+      "label": "Inviare una fattura"
     }
   }
 }
