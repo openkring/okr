@@ -13,6 +13,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
 import { ActivityViewModal } from '@okr/activity-feature';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { resourceParams } from '@okr/shared-util-angular';
 
 
 export type ActivitiesSectionState = {
@@ -33,11 +34,11 @@ export const ActivitiesSectionStore = signalStore(
   })),
   withProps((store) => ({
     activitiesResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         currentUser: store.appStore.currentUser(),
         tenantId: store.appStore.env.tenantId,
         maxItems: store.maxItems(),
-      }),
+      })),
       stream: ({ params }) => {
         if (!params.currentUser) return of([] as ActivityModel[]);
         const query = getSystemQuery(params.tenantId);

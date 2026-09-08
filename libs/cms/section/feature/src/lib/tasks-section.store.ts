@@ -13,6 +13,7 @@ import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 import { TaskService } from '@okr/task-data-access';
 import { TaskEditModal } from '@okr/task-feature';
 import { isTask } from '@okr/task-util';
+import { resourceParams } from '@okr/shared-util-angular';
 
 
 export type TasksState = {
@@ -33,9 +34,9 @@ export const TasksStore = signalStore(
   })),
   withProps((store) => ({
     tasksForCurrentUserResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         personKey: store.appStore.currentUser()?.personKey,
-      }),
+      })),
       stream: ({params}) => {
         const personKey = params.personKey;
         if (!personKey) return of([]);

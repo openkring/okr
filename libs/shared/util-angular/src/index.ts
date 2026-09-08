@@ -12,6 +12,7 @@ export * from './lib/html.util';
 export * from './lib/iban.util';
 export * from './lib/item-color.pipe';
 export * from './lib/persisted-signal';
+export * from './lib/resource-params';
 export * from './lib/phone.util';
 export * from './lib/overlay.util';
 export * from './lib/platform.util';

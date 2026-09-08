@@ -9,7 +9,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { AppConfig, CategoryItemModel, CategoryListModel, PageModel, SectionModel } from '@okr/shared-models';
 import { belongsToTenant, chipMatches, debugItemLoaded, debugListLoaded, debugMessage, die, nameMatches, getImgixUrlWithAutoParams, debugData, getTodayStr, DateFormat } from '@okr/shared-util-core';
-import { okrPrompt, confirm, downloadTextFile, error, exportCsv, getExportFileName, navigateByUrl } from '@okr/shared-util-angular';
+import { okrPrompt, confirm, downloadTextFile, error, exportCsv, getExportFileName, navigateByUrl, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { PageService } from '@okr/cms-page-data-access';
@@ -74,7 +74,7 @@ export const _PageStore = signalStore(
       // einem Firestore-Live-Stream und bekommt bei jeder Aktualisierung (Rollen, Profil, Auth)
       // eine neue Referenz. Als Objekt im Schlüssel liess das die Ressource jedes Mal komplett
       // neu anlaufen — gemessen dreimal pro Seitenaufruf (Befund B5).
-      params: () => ({ userKey: store.currentUser()?.okey ?? '' }),
+      params: resourceParams(() => ({ userKey: store.currentUser()?.okey ?? '' })),
       stream: () => {
         const currentUser = store.currentUser();
         return store.pageService.list().pipe(
@@ -88,10 +88,10 @@ export const _PageStore = signalStore(
       }
     }),
     pageResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         pageId: store.pageId(),
         userKey: store.currentUser()?.okey ?? ''
-      }),
+      })),
       stream: ({ params }) => {
         const currentUser = store.currentUser();
         if (!params.pageId || params.pageId.length === 0) {

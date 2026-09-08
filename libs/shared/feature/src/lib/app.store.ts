@@ -11,7 +11,7 @@ import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { die, getSystemQuery, indexBy, openInvitationsOf, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
-import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService } from '@okr/shared-util-angular';
+import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { SessionService} from '@okr/session-data-access';
@@ -128,10 +128,10 @@ export const AppStore = signalStore(
     // eine Projektion über 3,167 Adressen pro Durchlauf. Siehe Befund B5 der
     // Dashboard-Performance-Spezifikation.
     personsResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
-      }),
+      })),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
         // Einmal laden statt Echtzeit-Abo: Referenzdaten ändern sich selten, und ein offener
@@ -142,10 +142,10 @@ export const AppStore = signalStore(
       }
     }),
     orgsResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
-      }),
+      })),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
         // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
@@ -160,10 +160,10 @@ export const AppStore = signalStore(
     // orderBy 'none': lookups go through the directoryMap, and skipping the
     // orderBy avoids a composite index on this collection.
     addressDirectoryResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
-      }),
+      })),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
         // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
@@ -173,20 +173,20 @@ export const AppStore = signalStore(
       }
     }),
     groupsResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
-      }),
+      })),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
         return store.firestoreService.searchData<GroupModel>(GroupCollection, getSystemQuery(params.tenantId), 'name', 'asc');
       }
     }),
     resourcesResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
-      }),
+      })),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
         // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
@@ -196,10 +196,10 @@ export const AppStore = signalStore(
       }
     }),
     tagsResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         userKey: store.currentUserResource.value()?.okey ?? '',
         tenantId: store.tenantId()
-      }),
+      })),
       stream: ({params}) => {
         if (!params.userKey || !params.tenantId) return of([]);
         // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
@@ -215,10 +215,10 @@ export const AppStore = signalStore(
     // authored tasks the user could neither see nor complete, and the app-icon badge dropped
     // tasks entirely. `assignee` only — a notification means "you have something to do".
     openTasksResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         personKey: store.currentUserResource.value()?.personKey,
         tenantId: store.tenantId()
-      }),
+      })),
       stream: ({params}) => {
         if (!params.personKey || !params.tenantId) return of([]);
         const taskQuery = getSystemQuery(params.tenantId);
@@ -231,10 +231,10 @@ export const AppStore = signalStore(
     // badge writers (cms/menu/feature and chat/feature) must count the same thing.
     // Gated on personKey: the invitations collection requires an authenticated tenant user.
     openInvitationsResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         personKey: store.currentUserResource.value()?.personKey,
         tenantId: store.tenantId()
-      }),
+      })),
       stream: ({params}) => {
         if (!params.personKey || !params.tenantId) return of([]);
         const invitationQuery = getSystemQuery(params.tenantId);
@@ -243,12 +243,12 @@ export const AppStore = signalStore(
       }
     }),
     categoriesResource: rxResource({
-      params: () => ({
-        fbUser: store.fbUser(),
+      params: resourceParams(() => ({
+        fbUserUid: store.fbUser()?.uid ?? '',
         tenantId: store.tenantId()
-      }),
+      })),
       stream: ({params}) => {
-        if (!params.fbUser || !params.tenantId) return of([]);
+        if (!params.fbUserUid || !params.tenantId) return of([]);
         // Einmal laden statt Echtzeit-Abo: siehe personsResource oben. Nach eigenen
         // Schreibzugriffen holt reloadCategories() neu.
         return from(store.firestoreService.getDataOnce<CategoryListModel>(
@@ -263,9 +263,9 @@ export const AppStore = signalStore(
     // because fbUser stays null for them and the stream never fired. Keyed on tenantId
     // alone, it starts at bootstrap and runs in parallel with auth restore.
     appConfigResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         tenantId: store.tenantId()
-      }),
+      })),
       stream: ({params}) => {
         if (!params.tenantId) return of(undefined);
         return store.appConfigService.read(params.tenantId);

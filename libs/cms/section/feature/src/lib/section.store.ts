@@ -13,7 +13,7 @@ import { AppStore, withErrorState } from '@okr/shared-feature';
 import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType } from '@okr/shared-models';
 import { chipMatches, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
-import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast } from '@okr/shared-util-angular';
+import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams } from '@okr/shared-util-angular';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -89,10 +89,10 @@ export const _SectionStore = signalStore(
     }),
 
     sectionResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         sectionId: store.sectionId(),
         currentUser: store.appStore.currentUser()
-      }),
+      })),
       stream: ({ params }) => {
         return store.sectionService.read(params.sectionId).pipe(
           debugItemLoaded<SectionModel>(`SectionStore.sectionResource`, params.currentUser),

@@ -7,6 +7,7 @@ import { MenuItemModel } from '@okr/shared-models';
 import { debugData } from '@okr/shared-util-core';
 
 import { MenuService } from '@okr/cms-menu-data-access';
+import { resourceParams } from '@okr/shared-util-angular';
 
 /**
  * Die Menüliste des Mandanten — EIN Abonnement für die ganze Anwendung.
@@ -59,7 +60,7 @@ export class MenuItemsStore {
      * Benutzer-`okey` (ein Primitiv), nicht das Benutzerobjekt — der AppStore gibt bei jedem
      * Firestore-Tick eine neue Objektreferenz aus und würde die Ressource sonst dauernd neu laden.
      */
-    params: () => this.appStore.currentUser()?.okey ?? '',
+    params: resourceParams(() => this.appStore.currentUser()?.okey ?? ''),
     stream: () => this.menuService.list().pipe(
       timeout({
         first: MenuItemsStore.FIRST_SNAPSHOT_TIMEOUT_MS,
@@ -92,10 +93,21 @@ export class MenuItemsStore {
   public readonly menuItems = computed<MenuItemModel[] | undefined>(
     () => this.resource.hasValue() ? this.resource.value() : undefined
   );
-  public readonly isLoading = computed(() => this.resource.isLoading());
+  /**
+   * «Lädt» nur, solange noch KEINE Liste vorliegt. Bei einem Neuladen (reload() nach einem
+   * Schreibzugriff, neuer Schlüssel) behält die Ressource den bisherigen Wert; das Menü darf
+   * dann nicht in den Spinner zurückfallen — `menu.ts` würde sonst alle Knoten abbauen und neu
+   * aufbauen (2026-09-08: 197 Knoten, der grösste TBT-Posten des Dashboards).
+   */
+  public readonly isLoading = computed(() => this.resource.isLoading() && !this.resource.hasValue());
   public readonly hasLoadError = computed(() => this.resource.status() === 'error');
 
   constructor() {
+    effect(() => {
+      console.log('[perf-menu]', Math.round(performance.now()), 'status', this.resource.status(),
+        'okey', this.appStore.currentUser()?.okey, 'uid', this.appStore.fbUser()?.uid,
+        'userRes', this.appStore.currentUserResource.status(), 'n', this.resource.hasValue() ? this.resource.value()?.length : -1);
+    });
     effect(() => {
       if (this.resource.status() === 'error') {
         debugData('MenuItemsStore: stream error', this.resource.error(), this.appStore.currentUser());

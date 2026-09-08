@@ -11,7 +11,7 @@ import { ENV } from '@okr/shared-config';
 import { AppStore, withErrorState } from '@okr/shared-feature';
 import { CategoryListModel, MenuItemModel } from '@okr/shared-models';
 import { die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
-import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, lazyService, navigateByUrl, VersionCheckService } from '@okr/shared-util-angular';
+import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, lazyService, navigateByUrl, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { getRepoUrl, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
@@ -87,10 +87,10 @@ export const _MenuStore = signalStore(
     // notificationCount below) — the single source shared with the PWA app-icon badge,
     // so the two can no longer disagree about what counts as a notification.
     chatUnreadResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         name: store.name(),
         personKey: store.appStore.currentUser()?.personKey,
-      }),
+      })),
       stream: ({ params }): Observable<number> => {
         const { name, personKey } = params;
         // Only activate a real subscription for the dashboard menu item.

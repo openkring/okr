@@ -8,7 +8,7 @@ import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@okr/shared-util-core';
-import { notify } from '@okr/shared-util-angular';
+import { notify, resourceParams } from '@okr/shared-util-angular';
 
 import { CalEventService } from '@okr/calevent-data-access';
 import { getVisibleGroupKeys } from '@okr/subject-group-util';
@@ -46,9 +46,9 @@ export const CalendarStore = signalStore(
     // returns a list of unigue organization keys for the current user
     // ie. all orgs that the current user is a member of
     membershipsForCurrentUserResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         personKey: store.appStore.currentUser()?.personKey
-      }),
+      })),
       stream: ({params}) => {
         const personKey = params.personKey;
         if (!personKey) return of([]);
@@ -57,9 +57,9 @@ export const CalendarStore = signalStore(
     }),
 
     invitationsForCurrentUserResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         personKey: store.appStore.currentUser()?.personKey
-      }),
+      })),
       stream: ({params}) => {
         const personKey = params.personKey;
         if (!personKey) return of([]);
@@ -70,9 +70,9 @@ export const CalendarStore = signalStore(
     }),
 
     calendarsResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         currentUser: store.appStore.currentUser()
-      }),
+      })),
       stream: ({params}) => {
         // `calendars` is tenantRead-protected: gate on an authenticated user, or the
         // read fires unauthenticated during the auth-restore window (e.g. a calendar
@@ -86,9 +86,9 @@ export const CalendarStore = signalStore(
   // returns okeys of groups visible to the current user via the group's visibility roles (not by membership)
   withProps((store) => ({
     visibleGroupsResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         currentUser: store.appStore.currentUser()
-      }),
+      })),
       stream: ({params}) => {
         const currentUser = params.currentUser;
         if (!currentUser) return of([]);
@@ -109,10 +109,10 @@ export const CalendarStore = signalStore(
   // returns all calendar keys for the current user: member-based + visibility-based
   withProps((store) => ({
     calendarsForCurrentUserResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         orgKeys: store.membershipsForCurrentUserResource.value() ?? [],
         visibleGroupKeys: store.visibleGroupsResource.value() ?? []
-      }),
+      })),
       stream: ({params}) => {
         const memberOrgKeys: string[] = params.orgKeys;
         const visibleGroupKeys: string[] = params.visibleGroupKeys;
@@ -147,10 +147,10 @@ export const CalendarStore = signalStore(
 
   withProps((store) => ({
       caleventsResource: rxResource({
-        params: () => ({
+        params: resourceParams(() => ({
           calendarName: store.calendarName(),
           calendarsOfCurrentUser: store.calendarsForCurrentUserResource.value() ?? []
-        }),
+        })),
         stream: ({ params }) => {
           const calName = params.calendarName;
           if (!calName || calName.length === 0) {

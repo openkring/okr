@@ -8,7 +8,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { chipMatches, DateFormat, getSystemQuery, getTodayStr, isAfterDate, nameMatches, openInvitationsOf } from '@okr/shared-util-core';
-import { notify } from '@okr/shared-util-angular';
+import { notify, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { CalEventService } from '@okr/calevent-data-access';
@@ -65,7 +65,7 @@ export const InvitationSectionStore = signalStore(
     invitationsResource: rxResource({
       // gate on currentUser: the invitations collection requires an authenticated tenant user (tenantRead).
       // Firing before auth is restored (notably mobile Safari) yields "Missing or insufficient permissions".
-      params: () => ({ currentUser: store.appStore.currentUser() }),
+      params: resourceParams(() => ({ currentUser: store.appStore.currentUser() })),
       stream: ({ params }) => {
         if (!params.currentUser) return of([] as InvitationModel[]);
         return store.firestoreService.searchData<InvitationModel>(InvitationCollection, getSystemQuery(store.appStore.tenantId()), 'name', 'asc');
