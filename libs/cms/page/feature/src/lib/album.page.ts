@@ -5,6 +5,7 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonMenuButton, I
 import { of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
+import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header, Spinner } from '@okr/shared-ui';
 import { coerceBoolean, extractFirstPartOfOptionalTupel } from '@okr/shared-util-core';
@@ -12,7 +13,7 @@ import { copyToClipboardWithConfirmation, error, keepDefaultTrue } from '@okr/sh
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AlbumSectionComponent } from '@okr/cms-section-feature';
-import { createSection } from '@okr/cms-section-util';
+import { createSection, SECTION_I18N_KEYS } from '@okr/cms-section-util';
 import { DEFAULT_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
 import { ALBUM_CONFIG_SHAPE, AlbumSection, FolderModel } from '@okr/shared-models';
 
@@ -45,6 +46,8 @@ import { FolderService } from '@okr/content-folder-data-access';
   styles: [`
   okr-section { width: 100%; }
 
+  .upload-hint { margin: 0 1rem; font-size: 0.8rem; color: var(--ion-color-medium); }
+
   /* Printing an album means printing the pictures: drop the app chrome and let the grid
      break across pages. The context menu's 'print' hands the browser this stylesheet and
      nothing else — unlike a CMS page, an album has no page document to render server-side. */
@@ -64,6 +67,11 @@ import { FolderService } from '@okr/content-folder-data-access';
              [accept]="acceptMimeTypes"
              style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;"
              (change)="onFilesSelected($event)" />
+      @if(canUpload()) {
+        <!-- Datenschutz (Spec §8): eine Tonspur kann Gespräche enthalten, die die Beteiligten
+             nicht als öffentlich verstanden haben. Hinweis, keine technische Sperre. -->
+        <p class="upload-hint">{{ uploadHint() }}</p>
+      }
       @if(showToolbar()) {
         <!-- The route's optional :contextMenuName is only renderable here — okr-header carries no
              popover — so an album reached as /album/<folderKey>/<menuName> uses its own toolbar. -->
@@ -116,6 +124,7 @@ export class AlbumPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toastController = inject(ToastController);
+  private readonly i18n = inject(I18nService).translateAll(SECTION_I18N_KEYS);
 
   /** The rendered album — it owns the folder currently browsed, so every menu action goes there. */
   private readonly albumSection = viewChild(AlbumSectionComponent);
@@ -211,6 +220,10 @@ export class AlbumPage {
     return hidden;
   });
   protected readonly acceptMimeTypes = DEFAULT_ACCEPT_ATTRIBUTE;
+
+  /** Same predicate `hiddenMenuItems` uses to hide 'files-add': the hint appears only where upload is allowed. */
+  protected readonly canUpload = computed(() => this.albumSection()?.canUpload() ?? false);
+  protected readonly uploadHint = computed(() => this.i18n.album_video_hint());
 
   /**
    * Upload the picked files into the folder the album is currently showing. The album owns that

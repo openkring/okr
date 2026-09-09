@@ -8,7 +8,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, DocumentCollection, DocumentModel, FolderModel, FolderModelName, ImageConfig, ImageType, SectionModelName } from '@okr/shared-models';
-import { debugMessage, fill, getSystemQuery, sanitizeFileName } from '@okr/shared-util-core';
+import { checkVideoLimits, debugMessage, fileSizeUnit, fill, formatDuration, getSystemQuery, sanitizeFileName } from '@okr/shared-util-core';
 import { showImageSlider } from '@okr/shared-ui';
 import { downloadFilesAsZip, exportCsv, getExportFileName, showToast, ZipEntry } from '@okr/shared-util-angular';
 
@@ -194,6 +194,19 @@ export const AlbumStore = signalStore(
       const tags = `@tag.${tenantId},@tag.${SectionModelName},@tag.album`;
 
       for (const file of files) {
+        // Videos werden vor dem Upload geprüft: eine 200-MB-Datei erst hochzuladen und dann
+        // abzulehnen wäre die teuerste Art, Nein zu sagen. Bilder gehen ungeprüft durch.
+        if (file.type.startsWith('video/')) {
+          const check = await checkVideoLimits(file);
+          if (!check.ok) {
+            const message = check.reason === 'size'
+              ? fill(store.i18n.album_video_too_large(), { size: fileSizeUnit(check.actual ?? 0) })
+              : fill(store.i18n.album_video_too_long(), { duration: formatDuration(check.actual ?? 0) });
+            await showToast(store.toastController, message);
+            continue;   // die übrigen Dateien der Mehrfachauswahl laufen weiter
+          }
+        }
+
         const fullPath = `${basePath}/${sanitizeFileName(file.name)}`;
         const downloadUrl = await store.uploadService.uploadFile(file, fullPath, file.name);
         if (!downloadUrl) continue;
