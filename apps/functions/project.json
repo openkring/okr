@@ -48,6 +48,7 @@
           "puppeteer-core",
           "@sparticuz/chromium",
           "@neplex/vectorizer",
+          "ffmpeg-static",
           "handlebars",
           "html-to-docx",
           "sanitize-html",

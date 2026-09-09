@@ -16,6 +16,7 @@ import * as MatrixGroupNameSync from './matrix-simple/group-name-sync';
 import * as Rag from './rag';
 import * as Ocr from './ocr';
 import * as Vectorize from './vectorize';
+import * as Video from './video';
 import * as Expense from './expense';
 import * as Booking from './booking';
 import * as Email from './email';
@@ -222,6 +223,8 @@ export const onOcrResultWritten = Ocr.onOcrResultWritten;
 export const redoExpenseOcr = Ocr.redoExpenseOcr;
 // document renderings: raster → SVG (vtracer)
 export const vectorizeDocument = Vectorize.vectorizeDocument;
+// storage trigger: album videos → playable mp4 + poster frame (ffmpeg renderings)
+export const onAlbumVideoFinalized = Video.onAlbumVideoFinalized;
 // expense creation (CF-only writes to the `expenses` collection)
 export const createExpense = Expense.createExpense;
 export const deleteExpense = Expense.deleteExpense;
