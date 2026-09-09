@@ -188,19 +188,41 @@ export class WeatherSectionComponent {
   // ---- rain_radar: created by hand so Leaflet stays out of the eager bundle ----
   private radarHost = viewChild('radarHost', { read: ViewContainerRef });
   protected radarRef = signal<ComponentRef<WeatherRainRadar> | undefined>(undefined);
+  /** Guards against a second mount while the chunk is in flight; a signal so the effect re-runs
+   *  once the flight ends (the host may have been swapped meanwhile). */
+  private readonly creatingRadar = signal(false);
 
   constructor() {
+    // Pattern A (lazy-loading skill). The host lives in an `@case` of the section mode: leaving
+    // and re-entering that branch destroys the container and the radar created in it, so the
+    // stale ref must be dropped or the next host is never filled (white radar).
     effect(() => {
       const host = this.radarHost();
-      if (!host || untracked(() => this.radarRef())) return;
+      const ref = untracked(() => this.radarRef());
+      if (!host) {
+        if (ref) {
+          ref.destroy();
+          this.radarRef.set(undefined);
+        }
+        return;
+      }
+      if (ref || this.creatingRadar()) return;
+      this.creatingRadar.set(true);
       void (async () => {
-        const { WeatherRainRadar } = await import('./weather-rain-radar');
-        const ref = host.createComponent(WeatherRainRadar);
-        ref.setInput('measuredLabel', untracked(() => this.i18n.radar_measured()));
-        ref.setInput('forecastLabel', untracked(() => this.i18n.radar_forecast()));
-        ref.setInput('playLabel', untracked(() => this.i18n.radar_play()));
-        ref.setInput('degradedLabel', untracked(() => this.i18n.radar_degraded()));
-        this.radarRef.set(ref);
+        try {
+          const { WeatherRainRadar } = await import('./weather-rain-radar');
+          // host swapped while the chunk was in flight: a component in a detached container
+          // would never be visible, yet its ref would block the remount
+          if (untracked(() => this.radarHost()) !== host) return;
+          const created = host.createComponent(WeatherRainRadar);
+          created.setInput('measuredLabel', untracked(() => this.i18n.radar_measured()));
+          created.setInput('forecastLabel', untracked(() => this.i18n.radar_forecast()));
+          created.setInput('playLabel', untracked(() => this.i18n.radar_play()));
+          created.setInput('degradedLabel', untracked(() => this.i18n.radar_degraded()));
+          this.radarRef.set(created);
+        } finally {
+          this.creatingRadar.set(false);
+        }
       })();
     });
     inject(DestroyRef).onDestroy(() => this.radarRef()?.destroy());
