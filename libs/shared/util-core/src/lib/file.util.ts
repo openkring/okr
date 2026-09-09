@@ -39,6 +39,34 @@ export function sanitizeFileName(name: string): string {
 }
 
 /**
+ * Inserts a suffix before the extension, so a second file of the same name gets its own path
+ * without losing the name the member recognises it by.
+ * e.g. suffixFileName('IMG_0042.mov', 'a7f3') -> 'IMG_0042-a7f3.mov'
+ *
+ * Why this exists: iPhone file names collide for real. Two members uploading their own
+ * `IMG_0042.mov` into the same album folder would otherwise write the same storage path — the
+ * second upload overwrites the first one's bytes, while both `docs` documents keep pointing at
+ * that one path. The transcoder then looks the path up with `where('fullPath','==',…).limit(1)`
+ * and gets whichever of the two Firestore happens to return: one clip is never transcoded, and
+ * the other's tile shows a poster with a different video underneath it.
+ *
+ * The suffix goes before the extension on purpose — appending it at the end would produce
+ * `IMG_0042.mov-a7f3`, which no longer reads as a video to a human, to `resolveMimeType`, or to
+ * the extension gate in storage.rules.
+ * @param name the file name (no directories), ideally already sanitized
+ * @param suffix the discriminator; an empty suffix returns the name unchanged
+ * @returns the name with the suffix inserted before its extension
+ */
+export function suffixFileName(name: string, suffix: string): string {
+  if (!suffix) return name;
+  const dot = name.lastIndexOf('.');
+  // dot === -1: no extension. dot === 0: a dotfile ('.env'), where the dot starts the NAME and
+  // splitting there would yield '-a7f3.env' — in both cases the suffix belongs at the end.
+  if (dot <= 0) return `${name}-${suffix}`;
+  return `${name.slice(0, dot)}-${suffix}${name.slice(dot)}`;
+}
+
+/**
  * Strips the fileName off a fullPath.
  * e.g. path/to/a/filename.txt -> path/to/a
  * Will not work on Urls (because of / in queries).

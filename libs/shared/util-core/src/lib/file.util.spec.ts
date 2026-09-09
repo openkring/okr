@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_ACCEPT_ATTRIBUTE, DEFAULT_MIMETYPES } from '@okr/shared-constants';
-import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation, isVideo, resolveMimeType, sanitizeFileName } from './file.util';
+import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation, isVideo, resolveMimeType, sanitizeFileName, suffixFileName } from './file.util';
 
 describe('file.util', () => {
 
@@ -169,6 +169,33 @@ describe('sanitizeFileName', () => {
 
   it('should never return an empty name', () => {
     expect(sanitizeFileName('***')).toBe('file');
+  });
+});
+
+describe('suffixFileName', () => {
+  it('should insert the suffix before the extension, not after it', () => {
+    expect(suffixFileName('IMG_0042.mov', 'a7f3')).toBe('IMG_0042-a7f3.mov');
+  });
+
+  it('should keep the extension intact so mime resolution still works', () => {
+    // the whole point: resolveMimeType and the storage.rules extension gate must still see .mov
+    expect(resolveMimeType(suffixFileName('IMG_0042.mov', 'a7f3'), '')).toBe('video/quicktime');
+  });
+
+  it('should use the LAST dot, so a dotted base name survives', () => {
+    expect(suffixFileName('urlaub.2026.sommer.mp4', 'b2c1')).toBe('urlaub.2026.sommer-b2c1.mp4');
+  });
+
+  it('should append at the end when there is no extension', () => {
+    expect(suffixFileName('README', 'x1')).toBe('README-x1');
+  });
+
+  it('should append at the end for a dotfile, whose leading dot starts the name', () => {
+    expect(suffixFileName('.env', 'x1')).toBe('.env-x1');
+  });
+
+  it('should return the name unchanged for an empty suffix', () => {
+    expect(suffixFileName('IMG_0042.mov', '')).toBe('IMG_0042.mov');
   });
 });
 
