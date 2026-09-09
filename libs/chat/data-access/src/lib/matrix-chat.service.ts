@@ -1,23 +1,22 @@
-
 import { effect, inject, Injectable } from '@angular/core';
-import { captureMessage } from '@sentry/angular';
 import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMember, EventType, EventTimeline, MsgType, RelationType, IContent, ISendEventResponse, MatrixError, RoomStateEvent, RoomEvent, ClientEvent, ICreateRoomOpts, Visibility, Preset, User, ReceiptType, type MatrixCall, type Store } from 'matrix-js-sdk';
-import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { distinctUntilChanged } from 'rxjs/operators';
 
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, PersonModelName, TypingNotification, UserModel } from '@okr/shared-models';
+import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, isRenderableChatEvent, isRoomGoneError, MentionRef, OKR_TENANT_EVENT, MATRIX_FAVOURITE_TAG, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
-import { ActivityService } from '@okr/activity-data-access';
-import { AvatarService } from '@okr/avatar-data-access';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
 
-import { isServiceAccount as isServiceAccountHelper } from './matrix-helpers';
+import { mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
 import { MatrixCallService } from './matrix-call.service';
+import { MatrixDirectRoomService } from './matrix-direct-room.service';
+import { MatrixRoomListService } from './matrix-room-list.service';
+import { MatrixMessageService } from './matrix-message.service';
 
 /**
  * SCS-92: refresh a Matrix access token this long before it lapses, so a session that
@@ -40,62 +39,39 @@ export interface MatrixPollData {
 })
 export class MatrixChatService {
   private appStore = inject(AppStore);
-  
+
   private client: MatrixClient | null = null;
-  private readonly activityService = inject(ActivityService);
-  private readonly avatarService = inject(AvatarService);
   // ARCH-1: promise-cached so concurrent callers (early-init service + chat component)
   // share one in-flight initialization instead of each minting a Matrix token.
   private initPromise: Promise<void> | null = null;
   // C-9: single source of truth for "is the Matrix client up". The store derives its
   // isMatrixInitialized signal from this instead of maintaining its own copy.
   private readonly isInitialized$ = new BehaviorSubject<boolean>(false);
-  // C-2: serialize updateRoomsList() so two async runs can't emit out of order (older
-  // list last). While a build runs, further triggers set a pending flag that schedules
-  // exactly one more build afterwards, so the final emit always reflects the latest state.
-  private roomsListInFlight = false;
-  private roomsListPending = false;
   private syncState$ = new BehaviorSubject<string>('STOPPED');
-  private rooms$ = new BehaviorSubject<MatrixRoom[]>([]);
-  // True once the first room list after the initial sync (PREPARED) has been emitted. `rooms`
-  // starts as [] and is distinctUntilChanged, so a user with zero rooms never gets a second
-  // emission — consumers that must tell "still loading" from "really empty" gate on this.
-  private roomsLoaded$ = new BehaviorSubject<boolean>(false);
-  private messages$ = new Map<string, BehaviorSubject<MatrixMessage[] | null>>();
-  // C-3: roomIds with a load in progress, so concurrent subscriptions don't double-load.
-  private readonly loadingRooms = new Set<string>();
-  // C-4: edits whose original message isn't in the list yet (edit arrived before the
-  // original on the live timeline). Keyed by original eventId → latest edit event; replayed
-  // by handleNewMessage when the original is added. Cleared on disconnect.
-  private readonly pendingEdits = new Map<string, MatrixEvent>();
-  private typing$ = new Subject<TypingNotification>();
   private errors$ = new Subject<MatrixError>();
   private readonly tokenExpired$ = new Subject<void>();
   private readonly roomListToggle$ = new Subject<void>();
-  private readonly roomsUpdateTrigger$ = new Subject<void>();
   // Bumped on every RoomStateEvent.Events (membership, power levels). The `rooms`
   // observable's distinctUntilChanged deliberately ignores membership (members is
   // hard-coded []), so consumers that need to react to room-state changes (e.g.
   // mention-candidate lists) must depend on this counter instead of `rooms`.
   private readonly roomStateVersion$ = new BehaviorSubject<number>(0);
-  private roomsUpdateSub: Subscription | null = null;
   // Bound once so add/removeEventListener see the same reference (see setupEventHandlers).
   private readonly kickSync = (): void => {
     if (document.visibilityState !== 'visible') return;
     this.client?.retryImmediately();
   };
-  private readonly typingByRoom = new Map<string, string[]>(); // roomId -> typing userIds
-  private readonly receipts$ = new Map<string, BehaviorSubject<Map<string, MatrixReadReceipt[]>>>();
-  // Rooms joined via CF admin API that haven't appeared in a sync cycle yet.
-  // updateRoomsList() re-injects stubs for these so the UI renders immediately.
-  private readonly pendingRooms = new Map<string, string>(); // roomId → display name
 
-  // ARCH-2 delegates (design review #4): media resolution and WebRTC call state
-  // live in their own services; this facade wires the client and forwards calls.
+  // ARCH-2 delegates (design review #4): this class is the facade. It owns the client,
+  // its credentials, the SDK event wiring and everything that SENDS; each delegate owns
+  // one slice of read state and is handed the live client on initialize/disconnect.
   private readonly media = inject(MatrixMediaService);
   /** Epoch ms of the last media-401-driven re-auth — see the constructor's cooldown. */
   private lastMediaAuthRecovery = 0;
   private readonly calls = inject(MatrixCallService);
+  private readonly dm = inject(MatrixDirectRoomService);
+  private readonly roomList = inject(MatrixRoomListService);
+  private readonly messages = inject(MatrixMessageService);
 
   constructor() {
     // Disconnect and clear rooms when the user logs out (fbUser becomes null).
@@ -142,36 +118,16 @@ export class MatrixChatService {
 
   /** Emits true once the room list reflects the initial sync; false again after disconnect. */
   get roomsLoaded(): Observable<boolean> {
-    return this.roomsLoaded$.asObservable().pipe(distinctUntilChanged());
+    return this.roomList.roomsLoaded;
   }
 
   get rooms(): Observable<MatrixRoom[]> {
-    // C-1: compare every field the UI renders, not just roomId/unread/lastMessage.timestamp.
-    // The old comparator swallowed room renames, avatar changes and typing updates until an
-    // unrelated field happened to change.
-    return this.rooms$.asObservable().pipe(distinctUntilChanged((a, b) =>
-      a.length === b.length && a.every((room, i) => {
-        const o = b[i];
-        return !!o &&
-          room.roomId === o.roomId &&
-          room.name === o.name &&
-          room.avatar === o.avatar &&
-          room.isDirect === o.isDirect &&
-          room.unreadCount === o.unreadCount &&
-          room.isFavourite === o.isFavourite &&
-          room.lastMessage?.eventId === o.lastMessage?.eventId &&
-          room.lastMessage?.timestamp === o.lastMessage?.timestamp &&
-          room.lastMessage?.body === o.lastMessage?.body &&
-          room.lastMessage?.isRedacted === o.lastMessage?.isRedacted &&
-          room.typingUsers.length === o.typingUsers.length &&
-          room.typingUsers.every((u, j) => u === o.typingUsers[j]);
-      })
-    ));
+    return this.roomList.rooms;
   }
 
   /** Synchronous snapshot of the current rooms list (BehaviorSubject value). */
   get roomsCurrentValue(): MatrixRoom[] {
-    return this.rooms$.value;
+    return this.roomList.roomsCurrentValue;
   }
 
   /**
@@ -308,7 +264,7 @@ export class MatrixChatService {
   }
 
   get typing(): Observable<TypingNotification> {
-    return this.typing$.asObservable();
+    return this.roomList.typing;
   }
 
   get errors(): Observable<MatrixError> {
@@ -321,7 +277,7 @@ export class MatrixChatService {
 
   /** Emits the id of a room that was evicted because the server no longer knows it. */
   get roomGone(): Observable<string> {
-    return this.roomGone$.asObservable();
+    return this.messages.roomGone;
   }
 
   get roomListToggle(): Observable<void> {
@@ -479,26 +435,6 @@ export class MatrixChatService {
   }
 
   /**
-   * Fetch a Matrix media URL with auth and return a blob URL (delegates to
-   * MatrixMediaService, which caches and LRU-bounds the blob URLs — P-1).
-   * @param mimeTypeHint - expected MIME type; used to fix generic content-types returned by some homeservers
-   */
-  private resolveMediaUrl(mxcUrl: string | undefined, mimeTypeHint?: string): Promise<string> {
-    return this.media.resolveMediaUrl(mxcUrl, mimeTypeHint);
-  }
-
-  /**
-   * The MIME hint to pass to resolveMediaUrl for a message's attachment: the event's own
-   * `info.mimetype`, or — when the sending device left it empty — the type implied by the
-   * filename. Without the fallback the blob keeps whatever the homeserver served (often
-   * `application/octet-stream`); `<img>` sniffs raster formats anyway, but an SVG would
-   * silently refuse to render.
-   */
-  private mediaMimeHint(msg: MatrixMessage): string | undefined {
-    return (msg.content?.info?.mimetype as string | undefined) || imageMimeTypeForName(msg.body ?? '');
-  }
-
-  /**
    * Disconnect and cleanup the Matrix client.
    *
    * @param clearCache - only true on logout. clearStores() runs indexedDB.deleteDatabase('okr-matrix'),
@@ -508,24 +444,22 @@ export class MatrixChatService {
    *   cache is still valid, so keep it.
    */
   async disconnect(clearCache = false): Promise<void> {
-    this.roomsUpdateSub?.unsubscribe();
-    this.roomsUpdateSub = null;
+    this.roomList.stopUpdateTrigger();
     document.removeEventListener('visibilitychange', this.kickSync);
     window.removeEventListener('online', this.kickSync);
     this.media.setClient(null);  // revokes + clears the blob-URL cache
     this.calls.setClient(null);  // resets call state
-    this.typingByRoom.clear();
-    this.receipts$.clear();
-    this.loadingRooms.clear();
-    this.pendingEdits.clear();
+    this.roomList.clearTyping();
+    this.messages.clearTransient();
     if (this.client) {
       this.client.stopClient();
       if (clearCache) await this.client.clearStores();
       this.client = null;
       this.initPromise = null; // ARCH-1: allow a fresh ensureInitialized() after reconnect
       this.isInitialized$.next(false);
-      this.rooms$.next([]);
-      this.roomsLoaded$.next(false);
+      this.dm.setClient(null);
+      this.messages.setClient(null);
+      this.roomList.reset();       // detaches the client and emits an empty list
       this.syncState$.next('STOPPED');
       debugMessage('MatrixChatService: Client disconnected', this.appStore.currentUser());
     }
@@ -536,6 +470,13 @@ export class MatrixChatService {
    */
   private setupEventHandlers(): void {
     if (!this.client) return;
+
+    // Hand the live client to the read-side delegates before any event can fire.
+    // Re-runs on the in-memory-store fallback path in initialize(), which is why this is
+    // idempotent rather than a one-off in the constructor.
+    this.dm.setClient(this.client);
+    this.roomList.setClient(this.client);
+    this.messages.setClient(this.client);
 
     // Nudge the sync loop when the tab becomes visible again or the network returns.
     // A desktop tab that survived sleep/hibernate or a network drop keeps a dead long-poll
@@ -551,8 +492,7 @@ export class MatrixChatService {
     window.addEventListener('online', this.kickSync);
 
     // Debounce room list rebuilds so rapid-fire Timeline/RoomState events collapse into one update
-    this.roomsUpdateSub?.unsubscribe();
-    this.roomsUpdateSub = this.roomsUpdateTrigger$.pipe(debounceTime(300)).subscribe(() => this.updateRoomsList());
+    this.roomList.startUpdateTrigger();
 
     // Sync state changes
     this.client.on(ClientEvent.Sync, (state, _prevState, data) => {
@@ -567,13 +507,10 @@ export class MatrixChatService {
       
       if (state === 'PREPARED') {
         debugMessage('MatrixChatService: Initial sync complete, updating rooms list', this.appStore.currentUser());
-        this.repairDmRoomsAccountData().then(async () => {
-          await this.updateRoomsList();
-          this.roomsLoaded$.next(true);
-          for (const [roomId] of this.receipts$) {
-            const room = this.client?.getRoom(roomId);
-            if (room) this.buildAndEmitReceipts(room);
-          }
+        this.dm.repairDmRoomsAccountData().then(async () => {
+          await this.roomList.updateRoomsList();
+          this.roomList.markRoomsLoaded();
+          this.messages.refreshAllReceipts();
         });
       } else if (state === 'ERROR') {
         const matrixError = data?.error as MatrixError | undefined;
@@ -607,30 +544,7 @@ export class MatrixChatService {
     this.client.on(RoomEvent.Timeline, (event: MatrixEvent, room: Room | undefined, toStartOfTimeline: boolean | undefined) => {
       if (toStartOfTimeline) return;
       if (!room) return;
-
-      const eventType = event.getType();
-
-      if (eventType === EventType.RoomMessage) {
-        const relatesTo = event.getContent()?.['m.relates_to'];
-        if (relatesTo?.rel_type === RelationType.Replace && relatesTo?.event_id) {
-          this.applyMessageEdit(relatesTo.event_id as string, event, room);
-        } else {
-          this.handleNewMessage(event, room);
-        }
-      } else if (eventType === 'm.reaction') {
-        const targetId = event.getContent()?.['m.relates_to']?.event_id as string | undefined;
-        if (targetId) this.refreshMessageReactions(targetId, room);
-      } else if (eventType === 'org.matrix.msc3381.poll.start') {
-        this.handleNewMessage(event, room);
-        const pollId = event.getId();
-        if (pollId) this.refreshPollTally(pollId, room);
-      } else if (eventType === 'org.matrix.msc3381.poll.response') {
-        const pollEventId = event.getContent()?.['m.relates_to']?.event_id as string | undefined;
-        if (pollEventId) this.refreshPollTally(pollEventId, room);
-      } else if (eventType === 'org.matrix.msc3381.poll.end') {
-        const pollEventId = event.getContent()?.['m.relates_to']?.event_id as string | undefined;
-        if (pollEventId) this.markPollEnded(pollEventId, room);
-      }
+      this.messages.handleTimelineEvent(event, room);
     });
 
     // Timeline reset — rebuild the open room's message list from the FRESH live timeline.
@@ -639,69 +553,18 @@ export class MatrixChatService {
     // backgrounded/killed and resumes with an incremental sync from the persisted `since`
     // token), matrix-js-sdk calls room.resetLiveTimeline() and emits RoomEvent.TimelineReset
     // (sync.js). That discards the room's live timeline. Our message list is built once from
-    // the timeline and then only APPENDED to by handleNewMessage, so without re-reading the
-    // new timeline here the events delivered across the gap are never merged in — leaving a
-    // permanent hole spanning the offline period (bug: messages visible on desktop but not on
-    // the phone). Only rebuild rooms the user has actually opened (those with a message subject).
+    // the timeline and then only APPENDED to, so without re-reading the new timeline here the
+    // events delivered across the gap are never merged in — leaving a permanent hole spanning
+    // the offline period (bug: messages visible on desktop but not on the phone).
     this.client.on(RoomEvent.TimelineReset, (room: Room | undefined) => {
       if (!room) return;
-      if (!this.messages$.has(room.roomId)) return;
-      debugMessage(`MatrixChatService: Timeline reset for room ${room.roomId} — rebuilding message list from fresh timeline`, this.appStore.currentUser());
-      this.loadMessagesForRoom(room.roomId);
+      this.messages.handleTimelineReset(room);
     });
 
     // When a sent message is confirmed by the server, replace the local-echo entry
     // (temp ID like ~!room:id.$local) with the confirmed event (real server ID).
     this.client.on(RoomEvent.LocalEchoUpdated, (event: MatrixEvent, room: Room, oldEventId?: string) => {
-      const et = event.getType();
-      if (et !== EventType.RoomMessage && et !== 'org.matrix.msc3381.poll.start') return;
-
-      // An m.replace edit is not a message of its own — it patches the original in place.
-      // Without this branch the local echo of an edit has no temp entry to replace and is
-      // appended as a second bubble carrying the `* <text>` fallback body, so an edited
-      // message appears twice until the room is reloaded.
-      const echoRelatesTo = event.getContent()?.['m.relates_to'];
-      if (echoRelatesTo?.rel_type === RelationType.Replace && echoRelatesTo?.event_id) {
-        this.applyMessageEdit(echoRelatesTo.event_id as string, event, room);
-        return;
-      }
-
-      const subject = this.messages$.get(room.roomId);
-      if (!subject) return;
-      const msgs = subject.value ?? [];
-      const oldIdx = oldEventId ? msgs.findIndex(m => m.eventId === oldEventId) : -1;
-      const baseMsg = this.mapEventToMessage(event, room);
-      // For poll.start: preserve tally fields from the existing entry (avoids wiping votes on echo confirmation)
-      const oldMsg = oldIdx >= 0 ? msgs[oldIdx] : undefined;
-      const newMsg = (et === 'org.matrix.msc3381.poll.start' && oldMsg)
-        ? { ...baseMsg, pollVotes: oldMsg.pollVotes, pollVoters: oldMsg.pollVoters, myVoteAnswerId: oldMsg.myVoteAnswerId, myVoteAnswerIds: oldMsg.myVoteAnswerIds, pollEnded: oldMsg.pollEnded, maxSelections: oldMsg.maxSelections }
-        : baseMsg;
-      if (oldIdx >= 0) {
-        // Replace the temp-ID entry in-place so the message doesn't jump around
-        const updated = [...msgs];
-        updated[oldIdx] = newMsg;
-        subject.next(updated);
-      } else {
-        // No temp entry found — add if not already present
-        if (!msgs.some(m => m.eventId === newMsg.eventId)) {
-          subject.next([...msgs, newMsg]);
-        }
-      }
-
-      // Async-resolve media URL for the confirmed event (local echo has no mediaUrl yet)
-      const mxcUrl = newMsg.content?.url ?? newMsg.content?.file?.url;
-      if ((newMsg.type === 'm.image' || newMsg.type === 'm.file' || newMsg.type === 'm.audio') && mxcUrl) {
-        this.resolveMediaUrl(mxcUrl, this.mediaMimeHint(newMsg)).then(url => {
-          if (!url) return;
-          const current = subject.value ?? [];
-          const idx = current.findIndex(m => m.eventId === newMsg.eventId);
-          if (idx >= 0) {
-            const patched = [...current];
-            patched[idx] = { ...patched[idx], mediaUrl: url };
-            subject.next(patched);
-          }
-        });
-      }
+      this.messages.handleLocalEcho(event, room, oldEventId);
     });
 
     // Typing notifications
@@ -709,61 +572,31 @@ export class MatrixChatService {
       const room = this.client?.getRoom(member.roomId);
       if (room) {
         const typingMembers = room.getMembers().filter((m: any) => m.typing);
-        const typingUsers = typingMembers.map((u: any) => u.userId);
-        this.typingByRoom.set(room.roomId, typingUsers);
-        this.typing$.next({ roomId: room.roomId, users: typingUsers });
+        this.roomList.noteTyping(room.roomId, typingMembers.map((u: any) => u.userId));
       }
     });
 
     // Room state updates (name, topic, avatar changes)
     this.client.on(RoomStateEvent.Events, (_event: MatrixEvent) => {
-      this.roomsUpdateTrigger$.next();
+      this.roomList.triggerUpdate();
       this.roomStateVersion$.next(this.roomStateVersion$.value + 1);
     });
 
     // Room tags — `m.favourite` decides whether a room is pinned to the top of the room list.
     // Tags live in account data, so this also fires when the user pins the room on another device.
     this.client.on(RoomEvent.Tags, () => {
-      this.roomsUpdateTrigger$.next();
+      this.roomList.triggerUpdate();
     });
 
     // Read receipts — update room list so unread counts reflect the new read position
     this.client.on(RoomEvent.Receipt, (_event: MatrixEvent, room: Room) => {
-      this.roomsUpdateTrigger$.next();
-      if (room) this.buildAndEmitReceipts(room);
+      this.roomList.triggerUpdate();
+      if (room) this.messages.refreshReceipts(room);
     });
 
     // Redactions — either mark a message as deleted, or refresh reactions if a reaction was removed
     this.client.on(RoomEvent.Redaction, (event: MatrixEvent, room: Room) => {
-      const targetId = event.getAssociatedId();
-      if (!targetId) return;
-      const subject = this.messages$.get(room.roomId);
-      if (!subject) return;
-      const msgs = subject.value ?? [];
-
-      // If the redacted event itself was a message → mark it deleted
-      const msgIdx = msgs.findIndex(m => m.eventId === targetId);
-      if (msgIdx >= 0) {
-        const updated = [...msgs];
-        updated[msgIdx] = { ...msgs[msgIdx], isRedacted: true, body: '' };
-        subject.next(updated);
-        return;
-      }
-
-      // Otherwise the redacted event might be a reaction.
-      // m.relates_to is preserved by the Matrix spec after redaction, so try to find the parent.
-      const redactedEvent = room.findEventById(targetId);
-      const parentId = redactedEvent?.getContent()?.['m.relates_to']?.event_id as string | undefined;
-      if (parentId) {
-        this.refreshMessageReactions(parentId, room);
-      } else {
-        // Fallback: refresh reactions on all messages in the room
-        const updatedMsgs = msgs.map(m => {
-          const ev = room.findEventById(m.eventId);
-          return ev ? { ...m, reactions: this.getReactionsForEvent(ev, room) } : m;
-        });
-        subject.next(updatedMsgs);
-      }
+      this.messages.handleRedaction(event, room);
     });
   }
 
@@ -782,11 +615,6 @@ export class MatrixChatService {
     const uid = this.getCurrentUserId();
     if (!uid || !this.client) return undefined;
     return this.client.getUser(uid) ?? undefined;
-  }
-
-  /** True if the Matrix user ID belongs to a hidden service/bot account (S1). */
-  private isServiceAccount(userId: string | undefined): boolean {
-    return isServiceAccountHelper(userId);
   }
 
   /**
@@ -817,848 +645,9 @@ export class MatrixChatService {
    * @returns the avatar url of the user, or undefined if not available
    */
   public getAvatarUrl(user?: User, size: number = 96): string | undefined {
-    if (!this.client) return undefined;
-    if (!user || !user.avatarUrl) return undefined;
-    return this.client!.mxcUrlToHttp(user.avatarUrl, size, size, 'crop', true) ?? undefined;
+    return mxcAvatarHttpUrl(this.client, user, size);
   }
 
-  /** Patch a single message's senderAvatar in place on the room's message subject. */
-  private patchSenderAvatar(subject: BehaviorSubject<MatrixMessage[] | null>, eventId: string, senderAvatar: string): void {
-    const msgs = subject.value ?? [];
-    const idx = msgs.findIndex(m => m.eventId === eventId);
-    if (idx < 0) return;
-    const updated = [...msgs];
-    updated[idx] = { ...updated[idx], senderAvatar };
-    subject.next(updated);
-  }
-
-  /**
-   * The tenant's own avatar for a Matrix user, or undefined when this tenant has no picture
-   * for that person.
-   *
-   * A Matrix profile is global — one identity per person across every tenant (see
-   * matrix-simple/shared.resolvePersonAvatarUrl), so its picture can only ever be right for
-   * one of them. The app's avatars are tenant-scoped (`<tenant>.person.<okey>` with the bare
-   * `person.<okey>` as shared default, see avatarDocId), so wherever the chat renders a
-   * *person* we prefer the local avatar and fall back to the Matrix profile picture. The
-   * bridge between the two is the localpart: it is the person okey, lowercased.
-   *
-   * @param userId the Matrix user id, e.g. `@kaiser:bkchat.etke.host`
-   * @param size the desired edge length in px
-   */
-  private personAvatarUrl(userId?: string | null, size = 96): string | undefined {
-    if (!userId) return undefined;
-    const key = `person.${userId.replace(/^@/, '').split(':')[0]}`;
-    return this.avatarService.getCachedStoragePath(key)
-      ? this.avatarService.getAvatarUrl(key, PersonModelName, size)
-      : undefined;
-  }
-
-  /**
-   * Get messages for a specific room.
-   * If the subject was previously created before the client was ready (empty subject,
-   * no-op load), retry loading now that the client may be initialized.
-   */
-  public getMessagesForRoom(roomId: string): Observable<MatrixMessage[] | null> {
-    const existing = this.messages$.get(roomId);
-    if (!existing) {
-      this.messages$.set(roomId, new BehaviorSubject<MatrixMessage[] | null>(null));
-      this.loadMessagesForRoom(roomId);
-    } else if (this.client && (existing.value === null || this.hasUnloadedHistory(roomId, existing.value))) {
-      // C-3: retry when the room was NEVER successfully loaded (value === null, e.g. the
-      // subject was created before the client was ready, or a prior load errored). A
-      // genuinely empty room has value === [] and must NOT re-paginate on every
-      // subscription, which the old `!value?.length` check caused.
-      //
-      // Blank-room guard: `[]` alone does NOT prove the room is empty. A room whose live timeline was
-      // discarded by a `limited` sync (iOS resume) carries state events only until the
-      // back-fill runs, and every way that back-fill can come up short — a paginate that
-      // throws, the round cap — used to cache `[]` for the rest of the app session: no
-      // spinner (that needs `null`), no retry, a permanently blank room the user cannot
-      // recover from without restarting the app. An empty list with a backwards pagination
-      // token left is one of those cases, so re-load it; a room that really is empty has
-      // paginated to its own creation event and has no token, so it still loads once.
-      this.loadMessagesForRoom(roomId);
-    }
-    return this.messages$.get(roomId)!.asObservable();
-  }
-
-  /**
-   * True when a room's cached message list is empty although the timeline still has history
-   * behind it — i.e. the emptiness comes from a back-fill that never reached a message, not
-   * from the room being empty. Used to re-load instead of trusting the cached `[]`.
-   */
-  private hasUnloadedHistory(roomId: string, cached: MatrixMessage[] | null): boolean {
-    if (cached === null || cached.length > 0) return false;
-    const timeline = this.client?.getRoom(roomId)?.getLiveTimeline();
-    return !!timeline?.getPaginationToken(EventTimeline.BACKWARDS);
-  }
-
-  public getReadReceiptsForRoom(roomId: string): Observable<Map<string, MatrixReadReceipt[]>> {
-    if (!this.receipts$.has(roomId)) {
-      this.receipts$.set(roomId, new BehaviorSubject<Map<string, MatrixReadReceipt[]>>(new Map()));
-      const room = this.client?.getRoom(roomId);
-      if (room) this.buildAndEmitReceipts(room);
-    }
-    return this.receipts$.get(roomId)!.asObservable();
-  }
-
-  private async buildAndEmitReceipts(room: Room): Promise<void> {
-    const currentUserId = this.getCurrentUserId();
-    if (!currentUserId || !this.client) return;
-    const subject = this.receipts$.get(room.roomId);
-    if (!subject) return;
-
-    const result = new Map<string, MatrixReadReceipt[]>();
-    for (const member of room.getMembers()) {
-      if (member.userId === currentUserId) continue;
-      if (this.isServiceAccount(member.userId)) continue; // hide service/bot accounts (S1)
-      if (member.membership !== 'join') continue;
-      const receipt = room.getReadReceiptForUserId(member.userId);
-      if (!receipt) continue;
-      const mxcUrl = (member as any)?.getMxcAvatarUrl?.() as string | undefined;
-      // resolveMediaUrl fetches with Authorization header and returns a blob URL,
-      // avoiding M_NOT_FOUND from servers with authenticated media enabled.
-      const avatarUrl = this.personAvatarUrl(member.userId)
-        ?? (mxcUrl ? (await this.resolveMediaUrl(mxcUrl) || undefined) : undefined);
-      const entry: MatrixReadReceipt = {
-        userId: member.userId,
-        displayName: member.rawDisplayName || member.userId.split(':')[0].substring(1),
-        avatarUrl,
-        ts: receipt.data.ts,
-      };
-      const list = result.get(receipt.eventId) ?? [];
-      list.push(entry);
-      result.set(receipt.eventId, list);
-    }
-    subject.next(result);
-  }
-
-  /** Back-pagination failures already reported this session — see reportPaginationFailure. */
-  private readonly reportedPaginationFailures = new Set<string>();
-  // Rooms evicted from the local store because the server no longer knows them (see
-  // evictGoneRoom). Emits the roomId so the chat view can re-resolve a deep link that landed
-  // on the dead room.
-  private readonly roomGone$ = new Subject<string>();
-
-  /** How many rendered messages an opened room should carry before back-filling stops. */
-  private static readonly MIN_VISIBLE_MESSAGES = 20;
-  /** Round cap, so a room made almost entirely of state events cannot spin on /messages. */
-  private static readonly MAX_INITIAL_PAGINATIONS = 5;
-
-  /** Number of timeline events that actually render as a message bubble. */
-  private countRenderableEvents(events: MatrixEvent[]): number {
-    return events.filter(e => isRenderableChatEvent(e.getType(), e.getContent()?.['m.relates_to'])).length;
-  }
-
-  /**
-   * Load messages for a room from the timeline
-   */
-  private async loadMessagesForRoom(roomId: string): Promise<void> {
-    if (!this.client) return;
-    // C-3: guard against overlapping loads for the same room (a second subscription
-    // arriving while the first paginate/await is in flight would otherwise double-load).
-    if (this.loadingRooms.has(roomId)) return;
-
-    const room = this.client.getRoom(roomId);
-    if (!room) {
-      console.warn('MatrixChatService: Room not found:', roomId);
-      return;
-    }
-
-    this.loadingRooms.add(roomId);
-    // Blank-room guard: a back-fill that died on a failed /messages request must not be emitted as an
-    // empty room — see emitMessagesFromTimeline's `keepNullWhenEmpty`.
-    let paginationFailed = false;
-    try {
-      const timeline = room.getLiveTimeline();
-      const events = timeline.getEvents();
-
-      debugMessage(`MatrixChatService: Loading messages for room ${roomId}, found ${events.length} events in timeline`, this.appStore.currentUser());
-
-      // Back-fill until the room shows a usable amount of history. Two things are load-bearing
-      // here and both used to be wrong:
-      //  * count RENDERABLE events, not raw timeline events — group rooms are dominated by
-      //    m.room.member (scs Vorstand: 59 member events vs 23 messages), so the old
-      //    `events.length < 20` check happily stopped with two visible bubbles;
-      //  * loop — one paginate() of 50 is not enough when the window is mostly state events.
-      // This runs on room open AND on RoomEvent.TimelineReset (a limited /sync after the app
-      // resumes discards the live timeline), which is where the "I only see yesterday" reports
-      // come from. Scroll-up pagination stays the path for going further back.
-      for (let round = 0; round < MatrixChatService.MAX_INITIAL_PAGINATIONS; round++) {
-        const visible = this.countRenderableEvents(timeline.getEvents());
-        if (visible >= MatrixChatService.MIN_VISIBLE_MESSAGES) break;
-        if (!timeline.getPaginationToken(EventTimeline.BACKWARDS)) break; // start of room reached
-        debugMessage(`MatrixChatService: Only ${visible} renderable events, paginating back (round ${round + 1})`, this.appStore.currentUser());
-        try {
-          const hasMore = await this.client.paginateEventTimeline(timeline, { backwards: true, limit: 50 });
-          debugMessage(`MatrixChatService: After pagination, timeline has ${timeline.getEvents().length} events`, this.appStore.currentUser());
-          if (!hasMore) break;
-        } catch (paginateError) {
-          console.warn('MatrixChatService: Failed to paginate timeline:', paginateError);
-          if (isRoomGoneError(paginateError)) {
-            // Not a transient failure: the room only exists in the local store. Evict it
-            // instead of caching a blank room the user can never leave (SCS-AD).
-            await this.evictGoneRoom(roomId, paginateError);
-            return;
-          }
-          paginationFailed = true;
-          this.reportPaginationFailure(paginateError);
-          break;
-        }
-      }
-
-      await this.emitMessagesFromTimeline(room, paginationFailed);
-    } catch (error) {
-      console.error('MatrixChatService: Error loading messages for room:', error);
-    } finally {
-      this.loadingRooms.delete(roomId);
-    }
-  }
-
-  /**
-   * Drop a room the server no longer knows from the local SDK store.
-   *
-   * A room deleted + purged via the Synapse admin API (e.g. a group room that was re-created)
-   * sends no leave event a client that was offline at the time can ever sync — the purge
-   * removes the event itself. The IndexedDB store therefore keeps the room as "joined"
-   * forever: it shows in the room list, still carries the group's `#group_<key>` alias in its
-   * topic, and the group view's local alias match lands on it before ever asking the Cloud
-   * Function — which would have returned the live room. Every /messages request against it is
-   * a 403 "not in room", i.e. a permanently blank chat (SCS-AD).
-   *
-   * Eviction is per app session: the SDK's persisted sync accumulator replays the room on the
-   * next start (only a synced leave event removes it there), so the first open after a restart
-   * hits this path once more and heals again. `forget` is attempted so the server marks it
-   * forgotten where it still can; it is best-effort because a purged room has nothing left
-   * to forget.
-   */
-  private async evictGoneRoom(roomId: string, error: unknown): Promise<void> {
-    const errcode = (error as MatrixError | null)?.errcode ?? 'unknown';
-    console.warn(`MatrixChatService: Room ${roomId} is gone on the server (${errcode}) — evicting it from the local store`);
-    const reason = `stale-room:${errcode}`;
-    if (!this.reportedPaginationFailures.has(reason)) {
-      this.reportedPaginationFailures.add(reason);
-      captureMessage(`MatrixChatService: evicted a room the server no longer knows (${errcode})`, {
-        level: 'info',
-        tags: { chatTimeline: 'stale-room' },
-      });
-    }
-    // Drop the message subject first so a re-subscription does not re-load the dead room.
-    this.messages$.get(roomId)?.complete();
-    this.messages$.delete(roomId);
-    this.client?.store.removeRoom(roomId);
-    // Tell the view BEFORE the room list re-emits: it clears its "deep link already applied"
-    // guard, and the following rooms$ emission re-runs the resolution against live rooms.
-    this.roomGone$.next(roomId);
-    await this.updateRoomsList();
-    try {
-      await this.client?.forget(roomId);
-    } catch (forgetError) {
-      debugMessage(`MatrixChatService: forget(${roomId}) after eviction failed (expected for a purged room): ${(forgetError as Error)?.message}`, this.appStore.currentUser());
-    }
-  }
-
-  /**
-   * Report a back-pagination that failed while opening a room.
-   *
-   * This path has no user-facing signal of its own: the room simply shows no messages, and
-   * the `console.warn` next to the call dies with the tab (no app installs Sentry's
-   * captureConsoleIntegration). Sentry is therefore the only place such a failure can be
-   * observed — which is why the blank-DM-on-iOS report arrived with no ticket behind it.
-   *
-   * Reported once per distinct reason per session, like MatrixMediaService does: one flaky
-   * network on a resumed iOS tab hits every room the user opens, and a hundred identical
-   * issues would bury the one-off failures this exists to surface. No room id is attached —
-   * it identifies a specific private conversation.
-   */
-  private reportPaginationFailure(error: unknown): void {
-    const message = (error as Error | null)?.message ?? 'unknown';
-    const errcode = (error as MatrixError | null)?.errcode;
-    const reason = errcode ? `${errcode}: ${message}` : message;
-    if (this.reportedPaginationFailures.has(reason)) return;
-    this.reportedPaginationFailures.add(reason);
-    captureMessage(`MatrixChatService: timeline back-pagination failed: ${reason}`, {
-      level: 'warning',
-      tags: { chatTimeline: 'paginate-failed' },
-    });
-  }
-
-  /**
-   * Load older messages for a room by paginating the live timeline backwards (C-5,
-   * scroll-up history). Re-emits the rebuilt message list so all subscribers update.
-   * @returns true if more history may be available, false once the start of the room
-   * is reached (no backwards pagination token left).
-   */
-  public async paginateRoomBackwards(roomId: string): Promise<boolean> {
-    if (!this.client) return false;
-    const room = this.client.getRoom(roomId);
-    if (!room) return false;
-    const timeline = room.getLiveTimeline();
-    if (!timeline.getPaginationToken(EventTimeline.BACKWARDS)) return false;
-    // C-3 guard: a load for this room is already in flight — report "maybe more"
-    // so the caller can simply retry on the next scroll.
-    if (this.loadingRooms.has(roomId)) return true;
-
-    this.loadingRooms.add(roomId);
-    try {
-      const hasMore = await this.client.paginateEventTimeline(timeline, { backwards: true, limit: 50 });
-      await this.emitMessagesFromTimeline(room);
-      return hasMore;
-    } catch (error) {
-      console.warn('MatrixChatService: Failed to paginate timeline backwards:', error);
-      return true; // transient failure — leave the door open for a retry
-    } finally {
-      this.loadingRooms.delete(roomId);
-    }
-  }
-
-  /**
-   * Rebuild the message list from the room's live timeline (resolving media and
-   * avatars) and emit it on the room's messages subject.
-   */
-  private async emitMessagesFromTimeline(room: Room, keepNullWhenEmpty = false): Promise<void> {
-    const roomId = room.roomId;
-    const timeline = room.getLiveTimeline();
-    // Get all events from timeline and convert to messages, resolving media URLs
-    const allEvents = timeline.getEvents();
-    const messages = await Promise.all(
-      allEvents
-        .filter(e => isRenderableChatEvent(e.getType(), e.getContent()?.['m.relates_to']))
-        .map(async e => {
-          const msg = this.mapEventToMessage(e, room);
-          const mxcUrl = msg.content.url ?? msg.content.file?.url;
-          const senderMember = room.getMember(e.getSender()!);
-          const senderAvatarMxc = (senderMember as any)?.getMxcAvatarUrl?.() as string | undefined;
-          const senderAvatar = this.personAvatarUrl(e.getSender())
-            ?? (senderAvatarMxc ? await this.resolveMediaUrl(senderAvatarMxc) : undefined);
-
-          // Attach poll tally and ended flag for poll.start events
-          if (e.getType() === 'org.matrix.msc3381.poll.start') {
-            const eventId = e.getId()!;
-            const { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds } = this.computePollTally(eventId, room);
-            await this.resolveVoterAvatars(pollVoters);
-            const pollEnded = this.isPollEnded(eventId, room);
-            return { ...msg, senderAvatar: senderAvatar || undefined, pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds, pollEnded };
-          }
-
-          if ((msg.type === 'm.image' || msg.type === 'm.file' || msg.type === 'm.audio') && mxcUrl) {
-            return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.resolveMediaUrl(mxcUrl, this.mediaMimeHint(msg)) };
-          }
-          return { ...msg, senderAvatar: senderAvatar || undefined };
-        })
-    );
-
-    debugMessage(`MatrixChatService: Loaded ${messages.length} messages for room ${roomId}`, this.appStore.currentUser());
-
-    // Blank-room guard: the back-fill failed AND produced nothing — that is a failed load, not an empty
-    // room. Emitting `[]` would cache the failure for the rest of the session (the retry in
-    // getMessagesForRoom and the spinner in MatrixChatStore both key off `null`), leaving a
-    // room with months of history permanently blank and without any sign that something went
-    // wrong. Leave the subject untouched instead: the spinner stays up and the next open of
-    // the room loads again.
-    if (keepNullWhenEmpty && messages.length === 0) {
-      debugMessage(`MatrixChatService: back-fill for room ${roomId} failed and yielded no messages — keeping the list unresolved for a retry`, this.appStore.currentUser());
-      return;
-    }
-
-    this.messages$.get(roomId)?.next(messages);
-  }
-
-  /**
-   * Handle new incoming messages
-   */
-  private handleNewMessage(event: MatrixEvent, room: Room): void {
-    debugData(`MatrixChatService: New message in room ${room.roomId}`, {
-      eventId: event.getId(),
-      sender: event.getSender(),
-      type: event.getType(),
-      content: event.getContent()
-    }, this.appStore.currentUser());
-    
-    const message = this.mapEventToMessage(event, room);
-    const subject = this.messages$.get(room.roomId);
-
-    if (subject) {
-      // Deduplicate: the SDK can fire RoomEvent.Timeline more than once for the same event
-      // (e.g. soft-failed → retried, or timeline rebuild). Replace if already present.
-      const currentMsgs = subject.value ?? [];
-      const existing = currentMsgs.findIndex(m => m.eventId === message.eventId);
-      if (existing >= 0) {
-        const updated = [...currentMsgs];
-        updated[existing] = message;
-        subject.next(updated);
-      } else {
-        subject.next([...currentMsgs, message]);
-      }
-      // Async-resolve media URL and patch the message once fetched
-      const mxcUrl = message.content.url ?? message.content.file?.url;
-      if ((message.type === 'm.image' || message.type === 'm.file' || message.type === 'm.audio') && mxcUrl) {
-        this.resolveMediaUrl(mxcUrl, this.mediaMimeHint(message)).then(url => {
-          if (!url) return;
-          const msgs = subject.value ?? [];
-          const idx = msgs.findIndex(m => m.eventId === message.eventId);
-          if (idx >= 0) {
-            const updated = [...msgs];
-            updated[idx] = { ...updated[idx], mediaUrl: url };
-            subject.next(updated);
-          }
-        });
-      }
-      // Sender avatar: the tenant's own picture wins, otherwise async-resolve the Matrix
-      // profile picture via authenticated fetch.
-      const senderMember = room.getMember(event.getSender()!);
-      const senderAvatarMxc = (senderMember as any)?.getMxcAvatarUrl?.() as string | undefined;
-      const localSenderAvatar = this.personAvatarUrl(event.getSender());
-      if (localSenderAvatar) {
-        this.patchSenderAvatar(subject, message.eventId, localSenderAvatar);
-      } else if (senderAvatarMxc) {
-        this.resolveMediaUrl(senderAvatarMxc).then(url => {
-          if (url) this.patchSenderAvatar(subject, message.eventId, url);
-        });
-      }
-
-      // C-4: replay an edit that arrived before this original message was in the list.
-      const bufferedEdit = this.pendingEdits.get(message.eventId);
-      if (bufferedEdit) {
-        this.pendingEdits.delete(message.eventId);
-        this.applyMessageEdit(message.eventId, bufferedEdit, room);
-      }
-    } else {
-      // S4: a not-yet-opened room has no message subject; this is normal operation,
-      // not an error. The room-list preview is handled separately via roomsUpdateTrigger$.
-      debugMessage(`MatrixChatService: no open message list for room ${room.roomId} — preview only`, this.appStore.currentUser());
-    }
-
-    this.roomsUpdateTrigger$.next();
-  }
-
-  /**
-   * Convert a Matrix event to a MatrixMessage
-   */
-  private mapEventToMessage(event: MatrixEvent, room: Room): MatrixMessage {
-    const sender = room.getMember(event.getSender()!);
-    const content = event.getContent();
-    const relatesTo = content['m.relates_to'];
-    const eventType = event.getType();
-
-    let pollAnswers: Array<{ id: string; body: string }> | undefined;
-    let maxSelections: number | undefined;
-    if (eventType === 'org.matrix.msc3381.poll.start') {
-      const rawAnswers = content['org.matrix.msc3381.poll']?.answers;
-      if (Array.isArray(rawAnswers)) {
-        pollAnswers = rawAnswers.map((a: any) => ({
-          id: String(a.id),
-          body: a['org.matrix.msc3381.poll.answer']?.body ?? String(a.id)
-        }));
-      }
-      maxSelections = content['org.matrix.msc3381.poll']?.max_selections ?? 1;
-    }
-
-    return {
-      eventId: event.getId()!,
-      roomId: room.roomId,
-      sender: event.getSender()!,
-      senderName: sender?.name || event.getSender()!,
-      senderAvatar: undefined,
-      body: content.body || '',
-      timestamp: event.getTs(),
-      type: content.msgtype ?? eventType,
-      content: content,
-      relatesTo: (relatesTo?.event_id && relatesTo?.rel_type) ? {
-        eventId: relatesTo.event_id as string,
-        relationType: relatesTo.rel_type as string
-      } : undefined,
-      reactions: this.getReactionsForEvent(event, room),
-      isRedacted: event.isRedacted(),
-      isEdited: !!relatesTo && relatesTo.rel_type === RelationType.Replace,
-      pollAnswers,
-      maxSelections,
-    };
-  }
-
-  /** Apply an incoming m.replace edit to the existing message in the BehaviorSubject. */
-  private applyMessageEdit(originalEventId: string, editEvent: MatrixEvent, room: Room): void {
-    const subject = this.messages$.get(room.roomId);
-    if (!subject) return;
-    const msgs = subject.value ?? [];
-    const idx = msgs.findIndex(m => m.eventId === originalEventId);
-    if (idx < 0) {
-      // C-4: original not in the list yet — buffer the edit (latest wins) and let
-      // handleNewMessage replay it once the original arrives, instead of dropping it.
-      this.pendingEdits.set(originalEventId, editEvent);
-      return;
-    }
-    const newContent = editEvent.getContent()?.['m.new_content'];
-    if (!newContent) return;
-    const updated = [...msgs];
-    updated[idx] = {
-      ...msgs[idx],
-      body: newContent.body ?? msgs[idx].body,
-      content: { ...msgs[idx].content, ...newContent },
-      isEdited: true,
-    };
-    subject.next(updated);
-  }
-
-  /** Read all m.reaction annotation events for a message and group them by emoji key. */
-  private getReactionsForEvent(event: MatrixEvent, room: Room): Map<string, Set<string>> | undefined {
-    const eventId = event.getId();
-    if (!eventId) return undefined;
-    const relations = room.relations.getChildEventsForEvent(
-      eventId,
-      RelationType.Annotation,
-      'm.reaction'
-    );
-    if (!relations) return undefined;
-    const reactions = new Map<string, Set<string>>();
-    for (const reactionEvent of relations.getRelations()) {
-      const key = reactionEvent.getContent()?.['m.relates_to']?.key as string | undefined;
-      const sender = reactionEvent.getSender();
-      if (key && sender) {
-        if (!reactions.has(key)) reactions.set(key, new Set());
-        reactions.get(key)!.add(sender);
-      }
-    }
-    return reactions.size > 0 ? reactions : undefined;
-  }
-
-  /**
-   * Tally all poll.response events referencing pollEventId.
-   * Deduplicates by sender — only the highest getTs() per sender counts.
-   * Returns vote counts per answerId and the current user's voted answerId.
-   *
-   * C-6: uses the SDK relations API (like reactions) rather than scanning only the live
-   * timeline, so votes cast outside the currently-loaded window are still counted.
-   */
-  private computePollTally(
-    pollEventId: string,
-    room: Room
-  ): {
-    pollVotes: Record<string, number>;
-    pollVoters: Record<string, MatrixReadReceipt[]>;
-    myVoteAnswerId: string | undefined;
-    myVoteAnswerIds: string[];
-  } {
-    const currentUserId = this.getCurrentUserId();
-    const latestByUser = new Map<string, { answerIds: string[]; ts: number }>();
-
-    const responses = room.relations.getChildEventsForEvent(
-      pollEventId,
-      RelationType.Reference,
-      'org.matrix.msc3381.poll.response'
-    )?.getRelations() ?? [];
-    for (const event of responses) {
-      const sender = event.getSender();
-      if (!sender) continue;
-      const answerIds: string[] = event.getContent()?.['org.matrix.msc3381.poll.response']?.answers ?? [];
-      if (!answerIds.length) continue;
-      const ts = event.getTs();
-      const prev = latestByUser.get(sender);
-      if (!prev || ts > prev.ts) {
-        latestByUser.set(sender, { answerIds, ts });
-      }
-    }
-
-    const pollVotes: Record<string, number> = {};
-    const pollVoters: Record<string, MatrixReadReceipt[]> = {};
-    let myVoteAnswerId: string | undefined;
-    let myVoteAnswerIds: string[] = [];
-
-    for (const [sender, { answerIds, ts }] of latestByUser) {
-      const member = room.getMember(sender);
-      const displayName = member?.name ?? sender;
-      const mxcAvatarUrl: string | undefined = (member as any)?.getMxcAvatarUrl?.() || undefined;
-      // A local avatar is already an https url — resolveVoterAvatars only touches mxc:// ones.
-      const avatarUrl = this.personAvatarUrl(sender) ?? mxcAvatarUrl;
-      const voter: MatrixReadReceipt = { userId: sender, displayName, avatarUrl, ts };
-      for (const answerId of answerIds) {
-        pollVotes[answerId] = (pollVotes[answerId] ?? 0) + 1;
-        if (!pollVoters[answerId]) pollVoters[answerId] = [];
-        pollVoters[answerId].push(voter);
-      }
-      if (sender === currentUserId) {
-        myVoteAnswerIds = answerIds;
-        myVoteAnswerId = answerIds[0];
-      }
-    }
-    return { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds };
-  }
-
-  /**
-   * Returns true if a poll.end event referencing pollEventId exists.
-   * C-6: uses the relations API so an end event outside the loaded window is still seen.
-   */
-  private isPollEnded(pollEventId: string, room: Room): boolean {
-    const ends = room.relations.getChildEventsForEvent(
-      pollEventId,
-      RelationType.Reference,
-      'org.matrix.msc3381.poll.end'
-    )?.getRelations() ?? [];
-    return ends.length > 0;
-  }
-
-  /** Re-map one message in a room's BehaviorSubject after its reactions changed. */
-  private refreshMessageReactions(targetEventId: string, room: Room): void {
-    const subject = this.messages$.get(room.roomId);
-    if (!subject) return;
-    const msgs = subject.value ?? [];
-    const idx = msgs.findIndex(m => m.eventId === targetEventId);
-    if (idx < 0) return;
-    const targetEvent = room.findEventById(targetEventId);
-    if (!targetEvent) return;
-    const updated = [...msgs];
-    updated[idx] = { ...msgs[idx], reactions: this.getReactionsForEvent(targetEvent, room) };
-    subject.next(updated);
-  }
-
-  /** Resolve all mxc:// avatarUrls in pollVoters to authenticated blob URLs in-place. */
-  private async resolveVoterAvatars(pollVoters: Record<string, MatrixReadReceipt[]>): Promise<void> {
-    const seen = new Set<string>();
-    const resolveMap = new Map<string, Promise<string>>();
-    for (const voters of Object.values(pollVoters)) {
-      for (const voter of voters) {
-        if (voter.avatarUrl && voter.avatarUrl.startsWith('mxc://') && !seen.has(voter.avatarUrl)) {
-          seen.add(voter.avatarUrl);
-          resolveMap.set(voter.avatarUrl, this.resolveMediaUrl(voter.avatarUrl));
-        }
-      }
-    }
-    await Promise.all(resolveMap.values());
-    for (const voters of Object.values(pollVoters)) {
-      for (const voter of voters) {
-        if (voter.avatarUrl && resolveMap.has(voter.avatarUrl)) {
-          voter.avatarUrl = await resolveMap.get(voter.avatarUrl) || undefined;
-        }
-      }
-    }
-  }
-
-  /** Re-compute poll tally and update the poll message in the BehaviorSubject. */
-  private async refreshPollTally(pollEventId: string, room: Room): Promise<void> {
-    const subject = this.messages$.get(room.roomId);
-    if (!subject) return;
-    const msgs = subject.value ?? [];
-    const idx = msgs.findIndex(m => m.eventId === pollEventId);
-    if (idx < 0) return;
-    const { pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds } = this.computePollTally(pollEventId, room);
-    await this.resolveVoterAvatars(pollVoters);
-    const updated = [...msgs];
-    updated[idx] = { ...msgs[idx], pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds };
-    subject.next(updated);
-  }
-
-  /** Mark a poll message as ended in the BehaviorSubject. */
-  private markPollEnded(pollEventId: string, room: Room): void {
-    const subject = this.messages$.get(room.roomId);
-    if (!subject) return;
-    const msgs = subject.value ?? [];
-    const idx = msgs.findIndex(m => m.eventId === pollEventId);
-    if (idx < 0) return;
-    const updated = [...msgs];
-    updated[idx] = { ...msgs[idx], pollEnded: true };
-    subject.next(updated);
-  }
-
-/**
- * Update the rooms list observable with current room data.
- * Called after initial sync (PREPARED) and on relevant room events.
- *
- * C-2: serialized — a single build runs at a time. Triggers arriving mid-build coalesce
- * into exactly one follow-up build, so emits are always ordered and reflect the latest state.
- */
-private async updateRoomsList(): Promise<void> {
-  if (this.roomsListInFlight) {
-    this.roomsListPending = true;
-    return;
-  }
-  this.roomsListInFlight = true;
-  try {
-    do {
-      this.roomsListPending = false;
-      await this.buildAndEmitRoomsList();
-    } while (this.roomsListPending);
-  } finally {
-    this.roomsListInFlight = false;
-  }
-}
-
-/** Build the room-list snapshot and emit it. Always invoked via the serialized updateRoomsList(). */
-private async buildAndEmitRoomsList(): Promise<void> {
-  if (!this.client) return;
-
-  const rooms = this.client.getRooms();
-  debugMessage(`MatrixChatService: Updating rooms list - ${rooms.length} rooms found`, this.appStore.currentUser());
-
-  const matrixRooms: MatrixRoom[] = rooms
-    .filter(room => {
-      // Skip rooms the user has left or that are not visible
-      const myMembership = room.getMyMembership();
-      return myMembership === 'join' || myMembership === 'invite';
-    })
-    .map(room => {
-      // Get last message for preview
-      const timeline = room.getLiveTimeline();
-      const events = timeline.getEvents();
-      let lastMessage: MatrixMessage | undefined;
-
-      // Find the most recent m.room.message event
-      for (let i = events.length - 1; i >= 0; i--) {
-        const event = events[i];
-        if (event.getType() === EventType.RoomMessage && !event.isRedacted()) {
-          const content = event.getContent();
-          const senderId = event.getSender();
-          const sender = senderId ? this.client!.getUser(senderId) ?? undefined : undefined;
-          const avatarUrl = this.personAvatarUrl(senderId, 32) ?? this.getAvatarUrl(sender, 32);
-
-          lastMessage = {
-            eventId: event.getId()!,
-            roomId: room.roomId,
-            sender: senderId || '',
-            senderName: sender?.displayName || senderId?.split(':')[0].substring(1) || 'Unknown',
-            senderAvatar: avatarUrl,
-            body: content.body || '',
-            timestamp: event.getTs(),
-            type: content.msgtype || 'm.text',
-            content: content,
-            relatesTo: (content['m.relates_to']?.event_id && content['m.relates_to']?.rel_type) ? {
-              eventId: content['m.relates_to'].event_id,
-              relationType: content['m.relates_to'].rel_type
-            } : undefined,
-            reactions: undefined,
-            isRedacted: event.isRedacted(),
-            isEdited: !!content['m.new_content'],
-          };
-          break;
-        }
-      }
-
-      // Calculate unread count. 'total' already includes highlights — do NOT add them again.
-      const unreadCount = (room as any).getUnreadNotificationCount?.('total') || 0;
-
-      const isDirect = this.isDirectRoom(room);
-
-      // For DM rooms: use the other member's display name and avatar
-      // For group rooms: use room name/avatar with member-count fallback
-      let name: string;
-      let avatarUrl: string | undefined;
-      // The DM counterpart's Matrix user id — the tenant filter resolves the DM's tenant from
-      // it (the localpart is the person okey), so DMs need no room-state marker at all.
-      let directUserId: string | undefined;
-
-      if (isDirect) {
-        const otherMember = room.getMembers().find(m =>
-          m.userId !== this.client!.getUserId() &&
-          !this.isServiceAccount(m.userId) && // never label a DM with a service/bot account (S1)
-          (m.membership === 'join' || m.membership === 'invite')
-        );
-        if (otherMember) {
-          // rawDisplayName is null when no display name is set.
-          // otherMember.name falls back to the full "@user:server" string — skip it.
-          directUserId = otherMember.userId;
-          name = otherMember.rawDisplayName || otherMember.userId.split(':')[0].substring(1);
-          // The tenant's own picture wins; otherwise the raw mxc:// URL, resolved to a blob
-          // URL below via resolveMediaUrl (which skips anything that isn't mxc://).
-          avatarUrl = this.personAvatarUrl(otherMember.userId)
-            ?? (otherMember as any)?.getMxcAvatarUrl?.() as string | undefined;
-        } else {
-          name = room.name || 'Direct message';
-          avatarUrl = undefined;
-        }
-      } else {
-        name = room.name;
-        if (!name || name === room.roomId) {
-          const members = room.getJoinedMembers();
-          name = `Group (${members.length})`;
-        }
-        // Store raw mxc:// URL from room state; resolved to blob URL below
-        const roomState = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
-        const avatarStateEvent = roomState?.getStateEvents('m.room.avatar', '');
-        avatarUrl = (avatarStateEvent as MatrixEvent | null)?.getContent()?.url as string | undefined;
-      }
-
-      return {
-        roomId: room.roomId,
-        name,
-        avatar: avatarUrl,
-        topic: room.getCanonicalAlias() || undefined,
-        isDirect,
-        unreadCount,
-        lastMessage,
-        // P-2: the room-list entry no longer carries the full member array. It was
-        // rebuilt for every room on every debounced event (O(rooms × members)) but is
-        // not consumed by any list/preview UI — DM detection and naming above read
-        // room.getMembers() from the SDK directly. Member-detail views resolve members
-        // for the single open room on demand.
-        members: [],
-        typingUsers: this.typingByRoom.get(room.roomId) ?? [],
-        tenants: this.getRoomTenants(room),
-        directUserId,
-        isFavourite: this.isFavouriteRoom(room),
-        stateLoaded: this.isRoomStateLoaded(room),
-      };
-    })
-    .sort((a, b) => {
-      // Pinned rooms first — a room the user pinned stays at the top no matter where the last
-      // message arrived. Within each group the ordering below is unchanged.
-      if (!!a.isFavourite !== !!b.isFavourite) return a.isFavourite ? -1 : 1;
-      // Sort by last message timestamp (most recent first), fallback to room name
-      const timeA = a.lastMessage?.timestamp || 0;
-      const timeB = b.lastMessage?.timestamp || 0;
-      if (timeA !== timeB) return timeB - timeA;
-      return a.name.localeCompare(b.name);
-    });
-
-  // Resolve all room avatar mxc:// URLs to authenticated blob URLs in parallel
-  await Promise.all(matrixRooms.map(async r => {
-    if (r.avatar?.startsWith('mxc://')) {
-      r.avatar = await this.resolveMediaUrl(r.avatar) || undefined;
-    }
-  }));
-
-  // Inject stubs for rooms joined via CF that haven't appeared in a sync cycle yet.
-  // Once the real room data is present, remove the stub and let the real entry take over.
-  //
-  // The stub carries the CURRENT tenant: it exists only because this tenant's app just joined
-  // the room via the Cloud Function, so there is no ambiguity. Without the marker the stub has
-  // no tenant, no alias and no directUserId, and the tenant filter would show it everywhere —
-  // for as long as the room stays pending, not just for a sync window.
-  const stubTenants = this.appStore.tenantId() ? [this.appStore.tenantId()] : undefined;
-  for (const [roomId, name] of this.pendingRooms) {
-    if (matrixRooms.find(r => r.roomId === roomId)) {
-      this.pendingRooms.delete(roomId); // real data is now in the list
-    } else {
-      matrixRooms.push({ roomId, name, isDirect: false, unreadCount: 0, members: [], typingUsers: [], tenants: stubTenants });
-    }
-  }
-
-  // Emit the new sorted list
-  this.rooms$.next(matrixRooms);
-}
-
-  /**
-   * True if the room has an explicit m.room.name state event.
-   * This is the reliable group-vs-DM discriminator: every group room is created with a
-   * name, a DM never is. (room.name is unsuitable — the SDK synthesises a name for DMs
-   * from the other member, so it is always non-empty.)
-   */
-  private roomHasName(room: Room): boolean {
-    const ev = room.getLiveTimeline().getState(EventTimeline.FORWARDS)
-      ?.getStateEvents('m.room.name', '') as MatrixEvent | null;
-    const name = ev?.getContent()?.['name'];
-    return typeof name === 'string' && name.trim().length > 0;
-  }
-
-  /**
-   * Check if a room is a direct message room.
-   * Guard: a room with an explicit name is always a group, never a DM — this prevents
-   *   group rooms (including admin/bot-populated 2-member ones, S2) from rendering as
-   *   DMs even if m.direct still carries a stale entry for them.
-   * Primary: checks m.direct account data (set by markRoomAsDirect on creation).
-   * Fallback: checks all current member state events for is_direct:true,
-   *   which is present on the invitee's m.room.member event when a room was
-   *   created with is_direct:true and the invitee hasn't joined yet.
-   */
   /**
    * Tenant marker for a room created from this app: the room belongs to the tenant it was
    * created in. Without it the room would show up in every tenant's chat list, because one
@@ -1671,139 +660,32 @@ private async buildAndEmitRoomsList(): Promise<void> {
   }
 
   /**
-   * Read the room's tenant marker (`org.okr.tenant` state event). Undefined for rooms
-   * created before the marker existed — those stay visible in every tenant until
-   * `backfillMatrixRoomTenants` stamps them.
-   */
-  private getRoomTenants(room: Room): string[] | undefined {
-    const state = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
-    const tenants = state?.getStateEvents(OKR_TENANT_EVENT, '')?.getContent()?.['tenants'] as string[] | undefined;
-    return tenants?.length ? tenants : undefined;
-  }
-
-  /**
-   * Whether the user pinned this room (Matrix room tag `m.favourite`). Tags are account data,
-   * so this is the same answer on every device the person uses.
-   */
-  private isFavouriteRoom(room: Room): boolean {
-    return !!room.tags?.[MATRIX_FAVOURITE_TAG];
-  }
-
-  /**
    * Pin or unpin a room for the current user by setting/removing its `m.favourite` tag. The
    * room list is not patched here: the homeserver echoes the change back as RoomEvent.Tags,
    * which rebuilds the list — the same path a pin made on another device takes.
    */
-  public async setRoomFavourite(roomId: string, favourite: boolean): Promise<void> {
-    if (!this.client) throw new Error('MatrixChatService.setRoomFavourite: client not initialized');
-    if (favourite) {
-      await this.client.setRoomTag(roomId, MATRIX_FAVOURITE_TAG, {});
-    } else {
-      await this.client.deleteRoomTag(roomId, MATRIX_FAVOURITE_TAG);
-    }
+  public setRoomFavourite(roomId: string, favourite: boolean): Promise<void> {
+    return this.roomList.setRoomFavourite(roomId, favourite);
+  }
+
+  // ─── Timeline reads — delegated to MatrixMessageService (ARCH-2, design review #4) ──
+
+  /** Messages of a room; loads (and back-fills) the room's timeline on first subscription. */
+  public getMessagesForRoom(roomId: string): Observable<MatrixMessage[] | null> {
+    return this.messages.getMessagesForRoom(roomId);
+  }
+
+  /** Read receipts of a room, keyed by the event they point at. */
+  public getReadReceiptsForRoom(roomId: string): Observable<Map<string, MatrixReadReceipt[]>> {
+    return this.messages.getReadReceiptsForRoom(roomId);
   }
 
   /**
-   * Whether the room's state has actually been synced into the client yet.
-   *
-   * `m.room.create` is the first state event of every room and can never be absent from a
-   * fully-loaded room, so its absence is a precise "state has not arrived yet" signal — unlike
-   * the marker, the canonical alias or `m.room.name`, each of which a legitimate room may lack.
-   *
-   * This matters because updateRoomsList() runs on room/timeline events during the INITIAL sync,
-   * before PREPARED. A room built in that window has no tenant marker and no alias, so the tenant
-   * filter cannot place it and used to keep it — briefly showing another tenant's group room.
+   * Load older messages by paginating the live timeline backwards (C-5, scroll-up history).
+   * @returns true if more history may be available, false at the start of the room.
    */
-  private isRoomStateLoaded(room: Room): boolean {
-    const state = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
-    return !!state?.getStateEvents('m.room.create', '');
-  }
-
-  private isDirectRoom(room: Room): boolean {
-    if (this.roomHasName(room)) return false;
-
-    const dmEvent = this.client?.getAccountData('m.direct' as any);
-    if (dmEvent) {
-      const directRooms = dmEvent.getContent() as Record<string, string[]>;
-      for (const userId in directRooms) {
-        if (directRooms[userId].includes(room.roomId)) {
-          return true;
-        }
-      }
-    }
-
-    // Fallback: any current member state event with is_direct:true marks this as a DM
-    const liveState = room.getLiveTimeline().getState(EventTimeline.FORWARDS);
-    for (const member of room.getMembers()) {
-      const memberEvent = liveState?.getStateEvents('m.room.member', member.userId) as MatrixEvent | null;
-      if (memberEvent?.getContent()?.['is_direct'] === true) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * After initial sync, reconcile m.direct account data so the room list classifies
-   * DMs correctly (S2). Two passes:
-   *  - PRUNE: drop entries whose (synced) room is clearly a group — has an m.room.name,
-   *    a #group_ alias, or >2 joined members. This self-heals rooms that an earlier,
-   *    over-eager version wrongly marked as DMs (e.g. group rooms temporarily down to
-   *    two joined members, or an admin/bot 2-member room). Rooms not yet synced are
-   *    left untouched (absence ≠ deleted).
-   *  - ADD: register genuine DM-shaped rooms (exactly 2 joined members AND no name)
-   *    that arrived without an m.direct entry (e.g. an incoming DM created by the peer).
-   */
-  private async repairDmRoomsAccountData(): Promise<void> {
-    if (!this.client) return;
-    const myUserId = this.client.getUserId();
-    if (!myUserId) return;
-
-    const dmEvent = this.client.getAccountData('m.direct' as any);
-    const directRooms = structuredClone((dmEvent?.getContent() ?? {})) as Record<string, string[]>;
-    let updated = false;
-
-    // PRUNE — remove group rooms that were wrongly recorded as DMs.
-    const isGroupRoom = (roomId: string): boolean => {
-      const room = this.client!.getRoom(roomId);
-      if (!room) return false; // not synced — cannot judge, keep
-      if (this.roomHasName(room)) return true;
-      if (room.getCanonicalAlias()?.startsWith('#group_')) return true;
-      if (room.getJoinedMembers().length > 2) return true;
-      return false;
-    };
-    for (const userId of Object.keys(directRooms)) {
-      const kept = directRooms[userId].filter(roomId => !isGroupRoom(roomId));
-      if (kept.length !== directRooms[userId].length) {
-        updated = true;
-        if (kept.length === 0) delete directRooms[userId];
-        else directRooms[userId] = kept;
-      }
-    }
-
-    // ADD — register genuine DM-shaped rooms not yet in m.direct.
-    const knownDmRoomIds = new Set(Object.values(directRooms).flat());
-    for (const room of this.client.getRooms()) {
-      if (room.getMyMembership() !== 'join') continue;
-      if (knownDmRoomIds.has(room.roomId)) continue;
-      if (this.roomHasName(room)) continue; // named → group, never a DM
-      if (room.getCanonicalAlias()?.startsWith('#group_')) continue;
-
-      const joinedMembers = room.getJoinedMembers();
-      if (joinedMembers.length !== 2) continue;
-
-      const otherMember = joinedMembers.find(m => m.userId !== myUserId);
-      if (!otherMember) continue;
-
-      (directRooms[otherMember.userId] ??= []).push(room.roomId);
-      updated = true;
-    }
-
-    if (updated) {
-      await this.client.setAccountData('m.direct' as any, directRooms as any);
-      debugMessage('MatrixChatService: reconciled m.direct account data', this.appStore.currentUser());
-    }
+  public paginateRoomBackwards(roomId: string): Promise<boolean> {
+    return this.messages.paginateRoomBackwards(roomId);
   }
 
   /**
@@ -2091,10 +973,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
    * until the real room data arrives via sync.
    */
   registerPendingRoom(roomId: string, name: string): void {
-    if (!this.pendingRooms.has(roomId)) {
-      this.pendingRooms.set(roomId, name);
-      this.roomsUpdateTrigger$.next();
-    }
+    this.roomList.registerPendingRoom(roomId, name);
   }
 
   /**
@@ -2118,27 +997,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
    * Checks the m.direct account data and returns the first joined/invited room.
    */
   findExistingDirectRoom(matrixUserId: string): string | undefined {
-    if (!this.client) return undefined;
-    const dmEvent = this.client.getAccountData('m.direct' as any);
-    if (!dmEvent) return undefined;
-    const directRooms = dmEvent.getContent() as Record<string, string[]>;
-    const roomIds = directRooms[matrixUserId];
-    if (!roomIds || roomIds.length === 0) return undefined;
-    // Walk from most-recent to oldest; skip stale entries
-    for (let i = roomIds.length - 1; i >= 0; i--) {
-      const room = this.client.getRoom(roomIds[i]);
-      if (!room) continue; // not in local cache at all
-      const membership = room.getMyMembership();
-      if (membership !== 'join' && membership !== 'invite') continue; // left or banned
-      // Skip phantom rooms where the other user was never added (e.g. invite rejected by server)
-      const otherPresent = room.getMembers().some(m =>
-        m.userId !== this.client!.getUserId() &&
-        (m.membership === 'join' || m.membership === 'invite')
-      );
-      if (!otherPresent) continue;
-      return roomIds[i];
-    }
-    return undefined;
+    return this.dm.findExistingDirectRoom(matrixUserId);
   }
 
   /** Derive a Matrix user id from a Person.okey: '@{okey-lowercased}:{homeserver}'. */
@@ -2195,7 +1054,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
     }
 
     // Find-or-create: return existing DM room if one already exists
-    const existingRoomId = this.findExistingDirectRoom(matrixUserId);
+    const existingRoomId = this.dm.findExistingDirectRoom(matrixUserId);
     if (existingRoomId) {
       const existing = this.client.getRoom(existingRoomId);
       if (existing) return existing;
@@ -2232,7 +1091,7 @@ private async buildAndEmitRoomsList(): Promise<void> {
     const result = await this.client.createRoom(opts);
 
     // Mark as direct room in account data
-    await this.markRoomAsDirect(result.room_id, matrixUserId);
+    await this.dm.markRoomAsDirect(result.room_id, matrixUserId);
 
     const room = this.client.getRoom(result.room_id);
     if (!room) throw new Error('Failed to get created room');
@@ -2260,26 +1119,6 @@ private async buildAndEmitRoomsList(): Promise<void> {
     if (!room) throw new Error('Failed to get created room');
     
     return room;
-  }
-
-  /**
-   * Mark a room as direct in account data
-   */
-  private async markRoomAsDirect(roomId: string, userId: string): Promise<void> {
-    if (!this.client) return;
-
-    const dmEvent = this.client.getAccountData('m.direct' as any);
-    const directRooms = dmEvent?.getContent() || {};
-
-    if (!directRooms[userId]) {
-      directRooms[userId] = [];
-    }
-    
-    if (!directRooms[userId].includes(roomId)) {
-      directRooms[userId].push(roomId);
-    }
-
-    await this.client.setAccountData('m.direct' as any, directRooms as any);
   }
 
   /**
@@ -2537,13 +1376,5 @@ private async buildAndEmitRoomsList(): Promise<void> {
     if (mc) content['m.mentions'] = mc.mentions;
 
     return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
-  }
-
-  /** Send a notice message to a room so it persists across reloads. Fire-and-forget. */
-  private sendNotice(roomId: string, body: string): void {
-    if (!this.client) return;
-    this.client.sendMessage(roomId, { msgtype: MsgType.Notice, body } as any).catch(err =>
-      console.warn('MatrixChatService.sendNotice failed:', err)
-    );
   }
 }
