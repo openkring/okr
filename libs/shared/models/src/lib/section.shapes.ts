@@ -60,7 +60,7 @@ export const ALBUM_CONFIG_SHAPE = {
     folder: '',
     imageStyle: IMAGE_STYLE_SHAPE,
     albumStyle: 'grid',
-    showVideos: false,
+    showVideos: true,
     showStreamingVideos: false,
     showDocs: false,
     showPdfs: true,

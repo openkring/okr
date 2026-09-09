@@ -94,3 +94,15 @@ describe('toImageConfig for videos', () => {
     expect(toImageConfig(doc).url).toBe('tenant/scs/section/s1/album/photo.jpg');
   });
 });
+
+describe('album defaults', () => {
+  it('shows videos out of the box', () => {
+    // Ein hochgeladenes Video, das anschliessend unsichtbar im Album liegt, ist die
+    // Fehlerklasse, bei der der Nutzer keinen Fehler sieht, sondern nichts.
+    expect(ALBUM_CONFIG_SHAPE.showVideos).toBe(true);
+  });
+
+  it('keeps streaming videos opt-in', () => {
+    expect(ALBUM_CONFIG_SHAPE.showStreamingVideos).toBe(false);
+  });
+});
