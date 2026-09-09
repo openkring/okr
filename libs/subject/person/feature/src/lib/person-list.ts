@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
-import { ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { ActionSheetController, ActionSheetOptions, InfiniteScrollCustomEvent, IonAvatar, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonImg, IonInfiniteScroll, IonInfiniteScrollContent, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 
 import { NameDisplay, PersonModel, PersonModelName, RoleName } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -27,7 +27,8 @@ type PersonSortField = 'name' | 'phone' | 'email';
     Spinner, EmptyList, ListFilter, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
     IonLabel, IonContent, IonItem, IonPopover,
-    IonAvatar, IonImg, IonList
+    IonAvatar, IonImg, IonList,
+    IonInfiniteScroll, IonInfiniteScrollContent
   ],
   providers: [PersonStore],
   styles: [`
@@ -87,8 +88,11 @@ type PersonSortField = 'name' | 'phone' | 'email';
       @if(filteredPersonsCount() === 0) {
         <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
+        <!-- Incremental rendering, same pattern as page-list/menu-list: 623 persons as 623
+             ion-items at once (each with avatar, image and three labels) was the whole cost of
+             this page — perf-baselines.md, »Die Personenliste« (2026-09-09). -->
         <ion-list lines="inset">
-          @for(person of filteredPersons(); track $index) {
+          @for(person of visiblePersons(); track person.okey) {
             <ion-item (click)="showActions(person)">
               <ion-avatar slot="start">
                 <ion-img src="{{ personModelName + '.' + person.okey | avatar:personModelName }}" alt="Avatar Logo" />
@@ -111,6 +115,11 @@ type PersonSortField = 'name' | 'phone' | 'email';
             </ion-item>
           }
         </ion-list>
+        @if(hasMore()) {
+          <ion-infinite-scroll (ionInfinite)="loadMore($event)">
+            <ion-infinite-scroll-content />
+          </ion-infinite-scroll>
+        }
       }
     }
     </ion-content>
@@ -143,6 +152,12 @@ export class PersonList {
     ));
   });
   protected filteredPersonsCount = computed(() => this.filteredPersons().length);
+
+  // incremental rendering (ion-infinite-scroll)
+  private readonly pageSize = 50;
+  protected readonly visibleCount = signal(this.pageSize);
+  protected readonly visiblePersons = computed(() => this.filteredPersons().slice(0, this.visibleCount()));
+  protected readonly hasMore = computed(() => this.visibleCount() < this.filteredPersons().length);
   protected isLoading = computed(() => this.store.isLoading());
   protected readonly tags = computed(() => this.store.getTags());
   protected readonly types = computed(() => this.store.appStore.getCategory('gender'));
@@ -196,22 +211,32 @@ export class PersonList {
   protected setSort(field: PersonSortField): void {
     this.sortAsc.set(this.sortField() === field ? !this.sortAsc() : true);
     this.sortField.set(field);
+    this.visibleCount.set(this.pageSize);
   }
 
   protected onSearchtermChange(searchTerm: string): void {
     this.store.setSearchTerm(searchTerm);
+    this.visibleCount.set(this.pageSize);
   }
 
   protected onTagSelected(tag: string): void {
     this.store.setSelectedTag(tag);
+    this.visibleCount.set(this.pageSize);
   }
 
   protected onTypeSelected(type: string): void {
     this.store.setSelectedGender(type);
+    this.visibleCount.set(this.pageSize);
   }
 
   protected onPhotoUsageSelected(photoUsage: string): void {
     this.store.setSelectedPhotoUsage(photoUsage);
+    this.visibleCount.set(this.pageSize);
+  }
+
+  protected loadMore(event: InfiniteScrollCustomEvent): void {
+    this.visibleCount.update((c) => c + this.pageSize);
+    event.target.complete();
   }
 
   /******************************** actions ******************************************* */

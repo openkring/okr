@@ -4,6 +4,7 @@
 // angemeldete Lighthouse-Profil aus Regel 7 (/tmp/lh-profile) und einen laufenden lokalen Server.
 // Usage: node scripts/perf-dom-watch.mjs [url=http://localhost:5050/private/dashboard/c-contentpage] [--width 412] [--expand]
 //   --width 1280  Desktop-Viewport (Split-Pane ab 992 px), sonst Handy 412×823.
+//   --tags A,B    beobachtete Tag-Namen (Standard: Menü-Tags) — z. B. OKR-SINGLE-TAG,OKR-CAT-SELECT
 //   --expand      nach der Aufnahme den ersten Untermenü-Akkordeon öffnen und erneut zählen
 //                 (Nachweis, dass lazy gerenderte Einträge beim Aufklappen erscheinen).
 import { chromium } from 'playwright';
@@ -17,9 +18,11 @@ const urlArg = argv.find((a, i) => !a.startsWith('--') && (i === 0 || !argv[i - 
 for (const d of ['Cache', 'Code Cache', 'GPUCache', 'Service Worker']) rmSync(`${PROFILE}/Default/${d}`, { recursive: true, force: true });
 const ctx = await chromium.launchPersistentContext(PROFILE, { channel: 'chrome', headless: false, viewport: { width, height: 823 }, args: ['--disable-extensions', '--no-first-run'] });
 const page = ctx.pages()[0] ?? await ctx.newPage();
+const tagsArg = flag('--tags');
+if (tagsArg) await page.addInitScript((t) => { window.__okrWatchTags = t; }, tagsArg.toUpperCase());
 await page.addInitScript(() => {
   const W = 100; const bins = {}; window.__bins = bins;
-  const TAGS = ['ION-ITEM', 'OKR-MENU', 'OKR-MULTI-AVATAR', 'ION-ICON', 'ION-ACCORDION', 'OKR-SPINNER', 'ION-CARD'];
+  const TAGS = (window.__okrWatchTags ?? 'ION-ITEM,OKR-MENU,OKR-MULTI-AVATAR,ION-ICON,ION-ACCORDION,OKR-SPINNER,ION-CARD').split(',');
   const bump = (k) => { const t = Math.floor(performance.now() / W) * W; const b = bins[t] ??= {}; b[k] = (b[k] ?? 0) + 1; };
   const rec = (kind, node) => { if (node.nodeType !== 1) return; const walk = (el) => { if (TAGS.includes(el.tagName)) bump(kind + ':' + el.tagName); for (const c of el.children) walk(c); }; walk(node); };
   new MutationObserver(ms => { for (const m of ms) { m.addedNodes.forEach(n => rec('add', n)); m.removedNodes.forEach(n => rec('rm', n)); } }).observe(document, { childList: true, subtree: true });

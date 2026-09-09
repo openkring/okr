@@ -38,8 +38,11 @@ const console_ = [];
 page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) console_.push(`${m.type()}: ${m.text().slice(0, 160)}`); });
 
 await page.addInitScript(() => {
-  window.__lcp = [];
+  window.__lcp = []; window.__ls = [];
   try { new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__lcp.push({ t: Math.round(e.startTime), url: e.url, tag: e.element?.tagName, id: e.element?.id, cls: e.element?.className, size: e.size }); }).observe({ type: 'largest-contentful-paint', buffered: true }); } catch {}
+  // Layout-Shifts mit Quellknoten: welches Element ist von wo nach wo gerutscht (CLS-Ursache).
+  const desc = (n) => { if (!n) return '(node null)'; const el = n.nodeType === 1 ? n : n.parentElement; if (!el) return n.nodeName; const cls = String(el.className || '').split(' ').filter(Boolean).slice(0, 2).join('.'); const path = []; let p = el; for (let i = 0; i < 4 && p; i++, p = p.parentElement) path.push(p.tagName.toLowerCase()); return `${el.tagName.toLowerCase()}${cls ? '.' + cls : ''} ‹${path.slice(1).join('<')}›`; };
+  try { new PerformanceObserver((l) => { for (const e of l.getEntries()) { if (e.hadRecentInput) continue; window.__ls.push({ t: Math.round(e.startTime), score: +e.value.toFixed(4), sources: (e.sources ?? []).map((s) => ({ node: desc(s.node), from: [s.previousRect.y, s.previousRect.height], to: [s.currentRect.y, s.currentRect.height], dx: Math.round(s.currentRect.x - s.previousRect.x), dw: Math.round(s.currentRect.width - s.previousRect.width), dy: Math.abs(s.currentRect.y - s.previousRect.y) })).sort((a, b) => (b.dy + Math.abs(b.dx)) - (a.dy + Math.abs(a.dx))), n: (e.sources ?? []).length }); } }).observe({ type: 'layout-shift', buffered: true }); } catch {}
 });
 
 await page.goto(url, { waitUntil: 'commit' });
@@ -53,6 +56,7 @@ const dom = await page.evaluate(() => ({
   images: [...document.images].slice(0, 12).map((i) => ({ src: (i.currentSrc || i.src).slice(0, 120), w: i.naturalWidth, h: i.naturalHeight, cw: i.clientWidth, ch: i.clientHeight, loading: i.loading, fetchpriority: i.getAttribute('fetchpriority'), inViewport: i.getBoundingClientRect().top < innerHeight })),
   census: window.__okrFirestoreCensus?.() ?? null,
   title: document.title,
+  shifts: window.__ls,
 }));
 
 // Back/Forward-Cache: auf eine FREMDE Origin wegnavigieren und zurück. Eine gleiche Origin
@@ -77,6 +81,8 @@ console.log(`\n== Konsole (error/warning, ${console_.length}) ==`); for (const c
 console.log('\n== LCP-Kandidaten (Zeit, Element, URL) =='); for (const l of dom.lcp) console.log(`  ${l.t} ms  <${l.tag}${l.id ? '#' + l.id : ''}${l.cls ? '.' + String(l.cls).split(' ')[0] : ''}> size ${l.size}  ${l.url ?? ''}`);
 console.log('\n== Preloads im HTML ==', dom.preloads.length ? '' : '(keine)'); for (const p of dom.preloads) console.log('  ' + p);
 console.log('\n== Bilder (erste 12) =='); for (const i of dom.images) console.log(`  ${i.inViewport ? 'VIEWPORT' : '        '} ${i.w}x${i.h} → ${i.cw}x${i.ch} loading=${i.loading} fp=${i.fetchpriority}  ${i.src}`);
+console.log(`\n== Layout-Shifts (${dom.shifts.length}, Σ ${dom.shifts.reduce((a, x) => a + x.score, 0).toFixed(4)}) ==`);
+for (const sh of dom.shifts.slice(0, 8)) { console.log(`  ${String(sh.t).padStart(6)} ms  ${sh.score}  (${sh.n} Quellen)`); for (const x of sh.sources) console.log(`         ${x.node}  y:${Math.round(x.from[0])}→${Math.round(x.to[0])} h:${Math.round(x.from[1])}→${Math.round(x.to[1])} dx:${x.dx} dw:${x.dw}`); }
 console.log('\n== DOM ==', JSON.stringify(dom.counts), 'title:', dom.title);
 console.log('== Firestore-Census ==', dom.census ? `${dom.census.active} aktiv: ` + JSON.stringify(dom.census.byCollection?.slice(0, 8)) : '(kein __okrFirestoreCensus)');
 console.log(`\n== Bytes (content-length, ${reqCount} Requests) ==`);
