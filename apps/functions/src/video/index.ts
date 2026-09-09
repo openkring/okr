@@ -14,6 +14,7 @@ import {
   buildPosterArgs,
   buildTranscodeArgs,
   isAlbumVideoPath,
+  isVideoUpload,
   retryUntilFound,
 } from './video-path.util';
 
@@ -93,8 +94,14 @@ export const onAlbumVideoFinalized = onObjectFinalized(
   async (event: StorageEvent): Promise<void> => {
     const objectName = event.data.name ?? '';
     const contentType = event.data.contentType ?? '';
-    if (!contentType.startsWith('video/')) return;
+    // Path first: it is a pure string test, while isVideoUpload does a mime lookup. Both are
+    // cheap, but this trigger fires on EVERY object in the project, so the common case (a photo
+    // anywhere in the bucket) should leave by the shortest route available.
     if (!isAlbumVideoPath(objectName)) return;
+    // Not `contentType.startsWith('video/')`: see isVideoUpload — a .mov uploaded from Chrome
+    // regularly arrives with no usable contentType at all, and gating on it alone left the
+    // album tile in "wird aufbereitet" forever, silently.
+    if (!isVideoUpload(objectName, contentType)) return;
 
     const size = Number(event.data.size ?? 0);
     if (size > MAX_INPUT_BYTES) {

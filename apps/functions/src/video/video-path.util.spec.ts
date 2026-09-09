@@ -5,6 +5,7 @@ import {
   buildPosterArgs,
   buildTranscodeArgs,
   isAlbumVideoPath,
+  isVideoUpload,
   retryUntilFound,
 } from './video-path.util';
 
@@ -33,6 +34,40 @@ describe('isAlbumVideoPath', () => {
 
   it('rejects a path outside the tenant prefix', () => {
     expect(isAlbumVideoPath('misc/clip.mov')).toBe(false);
+  });
+});
+
+describe('isVideoUpload', () => {
+  it('accepts a declared video content type', () => {
+    expect(isVideoUpload('tenant/scs/section/a/album/clip.mp4', 'video/mp4')).toBe(true);
+    expect(isVideoUpload('tenant/scs/section/a/album/clip.mov', 'video/quicktime')).toBe(true);
+  });
+
+  it('accepts an UPPERCASE declared type — Storage does not normalise what the client sent', () => {
+    expect(isVideoUpload('tenant/scs/section/a/album/clip.mp4', 'VIDEO/MP4')).toBe(true);
+  });
+
+  it('falls back to the extension when the browser reported no type at all', () => {
+    // the regression this exists for: Chrome/Firefox report '' for a .mov
+    expect(isVideoUpload('tenant/scs/section/a/album/IMG_0042.mov', '')).toBe(true);
+    expect(isVideoUpload('tenant/scs/section/a/album/IMG_0042.MOV', '')).toBe(true);
+  });
+
+  it("falls back to the extension for Firebase's x-www-form-urlencoded default", () => {
+    // 147 live objects carry exactly this; it means "nothing was declared", not "not a video"
+    expect(isVideoUpload(
+      'tenant/scs/section/a/album/IMG_0042.mov',
+      'application/x-www-form-urlencoded;charset=UTF-8',
+    )).toBe(true);
+  });
+
+  it('rejects an image, declared or undeclared', () => {
+    expect(isVideoUpload('tenant/scs/section/a/album/IMG_0042.jpg', 'image/jpeg')).toBe(false);
+    expect(isVideoUpload('tenant/scs/section/a/album/IMG_0042.heic', '')).toBe(false);
+  });
+
+  it('rejects a file whose extension says nothing and whose type says nothing', () => {
+    expect(isVideoUpload('tenant/scs/section/a/album/notes', '')).toBe(false);
   });
 });
 

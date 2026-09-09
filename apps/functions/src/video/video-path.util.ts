@@ -1,3 +1,5 @@
+import { getMimeType } from '@okr/shared-util-core';
+
 /** Directories whose video uploads are transcoded. `ocr` and `rag` have their own triggers. */
 const ALBUM_PATH = /^tenant\/[^/]+\/(section\/[^/]+\/album|folder\/[^/]+\/album|document)\//;
 
@@ -11,6 +13,33 @@ const ALBUM_PATH = /^tenant\/[^/]+\/(section\/[^/]+\/album|folder\/[^/]+\/album|
 export function isAlbumVideoPath(objectName: string): boolean {
   if (!ALBUM_PATH.test(objectName)) return false;
   return !objectName.includes('/renderings/');
+}
+
+/**
+ * Whether a finalized object is a video, judged the same way the rest of the chain judges it.
+ *
+ * The Storage `contentType` alone is not usable as the gate. `uploadToFirebaseStorage` passes no
+ * explicit contentType, so whatever the browser guessed into `File.type` wins — and for a .mov
+ * that is regularly the empty string in Chrome and Firefox, which Firebase then stores as
+ * `application/x-www-form-urlencoded` (147 such objects live in the bucket today). Gating on
+ * `contentType.startsWith('video/')` therefore drops precisely the iPhone clips this trigger
+ * exists for, and drops them silently: no mp4 rendering is produced, so the album tile says
+ * "wird aufbereitet" forever, with no log line and no ticket to notice it by.
+ *
+ * The extension is what the rest of the chain already trusts: `DocumentModel.mimeType` comes from
+ * `resolveMimeType(file.name, file.type)`, and storage.rules gates the raised size cap on the
+ * extension too. This uses the same `getMimeType` lookup underneath.
+ *
+ * Deliberately an OR and not `resolveMimeType`'s "declared type wins, extension fills in": a
+ * declared type of `application/x-www-form-urlencoded` is not a considered answer, it is the
+ * absence of one, and letting it veto the extension is exactly the bug. Erring towards `true` is
+ * the cheap direction — a false positive costs one ffmpeg run that fails and is reported, a false
+ * negative costs a tile that never finishes and nobody hears about. The path gate
+ * (`isAlbumVideoPath`) has already narrowed the input to album uploads either way.
+ */
+export function isVideoUpload(objectName: string, contentType: string): boolean {
+  if (contentType.toLowerCase().startsWith('video/')) return true;
+  return getMimeType(objectName).toLowerCase().startsWith('video/');
 }
 
 /**
