@@ -565,7 +565,8 @@
     "album-cover": "Choose cover image",
     "album-exportraw": "Export file list",
     "album-folders-toggle_alt": "Hide subfolders",
-    "folder-all": "Folders"
+    "folder-all": "Folders",
+    "brand-styleguide": "Brand Styleguide"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

@@ -565,7 +565,8 @@
     "album-cover": "Choisir l’image de couverture",
     "album-exportraw": "Exporter la liste des fichiers",
     "album-folders-toggle_alt": "Masquer les sous-dossiers",
-    "folder-all": "Dossiers"
+    "folder-all": "Dossiers",
+    "brand-styleguide": "Charte graphique"
   },
   "ownership": {
     "fork_confirm": "« {name} » appartient au catalogue de fonctionnalités ({blocks}).\n\nL'enregistrement crée une copie propre au locataire « {forkKey} » et détache ce locataire de l'original partagé. Les corrections futures du catalogue (URL, action, rôle) n'atteindront plus cette entrée.\n\nEnregistrer quand même ?",

@@ -565,7 +565,8 @@
     "album-cover": "Elegir imagen de portada",
     "album-exportraw": "Exportar lista de archivos",
     "album-folders-toggle_alt": "Ocultar subcarpetas",
-    "folder-all": "Carpetas"
+    "folder-all": "Carpetas",
+    "brand-styleguide": "Guía de marca"
   },
   "ownership": {
     "fork_confirm": "«{name}» pertenece al catálogo de funciones ({blocks}).\n\nAl guardar se crea una copia propia del inquilino «{forkKey}» y se desvincula este inquilino del original compartido. Las futuras correcciones del catálogo (URL, acción, rol) ya no llegarán a esta entrada.\n\n¿Guardar de todos modos?",
