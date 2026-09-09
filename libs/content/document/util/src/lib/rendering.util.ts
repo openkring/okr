@@ -27,6 +27,12 @@ export function resolveRendering(doc: DocumentModel, format: string): string {
   return rendering?.fullPath ?? doc.fullPath;
 }
 
+/** Whether a rendering of this format exists. `resolveRendering` deliberately hides that by
+ *  falling back to the original, which is the wrong answer for "is it ready yet". */
+export function hasRendering(doc: DocumentModel, format: string): boolean {
+  return (doc.renderings ?? []).some(r => r.format === format);
+}
+
 /**
  * Upsert a rendering into a renderings list: replaces the entry of the same format in place,
  * appends a new format, preserves unrelated formats. `format` is the primary key of the array.

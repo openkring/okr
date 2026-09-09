@@ -19,6 +19,7 @@
     {"path": "../../../shared/categories/tsconfig.lib.json"},
     {"path": "../../../shared/i18n/tsconfig.lib.json"},
     {"path": "../../../shared/util-core/tsconfig.lib.json"},
-    {"path": "../../../cms/menu/util/tsconfig.lib.json"}
+    {"path": "../../../cms/menu/util/tsconfig.lib.json"},
+    {"path": "../../../content/document/util/tsconfig.lib.json"}
   ]
 }

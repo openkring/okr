@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALBUM_CONFIG_SHAPE, AlbumConfig, DocumentModel, ImageType } from '@okr/shared-models';
+import { ALBUM_CONFIG_SHAPE, AlbumConfig, DocumentModel, DocumentRendering, ImageType } from '@okr/shared-models';
 
 import { getDocumentImageType, isVisibleInAlbum, toImageConfig } from './album.util';
 
@@ -42,5 +42,55 @@ describe('toImageConfig', () => {
 
   it('prefers the document title', () => {
     expect(toImageConfig(doc({ title: 'Sunset' })).label).toBe('Sunset');
+  });
+});
+
+describe('toImageConfig for videos', () => {
+  function videoDoc(renderings: DocumentRendering[]): DocumentModel {
+    const doc = new DocumentModel('scs');
+    doc.okey = 'doc1';
+    doc.fullPath = 'tenant/scs/section/s1/album/clip.mov';
+    doc.mimeType = 'video/quicktime';
+    doc.renderings = renderings;
+    return doc;
+  }
+
+  it('renders the poster rendering, not the original', () => {
+    const config = toImageConfig(videoDoc([
+      { format: 'jpg', fullPath: 'tenant/scs/section/s1/album/renderings/doc1.jpg',
+        mimeType: 'image/jpeg', size: 1, generator: 'ffmpeg' },
+    ]));
+    expect(config.url).toBe('tenant/scs/section/s1/album/renderings/doc1.jpg');
+    expect(config.type).toBe(ImageType.Video);
+  });
+
+  it('falls back to the original while the rendering is still missing', () => {
+    const config = toImageConfig(videoDoc([]));
+    expect(config.url).toBe('tenant/scs/section/s1/album/clip.mov');
+  });
+
+  it('keeps the document key so the player can find the mp4 rendering', () => {
+    const config = toImageConfig(videoDoc([]));
+    expect(config.documentKey).toBe('doc1');
+  });
+
+  it('marks a video without an mp4 rendering as pending', () => {
+    expect(toImageConfig(videoDoc([])).pending).toBe(true);
+  });
+
+  it('is not pending once the mp4 rendering exists', () => {
+    const config = toImageConfig(videoDoc([
+      { format: 'mp4', fullPath: 'tenant/scs/section/s1/album/renderings/doc1.mp4',
+        mimeType: 'video/mp4', size: 1, generator: 'ffmpeg' },
+    ]));
+    expect(config.pending).toBeFalsy();
+  });
+
+  it('leaves an image untouched', () => {
+    const doc = new DocumentModel('scs');
+    doc.okey = 'doc2';
+    doc.fullPath = 'tenant/scs/section/s1/album/photo.jpg';
+    doc.mimeType = 'image/jpeg';
+    expect(toImageConfig(doc).url).toBe('tenant/scs/section/s1/album/photo.jpg');
   });
 });

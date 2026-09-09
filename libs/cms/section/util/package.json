@@ -12,6 +12,7 @@
     "@okr/shared-categories": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-util-core": "*",
-    "@okr/cms-menu-util": "*"
+    "@okr/cms-menu-util": "*",
+    "@okr/content-document-util": "*"
   }
 }

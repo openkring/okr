@@ -1,4 +1,5 @@
 import { AlbumConfig, DocumentModel, ImageConfig, ImageType } from "@okr/shared-models";
+import { hasRendering, resolveRendering } from "@okr/content-document-util";
 // getBackgroundStyle moved to @okr/shared-util-core so shared-ui's image grid can use it too;
 // re-exported here because callers (and their imports) still name it as an album helper.
 export { getBackgroundStyle } from "@okr/shared-util-core";
@@ -9,15 +10,21 @@ export { getBackgroundStyle } from "@okr/shared-util-core";
  */
 export function toImageConfig(doc: DocumentModel): ImageConfig {
   const fileName = doc.fullPath.split('/').pop() ?? doc.fullPath;
+  const type = getDocumentImageType(doc.mimeType);
+  const isVideo = type === ImageType.Video;
+  // Ein Video wird als sein Poster-Frame dargestellt: das Original ist für imgix nur ein
+  // Byte-Strom (Spec §7.1), das jpg-Rendering dagegen ein gewöhnliches Bild. Fehlt es noch,
+  // liefert resolveRendering den Originalpfad und `pending` trägt den Wartezustand.
   return {
     label: doc.title || fileName,
-    type: getDocumentImageType(doc.mimeType),
-    url: doc.fullPath,
+    type,
+    url: isVideo ? resolveRendering(doc, 'jpg') : doc.fullPath,
     actionUrl: doc.url,
     altText: doc.altText || doc.title || fileName,
     overlay: '',
     documentKey: doc.okey,
-    credit: doc.credit
+    credit: doc.credit,
+    ...(isVideo && !hasRendering(doc, 'mp4') ? { pending: true } : {})
   };
 }
 

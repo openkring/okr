@@ -15,6 +15,9 @@ export interface ImageConfig {
   overlay: string; // free-form text overlay on the imgix image; when set it wins over the auto-composed title/source overlay
   documentKey?: string; // FK to the corresponding DocumentModel (every image has a document entry)
   credit?: string; // image attribution / copyright, denormalized from DocumentModel.credit; rendered when ImageStyle.showSource is true
+  /** true, solange die Transkodierung eines Videos noch läuft (kein mp4-Rendering).
+   *  Das Grid zeigt dann die Wartekachel statt eines Players, der nichts abspielen kann. */
+  pending?: boolean;
 }
 
 

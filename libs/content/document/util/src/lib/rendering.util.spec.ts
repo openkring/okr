@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DocumentModel, DocumentRendering } from '@okr/shared-models';
 
-import { renderingPath, resolveRendering, upsertRendering } from './rendering.util';
+import { hasRendering, renderingPath, resolveRendering, upsertRendering } from './rendering.util';
 
 const svg: DocumentRendering = {
   format: 'svg', fullPath: 'tenant/scs/documents/renderings/doc1.svg',
@@ -52,6 +52,20 @@ describe('resolveRendering', () => {
 
   it('falls back to fullPath for a legacy document without renderings', () => {
     expect(resolveRendering(doc(undefined), 'svg')).toBe('tenant/scs/documents/logo.png');
+  });
+});
+
+describe('hasRendering', () => {
+  it('is true when a rendering of that format exists', () => {
+    expect(hasRendering(doc([svg]), 'svg')).toBe(true);
+  });
+
+  it('is false when no rendering of that format exists', () => {
+    expect(hasRendering(doc([svg]), 'pdf')).toBe(false);
+  });
+
+  it('is false for a legacy document without renderings', () => {
+    expect(hasRendering(doc(undefined), 'svg')).toBe(false);
   });
 });
 
