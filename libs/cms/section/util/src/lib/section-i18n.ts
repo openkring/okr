@@ -165,6 +165,8 @@ export const SECTION_I18N_KEYS = {
   chat_title:                               PFX + 'chat.title',
   chat_subtitle:                            PFX + 'chat.subtitle',
   chat_empty:                               PFX + 'chat.empty',
+  chat_loading:                             PFX + 'chat.loading',
+  chat_loadError:                           PFX + 'chat.loadError',
   chat_id_label:                            PFX + 'chat.id.label',
   chat_id_placeholder:                      PFX + 'chat.id.placeholder',
   chat_id_helper:                           PFX + 'chat.id.helper',

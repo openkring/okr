@@ -61,7 +61,7 @@ export const appConfig: ApplicationConfig = {
 
     // Register the Angular service worker (ngsw) to cache the app shell + static assets.
     // Deferred until the app is stable (or 30 s) so it stays off the critical path with
-    // Matrix init (10 s deferred) and Analytics. The SSR guard keeps the registrar's
+    // Matrix init (deferred until app-ready + idle) and Analytics. The SSR guard keeps the registrar's
     // lifecycle code off the server render path. See docs/16_spec-pwa-caching.md §4.
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode() && typeof window !== 'undefined',

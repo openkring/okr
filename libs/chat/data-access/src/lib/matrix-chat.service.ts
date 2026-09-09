@@ -57,6 +57,10 @@ export class MatrixChatService {
   private roomsListPending = false;
   private syncState$ = new BehaviorSubject<string>('STOPPED');
   private rooms$ = new BehaviorSubject<MatrixRoom[]>([]);
+  // True once the first room list after the initial sync (PREPARED) has been emitted. `rooms`
+  // starts as [] and is distinctUntilChanged, so a user with zero rooms never gets a second
+  // emission — consumers that must tell "still loading" from "really empty" gate on this.
+  private roomsLoaded$ = new BehaviorSubject<boolean>(false);
   private messages$ = new Map<string, BehaviorSubject<MatrixMessage[] | null>>();
   // C-3: roomIds with a load in progress, so concurrent subscriptions don't double-load.
   private readonly loadingRooms = new Set<string>();
@@ -134,6 +138,11 @@ export class MatrixChatService {
 
   get syncState(): Observable<string> {
     return this.syncState$.asObservable().pipe(distinctUntilChanged());
+  }
+
+  /** Emits true once the room list reflects the initial sync; false again after disconnect. */
+  get roomsLoaded(): Observable<boolean> {
+    return this.roomsLoaded$.asObservable().pipe(distinctUntilChanged());
   }
 
   get rooms(): Observable<MatrixRoom[]> {
@@ -511,6 +520,7 @@ export class MatrixChatService {
       this.initPromise = null; // ARCH-1: allow a fresh ensureInitialized() after reconnect
       this.isInitialized$.next(false);
       this.rooms$.next([]);
+      this.roomsLoaded$.next(false);
       this.syncState$.next('STOPPED');
       debugMessage('MatrixChatService: Client disconnected', this.appStore.currentUser());
     }
@@ -552,8 +562,9 @@ export class MatrixChatService {
       
       if (state === 'PREPARED') {
         debugMessage('MatrixChatService: Initial sync complete, updating rooms list', this.appStore.currentUser());
-        this.repairDmRoomsAccountData().then(() => {
-          this.updateRoomsList();
+        this.repairDmRoomsAccountData().then(async () => {
+          await this.updateRoomsList();
+          this.roomsLoaded$.next(true);
           for (const [roomId] of this.receipts$) {
             const room = this.client?.getRoom(roomId);
             if (room) this.buildAndEmitReceipts(room);
@@ -566,7 +577,15 @@ export class MatrixChatService {
           this.clearStoredCredentials();
           this.tokenExpired$.next();
         } else {
-          console.error('MatrixChatService: Sync error', data);
+          // The SDK reaches ERROR after three failed /sync requests in a row or a failed
+          // keep-alive (/versions). Log the parts that tell those cases apart — errcode,
+          // HTTP status, message — so a "Verbindungsfehler" report can be attributed.
+          const err = data?.error as (MatrixError & { httpStatus?: number; name?: string }) | undefined;
+          console.error('MatrixChatService: Sync error', {
+            errcode: err?.errcode, httpStatus: err?.httpStatus, name: err?.name, message: err?.message,
+            online: typeof navigator !== 'undefined' ? navigator.onLine : undefined,
+            hidden: typeof document !== 'undefined' ? document.hidden : undefined,
+          });
           if (matrixError) this.errors$.next(matrixError);
         }
       } else if (state === 'STOPPED') {

@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { of, switchMap } from 'rxjs';
+import { map, of, startWith, switchMap, timer } from 'rxjs';
 import { Visibility, type MatrixCall } from 'matrix-js-sdk';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 
@@ -28,6 +28,9 @@ export type MatrixChatState = {
   replyToMessage: MatrixMessage | undefined;
   hasMoreHistory: boolean;
 }
+
+/** How long the sync loop must stay in ERROR before the chat shows a connection error. */
+const SYNC_ERROR_GRACE_MS = 10_000;
 
 export const _MatrixChatStore = signalStore(
   // C-9: isMatrixInitialized is NOT stored here — it is a computed derived from the
@@ -63,7 +66,19 @@ export const _MatrixChatStore = signalStore(
   }),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(MATRIX_CHAT_I18N_KEYS),
-    syncStateResource: rxResource({ stream: () => store.matrixService.syncState }),
+    // The SDK flips to ERROR after three failed /sync polls or one failed keep-alive and
+    // recovers on its own (keep-alive → CATCHUP → SYNCING), usually within a second. A
+    // transient flap should not flash "Verbindungsfehler"; the badge only becomes an error
+    // once the state has stayed ERROR for SYNC_ERROR_GRACE_MS. Until then it reads as
+    // reconnecting. Readiness checks elsewhere only look for PREPARED/SYNCING/STOPPED,
+    // so the substitution is invisible to them.
+    syncStateResource: rxResource({
+      stream: () => store.matrixService.syncState.pipe(
+        switchMap(state => state === 'ERROR'
+          ? timer(SYNC_ERROR_GRACE_MS).pipe(map(() => 'ERROR'), startWith('RECONNECTING'))
+          : of(state)),
+      ),
+    }),
     roomsResource: rxResource({ stream: () => store.matrixService.rooms }),
     roomStateVersionResource: rxResource({ stream: () => store.matrixService.roomStateVersion }),
     imageUrlResource: rxResource({

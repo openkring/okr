@@ -17,6 +17,8 @@ import { MessagesStore } from './messages-section.store';
     ion-card-content { padding: 0px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important; }
     ion-label { font-size: 1em; }
+    .loading { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 0; }
+    .loading p { margin: 0; color: var(--ion-color-medium); font-size: 0.9em; }
   `],
   providers: [MessagesStore],
   imports: [
@@ -29,7 +31,12 @@ import { MessagesStore } from './messages-section.store';
       <ion-card-content>
         <div class="list-area" [style.min-height.px]="reservedHeight()">
         @if(isLoading()) {
-          <okr-spinner />
+          <div class="loading">
+            <okr-spinner />
+            <p>{{ store.i18n.chat_loading() }}</p>
+          </div>
+        } @else if(hasError()) {
+          <okr-empty-list [message]="store.i18n.chat_loadError()" />
         } @else if(rooms().length === 0) {
           <okr-empty-list [message]="store.i18n.chat_empty()" />
         } @else {
@@ -69,6 +76,7 @@ export class MessagesSectionComponent {
   protected readonly maxItems = computed(() => this.config()?.maxItems ?? undefined);
   protected readonly rooms = computed(() => this.store.rooms());
   protected readonly isLoading = computed(() => this.store.isLoading());
+  protected readonly hasError = computed(() => this.store.hasError());
   protected readonly reservedHeight = computed(() => getReservedListHeightPx(this.maxItems()));
 
   constructor() {

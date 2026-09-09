@@ -228,6 +228,8 @@
     "label": "Chat",
     "subtitle": "Adapter ici les paramètres du chat selon les besoins.",
     "empty": "Vous n'avez aucun message ouvert.",
+    "loading": "Chargement des messages …",
+    "loadError": "Les messages n'ont pas pu être chargés.",
     "id": {
       "label": "ID",
       "placeholder": "ID",

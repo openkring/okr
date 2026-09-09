@@ -228,6 +228,8 @@
     "label": "Chat",
     "subtitle": "Passe hier die Chat-Einstellungen an deine Bedürfnisse an.",
     "empty": "Du hast keine offenen Mitteilungen.",
+    "loading": "Mitteilungen werden geladen …",
+    "loadError": "Die Mitteilungen konnten nicht geladen werden.",
     "id": {
       "label": "ID",
       "placeholder": "ID",

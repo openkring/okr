@@ -228,6 +228,8 @@
     "label": "Chat",
     "subtitle": "Adjust the chat settings to your needs here.",
     "empty": "You have no open messages.",
+    "loading": "Loading messages …",
+    "loadError": "The messages could not be loaded.",
     "id": {
       "label": "ID",
       "placeholder": "ID",
