@@ -1,4 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
@@ -102,9 +103,9 @@ import { ConsentService } from '@okr/consent-data-access';
       -->
     <ion-app>
       <okr-cookie-banner />
-      <ion-split-pane contentId="main" [disabled]="!showMenu()">
+      <ion-split-pane contentId="main" [disabled]="!showMenu()" (ionSplitPaneVisible)="onSplitPaneVisible($event)">
         @if(showMenu()) {
-        <ion-menu side="start" menuId="main" contentId="main" type="overlay">
+        <ion-menu side="start" menuId="main" contentId="main" type="overlay" (ionWillOpen)="menuOpened.set(true)">
           <ion-header>
             <ion-toolbar color="secondary">
               <ion-buttons slot="start">
@@ -121,7 +122,12 @@ import { ConsentService } from '@okr/consent-data-access';
             </ion-toolbar>
           </ion-header>
           <ion-content>
-            @if (isUserSessionReady()) {
+            <!-- The menu tree (~200 nodes) is built only where somebody can see it: at once in
+                 the split pane (desktop), on the phone not before the overlay opens for the
+                 first time (ionWillOpen fires before the slide-in). Building it at boot behind a
+                 closed overlay was the largest main-thread task of the dashboard
+                 (perf-baselines.md, 2026-09-09). -->
+            @if (isUserSessionReady() && menuMounted()) {
               <okr-menu [menuName]="mainMenuName()" />
             } @else {
               <okr-spinner />
@@ -202,6 +208,22 @@ export class OkrRoot {
     if (qp != null) return coerceBoolean(qp);
     return this.showMenuFromRoute() ?? true;
   });
+
+  // Where the menu is visible. The split pane reports its state through ionSplitPaneVisible on
+  // init and on every breakpoint change; the media query seeds the value so the desktop menu
+  // does not wait for that first event. 992px is Ionic's default `when="lg"` of ion-split-pane.
+  private readonly splitPaneVisible = signal(
+    isPlatformBrowser(inject(PLATFORM_ID)) && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(min-width: 992px)').matches
+      : false
+  );
+  /** Set once the overlay menu opens for the first time; the tree stays mounted afterwards. */
+  protected readonly menuOpened = signal(false);
+  protected readonly menuMounted = computed(() => this.splitPaneVisible() || this.menuOpened());
+
+  protected onSplitPaneVisible(event: Event): void {
+    this.splitPaneVisible.set((event as CustomEvent<{ visible: boolean }>).detail.visible);
+  }
 
   private findRouteData(key: string): boolean | undefined {
     let snapshot: ActivatedRouteSnapshot | null = this.router.routerState.snapshot.root;
