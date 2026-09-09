@@ -206,6 +206,21 @@
     "help_promise": "Esta página no elimina nada y no cambia ninguna fila existente sin tu consentimiento.",
     "enable_dialog_intro": "Aquí eliges qué filas de menú se crean. Lo que no marques simplemente no se crea — no se pierde nada, y puedes añadirlo más tarde en cualquier momento desde la lista de filas de menú."
   },
+  "plan": {
+    "block_disabled": "se desactivará — las entradas de menú se mantienen y solo se ocultan, los datos quedan sin cambios",
+    "block_enabled": "El área está disponible para ti y tus miembros a partir de ahora.",
+    "block_enabled_dependency": "Esta área también se activa, porque la que elegiste se basa en ella.",
+    "block_withheld": "Esta área no está disponible para vosotros por ahora y permanece desactivada.",
+    "field_overwritten": "Este campo se restablecerá al valor del catálogo.",
+    "field_pinned": "A partir de ahora mantenéis este campo vosotros mismos y el catálogo ya no lo sobrescribe.",
+    "field_unpinned": "Este campo vuelve a ser mantenido por el catálogo.",
+    "menu_attached": "Esta entrada aparece de nuevo en vuestro menú principal.",
+    "menu_children": "Esta entrada de menú recibe las subentradas elegidas adicionalmente.",
+    "menu_created": "Esta entrada de menú se creará.",
+    "menu_reactivated": "Esta entrada de menú retirada anteriormente vuelve a ser visible.",
+    "menu_shared": "Esta entrada de menú ya existe y se habilitará para vosotros.",
+    "seed_created": "Para ello se crea un registro inicial que podrás ajustar después."
+  },
   "profile": {
     "minimal": {
       "label": "Pequeño",

@@ -206,6 +206,21 @@
     "help_promise": "Cette page ne supprime rien et ne modifie aucune ligne existante sans ton accord.",
     "enable_dialog_intro": "Ici, tu choisis quelles lignes de menu sont créées. Ce que tu ne coches pas n'est simplement pas créé — rien n'est perdu, et tu peux l'ajouter plus tard à tout moment depuis la liste des lignes de menu."
   },
+  "plan": {
+    "block_disabled": "sera désactivé — les entrées de menu subsistent et sont seulement masquées, les données restent inchangées",
+    "block_enabled": "Le domaine est désormais à ta disposition et à celle de tes membres.",
+    "block_enabled_dependency": "Ce domaine est activé également, car celui que tu as choisi s'appuie dessus.",
+    "block_withheld": "Ce domaine n'est actuellement pas disponible chez vous et reste désactivé.",
+    "field_overwritten": "Ce champ sera réinitialisé à la valeur du catalogue.",
+    "field_pinned": "Ce champ sera désormais géré par vous-mêmes et ne sera plus écrasé par le catalogue.",
+    "field_unpinned": "Ce champ est de nouveau géré par le catalogue.",
+    "menu_attached": "Cette entrée apparaît à nouveau dans votre menu principal.",
+    "menu_children": "Cette entrée de menu reçoit les sous-entrées choisies en plus.",
+    "menu_created": "Cette entrée de menu sera créée.",
+    "menu_reactivated": "Cette entrée de menu retirée auparavant redevient visible.",
+    "menu_shared": "Cette entrée de menu existe déjà et sera activée pour vous.",
+    "seed_created": "Un enregistrement de départ sera créé, que tu pourras ensuite adapter."
+  },
   "profile": {
     "minimal": {
       "label": "Petit",

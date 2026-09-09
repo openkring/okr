@@ -1,5 +1,7 @@
 import type { Signal } from '@angular/core';
 
+import type { PlanConsequence, PlanEntry } from './apply-preview.types';
+
 /**
  * Mirrors the lib's full physical path (`libs/tenant/util/src/i18n` → `assets/i18n/tenant/util`,
  * wired by `scripts/sync-i18n-assets.mjs`). MUST be 'tenant/util.', not a bare 'tenant.' — a
@@ -151,6 +153,59 @@ export const FEATURE_PICKER_I18N_KEYS = {
   help_pinned: PFX + 'picker.help_pinned',
   /** The promise: this screen deletes nothing and changes no existing row without consent. */
   help_promise: PFX + 'picker.help_promise',
+
+  // The dry run's own sentences. `applyFeatureSelection` builds its plan where no language is
+  // active, so it names each sentence (`PlanEntry.consequenceKey`) and the client translates it
+  // here — otherwise every confirmation dialog in the picker is German for all five languages.
+  plan_block_enabled: PFX + 'plan.block_enabled',
+  plan_block_enabled_dependency: PFX + 'plan.block_enabled_dependency',
+  plan_block_withheld: PFX + 'plan.block_withheld',
+  /** A fragment, not a sentence — it is appended to the block name in the disable confirmation. */
+  plan_block_disabled: PFX + 'plan.block_disabled',
+  plan_menu_created: PFX + 'plan.menu_created',
+  /** The tenant is added to a menu document that already exists and is shared. */
+  plan_menu_shared: PFX + 'plan.menu_shared',
+  /** An existing parent row gains the children that were ticked. */
+  plan_menu_children: PFX + 'plan.menu_children',
+  plan_menu_reactivated: PFX + 'plan.menu_reactivated',
+  plan_menu_attached: PFX + 'plan.menu_attached',
+  plan_seed_created: PFX + 'plan.seed_created',
+  plan_field_overwritten: PFX + 'plan.field_overwritten',
+  plan_field_pinned: PFX + 'plan.field_pinned',
+  plan_field_unpinned: PFX + 'plan.field_unpinned',
 } satisfies Record<string, string>;
 
 export type FeaturePickerI18n = { [K in keyof typeof FEATURE_PICKER_I18N_KEYS]: Signal<string> };
+
+/**
+ * `PlanConsequence` → the key that translates it. Exhaustive by construction: the `Record` makes
+ * a new union member a compile error here, which is the point — a sentence added server-side
+ * cannot silently stay German.
+ */
+const PLAN_CONSEQUENCE_I18N: Record<PlanConsequence, keyof FeaturePickerI18n> = {
+  block_enabled: 'plan_block_enabled',
+  block_enabled_dependency: 'plan_block_enabled_dependency',
+  block_withheld: 'plan_block_withheld',
+  block_disabled: 'plan_block_disabled',
+  menu_created: 'plan_menu_created',
+  menu_shared: 'plan_menu_shared',
+  menu_children: 'plan_menu_children',
+  menu_reactivated: 'plan_menu_reactivated',
+  menu_attached: 'plan_menu_attached',
+  seed_created: 'plan_seed_created',
+  field_overwritten: 'plan_field_overwritten',
+  field_pinned: 'plan_field_pinned',
+  field_unpinned: 'plan_field_unpinned',
+};
+
+/**
+ * The one place a `PlanEntry` turns into text a tenant reads.
+ *
+ * Falls back to the entry's German `consequence` when the key is missing or unknown — that is the
+ * app-newer-than-function window (the picker's deploy order is functions first, then the app), and
+ * a German sentence beats an empty confirmation dialog.
+ */
+export function planConsequence(entry: PlanEntry, i18n: FeaturePickerI18n): string {
+  const key = entry.consequenceKey ? PLAN_CONSEQUENCE_I18N[entry.consequenceKey] : undefined;
+  return key ? i18n[key]() : entry.consequence;
+}

@@ -12,7 +12,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 import type {
   ApplyPlanPreview, FeatureBlock, FeaturePickerI18n, MenuOutlineRow, PlanEntry, PlanEntryKind,
 } from '@okr/tenant-util';
-import { entriesOfKind, menuOutlineOf } from '@okr/tenant-util';
+import { entriesOfKind, menuOutlineOf, planConsequence } from '@okr/tenant-util';
 
 import { applyRowToggle, forcedDependencyKeys, menuKeysFor } from './block-enable-selection.util';
 
@@ -183,12 +183,14 @@ export class BlockEnableModal {
   /** `roleNeeded`, plus the dry run's own sentence for what happens to this menu row. */
   protected noteFor(row: MenuOutlineRow): string {
     if (this.isAlreadyPresent(row)) return `${row.roleNeeded} · ${this.i18n().enable_already_present()}`;
-    const consequence = this.menuEntriesByKey().get(row.key)?.map(entry => entry.consequence).join(' ');
+    const consequence = this.menuEntriesByKey().get(row.key)
+      ?.map(entry => planConsequence(entry, this.i18n())).join(' ');
     return consequence ? `${row.roleNeeded} · ${consequence}` : row.roleNeeded;
   }
 
   protected reasonFor(block: FeatureBlock): string {
-    return this.dependencyReasons().get(block.id)?.consequence ?? this.i18n().enable_dependency_reason_fallback();
+    const entry = this.dependencyReasons().get(block.id);
+    return entry ? planConsequence(entry, this.i18n()) : this.i18n().enable_dependency_reason_fallback();
   }
 
   protected onRowToggle(row: MenuOutlineRow, event: CheckboxCustomEvent): void {

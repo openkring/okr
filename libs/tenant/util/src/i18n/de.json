@@ -206,6 +206,21 @@
     "help_promise": "Diese Seite löscht nichts und ändert keine bestehende Zeile ohne dein Einverständnis.",
     "enable_dialog_intro": "Hier wählst du, welche Menüzeilen angelegt werden. Was du nicht ankreuzt, wird einfach nicht angelegt — es geht nichts verloren, und du kannst es später jederzeit aus der Liste der Menüzeilen ergänzen."
   },
+  "plan": {
+    "block_disabled": "wird ausgeschaltet — die Menüzeilen bleiben bestehen und werden nur ausgeblendet, die Daten bleiben unverändert",
+    "block_enabled": "Der Bereich steht dir und deinen Mitgliedern ab sofort zur Verfügung.",
+    "block_enabled_dependency": "Dieser Bereich wird mit eingeschaltet, weil der gewählte darauf aufbaut.",
+    "block_withheld": "Dieser Bereich ist für euch zurzeit nicht verfügbar und bleibt aus.",
+    "field_overwritten": "Dieses Feld wird auf den Katalog-Wert zurückgesetzt.",
+    "field_pinned": "Dieses Feld wird ab jetzt von euch selbst gepflegt und nicht mehr vom Katalog überschrieben.",
+    "field_unpinned": "Dieses Feld wird wieder vom Katalog gepflegt.",
+    "menu_attached": "Dieser Eintrag erscheint neu in eurem Hauptmenü.",
+    "menu_children": "Dieser Menüpunkt erhält die zusätzlich gewählten Unterpunkte.",
+    "menu_created": "Dieser Menüpunkt wird neu angelegt.",
+    "menu_reactivated": "Dieser früher entfernte Menüpunkt wird wieder sichtbar.",
+    "menu_shared": "Dieser Menüpunkt ist bereits vorhanden und wird für euch freigeschaltet.",
+    "seed_created": "Dafür wird ein Startdatensatz angelegt, den du danach anpassen kannst."
+  },
   "profile": {
     "minimal": {
       "label": "Klein",

@@ -14,7 +14,7 @@ import type { FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
   findStructuralDrift, indexMenuDocsByName, isEmptyPlan, menuOutlineOf, pinnedFieldsOf,
-  resolveAvailability, resolveWithDeps,
+  planConsequence, resolveAvailability, resolveWithDeps,
 } from '@okr/tenant-util';
 import type {
   ApplyFeatureResponse, ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, FeatureProfile,
@@ -582,7 +582,7 @@ export class FeaturePicker {
       await this.alertService.showToast(this.i18n.rows_nothing_planned());
       return;
     }
-    const message = preview.entries.map(entry => entry.consequence).join(' ');
+    const message = preview.entries.map(entry => planConsequence(entry, this.i18n)).join(' ');
     if (!await this.alertService.confirm(message, true)) return;
 
     try {
@@ -626,7 +626,7 @@ export class FeaturePicker {
       try {
         const { preview } = await call(field, { dryRun: true });
         if (isEmptyPlan(preview)) continue;
-        consequences.push(...preview.entries.map(entry => entry.consequence));
+        consequences.push(...preview.entries.map(entry => planConsequence(entry, this.i18n)));
         okFields.push(field);
       } catch (error) {
         this.alertService.error(`FeaturePicker.rowAction(dryRun ${row.name}.${field}): ${error}`);

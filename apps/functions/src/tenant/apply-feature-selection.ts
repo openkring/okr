@@ -258,19 +258,21 @@ function buildPreview(input: {
 
   if (input.blockId) {
     entries.push({
-      kind: 'block-enabled', subject: input.blockId,
+      kind: 'block-enabled', subject: input.blockId, consequenceKey: 'block_enabled',
       consequence: 'Der Bereich steht dir und deinen Mitgliedern ab sofort zur Verfügung.',
     });
   }
   for (const dep of input.alsoEnabled) {
     entries.push({
       kind: 'block-enabled', subject: dep.id, reason: dep.because,
+      consequenceKey: 'block_enabled_dependency',
       consequence: 'Dieser Bereich wird mit eingeschaltet, weil der gewählte darauf aufbaut.',
     });
   }
   for (const held of input.withheld) {
     entries.push({
       kind: 'block-withheld', subject: held.id, reason: held.reason,
+      consequenceKey: 'block_withheld',
       consequence: 'Dieser Bereich ist für euch zurzeit nicht verfügbar und bleibt aus.',
     });
   }
@@ -278,7 +280,7 @@ function buildPreview(input: {
   for (const op of input.ops) {
     if (op.op === 'create') {
       entries.push({
-        kind: 'menu-created', subject: op.key,
+        kind: 'menu-created', subject: op.key, consequenceKey: 'menu_created',
         consequence: 'Dieser Menüpunkt wird neu angelegt.',
       });
       continue;
@@ -287,18 +289,18 @@ function buildPreview(input: {
     // gains the children you ticked. Nothing that is already there changes.
     if (op.fields.tenants !== undefined) {
       entries.push({
-        kind: 'menu-extended', subject: op.key,
+        kind: 'menu-extended', subject: op.key, consequenceKey: 'menu_shared',
         consequence: 'Dieser Menüpunkt ist bereits vorhanden und wird für euch freigeschaltet.',
       });
     } else if (op.fields.menuItems !== undefined) {
       entries.push({
-        kind: 'menu-extended', subject: op.key,
+        kind: 'menu-extended', subject: op.key, consequenceKey: 'menu_children',
         consequence: 'Dieser Menüpunkt erhält die zusätzlich gewählten Unterpunkte.',
       });
     }
     if (op.fields.isArchived === false) {
       entries.push({
-        kind: 'menu-reactivated', subject: op.key,
+        kind: 'menu-reactivated', subject: op.key, consequenceKey: 'menu_reactivated',
         consequence: 'Dieser früher entfernte Menüpunkt wird wieder sichtbar.',
       });
     }
@@ -310,7 +312,7 @@ function buildPreview(input: {
     const next = (input.rootOp.fields.menuItems as string[] | undefined) ?? current;
     for (const key of next.filter(k => !current.includes(k))) {
       entries.push({
-        kind: 'menu-attached', subject: key,
+        kind: 'menu-attached', subject: key, consequenceKey: 'menu_attached',
         consequence: 'Dieser Eintrag erscheint neu in eurem Hauptmenü.',
       });
     }
@@ -319,6 +321,7 @@ function buildPreview(input: {
   for (const write of input.seedWrites) {
     entries.push({
       kind: 'seed-created', subject: `${write.ref.parent.id}/${write.ref.id}`,
+      consequenceKey: 'seed_created',
       consequence: 'Dafür wird ein Startdatensatz angelegt, den du danach anpassen kannst.',
     });
   }
@@ -689,7 +692,7 @@ export async function planDisableBlock(
     ],
     preview: {
       entries: [{
-        kind: 'block-disabled', subject: blockId,
+        kind: 'block-disabled', subject: blockId, consequenceKey: 'block_disabled',
         consequence: 'wird ausgeschaltet — die Menüzeilen bleiben bestehen und werden nur ausgeblendet, die Daten bleiben unverändert',
       }],
       alsoEnabled: [], withheld: [],
@@ -770,6 +773,7 @@ export async function planApplyCatalogueValue(
     preview: {
       entries: [{
         kind: 'field-overwritten', subject: name, field, from, to,
+        consequenceKey: 'field_overwritten',
         consequence: 'Dieses Feld wird auf den Katalog-Wert zurückgesetzt.',
       }],
       alsoEnabled: [], withheld: [],
@@ -818,6 +822,7 @@ export async function planPinField(
     preview: {
       entries: [{
         kind: pin ? 'field-pinned' : 'field-unpinned', subject: name, field,
+        consequenceKey: pin ? 'field_pinned' : 'field_unpinned',
         consequence: pin
           ? 'Dieses Feld wird ab jetzt von euch selbst gepflegt und nicht mehr vom Katalog überschrieben.'
           : 'Dieses Feld wird wieder vom Katalog gepflegt.',

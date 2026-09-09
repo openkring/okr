@@ -206,6 +206,21 @@
     "help_promise": "This page deletes nothing and never changes an existing row without your consent.",
     "enable_dialog_intro": "Here you choose which menu rows are created. Anything you leave unticked is simply not created — nothing is lost, and you can add it later at any time from the menu rows list."
   },
+  "plan": {
+    "block_disabled": "will be switched off — the menu entries remain and are only hidden, the data stays unchanged",
+    "block_enabled": "The area is available to you and your members from now on.",
+    "block_enabled_dependency": "This area is switched on as well, because the one you chose builds on it.",
+    "block_withheld": "This area is currently not available to you and stays off.",
+    "field_overwritten": "This field will be reset to the catalogue value.",
+    "field_pinned": "From now on you maintain this field yourselves and the catalogue no longer overwrites it.",
+    "field_unpinned": "This field is maintained by the catalogue again.",
+    "menu_attached": "This entry appears anew in your main menu.",
+    "menu_children": "This menu entry gets the additionally chosen sub-entries.",
+    "menu_created": "This menu entry will be created.",
+    "menu_reactivated": "This previously removed menu entry becomes visible again.",
+    "menu_shared": "This menu entry already exists and will be made available to you.",
+    "seed_created": "A starter record is created for it, which you can adjust afterwards."
+  },
   "profile": {
     "minimal": {
       "label": "Small",

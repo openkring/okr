@@ -206,6 +206,21 @@
     "help_promise": "Questa pagina non elimina nulla e non modifica nessuna riga esistente senza il tuo consenso.",
     "enable_dialog_intro": "Qui scegli quali righe di menu vengono create. Ciò che non selezioni semplicemente non viene creato — non si perde nulla, e puoi aggiungerlo in seguito in qualsiasi momento dall'elenco delle righe di menu."
   },
+  "plan": {
+    "block_disabled": "verrà disattivata — le voci di menu restano e vengono solo nascoste, i dati restano invariati",
+    "block_enabled": "L’area è a disposizione tua e dei tuoi membri da subito.",
+    "block_enabled_dependency": "Anche quest’area viene attivata, perché quella scelta si basa su di essa.",
+    "block_withheld": "Quest’area al momento non è disponibile per voi e resta disattivata.",
+    "field_overwritten": "Questo campo verrà riportato al valore del catalogo.",
+    "field_pinned": "D’ora in poi questo campo lo curate voi stessi e il catalogo non lo sovrascrive più.",
+    "field_unpinned": "Questo campo torna a essere curato dal catalogo.",
+    "menu_attached": "Questa voce compare di nuovo nel vostro menu principale.",
+    "menu_children": "Questa voce di menu riceve le sottovoci scelte in più.",
+    "menu_created": "Questa voce di menu verrà creata.",
+    "menu_reactivated": "Questa voce di menu rimossa in precedenza torna visibile.",
+    "menu_shared": "Questa voce di menu esiste già e verrà abilitata per voi.",
+    "seed_created": "Per questo viene creato un record iniziale che potrai poi adattare."
+  },
   "profile": {
     "minimal": {
       "label": "Piccolo",
