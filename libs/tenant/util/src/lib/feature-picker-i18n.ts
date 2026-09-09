@@ -34,6 +34,10 @@ export const FEATURE_PICKER_I18N_KEYS = {
   // Per-block actions — one confirmed act each, no global save (spec Task 10).
   enable_button: PFX + 'picker.enable_button',
   disable_button: PFX + 'picker.disable_button',
+  /** On an already-enabled block whose catalogue rows are missing from the menu — runs the
+   *  same `enableBlock` flow as «Einschalten», which is idempotent and writes only the
+   *  rows that are not there yet. */
+  complete_menu_button: PFX + 'picker.complete_menu_button',
   /** «Ausschalten» confirmation — must say plainly: rows stay and are only hidden, data
    *  is untouched. Nothing is deleted, unlike the old checkbox model's implied removal. */
   disable_confirm: PFX + 'picker.disable_confirm',
@@ -143,12 +147,15 @@ export const FEATURE_PICKER_I18N_KEYS = {
   // `PickerHelpModal` (the (i) icon in the toolbar, both segments).
   help_title: PFX + 'picker.help_title',
   help_button: PFX + 'picker.help_button',
-  help_close: PFX + 'picker.help_close',
   /** What a Baustein is, versus a Menüzeile. */
   help_blocks_vs_rows: PFX + 'picker.help_blocks_vs_rows',
   /** The three actions plus the test that tells «Fixieren» and «Katalog anpassen» apart:
    *  "würdest du diesen Wert auch den anderen Mandanten wünschen?" */
   help_actions: PFX + 'picker.help_actions',
+  /** The first-setup path: a profile only highlights, the writing happens per block. */
+  help_setup: PFX + 'picker.help_setup',
+  /** Why the screen has no Save button: every action writes on its own, after its own dialog. */
+  help_saving: PFX + 'picker.help_saving',
   /** What «fixiert» means going forward (the catalogue stops writing the field). */
   help_pinned: PFX + 'picker.help_pinned',
   /** The promise: this screen deletes nothing and changes no existing row without consent. */

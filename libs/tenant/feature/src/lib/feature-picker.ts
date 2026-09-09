@@ -133,6 +133,11 @@ type PickerSegment = 'blocks' | 'rows';
                         </ion-button>
                       }
                       @case ('on') {
+                        @if (missingRowCount(block) > 0) {
+                          <ion-button slot="end" fill="outline" (click)="onEnable(block)">
+                            {{ i18n.complete_menu_button() }}
+                          </ion-button>
+                        }
                         <ion-button slot="end" fill="clear" (click)="onDisable(block)">
                           {{ i18n.disable_button() }}
                         </ion-button>
@@ -394,6 +399,31 @@ export class FeaturePicker {
 
   protected isHighlighted(block: FeatureBlock): boolean {
     return this.highlighted().has(block.id);
+  }
+
+  /**
+   * How many of a block's catalogue rows are NOT in this tenant's menu — the gate on
+   * «Menü ergänzen».
+   *
+   * Being enabled and having menu rows are two independent facts: `enabledFeatures` only says
+   * a block MAY appear, the `menuItems` documents are what makes it appear, and only
+   * `enableBlock`/`addMenuRows` ever write those. A block can therefore be on and still
+   * contribute nothing to the menu — the ordinary state of a freshly provisioned tenant, where
+   * `enabledFeatures === undefined` reads as "every non-internal block is on" (D-BB-10) before
+   * a single row exists. Such a block used to offer «Ausschalten» and nothing else, so the one
+   * button that writes the missing rows was unreachable, and applying a profile appeared to do
+   * nothing at all. `enableBlock` is idempotent (`enabledFeatures` is a union, missing rows are
+   * planned either way), so «Menü ergänzen» is just `onEnable` under a name that tells the
+   * admin what it is for here.
+   */
+  private readonly missingRowCounts = computed<ReadonlyMap<string, number>>(() => {
+    const names = this.menuDocNames();
+    return new Map(this.catalogue.map(block =>
+      [block.id, menuOutlineOf(block).filter(row => !names.has(row.name)).length]));
+  });
+
+  protected missingRowCount(block: FeatureBlock): number {
+    return this.missingRowCounts().get(block.id) ?? 0;
   }
 
   /** core / withheld / on / off — see the class doc comment for what each means. */
