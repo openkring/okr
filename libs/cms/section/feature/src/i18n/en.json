@@ -102,6 +102,7 @@
       "tooLong": "This video is {duration} long. You can upload videos up to 2 minutes.",
       "hint": "Please consider who can be seen and heard in the video.",
       "pending": "This video is being prepared and will play in a minute or two.",
+      "error": "The video cannot be loaded right now. Please try again in a moment.",
       "title": "Video",
       "download": "Download video",
       "close": "Close"

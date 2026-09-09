@@ -205,7 +205,8 @@ export class AlbumSectionComponent {
       await showVideoView(this.modalController, resolveRendering(doc, 'mp4'), image.actionUrl, {
         title: image.label || this.store.i18n.album_video_title(),
         download: this.store.i18n.album_video_download(),
-        close: this.store.i18n.album_video_close()
+        close: this.store.i18n.album_video_close(),
+        error: this.store.i18n.album_video_error()
       });
       return;
     }

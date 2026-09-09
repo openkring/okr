@@ -95,14 +95,15 @@ export async function showVideoView(
   modalController: ModalController,
   storagePath: string,
   actionUrl: string,
-  labels: { title: string; download: string; close: string }
+  labels: { title: string; download: string; close: string; error: string }
 ): Promise<void> {
   const modal = await modalController.create({
     component: VideoViewModal,
     cssClass: 'full-modal',
     componentProps: {
       storagePath, actionUrl,
-      title: labels.title, downloadLabel: labels.download, closeLabel: labels.close
+      title: labels.title, downloadLabel: labels.download, closeLabel: labels.close,
+      errorLabel: labels.error
     }
   });
   modal.present();

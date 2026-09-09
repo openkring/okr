@@ -102,6 +102,7 @@
       "tooLong": "Das Video ist {duration} lang. Du kannst Videos bis 2 Minuten hochladen.",
       "hint": "Achte darauf, wer im Video zu sehen und zu hören ist.",
       "pending": "Das Video wird aufbereitet und ist in ein bis zwei Minuten abspielbar.",
+      "error": "Das Video lässt sich gerade nicht laden. Versuch es in einem Moment noch einmal.",
       "title": "Video",
       "download": "Video herunterladen",
       "close": "Schliessen"

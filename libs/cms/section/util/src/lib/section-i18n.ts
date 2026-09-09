@@ -84,6 +84,7 @@ export const SECTION_I18N_KEYS = {
   album_video_too_long:                     PFX + 'album.video.tooLong',
   album_video_hint:                         PFX + 'album.video.hint',
   album_video_pending:                      PFX + 'album.video.pending',
+  album_video_error:                        PFX + 'album.video.error',
   album_video_title:                        PFX + 'album.video.title',
   album_video_download:                     PFX + 'album.video.download',
   album_video_close:                        PFX + 'album.video.close',
