@@ -1,0 +1,102 @@
+import { VcardProperty } from './vcard-import-types';
+import { ParsedVcard } from './vcard-parser';
+
+/**
+ * The "residual notes" block (spec §4.6, §4.7): NOTE plus every vCard property the
+ * importer cannot map, rendered verbatim under a header so nothing silently vanishes
+ * on import. Pure, dependency-free.
+ */
+
+/** Hard cap on the rendered residual block (not counting the NOTE part). */
+export const NOTES_RESIDUAL_LIMIT = 4000;
+
+/**
+ * Property names that must never be written into `notes` — notes is not the PII
+ * vault (see the privacy-model / address-model skills). Matched case-insensitively
+ * against the property name.
+ */
+export const SENSITIVE_PROPERTY_PATTERN = /ssn|ahv|iban/i;
+
+export interface ImportNotes {
+  text: string;
+  header: string;
+  residualLineCount: number;
+  warnings: string[];
+}
+
+const TRUNCATION_MARKER = '\n… (gekürzt)';
+
+function isBinaryProperty(p: VcardProperty): boolean {
+  const name = p.name.toUpperCase();
+  if (name === 'SOUND' || name === 'KEY') return true;
+  const encodings = (p.params['ENCODING'] ?? []).map((v) => v.toUpperCase());
+  return encodings.includes('B') || encodings.includes('BASE64');
+}
+
+/** `;TYPE=a,b;OTHERKEY=c` — TYPE first, remaining keys alphabetically, ENCODING/CHARSET dropped. */
+function renderParams(params: Record<string, string[]>): string {
+  const keys = Object.keys(params).filter((k) => k !== 'ENCODING' && k !== 'CHARSET');
+  keys.sort((a, b) => {
+    if (a === 'TYPE') return -1;
+    if (b === 'TYPE') return 1;
+    return a.localeCompare(b);
+  });
+  if (keys.length === 0) return '';
+  return ';' + keys.map((k) => `${k}=${(params[k] ?? []).join(',')}`).join(';');
+}
+
+/** Render one residual property as a line, or `undefined` when it must be dropped (sensitive). */
+function renderResidualLine(p: VcardProperty, warnings: string[]): string | undefined {
+  if (SENSITIVE_PROPERTY_PATTERN.test(p.name)) {
+    warnings.push(`${p.name} wurde nicht in die Notizen uebernommen, da es vermutlich sensible Daten enthaelt.`);
+    return undefined;
+  }
+
+  const paramsStr = renderParams(p.params);
+  if (isBinaryProperty(p)) {
+    const kb = Math.round(p.value.length / 1024);
+    return `${p.name}${paramsStr}: (${kb} kB, nicht importiert)`;
+  }
+  return `${p.name}${paramsStr}: ${p.value}`;
+}
+
+/**
+ * Compose the `notes` text for one imported vCard: the `NOTE` value(s) verbatim,
+ * followed — when there is anything residual or any caller-supplied extra line
+ * (e.g. a rejected BDAY) — by a header naming the import date and source file and
+ * one line per leftover property. The residual block is capped at
+ * `NOTES_RESIDUAL_LIMIT` characters; the `NOTE` part is never truncated.
+ */
+export function composeImportNotes(parsed: ParsedVcard, importDateViewDate: string, extraLines: string[] = []): ImportNotes {
+  const header = `--- vCard-Import ${importDateViewDate} · ${parsed.sourceFileName} ---`;
+  const warnings: string[] = [];
+
+  const residualLines = parsed.residual
+    .map((p) => renderResidualLine(p, warnings))
+    .filter((line): line is string => line !== undefined);
+
+  const blockLines = [...extraLines, ...residualLines];
+  const notePart = parsed.noteTexts.join('\n\n');
+
+  let text = notePart;
+  if (blockLines.length > 0) {
+    let block = [header, ...blockLines].join('\n');
+    if (block.length > NOTES_RESIDUAL_LIMIT) {
+      block = block.slice(0, NOTES_RESIDUAL_LIMIT) + TRUNCATION_MARKER;
+      warnings.push(`Der vCard-Import-Block wurde auf ${NOTES_RESIDUAL_LIMIT} Zeichen gekuerzt.`);
+    }
+    text = notePart ? `${notePart}\n\n${block}` : block;
+  }
+
+  return { text, header, residualLineCount: residualLines.length, warnings };
+}
+
+/**
+ * Merge freshly composed import notes into an existing `notes` field: append, never
+ * replace, and never append the same import block twice (identified by its header).
+ */
+export function appendImportNotes(existingNotes: string, notes: ImportNotes): string {
+  if (!notes.text) return existingNotes;
+  if (existingNotes.includes(notes.header)) return existingNotes;
+  return [existingNotes, notes.text].filter(Boolean).join('\n\n');
+}
