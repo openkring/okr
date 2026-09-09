@@ -10,6 +10,9 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { PageStore } from './page.store';
 
+/** imgix params for the blurred landing backdrop — mirrored verbatim in firebase.json (Link preload). */
+export const LANDING_BANNER_IMGIX_PARAMS = 'w=1200&auto=format,compress&fit=crop';
+
 /**
  * LandingPage is a page that greets users when they visit the application.
  * It displays a logo, title, subtitle, and a login button if the user is not authenticated.
@@ -63,9 +66,13 @@ import { PageStore } from './page.store';
   text-align: center;
   z-index: 5;
 }
-.title { text-align: center; font-size: 2rem; }
-.subtitle { text-align: center; font-size: 1.2rem; }
+/* Reserve the rows before their content arrives: the title is translated asynchronously (starts
+   as '') and the logo has no intrinsic size until loaded — both used to push the grid down once
+   they came in (CLS 0.038 + 0.018 measured 2026-09-09, perf-baselines.md). */
+.title { text-align: center; font-size: 2rem; display: block; min-height: 2.4rem; }
+.subtitle { text-align: center; font-size: 1.2rem; display: block; min-height: 1.5rem; }
 .help { text-align: center; font-size: 1rem; }
+.logo { aspect-ratio: 1 / 1; }
 .logo, ion-button {
   max-width: 150px;
   text-align: center;
@@ -162,7 +169,11 @@ export class LandingPage {
   );
 
   protected logoUrl = computed (() => this.store.getImgixUrl(this.page()?.logoUrl));
-  protected bannerUrl = computed(() => this.store.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL));
+  // The backdrop is drawn blurred (8 px) and at 70 % opacity, so the 1716×1462 original was pure
+  // waste: 136 KB avif on the phone for an image nobody sees sharp. w=1200 keeps desktop covered
+  // and roughly halves the bytes. Keep in sync with the Link preload header in firebase.json —
+  // the preload only helps when both URLs are byte-identical.
+  protected bannerUrl = computed(() => this.store.getImgixUrl(this.page()?.bannerUrl || DEFAULT_BANNER_URL, LANDING_BANNER_IMGIX_PARAMS));
   protected isAuthenticated = computed(() => this.store.appStore.isAuthenticated());
 
   protected async gotoHome(): Promise<void> {

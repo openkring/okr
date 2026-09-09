@@ -239,10 +239,11 @@ export const _PageStore = signalStore(
         return store.appStore.appConfig()[key];
       },
 
-      getImgixUrl(url: string | undefined): string | undefined {
+      /** @param imgixParams overrides the extension-derived defaults, e.g. a sized variant for a blurred backdrop */
+      getImgixUrl(url: string | undefined, imgixParams?: string): string | undefined {
         if (!url) return undefined;
         const imgixBaseUrl = store.imgixBaseUrl();
-        return `${imgixBaseUrl}/${getImgixUrlWithAutoParams(url)}`;
+        return `${imgixBaseUrl}/${getImgixUrlWithAutoParams(url, imgixParams)}`;
       },
 
       /******************************** actions ... ******************************************* */
