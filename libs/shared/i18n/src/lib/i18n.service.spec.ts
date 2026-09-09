@@ -38,15 +38,22 @@ import { I18nService } from './i18n.service';
 
 describe('I18nService', () => {
   let service: I18nService;
+  // Hoisted out of beforeEach so the language tests can assert on the collaborator.
+  let transloco: {
+    setActiveLang: ReturnType<typeof vi.fn>;
+    getActiveLang: ReturnType<typeof vi.fn>;
+    selectTranslate: ReturnType<typeof vi.fn>;
+    load: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
-    const mockTranslocoService = {
+    transloco = {
       setActiveLang: vi.fn(),
       getActiveLang: vi.fn(() => 'de'),
       selectTranslate: vi.fn((key, arg) => of(`translated:${key}${arg ? ':' + JSON.stringify(arg) : ''}`)),
       load: vi.fn(() => of({})),
     };
-    service = new I18nService(mockTranslocoService as any);
+    service = new I18nService(transloco as any);
   });
 
   it('should be defined', () => {
@@ -58,8 +65,24 @@ describe('I18nService', () => {
   });
 
   it('should set active language using selectLanguage', () => {
+    service.setActiveLang('fr', 'en');
+    expect(transloco.setActiveLang).toHaveBeenCalledWith('fr');
+  });
+
+  // Performance (2026-09-09, perf-baselines.md »Die Sprache noch einmal auf denselben Wert setzen«):
+  // Transloco's setActiveLang pushes into a BehaviorSubject without a value check, so every
+  // selectTranslate in the app re-runs. The caller is an effect over currentUser(), a live Firestore
+  // stream that emits at least twice per boot with the same language — re-translating for nothing.
+  it('should not re-activate the language that is already active', () => {
+    transloco.getActiveLang.mockReturnValue('de');
     service.setActiveLang('de', 'en');
-    // You can add assertions for the mock if needed
+    expect(transloco.setActiveLang).not.toHaveBeenCalled();
+  });
+
+  it('should still switch when the user picks a different language', () => {
+    transloco.getActiveLang.mockReturnValue('de');
+    service.setActiveLang('fr', 'de');
+    expect(transloco.setActiveLang).toHaveBeenCalledExactlyOnceWith('fr');
   });
 
   it('should get active language', () => {

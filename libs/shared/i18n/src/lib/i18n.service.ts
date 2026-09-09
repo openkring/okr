@@ -32,8 +32,20 @@ export class I18nService {
   // availableLanguages defaults to the full supported set; pass a tenant's enabled subset to
   // restrict seeding. selectLanguage falls back browser → defaultLanguage when unsupported.
   public setActiveLang(language?: string, defaultLanguage = DefaultLanguageCode, availableLanguages: string[] = AvailableLanguages) {
-  const selectedLanguage = selectLanguage(availableLanguages, defaultLanguage, language);
-  this.translocoService.setActiveLang(selectedLanguage);
+    const selectedLanguage = selectLanguage(availableLanguages, defaultLanguage, language);
+    // PERFORMANCE — measured 2026-09-09 (perf-baselines.md, »Die Sprache noch einmal auf denselben
+    // Wert setzen«): Transloco's `setActiveLang` pushes into a plain `BehaviorSubject` with NO value
+    // check, and every `selectTranslate` in the app hangs off it through a `switchMap`. Setting the
+    // language it already has therefore re-translates the whole UI for nothing.
+    //
+    // That is the common path, not the exception: the only caller is an effect in `AppStore` over
+    // `currentUser()`, a LIVE Firestore stream that emits at least twice per boot (cache snapshot,
+    // then server snapshot) and again on every write to the user document — settings, delivery
+    // channels, read markers. The user's language is the same in all of them.
+    //
+    // A real change still goes through, so switching the language in the profile keeps working.
+    if (selectedLanguage === this.translocoService.getActiveLang()) return;
+    this.translocoService.setActiveLang(selectedLanguage);
   }
 
   public getActiveLang(): string {
