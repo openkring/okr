@@ -86,6 +86,26 @@ describe('toImageConfig for videos', () => {
     expect(config.pending).toBeFalsy();
   });
 
+  it('keeps poster and playability independent: an mp4 without a jpg is ready but has no poster', () => {
+    // Die Function schreibt bewusst nur das mp4, wenn der Poster-Schnitt scheitert
+    // (Clip unter zwei Sekunden). Beide Felder muessen dann auseinanderlaufen.
+    const config = toImageConfig(videoDoc([
+      { format: 'mp4', fullPath: 'tenant/scs/section/s1/album/renderings/doc1.mp4',
+        mimeType: 'video/mp4', size: 1, generator: 'ffmpeg' },
+    ]));
+    expect(config.pending).toBeFalsy();                                  // abspielbar
+    expect(config.url).toBe('tenant/scs/section/s1/album/clip.mov');     // aber kein Poster
+  });
+
+  it('keeps poster and playability independent: a jpg without an mp4 has a poster but is not ready', () => {
+    const config = toImageConfig(videoDoc([
+      { format: 'jpg', fullPath: 'tenant/scs/section/s1/album/renderings/doc1.jpg',
+        mimeType: 'image/jpeg', size: 1, generator: 'ffmpeg' },
+    ]));
+    expect(config.url).toBe('tenant/scs/section/s1/album/renderings/doc1.jpg'); // Poster da
+    expect(config.pending).toBe(true);                                          // aber noch nicht abspielbar
+  });
+
   it('leaves an image untouched', () => {
     const doc = new DocumentModel('scs');
     doc.okey = 'doc2';
