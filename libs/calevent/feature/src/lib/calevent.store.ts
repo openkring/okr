@@ -13,7 +13,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { Attendee, AvatarInfo, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
 import { addDuration, calculateRecurringDates, chipMatches, compareDate, DateFormat, debugListLoaded, extractSecondPartOfOptionalTupel, generateRandomString, getAttendee, getAvatarInfoForCurrentUser, getDayDiff, getArchiveInclusiveQuery, getFullName, getSystemQuery, getTodayStr, fill, isCalendarPublic, isAfterDate, isAfterOrEqualDate, nameMatches, pad, prettyFormatDate, removeKeyFromOkrModel, warn } from '@okr/shared-util-core';
-import { confirm, copyToClipboardWithConfirmation, error, lazyService, navigateByUrl, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
+import { confirm, copyToClipboardDeferred, error, lazyService, navigateByUrl, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import type { InvitePersonsFormData, InvitePersonsI18n } from '@okr/relationship-invitation-util';
 import { yearMatches } from '@okr/shared-categories';
@@ -842,21 +842,31 @@ export const CalEventStore = signalStore(
        * darf die Aktion allen registrierten Nutzern offenstehen.
        */
       async copyLink(calevent: CalEventModel, origin: string): Promise<void> {
-        const result = await store.aliasMintService.resolveAlias({
+        // Kein `await` vor dem Clipboard-Aufruf: das Prägen dauert auf einer kalten Function
+        // mehrere Sekunden, danach ist die Nutzergeste verbraucht und Chrome bräuchte eine
+        // Berechtigung, die es ohne Geste nicht abfragen kann — der Kopiervorgang blieb dann
+        // stumm hängen (7.24/7.25). copyToClipboardDeferred übergibt das Promise dem Browser.
+        const url = store.aliasMintService.resolveAlias({
           space: CALEVENT_ALIAS_SPACE,
           original: `${CalEventModelName}.${calevent.okey}`,
           targetType: 'url',
           targetUrl: buildCalEventLink(origin, calevent.okey),
           notes: calevent.name,
-        });
-        if (!result.ok) {
+        }).then(result => {
+          if (result.ok) return result.url;
           // Dem Nutzer der übersetzte Satz, der Konsole die Servermeldung: sie ist genauer (sie
           // steht neben der Regel, die sie ausgelöst hat), aber englisch und für Admins gedacht.
           warn(`CalEventStore.copyLink -> ${result.code}: ${result.message}`);
+          throw new Error(result.code);
+        });
+        try {
+          await copyToClipboardDeferred(url);
+        } catch (ex) {
+          warn(`CalEventStore.copyLink -> clipboard: ${ex}`);
           error(store.toastController, store.i18n.copy_link_error());
           return;
         }
-        await copyToClipboardWithConfirmation(store.toastController, result.url, store.i18n.copy_link_conf());
+        await showToast(store.toastController, store.i18n.copy_link_conf());
       },
 
       async view(calevent: CalEventModel): Promise<void> {

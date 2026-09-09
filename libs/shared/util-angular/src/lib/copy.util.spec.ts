@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as alertUtil from './alert.util';
 import {
   copyToClipboard,
+  copyToClipboardDeferred,
   copyToClipboardWithConfirmation,
   pasteFromClipboard,
   times
@@ -258,6 +259,86 @@ describe('copy.util', () => {
       execCommand.mockReturnValue(false);
 
       await expect(copyToClipboard('x')).rejects.toThrow('execCommand copy failed');
+    });
+  });
+
+  // Regression (scs 7.24/7.25, «Link zum Termin kopieren»): the value to copy comes from a
+  // callable that can take >5s on a cold start. Awaiting it and THEN writing leaves the user
+  // gesture behind; Chrome then needs a clipboard permission it cannot prompt for without a
+  // gesture and the write promise never settles — no toast, no error, nothing copied.
+  // The fix hands the pending value to navigator.clipboard.write() synchronously, inside the gesture.
+  describe('copyToClipboardDeferred', () => {
+    const originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    const originalClipboardItem = (globalThis as { ClipboardItem?: unknown }).ClipboardItem;
+    let write: ReturnType<typeof vi.fn>;
+    let writeText: ReturnType<typeof vi.fn>;
+    let items: Record<string, unknown>[];
+
+    beforeEach(() => {
+      vi.mocked(Capacitor.isNativePlatform).mockReturnValue(false);
+      items = [];
+      write = vi.fn().mockResolvedValue(undefined);
+      writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', { value: { write, writeText }, configurable: true });
+      // jsdom has no ClipboardItem; a minimal stand-in that records what it was given
+      (globalThis as { ClipboardItem?: unknown }).ClipboardItem = class {
+        constructor(public readonly data: Record<string, unknown>) { items.push(data); }
+      };
+    });
+
+    afterEach(() => {
+      if (originalClipboard) Object.defineProperty(navigator, 'clipboard', originalClipboard);
+      else delete (navigator as unknown as { clipboard?: unknown }).clipboard;
+      (globalThis as { ClipboardItem?: unknown }).ClipboardItem = originalClipboardItem;
+    });
+
+    it('hands the pending value to clipboard.write synchronously — before the value resolves', async () => {
+      let resolve!: (v: string) => void;
+      const pending = new Promise<string>(r => { resolve = r; });
+
+      const done = copyToClipboardDeferred(pending);
+      expect(write).toHaveBeenCalledTimes(1);         // called inside the gesture, value still pending
+      expect(items[0]['text/plain']).toBeInstanceOf(Promise);
+
+      resolve('https://app.seeclub.org/s/link/abc123');
+      await done;
+      const blob = await (items[0]['text/plain'] as Promise<Blob>);
+      expect(blob.type).toBe('text/plain');
+      expect(blob.size).toBe('https://app.seeclub.org/s/link/abc123'.length);   // jsdom Blob has no text()
+      expect(writeText).not.toHaveBeenCalled();
+    });
+
+    it('falls back to await-then-copy when the browser has no ClipboardItem', async () => {
+      delete (globalThis as { ClipboardItem?: unknown }).ClipboardItem;
+
+      await copyToClipboardDeferred(Promise.resolve('value'));
+
+      expect(write).not.toHaveBeenCalled();
+      expect(writeText).toHaveBeenCalledWith('value');
+    });
+
+    it('falls back to await-then-copy when clipboard.write rejects (no promise support)', async () => {
+      write.mockRejectedValue(new TypeError('not a Blob'));
+
+      await copyToClipboardDeferred(Promise.resolve('value'));
+
+      expect(writeText).toHaveBeenCalledWith('value');
+    });
+
+    it('rejects with the value error when the pending value fails', async () => {
+      write.mockRejectedValue(new Error('item rejected'));
+
+      await expect(copyToClipboardDeferred(Promise.reject(new Error('mint failed')))).rejects.toThrow('mint failed');
+      expect(writeText).not.toHaveBeenCalled();
+    });
+
+    it('uses the native pasteboard after awaiting on Capacitor', async () => {
+      vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+
+      await copyToClipboardDeferred(Promise.resolve('native'));
+
+      expect(write).not.toHaveBeenCalled();
+      expect(mockClipboard.write).toHaveBeenCalledWith({ string: 'native' });
     });
   });
 

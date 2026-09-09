@@ -100,6 +100,37 @@ export async function copyToClipboard(content: string | string[] | number | bool
 }
 
 /**
+ * Copies a value that is still being computed (e.g. a short link minted by a Cloud Function).
+ *
+ * Why not `copyToClipboard(await content)`: a clipboard write is only allowed while the user
+ * gesture is fresh (transient activation, ~5s in Chrome). A cold callable easily takes longer;
+ * afterwards Chrome needs a clipboard permission it cannot prompt for without a gesture, and the
+ * write promise never settles — no error, no toast, nothing copied (scs 7.24/7.25 copy-link bug).
+ *
+ * `ClipboardItem` accepts a Promise as value (Baseline 2025: Chrome, Safari 13.1+, Firefox 127+),
+ * so the write is started synchronously inside the gesture and the browser waits for the value.
+ * Browsers without it, and a `write()` that rejects, fall back to the plain await-then-copy path.
+ * The native pasteboard needs no gesture, so Capacitor simply awaits.
+ *
+ * @param content resolves to the text to copy; a rejection is passed through to the caller.
+ */
+export async function copyToClipboardDeferred(content: Promise<string>): Promise<void> {
+  if (!Capacitor.isNativePlatform()
+      && typeof ClipboardItem !== 'undefined'
+      && typeof navigator !== 'undefined' && navigator.clipboard?.write) {
+    try {
+      const blob = content.then(text => new Blob([text], { type: 'text/plain' }));
+      await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]);
+      return;
+    } catch {
+      // Promise values unsupported, NotAllowedError, or `content` itself rejected: the
+      // fallback below re-awaits `content`, so a value error still reaches the caller.
+    }
+  }
+  await copyToClipboard(await content);
+}
+
+/**
  * Retrieves the current contents of the clipboard.
  * @returns A promise that resolves with the contents of the clipboard as a string.
  */
