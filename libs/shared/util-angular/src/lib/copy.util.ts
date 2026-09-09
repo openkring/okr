@@ -120,6 +120,10 @@ export async function copyToClipboardDeferred(content: Promise<string>): Promise
       && typeof navigator !== 'undefined' && navigator.clipboard?.write) {
     try {
       const blob = content.then(text => new Blob([text], { type: 'text/plain' }));
+      // The clipboard consumes `blob`; if `write` itself fails first (promise values
+      // unsupported, NotAllowedError) nobody does, and a rejecting `content` would escape as
+      // an unhandled rejection. The error still reaches the caller via the re-await below.
+      blob.catch(() => undefined);
       await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]);
       return;
     } catch {
