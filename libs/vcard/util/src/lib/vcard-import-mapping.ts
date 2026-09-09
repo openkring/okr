@@ -89,7 +89,7 @@ function mapChannel(ch: VcardChannel, isOrgCard: boolean, tenantId: string, avai
   if (ch.channel === 'postal') {
     const { streetName, streetNumber } = splitStreet(ch.street);
     const countryCode = countryNameToCode(ch.country, warnings);
-    address = createFavoriteAddress('postal', usage, streetName, tenantId, streetNumber, '', ch.zip ?? '', ch.city ?? '', countryCode || 'CH');
+    address = createFavoriteAddress('postal', usage, streetName, tenantId, streetNumber, '', ch.zip ?? '', ch.city ?? '', countryCode);
   } else {
     address = createFavoriteAddress(ch.channel, usage, ch.value ?? '', tenantId);
   }
@@ -129,10 +129,11 @@ export function toImportDraft(parsed: ParsedVcard, tenantId: string, availableUs
     warnings.push(`BDAY "${parsed.bday}" konnte nicht als Datum uebernommen werden.`);
   }
 
-  // DEATHDATE/X-DEATH-DATE are consumed by the parser (never land in `residual`) but
-  // ParsedVcard carries no field for them (see Task 2 report §5) — there is nothing to
-  // read `dod` from yet, so it always comes out ''.
-  const dod = '';
+  const dod = vcardDateToStoreDate(parsed.deathdate);
+  if (parsed.deathdate && !dod) {
+    extraLines.push(`DEATHDATE: ${parsed.deathdate}   ← kein gültiges Datum`);
+    warnings.push(`DEATHDATE "${parsed.deathdate}" konnte nicht als Datum uebernommen werden.`);
+  }
 
   const composed = composeImportNotes(parsed, importDateViewDate, extraLines);
   warnings.push(...composed.warnings);

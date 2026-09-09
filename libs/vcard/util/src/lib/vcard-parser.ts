@@ -12,6 +12,8 @@ import { VcardChannel, VcardEmployment, VcardRecord, VcardRelatedName, VcardTarg
 
 export interface ParsedVcard extends VcardRecord {
   sourceFileName: string;
+  /** raw DEATHDATE/X-DEATH-DATE value, import-only — VcardRecord (export) has no death date. */
+  deathdate?: string;
   /** properties no mapping consumed — input to the notes block (§4.6) */
   residual: VcardProperty[];
   /** NOTE values, unescaped, in source order */
@@ -199,6 +201,7 @@ function parseBlock(props: VcardProperty[], sourceFileName: string): ParsedVcard
     displayName: displayName as string,
     orgName,
     bday: findProp(props, 'BDAY')?.value,
+    deathdate: findProp(props, 'DEATHDATE')?.value ?? findProp(props, 'X-DEATH-DATE')?.value,
     photoBase64: parsePhoto(props, kind, warnings),
     channels: parseChannels(props, abLabelsByGroup),
     employment: parseEmployment(props, kind, orgProp),

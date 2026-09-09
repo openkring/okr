@@ -105,6 +105,26 @@ describe('parseVcards — real-world dialects', () => {
     expect(parsed.residual).toEqual([]);
   });
 
+  it('extracts DEATHDATE into deathdate and keeps it out of residual', () => {
+    const text = ['BEGIN:VCARD', 'VERSION:3.0', 'FN:Anna Muster', 'DEATHDATE:2020-05-01', 'END:VCARD'].join('\r\n');
+    const [parsed] = parseVcards(text, 'k.vcf');
+    expect(parsed.deathdate).toBe('2020-05-01');
+    expect(parsed.residual).toEqual([]);
+  });
+
+  it('falls back to X-DEATH-DATE when DEATHDATE is absent', () => {
+    const text = ['BEGIN:VCARD', 'VERSION:3.0', 'FN:Anna Muster', 'X-DEATH-DATE:2020-05-01', 'END:VCARD'].join('\r\n');
+    const [parsed] = parseVcards(text, 'k.vcf');
+    expect(parsed.deathdate).toBe('2020-05-01');
+    expect(parsed.residual).toEqual([]);
+  });
+
+  it('leaves deathdate undefined when neither property is present', () => {
+    const text = ['BEGIN:VCARD', 'VERSION:3.0', 'FN:Anna Muster', 'END:VCARD'].join('\r\n');
+    const [parsed] = parseVcards(text, 'k.vcf');
+    expect(parsed.deathdate).toBeUndefined();
+  });
+
   it('sets sourceFileName on every card of the file', () => {
     const text = ['BEGIN:VCARD', 'FN:A', 'END:VCARD', 'BEGIN:VCARD', 'FN:B', 'END:VCARD'].join('\r\n');
     expect(parseVcards(text, 'kontakte.vcf').map((p) => p.sourceFileName)).toEqual(['kontakte.vcf', 'kontakte.vcf']);

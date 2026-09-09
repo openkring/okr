@@ -108,6 +108,25 @@ describe('toImportDraft', () => {
     expect(d.relatedNames).toEqual([{ name: 'Beat Muster', label: '_$!<Spouse>!$_' }]);
   });
 
+  it('leaves countryCode empty (not CH) when the country name does not resolve', () => {
+    const d = toImportDraft(parsed({ channels: [
+      { channel: 'postal', type: 'HOME', street: 'Hauptstrasse 1', zip: '1234', city: 'Nirgends', country: 'Nirgendland' },
+    ] }), TENANT, USAGES, '09.09.2026');
+    expect(d.addresses[0]).toMatchObject({ addressChannel: 'postal', countryCode: '' });
+    expect(d.warnings.some((w) => w.includes('Nirgendland'))).toBe(true);
+  });
+
+  it('carries a valid DEATHDATE into dod', () => {
+    expect(toImportDraft(parsed({ deathdate: '2020-05-01' }), TENANT, USAGES, '09.09.2026').dod).toBe('20200501');
+  });
+
+  it('routes an impossible DEATHDATE to notes instead of dod', () => {
+    const d = toImportDraft(parsed({ deathdate: '2020-02-30' }), TENANT, USAGES, '09.09.2026');
+    expect(d.dod).toBe('');
+    expect(d.notes).toContain('2020-02-30');
+    expect(d.warnings.length).toBeGreaterThan(0);
+  });
+
   it('never emits an ssn or iban address, whatever the card carried', () => {
     const d = toImportDraft(parsed({ residual: [
       { name: 'X-AHV-NR', value: '756.1234.5678.90', rawValue: '756.1234.5678.90', params: {} },
