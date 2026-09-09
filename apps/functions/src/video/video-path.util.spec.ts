@@ -71,15 +71,26 @@ describe('isVideoUpload', () => {
   });
 });
 
+/** The scale filter both builders must use — asserted literally, because its exact text is the fix. */
+const SCALE_FILTER = "scale=-2:'min(720,trunc(ih/2)*2)'";
+
 describe('buildTranscodeArgs', () => {
   it('caps the height at 720, keeps even dimensions and front-loads the moov atom', () => {
     const args = buildTranscodeArgs('/tmp/in.mov', '/tmp/out.mp4');
     expect(args).toContain('-movflags');
     expect(args).toContain('+faststart');
-    expect(args.join(' ')).toContain("scale=-2:'min(720,ih)'");
+    expect(args.join(' ')).toContain(SCALE_FILTER);
     expect(args.join(' ')).toContain('libx264');
     expect(args.join(' ')).toContain('aac');
     expect(args[args.length - 1]).toBe('/tmp/out.mp4');
+  });
+
+  it('rounds the source height down to even BEFORE capping it', () => {
+    // min(720,ih) alone let an odd source height (1079, 607 — a phone-cropped clip) through
+    // unchanged, and libx264 refuses "height not divisible by 2", failing the whole transcode.
+    const filter = buildTranscodeArgs('/tmp/in.mov', '/tmp/out.mp4').join(' ');
+    expect(filter).toContain('trunc(ih/2)*2');
+    expect(filter).not.toContain("min(720,ih)'");
   });
 });
 
@@ -89,6 +100,18 @@ describe('buildPosterArgs', () => {
     expect(args.indexOf('-ss')).toBeLessThan(args.indexOf('-i'));
     expect(args).toContain('-frames:v');
     expect(args[args.length - 1]).toBe('/tmp/poster.jpg');
+  });
+
+  it('scales the poster like the video, so a 4K clip does not leave a multi-MB JPEG behind', () => {
+    const args = buildPosterArgs('/tmp/in.mov', '/tmp/poster.jpg', 2);
+    expect(args).toContain('-vf');
+    expect(args.join(' ')).toContain(SCALE_FILTER);
+  });
+
+  it('uses the very same filter as the transcode — a poster is never larger than its video', () => {
+    const poster = buildPosterArgs('/tmp/in.mov', '/tmp/poster.jpg', 0);
+    const video = buildTranscodeArgs('/tmp/in.mov', '/tmp/out.mp4');
+    expect(poster[poster.indexOf('-vf') + 1]).toBe(video[video.indexOf('-vf') + 1]);
   });
 });
 

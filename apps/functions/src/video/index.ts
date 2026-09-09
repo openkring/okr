@@ -197,7 +197,20 @@ export const onAlbumVideoFinalized = onObjectFinalized(
 
       // The mp4 goes up FIRST and stands on its own. The poster is a nicety; the mp4 is the
       // feature, and nothing about the poster may cost us the transcode we already paid for.
-      await bucket.upload(localVideo, { destination: videoPath, metadata: { contentType: 'video/mp4' } });
+      // The download token is written by US, not left to Firebase to backfill. The player resolves
+      // this object with `getDownloadURL`, and a download URL is only obtainable when the object
+      // carries a `firebaseStorageDownloadTokens` entry. Objects written through the Admin SDK do
+      // not go through the Firebase layer that mints one; that a token appears anyway is emergent
+      // behaviour of the storage endpoint, undocumented, and nothing else in this repo depends on
+      // it. Minting it here costs one UUID and makes the playable URL a property of the upload
+      // rather than a favour.
+      await bucket.upload(localVideo, {
+        destination: videoPath,
+        metadata: {
+          contentType: 'video/mp4',
+          metadata: { firebaseStorageDownloadTokens: randomUUID() },
+        },
+      });
       uploaded.push(videoPath);
       const [videoMeta] = await bucket.file(videoPath).getMetadata();
 

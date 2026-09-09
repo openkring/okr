@@ -43,14 +43,25 @@ export function isVideoUpload(objectName: string, contentType: string): boolean 
 }
 
 /**
- * H.264/AAC in an mp4, height capped at 720. `-2` on the width keeps the aspect ratio and
- * rounds to an even number, which libx264 requires. `+faststart` moves the moov atom to the
- * front so playback starts before the file is fully downloaded.
+ * Downscale to at most 720 lines, both dimensions even.
+ *
+ * `-2` on the width keeps the aspect ratio and rounds to an even number, which libx264 requires.
+ * The height needs the same treatment and did not have it: a source of odd height (1080p rotated
+ * and cropped by a phone editor is routinely 1079 or 607 lines) is SHORTER than 720, so
+ * `min(720,ih)` passed the odd height straight through and libx264 refused the frame size —
+ * "height not divisible by 2" — which failed the whole transcode. `trunc(ih/2)*2` rounds the
+ * source height down to even BEFORE the cap, so both branches of the min() are even.
+ */
+const SCALE_TO_720 = "scale=-2:'min(720,trunc(ih/2)*2)'";
+
+/**
+ * H.264/AAC in an mp4, height capped at 720. `+faststart` moves the moov atom to the front so
+ * playback starts before the file is fully downloaded.
  */
 export function buildTranscodeArgs(input: string, output: string): string[] {
   return [
     '-i', input,
-    '-vf', "scale=-2:'min(720,ih)'",
+    '-vf', SCALE_TO_720,
     '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23',
     '-c:a', 'aac', '-b:a', '128k',
     '-movflags', '+faststart',
@@ -58,10 +69,21 @@ export function buildTranscodeArgs(input: string, output: string): string[] {
   ];
 }
 
-/** One frame as the poster. `-ss` BEFORE `-i` seeks by keyframe and is orders of magnitude
- *  faster than decoding up to that point. */
+/**
+ * One frame as the poster. `-ss` BEFORE `-i` seeks by keyframe and is orders of magnitude
+ * faster than decoding up to that point.
+ *
+ * Scaled with the same filter as the video. Without it the frame was written at the SOURCE
+ * resolution: a 4K clip produced a multi-megabyte JPEG sitting permanently in the bucket, to be
+ * used as a grid thumbnail a few hundred pixels wide. The poster must never be larger than the
+ * video it is a poster for.
+ */
 export function buildPosterArgs(input: string, output: string, atSecond: number): string[] {
-  return ['-ss', String(atSecond), '-i', input, '-frames:v', '1', '-q:v', '3', '-y', output];
+  return [
+    '-ss', String(atSecond), '-i', input,
+    '-vf', SCALE_TO_720,
+    '-frames:v', '1', '-q:v', '3', '-y', output,
+  ];
 }
 
 /** Attempts of the `docs` lookup before the object counts as "not part of any album". */
