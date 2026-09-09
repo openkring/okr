@@ -6,8 +6,48 @@
  */
 
 /**
-  Add here in :root your custom color theme that you can generate with Ionics Color Generator.
-  https://ionicframework.com/docs/theming/color-generator
+  ============================================================================
+  PLATZHALTER — dieser Mandant hat noch KEINE Markenfarben.
+  ============================================================================
+
+  Die Farben unten sind ein bewusst neutrales Schiefergrau. Sie sind KEIN
+  Design, sondern ein sichtbares "noch nicht gemacht": eine frisch generierte
+  App soll ungebrandet AUSSEHEN, statt fertig auszusehen und dabei die Farben
+  eines fremden Mandanten zu tragen.
+
+  (Bis 2026-09 stand hier die Palette des Seeclub Staefa. Vier Mandanten gingen
+  damit live und sahen monatelang aus wie ein Ruderclub — eine fertig wirkende
+  Palette bringt niemanden zum Nachfragen.)
+
+  SO ERSETZT DU SIE — Details in der Skill `styling`:
+
+    1. Markenwerte suchen. Quelle ist, in dieser Reihenfolge:
+       a) apps/<tenant>-website/assets/brand-styleguide.html — der Brand Guide,
+          falls vorhanden. Er ist die verbindliche Referenz.
+       b) apps/<tenant>-website/assets/site.css (:root)
+       c) die Fuellfarben im Logo selbst:
+          curl -s https://bkaiser.imgix.net/tenant/<tenant>/logo/logo_round.svg \
+            | grep -oE '(fill|stroke)="#[0-9a-fA-F]{3,6}"' | sort -u
+
+    2. Bloecke erzeugen (Shade = 12 % Schwarz, Tint = 10 % Weiss) und dabei jede
+       -contrast-Farbe gegen WCAG pruefen — auf einer hellen Markenfarbe ist
+       Weiss falsch:
+          node .claude/skills/styling/palette.mjs primary=#... secondary=#...
+
+    3. Pruefen, wie schwer eine Rolle wiegt, bevor sie eine blasse Farbe bekommt:
+       color="secondary" steht in ~104 Dateien, color="tertiary" in einer.
+
+    4. Die Helfer mitziehen: --bk-fab-background, --bk-banner-background,
+       --fa-primary-color, --fa-secondary-color, und den Dark-Mode-Block unten.
+
+    5. success / warning / danger NICHT anfassen — die sind semantisch.
+
+    6. Diesen Kommentar durch einen ersetzen, der sagt, woher jede Rolle kommt.
+       Beispiele: apps/kwa-app, apps/elab-app, apps/bka-app.
+
+  Gibt es fuer den Mandanten noch keinen Brand Guide, ist die Skill
+  `brand-styleguide` der naechste Schritt: erst die Marke festhalten, dann das
+  Theme davon ableiten — nie umgekehrt.
  */
  :root {
   --bk-h1-size: 80px;
@@ -25,40 +65,40 @@
   --bk-form-field-background: white;
   --bk-form-field-padding: 0;
   --bk-form-button-padding: 0.5em;
-  --bk-banner-background: #6d89b9;
+  --bk-banner-background: #475569;  // Platzhalter
   --bk-row-selection-color: lightblue;
   --bk-test-color: #ccffff;
   --bk-light-warning-color: #ffe6993e;
   --bk-archived-color: #ffcc99;
-  --bk-fab-background: #014da2;
+  --bk-fab-background: #475569;  // Platzhalter
 
   // FontAwesome colouring
-  --fa-primary-color: #014da2;
-  --fa-secondary-color: #009d53;
+  --fa-primary-color: #475569;  // Platzhalter
+  --fa-secondary-color: #334155;  // Platzhalter
 
   /** primary **/
-  --ion-color-primary: #009D53;
-  --ion-color-primary-rgb: 0,157,83;
+  --ion-color-primary: #475569;
+  --ion-color-primary-rgb: 71,85,105;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255,255,255;
-  --ion-color-primary-shade: #008a49;
-  --ion-color-primary-tint: #1aa76345;
+  --ion-color-primary-shade: #3e4b5c;
+  --ion-color-primary-tint: #596678;
 
   /** secondary **/
-  --ion-color-secondary: #014da2;
-  --ion-color-secondary-rgb: 1,77,162;
+  --ion-color-secondary: #334155;
+  --ion-color-secondary-rgb: 51,65,85;
   --ion-color-secondary-contrast: #ffffff;
   --ion-color-secondary-contrast-rgb: 255,255,255;
-  --ion-color-secondary-shade: #01448f;
-  --ion-color-secondary-tint: #1a5fab;
+  --ion-color-secondary-shade: #2d394b;
+  --ion-color-secondary-tint: #475466;
 
   /** tertiary **/
-  --ion-color-tertiary: #00A2FF;
-  --ion-color-tertiary-rgb: 0,162,255;
-  --ion-color-tertiary-contrast: #ffffff;
-  --ion-color-tertiary-contrast-rgb: 255,255,255;
-  --ion-color-tertiary-shade: #008fe0;
-  --ion-color-tertiary-tint: #1aabff;
+  --ion-color-tertiary: #94a3b8;
+  --ion-color-tertiary-rgb: 148,163,184;
+  --ion-color-tertiary-contrast: #000000;
+  --ion-color-tertiary-contrast-rgb: 0,0,0;
+  --ion-color-tertiary-shade: #828fa2;
+  --ion-color-tertiary-tint: #9facbf;
 
 	--ion-color-success: #2dd55b;
 	--ion-color-success-rgb: 45,213,91;
@@ -81,26 +121,26 @@
 	--ion-color-danger-shade: #ad000d;
 	--ion-color-danger-tint: #cb1a27;
 
-	--ion-color-light: #f6f8fc;
-	--ion-color-light-rgb: 246,248,252;
+	--ion-color-light: #f1f5f9;
+	--ion-color-light-rgb: 241,245,249;
 	--ion-color-light-contrast: #000000;
 	--ion-color-light-contrast-rgb: 0,0,0;
-	--ion-color-light-shade: #d8dade;
-	--ion-color-light-tint: #f7f9fc;
+	--ion-color-light-shade: #d4d8db;
+	--ion-color-light-tint: #f2f6fa;
 
-	--ion-color-medium: #5f5f5f;
-	--ion-color-medium-rgb: 95,95,95;
+	--ion-color-medium: #64748b;
+	--ion-color-medium-rgb: 100,116,139;
 	--ion-color-medium-contrast: #ffffff;
 	--ion-color-medium-contrast-rgb: 255,255,255;
-	--ion-color-medium-shade: #545454;
-	--ion-color-medium-tint: #6f6f6f;
+	--ion-color-medium-shade: #58667a;
+	--ion-color-medium-tint: #748297;
 
-	--ion-color-dark: #2f2f2f;
-	--ion-color-dark-rgb: 47,47,47;
+	--ion-color-dark: #0f172a;
+	--ion-color-dark-rgb: 15,23,42;
 	--ion-color-dark-contrast: #ffffff;
 	--ion-color-dark-contrast-rgb: 255,255,255;
-	--ion-color-dark-shade: #292929;
-	--ion-color-dark-tint: #444444;
+	--ion-color-dark-shade: #0d1425;
+	--ion-color-dark-tint: #272e3f;
 
 	--ion-color-white: #ffffff;
 	--ion-color-white-rgb: 255,255,255;
@@ -134,12 +174,12 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ion-color-light: #444343;
-    --ion-color-light-rgb: 47,47,47;
+    --ion-color-light: #1e293b;
+    --ion-color-light-rgb: 30,41,59;
     --ion-color-light-contrast: #ffffff;
     --ion-color-light-contrast-rgb: 255,255,255;
-    --ion-color-light-shade: #292929;
-    --ion-color-light-tint: #444444;
+    --ion-color-light-shade: #1a2434;
+    --ion-color-light-tint: #353f4f;
   }
 }
 

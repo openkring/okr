@@ -90,4 +90,28 @@ describe('app generator', () => {
     expect(tree.exists('apps/acme-app/src/environments/environment.ts')).toBe(false);
     expect(tree.exists('apps/acme-app/src/firebase-config.js')).toBe(false);
   });
+
+  // REGRESSION GUARD. The theme template shipped the Seeclub Stäfa palette until 2026-09, and
+  // nothing downstream ever re-derived it — bka, bkg, kwa, p13, kring, okr and elab all went
+  // live in another tenant's green/blue, because a palette that looks finished never prompts
+  // anyone to ask. The template now carries a neutral placebo grey plus instructions; this test
+  // fails the moment somebody pastes a real tenant's brand colours back into it.
+  it('scaffolds a neutral placeholder theme, never another tenant’s brand colours', async () => {
+    await appGenerator(tree, { tenantId: 'acme', appName: 'Acme' });
+
+    const theme = tree.read('apps/acme-app/src/theme/variables.scss', 'utf-8') ?? '';
+    expect(theme).not.toContain('<%=');
+
+    // The scs palette, verbatim — primary/secondary/tertiary plus the helper vars it leaked into.
+    for (const scsColour of ['#009d53', '#014da2', '#00a2ff', '#6d89b9', '#f6f8fc']) {
+      expect(theme.toLowerCase()).not.toContain(scsColour);
+    }
+
+    // …and it must still be a usable theme, not an empty file.
+    expect(theme).toContain('--ion-color-primary:');
+    expect(theme).toContain('--ion-color-primary-contrast:');
+    // The instructions are the point: without them the placeholder is just a different default.
+    expect(theme).toContain('PLATZHALTER');
+    expect(theme).toContain('brand-styleguide');
+  });
 });
