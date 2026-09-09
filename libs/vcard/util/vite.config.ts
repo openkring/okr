@@ -9,6 +9,10 @@ const libraryConfig = defineConfig({
   cacheDir: '../../../node_modules/.vite/libs/vcard/util',
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
+    // vcard-import-mapping imports @okr/subject-address-util (createFavoriteAddress), which
+    // transitively imports @ionic/angular; inline it so Vite resolves its directory imports
+    // instead of Node's ESM resolver rejecting them (same fix as address.util's own vite.config).
+    server: { deps: { inline: [/@ionic\/angular/, /@ionic\/core/] } },
     // only keep project-specific settings here
     coverage: {
       reportsDirectory: '../../../coverage/libs/vcard/util',
