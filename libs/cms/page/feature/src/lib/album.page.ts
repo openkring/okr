@@ -46,7 +46,7 @@ import { FolderService } from '@okr/content-folder-data-access';
   styles: [`
   okr-section { width: 100%; }
 
-  .upload-hint { margin: 0 1rem; font-size: 0.8rem; color: var(--ion-color-medium); }
+  .upload-hint { margin: 0.5rem 1rem; font-size: 0.8rem; color: var(--ion-color-medium); }
 
   /* Printing an album means printing the pictures: drop the app chrome and let the grid
      break across pages. The context menu's 'print' hands the browser this stylesheet and
@@ -67,11 +67,6 @@ import { FolderService } from '@okr/content-folder-data-access';
              [accept]="acceptMimeTypes"
              style="position:fixed;top:-100px;left:-100px;width:1px;height:1px;opacity:0;"
              (change)="onFilesSelected($event)" />
-      @if(canUpload()) {
-        <!-- Datenschutz (Spec §8): eine Tonspur kann Gespräche enthalten, die die Beteiligten
-             nicht als öffentlich verstanden haben. Hinweis, keine technische Sperre. -->
-        <p class="upload-hint">{{ uploadHint() }}</p>
-      }
       @if(showToolbar()) {
         <!-- The route's optional :contextMenuName is only renderable here — okr-header carries no
              popover — so an album reached as /album/<folderKey>/<menuName> uses its own toolbar. -->
@@ -99,6 +94,13 @@ import { FolderService } from '@okr/content-folder-data-access';
         }
       }
       <ion-content>
+        <!-- Datenschutz (Spec §8): eine Tonspur kann Gespräche enthalten, die die Beteiligten
+             nicht als öffentlich verstanden haben. Hinweis, keine technische Sperre.
+             Gehört INS ion-content: ion-page ist ein Flex-Container, und ein <p> davor wird
+             dessen erstes Flex-Item — es schob Header und Inhalt nach unten. -->
+        @if(canUpload()) {
+          <p class="upload-hint">{{ uploadHint() }}</p>
+        }
         <okr-album-section [section]="section()" [folder]="currentFolderKey()"
           [showStyleSelect]="showStyleSelect()" (folderChanged)="onFolderChanged($event)" />
       </ion-content>
