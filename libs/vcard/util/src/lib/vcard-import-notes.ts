@@ -26,6 +26,16 @@ export interface ImportNotes {
 
 const TRUNCATION_MARKER = '\n… (gekürzt)';
 
+/**
+ * The header line that identifies one import block: source file plus import date (§4.6).
+ * The single builder both the composer and the import service use — `appendImportNotes`
+ * recognises an already-appended block by exactly this string, so a second definition of
+ * the format elsewhere would silently break the "same file, same day" dedupe.
+ */
+export function importNotesHeader(sourceFileName: string, importDateViewDate: string): string {
+  return `--- vCard-Import ${importDateViewDate} · ${sourceFileName} ---`;
+}
+
 function isBinaryProperty(p: VcardProperty): boolean {
   const name = p.name.toUpperCase();
   if (name === 'SOUND' || name === 'KEY') return true;
@@ -62,13 +72,13 @@ function renderResidualLine(p: VcardProperty, warnings: string[]): string | unde
 
 /**
  * Compose the `notes` text for one imported vCard: the `NOTE` value(s) verbatim,
- * followed — when there is anything residual or any caller-supplied extra line
- * (e.g. a rejected BDAY) — by a header naming the import date and source file and
- * one line per leftover property. The residual block is capped at
+ * followed by a header naming the import date and source file and one line per leftover
+ * property (or any caller-supplied extra line, e.g. a rejected BDAY). The header is written
+ * whenever the card contributes any text at all, so a re-import can recognise it. The residual block is capped at
  * `NOTES_RESIDUAL_LIMIT` characters; the `NOTE` part is never truncated.
  */
 export function composeImportNotes(parsed: ParsedVcard, importDateViewDate: string, extraLines: string[] = []): ImportNotes {
-  const header = `--- vCard-Import ${importDateViewDate} · ${parsed.sourceFileName} ---`;
+  const header = importNotesHeader(parsed.sourceFileName, importDateViewDate);
   const warnings: string[] = [];
 
   const residualLines = parsed.residual
@@ -78,15 +88,19 @@ export function composeImportNotes(parsed: ParsedVcard, importDateViewDate: stri
   const blockLines = [...extraLines, ...residualLines];
   const notePart = parsed.noteTexts.join('\n\n');
 
-  let text = notePart;
-  if (blockLines.length > 0) {
-    let block = [header, ...blockLines].join('\n');
-    if (block.length > NOTES_RESIDUAL_LIMIT) {
-      block = block.slice(0, NOTES_RESIDUAL_LIMIT) + TRUNCATION_MARKER;
-      warnings.push(`Der vCard-Import-Block wurde auf ${NOTES_RESIDUAL_LIMIT} Zeichen gekuerzt.`);
-    }
-    text = notePart ? `${notePart}\n\n${block}` : block;
+  // The header is emitted whenever the card contributes ANY text, not only when there is a
+  // residual block: `appendImportNotes` recognises an already-imported block by the header,
+  // so a NOTE-only card without one would be appended again on every re-import (§4.6).
+  if (notePart.length === 0 && blockLines.length === 0) {
+    return { text: '', header, residualLineCount: 0, warnings };
   }
+
+  let block = [header, ...blockLines].join('\n');
+  if (block.length > NOTES_RESIDUAL_LIMIT) {
+    block = block.slice(0, NOTES_RESIDUAL_LIMIT) + TRUNCATION_MARKER;
+    warnings.push(`Der vCard-Import-Block wurde auf ${NOTES_RESIDUAL_LIMIT} Zeichen gekuerzt.`);
+  }
+  const text = notePart ? `${notePart}\n\n${block}` : block;
 
   return { text, header, residualLineCount: residualLines.length, warnings };
 }

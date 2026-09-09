@@ -49,6 +49,10 @@ function draftEmails(draft: VcardImportDraft): string[] {
 }
 
 function findDuplicates(draft: VcardImportDraft, persons: ExistingPerson[]): ExistingPerson[] {
+  // An org card is never a duplicate OF A PERSON. Without this an org sharing a generic
+  // address (info@acme.ch) with one of its people would match on email and be handed the
+  // person merge path, which writes `person.<okey>` addresses and a dob vault doc for it.
+  if (draft.kind === 'org') return [];
   const emails = draftEmails(draft);
   if (emails.length > 0) {
     const byEmail = persons.filter((p) => p.emails.some((e) => emails.includes(e.toLowerCase().trim())));

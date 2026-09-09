@@ -17,11 +17,13 @@ import {
   CategoryListModel,
   OrgCollection,
   OrgModel,
+  PersonalRelCollection,
   PersonalRelModel,
   PersonCollection,
   PersonModel,
   Roles,
   UserModel,
+  WorkrelCollection,
   WorkrelModel,
 } from '@okr/shared-models';
 import { convertDateFormatToString, DateFormat, getSystemQuery, getTodayStr } from '@okr/shared-util-core';
@@ -35,6 +37,7 @@ import {
   ImportNotes,
   appendImportNotes,
   buildDecisions,
+  importNotesHeader,
   isVcardFile,
   normalizeName,
   parseVcards,
@@ -65,18 +68,36 @@ export interface VcardImportResult {
 }
 
 /**
- * Mirrors the header `composeImportNotes` renders (vcard-import-notes.ts). It is
- * rebuilt here — and not carried on the draft — because `VcardImportDraft` keeps
- * only the composed `notes` TEXT, while `appendImportNotes` needs the header to
- * recognise a block it already appended on an earlier import run.
+ * Rebuild the `ImportNotes` shape from a draft: `VcardImportDraft` keeps only the composed
+ * notes TEXT, while `appendImportNotes` needs the header to recognise a block an earlier
+ * import run already appended. The header comes from the util's own `importNotesHeader`,
+ * the single definition of that format (§4.6) — never re-spelled here.
  */
 function importNotesOf(draft: VcardImportDraft, importDateViewDate: string): ImportNotes {
   return {
     text: draft.notes,
-    header: `--- vCard-Import ${importDateViewDate} · ${draft.sourceFileName} ---`,
+    header: importNotesHeader(draft.sourceFileName, importDateViewDate),
     residualLineCount: 0,
     warnings: [],
   };
+}
+
+/**
+ * Identity of a relationship edge for the §6.1 dedupe. Workrels are directed (person → org),
+ * personal relations are not: "Jane is married to John" and the stored reverse edge are the
+ * same relation, so the pair is sorted before it is compared.
+ */
+function edgeIdentity(subjectKey: string, objectKey: string, undirected: boolean): string {
+  return undirected ? [subjectKey, objectKey].sort().join('|') : `${subjectKey}|${objectKey}`;
+}
+
+/** Every name a created/merged person should be findable under in the batch key map (§5.3, §5.4). */
+function batchNamesOf(firstName: string, lastName: string, displayName: string): string[] {
+  // buildDecisions compares relation names against `${firstName} ${lastName}`, so THAT is the
+  // primary key. `displayName` is the card's FN and may be 'Doe, Jane' or 'Dr. Jane Doe' —
+  // registered as well when it differs, so both spellings resolve.
+  const names = [normalizeName(`${firstName} ${lastName}`), normalizeName(displayName)];
+  return [...new Set(names.filter(Boolean))];
 }
 
 /** `{key}` substitution — `I18nService.translateAll` blanks `{{param}}`, so the keys use single braces. */
@@ -178,11 +199,13 @@ export class VcardImportService {
     const confirmed = await this.openReviewModal(decisions);
     if (!confirmed) return;
 
-    const loading = await this.loadingController.create({ message: this.i18n.import_running() });
+    const loading = await this.loadingController.create({ message: this.progressMessage(0, confirmed.length) });
     await loading.present();
     let result: VcardImportResult;
     try {
-      result = await this.commit(confirmed, tenantId, currentUser);
+      result = await this.commit(confirmed, tenantId, currentUser, (done, total) => {
+        loading.message = this.progressMessage(done, total);
+      });
     } finally {
       await loading.dismiss();
     }
@@ -191,6 +214,17 @@ export class VcardImportService {
     const summary = fill(this.i18n.import_summary(), { imported, merged, skipped, failed });
     const message = result.failures.length > 0 ? `${summary}\n\n${result.failures.join('\n')}` : summary;
     await this.alertService.confirm(message);
+  }
+
+  /**
+   * The running `n / total` the spec asks for in §8.1. The `import.running` key carries no
+   * placeholders today, so the counter is appended; should a bundle ever spell it with
+   * `{done}`/`{total}`, that wording wins instead.
+   */
+  private progressMessage(done: number, total: number): string {
+    const template = this.i18n.import_running();
+    if (/\{(done|total)\}/.test(template)) return fill(template, { done, total });
+    return `${template} ${done} / ${total}`;
   }
 
   /**
@@ -245,15 +279,28 @@ export class VcardImportService {
    * Write the reviewed decisions, one card at a time. Sequential on purpose: a later card
    * may reference a person an earlier card created (`batchPersonKeys`), and the Firestore
    * writes are cheap enough that the parallelism is not worth the ordering loss.
+   *
+   * `currentUser` is passed to the person/org creates (they are what the activity log and the
+   * confirmation toast are FOR) but deliberately NOT to the per-address and per-edge creates:
+   * `FirestoreService.createModel` fires a toast and writes an extra comment document per
+   * record when it has a user, which a 50-card file would turn into a few hundred of each,
+   * stacked over the loading overlay. The subject creates still log `person`/`org` `create`.
    */
-  private async commit(decisions: VcardImportDecision[], tenantId: string, currentUser: UserModel | undefined): Promise<VcardImportResult> {
+  private async commit(
+    decisions: VcardImportDecision[],
+    tenantId: string,
+    currentUser: UserModel | undefined,
+    onProgress?: (done: number, total: number) => void,
+  ): Promise<VcardImportResult> {
     const result: VcardImportResult = { imported: 0, merged: 0, skipped: 0, failed: 0, failures: [] };
-    // normalized display name -> okey of the person/org this run created (or merged into).
+    // normalized name -> okey of the person/org this run created (or merged into).
     // buildDecisions leaves `relations[].personKey` empty for a name that only exists
     // later in the same file — this map is what closes that gap at commit time (§5.4).
     const batchPersonKeys = new Map<string, string>();
     const batchOrgKeys = new Map<string, string>();
+    const edges = await this.gatherExistingEdges(tenantId);
 
+    let done = 0;
     for (const decision of decisions) {
       const draft = decision.draft;
       try {
@@ -261,9 +308,15 @@ export class VcardImportService {
           result.skipped++;
           continue;
         }
-        if (decision.action === 'merge') {
-          const key = await this.mergeInto(decision, tenantId, currentUser);
-          if (key) batchPersonKeys.set(normalizeName(draft.displayName), key);
+
+        if (this.isMerge(decision)) {
+          const merged = await this.mergeInto(decision, tenantId, currentUser);
+          this.registerPerson(batchPersonKeys, merged.key, draft);
+          if (merged.warning) result.failures.push(merged.warning);
+          // §6.1: a merge refreshes the edges too — that is usually the point of re-importing
+          // a phone export. `writeEmployment`/`writeRelations` dedupe against `edges`.
+          await this.writeEmployment(decision, merged.key, tenantId, batchOrgKeys, edges, currentUser);
+          await this.writeRelations(decision, merged.key, tenantId, batchPersonKeys, edges, currentUser);
           result.merged++;
           continue;
         }
@@ -272,31 +325,82 @@ export class VcardImportService {
         if (!key) throw new Error('create returned no key');
         // register immediately: the very next card may relate to this one by name
         if (draft.kind === 'org') batchOrgKeys.set(normalizeName(draft.org?.name ?? draft.displayName), key);
-        else batchPersonKeys.set(normalizeName(draft.displayName), key);
+        else this.registerPerson(batchPersonKeys, key, draft);
 
-        await this.writeAddresses(draft.addresses, `${draft.kind}.${key}`, currentUser);
+        await this.writeAddresses(draft.addresses, `${draft.kind}.${key}`);
         const warning = await this.writeAvatar(draft, key, tenantId);
         if (warning) result.failures.push(warning);
 
         if (draft.kind === 'person') {
-          await this.writeEmployment(decision, key, tenantId, batchOrgKeys, currentUser);
-          await this.writeRelations(decision, key, tenantId, batchPersonKeys, currentUser);
+          // `createAnyway` may target a person who already carries edges, so the same dedupe applies
+          await this.writeEmployment(decision, key, tenantId, batchOrgKeys, edges, currentUser);
+          await this.writeRelations(decision, key, tenantId, batchPersonKeys, edges, currentUser);
         }
         result.imported++;
       } catch (e) {
         console.error('VcardImportService.commit failed for', draft.displayName, e);
         result.failed++;
         result.failures.push(`${draft.displayName} (${draft.sourceFileName}): ${e instanceof Error ? e.message : String(e)}`);
+      } finally {
+        onProgress?.(++done, decisions.length);
       }
     }
 
     return result;
   }
 
-  /** Create the person (dob/dod go into the vault through PersonService) or the org. Returns the new okey. */
+  /**
+   * Whether this decision really takes the merge path. Two cases look like a merge but are not:
+   *
+   * - an ORG card. `findDuplicates` matches on email, so an org sharing info@acme.ch with one of
+   *   its people used to come back as a person duplicate and would then be written as a person
+   *   (`person.<okey>` addresses, a dob vault doc). The matcher refuses that now; this is the
+   *   second lock, because taking the wrong branch here corrupts silently.
+   * - a duplicate that is only a BATCH SIBLING. buildDecisions folds each processed draft into the
+   *   candidate pool with `okey: ''` (§5.4) so the same person twice in one file is recognised —
+   *   but there is nothing to merge INTO yet, and the operator meant "this is that person".
+   *   Creating it is the honest reading; the alternative wrote addresses under `parentKey: 'person.'`.
+   */
+  private isMerge(decision: VcardImportDecision): boolean {
+    return decision.action === 'merge' && decision.draft.kind === 'person' && !!decision.duplicates[0]?.okey;
+  }
+
+  /** Register a created/merged person under every spelling a later card might relate to it by. */
+  private registerPerson(batchPersonKeys: Map<string, string>, key: string, draft: VcardImportDraft): void {
+    if (!key) return;
+    for (const name of batchNamesOf(draft.person?.firstName ?? '', draft.person?.lastName ?? '', draft.displayName)) {
+      batchPersonKeys.set(name, key);
+    }
+  }
+
+  /**
+   * The `(subject, object)` pairs the tenant already carries, so §6.1's "edges are added only if
+   * no Workrel/PersonalRel with the same subject/object pair exists" can be honoured without a
+   * query per card. Both collections are read tenant-scoped and filtered in memory — neither is
+   * indexed by subject/object key (same reason VcardExportService.gatherAvailability does it).
+   * The set is mutated as the run creates edges, so one file cannot duplicate within itself.
+   */
+  private async gatherExistingEdges(tenantId: string): Promise<Set<string>> {
+    const [workrels, personalRels] = await Promise.all([
+      this.firestoreService.getDataOnce<WorkrelModel>(WorkrelCollection, getSystemQuery(tenantId), 'none'),
+      this.firestoreService.getDataOnce<PersonalRelModel>(PersonalRelCollection, getSystemQuery(tenantId), 'none'),
+    ]);
+    const edges = new Set<string>();
+    for (const w of workrels ?? []) edges.add(edgeIdentity(w.subjectKey, w.objectKey, false));
+    for (const r of personalRels ?? []) edges.add(edgeIdentity(r.subjectKey, r.objectKey, true));
+    return edges;
+  }
+
+  /**
+   * Create the person (dob/dod go into the vault through PersonService) or the org, and put the
+   * composed notes on it. `toImportDraft` composes `notes` for BOTH kinds and deliberately leaves
+   * the assignment to its caller — dropping them on an org card would discard its NOTE and its
+   * whole residual block, which D-8 forbids. Returns the new okey.
+   */
   private async createSubject(draft: VcardImportDraft, currentUser: UserModel | undefined): Promise<string | undefined> {
     if (draft.kind === 'org') {
       if (!draft.org) return undefined;
+      draft.org.notes = draft.notes;
       return this.orgService.create(draft.org, currentUser);
     }
     if (!draft.person) return undefined;
@@ -306,10 +410,11 @@ export class VcardImportService {
     return this.personService.create(draft.person, currentUser, { dob: draft.dob || undefined, dod: draft.dod || undefined });
   }
 
-  private async writeAddresses(addresses: AddressModel[], parentKey: string, currentUser: UserModel | undefined): Promise<void> {
+  /** No `currentUser`: see `commit` — one toast and one comment doc per address is not wanted here. */
+  private async writeAddresses(addresses: AddressModel[], parentKey: string): Promise<void> {
     for (const address of addresses) {
       address.parentKey = parentKey; // the PREFIXED form, 'person.<okey>' / 'org.<okey>'
-      await this.addressService.create(address, currentUser);
+      await this.addressService.create(address);
     }
   }
 
@@ -318,10 +423,13 @@ export class VcardImportService {
    * fill an empty dob, set an avatar only when there is none, and append the import notes.
    * Never overwrites what is already there — an import is additive by definition.
    */
-  private async mergeInto(decision: VcardImportDecision, tenantId: string, currentUser: UserModel | undefined): Promise<string | undefined> {
+  private async mergeInto(decision: VcardImportDecision, tenantId: string, currentUser: UserModel | undefined): Promise<{ key: string; warning?: string }> {
     const draft = decision.draft;
     const existing = decision.duplicates[0];
-    if (!existing) throw new Error('merge without a duplicate');
+    // `commit`/`isMerge` already keeps an okey-less batch sibling off this path; this is the
+    // backstop, so any future caller reports the card as FAILED instead of writing addresses
+    // and a dob vault doc under the non-existent parent `person.`.
+    if (!existing?.okey) throw new Error('merge without an existing person');
     const parentKey = `person.${existing.okey}`;
 
     const current = await this.firestoreService.getDataOnce<AddressModel>(
@@ -334,7 +442,7 @@ export class VcardImportService {
       if (known.has(addressIdentity(address))) continue;
       address.parentKey = parentKey;
       address.isFavorite = false; // never displace the existing favorite of a channel
-      await this.addressService.create(address, currentUser);
+      await this.addressService.create(address); // no currentUser: see commit()
       known.add(addressIdentity(address));
     }
 
@@ -350,9 +458,10 @@ export class VcardImportService {
     }
 
     const avatar = await firstValueFrom(this.avatarService.read(parentKey));
-    if (!avatar?.storagePath) await this.writeAvatar(draft, existing.okey, tenantId);
+    // a failed photo is surfaced to the summary exactly like on the create path, not swallowed
+    const warning = avatar?.storagePath ? undefined : await this.writeAvatar(draft, existing.okey, tenantId);
 
-    return existing.okey;
+    return { key: existing.okey, warning };
   }
 
   /**
@@ -387,6 +496,7 @@ export class VcardImportService {
     personKey: string,
     tenantId: string,
     batchOrgKeys: Map<string, string>,
+    edges: Set<string>,
     currentUser: UserModel | undefined,
   ): Promise<void> {
     const employment = decision.draft.employment;
@@ -401,6 +511,11 @@ export class VcardImportService {
     }
     if (!orgKey) return;
 
+    // §6.1: never a second edge for a pair that already has one — a re-import refreshes, it does not stack
+    const identity = edgeIdentity(personKey, orgKey, false);
+    if (edges.has(identity)) return;
+    edges.add(identity);
+
     const workrel = new WorkrelModel(tenantId);
     workrel.subjectKey = personKey;
     workrel.subjectModelType = 'person';
@@ -410,7 +525,7 @@ export class VcardImportService {
     workrel.objectName = employment.orgName;
     workrel.label = employment.title || employment.role;
     workrel.name = workrel.label || employment.department;
-    await this.workrelService.create(workrel, currentUser);
+    await this.workrelService.create(workrel); // no currentUser: see commit()
   }
 
   /**
@@ -423,6 +538,7 @@ export class VcardImportService {
     personKey: string,
     tenantId: string,
     batchPersonKeys: Map<string, string>,
+    edges: Set<string>,
     currentUser: UserModel | undefined,
   ): Promise<void> {
     for (const relation of decision.relations) {
@@ -433,9 +549,18 @@ export class VcardImportService {
         person.firstName = names.firstName;
         person.lastName = names.lastName;
         objectKey = (await this.personService.create(person, currentUser)) ?? '';
-        if (objectKey) batchPersonKeys.set(normalizeName(relation.name), objectKey);
+        if (objectKey) {
+          for (const name of batchNamesOf(names.firstName, names.lastName, relation.name)) {
+            batchPersonKeys.set(name, objectKey);
+          }
+        }
       }
       if (!objectKey) continue;
+
+      // §6.1, undirected: the stored reverse edge IS this relation, so it is not written again
+      const identity = edgeIdentity(personKey, objectKey, true);
+      if (edges.has(identity)) continue;
+      edges.add(identity);
 
       const rel = new PersonalRelModel(tenantId);
       rel.subjectKey = personKey;
@@ -445,7 +570,7 @@ export class VcardImportService {
       rel.objectFirstName = names.firstName;
       rel.objectLastName = names.lastName;
       rel.label = relation.label;
-      await this.personalRelService.create(rel, currentUser);
+      await this.personalRelService.create(rel); // no currentUser: see commit()
     }
   }
 }

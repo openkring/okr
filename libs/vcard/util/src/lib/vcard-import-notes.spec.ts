@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendImportNotes, composeImportNotes, NOTES_RESIDUAL_LIMIT } from './vcard-import-notes';
+import { appendImportNotes, composeImportNotes, importNotesHeader, NOTES_RESIDUAL_LIMIT } from './vcard-import-notes';
 import { ParsedVcard } from './vcard-parser';
 
 function parsed(over: Partial<ParsedVcard> = {}): ParsedVcard {
@@ -12,9 +12,9 @@ const prop = (name: string, value: string, params: Record<string, string[]> = {}
   ({ name, value, rawValue: value, params });
 
 describe('composeImportNotes', () => {
-  it('returns the NOTE alone when there is no residual', () => {
+  it('keeps the NOTE verbatim and still stamps the header when there is no residual', () => {
     const n = composeImportNotes(parsed({ noteTexts: ['Trainingszeiten Di/Do.'] }), '09.09.2026');
-    expect(n.text).toBe('Trainingszeiten Di/Do.');
+    expect(n.text).toBe(['Trainingszeiten Di/Do.', '', '--- vCard-Import 09.09.2026 · kontakte.vcf ---'].join('\n'));
     expect(n.residualLineCount).toBe(0);
   });
 
@@ -77,6 +77,18 @@ describe('composeImportNotes', () => {
   });
 });
 
+describe('importNotesHeader', () => {
+  it('renders the file name and the import date', () => {
+    expect(importNotesHeader('kontakte.vcf', '09.09.2026')).toBe('--- vCard-Import 09.09.2026 · kontakte.vcf ---');
+  });
+
+  it('is the exact header composeImportNotes embeds', () => {
+    const n = composeImportNotes(parsed({ noteTexts: ['x'] }), '09.09.2026');
+    expect(n.header).toBe(importNotesHeader('kontakte.vcf', '09.09.2026'));
+    expect(n.text).toContain(n.header);
+  });
+});
+
 describe('appendImportNotes', () => {
   it('appends to existing notes without touching them', () => {
     const n = composeImportNotes(parsed({ residual: [prop('NICKNAME', 'Anni')] }), '09.09.2026');
@@ -88,6 +100,13 @@ describe('appendImportNotes', () => {
   it('does not append the same header twice', () => {
     const n = composeImportNotes(parsed({ residual: [prop('NICKNAME', 'Anni')] }), '09.09.2026');
     const once = appendImportNotes('', n);
+    expect(appendImportNotes(once, n)).toBe(once);
+  });
+
+  it('does not append a NOTE-only card twice either (the header is embedded for it too)', () => {
+    const n = composeImportNotes(parsed({ noteTexts: ['Trainingszeiten Di/Do.'] }), '09.09.2026');
+    const once = appendImportNotes('', n);
+    expect(once).toContain('Trainingszeiten Di/Do.');
     expect(appendImportNotes(once, n)).toBe(once);
   });
 

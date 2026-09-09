@@ -35,6 +35,19 @@ describe('buildDecisions', () => {
     expect(d.action).toBe('merge');
   });
 
+  it('never treats an org card as a duplicate of a person, even on a shared email', () => {
+    const orgCard = draft({
+      kind: 'org',
+      person: undefined,
+      org: { name: 'Acme AG' } as never,
+      displayName: 'Acme AG',
+      addresses: [{ addressChannel: 'email', email: 'info@acme.ch' } as never],
+    });
+    const [d] = buildDecisions([orgCard], [person('p1', 'Anna', 'Muster', ['info@acme.ch'])], []);
+    expect(d.duplicates).toEqual([]);
+    expect(d.action).toBe('import');
+  });
+
   it('lets an email match win over a name match', () => {
     const withEmail = draft({ addresses: [{ addressChannel: 'email', email: 'Anna@Example.CH' } as never] });
     const [d] = buildDecisions([withEmail], [person('p2', 'Andere', 'Person', ['anna@example.ch']), person('p1', 'Anna', 'Muster')], []);
