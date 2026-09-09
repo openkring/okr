@@ -77,6 +77,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/subject/swisscities/ui/src/assets/cities",
+            "output": "./assets/cities"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/activity/data-access/src/i18n",
             "output": "./assets/i18n/activity/data-access"
           },
