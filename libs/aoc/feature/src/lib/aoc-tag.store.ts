@@ -2,13 +2,13 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, map, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AvailableLanguages, I18nTenantOverrideCollection, I18nTenantOverrideModel, OkrModel, TagCollection, TagModel } from '@okr/shared-models';
 import { okrPrompt, confirm } from '@okr/shared-util-angular';
-import { getSystemQuery } from '@okr/shared-util-core';
+import { dedupeForTenant, getSystemQuery, isOwnedBy } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { AOC_I18N_KEYS, TagStringFormData } from '@okr/aoc-util';
 
@@ -19,11 +19,6 @@ import { AOC_I18N_KEYS, TagStringFormData } from '@okr/aoc-util';
 export interface TagItem extends OkrModel {
   tagModel: string;
   tags: string;
-}
-
-/** True when this definition belongs to the given tenant alone (i.e. it may be edited in place). */
-function isOwnedBy(tag: TagItem, tenantId: string): boolean {
-  return tag.tenants?.length === 1 && tag.tenants[0] === tenantId;
 }
 
 /**
@@ -68,9 +63,13 @@ export const AocTagStore = signalStore(
       }),
       stream: ({ params }) => {
         if (!params.fbUser || !params.tenantId) return of([] as TagItem[]);
+        // ONE definition per `tagModel`. A tenant that forked a shared definition matches
+        // both its own copy and the shared original — `forkModel`'s `arrayRemove` cannot
+        // detach it from a `'system'` document — and the editor must show (and write) the
+        // tenant's own, never the shared one it may not touch.
         return store.firestoreService.searchData<TagItem>(
           TagCollection, getSystemQuery(params.tenantId), 'tagModel', 'asc'
-        );
+        ).pipe(map(tags => dedupeForTenant(tags, tag => tag.tagModel, params.tenantId)));
       },
     }),
   })),

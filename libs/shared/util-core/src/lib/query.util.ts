@@ -121,3 +121,63 @@ export function canWriteTenant(
 ): boolean {
   return !!doc && Array.isArray(doc.tenants) && doc.tenants.includes(tenantId);
 }
+
+/* ────────────────────────── SHARED-vs-OWN RESOLUTION ──────────────────────────────────────
+ * Everything below exists because {@link SYSTEM_TENANT} and copy-on-write forking do not
+ * compose on their own.
+ *
+ * `FirestoreService.forkModel` splits a shared document in two writes: it `set`s the fork with
+ * `tenants: [tenantId]`, and it `arrayRemove`s the tenant from the SOURCE so the tenant ends up
+ * in exactly one definition. That second half is a NO-OP against a `['system']` source — the
+ * tenant id was never in that array to remove. The tenant therefore ends up matched by BOTH
+ * documents, and every lookup that assumed at most one match (`AppStore.getCategory`'s
+ * `.find()`, `getTags`'s `[0]`) starts returning whichever one Firestore listed first: no
+ * error, no warning, just the wrong vocabulary, intermittently.
+ *
+ * The fix is a read-side precedence rule rather than a schema field: A DOCUMENT NAMING THIS
+ * TENANT BEATS A SHARED ONE. That is the same ladder `indexMenuDocsByName` already applies to
+ * menu documents, and it needs no `excludedTenants[]` field, no extra query clause, and no
+ * change to `forkModel`.
+ */
+
+/**
+ * True when this document belongs to the given tenant ALONE — i.e. it may be edited in place
+ * rather than forked. A document listing any other tenant (or the `'system'` sentinel) is
+ * shared, and editing it would rewrite what everybody else reads.
+ */
+export function isOwnedBy(model: { tenants?: string[] }, tenantId: string): boolean {
+  return model.tenants?.length === 1 && model.tenants[0] === tenantId;
+}
+
+/**
+ * The one document a tenant should actually use out of several that carry the same identity
+ * (same category `name`, same `tagModel`, …), preferring its own copy over a shared one.
+ *
+ * Returns the first candidate whose `tenants[]` NAMES this tenant; failing that, the first
+ * candidate at all — which is the `'system'` document in the normal case, and is also what
+ * keeps a single un-forked shared document working unchanged.
+ */
+export function pickForTenant<T extends { tenants?: string[] }>(
+  candidates: readonly T[], tenantId: string,
+): T | undefined {
+  return candidates.find(candidate => (candidate.tenants ?? []).includes(tenantId)) ?? candidates[0];
+}
+
+/**
+ * Collapse a tenant-scoped list to ONE document per identity, applying {@link pickForTenant}
+ * within each group — what a list view needs so a forked tenant does not see its own copy and
+ * the shared original side by side. First-appearance order is preserved, so an ordered query
+ * stays ordered.
+ */
+export function dedupeForTenant<T extends { tenants?: string[] }>(
+  items: readonly T[], keyOf: (item: T) => string, tenantId: string,
+): T[] {
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const key = keyOf(item);
+    const group = groups.get(key);
+    if (group) group.push(item);
+    else groups.set(key, [item]);
+  }
+  return [...groups.values()].map(group => pickForTenant(group, tenantId) as T);
+}

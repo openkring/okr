@@ -6,7 +6,10 @@ import {
   canWriteTenant,
   getRangeQuery,
   getSystemQuery,
-  SYSTEM_TENANT
+  SYSTEM_TENANT,
+  isOwnedBy,
+  pickForTenant,
+  dedupeForTenant
 } from './query.util';
 
 describe('query.util', () => {
@@ -417,5 +420,69 @@ describe('query.util', () => {
       expect(belongsToTenant({ tenants: ['elab'], isArchived: true } as { tenants: string[] }, 'elab')).toBe(true);
     });
   });
+
+describe('shared-vs-own resolution', () => {
+  const own = { name: 'roles', tenants: ['scs'] };
+  const shared = { name: 'roles', tenants: [SYSTEM_TENANT] };
+  const listed = { name: 'roles', tenants: ['scs', 'bka', 'kring'] };
+
+  describe('isOwnedBy', () => {
+    it('is true only for a document naming this tenant and nobody else', () => {
+      expect(isOwnedBy(own, 'scs')).toBe(true);
+      expect(isOwnedBy(listed, 'scs')).toBe(false);
+      expect(isOwnedBy(shared, 'scs')).toBe(false);
+      expect(isOwnedBy(own, 'bka')).toBe(false);
+    });
+
+    it('treats a missing or empty tenants array as not owned', () => {
+      expect(isOwnedBy({}, 'scs')).toBe(false);
+      expect(isOwnedBy({ tenants: [] }, 'scs')).toBe(false);
+    });
+  });
+
+  describe('pickForTenant', () => {
+    it('prefers the tenant own fork over the system document', () => {
+      // The case forkModel cannot clean up: arrayRemove('scs') against ['system'] removes
+      // nothing, so both documents match the tenant-scoped query.
+      expect(pickForTenant([shared, own], 'scs')).toBe(own);
+      expect(pickForTenant([own, shared], 'scs')).toBe(own);
+    });
+
+    it('falls back to the shared document for a tenant that never forked', () => {
+      expect(pickForTenant([shared, own], 'bka')).toBe(shared);
+    });
+
+    it('leaves a single un-forked document untouched', () => {
+      expect(pickForTenant([listed], 'scs')).toBe(listed);
+      expect(pickForTenant([shared], 'kwa')).toBe(shared);
+    });
+
+    it('returns undefined for no candidates', () => {
+      expect(pickForTenant([], 'scs')).toBeUndefined();
+    });
+  });
+
+  describe('dedupeForTenant', () => {
+    const byName = (item: { name: string }) => item.name;
+
+    it('collapses each identity to the document this tenant should use', () => {
+      const gender = { name: 'gender', tenants: [SYSTEM_TENANT] };
+      const result = dedupeForTenant([shared, own, gender], byName, 'scs');
+      expect(result).toEqual([own, gender]);
+    });
+
+    it('preserves first-appearance order so an ordered query stays ordered', () => {
+      const a = { name: 'a', tenants: [SYSTEM_TENANT] };
+      const b = { name: 'b', tenants: [SYSTEM_TENANT] };
+      const c = { name: 'c', tenants: [SYSTEM_TENANT] };
+      expect(dedupeForTenant([a, b, c], byName, 'scs').map(byName)).toEqual(['a', 'b', 'c']);
+    });
+
+    it('is a no-op on a list that has no duplicates', () => {
+      expect(dedupeForTenant([listed], byName, 'scs')).toEqual([listed]);
+      expect(dedupeForTenant([], byName, 'scs')).toEqual([]);
+    });
+  });
+});
 
 });

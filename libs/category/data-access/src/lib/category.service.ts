@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { CategoryCollection, CategoryListModel, UserModel } from '@okr/shared-models';
-import { findByKey, getCategoryIndex, getSystemQuery } from '@okr/shared-util-core';
+import { dedupeForTenant, findByKey, getCategoryIndex, getSystemQuery, isOwnedBy } from '@okr/shared-util-core';
 import { PFX } from './scope';
 
 @Injectable({
@@ -47,11 +47,29 @@ export class CategoryService {
 
   /**
    * Update a category in the database with new values.
+   *
+   * COPY-ON-WRITE. Most category definitions are SHARED — one document read by the whole
+   * fleet through the `'system'` sentinel, or by a list of tenants. Writing such a document
+   * in place would silently change everybody else's vocabulary, and against a `'system'`
+   * document `firestore.rules` refuses the write outright (`canWriteTenant()` does not accept
+   * the sentinel), so the save would simply fail. So: edit in place only what this tenant owns
+   * alone, and otherwise fork — a new document with `tenants: [tenantId]` carrying the edit,
+   * in one batch with `arrayRemove(tenantId)` on the source.
+   *
+   * This mirrors `AocTagStore.saveTags`, which has done the same for `tags` since the fork
+   * helper existed; categories were the collection still missing it, which is why they could
+   * not move to the sentinel. The `arrayRemove` half is a no-op when the source is a
+   * `'system'` document — nothing to remove — so both documents then match this tenant's
+   * query and `pickForTenant` (own beats shared) is what resolves them on read.
+   *
    * @param category the CategoryListModel with the new values. Its key must be valid (in order to find it in the database)
    */
   public async update(category: CategoryListModel, currentUser?: UserModel): Promise<string | undefined> {
     category.index = getCategoryIndex(category);
-    return await this.firestoreService.updateModel<CategoryListModel>(CategoryCollection, category, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+    if (isOwnedBy(category, this.env.tenantId)) {
+      return await this.firestoreService.updateModel<CategoryListModel>(CategoryCollection, category, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+    }
+    return await this.firestoreService.forkModel<CategoryListModel>(CategoryCollection, category, {}, this.i18n.update_error());
   }
 
   /**
@@ -64,7 +82,14 @@ export class CategoryService {
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/
   
+  /**
+   * Every category this tenant may use, ONE per `name`: a tenant that forked a shared
+   * definition matches both its own copy and the shared original, and a list view showing the
+   * same category twice — one of them uneditable — is the visible half of that. `pickForTenant`
+   * inside `dedupeForTenant` keeps the tenant's own.
+   */
   public list(orderBy = 'name', sortOrder = 'asc'): Observable<CategoryListModel[]> {
-    return this.firestoreService.searchData<CategoryListModel>(CategoryCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder);
+    return this.firestoreService.searchData<CategoryListModel>(CategoryCollection, getSystemQuery(this.env.tenantId), orderBy, sortOrder)
+      .pipe(map(categories => dedupeForTenant(categories, category => category.name, this.env.tenantId)));
   }
 }

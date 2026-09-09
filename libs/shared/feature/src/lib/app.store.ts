@@ -10,7 +10,7 @@ import { App } from '@capacitor/app';
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
 import { AppConfigService, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, AvailableLanguages, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { die, getSystemQuery, indexBy, openInvitationsOf, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
+import { die, getSystemQuery, indexBy, openInvitationsOf, pickForTenant, replacePlaceholders, sortPersons } from '@okr/shared-util-core';
 import { AppNavigationService, isBrowser, markStartup, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
@@ -530,19 +530,25 @@ export const AppStore = signalStore(
       /**
        * Returns the configured tags for a given model type from firestore collection 'tags'.
        * The search is by attribute 'tagModel'. That means that the tags can be configured per model type and per tenant.
-       * You will find a database entry 'default' to start with or extend the tenants for an existing entry with your own tenantId.
+       *
+       * Most definitions are shared fleet-wide via the `'system'` sentinel, so a tenant that
+       * has never diverged needs no entry of its own. A tenant that DOES diverge gets a
+       * copy-on-write fork, and a fork cannot detach itself from a `'system'` document — so
+       * two documents can match here. `pickForTenant` applies the precedence (own beats
+       * shared); the old `[0]` returned whichever one Firestore happened to list first.
        * @param modelType 
        * @returns 
        */
       getTags(modelType: string): string {
         if (!modelType) return '';
         const tagModels = store.allTags().filter((tag: TagModel) => tag.tagModel === modelType);
-        return tagModels.length === 0 ? '' : tagModels[0].tags;
+        return pickForTenant(tagModels, store.tenantId())?.tags ?? '';
       },
 
       getCategory(categoryName?: string): CategoryListModel {
         if (!categoryName) { die('AppStore.getCategory: categoryName is mandatory.'); }
-        const cat = store.allCategories().find(c => c.name === categoryName);
+        // Own-before-shared, for the same reason as getTags above.
+        const cat = pickForTenant(store.allCategories().filter(c => c.name === categoryName), store.tenantId());
         if (cat) return cat;
         // The app-ready watchdog opens navigation after READINESS_TIMEOUT_MS even when the
         // categories resource never loaded (hung/failed Firestore read), so render-path callers
@@ -557,7 +563,7 @@ export const AppStore = signalStore(
 
       tryGetCategory(categoryName?: string): CategoryListModel | undefined {
         if (!categoryName) return undefined;
-        return store.allCategories()?.find(cat => cat.name === categoryName);
+        return pickForTenant((store.allCategories() ?? []).filter(cat => cat.name === categoryName), store.tenantId());
       },
 
       getCategoryItem(categoryName?: string, itemName?: string): CategoryItemModel | undefined {

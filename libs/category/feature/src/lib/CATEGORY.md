@@ -62,8 +62,27 @@ Notable store actions:
 
 `CategoryService` (`@okr/category-data-access`) is the Firestore gateway:
 
-- `list()` — real-time stream of all category lists for the tenant
+- `list()` — real-time stream of all category lists for the tenant, **one per `name`**
 - `create / update / delete` — write operations
+
+### Shared definitions and copy-on-write
+
+Most category definitions are **shared**: a single document read fleet-wide through the
+`'system'` sentinel (`getSystemQuery` matches `tenants array-contains-any [tenantId,
+'system']`). That is what lets a newly provisioned tenant inherit the whole reference
+vocabulary with no seeding step.
+
+The sentinel grants **read only** — `firestore.rules`' `canWriteTenant()` deliberately refuses
+it — so `update()` never writes a shared document in place. It **forks**: `isOwnedBy` decides,
+and anything not owned by this tenant alone goes through `FirestoreService.forkModel`, which
+in one batch writes a new document with `tenants: [tenantId]` and `arrayRemove`s the tenant
+from the source. Same model as `tags` (`AocTagStore.saveTags`).
+
+One consequence to know: that `arrayRemove` is a **no-op** against a `['system']` source, so
+after a fork *both* documents match the tenant's query. Resolution is therefore read-side —
+**a document naming this tenant beats a shared one** — via `pickForTenant` in
+`AppStore.getCategory`/`tryGetCategory`, and `dedupeForTenant` in `list()`. Never resolve a
+category by taking the first match yourself.
 
 ## Usage Pattern
 
