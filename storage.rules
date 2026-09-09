@@ -55,8 +55,39 @@ service firebase.storage {
     // exclude `private/` without reading any object metadata.
     //
     // Upload size cap (only valid when request.resource is present, i.e. create/update).
+    //
+    // There are two caps, and the reason is that they answer two different questions.
+    // `sizeOk()` is the general one: 25 MB is more than any document, scan or phone photo
+    // this app has ever seen, and holding it there is what keeps a stray or hostile upload
+    // from filling the bucket. Album VIDEOS genuinely need more — a 2-minute 1080p clip off
+    // an iPhone is routinely 60-150 MB — so they get their own, deliberately narrow grant
+    // below (`videoSizeOk()`, 200 MB) instead of the general cap being raised for everything.
+    // Raising `sizeOk()` would buy the videos their headroom at the price of letting a
+    // 200 MB anything land anywhere in the bucket; the carve-out costs one match block.
+    //
+    // 200 MB is not a free choice: it must stay equal to MAX_VIDEO_BYTES in
+    // libs/shared/util-core/src/lib/video.util.ts (the client-side pre-check) and to
+    // MAX_INPUT_BYTES in apps/functions/src/video/index.ts (the transcoder's backstop).
+    // The three are one limit expressed in three places; if they drift, the user either
+    // uploads what nothing will process or is refused what the client already accepted --
+    // and Firebase refuses with a bare `storage/unauthorized`, i.e. a red cross and no text.
     function sizeOk() {
       return request.resource.size < 25 * 1024 * 1024;   // 25 MB cap
+    }
+    function videoSizeOk() {
+      return request.resource.size < 200 * 1024 * 1024;  // 200 MB cap, album videos only
+    }
+    // Video by file EXTENSION, never by contentType. `uploadToFirebaseStorage` passes no
+    // explicit contentType, so the browser-inferred `File.type` wins -- and for .mov that is
+    // regularly empty in Chrome/Firefox, which is exactly how the 147 live objects carrying
+    // `application/x-www-form-urlencoded` (see contentTypeOk below) came about. Gating the
+    // raised cap on contentType would therefore refuse precisely the iPhone clips it exists
+    // for. The extension set mirrors DEFAULT_ACCEPT_ATTRIBUTE (@okr/shared-constants), which
+    // is what the file dialog actually offers. Safe on `request.resource` because this is
+    // only ever called from a create/update condition -- never from a read or list, where
+    // touching `resource` raises "Null value error" (see the note above).
+    function isVideoUpload() {
+      return request.resource.name.lower().matches('.*[.](mp4|m4v|mov)');
     }
     // Content type (H-1 / M-9, Phase 2). This is a DENYLIST of active HTML content,
     // not the allowlist the security report originally proposed. The MIME set was
@@ -97,6 +128,25 @@ service firebase.storage {
       allow read:           if inTenant(tenantId) && sub != 'private';
       allow create, update: if inTenant(tenantId) && sub != 'private' && sizeOk() && contentTypeOk();
       allow delete:         if inTenant(tenantId) && sub != 'private';
+    }
+
+    // ---- album video uploads: the one place the 25 MB cap is lifted ----
+    // `tenant/{tid}/section/{sectionKey}/album/...` and `tenant/{tid}/folder/{folderKey}/album/...`
+    // are the two paths AlbumStore.addFiles writes to (the second one serves the direct
+    // /album/<folderKey> route, whose section is synthesized and has no okey). Same two prefixes
+    // the transcoding trigger accepts -- see isAlbumVideoPath in apps/functions/src/video.
+    //
+    // This block only ever WIDENS: Storage rules OR every matching block's condition together,
+    // so the 25 MB grant above stays exactly as it is for everything else under this prefix,
+    // and a video simply picks up a second, larger grant here. Nothing is taken away, which is
+    // also why `read` and `delete` are deliberately absent -- they are already granted above.
+    //
+    // The mp4 and jpg renderings live under `.../album/renderings/` and are written by the
+    // Admin SDK, which bypasses these rules entirely; they need no grant.
+    match /tenant/{tenantId}/{modelType}/{key}/album/{path=**} {
+      allow create, update: if inTenant(tenantId)
+        && (modelType == 'section' || modelType == 'folder')
+        && isVideoUpload() && videoSizeOk() && contentTypeOk();
     }
 
     // ---- CF-only private data (D-P5-1): subject-access export ZIPs ----

@@ -1,8 +1,19 @@
 /*
-  Grenzen für hochgeladene Videos (Album). Absichtlich eine Komfort-, keine Sicherheitsgrenze:
-  storage.rules bleibt unverändert, weil der SDK bei leerem File.type ohne contentType hochlädt
-  und eine Regel hier nur neue Fehlerklassen erzeugen würde. Zweck ist, dem Mitglied 200 MB
-  Upload zu ersparen, die am Ende ohnehin abgelehnt würden.
+  Grenzen für hochgeladene Videos (Album). Zweck dieser Prüfung ist Komfort: dem Mitglied
+  200 MB Upload zu ersparen, die am Ende ohnehin abgelehnt würden.
+
+  Die Grenze ist aber KEINE reine Komfortgrenze mehr, sondern eine von drei Stellen, an denen
+  dieselben 200 MB stehen müssen:
+    - MAX_VIDEO_BYTES (hier)                      -- die Vorprüfung im Client
+    - videoSizeOk() in storage.rules              -- was Firebase überhaupt annimmt
+    - MAX_INPUT_BYTES in apps/functions/src/video -- was der Transcoder verarbeitet
+  Driften sie auseinander, lehnt Firebase mit einem blanken `storage/unauthorized` ab: der
+  Nutzer sieht ein rotes Kreuz ohne Text. Genau das war der Fall, solange storage.rules jeden
+  Upload bei 25 MB deckelte.
+
+  In storage.rules wird das Video an der ENDUNG erkannt, nicht am contentType: der SDK lädt
+  ohne expliziten contentType hoch, also gewinnt der vom Browser geratene File.type -- und der
+  ist bei .mov in Chrome/Firefox regelmässig leer.
 */
 
 export const MAX_VIDEO_BYTES = 200 * 1024 * 1024;   // 200 MB
