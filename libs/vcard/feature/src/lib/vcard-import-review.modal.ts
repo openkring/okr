@@ -25,7 +25,7 @@ import {
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { VcardImportDecision, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
+import { fill, VcardImportDecision, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
 
 /** One editable relation row, addressed by its index in `VcardImportDecision.relations`. */
 type Relation = VcardImportDecision['relations'][number];
@@ -63,6 +63,16 @@ type Relation = VcardImportDecision['relations'][number];
     <ion-content class="ion-padding">
       <p>{{ i18n.import_intro() }}</p>
 
+      @if (skippedCards() > 0) {
+        <ion-note color="warning" class="ion-display-block">
+          <ion-icon src="{{ 'warning' | svgIcon }}" color="warning" />
+          {{ fill(i18n.import_skippedCards(), { count: skippedCards() }) }}
+        </ion-note>
+      }
+      @for (warning of fileWarnings(); track $index) {
+        <ion-note color="warning" class="ion-display-block">{{ warning }}</ion-note>
+      }
+
       <ion-accordion-group [multiple]="true">
         @for (decision of state(); track decision.draft.sourceFileName + $index; let i = $index) {
           <ion-accordion [value]="'row-' + i">
@@ -73,13 +83,13 @@ type Relation = VcardImportDecision['relations'][number];
                 <ion-note>{{ decision.draft.sourceFileName }}</ion-note>
                 <ion-note>{{ summaryLine(decision) }}</ion-note>
               </ion-label>
-              <ion-badge [color]="decision.duplicates.length > 0 ? 'warning' : 'success'">
-                {{ decision.duplicates.length > 0 ? i18n.import_status_duplicate() : i18n.import_status_new() }}
+              <ion-badge [color]="isDuplicate(decision) ? 'warning' : 'success'">
+                {{ isDuplicate(decision) ? i18n.import_status_duplicate() : i18n.import_status_new() }}
               </ion-badge>
             </ion-item>
 
             <div slot="content" class="ion-padding-start ion-padding-end ion-padding-bottom">
-              @if (decision.duplicates.length > 0) {
+              @if (isDuplicate(decision)) {
                 <ion-segment [value]="decision.action" (ionChange)="setAction(i, $event.detail.value)">
                   <ion-segment-button value="merge">
                     <ion-label>{{ i18n.import_action_merge() }}</ion-label>
@@ -120,10 +130,10 @@ type Relation = VcardImportDecision['relations'][number];
                   </ion-item>
                 }
 
-                @for (relation of decision.relations; track relation.name; let r = $index) {
+                @for (relation of decision.relations; track $index; let r = $index) {
                   @if (relation.candidates.length > 1) {
                     <ion-item>
-                      <ion-select [value]="relation.personKey" (ionChange)="setRelationPersonKey(i, r, $event.detail.value)" [label]="relation.label + ': ' + relation.name">
+                      <ion-select [value]="relation.personKey" (ionChange)="setRelationPersonKey(i, r, $event.detail.value)" [label]="relationLabel(relation) + ': ' + relation.name">
                         <ion-select-option value="">{{ i18n.import_link_none() }}</ion-select-option>
                         @for (candidate of relation.candidates; track candidate.okey) {
                           <ion-select-option [value]="candidate.okey">{{ candidate.firstName }} {{ candidate.lastName }}</ion-select-option>
@@ -172,6 +182,10 @@ export class VcardImportReviewModal {
   protected readonly i18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
 
   public readonly decisions = input.required<VcardImportDecision[]>();
+  /** cards the parser had to drop (§3.1.6) — shown so a missing row is never silent. */
+  public readonly skippedCards = input<number>(0);
+  /** file-level warnings that belong to no single card. */
+  public readonly fileWarnings = input<string[]>([]);
 
   protected readonly state = signal<VcardImportDecision[]>([]);
   protected readonly notesExpanded = signal<Set<number>>(new Set());
@@ -202,8 +216,19 @@ export class VcardImportReviewModal {
     return `${imported} ${this.i18n.import_status_new()} · ${merged} ${this.i18n.import_action_merge()} · ${skipped} ${this.i18n.import_action_skip()}`;
   });
 
-  protected fill(template: string, params: Record<string, string>): string {
-    return template.replace(/\{(\w+)\}/g, (match, key: string) => (key in params ? params[key] : match));
+  /** Template helper for the view — the single `fill` lives in `@okr/vcard-util`. */
+  protected fill(template: string, params: Record<string, unknown>): string {
+    return fill(template, params);
+  }
+
+  /** A card matching something already in the tenant — a person OR an org (§5.1, §5.2). */
+  protected isDuplicate(decision: VcardImportDecision): boolean {
+    return decision.duplicates.length > 0 || decision.orgDuplicates.length > 0;
+  }
+
+  /** What to call a relation in the picker: the decoded kind, else the card's raw label. */
+  protected relationLabel(relation: Relation): string {
+    return relation.type || relation.label;
   }
 
   protected summaryLine(decision: VcardImportDecision): string {

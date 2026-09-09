@@ -37,14 +37,17 @@ import {
   ImportNotes,
   appendImportNotes,
   buildDecisions,
+  fill,
   importNotesHeader,
   isVcardFile,
   normalizeName,
   parseVcards,
   resolveVcardImportCapability,
   toImportDraft,
+  vcardImportTexts,
   VcardImportDecision,
   VcardImportDraft,
+  VcardImportTexts,
   VCARD_I18N_KEYS,
   VCARD_MIMETYPES,
   VcardI18n,
@@ -73,10 +76,10 @@ export interface VcardImportResult {
  * import run already appended. The header comes from the util's own `importNotesHeader`,
  * the single definition of that format (§4.6) — never re-spelled here.
  */
-function importNotesOf(draft: VcardImportDraft, importDateViewDate: string): ImportNotes {
+function importNotesOf(draft: VcardImportDraft, importDateViewDate: string, headerTemplate: string): ImportNotes {
   return {
     text: draft.notes,
-    header: importNotesHeader(draft.sourceFileName, importDateViewDate),
+    header: importNotesHeader(draft.sourceFileName, importDateViewDate, headerTemplate),
     residualLineCount: 0,
     warnings: [],
   };
@@ -98,11 +101,6 @@ function batchNamesOf(firstName: string, lastName: string, displayName: string):
   // registered as well when it differs, so both spellings resolve.
   const names = [normalizeName(`${firstName} ${lastName}`), normalizeName(displayName)];
   return [...new Set(names.filter(Boolean))];
-}
-
-/** `{key}` substitution — `I18nService.translateAll` blanks `{{param}}`, so the keys use single braces. */
-function fill(template: string, params: Record<string, unknown>): string {
-  return template.replace(/\{(\w+)\}/g, (match, key: string) => (key in params ? String(params[key]) : match));
 }
 
 /** Identity of an address for the merge-dedupe: channel plus its normalized carrying value. */
@@ -166,6 +164,15 @@ export class VcardImportService {
   private readonly personalRelService = inject(PersonalRelService);
   private readonly i18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
 
+  /**
+   * The operator-visible strings the pure util modules need (spec §9). Resolved here and
+   * threaded in as plain strings: `vcard-parser`, `vcard-import-mapping` and
+   * `vcard-import-notes` must stay free of Angular and cannot inject `I18nService`.
+   */
+  private importTexts(): VcardImportTexts {
+    return vcardImportTexts(this.i18n);
+  }
+
   /** The import date rendered into the notes header, as ViewDate. */
   private readonly importDateViewDate = convertDateFormatToString(getTodayStr(DateFormat.StoreDate), DateFormat.StoreDate, DateFormat.ViewDate);
 
@@ -182,21 +189,32 @@ export class VcardImportService {
     // No await before this call: Safari's transient user activation does not survive a
     // microtask boundary, and the dialog would silently not open (see UploadService.pickFile).
     const picked = await this.uploadService.pickMultipleFiles(VCARD_MIMETYPES);
+    if (picked.length === 0) return; // cancelled
     const files = picked.filter((f) => isVcardFile(f));
-    if (files.length === 0) return; // cancelled, or nothing that looks like a vCard
+    // Files were picked but none of them is a vCard. Returning silently here is
+    // indistinguishable from a cancel — the operator would think the dialog swallowed
+    // their file, so say the same thing as for a file holding no card at all.
+    if (files.length === 0) {
+      this.alertService.error(this.i18n.import_noCards());
+      return;
+    }
 
-    const texts = await Promise.all(files.map((f) => f.text()));
-    const parsed = texts.flatMap((text, i) => parseVcards(text, files[i].name));
+    const texts = this.importTexts();
+    const contents = await Promise.all(files.map((f) => f.text()));
+    const parsedFiles = contents.map((text, i) => parseVcards(text, files[i].name, texts));
+    const parsed = parsedFiles.flatMap((f) => f.cards);
+    const skippedCards = parsedFiles.reduce((sum, f) => sum + f.skippedCards, 0);
+    const fileWarnings = parsedFiles.flatMap((f) => f.warnings);
     if (parsed.length === 0) {
       this.alertService.error(this.i18n.import_noCards());
       return;
     }
 
     const { persons, orgs, usages } = await this.gatherTenantData(tenantId);
-    const drafts = parsed.map((p) => toImportDraft(p, tenantId, usages, this.importDateViewDate));
+    const drafts = parsed.map((p) => toImportDraft(p, tenantId, usages, this.importDateViewDate, texts));
     const decisions = buildDecisions(drafts, persons, orgs);
 
-    const confirmed = await this.openReviewModal(decisions);
+    const confirmed = await this.openReviewModal(decisions, skippedCards, fileWarnings);
     if (!confirmed) return;
 
     const loading = await this.loadingController.create({ message: this.progressMessage(0, confirmed.length) });
@@ -265,10 +283,10 @@ export class VcardImportService {
     return { persons, orgs, usages };
   }
 
-  private async openReviewModal(decisions: VcardImportDecision[]): Promise<VcardImportDecision[] | undefined> {
+  private async openReviewModal(decisions: VcardImportDecision[], skippedCards: number, fileWarnings: string[]): Promise<VcardImportDecision[] | undefined> {
     const modal = await this.modalController.create({
       component: VcardImportReviewModal,
-      componentProps: { decisions },
+      componentProps: { decisions, skippedCards, fileWarnings },
     });
     await modal.present();
     const { data, role } = await modal.onWillDismiss<VcardImportDecision[]>();
@@ -276,9 +294,19 @@ export class VcardImportService {
   }
 
   /**
-   * Write the reviewed decisions, one card at a time. Sequential on purpose: a later card
-   * may reference a person an earlier card created (`batchPersonKeys`), and the Firestore
-   * writes are cheap enough that the parallelism is not worth the ordering loss.
+   * Write the reviewed decisions in TWO passes (§5.4): every subject first, every edge
+   * afterwards.
+   *
+   * Interleaving them was wrong. Apple and Google export a couple as two cards with mutual
+   * `X-ABRELATEDNAMES`; card A names Beat, whose own card comes later in the file, so
+   * `buildDecisions` cannot resolve him and the modal offers "Person «Beat» erstellen".
+   * Ticking it created Beat while writing A's edges — and Beat's own card, two rows down,
+   * created him a second time. Two records, no warning. With all subjects registered in
+   * `batchPersonKeys`/`batchOrgKeys` before the first edge is written, A's relation
+   * resolves to the Beat his own card created.
+   *
+   * Both passes are sequential and each card keeps its own try/catch, so one failure never
+   * takes the run down; the progress counter runs across both passes.
    *
    * `currentUser` is passed to EVERY create, per-address and per-edge ones included: it is what
    * `ActivityService.log` needs (it returns early without a user, activity.service.ts:40), so
@@ -308,7 +336,15 @@ export class VcardImportService {
     const batchOrgKeys = new Map<string, string>();
     const edges = await this.gatherExistingEdges(tenantId);
 
+    // What pass 2 has to do, collected by pass 1. `counted` records which tally this card
+    // already incremented, so a card that fails on its EDGES is moved to `failed` instead
+    // of being counted twice.
+    const edgeWork: { decision: VcardImportDecision; key: string; counted: 'imported' | 'merged' }[] = [];
+    // Upper bound: every card once in pass 1, plus every non-skipped person card in pass 2.
+    const totalSteps = decisions.length + decisions.filter((d) => d.action !== 'skip' && d.draft.kind === 'person').length;
     let done = 0;
+
+    // ---- pass 1: subjects (create or merge), addresses, avatar ----
     for (const decision of decisions) {
       const draft = decision.draft;
       try {
@@ -321,17 +357,23 @@ export class VcardImportService {
           const merged = await this.mergeInto(decision, tenantId, currentUser);
           this.registerPerson(batchPersonKeys, merged.key, draft);
           if (merged.warning) result.failures.push(merged.warning);
+          result.merged++;
           // §6.1: a merge refreshes the edges too — that is usually the point of re-importing
           // a phone export. `writeEmployment`/`writeRelations` dedupe against `edges`.
-          await this.writeEmployment(decision, merged.key, tenantId, batchOrgKeys, edges, currentUser);
-          await this.writeRelations(decision, merged.key, tenantId, batchPersonKeys, edges, currentUser);
+          edgeWork.push({ decision, key: merged.key, counted: 'merged' });
+          continue;
+        }
+
+        if (this.isOrgMerge(decision)) {
+          const merged = await this.mergeIntoOrg(decision, tenantId, currentUser);
+          batchOrgKeys.set(normalizeName(draft.org?.name ?? draft.displayName), merged.key);
+          if (merged.warning) result.failures.push(merged.warning);
           result.merged++;
           continue;
         }
 
         const key = await this.createSubject(draft, currentUser);
         if (!key) throw new Error('create returned no key');
-        // register immediately: the very next card may relate to this one by name
         if (draft.kind === 'org') batchOrgKeys.set(normalizeName(draft.org?.name ?? draft.displayName), key);
         else this.registerPerson(batchPersonKeys, key, draft);
 
@@ -339,22 +381,39 @@ export class VcardImportService {
         const warning = await this.writeAvatar(draft, key, tenantId);
         if (warning) result.failures.push(warning);
 
-        if (draft.kind === 'person') {
-          // `createAnyway` may target a person who already carries edges, so the same dedupe applies
-          await this.writeEmployment(decision, key, tenantId, batchOrgKeys, edges, currentUser);
-          await this.writeRelations(decision, key, tenantId, batchPersonKeys, edges, currentUser);
-        }
         result.imported++;
+        // `createAnyway` may target a person who already carries edges, so the same dedupe applies
+        if (draft.kind === 'person') edgeWork.push({ decision, key, counted: 'imported' });
       } catch (e) {
-        console.error('VcardImportService.commit failed for', draft.displayName, e);
-        result.failed++;
-        result.failures.push(`${draft.displayName} (${draft.sourceFileName}): ${e instanceof Error ? e.message : String(e)}`);
+        this.recordFailure(result, draft, e);
       } finally {
-        onProgress?.(++done, decisions.length);
+        onProgress?.(++done, totalSteps);
+      }
+    }
+
+    // ---- pass 2: edges, now that every subject of this file exists and is registered ----
+    for (const { decision, key, counted } of edgeWork) {
+      const draft = decision.draft;
+      try {
+        await this.writeEmployment(decision, key, tenantId, batchOrgKeys, edges, currentUser);
+        await this.writeRelations(decision, key, tenantId, batchPersonKeys, edges, currentUser);
+      } catch (e) {
+        // the subject itself is written and stays; only its edges failed (§8.2)
+        result[counted]--;
+        this.recordFailure(result, draft, e);
+      } finally {
+        onProgress?.(++done, totalSteps);
       }
     }
 
     return result;
+  }
+
+  /** One failed card: logged, counted, and named in the closing summary (§8.2). */
+  private recordFailure(result: VcardImportResult, draft: VcardImportDraft, e: unknown): void {
+    console.error('VcardImportService.commit failed for', draft.displayName, e);
+    result.failed++;
+    result.failures.push(`${draft.displayName} (${draft.sourceFileName}): ${e instanceof Error ? e.message : String(e)}`);
   }
 
   /**
@@ -371,6 +430,15 @@ export class VcardImportService {
    */
   private isMerge(decision: VcardImportDecision): boolean {
     return decision.action === 'merge' && decision.draft.kind === 'person' && !!decision.duplicates[0]?.okey;
+  }
+
+  /**
+   * The org counterpart (§5.2). Same batch-sibling caveat as {@link isMerge}: a duplicate the
+   * matcher folded in from earlier in this very file has no okey yet, so it is created and
+   * the second card resolves against `batchOrgKeys` instead.
+   */
+  private isOrgMerge(decision: VcardImportDecision): boolean {
+    return decision.action === 'merge' && decision.draft.kind === 'org' && !!decision.orgDuplicates[0]?.okey;
   }
 
   /** Register a created/merged person under every spelling a later card might relate to it by. */
@@ -439,6 +507,37 @@ export class VcardImportService {
     if (!existing?.okey) throw new Error('merge without an existing person');
     const parentKey = `person.${existing.okey}`;
 
+    const current = await this.addMissingAddresses(draft, parentKey, tenantId, currentUser);
+
+    // only fill an EMPTY dob — the vault value already there was entered deliberately
+    if (draft.dob && !(current ?? []).some((a) => a.addressChannel === 'dob' && !!a.dob)) {
+      await this.personService.syncSensitiveChannels(existing.okey, { dob: draft.dob }, currentUser);
+    }
+
+    const person = await firstValueFrom(this.personService.read(existing.okey));
+    if (person) {
+      person.notes = appendImportNotes(person.notes ?? '', importNotesOf(draft, this.importDateViewDate, this.i18n.import_notes_header()));
+      await this.personService.update(person, currentUser);
+    }
+
+    const avatar = await firstValueFrom(this.avatarService.read(parentKey));
+    // a failed photo is surfaced to the summary exactly like on the create path, not swallowed
+    const warning = avatar?.storagePath ? undefined : await this.writeAvatar(draft, existing.okey, tenantId);
+
+    return { key: existing.okey, warning };
+  }
+
+  /**
+   * The addresses of a merged subject: only the ones it does not already carry (§6.1),
+   * never displacing an existing favorite. Returns the addresses that were already there,
+   * which the person path still needs to decide about the `dob` vault entry.
+   */
+  private async addMissingAddresses(
+    draft: VcardImportDraft,
+    parentKey: string,
+    tenantId: string,
+    currentUser: UserModel | undefined,
+  ): Promise<AddressModel[]> {
     const current = await this.firestoreService.getDataOnce<AddressModel>(
       AddressCollection,
       [...getSystemQuery(tenantId), { key: 'parentKey', operator: '==', value: parentKey }],
@@ -452,20 +551,30 @@ export class VcardImportService {
       await this.addressService.create(address, currentUser);
       known.add(addressIdentity(address));
     }
+    return current ?? [];
+  }
 
-    // only fill an EMPTY dob — the vault value already there was entered deliberately
-    if (draft.dob && !(current ?? []).some((a) => a.addressChannel === 'dob' && !!a.dob)) {
-      await this.personService.syncSensitiveChannels(existing.okey, { dob: draft.dob }, currentUser);
-    }
+  /**
+   * Merge an org card into the org the tenant already carries (§5.2): reuse its okey rather
+   * than writing a second `OrgModel`, add the channels it lacks, append the import notes and
+   * set the logo only when there is none. Identity is never touched — same rule as the person
+   * path — and no vault channel is involved, an org has no `dob`.
+   */
+  private async mergeIntoOrg(decision: VcardImportDecision, tenantId: string, currentUser: UserModel | undefined): Promise<{ key: string; warning?: string }> {
+    const draft = decision.draft;
+    const existing = decision.orgDuplicates[0];
+    if (!existing?.okey) throw new Error('merge without an existing org');
+    const parentKey = `org.${existing.okey}`;
 
-    const person = await firstValueFrom(this.personService.read(existing.okey));
-    if (person) {
-      person.notes = appendImportNotes(person.notes ?? '', importNotesOf(draft, this.importDateViewDate));
-      await this.personService.update(person, currentUser);
+    await this.addMissingAddresses(draft, parentKey, tenantId, currentUser);
+
+    const org = await firstValueFrom(this.orgService.read(existing.okey));
+    if (org) {
+      org.notes = appendImportNotes(org.notes ?? '', importNotesOf(draft, this.importDateViewDate, this.i18n.import_notes_header()));
+      await this.orgService.update(org, currentUser);
     }
 
     const avatar = await firstValueFrom(this.avatarService.read(parentKey));
-    // a failed photo is surfaced to the summary exactly like on the create path, not swallowed
     const warning = avatar?.storagePath ? undefined : await this.writeAvatar(draft, existing.okey, tenantId);
 
     return { key: existing.okey, warning };
@@ -484,12 +593,12 @@ export class VcardImportService {
       const avatar = newAvatarModel([tenantId], draft.kind, key, `vcard-import.${ext}`);
       const file = new File([blob], `vcard-import.${ext}`, { type: mime });
       const url = await this.uploadService.uploadFile(file, avatar.storagePath, AVATAR_UPLOAD_TITLE);
-      if (!url) return `${draft.displayName}: Bild konnte nicht hochgeladen werden.`;
+      if (!url) return fill(this.i18n.import_warning_photoFailed(), { name: draft.displayName });
       await this.avatarService.updateOrCreate(avatar);
       return undefined;
     } catch (e) {
       console.error('VcardImportService.writeAvatar failed for', draft.displayName, e);
-      return `${draft.displayName}: Bild konnte nicht importiert werden.`;
+      return fill(this.i18n.import_warning_photoFailed(), { name: draft.displayName });
     }
   }
 
@@ -576,7 +685,10 @@ export class VcardImportService {
       rel.objectKey = objectKey;
       rel.objectFirstName = names.firstName;
       rel.objectLastName = names.lastName;
+      // §4.4: a decoded Apple token IS the relation kind; only an undecodable label stays a
+      // label. `type` keeps the model default (DEFAULT_PERSONAL_REL) when nothing decoded.
       rel.label = relation.label;
+      if (relation.type) rel.type = relation.type;
       await this.personalRelService.create(rel, currentUser);
     }
   }
