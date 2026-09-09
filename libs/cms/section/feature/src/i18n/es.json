@@ -97,6 +97,15 @@
       "updated": "Modificado",
       "url": "Enlace"
     },
+    "video": {
+      "tooLarge": "Este vídeo es demasiado grande ({size}). Puedes subir vídeos de hasta 200 MB.",
+      "tooLong": "Este vídeo dura {duration}. Puedes subir vídeos de hasta 2 minutos.",
+      "hint": "Ten en cuenta quién aparece y quién se oye en el vídeo.",
+      "pending": "El vídeo se está preparando y podrás reproducirlo en uno o dos minutos.",
+      "title": "Vídeo",
+      "download": "Descargar el vídeo",
+      "close": "Cerrar"
+    },
     "newFolder": {
       "header": "Nueva carpeta",
       "placeholder": "Nombre de la carpeta"

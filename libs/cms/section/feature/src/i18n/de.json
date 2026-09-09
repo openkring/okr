@@ -97,6 +97,15 @@
       "updated": "Geändert",
       "url": "Link"
     },
+    "video": {
+      "tooLarge": "Das Video ist zu gross ({size}). Du kannst Videos bis 200 MB hochladen.",
+      "tooLong": "Das Video ist {duration} lang. Du kannst Videos bis 2 Minuten hochladen.",
+      "hint": "Achte darauf, wer im Video zu sehen und zu hören ist.",
+      "pending": "Das Video wird aufbereitet und ist in ein bis zwei Minuten abspielbar.",
+      "title": "Video",
+      "download": "Video herunterladen",
+      "close": "Schliessen"
+    },
     "newFolder": {
       "header": "Neuer Ordner",
       "placeholder": "Name des Ordners"

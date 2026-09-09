@@ -97,6 +97,15 @@
       "updated": "Modifié",
       "url": "Lien"
     },
+    "video": {
+      "tooLarge": "Cette vidéo est trop grande ({size}). Tu peux téléverser des vidéos jusqu'à 200 Mo.",
+      "tooLong": "Cette vidéo dure {duration}. Tu peux téléverser des vidéos jusqu'à 2 minutes.",
+      "hint": "Fais attention à qui apparaît et qui parle dans la vidéo.",
+      "pending": "Cette vidéo est en préparation et sera lisible dans une ou deux minutes.",
+      "title": "Vidéo",
+      "download": "Télécharger la vidéo",
+      "close": "Fermer"
+    },
     "newFolder": {
       "header": "Nouveau dossier",
       "placeholder": "Nom du dossier"
