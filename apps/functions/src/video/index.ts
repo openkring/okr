@@ -8,7 +8,12 @@ import { unlink } from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { DocumentRendering, renderingPath, upsertRendering } from '../vectorize/vectorize-path.util';
-import { buildPosterArgs, buildTranscodeArgs, isAlbumVideoPath } from './video-path.util';
+import {
+  buildPosterArgs,
+  buildTranscodeArgs,
+  isAlbumVideoPath,
+  retryUntilFound,
+} from './video-path.util';
 
 const REGION = 'europe-west6';
 const DOCS_COLLECTION = 'docs';
@@ -55,16 +60,30 @@ export const onAlbumVideoFinalized = onObjectFinalized(
     }
 
     const db = getFirestore();
-    const snap = await db.collection(DOCS_COLLECTION).where('fullPath', '==', objectName).limit(1).get();
-    if (snap.empty) {
-      // The client writes the docs entry right after the upload, so a miss here is a video that
-      // is not part of any album — nothing to attach a rendering to.
-      logger.info(`onAlbumVideoFinalized: no docs entry for ${objectName}, skipping`);
+    // This trigger fires at the END of the upload, while the client writes the docs document
+    // immediately AFTER the upload resolves — so the trigger can legitimately win that race. The
+    // bounded retry bridges that window instead of betting on the order: a hit costs no wait at
+    // all, and if all five attempts come up empty the object really is not part of any album
+    // (a video uploaded outside the picker), where giving up is the right answer.
+    const lookup = await retryUntilFound(async () => {
+      const snap = await db
+        .collection(DOCS_COLLECTION)
+        .where('fullPath', '==', objectName)
+        .limit(1)
+        .get();
+      return snap.empty ? undefined : snap.docs[0];
+    });
+    if (!lookup.value) {
+      // Deliberately info, not error: a video with no docs entry is legitimate, not a failure.
+      // The attempt count tells the reader whether the window was actually waited out.
+      logger.info(
+        `onAlbumVideoFinalized: no docs entry for ${objectName} after ${lookup.attempts} attempts, skipping`,
+      );
       return;
     }
-    const docRef = snap.docs[0].ref;
+    const docRef = lookup.value.ref;
     const docKey = docRef.id;
-    const existing = (snap.docs[0].data()['renderings'] as DocumentRendering[] | undefined) ?? [];
+    const existing = (lookup.value.data()['renderings'] as DocumentRendering[] | undefined) ?? [];
 
     const bucket = admin.storage().bucket(event.data.bucket);
     const localInput = path.join(tmpdir(), `${docKey}-${path.basename(objectName)}`);

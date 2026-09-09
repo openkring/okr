@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildPosterArgs, buildTranscodeArgs, isAlbumVideoPath } from './video-path.util';
+import {
+  DOC_LOOKUP_ATTEMPTS,
+  DOC_LOOKUP_DELAY_MS,
+  buildPosterArgs,
+  buildTranscodeArgs,
+  isAlbumVideoPath,
+  retryUntilFound,
+} from './video-path.util';
 
 describe('isAlbumVideoPath', () => {
   it('accepts album uploads of a section', () => {
@@ -47,5 +54,59 @@ describe('buildPosterArgs', () => {
     expect(args.indexOf('-ss')).toBeLessThan(args.indexOf('-i'));
     expect(args).toContain('-frames:v');
     expect(args[args.length - 1]).toBe('/tmp/poster.jpg');
+  });
+});
+
+describe('retryUntilFound', () => {
+  /** Records every requested pause instead of serving it, so the test never actually waits. */
+  function fakeSleep(): { waits: number[]; sleep: (ms: number) => Promise<void> } {
+    const waits: number[] = [];
+    return { waits, sleep: async (ms: number) => { waits.push(ms); } };
+  }
+
+  it('returns the first hit without pausing at all', async () => {
+    const { waits, sleep } = fakeSleep();
+    const seen: number[] = [];
+
+    const result = await retryUntilFound<string>(async (attemptNo) => {
+      seen.push(attemptNo);
+      return 'doc-1';
+    }, { sleep });
+
+    expect(result).toEqual({ value: 'doc-1', attempts: 1 });
+    expect(seen).toEqual([1]);
+    expect(waits).toEqual([]);
+  });
+
+  it('bridges the race: empty twice, found on the third attempt', async () => {
+    const { waits, sleep } = fakeSleep();
+
+    const result = await retryUntilFound<string>(
+      async (attemptNo) => (attemptNo < 3 ? undefined : 'doc-3'),
+      { sleep },
+    );
+
+    expect(result).toEqual({ value: 'doc-3', attempts: 3 });
+    // two pauses, one after each miss — and none after the hit
+    expect(waits).toEqual([DOC_LOOKUP_DELAY_MS, DOC_LOOKUP_DELAY_MS]);
+  });
+
+  it('gives up after five empty attempts, having waited four times', async () => {
+    const { waits, sleep } = fakeSleep();
+    const seen: number[] = [];
+
+    const result = await retryUntilFound<string>(async (attemptNo) => {
+      seen.push(attemptNo);
+      return undefined;
+    }, { sleep });
+
+    expect(result).toEqual({ value: undefined, attempts: DOC_LOOKUP_ATTEMPTS });
+    expect(seen).toEqual([1, 2, 3, 4, 5]);
+    expect(waits).toHaveLength(DOC_LOOKUP_ATTEMPTS - 1);
+  });
+
+  it('spans the documented ~10 s window', () => {
+    expect(DOC_LOOKUP_ATTEMPTS).toBe(5);
+    expect(DOC_LOOKUP_DELAY_MS).toBe(2000);
   });
 });

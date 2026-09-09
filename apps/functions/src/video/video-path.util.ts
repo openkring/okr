@@ -34,3 +34,47 @@ export function buildTranscodeArgs(input: string, output: string): string[] {
 export function buildPosterArgs(input: string, output: string, atSecond: number): string[] {
   return ['-ss', String(atSecond), '-i', input, '-frames:v', '1', '-q:v', '3', '-y', output];
 }
+
+/** Attempts of the `docs` lookup before the object counts as "not part of any album". */
+export const DOC_LOOKUP_ATTEMPTS = 5;
+/** Pause between two lookup attempts. Five attempts therefore span a ~10 s window. */
+export const DOC_LOOKUP_DELAY_MS = 2000;
+
+export interface RetryUntilFoundOptions {
+  attempts?: number;
+  delayMs?: number;
+  /** Injected in tests so the wait is not actually served. */
+  sleep?: (ms: number) => Promise<void>;
+}
+
+export interface RetryUntilFoundResult<T> {
+  /** The first defined value an attempt returned, or `undefined` if none did. */
+  value: T | undefined;
+  /** How many attempts were made — 1 on an immediate hit, `attempts` when it gave up. */
+  attempts: number;
+}
+
+/**
+ * Run `attempt` until it returns something, up to `attempts` times, pausing `delayMs` in between.
+ *
+ * The first attempt runs immediately and a hit never waits, so the common case costs nothing. This
+ * exists to bridge a genuine race and not as a general-purpose retry: the Storage trigger fires at
+ * the END of the upload, while the client writes the `docs` document immediately AFTER the upload
+ * resolves — so the trigger can legitimately arrive first. Waiting a bounded moment turns that from
+ * luck into a guarantee. Kept free of Firestore so it is testable without a connection.
+ */
+export async function retryUntilFound<T>(
+  attempt: (attemptNo: number) => Promise<T | undefined>,
+  options: RetryUntilFoundOptions = {},
+): Promise<RetryUntilFoundResult<T>> {
+  const attempts = options.attempts ?? DOC_LOOKUP_ATTEMPTS;
+  const delayMs = options.delayMs ?? DOC_LOOKUP_DELAY_MS;
+  const sleep = options.sleep ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)));
+
+  for (let attemptNo = 1; attemptNo <= attempts; attemptNo++) {
+    const value = await attempt(attemptNo);
+    if (value !== undefined) return { value, attempts: attemptNo };
+    if (attemptNo < attempts) await sleep(delayMs);
+  }
+  return { value: undefined, attempts };
+}
