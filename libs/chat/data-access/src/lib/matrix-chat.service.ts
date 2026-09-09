@@ -11,7 +11,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, PersonModelName, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, isRenderableChatEvent, MentionRef, OKR_TENANT_EVENT, MATRIX_FAVOURITE_TAG, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, imageMimeTypeForName, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, isRenderableChatEvent, isRoomGoneError, MentionRef, OKR_TENANT_EVENT, MATRIX_FAVOURITE_TAG, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { AvatarService } from '@okr/avatar-data-access';
 
@@ -317,6 +317,11 @@ export class MatrixChatService {
 
   get tokenExpired(): Observable<void> {
     return this.tokenExpired$.asObservable();
+  }
+
+  /** Emits the id of a room that was evicted because the server no longer knows it. */
+  get roomGone(): Observable<string> {
+    return this.roomGone$.asObservable();
   }
 
   get roomListToggle(): Observable<void> {
@@ -931,6 +936,10 @@ export class MatrixChatService {
 
   /** Back-pagination failures already reported this session — see reportPaginationFailure. */
   private readonly reportedPaginationFailures = new Set<string>();
+  // Rooms evicted from the local store because the server no longer knows them (see
+  // evictGoneRoom). Emits the roomId so the chat view can re-resolve a deep link that landed
+  // on the dead room.
+  private readonly roomGone$ = new Subject<string>();
 
   /** How many rendered messages an opened room should carry before back-filling stops. */
   private static readonly MIN_VISIBLE_MESSAGES = 20;
@@ -987,6 +996,12 @@ export class MatrixChatService {
           if (!hasMore) break;
         } catch (paginateError) {
           console.warn('MatrixChatService: Failed to paginate timeline:', paginateError);
+          if (isRoomGoneError(paginateError)) {
+            // Not a transient failure: the room only exists in the local store. Evict it
+            // instead of caching a blank room the user can never leave (SCS-AD).
+            await this.evictGoneRoom(roomId, paginateError);
+            return;
+          }
           paginationFailed = true;
           this.reportPaginationFailure(paginateError);
           break;
@@ -998,6 +1013,49 @@ export class MatrixChatService {
       console.error('MatrixChatService: Error loading messages for room:', error);
     } finally {
       this.loadingRooms.delete(roomId);
+    }
+  }
+
+  /**
+   * Drop a room the server no longer knows from the local SDK store.
+   *
+   * A room deleted + purged via the Synapse admin API (e.g. a group room that was re-created)
+   * sends no leave event a client that was offline at the time can ever sync — the purge
+   * removes the event itself. The IndexedDB store therefore keeps the room as "joined"
+   * forever: it shows in the room list, still carries the group's `#group_<key>` alias in its
+   * topic, and the group view's local alias match lands on it before ever asking the Cloud
+   * Function — which would have returned the live room. Every /messages request against it is
+   * a 403 "not in room", i.e. a permanently blank chat (SCS-AD).
+   *
+   * Eviction is per app session: the SDK's persisted sync accumulator replays the room on the
+   * next start (only a synced leave event removes it there), so the first open after a restart
+   * hits this path once more and heals again. `forget` is attempted so the server marks it
+   * forgotten where it still can; it is best-effort because a purged room has nothing left
+   * to forget.
+   */
+  private async evictGoneRoom(roomId: string, error: unknown): Promise<void> {
+    const errcode = (error as MatrixError | null)?.errcode ?? 'unknown';
+    console.warn(`MatrixChatService: Room ${roomId} is gone on the server (${errcode}) — evicting it from the local store`);
+    const reason = `stale-room:${errcode}`;
+    if (!this.reportedPaginationFailures.has(reason)) {
+      this.reportedPaginationFailures.add(reason);
+      captureMessage(`MatrixChatService: evicted a room the server no longer knows (${errcode})`, {
+        level: 'info',
+        tags: { chatTimeline: 'stale-room' },
+      });
+    }
+    // Drop the message subject first so a re-subscription does not re-load the dead room.
+    this.messages$.get(roomId)?.complete();
+    this.messages$.delete(roomId);
+    this.client?.store.removeRoom(roomId);
+    // Tell the view BEFORE the room list re-emits: it clears its "deep link already applied"
+    // guard, and the following rooms$ emission re-runs the resolution against live rooms.
+    this.roomGone$.next(roomId);
+    await this.updateRoomsList();
+    try {
+      await this.client?.forget(roomId);
+    } catch (forgetError) {
+      debugMessage(`MatrixChatService: forget(${roomId}) after eviction failed (expected for a purged room): ${(forgetError as Error)?.message}`, this.appStore.currentUser());
     }
   }
 

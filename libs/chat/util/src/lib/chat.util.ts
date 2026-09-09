@@ -253,3 +253,22 @@ export function canPostWithPower(ownPower: number | undefined, eventsDefault: nu
   if (eventsDefault === undefined) return true;
   return (ownPower ?? 0) >= eventsDefault;
 }
+
+/**
+ * True when a Matrix request failed because the room is gone for this user — the server
+ * says the user is not in it (`M_FORBIDDEN … not in room`) or the room does not exist
+ * (`M_NOT_FOUND`).
+ *
+ * The client can hold such a room in its IndexedDB store although the server has no trace of
+ * it: a room deleted + purged through the Synapse admin API (a group room that was re-created)
+ * yields no leave event a client that was offline at the time could ever sync, so the room
+ * stays "joined" locally forever. Timeline pagination against it is the first request that
+ * exposes the mismatch (SCS-AD). Other 403s (missing power level, history visibility) and
+ * transport errors are NOT a gone room and must not be treated as one.
+ */
+export function isRoomGoneError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const { errcode, message } = error as { errcode?: string; message?: string };
+  if (errcode === 'M_NOT_FOUND') return true;
+  return errcode === 'M_FORBIDDEN' && /not in room/i.test(message ?? '');
+}

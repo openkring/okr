@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias } from './chat.util';
+import { buildReceiptAriaLabel, filterRoomsOfTenant, findSupportRoom, isBridgeGhost, hashUserIdToColor, formatReceiptTime, isRenderableChatEvent, linkifyText, resolveMatrixDisplayName, canPostWithPower, groupRoomAliasLocalpart, groupKeyFromRoomAlias, isRoomGoneError } from './chat.util';
 
 describe('buildReceiptAriaLabel', () => {
   it('returns empty string for no receipts', () => {
@@ -268,5 +268,26 @@ describe('groupKeyFromRoomAlias', () => {
   it('round-trips with groupRoomAliasLocalpart for normalised keys', () => {
     expect(groupKeyFromRoomAlias(`#${groupRoomAliasLocalpart('scs_kandidatinnenin')}:bkchat.etke.host`))
       .toBe('scs_kandidatinnenin');
+  });
+});
+
+describe('isRoomGoneError', () => {
+  it('recognises the Synapse 403 for a room the user is not in (purged room in the local store)', () => {
+    expect(isRoomGoneError({ errcode: 'M_FORBIDDEN', message: 'MatrixError: [403] User @x:hs not in room !abc, and room previews are disabled' })).toBe(true);
+  });
+
+  it('recognises M_NOT_FOUND', () => {
+    expect(isRoomGoneError({ errcode: 'M_NOT_FOUND', message: 'Room not found' })).toBe(true);
+  });
+
+  it('does not treat other 403s (e.g. missing power) as a gone room', () => {
+    expect(isRoomGoneError({ errcode: 'M_FORBIDDEN', message: 'You don\'t have permission to view history' })).toBe(false);
+  });
+
+  it('does not treat network errors as a gone room', () => {
+    expect(isRoomGoneError(new TypeError('Failed to fetch'))).toBe(false);
+    expect(isRoomGoneError({ errcode: 'M_LIMIT_EXCEEDED', message: 'Too many requests' })).toBe(false);
+    expect(isRoomGoneError(null)).toBe(false);
+    expect(isRoomGoneError(undefined)).toBe(false);
   });
 });

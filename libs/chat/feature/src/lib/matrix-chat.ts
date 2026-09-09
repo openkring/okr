@@ -768,6 +768,20 @@ export class MatrixChat implements OnDestroy {
         this.store.cleanup().then(() => this.initializeMatrixIfNeeded());
       });
 
+    // The service evicted a room the server no longer knows (purged group room that was still
+    // in the local store, SCS-AD). If the deep link had been resolved onto exactly that room,
+    // release the "applied once" guard and clear the selection: the rooms$ emission that
+    // follows the eviction re-runs the resolution above, which now misses locally and asks the
+    // Cloud Function for the live room. Any other current room is left untouched.
+    this.store.matrixService.roomGone
+      .pipe(takeUntilDestroyed())
+      .subscribe((roomId) => {
+        if (this.store.currentRoomId() !== roomId) return;
+        console.warn(`MatrixChat: current room ${roomId} was evicted — re-resolving ${this.selectedRoom() ?? 'no deep link'}`);
+        this.resolvedRoomAlias = undefined;
+        this.store.setCurrentRoom(undefined);
+      });
+
     // When the user taps the chat menu item while already on the chat page,
     // toggle the room list so they can switch to another room.
     this.store.matrixService.roomListToggle
