@@ -54,7 +54,7 @@ function renderResidualLine(p: VcardProperty, warnings: string[]): string | unde
 
   const paramsStr = renderParams(p.params);
   if (isBinaryProperty(p)) {
-    const kb = Math.round(p.value.length / 1024);
+    const kb = Math.round((p.value.length * 0.75) / 1024);
     return `${p.name}${paramsStr}: (${kb} kB, nicht importiert)`;
   }
   return `${p.name}${paramsStr}: ${p.value}`;
