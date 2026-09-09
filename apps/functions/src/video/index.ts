@@ -96,6 +96,14 @@ async function reapStaleTempFiles(): Promise<void> {
  * because a transcode holds its input plus two outputs in the memory-resident `/tmp` and saturates
  * both vCPUs — the v2 default of 80 parallel requests per instance would exhaust the 2 GiB long
  * before it exhausts the CPU, and an OOM skips every `finally` on the way out.
+ *
+ * `maxInstances: 5` is the other half of that. A Storage trigger cannot be scoped to a prefix: this
+ * fires on EVERY object finalized anywhere in the project, and with `concurrency: 1` every one of
+ * them wants an instance of its own. Someone dropping 40 photos into an album therefore starts 40
+ * cold starts of a 2 GiB / 2 vCPU function that all return within milliseconds — billed in full,
+ * and holding regional capacity that the transcodes actually waiting behind them need. Capping at
+ * five costs the videos nothing worth having (a transcode runs minutes; a queue of five is the
+ * normal shape of this workload) and bounds the blast radius of a bulk upload.
  */
 export const onAlbumVideoFinalized = onObjectFinalized(
   {
@@ -104,6 +112,7 @@ export const onAlbumVideoFinalized = onObjectFinalized(
     timeoutSeconds: TIMEOUT_SECONDS,
     cpu: 2,
     concurrency: 1,
+    maxInstances: 5,
     secrets: ['SENTRY_FUNCTIONS_DSN'],
   },
   async (event: StorageEvent): Promise<void> => {
