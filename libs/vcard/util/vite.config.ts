@@ -1,3 +1,4 @@
+import '@angular/compiler';
 import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig, mergeConfig } from 'vite';
@@ -13,6 +14,7 @@ const libraryConfig = defineConfig({
       reportsDirectory: '../../../coverage/libs/vcard/util',
       provider: 'v8' as const,
     },
+    setupFiles: ['./test-setup.ts'],
   },
 });
 
