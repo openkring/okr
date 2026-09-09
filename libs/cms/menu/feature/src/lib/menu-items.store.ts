@@ -104,11 +104,6 @@ export class MenuItemsStore {
 
   constructor() {
     effect(() => {
-      console.log('[perf-menu]', Math.round(performance.now()), 'status', this.resource.status(),
-        'okey', this.appStore.currentUser()?.okey, 'uid', this.appStore.fbUser()?.uid,
-        'userRes', this.appStore.currentUserResource.status(), 'n', this.resource.hasValue() ? this.resource.value()?.length : -1);
-    });
-    effect(() => {
       if (this.resource.status() === 'error') {
         debugData('MenuItemsStore: stream error', this.resource.error(), this.appStore.currentUser());
       }

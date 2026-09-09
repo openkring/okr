@@ -1,4 +1,4 @@
-import { Component, computed, effect, forwardRef, inject, input } from '@angular/core';
+import { Component, computed, effect, forwardRef, inject, input, signal } from '@angular/core';
 import { IonAccordion, IonAccordionGroup, IonItem, IonItemDivider, IonLabel, IonList } from '@ionic/angular/standalone';
 
 import { MenuItemModel } from '@okr/shared-models';
@@ -42,19 +42,26 @@ import { MenuStore } from './menu.store';
               <okr-multi-avatar [icon]="icon()" [label]="menuStore.translatedMenuLabel()" [badge]="notificationCount()" (click)="select(menuItem)" />
             }
             @case('sub') {
-              <ion-accordion-group>
+              <!-- The entries of a sub-menu are created on the FIRST expand, not at boot: every
+                   accordion starts collapsed, and the main menu of a tenant holds ~18 of them
+                   with ~170 entries in total — instantiating them all up front was the largest
+                   remaining main-thread task of the dashboard (perf-baselines.md, 2026-09-09).
+                   Once expanded, the entries stay in the DOM so collapsing costs nothing. -->
+              <ion-accordion-group (ionChange)="onAccordionChange($event)">
                 <ion-accordion [value]="menuItem.name" toggle-icon-slot="start" >
                   <ion-item slot="header" color="primary">
                     <ion-label>{{ menuStore.translatedMenuLabel() }}</ion-label>
                   </ion-item>
                   <div slot="content">
-                    @for(menuItemName of menuItem.menuItems; track menuItemName) {
-                      @if(isBlocked(menuItemName)) {
-                        @if(isAdmin()) {
-                          <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
+                    @if (expanded()) {
+                      @for(menuItemName of menuItem.menuItems; track menuItemName) {
+                        @if(isBlocked(menuItemName)) {
+                          @if(isAdmin()) {
+                            <ion-item color="warning"><ion-label>↻ circular reference to {{ menuItemName }}</ion-label></ion-item>
+                          }
+                        } @else {
+                          <okr-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
                         }
-                      } @else {
-                        <okr-menu [menuName]="menuItemName" [forceVisible]="forceVisible()" [excludeNames]="excludeNames()" [toggleStates]="toggleStates()" [inputDepth]="childDepth()" [inputVisitedKeys]="childVisitedKeys()" />
                       }
                     }
                   </div>
@@ -163,6 +170,8 @@ export class Menu {
     return this.forceVisible() || this.forceVisibleSelf() || hasRole(this.roleNeeded(), this.currentUser());
   });
   protected readonly notificationCount = computed(() => this.menuStore.notificationCount());
+  /** 'sub' only: whether the accordion has been opened at least once — its entries render from then on. */
+  protected readonly expanded = signal(false);
 
   constructor() {
     effect(() => {
@@ -187,6 +196,15 @@ export class Menu {
   /** Whether a child menu must render as a placeholder (cycle or depth cap reached). */
   protected isBlocked(childName: string): boolean {
     return isMenuBlocked(this.inputVisitedKeys(), childName, this.inputDepth());
+  }
+
+  /**
+   * ion-accordion-group reports the open accordion's value (or undefined when all are
+   * collapsed). This group has exactly one accordion, so any defined value means "opened".
+   */
+  protected onAccordionChange(event: Event): void {
+    const value = (event as CustomEvent<{ value?: string | string[] | null }>).detail?.value;
+    if (value != null && value !== '') this.expanded.set(true);
   }
 
   protected async select(menuItem: MenuItemModel) {
