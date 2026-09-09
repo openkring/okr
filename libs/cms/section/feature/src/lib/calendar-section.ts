@@ -68,6 +68,9 @@ export class CalendarSectionComponent {
   public section = input<CalendarSection>();
   public editMode = input<boolean>(false);
   private calendarHost = viewChild('calendarHost', { read: ViewContainerRef });
+  /** Guards against a second mount while the chunk is in flight; a signal so the effect re-runs
+   *  once the flight ends (the host may have been swapped meanwhile). */
+  private readonly creatingCalendar = signal(false);
   protected readonly componentRef = signal<ComponentRef<CalendarView> | undefined>(undefined);
 
   // derived values
@@ -109,15 +112,38 @@ export class CalendarSectionComponent {
     effect(() => {
       debugData<EventInput[]>('CalendarSection(): events: ', this.filteredEvents(), this.calendarStore.currentUser());
     });
-    effect(async () => {
+    // Pattern A (lazy-loading skill): the effect body stays synchronous and starts the async work
+    // itself. The host lives in the `@else` of `isLoading()`: a reload removes it from the DOM
+    // together with the component created in it, so the stale ref must be dropped or the next
+    // host is never filled (white calendar after a reload).
+    effect(() => {
       const host = this.calendarHost();
-      if (!host || untracked(() => this.componentRef()) || !isBrowser(this.platformId)) return;
-      const { CalendarView } = await import('./calendar-view');
-      const ref = host.createComponent(CalendarView);
-      this.componentRef.set(ref);
-      ref.instance.dateClick.subscribe((e: unknown) => this.onDateClick(e));
-      ref.instance.eventDrop.subscribe((e: unknown) => this.onEventDrop(e));
-      ref.instance.eventResize.subscribe((e: unknown) => this.onEventResize(e));
+      if (!isBrowser(this.platformId)) return;
+      const ref = untracked(() => this.componentRef());
+      if (!host) {
+        if (ref) {
+          ref.destroy();
+          this.componentRef.set(undefined);
+        }
+        return;
+      }
+      if (ref || this.creatingCalendar()) return;
+      this.creatingCalendar.set(true);
+      void (async () => {
+        try {
+          const { CalendarView } = await import('./calendar-view');
+          // host swapped while the chunk was in flight: a component in a detached container
+          // would never be visible, yet its ref would block the remount
+          if (untracked(() => this.calendarHost()) !== host) return;
+          const created = host.createComponent(CalendarView);
+          this.componentRef.set(created);
+          created.instance.dateClick.subscribe((e: unknown) => this.onDateClick(e));
+          created.instance.eventDrop.subscribe((e: unknown) => this.onEventDrop(e));
+          created.instance.eventResize.subscribe((e: unknown) => this.onEventResize(e));
+        } finally {
+          this.creatingCalendar.set(false);
+        }
+      })();
     });
     effect(() => {
       const ref = this.componentRef();

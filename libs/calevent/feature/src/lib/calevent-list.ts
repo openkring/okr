@@ -332,8 +332,9 @@ export class CalEventList implements OnInit {
     import('@okr/chat-data-access').then(m => m.MatrixChatService));
   private calendarHost = viewChild('calendarHost', { read: ViewContainerRef });
   protected calendarRef = signal<ComponentRef<CaleventFullcalendarView> | undefined>(undefined);
-  /** Guards against a second mount while the chunk is still in flight. */
-  private creatingCalendar = false;
+  /** Guards against a second mount while the chunk is still in flight. A signal, so that the
+   *  mount effect re-runs once the flight ends — needed when the host was swapped meanwhile. */
+  private readonly creatingCalendar = signal(false);
 
   protected readonly getCalEventCssClass = getCalEventCssClass;
 
@@ -593,18 +594,34 @@ export class CalEventList implements OnInit {
     // value imports never join this component's static import graph (Pattern A, lazy-loading skill).
     effect(() => {
       const host = this.calendarHost();
+      if (!isBrowser(this.platformId)) return;
+      const ref = untracked(() => this.calendarRef());
+      // The host lives inside `@if(isListView() === false)` and the `@else` of `isLoading()`.
+      // Whenever that branch leaves the DOM (list view, a reload showing the spinner) Angular
+      // destroys the host container AND the component created in it — the ref we hold is dead.
+      // Drop it, otherwise the next host is never filled (white calendar after toggling views).
+      if (!host) {
+        if (ref) {
+          ref.destroy();
+          this.calendarRef.set(undefined);
+        }
+        return;
+      }
       // `creating` closes the window the ref guard alone leaves open: between starting the import
       // and setting the ref, a second run would pass the guard and mount a second component.
-      if (!host || !isBrowser(this.platformId) || untracked(() => this.calendarRef()) || this.creatingCalendar) return;
-      this.creatingCalendar = true;
+      if (ref || this.creatingCalendar()) return;
+      this.creatingCalendar.set(true);
       void (async () => {
         try {
           const { CaleventFullcalendarView } = await import('./calevent-fullcalendar-view');
-          const ref = host.createComponent(CaleventFullcalendarView);
-          ref.setInput('options', untracked(() => this.calendarOptions()));
-          this.calendarRef.set(ref);
+          // The host may have left the DOM while the chunk was in flight: a component created
+          // in a detached container would never be visible, yet the ref would block a remount.
+          if (untracked(() => this.calendarHost()) !== host) return;
+          const created = host.createComponent(CaleventFullcalendarView);
+          created.setInput('options', untracked(() => this.calendarOptions()));
+          this.calendarRef.set(created);
         } finally {
-          this.creatingCalendar = false;
+          this.creatingCalendar.set(false);
         }
       })();
     });
