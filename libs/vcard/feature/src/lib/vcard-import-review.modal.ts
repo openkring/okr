@@ -67,8 +67,10 @@ type Relation = VcardImportDecision['relations'][number];
         @for (decision of state(); track decision.draft.sourceFileName + $index; let i = $index) {
           <ion-accordion [value]="'row-' + i">
             <ion-item slot="header" lines="full">
+              <ion-icon src="{{ (decision.draft.kind === 'org' ? 'company' : 'person') | svgIcon }}" slot="start" />
               <ion-label>
                 <h2>{{ decision.draft.displayName }}</h2>
+                <ion-note>{{ decision.draft.sourceFileName }}</ion-note>
                 <ion-note>{{ summaryLine(decision) }}</ion-note>
               </ion-label>
               <ion-badge [color]="decision.duplicates.length > 0 ? 'warning' : 'success'">
@@ -197,12 +199,7 @@ export class VcardImportReviewModal {
     const imported = list.filter((d) => d.action === 'import' || d.action === 'createAnyway').length;
     const merged = list.filter((d) => d.action === 'merge').length;
     const skipped = list.filter((d) => d.action === 'skip').length;
-    return this.fill(this.i18n.import_summary(), {
-      imported: String(imported),
-      merged: String(merged),
-      skipped: String(skipped),
-      failed: '0',
-    });
+    return `${imported} ${this.i18n.import_status_new()} · ${merged} ${this.i18n.import_action_merge()} · ${skipped} ${this.i18n.import_action_skip()}`;
   });
 
   protected fill(template: string, params: Record<string, string>): string {
@@ -211,11 +208,11 @@ export class VcardImportReviewModal {
 
   protected summaryLine(decision: VcardImportDecision): string {
     const parts: string[] = [];
-    if (decision.draft.addresses.length > 0) parts.push(`${decision.draft.addresses.length} Kanäle`);
-    if (decision.draft.dob) parts.push('Geburtstag');
-    if (decision.draft.photoBase64) parts.push('Foto');
-    if (decision.draft.employment) parts.push('Anstellung');
-    if (decision.draft.relatedNames.length > 0) parts.push(`${decision.draft.relatedNames.length} Beziehungen`);
+    if (decision.draft.addresses.length > 0) parts.push(`${decision.draft.addresses.length} ${this.i18n.scope_addresses()}`);
+    if (decision.draft.dob) parts.push(this.i18n.scope_birthday());
+    if (decision.draft.photoBase64) parts.push(this.i18n.scope_photo());
+    if (decision.draft.employment) parts.push(this.i18n.scope_workRels());
+    if (decision.draft.relatedNames.length > 0) parts.push(`${decision.draft.relatedNames.length} ${this.i18n.scope_personalRels()}`);
     return parts.join(' · ');
   }
 
