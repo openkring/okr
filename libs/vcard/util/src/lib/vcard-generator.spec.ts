@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildVCard, escapeVcardValue, foldVcardLine, toAppleRelationLabel } from './vcard-generator';
+import { buildVCard, escapeVcardValue, foldVcardLine, fromAppleRelationLabel, toAppleRelationLabel, toPersonalRelType } from './vcard-generator';
 import { ExportScope, VcardRecord } from './vcard-types';
 
 const FULL_SCOPE: ExportScope = {
@@ -152,5 +152,47 @@ describe('toAppleRelationLabel', () => {
     expect(toAppleRelationLabel('coach', 'Trainer')).toBe('Trainer');
     expect(toAppleRelationLabel('coach')).toBe('coach');
     expect(toAppleRelationLabel(undefined)).toBe('Contact');
+  });
+});
+
+describe('toPersonalRelType', () => {
+  it.each([
+    ['spouse', 'husband'],
+    ['marriage', 'husband'],
+    ['partner', 'partner'],
+    ['child', 'parentChild'],
+    ['parent', 'parentChild'],
+    ['mother', 'parentChild'],
+    ['father', 'parentChild'],
+    ['brother', 'sibling'],
+    ['sister', 'sibling'],
+    ['sibling', 'sibling'],
+    ['friend', 'friend'],
+    ['friendship', 'friend'],
+  ])('maps the Apple kind %s onto the category key %s', (kind, expected) => {
+    expect(toPersonalRelType(kind)).toBe(expected);
+  });
+
+  it.each(['assistant', 'manager'])('falls back to custom for %s, which the category has no word for', (kind) => {
+    expect(toPersonalRelType(kind)).toBe('custom');
+  });
+
+  it('falls back to custom for an undecodable label and for no label at all', () => {
+    expect(toPersonalRelType('Nachbarin')).toBe('custom');
+    expect(toPersonalRelType(undefined)).toBe('custom');
+    expect(toPersonalRelType('')).toBe('custom');
+  });
+
+  it('never returns a key outside the personalrel_type category', () => {
+    const CATEGORY = ['partner', 'husband', 'friend', 'neighbor', 'incompatible', 'related', 'parentChild', 'sibling', 'custom'];
+    const appleKinds = ['spouse', 'marriage', 'partner', 'child', 'parent', 'mother', 'father',
+      'brother', 'sister', 'sibling', 'friend', 'friendship', 'assistant', 'manager'];
+    for (const kind of appleKinds) expect(CATEGORY).toContain(toPersonalRelType(kind));
+  });
+
+  it('round-trips every Apple token through decode + type mapping', () => {
+    // the token the exporter writes for a stored 'husband' must come back as 'husband'
+    expect(toPersonalRelType(fromAppleRelationLabel(toAppleRelationLabel('spouse')))).toBe('husband');
+    expect(toPersonalRelType(fromAppleRelationLabel(toAppleRelationLabel('sibling')))).toBe('sibling');
   });
 });

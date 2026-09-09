@@ -44,6 +44,7 @@ import {
   parseVcards,
   resolveVcardImportCapability,
   toImportDraft,
+  toPersonalRelType,
   vcardImportTexts,
   VcardImportDecision,
   VcardImportDraft,
@@ -372,7 +373,7 @@ export class VcardImportService {
           continue;
         }
 
-        const key = await this.createSubject(draft, currentUser);
+        const key = await this.createSubject(draft, currentUser, batchOrgKeys);
         if (!key) throw new Error('create returned no key');
         if (draft.kind === 'org') batchOrgKeys.set(normalizeName(draft.org?.name ?? draft.displayName), key);
         else this.registerPerson(batchPersonKeys, key, draft);
@@ -473,9 +474,19 @@ export class VcardImportService {
    * the assignment to its caller — dropping them on an org card would discard its NOTE and its
    * whole residual block, which D-8 forbids. Returns the new okey.
    */
-  private async createSubject(draft: VcardImportDraft, currentUser: UserModel | undefined): Promise<string | undefined> {
+  private async createSubject(
+    draft: VcardImportDraft,
+    currentUser: UserModel | undefined,
+    batchOrgKeys: Map<string, string>,
+  ): Promise<string | undefined> {
     if (draft.kind === 'org') {
       if (!draft.org) return undefined;
+      // §5.4: the same organisation named on two cards of one file is ONE organisation.
+      // `buildDecisions` marks the second card as a duplicate of an okey-less batch sibling,
+      // so `isOrgMerge` (which needs a real okey) lets it fall through to here — reuse the key
+      // this run already registered instead of writing a second OrgModel.
+      const known = batchOrgKeys.get(normalizeName(draft.org.name ?? draft.displayName));
+      if (known) return known;
       draft.org.notes = draft.notes;
       return this.orgService.create(draft.org, currentUser);
     }
@@ -685,10 +696,14 @@ export class VcardImportService {
       rel.objectKey = objectKey;
       rel.objectFirstName = names.firstName;
       rel.objectLastName = names.lastName;
-      // §4.4: a decoded Apple token IS the relation kind; only an undecodable label stays a
-      // label. `type` keeps the model default (DEFAULT_PERSONAL_REL) when nothing decoded.
-      rel.label = relation.label;
-      if (relation.type) rel.type = relation.type;
+      // §4.4: the decoded Apple kind is translated into the tenant's `personalrel_type`
+      // vocabulary — the two lists barely overlap, and storing the Apple word directly left
+      // the relation unrenderable. Everything the category has no word for becomes 'custom',
+      // whose label IS what the screen shows: so keep the card's own wording there — the raw
+      // label when nothing decoded, else the decoded kind ('assistant'), and nothing at all
+      // when the category itself names the relation.
+      rel.type = toPersonalRelType(relation.type);
+      rel.label = rel.type === 'custom' ? relation.label || relation.type || '' : relation.label;
       await this.personalRelService.create(rel, currentUser);
     }
   }

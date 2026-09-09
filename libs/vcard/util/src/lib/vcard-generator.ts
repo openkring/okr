@@ -201,6 +201,44 @@ export function fromAppleRelationLabel(label: string | undefined): string | unde
 }
 
 /**
+ * Apple relation kind -> a key of the tenant's `personalrel_type` category.
+ *
+ * The two vocabularies are NOT the same list. The Apple side speaks
+ * `spouse|mother|brother|…`; the category speaks
+ * `partner|husband|friend|neighbor|incompatible|related|parentChild|sibling|custom`,
+ * and only three keys overlap. Writing the Apple kind straight into
+ * `PersonalRelModel.type` produced a key no bundle carries: `PersonalRelNamePipe`
+ * rendered nothing, the type filter could not see the relation and every import
+ * emitted a missing-key event. Same bug class as an unknown `addressUsage`.
+ */
+const PERSONAL_REL_TYPE_BY_RELATION_KIND: Record<string, string> = {
+  spouse: 'husband',
+  marriage: 'husband',
+  partner: 'partner',
+  child: 'parentChild',
+  parent: 'parentChild',
+  mother: 'parentChild',
+  father: 'parentChild',
+  brother: 'sibling',
+  sister: 'sibling',
+  sibling: 'sibling',
+  friend: 'friend',
+  friendship: 'friend',
+};
+
+/**
+ * The `personalrel_type` key to store for a decoded relation kind, `'custom'` for anything
+ * the category has no word for (`assistant`, `manager`, an undecodable label, no label at
+ * all). `'custom'` is the vocabulary's own escape hatch: `personal-rel-name.pipe.ts` reads
+ * `PersonalRelModel.label` instead of the category for it, so the card's own wording still
+ * reaches the screen — the caller must therefore keep that wording in `label`.
+ */
+export function toPersonalRelType(relationKind: string | undefined): string {
+  const key = (relationKind ?? '').trim().toLowerCase();
+  return PERSONAL_REL_TYPE_BY_RELATION_KIND[key] ?? 'custom';
+}
+
+/**
  * Map a relation kind to Apple's predefined label where one exists; otherwise
  * fall back to a provided custom label or the raw kind (spec §3.5).
  */
