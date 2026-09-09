@@ -84,9 +84,21 @@ export class FirestoreSubscriptionMonitor {
     this.ensure(key).subscribes++;
   }
 
-  /** Ein echter Firestore-Snapshot ist eingetroffen (Messpunkt VOR `share`). */
+  /**
+   * Ein echter Firestore-Snapshot ist eingetroffen (Messpunkt VOR `share`).
+   *
+   * Setzt zusätzlich eine User-Timing-Marke `okr:snapshot:<collection>:<n>`. Damit landet jeder
+   * Snapshot auf der Zeitachse des Performance-Panels und im Lighthouse-Trace — so lässt sich ein
+   * langer Main-Thread-Task dem Abo zuordnen, dessen Snapshot darin ausgeliefert wurde
+   * (`scripts/perf-snapshot-tasks.mjs`). Eine Marke kostet Mikrosekunden; ohne `performance`
+   * (SSR, Tests) passiert nichts.
+   */
   public sourceEmitted(key: string): void {
-    this.ensure(key).sourceEmissions++;
+    const entry = this.ensure(key);
+    entry.sourceEmissions++;
+    if (typeof performance !== 'undefined' && typeof performance.mark === 'function') {
+      performance.mark(`okr:snapshot:${entry.collection}:${entry.sourceEmissions}`, { detail: key });
+    }
   }
 
   /** Ein Wert wurde an einen Konsumenten geliefert, Replay eingeschlossen (Messpunkt NACH `share`). */

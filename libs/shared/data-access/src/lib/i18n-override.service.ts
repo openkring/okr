@@ -3,7 +3,7 @@ import { TranslocoService } from '@jsverse/transloco';
 import { distinctUntilChanged } from 'rxjs/operators';
 
 import { I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@okr/shared-models';
-import { getSystemQuery } from '@okr/shared-util-core';
+import { deepEqual, getSystemQuery } from '@okr/shared-util-core';
 
 import { FirestoreService } from './firestore.service';
 
@@ -65,10 +65,23 @@ export class I18nOverrideService {
       getSystemQuery(tenantId),
       'module',
       'asc',
+    ).pipe(
+      // Firestore delivers the cache snapshot and then the server snapshot; on a cold start both
+      // hold the same documents. Applying them twice costs a full app-wide re-translation each.
+      distinctUntilChanged(deepEqual),
     ).subscribe(overrides => {
+      // PERFORMANCE — measured 2026-09-09 (perf-baselines.md, »Der Firestore-Snapshot-Task war
+      // Transloco«): `setTranslation` with the default `emitChange: true` calls `setActiveLang`,
+      // which re-emits `langChanges$`, and EVERY `selectTranslate` subscription in the app
+      // (hundreds — each `translateAll` signal of every mounted component) re-runs on each emit.
+      // With seven override documents that was seven app-wide re-translations per snapshot,
+      // ~150 ms observed / ~600 ms simulated TBT on the dashboard. So: apply all overrides
+      // silently, then emit exactly once.
+      let applied = 0;
       for (const override of overrides) {
         const value = (override as unknown as Record<string, unknown>)[lang] as string | undefined;
         if (!value) continue;
+        applied++;
 
         const isScoped = override.module.includes('/');
         if (isScoped) {
@@ -77,16 +90,18 @@ export class I18nOverrideService {
           this.translocoService.setTranslation(
             { [override.key]: value },
             lang,
-            { merge: true, scope: override.module } as any,
+            { merge: true, emitChange: false, scope: override.module } as any,
           );
         } else {
           this.translocoService.setTranslation(
             { [`${override.module}.${override.key}`]: value },
             lang,
-            { merge: true },
+            { merge: true, emitChange: false },
           );
         }
       }
+      // What Transloco would have done after each call — once, and only if something changed.
+      if (applied > 0) this.translocoService.setActiveLang(this.translocoService.getActiveLang());
     });
   }
 }
