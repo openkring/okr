@@ -2,12 +2,13 @@ import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, input, out
 import { AlertController, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonRow, IonTitle, IonToolbar, ModalController } from '@ionic/angular/standalone';
 import { AlbumSection, ImageConfig, ImageType } from '@okr/shared-models';
 import { SvgIconPipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
-import { browse, CategorySelect, ImageGrid, Label, openImageGallery, Spinner } from '@okr/shared-ui';
+import { browse, CategorySelect, ImageGrid, Label, openImageGallery, showVideoView, Spinner } from '@okr/shared-ui';
 import { I18nService } from '@okr/shared-i18n';
-import { downloadToBrowser } from '@okr/shared-util-angular';
+import { downloadToBrowser, showToast } from '@okr/shared-util-angular';
 
 import { FolderBreadcrumb } from '@okr/content-folder-ui';
 import { canUploadIntoFolder } from '@okr/content-folder-util';
+import { hasRendering, resolveRendering } from '@okr/content-document-util';
 
 
 import { AlbumStore } from './album-section.store';
@@ -188,10 +189,26 @@ export class AlbumSectionComponent {
 
   /**
    * Images open the full-screen viewer with prev/next across the sibling images of this folder,
-   * download and an info button (storage metadata + EXIF). Other files are downloaded / opened.
+   * download and an info button (storage metadata + EXIF). Videos open the full-screen player;
+   * everything else besides images is still downloaded / opened.
    */
   protected async onImageClicked(image: ImageConfig): Promise<void> {
     if (this.editMode()) return;
+    if (image.type === ImageType.Video) {
+      // Das Dokument trägt das mp4-Rendering; ohne es läuft die Transkodierung noch.
+      const doc = this.store.visibleDocuments().find((d) => d.okey === image.documentKey);
+      if (!doc || !hasRendering(doc, 'mp4')) {
+        await showToast(this.store.toastController, this.store.i18n.album_video_pending());
+        return;
+      }
+      // i18n über den Store, wie album_style_header und album_cover_apply daneben.
+      await showVideoView(this.modalController, resolveRendering(doc, 'mp4'), image.actionUrl, {
+        title: image.label || this.store.i18n.album_video_title(),
+        download: this.store.i18n.album_video_download(),
+        close: this.store.i18n.album_video_close()
+      });
+      return;
+    }
     if (image.type !== ImageType.Image) {
       if (image.actionUrl) await downloadToBrowser(image.actionUrl);
       else browse(image.url);

@@ -79,6 +79,7 @@ export * from './lib/image-lightbox.modal';
 export * from './lib/upload-task.modal';
 export * from './lib/url-input';
 export * from './lib/video';
+export * from './lib/video-view.modal';
 export * from './lib/image-grid';
 export * from './lib/viewdate-input';
 export * from './lib/year-select';

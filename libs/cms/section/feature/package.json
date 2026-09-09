@@ -28,6 +28,7 @@
     "@okr/avatar-feature": "*",
     "@okr/content-document-ui": "*",
     "@okr/content-document-feature": "*",
+    "@okr/content-document-util": "*",
     "@okr/activity-data-access": "*",
     "@okr/activity-feature": "*",
     "@okr/relationship-membership-data-access": "*",

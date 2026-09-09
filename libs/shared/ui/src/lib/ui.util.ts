@@ -8,6 +8,7 @@ import { DateFormat, debugMessage, getTodayStr, warn } from "@okr/shared-util-co
 import { DateSelectModal } from "./date-select.modal";
 import { ImageViewModal } from "./image-view.modal";
 import { ImageSliderModal } from "./image-slider.modal";
+import { VideoViewModal } from "./video-view.modal";
 
 export interface ValidationInfo {
   type: string,
@@ -82,6 +83,26 @@ export async function showImageSlider(modalController: ModalController, images: 
       images,
       startIndex,
       style
+    }
+  });
+  modal.present();
+  await modal.onWillDismiss();
+}
+
+// Open the full-screen player for one album video. No gallery: videos deliberately stay out of
+// the prev/next paging and out of the slideshow (spec §5.3).
+export async function showVideoView(
+  modalController: ModalController,
+  storagePath: string,
+  actionUrl: string,
+  labels: { title: string; download: string; close: string }
+): Promise<void> {
+  const modal = await modalController.create({
+    component: VideoViewModal,
+    cssClass: 'full-modal',
+    componentProps: {
+      storagePath, actionUrl,
+      title: labels.title, downloadLabel: labels.download, closeLabel: labels.close
     }
   });
   modal.present();
