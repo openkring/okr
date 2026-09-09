@@ -41,21 +41,20 @@ export const DOC_LOOKUP_ATTEMPTS = 5;
 export const DOC_LOOKUP_DELAY_MS = 2000;
 
 export interface RetryUntilFoundOptions {
-  attempts?: number;
-  delayMs?: number;
-  /** Injected in tests so the wait is not actually served. */
+  /** Injected in tests so the wait is not actually served. Never set in production. */
   sleep?: (ms: number) => Promise<void>;
 }
 
 export interface RetryUntilFoundResult<T> {
   /** The first defined value an attempt returned, or `undefined` if none did. */
   value: T | undefined;
-  /** How many attempts were made — 1 on an immediate hit, `attempts` when it gave up. */
+  /** How many attempts were made — 1 on an immediate hit, DOC_LOOKUP_ATTEMPTS when it gave up. */
   attempts: number;
 }
 
 /**
- * Run `attempt` until it returns something, up to `attempts` times, pausing `delayMs` in between.
+ * Run `attempt` until it returns something, up to `DOC_LOOKUP_ATTEMPTS` times, pausing
+ * `DOC_LOOKUP_DELAY_MS` in between.
  *
  * The first attempt runs immediately and a hit never waits, so the common case costs nothing. This
  * exists to bridge a genuine race and not as a general-purpose retry: the Storage trigger fires at
@@ -67,14 +66,12 @@ export async function retryUntilFound<T>(
   attempt: (attemptNo: number) => Promise<T | undefined>,
   options: RetryUntilFoundOptions = {},
 ): Promise<RetryUntilFoundResult<T>> {
-  const attempts = options.attempts ?? DOC_LOOKUP_ATTEMPTS;
-  const delayMs = options.delayMs ?? DOC_LOOKUP_DELAY_MS;
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)));
 
-  for (let attemptNo = 1; attemptNo <= attempts; attemptNo++) {
+  for (let attemptNo = 1; attemptNo <= DOC_LOOKUP_ATTEMPTS; attemptNo++) {
     const value = await attempt(attemptNo);
     if (value !== undefined) return { value, attempts: attemptNo };
-    if (attemptNo < attempts) await sleep(delayMs);
+    if (attemptNo < DOC_LOOKUP_ATTEMPTS) await sleep(DOC_LOOKUP_DELAY_MS);
   }
-  return { value: undefined, attempts };
+  return { value: undefined, attempts: DOC_LOOKUP_ATTEMPTS };
 }

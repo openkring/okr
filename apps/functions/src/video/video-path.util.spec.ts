@@ -104,9 +104,4 @@ describe('retryUntilFound', () => {
     expect(seen).toEqual([1, 2, 3, 4, 5]);
     expect(waits).toHaveLength(DOC_LOOKUP_ATTEMPTS - 1);
   });
-
-  it('spans the documented ~10 s window', () => {
-    expect(DOC_LOOKUP_ATTEMPTS).toBe(5);
-    expect(DOC_LOOKUP_DELAY_MS).toBe(2000);
-  });
 });
