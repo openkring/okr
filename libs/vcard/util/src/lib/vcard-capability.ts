@@ -51,3 +51,23 @@ export function resolveVcardCapability(roles: Roles | undefined, selectionCount:
       return { allowed: false, maxTargets: 0, scope: 'favorites', promptForScope: false };
   }
 }
+
+/**
+ * Who may import (spec §7.1). memberAdmin only — bulk-creating persons is a
+ * member-administration act, and it is the tier already permitted to write the
+ * sensitive dob/ssn vault channels. `vcardTier` already folds `admin` in.
+ */
+export function resolveVcardImportCapability(roles: Roles | undefined): { allowed: boolean } {
+  return { allowed: vcardTier(roles) === 'memberAdmin' };
+}
+
+/** Mime types offered to the file dialog (spec §7.3). */
+export const VCARD_MIMETYPES = ['text/vcard', 'text/x-vcard', 'text/directory', '.vcf'];
+
+/**
+ * Browsers report .vcf inconsistently — Safari often sends an empty type — so a
+ * picked file is accepted on its extension too (the resolveMimeType rule).
+ */
+export function isVcardFile(file: { name: string; type: string }): boolean {
+  return VCARD_MIMETYPES.includes(file.type) || /\.vcf$/i.test(file.name);
+}

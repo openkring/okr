@@ -58,3 +58,29 @@ describe('resolveVcardCapability', () => {
     expect(resolveVcardCapability({ memberAdmin: true }, 0).allowed).toBe(false);
   });
 });
+
+import { isVcardFile, resolveVcardImportCapability, VCARD_MIMETYPES } from './vcard-capability';
+
+describe('resolveVcardImportCapability', () => {
+  it('allows memberAdmin and admin', () => {
+    expect(resolveVcardImportCapability({ memberAdmin: true } as never).allowed).toBe(true);
+    expect(resolveVcardImportCapability({ admin: true } as never).allowed).toBe(true);
+  });
+  it('denies privileged, registered and undefined roles', () => {
+    expect(resolveVcardImportCapability({ privileged: true } as never).allowed).toBe(false);
+    expect(resolveVcardImportCapability({ registered: true } as never).allowed).toBe(false);
+    expect(resolveVcardImportCapability(undefined).allowed).toBe(false);
+  });
+});
+
+describe('isVcardFile', () => {
+  it('accepts the declared mime types', () => {
+    for (const type of VCARD_MIMETYPES) expect(isVcardFile({ name: 'k.vcf', type })).toBe(true);
+  });
+  it('accepts on the extension when the browser reports no type (Safari)', () => {
+    expect(isVcardFile({ name: 'Kontakte.VCF', type: '' })).toBe(true);
+  });
+  it('rejects an unrelated file', () => {
+    expect(isVcardFile({ name: 'bild.png', type: 'image/png' })).toBe(false);
+  });
+});
