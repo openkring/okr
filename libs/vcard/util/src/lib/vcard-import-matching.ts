@@ -19,13 +19,16 @@ export type DuplicateAction = 'merge' | 'skip' | 'createAnyway';
 /** The reviewable outcome of matching one parsed card against the tenant (and the batch so far). */
 export interface VcardImportDecision {
   draft: VcardImportDraft;
+  /** person cards only — an org card is never a duplicate OF A PERSON (see `findDuplicates`). */
   duplicates: ExistingPerson[];
+  /** org cards only — the tenant's orgs carrying the same normalized name (§5.2). */
+  orgDuplicates: ExistingOrg[];
   action: 'import' | DuplicateAction;
   /** resolved org key for the employment edge, '' = do not link */
   employerKey: string;
   createEmployer: boolean;
   employerCandidates: ExistingOrg[];
-  relations: { name: string; label: string; personKey: string; createPerson: boolean; candidates: ExistingPerson[] }[];
+  relations: { name: string; label: string; type?: string; personKey: string; createPerson: boolean; candidates: ExistingPerson[] }[];
 }
 
 /**
@@ -62,6 +65,19 @@ function findDuplicates(draft: VcardImportDraft, persons: ExistingPerson[]): Exi
   return persons.filter((p) => normalizeName(`${p.firstName} ${p.lastName}`) === draftName);
 }
 
+/**
+ * An org card duplicating an org the tenant already carries (§5.2). Matching is by
+ * normalized name against the very pool `resolveEmployer` uses, so "Acme AG" resolves the
+ * same way whether it arrives as its own card or as an `ORG:` string — without this the
+ * same file imported twice silently produced a second `OrgModel`.
+ */
+function findOrgDuplicates(draft: VcardImportDraft, orgs: ExistingOrg[]): ExistingOrg[] {
+  if (draft.kind !== 'org') return [];
+  const target = normalizeName(draft.org?.name ?? draft.displayName);
+  if (!target) return [];
+  return orgs.filter((o) => normalizeName(o.name) === target);
+}
+
 function resolveEmployer(draft: VcardImportDraft, orgs: ExistingOrg[]): { employerKey: string; createEmployer: boolean; employerCandidates: ExistingOrg[] } {
   const orgName = draft.employment?.orgName;
   if (!orgName) return { employerKey: '', createEmployer: false, employerCandidates: [] };
@@ -72,13 +88,13 @@ function resolveEmployer(draft: VcardImportDraft, orgs: ExistingOrg[]): { employ
 }
 
 function resolveRelations(draft: VcardImportDraft, persons: ExistingPerson[]): VcardImportDecision['relations'] {
-  return draft.relatedNames.map(({ name, label }) => {
+  return draft.relatedNames.map(({ name, label, type }) => {
     const target = normalizeName(name);
     const candidates = persons.filter((p) => normalizeName(`${p.firstName} ${p.lastName}`) === target);
     if (candidates.length === 1) {
-      return { name, label, personKey: candidates[0].okey, createPerson: false, candidates: [] };
+      return { name, label, type, personKey: candidates[0].okey, createPerson: false, candidates: [] };
     }
-    return { name, label, personKey: '', createPerson: false, candidates: candidates.length > 1 ? candidates : [] };
+    return { name, label, type, personKey: '', createPerson: false, candidates: candidates.length > 1 ? candidates : [] };
   });
 }
 
@@ -93,21 +109,27 @@ function resolveRelations(draft: VcardImportDraft, persons: ExistingPerson[]): V
  */
 export function buildDecisions(drafts: VcardImportDraft[], persons: ExistingPerson[], orgs: ExistingOrg[]): VcardImportDecision[] {
   const pool = [...persons];
+  const orgPool = [...orgs];
   const decisions: VcardImportDecision[] = [];
 
   for (const draft of drafts) {
     const duplicates = findDuplicates(draft, pool);
-    const action: VcardImportDecision['action'] = duplicates.length > 0 ? 'merge' : 'import';
+    const orgDuplicates = findOrgDuplicates(draft, orgPool);
+    const action: VcardImportDecision['action'] = duplicates.length > 0 || orgDuplicates.length > 0 ? 'merge' : 'import';
     const { employerKey, createEmployer, employerCandidates } = resolveEmployer(draft, orgs);
     const relations = resolveRelations(draft, pool);
 
-    decisions.push({ draft, duplicates, action, employerKey, createEmployer, employerCandidates, relations });
+    decisions.push({ draft, duplicates, orgDuplicates, action, employerKey, createEmployer, employerCandidates, relations });
 
     // Fold this card's own name into the pool (§5.4) without an okey, so a later
     // card can be recognized as duplicating it by name, while relation matching
     // against it (which requires an okey) still comes back unresolved.
     if (draft.kind === 'person' && draft.person) {
       pool.push({ okey: '', firstName: draft.person.firstName ?? '', lastName: draft.person.lastName ?? '', emails: draftEmails(draft) });
+    } else if (draft.kind === 'org' && draft.org) {
+      // the same org twice in one file is recognised the same way (okey-less, so the commit
+      // creates it once and the second card reuses the batch key rather than a merge target).
+      orgPool.push({ okey: '', name: draft.org.name ?? draft.displayName });
     }
   }
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_COUNTRY } from '@okr/shared-constants';
 import { mapVcardType, splitStreet, toImportDraft } from './vcard-import-mapping';
 import { ParsedVcard } from './vcard-parser';
 
@@ -32,6 +33,18 @@ describe('mapVcardType', () => {
 
   it('falls back for a missing type', () => {
     expect(mapVcardType(undefined, false, USAGES)).toEqual({ usage: 'home', matched: false });
+  });
+
+  it('checks the FALLBACK against the tenant too, and takes the first available usage', () => {
+    // a tenant without a 'home' item would otherwise get exactly the un-editable address
+    // the availability check exists to prevent.
+    expect(mapVcardType('PAGER', false, ['work', 'mobile'])).toEqual({ usage: 'work', matched: false });
+    expect(mapVcardType(undefined, true, ['privat', 'geschaeft'])).toEqual({ usage: 'privat', matched: false });
+  });
+
+  it('keeps the hard default only when the tenant carries no usage at all', () => {
+    expect(mapVcardType(undefined, false, [])).toEqual({ usage: 'home', matched: false });
+    expect(mapVcardType(undefined, true, [])).toEqual({ usage: 'work', matched: false });
   });
 });
 
@@ -108,12 +121,37 @@ describe('toImportDraft', () => {
     expect(d.relatedNames).toEqual([{ name: 'Beat Muster', label: '_$!<Spouse>!$_' }]);
   });
 
-  it('leaves countryCode empty (not CH) when the country name does not resolve', () => {
+  it('resolves an English country name, not only the German one', () => {
+    const d = toImportDraft(parsed({ channels: [
+      { channel: 'postal', type: 'HOME', street: 'Hauptstrasse 1', zip: '8001', city: 'Zürich', country: 'Switzerland' },
+    ] }), TENANT, USAGES, '09.09.2026');
+    expect(d.addresses[0]).toMatchObject({ addressChannel: 'postal', countryCode: 'CH' });
+    expect(d.warnings).toEqual([]);
+  });
+
+  it.each(['Suisse', 'Svizzera', 'Suiza'])('resolves the country name in %s', (name) => {
+    const d = toImportDraft(parsed({ channels: [
+      { channel: 'postal', type: 'HOME', street: 'Hauptstrasse 1', zip: '8001', city: 'Zürich', country: name },
+    ] }), TENANT, USAGES, '09.09.2026');
+    expect(d.addresses[0].countryCode).toBe('CH');
+  });
+
+  it('falls back to DEFAULT_COUNTRY and warns when the country name resolves in no language', () => {
+    // '' would pass the mapper but fail address.validations (mandatory, 2 chars, upper-case),
+    // leaving a record the address form cannot save. The fallback keeps the record saveable,
+    // the warning keeps the substitution visible.
     const d = toImportDraft(parsed({ channels: [
       { channel: 'postal', type: 'HOME', street: 'Hauptstrasse 1', zip: '1234', city: 'Nirgends', country: 'Nirgendland' },
     ] }), TENANT, USAGES, '09.09.2026');
-    expect(d.addresses[0]).toMatchObject({ addressChannel: 'postal', countryCode: '' });
+    expect(d.addresses[0]).toMatchObject({ addressChannel: 'postal', countryCode: DEFAULT_COUNTRY });
     expect(d.warnings.some((w) => w.includes('Nirgendland'))).toBe(true);
+  });
+
+  it('carries the ADR Ext component into addressValue2', () => {
+    const d = toImportDraft(parsed({ channels: [
+      { channel: 'postal', type: 'HOME', ext: 'c/o Meier', street: 'Bahnhofstrasse 1', zip: '8001', city: 'Zürich', country: 'Schweiz' },
+    ] }), TENANT, USAGES, '09.09.2026');
+    expect(d.addresses[0]).toMatchObject({ addressChannel: 'postal', addressValue2: 'c/o Meier' });
   });
 
   it('carries a valid DEATHDATE into dod', () => {

@@ -1,22 +1,34 @@
 import * as i18nIsoCountries from 'i18n-iso-countries';
 import deCountries from 'i18n-iso-countries/langs/de.json';
+import enCountries from 'i18n-iso-countries/langs/en.json';
+import frCountries from 'i18n-iso-countries/langs/fr.json';
+import itCountries from 'i18n-iso-countries/langs/it.json';
+import esCountries from 'i18n-iso-countries/langs/es.json';
 
+import { DEFAULT_COUNTRY } from '@okr/shared-constants';
 import { createFavoriteAddress } from '@okr/subject-address-util';
 import { AddressModel, OrgModel, PersonModel } from '@okr/shared-models';
 
+import { DEFAULT_VCARD_IMPORT_TEXTS, fill, VcardImportTexts } from './vcard-i18n';
 import { composeImportNotes } from './vcard-import-notes';
 import { vcardDateToStoreDate } from './vcard-import-dates';
 import { ParsedVcard } from './vcard-parser';
-import { VcardChannel } from './vcard-types';
+import { VcardChannel, VcardRelatedName } from './vcard-types';
 
 /*
-  i18n-iso-countries ships no locale data by default. The exporter (vcard-generator.ts)
-  emits the German display country name (§4.4), so only 'de' needs to be registered here
-  to resolve it back to an ISO alpha-2 code. Registering twice (e.g. alongside
-  @okr/shared-util-core, which registers all five app languages) is a no-op for
+  i18n-iso-countries ships no locale data by default. A card can come from anywhere:
+  our own exporter writes the German display name, but Apple and Google write the one
+  the phone's language produced — "Switzerland", "Suisse", "Svizzera", "Suiza". All five
+  app languages are therefore registered and all five are tried (§4.2). Registering twice
+  (e.g. alongside @okr/shared-util-core, which registers the same five) is a no-op for
   i18n-iso-countries, so this is safe even when both modules load in the same bundle.
 */
-i18nIsoCountries.registerLocale(deCountries as unknown as i18nIsoCountries.LocaleData);
+for (const locale of [deCountries, enCountries, frCountries, itCountries, esCountries]) {
+  i18nIsoCountries.registerLocale(locale as unknown as i18nIsoCountries.LocaleData);
+}
+
+/** The languages a `COUNTRY` component is tried in, in order (matches AvailableLanguages). */
+const COUNTRY_LOCALES = ['de', 'en', 'fr', 'it', 'es'];
 
 /** The mapped result of `toImportDraft` — unsaved Firestore model drafts, ready for review before commit. */
 export interface VcardImportDraft {
@@ -29,7 +41,7 @@ export interface VcardImportDraft {
   photoBase64?: string;
   notes: string;
   employment?: { orgName: string; department: string; title: string; role: string };
-  relatedNames: { name: string; label: string }[];
+  relatedNames: VcardRelatedName[];
   sourceFileName: string;
   displayName: string;
   warnings: string[];
@@ -53,7 +65,12 @@ const TYPE_TO_USAGE: Record<string, string> = {
  * the address form afterwards.
  */
 export function mapVcardType(typeToken: string | undefined, isOrgCard: boolean, availableUsages: string[]): { usage: string; matched: boolean } {
-  const fallback = isOrgCard ? 'work' : 'home';
+  // The FALLBACK is checked against the tenant exactly like a mapped usage would be: a
+  // tenant without a 'home' item would otherwise be handed precisely the un-editable
+  // address this check exists to prevent. Last resort is the first usage the tenant
+  // really has; only an empty tenant category leaves the hard-coded default standing.
+  const preferred = isOrgCard ? 'work' : 'home';
+  const fallback = availableUsages.includes(preferred) ? preferred : availableUsages[0] ?? preferred;
   if (!typeToken) return { usage: fallback, matched: false };
   const mapped = TYPE_TO_USAGE[typeToken.toUpperCase()];
   if (!mapped || !availableUsages.includes(mapped)) return { usage: fallback, matched: false };
@@ -68,28 +85,37 @@ export function splitStreet(street: string | undefined): { streetName: string; s
   return { streetName: match[1], streetNumber: match[2] };
 }
 
-/** Country display name (as emitted by the exporter, §4.4) -> ISO alpha-2 code, '' when unresolvable. */
-function countryNameToCode(name: string | undefined, warnings: string[]): string {
-  if (!name) return '';
-  const code = i18nIsoCountries.getAlpha2Code(name, 'de');
-  if (!code) {
-    warnings.push(`Land "${name}" konnte keinem ISO-Code zugeordnet werden.`);
-    return '';
+/**
+ * Country display name -> ISO 3166-1 alpha-2 code (§4.2).
+ *
+ * Never returns `''`: `address.validations.ts` makes `countryCode` mandatory, exactly two
+ * characters and upper-case, so an empty code writes a postal address that the address
+ * form then refuses to save until a human repairs it. An unresolvable name therefore
+ * falls back to `DEFAULT_COUNTRY` **and keeps the warning** — the operator is told that a
+ * value was substituted, instead of finding a broken record later.
+ */
+function countryNameToCode(name: string | undefined, warnings: string[], texts: VcardImportTexts): string {
+  if (!name) return DEFAULT_COUNTRY;
+  for (const locale of COUNTRY_LOCALES) {
+    const code = i18nIsoCountries.getAlpha2Code(name, locale);
+    if (code) return code.toUpperCase();
   }
-  return code;
+  warnings.push(fill(texts.unknownCountry, { name, fallback: DEFAULT_COUNTRY }));
+  return DEFAULT_COUNTRY;
 }
 
-function mapChannel(ch: VcardChannel, isOrgCard: boolean, tenantId: string, availableUsages: string[], warnings: string[]): AddressModel {
+function mapChannel(ch: VcardChannel, isOrgCard: boolean, tenantId: string, availableUsages: string[], warnings: string[], texts: VcardImportTexts): AddressModel {
   const { usage, matched } = mapVcardType(ch.type, isOrgCard, availableUsages);
   if (!matched && ch.type) {
-    warnings.push(`Unbekannter TYPE "${ch.type}" bei ${ch.channel} — auf "${usage}" abgebildet.`);
+    warnings.push(fill(texts.unknownUsage, { type: ch.type, channel: ch.channel, usage }));
   }
 
   let address: AddressModel;
   if (ch.channel === 'postal') {
     const { streetName, streetNumber } = splitStreet(ch.street);
-    const countryCode = countryNameToCode(ch.country, warnings);
-    address = createFavoriteAddress('postal', usage, streetName, tenantId, streetNumber, '', ch.zip ?? '', ch.city ?? '', countryCode);
+    const countryCode = countryNameToCode(ch.country, warnings, texts);
+    // `ext` is the ADR `Ext` component (c/o, apartment, floor) -> addressValue2 (§4.2).
+    address = createFavoriteAddress('postal', usage, streetName, tenantId, streetNumber, ch.ext ?? '', ch.zip ?? '', ch.city ?? '', countryCode);
   } else {
     address = createFavoriteAddress(ch.channel, usage, ch.value ?? '', tenantId);
   }
@@ -105,7 +131,13 @@ function mapChannel(ch: VcardChannel, isOrgCard: boolean, tenantId: string, avai
  * `addresses[].parentKey` is deliberately left empty — it is filled in once the caller
  * knows the (new or matched) person/org okey at commit time.
  */
-export function toImportDraft(parsed: ParsedVcard, tenantId: string, availableUsages: string[], importDateViewDate: string): VcardImportDraft {
+export function toImportDraft(
+  parsed: ParsedVcard,
+  tenantId: string,
+  availableUsages: string[],
+  importDateViewDate: string,
+  texts: VcardImportTexts = DEFAULT_VCARD_IMPORT_TEXTS,
+): VcardImportDraft {
   const warnings: string[] = [...parsed.warnings];
   const isOrgCard = parsed.kind === 'org';
 
@@ -120,22 +152,22 @@ export function toImportDraft(parsed: ParsedVcard, tenantId: string, availableUs
     person.lastName = parsed.lastName ?? '';
   }
 
-  const addresses = parsed.channels.map((ch) => mapChannel(ch, isOrgCard, tenantId, availableUsages, warnings));
+  const addresses = parsed.channels.map((ch) => mapChannel(ch, isOrgCard, tenantId, availableUsages, warnings, texts));
 
   const extraLines: string[] = [];
   const dob = vcardDateToStoreDate(parsed.bday);
   if (parsed.bday && !dob) {
-    extraLines.push(`BDAY: ${parsed.bday}   ← kein gültiges Datum`);
-    warnings.push(`BDAY "${parsed.bday}" konnte nicht als Datum uebernommen werden.`);
+    extraLines.push(`BDAY: ${parsed.bday}`);
+    warnings.push(fill(texts.badDate, { property: 'BDAY', value: parsed.bday }));
   }
 
   const dod = vcardDateToStoreDate(parsed.deathdate);
   if (parsed.deathdate && !dod) {
-    extraLines.push(`DEATHDATE: ${parsed.deathdate}   ← kein gültiges Datum`);
-    warnings.push(`DEATHDATE "${parsed.deathdate}" konnte nicht als Datum uebernommen werden.`);
+    extraLines.push(`DEATHDATE: ${parsed.deathdate}`);
+    warnings.push(fill(texts.badDate, { property: 'DEATHDATE', value: parsed.deathdate }));
   }
 
-  const composed = composeImportNotes(parsed, importDateViewDate, extraLines);
+  const composed = composeImportNotes(parsed, importDateViewDate, extraLines, texts);
   warnings.push(...composed.warnings);
 
   const employment = parsed.employment

@@ -48,7 +48,7 @@ describe('composeImportNotes', () => {
     const n = composeImportNotes(parsed({
       residual: [prop('SOUND', 'A'.repeat(18432), { TYPE: ['WAV'], ENCODING: ['b'] })],
     }), '09.09.2026');
-    expect(n.text).toContain('SOUND;TYPE=WAV: (14 kB, nicht importiert)');
+    expect(n.text).toContain('SOUND;TYPE=WAV: (14 kB, nicht übernommen)');
     expect(n.text).not.toContain('AAAA');
   });
 

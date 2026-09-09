@@ -1,3 +1,4 @@
+import { DEFAULT_VCARD_IMPORT_TEXTS, fill, VcardImportTexts } from './vcard-i18n';
 import { VcardProperty } from './vcard-import-types';
 import { ParsedVcard } from './vcard-parser';
 
@@ -24,16 +25,16 @@ export interface ImportNotes {
   warnings: string[];
 }
 
-const TRUNCATION_MARKER = '\n… (gekürzt)';
-
 /**
  * The header line that identifies one import block: source file plus import date (§4.6).
  * The single builder both the composer and the import service use — `appendImportNotes`
  * recognises an already-appended block by exactly this string, so a second definition of
- * the format elsewhere would silently break the "same file, same day" dedupe.
+ * the format elsewhere would silently break the "same file, same day" dedupe. The
+ * template is threaded in from the app bundle (§9); the German default keeps this pure
+ * util callable without an Angular caller.
  */
-export function importNotesHeader(sourceFileName: string, importDateViewDate: string): string {
-  return `--- vCard-Import ${importDateViewDate} · ${sourceFileName} ---`;
+export function importNotesHeader(sourceFileName: string, importDateViewDate: string, template: string = DEFAULT_VCARD_IMPORT_TEXTS.notesHeader): string {
+  return fill(template, { date: importDateViewDate, file: sourceFileName });
 }
 
 function isBinaryProperty(p: VcardProperty): boolean {
@@ -56,16 +57,16 @@ function renderParams(params: Record<string, string[]>): string {
 }
 
 /** Render one residual property as a line, or `undefined` when it must be dropped (sensitive). */
-function renderResidualLine(p: VcardProperty, warnings: string[]): string | undefined {
+function renderResidualLine(p: VcardProperty, warnings: string[], texts: VcardImportTexts): string | undefined {
   if (SENSITIVE_PROPERTY_PATTERN.test(p.name)) {
-    warnings.push(`${p.name} wurde nicht in die Notizen uebernommen, da es vermutlich sensible Daten enthaelt.`);
+    warnings.push(fill(texts.sensitiveDropped, { property: p.name }));
     return undefined;
   }
 
   const paramsStr = renderParams(p.params);
   if (isBinaryProperty(p)) {
     const kb = Math.round((p.value.length * 0.75) / 1024);
-    return `${p.name}${paramsStr}: (${kb} kB, nicht importiert)`;
+    return `${p.name}${paramsStr}: ${fill(texts.notesNotImported, { size: kb })}`;
   }
   return `${p.name}${paramsStr}: ${p.value}`;
 }
@@ -77,12 +78,17 @@ function renderResidualLine(p: VcardProperty, warnings: string[]): string | unde
  * whenever the card contributes any text at all, so a re-import can recognise it. The residual block is capped at
  * `NOTES_RESIDUAL_LIMIT` characters; the `NOTE` part is never truncated.
  */
-export function composeImportNotes(parsed: ParsedVcard, importDateViewDate: string, extraLines: string[] = []): ImportNotes {
-  const header = importNotesHeader(parsed.sourceFileName, importDateViewDate);
+export function composeImportNotes(
+  parsed: ParsedVcard,
+  importDateViewDate: string,
+  extraLines: string[] = [],
+  texts: VcardImportTexts = DEFAULT_VCARD_IMPORT_TEXTS,
+): ImportNotes {
+  const header = importNotesHeader(parsed.sourceFileName, importDateViewDate, texts.notesHeader);
   const warnings: string[] = [];
 
   const residualLines = parsed.residual
-    .map((p) => renderResidualLine(p, warnings))
+    .map((p) => renderResidualLine(p, warnings, texts))
     .filter((line): line is string => line !== undefined);
 
   const blockLines = [...extraLines, ...residualLines];
@@ -97,8 +103,8 @@ export function composeImportNotes(parsed: ParsedVcard, importDateViewDate: stri
 
   let block = [header, ...blockLines].join('\n');
   if (block.length > NOTES_RESIDUAL_LIMIT) {
-    block = block.slice(0, NOTES_RESIDUAL_LIMIT) + TRUNCATION_MARKER;
-    warnings.push(`Der vCard-Import-Block wurde auf ${NOTES_RESIDUAL_LIMIT} Zeichen gekuerzt.`);
+    block = `${block.slice(0, NOTES_RESIDUAL_LIMIT)}\n${texts.notesTruncated}`;
+    warnings.push(fill(texts.notesTruncatedWarning, { limit: NOTES_RESIDUAL_LIMIT }));
   }
   const text = notePart ? `${notePart}\n\n${block}` : block;
 

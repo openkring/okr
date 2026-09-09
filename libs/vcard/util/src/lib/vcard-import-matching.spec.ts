@@ -48,6 +48,34 @@ describe('buildDecisions', () => {
     expect(d.action).toBe('import');
   });
 
+  it('matches an org card against the tenant orgs by normalized name (§5.2)', () => {
+    const orgCard = draft({ kind: 'org', person: undefined, org: { name: 'Acme AG' } as never, displayName: 'Acme AG' });
+    const [d] = buildDecisions([orgCard], [], [org('o1', ' acme   ag ')]);
+    expect(d.orgDuplicates.map((o) => o.okey)).toEqual(['o1']);
+    expect(d.action).toBe('merge');
+    // the PERSON merge path must stay closed for an org card
+    expect(d.duplicates).toEqual([]);
+  });
+
+  it('leaves an unknown org card as a plain import', () => {
+    const orgCard = draft({ kind: 'org', person: undefined, org: { name: 'Neu GmbH' } as never, displayName: 'Neu GmbH' });
+    const [d] = buildDecisions([orgCard], [], [org('o1', 'Acme AG')]);
+    expect(d.orgDuplicates).toEqual([]);
+    expect(d.action).toBe('import');
+  });
+
+  it('never reports a PERSON card as an org duplicate', () => {
+    const [d] = buildDecisions([draft()], [], [org('o1', 'Anna Muster')]);
+    expect(d.orgDuplicates).toEqual([]);
+  });
+
+  it('recognises the same org twice in one file as a batch sibling (no okey to merge into)', () => {
+    const first = draft({ kind: 'org', person: undefined, org: { name: 'Acme AG' } as never, displayName: 'Acme AG' });
+    const second = draft({ kind: 'org', person: undefined, org: { name: 'Acme AG' } as never, displayName: 'Acme AG' });
+    const [, d] = buildDecisions([first, second], [], []);
+    expect(d.orgDuplicates.map((o) => o.okey)).toEqual(['']);
+  });
+
   it('lets an email match win over a name match', () => {
     const withEmail = draft({ addresses: [{ addressChannel: 'email', email: 'Anna@Example.CH' } as never] });
     const [d] = buildDecisions([withEmail], [person('p2', 'Andere', 'Person', ['anna@example.ch']), person('p1', 'Anna', 'Muster')], []);
