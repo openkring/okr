@@ -43,15 +43,21 @@ function unfold(text: string): string[] {
   return out;
 }
 
-/** Collect logical lines between `BEGIN:VCARD` and `END:VCARD`; drop an unterminated trailing block. */
-function splitBlocks(lines: string[]): string[][] {
+/**
+ * Collect logical lines between `BEGIN:VCARD` and `END:VCARD`; drop an unterminated
+ * block and COUNT it, so the caller can tell the operator that something was skipped
+ * instead of silently showing one row fewer (§3.1.6).
+ */
+function splitBlocks(lines: string[]): { blocks: string[][]; unterminated: number } {
   const blocks: string[][] = [];
+  let unterminated = 0;
   let current: string[] | null = null;
   for (const line of lines) {
     const trimmed = line.trim();
     const upper = trimmed.toUpperCase();
     if (upper === 'BEGIN:VCARD') {
-      // a previous, unterminated block (if any) is discarded by simply not having been pushed.
+      // a previous, unterminated block is discarded — but never silently.
+      if (current) unterminated += 1;
       current = [];
       continue;
     }
@@ -64,7 +70,8 @@ function splitBlocks(lines: string[]): string[][] {
       current.push(line);
     }
   }
-  return blocks;
+  if (current) unterminated += 1;
+  return { blocks, unterminated };
 }
 
 /** Index of the first `:` not inside a double-quoted param value, or -1. */
@@ -143,10 +150,28 @@ function parseLine(line: string): VcardProperty {
 
 /** Split a `.vcf` file into one property list per `BEGIN:VCARD…END:VCARD` block. */
 export function lexVcards(text: string): VcardProperty[][] {
+  return lexVcardFile(text).blocks;
+}
+
+/** What one lexed `.vcf` file yielded: its card blocks plus the count of dropped, unterminated ones. */
+export interface LexedVcardFile {
+  blocks: VcardProperty[][];
+  /** blocks that had a `BEGIN:VCARD` but no `END:VCARD` and were therefore dropped (§3.1.6). */
+  unterminated: number;
+}
+
+/**
+ * Lex a whole `.vcf` file, reporting what was dropped. {@link lexVcards} is the
+ * blocks-only shorthand over this.
+ */
+export function lexVcardFile(text: string): LexedVcardFile {
   const lines = unfold(normalize(text));
-  const blocks = splitBlocks(lines);
+  const { blocks, unterminated } = splitBlocks(lines);
   // VERSION carries no import-relevant data; drop it so callers don't need to filter it out.
-  return blocks.map((blockLines) => blockLines.map(parseLine).filter((p) => p.name !== 'VERSION'));
+  return {
+    blocks: blocks.map((blockLines) => blockLines.map(parseLine).filter((p) => p.name !== 'VERSION')),
+    unterminated,
+  };
 }
 
 /**

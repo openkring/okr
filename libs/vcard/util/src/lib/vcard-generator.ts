@@ -173,6 +173,34 @@ const APPLE_RELATION_LABELS: Record<string, string> = {
 };
 
 /**
+ * Inverse of {@link APPLE_RELATION_LABELS}, derived from it so there is exactly one
+ * source of truth: several kinds share a token (`spouse`/`marriage`), and the first
+ * one declared wins.
+ */
+const RELATION_KIND_BY_APPLE_LABEL: Record<string, string> = (() => {
+  const inverse: Record<string, string> = {};
+  for (const [kind, token] of Object.entries(APPLE_RELATION_LABELS)) {
+    if (!(token in inverse)) inverse[token] = kind;
+  }
+  return inverse;
+})();
+
+/**
+ * Inverse of {@link toAppleRelationLabel} (spec §4.4): decode an Apple predefined
+ * token (`_$!<Spouse>!$_`) — or a bare vCard 4.0 `RELATED;TYPE=` kind (`spouse`) —
+ * back to the relation kind. Returns `undefined` for anything else, so the caller
+ * keeps the raw text as a plain label and leaves `type` at its default.
+ */
+export function fromAppleRelationLabel(label: string | undefined): string | undefined {
+  const token = (label ?? '').trim();
+  if (token.length === 0) return undefined;
+  const decoded = RELATION_KIND_BY_APPLE_LABEL[token];
+  if (decoded) return decoded;
+  const kind = token.toLowerCase();
+  return kind in APPLE_RELATION_LABELS ? kind : undefined;
+}
+
+/**
  * Map a relation kind to Apple's predefined label where one exists; otherwise
  * fall back to a provided custom label or the raw kind (spec §3.5).
  */

@@ -64,6 +64,8 @@ export interface VcardChannel {
   value?: string;
   /** postal: "<street> <number>" */
   street?: string;
+  /** postal: the `Ext` component of `ADR` (c/o, apartment, floor) → `addressValue2` (§4.2) */
+  ext?: string;
   city?: string;
   region?: string;
   zip?: string;
@@ -84,8 +86,14 @@ export interface VcardEmployment {
 /** An item-grouped related name (PersonalRel, extra employer, org-linked person). */
 export interface VcardRelatedName {
   name: string;
-  /** Apple predefined token (e.g. `_$!<Spouse>!$_`) or a plain custom label. */
+  /**
+   * The free-text label of the relation. On EXPORT this carries the Apple predefined
+   * token (`_$!<Spouse>!$_`); on IMPORT such a token is decoded into {@link type} and
+   * `label` is left empty, so only a label we could NOT decode survives here (§4.4).
+   */
   label: string;
+  /** import only: the decoded relation kind (`spouse`), absent when nothing matched. */
+  type?: string;
 }
 
 /** The fully assembled, model-decoupled input to {@link buildVCard}. */

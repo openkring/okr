@@ -1,4 +1,6 @@
-import { lexVcards, splitStructured } from './vcard-lexer';
+import { fromAppleRelationLabel } from './vcard-generator';
+import { DEFAULT_VCARD_IMPORT_TEXTS, fill, VcardImportTexts } from './vcard-i18n';
+import { lexVcardFile, splitStructured } from './vcard-lexer';
 import { VcardProperty } from './vcard-import-types';
 import { VcardChannel, VcardEmployment, VcardRecord, VcardRelatedName, VcardTargetKind } from './vcard-types';
 
@@ -100,6 +102,7 @@ function parseChannels(props: VcardProperty[], abLabelsByGroup: Map<string, stri
           channel: 'postal',
           type,
           pref: pref || undefined,
+          ext: parts[1] || undefined,
           street: parts[2] || undefined,
           city: parts[3] || undefined,
           region: parts[4] || undefined,
@@ -113,16 +116,25 @@ function parseChannels(props: VcardProperty[], abLabelsByGroup: Map<string, stri
   return channels;
 }
 
+/**
+ * Decode one raw relation label (§4.4): an Apple predefined token — or a bare vCard 4.0
+ * `RELATED;TYPE=` kind — becomes the relation `type` and leaves `label` empty; anything
+ * else is kept verbatim in `label` so the operator still sees what the card said, and
+ * `type` stays absent (the model default applies at the write site).
+ */
+function toRelatedName(name: string, rawLabel: string): VcardRelatedName {
+  const type = fromAppleRelationLabel(rawLabel);
+  return type ? { name, label: '', type } : { name, label: rawLabel };
+}
+
 function parseRelatedNames(props: VcardProperty[], abLabelsByGroup: Map<string, string>): VcardRelatedName[] {
   const relatedNames: VcardRelatedName[] = [];
   for (const p of props) {
     const name = p.name.toUpperCase();
     if (name === 'X-ABRELATEDNAMES') {
-      const label = (p.group ? abLabelsByGroup.get(p.group) : undefined) ?? '';
-      relatedNames.push({ name: p.value, label });
+      relatedNames.push(toRelatedName(p.value, (p.group ? abLabelsByGroup.get(p.group) : undefined) ?? ''));
     } else if (name === 'RELATED') {
-      const label = p.params['TYPE']?.[0] ?? '';
-      relatedNames.push({ name: p.value, label });
+      relatedNames.push(toRelatedName(p.value, p.params['TYPE']?.[0] ?? ''));
     }
   }
   return relatedNames;
@@ -141,24 +153,35 @@ function parseEmployment(props: VcardProperty[], kind: VcardTargetKind, orgProp:
   });
 }
 
-function parsePhoto(props: VcardProperty[], kind: VcardTargetKind, warnings: string[]): string | undefined {
+/** `data:image/jpeg;base64,` — how vCard 4.0 writes an inline photo, with no ENCODING param. */
+const DATA_URI_BASE64_PREFIX = /^data:[^;,]*;base64,/i;
+
+/**
+ * The inline `PHOTO` (person) / `LOGO` (org) payload as bare base64 (D-6, D-8).
+ *
+ * Three shapes are accepted: `ENCODING=B` (3.0), `ENCODING=BASE64` (2.1) and the 4.0
+ * `data:<mime>;base64,…` value, which carries no ENCODING param at all. Anything else —
+ * a `VALUE=uri` reference, an http URL, an empty payload — is skipped WITH a warning:
+ * `PHOTO` is a consumed property, so a silent `undefined` would drop it from the
+ * residual notes too and lose it entirely.
+ */
+function parsePhoto(props: VcardProperty[], kind: VcardTargetKind, warnings: string[], texts: VcardImportTexts): string | undefined {
   const propName = kind === 'org' ? 'LOGO' : 'PHOTO';
   const photoProp = findProp(props, propName);
   if (!photoProp) return undefined;
+
+  const raw = photoProp.value.trim();
+  const stripped = raw.replace(DATA_URI_BASE64_PREFIX, '');
   const encodings = (photoProp.params['ENCODING'] ?? []).map((v) => v.toUpperCase());
   const hasBase64Encoding = encodings.includes('B') || encodings.includes('BASE64');
-  if (hasBase64Encoding) {
-    return photoProp.value;
-  }
-  const isUriValue = (photoProp.params['VALUE'] ?? []).some((v) => v.toUpperCase() === 'URI');
-  if (isUriValue) {
-    warnings.push(`${propName} is a VALUE=uri reference, not inline data — skipped`);
-  }
+  if ((hasBase64Encoding || stripped !== raw) && stripped.length > 0) return stripped;
+
+  warnings.push(fill(texts.photoFormat, { property: propName }));
   return undefined;
 }
 
 /** Parse one lexed vCard block into a `ParsedVcard`, or `undefined` when it has no usable name. */
-function parseBlock(props: VcardProperty[], sourceFileName: string): ParsedVcard | undefined {
+function parseBlock(props: VcardProperty[], sourceFileName: string, texts: VcardImportTexts): ParsedVcard | undefined {
   const nProp = findProp(props, 'N');
   const fnProp = findProp(props, 'FN');
   const orgProp = findProp(props, 'ORG');
@@ -202,7 +225,7 @@ function parseBlock(props: VcardProperty[], sourceFileName: string): ParsedVcard
     orgName,
     bday: findProp(props, 'BDAY')?.value,
     deathdate: findProp(props, 'DEATHDATE')?.value ?? findProp(props, 'X-DEATH-DATE')?.value,
-    photoBase64: parsePhoto(props, kind, warnings),
+    photoBase64: parsePhoto(props, kind, warnings, texts),
     channels: parseChannels(props, abLabelsByGroup),
     employment: parseEmployment(props, kind, orgProp),
     relatedNames: parseRelatedNames(props, abLabelsByGroup),
@@ -213,13 +236,35 @@ function parseBlock(props: VcardProperty[], sourceFileName: string): ParsedVcard
   };
 }
 
-/** Parse a whole `.vcf` file into `ParsedVcard`s, dropping any card with neither `N` nor `FN`. */
-export function parseVcards(text: string, sourceFileName: string): ParsedVcard[] {
-  const blocks = lexVcards(text);
-  const result: ParsedVcard[] = [];
+/** What one `.vcf` file yielded, including what it lost on the way. */
+export interface ParsedVcardFile {
+  cards: ParsedVcard[];
+  /** cards dropped entirely: unterminated blocks (§3.1.6) plus cards with neither `N` nor `FN` (§4.1). */
+  skippedCards: number;
+  /** file-level warnings — the ones that belong to no single card. */
+  warnings: string[];
+}
+
+/**
+ * Parse a whole `.vcf` file. A block without `END:VCARD` and a card with neither `N` nor
+ * `FN` are both dropped — but never silently: each raises a file-level warning and is
+ * counted in `skippedCards`, which the review modal surfaces so the operator can see
+ * that the file held more than the rows in front of them.
+ */
+export function parseVcards(text: string, sourceFileName: string, texts: VcardImportTexts = DEFAULT_VCARD_IMPORT_TEXTS): ParsedVcardFile {
+  const { blocks, unterminated } = lexVcardFile(text);
+  const cards: ParsedVcard[] = [];
+  const warnings: string[] = [];
+  let namelessCards = 0;
+
   for (const props of blocks) {
-    const parsed = parseBlock(props, sourceFileName);
-    if (parsed) result.push(parsed);
+    const parsed = parseBlock(props, sourceFileName, texts);
+    if (parsed) cards.push(parsed);
+    else namelessCards += 1;
   }
-  return result;
+
+  for (let i = 0; i < unterminated; i++) warnings.push(texts.unterminated);
+  for (let i = 0; i < namelessCards; i++) warnings.push(texts.noName);
+
+  return { cards, skippedCards: unterminated + namelessCards, warnings };
 }
