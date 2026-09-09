@@ -280,11 +280,19 @@ export class VcardImportService {
    * may reference a person an earlier card created (`batchPersonKeys`), and the Firestore
    * writes are cheap enough that the parallelism is not worth the ordering loss.
    *
-   * `currentUser` is passed to the person/org creates (they are what the activity log and the
-   * confirmation toast are FOR) but deliberately NOT to the per-address and per-edge creates:
-   * `FirestoreService.createModel` fires a toast and writes an extra comment document per
-   * record when it has a user, which a 50-card file would turn into a few hundred of each,
-   * stacked over the loading overlay. The subject creates still log `person`/`org` `create`.
+   * `currentUser` is passed to EVERY create, per-address and per-edge ones included: it is what
+   * `ActivityService.log` needs (it returns early without a user, activity.service.ts:40), so
+   * omitting it would silently drop the `address` / `workrel` / `personalrel` create records.
+   *
+   * Known rough edge, deliberately not solved here: each of those creates also fires a
+   * confirmation toast, because `FirestoreService.createModel` shows one whenever a
+   * `confirmMessage` is passed (firestore.service.ts:313) and the three services pass
+   * `create_conf()` unconditionally — independently of `currentUser`, which gates only the debug
+   * log and the comment document. A large file therefore stacks a lot of toasts over the loading
+   * overlay. Suppressing them needs a `suppressConfirmToast` path through AddressService /
+   * WorkrelService / PersonalRelService; batching via `FirestoreService.createModels` is NOT the
+   * way, since `AddressService.create` also runs normalizeAddressValue, getAddressIndex and
+   * demoteOtherFavorites, i.e. the one-favourite-per-channel invariant.
    */
   private async commit(
     decisions: VcardImportDecision[],
@@ -327,7 +335,7 @@ export class VcardImportService {
         if (draft.kind === 'org') batchOrgKeys.set(normalizeName(draft.org?.name ?? draft.displayName), key);
         else this.registerPerson(batchPersonKeys, key, draft);
 
-        await this.writeAddresses(draft.addresses, `${draft.kind}.${key}`);
+        await this.writeAddresses(draft.addresses, `${draft.kind}.${key}`, currentUser);
         const warning = await this.writeAvatar(draft, key, tenantId);
         if (warning) result.failures.push(warning);
 
@@ -410,11 +418,10 @@ export class VcardImportService {
     return this.personService.create(draft.person, currentUser, { dob: draft.dob || undefined, dod: draft.dod || undefined });
   }
 
-  /** No `currentUser`: see `commit` — one toast and one comment doc per address is not wanted here. */
-  private async writeAddresses(addresses: AddressModel[], parentKey: string): Promise<void> {
+  private async writeAddresses(addresses: AddressModel[], parentKey: string, currentUser: UserModel | undefined): Promise<void> {
     for (const address of addresses) {
       address.parentKey = parentKey; // the PREFIXED form, 'person.<okey>' / 'org.<okey>'
-      await this.addressService.create(address);
+      await this.addressService.create(address, currentUser);
     }
   }
 
@@ -442,7 +449,7 @@ export class VcardImportService {
       if (known.has(addressIdentity(address))) continue;
       address.parentKey = parentKey;
       address.isFavorite = false; // never displace the existing favorite of a channel
-      await this.addressService.create(address); // no currentUser: see commit()
+      await this.addressService.create(address, currentUser);
       known.add(addressIdentity(address));
     }
 
@@ -525,7 +532,7 @@ export class VcardImportService {
     workrel.objectName = employment.orgName;
     workrel.label = employment.title || employment.role;
     workrel.name = workrel.label || employment.department;
-    await this.workrelService.create(workrel); // no currentUser: see commit()
+    await this.workrelService.create(workrel, currentUser);
   }
 
   /**
@@ -570,7 +577,7 @@ export class VcardImportService {
       rel.objectFirstName = names.firstName;
       rel.objectLastName = names.lastName;
       rel.label = relation.label;
-      await this.personalRelService.create(rel); // no currentUser: see commit()
+      await this.personalRelService.create(rel, currentUser);
     }
   }
 }
