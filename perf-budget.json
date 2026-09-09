@@ -28,5 +28,10 @@
     "dashboardClosureGzipBytes": 1486737,
     "chunks": 220,
     "updated": "2026-09-07"
+  },
+  "kwa-app": {
+    "dashboardClosureGzipBytes": 1419154,
+    "chunks": 220,
+    "updated": "2026-09-09"
   }
 }
