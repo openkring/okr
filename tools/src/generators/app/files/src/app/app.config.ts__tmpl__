@@ -1,5 +1,5 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { APP_BOOTSTRAP_LISTENER, ApplicationConfig, ErrorHandler, importProvidersFrom, inject, Injector, isDevMode, PLATFORM_ID, provideZonelessChangeDetection } from '@angular/core';
+import { APP_BOOTSTRAP_LISTENER, ApplicationConfig, effect, ErrorHandler, importProvidersFrom, inject, Injector, isDevMode, PLATFORM_ID, provideZonelessChangeDetection, runInInjectionContext } from '@angular/core';
 import { provideRouter, RouteReuseStrategy, withComponentInputBinding } from '@angular/router';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -119,6 +119,39 @@ export const appConfig: ApplicationConfig = {
         };
       },
       deps: [PLATFORM_ID],
+      multi: true,
+    },
+
+    // Initialize Matrix chat early (non-blocking, after user authentication).
+    // Dynamic import ensures matrix-js-sdk is NOT in the initial bundle.
+    {
+      provide: APP_BOOTSTRAP_LISTENER,
+      useFactory: (platformId: object, injector: Injector) => {
+        const appStore = inject(AppStore);
+        return () => {
+          if (!isBrowser(platformId)) return;
+          // Skip Matrix init on public routes — matrix-js-sdk is ~700KB and not needed there.
+          if (window.location.pathname.startsWith('/public')) return;
+          const start = async () => {
+            const { MatrixInitializationService } = await import('@okr/chat-feature');
+            injector.get(MatrixInitializationService).startEarlyInitialization();
+          };
+          // Start as early as possible without competing with startup: once the app is ready
+          // to render for a signed-in user (roles + config loaded), wait for the next idle slot
+          // so the chunk download and the long-poll /sync stay off the first paint. Replaces a
+          // fixed 10 s delay that kept the dashboard's message list empty for that long.
+          // A dashboard messages section may start the client even earlier; both paths share
+          // the promise-cached ensureInitialized(), so nothing runs twice.
+          const ready = runInInjectionContext(injector, () => effect(() => {
+            if (!appStore.isAppReady() || !appStore.currentUser()) return;
+            ready.destroy();
+            const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+            if (w.requestIdleCallback) w.requestIdleCallback(() => void start(), { timeout: 3000 });
+            else setTimeout(() => void start(), 1000);
+          }));
+        };
+      },
+      deps: [PLATFORM_ID, Injector],
       multi: true,
     },
 
