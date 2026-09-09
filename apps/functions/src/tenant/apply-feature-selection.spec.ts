@@ -1109,6 +1109,31 @@ describe('planEnableBlock — enabledFeatures is only ever extended', () => {
     expect(enabledFeaturesOf(writes)).toContain('legacy-renamed-block');
   });
 
+  it('reports a stored dependency that rollout withholds, instead of leaving it dark in silence', async () => {
+    // `calevent` dependsOn `person`. `person` is in `enabledFeatures` — but rollout withholds
+    // it, so `effectiveFeatures` (catalogue ∩ rollout ∩ enablement) does NOT contain it. The
+    // preview used to filter withheld ids against the STORED array and drop `person` here: the
+    // admin switched calevent on and was never told the block underneath it stays off.
+    const rollouts: FeatureRollout[] = [{
+      okey: 'person', availability: 'beta', allowTenants: [], denyTenants: [],
+      reason: 'Personen sind noch in Arbeit', updatedAt: '', updatedBy: '',
+    }];
+    const db = fakeDb({
+      menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: ['person'] }],
+    });
+
+    const { writes, preview } = await planEnableBlock(
+      run(db), TEST_CATALOGUE, rollouts, 'scs', 'uid1', 'calevent', ['calevent-all']);
+
+    expect(preview.withheld.map(w => w.id)).toContain('person');
+    expect(preview.entries.some(e => e.kind === 'block-withheld' && e.subject === 'person'))
+      .toBe(true);
+    // The stored id is still never removed (Important 2), and no menu row is written for it.
+    expect(enabledFeaturesOf(writes)).toContain('person');
+    expect(writes.filter(w => w.ref.parent.id === 'menuItems').map(w => w.ref.id))
+      .not.toContain('person-all');
+  });
+
   it('still refuses to ADD a block rollout withholds', async () => {
     const db = fakeDb({ menuItems: [], 'app-config': [{ id: 'scs', enabledFeatures: ['calevent'] }] });
 

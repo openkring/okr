@@ -435,10 +435,19 @@ export async function planEnableBlock(
   const grantedIds = new Set(plan.enabled);
   // += the closure (spec §19). Order-preserving union: previous first, exactly as stored.
   const nextEnabled = [...new Set([...previous, ...plan.enabled])];
-  // An id that is ALREADY on is not "withheld" — it stays on. Only a block this call would
-  // have had to add, and may not, is reported, so the preview never says "bleibt aus" about
-  // something that in fact keeps running.
-  const withheld = plan.withheld.filter(w => !previous.includes(w.id));
+  // Reported on ROLLOUT, not on storage. The filter that used to sit here — drop anything in
+  // `previous` — read "already saved" as "already running" and so swallowed the one case worth
+  // reporting: a dependency of the block being enabled that is stored in `enabledFeatures` but
+  // withheld by rollout. `effectiveFeatures` is catalogue ∩ rollout ∩ enablement, so such a
+  // block is NOT running; the admin would have switched their block on and been told nothing
+  // about the dependency underneath it that stays dark.
+  //
+  // Nothing in `plan.withheld` can be a block that "keeps running" anyway: the list is this
+  // call's dependency closure minus what rollout offers, so every id in it is one rollout
+  // currently denies, stored or not. The unrelated already-enabled block the old comment
+  // worried about never reaches here — it is not in the closure (see the `enabledFeatures is
+  // only ever extended` suite, which stays green precisely because `labs` is not a dependency).
+  const withheld = plan.withheld;
   const alsoEnabled = resolveWithDeps(catalogue, [blockId])
     .filter(id => id !== blockId && !previous.includes(id) && grantedIds.has(id))
     .map(id => ({ id, because: blockId }));
