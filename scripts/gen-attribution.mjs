@@ -103,6 +103,14 @@ const TARGETS = {
     serverDeps: true,
     out: 'dist/apps/elab-app/browser/licenses.html',
   },
+  // Added 2026-09-09 — same story again: scaffolded, never released, so `pnpm release kwa-app`
+  // aborted at step 3b after a clean production build.
+  'kwa-app': {
+    label: 'Krampfwanderer',
+    bundle: 'dist/apps/kwa-app/3rdpartylicenses.txt',
+    serverDeps: true,
+    out: 'dist/apps/kwa-app/browser/licenses.html',
+  },
   'kring-website': {
     label: 'Kring',
     // self-hosted since 2026-08-04 (spec C6, defect W6) — the OFL text must travel with the files
