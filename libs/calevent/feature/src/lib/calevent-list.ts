@@ -619,6 +619,12 @@ export class CalEventList implements OnInit {
           if (untracked(() => this.calendarHost()) !== host) return;
           const created = host.createComponent(CaleventFullcalendarView);
           created.setInput('options', untracked(() => this.calendarOptions()));
+          // Run the first change-detection pass now, not on the next scheduled tick. FullCalendar's
+          // OffscreenFragmentComponent appends its element to a detached fragment in ngAfterViewInit
+          // and removes it unconditionally in ngOnDestroy: a component destroyed before its first
+          // pass (branch toggled by a reload, page popped by the Ionic stack) throws NotFoundError
+          // (Sentry SCS-AB, SCS-AC). We are outside CD here (after an await), so this is safe.
+          created.changeDetectorRef.detectChanges();
           this.calendarRef.set(created);
         } finally {
           this.creatingCalendar.set(false);
