@@ -1,4 +1,4 @@
-import { Component, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { Component, PLATFORM_ID, ViewContainerRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
@@ -114,6 +114,13 @@ import { ConsentService } from '@okr/consent-data-access';
               <ion-item lines="none" color="secondary">
                 <ion-label>{{ appStore.appConfig().appName }}</ion-label>
               </ion-item>
+              <!-- Tenant switcher: the host stays empty until a person who belongs to more than one
+                   tenant is signed in. Only then is @okr/aoc-feature fetched (the aoc route chunk,
+                   already lazy) and the switcher created into it — keeps the library and its
+                   per-tenant app-config listeners out of every single-tenant boot (spec 1.49, T1.7). -->
+              <ion-buttons slot="end">
+                <ng-container #tenantSwitcherHost />
+              </ion-buttons>
               @if(appStore.currentUser(); as currentUser) {
                 <ion-buttons slot="end">
                   <okr-avatar-user [currentUser]="currentUser" (profileClicked)="openProfile()" />
@@ -224,6 +231,22 @@ export class OkrRoot {
   protected onSplitPaneVisible(event: Event): void {
     this.splitPaneVisible.set((event as CustomEvent<{ visible: boolean }>).detail.visible);
   }
+
+  /** Host of the lazily created tenant switcher; empty while nobody with several tenants is signed in. */
+  private readonly tenantSwitcherHost = viewChild('tenantSwitcherHost', { read: ViewContainerRef });
+  private tenantSwitcherLoadedInto: ViewContainerRef | undefined;
+
+  private readonly loadTenantSwitcher = effect(() => {
+    const host = this.tenantSwitcherHost();
+    const tenantCount = this.appStore.currentPerson()?.tenants?.length ?? 0;
+    if (!host || tenantCount < 2 || this.tenantSwitcherLoadedInto === host) return;
+    this.tenantSwitcherLoadedInto = host;
+    void import('@okr/aoc-feature').then(({ TenantSwitcher }) => {
+      // The menu (and with it the host) may have been torn down while the chunk was loading.
+      if (this.tenantSwitcherHost() !== host) return;
+      host.createComponent(TenantSwitcher).changeDetectorRef.detectChanges();
+    });
+  });
 
   private findRouteData(key: string): boolean | undefined {
     let snapshot: ActivatedRouteSnapshot | null = this.router.routerState.snapshot.root;
