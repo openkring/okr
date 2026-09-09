@@ -163,7 +163,7 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
   },
   {
     key: 'imgix',
-    name: 'imgix (Bildauslieferung)',
+    name: 'imgix (Bild- und Videoauslieferung)',
     legalEntity: 'Imgix, Inc., 535 Mission St, San Francisco CA, US',
     role: 'subProcessor',
     category: 'infrastructure',
@@ -171,9 +171,17 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     // Imgix ist unter dem Swiss-U.S. Data Privacy Framework zertifiziert; die Schweiz
     // anerkennt das DPF seit dem 15. September 2024 als angemessenen Schutz.
     transferMechanism: 'adequacyDecision',
-    purposes: ['Auslieferung und Grössenanpassung von Profil- und Inhaltsbildern'],
+    purposes: [
+      'Auslieferung und Grössenanpassung von Profil- und Inhaltsbildern',
+      // imgix transkodiert keine Videos (die imgix Video API ist auf der Source nicht
+      // freigeschaltet) — das übernimmt die eigene Cloud Function onAlbumVideoFinalized
+      // (ffmpeg). imgix liefert bei Videoinhalten nur das Original als Byte-Durchreichung
+      // sowie den von der Function erzeugten Poster-Frame aus.
+      'Auslieferung von Videoinhalten einschliesslich Tonspur (Byte-Durchreichung des Originals) und des dazugehörigen Poster-Frames',
+    ],
     dataClasses: ['identity', 'content'],
-    retentionText: 'Zwischenspeicher (Cache) des Anbieters; Originalbilder bleiben bei Firebase Storage',
+    retentionText:
+      'Zwischenspeicher (Cache) des Anbieters; Originalbilder und -videos bleiben bei Firebase Storage',
     securityMeasures: [
       'Auslieferung ausschliesslich über HTTPS',
       'Zertifizierung unter dem Swiss-U.S. Data Privacy Framework',
@@ -184,7 +192,7 @@ export const PROCESSOR_CATALOGUE: readonly CatalogueEntry[] = [
     alwaysOn: true,
     cloudFunctions: [],
     memberNoticeDe:
-      'Dein Profilbild wird über einen Bilddienst ausgeliefert, der Kopien zwischenspeichert. Diese Zwischenspeicher laufen nach dem Löschen des Originals von selbst ab.',
+      'Dein Profilbild sowie hochgeladene Videos werden über einen Bilddienst ausgeliefert, der Kopien zwischenspeichert. Bei Videos liefert dieser Dienst nur das Originalvideo (inkl. Tonspur) und ein Vorschaubild aus, bearbeitet es aber nicht. Diese Zwischenspeicher laufen nach dem Löschen des Originals von selbst ab.',
   },
 
   // ── Integrations gated by AppConfig.integrations ────────────────────────────────────
