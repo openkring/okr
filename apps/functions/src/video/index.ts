@@ -75,7 +75,22 @@ async function reapStaleTempFiles(): Promise<void> {
  *
  * Why renderings and not new fields: DocumentRendering is defined as "a conversion the CDN can not
  * perform", and the imgix Video API is not enabled on our source (spec §7.1) — so this is exactly
- * that. It also means the existing delete path already reaps the derived files.
+ * that.
+ *
+ * WHAT THIS DOES *NOT* BUY US — the derived files are NOT reaped on delete. An earlier version of
+ * this comment claimed they were; that was wrong, and a comment that promises safety is worse than
+ * no comment at all. The facts, as of this writing:
+ *   - `DocumentService.delete()` calls `FirestoreService.deleteModel`, i.e. it ARCHIVES the
+ *     document (isArchived) and touches Storage not at all — neither the original nor a rendering.
+ *   - `DocumentService.hardDelete()` is the only path that calls `deleteRenderings()`, and its own
+ *     doc comment restricts it to isolated documents; the sole caller is the RAG section.
+ * For images this cost nothing worth counting — an orphaned SVG rendering. For videos every
+ * deletion leaves roughly TWICE the clip behind (original plus mp4), forever, and the member who
+ * deleted it has every reason to believe it is gone.
+ *
+ * Fixing that is deliberately NOT done here: `delete()` is shared by every document in the app and
+ * the archive-vs-purge decision is a product one (see the `deleting-models` skill). The video
+ * feature must not settle it as a side effect.
  *
  * Idempotent by way of upsertRendering: a second run replaces the entries in place. `concurrency: 1`
  * because a transcode holds its input plus two outputs in the memory-resident `/tmp` and saturates
