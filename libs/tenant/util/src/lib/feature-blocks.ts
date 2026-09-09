@@ -969,6 +969,7 @@ const subject: FeatureBlock = {
     { key: 'c-persons', name: 'c-persons', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'person-add', name: 'person-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.person-add' },
       { key: 'person-export', name: 'person-export', url: 'export', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.person-export' },
+      { key: 'person-vcard-import', name: 'person-vcard-import', url: 'importVcards', action: 'call', roleNeeded: 'memberAdmin', icon: 'upload', label: '@item.person-vcard-import' },
       { key: 'person-copy-emails', name: 'person-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: '@item.person-copy-emails' },
       { key: 'person-send-email', name: 'person-send-email', url: 'sendEmailToList', action: 'call', roleNeeded: 'memberAdmin', icon: 'email', label: '@item.person-send-email' },
     ] },

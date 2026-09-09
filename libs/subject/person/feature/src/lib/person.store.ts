@@ -23,7 +23,7 @@ import { convertFormToNewPerson, convertNewPersonFormToEmailAddress, convertNewP
 import { browseUrl, getDirectoryPostalAddress, readsAddressVault, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AvatarService } from '@okr/avatar-data-access';
-import { VcardExportService } from '@okr/vcard-feature';
+import { VcardExportService, VcardImportService } from '@okr/vcard-feature';
 import { ActivityService } from '@okr/activity-data-access';
 
 
@@ -67,6 +67,7 @@ export const PersonStore = signalStore(
       import('@okr/chat-data-access').then(m => m.MatrixChatService)),
     activityService: inject(ActivityService),
     vcardExportService: inject(VcardExportService),
+    vcardImportService: inject(VcardImportService),
     i18nService: inject(I18nService),
   })),
 
@@ -331,6 +332,16 @@ export const PersonStore = signalStore(
                 store.currentUser()?.roles,
                 store.tenantId()
             );
+        },
+
+        /**
+         * vCard import (spec 2026-09-09). Routes through VcardImportService, which
+         * owns the file dialog, the review modal and the commit — the store only
+         * supplies roles, tenant and the current user.
+         */
+        async importVcards(): Promise<void> {
+          await store.vcardImportService.importVcards(
+            store.currentUser()?.roles, store.tenantId(), store.currentUser());
         },
 
         async edit(person: PersonModel, readOnly = true): Promise<void> {

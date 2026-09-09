@@ -248,6 +248,7 @@ export class PersonList {
       case 'exportRaw': await this.store.export('raw'); break;
       case 'copyEmailAddresses': await this.store.copyEmailAddresses(); break;
       case 'sendEmailToList': await this.store.sendEmailToList(); break;
+      case 'importVcards': await this.store.importVcards(); break;
       default: this.alertService.error(`PersonList.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
   }
