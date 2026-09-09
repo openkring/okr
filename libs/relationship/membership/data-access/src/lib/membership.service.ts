@@ -178,10 +178,12 @@ export class MembershipService {
     // memberships pulled every membership of the tenant — 1,497 documents on scs, to find a
     // handful (spec 1.53 follow-up).
     //
-    // `orderBy 'orgKey'` is not cosmetic: it makes the query match the existing composite index
-    // `tenants + isArchived + memberKey + memberModelType + orgKey + …` whose equality prefix is
-    // exactly what is filtered here. Changing the order or the clauses may require a new index —
-    // check `firebase firestore:indexes` against firestore.indexes.json first, the file drifts.
+    // `orderBy 'orgKey'` is not cosmetic: it makes the query match a composite index whose
+    // equality prefix is exactly what is filtered here. There are two, one per call shape:
+    //   tenants + isArchived + memberKey + memberModelType + orgKey                 (no orgModelType)
+    //   tenants + isArchived + memberKey + memberModelType + orgModelType + orgKey  (with it)
+    // Changing the order or the clauses may require a new index — check
+    // `firebase firestore:indexes` against firestore.indexes.json first, the file drifts.
     const dbQuery: DbQuery[] = [{ key: 'memberKey', operator: '==', value: memberKey }];
     if (modelType) dbQuery.push({ key: 'memberModelType', operator: '==', value: modelType });
     if (orgModelType) dbQuery.push({ key: 'orgModelType', operator: '==', value: orgModelType });

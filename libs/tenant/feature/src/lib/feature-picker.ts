@@ -71,7 +71,7 @@ type PickerSegment = 'blocks' | 'rows';
         <ion-title>{{ i18n.title() }}</ion-title>
         <ion-buttons slot="end">
           <ion-button (click)="onHelp()" title="{{ i18n.help_button() }}">
-            <ion-icon slot="icon-only" src="{{ 'information-circle' | svgIcon }}" />
+            <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -152,23 +152,24 @@ type PickerSegment = 'blocks' | 'rows';
             </ion-item>
           </ion-list>
         } @else {
-          <ion-grid>
-            <ion-row>
-              <ion-col size="12" size-md="6"><strong>{{ i18n.rows_col_menu() }}</strong></ion-col>
-              <ion-col size="12" size-md="3"><strong>{{ i18n.rows_col_role() }}</strong></ion-col>
-              <ion-col size="12" size-md="3"><strong>{{ i18n.rows_col_action() }}</strong></ion-col>
+          <ion-grid class="rows-table">
+            <ion-row class="head-row">
+              <ion-col size-md="6"><strong>{{ i18n.rows_col_menu() }}</strong></ion-col>
+              <ion-col size-md="3"><strong>{{ i18n.rows_col_role() }}</strong></ion-col>
+              <ion-col size-md="3"><strong>{{ i18n.rows_col_action() }}</strong></ion-col>
             </ion-row>
             @for (row of rows(); track row.name) {
-              <ion-row [style.opacity]="isDimmed(row) ? 0.6 : 1">
-                <ion-col size="12" size-md="6" [style.padding-inline-start.rem]="row.depth * 1.5">
+              <ion-row class="data-row" [style.opacity]="isDimmed(row) ? 0.6 : 1">
+                <ion-col size="12" size-md="6" class="col-name" [style.padding-inline-start.rem]="row.depth * 1.5">
                   @if (row.state !== 'absent') {
                     <ion-button fill="clear" size="small" (click)="onCompare(row)">
-                      <ion-icon slot="icon-only" src="{{ 'information-circle' | svgIcon }}" />
+                      <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" />
                     </ion-button>
                   }
                   {{ row.name }}
                 </ion-col>
-                <ion-col size="12" size-md="3">
+                <ion-col size="12" size-md="3" class="col-role">
+                  <span class="stacked-label">{{ i18n.rows_col_role() }}:</span>
                   @switch (row.state) {
                     @case ('drifted') {
                       {{ row.roleNeededLive }} → {{ row.roleNeededCatalogue }}
@@ -190,7 +191,7 @@ type PickerSegment = 'blocks' | 'rows';
                     </ion-note>
                   }
                 </ion-col>
-                <ion-col size="12" size-md="3">
+                <ion-col size="12" size-md="3" class="col-action">
                   @switch (row.state) {
                     @case ('drifted') {
                       <ion-button size="small" fill="outline" (click)="onApply(row)">
@@ -225,6 +226,35 @@ type PickerSegment = 'blocks' | 'rows';
   styles: [`
     .highlighted { --background: var(--ion-color-warning-tint); }
     .active { --background: var(--ion-color-light-shade); }
+
+    /* Segment 2 renders a three-column table. Below the md breakpoint the columns stack, and a
+       plain stack of untitled cells is unreadable — every row becomes an anonymous run of words
+       (screenshot in the 7.25.0 report). So: a rule under every row so one row is visibly one
+       record, an inline «Rolle:» label that only appears once the columns are stacked, and no
+       header row at all when there are no columns left for it to head. */
+    .rows-table { padding-inline: 8px; }
+    .head-row {
+      border-bottom: 1px solid var(--ion-color-medium);
+      padding-block-end: 4px;
+    }
+    .data-row {
+      align-items: center;
+      border-bottom: 1px solid var(--ion-color-light-shade);
+    }
+    .col-name { display: flex; align-items: center; gap: 4px; }
+    .col-role { color: var(--ion-color-medium-shade); }
+    .stacked-label { display: none; }
+    /* Nothing to act on (state 'equal' / 'tenant-authored') -- do not let the empty cell add
+       height to the stacked row. */
+    .col-action:not(:has(ion-button)) { padding: 0; }
+
+    @media (max-width: 767px) {
+      .head-row { display: none; }
+      .data-row { padding-block: 6px; }
+      .col-name { font-weight: 500; }
+      .col-role, .col-action { padding-inline-start: 8px; }
+      .stacked-label { display: inline; color: var(--ion-color-medium); margin-inline-end: 4px; }
+    }
   `],
 })
 export class FeaturePicker {
