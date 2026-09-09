@@ -11,10 +11,21 @@ import { environment } from './environments/environment';
 // Initialize App Check BEFORE bootstrapping the app, but do NOT wait for its token.
 function initializeApp() {
   if (typeof window !== 'undefined') {
-    // Only use debug token in development (NOT in production)
+    // Only use debug token in development (NOT in production).
+    //
+    // A FIXED token (from FIREBASE_APPCHECK_DEBUG_TOKEN in the app's git-ignored .env) beats
+    // `true`: with `true` the SDK mints a RANDOM token per browser profile and keeps it in
+    // IndexedDB, so clearing site data or switching profile silently invalidates it and every
+    // Firestore listener starts failing with "Missing or insufficient permissions". The fixed
+    // one is registered once under App Check -> Manage debug tokens and survives all of that.
+    //
+    // Debug tokens are registered per FIREBASE WEB APP, not per project -- each app needs its
+    // own token in its own .env. Falls back to `true` when unset, which keeps the old
+    // print-it-and-register-it flow working.
     if (!environment.production) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (<any>window).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+      (<any>window).FIREBASE_APPCHECK_DEBUG_TOKEN =
+        environment.services.appcheckDebugToken || true;
     }
     
     markStartup('appcheck:start');
