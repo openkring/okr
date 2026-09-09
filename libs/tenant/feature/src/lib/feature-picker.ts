@@ -9,8 +9,9 @@ import {
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { ListFilter } from '@okr/shared-ui';
 import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
-import type { FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
+import type { CategoryListModel, FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
   findStructuralDrift, indexMenuDocsByName, isEmptyPlan, menuOutlineOf, pinnedFieldsOf,
@@ -25,7 +26,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 import type { BlockEnableResult } from '@okr/tenant-ui';
 import { BlockEnableModal, MenuCompareModal, PickerHelpModal } from '@okr/tenant-ui';
 
-import { buildMenuTree } from './menu-tree.util';
+import { buildMenuTree, filterMenuRows } from './menu-tree.util';
 import type { MenuTreeRow } from './menu-tree.util';
 import { actionableFieldsOf, patchNoteFor } from './menu-row-actions.util';
 
@@ -59,7 +60,7 @@ type PickerSegment = 'blocks' | 'rows';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    SvgIconPipe,
+    SvgIconPipe, ListFilter,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonButton, IonIcon,
     IonContent, IonList, IonItemGroup, IonItemDivider, IonItem, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonGrid, IonRow, IonCol,
@@ -85,6 +86,13 @@ type PickerSegment = 'blocks' | 'rows';
           </ion-segment-button>
         </ion-segment>
       </ion-toolbar>
+      @if (segment() === 'rows') {
+        <okr-list-filter
+          [types]="menuActions()"
+          [selectedType]="selectedAction()"
+          (searchTermChanged)="searchTerm.set($event)"
+          (typeChanged)="selectedAction.set($event)" />
+      }
     </ion-header>
 
     <ion-content>
@@ -156,6 +164,12 @@ type PickerSegment = 'blocks' | 'rows';
               <ion-label class="ion-text-wrap">{{ i18n.segment_rows_placeholder() }}</ion-label>
             </ion-item>
           </ion-list>
+        } @else if (filteredRows().length === 0) {
+          <ion-list>
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">{{ i18n.rows_filter_empty() }}</ion-label>
+            </ion-item>
+          </ion-list>
         } @else {
           <ion-grid class="rows-table">
             <ion-row class="head-row">
@@ -163,7 +177,7 @@ type PickerSegment = 'blocks' | 'rows';
               <ion-col size-md="3"><strong>{{ i18n.rows_col_role() }}</strong></ion-col>
               <ion-col size-md="3"><strong>{{ i18n.rows_col_action() }}</strong></ion-col>
             </ion-row>
-            @for (row of rows(); track row.name) {
+            @for (row of filteredRows(); track row.name) {
               <ion-row class="data-row" [style.opacity]="isDimmed(row) ? 0.6 : 1">
                 <ion-col size="12" size-md="6" class="col-name" [style.padding-inline-start.rem]="row.depth * 1.5">
                   @if (row.state !== 'absent') {
@@ -210,15 +224,31 @@ type PickerSegment = 'blocks' | 'rows';
                       </ion-button>
                     }
                     @case ('pinned') {
+                      <span class="state-word">{{ i18n.rows_state_pinned() }}</span>
                       <ion-button size="small" fill="clear" (click)="onUnpin(row)">
                         {{ i18n.rows_unpin_button() }}
                       </ion-button>
                     }
                     @case ('absent') {
                       <ion-button size="small" fill="outline" (click)="onAddToMenu(row)">
-                        {{ i18n.rows_add_button() }}
+                        {{ row.groupKeys.length > 1 ? i18n.rows_add_group_button() : i18n.rows_add_button() }}
                       </ion-button>
                     }
+                    @case ('equal') {
+                      @if (row.groupKeys.length === 0) {
+                        <span class="state-word">{{ i18n.rows_state_equal() }}</span>
+                      }
+                    }
+                    @case ('tenant-authored') {
+                      @if (row.groupKeys.length === 0) {
+                        <span class="state-word">{{ i18n.rows_state_tenant() }}</span>
+                      }
+                    }
+                  }
+                  @if (row.state !== 'absent' && row.groupKeys.length > 0) {
+                    <ion-button size="small" fill="outline" (click)="onAddToMenu(row)">
+                      {{ i18n.rows_add_group_button() }}
+                    </ion-button>
                   }
                 </ion-col>
               </ion-row>
@@ -249,9 +279,10 @@ type PickerSegment = 'blocks' | 'rows';
     .col-name { display: flex; align-items: center; gap: 4px; }
     .col-role { color: var(--ion-color-medium-shade); }
     .stacked-label { display: none; }
-    /* Nothing to act on (state 'equal' / 'tenant-authored') -- do not let the empty cell add
-       height to the stacked row. */
-    .col-action:not(:has(ion-button)) { padding: 0; }
+    /* A row with nothing to do says so in a word instead of offering a button that can only
+       ever answer "nichts zu übernehmen" — a faint outline button reads as disabled, invites
+       the click anyway, and then explains nothing. */
+    .state-word { color: var(--ion-color-medium-shade); font-style: italic; }
 
     @media (max-width: 767px) {
       .head-row { display: none; }
@@ -329,6 +360,16 @@ export class FeaturePicker {
 
   protected readonly segment = signal<PickerSegment>('blocks');
 
+  // ── Segment 2 filters ─────────────────────────────────────────────────────────────────
+  // Same two filters the ordinary menu list offers (`MenuList`): a free-text search over the
+  // menu NAME — the only identifier this table shows and the one an admin arrives with from
+  // a «Missing: x» in the sidebar — and the `menu_action` category as the type filter, so
+  // "show me every context menu" or "every toolbar action" is one click. `all` is the
+  // `okr-cat-select` «withAll» sentinel, i.e. no type filter.
+  protected readonly searchTerm = signal('');
+  protected readonly selectedAction = signal('all');
+  protected readonly menuActions = computed<CategoryListModel>(() => this.appStore.getCategory('menu_action'));
+
   // ── Segment 2 (Menüzeilen) ────────────────────────────────────────────────────────────
   // The blocks currently enabled — segment 2's whole tree is scoped to these; a disabled
   // block's menu is not something the tenant is "missing" (`buildMenuTree`'s own doc
@@ -369,6 +410,11 @@ export class FeaturePicker {
     drift: this.menuDrift(),
     enabledBlocks: this.enabledBlockObjs(),
   }));
+
+  /** What the table actually renders — `rows()` narrowed by the toolbar. A match keeps its
+   *  ancestors, so the indentation still reads as a tree rather than as a flat run. */
+  protected readonly filteredRows = computed<MenuTreeRow[]>(() =>
+    filterMenuRows(this.rows(), this.searchTerm(), this.selectedAction()));
 
   /**
    * Which blocks a profile would add — proposal 6, rebuilt for the additive model. It used to
@@ -597,13 +643,27 @@ export class FeaturePicker {
     );
   }
 
-  /** «Ins Menü» on an `absent` row — attach the catalogue's row (D-BB-14: offered once,
-   *  never re-asserted if the admin declines it now). */
+  /**
+   * «Ins Menü» / «Gruppe ergänzen» — attach the catalogue's row (D-BB-14: offered once,
+   * never re-asserted if the admin declines it now), together with every `absent` row in its
+   * own subtree. That group is what makes a page usable rather than merely present: adding
+   * `calevent-all` alone leaves it without its `c-calevents` context menu, and adding that
+   * context menu without `calevent-add`/`filter-toggle` leaves an empty popover. The keys are
+   * the ones the table shows indented below the row, so the button can never add something
+   * the admin cannot see, and `planRowsByKey` skips any key an ancestor in the same call
+   * already carries.
+   *
+   * The button only appears when `groupKeys` is non-empty, so this can no longer be the path
+   * that answers "es gibt nichts zu übernehmen" on a row that was never missing in the first
+   * place — that was `buildMenuTree` reporting every context menu as absent (see its doc
+   * comment), not a plan that came back empty.
+   */
   protected async onAddToMenu(row: MenuTreeRow): Promise<void> {
     const tenantId = this.tenantId();
+    const keys = row.groupKeys.length > 0 ? row.groupKeys : [row.name];
     let preview: ApplyPlanPreview;
     try {
-      preview = (await this.featureSelectionService.addMenuRows(tenantId, [row.name], { dryRun: true })).preview;
+      preview = (await this.featureSelectionService.addMenuRows(tenantId, keys, { dryRun: true })).preview;
     } catch (error) {
       this.alertService.error(`FeaturePicker.onAddToMenu(dryRun): ${error}`);
       return;
@@ -616,7 +676,7 @@ export class FeaturePicker {
     if (!await this.alertService.confirm(message, true)) return;
 
     try {
-      await this.featureSelectionService.addMenuRows(tenantId, [row.name]);
+      await this.featureSelectionService.addMenuRows(tenantId, keys);
       await this.alertService.showToast(this.i18n.rows_add_toast());
     } catch (error) {
       this.alertService.error(`FeaturePicker.onAddToMenu: ${error}`);

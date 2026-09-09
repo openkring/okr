@@ -18,28 +18,45 @@ export interface MenuTreeRow {
   otherDrift: string[];   // 'url' | 'action' that also differ — rendered as a ≠ badge
   blockId: string;        // '' for tenant-authored rows
   forked: boolean;
+  /** The live document's `action` (the catalogue spec's when absent) — drives the type filter. */
+  action: string;
+  /**
+   * This row plus every `absent` row in its own subtree — the argument for a single
+   * «Ins Menü» that attaches a page together with its context menu and that menu's actions
+   * (the "small feature" grouping). Empty when there is nothing left to add, which is what
+   * decides whether the row offers a button at all.
+   */
+  groupKeys: string[];
 }
 
 /**
- * THE LIVE MENU TREE FOR SEGMENT 2 — a flat, depth-annotated row list a table renders directly,
- * built by walking the tenant's real `main_<tenantId>` document tree and folding in every
- * catalogue row the tenant is missing.
+ * THE LIVE MENU TREE FOR SEGMENT 2 — a flat, depth-annotated row list a table renders directly.
  *
- * Two passes, not one:
+ * IDENTITY, NOT REACHABILITY. A row is "in the menu" when this tenant HAS the document, not
+ * when the document happens to hang below `main_<tenantId>`. That distinction is the whole
+ * point of this pass: a CONTEXT menu is never a child of the root menu — it is resolved from
+ * a page url's last segment (`calevent-all.url = '/calevent/all/c-calevents'`) — and neither
+ * are its `call`/`toggle` children. Deriving the state from a root walk alone reported every
+ * one of them as `absent`, so the table offered «Ins Menü» on documents the tenant already
+ * had; the server then correctly planned nothing and answered "es gibt nichts zu übernehmen".
+ * The row was lying, not the server.
  *
- *  1. A depth-first walk of `existing` from `rootKey` (below the root itself, exactly like
- *     `nestedMenuKeys`/`planRootMenuOp` in `@okr/tenant-util`'s `root-menu.util.ts`) produces
- *     the LIVE rows, with the same visited-set cycle guard — menu data is user-editable, and
- *     A -> B -> A is one bad save away.
- *  2. For every catalogue spec (from `enabledBlocks` only — a disabled block's menu is not
- *     something the tenant is "missing") whose name never turned up in that walk, an `absent`
- *     row is appended under its catalogue parent: right after that parent's own live subtree
- *     when the parent IS in the live tree, or at depth 0 under the root when it is not.
+ * The converse failed too: a child NAME listed by a live parent whose own document this tenant
+ * does not inherit (`cms-menu` lists `menu-all`, but `menu-all.tenants` has no `kwa`) is what
+ * `<okr-menu>` renders as a yellow «Missing: menu-all». The old pass marked such a name
+ * visited as a "dangling reference" and emitted NO row for it, so the one screen that could
+ * repair it never showed it. It is now exactly what `absent` means, and it gets the button.
  *
- * `visited` is shared across both passes and serves double duty: it is the cycle guard for
- * pass 1, and "already accounted for" for pass 2 — a name found live anywhere in the tree
- * (even nested somewhere other than its catalogue-expected parent) is not reported as absent
- * a second time.
+ * So: walk from the root, and wherever a name is reached — through a parent's `menuItems`, or
+ * through the catalogue's own structure — emit a LIVE row if `existing` has the document and
+ * an ABSENT row if it does not. `visited` is both the cycle guard (menu data is user-editable
+ * and A → B → A is one bad save away) and "already accounted for", so a name that turns up in
+ * two places is reported once.
+ *
+ * GROUPING: a `context` spec named by a `navigate` spec's url is re-parented under that
+ * navigate spec, so a page, its context menu and that menu's actions read as one small
+ * feature instead of as unrelated top-level rows. `groupKeys` then lets one click add the
+ * whole group.
  */
 export function buildMenuTree(input: {
   rootKey: string;
@@ -51,31 +68,55 @@ export function buildMenuTree(input: {
 
   const driftByName = new Map(drift.map(d => [d.name, d]));
 
-  // Catalogue structural index, built once: parent name ('' = top-level, directly under the
-  // root) -> its spec children; plus the first block that declares a name and the spec itself
-  // (for the catalogue-side field values an `equal`/`absent` row still needs to display).
+  // ── Catalogue index ────────────────────────────────────────────────────────────────────
+  // parent name ('' = top-level, directly under the root) -> its spec children; plus the first
+  // block that declares a name and the spec itself (for the catalogue-side field values an
+  // `equal`/`absent` row still needs to display).
   const childrenByParent = new Map<string, MenuSpec[]>();
   const blockIdBySpecName = new Map<string, string>();
   const specByName = new Map<string, MenuSpec>();
+  const declaredParent = new Map<string, string>();
+
   const indexSpecs = (specs: MenuSpec[], parentKey: string, blockId: string): void => {
-    const list = childrenByParent.get(parentKey) ?? [];
-    childrenByParent.set(parentKey, list);
     for (const spec of specs) {
-      list.push(spec);
       if (!blockIdBySpecName.has(spec.name)) blockIdBySpecName.set(spec.name, blockId);
-      if (!specByName.has(spec.name)) specByName.set(spec.name, spec);
+      if (!specByName.has(spec.name)) {
+        specByName.set(spec.name, spec);
+        declaredParent.set(spec.name, parentKey);
+      }
       if (spec.children && spec.children.length > 0) indexSpecs(spec.children, spec.name, blockId);
     }
   };
   for (const block of enabledBlocks) indexSpecs(block.menu, '', block.id);
 
-  const visited = new Set<string>([rootKey]);
+  /**
+   * The context menu a `navigate` row opens, by the only link the data gives us: the last
+   * segment of its url (`/private/{pageId}/{contextMenuName}`, `/calevent/all/c-calevents`)
+   * — the same regex shape `MenuGraphStore.extractContextMenuName` uses for the sitemap.
+   * Only a name that really is a `context` spec counts, so an ordinary trailing url segment
+   * ('all', 'my') re-parents nothing.
+   */
+  const contextParentOf = new Map<string, string>();
+  for (const spec of specByName.values()) {
+    if (spec.action !== 'navigate') continue;
+    const last = spec.url.split('?')[0].split('/').filter(Boolean).pop();
+    if (!last) continue;
+    const target = specByName.get(last);
+    if (!target || target.action !== 'context' || contextParentOf.has(last)) continue;
+    contextParentOf.set(last, spec.name);
+  }
 
-  const makeLiveRow = (name: string, depth: number): MenuTreeRow => {
-    const item = existing.get(name) as MenuItemModel;
+  for (const [name, spec] of specByName) {
+    const parent = contextParentOf.get(name) ?? declaredParent.get(name) ?? '';
+    childrenByParent.set(parent, [...(childrenByParent.get(parent) ?? []), spec]);
+  }
+
+  // ── Row factories ──────────────────────────────────────────────────────────────────────
+  const makeLiveRow = (name: string, item: MenuItemModel, depth: number): MenuTreeRow => {
     const ownerBlockId = blockIdBySpecName.get(name);
     const forked = (item.forkedFrom ?? '').length > 0;
     const liveRoleNeeded = String(item.roleNeeded ?? '');
+    const action = String(item.action ?? specByName.get(name)?.action ?? '');
 
     if (!ownerBlockId) {
       // No block declares this name — nothing the catalogue does can drift it, so it is
@@ -83,7 +124,7 @@ export function buildMenuTree(input: {
       return {
         name, docId: item.okey, depth, state: 'tenant-authored',
         roleNeededLive: liveRoleNeeded, roleNeededCatalogue: '',
-        otherDrift: [], blockId: '', forked,
+        otherDrift: [], blockId: '', forked, action, groupKeys: [],
       };
     }
 
@@ -113,6 +154,7 @@ export function buildMenuTree(input: {
     return {
       name, docId: item.okey, depth, state,
       roleNeededLive, roleNeededCatalogue, otherDrift, blockId: ownerBlockId, forked,
+      action, groupKeys: [],
     };
   };
 
@@ -120,46 +162,84 @@ export function buildMenuTree(input: {
     name: spec.name, docId: '', depth, state: 'absent',
     roleNeededLive: '', roleNeededCatalogue: spec.roleNeeded,
     otherDrift: [], blockId: blockIdBySpecName.get(spec.name) ?? '', forked: false,
+    action: spec.action, groupKeys: [],
   });
 
-  // Pass 2, factored so both the root and every live node can call it: the catalogue children
-  // of `parentKey` that never showed up live. `parentIsLive` decides the depth rule — nested
-  // one level under a live parent, or flattened to depth 0 under the root when the parent
-  // itself is missing (or is the root). An absent node's OWN children are, by construction,
-  // unreachable through it either, so they cascade to depth 0 too (`parentIsLive: false`),
-  // not one level under their equally-absent parent.
-  const buildAbsent = (parentKey: string, parentDepth: number, parentIsLive: boolean): MenuTreeRow[] => {
-    const specs = childrenByParent.get(parentKey) ?? [];
-    const out: MenuTreeRow[] = [];
-    for (const spec of specs) {
-      if (visited.has(spec.name)) continue; // live somewhere else in the tree — not absent
-      visited.add(spec.name);
-      const depth = parentIsLive ? parentDepth + 1 : 0;
-      out.push(makeAbsentRow(spec, depth));
-      out.push(...buildAbsent(spec.name, depth, false));
-    }
-    return out;
-  };
-
-  const buildLive = (name: string, depth: number): MenuTreeRow[] => {
-    visited.add(name);
-    const row = makeLiveRow(name, depth);
-    const childRows: MenuTreeRow[] = [];
-    for (const childName of existing.get(name)?.menuItems ?? []) {
-      if (visited.has(childName)) continue; // cycle guard
-      if (existing.has(childName)) childRows.push(...buildLive(childName, depth + 1));
-      else visited.add(childName); // dangling reference — no doc to render, nothing to show
-    }
-    childRows.push(...buildAbsent(name, depth, true));
-    return [row, ...childRows];
-  };
-
+  // ── The walk ───────────────────────────────────────────────────────────────────────────
+  const visited = new Set<string>([rootKey]);
   const rows: MenuTreeRow[] = [];
-  for (const childName of existing.get(rootKey)?.menuItems ?? []) {
-    if (visited.has(childName)) continue;
-    if (existing.has(childName)) rows.push(...buildLive(childName, 0));
-    else visited.add(childName);
-  }
-  rows.push(...buildAbsent('', -1, false));
-  return rows;
+
+  const emit = (name: string, depth: number): void => {
+    if (visited.has(name)) return;
+    visited.add(name);
+
+    const item = existing.get(name);
+    if (!item) {
+      // No document for this tenant. The catalogue knows what it should be -> offer it.
+      // Nothing knows it -> a stray name in somebody's `menuItems`, with nothing to show
+      // and nothing this screen could do about it.
+      const spec = specByName.get(name);
+      if (!spec) return;
+      rows.push(makeAbsentRow(spec, depth));
+      for (const child of childrenByParent.get(name) ?? []) emit(child.name, depth + 1);
+      return;
+    }
+
+    rows.push(makeLiveRow(name, item, depth));
+    // The document's own children first, in the order the tenant curated, then whatever the
+    // catalogue expects below this name and the document does not list.
+    for (const childName of item.menuItems ?? []) emit(childName, depth + 1);
+    for (const spec of childrenByParent.get(name) ?? []) emit(spec.name, depth + 1);
+  };
+
+  for (const childName of existing.get(rootKey)?.menuItems ?? []) emit(childName, 0);
+  for (const spec of childrenByParent.get('') ?? []) emit(spec.name, 0);
+
+  // ── Grouping: what one click on this row would add ─────────────────────────────────────
+  // A row's subtree is exactly the following rows with a greater depth, so the flat list is
+  // its own index — no second traversal, and the group can never disagree with what the
+  // table shows below the row.
+  return rows.map((row, i) => {
+    const groupKeys = row.state === 'absent' ? [row.name] : [];
+    for (let j = i + 1; j < rows.length && rows[j].depth > row.depth; j++) {
+      if (rows[j].state === 'absent') groupKeys.push(rows[j].name);
+    }
+    return groupKeys.length > 0 ? { ...row, groupKeys } : row;
+  });
+}
+
+/**
+ * The segment-2 toolbar's two filters, applied to a built tree.
+ *
+ * A MATCH DRAGS ITS ANCESTORS ALONG. Dropping a non-matching parent would leave its children
+ * indented under nothing, so `calevent-add` would appear to sit at the top level of the menu
+ * — the one thing this table exists to show correctly. Ancestors are kept for context only;
+ * they are ordinary rows and keep their own actions, which is right: an admin who searched
+ * for a missing action still wants the group button on the page above it.
+ *
+ * `action` is the `menu_action` category value; `'all'` (the `okr-cat-select` «withAll»
+ * sentinel) and `''` both mean "no type filter".
+ */
+export function filterMenuRows(rows: MenuTreeRow[], searchTerm: string, action: string): MenuTreeRow[] {
+  const term = searchTerm.trim().toLowerCase();
+  const byAction = action.length > 0 && action !== 'all';
+  if (term.length === 0 && !byAction) return rows;
+
+  const matches = (row: MenuTreeRow): boolean =>
+    (term.length === 0 || row.name.toLowerCase().includes(term))
+    && (!byAction || row.action === action);
+
+  // The flat list is its own tree index: `ancestors[d]` is the index of the row that opened
+  // depth `d`, truncated to the current row's depth before it takes its own slot.
+  const keep = new Set<number>();
+  const ancestors: number[] = [];
+  rows.forEach((row, i) => {
+    ancestors.length = row.depth;
+    ancestors[row.depth] = i;
+    if (!matches(row)) return;
+    for (const index of ancestors) {
+      if (index !== undefined) keep.add(index);
+    }
+  });
+  return rows.filter((_row, i) => keep.has(i));
 }

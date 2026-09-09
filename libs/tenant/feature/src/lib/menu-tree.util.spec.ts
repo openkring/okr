@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MenuItemModel } from '@okr/shared-models';
 import type { FeatureBlock, MenuStructureDrift } from '@okr/tenant-util';
-import { buildMenuTree } from './menu-tree.util';
+import { buildMenuTree, filterMenuRows } from './menu-tree.util';
 
 const doc = (okey: string, menuItems: string[] = []): MenuItemModel => ({
   okey, name: okey, tenants: ['scs'], menuItems, isArchived: false,
@@ -154,16 +154,20 @@ describe('buildMenuTree', () => {
     expect(row).toMatchObject({ state: 'drifted', otherDrift: ['url'] });
   });
 
-  it('cascades an absent row whose catalogue parent is itself absent to the root, at depth 0', () => {
-    // Neither `finance-menu` nor `finance-invoices` exists for this tenant at all — per the
-    // brief, a missing parent means the child is filed under the root, not nested one level
-    // under its (equally missing) parent.
+  it('keeps an absent subtree nested and offers it as one group', () => {
+    // Neither `finance-menu` nor `finance-invoices` exists for this tenant at all. An absent
+    // subtree used to be FLATTENED to depth 0, on the reasoning that a row under a missing
+    // parent is unreachable anyway. It is not flattened any more: the parent now carries a
+    // `groupKeys` closure over its own absent subtree, so one «Ins Menü» attaches the whole
+    // small feature — and a group the admin is asked to add as a unit has to be shown as one.
     const existing = new Map([['main_scs', doc('main_scs', [])]]);
     const rows = base(existing, [], [FINANCE]);
-    expect(rows).toEqual(expect.arrayContaining([
-      expect.objectContaining({ name: 'finance-menu', state: 'absent', depth: 0, docId: '' }),
-      expect.objectContaining({ name: 'finance-invoices', state: 'absent', depth: 0, docId: '' }),
-    ]));
+    expect(rows.map(r => [r.name, r.state, r.depth])).toEqual([
+      ['finance-menu', 'absent', 0],
+      ['finance-invoices', 'absent', 1],
+    ]);
+    expect(rows[0].groupKeys).toEqual(['finance-menu', 'finance-invoices']);
+    expect(rows[1].groupKeys).toEqual(['finance-invoices']);
   });
 
   it('does not duplicate a row that is both live elsewhere and a catalogue child', () => {
@@ -177,5 +181,102 @@ describe('buildMenuTree', () => {
     const rows = base(existing);
     expect(rows.filter(r => r.name === 'calevent-all')).toHaveLength(1);
     expect(rows.find(r => r.name === 'calevent-all')).toMatchObject({ state: 'equal', depth: 0 });
+  });
+});
+
+/** A page whose url names its context menu, that menu, and one action inside it — the shape
+ *  every list screen in the catalogue has, and the one the root walk alone could not see. */
+const TASK: FeatureBlock = {
+  id: 'task', bundle: 'special', label: 'Aufgaben', icon: 'task',
+  defaultAvailability: 'ga', dependsOn: [], collections: [],
+  menu: [
+    { key: 'task-all', name: 'task-all', url: '/task/all/c-tasks', action: 'navigate',
+      roleNeeded: 'none', icon: 'task', label: '@item.task-all' },
+    { key: 'c-tasks', name: 'c-tasks', url: '', action: 'context', roleNeeded: 'none',
+      icon: 'help-circle', label: '', children: [
+        { key: 'task-add', name: 'task-add', url: 'add', action: 'call', roleNeeded: 'none',
+          icon: 'add-circle', label: '@item.task-add' },
+      ] },
+  ],
+};
+
+describe('buildMenuTree — identity, not reachability', () => {
+  it('reports a context menu the tenant HAS as live, nested under the page whose url names it', () => {
+    // A context menu is never a child of the root menu — it is resolved from `task-all`'s url.
+    // Deriving the state from the root walk alone reported it (and its actions) as `absent`,
+    // so the table offered «Ins Menü» on documents the tenant already had and the server
+    // answered "es gibt nichts zu übernehmen".
+    const existing = new Map([
+      ['main_scs', doc('main_scs', ['task-all'])],
+      ['task-all', doc('task-all')],
+      ['c-tasks', doc('c-tasks', ['task-add'])],
+      ['task-add', doc('task-add')],
+    ]);
+    const rows = buildMenuTree({ rootKey: 'main_scs', existing, drift: [], enabledBlocks: [TASK] });
+    expect(rows.map(r => [r.name, r.state, r.depth])).toEqual([
+      ['task-all', 'equal', 0],
+      ['c-tasks', 'equal', 1],
+      ['task-add', 'equal', 2],
+    ]);
+    expect(rows.every(r => r.groupKeys.length === 0)).toBe(true);
+  });
+
+  it('offers a page together with its context menu and actions as one group', () => {
+    const existing = new Map([['main_scs', doc('main_scs', [])]]);
+    const rows = buildMenuTree({ rootKey: 'main_scs', existing, drift: [], enabledBlocks: [TASK] });
+    expect(rows.map(r => [r.name, r.state, r.depth])).toEqual([
+      ['task-all', 'absent', 0],
+      ['c-tasks', 'absent', 1],
+      ['task-add', 'absent', 2],
+    ]);
+    expect(rows[0].groupKeys).toEqual(['task-all', 'c-tasks', 'task-add']);
+  });
+
+  it('reports a name a live parent lists but whose own document this tenant lacks as absent', () => {
+    // The yellow «Missing: calevent-my» in the sidebar. This used to be swallowed as a
+    // "dangling reference", so the one screen that could repair it never listed the row.
+    const existing = new Map([
+      ['main_scs', doc('main_scs', ['event-menu'])],
+      ['event-menu', doc('event-menu', ['calevent-all', 'calevent-my'])],
+      ['calevent-all', doc('calevent-all')],
+    ]);
+    const rows = base(existing);
+    expect(rows.find(r => r.name === 'calevent-my'))
+      .toMatchObject({ state: 'absent', depth: 1, docId: '', groupKeys: ['calevent-my'] });
+  });
+
+  it('shows nothing for a dangling name no catalogue block declares', () => {
+    const existing = new Map([
+      ['main_scs', doc('main_scs', ['event-menu'])],
+      ['event-menu', doc('event-menu', ['ghost-row'])],
+    ]);
+    expect(base(existing).map(r => r.name)).not.toContain('ghost-row');
+  });
+});
+
+describe('filterMenuRows', () => {
+  const rows = buildMenuTree({
+    rootKey: 'main_scs',
+    existing: new Map([['main_scs', doc('main_scs', [])]]),
+    drift: [], enabledBlocks: [TASK],
+  });
+
+  it('returns the list untouched when neither filter is set', () => {
+    expect(filterMenuRows(rows, '', 'all')).toBe(rows);
+    expect(filterMenuRows(rows, '  ', '')).toBe(rows);
+  });
+
+  it('keeps a match together with its ancestors so the indentation still reads as a tree', () => {
+    expect(filterMenuRows(rows, 'task-add', 'all').map(r => r.name))
+      .toEqual(['task-all', 'c-tasks', 'task-add']);
+  });
+
+  it('filters by menu action and matches the name case-insensitively', () => {
+    expect(filterMenuRows(rows, '', 'context').map(r => r.name)).toEqual(['task-all', 'c-tasks']);
+    expect(filterMenuRows(rows, 'TASK-ALL', 'all').map(r => r.name)).toEqual(['task-all']);
+  });
+
+  it('returns nothing when both filters cannot be satisfied at once', () => {
+    expect(filterMenuRows(rows, 'task-add', 'navigate')).toEqual([]);
   });
 });

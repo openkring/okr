@@ -94,6 +94,18 @@ export const FEATURE_PICKER_I18N_KEYS = {
   rows_adjust_catalogue_button: PFX + 'picker.rows_adjust_catalogue_button',
   rows_unpin_button: PFX + 'picker.rows_unpin_button',
   rows_add_button: PFX + 'picker.rows_add_button',
+  /** «Ins Menü» on a row that also has absent descendants — the page, its context menu and
+   *  that menu's actions go in as one small feature (`MenuTreeRow.groupKeys`). */
+  rows_add_group_button: PFX + 'picker.rows_add_group_button',
+  /** Status words for the action column of a row that offers no action at all. A button that
+   *  can only ever answer "nichts zu übernehmen" is worse than no button — it reads as
+   *  disabled, invites a click, and then explains nothing. */
+  rows_state_equal: PFX + 'picker.rows_state_equal',
+  rows_state_pinned: PFX + 'picker.rows_state_pinned',
+  rows_state_tenant: PFX + 'picker.rows_state_tenant',
+  /** The filter toolbar found nothing — distinct from `segment_rows_placeholder`, which
+   *  means "no block is on yet". */
+  rows_filter_empty: PFX + 'picker.rows_filter_empty',
   rows_apply_toast: PFX + 'picker.rows_apply_toast',
   rows_pin_toast: PFX + 'picker.rows_pin_toast',
   rows_unpin_toast: PFX + 'picker.rows_unpin_toast',
