@@ -56,26 +56,28 @@ let id = 0;
       <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
     </ion-item>
   } @else if(!isReadOnly()) {
-    <!-- The button is rendered only once its label has resolved. Rendered empty first, the
+    <!-- The button is only made VISIBLE once its label has resolved. Rendered empty first, the
          label used to arrive a tick later and widen the button, and the chevron at its end
          jumped up to 132 px — an element that APPEARS is no layout shift, an element that MOVES
          is (perf-baselines.md, »Die Personenliste«, 2026-09-09). The column around it keeps
-         its width either way, so nothing else moves while the label is pending. -->
-    @if(selectedLabel(); as selectedLabel) {
-      <ion-button fill="clear" id="{{popoverId}}">
-        @if(showIcons() && selectedItem().icon.length > 0) {
-          <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
-        }
-        {{ selectedLabel }}
-        <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
-      </ion-button>
-    } @else {
-      <!-- an invisible twin of the button, so the row keeps exactly the button's height (font,
-           padding, margins) and the toolbar does not grow when the real one appears -->
-      <ion-button fill="clear" class="select-placeholder" aria-hidden="true" tabindex="-1">
-        <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
-      </ion-button>
-    }
+         its width either way, so nothing else moves while the label is pending.
+
+         It must stay ONE element that always carries popoverId: <ion-popover trigger>
+         resolves its trigger by document.getElementById when it loads and never re-scans, so a
+         button that only enters the DOM after the label arrives is bound to nothing and the
+         select is silently unclickable for the rest of its life. That happened to the
+         roleNeeded select in the menu form, whose '@auth/feature' scope loads late. -->
+    <ion-button fill="clear" id="{{popoverId}}"
+      [class.select-placeholder]="!selectedLabel()"
+      [attr.aria-hidden]="selectedLabel() ? null : 'true'"
+      [attr.tabindex]="selectedLabel() ? null : -1"
+    >
+      @if(showIcons() && selectedItem().icon.length > 0) {
+        <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
+      }
+      {{ selectedLabel() }}
+      <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
+    </ion-button>
   } @else {
     <ion-item lines="none">
       @if(showIcons() && selectedItem().icon.length > 0) {
