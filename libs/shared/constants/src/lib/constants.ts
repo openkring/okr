@@ -144,7 +144,12 @@ export const DEFAULT_MIMETYPES = [
     'image/webp',
     'image/heic',
     'image/heif',
-    'application/pdf', 
+    // Handy-Clips fürs Album (Spec 2026-09-09-album-video). Nur registrierte Mime-Typen —
+    // die blanken Endungen gehören in DEFAULT_ACCEPT_ATTRIBUTE, weil FilePicker.pickFiles
+    // (nativ) ausschliesslich Mime-Typen verträgt.
+    'video/mp4',
+    'video/quicktime',
+    'application/pdf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/msword',
     'application/vnd.ms-excel',
@@ -171,7 +176,7 @@ export const DEFAULT_MIMETYPES = [
  * in the dialog. Extensions are accepted by the accept attribute only — the native FilePicker
  * (Capacitor) expects mime types, so it keeps using DEFAULT_MIMETYPES.
  */
-export const DEFAULT_ACCEPT_ATTRIBUTE = [...DEFAULT_MIMETYPES, '.heic', '.heif', '.webp'].join(',');
+export const DEFAULT_ACCEPT_ATTRIBUTE = [...DEFAULT_MIMETYPES, '.heic', '.heif', '.webp', '.mp4', '.mov'].join(',');
 export const DEFAULT_BANNER_URL = 'tenant/default/app/banner.jpg';
 
 /**-------------------------------------------------------------------------

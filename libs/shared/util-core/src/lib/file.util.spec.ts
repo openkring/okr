@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation, resolveMimeType, sanitizeFileName } from './file.util';
+import { DEFAULT_ACCEPT_ATTRIBUTE, DEFAULT_MIMETYPES } from '@okr/shared-constants';
+import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPhotoCancellation, isVideo, resolveMimeType, sanitizeFileName } from './file.util';
 
 describe('file.util', () => {
 
@@ -191,5 +192,24 @@ describe('resolveMimeType', () => {
 
   it('should return an empty string for an unknown extension', () => {
     expect(resolveMimeType('mystery.qqq', '')).toBe('');
+  });
+});
+
+describe('video formats', () => {
+  it('accepts mp4 and quicktime as upload mime types', () => {
+    expect(DEFAULT_MIMETYPES).toContain('video/mp4');
+    expect(DEFAULT_MIMETYPES).toContain('video/quicktime');
+  });
+
+  it('carries the bare extensions in the accept attribute only', () => {
+    expect(DEFAULT_ACCEPT_ATTRIBUTE).toContain('.mp4');
+    expect(DEFAULT_ACCEPT_ATTRIBUTE).toContain('.mov');
+    // the native FilePicker takes DEFAULT_MIMETYPES and rejects bare extensions
+    expect(DEFAULT_MIMETYPES.some((t) => t.startsWith('.'))).toBe(false);
+  });
+
+  it('classifies both containers as video', () => {
+    expect(isVideo('clip.mp4')).toBe(true);
+    expect(isVideo('clip.mov')).toBe(true);
   });
 });
