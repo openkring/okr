@@ -117,7 +117,7 @@ import { AlbumStore } from './album-section.store';
 
           @if(images().length > 0) {
             <okr-image-grid [images]="images()" [imageStyle]="imageStyle()" [imgixBaseUrl]="imgixBaseUrl()"
-              [albumStyle]="albumStyle()" (imageClicked)="onImageClicked($event)" />
+              [albumStyle]="albumStyle()" [pendingLabel]="store.i18n.album_video_pending()" (imageClicked)="onImageClicked($event)" />
           } @else if(folders().length === 0 || !foldersVisible()) {
             <okr-label>{{ store.i18n.album_empty() }}</okr-label>
           }
