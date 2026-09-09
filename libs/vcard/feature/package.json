@@ -15,6 +15,13 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
-    "@okr/vcard-util": "*"
+    "@okr/vcard-util": "*",
+    "@okr/avatar-data-access": "*",
+    "@okr/avatar-util": "*",
+    "@okr/relationship-personal-rel-data-access": "*",
+    "@okr/relationship-workrel-data-access": "*",
+    "@okr/subject-address-data-access": "*",
+    "@okr/subject-org-data-access": "*",
+    "@okr/subject-person-data-access": "*"
   }
 }
