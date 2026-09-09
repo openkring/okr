@@ -33,10 +33,15 @@
  * skill as NOT a tenant id), anything already on the sentinel, and any document whose
  * `tenants` is not an array (`tags/all_tenants` is a dead leftover carrying a STRING there).
  *
- * `mcat` is excluded BY NAME: `scs` and `p13` carry parallel categories named `mcat_scs` /
- * `mcat_p13` rather than forks of `mcat`, so sharing `mcat` fleet-wide would hand them a
- * second, unused membership vocabulary. Whether a tenant wants the generic one is a decision
- * about its membership model, not a migration.
+ * `mcat` is excluded BY NAME. `scs` carries its own membership vocabulary under the parallel
+ * names `mcat_scs` / `mcat_srv` — separate names, not forks of `mcat` — so putting `mcat` on
+ * the sentinel would hand scs a second, unused one. Membership categories also carry PRICES,
+ * which is exactly the kind of value no tenant should inherit by default. `kwa` and `p13` were
+ * added to `mcat`'s explicit list by hand instead (2026-09-09; their earlier `mcat_kwa` /
+ * `mcat_p13` documents were deleted, and both orgs point at `mcat` via
+ * `orgs/<tenantId>.membershipCategoryKey` — the field `PersonStore` actually resolves).
+ * Whether a tenant wants the generic vocabulary stays a decision about its membership model,
+ * not a migration.
  *
  * NO INDEX CHANGE: an `arrayConfig: CONTAINS` composite index serves `array-contains-any` too.
  *
