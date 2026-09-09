@@ -32,6 +32,7 @@ let id = 0;
     IonItem, IonNote, IonButton, IonPopover, IonContent, IonList, IonIcon, IonLabel
   ],
   styles: [`
+    .select-placeholder { visibility: hidden; pointer-events: none; }
     .helper { --color: var(--ion-color-medium);}
     .popover.active { opacity: 1;}
     /* fieldStyle: the select reads like the neighbouring inputs — small label above the value,
@@ -55,13 +56,26 @@ let id = 0;
       <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
     </ion-item>
   } @else if(!isReadOnly()) {
-    <ion-button fill="clear" id="{{popoverId}}">
-      @if(showIcons() && selectedItem().icon.length > 0) {
-        <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
-      }
-      {{ itemLabel(selectedItem()) | translate | async }}
-      <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
-    </ion-button>
+    <!-- The button is rendered only once its label has resolved. Rendered empty first, the
+         label used to arrive a tick later and widen the button, and the chevron at its end
+         jumped up to 132 px — an element that APPEARS is no layout shift, an element that MOVES
+         is (perf-baselines.md, »Die Personenliste«, 2026-09-09). The column around it keeps
+         its width either way, so nothing else moves while the label is pending. -->
+    @if(selectedLabel(); as selectedLabel) {
+      <ion-button fill="clear" id="{{popoverId}}">
+        @if(showIcons() && selectedItem().icon.length > 0) {
+          <ion-icon slot="start" src="{{ selectedItem().icon | svgIcon }}" />
+        }
+        {{ selectedLabel }}
+        <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
+      </ion-button>
+    } @else {
+      <!-- an invisible twin of the button, so the row keeps exactly the button's height (font,
+           padding, margins) and the toolbar does not grow when the real one appears -->
+      <ion-button fill="clear" class="select-placeholder" aria-hidden="true" tabindex="-1">
+        <ion-icon slot="end" src="{{ 'chevron-expand' | svgIcon }}" />
+      </ion-button>
+    }
   } @else {
     <ion-item lines="none">
       @if(showIcons() && selectedItem().icon.length > 0) {
@@ -134,6 +148,14 @@ export class CategorySelect {
   });
 
   protected popoverId = `select-cat-${id++}`;
+  private readonly i18nService = inject(I18nService);
+  /** The translated label of the selected item; '' until the first translation has resolved. */
+  protected readonly selectedLabel = toSignal(
+    toObservable(computed(() => this.itemLabel(this.selectedItem()))).pipe(
+      switchMap((key) => this.i18nService.translate(key))
+    ),
+    { initialValue: '' }
+  );
   // a missing/unloaded category yields an empty item list (AppStore.getCategory degrades to an
   // empty CategoryListModel) — fall back to the stored name so the control renders instead of crashing
   protected selectedItem = computed(() => this.items().find(item => item.name === this.selectedItemName())
