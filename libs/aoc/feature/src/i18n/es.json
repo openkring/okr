@@ -103,14 +103,6 @@
       "button": "Ejecutar",
       "confirm": "El campo se vuelve a calcular para todas las personas, en todos los inquilinos. No se pierde ningún dato existente. ¿Continuar?",
       "conf": "Listo: {count} personas actualizadas."
-    },
-    "delivery": {
-      "title": "Convertir las vías de envío",
-      "label": "Reescribe en todos los usuarios los campos de envío de mensajes y facturas, de la antigua selección única a la nueva selección múltiple. En todos los mandantes. Necesario una sola vez.",
-      "button": "Ejecutar",
-      "dryrun": "Solo contar",
-      "confirm": "Las vías de envío se reescribirán en todos los usuarios, en todos los mandantes. Quien ya esté convertido no cambia. ¿Continuar?",
-      "conf": "Listo: {count} usuarios adaptados."
     }
   },
   "bexio": {

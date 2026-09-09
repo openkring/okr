@@ -103,14 +103,6 @@
       "button": "Run",
       "confirm": "The field is recomputed for all persons, across all tenants. No existing data is lost. Continue?",
       "conf": "Done: {count} persons updated."
-    },
-    "delivery": {
-      "title": "Convert delivery channels",
-      "label": "Rewrites the message and invoice delivery fields on every user from the old single choice to the new multiple choice, across all tenants. Needed once.",
-      "button": "Run",
-      "dryrun": "Count only",
-      "confirm": "The delivery channels will be rewritten for every user, across all tenants. Anyone already converted stays unchanged. Continue?",
-      "conf": "Done: {count} users updated."
     }
   },
   "bexio": {

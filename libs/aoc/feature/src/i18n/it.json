@@ -103,14 +103,6 @@
       "button": "Esegui",
       "confirm": "Il campo viene ricalcolato per tutte le persone, su tutti i tenant. Nessun dato esistente va perso. Continuare?",
       "conf": "Fatto: {count} persone aggiornate."
-    },
-    "delivery": {
-      "title": "Convertire le vie di consegna",
-      "label": "Riscrive per tutti gli utenti i campi di invio dei messaggi e delle fatture, dalla vecchia scelta singola alla nuova scelta multipla. Su tutti i mandanti. Necessario una sola volta.",
-      "button": "Esegui",
-      "dryrun": "Solo contare",
-      "confirm": "Le vie di consegna vengono riscritte per tutti gli utenti, su tutti i mandanti. Chi è già convertito resta invariato. Continuare?",
-      "conf": "Fatto: {count} utenti adattati."
     }
   },
   "bexio": {
