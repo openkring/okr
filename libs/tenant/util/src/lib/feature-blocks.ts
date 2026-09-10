@@ -259,9 +259,14 @@ const aoc: FeatureBlock = {
   //    from `FEATURE_ROUTES` until now);
   //  - `user-all` → `user`; `priv-register`/`priv-audit` → `security`; `flighttracker` →
   //    `mobility` (task 14); `activity-all` → `activity` (task 18) — each via `aocMenuParent`;
-  //  - `divider_empty` stays uncatalogued, and now for a HARD reason rather than a soft one:
-  //    its live `action` is `divider`, which is not a member of `MenuSpec['action']` at all,
-  //    so it is not expressible here. Same as `fibu`/`budget` on the `finance` block.
+  //  - `divider_empty` IS catalogued now (declared last below, mirroring its position as the
+  //    live doc's last child). It used to be excluded for a hard reason — its live `action` is
+  //    `divider`, which was not a member of `MenuSpec['action']` — and that reason is gone:
+  //    `divider` is now part of the union, because `Menu` has always rendered it (its own
+  //    `@case('divider')`) and a row the app renders but the catalogue cannot express is a row
+  //    `/tenant/features` can neither show nor repair. `fibu`/`budget` on the `finance` block
+  //    stay excluded on their own, unrelated grounds (tenant-bespoke "tbd:" placeholders for
+  //    unbuilt screens, `tenants: ['scs']`), not for the action type any more.
   //
   // TWO AOC SCREENS ARE ROUTED BUT UN-MENU'D, stated so the omission is not read as an
   // oversight: `/aoc/email` (`AocEmail`) and `/aoc/trip` (`AocTrip`) have NO live `menuItems`
@@ -330,6 +335,15 @@ const aoc: FeatureBlock = {
       // excluded as tenant-bespoke — the tenant literal is in the icon only, not in the
       // url/label/name.
       { key: 'aoc-srv',        name: 'aoc-srv',        url: '/aoc/srv',        action: 'navigate', roleNeeded: 'contentAdmin', icon: '//org.srv', label: '@item.aoc-srv' },
+      // Purely presentational, mirrored verbatim off the live doc (`z950dr1fob9b4eydqogq`:
+      // `action: divider`, empty `url`/`label`, `icon: help-circle`, `roleNeeded: admin`,
+      // `tenants: [bka, scs, bkg, kring, p13, okr]`) and kept LAST, the position it holds in
+      // `aoc-menu.menuItems`. The empty label is the point, not an omission: `Menu`'s
+      // `@case('divider')` draws a labelled `ion-item-divider` when there is a label and a
+      // hairline separator when there is not, and this row is the separator that closes the
+      // AOC submenu. `icon`/`roleNeeded` are inert for a divider but copied anyway, per the
+      // mirror-the-live-doc rule.
+      { key: 'divider_empty',  name: 'divider_empty',  url: '',                action: 'divider',  roleNeeded: 'admin', icon: 'help-circle', label: '' },
     ]),
     // TREE-SHAPE SURPRISE, verified rather than assumed (task 18): these two AOC screens hang
     // off `cms-menu`, NOT `aoc-menu`. The live `cms-menu.menuItems` array reads `[cms-graph,
@@ -407,7 +421,62 @@ const cms: FeatureBlock = {
   // Container domain: libs/cms/{icon,menu,page,section}, each owning its own Firestore collection.
   collections: ['icons', 'menuItems', 'pages', 'sections'],
   menu: [
+    // ── THE SHELL PAGES ──────────────────────────────────────────────────────────────────
+    // Top-level nav rows (verified against `main_scs` / `main_kwa`), each pointing at a CMS
+    // page that is ONE document for the whole fleet: the tenant-specific part is never in the
+    // page, it is in the sections the page lists (`impressum` → `@TID@_impressum`, expanded by
+    // `PageStore`) or in what those sections query at runtime (`dashboard`'s `d-*`). All of
+    // them were moved onto the `'system'` sentinel by
+    // `scripts/migrate-shared-pages-to-system.mjs`, together with their shared sections —
+    // WITHOUT that, cataloguing these rows would hand a tenant a menu entry pointing at a page
+    // it cannot read, because a seed can only create an absent document, never re-share an
+    // existing one (`planSeedWrites`). A tenant that later needs its own wording forks the page
+    // or the section to `<okey>_<tenantId>` (`PageService.update` / `SectionService.update`),
+    // which is the id both `read()`s prefer.
+    { key: 'dashboard', name: 'dashboard', url: '/private/dashboard/c-contentpage', action: 'navigate', roleNeeded: 'registered', icon: 'home', label: '@main.dashboard' },
+    { key: 'help', name: 'help', url: '/public/help/c-contentpage', action: 'navigate', roleNeeded: 'none', icon: 'help-circle', label: '@main.misc.help' },
+    // The RELEASE NOTES row — `action: 'browse'`, i.e. the system browser rather than a route,
+    // with `@VERSION@` in the label and the repo url expanded by `MenuStore`. Not a CMS page,
+    // so it is the odd one out in this block; it lives here because `cms` is `core: true` (the
+    // row must be offerable to every tenant, and `aoc` — where the other app-level rows sit —
+    // is `bundle: 'special'`) and because it is the same MAIN-MENU INFO class as `help`
+    // directly above it: something every member may open about the app itself.
+    // Mirrored verbatim off `menuItems/version`, `icon: 'golf'` included.
+    { key: 'version', name: 'version', url: 'https://github.com/openkring/okr/commits/main/', action: 'browse', roleNeeded: 'none', icon: 'golf', label: 'Release @VERSION@' },
+    // The album's url carries `@TID@`, not a page id: it renders a per-tenant STORAGE folder
+    // (`<tid>-album`), so there is no shared document behind it and nothing to migrate. `p13`
+    // holds a fork of the row itself (`album_p13`), which is exactly what `forkedFrom` is for.
+    { key: 'album', name: 'album', url: '/album/@TID@-album/c-album', action: 'navigate', roleNeeded: 'registered', icon: 'image', label: '@item.album' },
+    // The three legal pages hang under a shared `misc-menu` parent (live: `[terms, privacy,
+    // impressum]`, `roleNeeded: none`, empty icon — mirrored verbatim, including the order).
+    // Unlike `cms-menu`/`aoc-menu` this parent has exactly ONE owning block, so it is declared
+    // inline rather than through a shared-parent helper.
+    { key: 'misc-menu', name: 'misc-menu', url: '', action: 'sub', roleNeeded: 'none', icon: '', label: '@item.misc-menu', children: [
+      { key: 'terms', name: 'terms', url: '/public/terms/c-contentpage', action: 'navigate', roleNeeded: 'none', icon: 'legal', label: '@item.terms' },
+      { key: 'privacy', name: 'privacy', url: '/public/privacy/c-contentpage', action: 'navigate', roleNeeded: 'none', icon: 'eye-off', label: '@main.misc.privacy' },
+      { key: 'impressum', name: 'impressum', url: '/public/impressum/c-contentpage', action: 'navigate', roleNeeded: 'none', icon: 'info-circle', label: '@main.misc.impressum' },
+    ] },
     cmsMenuParent([
+      // The section SHOWCASE page — a tenant-independent demo of every section type, and the
+      // one row here whose live PARENT cannot be mirrored: `test-menu` is `isArchived: true`,
+      // and rule 10 forbids cataloguing an archived document (it would resurrect a retired
+      // menu). Hung under `cms-menu` instead, where a content admin looking for section
+      // examples would go, rather than at the top level of everybody's main menu.
+      { key: 'test-sections', name: 'test-sections', url: '/private/wDgtGIqwKiFoZGUChLBW/c-contentpage', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'text', label: '@item.test-sections' },
+      // The tenant SITEMAP, first child of the live `cms-menu` doc and catalogued in that
+      // position. Its url embeds a PAGE ID rather than a route
+      // (`/private/153shk38lk9xje36oci6/c-graphpage`) — that is the CMS page dispatcher's own
+      // shape, and the id is stable across tenants because `pages/153shk38lk9xje36oci6`
+      // ("Sitemap", `type: graph`, `sections: []`) is ONE document shared fleet-wide via the
+      // `system` tenant sentinel. That is what makes this row catalogueable at all: a seed can
+      // only CREATE an absent doc, never re-share an existing one
+      // (`planSeedWrites`), so a per-tenant `tenants[]` entry would have to be written by hand
+      // for every new tenant. `'system'` inverts that — see `SYSTEM_TENANT` in
+      // `@okr/shared-util-core`, and note `PageService.read` still prefers a
+      // `<pageId>_<tenantId>` copy, so a tenant that wants its own Sitemap page forks it.
+      // The page carries no content and no PII: it renders the tenant's OWN menu graph at
+      // runtime, from that tenant's own `menuItems` documents.
+      { key: 'cms-graph', name: 'cms-graph', url: '/private/153shk38lk9xje36oci6/c-graphpage', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'org', label: '@item.cms-graph' },
       { key: 'menu-all', name: 'menu-all', url: '/menu/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'menu', label: '@main.cms.menus' },
       { key: 'page-all', name: 'page-all', url: '/page/all/c-pages', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'text', label: '@main.cms.pages' },
       { key: 'section-all', name: 'section-all', url: '/section/all', action: 'navigate', roleNeeded: 'contentAdmin', icon: 'section', label: '@content.section.plural' },
@@ -425,6 +494,16 @@ const cms: FeatureBlock = {
     { key: 'c-pages', name: 'c-pages', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'page-add', name: 'page-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.page-add' },
       { key: 'page-exportraw', name: 'page-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.page-exportraw' },
+    ] },
+    // The context menu `cms-graph`'s url points at. Live for `scs` ONLY (as are both `gp-*`
+    // children) — catalogued so every tenant that switches the sitemap on gets the same three
+    // actions instead of an empty popover, the same reason `enableBlock` groups a page with its
+    // context menu. `menu-add` is the SAME shared document `c-menus` declares above, repeated
+    // here field-identically on purpose: the sitemap's popover really does offer it.
+    { key: 'c-graphpage', name: 'c-graphpage', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'menu-add', name: 'menu-add', url: 'add', action: 'call', roleNeeded: 'contentAdmin', icon: 'add-circle', label: '@item.menu-add' },
+      { key: 'gp-exportraw', name: 'gp-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.gp-exportraw' },
+      { key: 'gp-exportxml', name: 'gp-exportxml', url: 'exportXml', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.gp-exportxml' },
     ] },
     // Context menu of the PageDispatcher itself (rendering a CMS page + its sections) —
     // spans both the page and section subdomains, which is why it lives on the unified

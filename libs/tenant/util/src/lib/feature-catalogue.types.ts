@@ -26,7 +26,16 @@ export interface MenuSpec {
   key: string;
   name: string;
   url: string;
-  action: 'navigate' | 'sub' | 'context' | 'call' | 'toggle';
+  /**
+   * `'browse'` opens an EXTERNAL url in the system browser (`MenuStore`'s own `case 'browse'`,
+   * via `@capacitor/browser`), expanding `@VERSION@`/`@REPO_URL@` on the way — the release-notes
+   * row is the live example. `'divider'` renders no target at all — `Menu`'s own `@case('divider')` draws a labelled
+   * `ion-item-divider` when `label` is set and a hairline separator when it is not. It is here
+   * so purely presentational live docs (`divider_empty`) can be catalogued like any other row
+   * instead of staying invisible to `/tenant/features`; `feature-routes.util.ts` ignores it, as
+   * it does every non-`navigate` action.
+   */
+  action: 'navigate' | 'sub' | 'context' | 'call' | 'toggle' | 'divider' | 'browse';
   roleNeeded: RoleName;
   /** Presentational defaults — used on create, never rewritten on an existing doc (D-BB-7). */
   icon: string;

@@ -220,6 +220,15 @@ const KNOWN_WEAKER_THAN_MENU: readonly string[] = [
   'calevent-all', 'invitation-all',
   // treasurer
   'expenses-all',
+  // contentAdmin on the row, member-reachable route — BY DESIGN, and the same reasoning R-7
+  // recorded for `document-all`: `roleNeeded` here is a MENU-VISIBILITY choice, not a security
+  // boundary. Both point at screens whose data is tenant-readable anyway (`pages` and
+  // `sections` are `allow read: if true` in firestore.rules), and
+  // `/private/:pageId/:contextMenuName` must stay member-reachable or every ordinary content
+  // page would dead-end. What the role buys is a main menu that does not show a member the
+  // sitemap or the section showcase. (`album` was here too until its live doc settled on
+  // `registered` — a member SHOULD see the club album, so it is no longer a gated doc at all.)
+  'cms-graph', 'test-sections',
 ];
 
 describe('menu roleNeeded vs. the route it navigates to', () => {
