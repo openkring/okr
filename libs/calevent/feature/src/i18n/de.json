@@ -366,7 +366,7 @@
   "maxAttendees": {
     "label": "Teilnahme beschränken auf",
     "placeholder": "nn",
-    "helper": "Höchstzahl der Teilnehmenden. 0 heisst: unbeschränkt. Wer sich danach anmeldet, kommt auf die Warteliste."
+    "helper": "Höchstzahl der Teilnehmenden. Wer sich danach anmeldet, kommt auf die Warteliste. 0 heisst: unbeschränkt."
   },
   "locationKey": {
     "label": "Ort",
