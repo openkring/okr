@@ -82,12 +82,13 @@ service firebase.storage {
     // regularly empty in Chrome/Firefox, which is exactly how the 147 live objects carrying
     // `application/x-www-form-urlencoded` (see contentTypeOk below) came about. Gating the
     // raised cap on contentType would therefore refuse precisely the iPhone clips it exists
-    // for. The extension set mirrors DEFAULT_ACCEPT_ATTRIBUTE (@okr/shared-constants), which
-    // is what the file dialog actually offers. Safe on `request.resource` because this is
-    // only ever called from a create/update condition -- never from a read or list, where
-    // touching `resource` raises "Null value error" (see the note above).
+    // for. The extension set mirrors DEFAULT_ACCEPT_ATTRIBUTE (@okr/shared-constants) exactly --
+    // mp4 and mov are the only two video extensions it offers in the file dialog; no .m4v here
+    // because a member can never pick one. Safe on `request.resource` because this is only
+    // ever called from a create/update condition -- never from a read or list, where touching
+    // `resource` raises "Null value error" (see the note above).
     function isVideoUpload() {
-      return request.resource.name.lower().matches('.*[.](mp4|m4v|mov)');
+      return request.resource.name.lower().matches('.*[.](mp4|mov)');
     }
     // Content type (H-1 / M-9, Phase 2). This is a DENYLIST of active HTML content,
     // not the allowlist the security report originally proposed. The MIME set was
@@ -133,8 +134,13 @@ service firebase.storage {
     // ---- album video uploads: the one place the 25 MB cap is lifted ----
     // `tenant/{tid}/section/{sectionKey}/album/...` and `tenant/{tid}/folder/{folderKey}/album/...`
     // are the two paths AlbumStore.addFiles writes to (the second one serves the direct
-    // /album/<folderKey> route, whose section is synthesized and has no okey). Same two prefixes
-    // the transcoding trigger accepts -- see isAlbumVideoPath in apps/functions/src/video.
+    // /album/<folderKey> route, whose section is synthesized and has no okey).
+    //
+    // The transcoding trigger's own gate (isAlbumVideoPath in apps/functions/src/video) is
+    // WIDER than this: it also accepts `tenant/{tid}/document/...`, which is the bare document
+    // upload path (DocumentStore, comment attachments) and stays on the general 25 MB cap --
+    // there is no member-facing way to put a video there large enough to need this grant, so it
+    // is deliberately not repeated here. This block only covers the two album prefixes.
     //
     // This block only ever WIDENS: Storage rules OR every matching block's condition together,
     // so the 25 MB grant above stays exactly as it is for everything else under this prefix,
@@ -142,10 +148,13 @@ service firebase.storage {
     // also why `read` and `delete` are deliberately absent -- they are already granted above.
     //
     // The mp4 and jpg renderings live under `.../album/renderings/` and are written by the
-    // Admin SDK, which bypasses these rules entirely; they need no grant.
-    match /tenant/{tenantId}/{modelType}/{key}/album/{path=**} {
+    // Admin SDK, which bypasses these rules entirely; they need no grant, and `sub != 'renderings'`
+    // keeps this block from widening their cap too -- a member could otherwise write directly
+    // into `renderings/` under the 200 MB video cap instead of the general 25 MB one.
+    match /tenant/{tenantId}/{modelType}/{key}/album/{sub}/{path=**} {
       allow create, update: if inTenant(tenantId)
         && (modelType == 'section' || modelType == 'folder')
+        && sub != 'renderings'
         && isVideoUpload() && videoSizeOk() && contentTypeOk();
     }
 
