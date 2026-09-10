@@ -909,6 +909,11 @@
     "revoke": {
       "title": "Reprendre des données"
     },
+    "topup": {
+      "title": "Transmettre les données manquantes",
+      "button": "Transmettre les données manquantes",
+      "nothing": "Il n'y a rien à transmettre à ce club — il a déjà tout ce que tu peux partager."
+    },
     "block": {
       "always": "Toujours inclus",
       "alwaysHint": "Le nom, les caractéristiques et les termes de recherche de la personne se trouvent dans une seule fiche et sont donc toujours transmis.",

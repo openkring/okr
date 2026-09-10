@@ -909,6 +909,11 @@
     "revoke": {
       "title": "Retirar datos"
     },
+    "topup": {
+      "title": "Enviar los datos que faltan",
+      "button": "Enviar los datos que faltan",
+      "nothing": "No queda nada por enviar a este club: ya tiene todo lo que puedes compartir."
+    },
     "block": {
       "always": "Siempre incluido",
       "alwaysHint": "El nombre, las características y los términos de búsqueda de la persona están en un único registro, por lo que siempre se transmiten.",

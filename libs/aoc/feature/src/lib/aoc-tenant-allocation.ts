@@ -20,6 +20,11 @@ import { AocTenantAllocationStore } from './aoc-tenant-allocation.store';
  * Drag & drop is the shortcut, not the mechanism: every tile also carries a button, because a
  * drag gesture is reachable by neither keyboard nor screenreader. `add` grants (right column,
  * moves a tile into `current`); `remove` revokes (left column, moves a tile into `available`).
+ *
+ * A tile in the LEFT column carries a second `add` button: the top-up (D-TA-8). The person is
+ * already with that tenant, but data collected since — or deliberately held back the first
+ * time — never reaches it, and no drag gesture can express "grant to a tenant it already has".
+ * That is why the top-up is button-only: a drop within the same column stays a no-op.
  */
 @Component({
   selector: 'okr-aoc-tenant-allocation',
@@ -74,10 +79,18 @@ import { AocTenantAllocationStore } from './aoc-tenant-allocation.store';
                       <div class="tile" cdkDrag [cdkDragData]="tile" [cdkDragDisabled]="!tile.draggable">
                         <span>{{ tile.label }}</span>
                         @if (tile.draggable) {
-                          <ion-button fill="clear" size="small" [attr.aria-label]="store.i18n.allocation_revoke_title() + ': ' + tile.label"
-                                      (click)="store.move(tile, 'revoke')">
-                            <ion-icon src="{{ 'remove' | svgIcon }}" slot="icon-only" />
-                          </ion-button>
+                          <span class="tile-actions">
+                            <ion-button fill="clear" size="small" [attr.aria-label]="store.i18n.allocation_topup_button() + ': ' + tile.label"
+                                        [title]="store.i18n.allocation_topup_button()"
+                                        (click)="store.move(tile, 'grant')">
+                              <ion-icon src="{{ 'add' | svgIcon }}" slot="icon-only" />
+                            </ion-button>
+                            <ion-button fill="clear" size="small" [attr.aria-label]="store.i18n.allocation_revoke_title() + ': ' + tile.label"
+                                        [title]="store.i18n.allocation_revoke_title()"
+                                        (click)="store.move(tile, 'revoke')">
+                              <ion-icon src="{{ 'remove' | svgIcon }}" slot="icon-only" />
+                            </ion-button>
+                          </span>
                         } @else {
                           <ion-note>{{ store.i18n.allocation_own_tenant_hint() }}</ion-note>
                         }
@@ -119,6 +132,7 @@ import { AocTenantAllocationStore } from './aoc-tenant-allocation.store';
     .tile { display: flex; align-items: center; justify-content: space-between; gap: 8px;
             padding: 8px; margin-bottom: 6px; border-radius: 6px; background: var(--ion-color-light); cursor: grab; }
     .tile[aria-disabled='true'] { cursor: default; opacity: .8; }
+    .tile-actions { display: flex; align-items: center; }
   `],
 })
 export class AocTenantAllocation {

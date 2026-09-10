@@ -54,21 +54,23 @@ export interface AllocationConfirmI18n {
     <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" />
     <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     <ion-content class="ion-no-padding">
-      <ion-card>
-        <ion-card-header><ion-card-title>{{ i18n().blockAlways }}</ion-card-title></ion-card-header>
-        <ion-card-content>
-          @if (isRevoke()) {
-            <ion-item lines="none">
-              <ion-checkbox [checked]="includeSubject()" (ionChange)="includeSubject.set($event.detail.checked)">
-                {{ personLabel() }}
-              </ion-checkbox>
-            </ion-item>
-          } @else {
-            <ion-item lines="none"><ion-label>{{ personLabel() }}</ion-label></ion-item>
-          }
-          <ion-item lines="none"><ion-note>{{ i18n().blockAlwaysHint }}</ion-note></ion-item>
-        </ion-card-content>
-      </ion-card>
+      @if (!isTopUp()) {
+        <ion-card>
+          <ion-card-header><ion-card-title>{{ i18n().blockAlways }}</ion-card-title></ion-card-header>
+          <ion-card-content>
+            @if (isRevoke()) {
+              <ion-item lines="none">
+                <ion-checkbox [checked]="includeSubject()" (ionChange)="includeSubject.set($event.detail.checked)">
+                  {{ personLabel() }}
+                </ion-checkbox>
+              </ion-item>
+            } @else {
+              <ion-item lines="none"><ion-label>{{ personLabel() }}</ion-label></ion-item>
+            }
+            <ion-item lines="none"><ion-note>{{ i18n().blockAlwaysHint }}</ion-note></ion-item>
+          </ion-card-content>
+        </ion-card>
+      }
 
       <ion-card>
         <ion-card-header><ion-card-title>{{ i18n().blockContact }}</ion-card-title></ion-card-header>
@@ -157,6 +159,12 @@ export class TenantAllocationConfirmModal {
   public personLabel = input('');
   public hasAvatar = input(false);
   public isRevoke = input(false);
+  /** A grant aimed at a tenant the person ALREADY has — only the gap is listed, and block 1
+   * is dropped: the person document is not travelling, it is already there. */
+  public isTopUp = input(false);
+  /** Addresses the target tenant already carries. Not offered as checkboxes (there is nothing
+   * to transfer), but still valid login candidates on a top-up — see `eligibleEmails`. */
+  public carriedAddressKeys = input<string[]>([]);
   /** The person's email addresses, each flagged with whether an account already uses it.
    * Empty on a revoke — there is nothing to open there. */
   public emailOptions = input<AllocationEmailOption[]>([]);
@@ -176,7 +184,7 @@ export class TenantAllocationConfirmModal {
   /** Recomputed as the admin ticks addresses: an account can only log in with an address the
    * target tenant actually receives, so unticking the last free email withdraws the offer. */
   protected readonly eligibleEmails = computed(() =>
-    this.isRevoke() ? [] : eligibleLoginEmails([...this.selected()], this.emailOptions()));
+    this.isRevoke() ? [] : eligibleLoginEmails([...this.selected(), ...this.carriedAddressKeys()], this.emailOptions()));
 
   protected readonly canCreateAccount = computed(() => this.eligibleEmails().length > 0);
 
@@ -207,8 +215,17 @@ export class TenantAllocationConfirmModal {
 
   public async save(): Promise<void> {
     const createAccount = this.canCreateAccount() && this.createAccount();
+    const addressKeys = [...this.selected()];
+    // The callable resolves `loginEmail` only from an address named in `addressKeys`
+    // (allocate-tenant.ts). On a top-up the chosen login may be an address the target already
+    // carries — name it anyway: the plan builder skips it as a no-op write, and without it the
+    // account request would come back as 'notSelected'.
+    if (createAccount) {
+      const chosen = this.eligibleEmails().find(o => o.email === this.loginEmail());
+      if (chosen && !addressKeys.includes(chosen.okey)) addressKeys.push(chosen.okey);
+    }
     const result: AllocationConfirmResult = {
-      addressKeys: [...this.selected()],
+      addressKeys,
       includeAvatar: this.includeAvatar(),
       includeSubject: this.includeSubject(),
       createAccount,

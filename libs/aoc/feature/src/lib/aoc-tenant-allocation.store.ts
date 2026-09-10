@@ -13,11 +13,11 @@ import {
   AvatarCollection, AvatarModel, LogInfo, logMessage, PersonModel,
 } from '@okr/shared-models';
 import { error } from '@okr/shared-util-angular';
-import { getSystemQuery, isPerson } from '@okr/shared-util-core';
+import { getSystemQuery, isPerson, SYSTEM_TENANT } from '@okr/shared-util-core';
 
 import {
-  AllocationTile, AOC_I18N_KEYS, buildEmailOptions, groupAddressesForConsent, isDropAllowed,
-  splitTenants, TenantConfigMeta,
+  AllocationTile, AOC_I18N_KEYS, buildEmailOptions, eligibleAddresses, groupAddressesForConsent,
+  isDropAllowed, splitTenants, TenantConfigMeta,
 } from '@okr/aoc-util';
 
 import { AllocationConfirmResult, TenantAllocationConfirmModal } from './tenant-allocation-confirm.modal';
@@ -26,6 +26,9 @@ export type AocTenantAllocationState = {
   selectedPerson: PersonModel | undefined;
   addresses: AddressModel[];
   hasAvatar: boolean;
+  /** The `tenants[]` of `avatars/person.<okey>` — decides whether the avatar checkbox has
+   * anything left to do for a given target. */
+  avatarTenants: string[];
   tenantConfigs: Record<string, TenantConfigMeta>;
   log: LogInfo[];
   logTitle: string;
@@ -35,6 +38,7 @@ const initialState: AocTenantAllocationState = {
   selectedPerson: undefined,
   addresses: [],
   hasAvatar: false,
+  avatarTenants: [],
   tenantConfigs: {},
   log: [],
   logTitle: '',
@@ -137,11 +141,13 @@ export const AocTenantAllocationStore = signalStore(
       const avatar = await firstValueFrom(
         store.firestoreService.readModel<AvatarModel>(AvatarCollection, `person.${personKey}`),
       );
-      patchState(store, { hasAvatar: !!avatar });
+      patchState(store, { hasAvatar: !!avatar, avatarTenants: avatar?.tenants ?? [] });
     },
 
     clearPerson(): void {
-      patchState(store, { selectedPerson: undefined, addresses: [], hasAvatar: false, log: [], logTitle: '' });
+      patchState(store, {
+        selectedPerson: undefined, addresses: [], hasAvatar: false, avatarTenants: [], log: [], logTitle: '',
+      });
     },
   })),
   withMethods(store => ({
@@ -178,14 +184,34 @@ export const AocTenantAllocationStore = signalStore(
       const person = store.selectedPerson();
       if (!person || !isDropAllowed(tile, direction)) return;
 
-      // D-TA-3 / spec §2: on a revoke, list only what BOTH tenants carry — the target tenant
-      // must keep what it collected itself. A grant keeps the current behaviour (every active
-      // address of the acting tenant); only a revoke needs the extra filter, because only a
-      // revoke can be pointed at a document the target tenant does not carry.
-      const eligibleAddresses = direction === 'revoke'
-        ? store.addresses().filter(a => a.tenants.includes(tile.tenantId))
-        : store.addresses();
-      const groups = groupAddressesForConsent(eligibleAddresses);
+      // D-TA-3 / D-TA-8, spec §2: the dialog lists only documents the write would actually
+      // touch — on a revoke what BOTH tenants carry (the target keeps what it collected
+      // itself), on a grant what the target does NOT carry yet. On a first grant that second
+      // filter is a no-op; on a top-up it is the whole point.
+      const pending = eligibleAddresses(store.addresses(), tile.tenantId, direction);
+      const groups = groupAddressesForConsent(pending);
+
+      // A grant aimed at a tenant the person already has (D-TA-8). The person document is not
+      // travelling — it is already there — so only the gap is on offer, and when there is no
+      // gap the dialog would be a page of dashes: say so instead of opening it.
+      const isTopUp = direction === 'grant' && person.tenants.includes(tile.tenantId);
+      // The avatar checkbox is offered only when the write would do something. Besides the
+      // target-carries-it test that applies to every document, the bare avatar doc has one
+      // special state: `tenants: ['system']` is the fleet-wide default, already in every
+      // tenant's avatar stream — stamping the target onto it would change nothing, and the
+      // callable rejects it anyway because the actor does not "carry" a system document.
+      const avatarTenants = store.avatarTenants();
+      const avatarPending = store.hasAvatar()
+        && avatarTenants.includes(store.appStore.env.tenantId)
+        && !avatarTenants.includes(SYSTEM_TENANT)
+        && (direction === 'grant'
+          ? !avatarTenants.includes(tile.tenantId)
+          : avatarTenants.includes(tile.tenantId));
+      if (isTopUp && pending.length === 0 && !avatarPending) {
+        const message = `${tile.label}: ${store.i18n.allocation_topup_nothing()}`;
+        patchState(store, { logTitle: message, log: logMessage([...store.log()], message) });
+        return;
+      }
 
       // Which of this person's addresses already carry a Firebase identity. Asked BEFORE the
       // dialog opens, because the answer decides whether the "open an account" checkbox is
@@ -193,13 +219,20 @@ export const AocTenantAllocationStore = signalStore(
       // uid belongs to exactly one tenant, so it can never become a second, target-tenant
       // login. A revoke never opens anything, so it does not ask.
       const takenEmails = direction === 'grant' ? await this.loadTakenEmails(person.okey) : [];
-      const emailOptions = buildEmailOptions(eligibleAddresses, takenEmails);
+      // Built from ALL of the actor's addresses, not just the pending ones: on a top-up an
+      // address the target already carries is still a valid login for a new account there.
+      const emailOptions = buildEmailOptions(direction === 'grant' ? store.addresses() : pending, takenEmails);
+      const carriedAddressKeys = direction === 'grant'
+        ? store.addresses().filter(a => a.tenants.includes(tile.tenantId)).map(a => a.okey)
+        : [];
 
       const modal = await store.modalController.create({
         component: TenantAllocationConfirmModal,
         componentProps: {
           i18n: {
-            title: direction === 'grant' ? store.i18n.allocation_grant_title() : store.i18n.allocation_revoke_title(),
+            title: direction === 'revoke'
+              ? store.i18n.allocation_revoke_title()
+              : isTopUp ? store.i18n.allocation_topup_title() : store.i18n.allocation_grant_title(),
             blockAlways: store.i18n.allocation_block_always(),
             blockAlwaysHint: store.i18n.allocation_block_always_hint(),
             blockContact: store.i18n.allocation_block_contact(),
@@ -216,9 +249,11 @@ export const AocTenantAllocationStore = signalStore(
           },
           groups,
           emailOptions,
+          carriedAddressKeys,
           personLabel: `${person.firstName} ${person.lastName}`,
-          hasAvatar: store.hasAvatar(),
+          hasAvatar: avatarPending,
           isRevoke: direction === 'revoke',
+          isTopUp,
         },
       });
       modal.present();
@@ -274,6 +309,7 @@ export const AocTenantAllocationStore = signalStore(
         // stale `store.addresses()` list would otherwise carry rows into a second dialog in
         // the same session that the server just rejected as no-longer-actor-visible.
         await store.loadAddresses(person.okey);
+        await store.loadAvatar(person.okey);
       } catch (ex) {
         error(store.toastController, `${store.i18n.allocation_error()} ${JSON.stringify(ex)}`);
       }

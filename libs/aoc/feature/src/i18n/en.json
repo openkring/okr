@@ -909,6 +909,11 @@
     "revoke": {
       "title": "Take data back"
     },
+    "topup": {
+      "title": "Share missing data",
+      "button": "Share the missing data",
+      "nothing": "There is nothing left to share with this club — it already has everything you can pass on."
+    },
     "block": {
       "always": "Always included",
       "alwaysHint": "The person's name, attributes and search terms live in a single record, so they always travel along.",

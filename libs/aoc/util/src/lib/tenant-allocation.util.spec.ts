@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { AddressModel } from '@okr/shared-models';
 
 import {
-  buildEmailOptions, eligibleLoginEmails, groupAddressesForConsent, isDropAllowed, resolveLoginEmail,
+  buildEmailOptions, eligibleAddresses, eligibleLoginEmails, groupAddressesForConsent, isDropAllowed, resolveLoginEmail,
   splitTenants, SENSITIVE_ALLOCATION_CHANNELS,
 } from './tenant-allocation.util';
 
@@ -154,5 +154,26 @@ describe('resolveLoginEmail', () => {
 
   it('returns empty when nothing is eligible', () => {
     expect(resolveLoginEmail('a@x.ch', [])).toBe('');
+  });
+});
+
+describe('eligibleAddresses', () => {
+  const carried = address('a1', 'email', { email: 'a@b.ch', tenants: ['scs', 'bka'] });
+  const missing = address('a2', 'phone', { phone: '+41', tenants: ['scs'] });
+
+  it('offers on a grant only what the target does not carry yet (top-up)', () => {
+    expect(eligibleAddresses([carried, missing], 'bka', 'grant').map(a => a.okey)).toEqual(['a2']);
+  });
+
+  it('offers every address on a first grant, because the target carries none', () => {
+    expect(eligibleAddresses([carried, missing], 'kring', 'grant').map(a => a.okey)).toEqual(['a1', 'a2']);
+  });
+
+  it('offers on a revoke only what the target does carry (D-TA-3)', () => {
+    expect(eligibleAddresses([carried, missing], 'bka', 'revoke').map(a => a.okey)).toEqual(['a1']);
+  });
+
+  it('offers nothing when a top-up has no gap left', () => {
+    expect(eligibleAddresses([carried], 'bka', 'grant')).toEqual([]);
   });
 });

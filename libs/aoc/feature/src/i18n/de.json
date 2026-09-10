@@ -909,6 +909,11 @@
     "revoke": {
       "title": "Daten zurücknehmen"
     },
+    "topup": {
+      "title": "Daten nachliefern",
+      "button": "Fehlende Daten nachliefern",
+      "nothing": "Für diesen Verein gibt es nichts nachzuliefern — er hat schon alles, was du teilen kannst."
+    },
     "block": {
       "always": "Immer dabei",
       "alwaysHint": "Name, Merkmale und Suchbegriffe der Person stehen in einem einzigen Eintrag und gehen deshalb immer mit.",

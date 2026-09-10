@@ -909,6 +909,11 @@
     "revoke": {
       "title": "Ritira dati"
     },
+    "topup": {
+      "title": "Trasmettere i dati mancanti",
+      "button": "Trasmettere i dati mancanti",
+      "nothing": "Non c'è nulla da trasmettere a questa società: ha già tutto quello che puoi condividere."
+    },
     "block": {
       "always": "Sempre incluso",
       "alwaysHint": "Il nome, le caratteristiche e i termini di ricerca della persona si trovano in un'unica scheda e vengono quindi sempre trasmessi.",

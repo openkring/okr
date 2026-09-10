@@ -135,6 +135,30 @@ export function groupAddressesForConsent(addresses: readonly AddressModel[]): Al
   return { contact, sensitive };
 }
 
+/**
+ * The addresses a dialog may offer for `targetTenantId`, per direction.
+ *
+ * A GRANT offers what the target does NOT carry yet. On a first allocation that is every
+ * active address of the actor; on a top-up (the target already has the person) it is exactly
+ * the gap — offering a checkbox for something the target already holds would promise a
+ * transfer the server correctly skips as a no-op.
+ *
+ * A REVOKE offers only what the target DOES carry (D-TA-3): tenant A must not appear to be
+ * able to take away what tenant B collected itself.
+ *
+ * The caller passes its own active, actor-visible addresses; this function only applies the
+ * target-side half of the filter.
+ */
+export function eligibleAddresses(
+  addresses: readonly AddressModel[],
+  targetTenantId: string,
+  direction: AllocationDirection,
+): AddressModel[] {
+  return direction === 'grant'
+    ? addresses.filter((a) => !a.tenants.includes(targetTenantId))
+    : addresses.filter((a) => a.tenants.includes(targetTenantId));
+}
+
 /** Whether a tile may be dropped in the given direction. Grants are always fine; only the
  * acting tenant's own tile may never be revoked (D-TA-4). */
 export function isDropAllowed(tile: AllocationTile, direction: AllocationDirection): boolean {
