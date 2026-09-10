@@ -82,7 +82,6 @@ export const SECTION_I18N_KEYS = {
   // Videos im Album (Spec 2026-09-09-album-video)
   album_video_too_large:                    PFX + 'album.video.tooLarge',
   album_video_too_long:                     PFX + 'album.video.tooLong',
-  album_video_hint:                         PFX + 'album.video.hint',
   album_video_pending:                      PFX + 'album.video.pending',
   album_video_error:                        PFX + 'album.video.error',
   album_video_title:                        PFX + 'album.video.title',

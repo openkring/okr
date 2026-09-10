@@ -100,7 +100,6 @@
     "video": {
       "tooLarge": "Este vídeo es demasiado grande ({size}). Puedes subir vídeos de hasta 200 MB.",
       "tooLong": "Este vídeo dura {duration}. Puedes subir vídeos de hasta 2 minutos.",
-      "hint": "Ten en cuenta quién aparece y quién se oye en el vídeo.",
       "pending": "El vídeo se está preparando y podrás reproducirlo en uno o dos minutos.",
       "error": "El vídeo no se puede cargar ahora mismo. Vuelve a intentarlo en un momento.",
       "title": "Vídeo",
