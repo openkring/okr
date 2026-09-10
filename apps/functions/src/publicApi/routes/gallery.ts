@@ -96,6 +96,21 @@ function isImage(mimeType: string, fullPath: string): boolean {
   return /\.(jpe?g|png|webp|avif|gif|tiff?)$/i.test(fullPath);
 }
 
+/** The upload's original file name; the storage path carries a random uniqueness prefix. */
+function fileNameOf(d: DocumentDoc): string {
+  const segment = (d.fullPath ?? '').split('/').pop() ?? '';
+  return d.title || segment.replace(/^[0-9a-z]{8}-/, '');
+}
+
+/**
+ * Tie-break for documents that share an `index` — which is nearly all of them, since nothing
+ * sets it for album uploads. Without it the order is whatever Firestore happens to return.
+ * Natural order, so `IMG_2` comes before `IMG_10`.
+ */
+function compareByFileName(a: DocumentDoc, b: DocumentDoc): number {
+  return fileNameOf(a).localeCompare(fileNameOf(b), undefined, { numeric: true, sensitivity: 'base' });
+}
+
 function toImage(d: DocumentDoc): GalleryImage {
   return {
     path: d.fullPath ?? '',
@@ -190,7 +205,7 @@ export async function galleryRouter(req: Request, res: Response): Promise<void> 
       .filter((d) => (d.tenants ?? []).includes(tenantId))
       .filter((d) => isImage(d.mimeType ?? '', d.fullPath ?? ''))
       .filter((d) => !!d.fullPath)
-      .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+      .sort((a, b) => (a.index ?? 0) - (b.index ?? 0) || compareByFileName(a, b))
       .slice(0, MAX_IMAGES)
       .map(toImage);
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, DocumentModel, DocumentRendering, ImageType } from '@okr/shared-models';
 
-import { buildAlbumUploadPath, getDocumentImageType, isVisibleInAlbum, toImageConfig } from './album.util';
+import { buildAlbumUploadPath, compareByFileName, getAlbumFileName, getDocumentImageType, isVisibleInAlbum, toImageConfig } from './album.util';
 
 function doc(overrides: Partial<DocumentModel> = {}): DocumentModel {
   return { ...new DocumentModel('p13'), okey: 'd1', fullPath: 'tenant/p13/document/img.jpg', mimeType: 'image/jpeg', ...overrides };
@@ -146,5 +146,46 @@ describe('album defaults', () => {
 
   it('keeps streaming videos opt-in', () => {
     expect(ALBUM_CONFIG_SHAPE.showStreamingVideos).toBe(false);
+  });
+});
+
+describe('getAlbumFileName', () => {
+  it('uses the original upload name', () => {
+    expect(getAlbumFileName(doc({ title: 'Sonnenaufgang.jpg' }))).toBe('Sonnenaufgang.jpg');
+  });
+
+  it('falls back to the path, without the random upload prefix', () => {
+    expect(getAlbumFileName(doc({ title: '', fullPath: 'tenant/p13/section/s1/album/a1b2c3d4-img_0042.jpg' })))
+      .toBe('img_0042.jpg');
+  });
+
+  it('keeps a path segment that only looks like a prefix', () => {
+    expect(getAlbumFileName(doc({ title: '', fullPath: 'tenant/p13/album/sommer-2024.jpg' })))
+      .toBe('sommer-2024.jpg');
+  });
+});
+
+describe('compareByFileName', () => {
+  function names(docs: DocumentModel[]): string[] {
+    return [...docs].sort(compareByFileName).map((d) => d.title);
+  }
+
+  it('sorts numerically, not lexically', () => {
+    const docs = [doc({ title: 'IMG_10.jpg' }), doc({ title: 'IMG_2.jpg' }), doc({ title: 'IMG_1.jpg' })];
+    expect(names(docs)).toEqual(['IMG_1.jpg', 'IMG_2.jpg', 'IMG_10.jpg']);
+  });
+
+  it('ignores case', () => {
+    const docs = [doc({ title: 'banane.jpg' }), doc({ title: 'Apfel.jpg' }), doc({ title: 'Citrone.jpg' })];
+    expect(names(docs)).toEqual(['Apfel.jpg', 'banane.jpg', 'Citrone.jpg']);
+  });
+
+  it('sorts documents without a title by their path name', () => {
+    const docs = [
+      doc({ title: '', fullPath: 'a/zzzzzzzz-beta.jpg' }),
+      doc({ title: '', fullPath: 'a/aaaaaaaa-alpha.jpg' })
+    ];
+    expect([...docs].sort(compareByFileName).map((d) => d.fullPath))
+      .toEqual(['a/aaaaaaaa-alpha.jpg', 'a/zzzzzzzz-beta.jpg']);
   });
 });

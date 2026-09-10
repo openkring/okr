@@ -34,6 +34,28 @@ export function buildAlbumUploadPath(basePath: string, originalFileName: string)
   return `${basePath}/${generateRandomString(UPLOAD_PATH_RANDOM_LENGTH)}-${sanitizeFileName(originalFileName)}`;
 }
 
+/** Matches the random uniqueness prefix `buildAlbumUploadPath` puts in front of the file name. */
+const UPLOAD_PATH_PREFIX = new RegExp(`^[0-9a-z]{${UPLOAD_PATH_RANDOM_LENGTH}}-`);
+
+/**
+ * The file name an album sorts and labels by: the original upload name (`title`), falling back to
+ * the storage path's last segment with the random upload prefix stripped — documents written
+ * before `title` was set carry the name only in their path.
+ */
+export function getAlbumFileName(doc: DocumentModel): string {
+  const segment = doc.fullPath.split('/').pop() ?? doc.fullPath;
+  return doc.title || segment.replace(UPLOAD_PATH_PREFIX, '');
+}
+
+/**
+ * Order album documents by file name, naturally: `IMG_2` before `IMG_10`, case-insensitive.
+ * Firestore cannot do this — it orders by `fullPath`, whose random prefix scatters the files of a
+ * folder into an arbitrary order — so the album sorts client-side.
+ */
+export function compareByFileName(a: DocumentModel, b: DocumentModel): number {
+  return getAlbumFileName(a).localeCompare(getAlbumFileName(b), undefined, { numeric: true, sensitivity: 'base' });
+}
+
 /**
  * Map a DocumentModel to the ImageConfig the album renders.
  * fullPath is the storage path — the imgix pipes/overlays expect exactly that.

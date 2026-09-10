@@ -17,7 +17,7 @@ import { DocumentService } from '@okr/content-document-data-access';
 import { FolderService } from '@okr/content-folder-data-access';
 import { newFolderModel } from '@okr/content-folder-util';
 
-import { buildAlbumUploadPath, isVisibleInAlbum, SECTION_I18N_KEYS, toImageConfig } from '@okr/cms-section-util';
+import { buildAlbumUploadPath, compareByFileName, isVisibleInAlbum, SECTION_I18N_KEYS, toImageConfig } from '@okr/cms-section-util';
 
 export interface AlbumState {
   config: AlbumConfig;
@@ -87,7 +87,10 @@ export const AlbumStore = signalStore(
   })),
 
   withComputed((state) => ({
-    documents: computed(() => state.documentsResource.value() ?? []),
+    // Sorted by file name once, here: everything downstream (the file list, the zip and CSV
+    // exports, the folder tiles' fallback cover) inherits that order. The Firestore query can
+    // only order by `fullPath`, whose random upload prefix is effectively a shuffle.
+    documents: computed(() => [...(state.documentsResource.value() ?? [])].sort(compareByFileName)),
     currentFolder: computed(() => state.currentFolderResource.value()),
     isLoading: computed(() => state.documentsResource.isLoading() || state.foldersResource.isLoading()),
     error: computed(() => state.documentsResource.error() ?? state.foldersResource.error()),
