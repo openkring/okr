@@ -6,7 +6,7 @@ import { captureMessage } from '@sentry/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ImageLightboxModal, LightboxImage, Spinner } from '@okr/shared-ui';
-import { debugMessage, hasRole } from '@okr/shared-util-core';
+import { debugMessage, fileSizeUnit, fill, hasRole } from '@okr/shared-util-core';
 import { AlertService, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, downloadFile, isBrowser, isNativePlatform, saveFile } from '@okr/shared-util-angular';
 import { MatrixMessage, PersonModelName, RoleName } from '@okr/shared-models';
 
@@ -14,11 +14,16 @@ import { MenuService } from '@okr/cms-menu-data-access';
 
 import { MatrixMessageInput, MatrixMessageList, MatrixRoomList, PollDetailModal } from '@okr/chat-ui';
 import { MatrixPollData } from '@okr/chat-data-access';
-import { convertHeicToJpeg, groupRoomAliasLocalpart, isSupportedImageFile, filterRoomsByName, resolveInitialRoomId, MessageDraft } from '@okr/chat-util';
+import { convertHeicToJpeg, groupRoomAliasLocalpart, isSupportedImageFile, isUploadTooLargeError, filterRoomsByName, resolveInitialRoomId, MessageDraft, UploadTooLargeError } from '@okr/chat-util';
 
 import { MatrixChatStore } from './matrix-chat.store';
 import { PollCreateModal } from './poll-create.modal';
 import { ChatHelpModal } from './chat-help.modal';
+
+/** The reasons of the rejected settlements, in order — the failures of a Promise.allSettled batch. */
+function rejectionReasons(results: PromiseSettledResult<unknown>[]): unknown[] {
+  return results.filter(r => r.status === 'rejected').map(r => (r as PromiseRejectedResult).reason);
+}
 
 @Component({
   selector: 'okr-matrix-chat-overview',
@@ -918,6 +923,7 @@ export class MatrixChat implements OnDestroy {
     try {
       await this.store.sendFile(file);
     } catch (error) {
+      if (await this.showUploadLimitToast([error])) return;
       console.error('Failed to send file:', error);
       this.reportSilentFailure('onFileSent', error);
     }
@@ -1048,9 +1054,9 @@ export class MatrixChat implements OnDestroy {
   protected async onFilesSent(files: File[]): Promise<void> {
     this.pendingImages.set([]);
     const results = await Promise.allSettled(files.map(f => this.store.sendFile(f)));
-    const failures = results.filter(r => r.status === 'rejected').length;
-    if (failures > 0) {
-      await this.alertService.showToast(`${failures} ${this.store.i18n.images_send_error()}`);
+    const errors = rejectionReasons(results);
+    if (errors.length > 0 && !(await this.showUploadLimitToast(errors))) {
+      await this.alertService.showToast(`${errors.length} ${this.store.i18n.images_send_error()}`);
     }
   }
 
@@ -1060,6 +1066,7 @@ export class MatrixChat implements OnDestroy {
     try {
       await this.store.sendFile(file, threadId);
     } catch (error) {
+      if (await this.showUploadLimitToast([error])) return;
       console.error('Failed to send thread image:', error);
       this.reportSilentFailure('onThreadFileQueued', error);
     }
@@ -1192,9 +1199,9 @@ export class MatrixChat implements OnDestroy {
 
     if (otherFiles.length > 0) {
       const results = await Promise.allSettled(otherFiles.map(f => this.store.sendFile(f)));
-      const failures = results.filter(r => r.status === 'rejected').length;
-      if (failures > 0) {
-        await this.alertService.showToast(`${failures} ${this.store.i18n.files_send_error()}`);
+      const errors = rejectionReasons(results);
+      if (errors.length > 0 && !(await this.showUploadLimitToast(errors))) {
+        await this.alertService.showToast(`${errors.length} ${this.store.i18n.files_send_error()}`);
       }
     }
   }
@@ -1220,9 +1227,9 @@ export class MatrixChat implements OnDestroy {
     const files = Array.from(event.dataTransfer?.files ?? []);
     if (!files.length) return;
     const results = await Promise.allSettled(files.map(f => this.store.sendFile(f, threadId)));
-    const failures = results.filter(r => r.status === 'rejected').length;
-    if (failures > 0) {
-      await this.alertService.showToast(`${failures} ${this.store.i18n.files_send_error()}`);
+    const errors = rejectionReasons(results);
+    if (errors.length > 0 && !(await this.showUploadLimitToast(errors))) {
+      await this.alertService.showToast(`${errors.length} ${this.store.i18n.files_send_error()}`);
     }
   }
 
@@ -1416,6 +1423,26 @@ export class MatrixChat implements OnDestroy {
    * Necessary because no app installs captureConsoleIntegration: a bare console.error
    * here reaches nobody once the tab closes.
    */
+  /**
+   * Show the "file too large" toast when that — and only that — is why a send failed.
+   *
+   * Returns true when it took responsibility for the failure, so the caller skips its own
+   * generic toast AND the Sentry report: an oversized file is a user error with an
+   * actionable message, not a silent failure worth a ticket. A batch that ALSO failed for
+   * other reasons returns false and falls back to the counted toast, so real breakage is
+   * never hidden behind a size warning.
+   */
+  private async showUploadLimitToast(errors: unknown[]): Promise<boolean> {
+    if (errors.length === 0 || !errors.every(e => isUploadTooLargeError(e))) return false;
+    const first = errors[0] as UploadTooLargeError;
+    await this.alertService.showToast(fill(this.store.i18n.file_too_large(), {
+      name: first.fileName,
+      size: fileSizeUnit(first.size, 0),
+      limit: fileSizeUnit(first.limit, 0),
+    }));
+    return true;
+  }
+
   private reportSilentFailure(context: string, ex: unknown): void {
     captureMessage(`MatrixChat.${context} failed silently`, {
       level: 'warning',

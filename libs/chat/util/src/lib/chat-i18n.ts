@@ -183,6 +183,7 @@ export const MATRIX_CHAT_I18N_KEYS = {
   file_download_error:       PFX + 'file.downloadError',
   files_send_error:          PFX + 'file.sendError',
   images_send_error:         PFX + 'file.sendImagesError',
+  file_too_large:            PFX + 'file.tooLarge',
   video_call_error:          PFX + 'videoCallError',
 
   as_title:                  '@actionsheet.title',

@@ -240,7 +240,8 @@
     "shareError": "File could not be shared",
     "downloadError": "File could not be downloaded",
     "sendError": "File(s) could not be sent",
-    "sendImagesError": "Image(s) could not be sent"
+    "sendImagesError": "Image(s) could not be sent",
+    "tooLarge": "The file {name} is too large ({size}). The maximum is {limit}."
   },
   "videoCallError": "Video call failed",
   "send": "Send",

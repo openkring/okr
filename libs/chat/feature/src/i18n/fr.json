@@ -240,7 +240,8 @@
     "shareError": "Le fichier n'a pas pu être partagé",
     "downloadError": "Le fichier n'a pas pu être téléchargé",
     "sendError": "Le(s) fichier(s) n'ont pas pu être envoyés",
-    "sendImagesError": "La(les) image(s) n'ont pas pu être envoyées"
+    "sendImagesError": "La(les) image(s) n'ont pas pu être envoyées",
+    "tooLarge": "Le fichier {name} est trop volumineux ({size}). La taille maximale est de {limit}."
   },
   "videoCallError": "Échec de l'appel vidéo",
   "send": "Envoyer",

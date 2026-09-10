@@ -240,7 +240,8 @@
     "shareError": "Non è stato possibile condividere il file",
     "downloadError": "Non è stato possibile scaricare il file",
     "sendError": "Non è stato possibile inviare il/i file",
-    "sendImagesError": "Non è stato possibile inviare l'immagine/le immagini"
+    "sendImagesError": "Non è stato possibile inviare l'immagine/le immagini",
+    "tooLarge": "Il file {name} è troppo grande ({size}). Il massimo è {limit}."
   },
   "videoCallError": "Videochiamata non riuscita",
   "send": "Invia",

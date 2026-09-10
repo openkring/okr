@@ -9,7 +9,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
 
 import { mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -80,6 +80,8 @@ export class MatrixChatService {
   private readonly media = inject(MatrixMediaService);
   /** Epoch ms of the last media-401-driven re-auth — see the constructor's cooldown. */
   private lastMediaAuthRecovery = 0;
+  /** Cached homeserver `m.upload.size`; 0 = asked and got no usable answer. */
+  private maxUploadSize: number | undefined = undefined;
   private readonly calls = inject(MatrixCallService);
   private readonly dm = inject(MatrixDirectRoomService);
   private readonly roomList = inject(MatrixRoomListService);
@@ -758,6 +760,8 @@ export class MatrixChatService {
 
     file = await convertHeicToJpeg(file);
 
+    await this.assertWithinUploadLimit(file);
+
     // Never branch on `file.type` directly: it is empty for anything picked through the
     // iOS Files app / iCloud Drive, shared into the PWA, or dragged from some Windows
     // sources, which used to ship a perfectly good PNG as `m.file` with `mimetype: ''`
@@ -824,6 +828,39 @@ export class MatrixChatService {
     }
 
     return this.client.sendEvent(roomId, EventType.RoomMessage, content as any);
+  }
+
+  /**
+   * Refuse an upload the homeserver would reject anyway, before a single byte goes out.
+   *
+   * Synapse answers 413 M_TOO_LARGE, but only after the whole body has been sent — on a
+   * phone that is minutes of waiting for a failure that was knowable up front. The limit
+   * is per-homeserver configuration (`max_upload_size`), so it is read from the server
+   * rather than hard-coded, and cached for the session.
+   *
+   * A homeserver that will not tell us its limit is not a reason to block the upload:
+   * we let it through and Synapse decides.
+   */
+  private async assertWithinUploadLimit(file: File): Promise<void> {
+    const limit = await this.getMaxUploadSize();
+    if (limit && file.size > limit) {
+      throw new UploadTooLargeError(file.name, file.size, limit);
+    }
+  }
+
+  /** The homeserver's `m.upload.size`, cached per session; undefined if unavailable. */
+  private async getMaxUploadSize(): Promise<number | undefined> {
+    if (this.maxUploadSize !== undefined) return this.maxUploadSize || undefined;
+    if (!this.client) return undefined;
+    try {
+      const config = await this.client.getMediaConfig();
+      // 0 marks "asked, got no usable answer" so we don't re-request on every attachment.
+      this.maxUploadSize = Number(config?.['m.upload.size']) || 0;
+    } catch (err) {
+      console.warn('MatrixChatService: could not read the media config, skipping the size check:', err);
+      this.maxUploadSize = 0;
+    }
+    return this.maxUploadSize || undefined;
   }
 
   /**
