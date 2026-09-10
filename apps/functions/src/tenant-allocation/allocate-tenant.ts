@@ -11,6 +11,8 @@ import {
 } from '@okr/shared-util-functions';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
+import { openAccount } from '../auth/account-sync';
+
 import { AllocationDoc, buildAllocationPlan } from './allocation-plan';
 
 const REGION = 'europe-west6';
@@ -30,12 +32,26 @@ export interface AllocateTenantRequest {
   readonly addressKeys: string[];
   readonly includeAvatar: boolean;
   readonly includeSubject: boolean;
+  /** Open a user account for the person in the TARGET tenant. Grants only. */
+  readonly createAccount?: boolean;
+  /** The address the account logs in with. Must be one of `addressKeys`. */
+  readonly loginEmail?: string;
+}
+
+/** What became of the "open an account too" request, if there was one. */
+export interface AllocateTenantAccount {
+  readonly created: boolean;
+  readonly loginEmail?: string;
+  /** Why nothing was created. `exists` covers both an Auth identity that is already a user
+   * somewhere and a users/{uid} document that is already there. */
+  readonly reason?: 'notRequested' | 'notAGrant' | 'notSelected' | 'exists' | 'noEmail' | 'noPerson' | 'failed';
 }
 
 export interface AllocateTenantResponse {
   readonly changed: { persons: number; addresses: number; avatars: number };
   readonly rejected: { okey: string; reason: string }[];
   readonly logKey: string;
+  readonly account: AllocateTenantAccount;
 }
 
 /** A document id: a non-empty string with no path separator — a `/` would resolve to a
@@ -127,6 +143,48 @@ export const allocateTenant = onCall(
     selectedAddressKeys: rawAddressKeys,
   });
 
+  // ── the optional user account for the TARGET tenant (spec 1.47) ──────────────────────
+  // The client names an address, it never supplies one. So the login email is resolved from
+  // the documents re-read above, and only from an address that is actually travelling: an
+  // account whose loginEmail points at an address the target tenant never received would be
+  // a login that tenant cannot see, support or correct.
+  const requestedEmail = (data.loginEmail ?? '').trim().toLowerCase();
+  const selectedKeys = new Set(rawAddressKeys);
+  const loginAddress = addressSnap.docs.find((d) => {
+    const a = d.data();
+    return selectedKeys.has(d.id)
+      && a['addressChannel'] === 'email'
+      && a['isArchived'] !== true
+      && ((a['tenants'] as string[] | undefined) ?? []).includes(actorTenantId)
+      && ((a['email'] as string | undefined) ?? '').trim().toLowerCase() === requestedEmail;
+  });
+
+  /**
+   * Runs AFTER the allocation, never as part of it: the transfer is the primary act and must
+   * not be rolled back or reported as failed because an account could not be opened. Every
+   * outcome is reported instead of thrown, so the admin sees what happened to both halves.
+   *
+   * Idempotent by way of `openAccount`, which returns early on an existing users/{uid} — that
+   * is also why it runs on the nothing-to-change path: re-running a completed allocation to
+   * add the account the admin forgot the first time is a legitimate use.
+   */
+  const openTargetAccount = async (): Promise<AllocateTenantAccount> => {
+    if (data.createAccount !== true) return { created: false, reason: 'notRequested' };
+    if (data.direction !== 'grant') return { created: false, reason: 'notAGrant' };
+    if (!requestedEmail || !loginAddress) return { created: false, reason: 'notSelected' };
+    try {
+      const email = ((loginAddress.data()['email'] as string | undefined) ?? '').trim();
+      const result = await openAccount(data.okey, data.targetTenantId, email);
+      return result.outcome === 'created'
+        ? { created: true, loginEmail: result.loginEmail }
+        : { created: false, reason: result.outcome };
+    } catch (ex) {
+      // No email in the log — PII (privacy inventory §7.2).
+      logger.error(`allocateTenant: opening the account in ${data.targetTenantId} failed`, ex);
+      return { created: false, reason: 'failed' };
+    }
+  };
+
   if (plan.writes.length + 1 > MAX_BATCH_WRITES) {
     throw new HttpsError('invalid-argument', 'Zu viele Adressen für eine einzelne Zuteilung.');
   }
@@ -140,6 +198,7 @@ export const allocateTenant = onCall(
       changed: plan.counts,
       rejected: plan.rejections.map((r) => ({ okey: r.okey, reason: r.reason })),
       logKey: '',
+      account: await openTargetAccount(),
     };
   }
 
@@ -184,6 +243,13 @@ export const allocateTenant = onCall(
 
   // No personKey in Cloud Logging, matching the erasure callables — direction, both tenant
   // ids and counts are enough to operate on.
-  logger.info(`allocateTenant: ${data.direction} ${actorTenantId} -> ${data.targetTenantId}`, plan.counts);
-  return { changed: plan.counts, rejected: plan.rejections.map((r) => ({ okey: r.okey, reason: r.reason })), logKey: logRef.id };
+  const account = await openTargetAccount();
+
+  logger.info(`allocateTenant: ${data.direction} ${actorTenantId} -> ${data.targetTenantId}`, { ...plan.counts, account: account.created });
+  return {
+    changed: plan.counts,
+    rejected: plan.rejections.map((r) => ({ okey: r.okey, reason: r.reason })),
+    logKey: logRef.id,
+    account,
+  };
 });

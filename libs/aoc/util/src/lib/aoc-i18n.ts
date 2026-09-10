@@ -689,6 +689,12 @@ export const AOC_I18N_KEYS = {
   allocation_conf:                        PFX + 'allocation.conf',
   allocation_error:                       PFX + 'allocation.error',
   allocation_own_tenant_hint:             PFX + 'allocation.ownTenantHint',
+  allocation_account_title:               PFX + 'allocation.account.title',
+  allocation_account_checkbox:            PFX + 'allocation.account.checkbox',
+  allocation_account_hint:                PFX + 'allocation.account.hint',
+  allocation_account_email_choice:        PFX + 'allocation.account.emailChoice',
+  allocation_account_created:             PFX + 'allocation.account.created',
+  allocation_account_failed:              PFX + 'allocation.account.failed',
 } satisfies Record<string, string>;
 
 // ─── Tenant App-Switcher ─────────────────────────────────────────────────────

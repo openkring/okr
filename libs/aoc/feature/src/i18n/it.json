@@ -925,7 +925,15 @@
     "result": "Risultato",
     "conf": "L'assegnazione è stata salvata.",
     "error": "L'assegnazione non è riuscita.",
-    "ownTenantHint": "Qui non puoi eliminare il tuo tenant."
+    "ownTenantHint": "Qui non puoi eliminare il tuo tenant.",
+    "account": {
+      "title": "Accesso",
+      "checkbox": "Apri un accesso per questa persona",
+      "hint": "Così la persona può accedere all'altro club. Imposta la propria password tramite «Password dimenticata».",
+      "emailChoice": "Con quale indirizzo deve accedere?",
+      "created": "L'accesso è aperto.",
+      "failed": "Non è stato possibile aprire l'accesso."
+    }
   },
   "hygiene": {
     "events": {

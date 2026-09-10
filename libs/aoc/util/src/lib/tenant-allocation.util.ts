@@ -40,6 +40,24 @@ export interface AllocationAddressGroups {
   readonly sensitive: AllocationAddressItem[];
 }
 
+/**
+ * One candidate for the new account's `loginEmail` — an email address of the person, plus
+ * whether Firebase Auth already knows it.
+ *
+ * `hasAccount` is the whole reason this type exists. A Firebase identity belongs to exactly
+ * one tenant (`UserModel.tenants` — "user has always exactly one tenant"), and
+ * `createUser` returns the SAME uid for an email that already exists. So an address whose
+ * email already carries an account can never become a second, target-tenant login: the
+ * request would silently resolve to the other tenant's user document. Such an address is
+ * therefore not offered at all rather than offered and rejected.
+ */
+export interface AllocationEmailOption {
+  readonly okey: string;
+  readonly email: string;
+  readonly isFavorite: boolean;
+  readonly hasAccount: boolean;
+}
+
 function toTile(tenantId: string, currentTenantId: string, configs: Map<string, TenantConfigMeta>): AllocationTile {
   const cfg = configs.get(tenantId);
   const isCurrent = tenantId === currentTenantId;
@@ -121,4 +139,55 @@ export function groupAddressesForConsent(addresses: readonly AddressModel[]): Al
  * acting tenant's own tile may never be revoked (D-TA-4). */
 export function isDropAllowed(tile: AllocationTile, direction: AllocationDirection): boolean {
   return direction === 'grant' || tile.draggable;
+}
+
+/**
+ * The person's email addresses as account candidates, favourites first.
+ *
+ * `takenEmails` comes from `getAllocationEmails` (Firebase Auth is the only authority on
+ * which emails already have an account — a `users/{uid}` document may be missing while the
+ * Auth account exists, and it is the Auth side that decides whether `createUser` collides).
+ * Compared case-insensitively, because Firebase Auth treats addresses that way and an admin
+ * who typed `Eva@…` in one tenant would otherwise get a duplicate offered here.
+ */
+export function buildEmailOptions(
+  addresses: readonly AddressModel[],
+  takenEmails: readonly string[],
+): AllocationEmailOption[] {
+  const taken = new Set(takenEmails.map(e => e.trim().toLowerCase()).filter(Boolean));
+  return addresses
+    .filter(a => !a.isArchived && a.addressChannel === 'email' && !!a.email?.trim())
+    .map(a => ({
+      okey: a.okey,
+      email: a.email.trim(),
+      isFavorite: a.isFavorite,
+      hasAccount: taken.has(a.email.trim().toLowerCase()),
+    }))
+    .sort((a, b) => (a.isFavorite !== b.isFavorite ? (a.isFavorite ? -1 : 1) : a.email.localeCompare(b.email)));
+}
+
+/**
+ * The email addresses that could become the login of a new account: the ones the admin has
+ * ticked for transfer AND that no account uses yet.
+ *
+ * Ticked, not merely present: the target tenant must actually receive the address it is
+ * supposed to log in with. An account whose `loginEmail` names an address the target tenant
+ * never got would be a login the tenant cannot see, support, or correct.
+ */
+export function eligibleLoginEmails(
+  selectedAddressKeys: readonly string[],
+  options: readonly AllocationEmailOption[],
+): AllocationEmailOption[] {
+  const selected = new Set(selectedAddressKeys);
+  return options.filter(o => selected.has(o.okey) && !o.hasAccount);
+}
+
+/**
+ * Keep the admin's pick while it stays eligible, otherwise fall back to the first candidate
+ * (favourite first, by the ordering of `buildEmailOptions`). Unticking the chosen address
+ * must not leave a stale `loginEmail` pointing at an address that is no longer travelling.
+ */
+export function resolveLoginEmail(chosen: string, eligible: readonly AllocationEmailOption[]): string {
+  if (eligible.length === 0) return '';
+  return eligible.some(o => o.email === chosen) ? chosen : eligible[0].email;
 }

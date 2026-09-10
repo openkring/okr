@@ -1,15 +1,19 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonContent, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular/standalone';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCheckbox, IonContent, IonItem, IonLabel, IonNote, IonRadio, IonRadioGroup, ModalController } from '@ionic/angular/standalone';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { AllocationAddressGroups, AllocationAddressItem } from '@okr/aoc-util';
+import { AllocationAddressGroups, AllocationAddressItem, AllocationEmailOption, eligibleLoginEmails, resolveLoginEmail } from '@okr/aoc-util';
 
 /** What the admin picked. Consumed by `AocTenantAllocationStore.allocate()`. */
 export interface AllocationConfirmResult {
   readonly addressKeys: string[];
   readonly includeAvatar: boolean;
   readonly includeSubject: boolean;
+  /** Open a user account for the person in the target tenant. */
+  readonly createAccount: boolean;
+  /** The address that account logs in with — empty unless `createAccount`. */
+  readonly loginEmail: string;
 }
 
 export interface AllocationConfirmI18n {
@@ -23,6 +27,10 @@ export interface AllocationConfirmI18n {
   readonly legalNote: string;
   readonly ok: string;
   readonly cancel: string;
+  readonly accountTitle: string;
+  readonly accountCheckbox: string;
+  readonly accountHint: string;
+  readonly accountEmailChoice: string;
 }
 
 /**
@@ -39,7 +47,8 @@ export interface AllocationConfirmI18n {
   standalone: true,
   imports: [
     Header, ChangeConfirmation,
-    IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel, IonCheckbox, IonNote
+    IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonItem, IonLabel, IonCheckbox, IonNote,
+    IonRadioGroup, IonRadio,
   ],
   template: `
     <okr-header [i18n]="{ title: i18n().title }" [isModal]="true" />
@@ -104,6 +113,31 @@ export interface AllocationConfirmI18n {
         </ion-card>
       }
 
+      @if (canCreateAccount()) {
+        <ion-card>
+          <ion-card-header><ion-card-title>{{ i18n().accountTitle }}</ion-card-title></ion-card-header>
+          <ion-card-content>
+            <ion-item lines="none">
+              <ion-checkbox [checked]="createAccount()" (ionChange)="createAccount.set($event.detail.checked)">
+                {{ i18n().accountCheckbox }}
+              </ion-checkbox>
+            </ion-item>
+            <ion-item lines="none"><ion-note>{{ i18n().accountHint }}</ion-note></ion-item>
+
+            @if (createAccount() && eligibleEmails().length > 1) {
+              <ion-item lines="none"><ion-label>{{ i18n().accountEmailChoice }}</ion-label></ion-item>
+              <ion-radio-group [value]="loginEmail()" (ionChange)="chosenEmail.set($event.detail.value)">
+                @for (option of eligibleEmails(); track option.okey) {
+                  <ion-item lines="none">
+                    <ion-radio [value]="option.email">{{ emailLabel(option) }}</ion-radio>
+                  </ion-item>
+                }
+              </ion-radio-group>
+            }
+          </ion-card-content>
+        </ion-card>
+      }
+
       <ion-card>
         <ion-card-content><ion-note>{{ i18n().legalNote }}</ion-note></ion-card-content>
       </ion-card>
@@ -123,6 +157,9 @@ export class TenantAllocationConfirmModal {
   public personLabel = input('');
   public hasAvatar = input(false);
   public isRevoke = input(false);
+  /** The person's email addresses, each flagged with whether an account already uses it.
+   * Empty on a revoke — there is nothing to open there. */
+  public emailOptions = input<AllocationEmailOption[]>([]);
 
   // state — a revoke preselects everything, a grant preselects nothing
   protected selected = linkedSignal<Set<string>>(() => {
@@ -132,6 +169,19 @@ export class TenantAllocationConfirmModal {
   });
   protected includeAvatar = linkedSignal(() => this.isRevoke() && this.hasAvatar());
   protected includeSubject = linkedSignal(() => true);
+  /** Off by default: opening a login for another tenant is a deliberate act, like sharing. */
+  protected createAccount = linkedSignal(() => false);
+  protected chosenEmail = linkedSignal(() => '');
+
+  /** Recomputed as the admin ticks addresses: an account can only log in with an address the
+   * target tenant actually receives, so unticking the last free email withdraws the offer. */
+  protected readonly eligibleEmails = computed(() =>
+    this.isRevoke() ? [] : eligibleLoginEmails([...this.selected()], this.emailOptions()));
+
+  protected readonly canCreateAccount = computed(() => this.eligibleEmails().length > 0);
+
+  /** The pick, corrected whenever it stopped being eligible. */
+  protected readonly loginEmail = computed(() => resolveLoginEmail(this.chosenEmail(), this.eligibleEmails()));
 
   protected readonly changeConfirmationI18n = computed(() =>
     ({ cancel: this.i18n().cancel, save: this.i18n().ok }) as ChangeConfirmationI18n);
@@ -146,16 +196,23 @@ export class TenantAllocationConfirmModal {
     this.selected.set(next);
   }
 
+  protected emailLabel(option: AllocationEmailOption): string {
+    return option.isFavorite ? `${option.email} · ${this.i18n().favoriteMarker}` : option.email;
+  }
+
   protected label(item: AllocationAddressItem): string {
     const fav = item.isFavorite ? ` · ${this.i18n().favoriteMarker}` : '';
     return `${item.channel}: ${item.value}${fav}`;
   }
 
   public async save(): Promise<void> {
+    const createAccount = this.canCreateAccount() && this.createAccount();
     const result: AllocationConfirmResult = {
       addressKeys: [...this.selected()],
       includeAvatar: this.includeAvatar(),
       includeSubject: this.includeSubject(),
+      createAccount,
+      loginEmail: createAccount ? this.loginEmail() : '',
     };
     await dismissOverlay(this.modalController, result, 'confirm');
   }

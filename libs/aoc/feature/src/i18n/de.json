@@ -925,7 +925,15 @@
     "result": "Ergebnis",
     "conf": "Die Zuteilung ist gespeichert.",
     "error": "Die Zuteilung hat nicht geklappt.",
-    "ownTenantHint": "Deinen eigenen Mandanten kannst du hier nicht entfernen."
+    "ownTenantHint": "Deinen eigenen Mandanten kannst du hier nicht entfernen.",
+    "account": {
+      "title": "Zugang",
+      "checkbox": "Zugang für diese Person eröffnen",
+      "hint": "Die Person kann sich damit beim anderen Verein anmelden. Ihr Passwort setzt sie selbst über «Passwort vergessen».",
+      "emailChoice": "Mit welcher Adresse soll sie sich anmelden?",
+      "created": "Der Zugang ist eröffnet.",
+      "failed": "Der Zugang konnte nicht eröffnet werden."
+    }
   },
   "hygiene": {
     "events": {

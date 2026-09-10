@@ -925,7 +925,15 @@
     "result": "Resultado",
     "conf": "La asignación se ha guardado.",
     "error": "La asignación no ha funcionado.",
-    "ownTenantHint": "Aquí no puedes eliminar tu propio inquilino."
+    "ownTenantHint": "Aquí no puedes eliminar tu propio inquilino.",
+    "account": {
+      "title": "Acceso",
+      "checkbox": "Abrir un acceso para esta persona",
+      "hint": "Así la persona puede iniciar sesión en el otro club. Ella misma establece su contraseña con «He olvidado mi contraseña».",
+      "emailChoice": "¿Con qué dirección debe iniciar sesión?",
+      "created": "El acceso está abierto.",
+      "failed": "No se ha podido abrir el acceso."
+    }
   },
   "hygiene": {
     "events": {

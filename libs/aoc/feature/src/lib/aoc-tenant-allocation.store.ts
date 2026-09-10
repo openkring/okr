@@ -10,13 +10,13 @@ import { AppStore, PersonSelectModal, PersonSelectResult } from '@okr/shared-fea
 import { I18nService } from '@okr/shared-i18n';
 import {
   AddressCollection, AddressModel, AllocationDirection, AppConfigCollection,
-  AvatarCollection, AvatarModel, LogInfo, logMessage, PersonCollection, PersonModel,
+  AvatarCollection, AvatarModel, LogInfo, logMessage, PersonModel,
 } from '@okr/shared-models';
 import { error } from '@okr/shared-util-angular';
 import { getSystemQuery, isPerson } from '@okr/shared-util-core';
 
 import {
-  AllocationTile, AOC_I18N_KEYS, groupAddressesForConsent, isDropAllowed,
+  AllocationTile, AOC_I18N_KEYS, buildEmailOptions, groupAddressesForConsent, isDropAllowed,
   splitTenants, TenantConfigMeta,
 } from '@okr/aoc-util';
 
@@ -45,6 +45,7 @@ interface AllocateTenantResponse {
   changed: { persons: number; addresses: number; avatars: number };
   rejected: { okey: string; reason: string }[];
   logKey: string;
+  account: { created: boolean; loginEmail?: string; reason?: string };
 }
 
 export const AocTenantAllocationStore = signalStore(
@@ -145,6 +146,31 @@ export const AocTenantAllocationStore = signalStore(
   })),
   withMethods(store => ({
     /**
+     * The person's email addresses that Firebase Auth already knows, from
+     * `getAllocationEmails`.
+     *
+     * Fails CLOSED: when the lookup itself fails, every address is reported as taken, so the
+     * account offer disappears rather than being made on an answer we do not have. The
+     * allocation itself is unaffected — the admin can re-run it once the lookup works, and
+     * `openAccount` is idempotent.
+     */
+    async loadTakenEmails(personKey: string): Promise<string[]> {
+      const allEmails = store.addresses()
+        .filter(a => a.addressChannel === 'email' && !!a.email?.trim())
+        .map(a => a.email.trim());
+      try {
+        const functions = getFunctions(getApp(), 'europe-west6');
+        const lookup = httpsCallable(functions, 'getAllocationEmails');
+        const result = await lookup({ okey: personKey });
+        return (result.data as { taken: string[] }).taken ?? [];
+      } catch (ex) {
+        const message = 'Es liess sich nicht feststellen, welche Adressen schon einen Zugang haben.';
+        patchState(store, { logTitle: message, log: logMessage([...store.log()], `${message} ${JSON.stringify(ex)}`) });
+        return allEmails;
+      }
+    },
+
+    /**
      * A drop or an arrow click. Opens the consent dialog and, on confirmation, calls
      * `allocateTenant`. The client never writes persons/addresses/avatars itself.
      */
@@ -161,6 +187,14 @@ export const AocTenantAllocationStore = signalStore(
         : store.addresses();
       const groups = groupAddressesForConsent(eligibleAddresses);
 
+      // Which of this person's addresses already carry a Firebase identity. Asked BEFORE the
+      // dialog opens, because the answer decides whether the "open an account" checkbox is
+      // offered at all: an email that already has an account resolves to the SAME uid, and a
+      // uid belongs to exactly one tenant, so it can never become a second, target-tenant
+      // login. A revoke never opens anything, so it does not ask.
+      const takenEmails = direction === 'grant' ? await this.loadTakenEmails(person.okey) : [];
+      const emailOptions = buildEmailOptions(eligibleAddresses, takenEmails);
+
       const modal = await store.modalController.create({
         component: TenantAllocationConfirmModal,
         componentProps: {
@@ -175,8 +209,13 @@ export const AocTenantAllocationStore = signalStore(
             legalNote: store.i18n.allocation_legal_note(),
             ok: store.i18n.allocation_confirm_ok(),
             cancel: store.i18n.allocation_confirm_cancel(),
+            accountTitle: store.i18n.allocation_account_title(),
+            accountCheckbox: store.i18n.allocation_account_checkbox(),
+            accountHint: store.i18n.allocation_account_hint(),
+            accountEmailChoice: store.i18n.allocation_account_email_choice(),
           },
           groups,
+          emailOptions,
           personLabel: `${person.firstName} ${person.lastName}`,
           hasAvatar: store.hasAvatar(),
           isRevoke: direction === 'revoke',
@@ -197,6 +236,8 @@ export const AocTenantAllocationStore = signalStore(
           addressKeys: data.addressKeys,
           includeAvatar: data.includeAvatar,
           includeSubject: data.includeSubject,
+          createAccount: data.createAccount,
+          loginEmail: data.loginEmail,
         });
         const payload = result.data as AllocateTenantResponse;
 
@@ -205,13 +246,29 @@ export const AocTenantAllocationStore = signalStore(
         for (const r of payload.rejected) {
           entries = logMessage(entries, `${r.okey}: ${r.reason}`);
         }
+        // Only reported when an account was actually asked for: `notRequested` is the normal
+        // case and saying so on every allocation would be noise, not information.
+        if (data.createAccount) {
+          entries = payload.account?.created
+            ? logMessage(entries, `${store.i18n.allocation_account_created()} ${payload.account.loginEmail ?? ''}`.trim())
+            : logMessage(entries, `${store.i18n.allocation_account_failed()} (${payload.account?.reason ?? 'unknown'})`);
+        }
         patchState(store, { logTitle: store.i18n.allocation_result(), log: entries });
 
-        // the callable changed persons/{okey}.tenants — re-read the single document directly
-        // (never `appStore.allPersons()`, which is tenant-scoped and the wrong source to confirm
-        // a `tenants[]` change) so the two columns redraw.
-        const fresh = await firstValueFrom(store.firestoreService.readModel<PersonModel>(PersonCollection, person.okey));
-        if (fresh) patchState(store, { selectedPerson: fresh });
+        // The two columns redraw from `selectedPerson.tenants`, so that field must reflect what
+        // the callable just wrote. Re-reading the document here is a race that cannot be won:
+        // `readModel` is latency-compensated AND shares a ReplaySubject(1), so `firstValueFrom`
+        // hands back the LOCAL snapshot — the one from before the callable's write — and the
+        // grant appears to have done nothing until the page is reloaded. `changed.persons` is
+        // the server's own confirmation that `persons/{okey}.tenants` was among the writes
+        // (it counts exactly the one arrayUnion/arrayRemove the plan emitted), so derive the
+        // new list from it instead of asking Firestore a question it answers from cache.
+        if (payload.changed.persons > 0) {
+          const tenants = direction === 'grant'
+            ? [...new Set([...person.tenants, tile.tenantId])]
+            : person.tenants.filter(t => t !== tile.tenantId);
+          patchState(store, { selectedPerson: { ...person, tenants } });
+        }
 
         // A revoke can drop address documents (D-TA-3) as well as the tenants[] entry — the
         // stale `store.addresses()` list would otherwise carry rows into a second dialog in

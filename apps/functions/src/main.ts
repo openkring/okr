@@ -340,7 +340,7 @@ export { rebuildAddressDirectory } from './address/rebuild-address-directory';
 export { getAddressView } from './address/get-address-view';
 
 // tenant allocation (spec 1.47): move a person between tenants, with an audit entry
-export { allocateTenant } from './tenant-allocation';
+export { allocateTenant, getAllocationEmails } from './tenant-allocation';
 
 // exchange rates
 export { fetchSnbRatesScheduled } from './exchange-rate/fetch-snb-rates';

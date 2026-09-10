@@ -925,7 +925,15 @@
     "result": "Result",
     "conf": "The allocation has been saved.",
     "error": "The allocation did not work.",
-    "ownTenantHint": "You cannot remove your own tenant here."
+    "ownTenantHint": "You cannot remove your own tenant here.",
+    "account": {
+      "title": "Access",
+      "checkbox": "Open access for this person",
+      "hint": "This lets the person sign in to the other club. They set their own password via “Forgot password”.",
+      "emailChoice": "Which address should they sign in with?",
+      "created": "The access has been opened.",
+      "failed": "The access could not be opened."
+    }
   },
   "hygiene": {
     "events": {

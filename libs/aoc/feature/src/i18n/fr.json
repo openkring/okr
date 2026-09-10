@@ -925,7 +925,15 @@
     "result": "Résultat",
     "conf": "L’attribution a été enregistrée.",
     "error": "L’attribution n’a pas fonctionné.",
-    "ownTenantHint": "Tu ne peux pas supprimer ton propre locataire ici."
+    "ownTenantHint": "Tu ne peux pas supprimer ton propre locataire ici.",
+    "account": {
+      "title": "Accès",
+      "checkbox": "Ouvrir un accès pour cette personne",
+      "hint": "La personne peut ainsi se connecter à l'autre club. Elle définit son mot de passe elle-même via « Mot de passe oublié ».",
+      "emailChoice": "Avec quelle adresse doit-elle se connecter ?",
+      "created": "L'accès est ouvert.",
+      "failed": "L'accès n'a pas pu être ouvert."
+    }
   },
   "hygiene": {
     "events": {

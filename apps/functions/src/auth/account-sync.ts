@@ -93,27 +93,46 @@ function randomPassword(): string {
   return randomBytes(32).toString('base64url');
 }
 
+/** What `openAccount` did, for a caller that has to report it back to a user. */
+export type OpenAccountOutcome = 'created' | 'exists' | 'noEmail' | 'noPerson';
+
+export interface OpenAccountResult {
+  readonly outcome: OpenAccountOutcome;
+  readonly uid?: string;
+  readonly loginEmail?: string;
+}
+
 /**
  * Open a user account for a person. Idempotent: returns early when a users/{uid}
  * document already exists.
+ *
+ * `loginEmail` overrides the address-directory favourite. The membership trigger has no
+ * choice to offer and passes nothing; the tenant allocation (spec 1.47) passes the address
+ * the admin picked, because there the projection belongs to the ACTING tenant while the
+ * account is being opened for the TARGET one — the favourite of the wrong tenant, or of no
+ * tenant at all when the target has not projected this person yet.
  */
-export async function openAccount(personKey: string, tenantId: string): Promise<void> {
+export async function openAccount(personKey: string, tenantId: string, loginEmail?: string): Promise<OpenAccountResult> {
   const db = getFirestore();
 
-  // 1. favourite e-mail from the address-directory projection (getAddressDirectoryKey)
-  const dirSnap = await db.collection('address-directory').doc(`${tenantId}_person.${personKey}`).get();
-  const favEmail = (dirSnap.data()?.['favEmail'] as string | undefined) ?? '';
+  // 1. the caller's pick, else the favourite e-mail from the address-directory projection
+  //    (getAddressDirectoryKey)
+  let favEmail = loginEmail?.trim() ?? '';
+  if (!favEmail) {
+    const dirSnap = await db.collection('address-directory').doc(`${tenantId}_person.${personKey}`).get();
+    favEmail = (dirSnap.data()?.['favEmail'] as string | undefined) ?? '';
+  }
   if (!favEmail) {
     logger.warn(`${CF_NAME}: no favEmail for person ${personKey} — account not opened`);
     await logActivity(tenantId, 'create', { personKey, skipped: 'no email' });
-    return;
+    return { outcome: 'noEmail' };
   }
 
   const personSnap = await db.collection('persons').doc(personKey).get();
   if (!personSnap.exists) {
     logger.warn(`${CF_NAME}: person ${personKey} not found — account not opened`);
     await logActivity(tenantId, 'create', { personKey, skipped: 'person not found' });
-    return;
+    return { outcome: 'noPerson' };
   }
   const firstName = (personSnap.data()?.['firstName'] as string | undefined) ?? '';
   const lastName = (personSnap.data()?.['lastName'] as string | undefined) ?? '';
@@ -135,7 +154,7 @@ export async function openAccount(personKey: string, tenantId: string): Promise<
   const userRef = db.collection('users').doc(uid);
   if ((await userRef.get()).exists) {
     logger.info(`${CF_NAME}: users/${uid} already exists for person ${personKey} — nothing to do`);
-    return;
+    return { outcome: 'exists', uid, loginEmail: favEmail };
   }
 
   // 4. the user document. Built from `new UserModel(tenantId)` rather than a hand-written
@@ -155,6 +174,7 @@ export async function openAccount(personKey: string, tenantId: string): Promise<
 
   logger.info(`${CF_NAME}: opened account users/${uid} for person ${personKey} (${tenantId})`);
   await logActivity(tenantId, 'create', { personKey, uid, loginEmail: favEmail });
+  return { outcome: 'created', uid, loginEmail: favEmail };
 }
 
 /**

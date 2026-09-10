@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { AddressModel } from '@okr/shared-models';
 
-import { groupAddressesForConsent, isDropAllowed, splitTenants, SENSITIVE_ALLOCATION_CHANNELS } from './tenant-allocation.util';
+import {
+  buildEmailOptions, eligibleLoginEmails, groupAddressesForConsent, isDropAllowed, resolveLoginEmail,
+  splitTenants, SENSITIVE_ALLOCATION_CHANNELS,
+} from './tenant-allocation.util';
 
 const cfg = new Map([
   ['scs', { appName: 'Seeclub Stäfa' }],
@@ -83,5 +86,73 @@ describe('isDropAllowed', () => {
 
   it('allows granting', () => {
     expect(isDropAllowed(other, 'grant')).toBe(true);
+  });
+});
+
+describe('buildEmailOptions', () => {
+  const mail = (okey: string, email: string, over: Partial<AddressModel> = {}) =>
+    address(okey, 'email', { email, ...over });
+
+  it('keeps only live email addresses', () => {
+    const options = buildEmailOptions([
+      mail('a', 'a@x.ch'),
+      address('p', 'phone', { phone: '079' }),
+      mail('b', 'b@x.ch', { isArchived: true }),
+      mail('c', '   '),
+    ], []);
+    expect(options.map(o => o.okey)).toEqual(['a']);
+  });
+
+  it('sorts the favorite first, then alphabetically', () => {
+    const options = buildEmailOptions([
+      mail('a', 'zeta@x.ch'),
+      mail('b', 'alpha@x.ch'),
+      mail('c', 'fav@x.ch', { isFavorite: true }),
+    ], []);
+    expect(options.map(o => o.email)).toEqual(['fav@x.ch', 'alpha@x.ch', 'zeta@x.ch']);
+  });
+
+  it('marks an email that already has an account, ignoring case and padding', () => {
+    const options = buildEmailOptions([mail('a', 'Eva@x.ch'), mail('b', 'b@x.ch')], ['  eva@X.CH ']);
+    expect(options.find(o => o.okey === 'a')?.hasAccount).toBe(true);
+    expect(options.find(o => o.okey === 'b')?.hasAccount).toBe(false);
+  });
+});
+
+describe('eligibleLoginEmails', () => {
+  const options = buildEmailOptions(
+    [address('a', 'email', { email: 'a@x.ch' }), address('b', 'email', { email: 'b@x.ch' })],
+    ['a@x.ch'],
+  );
+
+  it('offers only addresses that travel AND have no account yet', () => {
+    expect(eligibleLoginEmails(['a', 'b'], options).map(o => o.email)).toEqual(['b@x.ch']);
+  });
+
+  it('offers nothing when no email address is selected', () => {
+    expect(eligibleLoginEmails([], options)).toEqual([]);
+  });
+
+  it('offers nothing when every selected email already has an account', () => {
+    expect(eligibleLoginEmails(['a'], options)).toEqual([]);
+  });
+});
+
+describe('resolveLoginEmail', () => {
+  const options = buildEmailOptions(
+    [address('a', 'email', { email: 'a@x.ch' }), address('b', 'email', { email: 'b@x.ch' })],
+    [],
+  );
+
+  it('keeps a pick that is still eligible', () => {
+    expect(resolveLoginEmail('b@x.ch', options)).toBe('b@x.ch');
+  });
+
+  it('falls back to the first candidate when the pick dropped out', () => {
+    expect(resolveLoginEmail('gone@x.ch', options)).toBe('a@x.ch');
+  });
+
+  it('returns empty when nothing is eligible', () => {
+    expect(resolveLoginEmail('a@x.ch', [])).toBe('');
   });
 });
