@@ -11,15 +11,16 @@ import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ListFilter } from '@okr/shared-ui';
 import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
+import { fill } from '@okr/shared-util-core';
 import type { CategoryListModel, FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
 import {
   FEATURE_BLOCKS, FEATURE_BUNDLES, FEATURE_PICKER_I18N_KEYS, FEATURE_PROFILES, effectiveFeatures,
-  findStructuralDrift, indexMenuDocsByName, isEmptyPlan, menuOutlineOf, pinnedFieldsOf,
-  planConsequence, resolveAvailability, resolveWithDeps,
+  findStructuralDrift, holdersOf, indexMenuDocsByName, isEmptyPlan, menuOutlineOf, pinnedFieldsOf,
+  resolveAvailability, resolveWithDeps, summarizePlanConsequences,
 } from '@okr/tenant-util';
 import type {
   ApplyFeatureResponse, ApplyPlanPreview, AvailabilityVerdict, FeatureBlock, FeatureProfile,
-  MenuSpec, StructuralField,
+  MenuSpec, PlanEntry, StructuralField,
 } from '@okr/tenant-util';
 import { FeatureRolloutService, FeatureSelectionService } from '@okr/tenant-data-access';
 import { MenuService } from '@okr/cms-menu-data-access';
@@ -48,6 +49,13 @@ type PickerSegment = 'blocks' | 'rows';
  * here can do that any more. Switching a block off does not remove its menu rows either — it
  * only hides them (`disableBlock`'s own doc comment); the confirmation before that write says
  * so explicitly.
+ *
+ * A block row shows ONE of five states (`blockState`): `core` (never switchable), `withheld`
+ * (rollout does not offer it), `required` (another RUNNING block depends on it — see
+ * `holdersOf`, no «Ausschalten»), `on` and `off`. `required` exists because enablement is
+ * stored flat but read dependency-closed: without it, `subject` under a running `calevent`
+ * offered an «Ausschalten» that removed the stored entry, changed nothing visible, and left
+ * no way back in.
  *
  * `enabledFeatures === undefined` still means "every non-internal block is on" (D-BB-10) —
  * that reading is unconditional and does not depend on this screen, so it needs no seeding
@@ -149,6 +157,17 @@ type PickerSegment = 'blocks' | 'rows';
                         <ion-button slot="end" fill="clear" (click)="onDisable(block)">
                           {{ i18n.disable_button() }}
                         </ion-button>
+                      }
+                      @case ('required') {
+                        @if (!isStored(block)) {
+                          <ion-button slot="end" fill="outline" (click)="onEnable(block)">
+                            {{ i18n.enable_button() }}
+                          </ion-button>
+                        } @else if (missingRowCount(block) > 0) {
+                          <ion-button slot="end" fill="outline" (click)="onEnable(block)">
+                            {{ i18n.complete_menu_button() }}
+                          </ion-button>
+                        }
                       }
                     }
                   </ion-item>
@@ -347,6 +366,22 @@ export class FeaturePicker {
     tenantId: this.tenantId(),
   }));
 
+  /**
+   * What `enabledFeatures` actually STORES — the set `enableBlock`/`disableBlock` write, before
+   * the dependency closure `liveBlocks` applies on top. The two must be read apart: a block can
+   * be absent here and still run, because a stored block depends on it. Reading only
+   * `liveBlocks` is what used to show «Ausschalten» on a block whose stored entry was already
+   * gone, where the click then committed nothing (see `holdersOf`).
+   *
+   * `undefined` means "every non-internal block" (D-BB-10), exactly as `effectiveEnabled`
+   * reads it server-side — a legacy config with no field is not an empty selection.
+   */
+  private readonly storedBlocks = computed(() => {
+    const stored = this.appStore.appConfig()?.enabledFeatures;
+    return new Set(stored
+      ?? this.catalogue.filter(block => block.defaultAvailability !== 'internal').map(block => block.id));
+  });
+
   protected readonly availability = computed<Map<string, AvailabilityVerdict>>(() => {
     const rolloutById = new Map(this.rollouts().map(rollout => [rollout.okey, rollout]));
     return new Map(this.catalogue.map(block =>
@@ -472,12 +507,31 @@ export class FeaturePicker {
     return this.missingRowCounts().get(block.id) ?? 0;
   }
 
-  /** core / withheld / on / off — see the class doc comment for what each means. */
-  protected blockState(block: FeatureBlock): 'on' | 'off' | 'withheld' | 'core' {
+  /** The running blocks that depend on this one — empty for a block free to switch off. */
+  protected holders(block: FeatureBlock): string[] {
+    return holdersOf(this.catalogue, block.id, this.liveBlocks());
+  }
+
+  /** Is the block written into `enabledFeatures` in its own right, rather than only pulled
+   *  in by a dependent? Decides which button a `'required'` row offers. */
+  protected isStored(block: FeatureBlock): boolean {
+    return this.storedBlocks().has(block.id);
+  }
+
+  /**
+   * core / withheld / required / on / off — see the class doc comment for what each means.
+   *
+   * `'required'` is checked BEFORE the stored/live question and outranks both: as long as a
+   * running block depends on this one, switching it off cannot take effect, so the row must
+   * not offer «Ausschalten» at all. It says who holds it instead (`noteOf`), which is the one
+   * piece of information that turns the dead end into a next step.
+   */
+  protected blockState(block: FeatureBlock): 'on' | 'off' | 'withheld' | 'core' | 'required' {
     if (block.core === true) return 'core';
     const verdict = this.availability().get(block.id);
     if (verdict && !verdict.offered) return 'withheld';
-    return this.liveBlocks().has(block.id) ? 'on' : 'off';
+    if (this.liveBlocks().has(block.id) && this.holders(block).length > 0) return 'required';
+    return this.storedBlocks().has(block.id) && this.liveBlocks().has(block.id) ? 'on' : 'off';
   }
 
   /** Bundle, block id, and — where relevant — the reason a block has no button at all. */
@@ -492,6 +546,11 @@ export class FeaturePicker {
         parts.push(verdict && verdict.reason.length > 0 ? verdict.reason : this.i18n.unavailable_reason_fallback());
         break;
       }
+      case 'required':
+        parts.push(fill(this.i18n.required_note(), {
+          blocks: this.holders(block).map(id => this.blockLabels[id]?.() || id).join(', '),
+        }));
+        break;
       default: {
         const remark = this.blockRemarks[block.id]?.();
         if (remark) parts.push(remark);
@@ -672,7 +731,9 @@ export class FeaturePicker {
       await this.alertService.showToast(this.i18n.rows_nothing_planned());
       return;
     }
-    const message = preview.entries.map(entry => planConsequence(entry, this.i18n)).join(' ');
+    // One counted line per distinct sentence, never one sentence per row: a group add plans an
+    // entry per row of the subtree, all of them usually carrying the SAME consequence.
+    const message = summarizePlanConsequences(preview.entries, this.i18n);
     if (!await this.alertService.confirm(message, true)) return;
 
     try {
@@ -710,13 +771,13 @@ export class FeaturePicker {
     call: (field: StructuralField, options: { dryRun?: boolean }) => Promise<ApplyFeatureResponse>,
     toastMessage: string,
   ): Promise<void> {
-    const consequences: string[] = [];
+    const planned: PlanEntry[] = [];
     const okFields: StructuralField[] = [];
     for (const field of fields) {
       try {
         const { preview } = await call(field, { dryRun: true });
         if (isEmptyPlan(preview)) continue;
-        consequences.push(...preview.entries.map(entry => planConsequence(entry, this.i18n)));
+        planned.push(...preview.entries);
         okFields.push(field);
       } catch (error) {
         this.alertService.error(`FeaturePicker.rowAction(dryRun ${row.name}.${field}): ${error}`);
@@ -726,7 +787,7 @@ export class FeaturePicker {
       await this.alertService.showToast(this.i18n.rows_nothing_planned());
       return;
     }
-    if (!await this.alertService.confirm(consequences.join(' '), true)) return;
+    if (!await this.alertService.confirm(summarizePlanConsequences(planned, this.i18n), true)) return;
 
     for (const field of okFields) {
       try {

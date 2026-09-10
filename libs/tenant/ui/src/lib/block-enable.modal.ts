@@ -2,7 +2,7 @@ import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
 import type { CheckboxCustomEvent } from '@ionic/angular/standalone';
 import {
-  IonCheckbox, IonContent, IonItem, IonItemDivider, IonItemGroup, IonLabel, IonList, IonNote,
+  IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCheckbox, IonContent, IonNote,
   ModalController,
 } from '@ionic/angular/standalone';
 
@@ -12,7 +12,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
 import type {
   ApplyPlanPreview, FeatureBlock, FeaturePickerI18n, MenuOutlineRow, PlanEntry, PlanEntryKind,
 } from '@okr/tenant-util';
-import { entriesOfKind, menuOutlineOf, planConsequence } from '@okr/tenant-util';
+import { entriesOfKind, menuOutlineOf, planConsequence, summarizePlanConsequences } from '@okr/tenant-util';
 
 import { applyRowToggle, forcedDependencyKeys, menuKeysFor } from './block-enable-selection.util';
 
@@ -69,55 +69,67 @@ const MENU_ROW_KINDS: PlanEntryKind[] = ['menu-created', 'menu-extended', 'menu-
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AsyncPipe, TranslatePipe,
-    IonCheckbox, IonContent, IonItem, IonItemDivider, IonItemGroup, IonLabel, IonList, IonNote,
+    IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCheckbox, IonContent, IonNote,
     ChangeConfirmation, Header,
   ],
+  styles: [`
+    .row { padding-block: 0.6rem; border-block-end: 1px solid var(--ion-color-step-150, #e5e5e5); }
+    .row:last-of-type { border-block-end: none; }
+    .row ion-note { display: block; margin-block-start: 0.25rem; font-size: 0.8rem; line-height: 1.35; }
+    ion-card-subtitle { text-transform: none; }
+  `],
   template: `
     <okr-header [i18n]="{ title: (block().label | translate | async) ?? '' }" [isModal]="true" />
     <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="confirm()" />
     <ion-content>
-      <ion-note class="ion-text-wrap">{{ i18n().enable_dialog_intro() }}</ion-note>
-      @if (block().remarks; as remarks) {
-        <ion-note class="ion-text-wrap">{{ remarks | translate | async }}</ion-note>
-      }
-      <ion-list>
-        @if (outline().length === 0) {
-          <ion-item lines="none">
-            <ion-label class="ion-text-wrap">{{ i18n().details_no_menu() }}</ion-label>
-          </ion-item>
-        } @else {
-          @for (row of outline(); track row.key) {
-            <ion-item>
-              <ion-checkbox
-                [style.padding-inline-start.rem]="row.depth * 2"
-                [checked]="isChecked(row)"
-                [disabled]="isAlreadyPresent(row)"
-                (ionChange)="onRowToggle(row, $event)">
-                <ion-label class="ion-text-wrap">{{ (row.labelKey | translate | async) || row.name }}</ion-label>
-              </ion-checkbox>
-              <ion-note slot="end" class="ion-text-wrap">{{ noteFor(row) }}</ion-note>
-            </ion-item>
+      <ion-card>
+        <ion-card-content>
+          <p>{{ i18n().enable_dialog_intro() }}</p>
+          @if (block().remarks; as remarks) {
+            <p>{{ remarks | translate | async }}</p>
           }
-        }
-        @for (also of alsoBlockOutlines(); track also.block.id) {
-          <ion-item-group>
-            <ion-item-divider>
-              <ion-label class="ion-text-wrap">{{ reasonFor(also.block) }}</ion-label>
-            </ion-item-divider>
-            @for (row of also.rows; track row.key) {
-              <ion-item>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card>
+        <ion-card-content>
+          @if (outline().length === 0) {
+            <p>{{ i18n().details_no_menu() }}</p>
+          } @else {
+            @for (row of outline(); track row.key) {
+              <div class="row" [style.padding-inline-start.rem]="row.depth * 1.5">
                 <ion-checkbox
-                  [style.padding-inline-start.rem]="row.depth * 2"
-                  [checked]="true"
-                  [disabled]="true">
-                  <ion-label class="ion-text-wrap">{{ (row.labelKey | translate | async) || row.name }}</ion-label>
+                  labelPlacement="end"
+                  justify="start"
+                  [checked]="isChecked(row)"
+                  [disabled]="isAlreadyPresent(row)"
+                  (ionChange)="onRowToggle(row, $event)">
+                  <div class="ion-text-wrap">{{ (row.labelKey | translate | async) || row.name }}</div>
                 </ion-checkbox>
-                <ion-note slot="end" class="ion-text-wrap">{{ noteFor(row) }}</ion-note>
-              </ion-item>
+                <ion-note class="ion-text-wrap">{{ noteFor(row) }}</ion-note>
+              </div>
             }
-          </ion-item-group>
-        }
-      </ion-list>
+          }
+        </ion-card-content>
+      </ion-card>
+
+      @for (also of alsoBlockOutlines(); track also.block.id) {
+        <ion-card>
+          <ion-card-header>
+            <ion-card-subtitle class="ion-text-wrap">{{ reasonFor(also.block) }}</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            @for (row of also.rows; track row.key) {
+              <div class="row" [style.padding-inline-start.rem]="row.depth * 1.5">
+                <ion-checkbox labelPlacement="end" justify="start" [checked]="true" [disabled]="true">
+                  <div class="ion-text-wrap">{{ (row.labelKey | translate | async) || row.name }}</div>
+                </ion-checkbox>
+                <ion-note class="ion-text-wrap">{{ noteFor(row) }}</ion-note>
+              </div>
+            }
+          </ion-card-content>
+        </ion-card>
+      }
     </ion-content>
   `,
 })
@@ -180,12 +192,20 @@ export class BlockEnableModal {
     return this.isAlreadyPresent(row) || this.selected().has(row.key);
   }
 
-  /** `roleNeeded`, plus the dry run's own sentence for what happens to this menu row. */
+  /**
+   * The second line under a row's label: which role will see the row, plus the dry run's own
+   * sentence(s) for what enabling does to it. The role is spelled out («Rolle: privileged»)
+   * rather than dropped in bare — on its own, a role name next to a consequence sentence reads
+   * as an unexplained fragment. Duplicate consequence sentences are collapsed: several
+   * `PlanEntry`s of different kinds can carry the SAME `consequenceKey`, and repeating one
+   * sentence twice in a row is how this note started reading like noise.
+   */
   protected noteFor(row: MenuOutlineRow): string {
-    if (this.isAlreadyPresent(row)) return `${row.roleNeeded} · ${this.i18n().enable_already_present()}`;
-    const consequence = this.menuEntriesByKey().get(row.key)
-      ?.map(entry => planConsequence(entry, this.i18n())).join(' ');
-    return consequence ? `${row.roleNeeded} · ${consequence}` : row.roleNeeded;
+    const role = `${this.i18n().rows_col_role()}: ${row.roleNeeded}`;
+    if (this.isAlreadyPresent(row)) return `${role} · ${this.i18n().enable_already_present()}`;
+    const consequence = summarizePlanConsequences(
+      this.menuEntriesByKey().get(row.key) ?? [], this.i18n(), { withSubjects: false });
+    return consequence ? `${role} · ${consequence}` : role;
   }
 
   protected reasonFor(block: FeatureBlock): string {

@@ -9,6 +9,7 @@ export * from './lib/feature-profiles';
 export * from './lib/feature-rollout.util';
 export * from './lib/feature-routes.util';
 export * from './lib/menu-outline.util';
+export * from './lib/plan-summary.util';
 export * from './lib/menu-ownership.util';
 export * from './lib/menu-seed.util';
 export * from './lib/root-menu.util';
