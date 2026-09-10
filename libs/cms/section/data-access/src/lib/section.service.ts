@@ -5,7 +5,7 @@ import { ENV } from "@okr/shared-config";
 import { FirestoreService } from "@okr/shared-data-access";
 import { I18nService } from "@okr/shared-i18n";
 import { DbQuery, SectionCollection, SectionModel, UserModel } from "@okr/shared-models";
-import { addSystemQueries, findByKey, getSystemQuery } from "@okr/shared-util-core";
+import { addSystemQueries, findByKey, forkKeyFor, getSystemQuery, isOwnedBy } from "@okr/shared-util-core";
 
 import { getSectionIndex } from "@okr/cms-section-util";
 import { PFX } from "./scope";
@@ -39,20 +39,40 @@ export class SectionService {
 
   /**
    * Return an Observable of a section by key.
+   *
+   * A section id is a GLOBAL document id listed by a page, and the shell pages are shared
+   * across tenants (`'system'`), so the same id arrives for every tenant while a tenant that
+   * customised the section owns its own copy named `<key>_<tenantId>` (written by
+   * {@link update}'s fork). Prefer that copy, fall back to the shared original — the same
+   * own-beats-shared ladder `PageService.read` applies to pages.
+   *
    * @param key the key of the model document
    */
   public read(key: string): Observable<SectionModel | undefined> {
-    return findByKey<SectionModel>(this.list(), key);
+    if (!key || key.length === 0) return findByKey<SectionModel>(this.list(), key);
+    const tenantKey = forkKeyFor(key, this.env.tenantId);
+    return this.list().pipe(map(sections =>
+      sections.find(s => s.okey === tenantKey) ?? sections.find(s => s.okey === key)));
   }
 
   /**
    * Update an existing SectionModel with new values.
+   *
+   * COPY-ON-WRITE, for the same reason (and by the same rule) as `PageService.update`: the
+   * sections of a shared shell page are shared documents, and a `'system'` one cannot be
+   * written by a tenant at all. A tenant editing one forks it to `<okey>_<tenantId>`, which is
+   * exactly the id {@link read} prefers, so its own text is what it sees from then on while
+   * every other tenant keeps the original.
+   *
    * @param section the SectionModel with the new values
-   * @param toastController 
    */
   public async update(section: SectionModel, currentUser?: UserModel): Promise<string | undefined> {
     section.index = getSectionIndex(section);
-    return await this.firestoreService.updateModel<SectionModel>(SectionCollection, section, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+    if (isOwnedBy(section, this.env.tenantId)) {
+      return await this.firestoreService.updateModel<SectionModel>(SectionCollection, section, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+    }
+    return await this.firestoreService.forkModel<SectionModel>(
+      SectionCollection, section, {}, this.i18n.update_error(), forkKeyFor(section.okey, this.env.tenantId));
   }
 
   /**

@@ -150,6 +150,25 @@ export function isOwnedBy(model: { tenants?: string[] }, tenantId: string): bool
 }
 
 /**
+ * The id a tenant's copy-on-write fork of the shared document `okey` takes: `<okey>_<tenantId>`.
+ *
+ * Categories and tags are resolved by IDENTITY (`name`, `tagModel`) and their forks can be
+ * randomly named — {@link pickForTenant} finds them. A CMS page and a section cannot: a page is
+ * addressed by the id a menu url embeds (`/public/impressum/c-contentpage`) and a section by
+ * the id its page lists, so the fork has to be findable FROM that id alone. This convention is
+ * what makes it findable, and it predates the fork path — `PageService.read` has preferred
+ * `<key>_<tenantId>` since menu documents started being shared (`welcome_p13`, `album_p13`),
+ * which is why the fork adopts it rather than inventing a second rule.
+ *
+ * Keep read and write on this ONE definition: a fork written under a key `read()` does not look
+ * for is invisible from the moment it is written, and nothing reports it — the tenant simply
+ * keeps seeing the shared original and its own edit appears to have been lost.
+ */
+export function forkKeyFor(okey: string, tenantId: string): string {
+  return `${okey}_${tenantId}`;
+}
+
+/**
  * The one document a tenant should actually use out of several that carry the same identity
  * (same category `name`, same `tagModel`, …), preferring its own copy over a shared one.
  *

@@ -856,14 +856,25 @@ export class FirestoreService {
    *
    * When the current tenant edits a document whose `tenants[]` also lists other tenants, the
    * shared document must NOT be mutated. Instead, atomically:
-   *   a) create a NEW document (random id) with the edits and `tenants: [currentTenant]`, and
+   *   a) create a NEW document with the edits and `tenants: [currentTenant]`, and
    *   b) remove the current tenant from the source document's `tenants[]`.
    * Both halves in one batch — a partial apply would leave the tenant in two definitions or in
    * none, and nothing in the app would report it (see the `tag-model` skill).
    *
+   * THE FORK'S ID. A random id is right where the fork is found by IDENTITY — `categories` by
+   * `name`, `tags` by `tagModel`, both resolved through `pickForTenant`. It is WRONG wherever
+   * the document is found by its id: a CMS page is addressed by the id embedded in a menu url
+   * (`/public/impressum/c-contentpage`) and a section by the id its page lists, so a randomly
+   * named fork would never be read again — the tenant would keep seeing the shared original and
+   * its edit would look silently lost. Those callers pass `newKey` and use the
+   * `<sourceOkey>_<tenantId>` convention `PageService.read` / `SectionService.read` already
+   * prefer over the shared original.
+   *
    * @param collectionName the collection holding the shared document
    * @param source the shared document as read (okey set)
    * @param changes the current tenant's edits, merged onto the source
+   * @param errorMessage toast shown when the batch fails
+   * @param newKey the fork's document id; defaults to a random one
    * @return the key of the new tenant-specific document, or undefined on failure
    */
   public async forkModel<T extends OkrModel>(
@@ -871,6 +882,7 @@ export class FirestoreService {
     source: T,
     changes: Partial<T>,
     errorMessage?: string,
+    newKey?: string,
   ): Promise<string | undefined> {
     if (!isBrowser(this.platformId)) {
       return this.okrError(undefined, 'FirestoreService.forkModel: This method can only be called in the browser context.', true);
@@ -879,16 +891,16 @@ export class FirestoreService {
       return this.okrError(undefined, 'FirestoreService.forkModel: source.okey is mandatory.', true);
     }
     const tenantId = this.env.tenantId;
-    const newKey = generateRandomString(20);
+    const forkKey = newKey ?? generateRandomString(20);
     const forked = removeUndefinedFields(removeKeyFromOkrModel(structuredClone({ ...source, ...changes })));
     forked.tenants = [tenantId];
 
     try {
       const batch = this.getBatch();
-      batch.set(doc(this.firestore, `${collectionName}/${newKey}`), forked);
+      batch.set(doc(this.firestore, `${collectionName}/${forkKey}`), forked);
       batch.update(doc(this.firestore, `${collectionName}/${source.okey}`), { tenants: arrayRemove(tenantId) });
       await batch.commit();
-      return newKey;
+      return forkKey;
     }
     catch (ex) {
       console.error(`FirestoreService.forkModel(${collectionName}/${source.okey}) -> ERROR:`, ex);

@@ -9,7 +9,8 @@ import {
   SYSTEM_TENANT,
   isOwnedBy,
   pickForTenant,
-  dedupeForTenant
+  dedupeForTenant,
+  forkKeyFor
 } from './query.util';
 
 describe('query.util', () => {
@@ -437,6 +438,23 @@ describe('shared-vs-own resolution', () => {
     it('treats a missing or empty tenants array as not owned', () => {
       expect(isOwnedBy({}, 'scs')).toBe(false);
       expect(isOwnedBy({ tenants: [] }, 'scs')).toBe(false);
+    });
+  });
+
+  describe('forkKeyFor', () => {
+    it('names the fork after the source document and the tenant', () => {
+      expect(forkKeyFor('impressum', 'kwa')).toBe('impressum_kwa');
+    });
+
+    it('matches the id PageService.read prefers for the pre-existing forks', () => {
+      // `welcome_p13` / `album_p13` exist in the database and predate the fork write path —
+      // the convention is read-side first, and the fork adopts it.
+      expect(forkKeyFor('welcome', 'p13')).toBe('welcome_p13');
+      expect(forkKeyFor('album', 'p13')).toBe('album_p13');
+    });
+
+    it('is stable, so a second edit of the same document targets the same fork', () => {
+      expect(forkKeyFor('privacy01intro', 'scs')).toBe(forkKeyFor('privacy01intro', 'scs'));
     });
   });
 
