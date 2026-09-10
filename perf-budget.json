@@ -33,5 +33,10 @@
     "dashboardClosureGzipBytes": 1419154,
     "chunks": 220,
     "updated": "2026-09-09"
+  },
+  "elab-app": {
+    "dashboardClosureGzipBytes": 1426635,
+    "chunks": 220,
+    "updated": "2026-09-10"
   }
 }
