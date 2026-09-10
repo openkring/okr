@@ -149,6 +149,7 @@
     "profiles_title": "Appliquer un profil",
     "profile_highlight_note": "Les modules surlignés appartiennent à ce profil. Rien n'est encore activé — fais-le toi-même pour chaque module surligné avec « Activer ».",
     "core_note": "toujours actif",
+    "required_note": "requis par {blocks} \u2014 d\u00e9sactive-le d'abord l\u00e0",
     "details_no_menu": "Ce module n'apporte aucune ligne de menu qui lui soit propre.",
     "unavailable_reason_fallback": "non disponible",
     "withheld_toast": "Non appliqué : {{blocks}}",

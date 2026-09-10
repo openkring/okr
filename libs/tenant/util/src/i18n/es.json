@@ -149,6 +149,7 @@
     "profiles_title": "Aplicar un perfil",
     "profile_highlight_note": "Los bloques resaltados pertenecen a este perfil. Todavía no se ha activado nada — hazlo tú mismo para cada bloque resaltado con «Activar».",
     "core_note": "siempre activo",
+    "required_note": "necesario para {blocks} \u2014 desact\u00edvalo primero all\u00ed",
     "details_no_menu": "Este bloque no trae ninguna fila de menú propia.",
     "unavailable_reason_fallback": "no disponible",
     "withheld_toast": "No aplicado: {{blocks}}",

@@ -868,6 +868,28 @@ describe('planDisableBlock', () => {
     expect(writes).toEqual([]);
     expect(preview.entries).toEqual([]);
   });
+
+  // The dead end this guard closes: `enabledFeatures` is stored flat but read
+  // dependency-closed, so removing `person` under a running `calevent` wrote a config the
+  // runtime ignored — the block kept running, the picker kept offering «Ausschalten», and the
+  // next click was a silent no-op because the stored entry was already gone.
+  it('refuses while a running block depends on it, naming the holder', async () => {
+    const db = fakeDb({
+      menuItems: [],
+      'app-config': [{ id: 'scs', enabledFeatures: ['calevent', 'person'] }],
+    });
+    await expect(planDisableBlock(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'person'))
+      .rejects.toThrow(/person.*required by calevent/);
+  });
+
+  it('allows it once the dependent is off', async () => {
+    const db = fakeDb({
+      menuItems: [],
+      'app-config': [{ id: 'scs', enabledFeatures: ['person'] }],
+    });
+    const { writes } = await planDisableBlock(run(db), TEST_CATALOGUE, 'scs', 'uid1', 'person');
+    expect(writes.find(w => w.ref.parent.id === 'app-config')?.data['enabledFeatures']).toEqual([]);
+  });
 });
 
 describe('planApplyCatalogueValue', () => {

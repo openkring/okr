@@ -149,6 +149,7 @@
     "profiles_title": "Profil anwenden",
     "profile_highlight_note": "Die markierten Bausteine gehören zu diesem Profil. Damit ist noch nichts eingeschaltet — das machst du für jeden markierten Baustein einzeln mit «Einschalten».",
     "core_note": "immer aktiv",
+    "required_note": "wird von {blocks} gebraucht \u2014 zuerst dort ausschalten",
     "details_no_menu": "Dieser Baustein bringt keine eigenen Menüzeilen mit.",
     "unavailable_reason_fallback": "nicht verfügbar",
     "withheld_toast": "Nicht übernommen: {{blocks}}",

@@ -149,6 +149,7 @@
     "profiles_title": "Apply a profile",
     "profile_highlight_note": "The highlighted blocks belong to this profile. Nothing is switched on yet — do that for each highlighted block yourself with \"Enable\".",
     "core_note": "always on",
+    "required_note": "required by {blocks} \u2014 switch that off first",
     "details_no_menu": "This block does not bring any menu rows of its own.",
     "unavailable_reason_fallback": "not available",
     "withheld_toast": "Not applied: {{blocks}}",

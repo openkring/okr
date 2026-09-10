@@ -54,6 +54,12 @@ export const FEATURE_PICKER_I18N_KEYS = {
    */
   profile_highlight_note: PFX + 'picker.profile_highlight_note',
   core_note: PFX + 'picker.core_note',
+  /**
+   * Shown INSTEAD of «Ausschalten» on a block another running block depends on, naming the
+   * holders. Store-driven, so it interpolates with `fill()` and SINGLE braces — Transloco's
+   * own `{{...}}` is stripped to empty by `translateAll`.
+   */
+  required_note: PFX + 'picker.required_note',
   details_no_menu: PFX + 'picker.details_no_menu',
   unavailable_reason_fallback: PFX + 'picker.unavailable_reason_fallback',
   // Guards/toasts that name what a write actually changed. Resolved through

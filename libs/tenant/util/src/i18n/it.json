@@ -149,6 +149,7 @@
     "profiles_title": "Applica un profilo",
     "profile_highlight_note": "I blocchi evidenziati appartengono a questo profilo. Non è ancora stato attivato nulla — fallo tu stesso per ogni blocco evidenziato con «Attiva».",
     "core_note": "sempre attivo",
+    "required_note": "richiesto da {blocks} \u2014 disattivalo prima l\u00ec",
     "details_no_menu": "Questo blocco non porta righe di menu proprie.",
     "unavailable_reason_fallback": "non disponibile",
     "withheld_toast": "Non applicato: {{blocks}}",

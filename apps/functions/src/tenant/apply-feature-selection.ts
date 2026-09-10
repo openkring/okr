@@ -10,7 +10,7 @@ import {
   type FeatureEvent, type MenuItemModel,
 } from '@okr/shared-models';
 import {
-  blockOwnersOfMenuKey, indexMenuDocsByName, isFieldPinned, menuSpecNames, planMenuOps,
+  blockOwnersOfMenuKey, holdersOf, indexMenuDocsByName, isFieldPinned, menuSpecNames, planMenuOps,
   planRootMenuOp, resolveAvailability, resolveWithDeps, STRUCTURAL_FIELDS, withoutPin, withPin,
   type ApplyFeatureResponse, type ApplyPlanPreview, type FeatureBlock, type FeatureIntent,
   type FeatureRollout,
@@ -691,6 +691,25 @@ export async function planDisableBlock(
   const previous = effectiveEnabled(configSnap.data(), catalogue);
   if (!previous.includes(blockId)) {
     return { writes: [], preview: emptyPreview() };
+  }
+  // Refuse while something still depends on it. `enabledFeatures` is stored FLAT but read
+  // dependency-closed (`effectiveFeatures` → `resolveWithDeps`), so removing the entry of a
+  // block a running block needs writes a config the runtime then ignores: the block keeps
+  // running, and the stored array no longer says why. That is not a hypothetical — it is how
+  // `subject` was switched off under a running `calevent` and could not be switched back on,
+  // because the picker read the closed set (`'on'` → only «Ausschalten») while this function
+  // read the flat one (id already absent → silent no-op).
+  //
+  // `core` blocks count as holders too: they are always in the effective set, so their
+  // dependencies are held on just as firmly as a stored block's.
+  const active = [...new Set([
+    ...previous,
+    ...catalogue.filter(block => block.core === true).map(block => block.id),
+  ])];
+  const holders = holdersOf(catalogue, blockId, active);
+  if (holders.length > 0) {
+    throw new HttpsError('failed-precondition',
+      `${CF_NAME}: '${blockId}' is required by ${holders.join(', ')} — switch those off first.`);
   }
   const enabled = previous.filter(id => id !== blockId);
   const at = getTodayStr(DateFormat.StoreDateTime);
