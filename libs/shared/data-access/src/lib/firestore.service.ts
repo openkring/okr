@@ -24,7 +24,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular/standalone';
 import { captureMessage } from '@sentry/angular';
-import { arrayRemove, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
+import { arrayRemove, collection, deleteDoc, doc, getDoc, getDocs, query, runTransaction, setDoc, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import { collectionData, docData } from 'rxfire/firestore';
 import { catchError, defer, delay, firstValueFrom, from, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, tap, timer } from 'rxjs';
 
@@ -38,6 +38,19 @@ import { createComment } from '@okr/comment-util';
 
 import { PFX } from "./scope";
 import { firestoreSubscriptionMonitor } from './firestore-subscription-monitor';
+
+/**
+ * A `createModel` call named a document id that is already taken. Its own error type so the catch
+ * block can tell it apart from a network or rules failure: this one is never retryable and always
+ * means the caller's id is wrong, stale, or recycled.
+ */
+export class DocumentExistsError extends Error {
+  constructor(public readonly path: string) {
+    super(`Document ${path} already exists — createModel refuses to overwrite it. `
+        + `Pass allowOverwrite when replacing it is genuinely intended.`);
+    this.name = 'DocumentExistsError';
+  }
+}
 
 @Injectable({
   providedIn: 'root'
@@ -265,16 +278,32 @@ export class FirestoreService {
   }
 
   /**
-   * Save a model as a new Firestore document into the database. 
-   * If okey is not set, the document ID is automatically assigned, otherwise okey is used as the document ID in Firestore.
-   * This function uses setdoc() to overwrite a document with the same ID. If the document does not exist, it will be created.
-   * If the document does exist, its contents will be overwritten with the newly provided data.
+   * Save a model as a NEW Firestore document.
+   *
+   * Without an okey the document id is generated and a collision is impossible. WITH an okey the
+   * caller is naming an id, and this method refuses to write over a document that is already
+   * there: the write runs in a transaction that checks existence first and fails with
+   * `DocumentExistsError` instead. `allowOverwrite` opts back into upsert semantics.
+   *
+   * It used to be an unconditional `setDoc`, which made a mistyped or recycled id a silent, total
+   * replacement — and because line ~330 also resets `tenants` to the current tenant, it could drop
+   * a cross-tenant allocation on the way. That is not theoretical: on 2026-08-23 a hand-minted
+   * person id was recycled and `persons/p_schaller_darinka` spent 18 days holding somebody else's
+   * record, with no error anywhere. The Admin-SDK seed scripts already use `.create()` for exactly
+   * this reason (see scripts/seed-diary-aliases.mjs); the web SDK has no `create()`, so the
+   * transaction below is the equivalent.
+   *
    * @param collectionName the name of the Firestore collection to create the model in
-   * @param model the data to save. if its key is valid, it will be used as the document ID in Firestore. Otherwise, a new document ID will be generated.
+   * @param model the data to save. If its okey is set it is used as the document id, otherwise a
+   *        random one is generated.
    * @param suppressErrorToast when true, a failed write does NOT pop a user-facing toast (it is
    *        still logged to the console). Use for best-effort background writes (e.g. audit logs)
    *        whose failure must never surface to the user.
-   * @return a Promise of the key of the newly stored model
+   * @param allowOverwrite when true, an okey that already exists is overwritten rather than
+   *        refused. Only for genuinely content-addressed or deterministic-by-design ids where
+   *        re-writing the same document is the intended behaviour — a duplicate upload keyed by
+   *        file hash, a diary entry keyed by author+date. Never pass it to silence an error.
+   * @return a Promise of the key of the newly stored model, or undefined if the write failed
    */
   public async createModel<T extends OkrModel>(
     collectionName: string,
@@ -282,7 +311,8 @@ export class FirestoreService {
     confirmMessage?: string,
     errorMessage?: string,
     currentUser?: UserModel,
-    suppressErrorToast = false
+    suppressErrorToast = false,
+    allowOverwrite = false
   ): Promise<string | undefined>
   {
     // ensure that the method is only called in the browser context; return undefined in SSR context
@@ -294,9 +324,12 @@ export class FirestoreService {
       return this.okrError(undefined, 'FirestoreService.createModel: model is mandatory.', true);
     }
       
-    let key = model.okey;
-    // if okey is not set, we auto-generate a random key for the document ID in firestore.
-    if (key?.length === 0) key = generateRandomString(20);
+    // An okey the caller chose deliberately; everything else gets a fresh random id. The test is
+    // `!key`, not `key?.length === 0`: a model read back from Firestore can arrive without the
+    // field at all (models are plain objects on read, defaults do not apply), and an `undefined`
+    // okey used to slip past the length check straight into the path `<collection>/undefined`.
+    const namedByCaller = (model.okey ?? '').length > 0;
+    const key = namedByCaller ? model.okey : generateRandomString(20);
     const path = `${collectionName}/${key}`;
     const ref = doc(this.firestore, path);
 
@@ -304,10 +337,19 @@ export class FirestoreService {
     const persistedModel = removeKeyFromOkrModel(model);
     persistedModel.tenants = [this.env.tenantId];   // ensure that the tenant is set
 
+    // structuredClone converts the custom object to a pure JavaScript object (e.g. arrays). It runs
+    // inside the write callback because writeWithTokenDenialRetry may invoke it a second time.
+    const guardExisting = namedByCaller && !allowOverwrite;
+    const write = guardExisting
+      ? () => runTransaction(this.firestore, async (transaction) => {
+          const existing = await transaction.get(ref);
+          if (existing.exists()) throw new DocumentExistsError(path);
+          transaction.set(ref, structuredClone(persistedModel));
+        })
+      : () => setDoc(ref, structuredClone(persistedModel));
+
     try {
-      // we need to convert the custom object to a pure JavaScript object (e.g. arrays)
-      await this.writeWithTokenDenialRetry(`createModel(${collectionName}/${ref.id})`,
-        () => setDoc(ref, structuredClone(persistedModel)));
+      await this.writeWithTokenDenialRetry(`createModel(${collectionName}/${ref.id})`, write);
       if (confirmMessage) {
         await this.okrShowToast(this.toastController, confirmMessage);
       }
@@ -320,7 +362,17 @@ export class FirestoreService {
     }
     catch (ex) {
       console.error(`FirestoreService.createModel(${collectionName}/${ref.id}) -> ERROR:`, ex);
-      if (suppressErrorToast) this.reportSilentWriteFailure(`createModel(${collectionName}/${ref.id})`, ex);
+      if (ex instanceof DocumentExistsError) {
+        // Always ticketed, even when the toast is suppressed: this is the failure mode that used
+        // to leave no trace at all, and the caller's id is now demonstrably wrong or stale.
+        captureMessage(`FirestoreService.createModel refused to overwrite ${path}`, {
+          level: 'warning',
+          tags: { firestoreCode: 'already-exists', collection: collectionName },
+          extra: { path },
+        });
+      } else if (suppressErrorToast) {
+        this.reportSilentWriteFailure(`createModel(${collectionName}/${ref.id})`, ex);
+      }
       const message = errorMessage ? errorMessage : `Could not create model ${collectionName}/${ref.id} in the database.`;
       return this.okrError(suppressErrorToast ? undefined : this.toastController, message);
     }

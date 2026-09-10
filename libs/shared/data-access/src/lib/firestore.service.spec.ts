@@ -19,6 +19,10 @@ vi.mock('rxfire/firestore', () => ({
   docData: () => docDataMock(),
 }));
 
+// Whether the document `createModel` is about to write already exists. Drives the transaction
+// mock below; `false` (a free id) is the ordinary case, so the existing tests are unaffected.
+const docExists = vi.hoisted(() => ({ value: false }));
+
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn(() => ({})),
   query: vi.fn(() => ({})),
@@ -30,7 +34,26 @@ vi.mock('firebase/firestore', () => ({
   updateDoc: vi.fn(),
   deleteDoc: vi.fn(),
   writeBatch: vi.fn(),
+  // createModel takes this branch whenever the caller named the document id. `transaction.set` is
+  // routed to the same setDoc mock the other tests assert on, so the retry/denial cases keep
+  // working through the guarded path exactly as they did through the bare setDoc.
+  runTransaction: vi.fn(async (_db: unknown, body: (t: unknown) => Promise<void>) => {
+    let pending: unknown;
+    await body({
+      get: async (ref: unknown) => ({ exists: () => docExists.value, ref }),
+      set: (ref: unknown, data: unknown) => { pending = setDocRelay(ref, data); },
+    });
+    // The real transaction.set is synchronous and the failure surfaces at commit; the tests model
+    // a failing write as a REJECTED setDoc, so the promise has to be awaited here or a denial
+    // would be silently discarded and the retry tests would see a successful write.
+    await pending;
+  }),
 }));
+
+// `transaction.set` cannot reference the hoisted setDoc mock directly (it is created by the
+// factory above), so it goes through this indirection, wired up right after the import.
+const setDocRelay = vi.hoisted(() => (ref: unknown, data: unknown) => setDocRelay.impl(ref, data)) as
+  ((ref: unknown, data: unknown) => unknown) & { impl: (ref: unknown, data: unknown) => unknown };
 
 // Writes must never reach the real Sentry client from a unit test.
 const captureMessageMock = vi.hoisted(() => vi.fn());
@@ -46,11 +69,13 @@ vi.mock('@okr/shared-config', async (orig) => {
   return { ...actual, isFirestoreInitializedCheck: () => true, ensureAppCheckToken: ensureAppCheckTokenMock };
 });
 
-import { doc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, runTransaction, setDoc, updateDoc } from 'firebase/firestore';
 
 import { FirestoreService } from './firestore.service';
 
 const setDocMock = vi.mocked(setDoc);
+const runTransactionMock = vi.mocked(runTransaction);
+setDocRelay.impl = (ref, data) => setDocMock(ref as never, data as never);
 const updateDocMock = vi.mocked(updateDoc);
 const docMock = vi.mocked(doc);
 
@@ -294,7 +319,56 @@ describe('FirestoreService.createModel', () => {
     vi.clearAllMocks();
     TestBed.resetTestingModule();
     ensureAppCheckTokenMock.mockResolvedValue(true);
+    docExists.value = false;                          // the id is free unless a test says otherwise
     docMock.mockReturnValue({ id: 'a1' } as never);   // createModel returns ref.id
+  });
+
+  // The regression this guard exists for: on 2026-08-23 a hand-minted person id was recycled and
+  // `persons/p_schaller_darinka` silently became a copy of somebody else's record — an
+  // unconditional setDoc replaced the document whole, and reset its `tenants` on the way out.
+  it('refuses to overwrite a document when the caller named an id that is taken', async () => {
+    docExists.value = true;
+    setDocMock.mockResolvedValue(undefined);
+    const svc = makeService();
+
+    const key = await svc.createModel('persons', { okey: 'p_schaller_darinka', tenants: ['bka'] } as never,
+      undefined, undefined, undefined, true);
+
+    expect(key).toBeUndefined();
+    expect(setDocMock).not.toHaveBeenCalled();
+    expect(captureMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('persons/p_schaller_darinka'),
+      expect.objectContaining({ tags: expect.objectContaining({ firestoreCode: 'already-exists' }) }));
+  });
+
+  // Content-addressed and deterministic-by-design ids (a document keyed by file hash, a diary
+  // entry keyed by author+date) still have to be able to replace what is there.
+  it('overwrites a taken id when allowOverwrite is set', async () => {
+    docExists.value = true;
+    setDocMock.mockResolvedValue(undefined);
+    const svc = makeService();
+
+    const key = await svc.createModel('diaries', { okey: 'bka_u1_20260910', tenants: ['bka'] } as never,
+      undefined, undefined, undefined, true, true);
+
+    expect(key).toBeDefined();
+    expect(setDocMock).toHaveBeenCalledTimes(1);
+    expect(captureMessageMock).not.toHaveBeenCalled();
+  });
+
+  // No okey means a generated id, where a collision cannot happen — that path must not pay for a
+  // transaction, and it is by far the common one.
+  it('writes straight through without a transaction when no okey is supplied', async () => {
+    docExists.value = true;   // would refuse if the guard ran, proving it does not
+    setDocMock.mockResolvedValue(undefined);
+    const svc = makeService();
+
+    const key = await svc.createModel('activities', { okey: '', tenants: ['scs'] } as never,
+      undefined, undefined, undefined, true);
+
+    expect(key).toBeDefined();
+    expect(runTransactionMock).not.toHaveBeenCalled();
+    expect(setDocMock).toHaveBeenCalledTimes(1);
   });
 
   it('returns the document id on the happy path', async () => {

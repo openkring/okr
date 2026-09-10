@@ -94,10 +94,15 @@ export class DiaryService {
     return await firstValueFrom(this.read(key));
   }
 
-  /** `okey` is preset by `newDiary` to the deterministic id; createModel keeps it (setDoc). */
+  /**
+   * `okey` is preset by `newDiary` to the deterministic author+date id, and `allowOverwrite` is on
+   * because writing over an existing document is the intended behaviour here: `DiaryStore.add`
+   * refuses a LIVE entry for that day itself (toast + open the editor) but deliberately lets an
+   * ARCHIVED one be replaced, so a deleted day is not a dead end that can never be re-created.
+   */
   public async create(diary: DiaryModel, currentUser?: UserModel): Promise<string | undefined> {
     return await this.firestoreService.createModel<DiaryModel>(
-      DiaryCollection, diary, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
+      DiaryCollection, diary, this.i18n.create_conf(), this.i18n.create_error(), currentUser, false, true);
   }
 
   /** Archive, never a hard delete — deleteModel applies the tenant-aware patch (deleting-models skill). */
