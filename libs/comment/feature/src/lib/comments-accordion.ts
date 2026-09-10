@@ -94,7 +94,7 @@ export class CommentsAccordion {
   public parentKey = input.required<string>();  // modelType.key of the parent model
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  public color = input('light');
+  public color = input('primary');
 
   public comments = computed(() => this.store.comments() ?? []);
 

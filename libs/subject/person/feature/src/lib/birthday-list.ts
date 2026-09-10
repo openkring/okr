@@ -71,8 +71,8 @@ interface BirthdayGroup {
   ],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
-    ion-item-divider.date { --background: var(--ion-color-light); min-height: 26px; }
-    ion-item-divider.date ion-label { font-size: 0.8rem; font-weight: 600; color: var(--ion-color-medium); }
+    ion-item-divider.date { --background: var(--ion-color-primary); --color: var(--ion-color-primary-contrast); min-height: 26px; }
+    ion-item-divider.date ion-label { font-size: 0.8rem; font-weight: 600; color: var(--ion-color-primary-contrast); }
   `],
   template: `
   <ion-header>

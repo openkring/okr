@@ -54,7 +54,7 @@ import { MeteringStore, MeteringView } from './metering.store';
         </ion-buttons>
       </ion-toolbar>
 
-      <ion-toolbar color="light" class="ion-hide-sm-down">
+      <ion-toolbar color="primary" class="ion-hide-sm-down">
         <ion-grid>
           @if(isRecords()) {
             <ion-row>

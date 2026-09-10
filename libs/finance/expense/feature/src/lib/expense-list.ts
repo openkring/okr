@@ -82,7 +82,7 @@ import { ExpenseListId, ExpenseStore } from './expense.store';
       />
 
       <!-- sortable column headers: the full set from md up, the three sortable ones below -->
-      <ion-toolbar color="light">
+      <ion-toolbar color="primary">
         <ion-grid class="ion-no-padding">
           <ion-row class="header-row ion-hide-md-down">
             <ion-col size="2" class="clickable" (click)="store.setSort('date')">{{ store.i18n.col_date() }}{{ sortIcon('date') }}</ion-col>

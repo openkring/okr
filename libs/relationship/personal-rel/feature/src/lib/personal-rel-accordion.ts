@@ -78,7 +78,7 @@ export class PersonalRelAccordion {
   private actionSheetController = inject(ActionSheetController);
 
   public person = input.required<PersonModel>();
-  public color = input('light');
+  public color = input('primary');
   public title = input<string | undefined>();
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

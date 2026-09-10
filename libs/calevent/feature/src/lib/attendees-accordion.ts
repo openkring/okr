@@ -132,7 +132,7 @@ export class AttendeesAccordion {
   public calevent = input.required<CalEventModel>();
   public currentUser = input<UserModel | undefined>();
   public tenantId = input<string>('');
-  public readonly color = input('light');
+  public readonly color = input('primary');
   public readonly readOnly = input<boolean>(true);
 
   // coerced boolean inputs

@@ -82,7 +82,7 @@ export class AddressesAccordion {
   public parentKey = input.required<string>(); // modelType.key of the parent model of the addresses person or org
   public intro = input<string>(); // description shown in the accordion header
   public readOnly = input<boolean>(true);
-  public color = input('light'); // color of the accordion
+  public color = input('primary'); // color of the accordion
   public label = input<string | undefined>(); // label of the accordion
   public readonly priv = input.required<PrivacySettings>();
 

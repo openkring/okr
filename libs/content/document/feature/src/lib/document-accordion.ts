@@ -75,7 +75,7 @@ export class DocumentsAccordion {
   private actionSheetController = inject(ActionSheetController);
 
   public parentKey = input.required<string>();
-  public readonly color = input('light');
+  public readonly color = input('primary');
   public readonly title = input<string | undefined>();
   public readonly readOnly = input<boolean>(true);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));

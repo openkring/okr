@@ -74,7 +74,7 @@ export class MembersAccordion {
 
   public orgKey = input.required<string>();
   public orgType = input.required<'org' | 'group'>();
-  public readonly color = input('light');
+  public readonly color = input('primary');
   public readonly title = input(this.store.i18n.members());
   public readonly readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));

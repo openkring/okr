@@ -50,7 +50,7 @@ type ResponsibilitySortField = 'name' | 'responsible';
       }
 
       <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
-      <ion-toolbar color="light" class="ion-hide-md-down">
+      <ion-toolbar color="primary" class="ion-hide-md-down">
         <ion-grid>
           <ion-row>
             <ion-col size="8" class="clickable" (click)="setSort('name')">

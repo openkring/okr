@@ -64,9 +64,9 @@ import { AliasStore } from './alias.store';
         [types]="spaceCategory()"
       />
 
-      <ion-toolbar color="light" class="ion-hide-sm-down">
+      <ion-toolbar color="primary" class="ion-hide-sm-down">
         <ion-list lines="none">
-          <ion-item lines="none" color="light">
+          <ion-item lines="none" color="primary">
             <ion-label><strong>{{ store.i18n.field_alias_label() }}</strong></ion-label>
             <ion-label class="ion-hide-md-down"><strong>{{ store.i18n.detail_target() }}</strong></ion-label>
             <ion-label slot="end"><strong>{{ store.i18n.detail_stats_usecount() }}</strong></ion-label>

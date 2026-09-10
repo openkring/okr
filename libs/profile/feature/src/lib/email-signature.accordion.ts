@@ -125,7 +125,7 @@ export class EmailSignatureAccordion {
 
   // inputs
   public readonly i18n = input.required<ProfileI18n>();
-  public readonly color = input('light');
+  public readonly color = input('primary');
 
   /** Copy-button label reflecting the currently selected format (HTML / RAW / Text). */
   protected readonly copyButtonLabel = computed(() => {

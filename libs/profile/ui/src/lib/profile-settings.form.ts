@@ -163,7 +163,7 @@ export class ProfileSettingsAccordion {
   public formData = model.required<UserModel>();
   public currentUser = input<UserModel | undefined>();
   public showForm = input<boolean>(true);   // used for initializing the form and resetting vest validations
-  public color = input('light'); // color of the accordion
+  public color = input('primary'); // color of the accordion
   public readonly tenantId = input.required<string>();
   public readonly tags = input.required<string>();
   public readonly readOnly = input<boolean>(true);

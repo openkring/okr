@@ -56,7 +56,7 @@ export class ReservationsAccordion {
   
   // inputs
   public listId = input.required<string>();
-  public color = input('light');
+  public color = input('primary');
   public title = input<string | undefined>();
   public readOnly = input(true); 
 

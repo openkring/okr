@@ -129,7 +129,7 @@ export class DataRightsAccordion {
   private readonly store = inject(ProfileStore);
 
   public readonly i18n = input.required<ProfileI18n>();
-  public readonly color = input('light');
+  public readonly color = input('primary');
 
   protected readonly isAccepting = signal(false);
   protected readonly policyError = signal(false);

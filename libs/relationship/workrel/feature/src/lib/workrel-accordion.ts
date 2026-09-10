@@ -78,7 +78,7 @@ export class WorkrelAccordion {
   private actionSheetController = inject(ActionSheetController);
 
   public personKey = input<string>();
-  public color = input('light');
+  public color = input('primary');
   public title = input<string | undefined>();
   public readOnly = input(true);
   protected types = computed(() => this.store.appStore.getCategory('workrel_type'));

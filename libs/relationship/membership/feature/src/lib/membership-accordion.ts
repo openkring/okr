@@ -59,7 +59,7 @@ export class MembershipAccordion {
   // inputs
   public member = input.required<PersonModel | OrgModel>();
   public readonly modelType = input<'person' | 'org'>('person');
-  public readonly color = input('light');
+  public readonly color = input('primary');
   public readonly title = input<string | undefined>();
   public readonly readOnly = input<boolean>(true);
 

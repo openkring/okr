@@ -48,7 +48,7 @@ type MeetingSortField = 'date' | 'name' | 'status';
         [tags]="tags()"
       />
 
-      <ion-toolbar color="light" class="ion-hide-sm-down">
+      <ion-toolbar color="primary" class="ion-hide-sm-down">
         <ion-grid>
           <ion-row>
             <ion-col size="3" class="clickable" (click)="setSort('date')"><ion-label><strong>{{ store.i18n.meetingDate_label() }}{{ sortIcon('date') }}</strong></ion-label></ion-col>

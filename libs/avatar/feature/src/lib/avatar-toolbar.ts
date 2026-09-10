@@ -59,7 +59,7 @@ export class AvatarToolbar {
   public key = input.required<string>(); // = ModelType.ModelKey e.g. person.1asdfölj
   public readOnly = input(true);
   public alt = input('Avatar');
-  public color = input<ColorIonic>(ColorIonic.Light);
+  public color = input<ColorIonic>(ColorIonic.Primary);
   public title = input<string | undefined>();
   public subTitle = input<string | undefined>(); // if subTitle starts with tel: or mailto: a href link is created
   public modelType = input.required<'person' | 'org' | 'group' | 'resource'>();

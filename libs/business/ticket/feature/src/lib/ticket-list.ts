@@ -45,7 +45,7 @@ import { TicketStore } from './ticket.store';
         (searchTermChanged)="store.setSearchTerm($event)"
         (typeChanged)="store.setSelectedStatus($event)" [types]="statuses()" />
 
-      <ion-toolbar color="light" class="ion-hide-sm-down">
+      <ion-toolbar color="primary" class="ion-hide-sm-down">
         <ion-grid>
           <ion-row>
             <ion-col size="5" size-md="4"><ion-label><strong>{{ store.i18n.header_name() }}</strong></ion-label></ion-col>

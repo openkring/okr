@@ -71,8 +71,8 @@ type PersonSortField = 'name' | 'phone' | 'email';
     />
 
     <!-- list header -->
-    <ion-toolbar color="light" class="ion-hide-sm-down">
-      <ion-item lines="none">
+    <ion-toolbar color="primary" class="ion-hide-sm-down">
+      <ion-item lines="none" color="primary">
         <ion-label class="clickable" (click)="setSort('name')"><strong>{{ store.i18n.name() }}{{ sortIcon('name') }}</strong></ion-label>
         <ion-label class="clickable" (click)="setSort('phone')"><strong>{{ store.i18n.phone_label() }}{{ sortIcon('phone') }}</strong></ion-label>
         <ion-label class="ion-hide-md-down clickable" (click)="setSort('email')"><strong>{{ store.i18n.email_label() }}{{ sortIcon('email') }}</strong></ion-label>

@@ -55,7 +55,7 @@ import { PartnerStore } from './partner.store';
       </ion-toolbar>
       <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
 
-      <ion-toolbar color="light" class="ion-hide-sm-down">
+      <ion-toolbar color="primary" class="ion-hide-sm-down">
         <ion-grid>
           <ion-row>
             <ion-col size="6" size-md="5"><ion-label><strong>{{ store.i18n.list_header_name() }}</strong></ion-label></ion-col>

@@ -58,7 +58,7 @@ export class OwnershipAccordion {
   public owner = input.required<PersonModel | OrgModel>();
   public readonly ownerModelType = input<'person' | 'org'>('person');
   public readonly defaultResource = input<ResourceModel>();
-  public readonly color = input('light');
+  public readonly color = input('primary');
   public readonly title = input<string | undefined>();
   public readonly readOnly = input(true);
 

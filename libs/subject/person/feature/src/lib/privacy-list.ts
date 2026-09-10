@@ -50,7 +50,7 @@ import { getPrivacyUsage, hasPrivacyChanges, isPrivacyRestricted, PERSON_I18N_KE
       <ion-title>{{ rows().length }} {{ i18n.privacy() }}</ion-title>
     </ion-toolbar>
 
-    <ion-toolbar color="light">
+    <ion-toolbar>
       <ion-item lines="none">
         <ion-select [value]="filter()" (ionChange)="filter.set($event.detail.value)"
           [label]="i18n.privacy_hint()" labelPlacement="stacked" interface="popover">
@@ -61,8 +61,8 @@ import { getPrivacyUsage, hasPrivacyChanges, isPrivacyRestricted, PERSON_I18N_KE
       </ion-item>
     </ion-toolbar>
 
-    <ion-toolbar color="light" class="ion-hide-sm-down">
-      <ion-item lines="none">
+    <ion-toolbar color="primary" class="ion-hide-sm-down">
+      <ion-item lines="none" color="primary">
         <ion-label class="col"><strong>{{ i18n.name() }}</strong></ion-label>
         @for (field of fields; track field) {
           <ion-label class="col"><strong>{{ label(field) }}</strong></ion-label>

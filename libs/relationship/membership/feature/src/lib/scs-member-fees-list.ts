@@ -63,7 +63,7 @@ import { Menu } from '@okr/cms-menu-feature';
       />
 
       <!-- list header (desktop) -->
-      <ion-toolbar color="light" class="ion-hide-sm-down">
+      <ion-toolbar color="primary" class="ion-hide-sm-down">
         <ion-grid>
           <ion-row>
             <ion-col size="6" size-md="2" class="sortable" (click)="sortBy('name')">

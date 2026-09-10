@@ -108,7 +108,7 @@ type DocumentSortField = 'title' | 'size' | 'dateOfDocLastUpdate';
 
     <!-- list header -->
     @if(isListView()) {
-      <ion-toolbar color="light" class="ion-hide-sm-down">
+      <ion-toolbar color="primary" class="ion-hide-sm-down">
         <ion-grid>
           <ion-row>
             <ion-col size="8" class="clickable" (click)="setSort('title')">
