@@ -18,6 +18,10 @@ import {
   retryUntilFound,
 } from './video-path.util';
 
+// The other half of the video lifecycle: the original leaves Storage → its renderings follow.
+// Re-exported here so `main.ts` reaches both video triggers through the same `Video` namespace.
+export { onAlbumSourceDeleted } from './reap-renderings';
+
 const REGION = 'europe-west6';
 const DOCS_COLLECTION = 'docs';
 const POSTER_SECOND = 2;
@@ -77,9 +81,9 @@ async function reapStaleTempFiles(): Promise<void> {
  * perform", and the imgix Video API is not enabled on our source (spec §7.1) — so this is exactly
  * that.
  *
- * WHAT THIS DOES *NOT* BUY US — the derived files are NOT reaped on delete. An earlier version of
- * this comment claimed they were; that was wrong, and a comment that promises safety is worse than
- * no comment at all. The facts, as of this writing:
+ * WHAT THIS DOES *NOT* BUY US — the derived files are only PARTLY reaped on delete. `onAlbumSourceDeleted`
+ * (./reap-renderings.ts) now removes them whenever the ORIGINAL object really leaves Storage, but
+ * that is not the route a member takes. The facts, as of this writing:
  *   - `DocumentService.delete()` calls `FirestoreService.deleteModel`, i.e. it ARCHIVES the
  *     document (isArchived) and touches Storage not at all — neither the original nor a rendering.
  *   - `DocumentService.hardDelete()` is the only path that calls `deleteRenderings()`, and its own
@@ -88,9 +92,12 @@ async function reapStaleTempFiles(): Promise<void> {
  * deletion leaves roughly TWICE the clip behind (original plus mp4), forever, and the member who
  * deleted it has every reason to believe it is gone.
  *
- * Fixing that is deliberately NOT done here: `delete()` is shared by every document in the app and
- * the archive-vs-purge decision is a product one (see the `deleting-models` skill). The video
- * feature must not settle it as a side effect.
+ * `onAlbumSourceDeleted` closes the second bullet and every path that genuinely purges the object;
+ * the FIRST bullet — archiving, the only delete a member is offered — is still open, because no
+ * Storage object is deleted there and the reaper never fires. Fixing THAT is deliberately not done
+ * here: `delete()` is shared by every document in the app and the archive-vs-purge decision is a
+ * product one (see the `deleting-models` skill). The video feature must not settle it as a side
+ * effect.
  *
  * Idempotent by way of upsertRendering: a second run replaces the entries in place. `concurrency: 1`
  * because a transcode holds its input plus two outputs in the memory-resident `/tmp` and saturates

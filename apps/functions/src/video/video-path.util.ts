@@ -11,8 +11,69 @@ const ALBUM_PATH = /^tenant\/[^/]+\/(section\/[^/]+\/album|folder\/[^/]+\/album|
  * transcode its own result forever.
  */
 export function isAlbumVideoPath(objectName: string): boolean {
+  return isAlbumSourcePath(objectName);
+}
+
+/**
+ * Whether an object is a DERIVED file (a rendering) rather than a source upload.
+ *
+ * The single place that knows what a rendering path looks like. Both video triggers gate on it,
+ * in opposite directions but for the same reason — a trigger that fires on its own output runs
+ * forever:
+ *   - `onAlbumVideoFinalized` must not transcode the mp4 it just wrote.
+ *   - `onAlbumSourceDeleted` must not reap the reaping: every object IT deletes fires
+ *     `onObjectDeleted` again, and without this test the second delivery would look for the
+ *     renderings of a rendering.
+ */
+export function isRenderingPath(objectName: string): boolean {
+  return objectName.includes('/renderings/');
+}
+
+/**
+ * Whether an object is a SOURCE upload under the album/document paths — i.e. an original a member
+ * put there, not something a trigger derived from one.
+ *
+ * `isAlbumVideoPath` is the historical name of exactly this test and stays as an alias: the
+ * transcoder reads better with it, and its own callers already narrow to videos with
+ * `isVideoUpload` on the next line. The reaper deliberately uses the general name, because it is
+ * not video-specific — an SVG rendering of a vectorized image is reaped by the same rule.
+ */
+export function isAlbumSourcePath(objectName: string): boolean {
   if (!ALBUM_PATH.test(objectName)) return false;
-  return !objectName.includes('/renderings/');
+  return !isRenderingPath(objectName);
+}
+
+/**
+ * Whether `renderingFullPath` is plausibly a rendering OF `sourceFullPath` produced for `docKey`:
+ * it must sit in the source's own `renderings/` sibling directory and be named `<docKey>.<format>`
+ * — the exact shape `renderingPath()` mints.
+ *
+ * This is a containment check, not a formality. The reaper takes the paths it deletes from
+ * `DocumentModel.renderings[]`, which is client-writable data: a document whose `renderings[]`
+ * named `tenant/other/document/annual-report.pdf` would otherwise turn a storage trigger into an
+ * arbitrary-delete primitive. An entry that fails this test is logged and left alone — never
+ * deleted, and never silently dropped from the array either.
+ */
+export function isOwnRendering(
+  sourceFullPath: string,
+  docKey: string,
+  renderingFullPath: string,
+): boolean {
+  const slash = sourceFullPath.lastIndexOf('/');
+  const dir = slash < 0 ? '' : sourceFullPath.slice(0, slash);
+  const expectedDir = `${dir ? dir + '/' : ''}renderings`;
+
+  const rSlash = renderingFullPath.lastIndexOf('/');
+  if (rSlash < 0) return false;
+  if (renderingFullPath.slice(0, rSlash) !== expectedDir) return false;
+
+  const base = renderingFullPath.slice(rSlash + 1);
+  // `<docKey>.<format>` and nothing else: a bare `<docKey>` or a second dot-segment is not ours.
+  const dot = base.indexOf('.');
+  if (dot <= 0) return false;
+  if (base.slice(0, dot) !== docKey) return false;
+  const format = base.slice(dot + 1);
+  return format.length > 0 && !format.includes('.') && !format.includes('/');
 }
 
 /**

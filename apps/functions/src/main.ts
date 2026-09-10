@@ -225,6 +225,9 @@ export const redoExpenseOcr = Ocr.redoExpenseOcr;
 export const vectorizeDocument = Vectorize.vectorizeDocument;
 // storage trigger: album videos → playable mp4 + poster frame (ffmpeg renderings)
 export const onAlbumVideoFinalized = Video.onAlbumVideoFinalized;
+// storage trigger: the original leaves the bucket → its mp4/poster renderings go with it.
+// Only covers real Storage deletions; the UI's delete ARCHIVES and leaves the object in place.
+export const onAlbumSourceDeleted = Video.onAlbumSourceDeleted;
 // expense creation (CF-only writes to the `expenses` collection)
 export const createExpense = Expense.createExpense;
 export const deleteExpense = Expense.deleteExpense;

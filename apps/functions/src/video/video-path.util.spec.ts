@@ -4,7 +4,10 @@ import {
   DOC_LOOKUP_DELAY_MS,
   buildPosterArgs,
   buildTranscodeArgs,
+  isAlbumSourcePath,
   isAlbumVideoPath,
+  isOwnRendering,
+  isRenderingPath,
   isVideoUpload,
   retryUntilFound,
 } from './video-path.util';
@@ -161,5 +164,85 @@ describe('retryUntilFound', () => {
     expect(result).toEqual({ value: undefined, attempts: DOC_LOOKUP_ATTEMPTS });
     expect(seen).toEqual([1, 2, 3, 4, 5]);
     expect(waits).toHaveLength(DOC_LOOKUP_ATTEMPTS - 1);
+  });
+});
+
+
+describe('isRenderingPath', () => {
+  it('recognises the renderings directory', () => {
+    expect(isRenderingPath('tenant/scs/section/a/album/renderings/doc1.mp4')).toBe(true);
+    expect(isRenderingPath('tenant/scs/document/renderings/doc1.jpg')).toBe(true);
+  });
+
+  it('does not mistake a source upload for a rendering', () => {
+    expect(isRenderingPath('tenant/scs/section/a/album/clip.mov')).toBe(false);
+    // a FILE named renderings is not the renderings DIRECTORY
+    expect(isRenderingPath('tenant/scs/section/a/album/renderings.mov')).toBe(false);
+  });
+});
+
+describe('isAlbumSourcePath', () => {
+  it('is the predicate isAlbumVideoPath delegates to — both triggers share one rule', () => {
+    const paths = [
+      'tenant/scs/section/abc/album/clip.mov',
+      'tenant/scs/folder/f1/album/clip.mp4',
+      'tenant/scs/document/clip.mov',
+      'tenant/scs/section/abc/album/renderings/doc1.mp4',
+      'tenant/scs/rag/clip.mov',
+      'misc/clip.mov',
+    ];
+    for (const p of paths) expect(isAlbumSourcePath(p)).toBe(isAlbumVideoPath(p));
+  });
+
+  it('accepts an image original too — the reaper is not video-specific', () => {
+    expect(isAlbumSourcePath('tenant/scs/section/abc/album/photo.jpg')).toBe(true);
+  });
+
+  it('rejects a rendering, which is what terminates the reaper recursion', () => {
+    // every object the reaper deletes lives here and fires onObjectDeleted again; this is the
+    // one and only thing that stops the second delivery from doing any work
+    expect(isAlbumSourcePath('tenant/scs/section/abc/album/renderings/doc1.mp4')).toBe(false);
+    expect(isAlbumSourcePath('tenant/scs/section/abc/album/renderings/doc1.jpg')).toBe(false);
+  });
+});
+
+describe('isOwnRendering', () => {
+  const source = 'tenant/scs/section/abc/album/clip.mov';
+
+  it('accepts the paths renderingPath() mints for the same document', () => {
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/abc/album/renderings/doc1.mp4')).toBe(true);
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/abc/album/renderings/doc1.jpg')).toBe(true);
+  });
+
+  it('accepts an svg rendering of a document in the document directory', () => {
+    expect(isOwnRendering(
+      'tenant/scs/document/logo.png', 'd7', 'tenant/scs/document/renderings/d7.svg')).toBe(true);
+  });
+
+  it('rejects a rendering belonging to a DIFFERENT document in the same directory', () => {
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/abc/album/renderings/doc2.mp4')).toBe(false);
+    // a key that merely starts the same must not pass either
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/abc/album/renderings/doc12.mp4')).toBe(false);
+  });
+
+  it('rejects a path outside the source own renderings directory', () => {
+    // the containment check that keeps a client-writable renderings[] from turning the
+    // storage trigger into an arbitrary-delete primitive
+    expect(isOwnRendering(source, 'doc1', 'tenant/other/document/annual-report.pdf')).toBe(false);
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/xyz/album/renderings/doc1.mp4')).toBe(false);
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/abc/album/doc1.mp4')).toBe(false);
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/abc/album/renderings/sub/doc1.mp4')).toBe(false);
+  });
+
+  it('rejects the source itself, so the original can never be reaped as its own rendering', () => {
+    expect(isOwnRendering(source, 'doc1', source)).toBe(false);
+  });
+
+  it('rejects malformed entries instead of guessing', () => {
+    expect(isOwnRendering(source, 'doc1', '')).toBe(false);
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/abc/album/renderings/doc1')).toBe(false);
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/abc/album/renderings/doc1.')).toBe(false);
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/abc/album/renderings/.mp4')).toBe(false);
+    expect(isOwnRendering(source, 'doc1', 'tenant/scs/section/abc/album/renderings/doc1.tar.gz')).toBe(false);
   });
 });
