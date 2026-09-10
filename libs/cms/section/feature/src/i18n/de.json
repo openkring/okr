@@ -107,6 +107,7 @@
       "close": "Schliessen"
     },
     "newFolder": {
+      "save": "Speichern",
       "header": "Neuer Ordner",
       "placeholder": "Name des Ordners"
     }

@@ -318,7 +318,7 @@ export const AlbumStore = signalStore(
         inputs: [{ name: 'name', type: 'text', placeholder: store.i18n.album_newfolder_placeholder() }],
         buttons: [
           { text: store.i18n.cancel(), role: 'cancel' },
-          { text: store.i18n.create(), role: 'confirm' }
+          { text: store.i18n.album_newfolder_save(), role: 'confirm' }
         ]
       });
       await alert.present();

@@ -107,6 +107,7 @@
       "close": "Fermer"
     },
     "newFolder": {
+      "save": "Enregistrer",
       "header": "Nouveau dossier",
       "placeholder": "Nom du dossier"
     }

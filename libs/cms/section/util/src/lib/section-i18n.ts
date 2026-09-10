@@ -64,6 +64,7 @@ export const SECTION_I18N_KEYS = {
   album_download_partial:                   PFX + 'album.download.partial',
   album_download_empty:                     PFX + 'album.download.empty',
   album_newfolder_header:                   PFX + 'album.newFolder.header',
+  album_newfolder_save:                     PFX + 'album.newFolder.save',
   album_newfolder_placeholder:              PFX + 'album.newFolder.placeholder',
   album_cover_header:                       PFX + 'album.cover.header',
   album_cover_auto:                         PFX + 'album.cover.auto',

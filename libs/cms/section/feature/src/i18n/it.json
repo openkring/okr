@@ -107,6 +107,7 @@
       "close": "Chiudi"
     },
     "newFolder": {
+      "save": "Salva",
       "header": "Nuova cartella",
       "placeholder": "Nome della cartella"
     }
