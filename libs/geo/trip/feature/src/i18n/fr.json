@@ -20,7 +20,11 @@
     "error": "La sortie n'a pas pu être supprimée."
   },
   "end": {
-    "label": "Clôturer la sortie"
+    "label": "Clôturer la sortie",
+    "date_label": "Date de fin",
+    "date_placeholder": "JJ.MM.AAAA",
+    "time_label": "Heure de fin",
+    "time_placeholder": "HH:MM"
   },
   "view": {
     "label": "Afficher la sortie"
@@ -112,7 +116,8 @@
     "distance_zero": "Veuillez saisir une distance entre 1 et 500 km.",
     "seats_mismatch": "Le nombre de participants ne correspond pas à la capacité du bateau.",
     "max_participants": "Ce bateau accueille au maximum {count} personnes.",
-    "note": "Afin d'éviter les abus, différents contrôles s'exécutent en arrière-plan. En cas d'abus constaté, l'administrateur est notifié."
+    "note": "Afin d'éviter les abus, différents contrôles s'exécutent en arrière-plan. En cas d'abus constaté, l'administrateur est notifié.",
+    "end_before_start": "La fin de la sortie est antérieure à son début."
   },
   "boat": "Bateau",
   "distance": {
@@ -240,5 +245,11 @@
     "unlock_conf": "Le carnet de bord a été déverrouillé.",
     "none": "Aucun appareil kiosque n'est enregistré pour ce club.",
     "error": "Le carnet de bord n'a pas pu être verrouillé ou déverrouillé."
+  },
+  "start": {
+    "date_label": "Date de départ",
+    "date_placeholder": "JJ.MM.AAAA",
+    "time_label": "Heure de départ",
+    "time_placeholder": "HH:MM"
   }
 }

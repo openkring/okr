@@ -33,6 +33,7 @@ import { TripService } from '@okr/trip-data-access';
           [boats]="boats()"
           [category]="category()"
           [locations]="store.locations()"
+          [locale]="locale()"
           [i18n]="store.i18n"
           (personSelectClicked)="addPerson()"
           (boatSelectClicked)="addBoat()"
@@ -64,6 +65,7 @@ export class TripEditModal {
   // derived
   protected currentUser = computed(() => this.store.currentUser());
   protected tenantId = computed(() => this.store.tenantId());
+  protected locale = computed(() => this.store.appStore.appConfig().locale);
   protected showConfirmation = computed(() => {
     return this.formValid() && this.formDirty() 
   });
@@ -121,8 +123,9 @@ export class TripEditModal {
         await this.tripService.update(trip, this.store.currentUser());
         break;
       case 'end':
-        trip.endDate = getTodayStr(DateFormat.StoreDate);
-        trip.endTime = getCurrentTime();        
+        // an admin may have typed the end into the form; only fill what is still empty
+        trip.endDate = trip.endDate || getTodayStr(DateFormat.StoreDate);
+        trip.endTime = trip.endTime || getCurrentTime();
         trip.state = 'closed';
         await this.tripService.update(trip, this.store.currentUser());
         break;

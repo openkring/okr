@@ -20,7 +20,11 @@
     "error": "The trip could not be deleted."
   },
   "end": {
-    "label": "Complete trip"
+    "label": "Complete trip",
+    "date_label": "End date",
+    "date_placeholder": "DD.MM.YYYY",
+    "time_label": "End time",
+    "time_placeholder": "HH:MM"
   },
   "view": {
     "label": "View trip"
@@ -112,7 +116,8 @@
     "distance_zero": "Please enter a distance between 1 and 500 km.",
     "seats_mismatch": "The number of participants does not match the boat capacity.",
     "max_participants": "This boat seats at most {count} people.",
-    "note": "To prevent misuse, various checks run in the background. Should misuse be detected, the admin is notified."
+    "note": "To prevent misuse, various checks run in the background. Should misuse be detected, the admin is notified.",
+    "end_before_start": "The end of the trip is before its start."
   },
   "boat": "Boat",
   "distance": {
@@ -240,5 +245,11 @@
     "unlock_conf": "The logbook has been unlocked.",
     "none": "No kiosk device is registered for this club.",
     "error": "The logbook could not be locked or unlocked."
+  },
+  "start": {
+    "date_label": "Start date",
+    "date_placeholder": "DD.MM.YYYY",
+    "time_label": "Start time",
+    "time_placeholder": "HH:MM"
   }
 }

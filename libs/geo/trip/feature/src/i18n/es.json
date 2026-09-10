@@ -20,7 +20,11 @@
     "error": "No se ha podido eliminar la salida."
   },
   "end": {
-    "label": "Cerrar salida"
+    "label": "Cerrar salida",
+    "date_label": "Fecha de fin",
+    "date_placeholder": "DD.MM.AAAA",
+    "time_label": "Hora de fin",
+    "time_placeholder": "HH:MM"
   },
   "view": {
     "label": "Ver salida"
@@ -112,7 +116,8 @@
     "distance_zero": "Introduzca una distancia entre 1 y 500 km.",
     "seats_mismatch": "El número de participantes no coincide con la capacidad de la embarcación.",
     "max_participants": "En este barco caben como máximo {count} personas.",
-    "note": "Para evitar abusos, se realizan varias comprobaciones en segundo plano. Si se detecta un abuso, se notifica al administrador."
+    "note": "Para evitar abusos, se realizan varias comprobaciones en segundo plano. Si se detecta un abuso, se notifica al administrador.",
+    "end_before_start": "El final de la salida es anterior a su inicio."
   },
   "boat": "Embarcación",
   "distance": {
@@ -240,5 +245,11 @@
     "unlock_conf": "El cuaderno de bitácora se ha desbloqueado.",
     "none": "No hay ningún dispositivo kiosco registrado para este club.",
     "error": "No se ha podido bloquear o desbloquear el cuaderno de bitácora."
+  },
+  "start": {
+    "date_label": "Fecha de inicio",
+    "date_placeholder": "DD.MM.AAAA",
+    "time_label": "Hora de inicio",
+    "time_placeholder": "HH:MM"
   }
 }

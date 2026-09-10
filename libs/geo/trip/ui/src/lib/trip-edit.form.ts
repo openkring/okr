@@ -3,7 +3,7 @@ import { form } from '@angular/forms/signals';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular/standalone';
 
 import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@okr/shared-models';
-import { NotesInput, NotesInputI18n, NumberInput, NumberInputI18n } from '@okr/shared-ui';
+import { DateInput, DateInputI18n, ErrorNote, NotesInput, NotesInputI18n, NumberInput, NumberInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { debugFormModel, getDurationLabel, hasRole } from '@okr/shared-util-core';
 import { validateVestTree } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES } from '@okr/shared-constants';
@@ -19,7 +19,7 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
   imports: [
     SvgIconPipe,
     IonItem, IonLabel, IonGrid, IonRow, IonCol, IonIcon, IonCard, IonCardContent, IonButton,
-    NotesInput, Avatars, NumberInput
+    NotesInput, Avatars, NumberInput, DateInput, TimeInput, ErrorNote
   ],
   styles: [`
     ion-thumbnail { width: 30px; height: 30px; }
@@ -32,18 +32,49 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
       <ion-card>
         <ion-card-content class="ion-no-padding">
           <ion-grid>
-            <ion-row>
-              <ion-col size="6">
-                <ion-item lines="none">
-                  <ion-label>{{ i18n().date() }}</ion-label>
-                </ion-item>
-              </ion-col>
-              <ion-col size="6">
-                <ion-item lines="none">
-                  <ion-label>{{ duration() }}</ion-label>
-                </ion-item>
-              </ion-col>
-            </ion-row>
+            <!-- date/time: read-only for the kiosk, editable for an admin correcting a trip -->
+            @if(hasRole('admin')) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-date-input [i18n]="startDateI18n()" [storeDate]="startDate()"
+                    (storeDateChange)="onFieldChange('startDate', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-error-note [errors]="startDateErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-time-input [i18n]="startTimeI18n()" [value]="startTime()"
+                    (valueChange)="onFieldChange('startTime', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-error-note [errors]="startTimeErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-date-input [i18n]="endDateI18n()" [storeDate]="endDate()"
+                    (storeDateChange)="onFieldChange('endDate', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-error-note [errors]="endDateErrors()" />
+                </ion-col>
+                <ion-col size="12" size-md="6">
+                  <okr-time-input [i18n]="endTimeI18n()" [value]="endTime()"
+                    (valueChange)="onFieldChange('endTime', $event)" [locale]="locale()" [readOnly]="false" />
+                  <okr-error-note [errors]="endTimeErrors()" />
+                </ion-col>
+                <ion-col size="12">
+                  <ion-item lines="none">
+                    <ion-label>{{ duration() }}</ion-label>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            } @else {
+              <ion-row>
+                <ion-col size="6">
+                  <ion-item lines="none">
+                    <ion-label>{{ i18n().date() }}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="6">
+                  <ion-item lines="none">
+                    <ion-label>{{ duration() }}</ion-label>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            }
 
             <!-- boat -->
             <ion-row>
@@ -142,6 +173,7 @@ export class TripEditForm {
   public readonly boats = input.required<ResourceModel[]>();
   public readonly locations = input.required<LocationModel[]>();
   public readonly category = input.required<CategoryListModel>();
+  public readonly locale = input.required<string>();
 
   // outputs
   public dirty = output<boolean>();
@@ -159,6 +191,25 @@ export class TripEditForm {
   constructor() {
     effect(() => this.valid.emit(this.tripForm().valid()));
   }
+
+  // date/time fields — only rendered for an admin, but computed unconditionally (cheap)
+  // formatTripTime turns the legacy 'HHmm' storage form into the 'HH:mm' the input expects
+  protected startDate = computed(() => this.formData().startDate ?? '');
+  protected startTime = computed(() => formatTripTime(this.formData().startTime ?? ''));
+  protected endDate = computed(() => this.formData().endDate ?? '');
+  protected endTime = computed(() => formatTripTime(this.formData().endTime ?? ''));
+
+  protected startDateI18n = computed(() => ({ name: 'startDate', label: this.i18n().start_date_label(), placeholder: this.i18n().start_date_placeholder() } as DateInputI18n));
+  protected startTimeI18n = computed(() => ({ name: 'startTime', label: this.i18n().start_time_label(), placeholder: this.i18n().start_time_placeholder() } as TimeInputI18n));
+  protected endDateI18n = computed(() => ({ name: 'endDate', label: this.i18n().end_date_label(), placeholder: this.i18n().end_date_placeholder() } as DateInputI18n));
+  protected endTimeI18n = computed(() => ({ name: 'endTime', label: this.i18n().end_time_label(), placeholder: this.i18n().end_time_placeholder() } as TimeInputI18n));
+
+  // per-field errors: without them a mistyped date would silently hide the save banner
+  private readonly validationResult = computed(() => tripValidationSuite(this.formData()));
+  protected startDateErrors = computed(() => this.validationResult().getErrors('startDate'));
+  protected startTimeErrors = computed(() => this.validationResult().getErrors('startTime'));
+  protected endDateErrors = computed(() => this.validationResult().getErrors('endDate'));
+  protected endTimeErrors = computed(() => this.validationResult().getErrors('endTime'));
 
   // derived
   protected duration = computed(() =>

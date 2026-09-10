@@ -1,15 +1,33 @@
-import { enforce, only, staticSuite, test } from 'vest';
+import { enforce, omitWhen, only, staticSuite, test } from 'vest';
 
 import { TripModel } from '@okr/shared-models';
 import { dateValidations, timeValidations } from '@okr/shared-util-core';
 
-import { MAX_TRIP_DISTANCE_KM } from './trip.util';
+import { formatTripTime, MAX_TRIP_DISTANCE_KM } from './trip.util';
 
 export const tripValidationSuite = staticSuite((trip: TripModel, field?: string) => {
   if (field) only(field);
 
   dateValidations('startDate', trip.startDate);
-  timeValidations('startTime', trip.startTime);
+  // legacy trips store the time as 'HHmm'; normalise before validating, otherwise checkTime
+  // rejects every trip written before the 'HH:mm' form and the admin cannot correct it
+  timeValidations('startTime', formatTripTime(trip.startTime));
+  // an open trip has no end yet — both fields stay optional, they are only filled by the
+  // 'end' action or by an admin correcting a trip after the fact
+  // '?? '' ': a Firestore read returns the raw document, so a trip written before these
+  // fields existed has no endDate/endTime at all — undefined would fail the notUndefined test
+  dateValidations('endDate', trip.endDate ?? '');
+  timeValidations('endTime', formatTripTime(trip.endTime ?? ''));
+
+  // formatTripTime normalises the legacy 'HHmm' form to 'HH:mm', so the two keys compare
+  // lexicographically; without it '1430' would sort before '09:00'
+  omitWhen(!trip.startDate || !trip.startTime || !trip.endDate || !trip.endTime, () => {
+    test('endDate', '@geo/trip/feature.warning.end_before_start', () => {
+      const start = `${trip.startDate}${formatTripTime(trip.startTime)}`;
+      const end = `${trip.endDate}${formatTripTime(trip.endTime)}`;
+      enforce(end >= start).equals(true);
+    });
+  });
 
   test('resource', '@trip/field.boat', () => {
     enforce(trip.resource?.key).isNotBlank();

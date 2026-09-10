@@ -20,7 +20,11 @@
     "error": "Non è stato possibile eliminare l'uscita."
   },
   "end": {
-    "label": "Chiudi uscita"
+    "label": "Chiudi uscita",
+    "date_label": "Data di fine",
+    "date_placeholder": "GG.MM.AAAA",
+    "time_label": "Ora di fine",
+    "time_placeholder": "HH:MM"
   },
   "view": {
     "label": "Visualizza uscita"
@@ -112,7 +116,8 @@
     "distance_zero": "Inserire una distanza tra 1 e 500 km.",
     "seats_mismatch": "Il numero di partecipanti non corrisponde alla capacità dell'imbarcazione.",
     "max_participants": "Su questa barca c’è posto per al massimo {count} persone.",
-    "note": "Per evitare abusi, in background vengono eseguiti vari controlli. Qualora venga rilevato un abuso, l'amministratore viene avvisato."
+    "note": "Per evitare abusi, in background vengono eseguiti vari controlli. Qualora venga rilevato un abuso, l'amministratore viene avvisato.",
+    "end_before_start": "La fine dell'uscita è precedente al suo inizio."
   },
   "boat": "Imbarcazione",
   "distance": {
@@ -240,5 +245,11 @@
     "unlock_conf": "Il libro di bordo è stato sbloccato.",
     "none": "Nessun dispositivo kiosk è registrato per questo club.",
     "error": "Non è stato possibile bloccare o sbloccare il libro di bordo."
+  },
+  "start": {
+    "date_label": "Data di partenza",
+    "date_placeholder": "GG.MM.AAAA",
+    "time_label": "Ora di partenza",
+    "time_placeholder": "HH:MM"
   }
 }

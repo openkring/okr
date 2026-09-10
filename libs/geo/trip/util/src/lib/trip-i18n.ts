@@ -129,6 +129,16 @@ export const TRIP_I18N_KEYS = {
   notes_placeholder:        PFX + 'notes.placeholder',
   date:                     PFX + 'date',
 
+  // admin-only date/time editing of a trip
+  start_date_label:         PFX + 'start.date_label',
+  start_date_placeholder:   PFX + 'start.date_placeholder',
+  start_time_label:         PFX + 'start.time_label',
+  start_time_placeholder:   PFX + 'start.time_placeholder',
+  end_date_label:           PFX + 'end.date_label',
+  end_date_placeholder:     PFX + 'end.date_placeholder',
+  end_time_label:           PFX + 'end.time_label',
+  end_time_placeholder:     PFX + 'end.time_placeholder',
+
   location:                 PFX + 'location.label',
   custom_location:          PFX + 'location.custom',
   location_view_list:       PFX + 'location.view.list',

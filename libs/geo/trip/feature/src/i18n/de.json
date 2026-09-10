@@ -20,7 +20,11 @@
     "error": "Die Fahrt konnte nicht gelöscht werden."
   },
   "end": {
-    "label": "Fahrt abschliessen"
+    "label": "Fahrt abschliessen",
+    "date_label": "Enddatum",
+    "date_placeholder": "TT.MM.JJJJ",
+    "time_label": "Endzeit",
+    "time_placeholder": "HH:MM"
   },
   "view": {
     "label": "Fahrt ansehen"
@@ -112,7 +116,8 @@
     "distance_zero": "Bitte eine Distanz zwischen 1 und 500 km eingeben.",
     "seats_mismatch": "Anzahl Teilnehmende entspricht nicht der Bootskapazität.",
     "max_participants": "In diesem Boot haben höchstens {count} Personen Platz.",
-    "note": "Um Missbräuche zu vermeiden, finden im Hintergrund verschiedene Checks statt. Sollte ein Missbrauch festgestellt werden, wird der Admin notifiziert."
+    "note": "Um Missbräuche zu vermeiden, finden im Hintergrund verschiedene Checks statt. Sollte ein Missbrauch festgestellt werden, wird der Admin notifiziert.",
+    "end_before_start": "Das Ende der Fahrt liegt vor ihrem Start."
   },
   "boat": "Boot",
   "distance": {
@@ -240,5 +245,11 @@
     "unlock_conf": "Das Logbuch wurde entsperrt.",
     "none": "Für diesen Verein ist kein Kiosk-Gerät registriert.",
     "error": "Das Logbuch konnte nicht gesperrt bzw. entsperrt werden."
+  },
+  "start": {
+    "date_label": "Startdatum",
+    "date_placeholder": "TT.MM.JJJJ",
+    "time_label": "Startzeit",
+    "time_placeholder": "HH:MM"
   }
 }
