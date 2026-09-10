@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, DocumentModel, DocumentRendering, ImageType } from '@okr/shared-models';
 
-import { getDocumentImageType, isVisibleInAlbum, toImageConfig } from './album.util';
+import { buildAlbumUploadPath, getDocumentImageType, isVisibleInAlbum, toImageConfig } from './album.util';
 
 function doc(overrides: Partial<DocumentModel> = {}): DocumentModel {
   return { ...new DocumentModel('p13'), okey: 'd1', fullPath: 'tenant/p13/document/img.jpg', mimeType: 'image/jpeg', ...overrides };
@@ -112,6 +112,28 @@ describe('toImageConfig for videos', () => {
     doc.fullPath = 'tenant/scs/section/s1/album/photo.jpg';
     doc.mimeType = 'image/jpeg';
     expect(toImageConfig(doc).url).toBe('tenant/scs/section/s1/album/photo.jpg');
+  });
+});
+
+describe('buildAlbumUploadPath', () => {
+  it('nests the sanitized file name under basePath, keeping the extension last', () => {
+    const path = buildAlbumUploadPath('tenant/scs/section/s1/album', 'IMG_0042.mov');
+    expect(path.startsWith('tenant/scs/section/s1/album/')).toBe(true);
+    expect(path.endsWith('.mov')).toBe(true);
+    expect(path).toMatch(/^tenant\/scs\/section\/s1\/album\/[A-Za-z0-9]+-IMG_0042\.mov$/);
+  });
+
+  it('sanitizes umlauts and spaces in the original name', () => {
+    const path = buildAlbumUploadPath('tenant/scs/section/s1/album', 'Bildschirmfoto Grün.jpg');
+    expect(path).toMatch(/^tenant\/scs\/section\/s1\/album\/[A-Za-z0-9]+-Bildschirmfoto-Grun\.jpg$/);
+  });
+
+  it('produces a different path on every call, without any lookup', () => {
+    // The whole point of building uniqueness in rather than probing for it: two uploads of the
+    // exact same original name must never collide on the same path.
+    const first = buildAlbumUploadPath('tenant/scs/section/s1/album', 'IMG_0042.mov');
+    const second = buildAlbumUploadPath('tenant/scs/section/s1/album', 'IMG_0042.mov');
+    expect(first).not.toBe(second);
   });
 });
 

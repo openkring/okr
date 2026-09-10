@@ -2,15 +2,13 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { FirebaseStorage, getMetadata, ref } from 'firebase/storage';
 import { of } from 'rxjs';
 
-import { STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { ALBUM_CONFIG_SHAPE, AlbumConfig, DocumentCollection, DocumentModel, FolderModel, FolderModelName, ImageConfig, ImageType, SectionModelName } from '@okr/shared-models';
-import { checkVideoLimits, debugMessage, fileSizeUnit, fill, formatDuration, generateRandomString, getSystemQuery, sanitizeFileName, suffixFileName } from '@okr/shared-util-core';
+import { checkVideoLimits, debugMessage, fileSizeUnit, fill, formatDuration, getSystemQuery } from '@okr/shared-util-core';
 import { showImageSlider } from '@okr/shared-ui';
 import { downloadFilesAsZip, exportCsv, getExportFileName, showToast, ZipEntry } from '@okr/shared-util-angular';
 
@@ -19,58 +17,7 @@ import { DocumentService } from '@okr/content-document-data-access';
 import { FolderService } from '@okr/content-folder-data-access';
 import { newFolderModel } from '@okr/content-folder-util';
 
-import { isVisibleInAlbum, SECTION_I18N_KEYS, toImageConfig } from '@okr/cms-section-util';
-
-/** Length of the discriminator appended to a colliding file name — short enough to stay readable. */
-const UNIQUE_SUFFIX_LENGTH = 4;
-/** How many suffixed candidates are tried before falling back to a long, effectively unique one. */
-const UNIQUE_PATH_ATTEMPTS = 5;
-
-/**
- * Whether something already lives at this storage path.
- *
- * Every failure answers "no". `storage/object-not-found` is the answer we are actually looking
- * for, and for the rest (offline, a denied read) refusing the upload would be the worse error:
- * the probe exists to avoid an overwrite, not to become a new way for an upload to fail.
- */
-async function pathIsTaken(storage: FirebaseStorage, fullPath: string): Promise<boolean> {
-  try {
-    await getMetadata(ref(storage, fullPath));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * A storage path for this upload that no other upload is already using.
- *
- * iPhone file names collide for real: two members putting their own `IMG_0042.mov` into the same
- * album folder produced the same path, so the second upload overwrote the first one's bytes while
- * both `docs` documents kept pointing at it. The transcoder resolves the object with
- * `where('fullPath','==',…).limit(1)` and no ordering, so it then transcoded whichever of the two
- * documents Firestore returned: one clip was never converted at all, and the other's tile showed a
- * poster with a different video underneath.
- *
- * Fixed here rather than in the function, because the collision is created here — an upload that
- * never overwrites leaves the function's lookup unambiguous by construction.
- *
- * The name keeps its shape (`IMG_0042-a7f3.mov`), so what the member sees is still recognisable
- * and the extension still tells `resolveMimeType` and storage.rules what the file is.
- */
-async function uniqueUploadPath(storage: FirebaseStorage, basePath: string, fileName: string): Promise<string> {
-  const preferred = `${basePath}/${fileName}`;
-  if (!await pathIsTaken(storage, preferred)) return preferred;
-
-  for (let attempt = 0; attempt < UNIQUE_PATH_ATTEMPTS; attempt++) {
-    const candidate = `${basePath}/${suffixFileName(fileName, generateRandomString(UNIQUE_SUFFIX_LENGTH))}`;
-    if (!await pathIsTaken(storage, candidate)) return candidate;
-  }
-  // Five 4-character collisions in a row means the probe is lying to us (a denied read answers
-  // "taken" for nothing). A long suffix ends the loop without another round trip and without ever
-  // returning a path we know to be occupied.
-  return `${basePath}/${suffixFileName(fileName, generateRandomString(12))}`;
-}
+import { buildAlbumUploadPath, isVisibleInAlbum, SECTION_I18N_KEYS, toImageConfig } from '@okr/cms-section-util';
 
 export interface AlbumState {
   config: AlbumConfig;
@@ -94,7 +41,6 @@ export const AlbumStore = signalStore(
     folderService: inject(FolderService),
     documentService: inject(DocumentService),
     uploadService: inject(UploadService),
-    storage: inject(STORAGE),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
@@ -261,14 +207,17 @@ export const AlbumStore = signalStore(
           }
         }
 
-        // Never `${basePath}/${sanitizeFileName(file.name)}` unchecked: that path may already be
-        // another member's clip of the same name — see uniqueUploadPath.
-        const fullPath = await uniqueUploadPath(store.storage, basePath, sanitizeFileName(file.name));
+        // buildAlbumUploadPath makes the path unique by construction (a random segment, no
+        // lookup) — two members uploading their own `IMG_0042.mov` at the same moment can never
+        // agree on the same path, so the transcoder's fullPath lookup stays unambiguous. The
+        // original name is not lost: it goes into doc.title below, which is what the UI shows.
+        const fullPath = buildAlbumUploadPath(basePath, file.name);
         const downloadUrl = await store.uploadService.uploadFile(file, fullPath, file.name);
         if (!downloadUrl) continue;
 
         const doc = await store.documentService.getDocumentFromFile(file, fullPath);
         doc.url = downloadUrl;
+        doc.title = file.name;
         doc.tags = tags;
         doc.folderKeys = [folderKey];
         doc.authorKey = currentUser.personKey;
