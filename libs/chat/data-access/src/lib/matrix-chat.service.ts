@@ -9,7 +9,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { debugData, debugMessage } from '@okr/shared-util-core';
-import { convertHeicToJpeg, materializeFile, resolveFileMimeType, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
+import { convertHeicToJpeg, materializeFile, resolveFileMimeType, extractVideoPoster, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower } from '@okr/chat-util';
 
 import { mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -32,6 +32,18 @@ export interface MatrixPollData {
   question: string;
   answers: string[];   // min 2, max 20
   maxSelections?: number; // 1 = single choice (default), >1 = multiple choice
+}
+
+/**
+ * The `msgtype` an attachment must be sent as. Three-way, and the video branch is the
+ * reason this is a named function: everything that is not an image used to be `m.file`,
+ * which uploaded videos correctly but told every client — ours and Element alike — to
+ * draw a document card instead of a player.
+ */
+function msgTypeForMimeType(mimetype: string): MsgType {
+  if (mimetype.startsWith('image/')) return MsgType.Image;
+  if (mimetype.startsWith('video/')) return MsgType.Video;
+  return MsgType.File;
 }
 
 @Injectable({
@@ -766,18 +778,42 @@ export class MatrixChatService {
       if (file.size === 0) throw new Error(`sendFile: refusing to upload empty image ${file.name}`);
     }
 
+    // A video's poster frame is extracted BEFORE the upload, while the File handle is
+    // certainly still readable, and never blocks the send: extractVideoPoster answers null
+    // for anything the browser cannot decode (many iPhone .mov files on Chrome/Firefox).
+    const poster = mimetype.startsWith('video/') ? await extractVideoPoster(file) : null;
+
     // Upload the file
     const upload = await this.client.uploadContent(file);
     const url = upload.content_uri;
 
+    const info: IContent = { size: file.size, mimetype };
+
+    if (poster) {
+      info['w'] = poster.videoWidth;
+      info['h'] = poster.videoHeight;
+      info['duration'] = poster.durationMs; // milliseconds, per the m.video spec
+      try {
+        const posterFile = new File([poster.blob], `${file.name}.thumb.jpg`, { type: 'image/jpeg' });
+        const thumbUpload = await this.client.uploadContent(posterFile);
+        info['thumbnail_url'] = thumbUpload.content_uri;
+        info['thumbnail_info'] = {
+          w: poster.width,
+          h: poster.height,
+          mimetype: 'image/jpeg',
+          size: poster.blob.size,
+        };
+      } catch (err) {
+        // The video itself is already uploaded — losing its thumbnail must not lose the message.
+        console.warn('MatrixChatService.sendFile: thumbnail upload failed, sending without it:', err);
+      }
+    }
+
     const content: IContent = {
-      msgtype: mimetype.startsWith('image/') ? MsgType.Image : MsgType.File,
+      msgtype: msgTypeForMimeType(mimetype),
       body: file.name,
       url: url,
-      info: {
-        size: file.size,
-        mimetype,
-      },
+      info,
     };
 
     if (threadId) {

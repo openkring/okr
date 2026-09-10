@@ -9,7 +9,7 @@ import { debugData, debugMessage } from '@okr/shared-util-core';
 import { isRenderableChatEvent, isRoomGoneError } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
-import { isServiceAccount, mediaMimeHint, personAvatarUrl } from './matrix-helpers';
+import { hasResolvableMedia, isServiceAccount, mediaMimeHint, personAvatarUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
 import { MatrixRoomListService } from './matrix-room-list.service';
 
@@ -158,19 +158,7 @@ export class MatrixMessageService {
     }
 
     // Async-resolve media URL for the confirmed event (local echo has no mediaUrl yet)
-    const mxcUrl = newMsg.content?.url ?? newMsg.content?.file?.url;
-    if ((newMsg.type === 'm.image' || newMsg.type === 'm.file' || newMsg.type === 'm.audio') && mxcUrl) {
-      this.media.resolveMediaUrl(mxcUrl, mediaMimeHint(newMsg)).then(url => {
-        if (!url) return;
-        const current = subject.value ?? [];
-        const idx = current.findIndex(m => m.eventId === newMsg.eventId);
-        if (idx >= 0) {
-          const patched = [...current];
-          patched[idx] = { ...patched[idx], mediaUrl: url };
-          subject.next(patched);
-        }
-      });
-    }
+    this.patchResolvedMedia(subject, newMsg);
   }
 
   /**
@@ -447,8 +435,12 @@ export class MatrixMessageService {
             return { ...msg, senderAvatar: senderAvatar || undefined, pollVotes, pollVoters, myVoteAnswerId, myVoteAnswerIds, pollEnded };
           }
 
-          if ((msg.type === 'm.image' || msg.type === 'm.file' || msg.type === 'm.audio') && mxcUrl) {
-            return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl: await this.media.resolveMediaUrl(mxcUrl, mediaMimeHint(msg)) };
+          if (hasResolvableMedia(msg.type) && mxcUrl) {
+            const [mediaUrl, posterUrl] = await Promise.all([
+              this.media.resolveMediaUrl(mxcUrl, mediaMimeHint(msg)),
+              this.resolvePosterUrl(msg),
+            ]);
+            return { ...msg, senderAvatar: senderAvatar || undefined, mediaUrl, posterUrl };
           }
           return { ...msg, senderAvatar: senderAvatar || undefined };
         })
@@ -497,19 +489,7 @@ export class MatrixMessageService {
         subject.next([...currentMsgs, message]);
       }
       // Async-resolve media URL and patch the message once fetched
-      const mxcUrl = message.content.url ?? message.content.file?.url;
-      if ((message.type === 'm.image' || message.type === 'm.file' || message.type === 'm.audio') && mxcUrl) {
-        this.media.resolveMediaUrl(mxcUrl, mediaMimeHint(message)).then(url => {
-          if (!url) return;
-          const msgs = subject.value ?? [];
-          const idx = msgs.findIndex(m => m.eventId === message.eventId);
-          if (idx >= 0) {
-            const updated = [...msgs];
-            updated[idx] = { ...updated[idx], mediaUrl: url };
-            subject.next(updated);
-          }
-        });
-      }
+      this.patchResolvedMedia(subject, message);
       // Sender avatar: the tenant's own picture wins, otherwise async-resolve the Matrix
       // profile picture via authenticated fetch.
       const senderMember = room.getMember(event.getSender()!);
@@ -539,6 +519,47 @@ export class MatrixMessageService {
   }
 
   /** Patch a single message's senderAvatar in place on the room's message subject. */
+  /**
+   * Resolve a message's attachment — and, for a video, its poster frame — from `mxc://`
+   * to a URL the browser can load, then patch the already-emitted message in place.
+   *
+   * Both URLs are fetched together and written in a SINGLE patch on purpose: two separate
+   * patches read `subject.value` at different times, so the slower one would write back a
+   * copy of the message that predates the faster one and silently drop its field.
+   */
+  private patchResolvedMedia(subject: BehaviorSubject<MatrixMessage[] | null>, message: MatrixMessage): void {
+    const mxcUrl = message.content?.url ?? message.content?.file?.url;
+    if (!hasResolvableMedia(message.type) || !mxcUrl) return;
+
+    void Promise.all([
+      this.media.resolveMediaUrl(mxcUrl, mediaMimeHint(message)),
+      this.resolvePosterUrl(message),
+    ]).then(([mediaUrl, posterUrl]) => {
+      if (!mediaUrl && !posterUrl) return;
+      const msgs = subject.value ?? [];
+      const idx = msgs.findIndex(m => m.eventId === message.eventId);
+      if (idx < 0) return;
+      const updated = [...msgs];
+      updated[idx] = {
+        ...updated[idx],
+        ...(mediaUrl ? { mediaUrl } : {}),
+        ...(posterUrl ? { posterUrl } : {}),
+      };
+      subject.next(updated);
+    });
+  }
+
+  /**
+   * The loadable URL of a video's thumbnail, or undefined when the event carries none —
+   * which is the normal case for a video sent by a client that could not decode it, and
+   * for every video sent before this app knew about `m.video`.
+   */
+  private async resolvePosterUrl(message: MatrixMessage): Promise<string | undefined> {
+    const thumbnailMxc = message.content?.info?.thumbnail_url as string | undefined;
+    if (!thumbnailMxc) return undefined;
+    return await this.media.resolveMediaUrl(thumbnailMxc, 'image/jpeg') || undefined;
+  }
+
   private patchSenderAvatar(subject: BehaviorSubject<MatrixMessage[] | null>, eventId: string, senderAvatar: string): void {
     const msgs = subject.value ?? [];
     const idx = msgs.findIndex(m => m.eventId === eventId);

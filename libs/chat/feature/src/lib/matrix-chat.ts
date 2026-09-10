@@ -1314,7 +1314,10 @@ export class MatrixChat implements OnDestroy {
     } else {  // receiver of a poll message
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.report', this.store.i18n.msg_report_header(), this.imgixBaseUrl, 'alert-circle'));
     }
-    if (message.type === 'm.file' && !!(message.mediaUrl ?? message.content.url)) { // file attachment → offer share (+ download on web)
+    // m.video belongs here too: a video used to travel as m.file, and dropping it from this
+    // gate would silently take share/download away from exactly the attachments that got a
+    // player. Images have their own lightbox and are deliberately not in this branch.
+    if ((message.type === 'm.file' || message.type === 'm.video') && !!(message.mediaUrl ?? message.content.url)) { // file attachment → offer share (+ download on web)
       actionSheetOptions.buttons.push(createActionSheetButton('chat.message.share', this.store.i18n.msg_share(), this.imgixBaseUrl, 'share'));
       if (!isNativePlatform()) { // web only — native already saves via the share sheet
         actionSheetOptions.buttons.push(createActionSheetButton('chat.message.download', this.store.i18n.msg_download(), this.imgixBaseUrl, 'download'));

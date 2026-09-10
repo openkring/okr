@@ -7,7 +7,7 @@ import { MatrixMessage, MatrixReadReceipt, PersonModelName } from '@okr/shared-m
 import { AvatarService } from '@okr/avatar-data-access';
 import { MatrixReadReceiptStrip } from './matrix-read-receipt-strip';
 import { PollMessage } from './poll-message';
-import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, linkifyText, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
+import { decorateMentionPills, extractMentionLocalpart, formatMatrixDate, formatMatrixTime, groupMessages, ImageBatchGroup, isVideoMessage, linkifyText, MatrixChatI18n, MessageOrBatch } from '@okr/chat-util';
 
 /** imgix thumbnail size for a mention pill's avatar — 2x the 18px CSS box, for retina. */
 const MENTION_AVATAR_SIZE = 36;
@@ -204,6 +204,15 @@ const MENTION_AVATAR_SIZE = 36;
       max-width: 100%;
       min-width: 200px;
       display: block;
+    }
+
+    .message-video {
+      max-width: 100%;
+      /* Cap the height so a portrait phone clip cannot fill the whole timeline. */
+      max-height: 420px;
+      border-radius: 8px;
+      display: block;
+      background: #000;
     }
 
     .message-location-map {
@@ -466,8 +475,39 @@ const MENTION_AVATAR_SIZE = 36;
                               <p class="message-text" [innerHTML]="linkify(item.body)"></p>
                             }
                           }
+                          @case ('m.video') {
+                            @if (item.mediaUrl) {
+                              <video
+                                controls
+                                preload="metadata"
+                                playsinline
+                                class="message-video"
+                                [src]="item.mediaUrl"
+                                [poster]="item.posterUrl ?? null"
+                                (click)="$event.stopPropagation()"
+                              ></video>
+                            } @else {
+                              <div class="message-file">
+                                <ion-icon src="{{'video' | svgIcon}}"></ion-icon>
+                                <span>{{ item.body }}</span>
+                              </div>
+                            }
+                          }
                           @case ('m.file') {
-                            @if (isAudioFile(item) && item.mediaUrl) {
+                            <!-- Videos this app sent before it knew about m.video arrived as
+                                 m.file with a video mimetype. Route them to the same player
+                                 rather than leaving them as document cards forever. -->
+                            @if (isVideoFile(item) && item.mediaUrl) {
+                              <video
+                                controls
+                                preload="metadata"
+                                playsinline
+                                class="message-video"
+                                [src]="item.mediaUrl"
+                                [poster]="item.posterUrl ?? null"
+                                (click)="$event.stopPropagation()"
+                              ></video>
+                            } @else if (isAudioFile(item) && item.mediaUrl) {
                               <audio controls class="message-audio" [src]="item.mediaUrl" (click)="$event.stopPropagation()"></audio>
                             } @else {
                               <!-- No own click handler: let it bubble to the bubble's messageClicked,
@@ -758,6 +798,11 @@ export class MatrixMessageList {
 
   formatTime(timestamp: number): string {
     return formatMatrixTime(timestamp);
+  }
+
+  /** True if this message should render as a video player — see isVideoMessage. */
+  isVideoFile(message: MatrixMessage): boolean {
+    return isVideoMessage(message);
   }
 
   isAudioFile(message: MatrixMessage): boolean {

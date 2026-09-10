@@ -1,3 +1,5 @@
+import { videoMimeTypeForName } from './video.util';
+
 /**
  * Supported image MIME types for chat upload and preview.
  *
@@ -69,13 +71,16 @@ export function isImageFileName(name: string): boolean {
 
 /**
  * The MIME type to record for an upload: what the browser reported, else what the
- * extension implies, else '' (an unknown non-image — a genuine file attachment).
+ * extension implies, else '' (an unknown type — a genuine file attachment).
  *
- * Every layer that has to decide whether something is an image must go through this,
- * so the composer preview, the sent event and the renderer can never disagree again.
+ * Every layer that has to decide whether something is an image or a video must go through
+ * this, so the composer preview, the sent event and the renderer can never disagree again.
+ * Videos are resolved from their own extension map for exactly the same reason images are:
+ * an untyped `.MOV` out of the iOS Files app would otherwise ship as `m.file` and render
+ * as a document card instead of a player.
  */
 export function resolveFileMimeType(file: File): string {
-  return file.type || imageMimeTypeForName(file.name) || '';
+  return file.type || imageMimeTypeForName(file.name) || videoMimeTypeForName(file.name) || '';
 }
 
 /** Returns true if the file is a supported chat image (MIME type or extension match). */

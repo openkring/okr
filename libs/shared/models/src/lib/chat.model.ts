@@ -22,7 +22,8 @@ export interface MatrixMessage {
   timestamp: number;
   type: string;
   content: any;
-  mediaUrl?: string; // resolved HTTP/blob URL for image and file messages
+  mediaUrl?: string; // resolved HTTP/blob URL for image, video, audio and file messages
+  posterUrl?: string; // resolved HTTP/blob URL of a video's thumbnail (content.info.thumbnail_url)
   relatesTo?: {
     eventId: string;
     relationType: string;

@@ -1,7 +1,7 @@
 import type { MatrixClient, User } from 'matrix-js-sdk';
 
 import { MatrixMessage, PersonModelName } from '@okr/shared-models';
-import { imageMimeTypeForName } from '@okr/chat-util';
+import { imageMimeTypeForName, videoMimeTypeForName } from '@okr/chat-util';
 import { AvatarService } from '@okr/avatar-data-access';
 
 /**
@@ -57,5 +57,20 @@ export function mxcAvatarHttpUrl(client: MatrixClient | null, user?: User, size 
  * silently refuse to render.
  */
 export function mediaMimeHint(msg: MatrixMessage): string | undefined {
-  return (msg.content?.info?.mimetype as string | undefined) || imageMimeTypeForName(msg.body ?? '');
+  return (msg.content?.info?.mimetype as string | undefined)
+    || imageMimeTypeForName(msg.body ?? '')
+    || videoMimeTypeForName(msg.body ?? '');
+}
+
+/**
+ * Message types whose `content.url` points at an attachment that must be resolved from
+ * `mxc://` to something an `<img>`/`<video>`/`<audio>` can load.
+ *
+ * This lives here as ONE predicate because the same condition is needed at three points in
+ * MatrixMessageService (initial load, live event, patched event). It used to be spelled out
+ * three times, and adding `m.video` to two of the three would have produced a video that
+ * plays in the timeline but not after a reload — the kind of bug that looks like caching.
+ */
+export function hasResolvableMedia(type: string): boolean {
+  return type === 'm.image' || type === 'm.video' || type === 'm.audio' || type === 'm.file';
 }
