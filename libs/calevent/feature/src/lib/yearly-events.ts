@@ -1,11 +1,12 @@
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
 import { ActionSheetOptions, IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { ActionSheetController } from '@ionic/angular';
+import { Router } from '@angular/router';
 
 import { CalEventModel, RoleName } from '@okr/shared-models';
 import { LabelPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
-import { createActionSheetButton, createActionSheetOptions, error } from '@okr/shared-util-angular';
+import { createActionSheetButton, createActionSheetOptions, error, navigateByUrl } from '@okr/shared-util-angular';
 import { extractSecondPartOfOptionalTupel, getYearFromDate, hasRole } from '@okr/shared-util-core';
 
 import { Menu } from '@okr/cms-menu-feature';
@@ -63,7 +64,7 @@ type YearlyEventSortField = 'year' | 'responsible' | 'location' | 'description';
     />
 
     <!-- list header -->
-    <ion-toolbar color="light">
+    <ion-toolbar color="primary">
       <ion-grid>
         <ion-row>
           <ion-col size="6" size-md="4" size-lg="3" class="clickable" (click)="setSort('year')">
@@ -101,9 +102,12 @@ type YearlyEventSortField = 'year' | 'responsible' | 'location' | 'description';
               <ion-label class="ion-hide-md-up"><okr-avatar-display [avatars]="event.responsiblePersons" [showName]="false" /></ion-label>
               <ion-label>{{ event.locationKey | label }}</ion-label>
               <ion-label class="ion-hide-lg-down">{{ event.description }}</ion-label>
-              <!-- a configured link opens in the same tab; the click must not open the ActionSheet -->
+              <!-- a configured link opens in the same tab; the click must not open the ActionSheet.
+                   The href stays on the anchor so hover/copy-link/middle-click keep working, but a
+                   plain left click is routed through the Router: an in-app url must not reload the
+                   whole SPA (openLink hands genuine externals back to the browser). -->
               @if(event.url) {
-                <a slot="end" [href]="event.url" [title]="event.urlLabel || event.url" rel="noopener noreferrer" (click)="$event.stopPropagation()">
+                <a slot="end" [href]="event.url" [title]="event.urlLabel || event.url" rel="noopener noreferrer" (click)="openLink($event, event.url)">
                   <ion-icon src="{{'link' | svgIcon }}" />
                 </a>
               }
@@ -118,6 +122,7 @@ type YearlyEventSortField = 'year' | 'responsible' | 'location' | 'description';
 export class YearlyEvents {
   protected store = inject(CalEventStore);
   private actionSheetController = inject(ActionSheetController);
+  private router = inject(Router);
 
   // inputs
   public listId = input.required<string>();     // calendar name
@@ -177,6 +182,20 @@ export class YearlyEvents {
       case 'exportRaw': await this.store.export("raw"); break;
       default: error(undefined, `YearlyEvents.onPopoverDismiss: unknown method ${selectedMethod}`);
     }
+  }
+
+  /**
+   * Opens the link configured on a CalEvent. The click must never reach the row (that would open
+   * the ActionSheet). A url that points back into the app is routed by the Router so the
+   * transition stays inside the SPA instead of reloading the whole app; navigateByUrl recognizes
+   * a same-origin absolute url and hands a genuine external one to the browser.
+   * A modified click (new tab/window, download) is left to the browser untouched.
+   */
+  protected openLink($event: MouseEvent, url: string): void {
+    $event.stopPropagation();
+    if ($event.button !== 0 || $event.ctrlKey || $event.metaKey || $event.shiftKey || $event.altKey) return;
+    $event.preventDefault();
+    navigateByUrl(this.router, url).catch(ex => error(undefined, 'YearlyEvents.openLink: ' + ex));
   }
 
   /**
