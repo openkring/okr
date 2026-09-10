@@ -268,8 +268,16 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Read your own doc; admins/privileged may read others within their tenant.
+      // The `resource == null` arm is the same guard tenantRead() carries: a get() on a
+      // NON-EXISTENT user doc evaluates rules with resource == null, and dereferencing
+      // resource.data.tenants there raises an error → the client sees "Missing or
+      // insufficient permissions" instead of a clean not-found. That broke the
+      // read-then-create pattern in FirestoreService.createModel, whose existence-guard
+      // transaction GETS users/{uid} before writing it — so an admin could not provision a
+      // user account at all (kwa-app, 2026-09-10). A list/query always has a concrete
+      // resource, so belongsToTenant still fully gates real data.
       allow read: if signedIn() && (request.auth.uid == userId
-                    || (isPrivileged() && belongsToTenant(resource.data)));
+                    || (isPrivileged() && (resource == null || belongsToTenant(resource.data))));
 
       // Self-service create of your own doc is allowed only without elevated roles;
       // admins may create within their tenant. (User provisioning normally happens
@@ -599,7 +607,7 @@ service cloud.firestore {
     // ============================================================================
 
     match /templates/{templateId} {
-      allow read:          if userExists() && belongsToTenant(resource.data);
+      allow read:          if userExists() && (resource == null || belongsToTenant(resource.data));
       allow create, update: if isPrivileged() || hasRole('contentAdmin');
       allow delete:        if isAdmin();
 
@@ -616,7 +624,7 @@ service cloud.firestore {
     // ============================================================================
 
     match /docGenerations/{genId} {
-      allow read:  if signedIn() && (request.auth.uid == resource.data.userId || isAdmin());
+      allow read:  if signedIn() && (resource == null || request.auth.uid == resource.data.userId || isAdmin());
       allow write: if false;
     }
     // Evidence that a data-subject erasure ran (privacy 1.19, Phase 5B). Holds counts
@@ -662,7 +670,7 @@ service cloud.firestore {
     }
     match /esignList/{esignId} {
       // esign records carry a singular tenantId field (not a tenants[] array).
-      allow read:  if userExists() && callerTenants().hasAny([resource.data.tenantId]);
+      allow read:  if userExists() && (resource == null || callerTenants().hasAny([resource.data.tenantId]));
       allow write: if false;
     }
     match /esignAudit/{tenantId}/{subcollection=**} {
@@ -696,7 +704,7 @@ service cloud.firestore {
     // ============================================================================
 
     match /applications/{appId} {
-      allow read:   if isPrivileged() && belongsToTenant(resource.data);
+      allow read:   if isPrivileged() && (resource == null || belongsToTenant(resource.data));
       allow create: if request.resource.data.state == 'applied'
                      && request.resource.data.taskKey == ''
                      && request.resource.data.personKey == ''
