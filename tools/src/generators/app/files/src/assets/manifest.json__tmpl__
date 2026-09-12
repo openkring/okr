@@ -1,8 +1,8 @@
 {
   "name": "<%= appName %>",
   "short_name": "<%= tenantId %>",
-  "id": "/public/welcome",
-  "start_url": "/public/welcome",
+  "id": "/",
+  "start_url": "/",
   "theme_color": "#ffffff",
   "background_color": "#ffffff",
   "display_override": ["fullscreen", "minimal-ui"],
