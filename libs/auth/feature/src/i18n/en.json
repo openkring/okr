@@ -4,30 +4,46 @@
     "label": "Email",
     "placeholder": "ssss@ssssssss.sss",
     "error": "Please enter a valid email address.",
-    "helper": "Please use the same email address on which you receive the association information."
+    "helper": "Use the email address the club sends its information to."
   },
   "password": {
     "label": "Password",
     "placeholder": "Password",
-    "error": "The password must be at least 6 characters long and may contain the following special characters: -_!@?:;äüö$*+&()=.,£$%",
-    "helper": "If you do not yet have a password or do not know it, you can click the 'Reset password' button below and set a new password.",
-    "changed": "The password for {email} was changed."
+    "error": "The password must be at least 6 characters long.",
+    "helper": "If you do not know your password, you can set a new one by email below.",
+    "changed": "Password set for {email}. You are signed in now.",
+    "newLabel": "New password",
+    "newPlaceholder": "At least 8 characters",
+    "newHelper": "At least 8 characters — there are no other rules.",
+    "accountLabel": "Account"
   },
   "pwdreset": {
     "title": "Set password",
-    "newpwd": "Set a new password",
+    "newpwd": "Choose a new password",
     "invalidLink": "This link is no longer valid. Request a new one below — it arrives by email right away.",
-    "success": "Password changed successfully. You will be redirected to the sign-in page.",
-    "savepwd": "Save password",
+    "success": "Password saved. Signing you in.",
+    "savepwd": "Save password and sign in",
     "error": {
       "expired": "This link has expired. A link for setting your password is only valid for a short while. Request a new one below — it arrives by email right away.",
       "used": "This link has already been used. If you set your password with it, you can sign in directly. Otherwise request a new link below.",
       "noAccount": "There is no active account for this email address. Please get in touch with your club's administration.",
-      "weakPassword": "This password is too simple. Please choose one with at least 6 characters.",
-      "network": "We could not reach the server just now. Check your internet connection and try again."
+      "weakPassword": "This password is too short. Please choose one with at least 8 characters.",
+      "network": "We could not reach the server just now. Check your internet connection and try again.",
+      "tooShort": "The password must be at least 8 characters long."
     },
     "requestNewLink": "Request a new link",
-    "gotoLogin": "Go to sign-in"
+    "gotoLogin": "Go to sign-in",
+    "cta": "No password yet? Set one by email",
+    "sent": {
+      "title": "Check your mailbox",
+      "body": "We have just sent a link to {email}. Tap it and you can set your password. The link is valid for one hour.",
+      "spam": "Nothing arrived? Have a look in your spam folder too.",
+      "resend": "Send the email again",
+      "resent": "We have sent the link to {email} again.",
+      "other": "Use a different email address",
+      "help": "If nothing arrives after a few minutes, get in touch with your club's administration."
+    },
+    "checking": "One moment, we are checking your link …"
   },
   "pwdconfirm": "Set password",
   "roles": {

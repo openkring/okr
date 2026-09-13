@@ -252,7 +252,10 @@ export const AocRolesStore = signalStore(
             const email = store.appStore.env.production ? user.loginEmail : store.appStore.currentUser()?.loginEmail;
             patchState(store, { log: [], logTitle: `sending reset password email to ${email}` });
             if (email) {
-              store.authService.resetPassword(email, 'aoc/roles');
+              // resetPassword no longer navigates or toasts — the console reports through its
+              // own log panel, which is the surface an admin is actually watching here.
+              const sent = await store.authService.resetPassword(email);
+              patchState(store, { logTitle: sent ? `reset password email sent to ${email}` : `sending reset password email to ${email} FAILED` });
             }
           } catch (ex) {
             error(store.toastController, 'RolesStore.resetPassword -> error: ' + JSON.stringify(ex));

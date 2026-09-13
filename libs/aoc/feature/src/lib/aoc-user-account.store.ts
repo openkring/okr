@@ -360,7 +360,10 @@ export const AocUserAccountStore = signalStore(
 
       async resetPassword(account: UserAccount): Promise<void> {
         if (!account.loginEmail) return;
-        await store.authService.resetPassword(account.loginEmail, 'aoc/accounts');
+        // resetPassword reports only whether the REQUEST went through; whether a mail was
+        // delivered is deliberately not knowable here (M-3). Say exactly that much.
+        const sent = await store.authService.resetPassword(account.loginEmail);
+        if (!sent) error(store.toastController, `AocUserAccountStore.resetPassword -> could not request a password link for ${account.loginEmail}`);
       }
     };
   })

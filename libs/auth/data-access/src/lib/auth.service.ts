@@ -10,7 +10,7 @@ import { AlertService, navigateByUrl } from '@okr/shared-util-angular';
 import { die, warn } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { ActivityService } from '@okr/activity-data-access';
-import { LoginFailure, PwdResetResult, toLoginFailure, toPwdResetFailure } from '@okr/auth-util';
+import { LoginFailure, PwdResetFailure, PwdResetResult, toLoginFailure, toPwdResetFailure } from '@okr/auth-util';
 
 import { PFX } from './scope';
 
@@ -114,23 +114,49 @@ export class AuthService {
   }
 
   /**
-   * Send a reset password link to an email address of a user who forgot her password.
-   * @param loginEmail an email address of a user
-   * @param loginUrl the URL to navigate to in case of an error
+   * Send a password link to an address, so the user can set a password without knowing the old one.
+   *
+   * Returns whether the REQUEST went through — not whether a mail was delivered. The callable
+   * answers the same way for an address with an account and one without (anti-enumeration, M-3),
+   * so no caller can learn more than this, and none should phrase its UI as if it could.
+   *
+   * Neither toasts nor navigates any more: the caller owns what the user sees next, because the
+   * old behaviour (toast, then back to the empty login form) left no trace on screen that a mail
+   * was coming at all.
    */
-  public async resetPassword(loginEmail: string, loginUrl: string): Promise<void> {
+  public async resetPassword(loginEmail: string): Promise<boolean> {
     try {
       if (!loginEmail || loginEmail.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
       const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
       await fn({ to: [loginEmail], appId: this.env.appId, provider: 'mailtrap_api', template: 'password_reset' });
       void this.activityService.logAuth('pwdreset', `${loginEmail}: SUCCESS`);
-      await this.alertService.showToast(this.i18n.pwdreset_conf() + loginEmail);
-      await navigateByUrl(this.router, loginUrl);
+      return true;
     } catch (ex) {
       void this.activityService.logAuth('pwdreset', `${loginEmail}: ERROR: ${ex}`);
       console.error('AuthService.resetPassword: error: ', ex);
       await this.alertService.showToast(this.i18n.pwdreset_error());
-      await navigateByUrl(this.router, loginUrl);
+      return false;
+    }
+  }
+
+  /**
+   * Sign in straight after a password was set, without sending the user back to the login form.
+   *
+   * At that moment both halves of the credential are in hand — confirmPasswordReset() returned
+   * the verified address and the user just chose the password — so asking them to type both again
+   * is a step that exists for no reason. Best-effort by design: if this fails the caller still
+   * navigates to the login page, which is exactly where the old flow ended anyway.
+   */
+  public async signInAfterPasswordSet(loginEmail: string, password: string): Promise<boolean> {
+    try {
+      await setPersistence(this.auth, browserLocalPersistence);
+      await signInWithEmailAndPassword(this.auth, loginEmail, password);
+      void this.activityService.logAuth('login', `${loginEmail}: SUCCESS (after password set)`);
+      return true;
+    } catch (ex) {
+      void this.activityService.logAuth('login', `${loginEmail}: ERROR (after password set): ${ex}`);
+      console.error('AuthService.signInAfterPasswordSet: error: ', ex);
+      return false;
     }
   }
 
@@ -143,6 +169,28 @@ export class AuthService {
    * what lets the page say something actionable ("link already used" vs. "password too
    * short") instead of one generic sentence for every failure (SCS-A8).
    */
+  /**
+   * Check a reset link WITHOUT consuming it, and report the address it belongs to.
+   *
+   * Called when the set-password page loads. Previously the link was only validated on submit,
+   * so an expired or already-used link was reported after the user had chosen and typed a
+   * password — the one moment where the answer is most annoying and least actionable. Verifying
+   * up front also yields the address, which the page needs as the account field so the browser's
+   * password manager can attach the new password to something.
+   *
+   * verifyPasswordResetCode does not spend the code; confirmPasswordReset still does.
+   */
+  public async verifyResetCode(oobCode: string): Promise<{ email: string } | PwdResetFailure> {
+    try {
+      const email = await verifyPasswordResetCode(this.auth, oobCode);
+      return { email };
+    } catch (ex) {
+      const reason = toPwdResetFailure(ex);
+      console.error('AuthService.verifyResetCode: error: ', ex);
+      return reason;
+    }
+  }
+
   public async confirmPasswordReset(oobCode: string, newPassword: string): Promise<PwdResetResult> {
     let email = '';
     try {

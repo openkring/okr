@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IonButton, IonCol, IonContent, IonGrid, IonImg, IonLabel, IonRow, IonText } from '@ionic/angular/standalone';
 
@@ -42,7 +42,10 @@ import { AuthStore } from './auth.store';
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="store.gotoHome()" />
           <ion-label class="title"><strong>{{ store.i18n.newpwd() }}</strong></ion-label>
 
-          @if (deadLink()) {
+          @if (checking()) {
+            <!-- The link is verified before anything is asked of the user; see ngOnInit. -->
+            <ion-text><p>{{ store.i18n.checking() }}</p></ion-text>
+          } @else if (deadLink()) {
             <ion-text color="danger">
               <p>{{ errorMessage() }}</p>
             </ion-text>
@@ -95,7 +98,7 @@ import { AuthStore } from './auth.store';
     </ion-content>
   `,
 })
-export class ConfirmPasswordResetPage {
+export class ConfirmPasswordResetPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   protected readonly store = inject(AuthStore);
 
@@ -114,6 +117,8 @@ export class ConfirmPasswordResetPage {
     loginPassword: '',
   });
   protected success = signal(false);
+  /** True until the link has been checked — the form is not shown before we know it is usable. */
+  protected checking = signal(false);
 
   /** Why the last attempt failed — undefined while nothing has gone wrong yet. */
   protected failure = signal<PwdResetFailure | undefined>(this.oobCode ? undefined : 'unknown');
@@ -141,6 +146,27 @@ export class ConfirmPasswordResetPage {
   });
 
   // methods
+  /**
+   * Check the link before asking for anything.
+   *
+   * The page used to render the form straight away and only validate the code on submit, so an
+   * expired or already-used link was reported after the user had thought up and typed a
+   * password. Verifying here costs one call, turns that into an immediate answer, and yields
+   * the address the link belongs to — which the form needs as its account field so iOS can
+   * store the new password against something.
+   */
+  public async ngOnInit(): Promise<void> {
+    if (!this.oobCode) return;              // failure is already 'unknown' — the dead-link branch renders
+    this.checking.set(true);
+    const result = await this.store.verifyResetCode(this.oobCode);
+    this.checking.set(false);
+    if (typeof result === 'string') {
+      this.failure.set(result);
+      return;
+    }
+    this.currentCredentials.update(c => ({ ...c, loginEmail: result.email }));
+  }
+
   public async confirm(): Promise<void> {
     const reason = await this.store.confirmPasswordReset(this.oobCode, this.continueUrl, this.currentCredentials().loginPassword);
     this.failure.set(reason);

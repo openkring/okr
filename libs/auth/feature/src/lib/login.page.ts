@@ -8,7 +8,8 @@ import { navigateByUrl } from '@okr/shared-util-angular';
 import { getImgixUrlWithAutoParams, getSafeReturnUrl } from '@okr/shared-util-core';
 
 import { AuthService } from '@okr/auth-data-access';
-import { LoginForm } from '@okr/auth-ui';
+import { LoginForm, PwdResetSent } from '@okr/auth-ui';
+import { emailValidations } from '@okr/auth-util';
 
 import { AuthStore } from './auth.store';
 
@@ -17,7 +18,7 @@ import { AuthStore } from './auth.store';
   standalone: true,
   providers: [AuthStore],
   imports: [
-    Header, LoginForm,
+    Header, LoginForm, PwdResetSent,
     IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton
   ],
   styles: `
@@ -42,25 +43,43 @@ import { AuthStore } from './auth.store';
         <img class="background-image" [src]="backgroundImageUrl()" [alt]="store.i18n.background_alt()" />
         <div class="login-form">
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
-          <ion-label class="title"><strong>{{ store.i18n.title() }}</strong></ion-label>
-          <okr-login-form context="login"
-            [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
-            [i18n]="store.i18n"
-          />
-          <div class="button-container">
-            <ion-grid>
-              <ion-row>
-                <ion-col>
-                  <ion-button #loginButton [disabled]="!formIsValid()" (click)="login()">{{ store.i18n.title() }}</ion-button>
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col>
-                  <ion-button class="reset-button" fill="clear" color="primary" (click)="resetPassword()">{{ store.i18n.pwdreset_title() }}</ion-button>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </div>
+          @if (linkSent()) {
+            <!--
+              The mail state replaces the form in place. It used to be a toast on top of this same
+              form: by the time the user looked up from their inbox the only thing on screen was
+              the login form again, saying nothing about the link that was on its way.
+            -->
+            <okr-pwdreset-sent
+              [i18n]="store.i18n"
+              [email]="currentCredentials().loginEmail ?? ''"
+              [resent]="linkResent()"
+              (resend)="sendPasswordLink(true)"
+              (useOther)="backToForm()"
+            />
+          } @else {
+            <ion-label class="title"><strong>{{ store.i18n.title() }}</strong></ion-label>
+            <okr-login-form context="login"
+              [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
+              [i18n]="store.i18n"
+            />
+            <div class="button-container">
+              <ion-grid>
+                <ion-row>
+                  <ion-col>
+                    <ion-button #loginButton [disabled]="!formIsValid()" (click)="login()">{{ store.i18n.title() }}</ion-button>
+                  </ion-col>
+                </ion-row>
+                <ion-row>
+                  <ion-col>
+                    <!-- Needs the address, nothing else: enabled as soon as the email field is valid. -->
+                    <ion-button class="reset-button" fill="clear" color="primary"
+                      [disabled]="!emailIsValid() || isSending()"
+                      (click)="sendPasswordLink(false)">{{ store.i18n.pwdreset_cta() }}</ion-button>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </div>
+          }
         </div>
       </div>
     </ion-content>
@@ -72,8 +91,6 @@ export class LoginPage {
   protected readonly authService = inject(AuthService);
   protected readonly store = inject(AuthStore);
 
-  // inputs
-
   // computed
   public logoUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().logoUrl)}`);
   public backgroundImageUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().welcomeBannerUrl)}`);
@@ -84,14 +101,37 @@ export class LoginPage {
     loginEmail: '',
     loginPassword: '',
   });
+  /** Whether the page currently shows the "check your mailbox" state instead of the form. */
+  protected linkSent = signal(false);
+  protected linkResent = signal(false);
+  protected isSending = signal(false);
+
+  /**
+   * Only the address matters for sending a link, so this is computed separately from
+   * formIsValid (which also wants a password). Without it the call to action would stay
+   * disabled for exactly the users who need it — the ones with no password to type.
+   */
+  protected emailIsValid = computed(() => emailValidations(this.currentCredentials()).isValid());
 
   // methods
-  public async resetPassword(): Promise<void> {
-    const email = this.currentCredentials().loginEmail;
-    const url = email
-      ? `${this.store.config().passwordResetUrl}?email=${encodeURIComponent(email)}`
-      : this.store.config().passwordResetUrl;
-    await navigateByUrl(this.router, url);
+  /**
+   * Send the link and stay on this page. `resent` only changes the wording of the confirmation,
+   * so a second tap gives visible feedback instead of looking like nothing happened.
+   */
+  protected async sendPasswordLink(resent: boolean): Promise<void> {
+    if (!this.emailIsValid() || this.isSending()) return;
+    this.isSending.set(true);
+    const ok = await this.store.resetPassword(this.currentCredentials().loginEmail);
+    this.isSending.set(false);
+    if (!ok) return;   // the service already reported the failure; keep the form so it can be retried
+    this.linkResent.set(resent);
+    this.linkSent.set(true);
+  }
+
+  /** Back to the form with the address still in the field, so a typo is a correction, not a retype. */
+  protected backToForm(): void {
+    this.linkSent.set(false);
+    this.linkResent.set(false);
   }
 
   /**

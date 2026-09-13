@@ -3,31 +3,47 @@
   "email": {
     "label": "E-mail",
     "placeholder": "ssss@ssssssss.sss",
-    "error": "Inserire un indirizzo e-mail valido.",
-    "helper": "Utilizzare lo stesso indirizzo e-mail sul quale si ricevono le informazioni dell'associazione."
+    "error": "Inserisci un indirizzo e-mail valido.",
+    "helper": "Usa l'indirizzo e-mail al quale ricevi le informazioni del club."
   },
   "password": {
     "label": "Password",
     "placeholder": "Password",
-    "error": "La password deve essere lunga almeno 6 caratteri e può contenere i seguenti caratteri speciali: -_!@?:;äüö$*+&()=.,£$%",
-    "helper": "Se non si dispone ancora di una password o non la si conosce, è possibile fare clic sul pulsante 'Reimposta password' qui sotto e impostare una nuova password.",
-    "changed": "La password di {email} è stata modificata."
+    "error": "La password deve avere almeno 6 caratteri.",
+    "helper": "Se non conosci la tua password, qui sotto puoi impostarne una nuova via e-mail.",
+    "changed": "Password impostata per {email}. Ora hai eseguito l'accesso.",
+    "newLabel": "Nuova password",
+    "newPlaceholder": "Almeno 8 caratteri",
+    "newHelper": "Almeno 8 caratteri — non ci sono altre regole.",
+    "accountLabel": "Account"
   },
   "pwdreset": {
-    "title": "Imposta password",
-    "newpwd": "Imposta una nuova password",
+    "title": "Imposta la password",
+    "newpwd": "Scegli una nuova password",
     "invalidLink": "Questo link non è più valido. Richiedine uno nuovo qui sotto: ti arriva subito per e-mail.",
-    "success": "Password modificata con successo. Si verrà reindirizzati alla pagina di accesso.",
-    "savepwd": "Salva password",
+    "success": "Password salvata. Ti stiamo facendo accedere.",
+    "savepwd": "Salva la password e accedi",
     "error": {
       "expired": "Questo link è scaduto. Un link per impostare la password vale solo per poco tempo. Richiedine uno nuovo qui sotto: ti arriva subito per e-mail.",
       "used": "Questo link è già stato usato. Se hai impostato la password con questo link, puoi accedere direttamente. Altrimenti richiedine uno nuovo qui sotto.",
       "noAccount": "Non esiste un account attivo per questo indirizzo e-mail. Rivolgiti all'amministrazione della tua società.",
-      "weakPassword": "Questa password è troppo semplice. Scegline una di almeno 6 caratteri.",
-      "network": "Non siamo riusciti a raggiungere il server. Controlla la connessione a internet e riprova."
+      "weakPassword": "Questa password è troppo corta. Scegline una di almeno 8 caratteri.",
+      "network": "Non siamo riusciti a raggiungere il server. Controlla la connessione a internet e riprova.",
+      "tooShort": "La password deve avere almeno 8 caratteri."
     },
     "requestNewLink": "Richiedi un nuovo link",
-    "gotoLogin": "Vai all'accesso"
+    "gotoLogin": "Vai all'accesso",
+    "cta": "Non hai ancora una password? Impostala via e-mail",
+    "sent": {
+      "title": "Guarda nella tua casella",
+      "body": "Abbiamo appena inviato un link a {email}. Toccalo e potrai impostare la tua password. Il link vale un'ora.",
+      "spam": "Non è arrivato nulla? Controlla anche la cartella spam.",
+      "resend": "Invia di nuovo l'e-mail",
+      "resent": "Abbiamo inviato di nuovo il link a {email}.",
+      "other": "Usa un altro indirizzo e-mail",
+      "help": "Se dopo qualche minuto non arriva nulla, contatta l'amministrazione del tuo club."
+    },
+    "checking": "Un attimo, stiamo controllando il tuo link …"
   },
   "pwdconfirm": "Imposta password",
   "roles": {

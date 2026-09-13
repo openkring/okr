@@ -3,31 +3,47 @@
   "email": {
     "label": "E-mail",
     "placeholder": "ssss@ssssssss.sss",
-    "error": "Veuillez saisir une adresse e-mail valide.",
-    "helper": "Veuillez utiliser la même adresse e-mail sur laquelle vous recevez les informations de l'association."
+    "error": "Merci de saisir une adresse e-mail valide.",
+    "helper": "Utilise l'adresse e-mail à laquelle tu reçois les informations du club."
   },
   "password": {
     "label": "Mot de passe",
     "placeholder": "Mot de passe",
-    "error": "Le mot de passe doit comporter au moins 6 caractères et peut contenir les caractères spéciaux suivants : -_!@?:;äüö$*+&()=.,£$%",
-    "helper": "Si vous n'avez pas encore de mot de passe ou si vous ne le connaissez pas, vous pouvez cliquer sur le bouton 'Réinitialiser le mot de passe' ci-dessous et définir un nouveau mot de passe.",
-    "changed": "Le mot de passe de {email} a été modifié."
+    "error": "Le mot de passe doit compter au moins 6 caractères.",
+    "helper": "Si tu ne connais pas ton mot de passe, tu peux en définir un nouveau par e-mail ci-dessous.",
+    "changed": "Mot de passe défini pour {email}. Tu es maintenant connecté.",
+    "newLabel": "Nouveau mot de passe",
+    "newPlaceholder": "Au moins 8 caractères",
+    "newHelper": "Au moins 8 caractères — il n'y a pas d'autre règle.",
+    "accountLabel": "Compte"
   },
   "pwdreset": {
     "title": "Définir le mot de passe",
-    "newpwd": "Définir un nouveau mot de passe",
+    "newpwd": "Choisis un nouveau mot de passe",
     "invalidLink": "Ce lien n'est plus valable. Demande-en un nouveau ci-dessous — tu le reçois aussitôt par e-mail.",
-    "success": "Mot de passe modifié avec succès. Vous allez être redirigé vers la page de connexion.",
-    "savepwd": "Enregistrer le mot de passe",
+    "success": "Mot de passe enregistré. Nous te connectons.",
+    "savepwd": "Enregistrer et se connecter",
     "error": {
       "expired": "Ce lien a expiré. Un lien pour définir ton mot de passe n'est valable que peu de temps. Demande-en un nouveau ci-dessous — tu le reçois aussitôt par e-mail.",
       "used": "Ce lien a déjà été utilisé. Si tu as défini ton mot de passe avec, tu peux te connecter directement. Sinon, demande un nouveau lien ci-dessous.",
       "noAccount": "Il n'y a pas de compte actif pour cette adresse e-mail. Adresse-toi à l'administration de ton club.",
-      "weakPassword": "Ce mot de passe est trop simple. Choisis-en un d'au moins 6 caractères.",
-      "network": "Nous n'avons pas pu joindre le serveur. Vérifie ta connexion internet et réessaie."
+      "weakPassword": "Ce mot de passe est trop court. Choisis-en un d'au moins 8 caractères.",
+      "network": "Nous n'avons pas pu joindre le serveur. Vérifie ta connexion internet et réessaie.",
+      "tooShort": "Le mot de passe doit compter au moins 8 caractères."
     },
     "requestNewLink": "Demander un nouveau lien",
-    "gotoLogin": "Aller à la connexion"
+    "gotoLogin": "Aller à la connexion",
+    "cta": "Pas encore de mot de passe ? En définir un par e-mail",
+    "sent": {
+      "title": "Regarde dans ta boîte mail",
+      "body": "Nous venons d'envoyer un lien à {email}. Touche-le et tu pourras définir ton mot de passe. Le lien est valable une heure.",
+      "spam": "Rien reçu ? Regarde aussi dans le dossier spam.",
+      "resend": "Renvoyer l'e-mail",
+      "resent": "Nous avons renvoyé le lien à {email}.",
+      "other": "Utiliser une autre adresse e-mail",
+      "help": "Si rien n'arrive après quelques minutes, contacte l'administration de ton club."
+    },
+    "checking": "Un instant, nous vérifions ton lien …"
   },
   "pwdconfirm": "Définir le mot de passe",
   "roles": {

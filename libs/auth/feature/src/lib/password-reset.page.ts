@@ -6,7 +6,7 @@ import { Header } from '@okr/shared-ui';
 import { getImgixUrlWithAutoParams } from '@okr/shared-util-core';
 import { AuthCredentials } from '@okr/shared-models';
 
-import { LoginForm } from '@okr/auth-ui';
+import { LoginForm, PwdResetSent } from '@okr/auth-ui';
 
 import { AuthStore } from './auth.store';
 
@@ -15,7 +15,7 @@ import { AuthStore } from './auth.store';
   standalone: true,
   providers: [AuthStore],
   imports: [
-    Header, LoginForm,
+    Header, LoginForm, PwdResetSent,
     IonContent, IonImg, IonLabel, IonGrid, IonRow, IonCol, IonButton
   ],
   styles: `
@@ -39,23 +39,38 @@ import { AuthStore } from './auth.store';
         <img class="background-image" [src]="backgroundImageUrl()" [alt]="store.i18n.background_alt()" />
         <div class="login-form">
           <ion-img class="logo" [src]="logoUrl()" alt="logo" (click)="store.gotoHome()"></ion-img>
-          <ion-label class="title"><strong>{{ store.i18n.pwdreset_title() }}</strong></ion-label>
-          <okr-login-form context="email"
-            [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
-            [i18n]="store.i18n"
-          />
-          <div class="button-container">
-            <ion-grid>
-              <ion-row>
-                <ion-col size="4">
-                  <ion-button expand="block" fill="outline" (click)="store.gotoHome()">{{ store.i18n.cancel() }}</ion-button>
-                </ion-col>
-                <ion-col size="2" offset="6">
-                  <ion-button expand="block" [disabled]="!formIsValid()" (click)="resetPassword()">{{ store.i18n.ok() }}</ion-button>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </div>
+          @if (linkSent()) {
+            <okr-pwdreset-sent
+              [i18n]="store.i18n"
+              [email]="currentCredentials().loginEmail ?? ''"
+              [resent]="linkResent()"
+              (resend)="resetPassword(true)"
+              (useOther)="backToForm()"
+            />
+          } @else {
+            <ion-label class="title"><strong>{{ store.i18n.pwdreset_title() }}</strong></ion-label>
+            <okr-login-form context="email"
+              [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
+              [i18n]="store.i18n"
+            />
+            <div class="button-container">
+              <ion-grid>
+                <!--
+                  Equal halves, and the confirming button says what it does. It used to sit in
+                  2 of 12 columns (~55px on a phone) against a 4-column "Abbrechen", labelled
+                  "OK" — the smallest target on the screen was the one the user came for.
+                -->
+                <ion-row>
+                  <ion-col size="6">
+                    <ion-button expand="block" fill="outline" (click)="store.gotoHome()">{{ store.i18n.cancel() }}</ion-button>
+                  </ion-col>
+                  <ion-col size="6">
+                    <ion-button expand="block" [disabled]="!formIsValid() || isSending()" (click)="resetPassword(false)">{{ store.i18n.pwdreset_cta() }}</ion-button>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </div>
+          }
         </div>
       </div>
     </ion-content>
@@ -74,12 +89,29 @@ export class PasswordResetPage {
     loginPassword: '',
   });
 
+  /** Whether the page shows the "check your mailbox" state instead of the form. */
+  protected linkSent = signal(false);
+  protected linkResent = signal(false);
+  protected isSending = signal(false);
+
   /**
-   * If the form is valid it will call the AuthData service to reset the user's password displaying a loading
-   * component while the user waits.
+   * Send the link and show what happened, on this page. This route stays reachable for deep
+   * links and for `app-config.passwordResetUrl`; the common path now starts on the login page,
+   * which already holds the address.
    */
-  public async resetPassword(): Promise<void> {
-    await this.store.resetPassword(this.currentCredentials().loginEmail);
+  public async resetPassword(resent: boolean): Promise<void> {
+    if (this.isSending()) return;
+    this.isSending.set(true);
+    const ok = await this.store.resetPassword(this.currentCredentials().loginEmail);
+    this.isSending.set(false);
+    if (!ok) return;
+    this.linkResent.set(resent);
+    this.linkSent.set(true);
+  }
+
+  protected backToForm(): void {
+    this.linkSent.set(false);
+    this.linkResent.set(false);
   }
 
   protected onValidChange(isValid: boolean): void {

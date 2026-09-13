@@ -3,31 +3,47 @@
   "email": {
     "label": "E-Mail",
     "placeholder": "ssss@ssssssss.sss",
-    "error": "Bitte eine gültige Email Adresse eingeben.",
-    "helper": "Bitte verwende die gleiche E-Mail Adresse, auf der du die Vereinsinformationen erhälst."
+    "error": "Bitte gib eine gültige E-Mail-Adresse ein.",
+    "helper": "Nimm die E-Mail-Adresse, an die du die Vereinsinformationen bekommst."
   },
   "password": {
     "label": "Passwort",
     "placeholder": "Passwort",
-    "error": "Das Passwort muss mindestens 6 Zeichen lang sein und darf die folgenden Sonderzeichen enthalten: -_!@?:;äüö$*+&()=.,£$%",
-    "helper": "Falls du noch kein Passwort hast oder dieses nicht kennst, kannst du unten auf den Button 'Passwort zurücksetzen' klicken und ein neues Passwort setzen.",
-    "changed": "Passwort für {email} wurde geändert."
+    "error": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+    "helper": "Falls du dein Passwort nicht kennst, kannst du es dir unten per E-Mail neu setzen.",
+    "changed": "Passwort für {email} gesetzt. Du bist jetzt angemeldet.",
+    "newLabel": "Neues Passwort",
+    "newPlaceholder": "Mindestens 8 Zeichen",
+    "newHelper": "Mindestens 8 Zeichen — sonst gibt es keine Regeln.",
+    "accountLabel": "Konto"
   },
   "pwdreset": {
     "title": "Passwort setzen",
     "newpwd": "Neues Passwort festlegen",
     "invalidLink": "Dieser Link ist nicht mehr gültig. Fordere unten einen neuen Link an — er kommt sofort per E-Mail.",
-    "success": "Passwort erfolgreich geändert. Du wirst zur Anmeldeseite weitergeleitet.",
-    "savepwd": "Passwort speichern",
+    "success": "Passwort gespeichert. Du wirst gleich angemeldet.",
+    "savepwd": "Passwort speichern und anmelden",
     "error": {
       "expired": "Dieser Link ist abgelaufen. Ein Link zum Passwort setzen ist nur kurze Zeit gültig. Fordere unten einen neuen an — er kommt sofort per E-Mail.",
       "used": "Dieser Link wurde bereits verwendet. Hast du dein Passwort damit schon gesetzt, kannst du dich direkt anmelden. Sonst fordere unten einen neuen Link an.",
       "noAccount": "Zu dieser E-Mail Adresse gibt es kein aktives Konto. Bitte wende dich an die Administration deines Vereins.",
-      "weakPassword": "Dieses Passwort ist zu einfach. Wähle bitte eines mit mindestens 6 Zeichen.",
-      "network": "Wir konnten den Server gerade nicht erreichen. Prüfe deine Internetverbindung und versuche es nochmals."
+      "weakPassword": "Dieses Passwort ist zu kurz. Wähle bitte eines mit mindestens 8 Zeichen.",
+      "network": "Wir konnten den Server gerade nicht erreichen. Prüfe deine Internetverbindung und versuche es nochmals.",
+      "tooShort": "Das Passwort muss mindestens 8 Zeichen lang sein."
     },
     "requestNewLink": "Neuen Link anfordern",
-    "gotoLogin": "Zur Anmeldung"
+    "gotoLogin": "Zur Anmeldung",
+    "cta": "Noch kein Passwort? Per E-Mail setzen",
+    "sent": {
+      "title": "Schau in deine Mailbox",
+      "body": "Wir haben dir eben einen Link an {email} geschickt. Tippe darauf, dann kannst du dein Passwort setzen. Der Link gilt eine Stunde.",
+      "spam": "Nichts angekommen? Schau auch im Spam-Ordner nach.",
+      "resend": "E-Mail nochmals senden",
+      "resent": "Wir haben den Link nochmals an {email} geschickt.",
+      "other": "Andere E-Mail-Adresse verwenden",
+      "help": "Kommt auch nach ein paar Minuten nichts an, melde dich bei der Administration deines Vereins."
+    },
+    "checking": "Einen Moment, wir prüfen deinen Link …"
   },
   "pwdconfirm": "Passwort setzen",
   "roles": {

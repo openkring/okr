@@ -13,10 +13,28 @@ export const AUTH_I18N_KEYS = {
   password_placeholder:     PFX + 'password.placeholder',
   password_error:           PFX + 'password.error',
   password_helper:          PFX + 'password.helper',
+  // The set-password screen needs its own helper: password.helper talks about a button that
+  // only exists on the login screen, and on the confirm page there is no such button at all.
+  password_new_label:       PFX + 'password.newLabel',
+  password_new_placeholder: PFX + 'password.newPlaceholder',
+  password_new_helper:      PFX + 'password.newHelper',
+  account_label:            PFX + 'password.accountLabel',
 
   pwdreset_title:           PFX + 'pwdreset.title',
+  // The call to action on the login screen. Separate from pwdreset_title (the page heading)
+  // because the two have to read differently: one names a destination, the other offers a way out.
+  pwdreset_cta:             PFX + 'pwdreset.cta',
+  // The state the login screen switches to once the mail is on its way.
+  sent_title:               PFX + 'pwdreset.sent.title',
+  sent_body:                PFX + 'pwdreset.sent.body',
+  sent_spam:                PFX + 'pwdreset.sent.spam',
+  sent_resend:              PFX + 'pwdreset.sent.resend',
+  sent_resent:              PFX + 'pwdreset.sent.resent',
+  sent_other:               PFX + 'pwdreset.sent.other',
+  sent_help:                PFX + 'pwdreset.sent.help',
   newpwd:                   PFX + 'pwdreset.newpwd',
   invalid_link:             PFX + 'pwdreset.invalidLink',
+  checking:                 PFX + 'pwdreset.checking',
   success:                  PFX + 'pwdreset.success',
   savepwd:                  PFX + 'pwdreset.savepwd',
   pwdconfirm:               PFX + 'pwdconfirm',
@@ -27,6 +45,7 @@ export const AUTH_I18N_KEYS = {
   error_noAccount:          PFX + 'pwdreset.error.noAccount',
   error_weakPassword:       PFX + 'pwdreset.error.weakPassword',
   error_network:            PFX + 'pwdreset.error.network',
+  error_tooShort:           PFX + 'pwdreset.error.tooShort',
   request_new_link:         PFX + 'pwdreset.requestNewLink',
   goto_login:               PFX + 'pwdreset.gotoLogin',
 

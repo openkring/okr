@@ -60,6 +60,7 @@ describe('constants exports', () => {
       'KEY_LENGTH',
       'URL_LENGTH',
       'PASSWORD_MIN_LENGTH',
+      'PASSWORD_SET_MIN_LENGTH',
       'PASSWORD_MAX_LENGTH',
       'DESCRIPTION_ROWS',
       'COMMENT_ROWS',
