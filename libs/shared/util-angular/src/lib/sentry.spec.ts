@@ -65,6 +65,15 @@ describe('buildSentryOptions', () => {
     expect(matches('FirebaseError: No document to update')).toBe(false);
   });
 
+  it('suppresses Firebase Auth IndexedDB polls that lose the connection on page teardown (SCS-AN)', () => {
+    const patterns = (buildSentryOptions(cfg, []).ignoreErrors ?? []) as RegExp[];
+    const matches = (msg: string) => patterns.some((p) => p instanceof RegExp && p.test(msg));
+    expect(matches("InvalidStateError: Failed to execute 'transaction' on 'IDBDatabase': The database connection is closing.")).toBe(true);
+    // Must NOT swallow actionable IndexedDB failures (quota, blocked upgrade, corrupt store).
+    expect(matches('QuotaExceededError: The quota has been exceeded.')).toBe(false);
+    expect(matches("InvalidStateError: Failed to execute 'transaction' on 'IDBDatabase': One of the specified object stores was not found.")).toBe(false);
+  });
+
   it('drops events originating inside the Google reCAPTCHA script (SCS-1Q)', () => {
     const patterns = (buildSentryOptions(cfg, []).denyUrls ?? []) as RegExp[];
     const matches = (url: string) => patterns.some((p) => p instanceof RegExp && p.test(url));

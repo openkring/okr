@@ -161,6 +161,16 @@ export function buildSentryOptions(
       // onunhandledrejection with no stacktrace and no first-party frames; the message
       // shape is unique to that bridge, so nothing of ours can be hidden by it.
       /Object Not Found Matching Id:\d+, MethodName:/i,
+      // Page teardown, not a defect (SCS-AN): the Firebase Auth SDK polls IndexedDB on its own
+      // timer to keep the persisted auth state in sync across tabs. When the browser closes the
+      // page (navigate away, iOS tab backgrounding, bfcache eviction) it closes the IDB
+      // connection, and the already-scheduled poll then calls .transaction() on it. Arrives as
+      // an onunhandledrejection whose every frame is inside @firebase/auth's indexed_db.ts —
+      // we never call this API, so there is no promise of ours to catch, and the SDK re-reads
+      // the state on the next tick or on the next page load. Scoped to "connection is closing";
+      // a genuine IndexedDB failure (quota, blocked upgrade, corrupt store) carries a different
+      // message and still reports.
+      /The database connection is closing/i,
     ],
 
     // Crashes inside third-party scripts we load but don't own. reCAPTCHA (pulled in by
