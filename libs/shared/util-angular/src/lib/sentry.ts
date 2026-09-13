@@ -4,6 +4,7 @@ import type { BrowserOptions, ErrorEvent, EventHint } from '@sentry/angular';
 import { redactSensitive, stripPii } from '@okr/shared-util-core';
 import { catchError } from 'rxjs';
 import { isStaleChunkRecoveryInFlight } from './chunk-load-error-handler';
+import { isFirestoreQueueRecoveryInFlight } from './firestore-queue-recovery';
 import { isAnalyticsInitInFlight } from './analytics-init-window';
 import { getRecentFailedRequests } from './failed-request-recorder';
 
@@ -34,6 +35,13 @@ export function beforeSend(event: ErrorEvent, _hint: EventHint): ErrorEvent | nu
   // Only the *recovered* case is dropped — when the loop guard suppresses the reload
   // (a genuinely broken deploy) the flag stays false and the event goes through.
   if (isStaleChunkRecoveryInFlight()) return null;
+
+  // A failed Firestore AsyncQueue throws its b815 assertion once per watch-stream message
+  // until the tab is reloaded — dozens of identical events per incident (SCS-4P). The
+  // failure is reported ONCE, explicitly and with the underlying fault attached, by
+  // recoverFromFirestoreQueueFailure; drop the flood that follows it. When the loop guard
+  // suppresses the reload (reloading did not help) the flag stays false and events go through.
+  if (isFirestoreQueueRecoveryInFlight()) return null;
 
   // Injected in-app-browser script, not our code (SCS-4A): the Google iOS app scans the
   // page with a recursive DOM walker (findTopmostVisibleElement → isOpaqueElement → isImage)

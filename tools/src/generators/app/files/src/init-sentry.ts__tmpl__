@@ -1,11 +1,17 @@
 import * as Sentry from '@sentry/angular';
-import { buildSentryOptions, installFailedRequestRecorder, registerStaleChunkRecovery } from '@okr/shared-util-angular';
+import { buildSentryOptions, installFailedRequestRecorder, registerFirestoreQueueRecovery, registerStaleChunkRecovery } from '@okr/shared-util-angular';
 import { environment } from './environments/environment';
 
 // Recover from lazy-chunk failures that never reach Angular's ErrorHandler (SCS-1N).
 // Registered before Sentry.init so this listener runs before Sentry's own
 // onunhandledrejection handler, and unconditionally — recovery is not monitoring.
 registerStaleChunkRecovery();
+
+// Recover from a permanently failed Firestore AsyncQueue by reloading once (SCS-4P). Once the
+// queue fails, Firestore is dead in this tab: no snapshot ever resolves again and terminate()
+// cannot help, because it has to enqueue too. Registered before Sentry.init for the same reason
+// as above, so the in-flight flag is set when beforeSend drops the assertion flood.
+registerFirestoreQueueRecovery();
 
 // Remember the last few failed requests so an error that arrives without a stacktrace
 // (an unowned promise rejection, e.g. the service worker's synthetic 504) can still say

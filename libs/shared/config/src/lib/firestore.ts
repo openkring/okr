@@ -104,6 +104,13 @@ export function isWebStorageAvailable(): boolean {
  * reload (SCS-4P / SCS-4R, seen in production on the very first two-tab session). A guaranteed
  * crash beats flaky leader election, so the trade was reversed.
  *
+ * That trade bought a DIFFERENT b815, not freedom from it: the multi-tab manager reads a
+ * targetId out of another tab's localStorage that this tab's IndexedDB target cache does not
+ * have, and the resulting null kills the queue just as permanently (SCS-4P again, still
+ * unguarded in the SDK). Neither tab manager is safe, so the real protection is recovery, not
+ * this choice — see registerFirestoreQueueRecovery() in @okr/shared-util-angular, which
+ * reloads the tab once when the queue dies.
+ *
  * Eviction: navigator.storage.persist() is requested on first init — harmless in a tab,
  * materially helps an installed iOS Home Screen PWA stay durable across WebKit storage pressure.
  */
@@ -137,7 +144,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
     };
 
     let firestore: Firestore;
-    let cacheMode: 'persistent-single-tab' | 'memory-fallback';
+    let cacheMode: 'persistent-multi-tab' | 'memory-fallback';
     // Safari and Firefox: skip the IndexedDB persistent cache outright. Its open is async, so a
     // hang under Safari ITP / Firefox ETP / private mode escapes the try/catch below (which only
     // catches a synchronous throw) and stalls the first snapshot forever (e.g. the side-menu
@@ -159,7 +166,7 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
             tabManager: persistentMultipleTabManager(),
           }),
         });
-        cacheMode = 'persistent-single-tab';
+        cacheMode = 'persistent-multi-tab';
       } catch (e) {
         console.warn('Firestore persistent cache init failed, falling back to memory cache:', e);
         firestore = initializeFirestore(app, {
