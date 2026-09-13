@@ -258,7 +258,6 @@ export class TripList {
     switch (selectedMethod) {
       case 'add': await this.store.createTrip(); break;
       case 'reportDamage': await this.store.reportDamage(this.currentUser()); break;
-      case 'reportBug': await this.store.reportBug(this.currentUser()); break;
       case 'callSupport': await this.store.callSupport(); break;
       case 'showBoatStatistics': await this.store.showBoatStatistics(); break;
       case 'showPersonStatistics': await this.store.showPersonStatistics(); break;
@@ -333,7 +332,6 @@ export class TripList {
     }
     options.buttons.push(createActionSheetDivider());
     options.buttons.push(createActionSheetButton('report_damage', this.store.i18n.report_damage(), url, 'warning'));
-    options.buttons.push(createActionSheetButton('report_bug', this.store.i18n.report_bug(), url, 'bug'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), url, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
@@ -348,12 +346,11 @@ export class TripList {
       case 'delete':        await this.store.deleteTrip(trip); break;
       case 'copy':          await this.store.copyTrip(trip); break;
       case 'report_damage': await this.store.reportDamage(this.currentUser(), trip); break;
-      case 'report_bug':    await this.store.reportBug(this.currentUser(), trip); break;
     }
   }
 
   /**
-   * Reduced sheet for a registered member: view the trip, or report a damage or a bug on it.
+   * Reduced sheet for a registered member: view the trip, or report a damage on it.
    * No write action on the trip itself — that stays with kiosk and admin (see the trips skill).
    */
   private async showReportActions(trip: TripModel): Promise<void> {
@@ -363,7 +360,6 @@ export class TripList {
     options.buttons.push(createActionSheetButton('view', this.store.i18n.view(), url, 'eye-on'));
     options.buttons.push(createActionSheetDivider());
     options.buttons.push(createActionSheetButton('report_damage', this.store.i18n.report_damage(), url, 'warning'));
-    options.buttons.push(createActionSheetButton('report_bug', this.store.i18n.report_bug(), url, 'bug'));
     options.buttons.push(createActionSheetButton('cancel', this.store.i18n.cancel(), url, 'cancel'));
 
     const sheet = await this.actionSheetController.create(options);
@@ -374,7 +370,6 @@ export class TripList {
     switch (data.action) {
       case 'view':          await this.store.viewTrip(trip); break;
       case 'report_damage': await this.store.reportDamage(this.currentUser(), trip); break;
-      case 'report_bug':    await this.store.reportBug(this.currentUser(), trip); break;
     }
   }
 

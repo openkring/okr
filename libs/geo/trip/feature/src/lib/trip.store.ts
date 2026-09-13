@@ -436,14 +436,16 @@ export const TripStore = signalStore(
       await this.report('damage', currentUser, trip);
     },
 
-    async reportBug(currentUser?: UserModel, trip?: TripModel): Promise<void> {
-      await this.report('bug', currentUser, trip);
-    },
-
     /**
      * Collect the report and hand it to the `reportIncident` callable, which emits
      * 'trip.damageReported' / 'trip.bugReported'. WHO gets told, and how, is a workflow rule
      * — this store no longer looks up a responsibility by name and no longer writes the task.
+     *
+     * `kind` stays open although the Logbuch offers only 'damage' since 2026-09-13: at the
+     * boathouse «Fehler melden» and «Schaden melden» read as the same thing, so boat damage
+     * kept arriving as 'trip.bugReported' — i.e. in Support instead of at Ressort Boote. The
+     * 'bug' kind remains plumbed through the modal, the callable and its workflow rule; only
+     * the entry point in the trip list is gone.
      */
     async report(kind: 'damage' | 'bug', currentUser?: UserModel, trip?: TripModel): Promise<void> {
       const report = await this.openReportModal(kind, currentUser, trip);

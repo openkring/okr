@@ -790,7 +790,6 @@ const trip: FeatureBlock = {
     { key: 'c-trips', name: 'c-trips', url: '', action: 'context', roleNeeded: 'registered', icon: 'help-circle', label: '', children: [
       { key: 'trip-add', name: 'trip-add', url: 'add', action: 'call', roleNeeded: 'kiosk', icon: 'edit', label: '@item.trip-add' },
       { key: 'trip-reportdamage', name: 'trip-reportdamage', url: 'reportDamage', action: 'call', roleNeeded: 'kiosk', icon: 'warning', label: '@item.trip-reportdamage' },
-      { key: 'trip-reportbug', name: 'trip-reportbug', url: 'reportBug', action: 'call', roleNeeded: 'kiosk', icon: 'bug', label: '@item.trip-reportbug' },
       { key: 'trip-callsupport', name: 'trip-callsupport', url: 'callSupport', action: 'call', roleNeeded: 'kiosk', icon: 'video', label: '@item.trip-callsupport' },
       { key: 'trip-boatstats', name: 'trip-boatstats', url: 'showBoatStatistics', action: 'call', roleNeeded: 'registered', icon: 'chart', label: '@item.trip-boatstats' },
       { key: 'trip-personstats', name: 'trip-personstats', url: 'showPersonStatistics', action: 'call', roleNeeded: 'registered', icon: 'chart', label: '@item.trip-personstats' },
