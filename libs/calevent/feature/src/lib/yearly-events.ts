@@ -7,7 +7,8 @@ import { CalEventModel, RoleName } from '@okr/shared-models';
 import { LabelPipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, error, navigateByUrl } from '@okr/shared-util-angular';
-import { extractSecondPartOfOptionalTupel, getYearFromDate, hasRole } from '@okr/shared-util-core';
+import { extractSecondPartOfOptionalTupel, getAttendanceColor, getAttendanceIcon, getAttendanceState, getYearFromDate, hasRole } from '@okr/shared-util-core';
+import { canAttendCalevent, isPastCalevent, mayJoinOpenCalevent } from '@okr/calevent-util';
 
 import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
@@ -19,6 +20,10 @@ const ALL_YEARS = 99;
 
 /** The four sortable columns of the list — same interaction as `CalEventList`. */
 type YearlyEventSortField = 'year' | 'responsible' | 'location' | 'description';
+
+/** Attendance state of the current user, and the filter cycling through it — as in `CalEventList`. */
+type AttendanceState = 'accepted' | 'declined' | 'invited';
+type AttendanceFilter = AttendanceState | 'all';
 
 @Component({
     selector: 'okr-yearly-events',
@@ -65,6 +70,16 @@ type YearlyEventSortField = 'year' | 'responsible' | 'location' | 'description';
 
     <!-- list header -->
     <ion-toolbar color="primary">
+      <!-- attendance filter: cycles all -> accepted -> declined -> open -->
+      <ion-buttons slot="start">
+        <ion-button (click)="cycleAttendanceFilter()">
+          @if(attendanceFilter() === 'all') {
+            <ion-label>{{ store.i18n.filter_all() }}</ion-label>
+          } @else {
+            <ion-icon slot="icon-only" src="{{ getAttendanceIcon(attendanceFilter()) | svgIcon }}" color="{{ getAttendanceColor(attendanceFilter()) }}" />
+          }
+        </ion-button>
+      </ion-buttons>
       <ion-grid>
         <ion-row>
           <ion-col size="6" size-md="4" size-lg="3" class="clickable" (click)="setSort('year')">
@@ -95,6 +110,14 @@ type YearlyEventSortField = 'year' | 'responsible' | 'location' | 'description';
         <ion-list lines="inset">
           @for(event of filteredCalEvents(); track event.okey) {
             <ion-item (click)="showActions(event)">
+              <!-- always an icon in slot=start, otherwise rows without an attendance state
+                   lose their leading column and the whole list misaligns. 'remove' (grey) means
+                   An-/Abmeldung is not possible on this event. -->
+              @if(attendanceState(event); as state) {
+                <ion-icon slot="start" src="{{ getAttendanceIcon(state) | svgIcon }}" color="{{ getAttendanceColor(state) }}" />
+              } @else {
+                <ion-icon slot="start" src="{{ 'remove' | svgIcon }}" color="medium" [title]="store.i18n.attendance_not_possible()" />
+              }
               <!-- The column header is "Jahr": show the year the event falls in, not the event
                    name, which repeats the tenant and the year in every row ("P13 Event 2024"). -->
               <ion-label>{{ getYearFromDate(event.startDate) }}</ion-label>
@@ -133,6 +156,9 @@ export class YearlyEvents {
   protected selectedTag = linkedSignal(() => this.store.selectedTag());
   protected selectedType = linkedSignal(() => this.store.selectedCategory());
 
+  // attendance filter: 'all' shows everything, the other values match the attendance state of the current user
+  protected attendanceFilter = signal<AttendanceFilter>('all');
+
   // data
   protected calEventsCount = computed(() => this.store.calEventsCount());
   // sort state — local to the component, like in CalEventList; 'year' reproduces the store's order.
@@ -144,7 +170,9 @@ export class YearlyEvents {
    * `responsible` by the last name of the first responsible person.
    */
   protected filteredCalEvents = computed(() => {
-    const list = this.store.filteredCalEvents() ?? [];
+    const attendance = this.attendanceFilter();
+    const list = (this.store.filteredCalEvents() ?? [])
+      .filter(event => attendance === 'all' || this.attendanceState(event) === attendance);
     const field = this.sortField();
     const dir = this.sortAsc() ? 1 : -1;
     return [...list].sort((a, b) => dir * (
@@ -205,14 +233,28 @@ export class YearlyEvents {
    */
   protected async showActions(calEvent: CalEventModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
-    this.addActionSheetButtons(actionSheetOptions);
+    this.addActionSheetButtons(actionSheetOptions, calEvent);
     await this.executeActions(actionSheetOptions, calEvent);
   }
 
   /**
    * Fills the ActionSheet with all possible actions, considering the user permissions.
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, calevent: CalEventModel): void {
+    // Anwesenheit: dieselbe Regel wie in CalEventList — wer antworten darf, entscheidet die
+    // Reichweite des Kalenders bzw. eine Einladung (canAttendCalevent). Vergangene oder
+    // gesperrte Anlaesse nehmen keine Antwort mehr entgegen.
+    const showAttendance = !isPastCalevent(calevent) && !calevent.isLocked;
+    const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === calevent.okey);
+    if (showAttendance && canAttendCalevent(calevent, hasInvitation, this.mayJoinOpen(calevent))) {
+      const state = getAttendanceState(calevent, this.currentUser()?.personKey ?? '');
+      if (state !== 'accepted') {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
+      }
+      if (state !== 'declined') {
+        actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
+      }
+    }
     if (hasRole('registered', this.currentUser())) {
       actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.view(), this.imgixBaseUrl, 'eye-on'));
       actionSheetOptions.buttons.push(createActionSheetButton('album', this.store.i18n.view_album(), this.imgixBaseUrl, 'albums'));
@@ -238,6 +280,12 @@ export class YearlyEvents {
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
       switch (data.action) {
+        case 'calevent.subscribe':
+          await this.store.subscribe(calEvent);
+          break;
+        case 'calevent.unsubscribe':
+          await this.store.unsubscribe(calEvent);
+          break;
         case 'calevent.delete':
           await this.store.delete(calEvent, this.readOnly());
           break;
@@ -291,6 +339,38 @@ export class YearlyEvents {
   }
 
   /******************************* helpers *************************************** */
+  /**
+   * Whether the current user may answer an open event without a personal invitation: the event
+   * must be open, and the user must be reachable through one of the calendars carrying it —
+   * see `mayJoinOpenCalevent`.
+   */
+  /**
+   * Attendance state of the current user for the given event — read from the attendees list.
+   * Falls back to 'invited' while the user has not answered yet but still could, and to undefined
+   * when An-/Abmeldung is not possible at all (past event, or one outside the reach of its
+   * calendar without an invitation) — the list then shows the grey 'remove' icon.
+   */
+  protected attendanceState(event: CalEventModel): AttendanceState | undefined {
+    const hasInvitation = this.store.invitations().some(inv => inv.caleventKey === event.okey);
+    if (isPastCalevent(event) || event.isLocked) return undefined;
+    const state = getAttendanceState(event, this.currentUser()?.personKey ?? '');
+    if (!state) return canAttendCalevent(event, hasInvitation, this.mayJoinOpen(event)) ? 'invited' : undefined;
+    return state === 'accepted' || state === 'declined' ? state : 'invited';
+  }
+
+  /** Cycles the attendance filter through all -> accepted -> declined -> open. */
+  protected cycleAttendanceFilter(): void {
+    const values: AttendanceFilter[] = ['all', 'accepted', 'declined', 'invited'];
+    this.attendanceFilter.update(current => values[(values.indexOf(current) + 1) % values.length]);
+  }
+
+  protected getAttendanceIcon = getAttendanceIcon;
+  protected getAttendanceColor = getAttendanceColor;
+
+  protected mayJoinOpen(event: CalEventModel): boolean {
+    return mayJoinOpenCalevent(event.calendars, this.store.groupCalendarKeys(), this.store.calendarsOfCurrentUser());
+  }
+
   protected hasRole(role: RoleName | undefined): boolean {
     return hasRole(role, this.store.currentUser());
   }
